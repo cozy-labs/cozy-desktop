@@ -37,7 +37,7 @@
     "path": "%orchid_electronics.uu/pines.mime/bangladesh_redefine.sgml/\\cross_platform_money_market_account.ddd"
   },
   { "op": "mkdir", "path": "payment_synthesizing.rpm/digital.src" },
-  { "op": "start" },
+  { "op": "start_watcher" },
   {
     "op": "mv",
     "from": "%orchid_electronics.uu",

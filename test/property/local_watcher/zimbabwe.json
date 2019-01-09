@@ -14,7 +14,7 @@
   { "op": "mkdir", "path": "local_incredible_cotton_chicken.scurl" },
   { "op": "mkdir", "path": "gorgeous_program_locks.litcoffee" },
   { "op": "mkdir", "path": "borders_haptic_expanded.mods" },
-  { "op": "start" },
+  { "op": "start_watcher" },
   { "op": "rm", "path": "generate_practical_metal_mouse.so" },
   { "op": "mkdir", "path": "disintermediate_sports_backing_up.vob" },
   { "op": "rm", "path": "borders_haptic_expanded.mods" },

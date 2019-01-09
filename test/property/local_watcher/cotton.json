@@ -13,7 +13,7 @@
     "size": 30
   },
   { "op": "mkdir", "path": "Évermont.scss" },
-  { "op": "start" },
+  { "op": "start_watcher" },
   { "op": "rm", "path": "Çcustomer_target_practical.iif" },
   {
     "op": "mv",

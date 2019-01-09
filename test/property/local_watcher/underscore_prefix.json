@@ -3,7 +3,7 @@
     "op": "pending",
     "msg": "path that starts with an underscore are seen as local docs in pouchdb"
   },
-  { "op": "start" },
+  { "op": "start_watcher" },
   { "op": "mkdir", "path": "_foo" },
   { "op": "mkdir", "path": "bar" },
   { "op": "mkdir", "path": "bar/_baz" },

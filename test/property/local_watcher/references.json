@@ -80,7 +80,7 @@
     "path": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph"
   },
   { "op": "mkdir", "path": "../outside" },
-  { "op": "start" },
+  { "op": "start_watcher" },
   {
     "op": "mv",
     "from": "generate_interface.mxu/practical_concrete_pants_berkshire_extend.onetoc/upward_trending_bricks_and_clicks.gph",

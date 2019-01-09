@@ -23,7 +23,7 @@
     "path": "tasty_wooden_fish_incredible_concrete_keyboard_towels.lrm"
   },
   { "op": "mkdir", "path": "%capacitor_neural.fti" },
-  { "op": "start" },
+  { "op": "start_watcher" },
   { "op": "rm", "path": "licensed_agent.wspolicy" },
   { "op": "mkdir", "path": "UNLEASH_FULL_RANGE.TEXT" },
   { "op": "create_file", "path": "licensed_agent.wspolicy" },

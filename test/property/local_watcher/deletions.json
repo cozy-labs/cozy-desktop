@@ -5,7 +5,7 @@
   { "op": "mkdir", "path": "qux" },
   { "op": "create_file", "path": "qux/quux", "size": 256 },
   { "op": "mkdir", "path": "courge" },
-  { "op": "start" },
+  { "op": "start_watcher" },
   { "op": "sleep", "duration": 1000 },
   { "op": "rm", "path": "foo" },
   { "op": "rm", "path": "qux/quux" }
