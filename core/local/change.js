@@ -299,7 +299,9 @@ function dirMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalD
   })
 }
 
-function fileMoveFromAddUnlink (addChange /*: LocalFileAddition */, e /*: LocalFileUnlinked */) /*: * */ {
+function fileMoveFromAddUnlink (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUnlinked */) /*: * */ {
+  const addChange /*: ?LocalFileAddition */ = maybeAddFile(sameInodeChange)
+  if (!addChange) return
   log.debug({oldpath: e.path, path: addChange.path, ino: addChange.ino}, 'add + unlink = FileMove')
   return build('FileMove', addChange.path, {
     stats: addChange.stats,

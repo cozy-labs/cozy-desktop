@@ -133,15 +133,9 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
                 'We should not have both move and unlink changes since ' +
                 'checksumless adds and inode-less unlink events are dropped')
             }
-
-            const addChange /*: ?LocalFileAddition */ = localChange.maybeAddFile(sameInodeChange)
-            if (addChange) {
-              // TODO: pending move
-              changeFound(localChange.fileMoveFromAddUnlink(addChange, e))
-              break
-            }
           }
           changeFound(
+            localChange.fileMoveFromAddUnlink(sameInodeChange, e) ||
             localChange.fileDeletion(e) ||
             withChangeByPath(e, samePathChange => (
               localChange.convertFileMoveToDeletion(samePathChange) ||
