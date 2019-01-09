@@ -139,12 +139,10 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
               // TODO: pending move
               changeFound(localChange.fileMoveFromAddUnlink(addChange, e))
               break
-            } else if (getInode(e)) {
-              changeFound(localChange.fileDeletion(e))
-              break
             }
           }
           changeFound(
+            localChange.fileDeletion(e) ||
             withChangeByPath(e, samePathChange => {
               return (
                 localChange.convertFileMoveToDeletion(samePathChange) ||
