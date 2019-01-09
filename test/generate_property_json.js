@@ -7,6 +7,22 @@ const nbInitOps = 32
 const nbRunOps = 256
 const specialChars = [':', '-', 'é', ' ', '%', ',', '&', '@', 'É', 'Ç']
 
+const localOps = [
+  [5, createNewDir],
+  [3, createNewFile],
+  [1, recreateDeletedDir],
+  [1, recreateDeletedFile],
+  [1, updateFile],
+  [2, mvToNewPath],
+  [3, mvToDeletedPath],
+  [1, mvToOutside],
+  [1, mvFromOutside],
+  [5, rm],
+  [3, addReference],
+  [1, stopOrRestart],
+  [2, sleep]
+]
+
 const knownPaths = []
 const deletedPaths = []
 const outsidePaths = []
@@ -133,8 +149,8 @@ function stopOrRestart () {
 }
 
 function sleep () {
-  const s = 2 ** (1 + faker.random.number(3))
-  return { op: 'sleep', duration: 1000 * s }
+  const s = 2 ** (6 + faker.random.number(8))
+  return { op: 'sleep', duration: s }
 }
 
 function freq (choices) {
@@ -162,24 +178,10 @@ function start (ops) {
   ops.push({ op: 'start' })
 }
 
-function run (ops) {
+function run (ops, availableOps) {
   const n = faker.random.number(nbRunOps)
   for (let i = 0; i < n; i++) {
-    const op = freq([
-      [5, createNewDir],
-      [3, createNewFile],
-      [1, recreateDeletedDir],
-      [1, recreateDeletedFile],
-      [1, updateFile],
-      [2, mvToNewPath],
-      [3, mvToDeletedPath],
-      [1, mvToOutside],
-      [1, mvFromOutside],
-      [5, rm],
-      [3, addReference],
-      [1, stopOrRestart],
-      [2, sleep]
-    ])
+    const op = freq(availableOps)
     ops.push(op)
   }
   if (!running) {
@@ -187,12 +189,23 @@ function run (ops) {
   }
 }
 
-function generate () {
+function generateLocalWatcher () {
   let ops = []
   init(ops)
   start(ops)
-  run(ops)
+  run(ops, localOps)
   console.log(JSON.stringify(ops))
 }
 
-generate()
+function generate (property) {
+  if (property === 'local_watcher') {
+    generateLocalWatcher()
+  } else if (!property){
+    console.error(`Usage: ./test/generate_property_json.js [property]`)
+  } else {
+    console.error(`${property} is not a supported property`)
+    process.exit(1)
+  }
+}
+
+generate(process.argv[2])
