@@ -7,7 +7,7 @@ const nbInitOps = 32
 const nbRunOps = 256
 const specialChars = [':', '-', 'é', ' ', '%', ',', '&', '@', 'É', 'Ç']
 
-const localOps = [
+const commonOps = [
   [5, createNewDir],
   [3, createNewFile],
   [1, recreateDeletedDir],
@@ -18,10 +18,14 @@ const localOps = [
   [1, mvToOutside],
   [1, mvFromOutside],
   [5, rm],
-  [3, addReference],
   [1, stopOrRestart],
   [2, sleep]
 ]
+const localOps = commonOps + [
+  [3, addReference]
+]
+const clientOps = commonOps
+// TODO network operations
 
 const knownPaths = []
 const deletedPaths = []
@@ -197,10 +201,24 @@ function generateLocalWatcher () {
   console.log(JSON.stringify(ops))
 }
 
+function generateTwoClients () {
+  let result = { desktop: [], laptop: [] }
+  for (let ops of Object.values(result)) {
+    init(ops)
+    start(ops)
+  }
+  for (let ops of Object.values(result)) {
+    run(ops, clientOps)
+  }
+  console.log(JSON.stringify(result))
+}
+
 function generate (property) {
   if (property === 'local_watcher') {
     generateLocalWatcher()
-  } else if (!property){
+  } else if (property === 'two_clients') {
+    generateTwoClients()
+  } else if (!property) {
     console.error(`Usage: ./test/generate_property_json.js [property]`)
   } else {
     console.error(`${property} is not a supported property`)
