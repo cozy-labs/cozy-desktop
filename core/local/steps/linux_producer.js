@@ -68,7 +68,7 @@ module.exports = class LinuxProducer /*:: implements Producer */ {
     // moved. Wait a bit to ensure that the corresponding renamed events have
     // been emited.
     await Promise.delay(1000)
-    const scanDone = { action: 'initial-scan-done', kind: 'unknown', path: '.' }
+    const scanDone = { action: 'initial-scan-done', kind: 'unknown', path: '.', noIgnore: true }
     this.buffer.push([scanDone])
   }
 

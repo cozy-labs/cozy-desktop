@@ -35,6 +35,7 @@ onPlatforms(['linux', 'win32'], () => {
         builders.event().path('tmp/ignored.txt').kind('file').build()
       ]
       const notIgnoredEvents = [
+        builders.event().action('initial-scan-done').path('.').kind('unknown').noIgnore().build(),
         builders.event().path('notIgnored.txt').kind('file').build(),
         builders.event().path('notIgnored').kind('directory').build(),
         builders.event().path('data/notIgnored.txt').kind('file').build()
