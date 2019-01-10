@@ -174,14 +174,14 @@ class Stack {
     const scope = 'io.cozy.files io.cozy.settings'
     const log = fs.openSync(`${this.dir}-instance-token-oauth.log`, 'a+')
     const child = spawn('cozy-stack',
-      ['instance', 'token-oauth', `${this.instance}`, `${client.clientID}`, scope],
+      ['instance', 'token-oauth', `${this.instance}`, `${client.client_id}`, scope],
       { stdio: ['ignore', 'pipe', log] })
     let buffer = ''
     child.stdout.on('data', data => { buffer += data })
     await new Promise(resolve => {
       child.on('exit', resolve)
     })
-    return { tokenType: 'bearer', accessToken: buffer, scope }
+    return { tokenType: 'bearer', accessToken: buffer.trim(), scope }
   }
 }
 
@@ -296,7 +296,6 @@ describe('Two clients', function () {
       await Promise.all(runnings)
 
       // Wait that the dust settles
-      console.log('state', state) // FIXME
       should.exists(state.stack)
       await Promise.delay(25000)
       for (const device in data) {
