@@ -8,16 +8,13 @@ const fs = require('fs')
 const fse = require('fs-extra')
 const glob = require('glob')
 const path = require('path')
-const { spawn, spawnSync } = require('child_process')
-const { clone } = require('lodash')
 const Promise = require('bluebird')
 
 const { ContextDir } = require('../../support/helpers/context_dir')
 const TmpDir = require('../../support/helpers/TmpDir')
 
-/*::
-import type { ChildProcess } from 'child_process'
-*/
+const { setupStack } = require('../stack')
+const { setupDevice } = require('../device')
 
 let winfs
 if (process.platform === 'win32') {
@@ -101,169 +98,6 @@ async function run (ops, state) {
   for (let op of ops) {
     state = await step(state, op)
   }
-}
-
-class Stack {
-  /*::
-  dir: string
-  instance: string
-  child: ?ChildProcess
-  stopped: ?Promise<void>
-  */
-
-  constructor (dir) {
-    this.dir = dir
-    this.instance = 'test.desktop.cozy.tools:8080'
-    this.child = null
-    this.stopped = null
-  }
-
-  async start () {
-    const log = fs.openSync(`${this.dir}.log`, 'w+')
-    this.child = spawn('cozy-stack',
-      ['serve', '--fs-url', `file://${this.dir}`],
-      { stdio: ['ignore', log, log] }
-    )
-    this.stopped = new Promise((resolve, reject) => {
-      this.child && this.child.on('exit', () => {
-        this.child = null
-        resolve()
-      })
-      this.child && this.child.on('error', err => {
-        this.child = null
-        reject(err)
-      })
-    })
-    await Promise.delay(1000)
-  }
-
-  async stop () {
-    if (!this.child) { return }
-    this.child.kill()
-    await this.stopped
-  }
-
-  async createInstance () {
-    const log = fs.openSync(`${this.dir}-instance-add.log`, 'a+')
-    spawnSync('cozy-stack',
-      ['instance', 'add', `${this.instance}`, '--dev', '--passphrase', 'cozy'],
-      { stdio: ['ignore', log, log] })
-  }
-
-  async cleanInstance () {
-    const log = fs.openSync(`${this.dir}-instance-rm.log`, 'a+')
-    spawnSync('cozy-stack',
-      ['instance', 'rm', '--force', `${this.instance}`],
-      { stdio: ['ignore', log, log] })
-  }
-
-  async registerClient (name) {
-    const log = fs.openSync(`${this.dir}-instance-client-oauth.log`, 'a+')
-    const child = spawn('cozy-stack',
-      ['instance', 'client-oauth', '--json', `${this.instance}`, `http://${name}.localhost`, `${name}`, 'github.com/cozy-labs/cozy-desktop'],
-      { stdio: ['ignore', 'pipe', log] })
-    let buffer = ''
-    child.stdout.on('data', data => { buffer += data })
-    await new Promise(resolve => {
-      child.on('exit', resolve)
-    })
-    return JSON.parse(buffer)
-  }
-
-  async createToken (client) {
-    const scope = 'io.cozy.files io.cozy.settings'
-    const log = fs.openSync(`${this.dir}-instance-token-oauth.log`, 'a+')
-    const child = spawn('cozy-stack',
-      ['instance', 'token-oauth', `${this.instance}`, `${client.client_id}`, scope],
-      { stdio: ['ignore', 'pipe', log] })
-    let buffer = ''
-    child.stdout.on('data', data => { buffer += data })
-    await new Promise(resolve => {
-      child.on('exit', resolve)
-    })
-    return { tokenType: 'bearer', accessToken: buffer.trim(), scope }
-  }
-}
-
-async function setupStack (dir) {
-  await fse.ensureDir(dir)
-  const stack = new Stack(dir)
-  await stack.start()
-  await stack.cleanInstance()
-  await stack.createInstance()
-  return stack
-}
-
-class Device {
-  /*::
-  name: string
-  stack: Stack
-  desktopDir: ?string
-  child: ?ChildProcess
-  stopped: ?Promise<void>
-  */
-
-  constructor (name, stack) {
-    this.name = name
-    this.stack = stack
-    this.desktopDir = null
-    this.child = null
-    this.stopped = null
-  }
-
-  async register (dir) {
-    const client = await this.stack.registerClient(this.name)
-    const token = await this.stack.createToken(client)
-    const desktopDir = path.join(dir.root + '-config', '.cozy-desktop')
-    await fse.ensureDir(desktopDir)
-    const json = {
-      url: `http://${this.stack.instance}/`,
-      path: dir.root,
-      creds: { client, token }
-    }
-    await fse.writeJson(path.join(desktopDir, 'config.json'), json)
-    this.desktopDir = path.dirname(desktopDir)
-  }
-
-  async start () {
-    if (this.child) { return }
-    if (!this.desktopDir) {
-      throw new Error('Client has not been configured')
-    }
-    let env = clone(process.env)
-    env.COZY_DESKTOP_DIR = this.desktopDir
-    env.COZY_DESKTOP_HEARTBEAT = 10000
-    env.COZY_DESKTOP_PROPERTY_BASED_TESTING = true
-    // TODO it would be nice to start cozy-desktop without the GUI
-    this.child = spawn('yarn', ['run', 'electron', '.'], {
-      stdio: ['ignore', 'ignore', 'ignore'],
-      cwd: path.join(__dirname, '../../..'),
-      env: env
-    })
-    this.stopped = new Promise((resolve, reject) => {
-      this.child && this.child.on('exit', () => {
-        this.child = null
-        resolve()
-      })
-      this.child && this.child.on('error', err => {
-        this.child = null
-        reject(err)
-      })
-    })
-  }
-
-  async stop () {
-    if (!this.child) { return }
-    this.child.kill()
-    await this.stopped
-    // TODO electron starts several processes and daemonizes itself
-  }
-}
-
-async function setupDevice (deviceName, dir, stack) {
-  const device = new Device(deviceName, stack)
-  await device.register(dir)
-  return { dir, device }
 }
 
 describe('Two clients', function () {
