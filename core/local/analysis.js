@@ -62,8 +62,9 @@ class LocalChangeMap {
     else return null
   }
 
-  whenFoundByPath /*:: <T> */ (path /*: string */, callback /*: (?LocalChange) => T */) /*: T */ {
-    return callback(this.changesByPath.get(path))
+  whenFoundByPath /*:: <T> */ (path /*: string */, callback /*: (LocalChange) => T */) /*: ?T */ {
+    const change = this.changesByPath.get(path)
+    if (change) return callback(change)
   }
 
   put (c /*: LocalChange */) {
