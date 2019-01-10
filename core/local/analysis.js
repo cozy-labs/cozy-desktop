@@ -119,7 +119,8 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
         e.type = 'unlinkDir'
       }
 
-      analyseEvent(e, changeMap)
+      const result = analyseEvent(e, changeMap)
+      changeFound(result)
     } catch (err) {
       const sentry = err.name === 'InvalidLocalMoveEvent'
       log.error({err, path: e.path, sentry})
@@ -134,36 +135,33 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
   return changes
 }
 
-function analyseEvent (e /*: LocalEvent */, changeMap /*: LocalChangeMap */) {
-  const { changeFound, getChangeByInode, withChangeByPath } = changeMap
+function analyseEvent (e /*: LocalEvent */, changeMap /*: LocalChangeMap */) /*: ?LocalChange|true */ {
+  const { getChangeByInode, withChangeByPath } = changeMap
   const sameInodeChange = getChangeByInode(e)
 
   switch (e.type) {
     case 'add':
-      changeFound(
+      return (
         localChange.includeAddEventInFileMove(sameInodeChange, e) ||
         localChange.fileMoveFromUnlinkAdd(sameInodeChange, e) ||
         localChange.fileMoveIdenticalOffline(e) ||
         localChange.fileAddition(e)
       )
-      break
     case 'addDir':
-      changeFound(
+      return (
         localChange.includeAddDirEventInDirMove(sameInodeChange, e) ||
         localChange.dirMoveFromUnlinkAdd(sameInodeChange, e) ||
         localChange.dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
         localChange.dirMoveIdenticalOffline(e) ||
         localChange.dirAddition(e)
       )
-      break
     case 'change':
-      changeFound(
+      return (
         localChange.includeChangeEventIntoFileMove(sameInodeChange, e) ||
         localChange.fileMoveFromFileDeletionChange(sameInodeChange, e) ||
         localChange.fileMoveIdentical(sameInodeChange, e) ||
         localChange.fileUpdate(e)
       )
-      break
     case 'unlink':
       {
         const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
@@ -175,7 +173,7 @@ function analyseEvent (e /*: LocalEvent */, changeMap /*: LocalChangeMap */) {
             'checksumless adds and inode-less unlink events are dropped')
         }
       }
-      changeFound(
+      return (
         localChange.fileMoveFromAddUnlink(sameInodeChange, e) ||
         localChange.fileDeletion(e) ||
         withChangeByPath(e, samePathChange => (
@@ -184,7 +182,6 @@ function analyseEvent (e /*: LocalEvent */, changeMap /*: LocalChangeMap */) {
           // Otherwise, skip unlink event by multiple moves
         ))
       )
-      break
     case 'unlinkDir':
       {
         const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(sameInodeChange)
@@ -196,7 +193,7 @@ function analyseEvent (e /*: LocalEvent */, changeMap /*: LocalChangeMap */) {
             'non-existing addDir and inode-less unlinkDir events are dropped')
         }
       }
-      changeFound(
+      return (
         localChange.dirMoveFromAddUnlink(sameInodeChange, e) ||
         localChange.dirDeletion(e) ||
         withChangeByPath(e, samePathChange => (
@@ -204,7 +201,6 @@ function analyseEvent (e /*: LocalEvent */, changeMap /*: LocalChangeMap */) {
           localChange.convertDirMoveToDeletion(samePathChange)
         ))
       )
-      break
     default:
       throw new TypeError(`Unknown event type: ${e.type}`)
   }
