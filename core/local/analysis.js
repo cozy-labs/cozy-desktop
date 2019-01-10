@@ -1,5 +1,6 @@
 /* @flow */
 
+const autoBind = require('auto-bind')
 const path = require('path')
 const _ = require('lodash')
 
@@ -38,21 +39,35 @@ const panic = (context, description) => {
   throw new Error(description)
 }
 
-function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChange[] */) /*: LocalChange[] */ {
-  const stopMeasure = measureTime('LocalWatcher#analyseEvents')
-  // OPTIMIZE: new Array(events.length)
-  const changes /*: LocalChange[] */ = []
-  const changesByInode /*: Map<number, LocalChange> */ = new Map()
-  const changesByPath /*: Map<string, LocalChange> */ = new Map()
-  const getChangeByInode = (e) => {
+class LocalChangeMap {
+  /*::
+  changes: LocalChange[]
+  changesByInode: Map<number, LocalChange>
+  changesByPath: Map<string, LocalChange>
+  */
+
+  constructor () {
+    this._clear()
+    autoBind(this)
+  }
+
+  _clear () {
+    this.changes = []
+    this.changesByInode = new Map()
+    this.changesByPath = new Map()
+  }
+
+  getChangeByInode (e) {
     const ino = getInode(e)
-    if (ino) return changesByInode.get(ino)
+    if (ino) return this.changesByInode.get(ino)
     else return null
   }
-  const withChangeByPath = (e, callback) => {
-    return callback(changesByPath.get(e.path))
+
+  withChangeByPath (e, callback) {
+    return callback(this.changesByPath.get(e.path))
   }
-  const changeFound = (c /*: ?LocalChange | true */) => {
+
+  changeFound (c /*: ?LocalChange | true */) {
     if (c == null) {
       // No change was found. Nothing to do.
       return
@@ -61,10 +76,24 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
       // A previous change was transformed. Nothing more to index.
       return
     }
-    changesByPath.set(c.path, c)
-    if (typeof c.ino === 'number') changesByInode.set(c.ino, c)
-    else changes.push(c)
+    this.changesByPath.set(c.path, c)
+    if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
+    else this.changes.push(c)
   }
+
+  flush () {
+    const changes = this.changes
+    for (let a of this.changesByInode.values()) changes.push(a)
+    this._clear()
+    return changes
+  }
+}
+
+function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChange[] */) /*: LocalChange[] */ {
+  const stopMeasure = measureTime('LocalWatcher#analyseEvents')
+  // OPTIMIZE: new Array(events.length)
+  const changeMap = new LocalChangeMap()
+  const { changeFound, getChangeByInode, withChangeByPath } = changeMap
 
   if (pendingChanges.length > 0) {
     log.warn({changes: pendingChanges}, `Prepend ${pendingChanges.length} pending change(s)`)
@@ -170,7 +199,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
   }
 
   log.trace('Flatten changes map...')
-  for (let a of changesByInode.values()) changes.push(a)
+  const changes /*: LocalChange[] */ = changeMap.flush()
 
   stopMeasure()
   return changes
