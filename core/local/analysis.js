@@ -57,16 +57,16 @@ class LocalChangeMap {
     this.changesByPath = new Map()
   }
 
-  getChangeByInode (ino) {
+  findByInode (ino) {
     if (ino) return this.changesByInode.get(ino)
     else return null
   }
 
-  withChangeByPath (path, callback) {
+  whenFoundByPath (path, callback) {
     return callback(this.changesByPath.get(path))
   }
 
-  changeFound (c /*: LocalChange */) {
+  put (c /*: LocalChange */) {
     this.changesByPath.set(c.path, c)
     if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
     else this.changes.push(c)
@@ -83,11 +83,11 @@ class LocalChangeMap {
 function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChange[] */) /*: LocalChange[] */ {
   const stopMeasure = measureTime('LocalWatcher#analyseEvents')
   // OPTIMIZE: new Array(events.length)
-  const changeMap = new LocalChangeMap()
+  const changesFound = new LocalChangeMap()
 
   if (pendingChanges.length > 0) {
     log.warn({changes: pendingChanges}, `Prepend ${pendingChanges.length} pending change(s)`)
-    for (const a of pendingChanges) { changeMap.changeFound(a) }
+    for (const a of pendingChanges) { changesFound.put(a) }
     pendingChanges.length = 0
   }
 
@@ -109,10 +109,10 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
         e.type = 'unlinkDir'
       }
 
-      const result = analyseEvent(e, changeMap)
+      const result = analyseEvent(e, changesFound)
       if (result == null) continue // No change was found. Skip event.
       if (result === true) continue // A previous change was transformed. Nothing more to do.
-      changeMap.changeFound(result) // A new change was found
+      changesFound.put(result) // A new change was found
     } catch (err) {
       const sentry = err.name === 'InvalidLocalMoveEvent'
       log.error({err, path: e.path, sentry})
@@ -121,14 +121,14 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
   }
 
   log.trace('Flatten changes map...')
-  const changes /*: LocalChange[] */ = changeMap.flush()
+  const changes /*: LocalChange[] */ = changesFound.flush()
 
   stopMeasure()
   return changes
 }
 
-function analyseEvent (e /*: LocalEvent */, changeMap /*: LocalChangeMap */) /*: ?LocalChange|true */ {
-  const sameInodeChange = changeMap.getChangeByInode(getInode(e))
+function analyseEvent (e /*: LocalEvent */, previousChanges /*: LocalChangeMap */) /*: ?LocalChange|true */ {
+  const sameInodeChange = previousChanges.findByInode(getInode(e))
 
   switch (e.type) {
     case 'add':
@@ -167,7 +167,7 @@ function analyseEvent (e /*: LocalEvent */, changeMap /*: LocalChangeMap */) /*:
       return (
         localChange.fileMoveFromAddUnlink(sameInodeChange, e) ||
         localChange.fileDeletion(e) ||
-        changeMap.withChangeByPath(e.path, samePathChange => (
+        previousChanges.whenFoundByPath(e.path, samePathChange => (
           localChange.convertFileMoveToDeletion(samePathChange) ||
           localChange.ignoreFileAdditionThenDeletion(samePathChange)
           // Otherwise, skip unlink event by multiple moves
@@ -187,7 +187,7 @@ function analyseEvent (e /*: LocalEvent */, changeMap /*: LocalChangeMap */) /*:
       return (
         localChange.dirMoveFromAddUnlink(sameInodeChange, e) ||
         localChange.dirDeletion(e) ||
-        changeMap.withChangeByPath(e.path, samePathChange => (
+        previousChanges.whenFoundByPath(e.path, samePathChange => (
           localChange.ignoreDirAdditionThenDeletion(samePathChange) ||
           localChange.convertDirMoveToDeletion(samePathChange)
         ))
