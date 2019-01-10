@@ -93,7 +93,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
   const stopMeasure = measureTime('LocalWatcher#analyseEvents')
   // OPTIMIZE: new Array(events.length)
   const changeMap = new LocalChangeMap()
-  const { changeFound, getChangeByInode, withChangeByPath } = changeMap
+  const { changeFound } = changeMap
 
   if (pendingChanges.length > 0) {
     log.warn({changes: pendingChanges}, `Prepend ${pendingChanges.length} pending change(s)`)
@@ -119,78 +119,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
         e.type = 'unlinkDir'
       }
 
-      const sameInodeChange = getChangeByInode(e)
-
-      switch (e.type) {
-        case 'add':
-          changeFound(
-            localChange.includeAddEventInFileMove(sameInodeChange, e) ||
-            localChange.fileMoveFromUnlinkAdd(sameInodeChange, e) ||
-            localChange.fileMoveIdenticalOffline(e) ||
-            localChange.fileAddition(e)
-          )
-          break
-        case 'addDir':
-          changeFound(
-            localChange.includeAddDirEventInDirMove(sameInodeChange, e) ||
-            localChange.dirMoveFromUnlinkAdd(sameInodeChange, e) ||
-            localChange.dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
-            localChange.dirMoveIdenticalOffline(e) ||
-            localChange.dirAddition(e)
-          )
-          break
-        case 'change':
-          changeFound(
-            localChange.includeChangeEventIntoFileMove(sameInodeChange, e) ||
-            localChange.fileMoveFromFileDeletionChange(sameInodeChange, e) ||
-            localChange.fileMoveIdentical(sameInodeChange, e) ||
-            localChange.fileUpdate(e)
-          )
-          break
-        case 'unlink':
-          {
-            const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
-            /* istanbul ignore next */
-            if (moveChange) {
-              // TODO: Pending move
-              panic({path: e.path, moveChange, event: e},
-                'We should not have both move and unlink changes since ' +
-                'checksumless adds and inode-less unlink events are dropped')
-            }
-          }
-          changeFound(
-            localChange.fileMoveFromAddUnlink(sameInodeChange, e) ||
-            localChange.fileDeletion(e) ||
-            withChangeByPath(e, samePathChange => (
-              localChange.convertFileMoveToDeletion(samePathChange) ||
-              localChange.ignoreFileAdditionThenDeletion(samePathChange)
-              // Otherwise, skip unlink event by multiple moves
-            ))
-          )
-          break
-        case 'unlinkDir':
-          {
-            const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(sameInodeChange)
-            /* istanbul ignore next */
-            if (moveChange) {
-              // TODO: pending move
-              panic({path: e.path, moveChange, event: e},
-                'We should not have both move and unlinkDir changes since ' +
-                'non-existing addDir and inode-less unlinkDir events are dropped')
-            }
-          }
-          changeFound(
-            localChange.dirMoveFromAddUnlink(sameInodeChange, e) ||
-            localChange.dirDeletion(e) ||
-            withChangeByPath(e, samePathChange => (
-              localChange.ignoreDirAdditionThenDeletion(samePathChange) ||
-              localChange.convertDirMoveToDeletion(samePathChange)
-            ))
-          )
-          break
-        default:
-          throw new TypeError(`Unknown event type: ${e.type}`)
-      }
+      analyseEvent(e, changeMap)
     } catch (err) {
       const sentry = err.name === 'InvalidLocalMoveEvent'
       log.error({err, path: e.path, sentry})
@@ -203,6 +132,82 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
 
   stopMeasure()
   return changes
+}
+
+function analyseEvent (e /*: LocalEvent */, changeMap /*: LocalChangeMap */) {
+  const { changeFound, getChangeByInode, withChangeByPath } = changeMap
+  const sameInodeChange = getChangeByInode(e)
+
+  switch (e.type) {
+    case 'add':
+      changeFound(
+        localChange.includeAddEventInFileMove(sameInodeChange, e) ||
+        localChange.fileMoveFromUnlinkAdd(sameInodeChange, e) ||
+        localChange.fileMoveIdenticalOffline(e) ||
+        localChange.fileAddition(e)
+      )
+      break
+    case 'addDir':
+      changeFound(
+        localChange.includeAddDirEventInDirMove(sameInodeChange, e) ||
+        localChange.dirMoveFromUnlinkAdd(sameInodeChange, e) ||
+        localChange.dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
+        localChange.dirMoveIdenticalOffline(e) ||
+        localChange.dirAddition(e)
+      )
+      break
+    case 'change':
+      changeFound(
+        localChange.includeChangeEventIntoFileMove(sameInodeChange, e) ||
+        localChange.fileMoveFromFileDeletionChange(sameInodeChange, e) ||
+        localChange.fileMoveIdentical(sameInodeChange, e) ||
+        localChange.fileUpdate(e)
+      )
+      break
+    case 'unlink':
+      {
+        const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(sameInodeChange)
+        /* istanbul ignore next */
+        if (moveChange) {
+          // TODO: Pending move
+          panic({path: e.path, moveChange, event: e},
+            'We should not have both move and unlink changes since ' +
+            'checksumless adds and inode-less unlink events are dropped')
+        }
+      }
+      changeFound(
+        localChange.fileMoveFromAddUnlink(sameInodeChange, e) ||
+        localChange.fileDeletion(e) ||
+        withChangeByPath(e, samePathChange => (
+          localChange.convertFileMoveToDeletion(samePathChange) ||
+          localChange.ignoreFileAdditionThenDeletion(samePathChange)
+          // Otherwise, skip unlink event by multiple moves
+        ))
+      )
+      break
+    case 'unlinkDir':
+      {
+        const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(sameInodeChange)
+        /* istanbul ignore next */
+        if (moveChange) {
+          // TODO: pending move
+          panic({path: e.path, moveChange, event: e},
+            'We should not have both move and unlinkDir changes since ' +
+            'non-existing addDir and inode-less unlinkDir events are dropped')
+        }
+      }
+      changeFound(
+        localChange.dirMoveFromAddUnlink(sameInodeChange, e) ||
+        localChange.dirDeletion(e) ||
+        withChangeByPath(e, samePathChange => (
+          localChange.ignoreDirAdditionThenDeletion(samePathChange) ||
+          localChange.convertDirMoveToDeletion(samePathChange)
+        ))
+      )
+      break
+    default:
+      throw new TypeError(`Unknown event type: ${e.type}`)
+  }
 }
 
 // TODO: Rename according to the sort logic
