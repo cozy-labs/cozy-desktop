@@ -297,22 +297,21 @@ describe('Two clients', function () {
 
       // Wait that the dust settles
       should.exists(state.stack)
-      await Promise.delay(25000)
+      await Promise.delay(30000)
       for (const device in data) {
         should.exists(state[device].device)
         await state[device].device.stop()
       }
 
       // Each device should have the same tree that the Cozy
-      // TODO
-      // let expected = await state.dir.tree()
-      // expected = expected.map(item => item.replace(/\/$/, ''))
-      // expected = expected.map(item => path.normalize(id(item)))
-      // expected = expected.sort((a, b) => a.localeCompare(b))
-      // let actual = await state.pouchdb.treeAsync()
-      // actual = actual.filter(item => !item.startsWith('_design/'))
-      // actual = actual.sort((a, b) => a.localeCompare(b))
-      // should(actual).deepEqual(expected)
+      let ctxDir = new ContextDir(path.join(state.stack.dir, state.stack.instance))
+      let expected = await ctxDir.tree()
+      expected = expected.filter(item => !item.startsWith('.cozy_trash/'))
+      expected = expected.filter(item => !item.startsWith('.thumbs/'))
+      for (const device in data) {
+        let actual = await state[device].dir.tree()
+        should(actual).deepEqual(expected)
+      }
 
       await state.stack.stop()
     })

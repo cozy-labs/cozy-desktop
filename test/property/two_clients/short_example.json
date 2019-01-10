@@ -1,0 +1,32 @@
+{
+  "desktop": [
+    { "op": "create_file", "path": "sports_cross_platform.mp4a", "size": 58 },
+    { "op": "mkdir", "path": "sports_cross_platform.mp4a/:garden.wmz" },
+    { "op": "create_file", "path": "thx_rss_handcrafted.qfx", "size": 16413 },
+    {
+      "op": "create_file",
+      "path": "sports_cross_platform.mp4a/:garden.wmz/Çuser_friendly_taiwan_utah.dp",
+      "size": 2053
+    },
+    { "op": "mkdir", "path": "auto_loan_account_ergonomic_channels.xaml" },
+    { "op": "mkdir", "path": "../outside" },
+    { "op": "sleep", "duration": 512 },
+    { "op": "start_client" },
+    { "op": "rm", "path": "sports_cross_platform.mp4a" },
+    { "op": "sleep", "duration": 16384 }
+  ],
+  "laptop": [
+    { "op": "create_file", "path": "online.jpgm", "size": 26 },
+    { "op": "create_file", "path": "ONLINE.JPGM", "size": 4097 },
+    {
+      "op": "create_file",
+      "path": "personal_loan_account_capacity.edm",
+      "size": 262170
+    },
+    { "op": "mkdir", "path": "../outside" },
+    { "op": "sleep", "duration": 512 },
+    { "op": "start_client" },
+    { "op": "mkdir", "path": ",agent_infrastructure_revolutionize.csp" },
+    { "op": "mkdir", "path": "ONLINE.JPGM/AUTOMOTIVE.M3A" }
+  ]
+}

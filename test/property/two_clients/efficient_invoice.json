@@ -1,4 +1,5 @@
 {
+  "pending": { "msg": "too much conflicts" },
   "desktop": [
     { "op": "create_file", "path": "efficient_invoice.stc", "size": 65536 },
     {

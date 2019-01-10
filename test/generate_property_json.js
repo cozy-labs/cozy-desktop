@@ -3,10 +3,12 @@
 
 const faker = require('faker')
 
-const nbInitOps = 32
-const nbRunOps = 256
+// TODO try with more operations to find more bugs
+const nbInitOps = 16
+const nbRunOps = 64
 const specialChars = [':', '-', 'é', ' ', '%', ',', '&', '@', 'É', 'Ç']
 
+// TODO try with random frequencies
 const commonOps = [
   [5, createNewDir],
   [3, createNewFile],
@@ -194,9 +196,6 @@ function run (ops, availableOps) {
     const op = freq(availableOps)
     ops.push(op)
   }
-  if (!running) {
-    ops.push({ op: 'restart' })
-  }
 }
 
 function generateLocalWatcher () {
@@ -204,6 +203,9 @@ function generateLocalWatcher () {
   init(ops)
   startWatcher(ops)
   run(ops, localOps)
+  if (!running) {
+    ops.push({ op: 'restart' })
+  }
   console.log(JSON.stringify(ops))
 }
 
