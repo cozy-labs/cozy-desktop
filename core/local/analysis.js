@@ -1,6 +1,5 @@
 /* @flow */
 
-const autoBind = require('auto-bind')
 const path = require('path')
 const _ = require('lodash')
 
@@ -48,7 +47,6 @@ class LocalChangeMap {
 
   constructor () {
     this._clear()
-    autoBind(this)
   }
 
   _clear () {
