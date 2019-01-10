@@ -67,15 +67,7 @@ class LocalChangeMap {
     return callback(this.changesByPath.get(e.path))
   }
 
-  changeFound (c /*: ?LocalChange | true */) {
-    if (c == null) {
-      // No change was found. Nothing to do.
-      return
-    }
-    if (c === true) {
-      // A previous change was transformed. Nothing more to index.
-      return
-    }
+  changeFound (c /*: LocalChange */) {
     this.changesByPath.set(c.path, c)
     if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
     else this.changes.push(c)
@@ -120,7 +112,9 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
       }
 
       const result = analyseEvent(e, changeMap)
-      changeFound(result)
+      if (result == null) continue // No change was found. Skip event.
+      if (result === true) continue // A previous change was transformed. Nothing more to do.
+      changeFound(result) // A new change was found
     } catch (err) {
       const sentry = err.name === 'InvalidLocalMoveEvent'
       log.error({err, path: e.path, sentry})
