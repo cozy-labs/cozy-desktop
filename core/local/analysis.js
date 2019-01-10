@@ -57,12 +57,12 @@ class LocalChangeMap {
     this.changesByPath = new Map()
   }
 
-  findByInode (ino) {
+  findByInode (ino /*: ?number */) /*: ?LocalChange */ {
     if (ino) return this.changesByInode.get(ino)
     else return null
   }
 
-  whenFoundByPath (path, callback) {
+  whenFoundByPath /*:: <T> */ (path /*: string */, callback /*: (?LocalChange) => T */) /*: T */ {
     return callback(this.changesByPath.get(path))
   }
 
@@ -72,7 +72,7 @@ class LocalChangeMap {
     else this.changes.push(c)
   }
 
-  flush () {
+  flush () /*: LocalChange[] */ {
     const changes = this.changes
     for (let a of this.changesByInode.values()) changes.push(a)
     this._clear()
