@@ -16,6 +16,7 @@ import type { Metadata } from '../../../core/metadata'
 import type Pouch from '../../../core/pouch'
 import type { Warning } from '../../../core/remote/warning'
 import type { RemoteDoc } from '../../../core/remote/document'
+import type { AtomWatcherEvent } from '../../../core/local/steps/event'
 */
 
 // Test data builders facade.
@@ -89,7 +90,7 @@ module.exports = class Builders {
     return new StreamBuilder()
   }
 
-  event () /*: AtomWatcherEventBuilder */ {
-    return new AtomWatcherEventBuilder()
+  event (old /*: ?AtomWatcherEvent */) /*: AtomWatcherEventBuilder */ {
+    return new AtomWatcherEventBuilder(old)
   }
 }

@@ -1,6 +1,7 @@
 /* @flow */
 
 const fs = require('fs')
+const _ = require('lodash')
 
 const metadata = require('../../../core/metadata')
 const events = require('../../../core/local/steps/event')
@@ -21,12 +22,16 @@ module.exports = class AtomWatcherEventBuilder {
   _event: AtomWatcherEvent
   */
 
-  constructor () {
-    this._event = {
-      action: randomPick(events.ACTIONS),
-      kind: randomPick(events.KINDS),
-      path: '/',
-      _id: '/'
+  constructor (old /*: ?AtomWatcherEvent */) {
+    if (old) {
+      this._event = _.cloneDeep(old)
+    } else {
+      this._event = {
+        action: randomPick(events.ACTIONS),
+        kind: randomPick(events.KINDS),
+        path: '/',
+        _id: '/'
+      }
     }
   }
 
