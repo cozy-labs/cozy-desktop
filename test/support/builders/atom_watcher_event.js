@@ -67,4 +67,9 @@ module.exports = class AtomWatcherEventBuilder {
     this._event.md5sum = newMd5sum
     return this
   }
+
+  noIgnore () /*: this */ {
+    this._event.noIgnore = true
+    return this
+  }
 }
