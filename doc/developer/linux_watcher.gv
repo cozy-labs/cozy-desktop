@@ -1,0 +1,101 @@
+digraph linux {
+	graph [fontname="Fira Code", fontsize=11, rankdir="LR", splines=true]
+	node [fontname="Fira Code", fontsize=10, color="#297EF2", fontcolor="#32363F", shape="box", style="bold,rounded", margin=0.3]
+	edge [color="#32363F", style="bold"]
+	ranksep = 1.5
+	nodesep = 0.5
+
+	subgraph cluster_lp {
+		label = "Linux Producer"
+		lp_c [label="Created - kind, path"]
+		lp_m [label="Modified - kind, path"]
+		lp_r [label="Renamed - kind, path, oldPath"]
+		lp_d [label="Deleted - kind, path"]
+		lp_s [label="Scan - kind, path, stats"]
+		lp_i [label="Initial scan done - ø"]
+	}
+
+	subgraph cluster_ai {
+		label = "Add Infos"
+		ai_c [label="_id, kind, stats, incomplete"]
+		ai_m [label="_id, kind, stats, incomplete"]
+		ai_r [label="_id, kind, stats, incomplete"]
+		ai_d [label="_id, kind"]
+		ai_s [label="_id, kind"]
+		ai_i [label="ø"]
+	}
+
+	subgraph cluster_fi {
+		label = "Filter Ignored"
+		fi_c [label="?="]
+		fi_m [label="?="]
+		fi_r [label="?="]
+		fi_d [label="?="]
+		fi_s [label="?="]
+		fi_i [label="ø"]
+	}
+
+	subgraph cluster_sf {
+		label = "Scan Folder"
+		sf_c [label="┴"]
+		sf_m [label="ø"]
+		sf_r [label="ø"]
+		sf_d [label="ø"]
+		sf_s [label="ø"]
+		sf_i [label="ø"]
+	}
+
+	subgraph cluster_awf {
+		label = "Await Write Finish"
+		{ rank=same; awf_c awf_d }
+		awf_c [label=">>"]
+		awf_m [label=">>"]
+		awf_r [label="ø"]
+		awf_d [label="ø"]
+		awf_s [label="ø"]
+		awf_i [label="ø"]
+	}
+
+	subgraph cluster_id {
+		label = "Initial Diff"
+		id_c [label="▷"]
+		id_m [label="▷"]
+		id_r [label="▷"]
+		id_d [label="ø"]
+		id_s [label="▷"]
+		id_i [label="┴"]
+	}
+
+	subgraph cluster_ac {
+		label = "Add Checksum"
+		ac_c [label="md5sum, incomplete"]
+		ac_m [label="md5sum, incomplete"]
+		ac_r [label="md5sum, incomplete"]
+		ac_d [label="ø"]
+		ac_s [label="md5sum, incomplete"]
+		ac_i [label="ø"]
+	}
+
+	subgraph cluster_if {
+		label = "Incomplete Fixer"
+		{ rank=same; if_r if_c if_m if_s }
+		if_c [label="stats, kind, md5sum"]
+		if_m [label="stats, kind, md5sum"]
+		if_r [label="┴"]
+		if_d [label="ø"]
+		if_s [label="stats, kind, md5sum"]
+		if_i [label="ø"]
+	}
+
+	lp_c -> ai_c -> fi_c -> sf_c -> awf_c -> id_c -> ac_c -> if_c
+	lp_m -> ai_m -> fi_m -> sf_m -> awf_m -> id_m -> ac_m -> if_m
+	lp_r -> ai_r -> fi_r -> sf_r -> awf_r -> id_r -> ac_r -> if_r
+	lp_d -> ai_d -> fi_d -> sf_d -> awf_d -> id_d -> ac_d -> if_d
+	lp_s -> ai_s -> fi_s -> sf_s -> awf_s -> id_s -> ac_s -> if_s
+	lp_i -> ai_i -> fi_i -> sf_i -> awf_i -> id_i -> ac_i -> if_i
+
+	sf_c -> lp_s
+	awf_c -> awf_d [dir="both"]
+	id_i -> ac_d
+	if_r -> { if_c if_m if_s }
+}
