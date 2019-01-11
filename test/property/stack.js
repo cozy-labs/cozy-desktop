@@ -41,6 +41,12 @@ class Stack {
       })
     })
     await Promise.delay(1000)
+    if (!this.child) {
+      console.log('The command cozy-stack serve has failed')
+      console.log('Do you have cozy-stack in your PATH?')
+      console.log('Is there another cozy-stack serve command running?')
+      throw new Error('Cannot start the stack')
+    }
   }
 
   async stop () /*: Promise<void> */ {
