@@ -51,6 +51,7 @@ describe('Two clients', function () {
         should.exists(state[device].device)
         await state[device].device.stop()
       }
+      await state.stack.stop()
 
       // Each device should have the same tree that the Cozy
       let ctxDir = new ContextDir(path.join(state.stack.dir, state.stack.instance))
@@ -61,8 +62,6 @@ describe('Two clients', function () {
         let actual = await state[device].dir.tree()
         should(actual).deepEqual(expected)
       }
-
-      await state.stack.stop()
     })
   })
 })
