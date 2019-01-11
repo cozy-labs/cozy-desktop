@@ -54,7 +54,7 @@ class Device {
     // TODO it would be nice to start cozy-desktop without the GUI
     this.child = spawn('yarn', ['run', 'electron', '.'], {
       stdio: ['ignore', 'ignore', 'ignore'],
-      cwd: path.join(__dirname, '../../..'),
+      cwd: path.join(__dirname, '../..'),
       env: env
     })
     this.stopped = new Promise((resolve, reject) => {
