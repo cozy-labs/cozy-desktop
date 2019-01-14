@@ -138,6 +138,49 @@ the [appropriate option][3].
    [Codecov][5] service.
 
 
+Property based testing
+----------------------
+
+In theory, property based testing is a way to generalize some unit tests.
+Here, we are using them more as fuzzing / intergration tests.
+
+The property based testing is not currently runned on CI: it would need some
+work to do so. Currently, it is mainly aimed at running manually by an
+experienced developer to find bugs that manual tests haven't found.
+
+We have two types of property based testing:
+
+- local_watcher, where we simulate events of a disk, and at the end we check
+  that PouchDB has all the information about the files and directory in the
+  synchronized path. It's called local_watcher because it mostly tests the
+  local watcher, but it also touches other classes like Prep and Merge.
+
+- two_clients, where we start a cozy-stack, create an instance, and run 2
+  cozy-desktop on this instance. Then, we doing things like creating files on
+  both clients, and at the end, we check that the two clients has the same data
+  as the stack (in CouchDB).
+
+For both, we have separated the generation of a test case from running it, and
+we have no shrinking strategy (no good JS library to do that). The generated
+test case are in JSON format, and it's possible to write manually a test case
+to exibit particular behavior.
+
+You can generate a test with this command:
+
+```sh
+$ ./test/generate_property_json.js local_watcher | jq . > test/property/local_watcher/generated.json
+```
+
+And then, you can run it with:
+
+```sh
+$ COZY_FS_WATCHER=atom yarn test:property --grep generated
+```
+
+If you want to run several tests for finding new bugs, there is also the
+`./test/mass_property_tests.sh` script.
+
+
 [1]:  https://mochajs.org/
 [2]:  ../test/mocha.opts
 [3]: https://github.com/istanbuljs/nyc
