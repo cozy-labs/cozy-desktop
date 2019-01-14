@@ -78,10 +78,20 @@ module.exports = class AtomWatcher {
       this._runningResolve = resolve
       this._runningReject = reject
     })
+    this.events.emit('local-start')
     this.producer.start()
-    return new Promise((resolve) => {
+    const scanDone = new Promise((resolve) => {
       this.events.on('initial-scan-done', resolve)
     })
+    scanDone.then(async () => {
+      let target = -1
+      try {
+        target = (await this.pouch.db.changes({limit: 1, descending: true})).last_seq
+      } catch (err) { /* ignore err */ }
+      this.events.emit('sync-target', target)
+      this.events.emit('local-end')
+    })
+    return scanDone
   }
 
   async stop (force /*: ? bool */) /*: Promise<*> */ {
