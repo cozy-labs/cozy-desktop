@@ -162,7 +162,7 @@ function sleep () {
 
 function freq (choices) {
   const ary = []
-  for (let choice of choices) {
+  for (const choice of choices) {
     for (let i = 0; i < choice[0]; i++) {
       ary.push(choice[1])
     }
@@ -199,7 +199,7 @@ function run (ops, availableOps) {
 }
 
 function generateLocalWatcher () {
-  let ops = []
+  const ops = []
   init(ops)
   startWatcher(ops)
   run(ops, localOps)
@@ -210,14 +210,15 @@ function generateLocalWatcher () {
 }
 
 function generateTwoClients () {
-  let result = { desktop: [], laptop: [] }
+  const result = { desktop: [], laptop: [] }
   // Flow doesn't want of:
-  // for (let ops of Object.values(result)) {
-  for (let ops of [result.desktop, result.laptop]) {
+  //   for (let ops of Object.values(result)) {
+  // with ops seen as an array
+  for (const ops of [result.desktop, result.laptop]) {
     init(ops)
     startClient(ops)
   }
-  for (let ops of [result.desktop, result.laptop]) {
+  for (const ops of [result.desktop, result.laptop]) {
     run(ops, clientOps)
   }
   console.log(JSON.stringify(result))
