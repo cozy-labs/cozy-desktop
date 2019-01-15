@@ -11,6 +11,12 @@ import type Buffer from './buffer'
 import type EventEmitter from 'events'
 import type Prep from '../../prep'
 import type Pouch from '../../pouch'
+
+type DispatchOptions = {
+  events: EventEmitter,
+  prep: Prep,
+  pouch: Pouch,
+}
 */
 
 const SIDE = 'local'
@@ -19,11 +25,12 @@ let events, target, pouch, actions
 // Dispatch takes a buffer of AtomWatcherEvents batches, and calls Prep for
 // each event. It needs to fetch the old documents from pouchdb in some cases
 // to have all the data expected by prep/merge.
-module.exports = function (buffer /*: Buffer */, opts /*: { events: EventEmitter, prep: Prep, pouch: Pouch } */) {
+module.exports = function (buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ {
   events = opts.events
   target = opts.prep
   pouch = opts.pouch
-  buffer.asyncForEach(async (batch) => {
+
+  return buffer.asyncMap(async (batch) => {
     for (const event of batch) {
       try {
         log.trace({event}, 'dispatch')
@@ -37,6 +44,8 @@ module.exports = function (buffer /*: Buffer */, opts /*: { events: EventEmitter
         console.log('Dispatch error:', err, event) // TODO
       }
     }
+
+    return batch
   })
 }
 
