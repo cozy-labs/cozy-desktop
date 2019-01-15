@@ -3,6 +3,11 @@
 const { id } = require('../../metadata')
 const Buffer = require('./buffer')
 
+const logger = require('../../logger')
+const log = logger({
+  component: 'initialDiff'
+})
+
 /*::
 import type Pouch from '../../pouch'
 */
@@ -14,6 +19,12 @@ import type Pouch from '../../pouch'
 // what was in pouchdb and the events from the local watcher to find what was
 // deleted.
 async function initialDiff (buffer, out, pouch) {
+  // XXX we wait to receive the first batch of events before initializing this
+  // component, as pouchdb may not be initialized when initialDiff is created
+  // (its views are added later, but before the local watcher is started, thus
+  // before the first batch of events)
+  let events = await buffer.pop()
+
   // Using inode/fileId is more robust that using path or id for detecting
   // which files/folders have been deleted, as it is stable even if the
   // file/folder has been moved or renamed
@@ -30,7 +41,6 @@ async function initialDiff (buffer, out, pouch) {
   let done = false
 
   while (true) {
-    const events = await buffer.pop()
     if (done) {
       out.push(events)
       continue
@@ -93,11 +103,13 @@ async function initialDiff (buffer, out, pouch) {
     }
 
     out.push(batch)
+    events = await buffer.pop()
   }
 }
 
 module.exports = function (buffer /*: Buffer */, opts /*: { pouch: Pouch } */) /*: Buffer */ {
   const out = new Buffer()
   initialDiff(buffer, out, opts.pouch)
+    .catch(err => log.error({err}))
   return out
 }
