@@ -297,7 +297,10 @@ function fileMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: Local
     ino: unlinkChange.ino,
     wip: e.wip
   })
-  return {newChange}
+  return {
+    oldChange: unlinkChange,
+    newChange
+  }
 }
 
 function dirMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
@@ -311,7 +314,10 @@ function dirMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalD
     ino: unlinkChange.ino,
     wip: e.wip
   })
-  return {newChange}
+  return {
+    oldChange: unlinkChange,
+    newChange
+  }
 }
 
 function fileMoveFromAddUnlink (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUnlinked */) /*: * */ {
@@ -325,7 +331,10 @@ function fileMoveFromAddUnlink (sameInodeChange /*: ?LocalChange */, e /*: Local
     ino: addChange.ino,
     wip: addChange.wip
   })
-  return {newChange}
+  return {
+    oldChange: addChange,
+    newChange
+  }
 }
 
 function fileMoveFromFileDeletionChange (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) {
@@ -347,7 +356,10 @@ function fileMoveFromFileDeletionChange (sameInodeChange /*: ?LocalChange */, e 
     wip: e.wip
   })
 
-  return {newChange}
+  return {
+    oldChange: fileDeletion,
+    newChange
+  }
 }
 
 function dirMoveFromAddUnlink (sameInodeChange /*: ?LocalChange */, e /*: LocalDirUnlinked */) /*: * */ {
@@ -360,7 +372,10 @@ function dirMoveFromAddUnlink (sameInodeChange /*: ?LocalChange */, e /*: LocalD
     ino: addChange.ino,
     wip: addChange.wip
   })
-  return {newChange}
+  return {
+    oldChange: addChange,
+    newChange
+  }
 }
 
 function fileMoveIdentical (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) /*: * */ {
@@ -374,7 +389,10 @@ function fileMoveIdentical (sameInodeChange /*: ?LocalChange */, e /*: LocalFile
     ino: addChange.ino,
     wip: addChange.wip
   })
-  return {newChange}
+  return {
+    oldChange: addChange,
+    newChange
+  }
 }
 
 function fileMoveIdenticalOffline (dstEvent /*: LocalFileAdded */) /*: ?NewChange */ {
@@ -405,7 +423,10 @@ function dirRenamingCaseOnlyFromAddAdd (sameInodeChange /*: ?LocalChange */, e /
     ino: addChange.ino,
     wip: e.wip
   })
-  return {newChange}
+  return {
+    oldChange: addChange,
+    newChange
+  }
 }
 
 function dirMoveIdenticalOffline (dstEvent /*: LocalDirAdded */) /*: ?NewChange */ {
