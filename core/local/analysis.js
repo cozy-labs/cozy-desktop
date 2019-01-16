@@ -17,7 +17,9 @@ import type {
   LocalDirMove,
   LocalFileAddition,
   LocalFileDeletion,
-  LocalFileMove
+  LocalFileMove,
+  NewChange,
+  ChangeReplacement
 } from './change'
 */
 
@@ -121,8 +123,11 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
 
       const result = analyseEvent(e, changesFound)
       if (result == null) continue // No change was found. Skip event.
-      if (result === true) continue // A previous change was transformed. Nothing more to do.
-      changesFound.put(result) // A new change was found
+      if (result.replacedChange) {
+        changesFound.replace(result.replacedChange, result.newChange)
+      } else {
+        changesFound.put(result.newChange)
+      }
     } catch (err) {
       const sentry = err.name === 'InvalidLocalMoveEvent'
       log.error({err, path: e.path, sentry})
@@ -137,7 +142,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
   return changes
 }
 
-function analyseEvent (e /*: LocalEvent */, previousChanges /*: LocalChangeMap */) /*: ?LocalChange|true */ {
+function analyseEvent (e /*: LocalEvent */, previousChanges /*: LocalChangeMap */) /*: ?NewChange|ChangeReplacement */ {
   const sameInodeChange = previousChanges.findByInode(getInode(e))
 
   switch (e.type) {
