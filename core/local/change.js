@@ -51,6 +51,7 @@ module.exports = {
   dirMoveFromUnlinkAdd,
   fileMoveFromAddUnlink,
   dirMoveFromAddUnlink,
+  dirMoveOverwriteOnMacAPFS,
   dirRenamingCaseOnlyFromAddAdd,
   dirMoveIdenticalOffline,
   ignoreDirAdditionThenDeletion,
@@ -447,22 +448,26 @@ function includeAddEventInFileMove (sameInodeChange /*: ?LocalChange */, e /*: L
   return true
 }
 
-function includeAddDirEventInDirMove (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) {
+// This is based on a bug in chokidar on macOS + APFS where an overwriting
+// move has two addDir events but no unlinkDir for the overwritten destination.
+function dirMoveOverwriteOnMacAPFS (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) {
   const moveChange /*: ?LocalDirMove */ = maybeMoveFolder(sameInodeChange)
   if (!moveChange) return
   if (!moveChange.wip &&
        moveChange.path === e.path &&
        moveChange.stats.ino === e.stats.ino
      ) {
-    // FIXME This is based on a bug in chokidar where
-    // an overwriting move have two addDir events on mac+APFS
-    // but no unlinkDir for the overwritten destination.
     log.debug(
       {path: e.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
       'DirMove(a, b) + addDir(b) = DirMove.overwrite(a, b) [chokidar bug]')
     moveChange.overwrite = true
     return true
   }
+}
+
+function includeAddDirEventInDirMove (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) {
+  const moveChange /*: ?LocalDirMove */ = maybeMoveFolder(sameInodeChange)
+  if (!moveChange) return
   if (moveChange.old.path === e.path) {
     log.debug(
       {path: moveChange.path, oldpath: moveChange.old.path, ino: moveChange.stats.ino},
