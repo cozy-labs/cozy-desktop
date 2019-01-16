@@ -206,34 +206,34 @@ function toString (a /*: LocalChange */) /*: string */ { return '(' + a.type + '
 
 function dirAddition (e /*: LocalDirAdded */) /*: LocalDirAddition */ {
   log.debug({path: e.path}, 'addDir = DirAddition')
-  const change /*: LocalDirAddition */ = {
+  const newChange /*: LocalDirAddition */ = {
     sideName,
     type: 'DirAddition',
     path: e.path,
     stats: e.stats,
     ino: e.stats.ino
   }
-  if (e.old) change.old = e.old
-  if (e.wip) change.wip = e.wip
-  return change
+  if (e.old) newChange.old = e.old
+  if (e.wip) newChange.wip = e.wip
+  return newChange
 }
 
 function dirDeletion (e /*: LocalDirUnlinked */) /*: ?LocalDirDeletion */ {
   if (!getInode(e)) return
   log.debug({path: e.path}, 'unlinkDir = DirDeletion')
-  const change /*: LocalDirDeletion */ = {
+  const newChange /*: LocalDirDeletion */ = {
     sideName,
     type: 'DirDeletion',
     path: e.path
   }
-  if (e.old) change.old = e.old
-  if (e.old && e.old.ino) change.ino = e.old.ino
-  return change
+  if (e.old) newChange.old = e.old
+  if (e.old && e.old.ino) newChange.ino = e.old.ino
+  return newChange
 }
 
 function fileAddition (e /*: LocalFileAdded */) /*: LocalFileAddition */ {
   log.debug({path: e.path}, 'add = FileAddition')
-  const change /*: LocalFileAddition */ = {
+  const newChange /*: LocalFileAddition */ = {
     sideName,
     type: 'FileAddition',
     path: e.path,
@@ -241,27 +241,27 @@ function fileAddition (e /*: LocalFileAdded */) /*: LocalFileAddition */ {
     ino: e.stats.ino,
     md5sum: e.md5sum
   }
-  if (e.old) change.old = e.old
-  if (e.wip) change.wip = e.wip
-  return change
+  if (e.old) newChange.old = e.old
+  if (e.wip) newChange.wip = e.wip
+  return newChange
 }
 
 function fileDeletion (e /*: LocalFileUnlinked */) /*: ?LocalFileDeletion */ {
   if (!getInode(e)) return
   log.debug({path: e.path}, 'unlink = FileDeletion')
-  const change /*: LocalFileDeletion */ = {
+  const newChange /*: LocalFileDeletion */ = {
     sideName,
     type: 'FileDeletion',
     path: e.path
   }
-  if (e.old) change.old = e.old
-  if (e.old && e.old.ino) change.ino = e.old.ino
-  return change
+  if (e.old) newChange.old = e.old
+  if (e.old && e.old.ino) newChange.ino = e.old.ino
+  return newChange
 }
 
 function fileUpdate (e /*: LocalFileUpdated */) /*: LocalFileUpdate */ {
   log.debug({path: e.path}, 'change = FileUpdate')
-  const change /*: LocalFileUpdate */ = {
+  const newChange /*: LocalFileUpdate */ = {
     sideName,
     type: 'FileUpdate',
     path: e.path,
@@ -269,9 +269,9 @@ function fileUpdate (e /*: LocalFileUpdated */) /*: LocalFileUpdate */ {
     ino: e.stats.ino,
     md5sum: e.md5sum
   }
-  if (e.old) change.old = e.old
-  if (e.wip) change.wip = e.wip
-  return change
+  if (e.old) newChange.old = e.old
+  if (e.wip) newChange.wip = e.wip
+  return newChange
 }
 
 function fileMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalFileAdded */) /*: * */ {
@@ -279,13 +279,14 @@ function fileMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: Local
   if (!unlinkChange) return
   if (_.get(unlinkChange, 'old.path') === e.path) return
   log.debug({oldpath: unlinkChange.path, path: e.path, ino: unlinkChange.ino}, 'unlink + add = FileMove')
-  return build('FileMove', e.path, {
+  const newChange = build('FileMove', e.path, {
     stats: e.stats,
     md5sum: e.md5sum,
     old: unlinkChange.old,
     ino: unlinkChange.ino,
     wip: e.wip
   })
+  return newChange
 }
 
 function dirMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
@@ -293,25 +294,27 @@ function dirMoveFromUnlinkAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalD
   if (!unlinkChange) return
   if (_.get(unlinkChange, 'old.path') === e.path) return
   log.debug({oldpath: unlinkChange.path, path: e.path}, 'unlinkDir + addDir = DirMove')
-  return build('DirMove', e.path, {
+  const newChange = build('DirMove', e.path, {
     stats: e.stats,
     old: unlinkChange.old,
     ino: unlinkChange.ino,
     wip: e.wip
   })
+  return newChange}
 }
 
 function fileMoveFromAddUnlink (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUnlinked */) /*: * */ {
   const addChange /*: ?LocalFileAddition */ = maybeAddFile(sameInodeChange)
   if (!addChange) return
   log.debug({oldpath: e.path, path: addChange.path, ino: addChange.ino}, 'add + unlink = FileMove')
-  return build('FileMove', addChange.path, {
+  const newChange = build('FileMove', addChange.path, {
     stats: addChange.stats,
     md5sum: addChange.md5sum,
     old: e.old,
     ino: addChange.ino,
     wip: addChange.wip
   })
+  return newChange
 }
 
 function fileMoveFromFileDeletionChange (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) {
@@ -324,7 +327,7 @@ function fileMoveFromFileDeletionChange (sameInodeChange /*: ?LocalChange */, e 
   log.debug({oldpath: fileDeletion.path, path: e.path},
     'unlink(src) + change(dst -> newDst) = FileMove.overwrite(src, newDst)')
 
-  const fileMove = build('FileMove', e.path, {
+  const newChange = build('FileMove', e.path, {
     stats: newDst.stats,
     md5sum: newDst.md5sum,
     overwrite: dst,
@@ -333,39 +336,41 @@ function fileMoveFromFileDeletionChange (sameInodeChange /*: ?LocalChange */, e 
     wip: e.wip
   })
 
-  return fileMove
+  return newChange
 }
 
 function dirMoveFromAddUnlink (sameInodeChange /*: ?LocalChange */, e /*: LocalDirUnlinked */) /*: * */ {
   const addChange /*: ?LocalDirAddition */ = maybePutFolder(sameInodeChange)
   if (!addChange) return
   log.debug({oldpath: e.path, path: addChange.path}, 'addDir + unlinkDir = DirMove')
-  return build('DirMove', addChange.path, {
+  const newChange = build('DirMove', addChange.path, {
     stats: addChange.stats,
     old: e.old,
     ino: addChange.ino,
     wip: addChange.wip
   })
+  return newChange
 }
 
 function fileMoveIdentical (sameInodeChange /*: ?LocalChange */, e /*: LocalFileUpdated */) /*: * */ {
   const addChange /*: ?LocalFileAddition */ = maybeAddFile(sameInodeChange)
   if (!addChange || metadata.id(addChange.path) !== metadata.id(e.path) || addChange.path === e.path) return
   log.debug({oldpath: e.path, path: addChange.path}, 'add + change = FileMove (same id)')
-  return build('FileMove', addChange.path, {
+  const newChange = build('FileMove', addChange.path, {
     stats: e.stats,
     md5sum: e.md5sum,
     old: e.old,
     ino: addChange.ino,
     wip: addChange.wip
   })
+  return newChange
 }
 
 function fileMoveIdenticalOffline (dstEvent /*: LocalFileAdded */) /*: ?LocalFileMove */ {
   const srcDoc = dstEvent.old
   if (!srcDoc || srcDoc.path === dstEvent.path || srcDoc.ino !== dstEvent.stats.ino) return
   log.debug({oldpath: srcDoc.path, path: dstEvent.path}, 'add = FileMove (same id, offline)')
-  return ({
+  const newChange = ({
     sideName,
     type: 'FileMove',
     path: dstEvent.path,
@@ -374,6 +379,7 @@ function fileMoveIdenticalOffline (dstEvent /*: LocalFileAdded */) /*: ?LocalFil
     old: srcDoc,
     ino: dstEvent.stats.ino
   } /*: LocalFileMove */)
+  return newChange
 }
 
 function dirRenamingCaseOnlyFromAddAdd (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) /*: * */ {
@@ -382,19 +388,20 @@ function dirRenamingCaseOnlyFromAddAdd (sameInodeChange /*: ?LocalChange */, e /
     return
   }
   log.debug({oldpath: addChange.path, path: e.path}, 'addDir + addDir = DirMove (same id)')
-  return build('DirMove', e.path, {
+  const newChange = build('DirMove', e.path, {
     stats: addChange.stats,
     old: addChange.old,
     ino: addChange.ino,
     wip: e.wip
   })
+  return newChange
 }
 
 function dirMoveIdenticalOffline (dstEvent /*: LocalDirAdded */) /*: ?LocalDirMove */ {
   const srcDoc = dstEvent.old
   if (!srcDoc || srcDoc.path === dstEvent.path || srcDoc.ino !== dstEvent.stats.ino) return
   log.debug({oldpath: srcDoc.path, path: dstEvent.path}, 'addDir = DirMove (same id, offline)')
-  return {
+  const newChange = {
     sideName,
     type: 'DirMove',
     path: dstEvent.path,
@@ -402,6 +409,7 @@ function dirMoveIdenticalOffline (dstEvent /*: LocalDirAdded */) /*: ?LocalDirMo
     old: srcDoc,
     ino: dstEvent.stats.ino
   }
+  return newChange
 }
 
 /*::
