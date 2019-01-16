@@ -142,7 +142,7 @@ function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChan
   return changes
 }
 
-function analyseEvent (e /*: LocalEvent */, previousChanges /*: LocalChangeMap */) /*: ?NewChange|TransformChange */ {
+function analyseEvent (e /*: LocalEvent */, previousChanges /*: LocalChangeMap */) /*: * */ {
   const sameInodeChange = previousChanges.findByInode(getInode(e))
 
   switch (e.type) {
