@@ -53,6 +53,7 @@ module.exports = {
   dirMoveFromAddUnlink,
   dirMoveOverwriteOnMacAPFS,
   dirRenamingCaseOnlyFromAddAdd,
+  dirRenamingIdenticalLoopback,
   dirMoveIdenticalOffline,
   ignoreDirAdditionThenDeletion,
   ignoreFileAdditionThenDeletion,
@@ -465,7 +466,7 @@ function dirMoveOverwriteOnMacAPFS (sameInodeChange /*: ?LocalChange */, e /*: L
   }
 }
 
-function includeAddDirEventInDirMove (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) {
+function dirRenamingIdenticalLoopback (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) {
   const moveChange /*: ?LocalDirMove */ = maybeMoveFolder(sameInodeChange)
   if (!moveChange) return
   if (moveChange.old.path === e.path) {
@@ -476,6 +477,11 @@ function includeAddDirEventInDirMove (sameInodeChange /*: ?LocalChange */, e /*:
     moveChange.type = 'Ignored'
     return true
   }
+}
+
+function includeAddDirEventInDirMove (sameInodeChange /*: ?LocalChange */, e /*: LocalDirAdded */) {
+  const moveChange /*: ?LocalDirMove */ = maybeMoveFolder(sameInodeChange)
+  if (!moveChange) return
   moveChange.path = e.path
   moveChange.stats = e.stats
   if (!e.wip) {

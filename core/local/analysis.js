@@ -140,6 +140,7 @@ function analyseEvent (e /*: LocalEvent */, previousChanges /*: LocalChangeMap *
     case 'addDir':
       return (
         localChange.dirMoveOverwriteOnMacAPFS(sameInodeChange, e) ||
+        localChange.dirRenamingIdenticalLoopback(sameInodeChange, e) ||
         localChange.includeAddDirEventInDirMove(sameInodeChange, e) ||
         localChange.dirMoveFromUnlinkAdd(sameInodeChange, e) ||
         localChange.dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
