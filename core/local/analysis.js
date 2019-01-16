@@ -71,6 +71,17 @@ class LocalChangeMap {
     else this.changes.push(c)
   }
 
+  remove (c /*: LocalChange */) {
+    this.changesByPath.delete(c.path)
+    if (typeof c.ino === 'number') this.changesByInode.delete(c.ino)
+    else _.pull(this.changes, c) // OPTIMIZE: Do not scan the whole Array
+  }
+
+  replace (replaced /*: LocalChange */, replacement /*: LocalChange */) {
+    this.remove(replaced)
+    this.put(replacement)
+  }
+
   flush () /*: LocalChange[] */ {
     const changes = this.changes
     for (let a of this.changesByInode.values()) changes.push(a)
