@@ -1,5 +1,27 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.12.0-alpha.3 - 2019-01-17
+
+Improvements for all users:
+
+- The count of objects to be synchronised was always 1 with the new local
+  watcher.
+  We've fixed this so the count is accurate and decreases with each element
+  successfully synchronised.
+- In some situations, the detection of local changes could be stalling.
+  We've adapted the watcher so it detects when it can start processing
+  filesystem events.
+
+Improvements for contributors:
+
+- The developer documentation's [design section](https://github.com/cozy-labs/cozy-desktop/blob/master/doc/developer/design.md#local-watcher) has been updated with the reasons
+  that led to the decision to create a new local watcher and diagrams explaining
+  how it works on Windows and Linux.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.12.0-alpha.2 - 2019-01-09
 
 Improvements for all users:
