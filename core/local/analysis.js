@@ -238,6 +238,18 @@ function squashMoves (changes /*: LocalChange[] */) {
         if (b.path.substr(a.path.length) === b.old.path.substr(a.old.path.length)) {
           log.debug({oldpath: b.old.path, path: b.path}, 'ignoring explicit child move')
           changes.splice(j--, 1)
+          if (b.type === 'FileMove' && b.update) {
+            changes.push({
+              sideName: 'local',
+              type: 'FileUpdate',
+              path: b.update.path,
+              stats: b.update.stats,
+              ino: b.ino,
+              md5sum: b.update.md5sum,
+              old: _.defaults({path: b.update.path}, b.old),
+              needRefetch: true
+            })
+          }
         } else {
           log.debug({oldpath: b.old.path, path: b.path}, 'move inside move')
           b.old.path = b.old.path.replace(a.old.path, a.path)
@@ -294,8 +306,10 @@ const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
 
   // if one change is a child of another, it takes priority
   if (localChange.isChildAdd(a, b)) return -1
+  if (localChange.isChildUpdate(a, b)) return -1
   if (localChange.isChildDelete(b, a)) return -1
   if (localChange.isChildAdd(b, a)) return 1
+  if (localChange.isChildUpdate(b, a)) return 1
   if (localChange.isChildDelete(a, b)) return 1
 
   // a is deleted what b added
