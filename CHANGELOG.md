@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.12.0-beta.1 - 2019-01-18
+
+Improvements for all users:
+
+- When moving a folder locally then quickly changing the content of a subfile
+  on the same device, the file content may not be updated in the Cozy in some
+  cases. Everything should now work as expected.
+
+Notice for Windows & GNU/Linux users:
+
+- This beta release uses the old watcher implementation. The new one is only
+  used by default in alpha releases. We're still actively testing and
+  improving it to make it the default in stable releases!
+
+Happy syncing!
+
 ## 3.12.0-alpha.3 - 2019-01-17
 
 Improvements for all users:
