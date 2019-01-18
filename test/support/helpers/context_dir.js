@@ -122,7 +122,7 @@ class ContextDir {
   }
 
   async move (src /*: string */, dst /*: string */) {
-    return fse.move(this.abspath(src), this.abspath(dst))
+    return fse.rename(this.abspath(src), this.abspath(dst))
   }
 
   async checksum (target /*: string | {path: string} */) /*: Promise<string> */ {
