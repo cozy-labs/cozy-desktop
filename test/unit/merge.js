@@ -39,10 +39,6 @@ async function mergeSideEffects ({merge, pouch} /*: * */, mergeCall /*: () => Pr
     // which makes them hard to compare.
     delete doc._rev
 
-    // Pouch serializes dates as strings, but input docs generally have Date
-    // objects. Casting makes assertions easier in most cases.
-    doc.updated_at = new Date(doc.updated_at)
-
     return doc
   })
 
@@ -208,7 +204,7 @@ describe('Merge', function () {
         should(sideEffects).deepEqual({
           savedDocs: [
             _.defaults({
-              updated_at: new Date(doc.updated_at) // FIXME: Stop mixing dates & strings
+              updated_at: doc.updated_at
             }, doc)
           ],
           resolvedConflicts: []
@@ -468,7 +464,7 @@ describe('Merge', function () {
             size: mergedLocalUpdate.size,
             // no remote since file was dissociated
             tags: initial.tags, // could only have been updated from a remote update
-            updated_at: new Date(mergedLocalUpdate.updated_at) // FIXME: Stop mixing dates & strings
+            updated_at: mergedLocalUpdate.updated_at
           }
         ],
         resolvedConflicts: [
@@ -780,7 +776,7 @@ describe('Merge', function () {
           sides: {local: 3, remote: 2},
           size: was.size,
           tags: was.tags,
-          updated_at: new Date(was.updated_at) // FIXME: Stop mixing dates & strings
+          updated_at: was.updated_at
         }
         const dst = {
           _id: dstId,
@@ -789,14 +785,14 @@ describe('Merge', function () {
           moveFrom: _.defaults({
             _rev: was._rev,
             moveTo: dstId,
-            updated_at: was.updated_at // FIXME: Stop mixing dates & strings
+            updated_at: was.updated_at
           }, src),
           path: dstPath,
           remote: doc.remote,
           sides: {local: 1},
           size: doc.size,
           tags: doc.tags,
-          updated_at: new Date(doc.updated_at) // FIXME: Stop mixing dates & strings
+          updated_at: doc.updated_at
         }
         should(sideEffects).deepEqual({
           savedDocs: [src, dst],
@@ -968,7 +964,7 @@ describe('Merge', function () {
           sides: {local: 1, remote: 2},
           size: baz.size,
           tags: baz.tags,
-          updated_at: new Date(baz.updated_at) // FIXME: Stop mixing dates & strings
+          updated_at: baz.updated_at
         }
         const dst = {
           _id: qux._id,
@@ -982,7 +978,7 @@ describe('Merge', function () {
           sides: {local: 1, remote: 2},
           size: qux.size,
           tags: [],
-          updated_at: new Date(qux.updated_at) // FIXME: Stop mixing dates & strings
+          updated_at: qux.updated_at
         }
         should(sideEffects).deepEqual({
           savedDocs: [src, dst],
@@ -1099,7 +1095,7 @@ describe('Merge', function () {
           remote: was.remote,
           sides: {local: 3, remote: 2},
           tags: was.tags,
-          updated_at: new Date(was.updated_at) // FIXME: Stop mixing dates & strings
+          updated_at: was.updated_at
         }
         const dst = {
           _id: dstId,
@@ -1112,7 +1108,7 @@ describe('Merge', function () {
           remote: doc.remote,
           sides: {local: 1},
           tags: doc.tags,
-          updated_at: new Date(doc.updated_at) // FIXME: Stop mixing dates & strings
+          updated_at: doc.updated_at
         }
 
         should(sideEffects).deepEqual({
@@ -1236,19 +1232,19 @@ describe('Merge', function () {
           remote: duke.remote,
           sides: {local: 1, remote: 2},
           tags: duke.tags,
-          updated_at: new Date(duke.updated_at) // FIXME: Stop mixing dates & strings
+          updated_at: duke.updated_at
         }
         const dst = {
           _id: nukem._id,
           docType: nukem.docType,
           moveFrom: _.defaults({
-            updated_at: duke.updated_at // FIXME: Stop mixing dates & strings
+            updated_at: duke.updated_at
           }, src),
           path: nukem.path,
           remote: nukem.remote,
           sides: {local: 1, remote: 2},
           tags: nukem.tags,
-          updated_at: new Date(nukem.updated_at) // FIXME: Stop mixing dates & strings
+          updated_at: nukem.updated_at
         }
         should(sideEffects).deepEqual({
           savedDocs: [src, dst],
@@ -1484,7 +1480,7 @@ describe('Merge', function () {
               .merge({
                 _deleted: true,
                 sides: {local: 3, remote: 2},
-                updated_at: new Date(doc.updated_at)
+                updated_at: doc.updated_at
               })
               .value()
           ],

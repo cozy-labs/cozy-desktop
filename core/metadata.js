@@ -9,7 +9,7 @@ const path = require('path')
 const logger = require('./logger')
 const { detectPathIssues, detectPathLengthIssue } = require('./path_restrictions')
 const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
-const { maxDate } = require('./timestamp')
+const timestamp = require('./timestamp')
 
 const fsutils = require('./utils/fs')
 /*::
@@ -58,7 +58,7 @@ export type Metadata = {
   docType: DocType,
   errors?: number,
   executable?: true,
-  updated_at: string|Date,
+  updated_at: string,
   mime?: string,
   moveTo?: string, // Destination id
   overwrite?: Metadata,
@@ -450,7 +450,7 @@ function buildDir (fpath /*: string */, stats /*: Stats */, remote /*: ?Metadata
     _id: id(fpath),
     path: fpath,
     docType: 'folder',
-    updated_at: maxDate(stats.mtime, stats.ctime),
+    updated_at: timestamp.fromDate(timestamp.maxDate(stats.mtime, stats.ctime)).toISOString(),
     ino: stats.ino,
     sides: {},
     remote
@@ -470,7 +470,7 @@ function buildFile (filePath /*: string */, stats /*: Stats */, md5sum /*: strin
     docType: 'file',
     md5sum,
     ino: stats.ino,
-    updated_at: maxDate(mtime, ctime),
+    updated_at: timestamp.fromDate(timestamp.maxDate(mtime, ctime)).toISOString(),
     mime: mimeType,
     class: mimeType.split('/')[0],
     size: stats.size,
