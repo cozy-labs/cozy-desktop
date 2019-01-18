@@ -35,7 +35,7 @@ function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ 
   if (platform === 'darwin') {
     return 'chokidar'
   }
-  return 'atom'
+  return 'chokidar' // TODO: Use atom watcher
 }
 
 function build (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) /*: Watcher */ {
