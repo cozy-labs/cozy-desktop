@@ -192,6 +192,148 @@ describe('Conflict resolution', () => {
     })
   })
 
+  // FIXME: Move to helpers?
+  const fullSyncStartingFrom = async (sideName) => {
+    if (sideName === 'local') {
+      // FIXME: Initial scan is not the same as watched change
+      await helpers.local.scan()
+      await helpers.remote.pullChanges()
+    } else {
+      // FIXME: Test remote first cases
+      throw new Error('Not implemented yet: fullSyncStartingFrom("remote")')
+    }
+    await helpers.syncAll()
+
+    // Simulate client restart (always starting from local)
+    await helpers.local.scan()
+    await helpers.remote.pullChanges()
+    await helpers.syncAll()
+  }
+
+  const bothSides = (tree) => ({local: tree, remote: tree})
+
+  describe('merging local file then remote one', () => {
+    it('renames one of them', async () => {
+      await helpers.local.syncDir.outputFile('same-name', 'content1')
+      await cozy.files.create('content2', {
+        name: 'same-name',
+        contentType: 'text/plain'
+      })
+
+      await fullSyncStartingFrom('local')
+
+      should(await helpers.trees()).deepEqual(bothSides([
+        'same-name',
+        'same-name-conflict-...'
+      ]))
+    })
+  })
+
+  describe('merging local file then remote dir', () => {
+    beforeEach(async () => {
+      await helpers.local.syncDir.outputFile('same-name', 'content1')
+      await cozy.files.createDirectory({
+        name: 'same-name',
+        contentType: 'text/plain'
+      })
+
+      await fullSyncStartingFrom('local')
+    })
+
+    const expectedTree = bothSides([
+      'same-name',
+      'same-name-conflict-.../'
+    ])
+
+    it('renames the remote dir', async () => {
+      should(await helpers.trees()).deepEqual(expectedTree)
+    })
+
+    it('does not trigger a conflict on subsequent local update', async () => {
+      await helpers.local.syncDir.outputFile('same-name', 'content2')
+      await fullSyncStartingFrom('local')
+
+      should(await helpers.trees()).deepEqual(expectedTree)
+    })
+  })
+
+  describe('merging local dir then remote file', () => {
+    it('renames the remote file', async () => {
+      await helpers.local.syncDir.ensureDir('same-name')
+      await cozy.files.create('content2', {
+        name: 'same-name',
+        contentType: 'text/plain'
+      })
+
+      await fullSyncStartingFrom('local')
+
+      should(await helpers.trees()).deepEqual(bothSides([
+        'same-name-conflict-...',
+        'same-name/'
+      ]))
+    })
+  })
+
+  describe('merging local file addition then remote file move to the same destination', () => {
+    it('renames one of them', async () => {
+      await helpers.local.syncDir.outputFile('src', 'src content')
+      await helpers.local.scan()
+      await helpers.syncAll()
+      // FIXME: Initial tree helper?
+      const remoteFile = await cozy.files.statByPath(`/src`)
+      await cozy.files.updateAttributesById(remoteFile._id, {name: 'dst'})
+      await helpers.local.syncDir.outputFile('dst', 'local dst content')
+
+      await fullSyncStartingFrom('local')
+
+      should(await helpers.trees()).deepEqual(bothSides([
+        'dst',
+        'dst-conflict-...'
+      ]))
+    })
+  })
+
+  describe('merging local file move then remote file addition', () => {
+    it('renames one of them', async () => {
+      await helpers.local.syncDir.outputFile('src', 'initial content')
+      await helpers.local.scan()
+      await helpers.syncAll()
+      await helpers.pullAndSyncAll()
+      // FIXME: Initial tree helper?
+      await cozy.files.create('remote dst content', {name: 'dst'})
+      await helpers.local.syncDir.move('src', 'dst')
+
+      await fullSyncStartingFrom('local')
+
+      should(await helpers.trees()).deepEqual(bothSides([
+        'dst',
+        'dst-conflict-...'
+      ]))
+    })
+  })
+
+  describe('merging local dir addition then remote dir move to the same destination', () => {
+    it('renames one of them', async () => {
+      await helpers.local.syncDir.ensureDir('src')
+      await helpers.local.scan()
+      await helpers.syncAll()
+      // FIXME: Initial tree helper?
+      const remoteDir = await cozy.files.statByPath(`/src`)
+      await cozy.files.updateAttributesById(remoteDir._id, {name: 'dst'})
+      await helpers.local.syncDir.ensureDir('dst')
+
+      await fullSyncStartingFrom('local')
+
+      should(await helpers.trees()).deepEqual(bothSides([
+        'dst-conflict-.../',
+        'dst/'
+      ]))
+    })
+  })
+
+  // FIXME: merging local dir move then remote dir addition to the same
+  // destination doesn't trigger a conflict although it should.
+
   describe('remote', () => {
     beforeEach('set up conflict', async () => {
       await helpers.prep.putFolderAsync('local', builders.metadir().path('foo').build())
