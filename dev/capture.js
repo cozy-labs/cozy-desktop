@@ -1,5 +1,8 @@
+/* @flow */
+
 const program = require('commander')
 const path = require('path')
+const { app } = require('electron')
 
 const local = require('./capture/local')
 const remote = require('./capture/remote')
@@ -55,3 +58,8 @@ const captureScenariosEvents = async (scenarios, sides) => {
 }
 
 captureScenariosEvents(scenarios(program.args), sides)
+  .then(() => app.exit(0))
+  .catch(err => {
+    console.error(err)
+    app.exit(1)
+  })
