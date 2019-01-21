@@ -628,7 +628,7 @@ describe('Merge', function () {
     })
   })
 
-  describe('moveFile', function () {
+  describe('moveFileAsync', function () {
     it('saves the new file and deletes the old one', async function () {
       let was = {
         _id: 'FOO/OLD',
@@ -841,6 +841,34 @@ describe('Merge', function () {
       should(res.moveFrom).be.undefined()
       should(res.moveTo).be.undefined()
       await should(this.pouch.db.get(was._id)).be.rejectedWith({status: 404})
+    })
+
+    it('does not identify the child move of a file following another unsynced move as an addition', async function () {
+      const orig = await builders.metafile().path('SRC/FILE').sides({ local: 2, remote: 2 }).create()
+      const was = await builders.metafile().path('SRC/FILE2').moveFrom(orig).sides({ local: 3, remote: 2 }).create()
+      const doc = await builders.metafile().path('DST/FILE2').build()
+
+      await this.merge.moveFileAsync('local', clone(doc), clone(was))
+
+      const res = await this.pouch.db.get(doc._id)
+      should(res.moveFrom).have.properties({
+        '_id': was._id,
+        moveTo: doc._id
+      })
+    })
+
+    it('does not identify the local move of file following an unsynced child move as an addition', async function () {
+      const orig = await builders.metafile().path('SRC/FILE').sides({ local: 2, remote: 2 }).create()
+      const was = await builders.metafile().path('DST/FILE').moveFrom(orig).sides({ local: 3, remote: 2 }).create()
+      const doc = await builders.metafile().path('DST/FILE2').build()
+
+      await this.merge.moveFileAsync('local', clone(doc), clone(was))
+
+      const res = await this.pouch.db.get(doc._id)
+      should(res.moveFrom).have.properties({
+        '_id': was._id,
+        moveTo: doc._id
+      })
     })
 
     onPlatforms(['win32', 'darwin'], () => {
@@ -1168,8 +1196,9 @@ describe('Merge', function () {
         should.exist(res)
         should(res.path).eql(`DESTINATION${id}`)
         should.not.exist(res.trashed)
-        if (id !== '') { // parent sides are updated in moveFolderAsync()
-          should(res.sides.local).not.eql(1)
+        if (id !== '') {
+          should(res.sides).deepEqual({ local: 1 })
+          should(res._rev).startWith('1')
         }
         await should(this.pouch.db.get(metadata.id(`my-folder${id}`)))
           .be.rejectedWith({status: 404})
@@ -1185,7 +1214,10 @@ describe('Merge', function () {
       await this.merge.moveFolderRecursivelyAsync('local', dstFolder, srcFolder)
 
       const movedFile = await this.pouch.db.get(metadata.id(path.normalize(`${dstFolder.path}/${fileName}`)))
-      should(movedFile).have.property('path', path.normalize(`${dstFolder.path}/${fileName}`))
+      should(movedFile).have.properties({
+        path: path.normalize(`${dstFolder.path}/${fileName}`),
+        sides: {local: 1}
+      })
       await should(
         this.pouch.db.get(metadata.id(`${srcFolder.path}/{fileName}`))
       ).be.rejectedWith({status: 404})

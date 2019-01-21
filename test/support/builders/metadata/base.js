@@ -51,7 +51,13 @@ module.exports = class BaseMetadataBuilder {
   fromRemote (remoteDoc /*: RemoteDoc */) /*: this */ {
     this.doc = metadata.fromRemoteDoc(remoteDoc)
     metadata.ensureValidPath(this.doc)
-    metadata.assignId(this.doc)
+    this._assignId()
+    return this
+  }
+
+  moveFrom (was /*: Metadata */) /*: this */ {
+    this.doc.moveFrom = _.defaultsDeep({ moveTo: this.doc._id }, was)
+    this.noRev()
     return this
   }
 
@@ -111,7 +117,8 @@ module.exports = class BaseMetadataBuilder {
 
   path (newPath /*: string */) /*: this */ {
     this.doc.path = path.normalize(newPath)
-    metadata.assignId(this.doc)
+    metadata.ensureValidPath(this.doc)
+    this._assignId()
     return this
   }
 
@@ -184,5 +191,13 @@ module.exports = class BaseMetadataBuilder {
     const { rev } = await this.pouch.put(doc)
     doc._rev = rev
     return doc
+  }
+
+  _assignId () /* void */ {
+    metadata.assignId(this.doc)
+
+    if (this.doc.moveFrom) {
+      this.doc.moveFrom.moveTo = this.doc._id
+    }
   }
 }
