@@ -236,6 +236,8 @@ function invariants (doc /*: Metadata */) {
     err = new Error(`${doc._id} has 'sides.remote' but no remote`)
   } else if (doc.docType === 'file' && doc.md5sum == null) {
     err = new Error(`${doc._id} is a file without checksum`)
+  } else {
+    err = detectInconsistentRevAndSides(doc)
   }
 
   if (err) {
@@ -244,6 +246,29 @@ function invariants (doc /*: Metadata */) {
   }
 
   return doc
+}
+
+function detectInconsistentRevAndSides (doc) {
+  const { sides } = doc
+  const sideNums = _.values(sides)
+  const revNum = extractRevNumber(doc)
+
+  if (_.some(sideNums, n => n <= revNum)) {
+    return new Error(
+      `${doc._id} has some side in ${sidesToString(doc)} that is lower or equal to short _rev ${revNum}`
+    )
+  }
+
+  const nextRevNum = revNum + 1
+  if (!_.some(sideNums, n => n === nextRevNum)) {
+    return new Error(
+      `${doc._id} has no side in ${sidesToString(doc)} that will match next short _rev ${nextRevNum}`
+    )
+  }
+}
+
+function sidesToString (doc) {
+  return JSON.stringify(doc.sides)
 }
 
 /*::
