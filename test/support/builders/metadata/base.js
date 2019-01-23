@@ -1,6 +1,7 @@
 /* @flow */
 
 const _ = require('lodash')
+const path = require('path')
 
 const metadata = require('../../../../core/metadata')
 const timestamp = require('../../../../core/timestamp')
@@ -108,8 +109,8 @@ module.exports = class BaseMetadataBuilder {
     return this.ino(ino).updatedAt(timestamp.maxDate(mtime, ctime))
   }
 
-  path (path /*: string */) /*: this */ {
-    this.doc.path = path
+  path (newPath /*: string */) /*: this */ {
+    this.doc.path = path.normalize(newPath)
     metadata.assignId(this.doc)
     return this
   }
