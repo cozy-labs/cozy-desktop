@@ -118,6 +118,7 @@ module.exports = {
   sameFileIgnoreRev,
   sameBinary,
   markSide,
+  wasSynced,
   buildDir,
   buildFile,
   upToDate,
@@ -435,6 +436,13 @@ function markSide (side /*: string */, doc /*: Metadata */, prev /*: ?Metadata *
   }
   doc.sides[side] = ++rev
   return doc
+}
+
+function wasSynced (doc /*: Metadata */) /*: boolean */ {
+  const hasBothSides /*: boolean */ = doc.sides && (doc.sides.local != null) && (doc.sides.remote != null)
+  const comesFromSyncedDoc /*: boolean */ = doc.moveFrom != null
+
+  return hasBothSides || comesFromSyncedDoc
 }
 
 function buildDir (fpath /*: string */, stats /*: Stats */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
