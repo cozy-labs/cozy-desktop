@@ -1,5 +1,20 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.12.0-beta.2 - 2019-01-23
+
+Improvements for all users:
+
+- We keep track of the changes made to documents to synchronise either with the
+  remote Cozy or the local filesystem using version numbers for each side of the
+  synchronisation. When moving a document, be it either a directory or a file,
+  on the local filesystem as part of its parent directory move, the new local
+  version number would be false, resulting in a possible desynchronisation of
+  content updates.
+  We now make sure both the local and remote version numbers get resetted in
+  this situation so future updates will be synchronised in the right direction.
+
+Happy syncing!
+
 ## 3.12.0-beta.1 - 2019-01-18
 
 Improvements for all users:
