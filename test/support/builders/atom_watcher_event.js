@@ -2,6 +2,7 @@
 
 const fs = require('fs')
 const _ = require('lodash')
+const path = require('path')
 
 const metadata = require('../../../core/metadata')
 const events = require('../../../core/local/steps/event')
@@ -50,13 +51,13 @@ module.exports = class AtomWatcherEventBuilder {
   }
 
   path (newPath /*: string */) /*: this */ {
-    this._event.path = newPath
+    this._event.path = path.normalize(newPath)
     this._event._id = metadata.id(newPath)
     return this
   }
 
   oldPath (newPath /*: string */) /*: this */{
-    this._event.oldPath = newPath
+    this._event.oldPath = path.normalize(newPath)
     return this
   }
 
