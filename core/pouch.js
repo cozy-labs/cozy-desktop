@@ -109,11 +109,11 @@ class Pouch {
 
   /* Mini ODM */
 
-  put (doc /*: Metadata */, callback /*: ?Callback */) {
+  put (doc /*: Metadata */) /*: Promise<void> */ {
     metadata.invariants(doc)
     const {local, remote} = doc.sides
     log.debug({path: doc.path, local, remote, _deleted: doc._deleted, doc}, 'Saving metadata...')
-    return this.db.put(doc).asCallback(callback)
+    return this.db.put(doc)
   }
 
   remove (doc /*: Metadata */) /*: Promise<*> */ {
