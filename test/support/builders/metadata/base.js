@@ -184,12 +184,25 @@ module.exports = class BaseMetadataBuilder {
   }
 
   async create () /*: Promise<Metadata> */ {
-    const doc = this.build()
-    if (this.pouch == null) {
+    const { pouch } = this
+    if (pouch == null) {
       throw new Error('Cannot create dir metadata without Pouch')
     }
-    const { rev } = await this.pouch.put(doc)
-    doc._rev = rev
+
+    const doc = this.build()
+    // Update doc until _rev matches the highest side
+    const desiredRevNumber = Math.max(
+      1,
+      this.doc.sides.local || 0,
+      this.doc.sides.remote || 0
+    )
+    let revNumber = 0
+    while (revNumber < desiredRevNumber) {
+      const { rev: newRev } = await pouch.db.put(doc)
+      doc._rev = newRev
+      revNumber = metadata.extractRevNumber(doc)
+    }
+
     return doc
   }
 

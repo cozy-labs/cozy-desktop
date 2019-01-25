@@ -760,7 +760,7 @@ describe('Merge', function () {
         moveTo: dstId,
         path: was.path,
         remote: was.remote,
-        sides: {local: 2, remote: 2},
+        sides: {local: 3, remote: 2},
         size: was.size,
         tags: was.tags,
         updated_at: new Date(was.updated_at) // FIXME: Stop mixing dates & strings
@@ -935,7 +935,7 @@ describe('Merge', function () {
     })
   })
 
-  describe('moveFolder', function () {
+  describe('moveFolderAsync', function () {
     // @TODO fixme intermittent failure
     // `Error in .on("change", function): {
     // AssertionError: expected 'FOOBAR/OLD' to be 'FOOBAR/OLD-HINT'`
@@ -1034,7 +1034,7 @@ describe('Merge', function () {
         moveTo: dstId,
         path: was.path,
         remote: was.remote,
-        sides: {local: 2, remote: 2},
+        sides: {local: 3, remote: 2},
         tags: was.tags,
         updated_at: new Date(was.updated_at) // FIXME: Stop mixing dates & strings
       }
