@@ -2,6 +2,7 @@
 
 const electron = require('electron')
 const {ipcRenderer, remote} = electron
+const loadMyApps = require('./loadMyApps')
 
 window.onerror = (message, url, line, column, err) => {
   ipcRenderer.send('renderer-error', {message, stack: err.stack})
@@ -206,3 +207,7 @@ if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
   debugMenu.install()
   window.elmectron = elmectron
 }
+
+elmectron.ports.loadMyApps.subscribe(myAppsAnchorID => {
+  loadMyApps(myAppsAnchorID)
+})

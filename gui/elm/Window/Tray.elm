@@ -29,9 +29,14 @@ import Window.Tray.UserActionRequiredPage as UserActionRequiredPage
 -- MODEL
 
 
+myAppsAnchorID =
+    "myapps-anchor"
+
+
 type Page
     = DashboardPage
     | SettingsPage
+    | MyAppsPage
 
 
 type alias Model =
@@ -156,10 +161,20 @@ update msg model =
 
         GoToTab tab ->
             let
-                ( dashboard, cmd ) =
+                ( dashboardModel, dashboardCmd ) =
                     Dashboard.update Dashboard.Reset model.dashboard
+
+                cmd =
+                    case tab of
+                        MyAppsPage ->
+                            Ports.loadMyApps myAppsAnchorID
+
+                        _ ->
+                            Cmd.none
             in
-            ( { model | page = tab, dashboard = dashboard }, cmd )
+            ( { model | page = tab, dashboard = dashboardModel }
+            , cmd
+            )
 
         GoToStrTab tabstr ->
             case
@@ -224,6 +239,7 @@ viewTabsWithContent helpers model =
         [ aside [ class "two-panes__menu" ]
             [ viewTab helpers model "Recents" DashboardPage
             , viewTab helpers model "Settings" SettingsPage
+            , viewTab helpers model "Apps" MyAppsPage
             ]
         , case model.page of
             DashboardPage ->
@@ -231,9 +247,13 @@ viewTabsWithContent helpers model =
 
             SettingsPage ->
                 let
-                    settingsModel = model.settings
+                    settingsModel =
+                        model.settings
                 in
-                    Html.map SettingsMsg (Settings.view helpers { settingsModel | status = model.status } )
+                Html.map SettingsMsg (Settings.view helpers { settingsModel | status = model.status })
+
+            MyAppsPage ->
+                viewMyApps
         ]
 
 
@@ -296,4 +316,10 @@ viewBottomBar helpers =
             [ Icons.globe 48 False
             , text (helpers.t "Bar GoToCozy")
             ]
+        ]
+
+
+viewMyApps =
+    div [ style "height" "100%" ]
+        [ div [ id myAppsAnchorID ] [ text "Loading…" ]
         ]
