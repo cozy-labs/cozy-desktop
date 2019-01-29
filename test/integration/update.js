@@ -92,12 +92,6 @@ describe('Update file', () => {
       await helpers.local.syncDir.outputFile('src/file', 'initial content')
       await helpers.local.scan()
       await helpers.syncAll()
-      await helpers.local.syncDir.outputFile('src/file', 'yolo')
-      await helpers.local.scan()
-      await helpers.syncAll()
-      await helpers.local.syncDir.outputFile('src/file', 'first update')
-      await helpers.local.scan()
-      await helpers.syncAll()
 
       await helpers.local.syncDir.move('src', 'dst')
       await helpers.local.scan()
@@ -106,9 +100,78 @@ describe('Update file', () => {
 
     it('synchronizes the latest change everywhere without conflicts', async () => {
       const contentUpdate = 'content update'
-      await helpers.local.syncDir.outputFile('dst/file', 'second update')
-      await helpers.local.scan()
       await helpers.local.syncDir.outputFile('dst/file', contentUpdate)
+      await helpers.local.scan()
+      await helpers.syncAll()
+      await helpers.pullAndSyncAll()
+
+      const trees = await helpers.treesNonEllipsized()
+      const contents = {
+        local: await Promise.reduce(
+          trees.local,
+          async (localContents, path) => {
+            if (path.endsWith('/')) return localContents
+            localContents[path] = await helpers.local.syncDir.readFile(path)
+            return localContents
+          },
+          {}
+        ),
+        remote: await Promise.reduce(
+          trees.remote,
+          async (remoteContents, path) => {
+            if (path.endsWith('/')) return remoteContents
+            remoteContents[path] = await helpers.remote.readFile(path)
+            return remoteContents
+          },
+          {}
+        )
+      }
+      should({trees, contents}).deepEqual({
+        trees: {
+          local: [
+            'dst/',
+            'dst/file'
+          ],
+          remote: [
+            'dst/',
+            'dst/file'
+          ]
+        },
+        contents: {
+          local: {
+            'dst/file': contentUpdate
+          },
+          remote: {
+            'dst/file': contentUpdate
+          }
+        }
+      })
+    })
+  })
+
+  describe('local change on unsynced child move to previously existing path', () => {
+    let existingPath = 'dst/file'
+
+    beforeEach(async () => {
+      await helpers.remote.ignorePreviousChanges()
+      await helpers.local.syncDir.outputFile(existingPath, 'existing content')
+      await helpers.local.scan()
+      await helpers.syncAll()
+      await helpers.local.syncDir.remove(existingPath)
+      await helpers.local.syncDir.removeParentDir(existingPath)
+      await helpers.local.scan()
+      await helpers.syncAll()
+
+      await helpers.local.syncDir.outputFile('src/file', 'initial content')
+      await helpers.local.scan()
+      await helpers.syncAll()
+      await helpers.local.syncDir.move('src', 'dst')
+      await helpers.local.scan()
+    })
+
+    it('synchronizes the latest change everywhere without conflicts', async () => {
+      const contentUpdate = 'content update'
+      await helpers.local.syncDir.outputFile(existingPath, contentUpdate)
       await helpers.local.scan()
       await helpers.syncAll()
       await helpers.pullAndSyncAll()
