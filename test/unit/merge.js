@@ -25,7 +25,7 @@ const Builders = require('../support/builders')
  * - `savedDocs`: Which docs were changed in `Pouch`
  * - `resolvedConflicts`: Which conflits were resolved on which side
  */
-async function mergeSideEffects ({merge, pouch} /*: * */, mergeCall /*: (): Promise<*> */) {
+async function mergeSideEffects ({merge, pouch} /*: * */, mergeCall /*: () => Promise<*> */) {
   const { last_seq: lastSeq } = await pouch.db.changes({since: 'now'})
 
   sinon.spy(merge, 'resolveConflictAsync')
@@ -103,10 +103,11 @@ describe('Merge', function () {
     })
 
     describe('when the path was used in the past', function () {
-      it('saves the new file with the correct side number', async function () {
+      const path = 'foo/file-created-deleted-and-then-recreated'
+      beforeEach(async function () {
         let was = {
-          _id: metadata.id('foo/file-created-deleted-and-then-recreated'),
-          path: 'foo/file-created-deleted-and-then-recreated',
+          _id: metadata.id(path),
+          path,
           md5sum: 'e2985ac920325989562a6537abde7668',
           docType: 'file',
           updated_at: new Date(),
@@ -118,20 +119,24 @@ describe('Merge', function () {
         const result = await this.pouch.db.put(was)
         was._rev = result.rev
         await this.pouch.remove(was)
+      })
+
+      it('saves the new file with the correct side number', async function () {
+        const expectedReNumber = 4 // create + delete + create + update side
+
         let doc = {
-          _id: metadata.id('foo/file-created-deleted-and-then-recreated'),
-          path: 'foo/file-created-deleted-and-then-recreated',
+          _id: metadata.id(path),
+          path,
           md5sum: '4721278923f9a4be208ad99e39be757c',
           docType: 'file',
           updated_at: new Date(),
           tags: []
         }
         await this.merge.addFileAsync(this.side, doc)
+
         const res = await this.pouch.db.get(doc._id)
-        doc.updated_at = doc.updated_at.toISOString()
-        res.should.have.properties(doc)
-        const gen = metadata.extractRevNumber(res)
-        res.sides.local.should.equal(gen)
+        should(metadata.extractRevNumber(res)).equal(expectedReNumber)
+        res.sides.local.should.equal(expectedReNumber)
       })
     })
 
@@ -536,10 +541,12 @@ describe('Merge', function () {
     })
 
     describe('when the path was used in the past', function () {
-      it('saves the new folder with the correct side number', async function () {
+      const path = 'foo/folder-created-deleted-and-then-recreated'
+
+      beforeEach(async function () {
         let was = {
-          _id: metadata.id('foo/folder-created-deleted-and-then-recreated'),
-          path: 'foo/folder-created-deleted-and-then-recreated',
+          _id: metadata.id(path),
+          path,
           docType: 'folder',
           updated_at: new Date(),
           tags: [],
@@ -550,19 +557,23 @@ describe('Merge', function () {
         const result = await this.pouch.db.put(was)
         was._rev = result.rev
         await this.pouch.remove(was)
+      })
+
+      it('saves the new folder with the correct side number', async function () {
+        const expectedReNumber = 4 // create + delete + create + update side
+
         let doc = {
-          _id: metadata.id('foo/folder-created-deleted-and-then-recreated'),
-          path: 'foo/folder-created-deleted-and-then-recreated',
+          _id: metadata.id(path),
+          path,
           docType: 'folder',
           updated_at: new Date(),
           tags: []
         }
         await this.merge.putFolderAsync(this.side, doc)
+
         const res = await this.pouch.db.get(doc._id)
-        doc.updated_at = doc.updated_at.toISOString()
-        res.should.have.properties(doc)
-        const gen = metadata.extractRevNumber(res)
-        res.sides.local.should.equal(gen)
+        should(metadata.extractRevNumber(res)).equal(expectedReNumber)
+        res.sides.local.should.equal(expectedReNumber)
       })
     })
 
@@ -739,62 +750,87 @@ describe('Merge', function () {
       should(info.doc).have.property('moveTo', doc._id)
     })
 
-    it('resolves a conflict with an existing destination', async function () {
-      const existing = await builders.metafile().path('DST_FILE').create()
-      const was = await builders.metafile().path('SRC_FILE').upToDate().create()
-      const doc = builders.metafile(was).path(existing.path).noRev().build()
+    context('when the destination exists', () => {
+      let existing
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFileAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
-      )
+      beforeEach(async function () {
+        existing = await builders.metafile().path('DST_FILE').create()
+      })
 
-      const {_id: dstId, path: dstPath} = _.find(
-        sideEffects.savedDocs,
-        ({path}) => path.match(/conflict/)
-      )
-      const src = {
-        _deleted: true,
-        _id: was._id,
-        docType: was.docType,
-        md5sum: was.md5sum,
-        moveTo: dstId,
-        path: was.path,
-        remote: was.remote,
-        sides: {local: 3, remote: 2},
-        size: was.size,
-        tags: was.tags,
-        updated_at: new Date(was.updated_at) // FIXME: Stop mixing dates & strings
-      }
-      const dst = {
-        _id: dstId,
-        docType: doc.docType,
-        md5sum: doc.md5sum,
-        moveFrom: _.defaults({
-          _rev: was._rev,
+      it('resolves a conflict', async function () {
+        const was = await builders.metafile().path('SRC_FILE').upToDate().create()
+        const doc = builders.metafile(was).path(existing.path).noRev().build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFileAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+        )
+
+        const {_id: dstId, path: dstPath} = _.find(
+          sideEffects.savedDocs,
+          ({path}) => path.match(/conflict/)
+        )
+        const src = {
+          _deleted: true,
+          _id: was._id,
+          docType: was.docType,
+          md5sum: was.md5sum,
           moveTo: dstId,
-          updated_at: was.updated_at // FIXME: Stop mixing dates & strings
-        }, src),
-        path: dstPath,
-        remote: doc.remote,
-        sides: {local: 1},
-        size: doc.size,
-        tags: doc.tags,
-        updated_at: new Date(doc.updated_at) // FIXME: Stop mixing dates & strings
-      }
-      should(sideEffects).deepEqual({
-        savedDocs: [src, dst],
-        resolvedConflicts: [
-          ['local', {path: doc.path, remote: doc.remote}]
-        ]
+          path: was.path,
+          remote: was.remote,
+          sides: {local: 3, remote: 2},
+          size: was.size,
+          tags: was.tags,
+          updated_at: new Date(was.updated_at) // FIXME: Stop mixing dates & strings
+        }
+        const dst = {
+          _id: dstId,
+          docType: doc.docType,
+          md5sum: doc.md5sum,
+          moveFrom: _.defaults({
+            _rev: was._rev,
+            moveTo: dstId,
+            updated_at: was.updated_at // FIXME: Stop mixing dates & strings
+          }, src),
+          path: dstPath,
+          remote: doc.remote,
+          sides: {local: 1},
+          size: doc.size,
+          tags: doc.tags,
+          updated_at: new Date(doc.updated_at) // FIXME: Stop mixing dates & strings
+        }
+        should(sideEffects).deepEqual({
+          savedDocs: [src, dst],
+          resolvedConflicts: [
+            ['local', {path: doc.path, remote: doc.remote}]
+          ]
+        })
+      })
+    })
+
+    context('when the destination has existed', () => {
+      const path = 'DST_FILE'
+
+      beforeEach(async function () {
+        const previous = await builders.metafile().path(path).create()
+        await this.pouch.remove(previous)
+      })
+
+      it('saves the new file with the correct side', async function () {
+        const expectedReNumber = 4 // create + delete + create + update side
+
+        const was = await builders.metafile().path('SRC_FILE').upToDate().create()
+        const doc = builders.metafile(was).path(path).noRev().build()
+        await this.merge.moveFileAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+
+        const res = await this.pouch.db.get(doc._id)
+        should(metadata.extractRevNumber(res)).equal(expectedReNumber)
+        should(res.sides.local).equal(expectedReNumber)
       })
     })
 
     it('does not identify an identical renaming as a conflict', async function () {
       const banana = await builders.metafile().path('banana').upToDate().create()
-      const BANANA = _({_id: metadata.id('BANANA'), path: 'BANANA'})
-        .defaults(banana)
-        .omit(['_rev'])
-        .value()
+      const BANANA = builders.metafile(banana).path('BANANA').noRev().build()
 
       sinon.spy(this.merge, 'resolveConflictAsync')
       await this.merge.moveFileAsync(this.side, BANANA, banana)
@@ -1014,49 +1050,77 @@ describe('Merge', function () {
       should(info.doc).have.property('moveTo', doc._id)
     })
 
-    it('resolves a conflict with an existing destination', async function () {
-      const existing = await builders.metadir().path('DST_DIR').upToDate().create()
-      const was = await builders.metadir().path('SRC_DIR').upToDate().create()
-      const doc = builders.metadir(was).path(existing.path).noRev().build()
+    context('when the destination exists', () => {
+      let existing
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFolderAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
-      )
+      beforeEach(async function () {
+        existing = await builders.metadir().path('DST_DIR').upToDate().create()
+      })
 
-      const {_id: dstId, path: dstPath} = _.find(
-        sideEffects.savedDocs,
-        ({path}) => path.match(/conflict/)
-      )
-      const src = {
-        _deleted: true,
-        _id: was._id,
-        docType: was.docType,
-        moveTo: dstId,
-        path: was.path,
-        remote: was.remote,
-        sides: {local: 3, remote: 2},
-        tags: was.tags,
-        updated_at: new Date(was.updated_at) // FIXME: Stop mixing dates & strings
-      }
-      const dst = {
-        _id: dstId,
-        docType: doc.docType,
-        moveFrom: _.defaults({
-          _rev: was._rev,
-          updated_at: was.updated_at
-        }, src),
-        path: dstPath,
-        remote: doc.remote,
-        sides: {local: 1},
-        tags: doc.tags,
-        updated_at: new Date(doc.updated_at) // FIXME: Stop mixing dates & strings
-      }
+      it('resolves a conflict', async function () {
+        const was = await builders.metadir().path('SRC_DIR').upToDate().create()
+        const doc = builders.metadir(was).path(existing.path).noRev().build()
 
-      should(sideEffects).deepEqual({
-        savedDocs: [src, dst],
-        resolvedConflicts: [
-          [this.side, _.pick(doc, ['path', 'remote'])]
-        ]
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFolderAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+        )
+
+        const {_id: dstId, path: dstPath} = _.find(
+          sideEffects.savedDocs,
+          ({path}) => path.match(/conflict/)
+        )
+        const src = {
+          _deleted: true,
+          _id: was._id,
+          docType: was.docType,
+          moveTo: dstId,
+          path: was.path,
+          remote: was.remote,
+          sides: {local: 3, remote: 2},
+          tags: was.tags,
+          updated_at: new Date(was.updated_at) // FIXME: Stop mixing dates & strings
+        }
+        const dst = {
+          _id: dstId,
+          docType: doc.docType,
+          moveFrom: _.defaults({
+            _rev: was._rev,
+            updated_at: was.updated_at
+          }, src),
+          path: dstPath,
+          remote: doc.remote,
+          sides: {local: 1},
+          tags: doc.tags,
+          updated_at: new Date(doc.updated_at) // FIXME: Stop mixing dates & strings
+        }
+
+        should(sideEffects).deepEqual({
+          savedDocs: [src, dst],
+          resolvedConflicts: [
+            [this.side, _.pick(doc, ['path', 'remote'])]
+          ]
+        })
+      })
+    })
+
+    context('when the destination has existed', () => {
+      const path = 'DST_DIR'
+
+      beforeEach(async function () {
+        const previous = await builders.metadir().path(path).create()
+        await this.pouch.remove(previous)
+      })
+
+      it('saves the new directory with the correct side', async function () {
+        const expectedReNumber = 4 // create + delete + create + update side
+
+        const was = await builders.metadir().path('SRC_DIR').upToDate().create()
+        const doc = builders.metadir(was).path(path).noRev().build()
+        await this.merge.moveFolderAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+
+        const res = await this.pouch.db.get(doc._id)
+        should(metadata.extractRevNumber(res)).equal(expectedReNumber)
+        should(res.sides.local).equal(expectedReNumber)
       })
     })
 
@@ -1221,6 +1285,51 @@ describe('Merge', function () {
       await should(
         this.pouch.db.get(metadata.id(`${srcFolder.path}/{fileName}`))
       ).be.rejectedWith({status: 404})
+    })
+
+    context('when the destination has existed', () => {
+      const path = 'DST_DIR'
+
+      beforeEach(async function () {
+        const previous = await builders.metadir().path(path).create()
+        await this.pouch.remove(previous)
+      })
+
+      it('saves the new directory with the correct side', async function () {
+        const expectedReNumber = 4 // create + delete + create + update side
+
+        const was = await builders.metadir().path('SRC_DIR').upToDate().create()
+        const doc = builders.metadir(was).path(path).noRev().build()
+        await this.merge.moveFolderRecursivelyAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+
+        const res = await this.pouch.db.get(doc._id)
+        should(metadata.extractRevNumber(res)).equal(expectedReNumber)
+        should(res.sides.local).equal(expectedReNumber)
+      })
+    })
+
+    context('when the destination of a child has existed', () => {
+      const parentPath = 'DST_DIR'
+      const childName = 'CHILD'
+
+      beforeEach(async function () {
+        const previous = await builders.metadata().path(`${parentPath}/${childName}`).create()
+        await this.pouch.remove(previous)
+      })
+
+      it('saves the new child with the correct side', async function () {
+        const expectedReNumber = 4 // create + delete + create + update side
+
+        const was = await builders.metadir().path('SRC_DIR').upToDate().create()
+        await builders.metadata().path(`SRC_DIR/${childName}`).upToDate().create()
+        const doc = builders.metadir(was).path(parentPath).noRev().build()
+        await this.merge.moveFolderRecursivelyAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
+
+        const newChildPath = path.normalize(`${parentPath}/${childName}`)
+        const res = await this.pouch.db.get(metadata.id(newChildPath))
+        should(metadata.extractRevNumber(res)).equal(expectedReNumber)
+        should(res.sides.local).equal(expectedReNumber)
+      })
     })
   })
 

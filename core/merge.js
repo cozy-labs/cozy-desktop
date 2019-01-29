@@ -144,19 +144,9 @@ class Merge {
     }
     if (doc.tags == null) { doc.tags = [] }
     await this.ensureParentExistAsync(side, doc)
-    const info = await this.pouch.put(doc)
-    // If a file has existed as this ID and was deleted, the pouchdb doc will
-    // have a revision higher than the expected 1-xxx, and we should update the
-    // side in this case
-    let rev = metadata.extractRevNumber({ _rev: info.rev })
-    if (rev === 1) {
-      return info
-    }
-    doc.sides[side] = ++rev
-    doc._rev = info.rev
+
     const result = await this.pouch.put(doc)
-    delete doc._rev
-    return result
+    return this.fixSideInPouch({ side, result, doc })
   }
 
   // Update a file, when its metadata or its content has changed
@@ -233,19 +223,9 @@ class Merge {
     }
     if (doc.tags == null) { doc.tags = [] }
     await this.ensureParentExistAsync(side, doc)
-    const info = await this.pouch.put(doc)
-    // If a folder has existed as this ID and was deleted, the pouchdb doc will
-    // have a revision higher than the expected 1-xxx, and we should update the
-    // side in this case
-    let rev = metadata.extractRevNumber({ _rev: info.rev })
-    if (rev === 1) {
-      return info
-    }
-    doc.sides[side] = ++rev
-    doc._rev = info.rev
+
     const result = await this.pouch.put(doc)
-    delete doc._rev
-    return result
+    return this.fixSideInPouch({ side, result, doc })
   }
 
   // Rename or move a file
@@ -284,10 +264,15 @@ class Merge {
         dst.sides = {}
         dst.sides[side] = 1
         return this.pouch.bulkDocs([was, dst])
-      } else {
-        if (file && doc.overwrite) doc._rev = file._rev
+      } else if (file && doc.overwrite) {
+        doc._rev = file._rev
         await this.ensureParentExistAsync(side, doc)
         return this.pouch.bulkDocs([was, doc])
+      } else {
+        await this.ensureParentExistAsync(side, doc)
+
+        const results = await this.pouch.bulkDocs([was, doc])
+        return this.bulkFixSideInPouch({ side, results, docs: [doc] })
       }
     } else { // It can happen after a conflict
       return this.addFileAsync(side, doc)
@@ -371,7 +356,8 @@ class Merge {
       else delete dst.incompatibilities
       bulk.push(dst)
     }
-    return this.pouch.bulkDocs(bulk)
+    const results = await this.pouch.bulkDocs(bulk)
+    return this.bulkFixSideInPouch({ side, results, docs: bulk })
   }
 
   async restoreFileAsync (side /*: SideName */, was /*: Metadata */, doc /*: Metadata */) /*: Promise<*> */ {
@@ -537,6 +523,45 @@ class Merge {
       }
     }
     return this.pouch.bulkDocs(docs)
+  }
+
+  async bulkFixSideInPouch ({ side, results, docs } /*: { side: SideName, results: { id: string, rev: string }[], docs: Metadata[] } */) /*: Promise<any> */ {
+    const fixedDocs = []
+    const reusingRevs = results.filter(this.isReusingRev)
+    for (const { id, rev } of reusingRevs) {
+      const doc = _.find(docs, { _id: id })
+      if (doc && !doc._rev) {
+        fixedDocs.push(this.fixSide({ side, rev, doc }))
+      }
+    }
+
+    if (fixedDocs.length > 0) return this.pouch.bulkDocs(fixedDocs)
+  }
+
+  async fixSideInPouch ({ side, result, doc } /*: { side: SideName, result: { rev: string }, doc: Metadata } */) /*: Promise<any> */ {
+    const { rev } = result
+
+    if (!doc._rev && this.isReusingRev(result)) {
+      const fixedDoc = this.fixSide({ side, rev, doc })
+      return this.pouch.put(fixedDoc)
+    }
+  }
+
+  isReusingRev ({ rev } /*: { rev: string } */) /*: boolean */ {
+    return metadata.extractRevNumber({ _rev: rev }) > 1
+  }
+
+  fixSide ({ side, rev, doc } /*: { side: SideName, rev: string, doc: Metadata } */) /*: Metadata */ {
+    return _.defaults(
+      {
+        _rev: rev,
+        sides: _.defaults(
+          { [side]: metadata.extractRevNumber({ _rev: rev }) + 1 },
+          doc.sides
+        )
+      },
+      doc
+    )
   }
 }
 
