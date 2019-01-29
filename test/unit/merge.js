@@ -771,7 +771,7 @@ describe('Merge', function () {
         md5sum: doc.md5sum,
         moveFrom: _.defaults({
           _rev: was._rev,
-          moveTo: doc._id, // FIXME: Should be doc._id?
+          moveTo: dstId,
           updated_at: was.updated_at // FIXME: Stop mixing dates & strings
         }, src),
         path: dstPath,
