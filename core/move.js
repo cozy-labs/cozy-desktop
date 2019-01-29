@@ -1,7 +1,5 @@
 /* @flow */
 
-const _ = require('lodash')
-
 /*::
 import type { Metadata } from './metadata'
 */
@@ -32,7 +30,7 @@ function move (src /*: Metadata */, dst /*: Metadata */) {
   // trashed property on the source, or explain why it doesn't.
   delete dst.trashed
 
-  dst.moveFrom = _.omit(src, 'moveFrom')
+  dst.moveFrom = src
 }
 
 // Same as move() but mark the source as a child move so it will be moved with
