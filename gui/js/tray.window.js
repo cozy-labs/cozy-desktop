@@ -138,10 +138,10 @@ module.exports = class TrayWM extends WindowManager {
   }
 
   hide () {
-    if (this.win) {
-      this.log.debug('hide')
-      this.win.hide()
-    }
+    // if (this.win) {
+    //   this.log.debug('hide')
+    //   this.win.hide()
+    // }
   }
 
   shown () {
