@@ -526,6 +526,7 @@ class Merge {
   }
 
   async bulkFixSideInPouch ({ side, results, docs } /*: { side: SideName, results: { id: string, rev: string }[], docs: Metadata[] } */) /*: Promise<any> */ {
+    log.debug({ side, results, docs }, 'bulkFixSideInPouch')
     const fixedDocs = []
     const reusingRevs = results.filter(this.isReusingRev)
     for (const { id, rev } of reusingRevs) {
@@ -539,6 +540,7 @@ class Merge {
   }
 
   async fixSideInPouch ({ side, result, doc } /*: { side: SideName, result: { rev: string }, doc: Metadata } */) /*: Promise<any> */ {
+    log.debug({ side, result, doc }, 'fixSideInPouch')
     const { rev } = result
 
     if (!doc._rev && this.isReusingRev(result)) {
