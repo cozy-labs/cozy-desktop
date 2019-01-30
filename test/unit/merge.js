@@ -828,25 +828,6 @@ describe('Merge', function () {
       })
     })
 
-    it('does not identify an identical renaming as a conflict', async function () {
-      const banana = await builders.metafile().path('banana').upToDate().create()
-      const BANANA = builders.metafile(banana).path('BANANA').noRev().build()
-
-      sinon.spy(this.merge, 'resolveConflictAsync')
-      await this.merge.moveFileAsync(this.side, BANANA, banana)
-
-      should(this.merge.resolveConflictAsync.args).not.have.been.called()
-      should(await this.pouch.db.get(BANANA._id)).have.properties(
-        _.omit(
-          BANANA,
-          ['class', 'mime', 'ino', 'fileid']
-        )
-      )
-      if (banana._id !== BANANA._id) {
-        await should(this.pouch.db.get(banana._id)).be.rejectedWith({status: 404})
-      }
-    })
-
     it('identifies a local move without existing remote side as an addition', async function () {
       let doc = {
         _id: 'FOO/NEW',
@@ -908,6 +889,26 @@ describe('Merge', function () {
     })
 
     onPlatforms(['win32', 'darwin'], () => {
+      it('does not identify an identical renaming as a conflict', async function () {
+        const expectedReNumber = 5 // up to date + delete + create + update side
+
+        const banana = await builders.metafile().path('banana').upToDate().create()
+        const BANANA = builders.metafile(banana).path('BANANA').noRev().build()
+
+        await this.merge.moveFileAsync(this.side, BANANA, banana)
+
+        should(this.merge.resolveConflictAsync).not.have.been.called()
+        should(await this.pouch.db.get(BANANA._id)).have.properties(
+          _.chain({ sides: { [this.side]: expectedReNumber } })
+            .defaultsDeep(BANANA)
+            .omit(['class', 'mime', 'ino', 'fileid'])
+            .value()
+        )
+        if (banana._id !== BANANA._id) {
+          await should(this.pouch.db.get(banana._id)).be.rejectedWith({status: 404})
+        }
+      })
+
       it('resolves an identity conflict with an existing file', async function () {
         const identical = await builders.metafile().path('QUX').create()
         const was = builders.metafile().path('baz').upToDate().build()
@@ -927,6 +928,26 @@ describe('Merge', function () {
     })
 
     onPlatform('linux', () => {
+      it('does not identify an identical renaming as a conflict', async function () {
+        const expectedReNumber = 1 // new unsynced document
+
+        const banana = await builders.metafile().path('banana').upToDate().create()
+        const BANANA = builders.metafile(banana).path('BANANA').noRev().build()
+
+        await this.merge.moveFileAsync(this.side, BANANA, banana)
+
+        should(this.merge.resolveConflictAsync).not.have.been.called()
+        should(await this.pouch.db.get(BANANA._id)).have.properties(
+          _.chain({ sides: { [this.side]: expectedReNumber } })
+            .defaultsDeep(BANANA)
+            .omit(['class', 'mime', 'ino', 'fileid'])
+            .value()
+        )
+        if (banana._id !== BANANA._id) {
+          await should(this.pouch.db.get(banana._id)).be.rejectedWith({status: 404})
+        }
+      })
+
       it('does not have identity conflicts', async function () {
         await builders.metafile().path('QUX').create()
         const baz = builders.metafile().path('baz').upToDate().build()
@@ -1137,29 +1158,27 @@ describe('Merge', function () {
       newMetadata.remote.should.have.property('_id', was.remote._id)
     })
 
-    it('does not identify an identical renaming as a conflict', async function () {
-      const apple = await builders.metadir().path('apple').upToDate().create()
-      const APPLE = _({_id: metadata.id('APPLE'), path: 'APPLE'})
-        .defaults(apple)
-        .omit(['_rev'])
-        .value()
-
-      sinon.spy(this.merge, 'resolveConflictAsync')
-      await this.merge.moveFolderAsync(this.side, APPLE, apple)
-
-      should(this.merge.resolveConflictAsync.args).not.have.been.called()
-      should(await this.pouch.db.get(APPLE._id)).have.properties(
-        _.omit(
-          APPLE,
-          ['ino', 'fileid']
-        )
-      )
-      if (apple._id !== APPLE._id) {
-        await should(this.pouch.db.get(apple._id)).be.rejectedWith({status: 404})
-      }
-    })
-
     onPlatforms(['win32', 'darwin'], () => {
+      it('does not identify an identical renaming as a conflict', async function () {
+        const expectedReNumber = 5 // up to date + delete + create + update side
+
+        const apple = await builders.metadir().path('apple').upToDate().create()
+        const APPLE = builders.metadir(apple).path('APPLE').noRev().build()
+
+        await this.merge.moveFolderAsync(this.side, APPLE, apple)
+
+        should(this.merge.resolveConflictAsync).not.have.been.called()
+        should(await this.pouch.db.get(APPLE._id)).have.properties(
+          _.chain({ sides: { [this.side]: expectedReNumber } })
+            .defaultsDeep(APPLE)
+            .omit(['ino', 'fileid'])
+            .value()
+        )
+        if (apple._id !== APPLE._id) {
+          await should(this.pouch.db.get(apple._id)).be.rejectedWith({status: 404})
+        }
+      })
+
       it('resolves an identity conflict with an existing file', async function () {
         const LINUX = await builders.metadir().path('LINUX').create()
         const torvalds = builders.metadir().path('torvalds').upToDate().build()
@@ -1179,6 +1198,26 @@ describe('Merge', function () {
     })
 
     onPlatform('linux', () => {
+      it('does not identify an identical renaming as a conflict', async function () {
+        const expectedReNumber = 1 // new unsynced document
+
+        const apple = await builders.metadir().path('apple').upToDate().create()
+        const APPLE = builders.metadir(apple).path('APPLE').noRev().build()
+
+        await this.merge.moveFolderAsync(this.side, APPLE, apple)
+
+        should(this.merge.resolveConflictAsync).not.have.been.called()
+        should(await this.pouch.db.get(APPLE._id)).have.properties(
+          _.chain({ sides: { [this.side]: expectedReNumber } })
+            .defaultsDeep(APPLE)
+            .omit(['ino', 'fileid'])
+            .value()
+        )
+        if (apple._id !== APPLE._id) {
+          await should(this.pouch.db.get(apple._id)).be.rejectedWith({status: 404})
+        }
+      })
+
       it('does not have identity conflicts', async function () {
         await builders.metadir().path('NUKEM').create()
         const duke = builders.metadir().path('duke').upToDate().build()
