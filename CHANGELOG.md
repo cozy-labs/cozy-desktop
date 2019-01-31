@@ -1,5 +1,20 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.12.0-beta.3 - 2019-01-31
+
+Improvements for all users:
+
+- We've modified the way we handle child documents updates so everything gets
+  synchronised, even if a child update occurs quickly after its parent directory
+  has been renamed.
+- We found out that moving a file or a directory to a path that has already been
+  used in the path then deleted could lead to unrelevant version numbers for the
+  new document and in the end to unnecessary conflicts.
+  We now correct our version numbers when this situation happens so future
+  updates to the document are handled correctly.
+
+Happy syncing!
+
 ## 3.12.0-beta.2 - 2019-01-23
 
 Improvements for all users:
