@@ -270,9 +270,11 @@ describe('Merge', function () {
         should(sideEffects).deepEqual({
           savedDocs: [{
             _id: initialFile._id,
+            class: 'application',
             docType: 'file',
             ino: initialFile.ino,
             md5sum: offUpdate.md5sum,
+            mime: 'application/octet-stream',
             path: initialFile.path,
             sides: {local: 2},
             size: offUpdate.size,
@@ -297,9 +299,11 @@ describe('Merge', function () {
           savedDocs: [
             {
               _id: initial._id,
+              class: 'application',
               docType: initial.docType,
               ino: initial.ino,
               md5sum: secondUpdate.md5sum,
+              mime: 'application/octet-stream',
               path: initial.path,
               remote: synced.remote,
               sides: {local: 4, remote: 2},
@@ -456,9 +460,11 @@ describe('Merge', function () {
         savedDocs: [
           {
             _id: initial._id,
+            class: 'application',
             docType: initial.docType,
             ino: initial.ino,
             md5sum: mergedLocalUpdate.md5sum,
+            mime: 'application/octet-stream',
             path: initial.path,
             sides: {local: 3},
             size: mergedLocalUpdate.size,
@@ -768,8 +774,10 @@ describe('Merge', function () {
         const src = {
           _deleted: true,
           _id: was._id,
+          class: 'application',
           docType: was.docType,
           md5sum: was.md5sum,
+          mime: 'application/octet-stream',
           moveTo: dstId,
           path: was.path,
           remote: was.remote,
@@ -780,8 +788,10 @@ describe('Merge', function () {
         }
         const dst = {
           _id: dstId,
+          class: 'application',
           docType: doc.docType,
           md5sum: doc.md5sum,
+          mime: 'application/octet-stream',
           moveFrom: _.defaults({
             _rev: was._rev,
             moveTo: dstId,
@@ -956,8 +966,10 @@ describe('Merge', function () {
         const src = {
           _deleted: true,
           _id: baz._id,
+          class: 'application',
           docType: baz.docType,
           md5sum: baz.md5sum,
+          mime: 'application/octet-stream',
           moveTo: qux._id,
           path: baz.path,
           remote: baz.remote,
@@ -968,8 +980,10 @@ describe('Merge', function () {
         }
         const dst = {
           _id: qux._id,
+          class: 'application',
           docType: qux.docType,
           md5sum: baz.md5sum,
+          mime: 'application/octet-stream',
           moveFrom: _.defaults({
             updated_at: baz.updated_at // FIXME: Stop mixing dates & strings
           }, src),
