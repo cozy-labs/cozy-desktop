@@ -69,7 +69,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   unmerged (sideName /*: SideName */) /*: this */ {
-    delete this.sides
+    if (this.doc.docType === 'file') delete this.doc.sides
     if (sideName === 'local') this.noRemote()
     return this.noRev()
   }
@@ -85,7 +85,11 @@ module.exports = class BaseMetadataBuilder {
   }
 
   noRemote () /*: this */ {
-    delete this.doc.remote
+    /*
+     * $FlowFixMe Flow is lying to us when allowing metadata's buildFile and
+     * buildDir to set remote to undefined
+     */
+    this.doc.remote = undefined
     return this
   }
 
