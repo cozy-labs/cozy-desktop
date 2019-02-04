@@ -1,5 +1,25 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.12.1-alpha.1 - 2019-02-04
+
+**Notice:** This release uses the new watcher by default on Windows and
+GNU/Linux for testing purpose only and should not be used in other situations.
+
+Improvements for all users:
+
+- Fixed a race condition case were a sharing could be disabled when a folder
+  was moved locally while another one was added remotely to the same
+  destination.
+
+Improvements for Windows and Linux users:
+
+- The right path separator is now used while squashing successive events (e.g.
+  file added or updated, then moved immediately) in the new watcher.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.12.0 - 2019-02-04
 
 Improvements for all users:
