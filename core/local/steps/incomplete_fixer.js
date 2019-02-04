@@ -82,7 +82,7 @@ module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , c
           continue
         }
 
-        if (event.oldPath && item.event.path.startsWith(event.oldPath + '/')) {
+        if (event.oldPath && item.event.path.startsWith(event.oldPath + path.sep)) {
           // We have a match, try to rebuild the incomplete event
           try {
             const rebuilt = await rebuildIncompleteEvent(item, event, opts)
