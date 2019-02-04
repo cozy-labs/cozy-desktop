@@ -331,8 +331,24 @@ describe('Conflict resolution', () => {
     })
   })
 
-  // FIXME: merging local dir move then remote dir addition to the same
-  // destination doesn't trigger a conflict although it should.
+  describe('merging local dir move then remote dir addition to the same destination', () => {
+    it('renames one of them', async () => {
+      await helpers.local.syncDir.ensureDir('src')
+      await helpers.local.scan()
+      await helpers.syncAll()
+      await helpers.pullAndSyncAll()
+      // FIXME: Initial tree helper?
+      await cozy.files.createDirectory({name: 'dst'})
+      await helpers.local.syncDir.move('src', 'dst')
+
+      await fullSyncStartingFrom('local')
+
+      should(await helpers.trees()).deepEqual(bothSides([
+        'dst-conflict-.../',
+        'dst/'
+      ]))
+    })
+  })
 
   describe('remote', () => {
     beforeEach('set up conflict', async () => {
