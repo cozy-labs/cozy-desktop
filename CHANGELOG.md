@@ -1,5 +1,43 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.12.0 - 2019-02-04
+
+Improvements for all users:
+
+- We've improved the way we handle the revision of newly detected documents that
+  are created at paths that have already been synchronised in the past. This was
+  a potential source of conflicts were you to modify the content of such file.
+- When moving a folder locally then quickly changing the content of a subfile
+  on the same device, the file content may not be updated in the Cozy in some
+  cases. Everything should now work as expected.
+- We keep track of the changes made to documents to synchronise either with the
+  remote Cozy or the local filesystem using version numbers for each side of the
+  synchronisation. When moving a document, be it either a directory or a file,
+  on the local filesystem as part of its parent directory move, the new local
+  version number would be false, resulting in a possible desynchronisation of
+  content updates.
+  We now make sure both the local and remote version numbers get reset in
+  this situation so future updates will be synchronised in the right direction.
+- We've modified the way we handle child documents updates so everything gets
+  synchronised, even if a child update occurs quickly after its parent directory
+  has been renamed.
+- We found out that moving a file or a directory to a path that has already been
+  used in the path then deleted could lead to irrelevant version numbers for the
+  new document and in the end to unnecessary conflicts.
+  We now correct our version numbers when this situation happens so future
+  updates to the document are handled correctly.
+
+Improvements for contributors:
+
+- The developer documentation's [design section](https://github.com/cozy-labs/cozy-desktop/blob/master/doc/developer/design.md#local-watcher) has been updated with the reasons
+  that led to the decision to create a new local watcher and diagrams explaining
+  how it works on Windows and Linux.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+
 ## 3.12.0-beta.3 - 2019-01-31
 
 Improvements for all users:
