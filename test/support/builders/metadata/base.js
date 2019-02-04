@@ -43,7 +43,7 @@ module.exports = class BaseMetadataBuilder {
         },
         tags: [],
         sides: {},
-        updated_at: timestamp.stringify(timestamp.current())
+        updated_at: timestamp.current().toISOString()
       }
     }
   }
@@ -138,12 +138,12 @@ module.exports = class BaseMetadataBuilder {
   }
 
   newerThan (doc /*: Metadata */) /*: this */ {
-    this.doc.updated_at = new Date(timestamp.fromDate(doc.updated_at).getTime() + 2000)
+    this.doc.updated_at = timestamp.fromDate(new Date(timestamp.fromDate(doc.updated_at).getTime() + 2000)).toISOString()
     return this
   }
 
   olderThan (doc /*: Metadata */) /*: this */ {
-    this.doc.updated_at = new Date(timestamp.fromDate(doc.updated_at).getTime() - 2000)
+    this.doc.updated_at = timestamp.fromDate(new Date(timestamp.fromDate(doc.updated_at).getTime() - 2000)).toISOString()
     return this
   }
 

@@ -9,6 +9,7 @@ const IdConflict = require('./IdConflict')
 const logger = require('./logger')
 const metadata = require('./metadata')
 const move = require('./move')
+const timestamp = require('./timestamp')
 const { otherSide } = require('./side')
 
 /*::
@@ -75,7 +76,7 @@ class Merge {
       _id: parentId,
       path: path.dirname(doc.path),
       docType: 'folder',
-      updated_at: new Date()
+      updated_at: timestamp.fromDate(new Date()).toISOString()
     }
 
     try {

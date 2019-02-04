@@ -416,7 +416,7 @@ describe('Local', function () {
         'dst/file',
         'src/'
       ])
-      should(+(await syncDir.mtime(dstFile))).equal(+dstFile.updated_at)
+      should((await syncDir.mtime(dstFile)).getTime()).equal((new Date(dstFile.updated_at)).getTime())
       should(await syncDir.readFile(dstFile)).equal('foobar')
     })
 
@@ -501,7 +501,7 @@ describe('Local', function () {
         'dst/dir/',
         'src/'
       ])
-      should(+(await syncDir.mtime(dstDir))).equal(+dstDir.updated_at)
+      should((await syncDir.mtime(dstDir)).getTime()).equal((new Date(dstDir.updated_at)).getTime())
     })
 
     it('throws ENOENT on missing source', async function () {
