@@ -267,20 +267,17 @@ describe('Merge', function () {
         this.merge.addFileAsync('local', _.cloneDeep(offUpdate))
         )
 
+        const doc = builders
+          .metafile(initialFile)
+          .data('off update')
+          .updatedAt(offUpdate.updated_at)
+          .sides({ local: 2 })
+          .build()
+        delete doc._rev // Side effects don't include doc's _rev
+        delete doc.remote // FIXME: stop mixing no remote attribute and undefined remote attribute
+
         should(sideEffects).deepEqual({
-          savedDocs: [{
-            _id: initialFile._id,
-            class: 'application',
-            docType: 'file',
-            ino: initialFile.ino,
-            md5sum: offUpdate.md5sum,
-            mime: 'application/octet-stream',
-            path: initialFile.path,
-            sides: {local: 2},
-            size: offUpdate.size,
-            tags: initialFile.tags, // tags can't be updated on the local side
-            updated_at: offUpdate.updated_at
-          }],
+          savedDocs: [doc],
           resolvedConflicts: []
         })
       })
@@ -295,23 +292,17 @@ describe('Merge', function () {
           this.merge.addFileAsync('local', _.cloneDeep(secondUpdate))
         )
 
+        const doc = builders
+          .metafile(initial)
+          .data('second update')
+          .updatedAt(secondUpdate.updated_at)
+          .remote(synced.remote)
+          .sides({ local: 4, remote: 2 })
+          .build()
+        delete doc._rev // Side effects don't include doc's _rev
+
         should(sideEffects).deepEqual({
-          savedDocs: [
-            {
-              _id: initial._id,
-              class: 'application',
-              docType: initial.docType,
-              ino: initial.ino,
-              md5sum: secondUpdate.md5sum,
-              mime: 'application/octet-stream',
-              path: initial.path,
-              remote: synced.remote,
-              sides: {local: 4, remote: 2},
-              size: secondUpdate.size,
-              tags: initial.tags, // can't have been updated on the local side
-              updated_at: secondUpdate.updated_at
-            }
-          ],
+          savedDocs: [doc],
           resolvedConflicts: []
         })
       })
@@ -449,30 +440,18 @@ describe('Merge', function () {
     it('resolves a conflict between a new remote update and a previous local version', async function () {
       const initial = await builders.metafile().sides({local: 1}).ino(456).data('initial content').create()
       const synced = await builders.metafile(initial).sides({local: 2, remote: 2}).create()
-      const mergedLocalUpdate = await builders.metafile(synced).sides({local: 3, remote: 2}).data('local update').create()
+      await builders.metafile(synced).sides({local: 3, remote: 2}).data('local update').create()
       const newRemoteUpdate = builders.metafile(synced).unmerged('remote').data('remote update').build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.updateFileAsync('remote', newRemoteUpdate)
       )
 
+      const doc = builders.metafile(initial).data('local update').sides({ local: 3 }).build()
+      delete doc._rev // Side effects don't include the doc's _rev
+      delete doc.remote // FIXME: stop mixing no remote attribute and undefined remote attribute
       should(sideEffects).deepEqual({
-        savedDocs: [
-          {
-            _id: initial._id,
-            class: 'application',
-            docType: initial.docType,
-            ino: initial.ino,
-            md5sum: mergedLocalUpdate.md5sum,
-            mime: 'application/octet-stream',
-            path: initial.path,
-            sides: {local: 3},
-            size: mergedLocalUpdate.size,
-            // no remote since file was dissociated
-            tags: initial.tags, // could only have been updated from a remote update
-            updated_at: mergedLocalUpdate.updated_at
-          }
-        ],
+        savedDocs: [doc],
         resolvedConflicts: [
           ['remote', _.pick(newRemoteUpdate, ['path', 'remote'])]
         ]
@@ -767,43 +746,13 @@ describe('Merge', function () {
           this.merge.moveFileAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
         )
 
-        const {_id: dstId, path: dstPath} = _.find(
+        const { _id: dstId, path: dstPath } = _.find(
           sideEffects.savedDocs,
           ({path}) => path.match(/conflict/)
         )
-        const src = {
-          _deleted: true,
-          _id: was._id,
-          class: 'application',
-          docType: was.docType,
-          md5sum: was.md5sum,
-          mime: 'application/octet-stream',
-          moveTo: dstId,
-          path: was.path,
-          remote: was.remote,
-          sides: {local: 3, remote: 2},
-          size: was.size,
-          tags: was.tags,
-          updated_at: was.updated_at
-        }
-        const dst = {
-          _id: dstId,
-          class: 'application',
-          docType: doc.docType,
-          md5sum: doc.md5sum,
-          mime: 'application/octet-stream',
-          moveFrom: _.defaults({
-            _rev: was._rev,
-            moveTo: dstId,
-            updated_at: was.updated_at
-          }, src),
-          path: dstPath,
-          remote: doc.remote,
-          sides: {local: 1},
-          size: doc.size,
-          tags: doc.tags,
-          updated_at: doc.updated_at
-        }
+        const src = builders.metafile(was).moveTo(dstId).sides({ local: 3, remote: 2 }).build()
+        const dst = builders.metafile(doc).path(dstPath).moveFrom(src).sides({ local: 1 }).build()
+        delete src._rev // Side effects don't include the doc's _rev
         should(sideEffects).deepEqual({
           savedDocs: [src, dst],
           resolvedConflicts: [
@@ -963,37 +912,8 @@ describe('Merge', function () {
           this.merge.moveFileAsync(this.side, _.cloneDeep(qux), _.cloneDeep(baz))
         )
 
-        const src = {
-          _deleted: true,
-          _id: baz._id,
-          class: 'application',
-          docType: baz.docType,
-          md5sum: baz.md5sum,
-          mime: 'application/octet-stream',
-          moveTo: qux._id,
-          path: baz.path,
-          remote: baz.remote,
-          sides: {local: 1, remote: 2},
-          size: baz.size,
-          tags: baz.tags,
-          updated_at: baz.updated_at
-        }
-        const dst = {
-          _id: qux._id,
-          class: 'application',
-          docType: qux.docType,
-          md5sum: baz.md5sum,
-          mime: 'application/octet-stream',
-          moveFrom: _.defaults({
-            updated_at: baz.updated_at // FIXME: Stop mixing dates & strings
-          }, src),
-          path: qux.path,
-          remote: qux.remote,
-          sides: {local: 1, remote: 2},
-          size: qux.size,
-          tags: [],
-          updated_at: qux.updated_at
-        }
+        const src = builders.metafile(baz).sides({ local: 1, remote: 2 }).moveTo(qux.path).build()
+        const dst = builders.metafile(qux).sides({ local: 1, remote: 2 }).moveFrom(src).build()
         should(sideEffects).deepEqual({
           savedDocs: [src, dst],
           resolvedConflicts: []
@@ -1096,34 +1016,14 @@ describe('Merge', function () {
           this.merge.moveFolderAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
         )
 
-        const {_id: dstId, path: dstPath} = _.find(
+        const { _id: dstId, path: dstPath } = _.find(
           sideEffects.savedDocs,
           ({path}) => path.match(/conflict/)
         )
-        const src = {
-          _deleted: true,
-          _id: was._id,
-          docType: was.docType,
-          moveTo: dstId,
-          path: was.path,
-          remote: was.remote,
-          sides: {local: 3, remote: 2},
-          tags: was.tags,
-          updated_at: was.updated_at
-        }
-        const dst = {
-          _id: dstId,
-          docType: doc.docType,
-          moveFrom: _.defaults({
-            _rev: was._rev,
-            updated_at: was.updated_at
-          }, src),
-          path: dstPath,
-          remote: doc.remote,
-          sides: {local: 1},
-          tags: doc.tags,
-          updated_at: doc.updated_at
-        }
+
+        const src = builders.metadir(was).sides({ local: 3, remote: 2 }).moveTo(dstId).build()
+        const dst = builders.metadir(doc).sides({ local: 1 }).moveFrom(src).path(dstPath).build()
+        delete src._rev // Side effects don't include doc's _rev
 
         should(sideEffects).deepEqual({
           savedDocs: [src, dst],
@@ -1231,35 +1131,16 @@ describe('Merge', function () {
       it('does not have identity conflicts', async function () {
         await builders.metadir().path('NUKEM').create()
         const duke = builders.metadir().path('duke').upToDate().build()
-        const nukem = _.defaults({_id: 'nukem', path: 'nukem'}, duke)
+        const nukem = builders.metadir(duke).path('nukem').build()
 
         const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.moveFolderAsync(this.side, nukem, duke)
+          this.merge.moveFolderAsync(this.side, _.cloneDeep(nukem), _.cloneDeep(duke))
         )
 
-        const src = {
-          _deleted: true,
-          _id: duke._id,
-          docType: duke.docType,
-          moveTo: nukem._id,
-          path: duke.path,
-          remote: duke.remote,
-          sides: {local: 1, remote: 2},
-          tags: duke.tags,
-          updated_at: duke.updated_at
-        }
-        const dst = {
-          _id: nukem._id,
-          docType: nukem.docType,
-          moveFrom: _.defaults({
-            updated_at: duke.updated_at
-          }, src),
-          path: nukem.path,
-          remote: nukem.remote,
-          sides: {local: 1, remote: 2},
-          tags: nukem.tags,
-          updated_at: nukem.updated_at
-        }
+        const src = builders.metadir(duke).sides({ local: 1, remote: 2 }).moveTo(nukem.path).build()
+        const dst = builders.metadir(nukem).sides({ local: 1, remote: 2 }).moveFrom(src).build()
+        delete dst._rev // Side effects don't include doc's _rev
+
         should(sideEffects).deepEqual({
           savedDocs: [src, dst],
           resolvedConflicts: []

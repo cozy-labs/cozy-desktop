@@ -61,6 +61,12 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  moveTo (id /*: string */) /*: this */ {
+    this.doc.moveTo = id
+    this.doc._deleted = true
+    return this
+  }
+
   /** Make sure the doc is not the same as before. */
   whateverChange () /*: this */ {
     this.doc.tags = this.doc.tags || []
@@ -156,6 +162,11 @@ module.exports = class BaseMetadataBuilder {
       _id,
       _rev: dbBuilders.rev()
     }
+    return this
+  }
+
+  remote (doc /*: RemoteDoc */) /*: this */ {
+    this.doc.remote = doc
     return this
   }
 
