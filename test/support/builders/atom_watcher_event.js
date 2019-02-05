@@ -115,4 +115,10 @@ module.exports = class AtomWatcherEventBuilder {
     this._event.noIgnore = true
     return this
   }
+
+  incomplete () /*: this */ {
+    this._event.incomplete = true
+    this.noStats()
+    return this
+  }
 }
