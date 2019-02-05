@@ -65,14 +65,15 @@ async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: Ato
   if (kind === 'file') {
     md5sum = await opts.checksumer.push(absPath)
   }
-  let oldPath
 
+  let oldPath
   if (item.event.oldPath) {
     oldPath = p === event.path
       ? item.event.oldPath
       // $FlowFixMe: Renamed events always have an oldPath
       : item.event.oldPath.replace(event.oldPath, event.path)
   }
+
   return {
     [STEP_NAME]: {
       incompleteEvent: item.event,
