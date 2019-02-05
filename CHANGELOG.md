@@ -1,5 +1,17 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.12.1-beta.1 - 2019-02-05
+
+Improvements for Windows and Linux users:
+
+- The watcher type used (i.e. atom or chokidar) can now be chosen via the config
+  file. This means the new watcher will be testable easily with any version of
+  the app starting from now.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.12.1-alpha.1 - 2019-02-04
 
 **Notice:** This release uses the new watcher by default on Windows and
