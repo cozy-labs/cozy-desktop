@@ -1,3 +1,4 @@
+/* eslint-disable node/no-unpublished-require */
 /* eslint-disable no-unused-vars */
 const React = require('react')
 const ReactDOM = require('react-dom')
@@ -6,10 +7,21 @@ const path = require('path')
 
 const Config = require('../core/config')
 const { RemoteCozy } = require('../core/remote/cozy')
-const { initCozyHomeForDesktop } = require('./light')
+const {
+  initCozyHomeForDesktop
+} = require('../../cozy-home/build/cozy-home-for-desktop.js')
 
 function initApp ({ token, uri }, anchorID) {
-  initCozyHomeForDesktop({ token, uri, lang: 'en' }, document.getElementById(anchorID))
+  const cozyDesktopDir =
+    process.env.COZY_DESKTOP_DIR || path.resolve(os.homedir())
+  const basePath = path.join(cozyDesktopDir, '.cozy-desktop')
+  const config = new Config(basePath)
+  const { client: cozy } = new RemoteCozy(config)
+
+  initCozyHomeForDesktop(
+    { token, uri, lang: 'en', cozy },
+    document.getElementById(anchorID)
+  )
 }
 
 module.exports = myAppsAnchorID => {
