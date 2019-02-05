@@ -151,6 +151,16 @@ module.exports = class Config {
     this.persist()
   }
 
+  get watcherType () {
+    if (!this.config.watcherType) {
+      this.config.watcherType = (
+        userDefinedWatcherType(process.env) ||
+        platformDefaultWatcherType(process.platform)
+      )
+    }
+    return this.config.watcherType
+  }
+
   // Set the pull, push or full mode for this device
   // It will throw an exception if the mode is not compatible with the last
   // mode used!
@@ -190,4 +200,21 @@ module.exports = class Config {
     delete this.config.state
     return Promise.resolve()
   }
+}
+
+function userDefinedWatcherType (env) /*: WatcherType | null */ {
+  const { COZY_FS_WATCHER } = env
+  if (COZY_FS_WATCHER === 'atom') {
+    return 'atom'
+  } else if (COZY_FS_WATCHER === 'chokidar') {
+    return 'chokidar'
+  }
+  return null
+}
+
+function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ {
+  if (platform === 'darwin') {
+    return 'chokidar'
+  }
+  return 'chokidar' // XXX: Should be 'atom' once we go live with the new watcher
 }

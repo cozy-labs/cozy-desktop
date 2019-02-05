@@ -5,6 +5,7 @@ const should = require('should')
 const fse = require('fs-extra')
 const configHelpers = require('../support/helpers/config')
 const { COZY_URL } = require('../support/helpers/cozy')
+const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 
 const Config = require('../../core/config')
 
@@ -201,6 +202,50 @@ describe('Config', function () {
     it('has no client after a reset', function () {
       this.config.reset()
       should(this.config.isValid()).be.false()
+    })
+  })
+
+  describe('WatcherType', function () {
+    it('returns watcher type if any', function () {
+      this.config.config.watcherType = 'fooWatcher'
+      should(this.config.watcherType).equal('fooWatcher')
+    })
+
+    context('when the COZY_FS_WATCHER env variable value is atom', function () {
+      beforeEach(function () {
+        Object.defineProperty(process.env, 'COZY_FS_WATCHER', {
+          value: 'atom'
+        })
+      })
+
+      it('returns atom', function () {
+        should(this.config.watcherType).equal('atom')
+      })
+    })
+
+    context('when the COZY_FS_WATCHER env variable value is something else', function () {
+      beforeEach(function () {
+        Object.defineProperty(process.env, 'COZY_FS_WATCHER', {
+          value: 'something'
+        })
+      })
+
+      it('returns chokidar', function () {
+        should(this.config.watcherType).equal('chokidar')
+      })
+    })
+
+    onPlatform('darwin', function () {
+      it('returns chokidar by default', function () {
+        should(this.config.watcherType).equal('chokidar')
+      })
+    })
+
+    onPlatforms(['linux', 'win32'], function () {
+      // FIXME: It returns 'atom' by default once the new watcher is live
+      it('returns chokidar by default', function () {
+        should(this.config.watcherType).equal('chokidar')
+      })
     })
   })
 

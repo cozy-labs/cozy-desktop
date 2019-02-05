@@ -57,7 +57,7 @@ module.exports = class Local /*:: implements Side */ {
     this.events = events
     this.syncPath = config.syncPath
     this.tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
-    this.watcher = watcher.build(this.syncPath, this.prep, this.pouch, events, ignore)
+    this.watcher = watcher.build(config, this.prep, this.pouch, events, ignore)
     // $FlowFixMe
     this.other = null
     this._trash = trash

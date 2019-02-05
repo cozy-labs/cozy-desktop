@@ -21,28 +21,9 @@ export interface Watcher {
 }
 */
 
-function userDefinedWatcherType (env) /*: WatcherType | null */ {
-  const { COZY_FS_WATCHER } = env
-  if (COZY_FS_WATCHER === 'atom') {
-    return 'atom'
-  } else if (COZY_FS_WATCHER === 'chokidar') {
-    return 'chokidar'
-  }
-  return null
-}
+function build (config /*: { syncPath: string, watcherType: string } */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) /*: Watcher */ {
+  const { syncPath, watcherType } = config
 
-function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ {
-  if (platform === 'darwin') {
-    return 'chokidar'
-  }
-  return 'chokidar' // TODO: Use atom watcher
-}
-
-function build (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) /*: Watcher */ {
-  const watcherType = (
-    userDefinedWatcherType(process.env) ||
-    platformDefaultWatcherType(process.platform)
-  )
   if (watcherType === 'atom') {
     return new AtomWatcher(syncPath, prep, pouch, events, ignore)
   } else {
