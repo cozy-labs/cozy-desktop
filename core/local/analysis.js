@@ -42,7 +42,6 @@ const panic = (context, description) => {
 
 class LocalChangeMap {
   /*::
-  changes: LocalChange[]
   changesByInode: Map<number, LocalChange>
   changesByPath: Map<string, LocalChange>
   */
@@ -52,7 +51,6 @@ class LocalChangeMap {
   }
 
   _clear () {
-    this.changes = []
     this.changesByInode = new Map()
     this.changesByPath = new Map()
   }
@@ -70,13 +68,11 @@ class LocalChangeMap {
   put (c /*: LocalChange */) {
     this.changesByPath.set(c.path, c)
     if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
-    else this.changes.push(c)
   }
 
   remove (c /*: LocalChange */) {
     this.changesByPath.delete(c.path)
     if (typeof c.ino === 'number') this.changesByInode.delete(c.ino)
-    else _.pull(this.changes, c) // OPTIMIZE: Do not scan the whole Array
   }
 
   replace (replaced /*: LocalChange */, replacement /*: LocalChange */) {
@@ -85,16 +81,14 @@ class LocalChangeMap {
   }
 
   flush () /*: LocalChange[] */ {
-    const changes = this.changes
-    for (let a of this.changesByInode.values()) changes.push(a)
+    const changes = this.changesByInode.values()
     this._clear()
-    return changes
+    return Array.from(changes)
   }
 }
 
 function analyseEvents (events /*: LocalEvent[] */, pendingChanges /*: LocalChange[] */) /*: LocalChange[] */ {
   const stopMeasure = measureTime('LocalWatcher#analyseEvents')
-  // OPTIMIZE: new Array(events.length)
   const changesFound = new LocalChangeMap()
 
   if (pendingChanges.length > 0) {
