@@ -17,6 +17,7 @@ const rimrafAsync = Promise.promisify(rimraf)
 /*::
 import type Local from '../../../core/local'
 import type { ChokidarEvent } from '../../../core/local/chokidar_event'
+import type { Batch } from '../../../core/local/steps/event'
 */
 
 class LocalTestHelpers {
@@ -96,6 +97,13 @@ class LocalTestHelpers {
   async simulateEvents (events /*: ChokidarEvent[] */) {
     // $FlowFixMe
     return this.local.watcher.onFlush(events)
+  }
+
+  simulateAtomEvents (batches /*: Batch[] */) {
+    for (const batch of batches) {
+      // $FlowFixMe
+      this.local.watcher.producer.buffer.push(batch)
+    }
   }
 
   async readFile (path /*: string */) /*: Promise<string> */ {
