@@ -216,5 +216,5 @@ function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ 
   if (platform === 'darwin') {
     return 'chokidar'
   }
-  return 'chokidar' // XXX: Should be 'atom' once we go live with the new watcher
+  return 'atom'
 }
