@@ -7,7 +7,16 @@ const _ = require('lodash')
 const path = require('path')
 const should = require('should')
 
-const { scenarios, loadFSEventFiles, runActions, init } = require('../support/helpers/scenarios')
+const AtomWatcher = require('../../core/local/atom_watcher')
+const dispatch = require('../../core/local/steps/dispatch')
+
+const {
+  init,
+  loadFSEventFiles,
+  loadAtomCaptures,
+  runActions,
+  scenarios
+} = require('../support/helpers/scenarios')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const { IntegrationTestHelpers } = require('../support/helpers/integration')
@@ -61,6 +70,46 @@ describe('Test scenarios', function () {
         : process.platform === 'darwin'
         ? 'chokidar'
         : 'atom'
+
+      for (let atomCapture of loadAtomCaptures(scenario)) {
+        const localTestName = `test/scenarios/${scenario.name}/atom/${atomCapture.name}`
+        if (watcherType !== 'atom') {
+          it.skip(localTestName, () => {})
+          continue
+        }
+
+        it(localTestName, async function () {
+          if (scenario.init) {
+            let relpathFix = _.identity
+            await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix, true)
+          }
+
+          await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
+          let resolveMerge
+          const mergePromise = new Promise((resolve, reject) => { resolveMerge = resolve })
+          const { watcher } = helpers.local.local
+          if (!(watcher instanceof AtomWatcher)) {
+            throw new Error(`${watcher.constructor.name} !== ${AtomWatcher.name}`)
+          }
+          const actuallyDispatchBatch = dispatch.batchDispatcher(watcher)
+          const mergeDoneBatch = [{action: 'deleted', kind: 'directory', path: '.merge-done'}]
+          watcher.dispatchBatch = batch => {
+            if (_.isEqual(batch, mergeDoneBatch)) {
+              resolveMerge()
+            } else {
+              return actuallyDispatchBatch(batch)
+            }
+          }
+          helpers.local.simulateAtomEvents(atomCapture.batches)
+          helpers.local.simulateAtomEvents([mergeDoneBatch])
+          await mergePromise
+          await helpers.syncAll()
+          await helpers.remote.pullChanges()
+          await helpers.syncAll()
+
+          await verifyExpectations(scenario, {includeRemoteTrash: true})
+        })
+      }
 
       for (let eventsFile of loadFSEventFiles(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
