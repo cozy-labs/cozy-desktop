@@ -93,4 +93,11 @@ module.exports = class Builders {
   event (old /*: ?AtomWatcherEvent */) /*: AtomWatcherEventBuilder */ {
     return new AtomWatcherEventBuilder(old)
   }
+
+  nonEmptyBatch (batchNumber /*: number */ = 1) /*: AtomWatcherEvent[] */ {
+    return [
+      this.event().action('created').kind('file').path(`file-from-batch-${batchNumber}`).build(),
+      this.event().action('deleted').kind('directory').path(`dir-from-batch-${batchNumber}`).build()
+    ]
+  }
 }
