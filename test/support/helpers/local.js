@@ -12,23 +12,40 @@ const { ContextDir } = require('./context_dir')
 
 const Local = require('../../../core/local')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
+const dispatch = require('../../../core/local/steps/dispatch')
 
 const rimrafAsync = Promise.promisify(rimraf)
 
 /*::
 import type { LocalOptions } from '../../../core/local'
 import type { ChokidarEvent } from '../../../core/local/chokidar_event'
+import type { Batch } from '../../../core/local/steps/event'
 */
+
+const simulationCompleteBatch = [
+  {
+    action: 'test-simulation-complete',
+    kind: 'magic',
+    path: ''
+  }
+]
 
 class LocalTestHelpers {
   /*::
   side: Local
   syncDir: ContextDir
   trashDir: ContextDir
+  _resolveSimulation: ?() => void
   */
 
   constructor (opts /*: LocalOptions */) {
-    this.side = new Local(opts)
+    const localOptions /*: LocalOptions */ = Object.assign(
+      ({
+        onAtomEvents: this.dispatchAtomEvents.bind(this)
+      } /*: Object */),
+      opts
+    )
+    this.side = new Local(localOptions)
     this.syncDir = new ContextDir(this.side.syncPath)
     autoBind(this)
   }
@@ -97,6 +114,40 @@ class LocalTestHelpers {
   async simulateEvents (events /*: ChokidarEvent[] */) {
     // $FlowFixMe
     return this.side.watcher.onFlush(events)
+  }
+
+  startSimulation () {
+    return new Promise((resolve, reject) => {
+      this._resolveSimulation = resolve
+    })
+  }
+
+  isSimulationEnd (batch /*: Batch */) {
+    const { _resolveSimulation } = this
+    return _resolveSimulation && _.isEqual(batch, simulationCompleteBatch)
+  }
+
+  stopSimulation () {
+    const { _resolveSimulation } = this
+    _resolveSimulation && _resolveSimulation()
+    delete this._resolveSimulation
+  }
+
+  dispatchAtomEvents (batch /*: Batch */) {
+    if (this.isSimulationEnd(batch)) {
+      this.stopSimulation()
+      return []
+    } else {
+      return dispatch.step(this.side)(batch)
+    }
+  }
+
+  simulateAtomEvents (batches /*: Batch[] */) {
+    for (const batch of batches.concat([simulationCompleteBatch])) {
+      // $FlowFixMe
+      this.side.watcher.producer.buffer.push(batch)
+    }
+    return this.startSimulation()
   }
 
   async readFile (path /*: string */) /*: Promise<string> */ {

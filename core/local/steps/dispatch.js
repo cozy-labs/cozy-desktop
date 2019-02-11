@@ -13,7 +13,7 @@ import type EventEmitter from 'events'
 import type Prep from '../../prep'
 import type Pouch from '../../pouch'
 
-export type AtomEventsDispatcher = (Batch) => ?Promise<void>
+export type AtomEventsDispatcher = (Batch) => Promise<Batch>
 
 type DispatchOptions = {
   events: EventEmitter,
