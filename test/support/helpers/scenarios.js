@@ -79,6 +79,18 @@ module.exports.loadFSEventFiles = (scenario) => {
     })
 }
 
+module.exports.loadAtomCaptures = scenario => {
+  const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'atom', '*.json*'))
+  return eventFiles
+    .map(f => {
+      const name = path.basename(f)
+      const disabled = scenario.disabled
+      const batches = fse.readJsonSync(f)
+
+      return {name, batches, disabled}
+    })
+}
+
 module.exports.loadRemoteChangesFiles = (scenario) => {
   const pattern = path.join(path.dirname(scenario.path), 'remote', '*.json*')
 
