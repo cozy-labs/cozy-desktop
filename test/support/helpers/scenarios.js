@@ -39,6 +39,28 @@ const scenarioByPath = module.exports.scenarioByPath = scenarioPath => {
   return scenario
 }
 
+const statsFixer = (event) => {
+  if (event.stats) {
+    event.stats = _.defaultsDeep({
+      atime: new Date(event.stats.atime),
+      mtime: new Date(event.stats.mtime),
+      ctime: new Date(event.stats.ctime),
+      birthtime: new Date(event.stats.birthtime)
+    }, event.stats)
+  }
+}
+
+const windowsPathFixer = (filename, event) => {
+  if (filename.indexOf('win32') !== -1 && process.platform !== 'win32') {
+    if (event.path) event.path = event.path.replace(/\\/g, '/')
+    if (event.oldPath) event.oldPath = event.oldPath.replace(/\\/g, '/')
+  }
+  if (filename.indexOf('win32') === -1 && process.platform === 'win32') {
+    if (event.path) event.path = event.path.replace(/\//g, '\\')
+    if (event.oldPath) event.oldPath = event.oldPath.replace(/\//g, '\\')
+  }
+}
+
 // TODO: Refactor to function
 module.exports.scenarios =
   glob.sync(path.join(scenariosDir, '**/scenario.js*'), {})
@@ -62,20 +84,38 @@ module.exports.loadFSEventFiles = (scenario) => {
       const name = path.basename(f)
       const disabled = scenario.disabled || disabledEventsFile(name)
       const events = fse.readJsonSync(f).map(e => {
-        if (e.stats) {
-          e.stats.mtime = new Date(e.stats.mtime)
-          e.stats.ctime = new Date(e.stats.ctime)
-        }
-        if (name.indexOf('win32') !== -1 && process.platform !== 'win32') {
-          e.path = e.path && e.path.replace(/\\/g, '/')
-        }
-        if (name.indexOf('win32') === -1 && process.platform === 'win32') {
-          e.path = e.path && e.path.replace(/\//g, '\\')
-        }
+        statsFixer(e)
+        windowsPathFixer(name, e)
         return e
       })
 
       return {name, events, disabled}
+    })
+}
+
+module.exports.loadAtomCaptures = scenario => {
+  const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'atom', '*.json*'))
+  const disabledEventsFile = (name) => {
+    if (process.platform === 'win32' && name.indexOf('win32') === -1) {
+      return 'darwin/linux test'
+    } else if (name.endsWith(disabledExtension)) {
+      return 'disabled case'
+    }
+  }
+  return eventFiles
+    .map(f => {
+      const name = path.basename(f)
+      const disabled = scenario.disabled || disabledEventsFile(name)
+      const batches = fse.readJsonSync(f)
+        .map(batch =>
+          batch.map(event => {
+            statsFixer(event)
+            windowsPathFixer(name, event)
+            return event
+          })
+        )
+
+      return {name, batches, disabled}
     })
 }
 
