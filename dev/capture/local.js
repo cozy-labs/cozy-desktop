@@ -33,16 +33,6 @@ const debug = process.env.DEBUG != null ? console.log : () => {}
 const setupInitialState = (scenario) => {
   if (scenario.init == null) return
   debug('[init]')
-  let pResolve // TODO: reject on chokidar error?
-  const donePromise = new Promise(resolve => { pResolve = resolve })
-  const watcher = chokidar.watch('.', chokidarOptions)
-  watcher.on('error', console.error.bind(console))
-  watcher.on('add', relpath => {
-    if (isDone(relpath)) {
-      watcher.close()
-      pResolve()
-    }
-  })
   return Promise.each(scenario.init, (opts) => {
     let {ino, path: relpath} = opts
     if (relpath.endsWith('/')) {
@@ -57,9 +47,6 @@ const setupInitialState = (scenario) => {
              .then(stats => { mapInode[stats.ino] = ino })
     }
   })
-  .delay(1000)
-  .then(triggerDone)
-  .then(() => donePromise)
 }
 
 const buildFSEvent = (type, relpath, stats) => {
