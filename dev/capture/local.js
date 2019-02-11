@@ -28,9 +28,10 @@ const DONE_FILE = '.done'
 
 const mapInode = {}
 
+const debug = process.env.DEBUG != null ? console.log : () => {}
+
 const setupInitialState = (scenario) => {
   if (scenario.init == null) return
-  const debug = process.env.DEBUG != null ? console.log : () => {}
   debug('[init]')
   let pResolve // TODO: reject on chokidar error?
   const donePromise = new Promise(resolve => { pResolve = resolve })
