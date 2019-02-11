@@ -1,8 +1,13 @@
 const Promise = require('bluebird')
 const chokidar = require('chokidar')
+const EventEmitter = require('events')
 const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
+const sinon = require('sinon')
+
+const Config = require('../../core/config')
+const AtomWatcher = require('../../core/local/atom_watcher')
 const fixturesHelpers = require('../../test/support/helpers/scenarios')
 
 const cliDir = path.resolve(path.join(__dirname, '..', '..'))
@@ -80,7 +85,7 @@ const logFSEvents = (events) => {
   }
 }
 
-const runAndRecordFSEvents = (scenario) => {
+const runAndRecordChokidarEvents = (scenario) => {
   return new Promise((resolve, reject) => {
     const watcher = chokidar.watch('.', chokidarOptions)
     const cleanCallback = cb => function () {
@@ -121,6 +126,44 @@ const runAndRecordFSEvents = (scenario) => {
     watcher.on('error', reject)
   })
 }
+
+const runAndRecordAtomEvents = async scenario => {
+  const prep = {
+    addFileAsync: sinon.stub().resolves(),
+    updateFileAsync: sinon.stub().resolves(),
+    putFolderAsync: sinon.stub().resolves(),
+    moveFileAsync: sinon.stub().resolves(),
+    moveFolderAsync: sinon.stub().resolves(),
+    trashFileAsync: sinon.stub().resolves(),
+    trashFolderAsync: sinon.stub().resolves(),
+    deleteFileAsync: sinon.stub().resolves(),
+    deleteFolderAsync: sinon.stub().resolves()
+  }
+  const pouch = {byRecursivePathAsync: sinon.stub().resolves([])}
+  const events = new EventEmitter()
+  const ignore = {isIgnored: whatever => false}
+  const capturedBatches = []
+  const watcher = new AtomWatcher(syncPath, prep, pouch, events, ignore)
+
+  try {
+    await watcher.start()
+    const { buffer } = watcher.producer
+    const actualPush = buffer.push
+    buffer.push = batch => {
+      capturedBatches.push(_.cloneDeep(batch))
+      actualPush.call(buffer, batch)
+    }
+    await fixturesHelpers.runActions(scenario, abspath)
+    await Promise.delay(1000)
+    await saveFSEventsToFile(scenario, capturedBatches, 'atom')
+  } finally {
+    await watcher.stop()
+  }
+}
+
+const runAndRecordFSEvents = Config.watcherType() === 'atom'
+  ? runAndRecordAtomEvents
+  : runAndRecordChokidarEvents
 
 const captureScenario = (scenario) => {
   return fse.emptyDir(syncPath)
