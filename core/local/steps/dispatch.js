@@ -13,10 +13,13 @@ import type EventEmitter from 'events'
 import type Prep from '../../prep'
 import type Pouch from '../../pouch'
 
+export type AtomEventsDispatcher = (Batch) => ?Promise<void>
+
 type DispatchOptions = {
   events: EventEmitter,
   prep: Prep,
   pouch: Pouch,
+  onAtomEvents?: AtomEventsDispatcher
 }
 */
 
@@ -33,7 +36,7 @@ module.exports = {
 // to have all the data expected by prep/merge.
 function loop (buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ {
   return buffer.asyncMap(
-    step(opts)
+    opts.onAtomEvents || step(opts)
   )
 }
 
