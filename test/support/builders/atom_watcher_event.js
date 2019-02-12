@@ -12,10 +12,33 @@ import type { Stats } from 'fs'
 import type { AtomWatcherEvent, EventAction, EventKind, Batch } from '../../../core/local/steps/event'
 */
 
+const NON_EXECUTABLE_MASK = 0 << 6
+
 function randomPick /*:: <T> */ (elements /*: Array<T> */) /*: T */{
   const l = elements.length
   const i = Math.floor(Math.random() * l)
   return elements[i]
+}
+
+function buildStats (kind /*: EventKind */) /*: fs.Stats */ {
+  let baseStats /*: fs.Stats */
+  if (kind === 'file') {
+    baseStats = fs.statSync(__filename)
+  } else {
+    baseStats = fs.statSync(__dirname)
+  }
+
+  return _.defaults(
+    {
+      atime: new Date(),
+      mtime: new Date(),
+      ctime: new Date(),
+      birthtime: new Date(),
+      mode: baseStats.mode & NON_EXECUTABLE_MASK,
+      size: 0
+    },
+    _.omit(baseStats, ['executable'])
+  )
 }
 
 module.exports = class AtomWatcherEventBuilder {
@@ -27,11 +50,14 @@ module.exports = class AtomWatcherEventBuilder {
     if (old) {
       this._event = _.cloneDeep(old)
     } else {
+      const kind = randomPick(events.KINDS)
+      const stats = buildStats(kind)
       this._event = {
         action: randomPick(events.ACTIONS),
-        kind: randomPick(events.KINDS),
+        kind,
         path: '/',
-        _id: '/'
+        _id: '/',
+        stats
       }
     }
   }
@@ -42,6 +68,9 @@ module.exports = class AtomWatcherEventBuilder {
 
   action (newAction /*: EventAction */) /*: this */ {
     this._event.action = newAction
+
+    if (newAction === 'deleted') this.noStats()
+
     return this
   }
 
@@ -66,11 +95,14 @@ module.exports = class AtomWatcherEventBuilder {
     return this
   }
 
-  stats (newStats /*: { ino?: number } */) /*: this */ {
-    const stats /*: Stats */ = fs.statSync(__filename)
-    Object.assign(stats, newStats)
+  ino (newIno /*: number */) /*: this */ {
+    if (this._event.stats == null) this._event.stats = buildStats(this._event.kind)
+    this._event.stats.ino = newIno
+    return this
+  }
 
-    this._event.stats = stats
+  noStats () /*: this */ {
+    delete this._event.stats
     return this
   }
 

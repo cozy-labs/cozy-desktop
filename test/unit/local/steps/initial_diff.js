@@ -26,8 +26,8 @@ describe('local/steps/initialDiff', () => {
     await builders.metadir().path('foo').ino(1).create()
     await builders.metafile().path('fizz').ino(2).create()
 
-    const bar = builders.event().action('scan').kind('directory').path('bar').stats({ ino: 1 }).build()
-    const buzz = builders.event().action('scan').kind('file').path('buzz').stats({ ino: 2 }).build()
+    const bar = builders.event().action('scan').kind('directory').path('bar').ino(1).build()
+    const buzz = builders.event().action('scan').kind('file').path('buzz').ino(2).build()
     buffer.push([bar, buzz])
     buffer = initialDiff(buffer, { pouch: this.pouch })
 
@@ -43,13 +43,13 @@ describe('local/steps/initialDiff', () => {
     await builders.metafile().path('foo/baz').ino(2).create()
     await builders.metadir().path('bar').ino(3).create()
 
-    const foo = builders.event().action('scan').kind('directory').path('foo').stats({ ino: 1 }).build()
-    const barbaz = builders.event().action('created').kind('file').path('bar/baz').stats({ ino: 2 }).build()
+    const foo = builders.event().action('scan').kind('directory').path('foo').ino(1).build()
+    const barbaz = builders.event().action('created').kind('file').path('bar/baz').ino(2).build()
     buffer.push([foo, barbaz])
-    const bar = builders.event().action('scan').kind('directory').path('bar').stats({ ino: 3 }).build()
+    const bar = builders.event().action('scan').kind('directory').path('bar').ino(3).build()
     buffer.push([
       bar,
-      builders.event().action('scan').kind('file').path('bar/baz').stats({ ino: 2 }).build()
+      builders.event().action('scan').kind('file').path('bar/baz').ino(2).build()
     ])
     buffer = initialDiff(buffer, { pouch: this.pouch })
 
@@ -70,8 +70,8 @@ describe('local/steps/initialDiff', () => {
     await builders.metadir().path('fizz').ino(3).create()
     await builders.metafile().path('buzz').ino(4).create()
 
-    const foo = builders.event().action('scan').kind('file').path('foo').stats({ ino: 2 }).build()
-    const buzz = builders.event().action('scan').kind('directory').path('buzz').stats({ ino: 3 }).build()
+    const foo = builders.event().action('scan').kind('file').path('foo').ino(2).build()
+    const buzz = builders.event().action('scan').kind('directory').path('buzz').ino(3).build()
     buffer.push([foo, buzz])
     buffer = initialDiff(buffer, { pouch: this.pouch })
 
