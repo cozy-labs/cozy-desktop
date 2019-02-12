@@ -989,7 +989,7 @@ describe('Merge', function () {
           }, src),
           path: qux.path,
           remote: qux.remote,
-          sides: {local: 1, remote: 2},
+          sides: {local: 1},
           size: qux.size,
           tags: [],
           updated_at: qux.updated_at
@@ -1256,7 +1256,7 @@ describe('Merge', function () {
           }, src),
           path: nukem.path,
           remote: nukem.remote,
-          sides: {local: 1, remote: 2},
+          sides: {local: 1},
           tags: nukem.tags,
           updated_at: nukem.updated_at
         }

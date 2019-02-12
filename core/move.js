@@ -1,7 +1,9 @@
 /* @flow */
 
+const metadata = require('./metadata')
+
 /*::
-import type { Metadata } from './metadata'
+import type { SideName, Metadata } from './metadata'
 */
 
 // Export so the following possible is possible:
@@ -15,7 +17,7 @@ move.child = child
 
 // Modify the given src/dst docs so they can be merged then moved accordingly
 // during sync.
-function move (src /*: Metadata */, dst /*: Metadata */) {
+function move (side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
   // moveTo is used for comparison. It's safer to take _id
   // than path for this case, as explained in doc/developer/design.md
   src.moveTo = dst._id
@@ -31,16 +33,17 @@ function move (src /*: Metadata */, dst /*: Metadata */) {
   delete dst.trashed
 
   dst.moveFrom = src
+
+  if (!dst.overwrite) {
+    delete dst._rev
+  }
+  delete dst.sides
+  metadata.markSide(side, dst)
 }
 
 // Same as move() but mark the source as a child move so it will be moved with
 // its ancestor, not by itself, during sync.
-function child (src /*: Metadata */, dst /*: Metadata */) {
+function child (side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
   src.childMove = true
-  move(src, dst)
-
-  // TODO: Find out why _rev is removed only from child move destinations and
-  // explain it here. Or in case it would make sense, move it to the move()
-  // function above.
-  delete dst._rev
+  move(side, src, dst)
 }

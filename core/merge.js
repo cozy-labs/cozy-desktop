@@ -258,7 +258,7 @@ class Merge {
       if (doc.ino == null) { doc.ino = was.ino }
       if (doc.fileid == null) { doc.fileid = was.fileid }
       if (doc.remote == null) { doc.remote = was.remote }
-      move(was, doc)
+      move(side, was, doc)
       if (file && metadata.sameFile(file, doc)) {
         log.info({path}, 'up to date (move)')
         return null
@@ -310,8 +310,6 @@ class Merge {
         doc.overwrite = folder
       } else {
         const dst = await this.resolveConflictAsync(side, doc, folder)
-        dst.sides = {}
-        dst.sides[side] = 1
         return this.moveFolderRecursivelyAsync(side, dst, was, newRemoteRevs)
       }
     }
@@ -329,7 +327,7 @@ class Merge {
     log.debug({path: folder.path, oldpath: was.path}, 'moveFolderRecursivelyAsync')
     const docs = await this.pouch.byRecursivePathAsync(was._id)
 
-    move(was, folder)
+    move(side, was, folder)
     let bulk = [was, folder]
 
     const makeDestinationID = (doc) => doc._id.replace(was._id, folder._id)
@@ -342,11 +340,11 @@ class Merge {
       dst.path = doc.path.replace(was.path, folder.path)
       if (src.sides && src.sides[side] && !src.sides[otherSide(side)]) {
         metadata.markAsUnsyncable(side, src)
+        metadata.markAsNew(dst)
+        metadata.markSide(side, dst)
       } else {
-        move.child(src, dst)
+        move.child(side, src, dst)
       }
-      metadata.markAsNew(dst)
-      metadata.markSide(side, dst)
 
       let existingDstRev = existingDstRevs[dst._id]
       if (existingDstRev && folder.overwrite) dst._rev = existingDstRev
