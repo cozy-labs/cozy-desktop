@@ -14,7 +14,7 @@ describe('move', () => {
       const src = builders.metadata().path('whatever/src').build()
       const dst = _.defaults({path: 'whatever/dst'}, src)
 
-      move.child(src, dst)
+      move.child('local', src, dst)
 
       should(dst).have.propertyByPath('moveFrom', 'childMove').eql(true)
     })
