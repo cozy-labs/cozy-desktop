@@ -19,7 +19,10 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
     this.doc.docType = 'file'
     this.doc.mime = mimeType
     this.doc.class = mimeType.split('/')[0]
-    this.data('')
+
+    if (this.doc.md5sum == null) {
+      this.data('')
+    }
   }
 
   data (data /*: string */) /*: this */ {

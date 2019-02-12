@@ -251,8 +251,8 @@ class Merge {
       }
       metadata.assignMaxDate(doc, was)
       if (doc.size == null) { doc.size = was.size }
-      if (doc.class == null) { doc.class = was.class }
-      if (doc.mime == null) { doc.mime = was.mime }
+      if (doc.class == null) { doc.class = was.class } // FIXME: Seems useless since metadata.buildFile adds it
+      if (doc.mime == null) { doc.mime = was.mime } // FIXME: Seems useless since metadata.buildFile adds it
       if (doc.tags == null) { doc.tags = was.tags || [] }
       if (doc.ino == null) { doc.ino = was.ino }
       if (doc.fileid == null) { doc.fileid = was.fileid }
