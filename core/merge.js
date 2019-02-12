@@ -178,6 +178,7 @@ class Merge {
           // the old file should be dissociated from the remote
           delete file.remote
           if (file.sides) delete file.sides.remote
+          metadata.markSide('local', file, file)
           await this.pouch.put(file)
         }
         return

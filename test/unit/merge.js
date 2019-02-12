@@ -466,7 +466,7 @@ describe('Merge', function () {
             md5sum: mergedLocalUpdate.md5sum,
             mime: 'application/octet-stream',
             path: initial.path,
-            sides: {local: 3},
+            sides: {local: 4},
             size: mergedLocalUpdate.size,
             // no remote since file was dissociated
             tags: initial.tags, // could only have been updated from a remote update
