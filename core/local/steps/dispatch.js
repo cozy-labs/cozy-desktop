@@ -8,6 +8,7 @@ const log = logger({
 
 /*::
 import type Buffer from './buffer'
+import type { Batch } from './event'
 import type EventEmitter from 'events'
 import type Prep from '../../prep'
 import type Pouch from '../../pouch'
@@ -29,8 +30,12 @@ module.exports = function (buffer /*: Buffer */, opts /*: DispatchOptions */) /*
   events = opts.events
   target = opts.prep
   pouch = opts.pouch
+  const dispatchBatch = batchDispatcher()
+  return buffer.asyncMap(dispatchBatch)
+}
 
-  return buffer.asyncMap(async (batch) => {
+const batchDispatcher = () =>
+  async function dispatchBatch (batch /*: Batch */) {
     for (const event of batch) {
       try {
         log.trace({event}, 'dispatch')
@@ -44,10 +49,8 @@ module.exports = function (buffer /*: Buffer */, opts /*: DispatchOptions */) /*
         console.log('Dispatch error:', err, event) // TODO
       }
     }
-
     return batch
-  })
-}
+  }
 
 actions = {
   initialScanDone: () => {
