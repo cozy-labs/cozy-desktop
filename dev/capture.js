@@ -44,7 +44,7 @@ const captureScenariosEvents = async (scenarios, sides) => {
       for (let side of sides) {
         try {
           const outputFilename = await side.captureScenario(scenario)
-          console.log(`    \x1B[1;32m✓\x1B[0m ${side.name}/${outputFilename}`)
+          console.log(`    \x1B[1;32m✓\x1B[0m ${outputFilename}`)
         } catch (err) {
           console.log(`    \x1B[1;31m✗\x1B[0m ${side.name}/`)
           console.error('\x1B[1;31m', err, '\x1B[0m')
