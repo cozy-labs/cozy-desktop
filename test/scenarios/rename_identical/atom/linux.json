@@ -1,0 +1,34 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "DIR-CASE",
+      "oldPath": "dir-case"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "FILE-CASE",
+      "oldPath": "file-case"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "dir-nfc-to-nfd-é",
+      "oldPath": "dir-nfc-to-nfd-é"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "file-nfc-to-nfd-é",
+      "oldPath": "file-nfc-to-nfd-é"
+    }
+  ]
+]

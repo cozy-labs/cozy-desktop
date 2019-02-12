@@ -1,0 +1,18 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "dst/dir1",
+      "oldPath": "src/dir1"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "dst/dir2",
+      "oldPath": "src/dir2"
+    }
+  ]
+]
