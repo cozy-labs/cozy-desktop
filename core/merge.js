@@ -248,7 +248,6 @@ class Merge {
         await this.resolveConflictAsync(side, doc, file)
         return
       }
-      metadata.markSide(side, was, was)
       metadata.assignMaxDate(doc, was)
       if (doc.size == null) { doc.size = was.size }
       if (doc.class == null) { doc.class = was.class }
@@ -296,7 +295,6 @@ class Merge {
       return this.resolveConflictAsync(side, doc, folder)
     }
 
-    metadata.markSide(side, was, was)
     metadata.assignMaxDate(doc, was)
     if (doc.tags == null) { doc.tags = was.tags || [] }
     if (doc.ino == null) { doc.ino = was.ino }

@@ -781,7 +781,7 @@ describe('Merge', function () {
           moveTo: dstId,
           path: was.path,
           remote: was.remote,
-          sides: {local: 3, remote: 2},
+          sides: {local: 2, remote: 2},
           size: was.size,
           tags: was.tags,
           updated_at: was.updated_at
@@ -973,7 +973,7 @@ describe('Merge', function () {
           moveTo: qux._id,
           path: baz.path,
           remote: baz.remote,
-          sides: {local: 1, remote: 2},
+          sides: {local: 2, remote: 2},
           size: baz.size,
           tags: baz.tags,
           updated_at: baz.updated_at
@@ -1107,7 +1107,7 @@ describe('Merge', function () {
           moveTo: dstId,
           path: was.path,
           remote: was.remote,
-          sides: {local: 3, remote: 2},
+          sides: {local: 2, remote: 2},
           tags: was.tags,
           updated_at: was.updated_at
         }
@@ -1244,7 +1244,7 @@ describe('Merge', function () {
           moveTo: nukem._id,
           path: duke.path,
           remote: duke.remote,
-          sides: {local: 1, remote: 2},
+          sides: {local: 2, remote: 2},
           tags: duke.tags,
           updated_at: duke.updated_at
         }
