@@ -42,6 +42,7 @@ module.exports = class AtomWatcher {
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
+  dispatchBatch: ?Function
   */
 
   constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) {
