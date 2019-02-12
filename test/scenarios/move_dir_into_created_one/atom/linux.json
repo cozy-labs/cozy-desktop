@@ -1,0 +1,44 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dir2"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "dir2/dir1",
+      "oldPath": "dir1"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "dir2/dir1",
+      "stats": {
+        "dev": 64771,
+        "mode": 16877,
+        "nlink": 2,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 4981421,
+        "size": 4096,
+        "blocks": 8,
+        "atimeMs": 1549961641035.7166,
+        "mtimeMs": 1549961639023.619,
+        "ctimeMs": 1549961641035.7166,
+        "birthtimeMs": 1549961641035.7166,
+        "atime": "2019-02-12T08:54:01.036Z",
+        "mtime": "2019-02-12T08:53:59.024Z",
+        "ctime": "2019-02-12T08:54:01.036Z",
+        "birthtime": "2019-02-12T08:54:01.036Z"
+      },
+      "kind": "unknown"
+    }
+  ]
+]

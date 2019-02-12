@@ -1,0 +1,123 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "FOO"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "FOO/subdir"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "FOO/subdir/file"
+    },
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "FOO/subdir/file"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "FOO/subdir",
+      "stats": {
+        "dev": 64771,
+        "mode": 16877,
+        "nlink": 2,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 4985207,
+        "size": 4096,
+        "blocks": 8,
+        "atimeMs": 1549961589665.2175,
+        "mtimeMs": 1549961589667.2178,
+        "ctimeMs": 1549961589667.2178,
+        "birthtimeMs": 1549961589667.2178,
+        "atime": "2019-02-12T08:53:09.665Z",
+        "mtime": "2019-02-12T08:53:09.667Z",
+        "ctime": "2019-02-12T08:53:09.667Z",
+        "birthtime": "2019-02-12T08:53:09.667Z"
+      },
+      "kind": "unknown"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "FOO/subdir/file",
+      "stats": {
+        "dev": 64771,
+        "mode": 33188,
+        "nlink": 1,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 4987626,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1549961589667.2178,
+        "mtimeMs": 1549961589667.2178,
+        "ctimeMs": 1549961589667.2178,
+        "birthtimeMs": 1549961589667.2178,
+        "atime": "2019-02-12T08:53:09.667Z",
+        "mtime": "2019-02-12T08:53:09.667Z",
+        "ctime": "2019-02-12T08:53:09.667Z",
+        "birthtime": "2019-02-12T08:53:09.667Z"
+      },
+      "kind": "unknown"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "FOO/subdir/file",
+      "stats": {
+        "dev": 64771,
+        "mode": 33188,
+        "nlink": 1,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 4987626,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1549961589667.2178,
+        "mtimeMs": 1549961589667.2178,
+        "ctimeMs": 1549961589667.2178,
+        "birthtimeMs": 1549961589667.2178,
+        "atime": "2019-02-12T08:53:09.667Z",
+        "mtime": "2019-02-12T08:53:09.667Z",
+        "ctime": "2019-02-12T08:53:09.667Z",
+        "birthtime": "2019-02-12T08:53:09.667Z"
+      },
+      "kind": "unknown"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "foo"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "foo"
+    }
+  ]
+]

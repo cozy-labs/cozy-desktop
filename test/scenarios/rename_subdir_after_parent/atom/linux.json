@@ -1,0 +1,26 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "parent-2",
+      "oldPath": "parent"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "parent-2/subdir-2",
+      "oldPath": "parent-2/subdir"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "parent-2/subdir-2/subsubdir-2",
+      "oldPath": "parent-2/subdir-2/subsubdir"
+    }
+  ]
+]
