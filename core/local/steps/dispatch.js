@@ -8,6 +8,7 @@ const log = logger({
 
 /*::
 import type Buffer from './buffer'
+import type { Batch } from './event'
 import type EventEmitter from 'events'
 import type Prep from '../../prep'
 import type Pouch from '../../pouch'
@@ -23,14 +24,21 @@ const SIDE = 'local'
 let actions
 
 module.exports = {
-  loop
+  loop,
+  step
 }
 
 // Dispatch takes a buffer of AtomWatcherEvents batches, and calls Prep for
 // each event. It needs to fetch the old documents from pouchdb in some cases
 // to have all the data expected by prep/merge.
 function loop (buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ {
-  return buffer.asyncMap(async (batch) => {
+  return buffer.asyncMap(
+    step(opts)
+  )
+}
+
+function step (opts /*: DispatchOptions */) {
+  return async (batch /*: Batch */) => {
     for (const event of batch) {
       try {
         log.trace({event}, 'dispatch')
@@ -44,9 +52,8 @@ function loop (buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ 
         console.log('Dispatch error:', err, event) // TODO
       }
     }
-
     return batch
-  })
+  }
 }
 
 actions = {
