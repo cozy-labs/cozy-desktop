@@ -20,14 +20,14 @@ type DispatchOptions = {
 */
 
 const SIDE = 'local'
-let events, target, pouch, actions
+let events, prep, pouch, actions
 
 // Dispatch takes a buffer of AtomWatcherEvents batches, and calls Prep for
 // each event. It needs to fetch the old documents from pouchdb in some cases
 // to have all the data expected by prep/merge.
 module.exports = function (buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ {
   events = opts.events
-  target = opts.prep
+  prep = opts.prep
   pouch = opts.pouch
 
   return buffer.asyncMap(async (batch) => {
@@ -60,22 +60,22 @@ actions = {
 
   createdfile: async (event) => {
     const doc = buildFile(event.path, event.stats, event.md5sum)
-    await target.addFileAsync(SIDE, doc)
+    await prep.addFileAsync(SIDE, doc)
   },
 
   createddirectory: async (event) => {
     const doc = buildDir(event.path, event.stats)
-    await target.putFolderAsync(SIDE, doc)
+    await prep.putFolderAsync(SIDE, doc)
   },
 
   modifiedfile: async (event) => {
     const doc = buildFile(event.path, event.stats, event.md5sum)
-    await target.updateFileAsync(SIDE, doc)
+    await prep.updateFileAsync(SIDE, doc)
   },
 
   modifieddirectory: async (event) => {
     const doc = buildDir(event.path, event.stats)
-    await target.putFolderAsync(SIDE, doc)
+    await prep.putFolderAsync(SIDE, doc)
   },
 
   renamedfile: async (event) => {
@@ -91,7 +91,7 @@ actions = {
       return actions.createdfile(event)
     }
     const doc = buildFile(event.path, event.stats, event.md5sum)
-    await target.moveFileAsync(SIDE, doc, old)
+    await prep.moveFileAsync(SIDE, doc, old)
   },
 
   renameddirectory: async (event) => {
@@ -107,7 +107,7 @@ actions = {
       return actions.createddirectory(event)
     }
     const doc = buildDir(event.path, event.stats)
-    await target.moveFolderAsync(SIDE, doc, old)
+    await prep.moveFolderAsync(SIDE, doc, old)
   },
 
   deletedfile: async (event) => {
@@ -119,7 +119,7 @@ actions = {
       // => we can ignore safely this event
       return
     }
-    await target.trashFileAsync(SIDE, old)
+    await prep.trashFileAsync(SIDE, old)
   },
 
   deleteddirectory: async (event) => {
@@ -131,7 +131,7 @@ actions = {
       // => we can ignore safely this event
       return
     }
-    await target.trashFolderAsync(SIDE, old)
+    await prep.trashFolderAsync(SIDE, old)
   }
 }
 
