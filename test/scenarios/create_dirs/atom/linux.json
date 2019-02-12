@@ -1,0 +1,36 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "foo"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "foo/bar",
+      "stats": {
+        "dev": 64771,
+        "mode": 16893,
+        "nlink": 2,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 2,
+        "size": 4096,
+        "blocks": 8,
+        "atimeMs": 1550661717194.0144,
+        "mtimeMs": 1550661717194.0144,
+        "ctimeMs": 1550661717194.0144,
+        "birthtimeMs": 1550661717194.0144,
+        "atime": "2019-02-20T11:21:57.194Z",
+        "mtime": "2019-02-20T11:21:57.194Z",
+        "ctime": "2019-02-20T11:21:57.194Z",
+        "birthtime": "2019-02-20T11:21:57.194Z"
+      },
+      "kind": "unknown"
+    }
+  ]
+]

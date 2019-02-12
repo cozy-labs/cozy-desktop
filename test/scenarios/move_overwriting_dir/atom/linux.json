@@ -1,0 +1,287 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/file3"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/subdir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/subdir/file5"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dst/dir/subdir"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dst/dir"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst/dir"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "directory",
+      "path": "dst/dir"
+    },
+    {
+      "action": "modified",
+      "kind": "directory",
+      "path": "dst/dir"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/file"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/file2"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst/dir/subdir"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "directory",
+      "path": "dst/dir/subdir"
+    },
+    {
+      "action": "modified",
+      "kind": "directory",
+      "path": "dst/dir/subdir"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/dir/file"
+    },
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/dir/file2"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/dir/file"
+    },
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/dir/file2"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/subdir/file"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/subdir/file6"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst/dir/subdir/subsub"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "directory",
+      "path": "dst/dir/subdir/subsub"
+    },
+    {
+      "action": "modified",
+      "kind": "directory",
+      "path": "dst/dir/subdir/subsub"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/dir/subdir/file"
+    },
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/dir/subdir/file6"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir/file",
+      "stats": {
+        "dev": 64771,
+        "mode": 33204,
+        "nlink": 1,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 6,
+        "size": 0,
+        "blocks": 0,
+        "atimeMs": 1550661812441.3816,
+        "mtimeMs": 1550661812441.3816,
+        "ctimeMs": 1550661812441.3816,
+        "birthtimeMs": 1550661812441.3816,
+        "atime": "2019-02-20T11:23:32.441Z",
+        "mtime": "2019-02-20T11:23:32.441Z",
+        "ctime": "2019-02-20T11:23:32.441Z",
+        "birthtime": "2019-02-20T11:23:32.441Z"
+      },
+      "kind": "unknown"
+    },
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir/file6",
+      "stats": {
+        "dev": 64771,
+        "mode": 33204,
+        "nlink": 1,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 7,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1550661812441.3816,
+        "mtimeMs": 1550661812444.3816,
+        "ctimeMs": 1550661812444.3816,
+        "birthtimeMs": 1550661812444.3816,
+        "atime": "2019-02-20T11:23:32.441Z",
+        "mtime": "2019-02-20T11:23:32.444Z",
+        "ctime": "2019-02-20T11:23:32.444Z",
+        "birthtime": "2019-02-20T11:23:32.444Z"
+      },
+      "kind": "unknown"
+    },
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir/subsub",
+      "stats": {
+        "dev": 64771,
+        "mode": 16893,
+        "nlink": 2,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 2,
+        "size": 4096,
+        "blocks": 8,
+        "atimeMs": 1550661812442.3816,
+        "mtimeMs": 1550661812441.3816,
+        "ctimeMs": 1550661812442.3816,
+        "birthtimeMs": 1550661812442.3816,
+        "atime": "2019-02-20T11:23:32.442Z",
+        "mtime": "2019-02-20T11:23:32.441Z",
+        "ctime": "2019-02-20T11:23:32.442Z",
+        "birthtime": "2019-02-20T11:23:32.442Z"
+      },
+      "kind": "unknown"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/dir/subdir/file"
+    },
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/dir/subdir/file6"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/file2"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/subdir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/subdir/file6"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "src/dir/subdir/subsub"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "src/dir/subdir"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "src/dir"
+    }
+  ]
+]

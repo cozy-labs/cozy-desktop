@@ -1,0 +1,262 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN/exact-same-subdir"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "JOHN/exact-same-subdir/a.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "JOHN/exact-same-subdir/a.txt"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "JOHN/exact-same-subdir",
+      "stats": {
+        "dev": 64771,
+        "mode": 16893,
+        "nlink": 2,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 19797470,
+        "size": 4096,
+        "blocks": 8,
+        "atimeMs": 1550661698826.9436,
+        "mtimeMs": 1550661698828.9436,
+        "ctimeMs": 1550661698828.9436,
+        "birthtimeMs": 1550661698828.9436,
+        "atime": "2019-02-20T11:21:38.827Z",
+        "mtime": "2019-02-20T11:21:38.829Z",
+        "ctime": "2019-02-20T11:21:38.829Z",
+        "birthtime": "2019-02-20T11:21:38.829Z"
+      },
+      "kind": "unknown"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "JOHN/exact-same-subdir/a.txt",
+      "stats": {
+        "dev": 64771,
+        "mode": 33204,
+        "nlink": 1,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 19797471,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1550661698828.9436,
+        "mtimeMs": 1550661698829.9436,
+        "ctimeMs": 1550661698829.9436,
+        "birthtimeMs": 1550661698829.9436,
+        "atime": "2019-02-20T11:21:38.829Z",
+        "mtime": "2019-02-20T11:21:38.830Z",
+        "ctime": "2019-02-20T11:21:38.830Z",
+        "birthtime": "2019-02-20T11:21:38.830Z"
+      },
+      "kind": "unknown"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "JOHN/exact-same-subdir/a.txt",
+      "stats": {
+        "dev": 64771,
+        "mode": 33204,
+        "nlink": 1,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 19797471,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1550661698828.9436,
+        "mtimeMs": 1550661698829.9436,
+        "ctimeMs": 1550661698829.9436,
+        "birthtimeMs": 1550661698829.9436,
+        "atime": "2019-02-20T11:21:38.829Z",
+        "mtime": "2019-02-20T11:21:38.830Z",
+        "ctime": "2019-02-20T11:21:38.830Z",
+        "birthtime": "2019-02-20T11:21:38.830Z"
+      },
+      "kind": "unknown"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "JOHN/exact-same-subdir/b.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "JOHN/exact-same-subdir/b.txt"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN/other-subdir-JOHN-1"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "john"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "john/exact-same-subdir"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "john/exact-same-subdir/a.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "john/exact-same-subdir/a.txt"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "john/exact-same-subdir",
+      "stats": {
+        "dev": 64771,
+        "mode": 16893,
+        "nlink": 2,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 19798495,
+        "size": 4096,
+        "blocks": 8,
+        "atimeMs": 1550661698846.9436,
+        "mtimeMs": 1550661698848.9436,
+        "ctimeMs": 1550661698848.9436,
+        "birthtimeMs": 1550661698848.9436,
+        "atime": "2019-02-20T11:21:38.847Z",
+        "mtime": "2019-02-20T11:21:38.849Z",
+        "ctime": "2019-02-20T11:21:38.849Z",
+        "birthtime": "2019-02-20T11:21:38.849Z"
+      },
+      "kind": "unknown"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "john/exact-same-subdir/a.txt",
+      "stats": {
+        "dev": 64771,
+        "mode": 33204,
+        "nlink": 1,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 19798496,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1550661698848.9436,
+        "mtimeMs": 1550661698849.9436,
+        "ctimeMs": 1550661698849.9436,
+        "birthtimeMs": 1550661698849.9436,
+        "atime": "2019-02-20T11:21:38.849Z",
+        "mtime": "2019-02-20T11:21:38.850Z",
+        "ctime": "2019-02-20T11:21:38.850Z",
+        "birthtime": "2019-02-20T11:21:38.850Z"
+      },
+      "kind": "unknown"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "john/exact-same-subdir/a.txt",
+      "stats": {
+        "dev": 64771,
+        "mode": 33204,
+        "nlink": 1,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 19798496,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1550661698848.9436,
+        "mtimeMs": 1550661698849.9436,
+        "ctimeMs": 1550661698849.9436,
+        "birthtimeMs": 1550661698849.9436,
+        "atime": "2019-02-20T11:21:38.849Z",
+        "mtime": "2019-02-20T11:21:38.850Z",
+        "ctime": "2019-02-20T11:21:38.850Z",
+        "birthtime": "2019-02-20T11:21:38.850Z"
+      },
+      "kind": "unknown"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "john/exact-same-subdir/b.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "john/exact-same-subdir/b.txt"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "john/other-subdir-john-2"
+    }
+  ]
+]

@@ -1,0 +1,16 @@
+[
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file"
+    }
+  ]
+]
