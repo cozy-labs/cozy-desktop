@@ -17,6 +17,7 @@ type DispatchOptions = {
   events: EventEmitter,
   prep: Prep,
   pouch: Pouch,
+  dispatchBatch: ?Function
 }
 */
 
@@ -27,7 +28,7 @@ let actions
 // each event. It needs to fetch the old documents from pouchdb in some cases
 // to have all the data expected by prep/merge.
 const dispatch = module.exports = function (buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ {
-  const dispatchBatch = batchDispatcher(opts)
+  const dispatchBatch = opts.dispatchBatch || batchDispatcher(opts)
   return buffer.asyncMap(dispatchBatch)
 }
 
