@@ -1,0 +1,9 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "foo"
+    }
+  ]
+]

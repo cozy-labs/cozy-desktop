@@ -1,0 +1,34 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/A"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "src/B"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "src/B"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "src/C"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "src/B",
+      "oldPath": "src/C"
+    }
+  ]
+]

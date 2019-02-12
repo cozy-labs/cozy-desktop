@@ -1,0 +1,88 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst/dir"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "dst/dir/empty-subdir",
+      "stats": {
+        "dev": 64771,
+        "mode": 16877,
+        "nlink": 2,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 4987477,
+        "size": 4096,
+        "blocks": 8,
+        "atimeMs": 1549961635996.4714,
+        "mtimeMs": 1549961635995.4714,
+        "ctimeMs": 1549961635995.4714,
+        "birthtimeMs": 1549961635995.4714,
+        "atime": "2019-02-12T08:53:55.996Z",
+        "mtime": "2019-02-12T08:53:55.995Z",
+        "ctime": "2019-02-12T08:53:55.995Z",
+        "birthtime": "2019-02-12T08:53:55.995Z"
+      },
+      "kind": "unknown"
+    },
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir",
+      "stats": {
+        "dev": 64771,
+        "mode": 16877,
+        "nlink": 2,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 4987690,
+        "size": 4096,
+        "blocks": 8,
+        "atimeMs": 1549961636002.472,
+        "mtimeMs": 1549961635997.4717,
+        "ctimeMs": 1549961635997.4717,
+        "birthtimeMs": 1549961635997.4717,
+        "atime": "2019-02-12T08:53:56.002Z",
+        "mtime": "2019-02-12T08:53:55.997Z",
+        "ctime": "2019-02-12T08:53:55.997Z",
+        "birthtime": "2019-02-12T08:53:55.997Z"
+      },
+      "kind": "unknown"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir/file",
+      "stats": {
+        "dev": 64771,
+        "mode": 33188,
+        "nlink": 1,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 4987934,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1549961635997.4717,
+        "mtimeMs": 1549961635997.4717,
+        "ctimeMs": 1549961635997.4717,
+        "birthtimeMs": 1549961635997.4717,
+        "atime": "2019-02-12T08:53:55.997Z",
+        "mtime": "2019-02-12T08:53:55.997Z",
+        "ctime": "2019-02-12T08:53:55.997Z",
+        "birthtime": "2019-02-12T08:53:55.997Z"
+      },
+      "kind": "unknown"
+    }
+  ]
+]
