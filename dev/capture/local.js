@@ -63,13 +63,13 @@ const isDone = (relpath) => {
   return relpath === DONE_FILE
 }
 
-const saveFSEventsToFile = (scenario, events) => {
+const saveFSEventsToFile = (scenario, events, subdir = 'local') => {
   const json = JSON.stringify(events, null, 2)
   const eventsFile = scenario.path
-    .replace(/scenario\.js/, path.join('local', `${process.platform}.json`))
+    .replace(/scenario\.js/, path.join(subdir, `${process.platform}.json`))
 
   return fse.outputFile(eventsFile, json)
-    .then(() => path.basename(eventsFile))
+    .then(() => subdir + path.sep + path.basename(eventsFile))
 }
 
 const logFSEvents = (events) => {
