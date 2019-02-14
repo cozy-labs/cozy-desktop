@@ -230,8 +230,13 @@ describe('Config', function () {
         })
       })
 
-      it('returns chokidar', function () {
-        should(this.config.watcherType).equal('chokidar')
+      it('returns the default for the current platform', function () {
+        should(this.config.watcherType).equal((() => {
+          // FIXME: Having a side-effect on env during setup makes it hard to
+          // test dependency with the default watcher per platform.
+          delete process.env.COZY_FS_WATCHER
+          return this.config.watcherType
+        })())
       })
     })
 
