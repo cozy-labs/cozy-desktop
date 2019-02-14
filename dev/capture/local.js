@@ -5,6 +5,8 @@ const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
 const sinon = require('sinon')
+
+const Config = require('../../core/config')
 const AtomWatcher = require('../../core/local/atom_watcher')
 const fixturesHelpers = require('../../test/support/helpers/scenarios')
 
@@ -159,9 +161,9 @@ const runAndRecordAtomEvents = async scenario => {
   }
 }
 
-const runAndRecordFSEvents = process.platform === 'darwin'
-  ? runAndRecordChokidarEvents
-  : runAndRecordAtomEvents
+const runAndRecordFSEvents = Config.watcherType() === 'atom'
+  ? runAndRecordAtomEvents
+  : runAndRecordChokidarEvents
 
 const captureScenario = (scenario) => {
   return fse.emptyDir(syncPath)
