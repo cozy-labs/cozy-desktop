@@ -153,10 +153,7 @@ class Config {
 
   get watcherType () {
     if (!this.config.watcherType) {
-      this.config.watcherType = (
-        userDefinedWatcherType(process.env) ||
-        platformDefaultWatcherType(process.platform)
-      )
+      this.config.watcherType = watcherType(this.config)
     }
     return this.config.watcherType
   }
@@ -206,6 +203,14 @@ function load (dir /*: string */) /*: Config */ {
   return new Config(dir)
 }
 
+function watcherType (config = {}, {env, platform} = process) {
+  return (
+    config.watcherType ||
+    userDefinedWatcherType(process.env) ||
+    platformDefaultWatcherType(process.platform)
+  )
+}
+
 function userDefinedWatcherType (env) /*: WatcherType | null */ {
   const { COZY_FS_WATCHER } = env
   if (COZY_FS_WATCHER === 'atom') {
@@ -225,5 +230,6 @@ function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ 
 
 module.exports = {
   Config,
-  load
+  load,
+  watcherType
 }
