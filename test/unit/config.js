@@ -247,9 +247,8 @@ describe('Config', function () {
     })
 
     onPlatforms(['linux', 'win32'], function () {
-      // FIXME: It returns 'atom' by default once the new watcher is live
-      it('returns chokidar by default', function () {
-        should(this.config.watcherType).equal('chokidar')
+      it('returns atom by default', function () {
+        should(this.config.watcherType).equal('atom')
       })
     })
   })
