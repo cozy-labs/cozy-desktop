@@ -86,6 +86,20 @@ module.exports.loadAtomCaptures = scenario => {
       const name = path.basename(f)
       const disabled = scenario.disabled
       const batches = fse.readJsonSync(f)
+        .map(batch =>
+          batch.map(event =>
+            event.stats
+              ? _.defaultsDeep({
+                stats: {
+                  atime: new Date(event.stats.atime),
+                  mtime: new Date(event.stats.mtime),
+                  ctime: new Date(event.stats.ctime),
+                  birthtime: new Date(event.stats.birthtime)
+                }
+              }, event)
+              : event
+          )
+        )
 
       return {name, batches, disabled}
     })
