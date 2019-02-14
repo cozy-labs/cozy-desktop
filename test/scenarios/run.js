@@ -68,7 +68,7 @@ describe('Test scenarios', function () {
     } else {
       for (let atomCapture of loadAtomCaptures(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/atom/${atomCapture.name}`
-        if (watcherType !== 'atom') {
+        if (Config.watcherType() !== 'atom') {
           it.skip(localTestName, () => {})
           continue
         }
