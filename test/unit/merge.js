@@ -680,6 +680,51 @@ describe('Merge', function () {
       })
     })
 
+    context('with a new local directory', () => {
+      let doc
+      beforeEach('build new dir', async function () {
+        doc = builders
+          .metadir()
+          .path('NEW-FOLDER')
+          .sides({ local: 1 })
+          .tags('courge', 'quux')
+          .build()
+      })
+
+      context('when an unsynced directory already exists at the given path', () => {
+        let existingLocalDir
+        beforeEach('create existing dir', async function () {
+          existingLocalDir = await builders
+            .metadir()
+            .path(doc.path)
+            .sides({ local: 1 })
+            .create()
+        })
+
+        it('updates the document', async function () {
+          const expectedRevNumber = existingLocalDir.sides.local + 1
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.putFolderAsync('local', _.cloneDeep(doc))
+          )
+
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              _.defaults(
+                {
+                  sides: { local: expectedRevNumber }
+                },
+                _.pick(existingLocalDir, ['_id']),
+                doc
+              )
+              // TODO: Compare _revs
+            ],
+            resolvedConflicts: []
+          })
+        })
+      })
+    })
+
     it('saves a new version of an existing folder', async function () {
       const old = await builders
         .metadir()
