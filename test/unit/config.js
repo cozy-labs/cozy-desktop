@@ -95,7 +95,7 @@ describe('Config', function () {
       })
 
       it('returns an object matching the file content', function () {
-        const newConf = Config.safeLoad(this.config.configPath)
+        const newConf = Config.Config.safeLoad(this.config.configPath)
         newConf.should.be.an.Object()
         newConf.url.should.eql(conf.url)
       })
@@ -110,7 +110,7 @@ describe('Config', function () {
 
       it('throws an error', function () {
         (() => {
-          Config.safeLoad(this.config.configPath)
+          Config.Config.safeLoad(this.config.configPath)
         }).should.throw()
       })
     })
@@ -121,12 +121,12 @@ describe('Config', function () {
       })
 
       it('returns an empty object', function () {
-        const config = Config.safeLoad(this.config.configPath)
+        const config = Config.Config.safeLoad(this.config.configPath)
         should(config).deepEqual({})
       })
 
       it('does not delete it', function () {
-        Config.safeLoad(this.config.configPath)
+        Config.Config.safeLoad(this.config.configPath)
         should(fse.existsSync(this.config.configPath)).be.true()
       })
     })
@@ -138,19 +138,19 @@ describe('Config', function () {
 
       it('does not throw any errors', function () {
         (() => {
-          Config.safeLoad(this.config.configPath)
+          Config.Config.safeLoad(this.config.configPath)
         }).should.not.throw()
       })
 
       it('returns an empty object', function () {
-        const config = Config.safeLoad(this.config.configPath)
+        const config = Config.Config.safeLoad(this.config.configPath)
         should(config).be.an.Object()
         should(config).be.empty()
       })
 
       it('deletes the file', function () {
         fse.existsSync(this.config.configPath).should.be.true()
-        Config.safeLoad(this.config.configPath)
+        Config.Config.safeLoad(this.config.configPath)
         fse.existsSync(this.config.configPath).should.be.false()
       })
     })
