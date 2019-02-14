@@ -238,7 +238,7 @@ function platformDefaultWatcherType (platform /*: string */ = process.platform) 
   if (platform === 'darwin') {
     return 'chokidar'
   }
-  return 'chokidar' // XXX: Should be 'atom' once we go live with the new watcher
+  return 'atom'
 }
 
 function validateWatcherType (watcherType /*: ?string */) /*: ?WatcherType */ {
