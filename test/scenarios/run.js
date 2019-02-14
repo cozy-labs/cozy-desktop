@@ -7,6 +7,7 @@ const _ = require('lodash')
 const path = require('path')
 const should = require('should')
 
+const Config = require('../../core/config')
 const AtomWatcher = require('../../core/local/atom_watcher')
 const dispatch = require('../../core/local/steps/dispatch')
 
@@ -65,12 +66,6 @@ describe('Test scenarios', function () {
     if (scenario.side === 'remote') {
       it.skip(`test/scenarios/${scenario.name}/local/  (skip remote only test)`, () => {})
     } else {
-      const watcherType = process.env.COZY_FS_WATCHER
-        ? process.env.COZY_FS_WATCHER
-        : process.platform === 'darwin'
-        ? 'chokidar'
-        : 'atom'
-
       for (let atomCapture of loadAtomCaptures(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/atom/${atomCapture.name}`
         if (watcherType !== 'atom') {
@@ -113,7 +108,7 @@ describe('Test scenarios', function () {
 
       for (let eventsFile of loadFSEventFiles(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
-        if (watcherType !== 'chokidar') {
+        if (Config.watcherType() !== 'chokidar') {
           it.skip(localTestName, () => {})
           continue
         }
