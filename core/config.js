@@ -12,7 +12,7 @@ const log = logger({
 
 // Config can keep some configuration parameters in a JSON file,
 // like the devices credentials or the mount path
-module.exports = class Config {
+class Config {
   // Create config file if it doesn't exist.
   constructor (basePath) {
     this.configPath = path.join(basePath, 'config.json')
@@ -202,6 +202,10 @@ module.exports = class Config {
   }
 }
 
+function load (dir /*: string */) /*: Config */ {
+  return new Config(dir)
+}
+
 function userDefinedWatcherType (env) /*: WatcherType | null */ {
   const { COZY_FS_WATCHER } = env
   if (COZY_FS_WATCHER === 'atom') {
@@ -217,4 +221,9 @@ function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ 
     return 'chokidar'
   }
   return 'chokidar' // XXX: Should be 'atom' once we go live with the new watcher
+}
+
+module.exports = {
+  Config,
+  load
 }
