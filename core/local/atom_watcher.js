@@ -58,7 +58,7 @@ module.exports = class AtomWatcher {
     // the producer: even if the chain is ready at the end of this constructor,
     // the producer won't start pushing batches of events until it is started.
     let steps
-    if (process.platform === 'linux') {
+    if (process.platform === 'linux' || process.platform === 'darwin') {
       this.producer = new LinuxProducer(this)
       steps = [addInfos, filterIgnored, scanFolder,
         awaitWriteFinish, initialDiff, addChecksum, incompleteFixer]
