@@ -73,6 +73,11 @@ describe('Test scenarios', function () {
           continue
         }
 
+        if (atomCapture.disabled) {
+          it.skip(`${localTestName}  (${atomCapture.disabled})`, () => {})
+          continue
+        }
+
         it(localTestName, async function () {
           if (scenario.init) {
             let relpathFix = _.identity
