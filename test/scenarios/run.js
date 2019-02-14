@@ -54,6 +54,10 @@ describe('Test scenarios', function () {
     } else {
       for (let eventsFile of loadFSEventFiles(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
+        if (config.watcherType() !== 'chokidar') {
+          it.skip(localTestName, () => {})
+          continue
+        }
         if (eventsFile.disabled) {
           it.skip(`${localTestName}  (${eventsFile.disabled})`, () => {})
           continue
