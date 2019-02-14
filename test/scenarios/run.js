@@ -56,8 +56,18 @@ describe('Test scenarios', function () {
     if (scenario.side === 'remote') {
       it.skip(`test/scenarios/${scenario.name}/local/  (skip remote only test)`, () => {})
     } else {
+      const watcherType = process.env.COZY_FS_WATCHER
+        ? process.env.COZY_FS_WATCHER
+        : process.platform === 'darwin'
+        ? 'chokidar'
+        : 'atom'
+
       for (let eventsFile of loadFSEventFiles(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
+        if (watcherType !== 'chokidar') {
+          it.skip(localTestName, () => {})
+          continue
+        }
         if (eventsFile.disabled) {
           it.skip(`${localTestName}  (${eventsFile.disabled})`, () => {})
           continue
