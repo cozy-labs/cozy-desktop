@@ -263,4 +263,50 @@ describe('core/config', function () {
       })
     })
   })
+
+  describe('.environmentWatcherType()', () => {
+    it('depends on the environment', () => {
+      should(Config.environmentWatcherType()).equal(
+        Config.environmentWatcherType(process.env)
+      )
+    })
+
+    describe('when COZY_FS_WATCHER is valid', () => {
+      for (const COZY_FS_WATCHER of ['atom', 'chokidar']) {
+        it(`returns COZY_FS_WATCHER when set to ${JSON.stringify(COZY_FS_WATCHER)}`, () => {
+          const watcherType = Config.environmentWatcherType({COZY_FS_WATCHER})
+          should(watcherType).equal(COZY_FS_WATCHER)
+        })
+      }
+    })
+
+    describe('when COZY_FS_WATCHER is invalid or missing', () => {
+      for (const COZY_FS_WATCHER of ['invalid', '', ' ', undefined]) {
+        it(`is null when COZY_FS_WATCHER is set to ${JSON.stringify(COZY_FS_WATCHER)}`, () => {
+          const watcherType = Config.environmentWatcherType({COZY_FS_WATCHER})
+          should(watcherType).be.null()
+        })
+      }
+    })
+  })
+
+  describe('.platformDefaultWatcherType()', () => {
+    it('depends on the platform', () => {
+      should(Config.platformDefaultWatcherType()).equal(
+        Config.platformDefaultWatcherType(process.platform)
+      )
+    })
+
+    it('is chokidar on Windows', () => {
+      should(Config.platformDefaultWatcherType('win32')).equal('chokidar')
+    })
+
+    it('is chokidar on macOS', () => {
+      should(Config.platformDefaultWatcherType('darwin')).equal('chokidar')
+    })
+
+    it('is chokidar on Linux', () => {
+      should(Config.platformDefaultWatcherType('linux')).equal('chokidar')
+    })
+  })
 })

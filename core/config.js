@@ -209,7 +209,7 @@ function loadOrDeleteFile (configPath) {
   }
 }
 
-function environmentWatcherType (env) /*: WatcherType | null */ {
+function environmentWatcherType (env /*: {COZY_FS_WATCHER?: string} */ = process.env) /*: WatcherType | null */ {
   const { COZY_FS_WATCHER } = env
   if (COZY_FS_WATCHER === 'atom') {
     return 'atom'
@@ -219,7 +219,7 @@ function environmentWatcherType (env) /*: WatcherType | null */ {
   return null
 }
 
-function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ {
+function platformDefaultWatcherType (platform /*: string */ = process.platform) /*: WatcherType */ {
   if (platform === 'darwin') {
     return 'chokidar'
   }
@@ -228,6 +228,8 @@ function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ 
 
 module.exports = {
   Config,
+  environmentWatcherType,
   load,
-  loadOrDeleteFile
+  loadOrDeleteFile,
+  platformDefaultWatcherType
 }
