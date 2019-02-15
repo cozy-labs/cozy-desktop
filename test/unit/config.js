@@ -6,7 +6,7 @@ const fse = require('fs-extra')
 const configHelpers = require('../support/helpers/config')
 const { COZY_URL } = require('../support/helpers/cozy')
 
-const Config = require('../../core/config')
+const config = require('../../core/config')
 
 describe('core/config', function () {
   describe('.Config', () => {
@@ -95,7 +95,7 @@ describe('core/config', function () {
         })
 
         it('returns an object matching the file content', function () {
-          const newConf = Config.loadOrDeleteFile(this.config.configPath)
+          const newConf = config.loadOrDeleteFile(this.config.configPath)
           newConf.should.be.an.Object()
           newConf.url.should.eql(conf.url)
         })
@@ -110,7 +110,7 @@ describe('core/config', function () {
 
         it('throws an error', function () {
           (() => {
-            Config.loadOrDeleteFile(this.config.configPath)
+            config.loadOrDeleteFile(this.config.configPath)
           }).should.throw()
         })
       })
@@ -121,12 +121,11 @@ describe('core/config', function () {
         })
 
         it('returns an empty object', function () {
-          const config = Config.loadOrDeleteFile(this.config.configPath)
-          should(config).deepEqual({})
+          should(config.loadOrDeleteFile(this.config.configPath)).deepEqual({})
         })
 
         it('does not delete it', function () {
-          Config.loadOrDeleteFile(this.config.configPath)
+          config.loadOrDeleteFile(this.config.configPath)
           should(fse.existsSync(this.config.configPath)).be.true()
         })
       })
@@ -138,19 +137,17 @@ describe('core/config', function () {
 
         it('does not throw any errors', function () {
           (() => {
-            Config.loadOrDeleteFile(this.config.configPath)
+            config.loadOrDeleteFile(this.config.configPath)
           }).should.not.throw()
         })
 
         it('returns an empty object', function () {
-          const config = Config.loadOrDeleteFile(this.config.configPath)
-          should(config).be.an.Object()
-          should(config).be.empty()
+          should(config.loadOrDeleteFile(this.config.configPath)).deepEqual({})
         })
 
         it('deletes the file', function () {
           fse.existsSync(this.config.configPath).should.be.true()
-          Config.loadOrDeleteFile(this.config.configPath)
+          config.loadOrDeleteFile(this.config.configPath)
           fse.existsSync(this.config.configPath).should.be.false()
         })
       })
@@ -161,7 +158,7 @@ describe('core/config', function () {
         const url = 'http://cozy.local:8080/'
         this.config.cozyUrl = url
         this.config.persist()
-        let conf = Config.load(path.dirname(this.config.configPath))
+        let conf = config.load(path.dirname(this.config.configPath))
         should(conf.cozyUrl).equal(url)
       })
     })
@@ -212,7 +209,7 @@ describe('core/config', function () {
       })
 
       it('is the same as core/config.watcherType() otherwise', function () {
-        should(this.config.watcherType).equal(Config.watcherType())
+        should(this.config.watcherType).equal(config.watcherType())
       })
     })
 
@@ -237,7 +234,7 @@ describe('core/config', function () {
       const fileConfig = {watcherType: 'atom'}
 
       it('is the file config value', () => {
-        should(Config.watcherType(fileConfig)).equal(fileConfig.watcherType)
+        should(config.watcherType(fileConfig)).equal(fileConfig.watcherType)
       })
     })
 
@@ -246,7 +243,7 @@ describe('core/config', function () {
 
       // FIXME: Should not silently fallback to chokidar
       it('is still the file config value', () => {
-        should(Config.watcherType(fileConfig)).equal(fileConfig.watcherType)
+        should(config.watcherType(fileConfig)).equal(fileConfig.watcherType)
       })
     })
 
@@ -257,7 +254,7 @@ describe('core/config', function () {
         const env = {COZY_FS_WATCHER: 'chokidar'}
 
         it('is the COZY_FS_WATCHER value', () => {
-          should(Config.watcherType(fileConfig, {env, platform})).equal(
+          should(config.watcherType(fileConfig, {env, platform})).equal(
             env.COZY_FS_WATCHER
           )
         })
@@ -267,8 +264,8 @@ describe('core/config', function () {
         const env = {COZY_FS_WATCHER: 'invalid'}
 
         it('is the default for the current platform', () => {
-          should(Config.watcherType(fileConfig, {env, platform})).equal(
-            Config.platformDefaultWatcherType(platform)
+          should(config.watcherType(fileConfig, {env, platform})).equal(
+            config.platformDefaultWatcherType(platform)
           )
         })
       })
@@ -277,8 +274,8 @@ describe('core/config', function () {
         const env = {}
 
         it('is the default for the current platform', () => {
-          should(Config.watcherType(fileConfig, {env, platform})).equal(
-            Config.platformDefaultWatcherType(platform)
+          should(config.watcherType(fileConfig, {env, platform})).equal(
+            config.platformDefaultWatcherType(platform)
           )
         })
       })
@@ -287,15 +284,15 @@ describe('core/config', function () {
 
   describe('.environmentWatcherType()', () => {
     it('depends on the environment', () => {
-      should(Config.environmentWatcherType()).equal(
-        Config.environmentWatcherType(process.env)
+      should(config.environmentWatcherType()).equal(
+        config.environmentWatcherType(process.env)
       )
     })
 
     describe('when COZY_FS_WATCHER is valid', () => {
       for (const COZY_FS_WATCHER of ['atom', 'chokidar']) {
         it(`returns COZY_FS_WATCHER when set to ${JSON.stringify(COZY_FS_WATCHER)}`, () => {
-          const watcherType = Config.environmentWatcherType({COZY_FS_WATCHER})
+          const watcherType = config.environmentWatcherType({COZY_FS_WATCHER})
           should(watcherType).equal(COZY_FS_WATCHER)
         })
       }
@@ -304,7 +301,7 @@ describe('core/config', function () {
     describe('when COZY_FS_WATCHER is invalid or missing', () => {
       for (const COZY_FS_WATCHER of ['invalid', '', ' ', undefined]) {
         it(`is null when COZY_FS_WATCHER is set to ${JSON.stringify(COZY_FS_WATCHER)}`, () => {
-          const watcherType = Config.environmentWatcherType({COZY_FS_WATCHER})
+          const watcherType = config.environmentWatcherType({COZY_FS_WATCHER})
           should(watcherType).be.null()
         })
       }
@@ -313,21 +310,21 @@ describe('core/config', function () {
 
   describe('.platformDefaultWatcherType()', () => {
     it('depends on the platform', () => {
-      should(Config.platformDefaultWatcherType()).equal(
-        Config.platformDefaultWatcherType(process.platform)
+      should(config.platformDefaultWatcherType()).equal(
+        config.platformDefaultWatcherType(process.platform)
       )
     })
 
     it('is chokidar on Windows', () => {
-      should(Config.platformDefaultWatcherType('win32')).equal('chokidar')
+      should(config.platformDefaultWatcherType('win32')).equal('chokidar')
     })
 
     it('is chokidar on macOS', () => {
-      should(Config.platformDefaultWatcherType('darwin')).equal('chokidar')
+      should(config.platformDefaultWatcherType('darwin')).equal('chokidar')
     })
 
     it('is chokidar on Linux', () => {
-      should(Config.platformDefaultWatcherType('linux')).equal('chokidar')
+      should(config.platformDefaultWatcherType('linux')).equal('chokidar')
     })
   })
 })

@@ -12,7 +12,7 @@ const {createGzip} = require('zlib')
 
 require('./globals')
 const pkg = require('../package.json')
-const Config = require('./config')
+const config = require('./config')
 const logger = require('./logger')
 const sentry = require('./sentry')
 const { LOG_FILE, LOG_FILENAME } = logger
@@ -28,6 +28,7 @@ const Registration = require('./remote/registration')
 
 /*::
 import type EventEmitter from 'events'
+import type { Config } from './config'
 import type stream from 'stream'
 import type { Callback } from './utils/func'
 import type { SyncMode } from './sync'
@@ -45,7 +46,7 @@ class App {
   /*::
   lang: string
   basePath: string
-  config: Config.Config
+  config: Config
   pouch: Pouch
   events: EventEmitter
   ignore: Ignore.Ignore
@@ -63,7 +64,7 @@ class App {
     if (basePath == null) { basePath = os.homedir() }
     basePath = path.resolve(basePath)
     this.basePath = path.join(basePath, '.cozy-desktop')
-    this.config = Config.load(this.basePath)
+    this.config = config.load(this.basePath)
     this.pouch = new Pouch(this.config)
     this.events = new SyncState()
 
