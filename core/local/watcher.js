@@ -21,7 +21,7 @@ export interface Watcher {
 }
 */
 
-function build (config /*: { syncPath: string, watcherType: string } */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) /*: Watcher */ {
+function build (config /*: { +syncPath: string, +watcherType: string } */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) /*: Watcher */ {
   const { syncPath, watcherType } = config
 
   if (watcherType === 'atom') {
