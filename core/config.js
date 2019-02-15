@@ -135,13 +135,7 @@ class Config {
   }
 
   get watcherType () {
-    if (!this.fileConfig.watcherType) {
-      this.fileConfig.watcherType = (
-        environmentWatcherType(process.env) ||
-        platformDefaultWatcherType(process.platform)
-      )
-    }
-    return this.fileConfig.watcherType
+    return watcherType(this.fileConfig)
   }
 
   // Set the pull, push or full mode for this device
@@ -209,6 +203,14 @@ function loadOrDeleteFile (configPath) {
   }
 }
 
+function watcherType (config = {}, {env, platform} = process) {
+  return (
+    config.watcherType ||
+    environmentWatcherType(process.env) ||
+    platformDefaultWatcherType(process.platform)
+  )
+}
+
 function environmentWatcherType (env /*: {COZY_FS_WATCHER?: string} */ = process.env) /*: WatcherType | null */ {
   const { COZY_FS_WATCHER } = env
   if (COZY_FS_WATCHER === 'atom') {
@@ -231,5 +233,6 @@ module.exports = {
   environmentWatcherType,
   load,
   loadOrDeleteFile,
-  platformDefaultWatcherType
+  platformDefaultWatcherType,
+  watcherType
 }

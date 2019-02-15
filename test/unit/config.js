@@ -5,7 +5,6 @@ const should = require('should')
 const fse = require('fs-extra')
 const configHelpers = require('../support/helpers/config')
 const { COZY_URL } = require('../support/helpers/cozy')
-const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 
 const Config = require('../../core/config')
 
@@ -206,47 +205,14 @@ describe('core/config', function () {
       })
     })
 
-    describe('WatcherType', function () {
-      it('returns watcher type if any', function () {
+    describe('#watcherType', function () {
+      it('returns watcher type from file config if any', function () {
         this.config.fileConfig.watcherType = 'fooWatcher'
         should(this.config.watcherType).equal('fooWatcher')
       })
 
-      context('when the COZY_FS_WATCHER env variable value is atom', function () {
-        beforeEach(function () {
-          Object.defineProperty(process.env, 'COZY_FS_WATCHER', {
-            value: 'atom'
-          })
-        })
-
-        it('returns atom', function () {
-          should(this.config.watcherType).equal('atom')
-        })
-      })
-
-      context('when the COZY_FS_WATCHER env variable value is something else', function () {
-        beforeEach(function () {
-          Object.defineProperty(process.env, 'COZY_FS_WATCHER', {
-            value: 'something'
-          })
-        })
-
-        it('returns chokidar', function () {
-          should(this.config.watcherType).equal('chokidar')
-        })
-      })
-
-      onPlatform('darwin', function () {
-        it('returns chokidar by default', function () {
-          should(this.config.watcherType).equal('chokidar')
-        })
-      })
-
-      onPlatforms(['linux', 'win32'], function () {
-        // FIXME: It returns 'atom' by default once the new watcher is live
-        it('returns chokidar by default', function () {
-          should(this.config.watcherType).equal('chokidar')
-        })
+      it('is the same as core/config.watcherType() otherwise', function () {
+        should(this.config.watcherType).equal(Config.watcherType())
       })
     })
 
@@ -260,6 +226,61 @@ describe('core/config', function () {
         this.config.saveMode('push')
         should.throws(() => this.config.saveMode('pull'), /you cannot switch/)
         should.throws(() => this.config.saveMode('full'), /you cannot switch/)
+      })
+    })
+  })
+
+  describe('.watcherType()', () => {
+    const { platform } = process
+
+    describe('when valid in file config', () => {
+      const fileConfig = {watcherType: 'atom'}
+
+      it('is the file config value', () => {
+        should(Config.watcherType(fileConfig)).equal(fileConfig.watcherType)
+      })
+    })
+
+    describe('when invalid in file config', () => {
+      const fileConfig = {watcherType: 'invalid'}
+
+      // FIXME: Should not silently fallback to chokidar
+      it('is still the file config value', () => {
+        should(Config.watcherType(fileConfig)).equal(fileConfig.watcherType)
+      })
+    })
+
+    describe('when missing in file config', () => {
+      const fileConfig = {}
+
+      describe('with valid COZY_FS_WATCHER env var', () => {
+        const env = {COZY_FS_WATCHER: 'chokidar'}
+
+        it('is the COZY_FS_WATCHER value', () => {
+          should(Config.watcherType(fileConfig, {env, platform})).equal(
+            env.COZY_FS_WATCHER
+          )
+        })
+      })
+
+      describe('with invalid COZY_FS_WATCHER env var', () => {
+        const env = {COZY_FS_WATCHER: 'invalid'}
+
+        it('is the default for the current platform', () => {
+          should(Config.watcherType(fileConfig, {env, platform})).equal(
+            Config.platformDefaultWatcherType(platform)
+          )
+        })
+      })
+
+      describe('with missing COZY_FS_WATCHER env var', () => {
+        const env = {}
+
+        it('is the default for the current platform', () => {
+          should(Config.watcherType(fileConfig, {env, platform})).equal(
+            Config.platformDefaultWatcherType(platform)
+          )
+        })
       })
     })
   })
