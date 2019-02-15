@@ -137,7 +137,7 @@ class Config {
   get watcherType () {
     if (!this.fileConfig.watcherType) {
       this.fileConfig.watcherType = (
-        userDefinedWatcherType(process.env) ||
+        environmentWatcherType(process.env) ||
         platformDefaultWatcherType(process.platform)
       )
     }
@@ -209,7 +209,7 @@ function loadOrDeleteFile (configPath) {
   }
 }
 
-function userDefinedWatcherType (env) /*: WatcherType | null */ {
+function environmentWatcherType (env) /*: WatcherType | null */ {
   const { COZY_FS_WATCHER } = env
   if (COZY_FS_WATCHER === 'atom') {
     return 'atom'
