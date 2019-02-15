@@ -202,6 +202,10 @@ class Config {
   }
 }
 
+function load (dir /*: string */) /*: Config */ {
+  return new Config(dir)
+}
+
 function userDefinedWatcherType (env) /*: WatcherType | null */ {
   const { COZY_FS_WATCHER } = env
   if (COZY_FS_WATCHER === 'atom') {
@@ -220,5 +224,6 @@ function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ 
 }
 
 module.exports = {
-  Config
+  Config,
+  load
 }

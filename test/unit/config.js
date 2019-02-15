@@ -162,7 +162,7 @@ describe('core/config', function () {
         const url = 'http://cozy.local:8080/'
         this.config.cozyUrl = url
         this.config.persist()
-        let conf = new Config.Config(path.dirname(this.config.configPath))
+        let conf = Config.load(path.dirname(this.config.configPath))
         should(conf.cozyUrl).equal(url)
       })
     })
