@@ -12,7 +12,7 @@ module.exports = {
     this.basePath = path.resolve(`${parent}/test/${+new Date()}`)
     this.syncPath = path.join(this.basePath, 'Cozy Drive')
     fse.ensureDirSync(this.syncPath)
-    this.config = new Config(path.join(this.basePath, '.cozy-desktop'))
+    this.config = new Config.Config(path.join(this.basePath, '.cozy-desktop'))
     this.config.syncPath = this.syncPath
     this.config.cozyUrl = COZY_URL
   },

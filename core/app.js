@@ -45,7 +45,7 @@ class App {
   /*::
   lang: string
   basePath: string
-  config: Config
+  config: Config.Config
   pouch: Pouch
   events: EventEmitter
   ignore: Ignore.Ignore
@@ -63,7 +63,7 @@ class App {
     if (basePath == null) { basePath = os.homedir() }
     basePath = path.resolve(basePath)
     this.basePath = path.join(basePath, '.cozy-desktop')
-    this.config = new Config(this.basePath)
+    this.config = new Config.Config(this.basePath)
     this.pouch = new Pouch(this.config)
     this.events = new SyncState()
 

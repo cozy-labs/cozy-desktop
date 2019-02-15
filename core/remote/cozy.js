@@ -12,7 +12,7 @@ const logger = require('../logger')
 const { posix } = path
 
 /*::
-import type Config from '../config'
+import type { Config } from '../config'
 import type { Readable } from 'stream'
 import type { RemoteDoc, RemoteDeletion } from './document'
 import type { Warning } from './warning'
