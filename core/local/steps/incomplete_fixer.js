@@ -35,7 +35,7 @@ function itemDestinationWasRenamed (item /*: IncompleteItem */, event /*: AtomWa
   return !!(
     event.action === 'renamed' &&
     event.oldPath &&
-    item.event.path.startsWith(event.oldPath + path.sep)
+    (item.event.path + path.sep).startsWith(event.oldPath + path.sep)
   )
 }
 
@@ -60,6 +60,7 @@ async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: Ato
   }
   return {
     action: item.event.action,
+    oldPath: item.event.oldPath,
     path: p,
     _id: metadata.id(p),
     kind,
@@ -122,10 +123,18 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
         try {
           if (itemDestinationWasRenamed(item, event)) {
             // We have a match, try to rebuild the incomplete event
-            batch.push(await rebuildIncompleteEvent(item, event, opts))
+            const rebuilt = await rebuildIncompleteEvent(item, event, opts)
+            log.debug({path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
+            if (rebuilt.action === 'renamed' && rebuilt.path === event.path) {
+              batch.splice(batch.indexOf(event), 1, rebuilt)
+            } else {
+              batch.push(rebuilt)
+            }
           } else if (itemDestinationWasDeleted(item, event)) {
             // We have a match, try to replace the incomplete event
-            batch.push(buildDeletedFromRenamed(item, event))
+            const rebuilt = buildDeletedFromRenamed(item, event)
+            log.debug({path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
+            batch.push(rebuilt)
           } else {
             continue
           }
