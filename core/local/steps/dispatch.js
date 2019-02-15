@@ -101,6 +101,9 @@ actions = {
       return actions.createdfile(event, {prep})
     }
     const doc = buildFile(event.path, event.stats, event.md5sum)
+    if (event.overwrite) {
+      doc.overwrite = await fetchOldDoc(pouch, id(event.path))
+    }
     await prep.moveFileAsync(SIDE, doc, old)
   },
 
@@ -117,6 +120,9 @@ actions = {
       return actions.createddirectory(event, {prep})
     }
     const doc = buildDir(event.path, event.stats)
+    if (event.overwrite) {
+      doc.overwrite = event.overwrite
+    }
     await prep.moveFolderAsync(SIDE, doc, old)
   },
 

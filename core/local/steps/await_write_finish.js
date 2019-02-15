@@ -52,6 +52,9 @@ function countFileWriteEvents (events /*: AtomWatcherEvent[] */) /*: number */ {
     if (event.kind === 'file' && ['created', 'modified'].includes(event.action)) {
       nbCandidates++
     }
+    if (event.action === 'deleted') {
+      nbCandidates++
+    }
   }
   return nbCandidates
 }
@@ -62,6 +65,21 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
     const event = events[i]
     if (event.incomplete) {
       continue
+    }
+    if (event.action === 'renamed') {
+      for (let j = 0; j < waiting.length; j++) {
+        const w = waiting[j]
+        if (w.nbCandidates === 0) { continue }
+        for (let k = 0; k < w.events.length; k++) {
+          const e = w.events[k]
+          if (e.action === 'deleted' && e.path === event.path) {
+            w.events.splice(k, 1)
+            w.nbCandidates--
+            event.overwrite = true
+            break
+          }
+        }
+      }
     }
     if (event.kind === 'file' && ['modified', 'deleted'].includes(event.action)) {
       for (let j = 0; j < waiting.length; j++) {
