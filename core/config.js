@@ -219,20 +219,19 @@ function loadOrDeleteFile (configPath /*: string */) /*: FileConfig */ {
 
 function watcherType (fileConfig /*: FileConfig */ = {}, {env, platform} /*: * */ = process) /*: WatcherType */ {
   return (
-    fileConfig.watcherType ||
+    fileWatcherType(fileConfig) ||
     environmentWatcherType(process.env) ||
     platformDefaultWatcherType(process.platform)
   )
 }
 
-function environmentWatcherType (env /*: * */ = process.env) /*: WatcherType | null */ {
+function fileWatcherType (fileConfig /*: FileConfig */) /*: ?WatcherType */ {
+  return validateWatcherType(fileConfig.watcherType)
+}
+
+function environmentWatcherType (env /*: * */ = process.env) /*: ?WatcherType */ {
   const { COZY_FS_WATCHER } = env
-  if (COZY_FS_WATCHER === 'atom') {
-    return 'atom'
-  } else if (COZY_FS_WATCHER === 'chokidar') {
-    return 'chokidar'
-  }
-  return null
+  return validateWatcherType(COZY_FS_WATCHER)
 }
 
 function platformDefaultWatcherType (platform /*: string */ = process.platform) /*: WatcherType */ {
@@ -240,6 +239,15 @@ function platformDefaultWatcherType (platform /*: string */ = process.platform) 
     return 'chokidar'
   }
   return 'chokidar' // XXX: Should be 'atom' once we go live with the new watcher
+}
+
+function validateWatcherType (watcherType /*: ?string */) /*: ?WatcherType */ {
+  if (watcherType === 'atom' || watcherType === 'chokidar') {
+    return watcherType
+  } else {
+    log.warn({watcherType}, 'Invalid watcher type')
+    return null
+  }
 }
 
 module.exports = {

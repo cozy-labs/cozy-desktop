@@ -203,9 +203,9 @@ describe('core/config', function () {
     })
 
     describe('#watcherType', function () {
-      it('returns watcher type from file config if any', function () {
-        this.config.fileConfig.watcherType = 'fooWatcher'
-        should(this.config.watcherType).equal('fooWatcher')
+      it('returns valid watcher type from file config if any', function () {
+        this.config.fileConfig.watcherType = 'atom'
+        should(this.config.watcherType).equal('atom')
       })
 
       it('is the same as core/config.watcherType() otherwise', function () {
@@ -241,9 +241,10 @@ describe('core/config', function () {
     describe('when invalid in file config', () => {
       const fileConfig = {watcherType: 'invalid'}
 
-      // FIXME: Should not silently fallback to chokidar
-      it('is still the file config value', () => {
-        should(config.watcherType(fileConfig)).equal(fileConfig.watcherType)
+      it('is the same as when no file config', () => {
+        should(config.watcherType(fileConfig)).equal(
+          config.watcherType({})
+        )
       })
     })
 
