@@ -217,9 +217,9 @@ function loadOrDeleteFile (configPath /*: string */) /*: FileConfig */ {
   }
 }
 
-function watcherType (config /*: FileConfig */ = {}, {env, platform} /*: * */ = process) /*: WatcherType */ {
+function watcherType (fileConfig /*: FileConfig */ = {}, {env, platform} /*: * */ = process) /*: WatcherType */ {
   return (
-    config.watcherType ||
+    fileConfig.watcherType ||
     environmentWatcherType(process.env) ||
     platformDefaultWatcherType(process.platform)
   )

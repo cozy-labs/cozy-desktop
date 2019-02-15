@@ -25,21 +25,21 @@ describe('core/config', function () {
         })
 
         context('and it has a valid JSON content', function () {
-          const config = { 'url': 'https://cozy.test/' }
+          const fileConfig = { 'url': 'https://cozy.test/' }
 
           beforeEach('write valid content', function () {
-            fse.writeFileSync(this.config.tmpConfigPath, JSON.stringify(config, null, 2))
+            fse.writeFileSync(this.config.tmpConfigPath, JSON.stringify(fileConfig, null, 2))
           })
 
           it('reads the tmp config', function () {
-            should(this.config.read()).match(config)
+            should(this.config.read()).match(fileConfig)
           })
 
           it('persists the tmp config file as the new config file', function () {
             this.config.read()
 
-            const persistedConfig = fse.readJSONSync(this.config.configPath)
-            should(persistedConfig).match(config)
+            const fileConfigPersisted = fse.readJSONSync(this.config.configPath)
+            should(fileConfigPersisted).match(fileConfig)
           })
         })
 
@@ -50,9 +50,9 @@ describe('core/config', function () {
           })
 
           it('reads the existing config', function () {
-            const config = this.config.read()
-            should(config).be.an.Object()
-            should(config.url).eql(COZY_URL)
+            const fileConfig = this.config.read()
+            should(fileConfig).be.an.Object()
+            should(fileConfig.url).eql(COZY_URL)
           })
         })
       })
@@ -66,9 +66,9 @@ describe('core/config', function () {
         })
 
         it('reads the existing config', function () {
-          const config = this.config.read()
-          should(config).be.an.Object()
-          should(config.url).eql(COZY_URL)
+          const fileConfig = this.config.read()
+          should(fileConfig).be.an.Object()
+          should(fileConfig.url).eql(COZY_URL)
         })
       })
 
@@ -79,25 +79,25 @@ describe('core/config', function () {
         })
 
         it('creates a new empty one', function () {
-          const config = this.config.read()
-          should(config).be.an.Object()
-          should(config).be.empty()
+          const fileConfig = this.config.read()
+          should(fileConfig).be.an.Object()
+          should(fileConfig).be.empty()
         })
       })
     })
 
     describe('safeLoad', function () {
       context('when the file content is valid JSON', function () {
-        const conf = { 'url': 'https://cozy.test/' }
+        const fileConfig = { 'url': 'https://cozy.test/' }
 
         beforeEach('write valid content', function () {
-          fse.writeFileSync(this.config.configPath, JSON.stringify(conf, null, 2))
+          fse.writeFileSync(this.config.configPath, JSON.stringify(fileConfig, null, 2))
         })
 
         it('returns an object matching the file content', function () {
-          const newConf = config.loadOrDeleteFile(this.config.configPath)
-          newConf.should.be.an.Object()
-          newConf.url.should.eql(conf.url)
+          const newFileConfig = config.loadOrDeleteFile(this.config.configPath)
+          newFileConfig.should.be.an.Object()
+          newFileConfig.url.should.eql(fileConfig.url)
         })
       })
 
@@ -158,8 +158,8 @@ describe('core/config', function () {
         const url = 'http://cozy.local:8080/'
         this.config.cozyUrl = url
         this.config.persist()
-        let conf = config.load(path.dirname(this.config.configPath))
-        should(conf.cozyUrl).equal(url)
+        const configLoaded = config.load(path.dirname(this.config.configPath))
+        should(configLoaded.cozyUrl).equal(url)
       })
     })
 
