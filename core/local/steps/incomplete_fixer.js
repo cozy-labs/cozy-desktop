@@ -48,9 +48,8 @@ function itemDestinationWasDeleted (item /*: IncompleteItem */, event /*: AtomWa
 }
 
 async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: AtomWatcherEvent */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Promise<AtomWatcherEvent> */ {
-  // The || '' is just a trick to please flow
-  const oldPath /*: string */ = event.oldPath || ''
-  const p = item.event.path.replace(oldPath, event.path)
+  // $FlowFixMe: Renamed events always have an oldPath
+  const p = item.event.path.replace(event.oldPath, event.path)
   const absPath = path.join(opts.syncPath, p)
   const stats = await stater.stat(absPath)
   const kind = stater.kind(stats)
@@ -58,9 +57,17 @@ async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: Ato
   if (kind === 'file') {
     md5sum = await opts.checksumer.push(absPath)
   }
+  let oldPath
+
+  if (item.event.oldPath) {
+    oldPath = p === event.path
+      ? item.event.oldPath
+      // $FlowFixMe: Renamed events always have an oldPath
+      : item.event.oldPath.replace(event.oldPath, event.path)
+  }
   return {
     action: item.event.action,
-    oldPath: item.event.oldPath,
+    oldPath,
     path: p,
     _id: metadata.id(p),
     kind,
