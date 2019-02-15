@@ -24,27 +24,10 @@ class Config {
     this.config = this.read()
   }
 
-  // Load a config JSON file or return an empty object
-  static safeLoad (configPath) {
-    try {
-      const content = fs.readFileSync(configPath, 'utf8')
-      if (content === '') return {}
-      return JSON.parse(content)
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        log.error(`Could not read config file at ${configPath}:`, e)
-        fse.unlinkSync(configPath)
-        return {}
-      } else {
-        throw e
-      }
-    }
-  }
-
   // Read the configuration from disk
   read () {
     if (fse.existsSync(this.tmpConfigPath)) {
-      const tmpConfig = Config.safeLoad(this.tmpConfigPath)
+      const tmpConfig = loadOrDeleteFile(this.tmpConfigPath)
 
       if (_.size(tmpConfig) > 0) {
         this._moveTmpConfig()
@@ -52,7 +35,7 @@ class Config {
       }
     }
 
-    return Config.safeLoad(this.configPath)
+    return loadOrDeleteFile(this.configPath)
   }
 
   // Reset the configuration
@@ -206,6 +189,26 @@ function load (dir /*: string */) /*: Config */ {
   return new Config(dir)
 }
 
+/** Load raw config from a JSON file.
+ *
+ * When file is invalid, delete it and return an empty object.
+ */
+function loadOrDeleteFile (configPath) {
+  try {
+    const content = fs.readFileSync(configPath, 'utf8')
+    if (content === '') return {}
+    return JSON.parse(content)
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      log.error(`Could not read config file at ${configPath}:`, e)
+      fse.unlinkSync(configPath)
+      return {}
+    } else {
+      throw e
+    }
+  }
+}
+
 function userDefinedWatcherType (env) /*: WatcherType | null */ {
   const { COZY_FS_WATCHER } = env
   if (COZY_FS_WATCHER === 'atom') {
@@ -225,5 +228,6 @@ function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ 
 
 module.exports = {
   Config,
-  load
+  load,
+  loadOrDeleteFile
 }

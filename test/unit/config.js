@@ -96,7 +96,7 @@ describe('core/config', function () {
         })
 
         it('returns an object matching the file content', function () {
-          const newConf = Config.Config.safeLoad(this.config.configPath)
+          const newConf = Config.loadOrDeleteFile(this.config.configPath)
           newConf.should.be.an.Object()
           newConf.url.should.eql(conf.url)
         })
@@ -111,7 +111,7 @@ describe('core/config', function () {
 
         it('throws an error', function () {
           (() => {
-            Config.Config.safeLoad(this.config.configPath)
+            Config.loadOrDeleteFile(this.config.configPath)
           }).should.throw()
         })
       })
@@ -122,12 +122,12 @@ describe('core/config', function () {
         })
 
         it('returns an empty object', function () {
-          const config = Config.Config.safeLoad(this.config.configPath)
+          const config = Config.loadOrDeleteFile(this.config.configPath)
           should(config).deepEqual({})
         })
 
         it('does not delete it', function () {
-          Config.Config.safeLoad(this.config.configPath)
+          Config.loadOrDeleteFile(this.config.configPath)
           should(fse.existsSync(this.config.configPath)).be.true()
         })
       })
@@ -139,19 +139,19 @@ describe('core/config', function () {
 
         it('does not throw any errors', function () {
           (() => {
-            Config.Config.safeLoad(this.config.configPath)
+            Config.loadOrDeleteFile(this.config.configPath)
           }).should.not.throw()
         })
 
         it('returns an empty object', function () {
-          const config = Config.Config.safeLoad(this.config.configPath)
+          const config = Config.loadOrDeleteFile(this.config.configPath)
           should(config).be.an.Object()
           should(config).be.empty()
         })
 
         it('deletes the file', function () {
           fse.existsSync(this.config.configPath).should.be.true()
-          Config.Config.safeLoad(this.config.configPath)
+          Config.loadOrDeleteFile(this.config.configPath)
           fse.existsSync(this.config.configPath).should.be.false()
         })
       })
