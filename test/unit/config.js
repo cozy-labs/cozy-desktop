@@ -188,7 +188,7 @@ describe('core/config', function () {
 
       it('returns GUI configuration if any', function () {
         const guiConfig = {foo: 'bar'}
-        this.config.config.gui = guiConfig
+        this.config.fileConfig.gui = guiConfig
         should(this.config.gui).deepEqual(guiConfig)
       })
     })
@@ -208,7 +208,7 @@ describe('core/config', function () {
 
     describe('WatcherType', function () {
       it('returns watcher type if any', function () {
-        this.config.config.watcherType = 'fooWatcher'
+        this.config.fileConfig.watcherType = 'fooWatcher'
         should(this.config.watcherType).equal('fooWatcher')
       })
 
@@ -253,7 +253,7 @@ describe('core/config', function () {
     describe('saveMode', function () {
       it('sets the pull or push mode', function () {
         this.config.saveMode('push')
-        should(this.config.config.mode).equal('push')
+        should(this.config.fileConfig.mode).equal('push')
       })
 
       it('throws an error for incompatible mode', function () {

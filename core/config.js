@@ -21,7 +21,7 @@ class Config {
     fse.ensureDirSync(this.dbPath)
     hideOnWindows(basePath)
 
-    this.config = this.read()
+    this.fileConfig = this.read()
   }
 
   // Read the configuration from disk
@@ -40,7 +40,7 @@ class Config {
 
   // Reset the configuration
   reset () {
-    this.config = Object.create(null)
+    this.fileConfig = Object.create(null)
     this.clear()
     this.persist()
   }
@@ -69,7 +69,7 @@ class Config {
 
   // Transform the config to a JSON string
   toJSON () {
-    return JSON.stringify(this.config, null, 2)
+    return JSON.stringify(this.fileConfig, null, 2)
   }
 
   // Get the tmp config path associated with the current config path
@@ -79,31 +79,31 @@ class Config {
 
   // Get the path on the local file system of the synchronized folder
   get syncPath () {
-    return this.config.path
+    return this.fileConfig.path
   }
 
   // Set the path on the local file system of the synchronized folder
   set syncPath (path) {
-    this.config.path = path
+    this.fileConfig.path = path
   }
 
   // Return the URL of the cozy instance
   get cozyUrl () {
-    return this.config.url
+    return this.fileConfig.url
   }
 
   // Set the URL of the cozy instance
   set cozyUrl (url) {
-    this.config.url = url
+    this.fileConfig.url = url
   }
 
   get gui () {
-    return this.config.gui || {}
+    return this.fileConfig.gui || {}
   }
 
   // Return true if a device has been configured
   isValid () {
-    return !!(this.config.creds && this.cozyUrl)
+    return !!(this.fileConfig.creds && this.cozyUrl)
   }
 
   // Return the name of the registered client
@@ -113,10 +113,10 @@ class Config {
 
   // Return config related to the OAuth client
   get client () {
-    if (!this.config.creds) {
+    if (!this.fileConfig.creds) {
       throw new Error(`Device not configured`)
     }
-    return this.config.creds.client
+    return this.fileConfig.creds.client
   }
 
   get version () {
@@ -130,38 +130,38 @@ class Config {
 
   // Set the remote configuration
   set client (options) {
-    this.config.creds = { client: options }
+    this.fileConfig.creds = { client: options }
     this.persist()
   }
 
   get watcherType () {
-    if (!this.config.watcherType) {
-      this.config.watcherType = (
+    if (!this.fileConfig.watcherType) {
+      this.fileConfig.watcherType = (
         userDefinedWatcherType(process.env) ||
         platformDefaultWatcherType(process.platform)
       )
     }
-    return this.config.watcherType
+    return this.fileConfig.watcherType
   }
 
   // Set the pull, push or full mode for this device
   // It will throw an exception if the mode is not compatible with the last
   // mode used!
   saveMode (mode) {
-    const old = this.config.mode
+    const old = this.fileConfig.mode
     if (old === mode) {
       return true
     } else if (old) {
       throw new Error(`Once you set mode to "${old}", you cannot switch to "${mode}"`)
     }
-    this.config.mode = mode
+    this.fileConfig.mode = mode
     this.persist()
   }
 
   // Implement the Storage interface for cozy-client-js oauth
 
   save (key, value) {
-    this.config[key] = value
+    this.fileConfig[key] = value
     if (key === 'creds') {
       // Persist the access token after it has been refreshed
       this.persist()
@@ -170,17 +170,17 @@ class Config {
   }
 
   load (key) {
-    return Promise.resolve(this.config[key])
+    return Promise.resolve(this.fileConfig[key])
   }
 
   delete (key) {
-    const deleted = delete this.config[key]
+    const deleted = delete this.fileConfig[key]
     return Promise.resolve(deleted)
   }
 
   clear () {
-    delete this.config.creds
-    delete this.config.state
+    delete this.fileConfig.creds
+    delete this.fileConfig.state
     return Promise.resolve()
   }
 }

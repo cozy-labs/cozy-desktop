@@ -18,7 +18,7 @@ module.exports = {
   },
 
   registerClient () {
-    this.config.config.creds = {
+    this.config.fileConfig.creds = {
       client: {
         clientID: process.env.COZY_CLIENT_ID || 'desktop',
         clientName: 'desktop',
