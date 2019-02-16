@@ -21,7 +21,7 @@ const syncDir = require('./sync_dir')
 
 /*::
 import type EventEmitter from 'events'
-import type Config from '../config'
+import type { Config } from '../config'
 import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
 import type { Ignore } from '../ignore'
 import type { Metadata } from '../metadata'

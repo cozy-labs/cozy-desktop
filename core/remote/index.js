@@ -14,7 +14,7 @@ const { withContentLength } = require('../file_stream_provider')
 
 /*::
 import type EventEmitter from 'events'
-import type Config from '../config'
+import type { Config } from '../config'
 import type { Metadata } from '../metadata'
 import type Pouch from '../pouch'
 import type Prep from '../prep'

@@ -13,7 +13,7 @@ const logger = require('./logger')
 const metadata = require('./metadata')
 
 /*::
-import type Config from './config'
+import type { Config } from './config'
 import type { Metadata } from './metadata'
 import type { Callback } from './utils/func'
 */

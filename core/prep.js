@@ -9,7 +9,7 @@ const metadata = require('./metadata')
 const { TRASH_DIR_NAME } = require('./remote/constants')
 
 /*::
-import type Config from './config'
+import type { Config } from './config'
 import type { Ignore } from './ignore'
 import type Merge from './merge'
 import type { SideName, Metadata, RemoteRevisionsByID } from './metadata'

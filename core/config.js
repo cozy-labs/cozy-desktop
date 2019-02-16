@@ -1,3 +1,5 @@
+/* @flow */
+
 const fs = require('fs')
 const fse = require('fs-extra')
 const _ = require('lodash')
@@ -10,41 +12,36 @@ const log = logger({
   component: 'Config'
 })
 
+/*::
+export type WatcherType = 'atom' | 'chokidar'
+export type SyncMode = 'full' | 'pull' | 'push'
+type FileConfig = Object
+*/
+
 // Config can keep some configuration parameters in a JSON file,
 // like the devices credentials or the mount path
-module.exports = class Config {
+class Config {
+  /*::
+  configPath: string
+  dbPath: string
+  fileConfig: FileConfig
+  */
+
   // Create config file if it doesn't exist.
-  constructor (basePath) {
+  constructor (basePath /*: string */) {
     this.configPath = path.join(basePath, 'config.json')
     fse.ensureFileSync(this.configPath)
     this.dbPath = path.join(basePath, 'db')
     fse.ensureDirSync(this.dbPath)
     hideOnWindows(basePath)
 
-    this.config = this.read()
-  }
-
-  // Load a config JSON file or return an empty object
-  static safeLoad (configPath) {
-    try {
-      const content = fs.readFileSync(configPath, 'utf8')
-      if (content === '') return {}
-      return JSON.parse(content)
-    } catch (e) {
-      if (e instanceof SyntaxError) {
-        log.error(`Could not read config file at ${configPath}:`, e)
-        fse.unlinkSync(configPath)
-        return {}
-      } else {
-        throw e
-      }
-    }
+    this.fileConfig = this.read()
   }
 
   // Read the configuration from disk
-  read () {
+  read () /*: FileConfig */ {
     if (fse.existsSync(this.tmpConfigPath)) {
-      const tmpConfig = Config.safeLoad(this.tmpConfigPath)
+      const tmpConfig = loadOrDeleteFile(this.tmpConfigPath)
 
       if (_.size(tmpConfig) > 0) {
         this._moveTmpConfig()
@@ -52,12 +49,12 @@ module.exports = class Config {
       }
     }
 
-    return Config.safeLoad(this.configPath)
+    return loadOrDeleteFile(this.configPath)
   }
 
   // Reset the configuration
   reset () {
-    this.config = Object.create(null)
+    this.fileConfig = Object.create(null)
     this.clear()
     this.persist()
   }
@@ -68,7 +65,7 @@ module.exports = class Config {
     this._moveTmpConfig()
   }
 
-  _writeTmpConfig (config) {
+  _writeTmpConfig (config /*: string */) {
     fse.ensureFileSync(this.tmpConfigPath)
     fse.writeFileSync(this.tmpConfigPath, config)
   }
@@ -85,100 +82,94 @@ module.exports = class Config {
   }
 
   // Transform the config to a JSON string
-  toJSON () {
-    return JSON.stringify(this.config, null, 2)
+  toJSON () /*: string */ {
+    return JSON.stringify(this.fileConfig, null, 2)
   }
 
   // Get the tmp config path associated with the current config path
-  get tmpConfigPath () {
+  get tmpConfigPath () /*: string */ {
     return this.configPath + '.tmp'
   }
 
   // Get the path on the local file system of the synchronized folder
-  get syncPath () {
-    return this.config.path
+  get syncPath () /*: string */ {
+    return this.fileConfig.path
   }
 
   // Set the path on the local file system of the synchronized folder
-  set syncPath (path) {
-    this.config.path = path
+  set syncPath (path /*: string */) {
+    this.fileConfig.path = path
   }
 
   // Return the URL of the cozy instance
-  get cozyUrl () {
-    return this.config.url
+  get cozyUrl () /*: string */ {
+    return this.fileConfig.url
   }
 
   // Set the URL of the cozy instance
-  set cozyUrl (url) {
-    this.config.url = url
+  set cozyUrl (url /*: string */) {
+    this.fileConfig.url = url
   }
 
-  get gui () {
-    return this.config.gui || {}
+  get gui () /*: * */ {
+    return this.fileConfig.gui || {}
   }
 
   // Return true if a device has been configured
-  isValid () {
-    return !!(this.config.creds && this.cozyUrl)
+  isValid () /*: bool */ {
+    return !!(this.fileConfig.creds && this.cozyUrl)
   }
 
   // Return the name of the registered client
-  get deviceName () {
+  get deviceName () /*: ?string */ {
     return _.get(this, 'config.creds.client.clientName', '')
   }
 
   // Return config related to the OAuth client
-  get client () {
-    if (!this.config.creds) {
+  get client () /*: * */ {
+    if (!this.fileConfig.creds) {
       throw new Error(`Device not configured`)
     }
-    return this.config.creds.client
+    return this.fileConfig.creds.client
   }
 
-  get version () {
+  get version () /*: ?string */ {
     return _.get(this, 'config.creds.client.softwareVersion')
   }
 
-  get permissions () {
+  get permissions () /*: * */ {
     const scope = _.get(this, 'config.creds.token.scope')
     return scope ? scope.split(' ') : []
   }
 
   // Set the remote configuration
-  set client (options) {
-    this.config.creds = { client: options }
+  set client (options /*: * */) {
+    this.fileConfig.creds = { client: options }
     this.persist()
   }
 
-  get watcherType () {
-    if (!this.config.watcherType) {
-      this.config.watcherType = (
-        userDefinedWatcherType(process.env) ||
-        platformDefaultWatcherType(process.platform)
-      )
-    }
-    return this.config.watcherType
+  get watcherType () /*: WatcherType */ {
+    return watcherType(this.fileConfig)
   }
 
   // Set the pull, push or full mode for this device
   // It will throw an exception if the mode is not compatible with the last
   // mode used!
-  saveMode (mode) {
-    const old = this.config.mode
+  saveMode (mode /*: SyncMode */) {
+    const old = this.fileConfig.mode
     if (old === mode) {
       return true
     } else if (old) {
       throw new Error(`Once you set mode to "${old}", you cannot switch to "${mode}"`)
     }
-    this.config.mode = mode
+    this.fileConfig.mode = mode
     this.persist()
   }
 
   // Implement the Storage interface for cozy-client-js oauth
 
-  save (key, value) {
-    this.config[key] = value
+  save (key /*: string */, value /*: * */) {
+    this.fileConfig[key] = value
     if (key === 'creds') {
       // Persist the access token after it has been refreshed
       this.persist()
@@ -186,35 +177,84 @@ module.exports = class Config {
     return Promise.resolve(value)
   }
 
-  load (key) {
-    return Promise.resolve(this.config[key])
+  load (key /*: string */) /*: Promise<*> */ {
+    return Promise.resolve(this.fileConfig[key])
   }
 
-  delete (key) {
-    const deleted = delete this.config[key]
+  delete (key /*: string */) /*: Promise<*> */ {
+    const deleted = delete this.fileConfig[key]
     return Promise.resolve(deleted)
   }
 
-  clear () {
-    delete this.config.creds
-    delete this.config.state
+  clear () /*: Promise<void> */ {
+    delete this.fileConfig.creds
+    delete this.fileConfig.state
     return Promise.resolve()
   }
 }
 
-function userDefinedWatcherType (env) /*: WatcherType | null */ {
-  const { COZY_FS_WATCHER } = env
-  if (COZY_FS_WATCHER === 'atom') {
-    return 'atom'
-  } else if (COZY_FS_WATCHER === 'chokidar') {
-    return 'chokidar'
-  }
-  return null
+function load (dir /*: string */) /*: Config */ {
+  return new Config(dir)
 }
 
-function platformDefaultWatcherType (platform /*: string */) /*: WatcherType */ {
+/** Load raw config from a JSON file.
+ *
+ * When file is invalid, delete it and return an empty object.
+ */
+function loadOrDeleteFile (configPath /*: string */) /*: FileConfig */ {
+  try {
+    const content = fs.readFileSync(configPath, 'utf8')
+    if (content === '') return {}
+    return JSON.parse(content)
+  } catch (e) {
+    if (e instanceof SyntaxError) {
+      log.error(`Could not read config file at ${configPath}:`, e)
+      fse.unlinkSync(configPath)
+      return {}
+    } else {
+      throw e
+    }
+  }
+}
+
+function watcherType (fileConfig /*: FileConfig */ = {}, {env, platform} /*: * */ = process) /*: WatcherType */ {
+  return (
+    fileWatcherType(fileConfig) ||
+    environmentWatcherType(process.env) ||
+    platformDefaultWatcherType(process.platform)
+  )
+}
+
+function fileWatcherType (fileConfig /*: FileConfig */) /*: ?WatcherType */ {
+  return validateWatcherType(fileConfig.watcherType)
+}
+
+function environmentWatcherType (env /*: * */ = process.env) /*: ?WatcherType */ {
+  const { COZY_FS_WATCHER } = env
+  return validateWatcherType(COZY_FS_WATCHER)
+}
+
+function platformDefaultWatcherType (platform /*: string */ = process.platform) /*: WatcherType */ {
   if (platform === 'darwin') {
     return 'chokidar'
   }
   return 'chokidar' // XXX: Should be 'atom' once we go live with the new watcher
+}
+
+function validateWatcherType (watcherType /*: ?string */) /*: ?WatcherType */ {
+  if (watcherType === 'atom' || watcherType === 'chokidar') {
+    return watcherType
+  } else {
+    log.warn({watcherType}, 'Invalid watcher type')
+    return null
+  }
+}
+
+module.exports = {
+  Config,
+  environmentWatcherType,
+  load,
+  loadOrDeleteFile,
+  platformDefaultWatcherType,
+  watcherType
 }

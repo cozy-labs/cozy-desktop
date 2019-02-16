@@ -4,14 +4,13 @@ const AtomWatcher = require('./atom_watcher')
 const ChokidarWatcher = require('./chokidar_watcher')
 
 /*::
+import type { WatcherType } from '../config'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { ChokidarEvent } from './chokidar_event'
 import type { Checksumer } from './checksumer'
-
-type WatcherType = 'atom' | 'chokidar'
 
 export interface Watcher {
   checksumer: Checksumer,
@@ -21,7 +20,7 @@ export interface Watcher {
 }
 */
 
-function build (config /*: { syncPath: string, watcherType: string } */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) /*: Watcher */ {
+function build (config /*: { +syncPath: string, +watcherType: WatcherType } */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) /*: Watcher */ {
   const { syncPath, watcherType } = config
 
   if (watcherType === 'atom') {
