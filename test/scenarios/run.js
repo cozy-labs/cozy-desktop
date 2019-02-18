@@ -141,29 +141,33 @@ describe('Test scenarios', function () {
     }
 
     it(remoteTestName, async function () {
-      if (scenario.init) {
-        let relpathFix = _.identity
-        if (process.platform === 'win32') {
-          relpathFix = (relpath) => relpath.replace(/\//g, '\\')
-        }
-        await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
-        await helpers.remote.ignorePreviousChanges()
-      }
-
-      await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
-
-      await helpers.remote.pullChanges()
-      // TODO: Don't sync when scenario doesn't have target FS/trash assertions?
-      for (let i = 0; i < scenario.actions.length + 1; i++) {
-        await helpers.syncAll()
-      }
-
-      await verifyExpectations(scenario, helpers, {includeRemoteTrash: false})
-
-      // TODO: Local trash assertions
+      await runRemote(scenario, helpers)
     })
   }
 })
+
+async function runRemote (scenario, helpers) {
+  if (scenario.init) {
+    let relpathFix = _.identity
+    if (process.platform === 'win32') {
+      relpathFix = (relpath) => relpath.replace(/\//g, '\\')
+    }
+    await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
+    await helpers.remote.ignorePreviousChanges()
+  }
+
+  await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
+
+  await helpers.remote.pullChanges()
+  // TODO: Don't sync when scenario doesn't have target FS/trash assertions?
+  for (let i = 0; i < scenario.actions.length + 1; i++) {
+    await helpers.syncAll()
+  }
+
+  await verifyExpectations(scenario, helpers, {includeRemoteTrash: false})
+
+  // TODO: Local trash assertions
+}
 
 async function verifyExpectations (scenario, helpers, {includeRemoteTrash}) {
   // TODO: Wrap in custom expectation
