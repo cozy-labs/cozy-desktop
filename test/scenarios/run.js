@@ -72,28 +72,7 @@ describe('Test scenarios', function () {
 
         for (let flushAfter of breakpoints) {
           it(localTestName + ' flushAfter=' + flushAfter, async function () {
-            if (scenario.init) {
-              let relpathFix = _.identity
-              if (process.platform === 'win32' && localTestName.match(/win32/)) {
-                relpathFix = (relpath) => relpath.replace(/\//g, '\\')
-              }
-              await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
-            }
-
-            const eventsBefore = eventsFile.events.slice(0, flushAfter)
-            const eventsAfter = eventsFile.events.slice(flushAfter)
-
-            await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
-            await helpers.local.simulateEvents(eventsBefore)
-            await helpers.syncAll()
-            await helpers.local.simulateEvents(eventsAfter)
-            await helpers.syncAll()
-            await helpers.remote.pullChanges()
-            await helpers.syncAll()
-
-            await verifyExpectations(scenario, helpers, {includeRemoteTrash: true})
-
-            // TODO: pull
+            await runLocalChokidar(scenario, eventsFile, flushAfter, helpers)
           })
         }
       }
@@ -139,6 +118,31 @@ function shouldSkipRemote (scenario) {
   } else if (scenario.side === 'local') {
     return 'skip local only test'
   }
+}
+
+async function runLocalChokidar (scenario, eventsFile, flushAfter, helpers) {
+  if (scenario.init) {
+    let relpathFix = _.identity
+    if (process.platform === 'win32' && eventsFile.name.match(/win32/)) {
+      relpathFix = (relpath) => relpath.replace(/\//g, '\\')
+    }
+    await init(scenario, helpers._pouch, helpers.local.syncDir.abspath, relpathFix)
+  }
+
+  const eventsBefore = eventsFile.events.slice(0, flushAfter)
+  const eventsAfter = eventsFile.events.slice(flushAfter)
+
+  await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
+  await helpers.local.simulateEvents(eventsBefore)
+  await helpers.syncAll()
+  await helpers.local.simulateEvents(eventsAfter)
+  await helpers.syncAll()
+  await helpers.remote.pullChanges()
+  await helpers.syncAll()
+
+  await verifyExpectations(scenario, helpers, {includeRemoteTrash: true})
+
+  // TODO: pull
 }
 
 async function runLocalStopped (scenario, helpers) {
