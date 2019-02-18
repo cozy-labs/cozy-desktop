@@ -41,12 +41,6 @@ describe('Test scenarios', function () {
     await helpers.remote.ignorePreviousChanges()
   })
 
-  afterEach(function () {
-    if (this.currentTest.state === 'failed') {
-      // TODO: dump logs
-    }
-  })
-
   for (let scenario of scenarios) {
     if (scenario.platforms && !scenario.platforms.includes(platform)) {
       it.skip(`test/scenarios/${scenario.name}/  (skip on ${platform})`, () => {})
