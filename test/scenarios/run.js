@@ -106,24 +106,7 @@ describe('Test scenarios', function () {
       } else {
         it(stoppedTestName, async function () {
           this.timeout(3 * 60 * 1000)
-          // TODO: Find why we need this to prevent random failures and fix it.
-          await Promise.delay(500)
-          if (scenario.init) {
-            let relpathFix = _.identity
-            if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
-              relpathFix = (relpath) => relpath.replace(/\//g, '\\')
-            }
-            await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix, true)
-          }
-
-          await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
-
-          await helpers.local.local.watcher.start()
-          await helpers.local.local.watcher.stop(true)
-
-          await helpers.syncAll()
-
-          await verifyExpectations(scenario, helpers, {includeRemoteTrash: true})
+          await runLocalStopped(scenario, helpers)
         })
       }
     }
@@ -149,6 +132,27 @@ function shouldSkipRemote (scenario) {
   } else if (scenario.side === 'local') {
     return 'skip local only test'
   }
+}
+
+async function runLocalStopped (scenario, helpers) {
+  // TODO: Find why we need this to prevent random failures and fix it.
+  await Promise.delay(500)
+  if (scenario.init) {
+    let relpathFix = _.identity
+    if (process.platform === 'win32' && scenario.name.match(/win32/)) {
+      relpathFix = (relpath) => relpath.replace(/\//g, '\\')
+    }
+    await init(scenario, helpers._pouch, helpers.local.syncDir.abspath, relpathFix, true)
+  }
+
+  await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
+
+  await helpers.local.local.watcher.start()
+  await helpers.local.local.watcher.stop(true)
+
+  await helpers.syncAll()
+
+  await verifyExpectations(scenario, helpers, {includeRemoteTrash: true})
 }
 
 async function runRemote (scenario, helpers) {
