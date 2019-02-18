@@ -16,9 +16,11 @@ const remoteCaptureHelpers = require('../../dev/capture/remote')
 
 const { platform } = process
 
-let helpers
+const stoppedEnvVar = 'STOPPED_CLIENT'
 
 describe('Test scenarios', function () {
+  let helpers
+
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
@@ -41,12 +43,6 @@ describe('Test scenarios', function () {
     await helpers.remote.ignorePreviousChanges()
   })
 
-  afterEach(function () {
-    if (this.currentTest.state === 'failed') {
-      // TODO: dump logs
-    }
-  })
-
   for (let scenario of scenarios) {
     if (scenario.platforms && !scenario.platforms.includes(platform)) {
       it.skip(`test/scenarios/${scenario.name}/  (skip on ${platform})`, () => {})
@@ -63,115 +59,142 @@ describe('Test scenarios', function () {
           continue
         }
 
-        let breakpoints = []
-        if (eventsFile.events[0] && eventsFile.events[0].breakpoints) {
-          breakpoints = eventsFile.events[0].breakpoints
-          eventsFile.events = eventsFile.events.slice(1)
-        } else {
-          // break between each events
-          for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
-        }
-
-        if (process.env.NO_BREAKPOINTS) breakpoints = [0]
+        const breakpoints = injectChokidarBreakpoints(eventsFile)
 
         for (let flushAfter of breakpoints) {
           it(localTestName + ' flushAfter=' + flushAfter, async function () {
-            if (scenario.init) {
-              let relpathFix = _.identity
-              if (process.platform === 'win32' && localTestName.match(/win32/)) {
-                relpathFix = (relpath) => relpath.replace(/\//g, '\\')
-              }
-              await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
-            }
-
-            const eventsBefore = eventsFile.events.slice(0, flushAfter)
-            const eventsAfter = eventsFile.events.slice(flushAfter)
-
-            await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
-            await helpers.local.simulateEvents(eventsBefore)
-            await helpers.syncAll()
-            await helpers.local.simulateEvents(eventsAfter)
-            await helpers.syncAll()
-            await helpers.remote.pullChanges()
-            await helpers.syncAll()
-
-            await verifyExpectations(scenario, {includeRemoteTrash: true})
-
-            // TODO: pull
+            await runLocalChokidar(scenario, eventsFile, flushAfter, helpers)
           })
-        } // event files
+        }
       }
 
       const stoppedTestName = `test/scenarios/${scenario.name}/local/stopped`
-      const stoppedEnvVar = 'STOPPED_CLIENT'
-
-      if (scenario.disabled) {
-        it.skip(`${stoppedTestName} (${scenario.disabled})`, () => {})
-      } else if (process.env[stoppedEnvVar] == null) {
-        it.skip(`${stoppedTestName} (${stoppedEnvVar} is not set)`, () => {})
+      const stoppedTestSkipped = shouldSkipLocalStopped(scenario)
+      if (stoppedTestSkipped) {
+        it.skip(`${stoppedTestName} (${stoppedTestSkipped})`, () => {})
       } else {
         it(stoppedTestName, async function () {
           this.timeout(3 * 60 * 1000)
-          // TODO: Find why we need this to prevent random failures and fix it.
-          await Promise.delay(500)
-          if (scenario.init) {
-            let relpathFix = _.identity
-            if (process.platform === 'win32' && this.currentTest.title.match(/win32/)) {
-              relpathFix = (relpath) => relpath.replace(/\//g, '\\')
-            }
-            await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix, true)
-          }
-
-          await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
-
-          await helpers.local.local.watcher.start()
-          await helpers.local.local.watcher.stop(true)
-
-          await helpers.syncAll()
-
-          await verifyExpectations(scenario, {includeRemoteTrash: true})
-        }) // test
-      } // !eventsFile.disabled
+          await runLocalStopped(scenario, helpers)
+        })
+      }
     }
 
     const remoteTestName = `test/scenarios/${scenario.name}/remote/`
-    if (scenario.name.indexOf('outside') !== -1) {
-      it.skip(`${remoteTestName}  (skip outside case)`, () => {})
-      continue
-    } else if (scenario.disabled) {
-      it.skip(`${remoteTestName}  (${scenario.disabled})`, () => {})
-      continue
-    } else if (scenario.side === 'local') {
-      it.skip(`${remoteTestName}  (skip local only test)`, () => {})
+    const remoteTestSkipped = shouldSkipRemote(scenario)
+    if (remoteTestSkipped) {
+      it.skip(`${remoteTestName}  (${remoteTestSkipped})`, () => {})
       continue
     }
 
     it(remoteTestName, async function () {
-      if (scenario.init) {
-        let relpathFix = _.identity
-        if (process.platform === 'win32') {
-          relpathFix = (relpath) => relpath.replace(/\//g, '\\')
-        }
-        await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
-        await helpers.remote.ignorePreviousChanges()
-      }
-
-      await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
-
-      await helpers.remote.pullChanges()
-      // TODO: Don't sync when scenario doesn't have target FS/trash assertions?
-      for (let i = 0; i < scenario.actions.length + 1; i++) {
-        await helpers.syncAll()
-      }
-
-      await verifyExpectations(scenario, {includeRemoteTrash: false})
-
-      // TODO: Local trash assertions
-    }) // describe remote
-  } // scenarios
+      await runRemote(scenario, helpers)
+    })
+  }
 })
 
-async function verifyExpectations (scenario, {includeRemoteTrash}) {
+function shouldSkipLocalStopped (scenario, env = process.env) {
+  if (scenario.disabled) {
+    return scenario.disabled
+  } else if (env[stoppedEnvVar] == null) {
+    return `${stoppedEnvVar} is not set`
+  }
+}
+
+function shouldSkipRemote (scenario) {
+  if (scenario.name.indexOf('outside') !== -1) {
+    return 'skip outside case'
+  } else if (scenario.disabled) {
+    return scenario.disabled
+  } else if (scenario.side === 'local') {
+    return 'skip local only test'
+  }
+}
+
+function injectChokidarBreakpoints (eventsFile) {
+  let breakpoints = []
+  if (eventsFile.events[0] && eventsFile.events[0].breakpoints) {
+    breakpoints = eventsFile.events[0].breakpoints
+    eventsFile.events = eventsFile.events.slice(1)
+  } else {
+    // break between each events
+    for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
+  }
+
+  if (process.env.NO_BREAKPOINTS) breakpoints = [0]
+  return breakpoints
+}
+
+async function runLocalChokidar (scenario, eventsFile, flushAfter, helpers) {
+  if (scenario.init) {
+    let relpathFix = _.identity
+    if (process.platform === 'win32' && eventsFile.name.match(/win32/)) {
+      relpathFix = (relpath) => relpath.replace(/\//g, '\\')
+    }
+    await init(scenario, helpers._pouch, helpers.local.syncDir.abspath, relpathFix)
+  }
+
+  const eventsBefore = eventsFile.events.slice(0, flushAfter)
+  const eventsAfter = eventsFile.events.slice(flushAfter)
+
+  await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
+  await helpers.local.simulateEvents(eventsBefore)
+  await helpers.syncAll()
+  await helpers.local.simulateEvents(eventsAfter)
+  await helpers.syncAll()
+  await helpers.remote.pullChanges()
+  await helpers.syncAll()
+
+  await verifyExpectations(scenario, helpers, {includeRemoteTrash: true})
+
+  // TODO: pull
+}
+
+async function runLocalStopped (scenario, helpers) {
+  // TODO: Find why we need this to prevent random failures and fix it.
+  await Promise.delay(500)
+  if (scenario.init) {
+    let relpathFix = _.identity
+    if (process.platform === 'win32' && scenario.name.match(/win32/)) {
+      relpathFix = (relpath) => relpath.replace(/\//g, '\\')
+    }
+    await init(scenario, helpers._pouch, helpers.local.syncDir.abspath, relpathFix, true)
+  }
+
+  await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
+
+  await helpers.local.local.watcher.start()
+  await helpers.local.local.watcher.stop(true)
+
+  await helpers.syncAll()
+
+  await verifyExpectations(scenario, helpers, {includeRemoteTrash: true})
+}
+
+async function runRemote (scenario, helpers) {
+  if (scenario.init) {
+    let relpathFix = _.identity
+    if (process.platform === 'win32') {
+      relpathFix = (relpath) => relpath.replace(/\//g, '\\')
+    }
+    await init(scenario, helpers._pouch, helpers.local.syncDir.abspath, relpathFix)
+    await helpers.remote.ignorePreviousChanges()
+  }
+
+  await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
+
+  await helpers.remote.pullChanges()
+  // TODO: Don't sync when scenario doesn't have target FS/trash assertions?
+  for (let i = 0; i < scenario.actions.length + 1; i++) {
+    await helpers.syncAll()
+  }
+
+  await verifyExpectations(scenario, helpers, {includeRemoteTrash: false})
+
+  // TODO: Local trash assertions
+}
+
+async function verifyExpectations (scenario, helpers, {includeRemoteTrash}) {
   // TODO: Wrap in custom expectation
   if (scenario.expected) {
     const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
