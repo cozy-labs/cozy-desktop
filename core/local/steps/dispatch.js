@@ -20,25 +20,21 @@ type DispatchOptions = {
 */
 
 const SIDE = 'local'
-let events, target, pouch, actions
+let actions
 
 // Dispatch takes a buffer of AtomWatcherEvents batches, and calls Prep for
 // each event. It needs to fetch the old documents from pouchdb in some cases
 // to have all the data expected by prep/merge.
 module.exports = function (buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ {
-  events = opts.events
-  target = opts.prep
-  pouch = opts.pouch
-
   return buffer.asyncMap(async (batch) => {
     for (const event of batch) {
       try {
         log.trace({event}, 'dispatch')
         if (event.action === 'initial-scan-done') {
-          actions.initialScanDone()
+          actions.initialScanDone(opts)
         } else {
           // $FlowFixMe
-          await actions[event.action + event.kind](event)
+          await actions[event.action + event.kind](event, opts)
         }
       } catch (err) {
         console.log('Dispatch error:', err, event) // TODO
@@ -50,88 +46,88 @@ module.exports = function (buffer /*: Buffer */, opts /*: DispatchOptions */) /*
 }
 
 actions = {
-  initialScanDone: () => {
+  initialScanDone: ({events}) => {
     events.emit('initial-scan-done')
   },
 
-  scanfile: (event) => actions.createdfile(event),
+  scanfile: (event, opts) => actions.createdfile(event, opts),
 
-  scandirectory: (event) => actions.createddirectory(event),
+  scandirectory: (event, opts) => actions.createddirectory(event, opts),
 
-  createdfile: async (event) => {
+  createdfile: async (event, {prep}) => {
     const doc = buildFile(event.path, event.stats, event.md5sum)
-    await target.addFileAsync(SIDE, doc)
+    await prep.addFileAsync(SIDE, doc)
   },
 
-  createddirectory: async (event) => {
+  createddirectory: async (event, {prep}) => {
     const doc = buildDir(event.path, event.stats)
-    await target.putFolderAsync(SIDE, doc)
+    await prep.putFolderAsync(SIDE, doc)
   },
 
-  modifiedfile: async (event) => {
+  modifiedfile: async (event, {prep}) => {
     const doc = buildFile(event.path, event.stats, event.md5sum)
-    await target.updateFileAsync(SIDE, doc)
+    await prep.updateFileAsync(SIDE, doc)
   },
 
-  modifieddirectory: async (event) => {
+  modifieddirectory: async (event, {prep}) => {
     const doc = buildDir(event.path, event.stats)
-    await target.putFolderAsync(SIDE, doc)
+    await prep.putFolderAsync(SIDE, doc)
   },
 
-  renamedfile: async (event) => {
+  renamedfile: async (event, {pouch, prep}) => {
     let old
     try {
-      old = await fetchOldDoc(id(event.oldPath))
+      old = await fetchOldDoc(pouch, id(event.oldPath))
     } catch (err) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a file is added when the client is
       // stopped, and is moved before it was scanned.
       event.action = 'created'
       delete event.oldPath
-      return actions.createdfile(event)
+      return actions.createdfile(event, {prep})
     }
     const doc = buildFile(event.path, event.stats, event.md5sum)
-    await target.moveFileAsync(SIDE, doc, old)
+    await prep.moveFileAsync(SIDE, doc, old)
   },
 
-  renameddirectory: async (event) => {
+  renameddirectory: async (event, {pouch, prep}) => {
     let old
     try {
-      old = await fetchOldDoc(id(event.oldPath))
+      old = await fetchOldDoc(pouch, id(event.oldPath))
     } catch (err) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a dir is added when the client is
       // stopped, and is moved before it was scanned.
       event.action = 'created'
       delete event.oldPath
-      return actions.createddirectory(event)
+      return actions.createddirectory(event, {prep})
     }
     const doc = buildDir(event.path, event.stats)
-    await target.moveFolderAsync(SIDE, doc, old)
+    await prep.moveFolderAsync(SIDE, doc, old)
   },
 
-  deletedfile: async (event) => {
+  deletedfile: async (event, {pouch, prep}) => {
     let old
     try {
-      old = await fetchOldDoc(event._id)
+      old = await fetchOldDoc(pouch, event._id)
     } catch (err) {
       // The file was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
     }
-    await target.trashFileAsync(SIDE, old)
+    await prep.trashFileAsync(SIDE, old)
   },
 
-  deleteddirectory: async (event) => {
+  deleteddirectory: async (event, {pouch, prep}) => {
     let old
     try {
-      old = await fetchOldDoc(event._id)
+      old = await fetchOldDoc(pouch, event._id)
     } catch (err) {
       // The dir was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
     }
-    await target.trashFolderAsync(SIDE, old)
+    await prep.trashFolderAsync(SIDE, old)
   }
 }
 
@@ -142,7 +138,7 @@ actions = {
 // 'foo' -> 'bar', the fetch old doc won't see 'foo' in pouch and the renamed
 // event will be misleady seen as just a 'created' event for 'bar' (but 'foo'
 // will still be created in pouch and not removed after that).
-async function fetchOldDoc (oldId /*: string */) {
+async function fetchOldDoc (pouch, oldId /*: string */) {
   const release = await pouch.lock('FetchOldDocs')
   try {
     return await pouch.db.get(oldId)
