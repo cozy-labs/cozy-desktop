@@ -10,7 +10,7 @@ const Buffer = require('../../../../core/local/steps/buffer')
 const filterIgnored = require('../../../../core/local/steps/filter_ignored')
 
 onPlatforms(['linux', 'win32'], () => {
-  describe('local/steps/filter_ignored', () => {
+  describe('local/steps/filter_ignored.loop()', () => {
     const builders = new Builders()
 
     let ignore
@@ -25,7 +25,7 @@ onPlatforms(['linux', 'win32'], () => {
 
     context('without any batches of events', () => {
       it('does not throw any errors', () => {
-        should(() => filterIgnored(buffer, { ignore })).not.throw()
+        should(() => filterIgnored.loop(buffer, { ignore })).not.throw()
       })
     })
 
@@ -55,7 +55,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       it('keeps only the relevant events in order', async () => {
-        const filteredBuffer = filterIgnored(buffer, { ignore })
+        const filteredBuffer = filterIgnored.loop(buffer, { ignore })
 
         const relevantEvents = await filteredBuffer.pop()
         should(relevantEvents).deepEqual(notIgnoredEvents)
@@ -79,7 +79,7 @@ onPlatforms(['linux', 'win32'], () => {
       it('returns a buffer without events for filtered paths', async () => {
         let relevantEvents
 
-        const filteredBuffer = filterIgnored(buffer, { ignore })
+        const filteredBuffer = filterIgnored.loop(buffer, { ignore })
 
         relevantEvents = await filteredBuffer.pop()
         should(relevantEvents).not.containDeep(ignoredEvents)
@@ -90,7 +90,7 @@ onPlatforms(['linux', 'win32'], () => {
       it('keeps the order of batches with relevant events', async () => {
         let relevantEvents
 
-        const filteredBuffer = filterIgnored(buffer, { ignore })
+        const filteredBuffer = filterIgnored.loop(buffer, { ignore })
 
         relevantEvents = await filteredBuffer.pop()
         should(relevantEvents).containDeepOrdered([notIgnoredEvents[0]])
@@ -107,7 +107,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       it('filters out folder events only', async () => {
-        const filteredBuffer = filterIgnored(buffer, { ignore })
+        const filteredBuffer = filterIgnored.loop(buffer, { ignore })
 
         const relevantEvents = await filteredBuffer.pop()
         should(relevantEvents).deepEqual([fileEvent])

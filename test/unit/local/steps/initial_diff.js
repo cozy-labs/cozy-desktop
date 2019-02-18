@@ -9,7 +9,7 @@ const pouchHelpers = require('../../../support/helpers/pouch')
 const Buffer = require('../../../../core/local/steps/buffer')
 const initialDiff = require('../../../../core/local/steps/initial_diff')
 
-describe('local/steps/initialDiff', () => {
+describe('local/steps/initial_diff.loop()', () => {
   let builders
   let buffer
 
@@ -29,7 +29,7 @@ describe('local/steps/initialDiff', () => {
     const bar = builders.event().action('scan').kind('directory').path('bar').ino(1).build()
     const buzz = builders.event().action('scan').kind('file').path('buzz').ino(2).build()
     buffer.push([bar, buzz])
-    buffer = initialDiff(buffer, { pouch: this.pouch })
+    buffer = initialDiff.loop(buffer, { pouch: this.pouch })
 
     const events = await buffer.pop()
     should(events).deepEqual([
@@ -51,7 +51,7 @@ describe('local/steps/initialDiff', () => {
       bar,
       builders.event().action('scan').kind('file').path('bar/baz').ino(2).build()
     ])
-    buffer = initialDiff(buffer, { pouch: this.pouch })
+    buffer = initialDiff.loop(buffer, { pouch: this.pouch })
 
     const events = [].concat(
       await buffer.pop(),
@@ -73,7 +73,7 @@ describe('local/steps/initialDiff', () => {
     const foo = builders.event().action('scan').kind('file').path('foo').ino(2).build()
     const buzz = builders.event().action('scan').kind('directory').path('buzz').ino(3).build()
     buffer.push([foo, buzz])
-    buffer = initialDiff(buffer, { pouch: this.pouch })
+    buffer = initialDiff.loop(buffer, { pouch: this.pouch })
 
     const events = await buffer.pop()
     should(events).deepEqual([
@@ -88,7 +88,7 @@ describe('local/steps/initialDiff', () => {
 
     const initial = builders.event().action('initial-scan-done').build()
     buffer.push([initial])
-    buffer = initialDiff(buffer, { pouch: this.pouch })
+    buffer = initialDiff.loop(buffer, { pouch: this.pouch })
 
     const events = await buffer.pop()
     should(events).deepEqual([

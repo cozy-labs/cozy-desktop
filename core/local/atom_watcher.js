@@ -87,8 +87,8 @@ module.exports = class AtomWatcher {
     // communicates with the next one via a buffer. The first step is called
     // the producer: even if the chain is ready at the end of this constructor,
     // the producer won't start pushing batches of events until it is started.
-    let buffer = steps.reduce((buf, step) => step(buf, this), this.producer.buffer)
-    dispatch(buffer, this)
+    let buffer = steps.reduce((buf, step) => step.loop(buf, this), this.producer.buffer)
+    dispatch.loop(buffer, this)
   }
 
   start () {

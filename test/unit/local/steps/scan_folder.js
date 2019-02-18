@@ -6,7 +6,7 @@ const sinon = require('sinon')
 const scanFolder = require('../../../../core/local/steps/scan_folder')
 const Buffer = require('../../../../core/local/steps/buffer')
 
-describe('core/local/steps/scan_folder', () => {
+describe('core/local/steps/scan_folder.loop()', () => {
   it('should call the producer scan for action `created` only', async () => {
     const batch = [
       {
@@ -49,7 +49,7 @@ describe('core/local/steps/scan_folder', () => {
         scan: sinon.stub().resolves()
       }
     }
-    const enhancedBuffer = scanFolder(buffer, opts)
+    const enhancedBuffer = scanFolder.loop(buffer, opts)
     const enhancedBatch = await enhancedBuffer.pop()
     should(enhancedBatch).be.length(batch.length)
     should(opts.producer.scan).be.calledOnce()
@@ -82,7 +82,7 @@ describe('core/local/steps/scan_folder', () => {
         scan: sinon.stub().resolves()
       }
     }
-    const enhancedBuffer = scanFolder(buffer, opts)
+    const enhancedBuffer = scanFolder.loop(buffer, opts)
     const enhancedBatch = await enhancedBuffer.pop()
     should(enhancedBatch).be.length(batch.length)
     should(opts.producer.scan).be.calledThrice()
@@ -115,7 +115,7 @@ describe('core/local/steps/scan_folder', () => {
         scan: sinon.stub().resolves()
       }
     }
-    const enhancedBuffer = scanFolder(buffer, opts)
+    const enhancedBuffer = scanFolder.loop(buffer, opts)
     const enhancedBatch = await enhancedBuffer.pop()
     should(enhancedBatch).be.length(batch.length)
     should(opts.producer.scan).be.calledTwice()

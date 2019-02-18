@@ -24,7 +24,7 @@ async function heuristicIsEmpty (buffer) {
   )
 }
 
-describe('core/local/steps/await_write_finish', () => {
+describe('core/local/steps/await_write_finish.loop()', () => {
   it('should reduce created→deleted to empty', async () => {
     const buffer = new Buffer()
     const originalBatch = [
@@ -43,7 +43,7 @@ describe('core/local/steps/await_write_finish', () => {
     originalBatch.forEach(event => {
       buffer.push([Object.assign({}, event)])
     })
-    const enhancedBuffer = awaitWriteFinish(buffer, {})
+    const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
     should(await heuristicIsEmpty(enhancedBuffer)).be.true()
   })
 
@@ -71,7 +71,7 @@ describe('core/local/steps/await_write_finish', () => {
       originalBatch.forEach(event => {
         buffer.push([Object.assign({}, event)])
       })
-      const enhancedBuffer = awaitWriteFinish(buffer, {})
+      const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
       should(await enhancedBuffer.pop()).eql([originalBatch[0]])
       should(await heuristicIsEmpty(enhancedBuffer)).be.true()
     })
@@ -104,7 +104,7 @@ describe('core/local/steps/await_write_finish', () => {
       originalBatch.forEach(event => {
         buffer.push([Object.assign({}, event)])
       })
-      const enhancedBuffer = awaitWriteFinish(buffer, {})
+      const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
       should(await heuristicIsEmpty(enhancedBuffer)).be.true()
     })
   })
@@ -133,7 +133,7 @@ describe('core/local/steps/await_write_finish', () => {
     originalBatch.forEach(event => {
       buffer.push([Object.assign({}, event)])
     })
-    const enhancedBuffer = awaitWriteFinish(buffer, {})
+    const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
     should(await enhancedBuffer.pop()).eql([originalBatch[1]])
     should(await enhancedBuffer.pop()).eql([originalBatch[0]])
     should(await heuristicIsEmpty(enhancedBuffer)).be.true()

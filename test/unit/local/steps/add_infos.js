@@ -9,7 +9,7 @@ const should = require('should')
 const addInfos = require('../../../../core/local/steps/add_infos')
 const Buffer = require('../../../../core/local/steps/buffer')
 
-describe('core/local/steps/add_infos', () => {
+describe('core/local/steps/add_infos.loop()', () => {
   it('should returns an enhanced batch with infos', async () => {
     const batch = [
       {
@@ -20,7 +20,7 @@ describe('core/local/steps/add_infos', () => {
     ]
     const buffer = new Buffer()
     buffer.push(batch)
-    const enhancedBuffer = addInfos(buffer, {
+    const enhancedBuffer = addInfos.loop(buffer, {
       syncPath: ''
     })
     const enhancedBatch = await enhancedBuffer.pop()
@@ -54,7 +54,7 @@ describe('core/local/steps/add_infos', () => {
     ]
     const buffer = new Buffer()
     buffer.push(batch)
-    const enhancedBuffer = addInfos(buffer, {
+    const enhancedBuffer = addInfos.loop(buffer, {
       syncPath: ''
     })
     const [scanEvent, ...otherEvents] = await enhancedBuffer.pop()

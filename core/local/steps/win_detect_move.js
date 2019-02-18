@@ -23,6 +23,10 @@ type PendingBatch = {
 }
 */
 
+module.exports = {
+  loop
+}
+
 // TODO add unit tests and logs
 // TODO check that a file/dir created and removed just after is not seen as a move
 
@@ -100,7 +104,7 @@ async function winDetectMove (buffer, out, pouch) {
   }
 }
 
-module.exports = function (buffer /*: Buffer */, opts /*: { pouch: Pouch } */) /*: Buffer */ {
+function loop (buffer /*: Buffer */, opts /*: { pouch: Pouch } */) /*: Buffer */ {
   const out = new Buffer()
   winDetectMove(buffer, out, opts.pouch)
     .catch(err => log.error({err}))
