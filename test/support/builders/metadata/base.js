@@ -179,6 +179,17 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  tags (...tags /*: string[] */) /*: this */ {
+    this.doc.tags = tags
+    return this
+  }
+
+  type (mime /*: string */) /*: this */ {
+    this.doc.class = mime.split('/')[0]
+    this.doc.mime = mime
+    return this
+  }
+
   build () /*: Metadata */ {
     // Don't detect incompatibilities according to syncPath for test data, to
     // prevent environment related failures.
