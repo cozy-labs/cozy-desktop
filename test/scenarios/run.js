@@ -129,14 +129,9 @@ describe('Test scenarios', function () {
     }
 
     const remoteTestName = `test/scenarios/${scenario.name}/remote/`
-    if (scenario.name.indexOf('outside') !== -1) {
-      it.skip(`${remoteTestName}  (skip outside case)`, () => {})
-      continue
-    } else if (scenario.disabled) {
-      it.skip(`${remoteTestName}  (${scenario.disabled})`, () => {})
-      continue
-    } else if (scenario.side === 'local') {
-      it.skip(`${remoteTestName}  (skip local only test)`, () => {})
+    const remoteTestSkipped = shouldSkipRemote(scenario)
+    if (remoteTestSkipped) {
+      it.skip(`${remoteTestName}  (${remoteTestSkipped})`, () => {})
       continue
     }
 
@@ -146,13 +141,23 @@ describe('Test scenarios', function () {
   }
 })
 
+function shouldSkipRemote (scenario) {
+  if (scenario.name.indexOf('outside') !== -1) {
+    return 'skip outside case'
+  } else if (scenario.disabled) {
+    return scenario.disabled
+  } else if (scenario.side === 'local') {
+    return 'skip local only test'
+  }
+}
+
 async function runRemote (scenario, helpers) {
   if (scenario.init) {
     let relpathFix = _.identity
     if (process.platform === 'win32') {
       relpathFix = (relpath) => relpath.replace(/\//g, '\\')
     }
-    await init(scenario, this.pouch, helpers.local.syncDir.abspath, relpathFix)
+    await init(scenario, helpers._pouch, helpers.local.syncDir.abspath, relpathFix)
     await helpers.remote.ignorePreviousChanges()
   }
 
