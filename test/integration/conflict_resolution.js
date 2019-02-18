@@ -70,12 +70,7 @@ describe('Conflict resolution', () => {
     it('local change', async () => {
       await helpers.local.syncDir.outputFile('concurrent-edited', 'new-local-content')
 
-      await helpers.local.scan()
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
-      await helpers.local.scan()
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
+      await fullSyncStartingFrom('local')
 
       should(await helpers.trees()).deepEqual({remote: expectedTree, local: expectedTree})
     })
@@ -86,12 +81,7 @@ describe('Conflict resolution', () => {
       await helpers.local.syncDir.unlink('concurrent-edited')
       await helpers.local.syncDir.move('concurrent-edited2', 'concurrent-edited')
 
-      await helpers.local.scan()
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
-      await helpers.local.scan()
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
+      await fullSyncStartingFrom('local')
 
       should(await helpers.trees()).deepEqual({remote: expectedTree, local: expectedTree})
     })
