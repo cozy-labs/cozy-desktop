@@ -59,16 +59,7 @@ describe('Test scenarios', function () {
           continue
         }
 
-        let breakpoints = []
-        if (eventsFile.events[0] && eventsFile.events[0].breakpoints) {
-          breakpoints = eventsFile.events[0].breakpoints
-          eventsFile.events = eventsFile.events.slice(1)
-        } else {
-          // break between each events
-          for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
-        }
-
-        if (process.env.NO_BREAKPOINTS) breakpoints = [0]
+        const breakpoints = injectChokidarBreakpoints(eventsFile)
 
         for (let flushAfter of breakpoints) {
           it(localTestName + ' flushAfter=' + flushAfter, async function () {
@@ -118,6 +109,20 @@ function shouldSkipRemote (scenario) {
   } else if (scenario.side === 'local') {
     return 'skip local only test'
   }
+}
+
+function injectChokidarBreakpoints (eventsFile) {
+  let breakpoints = []
+  if (eventsFile.events[0] && eventsFile.events[0].breakpoints) {
+    breakpoints = eventsFile.events[0].breakpoints
+    eventsFile.events = eventsFile.events.slice(1)
+  } else {
+    // break between each events
+    for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
+  }
+
+  if (process.env.NO_BREAKPOINTS) breakpoints = [0]
+  return breakpoints
 }
 
 async function runLocalChokidar (scenario, eventsFile, flushAfter, helpers) {
