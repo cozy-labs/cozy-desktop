@@ -53,13 +53,9 @@ describe('Update only a file mtime', () => {
     // actually change the file
     await fse.appendFile(localPath, ' appended')
     const stats = await fse.stat(localPath)
+    statAfter.mtime.toISOString().should.not.equal(stats.mtime.toISOString())
 
-    await helpers.local.simulateEvents([{
-      type: 'change',
-      path: 'file',
-      stats: stats
-    }])
-
+    await helpers.local.scan()
     await helpers.syncAll()
 
     should(await fse.readFile(localPath, 'utf8')).equal('basecontent appended')
