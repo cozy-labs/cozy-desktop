@@ -99,7 +99,7 @@ describe('Test scenarios', function () {
 
             // TODO: pull
           })
-        } // event files
+        }
       }
 
       const stoppedTestName = `test/scenarios/${scenario.name}/local/stopped`
@@ -130,8 +130,8 @@ describe('Test scenarios', function () {
           await helpers.syncAll()
 
           await verifyExpectations(scenario, {includeRemoteTrash: true})
-        }) // test
-      } // !eventsFile.disabled
+        })
+      }
     }
 
     const remoteTestName = `test/scenarios/${scenario.name}/remote/`
@@ -167,8 +167,8 @@ describe('Test scenarios', function () {
       await verifyExpectations(scenario, {includeRemoteTrash: false})
 
       // TODO: Local trash assertions
-    }) // describe remote
-  } // scenarios
+    })
+  }
 })
 
 async function verifyExpectations (scenario, {includeRemoteTrash}) {
