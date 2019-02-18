@@ -53,6 +53,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
   // which files/folders have been deleted, as it is stable even if the
   // file/folder has been moved or renamed
   const byInode /*: Map<number|string, WatchedPath> */ = new Map()
+  const byPath /*: Map<string, WatchedPath> */ = new Map()
   const docs /*: Metadata[] */ = await pouch.byRecursivePathAsync('')
   for (const doc of docs) {
     if (doc.ino != null) {
@@ -108,17 +109,21 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
           byInode.delete(event.stats.fileid)
         }
         byInode.delete(event.stats.ino)
+        byPath.set(event.path, { path: event.path, kind: event.kind })
       } else if (event.action === 'initial-scan-done') {
         // Emit deleted events for all the remaining files/dirs
         for (const [, doc] of byInode) {
-          batch.push({
-            action: 'deleted',
-            kind: doc.kind,
-            _id: id(doc.path),
-            path: doc.path
-          })
+          if (!byPath.get(doc.path)) {
+            batch.push({
+              action: 'deleted',
+              kind: doc.kind,
+              _id: id(doc.path),
+              path: doc.path
+            })
+          }
         }
         byInode.clear()
+        byPath.clear()
       }
       batch.push(event)
     }
