@@ -16,6 +16,8 @@ const remoteCaptureHelpers = require('../../dev/capture/remote')
 
 const { platform } = process
 
+const stoppedEnvVar = 'STOPPED_CLIENT'
+
 describe('Test scenarios', function () {
   let helpers
 
@@ -97,12 +99,9 @@ describe('Test scenarios', function () {
       }
 
       const stoppedTestName = `test/scenarios/${scenario.name}/local/stopped`
-      const stoppedEnvVar = 'STOPPED_CLIENT'
-
-      if (scenario.disabled) {
-        it.skip(`${stoppedTestName} (${scenario.disabled})`, () => {})
-      } else if (process.env[stoppedEnvVar] == null) {
-        it.skip(`${stoppedTestName} (${stoppedEnvVar} is not set)`, () => {})
+      const stoppedTestSkipped = shouldSkipLocalStopped(scenario)
+      if (stoppedTestSkipped) {
+        it.skip(`${stoppedTestName} (${stoppedTestSkipped})`, () => {})
       } else {
         it(stoppedTestName, async function () {
           this.timeout(3 * 60 * 1000)
@@ -123,6 +122,14 @@ describe('Test scenarios', function () {
     })
   }
 })
+
+function shouldSkipLocalStopped (scenario, env = process.env) {
+  if (scenario.disabled) {
+    return scenario.disabled
+  } else if (env[stoppedEnvVar] == null) {
+    return `${stoppedEnvVar} is not set`
+  }
+}
 
 function shouldSkipRemote (scenario) {
   if (scenario.name.indexOf('outside') !== -1) {
