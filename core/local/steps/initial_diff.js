@@ -59,7 +59,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
     if (doc.ino != null) {
       // Process only files/dirs that were created locally or synchronized
       const kind = doc.docType === 'file' ? 'file' : 'directory'
-      byInode.set(doc.fileid || doc.ino, { path: doc.path, kind: kind })
+      byInode.set(doc.fileid || doc.ino, { kind, path: doc.path, sides: doc.sides })
     }
   }
 
@@ -87,9 +87,14 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
         if (was && was.path !== event.path) {
           if (was.kind === event.kind) {
             // TODO for a directory, maybe we should check the children
-            event.action = 'renamed'
-            event.oldPath = was.path
             nbCandidates++
+            event.action = 'renamed'
+            if (!was.sides.remote || was.sides.local >= was.sides.remote) {
+              event.oldPath = was.path
+            } else {
+              event.oldPath = event.path
+              event.path = was.path
+            }
           } else {
             // On linux, the inodes can have been reused: a file was deleted
             // and a directory created just after while the client was stopped
