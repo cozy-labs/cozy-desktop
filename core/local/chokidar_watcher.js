@@ -98,8 +98,6 @@ module.exports = class LocalWatcher {
     this.watcher = chokidar.watch('.', {
       // Let paths in events be relative to this base path
       cwd: this.syncPath,
-      // Ignore our own .system-tmp-cozy-drive directory
-      ignored: /(^|[\/\\])\.system-tmp-cozy-drive/, // eslint-disable-line no-useless-escape
       // Don't follow symlinks
       followSymlinks: false,
       // The stats object is used in methods below
