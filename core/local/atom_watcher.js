@@ -80,6 +80,7 @@ module.exports = class AtomWatcher {
   events: EventEmitter
   checksumer: Checksumer
   producer: Producer
+  stepOptions: Object
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
@@ -90,24 +91,27 @@ module.exports = class AtomWatcher {
     this.events = opts.events
     this.checksumer = checksumer.init()
     this.producer = producer(opts)
-
-    const stepOptions = Object.assign(
+    this.stepOptions = Object.assign(
       ({
         checksumer: this.checksumer,
         scan: this.producer.scan
       } /*: Object */),
       opts
     )
-    // Here, we build a chain of steps. Each step can be seen as an actor that
-    // communicates with the next one via a buffer. The first step is called
-    // the producer: even if the chain is ready at the end of this constructor,
-    // the producer won't start pushing batches of events until it is started.
-    let buffer = steps.reduce((buf, step) => step.loop(buf, stepOptions), this.producer.buffer)
-    dispatch.loop(buffer, stepOptions)
+  }
+
+  // Here, we build a chain of steps. Each step can be seen as an actor that
+  // communicates with the next one via a buffer. The first step is called
+  // the producer: even if the chain is ready at the end of this constructor,
+  // the producer won't start pushing batches of events until it is started.
+  initializeSteps () {
+    let buffer = steps.reduce((buf, step) => step.loop(buf, this.stepOptions), this.producer.buffer)
+    dispatch.loop(buffer, this.stepOptions)
   }
 
   start () {
     log.debug('starting...')
+    this.initializeSteps()
     this.running = new Promise((resolve, reject) => {
       this._runningResolve = resolve
       this._runningReject = reject
@@ -134,6 +138,6 @@ module.exports = class AtomWatcher {
       this._runningResolve()
       this._runningResolve = null
     }
-    this.producer.stop()
+    await this.producer.stop()
   }
 }

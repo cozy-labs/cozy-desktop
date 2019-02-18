@@ -116,9 +116,10 @@ class LocalTestHelpers {
     return this.side.watcher.onFlush(events)
   }
 
-  startSimulation () {
+  async startSimulation () {
     return new Promise((resolve, reject) => {
       this._resolveSimulation = resolve
+      this.side.watcher.start()
     })
   }
 
@@ -127,10 +128,10 @@ class LocalTestHelpers {
     return _resolveSimulation && _.isEqual(batch, simulationCompleteBatch)
   }
 
-  stopSimulation () {
-    const { _resolveSimulation } = this
-    _resolveSimulation && _resolveSimulation()
+  async stopSimulation () {
+    this._resolveSimulation && this._resolveSimulation()
     delete this._resolveSimulation
+    this.side.watcher.stop()
   }
 
   dispatchAtomEvents (batch /*: Batch */) {
