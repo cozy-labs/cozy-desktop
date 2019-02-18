@@ -25,6 +25,14 @@ import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
 import type { Producer } from './steps/producer'
+
+type AtomWatcherOptions = {
+  syncPath: string,
+  prep: Prep,
+  pouch: Pouch,
+  events: EventEmitter,
+  ignore: Ignore
+}
 */
 
 const log = logger({
@@ -75,7 +83,7 @@ module.exports = class AtomWatcher {
   _runningReject: ?Function
   */
 
-  constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) {
+  constructor ({syncPath, prep, pouch, events, ignore} /*: AtomWatcherOptions */) {
     this.syncPath = syncPath
     this.prep = prep
     this.pouch = pouch

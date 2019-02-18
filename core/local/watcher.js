@@ -24,7 +24,7 @@ function build (config /*: { +syncPath: string, +watcherType: WatcherType } */, 
   const { syncPath, watcherType } = config
 
   if (watcherType === 'atom') {
-    return new AtomWatcher(syncPath, prep, pouch, events, ignore)
+    return new AtomWatcher({syncPath, prep, pouch, events, ignore})
   } else {
     return new ChokidarWatcher(syncPath, prep, pouch, events)
   }
