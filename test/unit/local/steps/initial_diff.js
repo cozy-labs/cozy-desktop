@@ -9,6 +9,8 @@ const pouchHelpers = require('../../../support/helpers/pouch')
 const Buffer = require('../../../../core/local/steps/buffer')
 const initialDiff = require('../../../../core/local/steps/initial_diff')
 
+const kind = doc => doc.docType === 'folder' ? 'directory' : 'file'
+
 describe('local/steps/initial_diff', () => {
   let builders
 
@@ -19,6 +21,23 @@ describe('local/steps/initial_diff', () => {
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
+
+  describe('.initialState()', () => {
+    it('returns initial state referenced by initial diff step name', async function () {
+      const foo = await builders.metadir().path('foo').ino(1).create()
+      const fizz = await builders.metafile().path('fizz').ino(2).create()
+
+      const state = await initialDiff.initialState(this)
+      should(state).have.property(initialDiff.STEP_NAME, {
+        waiting: [],
+        byInode: new Map([
+          [foo.ino, { path: foo.path, kind: kind(foo) }],
+          [fizz.ino, { path: fizz.path, kind: kind(fizz) }]
+        ]),
+        byPath: new Map()
+      })
+    })
+  })
 
   describe('.loop()', () => {
     let buffer
@@ -95,6 +114,25 @@ describe('local/steps/initial_diff', () => {
       should(events).deepEqual([
         builders.event(foo).action('renamed').oldPath('bar').build(),
         builders.event(buzz).action('renamed').oldPath('fizz').build(),
+        initialScanDone
+      ])
+    })
+
+    it('detects documents replaced by another one with a different ino while client was stopped', async function () {
+      await builders.metadir().path('foo').ino(1).create()
+      await builders.metafile().path('bar').ino(2).create()
+
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+
+      const foo = builders.event().action('scan').kind('directory').path('foo').ino(3).build()
+      const bar = builders.event().action('scan').kind('file').path('bar').ino(4).build()
+      buffer.push([foo, bar, initialScanDone])
+      buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
+
+      const events = await buffer.pop()
+      should(events).deepEqual([
+        foo,
+        bar,
         initialScanDone
       ])
     })
