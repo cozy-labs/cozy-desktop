@@ -6,7 +6,7 @@ import type { AtomWatcherEvent } from '../../../../core/local/steps/event'
 */
 
 const should = require('should')
-const addInfos = require('../../../../core/local/steps/add_infos')
+const { step: addInfos } = require('../../../../core/local/steps/add_infos')
 const Buffer = require('../../../../core/local/steps/buffer')
 
 describe('core/local/steps/add_infos', () => {

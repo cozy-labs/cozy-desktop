@@ -22,10 +22,14 @@ type DispatchOptions = {
 const SIDE = 'local'
 let actions
 
+module.exports = {
+  step
+}
+
 // Dispatch takes a buffer of AtomWatcherEvents batches, and calls Prep for
 // each event. It needs to fetch the old documents from pouchdb in some cases
 // to have all the data expected by prep/merge.
-module.exports = function (buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ {
+function step (buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ {
   return buffer.asyncMap(async (batch) => {
     for (const event of batch) {
       try {

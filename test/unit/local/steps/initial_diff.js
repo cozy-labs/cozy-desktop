@@ -7,7 +7,7 @@ const configHelpers = require('../../../support/helpers/config')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
 const Buffer = require('../../../../core/local/steps/buffer')
-const initialDiff = require('../../../../core/local/steps/initial_diff')
+const { step: initialDiff } = require('../../../../core/local/steps/initial_diff')
 
 describe('local/steps/initialDiff', () => {
   let builders

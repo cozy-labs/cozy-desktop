@@ -21,7 +21,7 @@ const pouchHelpers = require('../../../support/helpers/pouch')
 const SyncState = require('../../../../core/syncstate')
 const Prep = require('../../../../core/prep')
 const Buffer = require('../../../../core/local/steps/buffer')
-const dispatch = require('../../../../core/local/steps/dispatch')
+const { step: dispatch } = require('../../../../core/local/steps/dispatch')
 
 function dispatchedCalls (obj /*: Stub */) /*: DispatchedCalls */ {
   const methods = Object.getOwnPropertyNames(obj).filter(m => typeof obj[m] === 'function')

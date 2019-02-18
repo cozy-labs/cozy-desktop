@@ -22,6 +22,10 @@ type WaitingItem = {
 }
 */
 
+module.exports = {
+  step
+}
+
 // TODO add unit tests and logs
 
 function sendReadyBatches (waiting /*: WaitingItem[] */, out /*: Buffer */) {
@@ -109,7 +113,7 @@ async function awaitWriteFinish (buffer /*: Buffer */, out /*: Buffer */) {
   }
 }
 
-module.exports = function (buffer /*: Buffer */, opts /*: {} */) /*: Buffer */ {
+function step (buffer /*: Buffer */, opts /*: {} */) /*: Buffer */ {
   const out = new Buffer()
   awaitWriteFinish(buffer, out)
     .catch(err => log.error({err}))

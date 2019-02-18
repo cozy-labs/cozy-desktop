@@ -12,6 +12,10 @@ import type Buffer from './buffer'
 import type { Checksumer } from '../checksumer'
 */
 
+module.exports = {
+  step
+}
+
 // This step adds md5sum for files:
 // - for created and updated events, it is mandatory
 // - for scan events, it is always done but an optimization could be to do it
@@ -21,7 +25,7 @@ import type { Checksumer } from '../checksumer'
 //   that will be transformed in a created event in dispatch), but we could be
 //   smarter
 // TODO the 2 optimizations ↑
-module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Buffer */ {
+function step (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Buffer */ {
   return buffer.asyncMap(async (events) => {
     for (const event of events) {
       try {

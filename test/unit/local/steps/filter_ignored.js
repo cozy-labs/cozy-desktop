@@ -7,7 +7,7 @@ const Builders = require('../../../support/builders')
 
 const { Ignore } = require('../../../../core/ignore')
 const Buffer = require('../../../../core/local/steps/buffer')
-const filterIgnored = require('../../../../core/local/steps/filter_ignored')
+const { step: filterIgnored } = require('../../../../core/local/steps/filter_ignored')
 
 onPlatforms(['linux', 'win32'], () => {
   describe('local/steps/filter_ignored', () => {

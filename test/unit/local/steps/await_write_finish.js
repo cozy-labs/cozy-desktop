@@ -2,7 +2,7 @@
 /* @flow */
 
 const should = require('should')
-const awaitWriteFinish = require('../../../../core/local/steps/await_write_finish')
+const { step: awaitWriteFinish } = require('../../../../core/local/steps/await_write_finish')
 const Buffer = require('../../../../core/local/steps/buffer')
 
 const lastEventToCheckEmptyness = {

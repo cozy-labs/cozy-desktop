@@ -26,11 +26,15 @@ type WaitingItem = {
 //      good value, it is not something that was computed)
 const DELAY = 200
 
+module.exports = {
+  step
+}
+
 // Some files and directories can have been deleted while cozy-desktop was
 // stopped. So, at the end of the initial scan, we have to do a diff between
 // what was in pouchdb and the events from the local watcher to find what was
 // deleted.
-module.exports = function (buffer /*: Buffer */, opts /*: { pouch: Pouch } */) /*: Buffer */ {
+function step (buffer /*: Buffer */, opts /*: { pouch: Pouch } */) /*: Buffer */ {
   const out = new Buffer()
   initialDiff(buffer, out, opts.pouch)
   return out

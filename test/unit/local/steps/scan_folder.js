@@ -3,7 +3,7 @@
 
 const should = require('should')
 const sinon = require('sinon')
-const scanFolder = require('../../../../core/local/steps/scan_folder')
+const { step: scanFolder } = require('../../../../core/local/steps/scan_folder')
 const Buffer = require('../../../../core/local/steps/buffer')
 
 describe('core/local/steps/scan_folder', () => {

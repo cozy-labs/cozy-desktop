@@ -7,7 +7,7 @@
 
 const should = require('should')
 const checksumer = require('../../../../core/local/checksumer')
-const addChecksum = require('../../../../core/local/steps/add_checksum')
+const { step: addChecksum } = require('../../../../core/local/steps/add_checksum')
 const Buffer = require('../../../../core/local/steps/buffer')
 
 describe('core/local/steps/add_checksum', () => {
