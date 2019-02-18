@@ -9,7 +9,7 @@ const sinon = require('sinon')
 const { runActions, init } = require('../support/helpers/scenarios')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 const pouchHelpers = require('../support/helpers/pouch')
 
 let helpers
@@ -30,7 +30,7 @@ describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)'
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
+    helpers = TestHelpers.init(this)
     prepCalls = []
 
     for (let method of ['addFileAsync', 'putFolderAsync', 'updateFileAsync',

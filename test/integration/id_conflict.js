@@ -10,7 +10,7 @@ const {
   onPlatforms
 } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 
 describe('Identity conflict', () => {
   if (process.env.TRAVIS && (process.platform === 'darwin')) {
@@ -35,7 +35,7 @@ describe('Identity conflict', () => {
 
   beforeEach(async function () {
     cozy = cozyHelpers.cozy
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()

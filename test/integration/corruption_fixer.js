@@ -13,7 +13,7 @@ const Builders = require('../support/builders')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 /*::
 import type { RemoteDoc } from '../../core/remote/document'
 */
@@ -42,7 +42,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(function () {
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
     builders = new Builders({cozy})
   })

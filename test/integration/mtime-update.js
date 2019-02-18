@@ -9,7 +9,7 @@ const _ = require('lodash')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 
 const cozy = cozyHelpers.cozy
 
@@ -26,7 +26,7 @@ describe('Update only a file mtime', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(function () {
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
   })
 

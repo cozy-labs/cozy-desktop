@@ -6,7 +6,7 @@ const should = require('should')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 
 const cozy = cozyHelpers.cozy
 
@@ -23,7 +23,7 @@ describe('Permanent deletion remote', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(function () {
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
   })
 

@@ -10,7 +10,7 @@ const metadata = require('../../core/metadata')
 const { runActions, init } = require('../support/helpers/scenarios')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 const pouchHelpers = require('../support/helpers/pouch')
 
 describe('TRELLO #646: Déplacement écrasé avant synchro (malgré la synchro par lot, https://trello.com/c/Co05qttn)', () => {
@@ -28,7 +28,7 @@ describe('TRELLO #646: Déplacement écrasé avant synchro (malgré la synchro p
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
+    helpers = TestHelpers.init(this)
     await helpers.local.setupTrash()
   })
 

@@ -10,7 +10,7 @@ const dbBuilders = require('../support/builders/db')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 
 const builders = new Builders()
 const cozy = cozyHelpers.cozy
@@ -33,7 +33,7 @@ describe('Move', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = TestHelpers.init(this)
     pouch = helpers._pouch
     prep = helpers.prep
 

@@ -6,7 +6,7 @@ const should = require('should')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 
 describe('Case or encoding change', () => {
   // This test passes on a macOS workstation when using the docker container,
@@ -33,7 +33,7 @@ describe('Case or encoding change', () => {
 
   beforeEach(async function () {
     cozy = cozyHelpers.cozy
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()

@@ -8,7 +8,7 @@ const Builders = require('../support/builders')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 
 const builders = new Builders()
 
@@ -25,7 +25,7 @@ describe('Sync state', () => {
   let events, helpers
 
   beforeEach(function () {
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
+    helpers = TestHelpers.init(this)
     events = helpers.events
     sinon.spy(events, 'emit')
     // await helpers.local.setupTrash()

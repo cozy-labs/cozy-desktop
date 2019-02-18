@@ -16,6 +16,7 @@ const SyncState = require('../../../core/syncstate')
 
 const conflictHelpers = require('./conflict')
 const { posixifyPath } = require('./context_dir')
+const cozyHelpers = require('./cozy')
 const { LocalTestHelpers } = require('./local')
 const { RemoteTestHelpers } = require('./remote')
 
@@ -24,9 +25,14 @@ import type cozy from 'cozy-client-js'
 import type { Config } from '../../../core/config'
 import type { Metadata } from '../../../core/metadata'
 import type Pouch from '../../../core/pouch'
+
+export type TestHelpersOptions = {
+  config: Config,
+  pouch: Pouch
+}
 */
 
-class IntegrationTestHelpers {
+class TestHelpers {
   /*::
   local: LocalTestHelpers
   remote: RemoteTestHelpers
@@ -39,14 +45,14 @@ class IntegrationTestHelpers {
   _remote: Remote
   */
 
-  constructor (config /*: Config */, pouch /*: Pouch */, cozyClient /*: cozy.Client */) {
+  constructor ({ config, pouch } /*: TestHelpersOptions */) {
     const merge = new Merge(pouch)
     const ignore = new Ignore([])
     this.prep = new Prep(merge, ignore, config)
     this.events = new SyncState()
     this._local = merge.local = new Local(config, this.prep, pouch, this.events, ignore)
     this._remote = merge.remote = new Remote(config, this.prep, pouch, this.events)
-    this._remote.remoteCozy.client = cozyClient
+    this._remote.remoteCozy.client = cozyHelpers.cozy
     this._sync = new Sync(pouch, this._local, this._remote, ignore, this.events)
     this._sync.stopped = false
     this._sync.diskUsage = this._remote.diskUsage
@@ -166,6 +172,9 @@ class IntegrationTestHelpers {
   }
 }
 
+const init /*: (TestHelpersOptions) => TestHelpers */ =
+  opts => new TestHelpers(opts)
+
 module.exports = {
-  IntegrationTestHelpers
+  init
 }
