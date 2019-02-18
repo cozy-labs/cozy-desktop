@@ -16,9 +16,9 @@ const remoteCaptureHelpers = require('../../dev/capture/remote')
 
 const { platform } = process
 
-let helpers
-
 describe('Test scenarios', function () {
+  let helpers
+
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
@@ -89,7 +89,7 @@ describe('Test scenarios', function () {
             await helpers.remote.pullChanges()
             await helpers.syncAll()
 
-            await verifyExpectations(scenario, {includeRemoteTrash: true})
+            await verifyExpectations(scenario, helpers, {includeRemoteTrash: true})
 
             // TODO: pull
           })
@@ -123,7 +123,7 @@ describe('Test scenarios', function () {
 
           await helpers.syncAll()
 
-          await verifyExpectations(scenario, {includeRemoteTrash: true})
+          await verifyExpectations(scenario, helpers, {includeRemoteTrash: true})
         })
       }
     }
@@ -158,14 +158,14 @@ describe('Test scenarios', function () {
         await helpers.syncAll()
       }
 
-      await verifyExpectations(scenario, {includeRemoteTrash: false})
+      await verifyExpectations(scenario, helpers, {includeRemoteTrash: false})
 
       // TODO: Local trash assertions
     })
   }
 })
 
-async function verifyExpectations (scenario, {includeRemoteTrash}) {
+async function verifyExpectations (scenario, helpers, {includeRemoteTrash}) {
   // TODO: Wrap in custom expectation
   if (scenario.expected) {
     const expectedLocalTree = scenario.expected.tree || scenario.expected.localTree
