@@ -10,7 +10,7 @@ const checksumer = require('../../../../core/local/checksumer')
 const addChecksum = require('../../../../core/local/steps/add_checksum')
 const Buffer = require('../../../../core/local/steps/buffer')
 
-describe('core/local/steps/add_checksum', () => {
+describe('core/local/steps/add_checksum.loop()', () => {
   it('should add checksum within a file event', async () => {
     const batch = [
       {
@@ -21,7 +21,7 @@ describe('core/local/steps/add_checksum', () => {
     ]
     const buffer = new Buffer()
     buffer.push(batch)
-    const enhancedBuffer = addChecksum(buffer, {
+    const enhancedBuffer = addChecksum.loop(buffer, {
       checksumer: checksumer.init(),
       syncPath: ''
     })
@@ -41,7 +41,7 @@ describe('core/local/steps/add_checksum', () => {
     ]
     const buffer = new Buffer()
     buffer.push(batch)
-    const enhancedBuffer = addChecksum(buffer, {
+    const enhancedBuffer = addChecksum.loop(buffer, {
       checksumer: checksumer.init(),
       syncPath: ''
     })
@@ -76,7 +76,7 @@ describe('core/local/steps/add_checksum', () => {
     ]
     const buffer = new Buffer()
     buffer.push(batch)
-    const enhancedBuffer = addChecksum(buffer, {
+    const enhancedBuffer = addChecksum.loop(buffer, {
       checksumer: checksumer.init(),
       syncPath: ''
     })

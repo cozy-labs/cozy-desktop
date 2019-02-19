@@ -1,6 +1,7 @@
 /* @flow */
 
 const Promise = require('bluebird')
+const _ = require('lodash')
 
 const checksumer = require('./checksumer')
 const logger = require('../logger')
@@ -23,20 +24,58 @@ import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
-import type { Producer } from './steps/producer'
+import type {
+  Producer,
+  Scanner
+} from './steps/producer'
+
+type AtomWatcherOptions = {
+  syncPath: string,
+  prep: Prep,
+  pouch: Pouch,
+  events: EventEmitter,
+  ignore: Ignore
+}
 */
 
 const log = logger({
   component: 'AtomWatcher'
 })
 
+/** Returns the step only when the given platform matches the current one.
+ *
+ * Makes it easy to include a step only for some platform.
+ */
+const only = (platform, step) => platform === process.platform && step
+
+/** The steps for the current platform. */
+const steps =
+  _.compact([
+    addInfos,
+    filterIgnored,
+    only('win32', winDetectMove),
+    scanFolder,
+    awaitWriteFinish,
+    initialDiff,
+    addChecksum,
+    incompleteFixer
+  ])
+
+/** The producer for the current platform. */
+const producer = opts => {
+  if (process.platform === 'linux') {
+    return new LinuxProducer(opts)
+  } else if (process.platform === 'win32') {
+    return new WinProducer(opts)
+  } else {
+    throw new Error('The experimental watcher is not available on this platform')
+  }
+}
+
 module.exports = class AtomWatcher {
   /*::
-  syncPath: string
-  prep: Prep
   pouch: Pouch
   events: EventEmitter
-  ignore: Ignore
   checksumer: Checksumer
   producer: Producer
   running: Promise<void>
@@ -44,32 +83,25 @@ module.exports = class AtomWatcher {
   _runningReject: ?Function
   */
 
-  constructor (syncPath /*: string */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) {
-    this.syncPath = syncPath
-    this.prep = prep
-    this.pouch = pouch
-    this.events = events
-    this.ignore = ignore
+  constructor (opts /*: AtomWatcherOptions */) {
+    this.pouch = opts.pouch
+    this.events = opts.events
     this.checksumer = checksumer.init()
+    this.producer = producer(opts)
 
+    const stepOptions = Object.assign(
+      ({
+        checksumer: this.checksumer,
+        scan: this.producer.scan
+      } /*: Object */),
+      opts
+    )
     // Here, we build a chain of steps. Each step can be seen as an actor that
     // communicates with the next one via a buffer. The first step is called
     // the producer: even if the chain is ready at the end of this constructor,
     // the producer won't start pushing batches of events until it is started.
-    let steps
-    if (process.platform === 'linux') {
-      this.producer = new LinuxProducer(this)
-      steps = [addInfos, filterIgnored, scanFolder,
-        awaitWriteFinish, initialDiff, addChecksum, incompleteFixer]
-    } else if (process.platform === 'win32') {
-      this.producer = new WinProducer(this)
-      steps = [addInfos, filterIgnored, winDetectMove, scanFolder,
-        awaitWriteFinish, initialDiff, addChecksum, incompleteFixer]
-    } else {
-      throw new Error('The experimental watcher is not available on this platform')
-    }
-    let buffer = steps.reduce((buf, step) => step(buf, this), this.producer.buffer)
-    dispatch(buffer, this)
+    let buffer = steps.reduce((buf, step) => step.loop(buf, stepOptions), this.producer.buffer)
+    dispatch.loop(buffer, stepOptions)
   }
 
   start () {

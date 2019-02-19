@@ -13,8 +13,12 @@ const log = logger({
 import type Buffer from './buffer'
 */
 
+module.exports = {
+  loop
+}
+
 // This step adds some basic informations about events: _id, docType and stats.
-module.exports = function (buffer /*: Buffer */, opts /*: { syncPath: string } */) /*: Buffer */ {
+function loop (buffer /*: Buffer */, opts /*: { syncPath: string } */) /*: Buffer */ {
   return buffer.asyncMap(async (events) => {
     const batch = []
     for (const event of events) {

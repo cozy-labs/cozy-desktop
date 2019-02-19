@@ -10,6 +10,8 @@ import type { AtomWatcherEvent, Batch } from './event'
 // watcher to the Pouch database, via several steps. It's expected that we have
 // only one class/function that pushes in the buffer, and only one
 // class/function that takes batches from the buffer.
+//
+// FIXME: Rename Buffer to prevent confusion with the built-in type.
 module.exports = class Buffer {
   /*::
   _resolve: ?Promise<Batch>
