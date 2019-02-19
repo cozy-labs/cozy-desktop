@@ -7,7 +7,15 @@ const _ = require('lodash')
 const path = require('path')
 const should = require('should')
 
-const { scenarios, loadFSEventFiles, runActions, init } = require('../support/helpers/scenarios')
+const config = require('../../core/config')
+
+const {
+  init,
+  loadFSEventFiles,
+  loadAtomCaptures,
+  runActions,
+  scenarios
+} = require('../support/helpers/scenarios')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const TestHelpers = require('../support/helpers')
@@ -52,6 +60,23 @@ describe('Test scenarios', function () {
     if (scenario.side === 'remote') {
       it.skip(`test/scenarios/${scenario.name}/local/  (skip remote only test)`, () => {})
     } else {
+      for (let atomCapture of loadAtomCaptures(scenario)) {
+        const localTestName = `test/scenarios/${scenario.name}/atom/${atomCapture.name}`
+        if (config.watcherType() !== 'atom') {
+          it.skip(localTestName, () => {})
+          continue
+        }
+
+        if (atomCapture.disabled) {
+          it.skip(`${localTestName}  (${atomCapture.disabled})`, () => {})
+          continue
+        }
+
+        it(localTestName, async function () {
+          await runLocalAtom(scenario, atomCapture, helpers)
+        })
+      }
+
       for (let eventsFile of loadFSEventFiles(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
         if (config.watcherType() !== 'chokidar') {
@@ -127,6 +152,24 @@ function injectChokidarBreakpoints (eventsFile) {
 
   if (process.env.NO_BREAKPOINTS) breakpoints = [0]
   return breakpoints
+}
+
+async function runLocalAtom (scenario, atomCapture, helpers) {
+  if (scenario.init) {
+    let relpathFix = _.identity
+    if (process.platform === 'win32' && atomCapture.name.match(/win32/)) {
+      relpathFix = (relpath) => relpath.replace(/\//g, '\\')
+    }
+    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath, relpathFix)
+  }
+
+  await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
+  await helpers.local.simulateAtomEvents(atomCapture.batches)
+  await helpers.syncAll()
+  await helpers.remote.pullChanges()
+  await helpers.syncAll()
+
+  await verifyExpectations(scenario, helpers, {includeRemoteTrash: true})
 }
 
 async function runLocalChokidar (scenario, eventsFile, flushAfter, helpers) {
