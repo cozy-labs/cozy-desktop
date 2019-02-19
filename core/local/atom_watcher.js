@@ -24,7 +24,10 @@ import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
-import type { Producer } from './steps/producer'
+import type {
+  Producer,
+  Scanner
+} from './steps/producer'
 
 type AtomWatcherOptions = {
   syncPath: string,
@@ -78,6 +81,7 @@ module.exports = class AtomWatcher {
   ignore: Ignore
   checksumer: Checksumer
   producer: Producer
+  scan: Scanner
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
@@ -91,6 +95,7 @@ module.exports = class AtomWatcher {
     this.ignore = ignore
     this.checksumer = checksumer.init()
     this.producer = producer({syncPath})
+    this.scan = this.producer.scan
     // Here, we build a chain of steps. Each step can be seen as an actor that
     // communicates with the next one via a buffer. The first step is called
     // the producer: even if the chain is ready at the end of this constructor,
