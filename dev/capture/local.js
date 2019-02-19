@@ -1,3 +1,5 @@
+/* @flow */
+
 const Promise = require('bluebird')
 const chokidar = require('chokidar')
 const EventEmitter = require('events')
@@ -7,8 +9,15 @@ const path = require('path')
 const sinon = require('sinon')
 
 const Config = require('../../core/config')
+const { Ignore } = require('../../core/ignore')
 const AtomWatcher = require('../../core/local/atom_watcher')
+const Pouch = require('../../core/pouch')
+const Prep = require('../../core/prep')
 const fixturesHelpers = require('../../test/support/helpers/scenarios')
+
+/*::
+import type { Scenario } from '../../test/scenarios'
+*/
 
 const cliDir = path.resolve(path.join(__dirname, '..', '..'))
 const syncPath = path.join(cliDir, 'tmp', 'local_watcher', 'synced_dir')
@@ -33,9 +42,11 @@ const DONE_FILE = '.done'
 
 const mapInode = {}
 
-const debug = process.env.DEBUG != null ? console.log : () => {}
+const debug = process.env.DEBUG != null
+  ? console.log
+  : (...whatever) => {}
 
-const setupInitialState = (scenario) => {
+const setupInitialState = (scenario /*: Scenario */) => {
   if (scenario.init == null) return
   debug('[init]')
   return Promise.each(scenario.init, (opts) => {
@@ -55,7 +66,7 @@ const setupInitialState = (scenario) => {
 }
 
 const buildFSEvent = (type, relpath, stats) => {
-  const event = {type, path: relpath}
+  const event /*: Object */ = {type, path: relpath}
   if (stats != null) event.stats = _.pick(stats, ['ino', 'size', 'mtime', 'ctime'])
   return event
 }
@@ -165,7 +176,7 @@ const runAndRecordFSEvents = Config.watcherType() === 'atom'
   ? runAndRecordAtomEvents
   : runAndRecordChokidarEvents
 
-const captureScenario = (scenario) => {
+const captureScenario = (scenario /*: Scenario & {path: string} */) => {
   return fse.emptyDir(syncPath)
     .then(() => fse.emptyDir(outsidePath))
     .then(() => setupInitialState(scenario))
