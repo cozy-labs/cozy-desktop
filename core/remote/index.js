@@ -27,6 +27,15 @@ const log = logger({
   component: 'RemoteWriter'
 })
 
+/*::
+export type RemoteOptions = {
+  config: Config,
+  events: EventEmitter,
+  pouch: Pouch,
+  prep: Prep
+}
+*/
+
 class Remote /*:: implements Side */ {
   /*::
   other: FileStreamProvider
@@ -37,7 +46,7 @@ class Remote /*:: implements Side */ {
   warningsPoller: RemoteWarningPoller
   */
 
-  constructor (config /*: Config */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */) {
+  constructor ({config, prep, pouch, events} /*: RemoteOptions */) {
     this.pouch = pouch
     this.events = events
     this.remoteCozy = new RemoteCozy(config)

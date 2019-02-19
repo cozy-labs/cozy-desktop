@@ -259,7 +259,7 @@ class App {
     this.merge = new Merge(this.pouch)
     this.prep = new Prep(this.merge, this.ignore, this.config)
     this.local = this.merge.local = new Local(this)
-    this.remote = this.merge.remote = new Remote(this.config, this.prep, this.pouch, this.events)
+    this.remote = this.merge.remote = new Remote(this)
     this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
     this.sync.diskUsage = this.diskUsage
   }
