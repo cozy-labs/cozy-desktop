@@ -8,7 +8,7 @@ const should = require('should')
 const logger = require('../../core/logger')
 
 const Builders = require('../support/builders')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -29,7 +29,7 @@ describe('Update file', () => {
   beforeEach(async function () {
     builders = new Builders({cozy: cozyHelpers.cozy})
     cozy = cozyHelpers.cozy
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = TestHelpers.init(this)
     pouch = helpers._pouch
     prep = helpers.prep
 

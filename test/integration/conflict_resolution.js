@@ -10,7 +10,7 @@ const Builders = require('../support/builders')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 
 const builders = new Builders()
 const cozy = cozyHelpers.cozy
@@ -28,7 +28,7 @@ describe('Conflict resolution', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()

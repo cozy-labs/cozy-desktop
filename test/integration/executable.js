@@ -10,12 +10,12 @@ const {
   onPlatforms
 } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 
 const { platform } = process
 
 describe('Executable handling', () => {
-  let cozy, helpers, pouch, syncDir
+  let cozy, helpers, syncDir
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -26,9 +26,8 @@ describe('Executable handling', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
-    pouch = this.pouch
     cozy = cozyHelpers.cozy
-    helpers = new IntegrationTestHelpers(this.config, pouch, cozy)
+    helpers = TestHelpers.init(this)
     syncDir = helpers.local.syncDir
 
     await helpers.local.setupTrash()

@@ -9,7 +9,7 @@ const Builders = require('../support/builders')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 
 describe('Platform incompatibilities', () => {
   if (process.platform !== 'win32' && process.platform !== 'darwin') {
@@ -31,7 +31,7 @@ describe('Platform incompatibilities', () => {
   beforeEach(async function () {
     cozy = cozyHelpers.cozy
     builders = new Builders({cozy})
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()

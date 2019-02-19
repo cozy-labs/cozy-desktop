@@ -6,7 +6,7 @@ const { start } = require('repl')
 
 require('../core/globals')
 const { App } = require('../core/app')
-const { IntegrationTestHelpers } = require('../test/support/helpers/integration')
+const TestHelpers = require('../test/support/helpers')
 
 const basePath = process.env.COZY_DESKTOP_DIR
 if (basePath == null) throw new Error('COZY_DESKTOP_DIR is undefined')
@@ -23,7 +23,7 @@ The following objects are available:
 if (config.isValid()) {
   app.instanciate()
   cozy = app.remote.watcher.remoteCozy.client
-  helpers = new IntegrationTestHelpers(config, app.pouch, cozy)
+  helpers = TestHelpers.init(app)
   console.log(`  cozy     A cozy-client-js instance, set up with your config
   helpers  See test/helpers/integration.js
 

@@ -10,7 +10,7 @@ const should = require('should')
 const { scenarios, loadFSEventFiles, runActions, init } = require('../support/helpers/scenarios')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 const pouchHelpers = require('../support/helpers/pouch')
 const remoteCaptureHelpers = require('../../dev/capture/remote')
 
@@ -36,7 +36,7 @@ describe('Test scenarios', function () {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function () {
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozyHelpers.cozy)
+    helpers = TestHelpers.init(this)
 
     // TODO: helpers.setup()
     await helpers.local.setupTrash()

@@ -7,7 +7,7 @@ const should = require('should')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const { IntegrationTestHelpers } = require('../support/helpers/integration')
+const TestHelpers = require('../support/helpers')
 
 describe('Trash', () => {
   let cozy, helpers, pouch, prep
@@ -23,7 +23,7 @@ describe('Trash', () => {
 
   beforeEach(async function () {
     cozy = cozyHelpers.cozy
-    helpers = new IntegrationTestHelpers(this.config, this.pouch, cozy)
+    helpers = TestHelpers.init(this)
     pouch = helpers._pouch
     prep = helpers.prep
 
