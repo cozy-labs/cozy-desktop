@@ -48,9 +48,11 @@ describe('core/local/steps/Buffer', function () {
         await should(buffer.pop()).be.fulfilledWith(batch)
       })
 
-      it('accepts empty batches', async () => {
-        const batch = []
+      it('drops empty batches', async () => {
+        const emptyBatch = []
+        const batch = builders.nonEmptyBatch()
 
+        buffer.push(emptyBatch)
         buffer.push(batch)
 
         await should(buffer.pop()).be.fulfilledWith(batch)
