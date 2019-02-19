@@ -41,7 +41,7 @@ describe('remote.Remote', function () {
   before('instanciate remote', function () {
     this.prep = sinon.createStubInstance(Prep)
     this.events = new EventEmitter()
-    this.remote = new Remote(this.config, this.prep, this.pouch, this.events)
+    this.remote = new Remote(this)
   })
   beforeEach(deleteAll)
   beforeEach(createTheCouchdbFolder)

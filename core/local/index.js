@@ -35,6 +35,17 @@ import type { Watcher } from './watcher'
 const log = logger({
   component: 'LocalWriter'
 })
+
+/*::
+export type LocalOptions = {
+  config: Config,
+  prep: Prep,
+  pouch: Pouch,
+  events: EventEmitter,
+  ignore: Ignore
+}
+*/
+
 // Local is the class that interfaces cozy-desktop with the local filesystem.
 // It uses a watcher, based on chokidar, to listen for file and folder changes.
 // It also applied changes from the remote cozy on the local filesystem.
@@ -51,13 +62,13 @@ module.exports = class Local /*:: implements Side */ {
   _trash: (Array<string>) => Promise<void>
   */
 
-  constructor (config /*: Config */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) {
-    this.prep = prep
-    this.pouch = pouch
-    this.events = events
-    this.syncPath = config.syncPath
+  constructor (opts /*: LocalOptions */) {
+    this.prep = opts.prep
+    this.pouch = opts.pouch
+    this.events = opts.events
+    this.syncPath = opts.config.syncPath
     this.tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
-    this.watcher = watcher.build(config, this.prep, this.pouch, events, ignore)
+    this.watcher = watcher.build(opts)
     // $FlowFixMe
     this.other = null
     this._trash = trash
