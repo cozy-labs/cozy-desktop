@@ -62,13 +62,13 @@ module.exports = class Local /*:: implements Side */ {
   _trash: (Array<string>) => Promise<void>
   */
 
-  constructor ({config, prep, pouch, events, ignore} /*: LocalOptions */) {
-    this.prep = prep
-    this.pouch = pouch
-    this.events = events
-    this.syncPath = config.syncPath
+  constructor (opts /*: LocalOptions */) {
+    this.prep = opts.prep
+    this.pouch = opts.pouch
+    this.events = opts.events
+    this.syncPath = opts.config.syncPath
     this.tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
-    this.watcher = watcher.build(config, this.prep, this.pouch, events, ignore)
+    this.watcher = watcher.build(opts)
     // $FlowFixMe
     this.other = null
     this._trash = trash

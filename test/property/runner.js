@@ -47,7 +47,13 @@ async function step (state /*: Object */, op /*: Object */) {
       }
       const ignore = new Ignore([])
       const prep = new Prep(merge, ignore, state.config)
-      state.watcher = Watcher.build(state.dir.root, prep, state.pouchdb, events, ignore)
+      state.watcher = Watcher.build({
+        config: state.config,
+        prep,
+        pouch: state.pouchdb,
+        events,
+        ignore
+      })
       state.watcher.start()
       break
     case 'stop_watcher':

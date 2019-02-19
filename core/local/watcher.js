@@ -18,9 +18,20 @@ export interface Watcher {
   start (): Promise<*>,
   stop (force: ?bool): Promise<*>,
 }
+
+export type LocalWatcherOptions = {
+  +config: {
+    +syncPath: string,
+    +watcherType: WatcherType
+  },
+  events: EventEmitter,
+  ignore: Ignore,
+  pouch: Pouch,
+  prep: Prep
+}
 */
 
-function build (config /*: { +syncPath: string, +watcherType: WatcherType } */, prep /*: Prep */, pouch /*: Pouch */, events /*: EventEmitter */, ignore /*: Ignore */) /*: Watcher */ {
+function build ({config, prep, pouch, events, ignore} /*: LocalWatcherOptions */) /*: Watcher */ {
   const { syncPath, watcherType } = config
 
   if (watcherType === 'atom') {
