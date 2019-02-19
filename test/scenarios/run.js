@@ -163,9 +163,7 @@ async function runLocalStopped (scenario, helpers) {
 
   await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
 
-  await helpers.local.local.watcher.start()
-  await helpers.local.local.watcher.stop(true)
-
+  await helpers.local.scan()
   await helpers.syncAll()
 
   await verifyExpectations(scenario, helpers, {includeRemoteTrash: true})
