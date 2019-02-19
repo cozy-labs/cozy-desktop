@@ -74,34 +74,34 @@ const producer = opts => {
 
 module.exports = class AtomWatcher {
   /*::
-  syncPath: string
-  prep: Prep
   pouch: Pouch
   events: EventEmitter
-  ignore: Ignore
   checksumer: Checksumer
   producer: Producer
-  scan: Scanner
   running: Promise<void>
   _runningResolve: ?Function
   _runningReject: ?Function
   */
 
-  constructor ({syncPath, prep, pouch, events, ignore} /*: AtomWatcherOptions */) {
-    this.syncPath = syncPath
-    this.prep = prep
-    this.pouch = pouch
-    this.events = events
-    this.ignore = ignore
+  constructor (opts /*: AtomWatcherOptions */) {
+    this.pouch = opts.pouch
+    this.events = opts.events
     this.checksumer = checksumer.init()
-    this.producer = producer({syncPath})
-    this.scan = this.producer.scan
+    this.producer = producer(opts)
+
+    const stepOptions = Object.assign(
+      ({
+        checksumer: this.checksumer,
+        scan: this.producer.scan
+      } /*: Object */),
+      opts
+    )
     // Here, we build a chain of steps. Each step can be seen as an actor that
     // communicates with the next one via a buffer. The first step is called
     // the producer: even if the chain is ready at the end of this constructor,
     // the producer won't start pushing batches of events until it is started.
-    let buffer = steps.reduce((buf, step) => step.loop(buf, this), this.producer.buffer)
-    dispatch.loop(buffer, this)
+    let buffer = steps.reduce((buf, step) => step.loop(buf, stepOptions), this.producer.buffer)
+    dispatch.loop(buffer, stepOptions)
   }
 
   start () {
