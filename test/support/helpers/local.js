@@ -21,23 +21,23 @@ import type { ChokidarEvent } from '../../../core/local/chokidar_event'
 
 class LocalTestHelpers {
   /*::
-  local: Local
+  side: Local
   syncDir: ContextDir
   trashDir: ContextDir
   */
 
   constructor (local /*: Local */) {
-    this.local = local
+    this.side = local
     this.syncDir = new ContextDir(local.syncPath)
     autoBind(this)
   }
 
   get syncPath () /*: string */ {
-    return path.normalize(this.local.syncPath)
+    return path.normalize(this.side.syncPath)
   }
 
   get trashPath () /*: string */ {
-    return path.join(this.local.tmpPath, '.test-trash')
+    return path.join(this.side.tmpPath, '.test-trash')
   }
 
   async clean () {
@@ -60,7 +60,7 @@ class LocalTestHelpers {
   async setupTrash () {
     await fse.emptyDir(this.trashPath)
     this.trashDir = new ContextDir(this.trashPath)
-    this.local._trash = this.trashFunc
+    this.side._trash = this.trashFunc
   }
 
   async tree (opts /*: {ellipsize: boolean} */ = {ellipsize: true}) /*: Promise<string[]> */ {
@@ -84,8 +84,8 @@ class LocalTestHelpers {
   }
 
   async scan () {
-    await this.local.watcher.start()
-    await this.local.watcher.stop()
+    await this.side.watcher.start()
+    await this.side.watcher.stop()
   }
 
   async treeWithoutTrash () {
@@ -95,7 +95,7 @@ class LocalTestHelpers {
 
   async simulateEvents (events /*: ChokidarEvent[] */) {
     // $FlowFixMe
-    return this.local.watcher.onFlush(events)
+    return this.side.watcher.onFlush(events)
   }
 
   async readFile (path /*: string */) /*: Promise<string> */ {
