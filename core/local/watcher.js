@@ -5,6 +5,7 @@ const ChokidarWatcher = require('./chokidar_watcher')
 
 /*::
 import type { WatcherType } from '../config'
+import type { AtomEventsDispatcher } from './steps/dispatch'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
@@ -26,16 +27,17 @@ export type LocalWatcherOptions = {
   },
   events: EventEmitter,
   ignore: Ignore,
+  onAtomEvents?: AtomEventsDispatcher,
   pouch: Pouch,
   prep: Prep
 }
 */
 
-function build ({config, prep, pouch, events, ignore} /*: LocalWatcherOptions */) /*: Watcher */ {
+function build ({config, prep, pouch, events, ignore, onAtomEvents} /*: LocalWatcherOptions */) /*: Watcher */ {
   const { syncPath, watcherType } = config
 
   if (watcherType === 'atom') {
-    return new AtomWatcher({syncPath, prep, pouch, events, ignore})
+    return new AtomWatcher({syncPath, prep, pouch, events, ignore, onAtomEvents})
   } else {
     return new ChokidarWatcher(syncPath, prep, pouch, events)
   }

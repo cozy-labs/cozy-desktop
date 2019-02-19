@@ -24,6 +24,7 @@ import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
+import type { AtomEventsDispatcher } from './steps/dispatch'
 import type {
   Producer,
   Scanner
@@ -31,6 +32,7 @@ import type {
 
 type AtomWatcherOptions = {
   syncPath: string,
+  onAtomEvents?: AtomEventsDispatcher,
   prep: Prep,
   pouch: Pouch,
   events: EventEmitter,
