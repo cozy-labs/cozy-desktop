@@ -30,23 +30,18 @@ module.exports = {
 // TODO add unit tests and logs
 // TODO check that a file/dir created and removed just after is not seen as a move
 
+function loop (buffer /*: Buffer */, opts /*: { pouch: Pouch } */) /*: Buffer */ {
+  const out = new Buffer()
+  winDetectMove(buffer, out, opts.pouch)
+    .catch(err => log.error({err}))
+  return out
+}
+
 // On windows, ReadDirectoryChangesW emits a deleted and an added events when
 // a file or directory is moved. This step merges the two events to a single
 // renamed event.
 async function winDetectMove (buffer, out, pouch) {
   const pending /*: PendingBatch[] */ = []
-  const sendReadyBatches = () => {
-    while (pending.length > 0) {
-      if (pending[0].deleted.size !== 0) {
-        break
-      }
-      const p = pending.shift()
-      clearTimeout(p.timeout)
-      if (p.events.length > 0) {
-        out.push(p.events)
-      }
-    }
-  }
 
   while (true) {
     // Wait for a new batch of events
@@ -69,7 +64,7 @@ async function winDetectMove (buffer, out, pouch) {
     }
     const timeout = setTimeout(() => {
       out.push(pending.shift().events)
-      sendReadyBatches()
+      sendReadyBatches(pending, out)
     }, DELAY)
     pending.push({ events, deleted, timeout })
 
@@ -100,13 +95,17 @@ async function winDetectMove (buffer, out, pouch) {
     }
 
     // Finally, look if some batches can be sent without waiting
-    sendReadyBatches()
+    sendReadyBatches(pending, out)
   }
 }
 
-function loop (buffer /*: Buffer */, opts /*: { pouch: Pouch } */) /*: Buffer */ {
-  const out = new Buffer()
-  winDetectMove(buffer, out, opts.pouch)
-    .catch(err => log.error({err}))
-  return out
+function sendReadyBatches (waiting /*: PendingBatch[] */, out /*: Buffer */) {
+  while (waiting.length > 0) {
+    if (waiting[0].deleted.size !== 0) {
+      break
+    }
+    const item = waiting.shift()
+    clearTimeout(item.timeout)
+    out.push(item.events)
+  }
 }
