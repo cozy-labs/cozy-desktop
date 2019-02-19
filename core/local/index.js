@@ -24,6 +24,7 @@ import type EventEmitter from 'events'
 import type { Config } from '../config'
 import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
 import type { Ignore } from '../ignore'
+import type { AtomEventsDispatcher } from './steps/dispatch'
 import type { Metadata } from '../metadata'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
@@ -39,6 +40,7 @@ const log = logger({
 /*::
 export type LocalOptions = {
   config: Config,
+  onAtomEvents?: AtomEventsDispatcher,
   prep: Prep,
   pouch: Pouch,
   events: EventEmitter,
