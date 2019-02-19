@@ -6,25 +6,24 @@ const { pick } = _
 const sinon = require('sinon')
 
 const { Ignore } = require('../../../core/ignore')
-const Local = require('../../../core/local')
 const metadata = require('../../../core/metadata')
 const Merge = require('../../../core/merge')
 const Prep = require('../../../core/prep')
-const { Remote } = require('../../../core/remote')
 const Sync = require('../../../core/sync')
 const SyncState = require('../../../core/syncstate')
 
 const conflictHelpers = require('./conflict')
 const { posixifyPath } = require('./context_dir')
-const cozyHelpers = require('./cozy')
 const { LocalTestHelpers } = require('./local')
 const { RemoteTestHelpers } = require('./remote')
 
 /*::
 import type cozy from 'cozy-client-js'
 import type { Config } from '../../../core/config'
+import type Local from '../../../core/local'
 import type { Metadata } from '../../../core/metadata'
 import type Pouch from '../../../core/pouch'
+import type { Remote } from '../../../core/remote'
 
 export type TestHelpersOptions = {
   config: Config,
@@ -36,10 +35,10 @@ class TestHelpers {
   /*::
   local: LocalTestHelpers
   remote: RemoteTestHelpers
+  pouch: Pouch
   prep: Prep
   events: SyncState
 
-  _pouch: Pouch
   _sync: Sync
   _local: Local
   _remote: Remote
@@ -48,17 +47,24 @@ class TestHelpers {
   constructor ({ config, pouch } /*: TestHelpersOptions */) {
     const merge = new Merge(pouch)
     const ignore = new Ignore([])
-    this.prep = new Prep(merge, ignore, config)
-    this.events = new SyncState()
-    this._local = merge.local = new Local({config, prep: this.prep, pouch, events: this.events, ignore})
-    this._remote = merge.remote = new Remote({config, prep: this.prep, pouch, events: this.events})
-    this._remote.remoteCozy.client = cozyHelpers.cozy
-    this._sync = new Sync(pouch, this._local, this._remote, ignore, this.events)
+    const prep = new Prep(merge, ignore, config)
+    const events = new SyncState()
+    const localHelpers = new LocalTestHelpers({config, prep, pouch, events, ignore})
+    const remoteHelpers = new RemoteTestHelpers({config, prep, pouch, events})
+    const local = localHelpers.side
+    const remote = remoteHelpers.side
+    const sync = new Sync(pouch, local, remote, ignore, events)
+
+    this.prep = prep
+    this.events = events
+    this._local = merge.local = local
+    this._remote = merge.remote = remote
+    this._sync = sync
     this._sync.stopped = false
     this._sync.diskUsage = this._remote.diskUsage
-    this._pouch = pouch
-    this.local = new LocalTestHelpers(this._local)
-    this.remote = new RemoteTestHelpers(this._remote)
+    this.pouch = pouch
+    this.local = localHelpers
+    this.remote = remoteHelpers
 
     autoBind(this)
   }
@@ -105,20 +111,20 @@ class TestHelpers {
   }
 
   spyPouch () {
-    sinon.spy(this._pouch, 'put')
-    sinon.spy(this._pouch, 'bulkDocs')
+    sinon.spy(this.pouch, 'put')
+    sinon.spy(this.pouch, 'bulkDocs')
   }
 
   putDocs (...props /*: string[] */) {
     const results = []
 
-    for (const args of this._pouch.bulkDocs.args) {
+    for (const args of this.pouch.bulkDocs.args) {
       for (const doc of args[0]) {
         results.push(pick(doc, props))
       }
     }
 
-    for (const args of this._pouch.put.args) {
+    for (const args of this.pouch.put.args) {
       const doc = args[0]
       results.push(pick(doc, props))
     }
@@ -150,14 +156,14 @@ class TestHelpers {
   }
 
   async metadataTree () {
-    return _.chain(await this._pouch.byRecursivePathAsync(''))
+    return _.chain(await this.pouch.byRecursivePathAsync(''))
       .map(({docType, path}) => posixifyPath(path) + (docType === 'folder' ? '/' : ''))
       .sort()
       .value()
   }
 
   async incompatibleTree () {
-    return _.chain(await this._pouch.byRecursivePathAsync(''))
+    return _.chain(await this.pouch.byRecursivePathAsync(''))
       .filter(doc => doc.incompatibilities)
       .map(({docType, path}) => posixifyPath(path) + (docType === 'folder' ? '/' : ''))
       .uniq()
@@ -166,7 +172,7 @@ class TestHelpers {
   }
 
   async docByPath (relpath /*: string */) /*: Promise<Metadata> */ {
-    const doc = await this._pouch.db.get(metadata.id(relpath))
+    const doc = await this.pouch.db.get(metadata.id(relpath))
     if (doc) return doc
     else throw new Error(`No doc with path ${JSON.stringify(relpath)}`)
   }

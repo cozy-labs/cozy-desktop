@@ -30,7 +30,7 @@ describe('Update file', () => {
     builders = new Builders({cozy: cozyHelpers.cozy})
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
-    pouch = helpers._pouch
+    pouch = helpers.pouch
     prep = helpers.prep
 
     await helpers.local.clean()

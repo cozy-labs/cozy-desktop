@@ -267,7 +267,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     // Simulate local move
-    const dir = await helpers._pouch.byRemoteIdAsync(remoteDocs['dir/']._id)
+    const dir = await helpers.pouch.byRemoteIdAsync(remoteDocs['dir/']._id)
     const stats = {mtime: new Date(), ctime: new Date(), ino: dir.ino}
     // $FlowFixMe
     const dir2 = metadata.buildDir('dir2', stats)

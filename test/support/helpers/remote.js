@@ -5,36 +5,39 @@ const _ = require('lodash')
 const path = require('path')
 
 const conflictHelpers = require('./conflict')
+const cozyHelpers = require('./cozy')
 
+const { Remote } = require('../../../core/remote')
 const { TRASH_DIR_NAME } = require('../../../core/remote/constants')
 
 /*::
 import type cozy from 'cozy-client-js'
 import type Pouch from '../../../core/pouch'
-import type { Remote } from '../../../core/remote'
+import type { RemoteOptions } from '../../../core/remote'
 import type { RemoteDoc } from '../../../core/remote/document'
 */
 
 class RemoteTestHelpers {
   /*::
-  remote: Remote
+  side: Remote
   */
 
-  constructor (remote /*: Remote */) {
-    this.remote = remote
+  constructor (opts /*: RemoteOptions */) {
+    this.side = new Remote(opts)
+    this.side.remoteCozy.client = cozyHelpers.cozy
     autoBind(this)
   }
 
-  get cozy () /*: cozy.Client */ { return this.remote.remoteCozy.client }
-  get pouch () /*: Pouch */ { return this.remote.pouch }
+  get cozy () /*: cozy.Client */ { return this.side.remoteCozy.client }
+  get pouch () /*: Pouch */ { return this.side.pouch }
 
   async ignorePreviousChanges () {
-    const {last_seq} = await this.remote.remoteCozy.changes()
+    const {last_seq} = await this.side.remoteCozy.changes()
     await this.pouch.setRemoteSeqAsync(last_seq)
   }
 
   async pullChanges () {
-    await this.remote.watcher.watch()
+    await this.side.watcher.watch()
   }
 
   async createTree (paths /*: Array<string> */) /*: Promise<{ [string]: RemoteDoc}> */ {
@@ -107,7 +110,7 @@ class RemoteTestHelpers {
   }
 
   async simulateChanges (docs /*: * */) {
-    await this.remote.watcher.pullMany(docs)
+    await this.side.watcher.pullMany(docs)
   }
 
   async readFile (path /*: string */) {

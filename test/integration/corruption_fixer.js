@@ -64,7 +64,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
     })
 
     await helpers.pullAndSyncAll()
-    should(await helpers._pouch.byRemoteIdMaybeAsync(remoteFile._id))
+    should(await helpers.pouch.byRemoteIdMaybeAsync(remoteFile._id))
       .have.property('errors')
     should(helpers.local.syncDir.existsSync(fileName)).be.false()
   })
@@ -79,7 +79,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
     })
 
     await helpers.pullAndSyncAll()
-    should(await helpers._pouch.byRemoteIdMaybeAsync(remoteFile._id))
+    should(await helpers.pouch.byRemoteIdMaybeAsync(remoteFile._id))
       .have.property('errors')
     should(helpers.local.syncDir.existsSync(fileName)).be.false()
   })
@@ -98,14 +98,14 @@ describe('Re-Upload files when the stack report them as broken', () => {
       couchSize: GOODSIZE
     })
 
-    const overwriteFileAsync = sinon.spy(helpers.remote.remote, 'overwriteFileAsync')
+    const overwriteFileAsync = sinon.spy(helpers.remote.side, 'overwriteFileAsync')
 
     await helpers._sync.reuploadContentMismatchFiles()
     should(overwriteFileAsync).have.been.calledOnce() // fix once
 
     // should actually fix the problem
     // XXX may fail against a true cozy-stack due to fsck caching
-    should(await helpers.remote.remote.remoteCozy.fetchFileCorruptions()).have.length(0)
+    should(await helpers.remote.side.remoteCozy.fetchFileCorruptions()).have.length(0)
 
     await helpers._sync.reuploadContentMismatchFiles()
     should(overwriteFileAsync).have.been.calledOnce() // dont fix twice
@@ -132,7 +132,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
       couchSize: GOODSIZE
     })
 
-    const overwriteFileAsync = sinon.spy(helpers.remote.remote, 'overwriteFileAsync')
+    const overwriteFileAsync = sinon.spy(helpers.remote.side, 'overwriteFileAsync')
     await helpers._sync.reuploadContentMismatchFiles()
     should(overwriteFileAsync).not.have.been.called() // dont re-upload bad version
   })
@@ -172,7 +172,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
     if (couchSize) changes.size = couchSize
 
     await corruptFileInCouchdb(remoteFile, changes)
-    should(await helpers.remote.remote.remoteCozy.fetchFileCorruptions()).have.length(1)
+    should(await helpers.remote.side.remoteCozy.fetchFileCorruptions()).have.length(1)
 
     return remoteFile
   }
@@ -194,20 +194,20 @@ describe('Re-Upload files when the stack report them as broken', () => {
     // XXX may cause issue if scan is called again
     await helpers.local.syncDir.outputFile(fileName, localContent)
 
-    const pouchFile = await helpers._pouch.db.get(metadata.id(fileName))
+    const pouchFile = await helpers.pouch.db.get(metadata.id(fileName))
 
-    const remoteFile = await helpers._remote.remoteCozy.find(pouchFile.remote._id)
+    const remoteFile = await helpers.remote.side.remoteCozy.find(pouchFile.remote._id)
 
     const changes = {}
     if (couchChecksum) changes.md5sum = couchChecksum
     if (couchSize) changes.size = couchSize
     const {rev: newRev} = await corruptFileInCouchdb(remoteFile, changes)
-    should(await helpers.remote.remote.remoteCozy.fetchFileCorruptions()).have.length(1)
+    should(await helpers.remote.side.remoteCozy.fetchFileCorruptions()).have.length(1)
 
     pouchFile.remote._rev = newRev
     pouchFile.size = pouchSize
     pouchFile.md5sum = pouchChecksum
 
-    await helpers._pouch.put(pouchFile)
+    await helpers.pouch.put(pouchFile)
   }
 })

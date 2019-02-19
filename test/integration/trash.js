@@ -24,7 +24,7 @@ describe('Trash', () => {
   beforeEach(async function () {
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
-    pouch = helpers._pouch
+    pouch = helpers.pouch
     prep = helpers.prep
 
     await helpers.local.setupTrash()
