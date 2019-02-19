@@ -1,5 +1,7 @@
 /* eslint-env mocha */
+/* @flow */
 
+const Promise = require('bluebird')
 const sinon = require('sinon')
 const should = require('should')
 
@@ -50,7 +52,7 @@ describe('Sync', function () {
                   return Promise.delay(5 * HEARTBEAT)
                 })
 
-    helpers._sync.start()
+    helpers._sync.start('full')
 
     await Promise.delay(1.5 * HEARTBEAT)
     await helpers.prep.putFolderAsync('local', builders.metadir().path('foo').build())
