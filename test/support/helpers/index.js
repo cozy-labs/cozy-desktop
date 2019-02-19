@@ -6,7 +6,6 @@ const { pick } = _
 const sinon = require('sinon')
 
 const { Ignore } = require('../../../core/ignore')
-const Local = require('../../../core/local')
 const metadata = require('../../../core/metadata')
 const Merge = require('../../../core/merge')
 const Prep = require('../../../core/prep')
@@ -23,6 +22,7 @@ const { RemoteTestHelpers } = require('./remote')
 /*::
 import type cozy from 'cozy-client-js'
 import type { Config } from '../../../core/config'
+import type Local from '../../../core/local'
 import type { Metadata } from '../../../core/metadata'
 import type Pouch from '../../../core/pouch'
 
@@ -50,10 +50,10 @@ class TestHelpers {
     const ignore = new Ignore([])
     const prep = new Prep(merge, ignore, config)
     const events = new SyncState()
-    const local = new Local({config, prep, pouch, events, ignore})
+    const localHelpers = new LocalTestHelpers({config, prep, pouch, events, ignore})
+    const local = localHelpers.side
     const remote = new Remote({config, prep, pouch, events})
     const sync = new Sync(pouch, local, remote, ignore, events)
-    const localHelpers = new LocalTestHelpers(local)
     const remoteHelpers = new RemoteTestHelpers(remote)
 
     this.prep = prep

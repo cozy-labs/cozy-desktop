@@ -10,12 +10,13 @@ const rimraf = require('rimraf')
 const conflictHelpers = require('./conflict')
 const { ContextDir } = require('./context_dir')
 
+const Local = require('../../../core/local')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 
 const rimrafAsync = Promise.promisify(rimraf)
 
 /*::
-import type Local from '../../../core/local'
+import type { LocalOptions } from '../../../core/local'
 import type { ChokidarEvent } from '../../../core/local/chokidar_event'
 */
 
@@ -26,9 +27,9 @@ class LocalTestHelpers {
   trashDir: ContextDir
   */
 
-  constructor (local /*: Local */) {
-    this.side = local
-    this.syncDir = new ContextDir(local.syncPath)
+  constructor (opts /*: LocalOptions */) {
+    this.side = new Local(opts)
+    this.syncDir = new ContextDir(this.side.syncPath)
     autoBind(this)
   }
 
