@@ -25,7 +25,7 @@ describe('Local', function () {
   before('instanciate local', function () {
     this.prep = {}
     this.events = {}
-    this.local = new Local(this.config, this.prep, this.pouch, this.events)
+    this.local = new Local(this)
 
     builders = new Builders({pouch: this.pouch})
     syncDir = new ContextDir(this.syncPath)

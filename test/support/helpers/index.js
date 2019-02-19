@@ -50,7 +50,7 @@ class TestHelpers {
     const ignore = new Ignore([])
     this.prep = new Prep(merge, ignore, config)
     this.events = new SyncState()
-    this._local = merge.local = new Local(config, this.prep, pouch, this.events, ignore)
+    this._local = merge.local = new Local({config, prep: this.prep, pouch, events: this.events, ignore})
     this._remote = merge.remote = new Remote(config, this.prep, pouch, this.events)
     this._remote.remoteCozy.client = cozyHelpers.cozy
     this._sync = new Sync(pouch, this._local, this._remote, ignore, this.events)
