@@ -36,10 +36,10 @@ class TestHelpers {
   /*::
   local: LocalTestHelpers
   remote: RemoteTestHelpers
+  pouch: Pouch
   prep: Prep
   events: SyncState
 
-  _pouch: Pouch
   _sync: Sync
   _local: Local
   _remote: Remote
@@ -64,7 +64,7 @@ class TestHelpers {
     this._sync = sync
     this._sync.stopped = false
     this._sync.diskUsage = this._remote.diskUsage
-    this._pouch = pouch
+    this.pouch = pouch
     this.local = localHelpers
     this.remote = remoteHelpers
 
@@ -113,20 +113,20 @@ class TestHelpers {
   }
 
   spyPouch () {
-    sinon.spy(this._pouch, 'put')
-    sinon.spy(this._pouch, 'bulkDocs')
+    sinon.spy(this.pouch, 'put')
+    sinon.spy(this.pouch, 'bulkDocs')
   }
 
   putDocs (...props /*: string[] */) {
     const results = []
 
-    for (const args of this._pouch.bulkDocs.args) {
+    for (const args of this.pouch.bulkDocs.args) {
       for (const doc of args[0]) {
         results.push(pick(doc, props))
       }
     }
 
-    for (const args of this._pouch.put.args) {
+    for (const args of this.pouch.put.args) {
       const doc = args[0]
       results.push(pick(doc, props))
     }
@@ -158,14 +158,14 @@ class TestHelpers {
   }
 
   async metadataTree () {
-    return _.chain(await this._pouch.byRecursivePathAsync(''))
+    return _.chain(await this.pouch.byRecursivePathAsync(''))
       .map(({docType, path}) => posixifyPath(path) + (docType === 'folder' ? '/' : ''))
       .sort()
       .value()
   }
 
   async incompatibleTree () {
-    return _.chain(await this._pouch.byRecursivePathAsync(''))
+    return _.chain(await this.pouch.byRecursivePathAsync(''))
       .filter(doc => doc.incompatibilities)
       .map(({docType, path}) => posixifyPath(path) + (docType === 'folder' ? '/' : ''))
       .uniq()
@@ -174,7 +174,7 @@ class TestHelpers {
   }
 
   async docByPath (relpath /*: string */) /*: Promise<Metadata> */ {
-    const doc = await this._pouch.db.get(metadata.id(relpath))
+    const doc = await this.pouch.db.get(metadata.id(relpath))
     if (doc) return doc
     else throw new Error(`No doc with path ${JSON.stringify(relpath)}`)
   }

@@ -34,7 +34,7 @@ describe('Move', () => {
 
   beforeEach(async function () {
     helpers = TestHelpers.init(this)
-    pouch = helpers._pouch
+    pouch = helpers.pouch
     prep = helpers.prep
 
     await helpers.local.setupTrash()
@@ -224,7 +224,7 @@ describe('Move', () => {
       ])
 
       const subdir = await cozy.files.statByPath('/parent/dst/dir/subdir')
-      should(await helpers._pouch.byRemoteIdAsync(subdir._id))
+      should(await helpers.pouch.byRemoteIdAsync(subdir._id))
         .have.propertyByPath('remote', '_rev').eql(subdir._rev)
     })
 

@@ -64,7 +64,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
     })
 
     await helpers.pullAndSyncAll()
-    should(await helpers._pouch.byRemoteIdMaybeAsync(remoteFile._id))
+    should(await helpers.pouch.byRemoteIdMaybeAsync(remoteFile._id))
       .have.property('errors')
     should(helpers.local.syncDir.existsSync(fileName)).be.false()
   })
@@ -79,7 +79,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
     })
 
     await helpers.pullAndSyncAll()
-    should(await helpers._pouch.byRemoteIdMaybeAsync(remoteFile._id))
+    should(await helpers.pouch.byRemoteIdMaybeAsync(remoteFile._id))
       .have.property('errors')
     should(helpers.local.syncDir.existsSync(fileName)).be.false()
   })
@@ -194,7 +194,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
     // XXX may cause issue if scan is called again
     await helpers.local.syncDir.outputFile(fileName, localContent)
 
-    const pouchFile = await helpers._pouch.db.get(metadata.id(fileName))
+    const pouchFile = await helpers.pouch.db.get(metadata.id(fileName))
 
     const remoteFile = await helpers._remote.remoteCozy.find(pouchFile.remote._id)
 
@@ -208,6 +208,6 @@ describe('Re-Upload files when the stack report them as broken', () => {
     pouchFile.size = pouchSize
     pouchFile.md5sum = pouchChecksum
 
-    await helpers._pouch.put(pouchFile)
+    await helpers.pouch.put(pouchFile)
   }
 })

@@ -131,7 +131,7 @@ async function runLocalChokidar (scenario, eventsFile, flushAfter, helpers) {
     if (process.platform === 'win32' && eventsFile.name.match(/win32/)) {
       relpathFix = (relpath) => relpath.replace(/\//g, '\\')
     }
-    await init(scenario, helpers._pouch, helpers.local.syncDir.abspath, relpathFix)
+    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath, relpathFix)
   }
 
   const eventsBefore = eventsFile.events.slice(0, flushAfter)
@@ -158,7 +158,7 @@ async function runLocalStopped (scenario, helpers) {
     if (process.platform === 'win32' && scenario.name.match(/win32/)) {
       relpathFix = (relpath) => relpath.replace(/\//g, '\\')
     }
-    await init(scenario, helpers._pouch, helpers.local.syncDir.abspath, relpathFix, true)
+    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath, relpathFix, true)
   }
 
   await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
@@ -175,7 +175,7 @@ async function runRemote (scenario, helpers) {
     if (process.platform === 'win32') {
       relpathFix = (relpath) => relpath.replace(/\//g, '\\')
     }
-    await init(scenario, helpers._pouch, helpers.local.syncDir.abspath, relpathFix)
+    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath, relpathFix)
     await helpers.remote.ignorePreviousChanges()
   }
 
