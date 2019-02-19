@@ -48,17 +48,25 @@ class TestHelpers {
   constructor ({ config, pouch } /*: TestHelpersOptions */) {
     const merge = new Merge(pouch)
     const ignore = new Ignore([])
-    this.prep = new Prep(merge, ignore, config)
-    this.events = new SyncState()
-    this._local = merge.local = new Local({config, prep: this.prep, pouch, events: this.events, ignore})
-    this._remote = merge.remote = new Remote({config, prep: this.prep, pouch, events: this.events})
+    const prep = new Prep(merge, ignore, config)
+    const events = new SyncState()
+    const local = new Local({config, prep, pouch, events, ignore})
+    const remote = new Remote({config, prep, pouch, events})
+    const sync = new Sync(pouch, local, remote, ignore, events)
+    const localHelpers = new LocalTestHelpers(local)
+    const remoteHelpers = new RemoteTestHelpers(remote)
+
+    this.prep = prep
+    this.events = events
+    this._local = merge.local = local
+    this._remote = merge.remote = remote
     this._remote.remoteCozy.client = cozyHelpers.cozy
-    this._sync = new Sync(pouch, this._local, this._remote, ignore, this.events)
+    this._sync = sync
     this._sync.stopped = false
     this._sync.diskUsage = this._remote.diskUsage
     this._pouch = pouch
-    this.local = new LocalTestHelpers(this._local)
-    this.remote = new RemoteTestHelpers(this._remote)
+    this.local = localHelpers
+    this.remote = remoteHelpers
 
     autoBind(this)
   }
