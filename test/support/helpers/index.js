@@ -9,13 +9,11 @@ const { Ignore } = require('../../../core/ignore')
 const metadata = require('../../../core/metadata')
 const Merge = require('../../../core/merge')
 const Prep = require('../../../core/prep')
-const { Remote } = require('../../../core/remote')
 const Sync = require('../../../core/sync')
 const SyncState = require('../../../core/syncstate')
 
 const conflictHelpers = require('./conflict')
 const { posixifyPath } = require('./context_dir')
-const cozyHelpers = require('./cozy')
 const { LocalTestHelpers } = require('./local')
 const { RemoteTestHelpers } = require('./remote')
 
@@ -25,6 +23,7 @@ import type { Config } from '../../../core/config'
 import type Local from '../../../core/local'
 import type { Metadata } from '../../../core/metadata'
 import type Pouch from '../../../core/pouch'
+import type { Remote } from '../../../core/remote'
 
 export type TestHelpersOptions = {
   config: Config,
@@ -51,16 +50,15 @@ class TestHelpers {
     const prep = new Prep(merge, ignore, config)
     const events = new SyncState()
     const localHelpers = new LocalTestHelpers({config, prep, pouch, events, ignore})
+    const remoteHelpers = new RemoteTestHelpers({config, prep, pouch, events})
     const local = localHelpers.side
-    const remote = new Remote({config, prep, pouch, events})
+    const remote = remoteHelpers.side
     const sync = new Sync(pouch, local, remote, ignore, events)
-    const remoteHelpers = new RemoteTestHelpers(remote)
 
     this.prep = prep
     this.events = events
     this._local = merge.local = local
     this._remote = merge.remote = remote
-    this._remote.remoteCozy.client = cozyHelpers.cozy
     this._sync = sync
     this._sync.stopped = false
     this._sync.diskUsage = this._remote.diskUsage

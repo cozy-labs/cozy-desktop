@@ -5,13 +5,15 @@ const _ = require('lodash')
 const path = require('path')
 
 const conflictHelpers = require('./conflict')
+const cozyHelpers = require('./cozy')
 
+const { Remote } = require('../../../core/remote')
 const { TRASH_DIR_NAME } = require('../../../core/remote/constants')
 
 /*::
 import type cozy from 'cozy-client-js'
 import type Pouch from '../../../core/pouch'
-import type { Remote } from '../../../core/remote'
+import type { RemoteOptions } from '../../../core/remote'
 import type { RemoteDoc } from '../../../core/remote/document'
 */
 
@@ -20,8 +22,9 @@ class RemoteTestHelpers {
   side: Remote
   */
 
-  constructor (remote /*: Remote */) {
-    this.side = remote
+  constructor (opts /*: RemoteOptions */) {
+    this.side = new Remote(opts)
+    this.side.remoteCozy.client = cozyHelpers.cozy
     autoBind(this)
   }
 
