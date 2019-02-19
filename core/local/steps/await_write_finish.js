@@ -35,9 +35,7 @@ function sendReadyBatches (waiting /*: WaitingItem[] */, out /*: Buffer */) {
     }
     const item = waiting.shift()
     clearTimeout(item.timeout)
-    if (item.events.length > 0) {
-      out.push(item.events)
-    }
+    out.push(item.events)
   }
 }
 
