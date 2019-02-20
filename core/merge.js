@@ -257,6 +257,7 @@ class Merge {
       if (doc.ino == null) { doc.ino = was.ino }
       if (doc.fileid == null) { doc.fileid = was.fileid }
       if (doc.remote == null) { doc.remote = was.remote }
+      if (file && metadata.isUpToDate(side, file)) doc.overwrite = file
       move(side, was, doc)
       if (file && metadata.sameFile(file, doc)) {
         log.info({path}, 'up to date (move)')
