@@ -29,7 +29,7 @@ describe('Prep', function () {
   describe('Put', function () {
     describe('addFile', function () {
       it('expects a doc with a valid path', async function () {
-        await should(this.prep.addFileAsync(this.side, {path: '/'}))
+        await should(this.prep.addFileAsync('test', this.side, {path: '/'}))
           .be.rejectedWith('Invalid path')
       })
 
@@ -40,7 +40,7 @@ describe('Prep', function () {
           docType: 'file'
         }
         await should(
-          this.prep.addFileAsync(this.side, doc)
+          this.prep.addFileAsync('test', this.side, doc)
         ).be.rejectedWith('Invalid checksum')
       })
 
@@ -49,7 +49,7 @@ describe('Prep', function () {
           path: 'invalid-checksum',
           md5sum: 'foobar'
         }
-        await should(this.prep.addFileAsync(this.side, doc))
+        await should(this.prep.addFileAsync('test', this.side, doc))
           .be.rejectedWith('Invalid checksum')
       })
 
@@ -59,7 +59,7 @@ describe('Prep', function () {
           path: 'foo/missing-fields',
           md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
-        await this.prep.addFileAsync(this.side, doc)
+        await this.prep.addFileAsync('test', this.side, doc)
         this.merge.addFileAsync.calledWith(this.side, doc).should.be.true()
         doc.docType.should.equal('file')
         should.exist(doc._id)
@@ -71,14 +71,14 @@ describe('Prep', function () {
           path: 'ignored',
           md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
-        await this.prep.addFileAsync('local', doc)
+        await this.prep.addFileAsync('test', 'local', doc)
         this.merge.addFileAsync.called.should.be.false()
       })
     })
 
     describe('updateFile', function () {
       it('expects a doc with a valid path', async function () {
-        await should(this.prep.updateFileAsync(this.side, {path: '/'}))
+        await should(this.prep.updateFileAsync('test', this.side, {path: '/'}))
           .be.rejectedWith('Invalid path')
       })
 
@@ -89,7 +89,7 @@ describe('Prep', function () {
           docType: 'file'
         }
         await should(
-          this.prep.updateFileAsync(this.side, doc)
+          this.prep.updateFileAsync('test', this.side, doc)
         ).be.rejectedWith('Invalid checksum')
       })
 
@@ -98,7 +98,7 @@ describe('Prep', function () {
           path: 'no-checksum',
           md5sum: 'foobar'
         }
-        await should(this.prep.updateFileAsync(this.side, doc))
+        await should(this.prep.updateFileAsync('test', this.side, doc))
           .be.rejectedWith('Invalid checksum')
       })
 
@@ -108,7 +108,7 @@ describe('Prep', function () {
           path: 'foobar/missing-fields',
           md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
-        await this.prep.updateFileAsync(this.side, doc)
+        await this.prep.updateFileAsync('test', this.side, doc)
         this.merge.updateFileAsync.calledWith(this.side, doc).should.be.true()
         doc.docType.should.equal('file')
         should.exist(doc._id)
@@ -120,21 +120,21 @@ describe('Prep', function () {
           path: 'ignored',
           md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
         }
-        await this.prep.updateFileAsync('local', doc)
+        await this.prep.updateFileAsync('test', 'local', doc)
         this.merge.updateFileAsync.called.should.be.false()
       })
     })
 
     describe('putFolder', function () {
       it('expects a doc with a valid path', async function () {
-        await should(this.prep.putFolderAsync(this.side, {path: '..'}))
+        await should(this.prep.putFolderAsync('test', this.side, {path: '..'}))
           .be.rejectedWith('Invalid path')
       })
 
       it('calls Merge with the correct fields', async function () {
         this.merge.putFolderAsync.resolves()
         let doc = {path: 'foo/folder-missing-fields'}
-        await this.prep.putFolderAsync(this.side, doc)
+        await this.prep.putFolderAsync('test', this.side, doc)
         this.merge.putFolderAsync.calledWith(this.side, doc).should.be.true()
         doc.docType.should.equal('folder')
         should.exist(doc._id)
@@ -143,7 +143,7 @@ describe('Prep', function () {
 
       it('does nothing for ignored paths on local', async function () {
         let doc = {path: 'ignored'}
-        await this.prep.putFolderAsync('local', doc)
+        await this.prep.putFolderAsync('test', 'local', doc)
         this.merge.putFolderAsync.called.should.be.false()
       })
     })
@@ -154,14 +154,14 @@ describe('Prep', function () {
       it('expects a doc with a valid path', async function () {
         let doc = {path: ''}
         let was = {path: 'foo/baz'}
-        await should(this.prep.moveFileAsync(this.side, doc, was))
+        await should(this.prep.moveFileAsync('test', this.side, doc, was))
           .be.rejectedWith('Invalid path')
       })
 
       it('expects a was with a valid path', async function () {
         let doc = {path: 'foo/bar'}
         let was = {path: ''}
-        await should(this.prep.moveFileAsync(this.side, doc, was))
+        await should(this.prep.moveFileAsync('test', this.side, doc, was))
           .be.rejectedWith('Invalid path')
       })
 
@@ -172,7 +172,7 @@ describe('Prep', function () {
           md5sum: 'invalid'
         }
         let was = {path: 'foo/baz'}
-        await should(this.prep.moveFileAsync(this.side, doc, was))
+        await should(this.prep.moveFileAsync('test', this.side, doc, was))
           .be.rejectedWith('Invalid checksum')
       })
 
@@ -187,7 +187,7 @@ describe('Prep', function () {
           docType: 'file',
           md5sum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
         }
-        await should(this.prep.moveFileAsync(this.side, doc, was))
+        await should(this.prep.moveFileAsync('test', this.side, doc, was))
           .be.rejectedWith('Invalid move')
       })
 
@@ -202,7 +202,7 @@ describe('Prep', function () {
           docType: 'file',
           md5sum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
         }
-        await should(this.prep.moveFileAsync(this.side, doc, was))
+        await should(this.prep.moveFileAsync('test', this.side, doc, was))
           .be.rejectedWith('Missing rev')
       })
 
@@ -224,7 +224,7 @@ describe('Prep', function () {
           class: 'image',
           mime: 'image/jpeg'
         }
-        await this.prep.moveFileAsync(this.side, doc, was)
+        await this.prep.moveFileAsync('test', this.side, doc, was)
         this.merge.moveFileAsync.calledWith(this.side, doc, was).should.be.true()
         doc.docType.should.equal('file')
         should.exist(doc._id)
@@ -236,14 +236,14 @@ describe('Prep', function () {
       it('expects a doc with a valid path', async function () {
         let doc = {path: ''}
         let was = {path: 'foo/baz'}
-        await should(this.prep.moveFolderAsync(this.side, doc, was))
+        await should(this.prep.moveFolderAsync('test', this.side, doc, was))
           .be.rejectedWith('Invalid path')
       })
 
       it('expects a was with a valid id', async function () {
         let doc = {path: 'foo/bar'}
         let was = {path: ''}
-        await should(this.prep.moveFolderAsync(this.side, doc, was))
+        await should(this.prep.moveFolderAsync('test', this.side, doc, was))
           .be.rejectedWith('Invalid path')
       })
 
@@ -256,7 +256,7 @@ describe('Prep', function () {
           path: 'foo/bar',
           docType: 'folder'
         }
-        await should(this.prep.moveFolderAsync(this.side, doc, was))
+        await should(this.prep.moveFolderAsync('test', this.side, doc, was))
           .be.rejectedWith('Invalid move')
       })
 
@@ -269,7 +269,7 @@ describe('Prep', function () {
           path: 'foo/baz',
           docType: 'folder'
         }
-        await should(this.prep.moveFolderAsync(this.side, doc, was))
+        await should(this.prep.moveFolderAsync('test', this.side, doc, was))
           .be.rejectedWith('Missing rev')
       })
 
@@ -285,7 +285,7 @@ describe('Prep', function () {
           updated_at: new Date(),
           tags: ['courge', 'quux']
         }
-        await this.prep.moveFolderAsync(this.side, doc, was)
+        await this.prep.moveFolderAsync('test', this.side, doc, was)
         this.merge.moveFolderAsync.calledWith(this.side, doc, was).should.be.true()
         doc.docType.should.equal('folder')
         should.exist(doc._id)
@@ -297,14 +297,14 @@ describe('Prep', function () {
   describe('Delete', function () {
     describe('deleteFile', function () {
       it('expects a doc with a valid path', async function () {
-        await should(this.prep.deleteFileAsync(this.side, {path: '/'}))
+        await should(this.prep.deleteFileAsync('test', this.side, {path: '/'}))
           .be.rejectedWith('Invalid path')
       })
 
       it('calls Merge with the correct fields', async function () {
         this.merge.deleteFileAsync.resolves()
         let doc = {path: 'kill/file'}
-        await this.prep.deleteFileAsync(this.side, doc)
+        await this.prep.deleteFileAsync('test', this.side, doc)
         this.merge.deleteFileAsync.calledWith(this.side, doc).should.be.true()
         doc.docType.should.equal('file')
         should.exist(doc._id)
@@ -312,21 +312,21 @@ describe('Prep', function () {
 
       it('does nothing for ignored paths on local', async function () {
         let doc = {path: 'ignored'}
-        await this.prep.deleteFileAsync('local', doc)
+        await this.prep.deleteFileAsync('test', 'local', doc)
         this.merge.deleteFileAsync.called.should.be.false()
       })
     })
 
     describe('deleteFolder', function () {
       it('expects a doc with a valid path', async function () {
-        await should(this.prep.deleteFolderAsync(this.side, {path: '/'}))
+        await should(this.prep.deleteFolderAsync('test', this.side, {path: '/'}))
           .be.rejectedWith('Invalid path')
       })
 
       it('calls Merge with the correct fields', async function () {
         this.merge.deleteFolderAsync.resolves()
         let doc = {path: 'kill/folder'}
-        await this.prep.deleteFolderAsync(this.side, doc)
+        await this.prep.deleteFolderAsync('test', this.side, doc)
         this.merge.deleteFolderAsync.calledWith(this.side, doc).should.be.true()
         doc.docType.should.equal('folder')
         should.exist(doc._id)
@@ -334,7 +334,7 @@ describe('Prep', function () {
 
       it('does nothing for ignored paths on local', async function () {
         let doc = {path: 'ignored'}
-        await this.prep.deleteFolderAsync('local', doc)
+        await this.prep.deleteFolderAsync('test', 'local', doc)
         this.merge.deleteFolderAsync.called.should.be.false()
       })
     })
@@ -344,7 +344,7 @@ describe('Prep', function () {
     it('merges the metadata with an _id and a docType', async function () {
       const doc = {path: 'file-to-be-trashed', md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='}
 
-      await this.prep.trashFileAsync(this.side, doc)
+      await this.prep.trashFileAsync('test', this.side, doc)
 
       should(doc).have.property('_id')
       should(this.merge.trashFileAsync.calledOnce).be.true()
@@ -353,7 +353,7 @@ describe('Prep', function () {
     it('throws when path is invalid', async function () {
       const doc = {path: '/'}
 
-      return this.prep.trashFileAsync(this.side, doc).then(
+      return this.prep.trashFileAsync('test', this.side, doc).then(
           () => should.fail(),
           (err) => err.should.match(/Invalid path/)
       )
@@ -363,7 +363,7 @@ describe('Prep', function () {
     xit('does nothing for ignored paths on local', async function () {
       const doc = {path: 'ignored'}
 
-      await this.prep.trashFileAsync(this.side, doc)
+      await this.prep.trashFileAsync('test', this.side, doc)
 
       should(this.merge.trashFileAsync).not.be.called()
     })
@@ -373,7 +373,7 @@ describe('Prep', function () {
     it('merges the metadata with an _id and a docType', async function () {
       const doc = {path: 'folder-to-be-trashed', md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='}
 
-      await this.prep.trashFolderAsync(this.side, doc)
+      await this.prep.trashFolderAsync('test', this.side, doc)
 
       should(doc).have.property('_id')
       should(this.merge.trashFolderAsync).be.calledOnce()
@@ -382,7 +382,7 @@ describe('Prep', function () {
     it('throws when path is invalid', async function () {
       const doc = {path: '/'}
 
-      return this.prep.trashFolderAsync(this.side, doc).then(
+      return this.prep.trashFolderAsync('test', this.side, doc).then(
           () => should.fail(),
           (err) => err.should.match(/Invalid path/)
       )
@@ -392,7 +392,7 @@ describe('Prep', function () {
     xit('does nothing for ignored paths on local', async function () {
       const doc = {path: 'ignored'}
 
-      await this.prep.trashFolderAsync(this.side, doc)
+      await this.prep.trashFolderAsync('test', this.side, doc)
 
       should(this.merge.trashFolderAsync).not.be.called()
     })

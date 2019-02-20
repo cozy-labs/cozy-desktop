@@ -56,7 +56,7 @@ describe('Move', () => {
 
     it('local', async () => {
       const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
-      await prep.moveFileAsync('local', _.merge(
+      await prep.moveFileAsync('test', 'local', _.merge(
         {
           path: 'dst/file',
           updated_at: '2017-06-19T08:19:26.769Z'
@@ -81,7 +81,7 @@ describe('Move', () => {
 
     it('remote', async () => {
       const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
-      await prep.moveFileAsync('remote', _.merge(
+      await prep.moveFileAsync('test', 'remote', _.merge(
         _.pick(oldFile, ['docType', 'size', 'md5sum', 'class', 'mime', 'tags']),
         {
           path: 'dst/file',
@@ -170,7 +170,7 @@ describe('Move', () => {
       // FIXME: Why is this a file? And why does it break with a directory?
       const doc = builders.metafile().path('parent/dst/dir').build()
 
-      await prep.moveFolderAsync('local', doc, oldFolder)
+      await prep.moveFolderAsync('test', 'local', doc, oldFolder)
 
       should(helpers.putDocs('path', '_deleted', 'trashed', 'childMove')).deepEqual([
         {path: path.normalize('parent/src/dir'), _deleted: true},

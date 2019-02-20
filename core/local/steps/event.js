@@ -17,6 +17,7 @@ export type EventKind =
   | 'unknown'
 
 export type AtomWatcherEvent = {
+  uuid?: String,
   action: EventAction,
   kind: EventKind,
   path: string,

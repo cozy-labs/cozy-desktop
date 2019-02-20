@@ -6,6 +6,8 @@ import type { AtomWatcherEvent } from '../../../../core/local/steps/event'
 */
 
 const should = require('should')
+
+const metadata = require('../../../../core/metadata')
 const addInfos = require('../../../../core/local/steps/add_infos')
 const Buffer = require('../../../../core/local/steps/buffer')
 
@@ -58,12 +60,8 @@ describe('core/local/steps/add_infos.loop()', () => {
       syncPath: ''
     })
     const [scanEvent, ...otherEvents] = await enhancedBuffer.pop()
-    should(scanEvent).eql({
-      action: batch[0].action,
-      kind: 'directory',
-      path: batch[0].path,
-      _id: batch[0].path
-    })
+    should(scanEvent).have.properties(['_id', 'uuid'])
+    should(scanEvent._id).equal(metadata.id(batch[0].path))
     otherEvents.forEach(event => {
       should.exist(event._id)
       should.exist(event.stats)

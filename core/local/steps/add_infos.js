@@ -1,6 +1,7 @@
 /* @flow */
 
 const path = require('path')
+const uuidv4 = require('uuid/v4')
 
 const { id } = require('../../metadata')
 const stater = require('../stater')
@@ -28,10 +29,10 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string } */) /*: Buffe
         continue
       }
       try {
+        event.uuid = uuidv4()
         if (event.action !== 'initial-scan-done') {
           event._id = id(event.path)
           if (['created', 'modified', 'renamed'].includes(event.action)) {
-            log.debug({path: event.path, action: event.action}, 'stat')
             event.stats = await stater.stat(path.join(opts.syncPath, event.path))
           }
           if (event.stats) { // created, modified, renamed, scan
@@ -40,6 +41,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string } */) /*: Buffe
             // If kind is unknown, we say it's a file arbitrary
             event.kind = event.kind === 'directory' ? 'directory' : 'file'
           }
+          log.debug({uuid: event.uuid, path: event.path, action: event.action}, 'infos')
         }
       } catch (err) {
         log.info({err, event}, 'Cannot get infos')

@@ -50,11 +50,11 @@ onPlatform('darwin', function () {
         this.prep.addFileAsync = sinon.stub().resolves()
         await this.watcher.start()
         this.prep.putFolderAsync.called.should.be.true()
-        this.prep.putFolderAsync.args[0][0].should.equal('local')
-        this.prep.putFolderAsync.args[0][1].path.should.equal('aa')
+        this.prep.putFolderAsync.args[0][1].should.equal('local')
+        this.prep.putFolderAsync.args[0][2].path.should.equal('aa')
         this.prep.addFileAsync.called.should.be.true()
-        this.prep.addFileAsync.args[0][0].should.equal('local')
-        this.prep.addFileAsync.args[0][1].path.should.equal(path.normalize('aa/ab'))
+        this.prep.addFileAsync.args[0][1].should.equal('local')
+        this.prep.addFileAsync.args[0][2].path.should.equal(path.normalize('aa/ab'))
       })
 
       it('only recomputes checksums of changed files', async function () {
@@ -156,7 +156,7 @@ onPlatform('darwin', function () {
 
       it('detects when a file is created', function (done) {
         this.watcher.start().then(() => {
-          this.prep.addFileAsync = function (side, doc) {
+          this.prep.addFileAsync = function (uuid, side, doc) {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'aaa.jpg',
@@ -183,7 +183,7 @@ onPlatform('darwin', function () {
         await this.watcher.stop()
 
         should(this.prep.addFileAsync).have.been.calledOnce()
-        const doc = this.prep.addFileAsync.args[0][1]
+        const doc = this.prep.addFileAsync.args[0][2]
         should(doc.md5sum).not.equal(existing.md5sum)
       })
     })
@@ -196,7 +196,7 @@ onPlatform('darwin', function () {
 
       it('detects when a folder is created', function (done) {
         this.watcher.start().then(() => {
-          this.prep.putFolderAsync = function (side, doc) {
+          this.prep.putFolderAsync = function (uuid, side, doc) {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'aba',
@@ -217,7 +217,7 @@ onPlatform('darwin', function () {
       it('detects when a sub-folder is created', function (done) {
         this.watcher.start().then(() => {
           this.prep.putFolderAsync = () => {  // For abb folder
-            this.prep.putFolderAsync = function (side, doc) {
+            this.prep.putFolderAsync = function (uuid, side, doc) {
               side.should.equal('local')
               doc.should.have.properties({
                 path: path.normalize('abb/abc'),
@@ -249,7 +249,7 @@ onPlatform('darwin', function () {
         // and therefore discard it.
         fse.ensureFileSync(path.join(this.syncPath, 'aca'))
         this.prep.addFileAsync = () => {  // For aca file
-          this.prep.trashFileAsync = function (side, doc) {
+          this.prep.trashFileAsync = function (uuid, side, doc) {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'aca'})
@@ -275,7 +275,7 @@ onPlatform('darwin', function () {
         // and therefore discard it.
         fse.mkdirSync(path.join(this.syncPath, 'ada'))
         this.prep.putFolderAsync = () => {  // For ada folder
-          this.prep.trashFolderAsync = function (side, doc) {
+          this.prep.trashFolderAsync = function (uuid, side, doc) {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'ada'})
@@ -295,7 +295,7 @@ onPlatform('darwin', function () {
         let dst = path.join(this.syncPath, 'aea.jpg')
         fse.copySync(src, dst)
         this.prep.addFileAsync = () => {
-          this.prep.updateFileAsync = function (side, doc) {
+          this.prep.updateFileAsync = function (uuid, side, doc) {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'aea.jpg',
@@ -335,7 +335,7 @@ onPlatform('darwin', function () {
         let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
         let dst = path.join(this.syncPath, 'afa.jpg')
         fse.copySync(src, dst)
-        this.prep.addFileAsync = (side, doc) => {
+        this.prep.addFileAsync = (uuid, side, doc) => {
           doc._id = doc.path
           return this.pouch.db.put(doc)
         }
@@ -344,7 +344,7 @@ onPlatform('darwin', function () {
           setTimeout(() => {
             this.prep.deleteFileAsync = sinon.stub().resolves()
             this.prep.addFileAsync = sinon.stub().resolves()
-            this.prep.moveFileAsync = (side, doc, was) => {
+            this.prep.moveFileAsync = (uuid, side, doc, was) => {
               this.prep.deleteFileAsync.called.should.be.false()
               this.prep.addFileAsync.called.should.be.false()
               side.should.equal('local')
@@ -390,7 +390,7 @@ onPlatform('darwin', function () {
         let dst = path.join(this.syncPath, 'agb')
         fse.ensureDirSync(src)
         fse.writeFileSync(`${src}/agc`, 'agc')
-        this.prep.addFileAsync = this.prep.putFolderAsync = (side, doc) => {
+        this.prep.addFileAsync = this.prep.putFolderAsync = (uuid, side, doc) => {
           doc._id = doc.path
           return this.pouch.db.put(doc)
         }
@@ -403,7 +403,7 @@ onPlatform('darwin', function () {
             this.prep.moveFileAsync = sinon.stub().resolves()
             this.prep.deleteFolderAsync = sinon.stub().resolves()
             this.prep.trashFolderAsync = sinon.stub().resolves()
-            this.prep.putFolderAsync = (side, doc) => {
+            this.prep.putFolderAsync = (uuid, side, doc) => {
               side.should.equal('local')
               doc.should.have.properties({
                 path: 'agb',
@@ -413,13 +413,13 @@ onPlatform('darwin', function () {
                 this.prep.addFileAsync.called.should.be.false()
                 this.prep.deleteFileAsync.called.should.be.false()
                 this.prep.moveFileAsync.called.should.be.true()
-                src = this.prep.moveFileAsync.args[0][2]
+                src = this.prep.moveFileAsync.args[0][3]
                 src.should.have.properties({path: path.normalize('aga/agc')})
-                dst = this.prep.moveFileAsync.args[0][1]
+                dst = this.prep.moveFileAsync.args[0][2]
                 dst.should.have.properties({path: path.normalize('agb/agc')})
                 // FIXME: Delete moved dirs
                 this.prep.trashFolderAsync.called.should.be.true()
-                let args = this.prep.trashFolderAsync.args[0][1]
+                let args = this.prep.trashFolderAsync.args[0][2]
                 args.should.have.properties({path: 'aga'})
                 done()
               }, 5000)

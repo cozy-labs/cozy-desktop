@@ -72,6 +72,7 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
           const e = w.events[k]
           if (e.action === 'deleted' && e.path === event.path) {
             w.events.splice(k, 1)
+            log.debug({uuid: e.uuid, path: e.path}, 'debounced')
             w.nbCandidates--
             event.overwrite = true
             break
@@ -87,6 +88,7 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
           const e = w.events[k]
           if (['created', 'modified'].includes(e.action) && e.path === event.path) {
             w.events.splice(k, 1)
+            log.debug({uuid: e.uuid, path: e.path}, 'debounced')
             w.nbCandidates--
             if (event.action === 'modified') {
               // Preserve the action from the first event (it can be a created file)
@@ -95,6 +97,7 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
             if (event.action === 'deleted' && e.action === 'created') {
               // It's just a temporary file that we can ignore
               events.splice(i, 1)
+              log.debug({uuid: event.uuid, path: event.path}, 'temporary')
               i--
             }
             break

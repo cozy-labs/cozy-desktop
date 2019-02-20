@@ -231,7 +231,7 @@ describe('Update file', () => {
       await helpers.syncAll()
       const was = await pouch.byRemoteIdMaybeAsync(file._id)
 
-      await prep.updateFileAsync('local', _.defaults({ino: was.ino + 1}, was))
+      await prep.updateFileAsync('test', 'local', _.defaults({ino: was.ino + 1}, was))
       await helpers.syncAll()
       const doc = await pouch.byRemoteIdMaybeAsync(file._id)
       should(doc).have.propertyByPath('remote', '_rev').not.eql(was.remote._rev)
@@ -254,7 +254,7 @@ describe('Update file', () => {
       const was = await pouch.byRemoteIdMaybeAsync(file._id)
       should(was).have.property('updated_at', '2018-05-15T21:01:53Z')
 
-      await prep.updateFileAsync('local', _.defaults({
+      await prep.updateFileAsync('test', 'local', _.defaults({
         updated_at: '2017-05-15T21:01:53.000Z',
         tags: ['some new tag']
       }, was))
@@ -277,7 +277,7 @@ describe('Update file', () => {
 
       log.info('-------- local merge M1 --------')
       should(await helpers.local.syncDir.checksum('file')).equal('8x4e7yD2RzOhjFOAc+eDlg==')
-      await prep.updateFileAsync('local', _.defaults(
+      await prep.updateFileAsync('test', 'local', _.defaults(
         {
           md5sum: await helpers.local.syncDir.checksum('file'),
           size: 2
@@ -294,7 +294,7 @@ describe('Update file', () => {
 
       log.info('-------- local merge M2 --------')
       should(await helpers.local.syncDir.checksum('file')).equal('nYMiUwtn4jZuWxumcIHe2Q==')
-      await prep.updateFileAsync('local', _.defaults(
+      await prep.updateFileAsync('test', 'local', _.defaults(
         {
           md5sum: await helpers.local.syncDir.checksum('file'),
           size: 2

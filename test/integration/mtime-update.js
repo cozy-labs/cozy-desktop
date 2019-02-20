@@ -77,7 +77,7 @@ describe('Update only a file mtime', () => {
     helpers.spyPouch()
 
     const oldFile = await helpers.pouch.byRemoteIdMaybeAsync(file._id)
-    await helpers.prep.updateFileAsync('local', _.merge(
+    await helpers.prep.updateFileAsync('test', 'local', _.merge(
       {
         path: 'file',
         updated_at: d.toISOString()

@@ -3,6 +3,7 @@
 const fs = require('fs')
 const _ = require('lodash')
 const path = require('path')
+const uuidv4 = require('uuid/v4')
 
 const metadata = require('../../../core/metadata')
 const events = require('../../../core/local/steps/event')
@@ -53,6 +54,7 @@ module.exports = class AtomWatcherEventBuilder {
       const kind = randomPick(events.KINDS)
       const stats = buildStats(kind)
       this._event = {
+        uuid: uuidv4(),
         action: randomPick(events.ACTIONS),
         kind,
         path: '/',

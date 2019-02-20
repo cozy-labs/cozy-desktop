@@ -46,8 +46,8 @@ class Prep {
   // Expectations:
   //   - the file path is present and valid
   //   - the checksum is valid, if present
-  async addFileAsync (side /*: SideName */, doc /*: Metadata */) {
-    log.debug({path: doc.path}, 'addFileAsync')
+  async addFileAsync (uuid /*: string */, side /*: SideName */, doc /*: Metadata */) {
+    log.debug({uuid, path: doc.path}, 'addFileAsync')
     metadata.ensureValidPath(doc)
     metadata.ensureValidChecksum(doc)
 
@@ -60,8 +60,8 @@ class Prep {
   // Expectations:
   //   - the file path is present and valid
   //   - the checksum is valid, if present
-  async updateFileAsync (side /*: SideName */, doc /*: Metadata */) {
-    log.debug({path: doc.path}, 'updateFileAsync')
+  async updateFileAsync (uuid /*: string */, side /*: SideName */, doc /*: Metadata */) {
+    log.debug({uuid, path: doc.path}, 'updateFileAsync')
     metadata.ensureValidPath(doc)
     metadata.ensureValidChecksum(doc)
 
@@ -73,8 +73,8 @@ class Prep {
 
   // Expectations:
   //   - the folder path is present and valid
-  async putFolderAsync (side /*: SideName */, doc /*: Metadata */) {
-    log.debug({path: doc.path}, 'putFolderAsync')
+  async putFolderAsync (uuid /*: string */, side /*: SideName */, doc /*: Metadata */) {
+    log.debug({uuid, path: doc.path}, 'putFolderAsync')
     metadata.ensureValidPath(doc)
 
     doc.docType = 'folder'
@@ -89,8 +89,8 @@ class Prep {
   //   - the checksum is valid, if present
   //   - the two paths are not the same
   //   - the revision for the old file is present
-  async moveFileAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
-    log.debug({path: doc.path, oldpath: was.path}, 'moveFileAsync')
+  async moveFileAsync (uuid /*: string */, side /*: SideName */, doc /*: Metadata */, was /*: Metadata */) {
+    log.debug({uuid, path: doc.path, oldpath: was.path}, 'moveFileAsync')
     const {path} = doc
     metadata.ensureValidPath(doc)
     metadata.ensureValidPath(was)
@@ -98,11 +98,11 @@ class Prep {
 
     if (doc.path === was.path) {
       const msg = 'Invalid move'
-      log.warn({path, doc, was}, msg)
+      log.warn({uuid, path, doc, was}, msg)
       throw new Error(msg)
     } else if (!was._rev) {
       const msg = 'Missing rev'
-      log.warn({path, doc, was}, msg)
+      log.warn({uuid, path, doc, was}, msg)
       throw new Error(msg)
     }
 
@@ -126,20 +126,20 @@ class Prep {
   //   - the old folder path is present and valid
   //   - the two paths are not the same
   //   - the revision for the old folder is present
-  async moveFolderAsync (side /*: SideName */, doc /*: Metadata */, was /*: Metadata */, newRemoteRevs /*: ?RemoteRevisionsByID */) {
-    log.debug({path: doc.path, oldpath: was.path}, 'moveFolderAsync')
+  async moveFolderAsync (uuid /*: string */, side /*: SideName */, doc /*: Metadata */, was /*: Metadata */, newRemoteRevs /*: ?RemoteRevisionsByID */) {
+    log.debug({uuid, path: doc.path, oldpath: was.path}, 'moveFolderAsync')
     const {path} = doc
     metadata.ensureValidPath(doc)
     metadata.ensureValidPath(was)
     if (doc.path === was.path) {
       const msg = 'Invalid move'
-      log.warn({path, doc, was}, msg)
+      log.warn({uuid, path, doc, was}, msg)
       throw new Error(msg)
     }
 
     if (!was._rev) {
       const msg = 'Missing rev'
-      log.warn({path, doc, was}, msg)
+      log.warn({uuid, path, doc, was}, msg)
       throw new Error(msg)
     }
 
@@ -159,8 +159,8 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async restoreFileAsync (side /*: SideName */, was /*: Metadata */, doc /*: Metadata */) {
-    log.debug({path: doc.path, oldpath: was.path}, 'restoreFileAsync')
+  async restoreFileAsync (uuid /*: string */, side /*: SideName */, was /*: Metadata */, doc /*: Metadata */) {
+    log.debug({uuid, path: doc.path, oldpath: was.path}, 'restoreFileAsync')
     metadata.ensureValidPath(doc)
     metadata.ensureValidPath(was)
     metadata.ensureValidChecksum(doc)
@@ -174,8 +174,8 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async restoreFolderAsync (side /*: SideName */, was /*: Metadata */, doc /*: Metadata */) {
-    log.debug({path: doc.path, oldpath: was.path}, 'restoreFolderAsync')
+  async restoreFolderAsync (uuid /*: string */, side /*: SideName */, was /*: Metadata */, doc /*: Metadata */) {
+    log.debug({uuid, path: doc.path, oldpath: was.path}, 'restoreFolderAsync')
     metadata.ensureValidPath(doc)
     metadata.ensureValidPath(was)
 
@@ -188,8 +188,8 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFileAsync (side /*: SideName */, was /*: {path: string} */, doc /*: ?Metadata */) {
-    log.debug({path: doc && doc.path, oldpath: was.path}, 'trashFileAsync')
+  async trashFileAsync (uuid /*: string */, side /*: SideName */, was /*: {path: string} */, doc /*: ?Metadata */) {
+    log.debug({uuid, path: doc && doc.path, oldpath: was.path}, 'trashFileAsync')
     metadata.ensureValidPath(was)
 
     if (!doc) {
@@ -208,8 +208,8 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async trashFolderAsync (side /*: SideName */, was /*: {path: string} */, doc /*: ?Metadata */) {
-    log.debug({path: doc && doc.path, oldpath: was.path}, 'trashFolderAsync')
+  async trashFolderAsync (uuid /*: string */, side /*: SideName */, was /*: {path: string} */, doc /*: ?Metadata */) {
+    log.debug({uuid, path: doc && doc.path, oldpath: was.path}, 'trashFolderAsync')
     metadata.ensureValidPath(was)
 
     if (!doc) {
@@ -229,8 +229,8 @@ class Prep {
 
   // Expectations:
   //   - the file path is present and valid
-  async deleteFileAsync (side /*: SideName */, doc /*: Metadata */) {
-    log.debug({path: doc.path}, 'deleteFileAsync')
+  async deleteFileAsync (uuid /*: string */, side /*: SideName */, doc /*: Metadata */) {
+    log.debug({uuid, path: doc.path}, 'deleteFileAsync')
     metadata.ensureValidPath(doc)
 
     doc.docType = 'file'
@@ -241,8 +241,8 @@ class Prep {
 
   // Expectations:
   //   - the folder path is present and valid
-  async deleteFolderAsync (side /*: SideName */, doc /*: Metadata */) {
-    log.debug({path: doc.path}, 'deleteFolderAsync')
+  async deleteFolderAsync (uuid /*: string */, side /*: SideName */, doc /*: Metadata */) {
+    log.debug({uuid, path: doc.path}, 'deleteFolderAsync')
     metadata.ensureValidPath(doc)
 
     doc.docType = 'folder'

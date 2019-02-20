@@ -43,7 +43,7 @@ describe('Trash', () => {
     })
 
     it('local', async () => {
-      await prep.trashFileAsync('local', {path: 'parent/file'})
+      await prep.trashFileAsync('test', 'local', {path: 'parent/file'})
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
         {path: path.normalize('parent/file'), _deleted: true}
@@ -95,7 +95,7 @@ describe('Trash', () => {
     })
 
     it('local', async () => {
-      await prep.trashFolderAsync('local', {path: path.normalize('parent/dir')})
+      await prep.trashFolderAsync('test', 'local', {path: path.normalize('parent/dir')})
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
         // XXX: Why isn't file deleted? (it works anyway)
@@ -118,7 +118,7 @@ describe('Trash', () => {
 
     it('remote', async() => {
       // FIXME: should pass a remote doc, or trash from Cozy
-      await prep.trashFolderAsync('remote', {path: 'parent/dir'})
+      await prep.trashFolderAsync('test', 'remote', {path: 'parent/dir'})
 
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
         // XXX: Why isn't file deleted? (it works anyway)

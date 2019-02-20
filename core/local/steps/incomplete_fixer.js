@@ -66,6 +66,7 @@ async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: Ato
       : item.event.oldPath.replace(event.oldPath, event.path)
   }
   return {
+    uuid: item.event.uuid,
     action: item.event.action,
     oldPath,
     path: p,
@@ -103,7 +104,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
     const batch = []
     for (const event of events) {
       if (event.incomplete) {
-        log.debug({path: event.path, action: event.action}, 'incomplete')
+        log.debug({uuid: event.uuid, path: event.path, action: event.action}, 'incomplete')
         incompletes.push({ event, timestamp: Date.now() })
         continue
       }
@@ -131,7 +132,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
           if (itemDestinationWasRenamed(item, event)) {
             // We have a match, try to rebuild the incomplete event
             const rebuilt = await rebuildIncompleteEvent(item, event, opts)
-            log.debug({path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
+            log.debug({uuid: rebuilt.uuid, path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
             if (rebuilt.action === 'renamed' && rebuilt.path === event.path) {
               batch.splice(batch.indexOf(event), 1, rebuilt)
             } else {
@@ -140,7 +141,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
           } else if (itemDestinationWasDeleted(item, event)) {
             // We have a match, try to replace the incomplete event
             const rebuilt = buildDeletedFromRenamed(item, event)
-            log.debug({path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
+            log.debug({uuid: rebuilt.uuid, path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
             batch.push(rebuilt)
           } else {
             continue

@@ -87,8 +87,9 @@ describe('core/local/steps/dispatch.loop()', function () {
     const filePath = 'foo'
     const md5sum = crypto.createHash('md5').update('').digest().toString('base64')
 
+    let batch
     beforeEach(() => {
-      buffer.push([
+      batch = [
         builders
           .event()
           .action('scan')
@@ -97,7 +98,8 @@ describe('core/local/steps/dispatch.loop()', function () {
           .ino(1)
           .md5sum(md5sum)
           .build()
-      ])
+      ]
+      buffer.push(batch)
     })
 
     it('triggers a call to addFileAsync with a file Metadata object', async function () {
@@ -108,7 +110,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
       should(dispatchedCalls(prep)).deepEqual({
         addFileAsync: [
-          ['local', doc]
+          [batch[0].uuid, 'local', doc]
         ]
       })
     })
@@ -117,10 +119,12 @@ describe('core/local/steps/dispatch.loop()', function () {
   context('when buffer contains a scan directory event', () => {
     const directoryPath = 'foo'
 
+    let batch
     beforeEach(() => {
-      buffer.push([
+      batch = [
         builders.event().action('scan').kind('directory').path(directoryPath).ino(1).build()
-      ])
+      ]
+      buffer.push(batch)
     })
 
     it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
@@ -131,7 +135,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
       should(dispatchedCalls(prep)).deepEqual({
         putFolderAsync: [
-          ['local', doc]
+          [batch[0].uuid, 'local', doc]
         ]
       })
     })
@@ -141,8 +145,9 @@ describe('core/local/steps/dispatch.loop()', function () {
     const filePath = 'foo'
     const md5sum = crypto.createHash('md5').update('').digest().toString('base64')
 
+    let batch
     beforeEach(() => {
-      buffer.push([
+      batch = [
         builders
           .event()
           .action('created')
@@ -151,7 +156,8 @@ describe('core/local/steps/dispatch.loop()', function () {
           .ino(1)
           .md5sum(md5sum)
           .build()
-      ])
+      ]
+      buffer.push(batch)
     })
 
     it('triggers a call to addFileAsync with a file Metadata object', async function () {
@@ -162,7 +168,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
       should(dispatchedCalls(prep)).deepEqual({
         addFileAsync: [
-          ['local', doc]
+          [batch[0].uuid, 'local', doc]
         ]
       })
     })
@@ -171,10 +177,12 @@ describe('core/local/steps/dispatch.loop()', function () {
   context('when buffer contains a created directory event', () => {
     const directoryPath = 'foo'
 
+    let batch
     beforeEach(() => {
-      buffer.push([
+      batch = [
         builders.event().action('created').kind('directory').path(directoryPath).ino(1).build()
-      ])
+      ]
+      buffer.push(batch)
     })
 
     it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
@@ -185,7 +193,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
       should(dispatchedCalls(prep)).deepEqual({
         putFolderAsync: [
-          ['local', doc]
+          [batch[0].uuid, 'local', doc]
         ]
       })
     })
@@ -195,8 +203,9 @@ describe('core/local/steps/dispatch.loop()', function () {
     const filePath = 'foo'
     const md5sum = crypto.createHash('md5').update('').digest().toString('base64')
 
+    let batch
     beforeEach(() => {
-      buffer.push([
+      batch = [
         builders
           .event()
           .action('modified')
@@ -205,7 +214,8 @@ describe('core/local/steps/dispatch.loop()', function () {
           .ino(1)
           .md5sum(md5sum)
           .build()
-      ])
+      ]
+      buffer.push(batch)
     })
 
     it('triggers a call to updateFileAsync with a file Metadata object', async function () {
@@ -216,7 +226,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
       should(dispatchedCalls(prep)).deepEqual({
         updateFileAsync: [
-          ['local', doc]
+          [batch[0].uuid, 'local', doc]
         ]
       })
     })
@@ -225,10 +235,12 @@ describe('core/local/steps/dispatch.loop()', function () {
   context('when buffer contains a modified directory event', () => {
     const directoryPath = 'foo'
 
+    let batch
     beforeEach(() => {
-      buffer.push([
+      batch = [
         builders.event().action('modified').kind('directory').path(directoryPath).ino(1).build()
-      ])
+      ]
+      buffer.push(batch)
     })
 
     it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
@@ -239,7 +251,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
       should(dispatchedCalls(prep)).deepEqual({
         putFolderAsync: [
-          ['local', doc]
+          [batch[0].uuid, 'local', doc]
         ]
       })
     })
@@ -250,8 +262,9 @@ describe('core/local/steps/dispatch.loop()', function () {
     const newFilePath = 'bar'
     const md5sum = crypto.createHash('md5').update('').digest().toString('base64')
 
+    let batch
     beforeEach(() => {
-      buffer.push([
+      batch = [
         builders
           .event()
           .action('renamed')
@@ -261,7 +274,8 @@ describe('core/local/steps/dispatch.loop()', function () {
           .ino(1)
           .md5sum(md5sum)
           .build()
-      ])
+      ]
+      buffer.push(batch)
     })
 
     context('with an existing document at the event oldPath', () => {
@@ -279,7 +293,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
         should(dispatchedCalls(prep)).deepEqual({
           moveFileAsync: [
-            ['local', doc, oldDoc]
+            [batch[0].uuid, 'local', doc, oldDoc]
           ]
         })
       })
@@ -294,7 +308,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
         should(dispatchedCalls(prep)).deepEqual({
           addFileAsync: [
-            ['local', doc]
+            [batch[0].uuid, 'local', doc]
           ]
         })
       })
@@ -313,8 +327,9 @@ describe('core/local/steps/dispatch.loop()', function () {
     const directoryPath = 'foo'
     const newDirectoryPath = 'bar'
 
+    let batch
     beforeEach(() => {
-      buffer.push([
+      batch = [
         builders
           .event()
           .action('renamed')
@@ -323,7 +338,8 @@ describe('core/local/steps/dispatch.loop()', function () {
           .path(newDirectoryPath)
           .ino(1)
           .build()
-      ])
+      ]
+      buffer.push(batch)
     })
 
     context('with an existing document at the event oldPath', () => {
@@ -341,7 +357,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
         should(dispatchedCalls(prep)).deepEqual({
           moveFolderAsync: [
-            ['local', doc, oldDoc]
+            [batch[0].uuid, 'local', doc, oldDoc]
           ]
         })
       })
@@ -356,7 +372,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
         should(dispatchedCalls(prep)).deepEqual({
           putFolderAsync: [
-            ['local', doc]
+            [batch[0].uuid, 'local', doc]
           ]
         })
       })
@@ -374,10 +390,12 @@ describe('core/local/steps/dispatch.loop()', function () {
   context('when buffer contains a deleted file event', () => {
     const filePath = 'foo'
 
+    let batch
     beforeEach(() => {
-      buffer.push([
+      batch = [
         builders.event().action('deleted').kind('file').path(filePath).ino(1).build()
-      ])
+      ]
+      buffer.push(batch)
     })
 
     context('with an existing document at the event path', () => {
@@ -393,7 +411,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
         should(dispatchedCalls(prep)).deepEqual({
           trashFileAsync: [
-            ['local', oldDoc]
+            [batch[0].uuid, 'local', oldDoc]
           ]
         })
       })
@@ -412,8 +430,9 @@ describe('core/local/steps/dispatch.loop()', function () {
   context('when buffer contains a deleted directory event', () => {
     const directoryPath = 'foo'
 
+    let batch
     beforeEach(() => {
-      buffer.push([
+      batch = [
         builders
           .event()
           .action('deleted')
@@ -421,7 +440,8 @@ describe('core/local/steps/dispatch.loop()', function () {
           .path(directoryPath)
           .ino(1)
           .build()
-      ])
+      ]
+      buffer.push(batch)
     })
 
     context('with an existing document at the event path', () => {
@@ -437,7 +457,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
         should(dispatchedCalls(prep)).deepEqual({
           trashFolderAsync: [
-            ['local', oldDoc]
+            [batch[0].uuid, 'local', oldDoc]
           ]
         })
       })

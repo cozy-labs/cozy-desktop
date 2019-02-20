@@ -42,7 +42,7 @@ describe('Conflict resolution', () => {
 
     it('success', async () => {
       await helpers.local.syncDir.ensureDir('foo')
-      await helpers.prep.putFolderAsync('local', builders.metadir().path('foo').build())
+      await helpers.prep.putFolderAsync('test', 'local', builders.metadir().path('foo').build())
       should(await helpers.local.tree()).deepEqual([
         'foo-conflict-.../'
       ])
@@ -102,7 +102,7 @@ describe('Conflict resolution', () => {
     })
 
     const simulateLocalUpdateMerge = async () => {
-      await helpers.prep.updateFileAsync('local', _.merge(pouchFile, {
+      await helpers.prep.updateFileAsync('test', 'local', _.merge(pouchFile, {
         updated_at: new Date().toISOString(),
         md5sum: await helpers.local.syncDir.checksum('concurrent-edited')
       }))
@@ -342,7 +342,7 @@ describe('Conflict resolution', () => {
 
   describe('remote', () => {
     beforeEach('set up conflict', async () => {
-      await helpers.prep.putFolderAsync('local', builders.metadir().path('foo').build())
+      await helpers.prep.putFolderAsync('test', 'local', builders.metadir().path('foo').build())
       await cozy.files.create('whatever', {name: 'foo'})
     })
 

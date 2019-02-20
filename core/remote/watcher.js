@@ -393,39 +393,39 @@ class RemoteWatcher {
         break
       case 'FileTrashing':
         log.info({path}, 'file was trashed remotely')
-        await this.prep.trashFileAsync(sideName, change.was, change.doc)
+        await this.prep.trashFileAsync('remote', sideName, change.was, change.doc)
         break
       case 'DirTrashing':
         log.info({path}, 'folder was trashed remotely')
-        await this.prep.trashFolderAsync(sideName, change.was, change.doc)
+        await this.prep.trashFolderAsync('remote', sideName, change.was, change.doc)
         break
       case 'FileDeletion':
         log.info({path}, 'file was deleted permanently')
-        await this.prep.deleteFileAsync(sideName, change.doc)
+        await this.prep.deleteFileAsync('remote', sideName, change.doc)
         break
       case 'DirDeletion':
         log.info({path}, 'folder was deleted permanently')
-        await this.prep.deleteFolderAsync(sideName, change.doc)
+        await this.prep.deleteFolderAsync('remote', sideName, change.doc)
         break
       case 'FileAddition':
         log.info({path}, 'file was added remotely')
-        await this.prep.addFileAsync(sideName, change.doc)
+        await this.prep.addFileAsync('remote', sideName, change.doc)
         break
       case 'DirAddition':
         log.info({path}, 'folder was added remotely')
-        await this.prep.putFolderAsync(sideName, change.doc)
+        await this.prep.putFolderAsync('remote', sideName, change.doc)
         break
       case 'FileRestoration':
         log.info({path}, 'file was restored remotely')
-        await this.prep.restoreFileAsync(sideName, change.doc, change.was)
+        await this.prep.restoreFileAsync('remote', sideName, change.doc, change.was)
         break
       case 'DirRestoration':
         log.info({path}, 'folder was restored remotely')
-        await this.prep.restoreFolderAsync(sideName, change.doc, change.was)
+        await this.prep.restoreFolderAsync('remote', sideName, change.doc, change.was)
         break
       case 'FileUpdate':
         log.info({path}, 'file was updated remotely')
-        await this.prep.updateFileAsync(sideName, change.doc)
+        await this.prep.updateFileAsync('remote', sideName, change.doc)
         break
       case 'FileMove':
         log.info({path, oldpath: change.was.path}, 'file was moved or renamed remotely')
@@ -433,9 +433,9 @@ class RemoteWatcher {
           change.was = await this.pouch.byRemoteIdMaybeAsync(change.was.remote._id)
           change.was.childMove = false
         }
-        await this.prep.moveFileAsync(sideName, change.doc, change.was)
+        await this.prep.moveFileAsync('remote', sideName, change.doc, change.was)
         if (change.update) {
-          await this.prep.updateFileAsync(sideName, change.doc)
+          await this.prep.updateFileAsync('remote', sideName, change.doc)
         }
         break
       case 'DirMove':
@@ -447,10 +447,10 @@ class RemoteWatcher {
             newRemoteRevs[descendant.doc.remote._id] = descendant.doc.remote._rev
           }
         }
-        await this.prep.moveFolderAsync(sideName, change.doc, change.was, newRemoteRevs)
+        await this.prep.moveFolderAsync('remote', sideName, change.doc, change.was, newRemoteRevs)
         for (let descendant of descendants) {
           if (descendant.update) {
-            await this.prep.updateFileAsync(sideName, descendant.doc)
+            await this.prep.updateFileAsync('remote', sideName, descendant.doc)
           }
         }
         break

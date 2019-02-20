@@ -125,7 +125,7 @@ class LocalTestHelpers {
 
   isSimulationEnd (batch /*: Batch */) {
     const { _resolveSimulation } = this
-    return _resolveSimulation && _.isEqual(batch, simulationCompleteBatch)
+    return _resolveSimulation && _.isMatch(batch, simulationCompleteBatch)
   }
 
   async stopSimulation () {

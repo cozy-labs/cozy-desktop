@@ -271,7 +271,7 @@ describe('Platform incompatibilities', () => {
     const stats = {mtime: new Date(), ctime: new Date(), ino: dir.ino}
     // $FlowFixMe
     const dir2 = metadata.buildDir('dir2', stats)
-    await helpers.prep.moveFolderAsync('local', dir2, dir)
+    await helpers.prep.moveFolderAsync('test', 'local', dir2, dir)
     await helpers.syncAll()
 
     should(await helpers.remote.tree()).deepEqual([

@@ -1,7 +1,13 @@
 /* @flow */
 
+const uuidv4 = require('uuid/v4')
+
 const { id } = require('../../metadata')
 const Buffer = require('./buffer')
+const logger = require('../../logger')
+const log = logger({
+  component: 'initialDiff'
+})
 
 /*::
 import type Pouch from '../../pouch'
@@ -95,16 +101,20 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
               event.oldPath = event.path
               event.path = was.path
             }
+            log.debug({uuid: event.uuid, path: event.path, oldPath: event.oldPath, action: event.action}, 'diff')
           } else {
             // On linux, the inodes can have been reused: a file was deleted
             // and a directory created just after while the client was stopped
             // for example.
-            batch.push({
+            const e = {
+              uuid: uuidv4(),
               action: 'deleted',
               kind: was.kind,
               _id: id(was.path),
               path: was.path
-            })
+            }
+            log.debug({uuid: e.uuid, path: e.path, action: e.action}, 'diff')
+            batch.push(e)
           }
         }
       }
@@ -119,12 +129,15 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
         // Emit deleted events for all the remaining files/dirs
         for (const [, doc] of byInode) {
           if (!byPath.get(doc.path)) {
-            batch.push({
+            const e = {
+              uuid: uuidv4(),
               action: 'deleted',
               kind: doc.kind,
               _id: id(doc.path),
               path: doc.path
-            })
+            }
+            log.debug({uuid: e.uuid, path: e.path, action: e.action}, 'diff')
+            batch.push(e)
           }
         }
         byInode.clear()

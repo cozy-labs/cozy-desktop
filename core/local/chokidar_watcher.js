@@ -385,7 +385,7 @@ module.exports = class LocalWatcher {
     const logError = (err) => log.error({err, path: filePath})
     const doc = metadata.buildFile(filePath, stats, md5sum)
     log.info({path: filePath}, 'FileAddition')
-    return this.prep.addFileAsync(SIDE, doc).catch(logError)
+    return this.prep.addFileAsync('chokidar', SIDE, doc).catch(logError)
   }
 
   async onMoveFile (filePath /*: string */, stats /*: fse.Stats */, md5sum /*: string */, old /*: Metadata */, overwrite /*: ?Metadata */) {
@@ -393,7 +393,7 @@ module.exports = class LocalWatcher {
     const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
     if (overwrite) doc.overwrite = overwrite
     log.info({path: filePath, oldpath: old.path}, 'FileMove')
-    return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
+    return this.prep.moveFileAsync('chokidar', SIDE, doc, old).catch(logError)
   }
 
   onMoveFolder (folderPath /*: string */, stats /*: fse.Stats */, old /*: Metadata */, overwrite /*: ?boolean */) {
@@ -402,14 +402,14 @@ module.exports = class LocalWatcher {
     // $FlowFixMe we set doc.overwrite to true, it will be replaced by metadata in merge
     if (overwrite) doc.overwrite = overwrite
     log.info({path: folderPath, oldpath: old.path}, 'DirMove')
-    return this.prep.moveFolderAsync(SIDE, doc, old).catch(logError)
+    return this.prep.moveFolderAsync('chokidar', SIDE, doc, old).catch(logError)
   }
 
   // New directory detected
   onAddDir (folderPath /*: string */, stats /*: fse.Stats */) {
     const doc = metadata.buildDir(folderPath, stats)
     log.info({path: folderPath}, 'DirAddition')
-    return this.prep.putFolderAsync(SIDE, doc).catch(err => log.error({err, path: folderPath}))
+    return this.prep.putFolderAsync('chokidar', SIDE, doc).catch(err => log.error({err, path: folderPath}))
   }
 
   // File deletion detected
@@ -418,7 +418,7 @@ module.exports = class LocalWatcher {
   // same checksum is added and, if not, we declare this file as deleted.
   onUnlinkFile (filePath /*: string */) {
     log.info({path: filePath}, 'FileDeletion')
-    return this.prep.trashFileAsync(SIDE, {path: filePath}).catch(err => log.error({err, path: filePath}))
+    return this.prep.trashFileAsync('chokidar', SIDE, {path: filePath}).catch(err => log.error({err, path: filePath}))
   }
 
   // Folder deletion detected
@@ -427,13 +427,13 @@ module.exports = class LocalWatcher {
   // after chokidar event to declare the folder as deleted.
   onUnlinkDir (folderPath /*: string */) {
     log.info({path: folderPath}, 'DirDeletion')
-    return this.prep.trashFolderAsync(SIDE, {path: folderPath}).catch(err => log.error({err, path: folderPath}))
+    return this.prep.trashFolderAsync('chokidar', SIDE, {path: folderPath}).catch(err => log.error({err, path: folderPath}))
   }
 
   // File update detected
   onChange (filePath /*: string */, stats /*: fse.Stats */, md5sum /*: string */) {
     log.info({path: filePath}, 'FileUpdate')
     const doc = metadata.buildFile(filePath, stats, md5sum)
-    return this.prep.updateFileAsync(SIDE, doc)
+    return this.prep.updateFileAsync('chokidar', SIDE, doc)
   }
 }

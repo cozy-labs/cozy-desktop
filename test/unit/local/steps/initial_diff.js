@@ -1,6 +1,14 @@
 /* eslint-env mocha */
 /* @flow */
 
+const path = require('path')
+
+/*::
+import type { AtomWatcherEvent } from '../../../../core/local/steps/event'
+*/
+
+const _ = require('lodash')
+
 const should = require('should')
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
@@ -8,6 +16,10 @@ const pouchHelpers = require('../../../support/helpers/pouch')
 
 const Buffer = require('../../../../core/local/steps/buffer')
 const initialDiff = require('../../../../core/local/steps/initial_diff')
+
+const eventSignatures = (events /*: AtomWatcherEvent[] */) /*: Array<Object> */ => {
+  return events.map(event => _.pick(event, ['action', 'kind', 'path', 'oldPath']))
+}
 
 describe('local/steps/initial_diff.loop()', () => {
   let builders
@@ -32,9 +44,9 @@ describe('local/steps/initial_diff.loop()', () => {
     buffer = initialDiff.loop(buffer, { pouch: this.pouch })
 
     const events = await buffer.pop()
-    should(events).deepEqual([
-      builders.event(bar).action('renamed').oldPath('foo').build(),
-      builders.event(buzz).action('renamed').oldPath('fizz').build()
+    should(eventSignatures(events)).deepEqual([
+      { action: 'renamed', kind: bar.kind, path: bar.path, oldPath: 'foo' },
+      { action: 'renamed', kind: buzz.kind, path: buzz.path, oldPath: 'fizz' }
     ])
   })
 
@@ -57,10 +69,10 @@ describe('local/steps/initial_diff.loop()', () => {
       await buffer.pop(),
       await buffer.pop()
     )
-    should(events).deepEqual([
-      foo,
-      builders.event(barbaz).action('renamed').oldPath('foo/baz').build(),
-      bar
+    should(eventSignatures(events)).deepEqual([
+      _.pick(foo, ['action', 'kind', 'path', 'oldPath']),
+      { action: 'renamed', kind: barbaz.kind, path: barbaz.path, oldPath: path.normalize('foo/baz') },
+      _.pick(bar, ['action', 'kind', 'path', 'oldPath'])
     ])
   })
 
@@ -76,9 +88,9 @@ describe('local/steps/initial_diff.loop()', () => {
     buffer = initialDiff.loop(buffer, { pouch: this.pouch })
 
     const events = await buffer.pop()
-    should(events).deepEqual([
-      builders.event(foo).action('renamed').oldPath('bar').build(),
-      builders.event(buzz).action('renamed').oldPath('fizz').build()
+    should(eventSignatures(events)).deepEqual([
+      { action: 'renamed', kind: foo.kind, path: foo.path, oldPath: 'bar' },
+      { action: 'renamed', kind: buzz.kind, path: buzz.path, oldPath: 'fizz' }
     ])
   })
 
@@ -86,15 +98,15 @@ describe('local/steps/initial_diff.loop()', () => {
     await builders.metadir().path('foo').ino(1).create()
     await builders.metafile().path('bar').ino(2).create()
 
-    const initial = builders.event().action('initial-scan-done').build()
-    buffer.push([initial])
+    const scanDone = builders.event().action('initial-scan-done').build()
+    buffer.push([scanDone])
     buffer = initialDiff.loop(buffer, { pouch: this.pouch })
 
     const events = await buffer.pop()
-    should(events).deepEqual([
-      builders.event().action('deleted').kind('file').path('bar').build(),
-      builders.event().action('deleted').kind('directory').path('foo').build(),
-      initial
+    should(eventSignatures(events)).deepEqual([
+      { action: 'deleted', kind: 'file', path: 'bar' },
+      { action: 'deleted', kind: 'directory', path: 'foo' },
+      _.pick(scanDone, ['action', 'kind', 'path'])
     ])
   })
 })

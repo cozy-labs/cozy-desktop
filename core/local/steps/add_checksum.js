@@ -34,7 +34,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
         }
         if (['created', 'modified', 'scan', 'renamed'].includes(event.action) &&
             event.kind === 'file') {
-          log.debug({path: event.path, action: event.action}, 'checksum')
+          log.debug({uuid: event.uuid, path: event.path, action: event.action}, 'checksum')
           const absPath = path.join(opts.syncPath, event.path)
           event.md5sum = await opts.checksumer.push(absPath)
         }

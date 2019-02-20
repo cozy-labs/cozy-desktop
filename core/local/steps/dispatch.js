@@ -70,22 +70,22 @@ actions = {
 
   createdfile: async (event, {prep}) => {
     const doc = buildFile(event.path, event.stats, event.md5sum)
-    await prep.addFileAsync(SIDE, doc)
+    await prep.addFileAsync(event.uuid, SIDE, doc)
   },
 
   createddirectory: async (event, {prep}) => {
     const doc = buildDir(event.path, event.stats)
-    await prep.putFolderAsync(SIDE, doc)
+    await prep.putFolderAsync(event.uuid, SIDE, doc)
   },
 
   modifiedfile: async (event, {prep}) => {
     const doc = buildFile(event.path, event.stats, event.md5sum)
-    await prep.updateFileAsync(SIDE, doc)
+    await prep.updateFileAsync(event.uuid, SIDE, doc)
   },
 
   modifieddirectory: async (event, {prep}) => {
     const doc = buildDir(event.path, event.stats)
-    await prep.putFolderAsync(SIDE, doc)
+    await prep.putFolderAsync(event.uuid, SIDE, doc)
   },
 
   renamedfile: async (event, {pouch, prep}) => {
@@ -104,7 +104,7 @@ actions = {
     if (event.overwrite) {
       doc.overwrite = await fetchOldDoc(pouch, id(event.path))
     }
-    await prep.moveFileAsync(SIDE, doc, old)
+    await prep.moveFileAsync(event.uuid, SIDE, doc, old)
   },
 
   renameddirectory: async (event, {pouch, prep}) => {
@@ -123,7 +123,7 @@ actions = {
     if (event.overwrite) {
       doc.overwrite = event.overwrite
     }
-    await prep.moveFolderAsync(SIDE, doc, old)
+    await prep.moveFolderAsync(event.uuid, SIDE, doc, old)
   },
 
   deletedfile: async (event, {pouch, prep}) => {
@@ -135,7 +135,7 @@ actions = {
       // => we can ignore safely this event
       return
     }
-    await prep.trashFileAsync(SIDE, old)
+    await prep.trashFileAsync(event.uuid, SIDE, old)
   },
 
   deleteddirectory: async (event, {pouch, prep}) => {
@@ -147,7 +147,7 @@ actions = {
       // => we can ignore safely this event
       return
     }
-    await prep.trashFolderAsync(SIDE, old)
+    await prep.trashFolderAsync(event.uuid, SIDE, old)
   }
 }
 
