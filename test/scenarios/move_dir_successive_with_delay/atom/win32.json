@@ -1,0 +1,28 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "parent\\src\\dir"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "parent\\dst1\\dir"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "parent\\dst1\\dir"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "parent\\dst2\\dir"
+    }
+  ]
+]

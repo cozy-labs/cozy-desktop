@@ -1,0 +1,40 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src\\file"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst\\file"
+    },
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst\\file"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst\\file"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst\\file"
+    },
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst\\file"
+    }
+  ]
+]
