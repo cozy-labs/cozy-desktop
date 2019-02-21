@@ -1,0 +1,18 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "c",
+      "oldPath": "a"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "a",
+      "oldPath": "b"
+    }
+  ]
+]

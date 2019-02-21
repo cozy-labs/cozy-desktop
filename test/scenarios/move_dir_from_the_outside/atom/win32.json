@@ -1,0 +1,58 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst\\dir"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "dst\\dir\\empty-subdir",
+      "stats": {
+        "fileid": "0x000900000000D0B0",
+        "ino": 3,
+        "size": 0,
+        "atime": "2019-02-21T09:41:34.000Z",
+        "mtime": "2019-02-21T09:41:34.000Z",
+        "ctime": "2019-02-21T09:41:34.000Z",
+        "directory": true,
+        "symbolicLink": false
+      },
+      "kind": "directory"
+    },
+    {
+      "action": "scan",
+      "path": "dst\\dir\\subdir",
+      "stats": {
+        "fileid": "0x000900000000D0B2",
+        "ino": 4,
+        "size": 0,
+        "atime": "2019-02-21T09:41:34.000Z",
+        "mtime": "2019-02-21T09:41:34.000Z",
+        "ctime": "2019-02-21T09:41:34.000Z",
+        "directory": true,
+        "symbolicLink": false
+      },
+      "kind": "directory"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "dst\\dir\\subdir\\file",
+      "stats": {
+        "fileid": "0x001700000000E7C9",
+        "ino": 5,
+        "size": 8,
+        "atime": "2019-02-21T09:41:34.000Z",
+        "mtime": "2019-02-21T09:41:34.000Z",
+        "ctime": "2019-02-21T09:41:34.000Z",
+        "directory": false,
+        "symbolicLink": false
+      },
+      "kind": "file"
+    }
+  ]
+]

@@ -1,0 +1,137 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN\\exact-same-subdir"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "JOHN\\exact-same-subdir",
+      "stats": {
+        "fileid": "0x000900000000D065",
+        "ino": 2533274790449253,
+        "size": 0,
+        "atime": "2019-02-21T09:40:57.000Z",
+        "mtime": "2019-02-21T09:40:57.000Z",
+        "ctime": "2019-02-21T09:40:57.000Z",
+        "directory": true,
+        "symbolicLink": false
+      },
+      "kind": "directory"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "JOHN\\exact-same-subdir\\a.txt",
+      "stats": {
+        "fileid": "0x000900000000D066",
+        "ino": 2533274790449254,
+        "size": 0,
+        "atime": "2019-02-21T09:40:57.000Z",
+        "mtime": "2019-02-21T09:40:57.000Z",
+        "ctime": "2019-02-21T09:40:57.000Z",
+        "directory": false,
+        "symbolicLink": false
+      },
+      "kind": "file"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\a.txt"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "JOHN\\exact-same-subdir\\a.txt",
+      "stats": {
+        "fileid": "0x000900000000D066",
+        "ino": 2533274790449254,
+        "size": 8,
+        "atime": "2019-02-21T09:40:57.000Z",
+        "mtime": "2019-02-21T09:40:57.000Z",
+        "ctime": "2019-02-21T09:40:57.000Z",
+        "directory": false,
+        "symbolicLink": false
+      },
+      "kind": "file"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\a.txt"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\b.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\b.txt"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN\\other-subdir-JOHN-1"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\a.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\a.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\b.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\b.txt"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN\\other-subdir-john-2"
+    }
+  ]
+]
