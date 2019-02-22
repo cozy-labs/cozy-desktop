@@ -109,6 +109,10 @@ module.exports = class WindowManager {
     this.log.debug('create')
     const opts = this.windowOptions()
     opts.show = false
+    // https://github.com/AppImage/AppImageKit/wiki/Bundling-Electron-apps
+    if (process.platform === 'linux') {
+      opts.icon = path.join(__dirname, '../images/icon.png')
+    }
     this.win = new BrowserWindow(opts)
     this.win.on('unresponsive', () => { this.log.warn('Web page becomes unresponsive') })
     this.win.on('responsive', () => { this.log.warn('Web page becomes responsive again') })
