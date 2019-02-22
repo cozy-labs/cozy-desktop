@@ -263,7 +263,7 @@ const startSync = (force, ...args) => {
       sendErrorToMainWindow('Syncdir has been unlinked')
     })
     desktop.events.on('delete-file', removeFile)
-    desktop.synchronize(desktop.config.config.mode)
+    desktop.synchronize(desktop.config.fileConfig.mode)
       .then(() => sendErrorToMainWindow('stopped'))
       .catch((err) => {
         if (err.status === 402) {
