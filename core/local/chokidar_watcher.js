@@ -22,6 +22,7 @@ import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type { Checksumer } from './checksumer'
 import type { ChokidarEvent } from './chokidar_event'
+import type { InitialScan } from './chokidar_steps/initial_scan'
 import type { LocalEvent } from './event'
 import type { LocalChange } from './change'
 import type EventEmitter from 'events'
@@ -37,15 +38,6 @@ log.chokidar = log.child({
 const SIDE = 'local'
 
 const NB_OF_DELETABLE_ELEMENT = 3
-
-/*::
-type InitialScan = {
-  ids: string[],
-  emptyDirRetryCount: number,
-  flushed: boolean,
-  resolve: () => void
-}
-*/
 
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
