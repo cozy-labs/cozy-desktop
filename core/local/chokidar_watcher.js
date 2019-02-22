@@ -4,17 +4,16 @@ const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const chokidar = require('chokidar')
 const fse = require('fs-extra')
-const _ = require('lodash')
 const path = require('path')
 
 const analysis = require('./analysis')
 const checksumer = require('./checksumer')
 const chokidarEvent = require('./chokidar_event')
 const initialDiff = require('./chokidar_steps/initial_diff')
+const prepareEvents = require('./chokidar_steps/prepare_events')
 const LocalEventBuffer = require('./event_buffer')
 const logger = require('../logger')
 const metadata = require('../metadata')
-const {sameDate, fromDate} = require('../timestamp')
 const syncDir = require('./sync_dir')
 
 /*::
@@ -163,7 +162,7 @@ module.exports = class LocalWatcher {
     if (!events) return
 
     log.trace('Prepare events...')
-    const preparedEvents /*: LocalEvent[] */ = await this.prepareEvents(events, initialScan)
+    const preparedEvents /*: LocalEvent[] */ = await prepareEvents.step(events, this)
     log.trace('Done with events preparation.')
 
     const changes /*: LocalChange[] */ = analysis(preparedEvents, this.pendingChanges)
@@ -184,60 +183,6 @@ module.exports = class LocalWatcher {
       initialScan.resolve()
       this.initialScan = null
     }
-  }
-
-  async oldMetadata (e /*: ChokidarEvent */) /*: Promise<?Metadata> */ {
-    if (e.old) return e.old
-    try {
-      return await this.pouch.db.get(metadata.id(e.path))
-    } catch (err) {
-      if (err.status !== 404) log.error({path: e.path, err})
-    }
-    return null
-  }
-
-  async prepareEvents (events /*: ChokidarEvent[] */, initialScan /*: ?InitialScan */) /*: Promise<LocalEvent[]> */ {
-    return Promise.map(events, async (e /*: ChokidarEvent */) /*: Promise<?LocalEvent> */ => {
-      const abspath = path.join(this.syncPath, e.path)
-
-      const e2 /*: Object */ = _.merge({
-        old: await this.oldMetadata(e)
-      }, e)
-
-      if (e.type === 'add' || e.type === 'change') {
-        if (initialScan && e2.old &&
-          e2.path === e2.old.path &&
-          sameDate(fromDate(e2.old.updated_at), fromDate(e2.stats.mtime))) {
-          log.trace({path: e.path}, 'Do not compute checksum : mtime & path are unchanged')
-          e2.md5sum = e2.old.md5sum
-        } else {
-          try {
-            e2.md5sum = await this.checksum(e.path)
-            log.trace({path: e.path, md5sum: e2.md5sum}, 'Checksum complete')
-          } catch (err) {
-            // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
-            // Chokidar reports a change event when a file is replaced by a directory
-            if (err.code.match(/ENOENT/)) {
-              log.debug({path: e.path, ino: e.stats.ino}, 'Checksum failed: file does not exist anymore')
-              e2.wip = true
-            } else {
-              log.error({path: e.path, err}, 'Checksum failed')
-              return null
-            }
-          }
-        }
-      }
-
-      if (e.type === 'addDir') {
-        if (!await fse.exists(abspath)) {
-          log.debug({path: e.path, ino: e.stats.ino}, 'Dir does not exist anymore')
-          e2.wip = true
-        }
-      }
-
-      return e2
-    }, {concurrency: 50})
-    .filter((e /*: ?LocalEvent */) => e != null)
   }
 
   // @TODO inline this.onXXX in this function

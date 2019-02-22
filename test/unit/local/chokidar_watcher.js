@@ -129,23 +129,6 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('#oldMetadata()', () => {
-    it('resolves with the metadata whose id matches the event path', async function () {
-      const old = await builders.metadata().create()
-      const resultByEventType = {}
-      for (let type of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
-        resultByEventType[type] = await this.watcher.oldMetadata({type, path: old.path})
-      }
-      should(resultByEventType).deepEqual({
-        add: old,
-        addDir: old,
-        change: old,
-        unlink: old,
-        unlinkDir: old
-      })
-    })
-  })
-
   describe('onAddFile', () => {
     if (process.env.APPVEYOR) {
       it('is unstable on AppVeyor')
