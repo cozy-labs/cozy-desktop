@@ -10,6 +10,7 @@ const path = require('path')
 const analysis = require('./analysis')
 const checksumer = require('./checksumer')
 const chokidarEvent = require('./chokidar_event')
+const initialDiff = require('./chokidar_steps/initial_diff')
 const LocalEventBuffer = require('./event_buffer')
 const logger = require('../logger')
 const metadata = require('../metadata')
@@ -36,8 +37,6 @@ log.chokidar = log.child({
 })
 
 const SIDE = 'local'
-
-const NB_OF_DELETABLE_ELEMENT = 3
 
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
@@ -159,32 +158,9 @@ module.exports = class LocalWatcher {
     syncDir.ensureExistsSync(this)
     this.events.emit('local-start')
 
-    let events = rawEvents.filter((e) => e.path !== '') // @TODO handle root dir events
     const initialScan = this.initialScan
-    if (initialScan != null) {
-      const ids = initialScan.ids
-      events.filter((e) => e.type.startsWith('add'))
-            .forEach((e) => ids.push(metadata.id(e.path)))
-
-      const {offlineEvents, unappliedMoves, emptySyncDir} = await this.detectOfflineUnlinkEvents(initialScan)
-      events = offlineEvents.concat(events)
-
-      events = events.filter((e) => {
-        return unappliedMoves.indexOf(metadata.id(e.path)) === -1
-      })
-
-      if (emptySyncDir) {
-        // it is possible this is a temporary faillure (too late mounting)
-        // push back the events and wait until next flush.
-        this.buffer.unflush(rawEvents)
-        if (--initialScan.emptyDirRetryCount === 0) {
-          throw new Error('Syncdir is empty')
-        }
-        return initialScan.resolve()
-      }
-
-      log.debug({initialEvents: events})
-    }
+    const events = await initialDiff.step(rawEvents, this)
+    if (!events) return
 
     log.trace('Prepare events...')
     const preparedEvents /*: LocalEvent[] */ = await this.prepareEvents(events, initialScan)
@@ -208,32 +184,6 @@ module.exports = class LocalWatcher {
       initialScan.resolve()
       this.initialScan = null
     }
-  }
-
-  async detectOfflineUnlinkEvents (initialScan /*: InitialScan */) /*: Promise<{offlineEvents: Array<ChokidarEvent>, emptySyncDir: boolean}> */ {
-    // Try to detect removed files & folders
-    const events /*: Array<ChokidarEvent> */ = []
-    const docs = await this.pouch.byRecursivePathAsync('')
-    const inInitialScan = (doc) =>
-      initialScan.ids.indexOf(metadata.id(doc.path)) !== -1
-
-    // the Syncdir is empty error only occurs if there was some docs beforehand
-    let emptySyncDir = docs.length > NB_OF_DELETABLE_ELEMENT
-    let unappliedMoves = []
-
-    for (const doc of docs) {
-      if (inInitialScan(doc) || doc.trashed || doc.incompatibilities) {
-        emptySyncDir = false
-      } else if (doc.moveFrom) {
-        // unapplied move
-        unappliedMoves.push(metadata.id(doc.moveFrom.path))
-      } else {
-        log.chokidar.debug({path: doc.path}, 'pretend unlink or unlinkDir')
-        events.unshift(chokidarEvent.pretendUnlinkFromMetadata(doc))
-      }
-    }
-
-    return {offlineEvents: events, unappliedMoves, emptySyncDir}
   }
 
   async oldMetadata (e /*: ChokidarEvent */) /*: Promise<?Metadata> */ {
