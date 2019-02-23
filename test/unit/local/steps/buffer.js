@@ -149,10 +149,10 @@ describe('core/local/steps/Buffer', function () {
 
     /** STEPS IMPLEMENTATION
      *
-     * Steps are defined a simple words (with corresponding implementation
+     * Steps are defined as simple words (with corresponding implementation
      * functions).
      *
-     * Those basically mean calling the right method on the right buffer
+     * This basically means calling the right method on the right buffer
      * given the current state of the scenario:
      */
 
@@ -215,7 +215,13 @@ describe('core/local/steps/Buffer', function () {
       )
     )
 
-    const asyncTransform = async batch => transform(batch)
+    const asyncTransform = async batch => {
+      // According to manual testing, random 1-5ms delay easily breaks tests
+      // in case Buffer#asyncMap() doesn't properly await asyncTransform()
+      // while keeping the test suite duration < 2x the time without delay.
+      await Promise.delay(_.random(5))
+      return transform(batch)
+    }
 
     /** OPERATIONS */
 
