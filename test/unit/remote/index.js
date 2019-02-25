@@ -217,9 +217,8 @@ describe('remote.Remote', function () {
         }
       }
       await this.remote.addFileAsync(doc)
-      should.exist(doc.remote._id)
-      should.exist(doc.remote._rev)
-      should.exist(doc._deleted)
+      should(doc._deleted).be.true()
+      should(doc).not.have.property('remote')
     })
   })
 
@@ -332,9 +331,8 @@ describe('remote.Remote', function () {
           }
         }
         await this.remote.overwriteFileAsync(doc)
-        should.exist(doc.remote._id)
-        should.exist(doc.remote._rev)
-        should.exist(doc._deleted)
+        should(doc._deleted).be.true()
+        should(doc).not.have.property('remote')
       })
     })
   }

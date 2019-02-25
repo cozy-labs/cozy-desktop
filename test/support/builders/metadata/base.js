@@ -37,12 +37,10 @@ module.exports = class BaseMetadataBuilder {
         _id: metadata.id('foo'),
         docType: 'folder', // To make flow happy (overridden by subclasses)
         path: 'foo',
-        remote: {
-          _id: dbBuilders.id(),
-          _rev: dbBuilders.rev()
-        },
         tags: [],
         sides: {},
+        // $FlowFixMe: metadata's buildFile and buildDir allow it while types don't
+        remote: undefined,
         updated_at: timestamp.current().toISOString()
       }
     }
@@ -57,6 +55,7 @@ module.exports = class BaseMetadataBuilder {
 
   moveFrom (was /*: Metadata */) /*: this */ {
     this.doc.moveFrom = _.defaultsDeep({ moveTo: this.doc._id }, was)
+    if (this.doc.remote == null) this.doc.remote = was.remote
     this.noRev()
     return this
   }
@@ -166,6 +165,7 @@ module.exports = class BaseMetadataBuilder {
 
   upToDate () /*: this */ {
     this.doc.sides = {local: 2, remote: 2}
+    if (this.doc.remote == null) this.remoteId(dbBuilders.id())
     return this
   }
 
