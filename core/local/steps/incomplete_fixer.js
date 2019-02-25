@@ -38,6 +38,14 @@ function wasRenamedSuccessively (previousIncomplete /*: IncompleteItem */, nextE
   )
 }
 
+function itemDestinationWasDeleted (item /*: IncompleteItem */, event /*: AtomWatcherEvent */) /*: boolean %checks */ {
+  return !!(
+    event.action === 'deleted' &&
+    item.event.oldPath &&
+    (item.event.path + path.sep).startsWith(event.path + path.sep)
+  )
+}
+
 async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: AtomWatcherEvent */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Promise<AtomWatcherEvent> */ {
   // The || '' is just a trick to please flow
   const oldPath /*: string */ = event.oldPath || ''
@@ -56,6 +64,18 @@ async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: Ato
     kind,
     stats,
     md5sum
+  }
+}
+
+function buildDeletedFromRenamed (item /*: IncompleteItem */, event /*: AtomWatcherEvent */) /*: AtomWatcherEvent */ {
+  const { oldPath, kind } = item.event
+  return {
+    action: event.action,
+    // $FlowFixMe: renamed events always have an oldPath
+    path: oldPath,
+    // $FlowFixMe: renamed events always have an oldPath
+    _id: metadata.id(oldPath),
+    kind
   }
 }
 
@@ -83,7 +103,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
 
     // Let's see if we can match an incomplete event with this renamed event
     for (const event of batch) {
-      if (incompletes.length === 0 || event.action !== 'renamed') {
+      if (incompletes.length === 0 || !['renamed', 'deleted'].includes(event.action)) {
         continue
       }
 
@@ -102,6 +122,9 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
           if (wasRenamedSuccessively(item, event)) {
             // We have a match, try to rebuild the incomplete event
             batch.push(await rebuildIncompleteEvent(item, event, opts))
+          } else if (itemDestinationWasDeleted(item, event)) {
+            // We have a match, try to replace the incomplete event
+            batch.push(buildDeletedFromRenamed(item, event))
           } else {
             continue
           }
