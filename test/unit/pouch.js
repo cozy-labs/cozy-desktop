@@ -322,8 +322,8 @@ describe('Pouch', function () {
 
       beforeEach(async function () {
         const builders = new Builders({pouch: this.pouch})
-        dir = await builders.metadir().path('dir-with-remote-id').create()
-        file = await builders.metafile().path('file-with-remote-id').create()
+        dir = await builders.metadir().path('dir-with-remote-id').upToDate().create()
+        file = await builders.metafile().path('file-with-remote-id').upToDate().create()
       })
 
       it('resolves with docs matching the given remoteIds, in the same order', async function () {

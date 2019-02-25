@@ -784,12 +784,12 @@ describe('Merge', function () {
         await builders
           .metadir()
           .path('alfred')
-          .sides({ [this.side]: 1 })
+          .sides({ local: 1 })
           .create()
         Alfred = await builders
           .metadir()
           .path('Alfred')
-          .sides({ [otherSide(this.side)]: 1 })
+          .sides({ remote: 1 })
           .remoteId(dbBuilders.id())
           .build()
       })
@@ -797,13 +797,13 @@ describe('Merge', function () {
       onPlatforms(['win32', 'darwin'], () => {
         it('resolves the conflict', async function () {
           const sideEffects = await mergeSideEffects(this, () =>
-            this.merge.putFolderAsync(this.side, _.cloneDeep(Alfred))
+            this.merge.putFolderAsync('local', _.cloneDeep(Alfred))
           )
 
           should(sideEffects).deepEqual({
             savedDocs: [],
             resolvedConflicts: [
-              [this.side, _.pick(Alfred, ['path', 'remote'])]
+              ['local', _.pick(Alfred, ['path', 'remote'])]
             ]
           })
         })
@@ -812,14 +812,14 @@ describe('Merge', function () {
       onPlatform('linux', () => {
         it('saves the doc as a new doc', async function () {
           const sideEffects = await mergeSideEffects(this, () =>
-            this.merge.putFolderAsync(this.side, _.cloneDeep(Alfred))
+            this.merge.putFolderAsync('local', _.cloneDeep(Alfred))
           )
 
           should(sideEffects).deepEqual({
             savedDocs: [
               _.defaultsDeep(
                 {
-                  sides: { [this.side]: 1 }
+                  sides: { local: 1 }
                 },
                 Alfred
               )
@@ -914,7 +914,7 @@ describe('Merge', function () {
               sides: { [this.side]: 1 },
               moveFrom: movedSrc
             },
-            _.pick(was, ['size', 'ino']),
+            _.pick(was, ['size', 'ino', 'remote']),
             doc
           )
         ],
@@ -1081,7 +1081,6 @@ describe('Merge', function () {
         .path('SRC/FILE2')
         .moveFrom(orig)
         .sides({ [this.side]: 3, [otherSide(this.side)]: 2 })
-        .remoteId(dbBuilders.id())
         .create()
       const doc = await builders
         .metafile()
@@ -1116,6 +1115,7 @@ describe('Merge', function () {
               sides: { [this.side]: 1 },
               moveFrom: movedSrc
             },
+            _.pick(orig, ['remote']),
             doc
             // TODO: Compare _revs
           )
@@ -1170,6 +1170,7 @@ describe('Merge', function () {
               sides: { local: 1 },
               moveFrom: movedSrc
             },
+            _.pick(orig, ['remote']),
             doc
             // TODO: Compare _revs
           )
@@ -1316,6 +1317,7 @@ describe('Merge', function () {
                 sides: { [this.side]: 1 },
                 moveFrom: movedSrc
               },
+              _.pick(was, ['remote']),
               doc
               // TODO: Compare _revs
             )
@@ -1365,7 +1367,7 @@ describe('Merge', function () {
               sides: { [this.side]: 1 },
               moveFrom: movedSrc
             },
-            _.pick(was, ['ino']),
+            _.pick(was, ['ino', 'remote']),
             doc
             // TODO: Compare _revs
           )
@@ -1692,6 +1694,7 @@ describe('Merge', function () {
         .metadir()
         .path('src')
         .sides({ [this.side]: 2, [otherSide(this.side)]: 2 })
+        .remoteId(dbBuilders.id())
         .create()
       const srcFile = await builders
         .metafile()
@@ -1699,12 +1702,12 @@ describe('Merge', function () {
         .sides({ [this.side]: 2, [otherSide(this.side)]: 2 })
         .remoteId(dbBuilders.id())
         .create()
-      const oldDst = builders
+      const oldDst = await builders
         .metadir()
         .path('dst')
         .sides({ [this.side]: 2, [otherSide(this.side)]: 2 })
         .remoteId(dbBuilders.id())
-        .build()
+        .create()
       const dstFile = await builders
         .metafile()
         .path('dst/file')
@@ -1745,6 +1748,7 @@ describe('Merge', function () {
               moveFrom: movedSrcDir,
               overwrite: oldDst
             },
+            _.pick(srcDir, ['remote']),
             _.omit(dstDir, ['_rev']) // TODO: Compare _revs
           ),
           _.omit(movedSrcFile, ['_rev']), // TODO: Compare _revs
@@ -2198,6 +2202,7 @@ describe('Merge', function () {
         const was = await builders
           .metadata()
           .sides({ [this.side]: 2, [otherSide(this.side)]: 2 })
+          .remoteId(dbBuilders.id())
           .create()
         const doc = builders
           .metadata(was)
