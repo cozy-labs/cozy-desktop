@@ -456,7 +456,11 @@ function buildDir (fpath /*: string */, stats /*: Stats */, remote /*: ?Metadata
     remote
   }
   if (stats.fileid) { doc.fileid = stats.fileid }
-  return doc
+
+  return _.chain(doc)
+    .cloneDeep()
+    .omitBy(_.isUndefined)
+    .value()
 }
 
 const EXECUTABLE_MASK = 1 << 6
@@ -478,7 +482,11 @@ function buildFile (filePath /*: string */, stats /*: Stats */, md5sum /*: strin
   }
   if (stats.mode && (+stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
   if (stats.fileid) { doc.fileid = stats.fileid }
-  return doc
+
+  return _.chain(doc)
+    .cloneDeep()
+    .omitBy(_.isUndefined)
+    .value()
 }
 
 const CONFLICT_PATTERN = '-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z'
