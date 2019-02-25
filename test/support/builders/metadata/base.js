@@ -200,7 +200,10 @@ module.exports = class BaseMetadataBuilder {
     // prevent environment related failures.
     metadata.assignPlatformIncompatibilities(this.doc, '')
 
-    return _.cloneDeep(this.doc)
+    return _.chain(this.doc)
+      .cloneDeep()
+      .omitBy(_.isUndefined)
+      .value()
   }
 
   async create () /*: Promise<Metadata> */ {
