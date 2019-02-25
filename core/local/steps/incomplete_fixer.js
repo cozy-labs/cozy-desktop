@@ -27,6 +27,13 @@ module.exports = {
   loop
 }
 
+function wasRenamedSuccessively (previousIncomplete /*: IncompleteItem */, nextEvent /*: AtomWatcherEvent */) /*: boolean %checks */ {
+  return (
+    nextEvent.oldPath != null &&
+    (previousIncomplete.event.path + path.sep).startsWith(nextEvent.oldPath + path.sep)
+  )
+}
+
 async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: AtomWatcherEvent */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Promise<AtomWatcherEvent> */ {
   // The || '' is just a trick to please flow
   const oldPath /*: string */ = event.oldPath || ''
@@ -86,16 +93,18 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
           continue
         }
 
-        if (event.oldPath && item.event.path.startsWith(event.oldPath + path.sep)) {
-          // We have a match, try to rebuild the incomplete event
-          try {
-            const rebuilt = await rebuildIncompleteEvent(item, event, opts)
-            batch.push(rebuilt)
-          } catch (err) {
-            // If we have an error, there is probably not much that we can do
+        try {
+          if (wasRenamedSuccessively(item, event)) {
+            // We have a match, try to rebuild the incomplete event
+            batch.push(await rebuildIncompleteEvent(item, event, opts))
+          } else {
+            continue
           }
+
           incompletes.splice(i, 1)
           break
+        } catch (err) {
+          // If we have an error, there is probably not much that we can do
         }
       }
     }
