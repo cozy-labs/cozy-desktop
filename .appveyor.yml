@@ -5,7 +5,6 @@ clone_depth: 10
 environment:
   MOCHA_TIMEOUT: "60000"
   NO_BREAKPOINTS: "1"
-  COZY_FS_WATCHER: "chokidar"
   matrix:
       - BUILD_JOB: "short_tests"
       - BUILD_JOB: "scenarios_build"
