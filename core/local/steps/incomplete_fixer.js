@@ -2,8 +2,8 @@
 
 const path = require('path')
 
-const { id } = require('../../metadata')
 const stater = require('../stater')
+const metadata = require('../../metadata')
 
 // Drop incomplete events after this delay (in milliseconds).
 // TODO tweak the value (the initial value was chosen because it looks like a
@@ -41,7 +41,7 @@ async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: Ato
   return {
     action: item.event.action,
     path: p,
-    _id: id(p),
+    _id: metadata.id(p),
     kind,
     stats,
     md5sum
