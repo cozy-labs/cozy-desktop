@@ -4,6 +4,7 @@
 const should = require('should')
 const sinon = require('sinon')
 
+const metadata = require('../../../../core/metadata')
 const Buffer = require('../../../../core/local/steps/buffer')
 const incompleteFixer = require('../../../../core/local/steps/incomplete_fixer')
 
@@ -53,6 +54,47 @@ describe('core/local/steps/incomplete_fixer', () => {
           stats: renamedEvent.stats
         }
       ])
+    })
+  })
+
+  describe('.step()', () => {
+    describe('file renamed then deleted', () => {
+      it('is deleted at its original path', async () => {
+        const src = 'src'
+        const dst = 'dst'
+        const renamedEvent = builders.event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(src)
+          .path(dst)
+          .incomplete()
+          .build()
+        const deletedEvent = builders.event()
+          .kind(renamedEvent.kind)
+          .action('deleted')
+          .path(dst)
+          .build()
+        const incompletes = []
+        const outputBatches = []
+
+        for (const inputBatch of [[renamedEvent], [deletedEvent]]) {
+          const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
+          outputBatches.push(outputBatch)
+        }
+
+        should(outputBatches).deepEqual([
+          [],
+          [
+            deletedEvent, // OPTIMIZE: Drop useless event
+            {
+              _id: metadata.id(src),
+              action: 'deleted',
+              kind: renamedEvent.kind,
+              path: src
+            }
+          ]
+        ])
+      })
     })
   })
 })
