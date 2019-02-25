@@ -18,7 +18,12 @@ const pouchHelpers = require('../../support/helpers/pouch')
 const { TRAVIS } = process.env
 const { platform } = process
 
-describe('LocalWatcher Tests', function () {
+describe('ChokidarWatcher', () => {
+  if (platform !== 'darwin') {
+    it.skip('is supports macOS only', () => {})
+    return
+  }
+
   let builders
 
   before('instanciate config', configHelpers.createConfig)
