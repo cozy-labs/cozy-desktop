@@ -4,6 +4,10 @@ const path = require('path')
 
 const stater = require('../stater')
 const metadata = require('../../metadata')
+const logger = require('../../logger')
+const log = logger({
+  component: 'incompleteFixer'
+})
 
 // Drop incomplete events after this delay (in milliseconds).
 // TODO tweak the value (the initial value was chosen because it looks like a
@@ -70,6 +74,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
     const batch = []
     for (const event of events) {
       if (event.incomplete) {
+        log.debug({path: event.path, action: event.action}, 'incomplete')
         incompletes.push({ event, timestamp: Date.now() })
         continue
       }
@@ -104,6 +109,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
           incompletes.splice(i, 1)
           break
         } catch (err) {
+          log.error({err}, 'Could not rebuild incomplete event')
           // If we have an error, there is probably not much that we can do
         }
       }
