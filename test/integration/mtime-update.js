@@ -6,6 +6,8 @@ const fse = require('fs-extra')
 const path = require('path')
 const _ = require('lodash')
 
+const config = require('../../core/config')
+
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -54,11 +56,24 @@ describe('Update only a file mtime', () => {
     await fse.appendFile(localPath, ' appended')
     const stats = await fse.stat(localPath)
 
-    await helpers.local.simulateEvents([{
-      type: 'change',
-      path: 'file',
-      stats: stats
-    }])
+    if (config.watcherType() === 'chokidar') {
+      await helpers.local.simulateEvents([{
+        type: 'change',
+        path: 'file',
+        stats
+      }])
+    } else {
+      await helpers.local.simulateAtomEvents([
+        [
+          {
+            action: 'modified',
+            kind: 'file',
+            path: 'file',
+            stats
+          }
+        ]
+      ])
+    }
 
     await helpers.syncAll()
 
