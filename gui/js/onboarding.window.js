@@ -112,7 +112,9 @@ module.exports = class OnboardingWM extends WindowManager {
             }, 20)
           })
           this.win.loadURL(reg.client.redirectURI)
-          autoLaunch.setEnabled(true)
+          if (!process.env.DEBUG) {
+            autoLaunch.setEnabled(true)
+          }
         },
         (err) => {
           log.error(err)
