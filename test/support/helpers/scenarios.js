@@ -98,7 +98,9 @@ module.exports.loadAtomCaptures = scenario => {
   const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'atom', '*.json*'))
   const disabledEventsFile = (name) => {
     if (process.platform === 'win32' && name.indexOf('win32') === -1) {
-      return 'darwin/linux test'
+      return 'linux test'
+    } else if (process.platform === 'linux' && name.indexOf('win32') >= 0) {
+      return 'win32 test'
     } else if (name.endsWith(disabledExtension)) {
       return 'disabled case'
     }
