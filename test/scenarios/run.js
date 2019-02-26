@@ -160,7 +160,7 @@ async function runLocalAtom (scenario, atomCapture, helpers) {
     if (process.platform === 'win32' && atomCapture.name.match(/win32/)) {
       relpathFix = (relpath) => relpath.replace(/\//g, '\\')
     }
-    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath, relpathFix)
+    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath, relpathFix, true)
   }
 
   await runActions(scenario, helpers.local.syncDir.abspath, {skipWait: true})
