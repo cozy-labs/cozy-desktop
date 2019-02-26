@@ -46,7 +46,7 @@ class TestHelpers {
 
   constructor ({ config, pouch } /*: TestHelpersOptions */) {
     const merge = new Merge(pouch)
-    const ignore = new Ignore([])
+    const ignore = (new Ignore([])).addDefaultRules()
     const prep = new Prep(merge, ignore, config)
     const events = new SyncState()
     const localHelpers = new LocalTestHelpers({config, prep, pouch, events, ignore})
