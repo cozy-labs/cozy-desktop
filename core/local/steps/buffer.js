@@ -23,6 +23,8 @@ module.exports = class Buffer {
   }
 
   push (batch /*: Batch */) /*: void */ {
+    if (batch.length === 0) return
+
     if (this._resolve) {
       this._resolve(batch)
       this._resolve = null

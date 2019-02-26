@@ -144,9 +144,7 @@ function sendReadyBatches (waiting /*: WaitingItem[] */, out /*: Buffer */) {
     }
     const item = waiting.shift()
     clearTimeout(item.timeout)
-    if (item.batch.length > 0) {
-      out.push(item.batch)
-    }
+    out.push(item.batch)
   }
 }
 
