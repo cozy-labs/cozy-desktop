@@ -105,6 +105,13 @@ function match (path /*: string */, isFolder /*: boolean */, pattern /*: IgnoreP
   if (parent === '.') {
     return false
   }
+  // On Windows, the various `path.*()` functions don't play well with
+  // relative paths where the top-level file or directory name includes a
+  // forbidden `:` character and looks like a drive letter, even without a
+  // separator. Better make sure we don't end up in an infinite loop.
+  if (parent === path) {
+    return false
+  }
   return match(parent, true, pattern)
 }
 

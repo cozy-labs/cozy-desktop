@@ -8,6 +8,7 @@ const sinon = require('sinon')
 const { Ignore, loadSync } = require('../../core/ignore')
 const metadata = require('../../core/metadata')
 
+const { onPlatform } = require('../support/helpers/platform')
 const TmpDir = require('../support/helpers/TmpDir')
 
 describe('Ignore', function () {
@@ -263,6 +264,22 @@ describe('Ignore', function () {
       })
       const ignore = new Ignore(['Foo'])
       ignore.isIgnored({ relativePath: 'foo', isFolder: false }).should.be.true()
+    })
+  })
+
+  describe('#isIgnored()', () => {
+    onPlatform('win32', () => {
+      context('when at least one rule to match against', () => {
+        const ignore = new Ignore(['at least one rule'])
+
+        for (const relativePath of ['c:', 'd:whatever', 'e:\\whatever', 'f:what\\ever']) {
+          context(`with relative path ${JSON.stringify(relativePath)}`, () => {
+            it('does not confuse the path start with a Windows drive letter', () => {
+              ignore.isIgnored({relativePath}).should.be.false()
+            })
+          })
+        }
+      })
     })
   })
 })
