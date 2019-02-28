@@ -33,6 +33,7 @@ const DELAY = 200
 const STEP_NAME = 'initialDiff'
 
 module.exports = {
+  STEP_NAME,
   loop,
   initialState
 }

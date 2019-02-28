@@ -74,17 +74,17 @@ const producer = opts => {
   }
 }
 
-const stepsInitialState = opts =>
+const stepsInitialState = (state /*: Object */, opts /*: * */) /*: Promise<Object> */ =>
   Promise.reduce(
-    async (state, step) =>
-      step.initialState
-        ? Object.assign(state, await step.initialState(opts))
-        : state,
     steps,
-    {}
+    async (prevState, step) =>
+      step.initialState
+        ? _.assign(prevState, await step.initialState(opts))
+        : prevState,
+    state
   )
 
-module.exports = class AtomWatcher {
+class AtomWatcher {
   /*::
   pouch: Pouch
   events: EventEmitter
@@ -126,7 +126,7 @@ module.exports = class AtomWatcher {
       this._runningReject = reject
     })
     this.events.emit('local-start')
-    this.state = await stepsInitialState(this)
+    await stepsInitialState(this.state, this)
     this.producer.start()
     const scanDone = new Promise((resolve) => {
       this.events.on('initial-scan-done', resolve)
@@ -150,4 +150,9 @@ module.exports = class AtomWatcher {
     }
     this.producer.stop()
   }
+}
+
+module.exports = {
+  AtomWatcher,
+  stepsInitialState
 }
