@@ -8,6 +8,11 @@ import type Pouch from '../../pouch'
 import type { AtomWatcherEvent, Batch, EventKind } from './event'
 import type { Metadata } from '../../metadata'
 
+type InitialDiffState = {
+  waiting: WaitingItem[],
+  byInode: Map<number|string, WatchedPath>,
+}
+
 type WatchedPath = {
   path: string,
   kind: EventKind,
@@ -25,35 +30,31 @@ type WaitingItem = {
 // TODO tweak the value (the initial value was chosen because it looks like a
 //      good value, it is not something that was computed)
 const DELAY = 200
+const STEP_NAME = 'initialDiff'
 
 module.exports = {
-  loop
+  loop,
+  initialState
 }
 
 // Some files and directories can have been deleted while cozy-desktop was
 // stopped. So, at the end of the initial scan, we have to do a diff between
 // what was in pouchdb and the events from the local watcher to find what was
 // deleted.
-function loop (buffer /*: Buffer */, opts /*: { pouch: Pouch } */) /*: Buffer */ {
+function loop (buffer /*: Buffer */, opts /*: { pouch: Pouch, state: Object } */) /*: Buffer */ {
   const out = new Buffer()
-  initialDiff(buffer, out, opts.pouch)
+  initialDiff(buffer, out, opts.pouch, opts.state)
   return out
 }
 
-async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: Pouch */) /*: Promise<void> */ {
+async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<{ [typeof STEP_NAME]: InitialDiffState }> */ {
   const waiting /*: WaitingItem[] */ = []
-
-  // XXX we wait to receive the first batch of events before initializing this
-  // component, as pouchdb may not be initialized when initialDiff is created
-  // (its views are added later, but before the local watcher is started, thus
-  // before the first batch of events)
-  let events = await buffer.pop()
 
   // Using inode/fileId is more robust that using path or id for detecting
   // which files/folders have been deleted, as it is stable even if the
   // file/folder has been moved or renamed
   const byInode /*: Map<number|string, WatchedPath> */ = new Map()
-  const docs /*: Metadata[] */ = await pouch.byRecursivePathAsync('')
+  const docs /*: Metadata[] */ = await opts.pouch.byRecursivePathAsync('')
   for (const doc of docs) {
     if (doc.ino != null) {
       // Process only files/dirs that were created locally or synchronized
@@ -62,7 +63,16 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
     }
   }
 
+  return {
+    [STEP_NAME]: { waiting, byInode }
+  }
+}
+
+async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: Pouch */, state /*: Object */) /*: Promise<void> */ {
   while (true) {
+    const events = await buffer.pop()
+    const { [STEP_NAME]: { waiting, byInode } } = state
+
     let nbCandidates = 0
 
     debounce(waiting, events)
@@ -132,8 +142,6 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
 
     // Look if some batches can be sent without waiting
     sendReadyBatches(waiting, out)
-
-    events = await buffer.pop()
   }
 }
 

@@ -26,10 +26,12 @@ describe('local/steps/initial_diff.loop()', () => {
     await builders.metadir().path('foo').ino(1).create()
     await builders.metafile().path('fizz').ino(2).create()
 
+    const state = await initialDiff.initialState({ pouch: this.pouch })
+
     const bar = builders.event().action('scan').kind('directory').path('bar').ino(1).build()
     const buzz = builders.event().action('scan').kind('file').path('buzz').ino(2).build()
     buffer.push([bar, buzz])
-    buffer = initialDiff.loop(buffer, { pouch: this.pouch })
+    buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
 
     const events = await buffer.pop()
     should(events).deepEqual([
@@ -43,6 +45,8 @@ describe('local/steps/initial_diff.loop()', () => {
     await builders.metafile().path('foo/baz').ino(2).create()
     await builders.metadir().path('bar').ino(3).create()
 
+    const state = await initialDiff.initialState({ pouch: this.pouch })
+
     const foo = builders.event().action('scan').kind('directory').path('foo').ino(1).build()
     const barbaz = builders.event().action('created').kind('file').path('bar/baz').ino(2).build()
     buffer.push([foo, barbaz])
@@ -51,7 +55,7 @@ describe('local/steps/initial_diff.loop()', () => {
       bar,
       builders.event().action('scan').kind('file').path('bar/baz').ino(2).build()
     ])
-    buffer = initialDiff.loop(buffer, { pouch: this.pouch })
+    buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
 
     const events = [].concat(
       await buffer.pop(),
@@ -70,10 +74,12 @@ describe('local/steps/initial_diff.loop()', () => {
     await builders.metadir().path('fizz').ino(3).create()
     await builders.metafile().path('buzz').ino(4).create()
 
+    const state = await initialDiff.initialState({ pouch: this.pouch })
+
     const foo = builders.event().action('scan').kind('file').path('foo').ino(2).build()
     const buzz = builders.event().action('scan').kind('directory').path('buzz').ino(3).build()
     buffer.push([foo, buzz])
-    buffer = initialDiff.loop(buffer, { pouch: this.pouch })
+    buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
 
     const events = await buffer.pop()
     should(events).deepEqual([
@@ -86,9 +92,11 @@ describe('local/steps/initial_diff.loop()', () => {
     await builders.metadir().path('foo').ino(1).create()
     await builders.metafile().path('bar').ino(2).create()
 
+    const state = await initialDiff.initialState({ pouch: this.pouch })
+
     const initial = builders.event().action('initial-scan-done').build()
     buffer.push([initial])
-    buffer = initialDiff.loop(buffer, { pouch: this.pouch })
+    buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
 
     const events = await buffer.pop()
     should(events).deepEqual([
