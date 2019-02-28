@@ -74,7 +74,7 @@ const producer = opts => {
   }
 }
 
-const stepsInitialState = opts =>
+const stepsInitialState = (opts /*: * */) =>
   Promise.reduce(
     async (state, step) =>
       step.initialState
@@ -153,5 +153,6 @@ class AtomWatcher {
 }
 
 module.exports = {
-  AtomWatcher
+  AtomWatcher,
+  stepsInitialState
 }
