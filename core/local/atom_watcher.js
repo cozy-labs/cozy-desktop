@@ -84,7 +84,7 @@ const stepsInitialState = opts =>
     {}
   )
 
-module.exports = class AtomWatcher {
+class AtomWatcher {
   /*::
   pouch: Pouch
   events: EventEmitter
@@ -150,4 +150,8 @@ module.exports = class AtomWatcher {
     }
     this.producer.stop()
   }
+}
+
+module.exports = {
+  AtomWatcher
 }

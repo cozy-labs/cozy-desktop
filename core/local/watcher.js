@@ -1,6 +1,6 @@
 /* @flow */
 
-const AtomWatcher = require('./atom_watcher')
+const { AtomWatcher } = require('./atom_watcher')
 const ChokidarWatcher = require('./chokidar_watcher')
 
 /*::
