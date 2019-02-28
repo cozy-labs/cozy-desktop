@@ -130,8 +130,8 @@ module.exports.loadRemoteChangesFiles = (scenario) => {
   })
 }
 
-const getInode = async ({path, fakeIno, trashed, trueino}) => {
-  if (trashed || !trueino) {
+const getInode = async ({path, fakeIno, trashed, useRealInodes}) => {
+  if (trashed || !useRealInodes) {
     return fakeIno
   } else {
     const stats = await fse.stat(path)
@@ -139,7 +139,7 @@ const getInode = async ({path, fakeIno, trashed, trueino}) => {
   }
 }
 
-module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
+module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes) => {
   debug('[init]')
   const remoteDocsToTrash = []
   for (let {path: relpath, ino: fakeIno, trashed, content} of scenario.init) {
@@ -161,7 +161,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
         await fse.ensureDir(abspath(localPath))
       }
 
-      const ino = await getInode({path: abspath(localPath), fakeIno, trashed, trueino})
+      const ino = await getInode({path: abspath(localPath), fakeIno, trashed, useRealInodes})
       const doc = {
         _id: metadata.id(localPath),
         docType: 'folder',
@@ -200,7 +200,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
         await fse.outputFile(abspath(localPath), content)
       }
 
-      const ino = await getInode({path: abspath(localPath), fakeIno, trashed, trueino})
+      const ino = await getInode({path: abspath(localPath), fakeIno, trashed, useRealInodes})
       const doc = {
         _id: metadata.id(localPath),
         md5sum,
