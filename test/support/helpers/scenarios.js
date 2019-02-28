@@ -130,6 +130,15 @@ module.exports.loadRemoteChangesFiles = (scenario) => {
   })
 }
 
+const getInode = async ({path, ino, trashed, trueino}) => {
+  if (trashed || !trueino) {
+    return ino
+  } else {
+    const stats = await fse.stat(path)
+    return stats.ino
+  }
+}
+
 module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
   debug('[init]')
   const remoteDocsToTrash = []
@@ -150,9 +159,9 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
       if (!trashed) {
         debug(`- create local dir: ${localPath}`)
         await fse.ensureDir(abspath(localPath))
-        if (trueino) ino = (await fse.stat(abspath(localPath))).ino
       }
 
+      ino = await getInode({path: abspath(localPath), ino, trashed, trueino})
       const doc = {
         _id: metadata.id(localPath),
         docType: 'folder',
@@ -189,9 +198,9 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, trueino) => {
       if (!trashed) {
         debug(`- create local file: ${localPath}`)
         await fse.outputFile(abspath(localPath), content)
-        if (trueino) ino = (await fse.stat(abspath(localPath))).ino
       }
 
+      ino = await getInode({path: abspath(localPath), ino, trashed, trueino})
       const doc = {
         _id: metadata.id(localPath),
         md5sum,
