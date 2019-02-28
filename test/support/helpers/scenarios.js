@@ -6,6 +6,7 @@ const path = require('path')
 const crypto = require('crypto')
 const mergedirs = require('merge-dirs').default
 
+const stater = require('../../../core/local/stater')
 const metadata = require('../../../core/metadata')
 
 const { cozy } = require('./cozy')
@@ -130,12 +131,11 @@ module.exports.loadRemoteChangesFiles = (scenario) => {
   })
 }
 
-const getInode = async ({path, fakeIno, trashed, useRealInodes}) => {
+const getInoAndFileId = async ({path, fakeIno, trashed, useRealInodes}) => {
   if (trashed || !useRealInodes) {
-    return fakeIno
+    return {ino: fakeIno}
   } else {
-    const stats = await fse.stat(path)
-    return stats.ino
+    return stater.stat(path)
   }
 }
 
@@ -161,16 +161,16 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
         await fse.ensureDir(abspath(localPath))
       }
 
-      const ino = await getInode({path: abspath(localPath), fakeIno, trashed, useRealInodes})
+      const stats = await getInoAndFileId({path: abspath(localPath), fakeIno, trashed, useRealInodes})
       const doc = {
         _id: metadata.id(localPath),
         docType: 'folder',
         updated_at: lastModifiedDate,
         path: localPath,
-        ino,
         tags: [],
         sides: {local: 1, remote: 1}
       }
+      stater.assignInoAndFileId(doc, stats)
 
       if (!isOutside) {
         debug(`- create${trashed ? ' and trash' : ''} remote dir: ${remotePath}`)
@@ -200,7 +200,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
         await fse.outputFile(abspath(localPath), content)
       }
 
-      const ino = await getInode({path: abspath(localPath), fakeIno, trashed, useRealInodes})
+      const stats = await getInoAndFileId({path: abspath(localPath), fakeIno, trashed, useRealInodes})
       const doc = {
         _id: metadata.id(localPath),
         md5sum,
@@ -210,11 +210,11 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
         updated_at: lastModifiedDate,
         mime: 'text/plain',
         path: localPath,
-        ino,
         size: content.length,
         tags: [],
         sides: {local: 1, remote: 1}
       }
+      stater.assignInoAndFileId(doc, stats)
       if (!isOutside) {
         debug(`- create${trashed ? ' and trash' : ''} remote file: ${remotePath}`)
         const remoteFile = await cozy.files.create(content, {
