@@ -11,6 +11,7 @@ const conflictHelpers = require('./conflict')
 const { ContextDir } = require('./context_dir')
 
 const Local = require('../../../core/local')
+const atomWatcher = require('../../../core/local/atom_watcher')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const dispatch = require('../../../core/local/steps/dispatch')
 
@@ -142,12 +143,19 @@ class LocalTestHelpers {
     }
   }
 
-  simulateAtomEvents (batches /*: Batch[] */) {
+  async simulateAtomEvents (batches /*: Batch[] */) {
+    const { watcher } = this.side
+    if (!(watcher instanceof atomWatcher.AtomWatcher)) {
+      throw new Error(
+        'Cannot only use Local#simulateAtomEvents() with AtomWatcher'
+      )
+    }
+    await atomWatcher.stepsInitialState(watcher.state, watcher)
     for (const batch of batches.concat([simulationCompleteBatch])) {
       // $FlowFixMe
-      this.side.watcher.producer.buffer.push(batch)
+      watcher.producer.buffer.push(batch)
     }
-    return this.startSimulation()
+    await this.startSimulation()
   }
 
   async readFile (path /*: string */) /*: Promise<string> */ {
