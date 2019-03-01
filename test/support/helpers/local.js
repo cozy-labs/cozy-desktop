@@ -147,7 +147,7 @@ class LocalTestHelpers {
     const { watcher } = this.side
     if (!(watcher instanceof atomWatcher.AtomWatcher)) {
       throw new Error(
-        'Cannot only use Local#simulateAtomEvents() with AtomWatcher'
+        'Can only use LocalTestHelpers#simulateAtomEvents() with AtomWatcher'
       )
     }
     await atomWatcher.stepsInitialState(watcher.state, watcher)
