@@ -3,7 +3,7 @@
 const { buildDir, buildFile, id } = require('../../metadata')
 const logger = require('../../logger')
 const log = logger({
-  component: 'dispatch'
+  component: 'atom/dispatch'
 })
 
 /*::
@@ -48,11 +48,11 @@ function step (opts /*: DispatchOptions */) {
         if (event.action === 'initial-scan-done') {
           actions.initialScanDone(opts)
         } else {
-          // $FlowFixMe
           await actions[event.action + event.kind](event, opts)
         }
       } catch (err) {
-        console.log('Dispatch error:', err, event) // TODO
+        log.error({err, event})
+        // TODO: Error handling
       }
     }
     return batch
@@ -93,6 +93,7 @@ actions = {
     try {
       old = await fetchOldDoc(pouch, id(event.oldPath))
     } catch (err) {
+      log.debug({err, event}, 'Assuming move can be handled as addition')
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a file is added when the client is
       // stopped, and is moved before it was scanned.
@@ -109,6 +110,7 @@ actions = {
     try {
       old = await fetchOldDoc(pouch, id(event.oldPath))
     } catch (err) {
+      log.debug({err, event}, 'Assuming move can be handled as addition')
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a dir is added when the client is
       // stopped, and is moved before it was scanned.
@@ -125,6 +127,7 @@ actions = {
     try {
       old = await fetchOldDoc(pouch, event._id)
     } catch (err) {
+      log.debug({err, event}, 'Assuming already deleted')
       // The file was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
@@ -137,6 +140,7 @@ actions = {
     try {
       old = await fetchOldDoc(pouch, event._id)
     } catch (err) {
+      log.debug({err, event}, 'Assuming already deleted')
       // The dir was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return

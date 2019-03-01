@@ -70,7 +70,7 @@ const producer = opts => {
   } else if (process.platform === 'win32') {
     return new WinProducer(opts)
   } else {
-    throw new Error('The experimental watcher is not available on this platform')
+    throw new Error('The atom watcher is not available on this platform')
   }
 }
 
@@ -135,7 +135,10 @@ class AtomWatcher {
       let target = -1
       try {
         target = (await this.pouch.db.changes({limit: 1, descending: true})).last_seq
-      } catch (err) { /* ignore err */ }
+      } catch (err) {
+        log.warn({err})
+        /* ignore err */
+      }
       this.events.emit('sync-target', target)
       this.events.emit('local-end')
     })

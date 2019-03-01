@@ -103,8 +103,8 @@ def issues: clean | select(is_issue);
 def path(pattern):
   clean | select(
     (
-      (.path // (.doc | .path) // (.change | .doc | .path) // (.idConflict | .newDoc | .path)),
-      (.oldpath // (.was | .path) // (.idConflict | .existingDoc | .path)),
+      (.path // (.doc | .path) // (.change | .doc | .path) // (.idConflict | .newDoc | .path) // (.event | .path)),
+      (.oldpath // (.was | .path) // (.idConflict | .existingDoc | .path) // (.event | .oldPath)),
       ""
     )
       | strings

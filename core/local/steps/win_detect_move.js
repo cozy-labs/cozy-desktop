@@ -4,7 +4,7 @@ const { id } = require('../../metadata')
 const Buffer = require('./buffer')
 const logger = require('../../logger')
 const log = logger({
-  component: 'winDetectMove'
+  component: 'atom/winDetectMove'
 })
 
 // Wait at most this delay (in milliseconds) to see if it's a move.
@@ -61,7 +61,7 @@ async function winDetectMove (buffer, out, pouch) {
           const was = await pouch.db.get(id(event.path))
           deleted.set(was.fileid, event.path)
         } catch (err) {
-          // Ignore the error
+          log.debug({err, event}, 'No metadata. Ignoring.')
         } finally {
           release()
         }

@@ -10,7 +10,7 @@ const watcher = require('@atom/watcher')
 const stater = require('../stater')
 const logger = require('../../logger')
 const log = logger({
-  component: 'WinProducer'
+  component: 'atom/WinProducer'
 })
 
 /*::
@@ -71,6 +71,7 @@ module.exports = class WinProducer /*:: implements Producer */ {
           kind: stater.kind(stats)
         })
       } catch (err) {
+        log.error({err, path: path.join(relPath, entry)})
         // TODO error handling
       }
     }

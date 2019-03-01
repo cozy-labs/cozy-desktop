@@ -6,7 +6,7 @@ const { id } = require('../../metadata')
 const stater = require('../stater')
 const logger = require('../../logger')
 const log = logger({
-  component: 'addInfos'
+  component: 'atom/addInfos'
 })
 
 /*::
@@ -42,7 +42,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string } */) /*: Buffe
           }
         }
       } catch (err) {
-        log.info({err, event}, 'Cannot get infos')
+        log.debug({err, event}, 'Cannot get infos')
         event.incomplete = true
       }
       batch.push(event)

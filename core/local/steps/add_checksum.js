@@ -4,7 +4,7 @@ const path = require('path')
 
 const logger = require('../../logger')
 const log = logger({
-  component: 'addChecksum'
+  component: 'atom/addChecksum'
 })
 
 /*::
@@ -43,7 +43,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
         // keep the event. Maybe it was one if its parents directory that was
         // moved, and then we can refine the event later (in incompleteFixer).
         event.incomplete = true
-        log.info({err, event}, 'Cannot compute checksum')
+        log.debug({err, event}, 'Cannot compute checksum')
       }
     }
     return events

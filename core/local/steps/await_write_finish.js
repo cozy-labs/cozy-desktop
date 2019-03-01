@@ -3,7 +3,7 @@
 const Buffer = require('./buffer')
 const logger = require('../../logger')
 const log = logger({
-  component: 'awaitWriteFinish'
+  component: 'atom/awaitWriteFinish'
 })
 
 // Wait this delay (in milliseconds) after the last event for a given file
@@ -114,6 +114,6 @@ async function awaitWriteFinish (buffer /*: Buffer */, out /*: Buffer */) {
 function loop (buffer /*: Buffer */, opts /*: {} */) /*: Buffer */ {
   const out = new Buffer()
   awaitWriteFinish(buffer, out)
-    .catch(err => log.error({err}))
+    .catch(err => { log.error({err}) })
   return out
 }

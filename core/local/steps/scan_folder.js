@@ -2,7 +2,7 @@
 
 const logger = require('../../logger')
 const log = logger({
-  component: 'scanFolder'
+  component: 'atom/scanFolder'
 })
 
 /*::
@@ -26,7 +26,7 @@ function loop (buffer /*: Buffer */, opts /*: { scan: Scanner } */) /*: Buffer *
       }
       if (event.action === 'created' && event.kind === 'directory') {
         opts.scan(event.path)
-          .catch((err) => log.info({err, event}, 'Error on scan'))
+          .catch((err) => log.error({err, event}, 'Error on scan'))
       }
     }
     return batch
