@@ -9,7 +9,7 @@ const watcher = require('@atom/watcher')
 
 const logger = require('../../logger')
 const log = logger({
-  component: 'LinuxProducer'
+  component: 'atom/LinuxProducer'
 })
 
 /*::
@@ -87,6 +87,7 @@ module.exports = class LinuxProducer /*:: implements Producer */ {
           kind: 'unknown'
         })
       } catch (err) {
+        log.error({err, path: path.join(relPath, entry)})
         // TODO error handling
       }
     }

@@ -6,7 +6,7 @@ const stater = require('../stater')
 const metadata = require('../../metadata')
 const logger = require('../../logger')
 const log = logger({
-  component: 'incompleteFixer'
+  component: 'atom/incompleteFixer'
 })
 
 // Drop incomplete events after this delay (in milliseconds).
@@ -109,7 +109,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
           incompletes.splice(i, 1)
           break
         } catch (err) {
-          log.error({err}, 'Could not rebuild incomplete event')
+          log.error({err, event, item}, 'Could not rebuild incomplete event')
           // If we have an error, there is probably not much that we can do
         }
       }
