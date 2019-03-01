@@ -22,9 +22,11 @@ describe('local/steps/initial_diff', () => {
 
   describe('.loop()', () => {
     let buffer
+    let initialScanDone
 
     beforeEach('populate pouch with documents', function () {
       buffer = new Buffer()
+      initialScanDone = builders.event().action('initial-scan-done').kind('unknown').path('').build()
     })
 
     it('detects documents moved while client was stopped', async function () {
@@ -35,13 +37,14 @@ describe('local/steps/initial_diff', () => {
 
       const bar = builders.event().action('scan').kind('directory').path('bar').ino(1).build()
       const buzz = builders.event().action('scan').kind('file').path('buzz').ino(2).build()
-      buffer.push([bar, buzz])
+      buffer.push([bar, buzz, initialScanDone])
       buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
 
       const events = await buffer.pop()
       should(events).deepEqual([
         builders.event(bar).action('renamed').oldPath('foo').build(),
-        builders.event(buzz).action('renamed').oldPath('fizz').build()
+        builders.event(buzz).action('renamed').oldPath('fizz').build(),
+        initialScanDone
       ])
     })
 
@@ -58,7 +61,8 @@ describe('local/steps/initial_diff', () => {
       const bar = builders.event().action('scan').kind('directory').path('bar').ino(3).build()
       buffer.push([
         bar,
-        builders.event().action('scan').kind('file').path('bar/baz').ino(2).build()
+        builders.event().action('scan').kind('file').path('bar/baz').ino(2).build(),
+        initialScanDone
       ])
       buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
 
@@ -69,7 +73,8 @@ describe('local/steps/initial_diff', () => {
       should(events).deepEqual([
         foo,
         builders.event(barbaz).action('renamed').oldPath('foo/baz').build(),
-        bar
+        bar,
+        initialScanDone
       ])
     })
 
@@ -83,13 +88,14 @@ describe('local/steps/initial_diff', () => {
 
       const foo = builders.event().action('scan').kind('file').path('foo').ino(2).build()
       const buzz = builders.event().action('scan').kind('directory').path('buzz').ino(3).build()
-      buffer.push([foo, buzz])
+      buffer.push([foo, buzz, initialScanDone])
       buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
 
       const events = await buffer.pop()
       should(events).deepEqual([
         builders.event(foo).action('renamed').oldPath('bar').build(),
-        builders.event(buzz).action('renamed').oldPath('fizz').build()
+        builders.event(buzz).action('renamed').oldPath('fizz').build(),
+        initialScanDone
       ])
     })
 
@@ -99,15 +105,14 @@ describe('local/steps/initial_diff', () => {
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
 
-      const initial = builders.event().action('initial-scan-done').build()
-      buffer.push([initial])
+      buffer.push([initialScanDone])
       buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
 
       const events = await buffer.pop()
       should(events).deepEqual([
         builders.event().action('deleted').kind('file').path('bar').build(),
         builders.event().action('deleted').kind('directory').path('foo').build(),
-        initial
+        initialScanDone
       ])
     })
   })
