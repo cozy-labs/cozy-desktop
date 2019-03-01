@@ -220,9 +220,6 @@ class Merge {
         log.info({path}, 'up to date')
         return null
       } else {
-        if (doc.remote._id !== folder.remote._id) {
-          await this.resolveConflictAsync(side, folder, folder)
-        }
         return this.pouch.put(doc)
       }
     }
