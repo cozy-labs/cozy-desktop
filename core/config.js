@@ -245,7 +245,7 @@ function validateWatcherType (watcherType /*: ?string */) /*: ?WatcherType */ {
   if (watcherType === 'atom' || watcherType === 'chokidar') {
     return watcherType
   } else {
-    log.warn({watcherType}, 'Invalid watcher type')
+    if (watcherType) log.warn({watcherType}, 'Invalid watcher type')
     return null
   }
 }
