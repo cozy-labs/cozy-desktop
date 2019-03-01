@@ -16,14 +16,14 @@ const HEARTBEAT /*: number */ = parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || 
 
 const builders = new Builders()
 
-describe('Sync', function () {
+describe('Scheduling', function () {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)
   before('delete all', cozyHelpers.deleteAll)
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
-  after('clean  local', () => helpers.local.clean())
+  after('clean local', () => helpers.local.clean())
 
   let helpers
 
