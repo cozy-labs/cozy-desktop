@@ -3,6 +3,8 @@
 
 const should = require('should')
 
+const config = require('../../core/config')
+
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const {
@@ -151,6 +153,11 @@ describe('Identity conflict', () => {
       })
 
       onPlatforms(['win32', 'darwin'], () => {
+        if (config.watcherType() === 'atom') {
+          it.skip('is not supported yet')
+          return
+        }
+
         it('renames the local one to resolve the conflict on next flush', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -257,6 +264,11 @@ describe('Identity conflict', () => {
       })
 
       onPlatforms(['win32', 'darwin'], () => {
+        if (config.watcherType() === 'atom') {
+          it.skip('is not supported yet')
+          return
+        }
+
         it('renames the moved one to resolve the conflict on next polling', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -410,6 +422,11 @@ describe('Identity conflict', () => {
       })
 
       onPlatforms(['win32', 'darwin'], () => {
+        if (config.watcherType() === 'atom') {
+          it.skip('is not supported yet')
+          return
+        }
+
         it('renames the local one to resolve the conflict on next flush', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
@@ -516,6 +533,11 @@ describe('Identity conflict', () => {
       })
 
       onPlatforms(['win32', 'darwin'], () => {
+        if (config.watcherType() === 'atom') {
+          it.skip('is not supported yet')
+          return
+        }
+
         it('renames the moved one to resolve the conflict on next polling', async () => {
           should(await helpers.trees('local', 'remote')).deepEqual({
             local: [
