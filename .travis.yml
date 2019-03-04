@@ -30,6 +30,7 @@ env:
         - MOCHA_TIMEOUT="240000"
         - NODE_ENV=test
         - NPM_CONFIG_PROGRESS=false
+        - STOPPED_CLIENT=enabled
         - COZY_DESKTOP_HEARTBEAT=1000
 
 before_install: | # install cozy stack for integration test
