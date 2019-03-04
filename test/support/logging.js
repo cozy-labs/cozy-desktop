@@ -29,7 +29,7 @@ beforeEach(function () {
 })
 
 afterEach(function () {
-  if (this.currentTest.state === 'failed' && CI) {
+  if (this.currentTest.state === 'failed' && !CI) {
     console.log(lines.map(l => JSON.stringify(l)).join('\n'))
   }
 })

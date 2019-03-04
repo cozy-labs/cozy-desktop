@@ -5,6 +5,7 @@ clone_depth: 10
 environment:
   MOCHA_TIMEOUT: "60000"
   NO_BREAKPOINTS: "1"
+  STOPPED_CLIENT: "enabled"
   matrix:
       - BUILD_JOB: "short_tests"
       - BUILD_JOB: "scenarios_build"
