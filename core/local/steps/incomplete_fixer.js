@@ -18,7 +18,7 @@ const DELAY = 3000
 
 /*::
 import type Buffer from './buffer'
-import type { AtomWatcherEvent } from './event'
+import type { AtomWatcherEvent, Batch } from './event'
 import type { Checksumer } from '../checksumer'
 
 type IncompleteItem = {
@@ -28,7 +28,8 @@ type IncompleteItem = {
 */
 
 module.exports = {
-  loop
+  loop,
+  step
 }
 
 function wasRenamedSuccessively (previousIncomplete /*: IncompleteItem */, nextEvent /*: AtomWatcherEvent */) /*: boolean %checks */ {
@@ -69,7 +70,11 @@ async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: Ato
 // Cf test/property/local_watcher/swedish_krona.json
 function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Buffer */ {
   const incompletes = []
-  return buffer.asyncMap(async (events) => {
+  return buffer.asyncMap(step(incompletes, opts))
+}
+
+function step (incompletes /*: IncompleteItem[] */, opts /*: IncompleteFixerOptions */) {
+  return async (events /*: Batch */) /*: Promise<Batch> */ => {
     // Filter out the incomplete events
     const batch = []
     for (const event of events) {
@@ -116,5 +121,5 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
     }
 
     return batch
-  })
+  }
 }
