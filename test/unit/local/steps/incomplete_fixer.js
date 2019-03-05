@@ -1,9 +1,12 @@
 /* eslint-env mocha */
 /* @flow */
 
+const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
 
+const metadata = require('../../../../core/metadata')
+const stater = require('../../../../core/local/stater')
 const Buffer = require('../../../../core/local/steps/buffer')
 const incompleteFixer = require('../../../../core/local/steps/incomplete_fixer')
 
@@ -53,6 +56,93 @@ describe('core/local/steps/incomplete_fixer', () => {
           stats: renamedEvent.stats
         }
       ])
+    })
+  })
+
+  describe('.step()', () => {
+    describe('file renamed then deleted', () => {
+      it('is deleted at its original path', async () => {
+        const src = 'src'
+        const dst = 'dst'
+        const renamedEvent = builders.event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(src)
+          .path(dst)
+          .incomplete()
+          .build()
+        const deletedEvent = builders.event()
+          .kind(renamedEvent.kind)
+          .action('deleted')
+          .path(dst)
+          .build()
+        const incompletes = []
+        const outputBatches = []
+
+        for (const inputBatch of [[renamedEvent], [deletedEvent]]) {
+          const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
+          outputBatches.push(outputBatch)
+        }
+
+        should(outputBatches).deepEqual([
+          [],
+          [
+            deletedEvent, // OPTIMIZE: Drop useless event
+            {
+              _id: metadata.id(src),
+              action: 'deleted',
+              kind: renamedEvent.kind,
+              path: src
+            }
+          ]
+        ])
+      })
+    })
+
+    describe('file renamed twice', () => {
+      it('is renamed once as a whole', async () => {
+        const src = 'src'
+        const dst1 = 'dst1'
+        const dst2 = path.basename(__filename)
+        const firstRenamedEvent = builders.event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(src)
+          .path(dst1)
+          .incomplete()
+          .build()
+        const secondRenamedEvent = builders.event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(dst1)
+          .path(dst2)
+          .build()
+        const incompletes = []
+        const outputBatches = []
+        const md5sum = 'whatever'
+
+        checksumer.push.resolves(md5sum)
+
+        for (const inputBatch of [[firstRenamedEvent], [secondRenamedEvent]]) {
+          const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
+          outputBatches.push(outputBatch)
+        }
+
+        should(outputBatches).deepEqual([
+          [],
+          [
+            {
+              _id: metadata.id(dst2),
+              action: 'renamed',
+              kind: 'file',
+              md5sum,
+              oldPath: src,
+              path: dst2,
+              stats: await stater.stat(path.join(syncPath, dst2))
+            }
+          ]
+        ])
+      })
     })
   })
 })
