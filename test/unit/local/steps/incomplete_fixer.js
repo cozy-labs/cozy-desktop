@@ -91,6 +91,10 @@ describe('core/local/steps/incomplete_fixer', () => {
             {
               _id: metadata.id(src),
               action: 'deleted',
+              incompleteFixer: {
+                incompleteEvent: renamedEvent,
+                completingEvent: deletedEvent
+              },
               kind: renamedEvent.kind,
               path: src
             }
@@ -134,6 +138,10 @@ describe('core/local/steps/incomplete_fixer', () => {
             {
               _id: metadata.id(dst2),
               action: 'renamed',
+              incompleteFixer: {
+                incompleteEvent: firstRenamedEvent,
+                completingEvent: secondRenamedEvent
+              },
               kind: 'file',
               md5sum,
               oldPath: src,

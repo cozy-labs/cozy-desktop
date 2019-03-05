@@ -1,10 +1,15 @@
 /* @flow */
 
+const _ = require('lodash')
+
 const { id } = require('../../metadata')
 const Buffer = require('./buffer')
 const logger = require('../../logger')
+
+const STEP_NAME = 'winDetectMove'
+
 const log = logger({
-  component: 'atom/winDetectMove'
+  component: `atom/${STEP_NAME}`
 })
 
 // Wait at most this delay (in milliseconds) to see if it's a move.
@@ -61,7 +66,8 @@ async function winDetectMove (buffer, out, pouch) {
           const was = await pouch.db.get(id(event.path))
           deleted.set(was.fileid, event.path)
         } catch (err) {
-          log.debug({err, event}, 'No metadata. Ignoring.')
+          _.set(event, [STEP_NAME, 'docNotFound'], err.message)
+          if (err.status !== 404) log.error({err, event})
         } finally {
           release()
         }
@@ -88,6 +94,11 @@ async function winDetectMove (buffer, out, pouch) {
           for (let j = 0; j < l; j++) {
             const e = pending[i].events[j]
             if (e.action === 'deleted' && e.path === path) {
+              // FIXME: Make up new event with attached old one
+              _.set(event, [STEP_NAME, 'aggregatedEvents'], {
+                deletedEvent: e,
+                createdEvent: event
+              })
               event.action = 'renamed'
               event.oldPath = e.path
               pending[i].deleted.delete(event.stats.fileid)

@@ -138,8 +138,8 @@ describe('local/steps/initial_diff', () => {
     })
 
     it('detects documents removed while client was stopped', async function () {
-      await builders.metadir().path('foo').ino(1).create()
-      await builders.metafile().path('bar').ino(2).create()
+      const foo = await builders.metadir().path('foo').ino(1).create()
+      const bar = await builders.metafile().path('bar').ino(2).create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
 
@@ -148,8 +148,20 @@ describe('local/steps/initial_diff', () => {
 
       const events = await buffer.pop()
       should(events).deepEqual([
-        builders.event().action('deleted').kind('file').path('bar').build(),
-        builders.event().action('deleted').kind('directory').path('foo').build(),
+        {
+          _id: bar._id,
+          action: 'deleted',
+          initialDiff: {notFound: {kind: 'file', path: bar.path}},
+          kind: 'file',
+          path: bar.path
+        },
+        {
+          _id: foo._id,
+          action: 'deleted',
+          initialDiff: {notFound: {kind: 'directory', path: foo.path}},
+          kind: 'directory',
+          path: foo.path
+        },
         initialScanDone
       ])
     })

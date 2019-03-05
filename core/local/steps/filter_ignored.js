@@ -1,10 +1,18 @@
 /* @flow */
 
+const logger = require('../../logger')
+
 /*::
 import type Buffer from './buffer'
 import type { AtomWatcherEvent } from './event'
 import type { Ignore } from '../../ignore'
 */
+
+const STEP_NAME = 'filterIgnored'
+
+const log = logger({
+  component: `atom/${STEP_NAME}`
+})
 
 module.exports = {
   loop
@@ -28,9 +36,10 @@ function buildNotIgnored (ignoreRules /*: Ignore */) /*: ((AtomWatcherEvent) => 
     if (event.noIgnore) {
       return true
     }
-    return !ignoreRules.isIgnored({
-      relativePath: event.path,
-      isFolder: event.kind === 'directory'
-    })
+    const relativePath = event.path
+    const isFolder = event.kind === 'directory'
+    const isIgnored = ignoreRules.isIgnored({relativePath, isFolder})
+    if (isIgnored) log.debug({event}, 'Ignored')
+    return !isIgnored
   }
 }

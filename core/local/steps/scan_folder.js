@@ -1,8 +1,11 @@
 /* @flow */
 
 const logger = require('../../logger')
+
+const STEP_NAME = 'scanFolder'
+
 const log = logger({
-  component: 'atom/scanFolder'
+  component: `atom/${STEP_NAME}`
 })
 
 /*::
@@ -26,7 +29,7 @@ function loop (buffer /*: Buffer */, opts /*: { scan: Scanner } */) /*: Buffer *
       }
       if (event.action === 'created' && event.kind === 'directory') {
         opts.scan(event.path)
-          .catch((err) => log.error({err, event}, 'Error on scan'))
+          .catch((err) => { log.error({err, event}, 'Error on scan') })
       }
     }
     return batch

@@ -1,9 +1,14 @@
 /* @flow */
 
+const _ = require('lodash')
+
 const { buildDir, buildFile, id } = require('../../metadata')
 const logger = require('../../logger')
+
+const STEP_NAME = 'dispatch'
+
 const log = logger({
-  component: 'atom/dispatch'
+  component: `atom/${STEP_NAME}`
 })
 
 /*::
@@ -61,29 +66,34 @@ function step (opts /*: DispatchOptions */) {
 
 actions = {
   initialScanDone: ({events}) => {
+    log.info('Initial scan done')
     events.emit('initial-scan-done')
   },
 
-  scanfile: (event, opts) => actions.createdfile(event, opts),
+  scanfile: (event, opts) => actions.createdfile(event, opts, 'File found'),
 
-  scandirectory: (event, opts) => actions.createddirectory(event, opts),
+  scandirectory: (event, opts) => actions.createddirectory(event, opts, 'Dir found'),
 
-  createdfile: async (event, {prep}) => {
+  createdfile: async (event, {prep}, description = 'File added') => {
+    log.info({event}, description)
     const doc = buildFile(event.path, event.stats, event.md5sum)
     await prep.addFileAsync(SIDE, doc)
   },
 
-  createddirectory: async (event, {prep}) => {
+  createddirectory: async (event, {prep}, description = 'Dir added') => {
+    log.info({event}, description)
     const doc = buildDir(event.path, event.stats)
     await prep.putFolderAsync(SIDE, doc)
   },
 
   modifiedfile: async (event, {prep}) => {
+    log.info({event}, 'File modified')
     const doc = buildFile(event.path, event.stats, event.md5sum)
     await prep.updateFileAsync(SIDE, doc)
   },
 
   modifieddirectory: async (event, {prep}) => {
+    log.info({event}, 'Dir modified')
     const doc = buildDir(event.path, event.stats)
     await prep.putFolderAsync(SIDE, doc)
   },
@@ -93,14 +103,15 @@ actions = {
     try {
       old = await fetchOldDoc(pouch, id(event.oldPath))
     } catch (err) {
-      log.debug({err, event}, 'Assuming move can be handled as addition')
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a file is added when the client is
       // stopped, and is moved before it was scanned.
+      _.set(event, [STEP_NAME, 'originalEvent'], _.clone(event))
       event.action = 'created'
       delete event.oldPath
-      return actions.createdfile(event, {prep})
+      return actions.createdfile(event, {prep}, 'File moved, assuming added')
     }
+    log.info({event}, 'File moved')
     const doc = buildFile(event.path, event.stats, event.md5sum)
     await prep.moveFileAsync(SIDE, doc, old)
   },
@@ -110,14 +121,15 @@ actions = {
     try {
       old = await fetchOldDoc(pouch, id(event.oldPath))
     } catch (err) {
-      log.debug({err, event}, 'Assuming move can be handled as addition')
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a dir is added when the client is
       // stopped, and is moved before it was scanned.
+      _.set(event, [STEP_NAME, 'originalEvent'], _.clone(event))
       event.action = 'created'
       delete event.oldPath
-      return actions.createddirectory(event, {prep})
+      return actions.createddirectory(event, {prep}, 'Dir moved, assuming added')
     }
+    log.info({event}, 'Dir moved')
     const doc = buildDir(event.path, event.stats)
     await prep.moveFolderAsync(SIDE, doc, old)
   },
@@ -127,11 +139,12 @@ actions = {
     try {
       old = await fetchOldDoc(pouch, event._id)
     } catch (err) {
-      log.debug({err, event}, 'Assuming already deleted')
+      log.debug({err, event}, 'Assuming file already removed')
       // The file was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
     }
+    log.info({event}, 'File removed')
     await prep.trashFileAsync(SIDE, old)
   },
 
@@ -140,11 +153,12 @@ actions = {
     try {
       old = await fetchOldDoc(pouch, event._id)
     } catch (err) {
-      log.debug({err, event}, 'Assuming already deleted')
+      log.debug({err, event}, 'Assuming dir already removed')
       // The dir was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
     }
+    log.info({event}, 'Dir removed')
     await prep.trashFolderAsync(SIDE, old)
   }
 }
