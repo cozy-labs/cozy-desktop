@@ -6,22 +6,20 @@ const logger = require('../../core/logger')
 const { defaultLogger } = logger
 const log = logger({component: 'mocha'})
 
-const { CI } = process.env
-
-const lines = []
+const errors = []
 
 defaultLogger.addStream({
   type: 'raw',
-  level: 'trace',
+  level: 'error',
   stream: {
     write: function (msg) {
-      lines.push(msg)
+      errors.push(msg.err || msg)
     }
   }
 })
 
 beforeEach(function () {
-  lines.length = 0
+  errors.length = 0
   // FIXME: this.currentTest is undefined on AppVeyor, not sure why
   if (process.env.APPVEYOR == null) {
     log.info('\n\n---------- ' + this.currentTest.title + ' ----------\n\n')
@@ -29,7 +27,7 @@ beforeEach(function () {
 })
 
 afterEach(function () {
-  if (this.currentTest.state === 'failed' && CI) {
-    console.log(lines.map(l => JSON.stringify(l)).join('\n'))
+  for (const err of errors) {
+    console.error(err)
   }
 })
