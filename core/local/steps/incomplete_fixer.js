@@ -25,6 +25,11 @@ type IncompleteItem = {
   event: AtomWatcherEvent,
   timestamp: number,
 }
+
+type IncompleteFixerOptions = {
+  syncPath: string,
+  checksumer: Checksumer
+}
 */
 
 module.exports = {
@@ -68,7 +73,7 @@ async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: Ato
 // fs.stats if we have a file here.
 //
 // Cf test/property/local_watcher/swedish_krona.json
-function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Buffer */ {
+function loop (buffer /*: Buffer */, opts /*: IncompleteFixerOptions */) /*: Buffer */ {
   const incompletes = []
   return buffer.asyncMap(step(incompletes, opts))
 }
