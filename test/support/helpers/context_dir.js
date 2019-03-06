@@ -38,6 +38,16 @@ class ContextDir {
     return posixifyPath(abspath.slice(this.root.length + path.sep.length))
   }
 
+  async makeTree (paths /*: Array<string> */) {
+    for (const path of paths) {
+      if (path.endsWith('/')) {
+        await this.ensureDir(path)
+      } else {
+        await this.outputFile(path, '')
+      }
+    }
+  }
+
   async tree () /*: Promise<string[]> */ {
     const dirsToRead = [this.root]
     const relPaths = []
