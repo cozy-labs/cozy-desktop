@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 /* @flow */
 
+const _ = require('lodash')
 const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
@@ -11,21 +12,22 @@ const Buffer = require('../../../../core/local/steps/buffer')
 const incompleteFixer = require('../../../../core/local/steps/incomplete_fixer')
 
 const Builders = require('../../../support/builders')
+const { ContextDir } = require('../../../support/helpers/context_dir')
 
+const syncPath = __dirname
+const syncDir = new ContextDir(syncPath)
+const CHECKSUM = 'checksum'
+const checksumer = {
+  push: sinon.stub().resolves(CHECKSUM),
+  kill: sinon.stub()
+}
 const builders = new Builders()
 
+const completedEvent = event =>
+  _.omit(event, ['stats', 'incompleteFixer'])
+const completionChanges = events => events.map(completedEvent)
+
 describe('core/local/steps/incomplete_fixer', () => {
-  const syncPath = __dirname
-
-  let checksumer
-
-  beforeEach(() => {
-    checksumer = {
-      push: sinon.stub().resolves(),
-      kill: sinon.stub()
-    }
-  })
-
   describe('.loop()', () => {
     it('pushes a fixed event into the output buffer', async () => {
       const createdEvent = builders.event()
@@ -60,6 +62,77 @@ describe('core/local/steps/incomplete_fixer', () => {
   })
 
   describe('.step()', () => {
+    context('without any complete "renamed" event', () => {
+      it('drops incomplete events', async function () {
+        const inputBatch = [
+          builders.event().incomplete().action('created').path('foo1').build(),
+          builders.event().incomplete().action('modified').path('foo2').build(),
+          builders.event().incomplete().action('deleted').path('foo3').build(),
+          builders.event().incomplete().action('scan').path('foo4').build()
+        ]
+        const incompletes = []
+
+        const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
+        should(outputBatch).be.empty()
+      })
+    })
+
+    context('with a complete "renamed" event in a later batch', () => {
+      it('leaves complete events untouched', async function () {
+        const inputBatch = [
+          builders.event().action('created').path('file').build(),
+          builders.event().action('renamed').oldPath('file').path('foo').build()
+        ]
+        const incompletes = []
+
+        const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
+        should(outputBatch).deepEqual(inputBatch)
+      })
+
+      it('rebuilds the first incomplete event matching the "renamed" event old path', async function () {
+        const incompleteEvents = [
+          builders.event().incomplete().kind('file').action('created').path('src/foo1').build(),
+          builders.event().incomplete().kind('file').action('modified').path('src/foo2').build(),
+          builders.event().incomplete().kind('file').action('deleted').path('src/foo3').build(),
+          builders.event().incomplete().kind('file').action('renamed').oldPath('src/foo4').path('foo').build(),
+          builders.event().incomplete().kind('file').action('scan').path('src/foo5').build()
+        ]
+        const renamedEvent = builders.event().kind('directory').action('renamed').oldPath('src').path('dst').build()
+        const incompletes = []
+        const outputBatches = []
+
+        // Create actual files in `dst/` since their parent folder has been moved
+        await syncDir.makeTree([
+          'dst/',
+          'dst/foo',
+          'dst/foo1',
+          'dst/foo2',
+          'dst/foo3',
+          'dst/foo5'
+        ])
+
+        for (const inputBatch of [incompleteEvents, [renamedEvent]]) {
+          const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
+          outputBatches.push(completionChanges(outputBatch))
+        }
+
+        should(outputBatches).deepEqual([
+          [],
+          [
+            completedEvent(renamedEvent),
+            {
+              _id: metadata.id(path.normalize('dst/foo1')),
+              oldPath: undefined,
+              path: path.normalize('dst/foo1'),
+              kind: 'file',
+              action: 'created',
+              md5sum: CHECKSUM
+            }
+          ]
+        ])
+      })
+    })
+
     describe('file renamed then deleted', () => {
       it('is deleted at its original path', async () => {
         const src = 'src'
