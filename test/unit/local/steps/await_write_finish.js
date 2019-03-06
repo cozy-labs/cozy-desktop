@@ -72,7 +72,34 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         buffer.push([Object.assign({}, event)])
       })
       const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-      should(await enhancedBuffer.pop()).eql([originalBatch[0]])
+      should(await enhancedBuffer.pop()).eql([
+        {
+          // 3rd modified -> created
+          action: 'created',
+          awaitWriteFinish: {
+            previousEvents: [
+              {
+                // 2nd modified -> created
+                action: 'created',
+                awaitWriteFinish: {
+                  previousEvents: [
+                    {
+                      // 1st created
+                      action: 'created',
+                      kind: 'file',
+                      path: __filename
+                    }
+                  ]
+                },
+                kind: 'file',
+                path: __filename
+              }
+            ]
+          },
+          kind: 'file',
+          path: __filename
+        }
+      ])
       should(await heuristicIsEmpty(enhancedBuffer)).be.true()
     })
 
@@ -135,7 +162,24 @@ describe('core/local/steps/await_write_finish.loop()', () => {
     })
     const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
     should(await enhancedBuffer.pop()).eql([originalBatch[1]])
-    should(await enhancedBuffer.pop()).eql([originalBatch[0]])
+    should(await enhancedBuffer.pop()).eql([
+      {
+        // 3rd modified -> created
+        action: 'created',
+        awaitWriteFinish: {
+          previousEvents: [
+            {
+              // 1st created
+              action: 'created',
+              kind: 'file',
+              path: __filename
+            }
+          ]
+        },
+        kind: 'file',
+        path: __filename
+      }
+    ])
     should(await heuristicIsEmpty(enhancedBuffer)).be.true()
   })
 })

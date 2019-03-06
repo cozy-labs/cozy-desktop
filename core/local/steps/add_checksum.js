@@ -1,10 +1,14 @@
 /* @flow */
 
+const _ = require('lodash')
 const path = require('path')
 
 const logger = require('../../logger')
+
+const STEP_NAME = 'addChecksum'
+
 const log = logger({
-  component: 'atom/addChecksum'
+  component: `atom/${STEP_NAME}`
 })
 
 /*::
@@ -42,7 +46,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
         // Even if the file is no longer at the expected path, we want to
         // keep the event. Maybe it was one if its parents directory that was
         // moved, and then we can refine the event later (in incompleteFixer).
-        event.incomplete = true
+        _.set(event, ['incomplete', STEP_NAME], err.message)
         log.debug({err, event}, 'Cannot compute checksum')
       }
     }

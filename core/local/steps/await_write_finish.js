@@ -1,9 +1,14 @@
 /* @flow */
 
+const _ = require('lodash')
+
 const Buffer = require('./buffer')
 const logger = require('../../logger')
+
+const STEP_NAME = 'awaitWriteFinish'
+
 const log = logger({
-  component: 'atom/awaitWriteFinish'
+  component: `atom/${STEP_NAME}`
 })
 
 // Wait this delay (in milliseconds) after the last event for a given file
@@ -71,11 +76,18 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
             w.events.splice(k, 1)
             w.nbCandidates--
             if (event.action === 'modified') {
+              _.update(event, [STEP_NAME, 'previousEvents'], previousEvents =>
+                _.concat(_.toArray(previousEvents), [e])
+              )
               // Preserve the action from the first event (it can be a created file)
               event.action = e.action
             }
             if (event.action === 'deleted' && e.action === 'created') {
               // It's just a temporary file that we can ignore
+              log.debug(
+                {createdEvent: e, deletedEvent: event},
+                `Ignore ${e.kind} ${e.action} then ${event.action}`
+              )
               events.splice(i, 1)
               i--
             }

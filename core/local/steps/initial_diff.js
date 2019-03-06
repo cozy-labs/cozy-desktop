@@ -1,5 +1,8 @@
 /* @flow */
 
+const _ = require('lodash')
+
+const logger = require('../../logger')
 const { id } = require('../../metadata')
 const Buffer = require('./buffer')
 
@@ -32,6 +35,10 @@ type WaitingItem = {
 //      good value, it is not something that was computed)
 const DELAY = 200
 const STEP_NAME = 'initialDiff'
+
+const log = logger({
+  component: `atom/${STEP_NAME}`
+})
 
 module.exports = {
   STEP_NAME,
@@ -99,6 +106,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
         if (was && was.path !== event.path) {
           if (was.kind === event.kind) {
             // TODO for a directory, maybe we should check the children
+            _.set(event, [STEP_NAME, 'actionConvertedFrom'], event.action)
             event.action = 'renamed'
             event.oldPath = was.path
             nbCandidates++
@@ -110,6 +118,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
               action: 'deleted',
               kind: was.kind,
               _id: id(was.path),
+              [STEP_NAME]: {inodeReuse: event},
               path: was.path
             })
           }
@@ -130,6 +139,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
               action: 'deleted',
               kind: doc.kind,
               _id: id(doc.path),
+              [STEP_NAME]: {notFound: doc},
               path: doc.path
             })
           }
@@ -177,6 +187,10 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
         for (let k = 0; k < w.batch.length; k++) {
           const e = w.batch[k]
           if (e.action === 'renamed' && e.path === event.path) {
+            log.debug(
+              {renamedEvent: e, scanEvent: event},
+              `Ignore overlapping ${event.kind} ${event.action}`
+            )
             events.splice(i, 1)
             w.nbCandidates--
             break

@@ -5,8 +5,11 @@ const path = require('path')
 const stater = require('../stater')
 const metadata = require('../../metadata')
 const logger = require('../../logger')
+
+const STEP_NAME = 'incompleteFixer'
+
 const log = logger({
-  component: 'atom/incompleteFixer'
+  component: `atom/${STEP_NAME}`
 })
 
 // Drop incomplete events after this delay (in milliseconds).
@@ -71,6 +74,10 @@ async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: Ato
       : item.event.oldPath.replace(event.oldPath, event.path)
   }
   return {
+    [STEP_NAME]: {
+      incompleteEvent: item.event,
+      completingEvent: event
+    },
     action: item.event.action,
     oldPath,
     path: p,
@@ -84,6 +91,10 @@ async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: Ato
 function buildDeletedFromRenamed (item /*: IncompleteItem */, event /*: AtomWatcherEvent */) /*: AtomWatcherEvent */ {
   const { oldPath, kind } = item.event
   return {
+    [STEP_NAME]: {
+      incompleteEvent: item.event,
+      completingEvent: event
+    },
     action: event.action,
     // $FlowFixMe: renamed events always have an oldPath
     path: oldPath,
@@ -131,6 +142,7 @@ function step (incompletes /*: IncompleteItem[] */, opts /*: IncompleteFixerOpti
 
         // Remove the expired incomplete events
         if (item.timestamp + DELAY < now) {
+          log.debug({event: item.event}, 'Dropping expired incomplete event')
           incompletes.splice(i, 1)
           i--
           continue
@@ -158,7 +170,7 @@ function step (incompletes /*: IncompleteItem[] */, opts /*: IncompleteFixerOpti
           incompletes.splice(i, 1)
           break
         } catch (err) {
-          log.error({err, event, item}, 'Could not rebuild incomplete event')
+          log.error({err, event, item}, 'Error while rebuilding incomplete event')
           // If we have an error, there is probably not much that we can do
         }
       }

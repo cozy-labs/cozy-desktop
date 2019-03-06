@@ -1,12 +1,16 @@
 /* @flow */
 
+const _ = require('lodash')
 const path = require('path')
 
 const { id } = require('../../metadata')
 const stater = require('../stater')
 const logger = require('../../logger')
+
+const STEP_NAME = 'addInfos'
+
 const log = logger({
-  component: 'atom/addInfos'
+  component: `atom/${STEP_NAME}`
 })
 
 /*::
@@ -38,12 +42,15 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string } */) /*: Buffe
             event.kind = stater.kind(event.stats)
           } else { // deleted
             // If kind is unknown, we say it's a file arbitrary
-            event.kind = event.kind === 'directory' ? 'directory' : 'file'
+            if (event.kind !== 'directory' && event.kind !== 'file') {
+              _.set(event, [STEP_NAME, 'kindConvertedFrom'], event.kind)
+              event.kind = 'file'
+            }
           }
         }
       } catch (err) {
         log.debug({err, event}, 'Cannot get infos')
-        event.incomplete = true
+        _.set(event, ['incomplete', STEP_NAME], err.message)
       }
       batch.push(event)
     }
