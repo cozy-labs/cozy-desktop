@@ -1,5 +1,35 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.0-alpha.1 - 2019-03-06
+
+Improvements for Windows and Linux users:
+
+- The new local watcher is now the default watcher. It should bring better
+  performance in local changes analysis.
+
+Improvements for Windows users:
+
+- Files and folders named like a volume (e.g. C:) and at the root of the folder
+  watched by Cozy Desktop could lead to an infinite loop if they or any of their
+  children were ever modified. Those are now handled properly and won't be
+  ignored either.
+
+There are some known issues that we'll tackle in the next releases:
+
+- On Windows, moving the child of a moved directory won't be handled properly.
+- On Windows, moving a tree of directories and files to a destination that
+  shares part of this tree (e.g. `src/dir/subdir/file` → `dst/dir/subdir/file`)
+  and overwriting the destinations will result in conflicts being created for
+  the overwrited files.
+- On Windows, the synchronisation of a remote move stopped before it's been
+  applied on the local system will won't be resumed when restarting the client.
+- On Linux, some movements done while the client was stopped won't be correctly
+  detected and handled when starting the client.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.12.1-beta.1 - 2019-02-05
 
 Improvements for Windows and Linux users:
