@@ -75,10 +75,10 @@ module.exports = class WinProducer /*:: implements Producer */ {
         // TODO error handling
       }
     }
+    log.trace({path: relPath, batch: entries}, 'scan')
     if (entries.length === 0) {
       return
     }
-    log.trace({path: relPath}, `Scanned ${entries.length} item(s) in dir`)
     this.buffer.push(entries)
     for (const entry of entries) {
       if (entry.stats && entry.stats.directory) {
@@ -88,7 +88,7 @@ module.exports = class WinProducer /*:: implements Producer */ {
   }
 
   process (batch /*: Array<*> */) {
-    log.trace(`Processing ${batch.length} event(s)`)
+    log.trace({batch}, 'process')
     // Atom/watcher emits events with an absolute path, but it's more
     // convenient for us to use a relative path.
     for (const event of batch) {
