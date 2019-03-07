@@ -279,5 +279,40 @@ describe('core/local/steps/incomplete_fixer', () => {
         ])
       })
     })
+
+    describe('file renamed and then renamed back to its previous name', () => {
+      it('results in no events at all', async function () {
+        const { syncPath } = this
+
+        const src = 'src'
+        const dst = 'dst'
+        await syncDir.ensureFile(src)
+        const firstRenamedEvent = builders.event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(src)
+          .path(dst)
+          .incomplete()
+          .build()
+        const secondRenamedEvent = builders.event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(dst)
+          .path(src)
+          .build()
+        const incompletes = []
+        const outputBatches = []
+
+        for (const inputBatch of [[firstRenamedEvent], [secondRenamedEvent]]) {
+          const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
+          outputBatches.push(outputBatch)
+        }
+
+        should(outputBatches).deepEqual([
+          [],
+          []
+        ])
+      })
+    })
   })
 })

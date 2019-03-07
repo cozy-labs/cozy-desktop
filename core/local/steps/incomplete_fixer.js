@@ -55,7 +55,7 @@ function itemDestinationWasDeleted (item /*: IncompleteItem */, event /*: AtomWa
   )
 }
 
-async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: AtomWatcherEvent */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Promise<AtomWatcherEvent> */ {
+async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: AtomWatcherEvent */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Promise<?AtomWatcherEvent> */ {
   // $FlowFixMe: Renamed events always have an oldPath
   const p = item.event.path.replace(event.oldPath, event.path)
   const absPath = path.join(opts.syncPath, p)
@@ -72,6 +72,10 @@ async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: Ato
       ? item.event.oldPath
       // $FlowFixMe: Renamed events always have an oldPath
       : item.event.oldPath.replace(event.oldPath, event.path)
+  }
+
+  if (p === oldPath) {
+    return null
   }
 
   return {
@@ -150,25 +154,30 @@ function step (incompletes /*: IncompleteItem[] */, opts /*: IncompleteFixerOpti
         }
 
         try {
+          let rebuilt
           if (wasRenamedSuccessively(item, event)) {
             // We have a match, try to rebuild the incomplete event
-            const rebuilt = await rebuildIncompleteEvent(item, event, opts)
-            log.debug({path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
-            if (rebuilt.path === event.path) {
-              batch.splice(batch.indexOf(event), 1, rebuilt)
-            } else {
-              batch.push(rebuilt)
-            }
+            rebuilt = await rebuildIncompleteEvent(item, event, opts)
           } else if (itemDestinationWasDeleted(item, event)) {
             // We have a match, try to replace the incomplete event
-            const rebuilt = buildDeletedFromRenamed(item, event)
-            log.debug({path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
-            batch.push(rebuilt)
+            rebuilt = buildDeletedFromRenamed(item, event)
           } else {
             continue
           }
 
           incompletes.splice(i, 1)
+
+          if (!rebuilt) {
+            batch.splice(batch.indexOf(event), 1)
+            break
+          }
+          log.debug({path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
+
+          if (rebuilt.path === event.path) {
+            batch.splice(batch.indexOf(event), 1, rebuilt)
+          } else {
+            batch.push(rebuilt)
+          }
           break
         } catch (err) {
           log.error({err, event, item}, 'Error while rebuilding incomplete event')
