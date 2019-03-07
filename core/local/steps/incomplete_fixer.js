@@ -154,7 +154,7 @@ function step (incompletes /*: IncompleteItem[] */, opts /*: IncompleteFixerOpti
             // We have a match, try to rebuild the incomplete event
             const rebuilt = await rebuildIncompleteEvent(item, event, opts)
             log.debug({path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
-            if (rebuilt.action === 'renamed' && rebuilt.path === event.path) {
+            if (rebuilt.path === event.path) {
               batch.splice(batch.indexOf(event), 1, rebuilt)
             } else {
               batch.push(rebuilt)

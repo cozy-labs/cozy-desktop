@@ -29,7 +29,7 @@ const completionChanges = events => events.map(completedEvent)
 
 describe('core/local/steps/incomplete_fixer', () => {
   describe('.loop()', () => {
-    it('pushes a fixed event into the output buffer', async () => {
+    it('pushes the result of step() into the output buffer', async () => {
       const createdEvent = builders.event()
         .kind('file')
         .action('created')
@@ -40,7 +40,7 @@ describe('core/local/steps/incomplete_fixer', () => {
         .kind(createdEvent.kind)
         .action('renamed')
         .oldPath(createdEvent.path)
-        .path(__filename)
+        .path(path.basename(__filename))
         .build()
       const inputBuffer = new Buffer()
       const outputBuffer = incompleteFixer.loop(inputBuffer, {syncPath, checksumer})
@@ -48,16 +48,14 @@ describe('core/local/steps/incomplete_fixer', () => {
       inputBuffer.push([createdEvent])
       inputBuffer.push([renamedEvent])
 
-      should(await outputBuffer.pop()).deepEqual([
-        {
-          _id: renamedEvent._id,
-          action: 'renamed',
-          kind: 'file',
-          oldPath: createdEvent.path,
-          path: renamedEvent.path,
-          stats: renamedEvent.stats
-        }
-      ])
+      should(
+        await outputBuffer.pop()
+      ).deepEqual(
+        await incompleteFixer.step(
+          [{ event: createdEvent, timestamp: (new Date()) }],
+          {syncPath, checksumer}
+        )([renamedEvent])
+      )
     })
   })
 
@@ -129,6 +127,35 @@ describe('core/local/steps/incomplete_fixer', () => {
               md5sum: CHECKSUM
             }
           ]
+        ])
+      })
+
+      it('replaces the completing event if its path is the same as the rebuilt one', async function () {
+        const createdEvent = builders.event()
+          .kind('file')
+          .action('created')
+          .path('missing')
+          .incomplete()
+          .build()
+        const renamedEvent = builders.event()
+          .kind(createdEvent.kind)
+          .action('renamed')
+          .oldPath(createdEvent.path)
+          .path(path.basename(__filename))
+          .build()
+        const inputBatch = [createdEvent, renamedEvent]
+        const incompletes = []
+
+        const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
+        should(completionChanges(outputBatch)).deepEqual([
+          _.defaults(
+            {
+              md5sum: CHECKSUM,
+              oldPath: undefined
+            },
+            _.pick(renamedEvent, ['_id', 'path']),
+            _.omit(createdEvent, ['incomplete'])
+          )
         ])
       })
     })
