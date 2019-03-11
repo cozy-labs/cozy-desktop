@@ -97,7 +97,7 @@ async function winDetectMove (buffer, out, pouch) {
               // FIXME: Make up new event with attached old one
               _.set(event, [STEP_NAME, 'aggregatedEvents'], {
                 deletedEvent: e,
-                createdEvent: event
+                createdEvent: _.clone(event)
               })
               event.action = 'renamed'
               event.oldPath = e.path

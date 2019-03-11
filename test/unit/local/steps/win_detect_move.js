@@ -34,7 +34,7 @@ if (process.platform === 'win32') {
         outputBuffer = winDetectMove.loop(inputBuffer, this)
       })
 
-      const inputBatch = events => inputBuffer.push(events)
+      const inputBatch = events => inputBuffer.push(_.cloneDeep(events))
       const outputBatch = () => outputBuffer.pop()
 
       const metadataBuilderByKind = kind => {
