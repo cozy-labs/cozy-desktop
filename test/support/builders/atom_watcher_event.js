@@ -1,18 +1,18 @@
 /* @flow */
 
-const fs = require('fs')
 const _ = require('lodash')
 const path = require('path')
 
 const metadata = require('../../../core/metadata')
 const events = require('../../../core/local/steps/event')
 
+const statsBuilder = require('./stats')
+
 /*::
 import type { Stats } from 'fs'
 import type { AtomWatcherEvent, EventAction, EventKind, Batch } from '../../../core/local/steps/event'
+import type { StatsBuilder } from './stats'
 */
-
-const NON_EXECUTABLE_MASK = 0 << 6
 
 function randomPick /*:: <T> */ (elements /*: Array<T> */) /*: T */{
   const l = elements.length
@@ -20,30 +20,10 @@ function randomPick /*:: <T> */ (elements /*: Array<T> */) /*: T */{
   return elements[i]
 }
 
-function buildStats (kind /*: EventKind */) /*: fs.Stats */ {
-  let baseStats /*: fs.Stats */
-  if (kind === 'file') {
-    baseStats = fs.statSync(__filename)
-  } else {
-    baseStats = fs.statSync(__dirname)
-  }
-
-  return _.defaults(
-    {
-      atime: new Date(),
-      mtime: new Date(),
-      ctime: new Date(),
-      birthtime: new Date(),
-      mode: baseStats.mode & NON_EXECUTABLE_MASK,
-      size: 0
-    },
-    _.omit(baseStats, ['executable'])
-  )
-}
-
 module.exports = class AtomWatcherEventBuilder {
   /*::
   _event: AtomWatcherEvent
+  _statsBuilder: ?StatsBuilder
   */
 
   constructor (old /*: ?AtomWatcherEvent */) {
@@ -51,18 +31,28 @@ module.exports = class AtomWatcherEventBuilder {
       this._event = _.cloneDeep(old)
     } else {
       const kind = randomPick(events.KINDS)
-      const stats = buildStats(kind)
       this._event = {
         action: randomPick(events.ACTIONS),
         kind,
         path: '/',
-        _id: '/',
-        stats
+        _id: '/'
       }
     }
+    this._ensureStatsBuilder()
+  }
+
+  _ensureStatsBuilder () /*: StatsBuilder */ {
+    this._statsBuilder = this._statsBuilder ||
+      statsBuilder
+        .fromStats(this._event.stats)
+        .kind(this._event.kind)
+    return this._statsBuilder
   }
 
   build () /*: AtomWatcherEvent */ {
+    if (this._statsBuilder) {
+      this._event.stats = this._statsBuilder.build()
+    }
     return this._event
   }
 
@@ -76,6 +66,7 @@ module.exports = class AtomWatcherEventBuilder {
 
   kind (newKind /*: EventKind */) /*: this */ {
     this._event.kind = newKind
+    if (this._statsBuilder) this._statsBuilder.kind(newKind)
     return this
   }
 
@@ -96,13 +87,13 @@ module.exports = class AtomWatcherEventBuilder {
   }
 
   ino (newIno /*: number */) /*: this */ {
-    if (this._event.stats == null) this._event.stats = buildStats(this._event.kind)
-    this._event.stats.ino = newIno
+    this._ensureStatsBuilder().ino(newIno)
     return this
   }
 
   noStats () /*: this */ {
     delete this._event.stats
+    delete this._statsBuilder
     return this
   }
 
