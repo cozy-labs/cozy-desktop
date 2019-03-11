@@ -1,7 +1,7 @@
 /* @flow */
 
 /*::
-import type { Stats } from 'fs'
+import type { Stats } from '../stater'
 
 export type EventAction =
   | 'created'
