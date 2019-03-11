@@ -39,6 +39,10 @@ async function mergeSideEffects ({merge, pouch} /*: * */, mergeCall /*: () => Pr
     // which makes them hard to compare.
     delete doc._rev
 
+    // Don't include fileids in assertions: they are specific to Windows and
+    // not really useful at the Merge level.
+    delete doc.fileid
+
     return doc
   })
 
@@ -173,7 +177,7 @@ describe('Merge', function () {
                 tags: ['bar', 'baz'],
                 sides: { [this.side]: 3, [otherSide(this.side)]: 2 }
               },
-              _.omit(file, ['_rev'])
+              _.omit(file, ['_rev', 'fileid'])
             )
           ],
           resolvedConflicts: []
@@ -312,7 +316,7 @@ describe('Merge', function () {
                 sides: { local: 2 }
               },
               _.pick(offUpdate, ['md5sum', 'size', 'updated_at']),
-              _.omit(initialFile, ['_rev', 'remote']) // FIXME: Compare _revs, stop mixing undefined and missing remote
+              _.omit(initialFile, ['_rev', 'fileid', 'remote']) // FIXME: Compare _revs, stop mixing undefined and missing remote
             )
           ],
           resolvedConflicts: []
@@ -355,7 +359,7 @@ describe('Merge', function () {
                 sides: { [this.side]: 4 }
               },
               _.pick(secondUpdate, ['md5sum', 'size', 'updated_at']),
-              _.omit(firstUpdate, ['_rev']) // TODO: Compare _revs
+              _.omit(firstUpdate, ['_rev', 'fileid']) // TODO: Compare _revs
             )
           ],
           resolvedConflicts: []
@@ -486,7 +490,7 @@ describe('Merge', function () {
               sides: { [this.side]: 3, remote: 2 }
             },
             _.pick(doc, ['tags', 'updated_at']),
-            _.omit(file, ['_rev']) // TODO: Compare _revs
+            _.omit(file, ['_rev', 'fileid']) // TODO: Compare _revs
           )
         ],
         resolvedConflicts: []
@@ -511,7 +515,7 @@ describe('Merge', function () {
               sides: { [this.side]: 3, remote: 2 }
             },
             _.pick(doc, ['md5sum', 'size', 'tags', 'updated_at']),
-            _.omit(file, ['_rev']) // TODO: Compare _revs
+            _.omit(file, ['_rev', 'fileid']) // TODO: Compare _revs
           )
         ],
         resolvedConflicts: []
@@ -569,7 +573,7 @@ describe('Merge', function () {
               sides: { local: 4 }
             },
             // TODO: Compare _revs
-            _.omit(mergedLocalUpdate, ['_rev', 'remote']) // We're dissociating the local doc from the remote doc
+            _.omit(mergedLocalUpdate, ['_rev', 'fileid', 'remote']) // We're dissociating the local doc from the remote doc
           )
         ],
         resolvedConflicts: [
@@ -908,7 +912,7 @@ describe('Merge', function () {
       )
       should(sideEffects).deepEqual({
         savedDocs: [
-          _.omit(movedSrc, ['_rev']), // TODO: Compare _revs
+          _.omit(movedSrc, ['_rev', 'fileid']), // TODO: Compare _revs
           _.defaults(
             {
               sides: { [this.side]: 1 },
@@ -1359,7 +1363,7 @@ describe('Merge', function () {
       )
       should(sideEffects).deepEqual({
         savedDocs: [
-          _.omit(movedSrc, ['_rev']), // TODO: Compare _revs
+          _.omit(movedSrc, ['_rev', 'fileid']), // TODO: Compare _revs
           _.defaults(
             {
               sides: { [this.side]: 1 },
