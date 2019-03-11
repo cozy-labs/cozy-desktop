@@ -7,6 +7,7 @@ const metadata = require('../../../../core/metadata')
 const timestamp = require('../../../../core/timestamp')
 
 const dbBuilders = require('../db')
+const statsBuilder = require('../stats')
 
 /*::
 import type fs from 'fs-extra'
@@ -111,6 +112,9 @@ module.exports = class BaseMetadataBuilder {
   }
 
   ino (ino /*: number */) /*: this */ {
+    if (process.platform === 'win32') {
+      this.doc.fileid = statsBuilder.fileIdFromNumber(ino)
+    }
     this.doc.ino = ino
     return this
   }
