@@ -8,6 +8,8 @@ const Promise = require('bluebird')
 const watcher = require('@atom/watcher')
 
 const logger = require('../../logger')
+const stater = require('../stater')
+
 const log = logger({
   component: 'atom/LinuxProducer'
 })
@@ -97,7 +99,7 @@ module.exports = class LinuxProducer /*:: implements Producer */ {
     log.trace({path: relPath}, `Scanned ${entries.length} item(s) in dir`)
     this.buffer.push(entries)
     for (const entry of entries) {
-      if (entry.stats && entry.stats.isDirectory()) {
+      if (entry.stats && stater.isDirectory(entry.stats)) {
         await this.scan(entry.path)
       }
     }
