@@ -127,6 +127,10 @@ class ContextDir {
     await this.chmod(target, mode) // Post-creation so it ignores umask
   }
 
+  async ensureFile (target /*: string | {path: string} */) {
+    return this.outputFile(target, '')
+  }
+
   async outputFile (target /*: string | {path: string} */, data /*: string|Buffer */) {
     return fse.outputFile(this.abspath(target), data)
   }

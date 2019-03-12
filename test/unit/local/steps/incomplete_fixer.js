@@ -6,41 +6,54 @@ const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
 
+const Builders = require('../../../support/builders')
+const { ContextDir } = require('../../../support/helpers/context_dir')
+const configHelpers = require('../../../support/helpers/config')
+
 const metadata = require('../../../../core/metadata')
 const stater = require('../../../../core/local/stater')
 const Buffer = require('../../../../core/local/steps/buffer')
 const incompleteFixer = require('../../../../core/local/steps/incomplete_fixer')
 
-const Builders = require('../../../support/builders')
-const { ContextDir } = require('../../../support/helpers/context_dir')
-
-const syncPath = __dirname
-const syncDir = new ContextDir(syncPath)
 const CHECKSUM = 'checksum'
 const checksumer = {
   push: sinon.stub().resolves(CHECKSUM),
   kill: sinon.stub()
 }
-const builders = new Builders()
 
 const completedEvent = event =>
   _.omit(event, ['stats', 'incompleteFixer'])
 const completionChanges = events => events.map(completedEvent)
 
 describe('core/local/steps/incomplete_fixer', () => {
+  let syncDir
+  let builders
+
+  before('create config', configHelpers.createConfig)
+  before('create helpers', function () {
+    syncDir = new ContextDir(this.syncPath)
+    builders = new Builders()
+  })
+  after('cleanup config', configHelpers.cleanConfig)
+
   describe('.loop()', () => {
-    it('pushes the result of step() into the output buffer', async () => {
+    it('pushes the result of step() into the output buffer', async function () {
+      const { syncPath } = this
+
+      const src = 'missing'
+      const dst = path.basename(__filename)
+      await syncDir.ensureFile(dst)
       const createdEvent = builders.event()
         .kind('file')
         .action('created')
-        .path('missing')
+        .path(src)
         .incomplete()
         .build()
       const renamedEvent = builders.event()
         .kind(createdEvent.kind)
         .action('renamed')
-        .oldPath(createdEvent.path)
-        .path(path.basename(__filename))
+        .oldPath(src)
+        .path(dst)
         .build()
       const inputBuffer = new Buffer()
       const outputBuffer = incompleteFixer.loop(inputBuffer, {syncPath, checksumer})
@@ -62,6 +75,8 @@ describe('core/local/steps/incomplete_fixer', () => {
   describe('.step()', () => {
     context('without any complete "renamed" event', () => {
       it('drops incomplete events', async function () {
+        const { syncPath } = this
+
         const inputBatch = [
           builders.event().incomplete().action('created').path('foo1').build(),
           builders.event().incomplete().action('modified').path('foo2').build(),
@@ -75,11 +90,16 @@ describe('core/local/steps/incomplete_fixer', () => {
       })
     })
 
-    context('with a complete "renamed" event in a later batch', () => {
+    context('with a complete "renamed" event', () => {
       it('leaves complete events untouched', async function () {
+        const { syncPath } = this
+
+        const src = 'file'
+        const dst = 'foo'
+        await syncDir.ensureFile(dst)
         const inputBatch = [
-          builders.event().action('created').path('file').build(),
-          builders.event().action('renamed').oldPath('file').path('foo').build()
+          builders.event().action('created').path(src).build(),
+          builders.event().action('renamed').oldPath(src).path(dst).build()
         ]
         const incompletes = []
 
@@ -88,6 +108,16 @@ describe('core/local/steps/incomplete_fixer', () => {
       })
 
       it('rebuilds the first incomplete event matching the "renamed" event old path', async function () {
+        const { syncPath } = this
+
+        await syncDir.makeTree([
+          'dst/',
+          'dst/foo',
+          'dst/foo1',
+          'dst/foo2',
+          'dst/foo3',
+          'dst/foo5'
+        ])
         const incompleteEvents = [
           builders.event().incomplete().kind('file').action('created').path('src/foo1').build(),
           builders.event().incomplete().kind('file').action('modified').path('src/foo2').build(),
@@ -98,16 +128,6 @@ describe('core/local/steps/incomplete_fixer', () => {
         const renamedEvent = builders.event().kind('directory').action('renamed').oldPath('src').path('dst').build()
         const incompletes = []
         const outputBatches = []
-
-        // Create actual files in `dst/` since their parent folder has been moved
-        await syncDir.makeTree([
-          'dst/',
-          'dst/foo',
-          'dst/foo1',
-          'dst/foo2',
-          'dst/foo3',
-          'dst/foo5'
-        ])
 
         for (const inputBatch of [incompleteEvents, [renamedEvent]]) {
           const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
@@ -131,17 +151,22 @@ describe('core/local/steps/incomplete_fixer', () => {
       })
 
       it('replaces the completing event if its path is the same as the rebuilt one', async function () {
+        const { syncPath } = this
+
+        const src = 'missing'
+        const dst = path.basename(__filename)
+        await syncDir.ensureFile(dst)
         const createdEvent = builders.event()
           .kind('file')
           .action('created')
-          .path('missing')
+          .path(src)
           .incomplete()
           .build()
         const renamedEvent = builders.event()
           .kind(createdEvent.kind)
           .action('renamed')
-          .oldPath(createdEvent.path)
-          .path(path.basename(__filename))
+          .oldPath(src)
+          .path(dst)
           .build()
         const inputBatch = [createdEvent, renamedEvent]
         const incompletes = []
@@ -161,7 +186,9 @@ describe('core/local/steps/incomplete_fixer', () => {
     })
 
     describe('file renamed then deleted', () => {
-      it('is deleted at its original path', async () => {
+      it('is deleted at its original path', async function () {
+        const { syncPath } = this
+
         const src = 'src'
         const dst = 'dst'
         const renamedEvent = builders.event()
@@ -204,10 +231,13 @@ describe('core/local/steps/incomplete_fixer', () => {
     })
 
     describe('file renamed twice', () => {
-      it('is renamed once as a whole', async () => {
+      it('is renamed once as a whole', async function () {
+        const { syncPath } = this
+
         const src = 'src'
         const dst1 = 'dst1'
         const dst2 = path.basename(__filename)
+        await syncDir.ensureFile(dst2)
         const firstRenamedEvent = builders.event()
           .kind('file')
           .action('renamed')
@@ -223,9 +253,6 @@ describe('core/local/steps/incomplete_fixer', () => {
           .build()
         const incompletes = []
         const outputBatches = []
-        const md5sum = 'whatever'
-
-        checksumer.push.resolves(md5sum)
 
         for (const inputBatch of [[firstRenamedEvent], [secondRenamedEvent]]) {
           const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
@@ -243,12 +270,47 @@ describe('core/local/steps/incomplete_fixer', () => {
                 completingEvent: secondRenamedEvent
               },
               kind: 'file',
-              md5sum,
+              md5sum: CHECKSUM,
               oldPath: src,
               path: dst2,
               stats: await stater.stat(path.join(syncPath, dst2))
             }
           ]
+        ])
+      })
+    })
+
+    describe('file renamed and then renamed back to its previous name', () => {
+      it('results in no events at all', async function () {
+        const { syncPath } = this
+
+        const src = 'src'
+        const dst = 'dst'
+        await syncDir.ensureFile(src)
+        const firstRenamedEvent = builders.event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(src)
+          .path(dst)
+          .incomplete()
+          .build()
+        const secondRenamedEvent = builders.event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(dst)
+          .path(src)
+          .build()
+        const incompletes = []
+        const outputBatches = []
+
+        for (const inputBatch of [[firstRenamedEvent], [secondRenamedEvent]]) {
+          const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
+          outputBatches.push(outputBatch)
+        }
+
+        should(outputBatches).deepEqual([
+          [],
+          []
         ])
       })
     })
