@@ -17,8 +17,6 @@ const log = logger({
 //      good value, it is not something that was computed)
 const DELAY = 3000
 
-// TODO add unit tests and logs
-
 /*::
 import type Buffer from './buffer'
 import type { AtomWatcherEvent, Batch } from './event'
@@ -33,6 +31,10 @@ type IncompleteFixerOptions = {
   syncPath: string,
   checksumer: Checksumer
 }
+
+type Completion =
+  | { ignored: false, rebuilt: AtomWatcherEvent }
+  | { ignored: true }
 */
 
 module.exports = {
@@ -40,72 +42,86 @@ module.exports = {
   step
 }
 
-function wasRenamedSuccessively (previousIncomplete /*: IncompleteItem */, nextEvent /*: AtomWatcherEvent */) /*: boolean %checks */ {
+function wasRenamedSuccessively (previousEvent /*: AtomWatcherEvent */, nextEvent /*: AtomWatcherEvent */) /*: boolean %checks */ {
   return (
     nextEvent.oldPath != null &&
-    (previousIncomplete.event.path + path.sep).startsWith(nextEvent.oldPath + path.sep)
+    (previousEvent.path + path.sep).startsWith(nextEvent.oldPath + path.sep)
   )
 }
 
-function itemDestinationWasDeleted (item /*: IncompleteItem */, event /*: AtomWatcherEvent */) /*: boolean %checks */ {
+function itemDestinationWasDeleted (previousEvent /*: AtomWatcherEvent */, nextEvent /*: AtomWatcherEvent */) /*: boolean %checks */ {
   return !!(
-    event.action === 'deleted' &&
-    item.event.oldPath &&
-    (item.event.path + path.sep).startsWith(event.path + path.sep)
+    nextEvent.action === 'deleted' &&
+    previousEvent.oldPath &&
+    (previousEvent.path + path.sep).startsWith(nextEvent.path + path.sep)
   )
 }
 
-async function rebuildIncompleteEvent (item /*: IncompleteItem */, event /*: AtomWatcherEvent */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Promise<?AtomWatcherEvent> */ {
-  // $FlowFixMe: Renamed events always have an oldPath
-  const p = item.event.path.replace(event.oldPath, event.path)
-  const absPath = path.join(opts.syncPath, p)
+function completeEventPaths (previousEvent /*: AtomWatcherEvent */, nextEvent /*: AtomWatcherEvent */) /*: { path: string, oldPath?: string } */ {
+  // $FlowFixMe: `renamed` events always have oldPath
+  const path = previousEvent.path.replace(nextEvent.oldPath, nextEvent.path)
+
+  if (previousEvent.oldPath) {
+    return {
+      path,
+      oldPath: path === nextEvent.path
+        ? previousEvent.oldPath
+        // $FlowFixMe: `renamed` events always have oldPath
+        : previousEvent.oldPath.replace(nextEvent.oldPath, nextEvent.path)
+    }
+  } else {
+    return { path }
+  }
+}
+
+async function rebuildIncompleteEvent (previousEvent /*: AtomWatcherEvent */, nextEvent /*: AtomWatcherEvent */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Promise<Completion> */ {
+  const { path: relPath, oldPath } = completeEventPaths(previousEvent, nextEvent)
+
+  if (relPath === oldPath) {
+    return { ignored: true }
+  }
+
+  const absPath = path.join(opts.syncPath, relPath)
   const stats = await stater.stat(absPath)
   const kind = stater.kind(stats)
-  let md5sum
-  if (kind === 'file') {
-    md5sum = await opts.checksumer.push(absPath)
-  }
-
-  let oldPath
-  if (item.event.oldPath) {
-    oldPath = p === event.path
-      ? item.event.oldPath
-      // $FlowFixMe: Renamed events always have an oldPath
-      : item.event.oldPath.replace(event.oldPath, event.path)
-  }
-
-  if (p === oldPath) {
-    return null
-  }
+  const md5sum = kind === 'file'
+    ? await opts.checksumer.push(absPath)
+    : undefined
 
   return {
-    [STEP_NAME]: {
-      incompleteEvent: item.event,
-      completingEvent: event
-    },
-    action: item.event.action,
-    oldPath,
-    path: p,
-    _id: metadata.id(p),
-    kind,
-    stats,
-    md5sum
+    ignored: false,
+    rebuilt: {
+      [STEP_NAME]: {
+        incompleteEvent: previousEvent,
+        completingEvent: nextEvent
+      },
+      action: previousEvent.action,
+      oldPath,
+      path: relPath,
+      _id: metadata.id(relPath),
+      kind,
+      stats,
+      md5sum
+    }
   }
 }
 
-function buildDeletedFromRenamed (item /*: IncompleteItem */, event /*: AtomWatcherEvent */) /*: AtomWatcherEvent */ {
-  const { oldPath, kind } = item.event
+function buildDeletedFromRenamed (previousEvent /*: AtomWatcherEvent */, nextEvent /*: AtomWatcherEvent */) /*: Completion */ {
+  const { oldPath, kind } = previousEvent
   return {
-    [STEP_NAME]: {
-      incompleteEvent: item.event,
-      completingEvent: event
-    },
-    action: event.action,
-    // $FlowFixMe: renamed events always have an oldPath
-    path: oldPath,
-    // $FlowFixMe: renamed events always have an oldPath
-    _id: metadata.id(oldPath),
-    kind
+    ignored: false,
+    rebuilt: {
+      [STEP_NAME]: {
+        incompleteEvent: previousEvent,
+        completingEvent: nextEvent
+      },
+      action: nextEvent.action,
+      // $FlowFixMe: renamed events always have an oldPath
+      path: oldPath,
+      // $FlowFixMe: renamed events always have an oldPath
+      _id: metadata.id(oldPath),
+      kind
+    }
   }
 }
 
@@ -154,23 +170,15 @@ function step (incompletes /*: IncompleteItem[] */, opts /*: IncompleteFixerOpti
         }
 
         try {
-          let rebuilt
-          if (wasRenamedSuccessively(item, event)) {
-            // We have a match, try to rebuild the incomplete event
-            rebuilt = await rebuildIncompleteEvent(item, event, opts)
-          } else if (itemDestinationWasDeleted(item, event)) {
-            // We have a match, try to replace the incomplete event
-            rebuilt = buildDeletedFromRenamed(item, event)
-          } else {
+          const completion = await detectCompletion(item.event, event, opts)
+          if (!completion) {
             continue
-          }
-
-          incompletes.splice(i, 1)
-
-          if (!rebuilt) {
+          } else if (completion.ignored) {
             batch.splice(batch.indexOf(event), 1)
             break
           }
+
+          const { rebuilt } = completion
           log.debug({path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
 
           if (rebuilt.path === event.path) {
@@ -178,6 +186,9 @@ function step (incompletes /*: IncompleteItem[] */, opts /*: IncompleteFixerOpti
           } else {
             batch.push(rebuilt)
           }
+
+          incompletes.splice(i, 1)
+
           break
         } catch (err) {
           log.error({err, event, item}, 'Error while rebuilding incomplete event')
@@ -187,5 +198,15 @@ function step (incompletes /*: IncompleteItem[] */, opts /*: IncompleteFixerOpti
     }
 
     return batch
+  }
+}
+
+async function detectCompletion (previousEvent /*: AtomWatcherEvent */, nextEvent /*: AtomWatcherEvent */, opts /*: IncompleteFixerOptions */) /*: Promise<?Completion> */ {
+  if (wasRenamedSuccessively(previousEvent, nextEvent)) {
+    // We have a match, try to rebuild the incomplete event
+    return rebuildIncompleteEvent(previousEvent, nextEvent, opts)
+  } else if (itemDestinationWasDeleted(previousEvent, nextEvent)) {
+    // We have a match, try to replace the incomplete event
+    return buildDeletedFromRenamed(previousEvent, nextEvent)
   }
 }
