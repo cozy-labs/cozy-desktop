@@ -84,7 +84,7 @@ describe('Re-Upload files when the stack report them as broken', () => {
     should(helpers.local.syncDir.existsSync(fileName)).be.false()
   })
 
-  it('If the metadata in pouchdb are ok, fix once', async () => {
+  it.skip('If the metadata in pouchdb are ok, fix once', async () => {
     // HACK: to get in the same state than if this desktop had uploaded a file which got corrupted
     const fileName = 'file-corrupted-fixable'
 
