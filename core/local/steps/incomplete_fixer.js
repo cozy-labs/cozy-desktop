@@ -82,28 +82,29 @@ async function rebuildIncompleteEvent (previousEvent /*: AtomWatcherEvent */, ne
   }
 
   const absPath = path.join(opts.syncPath, relPath)
-  const stats = await stater.stat(absPath)
-  const kind = stater.kind(stats)
-  const md5sum = kind === 'file'
+  const stats = await stater.statMaybe(absPath)
+  const incomplete = stats == null
+  const kind = stats ? stater.kind(stats) : previousEvent.kind
+  const md5sum = stats && kind === 'file'
     ? await opts.checksumer.push(absPath)
     : undefined
 
-  return {
-    ignored: false,
-    rebuilt: {
-      [STEP_NAME]: {
-        incompleteEvent: previousEvent,
-        completingEvent: nextEvent
-      },
-      action: previousEvent.action,
-      oldPath,
-      path: relPath,
-      _id: metadata.id(relPath),
-      kind,
-      stats,
-      md5sum
-    }
+  const rebuilt /*: AtomWatcherEvent */ = {
+    [STEP_NAME]: {
+      incompleteEvent: previousEvent,
+      completingEvent: nextEvent
+    },
+    action: previousEvent.action,
+    path: relPath,
+    _id: metadata.id(relPath),
+    kind,
+    md5sum
   }
+  if (oldPath) rebuilt.oldPath = oldPath
+  if (stats) rebuilt.stats = stats
+  if (incomplete) rebuilt.incomplete = incomplete
+
+  return { rebuilt, ignored: false }
 }
 
 function buildDeletedFromRenamed (previousEvent /*: AtomWatcherEvent */, nextEvent /*: AtomWatcherEvent */) /*: Completion */ {
@@ -140,20 +141,22 @@ function loop (buffer /*: Buffer */, opts /*: IncompleteFixerOptions */) /*: Buf
 
 function step (incompletes /*: IncompleteItem[] */, opts /*: IncompleteFixerOptions */) {
   return async (events /*: Batch */) /*: Promise<Batch> */ => {
-    // Filter out the incomplete events
     const batch = []
+
+    // Filter incomplete events
     for (const event of events) {
       if (event.incomplete) {
         log.debug({path: event.path, action: event.action}, 'incomplete')
         incompletes.push({ event, timestamp: Date.now() })
-        continue
       }
-      batch.push(event)
     }
 
-    // Let's see if we can match an incomplete event with this renamed event
-    for (const event of batch) {
+    // Let's see if we can match an incomplete event with a renamed or deleted event
+    for (const event of events) {
       if (incompletes.length === 0 || !['renamed', 'deleted'].includes(event.action)) {
+        if (!event.incomplete) {
+          batch.push(event)
+        }
         continue
       }
 
@@ -172,23 +175,27 @@ function step (incompletes /*: IncompleteItem[] */, opts /*: IncompleteFixerOpti
         try {
           const completion = await detectCompletion(item.event, event, opts)
           if (!completion) {
+            if (!event.incomplete) {
+              batch.push(event)
+            }
             continue
           } else if (completion.ignored) {
-            batch.splice(batch.indexOf(event), 1)
             break
           }
 
           const { rebuilt } = completion
           log.debug({path: rebuilt.path, action: rebuilt.action}, 'rebuilt event')
 
-          if (rebuilt.path === event.path) {
-            batch.splice(batch.indexOf(event), 1, rebuilt)
-          } else {
-            batch.push(rebuilt)
+          if (rebuilt.incomplete) {
+            incompletes.splice(i, 1, { event: rebuilt, timestamp: Date.now() })
+            continue
           }
 
+          if (rebuilt.path.startsWith(event.path + path.sep)) {
+            batch.push(event) // Could we be pushing it multiple times?
+          }
+          batch.push(rebuilt)
           incompletes.splice(i, 1)
-
           break
         } catch (err) {
           log.error({err, event, item}, 'Error while rebuilding incomplete event')
