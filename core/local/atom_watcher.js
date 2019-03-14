@@ -6,8 +6,7 @@ const _ = require('lodash')
 const checksumer = require('./checksumer')
 const logger = require('../logger')
 
-const LinuxProducer = require('./steps/linux_producer')
-const WinProducer = require('./steps/win_producer')
+const Producer = require('./steps/producer')
 const addInfos = require('./steps/add_infos')
 const filterIgnored = require('./steps/filter_ignored')
 const winDetectMove = require('./steps/win_detect_move')
@@ -25,10 +24,7 @@ import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
 import type { AtomEventsDispatcher } from './steps/dispatch'
-import type {
-  Producer,
-  Scanner
-} from './steps/producer'
+import type { Scanner } from './steps/producer'
 
 type AtomWatcherOptions = {
   syncPath: string,
@@ -65,10 +61,8 @@ const steps =
 
 /** The producer for the current platform. */
 const producer = opts => {
-  if (process.platform === 'linux') {
-    return new LinuxProducer(opts)
-  } else if (process.platform === 'win32') {
-    return new WinProducer(opts)
+  if (['linux', 'win32'].includes(process.platform)) {
+    return new Producer(opts)
   } else {
     throw new Error('The atom watcher is not available on this platform')
   }
