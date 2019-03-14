@@ -22,7 +22,7 @@ const checksumer = {
 }
 
 const completedEvent = event =>
-  _.omit(event, ['stats', 'incompleteFixer'])
+  _.omit(event, ['incompleteFixer'])
 const completionChanges = events => events.map(completedEvent)
 
 describe('core/local/steps/incomplete_fixer', () => {
@@ -65,7 +65,7 @@ describe('core/local/steps/incomplete_fixer', () => {
         await outputBuffer.pop()
       ).deepEqual(
         await incompleteFixer.step(
-          [{ event: createdEvent, timestamp: (new Date()) }],
+          [{ event: createdEvent, timestamp: Date.now() }],
           {syncPath, checksumer}
         )([renamedEvent])
       )
@@ -140,11 +140,11 @@ describe('core/local/steps/incomplete_fixer', () => {
             completedEvent(renamedEvent),
             {
               _id: metadata.id(path.normalize('dst/foo1')),
-              oldPath: undefined,
               path: path.normalize('dst/foo1'),
               kind: 'file',
               action: 'created',
-              md5sum: CHECKSUM
+              md5sum: CHECKSUM,
+              stats: await stater.stat(path.join(syncPath, 'dst/foo1'))
             }
           ]
         ])
@@ -173,14 +173,14 @@ describe('core/local/steps/incomplete_fixer', () => {
 
         const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
         should(completionChanges(outputBatch)).deepEqual([
-          _.defaults(
-            {
-              md5sum: CHECKSUM,
-              oldPath: undefined
-            },
-            _.pick(renamedEvent, ['_id', 'path']),
-            _.omit(createdEvent, ['incomplete'])
-          )
+          {
+            _id: renamedEvent._id,
+            path: renamedEvent.path,
+            md5sum: CHECKSUM,
+            stats: await stater.stat(path.join(syncPath, renamedEvent.path)),
+            action: createdEvent.action,
+            kind: createdEvent.kind
+          }
         ])
       })
     })
@@ -214,7 +214,6 @@ describe('core/local/steps/incomplete_fixer', () => {
         should(outputBatches).deepEqual([
           [],
           [
-            deletedEvent, // OPTIMIZE: Drop useless event
             {
               _id: metadata.id(src),
               action: 'deleted',
@@ -274,6 +273,61 @@ describe('core/local/steps/incomplete_fixer', () => {
               oldPath: src,
               path: dst2,
               stats: await stater.stat(path.join(syncPath, dst2))
+            }
+          ]
+        ])
+      })
+    })
+
+    describe('file renamed three times', () => {
+      it('is renamed once as a whole', async function () {
+        const { syncPath } = this
+
+        const src = 'src'
+        const dst1 = 'dst1'
+        const dst2 = 'dst2'
+        const dst3 = path.basename(__filename)
+        await syncDir.ensureFile(dst3)
+        const firstRenamedEvent = builders.event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(src)
+          .path(dst1)
+          .incomplete()
+          .build()
+        const secondRenamedEvent = builders.event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(dst1)
+          .path(dst2)
+          .incomplete()
+          .build()
+        const thirdRenamedEvent = builders.event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(dst2)
+          .path(dst3)
+          .build()
+        const incompletes = []
+        const outputBatches = []
+
+        for (const inputBatch of [[firstRenamedEvent], [secondRenamedEvent], [thirdRenamedEvent]]) {
+          const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})(inputBatch)
+          outputBatches.push(completionChanges(outputBatch))
+        }
+
+        should(outputBatches).deepEqual([
+          [],
+          [],
+          [
+            {
+              _id: metadata.id(dst3),
+              action: 'renamed',
+              kind: 'file',
+              md5sum: CHECKSUM,
+              oldPath: src,
+              path: dst3,
+              stats: await stater.stat(path.join(syncPath, dst3))
             }
           ]
         ])
