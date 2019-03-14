@@ -65,7 +65,7 @@ describe('core/local/steps/incomplete_fixer', () => {
         await outputBuffer.pop()
       ).deepEqual(
         await incompleteFixer.step(
-          [{ event: createdEvent, timestamp: (new Date()) }],
+          [{ event: createdEvent, timestamp: Date.now() }],
           {syncPath, checksumer}
         )([renamedEvent])
       )
