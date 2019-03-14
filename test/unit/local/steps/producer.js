@@ -6,18 +6,18 @@ const os = require('os')
 const fs = require('fs')
 const fse = require('fs-extra')
 const path = require('path')
-const { onPlatform } = require('../../../support/helpers/platform')
-const LinuxProducer = require('../../../../core/local/steps/linux_producer')
+const { onPlatforms } = require('../../../support/helpers/platform')
+const Producer = require('../../../../core/local/steps/producer')
 
-onPlatform('linux', () => {
-  describe('core/local/steps/linux_producer', () => {
+onPlatforms(['linux', 'win32'], () => {
+  describe('core/local/steps/producer', () => {
     describe('API of the producer', () => {
       let syncPath
       let producer
 
       beforeEach(() => {
         syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'foo-'))
-        producer = new LinuxProducer({
+        producer = new Producer({
           syncPath
         })
       })
@@ -74,7 +74,7 @@ onPlatform('linux', () => {
           ).eql([
             {
               action: 'scan',
-              kind: 'unknown',
+              kind: 'directory',
               path: originalPath
             }
           ])
@@ -88,7 +88,7 @@ onPlatform('linux', () => {
 
       before(async () => {
         syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'foo-'))
-        producer = new LinuxProducer({
+        producer = new Producer({
           syncPath
         })
         await producer.start()
