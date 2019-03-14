@@ -35,8 +35,6 @@ describe('Sync', function () {
       this.local.stop = sinon.stub().resolves()
       this.remote.start = sinon.stub().returns(ret)
       this.remote.stop = sinon.stub().resolves()
-      this.remote.remoteCozy = {}
-      this.remote.remoteCozy.fetchFileCorruptions = sinon.stub().resolves([])
       this.sync.sync = sinon.stub().rejects(new Error('stopped'))
     })
 
