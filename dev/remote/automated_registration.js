@@ -49,7 +49,9 @@ function automatedRegistration (cozyUrl /*: string */, passphrase /*: string */,
               if (err) { reject(err) }
 
               if (!res.headers.location) {
-                err = new Error('No redirection after authorize')
+                err = new Error(
+                  'Cozy login failed. Please make sure passphrase is correct.'
+                )
                 log.error({body}, err)
                 reject(err)
                 return
