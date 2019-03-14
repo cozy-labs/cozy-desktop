@@ -119,11 +119,6 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  fileid (fileid /*: string */) /*: this */ {
-    this.doc.fileid = fileid
-    return this
-  }
-
   stats ({ino, mtime, ctime} /*: fs.Stats */) /*: this */ {
     return this.ino(ino).updatedAt(timestamp.maxDate(mtime, ctime))
   }
