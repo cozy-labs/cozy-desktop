@@ -26,6 +26,10 @@ export type WinStats = {|
 export type Stats = fs.Stats | WinStats
 */
 
+/** @gyselroth/windows-fsstat errors are strings -_-' */
+const isMissingFileError = err =>
+  err.code === 'ENOENT' || (err.startsWith && err.startsWith('ENOENT'))
+
 module.exports = {
   async stat (filepath /*: string */) {
     if (!winfs) {
@@ -41,6 +45,16 @@ module.exports = {
         reject(err)
       }
     })
+  },
+
+  async statMaybe (absPath /*: string */) /*: Promise<?Stats> */ {
+    try {
+      return await this.stat(absPath)
+    } catch (err) {
+      if (!isMissingFileError(err)) {
+        throw err
+      }
+    }
   },
 
   withStats (filepath /*: string */, callback /*: Callback */) {
