@@ -31,8 +31,8 @@ describe('local/steps/initial_diff', () => {
       should(state).have.property(initialDiff.STEP_NAME, {
         waiting: [],
         byInode: new Map([
-          [foo.ino, { path: foo.path, kind: kind(foo) }],
-          [fizz.ino, { path: fizz.path, kind: kind(fizz) }]
+          [foo.fileid || foo.ino, { path: foo.path, kind: kind(foo) }],
+          [fizz.fileid || fizz.ino, { path: fizz.path, kind: kind(fizz) }]
         ]),
         byPath: new Map()
       })
