@@ -32,6 +32,25 @@ module.exports = {
   loop
 }
 
+async function findDeleted (events, pouch) {
+  const deleted = new Map()
+  for (const event of events) {
+    if (event.action === 'deleted') {
+      const release = await pouch.lock('winMoveDetector')
+      try {
+        const was = await pouch.db.get(id(event.path))
+        deleted.set(was.fileid, event.path)
+      } catch (err) {
+        _.set(event, [STEP_NAME, 'docNotFound'], err.message)
+        if (err.status !== 404) log.error({err, event})
+      } finally {
+        release()
+      }
+    }
+  }
+  return deleted
+}
+
 function sendReadyBatches (waiting /*: PendingBatch[] */, out /*: Buffer */) {
   while (waiting.length > 0) {
     if (waiting[0].deleted.size !== 0) {
@@ -54,21 +73,7 @@ async function winDetectMove (buffer, out, pouch) {
     const events = await buffer.pop()
 
     // First, push the new events in the pending queue
-    const deleted = new Map()
-    for (const event of events) {
-      if (event.action === 'deleted') {
-        const release = await pouch.lock('winMoveDetector')
-        try {
-          const was = await pouch.db.get(id(event.path))
-          deleted.set(was.fileid, event.path)
-        } catch (err) {
-          _.set(event, [STEP_NAME, 'docNotFound'], err.message)
-          if (err.status !== 404) log.error({err, event})
-        } finally {
-          release()
-        }
-      }
-    }
+    const deleted = await findDeleted(events, pouch)
     const timeout = setTimeout(() => {
       out.push(pending.shift().events)
       sendReadyBatches(pending, out)
