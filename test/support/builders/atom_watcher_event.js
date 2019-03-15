@@ -91,6 +91,16 @@ module.exports = class AtomWatcherEventBuilder {
     return this
   }
 
+  mtime (newMtime /*: Date */) /*: this */ {
+    this._ensureStatsBuilder().mtime(newMtime)
+    return this
+  }
+
+  ctime (newCtime /*: Date */) /*: this */ {
+    this._ensureStatsBuilder().ctime(newCtime)
+    return this
+  }
+
   noStats () /*: this */ {
     delete this._event.stats
     delete this._statsBuilder
