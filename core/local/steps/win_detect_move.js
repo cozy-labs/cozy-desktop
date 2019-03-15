@@ -51,6 +51,37 @@ async function findDeleted (events, pouch) {
   return deleted
 }
 
+function aggregateEvents (events, pending) {
+  for (const event of events) {
+    if (event.incomplete) {
+      continue
+    }
+    if (event.action === 'created') {
+      for (let i = 0; i < pending.length; i++) {
+        const path = pending[i].deleted.get(event.stats.fileid)
+        if (!path || path === event.path) {
+          continue
+        }
+        const l = pending[i].events.length
+        for (let j = 0; j < l; j++) {
+          const e = pending[i].events[j]
+          if (e.action === 'deleted' && e.path === path) {
+            _.set(event, [STEP_NAME, 'aggregatedEvents'], {
+              deletedEvent: e,
+              createdEvent: _.clone(event)
+            })
+            event.action = 'renamed'
+            event.oldPath = e.path
+            pending[i].deleted.delete(event.stats.fileid)
+            pending[i].events.splice(j, 1)
+            break
+          }
+        }
+      }
+    }
+  }
+}
+
 function sendReadyBatches (waiting /*: PendingBatch[] */, out /*: Buffer */) {
   while (waiting.length > 0) {
     if (waiting[0].deleted.size !== 0) {
@@ -81,34 +112,7 @@ async function winDetectMove (buffer, out, pouch) {
     pending.push({ events, deleted, timeout })
 
     // Then, see if a created event matches a deleted event
-    for (const event of events) {
-      if (event.incomplete) {
-        continue
-      }
-      if (event.action === 'created') {
-        for (let i = 0; i < pending.length; i++) {
-          const path = pending[i].deleted.get(event.stats.fileid)
-          if (!path || path === event.path) {
-            continue
-          }
-          const l = pending[i].events.length
-          for (let j = 0; j < l; j++) {
-            const e = pending[i].events[j]
-            if (e.action === 'deleted' && e.path === path) {
-              _.set(event, [STEP_NAME, 'aggregatedEvents'], {
-                deletedEvent: e,
-                createdEvent: _.clone(event)
-              })
-              event.action = 'renamed'
-              event.oldPath = e.path
-              pending[i].deleted.delete(event.stats.fileid)
-              pending[i].events.splice(j, 1)
-              break
-            }
-          }
-        }
-      }
-    }
+    aggregateEvents(events, pending)
 
     // Finally, look if some batches can be sent without waiting
     sendReadyBatches(pending, out)
