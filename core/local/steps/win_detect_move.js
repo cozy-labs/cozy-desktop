@@ -32,9 +32,6 @@ module.exports = {
   loop
 }
 
-// TODO add unit tests and logs
-// TODO check that a file/dir created and removed just after is not seen as a move
-
 // On windows, ReadDirectoryChangesW emits a deleted and an added events when
 // a file or directory is moved. This step merges the two events to a single
 // renamed event.
@@ -94,7 +91,6 @@ async function winDetectMove (buffer, out, pouch) {
           for (let j = 0; j < l; j++) {
             const e = pending[i].events[j]
             if (e.action === 'deleted' && e.path === path) {
-              // FIXME: Make up new event with attached old one
               _.set(event, [STEP_NAME, 'aggregatedEvents'], {
                 deletedEvent: e,
                 createdEvent: _.clone(event)
