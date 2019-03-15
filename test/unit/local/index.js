@@ -302,6 +302,60 @@ describe('Local', function () {
       this.local.other = null
       fse.existsSync(filePath).should.be.false()
     })
+
+    describe('when md5sum matches but size does not', () => {
+      const message = 'Invalid size'
+      const corruptData = 'hell'
+      const validData = corruptData + 'o'
+      let doc
+
+      beforeEach('set up doc', () => {
+        doc = builders.metafile().data(corruptData).build()
+        doc.size = validData.length
+      })
+
+      beforeEach('stub #createReadStreamAsync() on the other side', function () {
+        this.local.other = {
+          async createReadStreamAsync (docToStream) {
+            should(docToStream).equal(doc)
+            return builders.stream().push(corruptData).build()
+          }
+        }
+      })
+
+      afterEach('restore #createReadStreamAsync() on the other side', function () {
+        this.local.other = null
+      })
+
+      it('rejects', async function () {
+        await should(this.local.addFileAsync(doc))
+          .be.rejectedWith(message)
+      })
+
+      const addFileRejection = async function () {
+        await this.local.addFileAsync(doc).catch({message}, () => {})
+      }
+
+      describe('existing local file with valid data', () => {
+        beforeEach(() => syncDir.outputFile(doc, validData))
+        afterEach(() => syncDir.unlink(doc))
+        beforeEach(addFileRejection)
+
+        it('is not overridden to prevent valid data loss', async function () {
+          await should(syncDir.readFile(doc))
+            .be.fulfilledWith(validData)
+        })
+      })
+
+      describe('missing local file', () => {
+        beforeEach(addFileRejection)
+
+        it('is not downloaded to prevent confusion', async function () {
+          await should(syncDir.exists(doc))
+            .be.fulfilledWith(false)
+        })
+      })
+    })
   })
 
   describe('addFolder', function () {

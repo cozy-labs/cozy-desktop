@@ -20,7 +20,6 @@ import type { Ignore } from './ignore'
 import type Local from './local'
 import type Pouch from './pouch'
 import type { Remote } from './remote'
-import type { ContentMismatchFsckLog } from './remote/cozy'
 import type { SideName, Metadata } from './metadata'
 import type { Side } from './side' // eslint-disable-line
 */
@@ -89,7 +88,6 @@ class Sync {
   async start (mode /*: SyncMode */) /*: Promise<*> */ {
     this.stopped = false
     await this.pouch.addAllViewsAsync()
-    await this.reuploadContentMismatchFiles()
     let sidePromises = []
     if (mode !== 'pull') {
       await this.local.start()
@@ -493,35 +491,6 @@ class Sync {
     log.info(`${doc.path}: should be trashed by itself`)
     await side.trashAsync(doc)
     return true
-  }
-
-  shouldReuploadCorruptFile (doc/*: Metadata */, corruption /*: ContentMismatchFsckLog */) /*: boolean */{
-    const remoteRev = metadata.extractRevNumber(doc.remote)
-    const reportedRev = metadata.extractRevNumber(corruption.file_doc)
-    const sameSizeAsCorrupted = doc.size === corruption.content_mismatch.size_file
-
-    const result = remoteRev >= reportedRev && !sameSizeAsCorrupted
-    log.info({remoteRev, reportedRev, sameSizeAsCorrupted, result}, 'Should reupload')
-    return result
-  }
-
-  async reuploadContentMismatchFiles () {
-    const fscklogs = await this.remote.remoteCozy.fetchFileCorruptions()
-    log.info({}, `Stack is reporting ${fscklogs.length} corrupted`)
-
-    for (var fscklog of fscklogs) {
-      const doc = await this.pouch.byRemoteIdMaybeAsync(fscklog.file_doc._id)
-      if (doc && this.shouldReuploadCorruptFile(doc, fscklog)) {
-        log.info({doc, fscklog}, `Attempting to reupload`)
-        try {
-          // $FlowFixMe
-          await this.remote.overwriteFileAsync(doc, {remote: fscklog})
-          await this.updateRevs(doc, 'local')
-        } catch (err) {
-          log.error({err, doc, fscklog}, 'Fail to fix file')
-        }
-      }
-    }
   }
 }
 
