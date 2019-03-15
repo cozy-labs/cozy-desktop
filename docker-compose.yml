@@ -2,7 +2,7 @@ version: '2.1'
 services:
   cozy:
     container_name: cozy-desktop-stack
-    build: ./dev/cozy-stack
+    image: cozy/cozy-app-dev:1.2.2
     ports:
       - "8080:8080"
       - "8025:8025"
