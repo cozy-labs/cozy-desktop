@@ -5,8 +5,8 @@ const fse = require('fs-extra')
 const pkg = require('../../package.json')
 const automatedRegistration = require('./automated_registration')
 
-const cozyUrl = chooseCozyUrl(process.env.BUILD_JOB)
-const passphrase = process.env.COZY_PASSPHRASE
+const cozyUrl = chooseCozyUrl(process.env.BUILD_JOB) || 'http://cozy.tools:8080'
+const passphrase = process.env.COZY_PASSPHRASE || 'cozy'
 const storage = new cozy.MemoryStorage()
 
 function chooseCozyUrl (buildJob) {
