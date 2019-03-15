@@ -40,7 +40,9 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
             event.kind === 'file') {
           log.debug({path: event.path, action: event.action}, 'checksum')
           const absPath = path.join(opts.syncPath, event.path)
-          event.md5sum = await opts.checksumer.push(absPath)
+          if (!event.md5sum) {
+            event.md5sum = await opts.checksumer.push(absPath)
+          }
         }
       } catch (err) {
         // Even if the file is no longer at the expected path, we want to
