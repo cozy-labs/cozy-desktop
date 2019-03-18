@@ -72,7 +72,7 @@ module.exports = class AtomWatcherEventBuilder {
 
   path (newPath /*: string */) /*: this */ {
     this._event.path = path.normalize(newPath)
-    this._event._id = metadata.id(newPath)
+    this._event._id = metadata.id(this._event.path)
     return this
   }
 
