@@ -249,6 +249,17 @@ class Pouch {
     return results.rows.map(row => row.doc)
   }
 
+  async byInoMaybeAsync (ino) {
+    let params = {
+      key: ino,
+      include_docs: true
+    }
+    const { rows } = await this.db.query('byIno', params)
+    if (rows.length > 0) {
+      return rows[0].doc
+    }
+  }
+
   /* Views */
 
   // Create all required views in the database
@@ -256,6 +267,7 @@ class Pouch {
     return async.series([
       this.addByPathView,
       this.addByChecksumView,
+      this.addByInoView,
       this.addByRemoteIdView
     ], err => callback(err))
   }
@@ -303,6 +315,18 @@ class Pouch {
         }
       }.toString()
     return this.createDesignDoc('byRemoteId', query, callback)
+  }
+
+  /** Create a view to find file/folder by ino (fileid on Windows) */
+  addByInoView (callback) {
+    /* !pragma no-coverage-next */
+    /* istanbul ignore next */
+    let query =
+      function (doc) {
+        // $FlowFixMe
+        return emit(doc.fileid || doc.ino) // eslint-disable-line no-undef
+      }.toString()
+    return this.createDesignDoc('byIno', query, callback)
   }
 
   // Create or update given design doc
