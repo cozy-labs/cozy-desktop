@@ -99,10 +99,13 @@ actions = {
   },
 
   renamedfile: async (event, {pouch, prep}) => {
-    let old
-    try {
-      old = await fetchOldDoc(pouch, id(event.oldPath))
-    } catch (err) {
+    const old = (
+      await pouch.byIdMaybeAsync(id(event.oldPath)) ||
+      (event.stats &&
+        await pouch.byInoMaybeAsync(event.stats.fileid || event.stats.ino)
+      )
+    )
+    if (!old) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a file is added when the client is
       // stopped, and is moved before it was scanned.
@@ -117,10 +120,13 @@ actions = {
   },
 
   renameddirectory: async (event, {pouch, prep}) => {
-    let old
-    try {
-      old = await fetchOldDoc(pouch, id(event.oldPath))
-    } catch (err) {
+    const old = (
+      await pouch.byIdMaybeAsync(id(event.oldPath)) ||
+      (event.stats &&
+        await pouch.byInoMaybeAsync(event.stats.fileid || event.stats.ino)
+      )
+    )
+    if (!old) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a dir is added when the client is
       // stopped, and is moved before it was scanned.
