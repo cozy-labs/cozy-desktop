@@ -41,6 +41,7 @@ async function findDeleted (events, pouch) {
         const was = await pouch.db.get(id(event.path))
         deleted.set(was.fileid, event.path)
       } catch (err) {
+        console.log('deleted', JSON.stringify(deleted, null, 2))
         _.set(event, [STEP_NAME, 'docNotFound'], err.message)
         event.incomplete = true
         if (err.status !== 404) log.error({err, event})
@@ -103,6 +104,7 @@ async function winDetectMove (buffer, out, pouch) {
   while (true) {
     // Wait for a new batch of events
     const events = await buffer.pop()
+    console.log('winDetectMove input:', JSON.stringify(events, null, 2))
 
     // First, push the new events in the pending queue
     const deleted = await findDeleted(events, pouch)
