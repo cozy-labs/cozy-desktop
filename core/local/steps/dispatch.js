@@ -114,6 +114,10 @@ actions = {
       delete event.oldPath
       return actions.createdfile(event, {prep}, 'File moved, assuming added')
     }
+    if (event.path === old.path) {
+      log.debug({event}, 'Assuming file already moved')
+      return
+    }
     log.info({event}, 'File moved')
     const doc = buildFile(event.path, event.stats, event.md5sum)
     await prep.moveFileAsync(SIDE, doc, old)
@@ -134,6 +138,10 @@ actions = {
       event.action = 'created'
       delete event.oldPath
       return actions.createddirectory(event, {prep}, 'Dir moved, assuming added')
+    }
+    if (event.path === old.path) {
+      log.debug({event}, 'Assuming dir already moved')
+      return
     }
     log.info({event}, 'Dir moved')
     const doc = buildDir(event.path, event.stats)
