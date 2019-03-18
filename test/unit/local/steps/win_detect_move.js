@@ -100,6 +100,44 @@ if (process.platform === 'win32') {
                 }
               ])
             })
+
+            if (kind === 'directory') {
+              describe.skip('+ deleted subdirectory (incomplete)', () => {
+                const subdirIno = srcIno + 1
+                const subdirTmpPath = 'dst/subdir'
+                let deletedSubdirEvent
+
+                beforeEach(async () => {
+                  await builders.metadir().path('src/subdir').ino(subdirIno)
+                    .create()
+                  deletedSubdirEvent = builders.event().action('deleted')
+                    .kind('directory').path(subdirTmpPath).build()
+                  inputBatch([deletedSubdirEvent])
+                })
+
+                describe('+ created subdirectory (different path, same fileid)', () => {
+                  const subdirDstPath = 'subdir-dst2'
+                  let createdDstSubdirEvent
+
+                  beforeEach(() => {
+                    createdDstSubdirEvent = builders.event().action('created')
+                      .kind('directory').path(subdirDstPath).ino(subdirIno)
+                      .build()
+                    inputBatch([createdDstSubdirEvent])
+                  })
+
+                  it.only('FIXME', async () => {
+                    const outputBatches = await Promise.mapSeries(
+                      _.range(3),
+                      outputBatch
+                    )
+                    should(outputBatches).deepEqual([
+                      // TODO
+                    ])
+                  })
+                })
+              })
+            }
           })
 
           describe(`+ created ${kind} (temporary path, incomplete)`, () => {
