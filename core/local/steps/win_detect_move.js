@@ -42,6 +42,7 @@ async function findDeleted (events, pouch) {
         deleted.set(was.fileid, event.path)
       } catch (err) {
         _.set(event, [STEP_NAME, 'docNotFound'], err.message)
+        event.incomplete = true
         if (err.status !== 404) log.error({err, event})
       } finally {
         release()
