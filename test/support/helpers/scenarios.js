@@ -134,11 +134,10 @@ module.exports.loadRemoteChangesFiles = (scenario) => {
   })
 }
 
-const getInoAndFileId = async ({path, fakeIno, trashed, useRealInodes}) => {
+const useFakeIno = async ({stats, fakeIno, trashed, useRealInodes}) => {
   if (trashed || !useRealInodes) {
-    return {ino: fakeIno}
-  } else {
-    return stater.stat(path)
+    stats.ino = fakeIno
+    delete stats.fileid
   }
 }
 
@@ -167,8 +166,11 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
         // await fse.utimes(abspath(localPath), lastModifiedDate, lastModifiedDate)
       }
 
-      const stats = await getInoAndFileId({path: abspath(localPath), fakeIno, trashed, useRealInodes})
+      const stats = await stater.stat(abspath(localPath))
       const lastModifiedDate = timestamp.maxDate(stats.mtime, stats.ctime)
+
+      useFakeIno({stats, fakeIno, trashed, useRealInodes})
+
       const doc = {
         _id: metadata.id(localPath),
         docType: 'folder',
@@ -210,8 +212,11 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
         // await fse.utimes(abspath(localPath), lastModifiedDate, lastModifiedDate)
       }
 
-      const stats = await getInoAndFileId({path: abspath(localPath), fakeIno, trashed, useRealInodes})
+      const stats = await stater.stat(abspath(localPath))
       const lastModifiedDate = timestamp.maxDate(stats.mtime, stats.ctime)
+
+      useFakeIno({stats, fakeIno, trashed, useRealInodes})
+
       const doc = {
         _id: metadata.id(localPath),
         md5sum,
