@@ -130,9 +130,11 @@ class Merge {
       if (doc.ino == null) { doc.ino = file.ino }
       if (doc.fileid == null) { doc.fileid = file.fileid }
       if (metadata.sameFile(file, doc)) {
+        console.log('FILE UP TO DATE')
         log.info({path}, 'up to date')
         return null
       } else {
+        console.log('UPDATING FILE', doc.fileid)
         return this.pouch.put(doc)
       }
     }
@@ -200,7 +202,9 @@ class Merge {
     log.debug({path: doc.path}, 'putFolderAsync')
     const {path} = doc
     const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
+    console.log('BEFORE markSide', JSON.stringify({side, doc, folder}, null, 2))
     metadata.markSide(side, doc, folder)
+    console.log('AFTER markSide', JSON.stringify({side, doc, folder}, null, 2))
     if (folder && folder.docType === 'file') {
       return this.resolveConflictAsync(side, doc, folder)
     }
@@ -217,9 +221,11 @@ class Merge {
       if (doc.ino == null && folder.ino) { doc.ino = folder.ino }
       if (doc.fileid == null) { doc.fileid = folder.fileid }
       if (metadata.sameFolder(folder, doc)) {
+        console.log('DIR UP TO DATE')
         log.info({path}, 'up to date')
         return null
       } else {
+        console.log('UPDATING DIR', doc.fileid)
         return this.pouch.put(doc)
       }
     }

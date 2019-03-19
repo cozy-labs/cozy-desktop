@@ -430,8 +430,10 @@ function sameBinary (one /*: Metadata */, two /*: Metadata */) {
 function markSide (side /*: string */, doc /*: Metadata */, prev /*: ?Metadata */) /*: Metadata */ {
   let rev = 0
   if (prev) { rev = extractRevNumber(prev) }
+  console.log('markSide', {rev})
   if (doc.sides == null) {
     const was = prev && prev.sides
+    console.log('markSide', {was: JSON.stringify(was)})
     doc.sides = clone(was || {})
   }
   doc.sides[side] = ++rev
