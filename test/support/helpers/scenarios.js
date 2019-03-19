@@ -12,7 +12,7 @@ const timestamp = require('../../../core/timestamp')
 
 const { cozy } = require('./cozy')
 
-const debug = process.env.TESTDEBUG ? console.log : () => {}
+const debug = /* process.env.TESTDEBUG ? console.log : */ () => {}
 
 const disabledExtension = '.DISABLED'
 
