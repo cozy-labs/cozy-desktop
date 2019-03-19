@@ -114,7 +114,9 @@ module.exports = {
   markAsUnsyncable,
   markAsUpToDate,
   sameFolder,
+  sameFolderExceptInodeAndRemoteRev,
   sameFile,
+  sameFileExceptInodeAndRemoteRev,
   sameFileIgnoreRev,
   sameBinary,
   markSide,
@@ -387,9 +389,16 @@ const makeComparator = (name, interestingFields) => {
 const sameFolderComparator = makeComparator('sameFolder',
   ['path', 'docType', 'remote', 'tags', 'trashed', 'ino', 'fileid'])
 
+const sameFolderExceptInodeAndRemoteRevComparator = makeComparator('sameFolderExceptInodeAndRemoteRev',
+  ['path', 'docType', 'remote._id', 'tags', 'trashed'])
+
 // Return true if the metadata of the two folders are the same
 function sameFolder (one /*: Metadata */, two /*: Metadata */) {
   return sameFolderComparator(one, two)
+}
+
+function sameFolderExceptInodeAndRemoteRev (one /*: Metadata */, two /*: Metadata */) {
+  return sameFolderExceptInodeAndRemoteRevComparator(one, two)
 }
 
 const sameFileComparator = makeComparator('sameFile',
@@ -399,6 +408,10 @@ const sameFileComparator = makeComparator('sameFile',
 const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev',
   ['path', 'docType', 'md5sum', 'remote._id',
     'tags', 'size', 'trashed', 'ino', 'fileid', 'executable'])
+
+const sameFileExceptInodeAndRemoteRevComparator = makeComparator('sameFileExceptInodeAndRemoteRev',
+  ['path', 'docType', 'md5sum', 'remote._id',
+    'tags', 'size', 'trashed', 'executable'])
 
 // Return true if the metadata of the two files are the same
 function sameFile (one /*: Metadata */, two /*: Metadata */) {
@@ -411,6 +424,13 @@ function sameFile (one /*: Metadata */, two /*: Metadata */) {
 function sameFileIgnoreRev (one /*: Metadata */, two /*: Metadata */) {
   [one, two] = ensureExecutable(one, two)
   return sameFileIgnoreRevComparator(one, two)
+}
+
+// Return true if the metadata of the two files are the same,
+// ignoring revision & ino
+function sameFileExceptInodeAndRemoteRev (one /*: Metadata */, two /*: Metadata */) {
+  [one, two] = ensureExecutable(one, two)
+  return sameFileExceptInodeAndRemoteRevComparator(one, two)
 }
 
 // Return true if the two files have the same binary content
