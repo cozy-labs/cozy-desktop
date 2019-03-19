@@ -31,6 +31,7 @@ const {
 const { Ignore } = require('../../core/ignore')
 const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const timestamp = require('../../core/timestamp')
+const stater = require('../../core/local/stater')
 
 const { platform } = process
 
@@ -660,26 +661,31 @@ describe('metadata', function () {
   })
 
   describe('markSide', function () {
-    it('marks local: 1 for a new doc', function () {
-      let doc = {}
-      markSide('local', doc)
-      should.exist(doc.sides)
-      should.exist(doc.sides.local)
-      doc.sides.local.should.equal(1)
-    })
+    const path = 'path'
 
-    it('increments the rev for an already existing doc', function () {
-      let doc = {
-        sides: {
-          local: 3,
-          remote: 5
-        }
-      }
-      let prev = {_rev: '5-0123'}
-      markSide('local', doc, prev)
-      doc.sides.local.should.equal(6)
-      doc.sides.remote.should.equal(5)
-    })
+    for (const kind of ['File', 'Dir']) {
+      let stats
+      beforeEach(async function () {
+        stats = kind === 'File' ? await stater.stat(__filename) : await stater.stat(__dirname)
+      })
+
+      it(`marks local: 1 for a new ${kind}`, async function () {
+        const doc = metadata[`build${kind}`](path, stats)
+
+        markSide('local', doc)
+        should(doc).have.properties({ sides: { local: 1 } })
+      })
+
+      it(`increments the side from the _rev of an already existing ${kind}`, async function () {
+        const prev = metadata[`build${kind}`](path, stats)
+        prev.sides = { local: 3, remote: 5 }
+        prev._rev = '5-0123'
+        const doc = metadata[`build${kind}`](path, stats)
+
+        markSide('local', doc, prev)
+        should(doc).have.properties({ sides: { local: 6, remote: 5 } })
+      })
+    }
   })
 
   describe('buildFile', function () {

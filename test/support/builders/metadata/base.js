@@ -34,7 +34,7 @@ module.exports = class BaseMetadataBuilder {
       this.old = old
       this.doc = _.cloneDeep(old)
     } else {
-      this.doc = {
+      const doc /*: Object */ = {
         _id: metadata.id('foo'),
         docType: 'folder', // To make flow happy (overridden by subclasses)
         path: 'foo',
@@ -43,9 +43,9 @@ module.exports = class BaseMetadataBuilder {
           _rev: dbBuilders.rev()
         },
         tags: [],
-        sides: {},
         updated_at: timestamp.current().toISOString()
       }
+      this.doc = doc
     }
   }
 
@@ -210,10 +210,10 @@ module.exports = class BaseMetadataBuilder {
 
     const doc = this.build()
     // Update doc until _rev matches the highest side
+    doc.sides = doc.sides || {local: 1}
     const desiredRevNumber = Math.max(
-      1,
-      this.doc.sides.local || 0,
-      this.doc.sides.remote || 0
+      doc.sides.local || 0,
+      doc.sides.remote || 0
     )
     let revNumber = 0
     while (revNumber < desiredRevNumber) {
