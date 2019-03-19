@@ -377,15 +377,15 @@ const makeComparator = (name, interestingFields) => {
     if (diff && !_.every(diff, canBeIgnoredDiff)) {
       return false
     }
-    if (process.platform === 'win32') {
-      return one.fileid === two.fileid
-    }
+    // if (process.platform === 'win32') {
+    //   return one.fileid === two.fileid
+    // }
     return true
   }
 }
 
 const sameFolderComparator = makeComparator('sameFolder',
-  ['path', 'docType', 'remote', 'tags', 'trashed', 'ino'])
+  ['path', 'docType', 'remote', 'tags', 'trashed', 'ino', 'fileid'])
 
 // Return true if the metadata of the two folders are the same
 function sameFolder (one /*: Metadata */, two /*: Metadata */) {
@@ -394,11 +394,11 @@ function sameFolder (one /*: Metadata */, two /*: Metadata */) {
 
 const sameFileComparator = makeComparator('sameFile',
   ['path', 'docType', 'md5sum', 'remote._id', 'remote._rev',
-    'tags', 'size', 'trashed', 'ino', 'executable'])
+    'tags', 'size', 'trashed', 'ino', 'fileid', 'executable'])
 
 const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev',
   ['path', 'docType', 'md5sum', 'remote._id',
-    'tags', 'size', 'trashed', 'ino', 'executable'])
+    'tags', 'size', 'trashed', 'ino', 'fileid', 'executable'])
 
 // Return true if the metadata of the two files are the same
 function sameFile (one /*: Metadata */, two /*: Metadata */) {
