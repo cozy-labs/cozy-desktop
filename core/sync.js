@@ -315,10 +315,14 @@ class Sync {
 
       if (old) {
         if (doc.docType === 'folder') {
-          await side.updateFolderAsync(doc, old)
+          if (metadata.sameFolderExceptInodeAndRemoteRev(old, doc)) {
+            log.debug({path: doc.path}, 'Ignoring timestamp/inode change')
+          } else {
+            await side.updateFolderAsync(doc, old)
+          }
         // $FlowFixMe
         } else if (metadata.sameBinary(old, doc)) {
-          if (metadata.sameFileIgnoreRev(old, doc)) {
+          if (metadata.sameFileExceptInodeAndRemoteRev(old, doc)) {
             log.debug({path: doc.path}, 'Ignoring timestamp-only change')
           } else {
             await side.updateFileMetadataAsync(doc, old)
