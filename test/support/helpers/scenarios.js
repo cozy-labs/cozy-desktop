@@ -8,6 +8,7 @@ const mergedirs = require('merge-dirs').default
 
 const stater = require('../../../core/local/stater')
 const metadata = require('../../../core/metadata')
+const timestamp = require('../../../core/timestamp')
 
 const { cozy } = require('./cozy')
 
@@ -156,14 +157,17 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
     const remoteName = path.posix.basename(relpath)
     const remotePath = path.posix.join(_.get(remoteParent, 'attributes.path', ''), remoteName)
     const localPath = relpathFix(_.trimEnd(relpath, '/'))
-    const lastModifiedDate = new Date('2011-04-11T10:20:30Z')
+    // const lastModifiedDate = new Date('2011-04-11T10:20:30Z')
     if (relpath.endsWith('/')) {
       if (!trashed) {
         debug(`- create local dir: ${localPath}`)
         await fse.ensureDir(abspath(localPath))
+        // await fse.chmod(abspath(localPath), 0o644)
+        // await fse.utimes(abspath(localPath), lastModifiedDate, lastModifiedDate)
       }
 
       const stats = await getInoAndFileId({path: abspath(localPath), fakeIno, trashed, useRealInodes})
+      const lastModifiedDate = timestamp.maxDate(stats.mtime, stats.ctime)
       const doc = {
         _id: metadata.id(localPath),
         docType: 'folder',
@@ -200,9 +204,12 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
       if (!trashed) {
         debug(`- create local file: ${localPath}`)
         await fse.outputFile(abspath(localPath), content)
+        // await fse.chmod(abspath(localPath), 0o644)
+        // await fse.utimes(abspath(localPath), lastModifiedDate, lastModifiedDate)
       }
 
       const stats = await getInoAndFileId({path: abspath(localPath), fakeIno, trashed, useRealInodes})
+      const lastModifiedDate = timestamp.maxDate(stats.mtime, stats.ctime)
       const doc = {
         _id: metadata.id(localPath),
         md5sum,
