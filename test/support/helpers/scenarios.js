@@ -162,6 +162,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
       if (!trashed) {
         debug(`- create local dir: ${localPath}`)
         await fse.ensureDir(abspath(localPath))
+        await stater.stat(abspath(localPath))
         // await fse.chmod(abspath(localPath), 0o644)
         // await fse.utimes(abspath(localPath), lastModifiedDate, lastModifiedDate)
       }
@@ -204,6 +205,7 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
       if (!trashed) {
         debug(`- create local file: ${localPath}`)
         await fse.outputFile(abspath(localPath), content)
+        await stater.stat(abspath(localPath))
         // await fse.chmod(abspath(localPath), 0o644)
         // await fse.utimes(abspath(localPath), lastModifiedDate, lastModifiedDate)
       }
