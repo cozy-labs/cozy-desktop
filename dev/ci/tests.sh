@@ -4,10 +4,6 @@ set -ex
 
 . "./dev/ci/start_xvfb.sh"
 
-# FIXME Integration tests use ChokidarEvents and onFlush
-# So, they are not yet compatible with atom/watcher
-export COZY_FS_WATCHER=chokidar
-
 yarn install:all
 yarn build:elm
 yarn lint
