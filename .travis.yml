@@ -60,9 +60,11 @@ before_install: | # install cozy stack for integration test
     # Create a local instance and an OAuth client
     mkdir -p "$COZY_STACK_STORAGE"
     $GOPATH/bin/cozy-stack serve --fs-url "file://$COZY_STACK_STORAGE" --log-level warning >/dev/null &
-    sleep 1
+    sleep 5
     $GOPATH/bin/cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
+    sleep 2
     export COZY_CLIENT_ID=$($GOPATH/bin/cozy-stack instances client-oauth localhost:8080 http://localhost/ test github.com/cozy-labs/cozy-desktop)
+    sleep 2
     export COZY_STACK_TOKEN=$($GOPATH/bin/cozy-stack instances token-oauth localhost:8080 "$COZY_CLIENT_ID" io.cozy.files io.cozy.settings)
 
     # COZY_DESKTOP_DIR
