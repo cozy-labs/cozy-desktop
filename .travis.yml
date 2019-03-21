@@ -62,10 +62,15 @@ before_install: | # install cozy stack for integration test
     $GOPATH/bin/cozy-stack serve --fs-url "file://$COZY_STACK_STORAGE" --log-level warning >/dev/null &
     sleep 5
     $GOPATH/bin/cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
+    echo $?
     sleep 2
     export COZY_CLIENT_ID=$($GOPATH/bin/cozy-stack instances client-oauth localhost:8080 http://localhost/ test github.com/cozy-labs/cozy-desktop)
+    echo $?
+    echo "$COZY_CLIENT_ID"
     sleep 2
     export COZY_STACK_TOKEN=$($GOPATH/bin/cozy-stack instances token-oauth localhost:8080 "$COZY_CLIENT_ID" io.cozy.files io.cozy.settings)
+    echo $?
+    echo "$COZY_STACK_TOKEN"
 
     # COZY_DESKTOP_DIR
     if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
