@@ -452,7 +452,6 @@ function buildDir (fpath /*: string */, stats /*: Stats */, remote /*: ?Metadata
     docType: 'folder',
     updated_at: timestamp.fromDate(timestamp.maxDate(stats.mtime, stats.ctime)).toISOString(),
     ino: stats.ino,
-    sides: {},
     remote
   }
   if (stats.fileid) { doc.fileid = stats.fileid }
