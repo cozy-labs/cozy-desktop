@@ -13,7 +13,7 @@ const TestHelpers = require('../support/helpers')
 const cozy = cozyHelpers.cozy
 
 describe('Sync gets interrupted, initialScan occurs', () => {
-  if (config.watcherType() === 'atom' && process.platform === 'win32') {
+  if (config.watcherType() === 'atom') {
     it.skip('is not supported yet')
     return
   }
