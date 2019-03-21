@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 /* @flow */
 
+const _ = require('lodash')
 const should = require('should')
 const os = require('os')
 const fs = require('fs')
@@ -133,7 +134,13 @@ onPlatforms(['linux', 'win32'], () => {
         const newname = 'barfoobaz'
         const content = 'Hello, Cozy Drive for Desktop'
         fs.writeFileSync(path.join(syncPath, filename), content)
-        should(await producer.buffer.pop()).eql([
+        const outputBatches = [await producer.buffer.pop()]
+        if (outputBatches[0].length === 1) {
+          // The modified event ended up in a separate batch.
+          // This seems to happen more frequently on Windows.
+          outputBatches.push(await producer.buffer.pop())
+        }
+        should(_.flatten(outputBatches)).deepEqual([
           {
             action: 'created',
             kind: 'file',
@@ -149,7 +156,22 @@ onPlatforms(['linux', 'win32'], () => {
           path.join(syncPath, filename),
           path.join(syncPath, newname)
         )
-        should(await producer.buffer.pop()).eql([
+        let renamedOutputBatch = await producer.buffer.pop()
+        if (renamedOutputBatch.length === 1 && renamedOutputBatch[0].action === 'modified') {
+          // A modified event on the old path may occur before the renamed one.
+          // This seems to happen sometimes on Windows.
+          should(renamedOutputBatch).deepEqual([
+            {
+              action: 'modified',
+              kind: 'file',
+              path: 'barbaz'
+            }
+          ])
+          // Let's replace it with the next batch so we can look for the
+          // renamed event:
+          renamedOutputBatch = await producer.buffer.pop()
+        }
+        should(renamedOutputBatch).eql([
           {
             action: 'renamed',
             kind: 'file',
