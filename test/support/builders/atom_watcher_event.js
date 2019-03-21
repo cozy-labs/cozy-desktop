@@ -10,6 +10,7 @@ const statsBuilder = require('./stats')
 
 /*::
 import type { Stats } from 'fs'
+import type { Metadata } from '../../../core/metadata'
 import type { AtomWatcherEvent, EventAction, EventKind, Batch } from '../../../core/local/steps/event'
 import type { StatsBuilder } from './stats'
 */
@@ -18,6 +19,10 @@ function randomPick /*:: <T> */ (elements /*: Array<T> */) /*: T */{
   const l = elements.length
   const i = Math.floor(Math.random() * l)
   return elements[i]
+}
+
+function kind (doc /*: Metadata */) /*: EventKind */ {
+  return doc.docType === 'folder' ? 'directory' : doc.docType
 }
 
 module.exports = class AtomWatcherEventBuilder {
@@ -47,6 +52,19 @@ module.exports = class AtomWatcherEventBuilder {
         .fromStats(this._event.stats)
         .kind(this._event.kind)
     return this._statsBuilder
+  }
+
+  fromDoc (doc /*: Metadata */) /*: this */ {
+    const updatedAt = new Date(doc.updated_at)
+
+    let builder =
+      this
+        .kind(kind(doc))
+        .path(doc.path)
+        .ctime(updatedAt)
+        .mtime(updatedAt)
+    if (doc.ino) builder = builder.ino(doc.ino)
+    return builder
   }
 
   build () /*: AtomWatcherEvent */ {
@@ -88,6 +106,16 @@ module.exports = class AtomWatcherEventBuilder {
 
   ino (newIno /*: number */) /*: this */ {
     this._ensureStatsBuilder().ino(newIno)
+    return this
+  }
+
+  mtime (newMtime /*: Date */) /*: this */ {
+    this._ensureStatsBuilder().mtime(newMtime)
+    return this
+  }
+
+  ctime (newCtime /*: Date */) /*: this */ {
+    this._ensureStatsBuilder().ctime(newCtime)
     return this
   }
 

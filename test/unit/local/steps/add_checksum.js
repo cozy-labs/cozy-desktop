@@ -51,6 +51,27 @@ describe('core/local/steps/add_checksum.loop()', () => {
       .and.length(batch.length)
     should.not.exist(enhancedBatch[0].md5sum)
   })
+  it('should not compute checksum if already present', async () => {
+    const batch = [
+      {
+        action: 'scan',
+        kind: 'file',
+        path: __filename,
+        md5sum: 'checksum'
+      }
+    ]
+    const buffer = new Buffer()
+    buffer.push(batch)
+    const enhancedBuffer = addChecksum.loop(buffer, {
+      checksumer: checksumer.init(),
+      syncPath: ''
+    })
+    const enhancedBatch = await enhancedBuffer.pop()
+    should(enhancedBatch)
+      .be.an.Array()
+      .and.length(batch.length)
+    should(enhancedBatch[0]).have.property('md5sum', 'checksum')
+  })
   it('should work for every action', async () => {
     const batch = [
       {

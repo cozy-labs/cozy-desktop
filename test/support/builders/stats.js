@@ -10,6 +10,8 @@ import type { EventKind } from '../../../core/local/steps/event'
 export interface StatsBuilder {
   ino (number): StatsBuilder,
   kind (EventKind): StatsBuilder,
+  mtime (Date) : StatsBuilder,
+  ctime (Date) : StatsBuilder,
   build (): Stats
 }
 */
@@ -58,6 +60,16 @@ class DefaultStatsBuilder {
     return this
   }
 
+  mtime (newMtime /*: Date */) /*: this */ {
+    this.stats.mtime = newMtime
+    return this
+  }
+
+  ctime (newCtime /*: Date */) /*: this */ {
+    this.stats.ctime = newCtime
+    return this
+  }
+
   build () {
     return this.stats
   }
@@ -97,6 +109,16 @@ class WinStatsBuilder {
   kind (newKind /*: EventKind */) /*: this */ {
     this.winStats.directory = newKind === 'directory'
     this.winStats.symbolicLink = newKind === 'symlink'
+    return this
+  }
+
+  mtime (newMtime /*: Date */) /*: this */ {
+    this.winStats.mtime = newMtime
+    return this
+  }
+
+  ctime (newCtime /*: Date */) /*: this */ {
+    this.winStats.ctime = newCtime
     return this
   }
 

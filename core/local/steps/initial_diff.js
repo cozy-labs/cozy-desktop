@@ -20,6 +20,8 @@ type InitialDiffState = {
 type WatchedPath = {
   path: string,
   kind: EventKind,
+  md5sum?: string,
+  updated_at: string
 }
 
 type WaitingItem = {
@@ -69,7 +71,13 @@ async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<{ [typeof
     if (doc.ino != null) {
       // Process only files/dirs that were created locally or synchronized
       const kind = doc.docType === 'file' ? 'file' : 'directory'
-      byInode.set(doc.fileid || doc.ino, { path: doc.path, kind: kind })
+      const was /*: WatchedPath */ = {
+        kind,
+        path: doc.path,
+        updated_at: doc.updated_at
+      }
+      if (kind === 'file') was.md5sum = doc.md5sum
+      byInode.set(doc.fileid || doc.ino, was)
     }
   }
 
@@ -122,6 +130,9 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
               path: was.path
             })
           }
+        } else if (foundUntouchedFile(event, was)) {
+          _.set(event, [STEP_NAME, 'md5sumReusedFrom'], was.path)
+          event.md5sum = was.md5sum
         }
       }
 
@@ -198,5 +209,17 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
         }
       }
     }
+  }
+}
+
+function foundUntouchedFile (event, was) {
+  if (was && event.kind === 'file') {
+    const { ctime, mtime } = event.stats
+    const eventUpdateTime = Math.max(ctime.getTime(), mtime.getTime())
+    const docUpdateTime = (new Date(was.updated_at)).getTime()
+
+    return eventUpdateTime === docUpdateTime
+  } else {
+    return false
   }
 }

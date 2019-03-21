@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 /* @flow */
 
+const _ = require('lodash')
 const should = require('should')
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
@@ -16,7 +17,7 @@ describe('local/steps/initial_diff', () => {
 
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('populate pouch with documents', function () {
+  beforeEach('create builders', function () {
     builders = new Builders({pouch: this.pouch})
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
@@ -31,8 +32,17 @@ describe('local/steps/initial_diff', () => {
       should(state).have.property(initialDiff.STEP_NAME, {
         waiting: [],
         byInode: new Map([
-          [foo.fileid || foo.ino, { path: foo.path, kind: kind(foo) }],
-          [fizz.fileid || fizz.ino, { path: fizz.path, kind: kind(fizz) }]
+          [foo.fileid || foo.ino, {
+            path: foo.path,
+            kind: kind(foo),
+            updated_at: foo.updated_at
+          }],
+          [fizz.fileid || fizz.ino, {
+            path: fizz.path,
+            kind: kind(fizz),
+            updated_at: fizz.updated_at,
+            md5sum: fizz.md5sum
+          }]
         ]),
         byPath: new Map()
       })
@@ -43,7 +53,7 @@ describe('local/steps/initial_diff', () => {
     let buffer
     let initialScanDone
 
-    beforeEach('populate pouch with documents', function () {
+    beforeEach(function () {
       buffer = new Buffer()
       initialScanDone = builders.event().action('initial-scan-done').kind('unknown').path('').build()
     })
@@ -151,17 +161,134 @@ describe('local/steps/initial_diff', () => {
         {
           _id: bar._id,
           action: 'deleted',
-          initialDiff: {notFound: {kind: 'file', path: bar.path}},
+          initialDiff: {notFound: _.defaults({kind: kind(bar)}, _.pick(bar, ['path', 'md5sum', 'updated_at']))},
           kind: 'file',
           path: bar.path
         },
         {
           _id: foo._id,
           action: 'deleted',
-          initialDiff: {notFound: {kind: 'directory', path: foo.path}},
+          initialDiff: {notFound: _.defaults({kind: kind(foo)}, _.pick(foo, ['path', 'updated_at']))},
           kind: 'directory',
           path: foo.path
         },
+        initialScanDone
+      ])
+    })
+
+    it('reuses the checksum of untouched files', async function () {
+      const stillEmptyFile = await builders.metafile()
+        .path('stillEmptyFile')
+        .ino(2)
+        .data('')
+        .create()
+      const sameContentFile = await builders.metafile()
+        .path('sameContentFile')
+        .ino(3)
+        .data('content')
+        .create()
+
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+
+      const stillEmptyFileScan = builders.event()
+        .fromDoc(stillEmptyFile)
+        .action('scan')
+        .mtime(new Date(stillEmptyFile.updated_at))
+        .build()
+      const sameContentFileScan = builders.event()
+        .fromDoc(sameContentFile)
+        .action('scan')
+        .ctime(new Date(sameContentFile.updated_at))
+        .build()
+      buffer.push(_.cloneDeep([
+        stillEmptyFileScan,
+        sameContentFileScan,
+        initialScanDone
+      ]))
+      buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
+
+      const events = await buffer.pop()
+      should(events).deepEqual([
+        _.defaults(
+          {
+            md5sum: stillEmptyFile.md5sum,
+            initialDiff: { md5sumReusedFrom: stillEmptyFile.path }
+          },
+          stillEmptyFileScan
+        ),
+        _.defaults(
+          {
+            md5sum: sameContentFile.md5sum,
+            initialDiff: { md5sumReusedFrom: sameContentFile.path }
+          },
+          sameContentFileScan
+        ),
+        initialScanDone
+      ])
+    })
+
+    it('does not try to reuse the checksum of a directory', async function () {
+      const dir = await builders.metadir()
+        .path('dir')
+        .ino(1)
+        .create()
+
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+
+      const dirScan = builders.event()
+        .fromDoc(dir)
+        .action('scan')
+        .mtime(new Date(dir.updated_at))
+        .build()
+      buffer.push(_.cloneDeep([
+        dirScan,
+        initialScanDone
+      ]))
+      buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
+
+      const events = await buffer.pop()
+      should(events).deepEqual([
+        dirScan,
+        initialScanDone
+      ])
+    })
+
+    it('does not reuse the checksum of modified files', async function () {
+      const updatedMetadata = await builders.metafile()
+        .path('updatedMetadata')
+        .ino(1)
+        .data('content')
+        .create()
+      const updatedContent = await builders.metafile()
+        .path('updatedContent')
+        .ino(2)
+        .data('content')
+        .create()
+
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+
+      const updateTime = new Date(Date.now() + 1000)
+      const updatedMetadataScan = builders.event()
+        .fromDoc(updatedMetadata)
+        .action('scan')
+        .ctime(updateTime)
+        .build()
+      const updatedContentScan = builders.event()
+        .fromDoc(updatedContent)
+        .action('scan')
+        .mtime(updateTime)
+        .build()
+      buffer.push(_.cloneDeep([
+        updatedMetadataScan,
+        updatedContentScan,
+        initialScanDone
+      ]))
+      buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
+
+      const events = await buffer.pop()
+      should(events).deepEqual([
+        updatedMetadataScan,
+        updatedContentScan,
         initialScanDone
       ])
     })
