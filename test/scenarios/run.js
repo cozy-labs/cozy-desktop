@@ -155,6 +155,7 @@ function injectChokidarBreakpoints (eventsFile) {
 }
 
 async function runLocalAtom (scenario, atomCapture, helpers) {
+  await helpers.local.simulateAtomStart()
   if (scenario.init) {
     let relpathFix = _.identity
     if (process.platform === 'win32' && atomCapture.name.match(/win32/)) {
