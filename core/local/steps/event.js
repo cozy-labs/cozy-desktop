@@ -38,7 +38,15 @@ const KINDS /*: EventKind[] */ = [
   'file', 'directory', 'symlink', 'unknown'
 ]
 
+const INITIAL_SCAN_DONE = {
+  action: 'initial-scan-done',
+  kind: 'unknown',
+  path: '.',
+  noIgnore: true
+}
+
 module.exports = {
   ACTIONS,
+  INITIAL_SCAN_DONE,
   KINDS
 }
