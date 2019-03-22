@@ -3,6 +3,7 @@
 
 const Promise = require('bluebird')
 const _ = require('lodash')
+const path = require('path')
 const should = require('should')
 
 const Buffer = require('../../../../core/local/steps/buffer')
@@ -14,6 +15,8 @@ const configHelpers = require('../../../support/helpers/config')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
 if (process.platform === 'win32') {
+  const timesAsync = (count, fn) => Promise.mapSeries(_.range(count), fn)
+
   describe('core/local/steps/win_detect_move', () => {
     let builders
 
@@ -98,6 +101,70 @@ if (process.platform === 'win32') {
                 }
               ])
             })
+
+            if (kind === 'directory') {
+              for (const childKind of ['directory']) {
+                describe(`+ deleted child ${childKind} (missing doc because path changed)`, () => {
+                  const childIno = 2
+                  const childName = `sub${childKind}`
+                  const childTmpPath = path.join(dstPath, childName)
+                  let deletedChildEvent
+
+                  beforeEach(async () => {
+                    await builders.metadir().path(path.join(srcPath, childName))
+                      .ino(childIno).create()
+                    deletedChildEvent = builders.event().action('deleted')
+                      .kind(childKind).path(childTmpPath).build()
+                  })
+
+                  describe(`+ created child ${childKind} (path outside parent)`, () => {
+                    const childDstPath = childName
+                    let createdChildEvent
+
+                    beforeEach(async () => {
+                      createdChildEvent = builders.event().action('created')
+                        .kind(childKind).path(childDstPath).ino(childIno).build()
+                      inputBatch([deletedEvent])
+                      inputBatch([createdEvent])
+                      inputBatch([deletedChildEvent])
+                      inputBatch([createdChildEvent])
+                    })
+
+                    // FIXME: move from inside move
+                    it(`fails to aggregate renamed child ${childKind}`, async function () {
+                      const outputBatches = await timesAsync(3, outputBatch)
+                      should(outputBatches).deepEqual([
+                        [
+                          {
+                            _id: metadata.id(dstPath),
+                            action: 'renamed',
+                            kind,
+                            oldPath: srcPath,
+                            path: dstPath,
+                            stats: createdEvent.stats,
+                            winDetectMove: {
+                              aggregatedEvents: {
+                                createdEvent,
+                                deletedEvent
+                              }
+                            }
+                          }
+                        ],
+                        [
+                          {
+                            ...deletedChildEvent,
+                            winDetectMove: {docNotFound: 'missing'}
+                          }
+                        ],
+                        [
+                          createdChildEvent
+                        ]
+                      ])
+                    })
+                  })
+                })
+              }
+            }
           })
 
           describe(`+ created ${kind} (temporary path, incomplete)`, () => {
