@@ -63,6 +63,7 @@ describe('Update only a file mtime', () => {
         stats
       }])
     } else {
+      await helpers.local.simulateAtomStart()
       await helpers.local.simulateAtomEvents([
         [
           {

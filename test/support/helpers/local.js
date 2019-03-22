@@ -14,6 +14,7 @@ const Local = require('../../../core/local')
 const atomWatcher = require('../../../core/local/atom_watcher')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const dispatch = require('../../../core/local/steps/dispatch')
+const { INITIAL_SCAN_DONE } = require('../../../core/local/steps/event')
 
 const rimrafAsync = Promise.promisify(rimraf)
 
@@ -143,19 +144,34 @@ class LocalTestHelpers {
     }
   }
 
+  /** Usage:
+   *
+   * - `#simulateAtomStart()`
+   * - Fill in the test Pouch / sync dir
+   * - `#simulateAtomEvents()`
+   */
   async simulateAtomEvents (batches /*: Batch[] */) {
-    const { watcher } = this.side
-    if (!(watcher instanceof atomWatcher.AtomWatcher)) {
-      throw new Error(
-        'Can only use LocalTestHelpers#simulateAtomEvents() with AtomWatcher'
-      )
-    }
-    await atomWatcher.stepsInitialState(watcher.state, watcher)
+    const watcher = this._ensureAtomWatcher()
     for (const batch of batches.concat([simulationCompleteBatch])) {
       // $FlowFixMe
       watcher.producer.buffer.push(batch)
     }
     await this.startSimulation()
+  }
+
+  async simulateAtomStart () {
+    const watcher = this._ensureAtomWatcher()
+    await atomWatcher.stepsInitialState(watcher.state, watcher)
+    watcher.producer.buffer.push([INITIAL_SCAN_DONE])
+  }
+
+  _ensureAtomWatcher () /*: atomWatcher.AtomWatcher */ {
+    const { watcher } = this.side
+    if (watcher instanceof atomWatcher.AtomWatcher) {
+      return watcher
+    } else {
+      throw new Error('Can only use AtomWatcher test helpers with AtomWatcher')
+    }
   }
 
   async readFile (path /*: string */) /*: Promise<string> */ {
