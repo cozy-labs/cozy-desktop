@@ -32,7 +32,8 @@ if (process.platform === 'win32') {
     describe('.loop()', () => {
       let inputBuffer, outputBuffer
 
-      beforeEach(function () {
+      beforeEach(async function () {
+        this.state = await winDetectMove.initialState()
         inputBuffer = new Buffer()
         outputBuffer = winDetectMove.loop(inputBuffer, this)
       })
@@ -130,9 +131,8 @@ if (process.platform === 'win32') {
                       inputBatch([createdChildEvent])
                     })
 
-                    // FIXME: move from inside move
-                    it(`fails to aggregate renamed child ${childKind}`, async function () {
-                      const outputBatches = await timesAsync(3, outputBatch)
+                    it(`is a renamed child ${childKind} (aggregated)`, async function () {
+                      const outputBatches = await timesAsync(2, outputBatch)
                       should(outputBatches).deepEqual([
                         [
                           {
@@ -152,12 +152,24 @@ if (process.platform === 'win32') {
                         ],
                         [
                           {
-                            ...deletedChildEvent,
-                            winDetectMove: {docNotFound: 'missing'}
+                            _id: metadata.id(childDstPath),
+                            action: 'renamed',
+                            kind: childKind,
+                            oldPath: childTmpPath,
+                            path: childDstPath,
+                            stats: createdChildEvent.stats,
+                            winDetectMove: {
+                              aggregatedEvents: {
+                                createdEvent: createdChildEvent,
+                                deletedEvent: {
+                                  ...deletedChildEvent,
+                                  winDetectMove: {
+                                    wasPath: path.join(srcPath, childName)
+                                  }
+                                }
+                              }
+                            }
                           }
-                        ],
-                        [
-                          createdChildEvent
                         ]
                       ])
                     })

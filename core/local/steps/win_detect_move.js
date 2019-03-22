@@ -1,6 +1,7 @@
 /* @flow */
 
 const _ = require('lodash')
+const path = require('path')
 
 const { id } = require('../../metadata')
 const Buffer = require('./buffer')
@@ -23,26 +24,85 @@ import type Pouch from '../../pouch'
 
 type PendingBatch = {
   events: AtomWatcherEvent[],
-  deleted: Map<string, string>,
+  deleted: Map<string | number, string>,
   timeout: TimeoutID
+}
+
+export type WinDetectMoveState = {
+  [typeof STEP_NAME]: {
+    unmergedRenamedEvents: AtomWatcherEvent[]
+  }
+}
+
+type WinDetectMoveOptions = {
+  pouch: Pouch,
+  state: WinDetectMoveState
 }
 */
 
 module.exports = {
+  initialState,
   loop
 }
 
-async function findDeleted (events, pouch) {
+const areParentChildPaths = (p /*: string */, c /*: string */) /*: boolean */ =>
+  `${c}${path.sep}`.startsWith(`${p}${path.sep}`)
+
+async function initialState (opts /*: ?{} */) /* Promise<WinDetectMoveState> */ {
+  return {
+    [STEP_NAME]: {
+      unmergedRenamedEvents: []
+    }
+  }
+}
+
+function previousPaths (deletedPath, unmergedRenamedEvents) {
+  const { previous: previousPaths } =
+    unmergedRenamedEvents.reduceRight/* ::<{ previous: string[], current: string }> */(
+      (paths, renamedEvent) => {
+        if (renamedEvent.oldPath && areParentChildPaths(renamedEvent.path, paths.current)) {
+          paths.current = paths.current.replace(renamedEvent.path, renamedEvent.oldPath)
+          paths.previous.unshift(paths.current)
+        }
+        return paths
+      },
+      {
+        current: deletedPath,
+        previous: []
+      }
+    )
+  return previousPaths
+}
+
+async function findDocFromPreviousPaths (previousPaths, pouch) {
+  for (const previousPath of previousPaths) {
+    const doc = await pouch.byIdMaybeAsync(id(previousPath))
+    if (doc) return doc
+  }
+}
+
+async function findDeleted (events, pouch, unmergedRenamedEvents) {
   const deleted = new Map()
   for (const event of events) {
     if (event.action === 'deleted') {
       const release = await pouch.lock('winMoveDetector')
       try {
-        const was = await pouch.db.get(id(event.path))
-        deleted.set(was.fileid, event.path)
-      } catch (err) {
-        _.set(event, [STEP_NAME, 'docNotFound'], err.message)
-        if (err.status !== 404) log.error({err, event})
+        const was = (
+          await pouch.byIdMaybeAsync(event._id) ||
+          await findDocFromPreviousPaths(
+            previousPaths(event.path, unmergedRenamedEvents),
+            pouch
+          )
+        )
+        if (was) {
+          deleted.set(was.fileid || was.ino, event.path)
+          if (was.path !== event.path) {
+            // TODO: Attach renamed chain info?
+            _.set(event, [STEP_NAME, 'wasPath'], was.path)
+          }
+        } else {
+          _.set(event, [STEP_NAME, 'docNotFound'], 'missing')
+        }
       } finally {
         release()
       }
@@ -51,14 +111,18 @@ async function findDeleted (events, pouch) {
   return deleted
 }
 
-function aggregateEvents (events, pending) {
+function aggregateEvents (events, pending, unmergedRenamedEvents) {
   for (const event of events) {
     if (event.incomplete) {
       continue
     }
     if (event.action === 'created') {
       for (let i = 0; i < pending.length; i++) {
-        const path = pending[i].deleted.get(event.stats.fileid)
+        let path = pending[i].deleted.get(event.stats.fileid)
+        if (!path) {
+          path = pending[i].deleted.get(event.stats.ino)
+        }
+
         if (!path || path === event.path) {
           continue
         }
@@ -74,7 +138,9 @@ function aggregateEvents (events, pending) {
             event.oldPath = e.path
             _.set(event, [STEP_NAME, 'aggregatedEvents'], aggregatedEvents)
             pending[i].deleted.delete(event.stats.fileid)
+            pending[i].deleted.delete(event.stats.ino)
             pending[i].events.splice(j, 1)
+            unmergedRenamedEvents.push(event)
             break
           }
         }
@@ -97,15 +163,19 @@ function sendReadyBatches (waiting /*: PendingBatch[] */, out /*: Buffer */) {
 // On windows, ReadDirectoryChangesW emits a deleted and an added events when
 // a file or directory is moved. This step merges the two events to a single
 // renamed event.
-async function winDetectMove (buffer, out, pouch) {
+async function winDetectMove (buffer, out, opts /*: WinDetectMoveOptions */) {
   const pending /*: PendingBatch[] */ = []
 
   while (true) {
     // Wait for a new batch of events
     const events = await buffer.pop()
+    const {
+      pouch,
+      state: { [STEP_NAME]: { unmergedRenamedEvents } }
+    } = opts
 
     // First, push the new events in the pending queue
-    const deleted = await findDeleted(events, pouch)
+    const deleted = await findDeleted(events, pouch, unmergedRenamedEvents)
     const timeout = setTimeout(() => {
       out.push(pending.shift().events)
       sendReadyBatches(pending, out)
@@ -113,16 +183,16 @@ async function winDetectMove (buffer, out, pouch) {
     pending.push({ events, deleted, timeout })
 
     // Then, see if a created event matches a deleted event
-    aggregateEvents(events, pending)
+    aggregateEvents(events, pending, unmergedRenamedEvents)
 
     // Finally, look if some batches can be sent without waiting
     sendReadyBatches(pending, out)
   }
 }
 
-function loop (buffer /*: Buffer */, opts /*: { pouch: Pouch } */) /*: Buffer */ {
+function loop (buffer /*: Buffer */, opts /*: WinDetectMoveOptions */) /*: Buffer */ {
   const out = new Buffer()
-  winDetectMove(buffer, out, opts.pouch)
+  winDetectMove(buffer, out, opts)
     .catch(err => log.error({err}))
   return out
 }
