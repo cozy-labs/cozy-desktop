@@ -64,11 +64,10 @@ if (process.platform === 'win32') {
             beforeEach(async () => {
               createdEvent = builders.event().action('created').kind(kind)
                 .path(srcPath).ino(differentIno).build()
-
-              inputBatch([deletedEvent, createdEvent])
             })
 
             it(`is a replaced ${kind} (not aggregated)`, async function () {
+              inputBatch([deletedEvent, createdEvent])
               should(await outputBatch()).deepEqual([
                 deletedEvent,
                 createdEvent
@@ -83,11 +82,10 @@ if (process.platform === 'win32') {
             beforeEach(async () => {
               createdEvent = builders.event().action('created').kind(kind)
                 .path(dstPath).ino(srcIno).build()
-
-              inputBatch([deletedEvent, createdEvent])
             })
 
             it(`is a renamed ${kind} (aggregated)`, async function () {
+              inputBatch([deletedEvent, createdEvent])
               should(await outputBatch()).deepEqual([
                 {
                   _id: metadata.id(dstPath),
@@ -110,7 +108,6 @@ if (process.platform === 'win32') {
               createdTmpEvent = builders.event().action('created').kind(kind)
                 .path(tmpPath).incomplete().build()
               // XXX: ino?
-              inputBatch([deletedEvent, createdTmpEvent])
             })
 
             describe(`+ deleted ${kind} (temporary path, missing doc)`, () => {
@@ -119,7 +116,6 @@ if (process.platform === 'win32') {
               beforeEach(async () => {
                 deletedTmpEvent = builders.event().action('deleted').kind(kind)
                   .path(tmpPath).build()
-                inputBatch([deletedTmpEvent])
               })
 
               describe(`+ created ${kind} (different path, same fileid)`, () => {
@@ -129,10 +125,12 @@ if (process.platform === 'win32') {
                 beforeEach(async () => {
                   createdDstEvent = builders.event().action('created').kind(kind)
                     .path(dstPath).ino(srcIno).build()
-                  inputBatch([createdDstEvent])
                 })
 
                 it(`is a temporary ${kind} (not aggregated) + a renamed ${kind} (aggregated)`, async () => {
+                  inputBatch([deletedEvent, createdTmpEvent])
+                  inputBatch([deletedTmpEvent])
+                  inputBatch([createdDstEvent])
                   const outputBatches = await Promise.mapSeries(
                     _.range(3),
                     outputBatch
@@ -183,11 +181,10 @@ if (process.platform === 'win32') {
             beforeEach(async () => {
               deletedEvent = builders.event().action('deleted').kind(kind)
                 .path(createdEvent.path).build()
-
-              inputBatch([createdEvent, deletedEvent])
             })
 
             it(`is a temporary ${kind} (not aggregated)`, async function () {
+              inputBatch([createdEvent, deletedEvent])
               should(await outputBatch()).deepEqual([
                 createdEvent,
                 _.defaults(
