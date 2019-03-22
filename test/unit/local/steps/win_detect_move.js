@@ -3,6 +3,7 @@
 
 const Promise = require('bluebird')
 const _ = require('lodash')
+const path = require('path')
 const should = require('should')
 
 const Buffer = require('../../../../core/local/steps/buffer')
@@ -14,6 +15,8 @@ const configHelpers = require('../../../support/helpers/config')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
 if (process.platform === 'win32') {
+  const timesAsync = (count, fn) => Promise.mapSeries(_.range(count), fn)
+
   describe('core/local/steps/win_detect_move', () => {
     let builders
 
@@ -64,11 +67,10 @@ if (process.platform === 'win32') {
             beforeEach(async () => {
               createdEvent = builders.event().action('created').kind(kind)
                 .path(srcPath).ino(differentIno).build()
-
-              inputBatch([deletedEvent, createdEvent])
             })
 
             it(`is a replaced ${kind} (not aggregated)`, async function () {
+              inputBatch([deletedEvent, createdEvent])
               should(await outputBatch()).deepEqual([
                 deletedEvent,
                 createdEvent
@@ -83,11 +85,10 @@ if (process.platform === 'win32') {
             beforeEach(async () => {
               createdEvent = builders.event().action('created').kind(kind)
                 .path(dstPath).ino(srcIno).build()
-
-              inputBatch([deletedEvent, createdEvent])
             })
 
             it(`is a renamed ${kind} (aggregated)`, async function () {
+              inputBatch([deletedEvent, createdEvent])
               should(await outputBatch()).deepEqual([
                 {
                   _id: metadata.id(dstPath),
@@ -100,6 +101,70 @@ if (process.platform === 'win32') {
                 }
               ])
             })
+
+            if (kind === 'directory') {
+              for (const childKind of ['directory']) {
+                describe(`+ deleted child ${childKind} (missing doc because path changed)`, () => {
+                  const childIno = 2
+                  const childName = `sub${childKind}`
+                  const childTmpPath = path.join(dstPath, childName)
+                  let deletedChildEvent
+
+                  beforeEach(async () => {
+                    await builders.metadir().path(path.join(srcPath, childName))
+                      .ino(childIno).create()
+                    deletedChildEvent = builders.event().action('deleted')
+                      .kind(childKind).path(childTmpPath).build()
+                  })
+
+                  describe(`+ created child ${childKind} (path outside parent)`, () => {
+                    const childDstPath = childName
+                    let createdChildEvent
+
+                    beforeEach(async () => {
+                      createdChildEvent = builders.event().action('created')
+                        .kind(childKind).path(childDstPath).ino(childIno).build()
+                      inputBatch([deletedEvent])
+                      inputBatch([createdEvent])
+                      inputBatch([deletedChildEvent])
+                      inputBatch([createdChildEvent])
+                    })
+
+                    // FIXME: move from inside move
+                    it(`fails to aggregate renamed child ${childKind}`, async function () {
+                      const outputBatches = await timesAsync(3, outputBatch)
+                      should(outputBatches).deepEqual([
+                        [
+                          {
+                            _id: metadata.id(dstPath),
+                            action: 'renamed',
+                            kind,
+                            oldPath: srcPath,
+                            path: dstPath,
+                            stats: createdEvent.stats,
+                            winDetectMove: {
+                              aggregatedEvents: {
+                                createdEvent,
+                                deletedEvent
+                              }
+                            }
+                          }
+                        ],
+                        [
+                          {
+                            ...deletedChildEvent,
+                            winDetectMove: {docNotFound: 'missing'}
+                          }
+                        ],
+                        [
+                          createdChildEvent
+                        ]
+                      ])
+                    })
+                  })
+                })
+              }
+            }
           })
 
           describe(`+ created ${kind} (temporary path, incomplete)`, () => {
@@ -110,7 +175,6 @@ if (process.platform === 'win32') {
               createdTmpEvent = builders.event().action('created').kind(kind)
                 .path(tmpPath).incomplete().build()
               // XXX: ino?
-              inputBatch([deletedEvent, createdTmpEvent])
             })
 
             describe(`+ deleted ${kind} (temporary path, missing doc)`, () => {
@@ -119,7 +183,6 @@ if (process.platform === 'win32') {
               beforeEach(async () => {
                 deletedTmpEvent = builders.event().action('deleted').kind(kind)
                   .path(tmpPath).build()
-                inputBatch([deletedTmpEvent])
               })
 
               describe(`+ created ${kind} (different path, same fileid)`, () => {
@@ -129,10 +192,12 @@ if (process.platform === 'win32') {
                 beforeEach(async () => {
                   createdDstEvent = builders.event().action('created').kind(kind)
                     .path(dstPath).ino(srcIno).build()
-                  inputBatch([createdDstEvent])
                 })
 
                 it(`is a temporary ${kind} (not aggregated) + a renamed ${kind} (aggregated)`, async () => {
+                  inputBatch([deletedEvent, createdTmpEvent])
+                  inputBatch([deletedTmpEvent])
+                  inputBatch([createdDstEvent])
                   const outputBatches = await Promise.mapSeries(
                     _.range(3),
                     outputBatch
@@ -183,11 +248,10 @@ if (process.platform === 'win32') {
             beforeEach(async () => {
               deletedEvent = builders.event().action('deleted').kind(kind)
                 .path(createdEvent.path).build()
-
-              inputBatch([createdEvent, deletedEvent])
             })
 
             it(`is a temporary ${kind} (not aggregated)`, async function () {
+              inputBatch([createdEvent, deletedEvent])
               should(await outputBatch()).deepEqual([
                 createdEvent,
                 _.defaults(

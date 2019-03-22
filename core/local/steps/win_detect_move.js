@@ -66,12 +66,13 @@ function aggregateEvents (events, pending) {
         for (let j = 0; j < l; j++) {
           const e = pending[i].events[j]
           if (e.action === 'deleted' && e.path === path) {
-            _.set(event, [STEP_NAME, 'aggregatedEvents'], {
+            const aggregatedEvents = {
               deletedEvent: e,
               createdEvent: _.clone(event)
-            })
+            }
             event.action = 'renamed'
             event.oldPath = e.path
+            _.set(event, [STEP_NAME, 'aggregatedEvents'], aggregatedEvents)
             pending[i].deleted.delete(event.stats.fileid)
             pending[i].events.splice(j, 1)
             break

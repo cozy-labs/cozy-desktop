@@ -25,6 +25,8 @@ function kind (doc /*: Metadata */) /*: EventKind */ {
   return doc.docType === 'folder' ? 'directory' : doc.docType
 }
 
+const defaultPath = 'foo'
+
 module.exports = class AtomWatcherEventBuilder {
   /*::
   _event: AtomWatcherEvent
@@ -39,8 +41,8 @@ module.exports = class AtomWatcherEventBuilder {
       this._event = {
         action: randomPick(events.ACTIONS),
         kind,
-        path: '/',
-        _id: '/'
+        path: defaultPath,
+        _id: metadata.id(defaultPath)
       }
     }
     this._ensureStatsBuilder()
