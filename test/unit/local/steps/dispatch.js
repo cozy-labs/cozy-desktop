@@ -22,6 +22,7 @@ const SyncState = require('../../../../core/syncstate')
 const Prep = require('../../../../core/prep')
 const Buffer = require('../../../../core/local/steps/buffer')
 const dispatch = require('../../../../core/local/steps/dispatch')
+const winDetectMove = require('../../../../core/local/steps/win_detect_move')
 
 function dispatchedCalls (obj /*: Stub */) /*: DispatchedCalls */ {
   const methods = Object.getOwnPropertyNames(obj).filter(m => typeof obj[m] === 'function')
@@ -44,15 +45,22 @@ describe('core/local/steps/dispatch.loop()', function () {
   let buffer
   let events
   let prep
+  let stepOptions
 
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('populate pouch with documents', function () {
+  beforeEach('populate pouch with documents', async function () {
     builders = new Builders({pouch: this.pouch})
     buffer = new Buffer()
 
     events = sinon.createStubInstance(SyncState)
     prep = sinon.createStubInstance(Prep)
+    stepOptions = {
+      events,
+      prep,
+      pouch: this.pouch,
+      state: await winDetectMove.initialState()
+    }
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
@@ -65,7 +73,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     })
 
     it('emits an initial-scan-done event via the emitter', async function () {
-      const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
       await dispatchedBuffer.pop()
 
       should(dispatchedCalls(events)).deepEqual({
@@ -76,7 +84,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     })
 
     it('does not call any Prep method', async function () {
-      const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
       await dispatchedBuffer.pop()
 
       should(dispatchedCalls(prep)).deepEqual({})
@@ -103,7 +111,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to addFileAsync with a file Metadata object', async function () {
       const doc = builders.metafile().path(filePath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
       await dispatchedBuffer.pop()
 
       should(dispatchedCalls(prep)).deepEqual({
@@ -126,7 +134,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
       const doc = builders.metadir().path(directoryPath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
       await dispatchedBuffer.pop()
 
       should(dispatchedCalls(prep)).deepEqual({
@@ -157,7 +165,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to addFileAsync with a file Metadata object', async function () {
       const doc = builders.metafile().path(filePath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
       await dispatchedBuffer.pop()
 
       should(dispatchedCalls(prep)).deepEqual({
@@ -180,7 +188,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
       const doc = builders.metadir().path(directoryPath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
       await dispatchedBuffer.pop()
 
       should(dispatchedCalls(prep)).deepEqual({
@@ -211,7 +219,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to updateFileAsync with a file Metadata object', async function () {
       const doc = builders.metafile().path(filePath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
       await dispatchedBuffer.pop()
 
       should(dispatchedCalls(prep)).deepEqual({
@@ -234,7 +242,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
       const doc = builders.metadir().path(directoryPath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
       await dispatchedBuffer.pop()
 
       should(dispatchedCalls(prep)).deepEqual({
@@ -274,7 +282,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       it('triggers a call to moveFileAsync with a file Metadata object', async function () {
         const doc = builders.metafile().path(newFilePath).ino(1).noTags().unmerged('local').build()
 
-        const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
         await dispatchedBuffer.pop()
 
         should(dispatchedCalls(prep)).deepEqual({
@@ -289,7 +297,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       it('triggers a call to addFileAsync with a file Metadata object', async function () {
         const doc = builders.metafile().path(newFilePath).ino(1).noTags().unmerged('local').build()
 
-        const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
         await dispatchedBuffer.pop()
 
         should(dispatchedCalls(prep)).deepEqual({
@@ -300,7 +308,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       })
 
       it('removes the event oldPath', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
         const batch = await dispatchedBuffer.pop()
 
         should(batch).have.length(1)
@@ -336,7 +344,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       it('triggers a call to moveFolderAsync with a directory Metadata object', async function () {
         const doc = builders.metadir().path(newDirectoryPath).ino(1).noRemote().noTags().build()
 
-        const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
         await dispatchedBuffer.pop()
 
         should(dispatchedCalls(prep)).deepEqual({
@@ -351,7 +359,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
         const doc = builders.metadir().path(newDirectoryPath).ino(1).noRemote().noTags().build()
 
-        const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
         await dispatchedBuffer.pop()
 
         should(dispatchedCalls(prep)).deepEqual({
@@ -362,7 +370,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       })
 
       it('removes the event oldPath', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
         const batch = await dispatchedBuffer.pop()
 
         should(batch).have.length(1)
@@ -388,7 +396,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       })
 
       it('triggers a call to trashFileAsync with the existing document', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
         await dispatchedBuffer.pop()
 
         should(dispatchedCalls(prep)).deepEqual({
@@ -401,7 +409,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
     context('without existing documents at the event path', () => {
       it('ignores the event', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
         await dispatchedBuffer.pop()
 
         should(dispatchedCalls(prep)).deepEqual({})
@@ -432,7 +440,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       })
 
       it('triggers a call to trashFolderAsync with the existing document', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
         await dispatchedBuffer.pop()
 
         should(dispatchedCalls(prep)).deepEqual({
@@ -445,7 +453,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
     context('without existing documents at the event path', () => {
       it('ignores the event', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, { events, prep, pouch: this.pouch })
+        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
         await dispatchedBuffer.pop()
 
         should(dispatchedCalls(prep)).deepEqual({})

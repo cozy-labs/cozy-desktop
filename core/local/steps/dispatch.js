@@ -2,6 +2,7 @@
 
 const _ = require('lodash')
 
+const winDetectMove = require('./win_detect_move')
 const { buildDir, buildFile, id } = require('../../metadata')
 const logger = require('../../logger')
 
@@ -14,6 +15,7 @@ const log = logger({
 /*::
 import type Buffer from './buffer'
 import type { Batch } from './event'
+import type { WinDetectMoveState } from './win_detect_move'
 import type EventEmitter from 'events'
 import type Prep from '../../prep'
 import type Pouch from '../../pouch'
@@ -24,6 +26,7 @@ type DispatchOptions = {
   events: EventEmitter,
   prep: Prep,
   pouch: Pouch,
+  state: WinDetectMoveState,
   onAtomEvents?: AtomEventsDispatcher
 }
 */
@@ -58,6 +61,10 @@ function step (opts /*: DispatchOptions */) {
       } catch (err) {
         log.error({err, event})
         // TODO: Error handling
+      } finally {
+        if (process.platform === 'win32') {
+          winDetectMove.onEventMerged(event, opts.state)
+        }
       }
     }
     return batch
