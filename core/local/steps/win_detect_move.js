@@ -126,29 +126,26 @@ async function assignDebugInfos (event, deletedIno, oldPaths) {
   }
 }
 
-function aggregateEvents (event, pendingItems, unmergedRenamedEvents) {
-  if (event.incomplete || event.action !== 'created') {
-    return
-  }
-
-  for (let i = 0; i < pendingItems.length; i++) {
-    const pendingItem = pendingItems[i]
-    if (!pendingItem.deletedIno) continue
-    if (![event.stats.fileid, event.stats.ino].includes(pendingItem.deletedIno)) continue
-
-    const deletedEvent = pendingItem.event
-    const aggregatedEvents = {
-      deletedEvent,
-      createdEvent: _.clone(event)
+function indexOfMatchingDeletedEvent (event, pendingItems) {
+  if (event.action === 'created' && !event.incomplete) {
+    for (let i = 0; i < pendingItems.length; i++) {
+      const pendingItem = pendingItems[i]
+      if (!pendingItem.deletedIno) continue
+      if (![event.stats.fileid, event.stats.ino].includes(pendingItem.deletedIno)) continue
+      return i
     }
-    event.action = 'renamed'
-    event.oldPath = deletedEvent.path
-    _.set(event, [STEP_NAME, 'aggregatedEvents'], aggregatedEvents)
-    clearTimeout(pendingItem.timeout)
-    pendingItems.splice(i, 1)
-    unmergedRenamedEvents.add(event)
-    break
   }
+  return -1
+}
+
+function aggregateEvents (createdEvent, deletedEvent) {
+  const aggregatedEvents = {
+    deletedEvent,
+    createdEvent: _.clone(createdEvent)
+  }
+  createdEvent.action = 'renamed'
+  createdEvent.oldPath = deletedEvent.path
+  _.set(createdEvent, [STEP_NAME, 'aggregatedEvents'], aggregatedEvents)
 }
 
 function sendReadyBatches (waiting /*: PendingItem[] */, out /*: Buffer */) {
@@ -190,7 +187,14 @@ async function winDetectMove (buffer, out, opts /*: WinDetectMoveOptions */) {
       pendingItems.push({ event, deletedIno, timeout })
 
       // Then, see if a created event matches a deleted event
-      aggregateEvents(event, pendingItems, unmergedRenamedEvents)
+      const pendingIndex = indexOfMatchingDeletedEvent(event, pendingItems)
+      if (pendingIndex !== -1) {
+        const pendingDeleted = pendingItems[pendingIndex]
+        aggregateEvents(event, pendingDeleted.event)
+        clearTimeout(pendingDeleted.timeout)
+        pendingItems.splice(pendingIndex, 1)
+        unmergedRenamedEvents.add(event)
+      }
     }
 
     // Finally, look if some batches can be sent without waiting
