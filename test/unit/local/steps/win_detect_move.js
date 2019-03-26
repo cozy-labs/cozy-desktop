@@ -166,7 +166,9 @@ if (process.platform === 'win32') {
                                 deletedEvent: {
                                   ...deletedChildEvent,
                                   winDetectMove: {
-                                    wasPath: path.join(srcPath, childName)
+                                    oldPaths: [
+                                      path.join(srcPath, childName)
+                                    ]
                                   }
                                 }
                               }

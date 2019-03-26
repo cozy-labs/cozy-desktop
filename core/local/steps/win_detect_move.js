@@ -82,36 +82,47 @@ function previousPaths (deletedPath, unmergedRenamedEvents) {
   return previousPaths
 }
 
-async function findDocFromPreviousPaths (previousPaths, pouch) {
-  for (const previousPath of previousPaths) {
+async function findDocById (id, pouch) {
+  const doc = await pouch.byIdMaybeAsync(id)
+  return doc && { deletedIno: doc.fileid || doc.ino }
+}
+
+async function findDocRecentlyRenamed (previousPaths, pouch) {
+  for (const [index, previousPath] of previousPaths.entries()) {
     const doc = await pouch.byIdMaybeAsync(id(previousPath))
-    if (doc) return doc
+    if (doc) {
+      return {
+        deletedIno: doc.fileid || doc.ino,
+        oldPaths: previousPaths.slice(index)
+      }
+    }
   }
 }
 
-async function findDeleted (event, pouch, unmergedRenamedEvents) {
-  if (event.action === 'deleted') {
-    const release = await pouch.lock('winMoveDetector')
-    try {
-      const was = (
-        await pouch.byIdMaybeAsync(event._id) ||
-        await findDocFromPreviousPaths(
-          previousPaths(event.path, unmergedRenamedEvents),
-          pouch
-        )
-      )
-      if (was) {
-        if (was.path !== event.path) {
-          // TODO: Attach renamed chain info?
-          _.set(event, [STEP_NAME, 'wasPath'], was.path)
-        }
-        return was.fileid || was.ino
-      } else {
-        _.set(event, [STEP_NAME, 'docNotFound'], 'missing')
-      }
-    } finally {
-      release()
-    }
+async function findDeletedIno (event, pouch, unmergedRenamedEvents) {
+  if (event.action !== 'deleted') return {}
+  // OPTIMIZE: Make .previousPaths() include event.path so we don't need a lock
+  const release = await pouch.lock('winMoveDetector')
+  try {
+    return (
+      await findDocById(event._id, pouch) ||
+      await findDocRecentlyRenamed(
+        previousPaths(event.path, unmergedRenamedEvents),
+        pouch
+      ) ||
+      {}
+    )
+  } finally {
+    release()
+  }
+}
+
+async function assignDebugInfos (event, deletedIno, oldPaths) {
+  if (event.action !== 'deleted') return
+  if (oldPaths) {
+    _.set(event, [STEP_NAME, 'oldPaths'], oldPaths)
+  } else if (!deletedIno) {
+    _.set(event, [STEP_NAME, 'docNotFound'], 'missing')
   }
 }
 
@@ -167,7 +178,11 @@ async function winDetectMove (buffer, out, opts /*: WinDetectMoveOptions */) {
 
     for (const event of events) {
       // First, push the new events in the pending queue
-      const deletedIno = await findDeleted(event, pouch, unmergedRenamedEvents)
+      const { deletedIno, oldPaths } =
+        await findDeletedIno(event, pouch, unmergedRenamedEvents)
+
+      assignDebugInfos(event, deletedIno, oldPaths)
+
       const timeout = setTimeout(() => {
         out.push([pendingItems.shift().event])
         sendReadyBatches(pendingItems, out)
