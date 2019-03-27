@@ -73,7 +73,9 @@ if (process.platform === 'win32') {
             it(`is a replaced ${kind} (not aggregated)`, async function () {
               inputBatch([deletedEvent, createdEvent])
               should(await outputBatch()).deepEqual([
-                deletedEvent,
+                deletedEvent
+              ])
+              should(await outputBatch()).deepEqual([
                 createdEvent
               ])
             })
@@ -265,7 +267,9 @@ if (process.platform === 'win32') {
             it(`is a temporary ${kind} (not aggregated)`, async function () {
               inputBatch([createdEvent, deletedEvent])
               should(await outputBatch()).deepEqual([
-                createdEvent,
+                createdEvent
+              ])
+              should(await outputBatch()).deepEqual([
                 _.defaults(
                   {winDetectMove: {docNotFound: 'missing'}},
                   deletedEvent

@@ -22,9 +22,9 @@ const DELAY = 1000
 import type { AtomWatcherEvent } from './event'
 import type Pouch from '../../pouch'
 
-type PendingBatch = {
-  events: AtomWatcherEvent[],
-  deleted: Map<string | number, string>,
+type PendingItem = {
+  event: AtomWatcherEvent,
+  deletedIno: ?string | ?number,
   timeout: TimeoutID
 }
 
@@ -90,82 +90,65 @@ async function findDocFromPreviousPaths (previousPaths, pouch) {
   }
 }
 
-async function findDeleted (events, pouch, unmergedRenamedEvents) {
-  const deleted = new Map()
-  for (const event of events) {
-    if (event.action === 'deleted') {
-      const release = await pouch.lock('winMoveDetector')
-      try {
-        const was = (
-          await pouch.byIdMaybeAsync(event._id) ||
-          await findDocFromPreviousPaths(
-            previousPaths(event.path, unmergedRenamedEvents),
-            pouch
-          )
+async function findDeleted (event, pouch, unmergedRenamedEvents) {
+  if (event.action === 'deleted') {
+    const release = await pouch.lock('winMoveDetector')
+    try {
+      const was = (
+        await pouch.byIdMaybeAsync(event._id) ||
+        await findDocFromPreviousPaths(
+          previousPaths(event.path, unmergedRenamedEvents),
+          pouch
         )
-        if (was) {
-          deleted.set(was.fileid || was.ino, event.path)
-          if (was.path !== event.path) {
-            // TODO: Attach renamed chain info?
-            _.set(event, [STEP_NAME, 'wasPath'], was.path)
-          }
-        } else {
-          _.set(event, [STEP_NAME, 'docNotFound'], 'missing')
+      )
+      if (was) {
+        if (was.path !== event.path) {
+          // TODO: Attach renamed chain info?
+          _.set(event, [STEP_NAME, 'wasPath'], was.path)
         }
-      } finally {
-        release()
+        return was.fileid || was.ino
+      } else {
+        _.set(event, [STEP_NAME, 'docNotFound'], 'missing')
       }
-    }
-  }
-  return deleted
-}
-
-function aggregateEvents (events, pending, unmergedRenamedEvents) {
-  for (const event of events) {
-    if (event.incomplete) {
-      continue
-    }
-    if (event.action === 'created') {
-      for (let i = 0; i < pending.length; i++) {
-        let path = pending[i].deleted.get(event.stats.fileid)
-        if (!path) {
-          path = pending[i].deleted.get(event.stats.ino)
-        }
-
-        if (!path || path === event.path) {
-          continue
-        }
-        const l = pending[i].events.length
-        for (let j = 0; j < l; j++) {
-          const e = pending[i].events[j]
-          if (e.action === 'deleted' && e.path === path) {
-            const aggregatedEvents = {
-              deletedEvent: e,
-              createdEvent: _.clone(event)
-            }
-            event.action = 'renamed'
-            event.oldPath = e.path
-            _.set(event, [STEP_NAME, 'aggregatedEvents'], aggregatedEvents)
-            pending[i].deleted.delete(event.stats.fileid)
-            pending[i].deleted.delete(event.stats.ino)
-            pending[i].events.splice(j, 1)
-            unmergedRenamedEvents.push(event)
-            break
-          }
-        }
-      }
+    } finally {
+      release()
     }
   }
 }
 
-function sendReadyBatches (waiting /*: PendingBatch[] */, out /*: Buffer */) {
+function aggregateEvents (event, pendingItems, unmergedRenamedEvents) {
+  if (event.incomplete || event.action !== 'created') {
+    return
+  }
+
+  for (let i = 0; i < pendingItems.length; i++) {
+    const pendingItem = pendingItems[i]
+    if (!pendingItem.deletedIno) continue
+    if (![event.stats.fileid, event.stats.ino].includes(pendingItem.deletedIno)) continue
+
+    const deletedEvent = pendingItem.event
+    const aggregatedEvents = {
+      deletedEvent,
+      createdEvent: _.clone(event)
+    }
+    event.action = 'renamed'
+    event.oldPath = deletedEvent.path
+    _.set(event, [STEP_NAME, 'aggregatedEvents'], aggregatedEvents)
+    clearTimeout(pendingItem.timeout)
+    pendingItems.splice(i, 1)
+    unmergedRenamedEvents.push(event)
+    break
+  }
+}
+
+function sendReadyBatches (waiting /*: PendingItem[] */, out /*: Buffer */) {
   while (waiting.length > 0) {
-    if (waiting[0].deleted.size !== 0) {
+    if (waiting[0].deletedIno) {
       break
     }
     const item = waiting.shift()
     clearTimeout(item.timeout)
-    out.push(item.events)
+    out.push([item.event])
   }
 }
 
@@ -173,7 +156,7 @@ function sendReadyBatches (waiting /*: PendingBatch[] */, out /*: Buffer */) {
 // a file or directory is moved. This step merges the two events to a single
 // renamed event.
 async function winDetectMove (buffer, out, opts /*: WinDetectMoveOptions */) {
-  const pending /*: PendingBatch[] */ = []
+  const pendingItems /*: PendingItem[] */ = []
 
   while (true) {
     // Wait for a new batch of events
@@ -183,19 +166,21 @@ async function winDetectMove (buffer, out, opts /*: WinDetectMoveOptions */) {
       state: { [STEP_NAME]: { unmergedRenamedEvents } }
     } = opts
 
-    // First, push the new events in the pending queue
-    const deleted = await findDeleted(events, pouch, unmergedRenamedEvents)
-    const timeout = setTimeout(() => {
-      out.push(pending.shift().events)
-      sendReadyBatches(pending, out)
-    }, DELAY)
-    pending.push({ events, deleted, timeout })
+    for (const event of events) {
+      // First, push the new events in the pending queue
+      const deletedIno = await findDeleted(event, pouch, unmergedRenamedEvents)
+      const timeout = setTimeout(() => {
+        out.push([pendingItems.shift().event])
+        sendReadyBatches(pendingItems, out)
+      }, DELAY)
+      pendingItems.push({ event, deletedIno, timeout })
 
-    // Then, see if a created event matches a deleted event
-    aggregateEvents(events, pending, unmergedRenamedEvents)
+      // Then, see if a created event matches a deleted event
+      aggregateEvents(event, pendingItems, unmergedRenamedEvents)
+    }
 
     // Finally, look if some batches can be sent without waiting
-    sendReadyBatches(pending, out)
+    sendReadyBatches(pendingItems, out)
   }
 }
 
