@@ -3,6 +3,7 @@
 const _ = require('lodash')
 const path = require('path')
 
+const SortedSet = require('../../utils/sorted_set')
 const { id } = require('../../metadata')
 const Buffer = require('./buffer')
 const logger = require('../../logger')
@@ -30,7 +31,7 @@ type PendingItem = {
 
 export type WinDetectMoveState = {
   [typeof STEP_NAME]: {
-    unmergedRenamedEvents: AtomWatcherEvent[]
+    unmergedRenamedEvents: SortedSet<AtomWatcherEvent>
   }
 }
 
@@ -52,17 +53,15 @@ const areParentChildPaths = (p /*: string */, c /*: string */) /*: boolean */ =>
 async function initialState (opts /*: ?{} */) /* Promise<WinDetectMoveState> */ {
   return {
     [STEP_NAME]: {
-      unmergedRenamedEvents: []
+      unmergedRenamedEvents: new SortedSet/* ::<AtomWatcherEvent> */()
     }
   }
 }
 
 function onEventMerged (event /*: AtomWatcherEvent */, state /*: WinDetectMoveState */) {
   const { [STEP_NAME]: { unmergedRenamedEvents } } = state
-  const eventIndex = unmergedRenamedEvents.indexOf(event)
-  if (eventIndex !== -1) {
-    unmergedRenamedEvents.splice(eventIndex, 1)
-  }
+
+  unmergedRenamedEvents.delete(event)
 }
 
 function previousPaths (deletedPath, unmergedRenamedEvents) {
@@ -136,7 +135,7 @@ function aggregateEvents (event, pendingItems, unmergedRenamedEvents) {
     _.set(event, [STEP_NAME, 'aggregatedEvents'], aggregatedEvents)
     clearTimeout(pendingItem.timeout)
     pendingItems.splice(i, 1)
-    unmergedRenamedEvents.push(event)
+    unmergedRenamedEvents.add(event)
     break
   }
 }
