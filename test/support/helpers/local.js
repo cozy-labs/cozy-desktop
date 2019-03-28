@@ -140,7 +140,16 @@ class LocalTestHelpers {
       this.stopSimulation()
       return []
     } else {
-      return dispatch.step(this.side)(batch)
+      const watcher = this._ensureAtomWatcher()
+      const stepOptions = Object.assign(
+        ({
+          checksumer: watcher.checksumer,
+          scan: watcher.producer.scan,
+          state: watcher.state
+        } /*: Object */),
+        this.side
+      )
+      return dispatch.step(stepOptions)(batch)
     }
   }
 
