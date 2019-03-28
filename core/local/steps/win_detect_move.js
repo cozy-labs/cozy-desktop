@@ -82,12 +82,12 @@ function previousPaths (deletedPath, unmergedRenamedEvents) {
   return previousPaths
 }
 
-async function findDocById (id, pouch) {
+async function findDeletedInoById (id, pouch) {
   const doc = await pouch.byIdMaybeAsync(id)
   return doc && { deletedIno: doc.fileid || doc.ino }
 }
 
-async function findDocRecentlyRenamed (previousPaths, pouch) {
+async function findDeletedInoRecentlyRenamed (previousPaths, pouch) {
   for (const [index, previousPath] of previousPaths.entries()) {
     const doc = await pouch.byIdMaybeAsync(id(previousPath))
     if (doc) {
@@ -102,11 +102,11 @@ async function findDocRecentlyRenamed (previousPaths, pouch) {
 async function findDeletedIno (event, pouch, unmergedRenamedEvents) {
   if (event.action !== 'deleted') return {}
   // OPTIMIZE: Make .previousPaths() include event.path so we don't need a lock
-  const release = await pouch.lock('winMoveDetector')
+  const release = await pouch.lock('winDetectMove')
   try {
     return (
-      await findDocById(event._id, pouch) ||
-      await findDocRecentlyRenamed(
+      await findDeletedInoById(event._id, pouch) ||
+      await findDeletedInoRecentlyRenamed(
         previousPaths(event.path, unmergedRenamedEvents),
         pouch
       ) ||
@@ -122,17 +122,21 @@ async function assignDebugInfos (event, deletedIno, oldPaths) {
   if (oldPaths) {
     _.set(event, [STEP_NAME, 'oldPaths'], oldPaths)
   } else if (!deletedIno) {
-    _.set(event, [STEP_NAME, 'docNotFound'], 'missing')
+    _.set(event, [STEP_NAME, 'deletedIno'], 'unresolved')
   }
+}
+
+function eventHasIno (event, ino) {
+  return ino === (event.stats.fileid || event.stats.ino)
 }
 
 function indexOfMatchingDeletedEvent (event, pendingItems) {
   if (event.action === 'created' && !event.incomplete) {
     for (let i = 0; i < pendingItems.length; i++) {
-      const pendingItem = pendingItems[i]
-      if (!pendingItem.deletedIno) continue
-      if (![event.stats.fileid, event.stats.ino].includes(pendingItem.deletedIno)) continue
-      return i
+      const { deletedIno } = pendingItems[i]
+      if (deletedIno && eventHasIno(event, deletedIno)) {
+        return i
+      }
     }
   }
   return -1

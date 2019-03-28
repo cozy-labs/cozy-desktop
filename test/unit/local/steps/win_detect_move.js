@@ -224,7 +224,7 @@ if (process.platform === 'win32') {
                     ],
                     [
                       _.defaults({
-                        winDetectMove: {docNotFound: 'missing'}
+                        winDetectMove: {deletedIno: 'unresolved'}
                       }, deletedTmpEvent)
                     ],
                     [
@@ -273,7 +273,7 @@ if (process.platform === 'win32') {
               ])
               should(await outputBatch()).deepEqual([
                 _.defaults(
-                  {winDetectMove: {docNotFound: 'missing'}},
+                  {winDetectMove: {deletedIno: 'unresolved'}},
                   deletedEvent
                 )
               ])
