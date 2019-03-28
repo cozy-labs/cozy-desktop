@@ -1,5 +1,44 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.0-alpha.2 - 2019-03-28
+
+Improvements for Windows and Linux users:
+
+- Successive moves (e.g. A → B → C → D) are now correctly applied (i.e. A → D)
+  with the new local watcher.
+- The introduction of the new local watcher brought a performance regression
+  during the initial Cozy directory scan. We ported an optimisation we had in
+  the previous watcher to the new one which should make the initial scan phase
+  about 3x faster.
+- We found a bug in the synchronisation process of directories that could lead
+  to missed updates. We have not seen any reports of it but the mechanism has
+  been fixed anyway.
+- We updated one of our main dependencies, Electron, to its 2.x version. We are
+  still not using the latest version but this one brings us back support from
+  the Electron team and security fixes. Other updates will come in the following
+  releases.
+
+Improvements for Windows users:
+
+- Moves from a directory that has just been moved to a path outside this
+  directory will now be correctly detected and applied with the new local
+  watcher.
+
+There are some known issues that we'll tackle in the next releases:
+
+- On Windows, moving a tree of directories and files to a destination that
+  shares part of this tree (e.g. `src/dir/subdir/file` → `dst/dir/subdir/file`)
+  and overwriting the destinations will result in conflicts being created for
+  the overwritten files.
+- On Windows, the synchronisation of a remote move stopped before it's been
+  applied on the local system will won't be resumed when restarting the client.
+- On Linux, some movements done while the client was stopped won't be correctly
+  detected and handled when starting the client.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.0-alpha.1 - 2019-03-06
 
 Improvements for Windows and Linux users:
@@ -20,7 +59,7 @@ There are some known issues that we'll tackle in the next releases:
 - On Windows, moving a tree of directories and files to a destination that
   shares part of this tree (e.g. `src/dir/subdir/file` → `dst/dir/subdir/file`)
   and overwriting the destinations will result in conflicts being created for
-  the overwrited files.
+  the overwritten files.
 - On Windows, the synchronisation of a remote move stopped before it's been
   applied on the local system will won't be resumed when restarting the client.
 - On Linux, some movements done while the client was stopped won't be correctly
