@@ -145,7 +145,7 @@ function step (incompletes /*: IncompleteItem[] */, opts /*: IncompleteFixerOpti
 
     // Filter incomplete events
     for (const event of events) {
-      if (event.incomplete) {
+      if (event.incomplete && event.action !== 'ignored') {
         log.debug({path: event.path, action: event.action}, 'incomplete')
         incompletes.push({ event, timestamp: Date.now() })
       }

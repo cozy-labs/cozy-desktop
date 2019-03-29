@@ -150,6 +150,34 @@ describe('core/local/steps/incomplete_fixer', () => {
         ])
       })
 
+      it('drops incomplete ignored events matching the "renamed" event old path', async function () {
+        const { syncPath } = this
+
+        await syncDir.makeTree([
+          'dst/',
+          'dst/file'
+        ])
+        const ignoredEvent = builders.event()
+          .incomplete()
+          .action('ignored')
+          .path('src/file')
+          .build()
+        const renamedEvent = builders.event()
+          .action('renamed')
+          .oldPath('src')
+          .path('dst')
+          .build()
+        const incompletes = []
+
+        const outputBatch = await incompleteFixer.step(incompletes, {syncPath, checksumer})([
+          ignoredEvent,
+          renamedEvent
+        ])
+        should(outputBatch).deepEqual([
+          renamedEvent
+        ])
+      })
+
       it('replaces the completing event if its path is the same as the rebuilt one', async function () {
         const { syncPath } = this
 

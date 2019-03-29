@@ -55,6 +55,8 @@ function step (opts /*: DispatchOptions */) {
         log.trace({event}, 'dispatch')
         if (event.action === 'initial-scan-done') {
           actions.initialScanDone(opts)
+        } else if (event.action === 'ignored') {
+          actions.ignored(event)
         } else {
           await actions[event.action + event.kind](event, opts)
         }
@@ -75,6 +77,10 @@ actions = {
   initialScanDone: ({events}) => {
     log.info('Initial scan done')
     events.emit('initial-scan-done')
+  },
+
+  ignored: event => {
+    log.debug({event}, 'Ignored')
   },
 
   scanfile: (event, opts) => actions.createdfile(event, opts, 'File found'),

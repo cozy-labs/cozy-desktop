@@ -280,6 +280,19 @@ if (process.platform === 'win32') {
             })
           })
         })
+
+        describe(`ignored ${kind}`, () => {
+          let ignoredEvent
+
+          beforeEach(async () => {
+            ignoredEvent = builders.event().action('ignored').kind(kind).build()
+          })
+
+          it('is untouched', async function () {
+            inputBatch([ignoredEvent])
+            should(await outputBatch()).deepEqual([ignoredEvent])
+          })
+        })
       }
     })
   })
