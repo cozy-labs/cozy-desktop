@@ -10,6 +10,7 @@ const Producer = require('./steps/producer')
 const addInfos = require('./steps/add_infos')
 const filterIgnored = require('./steps/filter_ignored')
 const winDetectMove = require('./steps/win_detect_move')
+const winIdenticalRenaming = require('./steps/win_identical_renaming')
 const scanFolder = require('./steps/scan_folder')
 const awaitWriteFinish = require('./steps/await_write_finish')
 const initialDiff = require('./steps/initial_diff')
@@ -51,6 +52,7 @@ const steps =
   _.compact([
     addInfos,
     filterIgnored,
+    only('win32', winIdenticalRenaming),
     only('win32', winDetectMove),
     scanFolder,
     awaitWriteFinish,
