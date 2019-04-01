@@ -2,6 +2,7 @@
 
 const _ = require('lodash')
 const path = require('path')
+const crypto = require('crypto')
 
 const metadata = require('../../../core/metadata')
 const events = require('../../../core/local/steps/event')
@@ -132,6 +133,12 @@ module.exports = class AtomWatcherEventBuilder {
     return this
   }
 
+  data (fileContent /*: string */) /*: this */ {
+    return this.md5sum(
+      crypto.createHash('md5').update(fileContent).digest().toString('base64')
+    )
+  }
+
   noIgnore () /*: this */ {
     this._event.noIgnore = true
     return this
@@ -141,5 +148,10 @@ module.exports = class AtomWatcherEventBuilder {
     this._event.incomplete = true
     delete this._event.md5sum
     return this.noStats()
+  }
+
+  overwrite () /*: this */ {
+    this._event.overwrite = true
+    return this
   }
 }

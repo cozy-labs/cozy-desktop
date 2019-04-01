@@ -27,6 +27,7 @@ export type AtomWatcherEvent = {
   md5sum?: string,
   incomplete?: bool,
   noIgnore?: bool,
+  overwrite?: bool
 }
 
 export type Batch = AtomWatcherEvent[]
