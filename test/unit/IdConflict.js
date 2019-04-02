@@ -156,8 +156,7 @@ describe('IdConflict', function () {
         })
 
         describe('from the existing path (identical renaming)', () => {
-          // FIXME: Should be false :)
-          assertIdConflict(true, move({dstPath, srcPath: existingPath}))
+          assertIdConflict(false, move({dstPath, srcPath: existingPath}))
         })
       })
     })

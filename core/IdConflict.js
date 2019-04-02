@@ -67,7 +67,11 @@ function detect (change /*: Change */, existingDoc /*: ?Metadata */) /*: ?IdConf
 function detectOnId ({doc, was} /*: $Diff<Change, {side: SideName}> */, existingDoc /*: Metadata */) /*: boolean */ {
   return (
     doc._id === existingDoc._id &&
-    doc.path !== existingDoc.path
+    doc.path !== existingDoc.path &&
+    (
+      was == null ||
+      was.path !== existingDoc.path
+    )
   )
 }
 
