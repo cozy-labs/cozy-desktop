@@ -111,7 +111,7 @@ class Merge {
     const {path} = doc
     const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     metadata.markSide(side, doc, file)
-    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, file)
+    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect({side, doc}, file)
     if (idConflict) {
       log.warn({idConflict}, IdConflict.description(idConflict))
       await this.resolveConflictAsync(side, doc, file)
@@ -205,7 +205,7 @@ class Merge {
       return this.resolveConflictAsync(side, doc, folder)
     }
     metadata.assignMaxDate(doc, folder)
-    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, folder)
+    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect({side, doc}, folder)
     if (idConflict) {
       log.warn({idConflict}, IdConflict.description(idConflict))
       await this.resolveConflictAsync(side, doc, folder)
@@ -240,7 +240,7 @@ class Merge {
       return this.addFileAsync(side, doc)
     } else if (was.sides && was.sides[side]) {
       const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
-      const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, file)
+      const idConflict /*: ?IdConflictInfo */ = IdConflict.detect({side, doc, was}, file)
       if (idConflict) {
         log.warn({idConflict}, IdConflict.description(idConflict))
         await this.resolveConflictAsync(side, doc, file)
@@ -287,7 +287,7 @@ class Merge {
     }
 
     const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
-    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(side, doc, folder)
+    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect({side, doc, was}, folder)
     if (idConflict) {
       log.warn({idConflict}, IdConflict.description(idConflict))
       return this.resolveConflictAsync(side, doc, folder)

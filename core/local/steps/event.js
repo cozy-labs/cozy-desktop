@@ -10,6 +10,7 @@ export type EventAction =
   | 'renamed'
   | 'scan'
   | 'initial-scan-done'
+  | 'ignored'
 export type EventKind =
   | 'file'
   | 'directory'
@@ -32,7 +33,8 @@ export type Batch = AtomWatcherEvent[]
 */
 
 const ACTIONS /*: EventAction[] */ = [
-  'created', 'modified', 'deleted', 'renamed', 'scan', 'initial-scan-done'
+  'created', 'modified', 'deleted', 'renamed', 'scan', 'initial-scan-done',
+  'ignored'
 ]
 const KINDS /*: EventKind[] */ = [
   'file', 'directory', 'symlink', 'unknown'

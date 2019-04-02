@@ -38,6 +38,11 @@ describe('core/local/steps/scan_folder.loop()', () => {
         action: 'created',
         kind: 'directory',
         path: __dirname
+      },
+      {
+        action: 'ignored',
+        kind: 'directory',
+        path: __dirname
       }
     ]
     const buffer = new Buffer()

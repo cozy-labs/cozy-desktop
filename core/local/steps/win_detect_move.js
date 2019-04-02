@@ -20,7 +20,7 @@ const log = logger({
 const DELAY = 1000
 
 /*::
-import type { AtomWatcherEvent } from './event'
+import type { AtomWatcherEvent, Batch } from './event'
 import type Pouch from '../../pouch'
 
 type PendingItem = {
@@ -152,21 +152,21 @@ function aggregateEvents (createdEvent, deletedEvent) {
   _.set(createdEvent, [STEP_NAME, 'aggregatedEvents'], aggregatedEvents)
 }
 
-function sendReadyBatches (waiting /*: PendingItem[] */, out /*: Buffer */) {
+function sendReadyBatches (waiting /*: PendingItem[] */, output /*: (Batch) => void */) {
   while (waiting.length > 0) {
     if (waiting[0].deletedIno) {
       break
     }
     const item = waiting.shift()
     clearTimeout(item.timeout)
-    out.push([item.event])
+    output([item.event])
   }
 }
 
 // On windows, ReadDirectoryChangesW emits a deleted and an added events when
 // a file or directory is moved. This step merges the two events to a single
 // renamed event.
-async function winDetectMove (buffer, out, opts /*: WinDetectMoveOptions */) {
+async function winDetectMove (buffer, output, opts /*: WinDetectMoveOptions */) {
   const pendingItems /*: PendingItem[] */ = []
 
   while (true) {
@@ -185,8 +185,8 @@ async function winDetectMove (buffer, out, opts /*: WinDetectMoveOptions */) {
       assignDebugInfos(event, deletedIno, oldPaths)
 
       const timeout = setTimeout(() => {
-        out.push([pendingItems.shift().event])
-        sendReadyBatches(pendingItems, out)
+        output([pendingItems.shift().event])
+        sendReadyBatches(pendingItems, output)
       }, DELAY)
       pendingItems.push({ event, deletedIno, timeout })
 
@@ -202,13 +202,16 @@ async function winDetectMove (buffer, out, opts /*: WinDetectMoveOptions */) {
     }
 
     // Finally, look if some batches can be sent without waiting
-    sendReadyBatches(pendingItems, out)
+    sendReadyBatches(pendingItems, output)
   }
 }
 
 function loop (buffer /*: Buffer */, opts /*: WinDetectMoveOptions */) /*: Buffer */ {
   const out = new Buffer()
-  winDetectMove(buffer, out, opts)
+  const output = batch => {
+    out.push(batch)
+  }
+  winDetectMove(buffer, output, opts)
     .catch(err => log.error({err}))
   return out
 }

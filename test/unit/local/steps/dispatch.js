@@ -91,6 +91,21 @@ describe('core/local/steps/dispatch.loop()', function () {
     })
   })
 
+  context('when buffer contains an ignored event', () => {
+    beforeEach(() => {
+      buffer.push([
+        builders.event().action('ignored').build()
+      ])
+    })
+
+    it('does not call any Prep method', async function () {
+      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
+      await dispatchedBuffer.pop()
+
+      should(dispatchedCalls(prep)).deepEqual({})
+    })
+  })
+
   context('when buffer contains a scan file event', () => {
     const filePath = 'foo'
     const md5sum = crypto.createHash('md5').update('').digest().toString('base64')
