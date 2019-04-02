@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.0-alpha.3 - 2019-04-02
+
+Improvements for Windows users:
+
+- Changing only the case of a file/directory name now works as expected when
+  using the new watcher.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.0-alpha.2 - 2019-03-28
 
 Improvements for Windows and Linux users:
