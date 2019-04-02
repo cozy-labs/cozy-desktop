@@ -212,6 +212,6 @@ function loop (buffer /*: Buffer */, opts /*: WinDetectMoveOptions */) /*: Buffe
     out.push(batch)
   }
   winDetectMove(buffer, output, opts)
-    .catch(err => log.error({err}))
+    .catch(err => { log.error({err}) })
   return out
 }
