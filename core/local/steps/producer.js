@@ -108,10 +108,8 @@ module.exports = class Producer {
       }
     }
     log.trace({path: relPath, batch: entries}, 'scan')
-    if (entries.length === 0) {
-      return
-    }
     this.buffer.push(entries)
+
     for (const entry of entries) {
       if (entry.stats && stater.isDirectory(entry.stats)) {
         await this.scan(entry.path)
