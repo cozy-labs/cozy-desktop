@@ -8,10 +8,12 @@ const watcher = require('@atom/watcher')
 
 const Buffer = require('./buffer')
 const { INITIAL_SCAN_DONE } = require('./event')
-const stater = require('../stater')
 const logger = require('../../logger')
+const defaultStater = require('../stater')
 
 /*::
+import type { AtomWatcherEvent } from './event'
+
 export type Scanner = (string) => Promise<void>
 */
 
@@ -88,23 +90,24 @@ module.exports = class Producer {
     this.buffer.push([INITIAL_SCAN_DONE])
   }
 
-  async scan (relPath /*: string */) {
+  async scan (relPath /*: string */, { readdir = fse.readdir, stater = defaultStater } /*: { readdir: *, stater: * } */ = {}) {
     const entries = []
     const fullPath = path.join(this.syncPath, relPath)
-    for (const entry of await fse.readdir(fullPath)) {
+    for (const entry of await readdir(fullPath)) {
       try {
-        // TODO ignore
         const absPath = path.join(this.syncPath, relPath, entry)
-        const stats = await stater.stat(absPath)
-        entries.push({
+        const stats = await stater.statMaybe(absPath)
+        const incomplete = stats == null
+        const scanEvent /*: AtomWatcherEvent */ = {
           action: 'scan',
           path: path.join(relPath, entry),
-          stats,
-          kind: stater.kind(stats)
-        })
+          kind: stats ? stater.kind(stats) : 'unknown'
+        }
+        if (stats) scanEvent.stats = stats
+        if (incomplete) scanEvent.incomplete = incomplete
+        entries.push(scanEvent)
       } catch (err) {
         log.error({err, path: path.join(relPath, entry)})
-        // TODO error handling
       }
     }
     log.trace({path: relPath, batch: entries}, 'scan')
