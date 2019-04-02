@@ -9,9 +9,34 @@ const fse = require('fs-extra')
 const path = require('path')
 const { onPlatforms } = require('../../../support/helpers/platform')
 const Producer = require('../../../../core/local/steps/producer')
+const stater = require('../../../../core/local/stater')
 
 onPlatforms(['linux', 'win32'], () => {
   describe('core/local/steps/producer', () => {
+    describe('scan()', () => {
+      const producer = new Producer({ syncPath: '' })
+
+      describe('on readdir / stat race condition', () => {
+        const missingFilePath = 'i-am-missing'
+        const readdir = async () => [missingFilePath]
+
+        it('produces incomplete scan event on ENOENT', async () => {
+          const { buffer } = producer
+
+          await producer.scan('', { readdir, stater })
+
+          should(await buffer.pop()).deepEqual([
+            {
+              action: 'scan',
+              path: missingFilePath,
+              kind: 'unknown',
+              incomplete: true
+            }
+          ])
+        })
+      })
+    })
+
     describe('API of the producer', () => {
       let syncPath
       let producer
