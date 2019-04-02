@@ -33,6 +33,7 @@ export opaque type IdConflictInfo = {
 module.exports = {
   description,
   detect,
+  detectOnId,
   existsBetween
 }
 
@@ -63,14 +64,24 @@ function detect (change /*: Change */, existingDoc /*: ?Metadata */) /*: ?IdConf
   }
 }
 
+function detectOnId ({doc, was} /*: $Diff<Change, {side: SideName}> */, existingDoc /*: Metadata */) /*: boolean */ {
+  return (
+    doc._id === existingDoc._id &&
+    doc.path !== existingDoc.path
+  )
+}
+
+function detectOnRemote ({doc, was} /*: $Diff<Change, {side: SideName}> */, existingDoc /*: Metadata */) /*: boolean */ {
+  return _.get(doc, 'remote._id') !== _.get(existingDoc, 'remote._id')
+}
+
 /** Does an identity conflict exist between a change and an existing doc?
  *
  * The side is not used here, hence the $Diff flow type annotation.
  */
-function existsBetween ({doc} /*: $Diff<Change, {side: SideName}> */, existingDoc /*: Metadata */) /*: boolean */ {
+function existsBetween (change /*: $Diff<Change, {side: SideName}> */, existingDoc /*: Metadata */) /*: boolean */ {
   return (
-    doc._id === existingDoc._id &&
-    doc.path !== existingDoc.path &&
-    _.get(doc, 'remote._id') !== _.get(existingDoc, 'remote._id')
+    detectOnId(change, existingDoc) &&
+    detectOnRemote(change, existingDoc)
   )
 }
