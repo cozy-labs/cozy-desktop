@@ -65,7 +65,7 @@ function step (opts /*: DispatchOptions */) {
         // TODO: Error handling
       } finally {
         if (process.platform === 'win32') {
-          winDetectMove.onEventMerged(event, opts.state)
+          winDetectMove.forget(event, opts.state)
         }
       }
     }

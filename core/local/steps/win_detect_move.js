@@ -42,9 +42,9 @@ type WinDetectMoveOptions = {
 */
 
 module.exports = {
+  forget,
   initialState,
-  loop,
-  onEventMerged
+  loop
 }
 
 const areParentChildPaths = (p /*: string */, c /*: string */) /*: boolean */ =>
@@ -58,7 +58,7 @@ async function initialState (opts /*: ?{} */) /* Promise<WinDetectMoveState> */ 
   }
 }
 
-function onEventMerged (event /*: AtomWatcherEvent */, state /*: WinDetectMoveState */) {
+function forget (event /*: AtomWatcherEvent */, state /*: WinDetectMoveState */) {
   const { [STEP_NAME]: { unmergedRenamedEvents } } = state
 
   unmergedRenamedEvents.delete(event)
