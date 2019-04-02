@@ -55,6 +55,7 @@ module.exports = {
 function loop (buffer /*: Buffer */, opts /*: { pouch: Pouch, state: Object } */) /*: Buffer */ {
   const out = new Buffer()
   initialDiff(buffer, out, opts.pouch, opts.state)
+    .catch(err => { log.error({err}) })
   return out
 }
 
