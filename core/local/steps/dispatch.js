@@ -111,8 +111,8 @@ actions = {
   },
 
   renamedfile: async (event, {pouch, prep}) => {
-    const old = await pouch.byIdMaybeAsync(id(event.oldPath))
-    if (!old) {
+    const was = await pouch.byIdMaybeAsync(id(event.oldPath))
+    if (!was) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a file is added when the client is
       // stopped, and is moved before it was scanned.
@@ -123,12 +123,12 @@ actions = {
     }
     log.info({event}, 'File moved')
     const doc = buildFile(event.path, event.stats, event.md5sum)
-    await prep.moveFileAsync(SIDE, doc, old)
+    await prep.moveFileAsync(SIDE, doc, was)
   },
 
   renameddirectory: async (event, {pouch, prep}) => {
-    const old = await pouch.byIdMaybeAsync(id(event.oldPath))
-    if (!old) {
+    const was = await pouch.byIdMaybeAsync(id(event.oldPath))
+    if (!was) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a dir is added when the client is
       // stopped, and is moved before it was scanned.
@@ -139,30 +139,30 @@ actions = {
     }
     log.info({event}, 'Dir moved')
     const doc = buildDir(event.path, event.stats)
-    await prep.moveFolderAsync(SIDE, doc, old)
+    await prep.moveFolderAsync(SIDE, doc, was)
   },
 
   deletedfile: async (event, {pouch, prep}) => {
-    const old = await pouch.byIdMaybeAsync(event._id)
-    if (!old) {
+    const was = await pouch.byIdMaybeAsync(event._id)
+    if (!was) {
       log.debug({event}, 'Assuming file already removed')
       // The file was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
     }
     log.info({event}, 'File removed')
-    await prep.trashFileAsync(SIDE, old)
+    await prep.trashFileAsync(SIDE, was)
   },
 
   deleteddirectory: async (event, {pouch, prep}) => {
-    const old = await pouch.byIdMaybeAsync(event._id)
-    if (!old) {
+    const was = await pouch.byIdMaybeAsync(event._id)
+    if (!was) {
       log.debug({event}, 'Assuming dir already removed')
       // The dir was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
     }
     log.info({event}, 'Dir removed')
-    await prep.trashFolderAsync(SIDE, old)
+    await prep.trashFolderAsync(SIDE, was)
   }
 }
