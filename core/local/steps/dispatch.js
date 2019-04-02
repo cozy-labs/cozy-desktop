@@ -62,7 +62,6 @@ function step (opts /*: DispatchOptions */) {
         }
       } catch (err) {
         log.error({err, event})
-        // TODO: Error handling
       } finally {
         if (process.platform === 'win32') {
           winDetectMove.forget(event, opts.state)
@@ -112,10 +111,8 @@ actions = {
   },
 
   renamedfile: async (event, {pouch, prep}) => {
-    let old
-    try {
-      old = await fetchOldDoc(pouch, id(event.oldPath))
-    } catch (err) {
+    const old = await pouch.byIdMaybeAsync(id(event.oldPath))
+    if (!old) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a file is added when the client is
       // stopped, and is moved before it was scanned.
@@ -130,10 +127,8 @@ actions = {
   },
 
   renameddirectory: async (event, {pouch, prep}) => {
-    let old
-    try {
-      old = await fetchOldDoc(pouch, id(event.oldPath))
-    } catch (err) {
+    const old = await pouch.byIdMaybeAsync(id(event.oldPath))
+    if (!old) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a dir is added when the client is
       // stopped, and is moved before it was scanned.
@@ -148,11 +143,9 @@ actions = {
   },
 
   deletedfile: async (event, {pouch, prep}) => {
-    let old
-    try {
-      old = await fetchOldDoc(pouch, event._id)
-    } catch (err) {
-      log.debug({err, event}, 'Assuming file already removed')
+    const old = await pouch.byIdMaybeAsync(event._id)
+    if (!old) {
+      log.debug({event}, 'Assuming file already removed')
       // The file was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
@@ -162,32 +155,14 @@ actions = {
   },
 
   deleteddirectory: async (event, {pouch, prep}) => {
-    let old
-    try {
-      old = await fetchOldDoc(pouch, event._id)
-    } catch (err) {
-      log.debug({err, event}, 'Assuming dir already removed')
+    const old = await pouch.byIdMaybeAsync(event._id)
+    if (!old) {
+      log.debug({event}, 'Assuming dir already removed')
       // The dir was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
     }
     log.info({event}, 'Dir removed')
     await prep.trashFolderAsync(SIDE, old)
-  }
-}
-
-// We have to call fetchOldDoc from the dispatch step, and not in a separated
-// step before that because we need that all the event batches were passed to
-// prep/merge before trying to fetch the old doc. If it is not the case, if we
-// have in a buffer an add event for 'foo' and just after a renamed event for
-// 'foo' -> 'bar', the fetch old doc won't see 'foo' in pouch and the renamed
-// event will be misleady seen as just a 'created' event for 'bar' (but 'foo'
-// will still be created in pouch and not removed after that).
-async function fetchOldDoc (pouch, oldId /*: string */) {
-  const release = await pouch.lock('FetchOldDocs')
-  try {
-    return await pouch.db.get(oldId)
-  } finally {
-    release()
   }
 }
