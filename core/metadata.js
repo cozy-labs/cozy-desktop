@@ -122,6 +122,7 @@ module.exports = {
   buildDir,
   buildFile,
   upToDate,
+  outOfDateSide,
   createConflictingDoc,
   conflictRegExp,
   shouldIgnore
@@ -336,6 +337,18 @@ function upToDate (doc /*: Metadata */) /*: Metadata */ {
   const rev = Math.max(clone.sides.local, clone.sides.remote)
 
   return _.assign(clone, { errors: undefined, sides: { local: rev, remote: rev } })
+}
+
+function outOfDateSide (doc /*: Metadata */) /*: ?SideName */ {
+  const localRev = _.get(doc, 'sides.local', 0)
+  const remoteRev = _.get(doc, 'sides.remote', 0)
+  if ((localRev === 0 || remoteRev === 0) && doc._deleted) {
+    return null
+  } else if (localRev > remoteRev) {
+    return 'remote'
+  } else if (remoteRev > localRev) {
+    return 'local'
+  }
 }
 
 // Ensure new timestamp is never older than the previous one

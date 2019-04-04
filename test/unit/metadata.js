@@ -25,6 +25,7 @@ const {
   buildFile,
   invariants,
   upToDate,
+  outOfDateSide,
   createConflictingDoc,
   conflictRegExp
 } = metadata
@@ -803,6 +804,35 @@ describe('metadata', function () {
       doc.errors = 1
 
       should(upToDate(doc).errors).be.undefined()
+    })
+  })
+
+  describe('outOfDateSide', () => {
+    let builders
+    beforeEach(() => {
+      builders = new Builders({pouch: this.pouch})
+    })
+
+    it('returns nothing if sides are not set', () => {
+      const doc1 = builders.metadata().sides({}).build()
+      should(outOfDateSide(doc1)).be.undefined()
+      const doc2 = builders.metadata().sides().build()
+      should(outOfDateSide(doc2)).be.undefined()
+    })
+
+    it('returns nothing if sides are equal', () => {
+      const doc = builders.metadata().sides({ local: 1, remote: 1 }).build()
+      should(outOfDateSide(doc)).be.undefined()
+    })
+
+    it('returns "local" if the local side is smaller than the remote one', () => {
+      const doc = builders.metadata().sides({ local: 1, remote: 2 }).build()
+      should(outOfDateSide(doc)).equal('local')
+    })
+
+    it('returns "remote" if the remote side is smaller than the local one', () => {
+      const doc = builders.metadata().sides({ local: 2, remote: 1 }).build()
+      should(outOfDateSide(doc)).equal('remote')
     })
   })
 

@@ -361,16 +361,10 @@ class Sync {
   // Select which side will apply the change
   // It returns the side, its name, and also the last rev applied by this side
   selectSide (doc /*: Metadata */) {
-    let localRev = doc.sides.local || 0
-    let remoteRev = doc.sides.remote || 0
-    if ((localRev === 0 || remoteRev === 0) && doc._deleted) {
-      return []
-    } else if (localRev > remoteRev) {
-      return [this.remote, 'remote', remoteRev]
-    } else if (remoteRev > localRev) {
-      return [this.local, 'local', localRev]
-    } else {
-      return []
+    switch (metadata.outOfDateSide(doc)) {
+      case 'local': return [this.local, 'local', doc.sides.local || 0]
+      case 'remote': return [this.remote, 'remote', doc.sides.remote || 0]
+      default: return []
     }
   }
 
