@@ -263,6 +263,75 @@ describe('Merge', function () {
       })
     })
 
+    onPlatform('win32', () => {
+      describe('for an existing file without fileid', () => {
+        let existingFile
+        beforeEach(async () => {
+          existingFile = await builders.metafile().sides({local: 1, remote: 1}).ino(1).create()
+          // the builder's ino() method adds a fileid on Windows
+          delete existingFile.fileid
+          existingFile = await builders.metafile(existingFile).create()
+        })
+
+        context('when new file has a fileid', () => {
+          let sameFile
+          beforeEach(() => {
+            sameFile = builders.metafile(existingFile).ino(1).build()
+          })
+
+          it('migrates the existing file', async function () {
+            const expectedRevNumber = metadata.extractRevNumber(existingFile) + 1
+
+            await this.merge.addFileAsync('local', _.cloneDeep(sameFile))
+
+            const savedFile = await this.pouch.db.get(existingFile._id)
+            should(savedFile).have.properties({
+              fileid: sameFile.fileid,
+              sides: { local: expectedRevNumber, remote: expectedRevNumber }
+            })
+          })
+        })
+
+        context('when new file does not have a fileid', () => {
+          let sameFile
+          beforeEach(() => {
+            sameFile = builders.metafile(existingFile).build()
+          })
+
+          it('does not migrate the existing file', async function () {
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.addFileAsync('local', _.cloneDeep(sameFile))
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [],
+              resolvedConflicts: []
+            })
+          })
+        })
+      })
+
+      describe('for an existing file with fileid', () => {
+        let existingFile
+        beforeEach(async () => {
+          existingFile = await builders.metafile().sides({local: 1, remote: 1}).ino(1).create()
+        })
+
+        it('does not migrate the existing file', async function () {
+          const sameFile = builders.metafile(existingFile).build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.addFileAsync('local', _.cloneDeep(sameFile))
+          )
+
+          should(sideEffects).deepEqual({
+            savedDocs: [],
+            resolvedConflicts: []
+          })
+        })
+      })
+    })
+
     it('resolves a conflict on remote file addition with unsynced local file addition', async function () {
       const unsyncedLocalFile = await builders
         .metafile()
@@ -2256,6 +2325,39 @@ describe('Merge', function () {
           savedDocs: [],
           resolvedConflicts: []
         })
+      })
+    })
+  })
+
+  onPlatform('win32', () => {
+    describe('migrateFileid(existing, fileid)', () => {
+      const shortRev = 2
+      const fileid = '0x0000000000000001'
+      let existing
+
+      beforeEach(async () => {
+        existing = await builders.metadata().sides({ local: 1, remote: shortRev }).create()
+      })
+
+      it('sets fileid on an up-to-date existing', async function () {
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.migrateFileid(_.cloneDeep(existing), fileid)
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: { local: shortRev + 1, remote: shortRev + 1 }
+              },
+              _.omit(existing, ['_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+        const savedExisting = await this.pouch.db.get(existing._id)
+        should(savedExisting._rev).startWith(`${shortRev + 1}`)
+        should(savedExisting).have.property('fileid', fileid)
       })
     })
   })
