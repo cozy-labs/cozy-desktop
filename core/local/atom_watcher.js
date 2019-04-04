@@ -64,11 +64,7 @@ const steps = _.compact([
 
 /** The producer for the current platform. */
 const producer = opts => {
-  if (['linux', 'win32'].includes(process.platform)) {
-    return new Producer(opts)
-  } else {
-    throw new Error('The atom watcher is not available on this platform')
-  }
+  return new Producer(opts)
 }
 
 const stepsInitialState = (
