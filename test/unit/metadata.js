@@ -810,7 +810,7 @@ describe('metadata', function () {
   describe('outOfDateSide', () => {
     let builders
     beforeEach(() => {
-      builders = new Builders({pouch: this.pouch})
+      builders = new Builders()
     })
 
     it('returns nothing if sides are not set', () => {

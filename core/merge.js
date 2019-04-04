@@ -130,6 +130,9 @@ class Merge {
       if (doc.ino == null) { doc.ino = file.ino }
       if (doc.fileid == null) { doc.fileid = file.fileid }
       if (metadata.sameFile(file, doc)) {
+        if (needsFileidMigration(file, doc.fileid)) {
+          return this.migrateFileid(file, doc.fileid)
+        }
         log.info({path}, 'up to date')
         return null
       } else {
@@ -217,6 +220,9 @@ class Merge {
       if (doc.ino == null && folder.ino) { doc.ino = folder.ino }
       if (doc.fileid == null) { doc.fileid = folder.fileid }
       if (metadata.sameFolder(folder, doc)) {
+        if (needsFileidMigration(folder, doc.fileid)) {
+          return this.migrateFileid(folder, doc.fileid)
+        }
         log.info({path}, 'up to date')
         return null
       } else {
@@ -566,6 +572,16 @@ class Merge {
       doc
     )
   }
+
+  async migrateFileid (existing /*: Metadata */, fileid /*: string */) /*: Promise<void> */ {
+    log.info({path: existing.path, fileid}, 'Migrating fileid')
+    const doc = _.defaults({fileid}, existing)
+    metadata.markAsUpToDate(doc)
+    await this.pouch.put(doc)
+  }
 }
+
+const needsFileidMigration = (existing /*: Metadata */, fileid /*: ?string */) /*: boolean %checks */ =>
+  existing.fileid == null && fileid != null
 
 module.exports = Merge
