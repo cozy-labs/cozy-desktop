@@ -328,8 +328,8 @@ describe('core/config', function() {
       should(config.platformDefaultWatcherType('win32')).equal('atom')
     })
 
-    it('is chokidar on macOS', () => {
-      should(config.platformDefaultWatcherType('darwin')).equal('chokidar')
+    it('is atom on macOS', () => {
+      should(config.platformDefaultWatcherType('darwin')).equal('atom')
     })
 
     it('is atom on Linux', () => {

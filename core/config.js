@@ -225,12 +225,12 @@ function loadOrDeleteFile(configPath /*: string */) /*: FileConfig */ {
 
 function watcherType(
   fileConfig /*: FileConfig */ = {},
-  { env, platform } /*: * */ = process
+  { env } /*: * */ = process
 ) /*: WatcherType */ {
   return (
     fileWatcherType(fileConfig) ||
     environmentWatcherType(env) ||
-    platformDefaultWatcherType(platform)
+    platformDefaultWatcherType()
   )
 }
 
@@ -245,12 +245,7 @@ function environmentWatcherType(
   return validateWatcherType(COZY_FS_WATCHER)
 }
 
-function platformDefaultWatcherType(
-  platform /*: string */ = process.platform
-) /*: WatcherType */ {
-  if (platform === 'darwin') {
-    return 'chokidar'
-  }
+function platformDefaultWatcherType() /*: WatcherType */ {
   return 'atom'
 }
 
