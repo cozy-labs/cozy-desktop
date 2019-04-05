@@ -1,0 +1,38 @@
+[
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file-case"
+    },
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file-nfc-to-nfd-é"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file-nfc-to-nfd-é"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dir-nfc-to-nfd-é"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "FILE-CASE"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "DIR-CASE"
+    }
+  ],
+  [],
+  []
+]

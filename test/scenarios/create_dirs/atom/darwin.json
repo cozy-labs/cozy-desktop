@@ -1,0 +1,43 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "foo"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "foo/bar"
+    }
+  ],
+  [],
+  [
+    {
+      "action": "scan",
+      "path": "foo/bar",
+      "kind": "directory",
+      "stats": {
+        "dev": 16777226,
+        "mode": 16877,
+        "nlink": 2,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 8600863105,
+        "size": 64,
+        "blocks": 0,
+        "atimeMs": 1554478410553.5947,
+        "mtimeMs": 1554478410533.3728,
+        "ctimeMs": 1554478410533.3728,
+        "birthtimeMs": 1554478410533.3728,
+        "atime": "2019-04-05T15:33:30.554Z",
+        "mtime": "2019-04-05T15:33:30.533Z",
+        "ctime": "2019-04-05T15:33:30.533Z",
+        "birthtime": "2019-04-05T15:33:30.533Z"
+      }
+    }
+  ],
+  []
+]

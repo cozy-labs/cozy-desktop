@@ -1,0 +1,17 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "dst/file",
+      "oldPath": "src/file"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/file"
+    }
+  ]
+]
