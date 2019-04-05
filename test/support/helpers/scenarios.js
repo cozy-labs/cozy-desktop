@@ -129,7 +129,10 @@ module.exports.loadAtomCaptures = scenario => {
   const disabledEventsFile = name => {
     if (process.platform === 'win32' && name.indexOf('win32') === -1) {
       return 'linux test'
-    } else if (process.platform === 'linux' && name.indexOf('win32') >= 0) {
+    } else if (
+      ['linux', 'darwin'].includes(process.platform) &&
+      name.indexOf('win32') >= 0
+    ) {
       return 'win32 test'
     } else {
       return disabledScenarioTest(scenario, `atom/${name}`)
