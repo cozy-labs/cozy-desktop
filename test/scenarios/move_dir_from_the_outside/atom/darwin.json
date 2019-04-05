@@ -1,0 +1,89 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst/dir"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "dst/dir/empty-subdir",
+      "kind": "directory",
+      "stats": {
+        "dev": 16777226,
+        "mode": 16877,
+        "nlink": 2,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 3,
+        "size": 64,
+        "blocks": 0,
+        "atimeMs": 1554478270675.5823,
+        "mtimeMs": 1554478269550.599,
+        "ctimeMs": 1554478269550.599,
+        "birthtimeMs": 1554478269550.599,
+        "atime": "2019-04-05T15:31:10.676Z",
+        "mtime": "2019-04-05T15:31:09.551Z",
+        "ctime": "2019-04-05T15:31:09.551Z",
+        "birthtime": "2019-04-05T15:31:09.551Z"
+      }
+    },
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir",
+      "kind": "directory",
+      "stats": {
+        "dev": 16777226,
+        "mode": 16877,
+        "nlink": 3,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 4,
+        "size": 96,
+        "blocks": 0,
+        "atimeMs": 1554478270676.1643,
+        "mtimeMs": 1554478269553.088,
+        "ctimeMs": 1554478269553.088,
+        "birthtimeMs": 1554478269551.147,
+        "atime": "2019-04-05T15:31:10.676Z",
+        "mtime": "2019-04-05T15:31:09.553Z",
+        "ctime": "2019-04-05T15:31:09.553Z",
+        "birthtime": "2019-04-05T15:31:09.551Z"
+      }
+    }
+  ],
+  [],
+  [
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir/file",
+      "kind": "file",
+      "stats": {
+        "dev": 16777226,
+        "mode": 33188,
+        "nlink": 1,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 5,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1554478270574.384,
+        "mtimeMs": 1554478269553.8943,
+        "ctimeMs": 1554478269553.8943,
+        "birthtimeMs": 1554478269553.069,
+        "atime": "2019-04-05T15:31:10.574Z",
+        "mtime": "2019-04-05T15:31:09.554Z",
+        "ctime": "2019-04-05T15:31:09.554Z",
+        "birthtime": "2019-04-05T15:31:09.553Z"
+      }
+    }
+  ]
+]

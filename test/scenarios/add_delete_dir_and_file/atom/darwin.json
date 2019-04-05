@@ -1,0 +1,27 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dir"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file"
+    }
+  ],
+  [],
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dir"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "file"
+    }
+  ]
+]

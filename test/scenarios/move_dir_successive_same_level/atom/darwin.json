@@ -1,0 +1,15 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "parent/dst2/dir",
+      "oldPath": "parent/src/dir"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "parent/dst1/dir"
+    }
+  ]
+]

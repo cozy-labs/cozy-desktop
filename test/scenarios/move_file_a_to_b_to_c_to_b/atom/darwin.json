@@ -1,0 +1,26 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "src/B",
+      "oldPath": "src/A"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "src/C",
+      "oldPath": "src/B"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "src/B",
+      "oldPath": "src/C"
+    }
+  ]
+]

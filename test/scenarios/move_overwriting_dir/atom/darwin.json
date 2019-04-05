@@ -1,0 +1,373 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/file"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/file3"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/subdir/file5"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/subdir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dst/dir/subdir"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst/dir/subdir"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dst/dir"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst/dir"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dst/dir/subdir"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst/dir/subdir"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/file"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/file"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/file2"
+    }
+  ],
+  [],
+  [
+    {
+      "action": "scan",
+      "path": "dst/dir/file",
+      "kind": "file",
+      "stats": {
+        "dev": 16777226,
+        "mode": 33188,
+        "nlink": 1,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 8600863062,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1554478389099.2615,
+        "mtimeMs": 1554478389107.9155,
+        "ctimeMs": 1554478389109.4739,
+        "birthtimeMs": 1554478389099.2615,
+        "atime": "2019-04-05T15:33:09.099Z",
+        "mtime": "2019-04-05T15:33:09.108Z",
+        "ctime": "2019-04-05T15:33:09.109Z",
+        "birthtime": "2019-04-05T15:33:09.099Z"
+      }
+    },
+    {
+      "action": "scan",
+      "path": "dst/dir/file2",
+      "kind": "file",
+      "stats": {
+        "dev": 16777226,
+        "mode": 33188,
+        "nlink": 1,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 8600863063,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1554478389099.4941,
+        "mtimeMs": 1554478389108.0127,
+        "ctimeMs": 1554478389109.535,
+        "birthtimeMs": 1554478389099.4941,
+        "atime": "2019-04-05T15:33:09.099Z",
+        "mtime": "2019-04-05T15:33:09.108Z",
+        "ctime": "2019-04-05T15:33:09.110Z",
+        "birthtime": "2019-04-05T15:33:09.099Z"
+      }
+    },
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir",
+      "kind": "directory",
+      "stats": {
+        "dev": 16777226,
+        "mode": 16877,
+        "nlink": 5,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 8600863064,
+        "size": 160,
+        "blocks": 0,
+        "atimeMs": 1554478389111.253,
+        "mtimeMs": 1554478389111.886,
+        "ctimeMs": 1554478389111.886,
+        "birthtimeMs": 1554478389099.6606,
+        "atime": "2019-04-05T15:33:09.111Z",
+        "mtime": "2019-04-05T15:33:09.112Z",
+        "ctime": "2019-04-05T15:33:09.112Z",
+        "birthtime": "2019-04-05T15:33:09.100Z"
+      }
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir/file",
+      "kind": "file",
+      "stats": {
+        "dev": 16777226,
+        "mode": 33188,
+        "nlink": 1,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 8600863065,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1554478389111.7083,
+        "mtimeMs": 1554478389113.0225,
+        "ctimeMs": 1554478389114.839,
+        "birthtimeMs": 1554478389111.7083,
+        "atime": "2019-04-05T15:33:09.112Z",
+        "mtime": "2019-04-05T15:33:09.113Z",
+        "ctime": "2019-04-05T15:33:09.115Z",
+        "birthtime": "2019-04-05T15:33:09.112Z"
+      }
+    },
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir/file6",
+      "kind": "file",
+      "stats": {
+        "dev": 16777226,
+        "mode": 33188,
+        "nlink": 1,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 8600863066,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1554478389111.8313,
+        "mtimeMs": 1554478389113.162,
+        "ctimeMs": 1554478389114.8503,
+        "birthtimeMs": 1554478389111.8313,
+        "atime": "2019-04-05T15:33:09.112Z",
+        "mtime": "2019-04-05T15:33:09.113Z",
+        "ctime": "2019-04-05T15:33:09.115Z",
+        "birthtime": "2019-04-05T15:33:09.112Z"
+      }
+    },
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir/subsub",
+      "kind": "directory",
+      "stats": {
+        "dev": 16777226,
+        "mode": 16877,
+        "nlink": 2,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 8600863067,
+        "size": 64,
+        "blocks": 0,
+        "atimeMs": 1554478389111.8752,
+        "mtimeMs": 1554478389111.8752,
+        "ctimeMs": 1554478389112.7273,
+        "birthtimeMs": 1554478389111.8752,
+        "atime": "2019-04-05T15:33:09.112Z",
+        "mtime": "2019-04-05T15:33:09.112Z",
+        "ctime": "2019-04-05T15:33:09.113Z",
+        "birthtime": "2019-04-05T15:33:09.112Z"
+      }
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir/file",
+      "kind": "file",
+      "stats": {
+        "dev": 16777226,
+        "mode": 33188,
+        "nlink": 1,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 8600863065,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1554478389111.7083,
+        "mtimeMs": 1554478389113.0225,
+        "ctimeMs": 1554478389114.839,
+        "birthtimeMs": 1554478389111.7083,
+        "atime": "2019-04-05T15:33:09.112Z",
+        "mtime": "2019-04-05T15:33:09.113Z",
+        "ctime": "2019-04-05T15:33:09.115Z",
+        "birthtime": "2019-04-05T15:33:09.112Z"
+      }
+    },
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir/file6",
+      "kind": "file",
+      "stats": {
+        "dev": 16777226,
+        "mode": 33188,
+        "nlink": 1,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 8600863066,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1554478389111.8313,
+        "mtimeMs": 1554478389113.162,
+        "ctimeMs": 1554478389114.8503,
+        "birthtimeMs": 1554478389111.8313,
+        "atime": "2019-04-05T15:33:09.112Z",
+        "mtime": "2019-04-05T15:33:09.113Z",
+        "ctime": "2019-04-05T15:33:09.115Z",
+        "birthtime": "2019-04-05T15:33:09.112Z"
+      }
+    },
+    {
+      "action": "scan",
+      "path": "dst/dir/subdir/subsub",
+      "kind": "directory",
+      "stats": {
+        "dev": 16777226,
+        "mode": 16877,
+        "nlink": 2,
+        "uid": 501,
+        "gid": 20,
+        "rdev": 0,
+        "blksize": 4194304,
+        "ino": 8600863067,
+        "size": 64,
+        "blocks": 0,
+        "atimeMs": 1554478389111.8752,
+        "mtimeMs": 1554478389111.8752,
+        "ctimeMs": 1554478389112.7273,
+        "birthtimeMs": 1554478389111.8752,
+        "atime": "2019-04-05T15:33:09.112Z",
+        "mtime": "2019-04-05T15:33:09.112Z",
+        "ctime": "2019-04-05T15:33:09.113Z",
+        "birthtime": "2019-04-05T15:33:09.112Z"
+      }
+    }
+  ],
+  [],
+  [],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst/dir/subdir/subsub"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/subdir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/subdir/file"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/subdir/file"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/subdir/file6"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/file2"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/subdir/file6"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/subdir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "src/dir/subdir/subsub"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "src/dir/subdir"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "src/dir"
+    }
+  ],
+  []
+]

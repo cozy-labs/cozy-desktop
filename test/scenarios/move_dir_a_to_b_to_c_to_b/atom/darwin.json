@@ -1,0 +1,26 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "src/B",
+      "oldPath": "src/A"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "src/C",
+      "oldPath": "src/B"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "src/B",
+      "oldPath": "src/C"
+    }
+  ]
+]
