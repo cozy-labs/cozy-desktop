@@ -2335,7 +2335,8 @@ describe('Merge', function () {
 
       describe('when existing doc is already up-to-date but missing a fileid', () => {
         beforeEach(async () => {
-          existing = await builders.metadata().sides({ local: 1, remote: shortRev }).create()
+          existing = await builders.metadata().ino(1).noFileid()
+            .sides({ local: shortRev, remote: shortRev }).create()
         })
 
         it('updates doc with the fileid without marking it as out-of-date', async function () {
