@@ -689,6 +689,21 @@ describe('metadata', function () {
     }
   })
 
+  describe('incSides', () => {
+    const docAfterIncSides = doc => {
+      metadata.incSides(doc)
+      return doc
+    }
+
+    it('increments both sides by 1 in-place', () => {
+      should(docAfterIncSides({})).deepEqual({sides: {local: 1, remote: 1}})
+      should(docAfterIncSides({sides: {local: 1}})).deepEqual({sides: {local: 2, remote: 1}})
+      should(docAfterIncSides({sides: {remote: 1}})).deepEqual({sides: {local: 1, remote: 2}})
+      should(docAfterIncSides({sides: {local: 2, remote: 2}})).deepEqual({sides: {local: 3, remote: 3}})
+      should(docAfterIncSides({sides: {local: 3, remote: 2}})).deepEqual({sides: {local: 4, remote: 3}})
+    })
+  })
+
   describe('buildFile', function () {
     it('creates a document for an existing file', async function () {
       const stats = await fse.stat(path.join(__dirname, '../fixtures/chat-mignon.jpg'))

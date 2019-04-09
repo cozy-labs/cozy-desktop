@@ -576,7 +576,7 @@ class Merge {
   async migrateFileid (existing /*: Metadata */, fileid /*: string */) /*: Promise<void> */ {
     log.info({path: existing.path, fileid}, 'Migrating fileid')
     const doc = _.defaults({fileid}, existing)
-    metadata.markAsUpToDate(doc)
+    metadata.incSides(doc)
     await this.pouch.put(doc)
   }
 }
