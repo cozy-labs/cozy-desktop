@@ -442,7 +442,7 @@ class Sync {
 
   // Update rev numbers for both local and remote sides
   async updateRevs (doc /*: Metadata */, side /*: SideName */) /*: Promise<*> */ {
-    const rev = metadata.markAsUpToDate(doc)
+    metadata.markAsUpToDate(doc)
     try {
       await this.pouch.put(doc)
     } catch (err) {
@@ -450,9 +450,15 @@ class Sync {
       // a thumbnail before apply has finished. In that case, we try to
       // reconciliate the documents.
       if (err && err.status === 409) {
-        doc = await this.pouch.db.get(doc._id)
-        doc.sides[side] = rev
-        await this.pouch.put(doc)
+        const unsynced = await this.pouch.db.get(doc._id)
+        const other = otherSide(side)
+        await this.pouch.put({
+          ...unsynced,
+          sides: {
+            [side]: metadata.extractRevNumber(doc) + 1,
+            [other]: unsynced.sides[other] + 1
+          }
+        })
       } else {
         log.warn({path: doc.path, err}, 'Race condition')
       }
