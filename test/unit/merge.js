@@ -2340,7 +2340,7 @@ describe('Merge', function () {
           existing = await builders.metadata().sides({ local: 1, remote: shortRev }).create()
         })
 
-        it('is updated with the fileid and both sides incremented', async function () {
+        it('updates doc with the fileid without marking it as out-of-date', async function () {
           const sideEffects = await mergeSideEffects(this, () =>
             this.merge.migrateFileid(_.cloneDeep(existing), fileid)
           )
@@ -2359,6 +2359,7 @@ describe('Merge', function () {
           const savedExisting = await this.pouch.db.get(existing._id)
           should(savedExisting._rev).startWith(`${shortRev + 1}`)
           should(savedExisting).have.property('fileid', fileid)
+          should.not.exist(metadata.outOfDateSide(savedExisting))
         })
       })
     })
