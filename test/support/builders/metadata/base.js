@@ -119,6 +119,11 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  noFileid () /*: this */ {
+    delete this.doc.fileid
+    return this
+  }
+
   stats ({ino, mtime, ctime} /*: fs.Stats */) /*: this */ {
     return this.ino(ino).updatedAt(timestamp.maxDate(mtime, ctime))
   }
@@ -180,6 +185,11 @@ module.exports = class BaseMetadataBuilder {
 
   sides (sides /*: MetadataSidesInfo */) /*: this */ {
     this.doc.sides = sides
+    return this
+  }
+
+  noSides () /*: this */ {
+    delete this.doc.sides
     return this
   }
 
