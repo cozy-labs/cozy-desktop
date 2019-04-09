@@ -204,7 +204,8 @@ def doc:
 #    yarn -s jq -c 'select(...)|short' path/to/logs*
 #
 def short:
-  {time,component,msg,path,oldpath}
+  {time,component,msg,path,oldpath,event}
+    | if .event then del(.event) + (.event|{path, oldpath: .oldPath, action}) else del(.event) end
     | if .oldpath then . else del(.oldpath) end
     ;
 
