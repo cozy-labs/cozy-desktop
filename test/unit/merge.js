@@ -267,10 +267,8 @@ describe('Merge', function () {
       describe('for an existing file without fileid', () => {
         let existingFile
         beforeEach(async () => {
-          existingFile = await builders.metafile().sides({local: 1, remote: 1}).ino(1).create()
-          // the builder's ino() method adds a fileid on Windows
-          delete existingFile.fileid
-          existingFile = await builders.metafile(existingFile).create()
+          existingFile = await builders.metafile().sides({local: 1, remote: 1})
+            .ino(1).noFileid().create()
         })
 
         context('when new file has a fileid', () => {
