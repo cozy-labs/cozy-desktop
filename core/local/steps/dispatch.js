@@ -7,9 +7,10 @@ const { buildDir, buildFile, id } = require('../../metadata')
 const logger = require('../../logger')
 
 const STEP_NAME = 'dispatch'
+const component = `atom/${STEP_NAME}`
 
 const log = logger({
-  component: `atom/${STEP_NAME}`
+  component
 })
 
 /*::
