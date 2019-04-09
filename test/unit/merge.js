@@ -2331,40 +2331,28 @@ describe('Merge', function () {
     describe('migrateFileid(existing, fileid)', () => {
       const shortRev = 2
       const fileid = '0x0000000000000001'
-      let existing
+      let existing, updatedDoc
 
       describe('when existing doc is already up-to-date but missing a fileid', () => {
-        beforeEach(async () => {
+        beforeEach(async function () {
           existing = await builders.metadata().ino(1).noFileid()
             .sides({ local: shortRev, remote: shortRev }).create()
+
+          await this.merge.migrateFileid(_.cloneDeep(existing), fileid)
+
+          updatedDoc = await this.pouch.db.get(existing._id)
         })
 
-        it('updates doc with the fileid without marking it as out-of-date', async function () {
-          const sideEffects = await mergeSideEffects(this, () =>
-            this.merge.migrateFileid(_.cloneDeep(existing), fileid)
-          )
+        it('updates doc with the fileid', async () => {
+          should(updatedDoc).have.property('fileid', fileid)
+        })
 
-          should(sideEffects).deepEqual({
-            savedDocs: [
-              _.defaults(
-                {
-                  sides: { local: shortRev + 1, remote: shortRev + 1 }
-                },
-                _.omit(existing, ['_rev'])
-              )
-            ],
-            resolvedConflicts: []
-          })
-          const savedExisting = await this.pouch.db.get(existing._id)
-          should(savedExisting._rev).startWith(`${shortRev + 1}`)
-          should(savedExisting).have.property('fileid', fileid)
-          should.not.exist(metadata.outOfDateSide(savedExisting))
+        it('does not make the doc out-of-date in order to prevent useless sync', async function () {
+          should.not.exist(metadata.outOfDateSide(updatedDoc))
         })
       })
 
       describe('when existing doc is being synced and missing a fileid', () => {
-        let updatedDoc
-
         beforeEach(async function () {
           existing = await builders.metadata().upToDate().changedSide(this.side)
             .ino(1).noFileid().create()
