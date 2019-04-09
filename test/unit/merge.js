@@ -2335,29 +2335,31 @@ describe('Merge', function () {
       const fileid = '0x0000000000000001'
       let existing
 
-      beforeEach(async () => {
-        existing = await builders.metadata().sides({ local: 1, remote: shortRev }).create()
-      })
-
-      it('sets fileid on an up-to-date existing', async function () {
-        const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.migrateFileid(_.cloneDeep(existing), fileid)
-        )
-
-        should(sideEffects).deepEqual({
-          savedDocs: [
-            _.defaults(
-              {
-                sides: { local: shortRev + 1, remote: shortRev + 1 }
-              },
-              _.omit(existing, ['_rev'])
-            )
-          ],
-          resolvedConflicts: []
+      describe('when existing doc is already up-to-date but missing a fileid', () => {
+        beforeEach(async () => {
+          existing = await builders.metadata().sides({ local: 1, remote: shortRev }).create()
         })
-        const savedExisting = await this.pouch.db.get(existing._id)
-        should(savedExisting._rev).startWith(`${shortRev + 1}`)
-        should(savedExisting).have.property('fileid', fileid)
+
+        it('is updated with the fileid and both sides incremented', async function () {
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.migrateFileid(_.cloneDeep(existing), fileid)
+          )
+
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              _.defaults(
+                {
+                  sides: { local: shortRev + 1, remote: shortRev + 1 }
+                },
+                _.omit(existing, ['_rev'])
+              )
+            ],
+            resolvedConflicts: []
+          })
+          const savedExisting = await this.pouch.db.get(existing._id)
+          should(savedExisting._rev).startWith(`${shortRev + 1}`)
+          should(savedExisting).have.property('fileid', fileid)
+        })
       })
     })
   })
