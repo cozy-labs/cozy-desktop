@@ -1,5 +1,31 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.0-beta.2 - 2019-04-09
+
+Improvements for Windows users:
+
+- With the new local watcher, we introduced a more precise way to identify files
+  and folders on the filesystem. To make sure previously detected documents
+  benefit from this new identification we need to migrate all of them when we
+  get the new identifier. This version takes care of the migration in a way that
+  avoids running a full synchronisation when we only change the identifier as it
+  has value on the local client only.
+
+There are some known issues that we'll tackle in the next releases:
+
+- On Windows, moving a tree of directories and files to a destination that
+  shares part of this tree (e.g. `src/dir/subdir/file` → `dst/dir/subdir/file`)
+  and overwriting the destinations will result in conflicts being created for
+  the overwritten files.
+- On Windows, the synchronisation of a remote move stopped before it's been
+  applied on the local system will won't be resumed when restarting the client.
+- On Linux, some movements done while the client was stopped won't be correctly
+  detected and handled when starting the client.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.0-beta.1 - 2019-04-03
 
 Improvements for Windows and Linux users:
