@@ -14,7 +14,10 @@ const log = logger({
 
 /*::
 import type Buffer from './buffer'
-import type { Batch } from './event'
+import type {
+  AtomWatcherEvent,
+  Batch
+} from './event'
 import type { WinDetectMoveState } from './win_detect_move'
 import type EventEmitter from 'events'
 import type Prep from '../../prep'
@@ -52,14 +55,7 @@ function step (opts /*: DispatchOptions */) {
   return async (batch /*: Batch */) => {
     for (const event of batch) {
       try {
-        log.trace({event}, 'dispatch')
-        if (event.action === 'initial-scan-done') {
-          actions.initialScanDone(opts)
-        } else if (event.action === 'ignored') {
-          actions.ignored(event)
-        } else {
-          await actions[event.action + event.kind](event, opts)
-        }
+        await dispatchEvent(event, opts)
       } catch (err) {
         log.error({err, event})
       } finally {
@@ -69,6 +65,17 @@ function step (opts /*: DispatchOptions */) {
       }
     }
     return batch
+  }
+}
+
+async function dispatchEvent (event /*: AtomWatcherEvent */, opts /*: DispatchOptions */) {
+  log.trace({event}, 'dispatch')
+  if (event.action === 'initial-scan-done') {
+    actions.initialScanDone(opts)
+  } else if (event.action === 'ignored') {
+    actions.ignored(event)
+  } else {
+    await actions[event.action + event.kind](event, opts)
   }
 }
 
