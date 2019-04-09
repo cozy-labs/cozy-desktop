@@ -76,7 +76,13 @@ async function dispatchEvent (event /*: AtomWatcherEvent */, opts /*: DispatchOp
   } else if (event.action === 'ignored') {
     actions.ignored(event)
   } else {
-    await actions[event.action + event.kind](event, opts)
+    // Lock to prevent Merge/Sync conflicts
+    const release = await opts.pouch.lock(component)
+    try {
+      await actions[event.action + event.kind](event, opts)
+    } finally {
+      release()
+    }
   }
 }
 
