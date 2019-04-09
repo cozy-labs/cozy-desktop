@@ -2361,6 +2361,27 @@ describe('Merge', function () {
           should.not.exist(metadata.outOfDateSide(savedExisting))
         })
       })
+
+      describe('when existing doc is being synced and missing a fileid', () => {
+        let updatedDoc
+
+        beforeEach(async function () {
+          existing = await builders.metadata().upToDate().changedSide(this.side)
+            .ino(1).noFileid().create()
+
+          await this.merge.migrateFileid(_.cloneDeep(existing), fileid)
+
+          updatedDoc = await this.pouch.db.get(existing._id)
+        })
+
+        it('updates doc with the fileid', async () => {
+          should(updatedDoc).have.property('fileid', fileid)
+        })
+
+        it('keeps the same out-of-date side in order not to prevent sync', async function () {
+          should(metadata.outOfDateSide(updatedDoc)).equal(this.side)
+        })
+      })
     })
   })
 })
