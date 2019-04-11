@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.0-beta.3 - 2019-04-11
+
+Improvements for Windows and GNU/Linux users:
+
+- Rapid successive changes on the same file were possibly generating conflicts
+  because the new watcher was messing up with the changes propagation. There
+  were actually 2 underlying issues behind this: one that was specific to the
+  new watcher and another that was not. We actually fixed both, although the
+  second one was not supposed to happen anymore once the new watcher would
+  behave correctly, but could still have been uncovered during upcoming
+  optimizations.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.0-beta.2 - 2019-04-09
 
 Improvements for Windows users:
