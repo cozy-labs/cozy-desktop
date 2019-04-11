@@ -1,20 +1,23 @@
 /* eslint-env mocha */
 
+const _ = require('lodash')
 const sinon = require('sinon')
 const should = require('should')
 
 const { Ignore } = require('../../core/ignore')
-const { isUpToDate } = require('../../core/metadata')
+const metadata = require('../../core/metadata')
+const { otherSide } = require('../../core/side')
 const Sync = require('../../core/sync')
 
 const stubSide = require('../support/doubles/side')
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
+const Builders = require('../support/builders')
 
 describe('Sync', function () {
   before('instanciate config', configHelpers.createConfig)
-  before('instanciate pouch', pouchHelpers.createDatabase)
-  after('clean pouch', pouchHelpers.cleanDatabase)
+  beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+  afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
   beforeEach('instanciate sync', function () {
@@ -23,6 +26,11 @@ describe('Sync', function () {
     this.ignore = new Ignore(['ignored'])
     this.events = {emit: sinon.spy()}
     this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+  })
+
+  let builders
+  beforeEach('prepare builders', function () {
+    builders = new Builders(this)
   })
 
   describe('start', function () {
@@ -483,7 +491,7 @@ describe('Sync', function () {
       should(actual.errors).equal(1)
       should(actual._rev).not.equal(doc._rev)
       should(actual.sides).deepEqual({local: 2})
-      should(isUpToDate('local', actual)).be.true()
+      should(metadata.isUpToDate('local', actual)).be.true()
     })
 
     it('retries on second remote -> local sync error', async function () {
@@ -508,7 +516,7 @@ describe('Sync', function () {
       should(actual.errors).equal(2)
       should(actual._rev).not.equal(doc._rev)
       should(actual.sides).deepEqual({local: 0, remote: 3})
-      should(isUpToDate('remote', actual)).be.true()
+      should(metadata.isUpToDate('remote', actual)).be.true()
     })
 
     it('stops retrying after 3 errors', async function () {
@@ -525,9 +533,73 @@ describe('Sync', function () {
       const actual = await this.pouch.db.get(doc._id)
       actual.errors.should.equal(3)
       actual._rev.should.equal(doc._rev)
-      should(isUpToDate('remote', actual)).be.true()
+      should(metadata.isUpToDate('remote', actual)).be.true()
     })
   })
+
+  for (const syncSide of ['local', 'remote']) {
+    describe(`updateRevs at end of ${syncSide} Sync`, function () {
+      const mergedSide = otherSide(syncSide)
+
+      const updateRevs = ({ sync }, doc) =>
+        sync.updateRevs(_.cloneDeep(doc), syncSide)
+
+      let doc, upToDate, syncedRev, mergedRev
+
+      beforeEach(async function () {
+        upToDate = await builders.metadata().upToDate().create()
+        syncedRev = upToDate.sides[syncSide]
+        mergedRev = upToDate.sides[mergedSide] + 1
+        doc = await builders.metadata(upToDate)
+          .sides({
+            [syncSide]: syncedRev,
+            [mergedSide]: mergedRev
+          })
+          .create()
+      })
+
+      context('without changes merged during Sync', function () {
+        it('marks doc as up-to-date', async function () {
+          await updateRevs(this, doc)
+
+          const updated = await this.pouch.db.get(doc._id)
+          should(metadata.outOfDateSide(updated)).be.undefined()
+          should(metadata.extractRevNumber(updated)).equal(metadata.extractRevNumber(doc) + 1)
+        })
+      })
+
+      for (const extraChanges of [1, 2]) {
+        context(`with ${extraChanges} ${mergedSide} changes merged during Sync`, function () {
+          let updated
+
+          beforeEach(async function () {
+            await builders.metadata(doc)
+              .sides({
+                [syncSide]: syncedRev,
+                [mergedSide]: mergedRev + extraChanges
+              })
+              .create()
+
+            await updateRevs(this, doc)
+
+            updated = await this.pouch.db.get(doc._id)
+          })
+
+          it(`keeps ${syncSide} out-of-date information`, async function () {
+            should(metadata.outOfDateSide(updated)).equal(syncSide)
+          })
+
+          it('keeps the changes difference between sides', () => {
+            should(updated.sides[mergedSide]).equal(updated.sides[syncSide] + extraChanges)
+          })
+
+          it(`keeps the doc rev coherent with its ${mergedSide} side`, async function () {
+            should(metadata.extractRevNumber(updated)).equal(updated.sides[mergedSide])
+          })
+        })
+      }
+    })
+  }
 
   describe('selectSide', function () {
     it('selects the local side if remote is up-to-date', function () {
