@@ -226,6 +226,42 @@ describe('Sync', function () {
       this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
     })
 
+    describe('local file update', () => {
+      const previousSeq = 759
+      const seq = previousSeq + 1
+
+      let file, merged
+
+      beforeEach('set up merged local file update', async function () {
+        file = await builders.metafile().upToDate()
+          .data('initial content').create()
+        merged = await builders.metafile(file).changedSide('local')
+          .data('updated content').create()
+
+        await this.pouch.setLocalSeqAsync(previousSeq)
+      })
+
+      const applyChange = async function () {
+        await this.sync.apply({ seq, doc: _.cloneDeep(merged) })
+      }
+
+      describe('when .remote#overwriteFileAsync() throws status 412', () => {
+        beforeEach('simulate error 412', function () {
+          this.remote.overwriteFileAsync.rejects({status: 412})
+        })
+        beforeEach(applyChange)
+
+        it('keeps sides unchanged', async function () {
+          const synced = await this.pouch.db.get(file._id)
+          should(synced.sides).deepEqual(merged.sides)
+        })
+
+        it('saves seq to skip the change', async function () {
+          should(await this.pouch.getLocalSeqAsync()).equal(seq)
+        })
+      })
+    })
+
     it('calls updateFileMetadataAsync for updated file metadata', async function () {
       let doc = {
         _id: 'update/foo/bar',
