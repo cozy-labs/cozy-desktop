@@ -905,6 +905,18 @@ describe('metadata', function () {
       should(secondConflict.path).be.a.String().and.match(pathRegExp)
       should(path.extname(secondConflict.path)).equal(ext)
     })
+    it('should not mistake a previous conflict timezone for a file extension', () => {
+      const base = 'dirname'
+      const firstConflictSuffix = '-conflict-1970-01-01T13_37_00.666Z'
+      const doc = {path: `${base}${firstConflictSuffix}`}
+
+      const secondConflict = createConflictingDoc(doc)
+
+      should(secondConflict.path)
+        .be.a.String()
+        .and.match(conflictRegExp(base))
+        .and.not.containEql(firstConflictSuffix)
+    })
   })
 
   describe('shouldIgnore', () => {
