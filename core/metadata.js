@@ -517,7 +517,7 @@ function createConflictingDoc (doc /*: Metadata */) /*: Metadata */ {
   let ext = path.extname(doc.path)
   let dir = path.dirname(doc.path)
   let base = path.basename(doc.path, ext)
-  const previousConflictingName = conflictRegExp('(.*)').exec(base)
+  const previousConflictingName = conflictRegExp('(.*)').exec(doc.path)
   const filename = previousConflictingName
     ? previousConflictingName[1]
     : base
