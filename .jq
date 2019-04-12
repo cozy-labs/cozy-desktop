@@ -63,6 +63,12 @@ def Remote: select(.component | test("^remote"; "i"));
 #
 def nouptodate: select(.msg | test("up[- ]to[- ]date") | not);
 
+# Exclude initial scan messages
+#
+#     yarn jq noscan path/to/logs*
+#
+def noscan: select(.action != "scan");
+
 # Exclude Proxy stuff:
 #
 #     yarn jq noproxy path/to/logs*
