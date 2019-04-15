@@ -375,6 +375,10 @@ class Sync {
     log.error({path, err, change})
     if (err.code === 'ENOSPC') {
       throw new Error('No more disk space')
+    } else if (err.status === 412) {
+      log.warn({path}, 'Sync error 412 needs Merge')
+      change.doc.errors = MAX_SYNC_ATTEMPTS
+      return this.updateErrors(change, sideName)
     } else if (err.status === 413) {
       throw new Error('Cozy is full')
     }
@@ -425,6 +429,7 @@ class Sync {
         `Failed to sync ${MAX_SYNC_ATTEMPTS} times. Giving up.`
       )
       await this.pouch.setLocalSeqAsync(change.seq)
+      // FIXME: final doc.errors is not saved which works but may be confusing.
       return
     }
     try {
