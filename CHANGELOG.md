@@ -1,5 +1,29 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.0-beta.4 - 2019-04-15
+
+Improvements for Windows and GNU/Linux users:
+
+- We recently fixed an issue we had in the generation of a conflict file name
+  where the conflict suffixes could be added indefinitely in case the
+  conflicting file would get in conflict again. It happens that directories are
+  still subject to a similar issue.
+  We made sure directories will only ever have one conflict suffix added to
+  their name event in case they get in conflict again.
+- During the synchronisation process, a document can change either locally
+  (e.g. its checksum has changed because of a modification) or on the Cozy
+  (e.g. the file was moved or modified by another client). In this situation the
+  Cozy won't accept the change and will answer with an error. When we receive
+  errors from the Cozy we retry up to 3 times to apply the change but if the
+  document has changed, we will never be able to apply it and will only lose
+  time by retrying.
+  We now retry only on network and disk space errors to speed up the
+  synchronisation of files rapidly changing.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.0-beta.3 - 2019-04-11
 
 Improvements for Windows and GNU/Linux users:
