@@ -63,18 +63,24 @@ function countFileWriteEvents (events /*: AtomWatcherEvent[] */) /*: number */ {
 function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] */) {
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
+
     if (event.incomplete) {
       continue
     }
+
     if (event.kind === 'file' && ['modified', 'deleted'].includes(event.action)) {
       for (let j = 0; j < waiting.length; j++) {
         const w = waiting[j]
+
         if (w.nbCandidates === 0) { continue }
+
         for (let k = 0; k < w.events.length; k++) {
           const e = w.events[k]
+
           if (['created', 'modified'].includes(e.action) && e.path === event.path) {
             w.events.splice(k, 1)
             w.nbCandidates--
+
             if (event.action === 'modified') {
               _.update(event, [STEP_NAME, 'previousEvents'], previousEvents =>
                 _.concat(_.toArray(previousEvents), [e])
@@ -82,6 +88,7 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
               // Preserve the action from the first event (it can be a created file)
               event.action = e.action
             }
+
             if (event.action === 'deleted' && e.action === 'created') {
               // It's just a temporary file that we can ignore
               log.debug(
@@ -91,6 +98,7 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
               events.splice(i, 1)
               i--
             }
+
             break
           }
         }
