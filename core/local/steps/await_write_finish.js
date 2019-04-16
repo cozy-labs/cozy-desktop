@@ -109,14 +109,37 @@ function aggregateEvents (oldEvent, recentEvent) {
   }
 
   if (recentEvent.action === 'modified') {
-    _.update(recentEvent, [STEP_NAME, 'previousEvents'], previousEvents =>
-      _.concat(_.toArray(previousEvents), [oldEvent])
-    )
+    addDebugInfo(recentEvent, oldEvent)
     // Preserve the action from the first event (it can be a created file)
     recentEvent.action = oldEvent.action
   }
 
   return recentEvent
+}
+
+function addDebugInfo (event, previousEvent) {
+  _.update(event, [STEP_NAME, 'previousEvents'], previousEvents =>
+    _.concat(
+      // Event to aggregate
+      [_.pick(previousEvent, [
+        'action',
+        'stats.ino',
+        'stats.fileid',
+        'stats.size',
+        'stats.atime',
+        'stats.mtime',
+        'stats.ctime',
+        'stats.birthtime'
+      ])],
+      // Events previously aggregated on `event`
+      _.toArray(previousEvents),
+      // Events previously aggregated on `e`
+      _.get(previousEvent, [STEP_NAME, 'previousEvents'], [])
+    )
+  )
+  // Previous events have been aggregated on the most recent event
+  // $FlowFixMe we are well aware that `awaitWriteFinish` is not part of AtomWatcherEvent
+  delete previousEvent[STEP_NAME]
 }
 
 // Look if we can debounce some waiting events with the current events
@@ -142,9 +165,7 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
             w.nbCandidates--
 
             if (event.action === 'modified') {
-              _.update(event, [STEP_NAME, 'previousEvents'], previousEvents =>
-                _.concat(_.toArray(previousEvents), [e])
-              )
+              addDebugInfo(event, e)
               // Preserve the action from the first event (it can be a created file)
               event.action = e.action
             }

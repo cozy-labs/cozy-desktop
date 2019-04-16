@@ -109,19 +109,11 @@ describe('core/local/steps/await_write_finish.loop()', () => {
               previousEvents: [
                 {
                   // 2nd modified -> created
-                  action: 'created',
-                  awaitWriteFinish: {
-                    previousEvents: [
-                      {
-                        // 1st created
-                        action: 'created',
-                        kind: 'file',
-                        path: __filename
-                      }
-                    ]
-                  },
-                  kind: 'file',
-                  path: __filename
+                  action: 'created'
+                },
+                {
+                  // 1st created
+                  action: 'created'
                 }
               ]
             },
@@ -202,9 +194,15 @@ describe('core/local/steps/await_write_finish.loop()', () => {
             previousEvents: [
               {
                 action: 'modified',
-                kind: 'file',
-                path: __filename,
-                stats: stats1
+                stats: _.pick(stats1, [
+                  'ino',
+                  'fileid',
+                  'size',
+                  'atime',
+                  'mtime',
+                  'ctime',
+                  'birthtime'
+                ])
               }
             ]
           },
@@ -250,9 +248,7 @@ describe('core/local/steps/await_write_finish.loop()', () => {
             previousEvents: [
               {
                 // 1st created -> created
-                action: 'created',
-                kind: 'file',
-                path: __filename
+                action: 'created'
               }
             ]
           },
@@ -341,19 +337,11 @@ describe('core/local/steps/await_write_finish.loop()', () => {
               previousEvents: [
                 {
                   // 2nd modified -> created
-                  action: 'created',
-                  awaitWriteFinish: {
-                    previousEvents: [
-                      {
-                        // 1st created
-                        action: 'created',
-                        kind: 'file',
-                        path: __filename
-                      }
-                    ]
-                  },
-                  kind: 'file',
-                  path: __filename
+                  action: 'created'
+                },
+                {
+                  // 1st created
+                  action: 'created'
                 }
               ]
             },
@@ -432,9 +420,15 @@ describe('core/local/steps/await_write_finish.loop()', () => {
             previousEvents: [
               {
                 action: 'modified',
-                kind: 'file',
-                path: __filename,
-                stats: stats1
+                stats: _.pick(stats1, [
+                  'ino',
+                  'fileid',
+                  'size',
+                  'atime',
+                  'mtime',
+                  'ctime',
+                  'birthtime'
+                ])
               }
             ]
           },
@@ -477,9 +471,7 @@ describe('core/local/steps/await_write_finish.loop()', () => {
             previousEvents: [
               {
                 // 1st created
-                action: 'created',
-                kind: 'file',
-                path: __filename
+                action: 'created'
               }
             ]
           },
