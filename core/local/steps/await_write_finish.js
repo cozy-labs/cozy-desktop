@@ -59,29 +59,117 @@ function countFileWriteEvents (events /*: AtomWatcherEvent[] */) /*: number */ {
   return nbCandidates
 }
 
+function aggregateBatch (events) {
+  const lastWritesByPath = new Map()
+  const aggregatedEvents = []
+
+  events.forEach(event => {
+    if (isAggregationCandidate(event)) {
+      const lastWrite = lastWritesByPath.get(event.path)
+      if (lastWrite) {
+        const aggregatedEvent = aggregateEvents(lastWrite, event)
+        const lastWriteIndex = aggregatedEvents.indexOf(lastWrite)
+
+        if (aggregatedEvent) {
+          aggregatedEvents.splice(lastWriteIndex, 1, aggregatedEvent)
+        } else {
+          aggregatedEvents.splice(lastWriteIndex, 1)
+        }
+
+        lastWritesByPath.set(lastWrite.path, aggregatedEvent)
+      } else {
+        lastWritesByPath.set(event.path, event)
+        aggregatedEvents.push(event)
+      }
+    } else {
+      aggregatedEvents.push(event)
+    }
+  })
+
+  return aggregatedEvents
+}
+
+function isAggregationCandidate (event) {
+  return (
+    !event.incomplete &&
+    event.kind === 'file' &&
+    ['created', 'modified', 'deleted'].includes(event.action)
+  )
+}
+
+function aggregateEvents (oldEvent, recentEvent) {
+  if (recentEvent.action === 'deleted' && oldEvent.action === 'created') {
+    // It's just a temporary file that we can ignore
+    log.debug(
+      {createdEvent: oldEvent, deletedEvent: recentEvent},
+      `Ignore ${oldEvent.kind} ${oldEvent.action} then ${recentEvent.action}`
+    )
+
+    return
+  }
+
+  if (recentEvent.action === 'modified') {
+    addDebugInfo(recentEvent, oldEvent)
+    // Preserve the action from the first event (it can be a created file)
+    recentEvent.action = oldEvent.action
+  }
+
+  return recentEvent
+}
+
+function addDebugInfo (event, previousEvent) {
+  _.update(event, [STEP_NAME, 'previousEvents'], previousEvents =>
+    _.concat(
+      // Event to aggregate
+      [_.pick(previousEvent, [
+        'action',
+        'stats.ino',
+        'stats.fileid',
+        'stats.size',
+        'stats.atime',
+        'stats.mtime',
+        'stats.ctime',
+        'stats.birthtime'
+      ])],
+      // Events previously aggregated on `event`
+      _.toArray(previousEvents),
+      // Events previously aggregated on `e`
+      _.get(previousEvent, [STEP_NAME, 'previousEvents'], [])
+    )
+  )
+  // Previous events have been aggregated on the most recent event
+  // $FlowFixMe we are well aware that `awaitWriteFinish` is not part of AtomWatcherEvent
+  delete previousEvent[STEP_NAME]
+}
+
 // Look if we can debounce some waiting events with the current events
 function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] */) {
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
+
     if (event.incomplete) {
       continue
     }
+
     if (event.kind === 'file' && ['modified', 'deleted'].includes(event.action)) {
       for (let j = 0; j < waiting.length; j++) {
         const w = waiting[j]
+
         if (w.nbCandidates === 0) { continue }
+
         for (let k = 0; k < w.events.length; k++) {
           const e = w.events[k]
+
           if (['created', 'modified'].includes(e.action) && e.path === event.path) {
             w.events.splice(k, 1)
             w.nbCandidates--
+
             if (event.action === 'modified') {
-              _.update(event, [STEP_NAME, 'previousEvents'], previousEvents =>
-                _.concat(_.toArray(previousEvents), [e])
-              )
+              addDebugInfo(event, e)
               // Preserve the action from the first event (it can be a created file)
               event.action = e.action
             }
+
             if (event.action === 'deleted' && e.action === 'created') {
               // It's just a temporary file that we can ignore
               log.debug(
@@ -91,6 +179,7 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
               events.splice(i, 1)
               i--
             }
+
             break
           }
         }
@@ -107,7 +196,7 @@ async function awaitWriteFinish (buffer /*: Buffer */, out /*: Buffer */) {
   const waiting /*: WaitingItem[] */ = []
 
   while (true) {
-    const events = await buffer.pop()
+    const events = aggregateBatch(await buffer.pop())
     let nbCandidates = countFileWriteEvents(events)
     debounce(waiting, events)
 
