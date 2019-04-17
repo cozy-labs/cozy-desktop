@@ -3,8 +3,6 @@
 
 const should = require('should')
 
-const config = require('../../core/config')
-
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -13,11 +11,6 @@ const TestHelpers = require('../support/helpers')
 const cozy = cozyHelpers.cozy
 
 describe('Sync gets interrupted, initialScan occurs', () => {
-  if (config.watcherType() === 'atom') {
-    it.skip('is not supported yet')
-    return
-  }
-
   let helpers
 
   before(configHelpers.createConfig)

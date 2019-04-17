@@ -21,6 +21,7 @@ type WatchedPath = {
   path: string,
   kind: EventKind,
   md5sum?: string,
+  moveFrom?: string,
   updated_at: string
 }
 
@@ -77,6 +78,7 @@ async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<{ [typeof
         path: doc.path,
         updated_at: doc.updated_at
       }
+      if (doc.moveFrom) was.moveFrom = doc.moveFrom.path
       if (kind === 'file') was.md5sum = doc.md5sum
       byInode.set(doc.fileid || doc.ino, was)
     }
@@ -112,7 +114,11 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
         if (!was) {
           was = byInode.get(event.stats.ino)
         }
-        if (was && was.path !== event.path) {
+
+        if (was && was.moveFrom && was.moveFrom === event.path) {
+          _.set(event, [STEP_NAME, 'unappliedMoveTo'], was.path)
+          event.action = 'ignored'
+        } else if (was && was.path !== event.path) {
           if (was.kind === event.kind) {
             // TODO for a directory, maybe we should check the children
             _.set(event, [STEP_NAME, 'actionConvertedFrom'], event.action)
@@ -137,11 +143,11 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
         }
       }
 
-      if (['created', 'modified', 'renamed', 'scan'].includes(event.action)) {
-        if (event.stats.fileid) {
+      if (['created', 'modified', 'renamed', 'scan', 'ignored'].includes(event.action)) {
+        if (event.stats) {
           byInode.delete(event.stats.fileid)
+          byInode.delete(event.stats.ino)
         }
-        byInode.delete(event.stats.ino)
         byPath.set(event.path, { path: event.path, kind: event.kind })
       } else if (event.action === 'initial-scan-done') {
         // Emit deleted events for all the remaining files/dirs

@@ -292,5 +292,34 @@ describe('local/steps/initial_diff', () => {
         initialScanDone
       ])
     })
+
+    it('ignores events for unapplied moves', async function () {
+      const wasDir = builders.metadir().path('foo').ino(1).build()
+      await builders.metadir(wasDir).path('foo2').moveFrom(wasDir).changedSide('remote').create()
+      const wasFile = builders.metafile().path('fizz').ino(2).build()
+      await builders.metafile(wasFile).path('fizz2').moveFrom(wasFile).changedSide('remote').create()
+
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+
+      const foo = builders.event().action('scan').kind('directory').path('foo').ino(1).build()
+      const fizz = builders.event().action('scan').kind('file').path('fizz').ino(2).build()
+      buffer.push([foo, fizz, initialScanDone])
+      buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
+
+      const events = await buffer.pop()
+      should(events).deepEqual([
+        {
+          ...foo,
+          action: 'ignored',
+          [initialDiff.STEP_NAME]: { unappliedMoveTo: 'foo2' }
+        },
+        {
+          ...fizz,
+          action: 'ignored',
+          [initialDiff.STEP_NAME]: { unappliedMoveTo: 'fizz2' }
+        },
+        initialScanDone
+      ])
+    })
   })
 })
