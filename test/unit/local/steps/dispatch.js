@@ -1,8 +1,6 @@
 /* eslint-env mocha */
 /* @flow */
 
-const crypto = require('crypto')
-
 /*::
 import type { Stub, Call } from 'sinon'
 
@@ -73,8 +71,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     })
 
     it('emits an initial-scan-done event via the emitter', async function () {
-      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-      await dispatchedBuffer.pop()
+      await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(events)).deepEqual({
         emit: [
@@ -84,8 +81,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     })
 
     it('does not call any Prep method', async function () {
-      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-      await dispatchedBuffer.pop()
+      await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({})
     })
@@ -99,8 +95,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     })
 
     it('does not call any Prep method', async function () {
-      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-      await dispatchedBuffer.pop()
+      await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({})
     })
@@ -108,7 +103,6 @@ describe('core/local/steps/dispatch.loop()', function () {
 
   context('when buffer contains a scan file event', () => {
     const filePath = 'foo'
-    const md5sum = crypto.createHash('md5').update('').digest().toString('base64')
 
     beforeEach(() => {
       buffer.push([
@@ -118,7 +112,7 @@ describe('core/local/steps/dispatch.loop()', function () {
           .kind('file')
           .path(filePath)
           .ino(1)
-          .md5sum(md5sum)
+          .data('')
           .build()
       ])
     })
@@ -126,8 +120,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to addFileAsync with a file Metadata object', async function () {
       const doc = builders.metafile().path(filePath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-      await dispatchedBuffer.pop()
+      await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         addFileAsync: [
@@ -149,8 +142,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
       const doc = builders.metadir().path(directoryPath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-      await dispatchedBuffer.pop()
+      await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         putFolderAsync: [
@@ -162,7 +154,6 @@ describe('core/local/steps/dispatch.loop()', function () {
 
   context('when buffer contains a created file event', () => {
     const filePath = 'foo'
-    const md5sum = crypto.createHash('md5').update('').digest().toString('base64')
 
     beforeEach(() => {
       buffer.push([
@@ -172,7 +163,7 @@ describe('core/local/steps/dispatch.loop()', function () {
           .kind('file')
           .path(filePath)
           .ino(1)
-          .md5sum(md5sum)
+          .data('')
           .build()
       ])
     })
@@ -180,8 +171,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to addFileAsync with a file Metadata object', async function () {
       const doc = builders.metafile().path(filePath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-      await dispatchedBuffer.pop()
+      await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         addFileAsync: [
@@ -203,8 +193,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
       const doc = builders.metadir().path(directoryPath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-      await dispatchedBuffer.pop()
+      await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         putFolderAsync: [
@@ -216,7 +205,6 @@ describe('core/local/steps/dispatch.loop()', function () {
 
   context('when buffer contains a modified file event', () => {
     const filePath = 'foo'
-    const md5sum = crypto.createHash('md5').update('').digest().toString('base64')
 
     beforeEach(() => {
       buffer.push([
@@ -226,7 +214,7 @@ describe('core/local/steps/dispatch.loop()', function () {
           .kind('file')
           .path(filePath)
           .ino(1)
-          .md5sum(md5sum)
+          .data('')
           .build()
       ])
     })
@@ -234,8 +222,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to updateFileAsync with a file Metadata object', async function () {
       const doc = builders.metafile().path(filePath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-      await dispatchedBuffer.pop()
+      await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         updateFileAsync: [
@@ -257,8 +244,7 @@ describe('core/local/steps/dispatch.loop()', function () {
     it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
       const doc = builders.metadir().path(directoryPath).ino(1).noTags().unmerged('local').build()
 
-      const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-      await dispatchedBuffer.pop()
+      await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         putFolderAsync: [
@@ -271,7 +257,6 @@ describe('core/local/steps/dispatch.loop()', function () {
   context('when buffer contains a renamed file event', () => {
     const filePath = 'foo'
     const newFilePath = 'bar'
-    const md5sum = crypto.createHash('md5').update('').digest().toString('base64')
 
     beforeEach(() => {
       buffer.push([
@@ -282,7 +267,7 @@ describe('core/local/steps/dispatch.loop()', function () {
           .oldPath(filePath)
           .path(newFilePath)
           .ino(1)
-          .md5sum(md5sum)
+          .data('')
           .build()
       ])
     })
@@ -297,8 +282,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       it('triggers a call to moveFileAsync with a file Metadata object', async function () {
         const doc = builders.metafile().path(newFilePath).ino(1).noTags().unmerged('local').build()
 
-        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-        await dispatchedBuffer.pop()
+        await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           moveFileAsync: [
@@ -307,13 +291,67 @@ describe('core/local/steps/dispatch.loop()', function () {
         })
       })
     })
+  })
+
+  context('when buffer contains a overwriting renamed file event', () => {
+    const filePath = 'foo'
+    const newFilePath = 'bar'
+
+    beforeEach(() => {
+      buffer.push([
+        builders
+          .event()
+          .action('renamed')
+          .kind('file')
+          .oldPath(filePath)
+          .path(newFilePath)
+          .ino(1)
+          .data('')
+          .overwrite()
+          .build()
+      ])
+    })
+
+    context('with an existing document at the event oldPath', () => {
+      let oldDoc
+
+      beforeEach(async () => {
+        oldDoc = await builders.metadata().path(filePath).ino(1).create()
+      })
+
+      context('and overwriting an existing document at the event path', () => {
+        let existingDoc
+
+        beforeEach(async () => {
+          existingDoc = await builders.metadata().path(newFilePath).ino(2).create()
+        })
+
+        it('triggers a call to moveFileAsync with an overwriting file Metadata object', async function () {
+          const doc = builders.metafile().path(newFilePath).ino(1).noTags().unmerged('local').build()
+
+          await dispatch.loop(buffer, stepOptions).pop()
+
+          should(dispatchedCalls(prep)).deepEqual({
+            moveFileAsync: [
+              [
+                'local',
+                {
+                  ...doc,
+                  overwrite: existingDoc
+                },
+                oldDoc
+              ]
+            ]
+          })
+        })
+      })
+    })
 
     context('without existing documents at the event oldPath', () => {
       it('triggers a call to addFileAsync with a file Metadata object', async function () {
         const doc = builders.metafile().path(newFilePath).ino(1).noTags().unmerged('local').build()
 
-        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-        await dispatchedBuffer.pop()
+        await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           addFileAsync: [
@@ -323,8 +361,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       })
 
       it('removes the event oldPath', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-        const batch = await dispatchedBuffer.pop()
+        const batch = await dispatch.loop(buffer, stepOptions).pop()
 
         should(batch).have.length(1)
         should(batch[0]).not.have.property('oldPath')
@@ -359,8 +396,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       it('triggers a call to moveFolderAsync with a directory Metadata object', async function () {
         const doc = builders.metadir().path(newDirectoryPath).ino(1).noRemote().noTags().build()
 
-        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-        await dispatchedBuffer.pop()
+        await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           moveFolderAsync: [
@@ -374,8 +410,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
         const doc = builders.metadir().path(newDirectoryPath).ino(1).noRemote().noTags().build()
 
-        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-        await dispatchedBuffer.pop()
+        await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           putFolderAsync: [
@@ -385,8 +420,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       })
 
       it('removes the event oldPath', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-        const batch = await dispatchedBuffer.pop()
+        const batch = await dispatch.loop(buffer, stepOptions).pop()
 
         should(batch).have.length(1)
         should(batch[0]).not.have.property('oldPath')
@@ -411,8 +445,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       })
 
       it('triggers a call to trashFileAsync with the existing document', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-        await dispatchedBuffer.pop()
+        await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           trashFileAsync: [
@@ -424,8 +457,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
     context('without existing documents at the event path', () => {
       it('ignores the event', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-        await dispatchedBuffer.pop()
+        await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})
       })
@@ -455,8 +487,7 @@ describe('core/local/steps/dispatch.loop()', function () {
       })
 
       it('triggers a call to trashFolderAsync with the existing document', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-        await dispatchedBuffer.pop()
+        await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           trashFolderAsync: [
@@ -468,8 +499,7 @@ describe('core/local/steps/dispatch.loop()', function () {
 
     context('without existing documents at the event path', () => {
       it('ignores the event', async function () {
-        const dispatchedBuffer = dispatch.loop(buffer, stepOptions)
-        await dispatchedBuffer.pop()
+        await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})
       })

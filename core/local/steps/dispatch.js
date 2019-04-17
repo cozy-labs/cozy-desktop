@@ -136,7 +136,13 @@ actions = {
       return actions.createdfile(event, {prep}, 'File moved, assuming added')
     }
     log.info({event}, 'File moved')
+
     const doc = buildFile(event.path, event.stats, event.md5sum)
+    if (event.overwrite) {
+      const existing = await pouch.byIdMaybeAsync(id(event.path))
+      doc.overwrite = existing
+    }
+
     await prep.moveFileAsync(SIDE, doc, was)
   },
 
