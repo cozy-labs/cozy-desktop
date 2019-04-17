@@ -1,5 +1,22 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.0-beta.5 - 2019-04-17
+
+Improvements for Windows and GNU/Linux users:
+
+- We now detect and correctly synchronise file moves where the destination
+  already existed and is being overwritten.
+  However since filesystems and file browsers are all different, you might
+  have a different experience on Linux. We made sure this works with the
+  GNOME file browser, Nautilus.
+- We improved the way we aggregate quick modifications to files to avoid
+  having to synchronise a lot of changes when we only care about the result
+  of the last one.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.0-beta.4 - 2019-04-15
 
 Improvements for Windows and GNU/Linux users:
