@@ -1,4 +1,4 @@
-module Window.Tray.StatusBar exposing (icon, imgIcon, view, viewMessage, statusToString)
+module Window.Tray.StatusBar exposing (icon, imgIcon, statusToString, view, viewMessage)
 
 import Data.Platform exposing (Platform(..))
 import Data.Status exposing (Status(..))
@@ -80,12 +80,10 @@ statusToString helpers status =
             helpers.t "Dashboard Prepare"
 
         Syncing _ ->
-            helpers.t "Dashboard Synchronize"
-
+            helpers.t "Dashboard Syncing"
 
         Error _ ->
             helpers.t "Dashboard Error:"
-
 
 
 viewMessage : Helpers -> Status -> List (Html msg)
@@ -93,14 +91,6 @@ viewMessage helpers status =
     case
         status
     of
-
-        Syncing n ->
-            [ text (statusToString helpers status)
-            , text " ("
-            , text (helpers.pluralize n "Dashboard left SINGULAR" "Dashboard left PLURAL")
-            , text ")"
-            ]
-
         Error message ->
             [ text (statusToString helpers status)
             , text " "
