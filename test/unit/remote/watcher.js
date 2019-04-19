@@ -959,5 +959,41 @@ describe('RemoteWatcher', function () {
       should(addArgs[0]).equal('remote')
       should(addArgs[1]).have.properties(metadata.fromRemoteDoc(newDir))
     })
+
+    describe('added file', () => {
+      let addedRemoteFile
+
+      beforeEach(() => {
+        addedRemoteFile = builders.remoteFile().data('initial content')
+          .shortRev(1).build()
+      })
+
+      describe('updated', () => {
+        let updatedRemoteFile
+
+        beforeEach(() => {
+          updatedRemoteFile = builders.remoteFile(addedRemoteFile).shortRev(2)
+            .data('updated content').build()
+        })
+
+        describe('with the added version in the changesfeed', () => {
+          let remoteDoc, was
+
+          beforeEach('simulate race condition', () => {
+            remoteDoc = addedRemoteFile
+            was = builders.metafile().fromRemote(updatedRemoteFile).upToDate()
+              .build()
+
+            should(metadata.extractRevNumber(remoteDoc)).equal(1)
+            should(metadata.extractRevNumber(was.remote)).equal(2)
+          })
+
+          it('assumes the file is up-to-date since remote rev number is lower', async function () {
+            const change = this.watcher.identifyChange(remoteDoc, was, 0, [])
+            should(change.type).equal('UpToDate')
+          })
+        })
+      })
+    })
   })
 })

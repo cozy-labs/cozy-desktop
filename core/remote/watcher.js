@@ -216,6 +216,10 @@ class RemoteWatcher {
       }
     }
 
+    if (was && was.remote && metadata.extractRevNumber(was.remote) >= metadata.extractRevNumber(doc.remote)) {
+      return remoteChange.upToDate(doc, was)
+    }
+
     // TODO: Move to Prep?
     if (!inRemoteTrash(remoteDoc)) {
       metadata.assignPlatformIncompatibilities(doc, this.prep.config.syncPath)
@@ -251,9 +255,6 @@ class RemoteWatcher {
     }
     if (!was) {
       return remoteChange.added(doc)
-    }
-    if (was.remote && was.remote._rev === doc.remote._rev) {
-      return remoteChange.upToDate(doc, was)
     }
     if (!inRemoteTrash(remoteDoc) && was.trashed) {
       return remoteChange.restored(doc, was)
