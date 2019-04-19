@@ -1,5 +1,31 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.0-beta.6 - 2019-04-19
+
+Improvements for all users:
+
+- We've updated our icons to reflect the new Cozy branding with a deep blue
+  instead of the faded one and more of that blue around our lovely little cloud.
+
+Improvements for Windows and GNU/Linux users:
+
+- With our new watcher, some remote movements that were detected, taken into
+  account but not applied locally (i.e. the file or directory itself would not
+  have been moved on the filesystem) because the client was stopped in the
+  middle of the synchronisation process would not be correctly applied after the
+  client is relaunched. In this situation, we would end up duplicating the
+  document that was moved, at its previous path.
+  We made sure we detect unapplied remote movements so we can finish applying
+  them and not duplicate your documents.
+- Since it could be surprising and even misleading, we've removed the count of
+  the remaining items to be synchronised until we can be sure it's always
+  accurate. In the meantime, you'll see a simpler message indicating the client
+  is syncing.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.0-beta.5 - 2019-04-17
 
 Improvements for Windows and GNU/Linux users:
