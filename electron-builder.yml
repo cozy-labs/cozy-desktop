@@ -19,6 +19,14 @@ asarUnpack:
 - gui/scripts/**
 directories:
   buildResources: gui/assets
+dmg:
+  contents:
+    - x: 110
+      y: 150
+    - x: 440
+      y: 150
+      type: link
+      path: '/Applications'
 win:
   target:
   - nsis
