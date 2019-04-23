@@ -6,11 +6,6 @@ const _ = require('lodash')
 
 const logger = require('../logger')
 const metadata = require('../metadata')
-const {
-  assignId,
-  ensureValidPath,
-  assignPlatformIncompatibilities
-} = metadata
 const remoteChange = require('./change')
 const { inRemoteTrash } = require('./document')
 const userActionRequired = require('./user_action_required')
@@ -200,7 +195,7 @@ class RemoteWatcher {
   identifyExistingDocChange (remoteDoc /*: RemoteDoc */, was /*: ?Metadata */, changeIndex /*: number */, previousChanges /*: Array<RemoteChange> */) /*: * */ {
     let doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
     try {
-      ensureValidPath(doc)
+      metadata.ensureValidPath(doc)
     } catch (error) {
       return {
         sideName,
@@ -210,7 +205,7 @@ class RemoteWatcher {
       }
     }
     const {docType, path} = doc
-    assignId(doc)
+    metadata.assignId(doc)
 
     if (doc.docType !== 'file' && doc.docType !== 'folder') {
       return {
@@ -223,7 +218,7 @@ class RemoteWatcher {
 
     // TODO: Move to Prep?
     if (!inRemoteTrash(remoteDoc)) {
-      assignPlatformIncompatibilities(doc, this.prep.config.syncPath)
+      metadata.assignPlatformIncompatibilities(doc, this.prep.config.syncPath)
       const { incompatibilities } = doc
       if (incompatibilities) {
         log.debug({path, oldpath: was && was.path, incompatibilities})
