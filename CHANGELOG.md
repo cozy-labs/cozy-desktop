@@ -1,5 +1,25 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.0-beta.7 - 2019-04-23
+
+Improvements for all users:
+
+- The remote watcher now ignores changes with a revision lower than the one
+  we've saved on the associated document in the local Pouch. Failing to do so
+  was leading to files disappearing locally (before reappearing a short while
+  later) during their upload to the Cozy. This could also be the cause of
+  unexpected and undocumented behavior.
+
+Improvements for MacOS users:
+
+- When updating the Cozy branding, we messed up the alignment of icons in the
+  MacOS installer. The Cozy app icon, the arrow and the Applications folder are
+  now properly aligned and vertically centered in the installer window.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.0-beta.6 - 2019-04-19
 
 Improvements for all users:
