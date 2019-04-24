@@ -49,6 +49,27 @@ describe('local/steps/initial_diff', () => {
     })
   })
 
+  describe('.clearState()', () => {
+    const waiting = [{ batch: [], nbCandidates: 0, timeout: setTimeout(() => {}, 0) }]
+    const scannedPaths = new Set(['foo'])
+    const byInode = new Map([[1, { path: 'foo', kind: 'file', updated_at: (new Date()).toString() }]])
+    const state = {
+      [initialDiff.STEP_NAME]: { waiting, scannedPaths, byInode }
+    }
+
+    it('removes every item from all initialDiff state collections', function () {
+      initialDiff.clearState(state)
+
+      should(state).deepEqual({
+        [initialDiff.STEP_NAME]: {
+          waiting: [],
+          scannedPaths: new Set(),
+          byInode: new Map()
+        }
+      })
+    })
+  })
+
   describe('.loop()', () => {
     let buffer
     let initialScanDone

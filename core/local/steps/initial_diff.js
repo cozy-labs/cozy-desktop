@@ -48,7 +48,8 @@ const log = logger({
 module.exports = {
   STEP_NAME,
   loop,
-  initialState
+  initialState,
+  clearState
 }
 
 // Some files and directories can have been deleted while cozy-desktop was
@@ -89,6 +90,18 @@ async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<InitialDi
   return {
     [STEP_NAME]: { waiting, scannedPaths, byInode }
   }
+}
+
+function clearState (state /*: InitialDiffState */) {
+  const { [STEP_NAME]: { waiting, scannedPaths, byInode } } = state
+
+  for (const item of waiting) {
+    clearTimeout(item.timeout)
+  }
+
+  state[STEP_NAME].waiting = []
+  scannedPaths.clear()
+  byInode.clear()
 }
 
 async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: Pouch */, state /*: InitialDiffState */) /*: Promise<void> */ {
@@ -164,8 +177,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
             })
           }
         }
-        byInode.clear()
-        scannedPaths.clear()
+        clearState(state)
       }
       batch.push(event)
     }
