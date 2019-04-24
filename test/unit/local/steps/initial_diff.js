@@ -2,6 +2,8 @@
 /* @flow */
 
 const _ = require('lodash')
+const path = require('path')
+
 const should = require('should')
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
@@ -31,6 +33,7 @@ describe('local/steps/initial_diff', () => {
       const state = await initialDiff.initialState(this)
       should(state).have.property(initialDiff.STEP_NAME, {
         waiting: [],
+        renamed: [],
         scannedPaths: new Set(),
         byInode: new Map([
           [foo.fileid || foo.ino, {
@@ -51,10 +54,11 @@ describe('local/steps/initial_diff', () => {
 
   describe('.clearState()', () => {
     const waiting = [{ batch: [], nbCandidates: 0, timeout: setTimeout(() => {}, 0) }]
+    const renamed = [{ oldPath: 'bar', path: 'foo' }]
     const scannedPaths = new Set(['foo'])
     const byInode = new Map([[1, { path: 'foo', kind: 'file', updated_at: (new Date()).toString() }]])
     const state = {
-      [initialDiff.STEP_NAME]: { waiting, scannedPaths, byInode }
+      [initialDiff.STEP_NAME]: { waiting, renamed, scannedPaths, byInode }
     }
 
     it('removes every item from all initialDiff state collections', function () {
@@ -63,6 +67,7 @@ describe('local/steps/initial_diff', () => {
       should(state).deepEqual({
         [initialDiff.STEP_NAME]: {
           waiting: [],
+          renamed: [],
           scannedPaths: new Set(),
           byInode: new Map()
         }
@@ -338,6 +343,113 @@ describe('local/steps/initial_diff', () => {
           ...fizz,
           action: 'ignored',
           [initialDiff.STEP_NAME]: { unappliedMoveTo: 'fizz2' }
+        },
+        initialScanDone
+      ])
+    })
+
+    it('fixes renamed after parent renamed', async function () {
+      await builders.metadir().path('parent').ino(1).create()
+      await builders.metadir().path('parent/foo').ino(2).create()
+      await builders.metadir().path('parent/foo/bar').ino(3).create()
+
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+
+      const parentScan = builders.event()
+        .action('scan')
+        .kind('directory')
+        .path('parent-2')
+        .ino(1)
+        .build()
+      const childScan = builders.event()
+        .action('scan')
+        .kind('directory')
+        .path('parent-2/foo-2')
+        .ino(2)
+        .build()
+      const childChildScan = builders.event()
+        .action('scan')
+        .kind('directory')
+        .path('parent-2/foo-2/bar-2')
+        .ino(3)
+        .build()
+      buffer.push(_.cloneDeep([parentScan, childScan, childChildScan, initialScanDone]))
+      buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
+
+      should(await buffer.pop()).deepEqual([
+        {
+          ...parentScan,
+          action: 'renamed',
+          oldPath: 'parent',
+          [initialDiff.STEP_NAME]: { actionConvertedFrom: parentScan.action }
+        },
+        {
+          ...childScan,
+          action: 'renamed',
+          oldPath: path.normalize('parent-2/foo'),
+          [initialDiff.STEP_NAME]: {
+            actionConvertedFrom: childScan.action,
+            renamedAncestor: {
+              oldPath: 'parent',
+              path: parentScan.path
+            }
+          }
+        },
+        {
+          ...childChildScan,
+          action: 'renamed',
+          oldPath: path.normalize('parent-2/foo-2/bar'),
+          [initialDiff.STEP_NAME]: {
+            actionConvertedFrom: childChildScan.action,
+            renamedAncestor: {
+              oldPath: path.normalize('parent-2/foo'),
+              path: childScan.path
+            }
+          }
+        },
+        initialScanDone
+      ])
+    })
+
+    it('ignores child moves', async function () {
+      await builders.metadir().path('parent').ino(1).create()
+      await builders.metadir().path('parent/foo').ino(2).create()
+
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+
+      const parentScan = builders.event()
+        .action('scan')
+        .kind('directory')
+        .path('parent-2')
+        .ino(1)
+        .build()
+      const childScan = builders.event()
+        .action('scan')
+        .kind('directory')
+        .path(path.normalize('parent-2/foo'))
+        .ino(2)
+        .build()
+      buffer.push(_.cloneDeep([parentScan, childScan, initialScanDone]))
+      buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
+
+      should(await buffer.pop()).deepEqual([
+        {
+          ...parentScan,
+          action: 'renamed',
+          oldPath: 'parent',
+          [initialDiff.STEP_NAME]: { actionConvertedFrom: parentScan.action }
+        },
+        {
+          ...childScan,
+          action: 'ignored',
+          oldPath: path.normalize('parent/foo'),
+          [initialDiff.STEP_NAME]: {
+            actionConvertedFrom: childScan.action,
+            renamedAncestor: {
+              oldPath: 'parent',
+              path: parentScan.path
+            }
+          }
         },
         initialScanDone
       ])
