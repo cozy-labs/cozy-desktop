@@ -12,9 +12,11 @@ import type { AtomWatcherEvent, Batch, EventKind } from './event'
 import type { Metadata } from '../../metadata'
 
 type InitialDiffState = {
-  waiting: WaitingItem[],
-  byInode: Map<number|string, WatchedPath>,
-  byPath: Map<string, WatchedPath>,
+  [typeof STEP_NAME]: {
+    waiting: WaitingItem[],
+    scannedPaths: Set<string>,
+    byInode: Map<number|string, WatchedPath>,
+  }
 }
 
 type WatchedPath = {
@@ -53,21 +55,21 @@ module.exports = {
 // stopped. So, at the end of the initial scan, we have to do a diff between
 // what was in pouchdb and the events from the local watcher to find what was
 // deleted.
-function loop (buffer /*: Buffer */, opts /*: { pouch: Pouch, state: Object } */) /*: Buffer */ {
+function loop (buffer /*: Buffer */, opts /*: { pouch: Pouch, state: InitialDiffState } */) /*: Buffer */ {
   const out = new Buffer()
   initialDiff(buffer, out, opts.pouch, opts.state)
     .catch(err => { log.error({err}) })
   return out
 }
 
-async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<{ [typeof STEP_NAME]: InitialDiffState }> */ {
+async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<InitialDiffState> */ {
   const waiting /*: WaitingItem[] */ = []
+  const scannedPaths /*: Set<string> */ = new Set()
 
   // Using inode/fileId is more robust that using path or id for detecting
   // which files/folders have been deleted, as it is stable even if the
   // file/folder has been moved or renamed
   const byInode /*: Map<number|string, WatchedPath> */ = new Map()
-  const byPath /*: Map<string, WatchedPath> */ = new Map()
   const docs /*: Metadata[] */ = await opts.pouch.byRecursivePathAsync('')
   for (const doc of docs) {
     if (doc.ino != null) {
@@ -85,14 +87,14 @@ async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<{ [typeof
   }
 
   return {
-    [STEP_NAME]: { waiting, byInode, byPath }
+    [STEP_NAME]: { waiting, scannedPaths, byInode }
   }
 }
 
-async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: Pouch */, state /*: Object */) /*: Promise<void> */ {
+async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: Pouch */, state /*: InitialDiffState */) /*: Promise<void> */ {
   while (true) {
     const events = await buffer.pop()
-    const { [STEP_NAME]: { waiting, byInode, byPath } } = state
+    const { [STEP_NAME]: { waiting, scannedPaths, byInode } } = state
 
     let nbCandidates = 0
 
@@ -148,11 +150,11 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
           byInode.delete(event.stats.fileid)
           byInode.delete(event.stats.ino)
         }
-        byPath.set(event.path, { path: event.path, kind: event.kind })
+        scannedPaths.add(event.path)
       } else if (event.action === 'initial-scan-done') {
         // Emit deleted events for all the remaining files/dirs
         for (const [, doc] of byInode) {
-          if (!byPath.get(doc.path)) {
+          if (!scannedPaths.has(doc.path)) {
             batch.push({
               action: 'deleted',
               kind: doc.kind,
@@ -163,7 +165,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
           }
         }
         byInode.clear()
-        byPath.clear()
+        scannedPaths.clear()
       }
       batch.push(event)
     }
@@ -219,14 +221,20 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
   }
 }
 
-function foundUntouchedFile (event, was) {
-  if (was && event.kind === 'file') {
-    const { ctime, mtime } = event.stats
-    const eventUpdateTime = Math.max(ctime.getTime(), mtime.getTime())
-    const docUpdateTime = (new Date(was.updated_at)).getTime()
+function eventUpdateTime (event) {
+  const { ctime, mtime } = event.stats
+  return Math.max(ctime.getTime(), mtime.getTime())
+}
 
-    return eventUpdateTime === docUpdateTime
-  } else {
-    return false
-  }
+function docUpdateTime (was) {
+  return (new Date(was.updated_at)).getTime()
+}
+
+function foundUntouchedFile (event, was) /*: boolean %checks */ {
+  return (
+    was != null &&
+    was.md5sum != null &&
+    event.kind === 'file' &&
+    eventUpdateTime(event) === docUpdateTime(was)
+  )
 }

@@ -31,6 +31,7 @@ describe('local/steps/initial_diff', () => {
       const state = await initialDiff.initialState(this)
       should(state).have.property(initialDiff.STEP_NAME, {
         waiting: [],
+        scannedPaths: new Set(),
         byInode: new Map([
           [foo.fileid || foo.ino, {
             path: foo.path,
@@ -43,8 +44,7 @@ describe('local/steps/initial_diff', () => {
             updated_at: fizz.updated_at,
             md5sum: fizz.md5sum
           }]
-        ]),
-        byPath: new Map()
+        ])
       })
     })
   })
