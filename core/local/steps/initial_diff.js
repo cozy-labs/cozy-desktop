@@ -15,7 +15,7 @@ import type { Metadata } from '../../metadata'
 type InitialDiffState = {
   [typeof STEP_NAME]: {
     waiting: WaitingItem[],
-    renamed: RenamedPath[],
+    renamedEvents: AtomWatcherEvent[],
     scannedPaths: Set<string>,
     byInode: Map<number|string, Metadata>,
   }
@@ -25,11 +25,6 @@ type WaitingItem = {
   batch: AtomWatcherEvent[],
   nbCandidates: number,
   timeout: TimeoutID
-}
-
-type RenamedPath = {
-  oldPath: string,
-  path: string
 }
 */
 
@@ -44,8 +39,8 @@ const log = logger({
   component: `atom/${STEP_NAME}`
 })
 
-const areParentChildPaths = (p /*: string */, c /*: string */) /*: boolean */ =>
-  p !== c && `${c}${path.sep}`.startsWith(`${p}${path.sep}`)
+const areParentChildPaths = (p /*: ?string */, c /*: ?string */) /*: boolean %checks */ =>
+  !!p && !!c && p !== c && `${c}${path.sep}`.startsWith(`${p}${path.sep}`)
 
 module.exports = {
   STEP_NAME,
@@ -67,7 +62,7 @@ function loop (buffer /*: Buffer */, opts /*: { pouch: Pouch, state: InitialDiff
 
 async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<InitialDiffState> */ {
   const waiting /*: WaitingItem[] */ = []
-  const renamed /*: RenamedPath[] */ = []
+  const renamedEvents /*: AtomWatcherEvent[] */ = []
   const scannedPaths /*: Set<string> */ = new Set()
 
   // Using inode/fileId is more robust that using path or id for detecting
@@ -83,7 +78,7 @@ async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<InitialDi
   }
 
   return {
-    [STEP_NAME]: { waiting, renamed, scannedPaths, byInode }
+    [STEP_NAME]: { waiting, renamedEvents, scannedPaths, byInode }
   }
 }
 
@@ -95,7 +90,7 @@ function clearState (state /*: InitialDiffState */) {
   }
 
   state[STEP_NAME].waiting = []
-  state[STEP_NAME].renamed = []
+  state[STEP_NAME].renamedEvents = []
   scannedPaths.clear()
   byInode.clear()
 }
@@ -103,7 +98,7 @@ function clearState (state /*: InitialDiffState */) {
 async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: Pouch */, state /*: InitialDiffState */) /*: Promise<void> */ {
   while (true) {
     const events = await buffer.pop()
-    const { [STEP_NAME]: { waiting, renamed, scannedPaths, byInode } } = state
+    const { [STEP_NAME]: { waiting, renamedEvents, scannedPaths, byInode } } = state
 
     let nbCandidates = 0
 
@@ -162,7 +157,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
         scannedPaths.add(event.path)
       }
 
-      for (const renamedEvent of renamed) {
+      for (const renamedEvent of renamedEvents) {
         if (areParentChildPaths(renamedEvent.oldPath, event.oldPath)) {
           const oldPathFixed = event.oldPath.replace(renamedEvent.oldPath, renamedEvent.path)
           if (event.path === oldPathFixed) {
@@ -170,12 +165,13 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
           } else {
             event.oldPath = oldPathFixed
           }
-          _.set(event, [STEP_NAME, 'renamedAncestor'], renamedEvent)
+          _.set(event, [STEP_NAME, 'renamedAncestor'], _.pick(renamedEvent, ['oldPath', 'path']))
         }
       }
 
       if (event.action === 'renamed') {
-        renamed.push({ oldPath: event.oldPath, path: event.path })
+        // Needs to be pushed after the oldPath has been fixed
+        renamedEvents.push(event)
       }
 
       if (event.action === 'initial-scan-done') {

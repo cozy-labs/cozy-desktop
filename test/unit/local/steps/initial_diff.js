@@ -33,7 +33,7 @@ describe('local/steps/initial_diff', () => {
       const state = await initialDiff.initialState(this)
       should(state).have.property(initialDiff.STEP_NAME, {
         waiting: [],
-        renamed: [],
+        renamedEvents: [],
         scannedPaths: new Set(),
         byInode: new Map([
           [foo.fileid || foo.ino, foo],
@@ -47,11 +47,11 @@ describe('local/steps/initial_diff', () => {
     it('removes every item from all initialDiff state collections', function () {
       const doc = builders.metadata().path('foo').ino(1).build()
       const waiting = [{ batch: [], nbCandidates: 0, timeout: setTimeout(() => {}, 0) }]
-      const renamed = [{ oldPath: 'bar', path: 'foo' }]
+      const renamedEvents = [builders.event().path('foo').oldPath('bar').build()]
       const scannedPaths = new Set(['foo'])
       const byInode = new Map([[doc.fileid || doc.ino || '', doc]]) // Flow thinks doc.ino can be null
       const state = {
-        [initialDiff.STEP_NAME]: { waiting, renamed, scannedPaths, byInode }
+        [initialDiff.STEP_NAME]: { waiting, renamedEvents, scannedPaths, byInode }
       }
 
       initialDiff.clearState(state)
@@ -59,7 +59,7 @@ describe('local/steps/initial_diff', () => {
       should(state).deepEqual({
         [initialDiff.STEP_NAME]: {
           waiting: [],
-          renamed: [],
+          renamedEvents: [],
           scannedPaths: new Set(),
           byInode: new Map()
         }
