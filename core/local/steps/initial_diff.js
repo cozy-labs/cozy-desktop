@@ -17,16 +17,8 @@ type InitialDiffState = {
     waiting: WaitingItem[],
     renamed: RenamedPath[],
     scannedPaths: Set<string>,
-    byInode: Map<number|string, WatchedPath>,
+    byInode: Map<number|string, Metadata>,
   }
-}
-
-type WatchedPath = {
-  path: string,
-  kind: EventKind,
-  md5sum?: string,
-  moveFrom?: string,
-  updated_at: string
 }
 
 type WaitingItem = {
@@ -81,20 +73,12 @@ async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<InitialDi
   // Using inode/fileId is more robust that using path or id for detecting
   // which files/folders have been deleted, as it is stable even if the
   // file/folder has been moved or renamed
-  const byInode /*: Map<number|string, WatchedPath> */ = new Map()
+  const byInode /*: Map<number|string, Metadata> */ = new Map()
   const docs /*: Metadata[] */ = await opts.pouch.byRecursivePathAsync('')
   for (const doc of docs) {
     if (doc.ino != null) {
       // Process only files/dirs that were created locally or synchronized
-      const kind = doc.docType === 'file' ? 'file' : 'directory'
-      const was /*: WatchedPath */ = {
-        kind,
-        path: doc.path,
-        updated_at: doc.updated_at
-      }
-      if (doc.moveFrom) was.moveFrom = doc.moveFrom.path
-      if (kind === 'file') was.md5sum = doc.md5sum
-      byInode.set(doc.fileid || doc.ino, was)
+      byInode.set(doc.fileid || doc.ino, doc)
     }
   }
 
@@ -134,7 +118,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
 
       // Detect if the file was moved while the client was stopped
       if (['created', 'scan'].includes(event.action)) {
-        let was /*: ?WatchedPath */
+        let was /*: ?Metadata */
         if (event.stats.fileid) {
           was = byInode.get(event.stats.fileid)
         }
@@ -142,11 +126,11 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
           was = byInode.get(event.stats.ino)
         }
 
-        if (was && was.moveFrom && was.moveFrom === event.path) {
+        if (was && was.moveFrom && was.moveFrom.path === event.path) {
           _.set(event, [STEP_NAME, 'unappliedMoveTo'], was.path)
           event.action = 'ignored'
         } else if (was && was.path !== event.path) {
-          if (was.kind === event.kind) {
+          if (kind(was) === event.kind) {
             // TODO for a directory, maybe we should check the children
             _.set(event, [STEP_NAME, 'actionConvertedFrom'], event.action)
             event.action = 'renamed'
@@ -158,7 +142,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
             // for example.
             batch.push({
               action: 'deleted',
-              kind: was.kind,
+              kind: kind(was),
               _id: id(was.path),
               [STEP_NAME]: {inodeReuse: event},
               path: was.path
@@ -200,9 +184,14 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
           if (!scannedPaths.has(doc.path)) {
             batch.push({
               action: 'deleted',
-              kind: doc.kind,
+              kind: kind(doc),
               _id: id(doc.path),
-              [STEP_NAME]: {notFound: doc},
+              [STEP_NAME]: {
+                notFound: _.defaults(
+                  { kind: kind(doc) },
+                  _.pick(doc, ['path', 'md5sum', 'updated_at'])
+                )
+              },
               path: doc.path
             })
           }
@@ -279,4 +268,8 @@ function foundUntouchedFile (event, was) /*: boolean %checks */ {
     event.kind === 'file' &&
     eventUpdateTime(event) === docUpdateTime(was)
   )
+}
+
+function kind (doc /*: Metadata */) /*: EventKind */ {
+  return doc.docType === 'folder' ? 'directory' : doc.docType
 }

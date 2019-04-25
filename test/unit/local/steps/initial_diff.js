@@ -36,32 +36,24 @@ describe('local/steps/initial_diff', () => {
         renamed: [],
         scannedPaths: new Set(),
         byInode: new Map([
-          [foo.fileid || foo.ino, {
-            path: foo.path,
-            kind: kind(foo),
-            updated_at: foo.updated_at
-          }],
-          [fizz.fileid || fizz.ino, {
-            path: fizz.path,
-            kind: kind(fizz),
-            updated_at: fizz.updated_at,
-            md5sum: fizz.md5sum
-          }]
+          [foo.fileid || foo.ino, foo],
+          [fizz.fileid || fizz.ino, fizz]
         ])
       })
     })
   })
 
   describe('.clearState()', () => {
-    const waiting = [{ batch: [], nbCandidates: 0, timeout: setTimeout(() => {}, 0) }]
-    const renamed = [{ oldPath: 'bar', path: 'foo' }]
-    const scannedPaths = new Set(['foo'])
-    const byInode = new Map([[1, { path: 'foo', kind: 'file', updated_at: (new Date()).toString() }]])
-    const state = {
-      [initialDiff.STEP_NAME]: { waiting, renamed, scannedPaths, byInode }
-    }
-
     it('removes every item from all initialDiff state collections', function () {
+      const doc = builders.metadata().path('foo').ino(1).build()
+      const waiting = [{ batch: [], nbCandidates: 0, timeout: setTimeout(() => {}, 0) }]
+      const renamed = [{ oldPath: 'bar', path: 'foo' }]
+      const scannedPaths = new Set(['foo'])
+      const byInode = new Map([[doc.fileid || doc.ino || '', doc]]) // Flow thinks doc.ino can be null
+      const state = {
+        [initialDiff.STEP_NAME]: { waiting, renamed, scannedPaths, byInode }
+      }
+
       initialDiff.clearState(state)
 
       should(state).deepEqual({
@@ -194,7 +186,7 @@ describe('local/steps/initial_diff', () => {
         {
           _id: foo._id,
           action: 'deleted',
-          initialDiff: {notFound: _.defaults({kind: kind(foo)}, _.pick(foo, ['path', 'updated_at']))},
+          initialDiff: {notFound: _.defaults({kind: kind(foo)}, _.pick(foo, ['path', 'md5sum', 'updated_at']))},
           kind: 'directory',
           path: foo.path
         },
