@@ -1,8 +1,6 @@
 ---
 extends:
-  - standard
-  - plugin:import/errors
-  - plugin:import/warnings
+  - cozy-app/basics
   - plugin:node/recommended
 rules:
   node/shebang: off
