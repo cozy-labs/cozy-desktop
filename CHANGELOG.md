@@ -1,5 +1,17 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.0-beta.8 - 2019-04-25
+
+Improvements for Windows and GNU/Linux users:
+
+- We fixed the last known issue regarding files and directories renamed while
+  the client is stopped using the new watcher. The next release should be a
+  stable one! 🚀
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.0-beta.7 - 2019-04-23
 
 Improvements for all users:
