@@ -170,6 +170,7 @@ module.exports = class WindowManager {
     })
 
     let resolveCreate = null
+    // eslint-disable-next-line no-unused-vars
     let promiseReady = new Promise((resolve, reject) => {
       resolveCreate = resolve
     }).catch(err => log.error(err))

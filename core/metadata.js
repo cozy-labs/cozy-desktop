@@ -79,7 +79,8 @@ export type Metadata = {
 }
 */
 
-let id /*: string => string */ = _ => ''
+// eslint-disable-next-line no-unused-vars
+let id /*: string => string */ = fpath => ''
 
 // See [test/world/](https://github.com/cozy-labs/cozy-desktop/blob/master/test/world/)
 // for file system behavior examples.

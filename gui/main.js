@@ -212,7 +212,7 @@ const sendDiskUsage = () => {
   }
 }
 
-const startSync = (force, ...args) => {
+const startSync = force => {
   trayWindow.send(
     'synchronization',
     desktop.config.cozyUrl,

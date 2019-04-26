@@ -27,7 +27,7 @@ const DOMAIN_TO_ENV = {
 }
 
 function toSentryContext(cozyUrl /*: string */) {
-  const host = cozyUrl && url.parse(cozyUrl).host
+  const host = cozyUrl && new url.URL(cozyUrl).host
   if (!host) throw new Error('badly formated URL')
   const urlParts = host.split(':')[0].split('.')
   const domain = urlParts.slice(-2).join('.')
@@ -73,6 +73,7 @@ function setup(clientInfos /*: ClientInfo */) {
     isSentryConfigured = true
     log.info('Sentry configured !')
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.log('FAIL TO SETUP', err)
     log.error(
       { err },
@@ -152,6 +153,7 @@ if (
         try {
           handleBunyanMessage(msg)
         } catch (err) {
+          // eslint-disable-next-line no-console
           console.log('Error in handleBunyanMessage', err)
         }
       }

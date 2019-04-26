@@ -1,4 +1,5 @@
 coverage
+dev/log2gource.js
 dist
 elm-stuff
 flow-typed

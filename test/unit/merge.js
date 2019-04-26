@@ -48,25 +48,23 @@ async function mergeSideEffects(
 
   return {
     savedDocs,
-    resolvedConflicts: merge.resolveConflictAsync.args.map(
-      ([side, doc, existing]) => [
-        side,
-        // Include only properties that are relevant in conflict resolution:
-        _.pick(doc, [
-          // The path is necessary to:
-          // - generate the new file/dir name including the conflict suffix.
-          // - rename the conflicting file/dir on the local side.
-          'path',
-          // The remote._id is necessary to rename the conflicting file/dir on
-          // the remote side. Actually the remote._rev is not used although
-          // we're currently including it in the test-asserted data as part of
-          // the remote property.
-          'remote'
-        ])
-        // Don't include the existing version: it is only useful for
-        // logging / debugging and has no impact on conflict resolution.
-      ]
-    )
+    resolvedConflicts: merge.resolveConflictAsync.args.map(([side, doc]) => [
+      side,
+      // Include only properties that are relevant in conflict resolution:
+      _.pick(doc, [
+        // The path is necessary to:
+        // - generate the new file/dir name including the conflict suffix.
+        // - rename the conflicting file/dir on the local side.
+        'path',
+        // The remote._id is necessary to rename the conflicting file/dir on
+        // the remote side. Actually the remote._rev is not used although
+        // we're currently including it in the test-asserted data as part of
+        // the remote property.
+        'remote'
+      ])
+      // Don't include the existing version: it is only useful for
+      // logging / debugging and has no impact on conflict resolution.
+    ])
   }
 }
 

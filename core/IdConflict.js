@@ -83,7 +83,7 @@ function detectOnId(
 }
 
 function detectOnRemote(
-  { doc, was } /*: $Diff<Change, {side: SideName}> */,
+  { doc } /*: $Diff<Change, {side: SideName}> */,
   existingDoc /*: Metadata */
 ) /*: boolean */ {
   return _.get(doc, 'remote._id') !== _.get(existingDoc, 'remote._id')

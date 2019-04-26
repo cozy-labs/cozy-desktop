@@ -47,7 +47,7 @@ module.exports = class Buffer {
     fn /*: (Batch) => Batch */,
     buffer /*: Buffer */
   ) /*: Promise<void> */ {
-    while (true) {
+    for (;;) {
       const batch = fn(await this.pop())
       buffer.push(batch)
     }
@@ -63,7 +63,7 @@ module.exports = class Buffer {
     fn /*: (Batch) => Promise<Batch> */,
     buffer /*: Buffer */
   ) /*: Promise<void> */ {
-    while (true) {
+    for (;;) {
       const batch = await this.pop()
       const after = await fn(batch)
       buffer.push(after)

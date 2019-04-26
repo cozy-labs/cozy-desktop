@@ -82,7 +82,7 @@ class App {
       }
       cozyUrl = `https://${cozyUrl}`
     }
-    return url.parse(cozyUrl)
+    return new url.URL(cozyUrl)
   }
 
   // Check that the cozyUrl is valid

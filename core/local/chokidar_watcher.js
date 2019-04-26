@@ -427,7 +427,9 @@ module.exports = class LocalWatcher {
           const fullpath = path.join(this.watcher.options.cwd, relpath)
           const curStat = await fse.stat(fullpath)
           this.watcher.emit('add', relpath, curStat)
-        } catch (err) {}
+        } catch (err) {
+          log.warn({ err }, 'Could not fire remaining add events')
+        }
       }
       this.watcher.close()
       this.watcher = null

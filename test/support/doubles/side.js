@@ -26,6 +26,7 @@ module.exports = function stubSide() /*: Side */ {
     double[method] = sinon.stub().resolves()
   }
   double.watcher = {}
+  // eslint-disable-next-line no-unused-vars
   double.watcher.running = new Promise((resolve, reject) => {})
   return double
 }

@@ -14,6 +14,7 @@ module.exports = class Registration {
     this.onReady =
       onReady ||
       (url => {
+        // eslint-disable-next-line no-console
         console.log(
           'Please visit the following url to authorize the application: ',
           url
@@ -24,7 +25,7 @@ module.exports = class Registration {
     autoBind(this)
   }
 
-  onRegistered(client, url, onReady = null) {
+  onRegistered(client, url) {
     // TODO if the port is already taken, try again with a new port
     let server
     return new Promise((resolve, reject) => {

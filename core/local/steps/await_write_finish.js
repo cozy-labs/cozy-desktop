@@ -211,7 +211,7 @@ function debounce(
 async function awaitWriteFinish(buffer /*: Buffer */, out /*: Buffer */) {
   const waiting /*: WaitingItem[] */ = []
 
-  while (true) {
+  for (;;) {
     const events = aggregateBatch(await buffer.pop())
     let nbCandidates = countFileWriteEvents(events)
     debounce(waiting, events)
@@ -228,6 +228,7 @@ async function awaitWriteFinish(buffer /*: Buffer */, out /*: Buffer */) {
   }
 }
 
+// eslint-disable-next-line no-unused-vars
 function loop(buffer /*: Buffer */, opts /*: {} */) /*: Buffer */ {
   const out = new Buffer()
   awaitWriteFinish(buffer, out).catch(err => {

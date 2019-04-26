@@ -34,6 +34,7 @@ module.exports = class CozyStackDouble {
 
   // Returns a promise that resolves as soon as the server is listening.
   start() {
+    // eslint-disable-next-line no-unused-vars
     return new Promise((resolve, reject) => {
       this.server.listen(this.port, this.hostname, resolve)
     })
@@ -41,6 +42,7 @@ module.exports = class CozyStackDouble {
 
   // Returns a promise that resolves as soon as the server is not listening.
   stop() {
+    // eslint-disable-next-line no-unused-vars
     return new Promise((resolve, reject) => {
       this.server.close(resolve)
     })

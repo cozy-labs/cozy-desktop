@@ -46,7 +46,7 @@ describe('Executable handling', () => {
     }
   }
 
-  const unmergedChanges = async relpath => {
+  const unmergedChanges = async () => {
     helpers.spyPouch()
     await helpers.local.scan()
     await helpers.remote.pullChanges()
@@ -65,7 +65,7 @@ describe('Executable handling', () => {
           pouch: true,
           remote: true
         })
-        should(await unmergedChanges('file')).deepEqual([])
+        should(await unmergedChanges()).deepEqual([])
       })
     })
   })
@@ -84,7 +84,7 @@ describe('Executable handling', () => {
         pouch: undefined,
         remote: false
       })
-      should(await unmergedChanges('file')).deepEqual([])
+      should(await unmergedChanges()).deepEqual([])
     })
   })
 
@@ -99,7 +99,7 @@ describe('Executable handling', () => {
         pouch: true,
         remote: true
       })
-      should(await unmergedChanges('file')).deepEqual([])
+      should(await unmergedChanges()).deepEqual([])
     })
   })
 
@@ -113,7 +113,7 @@ describe('Executable handling', () => {
         pouch: undefined,
         remote: false
       })
-      should(await unmergedChanges('file')).deepEqual([])
+      should(await unmergedChanges()).deepEqual([])
     })
   })
 
@@ -136,7 +136,7 @@ describe('Executable handling', () => {
             pouch: true,
             remote: true
           })
-          should(await unmergedChanges('file')).deepEqual([])
+          should(await unmergedChanges()).deepEqual([])
         })
       })
     })
@@ -151,7 +151,7 @@ describe('Executable handling', () => {
           pouch: true,
           remote: true
         })
-        should(await unmergedChanges('file')).deepEqual([])
+        should(await unmergedChanges()).deepEqual([])
       })
     })
   })
@@ -175,7 +175,7 @@ describe('Executable handling', () => {
             pouch: undefined,
             remote: false
           })
-          should(await unmergedChanges('file')).deepEqual([])
+          should(await unmergedChanges()).deepEqual([])
         })
       })
     })
@@ -190,7 +190,7 @@ describe('Executable handling', () => {
           pouch: undefined,
           remote: false
         })
-        should(await unmergedChanges('file')).deepEqual([])
+        should(await unmergedChanges()).deepEqual([])
       })
     })
   })

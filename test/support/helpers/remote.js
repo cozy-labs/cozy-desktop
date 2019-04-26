@@ -77,7 +77,7 @@ class RemoteTestHelpers {
     const pathsToScan = ['/', `/${TRASH_DIR_NAME}`]
     const relPaths = [`${TRASH_DIR_NAME}/`]
 
-    while (true) {
+    for (;;) {
       const dirPath = pathsToScan.shift()
       if (dirPath == null) break
 
@@ -86,8 +86,8 @@ class RemoteTestHelpers {
         dir = await this.cozy.files.statByPath(dirPath)
       } catch (err) {
         if (err.status !== 404) throw err
-        // $FlowFixMe
         dir = {
+          // $FlowFixMe
           relations: () => [
             { attributes: { name: '<BROKEN>', type: '<BROKEN>' } }
           ]

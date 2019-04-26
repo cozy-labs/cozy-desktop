@@ -79,6 +79,7 @@ describe('remote.Remote', function() {
       checksum.setEncoding('base64')
       stream.pipe(checksum)
 
+      // eslint-disable-next-line no-unused-vars
       await new Promise((resolve, reject) => {
         stream.on('end', function() {
           checksum.end()
@@ -108,6 +109,7 @@ describe('remote.Remote', function() {
       await this.pouch.db.put(doc)
 
       this.remote.other = {
+        // eslint-disable-next-line no-unused-vars
         createReadStreamAsync(localDoc) {
           const stream = fse.createReadStream(CHAT_MIGNON_MOD_PATH)
           return Promise.resolve(stream)
@@ -204,6 +206,7 @@ describe('remote.Remote', function() {
       await this.pouch.db.put(doc)
 
       this.remote.other = {
+        // eslint-disable-next-line no-unused-vars
         createReadStreamAsync(localDoc) {
           const stream = fse.createReadStream(CHAT_MIGNON_MOD_PATH)
           return Promise.resolve(stream)
@@ -220,6 +223,7 @@ describe('remote.Remote', function() {
         .path(path.join('foo', 'bar', 'qux'))
         .build()
       this.remote.other = {
+        // eslint-disable-next-line no-unused-vars
         createReadStreamAsync(localDoc) {
           const empty = withContentLength(
             new stream.Readable({
@@ -242,6 +246,7 @@ describe('remote.Remote', function() {
         .path('foo')
         .build()
       this.remote.other = {
+        // eslint-disable-next-line no-unused-vars
         createReadStreamAsync(localDoc) {
           return fse.readFile('/path/do/not/exists')
         }
@@ -368,6 +373,7 @@ describe('remote.Remote', function() {
         const old = metadata.fromRemoteDoc(created)
         const doc = _.defaults({ md5sum: 'Invalid///////////////==' }, old)
         this.remote.other = {
+          // eslint-disable-next-line no-unused-vars
           createReadStreamAsync(localDoc) {
             const stream = builders
               .stream()
@@ -393,6 +399,7 @@ describe('remote.Remote', function() {
           .path('foo')
           .build()
         this.remote.other = {
+          // eslint-disable-next-line no-unused-vars
           createReadStreamAsync(localDoc) {
             return fse.readFile('/path/do/not/exists')
           }

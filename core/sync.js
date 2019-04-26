@@ -108,7 +108,7 @@ class Sync {
       async function(resolve, reject) {
         Promise.all(sidePromises).catch(err => reject(err))
         try {
-          while (true) {
+          for (;;) {
             await this.sync()
           }
         } catch (err) {
@@ -150,7 +150,7 @@ class Sync {
   // sync
   async syncBatch() {
     let seq = null
-    while (true) {
+    for (;;) {
       if (this.stopped) break
       seq = await this.pouch.getLocalSeqAsync()
       // TODO: Prevent infinite loop
@@ -447,14 +447,16 @@ class Sync {
         // The client is offline, wait that it can connect again to the server
         log.warn({ path }, 'Client is offline')
         this.events.emit('offline')
-        while (true) {
+        for (;;) {
           try {
             await Promise.delay(60000)
             await this.diskUsage()
             this.events.emit('online')
             log.warn({ path }, 'Client is online')
             return
-          } catch (_) {}
+          } catch (err) {
+            // Client is still offline
+          }
         }
       }
     }

@@ -52,7 +52,7 @@ class ContextDir {
     const dirsToRead = [this.root]
     const relPaths = []
 
-    while (true) {
+    for (;;) {
       const dir = dirsToRead.shift()
       if (dir == null) break
 

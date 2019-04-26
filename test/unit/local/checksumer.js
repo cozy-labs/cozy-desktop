@@ -53,7 +53,6 @@ describe('local/checksumer', () => {
 
       it('retries until success', async () => {
         createReadStream.callsFake(() => {
-          console.log('restore fs')
           createReadStream.restore()
           return busyStream()
         })

@@ -50,10 +50,12 @@ module.exports = {
 const areParentChildPaths = (p /*: string */, c /*: string */) /*: boolean */ =>
   `${c}${path.sep}`.startsWith(`${p}${path.sep}`)
 
+// eslint-disable-next-line no-unused-vars
 async function initialState(opts /*: ?{} */) /* Promise<WinDetectMoveState> */ {
   return {
     [STEP_NAME]: {
-      unmergedRenamedEvents: new SortedSet /* ::<AtomWatcherEvent> */()
+      // eslint-disable-next-line
+      unmergedRenamedEvents: new SortedSet /*:: <AtomWatcherEvent> */ ()
     }
   }
 }
@@ -71,7 +73,7 @@ function forget(
 
 function previousPaths(deletedPath, unmergedRenamedEvents) {
   const { previous: previousPaths } = unmergedRenamedEvents.reduceRight(
-    /* ::<{ previous: string[], current: string }> */ (paths, renamedEvent) => {
+    (paths, renamedEvent) => {
       if (
         renamedEvent.oldPath &&
         areParentChildPaths(renamedEvent.path, paths.current)
@@ -182,7 +184,7 @@ function sendReadyBatches(
 async function winDetectMove(buffer, output, opts /*: WinDetectMoveOptions */) {
   const pendingItems /*: PendingItem[] */ = []
 
-  while (true) {
+  for (;;) {
     // Wait for a new batch of events
     const events = await buffer.pop()
     const {

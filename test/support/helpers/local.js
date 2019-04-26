@@ -122,6 +122,7 @@ class LocalTestHelpers {
   }
 
   startSimulation() {
+    // eslint-disable-next-line no-unused-vars
     return new Promise((resolve, reject) => {
       this._resolveSimulation = resolve
     })

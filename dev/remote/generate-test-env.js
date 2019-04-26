@@ -16,11 +16,13 @@ function chooseCozyUrl(buildJob) {
 }
 
 function readAccessToken() {
+  // eslint-disable-next-line no-console
   console.log('Read access token...')
   return storage.load('creds').then(creds => creds.token.accessToken)
 }
 
 function generateTestEnv(accessToken) {
+  // eslint-disable-next-line no-console
   console.log('Generate .env.test file...')
   return fse.writeFile(
     '.env.test',
@@ -38,10 +40,12 @@ automatedRegistration(cozyUrl, passphrase, storage)
   .then(readAccessToken)
   .then(generateTestEnv)
   .then(() => {
+    // eslint-disable-next-line no-console
     console.log('Remote bootstrap complete.')
     process.exit(0) // eslint-disable-line no-process-exit
   })
   .catch(err => {
+    // eslint-disable-next-line no-console
     console.error(err)
     process.exit(1) // eslint-disable-line no-process-exit
   })

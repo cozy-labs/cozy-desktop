@@ -206,6 +206,7 @@ function generateLocalWatcher() {
   if (!running) {
     ops.push({ op: 'restart' })
   }
+  // eslint-disable-next-line no-console
   console.log(JSON.stringify(ops))
 }
 
@@ -221,6 +222,7 @@ function generateTwoClients() {
   for (const ops of [result.desktop, result.laptop]) {
     run(ops, clientOps)
   }
+  // eslint-disable-next-line no-console
   console.log(JSON.stringify(result))
 }
 
@@ -230,8 +232,10 @@ function generate(property) {
   } else if (property === 'two_clients') {
     generateTwoClients()
   } else if (!property) {
+    // eslint-disable-next-line no-console
     console.error(`Usage: ./test/generate_property_json.js [property]`)
   } else {
+    // eslint-disable-next-line no-console
     console.error(`${property} is not a supported property`)
     throw new Error('Unsupported property')
   }

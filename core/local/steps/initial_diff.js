@@ -112,7 +112,7 @@ async function initialDiff(
   pouch /*: Pouch */,
   state /*: InitialDiffState */
 ) /*: Promise<void> */ {
-  while (true) {
+  for (;;) {
     const events = await buffer.pop()
     const {
       [STEP_NAME]: { waiting, renamedEvents, scannedPaths, byInode }

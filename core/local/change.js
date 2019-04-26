@@ -252,8 +252,8 @@ function isChildUpdate(a /*: LocalChange */, b /*: LocalChange */) {
   return childOf(addPath(a), updatePath(b))
 }
 
-// $FlowFixMe
 function toString(a /*: LocalChange */) /*: string */ {
+  // $FlowFixMe
   return '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')'
 }
 
