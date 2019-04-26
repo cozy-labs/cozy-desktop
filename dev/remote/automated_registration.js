@@ -22,7 +22,7 @@ function automatedRegistration(
     return new Promise((resolve, reject) => {
       log.debug('Get CSRF token...')
       client.get(
-        { url: url.resolve(cozyUrl, '/auth/login') },
+        { url: new url.URL(cozyUrl + '/auth/login') },
         (err, _, body) => {
           if (err) {
             reject(err)
@@ -34,7 +34,7 @@ function automatedRegistration(
           log.debug({ csrf }, 'Login...')
           client.post(
             {
-              url: url.resolve(cozyUrl, '/auth/login'),
+              url: new url.URL(cozyUrl + '/auth/login'),
               form: {
                 passphrase,
                 csrf_token: csrf

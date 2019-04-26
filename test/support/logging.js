@@ -28,6 +28,7 @@ beforeEach(function() {
 
 afterEach(function() {
   for (const err of errors) {
+    // eslint-disable-next-line no-console
     console.error(err)
   }
 })

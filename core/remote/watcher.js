@@ -81,6 +81,7 @@ class RemoteWatcher {
   }
 
   async watchLoop() {
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       await Promise.delay(HEARTBEAT)
       if (!this.runningResolve) {
@@ -288,10 +289,10 @@ class RemoteWatcher {
       const previousMoveToSamePath = _.find(
         previousChanges,
         change =>
-          // $FlowFixMe
           (change.type === 'DescendantChange' ||
             change.type === 'FileMove' ||
             change.type === 'DirMove') &&
+          // $FlowFixMe
           change.doc.path === was.path
       )
 
@@ -546,27 +547,29 @@ class RemoteWatcher {
         }
         break
       case 'DirMove':
-        log.info(
-          { path, oldpath: change.was.path },
-          'folder was moved or renamed remotely'
-        )
-        const newRemoteRevs /*: RemoteRevisionsByID */ = {}
-        const descendants = change.descendantMoves || []
-        for (let descendant of descendants) {
-          if (descendant.doc.remote) {
-            newRemoteRevs[descendant.doc.remote._id] =
-              descendant.doc.remote._rev
+        {
+          log.info(
+            { path, oldpath: change.was.path },
+            'folder was moved or renamed remotely'
+          )
+          const newRemoteRevs /*: RemoteRevisionsByID */ = {}
+          const descendants = change.descendantMoves || []
+          for (let descendant of descendants) {
+            if (descendant.doc.remote) {
+              newRemoteRevs[descendant.doc.remote._id] =
+                descendant.doc.remote._rev
+            }
           }
-        }
-        await this.prep.moveFolderAsync(
-          sideName,
-          change.doc,
-          change.was,
-          newRemoteRevs
-        )
-        for (let descendant of descendants) {
-          if (descendant.update) {
-            await this.prep.updateFileAsync(sideName, descendant.doc)
+          await this.prep.moveFolderAsync(
+            sideName,
+            change.doc,
+            change.was,
+            newRemoteRevs
+          )
+          for (let descendant of descendants) {
+            if (descendant.update) {
+              await this.prep.updateFileAsync(sideName, descendant.doc)
+            }
           }
         }
         break

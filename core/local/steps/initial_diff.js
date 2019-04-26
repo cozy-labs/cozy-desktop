@@ -112,6 +112,7 @@ async function initialDiff(
   pouch /*: Pouch */,
   state /*: InitialDiffState */
 ) /*: Promise<void> */ {
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const events = await buffer.pop()
     const {

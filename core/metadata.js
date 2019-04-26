@@ -79,7 +79,7 @@ export type Metadata = {
 }
 */
 
-let id /*: string => string */ = _ => ''
+let id /*: string => string */ = () => ''
 
 // See [test/world/](https://github.com/cozy-labs/cozy-desktop/blob/master/test/world/)
 // for file system behavior examples.

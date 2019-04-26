@@ -42,7 +42,8 @@ const DONE_FILE = '.done'
 
 const mapInode = {}
 
-const debug = process.env.DEBUG != null ? console.log : (...whatever) => {}
+// eslint-disable-next-line no-console,no-unused-vars
+const debug = process.env.DEBUG != null ? console.log : (...args) => {}
 
 const setupInitialState = (scenario /*: Scenario */) => {
   if (scenario.init == null) return
@@ -98,8 +99,10 @@ const saveFSEventsToFile = (scenario, events, subdir = 'local') => {
 
 const logFSEvents = events => {
   if (process.env.DEBUG == null) return
+  // eslint-disable-next-line no-console
   console.log('events:')
   for (let e of events) {
+    // eslint-disable-next-line no-console
     console.log('-', e.type, e.path, `[${e.stats ? e.stats.ino : 'N/A'}]`)
   }
 }

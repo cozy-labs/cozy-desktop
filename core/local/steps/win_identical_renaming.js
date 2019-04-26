@@ -42,9 +42,11 @@ const DELAY = 500
 
 const initialState = () => ({
   [STEP_NAME]: {
-    deletedEventsById: new Map /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> *//*:: <string,AtomWatcherEvent> */(),
+    // eslint-disable-next-line
+    deletedEventsById: new Map /*:: <string,AtomWatcherEvent> */ (),
     pending: {
-      deletedEventsById: new Map /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> *//*:: <string,AtomWatcherEvent> */(),
+      // eslint-disable-next-line
+      deletedEventsById: new Map /*:: <string,AtomWatcherEvent> */ (),
       events: []
     }
   }
@@ -127,6 +129,7 @@ const _loop = async (buffer, out, opts) => {
     pending.events = []
   }
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const events = await buffer.pop()
     const {

@@ -23,7 +23,7 @@ async function heuristicIsEmpty(buffer) {
           acc && expected[0][prop] === lastEventToCheckEmptyness[prop],
         true
       )) ||
-    console.log(expected)
+    console.log(expected) // eslint-disable-line no-console
   )
 }
 

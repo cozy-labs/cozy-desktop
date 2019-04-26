@@ -197,9 +197,7 @@ describe('RemoteWatcher', function() {
       })
 
       it('still tries to pull other files/dirs', async function() {
-        try {
-          await this.watcher.pullMany(remoteDocs)
-        } catch (_) {}
+        await this.watcher.pullMany(remoteDocs).catch(() => {})
         should(apply).have.been.calledTwice()
         should(apply.args[0][0]).have.properties({
           type: 'FileAddition',
@@ -212,9 +210,7 @@ describe('RemoteWatcher', function() {
       })
 
       it('releases the Pouch lock', async function() {
-        try {
-          await this.watcher.pullMany(remoteDocs)
-        } catch (_) {}
+        await this.watcher.pullMany(remoteDocs).catch(() => {})
         const nextLockPromise = this.pouch.lock('nextLock')
         await should(nextLockPromise).be.fulfilled()
       })

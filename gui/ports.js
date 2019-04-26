@@ -53,7 +53,7 @@ ipcRenderer.on('registration-error', (event, err) => {
   err = errMessage(err)
   elmectron.ports.registrationError.send(err)
 })
-ipcRenderer.on('registration-done', event => {
+ipcRenderer.on('registration-done', () => {
   elmectron.ports.registrationDone.send(true)
 })
 elmectron.ports.registerRemote.subscribe(url => {
@@ -85,7 +85,6 @@ elmectron.ports.manualStartSync.subscribe(() => {
 })
 
 ipcRenderer.on('new-release-available', (event, notes, name) => {
-  console.log('new-release-available', notes, name)
   elmectron.ports.newRelease.send([notes, name])
 })
 elmectron.ports.quitAndInstall.subscribe(() => {
@@ -113,7 +112,7 @@ ipcRenderer.on('go-to-tab', (event, tab) => {
   elmectron.ports.gototab.send(tab)
 })
 
-ipcRenderer.on('cancel-unlink', event => {
+ipcRenderer.on('cancel-unlink', () => {
   elmectron.ports.cancelUnlink.send(true)
 })
 elmectron.ports.unlinkCozy.subscribe(() => {

@@ -149,7 +149,7 @@ class AtomWatcher {
     return scanDone
   }
 
-  async stop(force /*: ? bool */) /*: Promise<*> */ {
+  async stop() /*: Promise<*> */ {
     log.debug('stopping...')
     if (this._runningResolve) {
       this._runningResolve()

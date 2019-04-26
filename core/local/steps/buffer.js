@@ -47,6 +47,7 @@ module.exports = class Buffer {
     fn /*: (Batch) => Batch */,
     buffer /*: Buffer */
   ) /*: Promise<void> */ {
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const batch = fn(await this.pop())
       buffer.push(batch)
@@ -63,6 +64,7 @@ module.exports = class Buffer {
     fn /*: (Batch) => Promise<Batch> */,
     buffer /*: Buffer */
   ) /*: Promise<void> */ {
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const batch = await this.pop()
       const after = await fn(batch)

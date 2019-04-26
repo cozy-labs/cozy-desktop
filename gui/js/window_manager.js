@@ -170,7 +170,7 @@ module.exports = class WindowManager {
     })
 
     let resolveCreate = null
-    let promiseReady = new Promise((resolve, reject) => {
+    let promiseReady = new Promise(resolve => {
       resolveCreate = resolve
     }).catch(err => log.error(err))
 

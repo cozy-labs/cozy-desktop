@@ -79,7 +79,7 @@ describe('remote.Remote', function() {
       checksum.setEncoding('base64')
       stream.pipe(checksum)
 
-      await new Promise((resolve, reject) => {
+      await new Promise(resolve => {
         stream.on('end', function() {
           checksum.end()
           should.equal(expectedChecksum, checksum.read())
@@ -108,7 +108,7 @@ describe('remote.Remote', function() {
       await this.pouch.db.put(doc)
 
       this.remote.other = {
-        createReadStreamAsync(localDoc) {
+        createReadStreamAsync() {
           const stream = fse.createReadStream(CHAT_MIGNON_MOD_PATH)
           return Promise.resolve(stream)
         }
@@ -204,7 +204,7 @@ describe('remote.Remote', function() {
       await this.pouch.db.put(doc)
 
       this.remote.other = {
-        createReadStreamAsync(localDoc) {
+        createReadStreamAsync() {
           const stream = fse.createReadStream(CHAT_MIGNON_MOD_PATH)
           return Promise.resolve(stream)
         }
@@ -220,7 +220,7 @@ describe('remote.Remote', function() {
         .path(path.join('foo', 'bar', 'qux'))
         .build()
       this.remote.other = {
-        createReadStreamAsync(localDoc) {
+        createReadStreamAsync() {
           const empty = withContentLength(
             new stream.Readable({
               read: function() {
@@ -242,7 +242,7 @@ describe('remote.Remote', function() {
         .path('foo')
         .build()
       this.remote.other = {
-        createReadStreamAsync(localDoc) {
+        createReadStreamAsync() {
           return fse.readFile('/path/do/not/exists')
         }
       }
@@ -368,7 +368,7 @@ describe('remote.Remote', function() {
         const old = metadata.fromRemoteDoc(created)
         const doc = _.defaults({ md5sum: 'Invalid///////////////==' }, old)
         this.remote.other = {
-          createReadStreamAsync(localDoc) {
+          createReadStreamAsync() {
             const stream = builders
               .stream()
               .push('bar')
@@ -393,7 +393,7 @@ describe('remote.Remote', function() {
           .path('foo')
           .build()
         this.remote.other = {
-          createReadStreamAsync(localDoc) {
+          createReadStreamAsync() {
             return fse.readFile('/path/do/not/exists')
           }
         }

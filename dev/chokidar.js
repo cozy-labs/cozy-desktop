@@ -34,7 +34,10 @@ if (scenarioArg) {
 
   local
     .setupInitialState(scenario)
-    .then(() => console.log('Inodes :', local.mapInode))
+    .then(() => {
+      // eslint-disable-next-line no-console
+      console.log('Inodes :', local.mapInode)
+    })
     .then(startChokidar)
 } else {
   startChokidar()
@@ -63,13 +66,19 @@ function startChokidar() {
   for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
     watcher.on(eventType, (relpath, stats) => {
       const { ino } = stats || {}
+      // eslint-disable-next-line no-console
       console.log(eventType, relpath, `[${ino}]`)
     })
   }
-  watcher.on('error', err => console.error('error', err))
+  watcher.on('error', err => {
+    // eslint-disable-next-line no-console
+    console.error('error', err)
+  })
   watcher.on('raw', (event, path, details) => {
+    // eslint-disable-next-line no-console
     console.log('raw:' + event, path, details)
   })
 
+  // eslint-disable-next-line no-console
   console.log(`Watching ${syncPath}`)
 }

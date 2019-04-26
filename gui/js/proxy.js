@@ -122,7 +122,7 @@ module.exports = (app, session, userAgent, doneSetup) => {
   https.request = function(options, cb) {
     log.warn(options, 'USING RAW HTTPS REQUEST')
     if (typeof options === 'string') {
-      options = url.parse(options)
+      options = new url.URL(options)
     } else {
       options = Object.assign({}, options)
     }

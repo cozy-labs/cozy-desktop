@@ -52,6 +52,7 @@ class ContextDir {
     const dirsToRead = [this.root]
     const relPaths = []
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const dir = dirsToRead.shift()
       if (dir == null) break

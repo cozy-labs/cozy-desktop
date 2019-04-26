@@ -11,6 +11,7 @@ const metadata = require('../../../core/metadata')
 
 const { cozy } = require('./cozy')
 
+// eslint-disable-next-line no-console
 const debug = process.env.TESTDEBUG ? console.log : () => {}
 
 const disabledExtension = '.DISABLED'

@@ -34,14 +34,14 @@ module.exports = class CozyStackDouble {
 
   // Returns a promise that resolves as soon as the server is listening.
   start() {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       this.server.listen(this.port, this.hostname, resolve)
     })
   }
 
   // Returns a promise that resolves as soon as the server is not listening.
   stop() {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
       this.server.close(resolve)
     })
   }

@@ -323,10 +323,7 @@ module.exports = class Local /*:: implements Side */ {
   }
 
   // Overwrite a file
-  async overwriteFileAsync(
-    doc /*: Metadata */,
-    old /*: ?Metadata */
-  ) /*: Promise<void> */ {
+  async overwriteFileAsync(doc /*: Metadata */) /*: Promise<void> */ {
     await this.addFileAsync(doc)
   }
 
@@ -341,10 +338,7 @@ module.exports = class Local /*:: implements Side */ {
   }
 
   // Update a folder
-  async updateFolderAsync(
-    doc /*: Metadata */,
-    old /*: Metadata */
-  ) /*: Promise<void> */ {
+  async updateFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
     await this.addFolderAsync(doc)
   }
 

@@ -14,7 +14,9 @@ module.exports.init = desktop => {
     if (!err && data) {
       try {
         lastFiles = JSON.parse(data)
-      } catch (err) {}
+      } catch (err) {
+        log.warn({ err }, 'Failed loading last files')
+      }
     }
   })
 }
