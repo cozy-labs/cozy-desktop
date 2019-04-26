@@ -18,7 +18,7 @@ describe('core/local/atom_watcher', () => {
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('.stepsInitialState()', () => {
-    it('includes initial diff state key', async function () {
+    it('includes initial diff state key', async function() {
       const state = {}
       const initialState = await AtomWatcher.stepsInitialState(state, this)
       should(state).have.property(initialDiff.STEP_NAME)

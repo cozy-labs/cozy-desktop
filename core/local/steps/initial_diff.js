@@ -39,7 +39,10 @@ const log = logger({
   component: `atom/${STEP_NAME}`
 })
 
-const areParentChildPaths = (p /*: ?string */, c /*: ?string */) /*: boolean %checks */ =>
+const areParentChildPaths = (
+  p /*: ?string */,
+  c /*: ?string */
+) /*: boolean %checks */ =>
   !!p && !!c && p !== c && `${c}${path.sep}`.startsWith(`${p}${path.sep}`)
 
 module.exports = {
@@ -53,14 +56,20 @@ module.exports = {
 // stopped. So, at the end of the initial scan, we have to do a diff between
 // what was in pouchdb and the events from the local watcher to find what was
 // deleted.
-function loop (buffer /*: Buffer */, opts /*: { pouch: Pouch, state: InitialDiffState } */) /*: Buffer */ {
+function loop(
+  buffer /*: Buffer */,
+  opts /*: { pouch: Pouch, state: InitialDiffState } */
+) /*: Buffer */ {
   const out = new Buffer()
-  initialDiff(buffer, out, opts.pouch, opts.state)
-    .catch(err => { log.error({err}) })
+  initialDiff(buffer, out, opts.pouch, opts.state).catch(err => {
+    log.error({ err })
+  })
   return out
 }
 
-async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<InitialDiffState> */ {
+async function initialState(
+  opts /*: { pouch: Pouch } */
+) /*: Promise<InitialDiffState> */ {
   const waiting /*: WaitingItem[] */ = []
   const renamedEvents /*: AtomWatcherEvent[] */ = []
   const scannedPaths /*: Set<string> */ = new Set()
@@ -82,8 +91,10 @@ async function initialState (opts /*: { pouch: Pouch } */) /*: Promise<InitialDi
   }
 }
 
-function clearState (state /*: InitialDiffState */) {
-  const { [STEP_NAME]: { waiting, scannedPaths, byInode } } = state
+function clearState(state /*: InitialDiffState */) {
+  const {
+    [STEP_NAME]: { waiting, scannedPaths, byInode }
+  } = state
 
   for (const item of waiting) {
     clearTimeout(item.timeout)
@@ -95,10 +106,17 @@ function clearState (state /*: InitialDiffState */) {
   byInode.clear()
 }
 
-async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: Pouch */, state /*: InitialDiffState */) /*: Promise<void> */ {
+async function initialDiff(
+  buffer /*: Buffer */,
+  out /*: Buffer */,
+  pouch /*: Pouch */,
+  state /*: InitialDiffState */
+) /*: Promise<void> */ {
   while (true) {
     const events = await buffer.pop()
-    const { [STEP_NAME]: { waiting, renamedEvents, scannedPaths, byInode } } = state
+    const {
+      [STEP_NAME]: { waiting, renamedEvents, scannedPaths, byInode }
+    } = state
 
     let nbCandidates = 0
 
@@ -139,7 +157,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
               action: 'deleted',
               kind: kind(was),
               _id: id(was.path),
-              [STEP_NAME]: {inodeReuse: event},
+              [STEP_NAME]: { inodeReuse: event },
               path: was.path
             })
           }
@@ -149,7 +167,11 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
         }
       }
 
-      if (['created', 'modified', 'renamed', 'scan', 'ignored'].includes(event.action)) {
+      if (
+        ['created', 'modified', 'renamed', 'scan', 'ignored'].includes(
+          event.action
+        )
+      ) {
         if (event.stats) {
           byInode.delete(event.stats.fileid)
           byInode.delete(event.stats.ino)
@@ -159,13 +181,20 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
 
       for (const renamedEvent of renamedEvents) {
         if (areParentChildPaths(renamedEvent.oldPath, event.oldPath)) {
-          const oldPathFixed = event.oldPath.replace(renamedEvent.oldPath, renamedEvent.path)
+          const oldPathFixed = event.oldPath.replace(
+            renamedEvent.oldPath,
+            renamedEvent.path
+          )
           if (event.path === oldPathFixed) {
             event.action = 'ignored'
           } else {
             event.oldPath = oldPathFixed
           }
-          _.set(event, [STEP_NAME, 'renamedAncestor'], _.pick(renamedEvent, ['oldPath', 'path']))
+          _.set(
+            event,
+            [STEP_NAME, 'renamedAncestor'],
+            _.pick(renamedEvent, ['oldPath', 'path'])
+          )
         }
       }
 
@@ -209,7 +238,7 @@ async function initialDiff (buffer /*: Buffer */, out /*: Buffer */, pouch /*: P
   }
 }
 
-function sendReadyBatches (waiting /*: WaitingItem[] */, out /*: Buffer */) {
+function sendReadyBatches(waiting /*: WaitingItem[] */, out /*: Buffer */) {
   while (waiting.length > 0) {
     if (waiting[0].nbCandidates !== 0) {
       break
@@ -221,7 +250,10 @@ function sendReadyBatches (waiting /*: WaitingItem[] */, out /*: Buffer */) {
 }
 
 // Look if we can debounce some waiting events with the current events
-function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] */) {
+function debounce(
+  waiting /*: WaitingItem[] */,
+  events /*: AtomWatcherEvent[] */
+) {
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
     if (event.incomplete) {
@@ -230,12 +262,14 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
     if (event.action === 'scan') {
       for (let j = 0; j < waiting.length; j++) {
         const w = waiting[j]
-        if (w.nbCandidates === 0) { continue }
+        if (w.nbCandidates === 0) {
+          continue
+        }
         for (let k = 0; k < w.batch.length; k++) {
           const e = w.batch[k]
           if (e.action === 'renamed' && e.path === event.path) {
             log.debug(
-              {renamedEvent: e, scanEvent: event},
+              { renamedEvent: e, scanEvent: event },
               `Ignore overlapping ${event.kind} ${event.action}`
             )
             events.splice(i, 1)
@@ -248,16 +282,16 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
   }
 }
 
-function eventUpdateTime (event) {
+function eventUpdateTime(event) {
   const { ctime, mtime } = event.stats
   return Math.max(ctime.getTime(), mtime.getTime())
 }
 
-function docUpdateTime (was) {
-  return (new Date(was.updated_at)).getTime()
+function docUpdateTime(was) {
+  return new Date(was.updated_at).getTime()
 }
 
-function foundUntouchedFile (event, was) /*: boolean %checks */ {
+function foundUntouchedFile(event, was) /*: boolean %checks */ {
   return (
     was != null &&
     was.md5sum != null &&
@@ -266,6 +300,6 @@ function foundUntouchedFile (event, was) /*: boolean %checks */ {
   )
 }
 
-function kind (doc /*: Metadata */) /*: EventKind */ {
+function kind(doc /*: Metadata */) /*: EventKind */ {
   return doc.docType === 'folder' ? 'directory' : doc.docType
 }

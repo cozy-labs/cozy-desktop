@@ -17,7 +17,7 @@ move.child = child
 
 // Modify the given src/dst docs so they can be merged then moved accordingly
 // during sync.
-function move (side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
+function move(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
   // moveTo is used for comparison. It's safer to take _id
   // than path for this case, as explained in doc/developer/design.md
   src.moveTo = dst._id
@@ -43,7 +43,7 @@ function move (side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
 
 // Same as move() but mark the source as a child move so it will be moved with
 // its ancestor, not by itself, during sync.
-function child (side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
+function child(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
   src.childMove = true
   move(side, src, dst)
 }

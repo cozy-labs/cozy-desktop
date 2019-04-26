@@ -14,7 +14,11 @@ const cozyHelpers = require('../../test/support/helpers/cozy')
 
 const debug = process.env.TESTDEBUG != null ? console.log : (...args) => {}
 
-const createInitialTree = async function (scenario /*: * */, cozy /*: * */, pouch /*: Pouch */) {
+const createInitialTree = async function(
+  scenario /*: * */,
+  cozy /*: * */,
+  pouch /*: Pouch */
+) {
   if (!scenario.init) return
   debug('[init]')
   for (let doc of scenario.init) {
@@ -30,8 +34,8 @@ const createInitialTree = async function (scenario /*: * */, cozy /*: * */, pouc
         path: relpath,
         ino: doc.ino,
         tags: [],
-        sides: {local: 1, remote: 1},
-        remote: {_id: remoteDir._id, _rev: remoteDir._rev}
+        sides: { local: 1, remote: 1 },
+        remote: { _id: remoteDir._id, _rev: remoteDir._rev }
       })
     } else {
       debug('- create_file', relpath)
@@ -52,8 +56,8 @@ const createInitialTree = async function (scenario /*: * */, cozy /*: * */, pouc
         ino: doc.ino,
         size: 0,
         tags: [],
-        sides: {local: 1, remote: 1},
-        remote: {_id: remoteFile._id, _rev: remoteFile._rev}
+        sides: { local: 1, remote: 1 },
+        remote: { _id: remoteFile._id, _rev: remoteFile._rev }
       })
     }
   }
@@ -61,7 +65,7 @@ const createInitialTree = async function (scenario /*: * */, cozy /*: * */, pouc
 
 const runActions = (scenario /*: * */, cozy /*: * */) => {
   debug('[actions]')
-  return Promise.each(scenario.actions, async (action) => {
+  return Promise.each(scenario.actions, async action => {
     switch (action.type) {
       case 'mkdir':
         debug('- mkdir', action.path)
@@ -71,7 +75,8 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
         debug('- create_file', action.path)
         {
           const parentDir = await cozy.files.statByPath(
-            `/${path.posix.dirname(action.path)}`)
+            `/${path.posix.dirname(action.path)}`
+          )
           return cozy.files.create('whatever', {
             name: path.posix.basename(action.path),
             dirID: parentDir._id,
@@ -106,7 +111,9 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
       case 'restore':
         debug('- restore .cozy_trash/', action.pathInTrash)
         {
-          const remoteDoc = await cozy.files.statByPath(`/.cozy_trash/${action.pathInTrash}`)
+          const remoteDoc = await cozy.files.statByPath(
+            `/.cozy_trash/${action.pathInTrash}`
+          )
           return cozy.files.restoreById(remoteDoc._id)
         }
 
@@ -114,12 +121,16 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
         debug('- mv', action.src, action.dst)
         {
           const newParent = await cozy.files.statByPath(
-            `/${path.posix.dirname(action.dst)}`)
+            `/${path.posix.dirname(action.dst)}`
+          )
           const remoteDoc = await cozy.files.statByPath(`/${action.src}`)
-          if (action.merge) throw new Error('Move.merge not implemented on remote')
+          if (action.merge)
+            throw new Error('Move.merge not implemented on remote')
           if (action.force) {
             try {
-              const remoteOverwriten = await cozy.files.statByPath(`/${action.dst}`)
+              const remoteOverwriten = await cozy.files.statByPath(
+                `/${action.dst}`
+              )
               await cozy.files.trashById(remoteOverwriten._id)
             } catch (err) {
               debug('force not forced', err)
@@ -138,8 +149,11 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
         return Promise.delay(action.ms)
 
       default:
-        return Promise.reject(new Error(
-          `Unknown action ${action.type} for scenario ${scenario.name}`))
+        return Promise.reject(
+          new Error(
+            `Unknown action ${action.type} for scenario ${scenario.name}`
+          )
+        )
     }
   })
 }
@@ -148,7 +162,7 @@ const setupConfig = () => {
   const context = {}
   configHelpers.createConfig.call(context)
   configHelpers.registerClient.call(context)
-  const {config} = context
+  const { config } = context
   return config
 }
 
@@ -165,16 +179,18 @@ const captureScenario = async (scenario /*: * */) => {
   await cozyHelpers.deleteAll()
   await createInitialTree(scenario, cozyHelpers.cozy, pouch)
   const remoteCozy = new RemoteCozy(config)
-  const {last_seq} = await remoteCozy.changes()
+  const { last_seq } = await remoteCozy.changes()
 
   // Run
   await runActions(scenario, cozyHelpers.cozy)
 
   // Capture
-  const {docs} = await await remoteCozy.changes(last_seq)
+  const { docs } = await await remoteCozy.changes(last_seq)
   const json = JSON.stringify(docs, null, 2)
-  const changesFile = scenario.path
-    .replace(/scenario\.js/, path.join('remote', 'changes.json'))
+  const changesFile = scenario.path.replace(
+    /scenario\.js/,
+    path.join('remote', 'changes.json')
+  )
   await fse.outputFile(changesFile, json)
 
   return path.basename(changesFile)

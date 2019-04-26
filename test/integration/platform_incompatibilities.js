@@ -28,9 +28,9 @@ describe('Platform incompatibilities', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     cozy = cozyHelpers.cozy
-    builders = new Builders({cozy})
+    builders = new Builders({ cozy })
     helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
@@ -38,22 +38,26 @@ describe('Platform incompatibilities', () => {
   })
 
   it('add incompatible dir and file', async () => {
-    await builders.remoteDir().name('di:r').create()
-    await builders.remoteFile().name('fi:le').create()
+    await builders
+      .remoteDir()
+      .name('di:r')
+      .create()
+    await builders
+      .remoteFile()
+      .name('fi:le')
+      .create()
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).be.empty()
-    should(await helpers.incompatibleTree()).deepEqual([
-      'di:r/',
-      'fi:le'
-    ])
+    should(await helpers.incompatibleTree()).deepEqual(['di:r/', 'fi:le'])
   })
   it('add incompatible dir with two colons', async () => {
-    await builders.remoteDir().name('d:i:r').create()
+    await builders
+      .remoteDir()
+      .name('d:i:r')
+      .create()
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).be.empty()
-    should(await helpers.incompatibleTree()).deepEqual([
-      'd:i:r/'
-    ])
+    should(await helpers.incompatibleTree()).deepEqual(['d:i:r/'])
   })
   it('add compatible dir with some incompatible content', async () => {
     await helpers.remote.createTree([
@@ -83,15 +87,12 @@ describe('Platform incompatibilities', () => {
     await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
 
-    await cozy.files.updateAttributesByPath('/d:ir', {name: 'di:r'})
-    await cozy.files.updateAttributesByPath('/f:ile', {name: 'fi:le'})
+    await cozy.files.updateAttributesByPath('/d:ir', { name: 'di:r' })
+    await cozy.files.updateAttributesByPath('/f:ile', { name: 'fi:le' })
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
-    should(await helpers.incompatibleTree()).deepEqual([
-      'di:r/',
-      'fi:le'
-    ])
+    should(await helpers.incompatibleTree()).deepEqual(['di:r/', 'fi:le'])
   })
   it('trash & restore incompatible', async () => {
     const remoteDocs = await helpers.remote.createTree(['d:ir/', 'f:ile'])
@@ -110,10 +111,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
-    should(await helpers.incompatibleTree()).deepEqual([
-      'd:ir/',
-      'f:ile'
-    ])
+    should(await helpers.incompatibleTree()).deepEqual(['d:ir/', 'f:ile'])
   })
 
   it('destroy & recreate incompatible', async () => {
@@ -132,10 +130,7 @@ describe('Platform incompatibilities', () => {
     await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).be.empty()
-    should(await helpers.incompatibleTree()).deepEqual([
-      'd:ir/',
-      'f:ile'
-    ])
+    should(await helpers.incompatibleTree()).deepEqual(['d:ir/', 'f:ile'])
   })
 
   it('make compatible bottom-up', async () => {
@@ -147,7 +142,10 @@ describe('Platform incompatibilities', () => {
     ])
     await helpers.pullAndSyncAll()
 
-    await cozy.files.updateAttributesById(remoteDocs['d:ir/sub:dir/f:ile']._id, {name: 'file'})
+    await cozy.files.updateAttributesById(
+      remoteDocs['d:ir/sub:dir/f:ile']._id,
+      { name: 'file' }
+    )
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).be.empty()
     should(await helpers.incompatibleTree()).deepEqual([
@@ -157,18 +155,20 @@ describe('Platform incompatibilities', () => {
       'd:ir/sub:dir/subsubdir/'
     ])
 
-    await cozy.files.updateAttributesById(remoteDocs['d:ir/']._id, {name: 'dir'})
+    await cozy.files.updateAttributesById(remoteDocs['d:ir/']._id, {
+      name: 'dir'
+    })
     await helpers.pullAndSyncAll()
-    should(await helpers.local.tree()).deepEqual([
-      'dir/'
-    ])
+    should(await helpers.local.tree()).deepEqual(['dir/'])
     should(await helpers.incompatibleTree()).deepEqual([
       'dir/sub:dir/',
       'dir/sub:dir/file',
       'dir/sub:dir/subsubdir/'
     ])
 
-    await cozy.files.updateAttributesById(remoteDocs['d:ir/sub:dir/']._id, {name: 'subdir'})
+    await cozy.files.updateAttributesById(remoteDocs['d:ir/sub:dir/']._id, {
+      name: 'subdir'
+    })
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).deepEqual([
       'dir/',
@@ -187,7 +187,9 @@ describe('Platform incompatibilities', () => {
     ])
     await helpers.pullAndSyncAll()
 
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {name: 'dir:'})
+    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+      name: 'dir:'
+    })
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).deepEqual([
       '/Trash/dir/',
@@ -209,11 +211,11 @@ describe('Platform incompatibilities', () => {
     ])
     await helpers.pullAndSyncAll()
 
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {name: 'dir:'})
+    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+      name: 'dir:'
+    })
     await helpers.pullAndSyncAll()
-    should(await helpers.local.tree()).deepEqual([
-      '/Trash/dir/'
-    ])
+    should(await helpers.local.tree()).deepEqual(['/Trash/dir/'])
     should(await helpers.incompatibleTree()).deepEqual([
       'dir:/',
       'dir:/sub:dir/',
@@ -222,21 +224,15 @@ describe('Platform incompatibilities', () => {
   })
 
   it('rename file compatible -> incompatible', async () => {
-    const remoteDocs = await helpers.remote.createTree([
-      'dir/',
-      'dir/file'
-    ])
+    const remoteDocs = await helpers.remote.createTree(['dir/', 'dir/file'])
     await helpers.pullAndSyncAll()
 
-    await cozy.files.updateAttributesById(remoteDocs['dir/file']._id, {name: 'fi:le'})
+    await cozy.files.updateAttributesById(remoteDocs['dir/file']._id, {
+      name: 'fi:le'
+    })
     await helpers.pullAndSyncAll()
-    should(await helpers.local.tree()).deepEqual([
-      '/Trash/file',
-      'dir/'
-    ])
-    should(await helpers.incompatibleTree()).deepEqual([
-      'dir/fi:le'
-    ])
+    should(await helpers.local.tree()).deepEqual(['/Trash/file', 'dir/'])
+    should(await helpers.incompatibleTree()).deepEqual(['dir/fi:le'])
   })
 
   it('rename dir compatible -> compatible with incompatible content', async () => {
@@ -247,11 +243,11 @@ describe('Platform incompatibilities', () => {
     ])
     await helpers.pullAndSyncAll()
 
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {name: 'dir2'})
+    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+      name: 'dir2'
+    })
     await helpers.pullAndSyncAll()
-    should(await helpers.local.tree()).deepEqual([
-      'dir2/'
-    ])
+    should(await helpers.local.tree()).deepEqual(['dir2/'])
     should(await helpers.incompatibleTree()).deepEqual([
       'dir2/fi:le',
       'dir2/sub:dir/'
@@ -268,7 +264,7 @@ describe('Platform incompatibilities', () => {
 
     // Simulate local move
     const dir = await helpers.pouch.byRemoteIdAsync(remoteDocs['dir/']._id)
-    const stats = {mtime: new Date(), ctime: new Date(), ino: dir.ino}
+    const stats = { mtime: new Date(), ctime: new Date(), ino: dir.ino }
     // $FlowFixMe
     const dir2 = metadata.buildDir('dir2', stats)
     await helpers.prep.moveFolderAsync('local', dir2, dir)
@@ -287,29 +283,24 @@ describe('Platform incompatibilities', () => {
   })
 
   it('rename dir compatible -> incompatible -> compatible with compatible content', async () => {
-    const remoteDocs = await helpers.remote.createTree([
-      'dir/',
-      'dir/file'
-    ])
+    const remoteDocs = await helpers.remote.createTree(['dir/', 'dir/file'])
     await helpers.pullAndSyncAll()
-    should(await helpers.local.tree()).deepEqual([
-      'dir/',
-      'dir/file'
-    ])
+    should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
     should(await helpers.incompatibleTree()).be.empty()
 
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {name: 'd:ir'})
+    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+      name: 'd:ir'
+    })
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).deepEqual([
       '/Trash/dir/',
       '/Trash/dir/file'
     ])
-    should(await helpers.incompatibleTree()).deepEqual([
-      'd:ir/',
-      'd:ir/file'
-    ])
+    should(await helpers.incompatibleTree()).deepEqual(['d:ir/', 'd:ir/file'])
 
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {name: 'dir'})
+    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+      name: 'dir'
+    })
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).deepEqual([
       // XXX: We don't restore from OS trash for now. Hence the copy.

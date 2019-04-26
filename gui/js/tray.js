@@ -1,5 +1,5 @@
-const {Tray, Menu, MenuItem} = require('electron')
-const {translate} = require('./i18n')
+const { Tray, Menu, MenuItem } = require('electron')
+const { translate } = require('./i18n')
 const path = require('path')
 
 let tray = null
@@ -7,16 +7,21 @@ let tray = null
 const imgs = path.resolve(__dirname, '..', 'images')
 
 module.exports.init = (app, listener) => {
-  let icon = (process.platform === 'darwin') ? `${imgs}/tray-icon-osx/idleTemplate.png`
-     : (process.platform === 'win32') ? `${imgs}/tray-icon-win/idle.png`
-     : (process.env.XDG_CURRENT_DESKTOP && process.env.XDG_CURRENT_DESKTOP.match(/KDE/)) ? `${imgs}/tray-icon-linux-kde/idle.png`
-     : `${imgs}/tray-icon-linux/idle.png`
+  let icon =
+    process.platform === 'darwin'
+      ? `${imgs}/tray-icon-osx/idleTemplate.png`
+      : process.platform === 'win32'
+      ? `${imgs}/tray-icon-win/idle.png`
+      : process.env.XDG_CURRENT_DESKTOP &&
+        process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
+      ? `${imgs}/tray-icon-linux-kde/idle.png`
+      : `${imgs}/tray-icon-linux/idle.png`
   tray = new Tray(icon)
   app.on('before-quit', () => tray.destroy())
 
   let cachedBounds = null
   const clicked = (e, bounds) => {
-    cachedBounds = (bounds && bounds.y !== 0) ? bounds : cachedBounds
+    cachedBounds = bounds && bounds.y !== 0 ? bounds : cachedBounds
     listener(tray.getBounds ? tray.getBounds() : cachedBounds)
   }
 
@@ -30,16 +35,26 @@ module.exports.init = (app, listener) => {
   // @TODO test on windows
 
   const isMac = process.platform !== 'darwin'
-  const isUnity = process.env.XDG_CURRENT_DESKTOP && process.env.XDG_CURRENT_DESKTOP.match(/Unity/)
-  const isKDE = process.env.XDG_CURRENT_DESKTOP && process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
+  const isUnity =
+    process.env.XDG_CURRENT_DESKTOP &&
+    process.env.XDG_CURRENT_DESKTOP.match(/Unity/)
+  const isKDE =
+    process.env.XDG_CURRENT_DESKTOP &&
+    process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
 
   if (isUnity || isMac || isKDE) {
     const cm = Menu.buildFromTemplate([
-     { label: translate('Tray Quit application'), click: app.quit }
+      { label: translate('Tray Quit application'), click: app.quit }
     ])
     if (isUnity || isKDE) {
-      cm.insert(0, new MenuItem({label: translate('Tray Show application'), click: clicked}))
-      cm.insert(1, new MenuItem({type: 'separator'}))
+      cm.insert(
+        0,
+        new MenuItem({
+          label: translate('Tray Show application'),
+          click: clicked
+        })
+      )
+      cm.insert(1, new MenuItem({ type: 'separator' }))
     }
     tray.setContextMenu(cm)
   }
@@ -89,7 +104,7 @@ if (newReleaseAvailable) {
 tray.setContextMenu(menu)
 */
 
-var setState = module.exports.setState = (state, filename) => {
+var setState = (module.exports.setState = (state, filename) => {
   let statusLabel = ''
   let icon = 'idle'
   if (state === 'error') {
@@ -115,9 +130,12 @@ var setState = module.exports.setState = (state, filename) => {
     tray.setPressedImage(`${imgs}/tray-icon-osx/${icon}Highlight.png`)
   } else if (process.platform === 'win32') {
     tray.setImage(`${imgs}/tray-icon-win/${icon}.png`)
-  } else if (process.env.XDG_CURRENT_DESKTOP && process.env.XDG_CURRENT_DESKTOP.match(/KDE/)) {
+  } else if (
+    process.env.XDG_CURRENT_DESKTOP &&
+    process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
+  ) {
     tray.setImage(`${imgs}/tray-icon-linux-kde/${icon}.png`)
   } else {
     tray.setImage(`${imgs}/tray-icon-linux/${icon}.png`)
   }
-}
+})

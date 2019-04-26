@@ -22,7 +22,7 @@ describe('utils/fs', () => {
     const dirName = '.dir-to-hide'
     let parentPath, dirPath, missingPath
 
-    before(async function () {
+    before(async function() {
       parentPath = this.syncPath
       dirPath = path.join(parentPath, dirName)
       missingPath = path.join(parentPath, 'missing')
@@ -34,17 +34,17 @@ describe('utils/fs', () => {
       it('sets the hidden attribute of the given dir on Windows', async () => {
         await should(hideOnWindows(dirPath)).be.fulfilled()
         // $FlowFixMe
-        const output = await childProcess.execAsync(`dir "${parentPath}"`, {encoding: 'utf8'})
+        const output = await childProcess.execAsync(`dir "${parentPath}"`, {
+          encoding: 'utf8'
+        })
         should(output).not.match(dirName)
       })
     } else {
       it(`does nothing on ${platform}`, () =>
-        should(hideOnWindows(dirPath)).be.fulfilled()
-      )
+        should(hideOnWindows(dirPath)).be.fulfilled())
     }
 
     it('never throws any error', async () =>
-      should(hideOnWindows(missingPath)).be.fulfilled()
-    )
+      should(hideOnWindows(missingPath)).be.fulfilled())
   })
 })

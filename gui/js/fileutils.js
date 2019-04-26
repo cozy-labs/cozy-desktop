@@ -1,5 +1,4 @@
-
-module.exports.selectIcon = (info) => {
+module.exports.selectIcon = info => {
   if (['image', 'video'].indexOf(info.class) !== -1) {
     return info.class
   } else if (info.class === 'music') {

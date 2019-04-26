@@ -45,17 +45,21 @@ describe('timestamp', () => {
 
   describe('sameDate', () => {
     it('is true when timestamps have same value', () => {
-      should.ok(sameDate(
-        timestamp.build(2016, 11, 22, 9, 54, 37),
-        timestamp.build(2016, 11, 22, 9, 54, 37)
-      ))
+      should.ok(
+        sameDate(
+          timestamp.build(2016, 11, 22, 9, 54, 37),
+          timestamp.build(2016, 11, 22, 9, 54, 37)
+        )
+      )
     })
 
     it('is false otherwise', () => {
-      should.ok(!sameDate(
-        timestamp.build(2016, 11, 22, 9, 54, 37),
-        timestamp.build(2016, 11, 22, 9, 54, 38)
-      ))
+      should.ok(
+        !sameDate(
+          timestamp.build(2016, 11, 22, 9, 54, 37),
+          timestamp.build(2016, 11, 22, 9, 54, 38)
+        )
+      )
     })
 
     it('throws when one or both args are not valid timestamps', () => {
@@ -70,7 +74,7 @@ describe('timestamp', () => {
   })
 
   describe('almostSameDate', () =>
-    it('returns true if the date are nearly the same', function () {
+    it('returns true if the date are nearly the same', function() {
       let a = '2015-12-01T11:22:56.517Z'
       let b = '2015-12-01T11:22:56.000Z'
       let c = '2015-12-01T11:22:57.000Z'
@@ -86,8 +90,7 @@ describe('timestamp', () => {
       almostSameDate(c, d).should.be.true()
       almostSameDate(c, e).should.be.false()
       almostSameDate(d, e).should.be.false()
-    })
-  )
+    }))
 
   describe('maxDate', () => {
     const d1 = new Date('2017-05-18T08:02:36.000Z')

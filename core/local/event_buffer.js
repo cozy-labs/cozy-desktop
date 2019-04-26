@@ -29,7 +29,10 @@ module.exports = class EventBuffer /*:: <EventType> */ {
   flushed: FlushCallback<EventType>
   */
 
-  constructor (timeoutInMs /*: number */, flushed /*: FlushCallback<EventType> */) {
+  constructor(
+    timeoutInMs /*: number */,
+    flushed /*: FlushCallback<EventType> */
+  ) {
     this.events = []
     this.mode = 'idle'
     this.timeoutInMs = timeoutInMs
@@ -39,31 +42,31 @@ module.exports = class EventBuffer /*:: <EventType> */ {
     autoBind(this)
   }
 
-  push (event /*: EventType */) /*: void */ {
+  push(event /*: EventType */) /*: void */ {
     this.events.push(event)
     this.shiftTimeout()
   }
 
-  unflush (events /*: Array<EventType> */) /*: void */ {
+  unflush(events /*: Array<EventType> */) /*: void */ {
     this.events = events.concat(this.events)
     this.shiftTimeout()
   }
 
-  shiftTimeout () /*: void */ {
+  shiftTimeout() /*: void */ {
     if (this.mode === 'timeout') {
       this.clearTimeout()
       this.timeout = setTimeout(this.flush, this.timeoutInMs)
     }
   }
 
-  clearTimeout () /*: void */ {
+  clearTimeout() /*: void */ {
     if (this.timeout != null) {
       clearTimeout(this.timeout)
       delete this.timeout
     }
   }
 
-  flush () /*: void */ {
+  flush() /*: void */ {
     this.clearTimeout()
     if (this.events.length > 0) {
       const flushedEvents = this.events
@@ -72,7 +75,7 @@ module.exports = class EventBuffer /*:: <EventType> */ {
     }
   }
 
-  switchMode (mode /*: EventBufferMode */) /*: void */ {
+  switchMode(mode /*: EventBufferMode */) /*: void */ {
     this.flush()
     this.mode = mode
   }

@@ -20,15 +20,18 @@ export type IgnorePattern = {
 */
 
 /** Load both given file rules & default ones */
-function loadSync (rulesFilePath /*: string */) /*: Ignore */ {
+function loadSync(rulesFilePath /*: string */) /*: Ignore */ {
   let ignored
   try {
     ignored = readLinesSync(rulesFilePath)
   } catch (err) {
     if (err.code === 'ENOENT') {
-      log.info({rulesFilePath}, 'Skip loading of non-existent ignore rules file')
+      log.info(
+        { rulesFilePath },
+        'Skip loading of non-existent ignore rules file'
+      )
     } else {
-      log.warn({rulesFilePath, err}, 'Failed loading ignore rules file')
+      log.warn({ rulesFilePath, err }, 'Failed loading ignore rules file')
     }
     ignored = []
   }
@@ -37,12 +40,12 @@ function loadSync (rulesFilePath /*: string */) /*: Ignore */ {
 
 /** Read lines from a file.
  */
-function readLinesSync (filePath /*: string */) /*: string[] */ {
+function readLinesSync(filePath /*: string */) /*: string[] */ {
   return fs.readFileSync(filePath, 'utf8').split(/\r?\n/)
 }
 
 // Parse a line and build the corresponding pattern
-function buildPattern (line /*: string */) /*: IgnorePattern */ {
+function buildPattern(line /*: string */) /*: IgnorePattern */ {
   let folder = false
   let negate = false
   let noslash = line.indexOf('/') === -1
@@ -80,17 +83,21 @@ function buildPattern (line /*: string */) /*: IgnorePattern */ {
 }
 
 /** Parse many lines and build the corresponding pattern array */
-function buildPatternArray (lines /*: string[] */) /*: IgnorePattern[] */ {
+function buildPatternArray(lines /*: string[] */) /*: IgnorePattern[] */ {
   return Array.from(lines)
     .filter(isNotBlankOrComment)
     .map(buildPattern)
 }
 
-function isNotBlankOrComment (line /*: string */) /*: boolean */ {
+function isNotBlankOrComment(line /*: string */) /*: boolean */ {
   return line !== '' && line[0] !== '#'
 }
 
-function match (path /*: string */, isFolder /*: boolean */, pattern /*: IgnorePattern */) /*: boolean */ {
+function match(
+  path /*: string */,
+  isFolder /*: boolean */,
+  pattern /*: IgnorePattern */
+) /*: boolean */ {
   if (pattern.basename) {
     if (pattern.match(basename(path))) {
       return true
@@ -129,20 +136,22 @@ class Ignore {
   */
 
   // Load patterns for detecting ignored files and folders
-  constructor (lines /*: string[] */) {
+  constructor(lines /*: string[] */) {
     this.patterns = buildPatternArray(lines)
   }
 
   // Add some rules for things that should be always ignored (temporary
   // files, thumbnails db, trash, etc.)
-  addDefaultRules () /*: this */ {
+  addDefaultRules() /*: this */ {
     const defaultPatterns = buildPatternArray(readLinesSync(defaultRulesPath))
     this.patterns = defaultPatterns.concat(this.patterns)
     return this
   }
 
   // Return true if the given file/folder path should be ignored
-  isIgnored ({ relativePath, isFolder } /*: {relativePath: string, isFolder: boolean} */) /*: boolean */ {
+  isIgnored(
+    { relativePath, isFolder } /*: {relativePath: string, isFolder: boolean} */
+  ) /*: boolean */ {
     let result = false
     for (let pattern of Array.from(this.patterns)) {
       if (pattern.negate) {

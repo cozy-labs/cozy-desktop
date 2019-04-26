@@ -14,27 +14,33 @@ const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
 const Builders = require('../support/builders')
 
-describe('Sync', function () {
+describe('Sync', function() {
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  beforeEach('instanciate sync', function () {
+  beforeEach('instanciate sync', function() {
     this.local = stubSide()
     this.remote = stubSide()
     this.ignore = new Ignore(['ignored'])
-    this.events = {emit: sinon.spy()}
-    this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+    this.events = { emit: sinon.spy() }
+    this.sync = new Sync(
+      this.pouch,
+      this.local,
+      this.remote,
+      this.ignore,
+      this.events
+    )
   })
 
   let builders
-  beforeEach('prepare builders', function () {
+  beforeEach('prepare builders', function() {
     builders = new Builders(this)
   })
 
-  describe('start', function () {
-    beforeEach('instanciate sync', function () {
+  describe('start', function() {
+    beforeEach('instanciate sync', function() {
       const ret = {
         started: Promise.resolve(),
         running: new Promise(() => {})
@@ -46,30 +52,38 @@ describe('Sync', function () {
       this.sync.sync = sinon.stub().rejects(new Error('stopped'))
     })
 
-    it('starts the metadata replication of remote in read only', async function () {
-      await should(this.sync.start('pull')).be.rejectedWith({message: 'stopped'})
+    it('starts the metadata replication of remote in read only', async function() {
+      await should(this.sync.start('pull')).be.rejectedWith({
+        message: 'stopped'
+      })
       this.local.start.called.should.be.false()
       this.remote.start.calledOnce.should.be.true()
       this.sync.sync.calledOnce.should.be.true()
     })
 
-    it('starts the metadata replication of local in write only', async function () {
-      await should(this.sync.start('push')).be.rejectedWith({message: 'stopped'})
+    it('starts the metadata replication of local in write only', async function() {
+      await should(this.sync.start('push')).be.rejectedWith({
+        message: 'stopped'
+      })
       this.local.start.calledOnce.should.be.true()
       this.remote.start.called.should.be.false()
       this.sync.sync.calledOnce.should.be.true()
     })
 
-    it('starts the metadata replication of both in full', async function () {
-      await should(this.sync.start('full')).be.rejectedWith({message: 'stopped'})
+    it('starts the metadata replication of both in full', async function() {
+      await should(this.sync.start('full')).be.rejectedWith({
+        message: 'stopped'
+      })
       this.local.start.calledOnce.should.be.true()
       this.remote.start.calledOnce.should.be.true()
       this.sync.sync.calledOnce.should.be.true()
     })
 
-    it('does not start sync if metadata replication fails', async function () {
+    it('does not start sync if metadata replication fails', async function() {
       this.local.start = sinon.stub().rejects(new Error('failed'))
-      await should(this.sync.start('full')).be.rejectedWith({message: 'failed'})
+      await should(this.sync.start('full')).be.rejectedWith({
+        message: 'failed'
+      })
       this.local.start.calledOnce.should.be.true()
       this.remote.start.called.should.be.false()
       this.sync.sync.calledOnce.should.be.false()
@@ -78,10 +92,10 @@ describe('Sync', function () {
 
   // TODO: Test lock request/acquisition/release
 
-  describe('sync', function () {
-    it('waits for and applies available changes', async function () {
-      const doc1 = {_id: 'doc1', docType: 'file', sides: {local: 1}}
-      const doc2 = {_id: 'doc2', docType: 'folder', sides: {remote: 1}}
+  describe('sync', function() {
+    it('waits for and applies available changes', async function() {
+      const doc1 = { _id: 'doc1', docType: 'file', sides: { local: 1 } }
+      const doc2 = { _id: 'doc2', docType: 'folder', sides: { remote: 1 } }
       await this.pouch.db.put(doc1)
       await this.pouch.db.put(doc2)
       const apply = sinon.stub(this.sync, 'apply')
@@ -94,8 +108,8 @@ describe('Sync', function () {
     })
   })
 
-  describe('apply', function () {
-    it('does nothing for an ignored document', async function () {
+  describe('apply', function() {
+    it('does nothing for an ignored document', async function() {
       let change = {
         seq: 121,
         doc: {
@@ -111,7 +125,7 @@ describe('Sync', function () {
       this.sync.folderChanged.called.should.be.false()
     })
 
-    it('does nothing for an up-to-date document', async function () {
+    it('does nothing for an up-to-date document', async function() {
       let change = {
         seq: 122,
         doc: {
@@ -128,7 +142,7 @@ describe('Sync', function () {
       this.sync.folderChanged.called.should.be.false()
     })
 
-    it('trashes a locally deleted file or folder', async function () {
+    it('trashes a locally deleted file or folder', async function() {
       const change = {
         seq: 145,
         doc: {
@@ -147,7 +161,7 @@ describe('Sync', function () {
       should(this.sync.trashWithParentOrByItself.called).be.true()
     })
 
-    it('calls fileChanged for a file', async function () {
+    it('calls fileChanged for a file', async function() {
       let change = {
         seq: 123,
         doc: {
@@ -158,7 +172,7 @@ describe('Sync', function () {
             local: 3,
             remote: 2
           },
-          remote: {_id: 'XXX', _rev: '2-abc'}
+          remote: { _id: 'XXX', _rev: '2-abc' }
         }
       }
       await this.sync.apply(change)
@@ -173,7 +187,7 @@ describe('Sync', function () {
       })
     })
 
-    it('calls folderChanged for a folder', async function () {
+    it('calls folderChanged for a folder', async function() {
       let change = {
         seq: 124,
         doc: {
@@ -190,7 +204,7 @@ describe('Sync', function () {
       seq.should.equal(124)
     })
 
-    it('calls addFileAsync for an added file', async function () {
+    it('calls addFileAsync for an added file', async function() {
       let doc = {
         _id: 'foo/bar',
         _rev: '1-abcdef0123456789',
@@ -204,7 +218,7 @@ describe('Sync', function () {
       this.remote.addFileAsync.calledWith(doc).should.be.true()
     })
 
-    it('calls overwriteFileAsync for an overwritten file', async function () {
+    it('calls overwriteFileAsync for an overwritten file', async function() {
       let doc = {
         _id: 'overwrite/foo/bar',
         md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
@@ -232,37 +246,43 @@ describe('Sync', function () {
 
       let file, merged
 
-      beforeEach('set up merged local file update', async function () {
-        file = await builders.metafile().upToDate()
-          .data('initial content').create()
-        merged = await builders.metafile(file).changedSide('local')
-          .data('updated content').create()
+      beforeEach('set up merged local file update', async function() {
+        file = await builders
+          .metafile()
+          .upToDate()
+          .data('initial content')
+          .create()
+        merged = await builders
+          .metafile(file)
+          .changedSide('local')
+          .data('updated content')
+          .create()
 
         await this.pouch.setLocalSeqAsync(previousSeq)
       })
 
-      const applyChange = async function () {
+      const applyChange = async function() {
         await this.sync.apply({ seq, doc: _.cloneDeep(merged) })
       }
 
       describe('when .remote#overwriteFileAsync() throws status 412', () => {
-        beforeEach('simulate error 412', function () {
-          this.remote.overwriteFileAsync.rejects({status: 412})
+        beforeEach('simulate error 412', function() {
+          this.remote.overwriteFileAsync.rejects({ status: 412 })
         })
         beforeEach(applyChange)
 
-        it('keeps sides unchanged', async function () {
+        it('keeps sides unchanged', async function() {
           const synced = await this.pouch.db.get(file._id)
           should(synced.sides).deepEqual(merged.sides)
         })
 
-        it('saves seq to skip the change', async function () {
+        it('saves seq to skip the change', async function() {
           should(await this.pouch.getLocalSeqAsync()).equal(seq)
         })
       })
     })
 
-    it('calls updateFileMetadataAsync for updated file metadata', async function () {
+    it('calls updateFileMetadataAsync for updated file metadata', async function() {
       let doc = {
         _id: 'update/foo/bar',
         md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
@@ -285,7 +305,7 @@ describe('Sync', function () {
       ufm.calledWith(doc).should.be.true()
     })
 
-    it('calls moveFileAsync for a moved file', async function () {
+    it('calls moveFileAsync for a moved file', async function() {
       let was = {
         _id: 'foo/bar',
         _rev: '3-9876543210',
@@ -315,7 +335,7 @@ describe('Sync', function () {
       this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
     })
 
-    it('calls moveFileAsync and overwriteFileAsync for a moved-updated file', async function () {
+    it('calls moveFileAsync and overwriteFileAsync for a moved-updated file', async function() {
       let was = {
         _id: 'foo/bar',
         _rev: '3-9876543210',
@@ -348,7 +368,7 @@ describe('Sync', function () {
       this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
     })
 
-    it('does not break when move works but not update', async function () {
+    it('does not break when move works but not update', async function() {
       let was = {
         _id: 'foo/bar2',
         _deleted: true,
@@ -375,10 +395,12 @@ describe('Sync', function () {
       doc._rev = (await this.pouch.db.put(doc)).rev
 
       // re-stubs overwriteFileAsync to fail
-      this.remote.overwriteFileAsync = sinon.stub().rejects(new Error('bad md5sum mock'))
+      this.remote.overwriteFileAsync = sinon
+        .stub()
+        .rejects(new Error('bad md5sum mock'))
       this.sync.diskUsage = sinon.stub().resolves()
 
-      await this.sync.apply({doc: doc}, this.remote, 'remote', 0)
+      await this.sync.apply({ doc: doc }, this.remote, 'remote', 0)
 
       this.remote.addFileAsync.called.should.be.false()
       this.remote.trashAsync.called.should.be.false()
@@ -393,7 +415,7 @@ describe('Sync', function () {
       this.remote.overwriteFileAsync = sinon.stub().resolves()
     })
 
-    it('calls trashAsync for a deleted file', async function () {
+    it('calls trashAsync for a deleted file', async function() {
       let doc = {
         _id: 'foo/baz',
         _rev: '4-1234567890',
@@ -408,7 +430,7 @@ describe('Sync', function () {
       this.local.trashAsync.calledWith(doc).should.be.true()
     })
 
-    it('does nothing for a deleted file that was not added', async function () {
+    it('does nothing for a deleted file that was not added', async function() {
       let doc = {
         _id: 'tmp/fooz',
         _rev: '2-1234567890',
@@ -422,7 +444,7 @@ describe('Sync', function () {
       this.remote.trashAsync.called.should.be.false()
     })
 
-    it('calls addFolderAsync for an added folder', async function () {
+    it('calls addFolderAsync for an added folder', async function() {
       let doc = {
         _id: 'foobar/bar',
         _rev: '1-abcdef0123456789',
@@ -435,7 +457,7 @@ describe('Sync', function () {
       this.remote.addFolderAsync.calledWith(doc).should.be.true()
     })
 
-    xit('calls updateFolderAsync for an updated folder', async function () {
+    xit('calls updateFolderAsync for an updated folder', async function() {
       let doc = {
         _id: 'foobar/bar',
         _rev: '2-abcdef9876543210',
@@ -450,7 +472,7 @@ describe('Sync', function () {
       this.local.updateFolderAsync.calledWith(doc).should.be.true()
     })
 
-    it('calls moveFolderAsync for a moved folder', async function () {
+    it('calls moveFolderAsync for a moved folder', async function() {
       let was = {
         _id: 'foobar/bar',
         _rev: '3-9876543210',
@@ -480,7 +502,7 @@ describe('Sync', function () {
       this.remote.moveFolderAsync.calledWith(doc, was).should.be.true()
     })
 
-    it('calls trashAsync for a deleted folder', async function () {
+    it('calls trashAsync for a deleted folder', async function() {
       let doc = {
         _id: 'foobar/baz',
         _rev: '4-1234567890',
@@ -495,7 +517,7 @@ describe('Sync', function () {
       this.local.deleteFolderAsync.calledWith(doc).should.be.true()
     })
 
-    it('does nothing for a deleted folder that was not added', async function () {
+    it('does nothing for a deleted folder that was not added', async function() {
       let doc = {
         _id: 'tmp/foobaz',
         _rev: '2-1234567890',
@@ -510,8 +532,8 @@ describe('Sync', function () {
     })
   })
 
-  describe('updateErrors', function () {
-    it('retries on first local -> remote sync error', async function () {
+  describe('updateErrors', function() {
+    it('retries on first local -> remote sync error', async function() {
       let doc = {
         _id: 'first/failure',
         sides: {
@@ -521,16 +543,16 @@ describe('Sync', function () {
       const infos = await this.pouch.db.put(doc)
       doc._rev = infos.rev
 
-      await this.sync.updateErrors({doc}, 'remote')
+      await this.sync.updateErrors({ doc }, 'remote')
 
       const actual = await this.pouch.db.get(doc._id)
       should(actual.errors).equal(1)
       should(actual._rev).not.equal(doc._rev)
-      should(actual.sides).deepEqual({local: 2})
+      should(actual.sides).deepEqual({ local: 2 })
       should(metadata.isUpToDate('local', actual)).be.true()
     })
 
-    it('retries on second remote -> local sync error', async function () {
+    it('retries on second remote -> local sync error', async function() {
       let doc = {
         _id: 'second/failure',
         errors: 1,
@@ -546,16 +568,16 @@ describe('Sync', function () {
       infos = await this.pouch.db.put(doc)
       doc._rev = infos.rev
 
-      await this.sync.updateErrors({doc}, 'local')
+      await this.sync.updateErrors({ doc }, 'local')
 
       const actual = await this.pouch.db.get(doc._id)
       should(actual.errors).equal(2)
       should(actual._rev).not.equal(doc._rev)
-      should(actual.sides).deepEqual({local: 0, remote: 3})
+      should(actual.sides).deepEqual({ local: 0, remote: 3 })
       should(metadata.isUpToDate('remote', actual)).be.true()
     })
 
-    it('stops retrying after 3 errors', async function () {
+    it('stops retrying after 3 errors', async function() {
       let doc = {
         _id: 'third/failure',
         errors: 3,
@@ -565,7 +587,7 @@ describe('Sync', function () {
       }
       const infos = await this.pouch.db.put(doc)
       doc._rev = infos.rev
-      await this.sync.updateErrors({doc}, 'local')
+      await this.sync.updateErrors({ doc }, 'local')
       const actual = await this.pouch.db.get(doc._id)
       actual.errors.should.equal(3)
       actual._rev.should.equal(doc._rev)
@@ -574,7 +596,7 @@ describe('Sync', function () {
   })
 
   for (const syncSide of ['local', 'remote']) {
-    describe(`updateRevs at end of ${syncSide} Sync`, function () {
+    describe(`updateRevs at end of ${syncSide} Sync`, function() {
       const mergedSide = otherSide(syncSide)
 
       const updateRevs = ({ sync }, doc) =>
@@ -582,11 +604,15 @@ describe('Sync', function () {
 
       let doc, upToDate, syncedRev, mergedRev
 
-      beforeEach(async function () {
-        upToDate = await builders.metadata().upToDate().create()
+      beforeEach(async function() {
+        upToDate = await builders
+          .metadata()
+          .upToDate()
+          .create()
         syncedRev = upToDate.sides[syncSide]
         mergedRev = upToDate.sides[mergedSide] + 1
-        doc = await builders.metadata(upToDate)
+        doc = await builders
+          .metadata(upToDate)
           .sides({
             [syncSide]: syncedRev,
             [mergedSide]: mergedRev
@@ -594,51 +620,61 @@ describe('Sync', function () {
           .create()
       })
 
-      context('without changes merged during Sync', function () {
-        it('marks doc as up-to-date', async function () {
+      context('without changes merged during Sync', function() {
+        it('marks doc as up-to-date', async function() {
           await updateRevs(this, doc)
 
           const updated = await this.pouch.db.get(doc._id)
           should(metadata.outOfDateSide(updated)).be.undefined()
-          should(metadata.extractRevNumber(updated)).equal(metadata.extractRevNumber(doc) + 1)
+          should(metadata.extractRevNumber(updated)).equal(
+            metadata.extractRevNumber(doc) + 1
+          )
         })
       })
 
       for (const extraChanges of [1, 2]) {
-        context(`with ${extraChanges} ${mergedSide} changes merged during Sync`, function () {
-          let updated
+        context(
+          `with ${extraChanges} ${mergedSide} changes merged during Sync`,
+          function() {
+            let updated
 
-          beforeEach(async function () {
-            await builders.metadata(doc)
-              .sides({
-                [syncSide]: syncedRev,
-                [mergedSide]: mergedRev + extraChanges
-              })
-              .create()
+            beforeEach(async function() {
+              await builders
+                .metadata(doc)
+                .sides({
+                  [syncSide]: syncedRev,
+                  [mergedSide]: mergedRev + extraChanges
+                })
+                .create()
 
-            await updateRevs(this, doc)
+              await updateRevs(this, doc)
 
-            updated = await this.pouch.db.get(doc._id)
-          })
+              updated = await this.pouch.db.get(doc._id)
+            })
 
-          it(`keeps ${syncSide} out-of-date information`, async function () {
-            should(metadata.outOfDateSide(updated)).equal(syncSide)
-          })
+            it(`keeps ${syncSide} out-of-date information`, async function() {
+              should(metadata.outOfDateSide(updated)).equal(syncSide)
+            })
 
-          it('keeps the changes difference between sides', () => {
-            should(updated.sides[mergedSide]).equal(updated.sides[syncSide] + extraChanges)
-          })
+            it('keeps the changes difference between sides', () => {
+              should(updated.sides[mergedSide]).equal(
+                updated.sides[syncSide] + extraChanges
+              )
+            })
 
-          it(`keeps the doc rev coherent with its ${mergedSide} side`, async function () {
-            should(metadata.extractRevNumber(updated)).equal(updated.sides[mergedSide])
-          })
-        })
+            it(`keeps the doc rev coherent with its ${mergedSide} side`, async function() {
+              should(metadata.extractRevNumber(updated)).equal(
+                updated.sides[mergedSide]
+              )
+            })
+          }
+        )
       }
     })
   }
 
-  describe('selectSide', function () {
-    it('selects the local side if remote is up-to-date', function () {
+  describe('selectSide', function() {
+    it('selects the local side if remote is up-to-date', function() {
       let doc = {
         _id: 'selectSide/1',
         _rev: '1-0123456789',
@@ -659,14 +695,14 @@ describe('Sync', function () {
           remote: 3,
           local: 2
         }
-      };
-      [side, name, rev] = this.sync.selectSide(doc)
+      }
+      ;[side, name, rev] = this.sync.selectSide(doc)
       side.should.equal(this.sync.local)
       name.should.equal('local')
       rev.should.equal(2)
     })
 
-    it('selects the remote side if local is up-to-date', function () {
+    it('selects the remote side if local is up-to-date', function() {
       let doc = {
         _id: 'selectSide/3',
         _rev: '1-0123456789',
@@ -687,14 +723,14 @@ describe('Sync', function () {
           remote: 3,
           local: 4
         }
-      };
-      [side, name, rev] = this.sync.selectSide(doc)
+      }
+      ;[side, name, rev] = this.sync.selectSide(doc)
       side.should.equal(this.sync.remote)
       name.should.equal('remote')
       rev.should.equal(3)
     })
 
-    it('returns an empty array if both sides are up-to-date', function () {
+    it('returns an empty array if both sides are up-to-date', function() {
       let doc = {
         _id: 'selectSide/5',
         _rev: '5-0123456789',
@@ -710,7 +746,7 @@ describe('Sync', function () {
       should.not.exist(rev)
     })
 
-    it('returns an empty array if a local only doc is deleted', function () {
+    it('returns an empty array if a local only doc is deleted', function() {
       let doc = {
         _id: 'selectSide/5',
         _rev: '5-0123456789',
@@ -726,7 +762,7 @@ describe('Sync', function () {
       should.not.exist(rev)
     })
 
-    it('returns an empty array if a remote only doc is deleted', function () {
+    it('returns an empty array if a remote only doc is deleted', function() {
       let doc = {
         _id: 'selectSide/5',
         _rev: '5-0123456789',

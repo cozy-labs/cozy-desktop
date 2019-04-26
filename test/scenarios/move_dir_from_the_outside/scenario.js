@@ -4,15 +4,13 @@
 
 module.exports = ({
   init: [
-    {ino: 1, path: 'dst/'},
-    {ino: 2, path: '../outside/dir/'},
-    {ino: 3, path: '../outside/dir/empty-subdir/'},
-    {ino: 4, path: '../outside/dir/subdir/'},
-    {ino: 5, path: '../outside/dir/subdir/file'}
+    { ino: 1, path: 'dst/' },
+    { ino: 2, path: '../outside/dir/' },
+    { ino: 3, path: '../outside/dir/empty-subdir/' },
+    { ino: 4, path: '../outside/dir/subdir/' },
+    { ino: 5, path: '../outside/dir/subdir/file' }
   ],
-  actions: [
-    {type: 'mv', src: '../outside/dir', dst: 'dst/dir'}
-  ],
+  actions: [{ type: 'mv', src: '../outside/dir', dst: 'dst/dir' }],
   expected: {
     tree: [
       'dst/',

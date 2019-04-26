@@ -23,7 +23,7 @@ if (process.platform === 'win32') {
   winfs = require('@gyselroth/windows-fsstat')
 }
 
-async function step (state /*: Object */, op /*: Object */) {
+async function step(state /*: Object */, op /*: Object */) {
   // Slow down things to avoid issues with chokidar throttler
   await Promise.delay(10)
 
@@ -37,7 +37,7 @@ async function step (state /*: Object */, op /*: Object */) {
       }
       state.pouchdb = new Pouch(state.config)
       await state.pouchdb.addAllViewsAsync()
-      // break omitted intentionally
+    // break omitted intentionally
     case 'restart_watcher':
       const events = new EventEmitter()
       const merge = new Merge(state.pouchdb)
@@ -88,7 +88,7 @@ async function step (state /*: Object */, op /*: Object */) {
         const block = size > 65536 ? 65536 : size
         const content = await crypto.randomBytes(block)
         size -= block
-        setTimeout(async function () {
+        setTimeout(async function() {
           try {
             await state.dir.outputFile(op.path, content)
           } catch (err) {}
@@ -99,8 +99,12 @@ async function step (state /*: Object */, op /*: Object */) {
       try {
         // XXX fs-extra move can enter in an infinite loop for some stupid moves
         await new Promise(resolve =>
-          fs.rename(state.dir.abspath(op.from), state.dir.abspath(op.to), resolve)
-        ).then((err) => {
+          fs.rename(
+            state.dir.abspath(op.from),
+            state.dir.abspath(op.to),
+            resolve
+          )
+        ).then(err => {
           if (!err && op.to.match(/^\.\.\/outside/)) {
             // Remove the reference for files/dirs moved outside
             const abspath = state.dir.abspath(op.to)
@@ -161,7 +165,7 @@ async function step (state /*: Object */, op /*: Object */) {
   return state
 }
 
-async function run (state /*: Object */, ops /*: Object[] */) {
+async function run(state /*: Object */, ops /*: Object[] */) {
   for (let op of ops) {
     state = await step(state, op)
   }

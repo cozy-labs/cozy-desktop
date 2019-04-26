@@ -33,11 +33,27 @@ export type LocalWatcherOptions = {
 }
 */
 
-function build ({config, prep, pouch, events, ignore, onAtomEvents} /*: LocalWatcherOptions */) /*: Watcher */ {
+function build(
+  {
+    config,
+    prep,
+    pouch,
+    events,
+    ignore,
+    onAtomEvents
+  } /*: LocalWatcherOptions */
+) /*: Watcher */ {
   const { syncPath, watcherType } = config
 
   if (watcherType === 'atom') {
-    return new AtomWatcher({syncPath, prep, pouch, events, ignore, onAtomEvents})
+    return new AtomWatcher({
+      syncPath,
+      prep,
+      pouch,
+      events,
+      ignore,
+      onAtomEvents
+    })
   } else {
     return new ChokidarWatcher(syncPath, prep, pouch, events)
   }

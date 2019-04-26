@@ -13,8 +13,8 @@ const autoLauncher = new AutoLaunch(opts)
 
 module.exports.isEnabled = () => autoLauncher.isEnabled()
 
-module.exports.setEnabled = (enabled) => {
-  autoLauncher.isEnabled().then((was) => {
+module.exports.setEnabled = enabled => {
+  autoLauncher.isEnabled().then(was => {
     if (was !== enabled) {
       if (enabled) {
         autoLauncher.enable()

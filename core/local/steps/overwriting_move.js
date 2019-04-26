@@ -41,9 +41,9 @@ const DELAY = 500
 
 const initialState = () => ({
   [STEP_NAME]: {
-    deletedEventsByPath: new Map/*:: <string,AtomWatcherEvent> */(),
+    deletedEventsByPath: new Map /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> *//*:: <string,AtomWatcherEvent> */(),
     pending: {
-      deletedEventsByPath: new Map/*:: <string,AtomWatcherEvent> */(),
+      deletedEventsByPath: new Map /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> */ /*:: <string,AtomWatcherEvent> *//*:: <string,AtomWatcherEvent> */(),
       events: []
     }
   }
@@ -76,10 +76,9 @@ const indexDeletedEvent = (event, state) => {
  */
 const ignoreDeletedBeforeOverwritingMove = (event, state) => {
   const { path } = event
-  const pendingDeletedEvent = (
+  const pendingDeletedEvent =
     state.deletedEventsByPath.get(path) ||
     state.pending.deletedEventsByPath.get(path)
-  )
   if (pendingDeletedEvent) {
     const deletedClone = _.clone(pendingDeletedEvent)
     const renamedClone = _.clone(event)
@@ -87,7 +86,11 @@ const ignoreDeletedBeforeOverwritingMove = (event, state) => {
     event.overwrite = true
     _.set(event, [STEP_NAME, 'moveToDeletedPath'], deletedClone)
     pendingDeletedEvent.action = 'ignored'
-    _.set(pendingDeletedEvent, [STEP_NAME, 'deletedBeforeRenamed'], renamedClone)
+    _.set(
+      pendingDeletedEvent,
+      [STEP_NAME, 'deletedBeforeRenamed'],
+      renamedClone
+    )
   }
 }
 
@@ -116,7 +119,9 @@ const _loop = async (buffer, out, opts) => {
 
   while (true) {
     const events = await buffer.pop()
-    const { state: { [STEP_NAME]: state } } = opts
+    const {
+      state: { [STEP_NAME]: state }
+    } = opts
 
     await step(events, opts)
 
@@ -124,18 +129,18 @@ const _loop = async (buffer, out, opts) => {
     rotateState(state, events)
 
     const { pending } = state
-    pending.timeout = setTimeout(
-      () => { output(pending) },
-      DELAY
-    )
+    pending.timeout = setTimeout(() => {
+      output(pending)
+    }, DELAY)
   }
 }
 
 const loop = (buffer /*: Buffer */, opts /*: OverwritingMoveOptions */) => {
   const out = new Buffer()
 
-  _loop(buffer, out, opts)
-    .catch(err => { log.error({err}) })
+  _loop(buffer, out, opts).catch(err => {
+    log.error({ err })
+  })
 
   return out
 }

@@ -8,10 +8,10 @@ module.exports = ({
   platforms: ['win32'],
   side: 'remote',
   actions: [
-    {type: 'mkdir', path: 'FOO'},
-    {type: 'mkdir', path: 'FOO/subdir'},
-    {type: 'create_file', path: 'FOO/subdir/file'},
-    {type: 'create_file', path: 'foo'}
+    { type: 'mkdir', path: 'FOO' },
+    { type: 'mkdir', path: 'FOO/subdir' },
+    { type: 'create_file', path: 'FOO/subdir/file' },
+    { type: 'create_file', path: 'foo' }
   ],
   expected: {
     localTree: [

@@ -5,11 +5,11 @@
 const uuid = require('uuid/v4')
 
 module.exports = {
-  id () /*: string */ {
+  id() /*: string */ {
     return uuid().replace(/-/g, '')
   },
 
-  rev (shortRev /*: number */ = 1) /*: string */ {
+  rev(shortRev /*: number */ = 1) /*: string */ {
     return `${shortRev}-${this.id()}`
   }
 }

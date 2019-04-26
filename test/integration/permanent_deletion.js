@@ -22,14 +22,14 @@ describe('Permanent deletion remote', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(function () {
+  beforeEach(function() {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
   })
 
   it('file', async () => {
     await helpers.remote.ignorePreviousChanges()
-    const file = await cozy.files.create('File content', {name: 'file'})
+    const file = await cozy.files.create('File content', { name: 'file' })
     await helpers.remote.pullChanges()
     await helpers.syncAll()
     helpers.spyPouch()
@@ -39,13 +39,11 @@ describe('Permanent deletion remote', () => {
     await helpers.remote.pullChanges()
 
     should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-      {path: 'file', _deleted: true}
+      { path: 'file', _deleted: true }
     ])
 
     await helpers.syncAll()
 
-    should(await helpers.local.tree()).deepEqual([
-      '/Trash/file'
-    ])
+    should(await helpers.local.tree()).deepEqual(['/Trash/file'])
   })
 })

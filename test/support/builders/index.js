@@ -31,49 +31,58 @@ module.exports = class Builders {
   pouch: ?Pouch
   */
 
-  constructor ({cozy, pouch} /*: {cozy?: Cozy, pouch?: Pouch} */ = {}) {
+  constructor({ cozy, pouch } /*: {cozy?: Cozy, pouch?: Pouch} */ = {}) {
     this.cozy = cozy
     this.pouch = pouch
   }
 
-  metadata (old /*: ?Metadata */) /*: DirMetadataBuilder|FileMetadataBuilder */ {
+  metadata(old /*: ?Metadata */) /*: DirMetadataBuilder|FileMetadataBuilder */ {
     return this.metadir(old)
   }
 
-  metadir (old /*: ?Metadata */) /*: DirMetadataBuilder */ {
+  metadir(old /*: ?Metadata */) /*: DirMetadataBuilder */ {
     return new DirMetadataBuilder(this.pouch, old)
   }
 
-  metafile (old /*: ?Metadata */) /*: FileMetadataBuilder */ {
+  metafile(old /*: ?Metadata */) /*: FileMetadataBuilder */ {
     return new FileMetadataBuilder(this.pouch, old)
   }
 
-  remoteDir (old /*: ?RemoteDoc */) /*: RemoteDirBuilder */ {
+  remoteDir(old /*: ?RemoteDoc */) /*: RemoteDirBuilder */ {
     return new RemoteDirBuilder(this.cozy, old)
   }
 
-  remoteFile (old /*: ?RemoteDoc */) /*: RemoteFileBuilder */ {
+  remoteFile(old /*: ?RemoteDoc */) /*: RemoteFileBuilder */ {
     return new RemoteFileBuilder(this.cozy, old)
   }
 
-  buildRemoteTree (paths /*: Array<string> */) /*: { [string]: RemoteDoc } */ {
+  buildRemoteTree(paths /*: Array<string> */) /*: { [string]: RemoteDoc } */ {
     const remoteDocsByPath = {}
     for (const p of paths) {
       const name = path.posix.basename(p)
       const parentPath = path.posix.dirname(p)
-      const parentDir = remoteDocsByPath[parentPath + '/'] || { _id: ROOT_DIR_ID, path: '/' }
+      const parentDir = remoteDocsByPath[parentPath + '/'] || {
+        _id: ROOT_DIR_ID,
+        path: '/'
+      }
 
       if (p.endsWith('/')) {
-        remoteDocsByPath[p] = this.remoteDir().name(name).inDir(parentDir).build()
+        remoteDocsByPath[p] = this.remoteDir()
+          .name(name)
+          .inDir(parentDir)
+          .build()
       } else {
-        remoteDocsByPath[p] = this.remoteFile().name(name).inDir(parentDir).build()
+        remoteDocsByPath[p] = this.remoteFile()
+          .name(name)
+          .inDir(parentDir)
+          .build()
       }
     }
 
     return remoteDocsByPath
   }
 
-  remoteWarnings () /*: Warning[] */ {
+  remoteWarnings() /*: Warning[] */ {
     return [
       {
         error: 'tos-updated',
@@ -86,18 +95,26 @@ module.exports = class Builders {
     ]
   }
 
-  stream () /*: StreamBuilder */ {
+  stream() /*: StreamBuilder */ {
     return new StreamBuilder()
   }
 
-  event (old /*: ?AtomWatcherEvent */) /*: AtomWatcherEventBuilder */ {
+  event(old /*: ?AtomWatcherEvent */) /*: AtomWatcherEventBuilder */ {
     return new AtomWatcherEventBuilder(old)
   }
 
-  nonEmptyBatch (batchNumber /*: number */ = 1) /*: AtomWatcherEvent[] */ {
+  nonEmptyBatch(batchNumber /*: number */ = 1) /*: AtomWatcherEvent[] */ {
     return [
-      this.event().action('created').kind('file').path(`file-from-batch-${batchNumber}`).build(),
-      this.event().action('deleted').kind('directory').path(`dir-from-batch-${batchNumber}`).build()
+      this.event()
+        .action('created')
+        .kind('file')
+        .path(`file-from-batch-${batchNumber}`)
+        .build(),
+      this.event()
+        .action('deleted')
+        .kind('directory')
+        .path(`dir-from-batch-${batchNumber}`)
+        .build()
     ]
   }
 }

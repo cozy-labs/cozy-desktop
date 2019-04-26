@@ -17,16 +17,22 @@ const disabledExtension = '.DISABLED'
 
 const scenariosDir = path.resolve(__dirname, '../../scenarios')
 
-const scenarioByPath = module.exports.scenarioByPath = scenarioPath => {
+const scenarioByPath = (module.exports.scenarioByPath = scenarioPath => {
   // $FlowFixMe
   const scenario = require(scenarioPath)
-  scenario.name = path.dirname(path.normalize(scenarioPath))
+  scenario.name = path
+    .dirname(path.normalize(scenarioPath))
     .replace(scenariosDir + path.sep, '')
     .replace(/\\/g, '/')
   scenario.path = scenarioPath
-  scenario.disabled = scenarioPath.endsWith(disabledExtension) && 'scenario disabled'
+  scenario.disabled =
+    scenarioPath.endsWith(disabledExtension) && 'scenario disabled'
 
-  if (process.platform === 'win32' && scenario.expected && scenario.expected.prepCalls) {
+  if (
+    process.platform === 'win32' &&
+    scenario.expected &&
+    scenario.expected.prepCalls
+  ) {
     for (let prepCall of scenario.expected.prepCalls) {
       if (prepCall.src) {
         prepCall.src = prepCall.src.split('/').join('\\')
@@ -38,16 +44,19 @@ const scenarioByPath = module.exports.scenarioByPath = scenarioPath => {
   }
 
   return scenario
-}
+})
 
-const statsFixer = (event) => {
+const statsFixer = event => {
   if (event.stats) {
-    event.stats = _.defaultsDeep({
-      atime: new Date(event.stats.atime),
-      mtime: new Date(event.stats.mtime),
-      ctime: new Date(event.stats.ctime),
-      birthtime: new Date(event.stats.birthtime)
-    }, event.stats)
+    event.stats = _.defaultsDeep(
+      {
+        atime: new Date(event.stats.atime),
+        mtime: new Date(event.stats.mtime),
+        ctime: new Date(event.stats.ctime),
+        birthtime: new Date(event.stats.birthtime)
+      },
+      event.stats
+    )
   }
 }
 
@@ -63,40 +72,45 @@ const windowsPathFixer = (filename, event) => {
 }
 
 // TODO: Refactor to function
-module.exports.scenarios =
-  glob.sync(path.join(scenariosDir, '**/scenario.js*'), {})
-    .map(scenarioByPath)
+module.exports.scenarios = glob
+  .sync(path.join(scenariosDir, '**/scenario.js*'), {})
+  .map(scenarioByPath)
 
 if (module.exports.scenarios.length === 0) {
-  throw new Error(`No scenario found! Please check scenariosDir: ${scenariosDir}`)
+  throw new Error(
+    `No scenario found! Please check scenariosDir: ${scenariosDir}`
+  )
 }
 
-module.exports.loadFSEventFiles = (scenario) => {
-  const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'local', '*.json*'))
-  const disabledEventsFile = (name) => {
+module.exports.loadFSEventFiles = scenario => {
+  const eventFiles = glob.sync(
+    path.join(path.dirname(scenario.path), 'local', '*.json*')
+  )
+  const disabledEventsFile = name => {
     if (process.platform === 'win32' && name.indexOf('win32') === -1) {
       return 'darwin/linux test'
     } else if (name.endsWith(disabledExtension)) {
       return 'disabled case'
     }
   }
-  return eventFiles
-    .map(f => {
-      const name = path.basename(f)
-      const disabled = scenario.disabled || disabledEventsFile(name)
-      const events = fse.readJsonSync(f).map(e => {
-        statsFixer(e)
-        windowsPathFixer(name, e)
-        return e
-      })
-
-      return {name, events, disabled}
+  return eventFiles.map(f => {
+    const name = path.basename(f)
+    const disabled = scenario.disabled || disabledEventsFile(name)
+    const events = fse.readJsonSync(f).map(e => {
+      statsFixer(e)
+      windowsPathFixer(name, e)
+      return e
     })
+
+    return { name, events, disabled }
+  })
 }
 
 module.exports.loadAtomCaptures = scenario => {
-  const eventFiles = glob.sync(path.join(path.dirname(scenario.path), 'atom', '*.json*'))
-  const disabledEventsFile = (name) => {
+  const eventFiles = glob.sync(
+    path.join(path.dirname(scenario.path), 'atom', '*.json*')
+  )
+  const disabledEventsFile = name => {
     if (process.platform === 'win32' && name.indexOf('win32') === -1) {
       return 'linux test'
     } else if (process.platform === 'linux' && name.indexOf('win32') >= 0) {
@@ -105,46 +119,50 @@ module.exports.loadAtomCaptures = scenario => {
       return 'disabled case'
     }
   }
-  return eventFiles
-    .map(f => {
-      const name = path.basename(f)
-      const disabled = scenario.disabled || disabledEventsFile(name)
-      const batches = fse.readJsonSync(f)
-        .map(batch =>
-          batch.map(event => {
-            statsFixer(event)
-            windowsPathFixer(name, event)
-            return event
-          })
-        )
+  return eventFiles.map(f => {
+    const name = path.basename(f)
+    const disabled = scenario.disabled || disabledEventsFile(name)
+    const batches = fse.readJsonSync(f).map(batch =>
+      batch.map(event => {
+        statsFixer(event)
+        windowsPathFixer(name, event)
+        return event
+      })
+    )
 
-      return {name, batches, disabled}
-    })
+    return { name, batches, disabled }
+  })
 }
 
-module.exports.loadRemoteChangesFiles = (scenario) => {
+module.exports.loadRemoteChangesFiles = scenario => {
   const pattern = path.join(path.dirname(scenario.path), 'remote', '*.json*')
 
   return glob.sync(pattern).map(f => {
     const name = path.basename(f)
     const disabled = scenario.disabled || f.endsWith(disabledExtension)
     const changes = fse.readJsonSync(f)
-    return {name, disabled, changes}
+    return { name, disabled, changes }
   })
 }
 
-const getInoAndFileId = async ({path, fakeIno, trashed, useRealInodes}) => {
+const getInoAndFileId = async ({ path, fakeIno, trashed, useRealInodes }) => {
   if (trashed || !useRealInodes) {
-    return {ino: fakeIno}
+    return { ino: fakeIno }
   } else {
     return stater.stat(path)
   }
 }
 
-module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes) => {
+module.exports.init = async (
+  scenario,
+  pouch,
+  abspath,
+  relpathFix,
+  useRealInodes
+) => {
   debug('[init]')
   const remoteDocsToTrash = []
-  for (let {path: relpath, ino: fakeIno, trashed, content} of scenario.init) {
+  for (let { path: relpath, ino: fakeIno, trashed, content } of scenario.init) {
     debug(relpath)
     const isOutside = relpath.startsWith('../outside')
     let remoteParent
@@ -154,7 +172,10 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
       remoteParent = await cozy.files.statByPath(remoteParentPath)
     }
     const remoteName = path.posix.basename(relpath)
-    const remotePath = path.posix.join(_.get(remoteParent, 'attributes.path', ''), remoteName)
+    const remotePath = path.posix.join(
+      _.get(remoteParent, 'attributes.path', ''),
+      remoteName
+    )
     const localPath = relpathFix(_.trimEnd(relpath, '/'))
     const lastModifiedDate = new Date('2011-04-11T10:20:30Z')
     if (relpath.endsWith('/')) {
@@ -163,19 +184,26 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
         await fse.ensureDir(abspath(localPath))
       }
 
-      const stats = await getInoAndFileId({path: abspath(localPath), fakeIno, trashed, useRealInodes})
+      const stats = await getInoAndFileId({
+        path: abspath(localPath),
+        fakeIno,
+        trashed,
+        useRealInodes
+      })
       const doc = {
         _id: metadata.id(localPath),
         docType: 'folder',
         updated_at: lastModifiedDate,
         path: localPath,
         tags: [],
-        sides: {local: 1, remote: 1}
+        sides: { local: 1, remote: 1 }
       }
       stater.assignInoAndFileId(doc, stats)
 
       if (!isOutside) {
-        debug(`- create${trashed ? ' and trash' : ''} remote dir: ${remotePath}`)
+        debug(
+          `- create${trashed ? ' and trash' : ''} remote dir: ${remotePath}`
+        )
         const remoteDir = await cozy.files.createDirectory({
           name: remoteName,
           dirID: remoteParent._id,
@@ -194,7 +222,11 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
         content = 'foo'
         md5sum = 'rL0Y20zC+Fzt72VPzMSk2A=='
       } else {
-        md5sum = crypto.createHash('md5').update(content).digest().toString('base64')
+        md5sum = crypto
+          .createHash('md5')
+          .update(content)
+          .digest()
+          .toString('base64')
       }
 
       if (!trashed) {
@@ -202,7 +234,12 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
         await fse.outputFile(abspath(localPath), content)
       }
 
-      const stats = await getInoAndFileId({path: abspath(localPath), fakeIno, trashed, useRealInodes})
+      const stats = await getInoAndFileId({
+        path: abspath(localPath),
+        fakeIno,
+        trashed,
+        useRealInodes
+      })
       const doc = {
         _id: metadata.id(localPath),
         md5sum,
@@ -214,11 +251,13 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
         path: localPath,
         size: content.length,
         tags: [],
-        sides: {local: 1, remote: 1}
+        sides: { local: 1, remote: 1 }
       }
       stater.assignInoAndFileId(doc, stats)
       if (!isOutside) {
-        debug(`- create${trashed ? ' and trash' : ''} remote file: ${remotePath}`)
+        debug(
+          `- create${trashed ? ' and trash' : ''} remote file: ${remotePath}`
+        )
         const remoteFile = await cozy.files.create(content, {
           name: remoteName,
           dirID: remoteParent._id,
@@ -240,7 +279,11 @@ module.exports.init = async (scenario, pouch, abspath, relpathFix, useRealInodes
   }
 }
 
-module.exports.runActions = (scenario, abspath, opts /*: {skipWait?: true} */ = {}) => {
+module.exports.runActions = (
+  scenario,
+  abspath,
+  opts /*: {skipWait?: true} */ = {}
+) => {
   debug('[actions]')
   return Promise.each(scenario.actions, action => {
     switch (action.type) {
@@ -271,7 +314,9 @@ module.exports.runActions = (scenario, abspath, opts /*: {skipWait?: true} */ = 
           mergedirs(abspath(action.src), abspath(action.dst), 'overwrite')
           return fse.remove(abspath(action.src))
         } else if (action.force) {
-          return fse.move(abspath(action.src), abspath(action.dst), {overwrite: true})
+          return fse.move(abspath(action.src), abspath(action.dst), {
+            overwrite: true
+          })
         } else {
           return fse.rename(abspath(action.src), abspath(action.dst))
         }
@@ -282,7 +327,11 @@ module.exports.runActions = (scenario, abspath, opts /*: {skipWait?: true} */ = 
         return Promise.delay(action.ms)
 
       default:
-        return Promise.reject(new Error(`Unknown action ${action.type} for scenario ${scenario.name}`))
+        return Promise.reject(
+          new Error(
+            `Unknown action ${action.type} for scenario ${scenario.name}`
+          )
+        )
     }
   })
 }

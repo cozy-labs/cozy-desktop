@@ -22,7 +22,7 @@ describe('Sync gets interrupted, initialScan occurs', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
@@ -34,15 +34,14 @@ describe('Sync gets interrupted, initialScan occurs', () => {
   })
 
   it('move Folder', async () => {
-    const docs = await helpers.remote.createTree([
-      '/a/',
-      '/b/'
-    ])
+    const docs = await helpers.remote.createTree(['/a/', '/b/'])
 
     await helpers.remote.pullChanges()
     await helpers.syncAll()
 
-    await cozy.files.updateAttributesById(docs['/b/']._id, {dir_id: docs['/a/']._id})
+    await cozy.files.updateAttributesById(docs['/b/']._id, {
+      dir_id: docs['/a/']._id
+    })
 
     await helpers.remote.pullChanges() // Merge
 
@@ -51,7 +50,7 @@ describe('Sync gets interrupted, initialScan occurs', () => {
     await helpers.local.scan()
     await helpers.syncAll()
 
-    const expected = [ 'a/', 'a/b/' ]
+    const expected = ['a/', 'a/b/']
 
     should(await helpers.trees()).deepEqual({
       remote: expected,

@@ -15,14 +15,14 @@ const { run } = require('../runner')
 const { setupStack } = require('../stack')
 const { setupDevice } = require('../device')
 
-describe('Two clients', function () {
+describe('Two clients', function() {
   this.timeout(600000)
   this.slow(60000)
 
   const scenarios = glob.sync(path.join(__dirname, '*.json'))
   scenarios.forEach(scenario => {
     scenario = path.normalize(scenario)
-    it(`works fine for ${path.basename(scenario)}`, async function () {
+    it(`works fine for ${path.basename(scenario)}`, async function() {
       const data = await fse.readJson(scenario)
       if (data.pending) {
         return this.skip(data.pending.msg || 'pending')
@@ -54,7 +54,9 @@ describe('Two clients', function () {
       await state.stack.stop()
 
       // Each device should have the same tree that the Cozy
-      let ctxDir = new ContextDir(path.join(state.stack.dir, state.stack.instance))
+      let ctxDir = new ContextDir(
+        path.join(state.stack.dir, state.stack.instance)
+      )
       let expected = await ctxDir.tree()
       expected = expected.filter(item => !item.startsWith('.cozy_trash/'))
       expected = expected.filter(item => !item.startsWith('.thumbs/'))

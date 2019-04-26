@@ -182,7 +182,10 @@ onPlatforms(['linux', 'win32'], () => {
           path.join(syncPath, newname)
         )
         let renamedOutputBatch = await producer.buffer.pop()
-        if (renamedOutputBatch.length === 1 && renamedOutputBatch[0].action === 'modified') {
+        if (
+          renamedOutputBatch.length === 1 &&
+          renamedOutputBatch[0].action === 'modified'
+        ) {
           // A modified event on the old path may occur before the renamed one.
           // This seems to happen sometimes on Windows.
           should(renamedOutputBatch).deepEqual([

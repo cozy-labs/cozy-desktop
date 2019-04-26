@@ -1,10 +1,10 @@
 const _ = require('lodash')
 const should = require('should')
 
-function changeAssertion (strict) {
+function changeAssertion(strict) {
   const assertionName = strict ? 'changeOnly' : 'change'
 
-  const assertion = function (actual, props) {
+  const assertion = function(actual, props) {
     if (props) {
       if (this.negate) {
         throw new Error(
@@ -24,9 +24,7 @@ function changeAssertion (strict) {
         )
       }
       if (props == null) {
-        throw new Error(
-          `should(...).${assertionName}(..., props) is required`
-        )
+        throw new Error(`should(...).${assertionName}(..., props) is required`)
       }
     }
 
@@ -35,12 +33,13 @@ function changeAssertion (strict) {
 
     codeWithPossibleSideEffect()
 
-    this.params = {actual, operator: 'to have changed'}
+    this.params = { actual, operator: 'to have changed' }
 
     if (props) {
       const expected = _.defaults({}, props, strict ? original : actual)
       should(actual).deepEqual(expected)
-    } if (_.isEqual(actual, original)) {
+    }
+    if (_.isEqual(actual, original)) {
       if (!this.negate) {
         this.params.operator += ' but it is the same'
         this.fail()

@@ -34,12 +34,15 @@ export type Batch = AtomWatcherEvent[]
 */
 
 const ACTIONS /*: EventAction[] */ = [
-  'created', 'modified', 'deleted', 'renamed', 'scan', 'initial-scan-done',
+  'created',
+  'modified',
+  'deleted',
+  'renamed',
+  'scan',
+  'initial-scan-done',
   'ignored'
 ]
-const KINDS /*: EventKind[] */ = [
-  'file', 'directory', 'symlink', 'unknown'
-]
+const KINDS /*: EventKind[] */ = ['file', 'directory', 'symlink', 'unknown']
 
 const INITIAL_SCAN_DONE = {
   action: 'initial-scan-done',

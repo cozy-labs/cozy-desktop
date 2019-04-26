@@ -42,7 +42,7 @@ Press CTRL+D to exit`)
 let repl = start()
 const defaultEval = repl.eval
 
-repl.eval = function customEval (cmd, context, filename, callback) {
+repl.eval = function customEval(cmd, context, filename, callback) {
   defaultEval(cmd, context, filename, (err, result) => {
     if (result instanceof Promise) {
       result.then(console.log).catch(console.error)

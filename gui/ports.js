@@ -1,10 +1,10 @@
 'use strict'
 
 const electron = require('electron')
-const {ipcRenderer, remote} = electron
+const { ipcRenderer, remote } = electron
 
 window.onerror = (message, url, line, column, err) => {
-  ipcRenderer.send('renderer-error', {message, stack: err.stack})
+  ipcRenderer.send('renderer-error', { message, stack: err.stack })
 }
 
 const pkg = remote.require('../package.json')
@@ -29,7 +29,7 @@ const elmectron = Elm.Main.init({
   }
 })
 
-const errMessage = (err) => {
+const errMessage = err => {
   if (!err) {
     return null
   } else if (err.code === 'ENOTFOUND') {
@@ -53,10 +53,10 @@ ipcRenderer.on('registration-error', (event, err) => {
   err = errMessage(err)
   elmectron.ports.registrationError.send(err)
 })
-ipcRenderer.on('registration-done', (event) => {
+ipcRenderer.on('registration-done', event => {
   elmectron.ports.registrationDone.send(true)
 })
-elmectron.ports.registerRemote.subscribe((url) => {
+elmectron.ports.registerRemote.subscribe(url => {
   ipcRenderer.send('register-remote', {
     cozyUrl: url,
     location: window.location.toString().replace('#', '')
@@ -76,7 +76,7 @@ elmectron.ports.chooseFolder.subscribe(() => {
 ipcRenderer.on('synchronization', (event, url, deviceName) => {
   elmectron.ports.synchonization.send([url, deviceName])
 })
-elmectron.ports.startSync.subscribe((folder) => {
+elmectron.ports.startSync.subscribe(folder => {
   ipcRenderer.send('start-sync', folder)
 })
 
@@ -105,7 +105,7 @@ elmectron.ports.closeApp.subscribe(() => {
 ipcRenderer.on('auto-launch', (event, enabled) => {
   elmectron.ports.autolaunch.send(enabled)
 })
-elmectron.ports.autoLauncher.subscribe((enabled) => {
+elmectron.ports.autoLauncher.subscribe(enabled => {
   ipcRenderer.send('auto-launcher', enabled)
 })
 
@@ -113,7 +113,7 @@ ipcRenderer.on('go-to-tab', (event, tab) => {
   elmectron.ports.gototab.send(tab)
 })
 
-ipcRenderer.on('cancel-unlink', (event) => {
+ipcRenderer.on('cancel-unlink', event => {
   elmectron.ports.cancelUnlink.send(true)
 })
 elmectron.ports.unlinkCozy.subscribe(() => {
@@ -124,11 +124,11 @@ ipcRenderer.on('mail-sent', (event, err) => {
   err = errMessage(err)
   elmectron.ports.mail.send(err)
 })
-elmectron.ports.sendMail.subscribe((body) => {
+elmectron.ports.sendMail.subscribe(body => {
   ipcRenderer.send('send-mail', body)
 })
 
-elmectron.ports.openFile.subscribe((path) => {
+elmectron.ports.openFile.subscribe(path => {
   ipcRenderer.send('open-file', path)
 })
 
@@ -152,7 +152,7 @@ ipcRenderer.on('up-to-date', () => {
   elmectron.ports.updated.send(true)
 })
 
-ipcRenderer.on('sync-status', (event, {label, remaining}) => {
+ipcRenderer.on('sync-status', (event, { label, remaining }) => {
   switch (label) {
     case 'sync':
       elmectron.ports.syncing.send(remaining)
@@ -185,7 +185,7 @@ ipcRenderer.on('sync-error', (event, err) => {
 })
 
 // Give focus to DOM nodes
-elmectron.ports.focus.subscribe((selector) => {
+elmectron.ports.focus.subscribe(selector => {
   // We wait that the CSS transition has finished before focusing the node
   setTimeout(() => {
     const nodes = document.querySelectorAll(selector)

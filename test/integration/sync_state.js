@@ -24,7 +24,7 @@ describe('Sync state', () => {
 
   let events, helpers
 
-  beforeEach(function () {
+  beforeEach(function() {
     helpers = TestHelpers.init(this)
     events = helpers.events
     sinon.spy(events, 'emit')
@@ -33,9 +33,7 @@ describe('Sync state', () => {
   })
 
   it('1 sync error (missing remote file)', async () => {
-    await helpers._remote.watcher.pullMany([
-      builders.remoteFile().build()
-    ])
+    await helpers._remote.watcher.pullMany([builders.remoteFile().build()])
     await helpers.syncAll()
     should(events.emit.args).deepEqual([
       ['sync-start'],

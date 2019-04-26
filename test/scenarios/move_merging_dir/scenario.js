@@ -20,9 +20,7 @@ module.exports = ({
     { ino: 13, path: 'src/dir/subdir/file6', content: 'sub-other' },
     { ino: 14, path: 'src/dir/file2', content: 'other' }
   ],
-  actions: [
-    {type: 'mv', merge: true, src: 'src/dir', dst: 'dst/dir'}
-  ],
+  actions: [{ type: 'mv', merge: true, src: 'src/dir', dst: 'dst/dir' }],
   expected: {
     tree: [
       'dst/',

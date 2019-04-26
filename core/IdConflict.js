@@ -40,12 +40,16 @@ module.exports = {
 const { platform } = process
 
 /** Human readable description of the conflict */
-function description ({ change, existingDoc, platform } /*: IdConflictInfo */) /*: string */ {
+function description(
+  { change, existingDoc, platform } /*: IdConflictInfo */
+) /*: string */ {
   const newPathRepr = JSON.stringify(change.doc.path)
   const existingPathRepr = JSON.stringify(existingDoc.path)
   const idRepr = JSON.stringify(existingDoc._id)
   return (
-    `Identity conflict between new ${change.side} ${change.doc.docType} ${newPathRepr} ` +
+    `Identity conflict between new ${change.side} ${
+      change.doc.docType
+    } ${newPathRepr} ` +
     `and existing ${existingDoc.docType} ${existingPathRepr}: ` +
     `both would get the same ${idRepr} id on ${platform}.`
   )
@@ -54,7 +58,10 @@ function description ({ change, existingDoc, platform } /*: IdConflictInfo */) /
 /** Return IdConflictInfo in case `change.doc` and `existingDoc` cannot coexist
  * on the current platform.
  */
-function detect (change /*: Change */, existingDoc /*: ?Metadata */) /*: ?IdConflictInfo */ {
+function detect(
+  change /*: Change */,
+  existingDoc /*: ?Metadata */
+) /*: ?IdConflictInfo */ {
   if (existingDoc && existsBetween(change, existingDoc)) {
     return {
       change,
@@ -64,18 +71,21 @@ function detect (change /*: Change */, existingDoc /*: ?Metadata */) /*: ?IdConf
   }
 }
 
-function detectOnId ({doc, was} /*: $Diff<Change, {side: SideName}> */, existingDoc /*: Metadata */) /*: boolean */ {
+function detectOnId(
+  { doc, was } /*: $Diff<Change, {side: SideName}> */,
+  existingDoc /*: Metadata */
+) /*: boolean */ {
   return (
     doc._id === existingDoc._id &&
     doc.path !== existingDoc.path &&
-    (
-      was == null ||
-      was.path !== existingDoc.path
-    )
+    (was == null || was.path !== existingDoc.path)
   )
 }
 
-function detectOnRemote ({doc, was} /*: $Diff<Change, {side: SideName}> */, existingDoc /*: Metadata */) /*: boolean */ {
+function detectOnRemote(
+  { doc, was } /*: $Diff<Change, {side: SideName}> */,
+  existingDoc /*: Metadata */
+) /*: boolean */ {
   return _.get(doc, 'remote._id') !== _.get(existingDoc, 'remote._id')
 }
 
@@ -83,9 +93,9 @@ function detectOnRemote ({doc, was} /*: $Diff<Change, {side: SideName}> */, exis
  *
  * The side is not used here, hence the $Diff flow type annotation.
  */
-function existsBetween (change /*: $Diff<Change, {side: SideName}> */, existingDoc /*: Metadata */) /*: boolean */ {
-  return (
-    detectOnId(change, existingDoc) &&
-    detectOnRemote(change, existingDoc)
-  )
+function existsBetween(
+  change /*: $Diff<Change, {side: SideName}> */,
+  existingDoc /*: Metadata */
+) /*: boolean */ {
+  return detectOnId(change, existingDoc) && detectOnRemote(change, existingDoc)
 }

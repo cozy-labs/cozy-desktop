@@ -8,43 +8,55 @@ const CozyClient = require('cozy-client-js').Client
 const PORT_NUMBER = 3344
 
 module.exports = class Registration {
-  constructor (url, config, onReady = null) {
+  constructor(url, config, onReady = null) {
     this.url = url
     this.config = config
-    this.onReady = onReady || (url => {
-      console.log('Please visit the following url to authorize the application: ', url)
-      opn(url)
-    })
+    this.onReady =
+      onReady ||
+      (url => {
+        console.log(
+          'Please visit the following url to authorize the application: ',
+          url
+        )
+        opn(url)
+      })
 
     autoBind(this)
   }
 
-  onRegistered (client, url, onReady = null) {
+  onRegistered(client, url, onReady = null) {
     // TODO if the port is already taken, try again with a new port
     let server
     return new Promise((resolve, reject) => {
       server = http.createServer((request, response) => {
         if (request.url.indexOf('/callback') === 0) {
           resolve(request.url)
-          response.end('Cozy-desktop has been successfully registered as a Cozy device')
+          response.end(
+            'Cozy-desktop has been successfully registered as a Cozy device'
+          )
         }
       })
       server.listen(PORT_NUMBER, () => {
         const pReady = this.onReady(url)
         if (pReady.catch) pReady.catch(reject)
       })
-    })
-      .then(
-        (url) => { server.close(); return url },
-        (err) => { server.close(); throw err }
-      )
+    }).then(
+      url => {
+        server.close()
+        return url
+      },
+      err => {
+        server.close()
+        throw err
+      }
+    )
   }
 
-  clientParams (pkg, redirectURI, deviceName) {
+  clientParams(pkg, redirectURI, deviceName) {
     if (!deviceName) {
       deviceName = `Cozy Drive (${os.hostname()})`
     }
-    let softwareID = (pkg.repository || 'cozy-desktop')
+    let softwareID = pkg.repository || 'cozy-desktop'
     if (softwareID.url) {
       softwareID = softwareID.url
     }
@@ -69,7 +81,7 @@ module.exports = class Registration {
     }
   }
 
-  process (pkg, redirectURI, onRegistered, deviceName) {
+  process(pkg, redirectURI, onRegistered, deviceName) {
     const params = this.clientParams(pkg, redirectURI, deviceName)
     onRegistered = onRegistered || this.onRegistered
     const cozy = new CozyClient({

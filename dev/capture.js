@@ -15,17 +15,19 @@ program
   .option('-r, --remote', 'Remove events only')
   .parse(process.argv)
 
-const scenarioArgPattern = new RegExp(path.posix.join(
-  '^.*', '?test', 'scenarios', `(.+)`, '(scenario.js)?'))
+const scenarioArgPattern = new RegExp(
+  path.posix.join('^.*', '?test', 'scenarios', `(.+)`, '(scenario.js)?')
+)
 
-const scenarios = (args) => {
+const scenarios = args => {
   if (args.length === 0) return scenarioHelpers.scenarios
 
   return args.map(arg => {
     const match = arg.match(scenarioArgPattern)
     if (match) {
-      return scenarioHelpers.scenarioByPath(path.join(
-        __dirname, '..', 'test', 'scenarios', match[1], 'scenario.js'))
+      return scenarioHelpers.scenarioByPath(
+        path.join(__dirname, '..', 'test', 'scenarios', match[1], 'scenario.js')
+      )
     } else {
       throw new Error(`Invalid argument: ${arg}`)
     }

@@ -24,23 +24,23 @@ const builders = new Builders()
 describe('remote/warning_poller', () => {
   describe('ticks', () => {
     it('can be a single one', () => {
-      should(ticks(123)).deepEqual({next: 123, rest: []})
+      should(ticks(123)).deepEqual({ next: 123, rest: [] })
     })
 
     it('can be many', () => {
-      should(ticks(1, 2, 3)).deepEqual({next: 1, rest: [2, 3]})
+      should(ticks(1, 2, 3)).deepEqual({ next: 1, rest: [2, 3] })
     })
   })
 
   describe('shiftTicks', () => {
     it('shifts many ticks', () => {
-      should(shiftTicks(ticks(1, 2, 3, 4))).deepEqual({next: 2, rest: [3, 4]})
-      should(shiftTicks(ticks(5, 6, 7))).deepEqual({next: 6, rest: [7]})
-      should(shiftTicks(ticks(8, 9))).deepEqual({next: 9, rest: []})
+      should(shiftTicks(ticks(1, 2, 3, 4))).deepEqual({ next: 2, rest: [3, 4] })
+      should(shiftTicks(ticks(5, 6, 7))).deepEqual({ next: 6, rest: [7] })
+      should(shiftTicks(ticks(8, 9))).deepEqual({ next: 9, rest: [] })
     })
 
     it('does not shift a single tick', () => {
-      should(shiftTicks(ticks(42))).deepEqual({next: 42, rest: []})
+      should(shiftTicks(ticks(42))).deepEqual({ next: 42, rest: [] })
     })
   })
 })
@@ -50,8 +50,8 @@ describe('RemoteWarningPoller', () => {
 
   beforeEach(() => {
     clock = sinon.useFakeTimers()
-    remoteCozy = {warnings: sinon.stub().resolves([])}
-    events = {emit: sinon.spy()}
+    remoteCozy = { warnings: sinon.stub().resolves([]) }
+    events = { emit: sinon.spy() }
     // $FlowFixMe
     poller = new RemoteWarningPoller(remoteCozy, events)
   })
@@ -86,7 +86,7 @@ describe('RemoteWarningPoller', () => {
     })
 
     it('waits again for next tick when already polling', async () => {
-      const currentTicks = {next: 1, rest: [2]}
+      const currentTicks = { next: 1, rest: [2] }
       poller.ticks = currentTicks
       poller.polling = new Promise(() => {})
       sinon.spy(poller, 'scheduleNext')
@@ -155,7 +155,7 @@ describe('RemoteWarningPoller', () => {
     it.skip('cancels scheduled ticks & timeout if any', () => {
       poller.scheduleNext(ticks(1))
       poller.scheduleNext(ticks(3, 4))
-      should(poller.ticks).deepEqual({next: 3, rest: [4]})
+      should(poller.ticks).deepEqual({ next: 3, rest: [4] })
       clock.tick(1)
       should(events.emit).not.have.been.called()
       clock.tick(3)

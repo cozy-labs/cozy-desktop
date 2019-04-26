@@ -50,44 +50,54 @@ module.exports = {
 const areParentChildPaths = (p /*: string */, c /*: string */) /*: boolean */ =>
   `${c}${path.sep}`.startsWith(`${p}${path.sep}`)
 
-async function initialState (opts /*: ?{} */) /* Promise<WinDetectMoveState> */ {
+async function initialState(opts /*: ?{} */) /* Promise<WinDetectMoveState> */ {
   return {
     [STEP_NAME]: {
-      unmergedRenamedEvents: new SortedSet/* ::<AtomWatcherEvent> */()
+      unmergedRenamedEvents: new SortedSet /* ::<AtomWatcherEvent> */()
     }
   }
 }
 
-function forget (event /*: AtomWatcherEvent */, state /*: WinDetectMoveState */) {
-  const { [STEP_NAME]: { unmergedRenamedEvents } } = state
+function forget(
+  event /*: AtomWatcherEvent */,
+  state /*: WinDetectMoveState */
+) {
+  const {
+    [STEP_NAME]: { unmergedRenamedEvents }
+  } = state
 
   unmergedRenamedEvents.delete(event)
 }
 
-function previousPaths (deletedPath, unmergedRenamedEvents) {
-  const { previous: previousPaths } =
-    unmergedRenamedEvents.reduceRight/* ::<{ previous: string[], current: string }> */(
-      (paths, renamedEvent) => {
-        if (renamedEvent.oldPath && areParentChildPaths(renamedEvent.path, paths.current)) {
-          paths.current = paths.current.replace(renamedEvent.path, renamedEvent.oldPath)
-          paths.previous.unshift(paths.current)
-        }
-        return paths
-      },
-      {
-        current: deletedPath,
-        previous: []
+function previousPaths(deletedPath, unmergedRenamedEvents) {
+  const { previous: previousPaths } = unmergedRenamedEvents.reduceRight(
+    /* ::<{ previous: string[], current: string }> */ (paths, renamedEvent) => {
+      if (
+        renamedEvent.oldPath &&
+        areParentChildPaths(renamedEvent.path, paths.current)
+      ) {
+        paths.current = paths.current.replace(
+          renamedEvent.path,
+          renamedEvent.oldPath
+        )
+        paths.previous.unshift(paths.current)
       }
-    )
+      return paths
+    },
+    {
+      current: deletedPath,
+      previous: []
+    }
+  )
   return previousPaths
 }
 
-async function findDeletedInoById (id, pouch) {
+async function findDeletedInoById(id, pouch) {
   const doc = await pouch.byIdMaybeAsync(id)
   return doc && { deletedIno: doc.fileid || doc.ino }
 }
 
-async function findDeletedInoRecentlyRenamed (previousPaths, pouch) {
+async function findDeletedInoRecentlyRenamed(previousPaths, pouch) {
   for (const [index, previousPath] of previousPaths.entries()) {
     const doc = await pouch.byIdMaybeAsync(id(previousPath))
     if (doc) {
@@ -99,17 +109,17 @@ async function findDeletedInoRecentlyRenamed (previousPaths, pouch) {
   }
 }
 
-async function findDeletedIno (event, pouch, unmergedRenamedEvents) {
+async function findDeletedIno(event, pouch, unmergedRenamedEvents) {
   if (event.action !== 'deleted') return {}
   // OPTIMIZE: Make .previousPaths() include event.path so we don't need a lock
   const release = await pouch.lock('winDetectMove')
   try {
     return (
-      await findDeletedInoById(event._id, pouch) ||
-      await findDeletedInoRecentlyRenamed(
+      (await findDeletedInoById(event._id, pouch)) ||
+      (await findDeletedInoRecentlyRenamed(
         previousPaths(event.path, unmergedRenamedEvents),
         pouch
-      ) ||
+      )) ||
       {}
     )
   } finally {
@@ -117,7 +127,7 @@ async function findDeletedIno (event, pouch, unmergedRenamedEvents) {
   }
 }
 
-async function assignDebugInfos (event, deletedIno, oldPaths) {
+async function assignDebugInfos(event, deletedIno, oldPaths) {
   if (event.action !== 'deleted') return
   if (oldPaths) {
     _.set(event, [STEP_NAME, 'oldPaths'], oldPaths)
@@ -126,11 +136,11 @@ async function assignDebugInfos (event, deletedIno, oldPaths) {
   }
 }
 
-function eventHasIno (event, ino) {
+function eventHasIno(event, ino) {
   return ino === (event.stats.fileid || event.stats.ino)
 }
 
-function indexOfMatchingDeletedEvent (event, pendingItems) {
+function indexOfMatchingDeletedEvent(event, pendingItems) {
   if (event.action === 'created' && !event.incomplete) {
     for (let i = 0; i < pendingItems.length; i++) {
       const { deletedIno } = pendingItems[i]
@@ -142,7 +152,7 @@ function indexOfMatchingDeletedEvent (event, pendingItems) {
   return -1
 }
 
-function aggregateEvents (createdEvent, deletedEvent) {
+function aggregateEvents(createdEvent, deletedEvent) {
   const aggregatedEvents = {
     deletedEvent,
     createdEvent: _.clone(createdEvent)
@@ -152,7 +162,10 @@ function aggregateEvents (createdEvent, deletedEvent) {
   _.set(createdEvent, [STEP_NAME, 'aggregatedEvents'], aggregatedEvents)
 }
 
-function sendReadyBatches (waiting /*: PendingItem[] */, output /*: (Batch) => void */) {
+function sendReadyBatches(
+  waiting /*: PendingItem[] */,
+  output /*: (Batch) => void */
+) {
   while (waiting.length > 0) {
     if (waiting[0].deletedIno) {
       break
@@ -166,7 +179,7 @@ function sendReadyBatches (waiting /*: PendingItem[] */, output /*: (Batch) => v
 // On windows, ReadDirectoryChangesW emits a deleted and an added events when
 // a file or directory is moved. This step merges the two events to a single
 // renamed event.
-async function winDetectMove (buffer, output, opts /*: WinDetectMoveOptions */) {
+async function winDetectMove(buffer, output, opts /*: WinDetectMoveOptions */) {
   const pendingItems /*: PendingItem[] */ = []
 
   while (true) {
@@ -174,13 +187,18 @@ async function winDetectMove (buffer, output, opts /*: WinDetectMoveOptions */) 
     const events = await buffer.pop()
     const {
       pouch,
-      state: { [STEP_NAME]: { unmergedRenamedEvents } }
+      state: {
+        [STEP_NAME]: { unmergedRenamedEvents }
+      }
     } = opts
 
     for (const event of events) {
       // First, push the new events in the pending queue
-      const { deletedIno, oldPaths } =
-        await findDeletedIno(event, pouch, unmergedRenamedEvents)
+      const { deletedIno, oldPaths } = await findDeletedIno(
+        event,
+        pouch,
+        unmergedRenamedEvents
+      )
 
       assignDebugInfos(event, deletedIno, oldPaths)
 
@@ -206,12 +224,16 @@ async function winDetectMove (buffer, output, opts /*: WinDetectMoveOptions */) 
   }
 }
 
-function loop (buffer /*: Buffer */, opts /*: WinDetectMoveOptions */) /*: Buffer */ {
+function loop(
+  buffer /*: Buffer */,
+  opts /*: WinDetectMoveOptions */
+) /*: Buffer */ {
   const out = new Buffer()
   const output = batch => {
     out.push(batch)
   }
-  winDetectMove(buffer, output, opts)
-    .catch(err => { log.error({err}) })
+  winDetectMove(buffer, output, opts).catch(err => {
+    log.error({ err })
+  })
   return out
 }

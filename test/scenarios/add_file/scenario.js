@@ -3,13 +3,9 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
-  actions: [
-    {type: 'create_file', path: 'file'}
-  ],
+  actions: [{ type: 'create_file', path: 'file' }],
   expected: {
-    tree: [
-      'file'
-    ],
+    tree: ['file'],
     remoteTrash: []
   }
 } /*: Scenario */)

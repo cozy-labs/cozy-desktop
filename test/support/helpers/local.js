@@ -40,7 +40,7 @@ class LocalTestHelpers {
   _resolveSimulation: ?() => void
   */
 
-  constructor (opts /*: LocalOptions */) {
+  constructor(opts /*: LocalOptions */) {
     const localOptions /*: LocalOptions */ = Object.assign(
       ({
         onAtomEvents: this.dispatchAtomEvents.bind(this)
@@ -52,21 +52,21 @@ class LocalTestHelpers {
     autoBind(this)
   }
 
-  get syncPath () /*: string */ {
+  get syncPath() /*: string */ {
     return path.normalize(this.side.syncPath)
   }
 
-  get trashPath () /*: string */ {
+  get trashPath() /*: string */ {
     return path.join(this.side.tmpPath, '.test-trash')
   }
 
-  async clean () {
+  async clean() {
     for (const pattern of ['*', '.*']) {
       await rimrafAsync(path.join(this.syncPath, pattern))
     }
   }
 
-  async trashFunc (paths /*: string[] */) /*: Promise<void> */ {
+  async trashFunc(paths /*: string[] */) /*: Promise<void> */ {
     for (const src of paths) {
       const dst = path.join(this.trashPath, path.basename(src))
       try {
@@ -77,13 +77,15 @@ class LocalTestHelpers {
     }
   }
 
-  async setupTrash () {
+  async setupTrash() {
     await fse.emptyDir(this.trashPath)
     this.trashDir = new ContextDir(this.trashPath)
     this.side._trash = this.trashFunc
   }
 
-  async tree (opts /*: {ellipsize: boolean} */ = {ellipsize: true}) /*: Promise<string[]> */ {
+  async tree(
+    opts /*: {ellipsize: boolean} */ = { ellipsize: true }
+  ) /*: Promise<string[]> */ {
     let trashContents
     try {
       trashContents = await this.trashDir.tree()
@@ -91,10 +93,12 @@ class LocalTestHelpers {
       if (err.code !== 'ENOENT') throw err
       throw new Error(
         'You must call and await helpers.local.setupTrash() (e.g. in a ' +
-        'beforeEach block) before calling helpers.local.tree() in a test'
+          'beforeEach block) before calling helpers.local.tree() in a test'
       )
     }
-    const ellipsizeDate = opts.ellipsize ? conflictHelpers.ellipsizeDate : _.identity
+    const ellipsizeDate = opts.ellipsize
+      ? conflictHelpers.ellipsizeDate
+      : _.identity
     return trashContents
       .map(relPath => path.posix.join('/Trash', relPath))
       .concat(await this.syncDir.tree())
@@ -103,39 +107,38 @@ class LocalTestHelpers {
       .sort()
   }
 
-  async scan () {
+  async scan() {
     await this.side.watcher.start()
     await this.side.watcher.stop()
   }
 
-  async treeWithoutTrash () {
-    return (await this.tree())
-      .filter(p => !p.startsWith('/Trash/'))
+  async treeWithoutTrash() {
+    return (await this.tree()).filter(p => !p.startsWith('/Trash/'))
   }
 
-  async simulateEvents (events /*: ChokidarEvent[] */) {
+  async simulateEvents(events /*: ChokidarEvent[] */) {
     // $FlowFixMe
     return this.side.watcher.onFlush(events)
   }
 
-  startSimulation () {
+  startSimulation() {
     return new Promise((resolve, reject) => {
       this._resolveSimulation = resolve
     })
   }
 
-  isSimulationEnd (batch /*: Batch */) {
+  isSimulationEnd(batch /*: Batch */) {
     const { _resolveSimulation } = this
     return _resolveSimulation && _.isEqual(batch, simulationCompleteBatch)
   }
 
-  stopSimulation () {
+  stopSimulation() {
     const { _resolveSimulation } = this
     _resolveSimulation && _resolveSimulation()
     delete this._resolveSimulation
   }
 
-  dispatchAtomEvents (batch /*: Batch */) {
+  dispatchAtomEvents(batch /*: Batch */) {
     if (this.isSimulationEnd(batch)) {
       this.stopSimulation()
       return []
@@ -159,7 +162,7 @@ class LocalTestHelpers {
    * - Fill in the test Pouch / sync dir
    * - `#simulateAtomEvents()`
    */
-  async simulateAtomEvents (batches /*: Batch[] */) {
+  async simulateAtomEvents(batches /*: Batch[] */) {
     const watcher = this._ensureAtomWatcher()
     for (const batch of batches.concat([simulationCompleteBatch])) {
       // $FlowFixMe
@@ -168,13 +171,13 @@ class LocalTestHelpers {
     await this.startSimulation()
   }
 
-  async simulateAtomStart () {
+  async simulateAtomStart() {
     const watcher = this._ensureAtomWatcher()
     await atomWatcher.stepsInitialState(watcher.state, watcher)
     watcher.producer.buffer.push([INITIAL_SCAN_DONE])
   }
 
-  _ensureAtomWatcher () /*: atomWatcher.AtomWatcher */ {
+  _ensureAtomWatcher() /*: atomWatcher.AtomWatcher */ {
     const { watcher } = this.side
     if (watcher instanceof atomWatcher.AtomWatcher) {
       return watcher
@@ -183,7 +186,7 @@ class LocalTestHelpers {
     }
   }
 
-  async readFile (path /*: string */) /*: Promise<string> */ {
+  async readFile(path /*: string */) /*: Promise<string> */ {
     return this.syncDir.readFile(path)
   }
 }

@@ -25,14 +25,14 @@ if (process.platform === 'win32') {
     afterEach('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
 
-    beforeEach(function () {
+    beforeEach(function() {
       builders = new Builders(this)
     })
 
     describe('.loop()', () => {
       let inputBuffer, outputBuffer
 
-      beforeEach(async function () {
+      beforeEach(async function() {
         this.state = await winDetectMove.initialState()
         inputBuffer = new Buffer()
         outputBuffer = winDetectMove.loop(inputBuffer, this)
@@ -43,9 +43,14 @@ if (process.platform === 'win32') {
 
       const metadataBuilderByKind = kind => {
         switch (kind) {
-          case 'file': return builders.metafile()
-          case 'directory': return builders.metadir()
-          default: throw new Error(`Cannot find metadata builder for ${JSON.stringify(kind)}`)
+          case 'file':
+            return builders.metafile()
+          case 'directory':
+            return builders.metadir()
+          default:
+            throw new Error(
+              `Cannot find metadata builder for ${JSON.stringify(kind)}`
+            )
         }
       }
 
@@ -56,9 +61,16 @@ if (process.platform === 'win32') {
           let deletedEvent
 
           beforeEach(async () => {
-            await metadataBuilderByKind(kind).path(srcPath).ino(srcIno).create()
-            deletedEvent = builders.event().action('deleted').kind(kind)
-              .path(srcPath).build()
+            await metadataBuilderByKind(kind)
+              .path(srcPath)
+              .ino(srcIno)
+              .create()
+            deletedEvent = builders
+              .event()
+              .action('deleted')
+              .kind(kind)
+              .path(srcPath)
+              .build()
           })
 
           describe(`+ created ${kind} (same path, different fileid)`, () => {
@@ -66,18 +78,19 @@ if (process.platform === 'win32') {
             let createdEvent
 
             beforeEach(async () => {
-              createdEvent = builders.event().action('created').kind(kind)
-                .path(srcPath).ino(differentIno).build()
+              createdEvent = builders
+                .event()
+                .action('created')
+                .kind(kind)
+                .path(srcPath)
+                .ino(differentIno)
+                .build()
             })
 
-            it(`is a replaced ${kind} (not aggregated)`, async function () {
+            it(`is a replaced ${kind} (not aggregated)`, async function() {
               inputBatch([deletedEvent, createdEvent])
-              should(await outputBatch()).deepEqual([
-                deletedEvent
-              ])
-              should(await outputBatch()).deepEqual([
-                createdEvent
-              ])
+              should(await outputBatch()).deepEqual([deletedEvent])
+              should(await outputBatch()).deepEqual([createdEvent])
             })
           })
 
@@ -86,11 +99,16 @@ if (process.platform === 'win32') {
             let createdEvent
 
             beforeEach(async () => {
-              createdEvent = builders.event().action('created').kind(kind)
-                .path(dstPath).ino(srcIno).build()
+              createdEvent = builders
+                .event()
+                .action('created')
+                .kind(kind)
+                .path(dstPath)
+                .ino(srcIno)
+                .build()
             })
 
-            it(`is a renamed ${kind} (aggregated)`, async function () {
+            it(`is a renamed ${kind} (aggregated)`, async function() {
               inputBatch([deletedEvent, createdEvent])
               should(await outputBatch()).deepEqual([
                 {
@@ -100,7 +118,9 @@ if (process.platform === 'win32') {
                   oldPath: srcPath,
                   path: dstPath,
                   stats: createdEvent.stats,
-                  winDetectMove: {aggregatedEvents: {createdEvent, deletedEvent}}
+                  winDetectMove: {
+                    aggregatedEvents: { createdEvent, deletedEvent }
+                  }
                 }
               ])
             })
@@ -114,10 +134,17 @@ if (process.platform === 'win32') {
                   let deletedChildEvent
 
                   beforeEach(async () => {
-                    await builders.metadir().path(path.join(srcPath, childName))
-                      .ino(childIno).create()
-                    deletedChildEvent = builders.event().action('deleted')
-                      .kind(childKind).path(childTmpPath).build()
+                    await builders
+                      .metadir()
+                      .path(path.join(srcPath, childName))
+                      .ino(childIno)
+                      .create()
+                    deletedChildEvent = builders
+                      .event()
+                      .action('deleted')
+                      .kind(childKind)
+                      .path(childTmpPath)
+                      .build()
                   })
 
                   describe(`+ created child ${childKind} (path outside parent)`, () => {
@@ -125,15 +152,20 @@ if (process.platform === 'win32') {
                     let createdChildEvent
 
                     beforeEach(async () => {
-                      createdChildEvent = builders.event().action('created')
-                        .kind(childKind).path(childDstPath).ino(childIno).build()
+                      createdChildEvent = builders
+                        .event()
+                        .action('created')
+                        .kind(childKind)
+                        .path(childDstPath)
+                        .ino(childIno)
+                        .build()
                       inputBatch([deletedEvent])
                       inputBatch([createdEvent])
                       inputBatch([deletedChildEvent])
                       inputBatch([createdChildEvent])
                     })
 
-                    it(`is a renamed child ${childKind} (aggregated)`, async function () {
+                    it(`is a renamed child ${childKind} (aggregated)`, async function() {
                       const outputBatches = await timesAsync(2, outputBatch)
                       should(outputBatches).deepEqual([
                         [
@@ -166,9 +198,7 @@ if (process.platform === 'win32') {
                                 deletedEvent: {
                                   ...deletedChildEvent,
                                   winDetectMove: {
-                                    oldPaths: [
-                                      path.join(srcPath, childName)
-                                    ]
+                                    oldPaths: [path.join(srcPath, childName)]
                                   }
                                 }
                               }
@@ -188,8 +218,13 @@ if (process.platform === 'win32') {
             let createdTmpEvent
 
             beforeEach(async () => {
-              createdTmpEvent = builders.event().action('created').kind(kind)
-                .path(tmpPath).incomplete().build()
+              createdTmpEvent = builders
+                .event()
+                .action('created')
+                .kind(kind)
+                .path(tmpPath)
+                .incomplete()
+                .build()
               // XXX: ino?
             })
 
@@ -197,8 +232,12 @@ if (process.platform === 'win32') {
               let deletedTmpEvent
 
               beforeEach(async () => {
-                deletedTmpEvent = builders.event().action('deleted').kind(kind)
-                  .path(tmpPath).build()
+                deletedTmpEvent = builders
+                  .event()
+                  .action('deleted')
+                  .kind(kind)
+                  .path(tmpPath)
+                  .build()
               })
 
               describe(`+ created ${kind} (different path, same fileid)`, () => {
@@ -206,8 +245,13 @@ if (process.platform === 'win32') {
                 let createdDstEvent
 
                 beforeEach(async () => {
-                  createdDstEvent = builders.event().action('created').kind(kind)
-                    .path(dstPath).ino(srcIno).build()
+                  createdDstEvent = builders
+                    .event()
+                    .action('created')
+                    .kind(kind)
+                    .path(dstPath)
+                    .ino(srcIno)
+                    .build()
                 })
 
                 it(`is a temporary ${kind} (not aggregated) + a renamed ${kind} (aggregated)`, async () => {
@@ -219,13 +263,14 @@ if (process.platform === 'win32') {
                     outputBatch
                   )
                   should(outputBatches).deepEqual([
+                    [createdTmpEvent],
                     [
-                      createdTmpEvent
-                    ],
-                    [
-                      _.defaults({
-                        winDetectMove: {deletedIno: 'unresolved'}
-                      }, deletedTmpEvent)
+                      _.defaults(
+                        {
+                          winDetectMove: { deletedIno: 'unresolved' }
+                        },
+                        deletedTmpEvent
+                      )
                     ],
                     [
                       {
@@ -254,26 +299,32 @@ if (process.platform === 'win32') {
           let createdEvent
 
           beforeEach(async () => {
-            createdEvent = builders.event().action('created').kind(kind)
-              .ino(1).build()
+            createdEvent = builders
+              .event()
+              .action('created')
+              .kind(kind)
+              .ino(1)
+              .build()
           })
 
           describe(`+ deleted ${kind} (same path, missing doc)`, () => {
             let deletedEvent
 
             beforeEach(async () => {
-              deletedEvent = builders.event().action('deleted').kind(kind)
-                .path(createdEvent.path).build()
+              deletedEvent = builders
+                .event()
+                .action('deleted')
+                .kind(kind)
+                .path(createdEvent.path)
+                .build()
             })
 
-            it(`is a temporary ${kind} (not aggregated)`, async function () {
+            it(`is a temporary ${kind} (not aggregated)`, async function() {
               inputBatch([createdEvent, deletedEvent])
-              should(await outputBatch()).deepEqual([
-                createdEvent
-              ])
+              should(await outputBatch()).deepEqual([createdEvent])
               should(await outputBatch()).deepEqual([
                 _.defaults(
-                  {winDetectMove: {deletedIno: 'unresolved'}},
+                  { winDetectMove: { deletedIno: 'unresolved' } },
                   deletedEvent
                 )
               ])
@@ -285,10 +336,14 @@ if (process.platform === 'win32') {
           let ignoredEvent
 
           beforeEach(async () => {
-            ignoredEvent = builders.event().action('ignored').kind(kind).build()
+            ignoredEvent = builders
+              .event()
+              .action('ignored')
+              .kind(kind)
+              .build()
           })
 
-          it('is untouched', async function () {
+          it('is untouched', async function() {
             inputBatch([ignoredEvent])
             should(await outputBatch()).deepEqual([ignoredEvent])
           })

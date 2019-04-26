@@ -28,7 +28,7 @@ module.exports = class BaseMetadataBuilder {
   old: ?Metadata
   */
 
-  constructor (pouch /*: ?Pouch */, old /*: ?Metadata */) {
+  constructor(pouch /*: ?Pouch */, old /*: ?Metadata */) {
     this.pouch = pouch
     if (old) {
       this.old = old
@@ -49,43 +49,43 @@ module.exports = class BaseMetadataBuilder {
     }
   }
 
-  fromRemote (remoteDoc /*: RemoteDoc */) /*: this */ {
+  fromRemote(remoteDoc /*: RemoteDoc */) /*: this */ {
     this.doc = metadata.fromRemoteDoc(remoteDoc)
     metadata.ensureValidPath(this.doc)
     this._assignId()
     return this
   }
 
-  moveFrom (was /*: Metadata */) /*: this */ {
+  moveFrom(was /*: Metadata */) /*: this */ {
     this.doc.moveFrom = _.defaultsDeep({ moveTo: this.doc._id }, was)
     this.noRev()
     return this
   }
 
   /** Make sure the doc is not the same as before. */
-  whateverChange () /*: this */ {
+  whateverChange() /*: this */ {
     this.doc.tags = this.doc.tags || []
     this.doc.tags.push('changed-tag')
     return this
   }
 
-  unmerged (sideName /*: SideName */) /*: this */ {
+  unmerged(sideName /*: SideName */) /*: this */ {
     if (this.doc.docType === 'file') delete this.doc.sides
     if (sideName === 'local') this.noRemote()
     return this.noRev()
   }
 
-  rev (rev /*: string */) /*: this */ {
+  rev(rev /*: string */) /*: this */ {
     this.doc._rev = rev
     return this
   }
 
-  noRev () /*: this */ {
+  noRev() /*: this */ {
     delete this.doc._rev
     return this
   }
 
-  noRemote () /*: this */ {
+  noRemote() /*: this */ {
     /*
      * $FlowFixMe Flow is lying to us when allowing metadata's buildFile and
      * buildDir to set remote to undefined
@@ -94,12 +94,12 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  noTags () /*: this */ {
+  noTags() /*: this */ {
     delete this.doc.tags
     return this
   }
 
-  incompatible () /*: this */ {
+  incompatible() /*: this */ {
     const { platform } = process
 
     if (platform === 'win32' || platform === 'darwin') {
@@ -111,7 +111,7 @@ module.exports = class BaseMetadataBuilder {
     }
   }
 
-  ino (ino /*: number */) /*: this */ {
+  ino(ino /*: number */) /*: this */ {
     if (process.platform === 'win32') {
       this.doc.fileid = statsBuilder.fileIdFromNumber(ino)
     }
@@ -119,48 +119,52 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  noFileid () /*: this */ {
+  noFileid() /*: this */ {
     delete this.doc.fileid
     return this
   }
 
-  stats ({ino, mtime, ctime} /*: fs.Stats */) /*: this */ {
+  stats({ ino, mtime, ctime } /*: fs.Stats */) /*: this */ {
     return this.ino(ino).updatedAt(timestamp.maxDate(mtime, ctime))
   }
 
-  path (newPath /*: string */) /*: this */ {
+  path(newPath /*: string */) /*: this */ {
     this.doc.path = path.normalize(newPath)
     metadata.ensureValidPath(this.doc)
     this._assignId()
     return this
   }
 
-  overwrite (existingDoc /*: Metadata */) /*: this */ {
+  overwrite(existingDoc /*: Metadata */) /*: this */ {
     this.doc.overwrite = existingDoc
     return this
   }
 
-  trashed () /*: this */ {
+  trashed() /*: this */ {
     this.doc.trashed = true
     return this
   }
 
-  updatedAt (date /*: Date */) /*: this */ {
+  updatedAt(date /*: Date */) /*: this */ {
     this.doc.updated_at = timestamp.fromDate(date).toISOString()
     return this
   }
 
-  newerThan (doc /*: Metadata */) /*: this */ {
-    this.doc.updated_at = timestamp.fromDate(new Date(timestamp.fromDate(doc.updated_at).getTime() + 2000)).toISOString()
+  newerThan(doc /*: Metadata */) /*: this */ {
+    this.doc.updated_at = timestamp
+      .fromDate(new Date(timestamp.fromDate(doc.updated_at).getTime() + 2000))
+      .toISOString()
     return this
   }
 
-  olderThan (doc /*: Metadata */) /*: this */ {
-    this.doc.updated_at = timestamp.fromDate(new Date(timestamp.fromDate(doc.updated_at).getTime() - 2000)).toISOString()
+  olderThan(doc /*: Metadata */) /*: this */ {
+    this.doc.updated_at = timestamp
+      .fromDate(new Date(timestamp.fromDate(doc.updated_at).getTime() - 2000))
+      .toISOString()
     return this
   }
 
-  remoteId (_id /*: string */) /*: this */ {
+  remoteId(_id /*: string */) /*: this */ {
     this.doc.remote = {
       _id,
       _rev: dbBuilders.rev()
@@ -168,43 +172,43 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  upToDate () /*: this */ {
-    this.doc.sides = {local: 2, remote: 2}
+  upToDate() /*: this */ {
+    this.doc.sides = { local: 2, remote: 2 }
     return this
   }
 
-  notUpToDate () /*: this */ {
-    this.doc.sides = {remote: 1}
+  notUpToDate() /*: this */ {
+    this.doc.sides = { remote: 1 }
     return this
   }
 
-  changedSide (side /*: SideName */) /*: this */ {
+  changedSide(side /*: SideName */) /*: this */ {
     metadata.markSide(side, this.doc, this.old)
     return this
   }
 
-  sides (sides /*: MetadataSidesInfo */) /*: this */ {
+  sides(sides /*: MetadataSidesInfo */) /*: this */ {
     this.doc.sides = sides
     return this
   }
 
-  noSides () /*: this */ {
+  noSides() /*: this */ {
     delete this.doc.sides
     return this
   }
 
-  tags (...tags /*: string[] */) /*: this */ {
+  tags(...tags /*: string[] */) /*: this */ {
     this.doc.tags = tags
     return this
   }
 
-  type (mime /*: string */) /*: this */ {
+  type(mime /*: string */) /*: this */ {
     this.doc.class = mime.split('/')[0]
     this.doc.mime = mime
     return this
   }
 
-  build () /*: Metadata */ {
+  build() /*: Metadata */ {
     // Don't detect incompatibilities according to syncPath for test data, to
     // prevent environment related failures.
     metadata.assignPlatformIncompatibilities(this.doc, '')
@@ -212,7 +216,7 @@ module.exports = class BaseMetadataBuilder {
     return _.cloneDeep(this.doc)
   }
 
-  async create () /*: Promise<Metadata> */ {
+  async create() /*: Promise<Metadata> */ {
     const { pouch } = this
     if (pouch == null) {
       throw new Error('Cannot create dir metadata without Pouch')
@@ -220,7 +224,7 @@ module.exports = class BaseMetadataBuilder {
 
     const doc = this.build()
     // Update doc until _rev matches the highest side
-    doc.sides = doc.sides || {local: 1}
+    doc.sides = doc.sides || { local: 1 }
     const desiredRevNumber = Math.max(
       doc.sides.local || 0,
       doc.sides.remote || 0
@@ -235,7 +239,7 @@ module.exports = class BaseMetadataBuilder {
     return doc
   }
 
-  _assignId () /* void */ {
+  _assignId() /* void */ {
     metadata.assignId(this.doc)
 
     if (this.doc.moveFrom) {

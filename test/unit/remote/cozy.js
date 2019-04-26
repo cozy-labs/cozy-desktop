@@ -11,10 +11,7 @@ const {
   TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
-const {
-  DirectoryNotFound,
-  RemoteCozy
-} = require('../../../core/remote/cozy')
+const { DirectoryNotFound, RemoteCozy } = require('../../../core/remote/cozy')
 
 const configHelpers = require('../../support/helpers/config')
 const { COZY_URL, builders, deleteAll } = require('../../support/helpers/cozy')
@@ -22,7 +19,7 @@ const CozyStackDouble = require('../../support/doubles/cozy_stack')
 
 const cozyStackDouble = new CozyStackDouble()
 
-describe('RemoteCozy', function () {
+describe('RemoteCozy', function() {
   before(() => cozyStackDouble.start())
   beforeEach(deleteAll)
   before('instanciate config', configHelpers.createConfig)
@@ -33,17 +30,20 @@ describe('RemoteCozy', function () {
 
   let remoteCozy
 
-  beforeEach(function () {
+  beforeEach(function() {
     this.config.cozyUrl = COZY_URL
     remoteCozy = new RemoteCozy(this.config)
   })
 
-  describe('changes', function () {
-    it('resolves with changes since then given seq', async function () {
+  describe('changes', function() {
+    it('resolves with changes since then given seq', async function() {
       const { last_seq } = await remoteCozy.changes()
 
       const dir = await builders.remoteDir().create()
-      const file = await builders.remoteFile().inDir(dir).create()
+      const file = await builders
+        .remoteFile()
+        .inDir(dir)
+        .create()
 
       const { docs } = await remoteCozy.changes(last_seq)
       const ids = docs.map(doc => doc._id)
@@ -51,9 +51,12 @@ describe('RemoteCozy', function () {
       should(ids.sort()).eql([file._id, dir._id].sort())
     })
 
-    it('resolves with all changes since the db creation when no seq given', async function () {
+    it('resolves with all changes since the db creation when no seq given', async function() {
       const dir = await builders.remoteDir().create()
-      const file = await builders.remoteFile().inDir(dir).create()
+      const file = await builders
+        .remoteFile()
+        .inDir(dir)
+        .create()
 
       const { docs } = await remoteCozy.changes()
       const ids = docs.map(doc => doc._id)
@@ -63,12 +66,12 @@ describe('RemoteCozy', function () {
       should(ids.length).be.greaterThan(2)
     })
 
-    it('does not swallow errors', function () {
+    it('does not swallow errors', function() {
       this.config.cozyUrl = cozyStackDouble.url()
       const remoteCozy = new RemoteCozy(this.config)
 
       cozyStackDouble.stub((req, res) => {
-        res.writeHead(500, {'Content-Type': 'text/plain'})
+        res.writeHead(500, { 'Content-Type': 'text/plain' })
         res.end('whatever')
       })
 
@@ -77,43 +80,49 @@ describe('RemoteCozy', function () {
 
     it('makes several calls to get changesfeed aka pagination', async () => {
       const fakeChangesFeed = sinon.stub(remoteCozy.client.data, 'changesFeed')
-      const docsOnServer = [{
-        doc: {
-          _id: 'a'
+      const docsOnServer = [
+        {
+          doc: {
+            _id: 'a'
+          }
+        },
+        {
+          doc: {
+            _id: 'b'
+          }
+        },
+        {
+          doc: {
+            _id: 'c'
+          }
+        },
+        {
+          doc: {
+            _id: 'd'
+          }
         }
-      }, {
-        doc: {
-          _id: 'b'
-        }
-      }, {
-        doc: {
-          _id: 'c'
-        }
-      },
-      {
-        doc: {
-          _id: 'd'
-        }
-      }]
+      ]
       fakeChangesFeed
-        .onFirstCall().resolves({
+        .onFirstCall()
+        .resolves({
           last_seq: 'abc',
           pending: 1,
           results: docsOnServer.slice(0, 3)
         })
-      .onSecondCall().resolves({
-        last_seq: 'd',
-        pending: 0,
-        results: docsOnServer.slice(3)
-      })
+        .onSecondCall()
+        .resolves({
+          last_seq: 'd',
+          pending: 0,
+          results: docsOnServer.slice(3)
+        })
 
       const { docs } = await remoteCozy.changes()
       should(docs.map(doc => ({ doc }))).eql(docsOnServer)
     })
   })
 
-  describe('find', function () {
-    it('fetches a remote directory matching the given id', async function () {
+  describe('find', function() {
+    it('fetches a remote directory matching the given id', async function() {
       const remoteDir = await builders.remoteDir().create()
 
       const foundDir = await remoteCozy.find(remoteDir._id)
@@ -121,26 +130,38 @@ describe('RemoteCozy', function () {
       foundDir.should.be.deepEqual(remoteDir)
     })
 
-    it('fetches a remote root file including its path', async function () {
-      const remoteFile = await builders.remoteFile().inRootDir().name('foo').create()
+    it('fetches a remote root file including its path', async function() {
+      const remoteFile = await builders
+        .remoteFile()
+        .inRootDir()
+        .name('foo')
+        .create()
 
       const foundFile = await remoteCozy.find(remoteFile._id)
 
-      foundFile.should.deepEqual(_.defaults({path: '/foo'}, remoteFile))
+      foundFile.should.deepEqual(_.defaults({ path: '/foo' }, remoteFile))
     })
 
-    it('fetches a remote non-root file including its path', async function () {
-      const remoteDir = await builders.remoteDir().name('foo').inRootDir().create()
-      const remoteFile = await builders.remoteFile().name('bar').inDir(remoteDir).create()
+    it('fetches a remote non-root file including its path', async function() {
+      const remoteDir = await builders
+        .remoteDir()
+        .name('foo')
+        .inRootDir()
+        .create()
+      const remoteFile = await builders
+        .remoteFile()
+        .name('bar')
+        .inDir(remoteDir)
+        .create()
 
       const foundFile = await remoteCozy.find(remoteFile._id)
 
-      foundFile.should.deepEqual(_.defaults({path: '/foo/bar'}, remoteFile))
+      foundFile.should.deepEqual(_.defaults({ path: '/foo/bar' }, remoteFile))
     })
   })
 
-  describe('findMaybe', function () {
-    it('does the same as find() when file or directory exists', async function () {
+  describe('findMaybe', function() {
+    it('does the same as find() when file or directory exists', async function() {
       const remoteDir = await builders.remoteDir().create()
 
       const foundDir = await remoteCozy.findMaybe(remoteDir._id)
@@ -148,17 +169,20 @@ describe('RemoteCozy', function () {
       foundDir.should.deepEqual(remoteDir)
     })
 
-    it('returns null when file or directory is not found', async function () {
+    it('returns null when file or directory is not found', async function() {
       const found = await remoteCozy.findMaybe('missing')
 
       should.not.exist(found)
     })
   })
 
-  describe('findDirectoryByPath', function () {
-    it('resolves when the directory exists remotely', async function () {
+  describe('findDirectoryByPath', function() {
+    it('resolves when the directory exists remotely', async function() {
       const dir = await builders.remoteDir().create()
-      const subdir = await builders.remoteDir().inDir(dir).create()
+      const subdir = await builders
+        .remoteDir()
+        .inDir(dir)
+        .create()
 
       const foundDir = await remoteCozy.findDirectoryByPath(dir.path)
       delete foundDir.created_at
@@ -169,28 +193,41 @@ describe('RemoteCozy', function () {
       foundSubdir.should.deepEqual(subdir)
     })
 
-    it('rejects when the directory does not exist remotely', async function () {
-      await builders.remoteFile().name('existing').inRootDir().create()
+    it('rejects when the directory does not exist remotely', async function() {
+      await builders
+        .remoteFile()
+        .name('existing')
+        .inRootDir()
+        .create()
 
       for (let path of ['/missing', '/existing/missing']) {
-        await remoteCozy.findDirectoryByPath(path)
+        await remoteCozy
+          .findDirectoryByPath(path)
           .should.be.rejectedWith(DirectoryNotFound)
       }
     })
 
-    it('rejects when the path matches a file', async function () {
-      await builders.remoteFile().name('foo').inRootDir().create()
+    it('rejects when the path matches a file', async function() {
+      await builders
+        .remoteFile()
+        .name('foo')
+        .inRootDir()
+        .create()
 
-      await remoteCozy.findDirectoryByPath('/foo')
+      await remoteCozy
+        .findDirectoryByPath('/foo')
         .should.be.rejectedWith(DirectoryNotFound)
     })
   })
 
   describe('findOrCreateDirectoryByPath', () => {
-    it('resolves with the exisisting directory if any', async function () {
+    it('resolves with the exisisting directory if any', async function() {
       const root = await remoteCozy.findDirectoryByPath('/')
       const dir = await builders.remoteDir().create()
-      const subdir = await builders.remoteDir().inDir(dir).create()
+      const subdir = await builders
+        .remoteDir()
+        .inDir(dir)
+        .create()
 
       let result = await remoteCozy.findOrCreateDirectoryByPath(root.path)
       should(result).have.properties(root)
@@ -203,11 +240,20 @@ describe('RemoteCozy', function () {
     if (process.platform === 'win32' && process.env.CI) {
       it.skip('creates any missing parent directory (unstable on AppVeyor)', () => {})
     } else {
-      it('creates any missing parent directory', async function () {
-        const dir = await builders.remoteDir().name('dir').create()
-        await builders.remoteDir().name('subdir').inDir(dir).create()
+      it('creates any missing parent directory', async function() {
+        const dir = await builders
+          .remoteDir()
+          .name('dir')
+          .create()
+        await builders
+          .remoteDir()
+          .name('subdir')
+          .inDir(dir)
+          .create()
 
-        let result = await remoteCozy.findOrCreateDirectoryByPath('/dir/subdir/foo')
+        let result = await remoteCozy.findOrCreateDirectoryByPath(
+          '/dir/subdir/foo'
+        )
         should(result).have.properties({
           type: 'directory',
           path: '/dir/subdir/foo'
@@ -225,23 +271,25 @@ describe('RemoteCozy', function () {
       })
     }
 
-    it('does not swallow errors', async function () {
+    it('does not swallow errors', async function() {
       this.config.cozyUrl = cozyStackDouble.url()
       const remoteCozy = new RemoteCozy(this.config)
 
       cozyStackDouble.stub((req, res) => {
-        res.writeHead(500, {'Content-Type': 'text/plain'})
+        res.writeHead(500, { 'Content-Type': 'text/plain' })
         res.end('Whatever')
       })
 
-      await should(remoteCozy.findOrCreateDirectoryByPath('/whatever'))
-        .be.rejected()
+      await should(
+        remoteCozy.findOrCreateDirectoryByPath('/whatever')
+      ).be.rejected()
     })
   })
 
   describe('trashById', () => {
-    it('resolves with a RemoteDoc representing the newly trashed item', async function () {
-      const orig = await builders.remoteFile()
+    it('resolves with a RemoteDoc representing the newly trashed item', async function() {
+      const orig = await builders
+        .remoteFile()
         .timestamp(2017, 1, 1, 1, 1, 1)
         .create()
 
@@ -265,47 +313,65 @@ describe('RemoteCozy', function () {
   })
 
   describe('isEmpty', () => {
-    it('is true when the folder with the given id is empty', async function () {
+    it('is true when the folder with the given id is empty', async function() {
       const dir = await builders.remoteDir().create()
       should(await remoteCozy.isEmpty(dir._id)).be.true()
 
-      const subdir = await builders.remoteDir().inDir(dir).create()
+      const subdir = await builders
+        .remoteDir()
+        .inDir(dir)
+        .create()
       should(await remoteCozy.isEmpty(dir._id)).be.false()
       should(await remoteCozy.isEmpty(subdir._id)).be.true()
 
-      await builders.remoteFile().inDir(dir).create()
+      await builders
+        .remoteFile()
+        .inDir(dir)
+        .create()
       should(await remoteCozy.isEmpty(dir._id)).be.false()
       should(await remoteCozy.isEmpty(subdir._id)).be.true()
 
-      await builders.remoteFile().inDir(subdir).create()
+      await builders
+        .remoteFile()
+        .inDir(subdir)
+        .create()
       should(await remoteCozy.isEmpty(dir._id)).be.false()
       should(await remoteCozy.isEmpty(subdir._id)).be.false()
     })
 
-    it('rejects when given a file id', async function () {
+    it('rejects when given a file id', async function() {
       const file = await builders.remoteFile().create()
       await should(remoteCozy.isEmpty(file._id)).be.rejectedWith(/wrong type/)
     })
 
-    it('rejects when no document matches the id', async function () {
-      await should(remoteCozy.isEmpty('missing')).be.rejectedWith({status: 404})
+    it('rejects when no document matches the id', async function() {
+      await should(remoteCozy.isEmpty('missing')).be.rejectedWith({
+        status: 404
+      })
     })
   })
 
-  describe('downloadBinary', function () {
-    it('resolves with a Readable stream of the file content', async function () {
-      const remoteFile = await builders.remoteFile().data('foo').create()
+  describe('downloadBinary', function() {
+    it('resolves with a Readable stream of the file content', async function() {
+      const remoteFile = await builders
+        .remoteFile()
+        .data('foo')
+        .create()
 
       const stream = await remoteCozy.downloadBinary(remoteFile._id)
 
       let data = ''
-      stream.on('data', chunk => { data += chunk })
-      stream.on('end', () => { data.should.equal('foo') })
+      stream.on('data', chunk => {
+        data += chunk
+      })
+      stream.on('end', () => {
+        data.should.equal('foo')
+      })
     })
   })
 
   describe('#warnings()', () => {
-    beforeEach(function () {
+    beforeEach(function() {
       this.config.cozyUrl = cozyStackDouble.url()
       remoteCozy = new RemoteCozy(this.config)
     })
@@ -333,7 +399,7 @@ describe('RemoteCozy', function () {
           }
         }
       ]
-      stubWarningsResponse(402, {errors: warnings})
+      stubWarningsResponse(402, { errors: warnings })
       should(await remoteCozy.warnings()).deepEqual(warnings)
     })
 
@@ -343,14 +409,14 @@ describe('RemoteCozy', function () {
     })
 
     it('assumes no warnings on unexpected 200 response', async () => {
-      stubWarningsResponse(200, {whatever: 'whatever'})
+      stubWarningsResponse(200, { whatever: 'whatever' })
       should(await remoteCozy.warnings()).deepEqual([])
     })
 
     for (let status of [401, 500]) {
       it(`does not swallow errors ${status}`, async () => {
         stubWarningsResponse(status)
-        await should(remoteCozy.warnings()).be.rejectedWith({status})
+        await should(remoteCozy.warnings()).be.rejectedWith({ status })
       })
     }
   })

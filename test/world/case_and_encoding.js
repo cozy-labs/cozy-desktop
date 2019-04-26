@@ -9,18 +9,20 @@ const MacOSRelease = require('../support/helpers/MacOSRelease')
 
 const { TRAVIS } = process.env
 
-should.Assertion.add('hex', function (expectedPretty) {
+should.Assertion.add('hex', function(expectedPretty) {
   const expected = expectedPretty.trim().split(/\s+/)
-  const actual = Buffer.from(this.obj).toString('hex').match(/.{1,2}/g)
-  this.params = {operator: `to be represented as: ${expected.join(' ')}`}
+  const actual = Buffer.from(this.obj)
+    .toString('hex')
+    .match(/.{1,2}/g)
+  this.params = { operator: `to be represented as: ${expected.join(' ')}` }
   should(actual).deepEqual(expected)
 })
 
 describe('Case and encoding basics', () => {
   // Test helpers
   const tmpdir = path.resolve(`tmp/test/unit/case_and_encoding`)
-  const abspath = (relpath) => path.join(tmpdir, relpath)
-  const createFile = (filename) => fse.ensureFile(abspath(filename))
+  const abspath = relpath => path.join(tmpdir, relpath)
+  const createFile = filename => fse.ensureFile(abspath(filename))
   const rename = (src, dst) => fse.rename(abspath(src), abspath(dst))
   const listFiles = () => fse.readdir(tmpdir)
 

@@ -22,8 +22,10 @@ const Buffer = require('../../../../core/local/steps/buffer')
 const dispatch = require('../../../../core/local/steps/dispatch')
 const winDetectMove = require('../../../../core/local/steps/win_detect_move')
 
-function dispatchedCalls (obj /*: Stub */) /*: DispatchedCalls */ {
-  const methods = Object.getOwnPropertyNames(obj).filter(m => typeof obj[m] === 'function')
+function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
+  const methods = Object.getOwnPropertyNames(obj).filter(
+    m => typeof obj[m] === 'function'
+  )
 
   const dispatchedCalls = {}
   for (const method of methods) {
@@ -38,7 +40,7 @@ function dispatchedCalls (obj /*: Stub */) /*: DispatchedCalls */ {
   return dispatchedCalls
 }
 
-describe('core/local/steps/dispatch.loop()', function () {
+describe('core/local/steps/dispatch.loop()', function() {
   let builders
   let buffer
   let events
@@ -47,8 +49,8 @@ describe('core/local/steps/dispatch.loop()', function () {
 
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('populate pouch with documents', async function () {
-    builders = new Builders({pouch: this.pouch})
+  beforeEach('populate pouch with documents', async function() {
+    builders = new Builders({ pouch: this.pouch })
     buffer = new Buffer()
 
     events = sinon.createStubInstance(SyncState)
@@ -66,21 +68,22 @@ describe('core/local/steps/dispatch.loop()', function () {
   context('when buffer contains an initial-scan-done event', () => {
     beforeEach(() => {
       buffer.push([
-        builders.event().action('initial-scan-done').build()
+        builders
+          .event()
+          .action('initial-scan-done')
+          .build()
       ])
     })
 
-    it('emits an initial-scan-done event via the emitter', async function () {
+    it('emits an initial-scan-done event via the emitter', async function() {
       await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(events)).deepEqual({
-        emit: [
-          ['initial-scan-done']
-        ]
+        emit: [['initial-scan-done']]
       })
     })
 
-    it('does not call any Prep method', async function () {
+    it('does not call any Prep method', async function() {
       await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({})
@@ -90,11 +93,14 @@ describe('core/local/steps/dispatch.loop()', function () {
   context('when buffer contains an ignored event', () => {
     beforeEach(() => {
       buffer.push([
-        builders.event().action('ignored').build()
+        builders
+          .event()
+          .action('ignored')
+          .build()
       ])
     })
 
-    it('does not call any Prep method', async function () {
+    it('does not call any Prep method', async function() {
       await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({})
@@ -117,15 +123,19 @@ describe('core/local/steps/dispatch.loop()', function () {
       ])
     })
 
-    it('triggers a call to addFileAsync with a file Metadata object', async function () {
-      const doc = builders.metafile().path(filePath).ino(1).noTags().unmerged('local').build()
+    it('triggers a call to addFileAsync with a file Metadata object', async function() {
+      const doc = builders
+        .metafile()
+        .path(filePath)
+        .ino(1)
+        .noTags()
+        .unmerged('local')
+        .build()
 
       await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
-        addFileAsync: [
-          ['local', doc]
-        ]
+        addFileAsync: [['local', doc]]
       })
     })
   })
@@ -135,19 +145,29 @@ describe('core/local/steps/dispatch.loop()', function () {
 
     beforeEach(() => {
       buffer.push([
-        builders.event().action('scan').kind('directory').path(directoryPath).ino(1).build()
+        builders
+          .event()
+          .action('scan')
+          .kind('directory')
+          .path(directoryPath)
+          .ino(1)
+          .build()
       ])
     })
 
-    it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
-      const doc = builders.metadir().path(directoryPath).ino(1).noTags().unmerged('local').build()
+    it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
+      const doc = builders
+        .metadir()
+        .path(directoryPath)
+        .ino(1)
+        .noTags()
+        .unmerged('local')
+        .build()
 
       await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
-        putFolderAsync: [
-          ['local', doc]
-        ]
+        putFolderAsync: [['local', doc]]
       })
     })
   })
@@ -168,15 +188,19 @@ describe('core/local/steps/dispatch.loop()', function () {
       ])
     })
 
-    it('triggers a call to addFileAsync with a file Metadata object', async function () {
-      const doc = builders.metafile().path(filePath).ino(1).noTags().unmerged('local').build()
+    it('triggers a call to addFileAsync with a file Metadata object', async function() {
+      const doc = builders
+        .metafile()
+        .path(filePath)
+        .ino(1)
+        .noTags()
+        .unmerged('local')
+        .build()
 
       await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
-        addFileAsync: [
-          ['local', doc]
-        ]
+        addFileAsync: [['local', doc]]
       })
     })
   })
@@ -186,19 +210,29 @@ describe('core/local/steps/dispatch.loop()', function () {
 
     beforeEach(() => {
       buffer.push([
-        builders.event().action('created').kind('directory').path(directoryPath).ino(1).build()
+        builders
+          .event()
+          .action('created')
+          .kind('directory')
+          .path(directoryPath)
+          .ino(1)
+          .build()
       ])
     })
 
-    it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
-      const doc = builders.metadir().path(directoryPath).ino(1).noTags().unmerged('local').build()
+    it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
+      const doc = builders
+        .metadir()
+        .path(directoryPath)
+        .ino(1)
+        .noTags()
+        .unmerged('local')
+        .build()
 
       await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
-        putFolderAsync: [
-          ['local', doc]
-        ]
+        putFolderAsync: [['local', doc]]
       })
     })
   })
@@ -219,15 +253,19 @@ describe('core/local/steps/dispatch.loop()', function () {
       ])
     })
 
-    it('triggers a call to updateFileAsync with a file Metadata object', async function () {
-      const doc = builders.metafile().path(filePath).ino(1).noTags().unmerged('local').build()
+    it('triggers a call to updateFileAsync with a file Metadata object', async function() {
+      const doc = builders
+        .metafile()
+        .path(filePath)
+        .ino(1)
+        .noTags()
+        .unmerged('local')
+        .build()
 
       await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
-        updateFileAsync: [
-          ['local', doc]
-        ]
+        updateFileAsync: [['local', doc]]
       })
     })
   })
@@ -237,19 +275,29 @@ describe('core/local/steps/dispatch.loop()', function () {
 
     beforeEach(() => {
       buffer.push([
-        builders.event().action('modified').kind('directory').path(directoryPath).ino(1).build()
+        builders
+          .event()
+          .action('modified')
+          .kind('directory')
+          .path(directoryPath)
+          .ino(1)
+          .build()
       ])
     })
 
-    it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
-      const doc = builders.metadir().path(directoryPath).ino(1).noTags().unmerged('local').build()
+    it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
+      const doc = builders
+        .metadir()
+        .path(directoryPath)
+        .ino(1)
+        .noTags()
+        .unmerged('local')
+        .build()
 
       await dispatch.loop(buffer, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
-        putFolderAsync: [
-          ['local', doc]
-        ]
+        putFolderAsync: [['local', doc]]
       })
     })
   })
@@ -276,18 +324,26 @@ describe('core/local/steps/dispatch.loop()', function () {
       let oldDoc
 
       beforeEach(async () => {
-        oldDoc = await builders.metadata().path(filePath).ino(1).create()
+        oldDoc = await builders
+          .metadata()
+          .path(filePath)
+          .ino(1)
+          .create()
       })
 
-      it('triggers a call to moveFileAsync with a file Metadata object', async function () {
-        const doc = builders.metafile().path(newFilePath).ino(1).noTags().unmerged('local').build()
+      it('triggers a call to moveFileAsync with a file Metadata object', async function() {
+        const doc = builders
+          .metafile()
+          .path(newFilePath)
+          .ino(1)
+          .noTags()
+          .unmerged('local')
+          .build()
 
         await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
-          moveFileAsync: [
-            ['local', doc, oldDoc]
-          ]
+          moveFileAsync: [['local', doc, oldDoc]]
         })
       })
     })
@@ -316,18 +372,32 @@ describe('core/local/steps/dispatch.loop()', function () {
       let oldDoc
 
       beforeEach(async () => {
-        oldDoc = await builders.metadata().path(filePath).ino(1).create()
+        oldDoc = await builders
+          .metadata()
+          .path(filePath)
+          .ino(1)
+          .create()
       })
 
       context('and overwriting an existing document at the event path', () => {
         let existingDoc
 
         beforeEach(async () => {
-          existingDoc = await builders.metadata().path(newFilePath).ino(2).create()
+          existingDoc = await builders
+            .metadata()
+            .path(newFilePath)
+            .ino(2)
+            .create()
         })
 
-        it('triggers a call to moveFileAsync with an overwriting file Metadata object', async function () {
-          const doc = builders.metafile().path(newFilePath).ino(1).noTags().unmerged('local').build()
+        it('triggers a call to moveFileAsync with an overwriting file Metadata object', async function() {
+          const doc = builders
+            .metafile()
+            .path(newFilePath)
+            .ino(1)
+            .noTags()
+            .unmerged('local')
+            .build()
 
           await dispatch.loop(buffer, stepOptions).pop()
 
@@ -348,19 +418,23 @@ describe('core/local/steps/dispatch.loop()', function () {
     })
 
     context('without existing documents at the event oldPath', () => {
-      it('triggers a call to addFileAsync with a file Metadata object', async function () {
-        const doc = builders.metafile().path(newFilePath).ino(1).noTags().unmerged('local').build()
+      it('triggers a call to addFileAsync with a file Metadata object', async function() {
+        const doc = builders
+          .metafile()
+          .path(newFilePath)
+          .ino(1)
+          .noTags()
+          .unmerged('local')
+          .build()
 
         await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
-          addFileAsync: [
-            ['local', doc]
-          ]
+          addFileAsync: [['local', doc]]
         })
       })
 
-      it('removes the event oldPath', async function () {
+      it('removes the event oldPath', async function() {
         const batch = await dispatch.loop(buffer, stepOptions).pop()
 
         should(batch).have.length(1)
@@ -390,36 +464,48 @@ describe('core/local/steps/dispatch.loop()', function () {
       let oldDoc
 
       beforeEach(async () => {
-        oldDoc = await builders.metadata().path(directoryPath).ino(1).create()
+        oldDoc = await builders
+          .metadata()
+          .path(directoryPath)
+          .ino(1)
+          .create()
       })
 
-      it('triggers a call to moveFolderAsync with a directory Metadata object', async function () {
-        const doc = builders.metadir().path(newDirectoryPath).ino(1).noRemote().noTags().build()
+      it('triggers a call to moveFolderAsync with a directory Metadata object', async function() {
+        const doc = builders
+          .metadir()
+          .path(newDirectoryPath)
+          .ino(1)
+          .noRemote()
+          .noTags()
+          .build()
 
         await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
-          moveFolderAsync: [
-            ['local', doc, oldDoc]
-          ]
+          moveFolderAsync: [['local', doc, oldDoc]]
         })
       })
     })
 
     context('without existing documents at the event oldPath', () => {
-      it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
-        const doc = builders.metadir().path(newDirectoryPath).ino(1).noRemote().noTags().build()
+      it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
+        const doc = builders
+          .metadir()
+          .path(newDirectoryPath)
+          .ino(1)
+          .noRemote()
+          .noTags()
+          .build()
 
         await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
-          putFolderAsync: [
-            ['local', doc]
-          ]
+          putFolderAsync: [['local', doc]]
         })
       })
 
-      it('removes the event oldPath', async function () {
+      it('removes the event oldPath', async function() {
         const batch = await dispatch.loop(buffer, stepOptions).pop()
 
         should(batch).have.length(1)
@@ -433,7 +519,13 @@ describe('core/local/steps/dispatch.loop()', function () {
 
     beforeEach(() => {
       buffer.push([
-        builders.event().action('deleted').kind('file').path(filePath).ino(1).build()
+        builders
+          .event()
+          .action('deleted')
+          .kind('file')
+          .path(filePath)
+          .ino(1)
+          .build()
       ])
     })
 
@@ -441,22 +533,24 @@ describe('core/local/steps/dispatch.loop()', function () {
       let oldDoc
 
       beforeEach(async () => {
-        oldDoc = await builders.metadata().path(filePath).ino(1).create()
+        oldDoc = await builders
+          .metadata()
+          .path(filePath)
+          .ino(1)
+          .create()
       })
 
-      it('triggers a call to trashFileAsync with the existing document', async function () {
+      it('triggers a call to trashFileAsync with the existing document', async function() {
         await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
-          trashFileAsync: [
-            ['local', oldDoc]
-          ]
+          trashFileAsync: [['local', oldDoc]]
         })
       })
     })
 
     context('without existing documents at the event path', () => {
-      it('ignores the event', async function () {
+      it('ignores the event', async function() {
         await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})
@@ -483,22 +577,24 @@ describe('core/local/steps/dispatch.loop()', function () {
       let oldDoc
 
       beforeEach(async () => {
-        oldDoc = await builders.metadata().path(directoryPath).ino(1).create()
+        oldDoc = await builders
+          .metadata()
+          .path(directoryPath)
+          .ino(1)
+          .create()
       })
 
-      it('triggers a call to trashFolderAsync with the existing document', async function () {
+      it('triggers a call to trashFolderAsync with the existing document', async function() {
         await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
-          trashFolderAsync: [
-            ['local', oldDoc]
-          ]
+          trashFolderAsync: [['local', oldDoc]]
         })
       })
     })
 
     context('without existing documents at the event path', () => {
-      it('ignores the event', async function () {
+      it('ignores the event', async function() {
         await dispatch.loop(buffer, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})

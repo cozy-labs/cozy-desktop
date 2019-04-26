@@ -25,7 +25,10 @@ module.exports = {
 //       ...
 //     })
 //
-function onMacOSAtLeast (minRelease /*: MacOSReleaseInfo */, spec /*: Function */) {
+function onMacOSAtLeast(
+  minRelease /*: MacOSReleaseInfo */,
+  spec /*: Function */
+) {
   const describeOrSkip = macOSRelease.isAtLeast(minRelease)
     ? describe
     : describe.skip
@@ -41,7 +44,10 @@ function onMacOSAtLeast (minRelease /*: MacOSReleaseInfo */, spec /*: Function *
 //       ...
 //     })
 //
-function onMacOSAtMost (maxRelease /*: MacOSReleaseInfo */, spec /*: Function */) {
+function onMacOSAtMost(
+  maxRelease /*: MacOSReleaseInfo */,
+  spec /*: Function */
+) {
   const describeOrSkip = macOSRelease.isAtMost(maxRelease)
     ? describe
     : describe.skip
@@ -49,16 +55,18 @@ function onMacOSAtMost (maxRelease /*: MacOSReleaseInfo */, spec /*: Function */
   describeOrSkip(`on ${macOSRelease.name(maxRelease)} or lower`, spec)
 }
 
-function onPlatforms (expectedPlatforms /*: Array<string> */, spec /*: Function */) {
+function onPlatforms(
+  expectedPlatforms /*: Array<string> */,
+  spec /*: Function */
+) {
   const currentPlatform = process.platform
 
-  const describeOrSkip = expectedPlatforms.indexOf(currentPlatform) > -1
-    ? describe
-    : describe.skip
+  const describeOrSkip =
+    expectedPlatforms.indexOf(currentPlatform) > -1 ? describe : describe.skip
 
   describeOrSkip(`on ${expectedPlatforms.join(' / ')}`, spec)
 }
 
-function onPlatform (platform /*: string */, spec /*: Function */) {
+function onPlatform(platform /*: string */, spec /*: Function */) {
   onPlatforms([platform], spec)
 }

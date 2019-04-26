@@ -14,7 +14,7 @@ const fse = require('fs-extra')
 const { hookRequire } = require('istanbul-lib-hook')
 const { createInstrumenter } = require('istanbul-lib-instrument') // eslint-disable-line node/no-extraneous-require
 
-const cov = global.__coverage__ = {}
+const cov = (global.__coverage__ = {})
 
 const root = path.resolve(__dirname, '..', '..')
 const tmpd = path.resolve(root, '.nyc_output')
@@ -38,5 +38,9 @@ process.on('exit', () => {
     }
   }
 
-  fse.writeFileSync(path.join(tmpd, `${process.type}.json`), JSON.stringify(cov), 'utf-8')
+  fse.writeFileSync(
+    path.join(tmpd, `${process.type}.json`),
+    JSON.stringify(cov),
+    'utf-8'
+  )
 })

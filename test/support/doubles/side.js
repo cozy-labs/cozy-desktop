@@ -20,7 +20,7 @@ const METHODS = [
   'renameConflictingDocAsync'
 ]
 
-module.exports = function stubSide () /*: Side */ {
+module.exports = function stubSide() /*: Side */ {
   const double = {}
   for (let method of METHODS) {
     double[method] = sinon.stub().resolves()

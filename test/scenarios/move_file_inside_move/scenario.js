@@ -12,9 +12,17 @@ module.exports = {
     { ino: 9, path: 'parent/src/dir/subdir/file2' }
   ],
   actions: [
-    {type: 'mv', src: 'parent/src/dir/subdir/file', dst: 'parent/src/dir/subdir/filerenamed'},
-    {type: 'mv', src: 'parent/src/dir', dst: 'parent/dst/dir'},
-    {type: 'mv', src: 'parent/dst/dir/subdir/file2', dst: 'parent/dst/dir/subdir/filerenamed2'}
+    {
+      type: 'mv',
+      src: 'parent/src/dir/subdir/file',
+      dst: 'parent/src/dir/subdir/filerenamed'
+    },
+    { type: 'mv', src: 'parent/src/dir', dst: 'parent/dst/dir' },
+    {
+      type: 'mv',
+      src: 'parent/dst/dir/subdir/file2',
+      dst: 'parent/dst/dir/subdir/filerenamed2'
+    }
   ],
   expected: {
     tree: [

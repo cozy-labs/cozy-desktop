@@ -1,4 +1,4 @@
-const {BrowserWindow, ipcMain, shell} = require('electron')
+const { BrowserWindow, ipcMain, shell } = require('electron')
 const _ = require('lodash')
 const path = require('path')
 const electron = require('electron')
@@ -10,7 +10,7 @@ const log = require('../../core/app').logger({
 })
 
 module.exports = class WindowManager {
-  constructor (app, desktop) {
+  constructor(app, desktop) {
     this.win = null
     this.app = app
     this.desktop = desktop
@@ -19,7 +19,7 @@ module.exports = class WindowManager {
     })
 
     let handlers = this.ipcEvents()
-    Object.keys(handlers).forEach((name) => {
+    Object.keys(handlers).forEach(name => {
       if (!handlers[name]) {
         throw new Error('undefined handler for event ' + name)
       }
@@ -28,34 +28,37 @@ module.exports = class WindowManager {
     ipcMain.on('renderer-error', (event, err) => {
       // Sender can be a WebContents instance not yet attached to this.win, so
       // we compare the title from browserWindowOptions:
-      if (_.get(event, 'sender.browserWindowOptions.title') === this.windowOptions().title) {
-        this.log.error({err}, err.message)
+      if (
+        _.get(event, 'sender.browserWindowOptions.title') ===
+        this.windowOptions().title
+      ) {
+        this.log.error({ err }, err.message)
       }
     })
   }
 
   /* abtract */
-  windowOptions () {
+  windowOptions() {
     throw new Error('extend WindowManager before using')
   }
 
   /* abtract */
-  ipcEvents () {
+  ipcEvents() {
     throw new Error('extend WindowManager before using')
   }
 
-  makesAppVisible () {
+  makesAppVisible() {
     return true
   }
 
-  show () {
+  show() {
     if (!this.win) return this.create()
     this.log.debug('show')
     this.win.show()
     return Promise.resolve(this.win)
   }
 
-  hide () {
+  hide() {
     if (this.win) {
       this.log.debug('hide')
       this.win.close()
@@ -63,49 +66,58 @@ module.exports = class WindowManager {
     this.win = null
   }
 
-  shown () {
+  shown() {
     return this.win != null
   }
 
-  focus () {
+  focus() {
     return this.win && this.win.focus()
   }
 
-  reload () {
+  reload() {
     if (this.win) {
       this.log.debug('reload')
       this.win.reload()
     }
   }
 
-  send (...args) {
+  send(...args) {
     this.win && this.win.webContents && this.win.webContents.send(...args)
   }
 
-  hash () {
+  hash() {
     return ''
   }
 
-  centerOnScreen (wantedWidth, wantedHeight) {
+  centerOnScreen(wantedWidth, wantedHeight) {
     try {
       const bounds = this.win.getBounds()
       // TODO : be smarter about which display to use ?
       const display = electron.screen.getDisplayMatching(bounds)
       const displaySize = display.workArea
-      const actualWidth = Math.min(wantedWidth, Math.floor(0.9 * displaySize.width))
-      const actualHeight = Math.min(wantedHeight, Math.floor(0.9 * displaySize.height))
-      this.win.setBounds({
-        x: Math.floor((displaySize.width - actualWidth) / 2),
-        y: Math.floor((displaySize.height - actualHeight) / 2),
-        width: actualWidth,
-        height: actualHeight
-      }, true /* animate on MacOS */)
+      const actualWidth = Math.min(
+        wantedWidth,
+        Math.floor(0.9 * displaySize.width)
+      )
+      const actualHeight = Math.min(
+        wantedHeight,
+        Math.floor(0.9 * displaySize.height)
+      )
+      this.win.setBounds(
+        {
+          x: Math.floor((displaySize.width - actualWidth) / 2),
+          y: Math.floor((displaySize.height - actualHeight) / 2),
+          width: actualWidth,
+          height: actualHeight
+        },
+        true /* animate on MacOS */
+      )
     } catch (err) {
-      log.error({err, wantedWidth, wantedHeight}, 'Fail to centerOnScreen')
+      log.error({ err, wantedWidth, wantedHeight }, 'Fail to centerOnScreen')
     }
   }
 
-  create () {
+  create() {
     this.log.debug('create')
     const opts = this.windowOptions()
     opts.show = false
@@ -114,11 +126,18 @@ module.exports = class WindowManager {
       opts.icon = path.join(__dirname, '../images/icon.png')
     }
     this.win = new BrowserWindow(opts)
-    this.win.on('unresponsive', () => { this.log.warn('Web page becomes unresponsive') })
-    this.win.on('responsive', () => { this.log.warn('Web page becomes responsive again') })
-    this.win.webContents.on('did-fail-load', (event, errorCode, errorDescription, url, isMainFrame) => {
-      this.log.error({errorCode, url, isMainFrame}, errorDescription)
+    this.win.on('unresponsive', () => {
+      this.log.warn('Web page becomes unresponsive')
     })
+    this.win.on('responsive', () => {
+      this.log.warn('Web page becomes responsive again')
+    })
+    this.win.webContents.on(
+      'did-fail-load',
+      (event, errorCode, errorDescription, url, isMainFrame) => {
+        this.log.error({ errorCode, url, isMainFrame }, errorDescription)
+      }
+    )
     this.centerOnScreen(opts.width, opts.height)
 
     // openExternalLinks
@@ -140,16 +159,20 @@ module.exports = class WindowManager {
     // allow per-window visibility.
     if (process.platform === 'darwin' && this.makesAppVisible()) {
       this.app.dock.show()
-      this.win.on('closed', () => { this.app.dock.hide() })
+      this.win.on('closed', () => {
+        this.app.dock.hide()
+      })
     }
 
     // dont keep  hidden windows objects
-    this.win.on('closed', () => { this.win = null })
+    this.win.on('closed', () => {
+      this.win = null
+    })
 
     let resolveCreate = null
     let promiseReady = new Promise((resolve, reject) => {
       resolveCreate = resolve
-    }).catch((err) => log.error(err))
+    }).catch(err => log.error(err))
 
     this.win.webContents.on('dom-ready', () => {
       setTimeout(() => {
@@ -163,7 +186,7 @@ module.exports = class WindowManager {
 
     // devTools
     if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
-      this.win.webContents.openDevTools({mode: 'detach'})
+      this.win.webContents.openDevTools({ mode: 'detach' })
     }
 
     return promiseReady

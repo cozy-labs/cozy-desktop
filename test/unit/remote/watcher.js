@@ -29,11 +29,11 @@ import type { RemoteDoc, RemoteDeletion } from '../../../core/remote/document'
 import type { Metadata } from '../../../core/metadata'
 */
 
-describe('RemoteWatcher', function () {
+describe('RemoteWatcher', function() {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   before(pouchHelpers.createDatabase)
-  before(function instanciateRemoteWatcher () {
+  before(function instanciateRemoteWatcher() {
     this.prep = sinon.createStubInstance(Prep)
     this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
@@ -42,15 +42,20 @@ describe('RemoteWatcher', function () {
       token: process.env.COZY_STACK_TOKEN
     })
     this.events = new EventEmitter()
-    this.watcher = new RemoteWatcher(this.pouch, this.prep, this.remoteCozy, this.events)
+    this.watcher = new RemoteWatcher(
+      this.pouch,
+      this.prep,
+      this.remoteCozy,
+      this.events
+    )
   })
-  afterEach(function removeEventListeners () {
+  afterEach(function removeEventListeners() {
     this.events.removeAllListeners()
   })
   after(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  before(async function () {
+  before(async function() {
     await pouchHelpers.createParentFolder(this.pouch)
     // FIXME: Tests pass without folder 3 & file 3
     for (let i of [1, 2, 3]) {
@@ -59,56 +64,53 @@ describe('RemoteWatcher', function () {
     }
   })
 
-  describe('start', function () {
-    beforeEach(function () {
+  describe('start', function() {
+    beforeEach(function() {
       sinon.stub(this.watcher, 'watch').returns(Promise.resolve())
       return this.watcher.start()
     })
 
-    afterEach(function () {
+    afterEach(function() {
       this.watcher.watch.restore()
     })
 
-    it('calls watch() a first time', function () {
+    it('calls watch() a first time', function() {
       this.watcher.watch.callCount.should.equal(1)
     })
   })
 
-  describe('stop', function () {
-    beforeEach(function () {
+  describe('stop', function() {
+    beforeEach(function() {
       sinon.stub(this.watcher, 'watch').returns(Promise.resolve())
     })
 
-    afterEach(function () {
+    afterEach(function() {
       this.watcher.watch.restore()
     })
 
-    it('ensures watch is not called anymore', function () {
+    it('ensures watch is not called anymore', function() {
       this.watcher.start()
       should(this.watcher.runningResolve).not.be.null()
       this.watcher.stop()
       should(this.watcher.runningResolve).be.null()
     })
 
-    it('does nothing when called again', function () {
+    it('does nothing when called again', function() {
       this.watcher.start()
       this.watcher.stop()
       this.watcher.stop()
     })
   })
 
-  describe('watch', function () {
+  describe('watch', function() {
     const lastLocalSeq = '123'
     const lastRemoteSeq = lastLocalSeq + '456'
     const changes = {
       last_seq: lastRemoteSeq,
-      docs: [
-        builders.remoteFile().build(),
-        builders.remoteDir().build()
-      ]
+      docs: [builders.remoteFile().build(), builders.remoteDir().build()]
     }
 
-    beforeEach(function () {
+    beforeEach(function() {
       sinon.stub(this.pouch, 'getRemoteSeqAsync')
       sinon.stub(this.pouch, 'setRemoteSeqAsync')
       sinon.stub(this.watcher, 'pullMany')
@@ -121,20 +123,22 @@ describe('RemoteWatcher', function () {
       return this.watcher.watch()
     })
 
-    afterEach(function () {
+    afterEach(function() {
       this.remoteCozy.changes.restore()
       this.watcher.pullMany.restore()
       this.pouch.setRemoteSeqAsync.restore()
       this.pouch.getRemoteSeqAsync.restore()
     })
 
-    it('pulls the changed files/dirs', function () {
-      this.watcher.pullMany.should.be.calledOnce()
+    it('pulls the changed files/dirs', function() {
+      this.watcher.pullMany.should.be
+        .calledOnce()
         .and.be.calledWithExactly(changes.docs)
     })
 
-    it('updates the last update sequence in local db', function () {
-      this.pouch.setRemoteSeqAsync.should.be.calledOnce()
+    it('updates the last update sequence in local db', function() {
+      this.pouch.setRemoteSeqAsync.should.be
+        .calledOnce()
         .and.be.calledWithExactly(lastRemoteSeq)
     })
   })
@@ -146,25 +150,25 @@ describe('RemoteWatcher', function () {
     return doc
   }
 
-  describe('pullMany', function () {
+  describe('pullMany', function() {
     const remoteDocs = [
       builders.remoteFile().build(),
-      {_id: dbBuilders.id(), _rev: dbBuilders.rev(), _deleted: true}
+      { _id: dbBuilders.id(), _rev: dbBuilders.rev(), _deleted: true }
     ]
     let apply
     let findMaybe
 
-    beforeEach(function () {
+    beforeEach(function() {
       apply = sinon.stub(this.watcher, 'apply')
       findMaybe = sinon.stub(this.remoteCozy, 'findMaybe')
     })
 
-    afterEach(function () {
+    afterEach(function() {
       apply.restore()
       findMaybe.restore()
     })
 
-    it('pulls many changed files/dirs given their ids', async function () {
+    it('pulls many changed files/dirs given their ids', async function() {
       apply.resolves()
 
       await this.watcher.pullMany(remoteDocs)
@@ -177,33 +181,46 @@ describe('RemoteWatcher', function () {
       should(apply.args[1][0].doc).deepEqual(remoteDocs[1])
     })
 
-    context('when apply() rejects some file/dir', function () {
-      beforeEach(function () {
-        apply.callsFake(async (change /*: RemoteChange */) /*: Promise<void> */ => {
+    context('when apply() rejects some file/dir', function() {
+      beforeEach(function() {
+        apply.callsFake(async (
+          change /*: RemoteChange */
+        ) /*: Promise<void> */ => {
           if (change.type === 'FileAddition') throw new Error('oops')
         })
       })
 
-      it('rejects with the failed ids', function () {
-        return this.watcher.pullMany(remoteDocs)
+      it('rejects with the failed ids', function() {
+        return this.watcher
+          .pullMany(remoteDocs)
           .should.be.rejectedWith(new RegExp(remoteDocs[0]._id))
       })
 
-      it('still tries to pull other files/dirs', async function () {
-        try { await this.watcher.pullMany(remoteDocs) } catch (_) {}
+      it('still tries to pull other files/dirs', async function() {
+        try {
+          await this.watcher.pullMany(remoteDocs)
+        } catch (_) {}
         should(apply).have.been.calledTwice()
-        should(apply.args[0][0]).have.properties({type: 'FileAddition', doc: validMetadata(remoteDocs[0])})
-        should(apply.args[1][0]).have.properties({type: 'IgnoredChange', doc: remoteDocs[1]})
+        should(apply.args[0][0]).have.properties({
+          type: 'FileAddition',
+          doc: validMetadata(remoteDocs[0])
+        })
+        should(apply.args[1][0]).have.properties({
+          type: 'IgnoredChange',
+          doc: remoteDocs[1]
+        })
       })
 
-      it('releases the Pouch lock', async function () {
-        try { await this.watcher.pullMany(remoteDocs) } catch (_) {}
+      it('releases the Pouch lock', async function() {
+        try {
+          await this.watcher.pullMany(remoteDocs)
+        } catch (_) {}
         const nextLockPromise = this.pouch.lock('nextLock')
         await should(nextLockPromise).be.fulfilled()
       })
     })
 
-    it('applies the changes when the document still exists on remote', async function () {
+    it('applies the changes when the document still exists on remote', async function() {
       let remoteDoc /*: RemoteDoc */ = {
         _id: '12345678904',
         _rev: '1-abcdef',
@@ -228,7 +245,7 @@ describe('RemoteWatcher', function () {
       should(apply.args[0][0].doc).deepEqual(validMetadata(remoteDoc))
     })
 
-    it('tries to apply a deletion otherwise', async function () {
+    it('tries to apply a deletion otherwise', async function() {
       const remoteDoc /*: RemoteDeletion */ = {
         _id: 'missing',
         _rev: 'whatever',
@@ -244,22 +261,32 @@ describe('RemoteWatcher', function () {
 
   describe('analyse', () => {
     describe('case-only renaming', () => {
-      it('is identified as a move', function () {
-        const oldRemote = builders.remoteFile().name('foo').build()
+      it('is identified as a move', function() {
+        const oldRemote = builders
+          .remoteFile()
+          .name('foo')
+          .build()
         const oldDoc = metadata.fromRemoteDoc(oldRemote)
         metadata.ensureValidPath(oldDoc)
         metadata.assignId(oldDoc)
-        const newRemote = _.defaults({
-          _rev: oldRemote._rev.replace(/^1/, '2'),
-          name: 'FOO',
-          path: '/FOO'
-        }, oldRemote)
+        const newRemote = _.defaults(
+          {
+            _rev: oldRemote._rev.replace(/^1/, '2'),
+            name: 'FOO',
+            path: '/FOO'
+          },
+          oldRemote
+        )
 
         const changes = this.watcher.analyse([newRemote], [oldDoc])
 
         should(changes.map(c => c.type)).deepEqual(['FileMove'])
-        should(changes[0]).have.propertyByPath('doc', 'path').eql('FOO')
-        should(changes[0]).have.propertyByPath('was', 'path').eql('foo')
+        should(changes[0])
+          .have.propertyByPath('doc', 'path')
+          .eql('FOO')
+        should(changes[0])
+          .have.propertyByPath('was', 'path')
+          .eql('foo')
       })
     })
 
@@ -275,38 +302,74 @@ describe('RemoteWatcher', function () {
         ])
 
         /* Files were synced */
-        srcFileDoc = builders.metafile().fromRemote(remoteDocs['src/file']).upToDate().build()
-        dstFileDoc = builders.metafile().fromRemote(remoteDocs['dst/file']).upToDate().build()
+        srcFileDoc = builders
+          .metafile()
+          .fromRemote(remoteDocs['src/file'])
+          .upToDate()
+          .build()
+        dstFileDoc = builders
+          .metafile()
+          .fromRemote(remoteDocs['dst/file'])
+          .upToDate()
+          .build()
         olds = [srcFileDoc, dstFileDoc]
 
         /* Moving /src/file to /dst/file (overwriting the destination) */
-        srcFileMoved = builders.remoteFile(remoteDocs['src/file']).shortRev(2).inDir(remoteDocs['dst/']).build()
-        dstFileTrashed = builders.remoteFile(remoteDocs['dst/file']).shortRev(2).trashed().build()
+        srcFileMoved = builders
+          .remoteFile(remoteDocs['src/file'])
+          .shortRev(2)
+          .inDir(remoteDocs['dst/'])
+          .build()
+        dstFileTrashed = builders
+          .remoteFile(remoteDocs['dst/file'])
+          .shortRev(2)
+          .trashed()
+          .build()
       })
 
-      const relevantChangesProps = changes => changes.map(({type, doc, was}) => {
-        const props /*: Object */ = {type, doc: {path: posixifyPath(doc.path)}}
-        if (was) props.was = {path: posixifyPath(was.path)}
-        if (doc.overwrite) props.doc.overwrite = true
-        if (was.overwrite) props.was.overwrite = true
-        return props
-      })
+      const relevantChangesProps = changes =>
+        changes.map(({ type, doc, was }) => {
+          const props /*: Object */ = {
+            type,
+            doc: { path: posixifyPath(doc.path) }
+          }
+          if (was) props.was = { path: posixifyPath(was.path) }
+          if (doc.overwrite) props.doc.overwrite = true
+          if (was.overwrite) props.was.overwrite = true
+          return props
+        })
 
-      it('is detected when moved source is first', function () {
+      it('is detected when moved source is first', function() {
         const remoteDocs = [srcFileMoved, dstFileTrashed]
         const changes = this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
-          {type: 'IgnoredChange', doc: {path: '.cozy_trash/file'}, was: {path: 'dst/file'}},
-          {type: 'FileMove', doc: {path: 'dst/file', overwrite: true}, was: {path: 'src/file'}}
+          {
+            type: 'IgnoredChange',
+            doc: { path: '.cozy_trash/file' },
+            was: { path: 'dst/file' }
+          },
+          {
+            type: 'FileMove',
+            doc: { path: 'dst/file', overwrite: true },
+            was: { path: 'src/file' }
+          }
         ])
       })
 
-      it('is detected when trashed destination is first', function () {
+      it('is detected when trashed destination is first', function() {
         const remoteDocs = [dstFileTrashed, srcFileMoved]
         const changes = this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
-          {type: 'FileMove', doc: {path: 'dst/file', overwrite: true}, was: {path: 'src/file'}},
-          {type: 'IgnoredChange', doc: {path: '.cozy_trash/file'}, was: {path: 'dst/file'}}
+          {
+            type: 'FileMove',
+            doc: { path: 'dst/file', overwrite: true },
+            was: { path: 'src/file' }
+          },
+          {
+            type: 'IgnoredChange',
+            doc: { path: '.cozy_trash/file' },
+            was: { path: 'dst/file' }
+          }
         ])
       })
     })
@@ -323,42 +386,78 @@ describe('RemoteWatcher', function () {
         ])
 
         /* Files were synced */
-        srcFileDoc = builders.metafile().fromRemote(remoteDocs['src/file']).upToDate().build()
-        dstFileDoc = builders.metafile().fromRemote(remoteDocs['dst/FILE']).upToDate().build()
+        srcFileDoc = builders
+          .metafile()
+          .fromRemote(remoteDocs['src/file'])
+          .upToDate()
+          .build()
+        dstFileDoc = builders
+          .metafile()
+          .fromRemote(remoteDocs['dst/FILE'])
+          .upToDate()
+          .build()
         olds = [srcFileDoc, dstFileDoc]
 
         /* Moving /src/file to /dst/file (overwriting the destination) */
-        srcFileMoved = builders.remoteFile(remoteDocs['src/file']).shortRev(2).inDir(remoteDocs['dst/']).build()
-        dstFileTrashed = builders.remoteFile(remoteDocs['dst/FILE']).shortRev(2).trashed().build()
+        srcFileMoved = builders
+          .remoteFile(remoteDocs['src/file'])
+          .shortRev(2)
+          .inDir(remoteDocs['dst/'])
+          .build()
+        dstFileTrashed = builders
+          .remoteFile(remoteDocs['dst/FILE'])
+          .shortRev(2)
+          .trashed()
+          .build()
       })
 
-      const relevantChangesProps = changes => changes.map(({type, doc, was}) => {
-        const props /*: Object */ = {type, doc: {path: posixifyPath(doc.path)}}
-        if (was) props.was = {path: posixifyPath(was.path)}
-        if (doc.overwrite) props.doc.overwrite = true
-        if (was.overwrite) props.was.overwrite = true
-        return props
-      })
+      const relevantChangesProps = changes =>
+        changes.map(({ type, doc, was }) => {
+          const props /*: Object */ = {
+            type,
+            doc: { path: posixifyPath(doc.path) }
+          }
+          if (was) props.was = { path: posixifyPath(was.path) }
+          if (doc.overwrite) props.doc.overwrite = true
+          if (was.overwrite) props.was.overwrite = true
+          return props
+        })
 
       describe('when moved source is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('detects the trashing before the move to prevent id confusion', function () {
+          it('detects the trashing before the move to prevent id confusion', function() {
             const remoteDocs = [srcFileMoved, dstFileTrashed]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
-              {type: 'FileTrashing', doc: {path: '.cozy_trash/FILE'}, was: {path: 'dst/FILE'}},
-              {type: 'FileMove', doc: {path: 'dst/file'}, was: {path: 'src/file'}}
+              {
+                type: 'FileTrashing',
+                doc: { path: '.cozy_trash/FILE' },
+                was: { path: 'dst/FILE' }
+              },
+              {
+                type: 'FileMove',
+                doc: { path: 'dst/file' },
+                was: { path: 'src/file' }
+              }
             ])
           })
         })
 
         onPlatform('linux', () => {
-          it('detects the move before the trashing', function () {
+          it('detects the move before the trashing', function() {
             const remoteDocs = [srcFileMoved, dstFileTrashed]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
-              {type: 'FileMove', doc: {path: 'dst/file'}, was: {path: 'src/file'}},
-              {type: 'FileTrashing', doc: {path: '.cozy_trash/FILE'}, was: {path: 'dst/FILE'}}
+              {
+                type: 'FileMove',
+                doc: { path: 'dst/file' },
+                was: { path: 'src/file' }
+              },
+              {
+                type: 'FileTrashing',
+                doc: { path: '.cozy_trash/FILE' },
+                was: { path: 'dst/FILE' }
+              }
             ])
           })
         })
@@ -366,23 +465,39 @@ describe('RemoteWatcher', function () {
 
       describe('when trashed destination is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('detects the trashing before the move to prevent id confusion', function () {
+          it('detects the trashing before the move to prevent id confusion', function() {
             const remoteDocs = [dstFileTrashed, srcFileMoved]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
-              {type: 'FileTrashing', doc: {path: '.cozy_trash/FILE'}, was: {path: 'dst/FILE'}},
-              {type: 'FileMove', doc: {path: 'dst/file'}, was: {path: 'src/file'}}
+              {
+                type: 'FileTrashing',
+                doc: { path: '.cozy_trash/FILE' },
+                was: { path: 'dst/FILE' }
+              },
+              {
+                type: 'FileMove',
+                doc: { path: 'dst/file' },
+                was: { path: 'src/file' }
+              }
             ])
           })
         })
 
         onPlatform('linux', () => {
-          it('detects the move before the trashing', function () {
+          it('detects the move before the trashing', function() {
             const remoteDocs = [dstFileTrashed, srcFileMoved]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
-              {type: 'FileMove', doc: {path: 'dst/file'}, was: {path: 'src/file'}},
-              {type: 'FileTrashing', doc: {path: '.cozy_trash/FILE'}, was: {path: 'dst/FILE'}}
+              {
+                type: 'FileMove',
+                doc: { path: 'dst/file' },
+                was: { path: 'src/file' }
+              },
+              {
+                type: 'FileTrashing',
+                doc: { path: '.cozy_trash/FILE' },
+                was: { path: 'dst/FILE' }
+              }
             ])
           })
         })
@@ -401,38 +516,74 @@ describe('RemoteWatcher', function () {
         ])
 
         /* Directories were synced */
-        srcDoc = builders.metadir().fromRemote(remoteDocs['src/dir/']).upToDate().build()
-        dstDoc = builders.metadir().fromRemote(remoteDocs['dst/dir/']).upToDate().build()
+        srcDoc = builders
+          .metadir()
+          .fromRemote(remoteDocs['src/dir/'])
+          .upToDate()
+          .build()
+        dstDoc = builders
+          .metadir()
+          .fromRemote(remoteDocs['dst/dir/'])
+          .upToDate()
+          .build()
         olds = [srcDoc, dstDoc]
 
         /* Moving /src/dir to /dst/dir (overwriting the destination) */
-        srcMoved = builders.remoteDir(remoteDocs['src/dir/']).shortRev(2).inDir(remoteDocs['dst/']).build()
-        dstTrashed = builders.remoteDir(remoteDocs['dst/dir/']).shortRev(2).trashed().build()
+        srcMoved = builders
+          .remoteDir(remoteDocs['src/dir/'])
+          .shortRev(2)
+          .inDir(remoteDocs['dst/'])
+          .build()
+        dstTrashed = builders
+          .remoteDir(remoteDocs['dst/dir/'])
+          .shortRev(2)
+          .trashed()
+          .build()
       })
 
-      const relevantChangesProps = changes => changes.map(({type, doc, was}) => {
-        const props /*: Object */ = {type, doc: {path: posixifyPath(doc.path)}}
-        if (was) props.was = {path: posixifyPath(was.path)}
-        if (doc.overwrite) props.doc.overwrite = true
-        if (was.overwrite) props.was.overwrite = true
-        return props
-      })
+      const relevantChangesProps = changes =>
+        changes.map(({ type, doc, was }) => {
+          const props /*: Object */ = {
+            type,
+            doc: { path: posixifyPath(doc.path) }
+          }
+          if (was) props.was = { path: posixifyPath(was.path) }
+          if (doc.overwrite) props.doc.overwrite = true
+          if (was.overwrite) props.was.overwrite = true
+          return props
+        })
 
-      it('is detected when moved source is first', function () {
+      it('is detected when moved source is first', function() {
         const remoteDocs = [srcMoved, dstTrashed]
         const changes = this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
-          {type: 'IgnoredChange', doc: {path: '.cozy_trash/dir'}, was: {path: 'dst/dir'}},
-          {type: 'DirMove', doc: {path: 'dst/dir', overwrite: true}, was: {path: 'src/dir'}}
+          {
+            type: 'IgnoredChange',
+            doc: { path: '.cozy_trash/dir' },
+            was: { path: 'dst/dir' }
+          },
+          {
+            type: 'DirMove',
+            doc: { path: 'dst/dir', overwrite: true },
+            was: { path: 'src/dir' }
+          }
         ])
       })
 
-      it('is detected when trashed destination is first', function () {
+      it('is detected when trashed destination is first', function() {
         const remoteDocs = [dstTrashed, srcMoved]
         const changes = this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
-          {type: 'DirMove', doc: {path: 'dst/dir', overwrite: true}, was: {path: 'src/dir'}},
-          {type: 'IgnoredChange', doc: {path: '.cozy_trash/dir'}, was: {path: 'dst/dir'}}
+          {
+            type: 'DirMove',
+            doc: { path: 'dst/dir', overwrite: true },
+            was: { path: 'src/dir' }
+          },
+          {
+            type: 'IgnoredChange',
+            doc: { path: '.cozy_trash/dir' },
+            was: { path: 'dst/dir' }
+          }
         ])
       })
     })
@@ -449,42 +600,78 @@ describe('RemoteWatcher', function () {
         ])
 
         /* Directories were synced */
-        srcDoc = builders.metadir().fromRemote(remoteDocs['src/dir/']).upToDate().build()
-        dstDoc = builders.metadir().fromRemote(remoteDocs['dst/DIR/']).upToDate().build()
+        srcDoc = builders
+          .metadir()
+          .fromRemote(remoteDocs['src/dir/'])
+          .upToDate()
+          .build()
+        dstDoc = builders
+          .metadir()
+          .fromRemote(remoteDocs['dst/DIR/'])
+          .upToDate()
+          .build()
         olds = [srcDoc, dstDoc]
 
         /* Moving /src/dir to /dst/dir (overwriting the destination) */
-        srcMoved = builders.remoteDir(remoteDocs['src/dir/']).shortRev(2).inDir(remoteDocs['dst/']).build()
-        dstTrashed = builders.remoteDir(remoteDocs['dst/DIR/']).shortRev(2).trashed().build()
+        srcMoved = builders
+          .remoteDir(remoteDocs['src/dir/'])
+          .shortRev(2)
+          .inDir(remoteDocs['dst/'])
+          .build()
+        dstTrashed = builders
+          .remoteDir(remoteDocs['dst/DIR/'])
+          .shortRev(2)
+          .trashed()
+          .build()
       })
 
-      const relevantChangesProps = changes => changes.map(({type, doc, was}) => {
-        const props /*: Object */ = {type, doc: {path: posixifyPath(doc.path)}}
-        if (was) props.was = {path: posixifyPath(was.path)}
-        if (doc.overwrite) props.doc.overwrite = true
-        if (was.overwrite) props.was.overwrite = true
-        return props
-      })
+      const relevantChangesProps = changes =>
+        changes.map(({ type, doc, was }) => {
+          const props /*: Object */ = {
+            type,
+            doc: { path: posixifyPath(doc.path) }
+          }
+          if (was) props.was = { path: posixifyPath(was.path) }
+          if (doc.overwrite) props.doc.overwrite = true
+          if (was.overwrite) props.was.overwrite = true
+          return props
+        })
 
       describe('when moved source is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('detects the trashing before the move to prevent id confusion', function () {
+          it('detects the trashing before the move to prevent id confusion', function() {
             const remoteDocs = [srcMoved, dstTrashed]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
-              {type: 'DirTrashing', doc: {path: '.cozy_trash/DIR'}, was: {path: 'dst/DIR'}},
-              {type: 'DirMove', doc: {path: 'dst/dir'}, was: {path: 'src/dir'}}
+              {
+                type: 'DirTrashing',
+                doc: { path: '.cozy_trash/DIR' },
+                was: { path: 'dst/DIR' }
+              },
+              {
+                type: 'DirMove',
+                doc: { path: 'dst/dir' },
+                was: { path: 'src/dir' }
+              }
             ])
           })
         })
 
         onPlatform('linux', () => {
-          it('is detects the move before the trashing', function () {
+          it('is detects the move before the trashing', function() {
             const remoteDocs = [srcMoved, dstTrashed]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
-              {type: 'DirMove', doc: {path: 'dst/dir'}, was: {path: 'src/dir'}},
-              {type: 'DirTrashing', doc: {path: '.cozy_trash/DIR'}, was: {path: 'dst/DIR'}}
+              {
+                type: 'DirMove',
+                doc: { path: 'dst/dir' },
+                was: { path: 'src/dir' }
+              },
+              {
+                type: 'DirTrashing',
+                doc: { path: '.cozy_trash/DIR' },
+                was: { path: 'dst/DIR' }
+              }
             ])
           })
         })
@@ -492,23 +679,39 @@ describe('RemoteWatcher', function () {
 
       describe('when trashed destination is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('detects the trashing before the move to prevent id confusion', function () {
+          it('detects the trashing before the move to prevent id confusion', function() {
             const remoteDocs = [dstTrashed, srcMoved]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
-              {type: 'DirTrashing', doc: {path: '.cozy_trash/DIR'}, was: {path: 'dst/DIR'}},
-              {type: 'DirMove', doc: {path: 'dst/dir'}, was: {path: 'src/dir'}}
+              {
+                type: 'DirTrashing',
+                doc: { path: '.cozy_trash/DIR' },
+                was: { path: 'dst/DIR' }
+              },
+              {
+                type: 'DirMove',
+                doc: { path: 'dst/dir' },
+                was: { path: 'src/dir' }
+              }
             ])
           })
         })
 
         onPlatform('linux', () => {
-          it('detects the move before the trashing ', function () {
+          it('detects the move before the trashing ', function() {
             const remoteDocs = [dstTrashed, srcMoved]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
-              {type: 'DirMove', doc: {path: 'dst/dir'}, was: {path: 'src/dir'}},
-              {type: 'DirTrashing', doc: {path: '.cozy_trash/DIR'}, was: {path: 'dst/DIR'}}
+              {
+                type: 'DirMove',
+                doc: { path: 'dst/dir' },
+                was: { path: 'src/dir' }
+              },
+              {
+                type: 'DirTrashing',
+                doc: { path: '.cozy_trash/DIR' },
+                was: { path: 'dst/DIR' }
+              }
             ])
           })
         })
@@ -516,53 +719,89 @@ describe('RemoteWatcher', function () {
     })
 
     describe('descendantMoves', () => {
-      it('handles correctly descendantMoves', function () {
-        const remoteDir1 = builders.remoteDir().name('src').build()
-        const remoteDir2 = builders.remoteDir().name('parent').inDir(remoteDir1).build()
-        const remoteFile = builders.remoteFile().name('child').inDir(remoteDir2).build()
-        const olds = [remoteDir1, remoteDir2, remoteFile].map((oldRemote) => {
+      it('handles correctly descendantMoves', function() {
+        const remoteDir1 = builders
+          .remoteDir()
+          .name('src')
+          .build()
+        const remoteDir2 = builders
+          .remoteDir()
+          .name('parent')
+          .inDir(remoteDir1)
+          .build()
+        const remoteFile = builders
+          .remoteFile()
+          .name('child')
+          .inDir(remoteDir2)
+          .build()
+        const olds = [remoteDir1, remoteDir2, remoteFile].map(oldRemote => {
           const oldDoc = metadata.fromRemoteDoc(oldRemote)
           metadata.ensureValidPath(oldDoc)
           metadata.assignId(oldDoc)
           return oldDoc
         })
 
-        const updated = (old, changes) => _.defaults({
-          _rev: old._rev.replace(/^1-[0-9a-z]{3}/, '2-xxx')
-        }, changes, old)
-
-        const shouldBeExpected = (result) => {
-          result.should.have.length(3)
-          result.map(x => x.type).sort().should.deepEqual(
-            ['DescendantChange', 'DescendantChange', 'DirMove']
+        const updated = (old, changes) =>
+          _.defaults(
+            {
+              _rev: old._rev.replace(/^1-[0-9a-z]{3}/, '2-xxx')
+            },
+            changes,
+            old
           )
+
+        const shouldBeExpected = result => {
+          result.should.have.length(3)
+          result
+            .map(x => x.type)
+            .sort()
+            .should.deepEqual([
+              'DescendantChange',
+              'DescendantChange',
+              'DirMove'
+            ])
           const dirMoveChange = result.filter(x => x.type === 'DirMove')[0]
           dirMoveChange.descendantMoves.should.have.length(2)
         }
 
-        shouldBeExpected(this.watcher.analyse([
-          updated(remoteFile, {path: '/dst/parent/child'}),
-          updated(remoteDir2, {path: '/dst/parent'}),
-          updated(remoteDir1, {name: 'dst', path: '/dst'})
-        ], olds))
+        shouldBeExpected(
+          this.watcher.analyse(
+            [
+              updated(remoteFile, { path: '/dst/parent/child' }),
+              updated(remoteDir2, { path: '/dst/parent' }),
+              updated(remoteDir1, { name: 'dst', path: '/dst' })
+            ],
+            olds
+          )
+        )
 
-        shouldBeExpected(this.watcher.analyse([
-          updated(remoteDir1, {name: 'dst', path: '/dst'}),
-          updated(remoteDir2, {path: '/dst/parent'}),
-          updated(remoteFile, {path: '/dst/parent/child'})
-        ], olds))
+        shouldBeExpected(
+          this.watcher.analyse(
+            [
+              updated(remoteDir1, { name: 'dst', path: '/dst' }),
+              updated(remoteDir2, { path: '/dst/parent' }),
+              updated(remoteFile, { path: '/dst/parent/child' })
+            ],
+            olds
+          )
+        )
 
-        shouldBeExpected(this.watcher.analyse([
-          updated(remoteDir1, {name: 'dst', path: '/dst'}),
-          updated(remoteFile, {path: '/dst/parent/child'}),
-          updated(remoteDir2, {path: '/dst/parent'})
-        ], olds))
+        shouldBeExpected(
+          this.watcher.analyse(
+            [
+              updated(remoteDir1, { name: 'dst', path: '/dst' }),
+              updated(remoteFile, { path: '/dst/parent/child' }),
+              updated(remoteDir2, { path: '/dst/parent' })
+            ],
+            olds
+          )
+        )
       })
     })
   })
 
-  describe('identifyChange', function () {
-    it('does not fail when the path is missing', function () {
+  describe('identifyChange', function() {
+    it('does not fail when the path is missing', function() {
       let remoteDoc /*: RemoteDoc */ = {
         _id: '12345678904',
         _rev: '1-abcdef',
@@ -581,7 +820,12 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(remoteDoc, null, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(
+        remoteDoc,
+        null,
+        0,
+        []
+      )
       should(change.type).equal('InvalidChange')
       // $FlowFixMe
       should(change.error.message).equal('Invalid path')
@@ -590,7 +834,7 @@ describe('RemoteWatcher', function () {
     // TODO: missing doctype test
     // TODO: file without checksum
 
-    it('does not fail on ghost file', async function () {
+    it('does not fail on ghost file', async function() {
       let remoteDoc = {
         _id: '12345678904',
         _rev: '1-abcdef',
@@ -599,20 +843,30 @@ describe('RemoteWatcher', function () {
         path: 'foo',
         name: 'bar'
       }
-      const change /*: RemoteChange */ = this.watcher.identifyChange(remoteDoc, null, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(
+        remoteDoc,
+        null,
+        0,
+        []
+      )
 
       should(change.type).equal('InvalidChange')
     })
 
     onPlatform('win32', () => {
-      it('detects path/platform incompatibilities if any', async function () {
+      it('detects path/platform incompatibilities if any', async function() {
         const remoteDoc = {
           _id: 'whatever',
           path: '/f:oo/b<a>r',
           md5sum: '9999999999999999999999999999999999999999',
           type: 'file'
         }
-        const change /*: RemoteChange */ = this.watcher.identifyChange(remoteDoc, null, 0, [])
+        const change /*: RemoteChange */ = this.watcher.identifyChange(
+          remoteDoc,
+          null,
+          0,
+          []
+        )
         const platform = process.platform
         should(change.type).equal('FileAddition')
         should(change.doc).have.property('incompatibilities', [
@@ -635,26 +889,36 @@ describe('RemoteWatcher', function () {
         ])
       })
 
-      it('does not detect any when file/dir is in the trash', async function () {
-        const change /*: RemoteChange */ = this.watcher.identifyChange({
-          _id: 'whatever',
-          path: '/.cozy_trash/f:oo/b<a>r',
-          md5sum: '9999999999999999999999999999999999999999',
-          type: 'file'
-        }, null, 0, [])
+      it('does not detect any when file/dir is in the trash', async function() {
+        const change /*: RemoteChange */ = this.watcher.identifyChange(
+          {
+            _id: 'whatever',
+            path: '/.cozy_trash/f:oo/b<a>r',
+            md5sum: '9999999999999999999999999999999999999999',
+            type: 'file'
+          },
+          null,
+          0,
+          []
+        )
         should(change.type).not.equal('RemotePlatformIncompatibleChange')
       })
     })
 
     onPlatform('darwin', () => {
-      it('detects when a new file is incompatible', async function () {
+      it('detects when a new file is incompatible', async function() {
         const remoteDoc = {
           _id: 'whatever',
           path: '/f:oo/b<a>r',
           md5sum: '9999999999999999999999999999999999999999',
           type: 'file'
         }
-        const change /*: RemoteChange */ = this.watcher.identifyChange(remoteDoc, null, 0, [])
+        const change /*: RemoteChange */ = this.watcher.identifyChange(
+          remoteDoc,
+          null,
+          0,
+          []
+        )
         const platform = process.platform
         should(change.type).equal('FileAddition')
         should((change /*: any */).doc.incompatibilities).deepEqual([
@@ -670,7 +934,7 @@ describe('RemoteWatcher', function () {
       })
     })
 
-    it('calls addDoc for a new doc', async function () {
+    it('calls addDoc for a new doc', async function() {
       this.prep.addFileAsync = sinon.stub()
       this.prep.addFileAsync.resolves(null)
       let remoteDoc /*: RemoteDoc */ = {
@@ -692,7 +956,12 @@ describe('RemoteWatcher', function () {
         }
       }
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(remoteDoc), null, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(
+        _.clone(remoteDoc),
+        null,
+        0,
+        []
+      )
 
       should(change.type).equal('FileAddition')
       should(change.doc).have.properties({
@@ -708,7 +977,7 @@ describe('RemoteWatcher', function () {
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls updateDoc when tags are updated', async function () {
+    it('calls updateDoc when tags are updated', async function() {
       this.prep.updateFileAsync = sinon.stub()
       this.prep.updateFileAsync.resolves(null)
       let remoteDoc /*: RemoteDoc */ = {
@@ -731,7 +1000,12 @@ describe('RemoteWatcher', function () {
       }
       const was = await this.pouch.byRemoteIdAsync(remoteDoc._id)
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(remoteDoc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(
+        _.clone(remoteDoc),
+        was,
+        0,
+        []
+      )
 
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
@@ -746,7 +1020,7 @@ describe('RemoteWatcher', function () {
       })
     })
 
-    it('calls updateDoc when content is overwritten', async function () {
+    it('calls updateDoc when content is overwritten', async function() {
       this.prep.updateFileAsync = sinon.stub()
       this.prep.updateFileAsync.resolves(null)
       let remoteDoc /*: RemoteDoc */ = {
@@ -763,7 +1037,12 @@ describe('RemoteWatcher', function () {
       }
       const was = await this.pouch.byRemoteIdAsync(remoteDoc._id)
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(remoteDoc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(
+        _.clone(remoteDoc),
+        was,
+        0,
+        []
+      )
 
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
@@ -779,7 +1058,7 @@ describe('RemoteWatcher', function () {
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls moveFile when file is renamed', async function () {
+    it('calls moveFile when file is renamed', async function() {
       this.prep.moveFileAsync = sinon.stub()
       this.prep.moveFileAsync.resolves(null)
       let remoteDoc /*: RemoteDoc */ = {
@@ -796,7 +1075,12 @@ describe('RemoteWatcher', function () {
       }
 
       const was = await this.pouch.byRemoteIdMaybeAsync(remoteDoc._id)
-      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(remoteDoc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(
+        _.clone(remoteDoc),
+        was,
+        0,
+        []
+      )
 
       should(change.type).equal('FileMove')
       // $FlowFixMe
@@ -824,7 +1108,7 @@ describe('RemoteWatcher', function () {
       should(dst).not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls moveFile when file is moved', async function () {
+    it('calls moveFile when file is moved', async function() {
       this.prep.moveFileAsync = sinon.stub()
       this.prep.moveFileAsync.resolves(null)
       let remoteDoc /*: RemoteDoc */ = {
@@ -845,10 +1129,17 @@ describe('RemoteWatcher', function () {
           }
         }
       }
-      const was /*: Metadata */ = await this.pouch.db.get(metadata.id(path.normalize('my-folder/file-2')))
+      const was /*: Metadata */ = await this.pouch.db.get(
+        metadata.id(path.normalize('my-folder/file-2'))
+      )
       await this.pouch.db.put(was)
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(remoteDoc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(
+        _.clone(remoteDoc),
+        was,
+        0,
+        []
+      )
 
       should(change.type).equal('FileMove')
       should(change).not.have.property('update')
@@ -877,8 +1168,12 @@ describe('RemoteWatcher', function () {
       should(dst).not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('detects when file was both moved and updated', async function () {
-      const file /*: RemoteDoc */ = await builders.remoteFile().name('meow.txt').data('meow').build()
+    it('detects when file was both moved and updated', async function() {
+      const file /*: RemoteDoc */ = await builders
+        .remoteFile()
+        .name('meow.txt')
+        .data('meow')
+        .build()
       const was /*: Metadata */ = metadata.fromRemoteDoc(file)
       metadata.ensureValidPath(was)
       metadata.assignId(was)
@@ -887,17 +1182,26 @@ describe('RemoteWatcher', function () {
       file.path = '/' + file.name
       file.md5sum = 'j9tggB6dOaUoaqAd0fT08w==' // woof
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(file), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(
+        _.clone(file),
+        was,
+        0,
+        []
+      )
 
       should(change).have.properties({
         type: 'FileMove',
         update: true
       })
-      should(change).have.propertyByPath('was', 'path').eql(was.path)
-      should(change).have.propertyByPath('doc', 'path').eql(file.name)
+      should(change)
+        .have.propertyByPath('was', 'path')
+        .eql(was.path)
+      should(change)
+        .have.propertyByPath('doc', 'path')
+        .eql(file.name)
     })
 
-    it('is invalid when local or remote file is corrupt', async function () {
+    it('is invalid when local or remote file is corrupt', async function() {
       const remoteDoc /*: RemoteDoc */ = builders.remoteFile().build()
       const was /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
       metadata.ensureValidPath(was)
@@ -907,21 +1211,35 @@ describe('RemoteWatcher', function () {
       was.size = 456
       was.remote._rev = '0'
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(_.clone(remoteDoc), was, 0, [])
+      const change /*: RemoteChange */ = this.watcher.identifyChange(
+        _.clone(remoteDoc),
+        was,
+        0,
+        []
+      )
 
       should(change).have.property('type', 'InvalidChange')
       // $FlowFixMe
       should(change.error).match(/corrupt/)
     })
 
-    xit('calls deleteDoc & addDoc when trashed', async function () {
+    xit('calls deleteDoc & addDoc when trashed', async function() {
       this.prep.deleteFolderAsync = sinon.stub()
       this.prep.deleteFolderAsync.returnsPromise().resolves(null)
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
-      const oldDir /*: RemoteDoc */ = builders.remoteDir().name('foo').build()
-      const oldMeta /*: Metadata */ = await builders.metadir().fromRemote(oldDir).create()
-      const newDir /*: RemoteDoc */ = builders.remoteDir(oldDir).trashed().build()
+      const oldDir /*: RemoteDoc */ = builders
+        .remoteDir()
+        .name('foo')
+        .build()
+      const oldMeta /*: Metadata */ = await builders
+        .metadir()
+        .fromRemote(oldDir)
+        .create()
+      const newDir /*: RemoteDoc */ = builders
+        .remoteDir(oldDir)
+        .trashed()
+        .build()
 
       this.watcher.identifyChange(newDir, null, 0, [])
 
@@ -937,14 +1255,23 @@ describe('RemoteWatcher', function () {
       should(addArgs[1]).have.properties(metadata.fromRemoteDoc(newDir))
     })
 
-    xit('calls deleteDoc & addDoc when restored', async function () {
+    xit('calls deleteDoc & addDoc when restored', async function() {
       this.prep.deleteFolder = sinon.stub()
       this.prep.deleteFolder.returnsPromise().resolves(null)
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
-      const oldDir /*: RemoteDoc */ = builders.remoteDir().name('foo').trashed().build()
-      const oldMeta /*: Metadata */ = await builders.metadir.fromRemote(oldDir).create()
-      const newDir /*: RemoteDoc */ = builders.remoteDir(oldDir).restored().build()
+      const oldDir /*: RemoteDoc */ = builders
+        .remoteDir()
+        .name('foo')
+        .trashed()
+        .build()
+      const oldMeta /*: Metadata */ = await builders.metadir
+        .fromRemote(oldDir)
+        .create()
+      const newDir /*: RemoteDoc */ = builders
+        .remoteDir(oldDir)
+        .restored()
+        .build()
 
       this.watcher.identifyChange(newDir, null, 0, [])
 
@@ -964,16 +1291,22 @@ describe('RemoteWatcher', function () {
       let addedRemoteFile
 
       beforeEach(() => {
-        addedRemoteFile = builders.remoteFile().data('initial content')
-          .shortRev(1).build()
+        addedRemoteFile = builders
+          .remoteFile()
+          .data('initial content')
+          .shortRev(1)
+          .build()
       })
 
       describe('updated', () => {
         let updatedRemoteFile
 
         beforeEach(() => {
-          updatedRemoteFile = builders.remoteFile(addedRemoteFile).shortRev(2)
-            .data('updated content').build()
+          updatedRemoteFile = builders
+            .remoteFile(addedRemoteFile)
+            .shortRev(2)
+            .data('updated content')
+            .build()
         })
 
         describe('with the added version in the changesfeed', () => {
@@ -981,14 +1314,17 @@ describe('RemoteWatcher', function () {
 
           beforeEach('simulate race condition', () => {
             remoteDoc = addedRemoteFile
-            was = builders.metafile().fromRemote(updatedRemoteFile).upToDate()
+            was = builders
+              .metafile()
+              .fromRemote(updatedRemoteFile)
+              .upToDate()
               .build()
 
             should(metadata.extractRevNumber(remoteDoc)).equal(1)
             should(metadata.extractRevNumber(was.remote)).equal(2)
           })
 
-          it('assumes the file is up-to-date since remote rev number is lower', async function () {
+          it('assumes the file is up-to-date since remote rev number is lower', async function() {
             const change = this.watcher.identifyChange(remoteDoc, was, 0, [])
             should(change.type).equal('UpToDate')
           })
