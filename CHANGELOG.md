@@ -1,5 +1,60 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.0 - 2019-04-29
+
+Improvements for Windows and GNU/Linux users:
+
+- We completely revamped the local watcher (the component looking for changes
+  in your local *Cozy Drive* directory). It should now be faster and more
+  reliable when synchronizing live changes. Expect a few more optimizations
+  regarding the initial scan very soon.
+- The watcher type used (i.e. atom or chokidar) can still be chosen via the
+  config file. The new watcher (atom) is the default on Windows and GNU/Linux.
+
+Improvements for all users:
+
+- We've updated our icons to reflect the new Cozy branding with a deep blue
+  instead of the faded one and more of that blue around our lovely little cloud.
+- The remote watcher now ignores changes with a revision lower than the one
+  we've saved on the associated document in the local Pouch. Failing to do so
+  was leading to files disappearing locally (before reappearing a short while
+  later) during their upload to the Cozy. This could also be the cause of
+  unexpected and undocumented behavior.
+- Since it could be surprising and even misleading, we've removed the count of
+  the remaining items to be synchronised until we can be sure it's always
+  accurate. In the meantime, you'll see a simpler message indicating the client
+  is syncing.
+- We fixed an issue we had in the generation of a conflict file name
+  where the conflict suffixes could be added indefinitely in case the
+  conflicting file would get in conflict again. It happened that directories or
+  files without an extension were still subject to a similar issue.
+  We made sure they will only ever have one conflict suffix added to
+  their name even in case they get in conflict again.
+- During the synchronisation process, a document can change either locally
+  (e.g. its checksum has changed because of a modification) or on the Cozy
+  (e.g. the file was moved or modified by another client). In this situation the
+  Cozy won't accept the change and will answer with an error. When we receive
+  errors from the Cozy we retry up to 3 times to apply the change but if the
+  document has changed, we will never be able to apply it and will only lose
+  time by retrying.
+  We now retry only on network and disk space errors to speed up the
+  synchronisation of files rapidly changing.
+- Files and folders named like a volume (e.g. C:) and at the root of the folder
+  watched by Cozy Desktop could lead to an infinite loop if they or any of their
+  children were ever modified. Those are now handled properly and won't be
+  ignored either.
+- Fixed a race condition case were a sharing could be disabled when a folder
+  was moved locally while another one was added remotely to the same
+  destination.
+- We updated one of our main dependencies, Electron, to its 2.x version. We are
+  still not using the latest version but this one brings us back support from
+  the Electron team and security fixes. Other updates will come in the following
+  releases.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.0-beta.8 - 2019-04-25
 
 Improvements for Windows and GNU/Linux users:
