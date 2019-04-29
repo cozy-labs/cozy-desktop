@@ -8,7 +8,10 @@ const Registration = require('../../core/remote/registration')
 
 module.exports = automatedRegistration
 
-const client = request.defaults({ jar: true })
+const client = request.defaults({
+  jar: true,
+  timeout: 120000
+})
 const log = logger({
   component: 'remote/automated_registration'
 })
