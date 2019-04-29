@@ -12,18 +12,12 @@ module.exports = ({
   actions: [
     // Trashing is not needed when running the scenario on the local side, but
     // it is needed when running on the remote side to prevent 409 errors.
-    {type: 'trash', path: 'dst/file'},
-    {type: 'mv', src: 'src/file', dst: 'dst/file'}
+    { type: 'trash', path: 'dst/file' },
+    { type: 'mv', src: 'src/file', dst: 'dst/file' }
   ],
   expected: {
-    tree: [
-      'dst/',
-      'dst/file',
-      'src/'
-    ],
-    remoteTrash: [
-      'file'
-    ],
+    tree: ['dst/', 'dst/file', 'src/'],
+    remoteTrash: ['file'],
     contents: {
       'dst/file': 'src-content'
     }

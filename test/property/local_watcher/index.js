@@ -17,14 +17,14 @@ const TmpDir = require('../../support/helpers/TmpDir')
 
 const { run } = require('../runner')
 
-describe('Local watcher', function () {
+describe('Local watcher', function() {
   this.timeout(240000)
   this.slow(30000)
 
   const scenarios = glob.sync(path.join(__dirname, '*.json'))
   scenarios.forEach(scenario => {
     scenario = path.normalize(scenario)
-    it(`works fine for ${path.basename(scenario)}`, async function () {
+    it(`works fine for ${path.basename(scenario)}`, async function() {
       const ops = await fse.readJson(scenario)
       if (ops.length > 0 && ops[0].op === 'pending') {
         return this.skip(ops[0].msg || 'pending')

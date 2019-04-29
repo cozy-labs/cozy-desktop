@@ -25,7 +25,7 @@ describe('Executable handling', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
     syncDir = helpers.local.syncDir
@@ -46,7 +46,7 @@ describe('Executable handling', () => {
     }
   }
 
-  const unmergedChanges = async relpath => {
+  const unmergedChanges = async () => {
     helpers.spyPouch()
     await helpers.local.scan()
     await helpers.remote.pullChanges()
@@ -65,7 +65,7 @@ describe('Executable handling', () => {
           pouch: true,
           remote: true
         })
-        should(await unmergedChanges('file')).deepEqual([])
+        should(await unmergedChanges()).deepEqual([])
       })
     })
   })
@@ -77,46 +77,43 @@ describe('Executable handling', () => {
       await helpers.syncAll()
 
       should(await executableStatus('file')).deepEqual({
-        local: platform === 'win32'
-          ? WINDOWS_DEFAULT_MODE // actually the same, but better separate
-          : '666',
+        local:
+          platform === 'win32'
+            ? WINDOWS_DEFAULT_MODE // actually the same, but better separate
+            : '666',
         pouch: undefined,
         remote: false
       })
-      should(await unmergedChanges('file')).deepEqual([])
+      should(await unmergedChanges()).deepEqual([])
     })
   })
 
   describe('adding a remote executable file', () => {
     it('is executable everywhere, except on Windows', async () => {
-      await cozy.files.create('whatever content', {name: 'file'})
-      await cozy.files.updateAttributesByPath('/file', {executable: true})
+      await cozy.files.create('whatever content', { name: 'file' })
+      await cozy.files.updateAttributesByPath('/file', { executable: true })
       await helpers.pullAndSyncAll()
 
       should(await executableStatus('file')).deepEqual({
-        local: platform === 'win32'
-          ? WINDOWS_DEFAULT_MODE
-          : '755', // assuming umask 022
+        local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '755', // assuming umask 022
         pouch: true,
         remote: true
       })
-      should(await unmergedChanges('file')).deepEqual([])
+      should(await unmergedChanges()).deepEqual([])
     })
   })
 
   describe('adding a remote non-executable file', () => {
     it('is not executable anywhere', async () => {
-      await cozy.files.create('whatever content', {name: 'file'})
+      await cozy.files.create('whatever content', { name: 'file' })
       await helpers.pullAndSyncAll()
 
       should(await executableStatus('file')).deepEqual({
-        local: platform === 'win32'
-          ? WINDOWS_DEFAULT_MODE
-          : '644', // assuming umask 022
+        local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '644', // assuming umask 022
         pouch: undefined,
         remote: false
       })
-      should(await unmergedChanges('file')).deepEqual([])
+      should(await unmergedChanges()).deepEqual([])
     })
   })
 
@@ -139,32 +136,30 @@ describe('Executable handling', () => {
             pouch: true,
             remote: true
           })
-          should(await unmergedChanges('file')).deepEqual([])
+          should(await unmergedChanges()).deepEqual([])
         })
       })
     })
 
     describe('making it executable remotely', () => {
       it('is executable everywhere, forcing 755 locally, except on Windows', async () => {
-        await cozy.files.updateAttributesByPath('/file', {executable: true})
+        await cozy.files.updateAttributesByPath('/file', { executable: true })
         await helpers.pullAndSyncAll()
 
         should(await executableStatus('file')).deepEqual({
-          local: platform === 'win32'
-            ? WINDOWS_DEFAULT_MODE
-            : '755',
+          local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '755',
           pouch: true,
           remote: true
         })
-        should(await unmergedChanges('file')).deepEqual([])
+        should(await unmergedChanges()).deepEqual([])
       })
     })
   })
 
   context('with a synced executable file', () => {
     beforeEach(async () => {
-      await cozy.files.create('whatever content', {name: 'file'})
-      await cozy.files.updateAttributesByPath('/file', {executable: true})
+      await cozy.files.create('whatever content', { name: 'file' })
+      await cozy.files.updateAttributesByPath('/file', { executable: true })
       await helpers.pullAndSyncAll()
     })
 
@@ -180,24 +175,22 @@ describe('Executable handling', () => {
             pouch: undefined,
             remote: false
           })
-          should(await unmergedChanges('file')).deepEqual([])
+          should(await unmergedChanges()).deepEqual([])
         })
       })
     })
 
     describe('making it non-executable remotely', () => {
       it('is non-executable everywhere', async () => {
-        await cozy.files.updateAttributesByPath('/file', {executable: false})
+        await cozy.files.updateAttributesByPath('/file', { executable: false })
         await helpers.pullAndSyncAll()
 
         should(await executableStatus('file')).deepEqual({
-          local: platform === 'win32'
-            ? WINDOWS_DEFAULT_MODE
-            : '644',
+          local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '644',
           pouch: undefined,
           remote: false
         })
-        should(await unmergedChanges('file')).deepEqual([])
+        should(await unmergedChanges()).deepEqual([])
       })
     })
   })

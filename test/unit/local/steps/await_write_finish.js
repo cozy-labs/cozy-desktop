@@ -14,7 +14,7 @@ const lastEventToCheckEmptyness = {
   path: ''
 }
 
-async function heuristicIsEmpty (buffer) {
+async function heuristicIsEmpty(buffer) {
   const expected = await buffer.pop()
   return (
     (expected.length === 1 &&
@@ -23,7 +23,7 @@ async function heuristicIsEmpty (buffer) {
           acc && expected[0][prop] === lastEventToCheckEmptyness[prop],
         true
       )) ||
-    console.log(expected)
+    console.log(expected) // eslint-disable-line no-console
   )
 }
 
@@ -70,9 +70,7 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         buffer.push([Object.assign({}, event)])
       })
       const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-      should(await enhancedBuffer.pop()).eql([
-        originalBatch[1]
-      ])
+      should(await enhancedBuffer.pop()).eql([originalBatch[1]])
       should(await heuristicIsEmpty(enhancedBuffer)).be.true()
     })
 
@@ -278,9 +276,7 @@ describe('core/local/steps/await_write_finish.loop()', () => {
       ]
       buffer.push(_.cloneDeep(originalBatch))
       const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-      should(await enhancedBuffer.pop()).eql([
-        lastEventToCheckEmptyness
-      ])
+      should(await enhancedBuffer.pop()).eql([lastEventToCheckEmptyness])
     })
 
     it('should reduce modified→deleted to deleted', async () => {
@@ -379,9 +375,7 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         ]
         buffer.push(_.cloneDeep(originalBatch))
         const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-        should(await enhancedBuffer.pop()).eql([
-          lastEventToCheckEmptyness
-        ])
+        should(await enhancedBuffer.pop()).eql([lastEventToCheckEmptyness])
       })
     })
 

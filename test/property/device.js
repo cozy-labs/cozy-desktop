@@ -20,7 +20,7 @@ class Device {
   stopped: ?Promise<void>
   */
 
-  constructor (name /*: string */, stack /*: Stack */) {
+  constructor(name /*: string */, stack /*: Stack */) {
     this.name = name
     this.stack = stack
     this.desktopDir = null
@@ -28,7 +28,7 @@ class Device {
     this.stopped = null
   }
 
-  async register (dir /*: ContextDir */) /*: Promise<void> */ {
+  async register(dir /*: ContextDir */) /*: Promise<void> */ {
     const client = await this.stack.registerClient(this.name)
     const token = await this.stack.createToken(client)
     const desktopDir = path.join(dir.root + '-config', '.cozy-desktop')
@@ -42,8 +42,10 @@ class Device {
     this.desktopDir = path.dirname(desktopDir)
   }
 
-  async start () /*: Promise<void> */ {
-    if (this.child) { return }
+  async start() /*: Promise<void> */ {
+    if (this.child) {
+      return
+    }
     if (!this.desktopDir) {
       throw new Error('Client has not been configured')
     }
@@ -58,26 +60,34 @@ class Device {
       env: env
     })
     this.stopped = new Promise((resolve, reject) => {
-      this.child && this.child.on('exit', () => {
-        this.child = null
-        resolve()
-      })
-      this.child && this.child.on('error', err => {
-        this.child = null
-        reject(err)
-      })
+      this.child &&
+        this.child.on('exit', () => {
+          this.child = null
+          resolve()
+        })
+      this.child &&
+        this.child.on('error', err => {
+          this.child = null
+          reject(err)
+        })
     })
   }
 
-  async stop () /*: Promise<void> */ {
-    if (!this.child) { return }
+  async stop() /*: Promise<void> */ {
+    if (!this.child) {
+      return
+    }
     this.child.kill()
     await this.stopped
     // TODO electron starts several processes and daemonizes itself
   }
 }
 
-async function setupDevice (deviceName /*: string */, dir /*: ContextDir */, stack /*: Stack */) {
+async function setupDevice(
+  deviceName /*: string */,
+  dir /*: ContextDir */,
+  stack /*: Stack */
+) {
   const device = new Device(deviceName, stack)
   await device.register(dir)
   return { dir, device }

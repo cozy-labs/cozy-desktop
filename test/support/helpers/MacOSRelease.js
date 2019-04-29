@@ -10,8 +10,14 @@ export opaque type MacOSReleaseInfo = {
 */
 
 // https://en.wikipedia.org/wiki/Darwin_(operating_system)#Release_history
-const HIGH_SIERRA_10_13 /*: MacOSReleaseInfo */ = {darwinMajor: 17, name: 'High Sierra 10.13'}
-const SIERRA_10_12 /*: MacOSReleaseInfo */ = {darwinMajor: 16, name: 'Sierra 10.12'}
+const HIGH_SIERRA_10_13 /*: MacOSReleaseInfo */ = {
+  darwinMajor: 17,
+  name: 'High Sierra 10.13'
+}
+const SIERRA_10_12 /*: MacOSReleaseInfo */ = {
+  darwinMajor: 16,
+  name: 'Sierra 10.12'
+}
 
 module.exports = {
   HIGH_SIERRA_10_13,
@@ -25,7 +31,7 @@ module.exports = {
 //
 //     MacOSRelease.name(MacOSRelease.HIGH_SIERRA_10_13)
 //
-function name (release /*: MacOSReleaseInfo */) /*: string */ {
+function name(release /*: MacOSReleaseInfo */) /*: string */ {
   return `macOS ${release.name}`
 }
 
@@ -38,7 +44,7 @@ const major = Number.parseInt(os.release().split('.')[0])
 //       ...
 //     }
 //
-function isAtLeast (minRelease /*: MacOSReleaseInfo */) /*: bool */ {
+function isAtLeast(minRelease /*: MacOSReleaseInfo */) /*: bool */ {
   if (!isDarwin) return false
   return major >= minRelease.darwinMajor
 }
@@ -49,7 +55,7 @@ function isAtLeast (minRelease /*: MacOSReleaseInfo */) /*: bool */ {
 //       ...
 //     }
 //
-function isAtMost (maxRelease /*: MacOSReleaseInfo */) /*: bool */ {
+function isAtMost(maxRelease /*: MacOSReleaseInfo */) /*: bool */ {
   if (!isDarwin) return false
   return major <= maxRelease.darwinMajor
 }

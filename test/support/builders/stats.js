@@ -35,42 +35,40 @@ class DefaultStatsBuilder {
   stats: fs.Stats
   */
 
-  constructor (oldStats /*: ?fs.Stats */) {
+  constructor(oldStats /*: ?fs.Stats */) {
     this.stats = oldStats
       ? _.clone(oldStats)
       : Object.assign(
-        new fs.Stats(),
-        {
-          mode: defaultFileMode,
-          birthtime: defaultDate()
-        },
-        commonDefaults()
-      )
+          new fs.Stats(),
+          {
+            mode: defaultFileMode,
+            birthtime: defaultDate()
+          },
+          commonDefaults()
+        )
   }
 
-  ino (newIno /*: number */) /*: this */ {
+  ino(newIno /*: number */) /*: this */ {
     this.stats.ino = newIno
     return this
   }
 
-  kind (newKind /*: EventKind */) /*: this */ {
-    this.stats.mode = newKind === 'file'
-      ? defaultFileMode
-      : defaultDirMode
+  kind(newKind /*: EventKind */) /*: this */ {
+    this.stats.mode = newKind === 'file' ? defaultFileMode : defaultDirMode
     return this
   }
 
-  mtime (newMtime /*: Date */) /*: this */ {
+  mtime(newMtime /*: Date */) /*: this */ {
     this.stats.mtime = newMtime
     return this
   }
 
-  ctime (newCtime /*: Date */) /*: this */ {
+  ctime(newCtime /*: Date */) /*: this */ {
     this.stats.ctime = newCtime
     return this
   }
 
-  build () {
+  build() {
     return this.stats
   }
 }
@@ -79,7 +77,11 @@ class DefaultStatsBuilder {
  * hexadecimal string.
  */
 const fileIdFromNumber = (n /*: number */) =>
-  '0x' + n.toString(16).toUpperCase().padStart(16, '0')
+  '0x' +
+  n
+    .toString(16)
+    .toUpperCase()
+    .padStart(16, '0')
 
 /** Build a @gyselroth/windows-fsstat object */
 class WinStatsBuilder {
@@ -87,50 +89,48 @@ class WinStatsBuilder {
   winStats: WinStats
   */
 
-  constructor (oldStats /*: ?WinStats */) {
+  constructor(oldStats /*: ?WinStats */) {
     this.winStats = oldStats
       ? _.clone(oldStats)
       : Object.assign(
-        ({
-          fileid: fileIdFromNumber(commonDefaults().ino),
-          directory: false,
-          symbolicLink: false
-        } /*: Object */),
-        commonDefaults()
-      )
+          ({
+            fileid: fileIdFromNumber(commonDefaults().ino),
+            directory: false,
+            symbolicLink: false
+          } /*: Object */),
+          commonDefaults()
+        )
   }
 
-  ino (newIno /*: number */) /*: this */ {
+  ino(newIno /*: number */) /*: this */ {
     this.winStats.fileid = fileIdFromNumber(newIno)
     this.winStats.ino = newIno
     return this
   }
 
-  kind (newKind /*: EventKind */) /*: this */ {
+  kind(newKind /*: EventKind */) /*: this */ {
     this.winStats.directory = newKind === 'directory'
     this.winStats.symbolicLink = newKind === 'symlink'
     return this
   }
 
-  mtime (newMtime /*: Date */) /*: this */ {
+  mtime(newMtime /*: Date */) /*: this */ {
     this.winStats.mtime = newMtime
     return this
   }
 
-  ctime (newCtime /*: Date */) /*: this */ {
+  ctime(newCtime /*: Date */) /*: this */ {
     this.winStats.ctime = newCtime
     return this
   }
 
-  build () {
+  build() {
     return this.winStats
   }
 }
 
 const forPlatform = (platform = process.platform) =>
-  platform === 'win32'
-    ? new WinStatsBuilder()
-    : new DefaultStatsBuilder()
+  platform === 'win32' ? new WinStatsBuilder() : new DefaultStatsBuilder()
 
 const fromStats = (baseStats /*: ?(WinStats | fs.Stats) */) => {
   if (baseStats instanceof fs.Stats) return new DefaultStatsBuilder(baseStats)

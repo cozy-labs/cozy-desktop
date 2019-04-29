@@ -15,21 +15,35 @@ program
 const scenarioArg = program.args[0]
 
 if (scenarioArg) {
-  const match = scenarioArg.match(new RegExp(path.posix.join(
-    '^.*', '?test', 'scenarios', `([^${path.posix.sep}]+)`, '?.*$')))
+  const match = scenarioArg.match(
+    new RegExp(
+      path.posix.join(
+        '^.*',
+        '?test',
+        'scenarios',
+        `([^${path.posix.sep}]+)`,
+        '?.*$'
+      )
+    )
+  )
 
   if (!match) throw new Error(`Invalid argument: ${scenarioArg}`)
-  const scenario = scenarioHelpers.scenarioByPath(path.join(
-      __dirname, '..', 'test', 'scenarios', match[1], 'scenario.js'))
+  const scenario = scenarioHelpers.scenarioByPath(
+    path.join(__dirname, '..', 'test', 'scenarios', match[1], 'scenario.js')
+  )
 
-  local.setupInitialState(scenario)
-  .then(() => console.log('Inodes :', local.mapInode))
-  .then(startChokidar)
+  local
+    .setupInitialState(scenario)
+    .then(() => {
+      // eslint-disable-next-line no-console
+      console.log('Inodes :', local.mapInode)
+    })
+    .then(startChokidar)
 } else {
   startChokidar()
 }
 
-function startChokidar () {
+function startChokidar() {
   const syncPath = local.syncPath
   opn(syncPath)
 
@@ -40,7 +54,7 @@ function startChokidar () {
     ignored: /(^|[\/\\])\.system-tmp-cozy-drive/, // eslint-disable-line no-useless-escape
     followSymlinks: false,
     alwaysStat: true,
-    usePolling: (process.platform === 'win32'),
+    usePolling: process.platform === 'win32',
     atomic: true,
     awaitWriteFinish: {
       pollInterval: 200,
@@ -51,14 +65,20 @@ function startChokidar () {
   })
   for (let eventType of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
     watcher.on(eventType, (relpath, stats) => {
-      const {ino} = stats || {}
+      const { ino } = stats || {}
+      // eslint-disable-next-line no-console
       console.log(eventType, relpath, `[${ino}]`)
     })
   }
-  watcher.on('error', (err) => console.error('error', err))
+  watcher.on('error', err => {
+    // eslint-disable-next-line no-console
+    console.error('error', err)
+  })
   watcher.on('raw', (event, path, details) => {
+    // eslint-disable-next-line no-console
     console.log('raw:' + event, path, details)
   })
 
+  // eslint-disable-next-line no-console
   console.log(`Watching ${syncPath}`)
 }

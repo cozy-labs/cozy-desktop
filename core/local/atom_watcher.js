@@ -49,19 +49,18 @@ const log = logger({
 const only = (platform, step) => platform === process.platform && step
 
 /** The steps for the current platform. */
-const steps =
-  _.compact([
-    addInfos,
-    filterIgnored,
-    only('win32', winIdenticalRenaming),
-    only('win32', winDetectMove),
-    scanFolder,
-    awaitWriteFinish,
-    initialDiff,
-    addChecksum,
-    incompleteFixer,
-    overwritingMove
-  ])
+const steps = _.compact([
+  addInfos,
+  filterIgnored,
+  only('win32', winIdenticalRenaming),
+  only('win32', winDetectMove),
+  scanFolder,
+  awaitWriteFinish,
+  initialDiff,
+  addChecksum,
+  incompleteFixer,
+  overwritingMove
+])
 
 /** The producer for the current platform. */
 const producer = opts => {
@@ -72,7 +71,10 @@ const producer = opts => {
   }
 }
 
-const stepsInitialState = (state /*: Object */, opts /*: * */) /*: Promise<Object> */ =>
+const stepsInitialState = (
+  state /*: Object */,
+  opts /*: * */
+) /*: Promise<Object> */ =>
   Promise.reduce(
     steps,
     async (prevState, step) =>
@@ -94,7 +96,7 @@ class AtomWatcher {
   _runningReject: ?Function
   */
 
-  constructor (opts /*: AtomWatcherOptions */) {
+  constructor(opts /*: AtomWatcherOptions */) {
     this.pouch = opts.pouch
     this.events = opts.events
     this.checksumer = checksumer.init()
@@ -113,11 +115,14 @@ class AtomWatcher {
     // communicates with the next one via a buffer. The first step is called
     // the producer: even if the chain is ready at the end of this constructor,
     // the producer won't start pushing batches of events until it is started.
-    let buffer = steps.reduce((buf, step) => step.loop(buf, stepOptions), this.producer.buffer)
+    let buffer = steps.reduce(
+      (buf, step) => step.loop(buf, stepOptions),
+      this.producer.buffer
+    )
     dispatch.loop(buffer, stepOptions)
   }
 
-  async start () {
+  async start() {
     log.debug('starting...')
     this.running = new Promise((resolve, reject) => {
       this._runningResolve = resolve
@@ -126,15 +131,16 @@ class AtomWatcher {
     this.events.emit('local-start')
     await stepsInitialState(this.state, this)
     this.producer.start()
-    const scanDone = new Promise((resolve) => {
+    const scanDone = new Promise(resolve => {
       this.events.on('initial-scan-done', resolve)
     })
     scanDone.then(async () => {
       let target = -1
       try {
-        target = (await this.pouch.db.changes({limit: 1, descending: true})).last_seq
+        target = (await this.pouch.db.changes({ limit: 1, descending: true }))
+          .last_seq
       } catch (err) {
-        log.warn({err})
+        log.warn({ err })
         /* ignore err */
       }
       this.events.emit('sync-target', target)
@@ -143,7 +149,7 @@ class AtomWatcher {
     return scanDone
   }
 
-  async stop (force /*: ? bool */) /*: Promise<*> */ {
+  async stop() /*: Promise<*> */ {
     log.debug('stopping...')
     if (this._runningResolve) {
       this._runningResolve()

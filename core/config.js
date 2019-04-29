@@ -28,7 +28,7 @@ class Config {
   */
 
   // Create config file if it doesn't exist.
-  constructor (basePath /*: string */) {
+  constructor(basePath /*: string */) {
     this.configPath = path.join(basePath, 'config.json')
     fse.ensureFileSync(this.configPath)
     this.dbPath = path.join(basePath, 'db')
@@ -39,7 +39,7 @@ class Config {
   }
 
   // Read the configuration from disk
-  read () /*: FileConfig */ {
+  read() /*: FileConfig */ {
     if (fse.existsSync(this.tmpConfigPath)) {
       const tmpConfig = loadOrDeleteFile(this.tmpConfigPath)
 
@@ -53,27 +53,31 @@ class Config {
   }
 
   // Reset the configuration
-  reset () {
+  reset() {
     this.fileConfig = Object.create(null)
     this.clear()
     this.persist()
   }
 
   // Save configuration to file system.
-  persist () {
+  persist() {
     this._writeTmpConfig(this.toJSON())
     this._moveTmpConfig()
   }
 
-  _writeTmpConfig (config /*: string */) {
+  _writeTmpConfig(config /*: string */) {
     fse.ensureFileSync(this.tmpConfigPath)
     fse.writeFileSync(this.tmpConfigPath, config)
   }
 
-  _moveTmpConfig () {
+  _moveTmpConfig() {
     if (fs.copyFileSync && fs.constants.COPYFILE_FICLONE) {
       // Node v8.5.0+ can use a copy-on-write reflink
-      fs.copyFileSync(this.tmpConfigPath, this.configPath, fs.constants.COPYFILE_FICLONE)
+      fs.copyFileSync(
+        this.tmpConfigPath,
+        this.configPath,
+        fs.constants.COPYFILE_FICLONE
+      )
     } else {
       // Fallback for old node versions
       fse.copySync(this.tmpConfigPath, this.configPath)
@@ -82,85 +86,87 @@ class Config {
   }
 
   // Transform the config to a JSON string
-  toJSON () /*: string */ {
+  toJSON() /*: string */ {
     return JSON.stringify(this.fileConfig, null, 2)
   }
 
   // Get the tmp config path associated with the current config path
-  get tmpConfigPath () /*: string */ {
+  get tmpConfigPath() /*: string */ {
     return this.configPath + '.tmp'
   }
 
   // Get the path on the local file system of the synchronized folder
-  get syncPath () /*: string */ {
+  get syncPath() /*: string */ {
     return this.fileConfig.path
   }
 
   // Set the path on the local file system of the synchronized folder
-  set syncPath (path /*: string */) {
+  set syncPath(path /*: string */) {
     this.fileConfig.path = path
   }
 
   // Return the URL of the cozy instance
-  get cozyUrl () /*: string */ {
+  get cozyUrl() /*: string */ {
     return this.fileConfig.url
   }
 
   // Set the URL of the cozy instance
-  set cozyUrl (url /*: string */) {
+  set cozyUrl(url /*: string */) {
     this.fileConfig.url = url
   }
 
-  get gui () /*: * */ {
+  get gui() /*: * */ {
     return this.fileConfig.gui || {}
   }
 
   // Return true if a device has been configured
-  isValid () /*: bool */ {
+  isValid() /*: bool */ {
     return !!(this.fileConfig.creds && this.cozyUrl)
   }
 
   // Return the name of the registered client
-  get deviceName () /*: ?string */ {
+  get deviceName() /*: ?string */ {
     return _.get(this, 'config.creds.client.clientName', '')
   }
 
   // Return config related to the OAuth client
-  get client () /*: * */ {
+  get client() /*: * */ {
     if (!this.fileConfig.creds) {
       throw new Error(`Device not configured`)
     }
     return this.fileConfig.creds.client
   }
 
-  get version () /*: ?string */ {
+  get version() /*: ?string */ {
     return _.get(this, 'config.creds.client.softwareVersion')
   }
 
-  get permissions () /*: * */ {
+  get permissions() /*: * */ {
     const scope = _.get(this, 'config.creds.token.scope')
     return scope ? scope.split(' ') : []
   }
 
   // Set the remote configuration
-  set client (options /*: * */) {
+  set client(options /*: * */) {
     this.fileConfig.creds = { client: options }
     this.persist()
   }
 
-  get watcherType () /*: WatcherType */ {
+  get watcherType() /*: WatcherType */ {
     return watcherType(this.fileConfig)
   }
 
   // Set the pull, push or full mode for this device
   // It will throw an exception if the mode is not compatible with the last
   // mode used!
-  saveMode (mode /*: SyncMode */) {
+  saveMode(mode /*: SyncMode */) {
     const old = this.fileConfig.mode
     if (old === mode) {
       return true
     } else if (old) {
-      throw new Error(`Once you set mode to "${old}", you cannot switch to "${mode}"`)
+      throw new Error(
+        `Once you set mode to "${old}", you cannot switch to "${mode}"`
+      )
     }
     this.fileConfig.mode = mode
     this.persist()
@@ -168,7 +174,7 @@ class Config {
 
   // Implement the Storage interface for cozy-client-js oauth
 
-  save (key /*: string */, value /*: * */) {
+  save(key /*: string */, value /*: * */) {
     this.fileConfig[key] = value
     if (key === 'creds') {
       // Persist the access token after it has been refreshed
@@ -177,23 +183,23 @@ class Config {
     return Promise.resolve(value)
   }
 
-  load (key /*: string */) /*: Promise<*> */ {
+  load(key /*: string */) /*: Promise<*> */ {
     return Promise.resolve(this.fileConfig[key])
   }
 
-  delete (key /*: string */) /*: Promise<*> */ {
+  delete(key /*: string */) /*: Promise<*> */ {
     const deleted = delete this.fileConfig[key]
     return Promise.resolve(deleted)
   }
 
-  clear () /*: Promise<void> */ {
+  clear() /*: Promise<void> */ {
     delete this.fileConfig.creds
     delete this.fileConfig.state
     return Promise.resolve()
   }
 }
 
-function load (dir /*: string */) /*: Config */ {
+function load(dir /*: string */) /*: Config */ {
   return new Config(dir)
 }
 
@@ -201,7 +207,7 @@ function load (dir /*: string */) /*: Config */ {
  *
  * When file is invalid, delete it and return an empty object.
  */
-function loadOrDeleteFile (configPath /*: string */) /*: FileConfig */ {
+function loadOrDeleteFile(configPath /*: string */) /*: FileConfig */ {
   try {
     const content = fs.readFileSync(configPath, 'utf8')
     if (content === '') return {}
@@ -217,7 +223,10 @@ function loadOrDeleteFile (configPath /*: string */) /*: FileConfig */ {
   }
 }
 
-function watcherType (fileConfig /*: FileConfig */ = {}, {env, platform} /*: * */ = process) /*: WatcherType */ {
+function watcherType(
+  fileConfig /*: FileConfig */ = {},
+  { env, platform } /*: * */ = process
+) /*: WatcherType */ {
   return (
     fileWatcherType(fileConfig) ||
     environmentWatcherType(env) ||
@@ -225,27 +234,31 @@ function watcherType (fileConfig /*: FileConfig */ = {}, {env, platform} /*: * *
   )
 }
 
-function fileWatcherType (fileConfig /*: FileConfig */) /*: ?WatcherType */ {
+function fileWatcherType(fileConfig /*: FileConfig */) /*: ?WatcherType */ {
   return validateWatcherType(fileConfig.watcherType)
 }
 
-function environmentWatcherType (env /*: * */ = process.env) /*: ?WatcherType */ {
+function environmentWatcherType(
+  env /*: * */ = process.env
+) /*: ?WatcherType */ {
   const { COZY_FS_WATCHER } = env
   return validateWatcherType(COZY_FS_WATCHER)
 }
 
-function platformDefaultWatcherType (platform /*: string */ = process.platform) /*: WatcherType */ {
+function platformDefaultWatcherType(
+  platform /*: string */ = process.platform
+) /*: WatcherType */ {
   if (platform === 'darwin') {
     return 'chokidar'
   }
   return 'atom'
 }
 
-function validateWatcherType (watcherType /*: ?string */) /*: ?WatcherType */ {
+function validateWatcherType(watcherType /*: ?string */) /*: ?WatcherType */ {
   if (watcherType === 'atom' || watcherType === 'chokidar') {
     return watcherType
   } else {
-    if (watcherType) log.warn({watcherType}, 'Invalid watcher type')
+    if (watcherType) log.warn({ watcherType }, 'Invalid watcher type')
     return null
   }
 }

@@ -1,6 +1,6 @@
 let app
 
-module.exports.init = (appRef) => {
+module.exports.init = appRef => {
   app = appRef
   app.locale = 'en'
   app.translations = {}
@@ -17,8 +17,8 @@ module.exports.init = (appRef) => {
   app.translations = require(`../locales/${app.locale}.json`)
 }
 
-module.exports.translate = key => app.translations[key] ||
-  key.substr(key.indexOf(' ') + 1) // Key without prefix
+module.exports.translate = key =>
+  app.translations[key] || key.substr(key.indexOf(' ') + 1) // Key without prefix
 
 module.exports.interpolate = (string, ...args) => {
   return string.replace(/{(\d+)}/g, (_, index) => args[parseInt(index)])
@@ -26,11 +26,17 @@ module.exports.interpolate = (string, ...args) => {
 
 module.exports.platformName = () => {
   switch (process.platform) {
-    case 'darwin': return 'macOS'
-    case 'freebsd': return 'FreeBSD'
-    case 'linux': return 'Linux'
-    case 'sunos': return 'SunOS'
-    case 'win32': return 'Windows'
-    default: return process.platform
+    case 'darwin':
+      return 'macOS'
+    case 'freebsd':
+      return 'FreeBSD'
+    case 'linux':
+      return 'Linux'
+    case 'sunos':
+      return 'SunOS'
+    case 'win32':
+      return 'Windows'
+    default:
+      return process.platform
   }
 }

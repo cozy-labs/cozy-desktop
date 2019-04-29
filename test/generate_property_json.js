@@ -35,7 +35,7 @@ const deletedPaths = []
 const outsidePaths = []
 let running = false
 
-function similarPath () {
+function similarPath() {
   let p = faker.random.arrayElement(knownPaths)
   let q = p.replace('é', '\u00E9')
   if (p !== q) {
@@ -52,7 +52,7 @@ function similarPath () {
   return p + faker.random.arrayElement(specialChars)
 }
 
-function newPath () {
+function newPath() {
   if (knownPaths.length > 0 && faker.random.number(4) === 0) {
     return similarPath()
   }
@@ -67,65 +67,65 @@ function newPath () {
   return p
 }
 
-function knownPath () {
+function knownPath() {
   if (knownPaths.length === 0) {
     return newPath()
   }
   return faker.random.arrayElement(knownPaths)
 }
 
-function deletedPath () {
+function deletedPath() {
   if (deletedPaths.length === 0) {
     return newPath()
   }
   return faker.random.arrayElement(deletedPaths)
 }
 
-function fileSize () {
+function fileSize() {
   return faker.random.number(32) + 2 ** (1 + faker.random.number(20))
 }
 
-function createNewDir () {
+function createNewDir() {
   return { op: 'mkdir', path: newPath() }
 }
 
-function createNewFile () {
+function createNewFile() {
   return { op: 'create_file', path: newPath(), size: fileSize() }
 }
 
-function recreateDeletedDir () {
+function recreateDeletedDir() {
   return { op: 'mkdir', path: deletedPath() }
 }
 
-function recreateDeletedFile () {
+function recreateDeletedFile() {
   return { op: 'create_file', path: deletedPath() }
 }
 
-function updateFile () {
+function updateFile() {
   return { op: 'update_file', path: knownPath(), size: fileSize() }
 }
 
-function mvToNewPath () {
+function mvToNewPath() {
   const p = knownPath()
   deletedPaths.push(p)
   return { op: 'mv', from: p, to: newPath() }
 }
 
-function mvToDeletedPath () {
+function mvToDeletedPath() {
   const p = knownPath()
   const to = deletedPath()
   deletedPaths.push(p)
   return { op: 'mv', from: p, to: to }
 }
 
-function mvToOutside () {
+function mvToOutside() {
   const src = knownPath()
   const dst = '../outside/' + faker.system.fileName()
   outsidePaths.push(dst)
   return { op: 'mv', from: src, to: dst }
 }
 
-function mvFromOutside () {
+function mvFromOutside() {
   if (outsidePaths.length === 0) {
     return mvToOutside()
   }
@@ -134,18 +134,18 @@ function mvFromOutside () {
   return { op: 'mv', from: src, to: dst }
 }
 
-function rm () {
+function rm() {
   const p = knownPath()
   deletedPaths.push(p)
   return { op: 'rm', path: p }
 }
 
-function addReference () {
+function addReference() {
   const p = knownPath()
   return { op: 'reference', path: p }
 }
 
-function stopOrRestartWatcher () {
+function stopOrRestartWatcher() {
   if (running) {
     running = false
     return { op: 'stop_watcher' }
@@ -155,12 +155,12 @@ function stopOrRestartWatcher () {
   }
 }
 
-function sleep () {
+function sleep() {
   const s = 2 ** (6 + faker.random.number(8))
   return { op: 'sleep', duration: s }
 }
 
-function freq (choices) {
+function freq(choices) {
   const ary = []
   for (const choice of choices) {
     for (let i = 0; i < choice[0]; i++) {
@@ -171,7 +171,7 @@ function freq (choices) {
   return fn()
 }
 
-function init (ops) {
+function init(ops) {
   const n = faker.random.number(nbInitOps)
   for (let i = 0; i < n; i++) {
     const op = freq([[1, createNewDir], [1, createNewFile]])
@@ -180,17 +180,17 @@ function init (ops) {
   ops.push({ op: 'mkdir', path: '../outside' })
 }
 
-function startWatcher (ops) {
+function startWatcher(ops) {
   running = true
   ops.push({ op: 'start_watcher' })
 }
 
-function startClient (ops) {
+function startClient(ops) {
   ops.push(sleep())
   ops.push({ op: 'start_client' })
 }
 
-function run (ops, availableOps) {
+function run(ops, availableOps) {
   const n = faker.random.number(nbRunOps)
   for (let i = 0; i < n; i++) {
     const op = freq(availableOps)
@@ -198,7 +198,7 @@ function run (ops, availableOps) {
   }
 }
 
-function generateLocalWatcher () {
+function generateLocalWatcher() {
   const ops = []
   init(ops)
   startWatcher(ops)
@@ -206,10 +206,11 @@ function generateLocalWatcher () {
   if (!running) {
     ops.push({ op: 'restart' })
   }
+  // eslint-disable-next-line no-console
   console.log(JSON.stringify(ops))
 }
 
-function generateTwoClients () {
+function generateTwoClients() {
   const result = { desktop: [], laptop: [] }
   // Flow doesn't want of:
   //   for (let ops of Object.values(result)) {
@@ -221,17 +222,20 @@ function generateTwoClients () {
   for (const ops of [result.desktop, result.laptop]) {
     run(ops, clientOps)
   }
+  // eslint-disable-next-line no-console
   console.log(JSON.stringify(result))
 }
 
-function generate (property) {
+function generate(property) {
   if (property === 'local_watcher') {
     generateLocalWatcher()
   } else if (property === 'two_clients') {
     generateTwoClients()
   } else if (!property) {
+    // eslint-disable-next-line no-console
     console.error(`Usage: ./test/generate_property_json.js [property]`)
   } else {
+    // eslint-disable-next-line no-console
     console.error(`${property} is not a supported property`)
     throw new Error('Unsupported property')
   }

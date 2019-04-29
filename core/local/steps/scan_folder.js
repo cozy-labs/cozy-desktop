@@ -21,15 +21,19 @@ module.exports = {
 // atom/Watcher emits a single event for the added directory. In this step,
 // when this happens, we scan the directory to see if it contains files and
 // sub-directories.
-function loop (buffer /*: Buffer */, opts /*: { scan: Scanner } */) /*: Buffer */ {
-  return buffer.asyncMap(async (batch) => {
+function loop(
+  buffer /*: Buffer */,
+  opts /*: { scan: Scanner } */
+) /*: Buffer */ {
+  return buffer.asyncMap(async batch => {
     for (const event of batch) {
       if (event.incomplete) {
         continue
       }
       if (event.action === 'created' && event.kind === 'directory') {
-        opts.scan(event.path)
-          .catch((err) => { log.error({err, event}, 'Error on scan') })
+        opts.scan(event.path).catch(err => {
+          log.error({ err, event }, 'Error on scan')
+        })
       }
     }
     return batch

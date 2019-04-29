@@ -19,27 +19,27 @@ describe('local/chokidar_event', () => {
     it('builds an FS event with path and stats', () => {
       for (let type of ['add', 'addDir', 'change']) {
         const event = chokidarEvent.build(type, path, stats)
-        should(event).deepEqual({type, path, stats})
+        should(event).deepEqual({ type, path, stats })
       }
     })
 
     it('builds an FS event with path only', () => {
       for (let type of ['unlink', 'unlinkDir']) {
         const event = chokidarEvent.build(type, path)
-        should(event).deepEqual({type, path})
+        should(event).deepEqual({ type, path })
       }
     })
 
     it('builds a ready event', () => {
       const type = 'ready'
       const event = chokidarEvent.build(type)
-      should(event).deepEqual({type})
+      should(event).deepEqual({ type })
     })
 
     it('does not swallow the empty path of the watched dir', () => {
       for (let type of ['addDir', 'change']) {
         const event = chokidarEvent.build(type, '', stats)
-        should(event).deepEqual({type, path: '', stats})
+        should(event).deepEqual({ type, path: '', stats })
       }
     })
   })

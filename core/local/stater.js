@@ -31,7 +31,7 @@ const isMissingFileError = err =>
   err.code === 'ENOENT' || (err.startsWith && err.startsWith('ENOENT'))
 
 module.exports = {
-  async stat (filepath /*: string */) {
+  async stat(filepath /*: string */) {
     if (!winfs) {
       return fse.stat(filepath)
     }
@@ -47,7 +47,7 @@ module.exports = {
     })
   },
 
-  async statMaybe (absPath /*: string */) /*: Promise<?Stats> */ {
+  async statMaybe(absPath /*: string */) /*: Promise<?Stats> */ {
     try {
       return await this.stat(absPath)
     } catch (err) {
@@ -57,7 +57,7 @@ module.exports = {
     }
   },
 
-  withStats (filepath /*: string */, callback /*: Callback */) {
+  withStats(filepath /*: string */, callback /*: Callback */) {
     if (winfs) {
       try {
         const stats = winfs.lstatSync(filepath)
@@ -70,7 +70,7 @@ module.exports = {
     }
   },
 
-  isDirectory (stats /*: Stats */) {
+  isDirectory(stats /*: Stats */) {
     if (stats instanceof fs.Stats) {
       return stats.isDirectory()
     } else {
@@ -78,12 +78,14 @@ module.exports = {
     }
   },
 
-  kind (stats /*: Stats */) {
+  kind(stats /*: Stats */) {
     return this.isDirectory(stats) ? 'directory' : 'file'
   },
 
-  assignInoAndFileId (doc /*: Metadata */, stats /*: Stats */) {
+  assignInoAndFileId(doc /*: Metadata */, stats /*: Stats */) {
     doc.ino = stats.ino
-    if (typeof stats.fileid === 'string') { doc.fileid = stats.fileid }
+    if (typeof stats.fileid === 'string') {
+      doc.fileid = stats.fileid
+    }
   }
 }

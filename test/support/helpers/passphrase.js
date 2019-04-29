@@ -9,4 +9,7 @@ module.exports = passphrase
 
 // Running this script directly with `node` prints the
 // passphrase to the console (useful for scripting, e.g. on Travis).
-if (require.main === module) { console.log(passphrase) }
+if (require.main === module) {
+  // eslint-disable-next-line no-console
+  console.log(passphrase)
+}

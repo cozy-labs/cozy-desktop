@@ -4,14 +4,16 @@ require('should')
 
 const sentry = require('../../core/sentry')
 
-describe('Sentry', function () {
-  describe('toSentryContext', function () {
-    it('properly parse all urls', function () {
-      sentry.toSentryContext('https://somedevcozy.cozy.tools:8080').should.deepEqual({
-        domain: 'cozy.tools',
-        instance: 'somedevcozy.cozy.tools',
-        environment: 'development'
-      })
+describe('Sentry', function() {
+  describe('toSentryContext', function() {
+    it('properly parse all urls', function() {
+      sentry
+        .toSentryContext('https://somedevcozy.cozy.tools:8080')
+        .should.deepEqual({
+          domain: 'cozy.tools',
+          instance: 'somedevcozy.cozy.tools',
+          environment: 'development'
+        })
 
       sentry.toSentryContext('https://example.mycozy.cloud').should.deepEqual({
         domain: 'mycozy.cloud',

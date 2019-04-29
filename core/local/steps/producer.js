@@ -49,7 +49,7 @@ module.exports = class Producer {
   syncPath: string
   watcher: *
   */
-  constructor (opts /*: { syncPath : string } */) {
+  constructor(opts /*: { syncPath : string } */) {
     this.buffer = new Buffer()
     this.syncPath = opts.syncPath
     this.watcher = null
@@ -73,8 +73,12 @@ module.exports = class Producer {
   // As atom/watcher doesn't give use the inotify cookies, the move/rename
   // detection is probably the harder of the four tasks. So, we choosed to use
   // the recursive option.
-  async start () {
-    this.watcher = await watcher.watchPath(this.syncPath, { recursive: true }, this.process)
+  async start() {
+    this.watcher = await watcher.watchPath(
+      this.syncPath,
+      { recursive: true },
+      this.process
+    )
     log.info(`Now watching ${this.syncPath}`)
     if (process.platform === 'linux') {
       // TODO to be checked, but we might need to give some time to
@@ -90,7 +94,13 @@ module.exports = class Producer {
     this.buffer.push([INITIAL_SCAN_DONE])
   }
 
-  async scan (relPath /*: string */, { readdir = fse.readdir, stater = defaultStater } /*: { readdir: *, stater: * } */ = {}) {
+  async scan(
+    relPath /*: string */,
+    {
+      readdir = fse.readdir,
+      stater = defaultStater
+    } /*: { readdir: *, stater: * } */ = {}
+  ) {
     const entries = []
     const fullPath = path.join(this.syncPath, relPath)
     for (const entry of await readdir(fullPath)) {
@@ -107,10 +117,10 @@ module.exports = class Producer {
         if (incomplete) scanEvent.incomplete = incomplete
         entries.push(scanEvent)
       } catch (err) {
-        log.error({err, path: path.join(relPath, entry)})
+        log.error({ err, path: path.join(relPath, entry) })
       }
     }
-    log.trace({path: relPath, batch: entries}, 'scan')
+    log.trace({ path: relPath, batch: entries }, 'scan')
     this.buffer.push(entries)
 
     for (const entry of entries) {
@@ -120,8 +130,8 @@ module.exports = class Producer {
     }
   }
 
-  process (batch /*: Array<*> */) {
-    log.trace({batch}, 'process')
+  process(batch /*: Array<*> */) {
+    log.trace({ batch }, 'process')
     // Atom/watcher emits events with an absolute path, but it's more
     // convenient for us to use a relative path.
     for (const event of batch) {
@@ -133,7 +143,7 @@ module.exports = class Producer {
     this.buffer.push(batch)
   }
 
-  stop () {
+  stop() {
     log.trace('Stop')
     if (this.watcher) {
       this.watcher.dispose()

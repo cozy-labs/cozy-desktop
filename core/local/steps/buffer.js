@@ -17,12 +17,12 @@ module.exports = class Buffer {
   _resolve: ?Promise<Batch>
   _buffer: Array<Batch>
   */
-  constructor () {
+  constructor() {
     this._resolve = null
     this._buffer = []
   }
 
-  push (batch /*: Batch */) /*: void */ {
+  push(batch /*: Batch */) /*: void */ {
     if (batch.length === 0) return
 
     if (this._resolve) {
@@ -33,30 +33,38 @@ module.exports = class Buffer {
     }
   }
 
-  pop () /*: Promise<Batch> */ {
+  pop() /*: Promise<Batch> */ {
     if (this._buffer.length > 0) {
       const batch = this._buffer.shift()
       return Promise.resolve(batch)
     }
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       this._resolve = resolve
     })
   }
 
-  async doMap (fn /*: (Batch) => Batch */, buffer /*: Buffer */) /*: Promise<void> */ {
+  async doMap(
+    fn /*: (Batch) => Batch */,
+    buffer /*: Buffer */
+  ) /*: Promise<void> */ {
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const batch = fn(await this.pop())
       buffer.push(batch)
     }
   }
 
-  map (fn /*: (Batch) => Batch */) /*: Buffer */ {
+  map(fn /*: (Batch) => Batch */) /*: Buffer */ {
     const buffer = new Buffer()
     this.doMap(fn, buffer)
     return buffer
   }
 
-  async doAsyncMap (fn /*: (Batch) => Promise<Batch> */, buffer /*: Buffer */) /*: Promise<void> */ {
+  async doAsyncMap(
+    fn /*: (Batch) => Promise<Batch> */,
+    buffer /*: Buffer */
+  ) /*: Promise<void> */ {
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       const batch = await this.pop()
       const after = await fn(batch)
@@ -64,7 +72,7 @@ module.exports = class Buffer {
     }
   }
 
-  asyncMap (fn /*: (Batch) => Promise<Batch> */) /*: Buffer */ {
+  asyncMap(fn /*: (Batch) => Promise<Batch> */) /*: Buffer */ {
     const buffer = new Buffer()
     this.doAsyncMap(fn, buffer)
     return buffer

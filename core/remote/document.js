@@ -3,7 +3,11 @@
 const { uniq } = require('lodash')
 
 const {
-  DIR_TYPE, FILE_TYPE, ROOT_DIR_ID, TRASH_DIR_ID, TRASH_DIR_NAME
+  DIR_TYPE,
+  FILE_TYPE,
+  ROOT_DIR_ID,
+  TRASH_DIR_ID,
+  TRASH_DIR_NAME
 } = require('./constants')
 
 module.exports = {
@@ -15,12 +19,8 @@ module.exports = {
   jsonApiToRemoteDoc
 }
 
-function specialId (id /*: string */) {
-  return (
-    id === ROOT_DIR_ID ||
-    id === TRASH_DIR_ID ||
-    id.startsWith('_design/')
-  )
+function specialId(id /*: string */) {
+  return id === ROOT_DIR_ID || id === TRASH_DIR_ID || id.startsWith('_design/')
 }
 
 // TODO: Define separate types for files and folders
@@ -52,19 +52,19 @@ export type RemoteDeletion = {
 }
 */
 
-function dropSpecialDocs (docs /*: RemoteDoc[] */) /*: RemoteDoc[] */ {
+function dropSpecialDocs(docs /*: RemoteDoc[] */) /*: RemoteDoc[] */ {
   return docs.filter(doc => !specialId(doc._id))
 }
 
-function keepFiles (docs /*: RemoteDoc[] */) /*: RemoteDoc[] */ {
+function keepFiles(docs /*: RemoteDoc[] */) /*: RemoteDoc[] */ {
   return docs.filter(doc => doc.type === FILE_TYPE)
 }
 
-function parentDirIds (docs /*: RemoteDoc[] */) {
+function parentDirIds(docs /*: RemoteDoc[] */) {
   return uniq(docs.map(doc => doc.dir_id))
 }
 
-function inRemoteTrash (doc /*: RemoteDoc */) /*: boolean */ {
+function inRemoteTrash(doc /*: RemoteDoc */) /*: boolean */ {
   return doc.trashed || doc.path.startsWith(`/${TRASH_DIR_NAME}/`)
 }
 
@@ -91,7 +91,7 @@ export type JsonApiDoc = {
 }
 */
 
-function jsonApiToRemoteDoc (json/*: JsonApiDoc */) /*: * */ {
+function jsonApiToRemoteDoc(json /*: JsonApiDoc */) /*: * */ {
   let remoteDoc = {}
 
   Object.assign(remoteDoc, {

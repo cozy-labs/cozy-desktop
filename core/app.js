@@ -8,7 +8,7 @@ const path = require('path')
 const url = require('url')
 const uuid = require('uuid/v4')
 const https = require('https')
-const {createGzip} = require('zlib')
+const { createGzip } = require('zlib')
 
 require('./globals')
 const pkg = require('../package.json')
@@ -38,7 +38,8 @@ const log = logger({
   component: 'App'
 })
 
-const SUPPORT_EMAIL = process.env.COZY_DESKTOP_SUPPORT_EMAIL || 'contact@cozycloud.cc'
+const SUPPORT_EMAIL =
+  process.env.COZY_DESKTOP_SUPPORT_EMAIL || 'contact@cozycloud.cc'
 
 // App is the entry point for the CLI and GUI.
 // They both can do actions and be notified by events via an App instance.
@@ -58,10 +59,12 @@ class App {
   */
 
   // basePath is the directory where the config and pouch are saved
-  constructor (basePath /*: string */) {
+  constructor(basePath /*: string */) {
     log.info(this.clientInfo(), 'constructor')
     this.lang = 'fr'
-    if (basePath == null) { basePath = os.homedir() }
+    if (basePath == null) {
+      basePath = os.homedir()
+    }
     basePath = path.resolve(basePath)
     this.basePath = path.join(basePath, '.cozy-desktop')
     this.config = config.load(this.basePath)
@@ -72,18 +75,18 @@ class App {
   }
 
   // Parse the URL
-  parseCozyUrl (cozyUrl /*: string */) {
+  parseCozyUrl(cozyUrl /*: string */) {
     if (cozyUrl.indexOf(':') === -1) {
       if (cozyUrl.indexOf('.') === -1) {
         cozyUrl += '.cozycloud.cc'
       }
       cozyUrl = `https://${cozyUrl}`
     }
-    return url.parse(cozyUrl)
+    return new url.URL(cozyUrl)
   }
 
   // Check that the cozyUrl is valid
-  checkCozyUrl (cozyUrl /*: string */) {
+  checkCozyUrl(cozyUrl /*: string */) {
     let parsed = this.parseCozyUrl(cozyUrl)
     cozyUrl = url.format(parsed)
     if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
@@ -96,7 +99,7 @@ class App {
 
   // Returns an object including the syncPath only when valid, or with an error
   // otherwise.
-  checkSyncPath (syncPath /*: string */) {
+  checkSyncPath(syncPath /*: string */) {
     // We do not allow syncing the whole user home directory, the system users
     // directory or the whole system:
     // - It would probably to big regarding the current local events squashing
@@ -109,33 +112,52 @@ class App {
     // We could exclude relevant files by default at some point, but it would
     // require many iterations to make it reliable.
     if ((os.homedir() + path.sep).startsWith(syncPath)) {
-      return {syncPath, error: 'You cannot synchronize your whole system or personal folder'}
+      return {
+        syncPath,
+        error: 'You cannot synchronize your whole system or personal folder'
+      }
     }
 
-    return {syncPath}
+    return { syncPath }
   }
 
   // Return a promise for registering a device on the remote cozy
-  registerRemote (cozyUrl /*: string */, redirectURI /*: ?string */, onRegistered /*: ?Function */, deviceName /*: string */) {
+  registerRemote(
+    cozyUrl /*: string */,
+    redirectURI /*: ?string */,
+    onRegistered /*: ?Function */,
+    deviceName /*: string */
+  ) {
     const registration = new Registration(cozyUrl, this.config)
     return registration.process(pkg, redirectURI, onRegistered, deviceName)
   }
 
   // Save the config with all the informations for synchonization
-  saveConfig (cozyUrl /*: string */, syncPath /*: string */) {
+  saveConfig(cozyUrl /*: string */, syncPath /*: string */) {
     fse.ensureDirSync(syncPath)
     this.config.cozyUrl = cozyUrl
     this.config.syncPath = syncPath
     this.config.persist()
-    log.info('The remote Cozy has properly been configured ' +
-             'to work with current device.')
+    log.info(
+      'The remote Cozy has properly been configured ' +
+        'to work with current device.'
+    )
   }
 
   // Register current device to remote Cozy and then save related informations
   // to the config file (used by CLI, not GUI)
-  async addRemote (cozyUrl /*: string */, syncPath /*: string */, deviceName /*: string */) {
+  async addRemote(
+    cozyUrl /*: string */,
+    syncPath /*: string */,
+    deviceName /*: string */
+  ) {
     try {
-      const registered = await this.registerRemote(cozyUrl, null, null, deviceName)
+      const registered = await this.registerRemote(
+        cozyUrl,
+        null,
+        null,
+        deviceName
+      )
       log.info(`Device ${registered.deviceName} has been added to ${cozyUrl}`)
       this.saveConfig(cozyUrl, syncPath)
     } catch (err) {
@@ -158,7 +180,7 @@ class App {
 
   // Unregister current device from remote Cozy and then remove remote from
   // the config file
-  async removeRemote () {
+  async removeRemote() {
     try {
       if (!this.remote) {
         this.instanciate()
@@ -174,7 +196,7 @@ class App {
     }
   }
 
-  async removeConfig () {
+  async removeConfig() {
     await this.pouch.db.destroy()
     for (const name of await fse.readdir(this.basePath)) {
       if (name.startsWith(LOG_FILENAME)) continue
@@ -182,23 +204,30 @@ class App {
     }
   }
 
-  async uploadFileToSupport (incident /*: string */, name /*: string */, data /*: string|stream.Readable */) {
+  async uploadFileToSupport(
+    incident /*: string */,
+    name /*: string */,
+    data /*: string|stream.Readable */
+  ) {
     return new Promise((resolve, reject) => {
-      const req = https.request({
-        method: 'PUT',
-        protocol: 'https:',
-        hostname: 'desktop-upload.cozycloud.cc',
-        path: `/${incident}/${name}`,
-        headers: {
-          'Content-Type': 'text/plain'
+      const req = https.request(
+        {
+          method: 'PUT',
+          protocol: 'https:',
+          hostname: 'desktop-upload.cozycloud.cc',
+          path: `/${incident}/${name}`,
+          headers: {
+            'Content-Type': 'text/plain'
+          }
+        },
+        res => {
+          if (res.statusCode === 201) {
+            resolve(null)
+          } else {
+            reject(new Error('Bad Status, expected 201, got ' + res.statusCode))
+          }
         }
-      }, (res) => {
-        if (res.statusCode === 201) {
-          resolve(null)
-        } else {
-          reject(new Error('Bad Status, expected 201, got ' + res.statusCode))
-        }
-      })
+      )
       req.on('error', reject)
 
       if (typeof data === 'string') {
@@ -211,7 +240,7 @@ class App {
   }
 
   // Send an issue by mail to the support
-  async sendMailToSupport (content /*: string */) {
+  async sendMailToSupport(content /*: string */) {
     const incidentID = uuid()
     const zipper = createGzip({
       // TODO tweak this values, low resources for now.
@@ -223,25 +252,27 @@ class App {
 
     const logsSent = Promise.all([
       this.uploadFileToSupport(incidentID, 'logs.gz', logs.pipe(zipper)),
-      this.uploadFileToSupport(incidentID, 'pouchdtree.json', JSON.stringify(pouchdbTree))
-    ]).catch((err) => {
-      log.error({err}, 'FAILED TO SEND LOGS')
+      this.uploadFileToSupport(
+        incidentID,
+        'pouchdtree.json',
+        JSON.stringify(pouchdbTree)
+      )
+    ]).catch(err => {
+      log.error({ err }, 'FAILED TO SEND LOGS')
     })
 
-    content = content + '\r\n\r\n-------- debug info --------\r\n' +
+    content =
+      content +
+      '\r\n\r\n-------- debug info --------\r\n' +
       _.map(this.clientInfo(), (v, k) => `${k}: ${v}`).join('\r\n') +
-    '\r\n\r\n-------- log status --------\r\n' +
-    `incidentID: ${incidentID}`
+      '\r\n\r\n-------- log status --------\r\n' +
+      `incidentID: ${incidentID}`
 
     const args = {
       mode: 'from',
-      to: [
-        { name: 'Support', email: SUPPORT_EMAIL }
-      ],
+      to: [{ name: 'Support', email: SUPPORT_EMAIL }],
       subject: 'Ask support for cozy-desktop',
-      parts: [
-        { type: 'text/plain', body: content }
-      ]
+      parts: [{ type: 'text/plain', body: content }]
     }
     const mailSent = this.remote.sendMail(args)
 
@@ -249,30 +280,36 @@ class App {
   }
 
   /** Path to the file containing user-defined ignore rules */
-  userIgnoreRules () /*: string */ {
+  userIgnoreRules() /*: string */ {
     return path.join(this.config.syncPath, '.cozyignore')
   }
 
   // Instanciate some objects before sync
-  instanciate () {
+  instanciate() {
     this.ignore = Ignore.loadSync(this.userIgnoreRules())
     this.merge = new Merge(this.pouch)
     this.prep = new Prep(this.merge, this.ignore, this.config)
     this.local = this.merge.local = new Local(this)
     this.remote = this.merge.remote = new Remote(this)
-    this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+    this.sync = new Sync(
+      this.pouch,
+      this.local,
+      this.remote,
+      this.ignore,
+      this.events
+    )
     this.sync.diskUsage = this.diskUsage
   }
 
   // Start the synchronization
-  startSync (mode /*: SyncMode */) {
+  startSync(mode /*: SyncMode */) {
     this.config.saveMode(mode)
     log.info('Run first synchronisation...')
     return this.sync.start(mode)
   }
 
   // Stop the synchronisation
-  stopSync () {
+  stopSync() {
     if (!this.sync) {
       // $FlowFixMe
       return Promise.resolve()
@@ -281,19 +318,21 @@ class App {
   }
 
   // Start database sync process and setup file change watcher
-  synchronize (mode /*: SyncMode */) {
+  synchronize(mode /*: SyncMode */) {
     log.info(this.clientInfo(), 'synchronize')
     sentry.setup(this.clientInfo())
     if (!this.config.isValid()) {
-      log.error('No configuration found, please run add-remote-cozy' +
-                'command before running a synchronization.')
+      log.error(
+        'No configuration found, please run add-remote-cozy' +
+          'command before running a synchronization.'
+      )
       throw new Error('No client configured')
     }
     this.instanciate()
     return this.startSync(mode)
   }
 
-  clientInfo () {
+  clientInfo() {
     const config = this.config || {}
 
     return {
@@ -311,7 +350,7 @@ class App {
   }
 
   // Get disk space informations from the cozy
-  diskUsage ()/*: Promise<*> */ {
+  diskUsage() /*: Promise<*> */ {
     if (!this.remote) this.instanciate()
     return this.remote.diskUsage()
   }

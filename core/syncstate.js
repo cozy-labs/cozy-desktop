@@ -11,20 +11,23 @@ module.exports = class SyncState extends EventEmitter {
   remoteSyncing: boolean
   */
 
-  constructor () {
+  constructor() {
     super()
     autoBind(this)
   }
 
-  shouldSpin () {
+  shouldSpin() {
     return this.localSyncing || this.remoteSyncing || this.syncSyncing
   }
 
-  emitStatus () {
-    const label = this.syncSyncing ? 'sync'
-                   : (this.localSyncing || this.remoteSyncing) ? 'squashprepmerge'
-                   : this.buffering ? 'buffering'
-                   : 'uptodate'
+  emitStatus() {
+    const label = this.syncSyncing
+      ? 'sync'
+      : this.localSyncing || this.remoteSyncing
+      ? 'squashprepmerge'
+      : this.buffering
+      ? 'buffering'
+      : 'uptodate'
 
     super.emit('sync-status', {
       label: label,
@@ -40,7 +43,7 @@ module.exports = class SyncState extends EventEmitter {
     }
   }
 
-  emit (name, ...args) {
+  emit(name, ...args) {
     this.wasSpinning = this.shouldSpin()
     switch (name) {
       case 'buffering-start':

@@ -11,12 +11,17 @@ const builders = new Builders()
 describe('move', () => {
   describe('.child()', () => {
     it('ensures destination will be moved as part of its ancestor directory', () => {
-      const src = builders.metadata().path('whatever/src').build()
-      const dst = _.defaults({path: 'whatever/dst'}, src)
+      const src = builders
+        .metadata()
+        .path('whatever/src')
+        .build()
+      const dst = _.defaults({ path: 'whatever/dst' }, src)
 
       move.child('local', src, dst)
 
-      should(dst).have.propertyByPath('moveFrom', 'childMove').eql(true)
+      should(dst)
+        .have.propertyByPath('moveFrom', 'childMove')
+        .eql(true)
     })
   })
 })

@@ -64,7 +64,7 @@ module.exports = class Local /*:: implements Side */ {
   _trash: (Array<string>) => Promise<void>
   */
 
-  constructor (opts /*: LocalOptions */) {
+  constructor(opts /*: LocalOptions */) {
     this.prep = opts.prep
     this.pouch = opts.pouch
     this.events = opts.events
@@ -87,21 +87,23 @@ module.exports = class Local /*:: implements Side */ {
   */
 
   // Start initial replication + watching changes in live
-  start () {
+  start() {
     syncDir.ensureExistsSync(this)
     this.syncDirCheckInterval = syncDir.startIntervalCheck(this)
     return this.watcher.start()
   }
 
   // Stop watching the file system
-  stop () {
+  stop() {
     clearInterval(this.syncDirCheckInterval)
     return this.watcher.stop()
   }
 
   // Create a readable stream for the given doc
   // adds a contentLength property to be used
-  async createReadStreamAsync (doc /*: Metadata */) /*: Promise<ReadableWithContentLength> */ {
+  async createReadStreamAsync(
+    doc /*: Metadata */
+  ) /*: Promise<ReadableWithContentLength> */ {
     try {
       let filePath = path.resolve(this.syncPath, doc.path)
       let pStats = fse.stat(filePath)
@@ -131,15 +133,17 @@ module.exports = class Local /*:: implements Side */ {
   // - utime for update (content only)
   // This function updates utime and ctime according to the last
   // modification date.
-  metadataUpdater (doc /*: Metadata */) {
+  metadataUpdater(doc /*: Metadata */) {
     return (callback /*: Callback */) => {
       this.updateMetadataAsync(doc)
-        .then(() => { callback() })
+        .then(() => {
+          callback()
+        })
         .catch(callback)
     }
   }
 
-  async updateMetadataAsync (doc /*: Metadata */) /*: Promise<void> */ {
+  async updateMetadataAsync(doc /*: Metadata */) /*: Promise<void> */ {
     let filePath = path.resolve(this.syncPath, doc.path)
 
     if (doc.docType === 'file') {
@@ -157,7 +161,7 @@ module.exports = class Local /*:: implements Side */ {
     }
   }
 
-  inodeSetter (doc /*: Metadata */) {
+  inodeSetter(doc /*: Metadata */) {
     let abspath = path.resolve(this.syncPath, doc.path)
     return (callback /*: Callback */) => {
       stater.withStats(abspath, (err, stats) => {
@@ -172,19 +176,21 @@ module.exports = class Local /*:: implements Side */ {
   }
 
   // Check if a file corresponding to given checksum already exists
-  fileExistsLocally (checksum /*: string */, callback /*: Callback */) {
+  fileExistsLocally(checksum /*: string */, callback /*: Callback */) {
     this.pouch.byChecksum(checksum, (err, docs) => {
       if (err) {
         callback(err)
-      } else if ((docs == null) || (docs.length === 0)) {
+      } else if (docs == null || docs.length === 0) {
         callback(null, false)
       } else {
         let paths = Array.from(docs)
-          .filter((doc) => isUpToDate('local', doc))
-          .map((doc) => path.resolve(this.syncPath, doc.path))
-        async.detect(paths,
-            (filePath, next) => fse.exists(filePath, found => next(null, found)),
-            callback)
+          .filter(doc => isUpToDate('local', doc))
+          .map(doc => path.resolve(this.syncPath, doc.path))
+        async.detect(
+          paths,
+          (filePath, next) => fse.exists(filePath, found => next(null, found)),
+          callback
+        )
       }
     })
   }
@@ -206,130 +212,155 @@ module.exports = class Local /*:: implements Side */ {
   // from the remote document. Later, chokidar will fire an event for this new
   // file. The checksum will then be computed and added to the document, and
   // then pushed to CouchDB.
-  addFile (doc /*: Metadata */, callback /*: Callback */) /*: void */ {
+  addFile(doc /*: Metadata */, callback /*: Callback */) /*: void */ {
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
     const stopMeasure = measureTime('LocalWriter#addFile')
 
-    log.info({path: doc.path}, 'Put file')
+    log.info({ path: doc.path }, 'Put file')
 
-    async.waterfall([
-      next => {
-        if (doc.md5sum != null) {
-          this.fileExistsLocally(doc.md5sum, next)
-        } else {
-          next(null, false)
-        }
-      },
-
-      (existingFilePath, next) => {
-        fse.ensureDir(this.tmpPath, () => {
-          hideOnWindows(this.tmpPath)
-          if (existingFilePath) {
-            log.info({path: filePath}, `Recopy ${existingFilePath} -> ${filePath}`)
-            this.events.emit('transfer-copy', doc)
-            fse.copy(existingFilePath, tmpFile, next)
+    async.waterfall(
+      [
+        next => {
+          if (doc.md5sum != null) {
+            this.fileExistsLocally(doc.md5sum, next)
           } else {
-            this.other.createReadStreamAsync(doc).then(
-              (stream) => {
-                // Don't use async callback here!
-                // Async does some magic and the stream can throw an
-                // 'error' event before the next async is called...
-                let target = fse.createWriteStream(tmpFile)
-                stream.pipe(target)
-                target.on('finish', next)
-                target.on('error', next)
-              },
-              (err) => { next(err) }
-            )
+            next(null, false)
           }
-        })
-      },
+        },
 
-      next => {
-        if (doc.md5sum != null) {
-          // TODO: Share checksumer instead of chaining properties
-          this.watcher.checksumer.push(tmpFile).asCallback(function (err, md5sum) {
-            if (err) {
-              next(err)
-            } else if (md5sum === doc.md5sum) {
-              next()
+        (existingFilePath, next) => {
+          fse.ensureDir(this.tmpPath, () => {
+            hideOnWindows(this.tmpPath)
+            if (existingFilePath) {
+              log.info(
+                { path: filePath },
+                `Recopy ${existingFilePath} -> ${filePath}`
+              )
+              this.events.emit('transfer-copy', doc)
+              fse.copy(existingFilePath, tmpFile, next)
             } else {
-              next(new Error('Invalid checksum'))
+              this.other.createReadStreamAsync(doc).then(
+                stream => {
+                  // Don't use async callback here!
+                  // Async does some magic and the stream can throw an
+                  // 'error' event before the next async is called...
+                  let target = fse.createWriteStream(tmpFile)
+                  stream.pipe(target)
+                  target.on('finish', next)
+                  target.on('error', next)
+                },
+                err => {
+                  next(err)
+                }
+              )
             }
           })
-        } else {
-          next()
-        }
-      },
+        },
 
-      next => {
-        // After downloading a file, check that the size is correct too
-        // (more protection against stack corruption)
-        stater.withStats(tmpFile, (err, stats) => {
-          if (err) {
-            next(err)
-          } else if (!doc.size || doc.size === stats.size) {
-            stater.assignInoAndFileId(doc, stats)
-            next()
+        next => {
+          if (doc.md5sum != null) {
+            // TODO: Share checksumer instead of chaining properties
+            this.watcher.checksumer
+              .push(tmpFile)
+              .asCallback(function(err, md5sum) {
+                if (err) {
+                  next(err)
+                } else if (md5sum === doc.md5sum) {
+                  next()
+                } else {
+                  next(new Error('Invalid checksum'))
+                }
+              })
           } else {
-            next(sentry.flag(new Error('Invalid size')))
+            next()
           }
-        })
-      },
+        },
 
-      next => fse.ensureDir(parent, () => fse.rename(tmpFile, filePath, next)),
+        next => {
+          // After downloading a file, check that the size is correct too
+          // (more protection against stack corruption)
+          stater.withStats(tmpFile, (err, stats) => {
+            if (err) {
+              next(err)
+            } else if (!doc.size || doc.size === stats.size) {
+              stater.assignInoAndFileId(doc, stats)
+              next()
+            } else {
+              next(sentry.flag(new Error('Invalid size')))
+            }
+          })
+        },
 
-      this.metadataUpdater(doc)
+        next =>
+          fse.ensureDir(parent, () => fse.rename(tmpFile, filePath, next)),
 
-    ], function (err) {
-      stopMeasure()
-      if (err) { log.warn({path: doc.path}, 'addFile failed:', err, doc) }
-      fse.unlink(tmpFile, () => callback(err))
-    })
+        this.metadataUpdater(doc)
+      ],
+      function(err) {
+        stopMeasure()
+        if (err) {
+          log.warn({ path: doc.path }, 'addFile failed:', err, doc)
+        }
+        fse.unlink(tmpFile, () => callback(err))
+      }
+    )
   }
 
   // Create a new folder
-  addFolder (doc /*: Metadata */, callback /*: Callback */) /*: void */ {
+  addFolder(doc /*: Metadata */, callback /*: Callback */) /*: void */ {
     let folderPath = path.join(this.syncPath, doc.path)
-    log.info({path: doc.path}, 'Put folder')
-    async.series([
-      cb => fse.ensureDir(folderPath, cb),
-      this.inodeSetter(doc),
-      this.metadataUpdater(doc)
-    ], callback)
+    log.info({ path: doc.path }, 'Put folder')
+    async.series(
+      [
+        cb => fse.ensureDir(folderPath, cb),
+        this.inodeSetter(doc),
+        this.metadataUpdater(doc)
+      ],
+      callback
+    )
   }
 
   // Overwrite a file
-  async overwriteFileAsync (doc /*: Metadata */, old /*: ?Metadata */) /*: Promise<void> */ {
+  async overwriteFileAsync(doc /*: Metadata */) /*: Promise<void> */ {
     await this.addFileAsync(doc)
   }
 
   // Update the metadata of a file
-  updateFileMetadata (doc /*: Metadata */, old /*: Metadata */, callback /*: Callback */) /*: void */ {
-    log.info({path: doc.path}, 'Updating file metadata...')
+  updateFileMetadata(
+    doc /*: Metadata */,
+    old /*: Metadata */,
+    callback /*: Callback */
+  ) /*: void */ {
+    log.info({ path: doc.path }, 'Updating file metadata...')
     this.metadataUpdater(doc)(callback)
   }
 
   // Update a folder
-  async updateFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
+  async updateFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
     await this.addFolderAsync(doc)
   }
 
-  async assignNewRev (doc /*: Metadata */) /*: Promise<void> */ {
-    log.info({path: doc.path}, 'Local assignNewRev = noop')
+  async assignNewRev(doc /*: Metadata */) /*: Promise<void> */ {
+    log.info({ path: doc.path }, 'Local assignNewRev = noop')
   }
 
   /** Move a file, eventually updating its content */
-  async moveFileAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
-    log.info({path: doc.path, oldpath: old.path}, 'Moving file')
+  async moveFileAsync(
+    doc /*: Metadata */,
+    old /*: Metadata */
+  ) /*: Promise<void> */ {
+    log.info({ path: doc.path, oldpath: old.path }, 'Moving file')
     await this._move(doc, old)
   }
 
   /** Move a folder */
-  async moveFolderAsync (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
-    log.info({path: doc.path, oldpath: old.path}, 'Moving folder')
+  async moveFolderAsync(
+    doc /*: Metadata */,
+    old /*: Metadata */
+  ) /*: Promise<void> */ {
+    log.info({ path: doc.path, oldpath: old.path }, 'Moving folder')
     await this._move(doc, old)
   }
 
@@ -347,7 +378,7 @@ module.exports = class Local /*:: implements Side */ {
    *
    * TODO: atomic local destination check + move
    */
-  async _move (doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
+  async _move(doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
 
@@ -368,8 +399,8 @@ module.exports = class Local /*:: implements Side */ {
     await this.updateMetadataAsync(doc)
   }
 
-  async trashAsync (doc /*: Metadata */) /*: Promise<void> */ {
-    log.info({path: doc.path}, 'Moving to the OS trash...')
+  async trashAsync(doc /*: Metadata */) /*: Promise<void> */ {
+    log.info({ path: doc.path }, 'Moving to the OS trash...')
     this.events.emit('delete-file', doc)
     let fullpath = path.join(this.syncPath, doc.path)
     try {
@@ -379,25 +410,30 @@ module.exports = class Local /*:: implements Side */ {
     }
   }
 
-  async deleteFolderAsync (doc /*: Metadata */) /*: Promise<void> */ {
-    if (doc.docType !== 'folder') throw new Error(`Not folder metadata: ${doc.path}`)
+  async deleteFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
+    if (doc.docType !== 'folder')
+      throw new Error(`Not folder metadata: ${doc.path}`)
     const fullpath = path.join(this.syncPath, doc.path)
 
     try {
-      log.info({path: doc.path}, 'Deleting empty folder...')
+      log.info({ path: doc.path }, 'Deleting empty folder...')
       await fse.rmdir(fullpath)
       this.events.emit('delete-file', doc)
       return
     } catch (err) {
       if (err.code !== 'ENOTEMPTY') throw err
     }
-    log.warn({path: doc.path}, 'Folder is not empty!')
+    log.warn({ path: doc.path }, 'Folder is not empty!')
     await this.trashAsync(doc)
   }
 
   // Rename a file/folder to resolve a conflict
-  renameConflictingDoc (doc /*: Metadata */, newPath /*: string */, callback /*: Callback */) {
-    log.info({path: doc.path}, `Resolve a conflict: ${doc.path} → ${newPath}`)
+  renameConflictingDoc(
+    doc /*: Metadata */,
+    newPath /*: string */,
+    callback /*: Callback */
+  ) {
+    log.info({ path: doc.path }, `Resolve a conflict: ${doc.path} → ${newPath}`)
     let srcPath = path.join(this.syncPath, doc.path)
     let dstPath = path.join(this.syncPath, newPath)
     fse.rename(srcPath, dstPath, callback)

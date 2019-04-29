@@ -34,10 +34,7 @@ describe('File systems', () => {
           await dir.outputFile(nfcFile, nfcContent)
           await dir.outputFile(nfdFile, nfdContent)
 
-          should(await dir.tree()).deepEqual([
-            nfdFile,
-            nfcFile
-          ])
+          should(await dir.tree()).deepEqual([nfdFile, nfcFile])
           await should(dir).have.fileContents({
             [nfcFile]: nfcContent,
             [nfdFile]: nfdContent
@@ -52,9 +49,7 @@ describe('File systems', () => {
           await dir.outputFile(nfcFile, nfcContent)
           await dir.outputFile(nfdFile, nfdContent)
 
-          should(await dir.tree()).deepEqual([
-            nfcFile
-          ])
+          should(await dir.tree()).deepEqual([nfcFile])
           await should(dir).have.fileContents({
             [nfcFile]: nfdContent
           })
@@ -64,9 +59,7 @@ describe('File systems', () => {
           await dir.outputFile(nfdFile, nfdContent)
           await dir.outputFile(nfcFile, nfcContent)
 
-          should(await dir.tree()).deepEqual([
-            nfdFile
-          ])
+          should(await dir.tree()).deepEqual([nfdFile])
           await should(dir).have.fileContents({
             [nfdFile]: nfcContent
           })
@@ -80,9 +73,7 @@ describe('File systems', () => {
           await dir.outputFile(nfcFile, nfcContent)
           await dir.outputFile(nfdFile, nfdContent)
 
-          should(await dir.tree()).deepEqual([
-            nfdFile
-          ])
+          should(await dir.tree()).deepEqual([nfdFile])
           await should(dir).have.fileContents({
             [nfdFile]: nfdContent
           })
@@ -92,9 +83,7 @@ describe('File systems', () => {
           await dir.outputFile(nfdFile, nfdContent)
           await dir.outputFile(nfcFile, nfcContent)
 
-          should(await dir.tree()).deepEqual([
-            nfdFile
-          ])
+          should(await dir.tree()).deepEqual([nfdFile])
           await should(dir).have.fileContents({
             [nfdFile]: nfcContent
           })

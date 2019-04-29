@@ -1,8 +1,8 @@
-const {addFileManagerShortcut} = require('./shortcut')
-const {dialog, session} = require('electron')
+const { addFileManagerShortcut } = require('./shortcut')
+const { dialog, session } = require('electron')
 const autoLaunch = require('./autolaunch')
 const defaults = require('./defaults')
-const {translate} = require('./i18n')
+const { translate } = require('./i18n')
 
 const log = require('../../core/app').logger({
   component: 'GUI'
@@ -18,7 +18,7 @@ const OAUTH_SCREEN_HEIGHT = 930
 const WindowManager = require('./window_manager')
 
 module.exports = class OnboardingWM extends WindowManager {
-  windowOptions () {
+  windowOptions() {
     return {
       title: 'ONBOARDING',
       center: true,
@@ -28,7 +28,7 @@ module.exports = class OnboardingWM extends WindowManager {
     }
   }
 
-  ipcEvents () {
+  ipcEvents() {
     return {
       'register-remote': this.onRegisterRemote,
       'choose-folder': this.onChooseFolder,
@@ -36,11 +36,11 @@ module.exports = class OnboardingWM extends WindowManager {
     }
   }
 
-  hash () {
+  hash() {
     return '#onboarding'
   }
 
-  jumpToSyncPath () {
+  jumpToSyncPath() {
     this.shouldJumpToSyncPath = true
     // TODO: cleanup state management, ensure elm side sends something
     // through ports so we can trigger 'registration-done' without relying
@@ -55,81 +55,99 @@ module.exports = class OnboardingWM extends WindowManager {
     })
   }
 
-  create () {
-    return super.create()
-      .then(() => {
-        if (this.shouldJumpToSyncPath) {
-          this.send('registration-done')
-        }
-      })
+  create() {
+    return super.create().then(() => {
+      if (this.shouldJumpToSyncPath) {
+        this.send('registration-done')
+      }
+    })
   }
 
-  onOnboardingDone (handler) {
+  onOnboardingDone(handler) {
     this.afterOnboarding = handler
   }
 
-  onRegisterRemote (event, arg) {
+  onRegisterRemote(event, arg) {
     let desktop = this.desktop
     let cozyUrl
     try {
       cozyUrl = desktop.checkCozyUrl(arg.cozyUrl)
     } catch (err) {
-      return event.sender.send('registration-error', translate('Address Invalid address!'))
+      return event.sender.send(
+        'registration-error',
+        translate('Address Invalid address!')
+      )
     }
     desktop.config.cozyUrl = cozyUrl
     const onRegistered = (client, url) => {
       let resolveP
-      const promise = new Promise((resolve) => { resolveP = resolve })
+      const promise = new Promise(resolve => {
+        resolveP = resolve
+      })
       // TODO only centerOnScreen if needed to display the whole login screen
       //      and if the user hasn't moved the window before
       this.centerOnScreen(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT)
       this.win.loadURL(url)
-      this.win.webContents.on('did-get-response-details', (event, status, newUrl, originalUrl, httpResponseCode) => {
-        if (newUrl.match(/\/auth\/authorize\?/) && httpResponseCode === 200) {
-          // TODO only centerOnScreen if needed to display the whole oauth screen
-          //      and if the user hasn't moved the window before
-          this.centerOnScreen(OAUTH_SCREEN_WIDTH, OAUTH_SCREEN_HEIGHT)
-        }
-      })
-      this.win.webContents.on('did-get-redirect-request', (event, oldUrl, newUrl) => {
-        if (newUrl.match('file://')) {
-          // TODO only centerOnScreen if needed to display the whole folder screen
-          //      and if the user hasn't moved the window before
-          this.centerOnScreen(ONBOARDING_SCREEN_WIDTH, ONBOARDING_SCREEN_HEIGHT)
-          resolveP(newUrl)
-        }
-      })
-      return promise
-    }
-    desktop.registerRemote(cozyUrl, arg.location, onRegistered)
-      .then(
-        (reg) => {
-          session.defaultSession.clearStorageData()
-          this.win.webContents.once('dom-ready', () => {
-            setTimeout(() => {
-              event.sender.send('registration-done')
-              this.checkSyncPath(defaults.syncPath, event.sender)
-            }, 20)
-          })
-          this.win.loadURL(reg.client.redirectURI)
-          if (!process.env.DEBUG) {
-            autoLaunch.setEnabled(true)
-          }
-        },
-        (err) => {
-          log.error(err)
-          if (err.code && err.code.match(/PROXY/)) {
-            session.defaultSession.resolveProxy(cozyUrl, (p) => {
-              event.sender.send('registration-error', translate('Address Proxy issue') + p)
-            })
-          } else {
-            event.sender.send('registration-error', translate('Address No cozy instance at this address!'))
+      this.win.webContents.on(
+        'did-get-response-details',
+        (event, status, newUrl, originalUrl, httpResponseCode) => {
+          if (newUrl.match(/\/auth\/authorize\?/) && httpResponseCode === 200) {
+            // TODO only centerOnScreen if needed to display the whole oauth screen
+            //      and if the user hasn't moved the window before
+            this.centerOnScreen(OAUTH_SCREEN_WIDTH, OAUTH_SCREEN_HEIGHT)
           }
         }
       )
+      this.win.webContents.on(
+        'did-get-redirect-request',
+        (event, oldUrl, newUrl) => {
+          if (newUrl.match('file://')) {
+            // TODO only centerOnScreen if needed to display the whole folder screen
+            //      and if the user hasn't moved the window before
+            this.centerOnScreen(
+              ONBOARDING_SCREEN_WIDTH,
+              ONBOARDING_SCREEN_HEIGHT
+            )
+            resolveP(newUrl)
+          }
+        }
+      )
+      return promise
+    }
+    desktop.registerRemote(cozyUrl, arg.location, onRegistered).then(
+      reg => {
+        session.defaultSession.clearStorageData()
+        this.win.webContents.once('dom-ready', () => {
+          setTimeout(() => {
+            event.sender.send('registration-done')
+            this.checkSyncPath(defaults.syncPath, event.sender)
+          }, 20)
+        })
+        this.win.loadURL(reg.client.redirectURI)
+        if (!process.env.DEBUG) {
+          autoLaunch.setEnabled(true)
+        }
+      },
+      err => {
+        log.error(err)
+        if (err.code && err.code.match(/PROXY/)) {
+          session.defaultSession.resolveProxy(cozyUrl, p => {
+            event.sender.send(
+              'registration-error',
+              translate('Address Proxy issue') + p
+            )
+          })
+        } else {
+          event.sender.send(
+            'registration-error',
+            translate('Address No cozy instance at this address!')
+          )
+        }
+      }
+    )
   }
 
-  onChooseFolder (event) {
+  onChooseFolder(event) {
     // FIXME: The modal may appear on background, either every time (e.g. Ubuntu)
     // or only the second time (e.g. Fedora)
     let folders = dialog.showOpenDialog({
@@ -140,7 +158,7 @@ module.exports = class OnboardingWM extends WindowManager {
     }
   }
 
-  checkSyncPath (syncPath, eventSender) {
+  checkSyncPath(syncPath, eventSender) {
     const result = this.desktop.checkSyncPath(syncPath)
     eventSender.send('folder-chosen', {
       folder: result.syncPath,
@@ -149,10 +167,10 @@ module.exports = class OnboardingWM extends WindowManager {
     return result
   }
 
-  onStartSync (event, syncPath) {
-    const {error} = this.checkSyncPath(syncPath, event.sender)
+  onStartSync(event, syncPath) {
+    const { error } = this.checkSyncPath(syncPath, event.sender)
     if (error) {
-      log.warn({err: error})
+      log.warn({ err: error })
       return
     }
     let desktop = this.desktop
@@ -164,7 +182,9 @@ module.exports = class OnboardingWM extends WindowManager {
       desktop.saveConfig(desktop.config.cozyUrl, syncPath)
       try {
         addFileManagerShortcut(desktop.config)
-      } catch (err) { log.error(err) }
+      } catch (err) {
+        log.error(err)
+      }
       this.afterOnboarding()
     } catch (err) {
       log.error(err)

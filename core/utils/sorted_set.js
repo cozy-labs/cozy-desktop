@@ -13,28 +13,28 @@
  * The SortedSet data structure uses both an Array and a Set to make
  * those 2 actions possible transparently.
  */
-module.exports = class SortedSet/* ::<A> */ {
+module.exports = class SortedSet /* ::<A> */ {
   /*::
   _set: Set<A>
   _values: A[]
   */
 
-  constructor () {
+  constructor() {
     this._set = new Set()
     this._values = []
   }
 
-  has (value /*: A */) {
+  has(value /*: A */) {
     return this._set.has(value)
   }
 
-  add (value /*: A */) {
+  add(value /*: A */) {
     this._set.add(value)
     this._values.push(value)
     return this
   }
 
-  delete (value /*: A */) {
+  delete(value /*: A */) {
     if (this._set.delete(value)) {
       const index = this._values.indexOf(value)
       this._values.splice(index, 1)
@@ -43,7 +43,10 @@ module.exports = class SortedSet/* ::<A> */ {
     return false
   }
 
-  reduceRight/* ::<B> */ (callback /*: (B, A) => B */, initialValue /*: B */) /*: B */{
+  reduceRight /* ::<B> */(
+    callback /*: (B, A) => B */,
+    initialValue /*: B */
+  ) /*: B */ {
     return this._values.reduceRight(callback, initialValue)
   }
 }

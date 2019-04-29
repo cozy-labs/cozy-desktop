@@ -23,9 +23,21 @@ describe('core/local/steps/overwriting_move', () => {
     beforeEach(() => {
       builders = new Builders()
       const docs = {
-        'SRC/FILE': builders.metafile().path('src/file').ino(1).build(),
-        'SRC/DIR': builders.metadir().path('src/dir').ino(2).build(),
-        'DST/FILE': builders.metafile().path('dst/file').ino(3).build()
+        'SRC/FILE': builders
+          .metafile()
+          .path('src/file')
+          .ino(1)
+          .build(),
+        'SRC/DIR': builders
+          .metadir()
+          .path('src/dir')
+          .ino(2)
+          .build(),
+        'DST/FILE': builders
+          .metafile()
+          .path('dst/file')
+          .ino(3)
+          .build()
       }
       inputBuffer = new Buffer()
       outputBuffer = overwritingMove.loop(inputBuffer, {
@@ -40,10 +52,19 @@ describe('core/local/steps/overwriting_move', () => {
     const outputBatch = () => outputBuffer.pop()
 
     it('ignores deleted file (dst/file) followed by renamed file (src/file → dst/file) with different ino', async () => {
-      const deletedEvent = builders.event().action('deleted')
-        .kind('file').path('dst/file').build()
-      const renamedEvent = builders.event().action('renamed')
-        .kind('file').oldPath('src/file').path('dst/file').build()
+      const deletedEvent = builders
+        .event()
+        .action('deleted')
+        .kind('file')
+        .path('dst/file')
+        .build()
+      const renamedEvent = builders
+        .event()
+        .action('renamed')
+        .kind('file')
+        .oldPath('src/file')
+        .path('dst/file')
+        .build()
 
       inputBatch([deletedEvent, renamedEvent])
 
@@ -62,10 +83,19 @@ describe('core/local/steps/overwriting_move', () => {
     })
 
     it('ignores deleted file (dst/file) followed by renamed dir (src/dir → dst/file) with different ino', async () => {
-      const deletedEvent = builders.event().action('deleted')
-        .kind('file').path('dst/file').build()
-      const renamedEvent = builders.event().action('renamed')
-        .kind('directory').oldPath('src/dir').path('dst/file').build()
+      const deletedEvent = builders
+        .event()
+        .action('deleted')
+        .kind('file')
+        .path('dst/file')
+        .build()
+      const renamedEvent = builders
+        .event()
+        .action('renamed')
+        .kind('directory')
+        .oldPath('src/dir')
+        .path('dst/file')
+        .build()
 
       inputBatch([deletedEvent, renamedEvent])
 
@@ -93,14 +123,30 @@ describe('core/local/steps/overwriting_move', () => {
         }
         */
       const scenarios /*: Scenario[] */ = [
-        {action: 'deleted', kind: 'file', path: 'dst/file'},
-        {action: 'renamed', kind: 'file', oldPath: 'src/file', path: 'dst/file'},
-        {action: 'renamed', kind: 'directory', oldPath: 'src/dir', path: 'dst/file'}
+        { action: 'deleted', kind: 'file', path: 'dst/file' },
+        {
+          action: 'renamed',
+          kind: 'file',
+          oldPath: 'src/file',
+          path: 'dst/file'
+        },
+        {
+          action: 'renamed',
+          kind: 'directory',
+          oldPath: 'src/dir',
+          path: 'dst/file'
+        }
       ]
 
       for (const { action, kind, oldPath, path } of scenarios) {
-        it(`forwards ${action} ${kind} (${oldPath ? oldPath + ' -> ' : ''}${path}) after .DELAY`, async () => {
-          let event = builders.event().action(action).kind(kind).path(path)
+        it(`forwards ${action} ${kind} (${
+          oldPath ? oldPath + ' -> ' : ''
+        }${path}) after .DELAY`, async () => {
+          let event = builders
+            .event()
+            .action(action)
+            .kind(kind)
+            .path(path)
           if (oldPath) event.oldPath(oldPath)
           const batch = [event.build()]
 

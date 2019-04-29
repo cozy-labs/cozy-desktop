@@ -46,19 +46,17 @@ module.exports = {
 // Dispatch takes a buffer of AtomWatcherEvents batches, and calls Prep for
 // each event. It needs to fetch the old documents from pouchdb in some cases
 // to have all the data expected by prep/merge.
-function loop (buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ {
-  return buffer.asyncMap(
-    opts.onAtomEvents || step(opts)
-  )
+function loop(buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ {
+  return buffer.asyncMap(opts.onAtomEvents || step(opts))
 }
 
-function step (opts /*: DispatchOptions */) {
+function step(opts /*: DispatchOptions */) {
   return async (batch /*: Batch */) => {
     for (const event of batch) {
       try {
         await dispatchEvent(event, opts)
       } catch (err) {
-        log.error({err, event})
+        log.error({ err, event })
       } finally {
         if (process.platform === 'win32') {
           winDetectMove.forget(event, opts.state)
@@ -69,8 +67,11 @@ function step (opts /*: DispatchOptions */) {
   }
 }
 
-async function dispatchEvent (event /*: AtomWatcherEvent */, opts /*: DispatchOptions */) {
-  log.trace({event}, 'dispatch')
+async function dispatchEvent(
+  event /*: AtomWatcherEvent */,
+  opts /*: DispatchOptions */
+) {
+  log.trace({ event }, 'dispatch')
   if (event.action === 'initial-scan-done') {
     actions.initialScanDone(opts)
   } else if (event.action === 'ignored') {
@@ -87,44 +88,45 @@ async function dispatchEvent (event /*: AtomWatcherEvent */, opts /*: DispatchOp
 }
 
 actions = {
-  initialScanDone: ({events}) => {
+  initialScanDone: ({ events }) => {
     log.info('Initial scan done')
     events.emit('initial-scan-done')
   },
 
   ignored: event => {
-    log.debug({event}, 'Ignored')
+    log.debug({ event }, 'Ignored')
   },
 
   scanfile: (event, opts) => actions.createdfile(event, opts, 'File found'),
 
-  scandirectory: (event, opts) => actions.createddirectory(event, opts, 'Dir found'),
+  scandirectory: (event, opts) =>
+    actions.createddirectory(event, opts, 'Dir found'),
 
-  createdfile: async (event, {prep}, description = 'File added') => {
-    log.info({event}, description)
+  createdfile: async (event, { prep }, description = 'File added') => {
+    log.info({ event }, description)
     const doc = buildFile(event.path, event.stats, event.md5sum)
     await prep.addFileAsync(SIDE, doc)
   },
 
-  createddirectory: async (event, {prep}, description = 'Dir added') => {
-    log.info({event}, description)
+  createddirectory: async (event, { prep }, description = 'Dir added') => {
+    log.info({ event }, description)
     const doc = buildDir(event.path, event.stats)
     await prep.putFolderAsync(SIDE, doc)
   },
 
-  modifiedfile: async (event, {prep}) => {
-    log.info({event}, 'File modified')
+  modifiedfile: async (event, { prep }) => {
+    log.info({ event }, 'File modified')
     const doc = buildFile(event.path, event.stats, event.md5sum)
     await prep.updateFileAsync(SIDE, doc)
   },
 
-  modifieddirectory: async (event, {prep}) => {
-    log.info({event}, 'Dir modified')
+  modifieddirectory: async (event, { prep }) => {
+    log.info({ event }, 'Dir modified')
     const doc = buildDir(event.path, event.stats)
     await prep.putFolderAsync(SIDE, doc)
   },
 
-  renamedfile: async (event, {pouch, prep}) => {
+  renamedfile: async (event, { pouch, prep }) => {
     const was = await pouch.byIdMaybeAsync(id(event.oldPath))
     if (!was) {
       // A renamed event where the source does not exist can be seen as just an
@@ -133,9 +135,9 @@ actions = {
       _.set(event, [STEP_NAME, 'originalEvent'], _.clone(event))
       event.action = 'created'
       delete event.oldPath
-      return actions.createdfile(event, {prep}, 'File moved, assuming added')
+      return actions.createdfile(event, { prep }, 'File moved, assuming added')
     }
-    log.info({event}, 'File moved')
+    log.info({ event }, 'File moved')
 
     const doc = buildFile(event.path, event.stats, event.md5sum)
     if (event.overwrite) {
@@ -146,7 +148,7 @@ actions = {
     await prep.moveFileAsync(SIDE, doc, was)
   },
 
-  renameddirectory: async (event, {pouch, prep}) => {
+  renameddirectory: async (event, { pouch, prep }) => {
     const was = await pouch.byIdMaybeAsync(id(event.oldPath))
     if (!was) {
       // A renamed event where the source does not exist can be seen as just an
@@ -155,34 +157,38 @@ actions = {
       _.set(event, [STEP_NAME, 'originalEvent'], _.clone(event))
       event.action = 'created'
       delete event.oldPath
-      return actions.createddirectory(event, {prep}, 'Dir moved, assuming added')
+      return actions.createddirectory(
+        event,
+        { prep },
+        'Dir moved, assuming added'
+      )
     }
-    log.info({event}, 'Dir moved')
+    log.info({ event }, 'Dir moved')
     const doc = buildDir(event.path, event.stats)
     await prep.moveFolderAsync(SIDE, doc, was)
   },
 
-  deletedfile: async (event, {pouch, prep}) => {
+  deletedfile: async (event, { pouch, prep }) => {
     const was = await pouch.byIdMaybeAsync(event._id)
     if (!was) {
-      log.debug({event}, 'Assuming file already removed')
+      log.debug({ event }, 'Assuming file already removed')
       // The file was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
     }
-    log.info({event}, 'File removed')
+    log.info({ event }, 'File removed')
     await prep.trashFileAsync(SIDE, was)
   },
 
-  deleteddirectory: async (event, {pouch, prep}) => {
+  deleteddirectory: async (event, { pouch, prep }) => {
     const was = await pouch.byIdMaybeAsync(event._id)
     if (!was) {
-      log.debug({event}, 'Assuming dir already removed')
+      log.debug({ event }, 'Assuming dir already removed')
       // The dir was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
     }
-    log.info({event}, 'Dir removed')
+    log.info({ event }, 'Dir removed')
     await prep.trashFolderAsync(SIDE, was)
   }
 }

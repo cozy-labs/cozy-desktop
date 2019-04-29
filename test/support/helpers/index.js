@@ -44,13 +44,19 @@ class TestHelpers {
   _remote: Remote
   */
 
-  constructor ({ config, pouch } /*: TestHelpersOptions */) {
+  constructor({ config, pouch } /*: TestHelpersOptions */) {
     const merge = new Merge(pouch)
-    const ignore = (new Ignore([])).addDefaultRules()
+    const ignore = new Ignore([]).addDefaultRules()
     const prep = new Prep(merge, ignore, config)
     const events = new SyncState()
-    const localHelpers = new LocalTestHelpers({config, prep, pouch, events, ignore})
-    const remoteHelpers = new RemoteTestHelpers({config, prep, pouch, events})
+    const localHelpers = new LocalTestHelpers({
+      config,
+      prep,
+      pouch,
+      events,
+      ignore
+    })
+    const remoteHelpers = new RemoteTestHelpers({ config, prep, pouch, events })
     const local = localHelpers.side
     const remote = remoteHelpers.side
     const sync = new Sync(pouch, local, remote, ignore, events)
@@ -69,31 +75,40 @@ class TestHelpers {
     autoBind(this)
   }
 
-  async syncAll () {
+  async syncAll() {
     await this._sync.sync(false)
   }
 
-  async pullAndSyncAll () {
+  async pullAndSyncAll() {
     await this.remote.pullChanges()
     await this.syncAll()
   }
 
-  async flushLocalAndSyncAll () {
+  async flushLocalAndSyncAll() {
     await this.local.scan()
     await this.syncAll()
   }
 
   // TODO: Spy by default?
-  spyPrep () {
+  spyPrep() {
     const prepCalls = []
 
-    for (let method of ['addFileAsync', 'putFolderAsync', 'updateFileAsync',
-      'moveFileAsync', 'moveFolderAsync', 'deleteFolderAsync', 'trashFileAsync',
-      'trashFolderAsync', 'restoreFileAsync', 'restoreFolderAsync']) {
+    for (let method of [
+      'addFileAsync',
+      'putFolderAsync',
+      'updateFileAsync',
+      'moveFileAsync',
+      'moveFolderAsync',
+      'deleteFolderAsync',
+      'trashFileAsync',
+      'trashFolderAsync',
+      'restoreFileAsync',
+      'restoreFolderAsync'
+    ]) {
       // $FlowFixMe
       const origMethod = this.prep[method]
       sinon.stub(this.prep, method).callsFake(async (...args) => {
-        const call /*: Object */ = {method}
+        const call /*: Object */ = { method }
         if (method.startsWith('move') || method.startsWith('restore')) {
           call.dst = args[1].path
           call.src = args[2].path
@@ -110,12 +125,12 @@ class TestHelpers {
     return prepCalls
   }
 
-  spyPouch () {
+  spyPouch() {
     sinon.spy(this.pouch, 'put')
     sinon.spy(this.pouch, 'bulkDocs')
   }
 
-  putDocs (...props /*: string[] */) {
+  putDocs(...props /*: string[] */) {
     const results = []
 
     for (const args of this.pouch.bulkDocs.args) {
@@ -132,7 +147,9 @@ class TestHelpers {
     return results
   }
 
-  async trees (...treeNames /*: Array<'local' | 'metadata' | 'remote'> */) /*: Promise<*> */ {
+  async trees(
+    ...treeNames /*: Array<'local' | 'metadata' | 'remote'> */
+  ) /*: Promise<*> */ {
     const result = await this.treesNonEllipsized(...treeNames)
 
     for (const treeName of ['local', 'metadata', 'remote']) {
@@ -144,42 +161,53 @@ class TestHelpers {
     return result
   }
 
-  async treesNonEllipsized (...treeNames /*: Array<'local' | 'metadata' | 'remote'> */) /*: Promise<*> */ {
+  async treesNonEllipsized(
+    ...treeNames /*: Array<'local' | 'metadata' | 'remote'> */
+  ) /*: Promise<*> */ {
     if (treeNames.length === 0) treeNames = ['local', 'remote']
 
     const result = {}
-    if (treeNames.includes('local')) result.local = await this.local.tree({ellipsize: false})
-    if (treeNames.includes('metadata')) result.metadata = (await this.metadataTree())
-    if (treeNames.includes('remote')) result.remote = await this.remote.treeWithoutTrash({ellipsize: false})
+    if (treeNames.includes('local'))
+      result.local = await this.local.tree({ ellipsize: false })
+    if (treeNames.includes('metadata'))
+      result.metadata = await this.metadataTree()
+    if (treeNames.includes('remote'))
+      result.remote = await this.remote.treeWithoutTrash({ ellipsize: false })
 
     return result
   }
 
-  async metadataTree () {
+  async metadataTree() {
     return _.chain(await this.pouch.byRecursivePathAsync(''))
-      .map(({docType, path}) => posixifyPath(path) + (docType === 'folder' ? '/' : ''))
+      .map(
+        ({ docType, path }) =>
+          posixifyPath(path) + (docType === 'folder' ? '/' : '')
+      )
       .sort()
       .value()
   }
 
-  async incompatibleTree () {
+  async incompatibleTree() {
     return _.chain(await this.pouch.byRecursivePathAsync(''))
       .filter(doc => doc.incompatibilities)
-      .map(({docType, path}) => posixifyPath(path) + (docType === 'folder' ? '/' : ''))
+      .map(
+        ({ docType, path }) =>
+          posixifyPath(path) + (docType === 'folder' ? '/' : '')
+      )
       .uniq()
       .sort()
       .value()
   }
 
-  async docByPath (relpath /*: string */) /*: Promise<Metadata> */ {
+  async docByPath(relpath /*: string */) /*: Promise<Metadata> */ {
     const doc = await this.pouch.db.get(metadata.id(relpath))
     if (doc) return doc
     else throw new Error(`No doc with path ${JSON.stringify(relpath)}`)
   }
 }
 
-const init /*: (TestHelpersOptions) => TestHelpers */ =
-  opts => new TestHelpers(opts)
+const init /*: (TestHelpersOptions) => TestHelpers */ = opts =>
+  new TestHelpers(opts)
 
 module.exports = {
   init

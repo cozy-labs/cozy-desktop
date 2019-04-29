@@ -8,15 +8,9 @@ module.exports = ({
     { ino: 2, path: 'src/' },
     { ino: 3, path: 'src/file' }
   ],
-  actions: [
-    {type: 'mv', src: 'src/file', dst: 'dst/file'}
-  ],
+  actions: [{ type: 'mv', src: 'src/file', dst: 'dst/file' }],
   expected: {
-    tree: [
-      'dst/',
-      'dst/file',
-      'src/'
-    ],
+    tree: ['dst/', 'dst/file', 'src/'],
     remoteTrash: []
   }
 } /*: Scenario */)

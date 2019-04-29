@@ -23,12 +23,12 @@ describe('Add', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
 
-    parent = await cozy.files.createDirectory({name: 'parent'})
+    parent = await cozy.files.createDirectory({ name: 'parent' })
     await helpers.remote.pullChanges()
     await helpers.syncAll()
 
@@ -39,19 +39,16 @@ describe('Add', () => {
     it('local')
 
     it('remote', async () => {
-      await cozy.files.create('foo', {name: 'file', dirID: parent._id})
+      await cozy.files.create('foo', { name: 'file', dirID: parent._id })
       await helpers.remote.pullChanges()
 
-      should(helpers.putDocs('path', '_deleted', 'trashed', 'sides')).deepEqual([
-        {path: path.normalize('parent/file'), sides: {remote: 1}}
-      ])
+      should(helpers.putDocs('path', '_deleted', 'trashed', 'sides')).deepEqual(
+        [{ path: path.normalize('parent/file'), sides: { remote: 1 } }]
+      )
 
       await helpers.syncAll()
 
-      should(await helpers.local.tree()).deepEqual([
-        'parent/',
-        'parent/file'
-      ])
+      should(await helpers.local.tree()).deepEqual(['parent/', 'parent/file'])
     })
   })
 
@@ -59,10 +56,16 @@ describe('Add', () => {
     it('local')
 
     it('remote', async () => {
-      const dir = await cozy.files.createDirectory({name: 'dir', dirID: parent._id})
-      const subdir = await cozy.files.createDirectory({name: 'subdir', dirID: dir._id})
-      await cozy.files.createDirectory({name: 'empty-subdir', dirID: dir._id})
-      await cozy.files.create('foo', {name: 'file', dirID: subdir._id})
+      const dir = await cozy.files.createDirectory({
+        name: 'dir',
+        dirID: parent._id
+      })
+      const subdir = await cozy.files.createDirectory({
+        name: 'subdir',
+        dirID: dir._id
+      })
+      await cozy.files.createDirectory({ name: 'empty-subdir', dirID: dir._id })
+      await cozy.files.create('foo', { name: 'file', dirID: subdir._id })
       await helpers.remote.pullChanges()
 
       /* FIXME: Nondeterministic

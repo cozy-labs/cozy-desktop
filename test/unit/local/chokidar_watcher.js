@@ -18,18 +18,18 @@ const pouchHelpers = require('../../support/helpers/pouch')
 const { TRAVIS } = process.env
 const { platform } = process
 
-describe('LocalWatcher Tests', function () {
+describe('LocalWatcher Tests', function() {
   let builders
 
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('instanciate local watcher', function () {
-    builders = new Builders({pouch: this.pouch})
+  beforeEach('instanciate local watcher', function() {
+    builders = new Builders({ pouch: this.pouch })
     this.prep = {}
-    const events = {emit: sinon.stub()}
+    const events = { emit: sinon.stub() }
     this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, events)
   })
-  afterEach('stop watcher and clean path', function (done) {
+  afterEach('stop watcher and clean path', function(done) {
     this.watcher.stop(true)
     this.watcher.checksumer.kill()
     fse.emptyDir(this.syncPath, done)
@@ -37,12 +37,12 @@ describe('LocalWatcher Tests', function () {
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  describe('start', function () {
-    it('calls the callback when initial scan is done', function () {
+  describe('start', function() {
+    it('calls the callback when initial scan is done', function() {
       this.watcher.start()
     })
 
-    it('calls addFile/putFolder for files that are aleady here', async function () {
+    it('calls addFile/putFolder for files that are aleady here', async function() {
       fse.ensureDirSync(path.join(this.syncPath, 'aa'))
       fse.ensureFileSync(path.join(this.syncPath, 'aa/ab'))
       this.prep.putFolderAsync = sinon.stub().resolves()
@@ -53,10 +53,12 @@ describe('LocalWatcher Tests', function () {
       this.prep.putFolderAsync.args[0][1].path.should.equal('aa')
       this.prep.addFileAsync.called.should.be.true()
       this.prep.addFileAsync.args[0][0].should.equal('local')
-      this.prep.addFileAsync.args[0][1].path.should.equal(path.normalize('aa/ab'))
+      this.prep.addFileAsync.args[0][1].path.should.equal(
+        path.normalize('aa/ab')
+      )
     })
 
-    it('only recomputes checksums of changed files', async function () {
+    it('only recomputes checksums of changed files', async function() {
       const unchangedFilename = 'unchanged-file.txt'
       const changedFilename = 'changed-file.txt'
       const unchangedPath = path.join(this.syncPath, unchangedFilename)
@@ -66,14 +68,16 @@ describe('LocalWatcher Tests', function () {
       await fse.outputFile(unchangedPath, unchangedData)
       await fse.outputFile(changedPath, changedData)
       const unchangedStats = await fse.stat(unchangedPath)
-      const {ino: changedIno} = await fse.stat(changedPath)
-      const unchangedDoc = await builders.metafile()
+      const { ino: changedIno } = await fse.stat(changedPath)
+      const unchangedDoc = await builders
+        .metafile()
         .upToDate()
         .path(unchangedFilename)
         .data(unchangedData)
         .stats(unchangedStats)
         .create()
-      const changedDoc = await builders.metafile()
+      const changedDoc = await builders
+        .metafile()
         .upToDate()
         .path(changedFilename)
         .data(changedData)
@@ -89,15 +93,19 @@ describe('LocalWatcher Tests', function () {
         await this.watcher.start()
 
         should(this.watcher.checksum.args).deepEqual([[changedFilename]])
-        should(await this.pouch.db.get(unchangedDoc._id)).have.properties(unchangedDoc)
-        should(await this.pouch.db.get(changedDoc._id)).have.properties(changedDoc)
+        should(await this.pouch.db.get(unchangedDoc._id)).have.properties(
+          unchangedDoc
+        )
+        should(await this.pouch.db.get(changedDoc._id)).have.properties(
+          changedDoc
+        )
       } finally {
         await this.pouch.db.remove(unchangedDoc)
         await this.pouch.db.remove(changedDoc)
       }
     })
 
-    it('ignores the temporary directory', async function () {
+    it('ignores the temporary directory', async function() {
       fse.ensureDirSync(path.join(this.syncPath, TMP_DIR_NAME))
       fse.ensureFileSync(path.join(this.syncPath, TMP_DIR_NAME, 'ac'))
       this.prep.putFolder = sinon.spy()
@@ -114,28 +122,33 @@ describe('LocalWatcher Tests', function () {
     const relpath = 'foo.txt'
     let abspath
 
-    beforeEach(function () {
+    beforeEach(function() {
       abspath = path.join(this.syncPath, relpath)
     })
 
-    it('resolves with the md5sum for the given relative path', async function () {
+    it('resolves with the md5sum for the given relative path', async function() {
       await fse.outputFile(abspath, 'foo')
-      await should(this.watcher.checksum(relpath))
-        .be.fulfilledWith('rL0Y20zC+Fzt72VPzMSk2A==') // foo
+      await should(this.watcher.checksum(relpath)).be.fulfilledWith(
+        'rL0Y20zC+Fzt72VPzMSk2A=='
+      ) // foo
     })
 
-    it('does not swallow errors', async function () {
-      await should(this.watcher.checksum(relpath))
-        .be.rejectedWith({code: 'ENOENT'})
+    it('does not swallow errors', async function() {
+      await should(this.watcher.checksum(relpath)).be.rejectedWith({
+        code: 'ENOENT'
+      })
     })
   })
 
   describe('#oldMetadata()', () => {
-    it('resolves with the metadata whose id matches the event path', async function () {
+    it('resolves with the metadata whose id matches the event path', async function() {
       const old = await builders.metadata().create()
       const resultByEventType = {}
       for (let type of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
-        resultByEventType[type] = await this.watcher.oldMetadata({type, path: old.path})
+        resultByEventType[type] = await this.watcher.oldMetadata({
+          type,
+          path: old.path
+        })
       }
       should(resultByEventType).deepEqual({
         add: old,
@@ -153,9 +166,9 @@ describe('LocalWatcher Tests', function () {
       return
     }
 
-    it('detects when a file is created', function (done) {
+    it('detects when a file is created', function(done) {
       this.watcher.start().then(() => {
-        this.prep.addFileAsync = function (side, doc) {
+        this.prep.addFileAsync = function(side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'aaa.jpg',
@@ -173,9 +186,14 @@ describe('LocalWatcher Tests', function () {
     })
 
     onPlatforms(['win32', 'darwin'], () => {
-      it('does not skip checksum computation when an identity conflict could occur during initial scan', async function () {
+      it('does not skip checksum computation when an identity conflict could occur during initial scan', async function() {
         const syncDir = new ContextDir(this.syncPath)
-        const existing = await builders.metafile().path('Alfred').data('Alfred content').sides({remote: 1}).create()
+        const existing = await builders
+          .metafile()
+          .path('Alfred')
+          .data('Alfred content')
+          .sides({ remote: 1 })
+          .create()
         this.prep.addFileAsync = sinon.stub().resolves()
 
         await syncDir.outputFile('alfred', 'alfred content')
@@ -189,24 +207,21 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('onAddDir', function () {
+  describe('onAddDir', function() {
     if (process.env.APPVEYOR) {
       it('is unstable on AppVeyor')
       return
     }
 
-    it('detects when a folder is created', function (done) {
+    it('detects when a folder is created', function(done) {
       this.watcher.start().then(() => {
-        this.prep.putFolderAsync = function (side, doc) {
+        this.prep.putFolderAsync = function(side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'aba',
             docType: 'folder'
           })
-          doc.should.have.properties([
-            'updated_at',
-            'ino'
-          ])
+          doc.should.have.properties(['updated_at', 'ino'])
           done()
           return Promise.resolve()
         }
@@ -215,18 +230,17 @@ describe('LocalWatcher Tests', function () {
       })
     })
 
-    it('detects when a sub-folder is created', function (done) {
+    it('detects when a sub-folder is created', function(done) {
       this.watcher.start().then(() => {
-        this.prep.putFolderAsync = () => {  // For abb folder
-          this.prep.putFolderAsync = function (side, doc) {
+        this.prep.putFolderAsync = () => {
+          // For abb folder
+          this.prep.putFolderAsync = function(side, doc) {
             side.should.equal('local')
             doc.should.have.properties({
               path: path.normalize('abb/abc'),
               docType: 'folder'
             })
-            doc.should.have.properties([
-              'updated_at'
-            ])
+            doc.should.have.properties(['updated_at'])
             done()
             return Promise.resolve()
           }
@@ -244,16 +258,18 @@ describe('LocalWatcher Tests', function () {
       return
     }
 
-    it.skip('detects when a file is deleted', function (done) {
+    it.skip('detects when a file is deleted', function(done) {
       // This test does not create the file in pouchdb.
       // the watcher will not find a inode number for the unlink
       // and therefore discard it.
       fse.ensureFileSync(path.join(this.syncPath, 'aca'))
-      this.prep.addFileAsync = () => {  // For aca file
-        this.prep.trashFileAsync = function (side, doc) {
+      this.prep.addFileAsync = () => {
+        // For aca file
+        this.prep.trashFileAsync = function(side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
-            path: 'aca'})
+            path: 'aca'
+          })
           done()
           return Promise.resolve()
         }
@@ -270,16 +286,18 @@ describe('LocalWatcher Tests', function () {
       return
     }
 
-    it.skip('detects when a folder is deleted', function (done) {
+    it.skip('detects when a folder is deleted', function(done) {
       // This test does not create the file in pouchdb.
       // the watcher will not find a inode number for the unlink
       // and therefore discard it.
       fse.mkdirSync(path.join(this.syncPath, 'ada'))
-      this.prep.putFolderAsync = () => {  // For ada folder
-        this.prep.trashFolderAsync = function (side, doc) {
+      this.prep.putFolderAsync = () => {
+        // For ada folder
+        this.prep.trashFolderAsync = function(side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
-            path: 'ada'})
+            path: 'ada'
+          })
           done()
           return Promise.resolve()
         }
@@ -291,12 +309,12 @@ describe('LocalWatcher Tests', function () {
   })
 
   describe('onChange', () =>
-    it('detects when a file is changed', function (done) {
+    it('detects when a file is changed', function(done) {
       let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
       let dst = path.join(this.syncPath, 'aea.jpg')
       fse.copySync(src, dst)
       this.prep.addFileAsync = () => {
-        this.prep.updateFileAsync = function (side, doc) {
+        this.prep.updateFileAsync = function(side, doc) {
           side.should.equal('local')
           doc.should.have.properties({
             path: 'aea.jpg',
@@ -313,23 +331,22 @@ describe('LocalWatcher Tests', function () {
         return Promise.resolve()
       }
       this.watcher.start()
-    })
-  )
+    }))
 
-  describe('when a file is moved', function () {
+  describe('when a file is moved', function() {
     // This integration test is unstable on travis + OSX (too often red).
     // It's disabled for the moment, but we should find a way to make it
     // more stable on travis, and enable it again.
-    if (TRAVIS && (platform === 'darwin')) {
+    if (TRAVIS && platform === 'darwin') {
       it('is unstable on travis')
       return
     }
 
-    beforeEach('reset pouchdb', function (done) {
+    beforeEach('reset pouchdb', function(done) {
       this.pouch.resetDatabase(done)
     })
 
-    it.skip('deletes the source and adds the destination', function (done) {
+    it.skip('deletes the source and adds the destination', function(done) {
       // This test does not create the file in pouchdb.
       // the watcher will not find a inode number for the unlink
       // and therefore discard it.
@@ -370,20 +387,20 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('when a directory is moved', function () {
-        // This integration test is unstable on travis + OSX (too often red).
-        // It's disabled for the moment, but we should find a way to make it
-        // more stable on travis, and enable it again.
-    if (TRAVIS && (platform === 'darwin')) {
+  describe('when a directory is moved', function() {
+    // This integration test is unstable on travis + OSX (too often red).
+    // It's disabled for the moment, but we should find a way to make it
+    // more stable on travis, and enable it again.
+    if (TRAVIS && platform === 'darwin') {
       it('is unstable on travis')
       return
     }
 
-    before('reset pouchdb', function (done) {
+    before('reset pouchdb', function(done) {
       this.pouch.resetDatabase(done)
     })
 
-    it.skip('deletes the source and adds the destination', function (done) {
+    it.skip('deletes the source and adds the destination', function(done) {
       // This test does not create the file in pouchdb.
       // the watcher will not find a inode number for the unlink
       // and therefore discard it.
@@ -415,13 +432,13 @@ describe('LocalWatcher Tests', function () {
               this.prep.deleteFileAsync.called.should.be.false()
               this.prep.moveFileAsync.called.should.be.true()
               src = this.prep.moveFileAsync.args[0][2]
-              src.should.have.properties({path: path.normalize('aga/agc')})
+              src.should.have.properties({ path: path.normalize('aga/agc') })
               dst = this.prep.moveFileAsync.args[0][1]
-              dst.should.have.properties({path: path.normalize('agb/agc')})
+              dst.should.have.properties({ path: path.normalize('agb/agc') })
               // FIXME: Delete moved dirs
               this.prep.trashFolderAsync.called.should.be.true()
               let args = this.prep.trashFolderAsync.args[0][1]
-              args.should.have.properties({path: 'aga'})
+              args.should.have.properties({ path: 'aga' })
               done()
             }, 5000)
             return Promise.resolve()
@@ -432,12 +449,12 @@ describe('LocalWatcher Tests', function () {
     })
   })
 
-  describe('detectOfflineUnlinkEvents', function () {
-    beforeEach('reset pouchdb', function (done) {
+  describe('detectOfflineUnlinkEvents', function() {
+    beforeEach('reset pouchdb', function(done) {
       this.pouch.resetDatabase(done)
     })
 
-    it('detects deleted files and folders', async function () {
+    it('detects deleted files and folders', async function() {
       let folder1 = {
         _id: 'folder1',
         path: 'folder1',
@@ -471,25 +488,32 @@ describe('LocalWatcher Tests', function () {
         docType: 'file'
       }
       for (let doc of [folder1, folder2, folder3, file1, file2, file3]) {
-        const {rev} = await this.pouch.db.put(doc)
+        const { rev } = await this.pouch.db.put(doc)
         doc._rev = rev
       }
-      const initialScan = {ids: ['folder1', 'file1'].map(metadata.id)}
+      const initialScan = { ids: ['folder1', 'file1'].map(metadata.id) }
 
-      const {offlineEvents} = await this.watcher.detectOfflineUnlinkEvents(initialScan)
+      const { offlineEvents } = await this.watcher.detectOfflineUnlinkEvents(
+        initialScan
+      )
 
       should(offlineEvents).deepEqual([
-        {type: 'unlinkDir', path: 'folder2', old: folder2},
-        {type: 'unlink', path: 'file2', old: file2}
+        { type: 'unlinkDir', path: 'folder2', old: folder2 },
+        { type: 'unlink', path: 'file2', old: file2 }
       ])
     })
 
     if (platform === 'win32' || platform === 'darwin') {
-      it('ignores incompatible docs', async function () {
-        await builders.metafile().incompatible().create()
-        const initialScan = {ids: []}
+      it('ignores incompatible docs', async function() {
+        await builders
+          .metafile()
+          .incompatible()
+          .create()
+        const initialScan = { ids: [] }
 
-        const {offlineEvents} = await this.watcher.detectOfflineUnlinkEvents(initialScan)
+        const { offlineEvents } = await this.watcher.detectOfflineUnlinkEvents(
+          initialScan
+        )
         should(offlineEvents).deepEqual([])
       })
     }

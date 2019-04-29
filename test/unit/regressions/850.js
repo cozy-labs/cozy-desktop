@@ -17,12 +17,12 @@ const metadata = require('../../../core/metadata')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 
-describe('issue 850', function () {
+describe('issue 850', function() {
   this.timeout(10000)
 
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
-  before('instanciate local watcher', function () {
+  before('instanciate local watcher', function() {
     this.merge = new Merge(this.pouch)
     this.local = {
       start: sinon.stub().resolves(),
@@ -35,14 +35,25 @@ describe('issue 850', function () {
       }),
       stop: sinon.stub().resolves()
     }
-    this.events = {emit: () => {}}
+    this.events = { emit: () => {} }
     this.ignore = new Ignore([])
-    this.sync = new Sync(this.pouch, this.local, this.remote, this.ignore, this.events)
+    this.sync = new Sync(
+      this.pouch,
+      this.local,
+      this.remote,
+      this.ignore,
+      this.events
+    )
     // this.sync.sync = sinon.stub().rejects(new Error('stopped'))
     this.prep = new Prep(this.merge, this.ignore)
-    this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, this.events)
+    this.watcher = new Watcher(
+      this.syncPath,
+      this.prep,
+      this.pouch,
+      this.events
+    )
   })
-  after('stop watcher and clean path', async function () {
+  after('stop watcher and clean path', async function() {
     this.watcher.stop(true)
     this.watcher.checksumer.kill()
     await fse.emptyDir(this.syncPath)
@@ -50,7 +61,7 @@ describe('issue 850', function () {
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  before('create dst dir', async function () {
+  before('create dst dir', async function() {
     let dirPath = path.join(this.syncPath, 'dst')
     await fse.mkdirp(dirPath)
     let stat = await fse.stat(dirPath)
@@ -61,13 +72,13 @@ describe('issue 850', function () {
       path: 'dst',
       ino: stat.ino,
       tags: [],
-      sides: {local: 1, remote: 1},
-      remote: {_id: 'XXX', _rev: '1-abc'}
+      sides: { local: 1, remote: 1 },
+      remote: { _id: 'XXX', _rev: '1-abc' }
     })
     await this.sync.sync()
   })
 
-  it('is fixed', async function () {
+  it('is fixed', async function() {
     let filePath = path.join(this.syncPath, 'file')
     let dstPath = path.join(this.syncPath, 'dst', 'file')
     await fse.outputFile(filePath, 'whatever')
@@ -93,7 +104,7 @@ describe('issue 850', function () {
       return Promise.delay(2000)
     }
 
-    this.remote.addFileAsync = async (doc) => {
+    this.remote.addFileAsync = async doc => {
       await doMove() // move occurs while the file is uploading
       // Promise.delay()
       doc.remote = {

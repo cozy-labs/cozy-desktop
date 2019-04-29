@@ -21,7 +21,7 @@ var dirNumber = 1
 //     const dir: RemoteDoc = await builders.remoteDir().inDir(...).create()
 //
 module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
-  constructor (cozy /*: Cozy */, old /*: ?RemoteDoc */) {
+  constructor(cozy /*: Cozy */, old /*: ?RemoteDoc */) {
     super(cozy, old)
 
     if (!old) {
@@ -30,7 +30,7 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
     this.remoteDoc.type = 'directory'
   }
 
-  async create () /*: Promise<RemoteDoc> */ {
+  async create() /*: Promise<RemoteDoc> */ {
     const cozy = this._ensureCozy()
     return jsonApiToRemoteDoc(
       await cozy.files.createDirectory({

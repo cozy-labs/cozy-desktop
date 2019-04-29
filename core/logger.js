@@ -6,7 +6,10 @@ const os = require('os')
 const path = require('path')
 const _ = require('lodash')
 
-const LOG_DIR = path.join(process.env.COZY_DESKTOP_DIR || os.homedir(), '.cozy-desktop')
+const LOG_DIR = path.join(
+  process.env.COZY_DESKTOP_DIR || os.homedir(),
+  '.cozy-desktop'
+)
 const LOG_FILENAME = 'logs.txt'
 const LOG_FILE = path.join(LOG_DIR, LOG_FILENAME)
 
@@ -31,21 +34,36 @@ const defaultLogger = bunyan.createLogger({
 if (process.env.DEBUG) {
   const logPath = 'debug.log'
   if (fse.existsSync(logPath)) fse.unlinkSync(logPath)
-  defaultLogger.addStream({type: 'file', path: logPath, level: 'trace'})
+  defaultLogger.addStream({ type: 'file', path: logPath, level: 'trace' })
 }
 if (process.env.TESTDEBUG) {
   defaultLogger.addStream({
     type: 'raw',
     level: process.env.TESTDEBUG,
     stream: {
-      write: function (msg) {
-        console.log(msg.component, msg.path || '', msg.msg, _.omit(msg, ['component', 'pid', 'name', 'hostname', 'level', 'time', 'v', 'msg']))
+      write: function(msg) {
+        // eslint-disable-next-line no-console
+        console.log(
+          msg.component,
+          msg.path || '',
+          msg.msg,
+          _.omit(msg, [
+            'component',
+            'pid',
+            'name',
+            'hostname',
+            'level',
+            'time',
+            'v',
+            'msg'
+          ])
+        )
       }
     }
   })
 }
 
-function logger (options) {
+function logger(options) {
   return defaultLogger.child(options, true)
 }
 

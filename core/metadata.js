@@ -7,7 +7,10 @@ const deepDiff = require('deep-diff').diff
 const path = require('path')
 
 const logger = require('./logger')
-const { detectPathIssues, detectPathLengthIssue } = require('./path_restrictions')
+const {
+  detectPathIssues,
+  detectPathLengthIssue
+} = require('./path_restrictions')
 const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
 const timestamp = require('./timestamp')
 
@@ -76,12 +79,14 @@ export type Metadata = {
 }
 */
 
-let id /*: string => string */ = (_) => ''
+let id /*: string => string */ = () => ''
 
 // See [test/world/](https://github.com/cozy-labs/cozy-desktop/blob/master/test/world/)
 // for file system behavior examples.
 switch (platform) {
-  case 'linux': case 'freebsd': case 'sunos':
+  case 'linux':
+  case 'freebsd':
+  case 'sunos':
     id = idUnix
     break
   case 'darwin':
@@ -129,18 +134,21 @@ module.exports = {
   shouldIgnore
 }
 
-function localDocType (remoteDocType /*: string */) /*: string */ {
+function localDocType(remoteDocType /*: string */) /*: string */ {
   switch (remoteDocType) {
-    case FILE_TYPE: return 'file'
-    case DIR_TYPE: return 'folder'
-    default: throw new Error(`Unexpected Cozy Files type: ${remoteDocType}`)
+    case FILE_TYPE:
+      return 'file'
+    case DIR_TYPE:
+      return 'folder'
+    default:
+      throw new Error(`Unexpected Cozy Files type: ${remoteDocType}`)
   }
 }
 
 // Transform a remote document into metadata, as stored in Pouch.
 // Please note the path is not normalized yet!
 // Normalization is done as a side effect of metadata.invalidPath() :/
-function fromRemoteDoc (remoteDoc /*: RemoteDoc */) /*: Metadata */ {
+function fromRemoteDoc(remoteDoc /*: RemoteDoc */) /*: Metadata */ {
   const doc /*: Object */ = {
     path: remoteDoc.path.substring(1),
     docType: localDocType(remoteDoc.type),
@@ -156,18 +164,20 @@ function fromRemoteDoc (remoteDoc /*: RemoteDoc */) /*: Metadata */ {
   }
 
   for (let field of ['md5sum', 'executable', 'class', 'mime', 'tags']) {
-    if (remoteDoc[field]) { doc[field] = remoteDoc[field] }
+    if (remoteDoc[field]) {
+      doc[field] = remoteDoc[field]
+    }
   }
 
   return doc
 }
 
-function isFile (doc /*: Metadata */) /*: bool */ {
+function isFile(doc /*: Metadata */) /*: bool */ {
   return doc.docType === 'file'
 }
 
 // Build an _id from the path for a case sensitive file system (Linux, BSD)
-function idUnix (fpath /*: string */) {
+function idUnix(fpath /*: string */) {
   return fpath
 }
 
@@ -191,19 +201,21 @@ function idUnix (fpath /*: string */) {
 //
 // Note: String.prototype.normalize is not available on node 0.10 and does
 // nothing when node is compiled without intl option.
-function idApfsOrHfs (fpath /*: string */) {
+function idApfsOrHfs(fpath /*: string */) {
   let id = fpath
-  if (id.normalize) { id = id.normalize('NFD') }
+  if (id.normalize) {
+    id = id.normalize('NFD')
+  }
   return id.toUpperCase()
 }
 
 // Build an _id from the path for Windows (NTFS file system)
-function idNTFS (fpath /*: string */) {
+function idNTFS(fpath /*: string */) {
   return fpath.toUpperCase()
 }
 
 // Assign an Id to a document
-function assignId (doc /*: any */) {
+function assignId(doc /*: any */) {
   doc._id = id(doc.path)
 }
 
@@ -211,27 +223,30 @@ function assignId (doc /*: any */) {
 // (ie a path inside the mount point).
 // Normalizes the path as a side-effect.
 // TODO: Separate normalization (side-effect) from validation (pure).
-function invalidPath (doc /*: {path: string} */) {
-  if (!doc.path) { return true }
+function invalidPath(doc /*: {path: string} */) {
+  if (!doc.path) {
+    return true
+  }
   doc.path = path.normalize(doc.path)
   if (doc.path.startsWith(path.sep)) {
     doc.path = doc.path.slice(1)
   }
   let parts = doc.path.split(path.sep)
-  return (doc.path === '.') ||
-          (doc.path === '') ||
-          (parts.indexOf('..') >= 0)
+  return doc.path === '.' || doc.path === '' || parts.indexOf('..') >= 0
 }
 
 // Same as invalidPath, except it throws an exception when path is invalid.
-function ensureValidPath (doc /*: {path: string} */) {
+function ensureValidPath(doc /*: {path: string} */) {
   if (invalidPath(doc)) {
-    log.warn({path: doc.path}, `Invalid path: ${JSON.stringify(doc, null, 2)}`)
+    log.warn(
+      { path: doc.path },
+      `Invalid path: ${JSON.stringify(doc, null, 2)}`
+    )
     throw new Error('Invalid path')
   }
 }
 
-function invariants (doc /*: Metadata */) {
+function invariants(doc /*: Metadata */) {
   let err
   if (!doc.sides) {
     err = new Error(`${doc._id} has no sides`)
@@ -242,7 +257,7 @@ function invariants (doc /*: Metadata */) {
   }
 
   if (err) {
-    log.error({err, sentry: true}, err.message)
+    log.error({ err, sentry: true }, err.message)
     throw err
   }
 
@@ -256,16 +271,33 @@ export type PlatformIncompatibility = PathIssue & {docType: string}
 // Identifies platform incompatibilities in metadata that will prevent local
 // synchronization
 // TODO: return null instead of an empty array when no issue was found?
-function detectPlatformIncompatibilities (metadata /*: Metadata */, syncPath /*: string */) /*: Array<PlatformIncompatibility> */ {
-  const pathLenghIssue = detectPathLengthIssue(path.join(syncPath, metadata.path), platform)
-  const issues /*: PathIssue[] */ = detectPathIssues(metadata.path, metadata.docType)
+function detectPlatformIncompatibilities(
+  metadata /*: Metadata */,
+  syncPath /*: string */
+) /*: Array<PlatformIncompatibility> */ {
+  const pathLenghIssue = detectPathLengthIssue(
+    path.join(syncPath, metadata.path),
+    platform
+  )
+  const issues /*: PathIssue[] */ = detectPathIssues(
+    metadata.path,
+    metadata.docType
+  )
   if (pathLenghIssue) issues.unshift(pathLenghIssue)
-  return issues.map(issue => (_.merge({
-    docType: issue.path === metadata.path ? metadata.docType : 'folder'
-  }, issue)))
+  return issues.map(issue =>
+    _.merge(
+      {
+        docType: issue.path === metadata.path ? metadata.docType : 'folder'
+      },
+      issue
+    )
+  )
 }
 
-function assignPlatformIncompatibilities (doc /*: Metadata */, syncPath /*: string */) /*: void */ {
+function assignPlatformIncompatibilities(
+  doc /*: Metadata */,
+  syncPath /*: string */
+) /*: void */ {
   const incompatibilities = detectPlatformIncompatibilities(doc, syncPath)
   if (incompatibilities.length > 0) doc.incompatibilities = incompatibilities
 }
@@ -274,24 +306,23 @@ function assignPlatformIncompatibilities (doc /*: Metadata */, syncPath /*: stri
 // If the checksum is missing, it is invalid.
 // MD5 has 16 bytes.
 // Base64 encoding must include padding.
-function invalidChecksum (doc /*: Metadata */) {
+function invalidChecksum(doc /*: Metadata */) {
   if (doc.md5sum == null) return doc.docType === 'file'
 
   const buffer = Buffer.from(doc.md5sum, 'base64')
 
-  return buffer.byteLength !== 16 ||
-    buffer.toString('base64') !== doc.md5sum
+  return buffer.byteLength !== 16 || buffer.toString('base64') !== doc.md5sum
 }
 
-function ensureValidChecksum (doc /*: Metadata */) {
+function ensureValidChecksum(doc /*: Metadata */) {
   if (invalidChecksum(doc)) {
-    log.warn({path: doc.path, doc}, 'Invalid checksum')
+    log.warn({ path: doc.path, doc }, 'Invalid checksum')
     throw new Error('Invalid checksum')
   }
 }
 
 // Extract the revision number, or 0 it not found
-function extractRevNumber (doc /*: Metadata|{_rev: string} */) {
+function extractRevNumber(doc /*: Metadata|{_rev: string} */) {
   try {
     // $FlowFixMe
     let rev = doc._rev.split('-')[0]
@@ -302,29 +333,29 @@ function extractRevNumber (doc /*: Metadata|{_rev: string} */) {
 }
 
 // Return true if the remote file is up-to-date for this document
-function isUpToDate (side /*: SideName */, doc /*: Metadata */) {
+function isUpToDate(side /*: SideName */, doc /*: Metadata */) {
   let currentRev = doc.sides[side] || 0
   let lastRev = extractRevNumber(doc)
   return currentRev === lastRev
 }
 
-function isAtLeastUpToDate (side /*: SideName */, doc /*: Metadata */) {
+function isAtLeastUpToDate(side /*: SideName */, doc /*: Metadata */) {
   let currentRev = doc.sides[side] || 0
   let lastRev = extractRevNumber(doc)
   return currentRev >= lastRev
 }
 
-function markAsUnsyncable (side /*: SideName */, doc /*: Metadata */) {
+function markAsUnsyncable(side /*: SideName */, doc /*: Metadata */) {
   doc._deleted = true
   markSide(side, doc, doc)
 }
 
-function markAsNew (doc /*: Metadata */) {
+function markAsNew(doc /*: Metadata */) {
   delete doc._rev
   delete doc.sides
 }
 
-function markAsUpToDate (doc /*: Metadata */) {
+function markAsUpToDate(doc /*: Metadata */) {
   let rev = extractRevNumber(doc) + 1
   for (let s of ['local', 'remote']) {
     doc.sides[s] = rev
@@ -333,14 +364,17 @@ function markAsUpToDate (doc /*: Metadata */) {
   return rev
 }
 
-function upToDate (doc /*: Metadata */) /*: Metadata */ {
+function upToDate(doc /*: Metadata */) /*: Metadata */ {
   const clone = _.clone(doc)
   const rev = Math.max(clone.sides.local, clone.sides.remote)
 
-  return _.assign(clone, { errors: undefined, sides: { local: rev, remote: rev } })
+  return _.assign(clone, {
+    errors: undefined,
+    sides: { local: rev, remote: rev }
+  })
 }
 
-function outOfDateSide (doc /*: Metadata */) /*: ?SideName */ {
+function outOfDateSide(doc /*: Metadata */) /*: ?SideName */ {
   const localRev = _.get(doc, 'sides.local', 0)
   const remoteRev = _.get(doc, 'sides.remote', 0)
   if ((localRev === 0 || remoteRev === 0) && doc._deleted) {
@@ -353,20 +387,23 @@ function outOfDateSide (doc /*: Metadata */) /*: ?SideName */ {
 }
 
 // Ensure new timestamp is never older than the previous one
-function assignMaxDate (doc /*: Metadata */, was /*: ?Metadata */) {
+function assignMaxDate(doc /*: Metadata */, was /*: ?Metadata */) {
   if (was == null) return
   const wasUpdatedAt = new Date(was.updated_at)
   const docUpdatedAt = new Date(doc.updated_at)
-  if (docUpdatedAt < wasUpdatedAt) { doc.updated_at = was.updated_at }
+  if (docUpdatedAt < wasUpdatedAt) {
+    doc.updated_at = was.updated_at
+  }
 }
 
 const ensureExecutable = (one, two) => {
-  two = process.platform === 'win32'
-    ? _.defaults({executable: one.executable}, two)
-    : two
+  two =
+    process.platform === 'win32'
+      ? _.defaults({ executable: one.executable }, two)
+      : two
   return [
-    _.merge({executable: !!one.executable}, one),
-    _.merge({executable: !!two.executable}, two)
+    _.merge({ executable: !!one.executable }, one),
+    _.merge({ executable: !!two.executable }, two)
   ]
 }
 
@@ -381,13 +418,13 @@ const makeComparator = (name, interestingFields) => {
       })
     })
   }
-  const canBeIgnoredDiff = (difference) => {
+  const canBeIgnoredDiff = difference => {
     const diff = difference.item || difference
     return _.isNil(diff.lhs) && _.isNil(diff.rhs)
   }
   return (one, two) => {
     const diff = deepDiff(one, two, filter)
-    log.trace({path: two.path, diff}, name)
+    log.trace({ path: two.path, diff }, name)
     if (diff && !_.every(diff, canBeIgnoredDiff)) {
       return false
     }
@@ -400,37 +437,60 @@ const makeComparator = (name, interestingFields) => {
   }
 }
 
-const sameFolderComparator = makeComparator('sameFolder',
-  ['path', 'docType', 'remote', 'tags', 'trashed', 'ino'])
+const sameFolderComparator = makeComparator('sameFolder', [
+  'path',
+  'docType',
+  'remote',
+  'tags',
+  'trashed',
+  'ino'
+])
 
 // Return true if the metadata of the two folders are the same
-function sameFolder (one /*: Metadata */, two /*: Metadata */) {
+function sameFolder(one /*: Metadata */, two /*: Metadata */) {
   return sameFolderComparator(one, two)
 }
 
-const sameFileComparator = makeComparator('sameFile',
-  ['path', 'docType', 'md5sum', 'remote._id', 'remote._rev',
-    'tags', 'size', 'trashed', 'ino', 'executable'])
+const sameFileComparator = makeComparator('sameFile', [
+  'path',
+  'docType',
+  'md5sum',
+  'remote._id',
+  'remote._rev',
+  'tags',
+  'size',
+  'trashed',
+  'ino',
+  'executable'
+])
 
-const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev',
-  ['path', 'docType', 'md5sum', 'remote._id',
-    'tags', 'size', 'trashed', 'ino', 'executable'])
+const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev', [
+  'path',
+  'docType',
+  'md5sum',
+  'remote._id',
+  'tags',
+  'size',
+  'trashed',
+  'ino',
+  'executable'
+])
 
 // Return true if the metadata of the two files are the same
-function sameFile (one /*: Metadata */, two /*: Metadata */) {
-  [one, two] = ensureExecutable(one, two)
+function sameFile(one /*: Metadata */, two /*: Metadata */) {
+  ;[one, two] = ensureExecutable(one, two)
   return sameFileComparator(one, two)
 }
 
 // Return true if the metadata of the two files are the same,
 // ignoring revision
-function sameFileIgnoreRev (one /*: Metadata */, two /*: Metadata */) {
-  [one, two] = ensureExecutable(one, two)
+function sameFileIgnoreRev(one /*: Metadata */, two /*: Metadata */) {
+  ;[one, two] = ensureExecutable(one, two)
   return sameFileIgnoreRevComparator(one, two)
 }
 
 // Return true if the two files have the same binary content
-function sameBinary (one /*: Metadata */, two /*: Metadata */) {
+function sameBinary(one /*: Metadata */, two /*: Metadata */) {
   return one.md5sum === two.md5sum
 }
 
@@ -441,9 +501,15 @@ function sameBinary (one /*: Metadata */, two /*: Metadata */) {
 // revision from the previous state, increment it by one to have the next
 // revision and associate this number to the side that makes the
 // modification.
-function markSide (side /*: string */, doc /*: Metadata */, prev /*: ?Metadata */) /*: Metadata */ {
+function markSide(
+  side /*: string */,
+  doc /*: Metadata */,
+  prev /*: ?Metadata */
+) /*: Metadata */ {
   let rev = 0
-  if (prev) { rev = extractRevNumber(prev) }
+  if (prev) {
+    rev = extractRevNumber(prev)
+  }
   if (doc.sides == null) {
     const was = prev && prev.sides
     doc.sides = clone(was || {})
@@ -452,75 +518,97 @@ function markSide (side /*: string */, doc /*: Metadata */, prev /*: ?Metadata *
   return doc
 }
 
-function incSides (doc /*: {sides?: MetadataSidesInfo} */) /*: void */ {
+function incSides(doc /*: {sides?: MetadataSidesInfo} */) /*: void */ {
   doc.sides = {
     local: side(doc, 'local') + 1,
     remote: side(doc, 'remote') + 1
   }
 }
 
-function side (doc /*: {sides?: MetadataSidesInfo} */, sideName /*: SideName */) /*: number */ {
+function side(
+  doc /*: {sides?: MetadataSidesInfo} */,
+  sideName /*: SideName */
+) /*: number */ {
   return (doc.sides || {})[sideName] || 0
 }
 
-function wasSynced (doc /*: Metadata */) /*: boolean */ {
-  const hasBothSides /*: boolean */ = doc.sides && (doc.sides.local != null) && (doc.sides.remote != null)
+function wasSynced(doc /*: Metadata */) /*: boolean */ {
+  const hasBothSides /*: boolean */ =
+    doc.sides && doc.sides.local != null && doc.sides.remote != null
   const comesFromSyncedDoc /*: boolean */ = doc.moveFrom != null
 
   return hasBothSides || comesFromSyncedDoc
 }
 
-function buildDir (fpath /*: string */, stats /*: Stats */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
+function buildDir(
+  fpath /*: string */,
+  stats /*: Stats */,
+  remote /*: ?MetadataRemoteInfo */
+) /*: Metadata */ {
   const doc /*: Object */ = {
     _id: id(fpath),
     path: fpath,
     docType: 'folder',
-    updated_at: timestamp.fromDate(timestamp.maxDate(stats.mtime, stats.ctime)).toISOString(),
+    updated_at: timestamp
+      .fromDate(timestamp.maxDate(stats.mtime, stats.ctime))
+      .toISOString(),
     ino: stats.ino,
     remote
   }
-  if (stats.fileid) { doc.fileid = stats.fileid }
+  if (stats.fileid) {
+    doc.fileid = stats.fileid
+  }
   return doc
 }
 
 const EXECUTABLE_MASK = 1 << 6
 
-function buildFile (filePath /*: string */, stats /*: Stats */, md5sum /*: string */, remote /*: ?MetadataRemoteInfo */) /*: Metadata */ {
+function buildFile(
+  filePath /*: string */,
+  stats /*: Stats */,
+  md5sum /*: string */,
+  remote /*: ?MetadataRemoteInfo */
+) /*: Metadata */ {
   const mimeType = mime.lookup(filePath)
-  const {mtime, ctime} = stats
+  const { mtime, ctime } = stats
   const doc /*: Object */ = {
     _id: id(filePath),
     path: filePath,
     docType: 'file',
     md5sum,
     ino: stats.ino,
-    updated_at: timestamp.fromDate(timestamp.maxDate(mtime, ctime)).toISOString(),
+    updated_at: timestamp
+      .fromDate(timestamp.maxDate(mtime, ctime))
+      .toISOString(),
     mime: mimeType,
     class: mimeType.split('/')[0],
     size: stats.size,
     remote
   }
-  if (stats.mode && (+stats.mode & EXECUTABLE_MASK) !== 0) { doc.executable = true }
-  if (stats.fileid) { doc.fileid = stats.fileid }
+  if (stats.mode && (+stats.mode & EXECUTABLE_MASK) !== 0) {
+    doc.executable = true
+  }
+  if (stats.fileid) {
+    doc.fileid = stats.fileid
+  }
   return doc
 }
 
-const CONFLICT_PATTERN = '-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z'
+const CONFLICT_PATTERN =
+  '-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z'
 
-function conflictRegExp (prefix /*: string */) /*: RegExp */ {
+function conflictRegExp(prefix /*: string */) /*: RegExp */ {
   return new RegExp(`${prefix}${CONFLICT_PATTERN}`)
 }
 
-function createConflictingDoc (doc /*: Metadata */) /*: Metadata */ {
+function createConflictingDoc(doc /*: Metadata */) /*: Metadata */ {
   let dst = clone(doc)
   let date = fsutils.validName(new Date().toISOString())
   let ext = path.extname(doc.path)
   let dir = path.dirname(doc.path)
   let base = path.basename(doc.path, ext)
   const previousConflictingName = conflictRegExp('(.*)').exec(doc.path)
-  const filename = previousConflictingName
-    ? previousConflictingName[1]
-    : base
+  const filename = previousConflictingName ? previousConflictingName[1] : base
   // 180 is an arbitrary limit to avoid having files with too long names
   const notToLongFilename = filename.slice(0, 180)
   dst.path = `${path.join(dir, notToLongFilename)}-conflict-${date}${ext}`
@@ -528,6 +616,12 @@ function createConflictingDoc (doc /*: Metadata */) /*: Metadata */ {
   return dst
 }
 
-function shouldIgnore (doc /*: Metadata */, ignoreRules /*: Ignore */) /*: boolean */ {
-  return ignoreRules.isIgnored({ relativePath: doc._id, isFolder: doc.docType === 'folder' })
+function shouldIgnore(
+  doc /*: Metadata */,
+  ignoreRules /*: Ignore */
+) /*: boolean */ {
+  return ignoreRules.isIgnored({
+    relativePath: doc._id,
+    isFolder: doc.docType === 'folder'
+  })
 }

@@ -7,7 +7,7 @@ const config = require('../../../core/config')
 const { COZY_URL } = require('./cozy')
 
 module.exports = {
-  createConfig () {
+  createConfig() {
     let parent = process.env.COZY_DESKTOP_DIR || 'tmp'
     this.basePath = path.resolve(`${parent}/test/${+new Date()}`)
     this.syncPath = path.join(this.basePath, 'Cozy Drive')
@@ -17,7 +17,7 @@ module.exports = {
     this.config.cozyUrl = COZY_URL
   },
 
-  registerClient () {
+  registerClient() {
     this.config.fileConfig.creds = {
       client: {
         clientID: process.env.COZY_CLIENT_ID || 'desktop',
@@ -31,8 +31,8 @@ module.exports = {
     }
   },
 
-  cleanConfig () {
+  cleanConfig() {
     this.timeout && this.timeout(5 * 60 * 1000)
-    return del.sync(this.syncPath, {force: process.env.TRAVIS})
+    return del.sync(this.syncPath, { force: process.env.TRAVIS })
   }
 }

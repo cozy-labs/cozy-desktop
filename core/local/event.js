@@ -43,7 +43,7 @@ module.exports = {
   getInode
 }
 
-function getInode (e /*: LocalEvent */) /*: ?number */ {
+function getInode(e /*: LocalEvent */) /*: ?number */ {
   switch (e.type) {
     case 'add':
     case 'addDir':

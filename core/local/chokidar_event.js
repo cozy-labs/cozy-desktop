@@ -43,14 +43,20 @@ module.exports = {
   pretendUnlinkFromMetadata
 }
 
-function build (type /*: string */, path /*: ?string */, stats /*: ?fs.Stats */) /*: ChokidarEvent */ {
-  const event /*: Object */ = {type}
+function build(
+  type /*: string */,
+  path /*: ?string */,
+  stats /*: ?fs.Stats */
+) /*: ChokidarEvent */ {
+  const event /*: Object */ = { type }
   if (path != null) event.path = path
   if (stats != null) event.stats = stats
   return event
 }
 
-function pretendUnlinkFromMetadata (doc /*: Metadata */) /*: ChokidarUnlink|ChokidarUnlinkDir */ {
+function pretendUnlinkFromMetadata(
+  doc /*: Metadata */
+) /*: ChokidarUnlink|ChokidarUnlinkDir */ {
   const type = doc.docType === 'file' ? 'unlink' : 'unlinkDir'
   const path = doc.path
   // $FlowFixMe

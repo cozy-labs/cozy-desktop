@@ -20,13 +20,13 @@ module.exports = {
 
 // Usage:
 //     await TmpDir.ensureEmpty(__filename)
-async function emptyForTestFile (filename /*: string */) /*: Promise<string> */ {
+async function emptyForTestFile(filename /*: string */) /*: Promise<string> */ {
   const fpath = pathForTestFile(filename)
   await fse.emptyDir(fpath)
   return fpath
 }
 
-function pathForTestFile (filename /*: string */) /*: string */ {
+function pathForTestFile(filename /*: string */) /*: string */ {
   const abspath = filename.replace(/.(js|json)$/, '')
   const relpath = abspath.startsWith(rootDir)
     ? abspath.slice(rootDir.length + 1)

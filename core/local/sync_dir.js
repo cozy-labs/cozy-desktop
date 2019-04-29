@@ -16,7 +16,9 @@ module.exports = {
  * In case it doesn't, emit 'syncdir-unlinked' and throws.
  * Any other error occuring during the check will be thrown too.
  */
-function ensureExistsSync ({syncPath, events} /*: {syncPath: string, events: EventEmitter} */) /*: void */ {
+function ensureExistsSync(
+  { syncPath, events } /*: {syncPath: string, events: EventEmitter} */
+) /*: void */ {
   if (!fs.existsSync(syncPath)) {
     events.emit('syncdir-unlinked')
     throw new Error('Syncdir has been unlinked')
@@ -27,6 +29,8 @@ function ensureExistsSync ({syncPath, events} /*: {syncPath: string, events: Eve
  *
  * Caller should stop the regular check at some point with clearInterval().
  */
-function startIntervalCheck (context /*: {syncPath: string, events: EventEmitter} */) /*: IntervalID */ {
+function startIntervalCheck(
+  context /*: {syncPath: string, events: EventEmitter} */
+) /*: IntervalID */ {
   return setInterval(() => ensureExistsSync(context), 5000)
 }

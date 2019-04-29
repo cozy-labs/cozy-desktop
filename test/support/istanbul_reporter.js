@@ -4,9 +4,9 @@ const istanbulAPI = require('istanbul-api')
 const libCoverage = require('istanbul-lib-coverage')
 
 const SpecReporter = require('mocha').reporters.spec
-const applySpecReporter = (runner) => new SpecReporter(runner)
+const applySpecReporter = runner => new SpecReporter(runner)
 
-function Istanbul (runner) {
+function Istanbul(runner) {
   applySpecReporter(runner)
 
   runner.on('end', () => {

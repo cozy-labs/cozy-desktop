@@ -27,7 +27,7 @@ describe('Update only a file mtime', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(function () {
+  beforeEach(function() {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
   })
@@ -36,13 +36,17 @@ describe('Update only a file mtime', () => {
     await helpers.remote.ignorePreviousChanges()
     const localPath = path.join(helpers.local.syncPath, 'file')
 
-    const file = await cozy.files.create('basecontent', {name: 'file'})
+    const file = await cozy.files.create('basecontent', { name: 'file' })
     await helpers.remote.pullChanges()
     await helpers.syncAll()
 
     // update only the file mtime
-    await cozy.files.updateById(file._id, 'changedcontent', {contentType: 'text/plain'})
-    await cozy.files.updateById(file._id, 'basecontent', {contentType: 'text/plain'})
+    await cozy.files.updateById(file._id, 'changedcontent', {
+      contentType: 'text/plain'
+    })
+    await cozy.files.updateById(file._id, 'basecontent', {
+      contentType: 'text/plain'
+    })
 
     const statBefore = await fse.stat(localPath)
     helpers.spyPouch()
@@ -57,11 +61,13 @@ describe('Update only a file mtime', () => {
 
     if (config.watcherType() === 'chokidar') {
       const stats = await fse.stat(localPath)
-      await helpers.local.simulateEvents([{
-        type: 'change',
-        path: 'file',
-        stats
-      }])
+      await helpers.local.simulateEvents([
+        {
+          type: 'change',
+          path: 'file',
+          stats
+        }
+      ])
     } else {
       await helpers.local.simulateAtomStart()
       await helpers.local.simulateAtomEvents([
@@ -87,7 +93,10 @@ describe('Update only a file mtime', () => {
     var d = new Date()
     d.setDate(d.getDate() - 1)
 
-    const file = await cozy.files.create('basecontent', {name: 'file', lastModifiedDate: d})
+    const file = await cozy.files.create('basecontent', {
+      name: 'file',
+      lastModifiedDate: d
+    })
     await helpers.remote.pullChanges()
     await helpers.syncAll()
 
@@ -96,13 +105,23 @@ describe('Update only a file mtime', () => {
     helpers.spyPouch()
 
     const oldFile = await helpers.pouch.byRemoteIdMaybeAsync(file._id)
-    await helpers.prep.updateFileAsync('local', _.merge(
-      {
-        path: 'file',
-        updated_at: d.toISOString()
-      },
-      _.pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size', 'remote'])
-    ))
+    await helpers.prep.updateFileAsync(
+      'local',
+      _.merge(
+        {
+          path: 'file',
+          updated_at: d.toISOString()
+        },
+        _.pick(oldFile, [
+          'docType',
+          'md5sum',
+          'mime',
+          'class',
+          'size',
+          'remote'
+        ])
+      )
+    )
 
     await helpers.syncAll()
 

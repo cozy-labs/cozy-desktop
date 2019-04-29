@@ -33,7 +33,7 @@ module.exports = {
 
 // TODO add unit tests and logs
 
-function sendReadyBatches (waiting /*: WaitingItem[] */, out /*: Buffer */) {
+function sendReadyBatches(waiting /*: WaitingItem[] */, out /*: Buffer */) {
   while (waiting.length > 0) {
     if (waiting[0].nbCandidates !== 0) {
       break
@@ -45,21 +45,24 @@ function sendReadyBatches (waiting /*: WaitingItem[] */, out /*: Buffer */) {
 }
 
 // Count the candidates for debouncing with future events
-function countFileWriteEvents (events /*: AtomWatcherEvent[] */) /*: number */ {
+function countFileWriteEvents(events /*: AtomWatcherEvent[] */) /*: number */ {
   let nbCandidates = 0
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
     if (event.incomplete) {
       continue
     }
-    if (event.kind === 'file' && ['created', 'modified'].includes(event.action)) {
+    if (
+      event.kind === 'file' &&
+      ['created', 'modified'].includes(event.action)
+    ) {
       nbCandidates++
     }
   }
   return nbCandidates
 }
 
-function aggregateBatch (events) {
+function aggregateBatch(events) {
   const lastWritesByPath = new Map()
   const aggregatedEvents = []
 
@@ -89,7 +92,7 @@ function aggregateBatch (events) {
   return aggregatedEvents
 }
 
-function isAggregationCandidate (event) {
+function isAggregationCandidate(event) {
   return (
     !event.incomplete &&
     event.kind === 'file' &&
@@ -97,11 +100,11 @@ function isAggregationCandidate (event) {
   )
 }
 
-function aggregateEvents (oldEvent, recentEvent) {
+function aggregateEvents(oldEvent, recentEvent) {
   if (recentEvent.action === 'deleted' && oldEvent.action === 'created') {
     // It's just a temporary file that we can ignore
     log.debug(
-      {createdEvent: oldEvent, deletedEvent: recentEvent},
+      { createdEvent: oldEvent, deletedEvent: recentEvent },
       `Ignore ${oldEvent.kind} ${oldEvent.action} then ${recentEvent.action}`
     )
 
@@ -117,20 +120,22 @@ function aggregateEvents (oldEvent, recentEvent) {
   return recentEvent
 }
 
-function addDebugInfo (event, previousEvent) {
+function addDebugInfo(event, previousEvent) {
   _.update(event, [STEP_NAME, 'previousEvents'], previousEvents =>
     _.concat(
       // Event to aggregate
-      [_.pick(previousEvent, [
-        'action',
-        'stats.ino',
-        'stats.fileid',
-        'stats.size',
-        'stats.atime',
-        'stats.mtime',
-        'stats.ctime',
-        'stats.birthtime'
-      ])],
+      [
+        _.pick(previousEvent, [
+          'action',
+          'stats.ino',
+          'stats.fileid',
+          'stats.size',
+          'stats.atime',
+          'stats.mtime',
+          'stats.ctime',
+          'stats.birthtime'
+        ])
+      ],
       // Events previously aggregated on `event`
       _.toArray(previousEvents),
       // Events previously aggregated on `e`
@@ -143,7 +148,10 @@ function addDebugInfo (event, previousEvent) {
 }
 
 // Look if we can debounce some waiting events with the current events
-function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] */) {
+function debounce(
+  waiting /*: WaitingItem[] */,
+  events /*: AtomWatcherEvent[] */
+) {
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
 
@@ -151,16 +159,24 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
       continue
     }
 
-    if (event.kind === 'file' && ['modified', 'deleted'].includes(event.action)) {
+    if (
+      event.kind === 'file' &&
+      ['modified', 'deleted'].includes(event.action)
+    ) {
       for (let j = 0; j < waiting.length; j++) {
         const w = waiting[j]
 
-        if (w.nbCandidates === 0) { continue }
+        if (w.nbCandidates === 0) {
+          continue
+        }
 
         for (let k = 0; k < w.events.length; k++) {
           const e = w.events[k]
 
-          if (['created', 'modified'].includes(e.action) && e.path === event.path) {
+          if (
+            ['created', 'modified'].includes(e.action) &&
+            e.path === event.path
+          ) {
             w.events.splice(k, 1)
             w.nbCandidates--
 
@@ -173,7 +189,7 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
             if (event.action === 'deleted' && e.action === 'created') {
               // It's just a temporary file that we can ignore
               log.debug(
-                {createdEvent: e, deletedEvent: event},
+                { createdEvent: e, deletedEvent: event },
                 `Ignore ${e.kind} ${e.action} then ${event.action}`
               )
               events.splice(i, 1)
@@ -192,9 +208,10 @@ function debounce (waiting /*: WaitingItem[] */, events /*: AtomWatcherEvent[] *
 // events for files, as we can have several of them in a short lapse of time,
 // and computing the checksum several times in a row for the same file is not a
 // good idea.
-async function awaitWriteFinish (buffer /*: Buffer */, out /*: Buffer */) {
+async function awaitWriteFinish(buffer /*: Buffer */, out /*: Buffer */) {
   const waiting /*: WaitingItem[] */ = []
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const events = aggregateBatch(await buffer.pop())
     let nbCandidates = countFileWriteEvents(events)
@@ -212,9 +229,11 @@ async function awaitWriteFinish (buffer /*: Buffer */, out /*: Buffer */) {
   }
 }
 
-function loop (buffer /*: Buffer */, opts /*: {} */) /*: Buffer */ {
+// eslint-disable-next-line no-unused-vars
+function loop(buffer /*: Buffer */, opts /*: {} */) /*: Buffer */ {
   const out = new Buffer()
-  awaitWriteFinish(buffer, out)
-    .catch(err => { log.error({err}) })
+  awaitWriteFinish(buffer, out).catch(err => {
+    log.error({ err })
+  })
   return out
 }

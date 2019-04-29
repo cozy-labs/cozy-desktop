@@ -25,8 +25,8 @@ describe('EventBuffer', () => {
     should(buffer.events).deepEqual([])
   })
 
-  const event1 = {path: 'path/1'}
-  const event2 = {path: 'path/2'}
+  const event1 = { path: 'path/1' }
+  const event2 = { path: 'path/2' }
 
   context('in idle mode (default)', () => {
     beforeEach(() => {
@@ -90,35 +90,38 @@ describe('EventBuffer', () => {
       })
     })
 
-    context('when last event occured since or more than TIMEOUT_IN_MS ago', () => {
-      const event3 = {path: 'path/3'}
-      const event4 = {path: 'path/4'}
+    context(
+      'when last event occured since or more than TIMEOUT_IN_MS ago',
+      () => {
+        const event3 = { path: 'path/3' }
+        const event4 = { path: 'path/4' }
 
-      beforeEach(() => {
-        buffer.switchMode('timeout')
-        buffer.push(event1)
-        buffer.push(event2)
-      })
+        beforeEach(() => {
+          buffer.switchMode('timeout')
+          buffer.push(event1)
+          buffer.push(event2)
+        })
 
-      it('flushes on timeout', () => {
-        clock.tick(TIMEOUT_IN_MS)
-        buffer.push(event3)
-        should(flushed).have.been.calledWith([event1, event2])
+        it('flushes on timeout', () => {
+          clock.tick(TIMEOUT_IN_MS)
+          buffer.push(event3)
+          should(flushed).have.been.calledWith([event1, event2])
 
-        clock.tick(TIMEOUT_IN_MS + 1)
-        buffer.push(event4)
-        should(flushed).have.been.calledWith([event3])
-      })
+          clock.tick(TIMEOUT_IN_MS + 1)
+          buffer.push(event4)
+          should(flushed).have.been.calledWith([event3])
+        })
 
-      it('stores new events', () => {
-        clock.tick(TIMEOUT_IN_MS)
-        buffer.push(event3)
-        should(buffer.events).deepEqual([event3])
+        it('stores new events', () => {
+          clock.tick(TIMEOUT_IN_MS)
+          buffer.push(event3)
+          should(buffer.events).deepEqual([event3])
 
-        clock.tick(TIMEOUT_IN_MS + 1)
-        buffer.push(event4)
-        should(buffer.events).deepEqual([event4])
-      })
-    })
+          clock.tick(TIMEOUT_IN_MS + 1)
+          buffer.push(event4)
+          should(buffer.events).deepEqual([event4])
+        })
+      }
+    )
   })
 })

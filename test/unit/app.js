@@ -14,27 +14,27 @@ const automatedRegistration = require('../../dev/remote/automated_registration')
 const configHelpers = require('../support/helpers/config')
 const passphrase = require('../support/helpers/passphrase')
 
-describe('App', function () {
-  describe('parseCozyUrl', function () {
-    it('parses https://example.com/', function () {
+describe('App', function() {
+  describe('parseCozyUrl', function() {
+    it('parses https://example.com/', function() {
       let parsed = App.prototype.parseCozyUrl('https://example.com')
       parsed.protocol.should.equal('https:')
       parsed.host.should.equal('example.com')
     })
 
-    it('parses example.org as https://example.org', function () {
+    it('parses example.org as https://example.org', function() {
       let parsed = App.prototype.parseCozyUrl('example.org')
       parsed.protocol.should.equal('https:')
       parsed.host.should.equal('example.org')
     })
 
-    it('parses zoe as https://zoe.cozycloud.cc', function () {
+    it('parses zoe as https://zoe.cozycloud.cc', function() {
       let parsed = App.prototype.parseCozyUrl('zoe')
       parsed.protocol.should.equal('https:')
       parsed.host.should.equal('zoe.cozycloud.cc')
     })
 
-    it('parses http://localhost:9104', function () {
+    it('parses http://localhost:9104', function() {
       let parsed = App.prototype.parseCozyUrl('http://localhost:9104')
       parsed.protocol.should.equal('http:')
       parsed.hostname.should.equal('localhost')
@@ -51,10 +51,14 @@ describe('App', function () {
       return
     }
 
-    it('unregisters the client', async function () {
+    it('unregisters the client', async function() {
       // For some reason, the test won't work using configHelpers because they
       // don't perfectly fake the actual registration behavior.
-      const registration = automatedRegistration(this.config.cozyUrl, passphrase, this.config)
+      const registration = automatedRegistration(
+        this.config.cozyUrl,
+        passphrase,
+        this.config
+      )
       await registration.process(pkg)
       const configDir = path.dirname(this.config.configPath)
       const basePath = path.dirname(configDir)
@@ -77,7 +81,7 @@ describe('App', function () {
     beforeEach(configHelpers.createConfig)
     beforeEach(configHelpers.registerClient)
 
-    it('removes everything but the logs from the config dir', async function () {
+    it('removes everything but the logs from the config dir', async function() {
       const configDir = path.dirname(this.config.configPath)
       const basePath = path.dirname(configDir)
       const app = new App(basePath)
@@ -101,30 +105,32 @@ describe('App', function () {
     it('cannot be the user home dir', () => {
       const syncPath = os.homedir()
       const result = App.prototype.checkSyncPath(syncPath)
-      should(result).have.properties({syncPath})
+      should(result).have.properties({ syncPath })
       should(result.error).not.be.empty()
     })
 
     it('cannot be the parent of the user home dir', () => {
       const syncPath = path.dirname(os.homedir())
       const result = App.prototype.checkSyncPath(syncPath)
-      should(result).have.properties({syncPath})
+      should(result).have.properties({ syncPath })
       should(result.error).not.be.empty()
     })
 
     it('cannot be the whole system', () => {
       const syncPath = process.platform === 'win32' ? 'C:\\' : '/'
       const result = App.prototype.checkSyncPath(syncPath)
-      should(result).have.properties({syncPath})
+      should(result).have.properties({ syncPath })
       should(result.error).not.be.empty()
     })
 
     it('can be an existing non-empty dir', () => {
-      const syncPath = fse.mkdtempSync(path.join(os.tmpdir(), 'existing-non-empty-dir'))
+      const syncPath = fse.mkdtempSync(
+        path.join(os.tmpdir(), 'existing-non-empty-dir')
+      )
       try {
         fse.writeFileSync(path.join(syncPath, 'some-file'), 'some-content')
         const result = App.prototype.checkSyncPath(syncPath)
-        should(result).have.properties({syncPath})
+        should(result).have.properties({ syncPath })
         should(result).not.have.property('error')
       } finally {
         fse.removeSync(syncPath)
@@ -134,26 +140,29 @@ describe('App', function () {
     it('can be the default dir', () => {
       const syncPath = path.join(os.homedir(), 'Cozy Drive')
       const result = App.prototype.checkSyncPath(syncPath)
-      should(result).deepEqual({syncPath})
+      should(result).deepEqual({ syncPath })
     })
 
     it('can be a subdir of the user home', () => {
-      const syncPath = path.join(os.homedir(), 'Cozy Drive Test ' + new Date().getTime())
+      const syncPath = path.join(
+        os.homedir(),
+        'Cozy Drive Test ' + new Date().getTime()
+      )
       const result = App.prototype.checkSyncPath(syncPath)
-      should(result).deepEqual({syncPath})
+      should(result).deepEqual({ syncPath })
     })
 
     it('can be a subdir outside the user home', () => {
       const syncPath = process.platform === 'win32' ? 'C:\\Cozy' : '/cozy'
       const result = App.prototype.checkSyncPath(syncPath)
-      should(result).deepEqual({syncPath})
+      should(result).deepEqual({ syncPath })
     })
 
     if (process.platform === 'win32') {
       it('can be another volume', () => {
         const syncPath = 'D:\\'
         const result = App.prototype.checkSyncPath(syncPath)
-        should(result).deepEqual({syncPath})
+        should(result).deepEqual({ syncPath })
       })
     }
   })
@@ -176,7 +185,7 @@ describe('App', function () {
       should.not.exist(info.syncPath)
     })
 
-    it('works when app is configured', function () {
+    it('works when app is configured', function() {
       configHelpers.createConfig.call(this)
       configHelpers.registerClient.call(this)
       this.config.persist() // the config helper does not persist it

@@ -23,23 +23,28 @@ module.exports = {
 // useless computing for ignored files/directories (like adding inotify
 // watchers), but it needs to be put after the AddInfos step as the docType is
 // required to know if the event can be ignored.
-function loop (buffer /*: Buffer */, opts /*: { ignore: Ignore } */) /*: Buffer */ {
+function loop(
+  buffer /*: Buffer */,
+  opts /*: { ignore: Ignore } */
+) /*: Buffer */ {
   const notIgnored = buildNotIgnored(opts.ignore)
 
-  return buffer.map((batch) => {
+  return buffer.map(batch => {
     return batch.filter(notIgnored)
   })
 }
 
-function buildNotIgnored (ignoreRules /*: Ignore */) /*: ((AtomWatcherEvent) => boolean) */ {
+function buildNotIgnored(
+  ignoreRules /*: Ignore */
+) /*: ((AtomWatcherEvent) => boolean) */ {
   return (event /*: AtomWatcherEvent */) /*: boolean */ => {
     if (event.noIgnore) {
       return true
     }
     const relativePath = event.path
     const isFolder = event.kind === 'directory'
-    const isIgnored = ignoreRules.isIgnored({relativePath, isFolder})
-    if (isIgnored) log.debug({event}, 'Ignored')
+    const isIgnored = ignoreRules.isIgnored({ relativePath, isFolder })
+    if (isIgnored) log.debug({ event }, 'Ignored')
     return !isIgnored
   }
 }

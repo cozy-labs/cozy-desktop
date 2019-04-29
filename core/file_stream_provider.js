@@ -14,7 +14,10 @@ class ReadableWithContentLength /*:: extends stream.Readable */ {
   */
 }
 
-function withContentLength (s /*: stream.Readable */, contentLength /*: ?number */) /*: ReadableWithContentLength */ {
+function withContentLength(
+  s /*: stream.Readable */,
+  contentLength /*: ?number */
+) /*: ReadableWithContentLength */ {
   const s2 /*: ReadableWithContentLength */ = (s /*: any */)
   s2.contentLength = contentLength
   return s2

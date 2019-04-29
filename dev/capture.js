@@ -15,17 +15,19 @@ program
   .option('-r, --remote', 'Remove events only')
   .parse(process.argv)
 
-const scenarioArgPattern = new RegExp(path.posix.join(
-  '^.*', '?test', 'scenarios', `(.+)`, '(scenario.js)?'))
+const scenarioArgPattern = new RegExp(
+  path.posix.join('^.*', '?test', 'scenarios', `(.+)`, '(scenario.js)?')
+)
 
-const scenarios = (args) => {
+const scenarios = args => {
   if (args.length === 0) return scenarioHelpers.scenarios
 
   return args.map(arg => {
     const match = arg.match(scenarioArgPattern)
     if (match) {
-      return scenarioHelpers.scenarioByPath(path.join(
-        __dirname, '..', 'test', 'scenarios', match[1], 'scenario.js'))
+      return scenarioHelpers.scenarioByPath(
+        path.join(__dirname, '..', 'test', 'scenarios', match[1], 'scenario.js')
+      )
     } else {
       throw new Error(`Invalid argument: ${arg}`)
     }
@@ -38,21 +40,28 @@ if (program.remote || !program.local) sides.push(remote)
 
 const captureScenariosEvents = async (scenarios, sides) => {
   try {
+    // eslint-disable-next-line no-console
     console.log('test/scenarios/')
     for (let scenario of scenarios) {
+      // eslint-disable-next-line no-console
       console.log(`  ${scenario.name}/`)
       for (let side of sides) {
         try {
           const outputFilename = await side.captureScenario(scenario)
+          // eslint-disable-next-line no-console
           console.log(`    \x1B[1;32m✓\x1B[0m ${outputFilename}`)
         } catch (err) {
+          // eslint-disable-next-line no-console
           console.log(`    \x1B[1;31m✗\x1B[0m ${side.name}/`)
+          // eslint-disable-next-line no-console
           console.error('\x1B[1;31m', err, '\x1B[0m')
         }
       }
     }
+    // eslint-disable-next-line no-console
     console.log('✨  Done.')
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(err)
   }
 }
@@ -60,6 +69,7 @@ const captureScenariosEvents = async (scenarios, sides) => {
 captureScenariosEvents(scenarios(program.args), sides)
   .then(() => app.exit(0))
   .catch(err => {
+    // eslint-disable-next-line no-console
     console.error(err)
     app.exit(1)
   })

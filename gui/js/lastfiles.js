@@ -8,20 +8,22 @@ const log = require('../../core/app').logger({
   component: 'GUI'
 })
 
-module.exports.init = (desktop) => {
+module.exports.init = desktop => {
   lastFilesPath = path.join(desktop.basePath, 'last-files')
   fs.readFile(lastFilesPath, 'utf-8', (err, data) => {
     if (!err && data) {
       try {
         lastFiles = JSON.parse(data)
-      } catch (err) {}
+      } catch (err) {
+        log.warn({ err }, 'Failed loading last files')
+      }
     }
   })
 }
 
 module.exports.persists = () => {
   const data = JSON.stringify(lastFiles)
-  fs.writeFile(lastFilesPath, data, (err) => {
+  fs.writeFile(lastFilesPath, data, err => {
     if (err) {
       log.error(err)
     }
@@ -29,10 +31,10 @@ module.exports.persists = () => {
 }
 
 module.exports.list = () => lastFiles
-module.exports.add = (file) => {
+module.exports.add = file => {
   lastFiles.push(file)
   lastFiles = lastFiles.slice(-250)
 }
-module.exports.remove = (file) => {
-  lastFiles = lastFiles.filter((f) => f.path !== file.path)
+module.exports.remove = file => {
+  lastFiles = lastFiles.filter(f => f.path !== file.path)
 }

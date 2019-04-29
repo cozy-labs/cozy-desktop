@@ -15,7 +15,7 @@ describe('Case or encoding change', () => {
   // macOS with HFS+ and the test will fail (see below).
   // Maybe we could create an ext4 volume on Travis and put the storage files
   // there to better match the production environment?
-  if (process.env.TRAVIS && (process.platform === 'darwin')) {
+  if (process.env.TRAVIS && process.platform === 'darwin') {
     it.skip('is unstable on Travis (macOS)')
     return
   }
@@ -31,7 +31,7 @@ describe('Case or encoding change', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
 
@@ -45,8 +45,8 @@ describe('Case or encoding change', () => {
     beforeEach(async () => {
       // This will fail with a 409 conflict error when cozy-stack runs directly
       // on macOS & HFS+ because a file with an equivalent name already exists.
-      dir = await cozy.files.createDirectory({name: 'e\u0301'}) // 'é'
-      dir2 = await cozy.files.createDirectory({name: 'foo'})
+      dir = await cozy.files.createDirectory({ name: 'e\u0301' }) // 'é'
+      dir2 = await cozy.files.createDirectory({ name: 'foo' })
       await helpers.remote.pullChanges()
       await helpers.syncAll()
       helpers.spyPouch()
@@ -57,8 +57,8 @@ describe('Case or encoding change', () => {
     })
 
     it('remote', async () => {
-      await cozy.files.updateAttributesById(dir._id, {name: '\u00e9'}) // 'é'
-      await cozy.files.updateAttributesById(dir2._id, {name: 'FOO'})
+      await cozy.files.updateAttributesById(dir._id, { name: '\u00e9' }) // 'é'
+      await cozy.files.updateAttributesById(dir2._id, { name: 'FOO' })
       await helpers.remote.pullChanges()
 
       await helpers.syncAll()

@@ -19,7 +19,7 @@ import type {
 
 const builders = new Builders()
 
-describe('core/local/steps/Buffer', function () {
+describe('core/local/steps/Buffer', function() {
   this.timeout(100)
 
   describe('Basics', () => {
@@ -175,7 +175,7 @@ describe('core/local/steps/Buffer', function () {
       inputBuffer.push(newBatch)
     }
 
-    const pop = (scenarioState) => {
+    const pop = scenarioState => {
       const { outputBuffer, outputBatchesPromise } = scenarioState
       if (!outputBuffer) {
         throw new Error(`Step pop cannot occur before asyncMap in scenario`)
@@ -183,9 +183,9 @@ describe('core/local/steps/Buffer', function () {
       scenarioState.outputBatchesPromise = new Promise((resolve, reject) => {
         outputBatchesPromise
           .then(outputBatches =>
-            outputBuffer.pop().then(batch =>
-              resolve(outputBatches.concat([batch]))
-            )
+            outputBuffer
+              .pop()
+              .then(batch => resolve(outputBatches.concat([batch])))
           )
           .catch(reject)
       })
@@ -193,11 +193,16 @@ describe('core/local/steps/Buffer', function () {
 
     const scenarioStepFn = step => {
       switch (step) {
-        case 'map': return map
-        case 'asyncMap': return asyncMap
-        case 'push': return push
-        case 'pop': return pop
-        default: throw new Error(`Unknown scenario step: ${step}`)
+        case 'map':
+          return map
+        case 'asyncMap':
+          return asyncMap
+        case 'push':
+          return push
+        case 'pop':
+          return pop
+        default:
+          throw new Error(`Unknown scenario step: ${step}`)
       }
     }
 
@@ -208,14 +213,8 @@ describe('core/local/steps/Buffer', function () {
      * Must be sync from #map() and async for #asyncMap().
      */
 
-    const transform = batch => (
-      batch.map(event =>
-        _.defaults(
-          {path: `mapped-${event.path}`},
-          event
-        )
-      )
-    )
+    const transform = batch =>
+      batch.map(event => _.defaults({ path: `mapped-${event.path}` }, event))
 
     const asyncTransform = async batch => {
       // According to manual testing, random 1-5ms delay easily breaks tests
@@ -277,7 +276,9 @@ describe('core/local/steps/Buffer', function () {
 
           it('returns a new output Buffer', () => {
             const { inputBuffer, outputBuffer } = scenarioState
-            should(outputBuffer).be.an.instanceOf(Buffer).not.equal(inputBuffer)
+            should(outputBuffer)
+              .be.an.instanceOf(Buffer)
+              .not.equal(inputBuffer)
           })
 
           it('invokes callback with each input Batch in order if any', () => {
@@ -288,7 +289,10 @@ describe('core/local/steps/Buffer', function () {
 
           it('pushes each transformed Batch if any to the output Buffer in order', async () => {
             const { inputBatches, outputBatchesPromise } = scenarioState
-            const expectedOutputBatches = await Promise.map(inputBatches, asyncTransform)
+            const expectedOutputBatches = await Promise.map(
+              inputBatches,
+              asyncTransform
+            )
             const actualOutputBatches = await outputBatchesPromise
             should(expectedOutputBatches).deepEqual(actualOutputBatches)
           })
@@ -346,7 +350,9 @@ describe('core/local/steps/Buffer', function () {
 
           it('returns a new output Buffer', () => {
             const { inputBuffer, outputBuffer } = scenarioState
-            should(outputBuffer).be.an.instanceOf(Buffer).not.equal(inputBuffer)
+            should(outputBuffer)
+              .be.an.instanceOf(Buffer)
+              .not.equal(inputBuffer)
           })
 
           it('invokes callback with each input Batch in order if any', () => {
@@ -357,7 +363,10 @@ describe('core/local/steps/Buffer', function () {
 
           it('pushes each transformed Batch if any to the output Buffer in order', async () => {
             const { inputBatches, outputBatchesPromise } = scenarioState
-            const expectedOutputBatches = await Promise.map(inputBatches, asyncTransform)
+            const expectedOutputBatches = await Promise.map(
+              inputBatches,
+              asyncTransform
+            )
             const actualOutputBatches = await outputBatchesPromise
             should(expectedOutputBatches).deepEqual(actualOutputBatches)
           })

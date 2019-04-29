@@ -16,13 +16,13 @@ import type { AtomWatcherEvent, EventAction, EventKind, Batch } from '../../../c
 import type { StatsBuilder } from './stats'
 */
 
-function randomPick /*:: <T> */ (elements /*: Array<T> */) /*: T */{
+function randomPick /*:: <T> */(elements /*: Array<T> */) /*: T */ {
   const l = elements.length
   const i = Math.floor(Math.random() * l)
   return elements[i]
 }
 
-function kind (doc /*: Metadata */) /*: EventKind */ {
+function kind(doc /*: Metadata */) /*: EventKind */ {
   return doc.docType === 'folder' ? 'directory' : doc.docType
 }
 
@@ -34,7 +34,7 @@ module.exports = class AtomWatcherEventBuilder {
   _statsBuilder: ?StatsBuilder
   */
 
-  constructor (old /*: ?AtomWatcherEvent */) {
+  constructor(old /*: ?AtomWatcherEvent */) {
     if (old) {
       this._event = _.cloneDeep(old)
     } else {
@@ -49,35 +49,32 @@ module.exports = class AtomWatcherEventBuilder {
     this._ensureStatsBuilder()
   }
 
-  _ensureStatsBuilder () /*: StatsBuilder */ {
-    this._statsBuilder = this._statsBuilder ||
-      statsBuilder
-        .fromStats(this._event.stats)
-        .kind(this._event.kind)
+  _ensureStatsBuilder() /*: StatsBuilder */ {
+    this._statsBuilder =
+      this._statsBuilder ||
+      statsBuilder.fromStats(this._event.stats).kind(this._event.kind)
     return this._statsBuilder
   }
 
-  fromDoc (doc /*: Metadata */) /*: this */ {
+  fromDoc(doc /*: Metadata */) /*: this */ {
     const updatedAt = new Date(doc.updated_at)
 
-    let builder =
-      this
-        .kind(kind(doc))
-        .path(doc.path)
-        .ctime(updatedAt)
-        .mtime(updatedAt)
+    let builder = this.kind(kind(doc))
+      .path(doc.path)
+      .ctime(updatedAt)
+      .mtime(updatedAt)
     if (doc.ino) builder = builder.ino(doc.ino)
     return builder
   }
 
-  build () /*: AtomWatcherEvent */ {
+  build() /*: AtomWatcherEvent */ {
     if (this._statsBuilder) {
       this._event.stats = this._statsBuilder.build()
     }
     return this._event
   }
 
-  action (newAction /*: EventAction */) /*: this */ {
+  action(newAction /*: EventAction */) /*: this */ {
     this._event.action = newAction
 
     if (newAction === 'deleted') this.noStats()
@@ -85,72 +82,76 @@ module.exports = class AtomWatcherEventBuilder {
     return this
   }
 
-  kind (newKind /*: EventKind */) /*: this */ {
+  kind(newKind /*: EventKind */) /*: this */ {
     this._event.kind = newKind
     if (this._statsBuilder) this._statsBuilder.kind(newKind)
     return this
   }
 
-  path (newPath /*: string */) /*: this */ {
+  path(newPath /*: string */) /*: this */ {
     this._event.path = path.normalize(newPath)
     this._event._id = metadata.id(this._event.path)
     return this
   }
 
-  oldPath (newPath /*: string */) /*: this */{
+  oldPath(newPath /*: string */) /*: this */ {
     this._event.oldPath = path.normalize(newPath)
     return this
   }
 
-  id (newId /*: string */) /*: this */ {
+  id(newId /*: string */) /*: this */ {
     this._event._id = newId
     return this
   }
 
-  ino (newIno /*: number */) /*: this */ {
+  ino(newIno /*: number */) /*: this */ {
     this._ensureStatsBuilder().ino(newIno)
     return this
   }
 
-  mtime (newMtime /*: Date */) /*: this */ {
+  mtime(newMtime /*: Date */) /*: this */ {
     this._ensureStatsBuilder().mtime(newMtime)
     return this
   }
 
-  ctime (newCtime /*: Date */) /*: this */ {
+  ctime(newCtime /*: Date */) /*: this */ {
     this._ensureStatsBuilder().ctime(newCtime)
     return this
   }
 
-  noStats () /*: this */ {
+  noStats() /*: this */ {
     delete this._event.stats
     delete this._statsBuilder
     return this
   }
 
-  md5sum (newMd5sum /*: string */) /*: this */ {
+  md5sum(newMd5sum /*: string */) /*: this */ {
     this._event.md5sum = newMd5sum
     return this
   }
 
-  data (fileContent /*: string */) /*: this */ {
+  data(fileContent /*: string */) /*: this */ {
     return this.md5sum(
-      crypto.createHash('md5').update(fileContent).digest().toString('base64')
+      crypto
+        .createHash('md5')
+        .update(fileContent)
+        .digest()
+        .toString('base64')
     )
   }
 
-  noIgnore () /*: this */ {
+  noIgnore() /*: this */ {
     this._event.noIgnore = true
     return this
   }
 
-  incomplete () /*: this */ {
+  incomplete() /*: this */ {
     this._event.incomplete = true
     delete this._event.md5sum
     return this.noStats()
   }
 
-  overwrite () /*: this */ {
+  overwrite() /*: this */ {
     this._event.overwrite = true
     return this
   }

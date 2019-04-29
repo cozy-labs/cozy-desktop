@@ -31,7 +31,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
   _data: string | stream.Readable | Buffer
   */
 
-  constructor (cozy /*: Cozy */, old /*: ?RemoteDoc */) {
+  constructor(cozy /*: Cozy */, old /*: ?RemoteDoc */) {
     super(cozy, old)
 
     if (!old) {
@@ -46,32 +46,35 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
     fileNumber++
   }
 
-  contentType (contentType /*: string */) /*: RemoteFileBuilder */ {
+  contentType(contentType /*: string */) /*: RemoteFileBuilder */ {
     this.remoteDoc.mime = contentType
     return this
   }
 
-  data (data /*: string | stream.Readable | Buffer */) /*: RemoteFileBuilder */ {
+  data(data /*: string | stream.Readable | Buffer */) /*: RemoteFileBuilder */ {
     this._data = data
     if (typeof data === 'string') {
       this.remoteDoc.size = Buffer.from(data).length.toString()
-      this.remoteDoc.md5sum =
-        crypto.createHash('md5').update(data).digest().toString('base64')
+      this.remoteDoc.md5sum = crypto
+        .createHash('md5')
+        .update(data)
+        .digest()
+        .toString('base64')
     }
     // FIXME: Assuming doc will be created with data stream
     return this
   }
 
-  dataFromFile (path /*: string */) /*: RemoteFileBuilder */ {
+  dataFromFile(path /*: string */) /*: RemoteFileBuilder */ {
     return this.data(fs.createReadStream(path))
   }
 
-  executable (isExecutable /*: boolean */) /*: RemoteFileBuilder */ {
+  executable(isExecutable /*: boolean */) /*: RemoteFileBuilder */ {
     this.remoteDoc.executable = isExecutable
     return this
   }
 
-  async create () /*: Promise<RemoteDoc> */ {
+  async create() /*: Promise<RemoteDoc> */ {
     const cozy = this._ensureCozy()
 
     const doc = jsonApiToRemoteDoc(

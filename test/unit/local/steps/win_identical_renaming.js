@@ -24,8 +24,14 @@ if (process.platform === 'win32') {
       beforeEach(() => {
         builders = new Builders()
         const docs = {
-          DIR: builders.metadir().path('dir').build(),
-          FILE: builders.metafile().path('file').build()
+          DIR: builders
+            .metadir()
+            .path('dir')
+            .build(),
+          FILE: builders
+            .metafile()
+            .path('file')
+            .build()
         }
         inputBuffer = new Buffer()
         outputBuffer = winIdenticalRenaming.loop(inputBuffer, {
@@ -41,8 +47,13 @@ if (process.platform === 'win32') {
 
       describe('broken case-only renaming', () => {
         it('fixes renamed directory (DIR -> DIR) matching dir to (dir -> DIR) after .DELAY', async () => {
-          const renamedEvent = builders.event().action('renamed')
-            .kind('directory').oldPath('DIR').path('DIR').build()
+          const renamedEvent = builders
+            .event()
+            .action('renamed')
+            .kind('directory')
+            .oldPath('DIR')
+            .path('DIR')
+            .build()
 
           inputBatch([renamedEvent])
 
@@ -50,40 +61,60 @@ if (process.platform === 'win32') {
             {
               ...renamedEvent,
               oldPath: 'dir',
-              [winIdenticalRenaming.STEP_NAME]: {oldPathBeforeFix: 'DIR'}
+              [winIdenticalRenaming.STEP_NAME]: { oldPathBeforeFix: 'DIR' }
             }
           ])
         })
 
         it('ignores deleted file (DIR) followed by renamed directory (DIR → DIR) matching dir', async () => {
-          const deletedEvent = builders.event().action('deleted')
-            .kind('file').path('DIR').build()
-          const renamedEvent = builders.event().action('renamed')
-            .kind('directory').oldPath('DIR').path('DIR').build()
+          const deletedEvent = builders
+            .event()
+            .action('deleted')
+            .kind('file')
+            .path('DIR')
+            .build()
+          const renamedEvent = builders
+            .event()
+            .action('renamed')
+            .kind('directory')
+            .oldPath('DIR')
+            .path('DIR')
+            .build()
 
           inputBatch([deletedEvent, renamedEvent])
 
           const fixedRenamedEvent = {
             ...renamedEvent,
             oldPath: 'dir',
-            [winIdenticalRenaming.STEP_NAME]: {oldPathBeforeFix: 'DIR'}
+            [winIdenticalRenaming.STEP_NAME]: { oldPathBeforeFix: 'DIR' }
           }
 
           should(await outputBatch()).deepEqual([
             {
               ...deletedEvent,
               action: 'ignored',
-              [winIdenticalRenaming.STEP_NAME]: { deletedBeforeRenamed: fixedRenamedEvent }
+              [winIdenticalRenaming.STEP_NAME]: {
+                deletedBeforeRenamed: fixedRenamedEvent
+              }
             },
             fixedRenamedEvent
           ])
         })
 
         it('ignores deleted file (file) followed by renamed file (file → FILE) matching file', async () => {
-          const deletedEvent = builders.event().action('deleted')
-            .kind('file').path('file').build()
-          const renamedEvent = builders.event().action('renamed')
-            .kind('file').oldPath('file').path('FILE').build()
+          const deletedEvent = builders
+            .event()
+            .action('deleted')
+            .kind('file')
+            .path('file')
+            .build()
+          const renamedEvent = builders
+            .event()
+            .action('renamed')
+            .kind('file')
+            .oldPath('file')
+            .path('FILE')
+            .build()
 
           inputBatch([deletedEvent, renamedEvent])
 
@@ -91,15 +122,22 @@ if (process.platform === 'win32') {
             {
               ...deletedEvent,
               action: 'ignored',
-              [winIdenticalRenaming.STEP_NAME]: { deletedBeforeRenamed: renamedEvent }
+              [winIdenticalRenaming.STEP_NAME]: {
+                deletedBeforeRenamed: renamedEvent
+              }
             },
             renamedEvent
           ])
         })
 
         it('leaves renamed directory (\u00e9, \u0301e) untouched', async () => {
-          const renamedEvent = builders.event().action('renamed')
-            .kind('directory').oldPath('\u00e9').path('\u0301e').build()
+          const renamedEvent = builders
+            .event()
+            .action('renamed')
+            .kind('directory')
+            .oldPath('\u00e9')
+            .path('\u0301e')
+            .build()
 
           inputBatch([renamedEvent])
 
@@ -107,8 +145,13 @@ if (process.platform === 'win32') {
         })
 
         it('leaves renamed file (\u00e9, \u0301e) untouched', async () => {
-          const renamedEvent = builders.event().action('renamed')
-            .kind('file').oldPath('\u00e9').path('\u0301e').build()
+          const renamedEvent = builders
+            .event()
+            .action('renamed')
+            .kind('file')
+            .oldPath('\u00e9')
+            .path('\u0301e')
+            .build()
 
           inputBatch([renamedEvent])
 
@@ -126,15 +169,26 @@ if (process.platform === 'win32') {
         }
         */
         const scenarios /*: Scenario[] */ = [
-          {action: 'created', kind: 'directory', path: 'unknown'},
-          {action: 'deleted', kind: 'file', path: 'file'},
-          {action: 'renamed', kind: 'directory', oldPath: 'UNKNOWN', path: 'UNKNOWN'},
-          {action: 'renamed', kind: 'file', oldPath: 'file', path: 'FILE'}
+          { action: 'created', kind: 'directory', path: 'unknown' },
+          { action: 'deleted', kind: 'file', path: 'file' },
+          {
+            action: 'renamed',
+            kind: 'directory',
+            oldPath: 'UNKNOWN',
+            path: 'UNKNOWN'
+          },
+          { action: 'renamed', kind: 'file', oldPath: 'file', path: 'FILE' }
         ]
 
         for (const { action, kind, oldPath, path } of scenarios) {
-          it(`forwards ${action} ${kind} (${oldPath ? oldPath + ' -> ' : ''}${path}) after .DELAY`, async () => {
-            let event = builders.event().action(action).kind(kind).path(path)
+          it(`forwards ${action} ${kind} (${
+            oldPath ? oldPath + ' -> ' : ''
+          }${path}) after .DELAY`, async () => {
+            let event = builders
+              .event()
+              .action(action)
+              .kind(kind)
+              .path(path)
             if (oldPath) event.oldPath(oldPath)
             const batch = [event.build()]
 

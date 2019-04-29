@@ -27,7 +27,7 @@ module.exports = class RemoteBaseBuilder {
   remoteDoc: RemoteDoc
   */
 
-  constructor (cozy /*: ?Cozy */, old /*: ?RemoteDoc */) {
+  constructor(cozy /*: ?Cozy */, old /*: ?RemoteDoc */) {
     this.cozy = cozy
     if (old) {
       this.remoteDoc = _.cloneDeep(old)
@@ -48,51 +48,51 @@ module.exports = class RemoteBaseBuilder {
     }
   }
 
-  inDir (dir /*: RemoteDoc | {_id: string, path: string} */) /*: this */ {
+  inDir(dir /*: RemoteDoc | {_id: string, path: string} */) /*: this */ {
     this.remoteDoc.dir_id = dir._id
     this.remoteDoc.path = posix.join(dir.path, this.remoteDoc.name)
     return this
   }
 
-  inRootDir () /*: this */ {
+  inRootDir() /*: this */ {
     return this.inDir({
       _id: ROOT_DIR_ID,
       path: '/'
     })
   }
 
-  trashed () /*: this */ {
+  trashed() /*: this */ {
     return this.inDir({
       _id: TRASH_DIR_ID,
       path: `/${TRASH_DIR_NAME}`
     })
   }
 
-  restored () /*: this */ {
+  restored() /*: this */ {
     return this.inRootDir()
   }
 
-  shortRev (revNumber /*: number */) /*: this */ {
+  shortRev(revNumber /*: number */) /*: this */ {
     this.remoteDoc._rev = revNumber.toString() + '-' + uuid().replace(/-/g, '')
     return this
   }
 
-  timestamp (...args /*: number[] */) /*: this */ {
+  timestamp(...args /*: number[] */) /*: this */ {
     this.remoteDoc.updated_at = timestamp.stringify(timestamp.build(...args))
     return this
   }
 
-  name (name /*: string */) /*: this */ {
+  name(name /*: string */) /*: this */ {
     this.remoteDoc.name = name
     this.remoteDoc.path = posix.join(posix.dirname(this.remoteDoc.path), name)
     return this
   }
 
-  build () /*: Object */ {
+  build() /*: Object */ {
     return _.clone(this.remoteDoc)
   }
 
-  _ensureCozy () /*: Cozy */ {
+  _ensureCozy() /*: Cozy */ {
     if (this.cozy) {
       return this.cozy
     } else {

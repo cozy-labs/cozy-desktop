@@ -17,13 +17,13 @@ const UpdaterWM = require('./js/updater.window.js')
 const HelpWM = require('./js/help.window.js')
 const OnboardingWM = require('./js/onboarding.window.js')
 
-const {selectIcon} = require('./js/fileutils')
-const {buildAppMenu} = require('./js/appmenu')
+const { selectIcon } = require('./js/fileutils')
+const { buildAppMenu } = require('./js/appmenu')
 const i18n = require('./js/i18n')
-const {translate} = i18n
-const {incompatibilitiesErrorMessage} = require('./js/incompatibilitiesmsg')
+const { translate } = i18n
+const { incompatibilitiesErrorMessage } = require('./js/incompatibilitiesmsg')
 const UserActionRequiredDialog = require('./js/components/UserActionRequiredDialog')
-const {app, Menu, Notification, ipcMain, dialog} = require('electron')
+const { app, Menu, Notification, ipcMain, dialog } = require('electron')
 
 const DAILY = 3600 * 24 * 1000
 
@@ -33,7 +33,7 @@ if (process.platform === 'win32') app.setAppUserModelId('io.cozy.desktop')
 const log = Desktop.logger({
   component: 'GUI'
 })
-process.on('uncaughtException', (err) => log.error(err))
+process.on('uncaughtException', err => log.error(err))
 
 let desktop
 let state = 'not-configured'
@@ -45,7 +45,7 @@ let helpWindow = null
 let updaterWindow = null
 let trayWindow = null
 
-const toggleWindow = (bounds) => {
+const toggleWindow = bounds => {
   if (trayWindow.shown()) trayWindow.hide()
   else showWindow(bounds)
 }
@@ -63,7 +63,7 @@ const showWindowStartApp = () => {
   }
 }
 
-const showWindow = (bounds) => {
+const showWindow = bounds => {
   if (revokedAlertShown || syncDirUnlinkedShown) return
   if (updaterWindow.shown()) return updaterWindow.focus()
   if (!desktop.config.syncPath) {
@@ -80,26 +80,34 @@ const showWindow = (bounds) => {
 let revokedAlertShown = false
 let syncDirUnlinkedShown = false
 
-const sendErrorToMainWindow = (msg) => {
+const sendErrorToMainWindow = msg => {
   if (msg === 'Client has been revoked') {
     if (revokedAlertShown) return
     revokedAlertShown = true // prevent the alert from appearing twice
     const options = {
       type: 'warning',
       title: pkg.productName,
-      message: translate('Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?'),
-      detail: translate('Revoked In case you didn\'t, contact us at contact@cozycloud.cc'),
-      buttons: [translate('Revoked Log out'), translate('Revoked Try again later')],
+      message: translate(
+        'Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?'
+      ),
+      detail: translate(
+        "Revoked In case you didn't, contact us at contact@cozycloud.cc"
+      ),
+      buttons: [
+        translate('Revoked Log out'),
+        translate('Revoked Try again later')
+      ],
       defaultId: 1
     }
     trayWindow.hide()
     const userChoice = dialog.showMessageBox(null, options)
     if (userChoice === 0) {
-      desktop.stopSync()
+      desktop
+        .stopSync()
         .then(() => desktop.removeConfig())
         .then(() => log.info('removed'))
         .then(() => trayWindow.doRestart())
-        .catch((err) => log.error(err))
+        .catch(err => log.error(err))
     } else {
       app.quit()
     }
@@ -118,13 +126,16 @@ const sendErrorToMainWindow = (msg) => {
     }
     trayWindow.hide()
     dialog.showMessageBox(null, options)
-    desktop.stopSync()
+    desktop
+      .stopSync()
       .then(() => desktop.pouch.db.destroy())
-      .then(() => { desktop.config.syncPath = undefined })
+      .then(() => {
+        desktop.config.syncPath = undefined
+      })
       .then(() => desktop.config.persist())
       .then(() => log.info('removed'))
       .then(() => trayWindow.doRestart())
-      .catch((err) => log.error(err))
+      .catch(err => log.error(err))
     return // no notification
   } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
     msg = translate('Error ' + msg)
@@ -138,8 +149,7 @@ const sendErrorToMainWindow = (msg) => {
       detail: translate('SyncDirEmpty Detail')
     }
     dialog.showMessageBox(null, options)
-    desktop.stopSync()
-      .catch((err) => log.error(err))
+    desktop.stopSync().catch(err => log.error(err))
     return // no notification
   } else {
     trayWindow.send('sync-error', msg)
@@ -155,7 +165,7 @@ const updateState = (newState, filename) => {
   tray.setState(state, filename)
 }
 
-const addFile = (info) => {
+const addFile = info => {
   const file = {
     filename: path.basename(info.path),
     path: info.path,
@@ -169,7 +179,7 @@ const addFile = (info) => {
   lastFiles.persists()
 }
 
-const removeFile = (info) => {
+const removeFile = info => {
   const file = {
     filename: path.basename(info.path),
     path: info.path,
@@ -188,22 +198,26 @@ const sendDiskUsage = () => {
     diskTimeout = null
   }
   if (trayWindow) {
-    diskTimeout = setTimeout(sendDiskUsage, 10 * 60 * 1000)  // every 10 minutes
+    diskTimeout = setTimeout(sendDiskUsage, 10 * 60 * 1000) // every 10 minutes
     desktop.diskUsage().then(
-      (res) => {
+      res => {
         const space = {
           used: +res.attributes.used,
           quota: +(res.attributes.quota || 0)
         }
         trayWindow.send('disk-space', space)
       },
-      (err) => log.error(err)
+      err => log.error(err)
     )
   }
 }
 
-const startSync = (force, ...args) => {
-  trayWindow.send('synchronization', desktop.config.cozyUrl, desktop.config.deviceName)
+const startSync = force => {
+  trayWindow.send(
+    'synchronization',
+    desktop.config.cozyUrl,
+    desktop.config.deviceName
+  )
   for (let file of lastFiles.list()) {
     trayWindow.send('transfer', file)
   }
@@ -220,7 +234,7 @@ const startSync = (force, ...args) => {
     sendDiskUsage()
   } else {
     updateState('syncing')
-    desktop.events.on('sync-status', (status) => {
+    desktop.events.on('sync-status', status => {
       updateState(status.label === 'uptodate' ? 'online' : 'syncing')
       trayWindow.send('sync-status', status)
     })
@@ -233,7 +247,7 @@ const startSync = (force, ...args) => {
       updateState('offline')
       trayWindow.send('offline')
     })
-    desktop.events.on('remoteWarnings', (warnings) => {
+    desktop.events.on('remoteWarnings', warnings => {
       if (warnings.length > 0) {
         trayWindow.send('remoteWarnings', warnings)
       } else if (userActionRequired) {
@@ -248,11 +262,11 @@ const startSync = (force, ...args) => {
       removeFile(old)
     })
     const notifyIncompatibilities = debounce(
-      (incompatibilities) => {
+      incompatibilities => {
         sendErrorToMainWindow(incompatibilitiesErrorMessage(incompatibilities))
       },
       5000,
-      {leading: true}
+      { leading: true }
     )
     desktop.events.on('platform-incompatibilities', incompatibilitiesList => {
       incompatibilitiesList.forEach(incompatibilities => {
@@ -263,17 +277,22 @@ const startSync = (force, ...args) => {
       sendErrorToMainWindow('Syncdir has been unlinked')
     })
     desktop.events.on('delete-file', removeFile)
-    desktop.synchronize(desktop.config.fileConfig.mode)
+    desktop
+      .synchronize(desktop.config.fileConfig.mode)
       .then(() => sendErrorToMainWindow('stopped'))
-      .catch((err) => {
+      .catch(err => {
         if (err.status === 402) {
           // Only show notification popup on the first check (the GUI will
           // include a warning anyway).
           if (!userActionRequired) UserActionRequiredDialog.show(err)
 
-          userActionRequired = pick(err,
-            ['title', 'code', 'detail', 'links', 'message']
-          )
+          userActionRequired = pick(err, [
+            'title',
+            'code',
+            'detail',
+            'links',
+            'message'
+          ])
           trayWindow.send('user-action-required', userActionRequired)
           desktop.remote.warningsPoller.switchMode('medium')
           return
@@ -284,7 +303,7 @@ const startSync = (force, ...args) => {
       })
     sendDiskUsage()
   }
-  autoLaunch.isEnabled().then((enabled) => {
+  autoLaunch.isEnabled().then(enabled => {
     trayWindow.send('auto-launch', enabled)
   })
 }
@@ -297,7 +316,8 @@ if (!process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
   }
 }
 
-const dumbhash = (k) => k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
+const dumbhash = k =>
+  k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
 
 app.on('ready', () => {
   // Once configured and running in the tray, the app doesn't need to be
@@ -305,7 +325,7 @@ app.on('ready', () => {
   // is visible, until another window shows up.
   if (process.platform === 'darwin') app.dock.hide()
 
-  const {session} = require('electron')
+  const { session } = require('electron')
 
   const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
   let userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`

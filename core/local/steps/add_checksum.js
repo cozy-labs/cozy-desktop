@@ -29,16 +29,21 @@ module.exports = {
 //   that will be transformed in a created event in dispatch), but we could be
 //   smarter
 // TODO the 2 optimizations ↑
-function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: Checksumer } */) /*: Buffer */ {
-  return buffer.asyncMap(async (events) => {
+function loop(
+  buffer /*: Buffer */,
+  opts /*: { syncPath: string , checksumer: Checksumer } */
+) /*: Buffer */ {
+  return buffer.asyncMap(async events => {
     for (const event of events) {
       try {
         if (event.incomplete) {
           continue
         }
-        if (['created', 'modified', 'scan', 'renamed'].includes(event.action) &&
-            event.kind === 'file') {
-          log.debug({path: event.path, action: event.action}, 'checksum')
+        if (
+          ['created', 'modified', 'scan', 'renamed'].includes(event.action) &&
+          event.kind === 'file'
+        ) {
+          log.debug({ path: event.path, action: event.action }, 'checksum')
           const absPath = path.join(opts.syncPath, event.path)
           if (!event.md5sum) {
             event.md5sum = await opts.checksumer.push(absPath)
@@ -49,7 +54,7 @@ function loop (buffer /*: Buffer */, opts /*: { syncPath: string , checksumer: C
         // keep the event. Maybe it was one if its parents directory that was
         // moved, and then we can refine the event later (in incompleteFixer).
         _.set(event, ['incomplete', STEP_NAME], err.message)
-        log.debug({err, event}, 'Cannot compute checksum')
+        log.debug({ err, event }, 'Cannot compute checksum')
       }
     }
     return events

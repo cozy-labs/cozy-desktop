@@ -8,10 +8,10 @@ const Merge = require('../../core/merge')
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
 
-describe('Merge Helpers', function () {
+describe('Merge Helpers', function() {
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('instanciate merge', function () {
+  beforeEach('instanciate merge', function() {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
     this.merge.putFolderAsync = sinon.stub()
@@ -21,12 +21,12 @@ describe('Merge Helpers', function () {
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  describe('ensureParentExist', function () {
-    it('works when in the root folder', async function () {
-      await this.merge.ensureParentExistAsync(this.side, {_id: 'foo'})
+  describe('ensureParentExist', function() {
+    it('works when in the root folder', async function() {
+      await this.merge.ensureParentExistAsync(this.side, { _id: 'foo' })
     })
 
-    it('works if the parent directory is present', async function () {
+    it('works if the parent directory is present', async function() {
       let doc = {
         _id: 'exists',
         docType: 'folder'
@@ -39,7 +39,7 @@ describe('Merge Helpers', function () {
       await this.merge.ensureParentExistAsync(this.side, child)
     })
 
-    it('creates the parent directory if missing', async function () {
+    it('creates the parent directory if missing', async function() {
       this.merge.putFolderAsync.resolves('OK')
       let doc = {
         _id: 'MISSING/CHILD',
@@ -54,7 +54,7 @@ describe('Merge Helpers', function () {
       })
     })
 
-    it('creates the full tree if needed', async function () {
+    it('creates the full tree if needed', async function() {
       this.merge.putFolderAsync.resolves('OK')
       let doc = {
         _id: 'a/b/c/d/e',
@@ -74,9 +74,9 @@ describe('Merge Helpers', function () {
     })
   })
 
-  describe('resolveConflict', function () {
-    it('appends -conflict- and the date to the path', async function () {
-      let doc = {path: 'foo/bar'}
+  describe('resolveConflict', function() {
+    it('appends -conflict- and the date to the path', async function() {
+      let doc = { path: 'foo/bar' }
       let spy = this.merge.local.renameConflictingDocAsync
       spy.resolves()
       await this.merge.resolveConflictAsync(this.side, doc)
@@ -89,8 +89,8 @@ describe('Merge Helpers', function () {
       src.path.should.equal(doc.path)
     })
 
-    it('preserves the extension', async function () {
-      let doc = {path: 'foo/bar.jpg'}
+    it('preserves the extension', async function() {
+      let doc = { path: 'foo/bar.jpg' }
       let spy = this.merge.local.renameConflictingDocAsync
       spy.resolves()
       await this.merge.resolveConflictAsync(this.side, doc)
@@ -100,8 +100,8 @@ describe('Merge Helpers', function () {
       path.extname(dstPath).should.equal('.jpg')
     })
 
-    it('do not chain conflicts', async function () {
-      let doc = {path: 'foo/baz-conflict-2018-11-08T01_02_03.004Z.jpg'}
+    it('do not chain conflicts', async function() {
+      let doc = { path: 'foo/baz-conflict-2018-11-08T01_02_03.004Z.jpg' }
       let spy = this.merge.local.renameConflictingDocAsync
       spy.resolves()
       await this.merge.resolveConflictAsync(this.side, doc)

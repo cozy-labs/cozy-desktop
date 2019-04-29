@@ -7,7 +7,7 @@ const log = require('../../core/app').logger({
 })
 
 module.exports = class TrayWM extends WindowManager {
-  windowOptions () {
+  windowOptions() {
     return {
       title: 'HELP',
       width: HELP_SCREEN_WIDTH,
@@ -15,18 +15,20 @@ module.exports = class TrayWM extends WindowManager {
     }
   }
 
-  hash () {
+  hash() {
     return '#help'
   }
 
-  ipcEvents () {
+  ipcEvents() {
     let that = this
     return {
       'send-mail': (event, body) => {
         that.desktop.sendMailToSupport(body).then(
-          () => { event.sender.send('mail-sent') },
-          (err) => {
-            log.error({err})
+          () => {
+            event.sender.send('mail-sent')
+          },
+          err => {
+            log.error({ err })
             event.sender.send('mail-sent', {
               message: 'Help An error occured while sending your email'
             })

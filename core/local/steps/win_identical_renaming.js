@@ -42,9 +42,11 @@ const DELAY = 500
 
 const initialState = () => ({
   [STEP_NAME]: {
-    deletedEventsById: new Map/*:: <string,AtomWatcherEvent> */(),
+    // eslint-disable-next-line
+    deletedEventsById: new Map /*:: <string,AtomWatcherEvent> */ (),
     pending: {
-      deletedEventsById: new Map/*:: <string,AtomWatcherEvent> */(),
+      // eslint-disable-next-line
+      deletedEventsById: new Map /*:: <string,AtomWatcherEvent> */ (),
       events: []
     }
   }
@@ -73,9 +75,9 @@ const indexDeletedEvent = (event, state) => {
 }
 
 /** Possibly fix oldPath when event is identical renamed. */
-const fixIdenticalRenamed = async (event, {byIdMaybeAsync}) => {
+const fixIdenticalRenamed = async (event, { byIdMaybeAsync }) => {
   if (event.path === event.oldPath) {
-    const doc = event._id && await byIdMaybeAsync(event._id)
+    const doc = event._id && (await byIdMaybeAsync(event._id))
 
     if (doc && doc.path !== event.oldPath) {
       _.set(event, [STEP_NAME, 'oldPathBeforeFix'], event.oldPath)
@@ -90,10 +92,9 @@ const fixIdenticalRenamed = async (event, {byIdMaybeAsync}) => {
  */
 const ignoreDeletedBeforeIdenticalRenamed = (event, state) => {
   const { _id: id } = event
-  const pendingDeletedEvent = id && (
-    state.deletedEventsById.get(id) ||
-    state.pending.deletedEventsById.get(id)
-  )
+  const pendingDeletedEvent =
+    id &&
+    (state.deletedEventsById.get(id) || state.pending.deletedEventsById.get(id))
   if (pendingDeletedEvent) {
     pendingDeletedEvent.action = 'ignored'
     _.set(pendingDeletedEvent, [STEP_NAME, 'deletedBeforeRenamed'], event)
@@ -101,7 +102,10 @@ const ignoreDeletedBeforeIdenticalRenamed = (event, state) => {
 }
 
 /** Process an event batch. */
-const step = async (batch /*: Batch */, opts /*: WinIdenticalRenamingOptions */) => {
+const step = async (
+  batch /*: Batch */,
+  opts /*: WinIdenticalRenamingOptions */
+) => {
   const {
     pouch,
     state: { [STEP_NAME]: state }
@@ -125,9 +129,12 @@ const _loop = async (buffer, out, opts) => {
     pending.events = []
   }
 
+  // eslint-disable-next-line no-constant-condition
   while (true) {
     const events = await buffer.pop()
-    const { state: { [STEP_NAME]: state } } = opts
+    const {
+      state: { [STEP_NAME]: state }
+    } = opts
 
     await step(events, opts)
 
@@ -135,18 +142,21 @@ const _loop = async (buffer, out, opts) => {
     rotateState(state, events)
 
     const { pending } = state
-    pending.timeout = setTimeout(
-      () => { output(pending) },
-      DELAY
-    )
+    pending.timeout = setTimeout(() => {
+      output(pending)
+    }, DELAY)
   }
 }
 
-const loop = (buffer /*: Buffer */, opts /*: WinIdenticalRenamingOptions */) => {
+const loop = (
+  buffer /*: Buffer */,
+  opts /*: WinIdenticalRenamingOptions */
+) => {
   const out = new Buffer()
 
-  _loop(buffer, out, opts)
-    .catch(err => { log.error({err}) })
+  _loop(buffer, out, opts).catch(err => {
+    log.error({ err })
+  })
 
   return out
 }
