@@ -70,10 +70,11 @@ function automatedRegistration(
                   }
 
                   if (!res.headers.location) {
+                    const { statusCode } = res
                     err = new Error(
-                      'Cozy login failed. Please make sure passphrase is correct.'
+                      `Cozy login failed: ${statusCode} (Timeout? Wrong passphrase?).`
                     )
-                    log.error({ body }, err)
+                    log.error({ body, statusCode }, err)
                     reject(err)
                     return
                   }
