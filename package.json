@@ -139,7 +139,7 @@
     "mocha": "^5.2.0",
     "mocha-clean": "^1.0.0",
     "pouchdb-adapter-memory": "^7.0.0",
-    "request": "^2.83.0",
+    "request-promise": "^4.2.4",
     "rimraf": "^2.6.1",
     "should": "^11.2.1",
     "should-sinon": "^0.0.5",
