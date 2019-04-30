@@ -191,18 +191,22 @@ async function initialDiff(
         // Emit deleted events for all the remaining files/dirs
         for (const [, doc] of byInode) {
           if (!scannedPaths.has(doc.path)) {
-            batch.push({
+            const deletedEvent /*: AtomWatcherEvent */ = {
               action: 'deleted',
               kind: kind(doc),
               _id: id(doc.path),
-              [STEP_NAME]: {
-                notFound: _.defaults(
-                  { kind: kind(doc) },
-                  _.pick(doc, ['path', 'md5sum', 'updated_at'])
-                )
-              },
               path: doc.path
-            })
+            }
+            fixPathsAfterParentMove(renamedEvents, deletedEvent)
+            _.set(
+              deletedEvent,
+              [STEP_NAME, 'notFound'],
+              _.defaults(
+                _.pick(deletedEvent, ['kind', 'path']),
+                _.pick(doc, ['md5sum', 'updated_at'])
+              )
+            )
+            batch.push(deletedEvent)
           }
         }
         clearState(state)
@@ -280,6 +284,24 @@ function fixPathsAfterParentMove(renamedEvents, event) {
         event.action = 'ignored'
       } else {
         event.oldPath = oldPathFixed
+      }
+      _.set(
+        event,
+        [STEP_NAME, 'renamedAncestor'],
+        _.pick(renamedEvent, ['oldPath', 'path'])
+      )
+    }
+
+    if (areParentChildPaths(renamedEvent.oldPath, event.path)) {
+      const pathFixed = event.path.replace(
+        renamedEvent.oldPath,
+        renamedEvent.path
+      )
+      if (event.oldPath && event.oldPath === pathFixed) {
+        event.action = 'ignored'
+      } else {
+        event.path = pathFixed
+        event._id = id(event.path)
       }
       _.set(
         event,

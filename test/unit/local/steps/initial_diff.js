@@ -11,6 +11,7 @@ const pouchHelpers = require('../../../support/helpers/pouch')
 
 const Buffer = require('../../../../core/local/steps/buffer')
 const initialDiff = require('../../../../core/local/steps/initial_diff')
+const metadata = require('../../../../core/metadata')
 
 const kind = doc => (doc.docType === 'folder' ? 'directory' : 'file')
 
@@ -670,6 +671,87 @@ describe('local/steps/initial_diff', () => {
           oldPath: path.normalize('parent-2/foo-2/bar'),
           [initialDiff.STEP_NAME]: {
             actionConvertedFrom: bar2Scan.action,
+            renamedAncestor: {
+              oldPath: path.normalize('parent-2/foo'),
+              path: foo2Scan.path
+            }
+          }
+        },
+        initialScanDone
+      ])
+    })
+
+    it('fixes deleted after parent renamed', async function() {
+      await builders
+        .metadir()
+        .path('parent')
+        .ino(1)
+        .create()
+      await builders
+        .metadir()
+        .path('parent/foo')
+        .ino(2)
+        .create()
+      const missingDoc = await builders
+        .metadir()
+        .path('parent/foo/bar')
+        .ino(3)
+        .create()
+
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+
+      const parent2Scan = builders
+        .event()
+        .action('scan')
+        .kind('directory')
+        .path('parent-2')
+        .ino(1)
+        .build()
+      const foo2Scan = builders
+        .event()
+        .action('scan')
+        .kind('directory')
+        .path('parent-2/foo-2')
+        .ino(2)
+        .build()
+      inputBatch([parent2Scan, foo2Scan, initialScanDone])
+
+      const events = await initialDiff
+        .loop(buffer, { pouch: this.pouch, state })
+        .pop()
+
+      const deletedPath = path.normalize('parent-2/foo-2/bar')
+
+      should(events).deepEqual([
+        {
+          ...parent2Scan,
+          action: 'renamed',
+          oldPath: 'parent',
+          [initialDiff.STEP_NAME]: { actionConvertedFrom: parent2Scan.action }
+        },
+        {
+          ...foo2Scan,
+          action: 'renamed',
+          oldPath: path.normalize('parent-2/foo'),
+          [initialDiff.STEP_NAME]: {
+            actionConvertedFrom: foo2Scan.action,
+            renamedAncestor: {
+              oldPath: 'parent',
+              path: parent2Scan.path
+            }
+          }
+        },
+        {
+          action: 'deleted',
+          kind: 'directory',
+          _id: metadata.id(deletedPath),
+          path: deletedPath,
+          [initialDiff.STEP_NAME]: {
+            notFound: {
+              path: deletedPath,
+              kind: 'directory',
+              updated_at: missingDoc.updated_at
+            },
             renamedAncestor: {
               oldPath: path.normalize('parent-2/foo'),
               path: foo2Scan.path
