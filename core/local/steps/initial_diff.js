@@ -180,24 +180,7 @@ async function initialDiff(
         scannedPaths.add(event.path)
       }
 
-      for (const renamedEvent of renamedEvents) {
-        if (areParentChildPaths(renamedEvent.oldPath, event.oldPath)) {
-          const oldPathFixed = event.oldPath.replace(
-            renamedEvent.oldPath,
-            renamedEvent.path
-          )
-          if (event.path === oldPathFixed) {
-            event.action = 'ignored'
-          } else {
-            event.oldPath = oldPathFixed
-          }
-          _.set(
-            event,
-            [STEP_NAME, 'renamedAncestor'],
-            _.pick(renamedEvent, ['oldPath', 'path'])
-          )
-        }
-      }
+      fixPathsAfterParentMove(renamedEvents, event)
 
       if (event.action === 'renamed') {
         // Needs to be pushed after the oldPath has been fixed
@@ -279,6 +262,30 @@ function debounce(
           }
         }
       }
+    }
+  }
+}
+
+function fixPathsAfterParentMove(renamedEvents, event) {
+  for (const renamedEvent of renamedEvents) {
+    if (
+      event.oldPath &&
+      areParentChildPaths(renamedEvent.oldPath, event.oldPath)
+    ) {
+      const oldPathFixed = event.oldPath.replace(
+        renamedEvent.oldPath,
+        renamedEvent.path
+      )
+      if (event.path === oldPathFixed) {
+        event.action = 'ignored'
+      } else {
+        event.oldPath = oldPathFixed
+      }
+      _.set(
+        event,
+        [STEP_NAME, 'renamedAncestor'],
+        _.pick(renamedEvent, ['oldPath', 'path'])
+      )
     }
   }
 }
