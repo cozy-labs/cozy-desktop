@@ -1,5 +1,24 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.1-alpha.1 - 2019-04-30
+
+Improvements for contributors:
+
+- We've decided to run prettier over our entire codebase with the cozy-app
+  eslint config and to keep using it from now on. This will remove the need to
+  check for syntax errors and improve homogeneity between Cozy Cloud javascript
+  projects.
+
+Improvements for all users:
+
+- We've updated some of our dependencies. There shouldn't be any consequence but
+  it's just good hygiene and could potentially fix issues we don't even know.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+
 ## 3.13.0 - 2019-04-29
 
 Improvements for Windows and GNU/Linux users:
