@@ -105,7 +105,7 @@ const automatedRegistration = (
   passphrase /*: string */,
   storage /*: * */
 ) /*: Registration */ => {
-  const cozyUrl = path => new url.URL(cozyBaseUrl + path)
+  const cozyUrl = path => new url.URL(path, cozyBaseUrl)
   const saveCredentials = async redirectUrl => {
     log.debug('Saving credentials...')
     await client({ url: redirectUrl })
