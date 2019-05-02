@@ -269,8 +269,10 @@ const sorter = (a, b) => {
   if (areParentChild(deletedId(b), deletedId(a))) return aFirst
   if (areParentChild(deletedId(a), deletedId(b))) return bFirst
 
-  if (deletedId(a) === createdId(b)) return aFirst
-  if (deletedId(b) === createdId(a)) return bFirst
+  if (deletedId(a) && createdId(b) && deletedId(a) === createdId(b))
+    return aFirst
+  if (deletedId(b) && createdId(a) && deletedId(b) === createdId(a))
+    return bFirst
 
   // otherwise, order by add path
   if (lower(createdId(a), createdId(b))) return aFirst

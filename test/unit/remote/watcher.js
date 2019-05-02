@@ -174,11 +174,10 @@ describe('RemoteWatcher', function() {
       await this.watcher.pullMany(remoteDocs)
 
       apply.callCount.should.equal(2)
-      // Changes are sorted before applying (first one was given
-      // Metadata since it is valid, while second one got the original
-      // RemoteDeletion)
-      should(apply.args[0][0].doc).deepEqual(validMetadata(remoteDocs[0]))
-      should(apply.args[1][0].doc).deepEqual(remoteDocs[1])
+      // Changes are sorted before applying (first one got the original
+      // RemoteDeletion, while second one was given Metadata since it is valid)
+      should(apply.args[0][0].doc).deepEqual(remoteDocs[1])
+      should(apply.args[1][0].doc).deepEqual(validMetadata(remoteDocs[0]))
     })
 
     context('when apply() rejects some file/dir', function() {
@@ -200,12 +199,12 @@ describe('RemoteWatcher', function() {
         await this.watcher.pullMany(remoteDocs).catch(() => {})
         should(apply).have.been.calledTwice()
         should(apply.args[0][0]).have.properties({
-          type: 'FileAddition',
-          doc: validMetadata(remoteDocs[0])
-        })
-        should(apply.args[1][0]).have.properties({
           type: 'IgnoredChange',
           doc: remoteDocs[1]
+        })
+        should(apply.args[1][0]).have.properties({
+          type: 'FileAddition',
+          doc: validMetadata(remoteDocs[0])
         })
       })
 
