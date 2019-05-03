@@ -1,1 +1,2 @@
+require('./electron')
 require('./logging')
