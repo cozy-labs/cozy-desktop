@@ -4,6 +4,8 @@ const ElectronProxyAgent = require('electron-proxy-agent')
 const url = require('url')
 const http = require('http')
 const https = require('https')
+const os = require('os')
+const pkg = require('../../package.json')
 
 const log = require('../../core/app').logger({
   component: 'GUI:proxy'
@@ -27,7 +29,12 @@ log.debug({config}, 'argv')
 
 const formatCertificate = (certif) => `Certificate(${certif.issuerName} ${certif.subjectName})`
 
-module.exports = (app, session, userAgent, doneSetup) => {
+const dumbhash = k =>
+  k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
+const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
+const userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
+
+module.exports = (app, session, doneSetup) => {
   const loginByRealm = {}
   if (config['login-by-realm']) {
     config['login-by-realm'].split(',').forEach((lbr) => {
