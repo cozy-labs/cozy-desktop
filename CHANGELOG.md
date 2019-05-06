@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.1-beta.1 - 2019-05-06
+
+Improvements for Windows & GNU/Linux users:
+
+- When renaming folders and deleting part of their content while the client
+  was stopped, the deletion should now be properly handled on restart.
+
+Improvements for all users:
+
+- We downgraded the dependencies upgraded in [v3.13.1-alpha.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.13.1-alpha.1)
+  because the upgrade broke networking. It should work again now.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.1-alpha.1 - 2019-04-30
 
 Improvements for contributors:
