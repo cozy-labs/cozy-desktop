@@ -45,12 +45,6 @@ describe('App', function() {
   describe('removeRemote', () => {
     beforeEach(configHelpers.createConfig)
 
-    // FIXME
-    if (process.env.TRAVIS) {
-      it('does not work on Travis')
-      return
-    }
-
     it('unregisters the client', async function() {
       // For some reason, the test won't work using configHelpers because they
       // don't perfectly fake the actual registration behavior.
