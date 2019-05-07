@@ -6,7 +6,7 @@ describe('remote change sort', () => {
   it('sort correctly move inside move', () => {
     const parent = {
       doc: { path: 'parent/dst/dir' },
-      type: 'FolderMove',
+      type: 'DirMove',
       was: { path: 'parent/src/dir' }
     }
     const child = {
@@ -152,15 +152,15 @@ describe('remote change sort', () => {
       // - conflicts before anything else on same id
       // - deletion before addition on same id
       changes.should.deepEqual([
-        alanInsuranceCardDeletion,
-        alanInsuranceCardAddition,
+        edfContract3Deletion,
         digipostBouyguesBill,
         edfContract1ConflictCreation,
         edfContract1Addition,
         edfContract2ConflictCreation,
         edfContract2Addition,
-        edfContract3Deletion,
         edfContract3Addition,
+        alanInsuranceCardDeletion,
+        alanInsuranceCardAddition,
         netflixBillAddition,
         photoAddition
       ])

@@ -280,7 +280,12 @@ const sorter = (a, b) => {
 
   // if there isnt 2 add paths, sort by del path
   if (lower(deletedId(b), deletedId(a))) return aFirst
-  return bFirst
+  if (lower(deletedId(a), deletedId(b))) return bFirst
+
+  if (lower(createdId(a), deletedId(b))) return bFirst
+  if (lower(deletedId(a), createdId(b))) return aFirst
+
+  return 0
 }
 
 function sort(changes /*: Array<RemoteChange> */) /*: void */ {
