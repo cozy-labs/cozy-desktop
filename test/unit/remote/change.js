@@ -18,4 +18,28 @@ describe('remote change sort', () => {
     remoteChange.sort(a)
     a.should.deepEqual([parent, child])
   })
+
+  describe('sorts deleted before created for the same path', () => {
+    const deleted = {
+      doc: { path: 'parent/file' },
+      type: 'FileDeletion'
+    }
+
+    const created = {
+      doc: { path: 'parent/file' },
+      type: 'FileAddition'
+    }
+
+    it('when deleted comes before created', () => {
+      const changes = [deleted, created]
+      remoteChange.sort(changes)
+      changes.should.deepEqual([deleted, created])
+    })
+
+    it('when created comes before deleted', () => {
+      const changes = [created, deleted]
+      remoteChange.sort(changes)
+      changes.should.deepEqual([deleted, created])
+    })
+  })
 })
