@@ -134,6 +134,10 @@ module.exports = (app, session, doneSetup) => {
       options = Object.assign({}, options)
     }
     options.agent = options.agent || https.globalAgent
+    if (options.host.endsWith('.mycozy.cloud')) {
+      // SNI support
+      options.servername = 'cozycloud.cc'
+    }
     return _httpsRequest.call(https, options, cb)
   }
 
