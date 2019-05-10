@@ -120,7 +120,7 @@ var setState = (module.exports.setState = (state, filename) => {
     icon = 'sync'
     statusLabel = translate('Tray Syncing') + '…'
   } else if (state === 'offline') {
-    icon = 'pause'
+    icon = 'offline'
     statusLabel = translate('Tray Offline')
   }
 
