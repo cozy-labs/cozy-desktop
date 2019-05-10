@@ -1,4 +1,14 @@
-module Window.Help exposing (Model, Msg(..), Status(..), bodyOrDefault, iconLink, init, subscriptions, update, view)
+module Window.Help exposing
+    ( Model
+    , Msg(..)
+    , Status(..)
+    , bodyOrDefault
+    , iconLink
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

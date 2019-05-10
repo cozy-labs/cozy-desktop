@@ -1,4 +1,7 @@
-module Data.Window exposing (Window(..), fromHash)
+module Data.Window exposing
+    ( Window(..)
+    , fromHash
+    )
 
 
 type Window

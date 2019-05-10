@@ -1,4 +1,10 @@
-module Window.Tray.StatusBar exposing (icon, imgIcon, statusToString, view, viewMessage)
+module Window.Tray.StatusBar exposing
+    ( icon
+    , imgIcon
+    , statusToString
+    , view
+    , viewMessage
+    )
 
 import Data.Platform exposing (Platform(..))
 import Data.Status exposing (Status(..))

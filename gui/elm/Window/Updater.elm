@@ -1,4 +1,12 @@
-module Window.Updater exposing (Model, Msg(..), humanReadableDiskValue, init, subscriptions, update, view)
+module Window.Updater exposing
+    ( Model
+    , Msg(..)
+    , humanReadableDiskValue
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import Data.Progress exposing (Progress)
 import Html exposing (..)

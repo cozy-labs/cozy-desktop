@@ -1,4 +1,11 @@
-module Window.Onboarding.Folder exposing (Model, Msg(..), init, isValid, update, view)
+module Window.Onboarding.Folder exposing
+    ( Model
+    , Msg(..)
+    , init
+    , isValid
+    , update
+    , view
+    )
 
 import Data.SyncFolderConfig as SyncFolderConfig exposing (SyncFolderConfig)
 import Html exposing (..)

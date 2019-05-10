@@ -1,4 +1,13 @@
-module Window.Onboarding.Address exposing (Model, Msg(..), correctAddress, dropAppName, init, setError, update, view)
+module Window.Onboarding.Address exposing
+    ( Model
+    , Msg(..)
+    , correctAddress
+    , dropAppName
+    , init
+    , setError
+    , update
+    , view
+    )
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

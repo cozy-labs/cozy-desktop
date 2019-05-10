@@ -1,15 +1,23 @@
-module Window.Tray.Settings exposing (Model, Msg(..), diskQuotaLine, humanReadableDiskValue, init, update, versionLine, view)
+module Window.Tray.Settings exposing
+    ( Model
+    , Msg(..)
+    , diskQuotaLine
+    , humanReadableDiskValue
+    , init
+    , update
+    , versionLine
+    , view
+    )
 
 import Data.DiskSpace exposing (DiskSpace)
+import Data.Status exposing (Status(..))
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Locale exposing (Helpers)
 import Ports
 import View.ProgressBar as ProgressBar
-import Data.Status exposing (Status(..))
 import Window.Tray.StatusBar exposing (statusToString)
-
 
 
 
@@ -217,15 +225,20 @@ view helpers model =
         ]
 
 
-syncButton: Helpers -> Status -> Html Msg
+syncButton : Helpers -> Status -> Html Msg
 syncButton helpers status =
     case status of
-        UpToDate -> a [ class "btn"
-            , href "#"
-            , onClick Sync
-            ]
-            [ text (helpers.t "Settings Sync") ]
-        _ -> a [ class "btn"
+        UpToDate ->
+            a
+                [ class "btn"
+                , href "#"
+                , onClick Sync
+                ]
+                [ text (helpers.t "Settings Sync") ]
+
+        _ ->
+            a
+                [ class "btn"
                 , href "#"
                 , attribute "disabled" "true"
                 ]

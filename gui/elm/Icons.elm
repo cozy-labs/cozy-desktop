@@ -1,4 +1,21 @@
-module Icons exposing (IconFunction, account, bigCross, bigTick, cozyBig, dashboard, folder, globe, grey, help, icon, path, polygon, settings, white, logo)
+module Icons exposing
+    ( IconFunction
+    , account
+    , bigCross
+    , bigTick
+    , cozyBig
+    , dashboard
+    , folder
+    , globe
+    , grey
+    , help
+    , icon
+    , logo
+    , path
+    , polygon
+    , settings
+    , white
+    )
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
