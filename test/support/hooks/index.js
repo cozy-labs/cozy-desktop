@@ -13,3 +13,4 @@
  */
 
 require('./logging')
+require('./proxy')
