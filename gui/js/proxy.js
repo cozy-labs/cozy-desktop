@@ -42,7 +42,7 @@ const dumbhash = k =>
 const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
 const userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
 
-module.exports = (app, session, doneSetup) => {
+const setup = (app, session, doneSetup) => {
   const loginByRealm = {}
   if (config['login-by-realm']) {
     config['login-by-realm'].split(',').forEach(lbr => {
@@ -148,4 +148,8 @@ module.exports = (app, session, doneSetup) => {
       doneSetup
     )
   } else doneSetup()
+}
+
+module.exports = {
+  setup
 }

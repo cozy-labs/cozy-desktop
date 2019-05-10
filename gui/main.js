@@ -6,7 +6,7 @@ const pkg = require('../package.json')
 const { debounce, pick } = require('lodash')
 const path = require('path')
 
-const setupProxy = require('./js/proxy')
+const proxy = require('./js/proxy')
 
 const autoLaunch = require('./js/autolaunch')
 const lastFiles = require('./js/lastfiles')
@@ -323,7 +323,7 @@ app.on('ready', () => {
 
   const { session } = require('electron')
 
-  setupProxy(app, session, () => {
+  proxy.setup(app, session, () => {
     log.info('Loading CLI...')
     i18n.init(app)
     try {
