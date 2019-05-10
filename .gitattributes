@@ -1,2 +1,4 @@
+# JavaScript files with carriage returns would break prettier on Windows
+*.js text eol=lf
 # Make sure running scripts doesn't fail on Windows + Docker because of CRLF
 *.sh text eol=lf
