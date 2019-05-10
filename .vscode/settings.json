@@ -1,4 +1,8 @@
 {
   "editor.formatOnSave": false,
+  "[elm]": {
+    "editor.formatOnSave": true
+  },
+  "eslint.autoFixOnSave": true,
   "mocha.files.glob": "test/unit/**/metadata.js"
 }
