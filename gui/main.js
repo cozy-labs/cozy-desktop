@@ -321,9 +321,7 @@ app.on('ready', () => {
   // is visible, until another window shows up.
   if (process.platform === 'darwin') app.dock.hide()
 
-  const { session } = require('electron')
-
-  proxy.setup(app, session, () => {
+  proxy.setupDefaults(() => {
     log.info('Loading CLI...')
     i18n.init(app)
     try {

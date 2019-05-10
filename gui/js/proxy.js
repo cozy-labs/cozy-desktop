@@ -1,5 +1,6 @@
 /* eslint standard/no-callback-literal: 0 */
 
+const { app, session } = require('electron')
 const ElectronProxyAgent = require('electron-proxy-agent')
 const url = require('url')
 const http = require('http')
@@ -42,7 +43,7 @@ const dumbhash = k =>
 const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
 const userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
 
-const setup = (app, session, doneSetup) => {
+const setup = ({ app, config, global, http, https, session }, doneSetup) => {
   const loginByRealm = {}
   if (config['login-by-realm']) {
     config['login-by-realm'].split(',').forEach(lbr => {
@@ -150,6 +151,10 @@ const setup = (app, session, doneSetup) => {
   } else doneSetup()
 }
 
+const setupDefaults = doneSetup => {
+  setup({ app, config, global, http, https, session }, doneSetup)
+}
+
 module.exports = {
-  setup
+  setupDefaults
 }
