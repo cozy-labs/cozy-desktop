@@ -12,27 +12,26 @@ const log = require('../../core/app').logger({
   component: 'GUI:proxy'
 })
 
-const config = require('yargs')
-  .env('COZY_DRIVE')
-  .conflicts('proxy-script', 'proxy-rules')
-  .describe('proxy-script', 'The URL associated with the PAC file.')
-  .describe('proxy-rules', 'Rules indicating which proxies to use.')
-  .describe(
-    'proxy-bypassrules',
-    'Rules indicating which URLs should bypass the proxy settings. ' +
-      'See https://github.com/electron/electron/blob/master/docs/api/session.md#sessetproxyconfig-callback'
-  )
-  .default('proxy-ntlm-domains', '*')
-  .describe(
-    'proxy-ntlm-domains',
-    'A comma-separated list of servers for which integrated authentication is enabled. ' +
-      'Dynamically sets whether to always send credentials for HTTP NTLM or Negotiate authentication.'
-  )
-  .describe('login-by-realm', 'comma-separated list of realm:user:password')
-  .help('help')
-  .parse()
-
-log.debug({ config }, 'argv')
+const parseCommandArgs = () =>
+  require('yargs')
+    .env('COZY_DRIVE')
+    .conflicts('proxy-script', 'proxy-rules')
+    .describe('proxy-script', 'The URL associated with the PAC file.')
+    .describe('proxy-rules', 'Rules indicating which proxies to use.')
+    .describe(
+      'proxy-bypassrules',
+      'Rules indicating which URLs should bypass the proxy settings. ' +
+        'See https://github.com/electron/electron/blob/master/docs/api/session.md#sessetproxyconfig-callback'
+    )
+    .default('proxy-ntlm-domains', '*')
+    .describe(
+      'proxy-ntlm-domains',
+      'A comma-separated list of servers for which integrated authentication is enabled. ' +
+        'Dynamically sets whether to always send credentials for HTTP NTLM or Negotiate authentication.'
+    )
+    .describe('login-by-realm', 'comma-separated list of realm:user:password')
+    .help('help')
+    .parse()
 
 const formatCertificate = certif =>
   `Certificate(${certif.issuerName} ${certif.subjectName})`
@@ -152,6 +151,8 @@ const setup = ({ app, config, global, http, https, session }, doneSetup) => {
 }
 
 const setupDefaults = doneSetup => {
+  const config = parseCommandArgs()
+  log.debug({ config }, 'argv')
   setup({ app, config, global, http, https, session }, doneSetup)
 }
 
