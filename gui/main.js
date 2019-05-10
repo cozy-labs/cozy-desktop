@@ -5,7 +5,6 @@ const pkg = require('../package.json')
 
 const { debounce, pick } = require('lodash')
 const path = require('path')
-const os = require('os')
 
 const setupProxy = require('./js/proxy')
 
@@ -316,9 +315,6 @@ if (!process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
   }
 }
 
-const dumbhash = k =>
-  k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
-
 app.on('ready', () => {
   // Once configured and running in the tray, the app doesn't need to be
   // visible anymore in macOS dock (and cmd+tab), even when the tray popover
@@ -327,9 +323,7 @@ app.on('ready', () => {
 
   const { session } = require('electron')
 
-  const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
-  let userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
-  setupProxy(app, session, userAgent, () => {
+  setupProxy(app, session, () => {
     log.info('Loading CLI...')
     i18n.init(app)
     try {
