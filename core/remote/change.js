@@ -233,6 +233,8 @@ const isTrash = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirTrashing' || a.type === 'FileTrashing'
 const isRestore = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirRestoration' || a.type === 'FileRestoration'
+const isIgnored = (a /*: RemoteChange */) /*: boolean %checks */ =>
+  a.type === 'IgnoredChange'
 
 function includeDescendant(
   parent /*: RemoteDirMove */,
@@ -260,6 +262,10 @@ const aFirst = -1
 const bFirst = 1
 
 const sorter = (a, b) => {
+  if (isIgnored(a) && !isIgnored(b)) return bFirst
+  if (isIgnored(b) && !isIgnored(a)) return aFirst
+  if (isIgnored(a) && isIgnored(b)) return 0
+
   if (areParentChild(createdId(a), deletedId(b))) return aFirst
   if (areParentChild(createdId(b), deletedId(a))) return bFirst
 
