@@ -1,4 +1,7 @@
-module Window.Onboarding.Welcome exposing (Msg(..), view)
+module Window.Onboarding.Welcome exposing
+    ( Msg(..)
+    , view
+    )
 
 import Html exposing (..)
 import Html.Attributes exposing (..)

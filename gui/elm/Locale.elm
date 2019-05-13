@@ -1,4 +1,20 @@
-module Locale exposing (DistanceOfTime, Helpers, Locale, NumberToHumanSize, Pluralize, Translate, decodeAll, decoder, distance_of_time_in_words, helpers, interpolate, isSingular, number_to_human_size, pluralize, translate)
+module Locale exposing
+    ( DistanceOfTime
+    , Helpers
+    , Locale
+    , NumberToHumanSize
+    , Pluralize
+    , Translate
+    , decodeAll
+    , decoder
+    , distance_of_time_in_words
+    , helpers
+    , interpolate
+    , isSingular
+    , number_to_human_size
+    , pluralize
+    , translate
+    )
 
 import Dict exposing (Dict)
 import Json.Decode as Json

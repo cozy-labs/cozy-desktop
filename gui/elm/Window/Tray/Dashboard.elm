@@ -1,4 +1,15 @@
-module Window.Tray.Dashboard exposing (Model, Msg(..), init, maxActivities, nbActivitiesPerPage, renderFile, samePath, showMoreButton, update, view)
+module Window.Tray.Dashboard exposing
+    ( Model
+    , Msg(..)
+    , init
+    , maxActivities
+    , nbActivitiesPerPage
+    , renderFile
+    , samePath
+    , showMoreButton
+    , update
+    , view
+    )
 
 import Data.File as File exposing (EncodedFile, File)
 import Html exposing (..)

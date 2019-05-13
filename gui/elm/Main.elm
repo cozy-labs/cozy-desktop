@@ -1,4 +1,15 @@
-module Main exposing (Flags, Model, Msg(..), currentLocale, debugLog, init, main, subscriptions, update, view)
+module Main exposing
+    ( Flags
+    , Model
+    , Msg(..)
+    , currentLocale
+    , debugLog
+    , init
+    , main
+    , subscriptions
+    , update
+    , view
+    )
 
 import Browser
 import Data.Platform as Platform exposing (Platform)

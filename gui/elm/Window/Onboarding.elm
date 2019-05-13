@@ -1,4 +1,12 @@
-module Window.Onboarding exposing (Model, Msg(..), Page(..), init, subscriptions, update, view)
+module Window.Onboarding exposing
+    ( Model
+    , Msg(..)
+    , Page(..)
+    , init
+    , subscriptions
+    , update
+    , view
+    )
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
