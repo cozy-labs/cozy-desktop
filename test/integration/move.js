@@ -257,55 +257,16 @@ describe('Move', () => {
     })
 
     it('from remote client', async () => {
-      // FIXME: Ensure events occur in the same order as resulting from the
-      // local dir test
-      await helpers._remote.addFolderAsync(
+      const oldFolderMetadata = await pouch.byRemoteIdAsync(dir._id)
+      await helpers._remote.moveFolderAsync(
         _.defaults(
           {
-            path: path.normalize('parent/dst/dir'),
-            updated_at: '2017-06-20T12:58:49.681Z'
+            path: path.normalize('parent/dst/dir')
           },
-          await pouch.byRemoteIdAsync(dir._id)
-        )
-      )
-      await helpers._remote.addFolderAsync(
-        _.defaults(
-          {
-            path: path.normalize('parent/dst/dir/empty-subdir'),
-            updated_at: '2017-06-20T12:58:49.817Z'
-          },
-          await pouch.byRemoteIdAsync(emptySubdir._id)
-        )
-      )
-      await helpers._remote.addFolderAsync(
-        _.defaults(
-          {
-            path: path.normalize('parent/dst/dir/subdir'),
-            updated_at: '2017-06-20T12:58:49.873Z'
-          },
-          await pouch.byRemoteIdAsync(subdir._id)
-        )
-      )
-      const oldFileMetadata = await pouch.byRemoteIdAsync(file._id)
-      await helpers._remote.moveFileAsync(
-        _.defaults(
-          {
-            path: path.normalize('parent/dst/dir/subdir/file')
-            // FIXME: Why does moveFileAsync({updated_at: ...}) fail?
-            // updated_at: '2017-06-20T12:58:49.921Z'
-          },
-          oldFileMetadata
+          oldFolderMetadata
         ),
-        oldFileMetadata
+        oldFolderMetadata
       )
-      const oldSubdirMetadata = await pouch.byRemoteIdAsync(subdir._id)
-      await helpers._remote.deleteFolderAsync(oldSubdirMetadata)
-      const oldEmptySubdirMetadata = await pouch.byRemoteIdAsync(
-        emptySubdir._id
-      )
-      await helpers._remote.deleteFolderAsync(oldEmptySubdirMetadata)
-      const oldDirMetadata = await pouch.byRemoteIdAsync(dir._id)
-      await helpers._remote.deleteFolderAsync(oldDirMetadata)
 
       await helpers.remote.pullChanges()
 
