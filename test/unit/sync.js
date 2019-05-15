@@ -430,6 +430,37 @@ describe('Sync', function() {
       this.local.trashAsync.calledWith(doc).should.be.true()
     })
 
+    it('calls trashAsync for a moved-deleted file', async function() {
+      let was = {
+        _id: 'foo/bar',
+        _rev: '3-9876543210',
+        _deleted: true,
+        moveTo: 'foo/baz',
+        docType: 'file',
+        tags: ['qux'],
+        sides: {
+          local: 3,
+          remote: 2
+        }
+      }
+      let doc = {
+        _id: 'foo/baz',
+        _rev: '1-abcdef',
+        moveFrom: was,
+        docType: 'file',
+        tags: ['qux'],
+        sides: {
+          local: 2
+        },
+        _deleted: true
+      }
+      await this.sync.applyDoc(was, this.remote, 'remote', 2)
+      this.remote.trashAsync.called.should.be.false()
+      await this.sync.applyDoc(doc, this.remote, 'remote', 0)
+      this.remote.addFileAsync.called.should.be.false()
+      this.remote.trashAsync.calledWith(was).should.be.true()
+    })
+
     it('does nothing for a deleted file that was not added', async function() {
       let doc = {
         _id: 'tmp/fooz',
@@ -515,6 +546,37 @@ describe('Sync', function() {
       }
       await this.sync.applyDoc(doc, this.local, 'local', 1)
       this.local.deleteFolderAsync.calledWith(doc).should.be.true()
+    })
+
+    it('calls trashAsync for a moved-deleted folder', async function() {
+      let was = {
+        _id: 'foobar/bar',
+        _rev: '3-9876543210',
+        _deleted: true,
+        moveTo: 'foobar/baz',
+        docType: 'folder',
+        tags: ['qux'],
+        sides: {
+          local: 3,
+          remote: 2
+        }
+      }
+      let doc = {
+        _id: 'foobar/baz',
+        _rev: '1-abcdef',
+        moveFrom: was,
+        docType: 'folder',
+        tags: ['qux'],
+        sides: {
+          local: 2
+        },
+        _deleted: true
+      }
+      await this.sync.applyDoc(was, this.remote, 'remote', 2)
+      this.remote.trashAsync.called.should.be.false()
+      await this.sync.applyDoc(doc, this.remote, 'remote', 0)
+      this.remote.addFolderAsync.called.should.be.false()
+      this.remote.deleteFolderAsync.calledWith(was).should.be.true()
     })
 
     it('does nothing for a deleted folder that was not added', async function() {
