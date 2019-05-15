@@ -244,9 +244,11 @@ class Sync {
       stopMeasure = measureTime('Sync#applyChange:' + sideName)
 
       if (!side) {
+        if (doc.docType === 'file') console.log('up to date', { doc })
         log.info({ path }, 'up to date')
         return this.pouch.setLocalSeqAsync(change.seq)
       } else if (sideName === 'remote' && doc.trashed) {
+        if (doc.docType === 'file') console.log('doc trashed', { doc })
         // File or folder was just deleted locally
         const byItself = await this.trashWithParentOrByItself(doc, side)
         if (!byItself) {
@@ -275,6 +277,8 @@ class Sync {
     sideName /*: SideName */,
     rev /*: number */
   ) /*: Promise<*> */ {
+    if (doc.docType === 'file')
+      console.log('applyDoc ' + sideName, { doc, rev })
     if (doc.incompatibilities && sideName === 'local' && doc.moveTo == null) {
       const was = doc.moveFrom
       if (was != null && was.incompatibilities == null) {
@@ -305,16 +309,10 @@ class Sync {
       }
     } else if (doc.docType !== 'file' && doc.docType !== 'folder') {
       throw new Error(`Unknown docType: ${doc.docType}`)
-    } else if (doc._deleted && rev === 0) {
-      // do nothing
-    } else if (doc.moveTo != null) {
-      log.debug(
-        { path: doc.path },
-        `Ignoring deleted ${doc.docType} metadata as move source`
-      )
     } else if (doc.moveFrom != null) {
+      if (doc.docType === 'file') console.log('with moveFrom', { doc })
       const from = (doc.moveFrom /*: Metadata */)
-      log.debug(
+      log.info(
         { path: doc.path },
         `Applying ${doc.docType} change with moveFrom`
       )
@@ -322,10 +320,21 @@ class Sync {
       if (from.incompatibilities) {
         await this.doAdd(side, doc)
       } else if (from.childMove) {
+        log.info({ path: doc.path }, 'assign new rev on child move dst')
         await side.assignNewRev(doc)
         this.events.emit('transfer-move', _.clone(doc), _.clone(from))
+        if (doc._deleted && !doc.moveTo && !doc.childMove) {
+          // WHYYYYYYY ??!?!??!?!?!
+          console.log('FUCK BRANCH', { doc })
+          if (doc.docType === 'file') await side.trashAsync(doc)
+          else await side.deleteFolderAsync(doc)
+        }
       } else {
         if (from.moveFrom && from.moveFrom.childMove) {
+          log.info(
+            { path: from.path },
+            'assign new rev on move src (dst path: ' + doc.path + ')'
+          )
           await side.assignNewRev(from)
         }
         await this.doMove(side, doc, from)
@@ -334,6 +343,13 @@ class Sync {
       if (!metadata.sameBinary(from, doc)) {
         await side.overwriteFileAsync(doc, doc) // move & update
       }
+    } else if (doc._deleted && rev === 0) {
+      // do nothing
+    } else if (doc.moveTo != null) {
+      log.debug(
+        { path: doc.path },
+        `Ignoring deleted ${doc.docType} metadata as move source`
+      )
     } else if (doc._deleted) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} deletion`)
       if (doc.docType === 'file') await side.trashAsync(doc)
