@@ -37,7 +37,7 @@ function move(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
   if (!dst.overwrite) {
     delete dst._rev
   }
-  delete dst.sides
+  //delete dst.sides
   metadata.markSide(side, dst)
 }
 

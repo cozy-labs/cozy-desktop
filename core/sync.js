@@ -334,6 +334,11 @@ class Sync {
       if (!metadata.sameBinary(from, doc)) {
         await side.overwriteFileAsync(doc, doc) // move & update
       }
+      if (doc._deleted) {
+        log.info({ path: doc.path }, `Applying ${doc.docType} deletion`)
+        if (doc.docType === 'file') await side.trashAsync(doc)
+        else await side.deleteFolderAsync(doc)
+      }
     } else if (doc._deleted) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} deletion`)
       if (doc.docType === 'file') await side.trashAsync(doc)
