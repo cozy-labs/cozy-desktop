@@ -377,7 +377,7 @@ function upToDate(doc /*: Metadata */) /*: Metadata */ {
 function outOfDateSide(doc /*: Metadata */) /*: ?SideName */ {
   const localRev = _.get(doc, 'sides.local', 0)
   const remoteRev = _.get(doc, 'sides.remote', 0)
-  if ((localRev === 0 || remoteRev === 0) && doc._deleted && !doc.moveFrom) {
+  if ((localRev === 0 || remoteRev === 0) && doc._deleted) {
     return null
   } else if (localRev > remoteRev) {
     return 'remote'
@@ -518,7 +518,7 @@ function markSide(
   return doc
 }
 
-function incSides(doc /*: * */) /*: void */ {
+function incSides(doc /*: {sides?: MetadataSidesInfo} */) /*: void */ {
   doc.sides = {
     local: side(doc, 'local') + 1,
     remote: side(doc, 'remote') + 1
