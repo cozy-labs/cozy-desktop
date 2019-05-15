@@ -1,5 +1,25 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.1-beta.2 - 2019-05-15
+
+Improvements for all users:
+
+- We added a new icon set for the Offline status. Prior to this version,
+  whenever we detected you might be disconnected from the Internet, we would
+  display a "pause" icon with the "Disconnected" status label. We're now
+  displaying a shadowed version of the main icon and a "No Internet connection"
+  status label. We hope this is clearer to you.
+- We fixed a bug in the way we sort changes coming from your remote Cozy. For
+  some changes like the replacement of a file, the order in which we receive
+  changes from the remote Cozy is crucial to applying it correctly on the local
+  filesystem. In this particular case, we were not always sorting correctly the
+  deletion and recreation of the file (or folder) which could lead to documents
+  disappearing or conflicts to appear.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.1-beta.1 - 2019-05-06
 
 Improvements for Windows & GNU/Linux users:
