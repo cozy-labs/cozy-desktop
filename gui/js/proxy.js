@@ -4,37 +4,41 @@ const ElectronProxyAgent = require('electron-proxy-agent')
 const url = require('url')
 const http = require('http')
 const https = require('https')
+const yargs = require('yargs')
 
 const log = require('../../core/app').logger({
   component: 'GUI:proxy'
 })
 
-const config = require('yargs')
-  .env('COZY_DRIVE')
-  .conflicts('proxy-script', 'proxy-rules')
-  .describe('proxy-script', 'The URL associated with the PAC file.')
-  .describe('proxy-rules', 'Rules indicating which proxies to use.')
-  .describe(
-    'proxy-bypassrules',
-    'Rules indicating which URLs should bypass the proxy settings. ' +
-      'See https://github.com/electron/electron/blob/master/docs/api/session.md#sessetproxyconfig-callback'
-  )
-  .default('proxy-ntlm-domains', '*')
-  .describe(
-    'proxy-ntlm-domains',
-    'A comma-separated list of servers for which integrated authentication is enabled. ' +
-      'Dynamically sets whether to always send credentials for HTTP NTLM or Negotiate authentication.'
-  )
-  .describe('login-by-realm', 'comma-separated list of realm:user:password')
-  .help('help')
-  .parse()
+const config = (argv = yargs.argv) => {
+  const config = yargs
+    .env('COZY_DRIVE')
+    .conflicts('proxy-script', 'proxy-rules')
+    .describe('proxy-script', 'The URL associated with the PAC file.')
+    .describe('proxy-rules', 'Rules indicating which proxies to use.')
+    .describe(
+      'proxy-bypassrules',
+      'Rules indicating which URLs should bypass the proxy settings. ' +
+        'See https://github.com/electron/electron/blob/master/docs/api/session.md#sessetproxyconfig-callback'
+    )
+    .default('proxy-ntlm-domains', '*')
+    .describe(
+      'proxy-ntlm-domains',
+      'A comma-separated list of servers for which integrated authentication is enabled. ' +
+        'Dynamically sets whether to always send credentials for HTTP NTLM or Negotiate authentication.'
+    )
+    .describe('login-by-realm', 'comma-separated list of realm:user:password')
+    .help('help')
+    .parse(argv)
 
-log.debug({ config }, 'argv')
+  log.debug({ config }, 'argv')
+  return config
+}
 
 const formatCertificate = certif =>
   `Certificate(${certif.issuerName} ${certif.subjectName})`
 
-module.exports = (app, session, userAgent, doneSetup) => {
+const setup = (app, config, session, userAgent, doneSetup) => {
   const loginByRealm = {}
   if (config['login-by-realm']) {
     config['login-by-realm'].split(',').forEach(lbr => {
@@ -99,6 +103,7 @@ module.exports = (app, session, userAgent, doneSetup) => {
   })
 
   // XXX even if we swicth from electron-fetch, keep the custom user-agent
+  const originalFetch = global.fetch
   const electronFetch = require('electron-fetch')
   global.fetch = (url, opts = {}) => {
     opts.session = session.defaultSession
@@ -109,16 +114,16 @@ module.exports = (app, session, userAgent, doneSetup) => {
   http.Agent.globalAgent = http.globalAgent = https.globalAgent = new ElectronProxyAgent(
     session.defaultSession
   )
-  const _httpRequest = http.request
+  const originalHttpRequest = http.request
   http.request = function(options, cb) {
     log.warn(options, 'USING RAW HTTP REQUEST')
     options.agent = options.agent || http.globalAgent
     options.headers = options.headers || {}
     if (options.hostname) options.headers.host = options.hostname
     options.headers['User-Agent'] = userAgent
-    return _httpRequest.call(http, options, cb)
+    return originalHttpRequest.call(http, options, cb)
   }
-  const _httpsRequest = https.request
+  const originalHttpsRequest = https.request
   https.request = function(options, cb) {
     log.warn(options, 'USING RAW HTTPS REQUEST')
     if (typeof options === 'string') {
@@ -127,9 +132,16 @@ module.exports = (app, session, userAgent, doneSetup) => {
       options = Object.assign({}, options)
     }
     options.agent = options.agent || https.globalAgent
-    return _httpsRequest.call(https, options, cb)
+    return originalHttpsRequest.call(https, options, cb)
   }
 
+  const callback = () => {
+    doneSetup({
+      originalFetch,
+      originalHttpRequest,
+      originalHttpsRequest
+    })
+  }
   if (config['proxy-script'] || config['proxy-rules']) {
     session.defaultSession.setProxy(
       {
@@ -137,7 +149,12 @@ module.exports = (app, session, userAgent, doneSetup) => {
         proxyRules: config['proxy-rules'],
         proxyBypassRules: config['proxy-bypassrules']
       },
-      doneSetup
+      callback
     )
-  } else doneSetup()
+  } else callback()
+}
+
+module.exports = {
+  config,
+  setup
 }

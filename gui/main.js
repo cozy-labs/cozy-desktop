@@ -7,7 +7,7 @@ const { debounce, pick } = require('lodash')
 const path = require('path')
 const os = require('os')
 
-const setupProxy = require('./js/proxy')
+const proxy = require('./js/proxy')
 
 const autoLaunch = require('./js/autolaunch')
 const lastFiles = require('./js/lastfiles')
@@ -329,7 +329,7 @@ app.on('ready', () => {
 
   const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
   let userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
-  setupProxy(app, session, userAgent, () => {
+  proxy.setup(app, proxy.config(), session, userAgent, () => {
     log.info('Loading CLI...')
     i18n.init(app)
     try {
