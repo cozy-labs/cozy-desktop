@@ -4,6 +4,7 @@ const fs = require('fs')
 const http = require('http')
 const https = require('https')
 const path = require('path')
+const process = require('process')
 const should = require('should')
 const { URL } = require('url')
 
@@ -20,6 +21,10 @@ describe('gui/js/proxy', function() {
 
   describe('.config()', () => {
     let config
+
+    it('is equivalent to .config(process.argv)', () => {
+      should(proxy.config()).deepEqual(proxy.config(process.argv))
+    })
 
     describe('with no command-line option', () => {
       beforeEach(() => {
