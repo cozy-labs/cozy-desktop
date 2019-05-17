@@ -4,6 +4,7 @@ const fs = require('fs')
 const http = require('http')
 const https = require('https')
 const path = require('path')
+const process = require('process')
 const should = require('should')
 const { URL } = require('url')
 
@@ -20,6 +21,10 @@ describe('gui/js/proxy', function() {
 
   describe('.config()', () => {
     let config
+
+    it('is equivalent to .config(process.argv)', () => {
+      should(proxy.config()).deepEqual(proxy.config(process.argv))
+    })
 
     describe('with no command-line option', () => {
       beforeEach(() => {
@@ -81,10 +86,7 @@ describe('gui/js/proxy', function() {
         done()
       })
     }
-    const revertProxySideEffects = () => {
-      session.defaultSession.setCertificateVerifyProc(null)
-      // TODO: Find a way to revert allowNTLMCredentialsForDomains()
-      // TODO: Find a way to revert setProxy()
+    const revertProxySideEffects = done => {
       global.fetch = proxySideEffects.originalFetch
       http.request = proxySideEffects.originalHttpRequest
       https.request = proxySideEffects.originalHttpsRequest
@@ -95,6 +97,9 @@ describe('gui/js/proxy', function() {
       ]) {
         app.removeAllListeners(event)
       }
+      session.defaultSession.setCertificateVerifyProc(null)
+      session.defaultSession.allowNTLMCredentialsForDomains('')
+      session.defaultSession.setProxy({}, done)
     }
 
     afterEach(revertProxySideEffects)

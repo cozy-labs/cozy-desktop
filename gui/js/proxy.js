@@ -4,13 +4,14 @@ const ElectronProxyAgent = require('electron-proxy-agent')
 const url = require('url')
 const http = require('http')
 const https = require('https')
+const process = require('process')
 const yargs = require('yargs')
 
 const log = require('../../core/app').logger({
   component: 'GUI:proxy'
 })
 
-const config = (argv = yargs.argv) => {
+const config = (argv = process.argv) => {
   const config = yargs
     .env('COZY_DRIVE')
     .conflicts('proxy-script', 'proxy-rules')
