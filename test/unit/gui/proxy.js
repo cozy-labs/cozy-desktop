@@ -86,10 +86,7 @@ describe('gui/js/proxy', function() {
         done()
       })
     }
-    const revertProxySideEffects = () => {
-      session.defaultSession.setCertificateVerifyProc(null)
-      // TODO: Find a way to revert allowNTLMCredentialsForDomains()
-      // TODO: Find a way to revert setProxy()
+    const revertProxySideEffects = done => {
       global.fetch = proxySideEffects.originalFetch
       http.request = proxySideEffects.originalHttpRequest
       https.request = proxySideEffects.originalHttpsRequest
@@ -100,6 +97,9 @@ describe('gui/js/proxy', function() {
       ]) {
         app.removeAllListeners(event)
       }
+      session.defaultSession.setCertificateVerifyProc(null)
+      session.defaultSession.allowNTLMCredentialsForDomains('')
+      session.defaultSession.setProxy({}, done)
     }
 
     afterEach(revertProxySideEffects)
