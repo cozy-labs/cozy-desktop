@@ -3,6 +3,10 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
+  disabled: {
+    'local/win32-no-trash-events':
+      'Trashing events are missing. May be a capture issue...'
+  },
   init: [
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'src/' },
