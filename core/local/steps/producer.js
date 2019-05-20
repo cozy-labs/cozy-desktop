@@ -10,9 +10,10 @@ const Buffer = require('./buffer')
 const { INITIAL_SCAN_DONE } = require('./event')
 const logger = require('../../logger')
 const defaultStater = require('../stater')
+const LocalEventBuffer = require('../event_buffer')
 
 /*::
-import type { AtomWatcherEvent } from './event'
+import type { AtomWatcherEvent, Batch } from './event'
 
 export type Scanner = (string) => Promise<void>
 */
@@ -48,11 +49,20 @@ module.exports = class Producer {
   buffer: Buffer
   syncPath: string
   watcher: *
+  macOSBuffer: ?LocalEventBuffer<Batch>
   */
   constructor(opts /*: { syncPath : string } */) {
     this.buffer = new Buffer()
     this.syncPath = opts.syncPath
     this.watcher = null
+    if (process.platform === 'darwin') {
+      const timeoutInMs = process.env.NODE_ENV === 'test' ? 1000 : 10000
+      this.macOSBuffer = new LocalEventBuffer(timeoutInMs, batches => {
+        for (const batch of batches) {
+          this.process(batch)
+        }
+      })
+    }
     autoBind(this)
   }
 
@@ -74,10 +84,15 @@ module.exports = class Producer {
   // detection is probably the harder of the four tasks. So, we choosed to use
   // the recursive option.
   async start() {
+    const macOSBuffer = this.macOSBuffer
+    const onEventBatch = macOSBuffer
+      ? macOSBuffer.push.bind(macOSBuffer)
+      : this.process
+
     this.watcher = await watcher.watchPath(
       this.syncPath,
       { recursive: true },
-      this.process
+      onEventBatch
     )
     log.info(`Now watching ${this.syncPath}`)
     if (process.platform === 'linux') {
