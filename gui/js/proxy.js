@@ -90,10 +90,7 @@ const setup = (app, config, session, userAgent, doneSetup) => {
   )
 
   app.on('login', (event, webContents, request, authInfo, callback) => {
-    log.debug(
-      { request: request.method + ' ' + request.url, authInfo },
-      'Login event'
-    )
+    log.debug({ request: request.method + ' ' + request.url }, 'Login event')
     const auth = loginByRealm[authInfo.realm]
     if (auth) {
       event.preventDefault()
@@ -117,7 +114,6 @@ const setup = (app, config, session, userAgent, doneSetup) => {
   )
   const originalHttpRequest = http.request
   http.request = function(options, cb) {
-    log.warn(options, 'USING RAW HTTP REQUEST')
     options.agent = options.agent || http.globalAgent
     options.headers = options.headers || {}
     if (options.hostname) options.headers.host = options.hostname
@@ -126,7 +122,6 @@ const setup = (app, config, session, userAgent, doneSetup) => {
   }
   const originalHttpsRequest = https.request
   https.request = function(options, cb) {
-    log.warn(options, 'USING RAW HTTPS REQUEST')
     if (typeof options === 'string') {
       options = new url.URL(options)
     } else {
