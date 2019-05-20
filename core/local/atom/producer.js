@@ -12,11 +12,12 @@ const watcher = require('@atom/watcher')
 const Channel = require('./channel')
 const { INITIAL_SCAN_DONE } = require('./event')
 const defaultStater = require('../stater')
+const LocalEventBuffer = require('../chokidar/event_buffer')
 const logger = require('../../utils/logger')
 
 /*::
 import type { Ignore } from '../../ignore'
-import type { AtomEvent } from './event'
+import type { AtomBatch, AtomEvent } from './event'
 
 export type Scanner = (string) => Promise<void>
 */
@@ -61,12 +62,21 @@ class Producer {
   syncPath: string
   ignore: Ignore
   watcher: *
+  macOSBuffer: ?LocalEventBuffer<AtomBatch>
   */
   constructor(opts /*: { syncPath: string, ignore: Ignore } */) {
     this.channel = new Channel()
     this.syncPath = opts.syncPath
     this.ignore = opts.ignore
     this.watcher = null
+    if (process.platform === 'darwin') {
+      const timeoutInMs = process.env.NODE_ENV === 'test' ? 1000 : 10000
+      this.macOSBuffer = new LocalEventBuffer(timeoutInMs, batches => {
+        for (const batch of batches) {
+          this.process(batch)
+        }
+      })
+    }
     autoBind(this)
   }
 
@@ -90,10 +100,15 @@ class Producer {
    * the recursive option.
    */
   async start() {
+    const macOSBuffer = this.macOSBuffer
+    const onEventBatch = macOSBuffer
+      ? macOSBuffer.push.bind(macOSBuffer)
+      : this.process
+
     this.watcher = await watcher.watchPath(
       this.syncPath,
       { recursive: true },
-      this.process
+      onEventBatch
     )
     log.info(`Now watching ${this.syncPath}`)
     if (process.platform === 'linux') {
