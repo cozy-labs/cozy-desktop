@@ -14,7 +14,7 @@ describe('gui/js/proxy', function() {
   const emptyConfig = {
     'login-by-realm': undefined,
     'proxy-bypassrules': undefined,
-    'proxy-ntlm-domains': '*',
+    'proxy-ntlm-domains': undefined,
     'proxy-rules': undefined,
     'proxy-script': undefined
   }

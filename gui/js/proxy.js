@@ -22,7 +22,6 @@ const config = (argv = process.argv) => {
       'Rules indicating which URLs should bypass the proxy settings. ' +
         'See https://github.com/electron/electron/blob/master/docs/api/session.md#sessetproxyconfig-callback'
     )
-    .default('proxy-ntlm-domains', '*')
     .describe(
       'proxy-ntlm-domains',
       'A comma-separated list of servers for which integrated authentication is enabled. ' +
