@@ -1,5 +1,24 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.1-beta.3 - 2019-05-21
+
+Improvements for MacOS users:
+
+- We recently introduced a new icon for the Disconnected app status when we
+  can't reach your remote Cozy. On MacOS, this icon was rendered incorrectly
+  within the app itself, in the status bar.
+  We changed the icon to be of the expected color in the systray and the app
+  status bar.
+
+Changes that should have no effects:
+
+- We did some minimal refactoring on our proxy setup to introduce some tests.
+  There should be no effects on the way the proxy works.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.1-beta.2 - 2019-05-15
 
 Improvements for all users:
