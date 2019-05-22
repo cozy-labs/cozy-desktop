@@ -96,6 +96,29 @@ const ignoreDeletedBeforeOverwritingMove = (event, state) => {
   }
 }
 
+/** Possibly change event action to 'ignored'.
+ *
+ * In case it is a deleted event preceding a replacement.
+ * We expect the Merge step to be able to merge the created event as is, even
+ * without deleting the document first.
+ * However, we want to ignore the deleted event so we don't move the original
+ * file to the trash.
+ */
+const ignoreDeletedBeforeOverwritingAdd = (event, state) => {
+  const { path } = event
+  const pendingDeletedEvent =
+    state.deletedEventsByPath.get(path) ||
+    state.pending.deletedEventsByPath.get(path)
+  if (pendingDeletedEvent) {
+    const deletedClone = _.clone(pendingDeletedEvent)
+    const createdClone = _.clone(event)
+
+    _.set(event, [STEP_NAME, 'createOnDeletedPath'], deletedClone)
+    pendingDeletedEvent.action = 'ignored'
+    _.set(pendingDeletedEvent, [STEP_NAME, 'deletedBeforeCreate'], createdClone)
+  }
+}
+
 /** Process an event batch. */
 const step = async (batch /*: Batch */, opts /*: OverwritingMoveOptions */) => {
   const {
@@ -107,6 +130,8 @@ const step = async (batch /*: Batch */, opts /*: OverwritingMoveOptions */) => {
 
     if (event.action === 'renamed') {
       ignoreDeletedBeforeOverwritingMove(event, state)
+    } else if (event.action === 'created') {
+      ignoreDeletedBeforeOverwritingAdd(event, state)
     }
   }
 }

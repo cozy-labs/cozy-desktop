@@ -113,6 +113,37 @@ describe('core/local/steps/overwriting_move', () => {
       ])
     })
 
+    for (const kind of ['file', 'directory']) {
+      it(`ignores deleted ${kind} followed by created ${kind} with different ino`, async () => {
+        const deletedEvent = builders
+          .event()
+          .action('deleted')
+          .kind(kind)
+          .path(kind)
+          .build()
+        const createdEvent = builders
+          .event()
+          .action('created')
+          .kind(kind)
+          .path(kind)
+          .build()
+
+        inputBatch([deletedEvent, createdEvent])
+
+        should(await outputBatch()).deepEqual([
+          {
+            ...deletedEvent,
+            action: 'ignored',
+            [overwritingMove.STEP_NAME]: { deletedBeforeCreate: createdEvent }
+          },
+          {
+            ...createdEvent,
+            [overwritingMove.STEP_NAME]: { createOnDeletedPath: deletedEvent }
+          }
+        ])
+      })
+    }
+
     describe('everything else', () => {
       /*::
         type Scenario = {
@@ -135,6 +166,16 @@ describe('core/local/steps/overwriting_move', () => {
           kind: 'directory',
           oldPath: 'src/dir',
           path: 'dst/file'
+        },
+        {
+          action: 'created',
+          kind: 'file',
+          path: 'file'
+        },
+        {
+          action: 'created',
+          kind: 'directory',
+          path: 'dir'
         }
       ]
 
