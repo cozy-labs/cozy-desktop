@@ -57,9 +57,28 @@ type FSAction
   | FSUpdateFileAction
   | FSWaitAction
 
+type Explanation = string
+
+// Path to a capture file, without extension, relative to the scenario dir.
+type CaptureRelpath = string
+
+// A scenario has multiple tests:
+// - 1 local test for each Atom watcher capture
+// - 1 local test for each Chokidar watcher capture
+// - 1 local test for initial scan with the platform default watcher
+// - 1 remote test (no capture yet)
+type ScenarioTestName =
+  | CaptureRelpath
+  | 'stopped'
+  | 'remote'
+
+type ScenarioCompletelyDisabled = Explanation
+type ScenarioTestsDisabled = {[ScenarioTestName]: Explanation}
+
 export type Scenario = {|
   platforms?: Array<'win32'|'darwin'|'linux'>,
   side?: SideName,
+  disabled?: ScenarioCompletelyDisabled | ScenarioTestsDisabled,
   init?: Array<{|
     ino: number, path: string, content?: string
   |}>,

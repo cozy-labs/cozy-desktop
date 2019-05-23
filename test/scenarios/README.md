@@ -177,12 +177,13 @@ This should be fixed soon.
 
 ## Disabled scenarios
 
-Some scenarios can be partially or completely unsupported:
+Some scenarios can be partially or completely unsupported through the
+`.disabled` property of the `Scenario` object (in the `scenario.js` file):
 
-- A `.DISABLED` suffix on the `scenario.js` file means the scenario is
-  completely unsupported.
-- A `.DISABLED` suffix on some `local/<capture_name>.json` file means this
-  captured case is unsupported.
+- A *string* value explains why the scenario is completely unsupported.
+- An *object* value, relative paths to the disabled capture files (without the
+  `*.json` extension) as keys, *string* as values explaining why each capture
+  is currently disabled.
 
 Some disabled scenarios actually work locally but are currently failing on CI.
 

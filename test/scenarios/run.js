@@ -10,6 +10,7 @@ const should = require('should')
 const config = require('../../core/config')
 
 const {
+  disabledScenarioTest,
   init,
   loadFSEventFiles,
   loadAtomCaptures,
@@ -131,8 +132,9 @@ describe('Test scenarios', function() {
 })
 
 function shouldSkipLocalStopped(scenario, env = process.env) {
-  if (scenario.disabled) {
-    return scenario.disabled
+  const disabled = disabledScenarioTest(scenario, 'stopped')
+  if (disabled) {
+    return disabled
   } else if (env[stoppedEnvVar] == null) {
     return `${stoppedEnvVar} is not set`
   }
@@ -141,8 +143,10 @@ function shouldSkipLocalStopped(scenario, env = process.env) {
 function shouldSkipRemote(scenario) {
   if (scenario.name.indexOf('outside') !== -1) {
     return 'skip outside case'
-  } else if (scenario.disabled) {
-    return scenario.disabled
+  }
+  const disabled = disabledScenarioTest(scenario, 'remote')
+  if (disabled) {
+    return disabled
   } else if (scenario.side === 'local') {
     return 'skip local only test'
   }

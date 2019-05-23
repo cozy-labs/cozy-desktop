@@ -4,6 +4,7 @@
 
 module.exports = ({
   platforms: ['win32', 'darwin'],
+  disabled: 'It still fails on Windows and/or macOS',
   actions: require('../actions'),
   expected: {
     tree: [
