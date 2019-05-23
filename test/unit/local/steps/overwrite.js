@@ -5,7 +5,7 @@ const _ = require('lodash')
 const should = require('should')
 
 const Buffer = require('../../../../core/local/steps/buffer')
-const overwritingMove = require('../../../../core/local/steps/overwriting_move')
+const overwrite = require('../../../../core/local/steps/overwrite')
 
 const Builders = require('../../../support/builders')
 
@@ -16,7 +16,7 @@ import type {
 } from '../../../../core/local/steps/event'
 */
 
-describe('core/local/steps/overwriting_move', () => {
+describe('core/local/steps/overwrite', () => {
   describe('.loop()', () => {
     let builders, inputBuffer, outputBuffer
 
@@ -40,11 +40,11 @@ describe('core/local/steps/overwriting_move', () => {
           .build()
       }
       inputBuffer = new Buffer()
-      outputBuffer = overwritingMove.loop(inputBuffer, {
+      outputBuffer = overwrite.loop(inputBuffer, {
         pouch: {
           byIdMaybeAsync: async id => _.cloneDeep(docs[id])
         },
-        state: overwritingMove.initialState()
+        state: overwrite.initialState()
       })
     })
 
@@ -72,12 +72,12 @@ describe('core/local/steps/overwriting_move', () => {
         {
           ...deletedEvent,
           action: 'ignored',
-          [overwritingMove.STEP_NAME]: { deletedBeforeRenamed: renamedEvent }
+          [overwrite.STEP_NAME]: { deletedBeforeRenamed: renamedEvent }
         },
         {
           ...renamedEvent,
           overwrite: true,
-          [overwritingMove.STEP_NAME]: { moveToDeletedPath: deletedEvent }
+          [overwrite.STEP_NAME]: { moveToDeletedPath: deletedEvent }
         }
       ])
     })
@@ -103,12 +103,12 @@ describe('core/local/steps/overwriting_move', () => {
         {
           ...deletedEvent,
           action: 'ignored',
-          [overwritingMove.STEP_NAME]: { deletedBeforeRenamed: renamedEvent }
+          [overwrite.STEP_NAME]: { deletedBeforeRenamed: renamedEvent }
         },
         {
           ...renamedEvent,
           overwrite: true,
-          [overwritingMove.STEP_NAME]: { moveToDeletedPath: deletedEvent }
+          [overwrite.STEP_NAME]: { moveToDeletedPath: deletedEvent }
         }
       ])
     })
@@ -134,11 +134,11 @@ describe('core/local/steps/overwriting_move', () => {
           {
             ...deletedEvent,
             action: 'ignored',
-            [overwritingMove.STEP_NAME]: { deletedBeforeCreate: createdEvent }
+            [overwrite.STEP_NAME]: { deletedBeforeCreate: createdEvent }
           },
           {
             ...createdEvent,
-            [overwritingMove.STEP_NAME]: { createOnDeletedPath: deletedEvent }
+            [overwrite.STEP_NAME]: { createOnDeletedPath: deletedEvent }
           }
         ])
       })

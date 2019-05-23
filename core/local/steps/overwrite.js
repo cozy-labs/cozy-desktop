@@ -9,7 +9,7 @@ const logger = require('../../logger')
 import type { AtomWatcherEvent, Batch } from './event'
 import type { Metadata } from '../../metadata'
 
-type OverwritingMoveState = {
+type OverwriteState = {
   deletedEventsByPath: Map<string, AtomWatcherEvent>,
   pending: {
     deletedEventsByPath: Map<string, AtomWatcherEvent>,
@@ -22,14 +22,14 @@ type PouchFunctions = {
   byIdMaybeAsync: (string) => Promise<?Metadata>
 }
 
-type OverwritingMoveOptions = {
+type OverwriteOptions = {
   state: {
-    [typeof STEP_NAME]: OverwritingMoveState
+    [typeof STEP_NAME]: OverwriteState
   }
 }
 */
 
-const STEP_NAME = 'overwritingMove'
+const STEP_NAME = 'overwrite'
 
 const log = logger({
   component: `atom/${STEP_NAME}`
@@ -120,7 +120,7 @@ const ignoreDeletedBeforeOverwritingAdd = (event, state) => {
 }
 
 /** Process an event batch. */
-const step = async (batch /*: Batch */, opts /*: OverwritingMoveOptions */) => {
+const step = async (batch /*: Batch */, opts /*: OverwriteOptions */) => {
   const {
     state: { [STEP_NAME]: state }
   } = opts
@@ -163,7 +163,7 @@ const _loop = async (buffer, out, opts) => {
   }
 }
 
-const loop = (buffer /*: Buffer */, opts /*: OverwritingMoveOptions */) => {
+const loop = (buffer /*: Buffer */, opts /*: OverwriteOptions */) => {
   const out = new Buffer()
 
   _loop(buffer, out, opts).catch(err => {
