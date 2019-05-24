@@ -44,19 +44,5 @@
       "kind": "file",
       "path": "file.ods.osl-tmp"
     }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file.ods"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file.ods"
-    }
   ]
 ]
