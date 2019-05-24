@@ -85,7 +85,7 @@ describe('issue 850', function() {
     await this.watcher.onFlush([
       ChokidarEvent.build('add', 'file', await fse.stat(filePath))
     ])
-    await fse.move(filePath, dstPath)
+    await fse.rename(filePath, dstPath)
 
     const doMove = async () => {
       // let _resolve
