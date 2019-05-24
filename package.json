@@ -2,7 +2,7 @@
   "name": "CozyDrive",
   "productName": "Cozy Drive",
   "private": true,
-  "version": "3.13.1-beta.3",
+  "version": "3.13.1-beta.4",
   "description": "Cozy Drive is a synchronization tool for your files and folders with Cozy Cloud.",
   "homepage": "https://github.com/cozy-labs/cozy-desktop",
   "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",
