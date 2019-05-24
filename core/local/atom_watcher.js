@@ -16,7 +16,7 @@ const awaitWriteFinish = require('./steps/await_write_finish')
 const initialDiff = require('./steps/initial_diff')
 const addChecksum = require('./steps/add_checksum')
 const incompleteFixer = require('./steps/incomplete_fixer')
-const overwritingMove = require('./steps/overwriting_move')
+const overwrite = require('./steps/overwrite')
 const dispatch = require('./steps/dispatch')
 
 /*::
@@ -59,7 +59,7 @@ const steps = _.compact([
   initialDiff,
   addChecksum,
   incompleteFixer,
-  overwritingMove
+  overwrite
 ])
 
 /** The producer for the current platform. */
