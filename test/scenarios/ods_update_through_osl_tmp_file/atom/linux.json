@@ -1,0 +1,45 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "file.ods.osl-tmp",
+      "oldPath": "file.ods"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file.ods"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file.ods"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file.ods"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file.ods"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "file.ods.osl-tmp"
+    }
+  ]
+]
