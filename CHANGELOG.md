@@ -1,5 +1,35 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.1-beta.4 - 2019-05-24
+
+Improvements for GNU/Linux users:
+
+- We've mitigated an issue LibreOffice users could encounter while saving.
+  LibreOffice uses an intermediary temporary file when saving and in some
+  situations we could end up deleting the file altogether or move the previous
+  version to the Cozy's trash and even not be able to synchronise the new
+  version.
+  We're now ignoring those temporary files (i.e. with extension `.osl-tmp`)
+  which results in a correct update of the office document.
+
+Improvements for all users:
+
+- The solution above applies only to LibreOffice users on Linux while there are
+  other software saving through a temporary file.
+  We are now able to detect the use of a temporary file in some situations and
+  correctly handle it (i.e. not move it to the trash and synchronise the new
+  version).
+
+There are some known issues that we'll tackle in the next releases:
+
+- When we don't detect any update closely following the temporary file deletion
+  and that file is not ignored, we end up deleting the file that was saved.
+  This is a more general situation and should be fixed very soon.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.1-beta.3 - 2019-05-21
 
 Improvements for MacOS users:
