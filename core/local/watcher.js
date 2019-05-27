@@ -1,7 +1,7 @@
 /* @flow */
 
 const { AtomWatcher } = require('./atom/watcher')
-const ChokidarWatcher = require('./chokidar_watcher')
+const ChokidarWatcher = require('./chokidar/watcher')
 
 /*::
 import type { WatcherType } from '../config'
@@ -10,7 +10,7 @@ import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
-import type { ChokidarEvent } from './chokidar_event'
+import type { ChokidarEvent } from './chokidar/event'
 import type { Checksumer } from './checksumer'
 
 export interface Watcher {

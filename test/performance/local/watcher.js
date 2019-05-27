@@ -5,7 +5,7 @@ const Promise = require('bluebird')
 const fse = require('fs-extra')
 const path = require('path')
 
-const Watcher = require('../../../core/local/chokidar_watcher')
+const Watcher = require('../../../core/local/chokidar/watcher')
 const metadata = require('../../../core/metadata')
 
 const configHelpers = require('../../support/helpers/config')

@@ -2,7 +2,7 @@
 
 /*::
 import type fs from 'fs'
-import type {Metadata} from '../metadata'
+import type {Metadata} from '../../metadata'
 
 export type ChokidarAdd = {
   type: 'add',

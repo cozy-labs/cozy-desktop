@@ -20,7 +20,7 @@ const rimrafAsync = Promise.promisify(rimraf)
 
 /*::
 import type { LocalOptions } from '../../../core/local'
-import type { ChokidarEvent } from '../../../core/local/chokidar_event'
+import type { ChokidarEvent } from '../../../core/local/chokidar/event'
 import type { AtomBatch } from '../../../core/local/atom/event'
 */
 

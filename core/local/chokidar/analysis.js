@@ -3,13 +3,13 @@
 const path = require('path')
 const _ = require('lodash')
 
-const { getInode } = require('./event')
-const localChange = require('./change')
-const logger = require('../logger')
-const measureTime = require('../perftools')
+const { getInode } = require('./local_event')
+const localChange = require('./local_change')
+const logger = require('../../logger')
+const measureTime = require('../../perftools')
 
 /*::
-import type { LocalEvent } from './event'
+import type { LocalEvent } from './local_event'
 import type {
   LocalChange,
   LocalDirAddition,
@@ -18,7 +18,7 @@ import type {
   LocalFileAddition,
   LocalFileDeletion,
   LocalFileMove
-} from './change'
+} from './local_change'
 */
 
 const log = logger({

@@ -4,17 +4,17 @@ const _ = require('lodash')
 const should = require('should')
 const path = require('path')
 
-const analysis = require('../../../core/local/analysis')
+const analysis = require('../../../../core/local/chokidar/analysis')
 
-const Builders = require('../../support/builders')
+const Builders = require('../../../support/builders')
 
 /*::
-import type { LocalEvent } from '../../../core/local/event'
-import type { LocalChange } from '../../../core/local/change'
-import type { Metadata } from '../../../core/metadata'
+import type { LocalEvent } from '../../../../core/local/chokidar/local_event'
+import type { LocalChange } from '../../../../core/local/chokidar/local_change'
+import type { Metadata } from '../../../../core/metadata'
 */
 
-describe('core/local/analysis', function() {
+describe('core/local/chokidar/analysis', function() {
   const sideName = 'local'
   const builders = new Builders()
 
