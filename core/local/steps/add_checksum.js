@@ -12,7 +12,7 @@ const log = logger({
 })
 
 /*::
-import type Buffer from './buffer'
+import type Channel from './channel'
 import type { Checksumer } from '../checksumer'
 */
 
@@ -30,10 +30,10 @@ module.exports = {
 //   smarter
 // TODO the 2 optimizations ↑
 function loop(
-  buffer /*: Buffer */,
+  channel /*: Channel */,
   opts /*: { syncPath: string , checksumer: Checksumer } */
-) /*: Buffer */ {
-  return buffer.asyncMap(async events => {
+) /*: Channel */ {
+  return channel.asyncMap(async events => {
     for (const event of events) {
       try {
         if (event.incomplete) {

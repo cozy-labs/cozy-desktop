@@ -2,7 +2,7 @@
 
 const _ = require('lodash')
 
-const Buffer = require('./buffer')
+const Channel = require('./channel')
 const logger = require('../../logger')
 
 const STEP_NAME = 'awaitWriteFinish'
@@ -33,7 +33,7 @@ module.exports = {
 
 // TODO add unit tests and logs
 
-function sendReadyBatches(waiting /*: WaitingItem[] */, out /*: Buffer */) {
+function sendReadyBatches(waiting /*: WaitingItem[] */, out /*: Channel */) {
   while (waiting.length > 0) {
     if (waiting[0].nbCandidates !== 0) {
       break
@@ -208,12 +208,12 @@ function debounce(
 // events for files, as we can have several of them in a short lapse of time,
 // and computing the checksum several times in a row for the same file is not a
 // good idea.
-async function awaitWriteFinish(buffer /*: Buffer */, out /*: Buffer */) {
+async function awaitWriteFinish(channel /*: Channel */, out /*: Channel */) {
   const waiting /*: WaitingItem[] */ = []
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const events = aggregateBatch(await buffer.pop())
+    const events = aggregateBatch(await channel.pop())
     let nbCandidates = countFileWriteEvents(events)
     debounce(waiting, events)
 
@@ -230,9 +230,9 @@ async function awaitWriteFinish(buffer /*: Buffer */, out /*: Buffer */) {
 }
 
 // eslint-disable-next-line no-unused-vars
-function loop(buffer /*: Buffer */, opts /*: {} */) /*: Buffer */ {
-  const out = new Buffer()
-  awaitWriteFinish(buffer, out).catch(err => {
+function loop(channel /*: Channel */, opts /*: {} */) /*: Channel */ {
+  const out = new Channel()
+  awaitWriteFinish(channel, out).catch(err => {
     log.error({ err })
   })
   return out

@@ -8,7 +8,7 @@
 const should = require('should')
 const checksumer = require('../../../../core/local/checksumer')
 const addChecksum = require('../../../../core/local/steps/add_checksum')
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 
 describe('core/local/steps/add_checksum.loop()', () => {
   it('should add checksum within a file event', async () => {
@@ -19,13 +19,13 @@ describe('core/local/steps/add_checksum.loop()', () => {
         path: __filename
       }
     ]
-    const buffer = new Buffer()
-    buffer.push(batch)
-    const enhancedBuffer = addChecksum.loop(buffer, {
+    const channel = new Channel()
+    channel.push(batch)
+    const enhancedChannel = addChecksum.loop(channel, {
       checksumer: checksumer.init(),
       syncPath: ''
     })
-    const enhancedBatch = await enhancedBuffer.pop()
+    const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch)
       .be.an.Array()
       .and.length(batch.length)
@@ -40,13 +40,13 @@ describe('core/local/steps/add_checksum.loop()', () => {
         path: __dirname
       }
     ]
-    const buffer = new Buffer()
-    buffer.push(batch)
-    const enhancedBuffer = addChecksum.loop(buffer, {
+    const channel = new Channel()
+    channel.push(batch)
+    const enhancedChannel = addChecksum.loop(channel, {
       checksumer: checksumer.init(),
       syncPath: ''
     })
-    const enhancedBatch = await enhancedBuffer.pop()
+    const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch)
       .be.an.Array()
       .and.length(batch.length)
@@ -62,13 +62,13 @@ describe('core/local/steps/add_checksum.loop()', () => {
         md5sum: 'checksum'
       }
     ]
-    const buffer = new Buffer()
-    buffer.push(batch)
-    const enhancedBuffer = addChecksum.loop(buffer, {
+    const channel = new Channel()
+    channel.push(batch)
+    const enhancedChannel = addChecksum.loop(channel, {
       checksumer: checksumer.init(),
       syncPath: ''
     })
-    const enhancedBatch = await enhancedBuffer.pop()
+    const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch)
       .be.an.Array()
       .and.length(batch.length)
@@ -102,19 +102,19 @@ describe('core/local/steps/add_checksum.loop()', () => {
       kind: 'file',
       path: __filename
     }
-    const buffer = new Buffer()
-    buffer.push([
+    const channel = new Channel()
+    channel.push([
       createdEvent,
       modifiedEvent,
       scanEvent,
       renamedEvent,
       ignoredEvent
     ])
-    const enhancedBuffer = addChecksum.loop(buffer, {
+    const enhancedChannel = addChecksum.loop(channel, {
       checksumer: checksumer.init(),
       syncPath: ''
     })
-    const enhancedBatch = await enhancedBuffer.pop()
+    const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch).deepEqual([
       {
         ...createdEvent,

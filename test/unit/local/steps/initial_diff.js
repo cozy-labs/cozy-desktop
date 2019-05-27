@@ -9,7 +9,7 @@ const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 const initialDiff = require('../../../../core/local/steps/initial_diff')
 const metadata = require('../../../../core/metadata')
 
@@ -94,13 +94,13 @@ describe('local/steps/initial_diff', () => {
   })
 
   describe('.loop()', () => {
-    let buffer
+    let channel
     let initialScanDone
 
-    const inputBatch = batch => buffer.push(_.cloneDeep(batch))
+    const inputBatch = batch => channel.push(_.cloneDeep(batch))
 
     beforeEach(function() {
-      buffer = new Buffer()
+      channel = new Channel()
       initialScanDone = builders
         .event()
         .action('initial-scan-done')
@@ -140,7 +140,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([barScan, buzzScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -210,8 +210,11 @@ describe('local/steps/initial_diff', () => {
         .build()
       inputBatch([barScan, barBazScan, initialScanDone])
 
-      buffer = initialDiff.loop(buffer, { pouch: this.pouch, state })
-      const events = [].concat(await buffer.pop(), await buffer.pop())
+      channel = initialDiff.loop(channel, {
+        pouch: this.pouch,
+        state
+      })
+      const events = [].concat(await channel.pop(), await channel.pop())
 
       should(events).deepEqual([
         fooScan,
@@ -267,7 +270,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([fooScan, buzzScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -320,7 +323,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([fooScan, barScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -363,7 +366,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([fooScan, barScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -392,7 +395,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -455,7 +458,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([stillEmptyFileScan, sameContentFileScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -491,7 +494,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([dirScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([dirScan, initialScanDone])
@@ -529,7 +532,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([updatedMetadataScan, updatedContentScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -582,7 +585,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([fooScan, fizzScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -643,7 +646,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([parent2Scan, foo2Scan, bar2Scan, initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -717,7 +720,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([parent2Scan, foo2Scan, initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       const deletedPath = path.normalize('parent-2/foo-2/bar')
@@ -793,7 +796,7 @@ describe('local/steps/initial_diff', () => {
       inputBatch([parent2Scan, fooScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(buffer, { pouch: this.pouch, state })
+        .loop(channel, { pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([

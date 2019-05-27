@@ -166,7 +166,7 @@ class LocalTestHelpers {
     const watcher = this._ensureAtomWatcher()
     for (const batch of batches.concat([simulationCompleteBatch])) {
       // $FlowFixMe
-      watcher.producer.buffer.push(batch)
+      watcher.producer.channel.push(batch)
     }
     await this.startSimulation()
   }
@@ -174,7 +174,7 @@ class LocalTestHelpers {
   async simulateAtomStart() {
     const watcher = this._ensureAtomWatcher()
     await atomWatcher.stepsInitialState(watcher.state, watcher)
-    watcher.producer.buffer.push([INITIAL_SCAN_DONE])
+    watcher.producer.channel.push([INITIAL_SCAN_DONE])
   }
 
   _ensureAtomWatcher() /*: atomWatcher.AtomWatcher */ {

@@ -21,11 +21,11 @@ onPlatforms(['linux', 'win32'], () => {
         const readdir = async () => [missingFilePath]
 
         it('produces incomplete scan event on ENOENT', async () => {
-          const { buffer } = producer
+          const { channel } = producer
 
           await producer.scan('', { readdir, stater })
 
-          should(await buffer.pop()).deepEqual([
+          should(await channel.pop()).deepEqual([
             {
               action: 'scan',
               path: missingFilePath,
@@ -65,7 +65,7 @@ onPlatforms(['linux', 'win32'], () => {
           }
         ]
         producer.process(batch.map(evt => Object.assign({}, evt)))
-        should(await producer.buffer.pop()).eql(
+        should(await producer.channel.pop()).eql(
           batch.map(evt => Object.assign({}, evt, { path: dirname }))
         )
       })
@@ -77,15 +77,15 @@ onPlatforms(['linux', 'win32'], () => {
 
         const batches = [
           {
-            batch: await producer.buffer.pop(),
+            batch: await producer.channel.pop(),
             path: path.join(mypath[0])
           },
           {
-            batch: await producer.buffer.pop(),
+            batch: await producer.channel.pop(),
             path: path.join(mypath[0], mypath[1])
           },
           {
-            batch: await producer.buffer.pop(),
+            batch: await producer.channel.pop(),
             path: path.join(mypath[0], mypath[1], mypath[2])
           }
         ]
@@ -118,14 +118,14 @@ onPlatforms(['linux', 'win32'], () => {
           syncPath
         })
         await producer.start()
-        await producer.buffer.pop()
+        await producer.channel.pop()
       })
 
       it('detect events on folder in temp dir', async () => {
         const dirname = 'foobaz'
         const newname = 'foobarbaz'
         fs.mkdirSync(path.join(syncPath, dirname))
-        should(await producer.buffer.pop()).eql([
+        should(await producer.channel.pop()).eql([
           {
             action: 'created',
             kind: 'directory',
@@ -136,7 +136,7 @@ onPlatforms(['linux', 'win32'], () => {
           path.join(syncPath, dirname),
           path.join(syncPath, newname)
         )
-        should(await producer.buffer.pop()).eql([
+        should(await producer.channel.pop()).eql([
           {
             action: 'renamed',
             kind: 'directory',
@@ -145,7 +145,7 @@ onPlatforms(['linux', 'win32'], () => {
           }
         ])
         fs.rmdirSync(path.join(syncPath, newname))
-        should(await producer.buffer.pop()).eql([
+        should(await producer.channel.pop()).eql([
           {
             action: 'deleted',
             kind: 'directory',
@@ -159,11 +159,11 @@ onPlatforms(['linux', 'win32'], () => {
         const newname = 'barfoobaz'
         const content = 'Hello, Cozy Drive for Desktop'
         fs.writeFileSync(path.join(syncPath, filename), content)
-        const outputBatches = [await producer.buffer.pop()]
+        const outputBatches = [await producer.channel.pop()]
         if (outputBatches[0].length === 1) {
           // The modified event ended up in a separate batch.
           // This seems to happen more frequently on Windows.
-          outputBatches.push(await producer.buffer.pop())
+          outputBatches.push(await producer.channel.pop())
         }
         should(_.flatten(outputBatches)).deepEqual([
           {
@@ -181,7 +181,7 @@ onPlatforms(['linux', 'win32'], () => {
           path.join(syncPath, filename),
           path.join(syncPath, newname)
         )
-        let renamedOutputBatch = await producer.buffer.pop()
+        let renamedOutputBatch = await producer.channel.pop()
         if (
           renamedOutputBatch.length === 1 &&
           renamedOutputBatch[0].action === 'modified'
@@ -197,7 +197,7 @@ onPlatforms(['linux', 'win32'], () => {
           ])
           // Let's replace it with the next batch so we can look for the
           // renamed event:
-          renamedOutputBatch = await producer.buffer.pop()
+          renamedOutputBatch = await producer.channel.pop()
         }
         should(renamedOutputBatch).eql([
           {
@@ -208,7 +208,7 @@ onPlatforms(['linux', 'win32'], () => {
           }
         ])
         fs.unlinkSync(path.join(syncPath, newname))
-        should(await producer.buffer.pop()).eql([
+        should(await producer.channel.pop()).eql([
           {
             action: 'deleted',
             kind: 'file',

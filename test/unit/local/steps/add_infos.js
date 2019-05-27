@@ -7,7 +7,7 @@ import type { AtomWatcherEvent } from '../../../../core/local/steps/event'
 
 const should = require('should')
 const addInfos = require('../../../../core/local/steps/add_infos')
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 
 describe('core/local/steps/add_infos.loop()', () => {
   it('should returns an enhanced batch with infos', async () => {
@@ -18,12 +18,12 @@ describe('core/local/steps/add_infos.loop()', () => {
         path: __filename
       }
     ]
-    const buffer = new Buffer()
-    buffer.push(batch)
-    const enhancedBuffer = addInfos.loop(buffer, {
+    const channel = new Channel()
+    channel.push(batch)
+    const enhancedChannel = addInfos.loop(channel, {
       syncPath: ''
     })
-    const enhancedBatch = await enhancedBuffer.pop()
+    const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch)
       .be.an.Array()
       .and.have.length(batch.length)
@@ -52,12 +52,12 @@ describe('core/local/steps/add_infos.loop()', () => {
         path: __dirname
       }
     ]
-    const buffer = new Buffer()
-    buffer.push(batch)
-    const enhancedBuffer = addInfos.loop(buffer, {
+    const channel = new Channel()
+    channel.push(batch)
+    const enhancedChannel = addInfos.loop(channel, {
       syncPath: ''
     })
-    const [scanEvent, ...otherEvents] = await enhancedBuffer.pop()
+    const [scanEvent, ...otherEvents] = await enhancedChannel.pop()
     should(scanEvent).eql({
       action: batch[0].action,
       kind: 'directory',

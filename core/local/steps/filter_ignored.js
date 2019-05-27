@@ -3,7 +3,7 @@
 const logger = require('../../logger')
 
 /*::
-import type Buffer from './buffer'
+import type Channel from './channel'
 import type { AtomWatcherEvent } from './event'
 import type { Ignore } from '../../ignore'
 */
@@ -24,12 +24,12 @@ module.exports = {
 // watchers), but it needs to be put after the AddInfos step as the docType is
 // required to know if the event can be ignored.
 function loop(
-  buffer /*: Buffer */,
+  channel /*: Channel */,
   opts /*: { ignore: Ignore } */
-) /*: Buffer */ {
+) /*: Channel */ {
   const notIgnored = buildNotIgnored(opts.ignore)
 
-  return buffer.map(batch => {
+  return channel.map(batch => {
     return batch.filter(notIgnored)
   })
 }

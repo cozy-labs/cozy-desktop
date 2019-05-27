@@ -3,16 +3,14 @@
 const Promise = require('bluebird')
 
 /*::
-import type { AtomWatcherEvent, Batch } from './event'
+import type { Batch } from './event'
 */
 
-// Buffer is a data structure for propagating batches of events from a FS
+// Channel is a data structure for propagating batches of events from a FS
 // watcher to the Pouch database, via several steps. It's expected that we have
-// only one class/function that pushes in the buffer, and only one
-// class/function that takes batches from the buffer.
-//
-// FIXME: Rename Buffer to prevent confusion with the built-in type.
-module.exports = class Buffer {
+// only one class/function that pushes in the channel, and only one
+// class/function that takes batches from the channel.
+module.exports = class Channel {
   /*::
   _resolve: ?Promise<Batch>
   _buffer: Array<Batch>
@@ -45,36 +43,36 @@ module.exports = class Buffer {
 
   async doMap(
     fn /*: (Batch) => Batch */,
-    buffer /*: Buffer */
+    channel /*: Channel */
   ) /*: Promise<void> */ {
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const batch = fn(await this.pop())
-      buffer.push(batch)
+      channel.push(batch)
     }
   }
 
-  map(fn /*: (Batch) => Batch */) /*: Buffer */ {
-    const buffer = new Buffer()
-    this.doMap(fn, buffer)
-    return buffer
+  map(fn /*: (Batch) => Batch */) /*: Channel */ {
+    const channel = new Channel()
+    this.doMap(fn, channel)
+    return channel
   }
 
   async doAsyncMap(
     fn /*: (Batch) => Promise<Batch> */,
-    buffer /*: Buffer */
+    channel /*: Channel */
   ) /*: Promise<void> */ {
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const batch = await this.pop()
       const after = await fn(batch)
-      buffer.push(after)
+      channel.push(after)
     }
   }
 
-  asyncMap(fn /*: (Batch) => Promise<Batch> */) /*: Buffer */ {
-    const buffer = new Buffer()
-    this.doAsyncMap(fn, buffer)
-    return buffer
+  asyncMap(fn /*: (Batch) => Promise<Batch> */) /*: Channel */ {
+    const channel = new Channel()
+    this.doAsyncMap(fn, channel)
+    return channel
   }
 }

@@ -6,7 +6,7 @@ const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
 
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 
 const Builders = require('../../../support/builders')
 
@@ -19,43 +19,43 @@ import type {
 
 const builders = new Builders()
 
-describe('core/local/steps/Buffer', function() {
+describe('core/local/steps/Channel', function() {
   this.timeout(100)
 
   describe('Basics', () => {
-    let buffer
+    let channel
 
     beforeEach('instanciate', () => {
-      buffer = new Buffer()
+      channel = new Channel()
     })
 
     describe('#push()', () => {
-      it('inserts the given Batch into the Buffer so it may be retrieved with #pop()', async () => {
+      it('inserts the given Batch into the Channel so it may be retrieved with #pop()', async () => {
         const batch = builders.nonEmptyBatch()
 
-        buffer.push(batch)
+        channel.push(batch)
 
-        await should(buffer.pop()).be.fulfilledWith(batch)
+        await should(channel.pop()).be.fulfilledWith(batch)
       })
 
       it('does not squash equivalent batches', async () => {
         const batch = builders.nonEmptyBatch()
 
-        buffer.push(batch)
-        buffer.push(batch)
+        channel.push(batch)
+        channel.push(batch)
 
-        await should(buffer.pop()).be.fulfilledWith(batch)
-        await should(buffer.pop()).be.fulfilledWith(batch)
+        await should(channel.pop()).be.fulfilledWith(batch)
+        await should(channel.pop()).be.fulfilledWith(batch)
       })
 
       it('drops empty batches', async () => {
         const emptyBatch = []
         const batch = builders.nonEmptyBatch()
 
-        buffer.push(emptyBatch)
-        buffer.push(batch)
+        channel.push(emptyBatch)
+        channel.push(batch)
 
-        await should(buffer.pop()).be.fulfilledWith(batch)
+        await should(channel.pop()).be.fulfilledWith(batch)
       })
     })
 
@@ -64,51 +64,51 @@ describe('core/local/steps/Buffer', function() {
         const batch1 = builders.nonEmptyBatch(1)
         const batch2 = builders.nonEmptyBatch(2)
 
-        buffer.push(batch1)
-        buffer.push(batch2)
+        channel.push(batch1)
+        channel.push(batch2)
 
-        await should(buffer.pop()).be.fulfilledWith(batch1)
-        await should(buffer.pop()).be.fulfilledWith(batch2)
+        await should(channel.pop()).be.fulfilledWith(batch1)
+        await should(channel.pop()).be.fulfilledWith(batch2)
       })
 
       describe('when all Batches were already popped', () => {
         beforeEach('push and pop', async () => {
-          buffer.push(builders.nonEmptyBatch(1))
-          await buffer.pop()
+          channel.push(builders.nonEmptyBatch(1))
+          await channel.pop()
         })
 
         it('awaits for the next Batch', async () => {
           const batch2 = builders.nonEmptyBatch(2)
 
-          const nextBatchPromise = buffer.pop()
-          buffer.push(batch2)
+          const nextBatchPromise = channel.pop()
+          channel.push(batch2)
 
           await should(nextBatchPromise).be.fulfilledWith(batch2)
         })
       })
 
-      describe('when Buffer was never pushed anything', () => {
+      describe('when Channel was never pushed anything', () => {
         it('awaits for the next Batch', async () => {
           const batch1 = builders.nonEmptyBatch(1)
           const batch2 = builders.nonEmptyBatch(2)
 
-          const nextBatchPromise = buffer.pop()
-          buffer.push(batch1)
-          buffer.push(batch2)
+          const nextBatchPromise = channel.pop()
+          channel.push(batch1)
+          channel.push(batch2)
 
           await should(nextBatchPromise).be.fulfilledWith(batch1)
         })
       })
 
-      describe('when called more than once on an empty Buffer (DO NOT DO THIS)', () => {
+      describe('when called more than once on an empty Channel (DO NOT DO THIS)', () => {
         it('only resolves the last Promise with the next Batch', async () => {
           const batch1 = builders.nonEmptyBatch(1)
           const batch2 = builders.nonEmptyBatch(2)
 
-          const popPromise1 = buffer.pop()
-          const popPromise2 = buffer.pop()
-          buffer.push(batch1)
-          buffer.push(batch2)
+          const popPromise1 = channel.pop()
+          const popPromise2 = channel.pop()
+          channel.push(batch1)
+          channel.push(batch2)
 
           await should(popPromise2).be.fulfilledWith(batch1)
           should(popPromise1).be.pending()
@@ -119,22 +119,22 @@ describe('core/local/steps/Buffer', function() {
 
   describe('Plugging', () => {
     /**
-     * Buffer#map() and #asyncMap() basically plug two Buffers together with a
+     * Channel#map() and #asyncMap() basically plug two Channels together with a
      * transformation. One may carry out the following steps:
      *
-     * - Call #push() on the input Buffer with a Batch to transform.
-     * - Call #map() or #asyncMap() on the input Buffer and get an output
-     *   Buffer.
-     * - Call #pop() on the output Buffer to asynchronously retrieve the next
+     * - Call #push() on the input Channel with a Batch to transform.
+     * - Call #map() or #asyncMap() on the input Channel and get an output
+     *   Channel.
+     * - Call #pop() on the output Channel to asynchronously retrieve the next
      *   transformed Batch.
      *
      * The order by which steps occur shouldn't matter, except:
      *
      * - #map() or #asyncMap() must be called only once.
      * - #map() or #asyncMap() must be called before any #pop(), otherwise we
-     *   don't have any output Buffer to *pop* from.
+     *   don't have any output Channel to *pop* from.
      * - A #pop() cannot occur without awaiting a previous #pop() due to the
-     *   way Buffers are currently implemented.
+     *   way Channels are currently implemented.
      *
      * Many scenarios are tested below to make sure the expected properties
      * are enforced for all of them.
@@ -154,36 +154,36 @@ describe('core/local/steps/Buffer', function() {
      * Steps are defined as simple words (with corresponding implementation
      * functions).
      *
-     * This basically means calling the right method on the right buffer
+     * This basically means calling the right method on the right channel
      * given the current state of the scenario:
      */
 
     const map = scenarioState => {
-      const { inputBuffer, callback } = scenarioState
-      scenarioState.outputBuffer = inputBuffer.map(callback)
+      const { inputChannel, callback } = scenarioState
+      scenarioState.outputChannel = inputChannel.map(callback)
     }
 
     const asyncMap = scenarioState => {
-      const { inputBuffer, callback } = scenarioState
-      scenarioState.outputBuffer = inputBuffer.asyncMap(callback)
+      const { inputChannel, callback } = scenarioState
+      scenarioState.outputChannel = inputChannel.asyncMap(callback)
     }
 
-    const push = ({ inputBuffer, inputBatches }) => {
+    const push = ({ inputChannel, inputBatches }) => {
       const nextBatchNumber = inputBatches.length + 1
       const newBatch = builders.nonEmptyBatch(nextBatchNumber)
       inputBatches.push(newBatch)
-      inputBuffer.push(newBatch)
+      inputChannel.push(newBatch)
     }
 
     const pop = scenarioState => {
-      const { outputBuffer, outputBatchesPromise } = scenarioState
-      if (!outputBuffer) {
+      const { outputChannel, outputBatchesPromise } = scenarioState
+      if (!outputChannel) {
         throw new Error(`Step pop cannot occur before asyncMap in scenario`)
       }
       scenarioState.outputBatchesPromise = new Promise((resolve, reject) => {
         outputBatchesPromise
           .then(outputBatches =>
-            outputBuffer
+            outputChannel
               .pop()
               .then(batch => resolve(outputBatches.concat([batch])))
           )
@@ -218,7 +218,7 @@ describe('core/local/steps/Buffer', function() {
 
     const asyncTransform = async batch => {
       // According to manual testing, random 1-5ms delay easily breaks tests
-      // in case Buffer#asyncMap() doesn't properly await asyncTransform()
+      // in case Channel#asyncMap() doesn't properly await asyncTransform()
       // while keeping the test suite duration < 2x the time without delay.
       await Promise.delay(_.random(5))
       return transform(batch)
@@ -248,8 +248,8 @@ describe('core/local/steps/Buffer', function() {
           let scenarioState /*:: ?: {
             callback: (Batch) => Batch,
             inputBatches: Batch[],
-            inputBuffer: Buffer,
-            outputBuffer?: Buffer,
+            inputChannel: Channel,
+            outputChannel?: Channel,
             outputBatchesPromise: Promise<Batch[]>
           } */
 
@@ -257,7 +257,7 @@ describe('core/local/steps/Buffer', function() {
             scenarioState = {
               callback: sinon.spy(transform),
               inputBatches: [],
-              inputBuffer: new Buffer(),
+              inputChannel: new Channel(),
               outputBatchesPromise: Promise.resolve([])
             }
           })
@@ -274,11 +274,11 @@ describe('core/local/steps/Buffer', function() {
 
           /** EXPECTATIONS */
 
-          it('returns a new output Buffer', () => {
-            const { inputBuffer, outputBuffer } = scenarioState
-            should(outputBuffer)
-              .be.an.instanceOf(Buffer)
-              .not.equal(inputBuffer)
+          it('returns a new output Channel', () => {
+            const { inputChannel, outputChannel } = scenarioState
+            should(outputChannel)
+              .be.an.instanceOf(Channel)
+              .not.equal(inputChannel)
           })
 
           it('invokes callback with each input Batch in order if any', () => {
@@ -287,7 +287,7 @@ describe('core/local/steps/Buffer', function() {
             should(passedBatches).deepEqual(inputBatches)
           })
 
-          it('pushes each transformed Batch if any to the output Buffer in order', async () => {
+          it('pushes each transformed Batch if any to the output Channel in order', async () => {
             const { inputBatches, outputBatchesPromise } = scenarioState
             const expectedOutputBatches = await Promise.map(
               inputBatches,
@@ -322,8 +322,8 @@ describe('core/local/steps/Buffer', function() {
           let scenarioState /*:: ?: {
             callback: (Batch) => Promise<Batch>,
             inputBatches: Batch[],
-            inputBuffer: Buffer,
-            outputBuffer?: Buffer,
+            inputChannel: Channel,
+            outputChannel?: Channel,
             outputBatchesPromise: Promise<Batch[]>
           } */
 
@@ -331,7 +331,7 @@ describe('core/local/steps/Buffer', function() {
             scenarioState = {
               callback: sinon.spy(asyncTransform),
               inputBatches: [],
-              inputBuffer: new Buffer(),
+              inputChannel: new Channel(),
               outputBatchesPromise: Promise.resolve([])
             }
           })
@@ -348,11 +348,11 @@ describe('core/local/steps/Buffer', function() {
 
           /** EXPECTATIONS */
 
-          it('returns a new output Buffer', () => {
-            const { inputBuffer, outputBuffer } = scenarioState
-            should(outputBuffer)
-              .be.an.instanceOf(Buffer)
-              .not.equal(inputBuffer)
+          it('returns a new output Channel', () => {
+            const { inputChannel, outputChannel } = scenarioState
+            should(outputChannel)
+              .be.an.instanceOf(Channel)
+              .not.equal(inputChannel)
           })
 
           it('invokes callback with each input Batch in order if any', () => {
@@ -361,7 +361,7 @@ describe('core/local/steps/Buffer', function() {
             should(passedBatches).deepEqual(inputBatches)
           })
 
-          it('pushes each transformed Batch if any to the output Buffer in order', async () => {
+          it('pushes each transformed Batch if any to the output Channel in order', async () => {
             const { inputBatches, outputBatchesPromise } = scenarioState
             const expectedOutputBatches = await Promise.map(
               inputBatches,

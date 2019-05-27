@@ -6,7 +6,7 @@ const path = require('path')
 const Promise = require('bluebird')
 const watcher = require('@atom/watcher')
 
-const Buffer = require('./buffer')
+const Channel = require('./channel')
 const { INITIAL_SCAN_DONE } = require('./event')
 const logger = require('../../logger')
 const defaultStater = require('../stater')
@@ -45,12 +45,12 @@ const log = logger({
 //   and update events.
 module.exports = class Producer {
   /*::
-  buffer: Buffer
+  channel: Channel
   syncPath: string
   watcher: *
   */
   constructor(opts /*: { syncPath : string } */) {
-    this.buffer = new Buffer()
+    this.channel = new Channel()
     this.syncPath = opts.syncPath
     this.watcher = null
     autoBind(this)
@@ -91,7 +91,7 @@ module.exports = class Producer {
     // moved. Wait a bit to ensure that the corresponding renamed events have
     // been emited.
     await Promise.delay(1000)
-    this.buffer.push([INITIAL_SCAN_DONE])
+    this.channel.push([INITIAL_SCAN_DONE])
   }
 
   async scan(
@@ -121,7 +121,7 @@ module.exports = class Producer {
       }
     }
     log.trace({ path: relPath, batch: entries }, 'scan')
-    this.buffer.push(entries)
+    this.channel.push(entries)
 
     for (const entry of entries) {
       if (entry.stats && stater.isDirectory(entry.stats)) {
@@ -140,7 +140,7 @@ module.exports = class Producer {
         event.oldPath = path.relative(this.syncPath, event.oldPath)
       }
     }
-    this.buffer.push(batch)
+    this.channel.push(batch)
   }
 
   stop() {

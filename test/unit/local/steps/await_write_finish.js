@@ -5,7 +5,7 @@ const _ = require('lodash')
 const should = require('should')
 
 const awaitWriteFinish = require('../../../../core/local/steps/await_write_finish')
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 const stater = require('../../../../core/local/stater')
 
 const lastEventToCheckEmptyness = {
@@ -14,8 +14,8 @@ const lastEventToCheckEmptyness = {
   path: ''
 }
 
-async function heuristicIsEmpty(buffer) {
-  const expected = await buffer.pop()
+async function heuristicIsEmpty(channel) {
+  const expected = await channel.pop()
   return (
     (expected.length === 1 &&
       Object.keys(expected[0]).reduce(
@@ -30,7 +30,7 @@ async function heuristicIsEmpty(buffer) {
 describe('core/local/steps/await_write_finish.loop()', () => {
   context('with many batches', () => {
     it('should reduce created→deleted to empty', async () => {
-      const buffer = new Buffer()
+      const channel = new Channel()
       const originalBatch = [
         {
           action: 'created',
@@ -45,14 +45,14 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         lastEventToCheckEmptyness
       ]
       originalBatch.forEach(event => {
-        buffer.push([Object.assign({}, event)])
+        channel.push([Object.assign({}, event)])
       })
-      const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-      should(await heuristicIsEmpty(enhancedBuffer)).be.true()
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await heuristicIsEmpty(enhancedChannel)).be.true()
     })
 
     it('should reduce modified→deleted to deleted', async () => {
-      const buffer = new Buffer()
+      const channel = new Channel()
       const originalBatch = [
         {
           action: 'modified',
@@ -67,16 +67,16 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         lastEventToCheckEmptyness
       ]
       originalBatch.forEach(event => {
-        buffer.push([Object.assign({}, event)])
+        channel.push([Object.assign({}, event)])
       })
-      const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-      should(await enhancedBuffer.pop()).eql([originalBatch[1]])
-      should(await heuristicIsEmpty(enhancedBuffer)).be.true()
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await enhancedChannel.pop()).eql([originalBatch[1]])
+      should(await heuristicIsEmpty(enhancedChannel)).be.true()
     })
 
     describe('created→modified→modified with or without deleted', () => {
       it('should reduce created→modified→modified to created', async () => {
-        const buffer = new Buffer()
+        const channel = new Channel()
         const originalBatch = [
           {
             action: 'created',
@@ -96,10 +96,10 @@ describe('core/local/steps/await_write_finish.loop()', () => {
           lastEventToCheckEmptyness
         ]
         originalBatch.forEach(event => {
-          buffer.push([Object.assign({}, event)])
+          channel.push([Object.assign({}, event)])
         })
-        const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-        should(await enhancedBuffer.pop()).eql([
+        const enhancedChannel = awaitWriteFinish.loop(channel, {})
+        should(await enhancedChannel.pop()).eql([
           {
             // 3rd modified -> created
             action: 'created',
@@ -119,11 +119,11 @@ describe('core/local/steps/await_write_finish.loop()', () => {
             path: __filename
           }
         ])
-        should(await heuristicIsEmpty(enhancedBuffer)).be.true()
+        should(await heuristicIsEmpty(enhancedChannel)).be.true()
       })
 
       it('should reduce created→modified→modified→deleted to empty', async () => {
-        const buffer = new Buffer()
+        const channel = new Channel()
         const originalBatch = [
           {
             action: 'created',
@@ -148,10 +148,10 @@ describe('core/local/steps/await_write_finish.loop()', () => {
           lastEventToCheckEmptyness
         ]
         originalBatch.forEach(event => {
-          buffer.push([Object.assign({}, event)])
+          channel.push([Object.assign({}, event)])
         })
-        const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-        should(await heuristicIsEmpty(enhancedBuffer)).be.true()
+        const enhancedChannel = awaitWriteFinish.loop(channel, {})
+        should(await heuristicIsEmpty(enhancedChannel)).be.true()
       })
     })
 
@@ -165,7 +165,7 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         ...fileStats,
         size: 2
       }
-      const buffer = new Buffer()
+      const channel = new Channel()
       const originalBatch = [
         {
           action: 'modified',
@@ -182,10 +182,10 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         lastEventToCheckEmptyness
       ]
       originalBatch.forEach(event => {
-        buffer.push([Object.assign({}, event)])
+        channel.push([Object.assign({}, event)])
       })
-      const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-      should(await enhancedBuffer.pop()).eql([
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await enhancedChannel.pop()).eql([
         {
           action: 'modified',
           awaitWriteFinish: {
@@ -209,11 +209,11 @@ describe('core/local/steps/await_write_finish.loop()', () => {
           stats: stats2
         }
       ])
-      should(await heuristicIsEmpty(enhancedBuffer)).be.true()
+      should(await heuristicIsEmpty(enhancedChannel)).be.true()
     })
 
     it('should not squash incomplete events', async () => {
-      const buffer = new Buffer()
+      const channel = new Channel()
       const originalBatch = [
         {
           action: 'created',
@@ -234,11 +234,11 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         lastEventToCheckEmptyness
       ]
       originalBatch.forEach(event => {
-        buffer.push([Object.assign({}, event)])
+        channel.push([Object.assign({}, event)])
       })
-      const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-      should(await enhancedBuffer.pop()).eql([originalBatch[1]])
-      should(await enhancedBuffer.pop()).eql([
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await enhancedChannel.pop()).eql([originalBatch[1]])
+      should(await enhancedChannel.pop()).eql([
         {
           // 3rd modified -> created
           action: 'created',
@@ -254,13 +254,13 @@ describe('core/local/steps/await_write_finish.loop()', () => {
           path: __filename
         }
       ])
-      should(await heuristicIsEmpty(enhancedBuffer)).be.true()
+      should(await heuristicIsEmpty(enhancedChannel)).be.true()
     })
   })
 
   context('with one batch', () => {
     it('should reduce created→deleted to empty', async () => {
-      const buffer = new Buffer()
+      const channel = new Channel()
       const originalBatch = [
         {
           action: 'created',
@@ -274,13 +274,13 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         },
         lastEventToCheckEmptyness
       ]
-      buffer.push(_.cloneDeep(originalBatch))
-      const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-      should(await enhancedBuffer.pop()).eql([lastEventToCheckEmptyness])
+      channel.push(_.cloneDeep(originalBatch))
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await enhancedChannel.pop()).eql([lastEventToCheckEmptyness])
     })
 
     it('should reduce modified→deleted to deleted', async () => {
-      const buffer = new Buffer()
+      const channel = new Channel()
       const originalBatch = [
         {
           action: 'modified',
@@ -294,9 +294,9 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         },
         lastEventToCheckEmptyness
       ]
-      buffer.push(_.cloneDeep(originalBatch))
-      const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-      should(await enhancedBuffer.pop()).eql([
+      channel.push(_.cloneDeep(originalBatch))
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await enhancedChannel.pop()).eql([
         originalBatch[1],
         lastEventToCheckEmptyness
       ])
@@ -304,7 +304,7 @@ describe('core/local/steps/await_write_finish.loop()', () => {
 
     describe('created→modified→modified with or without deleted', () => {
       it('should reduce created→modified→modified to created', async () => {
-        const buffer = new Buffer()
+        const channel = new Channel()
         const originalBatch = [
           {
             action: 'created',
@@ -323,9 +323,9 @@ describe('core/local/steps/await_write_finish.loop()', () => {
           },
           lastEventToCheckEmptyness
         ]
-        buffer.push(_.cloneDeep(originalBatch))
-        const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-        should(await enhancedBuffer.pop()).eql([
+        channel.push(_.cloneDeep(originalBatch))
+        const enhancedChannel = awaitWriteFinish.loop(channel, {})
+        should(await enhancedChannel.pop()).eql([
           {
             // 3rd modified -> created
             action: 'created',
@@ -349,7 +349,7 @@ describe('core/local/steps/await_write_finish.loop()', () => {
       })
 
       it('should reduce created→modified→modified→deleted to empty', async () => {
-        const buffer = new Buffer()
+        const channel = new Channel()
         const originalBatch = [
           {
             action: 'created',
@@ -373,9 +373,9 @@ describe('core/local/steps/await_write_finish.loop()', () => {
           },
           lastEventToCheckEmptyness
         ]
-        buffer.push(_.cloneDeep(originalBatch))
-        const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-        should(await enhancedBuffer.pop()).eql([lastEventToCheckEmptyness])
+        channel.push(_.cloneDeep(originalBatch))
+        const enhancedChannel = awaitWriteFinish.loop(channel, {})
+        should(await enhancedChannel.pop()).eql([lastEventToCheckEmptyness])
       })
     })
 
@@ -389,7 +389,7 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         ...fileStats,
         size: 2
       }
-      const buffer = new Buffer()
+      const channel = new Channel()
       const originalBatch = [
         {
           action: 'modified',
@@ -405,9 +405,9 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         },
         lastEventToCheckEmptyness
       ]
-      buffer.push(_.cloneDeep(originalBatch))
-      const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-      should(await enhancedBuffer.pop()).eql([
+      channel.push(_.cloneDeep(originalBatch))
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await enhancedChannel.pop()).eql([
         {
           action: 'modified',
           awaitWriteFinish: {
@@ -435,7 +435,7 @@ describe('core/local/steps/await_write_finish.loop()', () => {
     })
 
     it('should not squash incomplete events', async () => {
-      const buffer = new Buffer()
+      const channel = new Channel()
       const originalBatch = [
         {
           action: 'created',
@@ -455,9 +455,9 @@ describe('core/local/steps/await_write_finish.loop()', () => {
         },
         lastEventToCheckEmptyness
       ]
-      buffer.push(_.cloneDeep(originalBatch))
-      const enhancedBuffer = awaitWriteFinish.loop(buffer, {})
-      should(await enhancedBuffer.pop()).eql([
+      channel.push(_.cloneDeep(originalBatch))
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await enhancedChannel.pop()).eql([
         {
           // 3rd modified -> created
           action: 'created',

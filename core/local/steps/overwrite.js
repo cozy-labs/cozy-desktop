@@ -2,7 +2,7 @@
 
 const _ = require('lodash')
 
-const Buffer = require('./buffer')
+const Channel = require('./channel')
 const logger = require('../../logger')
 
 /*::
@@ -136,7 +136,7 @@ const step = async (batch /*: Batch */, opts /*: OverwriteOptions */) => {
   }
 }
 
-const _loop = async (buffer, out, opts) => {
+const _loop = async (channel, out, opts) => {
   const output = pending => {
     clearTimeout(pending.timeout)
     out.push(pending.events)
@@ -146,7 +146,7 @@ const _loop = async (buffer, out, opts) => {
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const events = await buffer.pop()
+    const events = await channel.pop()
     const {
       state: { [STEP_NAME]: state }
     } = opts
@@ -163,10 +163,10 @@ const _loop = async (buffer, out, opts) => {
   }
 }
 
-const loop = (buffer /*: Buffer */, opts /*: OverwriteOptions */) => {
-  const out = new Buffer()
+const loop = (channel /*: Channel */, opts /*: OverwriteOptions */) => {
+  const out = new Channel()
 
-  _loop(buffer, out, opts).catch(err => {
+  _loop(channel, out, opts).catch(err => {
     log.error({ err })
   })
 
