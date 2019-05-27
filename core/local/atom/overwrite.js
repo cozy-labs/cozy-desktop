@@ -6,14 +6,14 @@ const Channel = require('./channel')
 const logger = require('../../logger')
 
 /*::
-import type { AtomEvent, Batch } from './event'
+import type { AtomEvent, AtomBatch } from './event'
 import type { Metadata } from '../../metadata'
 
 type OverwriteState = {
   deletedEventsByPath: Map<string, AtomEvent>,
   pending: {
     deletedEventsByPath: Map<string, AtomEvent>,
-    events: Batch,
+    events: AtomBatch,
     timeout?: TimeoutID
   }
 }
@@ -120,7 +120,7 @@ const ignoreDeletedBeforeOverwritingAdd = (event, state) => {
 }
 
 /** Process an event batch. */
-const step = async (batch /*: Batch */, opts /*: OverwriteOptions */) => {
+const step = async (batch /*: AtomBatch */, opts /*: OverwriteOptions */) => {
   const {
     state: { [STEP_NAME]: state }
   } = opts

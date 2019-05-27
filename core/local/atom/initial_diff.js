@@ -9,7 +9,7 @@ const Channel = require('./channel')
 
 /*::
 import type Pouch from '../../pouch'
-import type { AtomEvent, Batch, EventKind } from './event'
+import type { AtomEvent, AtomBatch, EventKind } from './event'
 import type { Metadata } from '../../metadata'
 
 type InitialDiffState = {
@@ -123,7 +123,7 @@ async function initialDiff(
 
     debounce(waiting, events)
 
-    const batch /*: Batch */ = []
+    const batch /*: AtomBatch */ = []
     for (const event of events) {
       if (event.incomplete) {
         batch.push(event)

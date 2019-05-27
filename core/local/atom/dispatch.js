@@ -17,14 +17,14 @@ const log = logger({
 import type Channel from './channel'
 import type {
   AtomEvent,
-  Batch
+  AtomBatch
 } from './event'
 import type { WinDetectMoveState } from './win_detect_move'
 import type EventEmitter from 'events'
 import type Prep from '../../prep'
 import type Pouch from '../../pouch'
 
-export type AtomEventsDispatcher = (Batch) => Promise<Batch>
+export type AtomEventsDispatcher = (AtomBatch) => Promise<AtomBatch>
 
 type DispatchOptions = {
   events: EventEmitter,
@@ -54,7 +54,7 @@ function loop(
 }
 
 function step(opts /*: DispatchOptions */) {
-  return async (batch /*: Batch */) => {
+  return async (batch /*: AtomBatch */) => {
     for (const event of batch) {
       try {
         await dispatchEvent(event, opts)

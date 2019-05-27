@@ -12,7 +12,7 @@ const statsBuilder = require('./stats')
 /*::
 import type { Stats } from 'fs'
 import type { Metadata } from '../../../core/metadata'
-import type { AtomEvent, EventAction, EventKind, Batch } from '../../../core/local/atom/event'
+import type { AtomEvent, EventAction, EventKind } from '../../../core/local/atom/event'
 import type { StatsBuilder } from './stats'
 */
 

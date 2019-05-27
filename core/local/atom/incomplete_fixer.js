@@ -19,7 +19,7 @@ const DELAY = 3000
 
 /*::
 import type Channel from './channel'
-import type { AtomEvent, Batch } from './event'
+import type { AtomEvent, AtomBatch } from './event'
 import type { Checksumer } from '../checksumer'
 
 type IncompleteItem = {
@@ -165,7 +165,7 @@ function step(
   incompletes /*: IncompleteItem[] */,
   opts /*: IncompleteFixerOptions */
 ) {
-  return async (events /*: Batch */) /*: Promise<Batch> */ => {
+  return async (events /*: AtomBatch */) /*: Promise<AtomBatch> */ => {
     const batch = []
 
     // Filter incomplete events

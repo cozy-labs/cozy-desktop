@@ -21,7 +21,7 @@ const rimrafAsync = Promise.promisify(rimraf)
 /*::
 import type { LocalOptions } from '../../../core/local'
 import type { ChokidarEvent } from '../../../core/local/chokidar_event'
-import type { Batch } from '../../../core/local/atom/event'
+import type { AtomBatch } from '../../../core/local/atom/event'
 */
 
 const simulationCompleteBatch = [
@@ -127,7 +127,7 @@ class LocalTestHelpers {
     })
   }
 
-  isSimulationEnd(batch /*: Batch */) {
+  isSimulationEnd(batch /*: AtomBatch */) {
     const { _resolveSimulation } = this
     return _resolveSimulation && _.isEqual(batch, simulationCompleteBatch)
   }
@@ -138,7 +138,7 @@ class LocalTestHelpers {
     delete this._resolveSimulation
   }
 
-  dispatchAtomEvents(batch /*: Batch */) {
+  dispatchAtomEvents(batch /*: AtomBatch */) {
     if (this.isSimulationEnd(batch)) {
       this.stopSimulation()
       return []
@@ -162,7 +162,7 @@ class LocalTestHelpers {
    * - Fill in the test Pouch / sync dir
    * - `#simulateAtomEvents()`
    */
-  async simulateAtomEvents(batches /*: Batch[] */) {
+  async simulateAtomEvents(batches /*: AtomBatch[] */) {
     const watcher = this._ensureAtomWatcher()
     for (const batch of batches.concat([simulationCompleteBatch])) {
       // $FlowFixMe

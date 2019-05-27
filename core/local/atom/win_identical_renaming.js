@@ -6,14 +6,14 @@ const Channel = require('./channel')
 const logger = require('../../logger')
 
 /*::
-import type { AtomEvent, Batch } from './event'
+import type { AtomEvent, AtomBatch } from './event'
 import type { Metadata } from '../../metadata'
 
 type WinIdenticalRenamingState = {
   deletedEventsById: Map<string, AtomEvent>,
   pending: {
     deletedEventsById: Map<string, AtomEvent>,
-    events: Batch,
+    events: AtomBatch,
     timeout?: TimeoutID
   }
 }
@@ -103,7 +103,7 @@ const ignoreDeletedBeforeIdenticalRenamed = (event, state) => {
 
 /** Process an event batch. */
 const step = async (
-  batch /*: Batch */,
+  batch /*: AtomBatch */,
   opts /*: WinIdenticalRenamingOptions */
 ) => {
   const {

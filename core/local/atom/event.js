@@ -30,7 +30,7 @@ export type AtomEvent = {
   overwrite?: bool
 }
 
-export type Batch = AtomEvent[]
+export type AtomBatch = AtomEvent[]
 */
 
 const ACTIONS /*: EventAction[] */ = [

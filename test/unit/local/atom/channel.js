@@ -12,7 +12,7 @@ const Builders = require('../../../support/builders')
 
 /*::
 import type {
-  Batch
+  AtomBatch
 } from '../../../../core/local/atom/event'
 */
 
@@ -245,11 +245,11 @@ describe('core/local/atom/Channel', function() {
       for (const scenario of scenarios) {
         describe(scenarioDescription(scenario), () => {
           let scenarioState /*:: ?: {
-            callback: (Batch) => Batch,
-            inputBatches: Batch[],
+            callback: (AtomBatch) => AtomBatch,
+            inputBatches: AtomBatch[],
             inputChannel: Channel,
             outputChannel?: Channel,
-            outputBatchesPromise: Promise<Batch[]>
+            outputBatchesPromise: Promise<AtomBatch[]>
           } */
 
           beforeEach('init scenarioState', () => {
@@ -319,11 +319,11 @@ describe('core/local/atom/Channel', function() {
       for (const scenario of scenarios) {
         describe(scenarioDescription(scenario), () => {
           let scenarioState /*:: ?: {
-            callback: (Batch) => Promise<Batch>,
-            inputBatches: Batch[],
+            callback: (AtomBatch) => Promise<AtomBatch>,
+            inputBatches: AtomBatch[],
             inputChannel: Channel,
             outputChannel?: Channel,
-            outputBatchesPromise: Promise<Batch[]>
+            outputBatchesPromise: Promise<AtomBatch[]>
           } */
 
           beforeEach('init scenarioState', () => {

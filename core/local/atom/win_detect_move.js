@@ -20,7 +20,7 @@ const log = logger({
 const DELAY = 1000
 
 /*::
-import type { AtomEvent, Batch } from './event'
+import type { AtomEvent, AtomBatch } from './event'
 import type Pouch from '../../pouch'
 
 type PendingItem = {
@@ -162,7 +162,7 @@ function aggregateEvents(createdEvent, deletedEvent) {
 
 function sendReadyBatches(
   waiting /*: PendingItem[] */,
-  output /*: (Batch) => void */
+  output /*: (AtomBatch) => void */
 ) {
   while (waiting.length > 0) {
     if (waiting[0].deletedIno) {
