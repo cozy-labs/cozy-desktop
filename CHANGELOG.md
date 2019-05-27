@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.1-beta.5 - 2019-05-27
+
+Improvements for all users:
+
+- We've updated again some of our dependencies that don't require changes in
+  our code. Those are the same that were upgraded in [v3.13.1-alpha.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.13.1-alpha.1)
+  then downgraded back in [v3.13.1-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.13.1-beta.1).
+  We investigated, identified and excluded the problematic updates, so
+  networking should work as expected this time.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.1-beta.4 - 2019-05-24
 
 Improvements for GNU/Linux users:
