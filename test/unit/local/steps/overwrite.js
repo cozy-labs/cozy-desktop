@@ -4,7 +4,7 @@
 const _ = require('lodash')
 const should = require('should')
 
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 const overwrite = require('../../../../core/local/steps/overwrite')
 
 const Builders = require('../../../support/builders')
@@ -18,7 +18,7 @@ import type {
 
 describe('core/local/steps/overwrite', () => {
   describe('.loop()', () => {
-    let builders, inputBuffer, outputBuffer
+    let builders, inputChannel, outputChannel
 
     beforeEach(() => {
       builders = new Builders()
@@ -39,8 +39,8 @@ describe('core/local/steps/overwrite', () => {
           .ino(3)
           .build()
       }
-      inputBuffer = new Buffer()
-      outputBuffer = overwrite.loop(inputBuffer, {
+      inputChannel = new Channel()
+      outputChannel = overwrite.loop(inputChannel, {
         pouch: {
           byIdMaybeAsync: async id => _.cloneDeep(docs[id])
         },
@@ -48,8 +48,8 @@ describe('core/local/steps/overwrite', () => {
       })
     })
 
-    const inputBatch = batch => inputBuffer.push(_.cloneDeep(batch))
-    const outputBatch = () => outputBuffer.pop()
+    const inputBatch = batch => inputChannel.push(_.cloneDeep(batch))
+    const outputBatch = () => outputChannel.pop()
 
     it('ignores deleted file (dst/file) followed by renamed file (src/file → dst/file) with different ino', async () => {
       const deletedEvent = builders

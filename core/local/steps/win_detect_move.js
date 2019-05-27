@@ -5,7 +5,7 @@ const path = require('path')
 
 const SortedSet = require('../../utils/sorted_set')
 const { id } = require('../../metadata')
-const Buffer = require('./buffer')
+const Channel = require('./channel')
 const logger = require('../../logger')
 
 const STEP_NAME = 'winDetectMove'
@@ -180,13 +180,17 @@ function sendReadyBatches(
 // On windows, ReadDirectoryChangesW emits a deleted and an added events when
 // a file or directory is moved. This step merges the two events to a single
 // renamed event.
-async function winDetectMove(buffer, output, opts /*: WinDetectMoveOptions */) {
+async function winDetectMove(
+  channel,
+  output,
+  opts /*: WinDetectMoveOptions */
+) {
   const pendingItems /*: PendingItem[] */ = []
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
     // Wait for a new batch of events
-    const events = await buffer.pop()
+    const events = await channel.pop()
     const {
       pouch,
       state: {
@@ -227,14 +231,14 @@ async function winDetectMove(buffer, output, opts /*: WinDetectMoveOptions */) {
 }
 
 function loop(
-  buffer /*: Buffer */,
+  channel /*: Channel */,
   opts /*: WinDetectMoveOptions */
-) /*: Buffer */ {
-  const out = new Buffer()
+) /*: Channel */ {
+  const out = new Channel()
   const output = batch => {
     out.push(batch)
   }
-  winDetectMove(buffer, output, opts).catch(err => {
+  winDetectMove(channel, output, opts).catch(err => {
     log.error({ err })
   })
   return out

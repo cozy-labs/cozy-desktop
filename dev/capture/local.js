@@ -171,13 +171,13 @@ const runAndRecordAtomEvents = async scenario => {
 
   try {
     await watcher.start()
-    const { buffer } = watcher.producer
-    const actualPush = buffer.push
+    const { channel } = watcher.producer
+    const actualPush = channel.push
     // $FlowFixMe
-    buffer.push = batch => {
+    channel.push = batch => {
       batch.forEach(replaceFSEventIno)
       capturedBatches.push(_.cloneDeep(batch))
-      actualPush.call(buffer, batch)
+      actualPush.call(channel, batch)
     }
     await fixturesHelpers.runActions(scenario, abspath).delay(1000)
     return saveFSEventsToFile(scenario, capturedBatches, 'atom')

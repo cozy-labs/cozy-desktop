@@ -4,7 +4,7 @@
 const should = require('should')
 const sinon = require('sinon')
 const scanFolder = require('../../../../core/local/steps/scan_folder')
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 
 describe('core/local/steps/scan_folder.loop()', () => {
   it('should call the producer scan for action `created` only', async () => {
@@ -45,11 +45,11 @@ describe('core/local/steps/scan_folder.loop()', () => {
         path: __dirname
       }
     ]
-    const buffer = new Buffer()
-    buffer.push(batch)
+    const channel = new Channel()
+    channel.push(batch)
     const scan = sinon.stub().resolves()
-    const enhancedBuffer = scanFolder.loop(buffer, { scan })
-    const enhancedBatch = await enhancedBuffer.pop()
+    const enhancedChannel = scanFolder.loop(channel, { scan })
+    const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch).be.length(batch.length)
     should(scan).be.calledOnce()
   })
@@ -72,11 +72,11 @@ describe('core/local/steps/scan_folder.loop()', () => {
         path: __dirname
       }
     ]
-    const buffer = new Buffer()
-    buffer.push(batch)
+    const channel = new Channel()
+    channel.push(batch)
     const scan = sinon.stub().resolves()
-    const enhancedBuffer = scanFolder.loop(buffer, { scan })
-    const enhancedBatch = await enhancedBuffer.pop()
+    const enhancedChannel = scanFolder.loop(channel, { scan })
+    const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch).be.length(batch.length)
     should(scan).be.calledThrice()
   })
@@ -99,11 +99,11 @@ describe('core/local/steps/scan_folder.loop()', () => {
         path: __dirname
       }
     ]
-    const buffer = new Buffer()
-    buffer.push(batch)
+    const channel = new Channel()
+    channel.push(batch)
     const scan = sinon.stub().resolves()
-    const enhancedBuffer = scanFolder.loop(buffer, { scan })
-    const enhancedBatch = await enhancedBuffer.pop()
+    const enhancedChannel = scanFolder.loop(channel, { scan })
+    const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch).be.length(batch.length)
     should(scan).be.calledTwice()
   })

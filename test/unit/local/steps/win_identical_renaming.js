@@ -4,7 +4,7 @@
 const _ = require('lodash')
 const should = require('should')
 
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 const winIdenticalRenaming = require('../../../../core/local/steps/win_identical_renaming')
 
 const Builders = require('../../../support/builders')
@@ -19,7 +19,7 @@ import type {
 if (process.platform === 'win32') {
   describe('core/local/steps/win_identical_renaming', () => {
     describe('.loop()', () => {
-      let builders, inputBuffer, outputBuffer
+      let builders, inputChannel, outputChannel
 
       beforeEach(() => {
         builders = new Builders()
@@ -33,8 +33,8 @@ if (process.platform === 'win32') {
             .path('file')
             .build()
         }
-        inputBuffer = new Buffer()
-        outputBuffer = winIdenticalRenaming.loop(inputBuffer, {
+        inputChannel = new Channel()
+        outputChannel = winIdenticalRenaming.loop(inputChannel, {
           pouch: {
             byIdMaybeAsync: async id => _.cloneDeep(docs[id])
           },
@@ -42,8 +42,8 @@ if (process.platform === 'win32') {
         })
       })
 
-      const inputBatch = batch => inputBuffer.push(_.cloneDeep(batch))
-      const outputBatch = () => outputBuffer.pop()
+      const inputBatch = batch => inputChannel.push(_.cloneDeep(batch))
+      const outputBatch = () => outputChannel.pop()
 
       describe('broken case-only renaming', () => {
         it('fixes renamed directory (DIR -> DIR) matching dir to (dir -> DIR) after .DELAY', async () => {

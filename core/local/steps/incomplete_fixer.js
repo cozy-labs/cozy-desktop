@@ -18,7 +18,7 @@ const log = logger({
 const DELAY = 3000
 
 /*::
-import type Buffer from './buffer'
+import type Channel from './channel'
 import type { AtomWatcherEvent, Batch } from './event'
 import type { Checksumer } from '../checksumer'
 
@@ -154,11 +154,11 @@ function buildDeletedFromRenamed(
 //
 // Cf test/property/local_watcher/swedish_krona.json
 function loop(
-  buffer /*: Buffer */,
+  channel /*: Channel */,
   opts /*: IncompleteFixerOptions */
-) /*: Buffer */ {
+) /*: Channel */ {
   const incompletes = []
-  return buffer.asyncMap(step(incompletes, opts))
+  return channel.asyncMap(step(incompletes, opts))
 }
 
 function step(

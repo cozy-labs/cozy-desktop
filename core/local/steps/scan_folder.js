@@ -9,7 +9,7 @@ const log = logger({
 })
 
 /*::
-import type Buffer from './buffer'
+import type Channel from './channel'
 import type { Scanner } from './producer'
 */
 
@@ -22,10 +22,10 @@ module.exports = {
 // when this happens, we scan the directory to see if it contains files and
 // sub-directories.
 function loop(
-  buffer /*: Buffer */,
+  channel /*: Channel */,
   opts /*: { scan: Scanner } */
-) /*: Buffer */ {
-  return buffer.asyncMap(async batch => {
+) /*: Channel */ {
+  return channel.asyncMap(async batch => {
     for (const event of batch) {
       if (event.incomplete) {
         continue

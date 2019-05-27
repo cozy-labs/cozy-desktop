@@ -14,7 +14,7 @@ const log = logger({
 })
 
 /*::
-import type Buffer from './buffer'
+import type Channel from './channel'
 */
 
 module.exports = {
@@ -23,10 +23,10 @@ module.exports = {
 
 // This step adds some basic informations about events: _id, docType and stats.
 function loop(
-  buffer /*: Buffer */,
+  channel /*: Channel */,
   opts /*: { syncPath: string } */
-) /*: Buffer */ {
-  return buffer.asyncMap(async events => {
+) /*: Channel */ {
+  return channel.asyncMap(async events => {
     const batch = []
     for (const event of events) {
       if (event.kind === 'symlink') {

@@ -5,7 +5,7 @@ const path = require('path')
 
 const logger = require('../../logger')
 const { id } = require('../../metadata')
-const Buffer = require('./buffer')
+const Channel = require('./channel')
 
 /*::
 import type Pouch from '../../pouch'
@@ -57,11 +57,11 @@ module.exports = {
 // what was in pouchdb and the events from the local watcher to find what was
 // deleted.
 function loop(
-  buffer /*: Buffer */,
+  channel /*: Channel */,
   opts /*: { pouch: Pouch, state: InitialDiffState } */
-) /*: Buffer */ {
-  const out = new Buffer()
-  initialDiff(buffer, out, opts.pouch, opts.state).catch(err => {
+) /*: Channel */ {
+  const out = new Channel()
+  initialDiff(channel, out, opts.pouch, opts.state).catch(err => {
     log.error({ err })
   })
   return out
@@ -107,14 +107,14 @@ function clearState(state /*: InitialDiffState */) {
 }
 
 async function initialDiff(
-  buffer /*: Buffer */,
-  out /*: Buffer */,
+  channel /*: Channel */,
+  out /*: Channel */,
   pouch /*: Pouch */,
   state /*: InitialDiffState */
 ) /*: Promise<void> */ {
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const events = await buffer.pop()
+    const events = await channel.pop()
     const {
       [STEP_NAME]: { waiting, renamedEvents, scannedPaths, byInode }
     } = state
@@ -226,7 +226,7 @@ async function initialDiff(
   }
 }
 
-function sendReadyBatches(waiting /*: WaitingItem[] */, out /*: Buffer */) {
+function sendReadyBatches(waiting /*: WaitingItem[] */, out /*: Channel */) {
   while (waiting.length > 0) {
     if (waiting[0].nbCandidates !== 0) {
       break

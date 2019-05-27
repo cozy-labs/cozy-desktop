@@ -14,7 +14,7 @@ const log = logger({
 })
 
 /*::
-import type Buffer from './buffer'
+import type Channel from './channel'
 import type {
   AtomWatcherEvent,
   Batch
@@ -43,11 +43,14 @@ module.exports = {
   step
 }
 
-// Dispatch takes a buffer of AtomWatcherEvents batches, and calls Prep for
+// Dispatch takes a Channel of AtomWatcherEvents batches, and calls Prep for
 // each event. It needs to fetch the old documents from pouchdb in some cases
 // to have all the data expected by prep/merge.
-function loop(buffer /*: Buffer */, opts /*: DispatchOptions */) /*: Buffer */ {
-  return buffer.asyncMap(opts.onAtomEvents || step(opts))
+function loop(
+  channel /*: Channel */,
+  opts /*: DispatchOptions */
+) /*: Channel */ {
+  return channel.asyncMap(opts.onAtomEvents || step(opts))
 }
 
 function step(opts /*: DispatchOptions */) {

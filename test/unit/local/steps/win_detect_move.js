@@ -6,7 +6,7 @@ const _ = require('lodash')
 const path = require('path')
 const should = require('should')
 
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 const winDetectMove = require('../../../../core/local/steps/win_detect_move')
 const metadata = require('../../../../core/metadata')
 
@@ -30,16 +30,16 @@ if (process.platform === 'win32') {
     })
 
     describe('.loop()', () => {
-      let inputBuffer, outputBuffer
+      let inputChannel, outputChannel
 
       beforeEach(async function() {
         this.state = await winDetectMove.initialState()
-        inputBuffer = new Buffer()
-        outputBuffer = winDetectMove.loop(inputBuffer, this)
+        inputChannel = new Channel()
+        outputChannel = winDetectMove.loop(inputChannel, this)
       })
 
-      const inputBatch = events => inputBuffer.push(_.cloneDeep(events))
-      const outputBatch = () => outputBuffer.pop()
+      const inputBatch = events => inputChannel.push(_.cloneDeep(events))
+      const outputBatch = () => outputChannel.pop()
 
       const metadataBuilderByKind = kind => {
         switch (kind) {

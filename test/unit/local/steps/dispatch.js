@@ -18,7 +18,7 @@ const pouchHelpers = require('../../../support/helpers/pouch')
 
 const SyncState = require('../../../../core/syncstate')
 const Prep = require('../../../../core/prep')
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 const dispatch = require('../../../../core/local/steps/dispatch')
 const winDetectMove = require('../../../../core/local/steps/win_detect_move')
 
@@ -42,7 +42,7 @@ function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
 
 describe('core/local/steps/dispatch.loop()', function() {
   let builders
-  let buffer
+  let channel
   let events
   let prep
   let stepOptions
@@ -51,7 +51,7 @@ describe('core/local/steps/dispatch.loop()', function() {
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('populate pouch with documents', async function() {
     builders = new Builders({ pouch: this.pouch })
-    buffer = new Buffer()
+    channel = new Channel()
 
     events = sinon.createStubInstance(SyncState)
     prep = sinon.createStubInstance(Prep)
@@ -65,9 +65,9 @@ describe('core/local/steps/dispatch.loop()', function() {
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  context('when buffer contains an initial-scan-done event', () => {
+  context('when channel contains an initial-scan-done event', () => {
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('initial-scan-done')
@@ -76,7 +76,7 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
 
     it('emits an initial-scan-done event via the emitter', async function() {
-      await dispatch.loop(buffer, stepOptions).pop()
+      await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(events)).deepEqual({
         emit: [['initial-scan-done']]
@@ -84,15 +84,15 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
 
     it('does not call any Prep method', async function() {
-      await dispatch.loop(buffer, stepOptions).pop()
+      await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({})
     })
   })
 
-  context('when buffer contains an ignored event', () => {
+  context('when channel contains an ignored event', () => {
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('ignored')
@@ -101,17 +101,17 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
 
     it('does not call any Prep method', async function() {
-      await dispatch.loop(buffer, stepOptions).pop()
+      await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({})
     })
   })
 
-  context('when buffer contains a scan file event', () => {
+  context('when channel contains a scan file event', () => {
     const filePath = 'foo'
 
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('scan')
@@ -132,7 +132,7 @@ describe('core/local/steps/dispatch.loop()', function() {
         .unmerged('local')
         .build()
 
-      await dispatch.loop(buffer, stepOptions).pop()
+      await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         addFileAsync: [['local', doc]]
@@ -140,11 +140,11 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
   })
 
-  context('when buffer contains a scan directory event', () => {
+  context('when channel contains a scan directory event', () => {
     const directoryPath = 'foo'
 
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('scan')
@@ -164,7 +164,7 @@ describe('core/local/steps/dispatch.loop()', function() {
         .unmerged('local')
         .build()
 
-      await dispatch.loop(buffer, stepOptions).pop()
+      await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         putFolderAsync: [['local', doc]]
@@ -172,11 +172,11 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
   })
 
-  context('when buffer contains a created file event', () => {
+  context('when channel contains a created file event', () => {
     const filePath = 'foo'
 
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('created')
@@ -197,7 +197,7 @@ describe('core/local/steps/dispatch.loop()', function() {
         .unmerged('local')
         .build()
 
-      await dispatch.loop(buffer, stepOptions).pop()
+      await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         addFileAsync: [['local', doc]]
@@ -205,11 +205,11 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
   })
 
-  context('when buffer contains a created directory event', () => {
+  context('when channel contains a created directory event', () => {
     const directoryPath = 'foo'
 
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('created')
@@ -229,7 +229,7 @@ describe('core/local/steps/dispatch.loop()', function() {
         .unmerged('local')
         .build()
 
-      await dispatch.loop(buffer, stepOptions).pop()
+      await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         putFolderAsync: [['local', doc]]
@@ -237,11 +237,11 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
   })
 
-  context('when buffer contains a modified file event', () => {
+  context('when channel contains a modified file event', () => {
     const filePath = 'foo'
 
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('modified')
@@ -262,7 +262,7 @@ describe('core/local/steps/dispatch.loop()', function() {
         .unmerged('local')
         .build()
 
-      await dispatch.loop(buffer, stepOptions).pop()
+      await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         updateFileAsync: [['local', doc]]
@@ -270,11 +270,11 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
   })
 
-  context('when buffer contains a modified directory event', () => {
+  context('when channel contains a modified directory event', () => {
     const directoryPath = 'foo'
 
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('modified')
@@ -294,7 +294,7 @@ describe('core/local/steps/dispatch.loop()', function() {
         .unmerged('local')
         .build()
 
-      await dispatch.loop(buffer, stepOptions).pop()
+      await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
         putFolderAsync: [['local', doc]]
@@ -302,12 +302,12 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
   })
 
-  context('when buffer contains a renamed file event', () => {
+  context('when channel contains a renamed file event', () => {
     const filePath = 'foo'
     const newFilePath = 'bar'
 
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('renamed')
@@ -340,7 +340,7 @@ describe('core/local/steps/dispatch.loop()', function() {
           .unmerged('local')
           .build()
 
-        await dispatch.loop(buffer, stepOptions).pop()
+        await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           moveFileAsync: [['local', doc, oldDoc]]
@@ -349,12 +349,12 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
   })
 
-  context('when buffer contains a overwriting renamed file event', () => {
+  context('when channel contains a overwriting renamed file event', () => {
     const filePath = 'foo'
     const newFilePath = 'bar'
 
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('renamed')
@@ -399,7 +399,7 @@ describe('core/local/steps/dispatch.loop()', function() {
             .unmerged('local')
             .build()
 
-          await dispatch.loop(buffer, stepOptions).pop()
+          await dispatch.loop(channel, stepOptions).pop()
 
           should(dispatchedCalls(prep)).deepEqual({
             moveFileAsync: [
@@ -427,7 +427,7 @@ describe('core/local/steps/dispatch.loop()', function() {
           .unmerged('local')
           .build()
 
-        await dispatch.loop(buffer, stepOptions).pop()
+        await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           addFileAsync: [['local', doc]]
@@ -435,7 +435,7 @@ describe('core/local/steps/dispatch.loop()', function() {
       })
 
       it('removes the event oldPath', async function() {
-        const batch = await dispatch.loop(buffer, stepOptions).pop()
+        const batch = await dispatch.loop(channel, stepOptions).pop()
 
         should(batch).have.length(1)
         should(batch[0]).not.have.property('oldPath')
@@ -443,12 +443,12 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
   })
 
-  context('when buffer contains a renamed directory event', () => {
+  context('when channel contains a renamed directory event', () => {
     const directoryPath = 'foo'
     const newDirectoryPath = 'bar'
 
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('renamed')
@@ -480,7 +480,7 @@ describe('core/local/steps/dispatch.loop()', function() {
           .noTags()
           .build()
 
-        await dispatch.loop(buffer, stepOptions).pop()
+        await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           moveFolderAsync: [['local', doc, oldDoc]]
@@ -498,7 +498,7 @@ describe('core/local/steps/dispatch.loop()', function() {
           .noTags()
           .build()
 
-        await dispatch.loop(buffer, stepOptions).pop()
+        await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           putFolderAsync: [['local', doc]]
@@ -506,7 +506,7 @@ describe('core/local/steps/dispatch.loop()', function() {
       })
 
       it('removes the event oldPath', async function() {
-        const batch = await dispatch.loop(buffer, stepOptions).pop()
+        const batch = await dispatch.loop(channel, stepOptions).pop()
 
         should(batch).have.length(1)
         should(batch[0]).not.have.property('oldPath')
@@ -514,11 +514,11 @@ describe('core/local/steps/dispatch.loop()', function() {
     })
   })
 
-  context('when buffer contains a deleted file event', () => {
+  context('when channel contains a deleted file event', () => {
     const filePath = 'foo'
 
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('deleted')
@@ -541,7 +541,7 @@ describe('core/local/steps/dispatch.loop()', function() {
       })
 
       it('triggers a call to trashFileAsync with the existing document', async function() {
-        await dispatch.loop(buffer, stepOptions).pop()
+        await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           trashFileAsync: [['local', oldDoc]]
@@ -551,18 +551,18 @@ describe('core/local/steps/dispatch.loop()', function() {
 
     context('without existing documents at the event path', () => {
       it('ignores the event', async function() {
-        await dispatch.loop(buffer, stepOptions).pop()
+        await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})
       })
     })
   })
 
-  context('when buffer contains a deleted directory event', () => {
+  context('when channel contains a deleted directory event', () => {
     const directoryPath = 'foo'
 
     beforeEach(() => {
-      buffer.push([
+      channel.push([
         builders
           .event()
           .action('deleted')
@@ -585,7 +585,7 @@ describe('core/local/steps/dispatch.loop()', function() {
       })
 
       it('triggers a call to trashFolderAsync with the existing document', async function() {
-        await dispatch.loop(buffer, stepOptions).pop()
+        await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
           trashFolderAsync: [['local', oldDoc]]
@@ -595,7 +595,7 @@ describe('core/local/steps/dispatch.loop()', function() {
 
     context('without existing documents at the event path', () => {
       it('ignores the event', async function() {
-        await dispatch.loop(buffer, stepOptions).pop()
+        await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})
       })

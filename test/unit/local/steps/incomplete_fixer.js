@@ -12,7 +12,7 @@ const configHelpers = require('../../../support/helpers/config')
 
 const metadata = require('../../../../core/metadata')
 const stater = require('../../../../core/local/stater')
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 const incompleteFixer = require('../../../../core/local/steps/incomplete_fixer')
 
 const CHECKSUM = 'checksum'
@@ -36,7 +36,7 @@ describe('core/local/steps/incomplete_fixer', () => {
   after('cleanup config', configHelpers.cleanConfig)
 
   describe('.loop()', () => {
-    it('pushes the result of step() into the output buffer', async function() {
+    it('pushes the result of step() into the output Channel', async function() {
       const { syncPath } = this
 
       const src = 'missing'
@@ -56,16 +56,16 @@ describe('core/local/steps/incomplete_fixer', () => {
         .oldPath(src)
         .path(dst)
         .build()
-      const inputBuffer = new Buffer()
-      const outputBuffer = incompleteFixer.loop(inputBuffer, {
+      const inputChannel = new Channel()
+      const outputChannel = incompleteFixer.loop(inputChannel, {
         syncPath,
         checksumer
       })
 
-      inputBuffer.push([createdEvent])
-      inputBuffer.push([renamedEvent])
+      inputChannel.push([createdEvent])
+      inputChannel.push([renamedEvent])
 
-      should(await outputBuffer.pop()).deepEqual(
+      should(await outputChannel.pop()).deepEqual(
         await incompleteFixer.step(
           [{ event: createdEvent, timestamp: Date.now() }],
           { syncPath, checksumer }

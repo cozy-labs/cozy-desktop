@@ -6,7 +6,7 @@ const { onPlatforms } = require('../../../support/helpers/platform')
 const Builders = require('../../../support/builders')
 
 const { Ignore } = require('../../../../core/ignore')
-const Buffer = require('../../../../core/local/steps/buffer')
+const Channel = require('../../../../core/local/steps/channel')
 const filterIgnored = require('../../../../core/local/steps/filter_ignored')
 
 onPlatforms(['linux', 'win32'], () => {
@@ -14,10 +14,10 @@ onPlatforms(['linux', 'win32'], () => {
     const builders = new Builders()
 
     let ignore
-    let buffer
+    let channel
 
     beforeEach(() => {
-      buffer = new Buffer()
+      channel = new Channel()
 
       const patterns = ['*.bck', 'tmp/', 'folder/']
       ignore = new Ignore(patterns)
@@ -25,7 +25,7 @@ onPlatforms(['linux', 'win32'], () => {
 
     context('without any batches of events', () => {
       it('does not throw any errors', () => {
-        should(() => filterIgnored.loop(buffer, { ignore })).not.throw()
+        should(() => filterIgnored.loop(channel, { ignore })).not.throw()
       })
     })
 
@@ -81,13 +81,13 @@ onPlatforms(['linux', 'win32'], () => {
             batch.push(ignoredEvents[i])
           }
         }
-        buffer.push(batch)
+        channel.push(batch)
       })
 
       it('keeps only the relevant events in order', async () => {
-        const filteredBuffer = filterIgnored.loop(buffer, { ignore })
+        const filteredChannel = filterIgnored.loop(channel, { ignore })
 
-        const relevantEvents = await filteredBuffer.pop()
+        const relevantEvents = await filteredChannel.pop()
         should(relevantEvents).deepEqual(notIgnoredEvents)
       })
     })
@@ -118,29 +118,29 @@ onPlatforms(['linux', 'win32'], () => {
           .build()
       ]
       beforeEach(() => {
-        buffer.push([ignoredEvents[0], notIgnoredEvents[0]])
-        buffer.push([ignoredEvents[1], notIgnoredEvents[1]])
+        channel.push([ignoredEvents[0], notIgnoredEvents[0]])
+        channel.push([ignoredEvents[1], notIgnoredEvents[1]])
       })
 
-      it('returns a buffer without events for filtered paths', async () => {
+      it('returns a channel without events for filtered paths', async () => {
         let relevantEvents
 
-        const filteredBuffer = filterIgnored.loop(buffer, { ignore })
+        const filteredChannel = filterIgnored.loop(channel, { ignore })
 
-        relevantEvents = await filteredBuffer.pop()
+        relevantEvents = await filteredChannel.pop()
         should(relevantEvents).not.containDeep(ignoredEvents)
-        relevantEvents = await filteredBuffer.pop()
+        relevantEvents = await filteredChannel.pop()
         should(relevantEvents).not.containDeep(ignoredEvents)
       })
 
       it('keeps the order of batches with relevant events', async () => {
         let relevantEvents
 
-        const filteredBuffer = filterIgnored.loop(buffer, { ignore })
+        const filteredChannel = filterIgnored.loop(channel, { ignore })
 
-        relevantEvents = await filteredBuffer.pop()
+        relevantEvents = await filteredChannel.pop()
         should(relevantEvents).containDeepOrdered([notIgnoredEvents[0]])
-        relevantEvents = await filteredBuffer.pop()
+        relevantEvents = await filteredChannel.pop()
         should(relevantEvents).containDeepOrdered([notIgnoredEvents[1]])
       })
     })
@@ -157,13 +157,13 @@ onPlatforms(['linux', 'win32'], () => {
         .kind('file')
         .build()
       beforeEach(() => {
-        buffer.push([directoryEvent, fileEvent])
+        channel.push([directoryEvent, fileEvent])
       })
 
       it('filters out folder events only', async () => {
-        const filteredBuffer = filterIgnored.loop(buffer, { ignore })
+        const filteredChannel = filterIgnored.loop(channel, { ignore })
 
-        const relevantEvents = await filteredBuffer.pop()
+        const relevantEvents = await filteredChannel.pop()
         should(relevantEvents).deepEqual([fileEvent])
       })
     })
