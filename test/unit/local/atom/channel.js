@@ -12,7 +12,6 @@ const Builders = require('../../../support/builders')
 
 /*::
 import type {
-  AtomWatcherEvent,
   Batch
 } from '../../../../core/local/atom/event'
 */

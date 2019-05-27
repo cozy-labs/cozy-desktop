@@ -1,10 +1,6 @@
 /* eslint-env mocha */
 /* @flow */
 
-/*::
- import type { AtomWatcherEvent } from '../../../../core/local/atom/event'
- */
-
 const should = require('should')
 const checksumer = require('../../../../core/local/checksumer')
 const addChecksum = require('../../../../core/local/atom/add_checksum')

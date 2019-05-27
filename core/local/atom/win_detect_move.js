@@ -20,18 +20,18 @@ const log = logger({
 const DELAY = 1000
 
 /*::
-import type { AtomWatcherEvent, Batch } from './event'
+import type { AtomEvent, Batch } from './event'
 import type Pouch from '../../pouch'
 
 type PendingItem = {
-  event: AtomWatcherEvent,
+  event: AtomEvent,
   deletedIno: ?string | ?number,
   timeout: TimeoutID
 }
 
 export type WinDetectMoveState = {
   [typeof STEP_NAME]: {
-    unmergedRenamedEvents: SortedSet<AtomWatcherEvent>
+    unmergedRenamedEvents: SortedSet<AtomEvent>
   }
 }
 
@@ -54,15 +54,12 @@ async function initialState() /* Promise<WinDetectMoveState> */ {
   return {
     [STEP_NAME]: {
       // eslint-disable-next-line
-      unmergedRenamedEvents: new SortedSet /*:: <AtomWatcherEvent> */ ()
+      unmergedRenamedEvents: new SortedSet /*:: <AtomEvent> */ ()
     }
   }
 }
 
-function forget(
-  event /*: AtomWatcherEvent */,
-  state /*: WinDetectMoveState */
-) {
+function forget(event /*: AtomEvent */, state /*: WinDetectMoveState */) {
   const {
     [STEP_NAME]: { unmergedRenamedEvents }
   } = state

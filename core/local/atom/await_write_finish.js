@@ -18,10 +18,10 @@ const log = logger({
 const DELAY = 200
 
 /*::
-import type { AtomWatcherEvent } from './event'
+import type { AtomEvent } from './event'
 
 type WaitingItem = {
-  events: AtomWatcherEvent[],
+  events: AtomEvent[],
   nbCandidates: number,
   timeout: TimeoutID
 }
@@ -45,7 +45,7 @@ function sendReadyBatches(waiting /*: WaitingItem[] */, out /*: Channel */) {
 }
 
 // Count the candidates for debouncing with future events
-function countFileWriteEvents(events /*: AtomWatcherEvent[] */) /*: number */ {
+function countFileWriteEvents(events /*: AtomEvent[] */) /*: number */ {
   let nbCandidates = 0
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
@@ -143,15 +143,12 @@ function addDebugInfo(event, previousEvent) {
     )
   )
   // Previous events have been aggregated on the most recent event
-  // $FlowFixMe we are well aware that `awaitWriteFinish` is not part of AtomWatcherEvent
+  // $FlowFixMe we are well aware that `awaitWriteFinish` is not part of AtomEvent
   delete previousEvent[STEP_NAME]
 }
 
 // Look if we can debounce some waiting events with the current events
-function debounce(
-  waiting /*: WaitingItem[] */,
-  events /*: AtomWatcherEvent[] */
-) {
+function debounce(waiting /*: WaitingItem[] */, events /*: AtomEvent[] */) {
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
 

@@ -12,7 +12,7 @@ const statsBuilder = require('./stats')
 /*::
 import type { Stats } from 'fs'
 import type { Metadata } from '../../../core/metadata'
-import type { AtomWatcherEvent, EventAction, EventKind, Batch } from '../../../core/local/atom/event'
+import type { AtomEvent, EventAction, EventKind, Batch } from '../../../core/local/atom/event'
 import type { StatsBuilder } from './stats'
 */
 
@@ -28,13 +28,13 @@ function kind(doc /*: Metadata */) /*: EventKind */ {
 
 const defaultPath = 'foo'
 
-module.exports = class AtomWatcherEventBuilder {
+module.exports = class AtomEventBuilder {
   /*::
-  _event: AtomWatcherEvent
+  _event: AtomEvent
   _statsBuilder: ?StatsBuilder
   */
 
-  constructor(old /*: ?AtomWatcherEvent */) {
+  constructor(old /*: ?AtomEvent */) {
     if (old) {
       this._event = _.cloneDeep(old)
     } else {
@@ -67,7 +67,7 @@ module.exports = class AtomWatcherEventBuilder {
     return builder
   }
 
-  build() /*: AtomWatcherEvent */ {
+  build() /*: AtomEvent */ {
     if (this._statsBuilder) {
       this._event.stats = this._statsBuilder.build()
     }

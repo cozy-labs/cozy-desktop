@@ -6,13 +6,13 @@ const Channel = require('./channel')
 const logger = require('../../logger')
 
 /*::
-import type { AtomWatcherEvent, Batch } from './event'
+import type { AtomEvent, Batch } from './event'
 import type { Metadata } from '../../metadata'
 
 type OverwriteState = {
-  deletedEventsByPath: Map<string, AtomWatcherEvent>,
+  deletedEventsByPath: Map<string, AtomEvent>,
   pending: {
-    deletedEventsByPath: Map<string, AtomWatcherEvent>,
+    deletedEventsByPath: Map<string, AtomEvent>,
     events: Batch,
     timeout?: TimeoutID
   }
@@ -42,10 +42,10 @@ const DELAY = 500
 const initialState = () => ({
   [STEP_NAME]: {
     // eslint-disable-next-line
-    deletedEventsByPath: new Map /*:: <string,AtomWatcherEvent> */ (),
+    deletedEventsByPath: new Map /*:: <string,AtomEvent> */ (),
     pending: {
       // eslint-disable-next-line
-      deletedEventsByPath: new Map /*:: <string,AtomWatcherEvent> */ (),
+      deletedEventsByPath: new Map /*:: <string,AtomEvent> */ (),
       events: []
     }
   }

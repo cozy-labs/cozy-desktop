@@ -19,11 +19,11 @@ const DELAY = 3000
 
 /*::
 import type Channel from './channel'
-import type { AtomWatcherEvent, Batch } from './event'
+import type { AtomEvent, Batch } from './event'
 import type { Checksumer } from '../checksumer'
 
 type IncompleteItem = {
-  event: AtomWatcherEvent,
+  event: AtomEvent,
   timestamp: number,
 }
 
@@ -33,7 +33,7 @@ type IncompleteFixerOptions = {
 }
 
 type Completion =
-  | { ignored: false, rebuilt: AtomWatcherEvent }
+  | { ignored: false, rebuilt: AtomEvent }
   | { ignored: true }
 */
 
@@ -43,8 +43,8 @@ module.exports = {
 }
 
 function wasRenamedSuccessively(
-  previousEvent /*: AtomWatcherEvent */,
-  nextEvent /*: AtomWatcherEvent */
+  previousEvent /*: AtomEvent */,
+  nextEvent /*: AtomEvent */
 ) /*: boolean %checks */ {
   return (
     nextEvent.oldPath != null &&
@@ -53,8 +53,8 @@ function wasRenamedSuccessively(
 }
 
 function itemDestinationWasDeleted(
-  previousEvent /*: AtomWatcherEvent */,
-  nextEvent /*: AtomWatcherEvent */
+  previousEvent /*: AtomEvent */,
+  nextEvent /*: AtomEvent */
 ) /*: boolean %checks */ {
   return !!(
     nextEvent.action === 'deleted' &&
@@ -64,8 +64,8 @@ function itemDestinationWasDeleted(
 }
 
 function completeEventPaths(
-  previousEvent /*: AtomWatcherEvent */,
-  nextEvent /*: AtomWatcherEvent */
+  previousEvent /*: AtomEvent */,
+  nextEvent /*: AtomEvent */
 ) /*: { path: string, oldPath?: string } */ {
   // $FlowFixMe: `renamed` events always have oldPath
   const path = previousEvent.path.replace(nextEvent.oldPath, nextEvent.path)
@@ -85,8 +85,8 @@ function completeEventPaths(
 }
 
 async function rebuildIncompleteEvent(
-  previousEvent /*: AtomWatcherEvent */,
-  nextEvent /*: AtomWatcherEvent */,
+  previousEvent /*: AtomEvent */,
+  nextEvent /*: AtomEvent */,
   opts /*: { syncPath: string , checksumer: Checksumer } */
 ) /*: Promise<Completion> */ {
   const { path: relPath, oldPath } = completeEventPaths(
@@ -105,7 +105,7 @@ async function rebuildIncompleteEvent(
   const md5sum =
     stats && kind === 'file' ? await opts.checksumer.push(absPath) : undefined
 
-  const rebuilt /*: AtomWatcherEvent */ = {
+  const rebuilt /*: AtomEvent */ = {
     [STEP_NAME]: {
       incompleteEvent: previousEvent,
       completingEvent: nextEvent
@@ -124,8 +124,8 @@ async function rebuildIncompleteEvent(
 }
 
 function buildDeletedFromRenamed(
-  previousEvent /*: AtomWatcherEvent */,
-  nextEvent /*: AtomWatcherEvent */
+  previousEvent /*: AtomEvent */,
+  nextEvent /*: AtomEvent */
 ) /*: Completion */ {
   const { oldPath, kind } = previousEvent
   return {
@@ -243,8 +243,8 @@ function step(
 }
 
 async function detectCompletion(
-  previousEvent /*: AtomWatcherEvent */,
-  nextEvent /*: AtomWatcherEvent */,
+  previousEvent /*: AtomEvent */,
+  nextEvent /*: AtomEvent */,
   opts /*: IncompleteFixerOptions */
 ) /*: Promise<?Completion> */ {
   if (wasRenamedSuccessively(previousEvent, nextEvent)) {

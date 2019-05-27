@@ -9,20 +9,20 @@ const Channel = require('./channel')
 
 /*::
 import type Pouch from '../../pouch'
-import type { AtomWatcherEvent, Batch, EventKind } from './event'
+import type { AtomEvent, Batch, EventKind } from './event'
 import type { Metadata } from '../../metadata'
 
 type InitialDiffState = {
   [typeof STEP_NAME]: {
     waiting: WaitingItem[],
-    renamedEvents: AtomWatcherEvent[],
+    renamedEvents: AtomEvent[],
     scannedPaths: Set<string>,
     byInode: Map<number|string, Metadata>,
   }
 }
 
 type WaitingItem = {
-  batch: AtomWatcherEvent[],
+  batch: AtomEvent[],
   nbCandidates: number,
   timeout: TimeoutID
 }
@@ -71,7 +71,7 @@ async function initialState(
   opts /*: { pouch: Pouch } */
 ) /*: Promise<InitialDiffState> */ {
   const waiting /*: WaitingItem[] */ = []
-  const renamedEvents /*: AtomWatcherEvent[] */ = []
+  const renamedEvents /*: AtomEvent[] */ = []
   const scannedPaths /*: Set<string> */ = new Set()
 
   // Using inode/fileId is more robust that using path or id for detecting
@@ -191,7 +191,7 @@ async function initialDiff(
         // Emit deleted events for all the remaining files/dirs
         for (const [, doc] of byInode) {
           if (!scannedPaths.has(doc.path)) {
-            const deletedEvent /*: AtomWatcherEvent */ = {
+            const deletedEvent /*: AtomEvent */ = {
               action: 'deleted',
               kind: kind(doc),
               _id: id(doc.path),
@@ -238,10 +238,7 @@ function sendReadyBatches(waiting /*: WaitingItem[] */, out /*: Channel */) {
 }
 
 // Look if we can debounce some waiting events with the current events
-function debounce(
-  waiting /*: WaitingItem[] */,
-  events /*: AtomWatcherEvent[] */
-) {
+function debounce(waiting /*: WaitingItem[] */, events /*: AtomEvent[] */) {
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
     if (event.incomplete) {

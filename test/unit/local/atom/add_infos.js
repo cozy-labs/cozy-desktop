@@ -1,10 +1,6 @@
 /* eslint-env mocha */
 /* @flow */
 
-/*::
-import type { AtomWatcherEvent } from '../../../../core/local/atom/event'
-*/
-
 const should = require('should')
 const addInfos = require('../../../../core/local/atom/add_infos')
 const Channel = require('../../../../core/local/atom/channel')
