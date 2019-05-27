@@ -13,15 +13,15 @@ const { ContextDir } = require('./context_dir')
 const Local = require('../../../core/local')
 const atomWatcher = require('../../../core/local/atom_watcher')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
-const dispatch = require('../../../core/local/steps/dispatch')
-const { INITIAL_SCAN_DONE } = require('../../../core/local/steps/event')
+const dispatch = require('../../../core/local/atom/dispatch')
+const { INITIAL_SCAN_DONE } = require('../../../core/local/atom/event')
 
 const rimrafAsync = Promise.promisify(rimraf)
 
 /*::
 import type { LocalOptions } from '../../../core/local'
 import type { ChokidarEvent } from '../../../core/local/chokidar_event'
-import type { Batch } from '../../../core/local/steps/event'
+import type { Batch } from '../../../core/local/atom/event'
 */
 
 const simulationCompleteBatch = [

@@ -4,7 +4,7 @@
 const should = require('should')
 
 const AtomWatcher = require('../../../core/local/atom_watcher')
-const initialDiff = require('../../../core/local/steps/initial_diff')
+const initialDiff = require('../../../core/local/atom/initial_diff')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')

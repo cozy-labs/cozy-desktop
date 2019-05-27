@@ -4,8 +4,8 @@
 const _ = require('lodash')
 const should = require('should')
 
-const Channel = require('../../../../core/local/steps/channel')
-const overwrite = require('../../../../core/local/steps/overwrite')
+const Channel = require('../../../../core/local/atom/channel')
+const overwrite = require('../../../../core/local/atom/overwrite')
 
 const Builders = require('../../../support/builders')
 
@@ -13,10 +13,10 @@ const Builders = require('../../../support/builders')
 import type {
   EventAction,
   EventKind
-} from '../../../../core/local/steps/event'
+} from '../../../../core/local/atom/event'
 */
 
-describe('core/local/steps/overwrite', () => {
+describe('core/local/atom/overwrite', () => {
   describe('.loop()', () => {
     let builders, inputChannel, outputChannel
 

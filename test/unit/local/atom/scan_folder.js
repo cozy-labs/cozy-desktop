@@ -3,10 +3,10 @@
 
 const should = require('should')
 const sinon = require('sinon')
-const scanFolder = require('../../../../core/local/steps/scan_folder')
-const Channel = require('../../../../core/local/steps/channel')
+const scanFolder = require('../../../../core/local/atom/scan_folder')
+const Channel = require('../../../../core/local/atom/channel')
 
-describe('core/local/steps/scan_folder.loop()', () => {
+describe('core/local/atom/scan_folder.loop()', () => {
   it('should call the producer scan for action `created` only', async () => {
     const batch = [
       {

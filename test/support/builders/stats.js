@@ -5,7 +5,7 @@ const _ = require('lodash')
 
 /*::
 import type { Stats, WinStats } from '../../../core/local/stater'
-import type { EventKind } from '../../../core/local/steps/event'
+import type { EventKind } from '../../../core/local/atom/event'
 
 export interface StatsBuilder {
   ino (number): StatsBuilder,

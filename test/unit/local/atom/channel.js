@@ -6,7 +6,7 @@ const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
 
-const Channel = require('../../../../core/local/steps/channel')
+const Channel = require('../../../../core/local/atom/channel')
 
 const Builders = require('../../../support/builders')
 
@@ -14,12 +14,12 @@ const Builders = require('../../../support/builders')
 import type {
   AtomWatcherEvent,
   Batch
-} from '../../../../core/local/steps/event'
+} from '../../../../core/local/atom/event'
 */
 
 const builders = new Builders()
 
-describe('core/local/steps/Channel', function() {
+describe('core/local/atom/Channel', function() {
   this.timeout(100)
 
   describe('Basics', () => {

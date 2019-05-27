@@ -12,8 +12,8 @@ const configHelpers = require('../../../support/helpers/config')
 
 const metadata = require('../../../../core/metadata')
 const stater = require('../../../../core/local/stater')
-const Channel = require('../../../../core/local/steps/channel')
-const incompleteFixer = require('../../../../core/local/steps/incomplete_fixer')
+const Channel = require('../../../../core/local/atom/channel')
+const incompleteFixer = require('../../../../core/local/atom/incomplete_fixer')
 
 const CHECKSUM = 'checksum'
 const checksumer = {
@@ -24,7 +24,7 @@ const checksumer = {
 const completedEvent = event => _.omit(event, ['incompleteFixer'])
 const completionChanges = events => events.map(completedEvent)
 
-describe('core/local/steps/incomplete_fixer', () => {
+describe('core/local/atom/incomplete_fixer', () => {
   let syncDir
   let builders
 

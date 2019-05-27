@@ -5,14 +5,14 @@ const path = require('path')
 const crypto = require('crypto')
 
 const metadata = require('../../../core/metadata')
-const events = require('../../../core/local/steps/event')
+const events = require('../../../core/local/atom/event')
 
 const statsBuilder = require('./stats')
 
 /*::
 import type { Stats } from 'fs'
 import type { Metadata } from '../../../core/metadata'
-import type { AtomWatcherEvent, EventAction, EventKind, Batch } from '../../../core/local/steps/event'
+import type { AtomWatcherEvent, EventAction, EventKind, Batch } from '../../../core/local/atom/event'
 import type { StatsBuilder } from './stats'
 */
 

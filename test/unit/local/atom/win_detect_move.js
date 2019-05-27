@@ -6,8 +6,8 @@ const _ = require('lodash')
 const path = require('path')
 const should = require('should')
 
-const Channel = require('../../../../core/local/steps/channel')
-const winDetectMove = require('../../../../core/local/steps/win_detect_move')
+const Channel = require('../../../../core/local/atom/channel')
+const winDetectMove = require('../../../../core/local/atom/win_detect_move')
 const metadata = require('../../../../core/metadata')
 
 const Builders = require('../../../support/builders')
@@ -17,7 +17,7 @@ const pouchHelpers = require('../../../support/helpers/pouch')
 if (process.platform === 'win32') {
   const timesAsync = (count, fn) => Promise.mapSeries(_.range(count), fn)
 
-  describe('core/local/steps/win_detect_move', () => {
+  describe('core/local/atom/win_detect_move', () => {
     let builders
 
     before('instanciate config', configHelpers.createConfig)

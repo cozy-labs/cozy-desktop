@@ -6,18 +6,18 @@ const _ = require('lodash')
 const checksumer = require('./checksumer')
 const logger = require('../logger')
 
-const Producer = require('./steps/producer')
-const addInfos = require('./steps/add_infos')
-const filterIgnored = require('./steps/filter_ignored')
-const winDetectMove = require('./steps/win_detect_move')
-const winIdenticalRenaming = require('./steps/win_identical_renaming')
-const scanFolder = require('./steps/scan_folder')
-const awaitWriteFinish = require('./steps/await_write_finish')
-const initialDiff = require('./steps/initial_diff')
-const addChecksum = require('./steps/add_checksum')
-const incompleteFixer = require('./steps/incomplete_fixer')
-const overwrite = require('./steps/overwrite')
-const dispatch = require('./steps/dispatch')
+const Producer = require('./atom/producer')
+const addInfos = require('./atom/add_infos')
+const filterIgnored = require('./atom/filter_ignored')
+const winDetectMove = require('./atom/win_detect_move')
+const winIdenticalRenaming = require('./atom/win_identical_renaming')
+const scanFolder = require('./atom/scan_folder')
+const awaitWriteFinish = require('./atom/await_write_finish')
+const initialDiff = require('./atom/initial_diff')
+const addChecksum = require('./atom/add_checksum')
+const incompleteFixer = require('./atom/incomplete_fixer')
+const overwrite = require('./atom/overwrite')
+const dispatch = require('./atom/dispatch')
 
 /*::
 import type Pouch from '../pouch'
@@ -25,8 +25,8 @@ import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'
 import type { Checksumer } from './checksumer'
-import type { AtomEventsDispatcher } from './steps/dispatch'
-import type { Scanner } from './steps/producer'
+import type { AtomEventsDispatcher } from './atom/dispatch'
+import type { Scanner } from './atom/producer'
 
 type AtomWatcherOptions = {
   syncPath: string,

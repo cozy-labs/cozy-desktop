@@ -2,14 +2,14 @@
 /* @flow */
 
 /*::
-import type { AtomWatcherEvent } from '../../../../core/local/steps/event'
+import type { AtomWatcherEvent } from '../../../../core/local/atom/event'
 */
 
 const should = require('should')
-const addInfos = require('../../../../core/local/steps/add_infos')
-const Channel = require('../../../../core/local/steps/channel')
+const addInfos = require('../../../../core/local/atom/add_infos')
+const Channel = require('../../../../core/local/atom/channel')
 
-describe('core/local/steps/add_infos.loop()', () => {
+describe('core/local/atom/add_infos.loop()', () => {
   it('should returns an enhanced batch with infos', async () => {
     const batch = [
       {

@@ -6,11 +6,11 @@ const { onPlatforms } = require('../../../support/helpers/platform')
 const Builders = require('../../../support/builders')
 
 const { Ignore } = require('../../../../core/ignore')
-const Channel = require('../../../../core/local/steps/channel')
-const filterIgnored = require('../../../../core/local/steps/filter_ignored')
+const Channel = require('../../../../core/local/atom/channel')
+const filterIgnored = require('../../../../core/local/atom/filter_ignored')
 
 onPlatforms(['linux', 'win32'], () => {
-  describe('local/steps/filter_ignored.loop()', () => {
+  describe('core/local/atom/filter_ignored.loop()', () => {
     const builders = new Builders()
 
     let ignore

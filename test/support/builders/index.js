@@ -16,7 +16,7 @@ import type { Metadata } from '../../../core/metadata'
 import type Pouch from '../../../core/pouch'
 import type { Warning } from '../../../core/remote/warning'
 import type { RemoteDoc } from '../../../core/remote/document'
-import type { AtomWatcherEvent } from '../../../core/local/steps/event'
+import type { AtomWatcherEvent } from '../../../core/local/atom/event'
 */
 
 // Test data builders facade.

@@ -2,15 +2,15 @@
 /* @flow */
 
 /*::
- import type { AtomWatcherEvent } from '../../../../core/local/steps/event'
+ import type { AtomWatcherEvent } from '../../../../core/local/atom/event'
  */
 
 const should = require('should')
 const checksumer = require('../../../../core/local/checksumer')
-const addChecksum = require('../../../../core/local/steps/add_checksum')
-const Channel = require('../../../../core/local/steps/channel')
+const addChecksum = require('../../../../core/local/atom/add_checksum')
+const Channel = require('../../../../core/local/atom/channel')
 
-describe('core/local/steps/add_checksum.loop()', () => {
+describe('core/local/atom/add_checksum.loop()', () => {
   it('should add checksum within a file event', async () => {
     const batch = [
       {

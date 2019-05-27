@@ -4,8 +4,8 @@
 const _ = require('lodash')
 const should = require('should')
 
-const Channel = require('../../../../core/local/steps/channel')
-const winIdenticalRenaming = require('../../../../core/local/steps/win_identical_renaming')
+const Channel = require('../../../../core/local/atom/channel')
+const winIdenticalRenaming = require('../../../../core/local/atom/win_identical_renaming')
 
 const Builders = require('../../../support/builders')
 
@@ -13,11 +13,11 @@ const Builders = require('../../../support/builders')
 import type {
   EventAction,
   EventKind
-} from '../../../../core/local/steps/event'
+} from '../../../../core/local/atom/event'
 */
 
 if (process.platform === 'win32') {
-  describe('core/local/steps/win_identical_renaming', () => {
+  describe('core/local/atom/win_identical_renaming', () => {
     describe('.loop()', () => {
       let builders, inputChannel, outputChannel
 

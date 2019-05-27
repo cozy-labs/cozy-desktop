@@ -18,9 +18,9 @@ const pouchHelpers = require('../../../support/helpers/pouch')
 
 const SyncState = require('../../../../core/syncstate')
 const Prep = require('../../../../core/prep')
-const Channel = require('../../../../core/local/steps/channel')
-const dispatch = require('../../../../core/local/steps/dispatch')
-const winDetectMove = require('../../../../core/local/steps/win_detect_move')
+const Channel = require('../../../../core/local/atom/channel')
+const dispatch = require('../../../../core/local/atom/dispatch')
+const winDetectMove = require('../../../../core/local/atom/win_detect_move')
 
 function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
   const methods = Object.getOwnPropertyNames(obj).filter(
@@ -40,7 +40,7 @@ function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
   return dispatchedCalls
 }
 
-describe('core/local/steps/dispatch.loop()', function() {
+describe('core/local/atom/dispatch.loop()', function() {
   let builders
   let channel
   let events
