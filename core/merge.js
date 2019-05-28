@@ -693,9 +693,12 @@ class Merge {
         (doc.sides && !metadata.isUpToDate(side, doc))
       ) {
         log.warn(
-          { path: folder.path },
-          `${doc.path}: cannot be deleted with ${folder.path}: ` +
-            `${doc.docType} was modified on the ${otherSide(side)} side`
+          {
+            path: doc.path,
+            ancestorPath: folder.path,
+            otherSide: otherSide(side)
+          },
+          'Cannot be deleted with ancestor: document was modified on the other side.'
         )
         log.info({ path: doc.path }, 'Dissociating from remote...')
         delete doc.remote
