@@ -1,5 +1,66 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.1 - 2019-05-27
+
+Improvements for all users:
+
+- We added a new icon set for the Offline status. Prior to this version,
+  whenever we detected you might be disconnected from the Internet, we would
+  display a "pause" icon with the "Disconnected" status label. We're now
+  displaying a shadowed version of the main icon and a "No Internet connection"
+  status label. We hope this is clearer to you.
+- We fixed a bug in the way we sort changes coming from your remote Cozy. For
+  some changes like the replacement of a file, the order in which we receive
+  changes from the remote Cozy is crucial to applying it correctly on the local
+  filesystem. In this particular case, we were not always sorting correctly the
+  deletion and recreation of the file (or folder) which could lead to documents
+  disappearing or conflicts to appear.
+- We are now able to detect the use of a temporary file in some situations and
+  correctly handle it (i.e. not move it to the trash and synchronise the new
+  version).
+- We've updated again some of our dependencies that don't require changes in
+  our code. Those are the same that were upgraded in [v3.13.1-alpha.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.13.1-alpha.1)
+  then downgraded back in [v3.13.1-beta.1](https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.13.1-beta.1).
+  We investigated, identified and excluded the problematic updates, so
+  networking should work as expected this time.
+
+Improvements for Windows & GNU/Linux users:
+
+- When renaming folders and deleting part of their content while the client
+  was stopped, the deletion should now be properly handled on restart.
+
+Improvements for GNU/Linux users:
+
+- We've mitigated an issue LibreOffice users could encounter while saving.
+  LibreOffice uses an intermediary temporary file when saving and in some
+  situations we could end up deleting the file altogether or move the previous
+  version to the Cozy's trash and even not be able to synchronise the new
+  version.
+  We're now ignoring those temporary files (i.e. with extension `.osl-tmp`)
+  which results in a correct update of the office document.
+
+Improvements for contributors:
+
+- We've decided to run prettier over our entire codebase with the cozy-app
+  eslint config and to keep using it from now on. This will remove the need to
+  check for syntax errors and improve homogeneity between Cozy Cloud javascript
+  projects.
+
+Changes that should have no effects:
+
+- We did some minimal refactoring on our proxy setup to introduce some tests.
+  There should be no effects on the way the proxy works.
+
+There are some known issues that we'll tackle in the next releases:
+
+- When we don't detect any update closely following the temporary file deletion
+  and that file is not ignored, we end up deleting the file that was saved.
+  This is a more general situation and should be fixed very soon.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.1-beta.5 - 2019-05-27
 
 Improvements for all users:
