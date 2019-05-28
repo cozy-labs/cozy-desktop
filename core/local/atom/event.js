@@ -17,7 +17,7 @@ export type EventKind =
   | 'symlink'
   | 'unknown'
 
-export type AtomWatcherEvent = {
+export type AtomEvent = {
   action: EventAction,
   kind: EventKind,
   path: string,
@@ -30,7 +30,7 @@ export type AtomWatcherEvent = {
   overwrite?: bool
 }
 
-export type Batch = AtomWatcherEvent[]
+export type AtomBatch = AtomEvent[]
 */
 
 const ACTIONS /*: EventAction[] */ = [

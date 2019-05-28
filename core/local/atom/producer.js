@@ -12,7 +12,7 @@ const logger = require('../../logger')
 const defaultStater = require('../stater')
 
 /*::
-import type { AtomWatcherEvent } from './event'
+import type { AtomEvent } from './event'
 
 export type Scanner = (string) => Promise<void>
 */
@@ -108,7 +108,7 @@ module.exports = class Producer {
         const absPath = path.join(this.syncPath, relPath, entry)
         const stats = await stater.statMaybe(absPath)
         const incomplete = stats == null
-        const scanEvent /*: AtomWatcherEvent */ = {
+        const scanEvent /*: AtomEvent */ = {
           action: 'scan',
           path: path.join(relPath, entry),
           kind: stats ? stater.kind(stats) : 'unknown'

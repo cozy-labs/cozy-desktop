@@ -6,20 +6,19 @@ const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
 
-const Channel = require('../../../../core/local/steps/channel')
+const Channel = require('../../../../core/local/atom/channel')
 
 const Builders = require('../../../support/builders')
 
 /*::
 import type {
-  AtomWatcherEvent,
-  Batch
-} from '../../../../core/local/steps/event'
+  AtomBatch
+} from '../../../../core/local/atom/event'
 */
 
 const builders = new Builders()
 
-describe('core/local/steps/Channel', function() {
+describe('core/local/atom/Channel', function() {
   this.timeout(100)
 
   describe('Basics', () => {
@@ -246,11 +245,11 @@ describe('core/local/steps/Channel', function() {
       for (const scenario of scenarios) {
         describe(scenarioDescription(scenario), () => {
           let scenarioState /*:: ?: {
-            callback: (Batch) => Batch,
-            inputBatches: Batch[],
+            callback: (AtomBatch) => AtomBatch,
+            inputBatches: AtomBatch[],
             inputChannel: Channel,
             outputChannel?: Channel,
-            outputBatchesPromise: Promise<Batch[]>
+            outputBatchesPromise: Promise<AtomBatch[]>
           } */
 
           beforeEach('init scenarioState', () => {
@@ -320,11 +319,11 @@ describe('core/local/steps/Channel', function() {
       for (const scenario of scenarios) {
         describe(scenarioDescription(scenario), () => {
           let scenarioState /*:: ?: {
-            callback: (Batch) => Promise<Batch>,
-            inputBatches: Batch[],
+            callback: (AtomBatch) => Promise<AtomBatch>,
+            inputBatches: AtomBatch[],
             inputChannel: Channel,
             outputChannel?: Channel,
-            outputBatchesPromise: Promise<Batch[]>
+            outputBatchesPromise: Promise<AtomBatch[]>
           } */
 
           beforeEach('init scenarioState', () => {

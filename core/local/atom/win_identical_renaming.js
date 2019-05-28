@@ -6,14 +6,14 @@ const Channel = require('./channel')
 const logger = require('../../logger')
 
 /*::
-import type { AtomWatcherEvent, Batch } from './event'
+import type { AtomEvent, AtomBatch } from './event'
 import type { Metadata } from '../../metadata'
 
 type WinIdenticalRenamingState = {
-  deletedEventsById: Map<string, AtomWatcherEvent>,
+  deletedEventsById: Map<string, AtomEvent>,
   pending: {
-    deletedEventsById: Map<string, AtomWatcherEvent>,
-    events: Batch,
+    deletedEventsById: Map<string, AtomEvent>,
+    events: AtomBatch,
     timeout?: TimeoutID
   }
 }
@@ -43,10 +43,10 @@ const DELAY = 500
 const initialState = () => ({
   [STEP_NAME]: {
     // eslint-disable-next-line
-    deletedEventsById: new Map /*:: <string,AtomWatcherEvent> */ (),
+    deletedEventsById: new Map /*:: <string,AtomEvent> */ (),
     pending: {
       // eslint-disable-next-line
-      deletedEventsById: new Map /*:: <string,AtomWatcherEvent> */ (),
+      deletedEventsById: new Map /*:: <string,AtomEvent> */ (),
       events: []
     }
   }
@@ -103,7 +103,7 @@ const ignoreDeletedBeforeIdenticalRenamed = (event, state) => {
 
 /** Process an event batch. */
 const step = async (
-  batch /*: Batch */,
+  batch /*: AtomBatch */,
   opts /*: WinIdenticalRenamingOptions */
 ) => {
   const {

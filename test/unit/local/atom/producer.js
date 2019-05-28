@@ -8,11 +8,11 @@ const fs = require('fs')
 const fse = require('fs-extra')
 const path = require('path')
 const { onPlatforms } = require('../../../support/helpers/platform')
-const Producer = require('../../../../core/local/steps/producer')
+const Producer = require('../../../../core/local/atom/producer')
 const stater = require('../../../../core/local/stater')
 
 onPlatforms(['linux', 'win32'], () => {
-  describe('core/local/steps/producer', () => {
+  describe('core/local/atom/producer', () => {
     describe('scan()', () => {
       const producer = new Producer({ syncPath: '' })
 

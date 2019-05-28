@@ -9,13 +9,13 @@ const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
-const Channel = require('../../../../core/local/steps/channel')
-const initialDiff = require('../../../../core/local/steps/initial_diff')
+const Channel = require('../../../../core/local/atom/channel')
+const initialDiff = require('../../../../core/local/atom/initial_diff')
 const metadata = require('../../../../core/metadata')
 
 const kind = doc => (doc.docType === 'folder' ? 'directory' : 'file')
 
-describe('local/steps/initial_diff', () => {
+describe('core/local/atom/initial_diff', () => {
   let builders
 
   before('instanciate config', configHelpers.createConfig)

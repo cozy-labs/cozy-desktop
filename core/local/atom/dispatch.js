@@ -16,15 +16,15 @@ const log = logger({
 /*::
 import type Channel from './channel'
 import type {
-  AtomWatcherEvent,
-  Batch
+  AtomEvent,
+  AtomBatch
 } from './event'
 import type { WinDetectMoveState } from './win_detect_move'
 import type EventEmitter from 'events'
 import type Prep from '../../prep'
 import type Pouch from '../../pouch'
 
-export type AtomEventsDispatcher = (Batch) => Promise<Batch>
+export type AtomEventsDispatcher = (AtomBatch) => Promise<AtomBatch>
 
 type DispatchOptions = {
   events: EventEmitter,
@@ -43,7 +43,7 @@ module.exports = {
   step
 }
 
-// Dispatch takes a Channel of AtomWatcherEvents batches, and calls Prep for
+// Dispatch takes a Channel of AtomEvents batches, and calls Prep for
 // each event. It needs to fetch the old documents from pouchdb in some cases
 // to have all the data expected by prep/merge.
 function loop(
@@ -54,7 +54,7 @@ function loop(
 }
 
 function step(opts /*: DispatchOptions */) {
-  return async (batch /*: Batch */) => {
+  return async (batch /*: AtomBatch */) => {
     for (const event of batch) {
       try {
         await dispatchEvent(event, opts)
@@ -71,7 +71,7 @@ function step(opts /*: DispatchOptions */) {
 }
 
 async function dispatchEvent(
-  event /*: AtomWatcherEvent */,
+  event /*: AtomEvent */,
   opts /*: DispatchOptions */
 ) {
   log.trace({ event }, 'dispatch')

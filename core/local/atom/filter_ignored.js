@@ -4,7 +4,7 @@ const logger = require('../../logger')
 
 /*::
 import type Channel from './channel'
-import type { AtomWatcherEvent } from './event'
+import type { AtomEvent } from './event'
 import type { Ignore } from '../../ignore'
 */
 
@@ -36,8 +36,8 @@ function loop(
 
 function buildNotIgnored(
   ignoreRules /*: Ignore */
-) /*: ((AtomWatcherEvent) => boolean) */ {
-  return (event /*: AtomWatcherEvent */) /*: boolean */ => {
+) /*: ((AtomEvent) => boolean) */ {
+  return (event /*: AtomEvent */) /*: boolean */ => {
     if (event.noIgnore) {
       return true
     }

@@ -1,11 +1,11 @@
 /* @flow */
 
-const { AtomWatcher } = require('./atom_watcher')
+const { AtomWatcher } = require('./atom/watcher')
 const ChokidarWatcher = require('./chokidar_watcher')
 
 /*::
 import type { WatcherType } from '../config'
-import type { AtomEventsDispatcher } from './steps/dispatch'
+import type { AtomEventsDispatcher } from './atom/dispatch'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'

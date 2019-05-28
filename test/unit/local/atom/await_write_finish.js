@@ -4,8 +4,8 @@
 const _ = require('lodash')
 const should = require('should')
 
-const awaitWriteFinish = require('../../../../core/local/steps/await_write_finish')
-const Channel = require('../../../../core/local/steps/channel')
+const awaitWriteFinish = require('../../../../core/local/atom/await_write_finish')
+const Channel = require('../../../../core/local/atom/channel')
 const stater = require('../../../../core/local/stater')
 
 const lastEventToCheckEmptyness = {
@@ -27,7 +27,7 @@ async function heuristicIsEmpty(channel) {
   )
 }
 
-describe('core/local/steps/await_write_finish.loop()', () => {
+describe('core/local/atom/await_write_finish.loop()', () => {
   context('with many batches', () => {
     it('should reduce created→deleted to empty', async () => {
       const channel = new Channel()

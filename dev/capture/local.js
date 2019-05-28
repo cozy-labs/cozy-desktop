@@ -10,7 +10,7 @@ const sinon = require('sinon')
 
 const Config = require('../../core/config')
 const { Ignore } = require('../../core/ignore')
-const { AtomWatcher } = require('../../core/local/atom_watcher')
+const { AtomWatcher } = require('../../core/local/atom/watcher')
 const Pouch = require('../../core/pouch')
 const Prep = require('../../core/prep')
 const fixturesHelpers = require('../../test/support/helpers/scenarios')

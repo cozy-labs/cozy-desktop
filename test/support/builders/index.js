@@ -8,7 +8,7 @@ const FileMetadataBuilder = require('./metadata/file')
 const RemoteDirBuilder = require('./remote/dir')
 const RemoteFileBuilder = require('./remote/file')
 const StreamBuilder = require('./stream')
-const AtomWatcherEventBuilder = require('./atom_watcher_event')
+const AtomEventBuilder = require('./atom_event')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
@@ -16,7 +16,7 @@ import type { Metadata } from '../../../core/metadata'
 import type Pouch from '../../../core/pouch'
 import type { Warning } from '../../../core/remote/warning'
 import type { RemoteDoc } from '../../../core/remote/document'
-import type { AtomWatcherEvent } from '../../../core/local/steps/event'
+import type { AtomEvent } from '../../../core/local/atom/event'
 */
 
 // Test data builders facade.
@@ -99,11 +99,11 @@ module.exports = class Builders {
     return new StreamBuilder()
   }
 
-  event(old /*: ?AtomWatcherEvent */) /*: AtomWatcherEventBuilder */ {
-    return new AtomWatcherEventBuilder(old)
+  event(old /*: ?AtomEvent */) /*: AtomEventBuilder */ {
+    return new AtomEventBuilder(old)
   }
 
-  nonEmptyBatch(batchNumber /*: number */ = 1) /*: AtomWatcherEvent[] */ {
+  nonEmptyBatch(batchNumber /*: number */ = 1) /*: AtomEvent[] */ {
     return [
       this.event()
         .action('created')

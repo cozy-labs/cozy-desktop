@@ -3,7 +3,7 @@
 const Promise = require('bluebird')
 
 /*::
-import type { Batch } from './event'
+import type { AtomBatch } from './event'
 */
 
 // Channel is a data structure for propagating batches of events from a FS
@@ -12,15 +12,15 @@ import type { Batch } from './event'
 // class/function that takes batches from the channel.
 module.exports = class Channel {
   /*::
-  _resolve: ?Promise<Batch>
-  _buffer: Array<Batch>
+  _resolve: ?Promise<AtomBatch>
+  _buffer: Array<AtomBatch>
   */
   constructor() {
     this._resolve = null
     this._buffer = []
   }
 
-  push(batch /*: Batch */) /*: void */ {
+  push(batch /*: AtomBatch */) /*: void */ {
     if (batch.length === 0) return
 
     if (this._resolve) {
@@ -31,7 +31,7 @@ module.exports = class Channel {
     }
   }
 
-  pop() /*: Promise<Batch> */ {
+  pop() /*: Promise<AtomBatch> */ {
     if (this._buffer.length > 0) {
       const batch = this._buffer.shift()
       return Promise.resolve(batch)
@@ -42,7 +42,7 @@ module.exports = class Channel {
   }
 
   async doMap(
-    fn /*: (Batch) => Batch */,
+    fn /*: (AtomBatch) => AtomBatch */,
     channel /*: Channel */
   ) /*: Promise<void> */ {
     // eslint-disable-next-line no-constant-condition
@@ -52,14 +52,14 @@ module.exports = class Channel {
     }
   }
 
-  map(fn /*: (Batch) => Batch */) /*: Channel */ {
+  map(fn /*: (AtomBatch) => AtomBatch */) /*: Channel */ {
     const channel = new Channel()
     this.doMap(fn, channel)
     return channel
   }
 
   async doAsyncMap(
-    fn /*: (Batch) => Promise<Batch> */,
+    fn /*: (AtomBatch) => Promise<AtomBatch> */,
     channel /*: Channel */
   ) /*: Promise<void> */ {
     // eslint-disable-next-line no-constant-condition
@@ -70,7 +70,7 @@ module.exports = class Channel {
     }
   }
 
-  asyncMap(fn /*: (Batch) => Promise<Batch> */) /*: Channel */ {
+  asyncMap(fn /*: (AtomBatch) => Promise<AtomBatch> */) /*: Channel */ {
     const channel = new Channel()
     this.doAsyncMap(fn, channel)
     return channel

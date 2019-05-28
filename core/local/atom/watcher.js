@@ -3,30 +3,30 @@
 const Promise = require('bluebird')
 const _ = require('lodash')
 
-const checksumer = require('./checksumer')
-const logger = require('../logger')
+const checksumer = require('./../checksumer')
+const logger = require('../../logger')
 
-const Producer = require('./steps/producer')
-const addInfos = require('./steps/add_infos')
-const filterIgnored = require('./steps/filter_ignored')
-const winDetectMove = require('./steps/win_detect_move')
-const winIdenticalRenaming = require('./steps/win_identical_renaming')
-const scanFolder = require('./steps/scan_folder')
-const awaitWriteFinish = require('./steps/await_write_finish')
-const initialDiff = require('./steps/initial_diff')
-const addChecksum = require('./steps/add_checksum')
-const incompleteFixer = require('./steps/incomplete_fixer')
-const overwrite = require('./steps/overwrite')
-const dispatch = require('./steps/dispatch')
+const Producer = require('./producer')
+const addInfos = require('./add_infos')
+const filterIgnored = require('./filter_ignored')
+const winDetectMove = require('./win_detect_move')
+const winIdenticalRenaming = require('./win_identical_renaming')
+const scanFolder = require('./scan_folder')
+const awaitWriteFinish = require('./await_write_finish')
+const initialDiff = require('./initial_diff')
+const addChecksum = require('./add_checksum')
+const incompleteFixer = require('./incomplete_fixer')
+const overwrite = require('./overwrite')
+const dispatch = require('./dispatch')
 
 /*::
-import type Pouch from '../pouch'
-import type Prep from '../prep'
+import type Pouch from '../../pouch'
+import type Prep from '../../prep'
 import type EventEmitter from 'events'
-import type { Ignore } from '../ignore'
-import type { Checksumer } from './checksumer'
-import type { AtomEventsDispatcher } from './steps/dispatch'
-import type { Scanner } from './steps/producer'
+import type { Ignore } from '../../ignore'
+import type { Checksumer } from '../checksumer'
+import type { AtomEventsDispatcher } from './dispatch'
+import type { Scanner } from './producer'
 
 type AtomWatcherOptions = {
   syncPath: string,
