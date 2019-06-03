@@ -1,14 +1,14 @@
 /* @flow */
 
 /*::
-import type { Metadata } from '../metadata'
+import type { Metadata } from '../../metadata'
 import type {
   ChokidarAdd,
   ChokidarAddDir,
   ChokidarChange,
   ChokidarUnlink,
   ChokidarUnlinkDir
-} from './chokidar_event'
+} from './event'
 
 export type LocalDirAdded = ChokidarAddDir & {
   old: ?Metadata,

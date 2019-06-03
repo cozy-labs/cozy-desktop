@@ -5,9 +5,9 @@ const faker = require('faker')
 const fs = require('fs')
 const should = require('should')
 
-const chokidarEvent = require('../../../core/local/chokidar_event')
+const chokidarEvent = require('../../../../core/local/chokidar/event')
 
-describe('local/chokidar_event', () => {
+describe('core/local/chokidar/event', () => {
   describe('build', () => {
     let path, stats
 

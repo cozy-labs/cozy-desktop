@@ -4,7 +4,7 @@
 const should = require('should')
 const sinon = require('sinon')
 
-const LocalEventBuffer = require('../../../core/local/event_buffer')
+const LocalEventBuffer = require('../../../../core/local/chokidar/event_buffer')
 
 describe('EventBuffer', () => {
   const TIMEOUT_IN_MS = 2000

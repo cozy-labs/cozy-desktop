@@ -8,22 +8,22 @@ const _ = require('lodash')
 const path = require('path')
 
 const analysis = require('./analysis')
-const checksumer = require('./checksumer')
-const chokidarEvent = require('./chokidar_event')
+const checksumer = require('../checksumer')
+const chokidarEvent = require('./event')
 const LocalEventBuffer = require('./event_buffer')
-const logger = require('../logger')
-const metadata = require('../metadata')
-const { sameDate, fromDate } = require('../timestamp')
-const syncDir = require('./sync_dir')
+const logger = require('../../logger')
+const metadata = require('../../metadata')
+const { sameDate, fromDate } = require('../../timestamp')
+const syncDir = require('../sync_dir')
 
 /*::
-import type { Metadata } from '../metadata'
-import type Pouch from '../pouch'
-import type Prep from '../prep'
-import type { Checksumer } from './checksumer'
-import type { ChokidarEvent } from './chokidar_event'
-import type { LocalEvent } from './event'
-import type { LocalChange } from './change'
+import type { Metadata } from '../../metadata'
+import type Pouch from '../../pouch'
+import type Prep from '../../prep'
+import type { Checksumer } from '../checksumer'
+import type { ChokidarEvent } from './event'
+import type { LocalEvent } from './local_event'
+import type { LocalChange } from './local_change'
 import type EventEmitter from 'events'
 */
 

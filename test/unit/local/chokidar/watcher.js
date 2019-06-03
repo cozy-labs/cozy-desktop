@@ -5,20 +5,20 @@ const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
 
-const { TMP_DIR_NAME } = require('../../../core/local/constants')
-const Watcher = require('../../../core/local/chokidar_watcher')
-const metadata = require('../../../core/metadata')
+const { TMP_DIR_NAME } = require('../../../../core/local/constants')
+const Watcher = require('../../../../core/local/chokidar/watcher')
+const metadata = require('../../../../core/metadata')
 
-const Builders = require('../../support/builders')
-const configHelpers = require('../../support/helpers/config')
-const { ContextDir } = require('../../support/helpers/context_dir')
-const { onPlatforms } = require('../../support/helpers/platform')
-const pouchHelpers = require('../../support/helpers/pouch')
+const Builders = require('../../../support/builders')
+const configHelpers = require('../../../support/helpers/config')
+const { ContextDir } = require('../../../support/helpers/context_dir')
+const { onPlatforms } = require('../../../support/helpers/platform')
+const pouchHelpers = require('../../../support/helpers/pouch')
 
 const { TRAVIS } = process.env
 const { platform } = process
 
-describe('LocalWatcher Tests', function() {
+describe('ChokidarWatcher Tests', function() {
   let builders
 
   before('instanciate config', configHelpers.createConfig)
@@ -179,7 +179,7 @@ describe('LocalWatcher Tests', function() {
           done()
           return Promise.resolve()
         }
-        let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
+        let src = path.join(__dirname, '../../../fixtures/chat-mignon.jpg')
         let dst = path.join(this.syncPath, 'aaa.jpg')
         fse.copySync(src, dst)
       })
@@ -310,7 +310,7 @@ describe('LocalWatcher Tests', function() {
 
   describe('onChange', () =>
     it('detects when a file is changed', function(done) {
-      let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
+      let src = path.join(__dirname, '../../../fixtures/chat-mignon.jpg')
       let dst = path.join(this.syncPath, 'aea.jpg')
       fse.copySync(src, dst)
       this.prep.addFileAsync = () => {
@@ -350,7 +350,7 @@ describe('LocalWatcher Tests', function() {
       // This test does not create the file in pouchdb.
       // the watcher will not find a inode number for the unlink
       // and therefore discard it.
-      let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
+      let src = path.join(__dirname, '../../../fixtures/chat-mignon.jpg')
       let dst = path.join(this.syncPath, 'afa.jpg')
       fse.copySync(src, dst)
       this.prep.addFileAsync = (side, doc) => {

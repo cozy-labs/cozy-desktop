@@ -3,12 +3,12 @@
 const _ = require('lodash')
 const path = require('path')
 
-const metadata = require('../metadata')
-const { getInode } = require('./event')
+const metadata = require('../../metadata')
+const { getInode } = require('./local_event')
 
 /*::
 import type fs from 'fs'
-import type { Metadata } from '../metadata'
+import type { Metadata } from '../../metadata'
 import type {
   LocalDirAdded,
   LocalDirUnlinked,
@@ -16,10 +16,10 @@ import type {
   LocalFileAdded,
   LocalFileUnlinked,
   LocalFileUpdated
-} from './event'
+} from './local_event'
 */
 
-const logger = require('../logger')
+const logger = require('../../logger')
 
 module.exports = {
   build,
