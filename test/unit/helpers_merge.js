@@ -1,9 +1,10 @@
 /* eslint-env mocha */
 
 const path = require('path')
+const should = require('should')
 const sinon = require('sinon')
 
-const { Merge } = require('../../core/merge')
+const { Merge, MergeMissingParentError } = require('../../core/merge')
 
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -41,39 +42,63 @@ describe('Merge Helpers', function() {
           await this.merge.ensureParentExistAsync(side, child)
         })
 
-        it('creates the parent directory if missing', async function() {
-          this.merge.putFolderAsync.resolves('OK')
-          let doc = {
-            _id: 'MISSING/CHILD',
-            path: 'missing/child'
-          }
-          await this.merge.ensureParentExistAsync(side, doc)
-          this.merge.putFolderAsync.called.should.be.true()
-          this.merge.putFolderAsync.args[0][1].should.have.properties({
-            _id: 'MISSING',
-            path: 'missing',
-            docType: 'folder'
-          })
-        })
-
-        it('creates the full tree if needed', async function() {
-          this.merge.putFolderAsync.resolves('OK')
-          let doc = {
-            _id: 'a/b/c/d/e',
-            path: 'a/b/c/d/e'
-          }
-          await this.merge.ensureParentExistAsync(side, doc)
-          let iterable = ['a', 'a/b', 'a/b/c', 'a/b/c/d']
-          for (let i = 0; i < iterable.length; i++) {
-            let id = iterable[i]
+        if (side === 'local') {
+          it('creates the parent directory if missing', async function() {
+            this.merge.putFolderAsync.resolves('OK')
+            let doc = {
+              _id: 'MISSING/CHILD',
+              path: 'missing/child'
+            }
+            await this.merge.ensureParentExistAsync(side, doc)
             this.merge.putFolderAsync.called.should.be.true()
-            this.merge.putFolderAsync.args[i][1].should.have.properties({
-              _id: id,
-              path: id,
+            this.merge.putFolderAsync.args[0][1].should.have.properties({
+              _id: 'MISSING',
+              path: 'missing',
               docType: 'folder'
             })
-          }
-        })
+          })
+
+          it('creates the full tree if needed', async function() {
+            this.merge.putFolderAsync.resolves('OK')
+            let doc = {
+              _id: 'a/b/c/d/e',
+              path: 'a/b/c/d/e'
+            }
+            await this.merge.ensureParentExistAsync(side, doc)
+            let iterable = ['a', 'a/b', 'a/b/c', 'a/b/c/d']
+            for (let i = 0; i < iterable.length; i++) {
+              let id = iterable[i]
+              this.merge.putFolderAsync.called.should.be.true()
+              this.merge.putFolderAsync.args[i][1].should.have.properties({
+                _id: id,
+                path: id,
+                docType: 'folder'
+              })
+            }
+          })
+        }
+
+        if (side === 'remote') {
+          it('throws MergeMissingParentError when the parent directory is missing', async function() {
+            const doc = {
+              _id: 'MISSING/CHILD',
+              path: 'missing/child'
+            }
+            await should(
+              this.merge.ensureParentExistAsync(side, doc)
+            ).be.rejectedWith(MergeMissingParentError)
+          })
+
+          it('throws MergeMissingParentError when the full tree is missing', async function() {
+            const doc = {
+              _id: 'a/b/c/d/e',
+              path: 'a/b/c/d/e'
+            }
+            await should(
+              this.merge.ensureParentExistAsync(side, doc)
+            ).be.rejectedWith(MergeMissingParentError)
+          })
+        }
       })
     }
   })
