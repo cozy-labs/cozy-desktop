@@ -26,6 +26,7 @@ describe('Remote', function() {
   before('instanciate pouch', pouchHelpers.createDatabase)
   before('instanciate remote', function() {
     this.prep = sinon.createStubInstance(Prep)
+    this.prep.config = this.config
     this.events = new EventEmitter()
     this.remote = new Remote(this)
   })
