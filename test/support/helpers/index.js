@@ -7,7 +7,7 @@ const sinon = require('sinon')
 
 const { Ignore } = require('../../../core/ignore')
 const metadata = require('../../../core/metadata')
-const Merge = require('../../../core/merge')
+const { Merge } = require('../../../core/merge')
 const Prep = require('../../../core/prep')
 const Sync = require('../../../core/sync')
 const SyncState = require('../../../core/syncstate')

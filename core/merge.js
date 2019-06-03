@@ -754,4 +754,6 @@ const needsFileidMigration = (
   fileid /*: ?string */
 ) /*: boolean %checks */ => existing.fileid == null && fileid != null
 
-module.exports = Merge
+module.exports = {
+  Merge
+}

@@ -3,7 +3,7 @@
 const path = require('path')
 const sinon = require('sinon')
 
-const Merge = require('../../core/merge')
+const { Merge } = require('../../core/merge')
 
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
