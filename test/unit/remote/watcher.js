@@ -123,8 +123,6 @@ describe('RemoteWatcher', function() {
       this.pouch.getRemoteSeqAsync.resolves(lastLocalSeq)
       this.watcher.pullMany.resolves()
       this.remoteCozy.changes.resolves(changes)
-
-      return this.watcher.watch()
     })
 
     afterEach(function() {
@@ -134,13 +132,15 @@ describe('RemoteWatcher', function() {
       this.pouch.getRemoteSeqAsync.restore()
     })
 
-    it('pulls the changed files/dirs', function() {
+    it('pulls the changed files/dirs', async function() {
+      await this.watcher.watch()
       this.watcher.pullMany.should.be
         .calledOnce()
         .and.be.calledWithExactly(changes.docs)
     })
 
-    it('updates the last update sequence in local db', function() {
+    it('updates the last update sequence in local db', async function() {
+      await this.watcher.watch()
       this.pouch.setRemoteSeqAsync.should.be
         .calledOnce()
         .and.be.calledWithExactly(lastRemoteSeq)
