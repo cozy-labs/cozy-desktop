@@ -3,6 +3,7 @@
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const _ = require('lodash')
+const { FetchError } = require('electron-fetch')
 
 const logger = require('../logger')
 const metadata = require('../metadata')
@@ -94,6 +95,8 @@ class RemoteWatcher {
   }
 
   async watch() {
+    let errors = []
+
     try {
       const seq = await this.pouch.getRemoteSeqAsync()
       const { last_seq, docs } = await this.remoteCozy.changes(seq)
@@ -102,46 +105,58 @@ class RemoteWatcher {
       if (docs.length === 0) return
 
       const release = await this.pouch.lock(this)
-      let target = -1
+      this.events.emit('remote-start')
+
       try {
-        this.events.emit('remote-start')
-        await this.pullMany(docs)
-        target = (await this.pouch.db.changes({ limit: 1, descending: true }))
-          .last_seq
+        let target = -1
+        errors = errors.concat(await this.pullMany(docs))
+        if (errors.length === 0) {
+          target = (await this.pouch.db.changes({ limit: 1, descending: true }))
+            .last_seq
+          this.events.emit('sync-target', target)
+          await this.pouch.setRemoteSeqAsync(last_seq)
+        }
       } finally {
-        this.events.emit('sync-target', target)
         release()
         this.events.emit('remote-end')
+        log.debug('No more remote changes for now')
       }
-
-      await this.pouch.setRemoteSeqAsync(last_seq)
-      log.debug('No more remote changes for now')
     } catch (err) {
+      errors.push(err)
+    }
+
+    for (const err of errors) {
       if (err.status === 400) {
         log.error({ err }, 'Client has been revoked')
         throw new Error('Client has been revoked')
       } else if (err.status === 402) {
         log.error({ err }, 'User action required')
         throw userActionRequired.includeJSONintoError(err)
+      } else if (err instanceof FetchError) {
+        log.error({ err }, 'Assuming offline')
+        this.events.emit('offline')
       } else {
         log.error({ err })
-        this.events.emit('offline')
+        throw err
       }
     }
   }
 
   // Pull multiple changed or deleted docs
   // FIXME: Misleading method name?
-  async pullMany(docs /*: Array<RemoteDoc|RemoteDeletion> */) {
+  async pullMany(
+    docs /*: Array<RemoteDoc|RemoteDeletion> */
+  ) /*: Promise<Error[]> */ {
     const remoteIds = docs.reduce((ids, doc) => ids.add(doc._id), new Set())
     const olds = await this.pouch.allByRemoteIds(remoteIds)
 
     const changes = this.analyse(docs, olds)
 
     log.trace('Apply changes...')
-    await this.applyAll(changes)
+    const errors = await this.applyAll(changes)
 
     log.trace('Done with pull.')
+    return errors
   }
 
   analyse(
@@ -456,27 +471,20 @@ class RemoteWatcher {
     }
   }
 
-  async applyAll(changes /*: Array<RemoteChange> */) /*: Promise<void> */ {
-    const failedChanges = []
+  async applyAll(changes /*: Array<RemoteChange> */) /*: Promise<Error[]> */ {
+    const errors = []
 
     for (let change of changes) {
       try {
         await this.apply(change)
       } catch (err) {
         log.error({ path: _.get(change, 'doc.path'), err })
-        if (!(err instanceof MergeMissingParentError)) {
-          failedChanges.push(change)
-        }
-      } // try
-    } // for
-
-    if (failedChanges.length > 0) {
-      throw new Error(
-        `Some changes could not be pulled:\n${failedChanges
-          .map(change => JSON.stringify(change.doc))
-          .join('\n')}`
-      )
+        if (err instanceof MergeMissingParentError) continue
+        errors.push(err)
+      }
     }
+
+    return errors
   }
 
   async apply(change /*: RemoteChange */) /*: Promise<void> */ {

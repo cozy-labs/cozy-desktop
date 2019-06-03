@@ -3,6 +3,7 @@
 
 const EventEmitter = require('events')
 const sinon = require('sinon')
+const { FetchError } = require('electron-fetch')
 
 const Prep = require('../../../core/prep')
 const { Remote } = require('../../../core/remote')
@@ -37,7 +38,7 @@ describe('Remote', function() {
     it('The remote can be started when offline ', async function() {
       let fetchStub = sinon
         .stub(global, 'fetch')
-        .rejects(new Error('net::ERR_INTERNET_DISCONNECTED'))
+        .rejects(new FetchError('net::ERR_INTERNET_DISCONNECTED'))
       let eventsSpy = sinon.spy(this.events, 'emit')
       await this.remote.start().started
       eventsSpy.should.have.been.calledWith('offline')

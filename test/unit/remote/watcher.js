@@ -7,8 +7,8 @@ const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
 const CozyClient = require('cozy-client-js').Client
+const { FetchError } = require('electron-fetch')
 
-const dbBuilders = require('../../support/builders/db')
 const configHelpers = require('../../support/helpers/config')
 const { posixifyPath } = require('../../support/helpers/context_dir')
 const { onPlatform, onPlatforms } = require('../../support/helpers/platform')
@@ -119,13 +119,15 @@ describe('RemoteWatcher', function() {
       sinon.stub(this.pouch, 'setRemoteSeqAsync')
       sinon.stub(this.watcher, 'pullMany')
       sinon.stub(this.remoteCozy, 'changes')
+      sinon.spy(this.events, 'emit')
 
       this.pouch.getRemoteSeqAsync.resolves(lastLocalSeq)
-      this.watcher.pullMany.resolves()
+      this.watcher.pullMany.resolves([])
       this.remoteCozy.changes.resolves(changes)
     })
 
     afterEach(function() {
+      this.events.emit.restore()
       this.remoteCozy.changes.restore()
       this.watcher.pullMany.restore()
       this.pouch.setRemoteSeqAsync.restore()
@@ -145,6 +147,42 @@ describe('RemoteWatcher', function() {
         .calledOnce()
         .and.be.calledWithExactly(lastRemoteSeq)
     })
+
+    context('on FetchError', () => {
+      const fetchError = new FetchError('net::ERR_INTERNET_DISCONNECTED')
+
+      beforeEach(function() {
+        this.remoteCozy.changes.rejects(fetchError)
+      })
+
+      it('does not reject', async function() {
+        await should(this.watcher.watch()).not.be.rejected()
+      })
+
+      it('emits offline event', async function() {
+        await this.watcher.watch()
+        should(this.events.emit)
+          .have.been.calledWith('offline')
+          .calledOnce()
+      })
+    })
+
+    context('on other Error', () => {
+      const otherError = new Error('Other error')
+
+      beforeEach(function() {
+        this.remoteCozy.changes.rejects(otherError)
+      })
+
+      it('rejects', async function() {
+        await should(this.watcher.watch()).be.rejectedWith(otherError)
+      })
+
+      it('does not emit offline event', async function() {
+        await this.watcher.watch().catch(() => {})
+        should(this.events.emit).not.have.been.called()
+      })
+    })
   })
 
   const validMetadata = (remoteDoc /*: RemoteDoc */) /*: Metadata */ => {
@@ -157,7 +195,10 @@ describe('RemoteWatcher', function() {
   describe('pullMany', function() {
     const remoteDocs = [
       builders.remoteFile().build(),
-      { _id: dbBuilders.id(), _rev: dbBuilders.rev(), _deleted: true }
+      {
+        ...builders.remoteFile().build(),
+        _deleted: true
+      }
     ]
     let apply
     let findMaybe
@@ -196,15 +237,16 @@ describe('RemoteWatcher', function() {
         })
       })
 
-      it('rejects with the failed ids', function() {
-        return this.watcher
-          .pullMany(remoteDocs)
-          .should.be.rejectedWith(new RegExp(remoteDocs[0]._id))
+      it('resolves with an array of errors', function() {
+        const errors = [new errType(remoteDocs[0])]
+        return should(this.watcher.pullMany(remoteDocs)).be.fulfilledWith(
+          errors
+        )
       })
 
       it('ignores MergeMissingParentError', async function() {
         errType = MergeMissingParentError
-        await should(this.watcher.pullMany(remoteDocs)).not.be.rejected()
+        await should(this.watcher.pullMany(remoteDocs)).be.fulfilledWith([])
       })
 
       it('still tries to pull other files/dirs', async function() {
