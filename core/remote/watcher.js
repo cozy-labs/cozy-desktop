@@ -6,6 +6,7 @@ const _ = require('lodash')
 
 const logger = require('../logger')
 const metadata = require('../metadata')
+const { MergeMissingParentError } = require('../merge')
 const remoteChange = require('./change')
 const { inRemoteTrash } = require('./document')
 const userActionRequired = require('./user_action_required')
@@ -463,7 +464,9 @@ class RemoteWatcher {
         await this.apply(change)
       } catch (err) {
         log.error({ path: _.get(change, 'doc.path'), err })
-        failedChanges.push(change)
+        if (!(err instanceof MergeMissingParentError)) {
+          failedChanges.push(change)
+        }
       } // try
     } // for
 

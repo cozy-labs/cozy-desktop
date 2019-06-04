@@ -16,6 +16,7 @@ const pouchHelpers = require('../../support/helpers/pouch')
 const { builders } = require('../../support/helpers/cozy')
 
 const metadata = require('../../../core/metadata')
+const { MergeMissingParentError } = require('../../../core/merge')
 const { FILES_DOCTYPE } = require('../../../core/remote/constants')
 const Prep = require('../../../core/prep')
 const { RemoteCozy } = require('../../../core/remote/cozy')
@@ -184,11 +185,14 @@ describe('RemoteWatcher', function() {
     })
 
     context('when apply() rejects some file/dir', function() {
+      let errType
+
       beforeEach(function() {
+        errType = Error
         apply.callsFake(async (
           change /*: RemoteChange */
         ) /*: Promise<void> */ => {
-          if (change.type === 'FileAddition') throw new Error('oops')
+          if (change.type === 'FileAddition') throw new errType(change.doc)
         })
       })
 
@@ -196,6 +200,11 @@ describe('RemoteWatcher', function() {
         return this.watcher
           .pullMany(remoteDocs)
           .should.be.rejectedWith(new RegExp(remoteDocs[0]._id))
+      })
+
+      it('ignores MergeMissingParentError', async function() {
+        errType = MergeMissingParentError
+        await should(this.watcher.pullMany(remoteDocs)).not.be.rejected()
       })
 
       it('still tries to pull other files/dirs', async function() {
