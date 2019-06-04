@@ -8,7 +8,20 @@ const log = require('../../core/app').logger({
   component: 'GUI:autoupdater'
 })
 
-const UPDATE_CHECK_TIMEOUT = 5000
+/** The delay starting from the update info request after which it is skipped.
+ *
+ * Long enough so users with slow connection have chances to start downloading
+ * the update before it is skipped (5s was tried but didn't seem sufficient in
+ * some cases).
+ *
+ * App startup could be slower in case GitHub is down exactly at the same
+ * time. But the delay still seems acceptable  for an app starting
+ * automatically on boot. Even in case it is started by hand.
+ *
+ * Except for downtimes, users with fast connection should still get a fast
+ * available or unavailable update answer anyway.
+ */
+const UPDATE_CHECK_TIMEOUT = 10000
 
 module.exports = class UpdaterWM extends WindowManager {
   windowOptions() {
