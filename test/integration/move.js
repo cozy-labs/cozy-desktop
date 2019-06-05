@@ -177,9 +177,8 @@ describe('Move', () => {
 
     it('local', async () => {
       const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
-      // FIXME: Why is this a file? And why does it break with a directory?
       const doc = builders
-        .metafile()
+        .metadir()
         .path('parent/dst/dir')
         .build()
 
@@ -228,17 +227,23 @@ describe('Move', () => {
       await cozy.files.updateAttributesById(dir._id, { dir_id: dst._id })
       await helpers.remote.pullChanges()
 
-      /* FIXME: Nondeterministic
-      should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-        {path: 'parent/src/dir/subdir/file', _deleted: true},
-        {path: 'parent/src/dir/subdir', _deleted: true},
-        {path: 'parent/src/dir/empty-subdir', _deleted: true},
-        {path: 'parent/src/dir', _deleted: true},
-        {path: 'parent/dst/dir'},
-        {path: 'parent/dst/dir/subdir'},
-        {path: 'parent/dst/dir/empty-subdir'}
+      should(
+        helpers.putDocs('path', '_deleted', 'trashed', 'childMove')
+      ).deepEqual([
+        { path: 'parent/src/dir', _deleted: true },
+        { path: 'parent/dst/dir' },
+        {
+          path: 'parent/src/dir/empty-subdir',
+          _deleted: true,
+          childMove: true
+        },
+        { path: 'parent/dst/dir/empty-subdir' },
+        { path: 'parent/src/dir/subdir', _deleted: true, childMove: true },
+        { path: 'parent/dst/dir/subdir' },
+        { path: 'parent/src/dir/subdir/file', _deleted: true, childMove: true },
+        { path: 'parent/dst/dir/subdir/file' }
       ])
-      */
+
       await helpers.syncAll()
       should(await helpers.local.tree()).deepEqual([
         'parent/',
@@ -257,91 +262,47 @@ describe('Move', () => {
     })
 
     it('from remote client', async () => {
-      // FIXME: Ensure events occur in the same order as resulting from the
-      // local dir test
-      await helpers._remote.addFolderAsync(
+      const oldFolderMetadata = await pouch.byRemoteIdAsync(dir._id)
+      await helpers._remote.moveFolderAsync(
         _.defaults(
           {
-            path: path.normalize('parent/dst/dir'),
-            updated_at: '2017-06-20T12:58:49.681Z'
+            path: path.normalize('parent/dst/dir')
           },
-          await pouch.byRemoteIdAsync(dir._id)
-        )
-      )
-      await helpers._remote.addFolderAsync(
-        _.defaults(
-          {
-            path: path.normalize('parent/dst/dir/empty-subdir'),
-            updated_at: '2017-06-20T12:58:49.817Z'
-          },
-          await pouch.byRemoteIdAsync(emptySubdir._id)
-        )
-      )
-      await helpers._remote.addFolderAsync(
-        _.defaults(
-          {
-            path: path.normalize('parent/dst/dir/subdir'),
-            updated_at: '2017-06-20T12:58:49.873Z'
-          },
-          await pouch.byRemoteIdAsync(subdir._id)
-        )
-      )
-      const oldFileMetadata = await pouch.byRemoteIdAsync(file._id)
-      await helpers._remote.moveFileAsync(
-        _.defaults(
-          {
-            path: path.normalize('parent/dst/dir/subdir/file')
-            // FIXME: Why does moveFileAsync({updated_at: ...}) fail?
-            // updated_at: '2017-06-20T12:58:49.921Z'
-          },
-          oldFileMetadata
+          oldFolderMetadata
         ),
-        oldFileMetadata
+        oldFolderMetadata
       )
-      const oldSubdirMetadata = await pouch.byRemoteIdAsync(subdir._id)
-      await helpers._remote.deleteFolderAsync(oldSubdirMetadata)
-      const oldEmptySubdirMetadata = await pouch.byRemoteIdAsync(
-        emptySubdir._id
-      )
-      await helpers._remote.deleteFolderAsync(oldEmptySubdirMetadata)
-      const oldDirMetadata = await pouch.byRemoteIdAsync(dir._id)
-      await helpers._remote.deleteFolderAsync(oldDirMetadata)
 
       await helpers.remote.pullChanges()
 
-      /* FIXME: Nondeterministic
-      should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-        // file 1/2
-        {path: path.normalize('parent/src/dir/subdir/file'), _deleted: true},
-        // file 2/2
-        {path: path.normalize('parent/dst/dir/subdir/file')},
-        // dir 2/2
-        {path: path.normalize('parent/dst/dir')},
-        // empty-subdir 2/2
-        {path: path.normalize('parent/dst/dir/empty-subdir')},
-        // subdir 2/3
-        {path: path.normalize('parent/dst/dir/subdir')},
-        // subdir 1/3
-        {path: path.normalize('parent/src/dir/subdir'), _deleted: true},
-        {path: path.normalize('parent/src/dir/subdir'), trashed: true},
-        // empty-subdir 1/2
-        {path: path.normalize('parent/src/dir/empty-subdir'), _deleted: true},
-        {path: path.normalize('parent/src/dir/empty-subdir'), trashed: true},
-        // dir 1/2
-        {path: path.normalize('parent/src/dir'), _deleted: true},
-        {path: path.normalize('parent/src/dir'), trashed: true}
+      should(
+        helpers.putDocs('path', '_deleted', 'trashed', 'childMove')
+      ).deepEqual([
+        { path: path.normalize('parent/src/dir'), _deleted: true },
+        { path: path.normalize('parent/dst/dir') },
+        {
+          path: path.normalize('parent/src/dir/empty-subdir'),
+          _deleted: true,
+          childMove: true
+        },
+        { path: path.normalize('parent/dst/dir/empty-subdir') },
+        {
+          path: path.normalize('parent/src/dir/subdir'),
+          _deleted: true,
+          childMove: true
+        },
+        { path: path.normalize('parent/dst/dir/subdir') },
+        {
+          path: path.normalize('parent/src/dir/subdir/file'),
+          _deleted: true,
+          childMove: true
+        },
+        { path: path.normalize('parent/dst/dir/subdir/file') }
       ])
-      */
 
       await helpers.syncAll()
 
-      should(
-        (await helpers.local.tree())
-          // FIXME: Sometimes a copy of the file ends up in the OS trash.
-          // Issue was already occurring from time to time, even before we start
-          // to permanently delete empty dirs.
-          .filter(path => path !== '/Trash/file')
-      ).deepEqual([
+      should(await helpers.local.tree()).deepEqual([
         'parent/',
         'parent/dst/',
         'parent/dst/dir/',
