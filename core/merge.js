@@ -24,6 +24,35 @@ const log = logger({
   component: 'Merge'
 })
 
+/** Error occuring when parent of doc being merged is missing from Pouch.
+ *
+ * For now, this error only occurs when merging remote changes.
+ *
+ * In case the parent is missing, the made-up document would be inconsistent,
+ * with `sides.remote` set but no `remote._id` nor `remote._rev`. Any
+ * subsequent subsequent local change could fail because of those missing.
+ *
+ * Regarding local changes, one could wonder whether we should adopt the same
+ * behavior: made-up documents will be missing an inode. Which could result in
+ * subsequent moves not being detected correctly. But at least it should not
+ * prevent subsequent remote changes from being synced since the inode is not
+ * used in this case.
+ *
+ * This error is mostly caused by a bug, either in a previous Merge/Sync run
+ * or related to some watcher events order.
+ */
+class MergeMissingParentError extends Error {
+  /*::
+  doc: Metadata
+  */
+
+  constructor(doc /*: Metadata */) {
+    super('Cannot merge remote change: Missing parent metadata')
+    this.name = 'MergeMissingParentError'
+    this.doc = doc
+  }
+}
+
 // When the local filesystem or the remote cozy detects a change, it calls this
 // class to inform it (via Prep). This class will check how to operate this
 // change against the data in pouchdb and then will update pouchdb. It avoids a
@@ -78,6 +107,9 @@ class Merge {
       if (err.status !== 404) {
         log.warn(err)
       }
+    }
+    if (side === 'remote') {
+      throw new MergeMissingParentError(doc)
     }
 
     let parentDoc = {
@@ -754,4 +786,7 @@ const needsFileidMigration = (
   fileid /*: ?string */
 ) /*: boolean %checks */ => existing.fileid == null && fileid != null
 
-module.exports = Merge
+module.exports = {
+  Merge,
+  MergeMissingParentError
+}

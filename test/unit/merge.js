@@ -5,7 +5,7 @@ const _ = require('lodash')
 const sinon = require('sinon')
 const should = require('should')
 
-const Merge = require('../../core/merge')
+const { Merge } = require('../../core/merge')
 const metadata = require('../../core/metadata')
 const { otherSide } = require('../../core/side')
 

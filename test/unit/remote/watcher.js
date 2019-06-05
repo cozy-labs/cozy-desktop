@@ -16,6 +16,7 @@ const pouchHelpers = require('../../support/helpers/pouch')
 const { builders } = require('../../support/helpers/cozy')
 
 const metadata = require('../../../core/metadata')
+const { MergeMissingParentError } = require('../../../core/merge')
 const { FILES_DOCTYPE } = require('../../../core/remote/constants')
 const Prep = require('../../../core/prep')
 const { RemoteCozy } = require('../../../core/remote/cozy')
@@ -32,8 +33,8 @@ import type { Metadata } from '../../../core/metadata'
 describe('RemoteWatcher', function() {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
-  before(pouchHelpers.createDatabase)
-  before(function instanciateRemoteWatcher() {
+  beforeEach(pouchHelpers.createDatabase)
+  beforeEach(function instanciateRemoteWatcher() {
     this.prep = sinon.createStubInstance(Prep)
     this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
@@ -49,13 +50,16 @@ describe('RemoteWatcher', function() {
       this.events
     )
   })
+  afterEach(function() {
+    this.watcher.stop()
+  })
   afterEach(function removeEventListeners() {
     this.events.removeAllListeners()
   })
-  after(pouchHelpers.cleanDatabase)
+  afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  before(async function() {
+  beforeEach(async function() {
     await pouchHelpers.createParentFolder(this.pouch)
     // FIXME: Tests pass without folder 3 & file 3
     for (let i of [1, 2, 3]) {
@@ -88,15 +92,15 @@ describe('RemoteWatcher', function() {
       this.watcher.watch.restore()
     })
 
-    it('ensures watch is not called anymore', function() {
-      this.watcher.start()
+    it('ensures watch is not called anymore', async function() {
+      await this.watcher.start().started
       should(this.watcher.runningResolve).not.be.null()
       this.watcher.stop()
       should(this.watcher.runningResolve).be.null()
     })
 
-    it('does nothing when called again', function() {
-      this.watcher.start()
+    it('does nothing when called again', async function() {
+      await this.watcher.start().started
       this.watcher.stop()
       this.watcher.stop()
     })
@@ -181,11 +185,14 @@ describe('RemoteWatcher', function() {
     })
 
     context('when apply() rejects some file/dir', function() {
+      let errType
+
       beforeEach(function() {
+        errType = Error
         apply.callsFake(async (
           change /*: RemoteChange */
         ) /*: Promise<void> */ => {
-          if (change.type === 'FileAddition') throw new Error('oops')
+          if (change.type === 'FileAddition') throw new errType(change.doc)
         })
       })
 
@@ -193,6 +200,11 @@ describe('RemoteWatcher', function() {
         return this.watcher
           .pullMany(remoteDocs)
           .should.be.rejectedWith(new RegExp(remoteDocs[0]._id))
+      })
+
+      it('ignores MergeMissingParentError', async function() {
+        errType = MergeMissingParentError
+        await should(this.watcher.pullMany(remoteDocs)).not.be.rejected()
       })
 
       it('still tries to pull other files/dirs', async function() {

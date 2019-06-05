@@ -9,7 +9,7 @@ const Promise = require('bluebird')
 
 const { id } = require('../../core/metadata')
 const { Ignore } = require('../../core/ignore')
-const Merge = require('../../core/merge')
+const { Merge } = require('../../core/merge')
 const Pouch = require('../../core/pouch')
 const Prep = require('../../core/prep')
 const Watcher = require('../../core/local/watcher')
