@@ -153,22 +153,25 @@ describe('Move', () => {
   })
 
   describe('directory', () => {
-    let dir, dst, emptySubdir, file, parent, src, subdir
+    let dir, dst
 
     beforeEach(async () => {
-      parent = await cozy.files.createDirectory({ name: 'parent' })
+      const parent = await cozy.files.createDirectory({ name: 'parent' })
+      const src = await cozy.files.createDirectory({
+        name: 'src',
+        dirID: parent._id
+      })
       dst = await cozy.files.createDirectory({ name: 'dst', dirID: parent._id })
-      src = await cozy.files.createDirectory({ name: 'src', dirID: parent._id })
       dir = await cozy.files.createDirectory({ name: 'dir', dirID: src._id })
-      emptySubdir = await cozy.files.createDirectory({
+      await cozy.files.createDirectory({
         name: 'empty-subdir',
         dirID: dir._id
       })
-      subdir = await cozy.files.createDirectory({
+      const subdir = await cozy.files.createDirectory({
         name: 'subdir',
         dirID: dir._id
       })
-      file = await cozy.files.create('foo', { name: 'file', dirID: subdir._id })
+      await cozy.files.create('foo', { name: 'file', dirID: subdir._id })
 
       await helpers.remote.pullChanges()
       await helpers.syncAll()
@@ -177,9 +180,8 @@ describe('Move', () => {
 
     it('local', async () => {
       const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
-      // FIXME: Why is this a file? And why does it break with a directory?
       const doc = builders
-        .metafile()
+        .metadir()
         .path('parent/dst/dir')
         .build()
 
@@ -257,59 +259,18 @@ describe('Move', () => {
     })
 
     it('from remote client', async () => {
-      // FIXME: Ensure events occur in the same order as resulting from the
-      // local dir test
-      await helpers._remote.addFolderAsync(
-        _.defaults(
-          {
-            path: path.normalize('parent/dst/dir'),
-            updated_at: '2017-06-20T12:58:49.681Z'
-          },
-          await pouch.byRemoteIdAsync(dir._id)
-        )
+      const was = await pouch.byRemoteIdAsync(dir._id)
+      await helpers._remote.moveFolderAsync(
+        {
+          ...was,
+          path: path.normalize('parent/dst/dir')
+        },
+        was
       )
-      await helpers._remote.addFolderAsync(
-        _.defaults(
-          {
-            path: path.normalize('parent/dst/dir/empty-subdir'),
-            updated_at: '2017-06-20T12:58:49.817Z'
-          },
-          await pouch.byRemoteIdAsync(emptySubdir._id)
-        )
-      )
-      await helpers._remote.addFolderAsync(
-        _.defaults(
-          {
-            path: path.normalize('parent/dst/dir/subdir'),
-            updated_at: '2017-06-20T12:58:49.873Z'
-          },
-          await pouch.byRemoteIdAsync(subdir._id)
-        )
-      )
-      const oldFileMetadata = await pouch.byRemoteIdAsync(file._id)
-      await helpers._remote.moveFileAsync(
-        _.defaults(
-          {
-            path: path.normalize('parent/dst/dir/subdir/file')
-            // FIXME: Why does moveFileAsync({updated_at: ...}) fail?
-            // updated_at: '2017-06-20T12:58:49.921Z'
-          },
-          oldFileMetadata
-        ),
-        oldFileMetadata
-      )
-      const oldSubdirMetadata = await pouch.byRemoteIdAsync(subdir._id)
-      await helpers._remote.deleteFolderAsync(oldSubdirMetadata)
-      const oldEmptySubdirMetadata = await pouch.byRemoteIdAsync(
-        emptySubdir._id
-      )
-      await helpers._remote.deleteFolderAsync(oldEmptySubdirMetadata)
-      const oldDirMetadata = await pouch.byRemoteIdAsync(dir._id)
-      await helpers._remote.deleteFolderAsync(oldDirMetadata)
 
       await helpers.remote.pullChanges()
 
-      /* FIXME: Nondeterministic
+      /* FIXME: Wrong order
       should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
         // file 1/2
         {path: path.normalize('parent/src/dir/subdir/file'), _deleted: true},
