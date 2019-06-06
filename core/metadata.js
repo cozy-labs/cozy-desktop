@@ -249,15 +249,15 @@ function ensureValidPath(doc /*: {path: string} */) {
 function invariants(doc /*: Metadata */) {
   let err
   if (!doc.sides) {
-    err = new Error(`${doc._id} has no sides`)
+    err = new Error(`Metadata has no sides`)
   } else if (doc.sides.remote && !doc.remote) {
-    err = new Error(`${doc._id} has 'sides.remote' but no remote`)
+    err = new Error(`Metadata has 'sides.remote' but no remote`)
   } else if (doc.docType === 'file' && doc.md5sum == null) {
-    err = new Error(`${doc._id} is a file without checksum`)
+    err = new Error(`File metadata has no checksum`)
   }
 
   if (err) {
-    log.error({ err, sentry: true }, err.message)
+    log.error({ err, path: doc.path, sentry: true }, err.message)
     throw err
   }
 
