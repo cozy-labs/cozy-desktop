@@ -21,6 +21,8 @@ module.exports = {
   toSentryContext
 }
 
+const { COZY_NO_SENTRY, DEBUG, TESTDEBUG } = process.env
+
 const SENTRY_REF = `ed6d0a175d504ead84851717b9bdb72e:324375dbe2ae4bbf8c212ae4eaf26289`
 const SENTRY_DSN = `https://${SENTRY_REF}@sentry.cozycloud.cc/91`
 const DOMAIN_TO_ENV = {
@@ -60,6 +62,7 @@ type ClientInfo = {
 */
 
 function setup(clientInfos /*: ClientInfo */) {
+  if (DEBUG || TESTDEBUG || COZY_NO_SENTRY || isSentryConfigured) return
   try {
     const { appVersion, cozyUrl } = clientInfos
     const { domain, instance, environment } = toSentryContext(cozyUrl)
@@ -73,6 +76,19 @@ function setup(clientInfos /*: ClientInfo */) {
         log.error({ err, sendErr }, 'Fatal error, unable to send to sentry')
       else log.error({ err, eventId }, 'Fatal error, sent to sentry')
       process.exit(1) // eslint-disable-line no-process-exit
+    })
+    logger.defaultLogger.addStream({
+      type: 'raw',
+      stream: {
+        write: msg => {
+          try {
+            handleBunyanMessage(msg)
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.log('Error in handleBunyanMessage', err)
+          }
+        }
+      }
     })
     isSentryConfigured = true
     log.info('Sentry configured !')
@@ -144,23 +160,4 @@ const handleBunyanMessage = msg => {
 function flag(err /*: Object */) {
   err.sentry = true
   return err
-}
-if (
-  !process.env.DEBUG &&
-  !process.env.TESTDEBUG &&
-  !process.env.COZY_NO_SENTRY
-) {
-  logger.defaultLogger.addStream({
-    type: 'raw',
-    stream: {
-      write: msg => {
-        try {
-          handleBunyanMessage(msg)
-        } catch (err) {
-          // eslint-disable-next-line no-console
-          console.log('Error in handleBunyanMessage', err)
-        }
-      }
-    }
-  })
 }
