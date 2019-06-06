@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.2-beta.2 - 2019-06-06
+
+Improvements for all users:
+
+- Whenever we can't reconciliate some changes coming from your remote Cozy with
+  your local documents, we try to inform you via special status label and icon.
+  Those issues can have different origins but most of them were notified to you
+  as your computer lacking an internet connection. We've made some changes to
+  display the No Internet connection status only when we experience network
+  issues and a generic synchronisation issues status when we can't be more
+  precise.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.2-beta.1 - 2019-06-05
 
 Improvements for all users:
