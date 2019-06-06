@@ -3,6 +3,7 @@
 
 const EventEmitter = require('events')
 const sinon = require('sinon')
+const { FetchError } = require('electron-fetch')
 
 const Prep = require('../../../core/prep')
 const { Remote } = require('../../../core/remote')
@@ -25,6 +26,7 @@ describe('Remote', function() {
   before('instanciate pouch', pouchHelpers.createDatabase)
   before('instanciate remote', function() {
     this.prep = sinon.createStubInstance(Prep)
+    this.prep.config = this.config
     this.events = new EventEmitter()
     this.remote = new Remote(this)
   })
@@ -37,7 +39,7 @@ describe('Remote', function() {
     it('The remote can be started when offline ', async function() {
       let fetchStub = sinon
         .stub(global, 'fetch')
-        .rejects(new Error('net::ERR_INTERNET_DISCONNECTED'))
+        .rejects(new FetchError('net::ERR_INTERNET_DISCONNECTED'))
       let eventsSpy = sinon.spy(this.events, 'emit')
       await this.remote.start().started
       eventsSpy.should.have.been.calledWith('offline')

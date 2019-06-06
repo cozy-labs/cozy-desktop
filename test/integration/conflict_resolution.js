@@ -6,6 +6,8 @@ const sinon = require('sinon')
 
 const fse = require('fs-extra')
 const _ = require('lodash')
+const { FetchError } = require('electron-fetch')
+
 const Builders = require('../support/builders')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -372,7 +374,7 @@ describe('Conflict resolution', () => {
 
     describe('retry', () => {
       beforeEach('simulate stack failure', () => {
-        sinon.stub(cozy.files, 'updateAttributesById').throws('FetchError')
+        sinon.stub(cozy.files, 'updateAttributesById').throws(new FetchError())
       })
 
       it('success', async () => {
