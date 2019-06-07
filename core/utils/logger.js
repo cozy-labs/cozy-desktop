@@ -6,6 +6,10 @@ const os = require('os')
 const path = require('path')
 const _ = require('lodash')
 
+/*::
+export type Logger = bunyan.Logger
+*/
+
 const LOG_DIR = path.join(
   process.env.COZY_DESKTOP_DIR || os.homedir(),
   '.cozy-desktop'
