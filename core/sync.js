@@ -7,7 +7,7 @@ const { dirname } = require('path')
 const _ = require('lodash')
 
 const metadata = require('./metadata')
-const userActionRequired = require('./remote/user_action_required')
+const { handleCommonCozyErrors } = require('./remote/cozy')
 const { HEARTBEAT } = require('./remote/watcher')
 const { otherSide } = require('./side')
 const logger = require('./utils/logger')
@@ -437,19 +437,11 @@ class Sync {
     try {
       await this.diskUsage()
     } catch (err) {
-      if (err.status === 400) {
-        log.error({ err }, 'Client has been revoked')
-        throw new Error('Client has been revoked')
-      } else if (err.status === 402) {
-        log.error({ err }, 'User action required')
-        throw userActionRequired.includeJSONintoError(err)
-      } else if (err.status === 403) {
-        log.error({ err }, 'Client has wrong permissions (lack disk-usage)')
-        throw new Error('Client has wrong permissions (lack disk-usage)')
-      } else {
+      const result = handleCommonCozyErrors(err, { events: this.events, log })
+      // FIXME: Handle non-Fetch errors as offline to match previous behavior.
+      // This should be fixed in a subsequent commit.
+      if (result === 'offline' || result === 'unhandled') {
         // The client is offline, wait that it can connect again to the server
-        log.warn({ path }, 'Client is offline')
-        this.events.emit('offline')
         // eslint-disable-next-line no-constant-condition
         while (true) {
           try {
