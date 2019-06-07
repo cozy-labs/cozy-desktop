@@ -438,9 +438,7 @@ class Sync {
       await this.diskUsage()
     } catch (err) {
       const result = handleCommonCozyErrors(err, { events: this.events, log })
-      // FIXME: Handle non-Fetch errors as offline to match previous behavior.
-      // This should be fixed in a subsequent commit.
-      if (result === 'offline' || result === 'unhandled') {
+      if (result === 'offline') {
         // The client is offline, wait that it can connect again to the server
         // eslint-disable-next-line no-constant-condition
         while (true) {

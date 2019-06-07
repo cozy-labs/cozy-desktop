@@ -90,8 +90,10 @@ describe('core/remote/cozy', () => {
     context('on any other error', () => {
       const err = new Error(randomMessage())
 
-      it('returns "unhandled" to allow custom behavior', () => {
-        should(handleCommonCozyErrors(err, { events, log })).eql('unhandled')
+      it('throws the error', () => {
+        should(() => {
+          handleCommonCozyErrors(err, { events, log })
+        }).throw(err)
       })
     })
   })

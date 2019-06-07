@@ -125,11 +125,7 @@ class RemoteWatcher {
     }
 
     for (const err of errors) {
-      const result = handleCommonCozyErrors(err, { events: this.events, log })
-      if (result === 'unhandled') {
-        log.error({ err })
-        throw err
-      }
+      handleCommonCozyErrors(err, { events: this.events, log })
       // No need to handle 'offline' result since next pollings will switch
       // back to 'online' as soon as the changesfeed can be fetched.
     }
