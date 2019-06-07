@@ -2,6 +2,7 @@
 
 const autoBind = require('auto-bind')
 const CozyClient = require('cozy-client-js').Client
+const { FetchError } = require('electron-fetch')
 const _ = require('lodash')
 const path = require('path')
 
@@ -13,11 +14,14 @@ const {
   parentDirIds
 } = require('./document')
 const logger = require('../utils/logger')
+const userActionRequired = require('./user_action_required')
 
 const { posix } = path
 
 /*::
+import type EventEmitter from 'events'
 import type { Config } from '../config'
+import type { Logger } from '../utils/logger'
 import type { Readable } from 'stream'
 import type { RemoteDoc, RemoteDeletion } from './document'
 import type { Warning } from './warning'
@@ -31,6 +35,41 @@ function DirectoryNotFound(path /*: string */, cozyURL /*: string */) {
   this.name = 'DirectoryNotFound'
   this.message = `Directory ${path} was not found on Cozy ${cozyURL}`
   this.stack = new Error().stack
+}
+
+/*::
+type CommonCozyErrorHandlingOptions = {
+  events: EventEmitter,
+  log: Logger
+}
+
+type CommonCozyErrorHandlingResult =
+  | 'offline'
+  | 'unhandled'
+*/
+
+const handleCommonCozyErrors = (
+  err /*: Error */,
+  { events, log } /*: CommonCozyErrorHandlingOptions */
+) /*: CommonCozyErrorHandlingResult */ => {
+  if (err instanceof FetchError) {
+    if (err.status === 400) {
+      log.error({ err }, 'Client has been revoked')
+      throw new Error('Client has been revoked')
+    } else if (err.status === 402) {
+      log.error({ err }, 'User action required')
+      throw userActionRequired.includeJSONintoError(err)
+    } else if (err.status === 403) {
+      log.error({ err }, 'Client has wrong permissions (lack disk-usage)')
+      throw new Error('Client has wrong permissions (lack disk-usage)')
+    } else {
+      log.warn({ err }, 'Assuming offline')
+      events.emit('offline')
+      return 'offline'
+    }
+  } else {
+    return 'unhandled'
+  }
 }
 
 // A remote Cozy instance.
@@ -259,7 +298,8 @@ class RemoteCozy {
 
 module.exports = {
   DirectoryNotFound,
-  RemoteCozy
+  RemoteCozy,
+  handleCommonCozyErrors
 }
 
 async function getChangesFeed(
