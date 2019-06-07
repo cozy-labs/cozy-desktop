@@ -45,7 +45,6 @@ type CommonCozyErrorHandlingOptions = {
 
 type CommonCozyErrorHandlingResult =
   | 'offline'
-  | 'unhandled'
 */
 
 const handleCommonCozyErrors = (
@@ -68,7 +67,8 @@ const handleCommonCozyErrors = (
       return 'offline'
     }
   } else {
-    return 'unhandled'
+    log.error({ err })
+    throw err
   }
 }
 
