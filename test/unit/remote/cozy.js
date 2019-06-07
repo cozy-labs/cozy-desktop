@@ -1,6 +1,8 @@
 /* eslint-env mocha */
 /* @flow weak */
 
+const { FetchError } = require('electron-fetch')
+const faker = require('faker')
 const _ = require('lodash')
 const path = require('path')
 const should = require('should')
@@ -11,13 +13,89 @@ const {
   TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
-const { DirectoryNotFound, RemoteCozy } = require('../../../core/remote/cozy')
+const {
+  DirectoryNotFound,
+  RemoteCozy,
+  handleCommonCozyErrors
+} = require('../../../core/remote/cozy')
 
 const configHelpers = require('../../support/helpers/config')
 const { COZY_URL, builders, deleteAll } = require('../../support/helpers/cozy')
 const CozyStackDouble = require('../../support/doubles/cozy_stack')
 
 const cozyStackDouble = new CozyStackDouble()
+
+describe('core/remote/cozy', () => {
+  describe('.handleCommonCozyErrors()', () => {
+    let events, log
+
+    beforeEach(() => {
+      events = { emit: sinon.spy() }
+      log = { error: sinon.spy(), warn: sinon.spy() }
+    })
+
+    const randomMessage = faker.random.words
+
+    context('on FetchError status 400', () => {
+      const err = new FetchError(randomMessage())
+      err.status = 400
+      const expectedMessage = 'Client has been revoked'
+
+      it(`throws an Error with the exact "${expectedMessage}" message to notify the GUI`, () => {
+        should(() => {
+          handleCommonCozyErrors(err, { events, log })
+        }).throw()
+      })
+    })
+
+    context('on FetchError status 402', () => {
+      const status = 402
+      const message = randomMessage()
+      const err = new FetchError(
+        JSON.stringify([{ status: status.toString(), message }])
+      )
+      err.status = status
+
+      it('throws an error decorated with JSON parsed from the original message', () => {
+        should(() => {
+          handleCommonCozyErrors(err, { events, log })
+        }).throw({ status, message })
+      })
+    })
+
+    context('on FetchError status 403', () => {
+      const err = new FetchError(randomMessage())
+      err.status = 403
+
+      it('throws a permissions error', () => {
+        should(() => {
+          handleCommonCozyErrors(err, { events, log })
+        }).throw(/permissions/)
+      })
+    })
+
+    context('on any other FetchError', () => {
+      const err = new FetchError(randomMessage())
+
+      it('emits "offline" to notify the GUI', () => {
+        handleCommonCozyErrors(err, { events, log })
+        should(events.emit).have.been.calledWith('offline')
+      })
+
+      it('returns "offline" to allow custom behavior', () => {
+        should(handleCommonCozyErrors(err, { events, log })).eql('offline')
+      })
+    })
+
+    context('on any other error', () => {
+      const err = new Error(randomMessage())
+
+      it('returns "unhandled" to allow custom behavior', () => {
+        should(handleCommonCozyErrors(err, { events, log })).eql('unhandled')
+      })
+    })
+  })
+})
 
 describe('RemoteCozy', function() {
   before(() => cozyStackDouble.start())
