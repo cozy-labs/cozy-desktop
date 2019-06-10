@@ -112,7 +112,7 @@ onPlatforms(['linux', 'win32'], () => {
       let syncPath
       let producer
 
-      before(async () => {
+      beforeEach(async () => {
         syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'foo-'))
         producer = new Producer({
           syncPath
