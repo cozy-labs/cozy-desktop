@@ -69,22 +69,21 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       it('should scan a subfolder tree', async () => {
-        const mypath = ['foo', 'bar', 'baz']
-        fse.mkdirsSync(path.join(syncPath, ...mypath))
+        fse.mkdirsSync(path.join(syncPath, 'foo/bar/baz'))
         await producer.start()
 
         const batches = [
           {
             batch: await producer.channel.pop(),
-            path: path.join(mypath[0])
+            path: path.normalize('foo')
           },
           {
             batch: await producer.channel.pop(),
-            path: path.join(mypath[0], mypath[1])
+            path: path.normalize('foo/bar')
           },
           {
             batch: await producer.channel.pop(),
-            path: path.join(mypath[0], mypath[1], mypath[2])
+            path: path.normalize('foo/bar/baz')
           }
         ]
 
