@@ -27,8 +27,8 @@ onPlatforms(['linux', 'win32'], () => {
 
     describe('scan()', () => {
       describe('on readdir / stat race condition', () => {
-        const missingFilePath = 'i-am-missing'
-        const readdir = async () => [missingFilePath]
+        const missingFileName = 'i-am-missing'
+        const readdir = async () => [missingFileName]
 
         it('produces incomplete scan event on ENOENT', async () => {
           const { channel } = producer
@@ -38,7 +38,7 @@ onPlatforms(['linux', 'win32'], () => {
           should(await channel.pop()).deepEqual([
             {
               action: 'scan',
-              path: missingFilePath,
+              path: missingFileName,
               kind: 'unknown',
               incomplete: true
             }
