@@ -7,17 +7,22 @@ const os = require('os')
 const fs = require('fs')
 const fse = require('fs-extra')
 const path = require('path')
-const { onPlatforms } = require('../../../support/helpers/platform')
+
 const Producer = require('../../../../core/local/atom/producer')
 const stater = require('../../../../core/local/stater')
 
+const { ContextDir } = require('../../../support/helpers/context_dir')
+const { onPlatforms } = require('../../../support/helpers/platform')
+
 onPlatforms(['linux', 'win32'], () => {
   describe('core/local/atom/producer', () => {
+    let syncDir
     let syncPath
     let producer
 
     beforeEach(() => {
       syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'foo-'))
+      syncDir = new ContextDir(syncPath)
       producer = new Producer({
         syncPath
       })
@@ -61,7 +66,7 @@ onPlatforms(['linux', 'win32'], () => {
           {
             action: 'created',
             kind: 'directory',
-            path: path.join(syncPath, dirname)
+            path: syncDir.abspath(dirname)
           }
         ]
         producer.process(batch.map(evt => Object.assign({}, evt)))
@@ -71,7 +76,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       it('should scan a subfolder tree', async () => {
-        fse.mkdirsSync(path.join(syncPath, 'foo/bar/baz'))
+        await syncDir.ensureDir('foo/bar/baz')
         await producer.start()
 
         const batches = [
@@ -116,7 +121,7 @@ onPlatforms(['linux', 'win32'], () => {
       it('detect events on folder in temp dir', async () => {
         const dirname = 'foobaz'
         const newname = 'foobarbaz'
-        fs.mkdirSync(path.join(syncPath, dirname))
+        await syncDir.ensureDir(dirname)
         should(await producer.channel.pop()).eql([
           {
             action: 'created',
@@ -124,10 +129,7 @@ onPlatforms(['linux', 'win32'], () => {
             path: dirname
           }
         ])
-        fs.renameSync(
-          path.join(syncPath, dirname),
-          path.join(syncPath, newname)
-        )
+        await syncDir.rename(dirname, newname)
         should(await producer.channel.pop()).eql([
           {
             action: 'renamed',
@@ -136,7 +138,7 @@ onPlatforms(['linux', 'win32'], () => {
             path: newname
           }
         ])
-        fs.rmdirSync(path.join(syncPath, newname))
+        await syncDir.rmdir(newname)
         should(await producer.channel.pop()).eql([
           {
             action: 'deleted',
@@ -150,7 +152,7 @@ onPlatforms(['linux', 'win32'], () => {
         const filename = 'barbaz'
         const newname = 'barfoobaz'
         const content = 'Hello, Cozy Drive for Desktop'
-        fs.writeFileSync(path.join(syncPath, filename), content)
+        await syncDir.outputFile(filename, content)
         const outputBatches = [await producer.channel.pop()]
         if (outputBatches[0].length === 1) {
           // The modified event ended up in a separate batch.
@@ -169,10 +171,7 @@ onPlatforms(['linux', 'win32'], () => {
             path: filename
           }
         ])
-        fs.renameSync(
-          path.join(syncPath, filename),
-          path.join(syncPath, newname)
-        )
+        await syncDir.rename(filename, newname)
         let renamedOutputBatch = await producer.channel.pop()
         if (
           renamedOutputBatch.length === 1 &&
@@ -199,7 +198,7 @@ onPlatforms(['linux', 'win32'], () => {
             path: 'barfoobaz'
           }
         ])
-        fs.unlinkSync(path.join(syncPath, newname))
+        await syncDir.unlink(newname)
         should(await producer.channel.pop()).eql([
           {
             action: 'deleted',
