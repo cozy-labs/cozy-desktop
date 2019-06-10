@@ -26,8 +26,6 @@ onPlatforms(['linux', 'win32'], () => {
     beforeEach(() => fse.emptyDir(syncPath))
 
     describe('scan()', () => {
-      const producer = new Producer({ syncPath: '' })
-
       describe('on readdir / stat race condition', () => {
         const missingFilePath = 'i-am-missing'
         const readdir = async () => [missingFilePath]
