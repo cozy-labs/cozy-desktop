@@ -42,6 +42,7 @@ Icon
 *.sw[px]
 
 # Windows
+System Volume Information/
 Thumbs.db
 ehthumbs.db
 $Recycle.bin
