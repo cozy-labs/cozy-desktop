@@ -11,10 +11,6 @@ const log = logger({
 
 const _ = require('lodash')
 
-// FIXME: We were getting far too many Sentry messages.
-// So it is disabled for now, until we find a solution.
-process.env.COZY_NO_SENTRY = '1'
-
 module.exports = {
   setup,
   flag,
