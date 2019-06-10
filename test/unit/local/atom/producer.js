@@ -13,6 +13,18 @@ const stater = require('../../../../core/local/stater')
 
 onPlatforms(['linux', 'win32'], () => {
   describe('core/local/atom/producer', () => {
+    let syncPath
+    let producer
+
+    beforeEach(() => {
+      syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'foo-'))
+      producer = new Producer({
+        syncPath
+      })
+    })
+
+    beforeEach(() => fse.emptyDir(syncPath))
+
     describe('scan()', () => {
       const producer = new Producer({ syncPath: '' })
 
@@ -38,16 +50,6 @@ onPlatforms(['linux', 'win32'], () => {
     })
 
     describe('API of the producer', () => {
-      let syncPath
-      let producer
-
-      beforeEach(() => {
-        syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'foo-'))
-        producer = new Producer({
-          syncPath
-        })
-      })
-
       it('should register on start and dispose on stop the watcher', async () => {
         await producer.start()
         should(producer.watcher).be.not.null()
@@ -109,14 +111,7 @@ onPlatforms(['linux', 'win32'], () => {
     })
 
     describe('register an event on FS events', () => {
-      let syncPath
-      let producer
-
       beforeEach(async () => {
-        syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'foo-'))
-        producer = new Producer({
-          syncPath
-        })
         await producer.start()
         await producer.channel.pop()
       })
