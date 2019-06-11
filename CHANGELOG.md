@@ -1,5 +1,17 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.2-beta.3 - 2019-06-11
+
+Improvements for all users:
+
+- We improved error handling in our auto-update component. Hopefully this
+  should make it easier for people with flaky connections to get the latest
+  version of the app.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.2-beta.2 - 2019-06-06
 
 Improvements for all users:
