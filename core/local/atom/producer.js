@@ -9,6 +9,7 @@ const watcher = require('@atom/watcher')
 const Channel = require('./channel')
 const { INITIAL_SCAN_DONE } = require('./event')
 const logger = require('../../logger')
+const { TMP_DIR_NAME } = require('../constants')
 const defaultStater = require('../stater')
 
 /*::
@@ -104,6 +105,7 @@ module.exports = class Producer {
     const entries = []
     const fullPath = path.join(this.syncPath, relPath)
     for (const entry of await readdir(fullPath)) {
+      if (entry === TMP_DIR_NAME) continue
       try {
         const absPath = path.join(this.syncPath, relPath, entry)
         const stats = await stater.statMaybe(absPath)

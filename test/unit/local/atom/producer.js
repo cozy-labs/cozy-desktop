@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 /* @flow */
 
+const faker = require('faker')
 const _ = require('lodash')
 const should = require('should')
 const os = require('os')
@@ -9,6 +10,7 @@ const fse = require('fs-extra')
 const path = require('path')
 
 const Producer = require('../../../../core/local/atom/producer')
+const { TMP_DIR_NAME } = require('../../../../core/local/constants')
 const stater = require('../../../../core/local/stater')
 
 const { ContextDir } = require('../../../support/helpers/context_dir')
@@ -31,6 +33,24 @@ onPlatforms(['linux', 'win32'], () => {
     beforeEach(() => fse.emptyDir(syncPath))
 
     describe('scan()', () => {
+      context('when root dir includes Cozy tmp dir amongst others', () => {
+        const relpath1 = faker.system.fileName()
+        const relpath2 = faker.system.fileName()
+
+        beforeEach(async () => {
+          await syncDir.ensureFile(relpath1)
+          await syncDir.ensureDir(TMP_DIR_NAME)
+          await syncDir.ensureFile(relpath2)
+        })
+
+        it('produces events for others only sorted by name', async () => {
+          await producer.scan('.')
+          should(_.map(await producer.channel.pop(), 'path')).deepEqual(
+            [relpath1, relpath2].sort()
+          )
+        })
+      })
+
       describe('on readdir / stat race condition', () => {
         const missingFileName = 'i-am-missing'
         const readdir = async () => [missingFileName]
