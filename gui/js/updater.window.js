@@ -1,3 +1,4 @@
+const Promise = require('bluebird')
 const WindowManager = require('./window_manager')
 const { autoUpdater } = require('electron-updater')
 const { translate } = require('./i18n')
@@ -22,6 +23,8 @@ const log = require('../../core/app').logger({
  * available or unavailable update answer anyway.
  */
 const UPDATE_CHECK_TIMEOUT = 10000
+
+const UPDATE_RETRY_DELAY = 1000
 
 module.exports = class UpdaterWM extends WindowManager {
   windowOptions() {
@@ -75,11 +78,15 @@ module.exports = class UpdaterWM extends WindowManager {
       log.info({ update: info }, 'No update available')
       this.afterUpToDate()
     })
-    autoUpdater.on('error', err => {
-      // May also happen in dev because of code signature error. Not an issue.
-      log.error({ err }, 'Error in auto-updater! ')
-      this.clearTimeoutIfAny()
-      this.afterUpToDate()
+    autoUpdater.on('error', async err => {
+      if (this.skipped) {
+        return
+      } else if (err.code === 'ENOENT') {
+        this.skipUpdate('assuming development environment')
+      } else {
+        await Promise.delay(UPDATE_RETRY_DELAY)
+        autoUpdater.checkForUpdates()
+      }
     })
     autoUpdater.on('download-progress', progressObj => {
       log.trace({ progress: progressObj }, 'Downloading...')
@@ -116,21 +123,21 @@ module.exports = class UpdaterWM extends WindowManager {
   }
 
   checkForUpdates() {
-    log.info('Looking for updates...')
     this.timeout = setTimeout(() => {
-      log.warn(
-        { timeout: UPDATE_CHECK_TIMEOUT },
-        'Updates check is taking too long'
-      )
-      this.skipped = true
-
-      // Disable handler & warn on future calls
-      const handler = this.afterUpToDate
-      this.afterUpToDate = () => {}
-
-      handler()
+      this.skipUpdate(`check is taking more than ${UPDATE_CHECK_TIMEOUT} ms`)
     }, UPDATE_CHECK_TIMEOUT)
     autoUpdater.checkForUpdates()
+  }
+
+  skipUpdate(reason) {
+    log.info(`Not updating: ${reason}`)
+    this.skipped = true
+
+    // Disable handler & warn on future calls
+    const handler = this.afterUpToDate
+    this.afterUpToDate = () => {}
+
+    handler()
   }
 
   hash() {
