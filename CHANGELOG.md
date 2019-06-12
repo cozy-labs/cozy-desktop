@@ -1,5 +1,57 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.2 - 2019-06-12
+
+Improvements for all users:
+
+- We changed the status label when we catch an error that was not specific
+  enough for us to offer you a simple resolution. In this situation we were
+  stating that the synchronisation was impossible when in most cases, some
+  changes can have been reconciliated and synchronised. We're now saying that
+  the synchronisation was incomplete. You should still contact us in this
+  situation as we might be able to offer you some help.
+- We improved error handling in our auto-update component. Hopefully this
+  should make it easier for people with flaky connections to get the latest
+  version of the app.
+- Whenever we can't reconciliate some changes coming from your remote Cozy with
+  your local documents, we try to inform you via special status label and icon.
+  Those issues can have different origins but most of them were notified to you
+  as your computer lacking an internet connection. We've made some changes to
+  display the No Internet connection status only when we experience network
+  issues and a generic synchronisation issues status when we can't be more
+  precise.
+- To help you keep your app up-to-date, we have a mechanism that checks for new
+  versions every 24 hours. While we do that check, the app does not attempt to
+  synchronise anything to avoid stopping the process while the new version is
+  installed. We set a maximum wait time of 5 seconds for the check so that you
+  won't get stuck in that state for too long. Unfortunately, we've noticed that
+  some users hit that timeout because the check was taking too long and don't
+  get the new version notification, probably because of a slow Internet
+  connection.
+  We've decided to increase the maximum wait time to 10 seconds to make sure
+  those users are informed that a new version is available. This should have no
+  impact for users with a fast Internet connection.
+- In some situations, we can try to reconciliate changes on documents whose
+  ancestor we don't know (e.g. a change on `directory/file` when we've never
+  received the creation of `directory/`). To help merge those changes we try to
+  recreate the missing ancestor. However, we found out that recreating a valid
+  ancestor for changes coming from your remote Cozy is plain impossible since we
+  don't have its remote metadata such as its identifier. This was causing merge
+  issues leading to increased merge times for subsequent changes on other
+  documents, increased log files sizes and no way to fix the situation.
+  We've made the decision to stop trying to recreate missing ancestors of remote
+  changes and ignore those issues altogether. This means that the changes won't
+  be merged (i.e. this is no different than the current situation) but we won't
+  try to merge them over and over, each time we pull changes from the remote
+  Cozy (i.e. every minute or so). We will still detect and attempt to merge
+  changes on the documents although the situation will be similar until a change
+  on the ancestor is made. But this also means we'll be able to merge all those
+  changes if you make a change on the ancestor we didn't get the chance to save.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.2-beta.3 - 2019-06-11
 
 Improvements for all users:
