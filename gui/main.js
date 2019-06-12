@@ -152,7 +152,7 @@ const sendErrorToMainWindow = msg => {
     desktop.stopSync().catch(err => log.error(err))
     return // no notification
   } else {
-    msg = translate('Dashboard Synchronization impossible')
+    msg = translate('Dashboard Synchronization incomplete')
     trayWindow.send('sync-error', msg)
   }
   const notif = new Notification({ title: 'Cozy Drive', body: msg })
