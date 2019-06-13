@@ -10,10 +10,12 @@ const STEP_NAME = 'addChecksum'
 const log = logger({
   component: `atom/${STEP_NAME}`
 })
+const contentActions = new Set(['created', 'modified', 'renamed', 'scan'])
 
 /*::
 import type Channel from './channel'
 import type { Checksumer } from '../checksumer'
+import type { AtomEvent } from './event'
 */
 
 module.exports = {
@@ -39,15 +41,13 @@ function loop(
         if (event.incomplete) {
           continue
         }
-        if (
-          ['created', 'modified', 'scan', 'renamed'].includes(event.action) &&
-          event.kind === 'file'
-        ) {
-          log.debug({ path: event.path, action: event.action }, 'checksum')
+        if (isFileWithContent(event) && !event.md5sum) {
+          log.debug(
+            { path: event.path, action: event.action },
+            'computing checksum'
+          )
           const absPath = path.join(opts.syncPath, event.path)
-          if (!event.md5sum) {
-            event.md5sum = await opts.checksumer.push(absPath)
-          }
+          event.md5sum = await opts.checksumer.push(absPath)
         }
       } catch (err) {
         // Even if the file is no longer at the expected path, we want to
@@ -59,4 +59,8 @@ function loop(
     }
     return events
   })
+}
+
+function isFileWithContent(event /*: AtomEvent */) /*: boolean %checks */ {
+  return event.kind === 'file' && contentActions.has(event.action)
 }
