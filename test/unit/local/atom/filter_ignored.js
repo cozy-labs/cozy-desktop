@@ -2,10 +2,14 @@
 /* @flow */
 
 const should = require('should')
+const _ = require('lodash')
+
 const { onPlatforms } = require('../../../support/helpers/platform')
 const Builders = require('../../../support/builders')
 
 const { Ignore } = require('../../../../core/ignore')
+const metadata = require('../../../../core/metadata')
+const { INITIAL_SCAN_DONE } = require('../../../../core/local/atom/event')
 const Channel = require('../../../../core/local/atom/channel')
 const filterIgnored = require('../../../../core/local/atom/filter_ignored')
 
@@ -29,142 +33,186 @@ onPlatforms(['linux', 'win32'], () => {
       })
     })
 
+    const ignoredScanEvent = builders
+      .event()
+      .action('scan')
+      .path('ignored.bck')
+      .kind('file')
+      .build()
+    const ignoredCreatedEvent = builders
+      .event()
+      .action('created')
+      .path('tmp/ignored.txt')
+      .kind('file')
+      .build()
+    const ignoredDeletedEvent = builders
+      .event()
+      .action('deleted')
+      .path('tmp/isIgnored.txt')
+      .kind('file')
+      .build()
+    const notIgnoredScanEvent = builders
+      .event()
+      .action('scan')
+      .path('notIgnored.txt')
+      .kind('file')
+      .build()
+    const notIgnoredCreatedEvent = builders
+      .event()
+      .action('created')
+      .path('notIgnored')
+      .kind('directory')
+      .build()
+    const notIgnoredDeletedEvent = builders
+      .event()
+      .action('deleted')
+      .path('data/notIgnored.txt')
+      .kind('file')
+      .build()
+    const ignoredRenamedSrcEvent = builders
+      .event()
+      .action('renamed')
+      .oldPath('tmp/wasIgnored.txt')
+      .path('isNotIgnored.txt')
+      .kind('file')
+      .build()
+    const ignoredRenamedDstEvent = builders
+      .event()
+      .action('renamed')
+      .oldPath('wasNotIgnored.txt')
+      .path('tmp/isIgnored.txt')
+      .kind('file')
+      .build()
+    const notIgnoredRenamedEvent = builders
+      .event()
+      .action('renamed')
+      .oldPath('notIgnored.txt')
+      .path('stillNotIgnored.txt')
+      .kind('file')
+      .build()
+
     context('with 1 batch of file & folder events', () => {
-      const ignoredEvents = [
-        builders
-          .event()
-          .path('ignored.bck')
-          .kind('file')
-          .build(),
-        builders
-          .event()
-          .path('tmp/ignored.txt')
-          .kind('file')
-          .build()
-      ]
-      const notIgnoredEvents = [
-        builders
-          .event()
-          .action('initial-scan-done')
-          .path('.')
-          .kind('unknown')
-          .noIgnore()
-          .build(),
-        builders
-          .event()
-          .path('notIgnored.txt')
-          .kind('file')
-          .build(),
-        builders
-          .event()
-          .path('notIgnored')
-          .kind('directory')
-          .build(),
-        builders
-          .event()
-          .path('data/notIgnored.txt')
-          .kind('file')
-          .build()
-      ]
       beforeEach(() => {
-        // Mix ignored and not ignored events
-        let batch = []
-        for (
-          let i = 0;
-          i < Math.max(ignoredEvents.length, notIgnoredEvents.length);
-          i++
-        ) {
-          if (notIgnoredEvents[i]) {
-            batch.push(notIgnoredEvents[i])
-          }
-          if (ignoredEvents[i]) {
-            batch.push(ignoredEvents[i])
-          }
-        }
-        channel.push(batch)
+        channel.push(
+          _.cloneDeep([
+            notIgnoredScanEvent,
+            ignoredScanEvent,
+            notIgnoredCreatedEvent,
+            ignoredCreatedEvent,
+            notIgnoredDeletedEvent,
+            ignoredDeletedEvent,
+            ignoredRenamedSrcEvent,
+            ignoredRenamedDstEvent,
+            notIgnoredRenamedEvent,
+            INITIAL_SCAN_DONE
+          ])
+        )
       })
 
       it('keeps only the relevant events in order', async () => {
         const filteredChannel = filterIgnored.loop(channel, { ignore })
 
+        const renamedToCreatedEvent = {
+          ...ignoredRenamedSrcEvent,
+          action: 'created',
+          [filterIgnored.STEP_NAME]: {
+            movedFromIgnoredPath: ignoredRenamedSrcEvent.oldPath
+          }
+        }
+        delete renamedToCreatedEvent.oldPath
+        const renamedToDeletedEvent = {
+          ...ignoredRenamedDstEvent,
+          action: 'deleted',
+          // $FlowFixMe ignoredRenamedDstEvent does have an oldPath attribute
+          _id: metadata.id(ignoredRenamedDstEvent.oldPath),
+          path: ignoredRenamedDstEvent.oldPath,
+          [filterIgnored.STEP_NAME]: {
+            movedToIgnoredPath: ignoredRenamedDstEvent.path
+          }
+        }
+        delete renamedToDeletedEvent.oldPath
         const relevantEvents = await filteredChannel.pop()
-        should(relevantEvents).deepEqual(notIgnoredEvents)
+        should(relevantEvents).deepEqual([
+          notIgnoredScanEvent,
+          notIgnoredCreatedEvent,
+          notIgnoredDeletedEvent,
+          renamedToCreatedEvent,
+          renamedToDeletedEvent,
+          notIgnoredRenamedEvent,
+          INITIAL_SCAN_DONE
+        ])
       })
     })
 
     context('with multiple batches of file & folder events', () => {
-      const ignoredEvents = [
-        builders
-          .event()
-          .path('ignored1.bck')
-          .kind('file')
-          .build(),
-        builders
-          .event()
-          .path('ignored2.bck')
-          .kind('file')
-          .build()
-      ]
-      const notIgnoredEvents = [
-        builders
-          .event()
-          .path('notIgnored1.txt')
-          .kind('file')
-          .build(),
-        builders
-          .event()
-          .path('notIgnored2.txt')
-          .kind('file')
-          .build()
-      ]
       beforeEach(() => {
-        channel.push([ignoredEvents[0], notIgnoredEvents[0]])
-        channel.push([ignoredEvents[1], notIgnoredEvents[1]])
+        channel.push(_.cloneDeep([notIgnoredScanEvent, ignoredScanEvent]))
+        channel.push(_.cloneDeep([notIgnoredCreatedEvent, ignoredCreatedEvent]))
+        channel.push(_.cloneDeep([notIgnoredDeletedEvent, ignoredDeletedEvent]))
+        channel.push(
+          _.cloneDeep([ignoredRenamedSrcEvent, ignoredRenamedDstEvent])
+        )
+        channel.push(_.cloneDeep([notIgnoredRenamedEvent, INITIAL_SCAN_DONE]))
       })
 
-      it('returns a channel without events for filtered paths', async () => {
-        let relevantEvents
-
+      it('returns a channel with only the relevant events in order', async () => {
         const filteredChannel = filterIgnored.loop(channel, { ignore })
 
-        relevantEvents = await filteredChannel.pop()
-        should(relevantEvents).not.containDeep(ignoredEvents)
-        relevantEvents = await filteredChannel.pop()
-        should(relevantEvents).not.containDeep(ignoredEvents)
-      })
-
-      it('keeps the order of batches with relevant events', async () => {
-        let relevantEvents
-
-        const filteredChannel = filterIgnored.loop(channel, { ignore })
-
-        relevantEvents = await filteredChannel.pop()
-        should(relevantEvents).containDeepOrdered([notIgnoredEvents[0]])
-        relevantEvents = await filteredChannel.pop()
-        should(relevantEvents).containDeepOrdered([notIgnoredEvents[1]])
+        const renamedToCreatedEvent = {
+          ...ignoredRenamedSrcEvent,
+          action: 'created',
+          [filterIgnored.STEP_NAME]: {
+            movedFromIgnoredPath: ignoredRenamedSrcEvent.oldPath
+          }
+        }
+        delete renamedToCreatedEvent.oldPath
+        const renamedToDeletedEvent = {
+          ...ignoredRenamedDstEvent,
+          action: 'deleted',
+          // $FlowFixMe ignoredRenamedDstEvent does have an oldPath attribute
+          _id: metadata.id(ignoredRenamedDstEvent.oldPath),
+          path: ignoredRenamedDstEvent.oldPath,
+          [filterIgnored.STEP_NAME]: {
+            movedToIgnoredPath: ignoredRenamedDstEvent.path
+          }
+        }
+        delete renamedToDeletedEvent.oldPath
+        should(await filteredChannel.pop()).deepEqual([notIgnoredScanEvent])
+        should(await filteredChannel.pop()).deepEqual([notIgnoredCreatedEvent])
+        should(await filteredChannel.pop()).deepEqual([notIgnoredDeletedEvent])
+        should(await filteredChannel.pop()).deepEqual([
+          renamedToCreatedEvent,
+          renamedToDeletedEvent
+        ])
+        should(await filteredChannel.pop()).deepEqual([
+          notIgnoredRenamedEvent,
+          INITIAL_SCAN_DONE
+        ])
       })
     })
 
     context('with file events matching folder patterns', () => {
-      const directoryEvent = builders
+      const directoryScanEvent = builders
         .event()
+        .action('scan')
         .path('folder')
         .kind('directory')
         .build()
-      const fileEvent = builders
+      const fileScanEvent = builders
         .event()
+        .action('scan')
         .path('folder')
         .kind('file')
         .build()
       beforeEach(() => {
-        channel.push([directoryEvent, fileEvent])
+        channel.push([directoryScanEvent, fileScanEvent])
       })
 
       it('filters out folder events only', async () => {
         const filteredChannel = filterIgnored.loop(channel, { ignore })
 
         const relevantEvents = await filteredChannel.pop()
-        should(relevantEvents).deepEqual([fileEvent])
+        should(relevantEvents).deepEqual([fileScanEvent])
       })
     })
   })
