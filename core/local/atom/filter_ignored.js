@@ -15,6 +15,7 @@ const log = logger({
 })
 
 module.exports = {
+  STEP_NAME,
   loop
 }
 
