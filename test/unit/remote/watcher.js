@@ -20,7 +20,7 @@ const { MergeMissingParentError } = require('../../../core/merge')
 const { FILES_DOCTYPE } = require('../../../core/remote/constants')
 const Prep = require('../../../core/prep')
 const {
-  COZY_CLIENT_REVOKED_MESSAGE,
+  CozyClientRevokedError,
   RemoteCozy
 } = require('../../../core/remote/cozy')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
@@ -178,7 +178,7 @@ describe('RemoteWatcher', function() {
 
         it('rejects with a higher-level error', async function() {
           await should(this.watcher.watch()).be.rejectedWith(
-            COZY_CLIENT_REVOKED_MESSAGE
+            new CozyClientRevokedError()
           )
         })
       })

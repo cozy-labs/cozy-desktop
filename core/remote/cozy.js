@@ -36,6 +36,13 @@ function DirectoryNotFound(path /*: string */, cozyURL /*: string */) {
   this.stack = new Error().stack
 }
 
+const COZY_CLIENT_REVOKED_ERROR = 'CozyClientRevokedError'
+const COZY_CLIENT_REVOKED_MESSAGE = 'Client has been revoked' // Only necessary for the GUI
+function CozyClientRevokedError() {
+  this.name = COZY_CLIENT_REVOKED_ERROR
+  this.message = COZY_CLIENT_REVOKED_MESSAGE
+}
+
 /*::
 import type FetchError from 'electron-fetch'
 
@@ -58,8 +65,6 @@ type CozyFetchError = Error & {
 }
 */
 
-const COZY_CLIENT_REVOKED_MESSAGE = 'Client has been revoked'
-
 const handleCommonCozyErrors = (
   err /*: FetchError | CozyFetchError | Error */,
   { events, log } /*: CommonCozyErrorHandlingOptions */
@@ -67,7 +72,7 @@ const handleCommonCozyErrors = (
   if (err.name === 'FetchError') {
     if (err.status === 400) {
       log.error({ err })
-      throw new Error(COZY_CLIENT_REVOKED_MESSAGE)
+      throw new CozyClientRevokedError()
     } else if (err.status === 402) {
       log.error({ err }, 'User action required')
       throw userActionRequired.includeJSONintoError(err)
@@ -311,9 +316,11 @@ class RemoteCozy {
 
 module.exports = {
   DirectoryNotFound,
+  COZY_CLIENT_REVOKED_ERROR,
   COZY_CLIENT_REVOKED_MESSAGE,
-  RemoteCozy,
-  handleCommonCozyErrors
+  CozyClientRevokedError,
+  handleCommonCozyErrors,
+  RemoteCozy
 }
 
 async function getChangesFeed(
