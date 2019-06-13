@@ -2,6 +2,7 @@
 /* eslint-env mocha */
 
 const EventEmitter = require('events')
+const faker = require('faker')
 const _ = require('lodash')
 const path = require('path')
 const sinon = require('sinon')
@@ -19,7 +20,10 @@ const metadata = require('../../../core/metadata')
 const { MergeMissingParentError } = require('../../../core/merge')
 const { FILES_DOCTYPE } = require('../../../core/remote/constants')
 const Prep = require('../../../core/prep')
-const { RemoteCozy } = require('../../../core/remote/cozy')
+const {
+  COZY_CLIENT_REVOKED_MESSAGE,
+  RemoteCozy
+} = require('../../../core/remote/cozy')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 
 const { assignId, ensureValidPath } = metadata
@@ -148,39 +152,35 @@ describe('RemoteWatcher', function() {
         .and.be.calledWithExactly(lastRemoteSeq)
     })
 
-    context('on FetchError', () => {
-      const fetchError = new FetchError('net::ERR_INTERNET_DISCONNECTED')
+    context('on error while fetching changes', () => {
+      const randomMessage = faker.random.words
+      let err
 
       beforeEach(function() {
-        this.remoteCozy.changes.rejects(fetchError)
+        err = new FetchError(randomMessage())
+        this.remoteCozy.changes.rejects(err)
       })
 
-      it('does not reject', async function() {
-        await should(this.watcher.watch()).not.be.rejected()
+      context('when next #watch() has no chance to work anymore', () => {
+        beforeEach(() => {
+          err.status = 400 // Revoked
+        })
+
+        it('rejects with a higher-level error', async function() {
+          await should(this.watcher.watch()).be.rejectedWith(
+            COZY_CLIENT_REVOKED_MESSAGE
+          )
+        })
       })
 
-      it('emits offline event', async function() {
-        await this.watcher.watch()
-        should(this.events.emit)
-          .have.been.calledWith('offline')
-          .calledOnce()
-      })
-    })
+      context('when next #watch() could work', () => {
+        beforeEach(() => {
+          err.status = 500 // Possibly temporary error
+        })
 
-    context('on other Error', () => {
-      const otherError = new Error('Other error')
-
-      beforeEach(function() {
-        this.remoteCozy.changes.rejects(otherError)
-      })
-
-      it('rejects', async function() {
-        await should(this.watcher.watch()).be.rejectedWith(otherError)
-      })
-
-      it('does not emit offline event', async function() {
-        await this.watcher.watch().catch(() => {})
-        should(this.events.emit).not.have.been.called()
+        it('does not reject', async function() {
+          await should(this.watcher.watch()).not.be.rejected()
+        })
       })
     })
   })
