@@ -6,7 +6,6 @@ const Promise = require('bluebird')
 const { dirname } = require('path')
 const _ = require('lodash')
 
-const { MAX_SYNC_ATTEMPTS } = require('./constants')
 const metadata = require('./metadata')
 const userActionRequired = require('./remote/user_action_required')
 const { HEARTBEAT } = require('./remote/watcher')
@@ -27,6 +26,8 @@ import type { Side } from './side' // eslint-disable-line
 const log = logger({
   component: 'Sync'
 })
+
+const MAX_SYNC_ATTEMPTS = 3
 
 const TRASHING_DELAY = 1000
 
