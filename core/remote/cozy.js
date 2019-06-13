@@ -47,14 +47,16 @@ type CommonCozyErrorHandlingResult =
   | 'offline'
 */
 
+const COZY_CLIENT_REVOKED_MESSAGE = 'Client has been revoked'
+
 const handleCommonCozyErrors = (
   err /*: Error */,
   { events, log } /*: CommonCozyErrorHandlingOptions */
 ) /*: CommonCozyErrorHandlingResult */ => {
   if (err instanceof FetchError) {
     if (err.status === 400) {
-      log.error({ err }, 'Client has been revoked')
-      throw new Error('Client has been revoked')
+      log.error({ err })
+      throw new Error(COZY_CLIENT_REVOKED_MESSAGE)
     } else if (err.status === 402) {
       log.error({ err }, 'User action required')
       throw userActionRequired.includeJSONintoError(err)
@@ -298,6 +300,7 @@ class RemoteCozy {
 
 module.exports = {
   DirectoryNotFound,
+  COZY_CLIENT_REVOKED_MESSAGE,
   RemoteCozy,
   handleCommonCozyErrors
 }
