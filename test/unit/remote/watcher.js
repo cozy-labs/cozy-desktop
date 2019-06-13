@@ -193,6 +193,30 @@ describe('RemoteWatcher', function() {
         })
       })
     })
+
+    context('on Pouch reserved ids error', () => {
+      const reservedIdsError = {
+        name: 'bad_request',
+        status: 400,
+        message: 'Only reserved document ids may start with underscore.'
+      }
+
+      beforeEach(function() {
+        this.watcher.pullMany.returns([reservedIdsError])
+      })
+
+      it('rejects', async function() {
+        await should(this.watcher.watch()).be.rejected()
+      })
+
+      it('does not reject client revoked error', async function() {
+        try {
+          await this.watcher.watch()
+        } catch (e) {
+          should(e).not.be.an.instanceof(CozyClientRevokedError)
+        }
+      })
+    })
   })
 
   const validMetadata = (remoteDoc /*: RemoteDoc */) /*: Metadata */ => {
