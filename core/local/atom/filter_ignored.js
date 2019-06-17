@@ -41,36 +41,44 @@ function loop(
     const batch = []
 
     for (const event of events) {
-      if (event.noIgnore) {
-        batch.push(event)
-        continue
-      }
+      const eventToKeep = notIgnoredEvent(event, isIgnored)
 
-      const isPathIgnored = isIgnored(event.path, event.kind)
-
-      if (event.action === 'renamed' && event.oldPath != null) {
-        const isOldPathIgnored = isIgnored(event.oldPath, event.kind)
-
-        if (isOldPathIgnored && isPathIgnored) {
-          log.debug({ event }, 'Ignored via .cozyignore')
-        } else if (isPathIgnored) {
-          const deletedEvent = movedToIgnoredPath(event)
-          batch.push(deletedEvent)
-        } else if (isOldPathIgnored) {
-          const createdEvent = movedFromIgnoredPath(event)
-          batch.push(createdEvent)
-        } else {
-          batch.push(event)
-        }
-      } else if (isPathIgnored) {
-        log.debug({ event }, 'Ignored via .cozyignore')
+      if (eventToKeep) {
+        batch.push(eventToKeep)
       } else {
-        batch.push(event)
+        log.debug({ event }, 'Ignored via .cozyignore')
       }
     }
 
     return batch
   })
+}
+
+function notIgnoredEvent(
+  event /*: AtomEvent */,
+  isIgnored /*: (string, EventKind) => boolean */
+) /*: ?AtomEvent */ {
+  if (event.noIgnore) {
+    return event
+  }
+
+  const isPathIgnored = isIgnored(event.path, event.kind)
+
+  if (event.action === 'renamed' && event.oldPath != null) {
+    const isOldPathIgnored = isIgnored(event.oldPath, event.kind)
+
+    if (!isOldPathIgnored && isPathIgnored) {
+      return movedToIgnoredPath(event)
+    } else if (isOldPathIgnored && !isPathIgnored) {
+      return movedFromIgnoredPath(event)
+    } else if (!isOldPathIgnored && !isPathIgnored) {
+      return event
+    }
+  } else if (!isPathIgnored) {
+    return event
+  }
+
+  return null
 }
 
 function movedFromIgnoredPath(event /*: AtomEvent */) /*: AtomEvent */ {
