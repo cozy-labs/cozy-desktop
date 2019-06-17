@@ -5,20 +5,32 @@ const _ = require('lodash')
 const should = require('should')
 const os = require('os')
 const fs = require('fs')
-const fse = require('fs-extra')
 const path = require('path')
-const { onPlatforms } = require('../../../support/helpers/platform')
+
 const Producer = require('../../../../core/local/atom/producer')
 const stater = require('../../../../core/local/stater')
 
+const { ContextDir } = require('../../../support/helpers/context_dir')
+const { onPlatforms } = require('../../../support/helpers/platform')
+
 onPlatforms(['linux', 'win32'], () => {
   describe('core/local/atom/producer', () => {
-    describe('scan()', () => {
-      const producer = new Producer({ syncPath: '' })
+    let syncDir
+    let syncPath
+    let producer
 
-      describe('on readdir / stat race condition', () => {
-        const missingFilePath = 'i-am-missing'
-        const readdir = async () => [missingFilePath]
+    beforeEach(() => {
+      syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'Cozy Drive.test-'))
+      syncDir = new ContextDir(syncPath)
+      producer = new Producer({
+        syncPath
+      })
+    })
+
+    describe('scan()', () => {
+      context('on readdir / stat race condition', () => {
+        const missingFileName = 'i-am-missing'
+        const readdir = async () => [missingFileName]
 
         it('produces incomplete scan event on ENOENT', async () => {
           const { channel } = producer
@@ -28,7 +40,7 @@ onPlatforms(['linux', 'win32'], () => {
           should(await channel.pop()).deepEqual([
             {
               action: 'scan',
-              path: missingFilePath,
+              path: missingFileName,
               kind: 'unknown',
               incomplete: true
             }
@@ -38,16 +50,6 @@ onPlatforms(['linux', 'win32'], () => {
     })
 
     describe('API of the producer', () => {
-      let syncPath
-      let producer
-
-      beforeEach(() => {
-        syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'foo-'))
-        producer = new Producer({
-          syncPath
-        })
-      })
-
       it('should register on start and dispose on stop the watcher', async () => {
         await producer.start()
         should(producer.watcher).be.not.null()
@@ -61,7 +63,7 @@ onPlatforms(['linux', 'win32'], () => {
           {
             action: 'created',
             kind: 'directory',
-            path: path.join(syncPath, dirname)
+            path: syncDir.abspath(dirname)
           }
         ]
         producer.process(batch.map(evt => Object.assign({}, evt)))
@@ -71,22 +73,21 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       it('should scan a subfolder tree', async () => {
-        const mypath = ['foo', 'bar', 'baz']
-        mkdirsSync(path.join(syncPath, ...mypath))
+        await syncDir.ensureDir('foo/bar/baz')
         await producer.start()
 
         const batches = [
           {
             batch: await producer.channel.pop(),
-            path: path.join(mypath[0])
+            path: path.normalize('foo')
           },
           {
             batch: await producer.channel.pop(),
-            path: path.join(mypath[0], mypath[1])
+            path: path.normalize('foo/bar')
           },
           {
             batch: await producer.channel.pop(),
-            path: path.join(mypath[0], mypath[1], mypath[2])
+            path: path.normalize('foo/bar/baz')
           }
         ]
 
@@ -109,14 +110,7 @@ onPlatforms(['linux', 'win32'], () => {
     })
 
     describe('register an event on FS events', () => {
-      let syncPath
-      let producer
-
-      before(async () => {
-        syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'foo-'))
-        producer = new Producer({
-          syncPath
-        })
+      beforeEach(async () => {
         await producer.start()
         await producer.channel.pop()
       })
@@ -124,7 +118,7 @@ onPlatforms(['linux', 'win32'], () => {
       it('detect events on folder in temp dir', async () => {
         const dirname = 'foobaz'
         const newname = 'foobarbaz'
-        fs.mkdirSync(path.join(syncPath, dirname))
+        await syncDir.ensureDir(dirname)
         should(await producer.channel.pop()).eql([
           {
             action: 'created',
@@ -132,10 +126,7 @@ onPlatforms(['linux', 'win32'], () => {
             path: dirname
           }
         ])
-        fs.renameSync(
-          path.join(syncPath, dirname),
-          path.join(syncPath, newname)
-        )
+        await syncDir.rename(dirname, newname)
         should(await producer.channel.pop()).eql([
           {
             action: 'renamed',
@@ -144,7 +135,7 @@ onPlatforms(['linux', 'win32'], () => {
             path: newname
           }
         ])
-        fs.rmdirSync(path.join(syncPath, newname))
+        await syncDir.rmdir(newname)
         should(await producer.channel.pop()).eql([
           {
             action: 'deleted',
@@ -158,7 +149,7 @@ onPlatforms(['linux', 'win32'], () => {
         const filename = 'barbaz'
         const newname = 'barfoobaz'
         const content = 'Hello, Cozy Drive for Desktop'
-        fs.writeFileSync(path.join(syncPath, filename), content)
+        await syncDir.outputFile(filename, content)
         const outputBatches = [await producer.channel.pop()]
         if (outputBatches[0].length === 1) {
           // The modified event ended up in a separate batch.
@@ -177,10 +168,7 @@ onPlatforms(['linux', 'win32'], () => {
             path: filename
           }
         ])
-        fs.renameSync(
-          path.join(syncPath, filename),
-          path.join(syncPath, newname)
-        )
+        await syncDir.rename(filename, newname)
         let renamedOutputBatch = await producer.channel.pop()
         if (
           renamedOutputBatch.length === 1 &&
@@ -207,7 +195,7 @@ onPlatforms(['linux', 'win32'], () => {
             path: 'barfoobaz'
           }
         ])
-        fs.unlinkSync(path.join(syncPath, newname))
+        await syncDir.unlink(newname)
         should(await producer.channel.pop()).eql([
           {
             action: 'deleted',
@@ -219,5 +207,3 @@ onPlatforms(['linux', 'win32'], () => {
     })
   })
 })
-
-const mkdirsSync = fse.mkdirsSync
