@@ -6,11 +6,11 @@ const { clone } = _
 const path = require('path')
 
 const IdConflict = require('./IdConflict')
-const logger = require('./logger')
 const metadata = require('./metadata')
 const move = require('./move')
-const timestamp = require('./timestamp')
 const { otherSide } = require('./side')
+const logger = require('./utils/logger')
+const timestamp = require('./utils/timestamp')
 
 /*::
 import type { IdConflictInfo } from './IdConflict'

@@ -31,8 +31,8 @@ const {
 } = metadata
 const { Ignore } = require('../../core/ignore')
 const { FILES_DOCTYPE } = require('../../core/remote/constants')
-const timestamp = require('../../core/timestamp')
 const stater = require('../../core/local/stater')
+const timestamp = require('../../core/utils/timestamp')
 
 const { platform } = process
 

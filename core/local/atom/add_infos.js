@@ -5,7 +5,7 @@ const path = require('path')
 
 const { id } = require('../../metadata')
 const stater = require('../stater')
-const logger = require('../../logger')
+const logger = require('../../utils/logger')
 
 const STEP_NAME = 'addInfos'
 

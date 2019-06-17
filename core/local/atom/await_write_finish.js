@@ -3,7 +3,7 @@
 const _ = require('lodash')
 
 const Channel = require('./channel')
-const logger = require('../../logger')
+const logger = require('../../utils/logger')
 
 const STEP_NAME = 'awaitWriteFinish'
 

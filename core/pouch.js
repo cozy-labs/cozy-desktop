@@ -9,8 +9,8 @@ const _ = require('lodash')
 const { isEqual } = _
 const path = require('path')
 
-const logger = require('./logger')
 const metadata = require('./metadata')
+const logger = require('./utils/logger')
 
 /*::
 import type { Config } from './config'

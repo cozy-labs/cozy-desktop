@@ -4,7 +4,7 @@ const _ = require('lodash')
 
 const winDetectMove = require('./win_detect_move')
 const { buildDir, buildFile, id } = require('../../metadata')
-const logger = require('../../logger')
+const logger = require('../../utils/logger')
 
 const STEP_NAME = 'dispatch'
 const component = `atom/${STEP_NAME}`

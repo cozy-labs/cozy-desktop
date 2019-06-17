@@ -5,8 +5,8 @@ const _ = require('lodash')
 
 const { getInode } = require('./local_event')
 const localChange = require('./local_change')
-const logger = require('../../logger')
-const measureTime = require('../../perftools')
+const logger = require('../../utils/logger')
+const measureTime = require('../../utils/perfs')
 
 /*::
 import type { LocalEvent } from './local_event'

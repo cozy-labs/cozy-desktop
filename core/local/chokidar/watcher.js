@@ -11,10 +11,10 @@ const analysis = require('./analysis')
 const checksumer = require('../checksumer')
 const chokidarEvent = require('./event')
 const LocalEventBuffer = require('./event_buffer')
-const logger = require('../../logger')
 const metadata = require('../../metadata')
-const { sameDate, fromDate } = require('../../timestamp')
 const syncDir = require('../sync_dir')
+const logger = require('../../utils/logger')
+const { sameDate, fromDate } = require('../../utils/timestamp')
 
 /*::
 import type { Metadata } from '../../metadata'

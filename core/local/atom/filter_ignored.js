@@ -2,8 +2,8 @@
 
 const _ = require('lodash')
 
-const logger = require('../../logger')
 const metadata = require('../../metadata')
+const logger = require('../../utils/logger')
 
 /*::
 import type Channel from './channel'

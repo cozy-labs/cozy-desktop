@@ -3,8 +3,8 @@
 const cheerio = require('cheerio')
 const request = require('request-promise')
 const url = require('url')
-const logger = require('../../core/logger')
 const Registration = require('../../core/remote/registration')
+const logger = require('../../core/utils/logger')
 
 const log = logger({
   component: 'remote/automated_registration'

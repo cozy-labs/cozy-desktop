@@ -10,7 +10,7 @@ const {
   TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../../core/remote/constants')
-const timestamp = require('../../../../core/timestamp')
+const timestamp = require('../../../../core/utils/timestamp')
 
 const dbBuilders = require('../db')
 

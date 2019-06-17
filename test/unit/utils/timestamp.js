@@ -3,7 +3,7 @@
 const should = require('should')
 const sinon = require('sinon')
 
-const timestamp = require('../../core/timestamp')
+const timestamp = require('../../../core/utils/timestamp')
 const { InvalidTimestampError, maxDate, sameDate, almostSameDate } = timestamp
 
 // XXX: Pass strings to javascript's Date constructor everywhere, so the tests

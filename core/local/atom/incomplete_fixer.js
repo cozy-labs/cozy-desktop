@@ -4,7 +4,7 @@ const path = require('path')
 
 const stater = require('../stater')
 const metadata = require('../../metadata')
-const logger = require('../../logger')
+const logger = require('../../utils/logger')
 
 const STEP_NAME = 'incompleteFixer'
 

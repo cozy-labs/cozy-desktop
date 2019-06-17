@@ -6,7 +6,7 @@ const _ = require('lodash')
 const path = require('path')
 
 const { hideOnWindows } = require('./utils/fs')
-const logger = require('./logger')
+const logger = require('./utils/logger')
 
 const log = logger({
   component: 'Config'

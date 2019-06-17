@@ -6,7 +6,7 @@ const path = require('path')
 const SortedSet = require('../../utils/sorted_set')
 const { id } = require('../../metadata')
 const Channel = require('./channel')
-const logger = require('../../logger')
+const logger = require('../../utils/logger')
 
 const STEP_NAME = 'winDetectMove'
 

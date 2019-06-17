@@ -4,7 +4,7 @@ const { basename, dirname, resolve } = require('path')
 const { matcher, makeRe } = require('micromatch')
 const fs = require('fs')
 
-const logger = require('./logger')
+const logger = require('./utils/logger')
 
 const log = logger({
   component: 'Ignore'

@@ -20,7 +20,7 @@ const Prep = require('../../../core/prep')
 const remote = require('../../../core/remote')
 const { Remote } = remote
 const { TRASH_DIR_ID } = require('../../../core/remote/constants')
-const timestamp = require('../../../core/timestamp')
+const timestamp = require('../../../core/utils/timestamp')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')

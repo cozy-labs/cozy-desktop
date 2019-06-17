@@ -6,11 +6,11 @@ const path = require('path')
 const { posix, sep } = path
 
 const { RemoteCozy } = require('./cozy')
-const logger = require('../logger')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
-const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
+const logger = require('../utils/logger')
+const measureTime = require('../utils/perfs')
 
 /*::
 import type EventEmitter from 'events'

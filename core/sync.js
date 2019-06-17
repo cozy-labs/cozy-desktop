@@ -7,12 +7,12 @@ const { dirname } = require('path')
 const _ = require('lodash')
 
 const { MAX_SYNC_ATTEMPTS } = require('./constants')
-const logger = require('./logger')
 const metadata = require('./metadata')
 const userActionRequired = require('./remote/user_action_required')
 const { HEARTBEAT } = require('./remote/watcher')
 const { otherSide } = require('./side')
-const measureTime = require('./perftools')
+const logger = require('./utils/logger')
+const measureTime = require('./utils/perfs')
 
 /*::
 import type EventEmitter from 'events'
