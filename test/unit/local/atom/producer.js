@@ -20,7 +20,7 @@ onPlatforms(['linux', 'win32'], () => {
     let producer
 
     beforeEach(() => {
-      syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'foo-'))
+      syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'Cozy Drive.test-'))
       syncDir = new ContextDir(syncPath)
       producer = new Producer({
         syncPath
