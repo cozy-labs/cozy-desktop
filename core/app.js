@@ -13,9 +13,6 @@ const { createGzip } = require('zlib')
 require('./globals')
 const pkg = require('../package.json')
 const config = require('./config')
-const logger = require('./logger')
-const sentry = require('./sentry')
-const { LOG_FILE, LOG_FILENAME } = logger
 const Pouch = require('./pouch')
 const Ignore = require('./ignore')
 const { Merge } = require('./merge')
@@ -25,6 +22,9 @@ const { Remote } = require('./remote')
 const Sync = require('./sync')
 const SyncState = require('./syncstate')
 const Registration = require('./remote/registration')
+const logger = require('./utils/logger')
+const { LOG_FILE, LOG_FILENAME } = logger
+const sentry = require('./utils/sentry')
 
 /*::
 import type EventEmitter from 'events'

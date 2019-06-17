@@ -3,9 +3,9 @@
 const _ = require('lodash')
 const path = require('path')
 
-const logger = require('../../logger')
 const { id } = require('../../metadata')
 const Channel = require('./channel')
+const logger = require('../../utils/logger')
 
 /*::
 import type Pouch from '../../pouch'

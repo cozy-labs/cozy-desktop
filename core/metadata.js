@@ -6,13 +6,13 @@ const mime = require('mime')
 const deepDiff = require('deep-diff').diff
 const path = require('path')
 
-const logger = require('./logger')
 const {
   detectPathIssues,
   detectPathLengthIssue
 } = require('./path_restrictions')
 const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
-const timestamp = require('./timestamp')
+const logger = require('./utils/logger')
+const timestamp = require('./utils/timestamp')
 
 const fsutils = require('./utils/fs')
 /*::

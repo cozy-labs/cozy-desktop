@@ -4,9 +4,9 @@ const autoBind = require('auto-bind')
 const { clone } = require('lodash')
 const { join } = require('path')
 
-const logger = require('./logger')
 const metadata = require('./metadata')
 const { TRASH_DIR_NAME } = require('./remote/constants')
+const logger = require('./utils/logger')
 
 /*::
 import type { Config } from './config'

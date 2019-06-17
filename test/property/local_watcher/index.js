@@ -10,7 +10,7 @@ const path = require('path')
 const Promise = require('bluebird')
 
 const { id } = require('../../../core/metadata')
-const { defaultLogger } = require('../../../core/logger')
+const { defaultLogger } = require('../../../core/utils/logger')
 
 const { ContextDir } = require('../../support/helpers/context_dir')
 const TmpDir = require('../../support/helpers/TmpDir')

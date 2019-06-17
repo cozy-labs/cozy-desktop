@@ -4,8 +4,6 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 
 const checksumer = require('./../checksumer')
-const logger = require('../../logger')
-
 const Producer = require('./producer')
 const addInfos = require('./add_infos')
 const filterIgnored = require('./filter_ignored')
@@ -18,6 +16,7 @@ const addChecksum = require('./add_checksum')
 const incompleteFixer = require('./incomplete_fixer')
 const overwrite = require('./overwrite')
 const dispatch = require('./dispatch')
+const logger = require('../../utils/logger')
 
 /*::
 import type Pouch from '../../pouch'

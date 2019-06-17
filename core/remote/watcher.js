@@ -5,12 +5,12 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 const { FetchError } = require('electron-fetch')
 
-const logger = require('../logger')
 const metadata = require('../metadata')
 const { MergeMissingParentError } = require('../merge')
 const remoteChange = require('./change')
 const { inRemoteTrash } = require('./document')
 const userActionRequired = require('./user_action_required')
+const logger = require('../utils/logger')
 
 /*::
 import type EventEmitter from 'events'

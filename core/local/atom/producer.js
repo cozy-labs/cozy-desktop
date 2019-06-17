@@ -8,8 +8,8 @@ const watcher = require('@atom/watcher')
 
 const Channel = require('./channel')
 const { INITIAL_SCAN_DONE } = require('./event')
-const logger = require('../../logger')
 const defaultStater = require('../stater')
+const logger = require('../../utils/logger')
 
 /*::
 import type { AtomEvent } from './event'

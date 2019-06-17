@@ -10,14 +10,14 @@ const bluebird = require('bluebird')
 
 const { TMP_DIR_NAME } = require('./constants')
 const stater = require('./stater')
-const logger = require('../logger')
 const { isUpToDate } = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
-const sentry = require('../sentry')
 const watcher = require('./watcher')
-const measureTime = require('../perftools')
 const { withContentLength } = require('../file_stream_provider')
 const syncDir = require('./sync_dir')
+const logger = require('../utils/logger')
+const measureTime = require('../utils/perfs')
+const sentry = require('../utils/sentry')
 
 /*::
 import type EventEmitter from 'events'

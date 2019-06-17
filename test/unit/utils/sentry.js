@@ -2,7 +2,7 @@
 
 require('should')
 
-const sentry = require('../../core/sentry')
+const sentry = require('../../../core/utils/sentry')
 
 describe('Sentry', function() {
   describe('toSentryContext', function() {

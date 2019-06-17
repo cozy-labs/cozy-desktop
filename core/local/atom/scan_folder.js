@@ -1,6 +1,6 @@
 /* @flow */
 
-const logger = require('../../logger')
+const logger = require('../../utils/logger')
 
 const STEP_NAME = 'scanFolder'
 

@@ -1,7 +1,7 @@
 /* @flow */
 
-const logger = require('../logger')
 const delay = require('../utils/delay')
+const logger = require('../utils/logger')
 
 /*::
 import type EventEmitter from 'events'

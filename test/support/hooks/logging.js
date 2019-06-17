@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 /* @flow */
 
-const logger = require('../../../core/logger')
+const logger = require('../../../core/utils/logger')
 
 const { defaultLogger } = logger
 const log = logger({ component: 'mocha' })

@@ -4,7 +4,7 @@ const _ = require('lodash')
 const path = require('path')
 
 const metadata = require('../../../../core/metadata')
-const timestamp = require('../../../../core/timestamp')
+const timestamp = require('../../../../core/utils/timestamp')
 
 const dbBuilders = require('../db')
 const statsBuilder = require('../stats')

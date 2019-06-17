@@ -5,6 +5,7 @@ const path = require('path')
 
 const metadata = require('../../metadata')
 const { getInode } = require('./local_event')
+const logger = require('../../utils/logger')
 
 /*::
 import type fs from 'fs'
@@ -18,8 +19,6 @@ import type {
   LocalFileUpdated
 } from './local_event'
 */
-
-const logger = require('../../logger')
 
 module.exports = {
   build,

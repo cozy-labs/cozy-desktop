@@ -5,7 +5,7 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 const should = require('should')
 
-const logger = require('../../core/logger')
+const logger = require('../../core/utils/logger')
 
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
