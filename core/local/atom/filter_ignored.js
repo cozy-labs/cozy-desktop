@@ -1,10 +1,13 @@
 /* @flow */
 
+const _ = require('lodash')
+
 const logger = require('../../logger')
+const metadata = require('../../metadata')
 
 /*::
 import type Channel from './channel'
-import type { AtomEvent } from './event'
+import type { AtomEvent, EventKind } from './event'
 import type { Ignore } from '../../ignore'
 */
 
@@ -15,6 +18,7 @@ const log = logger({
 })
 
 module.exports = {
+  STEP_NAME,
   loop
 }
 
@@ -27,24 +31,68 @@ function loop(
   channel /*: Channel */,
   opts /*: { ignore: Ignore } */
 ) /*: Channel */ {
-  const notIgnored = buildNotIgnored(opts.ignore)
+  const isIgnored = (path /*: string */, kind /*: EventKind */) =>
+    opts.ignore.isIgnored({
+      relativePath: path,
+      isFolder: kind === 'directory'
+    })
 
-  return channel.map(batch => {
-    return batch.filter(notIgnored)
+  return channel.map(events => {
+    const batch = []
+
+    for (const event of events) {
+      if (event.noIgnore) {
+        batch.push(event)
+        continue
+      }
+
+      const isPathIgnored = isIgnored(event.path, event.kind)
+
+      if (event.action === 'renamed' && event.oldPath != null) {
+        const isOldPathIgnored = isIgnored(event.oldPath, event.kind)
+
+        if (isOldPathIgnored && isPathIgnored) {
+          log.debug({ event }, 'Ignored via .cozyignore')
+        } else if (isPathIgnored) {
+          const deletedEvent = movedToIgnoredPath(event)
+          batch.push(deletedEvent)
+        } else if (isOldPathIgnored) {
+          const createdEvent = movedFromIgnoredPath(event)
+          batch.push(createdEvent)
+        } else {
+          batch.push(event)
+        }
+      } else if (isPathIgnored) {
+        log.debug({ event }, 'Ignored via .cozyignore')
+      } else {
+        batch.push(event)
+      }
+    }
+
+    return batch
   })
 }
 
-function buildNotIgnored(
-  ignoreRules /*: Ignore */
-) /*: ((AtomEvent) => boolean) */ {
-  return (event /*: AtomEvent */) /*: boolean */ => {
-    if (event.noIgnore) {
-      return true
-    }
-    const relativePath = event.path
-    const isFolder = event.kind === 'directory'
-    const isIgnored = ignoreRules.isIgnored({ relativePath, isFolder })
-    if (isIgnored) log.debug({ event }, 'Ignored')
-    return !isIgnored
+function movedFromIgnoredPath(event /*: AtomEvent */) /*: AtomEvent */ {
+  const createdEvent = {
+    ...event,
+    action: 'created'
   }
+  _.set(createdEvent, [STEP_NAME, 'movedFromIgnoredPath'], createdEvent.oldPath)
+  delete createdEvent.oldPath
+
+  return createdEvent
+}
+
+function movedToIgnoredPath(event /*: AtomEvent */) /*: AtomEvent */ {
+  const deletedEvent = {
+    ...event,
+    action: 'deleted'
+  }
+  _.set(deletedEvent, [STEP_NAME, 'movedToIgnoredPath'], deletedEvent.path)
+  deletedEvent._id = metadata.id(deletedEvent.oldPath)
+  deletedEvent.path = deletedEvent.oldPath
+  delete deletedEvent.oldPath
+
+  return deletedEvent
 }
