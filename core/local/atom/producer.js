@@ -12,6 +12,7 @@ const defaultStater = require('../stater')
 const logger = require('../../utils/logger')
 
 /*::
+import type { Ignore } from '../../ignore'
 import type { AtomEvent } from './event'
 
 export type Scanner = (string) => Promise<void>
@@ -47,11 +48,13 @@ module.exports = class Producer {
   /*::
   channel: Channel
   syncPath: string
+  ignore: Ignore
   watcher: *
   */
-  constructor(opts /*: { syncPath : string } */) {
+  constructor(opts /*: { syncPath: string, ignore: Ignore } */) {
     this.channel = new Channel()
     this.syncPath = opts.syncPath
+    this.ignore = opts.ignore
     this.watcher = null
     autoBind(this)
   }

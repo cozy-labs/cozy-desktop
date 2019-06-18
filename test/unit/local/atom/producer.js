@@ -8,6 +8,7 @@ const fs = require('fs')
 const path = require('path')
 
 const Producer = require('../../../../core/local/atom/producer')
+const { Ignore } = require('../../../../core/ignore')
 const stater = require('../../../../core/local/stater')
 
 const { ContextDir } = require('../../../support/helpers/context_dir')
@@ -17,14 +18,14 @@ onPlatforms(['linux', 'win32'], () => {
   describe('core/local/atom/producer', () => {
     let syncDir
     let syncPath
+    let ignore
     let producer
 
     beforeEach(() => {
       syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'Cozy Drive.test-'))
       syncDir = new ContextDir(syncPath)
-      producer = new Producer({
-        syncPath
-      })
+      ignore = new Ignore([])
+      producer = new Producer({ syncPath, ignore })
     })
 
     describe('scan()', () => {
