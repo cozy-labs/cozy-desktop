@@ -29,6 +29,31 @@ onPlatforms(['linux', 'win32'], () => {
     })
 
     describe('scan()', () => {
+      context('when a directory is ignored', () => {
+        const ignoredDir = 'ignored-dir'
+        const notIgnoredFile = 'not-ignored-file'
+        let ignore
+
+        beforeEach(async () => {
+          ignore = new Ignore([ignoredDir])
+          producer = new Producer({ syncPath, ignore })
+
+          await syncDir.makeTree([
+            `${ignoredDir}/`,
+            `${ignoredDir}/subdir/`,
+            `${ignoredDir}/subdir/file`,
+            `${notIgnoredFile}`
+          ])
+        })
+
+        it('does not produce events for it and its descendants', async () => {
+          await producer.scan('.')
+
+          const outputBatch = await producer.channel.pop()
+          should(outputBatch.map(e => e.path)).deepEqual([notIgnoredFile])
+        })
+      })
+
       context('on readdir / stat race condition', () => {
         const missingFileName = 'i-am-missing'
         const readdir = async () => [missingFileName]

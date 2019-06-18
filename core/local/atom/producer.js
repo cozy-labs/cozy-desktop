@@ -22,6 +22,12 @@ const log = logger({
   component: 'atom/Producer'
 })
 
+const isIgnored = ({ path, kind }, ignore) =>
+  ignore.isIgnored({
+    relativePath: path,
+    isFolder: kind === 'directory'
+  })
+
 // This class is a producer: it watches the filesystem and the events are
 // created here.
 //
@@ -118,7 +124,9 @@ module.exports = class Producer {
         }
         if (stats) scanEvent.stats = stats
         if (incomplete) scanEvent.incomplete = incomplete
-        entries.push(scanEvent)
+        if (!isIgnored(scanEvent, this.ignore)) {
+          entries.push(scanEvent)
+        }
       } catch (err) {
         log.error({ err, path: path.join(relPath, entry) })
       }
