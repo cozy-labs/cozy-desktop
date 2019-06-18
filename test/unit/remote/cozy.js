@@ -186,11 +186,11 @@ describe('RemoteCozy', function() {
 
       const foundDir = await remoteCozy.findDirectoryByPath(dir.path)
       delete foundDir.created_at
-      foundDir.should.deepEqual(dir)
+      should(foundDir).have.properties(dir)
 
       const foundSubdir = await remoteCozy.findDirectoryByPath(subdir.path)
       delete foundSubdir.created_at
-      foundSubdir.should.deepEqual(subdir)
+      should(foundSubdir).have.properties(subdir)
     })
 
     it('rejects when the directory does not exist remotely', async function() {
