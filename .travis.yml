@@ -9,9 +9,9 @@ addons:
       packages:
           - gcc-8
           - g++-8
-          - jq
+          # - jq
 services:
-  - docker
+  # - docker
 cache:
   yarn: true
   directories:
@@ -34,44 +34,44 @@ env:
 
 before_install: | # install cozy stack for integration test
     # CouchDB
-    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      travis_retry docker run -d -p 5984:5984 --name couch apache/couchdb:2.2;
-    fi
-    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      travis_retry brew cask install https://raw.githubusercontent.com/Homebrew/homebrew-cask/master/Casks/apache-couchdb.rb;
-      printf "\n[log]\nlevel = warn\n" >> /Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/etc/local.ini;
-      ulimit -S -n 1024;
-      (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb >couchdb.log 2>&1 &);
-    fi
-    sleep 8
-    curl -X PUT http://127.0.0.1:5984/{_users,_replicator,_global_changes}
+    # if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    #   travis_retry docker run -d -p 5984:5984 --name couch apache/couchdb:2.2;
+    # fi
+    # if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    #   travis_retry brew cask install https://raw.githubusercontent.com/Homebrew/homebrew-cask/master/Casks/apache-couchdb.rb;
+    #   printf "\n[log]\nlevel = warn\n" >> /Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/etc/local.ini;
+    #   ulimit -S -n 1024;
+    #   (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb >couchdb.log 2>&1 &);
+    # fi
+    # sleep 8
+    # curl -X PUT http://127.0.0.1:5984/{_users,_replicator,_global_changes}
 
     # Cozy-stack
-    if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      travis_retry brew install gimme;
-      travis_retry brew install imagemagick;
-    fi
-    if [[ ! -f $GOPATH/bin/cozy-stack ]]; then
-      travis_retry gimme 1.11;
-      source ~/.gimme/envs/go1.11.env;
-      travis_retry go get -u github.com/cozy/cozy-stack;
-    fi
+    # if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    #   travis_retry brew install gimme;
+    #   travis_retry brew install imagemagick;
+    # fi
+    # if [[ ! -f $GOPATH/bin/cozy-stack ]]; then
+    #   travis_retry gimme 1.11;
+    #   source ~/.gimme/envs/go1.11.env;
+    #   travis_retry go get -u github.com/cozy/cozy-stack;
+    # fi
 
     # Create a local instance and an OAuth client
-    mkdir -p "$COZY_STACK_STORAGE"
-    $GOPATH/bin/cozy-stack serve --fs-url "file://$COZY_STACK_STORAGE" --log-level warning >/dev/null &
-    sleep 1
-    $GOPATH/bin/cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
-    export COZY_CLIENT_ID=$($GOPATH/bin/cozy-stack instances client-oauth localhost:8080 http://localhost/ test github.com/cozy-labs/cozy-desktop)
-    export COZY_STACK_TOKEN=$($GOPATH/bin/cozy-stack instances token-oauth localhost:8080 "$COZY_CLIENT_ID" io.cozy.files io.cozy.settings)
+    # mkdir -p "$COZY_STACK_STORAGE"
+    # $GOPATH/bin/cozy-stack serve --fs-url "file://$COZY_STACK_STORAGE" --log-level warning >/dev/null &
+    # sleep 1
+    # $GOPATH/bin/cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
+    # export COZY_CLIENT_ID=$($GOPATH/bin/cozy-stack instances client-oauth localhost:8080 http://localhost/ test github.com/cozy-labs/cozy-desktop)
+    # export COZY_STACK_TOKEN=$($GOPATH/bin/cozy-stack instances token-oauth localhost:8080 "$COZY_CLIENT_ID" io.cozy.files io.cozy.settings)
 
     # COZY_DESKTOP_DIR
-    if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      hdiutil create -megabytes 10 -fs APFS -volname cozy-desktop "$COZY_DESKTOP_DIR";
-      hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR";
-    else
-      mkdir -p "$COZY_DESKTOP_DIR";
-    fi
+    # if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
+    #   hdiutil create -megabytes 10 -fs APFS -volname cozy-desktop "$COZY_DESKTOP_DIR";
+    #   hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR";
+    # else
+    #   mkdir -p "$COZY_DESKTOP_DIR";
+    # fi
 
     # Dummy .env.test (all variables are already set)
     # env-cmd ignores the file when empty
@@ -84,42 +84,42 @@ branches:
         - master
 stages:
     - test
-    - name: notify
-      if: type = pull_request
+    # - name: notify
+    #   if: type = pull_request
 jobs:
     fast_finish: true
     include:
-        - &test_unit
-          stage: test
-          script: ./dev/ci/tests.sh
-          name: unit and integration tests
-          os: osx
-        - <<: *test_unit
-          os: linux
-          env:
-              - CC=gcc-8 CXX=g++-8
-        - &test_scenarios
-          stage: test
-          script: ./dev/ci/scenarios.sh
-          name: real life scenarios
-          os: osx
-        - <<: *test_scenarios
-          os: linux
-          env:
-              - CC=gcc-8 CXX=g++-8
+        # - &test_unit
+        #   stage: test
+        #   script: ./dev/ci/tests.sh
+        #   name: unit and integration tests
+        #   os: osx
+        # - <<: *test_unit
+        #   os: linux
+        #   env:
+        #       - CC=gcc-8 CXX=g++-8
+        # - &test_scenarios
+        #   stage: test
+        #   script: ./dev/ci/scenarios.sh
+        #   name: real life scenarios
+        #   os: osx
+        # - <<: *test_scenarios
+        #   os: linux
+        #   env:
+        #       - CC=gcc-8 CXX=g++-8
         - &dist
           stage: test
           script: ./dev/ci/dist.sh
           name: artifacts build
           os: osx
-        - <<: *dist
-          os: linux
-          env:
-              - CC=gcc-8 CXX=g++-8
-        - stage: notify
-          name: artifacts built
-          services: false
-          cache: false
-          before_install: skip
-          install: skip
-          script: ./dev/ci/notify.sh
+        # - <<: *dist
+        #   os: linux
+        #   env:
+        #       - CC=gcc-8 CXX=g++-8
+        # - stage: notify
+        #   name: artifacts built
+        #   services: false
+        #   cache: false
+        #   before_install: skip
+        #   install: skip
+        #   script: ./dev/ci/notify.sh
