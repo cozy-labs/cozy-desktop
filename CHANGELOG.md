@@ -1,5 +1,15 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.3-beta.2 - 2019-06-18
+
+Improvements for Windows & macOS users:
+
+- The application [code signing][code-signing] certificate was updated.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.3-beta.1 - 2019-06-18
 
 Improvements for Windows & GNU/Linux users:
@@ -2685,6 +2695,7 @@ Please note that future releases will only support the new Cozy stack v3.
 * Proof of concept
 
 [KNOWN_ISSUES.md]: https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md
+[code-signing]: https://en.wikipedia.org/wiki/Code_signing
 [3.7.0-beta.1]: https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.7.0-beta.1
 [3.7.0-beta.2]: https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.7.0-beta.2
 [3.7.0-beta.3]: https://github.com/cozy-labs/cozy-desktop/releases/tag/v3.7.0-beta.3
