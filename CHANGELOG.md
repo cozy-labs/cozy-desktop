@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.3-beta.1 - 2019-06-18
+
+Improvements for Windows & GNU/Linux users:
+
+- When a file or directory is moved or renamed from an ignored path to a
+  non-ignored one, it is now handled as a creation.
+- When a file or directory is moved or renamed from a non-ignored path to an
+  ignored one, it is now handled as a deletion.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.2 - 2019-06-12
 
 Improvements for all users:
