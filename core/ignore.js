@@ -132,7 +132,6 @@ const defaultRulesPath = resolve(__dirname, './config/.cozyignore')
 class Ignore {
   /*::
   patterns: IgnorePattern[]
-  match: (string, boolean, IgnorePattern) => boolean
   */
 
   // Load patterns for detecting ignored files and folders
