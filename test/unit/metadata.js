@@ -1082,6 +1082,21 @@ describe('metadata', function() {
         .and.match(conflictRegExp(base))
         .and.not.containEql(firstConflictSuffix)
     })
+    it('should not duplicate its ancestors', () => {
+      const doc = { path: 'parent/dir/file.ext' }
+      const newDoc = createConflictingDoc(doc)
+      should(newDoc.path).not.containEql('parent/dir/parent/dir')
+    })
+
+    it('should not duplicate the ancestors of a previous conflict', () => {
+      const ext = `.pdf`
+      const base = `docname`
+      const doc = {
+        path: `parent/dir/${base}-conflict-1970-01-01T13_37_00.666Z${ext}`
+      }
+      const newDoc = createConflictingDoc(doc)
+      should(newDoc.path).not.containEql('parent/dir/parent/dir')
+    })
   })
 
   describe('shouldIgnore', () => {
