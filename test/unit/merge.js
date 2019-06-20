@@ -2135,6 +2135,70 @@ describe('Merge', function() {
       })
     })
 
+    it('adds an unsynced file from the other side to the destination folder', async function() {
+      const was = await builders
+        .metadir()
+        .path('ADDED_DIR')
+        .sides({ [this.side]: 2, [otherSide(this.side)]: 2 })
+        .remoteId(dbBuilders.id())
+        .create()
+      const unsyncedFile = await builders
+        .metafile()
+        .path('ADDED_DIR/unsynced-file')
+        .sides({ [otherSide(this.side)]: 1 })
+        .create()
+      const doc = builders
+        .metadir()
+        .path('MOVED_DIR')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.moveFolderRecursivelyAsync(
+          this.side,
+          _.cloneDeep(doc),
+          _.cloneDeep(was)
+        )
+      )
+
+      const movedPath = oldDoc => oldDoc.path.replace(was.path, doc.path)
+
+      const movedSrc = _.defaults(
+        {
+          moveTo: doc._id,
+          _deleted: true
+        },
+        was
+      )
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.omit(movedSrc, ['_rev']), // TODO: Compare _revs
+          _.defaults(
+            {
+              sides: increasedSides(was.sides, this.side, 1),
+              moveFrom: movedSrc
+            },
+            doc
+          ),
+          _.defaults(
+            {
+              sides: { target: 2, [otherSide(this.side)]: 2 },
+              _deleted: true
+            },
+            _.omit(unsyncedFile, ['_rev']) // TODO: Compare _revs
+          ),
+          _.defaults(
+            {
+              _id: metadata.id(movedPath(unsyncedFile)),
+              path: movedPath(unsyncedFile),
+              sides: { target: 1, [otherSide(this.side)]: 1 }
+            },
+            _.omit(unsyncedFile, ['_rev']) // TODO: Compare _revs
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
     context('when the destination has existed', () => {
       const path = 'DST_DIR'
 

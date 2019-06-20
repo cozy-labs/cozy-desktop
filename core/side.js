@@ -10,6 +10,8 @@ export type SideName =
   | "remote";
 */
 
+const SIDE_NAMES /*: Set<SideName> */ = new Set(['local', 'remote'])
+
 function otherSide(side /*: SideName */) /*: SideName */ {
   switch (side) {
     case 'local':
@@ -22,5 +24,6 @@ function otherSide(side /*: SideName */) /*: SideName */ {
 }
 
 module.exports = {
+  SIDE_NAMES,
   otherSide
 }

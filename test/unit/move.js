@@ -24,4 +24,37 @@ describe('move', () => {
         .eql(true)
     })
   })
+
+  describe('convertToDestinationAddition', () => {
+    const side = 'local'
+    let src, dst
+
+    beforeEach(() => {
+      src = builders
+        .metadata()
+        .path('src')
+        .upToDate()
+        .build()
+      dst = builders
+        .metadata(src)
+        .path('destination')
+        .build()
+
+      move(side, src, dst)
+      move.convertToDestinationAddition(side, src, dst)
+    })
+
+    it('deletes the source document', () => {
+      should(src._deleted).be.true()
+    })
+
+    it('marks the destination document as newly added on `side`', () => {
+      should(dst.sides).deepEqual({ target: 1, [side]: 1 })
+    })
+
+    it('removes move hints on both documents', () => {
+      should(src).not.have.property('moveTo')
+      should(dst).not.have.property('moveFrom')
+    })
+  })
 })
