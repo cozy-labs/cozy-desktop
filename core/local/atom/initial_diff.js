@@ -295,7 +295,7 @@ function fixPathsAfterParentMove(renamedEvents, event) {
         renamedEvent.path
       )
       if (event.oldPath && event.oldPath === pathFixed) {
-        event.action = 'ignored'
+        // event.action = 'ignored'
       } else {
         event.path = pathFixed
         event._id = id(event.path)
