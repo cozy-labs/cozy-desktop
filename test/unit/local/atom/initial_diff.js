@@ -765,7 +765,7 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('ignores child moves', async function() {
+    it('does not swallow possible changes on move descendants', async function() {
       await builders
         .metadir()
         .path('parent')
@@ -808,7 +808,7 @@ describe('core/local/atom/initial_diff', () => {
         },
         {
           ...fooScan,
-          action: 'ignored',
+          action: 'scan',
           oldPath: path.normalize('parent/foo'),
           [initialDiff.STEP_NAME]: {
             actionConvertedFrom: fooScan.action,
