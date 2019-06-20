@@ -3,9 +3,6 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
-  disabled: {
-    stopped: 'Broken by a regression on AtomWatcher. To be fixed soon.'
-  },
   init: [
     { ino: 1, path: 'src/' },
     { ino: 2, path: 'src/file', content: 'initial content' }
