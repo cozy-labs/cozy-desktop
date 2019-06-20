@@ -64,7 +64,7 @@ describe('Test scenarios', function() {
       it.skip(`test/scenarios/${
         scenario.name
       }/local/  (skip remote only test)`, () => {})
-    } else {
+    } else if (process.env[stoppedEnvVar] == null) {
       for (let atomCapture of loadAtomCaptures(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/atom/${
           atomCapture.name
@@ -105,7 +105,7 @@ describe('Test scenarios', function() {
           })
         }
       }
-
+    } else {
       const stoppedTestName = `test/scenarios/${scenario.name}/local/stopped`
       const stoppedTestSkipped = shouldSkipLocalStopped(scenario)
       if (stoppedTestSkipped) {
@@ -118,6 +118,7 @@ describe('Test scenarios', function() {
       }
     }
 
+    if (process.env[stoppedEnvVar]) continue
     const remoteTestName = `test/scenarios/${scenario.name}/remote/`
     const remoteTestSkipped = shouldSkipRemote(scenario)
     if (remoteTestSkipped) {

@@ -6,7 +6,8 @@ module.exports = ({
   side: 'local',
   disabled: {
     'atom/linux': 'Does not work with AtomWatcher yet.',
-    'atom/win32': 'Does not work with AtomWatcher yet.'
+    'atom/win32': 'Does not work with AtomWatcher yet.',
+    stopped: 'Does not work with AtomWatcher yet.'
   },
   init: [
     { ino: 1, path: 'dst/' },
