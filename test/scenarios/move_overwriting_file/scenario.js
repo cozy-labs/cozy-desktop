@@ -3,6 +3,9 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
+  disabled: {
+    stopped: 'Does not work with AtomWatcher yet.'
+  },
   init: [
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'dst/file' },
