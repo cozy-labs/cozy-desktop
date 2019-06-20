@@ -3,6 +3,9 @@
 # all hidden files
 .*
 
+# Cozy
+.system-tmp-cozy-drive/
+
 # Dropbox
 .dropbox
 .dropbox.attr
