@@ -1,5 +1,30 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.4-beta.1 - 2019-06-20
+
+Improvements for all users:
+
+- We fixed an issue where copies of conflicting files would not be created at
+  the right path.
+
+Improvements for Windows & GNU/Linux users:
+
+- We improved our test harness regarding the initial scan of the local synced
+  directory. Those new tests already allowed us to identify and fix an issue
+  (see next point).
+- When moving a directory then updating a descendant file while the app was
+  stopped, the file change would not be synced. This now works as expected.
+  This used to work but was broken at some point. The new tests should prevent
+  this to happen again.
+- Although some files and directories were correctly ignored during initial
+  scan, this was not done immediately, resulting in more work for the app.
+  They are now ignored as soon as possible. This should also prevent a couple
+  of issues with some Windows system directories.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.3 - 2019-06-18
 
 Improvements for Windows & macOS users:
