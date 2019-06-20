@@ -606,12 +606,13 @@ function createConflictingDoc(doc /*: Metadata */) /*: Metadata */ {
   let date = fsutils.validName(new Date().toISOString())
   let ext = path.extname(doc.path)
   let dir = path.dirname(doc.path)
-  let base = path.basename(doc.path, ext)
-  const previousConflictingName = conflictRegExp('(.*)').exec(doc.path)
-  const filename = previousConflictingName ? previousConflictingName[1] : base
-  // 180 is an arbitrary limit to avoid having files with too long names
-  const notToLongFilename = filename.slice(0, 180)
-  dst.path = `${path.join(dir, notToLongFilename)}-conflict-${date}${ext}`
+  let basename = path.basename(doc.path)
+  const previousConflictingName = conflictRegExp('(.*)').exec(basename)
+  const filename = previousConflictingName
+    ? previousConflictingName[1]
+    : path.basename(basename, ext)
+  const notTooLongFilename = filename.slice(0, 180)
+  dst.path = `${path.join(dir, notTooLongFilename)}-conflict-${date}${ext}`
   assignId(dst)
   return dst
 }
