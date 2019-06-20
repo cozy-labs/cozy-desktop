@@ -607,7 +607,7 @@ function createConflictingDoc(doc /*: Metadata */) /*: Metadata */ {
   let ext = path.extname(doc.path)
   let dir = path.dirname(doc.path)
   let base = path.basename(doc.path, ext)
-  const previousConflictingName = conflictRegExp('(.*)').exec(doc.path)
+  const previousConflictingName = conflictRegExp('(.*)').exec(base)
   const filename = previousConflictingName ? previousConflictingName[1] : base
   // 180 is an arbitrary limit to avoid having files with too long names
   const notToLongFilename = filename.slice(0, 180)
