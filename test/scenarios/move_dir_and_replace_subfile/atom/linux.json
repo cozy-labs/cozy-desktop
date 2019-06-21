@@ -1,0 +1,39 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "dst",
+      "oldPath": "src"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/file.tmp"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/file.tmp"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/file"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "dst/file",
+      "oldPath": "dst/file.tmp"
+    }
+  ]
+]
