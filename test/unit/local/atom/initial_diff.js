@@ -772,9 +772,10 @@ describe('core/local/atom/initial_diff', () => {
         .ino(1)
         .create()
       await builders
-        .metadir()
+        .metafile()
         .path('parent/foo')
         .ino(2)
+        .data('initial content')
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -789,9 +790,10 @@ describe('core/local/atom/initial_diff', () => {
       const fooScan = builders
         .event()
         .action('scan')
-        .kind('directory')
+        .kind('file')
         .path(path.normalize('parent-2/foo'))
         .ino(2)
+        .data('new content')
         .build()
       inputBatch([parent2Scan, fooScan, initialScanDone])
 
