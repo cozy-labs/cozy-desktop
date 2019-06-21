@@ -126,6 +126,8 @@ module.exports = class Producer {
         if (incomplete) scanEvent.incomplete = incomplete
         if (!isIgnored(scanEvent, this.ignore)) {
           entries.push(scanEvent)
+        } else {
+          log.debug({ event: scanEvent }, 'Ignored via .cozyignore')
         }
       } catch (err) {
         log.error({ err, path: path.join(relPath, entry) })
