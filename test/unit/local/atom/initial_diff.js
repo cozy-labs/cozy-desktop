@@ -772,9 +772,10 @@ describe('core/local/atom/initial_diff', () => {
         .ino(1)
         .create()
       await builders
-        .metadir()
+        .metafile()
         .path('parent/foo')
         .ino(2)
+        .data('initial content')
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -789,9 +790,10 @@ describe('core/local/atom/initial_diff', () => {
       const fooScan = builders
         .event()
         .action('scan')
-        .kind('directory')
+        .kind('file')
         .path(path.normalize('parent-2/foo'))
         .ino(2)
+        .data('new content')
         .build()
       inputBatch([parent2Scan, fooScan, initialScanDone])
 
@@ -818,6 +820,54 @@ describe('core/local/atom/initial_diff', () => {
             }
           }
         },
+        initialScanDone
+      ])
+    })
+
+    it('does not delete replaced file after parent move', async function() {
+      await builders
+        .metadir()
+        .path('parent')
+        .ino(1)
+        .create()
+      await builders
+        .metafile()
+        .path('parent/foo')
+        .ino(2)
+        .data('initial content')
+        .create()
+
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+
+      const parent2Scan = builders
+        .event()
+        .action('scan')
+        .kind('directory')
+        .path('parent-2')
+        .ino(1)
+        .build()
+      const fooScan = builders
+        .event()
+        .action('scan')
+        .kind('file')
+        .path(path.normalize('parent-2/foo'))
+        .ino(3)
+        .data('new content')
+        .build()
+      inputBatch([parent2Scan, fooScan, initialScanDone])
+
+      const events = await initialDiff
+        .loop(channel, { pouch: this.pouch, state })
+        .pop()
+
+      should(events).deepEqual([
+        {
+          ...parent2Scan,
+          action: 'renamed',
+          oldPath: 'parent',
+          [initialDiff.STEP_NAME]: { actionConvertedFrom: parent2Scan.action }
+        },
+        fooScan,
         initialScanDone
       ])
     })

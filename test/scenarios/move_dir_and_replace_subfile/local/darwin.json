@@ -1,0 +1,40 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "src"
+  },
+  {
+    "type": "addDir",
+    "path": "dst",
+    "stats": {
+      "ino": 1,
+      "size": 96,
+      "mtime": "2019-06-21T13:11:15.153Z",
+      "ctime": "2019-06-21T13:11:15.181Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "src/file"
+  },
+  {
+    "type": "add",
+    "path": "dst/file",
+    "stats": {
+      "ino": 2,
+      "size": 8,
+      "mtime": "2019-06-21T13:11:15.153Z",
+      "ctime": "2019-06-21T13:11:15.153Z"
+    }
+  },
+  {
+    "type": "change",
+    "path": "dst/file",
+    "stats": {
+      "ino": 8602342876,
+      "size": 11,
+      "mtime": "2019-06-21T13:11:16.684Z",
+      "ctime": "2019-06-21T13:11:16.685Z"
+    }
+  }
+]
