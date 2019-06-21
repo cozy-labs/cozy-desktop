@@ -1,5 +1,26 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.13.4-beta.2 - 2019-06-21
+
+Improvements for Windows & GNU/Linux users:
+
+- We've found out that if a file is replaced and it's parent directory
+  moved or renamed while the client was stopped, we were issuing a
+  deleted event for the file at its new location because its inode is
+  different and we didn't match it with its Pouch document.
+  However, we have logic that prevents issuing deleted events for paths
+  we have seen during the initial scan.
+  The problem here is that we were correcting the file's path (i.e. we
+  follow its parent move and use its new location in the file's path)
+  after checking if we had seen the path during the initial scan.
+  We're now correcting the path before doing the check so a scan event
+  of the new file's path will prevent the initialDiff from issuing a
+  deleted event for it.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.13.4-beta.1 - 2019-06-20
 
 Improvements for all users:
