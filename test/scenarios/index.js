@@ -10,7 +10,8 @@ type FSAddDirAction = {|
 
 type FSCreateFileAction = {|
   type: 'create_file',
-  path: string
+  path: string,
+  content?: string
 |}
 
 type FSDeleteAction = {|

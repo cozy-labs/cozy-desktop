@@ -304,7 +304,10 @@ module.exports.runActions = (
 
       case 'create_file':
         debug('- create_file', action.path)
-        return fse.outputFile(abspath(action.path), 'whatever')
+        return fse.outputFile(
+          abspath(action.path),
+          action.content || 'whatever'
+        )
 
       case 'update_file':
         debug('- update_file', action.path)

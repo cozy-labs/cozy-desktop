@@ -78,7 +78,7 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
           const parentDir = await cozy.files.statByPath(
             `/${path.posix.dirname(action.path)}`
           )
-          return cozy.files.create('whatever', {
+          return cozy.files.create(action.content || 'whatever', {
             name: path.posix.basename(action.path),
             dirID: parentDir._id,
             contentType: 'text/plain'
