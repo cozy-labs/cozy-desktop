@@ -190,22 +190,22 @@ async function initialDiff(
       if (event.action === 'initial-scan-done') {
         // Emit deleted events for all the remaining files/dirs
         for (const [, doc] of byInode) {
-          if (!scannedPaths.has(doc.path)) {
-            const deletedEvent /*: AtomEvent */ = {
-              action: 'deleted',
-              kind: kind(doc),
-              _id: id(doc.path),
-              path: doc.path
-            }
-            fixPathsAfterParentMove(renamedEvents, deletedEvent)
-            _.set(
-              deletedEvent,
-              [STEP_NAME, 'notFound'],
-              _.defaults(
-                _.pick(deletedEvent, ['kind', 'path']),
-                _.pick(doc, ['md5sum', 'updated_at'])
-              )
+          const deletedEvent /*: AtomEvent */ = {
+            action: 'deleted',
+            kind: kind(doc),
+            _id: id(doc.path),
+            path: doc.path
+          }
+          fixPathsAfterParentMove(renamedEvents, deletedEvent)
+          _.set(
+            deletedEvent,
+            [STEP_NAME, 'notFound'],
+            _.defaults(
+              _.pick(deletedEvent, ['kind', 'path']),
+              _.pick(doc, ['md5sum', 'updated_at'])
             )
+          )
+          if (!scannedPaths.has(deletedEvent.path)) {
             batch.push(deletedEvent)
           }
         }
