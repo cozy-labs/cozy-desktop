@@ -12,7 +12,7 @@ const chokidarEvent = require('./event')
 const LocalEventBuffer = require('./event_buffer')
 const initialScan = require('./initial_scan')
 const prepareEvents = require('./prepare_events')
-const metadata = require('../../metadata')
+const sendToPrep = require('./send_to_prep')
 const syncDir = require('../sync_dir')
 const logger = require('../../utils/logger')
 
@@ -34,8 +34,6 @@ const log = logger({
 log.chokidar = log.child({
   component: 'Chokidar'
 })
-
-const SIDE = 'local'
 
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
@@ -200,7 +198,7 @@ module.exports = class LocalWatcher {
     const release = await this.pouch.lock(this)
     let target = -1
     try {
-      await this.sendToPrep(changes)
+      await sendToPrep.step(changes, this)
       target = (await this.pouch.db.changes({ limit: 1, descending: true }))
         .last_seq
     } finally {
@@ -211,65 +209,6 @@ module.exports = class LocalWatcher {
     if (this.initialScan != null) {
       this.initialScan.resolve()
       this.initialScan = null
-    }
-  }
-
-  // @TODO inline this.onXXX in this function
-  // @TODO rename LocalChange types to prep.xxxxxx
-  async sendToPrep(changes /*: LocalChange[] */) {
-    const errors /*: Error[] */ = []
-    for (let c of changes) {
-      try {
-        if (c.needRefetch) {
-          // $FlowFixMe
-          c.old = await this.pouch.db.get(metadata.id(c.old.path))
-        }
-        switch (c.type) {
-          // TODO: Inline old LocalWatcher methods
-          case 'DirDeletion':
-            await this.onUnlinkDir(c.path)
-            break
-          case 'FileDeletion':
-            await this.onUnlinkFile(c.path)
-            break
-          case 'DirAddition':
-            await this.onAddDir(c.path, c.stats)
-            break
-          case 'FileUpdate':
-            await this.onChange(c.path, c.stats, c.md5sum)
-            break
-          case 'FileAddition':
-            await this.onAddFile(c.path, c.stats, c.md5sum)
-            break
-          case 'FileMove':
-            await this.onMoveFile(c.path, c.stats, c.md5sum, c.old, c.overwrite)
-            if (c.update)
-              await this.onChange(
-                c.update.path,
-                c.update.stats,
-                c.update.md5sum
-              )
-            break
-          case 'DirMove':
-            await this.onMoveFolder(c.path, c.stats, c.old, c.overwrite)
-            break
-          case 'Ignored':
-            break
-          default:
-            throw new Error('wrong changes')
-        }
-      } catch (err) {
-        log.error({ path: c.path, err })
-        errors.push(err)
-      }
-    }
-
-    if (errors.length > 0) {
-      throw new Error(
-        `Could not apply all changes to Prep:\n- ${errors
-          .map(e => e.stack)
-          .join('\n- ')}`
-      )
     }
   }
 
@@ -305,89 +244,5 @@ module.exports = class LocalWatcher {
   async checksum(filePath /*: string */) /*: Promise<string> */ {
     const absPath = path.join(this.syncPath, filePath)
     return this.checksumer.push(absPath)
-  }
-
-  /* Changes */
-
-  // New file detected
-  onAddFile(
-    filePath /*: string */,
-    stats /*: fse.Stats */,
-    md5sum /*: string */
-  ) {
-    const logError = err => log.error({ err, path: filePath })
-    const doc = metadata.buildFile(filePath, stats, md5sum)
-    log.info({ path: filePath }, 'FileAddition')
-    return this.prep.addFileAsync(SIDE, doc).catch(logError)
-  }
-
-  async onMoveFile(
-    filePath /*: string */,
-    stats /*: fse.Stats */,
-    md5sum /*: string */,
-    old /*: Metadata */,
-    overwrite /*: ?Metadata */
-  ) {
-    const logError = err => log.error({ err, path: filePath })
-    const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
-    if (overwrite) doc.overwrite = overwrite
-    log.info({ path: filePath, oldpath: old.path }, 'FileMove')
-    return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
-  }
-
-  onMoveFolder(
-    folderPath /*: string */,
-    stats /*: fse.Stats */,
-    old /*: Metadata */,
-    overwrite /*: ?boolean */
-  ) {
-    const logError = err => log.error({ err, path: folderPath })
-    const doc = metadata.buildDir(folderPath, stats, old.remote)
-    // $FlowFixMe we set doc.overwrite to true, it will be replaced by metadata in merge
-    if (overwrite) doc.overwrite = overwrite
-    log.info({ path: folderPath, oldpath: old.path }, 'DirMove')
-    return this.prep.moveFolderAsync(SIDE, doc, old).catch(logError)
-  }
-
-  // New directory detected
-  onAddDir(folderPath /*: string */, stats /*: fse.Stats */) {
-    const doc = metadata.buildDir(folderPath, stats)
-    log.info({ path: folderPath }, 'DirAddition')
-    return this.prep
-      .putFolderAsync(SIDE, doc)
-      .catch(err => log.error({ err, path: folderPath }))
-  }
-
-  // File deletion detected
-  //
-  // It can be a file moved out. So, we wait a bit to see if a file with the
-  // same checksum is added and, if not, we declare this file as deleted.
-  onUnlinkFile(filePath /*: string */) {
-    log.info({ path: filePath }, 'FileDeletion')
-    return this.prep
-      .trashFileAsync(SIDE, { path: filePath })
-      .catch(err => log.error({ err, path: filePath }))
-  }
-
-  // Folder deletion detected
-  //
-  // We don't want to delete a folder before files inside it. So we wait a bit
-  // after chokidar event to declare the folder as deleted.
-  onUnlinkDir(folderPath /*: string */) {
-    log.info({ path: folderPath }, 'DirDeletion')
-    return this.prep
-      .trashFolderAsync(SIDE, { path: folderPath })
-      .catch(err => log.error({ err, path: folderPath }))
-  }
-
-  // File update detected
-  onChange(
-    filePath /*: string */,
-    stats /*: fse.Stats */,
-    md5sum /*: string */
-  ) {
-    log.info({ path: filePath }, 'FileUpdate')
-    const doc = metadata.buildFile(filePath, stats, md5sum)
-    return this.prep.updateFileAsync(SIDE, doc)
   }
 }
