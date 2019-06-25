@@ -7,7 +7,6 @@ const should = require('should')
 
 const { TMP_DIR_NAME } = require('../../../../core/local/constants')
 const Watcher = require('../../../../core/local/chokidar/watcher')
-const metadata = require('../../../../core/metadata')
 
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
@@ -136,26 +135,6 @@ describe('ChokidarWatcher Tests', function() {
     it('does not swallow errors', async function() {
       await should(this.watcher.checksum(relpath)).be.rejectedWith({
         code: 'ENOENT'
-      })
-    })
-  })
-
-  describe('#oldMetadata()', () => {
-    it('resolves with the metadata whose id matches the event path', async function() {
-      const old = await builders.metadata().create()
-      const resultByEventType = {}
-      for (let type of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
-        resultByEventType[type] = await this.watcher.oldMetadata({
-          type,
-          path: old.path
-        })
-      }
-      should(resultByEventType).deepEqual({
-        add: old,
-        addDir: old,
-        change: old,
-        unlink: old,
-        unlinkDir: old
       })
     })
   })
@@ -447,75 +426,5 @@ describe('ChokidarWatcher Tests', function() {
         }, 1800)
       })
     })
-  })
-
-  describe('detectOfflineUnlinkEvents', function() {
-    beforeEach('reset pouchdb', function(done) {
-      this.pouch.resetDatabase(done)
-    })
-
-    it('detects deleted files and folders', async function() {
-      let folder1 = {
-        _id: 'folder1',
-        path: 'folder1',
-        docType: 'folder'
-      }
-      let folder2 = {
-        _id: 'folder2',
-        path: 'folder2',
-        docType: 'folder'
-      }
-      const folder3 = {
-        _id: '.cozy_trash/folder3',
-        path: '.cozy_trash/folder3',
-        trashed: true,
-        docType: 'folder'
-      }
-      let file1 = {
-        _id: 'file1',
-        path: 'file1',
-        docType: 'file'
-      }
-      let file2 = {
-        _id: 'file2',
-        path: 'file2',
-        docType: 'file'
-      }
-      const file3 = {
-        _id: '.cozy_trash/folder3/file3',
-        path: '.cozy_trash/folder3/file3',
-        trashed: true,
-        docType: 'file'
-      }
-      for (let doc of [folder1, folder2, folder3, file1, file2, file3]) {
-        const { rev } = await this.pouch.db.put(doc)
-        doc._rev = rev
-      }
-      const initialScan = { ids: ['folder1', 'file1'].map(metadata.id) }
-
-      const { offlineEvents } = await this.watcher.detectOfflineUnlinkEvents(
-        initialScan
-      )
-
-      should(offlineEvents).deepEqual([
-        { type: 'unlinkDir', path: 'folder2', old: folder2 },
-        { type: 'unlink', path: 'file2', old: file2 }
-      ])
-    })
-
-    if (platform === 'win32' || platform === 'darwin') {
-      it('ignores incompatible docs', async function() {
-        await builders
-          .metafile()
-          .incompatible()
-          .create()
-        const initialScan = { ids: [] }
-
-        const { offlineEvents } = await this.watcher.detectOfflineUnlinkEvents(
-          initialScan
-        )
-        should(offlineEvents).deepEqual([])
-      })
-    }
   })
 })

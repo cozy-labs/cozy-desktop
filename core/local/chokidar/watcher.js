@@ -4,17 +4,17 @@ const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const chokidar = require('chokidar')
 const fse = require('fs-extra')
-const _ = require('lodash')
 const path = require('path')
 
 const analysis = require('./analysis')
 const checksumer = require('../checksumer')
 const chokidarEvent = require('./event')
 const LocalEventBuffer = require('./event_buffer')
-const metadata = require('../../metadata')
+const initialScan = require('./initial_scan')
+const prepareEvents = require('./prepare_events')
+const sendToPrep = require('./send_to_prep')
 const syncDir = require('../sync_dir')
 const logger = require('../../utils/logger')
-const { sameDate, fromDate } = require('../../utils/timestamp')
 
 /*::
 import type { Metadata } from '../../metadata'
@@ -22,6 +22,7 @@ import type Pouch from '../../pouch'
 import type Prep from '../../prep'
 import type { Checksumer } from '../checksumer'
 import type { ChokidarEvent } from './event'
+import type { InitialScan } from './initial_scan'
 import type { LocalEvent } from './local_event'
 import type { LocalChange } from './local_change'
 import type EventEmitter from 'events'
@@ -33,19 +34,6 @@ const log = logger({
 log.chokidar = log.child({
   component: 'Chokidar'
 })
-
-const SIDE = 'local'
-
-const NB_OF_DELETABLE_ELEMENT = 3
-
-/*::
-type InitialScan = {
-  ids: string[],
-  emptyDirRetryCount: number,
-  flushed: boolean,
-  resolve: () => void
-}
-*/
 
 // This file contains the filesystem watcher that will trigger operations when
 // a file or a folder is added/removed/changed locally.
@@ -190,42 +178,13 @@ module.exports = class LocalWatcher {
     syncDir.ensureExistsSync(this)
     this.events.emit('local-start')
 
-    let events = rawEvents.filter(e => e.path !== '') // @TODO handle root dir events
-    const initialScan = this.initialScan
-    if (initialScan != null) {
-      const ids = initialScan.ids
-      events
-        .filter(e => e.type.startsWith('add'))
-        .forEach(e => ids.push(metadata.id(e.path)))
-
-      const {
-        offlineEvents,
-        unappliedMoves,
-        emptySyncDir
-      } = await this.detectOfflineUnlinkEvents(initialScan)
-      events = offlineEvents.concat(events)
-
-      events = events.filter(e => {
-        return unappliedMoves.indexOf(metadata.id(e.path)) === -1
-      })
-
-      if (emptySyncDir) {
-        // it is possible this is a temporary faillure (too late mounting)
-        // push back the events and wait until next flush.
-        this.buffer.unflush(rawEvents)
-        if (--initialScan.emptyDirRetryCount === 0) {
-          throw new Error('Syncdir is empty')
-        }
-        return initialScan.resolve()
-      }
-
-      log.debug({ initialEvents: events })
-    }
+    const events = await initialScan.step(rawEvents, this)
+    if (!events) return
 
     log.trace('Prepare events...')
-    const preparedEvents /*: LocalEvent[] */ = await this.prepareEvents(
+    const preparedEvents /*: LocalEvent[] */ = await prepareEvents.step(
       events,
-      initialScan
+      this
     )
     log.trace('Done with events preparation.')
 
@@ -239,7 +198,7 @@ module.exports = class LocalWatcher {
     const release = await this.pouch.lock(this)
     let target = -1
     try {
-      await this.sendToPrep(changes)
+      await sendToPrep.step(changes, this)
       target = (await this.pouch.db.changes({ limit: 1, descending: true }))
         .last_seq
     } finally {
@@ -247,174 +206,9 @@ module.exports = class LocalWatcher {
       release()
       this.events.emit('local-end')
     }
-    if (initialScan != null) {
-      initialScan.resolve()
+    if (this.initialScan != null) {
+      this.initialScan.resolve()
       this.initialScan = null
-    }
-  }
-
-  async detectOfflineUnlinkEvents(
-    initialScan /*: InitialScan */
-  ) /*: Promise<{offlineEvents: Array<ChokidarEvent>, emptySyncDir: boolean}> */ {
-    // Try to detect removed files & folders
-    const events /*: Array<ChokidarEvent> */ = []
-    const docs = await this.pouch.byRecursivePathAsync('')
-    const inInitialScan = doc =>
-      initialScan.ids.indexOf(metadata.id(doc.path)) !== -1
-
-    // the Syncdir is empty error only occurs if there was some docs beforehand
-    let emptySyncDir = docs.length > NB_OF_DELETABLE_ELEMENT
-    let unappliedMoves = []
-
-    for (const doc of docs) {
-      if (inInitialScan(doc) || doc.trashed || doc.incompatibilities) {
-        emptySyncDir = false
-      } else if (doc.moveFrom) {
-        // unapplied move
-        unappliedMoves.push(metadata.id(doc.moveFrom.path))
-      } else {
-        log.chokidar.debug({ path: doc.path }, 'pretend unlink or unlinkDir')
-        events.unshift(chokidarEvent.pretendUnlinkFromMetadata(doc))
-      }
-    }
-
-    return { offlineEvents: events, unappliedMoves, emptySyncDir }
-  }
-
-  async oldMetadata(e /*: ChokidarEvent */) /*: Promise<?Metadata> */ {
-    if (e.old) return e.old
-    try {
-      return await this.pouch.db.get(metadata.id(e.path))
-    } catch (err) {
-      if (err.status !== 404) log.error({ path: e.path, err })
-    }
-    return null
-  }
-
-  async prepareEvents(
-    events /*: ChokidarEvent[] */,
-    initialScan /*: ?InitialScan */
-  ) /*: Promise<LocalEvent[]> */ {
-    return Promise.map(
-      events,
-      async (e /*: ChokidarEvent */) /*: Promise<?LocalEvent> */ => {
-        const abspath = path.join(this.syncPath, e.path)
-
-        const e2 /*: Object */ = _.merge(
-          {
-            old: await this.oldMetadata(e)
-          },
-          e
-        )
-
-        if (e.type === 'add' || e.type === 'change') {
-          if (
-            initialScan &&
-            e2.old &&
-            e2.path === e2.old.path &&
-            sameDate(fromDate(e2.old.updated_at), fromDate(e2.stats.mtime))
-          ) {
-            log.trace(
-              { path: e.path },
-              'Do not compute checksum : mtime & path are unchanged'
-            )
-            e2.md5sum = e2.old.md5sum
-          } else {
-            try {
-              e2.md5sum = await this.checksum(e.path)
-              log.trace(
-                { path: e.path, md5sum: e2.md5sum },
-                'Checksum complete'
-              )
-            } catch (err) {
-              // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
-              // Chokidar reports a change event when a file is replaced by a directory
-              if (err.code.match(/ENOENT/)) {
-                log.debug(
-                  { path: e.path, ino: e.stats.ino },
-                  'Checksum failed: file does not exist anymore'
-                )
-                e2.wip = true
-              } else {
-                log.error({ path: e.path, err }, 'Checksum failed')
-                return null
-              }
-            }
-          }
-        }
-
-        if (e.type === 'addDir') {
-          if (!(await fse.exists(abspath))) {
-            log.debug(
-              { path: e.path, ino: e.stats.ino },
-              'Dir does not exist anymore'
-            )
-            e2.wip = true
-          }
-        }
-
-        return e2
-      },
-      { concurrency: 50 }
-    ).filter((e /*: ?LocalEvent */) => e != null)
-  }
-
-  // @TODO inline this.onXXX in this function
-  // @TODO rename LocalChange types to prep.xxxxxx
-  async sendToPrep(changes /*: LocalChange[] */) {
-    const errors /*: Error[] */ = []
-    for (let c of changes) {
-      try {
-        if (c.needRefetch) {
-          // $FlowFixMe
-          c.old = await this.pouch.db.get(metadata.id(c.old.path))
-        }
-        switch (c.type) {
-          // TODO: Inline old LocalWatcher methods
-          case 'DirDeletion':
-            await this.onUnlinkDir(c.path)
-            break
-          case 'FileDeletion':
-            await this.onUnlinkFile(c.path)
-            break
-          case 'DirAddition':
-            await this.onAddDir(c.path, c.stats)
-            break
-          case 'FileUpdate':
-            await this.onChange(c.path, c.stats, c.md5sum)
-            break
-          case 'FileAddition':
-            await this.onAddFile(c.path, c.stats, c.md5sum)
-            break
-          case 'FileMove':
-            await this.onMoveFile(c.path, c.stats, c.md5sum, c.old, c.overwrite)
-            if (c.update)
-              await this.onChange(
-                c.update.path,
-                c.update.stats,
-                c.update.md5sum
-              )
-            break
-          case 'DirMove':
-            await this.onMoveFolder(c.path, c.stats, c.old, c.overwrite)
-            break
-          case 'Ignored':
-            break
-          default:
-            throw new Error('wrong changes')
-        }
-      } catch (err) {
-        log.error({ path: c.path, err })
-        errors.push(err)
-      }
-    }
-
-    if (errors.length > 0) {
-      throw new Error(
-        `Could not apply all changes to Prep:\n- ${errors
-          .map(e => e.stack)
-          .join('\n- ')}`
-      )
     }
   }
 
@@ -450,89 +244,5 @@ module.exports = class LocalWatcher {
   async checksum(filePath /*: string */) /*: Promise<string> */ {
     const absPath = path.join(this.syncPath, filePath)
     return this.checksumer.push(absPath)
-  }
-
-  /* Changes */
-
-  // New file detected
-  onAddFile(
-    filePath /*: string */,
-    stats /*: fse.Stats */,
-    md5sum /*: string */
-  ) {
-    const logError = err => log.error({ err, path: filePath })
-    const doc = metadata.buildFile(filePath, stats, md5sum)
-    log.info({ path: filePath }, 'FileAddition')
-    return this.prep.addFileAsync(SIDE, doc).catch(logError)
-  }
-
-  async onMoveFile(
-    filePath /*: string */,
-    stats /*: fse.Stats */,
-    md5sum /*: string */,
-    old /*: Metadata */,
-    overwrite /*: ?Metadata */
-  ) {
-    const logError = err => log.error({ err, path: filePath })
-    const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
-    if (overwrite) doc.overwrite = overwrite
-    log.info({ path: filePath, oldpath: old.path }, 'FileMove')
-    return this.prep.moveFileAsync(SIDE, doc, old).catch(logError)
-  }
-
-  onMoveFolder(
-    folderPath /*: string */,
-    stats /*: fse.Stats */,
-    old /*: Metadata */,
-    overwrite /*: ?boolean */
-  ) {
-    const logError = err => log.error({ err, path: folderPath })
-    const doc = metadata.buildDir(folderPath, stats, old.remote)
-    // $FlowFixMe we set doc.overwrite to true, it will be replaced by metadata in merge
-    if (overwrite) doc.overwrite = overwrite
-    log.info({ path: folderPath, oldpath: old.path }, 'DirMove')
-    return this.prep.moveFolderAsync(SIDE, doc, old).catch(logError)
-  }
-
-  // New directory detected
-  onAddDir(folderPath /*: string */, stats /*: fse.Stats */) {
-    const doc = metadata.buildDir(folderPath, stats)
-    log.info({ path: folderPath }, 'DirAddition')
-    return this.prep
-      .putFolderAsync(SIDE, doc)
-      .catch(err => log.error({ err, path: folderPath }))
-  }
-
-  // File deletion detected
-  //
-  // It can be a file moved out. So, we wait a bit to see if a file with the
-  // same checksum is added and, if not, we declare this file as deleted.
-  onUnlinkFile(filePath /*: string */) {
-    log.info({ path: filePath }, 'FileDeletion')
-    return this.prep
-      .trashFileAsync(SIDE, { path: filePath })
-      .catch(err => log.error({ err, path: filePath }))
-  }
-
-  // Folder deletion detected
-  //
-  // We don't want to delete a folder before files inside it. So we wait a bit
-  // after chokidar event to declare the folder as deleted.
-  onUnlinkDir(folderPath /*: string */) {
-    log.info({ path: folderPath }, 'DirDeletion')
-    return this.prep
-      .trashFolderAsync(SIDE, { path: folderPath })
-      .catch(err => log.error({ err, path: folderPath }))
-  }
-
-  // File update detected
-  onChange(
-    filePath /*: string */,
-    stats /*: fse.Stats */,
-    md5sum /*: string */
-  ) {
-    log.info({ path: filePath }, 'FileUpdate')
-    const doc = metadata.buildFile(filePath, stats, md5sum)
-    return this.prep.updateFileAsync(SIDE, doc)
   }
 }
