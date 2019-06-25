@@ -227,19 +227,14 @@ view helpers model =
 
 syncButton : Helpers -> Status -> Html Msg
 syncButton helpers status =
-    case status of
-        UpToDate ->
-            a
-                [ class "btn"
-                , href "#"
-                , onClick Sync
-                ]
-                [ text (helpers.t "Settings Sync") ]
+    a
+        [ class "btn"
+        , href "#"
+        , case status of
+            UpToDate ->
+                onClick Sync
 
-        _ ->
-            a
-                [ class "btn"
-                , href "#"
-                , attribute "disabled" "true"
-                ]
-                [ text (statusToString helpers status) ]
+            _ ->
+                attribute "disabled" "true"
+        ]
+        [ text (helpers.t "Settings Sync") ]
