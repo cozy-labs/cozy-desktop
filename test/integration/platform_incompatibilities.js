@@ -12,7 +12,7 @@ const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
 
 describe('Platform incompatibilities', () => {
-  if (process.platform !== 'win32' && process.platform !== 'darwin') {
+  if (process.platform !== 'win32') {
     it.skip(`is not tested on ${process.platform}`, () => {})
     return
   }

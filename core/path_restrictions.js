@@ -129,7 +129,7 @@ const win = pathRestrictions({
 const mac = pathRestrictions({
   pathMaxBytes: 1023, // PATH_MAX without nul
   nameMaxBytes: 255, // NAME_MAX
-  reservedChars: new Set('/:') // macOS API forbids colons for legacy reasons
+  reservedChars: new Set('/')
 })
 
 // See: /usr/include/linux/limits.h
