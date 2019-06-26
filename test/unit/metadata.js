@@ -1063,7 +1063,8 @@ describe('metadata', function() {
     })
     it('should not mistake a previous conflict timezone for a file extension', () => {
       const base = 'dirname'
-      const firstConflictSuffix = '-conflict-1970-01-01T13_37_00.666Z'
+      const timezone = '666Z'
+      const firstConflictSuffix = `-conflict-1970-01-01T13_37_00.${timezone}`
       const doc = { path: `${base}${firstConflictSuffix}` }
 
       const secondConflict = createConflictingDoc(doc)
@@ -1071,7 +1072,7 @@ describe('metadata', function() {
       should(secondConflict.path)
         .be.a.String()
         .and.match(conflictRegExp(base))
-        .and.not.containEql(firstConflictSuffix)
+        .and.not.containEql(timezone)
     })
     it('should not duplicate its ancestors', () => {
       const doc = { path: 'parent/dir/file.ext' }
