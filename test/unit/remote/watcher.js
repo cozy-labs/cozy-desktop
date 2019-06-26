@@ -8,7 +8,6 @@ const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
 const CozyClient = require('cozy-client-js').Client
-const { FetchError } = require('electron-fetch')
 
 const configHelpers = require('../../support/helpers/config')
 const { posixifyPath } = require('../../support/helpers/context_dir')
@@ -153,11 +152,22 @@ describe('RemoteWatcher', function() {
     })
 
     context('on error while fetching changes', () => {
+      /* cozy-client-js defines its own FetchError type which is not exported.
+       * This means we can't use the FetchError class from electron-fetch to
+       * simulate network errors in cozy-client-js calls.
+       */
+      const CozyFetchError = function(message) {
+        this.name = 'FetchError'
+        this.response = {}
+        this.url = faker.internet.url
+        this.reason = message
+        this.message = message
+      }
       const randomMessage = faker.random.words
       let err
 
       beforeEach(function() {
-        err = new FetchError(randomMessage())
+        err = new CozyFetchError(randomMessage())
         this.remoteCozy.changes.rejects(err)
       })
 

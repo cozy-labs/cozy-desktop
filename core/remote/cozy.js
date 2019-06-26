@@ -2,7 +2,6 @@
 
 const autoBind = require('auto-bind')
 const CozyClient = require('cozy-client-js').Client
-const { FetchError } = require('electron-fetch')
 const _ = require('lodash')
 const path = require('path')
 
@@ -38,6 +37,8 @@ function DirectoryNotFound(path /*: string */, cozyURL /*: string */) {
 }
 
 /*::
+import type FetchError from 'electron-fetch'
+
 type CommonCozyErrorHandlingOptions = {
   events: EventEmitter,
   log: Logger
@@ -45,15 +46,25 @@ type CommonCozyErrorHandlingOptions = {
 
 type CommonCozyErrorHandlingResult =
   | 'offline'
+
+// See definition at https://github.com/cozy/cozy-client-js/blob/v0.13.0/src/fetch.js#L152
+type CozyFetchError = Error & {
+  name: 'FetchError',
+  response: *,
+  url: string,
+  status: number,
+  reason: { message: string } | string,
+  message: string
+}
 */
 
 const COZY_CLIENT_REVOKED_MESSAGE = 'Client has been revoked'
 
 const handleCommonCozyErrors = (
-  err /*: Error */,
+  err /*: FetchError | CozyFetchError | Error */,
   { events, log } /*: CommonCozyErrorHandlingOptions */
 ) /*: CommonCozyErrorHandlingResult */ => {
-  if (err instanceof FetchError) {
+  if (err.name === 'FetchError') {
     if (err.status === 400) {
       log.error({ err })
       throw new Error(COZY_CLIENT_REVOKED_MESSAGE)
