@@ -29,7 +29,7 @@ onPlatforms(['linux', 'win32'], () => {
     })
 
     describe('scan()', () => {
-      context.only('when a directory is ignored', () => {
+      context('when a directory is ignored', () => {
         const ignoredDir = 'ignored-dir'
         const notIgnoredFile = 'not-ignored-file'
         let ignore
