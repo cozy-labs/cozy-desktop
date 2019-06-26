@@ -27,7 +27,7 @@ const {
   upToDate,
   outOfDateSide,
   createConflictingDoc,
-  conflictRegExp
+  CONFLICT_REGEXP
 } = metadata
 const { Ignore } = require('../../core/ignore')
 const { FILES_DOCTYPE } = require('../../core/remote/constants')
@@ -1004,20 +1004,22 @@ describe('metadata', function() {
         path: 'docname'
       }
       const newDoc = createConflictingDoc(doc)
-      const pathRegExp = conflictRegExp(doc.path)
       should(newDoc.path)
         .be.a.String()
-        .and.match(pathRegExp)
+        .and.startWith(doc.path)
+        .and.match(CONFLICT_REGEXP)
     })
     it('should get the correct _id', () => {
       const doc = {
-        path: 'docname'
+        path: 'docname',
+        _id: metadata.id('docname')
       }
       const newDoc = createConflictingDoc(doc)
-      const pathRegExp = new RegExp(conflictRegExp(doc.path).source, 'i')
+      const idRegExp = new RegExp(CONFLICT_REGEXP.source, 'i')
       should(newDoc._id)
         .be.a.String()
-        .and.match(pathRegExp)
+        .and.startWith(doc._id)
+        .and.match(idRegExp)
     })
     it('should keep the correct extension', () => {
       const ext = '.pdf'
@@ -1042,10 +1044,8 @@ describe('metadata', function() {
           'Lorem ipsum dolor sit amet consectetur adipiscing elit Nam a velit at dolor euismod tincidunt sit amet id ante Cras vehicula lectus purus In lobortis risus lectus vitae rhoncus quam porta nullam'
       }
       const newDoc = createConflictingDoc(doc)
-      const newDocBasename = conflictRegExp('(.*)').exec(
-        path.basename(newDoc.path)
-      )[1]
-      should(newDocBasename.length).equal(180)
+      const conflictStart = path.basename(newDoc.path).search(CONFLICT_REGEXP)
+      should(conflictStart).equal(180)
     })
     it('should handle the renaming of a conflict', () => {
       const ext = `.pdf`
@@ -1054,11 +1054,11 @@ describe('metadata', function() {
         path: `${base}-conflict-1970-01-01T13_37_00.666Z${ext}`
       }
       const secondConflict = createConflictingDoc(doc)
-      const pathRegExp = conflictRegExp(base)
       should(doc.path).not.equal(secondConflict.path)
       should(secondConflict.path)
         .be.a.String()
-        .and.match(pathRegExp)
+        .and.startWith(base)
+        .and.match(CONFLICT_REGEXP)
       should(path.extname(secondConflict.path)).equal(ext)
     })
     it('should not mistake a previous conflict timezone for a file extension', () => {
@@ -1071,7 +1071,8 @@ describe('metadata', function() {
 
       should(secondConflict.path)
         .be.a.String()
-        .and.match(conflictRegExp(base))
+        .and.startWith(base)
+        .and.match(CONFLICT_REGEXP)
         .and.not.containEql(timezone)
     })
     it('should not duplicate its ancestors', () => {
