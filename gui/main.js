@@ -8,6 +8,7 @@ const path = require('path')
 const os = require('os')
 
 const proxy = require('./js/proxy')
+const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/cozy')
 
 const autoLaunch = require('./js/autolaunch')
 const lastFiles = require('./js/lastfiles')
@@ -81,7 +82,7 @@ let revokedAlertShown = false
 let syncDirUnlinkedShown = false
 
 const sendErrorToMainWindow = msg => {
-  if (msg === 'Client has been revoked') {
+  if (msg === COZY_CLIENT_REVOKED_MESSAGE) {
     if (revokedAlertShown) return
     revokedAlertShown = true // prevent the alert from appearing twice
     const options = {

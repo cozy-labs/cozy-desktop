@@ -15,6 +15,7 @@ const {
 const {
   DirectoryNotFound,
   RemoteCozy,
+  CozyClientRevokedError,
   handleCommonCozyErrors
 } = require('../../../core/remote/cozy')
 
@@ -57,12 +58,11 @@ describe('core/remote/cozy', () => {
         context('on FetchError status 400', () => {
           const err = new FetchError(randomMessage())
           err.status = 400
-          const expectedMessage = 'Client has been revoked'
 
-          it(`throws an Error with the exact "${expectedMessage}" message to notify the GUI`, () => {
+          it(`throws a CozyClientRevokedError to notify the GUI`, () => {
             should(() => {
               handleCommonCozyErrors(err, { events, log })
-            }).throw()
+            }).throw(new CozyClientRevokedError())
           })
         })
 
