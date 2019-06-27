@@ -29,6 +29,8 @@ const log = logger({
 
 const { platform } = process
 
+const CONFLICT_REGEXP = /-conflict-\d{4}(?:-\d{2}){2}T(?:\d{2}_?){3}\.\d{3}Z/
+
 /*::
 export type SideName =
   | "local"
@@ -130,7 +132,7 @@ module.exports = {
   upToDate,
   outOfDateSide,
   createConflictingDoc,
-  conflictRegExp,
+  CONFLICT_REGEXP,
   shouldIgnore
 }
 
@@ -594,27 +596,36 @@ function buildFile(
   return doc
 }
 
-const CONFLICT_PATTERN =
-  '-conflict-\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}.\\d{3}Z'
+function createConflictingDoc(doc /*: Metadata */) /*: Metadata */ {
+  const newPath = CONFLICT_REGEXP.test(doc.path)
+    ? replacePreviousConflictSuffix(doc.path)
+    : addConflictSuffix(doc.path)
 
-function conflictRegExp(prefix /*: string */) /*: RegExp */ {
-  return new RegExp(`${prefix}${CONFLICT_PATTERN}`)
+  return {
+    ...doc,
+    path: newPath,
+    _id: id(newPath)
+  }
 }
 
-function createConflictingDoc(doc /*: Metadata */) /*: Metadata */ {
-  let dst = clone(doc)
-  let date = fsutils.validName(new Date().toISOString())
-  let ext = path.extname(doc.path)
-  let dir = path.dirname(doc.path)
-  let basename = path.basename(doc.path)
-  const previousConflictingName = conflictRegExp('(.*)').exec(basename)
-  const filename = previousConflictingName
-    ? previousConflictingName[1]
-    : path.basename(basename, ext)
+function conflictSuffix() /*: string */ {
+  const date = fsutils.validName(new Date().toISOString())
+  return `-conflict-${date}`
+}
+
+function replacePreviousConflictSuffix(filePath /*: string */) /*: string */ {
+  return filePath.replace(CONFLICT_REGEXP, conflictSuffix())
+}
+
+function addConflictSuffix(filePath /*: string */) /*: string */ {
+  const dirname = path.dirname(filePath)
+  const extname = path.extname(filePath)
+  const filename = path.basename(filePath, extname)
   const notTooLongFilename = filename.slice(0, 180)
-  dst.path = `${path.join(dir, notTooLongFilename)}-conflict-${date}${ext}`
-  assignId(dst)
-  return dst
+  return `${path.join(
+    dirname,
+    notTooLongFilename
+  )}${conflictSuffix()}${extname}`
 }
 
 function shouldIgnore(
