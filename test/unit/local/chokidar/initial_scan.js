@@ -81,7 +81,7 @@ describe('core/local/chokidar/initial_scan', () => {
       ])
     })
 
-    if (platform === 'win32' || platform === 'darwin') {
+    if (platform === 'win32') {
       it('ignores incompatible docs', async function() {
         await builders
           .metafile()

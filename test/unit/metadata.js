@@ -7,7 +7,7 @@ const should = require('should')
 const sinon = require('sinon')
 
 const Builders = require('../support/builders')
-const { onPlatform } = require('../support/helpers/platform')
+const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 
 const metadata = require('../../core/metadata')
 const {
@@ -255,20 +255,11 @@ describe('metadata', function() {
       })
     })
 
-    onPlatform('darwin', () => {
-      it('lists platform incompatibilities for all names in the path', () => {
+    onPlatforms(['darwin', 'linux'], () => {
+      it('does not list Windows incompatibilities', () => {
         const path = 'foo/b:ar/qux'
         const doc = { path, docType: 'folder' }
-        should(detectPlatformIncompatibilities(doc, syncPath)).deepEqual([
-          {
-            type: 'reservedChars',
-            name: 'b:ar',
-            path: 'foo/b:ar',
-            docType: 'folder',
-            reservedChars: new Set(':'),
-            platform
-          }
-        ])
+        should(detectPlatformIncompatibilities(doc, syncPath)).deepEqual([])
       })
     })
   })
