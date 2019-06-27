@@ -3,13 +3,12 @@
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const _ = require('lodash')
-const { FetchError } = require('electron-fetch')
 
 const metadata = require('../metadata')
 const { MergeMissingParentError } = require('../merge')
 const remoteChange = require('./change')
+const { handleCommonCozyErrors } = require('./cozy')
 const { inRemoteTrash } = require('./document')
-const userActionRequired = require('./user_action_required')
 const logger = require('../utils/logger')
 
 /*::
@@ -126,19 +125,9 @@ class RemoteWatcher {
     }
 
     for (const err of errors) {
-      if (err.status === 400) {
-        log.error({ err }, 'Client has been revoked')
-        throw new Error('Client has been revoked')
-      } else if (err.status === 402) {
-        log.error({ err }, 'User action required')
-        throw userActionRequired.includeJSONintoError(err)
-      } else if (err instanceof FetchError) {
-        log.error({ err }, 'Assuming offline')
-        this.events.emit('offline')
-      } else {
-        log.error({ err })
-        throw err
-      }
+      handleCommonCozyErrors(err, { events: this.events, log })
+      // No need to handle 'offline' result since next pollings will switch
+      // back to 'online' as soon as the changesfeed can be fetched.
     }
   }
 
