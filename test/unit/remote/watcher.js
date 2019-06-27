@@ -955,7 +955,7 @@ describe('RemoteWatcher', function() {
     })
 
     onPlatform('darwin', () => {
-      it('detects when a new file is incompatible', async function() {
+      it('does not mistakenly assume a new file is incompatible', async function() {
         const remoteDoc = {
           _id: 'whatever',
           path: '/f:oo/b<a>r',
@@ -968,18 +968,8 @@ describe('RemoteWatcher', function() {
           0,
           []
         )
-        const platform = process.platform
         should(change.type).equal('FileAddition')
-        should((change /*: any */).doc.incompatibilities).deepEqual([
-          {
-            type: 'reservedChars',
-            name: 'f:oo',
-            path: 'f:oo',
-            docType: 'folder',
-            reservedChars: new Set(':'),
-            platform
-          }
-        ])
+        should((change /*: any */).doc.incompatibilities).be.undefined()
       })
     })
 
