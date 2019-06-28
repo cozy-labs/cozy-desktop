@@ -1,4 +1,8 @@
-/* @flow */
+/** Send LocalChanges to Prep/Merge
+ *
+ * @module core/local/chokidar/send_to_prep
+ * @flow
+ */
 
 const metadata = require('../../metadata')
 const logger = require('../../utils/logger')
@@ -27,7 +31,6 @@ type SendToPrepOpts = {
   pouch: Pouch,
   prep: Prep
 }
-
 */
 
 const log = logger({
@@ -36,7 +39,7 @@ const log = logger({
 
 const SIDE = 'local'
 
-// New file detected
+/** New file detected */
 const onAddFile = (
   { path: filePath, stats, md5sum } /*: LocalFileAddition */,
   prep /*: Prep */
@@ -70,7 +73,7 @@ const onMoveFolder = (
   return prep.moveFolderAsync(SIDE, doc, old).catch(logError)
 }
 
-// New directory detected
+/** New directory detected */
 const onAddDir = (
   { path: folderPath, stats } /*: LocalDirAddition */,
   prep /*: Prep */
@@ -82,10 +85,11 @@ const onAddDir = (
     .catch(err => log.error({ err, path: folderPath }))
 }
 
-// File deletion detected
-//
-// It can be a file moved out. So, we wait a bit to see if a file with the
-// same checksum is added and, if not, we declare this file as deleted.
+/** File deletion detected
+ *
+ * It can be a file moved out. So, we wait a bit to see if a file with the
+ * same checksum is added and, if not, we declare this file as deleted.
+ */
 const onUnlinkFile = (
   { path: filePath } /*: LocalFileDeletion */,
   prep /*: Prep */
@@ -96,10 +100,11 @@ const onUnlinkFile = (
     .catch(err => log.error({ err, path: filePath }))
 }
 
-// Folder deletion detected
-//
-// We don't want to delete a folder before files inside it. So we wait a bit
-// after chokidar event to declare the folder as deleted.
+/** Folder deletion detected
+ *
+ * We don't want to delete a folder before files inside it. So we wait a bit
+ * after chokidar event to declare the folder as deleted.
+ */
 const onUnlinkDir = (
   { path: folderPath } /*: LocalDirDeletion */,
   prep /*: Prep */
@@ -110,7 +115,7 @@ const onUnlinkDir = (
     .catch(err => log.error({ err, path: folderPath }))
 }
 
-// File update detected
+/** File update detected */
 const onChange = (
   {
     path: filePath,

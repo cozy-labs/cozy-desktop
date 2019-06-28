@@ -1,3 +1,8 @@
+/** The systray icon.
+ *
+ * @module gui/js/tray
+ */
+
 const { Tray, Menu, MenuItem } = require('electron')
 const { translate } = require('./i18n')
 const path = require('path')

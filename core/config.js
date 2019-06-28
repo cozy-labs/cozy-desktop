@@ -1,4 +1,8 @@
-/* @flow */
+/** The synchronization client configuration
+ *
+ * @module core/config
+ * @flow
+ */
 
 const fs = require('fs')
 const fse = require('fs-extra')

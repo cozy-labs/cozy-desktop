@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/remote/cozy
+ * @flow
+ */
 
 const autoBind = require('auto-bind')
 const CozyClient = require('cozy-client-js').Client
@@ -90,13 +93,13 @@ const handleCommonCozyErrors = (
   }
 }
 
-// A remote Cozy instance.
-//
-// This class wraps cozy-client-js to:
-//
-// - deal with parsing and errors
-// - provide custom functions (that may eventually be merged into the lib)
-//
+/** A remote Cozy instance.
+ *
+ * This class wraps cozy-client-js to:
+ *
+ * - deal with parsing and errors
+ * - provide custom functions (that may eventually be merged into the lib)
+ */
 class RemoteCozy {
   /*::
   url: string
@@ -284,7 +287,7 @@ class RemoteCozy {
     return doc
   }
 
-  // Retrieve the path of a remote file doc
+  /** Retrieve the path of a remote file doc. */
   async _setPath(doc /*: * */) /*: Promise<*> */ {
     const parentDir = await this.find(doc.dir_id)
     doc.path = path.posix.join(parentDir.path, doc.name)

@@ -1,3 +1,8 @@
+/** GUI internationalization helpers.
+ *
+ * @module gui/js/i18n
+ */
+
 let app
 
 module.exports.init = appRef => {

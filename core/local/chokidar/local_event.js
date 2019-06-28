@@ -1,4 +1,8 @@
-/* @flow */
+/** A ChokidarEvent with a bit more context.
+ *
+ * @module core/local/chokidar/local_event
+ * @flow
+ */
 
 /*::
 import type { Metadata } from '../../metadata'

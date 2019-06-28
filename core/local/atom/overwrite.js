@@ -1,4 +1,8 @@
-/* @flow */
+/** This step handles file additions/moves overwriting their destination.
+ *
+ * @module core/local/atom/overwrite
+ * @flow
+ */
 
 const _ = require('lodash')
 
@@ -35,8 +39,10 @@ const log = logger({
   component: `atom/${STEP_NAME}`
 })
 
-// Wait at most this delay (in milliseconds) to fix overwriting move related
-// events.
+/**
+ * Wait at most this delay (in milliseconds) to fix overwriting move related
+ * events.
+ */
 const DELAY = 500
 
 const initialState = () => ({

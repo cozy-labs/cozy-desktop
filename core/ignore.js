@@ -1,4 +1,13 @@
-// @flow
+/** Ignored files/directories handling.
+ *
+ * Cozy-desktop can ignore some files and folders from a list of patterns in the
+ * cozyignore file. This class can be used to know if a file/folder is ignored.
+ *
+ *
+ * @module core/ignore
+ * @see https://git-scm.com/docs/gitignore/#_pattern_format
+ * @flow
+ */
 
 const { basename, dirname, resolve } = require('path')
 const { matcher, makeRe } = require('micromatch')
@@ -125,10 +134,6 @@ function match(
 /** The default rules included in the repo */
 const defaultRulesPath = resolve(__dirname, './config/.cozyignore')
 
-// Cozy-desktop can ignore some files and folders from a list of patterns in the
-// cozyignore file. This class can be used to know if a file/folder is ignored.
-//
-// See https://git-scm.com/docs/gitignore/#_pattern_format
 class Ignore {
   /*::
   patterns: IgnorePattern[]

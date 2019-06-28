@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/remote/warning
+ * @flow
+ */
 
 /*::
 export type Warning = {

@@ -1,4 +1,8 @@
-/* @flow weak */
+/** A bunyan-based logger.
+ *
+ * @module core/utils/logger
+ * @flow weak
+ */
 
 const bunyan = require('bunyan')
 const fse = require('fs-extra')

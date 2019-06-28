@@ -1,4 +1,8 @@
-/* @flow */
+/** Automated registration for testing purpose (e.g. AppVeyor vs remote Cozy).
+ *
+ * @module dev/remote/automated_registration
+ * @flow
+ */
 
 const cheerio = require('cheerio')
 const request = require('request-promise')

@@ -1,4 +1,10 @@
-/* @flow */
+/** A local change as to be fed to Prep/Merge.
+ *
+ * Ended up being specific to ChokidarWatcher.
+ *
+ * @module core/local/chokidar/local_change
+ * @flow
+ */
 
 const _ = require('lodash')
 const path = require('path')
@@ -581,8 +587,10 @@ function includeAddEventInFileMove(
   return true
 }
 
-// This is based on a bug in chokidar on macOS + APFS where an overwriting
-// move has two addDir events but no unlinkDir for the overwritten destination.
+/**
+ * This is based on a bug in chokidar on macOS + APFS where an overwriting
+ * move has two addDir events but no unlinkDir for the overwritten destination.
+ */
 function dirMoveOverwriteOnMacAPFS(
   sameInodeChange /*: ?LocalChange */,
   e /*: LocalDirAdded */

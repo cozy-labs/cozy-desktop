@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/local/atom/producer
+ * @flow
+ */
 
 const autoBind = require('auto-bind')
 const fse = require('fs-extra') // Used for await
@@ -28,29 +31,31 @@ const isIgnored = ({ path, kind }, ignore) =>
     isFolder: kind === 'directory'
   })
 
-// This class is a producer: it watches the filesystem and the events are
-// created here.
-//
-// On Windows:
-//   the API used for FS notifications is ReadDirectoryChangesW. It is
-//   recursive and works without too many darts. Still, it doesn't detect the
-//   moves and atom/watcher can misunderstand renaming with just case swapping
-//   (Foo -> foo).
-//
-//   Another important thing to know is that we need to scan added directories: if
-//   the directory was restored from the trash or moved from outside the watched
-//   directory, ReadDirectoryChangesW won't send us events for the files and
-//   sub-directories.
-//
-// On Linux:
-//   the API used for FS notifications is inotify and is not recursive. It
-//   means that we have to add a watcher when we a new directory is added (and to
-//   remove a watcher when a watched directory is removed).
-//
-//   Even if inotify has a IN_ISDIR hint, atom/watcher does not report it. So, we
-//   have to call stat on the path to know if it's a file or a directory for add
-//   and update events.
-module.exports = class Producer {
+/**
+ * This class is a producer: it watches the filesystem and the events are
+ * created here.
+ *
+ * On Windows:
+ *   the API used for FS notifications is ReadDirectoryChangesW. It is
+ *   recursive and works without too many darts. Still, it doesn't detect the
+ *   moves and atom/watcher can misunderstand renaming with just case swapping
+ *   (Foo -> foo).
+ *
+ *   Another important thing to know is that we need to scan added directories: if
+ *   the directory was restored from the trash or moved from outside the watched
+ *   directory, ReadDirectoryChangesW won't send us events for the files and
+ *   sub-directories.
+ *
+ * On Linux:
+ *   the API used for FS notifications is inotify and is not recursive. It
+ *   means that we have to add a watcher when we a new directory is added (and to
+ *   remove a watcher when a watched directory is removed).
+ *
+ *   Even if inotify has a IN_ISDIR hint, atom/watcher does not report it. So, we
+ *   have to call stat on the path to know if it's a file or a directory for add
+ *   and update events.
+ */
+class Producer {
   /*::
   channel: Channel
   syncPath: string
@@ -65,23 +70,25 @@ module.exports = class Producer {
     autoBind(this)
   }
 
-  // Atom/watcher has a recursive option, even on Linux. It just calls inotify
-  // on each sub-directory. Using this option has some pros and cons:
-  //
-  // - Pro: we don't have to explicitely manage the inotify watchers on Linux
-  // - Pro: move/rename detection is made by atom/watcher on Linux
-  // - Con: the sync dir must be scanned twice on Linux, once by atom/watcher
-  //   to put the inotify watchers, and once by Producer for the initial scan
-  // - Con: when a new directory is detected, we must scan it twice on Linux,
-  //   once by atom-watcher to put inotify watchers on sub-directories that can
-  //   have been added faster that the event has bubbled, and once by the local
-  //   watcher (because it can be a directory that has been moved from outside
-  //   the synchronized directory, and atom/watcher doesn't emit events in that
-  //   case).
-  //
-  // As atom/watcher doesn't give use the inotify cookies, the move/rename
-  // detection is probably the harder of the four tasks. So, we choosed to use
-  // the recursive option.
+  /**
+   * Atom/watcher has a recursive option, even on Linux. It just calls inotify
+   * on each sub-directory. Using this option has some pros and cons:
+   *
+   * - Pro: we don't have to explicitely manage the inotify watchers on Linux
+   * - Pro: move/rename detection is made by atom/watcher on Linux
+   * - Con: the sync dir must be scanned twice on Linux, once by atom/watcher
+   *   to put the inotify watchers, and once by Producer for the initial scan
+   * - Con: when a new directory is detected, we must scan it twice on Linux,
+   *   once by atom-watcher to put inotify watchers on sub-directories that can
+   *   have been added faster that the event has bubbled, and once by the local
+   *   watcher (because it can be a directory that has been moved from outside
+   *   the synchronized directory, and atom/watcher doesn't emit events in that
+   *   case).
+   *
+   * As atom/watcher doesn't give use the inotify cookies, the move/rename
+   * detection is probably the harder of the four tasks. So, we choosed to use
+   * the recursive option.
+   */
   async start() {
     this.watcher = await watcher.watchPath(
       this.syncPath,
@@ -164,3 +171,5 @@ module.exports = class Producer {
     }
   }
 }
+
+module.exports = Producer

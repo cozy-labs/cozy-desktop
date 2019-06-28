@@ -1,3 +1,7 @@
+/**
+ * @module core/syncstate
+ */
+
 const autoBind = require('auto-bind')
 const EventEmitter = require('events')
 

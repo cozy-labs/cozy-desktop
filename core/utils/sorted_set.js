@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/utils/sorted_set
+ * @flow
+ */
 
 /** Custom SortedSet implementation
  *
@@ -13,7 +16,7 @@
  * The SortedSet data structure uses both an Array and a Set to make
  * those 2 actions possible transparently.
  */
-module.exports = class SortedSet /* ::<A> */ {
+class SortedSet /* ::<A> */ {
   /*::
   _set: Set<A>
   _values: A[]
@@ -50,3 +53,5 @@ module.exports = class SortedSet /* ::<A> */ {
     return this._values.reduceRight(callback, initialValue)
   }
 }
+
+module.exports = SortedSet

@@ -1,4 +1,12 @@
-/* @flow */
+/** This step is a port of awaitWriteFinish (aWF) from chokidar.
+ *
+ * It debounces write events for files, as we can have several of them in a
+ * short lapse of time, and computing the checksum several times in a row for
+ * the same file is not a good idea.
+ *
+ * @module core/local/atom/await_write_finish
+ * @flow
+ */
 
 const _ = require('lodash')
 
@@ -11,10 +19,13 @@ const log = logger({
   component: `atom/${STEP_NAME}`
 })
 
-// Wait this delay (in milliseconds) after the last event for a given file
-// before pushing this event to the next steps.
-// TODO tweak the value (the initial value was chosen because it looks like a
-//      good value, it is not something that was computed)
+/**
+ * Wait this delay (in milliseconds) after the last event for a given file
+ * before pushing this event to the next steps.
+ *
+ * TODO: tweak the value (the initial value was chosen because it looks like a
+ * good value, it is not something that was computed).
+ */
 const DELAY = 200
 
 /*::
@@ -44,7 +55,7 @@ function sendReadyBatches(waiting /*: WaitingItem[] */, out /*: Channel */) {
   }
 }
 
-// Count the candidates for debouncing with future events
+/** Count the candidates for debouncing with future events */
 function countFileWriteEvents(events /*: AtomEvent[] */) /*: number */ {
   let nbCandidates = 0
   for (let i = 0; i < events.length; i++) {
@@ -147,7 +158,7 @@ function addDebugInfo(event, previousEvent) {
   delete previousEvent[STEP_NAME]
 }
 
-// Look if we can debounce some waiting events with the current events
+/** Look if we can debounce some waiting events with the current events */
 function debounce(waiting /*: WaitingItem[] */, events /*: AtomEvent[] */) {
   for (let i = 0; i < events.length; i++) {
     const event = events[i]
@@ -201,10 +212,6 @@ function debounce(waiting /*: WaitingItem[] */, events /*: AtomEvent[] */) {
   }
 }
 
-// This is a port of awaitWriteFinish (aWF) from chokidar. It debounces write
-// events for files, as we can have several of them in a short lapse of time,
-// and computing the checksum several times in a row for the same file is not a
-// good idea.
 async function awaitWriteFinish(channel /*: Channel */, out /*: Channel */) {
   const waiting /*: WaitingItem[] */ = []
 

@@ -1,3 +1,8 @@
+/** File manager shortcut installation.
+ *
+ * @module gui/js/shortcut
+ */
+
 const lnk = require('lnk')
 const os = require('os')
 const path = require('path')

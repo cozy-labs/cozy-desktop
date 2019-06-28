@@ -1,6 +1,8 @@
-/* @flow */
-
-/** Test data builders common to both CouchDB and PouchDB */
+/** Test data builders common to both CouchDB and PouchDB
+ *
+ * @module test/support/builders/db
+ * @flow
+ */
 
 const uuid = require('uuid/v4')
 

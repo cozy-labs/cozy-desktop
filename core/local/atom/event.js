@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/local/atom/events
+ * @flow
+ */
 
 /*::
 import type { Stats } from '../stater'

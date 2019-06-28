@@ -1,4 +1,7 @@
-/* @flow weak */
+/**
+ * @module core/pouch
+ * @flow weak
+ */
 
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')

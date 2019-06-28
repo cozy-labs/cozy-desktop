@@ -1,4 +1,8 @@
-/* @flow */
+/** A remote change to be send to Prep/Merge.
+ *
+ * @module core/remote/change
+ * @flow
+ */
 
 /*::
 import type { RemoteDoc, RemoteDeletion } from './document'
@@ -202,10 +206,11 @@ function isChildMove(
   )
 }
 
-/*     was           doc
- a    /a     ->    /a2
- b    /a/b   ->    /a2/b
-*/
+/**
+ *          was          doc
+ *     a    /a     ->    /a2
+ *     b    /a/b   ->    /a2/b
+ */
 function isOnlyChildMove(
   a /*: RemoteDirMove */,
   b /*: RemoteFileMove|RemoteDirMove */

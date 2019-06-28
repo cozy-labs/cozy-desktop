@@ -1,3 +1,8 @@
+/** File UI helpers.
+ *
+ * @module gui/js/fileutils
+ */
+
 module.exports.selectIcon = info => {
   if (['image', 'video'].indexOf(info.class) !== -1) {
     return info.class

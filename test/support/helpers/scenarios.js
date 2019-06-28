@@ -1,3 +1,8 @@
+/** Test scenario helpers
+ *
+ * @module test/support/helpers/scenarios
+ */
+
 const Promise = require('bluebird')
 const fse = require('fs-extra')
 const glob = require('glob')

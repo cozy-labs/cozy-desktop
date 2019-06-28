@@ -1,4 +1,15 @@
-/* @flow */
+/**
+ * ## Windows
+ *
+ * ![Windows watcher workflow](../../doc/developer/win_watcher.png)
+ *
+ * ## GNU/Linux
+ *
+ * ![GNU/Linux watcher workflow](../../doc/developer/linux_watcher.png)
+ *
+ * @module core/local/atom/watcher
+ * @flow
+ */
 
 const Promise = require('bluebird')
 const _ = require('lodash')

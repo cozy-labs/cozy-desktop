@@ -1,4 +1,14 @@
-/* @flow */
+/** This step handles identical renaming on Windows.
+ *
+ * An identical renaming is a renaming where the source and destination would
+ * both have the same identity on the current filesystem:
+ *
+ * - Names differing only by their case: `foo` vs `Foo` vs `FOO`
+ * - Names equivalent from a Unicode point of view
+ *
+ * @module core/local/atom/win_identical_renaming
+ * @flow
+ */
 
 const _ = require('lodash')
 
@@ -36,8 +46,10 @@ const log = logger({
   component: `atom/${STEP_NAME}`
 })
 
-// Wait at most this delay (in milliseconds) to fix identical renaming related
-// events.
+/**
+ * Wait at most this delay (in milliseconds) to fix identical renaming related
+ * events.
+ */
 const DELAY = 500
 
 const initialState = () => ({

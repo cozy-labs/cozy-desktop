@@ -1,4 +1,8 @@
-/* @flow */
+/** Sentry monitoring support
+ *
+ * @module core/utils/sentry
+ * @flow
+ */
 
 const Sentry = require('raven')
 const bunyan = require('bunyan')

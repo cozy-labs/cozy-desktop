@@ -1,4 +1,13 @@
-/* @flow */
+/** This step handle the events of the AtomWatcher initial scan.
+ *
+ * Some files and directories can have been deleted while cozy-desktop was
+ * stopped. So, at the end of the initial scan, we have to do a diff between
+ * what was in pouchdb and the events from the local watcher to find what was
+ * deleted.
+ *
+ * @module core/local/atom/initial_diff
+ * @flow
+ */
 
 const _ = require('lodash')
 const path = require('path')
@@ -28,11 +37,15 @@ type WaitingItem = {
 }
 */
 
-// Wait this delay (in milliseconds) after the last event for a given file
-// before pushing this event to the next steps.
-// TODO tweak the value (the initial value was chosen because it looks like a
-//      good value, it is not something that was computed)
+/**
+ * Wait this delay (in milliseconds) after the last event for a given file
+ * before pushing this event to the next steps.
+ *
+ * TODO: tweak the value (the initial value was chosen because it looks like a
+ * good value, it is not something that was computed)
+ */
 const DELAY = 200
+
 const STEP_NAME = 'initialDiff'
 
 const log = logger({
@@ -52,10 +65,6 @@ module.exports = {
   clearState
 }
 
-// Some files and directories can have been deleted while cozy-desktop was
-// stopped. So, at the end of the initial scan, we have to do a diff between
-// what was in pouchdb and the events from the local watcher to find what was
-// deleted.
 function loop(
   channel /*: Channel */,
   opts /*: { pouch: Pouch, state: InitialDiffState } */
@@ -237,7 +246,7 @@ function sendReadyBatches(waiting /*: WaitingItem[] */, out /*: Channel */) {
   }
 }
 
-// Look if we can debounce some waiting events with the current events
+/** Look if we can debounce some waiting events with the current events */
 function debounce(waiting /*: WaitingItem[] */, events /*: AtomEvent[] */) {
   for (let i = 0; i < events.length; i++) {
     const event = events[i]

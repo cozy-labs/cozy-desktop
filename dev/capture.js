@@ -1,4 +1,8 @@
-/* @flow */
+/** Capture local/remote changes to be replayed in test scenarios.
+ *
+ * @module dev/capture
+ * @flow
+ */
 
 const program = require('commander')
 const path = require('path')

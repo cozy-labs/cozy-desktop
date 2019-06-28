@@ -1,4 +1,9 @@
-/* @flow */
+/** Test data builders. Plain functions or Object mother patterns.
+ *
+ * @module test/support/builders
+ * @flow
+ */
+
 const path = require('path')
 
 const { ROOT_DIR_ID } = require('../../../core/remote/constants')

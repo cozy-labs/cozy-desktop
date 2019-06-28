@@ -1,4 +1,8 @@
-/* @flow */
+/** Checksum files one at a time.
+ *
+ * @module core/local/checksumer
+ * @flow
+ */
 
 const Promise = require('bluebird')
 const async = require('async')
@@ -17,7 +21,7 @@ module.exports = {
   init
 }
 
-// Get checksum for given file
+/** Get checksum for given file */
 function computeChecksum(filePath /*: string */, callback /*: Callback */) {
   const stopMeasure = measureTime('LocalWatcher#checksumer')
   const stream = fs.createReadStream(filePath)

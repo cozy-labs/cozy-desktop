@@ -1,4 +1,8 @@
-/* @flow */
+/** The remote side read/write interface.
+ *
+ * @module core/remote
+ * @flow
+ */
 
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
@@ -76,7 +80,7 @@ class Remote /*:: implements Side */ {
     return this.remoteCozy.unregister()
   }
 
-  // Create a readable stream for the given doc
+  /** Create a readable stream for the given doc */
   async createReadStreamAsync(
     doc /*: Metadata */
   ) /*: Promise<ReadableWithContentLength> */ {
@@ -84,7 +88,7 @@ class Remote /*:: implements Side */ {
     return withContentLength(stream, doc.size)
   }
 
-  // Create a folder on the remote cozy instance
+  /** Create a folder on the remote cozy instance */
   async addFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Creating folder...')

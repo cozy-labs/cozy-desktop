@@ -1,3 +1,8 @@
+/** Auto-launching the app on session start.
+ *
+ * @module gui/js/autolaunch
+ */
+
 const AutoLaunch = require('auto-launch')
 
 const opts = {

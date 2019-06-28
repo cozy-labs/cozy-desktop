@@ -1,4 +1,12 @@
-/* @flow */
+/** Move reconciliation.
+ *
+ *     const move = require('.../move')
+ *     move(src, dst)
+ *     move.child(src, dst)
+ *
+ * @module core/move
+ * @flow
+ */
 
 const metadata = require('./metadata')
 
@@ -6,12 +14,6 @@ const metadata = require('./metadata')
 import type { SideName, Metadata } from './metadata'
 */
 
-// Export so the following possible is possible:
-//
-//    const move = require('.../move')
-//    move(src, dst)
-//    move.child(src, dst)
-//
 module.exports = move
 move.child = child
 

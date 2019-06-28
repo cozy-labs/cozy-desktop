@@ -1,4 +1,8 @@
-/* @flow */
+/** Provide reliable file stats for every supported platform.
+ *
+ * @module core/local/stater
+ * @flow
+ */
 
 const fs = require('fs')
 const fse = require('fs-extra')

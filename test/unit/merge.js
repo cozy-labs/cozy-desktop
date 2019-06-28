@@ -15,7 +15,7 @@ const pouchHelpers = require('../support/helpers/pouch')
 const dbBuilders = require('../support/builders/db')
 const Builders = require('../support/builders')
 
-/** Resolves with an object describing the side-effects of a Merge call.
+/* Resolves with an object describing the side-effects of a Merge call.
  *
  * The returned object has the following properties:
  *

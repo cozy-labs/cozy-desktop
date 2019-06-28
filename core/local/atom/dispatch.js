@@ -1,4 +1,11 @@
-/* @flow */
+/* Dispatch takes a Channel of AtomEvent batches and calls Prep for each event.
+ *
+ * It needs to fetch the old documents from pouchdb in some cases to have all
+ * the data expected by prep/merge.
+ *
+ * @module core/local/atom/dispatch
+ * @flow
+ */
 
 const _ = require('lodash')
 
@@ -43,9 +50,6 @@ module.exports = {
   step
 }
 
-// Dispatch takes a Channel of AtomEvents batches, and calls Prep for
-// each event. It needs to fetch the old documents from pouchdb in some cases
-// to have all the data expected by prep/merge.
 function loop(
   channel /*: Channel */,
   opts /*: DispatchOptions */

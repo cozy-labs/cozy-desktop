@@ -1,4 +1,8 @@
-/* @flow */
+/** Add context to ChokidarEvents, turning them into LocalEvents.
+ *
+ * @module core/local/chokidar/prepare_events
+ * @flow
+ */
 
 const Promise = require('bluebird')
 const fse = require('fs-extra')

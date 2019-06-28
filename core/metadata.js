@@ -1,4 +1,8 @@
-/* @flow */
+/** Metadata of synchronized files & directories.
+ *
+ * @module core/metadata
+ * @flow
+ */
 
 const _ = require('lodash')
 const { clone } = _

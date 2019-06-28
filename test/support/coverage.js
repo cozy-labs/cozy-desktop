@@ -2,10 +2,10 @@
  *
  * We don't instrument renderer code for now since it is mostly Elm code.
  *
- * See:
- * https://github.com/jprichardson/electron-mocha#code-coverage
- * https://github.com/tropy/tropy/blob/d585b79268b4e4e614feb100d259d7b1a2be02a3/test/support/coverage.js
- * https://electronjs.org/docs/api/process#processtype
+ * @see https://github.com/jprichardson/electron-mocha#code-coverage
+ * @see https://github.com/tropy/tropy/blob/d585b79268b4e4e614feb100d259d7b1a2be02a3/test/support/coverage.js
+ * @see https://electronjs.org/docs/api/process#processtype
+ * @module test/support/coverage
  */
 
 const glob = require('glob')

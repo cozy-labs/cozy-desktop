@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/path_restrictions
+ * @flow
+ */
 
 const path = require('path')
 const { sep } = path

@@ -1,4 +1,8 @@
-/* @flow */
+/** Raw chokidar events
+ *
+ * @module core/local/chokidar/event
+ * @flow
+ */
 
 /*::
 import type fs from 'fs'

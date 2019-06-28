@@ -1,4 +1,12 @@
-/* @flow */
+/** This step adds some basic informations about events:
+ *
+ * - _id
+ * - docType
+ * - stats
+ *
+ * @module core/local/atom/add_infos
+ * @flow
+ */
 
 const _ = require('lodash')
 const path = require('path')
@@ -21,7 +29,12 @@ module.exports = {
   loop
 }
 
-// This step adds some basic informations about events: _id, docType and stats.
+/** Add _id & stats to event batches pulled from the given channel.
+ *
+ * Arbitrarily assume event kind is file by default.
+ *
+ * Return a new Channel where new events with stats will be pushed.
+ */
 function loop(
   channel /*: Channel */,
   opts /*: { syncPath: string } */
