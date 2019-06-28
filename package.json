@@ -136,6 +136,7 @@
     "istanbul-api": "^2.0.0",
     "istanbul-lib-coverage": "^2.0.0",
     "istanbul-lib-hook": "^2.0.0",
+    "jsdoc": "~3.5.0",
     "jsverify": "^0.8.4",
     "merge-dirs": "^0.2.1",
     "mocha": "^5.2.0",
