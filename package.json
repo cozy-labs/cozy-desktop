@@ -45,6 +45,8 @@
     "docker:exec": "docker exec -it cozy-desktop-stack",
     "elm:upgrade": "cd gui && yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
     "jq": "cross-env HOME=. nice -n 19 jq",
+    "jsdoc": "jsdoc -c .jsdoc.json -r ./CODE_ORGANIZATION.md -d ./doc/api/ core/ dev/ gui/ test/",
+    "jsdoc:watch": "chokidar package.json .jsdoc.json ./CODE_ORGANIZATION.md 'core/**/*.js' 'dev/**/*.js' 'gui/**/*.js' 'test/**/*.js' -c 'yarn jsdoc'",
     "lint": "yarn lint:flow && yarn lint:eslint",
     "lint:flow": "flow status --quiet --show-all-errors",
     "lint:elm": "elm-format --validate gui/elm test/elm",
