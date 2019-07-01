@@ -177,7 +177,7 @@ async function initialDiff(
           }
         } else if (foundUntouchedFile(event, was)) {
           _.set(event, [STEP_NAME, 'md5sumReusedFrom'], was.path)
-          event.md5sum = was.md5sum
+          event.md5sum = was.local.md5sum
         }
       }
 
@@ -320,20 +320,20 @@ function fixPathsAfterParentMove(renamedEvents, event) {
   }
 }
 
-function eventUpdateTime(event) {
-  const { ctime, mtime } = event.stats
-  return Math.max(ctime.getTime(), mtime.getTime())
+function contentUpdateTime(event) {
+  return event.stats.mtime.getTime()
 }
 
-function docUpdateTime(was) {
-  return new Date(was.updated_at).getTime()
+function docUpdateTime(oldLocal) {
+  return new Date(oldLocal.updated_at).getTime()
 }
 
 function foundUntouchedFile(event, was) /*: boolean %checks */ {
   return (
-    was != null &&
-    was.md5sum != null &&
     event.kind === 'file' &&
-    eventUpdateTime(event) === docUpdateTime(was)
+    was != null &&
+    was.local != null &&
+    was.local.md5sum != null &&
+    contentUpdateTime(event) === docUpdateTime(was.local)
   )
 }

@@ -36,12 +36,13 @@ describe('Full watch/merge/sync/repeat loop', () => {
   })
 
   it('remote -> local add file', async () => {
+    await helpers._local.watcher.start()
+
     await cozy.files.create('some file content', { name: 'file' })
     await helpers.remote.pullChanges()
     await helpers.syncAll()
-    should(await helpers.local.tree()).deepEqual(['file'])
 
-    await helpers._local.watcher.start()
+    should(await helpers.local.tree()).deepEqual(['file'])
 
     const doc = await helpers.pouch.db.get(metadata.id('file'))
     should(doc.ino).be.a.Number()

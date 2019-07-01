@@ -768,7 +768,9 @@ function buildFile(
   if (stats.fileid) {
     doc.fileid = stats.fileid
   }
-  updateLocal(doc)
+  updateLocal(doc, {
+    updated_at: mtime.toISOString()
+  })
   return doc
 }
 
@@ -814,6 +816,13 @@ function shouldIgnore(
   })
 }
 
-function updateLocal(doc /*: Metadata */, newLocal /*: Object */) {
-  doc.local = _.pick(newLocal || doc, LOCAL_ATTRIBUTES)
+function updateLocal(doc /*: Metadata */, newLocal /*: ?Object */ = {}) {
+  // Boolean attributes not set in doc when false will not override an existing
+  // truthy value.
+  // This is the case for `executable` and we need to provide a default falsy
+  // value to override the `newLocal` executable value in all cases.
+  doc.local = _.pick(
+    _.defaults(newLocal, { executable: false }, doc),
+    LOCAL_ATTRIBUTES
+  )
 }

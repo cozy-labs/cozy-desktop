@@ -30,7 +30,6 @@ const path = require('path')
 
 const metadata = require('../../metadata')
 const logger = require('../../utils/logger')
-const { sameDate, fromDate } = require('../../utils/timestamp')
 
 /*::
 import type { ChokidarEvent } from './event'
@@ -90,14 +89,17 @@ const step = async (
         if (
           initialScan &&
           e2.old &&
-          e2.path === e2.old.path &&
-          sameDate(fromDate(e2.old.updated_at), fromDate(e2.stats.mtime))
+          e2.path.normalize() === e2.old.path.normalize() &&
+          e2.old.local &&
+          e2.old.local.md5sum &&
+          new Date(e2.old.local.updated_at).getTime() ===
+            e2.stats.mtime.getTime()
         ) {
           log.trace(
             { path: e.path },
             'Do not compute checksum : mtime & path are unchanged'
           )
-          e2.md5sum = e2.old.md5sum
+          e2.md5sum = e2.old.local.md5sum
         } else {
           try {
             e2.md5sum = await checksum(e.path)
