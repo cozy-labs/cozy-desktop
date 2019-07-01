@@ -1,5 +1,44 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.14.0 - 2019-07-01
+
+Improvements for all users:
+
+- In case your client enters an error state, the manual synchronisation button
+  will now display is normal label instead of the error label which is already
+  display in the window's top bar.
+- We fixed an issue with conflicting document names in the previous version but
+  introduced in the process a bug with files without extensions. If we detected
+  a conflict on a file without extensions that already had the conflict suffix,
+  we would use the milliseconds part of the previous conflict suffix as the new
+  file extension. We're now correctly handling conflict suffixes replacement
+  for all types of documents, with or without extensions.
+- We recently tried to reduce the error kinds that would lead to a
+  "No Internet connection" status to network errors only and introduced a new
+  "Synchronization incomplete" status for cases where one or several of yours
+  documents could not be synchronised but some could.
+  However, we discovered the network errors we're getting from the remote Cozy
+  don't have the shape we expected and were detected as synchronisation errors
+  thus displaying the "Synchronization incomplete" status. All network errors
+  are now correctly detected and handled as "No Internet connection" errors
+  with a retry every second until the connection to your Cozy is back.
+- We took this opportunity to handle PouchDB errors thrown when a file or
+  directory name starts with an `_` (i.e. those are reserved PouchDB words) as a
+  synchronisation error instead of a network error.
+
+Improvements for MacOS users:
+
+- We were forbidding the usage of the `:` character in folder and file names as
+  this is a forbidden character in the MacOS Finder application. However, the
+  Cozy Desktop application is working at a lower level where `:` characters are
+  allowed. Those are then displayed as `/` characters in Finder.
+  Note that any `/` you see in one of your documents' name in Finder, will be
+  synchronised as a `:` in your Cozy and vice versa.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.14.0-beta.1 - 2019-06-27
 
 Improvements for all users:
