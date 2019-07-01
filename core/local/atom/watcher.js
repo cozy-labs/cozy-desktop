@@ -1,11 +1,19 @@
 /**
+ * This is the {@link module:core/local/watcher|local watcher} implementation
+ * based on the {@link https://github.com/atom/watcher|@atom/watcher} library.
+ *
+ * The watcher is built as a chain of steps. Each step can be seen as an actor
+ * that communicates with the next one via a Channel. The first step is called
+ * the producer: even if the chain is ready at the end of this constructor,
+ * the producer won't start pushing batches of events until it is started.
+ *
  * ## Windows
  *
- * ![Windows watcher workflow](../../doc/developer/win_watcher.png)
+ * [![Windows watcher workflow](../../doc/developer/win_watcher.png)](../../doc/developer/win_watcher.png)
  *
  * ## GNU/Linux
  *
- * ![GNU/Linux watcher workflow](../../doc/developer/linux_watcher.png)
+ * [![GNU/Linux watcher workflow](../../doc/developer/linux_watcher.png)](../../doc/developer/linux_watcher.png)
  *
  * @module core/local/atom/watcher
  * @flow
@@ -121,10 +129,7 @@ class AtomWatcher {
       } /*: Object */),
       opts
     )
-    // Here, we build a chain of steps. Each step can be seen as an actor that
-    // communicates with the next one via a Channel. The first step is called
-    // the producer: even if the chain is ready at the end of this constructor,
-    // the producer won't start pushing batches of events until it is started.
+    // Here, we build the chain of steps.
     const channel = steps.reduce(
       (chan, step) => step.loop(chan, stepOptions),
       this.producer.channel

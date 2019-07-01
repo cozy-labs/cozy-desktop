@@ -13,10 +13,10 @@
  * listens to the changes feed of CouchDB to be notified of all the metadata
  * changes on the remote cozy. Those metadata are recopied in the local PouchDB.
  *
- * On the local filesystem, the synchronized folder is watched via chokidar. It's
- * a library that uses nodejs' watch powered by inotify/fsevents (with a fallback
- * on polling). With it, cozy-desktop is notified of all the changes on the file
- * system and can update the pouchdb with the new metadata.
+ * On the local filesystem, the synchronized folder is watched by the
+ * {@link module:core/local/watcher|local watcher}. With it, cozy-desktop is
+ * notified of all the changes on the file system and can update the pouchdb
+ * with the new metadata.
  *
  * Cozy-desktop also uses a changes feed on the local PouchDB. It takes metadata
  * changes one by one, and apply them to the other side. For example, if the last

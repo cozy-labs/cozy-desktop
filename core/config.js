@@ -227,6 +227,7 @@ function loadOrDeleteFile(configPath /*: string */) /*: FileConfig */ {
   }
 }
 
+/** Detect which local watcher will be used. */
 function watcherType(
   fileConfig /*: FileConfig */ = {},
   { env, platform } /*: * */ = process

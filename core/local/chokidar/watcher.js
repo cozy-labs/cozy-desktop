@@ -1,4 +1,17 @@
 /**
+ * This is the {@link module:core/local/watcher|local watcher} implementation
+ * based on the {@link https://github.com/paulmillr/chokidar|chokidar} library.
+ *
+ * It's a library that uses nodejs' watch powered by inotify/fsevents (with a
+ * fallback on polling).
+ *
+ * ## Steps
+ *
+ * 1. {@link module:core/local/chokidar/initial_scan|initial_scan}
+ * 2. {@link module:core/local/chokidar/prepare_events|prepare_events}
+ * 3. {@link module:core/local/chokidar/analysis|analysis} (macro step)
+ * 4. {@link module:core/local/chokidar/send_to_prep|send_to_prep}
+ *
  * @module core/local/chokidar/watcher
  * @flow
  */

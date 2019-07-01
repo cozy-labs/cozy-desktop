@@ -1,6 +1,12 @@
-/** Common local watcher interface & constructor.
+/** The component that watches the local synchronized folder.
+ *
+ * There are currently 2 implementations:
+ *
+ * - {@link module:core/local/atom/watcher|atom}
+ * - {@link module:core/local/chokidar/watcher|chokidar}
  *
  * @module core/local/watcher
+ * @see module:core/config~watcherType
  * @flow
  */
 

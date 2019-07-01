@@ -1,4 +1,15 @@
-/** Raw chokidar events
+/** Raw events as provided by {@link https://github.com/paulmillr/chokidar/|chokidar}.
+ *
+ * Including `stats` because our chokidar watcher is configured to always
+ * retrieve them.
+ *
+ * ## Known issues
+ *
+ * - We're not sure chokidar maintains the events order with stats.
+ * - _unlink*_ events may have an `old` {@link module:core/metadata|Metadata}
+ *   attribute attached because of the unfortunate design decision to include
+ *   the corresponding existing doc as soon as possible when issuing deleted
+ *   events during the initial scan.
  *
  * @module core/local/chokidar/event
  * @flow
