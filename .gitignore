@@ -8,6 +8,8 @@
 /cli/storage/
 /cli/debug.log
 
+/doc/api/
+
 /gui/app.css
 /gui/app.css.map
 /gui/elm.js
