@@ -1,4 +1,8 @@
-// https://github.com/cozy/cozy-stack/blob/master/pkg/consts/consts.go
+/**
+ * @module core/remote/constants
+ * @see https://github.com/cozy/cozy-stack/blob/master/pkg/consts/consts.go
+ * @flow
+ */
 
 module.exports = {
   // Doctypes

@@ -1,4 +1,8 @@
-/* @flow */
+/** Benchmarking helpers
+ *
+ * @module core/utils/perfs
+ * @flow
+ */
 
 const logger = require('./logger')
 const log = logger({

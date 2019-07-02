@@ -1,4 +1,8 @@
-/* @flow */
+/** Look for warnings on the Cozy.
+ *
+ * @module core/remote/warning_poller
+ * @flow
+ */
 
 const delay = require('../utils/delay')
 const logger = require('../utils/logger')

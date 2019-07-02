@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/local/atom/channel
+ * @flow
+ */
 
 const Promise = require('bluebird')
 
@@ -6,11 +9,13 @@ const Promise = require('bluebird')
 import type { AtomBatch } from './event'
 */
 
-// Channel is a data structure for propagating batches of events from a FS
-// watcher to the Pouch database, via several steps. It's expected that we have
-// only one class/function that pushes in the channel, and only one
-// class/function that takes batches from the channel.
-module.exports = class Channel {
+/**
+ * Channel is a data structure for propagating batches of events from a FS
+ * watcher to the Pouch database, via several steps. It's expected that we have
+ * only one class/function that pushes in the channel, and only one
+ * class/function that takes batches from the channel.
+ */
+class Channel {
   /*::
   _resolve: ?Promise<AtomBatch>
   _buffer: Array<AtomBatch>
@@ -76,3 +81,5 @@ module.exports = class Channel {
     return channel
   }
 }
+
+module.exports = Channel

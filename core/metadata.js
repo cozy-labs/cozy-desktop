@@ -1,4 +1,37 @@
-/* @flow */
+/** Metadata of synchronized files & directories.
+ *
+ * ### File
+ *
+ * - `_id`: the normalized path
+ * - `_rev`: from PouchDB
+ * - `docType`: always 'file'
+ * - `path`: the original path to this file
+ * - `md5sum`: a checksum of its content
+ * - `updated_at`: date and time of the last modification
+ * - `tags`: the list of tags, from the remote cozy
+ * - `size`: the size on disk
+ * - `class`: generic class of the mime-type (can be document, image, etc.)
+ * - `mime`: the precise mime-type (example: image/jpeg)
+ * - `remote`: id and rev of the associated documents in the remote CouchDB
+ * - `sides`: for tracking what is applied on local file system and remote cozy
+ * - `executable`: true if the file is executable (UNIX permission), undefined else
+ * - `errors`: the number of errors while applying the last modification
+ *
+ * ### Folder
+ *
+ * - `_id`: the normalized path
+ * - `_rev`: from PouchDB
+ * - `docType`: always 'folder'
+ * - `path`: the original path to this file
+ * - `updated_at`: date and time of the last modification
+ * - `tags`: the list of tags, from the remote cozy
+ * - `remote`: id and rev of the associated documents in the remote CouchDB
+ * - `sides`: for tracking what is applied on local file system and remote cozy
+ * - `errors`: the number of errors while applying the last modification
+ *
+ * @module core/metadata
+ * @flow
+ */
 
 const _ = require('lodash')
 const { clone } = _

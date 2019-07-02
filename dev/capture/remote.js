@@ -1,4 +1,8 @@
-/* @flow */
+/** Capture remote changes to be replayed in test scenarios.
+ *
+ * @module dev/capture/remote
+ * @flow
+ */
 
 const Promise = require('bluebird')
 const fse = require('fs-extra')

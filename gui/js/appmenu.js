@@ -1,3 +1,8 @@
+/** The macOS application menus.
+ *
+ * @module gui/js/appmenu
+ */
+
 const { Menu } = require('electron')
 const { translate } = require('./i18n')
 

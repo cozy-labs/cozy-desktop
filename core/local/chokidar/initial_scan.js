@@ -1,4 +1,8 @@
-/* @flow */
+/** Handling of events from the ChokidarWatcher initial scan.
+ *
+ * @module core/local/chokidar/initial_scan
+ * @flow
+ */
 
 const chokidarEvent = require('./event')
 const logger = require('../../utils/logger')

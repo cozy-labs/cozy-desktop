@@ -1,6 +1,6 @@
-/* @flow */
-
-/** An identity conflict is a conflict where two files/dirs can coexist on the
+/** Identity conflict handling
+ *
+ * An identity conflict is a conflict where two files/dirs can coexist on the
  * remote side but not on the local one because they would be considered the
  * same by the file system.
  *
@@ -9,6 +9,9 @@
  * doc would still prevent the remote one from being written locally.
  *
  * This is why identity conflicts are always resolved on the remote side.
+ *
+ * @module core/IdConflict
+ * @flow
  */
 
 const _ = require('lodash')

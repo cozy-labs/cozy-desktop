@@ -1,4 +1,51 @@
-// @flow
+/** Ignored files/directories handling.
+ *
+ * Cozy-desktop can ignore some files and folders with a `.cozyignore` file. This
+ * file is read only at the startup of Cozy-desktop. So, if this file is
+ * modified, cozy-desktop has to be relaunched for the changes to be effective.
+ *
+ * There 4 places where ignoring files and folders can have a meaning:
+ *
+ * - when a change is detected on the local file system and cozy-desktop is going
+ *   to save it in its internal pouchdb
+ * - when a change is detected on the remote cozy and cozy-desktop is going to
+ *   save it in its internal pouchdb
+ * - when a change is taken from the pouchdb and cozy-desktop is going to apply
+ *   on the local file system
+ * - when a change is taken from the pouchdb and cozy-desktop is going to apply
+ *   on the remote cozy.
+ *
+ * Even with the first two checks, pouchdb can have a change for an ignored file
+ * from a previous run of cozy-desktop where the file was not yet ignored. So, we
+ * have to implement the last two checks. It is enough for a file created on one
+ * side (local or remote) won't be replicated on the other side if it is ignored.
+ *
+ * But, there is a special case: conflicts are treated ahead of pouchdb. So, if a
+ * file is created in both the local file system and the remote cozy (with
+ * different contents) is ignored, the conflict will still be resolved by
+ * renaming if we implement only the last two checks. We have to avoid that by
+ * also implementing at least one of the first two checks.
+ *
+ * In practice, it's really convenient to let the changes from the remote couchdb
+ * flows to pouchdb, even for ignored files, as it is very costly to find them
+ * later if `.cozyignore` has changed. And it's a lot easier to detect local
+ * files that were ignored but are no longer at the startup, as cozy-desktop
+ * already does a full scan of the local file system at that moment.
+ *
+ * Thus, cozy-desktop has a check for ignored files and folder in three of the
+ * four relevant places:
+ *
+ * - when a change is detected on the local file system and cozy-desktop is going
+ *   to save it in its internal pouchdb
+ * - when a change is taken from the pouchdb and cozy-desktop is going to apply
+ *   on the local file system
+ * - when a change is taken from the pouchdb and cozy-desktop is going to apply
+ *   on the remote cozy.
+ *
+ * @module core/ignore
+ * @see https://git-scm.com/docs/gitignore/#_pattern_format
+ * @flow
+ */
 
 const { basename, dirname, resolve } = require('path')
 const { matcher, makeRe } = require('micromatch')
@@ -125,10 +172,10 @@ function match(
 /** The default rules included in the repo */
 const defaultRulesPath = resolve(__dirname, './config/.cozyignore')
 
-// Cozy-desktop can ignore some files and folders from a list of patterns in the
-// cozyignore file. This class can be used to know if a file/folder is ignored.
-//
-// See https://git-scm.com/docs/gitignore/#_pattern_format
+/**
+ * Cozy-desktop can ignore some files and folders from a list of patterns in the
+ * cozyignore file. This class can be used to know if a file/folder is ignored.
+ */
 class Ignore {
   /*::
   patterns: IgnorePattern[]

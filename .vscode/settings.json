@@ -4,5 +4,8 @@
     "editor.formatOnSave": true
   },
   "eslint.autoFixOnSave": true,
-  "mocha.files.glob": "test/unit/**/metadata.js"
+  "mocha.files.glob": "test/unit/**/metadata.js",
+  "files.exclude": {
+    "doc/api/": true
+  }
 }

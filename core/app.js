@@ -1,4 +1,8 @@
-/* @flow */
+/** Entry point of the synchronization core.
+ *
+ * @module core/app
+ * @flow
+ */
 
 const autoBind = require('auto-bind')
 const fse = require('fs-extra')

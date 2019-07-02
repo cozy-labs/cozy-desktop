@@ -1,4 +1,8 @@
-/* @flow */
+/** Common interface of Local & Remote sides.
+ *
+ * @module core/side
+ * @flow
+ */
 
 /*::
 import type { SideName, Metadata } from './metadata'

@@ -1,4 +1,8 @@
 /* eslint standard/no-callback-literal: 0 */
+/** Proxy management.
+ *
+ * @module gui/js/proxy
+ */
 
 const ElectronProxyAgent = require('electron-proxy-agent')
 const url = require('url')

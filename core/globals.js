@@ -1,4 +1,8 @@
-/* @flow */
+/** Monkey-patches on global objects.
+ *
+ * @module core/globals
+ * @flow
+ */
 
 require('isomorphic-fetch')
 

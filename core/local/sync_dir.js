@@ -1,4 +1,8 @@
-/* @flow */
+/** Sync directory helpers
+ *
+ * @module core/local/sync_dir
+ * @flow
+ */
 
 var fs = require('fs')
 

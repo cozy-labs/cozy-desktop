@@ -1,3 +1,8 @@
+/** Save/reload recently synchronized files between app run.
+ *
+ * @module gui/js/lastfiles
+ */
+
 const fs = require('fs')
 const path = require('path')
 

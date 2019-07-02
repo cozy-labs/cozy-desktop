@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/remote/user_action_required
+ * @flow
+ */
 
 const logger = require('../utils/logger')
 

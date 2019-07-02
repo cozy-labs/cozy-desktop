@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/local/chokidar/event_buffer
+ * @flow
+ */
 
 const autoBind = require('auto-bind')
 
@@ -7,20 +10,22 @@ type EventBufferMode = 'idle' | 'timeout'
 type FlushCallback<EventType> = (EventType[]) => any
 */
 
-// An event buffer.
-// Needs a flush callback to be called everytime the buffer is flushed.
-//
-// In *idle* mode (default), the buffer will only store pushed events and
-// you'll have to flush it manually.
-// In *timeout* mode, the buffer flushes stored events by itself when nothing
-// happens during `timeoutInMs`.
-//
-// The buffer will also flush automatically when switching from one mode to
-// another.
-//
-// Right now this class is in the local/ namespace because this is where it is
-// used, but it could be anywhere else since it doesn't have any dependency.
-module.exports = class EventBuffer /*:: <EventType> */ {
+/**
+ * An event buffer.
+ * Needs a flush callback to be called everytime the buffer is flushed.
+ *
+ * In *idle* mode (default), the buffer will only store pushed events and
+ * you'll have to flush it manually.
+ * In *timeout* mode, the buffer flushes stored events by itself when nothing
+ * happens during `timeoutInMs`.
+ *
+ * The buffer will also flush automatically when switching from one mode to
+ * another.
+ *
+ * Right now this class is in the local/ namespace because this is where it is
+ * used, but it could be anywhere else since it doesn't have any dependency.
+ */
+class EventBuffer /*:: <EventType> */ {
   /*::
   events: EventType[]
   mode: EventBufferMode
@@ -80,3 +85,5 @@ module.exports = class EventBuffer /*:: <EventType> */ {
     this.mode = mode
   }
 }
+
+module.exports = EventBuffer

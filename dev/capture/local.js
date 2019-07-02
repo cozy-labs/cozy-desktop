@@ -1,4 +1,8 @@
-/* @flow */
+/** Capture local atom or chokidar events to be replayed in test scenarios.
+ *
+ * @module dev/capture/local
+ * @flow
+ */
 
 const Promise = require('bluebird')
 const chokidar = require('chokidar')

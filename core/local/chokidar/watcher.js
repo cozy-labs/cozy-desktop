@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/local/chokidar/watcher
+ * @flow
+ */
 
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
@@ -35,11 +38,13 @@ log.chokidar = log.child({
   component: 'Chokidar'
 })
 
-// This file contains the filesystem watcher that will trigger operations when
-// a file or a folder is added/removed/changed locally.
-// Operations will be added to the a common operation queue along with the
-// remote operations triggered by the remoteEventWatcher.
-module.exports = class LocalWatcher {
+/**
+ * This file contains the filesystem watcher that will trigger operations when
+ * a file or a folder is added/removed/changed locally.
+ * Operations will be added to the a common operation queue along with the
+ * remote operations triggered by the remoteEventWatcher.
+ */
+class LocalWatcher {
   /*::
   syncPath: string
   prep: Prep
@@ -83,8 +88,10 @@ module.exports = class LocalWatcher {
     })
   }
 
-  // Start chokidar, the filesystem watcher
-  // https://github.com/paulmillr/chokidar
+  /** Start chokidar, the filesystem watcher
+   *
+   * @see https://github.com/paulmillr/chokidar
+   */
   start() {
     log.debug('Starting...')
 
@@ -246,3 +253,5 @@ module.exports = class LocalWatcher {
     return this.checksumer.push(absPath)
   }
 }
+
+module.exports = LocalWatcher

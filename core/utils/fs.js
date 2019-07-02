@@ -1,3 +1,7 @@
+/**
+ * @module core/utils/fs
+ */
+
 const Promise = require('bluebird')
 const childProcess = require('child_process')
 
@@ -14,8 +18,10 @@ const log = logger({
   component: 'Fs'
 })
 
-// Hides a directory on Windows.
-// Errors are logged, not thrown.
+/** Hide a directory on Windows.
+ *
+ * Errors are logged, not thrown.
+ */
 async function hideOnWindows(path /*: string */) /*: Promise<void> */ {
   if (process.platform !== 'win32') return
   try {

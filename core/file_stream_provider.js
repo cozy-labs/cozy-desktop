@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/file_stream_provider
+ * @flow
+ */
 
 // FIXME:
 // eslint-disable-next-line

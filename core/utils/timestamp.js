@@ -1,4 +1,8 @@
-/* @flow */
+/** Date/time helpers
+ *
+ * @module core/utils/timestamp
+ * @flow
+ */
 
 /*::
 export type Timestamp = Date

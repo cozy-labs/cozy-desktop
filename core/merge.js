@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/merge
+ * @flow
+ */
 
 const autoBind = require('auto-bind')
 const _ = require('lodash')

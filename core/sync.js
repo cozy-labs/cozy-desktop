@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/sync
+ * @flow
+ */
 
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')

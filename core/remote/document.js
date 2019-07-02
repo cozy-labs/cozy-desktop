@@ -1,4 +1,8 @@
-/* @flow */
+/** The remote Cozy metadata, as returned by cozy-client-js.
+ *
+ * @module core/remote/document
+ * @flow
+ */
 
 const { uniq } = require('lodash')
 
@@ -26,7 +30,6 @@ function specialId(id /*: string */) {
 // TODO: Define separate types for files and folders
 
 /*::
-// The remote Cozy metadata, as returned by cozy-client-js
 export type RemoteDoc = {
   _id: string,
   _rev: string,

@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/local/chokidar/analysis
+ * @flow
+ */
 
 const path = require('path')
 const _ = require('lodash')

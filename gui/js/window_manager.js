@@ -1,3 +1,8 @@
+/** Base implementation for all windows.
+ *
+ * @module gui/js/window_manager
+ */
+
 const { BrowserWindow, ipcMain, shell } = require('electron')
 const _ = require('lodash')
 const path = require('path')

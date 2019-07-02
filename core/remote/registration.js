@@ -1,3 +1,8 @@
+/** Registration of the client to the remote Cozy.
+ *
+ * @module core/remote/registration
+ */
+
 const autoBind = require('auto-bind')
 const os = require('os')
 const http = require('http')

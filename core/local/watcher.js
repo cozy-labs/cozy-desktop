@@ -1,4 +1,8 @@
-/* @flow */
+/** Common local watcher interface & constructor.
+ *
+ * @module core/local/watcher
+ * @flow
+ */
 
 const { AtomWatcher } = require('./atom/watcher')
 const ChokidarWatcher = require('./chokidar/watcher')

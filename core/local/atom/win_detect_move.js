@@ -1,4 +1,12 @@
-/* @flow */
+/** This step aggregates deleted & added events into renamed ones on Windows.
+ *
+ * On windows, ReadDirectoryChangesW emits a deleted and an added events when
+ * a file or directory is moved. This step merges the two events to a single
+ * renamed event.
+ *
+ * @module core/local/atom/win_detect_move
+ * @flow
+ */
 
 const _ = require('lodash')
 const path = require('path')
@@ -14,9 +22,11 @@ const log = logger({
   component: `atom/${STEP_NAME}`
 })
 
-// Wait at most this delay (in milliseconds) to see if it's a move.
-// TODO tweak the value (the initial value was chosen because it looks like a
-//      good value, it is not something that was computed)
+/** Wait at most this delay (in milliseconds) to see if it's a move.
+ *
+ * TODO: tweak the value (the initial value was chosen because it looks like a
+ * good value, it is not something that was computed).
+ */
 const DELAY = 1000
 
 /*::
@@ -174,9 +184,6 @@ function sendReadyBatches(
   }
 }
 
-// On windows, ReadDirectoryChangesW emits a deleted and an added events when
-// a file or directory is moved. This step merges the two events to a single
-// renamed event.
 async function winDetectMove(
   channel,
   output,

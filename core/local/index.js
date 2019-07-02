@@ -1,4 +1,8 @@
-/* @flow */
+/** The Local side read/write interface.
+ *
+ * @module core/local
+ * @flow
+ */
 
 const async = require('async')
 const autoBind = require('auto-bind')
@@ -48,10 +52,12 @@ export type LocalOptions = {
 }
 */
 
-// Local is the class that interfaces cozy-desktop with the local filesystem.
-// It uses a watcher, based on chokidar, to listen for file and folder changes.
-// It also applied changes from the remote cozy on the local filesystem.
-module.exports = class Local /*:: implements Side */ {
+/**
+ * Local is the class that interfaces cozy-desktop with the local filesystem.
+ * It uses a watcher, based on chokidar, to listen for file and folder changes.
+ * It also applied changes from the remote cozy on the local filesystem.
+ */
+class Local /*:: implements Side */ {
   /*::
   prep: Prep
   pouch: Pouch
@@ -86,21 +92,23 @@ module.exports = class Local /*:: implements Side */ {
   renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<void>
   */
 
-  // Start initial replication + watching changes in live
+  /** Start initial replication + watching changes in live */
   start() {
     syncDir.ensureExistsSync(this)
     this.syncDirCheckInterval = syncDir.startIntervalCheck(this)
     return this.watcher.start()
   }
 
-  // Stop watching the file system
+  /** Stop watching the file system */
   stop() {
     clearInterval(this.syncDirCheckInterval)
     return this.watcher.stop()
   }
 
-  // Create a readable stream for the given doc
-  // adds a contentLength property to be used
+  /** Create a readable stream for the given doc.
+   *
+   * adds a contentLength property to be used
+   */
   async createReadStreamAsync(
     doc /*: Metadata */
   ) /*: Promise<ReadableWithContentLength> */ {
@@ -124,15 +132,17 @@ module.exports = class Local /*:: implements Side */ {
 
   /* Helpers */
 
-  // Return a function that will update last modification date
-  // and does a chmod +x if the file is executable
-  //
-  // Note: UNIX has 3 timestamps for a file/folder:
-  // - atime for last access
-  // - ctime for change (metadata or content)
-  // - utime for update (content only)
-  // This function updates utime and ctime according to the last
-  // modification date.
+  /**
+   * Return a function that will update last modification date
+   * and does a chmod +x if the file is executable
+   *
+   * Note: UNIX has 3 timestamps for a file/folder:
+   * - atime for last access
+   * - ctime for change (metadata or content)
+   * - utime for update (content only)
+   * This function updates utime and ctime according to the last
+   * modification date.
+   */
   metadataUpdater(doc /*: Metadata */) {
     return (callback /*: Callback */) => {
       this.updateMetadataAsync(doc)
@@ -175,7 +185,7 @@ module.exports = class Local /*:: implements Side */ {
     }
   }
 
-  // Check if a file corresponding to given checksum already exists
+  /** Check if a file corresponding to given checksum already exists */
   fileExistsLocally(checksum /*: string */, callback /*: Callback */) {
     this.pouch.byChecksum(checksum, (err, docs) => {
       if (err) {
@@ -197,21 +207,23 @@ module.exports = class Local /*:: implements Side */ {
 
   /* Write operations */
 
-  // Add a new file, or replace an existing one
-  //
-  // Steps to create a file:
-  //   * Try to find a similar file based on his checksum
-  //     (in that case, it just requires a local copy)
-  //   * Or download the linked binary from remote
-  //   * Write to a temporary file
-  //   * Ensure parent folder exists
-  //   * Move the temporay file to its final destination
-  //   * Update creation and last modification dates
-  //
-  // Note: if no checksum was available for this file, we download the file
-  // from the remote document. Later, chokidar will fire an event for this new
-  // file. The checksum will then be computed and added to the document, and
-  // then pushed to CouchDB.
+  /**
+   * Add a new file, or replace an existing one
+   *
+   * Steps to create a file:
+   *   * Try to find a similar file based on his checksum
+   *     (in that case, it just requires a local copy)
+   *   * Or download the linked binary from remote
+   *   * Write to a temporary file
+   *   * Ensure parent folder exists
+   *   * Move the temporay file to its final destination
+   *   * Update creation and last modification dates
+   *
+   * Note: if no checksum was available for this file, we download the file
+   * from the remote document. Later, chokidar will fire an event for this new
+   * file. The checksum will then be computed and added to the document, and
+   * then pushed to CouchDB.
+   */
   addFile(doc /*: Metadata */, callback /*: Callback */) /*: void */ {
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
     let filePath = path.resolve(this.syncPath, doc.path)
@@ -308,7 +320,7 @@ module.exports = class Local /*:: implements Side */ {
     )
   }
 
-  // Create a new folder
+  /** Create a new folder */
   addFolder(doc /*: Metadata */, callback /*: Callback */) /*: void */ {
     let folderPath = path.join(this.syncPath, doc.path)
     log.info({ path: doc.path }, 'Put folder')
@@ -322,12 +334,12 @@ module.exports = class Local /*:: implements Side */ {
     )
   }
 
-  // Overwrite a file
+  /** Overwrite a file */
   async overwriteFileAsync(doc /*: Metadata */) /*: Promise<void> */ {
     await this.addFileAsync(doc)
   }
 
-  // Update the metadata of a file
+  /** Update the metadata of a file */
   updateFileMetadata(
     doc /*: Metadata */,
     old /*: Metadata */,
@@ -337,7 +349,7 @@ module.exports = class Local /*:: implements Side */ {
     this.metadataUpdater(doc)(callback)
   }
 
-  // Update a folder
+  /** Update a folder */
   async updateFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
     await this.addFolderAsync(doc)
   }
@@ -427,7 +439,7 @@ module.exports = class Local /*:: implements Side */ {
     await this.trashAsync(doc)
   }
 
-  // Rename a file/folder to resolve a conflict
+  /** Rename a file/folder to resolve a conflict */
   renameConflictingDoc(
     doc /*: Metadata */,
     newPath /*: string */,
@@ -440,3 +452,5 @@ module.exports = class Local /*:: implements Side */ {
     // TODO: Don't fire an event for the deleted file?
   }
 }
+
+module.exports = Local

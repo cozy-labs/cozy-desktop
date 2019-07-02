@@ -1,3 +1,8 @@
+/** Platform incompatibility message helpers.
+ *
+ * @module gui/js/incompatibilitiesmsg
+ */
+
 const { translate, interpolate, platformName } = require('./i18n')
 
 module.exports.incompatibilitiesErrorMessage = i => {

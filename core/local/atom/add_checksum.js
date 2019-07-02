@@ -1,4 +1,18 @@
-/* @flow */
+/** This step adds md5sum for files:
+ *
+ * - for created and updated events, it is mandatory
+ * - for scan events, it is always done but an optimization could be to do it
+ *   only for new files and files whose mtime or path has changed
+ * - for renamed events, it is done in case a file was created while the client
+ *   was stopped and is renamed while the client is starting (the renamed event
+ *   that will be transformed in a created event in dispatch), but we could be
+ *   smarter
+ *
+ * TODO the 2 optimizations ↑
+ *
+ * @module core/local/atom/add_checksum
+ * @flow
+ */
 
 const _ = require('lodash')
 const path = require('path')
@@ -22,15 +36,18 @@ module.exports = {
   loop
 }
 
-// This step adds md5sum for files:
-// - for created and updated events, it is mandatory
-// - for scan events, it is always done but an optimization could be to do it
-//   only for new files and files whose mtime or path has changed
-// - for renamed events, it is done in case a file was created while the client
-//   was stopped and is renamed while the client is starting (the renamed event
-//   that will be transformed in a created event in dispatch), but we could be
-//   smarter
-// TODO the 2 optimizations ↑
+/** Compute checksums for event batches pulled from the given Channel.
+ *
+ * Returns a new Channel were events with computed checksums will be pushed.
+ *
+ * Skip checksuming when:
+ *
+ * - File is supposed not to exist anymore according to the event data.
+ * - Checksum is already assigned because it is not supposed to have changed.
+ *
+ * @see .isFileWithContent
+ * @see module:core/local/atom/initial_diff
+ */
 function loop(
   channel /*: Channel */,
   opts /*: { syncPath: string , checksumer: Checksumer } */
@@ -61,6 +78,10 @@ function loop(
   })
 }
 
+/** Return true when file is supposed to exist according to event data.
+ *
+ * Return false for directories & deleted files.
+ */
 function isFileWithContent(event /*: AtomEvent */) /*: boolean %checks */ {
   return event.kind === 'file' && contentActions.has(event.action)
 }

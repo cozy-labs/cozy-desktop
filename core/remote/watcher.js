@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/remote/watcher
+ * @flow
+ */
 
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
@@ -31,7 +34,7 @@ const HEARTBEAT /*: number */ =
 
 const sideName = 'remote'
 
-// Get changes from the remote Cozy and prepare them for merge
+/** Get changes from the remote Cozy and prepare them for merge */
 class RemoteWatcher {
   /*::
   pouch: Pouch
@@ -131,8 +134,10 @@ class RemoteWatcher {
     }
   }
 
-  // Pull multiple changed or deleted docs
-  // FIXME: Misleading method name?
+  /** Pull multiple changed or deleted docs
+   *
+   * FIXME: Misleading method name?
+   */
   async pullMany(
     docs /*: Array<RemoteDoc|RemoteDeletion> */
   ) /*: Promise<Error[]> */ {
@@ -228,14 +233,16 @@ class RemoteWatcher {
     }
   }
 
-  // FIXME: comment: Transform the doc and save it in pouchdb
-  //
-  // In both CouchDB and PouchDB, the filepath includes the name field.
-  // And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
-  //
-  // Note that the changes feed can aggregate several changes for many changes
-  // for the same document. For example, if a file is created and then put in
-  // the trash just after, it looks like it appeared directly on the trash.
+  /**
+   * FIXME: comment: Transform the doc and save it in pouchdb
+   *
+   * In both CouchDB and PouchDB, the filepath includes the name field.
+   * And the _id/_rev from CouchDB are saved in the remote field in PouchDB.
+   *
+   * Note that the changes feed can aggregate several changes for many changes
+   * for the same document. For example, if a file is created and then put in
+   * the trash just after, it looks like it appeared directly on the trash.
+   */
   identifyExistingDocChange(
     remoteDoc /*: RemoteDoc */,
     was /*: ?Metadata */,

@@ -1,4 +1,7 @@
-/* @flow */
+/**
+ * @module core/prep
+ * @flow
+ */
 
 const autoBind = require('auto-bind')
 const { clone } = require('lodash')
