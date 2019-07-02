@@ -112,6 +112,11 @@ jobs:
           name: stopped client scenarios
           env:
               - STOPPED_CLIENT=1
+        - <<: *test_scenarios
+          os: osx
+          name: stopped client scenarios
+          env:
+              - STOPPED_CLIENT=1
         - &dist
           stage: test
           script: ./dev/ci/dist.sh
