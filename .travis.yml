@@ -28,6 +28,7 @@ env:
         # FIXME: Homebrew 1.7.3 fails to install cask apache-couchdb
         - HOMEBREW_NO_AUTO_UPDATE=1
         - MOCHA_TIMEOUT="240000"
+        - NO_BREAKPOINTS=1
         - NODE_ENV=test
         - NPM_CONFIG_PROGRESS=false
         - COZY_DESKTOP_HEARTBEAT=1000
