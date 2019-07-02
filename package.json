@@ -139,7 +139,6 @@
     "jsdoc": "~3.5.0",
     "jsverify": "^0.8.4",
     "merge-dirs": "^0.2.1",
-    "mocha": "^5.2.0",
     "mocha-clean": "^1.0.0",
     "pouchdb-adapter-memory": "^7.0.0",
     "request-promise": "^4.2.4",
