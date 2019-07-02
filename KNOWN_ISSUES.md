@@ -9,15 +9,13 @@ Please report any other issue you may encounter by using the app help form.
 * Trashing, restoring and deleting content permanently may not work as expected
   yet, especially regarding shared folders and connectors.
   [details](https://trello.com/c/6jfO4hoB)
-* Changing only the case or encoding in a file or directory name, e.g. renaming
-  *my stuff* to *MY STUFF*, won't be synchronized on other devices.
-  [details](https://trello.com/c/Phc3lLEr)
 * Symlinks are not supported yet. Symlinks inside the synchronized directory
   will trigger errors and their content won't be synchronized.
-* Using a mount point as the synchronized folder can have unexpected
-  consequences: in case it is not mounted when the client starts, the directory
-  will appear empty, the client will assume you deleted everything and will
-  update your Cozy accordingly, putting everything in the Cozy trash.
+* Using an external device mounted in a non temporary mount point as the
+  synchronized directory can have unexpected consequences: in case the device is
+  not mounted when the client starts, the mount point will appear as an empty
+  directory and the client will assume you deleted everything and will update
+  your Cozy accordingly, putting everything in the Cozy trash.
 * Using two clients on two different OS with a shared partition between the two is not supported.
 * When a file is made executable / non-executable on the Cozy side (i.e.
   typically from another device), the local file permissions are set to
@@ -28,19 +26,18 @@ Please report any other issue you may encounter by using the app help form.
 
 * Replacing a directory with a file of the same name won't work (same when
   replacing a file with a directory of the same name).
-  [details](https://trello.com/c/rBQ2XXwp)
-* When moving 2 directories at the same time on Windows, possibly only 1 move
-  may be detected. [details](https://trello.com/c/X3QMUQO3)
-
+* Files and directories at the root of the synchronized directory (usually
+  `Cozy Drive`) and whose name start with an underscore (i.e. `_`), won't be
+  synchronized at all.
+* On MacOS, Files in directories whose name start or end with a space won't be
+  synchronized although the directories themselves will be.
 
 ## Performances & resources consumption
 
-* The app takes some time before actually syncing, may hold on until
-  there is no more activity, and uses a lot of CPU on start and when syncing.
-  [details](https://trello.com/c/IQEImXQF)
+* The app uses a lot of CPU on start and when syncing.
 * Actions involving lots of content may take too much time to complete or use
   too much resources. But adding 100000 files or moving 50000 files should
-  still work. [details](https://trello.com/c/IQEImXQF)
+  still work.
 * Logs can grow up a lot. We want to reduce the default verbosity, but it
   currently helps us a lot with synchronisation issues.
 
@@ -57,16 +54,14 @@ Please report any other issue you may encounter by using the app help form.
 
 ## macOS integration
 
+* The app takes some time before actually syncing, may hold on until
+  there is no more activity.
 * The systray icon/menu doesn't behave exactly the same as native ones: missing
   background color when selected, clicking on nearby icon doesn't hide the
   popover...
-* Right-click menu doesn't work, so there is no obvious way to quit
-  (workaround: you can show the help form and then quit via menu or Cmd+Q).
-* Clicking on the systray icon may bring you to the last *space* were it was
-  open.
+* Right-click menu doesn't work, the only way to quit is through the popover,
+  in the preferences tab.
 * The popover is still moveable with tools like BetterTouchTools.
-* When opening the local synced folder, the Finder windows shows up in the
-  background.
 
 ## GNU/Linux integration
 
@@ -74,8 +69,8 @@ Please report any other issue you may encounter by using the app help form.
   will always launch the old app version, even after auto-updating
   (**workaround**: install the *appimaged* daemon as explained in the
   [linux install doc](https://github.com/cozy-labs/cozy-desktop/blob/master/doc/usage/linux.md#install)).
-* The icon is broken with alt+tab or in the GNOME 3 application menu.
-* The app takes far more time to start.
+* When using the `*.AppImage`, after an update, the automatic launch on system
+  startup might need to be reactivated.
 * Without an extension like TopIcons-Plus on GNOME 3, the systray icon is not
   visible, leaving no other way to access the popover (since we don't bring it
   up when relaunching the app yet). It should work on other GNU/Linux desktops
