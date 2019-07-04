@@ -501,7 +501,7 @@ class Merge {
 
       bulk.push(src)
       // FIXME: Find a cleaner way to pass the syncPath to the Merge
-      const incompatibilities = metadata.detectPlatformIncompatibilities(
+      const incompatibilities = metadata.detectIncompatibilities(
         dst,
         this.pouch.config.syncPath
       )

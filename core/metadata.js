@@ -40,9 +40,9 @@ const deepDiff = require('deep-diff').diff
 const path = require('path')
 
 const {
-  detectPathIssues,
-  detectPathLengthIssue
-} = require('./path_restrictions')
+  detectPathIncompatibilities,
+  detectPathLengthIncompatibility
+} = require('./incompatibilities/platform')
 const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
 const logger = require('./utils/logger')
 const timestamp = require('./utils/timestamp')
@@ -50,7 +50,7 @@ const timestamp = require('./utils/timestamp')
 const fsutils = require('./utils/fs')
 /*::
 import type fs from 'fs'
-import type { PathIssue } from './path_restrictions'
+import type { PlatformIncompatibility } from './incompatibilities/platform'
 import type { RemoteDoc } from './remote/document'
 import type { Stats } from './local/stater'
 import type { Ignore } from './ignore'
@@ -142,7 +142,7 @@ module.exports = {
   invalidPath,
   invariants,
   ensureValidPath,
-  detectPlatformIncompatibilities,
+  detectIncompatibilities,
   invalidChecksum,
   ensureValidChecksum,
   extractRevNumber,
@@ -298,26 +298,30 @@ function invariants(doc /*: Metadata */) {
 }
 
 /*::
-export type PlatformIncompatibility = PathIssue & {docType: string}
+export type Incompatibility = PlatformIncompatibility & {docType: string}
 */
 
-// Identifies platform incompatibilities in metadata that will prevent local
-// synchronization
-// TODO: return null instead of an empty array when no issue was found?
-function detectPlatformIncompatibilities(
+/** Identify incompatibilities that will prevent synchronization.
+ *
+ * @see module:core/incompatibilities/platform
+ */
+function detectIncompatibilities(
   metadata /*: Metadata */,
   syncPath /*: string */
-) /*: Array<PlatformIncompatibility> */ {
-  const pathLenghIssue = detectPathLengthIssue(
+) /*: Array<Incompatibility> */ {
+  const pathLenghIncompatibility = detectPathLengthIncompatibility(
     path.join(syncPath, metadata.path),
     platform
   )
-  const issues /*: PathIssue[] */ = detectPathIssues(
+  const incompatibilities /*: PlatformIncompatibility[] */ = detectPathIncompatibilities(
     metadata.path,
     metadata.docType
   )
-  if (pathLenghIssue) issues.unshift(pathLenghIssue)
-  return issues.map(issue =>
+  if (pathLenghIncompatibility) {
+    incompatibilities.unshift(pathLenghIncompatibility)
+  }
+  // TODO: return null instead of an empty array when no issue was found?
+  return incompatibilities.map(issue =>
     _.merge(
       {
         docType: issue.path === metadata.path ? metadata.docType : 'folder'
@@ -331,7 +335,7 @@ function assignPlatformIncompatibilities(
   doc /*: Metadata */,
   syncPath /*: string */
 ) /*: void */ {
-  const incompatibilities = detectPlatformIncompatibilities(doc, syncPath)
+  const incompatibilities = detectIncompatibilities(doc, syncPath)
   if (incompatibilities.length > 0) doc.incompatibilities = incompatibilities
 }
 
