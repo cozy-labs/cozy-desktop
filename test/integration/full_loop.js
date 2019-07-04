@@ -45,7 +45,7 @@ describe('Full watch/merge/sync/repeat loop', () => {
 
     const doc = await helpers.pouch.db.get(metadata.id('file'))
     should(doc.ino).be.a.Number()
-    should(doc.sides).deepEqual({ local: 2, remote: 2 })
+    should(doc.sides).deepEqual({ target: 2, local: 2, remote: 2 })
     await helpers._local.watcher.stop()
   })
 })

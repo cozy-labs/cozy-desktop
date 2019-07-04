@@ -189,6 +189,7 @@ describe('Local', function() {
         docType: 'file',
         md5sum: 'deadcafe',
         sides: {
+          target: 1,
           local: 1
         }
       }

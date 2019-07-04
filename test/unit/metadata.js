@@ -769,17 +769,19 @@ describe('metadata', function() {
         const doc = metadata[`build${kind}`](path, stats)
 
         markSide('local', doc)
-        should(doc).have.properties({ sides: { local: 1 } })
+        should(doc).have.properties({ sides: { target: 1, local: 1 } })
       })
 
       it(`increments the side from the _rev of an already existing ${kind}`, async function() {
         const prev = metadata[`build${kind}`](path, stats)
-        prev.sides = { local: 3, remote: 5 }
+        prev.sides = { target: 5, local: 3, remote: 5 }
         prev._rev = '5-0123'
         const doc = metadata[`build${kind}`](path, stats)
 
         markSide('local', doc, prev)
-        should(doc).have.properties({ sides: { local: 6, remote: 5 } })
+        should(doc).have.properties({
+          sides: { target: 6, local: 6, remote: 5 }
+        })
       })
     }
   })
@@ -791,18 +793,24 @@ describe('metadata', function() {
     }
 
     it('increments both sides by 1 in-place', () => {
-      should(docAfterIncSides({})).deepEqual({ sides: { local: 1, remote: 1 } })
-      should(docAfterIncSides({ sides: { local: 1 } })).deepEqual({
-        sides: { local: 2, remote: 1 }
+      should(docAfterIncSides({})).deepEqual({
+        sides: { target: 1, local: 1, remote: 1 }
       })
-      should(docAfterIncSides({ sides: { remote: 1 } })).deepEqual({
-        sides: { local: 1, remote: 2 }
+      should(docAfterIncSides({ sides: { target: 1, local: 1 } })).deepEqual({
+        sides: { target: 2, local: 2, remote: 1 }
       })
-      should(docAfterIncSides({ sides: { local: 2, remote: 2 } })).deepEqual({
-        sides: { local: 3, remote: 3 }
+      should(docAfterIncSides({ sides: { target: 1, remote: 1 } })).deepEqual({
+        sides: { target: 2, local: 1, remote: 2 }
       })
-      should(docAfterIncSides({ sides: { local: 3, remote: 2 } })).deepEqual({
-        sides: { local: 4, remote: 3 }
+      should(
+        docAfterIncSides({ sides: { target: 2, local: 2, remote: 2 } })
+      ).deepEqual({
+        sides: { target: 3, local: 3, remote: 3 }
+      })
+      should(
+        docAfterIncSides({ sides: { target: 3, local: 3, remote: 2 } })
+      ).deepEqual({
+        sides: { target: 4, local: 4, remote: 3 }
       })
     })
   })

@@ -5,7 +5,6 @@
 
 const autoBind = require('auto-bind')
 const _ = require('lodash')
-const { clone } = _
 const path = require('path')
 
 const IdConflict = require('./IdConflict')
@@ -138,7 +137,7 @@ class Merge {
     side /*: SideName */,
     doc /*: Metadata */,
     was /*: ?Metadata */
-  ) {
+  ) /*: Promise<Metadata> */ {
     log.warn(
       { path: doc.path, oldpath: was && was.path, doc, was },
       'resolveConflictAsync'
@@ -219,8 +218,7 @@ class Merge {
     }
     await this.ensureParentExistAsync(side, doc)
 
-    const result = await this.pouch.put(doc)
-    return this.fixSideInPouch({ side, result, doc })
+    return this.pouch.put(doc)
   }
 
   // Update a file, when its metadata or its content has changed
@@ -331,8 +329,7 @@ class Merge {
     }
     await this.ensureParentExistAsync(side, doc)
 
-    const result = await this.pouch.put(doc)
-    return this.fixSideInPouch({ side, result, doc })
+    return this.pouch.put(doc)
   }
 
   // Rename or move a file
@@ -387,8 +384,7 @@ class Merge {
       } else if (file && !doc.overwrite && doc.path === file.path) {
         const dst = await this.resolveConflictAsync(side, doc, file)
         was.moveTo = dst._id
-        dst.sides = {}
-        dst.sides[side] = 1
+        dst.sides = { target: 1, [side]: 1 }
         return this.pouch.bulkDocs([was, dst])
       } else if (file && doc.overwrite) {
         doc._rev = file._rev
@@ -397,8 +393,7 @@ class Merge {
       } else {
         await this.ensureParentExistAsync(side, doc)
 
-        const results = await this.pouch.bulkDocs([was, doc])
-        return this.bulkFixSideInPouch({ side, results, docs: [doc] })
+        return this.pouch.bulkDocs([was, doc])
       }
     } else {
       // It can happen after a conflict
@@ -482,8 +477,8 @@ class Merge {
     )
 
     for (let doc of docs) {
-      let src = clone(doc)
-      let dst = clone(doc)
+      let src = _.cloneDeep(doc)
+      let dst = _.cloneDeep(doc)
       dst._id = makeDestinationID(doc)
       dst.path = doc.path.replace(was.path, folder.path)
       if (src.sides && src.sides[side] && !src.sides[otherSide(side)]) {
@@ -510,8 +505,7 @@ class Merge {
       else delete dst.incompatibilities
       bulk.push(dst)
     }
-    const results = await this.pouch.bulkDocs(bulk)
-    return this.bulkFixSideInPouch({ side, results, docs: bulk })
+    return this.pouch.bulkDocs(bulk)
   }
 
   async restoreFileAsync(
@@ -575,7 +569,7 @@ class Merge {
       return this.pouch.put(oldMetadata)
     }
     delete oldMetadata.errors
-    const newMetadata = clone(oldMetadata)
+    const newMetadata = _.cloneDeep(oldMetadata)
     metadata.markSide(side, newMetadata, oldMetadata)
     newMetadata._id = doc._id
     newMetadata._rev = doc._rev
@@ -621,8 +615,7 @@ class Merge {
         } else {
           // When "unlinked" from the local side, a folder doesn't have sides
           // information.
-          was.sides = {}
-          was.sides[otherSide(side)] = 1
+          was.sides = { target: 1, [otherSide(side)]: 1 }
         }
         return this.putFolderAsync(otherSide(side), was)
       }

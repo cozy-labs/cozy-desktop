@@ -173,12 +173,12 @@ module.exports = class BaseMetadataBuilder {
   }
 
   upToDate() /*: this */ {
-    this.doc.sides = { local: 2, remote: 2 }
+    this.doc.sides = { rev: 2, local: 2, remote: 2 }
     return this
   }
 
   notUpToDate() /*: this */ {
-    this.doc.sides = { remote: 1 }
+    this.doc.sides = { target: 1, remote: 1 }
     return this
   }
 
@@ -187,7 +187,15 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  sides(sides /*: MetadataSidesInfo */) /*: this */ {
+  sides({
+    local,
+    remote
+  } /*: { local?: number, remote?: number } */ = {}) /*: this */ {
+    const sides /*: MetadataSidesInfo */ = {
+      target: Math.max(local || 0, remote || 0)
+    }
+    if (local) sides.local = local
+    if (remote) sides.remote = remote
     this.doc.sides = sides
     return this
   }
@@ -223,18 +231,11 @@ module.exports = class BaseMetadataBuilder {
     }
 
     const doc = this.build()
-    // Update doc until _rev matches the highest side
     doc.sides = doc.sides || { local: 1 }
-    const desiredRevNumber = Math.max(
-      doc.sides.local || 0,
-      doc.sides.remote || 0
-    )
-    let revNumber = 0
-    while (revNumber < desiredRevNumber) {
-      const { rev: newRev } = await pouch.db.put(doc)
-      doc._rev = newRev
-      revNumber = metadata.extractRevNumber(doc)
-    }
+    doc.sides.target = Math.max(doc.sides.local || 0, doc.sides.remote || 0)
+
+    const { rev: newRev } = await pouch.db.put(doc)
+    doc._rev = newRev
 
     return doc
   }
