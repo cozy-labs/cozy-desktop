@@ -173,7 +173,11 @@ module.exports = class BaseMetadataBuilder {
   }
 
   upToDate() /*: this */ {
-    this.doc.sides = { rev: 2, local: 2, remote: 2 }
+    this.doc.sides = {
+      ...this.doc.sides,
+      target: (this.doc.sides && this.doc.sides.target) || 1
+    }
+    metadata.markAsUpToDate(this.doc)
     return this
   }
 
@@ -183,7 +187,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   changedSide(side /*: SideName */) /*: this */ {
-    metadata.markSide(side, this.doc, this.old)
+    metadata.markSide(side, this.doc, this.doc)
     return this
   }
 
