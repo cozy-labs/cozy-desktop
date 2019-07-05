@@ -1,12 +1,10 @@
 # Setting Up a Development Environment
 
-The following commands should work in a Unix shell (Bash or ZSH for example)
-and in Windows PowerShell.
-
-## Code organization and technologies
-
 Cozy Desktop is based on [electron](https://electronjs.org/) and the code is mostly written in JavaScript.
 To start developing, check the prerequisites and follow the guide below.
+
+The following commands should work in a Unix shell (Bash or ZSH for example)
+and in Windows PowerShell.
 
 ## Install requirements
 
@@ -60,7 +58,7 @@ N.B.: the address of the development cozy-stack is http://cozy.tools:8080. Don't
 
 ## Run tests
 
-See [./test.md]().
+See [./test.md](./test.md).
 
 ## Develop Elm
 
