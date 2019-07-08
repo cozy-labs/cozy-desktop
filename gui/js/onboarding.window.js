@@ -88,30 +88,28 @@ module.exports = class OnboardingWM extends WindowManager {
       //      and if the user hasn't moved the window before
       this.centerOnScreen(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT)
       this.win.loadURL(url)
-      this.win.webContents.on(
-        'did-get-response-details',
-        (event, status, newUrl, originalUrl, httpResponseCode) => {
-          if (newUrl.match(/\/auth\/authorize\?/) && httpResponseCode === 200) {
+      session.defaultSession.webRequest.onResponseStarted(
+        [/\/auth\/authorize\?/],
+        ({ statusCode }) => {
+          if (statusCode === 200) {
             // TODO only centerOnScreen if needed to display the whole oauth screen
             //      and if the user hasn't moved the window before
             this.centerOnScreen(OAUTH_SCREEN_WIDTH, OAUTH_SCREEN_HEIGHT)
+            // Unsubscribe from the event
+            session.defaultSession.webRequest.onResponseStarted(null)
           }
         }
       )
-      this.win.webContents.on(
-        'did-get-redirect-request',
-        (event, oldUrl, newUrl) => {
-          if (newUrl.match('file://')) {
-            // TODO only centerOnScreen if needed to display the whole folder screen
-            //      and if the user hasn't moved the window before
-            this.centerOnScreen(
-              ONBOARDING_SCREEN_WIDTH,
-              ONBOARDING_SCREEN_HEIGHT
-            )
-            resolveP(newUrl)
-          }
+      session.defaultSession.webRequest.onBeforeRedirect(({ redirectURL }) => {
+        if (redirectURL.match(/^file:\/\//)) {
+          // TODO only centerOnScreen if needed to display the whole folder screen
+          //      and if the user hasn't moved the window before
+          this.centerOnScreen(ONBOARDING_SCREEN_WIDTH, ONBOARDING_SCREEN_HEIGHT)
+          resolveP(redirectURL)
+          // Unsubscribe from the event
+          session.defaultSession.webRequest.onBeforeRedirect(null)
         }
-      )
+      })
       return promise
     }
     desktop.registerRemote(cozyUrl, arg.location, onRegistered).then(
