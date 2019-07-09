@@ -21,7 +21,7 @@ Please report any other issue you may encounter by using the app help form.
   typically from another device), the local file permissions are set to
   755 / 644, which means they could be more accessible than they were before
   for group / others.
-* Lose the original creation date of the files and applies the sync date as the creation date instead.
+* Loses the original creation date of the files and applies the sync date as the creation date instead.
 
 **Issues** caused by lower-level bugs that will be **harder to fix or circumvent**:
 
