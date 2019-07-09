@@ -40,6 +40,12 @@ export type RemoteOptions = {
 }
 */
 
+/** `Remote` is the class that interfaces cozy-desktop with the remote Cozy.
+ *
+ * It uses a watcher, based on cozy-client-js, to poll for file and folder
+ * changes from the remote CouchDB.
+ * It also applies changes from the local filesystem on the remote cozy.
+ */
 class Remote /*:: implements Side */ {
   /*::
   other: FileStreamProvider
