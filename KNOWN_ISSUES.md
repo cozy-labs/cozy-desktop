@@ -21,6 +21,7 @@ Please report any other issue you may encounter by using the app help form.
   typically from another device), the local file permissions are set to
   755 / 644, which means they could be more accessible than they were before
   for group / others.
+* Loses the original creation date of the files and applies the sync date as the creation date instead.
 
 **Issues** caused by lower-level bugs that will be **harder to fix or circumvent**:
 
@@ -29,8 +30,9 @@ Please report any other issue you may encounter by using the app help form.
 * Files and directories at the root of the synchronized directory (usually
   `Cozy Drive`) and whose name start with an underscore (i.e. `_`), won't be
   synchronized at all.
-* On MacOS, Files in directories whose name start or end with a space won't be
-  synchronized although the directories themselves will be.
+* While having some errors, client might display "offline" message instead of relevant one.
+* With some specific successive actions, moving a parent folder and editing a child file, or removing it, some changes might not be taken into account.
+* On MacOS, Files in directories whose name start or end with a space won't be synchronized although the directories themselves will be.
 
 ## Performances & resources consumption
 
@@ -39,7 +41,7 @@ Please report any other issue you may encounter by using the app help form.
   too much resources. But adding 100000 files or moving 50000 files should
   still work.
 * Logs can grow up a lot. We want to reduce the default verbosity, but it
-  currently helps us a lot with synchronisation issues.
+  currently helps us a lot with synchronization issues.
 
 ## UI issues
 
@@ -60,7 +62,7 @@ Please report any other issue you may encounter by using the app help form.
   background color when selected, clicking on nearby icon doesn't hide the
   popover...
 * Right-click menu doesn't work, the only way to quit is through the popover,
-  in the preferences tab.
+  in the settings tab.
 * The popover is still moveable with tools like BetterTouchTools.
 
 ## GNU/Linux integration
