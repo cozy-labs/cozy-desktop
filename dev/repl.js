@@ -6,7 +6,6 @@ const { start } = require('repl')
 
 require('../core/globals')
 const { App } = require('../core/app')
-const TestHelpers = require('../test/support/helpers')
 
 const basePath = process.env.COZY_DESKTOP_DIR
 if (basePath == null) throw new Error('COZY_DESKTOP_DIR is undefined')
@@ -24,10 +23,8 @@ The following objects are available:
 if (config.isValid()) {
   app.instanciate()
   cozy = app.remote.watcher.remoteCozy.client
-  helpers = TestHelpers.init(app)
   // eslint-disable-next-line no-console
   console.log(`  cozy     A cozy-client-js instance, set up with your config
-  helpers  See test/helpers/integration.js
 
 Since a valid configuration is available, app.instanciate() was already called
 for you, which means you can call app.startSync().`)
