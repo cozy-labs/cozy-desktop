@@ -10,17 +10,20 @@ const path = require('path')
 let tray = null
 
 const imgs = path.resolve(__dirname, '..', 'images')
+const isMac = process.platform === 'darwin'
+const isWindows = process.platform === 'win32'
+const isKde =
+  process.env.XDG_CURRENT_DESKTOP &&
+  process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
 
 module.exports.init = (app, listener) => {
-  let icon =
-    process.platform === 'darwin'
-      ? `${imgs}/tray-icon-osx/idleTemplate.png`
-      : process.platform === 'win32'
-      ? `${imgs}/tray-icon-win/idle.png`
-      : process.env.XDG_CURRENT_DESKTOP &&
-        process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
-      ? `${imgs}/tray-icon-linux-kde/idle.png`
-      : `${imgs}/tray-icon-linux/idle.png`
+  let icon = isMac
+    ? `${imgs}/tray-icon-osx/idleTemplate.png`
+    : isWindows
+    ? `${imgs}/tray-icon-win/idle.png`
+    : isKde
+    ? `${imgs}/tray-icon-linux-kde/idle.png`
+    : `${imgs}/tray-icon-linux/idle.png`
   tray = new Tray(icon)
   app.on('before-quit', () => tray.destroy())
 
@@ -30,37 +33,28 @@ module.exports.init = (app, listener) => {
     listener(tray.getBounds ? tray.getBounds() : cachedBounds)
   }
 
+  // On Linux systems without libappindicator-gtk3 or other systems, clicks on
+  // the systray icon trigger events that can be caught to display the app
+  // window for example.
   tray.on('click', clicked)
   tray.on('right-click', clicked)
   tray.on('double-click', clicked)
   tray.setToolTip('loading')
 
-  // on MacOS, Unity & KDE, if a tray has a contextmenu, click event does not work
-  // on Gnome, if a tray has no contextmenu, tray is not shown
-  // @TODO test on windows
-
-  const isMac = process.platform !== 'darwin'
-  const isUnity =
-    process.env.XDG_CURRENT_DESKTOP &&
-    process.env.XDG_CURRENT_DESKTOP.match(/Unity/)
-  const isKDE =
-    process.env.XDG_CURRENT_DESKTOP &&
-    process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
-
-  if (isUnity || isMac || isKDE) {
+  if (!isMac && !isWindows) {
+    // When click events are not triggered, we need to display a context menu so
+    // users can open the app's window.
     const cm = Menu.buildFromTemplate([
       { label: translate('Tray Quit application'), click: app.quit }
     ])
-    if (isUnity || isKDE) {
-      cm.insert(
-        0,
-        new MenuItem({
-          label: translate('Tray Show application'),
-          click: clicked
-        })
-      )
-      cm.insert(1, new MenuItem({ type: 'separator' }))
-    }
+    cm.insert(
+      0,
+      new MenuItem({
+        label: translate('Tray Show application'),
+        click: clicked
+      })
+    )
+    cm.insert(1, new MenuItem({ type: 'separator' }))
     tray.setContextMenu(cm)
   }
   setState('idle')
