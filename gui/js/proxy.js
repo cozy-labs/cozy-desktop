@@ -116,23 +116,25 @@ const setup = (app, config, session, userAgent, doneSetup) => {
   http.Agent.globalAgent = http.globalAgent = https.globalAgent = new ElectronProxyAgent(
     session.defaultSession
   )
-  const originalHttpRequest = http.request
-  http.request = function(options, cb) {
-    options.agent = options.agent || http.globalAgent
-    options.headers = options.headers || {}
-    if (options.hostname) options.headers.host = options.hostname
-    options.headers['User-Agent'] = userAgent
-    return originalHttpRequest.call(http, options, cb)
-  }
-  const originalHttpsRequest = https.request
-  https.request = function(options, cb) {
+  const parseRequestOptions = options => {
     if (typeof options === 'string') {
       options = new url.URL(options)
     } else {
       options = Object.assign({}, options)
     }
-    options.agent = options.agent || https.globalAgent
-    return originalHttpsRequest.call(https, options, cb)
+    options.agent = options.agent || http.globalAgent
+    options.headers = options.headers || {}
+    if (options.hostname) options.headers.host = options.hostname
+    options.headers['User-Agent'] = userAgent
+    return options
+  }
+  const originalHttpRequest = http.request
+  http.request = function(options, cb) {
+    return originalHttpRequest.call(http, parseRequestOptions(options), cb)
+  }
+  const originalHttpsRequest = https.request
+  https.request = function(options, cb) {
+    return originalHttpsRequest.call(https, parseRequestOptions(options), cb)
   }
 
   const callback = () => {
