@@ -1,4 +1,29 @@
-/**
+/** Turn messy low-level events into normalized high-level ones.
+ *
+ * ## Input
+ *
+ * The analysis receives
+ * {@link module:core/local/chokidar/local_event|LocalEvent} batches.
+ *
+ * Moves are typically detected as `unlink*` + `add*` events. Directory moves
+ * end up as a whole tree of those.
+ *
+ * Events are not necessarily in the correct order. Nor are they necessarily
+ * batched together.
+ *
+ * ## Analysis substeps
+ *
+ * 1. {@link module:core/local/chokidar/analysis~analyseEvents|analyseEvents}
+ * 2. {@link module:core/local/chokidar/analysis~sortBeforeSquash|sortBeforeSquash}
+ * 3. {@link module:core/local/chokidar/analysis~squashMoves|squashMoves}
+ * 4. {@link module:core/local/chokidar/analysis~finalSort|finalSort}
+ * 5. {@link module:core/local/chokidar/analysis~separatePendingChanges|separatePendingChanges}
+ *
+ * ## Known issues
+ *
+ * - Substeps may end up eating a lot of CPU & RAM when batches are too big.
+ * - See also individual substep issues.
+ *
  * @module core/local/chokidar/analysis
  * @flow
  */
@@ -88,6 +113,13 @@ class LocalChangeMap {
   }
 }
 
+/** Analyse low-level events and turn them into high level changes.
+ *
+ * - Aggregates corresponding `deleted` & `created` events as *moves*.
+ * - Does not aggregate descendant moves.
+ * - Does not sort changes.
+ * - Handles known broken event combos (e.g. identical renaming).
+ */
 function analyseEvents(
   events /*: LocalEvent[] */,
   pendingChanges /*: LocalChange[] */
@@ -236,7 +268,8 @@ function analyseEvent(
   }
 }
 
-// TODO: Rename according to the sort logic
+/** First sort to make moves squashing easier.
+ */
 function sortBeforeSquash(changes /*: LocalChange[] */) {
   log.trace('Sort changes before squash...')
   const stopMeasure = measureTime('LocalWatcher#sortBeforeSquash')
@@ -256,6 +289,8 @@ function sortBeforeSquash(changes /*: LocalChange[] */) {
   stopMeasure()
 }
 
+/** Aggregate descendant moves with their corresponding root move change.
+ */
 function squashMoves(changes /*: LocalChange[] */) {
   log.trace('Squash moves...')
   const stopMeasure = measureTime('LocalWatcher#squashMoves')
@@ -310,6 +345,19 @@ function squashMoves(changes /*: LocalChange[] */) {
   stopMeasure()
 }
 
+/** Push back pending changes.
+ *
+ * More low-level events are expected to come up for those changes to be
+ * complete. They will be injected back in the next analysis run.
+ *
+ * This step helped us fix a bunch of move scenarios with unexpected event
+ * batches.
+ *
+ * ## Known issues
+ *
+ * - May break events order.
+ * - No timeout (some changes may be pending forever).
+ */
 function separatePendingChanges(
   changes /*: LocalChange[] */,
   pendingChanges /*: LocalChange[] */
@@ -346,7 +394,6 @@ function separatePendingChanges(
   return []
 }
 
-// TODO: Rename according to the sort logic
 const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
   if (a.wip && !b.wip) return -1
   if (b.wip && !a.wip) return 1
@@ -410,7 +457,12 @@ const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
   return 1
 }
 
-// TODO: Rename according to the sort logic
+/** Final sort to ensure multiple changes at the same paths can be merged.
+ *
+ * Known issues:
+ *
+ * - Hard to change without breaking things.
+ */
 function finalSort(changes /*: LocalChange[] */) {
   log.trace('Final sort...')
   const stopMeasure = measureTime('LocalWatcher#finalSort')

@@ -1,4 +1,9 @@
-/** A ChokidarEvent with a bit more context.
+/** A {@link module:core/local/chokidar/event|ChokidarEvent} with some context:
+ *
+ * - The corresponding `old` {@link module:core/metadata|Metadata} present in
+ *   the {@link module:core/pouch|Pouch}.
+ * - An `md5sum` when relevant
+ * - A `wip` flag indicating whether the event is incomplete or not
  *
  * @module core/local/chokidar/local_event
  * @flow

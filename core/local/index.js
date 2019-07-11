@@ -52,10 +52,14 @@ export type LocalOptions = {
 }
 */
 
-/**
- * Local is the class that interfaces cozy-desktop with the local filesystem.
+/** `Local` is the class that interfaces cozy-desktop with the local filesystem.
+ *
  * It uses a watcher, based on chokidar, to listen for file and folder changes.
  * It also applied changes from the remote cozy on the local filesystem.
+ *
+ * Its `other` attribute is a reference to a {@link module:core/remote|Remote} side instance.
+ * This allows us to read from the remote Cozy when writing to the local
+ * filesystem.
  */
 class Local /*:: implements Side */ {
   /*::
