@@ -17,7 +17,7 @@ const stater = require('./stater')
 const { isUpToDate } = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
 const watcher = require('./watcher')
-const { withContentLength } = require('../file_stream_provider')
+const { withContentLength } = require('../reader')
 const syncDir = require('./sync_dir')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
@@ -26,13 +26,13 @@ const sentry = require('../utils/sentry')
 /*::
 import type EventEmitter from 'events'
 import type { Config } from '../config'
-import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
+import type { ReadableWithContentLength, Reader } from '../reader'
 import type { Ignore } from '../ignore'
 import type { AtomEventsDispatcher } from './atom/dispatch'
 import type { Metadata } from '../metadata'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
-import type { Side } from '../side' // eslint-disable-line
+import type { Writer } from '../writer'
 import type { Callback } from '../utils/func'
 import type { Watcher } from './watcher'
 */
@@ -61,7 +61,7 @@ export type LocalOptions = {
  * This allows us to read from the remote Cozy when writing to the local
  * filesystem.
  */
-class Local /*:: implements Side */ {
+class Local /*:: implements Reader, Writer */ {
   /*::
   prep: Prep
   pouch: Pouch
@@ -70,7 +70,7 @@ class Local /*:: implements Side */ {
   syncDirCheckInterval: IntervalID
   tmpPath: string
   watcher: Watcher
-  other: FileStreamProvider
+  other: Reader
   _trash: (Array<string>) => Promise<void>
   */
 

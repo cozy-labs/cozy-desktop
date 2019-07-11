@@ -3,7 +3,7 @@
 const sinon = require('sinon')
 
 /*::
-import type { Side } from '../../../core/side'
+import type { Writer } from '../../../core/writer'
 */
 
 const METHODS = [
@@ -20,7 +20,7 @@ const METHODS = [
   'renameConflictingDocAsync'
 ]
 
-module.exports = function stubSide() /*: Side */ {
+module.exports = function stubSide() /*: Writer */ {
   const double = {}
   for (let method of METHODS) {
     double[method] = sinon.stub().resolves()

@@ -1,5 +1,9 @@
-/**
- * @module core/file_stream_provider
+/**  Provides a stream.Readable for local or remote file corresponding to the
+ * given metadata.
+ *
+ * See the `Reader` type.
+ *
+ * @module core/reader
  * @flow
  */
 
@@ -27,10 +31,8 @@ function withContentLength(
 }
 
 /*::
-// Provides a stream.Readable for local or remote file corresponding to the
-// given metadata.
-export type FileStreamProvider = {
-  createReadStreamAsync: (Metadata) => Promise<ReadableWithContentLength>;
+export interface Reader {
+  createReadStreamAsync (Metadata): Promise<ReadableWithContentLength>;
 }
 */
 

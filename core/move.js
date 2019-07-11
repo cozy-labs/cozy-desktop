@@ -11,7 +11,8 @@
 const metadata = require('./metadata')
 
 /*::
-import type { SideName, Metadata } from './metadata'
+import type { Metadata } from './metadata'
+import type { SideName } from './side'
 */
 
 module.exports = move

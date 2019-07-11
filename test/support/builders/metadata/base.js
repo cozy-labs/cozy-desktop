@@ -15,10 +15,10 @@ import type {
   Metadata,
   MetadataRemoteInfo,
   MetadataSidesInfo,
-  SideName
 } from '../../../../core/metadata'
 import type Pouch from '../../../../core/pouch'
 import type { RemoteDoc } from '../../../../core/remote/document'
+import type { SideName } from '../../../../core/side'
 */
 
 module.exports = class BaseMetadataBuilder {

@@ -12,7 +12,7 @@ const sinon = require('sinon')
 const should = require('should')
 const stream = require('stream')
 
-const { withContentLength } = require('../../../core/file_stream_provider')
+const { withContentLength } = require('../../../core/reader')
 const checksumer = require('../../../core/local/checksumer')
 const metadata = require('../../../core/metadata')
 const { ensureValidPath } = metadata

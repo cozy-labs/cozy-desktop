@@ -12,7 +12,7 @@ const { posix, sep } = path
 const { RemoteCozy } = require('./cozy')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
-const { withContentLength } = require('../file_stream_provider')
+const { withContentLength } = require('../reader')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
 
@@ -23,8 +23,8 @@ import type { Metadata } from '../metadata'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type { RemoteDoc } from './document'
-import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider' // eslint-disable-line
-import type { Side } from '../side' // eslint-disable-line
+import type { ReadableWithContentLength, Reader } from '../reader' // eslint-disable-line
+import type { Writer } from '../writer'
 */
 
 const log = logger({
@@ -51,9 +51,9 @@ export type RemoteOptions = {
  * This allows us to read from the local filesystem when writing to the remote
  * Cozy.
  */
-class Remote /*:: implements Side */ {
+class Remote /*:: implements Reader, Writer */ {
   /*::
-  other: FileStreamProvider
+  other: Reader
   pouch: Pouch
   events: EventEmitter
   watcher: RemoteWatcher

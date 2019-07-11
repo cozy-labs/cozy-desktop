@@ -18,9 +18,10 @@ const timestamp = require('./utils/timestamp')
 /*::
 import type { IdConflictInfo } from './IdConflict'
 import type Local from './local'
-import type { SideName, Metadata, RemoteRevisionsByID } from './metadata'
+import type { Metadata, RemoteRevisionsByID } from './metadata'
 import type Pouch from './pouch'
 import type { Remote } from './remote'
+import type { SideName } from './side'
 */
 
 const log = logger({

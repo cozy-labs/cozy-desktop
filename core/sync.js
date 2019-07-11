@@ -22,8 +22,9 @@ import type { Ignore } from './ignore'
 import type Local from './local'
 import type Pouch from './pouch'
 import type { Remote } from './remote'
-import type { SideName, Metadata } from './metadata'
-import type { Side } from './side' // eslint-disable-line
+import type { Metadata } from './metadata'
+import type { SideName } from './side'
+import type { Writer } from './writer'
 */
 
 const log = logger({
@@ -79,9 +80,7 @@ class Sync {
     this.remote = remote
     this.ignore = ignore
     this.events = events
-    // $FlowFixMe
     this.local.other = this.remote
-    // $FlowFixMe
     this.remote.other = this.local
 
     autoBind(this)
@@ -275,7 +274,7 @@ class Sync {
 
   async applyDoc(
     doc /*: Metadata */,
-    side /*: Side */,
+    side /*: Writer */,
     sideName /*: SideName */,
     rev /*: number */
   ) /*: Promise<*> */ {
@@ -357,7 +356,6 @@ class Sync {
       if (old) {
         if (doc.docType === 'folder') {
           await side.updateFolderAsync(doc, old)
-          // $FlowFixMe
         } else if (metadata.sameBinary(old, doc)) {
           if (metadata.sameFileIgnoreRev(old, doc)) {
             log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
@@ -372,7 +370,7 @@ class Sync {
     }
   }
 
-  async doAdd(side /*: Side */, doc /*: Metadata */) /*: Promise<void> */ {
+  async doAdd(side /*: Writer */, doc /*: Metadata */) /*: Promise<void> */ {
     if (doc.docType === 'file') {
       await side.addFileAsync(doc)
       this.events.emit('transfer-started', _.clone(doc))
@@ -382,7 +380,7 @@ class Sync {
   }
 
   async doOverwrite(
-    side /*: Side */,
+    side /*: Writer */,
     doc /*: Metadata */
   ) /*: Promise<void> */ {
     if (doc.docType === 'file') {
@@ -395,7 +393,7 @@ class Sync {
   }
 
   async doMove(
-    side /*: Side */,
+    side /*: Writer */,
     doc /*: Metadata */,
     old /*: Metadata */
   ) /*: Promise<void> */ {
@@ -529,7 +527,7 @@ class Sync {
   // preserve the tree in the trash.
   async trashWithParentOrByItself(
     doc /*: Metadata */,
-    side /*: Side */
+    side /*: Writer */
   ) /*: Promise<boolean> */ {
     let parentId = dirname(doc._id)
     if (parentId !== '.') {

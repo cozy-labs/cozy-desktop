@@ -54,6 +54,7 @@ import type { PathIssue } from './path_restrictions'
 import type { RemoteDoc } from './remote/document'
 import type { Stats } from './local/stater'
 import type { Ignore } from './ignore'
+import type { SideName } from './side'
 */
 
 const log = logger({
@@ -65,9 +66,6 @@ const { platform } = process
 const CONFLICT_REGEXP = /-conflict-\d{4}(?:-\d{2}){2}T(?:\d{2}_?){3}\.\d{3}Z/
 
 /*::
-export type SideName =
-  | "local"
-  | "remote";
 export type DocType =
   | "file"
   | "folder";
