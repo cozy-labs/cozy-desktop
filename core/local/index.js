@@ -17,7 +17,7 @@ const stater = require('./stater')
 const { isUpToDate } = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
 const watcher = require('./watcher')
-const { withContentLength } = require('../file_stream_provider')
+const { withContentLength } = require('../reader')
 const syncDir = require('./sync_dir')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
@@ -26,7 +26,7 @@ const sentry = require('../utils/sentry')
 /*::
 import type EventEmitter from 'events'
 import type { Config } from '../config'
-import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider'
+import type { ReadableWithContentLength, Reader } from '../reader'
 import type { Ignore } from '../ignore'
 import type { AtomEventsDispatcher } from './atom/dispatch'
 import type { Metadata } from '../metadata'
@@ -70,7 +70,7 @@ class Local /*:: implements Writer */ {
   syncDirCheckInterval: IntervalID
   tmpPath: string
   watcher: Watcher
-  other: FileStreamProvider
+  other: Reader
   _trash: (Array<string>) => Promise<void>
   */
 

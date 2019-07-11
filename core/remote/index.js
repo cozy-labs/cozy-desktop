@@ -12,7 +12,7 @@ const { posix, sep } = path
 const { RemoteCozy } = require('./cozy')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
-const { withContentLength } = require('../file_stream_provider')
+const { withContentLength } = require('../reader')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
 
@@ -23,7 +23,7 @@ import type { Metadata } from '../metadata'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type { RemoteDoc } from './document'
-import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider' // eslint-disable-line
+import type { ReadableWithContentLength, Reader } from '../reader' // eslint-disable-line
 import type { Writer } from '../writer'
 */
 
@@ -53,7 +53,7 @@ export type RemoteOptions = {
  */
 class Remote /*:: implements Writer */ {
   /*::
-  other: FileStreamProvider
+  other: Reader
   pouch: Pouch
   events: EventEmitter
   watcher: RemoteWatcher
