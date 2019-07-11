@@ -22,7 +22,7 @@ module.exports = class OnboardingWM extends WindowManager {
     return {
       title: 'ONBOARDING',
       center: true,
-      'auto-hide-menu-bar': true,
+      autoHideMenuBar: true,
       width: ONBOARDING_SCREEN_WIDTH,
       height: ONBOARDING_SCREEN_HEIGHT
     }
