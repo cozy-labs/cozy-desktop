@@ -37,6 +37,12 @@ const log = Desktop.logger({
 })
 process.on('uncaughtException', err => log.error(err))
 
+const mainInstance = app.requestSingleInstanceLock()
+if (!mainInstance && !process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
+  log.warn('Cozy Drive is already running. Exiting...')
+  app.exit()
+}
+
 let desktop
 let state = 'not-configured'
 let errorMessage = ''
@@ -320,16 +326,12 @@ const startSync = force => {
   })
 }
 
-if (!process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
-  const shouldExit = app.makeSingleInstance(() => showWindow())
-  if (shouldExit) {
-    log.warn('Cozy Drive is already running. Exiting...')
-    app.exit()
-  }
-}
-
 const dumbhash = k =>
   k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
+
+app.on('second-instance', () => {
+  showWindow()
+})
 
 app.on('ready', () => {
   // Once configured and running in the tray, the app doesn't need to be
