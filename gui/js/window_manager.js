@@ -131,6 +131,7 @@ module.exports = class WindowManager {
     }
     this.win = new BrowserWindow({
       ...opts,
+      autoHideMenuBar: true,
       show: false
     })
     this.win.on('unresponsive', () => {
