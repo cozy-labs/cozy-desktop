@@ -15,7 +15,8 @@ const logger = require('./utils/logger')
 import type { Config } from './config'
 import type { Ignore } from './ignore'
 import type { Merge } from './merge'
-import type { SideName, Metadata, RemoteRevisionsByID } from './metadata'
+import type { Metadata, RemoteRevisionsByID } from './metadata'
+import type { SideName } from './side'
 */
 
 const log = logger({

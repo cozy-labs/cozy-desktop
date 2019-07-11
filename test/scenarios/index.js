@@ -1,7 +1,7 @@
 /* @flow */
 
 /*::
-import type { SideName } from '../../core/metadata'
+import type { SideName } from '../../core/side'
 
 type FSAddDirAction = {|
   type: 'mkdir',

@@ -22,7 +22,8 @@ import type { Ignore } from './ignore'
 import type Local from './local'
 import type Pouch from './pouch'
 import type { Remote } from './remote'
-import type { SideName, Metadata } from './metadata'
+import type { Metadata } from './metadata'
+import type { SideName } from './side'
 import type { Writer } from './writer'
 */
 

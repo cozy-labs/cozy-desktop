@@ -5,12 +5,10 @@
  */
 
 /*::
-import type { SideName } from './metadata'
+export type SideName =
+  | "local"
+  | "remote";
 */
-
-module.exports = {
-  otherSide
-}
 
 function otherSide(side /*: SideName */) /*: SideName */ {
   switch (side) {
@@ -21,4 +19,8 @@ function otherSide(side /*: SideName */) /*: SideName */ {
     default:
       throw new Error(`Invalid side name: ${JSON.stringify(side)}`)
   }
+}
+
+module.exports = {
+  otherSide
 }

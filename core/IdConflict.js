@@ -17,7 +17,8 @@
 const _ = require('lodash')
 
 /*::
-import type { Metadata, SideName } from './metadata'
+import type { Metadata } from './metadata'
+import type { SideName } from './side'
 
 type Change = {
   side: SideName,

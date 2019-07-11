@@ -7,7 +7,8 @@
  */
 
 /*::
-import type { SideName, Metadata } from './metadata'
+import type { Metadata } from './metadata'
+import type { SideName } from './side'
 
 export interface Writer {
   addFileAsync (doc: Metadata): Promise<void>;
