@@ -51,7 +51,7 @@ export type RemoteOptions = {
  * This allows us to read from the local filesystem when writing to the remote
  * Cozy.
  */
-class Remote /*:: implements Writer */ {
+class Remote /*:: implements Reader, Writer */ {
   /*::
   other: Reader
   pouch: Pouch

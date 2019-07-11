@@ -61,7 +61,7 @@ export type LocalOptions = {
  * This allows us to read from the remote Cozy when writing to the local
  * filesystem.
  */
-class Local /*:: implements Writer */ {
+class Local /*:: implements Reader, Writer */ {
   /*::
   prep: Prep
   pouch: Pouch

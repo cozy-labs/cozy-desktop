@@ -31,8 +31,8 @@ function withContentLength(
 }
 
 /*::
-export type Reader = {
-  createReadStreamAsync: (Metadata) => Promise<ReadableWithContentLength>;
+export interface Reader {
+  createReadStreamAsync (Metadata): Promise<ReadableWithContentLength>;
 }
 */
 

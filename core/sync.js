@@ -79,9 +79,7 @@ class Sync {
     this.remote = remote
     this.ignore = ignore
     this.events = events
-    // $FlowFixMe
     this.local.other = this.remote
-    // $FlowFixMe
     this.remote.other = this.local
 
     autoBind(this)
