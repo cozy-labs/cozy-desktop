@@ -24,7 +24,7 @@ import type Pouch from '../pouch'
 import type Prep from '../prep'
 import type { RemoteDoc } from './document'
 import type { FileStreamProvider, ReadableWithContentLength } from '../file_stream_provider' // eslint-disable-line
-import type { Side } from '../side' // eslint-disable-line
+import type { Writer } from '../writer'
 */
 
 const log = logger({
@@ -51,7 +51,7 @@ export type RemoteOptions = {
  * This allows us to read from the local filesystem when writing to the remote
  * Cozy.
  */
-class Remote /*:: implements Side */ {
+class Remote /*:: implements Writer */ {
   /*::
   other: FileStreamProvider
   pouch: Pouch

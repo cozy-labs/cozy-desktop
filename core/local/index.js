@@ -32,7 +32,7 @@ import type { AtomEventsDispatcher } from './atom/dispatch'
 import type { Metadata } from '../metadata'
 import type Pouch from '../pouch'
 import type Prep from '../prep'
-import type { Side } from '../side' // eslint-disable-line
+import type { Writer } from '../writer'
 import type { Callback } from '../utils/func'
 import type { Watcher } from './watcher'
 */
@@ -61,7 +61,7 @@ export type LocalOptions = {
  * This allows us to read from the remote Cozy when writing to the local
  * filesystem.
  */
-class Local /*:: implements Side */ {
+class Local /*:: implements Writer */ {
   /*::
   prep: Prep
   pouch: Pouch
