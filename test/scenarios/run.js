@@ -249,6 +249,7 @@ async function runLocalStopped(scenario, helpers) {
 
 async function runRemote(scenario, helpers) {
   if (scenario.init) {
+    const useRealInodes = true
     let relpathFix = _.identity
     if (process.platform === 'win32') {
       relpathFix = relpath => relpath.replace(/\//g, '\\')
@@ -257,18 +258,27 @@ async function runRemote(scenario, helpers) {
       scenario,
       helpers.pouch,
       helpers.local.syncDir.abspath,
-      relpathFix
+      relpathFix,
+      useRealInodes
     )
     await helpers.remote.ignorePreviousChanges()
   }
 
   await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
 
+  await helpers.local.side.watcher.start()
   await helpers.remote.pullChanges()
   // TODO: Don't sync when scenario doesn't have target FS/trash assertions?
-  for (let i = 0; i < scenario.actions.length + 1; i++) {
-    await helpers.syncAll()
+  await helpers.syncAll()
+  // Wait for all local events to be dispatched
+  await Promise.delay(500)
+  if (process.platform === 'darwin') {
+    // $FlowFixMe buffer is defined in ChokidarWatcher
+    await helpers.local.side.watcher.buffer.flush()
+  } else {
+    await helpers.local.simulateAtomEvents([])
   }
+  await helpers.local.side.watcher.stop()
 
   await verifyExpectations(scenario, helpers, { includeRemoteTrash: false })
 
