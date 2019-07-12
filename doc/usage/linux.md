@@ -38,6 +38,7 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 | Debian 7 (Wheezy)                         | no        | 3.4.17    |                       |
 | Debian 8 (Jessie)                         | no        | 3.4.20    |                       |
 | **Debian 9 (Stretch)**                    | ?         | 3.4.22    | **should work**       |
+| **Debian 10 (Buster)**                    | no        | 3.14.0    | bug on pop-up windows |
 | **Fedora 28**                             | **yes**   | 3.4.25    | with TopIcons         |
 | **Fedora 27**                             | **yes**   | 3.4.24    | with TopIcons-Plus    |
 | Linux Mint 17.1 LTS (Rebecca)             | no        |           |                       |
