@@ -1,10 +1,14 @@
-# Install requirements
+# Requirements
 
--   [Git](https://git-scm.com/)
--   [Node.js](https://nodejs.org/)
--   [Yarn](https://yarnpkg.com/)
--   [Docker](https://www.docker.com/)
--   [Cozy Stack in Docker](#set-up-a-cozy-stack)
+## Build
+
+- [Git](https://git-scm.com/)
+- [Node.js](https://nodejs.org/)
+- [Yarn](https://yarnpkg.com/)
+
+## Development
+
+- [Cozy Stack in Docker](#set-up-a-cozy-stack)
 
 ### Windows
 
@@ -18,6 +22,8 @@ any of the hypervisors supporting the available VM file formats.
 
 To get an administrator prompt, look for _Command Prompt_ in the start menu,
 right-click on it and select _Run as administrator_.
+
+FIXME: Document scoop instead of choco (it works far better).
 
 Once you are in a running Windows session, you can eventually install
 [Chocolatey](https://chocolatey.org/) from an administrator prompt, then use
@@ -60,7 +66,7 @@ The easiest way to set up the environment is to install and use
 [Homebrew](https://brew.sh/):
 
     brew install git
-    brew install node
+    brew install node@8
     brew install yarn
 
 To install Docker, first check that your mac has kernel hypervisor support:
@@ -102,7 +108,7 @@ parameters below):
 
 ## Set up a Cozy stack
 
-If you don't already have a [running Cozy stack](https://github.com/cozy/cozy-stack/blob/master/docs/INSTALL.md), the easiest way to get started is to use Docker:
+If you don't already have a [running Cozy stack](https://github.com/cozy/cozy-stack/blob/master/docs/INSTALL.md), the easiest way to get started is to use [Docker](https://www.docker.com/) & `docker-compose`:
 
     docker-compose up
     yarn bootstrap
@@ -125,4 +131,4 @@ yarn cozy-stack apps install --domain cozy.tools:8080 drive 'git://github.com/co
 
 ## Complete your setup
 
-See [./setup.md]()
+See [./setup.md](./setup.md)
