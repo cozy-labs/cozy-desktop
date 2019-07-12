@@ -1,0 +1,36 @@
+[
+  {
+    "_id": "286d994b69698b49049b229f753aef5b",
+    "_rev": "2-f49f82bfe5c2683984723f299a366d57",
+    "class": "text",
+    "created_at": "2019-07-12T15:14:37.849943018Z",
+    "dir_id": "io.cozy.files.root-dir",
+    "executable": false,
+    "md5sum": "lsFcK7KSEZO/KQ34zYXiug==",
+    "mime": "text/plain",
+    "name": "a",
+    "size": "11",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2019-07-12T15:14:37.849943018Z",
+    "path": "/a"
+  },
+  {
+    "_id": "286d994b69698b49049b229f753aeccb",
+    "_rev": "3-a2391e2e0505982add5736cec03f98a6",
+    "class": "files",
+    "created_at": "2019-07-12T15:14:37.46323708Z",
+    "dir_id": "io.cozy.files.root-dir",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "b",
+    "size": "20",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2019-07-12T15:14:37.46323708Z",
+    "path": "/b"
+  }
+]
