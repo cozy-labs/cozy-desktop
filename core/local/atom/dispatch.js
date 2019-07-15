@@ -143,6 +143,10 @@ actions = {
       event.action = 'created'
       delete event.oldPath
       return actions.createdfile(event, { prep }, 'File moved, assuming added')
+    } else if (was.ino !== event.stats.ino) {
+      _.set(event, [STEP_NAME, 'moveSrcReplacement'], _.clone(was))
+      log.warn({ event }, 'File move source has been replaced in Pouch')
+      return
     }
     log.info({ event }, 'File moved')
 
@@ -169,9 +173,15 @@ actions = {
         { prep },
         'Dir moved, assuming added'
       )
+    } else if (was.ino !== event.stats.ino) {
+      _.set(event, [STEP_NAME, 'moveSrcReplacement'], _.clone(was))
+      log.warn({ event }, 'File move source has been replaced in Pouch')
+      return
     }
     log.info({ event }, 'Dir moved')
+
     const doc = buildDir(event.path, event.stats)
+
     await prep.moveFolderAsync(SIDE, doc, was)
   },
 

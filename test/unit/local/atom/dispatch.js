@@ -305,6 +305,7 @@ describe('core/local/atom/dispatch.loop()', function() {
   context('when channel contains a renamed file event', () => {
     const filePath = 'foo'
     const newFilePath = 'bar'
+    const fileIno = 1
 
     beforeEach(() => {
       channel.push([
@@ -314,36 +315,54 @@ describe('core/local/atom/dispatch.loop()', function() {
           .kind('file')
           .oldPath(filePath)
           .path(newFilePath)
-          .ino(1)
+          .ino(fileIno)
           .data('')
           .build()
       ])
     })
 
     context('with an existing document at the event oldPath', () => {
-      let oldDoc
+      context('and the inodes match', () => {
+        let oldDoc
 
-      beforeEach(async () => {
-        oldDoc = await builders
-          .metadata()
-          .path(filePath)
-          .ino(1)
-          .create()
+        beforeEach(async () => {
+          oldDoc = await builders
+            .metadata()
+            .path(filePath)
+            .ino(fileIno)
+            .create()
+        })
+
+        it('triggers a call to moveFileAsync with a file Metadata object', async function() {
+          const doc = builders
+            .metafile()
+            .path(newFilePath)
+            .ino(1)
+            .noTags()
+            .unmerged('local')
+            .build()
+
+          await dispatch.loop(channel, stepOptions).pop()
+
+          should(dispatchedCalls(prep)).deepEqual({
+            moveFileAsync: [['local', doc, oldDoc]]
+          })
+        })
       })
 
-      it('triggers a call to moveFileAsync with a file Metadata object', async function() {
-        const doc = builders
-          .metafile()
-          .path(newFilePath)
-          .ino(1)
-          .noTags()
-          .unmerged('local')
-          .build()
+      context('but the inodes do not match', () => {
+        beforeEach(async () => {
+          await builders
+            .metadata()
+            .path(filePath)
+            .ino(fileIno + 1)
+            .create()
+        })
 
-        await dispatch.loop(channel, stepOptions).pop()
+        it('does not call moveFileAsync', async function() {
+          await dispatch.loop(channel, stepOptions).pop()
 
-        should(dispatchedCalls(prep)).deepEqual({
-          moveFileAsync: [['local', doc, oldDoc]]
+          should(dispatchedCalls(prep)).deepEqual({})
         })
       })
     })
@@ -446,6 +465,7 @@ describe('core/local/atom/dispatch.loop()', function() {
   context('when channel contains a renamed directory event', () => {
     const directoryPath = 'foo'
     const newDirectoryPath = 'bar'
+    const dirIno = 1
 
     beforeEach(() => {
       channel.push([
@@ -455,35 +475,53 @@ describe('core/local/atom/dispatch.loop()', function() {
           .kind('directory')
           .oldPath(directoryPath)
           .path(newDirectoryPath)
-          .ino(1)
+          .ino(dirIno)
           .build()
       ])
     })
 
     context('with an existing document at the event oldPath', () => {
-      let oldDoc
+      context('and the inodes match', () => {
+        let oldDoc
 
-      beforeEach(async () => {
-        oldDoc = await builders
-          .metadata()
-          .path(directoryPath)
-          .ino(1)
-          .create()
+        beforeEach(async () => {
+          oldDoc = await builders
+            .metadata()
+            .path(directoryPath)
+            .ino(dirIno)
+            .create()
+        })
+
+        it('triggers a call to moveFolderAsync with a directory Metadata object', async function() {
+          const doc = builders
+            .metadir()
+            .path(newDirectoryPath)
+            .ino(1)
+            .noRemote()
+            .noTags()
+            .build()
+
+          await dispatch.loop(channel, stepOptions).pop()
+
+          should(dispatchedCalls(prep)).deepEqual({
+            moveFolderAsync: [['local', doc, oldDoc]]
+          })
+        })
       })
 
-      it('triggers a call to moveFolderAsync with a directory Metadata object', async function() {
-        const doc = builders
-          .metadir()
-          .path(newDirectoryPath)
-          .ino(1)
-          .noRemote()
-          .noTags()
-          .build()
+      context('and the inodes do not match', () => {
+        beforeEach(async () => {
+          await builders
+            .metadata()
+            .path(directoryPath)
+            .ino(dirIno + 1)
+            .create()
+        })
 
-        await dispatch.loop(channel, stepOptions).pop()
+        it('does not call moveFolderAsync', async function() {
+          await dispatch.loop(channel, stepOptions).pop()
 
-        should(dispatchedCalls(prep)).deepEqual({
-          moveFolderAsync: [['local', doc, oldDoc]]
+          should(dispatchedCalls(prep)).deepEqual({})
         })
       })
     })
