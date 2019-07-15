@@ -71,12 +71,12 @@ class EventBuffer /*:: <EventType> */ {
     }
   }
 
-  flush() /*: void */ {
+  async flush() {
     this.clearTimeout()
     if (this.events.length > 0) {
       const flushedEvents = this.events
       this.events = []
-      this.flushed(flushedEvents)
+      return this.flushed(flushedEvents)
     }
   }
 

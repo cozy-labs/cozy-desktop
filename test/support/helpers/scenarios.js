@@ -212,7 +212,7 @@ module.exports.init = async (
         updated_at: lastModifiedDate,
         path: localPath,
         tags: [],
-        sides: { local: 1, remote: 1 }
+        sides: { local: 2, remote: 2 }
       }
       stater.assignInoAndFileId(doc, stats)
 
@@ -229,6 +229,8 @@ module.exports.init = async (
         if (trashed) remoteDocsToTrash.push(remoteDir)
         else {
           debug(`- create dir metadata: ${doc._id}`)
+          const { rev } = await pouch.put(doc)
+          doc._rev = rev
           await pouch.put(doc)
         }
       }
@@ -267,7 +269,7 @@ module.exports.init = async (
         path: localPath,
         size: content.length,
         tags: [],
-        sides: { local: 1, remote: 1 }
+        sides: { local: 2, remote: 2 }
       }
       stater.assignInoAndFileId(doc, stats)
       if (!isOutside) {
@@ -285,6 +287,8 @@ module.exports.init = async (
         if (trashed) remoteDocsToTrash.push(remoteFile)
         else {
           debug(`- create file metadata: ${doc._id}`)
+          const { rev } = await pouch.put(doc)
+          doc._rev = rev
           await pouch.put(doc)
         }
       }

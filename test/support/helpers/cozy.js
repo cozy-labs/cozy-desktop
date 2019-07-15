@@ -1,6 +1,8 @@
 /* @flow */
 /* eslint-env mocha */
 
+require('../../../core/globals')
+
 const CozyClient = require('cozy-client-js').Client
 
 const {
