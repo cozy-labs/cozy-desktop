@@ -17,7 +17,7 @@ const {
   invalidChecksum,
   invalidPath,
   markSide,
-  detectPlatformIncompatibilities,
+  detectIncompatibilities,
   sameBinary,
   sameFile,
   sameFolder,
@@ -214,19 +214,19 @@ describe('metadata', function() {
     })
   })
 
-  describe('detectPlatformIncompatibilities', () => {
+  describe('detectIncompatibilities', () => {
     const syncPath = ';'
 
     it('is null when all names in the path are compatible', () => {
       const doc = { path: path.normalize('foo/bar'), docType: 'file' }
-      should(detectPlatformIncompatibilities(doc, syncPath)).deepEqual([])
+      should(detectIncompatibilities(doc, syncPath)).deepEqual([])
     })
 
     onPlatform('win32', () => {
       it('lists platform incompatibilities for all names in the path', () => {
         const path = 'f?o:o\\ba|r\\baz\\q"ux'
         const doc = { path, docType: 'file' }
-        should(detectPlatformIncompatibilities(doc, syncPath)).deepEqual([
+        should(detectIncompatibilities(doc, syncPath)).deepEqual([
           {
             type: 'reservedChars',
             name: 'q"ux',
@@ -259,7 +259,7 @@ describe('metadata', function() {
       it('does not list Windows incompatibilities', () => {
         const path = 'foo/b:ar/qux'
         const doc = { path, docType: 'folder' }
-        should(detectPlatformIncompatibilities(doc, syncPath)).deepEqual([])
+        should(detectIncompatibilities(doc, syncPath)).deepEqual([])
       })
     })
   })
