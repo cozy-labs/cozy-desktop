@@ -4,7 +4,7 @@
 
 module.exports = ({
   disabled: {
-    remote: 'Does not work with AtomWatcher yet.'
+    stopped: 'Does not work with AtomWatcher yet.'
   },
   init: [{ ino: 1, path: 'a', content: 'initial content' }],
   actions: [

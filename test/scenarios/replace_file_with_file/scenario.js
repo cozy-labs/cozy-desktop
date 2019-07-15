@@ -3,7 +3,6 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
-  side: 'local',
   init: [{ ino: 1, path: 'file', content: 'initial content' }],
   actions: [
     { type: 'delete', path: 'file' },
