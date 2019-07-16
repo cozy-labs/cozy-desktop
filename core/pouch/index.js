@@ -12,13 +12,13 @@ const _ = require('lodash')
 const { isEqual } = _
 const path = require('path')
 
-const metadata = require('./metadata')
-const logger = require('./utils/logger')
+const metadata = require('../metadata')
+const logger = require('../utils/logger')
 
 /*::
-import type { Config } from './config'
-import type { Metadata } from './metadata'
-import type { Callback } from './utils/func'
+import type { Config } from '../config'
+import type { Metadata } from '../metadata'
+import type { Callback } from '../utils/func'
 */
 
 const log = logger({
