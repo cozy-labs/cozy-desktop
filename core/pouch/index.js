@@ -14,6 +14,7 @@ const path = require('path')
 
 const metadata = require('../metadata')
 const logger = require('../utils/logger')
+const { PouchError } = require('./error')
 
 /*::
 import type { Config } from '../config'
@@ -144,10 +145,7 @@ class Pouch {
     const results = await this.db.bulkDocs(docs)
     for (let [idx, result] of results.entries()) {
       if (result.error) {
-        const err = new Error(result.message)
-        // $FlowFixMe
-        err.status = result.status
-        err.name = result.name
+        const err = new PouchError(result)
         log.error({ doc: docs[idx] }, err)
         throw err
       }
@@ -434,6 +432,4 @@ class Pouch {
   }
 }
 
-module.exports = {
-  Pouch
-}
+module.exports = { Pouch }
