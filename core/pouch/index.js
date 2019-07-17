@@ -69,6 +69,7 @@ class Pouch {
   }
 
   /*::
+  resetDatabaseAsync: () => Promise<*>
   byPathAsync: (string) => Promise<Metadata>
   byChecksumAsync: (string) => Promise<Metadata[]>
   byRecursivePathAsync: (string) => Promise<*>
