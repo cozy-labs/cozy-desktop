@@ -15,6 +15,7 @@ const path = require('path')
 const metadata = require('../metadata')
 const logger = require('../utils/logger')
 const { PouchError } = require('./error')
+const { migrations, migrate, migrationLog } = require('./migrations')
 
 /*::
 import type { Config } from '../config'
@@ -112,6 +113,16 @@ class Pouch {
         _resolve()
       }
     })
+  }
+
+  async runMigrations() {
+    log.debug('Running migrations...')
+    for (const migration of migrations) {
+      const result = await migrate(migration, this)
+      const { errors, msg } = migrationLog(migration, result)
+      log.debug({ errors }, msg)
+    }
+    log.debug('Migrations done.')
   }
 
   /* Mini ODM */

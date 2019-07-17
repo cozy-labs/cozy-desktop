@@ -97,6 +97,8 @@ class Sync {
   async start(mode /*: SyncMode */) /*: Promise<*> */ {
     this.stopped = false
     await this.pouch.addAllViewsAsync()
+    await this.pouch.runMigrations()
+
     let sidePromises = []
     if (mode !== 'pull') {
       await this.local.start()
