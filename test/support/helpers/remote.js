@@ -12,7 +12,7 @@ const { TRASH_DIR_NAME } = require('../../../core/remote/constants')
 
 /*::
 import type cozy from 'cozy-client-js'
-import type Pouch from '../../../core/pouch'
+import type { Pouch } from '../../../core/pouch'
 import type { RemoteOptions } from '../../../core/remote'
 import type { RemoteDoc } from '../../../core/remote/document'
 */

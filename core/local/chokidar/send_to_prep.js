@@ -24,7 +24,7 @@ import type {
   LocalFileAdded,
   LocalFileUpdated
 } from './local_event'
-import type Pouch from '../../pouch'
+import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
 
 type SendToPrepOpts = {

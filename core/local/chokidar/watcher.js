@@ -34,7 +34,7 @@ const logger = require('../../utils/logger')
 
 /*::
 import type { Metadata } from '../../metadata'
-import type Pouch from '../../pouch'
+import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
 import type { Checksumer } from '../checksumer'
 import type { ChokidarEvent } from './event'

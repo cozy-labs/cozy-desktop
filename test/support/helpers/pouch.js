@@ -1,7 +1,7 @@
 const path = require('path')
 
 const { assignId } = require('../../../core/metadata')
-const Pouch = require('../../../core/pouch')
+const { Pouch } = require('../../../core/pouch')
 
 module.exports = {
   createDatabase(done) {

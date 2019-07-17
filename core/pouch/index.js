@@ -434,4 +434,6 @@ class Pouch {
   }
 }
 
-module.exports = Pouch
+module.exports = {
+  Pouch
+}

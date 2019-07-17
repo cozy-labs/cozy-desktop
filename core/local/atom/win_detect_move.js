@@ -31,7 +31,7 @@ const DELAY = 1000
 
 /*::
 import type { AtomEvent, AtomBatch } from './event'
-import type Pouch from '../../pouch'
+import type { Pouch } from '../../pouch'
 
 type PendingItem = {
   event: AtomEvent,

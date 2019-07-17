@@ -4,7 +4,7 @@ const BaseMetadataBuilder = require('./base')
 
 /*::
 import type { Metadata } from '../../../../core/metadata'
-import type Pouch from '../../../../core/pouch'
+import type { Pouch } from '../../../../core/pouch'
 */
 
 module.exports = class DirMetadataBuilder extends BaseMetadataBuilder {

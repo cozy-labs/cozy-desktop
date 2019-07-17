@@ -16,7 +16,7 @@ const ChokidarWatcher = require('./chokidar/watcher')
 /*::
 import type { WatcherType } from '../config'
 import type { AtomEventsDispatcher } from './atom/dispatch'
-import type Pouch from '../pouch'
+import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../ignore'

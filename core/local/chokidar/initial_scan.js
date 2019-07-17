@@ -17,7 +17,7 @@ const NB_OF_DELETABLE_ELEMENT = 3
 /*::
 import type { ChokidarEvent } from './event'
 import type LocalEventBuffer from './event_buffer'
-import type Pouch from '../../pouch'
+import type { Pouch } from '../../pouch'
 
 export type InitialScan = {
   ids: string[],
