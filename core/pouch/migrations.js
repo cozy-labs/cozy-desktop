@@ -48,6 +48,22 @@ const MIGRATION_RESULT_FAILED = 'MigrationFailed'
 
 const migrations /*: Migration[] */ = []
 
+class MigrationFailedError extends Error {
+  /*::
+  name: string
+  migration: string
+  errors: PouchError[]
+  sentry: true
+  */
+
+  constructor(migration /*: Migration */, errors /*: PouchError[] */) {
+    super(migration.description)
+    this.name = MIGRATION_RESULT_FAILED
+    this.errors = errors
+    this.sentry = true
+  }
+}
+
 function migrationNoop() {
   return { type: MIGRATION_RESULT_NOOP, errors: [] }
 }
@@ -236,6 +252,7 @@ module.exports = {
   MIGRATION_RESULT_FAILED,
   MIGRATION_RESULT_NOOP,
   migrations,
+  MigrationFailedError,
   currentSchemaVersion,
   updateSchemaVersion,
   migrate,
