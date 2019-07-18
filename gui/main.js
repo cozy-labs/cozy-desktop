@@ -9,6 +9,7 @@ const os = require('os')
 
 const proxy = require('./js/proxy')
 const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/cozy')
+const migrations = require('../core/pouch/migrations')
 
 const autoLaunch = require('./js/autolaunch')
 const lastFiles = require('./js/lastfiles')
@@ -299,9 +300,14 @@ const startSync = force => {
           desktop.remote.warningsPoller.switchMode('medium')
           return
         }
-        updateState('error', err.message)
+
+        const msg =
+          err instanceof migrations.MigrationFailedError
+            ? err.name
+            : err.message
+        updateState('error', msg)
         sendDiskUsage()
-        sendErrorToMainWindow(err.message)
+        sendErrorToMainWindow(msg)
       })
     sendDiskUsage()
   }
