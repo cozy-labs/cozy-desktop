@@ -17,7 +17,7 @@ const Channel = require('./channel')
 const logger = require('../../utils/logger')
 
 /*::
-import type Pouch from '../../pouch'
+import type { Pouch } from '../../pouch'
 import type { AtomEvent, AtomBatch, EventKind } from './event'
 import type { Metadata } from '../../metadata'
 

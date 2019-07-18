@@ -16,7 +16,7 @@ const logger = require('../utils/logger')
 
 /*::
 import type EventEmitter from 'events'
-import type Pouch from '../pouch'
+import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { RemoteCozy } from './cozy'
 import type { Metadata, RemoteRevisionsByID } from '../metadata'

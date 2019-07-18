@@ -20,7 +20,7 @@ const measureTime = require('./utils/perfs')
 import type EventEmitter from 'events'
 import type { Ignore } from './ignore'
 import type Local from './local'
-import type Pouch from './pouch'
+import type { Pouch } from './pouch'
 import type { Remote } from './remote'
 import type { Metadata } from './metadata'
 import type { SideName } from './side'
@@ -97,6 +97,8 @@ class Sync {
   async start(mode /*: SyncMode */) /*: Promise<*> */ {
     this.stopped = false
     await this.pouch.addAllViewsAsync()
+    await this.pouch.runMigrations()
+
     let sidePromises = []
     if (mode !== 'pull') {
       await this.local.start()

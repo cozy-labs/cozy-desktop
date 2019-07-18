@@ -12,13 +12,15 @@ const _ = require('lodash')
 const { isEqual } = _
 const path = require('path')
 
-const metadata = require('./metadata')
-const logger = require('./utils/logger')
+const metadata = require('../metadata')
+const logger = require('../utils/logger')
+const { PouchError } = require('./error')
+const { migrations, migrate, migrationLog } = require('./migrations')
 
 /*::
-import type { Config } from './config'
-import type { Metadata } from './metadata'
-import type { Callback } from './utils/func'
+import type { Config } from '../config'
+import type { Metadata } from '../metadata'
+import type { Callback } from '../utils/func'
 */
 
 const log = logger({
@@ -68,6 +70,7 @@ class Pouch {
   }
 
   /*::
+  resetDatabaseAsync: () => Promise<*>
   byPathAsync: (string) => Promise<Metadata>
   byChecksumAsync: (string) => Promise<Metadata[]>
   byRecursivePathAsync: (string) => Promise<*>
@@ -112,6 +115,16 @@ class Pouch {
     })
   }
 
+  async runMigrations() {
+    log.debug('Running migrations...')
+    for (const migration of migrations) {
+      const result = await migrate(migration, this)
+      const { errors, msg } = migrationLog(migration, result)
+      log.debug({ errors }, msg)
+    }
+    log.debug('Migrations done.')
+  }
+
   /* Mini ODM */
 
   put(doc /*: Metadata */) /*: Promise<void> */ {
@@ -144,10 +157,7 @@ class Pouch {
     const results = await this.db.bulkDocs(docs)
     for (let [idx, result] of results.entries()) {
       if (result.error) {
-        const err = new Error(result.message)
-        // $FlowFixMe
-        err.status = result.status
-        err.name = result.name
+        const err = new PouchError(result)
         log.error({ doc: docs[idx] }, err)
         throw err
       }
@@ -434,4 +444,4 @@ class Pouch {
   }
 }
 
-module.exports = Pouch
+module.exports = { Pouch }

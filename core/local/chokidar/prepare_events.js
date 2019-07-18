@@ -18,7 +18,7 @@ import type { ChokidarEvent } from './event'
 import type { InitialScan } from './initial_scan'
 import type { LocalEvent } from './local_event'
 import type { Metadata } from '../../metadata'
-import type Pouch from '../../pouch'
+import type { Pouch } from '../../pouch'
 
 type PrepareEventsOpts = {
   +checksum: (string) => Promise<string>,

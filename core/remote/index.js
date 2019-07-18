@@ -20,7 +20,7 @@ const measureTime = require('../utils/perfs')
 import type EventEmitter from 'events'
 import type { Config } from '../config'
 import type { Metadata } from '../metadata'
-import type Pouch from '../pouch'
+import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { RemoteDoc } from './document'
 import type { ReadableWithContentLength, Reader } from '../reader' // eslint-disable-line

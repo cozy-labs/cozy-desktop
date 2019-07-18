@@ -38,7 +38,7 @@ const dispatch = require('./dispatch')
 const logger = require('../../utils/logger')
 
 /*::
-import type Pouch from '../../pouch'
+import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
 import type EventEmitter from 'events'
 import type { Ignore } from '../../ignore'

@@ -6,7 +6,7 @@ const crypto = require('crypto')
 const BaseMetadataBuilder = require('./base')
 
 /*::
-import type Pouch from '../../../../core/pouch'
+import type { Pouch } from '../../../../core/pouch'
 import type { Metadata } from '../../../../core/metadata'
 */
 

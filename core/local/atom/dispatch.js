@@ -29,7 +29,7 @@ import type {
 import type { WinDetectMoveState } from './win_detect_move'
 import type EventEmitter from 'events'
 import type Prep from '../../prep'
-import type Pouch from '../../pouch'
+import type { Pouch } from '../../pouch'
 
 export type AtomEventsDispatcher = (AtomBatch) => Promise<AtomBatch>
 

@@ -22,7 +22,7 @@ import type cozy from 'cozy-client-js'
 import type { Config } from '../../../core/config'
 import type Local from '../../../core/local'
 import type { Metadata } from '../../../core/metadata'
-import type Pouch from '../../../core/pouch'
+import type { Pouch } from '../../../core/pouch'
 import type { Remote } from '../../../core/remote'
 
 export type TestHelpersOptions = {
