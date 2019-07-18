@@ -153,6 +153,10 @@ const sendErrorToMainWindow = msg => {
     dialog.showMessageBox(null, options)
     desktop.stopSync().catch(err => log.error(err))
     return // no notification
+  } else if (msg === migrations.MIGRATION_RESULT_FAILED) {
+    desktop.stopSync().catch(err => log.error(err))
+    msg = translate('Dashboard App upgrade failed')
+    trayWindow.send('sync-error', msg)
   } else {
     msg = translate('Dashboard Synchronization incomplete')
     trayWindow.send('sync-error', msg)
