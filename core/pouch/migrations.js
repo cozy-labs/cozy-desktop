@@ -224,9 +224,8 @@ async function save(
 function migrationLog(
   migration /*: Migration */,
   result /*: MigrationResult */
-) /*: { errors: PouchError[], msg: string } */ {
-  let globalResult,
-    errors = []
+) /*: string */ {
+  let globalResult
 
   switch (result.type) {
     case MIGRATION_RESULT_NOOP:
@@ -237,12 +236,11 @@ function migrationLog(
       break
     case MIGRATION_RESULT_FAILED:
       globalResult = 'Failed'
-      errors = result.errors
       break
     default:
       globalResult = 'Unexpected error'
   }
-  return { errors, msg: `--- ${migration.description} => ${globalResult}` }
+  return `--- ${migration.description} => ${globalResult}`
 }
 
 module.exports = {
