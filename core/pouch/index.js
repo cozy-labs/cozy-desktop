@@ -15,12 +15,13 @@ const path = require('path')
 const metadata = require('../metadata')
 const logger = require('../utils/logger')
 const { PouchError } = require('./error')
-const { migrations, migrate, migrationLog } = require('./migrations')
+const { migrate, migrationLog } = require('./migrations')
 
 /*::
 import type { Config } from '../config'
 import type { Metadata } from '../metadata'
 import type { Callback } from '../utils/func'
+import type { Migration } from './migrations'
 */
 
 const log = logger({
@@ -115,7 +116,7 @@ class Pouch {
     })
   }
 
-  async runMigrations() {
+  async runMigrations(migrations /*: Migration[] */) {
     log.debug('Running migrations...')
     for (const migration of migrations) {
       const result = await migrate(migration, this)

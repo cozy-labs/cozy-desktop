@@ -13,6 +13,7 @@ const metadata = require('./metadata')
 const { handleCommonCozyErrors } = require('./remote/cozy')
 const { HEARTBEAT } = require('./remote/watcher')
 const { otherSide } = require('./side')
+const { migrations } = require('./pouch/migrations')
 const logger = require('./utils/logger')
 const measureTime = require('./utils/perfs')
 
@@ -97,7 +98,7 @@ class Sync {
   async start(mode /*: SyncMode */) /*: Promise<*> */ {
     this.stopped = false
     await this.pouch.addAllViewsAsync()
-    await this.pouch.runMigrations()
+    await this.pouch.runMigrations(migrations)
 
     let sidePromises = []
     if (mode !== 'pull') {
