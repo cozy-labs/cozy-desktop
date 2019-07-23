@@ -4,12 +4,19 @@
  */
 
 const PouchDB = require('pouchdb')
+const uuid = require('uuid/v4')
 
 const { PouchError } = require('./error')
 
 /*::
 import type { Pouch } from './'
 import type { Metadata } from '../metadata'
+
+type PouchDBInfo = {
+  db_name: string,
+  doc_count: number,
+  update_seq: number
+}
 
 type SchemaVersion = number
 
@@ -90,7 +97,10 @@ async function migrate(
   if ((await currentSchemaVersion(pouch.db)) !== migration.baseSchemaVersion) {
     return migrationNoop()
   } else {
-    const migrationDB = createDB(await migrationDBPath(pouch.db))
+    const originalDBInfo = await pouch.db.info()
+    const migrationDB = createDB(
+      await migrationDBPath(migration, originalDBInfo)
+    )
 
     let result /*: MigrationResult */
     try {
@@ -132,13 +142,14 @@ function createDB(name /*: string */) /*: PouchDB */ {
 }
 
 async function migrationDBPath(
-  originalDB /*: PouchDB */
+  migration /*: Migration */,
+  originalDBInfo /*: PouchDBInfo */
 ) /*: Promise<string> */ {
   const date = new Date()
   const dateString = `${date.getFullYear()}-${date.getMonth() +
     1}-${date.getDate()}`
-  const originalDBInfo = await originalDB.info()
-  return `${originalDBInfo.db_name}-migration-${dateString}`
+  const safeUUID = uuid().replace(/-/g, '')
+  return `${originalDBInfo.db_name}-migration-${dateString}-${safeUUID}`
 }
 
 async function replicateDB(fromDB /*: PouchDB */, toDB /*: PouchDB */) {
