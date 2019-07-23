@@ -160,7 +160,12 @@ async function replicateDB(fromDB /*: PouchDB */, toDB /*: PouchDB */) {
           reject(err)
         }
       })
-      .on('error', err => reject(err))
+      .on('denied', err => {
+        reject(err)
+      })
+      .on('error', err => {
+        reject(err)
+      })
   })
 }
 
