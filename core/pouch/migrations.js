@@ -4,12 +4,19 @@
  */
 
 const PouchDB = require('pouchdb')
+const uuid = require('uuid/v4')
 
 const { PouchError } = require('./error')
 
 /*::
 import type { Pouch } from './'
 import type { Metadata } from '../metadata'
+
+type PouchDBInfo = {
+  db_name: string,
+  doc_count: number,
+  update_seq: number
+}
 
 type SchemaVersion = number
 
@@ -48,6 +55,22 @@ const MIGRATION_RESULT_FAILED = 'MigrationFailed'
 
 const migrations /*: Migration[] */ = []
 
+class MigrationFailedError extends Error {
+  /*::
+  name: string
+  migration: string
+  errors: PouchError[]
+  sentry: true
+  */
+
+  constructor(migration /*: Migration */, errors /*: PouchError[] */) {
+    super(migration.description)
+    this.name = MIGRATION_RESULT_FAILED
+    this.errors = errors
+    this.sentry = true
+  }
+}
+
 function migrationNoop() {
   return { type: MIGRATION_RESULT_NOOP, errors: [] }
 }
@@ -74,7 +97,10 @@ async function migrate(
   if ((await currentSchemaVersion(pouch.db)) !== migration.baseSchemaVersion) {
     return migrationNoop()
   } else {
-    const migrationDB = createDB(await migrationDBPath(pouch.db))
+    const originalDBInfo = await pouch.db.info()
+    const migrationDB = createDB(
+      await migrationDBPath(migration, originalDBInfo)
+    )
 
     let result /*: MigrationResult */
     try {
@@ -116,13 +142,14 @@ function createDB(name /*: string */) /*: PouchDB */ {
 }
 
 async function migrationDBPath(
-  originalDB /*: PouchDB */
+  migration /*: Migration */,
+  originalDBInfo /*: PouchDBInfo */
 ) /*: Promise<string> */ {
   const date = new Date()
   const dateString = `${date.getFullYear()}-${date.getMonth() +
     1}-${date.getDate()}`
-  const originalDBInfo = await originalDB.info()
-  return `${originalDBInfo.db_name}-migration-${dateString}`
+  const safeUUID = uuid().replace(/-/g, '')
+  return `${originalDBInfo.db_name}-migration-${dateString}-${safeUUID}`
 }
 
 async function replicateDB(fromDB /*: PouchDB */, toDB /*: PouchDB */) {
@@ -144,7 +171,12 @@ async function replicateDB(fromDB /*: PouchDB */, toDB /*: PouchDB */) {
           reject(err)
         }
       })
-      .on('error', err => reject(err))
+      .on('denied', err => {
+        reject(err)
+      })
+      .on('error', err => {
+        reject(err)
+      })
   })
 }
 
@@ -208,9 +240,8 @@ async function save(
 function migrationLog(
   migration /*: Migration */,
   result /*: MigrationResult */
-) /*: { errors: PouchError[], msg: string } */ {
-  let globalResult,
-    errors = []
+) /*: string */ {
+  let globalResult
 
   switch (result.type) {
     case MIGRATION_RESULT_NOOP:
@@ -221,12 +252,11 @@ function migrationLog(
       break
     case MIGRATION_RESULT_FAILED:
       globalResult = 'Failed'
-      errors = result.errors
       break
     default:
       globalResult = 'Unexpected error'
   }
-  return { errors, msg: `--- ${migration.description} => ${globalResult}` }
+  return `--- ${migration.description} => ${globalResult}`
 }
 
 module.exports = {
@@ -236,6 +266,7 @@ module.exports = {
   MIGRATION_RESULT_FAILED,
   MIGRATION_RESULT_NOOP,
   migrations,
+  MigrationFailedError,
   currentSchemaVersion,
   updateSchemaVersion,
   migrate,

@@ -104,7 +104,9 @@ function setup(clientInfos /*: ClientInfo */) {
 
 const handleBunyanMessage = msg => {
   const level =
-    msg.level >= bunyan.ERROR
+    msg.level >= bunyan.FATAL
+      ? 'fatal'
+      : msg.level >= bunyan.ERROR
       ? 'error'
       : msg.level >= bunyan.WARNING
       ? 'warning'

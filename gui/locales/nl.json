@@ -62,6 +62,7 @@
   "Dashboard Synchronize": "Synchroniseren",
   "Dashboard Syncing": "Bezig met synchroniseren",
   "Dashboard Your cozy is up to date!": "Je Cozy is bijgewerkt!",
+  "Dashboard App upgrade failed": "Cozy Desktop upgrade failed",
   "Error {0} names cannot end with character {1}": "Namen met {0} mogen niet eindigen op {1}",
   "Error {0} names cannot include characters {1}": "Namen met {0} mogen {1} niet bevatten",
   "Error Bad GLIBCXX version": "Je systeem gebruikt een oude versie van glibc; je moet je distributie bijwerken. Bekijk hiervoor https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
