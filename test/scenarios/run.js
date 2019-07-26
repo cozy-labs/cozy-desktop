@@ -298,7 +298,13 @@ async function verifyExpectations(scenario, helpers, { includeRemoteTrash }) {
     const actual = {}
 
     if (expectedLocalTree) {
-      expected.localTree = expectedLocalTree
+      if (process.env.COZY_DESKTOP_FS === 'HFS+') {
+        expected.localTree = expectedLocalTree.map(relpath =>
+          relpath.normalize ? relpath.normalize('NFD') : relpath
+        )
+      } else {
+        expected.localTree = expectedLocalTree
+      }
       actual.localTree = await helpers.local.treeWithoutTrash()
     }
     if (expectedRemoteTree) {

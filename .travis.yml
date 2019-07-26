@@ -18,6 +18,9 @@ cache:
       - $HOME/.cache/electron
       - $HOME/.cache/electron-builder
       - $HOME/bin
+os:
+    - linux
+    - osx
 env:
     global:
         - COZY_DESKTOP_DIR=/tmp/cozy-desktop
@@ -34,6 +37,42 @@ env:
         - NODE_ENV=test
         - NPM_CONFIG_PROGRESS=false
         - COZY_DESKTOP_HEARTBEAT=1000
+    matrix:
+        - JOB=unit COZY_DESKTOP_FS=APFS
+        - JOB=scenarios COZY_DESKTOP_FS=APFS
+        - JOB=scenarios COZY_DESKTOP_FS=HFS+
+        - JOB=stopped_scenarios COZY_DESKTOP_FS=APFS
+        - JOB=dist COZY_DESKTOP_FS=APFS
+        - JOB=unit CC=gcc-8 CXX=g++-8
+        - JOB=scenarios CC=gcc-8 CXX=g++-8
+        - JOB=stopped_scenarios CC=gcc-8 CXX=g++-8
+        - JOB=dist CC=gcc-8 CXX=g++-8
+
+branches:
+    only:
+        - master
+jobs:
+    fast_finish: true
+    exclude:
+        - os: linux
+          env: JOB=unit COZY_DESKTOP_FS=APFS
+        - os: linux
+          env: JOB=scenarios COZY_DESKTOP_FS=APFS
+        - os: linux
+          env: JOB=stopped_scenarios COZY_DESKTOP_FS=APFS
+        - os: linux
+          env: JOB=dist COZY_DESKTOP_FS=APFS
+        - os: linux
+          env: JOB=scenarios COZY_DESKTOP_FS=HFS+
+        - os: osx
+          env: JOB=unit CC=gcc-8 CXX=g++-8
+        - os: osx
+          env: JOB=scenarios CC=gcc-8 CXX=g++-8
+        - os: osx
+          env: JOB=stopped_scenarios CC=gcc-8 CXX=g++-8
+        - os: osx
+          env: JOB=dist CC=gcc-8 CXX=g++-8
+script: ./dev/ci/script.sh
 
 before_install: | # install cozy stack for integration test
     # CouchDB
@@ -70,7 +109,7 @@ before_install: | # install cozy stack for integration test
 
     # COZY_DESKTOP_DIR
     if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      hdiutil create -megabytes 10 -fs APFS -volname cozy-desktop "$COZY_DESKTOP_DIR";
+      hdiutil create -megabytes 10 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR";
       hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR";
     else
       mkdir -p "$COZY_DESKTOP_DIR";
@@ -81,51 +120,3 @@ before_install: | # install cozy stack for integration test
     echo "NODE_ENV=test" > "${TRAVIS_BUILD_DIR}/.env.test"
 
 after_failure: ./dev/ci/after_failure.sh
-
-branches:
-    only:
-        - master
-stages:
-    - test
-    - name: notify
-      if: type = pull_request
-jobs:
-    fast_finish: true
-    include:
-        - &test_unit
-          stage: test
-          script: ./dev/ci/tests.sh
-          name: unit and integration tests
-          os: osx
-        - <<: *test_unit
-          os: linux
-          env:
-              - CC=gcc-8 CXX=g++-8
-        - &test_scenarios
-          stage: test
-          script: ./dev/ci/scenarios.sh
-          name: real life scenarios
-          os: osx
-        - <<: *test_scenarios
-          os: linux
-          env:
-              - CC=gcc-8 CXX=g++-8
-        - <<: *test_scenarios
-          os: linux
-          name: stopped client scenarios
-          env:
-              - STOPPED_CLIENT=1
-        - <<: *test_scenarios
-          os: osx
-          name: stopped client scenarios
-          env:
-              - STOPPED_CLIENT=1
-        - &dist
-          stage: test
-          script: ./dev/ci/dist.sh
-          name: artifacts build
-          os: osx
-        - <<: *dist
-          os: linux
-          env:
-              - CC=gcc-8 CXX=g++-8
