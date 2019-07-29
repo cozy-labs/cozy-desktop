@@ -2,11 +2,6 @@
 /* eslint-env mocha */
 
 const should = require('should')
-const fse = require('fs-extra')
-const path = require('path')
-const _ = require('lodash')
-
-const config = require('../../core/config')
 
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -32,100 +27,73 @@ describe('Update only a file mtime', () => {
     helpers.local.setupTrash()
   })
 
-  it('remote', async () => {
-    await helpers.remote.ignorePreviousChanges()
-    const localPath = path.join(helpers.local.syncPath, 'file')
+  context('when update is made on local filesystem', () => {
+    let file, oldUpdatedAt
+    beforeEach('create file and update mtime', async function() {
+      await helpers.remote.ignorePreviousChanges()
 
-    const file = await cozy.files.create('basecontent', { name: 'file' })
-    await helpers.remote.pullChanges()
-    await helpers.syncAll()
+      oldUpdatedAt = new Date()
+      oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-    // update only the file mtime
-    await cozy.files.updateById(file._id, 'changedcontent', {
-      contentType: 'text/plain'
+      file = await cozy.files.create('basecontent', {
+        name: 'file',
+        lastModifiedDate: oldUpdatedAt
+      })
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
     })
-    await cozy.files.updateById(file._id, 'basecontent', {
-      contentType: 'text/plain'
+
+    it('does not update the document in Pouch', async () => {
+      helpers.spyPouch()
+
+      const newUpdatedAt = new Date()
+      newUpdatedAt.setDate(oldUpdatedAt.getDate() + 1)
+
+      const oldFile = await helpers.pouch.byRemoteIdMaybeAsync(file._id)
+      await helpers.prep.updateFileAsync('local', {
+        ...oldFile,
+        updated_at: newUpdatedAt.toISOString()
+      })
+
+      await helpers.syncAll()
+      should(helpers.putDocs('path')).deepEqual([])
     })
-
-    const statBefore = await fse.stat(localPath)
-    helpers.spyPouch()
-    await helpers.remote.pullChanges()
-    await helpers.syncAll()
-
-    const statAfter = await fse.stat(localPath)
-    statBefore.mtime.toISOString().should.equal(statAfter.mtime.toISOString())
-
-    // actually change the file
-    await fse.appendFile(localPath, ' appended')
-
-    if (config.watcherType() === 'chokidar') {
-      const stats = await fse.stat(localPath)
-      await helpers.local.simulateEvents([
-        {
-          type: 'change',
-          path: 'file',
-          stats
-        }
-      ])
-    } else {
-      await helpers.local.simulateAtomStart()
-      await helpers.local.simulateAtomEvents([
-        [
-          {
-            action: 'modified',
-            kind: 'file',
-            path: 'file'
-          }
-        ]
-      ])
-    }
-
-    await helpers.syncAll()
-
-    should(await fse.readFile(localPath, 'utf8')).equal('basecontent appended')
-    should((await fse.stat(localPath)).mtime).not.equal(statAfter.mtime)
   })
 
-  it('local', async () => {
-    await helpers.remote.ignorePreviousChanges()
+  context('when update is made on remote Cozy', () => {
+    let file, oldUpdatedAt
+    beforeEach('create file and update mtime', async function() {
+      await helpers.remote.ignorePreviousChanges()
 
-    var d = new Date()
-    d.setDate(d.getDate() - 1)
+      oldUpdatedAt = new Date()
+      oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-    const file = await cozy.files.create('basecontent', {
-      name: 'file',
-      lastModifiedDate: d
+      file = await cozy.files.create('basecontent', {
+        name: 'file',
+        lastModifiedDate: oldUpdatedAt
+      })
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
     })
-    await helpers.remote.pullChanges()
-    await helpers.syncAll()
 
-    d.setDate(d.getDate() + 1)
+    it('updates the document in Pouch with the new remote rev and mtime', async () => {
+      helpers.spyPouch()
 
-    helpers.spyPouch()
+      // update only the file mtime
+      await cozy.files.updateById(file._id, 'changedcontent', {
+        contentType: 'text/plain'
+      })
+      const newFile = await cozy.files.updateById(file._id, 'basecontent', {
+        contentType: 'text/plain'
+      })
 
-    const oldFile = await helpers.pouch.byRemoteIdMaybeAsync(file._id)
-    await helpers.prep.updateFileAsync(
-      'local',
-      _.merge(
+      await helpers.remote.pullChanges()
+      should(helpers.putDocs('path', 'updated_at')).deepEqual([
         {
-          path: 'file',
-          updated_at: d.toISOString()
-        },
-        _.pick(oldFile, [
-          'docType',
-          'md5sum',
-          'mime',
-          'class',
-          'size',
-          'remote'
-        ])
-      )
-    )
-
-    await helpers.syncAll()
-
-    // no change saved
-    should(helpers.putDocs('path')).deepEqual([])
+          path: file.attributes.name,
+          updated_at: newFile.attributes.updated_at
+        }
+      ])
+    })
   })
 })
