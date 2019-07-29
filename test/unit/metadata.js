@@ -1009,6 +1009,7 @@ describe('metadata', function() {
         .and.startWith(doc.path)
         .and.match(CONFLICT_REGEXP)
     })
+
     it('should get the correct _id', () => {
       const doc = {
         path: 'docname',
@@ -1021,6 +1022,7 @@ describe('metadata', function() {
         .and.startWith(doc._id)
         .and.match(idRegExp)
     })
+
     it('should keep the correct extension', () => {
       const ext = '.pdf'
       const doc = {
@@ -1029,6 +1031,7 @@ describe('metadata', function() {
       const newDoc = createConflictingDoc(doc)
       should(path.extname(newDoc.path)).equal(ext)
     })
+
     it('should but does not handle complex extension `.tar.gz`', () => {
       // FIXME: must be docname-conflict-:ISODATE:.tar.gz instead of docname.tar-conflict-:ISODATE:.gz
       const ext = '.tar.gz'
@@ -1038,6 +1041,7 @@ describe('metadata', function() {
       const newDoc = createConflictingDoc(doc)
       should(path.extname(newDoc.path)).equal('.gz')
     })
+
     it('should not have more than 180 characters', () => {
       const doc = {
         path:
@@ -1047,6 +1051,7 @@ describe('metadata', function() {
       const conflictStart = path.basename(newDoc.path).search(CONFLICT_REGEXP)
       should(conflictStart).equal(180)
     })
+
     it('should handle the renaming of a conflict', () => {
       const ext = `.pdf`
       const base = `docname`
@@ -1061,6 +1066,7 @@ describe('metadata', function() {
         .and.match(CONFLICT_REGEXP)
       should(path.extname(secondConflict.path)).equal(ext)
     })
+
     it('should not mistake a previous conflict timezone for a file extension', () => {
       const base = 'dirname'
       const timezone = '666Z'
@@ -1075,6 +1081,7 @@ describe('metadata', function() {
         .and.match(CONFLICT_REGEXP)
         .and.not.containEql(timezone)
     })
+
     it('should not duplicate its ancestors', () => {
       const doc = { path: 'parent/dir/file.ext' }
       const newDoc = createConflictingDoc(doc)
@@ -1089,6 +1096,18 @@ describe('metadata', function() {
       }
       const newDoc = createConflictingDoc(doc)
       should(newDoc.path).not.containEql('parent/dir/parent/dir')
+    })
+
+    it('should not replace the conflict suffix of a parent', () => {
+      const ext = `.pdf`
+      const base = `docname`
+      const doc = {
+        path: `parent/dir-conflict-1970-01-01T13_37_00.666Z/${base}${ext}`
+      }
+      const newDoc = createConflictingDoc(doc)
+      should(newDoc.path).startWith(
+        'parent/dir-conflict-1970-01-01T13_37_00.666Z'
+      )
     })
   })
 
