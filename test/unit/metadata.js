@@ -999,115 +999,123 @@ describe('metadata', function() {
   })
 
   describe('createConflictingDoc', () => {
-    it('should get the correct path', () => {
-      const doc = {
-        path: 'docname'
-      }
-      const newDoc = createConflictingDoc(doc)
-      should(newDoc.path)
-        .be.a.String()
-        .and.startWith(doc.path)
-        .and.match(CONFLICT_REGEXP)
+    const runSharedExamples = ({
+      base,
+      ext = '',
+      ancestors = '',
+      conflict = ''
+    }) => {
+      const filepath = () => ancestors + base + conflict + ext
+      const _id = () => metadata.id(filepath())
+      const doc = { path: filepath(), _id: _id() }
+
+      it('returns a doc with a conflict path', () => {
+        const newDoc = createConflictingDoc(doc)
+        should(newDoc.path)
+          .be.a.String()
+          .and.match(CONFLICT_REGEXP)
+      })
+
+      it('returns a doc within the same parent', () => {
+        const newDoc = createConflictingDoc(doc)
+        should(newDoc.path)
+          .be.a.String()
+          .and.startWith(ancestors)
+
+        if (ancestors !== '')
+          should(newDoc.path).not.containEql(ancestors + ancestors)
+      })
+
+      it('returns a doc with the same extension', () => {
+        const newDoc = createConflictingDoc(doc)
+        should(newDoc.path)
+          .be.a.String()
+          .and.endWith(ext)
+      })
+
+      it('returns a doc with a correct _id', () => {
+        const newDoc = createConflictingDoc(doc)
+        should(newDoc._id)
+          .be.a.String()
+          .and.equal(metadata.id(newDoc.path))
+      })
+
+      it('returns a doc with the first 180 characters of the base file name', () => {
+        const newDoc = createConflictingDoc(doc)
+        const conflictStart = path.basename(newDoc.path).search(CONFLICT_REGEXP)
+        should(conflictStart).be.lessThanOrEqual(180)
+        should(doc.path).startWith(newDoc.path.slice(0, conflictStart))
+      })
+    }
+
+    context('with no file extension', () => {
+      runSharedExamples({ base: 'docname' })
     })
 
-    it('should get the correct _id', () => {
-      const doc = {
-        path: 'docname',
-        _id: metadata.id('docname')
-      }
-      const newDoc = createConflictingDoc(doc)
-      const idRegExp = new RegExp(CONFLICT_REGEXP.source, 'i')
-      should(newDoc._id)
-        .be.a.String()
-        .and.startWith(doc._id)
-        .and.match(idRegExp)
+    context('with complex extension `.tar.gz`', () => {
+      it('should but does not keep complete extension', () => {
+        // FIXME: must be docname-conflict-:ISODATE:.tar.gz instead of docname.tar-conflict-:ISODATE:.gz
+        const doc = {
+          path: 'docname.tar.gz'
+        }
+        const newDoc = createConflictingDoc(doc)
+        should(path.extname(newDoc.path)).equal('.gz')
+      })
     })
 
-    it('should keep the correct extension', () => {
-      const ext = '.pdf'
-      const doc = {
-        path: `docname${ext}`
-      }
-      const newDoc = createConflictingDoc(doc)
-      should(path.extname(newDoc.path)).equal(ext)
+    context('with no previous conflicts', () => {
+      runSharedExamples({ base: 'docname', ext: '.pdf' })
     })
 
-    it('should but does not handle complex extension `.tar.gz`', () => {
-      // FIXME: must be docname-conflict-:ISODATE:.tar.gz instead of docname.tar-conflict-:ISODATE:.gz
-      const ext = '.tar.gz'
-      const doc = {
-        path: `docname${ext}`
-      }
-      const newDoc = createConflictingDoc(doc)
-      should(path.extname(newDoc.path)).equal('.gz')
+    context('with previous file conflict', () => {
+      runSharedExamples({
+        base: 'docname',
+        conflict: '-conflict-1970-01-01T13_37_00.666Z',
+        ext: '.pdf'
+      })
+
+      context('with no file extension', () => {
+        runSharedExamples({
+          base: 'docname',
+          conflict: '-conflict-1970-01-01T13_37_00.666Z'
+        })
+      })
     })
 
-    it('should not have more than 180 characters', () => {
-      const doc = {
-        path:
-          'Lorem ipsum dolor sit amet consectetur adipiscing elit Nam a velit at dolor euismod tincidunt sit amet id ante Cras vehicula lectus purus In lobortis risus lectus vitae rhoncus quam porta nullam'
-      }
-      const newDoc = createConflictingDoc(doc)
-      const conflictStart = path.basename(newDoc.path).search(CONFLICT_REGEXP)
-      should(conflictStart).equal(180)
+    context('with parents', () => {
+      runSharedExamples({
+        ancestors: path.normalize('parent/dir/'),
+        base: 'docname',
+        ext: '.pdf'
+      })
     })
 
-    it('should handle the renaming of a conflict', () => {
-      const ext = `.pdf`
-      const base = `docname`
-      const doc = {
-        path: `${base}-conflict-1970-01-01T13_37_00.666Z${ext}`
-      }
-      const secondConflict = createConflictingDoc(doc)
-      should(doc.path).not.equal(secondConflict.path)
-      should(secondConflict.path)
-        .be.a.String()
-        .and.startWith(base)
-        .and.match(CONFLICT_REGEXP)
-      should(path.extname(secondConflict.path)).equal(ext)
-    })
-
-    it('should not mistake a previous conflict timezone for a file extension', () => {
-      const base = 'dirname'
-      const timezone = '666Z'
-      const firstConflictSuffix = `-conflict-1970-01-01T13_37_00.${timezone}`
-      const doc = { path: `${base}${firstConflictSuffix}` }
-
-      const secondConflict = createConflictingDoc(doc)
-
-      should(secondConflict.path)
-        .be.a.String()
-        .and.startWith(base)
-        .and.match(CONFLICT_REGEXP)
-        .and.not.containEql(timezone)
-    })
-
-    it('should not duplicate its ancestors', () => {
-      const doc = { path: 'parent/dir/file.ext' }
-      const newDoc = createConflictingDoc(doc)
-      should(newDoc.path).not.containEql('parent/dir/parent/dir')
-    })
-
-    it('should not duplicate the ancestors of a previous conflict', () => {
-      const ext = `.pdf`
-      const base = `docname`
-      const doc = {
-        path: `parent/dir/${base}-conflict-1970-01-01T13_37_00.666Z${ext}`
-      }
-      const newDoc = createConflictingDoc(doc)
-      should(newDoc.path).not.containEql('parent/dir/parent/dir')
-    })
-
-    it('should not replace the conflict suffix of a parent', () => {
-      const ext = `.pdf`
-      const base = `docname`
-      const doc = {
-        path: `parent/dir-conflict-1970-01-01T13_37_00.666Z/${base}${ext}`
-      }
-      const newDoc = createConflictingDoc(doc)
-      should(newDoc.path).startWith(
-        'parent/dir-conflict-1970-01-01T13_37_00.666Z'
+    context('with previous parent conflict', () => {
+      const ancestors = path.normalize(
+        'parent/dir-conflict-1970-01-01T13_37_00.666Z/'
       )
+      const base = 'docname'
+      const ext = '.pdf'
+
+      runSharedExamples({ ancestors, base, ext })
+
+      it('should not replace the conflict suffix of a parent', () => {
+        const doc = {
+          path: ancestors + base + ext
+        }
+        const newDoc = createConflictingDoc(doc)
+        should(newDoc.path)
+          .startWith(`${ancestors}${base}-conflict-`)
+          .and.endWith(ext)
+      })
+    })
+
+    context('with long file name', () => {
+      runSharedExamples({
+        base:
+          'Lorem ipsum dolor sit amet consectetur adipiscing elit Nam a velit at dolor euismod tincidunt sit amet id ante Cras vehicula lectus purus In lobortis risus lectus vitae rhoncus quam porta nullam',
+        ext: '.pdf'
+      })
     })
   })
 
