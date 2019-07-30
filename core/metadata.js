@@ -63,7 +63,11 @@ const log = logger({
 
 const { platform } = process
 
-const CONFLICT_REGEXP = /-conflict-\d{4}(?:-\d{2}){2}T(?:\d{2}_?){3}\.\d{3}Z/
+const DATE_REGEXP = '\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}\\.\\d{3}Z'
+const SEPARATOR_REGEXP = `(?!.*\\${path.sep}.*)`
+const CONFLICT_REGEXP = new RegExp(
+  `-conflict-${DATE_REGEXP}${SEPARATOR_REGEXP}`
+)
 
 /*::
 export type DocType =
