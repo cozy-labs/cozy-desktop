@@ -83,7 +83,7 @@ class Pouch {
   byRemoteIdAsync: (id: string) => Promise<*>
   byRemoteIdMaybeAsync: (id: string) => Promise<*>
   addAllViewsAsync: () => Promise<*>
-  getPreviousRevAsync: (id: string, shortRev: ?number) => Promise<Metadata>
+  getPreviousRevAsync: (id: string, revDiff: number) => Promise<Metadata>
   getLocalSeqAsync: () => Promise<number>
   setLocalSeqAsync: (number) => Promise<*>
   getRemoteSeqAsync: () => string
@@ -386,7 +386,7 @@ class Pouch {
   /* Helpers */
 
   // Retrieve a previous doc revision from its id
-  getPreviousRev(id, shortRev, callback) {
+  getPreviousRev(id, revDiff, callback) {
     let options = {
       revs: true,
       revs_info: true,
@@ -398,8 +398,8 @@ class Pouch {
       } else {
         let { ids } = infos[0].ok._revisions
         let { start } = infos[0].ok._revisions
-        let revId = ids[start - shortRev]
-        let rev = `${shortRev}-${revId}`
+        let revId = ids[start - revDiff]
+        let rev = `${revDiff}-${revId}`
         return this.db.get(id, { rev }, function(err, doc) {
           if (err) {
             log.debug(infos[0].doc)

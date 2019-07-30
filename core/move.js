@@ -40,8 +40,7 @@ function move(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
   if (!dst.overwrite) {
     delete dst._rev
   }
-  delete dst.sides
-  metadata.markSide(side, dst)
+  metadata.markSide(side, dst, src)
 }
 
 // Same as move() but mark the source as a child move so it will be moved with

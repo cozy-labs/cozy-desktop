@@ -8,11 +8,13 @@ const { PouchError } = require('../../../core/pouch/error')
 const {
   SCHEMA_DOC_ID,
   SCHEMA_INITIAL_VERSION,
+  migrations,
   currentSchemaVersion,
   updateSchemaVersion,
   migrate,
   save
 } = require('../../../core/pouch/migrations')
+const metadata = require('../../../core/metadata')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
@@ -420,6 +422,47 @@ describe('core/pouch/migrations', function() {
             should(md.migrated).be.true()
           }
         })
+      })
+    })
+  })
+
+  describe('[migration] Migrate _rev to sides.target', () => {
+    const migration = migrations[0]
+
+    describe('affectedDocs()', () => {
+      it('returns an empty array when all docs have sides.target', async function() {
+        const docs = await this.pouch.byRecursivePathAsync('').map(doc => {
+          doc.sides.target = 2
+          return doc
+        })
+        should(migration.affectedDocs(docs)).be.empty()
+      })
+
+      it('returns only docs missing sides.target', async function() {
+        const docs = await this.pouch.byRecursivePathAsync('')
+        const incompleteDocs = docs.filter((doc, index) => index % 2 === 0)
+        docs
+          .filter((doc, index) => index % 2 === 1)
+          .map(doc => {
+            doc.sides.target = 2
+            return doc
+          })
+        should(migration.affectedDocs(docs)).deepEqual(incompleteDocs)
+      })
+    })
+
+    describe('run()', () => {
+      it('sets sides.target with the short rev extracted from _rev', async function() {
+        const docs = await this.pouch.byRecursivePathAsync('')
+        const expected = docs.map(doc => ({
+          ...doc,
+          sides: {
+            ...doc.sides,
+            target: metadata.extractRevNumber(doc)
+          }
+        }))
+
+        should(migration.run(docs)).deepEqual(expected)
       })
     })
   })

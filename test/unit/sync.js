@@ -109,8 +109,16 @@ describe('Sync', function() {
 
   describe('sync', function() {
     it('waits for and applies available changes', async function() {
-      const doc1 = { _id: 'doc1', docType: 'file', sides: { local: 1 } }
-      const doc2 = { _id: 'doc2', docType: 'folder', sides: { remote: 1 } }
+      const doc1 = {
+        _id: 'doc1',
+        docType: 'file',
+        sides: { target: 1, local: 1 }
+      }
+      const doc2 = {
+        _id: 'doc2',
+        docType: 'folder',
+        sides: { target: 1, remote: 1 }
+      }
       await this.pouch.db.put(doc1)
       await this.pouch.db.put(doc2)
       const apply = sinon.stub(this.sync, 'apply')
@@ -131,6 +139,7 @@ describe('Sync', function() {
           _id: 'ignored',
           docType: 'folder',
           sides: {
+            target: 1,
             local: 1
           }
         }
@@ -147,8 +156,9 @@ describe('Sync', function() {
           _id: 'foo',
           docType: 'folder',
           sides: {
-            local: 1,
-            remote: 1
+            target: 2,
+            local: 2,
+            remote: 2
           }
         }
       }
@@ -164,6 +174,7 @@ describe('Sync', function() {
           _id: 'foo',
           path: 'foo',
           sides: {
+            target: 2,
             local: 2,
             remote: 1
           },
@@ -184,6 +195,7 @@ describe('Sync', function() {
           docType: 'file',
           md5sum: '0000000000000000000000000000000000000000',
           sides: {
+            target: 3,
             local: 3,
             remote: 2
           },
@@ -196,8 +208,9 @@ describe('Sync', function() {
         _id: 'foo/bar',
         docType: 'file',
         sides: {
-          local: 1,
-          remote: 1
+          target: 4,
+          local: 4,
+          remote: 4
         }
       })
     })
@@ -210,6 +223,7 @@ describe('Sync', function() {
           docType: 'folder',
           tags: [],
           sides: {
+            target: 1,
             local: 1
           }
         }
@@ -226,6 +240,7 @@ describe('Sync', function() {
         md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
         docType: 'file',
         sides: {
+          target: 1,
           local: 1
         }
       }
@@ -239,6 +254,7 @@ describe('Sync', function() {
         md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
         docType: 'file',
         sides: {
+          target: 1,
           local: 1
         }
       }
@@ -246,6 +262,7 @@ describe('Sync', function() {
       doc._rev = created.rev
       doc.md5sum = '389dd709c94a6a7ea56e1d55cbf65eef31b9bc5e'
       doc.sides = {
+        target: 2,
         local: 2,
         remote: 1
       }
@@ -303,18 +320,21 @@ describe('Sync', function() {
         md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
         docType: 'file',
         sides: {
-          local: 1
+          target: 2,
+          local: 2,
+          remote: 2
         }
       }
       const created = await this.pouch.db.put(doc)
       doc._rev = created.rev
       doc.tags = ['courge']
       doc.sides = {
-        local: 2,
-        remote: 1
+        target: 3,
+        local: 3,
+        remote: 2
       }
       await this.pouch.db.put(doc)
-      await this.sync.applyDoc(doc, this.remote, 'remote', 1)
+      await this.sync.applyDoc(doc, this.remote, 'remote', 2)
       this.remote.overwriteFileAsync.called.should.be.false()
       let ufm = this.remote.updateFileMetadataAsync
       ufm.calledWith(doc).should.be.true()
@@ -329,6 +349,7 @@ describe('Sync', function() {
         docType: 'file',
         tags: ['qux'],
         sides: {
+          target: 3,
           local: 3,
           remote: 2
         }
@@ -340,6 +361,7 @@ describe('Sync', function() {
         docType: 'file',
         tags: ['qux'],
         sides: {
+          target: 1,
           local: 1
         }
       }
@@ -360,6 +382,7 @@ describe('Sync', function() {
         docType: 'file',
         tags: ['qux'],
         sides: {
+          target: 3,
           local: 3,
           remote: 2
         }
@@ -372,6 +395,7 @@ describe('Sync', function() {
         docType: 'file',
         tags: ['qux'],
         sides: {
+          target: 1,
           local: 1
         }
       }
@@ -392,6 +416,7 @@ describe('Sync', function() {
         docType: 'file',
         tags: ['qux'],
         sides: {
+          target: 3,
           local: 3,
           remote: 2
         }
@@ -403,6 +428,7 @@ describe('Sync', function() {
         docType: 'file',
         tags: ['qux'],
         sides: {
+          target: 1,
           local: 1
         }
       }
@@ -437,6 +463,7 @@ describe('Sync', function() {
         _deleted: true,
         docType: 'file',
         sides: {
+          target: 2,
           local: 1,
           remote: 2
         }
@@ -452,6 +479,7 @@ describe('Sync', function() {
         _deleted: true,
         docType: 'file',
         sides: {
+          target: 2,
           local: 2
         }
       }
@@ -465,6 +493,7 @@ describe('Sync', function() {
         _rev: '1-abcdef0123456789',
         docType: 'folder',
         sides: {
+          target: 1,
           local: 1
         }
       }
@@ -479,6 +508,7 @@ describe('Sync', function() {
         docType: 'folder',
         tags: ['qux'],
         sides: {
+          target: 2,
           local: 1,
           remote: 2
         }
@@ -496,6 +526,7 @@ describe('Sync', function() {
         docType: 'folder',
         tags: ['qux'],
         sides: {
+          target: 3,
           local: 3,
           remote: 2
         }
@@ -507,6 +538,7 @@ describe('Sync', function() {
         docType: 'folder',
         tags: ['qux'],
         sides: {
+          target: 1,
           local: 1
         }
       }
@@ -524,6 +556,7 @@ describe('Sync', function() {
         _deleted: true,
         docType: 'folder',
         sides: {
+          target: 2,
           local: 1,
           remote: 2
         }
@@ -539,6 +572,7 @@ describe('Sync', function() {
         _deleted: true,
         docType: 'folder',
         sides: {
+          target: 2,
           local: 2
         }
       }
@@ -552,6 +586,7 @@ describe('Sync', function() {
       let doc = {
         _id: 'first/failure',
         sides: {
+          target: 1,
           local: 1
         }
       }
@@ -563,7 +598,7 @@ describe('Sync', function() {
       const actual = await this.pouch.db.get(doc._id)
       should(actual.errors).equal(1)
       should(actual._rev).not.equal(doc._rev)
-      should(actual.sides).deepEqual({ local: 2 })
+      should(actual.sides).deepEqual({ target: 2, local: 2 })
       should(metadata.isUpToDate('local', actual)).be.true()
     })
 
@@ -572,10 +607,9 @@ describe('Sync', function() {
         _id: 'second/failure',
         errors: 1,
         sides: {
-          // XXX: Use dumb values so we don't need to save Pouch doc multiple
-          //      times to get a matching rev.
-          local: 0,
-          remote: 2
+          target: 4,
+          local: 2,
+          remote: 4
         }
       }
       let infos = await this.pouch.db.put(doc)
@@ -588,7 +622,7 @@ describe('Sync', function() {
       const actual = await this.pouch.db.get(doc._id)
       should(actual.errors).equal(2)
       should(actual._rev).not.equal(doc._rev)
-      should(actual.sides).deepEqual({ local: 0, remote: 3 })
+      should(actual.sides).deepEqual({ target: 5, local: 2, remote: 5 })
       should(metadata.isUpToDate('remote', actual)).be.true()
     })
 
@@ -597,7 +631,8 @@ describe('Sync', function() {
         _id: 'third/failure',
         errors: 3,
         sides: {
-          remote: 1
+          target: 4,
+          remote: 4
         }
       }
       const infos = await this.pouch.db.put(doc)
@@ -617,22 +652,22 @@ describe('Sync', function() {
       const updateRevs = ({ sync }, doc) =>
         sync.updateRevs(_.cloneDeep(doc), syncSide)
 
-      let doc, upToDate, syncedRev, mergedRev
+      let doc, upToDate, syncedTarget, mergedTarget
 
       beforeEach(async function() {
         upToDate = await builders
           .metadata()
-          .upToDate()
+          .upToDate() // 2, 2
           .create()
-        syncedRev = upToDate.sides[syncSide]
-        mergedRev = upToDate.sides[mergedSide] + 1
+        syncedTarget = upToDate.sides[syncSide] // 2
+        mergedTarget = upToDate.sides[mergedSide] + 1 // 3
         doc = await builders
           .metadata(upToDate)
           .sides({
-            [syncSide]: syncedRev,
-            [mergedSide]: mergedRev
+            [syncSide]: syncedTarget, // 2
+            [mergedSide]: mergedTarget // 3
           })
-          .create()
+          .create() // rev == 3
       })
 
       context('without changes merged during Sync', function() {
@@ -641,9 +676,7 @@ describe('Sync', function() {
 
           const updated = await this.pouch.db.get(doc._id)
           should(metadata.outOfDateSide(updated)).be.undefined()
-          should(metadata.extractRevNumber(updated)).equal(
-            metadata.extractRevNumber(doc) + 1
-          )
+          should(metadata.target(updated)).equal(metadata.target(doc) + 1)
         })
       })
 
@@ -657,12 +690,12 @@ describe('Sync', function() {
               await builders
                 .metadata(doc)
                 .sides({
-                  [syncSide]: syncedRev,
-                  [mergedSide]: mergedRev + extraChanges
+                  [syncSide]: syncedTarget, // 2
+                  [mergedSide]: mergedTarget + extraChanges // 3 + extra
                 })
-                .create()
+                .create() // rev == 3 + extra
 
-              await updateRevs(this, doc)
+              await updateRevs(this, doc) // rev == 4, syncSide == 3, mergedSide == 4 + extra - 1
 
               updated = await this.pouch.db.get(doc._id)
             })
@@ -672,14 +705,14 @@ describe('Sync', function() {
             })
 
             it('keeps the changes difference between sides', () => {
-              should(updated.sides[mergedSide]).equal(
-                updated.sides[syncSide] + extraChanges
+              should(metadata.side(updated, mergedSide)).equal(
+                metadata.side(updated, syncSide) + extraChanges
               )
             })
 
             it(`keeps the doc rev coherent with its ${mergedSide} side`, async function() {
-              should(metadata.extractRevNumber(updated)).equal(
-                updated.sides[mergedSide]
+              should(metadata.target(updated)).equal(
+                metadata.side(updated, mergedSide)
               )
             })
           }
@@ -695,6 +728,7 @@ describe('Sync', function() {
         _rev: '1-0123456789',
         docType: 'file',
         sides: {
+          target: 1,
           remote: 1
         }
       }
@@ -707,6 +741,7 @@ describe('Sync', function() {
         _rev: '3-0123456789',
         docType: 'file',
         sides: {
+          target: 3,
           remote: 3,
           local: 2
         }
@@ -723,6 +758,7 @@ describe('Sync', function() {
         _rev: '1-0123456789',
         docType: 'file',
         sides: {
+          target: 1,
           local: 1
         }
       }
@@ -735,6 +771,7 @@ describe('Sync', function() {
         _rev: '4-0123456789',
         docType: 'file',
         sides: {
+          target: 4,
           remote: 3,
           local: 4
         }
@@ -751,6 +788,7 @@ describe('Sync', function() {
         _rev: '5-0123456789',
         docType: 'file',
         sides: {
+          target: 5,
           remote: 5,
           local: 5
         }
@@ -768,6 +806,7 @@ describe('Sync', function() {
         _deleted: true,
         docType: 'file',
         sides: {
+          target: 5,
           local: 5
         }
       }
@@ -784,6 +823,7 @@ describe('Sync', function() {
         _deleted: true,
         docType: 'file',
         sides: {
+          target: 5,
           remote: 5
         }
       }

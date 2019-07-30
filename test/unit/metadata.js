@@ -17,6 +17,7 @@ const {
   invalidChecksum,
   invalidPath,
   markSide,
+  markAsUpToDate,
   detectIncompatibilities,
   sameBinary,
   sameFile,
@@ -24,7 +25,6 @@ const {
   buildDir,
   buildFile,
   invariants,
-  upToDate,
   outOfDateSide,
   createConflictingDoc,
   CONFLICT_REGEXP
@@ -769,17 +769,19 @@ describe('metadata', function() {
         const doc = metadata[`build${kind}`](path, stats)
 
         markSide('local', doc)
-        should(doc).have.properties({ sides: { local: 1 } })
+        should(doc).have.properties({ sides: { target: 1, local: 1 } })
       })
 
       it(`increments the side from the _rev of an already existing ${kind}`, async function() {
         const prev = metadata[`build${kind}`](path, stats)
-        prev.sides = { local: 3, remote: 5 }
+        prev.sides = { target: 5, local: 3, remote: 5 }
         prev._rev = '5-0123'
         const doc = metadata[`build${kind}`](path, stats)
 
         markSide('local', doc, prev)
-        should(doc).have.properties({ sides: { local: 6, remote: 5 } })
+        should(doc).have.properties({
+          sides: { target: 6, local: 6, remote: 5 }
+        })
       })
     }
   })
@@ -791,18 +793,24 @@ describe('metadata', function() {
     }
 
     it('increments both sides by 1 in-place', () => {
-      should(docAfterIncSides({})).deepEqual({ sides: { local: 1, remote: 1 } })
-      should(docAfterIncSides({ sides: { local: 1 } })).deepEqual({
-        sides: { local: 2, remote: 1 }
+      should(docAfterIncSides({})).deepEqual({
+        sides: { target: 1, local: 1, remote: 1 }
       })
-      should(docAfterIncSides({ sides: { remote: 1 } })).deepEqual({
-        sides: { local: 1, remote: 2 }
+      should(docAfterIncSides({ sides: { target: 1, local: 1 } })).deepEqual({
+        sides: { target: 2, local: 2, remote: 1 }
       })
-      should(docAfterIncSides({ sides: { local: 2, remote: 2 } })).deepEqual({
-        sides: { local: 3, remote: 3 }
+      should(docAfterIncSides({ sides: { target: 1, remote: 1 } })).deepEqual({
+        sides: { target: 2, local: 1, remote: 2 }
       })
-      should(docAfterIncSides({ sides: { local: 3, remote: 2 } })).deepEqual({
-        sides: { local: 4, remote: 3 }
+      should(
+        docAfterIncSides({ sides: { target: 2, local: 2, remote: 2 } })
+      ).deepEqual({
+        sides: { target: 3, local: 3, remote: 3 }
+      })
+      should(
+        docAfterIncSides({ sides: { target: 3, local: 3, remote: 2 } })
+      ).deepEqual({
+        sides: { target: 4, local: 4, remote: 3 }
       })
     })
   })
@@ -920,7 +928,7 @@ describe('metadata', function() {
     })
   })
 
-  describe('upToDate', () => {
+  describe('markAsUpToDate', () => {
     let doc
     beforeEach(async () => {
       const builders = new Builders({ pouch: this.pouch })
@@ -931,26 +939,36 @@ describe('metadata', function() {
         .build()
     })
 
-    it('returns a clone of the doc', () => {
-      const clone = upToDate(doc)
+    it('increments the doc target', () => {
+      const previousTarget = doc.sides.target
 
-      should(clone._id).eql(doc._id)
-      should(clone.path).eql(doc.path)
+      markAsUpToDate(doc)
 
-      doc.path = '/new/doc/path'
-      should(clone.path).not.eql(doc.path)
+      should(doc.sides.target).eql(previousTarget + 1)
     })
 
-    it('returns a doc with both sides equal', () => {
-      const clone = upToDate(doc)
+    it('returns the new target', () => {
+      const target = markAsUpToDate(doc)
 
-      should(clone.sides.local).eql(clone.sides.remote)
+      should(target)
+        .be.a.Number()
+        .and.eql(doc.sides.target)
+    })
+
+    it('sets both sides to the new target', () => {
+      markAsUpToDate(doc)
+
+      should(doc.sides.local)
+        .eql(doc.sides.remote)
+        .and.eql(doc.sides.target)
     })
 
     it('removes errors', () => {
       doc.errors = 1
 
-      should(upToDate(doc).errors).be.undefined()
+      markAsUpToDate(doc)
+
+      should(doc.errors).be.undefined()
     })
   })
 

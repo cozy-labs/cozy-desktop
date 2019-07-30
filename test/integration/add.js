@@ -43,7 +43,12 @@ describe('Add', () => {
       await helpers.remote.pullChanges()
 
       should(helpers.putDocs('path', '_deleted', 'trashed', 'sides')).deepEqual(
-        [{ path: path.normalize('parent/file'), sides: { remote: 1 } }]
+        [
+          {
+            path: path.normalize('parent/file'),
+            sides: { target: 1, remote: 1 }
+          }
+        ]
       )
 
       await helpers.syncAll()

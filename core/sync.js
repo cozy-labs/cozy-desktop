@@ -351,8 +351,11 @@ class Sync {
       log.debug({ path: doc.path }, `Applying else for ${doc.docType} change`)
       let old
       try {
-        old = await this.pouch.getPreviousRevAsync(doc._id, rev)
-      } catch (_) {
+        old = await this.pouch.getPreviousRevAsync(
+          doc._id,
+          doc.sides.target - rev
+        )
+      } catch (err) {
         await this.doOverwrite(side, doc)
       }
 
@@ -515,8 +518,9 @@ class Sync {
         await this.pouch.put({
           ...unsynced,
           sides: {
-            [side]: metadata.extractRevNumber(doc) + 1,
-            [other]: unsynced.sides[other] + 1
+            target: unsynced.sides.target + 1, // increase target because of new merge
+            [side]: doc.sides.target,
+            [other]: unsynced.sides[other] + 1 // increase side to mark change as applied
           }
         })
       } else {

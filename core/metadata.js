@@ -84,6 +84,7 @@ type RemoteRev = string
 export type RemoteRevisionsByID = { [RemoteID] : RemoteRev}
 
 export type MetadataSidesInfo = {
+  target: number,
   remote?: number,
   local?: number
 }
@@ -161,10 +162,11 @@ module.exports = {
   sameBinary,
   markSide,
   incSides,
+  side,
+  target,
   wasSynced,
   buildDir,
   buildFile,
-  upToDate,
   outOfDateSide,
   createConflictingDoc,
   CONFLICT_REGEXP,
@@ -374,16 +376,12 @@ function extractRevNumber(doc /*: Metadata|{_rev: string} */) {
 }
 
 // Return true if the remote file is up-to-date for this document
-function isUpToDate(side /*: SideName */, doc /*: Metadata */) {
-  let currentRev = doc.sides[side] || 0
-  let lastRev = extractRevNumber(doc)
-  return currentRev === lastRev
+function isUpToDate(sideName /*: SideName */, doc /*: Metadata */) {
+  return side(doc, sideName) === target(doc)
 }
 
-function isAtLeastUpToDate(side /*: SideName */, doc /*: Metadata */) {
-  let currentRev = doc.sides[side] || 0
-  let lastRev = extractRevNumber(doc)
-  return currentRev >= lastRev
+function isAtLeastUpToDate(sideName /*: SideName */, doc /*: Metadata */) {
+  return side(doc, sideName) >= target(doc)
 }
 
 function markAsUnsyncable(side /*: SideName */, doc /*: Metadata */) {
@@ -397,22 +395,14 @@ function markAsNew(doc /*: Metadata */) {
 }
 
 function markAsUpToDate(doc /*: Metadata */) {
-  let rev = extractRevNumber(doc) + 1
-  for (let s of ['local', 'remote']) {
-    doc.sides[s] = rev
+  const newTarget = target(doc) + 1
+  doc.sides = {
+    target: newTarget,
+    local: newTarget,
+    remote: newTarget
   }
   delete doc.errors
-  return rev
-}
-
-function upToDate(doc /*: Metadata */) /*: Metadata */ {
-  const clone = _.clone(doc)
-  const rev = Math.max(clone.sides.local, clone.sides.remote)
-
-  return _.assign(clone, {
-    errors: undefined,
-    sides: { local: rev, remote: rev }
-  })
+  return newTarget
 }
 
 function outOfDateSide(doc /*: Metadata */) /*: ?SideName */ {
@@ -547,29 +537,30 @@ function markSide(
   doc /*: Metadata */,
   prev /*: ?Metadata */
 ) /*: Metadata */ {
-  let rev = 0
-  if (prev) {
-    rev = extractRevNumber(prev)
-  }
+  const prevSides = prev && prev.sides
+  const prevTarget = target(prev)
+
   if (doc.sides == null) {
-    const was = prev && prev.sides
-    doc.sides = clone(was || {})
+    doc.sides = clone(prevSides || { target: prevTarget })
   }
-  doc.sides[side] = ++rev
+  doc.sides[side] = prevTarget + 1
+  doc.sides.target = prevTarget + 1
   return doc
 }
 
-function incSides(doc /*: {sides?: MetadataSidesInfo} */) /*: void */ {
+function incSides(doc /*: Metadata */) /*: void */ {
   doc.sides = {
+    target: target(doc) + 1,
     local: side(doc, 'local') + 1,
     remote: side(doc, 'remote') + 1
   }
 }
 
-function side(
-  doc /*: {sides?: MetadataSidesInfo} */,
-  sideName /*: SideName */
-) /*: number */ {
+function target(doc /*: ?Metadata */) /*: number */ {
+  return (doc && doc.sides && doc.sides.target) || 0
+}
+
+function side(doc /*: Metadata */, sideName /*: SideName */) /*: number */ {
   return (doc.sides || {})[sideName] || 0
 }
 

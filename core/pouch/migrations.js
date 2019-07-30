@@ -7,6 +7,7 @@ const PouchDB = require('pouchdb')
 const uuid = require('uuid/v4')
 
 const { PouchError } = require('./error')
+const metadata = require('../metadata')
 
 /*::
 import type { Pouch } from './'
@@ -53,7 +54,23 @@ const MIGRATION_RESULT_NOOP = 'MigrationNoop'
 const MIGRATION_RESULT_COMPLETE = 'MigrationComplete'
 const MIGRATION_RESULT_FAILED = 'MigrationFailed'
 
-const migrations /*: Migration[] */ = []
+const migrations /*: Migration[] */ = [
+  {
+    baseSchemaVersion: SCHEMA_INITIAL_VERSION,
+    targetSchemaVersion: 1,
+    description: 'Adding sides.target with value of _rev',
+    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.filter(doc => doc.sides == null || doc.sides.target == null)
+    },
+    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.map(doc => {
+        doc.sides = doc.sides || {}
+        doc.sides.target = metadata.extractRevNumber(doc)
+        return doc
+      })
+    }
+  }
+]
 
 class MigrationFailedError extends Error {
   /*::
