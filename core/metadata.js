@@ -167,7 +167,6 @@ module.exports = {
   wasSynced,
   buildDir,
   buildFile,
-  upToDate,
   outOfDateSide,
   createConflictingDoc,
   CONFLICT_REGEXP,
@@ -404,16 +403,6 @@ function markAsUpToDate(doc /*: Metadata */) {
   }
   delete doc.errors
   return newTarget
-}
-
-function upToDate(doc /*: Metadata */) /*: Metadata */ {
-  const clone = _.clone(doc)
-  const rev = Math.max(clone.sides.local, clone.sides.remote)
-
-  return _.assign(clone, {
-    errors: undefined,
-    sides: { rev, local: rev, remote: rev }
-  })
 }
 
 function outOfDateSide(doc /*: Metadata */) /*: ?SideName */ {
