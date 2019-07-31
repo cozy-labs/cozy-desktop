@@ -1,5 +1,6 @@
 /* eslint-env mocha */
 
+const fs = require('fs')
 const fse = require('fs-extra')
 const path = require('path')
 const sinon = require('sinon')
@@ -306,7 +307,8 @@ describe('ChokidarWatcher Tests', function() {
         }
         src = src.replace(/\.jpg$/, '-mod.jpg')
         dst = path.join(this.syncPath, 'aea.jpg')
-        fse.copySync(src, dst)
+        const content = fs.readFileSync(src)
+        fs.writeFileSync(dst, content)
         return Promise.resolve()
       }
       this.watcher.start()
