@@ -128,10 +128,3 @@ jobs:
           os: linux
           env:
               - CC=gcc-8 CXX=g++-8
-        - stage: notify
-          name: artifacts built
-          services: false
-          cache: false
-          before_install: skip
-          install: skip
-          script: ./dev/ci/notify.sh
