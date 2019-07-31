@@ -481,10 +481,10 @@ class Merge {
       let dst = _.cloneDeep(doc)
       dst._id = makeDestinationID(doc)
       dst.path = doc.path.replace(was.path, folder.path)
-      if (src.sides && src.sides[side] && !src.sides[otherSide(side)]) {
-        metadata.markAsUnsyncable(side, src)
-        metadata.markAsNew(dst)
-        metadata.markSide(side, dst)
+
+      const singleSide = metadata.detectSingleSide(src)
+      if (singleSide) {
+        move.convertToDestinationAddition(singleSide, src, dst)
       } else {
         move.child(side, src, dst)
       }

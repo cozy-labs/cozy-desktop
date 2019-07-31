@@ -815,6 +815,26 @@ describe('metadata', function() {
     })
   })
 
+  describe('detectSingleSide', () => {
+    it('returns `local` if `remote` side is absent', () => {
+      should(metadata.detectSingleSide({ sides: { local: 1 } })).equal('local')
+    })
+
+    it('returns `remote` if `local` side is absent', () => {
+      should(metadata.detectSingleSide({ sides: { remote: 1 } })).equal(
+        'remote'
+      )
+    })
+
+    it('returns undefined if both sides are absent', () => {
+      should(metadata.detectSingleSide({ sides: {} })).be.undefined()
+    })
+
+    it('returns undefined if `sides` is absent', () => {
+      should(metadata.detectSingleSide({})).be.undefined()
+    })
+  })
+
   describe('buildFile', function() {
     it('creates a document for an existing file', async function() {
       const stats = await fse.stat(

@@ -17,6 +17,7 @@ import type { SideName } from './side'
 
 module.exports = move
 move.child = child
+move.convertToDestinationAddition = convertToDestinationAddition
 
 // Modify the given src/dst docs so they can be merged then moved accordingly
 // during sync.
@@ -48,4 +49,19 @@ function move(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
 function child(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
   src.childMove = true
   move(side, src, dst)
+}
+
+function convertToDestinationAddition(
+  side /*: SideName */,
+  src /*: Metadata */,
+  dst /*: Metadata */
+) {
+  // Delete source
+  if (src.moveTo) delete src.moveTo
+  metadata.markAsUnsyncable(side, src)
+
+  // Create destination
+  if (dst.moveFrom) delete dst.moveFrom
+  metadata.markAsNew(dst)
+  metadata.markSide(side, dst)
 }

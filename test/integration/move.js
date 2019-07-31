@@ -366,6 +366,50 @@ describe('Move', () => {
           ]
         })
       })
+
+      it('on initial scan with parent move', async () => {
+        should(await helpers.local.tree()).deepEqual([
+          'parent/',
+          'parent/dst/',
+          'parent/src/',
+          'parent/src/dir/',
+          'parent/src/dir/empty-subdir/',
+          'parent/src/dir/file',
+          'parent/src/dir/subdir/',
+          'parent/src/dir/subdir/file'
+        ])
+        const was = await pouch.byRemoteIdAsync(dir._id)
+        await helpers._remote.moveFolderAsync(
+          {
+            ...was,
+            path: path.normalize('parent/dst/dir')
+          },
+          was
+        )
+        await helpers.pullAndSyncAll()
+        should(await helpers.trees('metadata', 'remote')).deepEqual({
+          remote: [
+            'parent/',
+            'parent/dst/',
+            'parent/dst/dir/',
+            'parent/dst/dir/empty-subdir/',
+            'parent/dst/dir/file',
+            'parent/dst/dir/subdir/',
+            'parent/dst/dir/subdir/file',
+            'parent/src/'
+          ],
+          metadata: [
+            'parent/',
+            'parent/dst/',
+            'parent/dst/dir/',
+            'parent/dst/dir/empty-subdir/',
+            'parent/dst/dir/file',
+            'parent/dst/dir/subdir/',
+            'parent/dst/dir/subdir/file',
+            'parent/src/'
+          ]
+        })
+      })
     })
   })
 })
