@@ -119,11 +119,11 @@ renderFile helpers model file =
         , onClick (OpenFile file)
         ]
         [ div [ class ("file-type file-type-" ++ file.icon) ] []
-        , span [ class "file-name-wrapper" ]
+        , span [ class "file-line-content file-name-wrapper" ]
             [ span [ class "file-name-name" ] [ text basename ]
             , span [ class "file-name-ext" ] [ text extname ]
             ]
-        , span [ class "file-extra" ]
+        , span [ class "file-line-content file-extra" ]
             [ span [ class "file-time-ago" ] [ text (helpers.distance_of_time_in_words file.updated model.now) ]
             , text file.path
             ]
