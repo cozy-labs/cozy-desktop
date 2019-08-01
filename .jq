@@ -24,18 +24,18 @@ def clean:
 #
 def error_level: 50;
 def is_error: .level >= error_level;
-def error: clean | select(is_error);
+def error: select(is_error) | clean;
 def warn_level: 40;
 def is_warn: .level >= warn_level;
 def is_warn_strict: .level == warn_level;
-def warn: clean | select(is_warn);
-def warn_strict: clean | select(is_warn_strict);
+def warn: select(is_warn) | clean;
+def warn_strict: select(is_warn_strict) | clean;
 def info_level: 30;
 def is_info: .level >= info_level;
-def info: clean | select(is_info);
+def info: select(is_info) | clean;
 def debug_level: 20;
 def is_debug: .level >= debug_level;
-def debug: clean | select(is_debug);
+def debug: select(is_debug) | clean;
 
 # Components:
 def component(pattern): select(.component | test(pattern));
