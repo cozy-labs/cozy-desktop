@@ -7,7 +7,11 @@ def clean:
   del(.hostname) |
   del(.name) |
   del(.pid) |
-  del(.v);
+  del(.v) |
+  del(.level) |
+  del(.local) |
+  del(.remote) |
+  {time,component,msg,path}+(del(.time)|del(.component)|del(.msg)|del(.path));
 
 # Filter by log level:
 #
