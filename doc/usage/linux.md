@@ -29,7 +29,8 @@ nightly builds for Debian and Ubuntu are already being tested internally).
 
 The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 
-| Distribution                              | supported | `GLIBCXX` | comment               |
+| Distribution                              | supported | `6 2019 tmb <tmb> 6:2.29-13.mga7
+        + Revision: GLIBCXX` | comment               |
 | ----------------------------------------- | --------- | --------- | --------------------- |
 | **Archlinux (Gnome 3)**                   | **yes**   | 3.4.24    | WORK with topicons    |
 | **Archlinux (Cinnamon)**                  | **yes**   | 3.4.24    | WORK                  |
