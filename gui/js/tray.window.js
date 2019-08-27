@@ -79,7 +79,7 @@ const WindowManager = require('./window_manager')
 module.exports = class TrayWM extends WindowManager {
   constructor(...opts) {
     super(...opts)
-    this.create().then(() => this.hide())
+    this.create()
   }
 
   windowOptions() {
