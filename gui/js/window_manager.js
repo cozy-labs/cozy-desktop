@@ -147,7 +147,11 @@ module.exports = class WindowManager {
 
     // openExternalLinks
     this.win.webContents.on('will-navigate', (event, url) => {
-      if (url.startsWith('http') && !url.match('/auth/authorize')) {
+      if (
+        url.startsWith('http') &&
+        !url.match('/auth/authorize') &&
+        !url.match('/auth/twofactor')
+      ) {
         event.preventDefault()
         shell.openExternal(url)
       }
