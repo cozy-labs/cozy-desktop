@@ -24,8 +24,9 @@ import type { Scenario } from '../../test/scenarios'
 */
 
 const cliDir = path.resolve(path.join(__dirname, '..', '..'))
-const syncPath = path.join(cliDir, 'tmp', 'local_watcher', 'synced_dir')
-const outsidePath = path.join(cliDir, 'tmp', 'local_watcher', 'outside')
+const syncDir = process.env.COZY_DESKTOP_DIR || cliDir
+const syncPath = path.join(syncDir, 'tmp', 'local_watcher', 'synced_dir')
+const outsidePath = path.join(syncDir, 'tmp', 'local_watcher', 'outside')
 const abspath = relpath => path.join(syncPath, relpath.replace(/\//g, path.sep))
 const chokidarOptions = {
   cwd: syncPath,

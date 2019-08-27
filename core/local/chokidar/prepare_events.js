@@ -1,12 +1,34 @@
 /** Add context to ChokidarEvents, turning them into LocalEvents.
  *
+ * When applying remote changes on the local filesystem for paths containing
+ * utf8 characters, the encoding can be automatically and silently modified by
+ * the filesystem itself. For example, HFS+ volumes will normalize UTF-8
+ * characters using NFD
+ * (c.f. {@link https://en.wikipedia.org/wiki/Unicode_equivalence#Normalization}).
+ *
+ * When this happens, the local watcher will fire events for paths which aren't
+ * exactly equal to the ones that were merged from the remote changes, leading
+ * to the detection of a move which will then be synchronized with the remote
+ * and so on.
+ *
+ * To avoid those "leaks" which can create conflicts or at least extraneous
+ * changes on existing documents, we normalize on the fly both the stored path
+ * and the event's path using NFC so we won't detect movements when only the
+ * encoding has changed.
+ * This means that paths will always be encoded and stored using NFC while ids
+ * will still use NFD.
+ *
+ * @see method {@link oldMetadata} for existing Metadata path normalization
+ * @see method {@link step} for current events path normalization
+ * @see {@link module:core/metadata|Metadata#idApfsOrHfs} for id normalization
+ *
  * @module core/local/chokidar/prepare_events
  * @flow
+ *
  */
 
 const Promise = require('bluebird')
 const fse = require('fs-extra')
-const _ = require('lodash')
 const path = require('path')
 
 const metadata = require('../../metadata')
@@ -32,19 +54,30 @@ const log = logger({
   component: 'chokidar/prepare_events'
 })
 
+/**
+ * Returns the Metadata stored in Pouch associated with the given event's path.
+ *
+ * @return Metadata
+ */
 const oldMetadata = async (
   e /*: ChokidarEvent */,
   pouch /*: Pouch */
 ) /*: Promise<?Metadata> */ => {
   if (e.old) return e.old
-  try {
-    return await pouch.db.get(metadata.id(e.path))
-  } catch (err) {
-    if (err.status !== 404) log.error({ path: e.path, err })
-  }
-  return null
+  const old = await pouch.byIdMaybeAsync(metadata.id(e.path))
+  if (old)
+    return {
+      ...old,
+      path: normalize(old.path, 'NFC')
+    }
 }
 
+/**
+ * Adds domain information on raw Chokidar events including associated existing
+ * Metadata and normalized path.
+ *
+ * @return Promise<LocalEvent[]>
+ */
 const step = async (
   events /*: ChokidarEvent[] */,
   { checksum, initialScan, pouch, syncPath } /*: PrepareEventsOpts */
@@ -54,12 +87,11 @@ const step = async (
     async (e /*: ChokidarEvent */) /*: Promise<?LocalEvent> */ => {
       const abspath = path.join(syncPath, e.path)
 
-      const e2 /*: Object */ = _.merge(
-        {
-          old: await oldMetadata(e, pouch)
-        },
-        e
-      )
+      const e2 /*: Object */ = {
+        ...e,
+        path: normalize(e.path, 'NFC'),
+        old: await oldMetadata(e, pouch)
+      }
 
       if (e.type === 'add' || e.type === 'change') {
         if (
@@ -108,6 +140,14 @@ const step = async (
     },
     { concurrency: 50 }
   ).filter((e /*: ?LocalEvent */) => e != null)
+}
+
+function normalize(p /*: string */, norm /* NFC|NFD */) /*: string */ {
+  if (p.normalize) {
+    return p.normalize(norm)
+  } else {
+    return p
+  }
 }
 
 module.exports = {

@@ -186,8 +186,7 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
   await runActions(scenario, helpers.local.syncDir.abspath, { skipWait: true })
   await helpers.local.simulateAtomEvents(atomCapture.batches)
   await helpers.syncAll()
-  await helpers.remote.pullChanges()
-  await helpers.syncAll()
+  await helpers.pullAndSyncAll()
 
   await verifyExpectations(scenario, helpers, { includeRemoteTrash: true })
 }
@@ -210,12 +209,15 @@ async function runLocalChokidar(scenario, eventsFile, flushAfter, helpers) {
   const eventsAfter = eventsFile.events.slice(flushAfter)
 
   await runActions(scenario, helpers.local.syncDir.abspath, { skipWait: true })
-  await helpers.local.simulateEvents(eventsBefore)
-  await helpers.syncAll()
-  await helpers.local.simulateEvents(eventsAfter)
-  await helpers.syncAll()
-  await helpers.remote.pullChanges()
-  await helpers.syncAll()
+  if (eventsBefore.length) {
+    await helpers.local.simulateEvents(eventsBefore)
+    await helpers.syncAll()
+  }
+  if (eventsAfter.length) {
+    await helpers.local.simulateEvents(eventsAfter)
+    await helpers.syncAll()
+  }
+  await helpers.pullAndSyncAll()
 
   await verifyExpectations(scenario, helpers, { includeRemoteTrash: true })
 
@@ -279,6 +281,7 @@ async function runRemote(scenario, helpers) {
     await helpers.local.simulateAtomEvents([])
   }
   await helpers.local.side.watcher.stop()
+  await helpers.syncAll()
 
   await verifyExpectations(scenario, helpers, { includeRemoteTrash: false })
 
@@ -298,7 +301,13 @@ async function verifyExpectations(scenario, helpers, { includeRemoteTrash }) {
     const actual = {}
 
     if (expectedLocalTree) {
-      expected.localTree = expectedLocalTree
+      if (process.env.COZY_DESKTOP_FS === 'HFS+') {
+        expected.localTree = expectedLocalTree.map(relpath =>
+          relpath.normalize ? relpath.normalize('NFD') : relpath
+        )
+      } else {
+        expected.localTree = expectedLocalTree
+      }
       actual.localTree = await helpers.local.treeWithoutTrash()
     }
     if (expectedRemoteTree) {

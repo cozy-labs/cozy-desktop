@@ -44,7 +44,7 @@ if (scenarioArg) {
 }
 
 function startChokidar() {
-  const syncPath = local.syncPath
+  const syncPath = process.env.COZY_DESKTOP_DIR || local.syncPath
   opn(syncPath)
 
   fse.ensureDirSync(syncPath)

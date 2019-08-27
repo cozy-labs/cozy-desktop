@@ -105,6 +105,16 @@ module.exports.loadFSEventFiles = scenario => {
   const disabledEventsFile = name => {
     if (process.platform === 'win32' && name.indexOf('win32') === -1) {
       return 'darwin/linux test'
+    } else if (
+      process.env.COZY_DESKTOP_FS === 'APFS' &&
+      name.indexOf('hfs+') !== -1
+    ) {
+      return 'HFS+ test'
+    } else if (
+      process.env.COZY_DESKTOP_FS === 'HFS+' &&
+      name.indexOf('apfs') !== -1
+    ) {
+      return 'APFS test'
     } else {
       return disabledScenarioTest(scenario, `local/${name}`)
     }
