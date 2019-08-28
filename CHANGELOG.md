@@ -1,5 +1,59 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.15.0-beta.1 - 2019-28-08
+
+Improvements for all users:
+
+- Replacing a file on the remote Cozy with a new version without overriding the
+  previous one (i.e. moving/deleting the first version before uploading the new
+  one) while the client was off would lead to a conflict on said file.
+  The client now synchronises the file replacement correctly.
+- When handling a conflict on a document whose ancestor was already in conflict
+  would lead to the ancestor's conflict suffix to be replaced instead of a
+  conflict suffix to be added on the document itself. This would make detecting
+  and fixing conflicts difficult for you. We've made our conflict resolution
+  logic more robust to avoid those situations in the future.
+- Due to the way we used to decide on which side changes should be applied
+  (i.e. either on the local filesystem or the remote Cozy), some successive
+  changes made on both sides could lead to blockage on the modified documents.
+  One such situation is the addition of a document in a directory while the
+  client is on but shut down before the document is synchronised with the remote
+  Cozy followed by the renaming of the parent directory on the remote Cozy. In
+  this case, the renaming could not be synchronised locally and the new document
+  would never be pushed to the remote Cozy.
+  We've made some changes to this logic so we can be more precise in the side
+  detection and manage specific situations such as the one above on a case by
+  case basis.
+- We're now able to use Two Factor Authentication when connecting the client to
+  the remote Cozy if it's been activated. Activating the 2FA after connecting
+  the client was already working and if you are in this situation, you have
+  nothing to do.
+
+Improvements for MacOS users:
+
+- We know that HFS+ volumes are using a different UTF-8 encoding norm for paths
+  that the one we use on the remote Cozy (i.e. `NFD` and `NFC` respectively) but
+  we've found out that paths containing UTF-8 characters encoded with `NFC`
+  written to such volumes would get automatically renamed into their `NFD`
+  counterpart, leading to extraneous renaming on the remote Cozy. In most cases
+  this would not be an issue but when the renamed directory is `Partages reçus`,
+  the French version of the received shared documents, this can lead to
+  conflicts and even ignored sharings.
+  To prevent those bad situations from happenning, we're now only keeping `NFC`
+  versions of the document paths in our local Pouch and normalizing all paths
+  from local events using `NFC` so they can be compared with the ones in Pouch.
+  This means that local normalization changes won't be synchronised with the
+  remote Cozy but will be left untouched on the filesystem.
+
+Improvements for GNU/Linux users:
+
+- We've made sure that the app is really launched minimized in the systray and
+  that no transparent windows are displayed on startup anymore.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.14.0 - 2019-07-01
 
 Improvements for all users:
