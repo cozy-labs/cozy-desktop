@@ -1,0 +1,54 @@
+[
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/dir/file"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/file2"
+    },
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/dir/subdir/file"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dst/dir/subdir/file6"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/file2"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/subdir/file6"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/subdir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "src/dir/subdir"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "src/dir"
+    }
+  ]
+]

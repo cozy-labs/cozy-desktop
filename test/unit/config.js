@@ -324,15 +324,15 @@ describe('core/config', function() {
       )
     })
 
-    it('is chokidar on Windows', () => {
+    it('is atom on Windows', () => {
       should(config.platformDefaultWatcherType('win32')).equal('atom')
     })
 
-    it('is chokidar on macOS', () => {
-      should(config.platformDefaultWatcherType('darwin')).equal('chokidar')
+    it('is atom on macOS', () => {
+      should(config.platformDefaultWatcherType('darwin')).equal('atom')
     })
 
-    it('is chokidar on Linux', () => {
+    it('is atom on Linux', () => {
       should(config.platformDefaultWatcherType('linux')).equal('atom')
     })
   })
