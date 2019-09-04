@@ -12,11 +12,8 @@
  * and so on.
  *
  * To avoid those "leaks" which can create conflicts or at least extraneous
- * changes on existing documents, we normalize on the fly both the stored path
- * and the event's path using NFC so we won't detect movements when only the
- * encoding has changed.
- * This means that paths will always be encoded and stored using NFC while ids
- * will still use NFD.
+ * changes on existing documents, we normalize on the fly the event's path
+ * using NFC so we won't detect movements when only the encoding has changed.
  *
  * @see method {@link oldMetadata} for existing Metadata path normalization
  * @see method {@link step} for current events path normalization
@@ -64,12 +61,7 @@ const oldMetadata = async (
   pouch /*: Pouch */
 ) /*: Promise<?Metadata> */ => {
   if (e.old) return e.old
-  const old = await pouch.byIdMaybeAsync(metadata.id(e.path))
-  if (old)
-    return {
-      ...old,
-      path: normalize(old.path, 'NFC')
-    }
+  return await pouch.byIdMaybeAsync(metadata.id(e.path))
 }
 
 /**
@@ -87,10 +79,11 @@ const step = async (
     async (e /*: ChokidarEvent */) /*: Promise<?LocalEvent> */ => {
       const abspath = path.join(syncPath, e.path)
 
+      const old = await oldMetadata(e, pouch)
       const e2 /*: Object */ = {
         ...e,
-        path: normalize(e.path, 'NFC'),
-        old: await oldMetadata(e, pouch)
+        path: normalizedPath(e, old),
+        old
       }
 
       if (e.type === 'add' || e.type === 'change') {
@@ -142,12 +135,25 @@ const step = async (
   ).filter((e /*: ?LocalEvent */) => e != null)
 }
 
-function normalize(p /*: string */, norm /* NFC|NFD */) /*: string */ {
-  if (p.normalize) {
-    return p.normalize(norm)
-  } else {
-    return p
+const normalizedPath = (
+  event /*: ChokidarEvent */,
+  existing /*: ?Metadata */
+) /*: string */ => {
+  if (existing != null && existing.path != null) {
+    const existingPath = existing.path
+    const existingIsNFD = existingPath === existingPath.normalize('NFD')
+    const docIsNFD = event.path === event.path.normalize('NFD')
+
+    if (docIsNFD && !existingIsNFD) {
+      log.info(
+        { path: event.path, existingPath },
+        'normalizing local NFD path to match existing NFC path'
+      )
+      return event.path.normalize('NFC')
+    }
   }
+
+  return event.path
 }
 
 module.exports = {

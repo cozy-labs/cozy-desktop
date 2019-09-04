@@ -5,7 +5,9 @@
 //const save = 'Partages reçus/'
 
 module.exports = ({
-  actions: [{ type: 'mkdir', path: 'Partages reçus' }],
+  side: 'remote',
+  init: [{ path: 'Partages reçus/', ino: 1 }],
+  actions: [],
   expected: {
     tree: ['Partages reçus/'],
     remoteTrash: []
