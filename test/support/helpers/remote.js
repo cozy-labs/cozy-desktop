@@ -53,16 +53,21 @@ class RemoteTestHelpers {
       const parentPath = path.posix.dirname(p)
       const dirID = (remoteDocsByPath[parentPath + '/'] || {})._id
       if (p.endsWith('/')) {
-        remoteDocsByPath[p] = await this.cozy.files.createDirectory({
-          name,
-          dirID,
-          lastModifiedDate: new Date()
-        })
+        remoteDocsByPath[p] = await this.cozy.files
+          .createDirectory({
+            name,
+            dirID,
+            lastModifiedDate: new Date()
+          })
+          .then(this.side.remoteCozy.toRemoteDoc)
       } else {
-        remoteDocsByPath[p] = await this.cozy.files.create(
-          `Content of file ${p}`,
-          { name, dirID, lastModifiedDate: new Date() }
-        )
+        remoteDocsByPath[p] = await this.cozy.files
+          .create(`Content of file ${p}`, {
+            name,
+            dirID,
+            lastModifiedDate: new Date()
+          })
+          .then(this.side.remoteCozy.toRemoteDoc)
       }
     }
 
