@@ -14,11 +14,10 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
 
-const builders = new Builders()
 const cozy = cozyHelpers.cozy
 
 describe('Conflict resolution', () => {
-  let helpers
+  let helpers, builders
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -31,6 +30,7 @@ describe('Conflict resolution', () => {
 
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
+    builders = new Builders(this)
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
@@ -346,6 +346,35 @@ describe('Conflict resolution', () => {
       should(await helpers.trees()).deepEqual(
         bothSides(['dst-conflict-.../', 'dst/'])
       )
+    })
+  })
+
+  describe('migrating to Cozy Desktop 3.15', () => {
+    it('does not generate conflicts on existing documents with NFD encoded paths', async () => {
+      const nfdPath = 'Partages reçus'.normalize('NFD')
+
+      await helpers.local.syncDir.ensureDir(nfdPath)
+      const stats = await helpers.local.syncDir.stat(nfdPath)
+      const doc = await builders
+        .metadir()
+        .path(nfdPath)
+        .stats(stats)
+        .create()
+      await helpers.prep.putFolderAsync('local', doc)
+
+      await fullSyncStartingFrom('local')
+
+      should(await helpers.trees()).deepEqual(bothSides([`${nfdPath}/`]))
+    })
+
+    it('does not generate conflicts on new documents with NFD encoded paths', async () => {
+      const nfdPath = 'Partages reçus'.normalize('NFD')
+
+      await helpers.local.syncDir.ensureDir(nfdPath)
+
+      await fullSyncStartingFrom('local')
+
+      should(await helpers.trees()).deepEqual(bothSides([`${nfdPath}/`]))
     })
   })
 
