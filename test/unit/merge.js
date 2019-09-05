@@ -1564,6 +1564,47 @@ describe('Merge', function() {
       })
     })
 
+    it('replaces the move with an addition for a local-only folder', async function() {
+      const was = await builders
+        .metadir()
+        .path('FOOBAR/OLD')
+        .ino(666)
+        .tags('courge', 'quux')
+        .sides({ local: 1 })
+        .create()
+      const doc = builders
+        .metadir(was)
+        .path('FOOBAR/NEW')
+        .tags('courge', 'quux')
+        .noRev()
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.moveFolderAsync('local', _.cloneDeep(doc), _.cloneDeep(was))
+      )
+
+      const movedSrc = _.defaults(
+        {
+          sides: increasedSides(was.sides, 'local', 1),
+          _deleted: true
+        },
+        was
+      )
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.omit(movedSrc, ['_rev', 'fileid']),
+          _.defaults(
+            {
+              sides: { target: 1, local: 1 }
+            },
+            _.pick(was, ['ino']),
+            _.omit(doc, ['_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
     context('when the destination exists', () => {
       let existing
 
