@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.15.1-beta.1 - 2019-09-05
+
+Improvements for MacOS users:
+
+- The UTF-8 encoding fix we shipped in the previous release was missing a
+  crucial step when re-encoding `NFD` paths with `NFC` which lead to the
+  creation of conflicts on accentuated paths for users synchronizing a directory
+  placed on a HFS+ volume.
+  In response, we've changed the way we attack this problem and decided to keep
+  paths in the encoding they were created with in Pouch and manage the mapping
+  with the filesystem only.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.15.0 - 2019-28-08
 
 Improvements for all users:
