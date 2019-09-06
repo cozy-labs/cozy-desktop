@@ -409,8 +409,9 @@ class Merge {
     newRemoteRevs /*: ?RemoteRevisionsByID */
   ) {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFolderAsync')
-    if (!was.sides || !was.sides[side]) {
-      // It can happen after a conflict
+    if (!metadata.wasSynced(was)) {
+      metadata.markAsUnsyncable(side, was)
+      await this.pouch.put(was)
       return this.putFolderAsync(side, doc)
     }
 

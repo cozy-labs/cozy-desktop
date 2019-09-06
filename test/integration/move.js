@@ -121,7 +121,7 @@ describe('Move', () => {
     })
   })
 
-  describe('unsynced file', () => {
+  describe('unsynced local file', () => {
     beforeEach(async () => {
       await helpers.local.syncDir.ensureDir('src')
       await helpers.local.syncDir.ensureDir('dst')
@@ -135,13 +135,25 @@ describe('Move', () => {
       await helpers.local.scan()
     })
 
-    it('local', async () => {
+    it('moved during sync', async () => {
       should(await helpers.local.tree()).deepEqual(['dst/', 'src/', 'src/file'])
       await helpers.local.syncDir.move('src/file', 'dst/file')
       // Sync will fail since file was already moved.
       await helpers.syncAll()
       // This will prepend made up unlink event to scan add one, ending up as
       // the expected move.
+      await helpers.local.scan()
+      await helpers.syncAll()
+
+      should(await helpers.trees('metadata', 'remote')).deepEqual({
+        remote: ['dst/', 'dst/file', 'src/'],
+        metadata: ['dst/', 'dst/file', 'src/']
+      })
+    })
+
+    it('moved before sync', async () => {
+      should(await helpers.local.tree()).deepEqual(['dst/', 'src/', 'src/file'])
+      await helpers.local.syncDir.move('src/file', 'dst/file')
       await helpers.local.scan()
       await helpers.syncAll()
 
@@ -313,7 +325,7 @@ describe('Move', () => {
       ])
     })
 
-    describe('unsynced file', () => {
+    describe('with unsynced file', () => {
       beforeEach(async () => {
         await helpers.local.syncDir.ensureDir('parent/src/dir')
         await helpers.local.scan()
@@ -409,6 +421,60 @@ describe('Move', () => {
             'parent/src/'
           ]
         })
+      })
+    })
+  })
+
+  describe('unsynced local directory', () => {
+    beforeEach(async () => {
+      await helpers.local.syncDir.ensureDir('src')
+      await helpers.local.syncDir.ensureDir('dst')
+      await helpers.local.scan()
+      await helpers.syncAll()
+
+      await helpers.local.syncDir.ensureDir('src/dir')
+      await helpers.local.scan()
+    })
+
+    it('moved during sync', async () => {
+      should(await helpers.local.tree()).deepEqual(['dst/', 'src/', 'src/dir/'])
+      await helpers.local.syncDir.move('src/dir', 'dst/dir')
+      // Sync will fail since file was already moved.
+      await helpers.syncAll()
+      // This will prepend made up unlink event to scan add one, ending up as
+      // the expected move.
+      await helpers.local.scan()
+      await helpers.syncAll()
+
+      should(await helpers.trees('metadata', 'remote')).deepEqual({
+        remote: ['dst/', 'dst/dir/', 'src/'],
+        metadata: ['dst/', 'dst/dir/', 'src/']
+      })
+    })
+
+    it('moved before sync', async () => {
+      should(await helpers.local.tree()).deepEqual(['dst/', 'src/', 'src/dir/'])
+      await helpers.local.syncDir.move('src/dir', 'dst/dir')
+      await helpers.local.scan()
+      await helpers.syncAll()
+
+      should(await helpers.trees('metadata', 'remote')).deepEqual({
+        remote: ['dst/', 'dst/dir/', 'src/'],
+        metadata: ['dst/', 'dst/dir/', 'src/']
+      })
+    })
+
+    it('moved twice before sync', async () => {
+      should(await helpers.local.tree()).deepEqual(['dst/', 'src/', 'src/dir/'])
+      await helpers.local.syncDir.move('src/dir', 'dst/dir')
+      await helpers.local.scan()
+      await helpers.local.syncDir.move('dst/dir', 'dst/final')
+      await helpers.local.scan()
+      await helpers.syncAll()
+
+      should(await helpers.trees('metadata', 'remote')).deepEqual({
+        remote: ['dst/', 'dst/final/', 'src/'],
+        metadata: ['dst/', 'dst/final/', 'src/']
       })
     })
   })
