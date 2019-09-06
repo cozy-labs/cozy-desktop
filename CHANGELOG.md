@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.15.1-beta.2 - 2019-09-06
+
+Improvements for all users:
+
+- In some situations, like when a large quantity of data is synchronized with
+  the remote Cozy, adding a directory and then renaming it before we had a
+  chance to synchronize it would result in a error and that directory (and by
+  extension, its content) would never get synchronized.
+  We're now correctly handling this situation, like we were already doing for
+  files, by treating this directory renaming as a simple addition of the
+  directory at its most recent location.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.15.1-beta.1 - 2019-09-05
 
 Improvements for MacOS users:
