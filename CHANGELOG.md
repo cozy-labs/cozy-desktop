@@ -1,5 +1,31 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.15.1 - 2019-09-09
+
+Improvements for all users:
+
+- In some situations, like when a large quantity of data is synchronized with
+  the remote Cozy, adding a directory and then renaming it before we had a
+  chance to synchronize it would result in a error and that directory (and by
+  extension, its content) would never get synchronized.
+  We're now correctly handling this situation, like we were already doing for
+  files, by treating this directory renaming as a simple addition of the
+  directory at its most recent location.
+
+Improvements for MacOS users:
+
+- The UTF-8 encoding fix we shipped in the previous release was missing a
+  crucial step when re-encoding `NFD` paths with `NFC` which lead to the
+  creation of conflicts on accentuated paths for users synchronizing a directory
+  placed on a HFS+ volume.
+  In response, we've changed the way we attack this problem and decided to keep
+  paths in the encoding they were created with in Pouch and manage the mapping
+  with the filesystem only.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.15.1-beta.2 - 2019-09-06
 
 Improvements for all users:
