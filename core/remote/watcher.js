@@ -20,7 +20,7 @@ import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { RemoteCozy } from './cozy'
 import type { Metadata, RemoteRevisionsByID } from '../metadata'
-import type { RemoteChange, RemoteFileMove } from './change'
+import type { RemoteChange, RemoteFileMove, RemoteDirMove } from './change'
 import type { RemoteDoc, RemoteDeletion } from './document'
 */
 
@@ -364,33 +364,8 @@ class RemoteWatcher {
       ) {
         const previousChange /*: RemoteChange */ =
           previousChanges[previousChangeIndex]
-        // FIXME figure out why isChildMove%checks is not enough
+
         if (
-          previousChange.type === 'DirMove' &&
-          remoteChange.isChildMove(previousChange, change)
-        ) {
-          if (!remoteChange.isOnlyChildMove(previousChange, change)) {
-            // move inside move
-            change.was.path = remoteChange.applyMoveToPath(
-              previousChange,
-              change.was.path
-            )
-            change.needRefetch = true
-            return change // FileMove
-          } else {
-            const descendantChange = {
-              sideName,
-              type: 'DescendantChange',
-              update: change.update,
-              doc,
-              was,
-              ancestorPath: _.get(previousChange, 'doc.path')
-            }
-            if (previousChange.type === 'DirMove')
-              remoteChange.includeDescendant(previousChange, descendantChange)
-            return descendantChange
-          }
-        } else if (
           previousChange.type === 'FileTrashing' &&
           previousChange.was.path === change.doc.path
         ) {
@@ -403,11 +378,37 @@ class RemoteWatcher {
           change.doc.overwrite = previousChange.was
           return change
         }
+
+        if (
+          previousChange.type === 'DirMove' &&
+          remoteChange.isChildMove(previousChange, change)
+        ) {
+          if (remoteChange.isOnlyChildMove(previousChange, change)) {
+            const descendantChange = {
+              sideName,
+              type: 'DescendantChange',
+              update: change.update,
+              doc,
+              was,
+              ancestorPath: _.get(previousChange, 'doc.path')
+            }
+            remoteChange.includeDescendant(previousChange, descendantChange)
+            return descendantChange
+          } else {
+            remoteChange.applyMoveInsideMove(previousChange, change)
+            return change // FileMove
+          }
+        }
       }
       return change
     } else {
       // doc.docType === 'folder'
-      const change = { sideName, type: 'DirMove', doc, was }
+      const change /*: RemoteDirMove */ = {
+        sideName,
+        type: 'DirMove',
+        doc,
+        was
+      }
       // Squash moves
       for (
         let previousChangeIndex = 0;
@@ -416,29 +417,8 @@ class RemoteWatcher {
       ) {
         const previousChange /*: RemoteChange */ =
           previousChanges[previousChangeIndex]
-        // FIXME figure out why isChildMove%checks is not enough
+
         if (
-          (previousChange.type === 'DirMove' ||
-            previousChange.type === 'FileMove') &&
-          remoteChange.isChildMove(change, previousChange)
-        ) {
-          if (!remoteChange.isOnlyChildMove(change, previousChange)) {
-            previousChange.was.path = remoteChange.applyMoveToPath(
-              change,
-              previousChange.was.path
-            )
-            previousChange.needRefetch = true
-            continue
-          } else {
-            _.assign(previousChange, {
-              type: 'DescendantChange',
-              ancestorPath: change.doc.path
-            })
-            // $FlowFixMe
-            remoteChange.includeDescendant(change, previousChange)
-            continue
-          }
-        } else if (
           previousChange.type === 'DirTrashing' &&
           previousChange.was.path === change.doc.path
         ) {
@@ -450,17 +430,43 @@ class RemoteWatcher {
           })
           change.doc.overwrite = previousChange.was
           return change
-        } else if (remoteChange.isChildMove(previousChange, change)) {
-          const descendantChange = {
-            sideName,
-            type: 'DescendantChange',
-            doc,
-            was,
-            ancestorPath: _.get(previousChange, 'doc.path')
-          }
-          if (previousChange.type === 'DirMove')
+        }
+
+        if (
+          previousChange.type === 'DirMove' &&
+          remoteChange.isChildMove(previousChange, change)
+        ) {
+          if (remoteChange.isOnlyChildMove(previousChange, change)) {
+            const descendantChange = {
+              sideName,
+              type: 'DescendantChange',
+              doc,
+              was,
+              ancestorPath: _.get(previousChange, 'doc.path')
+            }
             remoteChange.includeDescendant(previousChange, descendantChange)
-          return descendantChange
+            return descendantChange
+          } else {
+            remoteChange.applyMoveInsideMove(previousChange, change)
+            return change
+          }
+        }
+
+        if (
+          (previousChange.type === 'DirMove' ||
+            previousChange.type === 'FileMove') &&
+          remoteChange.isChildMove(change, previousChange)
+        ) {
+          if (remoteChange.isOnlyChildMove(change, previousChange)) {
+            _.assign(previousChange, {
+              type: 'DescendantChange',
+              ancestorPath: change.doc.path
+            })
+            // $FlowFixMe
+            remoteChange.includeDescendant(change, previousChange)
+          } else {
+            remoteChange.applyMoveInsideMove(change, previousChange)
+          }
         }
       }
       return change

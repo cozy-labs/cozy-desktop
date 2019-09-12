@@ -137,6 +137,7 @@ module.exports = {
   isOnlyChildMove,
   applyMoveToPath,
   includeDescendant,
+  applyMoveInsideMove,
   sort
 }
 
@@ -223,6 +224,14 @@ function applyMoveToPath(
   p /*: string */
 ) /*: string */ {
   return p.replace(a.was.path, a.doc.path)
+}
+
+function applyMoveInsideMove(
+  parentMove /*: RemoteDirMove */,
+  childMove /*: RemoteDirMove | RemoteFileMove */
+) {
+  childMove.was.path = applyMoveToPath(parentMove, childMove.was.path)
+  childMove.needRefetch = true
 }
 
 const isDelete = (a /*: RemoteChange */) /*: boolean %checks */ =>
