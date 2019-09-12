@@ -1,5 +1,20 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.15.2-beta.1 - 2019-09-12
+
+Improvements for all users:
+
+- When moving or renaming directories and subdirectories on your remote Cozy
+  pretty quickly or with your Desktop client turned off, we would detect all
+  moves but would end up dropping the moves of children directories of moved
+  directories. This would lead to unsynchronized directories.
+  We're now treating them the same way we do for children file movements and
+  keep them synchronized.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.15.1 - 2019-09-09
 
 Improvements for all users:
