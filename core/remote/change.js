@@ -137,6 +137,7 @@ module.exports = {
   isOnlyChildMove,
   applyMoveToPath,
   includeDescendant,
+  applyMoveInsideMove,
   sort
 }
 
@@ -197,12 +198,10 @@ function isChildMove(
   return (
     a.type === 'DirMove' &&
     (b.type === 'DirMove' || b.type === 'FileMove') &&
-    b.doc.path.indexOf(a.doc.path + path.sep) === 0 &&
+    b.doc.path.startsWith(a.doc.path + path.sep) &&
     a.was &&
     b.was &&
-    b.was.path.indexOf(a.was.path + path.sep) === 0 &&
-    a.type === 'DirMove' &&
-    (b.type === 'DirMove' || b.type === 'FileMove')
+    b.was.path.startsWith(a.was.path + path.sep)
   )
 }
 
@@ -216,8 +215,7 @@ function isOnlyChildMove(
   b /*: RemoteFileMove|RemoteDirMove */
 ) /*: boolean %checks */ {
   return (
-    isChildMove(a, b) &&
-    b.doc.path.replace(a.doc.path, '') === b.was.path.replace(a.was.path, '')
+    isChildMove(a, b) && path.basename(b.doc.path) === path.basename(b.was.path)
   )
 }
 
@@ -226,6 +224,14 @@ function applyMoveToPath(
   p /*: string */
 ) /*: string */ {
   return p.replace(a.was.path, a.doc.path)
+}
+
+function applyMoveInsideMove(
+  parentMove /*: RemoteDirMove */,
+  childMove /*: RemoteDirMove | RemoteFileMove */
+) {
+  childMove.was.path = applyMoveToPath(parentMove, childMove.was.path)
+  childMove.needRefetch = true
 }
 
 const isDelete = (a /*: RemoteChange */) /*: boolean %checks */ =>

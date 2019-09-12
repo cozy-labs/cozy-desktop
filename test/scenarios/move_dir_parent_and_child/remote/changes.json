@@ -1,0 +1,63 @@
+[
+  {
+    "_id": "feb557f36d10ce243ce2c0d6b904abf9",
+    "_rev": "3-54fe1d4115787f54a798a73b6433b7f3",
+    "created_at": "2019-09-11T14:07:23.093454469Z",
+    "dir_id": "feb557f36d10ce243ce2c0d6b9047afe",
+    "name": "dir2",
+    "path": "/parent/dst/dir2",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2019-09-11T14:07:23.093454469Z"
+  },
+  {
+    "_id": "feb557f36d10ce243ce2c0d6b9050bc9",
+    "_rev": "3-d2617b56fc0a7a00bfeaf0b5cc4aa5bf",
+    "created_at": "2019-09-11T14:07:23.290407345Z",
+    "dir_id": "feb557f36d10ce243ce2c0d6b904abf9",
+    "name": "empty-subdir",
+    "path": "/parent/dst/dir2/empty-subdir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2019-09-11T14:07:23.290407345Z"
+  },
+  {
+    "_id": "feb557f36d10ce243ce2c0d6b9051406",
+    "_rev": "3-83c741c9b1bd62d35d0acb2080675c29",
+    "created_at": "2019-09-11T14:07:23.433639777Z",
+    "dir_id": "feb557f36d10ce243ce2c0d6b904abf9",
+    "name": "subdir",
+    "path": "/parent/dst/dir2/subdir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2019-09-11T14:07:23.433639777Z"
+  },
+  {
+    "_id": "feb557f36d10ce243ce2c0d6b9047afe",
+    "_rev": "2-fa5229de3779a8b54d20e708e04b7b2a",
+    "created_at": "2019-09-11T14:07:22.955027253Z",
+    "dir_id": "feb557f36d10ce243ce2c0d6b90441f5",
+    "name": "dst",
+    "path": "/parent/dst",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2019-09-11T14:07:22.955027253Z"
+  },
+  {
+    "_id": "feb557f36d10ce243ce2c0d6b9051f58",
+    "_rev": "3-e74123b9941b0115d1076e59dafd2656",
+    "class": "files",
+    "created_at": "2019-09-11T14:07:23.485683655Z",
+    "dir_id": "feb557f36d10ce243ce2c0d6b9051406",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "file2",
+    "size": "20",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2019-09-11T14:07:23.485683655Z",
+    "path": "/parent/dst/dir2/subdir/file2"
+  }
+]
