@@ -214,8 +214,7 @@ function isOnlyChildMove(
   b /*: RemoteFileMove|RemoteDirMove */
 ) /*: boolean %checks */ {
   return (
-    isChildMove(a, b) &&
-    b.doc.path.replace(a.doc.path, '') === b.was.path.replace(a.was.path, '')
+    isChildMove(a, b) && path.basename(b.doc.path) === path.basename(b.was.path)
   )
 }
 
