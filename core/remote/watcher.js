@@ -565,6 +565,12 @@ class RemoteWatcher {
             { path, oldpath: change.was.path },
             'folder was moved or renamed remotely'
           )
+          if (change.needRefetch) {
+            change.was = await this.pouch.byRemoteIdMaybeAsync(
+              change.was.remote._id
+            )
+            change.was.childMove = false
+          }
           const newRemoteRevs /*: RemoteRevisionsByID */ = {}
           const descendants = change.descendantMoves || []
           for (let descendant of descendants) {
