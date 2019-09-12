@@ -197,12 +197,10 @@ function isChildMove(
   return (
     a.type === 'DirMove' &&
     (b.type === 'DirMove' || b.type === 'FileMove') &&
-    b.doc.path.indexOf(a.doc.path + path.sep) === 0 &&
+    b.doc.path.startsWith(a.doc.path + path.sep) &&
     a.was &&
     b.was &&
-    b.was.path.indexOf(a.was.path + path.sep) === 0 &&
-    a.type === 'DirMove' &&
-    (b.type === 'DirMove' || b.type === 'FileMove')
+    b.was.path.startsWith(a.was.path + path.sep)
   )
 }
 
