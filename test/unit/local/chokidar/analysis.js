@@ -961,15 +961,6 @@ describe('core/local/chokidar/analysis', function() {
       should(analysis(events, pendingChanges)).deepEqual([
         {
           sideName,
-          type: 'FileUpdate',
-          path: 'other-file',
-          stats: otherFileStats,
-          ino: otherFileStats.ino,
-          md5sum: 'yolo',
-          old: otherFileMetadata
-        },
-        {
-          sideName,
           type: 'DirMove',
           path: 'dst',
           stats: dirStats,
@@ -984,6 +975,15 @@ describe('core/local/chokidar/analysis', function() {
           stats: otherDirStats,
           ino: otherDirStats.ino,
           old: otherDirMetadata
+        },
+        {
+          sideName,
+          type: 'FileUpdate',
+          path: 'other-file',
+          stats: otherFileStats,
+          ino: otherFileStats.ino,
+          md5sum: 'yolo',
+          old: otherFileMetadata
         }
       ])
     })
