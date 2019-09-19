@@ -864,7 +864,7 @@ describe('core/local/chokidar/analysis', function() {
 
       const oldDirPath = 'root/src/dir'
       const oldFilePath = 'root/src/dir/file.rtf'
-      const newDirPath = 'root/dir/file.rtf'
+      const newDirPath = 'root/dir'
       const newFilePath = 'root/dir/file.rtf'
 
       const dirMetadata /*: Metadata */ = builders
