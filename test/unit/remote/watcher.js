@@ -253,10 +253,11 @@ describe('RemoteWatcher', function() {
       await this.watcher.pullMany(remoteDocs)
 
       apply.callCount.should.equal(2)
-      // Changes are sorted before applying (first one got the original
-      // RemoteDeletion, while second one was given Metadata since it is valid)
-      should(apply.args[0][0].doc).deepEqual(remoteDocs[1])
-      should(apply.args[1][0].doc).deepEqual(validMetadata(remoteDocs[0]))
+      // Changes are sorted before applying (first one was given Metadata since
+      // it is valid while the second one got the original RemoteDeletion since
+      // it is ignored)
+      should(apply.args[0][0].doc).deepEqual(validMetadata(remoteDocs[0]))
+      should(apply.args[1][0].doc).deepEqual(remoteDocs[1])
     })
 
     context('when apply() rejects some file/dir', function() {
@@ -287,12 +288,12 @@ describe('RemoteWatcher', function() {
         await this.watcher.pullMany(remoteDocs).catch(() => {})
         should(apply).have.been.calledTwice()
         should(apply.args[0][0]).have.properties({
-          type: 'IgnoredChange',
-          doc: remoteDocs[1]
-        })
-        should(apply.args[1][0]).have.properties({
           type: 'FileAddition',
           doc: validMetadata(remoteDocs[0])
+        })
+        should(apply.args[1][0]).have.properties({
+          type: 'IgnoredChange',
+          doc: remoteDocs[1]
         })
       })
 
@@ -427,14 +428,14 @@ describe('RemoteWatcher', function() {
         const changes = this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
           {
-            type: 'IgnoredChange',
-            doc: { path: '.cozy_trash/file' },
-            was: { path: 'dst/file' }
-          },
-          {
             type: 'FileMove',
             doc: { path: 'dst/file', overwrite: true },
             was: { path: 'src/file' }
+          },
+          {
+            type: 'IgnoredChange',
+            doc: { path: '.cozy_trash/file' },
+            was: { path: 'dst/file' }
           }
         ])
       })
@@ -641,14 +642,14 @@ describe('RemoteWatcher', function() {
         const changes = this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
           {
-            type: 'IgnoredChange',
-            doc: { path: '.cozy_trash/dir' },
-            was: { path: 'dst/dir' }
-          },
-          {
             type: 'DirMove',
             doc: { path: 'dst/dir', overwrite: true },
             was: { path: 'src/dir' }
+          },
+          {
+            type: 'IgnoredChange',
+            doc: { path: '.cozy_trash/dir' },
+            was: { path: 'dst/dir' }
           }
         ])
       })

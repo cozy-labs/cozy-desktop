@@ -244,6 +244,8 @@ const isTrash = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirTrashing' || a.type === 'FileTrashing'
 const isRestore = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirRestoration' || a.type === 'FileRestoration'
+const isIgnore = (a /*: RemoteChange */) /*: boolean %checks */ =>
+  a.type === 'IgnoredChange'
 
 function includeDescendant(
   parent /*: RemoteDirMove */,
@@ -262,6 +264,8 @@ const deletedId = (a /*: RemoteChange */) /*: ?string */ =>
     : isMove(a) || isTrash(a)
     ? metadata.id(a.was.path)
     : null
+const ignoredId = (a /*: RemoteChange */) /*: ?string */ =>
+  isIgnore(a) && typeof a.doc.path === 'string' ? metadata.id(a.doc.path) : null
 const areParentChild = (p /*: ?string */, c /*: ?string */) /*: boolean */ =>
   !!p && !!c && c.startsWith(p + path.sep)
 const lower = (p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ =>
@@ -291,6 +295,12 @@ const sorter = (a, b) => {
 
   // if there isnt 2 add paths, sort by del path
   if (lower(deletedId(b), deletedId(a))) return aFirst
+
+  // if there is one ignored change, it is put back to the end
+  if (ignoredId(a) && !ignoredId(b)) return bFirst
+  if (ignoredId(b) && !ignoredId(a)) return aFirst
+  if (lower(ignoredId(a), ignoredId(b))) return aFirst
+
   return bFirst
 }
 
