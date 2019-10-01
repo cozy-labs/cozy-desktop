@@ -5,6 +5,7 @@
  */
 
 const cheerio = require('cheerio')
+const crypto = require('crypto')
 const request = require('request-promise')
 const url = require('url')
 const Registration = require('../../core/remote/registration')
@@ -25,7 +26,7 @@ const client = request.defaults({
  *
  * So we can use it in the actual `login()`.
  */
-const _getCsrfToken = async cozyUrl => {
+const _getLoginInfo = async cozyUrl => {
   log.debug('Get CSRF token...')
   const { body } = await client.get({ url: cozyUrl('/auth/login') })
   const $ = cheerio.load(body)
@@ -34,9 +35,17 @@ const _getCsrfToken = async cozyUrl => {
     throw new Error(
       `Could not parse CSRF token from login page:\n  ${$.text()}`
     )
-  } else {
-    return csrf_token
   }
+  const form = $('#login-form')
+  const salt = form.data('salt')
+  const iterations = parseInt(form.data('iterations'), 10)
+  return { csrf_token, salt, iterations }
+}
+
+const _hashPassphrase = async (passphrase, salt, iterations) => {
+  const master = crypto.pbkdf2Sync(passphrase, salt, iterations, 32, 'sha256')
+  const hash = crypto.pbkdf2Sync(master, passphrase, 1, 32, 'sha256')
+  return hash.toString('base64')
 }
 
 /** Login to the Cozy using `getCsrfToken()` result.
@@ -44,8 +53,11 @@ const _getCsrfToken = async cozyUrl => {
  * Resolves when login is successful. Rejects otherwise.
  */
 const login = async (cozyUrl, passphrase) => {
-  const csrf_token = await _getCsrfToken(cozyUrl)
+  const { csrf_token, salt, iterations } = await _getLoginInfo(cozyUrl)
   log.debug({ csrf_token }, 'Login...')
+  if (iterations > 0) {
+    passphrase = await _hashPassphrase(passphrase, salt, iterations)
+  }
   const form = { passphrase, csrf_token }
   const response = await client.post({
     url: cozyUrl('/auth/login'),
