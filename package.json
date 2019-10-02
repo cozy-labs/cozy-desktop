@@ -151,5 +151,8 @@
   },
   "optionalDependencies": {
     "@gyselroth/windows-fsstat": "^0.0.7"
+  },
+  "resolutions": {
+    "levelup": "4.0.2"
   }
 }
