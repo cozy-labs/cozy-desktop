@@ -420,24 +420,23 @@ describe('Identity conflict', () => {
         await helpers.local.syncDir.rename(nfcDir, nfdDir)
         await helpers.local.syncDir.rename(nfcFile, nfdFile)
 
-        await helpers.local.scan()
-        should(await helpers.trees('local', 'metadata', 'remote')).deepEqual({
+        const nfdLocalOnly = {
           local: [`${nfdDir}/`, nfdFile],
-          metadata: [`${nfdDir}/`, nfdFile],
+          metadata: [`${nfcDir}/`, nfcFile],
           remote: [`${nfcDir}/`, nfcFile]
-        })
-        await helpers.syncAll()
-        const nfdEverywhere = {
-          local: [`${nfdDir}/`, nfdFile],
-          metadata: [`${nfdDir}/`, nfdFile],
-          remote: [`${nfdDir}/`, nfdFile]
         }
+
+        await helpers.local.scan()
         should(await helpers.trees('local', 'metadata', 'remote')).deepEqual(
-          nfdEverywhere
+          nfdLocalOnly
+        )
+        await helpers.syncAll()
+        should(await helpers.trees('local', 'metadata', 'remote')).deepEqual(
+          nfdLocalOnly
         )
         await helpers.remote.pullChanges()
         should(await helpers.trees('local', 'metadata', 'remote')).deepEqual(
-          nfdEverywhere
+          nfdLocalOnly
         )
       })
     })
