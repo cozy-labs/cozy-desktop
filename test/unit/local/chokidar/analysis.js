@@ -864,7 +864,7 @@ describe('core/local/chokidar/analysis', function() {
 
       const oldDirPath = 'root/src/dir'
       const oldFilePath = 'root/src/dir/file.rtf'
-      const newDirPath = 'root/dir/file.rtf'
+      const newDirPath = 'root/dir'
       const newFilePath = 'root/dir/file.rtf'
 
       const dirMetadata /*: Metadata */ = builders
@@ -961,15 +961,6 @@ describe('core/local/chokidar/analysis', function() {
       should(analysis(events, pendingChanges)).deepEqual([
         {
           sideName,
-          type: 'FileUpdate',
-          path: 'other-file',
-          stats: otherFileStats,
-          ino: otherFileStats.ino,
-          md5sum: 'yolo',
-          old: otherFileMetadata
-        },
-        {
-          sideName,
           type: 'DirMove',
           path: 'dst',
           stats: dirStats,
@@ -984,6 +975,15 @@ describe('core/local/chokidar/analysis', function() {
           stats: otherDirStats,
           ino: otherDirStats.ino,
           old: otherDirMetadata
+        },
+        {
+          sideName,
+          type: 'FileUpdate',
+          path: 'other-file',
+          stats: otherFileStats,
+          ino: otherFileStats.ino,
+          md5sum: 'yolo',
+          old: otherFileMetadata
         }
       ])
     })

@@ -39,6 +39,7 @@ module.exports = {
   isChildUpdate,
   addPath,
   delPath,
+  updatePath,
   childOf,
   lower,
   isChildDelete,
