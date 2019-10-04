@@ -12,8 +12,6 @@ const ONBOARDING_SCREEN_WIDTH = 768
 const ONBOARDING_SCREEN_HEIGHT = 570
 const LOGIN_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
 const LOGIN_SCREEN_HEIGHT = 740
-const OAUTH_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
-const OAUTH_SCREEN_HEIGHT = 930
 
 const WindowManager = require('./window_manager')
 
@@ -21,6 +19,7 @@ module.exports = class OnboardingWM extends WindowManager {
   windowOptions() {
     return {
       title: 'ONBOARDING',
+      show: true,
       center: true,
       width: ONBOARDING_SCREEN_WIDTH,
       height: ONBOARDING_SCREEN_HEIGHT
@@ -87,26 +86,23 @@ module.exports = class OnboardingWM extends WindowManager {
       //      and if the user hasn't moved the window before
       this.centerOnScreen(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT)
       this.win.loadURL(url)
-      session.defaultSession.webRequest.onResponseStarted(
-        [/\/auth\/authorize\?/],
-        ({ statusCode }) => {
-          if (statusCode === 200) {
-            // TODO only centerOnScreen if needed to display the whole oauth screen
-            //      and if the user hasn't moved the window before
-            this.centerOnScreen(OAUTH_SCREEN_WIDTH, OAUTH_SCREEN_HEIGHT)
-            // Unsubscribe from the event
-            session.defaultSession.webRequest.onResponseStarted(null)
-          }
+      session.defaultSession.webRequest.onBeforeRequest(({ url }, callback) => {
+        if (url.match(/^file:\/\//)) {
+          // Chrome won't honor server redirects to local files and the window
+          // will hang if we don't cancel it.
+          session.defaultSession.webRequest.onBeforeRequest(null)
+          callback({ cancel: true })
+        } else {
+          callback({ cancel: false })
         }
-      )
+      })
       session.defaultSession.webRequest.onBeforeRedirect(({ redirectURL }) => {
         if (redirectURL.match(/^file:\/\//)) {
+          session.defaultSession.webRequest.onBeforeRedirect(null)
           // TODO only centerOnScreen if needed to display the whole folder screen
           //      and if the user hasn't moved the window before
           this.centerOnScreen(ONBOARDING_SCREEN_WIDTH, ONBOARDING_SCREEN_HEIGHT)
           resolveP(redirectURL)
-          // Unsubscribe from the event
-          session.defaultSession.webRequest.onBeforeRedirect(null)
         }
       })
       return promise
