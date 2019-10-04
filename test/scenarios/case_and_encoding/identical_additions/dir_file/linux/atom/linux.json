@@ -31,81 +31,7 @@
     {
       "action": "scan",
       "path": "FOO/subdir",
-      "stats": {
-        "dev": 64771,
-        "mode": 16893,
-        "nlink": 2,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 19797470,
-        "size": 4096,
-        "blocks": 8,
-        "atimeMs": 1550661704972.9673,
-        "mtimeMs": 1550661704974.9673,
-        "ctimeMs": 1550661704974.9673,
-        "birthtimeMs": 1550661704974.9673,
-        "atime": "2019-02-20T11:21:44.973Z",
-        "mtime": "2019-02-20T11:21:44.975Z",
-        "ctime": "2019-02-20T11:21:44.975Z",
-        "birthtime": "2019-02-20T11:21:44.975Z"
-      },
-      "kind": "unknown"
-    }
-  ],
-  [
-    {
-      "action": "scan",
-      "path": "FOO/subdir/file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 19797471,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1550661704974.9673,
-        "mtimeMs": 1550661704975.9673,
-        "ctimeMs": 1550661704975.9673,
-        "birthtimeMs": 1550661704975.9673,
-        "atime": "2019-02-20T11:21:44.975Z",
-        "mtime": "2019-02-20T11:21:44.976Z",
-        "ctime": "2019-02-20T11:21:44.976Z",
-        "birthtime": "2019-02-20T11:21:44.976Z"
-      },
-      "kind": "unknown"
-    }
-  ],
-  [
-    {
-      "action": "scan",
-      "path": "FOO/subdir/file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 19797471,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1550661704974.9673,
-        "mtimeMs": 1550661704975.9673,
-        "ctimeMs": 1550661704975.9673,
-        "birthtimeMs": 1550661704975.9673,
-        "atime": "2019-02-20T11:21:44.975Z",
-        "mtime": "2019-02-20T11:21:44.976Z",
-        "ctime": "2019-02-20T11:21:44.976Z",
-        "birthtime": "2019-02-20T11:21:44.976Z"
-      },
-      "kind": "unknown"
+      "kind": "directory"
     }
   ],
   [
@@ -113,13 +39,25 @@
       "action": "created",
       "kind": "file",
       "path": "foo"
-    }
-  ],
-  [
+    },
     {
       "action": "modified",
       "kind": "file",
       "path": "foo"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "FOO/subdir/file",
+      "kind": "file"
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "FOO/subdir/file",
+      "kind": "file"
     }
   ]
 ]

@@ -2,6 +2,7 @@
 /* @flow */
 
 const should = require('should')
+const metadata = require('../../../../core/metadata')
 const addInfos = require('../../../../core/local/atom/add_infos')
 const Channel = require('../../../../core/local/atom/channel')
 
@@ -28,9 +29,19 @@ describe('core/local/atom/add_infos.loop()', () => {
   it('should add specific infos for specific events', async () => {
     const batch = [
       {
+        action: 'deleted',
+        kind: 'directory',
+        path: __dirname
+      },
+      {
+        action: 'ignored',
+        kind: 'directory',
+        path: __dirname
+      },
+      {
         action: 'scan',
         kind: 'directory',
-        path: '/'
+        path: __dirname
       },
       {
         action: 'created',
@@ -53,18 +64,27 @@ describe('core/local/atom/add_infos.loop()', () => {
     const enhancedChannel = addInfos.loop(channel, {
       syncPath: ''
     })
-    const [scanEvent, ...otherEvents] = await enhancedChannel.pop()
-    should(scanEvent).eql({
+    const [
+      deletedEvent,
+      ignoredEvent,
+      ...otherEvents
+    ] = await enhancedChannel.pop()
+    should(deletedEvent).eql({
       action: batch[0].action,
       kind: 'directory',
       path: batch[0].path,
-      _id: batch[0].path
+      _id: metadata.id(batch[0].path)
+    })
+    should(ignoredEvent).eql({
+      action: batch[1].action,
+      kind: 'directory',
+      path: batch[1].path,
+      _id: metadata.id(batch[1].path)
     })
     otherEvents.forEach(event => {
-      should.exist(event._id)
-      should.exist(event.stats)
-      should.exist(event.kind)
+      should(event._id).eql(metadata.id(event.path))
       should(event.kind).eql('directory')
+      should.exist(event.stats)
     })
   })
 })
