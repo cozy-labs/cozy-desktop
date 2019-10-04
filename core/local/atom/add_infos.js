@@ -23,6 +23,7 @@ const log = logger({
 
 /*::
 import type Channel from './channel'
+import type { AtomEvent } from './event'
 */
 
 module.exports = {
@@ -50,7 +51,7 @@ function loop(
       try {
         if (event.action !== 'initial-scan-done') {
           event._id = id(event.path)
-          if (['created', 'modified', 'renamed'].includes(event.action)) {
+          if (needsStats(event)) {
             log.debug({ path: event.path, action: event.action }, 'stat')
             event.stats = await stater.stat(
               path.join(opts.syncPath, event.path)
@@ -76,4 +77,11 @@ function loop(
     }
     return batch
   })
+}
+
+function needsStats(event /*: AtomEvent */) /*: boolean %checks */ {
+  return (
+    ['created', 'modified', 'renamed', 'scan'].includes(event.action) &&
+    !event.stats
+  )
 }

@@ -17,16 +17,6 @@
     {
       "action": "scan",
       "path": "foo\\bar",
-      "stats": {
-        "fileid": "0x000F00000000D068",
-        "ino": 4222124650713192,
-        "size": 0,
-        "atime": "2019-02-21T09:41:06.000Z",
-        "mtime": "2019-02-21T09:41:06.000Z",
-        "ctime": "2019-02-21T09:41:06.000Z",
-        "directory": true,
-        "symbolicLink": false
-      },
       "kind": "directory"
     }
   ]
