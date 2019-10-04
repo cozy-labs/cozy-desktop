@@ -157,6 +157,7 @@
     "dtrace-provider": "0.8.8",
     "leveldown": "5.0.2",
     "levelup": "4.0.2",
+    "nan": "2.14.0",
     "node-abi": "2.11.0"
   }
 }
