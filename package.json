@@ -88,7 +88,7 @@
     "chokidar": "^3.0.2",
     "cozy-client-js": "0.15.0",
     "deep-diff": "^1.0.2",
-    "dtrace-provider": "^0.8.6",
+    "dtrace-provider": "^0.8.8",
     "electron-fetch": "~1.1.0",
     "electron-positioner": "^4.0.0",
     "electron-proxy-agent": "^1.0.2",
@@ -154,6 +154,7 @@
     "@gyselroth/windows-fsstat": "^0.0.7"
   },
   "resolutions": {
+    "dtrace-provider": "0.8.8",
     "levelup": "4.0.2",
     "node-abi": "2.11.0"
   }
