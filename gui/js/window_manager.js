@@ -6,7 +6,6 @@
 const { BrowserWindow, ipcMain, shell } = require('electron')
 const _ = require('lodash')
 const path = require('path')
-const electron = require('electron')
 
 const ELMSTARTUP = 400
 
@@ -96,27 +95,8 @@ module.exports = class WindowManager {
 
   centerOnScreen(wantedWidth, wantedHeight) {
     try {
-      const bounds = this.win.getBounds()
-      // TODO : be smarter about which display to use ?
-      const display = electron.screen.getDisplayMatching(bounds)
-      const displaySize = display.workArea
-      const actualWidth = Math.min(
-        wantedWidth,
-        Math.floor(0.9 * displaySize.width)
-      )
-      const actualHeight = Math.min(
-        wantedHeight,
-        Math.floor(0.9 * displaySize.height)
-      )
-      this.win.setBounds(
-        {
-          x: Math.floor((displaySize.width - actualWidth) / 2),
-          y: Math.floor((displaySize.height - actualHeight) / 2),
-          width: actualWidth,
-          height: actualHeight
-        },
-        true /* animate on MacOS */
-      )
+      this.win.setSize(wantedWidth, wantedHeight, true)
+      this.win.center()
     } catch (err) {
       log.error({ err, wantedWidth, wantedHeight }, 'Fail to centerOnScreen')
     }
@@ -134,9 +114,9 @@ module.exports = class WindowManager {
       opts.icon = path.join(__dirname, '../images/icon.png')
     }
     this.win = new BrowserWindow({
-      ...opts,
       autoHideMenuBar: true,
-      show: false
+      show: false,
+      ...opts
     })
     this.win.on('unresponsive', () => {
       this.log.warn('Web page becomes unresponsive')
