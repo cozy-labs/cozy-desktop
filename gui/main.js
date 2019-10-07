@@ -73,7 +73,7 @@ const showWindowStartApp = () => {
 
 const showWindow = bounds => {
   if (revokedAlertShown || syncDirUnlinkedShown) return
-  if (updaterWindow.shown()) return updaterWindow.focus()
+  if (updaterWindow && updaterWindow.shown()) return updaterWindow.focus()
   if (!desktop.config.syncPath) {
     onboardingWindow.show(bounds)
     // registration is done, but we need a syncPath
@@ -370,24 +370,23 @@ app.on('ready', () => {
       onboardingWindow.hide()
       trayWindow.show().then(() => startSync())
     })
-    log.trace('Setting up updater WM...')
-    updaterWindow = new UpdaterWM(app, desktop)
-    updaterWindow.onUpToDate(() => {
-      updaterWindow.hide()
-      showWindowStartApp()
-    })
-    if (process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
-      updaterWindow.hide()
-      showWindowStartApp()
-    } else {
+    if (app.isPackaged) {
+      log.trace('Setting up updater WM...')
+      updaterWindow = new UpdaterWM(app, desktop)
+      updaterWindow.onUpToDate(() => {
+        updaterWindow.hide()
+        showWindowStartApp()
+      })
       updaterWindow.checkForUpdates()
+      setInterval(() => {
+        updaterWindow.checkForUpdates()
+      }, DAILY)
+    } else {
+      showWindowStartApp()
     }
 
     // Os X wants all application to have a menu
     Menu.setApplicationMenu(buildAppMenu(app))
-    setInterval(() => {
-      updaterWindow.checkForUpdates()
-    }, DAILY)
 
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
