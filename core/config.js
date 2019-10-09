@@ -76,12 +76,7 @@ class Config {
 
   _moveTmpConfig() {
     if (fs.copyFileSync && fs.constants.COPYFILE_FICLONE) {
-      // Node v8.5.0+ can use a copy-on-write reflink
-      fs.copyFileSync(
-        this.tmpConfigPath,
-        this.configPath,
-        fs.constants.COPYFILE_FICLONE
-      )
+      fs.copyFileSync(this.tmpConfigPath, this.configPath)
     } else {
       // Fallback for old node versions
       fse.copySync(this.tmpConfigPath, this.configPath)
