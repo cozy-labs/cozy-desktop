@@ -85,7 +85,7 @@
     "bluebird": "^3.5.4",
     "btoa": "^1.1.2",
     "bunyan": "^2.0.2",
-    "chokidar": "^3.0.2",
+    "chokidar": "^3.2.1",
     "cozy-client-js": "0.15.0",
     "deep-diff": "^1.0.2",
     "dtrace-provider": "^0.8.8",
