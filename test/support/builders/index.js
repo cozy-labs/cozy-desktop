@@ -61,25 +61,37 @@ module.exports = class Builders {
     return new RemoteFileBuilder(this.cozy, old)
   }
 
-  buildRemoteTree(paths /*: Array<string> */) /*: { [string]: RemoteDoc } */ {
+  buildRemoteTree(
+    paths /*: Array<string|[string, number]> */
+  ) /*: { [string]: RemoteDoc } */ {
     const remoteDocsByPath = {}
     for (const p of paths) {
-      const name = path.posix.basename(p)
-      const parentPath = path.posix.dirname(p)
+      let docPath, shortRev
+      if (typeof p === 'string') {
+        docPath = p
+        shortRev = 1
+      } else {
+        docPath = p[0]
+        shortRev = p[1]
+      }
+      const name = path.posix.basename(docPath)
+      const parentPath = path.posix.dirname(docPath)
       const parentDir = remoteDocsByPath[parentPath + '/'] || {
         _id: ROOT_DIR_ID,
         path: '/'
       }
 
-      if (p.endsWith('/')) {
-        remoteDocsByPath[p] = this.remoteDir()
+      if (docPath.endsWith('/')) {
+        remoteDocsByPath[docPath] = this.remoteDir()
           .name(name)
           .inDir(parentDir)
+          .shortRev(shortRev)
           .build()
       } else {
-        remoteDocsByPath[p] = this.remoteFile()
+        remoteDocsByPath[docPath] = this.remoteFile()
           .name(name)
           .inDir(parentDir)
+          .shortRev(shortRev)
           .build()
       }
     }
