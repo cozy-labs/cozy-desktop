@@ -1148,6 +1148,7 @@ describe('RemoteWatcher', function() {
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         remoteDoc,
         null,
+        [],
         []
       )
       should(change.type).equal('InvalidChange')
@@ -1170,6 +1171,7 @@ describe('RemoteWatcher', function() {
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         remoteDoc,
         null,
+        [],
         []
       )
 
@@ -1187,6 +1189,7 @@ describe('RemoteWatcher', function() {
         const change /*: RemoteChange */ = this.watcher.identifyChange(
           remoteDoc,
           null,
+          [],
           []
         )
         const platform = process.platform
@@ -1220,6 +1223,7 @@ describe('RemoteWatcher', function() {
             type: 'file'
           },
           null,
+          [],
           []
         )
         should(change.type).not.equal('RemotePlatformIncompatibleChange')
@@ -1237,6 +1241,7 @@ describe('RemoteWatcher', function() {
         const change /*: RemoteChange */ = this.watcher.identifyChange(
           remoteDoc,
           null,
+          [],
           []
         )
         should(change.type).equal('FileAddition')
@@ -1269,6 +1274,7 @@ describe('RemoteWatcher', function() {
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
         null,
+        [],
         []
       )
 
@@ -1312,6 +1318,7 @@ describe('RemoteWatcher', function() {
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
         was,
+        [],
         []
       )
 
@@ -1348,6 +1355,7 @@ describe('RemoteWatcher', function() {
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
         was,
+        [],
         []
       )
 
@@ -1385,6 +1393,7 @@ describe('RemoteWatcher', function() {
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
         was,
+        [],
         []
       )
 
@@ -1443,6 +1452,7 @@ describe('RemoteWatcher', function() {
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
         was,
+        [],
         []
       )
 
@@ -1490,6 +1500,7 @@ describe('RemoteWatcher', function() {
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(file),
         was,
+        [],
         []
       )
 
@@ -1518,6 +1529,7 @@ describe('RemoteWatcher', function() {
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
         was,
+        [],
         []
       )
 
@@ -1544,7 +1556,7 @@ describe('RemoteWatcher', function() {
         .trashed()
         .build()
 
-      this.watcher.identifyChange(newDir, null, [])
+      this.watcher.identifyChange(newDir, null, [], [])
 
       should(this.prep.deleteFolderAsync.called).be.true()
       should(this.prep.addFolderAsync.called).be.true()
@@ -1576,7 +1588,7 @@ describe('RemoteWatcher', function() {
         .restored()
         .build()
 
-      this.watcher.identifyChange(newDir, null, [])
+      this.watcher.identifyChange(newDir, null, [], [])
 
       should(this.prep.deleteFolder.called).be.true()
       should(this.prep.addFolderAsync.called).be.true()
@@ -1628,7 +1640,7 @@ describe('RemoteWatcher', function() {
           })
 
           it('assumes the file is up-to-date since remote rev number is lower', async function() {
-            const change = this.watcher.identifyChange(remoteDoc, was, [])
+            const change = this.watcher.identifyChange(remoteDoc, was, [], [])
             should(change.type).equal('UpToDate')
           })
         })
