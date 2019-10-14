@@ -332,14 +332,21 @@ const aFirst = -1
 const bFirst = 1
 
 const sorter = (a, b) => {
-  if (areParentChild(createdId(a), deletedId(b))) return aFirst
-  if (areParentChild(createdId(b), deletedId(a))) return bFirst
+  // if there is one ignored change, it is put back to the end
+  if (ignoredId(a) && !ignoredId(b)) return bFirst
+  if (ignoredId(b) && !ignoredId(a)) return aFirst
+  if (lower(ignoredId(a), ignoredId(b))) return aFirst
+  if (lower(ignoredId(b), ignoredId(a))) return bFirst
 
-  // if one action is a child of another, it takes priority
+  // if one action is the parent of another, it takes priority
   if (areParentChild(createdId(a), createdId(b))) return aFirst
   if (areParentChild(createdId(b), createdId(a))) return bFirst
   if (areParentChild(deletedId(b), deletedId(a))) return aFirst
   if (areParentChild(deletedId(a), deletedId(b))) return bFirst
+  if (areParentChild(createdId(a), deletedId(b))) return aFirst
+  if (areParentChild(createdId(b), deletedId(a))) return bFirst
+  if (areParentChild(deletedId(a), createdId(b))) return bFirst
+  if (areParentChild(deletedId(b), createdId(a))) return aFirst
 
   if (deletedId(a) && createdId(b) && deletedId(a) === createdId(b))
     return aFirst
@@ -352,12 +359,6 @@ const sorter = (a, b) => {
 
   // if there isnt 2 add paths, sort by del path
   if (lower(deletedId(b), deletedId(a))) return aFirst
-
-  // if there is one ignored change, it is put back to the end
-  if (ignoredId(a) && !ignoredId(b)) return bFirst
-  if (ignoredId(b) && !ignoredId(a)) return aFirst
-  if (lower(ignoredId(a), ignoredId(b))) return aFirst
-
   return bFirst
 }
 
