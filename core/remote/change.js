@@ -296,7 +296,7 @@ const isDelete = (a /*: RemoteChange */) /*: boolean %checks */ =>
 const isAdd = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirAddition' || a.type === 'FileAddition'
 const isMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
-  a.type === 'DirMove' || a.type === 'FileMove'
+  a.type === 'DirMove' || a.type === 'FileMove' || a.type === 'DescendantChange'
 const isTrash = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirTrashing' || a.type === 'FileTrashing'
 const isRestore = (a /*: RemoteChange */) /*: boolean %checks */ =>
