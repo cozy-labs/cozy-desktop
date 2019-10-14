@@ -5,8 +5,8 @@ const should = require('should')
 
 const remoteChange = require('../../../core/remote/change')
 
-describe('remote change sort', () => {
-  describe('with movee inside move', () => {
+describe('sorter()', () => {
+  describe('with move inside move', () => {
     const expected = [
       {
         doc: { path: path.normalize('parent/dst/dir') },
@@ -150,6 +150,117 @@ describe('remote change sort', () => {
       remoteChange.sort(changes)
       should(changes).deepEqual([deleted, created])
     })
+  })
+})
+
+describe('isChildSource(p, c)', () => {
+  it('returns true if p src path is parent of c src path', () => {
+    const parent = {
+      doc: { path: path.normalize('parent/dst/subdir') },
+      type: 'DirMove',
+      was: { path: path.normalize('parent/src/dir/subdir') }
+    }
+    const child = {
+      doc: { path: path.normalize('parent/dst2/file') },
+      type: 'FileMove',
+      was: { path: path.normalize('parent/src/dir/subdir/file') }
+    }
+
+    should(remoteChange.isChildSource(parent, child)).be.true()
+  })
+
+  it('returns false if p src path is not parent of c src path', () => {
+    const parent = {
+      doc: { path: path.normalize('parent/dst/subdir') },
+      type: 'DirMove',
+      was: { path: path.normalize('parent/src/dir/subdir') }
+    }
+    const child = {
+      doc: { path: path.normalize('parent/dst/subdir/file') },
+      type: 'FileMove',
+      was: { path: path.normalize('parent/src2/file') }
+    }
+
+    should(remoteChange.isChildSource(parent, child)).be.false()
+  })
+})
+
+describe('isChildDestination(p, c)', () => {
+  it('returns true if p dst path is parent of c dst path', () => {
+    const parent = {
+      doc: { path: path.normalize('parent/dst/subdir') },
+      type: 'DirMove',
+      was: { path: path.normalize('parent/src/dir/subdir') }
+    }
+    const child = {
+      doc: { path: path.normalize('parent/dst/subdir/file') },
+      type: 'FileMove',
+      was: { path: path.normalize('parent/src2/file') }
+    }
+
+    should(remoteChange.isChildDestination(parent, child)).be.true()
+  })
+
+  it('returns false if p dst path is not parent of c dst path', () => {
+    const parent = {
+      doc: { path: path.normalize('parent/dst/subdir') },
+      type: 'DirMove',
+      was: { path: path.normalize('parent/src/dir/subdir') }
+    }
+    const child = {
+      doc: { path: path.normalize('parent/dst2/file') },
+      type: 'FileMove',
+      was: { path: path.normalize('parent/src/dir/subdir/file') }
+    }
+
+    should(remoteChange.isChildDestination(parent, child)).be.false()
+  })
+})
+
+describe('isChildMove(p, c)', () => {
+  it('returns true if p src path is parent of c src path', () => {
+    const parent = {
+      doc: { path: path.normalize('parent/dst/subdir') },
+      type: 'DirMove',
+      was: { path: path.normalize('parent/src/dir/subdir') }
+    }
+    const child = {
+      doc: { path: path.normalize('parent/dst2/file') },
+      type: 'FileMove',
+      was: { path: path.normalize('parent/src/dir/subdir/file') }
+    }
+
+    should(remoteChange.isChildSource(parent, child)).be.true()
+  })
+
+  it('returns true if p dst path is parent of c dst path', () => {
+    const parent = {
+      doc: { path: path.normalize('parent/dst/subdir') },
+      type: 'DirMove',
+      was: { path: path.normalize('parent/src/dir/subdir') }
+    }
+    const child = {
+      doc: { path: path.normalize('parent/dst/subdir/file') },
+      type: 'FileMove',
+      was: { path: path.normalize('parent/src2/file') }
+    }
+
+    should(remoteChange.isChildDestination(parent, child)).be.true()
+  })
+
+  it('returns true if p src and dst paths are parents of c src and dst paths', () => {
+    const parent = {
+      doc: { path: path.normalize('parent/dst2/subdir') },
+      type: 'DirMove',
+      was: { path: path.normalize('parent/src/dir/subdir') }
+    }
+    const child = {
+      doc: { path: path.normalize('parent/dst2/subdir/file') },
+      type: 'FileMove',
+      was: { path: path.normalize('parent/src/dir/subdir/file') }
+    }
+
+    should(remoteChange.isChildMove(parent, child)).be.true()
   })
 })
 
