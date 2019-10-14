@@ -175,17 +175,15 @@ class RemoteWatcher {
     changes /*: Array<RemoteChange> */
   ) {
     const oldsByRemoteId = _.keyBy(olds, 'remote._id')
-    for (let index = 0; index < remoteDocs.length; index++) {
-      const remoteDoc = remoteDocs[index]
+    for (const remoteDoc of remoteDocs) {
       const was /*: ?Metadata */ = oldsByRemoteId[remoteDoc._id]
-      changes.push(this.identifyChange(remoteDoc, was, index, changes))
+      changes.push(this.identifyChange(remoteDoc, was, changes))
     }
   }
 
   identifyChange(
     remoteDoc /*: RemoteDoc|RemoteDeletion */,
     was /*: ?Metadata */,
-    changeIndex /*: number */,
     previousChanges /*: Array<RemoteChange> */
   ) /*: RemoteChange */ {
     const oldpath /*: ?string */ = was && was.path
@@ -234,7 +232,6 @@ class RemoteWatcher {
         return this.identifyExistingDocChange(
           remoteDoc,
           was,
-          changeIndex,
           previousChanges
         )
       }
@@ -254,7 +251,6 @@ class RemoteWatcher {
   identifyExistingDocChange(
     remoteDoc /*: RemoteDoc */,
     was /*: ?Metadata */,
-    changeIndex /*: number */,
     previousChanges /*: Array<RemoteChange> */
   ) /*: RemoteChange */ {
     let doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
@@ -365,14 +361,7 @@ class RemoteWatcher {
       if (was.md5sum !== doc.md5sum) change.update = true // move + change
 
       // Squash moves
-      for (
-        let previousChangeIndex = 0;
-        previousChangeIndex < changeIndex;
-        previousChangeIndex++
-      ) {
-        const previousChange /*: RemoteChange */ =
-          previousChanges[previousChangeIndex]
-
+      for (const previousChange of previousChanges) {
         if (
           previousChange.type === 'FileTrashing' &&
           previousChange.was.path === change.doc.path
@@ -418,14 +407,8 @@ class RemoteWatcher {
         was
       }
       // Squash moves
-      for (
-        let previousChangeIndex = 0;
-        previousChangeIndex < changeIndex;
-        previousChangeIndex++
-      ) {
-        const previousChange /*: RemoteChange */ =
-          previousChanges[previousChangeIndex]
 
+      for (const previousChange of previousChanges) {
         if (
           previousChange.type === 'DirTrashing' &&
           previousChange.was.path === change.doc.path
