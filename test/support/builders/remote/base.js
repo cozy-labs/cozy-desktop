@@ -2,7 +2,6 @@
 
 const _ = require('lodash')
 const { posix } = require('path')
-const uuid = require('uuid/v4')
 
 const {
   FILES_DOCTYPE,
@@ -73,7 +72,7 @@ module.exports = class RemoteBaseBuilder {
   }
 
   shortRev(revNumber /*: number */) /*: this */ {
-    this.remoteDoc._rev = revNumber.toString() + '-' + uuid().replace(/-/g, '')
+    this.remoteDoc._rev = dbBuilders.rev(revNumber)
     return this
   }
 

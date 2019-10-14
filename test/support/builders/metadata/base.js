@@ -172,6 +172,11 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  remoteRev(shortRev /*: number */) /*: this */ {
+    this.doc.remote._rev = dbBuilders.rev(shortRev)
+    return this
+  }
+
   upToDate() /*: this */ {
     this.doc.sides = {
       ...this.doc.sides,
