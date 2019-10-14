@@ -157,21 +157,29 @@ class RemoteWatcher {
     remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */,
     olds /*: Array<Metadata> */
   ) /*: Array<RemoteChange> */ {
-    const oldsByRemoteId = _.keyBy(olds, 'remote._id')
     const changes /*: Array<RemoteChange> */ = []
 
     log.trace('Contextualize and analyse changesfeed results...')
-    for (let index = 0; index < remoteDocs.length; index++) {
-      const remoteDoc = remoteDocs[index]
-      const was /*: ?Metadata */ = oldsByRemoteId[remoteDoc._id]
-      changes.push(this.identifyChange(remoteDoc, was, index, changes))
-    }
+    this.identifyAll(remoteDocs, olds, changes)
     log.trace('Done with analysis.')
 
     log.trace('Sort changes...')
     remoteChange.sort(changes)
 
     return changes
+  }
+
+  identifyAll(
+    remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */,
+    olds /*: Array<Metadata> */,
+    changes /*: Array<RemoteChange> */
+  ) {
+    const oldsByRemoteId = _.keyBy(olds, 'remote._id')
+    for (let index = 0; index < remoteDocs.length; index++) {
+      const remoteDoc = remoteDocs[index]
+      const was /*: ?Metadata */ = oldsByRemoteId[remoteDoc._id]
+      changes.push(this.identifyChange(remoteDoc, was, index, changes))
+    }
   }
 
   identifyChange(
