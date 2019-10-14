@@ -105,7 +105,7 @@ class Pouch {
   lock(component /*: * */) /*: Promise<Function> */ {
     const id = this.nextLockId++
     if (typeof component !== 'string') component = component.constructor.name
-    log.trace({ component, lock: { id, state: 'requested' } })
+    log.trace({ component, lock: { id, state: 'requested' } }, 'lock requested')
     let pCurrent = this._lock.promise
     let _resolve
     let pReleased = new Promise(resolve => {
@@ -113,9 +113,12 @@ class Pouch {
     })
     this._lock = { id, promise: pCurrent.then(() => pReleased) }
     return pCurrent.then(() => {
-      log.trace({ component, lock: { id, state: 'acquired' } })
+      log.trace({ component, lock: { id, state: 'acquired' } }, 'lock acquired')
       return () => {
-        log.trace({ component, lock: { id, state: 'released' } })
+        log.trace(
+          { component, lock: { id, state: 'released' } },
+          'lock released'
+        )
         _resolve()
       }
     })
