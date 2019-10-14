@@ -215,7 +215,8 @@ def doc:
 #
 def short:
   {time,component,msg,path,oldpath,event}
-    | if .event then del(.event) + (.event|{path, oldpath: .oldPath, action}) else del(.event) end
+    | if (.event | not) then del(.event) else . end
+    | if (.event | type == "object") then del(.event) + (.event|{path, oldpath: .oldPath, action}) else . end
     | if .oldpath then . else del(.oldpath) end
     ;
 
