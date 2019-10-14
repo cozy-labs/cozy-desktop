@@ -1004,6 +1004,125 @@ describe('RemoteWatcher', function() {
         }
       ])
     })
+
+    it('identifies move inside move', function() {
+      const remotePaths = [
+        ['parent/', 1],
+        ['parent/src/', 1],
+        ['parent/dst/', 1],
+        ['parent/dst2/', 1],
+        ['parent/dst/dir/', 2],
+        ['parent/dst/dir/empty-subdir/', 2],
+        ['parent/dst2/subdir/', 3],
+        ['parent/dst2/subdir/file', 3]
+      ]
+      const remoteDocsByPath = builders.buildRemoteTree(remotePaths)
+      const remoteDocs = remotePaths.map(p => remoteDocsByPath[p[0]])
+      const olds = [
+        builders
+          .metadir()
+          .fromRemote(remoteDocsByPath['parent/'])
+          .path('parent')
+          .upToDate()
+          .build(),
+        builders
+          .metadir()
+          .fromRemote(remoteDocsByPath['parent/dst/'])
+          .path(path.normalize('parent/dst'))
+          .upToDate()
+          .build(),
+        builders
+          .metadir()
+          .fromRemote(remoteDocsByPath['parent/dst2/'])
+          .path(path.normalize('parent/dst2'))
+          .upToDate()
+          .build(),
+        builders
+          .metadir()
+          .fromRemote(remoteDocsByPath['parent/src/'])
+          .path(path.normalize('parent/src'))
+          .upToDate()
+          .build(),
+        builders
+          .metadir()
+          .fromRemote(remoteDocsByPath['parent/dst/dir/'])
+          .path(path.normalize('parent/src/dir'))
+          .upToDate()
+          .remoteRev(1)
+          .build(),
+        builders
+          .metadir()
+          .fromRemote(remoteDocsByPath['parent/dst/dir/empty-subdir/'])
+          .path(path.normalize('parent/src/dir/empty-subdir'))
+          .upToDate()
+          .remoteRev(1)
+          .build(),
+        builders
+          .metadir()
+          .fromRemote(remoteDocsByPath['parent/dst2/subdir/'])
+          .path(path.normalize('parent/src/dir/subdir'))
+          .upToDate()
+          .remoteRev(1)
+          .build(),
+        builders
+          .metadir()
+          .fromRemote(remoteDocsByPath['parent/dst2/subdir/file'])
+          .path(path.normalize('parent/src/dir/subdir/file'))
+          .upToDate()
+          .remoteRev(1)
+          .build()
+      ]
+      const changes = this.watcher.identifyAll(remoteDocs, olds)
+
+      const changeInfo = change => ({
+        doc: { path: change.doc.path },
+        type: change.type,
+        was: { path: change.was && change.was.path }
+      })
+
+      should(changes.map(changeInfo)).deepEqual([
+        {
+          doc: { path: path.normalize('parent') },
+          type: 'UpToDate',
+          was: { path: path.normalize('parent') }
+        },
+        {
+          doc: { path: path.normalize('parent/src') },
+          type: 'UpToDate',
+          was: { path: path.normalize('parent/src') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst') },
+          type: 'UpToDate',
+          was: { path: path.normalize('parent/dst') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst2') },
+          type: 'UpToDate',
+          was: { path: path.normalize('parent/dst2') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir') },
+          type: 'DirMove',
+          was: { path: path.normalize('parent/src/dir') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir/empty-subdir') },
+          type: 'DescendantChange',
+          was: { path: path.normalize('parent/src/dir/empty-subdir') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst2/subdir') },
+          type: 'DirMove',
+          was: { path: path.normalize('parent/dst/dir/subdir') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst2/subdir/file') },
+          type: 'DescendantChange',
+          was: { path: path.normalize('parent/src/dir/subdir/file') }
+        }
+      ])
+    })
   })
 
   describe('identifyChange', function() {
