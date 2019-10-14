@@ -133,6 +133,8 @@ module.exports = {
   restored,
   upToDate,
   updated,
+  isChildSource,
+  isChildDestination,
   isChildMove,
   isOnlyChildMove,
   applyMoveToPath,
@@ -254,11 +256,22 @@ function isChildMove(
   return (
     p.type === 'DirMove' &&
     (c.type === 'DirMove' || c.type === 'FileMove') &&
-    c.doc.path.startsWith(p.doc.path + path.sep) &&
-    p.was &&
-    c.was &&
-    c.was.path.startsWith(p.was.path + path.sep)
+    (isChildDestination(p, c) || isChildSource(p, c))
   )
+}
+
+function isChildDestination(
+  p /*: RemoteDirMove|RemoteDescendantChange */,
+  c /*: RemoteDirMove|RemoteFileMove */
+) /*: boolean %checks */ {
+  return c.doc.path.startsWith(p.doc.path + path.sep)
+}
+
+function isChildSource(
+  p /*: RemoteDirMove|RemoteDescendantChange */,
+  c /*: RemoteDirMove|RemoteFileMove */
+) /*: boolean %checks */ {
+  return p.was && c.was && c.was.path.startsWith(p.was.path + path.sep)
 }
 
 /**
@@ -267,11 +280,15 @@ function isChildMove(
  *     c    /p/c   ->    /p2/c
  */
 function isOnlyChildMove(
-  p /*: RemoteDirMove */,
+  p /*: RemoteDirMove|RemoteDescendantChange */,
   c /*: RemoteFileMove|RemoteDirMove */
 ) /*: boolean %checks */ {
   return (
-    isChildMove(p, c) && path.basename(c.doc.path) === path.basename(c.was.path)
+    (p.type === 'DirMove' || p.type === 'DescendantChange') &&
+    (c.type === 'DirMove' || c.type === 'FileMove') &&
+    isChildSource(p, c) &&
+    isChildDestination(p, c) &&
+    path.basename(c.doc.path) === path.basename(c.was.path)
   )
 }
 
