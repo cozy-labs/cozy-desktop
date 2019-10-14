@@ -248,7 +248,7 @@ class RemoteWatcher {
     was /*: ?Metadata */,
     changeIndex /*: number */,
     previousChanges /*: Array<RemoteChange> */
-  ) /*: * */ {
+  ) /*: RemoteChange */ {
     let doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
     try {
       metadata.ensureValidPath(doc)

@@ -52,8 +52,7 @@ export type RemoteFileUpdate = {
 export type RemoteDirAddition = {
   sideName: 'remote',
   type: 'DirAddition',
-  doc: Metadata,
-  was: Metadata
+  doc: Metadata
 }
 export type RemoteDirDeletion = {
   sideName: 'remote',
@@ -90,6 +89,7 @@ export type RemoteInvalidChange = {
   sideName: 'remote',
   type: 'InvalidChange',
   doc: *,
+  was?: Metadata,
   error: Error
 }
 export type RemoteUpToDate = {
@@ -144,49 +144,106 @@ module.exports = {
 const sideName = 'remote'
 
 // FIXME: return types
-function added(doc /*: Metadata */) /*: * */ {
-  return {
-    sideName,
-    type: metadata.isFile(doc) ? 'FileAddition' : 'DirAddition',
-    doc
+function added(
+  doc /*: Metadata */
+) /*: RemoteFileAddition | RemoteDirAddition */ {
+  if (metadata.isFile(doc)) {
+    return {
+      sideName,
+      type: 'FileAddition',
+      doc
+    }
+  } else {
+    return {
+      sideName,
+      type: 'DirAddition',
+      doc
+    }
   }
 }
 
-function trashed(doc /*: Metadata */, was /*: Metadata */) /*: * */ {
-  return {
-    sideName,
-    type: metadata.isFile(doc) ? 'FileTrashing' : 'DirTrashing',
-    doc,
-    was
+function trashed(
+  doc /*: Metadata */,
+  was /*: Metadata */
+) /*: RemoteFileTrashing | RemoteDirTrashing */ {
+  if (metadata.isFile(doc)) {
+    return {
+      sideName,
+      type: 'FileTrashing',
+      doc,
+      was
+    }
+  } else {
+    return {
+      sideName,
+      type: 'DirTrashing',
+      doc,
+      was
+    }
   }
 }
 
-function deleted(doc /*: Metadata */) /*: * */ {
-  return {
-    sideName,
-    type: metadata.isFile(doc) ? 'FileDeletion' : 'DirDeletion',
-    doc
+function deleted(
+  doc /*: Metadata */
+) /*: RemoteFileDeletion | RemoteDirDeletion */ {
+  if (metadata.isFile(doc)) {
+    return {
+      sideName,
+      type: 'FileDeletion',
+      doc
+    }
+  } else {
+    return {
+      sideName,
+      type: 'DirDeletion',
+      doc
+    }
   }
 }
 
-function restored(doc /*: Metadata */, was /*: Metadata */) /*: * */ {
-  return {
-    sideName,
-    type: metadata.isFile(doc) ? 'FileRestoration' : 'DirRestoration',
-    doc,
-    was
+function restored(
+  doc /*: Metadata */,
+  was /*: Metadata */
+) /*: RemoteFileRestoration | RemoteDirRestoration */ {
+  if (metadata.isFile(doc)) {
+    return {
+      sideName,
+      type: 'FileRestoration',
+      doc,
+      was
+    }
+  } else {
+    return {
+      sideName,
+      type: 'DirRestoration',
+      doc,
+      was
+    }
   }
 }
 
-function upToDate(doc /*: Metadata */, was /*: Metadata */) /*: * */ {
+function upToDate(
+  doc /*: Metadata */,
+  was /*: Metadata */
+) /*: RemoteUpToDate */ {
   return { sideName, type: 'UpToDate', doc, was }
 }
 
-function updated(doc /*: Metadata */) /*: * */ {
-  return {
-    sideName,
-    type: metadata.isFile(doc) ? 'FileUpdate' : 'DirAddition',
-    doc
+function updated(
+  doc /*: Metadata */
+) /*: RemoteFileUpdate | RemoteDirAddition */ {
+  if (metadata.isFile(doc)) {
+    return {
+      sideName,
+      type: 'FileUpdate',
+      doc
+    }
+  } else {
+    return {
+      sideName,
+      type: 'DirAddition',
+      doc
+    }
   }
 }
 
