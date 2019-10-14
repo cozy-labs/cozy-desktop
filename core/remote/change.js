@@ -30,7 +30,7 @@ export type RemoteFileMove = {
   doc: Metadata,
   was: Metadata,
   needRefetch?: true,
-  update?: true
+  update?: boolean
 }
 export type RemoteFileRestoration = {
   sideName: 'remote',
@@ -105,7 +105,7 @@ export type RemoteDescendantChange = {
   was: Metadata,
   ancestorPath: string,
   descendantMoves?: RemoteDescendantChange[],
-  update?: true
+  update?: boolean
 }
 
 export type RemoteChange =
