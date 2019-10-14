@@ -172,10 +172,12 @@ class RemoteWatcher {
     olds /*: Array<Metadata> */
   ) {
     const changes /*: Array<RemoteChange> */ = []
+    const originalMoves = []
+
     const oldsByRemoteId = _.keyBy(olds, 'remote._id')
     for (const remoteDoc of remoteDocs) {
       const was /*: ?Metadata */ = oldsByRemoteId[remoteDoc._id]
-      changes.push(this.identifyChange(remoteDoc, was, changes))
+      changes.push(this.identifyChange(remoteDoc, was, changes, originalMoves))
     }
 
     return changes
@@ -184,7 +186,8 @@ class RemoteWatcher {
   identifyChange(
     remoteDoc /*: RemoteDoc|RemoteDeletion */,
     was /*: ?Metadata */,
-    previousChanges /*: Array<RemoteChange> */
+    previousChanges /*: Array<RemoteChange> */,
+    originalMoves /*: Array<RemoteDirMove> */
   ) /*: RemoteChange */ {
     const oldpath /*: ?string */ = was && was.path
     log.debug(
@@ -232,7 +235,8 @@ class RemoteWatcher {
         return this.identifyExistingDocChange(
           remoteDoc,
           was,
-          previousChanges
+          previousChanges,
+          originalMoves
         )
       }
     }
@@ -251,7 +255,8 @@ class RemoteWatcher {
   identifyExistingDocChange(
     remoteDoc /*: RemoteDoc */,
     was /*: ?Metadata */,
-    previousChanges /*: Array<RemoteChange> */
+    previousChanges /*: Array<RemoteChange> */,
+    originalMoves /*: Array<RemoteDirMove> */
   ) /*: RemoteChange */ {
     let doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
     try {
@@ -352,13 +357,14 @@ class RemoteWatcher {
       }
     }
     // It's a move
-    return this.squashMoves(doc, was, previousChanges)
+    return this.squashMoves(doc, was, previousChanges, originalMoves)
   }
 
   squashMoves(
     doc /*: Metadata */,
     was /*: Metadata */,
-    previousChanges /*: RemoteChange[] */
+    previousChanges /*: RemoteChange[] */,
+    originalMoves /*: RemoteDirMove[] */
   ) /*: RemoteDirMove|RemoteFileMove|RemoteDescendantChange */ {
     if (doc.docType === 'file') {
       const change /*: RemoteFileMove */ = {
@@ -367,9 +373,11 @@ class RemoteWatcher {
         doc,
         was
       }
+      const originalParent = originalMoves.find(move =>
+        remoteChange.isChildMove(move, change)
+      )
       if (was.md5sum !== doc.md5sum) change.update = true // move + change
 
-      // Squash moves
       for (const previousChange of previousChanges) {
         if (
           previousChange.type === 'FileTrashing' &&
@@ -405,7 +413,26 @@ class RemoteWatcher {
             return change // FileMove
           }
         }
+
+        if (originalParent) {
+          if (remoteChange.isOnlyChildMove(originalParent, change)) {
+            const descendantChange = {
+              sideName,
+              type: 'DescendantChange',
+              update: change.update,
+              doc,
+              was,
+              ancestorPath: _.get(previousChange, 'doc.path')
+            }
+            remoteChange.includeDescendant(originalParent, descendantChange)
+            return descendantChange
+          } else {
+            remoteChange.applyMoveInsideMove(originalParent, change)
+            return change // FileMove
+          }
+        }
       }
+
       return change
     } else {
       const change /*: RemoteDirMove */ = {
@@ -414,6 +441,9 @@ class RemoteWatcher {
         doc,
         was
       }
+      const originalParent = originalMoves.find(move =>
+        remoteChange.isChildMove(move, change)
+      )
 
       for (const previousChange of previousChanges) {
         if (
@@ -434,6 +464,8 @@ class RemoteWatcher {
           previousChange.type === 'DirMove' &&
           remoteChange.isChildMove(previousChange, change)
         ) {
+          originalMoves.push(_.cloneDeep(change))
+
           if (remoteChange.isOnlyChildMove(previousChange, change)) {
             const descendantChange = {
               sideName,
@@ -455,6 +487,8 @@ class RemoteWatcher {
             previousChange.type === 'FileMove') &&
           remoteChange.isChildMove(change, previousChange)
         ) {
+          originalMoves.push(_.cloneDeep(previousChange))
+
           if (remoteChange.isOnlyChildMove(change, previousChange)) {
             _.assign(previousChange, {
               type: 'DescendantChange',
@@ -466,7 +500,27 @@ class RemoteWatcher {
             remoteChange.applyMoveInsideMove(change, previousChange)
           }
         }
+
+        if (originalParent) {
+          originalMoves.push(_.cloneDeep(change))
+
+          if (remoteChange.isOnlyChildMove(originalParent, change)) {
+            const descendantChange = {
+              sideName,
+              type: 'DescendantChange',
+              doc,
+              was,
+              ancestorPath: _.get(previousChange, 'doc.path')
+            }
+            remoteChange.includeDescendant(originalParent, descendantChange)
+            return descendantChange
+          } else {
+            remoteChange.applyMoveInsideMove(originalParent, change)
+            return change
+          }
+        }
       }
+
       return change
     }
   }
