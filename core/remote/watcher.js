@@ -20,7 +20,7 @@ import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { RemoteCozy } from './cozy'
 import type { Metadata, RemoteRevisionsByID } from '../metadata'
-import type { RemoteChange, RemoteFileMove, RemoteDirMove } from './change'
+import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from './change'
 import type { RemoteDoc, RemoteDeletion } from './document'
 */
 
@@ -351,6 +351,15 @@ class RemoteWatcher {
         return remoteChange.updated(doc)
       }
     }
+    // It's a move
+    return this.squashMoves(doc, was, previousChanges)
+  }
+
+  squashMoves(
+    doc /*: Metadata */,
+    was /*: Metadata */,
+    previousChanges /*: RemoteChange[] */
+  ) /*: RemoteDirMove|RemoteFileMove|RemoteDescendantChange */ {
     if (doc.docType === 'file') {
       const change /*: RemoteFileMove */ = {
         sideName,
@@ -399,14 +408,12 @@ class RemoteWatcher {
       }
       return change
     } else {
-      // doc.docType === 'folder'
       const change /*: RemoteDirMove */ = {
         sideName,
         type: 'DirMove',
         doc,
         was
       }
-      // Squash moves
 
       for (const previousChange of previousChanges) {
         if (
