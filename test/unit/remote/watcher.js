@@ -1457,7 +1457,7 @@ describe('RemoteWatcher', function() {
       )
 
       should(change.type).equal('FileMove')
-      should(change).not.have.property('update')
+      should(change).have.property('update', false)
       // $FlowFixMe
       const src = change.was
       should(src).have.properties({
