@@ -6,20 +6,126 @@ const should = require('should')
 const remoteChange = require('../../../core/remote/change')
 
 describe('remote change sort', () => {
-  it('sort correctly move inside move', () => {
-    const parent = {
-      doc: { path: path.normalize('parent/dst/dir') },
-      type: 'DirMove',
-      was: { path: path.normalize('parent/src/dir') }
-    }
-    const child = {
-      doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed') },
-      type: 'FileMove',
-      was: { path: path.normalize('parent/dst/dir/subdir/file') }
-    }
-    const a = [child, parent]
-    remoteChange.sort(a)
-    should(a).deepEqual([parent, child])
+  describe('with movee inside move', () => {
+    const expected = [
+      {
+        doc: { path: path.normalize('parent/dst/dir') },
+        type: 'DirMove',
+        was: { path: path.normalize('parent/src/dir') }
+      },
+      {
+        doc: { path: path.normalize('parent/dst/dir/empty-subdir') },
+        type: 'DescendantChange',
+        was: { path: path.normalize('parent/src/dir/empty-subdir') }
+      },
+      {
+        doc: { path: path.normalize('parent/dst/dir/subdir') },
+        type: 'DescendantChange',
+        was: { path: path.normalize('parent/src/dir/subdir') }
+      },
+      {
+        doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed') },
+        type: 'FileMove',
+        was: { path: path.normalize('parent/dst/dir/subdir/file') }
+      },
+      {
+        doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed2') },
+        type: 'FileMove',
+        was: { path: path.normalize('parent/dst/dir/subdir/file2') }
+      }
+    ]
+
+    it('sorts parents before children', () => {
+      const order1 = [
+        {
+          doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed2') },
+          type: 'FileMove',
+          was: { path: path.normalize('parent/dst/dir/subdir/file2') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir/empty-subdir') },
+          type: 'DescendantChange',
+          was: { path: path.normalize('parent/src/dir/empty-subdir') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir/subdir') },
+          type: 'DescendantChange',
+          was: { path: path.normalize('parent/src/dir/subdir') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed') },
+          type: 'FileMove',
+          was: { path: path.normalize('parent/dst/dir/subdir/file') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir') },
+          type: 'DirMove',
+          was: { path: path.normalize('parent/src/dir') }
+        }
+      ]
+      remoteChange.sort(order1)
+      should(order1).deepEqual(expected)
+
+      const order2 = [
+        {
+          doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed2') },
+          type: 'FileMove',
+          was: { path: path.normalize('parent/dst/dir/subdir/file2') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir/empty-subdir') },
+          type: 'DescendantChange',
+          was: { path: path.normalize('parent/src/dir/empty-subdir') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed') },
+          type: 'FileMove',
+          was: { path: path.normalize('parent/dst/dir/subdir/file') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir/subdir') },
+          type: 'DescendantChange',
+          was: { path: path.normalize('parent/src/dir/subdir') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir') },
+          type: 'DirMove',
+          was: { path: path.normalize('parent/src/dir') }
+        }
+      ]
+      remoteChange.sort(order2)
+      should(order2).deepEqual(expected)
+
+      const order3 = [
+        {
+          doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed') },
+          type: 'FileMove',
+          was: { path: path.normalize('parent/dst/dir/subdir/file') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir/subdir') },
+          type: 'DescendantChange',
+          was: { path: path.normalize('parent/src/dir/subdir') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir/empty-subdir') },
+          type: 'DescendantChange',
+          was: { path: path.normalize('parent/src/dir/empty-subdir') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir') },
+          type: 'DirMove',
+          was: { path: path.normalize('parent/src/dir') }
+        },
+        {
+          doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed2') },
+          type: 'FileMove',
+          was: { path: path.normalize('parent/dst/dir/subdir/file2') }
+        }
+      ]
+      remoteChange.sort(order3)
+      should(order3).deepEqual(expected)
+    })
   })
 
   describe('sorts deleted before created for the same path', () => {
