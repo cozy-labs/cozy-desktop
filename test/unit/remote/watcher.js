@@ -953,8 +953,7 @@ describe('RemoteWatcher', function() {
           .remoteRev(1)
           .build()
       ]
-      const changes = []
-      this.watcher.identifyAll(remoteDocs, olds, changes)
+      const changes = this.watcher.identifyAll(remoteDocs, olds)
 
       const changeInfo = change => ({
         doc: { path: change.doc.path },
