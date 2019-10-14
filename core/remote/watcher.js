@@ -157,10 +157,8 @@ class RemoteWatcher {
     remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */,
     olds /*: Array<Metadata> */
   ) /*: Array<RemoteChange> */ {
-    const changes /*: Array<RemoteChange> */ = []
-
     log.trace('Contextualize and analyse changesfeed results...')
-    this.identifyAll(remoteDocs, olds, changes)
+    const changes = this.identifyAll(remoteDocs, olds)
     log.trace('Done with analysis.')
 
     log.trace('Sort changes...')
@@ -171,14 +169,16 @@ class RemoteWatcher {
 
   identifyAll(
     remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */,
-    olds /*: Array<Metadata> */,
-    changes /*: Array<RemoteChange> */
+    olds /*: Array<Metadata> */
   ) {
+    const changes /*: Array<RemoteChange> */ = []
     const oldsByRemoteId = _.keyBy(olds, 'remote._id')
     for (const remoteDoc of remoteDocs) {
       const was /*: ?Metadata */ = oldsByRemoteId[remoteDoc._id]
       changes.push(this.identifyChange(remoteDoc, was, changes))
     }
+
+    return changes
   }
 
   identifyChange(
