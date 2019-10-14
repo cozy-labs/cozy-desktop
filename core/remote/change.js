@@ -247,32 +247,31 @@ function updated(
   }
 }
 
-// TODO: Rename args
 function isChildMove(
-  a /*: RemoteChange */,
-  b /*: RemoteChange */
+  p /*: RemoteChange */,
+  c /*: RemoteChange */
 ) /*: boolean %checks */ {
   return (
-    a.type === 'DirMove' &&
-    (b.type === 'DirMove' || b.type === 'FileMove') &&
-    b.doc.path.startsWith(a.doc.path + path.sep) &&
-    a.was &&
-    b.was &&
-    b.was.path.startsWith(a.was.path + path.sep)
+    p.type === 'DirMove' &&
+    (c.type === 'DirMove' || c.type === 'FileMove') &&
+    c.doc.path.startsWith(p.doc.path + path.sep) &&
+    p.was &&
+    c.was &&
+    c.was.path.startsWith(p.was.path + path.sep)
   )
 }
 
 /**
  *          was          doc
- *     a    /a     ->    /a2
- *     b    /a/b   ->    /a2/b
+ *     p    /p     ->    /p2
+ *     c    /p/c   ->    /p2/c
  */
 function isOnlyChildMove(
-  a /*: RemoteDirMove */,
-  b /*: RemoteFileMove|RemoteDirMove */
+  p /*: RemoteDirMove */,
+  c /*: RemoteFileMove|RemoteDirMove */
 ) /*: boolean %checks */ {
   return (
-    isChildMove(a, b) && path.basename(b.doc.path) === path.basename(b.was.path)
+    isChildMove(p, c) && path.basename(c.doc.path) === path.basename(c.was.path)
   )
 }
 
