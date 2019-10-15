@@ -272,12 +272,14 @@ async function runRemote(scenario, helpers) {
   await helpers.remote.pullChanges()
   // TODO: Don't sync when scenario doesn't have target FS/trash assertions?
   await helpers.syncAll()
-  // Wait for all local events to be dispatched
-  await Promise.delay(500)
   if (process.platform === 'darwin') {
+    // Wait for all local events to be dispatched
+    await Promise.delay(1500)
     // $FlowFixMe buffer is defined in ChokidarWatcher
     await helpers.local.side.watcher.buffer.flush()
   } else {
+    // Wait for all local events to be dispatched
+    await Promise.delay(500)
     await helpers.local.simulateAtomEvents([])
   }
   await helpers.local.side.watcher.stop()
