@@ -7,21 +7,21 @@ const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const _ = require('lodash')
 
-const metadata = require('../metadata')
-const { MergeMissingParentError } = require('../merge')
-const remoteChange = require('./change')
-const { handleCommonCozyErrors } = require('./cozy')
-const { inRemoteTrash } = require('./document')
-const logger = require('../utils/logger')
+const metadata = require('../../metadata')
+const { MergeMissingParentError } = require('../../merge')
+const remoteChange = require('../change')
+const { handleCommonCozyErrors } = require('../cozy')
+const { inRemoteTrash } = require('../document')
+const logger = require('../../utils/logger')
 
 /*::
 import type EventEmitter from 'events'
-import type { Pouch } from '../pouch'
-import type Prep from '../prep'
-import type { RemoteCozy } from './cozy'
-import type { Metadata, RemoteRevisionsByID } from '../metadata'
-import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from './change'
-import type { RemoteDoc, RemoteDeletion } from './document'
+import type { Pouch } from '../../pouch'
+import type Prep from '../../prep'
+import type { RemoteCozy } from '../cozy'
+import type { Metadata, RemoteRevisionsByID } from '../../metadata'
+import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from '../change'
+import type { RemoteDoc, RemoteDeletion } from '../document'
 */
 
 const log = logger({
