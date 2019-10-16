@@ -37,6 +37,12 @@ const log = Desktop.logger({
 })
 process.on('uncaughtException', err => log.error(err))
 
+const mainInstance = app.requestSingleInstanceLock()
+if (!mainInstance && !process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
+  log.warn('Cozy Drive is already running. Exiting...')
+  app.exit()
+}
+
 let desktop
 let state = 'not-configured'
 let errorMessage = ''
@@ -67,7 +73,7 @@ const showWindowStartApp = () => {
 
 const showWindow = bounds => {
   if (revokedAlertShown || syncDirUnlinkedShown) return
-  if (updaterWindow.shown()) return updaterWindow.focus()
+  if (updaterWindow && updaterWindow.shown()) return updaterWindow.focus()
   if (!desktop.config.syncPath) {
     onboardingWindow.show(bounds)
     // registration is done, but we need a syncPath
@@ -320,16 +326,12 @@ const startSync = force => {
   })
 }
 
-if (!process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
-  const shouldExit = app.makeSingleInstance(() => showWindow())
-  if (shouldExit) {
-    log.warn('Cozy Drive is already running. Exiting...')
-    app.exit()
-  }
-}
-
 const dumbhash = k =>
   k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
+
+app.on('second-instance', () => {
+  showWindow()
+})
 
 app.on('ready', () => {
   // Once configured and running in the tray, the app doesn't need to be
@@ -368,24 +370,23 @@ app.on('ready', () => {
       onboardingWindow.hide()
       trayWindow.show().then(() => startSync())
     })
-    log.trace('Setting up updater WM...')
-    updaterWindow = new UpdaterWM(app, desktop)
-    updaterWindow.onUpToDate(() => {
-      updaterWindow.hide()
-      showWindowStartApp()
-    })
-    if (process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
-      updaterWindow.hide()
-      showWindowStartApp()
-    } else {
+    if (app.isPackaged) {
+      log.trace('Setting up updater WM...')
+      updaterWindow = new UpdaterWM(app, desktop)
+      updaterWindow.onUpToDate(() => {
+        updaterWindow.hide()
+        showWindowStartApp()
+      })
       updaterWindow.checkForUpdates()
+      setInterval(() => {
+        updaterWindow.checkForUpdates()
+      }, DAILY)
+    } else {
+      showWindowStartApp()
     }
 
     // Os X wants all application to have a menu
     Menu.setApplicationMenu(buildAppMenu(app))
-    setInterval(() => {
-      updaterWindow.checkForUpdates()
-    }, DAILY)
 
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.

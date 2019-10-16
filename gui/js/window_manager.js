@@ -125,12 +125,17 @@ module.exports = class WindowManager {
   create() {
     this.log.debug('create')
     const opts = this.windowOptions()
+    opts.webPreferences = {
+      ...opts.webPreferences,
+      nodeIntegration: true
+    }
     // https://github.com/AppImage/AppImageKit/wiki/Bundling-Electron-apps
     if (process.platform === 'linux') {
       opts.icon = path.join(__dirname, '../images/icon.png')
     }
     this.win = new BrowserWindow({
       ...opts,
+      autoHideMenuBar: true,
       show: false
     })
     this.win.on('unresponsive', () => {

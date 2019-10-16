@@ -208,10 +208,7 @@ class LocalWatcher {
     )
     log.trace('Done with events preparation.')
 
-    const changes /*: LocalChange[] */ = analysis(
-      preparedEvents,
-      this.pendingChanges
-    )
+    const changes /*: LocalChange[] */ = analysis(preparedEvents, this)
 
     // TODO: Don't even acquire lock changes list is empty
     // FIXME: Shouldn't we acquire the lock before preparing the events?

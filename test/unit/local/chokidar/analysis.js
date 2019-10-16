@@ -23,7 +23,7 @@ describe('core/local/chokidar/analysis', function() {
       it('may happen when all events were dropped', () => {
         const events /*: LocalEvent[] */ = []
         const pendingChanges /*: LocalChange[] */ = []
-        const result /*: LocalChange[] */ = analysis(events, pendingChanges)
+        const result /*: LocalChange[] */ = analysis(events, { pendingChanges })
         should(result).have.length(0)
       })
     })
@@ -39,7 +39,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        const changes = analysis(events, pendingChanges)
+        const changes = analysis(events, { pendingChanges })
         should({ changes, pendingChanges }).deepEqual({
           changes: [
             {
@@ -65,7 +65,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'DirAddition',
@@ -95,7 +95,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'DirAddition',
@@ -128,7 +128,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        const changes = analysis(events, pendingChanges)
+        const changes = analysis(events, { pendingChanges })
 
         should({ changes, pendingChanges }).deepEqual({
           changes: [
@@ -166,7 +166,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([])
+        should(analysis(events, { pendingChanges })).deepEqual([])
         should(pendingChanges).deepEqual([
           {
             sideName,
@@ -182,7 +182,7 @@ describe('core/local/chokidar/analysis', function() {
         const nextEvents /*: LocalEvent[] */ = [
           { type: 'unlink', path: 'dst1' }
         ]
-        should(analysis(nextEvents, pendingChanges)).deepEqual([
+        should(analysis(nextEvents, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'FileDeletion',
@@ -211,7 +211,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'FileMove',
@@ -239,7 +239,7 @@ describe('core/local/chokidar/analysis', function() {
           { type: 'add', path: 'dst', stats, md5sum }
         ]
         const pendingChanges /*: LocalChange[] */ = []
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'FileMove',
@@ -268,7 +268,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'FileMove',
@@ -284,7 +284,7 @@ describe('core/local/chokidar/analysis', function() {
         const nextEvents /*: LocalEvent[] */ = [
           { type: 'unlink', path: 'dst1' }
         ]
-        should(analysis(nextEvents, pendingChanges)).deepEqual([])
+        should(analysis(nextEvents, { pendingChanges })).deepEqual([])
         should(pendingChanges).deepEqual([])
       })
     })
@@ -304,7 +304,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([])
+        should(analysis(events, { pendingChanges })).deepEqual([])
         should(pendingChanges).deepEqual([
           {
             sideName,
@@ -336,7 +336,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'FileMove',
@@ -367,7 +367,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'FileMove',
@@ -405,7 +405,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             update: {
@@ -452,7 +452,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        const changes = analysis(events, pendingChanges)
+        const changes = analysis(events, { pendingChanges })
 
         should({ changes, pendingChanges }).deepEqual({
           changes: [
@@ -486,7 +486,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'FileMove',
@@ -521,7 +521,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'FileAddition',
@@ -550,7 +550,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'DirMove',
@@ -577,7 +577,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'DirMove',
@@ -606,7 +606,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'DirMove',
@@ -635,7 +635,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([])
+        should(analysis(events, { pendingChanges })).deepEqual([])
         should(pendingChanges).deepEqual([
           {
             sideName,
@@ -666,7 +666,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'DirMove',
@@ -689,7 +689,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'DirMove',
@@ -742,7 +742,7 @@ describe('core/local/chokidar/analysis', function() {
           }
         ]
         const pendingChanges = []
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'DirMove',
@@ -798,7 +798,7 @@ describe('core/local/chokidar/analysis', function() {
           }
         ]
         const pendingChanges = []
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'DirMove',
@@ -842,7 +842,7 @@ describe('core/local/chokidar/analysis', function() {
         ]
         const pendingChanges = []
 
-        should(analysis(events, pendingChanges)).deepEqual([
+        should(analysis(events, { pendingChanges })).deepEqual([
           {
             sideName,
             type: 'DirAddition',
@@ -857,135 +857,167 @@ describe('core/local/chokidar/analysis', function() {
   })
 
   describe('Sorting', () => {
-    it('sorts correctly unlink + add + move dir', () => {
-      const dirStats = { ino: 1 }
-      const fileStats = { ino: 2 }
-      const newFileStats = { ino: 3 }
-
-      const oldDirPath = 'root/src/dir'
-      const oldFilePath = 'root/src/dir/file.rtf'
-      const newDirPath = 'root/dir'
-      const newFilePath = 'root/dir/file.rtf'
-
-      const dirMetadata /*: Metadata */ = builders
-        .metadir()
-        .path(oldDirPath)
-        .ino(dirStats.ino)
-        .build()
-      const fileMetadata /*: Metadata */ = builders
-        .metafile()
-        .path(oldFilePath)
-        .ino(fileStats.ino)
-        .build()
-
-      const events /*: LocalEvent[] */ = [
-        { type: 'addDir', path: newDirPath, stats: dirStats },
-        { type: 'add', path: newFilePath, stats: newFileStats },
-        { type: 'unlinkDir', path: oldDirPath, old: dirMetadata },
-        { type: 'unlink', path: oldFilePath, old: fileMetadata }
-      ]
-      const pendingChanges /*: LocalChange[] */ = []
-
-      const changes = analysis(events, pendingChanges)
-      changes
-        .map(change => change.type)
-        .should.deepEqual(['DirMove', 'FileAddition', 'FileDeletion'])
-    })
-
-    it('sorts actions', () => {
-      const normalizer = x => {
-        x.path = path.normalize(x.path)
-        if (x.old) x.old.path = path.normalize(x.old.path)
-        return x
-      }
-
-      const dirStats = { ino: 1 }
-      const subdirStats = { ino: 2 }
-      const fileStats = { ino: 3 }
-      const otherFileStats = { ino: 4 }
-      const otherDirStats = { ino: 5 }
-      const dirMetadata /*: Metadata */ = normalizer(
-        builders
+    describe('using the initial scan sorter', () => {
+      it('sorts correctly move a to b + add b/child', () => {
+        const dirStats = { ino: 3 }
+        const dir = builders
           .metadir()
-          .path('src')
+          .path('src/dir')
           .ino(dirStats.ino)
           .build()
-      )
-      const subdirMetadata /*: Metadata */ = normalizer(
-        builders
+
+        const events /*: LocalEvent[] */ = [
+          { type: 'unlinkDir', path: dir.path, old: dir },
+          { type: 'addDir', path: 'dst', stats: { ino: 1 } },
+          { type: 'addDir', path: 'src', stats: { ino: 2 } },
+          { type: 'addDir', path: 'dst/dir', stats: dirStats },
+          { type: 'addDir', path: 'dst/dir/childDir', stats: { ino: 4 } }
+        ]
+        const pendingChanges /*: LocalChange[] */ = []
+
+        const changes = analysis(events, { pendingChanges, initialScan: true })
+        changes
+          .map(change => [change.type, change.path])
+          .should.deepEqual([
+            ['DirAddition', 'dst'],
+            ['DirMove', 'dst/dir'],
+            ['DirAddition', 'dst/dir/childDir'],
+            ['DirAddition', 'src']
+          ])
+      })
+    })
+
+    describe('using the default sorter', () => {
+      it('sorts correctly unlink + add + move dir', () => {
+        const dirStats = { ino: 1 }
+        const fileStats = { ino: 2 }
+        const newFileStats = { ino: 3 }
+
+        const oldDirPath = 'root/src/dir'
+        const oldFilePath = 'root/src/dir/file.rtf'
+        const newDirPath = 'root/dir'
+        const newFilePath = 'root/dir/file.rtf'
+
+        const dirMetadata /*: Metadata */ = builders
           .metadir()
-          .path('src/subdir')
-          .ino(subdirStats.ino)
+          .path(oldDirPath)
+          .ino(dirStats.ino)
           .build()
-      )
-      const fileMetadata /*: Metadata */ = normalizer(
-        builders
+        const fileMetadata /*: Metadata */ = builders
           .metafile()
-          .path('src/file')
+          .path(oldFilePath)
           .ino(fileStats.ino)
           .build()
-      )
-      const otherFileMetadata /*: Metadata */ = normalizer(
-        builders
-          .metafile()
-          .path('other-file')
-          .ino(otherFileStats.ino)
-          .build()
-      )
-      const otherDirMetadata /*: Metadata */ = normalizer(
-        builders
-          .metadir()
-          .path('other-dir-src')
-          .ino(otherDirStats.ino)
-          .build()
-      )
-      const events /*: LocalEvent[] */ = [
-        { type: 'unlinkDir', path: 'src/subdir', old: subdirMetadata },
-        { type: 'unlinkDir', path: 'src', old: dirMetadata },
-        { type: 'addDir', path: 'dst', stats: dirStats },
-        { type: 'addDir', path: 'dst/subdir', stats: subdirStats },
-        { type: 'unlink', path: 'src/file', old: fileMetadata },
-        { type: 'add', path: 'dst/file', stats: fileStats },
-        {
-          type: 'change',
-          path: 'other-file',
-          stats: otherFileStats,
-          md5sum: 'yolo',
-          old: otherFileMetadata
-        },
-        { type: 'unlinkDir', path: 'other-dir-src', old: otherDirMetadata },
-        { type: 'addDir', path: 'other-dir-dst', stats: otherDirStats }
-      ].map(normalizer)
-      const pendingChanges /*: LocalChange[] */ = []
 
-      should(analysis(events, pendingChanges)).deepEqual([
-        {
-          sideName,
-          type: 'DirMove',
-          path: 'dst',
-          stats: dirStats,
-          ino: dirStats.ino,
-          old: dirMetadata,
-          wip: undefined
-        },
-        {
-          sideName,
-          type: 'DirMove',
-          path: 'other-dir-dst',
-          stats: otherDirStats,
-          ino: otherDirStats.ino,
-          old: otherDirMetadata
-        },
-        {
-          sideName,
-          type: 'FileUpdate',
-          path: 'other-file',
-          stats: otherFileStats,
-          ino: otherFileStats.ino,
-          md5sum: 'yolo',
-          old: otherFileMetadata
+        const events /*: LocalEvent[] */ = [
+          { type: 'addDir', path: newDirPath, stats: dirStats },
+          { type: 'add', path: newFilePath, stats: newFileStats },
+          { type: 'unlinkDir', path: oldDirPath, old: dirMetadata },
+          { type: 'unlink', path: oldFilePath, old: fileMetadata }
+        ]
+        const pendingChanges /*: LocalChange[] */ = []
+
+        const changes = analysis(events, { pendingChanges })
+        changes
+          .map(change => change.type)
+          .should.deepEqual(['DirMove', 'FileAddition', 'FileDeletion'])
+      })
+
+      it('sorts actions', () => {
+        const normalizer = x => {
+          x.path = path.normalize(x.path)
+          if (x.old) x.old.path = path.normalize(x.old.path)
+          return x
         }
-      ])
+
+        const dirStats = { ino: 1 }
+        const subdirStats = { ino: 2 }
+        const fileStats = { ino: 3 }
+        const otherFileStats = { ino: 4 }
+        const otherDirStats = { ino: 5 }
+        const dirMetadata /*: Metadata */ = normalizer(
+          builders
+            .metadir()
+            .path('src')
+            .ino(dirStats.ino)
+            .build()
+        )
+        const subdirMetadata /*: Metadata */ = normalizer(
+          builders
+            .metadir()
+            .path('src/subdir')
+            .ino(subdirStats.ino)
+            .build()
+        )
+        const fileMetadata /*: Metadata */ = normalizer(
+          builders
+            .metafile()
+            .path('src/file')
+            .ino(fileStats.ino)
+            .build()
+        )
+        const otherFileMetadata /*: Metadata */ = normalizer(
+          builders
+            .metafile()
+            .path('other-file')
+            .ino(otherFileStats.ino)
+            .build()
+        )
+        const otherDirMetadata /*: Metadata */ = normalizer(
+          builders
+            .metadir()
+            .path('other-dir-src')
+            .ino(otherDirStats.ino)
+            .build()
+        )
+        const events /*: LocalEvent[] */ = [
+          { type: 'unlinkDir', path: 'src/subdir', old: subdirMetadata },
+          { type: 'unlinkDir', path: 'src', old: dirMetadata },
+          { type: 'addDir', path: 'dst', stats: dirStats },
+          { type: 'addDir', path: 'dst/subdir', stats: subdirStats },
+          { type: 'unlink', path: 'src/file', old: fileMetadata },
+          { type: 'add', path: 'dst/file', stats: fileStats },
+          {
+            type: 'change',
+            path: 'other-file',
+            stats: otherFileStats,
+            md5sum: 'yolo',
+            old: otherFileMetadata
+          },
+          { type: 'unlinkDir', path: 'other-dir-src', old: otherDirMetadata },
+          { type: 'addDir', path: 'other-dir-dst', stats: otherDirStats }
+        ].map(normalizer)
+        const pendingChanges /*: LocalChange[] */ = []
+
+        should(analysis(events, { pendingChanges })).deepEqual([
+          {
+            sideName,
+            type: 'DirMove',
+            path: 'dst',
+            stats: dirStats,
+            ino: dirStats.ino,
+            old: dirMetadata,
+            wip: undefined
+          },
+          {
+            sideName,
+            type: 'DirMove',
+            path: 'other-dir-dst',
+            stats: otherDirStats,
+            ino: otherDirStats.ino,
+            old: otherDirMetadata
+          },
+          {
+            sideName,
+            type: 'FileUpdate',
+            path: 'other-file',
+            stats: otherFileStats,
+            ino: otherFileStats.ino,
+            md5sum: 'yolo',
+            old: otherFileMetadata
+          }
+        ])
+      })
     })
   })
 })

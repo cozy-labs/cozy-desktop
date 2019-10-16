@@ -125,6 +125,7 @@
   box-sizing border-box
   font-size .8em
   overflow-x hidden
+  flex: 1
 
   a:not(.btn)
     color blue
@@ -237,15 +238,13 @@
         &.file-type-{mimetype}
             background-image url("./images/type-icons/icon-type-" + mimetype + ".svg")
 
-  .file-name-wrapper
-    display table
-    width   100%
-    border-collapse collapse
+  .file-line-content
     overflow hidden
     text-overflow ellipsis
     white-space nowrap
-    width 100%
-    max-width 1px
+    display inline-block
+
+  .file-name-wrapper
     font-size: 1.1em
 
     .file-name-name
@@ -256,12 +255,8 @@
       color #95999d
 
   .file-extra
-    overflow hidden
-    text-overflow ellipsis
-    white-space nowrap
     font-size: 0.9em
     color #95999d
-    display inline-block
 
     .file-time-ago::after
       content ' · '

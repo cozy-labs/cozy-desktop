@@ -241,8 +241,8 @@ function delPath(a /*: LocalChange */) /*: ?string */ {
 function updatePath(a /*: LocalChange */) /*: ?string */ {
   return isUpdate(a) ? a.path : null
 }
-function childOf(p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ {
-  return p1 != null && p2 != null && p2 !== p1 && p2.startsWith(p1 + path.sep)
+function childOf(p /*: ?string */, c /*: ?string */) /*: boolean */ {
+  return p != null && c != null && c !== p && c.startsWith(p + path.sep)
 }
 function lower(p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ {
   return p1 != null && p2 != null && p2 !== p1 && p1 < p2

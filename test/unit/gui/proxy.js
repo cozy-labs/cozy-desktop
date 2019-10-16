@@ -88,7 +88,9 @@ describe('gui/js/proxy', function() {
     }
     const revertProxySideEffects = done => {
       global.fetch = proxySideEffects.originalFetch
+      http.Agent.globalAgent = http.globalAgent = new http.Agent()
       http.request = proxySideEffects.originalHttpRequest
+      https.Agent.globalAgent = https.globalAgent = new https.Agent()
       https.request = proxySideEffects.originalHttpsRequest
       for (const event of [
         'select-client-certificate',

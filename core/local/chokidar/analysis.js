@@ -47,6 +47,7 @@ import type {
   LocalFileDeletion,
   LocalFileMove
 } from './local_change'
+import type { InitialScan } from './initial_scan'
 */
 
 const log = logger({
@@ -55,12 +56,15 @@ const log = logger({
 
 module.exports = function analysis(
   events /*: LocalEvent[] */,
-  pendingChanges /*: LocalChange[] */
+  {
+    pendingChanges,
+    initialScan
+  } /*: { pendingChanges: LocalChange[], initialScan: ?InitialScan } */
 ) /*: LocalChange[] */ {
   const changes /*: LocalChange[] */ = analyseEvents(events, pendingChanges)
   sortBeforeSquash(changes)
   squashMoves(changes)
-  finalSort(changes)
+  sortChanges(changes, initialScan != null)
   return separatePendingChanges(changes, pendingChanges)
 }
 
@@ -394,79 +398,118 @@ function separatePendingChanges(
   return []
 }
 
-const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
-  if (a.wip && !b.wip) return -1
-  if (b.wip && !a.wip) return 1
+const aFirst = -1
+const bFirst = 1
+
+const initialScanSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
+  if (a.wip && !b.wip) return aFirst
+  if (b.wip && !a.wip) return bFirst
+
+  if (localChange.isChildAdd(a, b)) return aFirst
+  if (localChange.isChildAdd(b, a)) return bFirst
+
+  if (
+    (a.type === 'FileDeletion' || a.type === 'DirDeletion') &&
+    b.type !== 'FileDeletion' &&
+    b.type !== 'DirDeletion'
+  )
+    return bFirst
+  if (
+    (b.type === 'FileDeletion' || b.type === 'DirDeletion') &&
+    a.type !== 'FileDeletion' &&
+    a.type !== 'DirDeletion'
+  )
+    return aFirst
+
+  if (localChange.lower(localChange.addPath(a), localChange.addPath(b)))
+    return aFirst
+  if (localChange.lower(localChange.addPath(b), localChange.addPath(a)))
+    return bFirst
+  if (localChange.lower(localChange.addPath(b), localChange.updatePath(a)))
+    return bFirst
+  if (localChange.lower(localChange.addPath(a), localChange.updatePath(b)))
+    return aFirst
+
+  // if there isnt 2 add paths, sort by del path
+  if (localChange.lower(localChange.delPath(b), localChange.delPath(a)))
+    return aFirst
+
+  return bFirst
+}
+
+const defaultSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
+  if (a.wip && !b.wip) return aFirst
+  if (b.wip && !a.wip) return bFirst
 
   // b is deleting something which is a children of what a adds
   if (
     !localChange.addPath(b) &&
     localChange.childOf(localChange.addPath(a), localChange.delPath(b))
   )
-    return 1
+    return bFirst
   // a is deleting something which is a children of what b adds
   if (
     !localChange.addPath(a) &&
     localChange.childOf(localChange.addPath(b), localChange.delPath(a))
   )
-    return -1
+    return aFirst
 
-  // b is moving something which is a children of what a adds
+  // b is moving something which is a child of what a adds
   if (localChange.childOf(localChange.addPath(a), localChange.delPath(b)))
-    return -1
-  // a is deleting or moving something which is a children of what b adds
+    return aFirst
+  // a is deleting or moving something which is a child of what b adds
   if (localChange.childOf(localChange.addPath(b), localChange.delPath(a)))
-    return 1
+    return bFirst
 
-  // if one change is a child of another, it takes priority
-  if (localChange.isChildAdd(a, b)) return -1
-  if (localChange.isChildUpdate(a, b)) return -1
-  if (localChange.isChildDelete(b, a)) return -1
-  if (localChange.isChildAdd(b, a)) return 1
-  if (localChange.isChildUpdate(b, a)) return 1
-  if (localChange.isChildDelete(a, b)) return 1
+  // if one change is a parent of another, it takes priority
+  if (localChange.isChildAdd(a, b)) return aFirst
+  if (localChange.isChildUpdate(a, b)) return aFirst
+  if (localChange.isChildDelete(b, a)) return aFirst
+  if (localChange.isChildAdd(b, a)) return bFirst
+  if (localChange.isChildUpdate(b, a)) return bFirst
+  if (localChange.isChildDelete(a, b)) return bFirst
 
   // a is deleted what b added
-  if (localChange.delPath(a) === localChange.addPath(b)) return -1
+  if (localChange.delPath(a) === localChange.addPath(b)) return aFirst
   // b is deleting what a added
-  if (localChange.delPath(b) === localChange.addPath(a)) return 1
+  if (localChange.delPath(b) === localChange.addPath(a)) return bFirst
 
   // both adds at same path (seen with move + add)
   if (
     localChange.addPath(a) &&
     localChange.addPath(a) === localChange.addPath(b)
   )
-    return -1
+    return aFirst
   // both deletes at same path (seen with delete + move)
   if (
     localChange.delPath(a) &&
     localChange.delPath(a) === localChange.delPath(b)
   )
-    return 1
+    return bFirst
 
   // otherwise, order by add path
   if (localChange.lower(localChange.addPath(a), localChange.addPath(b)))
-    return -1
+    return aFirst
   if (localChange.lower(localChange.addPath(b), localChange.addPath(a)))
-    return 1
+    return bFirst
   if (localChange.lower(localChange.updatePath(a), localChange.addPath(b)))
-    return -1
+    return aFirst
   if (localChange.lower(localChange.addPath(b), localChange.updatePath(a)))
-    return 1
+    return bFirst
   if (localChange.lower(localChange.addPath(a), localChange.updatePath(b)))
-    return -1
+    return aFirst
   if (localChange.lower(localChange.updatePath(b), localChange.addPath(a)))
-    return 1
+    return bFirst
   if (localChange.lower(localChange.updatePath(a), localChange.updatePath(b)))
-    return -1
+    return aFirst
   if (localChange.lower(localChange.updatePath(b), localChange.updatePath(a)))
-    return 1
+    return bFirst
 
   // if there isnt 2 add paths, sort by del path
   if (localChange.lower(localChange.delPath(b), localChange.delPath(a)))
-    return -1
+    return aFirst
 
-  return 1
+  return bFirst
 }
 
 /** Final sort to ensure multiple changes at the same paths can be merged.
@@ -475,9 +518,13 @@ const finalSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
  *
  * - Hard to change without breaking things.
  */
-function finalSort(changes /*: LocalChange[] */) {
+function sortChanges(
+  changes /*: LocalChange[] */,
+  isInitialScan /*: boolean */
+) {
   log.trace('Final sort...')
   const stopMeasure = measureTime('LocalWatcher#finalSort')
-  changes.sort(finalSorter)
+  if (isInitialScan) changes.sort(initialScanSorter)
+  else changes.sort(defaultSorter)
   stopMeasure()
 }
