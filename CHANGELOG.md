@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.0-beta.2 - 2019-10-16
+
+Improvements for all users:
+
+- We fixed a technical error with one of our dependencies which prevented the
+  app from starting.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.0-beta.1 - 2019-10-16
 
 Improvements for all users:
