@@ -1,5 +1,51 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.0-beta.1 - 2019-10-16
+
+Improvements for all users:
+
+- We upgraded a lot of dependencies and especially Electron which was upgraded
+  to v5.0.0. This brings in Node v12.0.0. They should bring performance and
+  stability improvements.
+- We improved the stability of the ordering and identification of changes
+  fetched from the remote Cozy. This should reduce the number of unmergeable
+  changes and conflicts arising from those situations. This is especially true
+  when complex moves were synchronised with the remote Cozy (e.g. moving a
+  folder from inside a moved folder).
+- We fixed a few minor UI issues like long filenames which were not correctly
+  ellipsized in the synced files list.
+
+Improvements for MacOS users:
+
+- In an attempt to prevent losing a working config, we decided to use a write
+  technique called copy-on-write. This proved itself unnecessary and even lead
+  to issues for some users when they had both a working config and a temporary
+  config file. We stopped using this technique without losing the safety of an
+  atomic write via a temporary config file.
+- When launching the application, we do what we call an initial scan of your
+  synced directory to list all its documents and try to detect changes that were
+  made since the last time the application was running. It is a complex task
+  which does not behave in the same way the live watching does and we were not
+  always ordering the resulting changes in the correct order, resulting in
+  incorrect changes or unmerged changes. We designed a specific sorting
+  algorithm for this phase to stabilize this situation which should result in
+  less errors during the application startup.
+
+Improvements for GNU/Linux users:
+
+- Upgrading Electron, the desktop applications framework upon which Cozy Desktop
+  is built, means upgrading the Node and Chromium versions shipped with it.
+  Starting with Electron v4, when libappindicator is available and installed on
+  your distribution, the systray icon will be displayed via this library. This
+  means that the icon won't respond to left clicks anymore. To mitigate this
+  situation, we decided to add the "Show Application" menu entry in the context
+  menu for all distributions. This context menu can be displayed via a right
+  click on the systray icon.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.15.2 - 2019-09-16
 
 Improvements for all users:
