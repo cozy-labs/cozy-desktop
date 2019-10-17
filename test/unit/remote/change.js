@@ -6,6 +6,51 @@ const should = require('should')
 const remoteChange = require('../../../core/remote/change')
 
 describe('sorter()', () => {
+  describe('with identical additions', () => {
+    const expected = [
+      {
+        doc: { path: path.normalize('FOO') },
+        type: 'DirAddition'
+      },
+      {
+        doc: { path: path.normalize('FOO/subdir') },
+        type: 'DirAddition'
+      },
+      {
+        doc: { path: path.normalize('FOO/subdir/file') },
+        type: 'FileAddition'
+      },
+      {
+        doc: { path: path.normalize('foo') },
+        type: 'DirAddition'
+      }
+    ]
+
+    it('sorts FOO before foo', () => {
+      const changes = [
+        {
+          doc: { path: path.normalize('FOO/subdir') },
+          type: 'DirAddition'
+        },
+        {
+          doc: { path: path.normalize('foo') },
+          type: 'DirAddition'
+        },
+        {
+          doc: { path: path.normalize('FOO/subdir/file') },
+          type: 'FileAddition'
+        },
+        {
+          doc: { path: path.normalize('FOO') },
+          type: 'DirAddition'
+        }
+      ]
+
+      remoteChange.sort(changes)
+      should(changes).deepEqual(expected)
+    })
+  })
+
   describe('with move inside move', () => {
     const expected = [
       {
