@@ -331,8 +331,16 @@ function includeDescendant(
 
 const createdPath = (a /*: RemoteChange */) /*: ?string */ =>
   isAdd(a) || isMove(a) || isRestore(a) ? a.doc.path : null
+const createdId = (a /*: RemoteChange */) /*: ?string */ =>
+  isAdd(a) || isMove(a) || isRestore(a) ? metadata.id(a.doc.path) : null
 const deletedPath = (a /*: RemoteChange */) /*: ?string */ =>
   isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
+const deletedId = (a /*: RemoteChange */) /*: ?string */ =>
+  isDelete(a)
+    ? metadata.id(a.doc.path)
+    : isMove(a) || isTrash(a)
+    ? metadata.id(a.was.path)
+    : null
 const ignoredPath = (a /*: RemoteChange */) /*: ?string */ =>
   isIgnore(a) && typeof a.doc.path === 'string' ? a.doc.path : null
 const areParentChild = (p /*: ?string */, c /*: ?string */) /*: boolean */ =>
@@ -360,6 +368,10 @@ const sorter = (a, b) => {
   if (areParentChild(deletedPath(a), createdPath(b))) return bFirst
   if (areParentChild(deletedPath(b), createdPath(a))) return aFirst
 
+  if (deletedId(a) && createdId(b) && deletedId(a) === createdId(b))
+    return aFirst
+  if (deletedId(b) && createdId(a) && deletedId(b) === createdId(a))
+    return bFirst
   if (deletedPath(a) && createdPath(b) && deletedPath(a) === createdPath(b))
     return aFirst
   if (deletedPath(b) && createdPath(a) && deletedPath(b) === createdPath(a))
@@ -374,6 +386,6 @@ const sorter = (a, b) => {
   return bFirst
 }
 
-function sort(changes /*: Array<RemoteChange> */) /*: void */ {
-  changes.sort(sorter)
+function sort(changes /*: Array<RemoteChange> */) /*: Array<RemoteChange> */ {
+  return changes.sort(sorter)
 }
