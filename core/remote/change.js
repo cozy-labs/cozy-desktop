@@ -329,16 +329,12 @@ function includeDescendant(
   delete e.descendantMoves
 }
 
-const createdId = (a /*: RemoteChange */) /*: ?string */ =>
-  isAdd(a) || isMove(a) || isRestore(a) ? metadata.id(a.doc.path) : null
-const deletedId = (a /*: RemoteChange */) /*: ?string */ =>
-  isDelete(a)
-    ? metadata.id(a.doc.path)
-    : isMove(a) || isTrash(a)
-    ? metadata.id(a.was.path)
-    : null
-const ignoredId = (a /*: RemoteChange */) /*: ?string */ =>
-  isIgnore(a) && typeof a.doc.path === 'string' ? metadata.id(a.doc.path) : null
+const createdPath = (a /*: RemoteChange */) /*: ?string */ =>
+  isAdd(a) || isMove(a) || isRestore(a) ? a.doc.path : null
+const deletedPath = (a /*: RemoteChange */) /*: ?string */ =>
+  isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
+const ignoredPath = (a /*: RemoteChange */) /*: ?string */ =>
+  isIgnore(a) && typeof a.doc.path === 'string' ? a.doc.path : null
 const areParentChild = (p /*: ?string */, c /*: ?string */) /*: boolean */ =>
   !!p && !!c && c.startsWith(p + path.sep)
 const lower = (p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ =>
@@ -349,32 +345,32 @@ const bFirst = 1
 
 const sorter = (a, b) => {
   // if there is one ignored change, it is put back to the end
-  if (ignoredId(a) && !ignoredId(b)) return bFirst
-  if (ignoredId(b) && !ignoredId(a)) return aFirst
-  if (lower(ignoredId(a), ignoredId(b))) return aFirst
-  if (lower(ignoredId(b), ignoredId(a))) return bFirst
+  if (ignoredPath(a) && !ignoredPath(b)) return bFirst
+  if (ignoredPath(b) && !ignoredPath(a)) return aFirst
+  if (lower(ignoredPath(a), ignoredPath(b))) return aFirst
+  if (lower(ignoredPath(b), ignoredPath(a))) return bFirst
 
   // if one action is the parent of another, it takes priority
-  if (areParentChild(createdId(a), createdId(b))) return aFirst
-  if (areParentChild(createdId(b), createdId(a))) return bFirst
-  if (areParentChild(deletedId(b), deletedId(a))) return aFirst
-  if (areParentChild(deletedId(a), deletedId(b))) return bFirst
-  if (areParentChild(createdId(a), deletedId(b))) return aFirst
-  if (areParentChild(createdId(b), deletedId(a))) return bFirst
-  if (areParentChild(deletedId(a), createdId(b))) return bFirst
-  if (areParentChild(deletedId(b), createdId(a))) return aFirst
+  if (areParentChild(createdPath(a), createdPath(b))) return aFirst
+  if (areParentChild(createdPath(b), createdPath(a))) return bFirst
+  if (areParentChild(deletedPath(b), deletedPath(a))) return aFirst
+  if (areParentChild(deletedPath(a), deletedPath(b))) return bFirst
+  if (areParentChild(createdPath(a), deletedPath(b))) return aFirst
+  if (areParentChild(createdPath(b), deletedPath(a))) return bFirst
+  if (areParentChild(deletedPath(a), createdPath(b))) return bFirst
+  if (areParentChild(deletedPath(b), createdPath(a))) return aFirst
 
-  if (deletedId(a) && createdId(b) && deletedId(a) === createdId(b))
+  if (deletedPath(a) && createdPath(b) && deletedPath(a) === createdPath(b))
     return aFirst
-  if (deletedId(b) && createdId(a) && deletedId(b) === createdId(a))
+  if (deletedPath(b) && createdPath(a) && deletedPath(b) === createdPath(a))
     return bFirst
 
   // otherwise, order by add path
-  if (lower(createdId(a), createdId(b))) return aFirst
-  if (lower(createdId(b), createdId(a))) return bFirst
+  if (lower(createdPath(a), createdPath(b))) return aFirst
+  if (lower(createdPath(b), createdPath(a))) return bFirst
 
   // if there isnt 2 add paths, sort by del path
-  if (lower(deletedId(b), deletedId(a))) return aFirst
+  if (lower(deletedPath(b), deletedPath(a))) return aFirst
   return bFirst
 }
 
