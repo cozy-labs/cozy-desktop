@@ -112,7 +112,7 @@
   },
   "devDependencies": {
     "cheerio": "^0.22.0",
-    "chokidar-cli": "^1.2.1",
+    "chokidar-cli": "^2.0.0",
     "commander": "^2.20.0",
     "cozy-ui": "3.0.0-beta39",
     "cross-env": "^5.2.0",
