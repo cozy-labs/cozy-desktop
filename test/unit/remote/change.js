@@ -4,6 +4,7 @@ const path = require('path')
 const should = require('should')
 
 const remoteChange = require('../../../core/remote/change')
+const { onPlatforms } = require('../../support/helpers/platform')
 
 describe('sorter()', () => {
   describe('with identical additions', () => {
@@ -48,6 +49,82 @@ describe('sorter()', () => {
 
       remoteChange.sort(changes)
       should(changes).deepEqual(expected)
+    })
+  })
+
+  onPlatforms(['darwin', 'win32'], () => {
+    describe('with addition of trashed identical id', () => {
+      it('sorts tashing before addition when addition has greater path', () => {
+        const trashing = {
+          type: 'DirTrashing',
+          doc: { path: '.cozy_trash/DIR' },
+          was: { path: 'dst/DIR' }
+        }
+        const addition = {
+          type: 'DirAddition',
+          doc: { path: 'dst/dir' }
+        }
+        should(remoteChange.sort([trashing, addition])).deepEqual([
+          trashing,
+          addition
+        ])
+        should(remoteChange.sort([addition, trashing])).deepEqual([
+          trashing,
+          addition
+        ])
+      })
+
+      it('sorts tashing before addition when addition has lower path', () => {
+        const trashing = {
+          type: 'DirTrashing',
+          doc: { path: '.cozy_trash/dir' },
+          was: { path: 'dst/dir' }
+        }
+        const addition = {
+          type: 'DirAddition',
+          doc: { path: 'dst/DIR' }
+        }
+        should(remoteChange.sort([trashing, addition])).deepEqual([
+          trashing,
+          addition
+        ])
+        should(remoteChange.sort([addition, trashing])).deepEqual([
+          trashing,
+          addition
+        ])
+      })
+    })
+
+    describe('with move to trashed identical id', () => {
+      it('sorts tashing before move when moved change has greater path', () => {
+        const trashing = {
+          type: 'DirTrashing',
+          doc: { path: '.cozy_trash/DIR' },
+          was: { path: 'dst/DIR' }
+        }
+        const move = {
+          type: 'DirMove',
+          doc: { path: 'dst/dir' },
+          was: { path: 'src/dir' }
+        }
+        should(remoteChange.sort([trashing, move])).deepEqual([trashing, move])
+        should(remoteChange.sort([move, trashing])).deepEqual([trashing, move])
+      })
+
+      it('sorts tashing before move when moved change has lower path', () => {
+        const trashing = {
+          type: 'DirTrashing',
+          doc: { path: '.cozy_trash/dir' },
+          was: { path: 'dst/dir' }
+        }
+        const move = {
+          type: 'DirMove',
+          doc: { path: 'dst/DIR' },
+          was: { path: 'src/DIR' }
+        }
+        should(remoteChange.sort([trashing, move])).deepEqual([trashing, move])
+        should(remoteChange.sort([move, trashing])).deepEqual([trashing, move])
+      })
     })
   })
 
