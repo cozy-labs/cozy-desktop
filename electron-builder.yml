@@ -15,6 +15,7 @@ files:
 - gui/scripts/**
 - package.json
 forceCodeSigning: true
+afterSign: './build/afterSignHook.js'
 asarUnpack:
 - gui/scripts/**
 directories:
@@ -31,6 +32,8 @@ win:
   target:
   - nsis
 mac:
+  hardenedRuntime: true
+  entitlements: './build/entitlements.mac.inherit.plist'
   category: public.app-category.productivity
   target:
   - dmg
