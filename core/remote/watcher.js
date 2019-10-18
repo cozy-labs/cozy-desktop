@@ -324,9 +324,7 @@ class RemoteWatcher {
           type: 'IgnoredChange',
           doc,
           was,
-          detail: `${was.docType} ${was.path} overwritten by ${
-            previousMoveToSamePath.was.path
-          }`
+          detail: `${was.docType} ${was.path} overwritten by ${previousMoveToSamePath.was.path}`
         }
       }
       return remoteChange.trashed(doc, was)
@@ -396,9 +394,7 @@ class RemoteWatcher {
       ) {
         _.assign(previousChange, {
           type: 'IgnoredChange',
-          detail: `File ${previousChange.was.path} overwritten by ${
-            change.was.path
-          }`
+          detail: `File ${previousChange.was.path} overwritten by ${change.was.path}`
         })
         change.doc.overwrite = previousChange.was
         return change
@@ -411,9 +407,7 @@ class RemoteWatcher {
       ) {
         _.assign(previousChange, {
           type: 'IgnoredChange',
-          detail: `Folder ${previousChange.was.path} overwritten by ${
-            change.was.path
-          }`
+          detail: `Folder ${previousChange.was.path} overwritten by ${change.was.path}`
         })
         change.doc.overwrite = previousChange.was
         return change
