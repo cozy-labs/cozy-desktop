@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.0-beta.3 - 2019-10-18
+
+Improvements for MacOS users:
+
+- Apple now requires a notarization step for apps to be installed on newer
+  versions of macOS. With this process, Apple certifies that Cozy Desktop
+  does not contain any known malware and macOS will let you install our app
+  without having to tinkle with your security parameters.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.0-beta.2 - 2019-10-16
 
 Improvements for all users:
