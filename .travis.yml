@@ -73,7 +73,7 @@ jobs:
           env: JOB=stopped_scenarios CC=gcc-8 CXX=g++-8
         - os: osx
           env: JOB=dist CC=gcc-8 CXX=g++-8
-script: ./dev/ci/script.sh
+script: travis_wait ./dev/ci/script.sh
 
 before_install: | # install cozy stack for integration test
     # CouchDB
