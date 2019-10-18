@@ -51,9 +51,7 @@ function description(
   const existingPathRepr = JSON.stringify(existingDoc.path)
   const idRepr = JSON.stringify(existingDoc._id)
   return (
-    `Identity conflict between new ${change.side} ${
-      change.doc.docType
-    } ${newPathRepr} ` +
+    `Identity conflict between new ${change.side} ${change.doc.docType} ${newPathRepr} ` +
     `and existing ${existingDoc.docType} ${existingPathRepr}: ` +
     `both would get the same ${idRepr} id on ${platform}.`
   )

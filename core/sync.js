@@ -292,9 +292,7 @@ class Sync {
               oldpath: was.path,
               incompatibilities: doc.incompatibilities
             },
-            `Trashing ${sideName} ${
-              doc.docType
-            } since new remote one is incompatible`
+            `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`
           )
           await side.trashAsync(was)
         } else {

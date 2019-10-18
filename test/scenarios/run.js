@@ -54,21 +54,15 @@ describe('Test scenarios', function() {
 
   for (let scenario of scenarios) {
     if (scenario.platforms && !scenario.platforms.includes(platform)) {
-      it.skip(`test/scenarios/${
-        scenario.name
-      }/  (skip on ${platform})`, () => {})
+      it.skip(`test/scenarios/${scenario.name}/  (skip on ${platform})`, () => {})
       continue
     }
 
     if (scenario.side === 'remote') {
-      it.skip(`test/scenarios/${
-        scenario.name
-      }/local/  (skip remote only test)`, () => {})
+      it.skip(`test/scenarios/${scenario.name}/local/  (skip remote only test)`, () => {})
     } else if (process.env[stoppedEnvVar] == null) {
       for (let atomCapture of loadAtomCaptures(scenario)) {
-        const localTestName = `test/scenarios/${scenario.name}/atom/${
-          atomCapture.name
-        }`
+        const localTestName = `test/scenarios/${scenario.name}/atom/${atomCapture.name}`
         if (config.watcherType() !== 'atom') {
           it.skip(localTestName, () => {})
           continue
@@ -85,9 +79,7 @@ describe('Test scenarios', function() {
       }
 
       for (let eventsFile of loadFSEventFiles(scenario)) {
-        const localTestName = `test/scenarios/${scenario.name}/local/${
-          eventsFile.name
-        }`
+        const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
         if (config.watcherType() !== 'chokidar') {
           it.skip(localTestName, () => {})
           continue
