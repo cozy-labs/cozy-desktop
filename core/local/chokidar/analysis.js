@@ -301,19 +301,17 @@ function squashMoves(changes /*: LocalChange[] */) {
 
   for (let i = 0; i < changes.length; i++) {
     let a = changes[i]
+    if (a.type !== 'DirMove' && a.type !== 'FileMove') continue
 
-    if (a.type !== 'DirMove' && a.type !== 'FileMove') break
     for (let j = i + 1; j < changes.length; j++) {
       let b = changes[j]
-      if (b.type !== 'DirMove' && b.type !== 'FileMove') break
+      if (b.type !== 'DirMove' && b.type !== 'FileMove') continue
 
       // inline of LocalChange.isChildMove
       if (
         a.type === 'DirMove' &&
-        b.path.indexOf(a.path + path.sep) === 0 &&
-        a.old &&
-        b.old &&
-        b.old.path.indexOf(a.old.path + path.sep) === 0
+        (b.path.indexOf(a.path + path.sep) === 0 ||
+          (a.old && b.old && b.old.path.indexOf(a.old.path + path.sep) === 0))
       ) {
         log.debug({ oldpath: b.old.path, path: b.path }, 'descendant move')
         a.wip = a.wip || b.wip
