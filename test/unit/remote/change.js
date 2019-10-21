@@ -545,14 +545,14 @@ describe('isOnlyChildMove(p, c)', () => {
     should(remoteChange.isOnlyChildMove(p, c2)).be.true()
   })
 
-  it('returns true if c is a child move of a move of a child of p', () => {
+  it('returns false if c is a child move of a move of a child of p', () => {
     const c1 = {
       doc: { path: path.normalize('dst/dir2/file') },
       type: 'FileMove',
       was: { path: path.normalize('src/dir/file') }
     }
 
-    should(remoteChange.isOnlyChildMove(p, c1)).be.true()
+    should(remoteChange.isOnlyChildMove(p, c1)).be.false()
 
     const c2 = {
       doc: { path: path.normalize('dst/parent2/dir') },
@@ -560,6 +560,6 @@ describe('isOnlyChildMove(p, c)', () => {
       was: { path: path.normalize('src/parent/dir') }
     }
 
-    should(remoteChange.isOnlyChildMove(p, c2)).be.true()
+    should(remoteChange.isOnlyChildMove(p, c2)).be.false()
   })
 })

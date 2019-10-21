@@ -83,6 +83,7 @@ export type RemoteIgnoredChange = {
   sideName: 'remote',
   type: 'IgnoredChange',
   doc: Metadata|RemoteDoc|RemoteDeletion,
+  was?: Metadata,
   detail: string
 }
 export type RemoteInvalidChange = {
@@ -254,24 +255,30 @@ function isChildMove(
   c /*: RemoteChange */
 ) /*: boolean %checks */ {
   return (
-    p.type === 'DirMove' &&
+    isFolderMove(p) &&
     (c.type === 'DirMove' || c.type === 'FileMove') &&
     (isChildDestination(p, c) || isChildSource(p, c))
   )
 }
 
 function isChildDestination(
-  p /*: RemoteDirMove|RemoteDescendantChange */,
-  c /*: RemoteDirMove|RemoteFileMove */
+  p /*: RemoteChange */,
+  c /*: RemoteChange */
 ) /*: boolean %checks */ {
-  return c.doc.path.startsWith(p.doc.path + path.sep)
+  return isFolderMove(p) && isMove(c) && path.dirname(c.doc.path) === p.doc.path
 }
 
 function isChildSource(
-  p /*: RemoteDirMove|RemoteDescendantChange */,
-  c /*: RemoteDirMove|RemoteFileMove */
+  p /*: RemoteChange */,
+  c /*: RemoteChange */
 ) /*: boolean %checks */ {
-  return p.was && c.was && c.was.path.startsWith(p.was.path + path.sep)
+  return (
+    isFolderMove(p) &&
+    isMove(c) &&
+    p.was &&
+    c.was &&
+    path.dirname(c.was.path) === p.was.path
+  )
 }
 
 /**
@@ -280,12 +287,10 @@ function isChildSource(
  *     c    /p/c   ->    /p2/c
  */
 function isOnlyChildMove(
-  p /*: RemoteDirMove|RemoteDescendantChange */,
-  c /*: RemoteFileMove|RemoteDirMove */
+  p /*: RemoteChange */,
+  c /*: RemoteChange */
 ) /*: boolean %checks */ {
   return (
-    (p.type === 'DirMove' || p.type === 'DescendantChange') &&
-    (c.type === 'DirMove' || c.type === 'FileMove') &&
     isChildSource(p, c) &&
     isChildDestination(p, c) &&
     path.basename(c.doc.path) === path.basename(c.was.path)
@@ -293,14 +298,14 @@ function isOnlyChildMove(
 }
 
 function applyMoveToPath(
-  a /*: RemoteDirMove */,
+  a /*: RemoteDirMove|RemoteDescendantChange */,
   p /*: string */
 ) /*: string */ {
   return p.replace(a.was.path, a.doc.path)
 }
 
 function applyMoveInsideMove(
-  parentMove /*: RemoteDirMove */,
+  parentMove /*: RemoteDirMove|RemoteDescendantChange */,
   childMove /*: RemoteDirMove | RemoteFileMove */
 ) {
   childMove.was.path = applyMoveToPath(parentMove, childMove.was.path)
@@ -313,6 +318,8 @@ const isAdd = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirAddition' || a.type === 'FileAddition'
 const isMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirMove' || a.type === 'FileMove' || a.type === 'DescendantChange'
+const isFolderMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
+  a.type === 'DirMove' || a.type === 'DescendantChange'
 const isTrash = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirTrashing' || a.type === 'FileTrashing'
 const isRestore = (a /*: RemoteChange */) /*: boolean %checks */ =>
@@ -321,7 +328,7 @@ const isIgnore = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'IgnoredChange'
 
 function includeDescendant(
-  parent /*: RemoteDirMove */,
+  parent /*: RemoteDirMove|RemoteDescendantChange */,
   e /*: RemoteDescendantChange */
 ) {
   parent.descendantMoves = parent.descendantMoves || []

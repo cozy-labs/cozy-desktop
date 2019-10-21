@@ -837,15 +837,33 @@ describe('RemoteWatcher', function() {
         const shouldBeExpected = result => {
           result.should.have.length(3)
           result
-            .map(x => x.type)
-            .sort()
+            .map(x => ({
+              type: x.type,
+              oldPath: x.was.path,
+              path: x.doc.path,
+              ancestorPath: x.ancestorPath
+            }))
+            .sort((a, b) => a.path - b.path)
             .should.deepEqual([
-              'DescendantChange',
-              'DescendantChange',
-              'DirMove'
+              {
+                type: 'DirMove',
+                oldPath: 'src',
+                path: 'dst',
+                ancestorPath: undefined
+              },
+              {
+                type: 'DescendantChange',
+                oldPath: path.normalize('src/parent'),
+                path: path.normalize('dst/parent'),
+                ancestorPath: 'dst'
+              },
+              {
+                type: 'DescendantChange',
+                oldPath: path.normalize('src/parent/child'),
+                path: path.normalize('dst/parent/child'),
+                ancestorPath: path.normalize('dst/parent')
+              }
             ])
-          const dirMoveChange = result.filter(x => x.type === 'DirMove')[0]
-          dirMoveChange.descendantMoves.should.have.length(2)
         }
 
         shouldBeExpected(
@@ -1005,7 +1023,7 @@ describe('RemoteWatcher', function() {
       ])
     })
 
-    it('identifies move inside move', function() {
+    it('identifies move from inside move', function() {
       const remotePaths = [
         ['parent/', 1],
         ['parent/src/', 1],
@@ -1122,6 +1140,149 @@ describe('RemoteWatcher', function() {
           was: { path: path.normalize('parent/src/dir/subdir/file') }
         }
       ])
+    })
+
+    describe('identifies move inside move inside move', () => {
+      const changeInfo = change => ({
+        doc: { path: change.doc.path },
+        type: change.type,
+        was: { path: change.was && change.was.path }
+      })
+
+      const remotePaths = [
+        ['parent/', 1],
+        ['parent/dst/', 2],
+        ['parent/dst/dir2/', 3],
+        ['parent/dst/dir2/empty-subdir/', 3],
+        ['parent/dst/dir2/subdir/', 3],
+        ['parent/dst/dir2/subdir/file2', 4]
+      ]
+
+      let remoteDocsByPath, olds
+      beforeEach('build changes', () => {
+        remoteDocsByPath = builders.buildRemoteTree(remotePaths)
+        olds = [
+          builders
+            .metadir()
+            .fromRemote(remoteDocsByPath['parent/'])
+            .path('parent')
+            .upToDate()
+            .build(),
+          builders
+            .metadir()
+            .fromRemote(remoteDocsByPath['parent/dst/'])
+            .path(path.normalize('parent/src'))
+            .upToDate()
+            .remoteRev(1)
+            .build(),
+          builders
+            .metadir()
+            .fromRemote(remoteDocsByPath['parent/dst/dir2/'])
+            .path(path.normalize('parent/src/dir'))
+            .upToDate()
+            .remoteRev(1)
+            .build(),
+          builders
+            .metadir()
+            .fromRemote(remoteDocsByPath['parent/dst/dir2/empty-subdir/'])
+            .path(path.normalize('parent/src/dir/empty-subdir'))
+            .upToDate()
+            .remoteRev(1)
+            .build(),
+          builders
+            .metadir()
+            .fromRemote(remoteDocsByPath['parent/dst/dir2/subdir/'])
+            .path(path.normalize('parent/src/dir/subdir'))
+            .upToDate()
+            .remoteRev(1)
+            .build(),
+          builders
+            .metadir()
+            .fromRemote(remoteDocsByPath['parent/dst/dir2/subdir/file2'])
+            .path(path.normalize('parent/src/dir/subdir/file'))
+            .upToDate()
+            .remoteRev(1)
+            .build()
+        ]
+      })
+
+      it('sorts correctly order1', function() {
+        const order1 = [
+          remoteDocsByPath['parent/dst/dir2/'],
+          remoteDocsByPath['parent/dst/'],
+          remoteDocsByPath['parent/dst/dir2/empty-subdir/'],
+          remoteDocsByPath['parent/dst/dir2/subdir/file2'],
+          remoteDocsByPath['parent/dst/dir2/subdir/']
+        ]
+        should(
+          this.watcher.identifyAll(order1, olds).map(changeInfo)
+        ).deepEqual([
+          {
+            doc: { path: path.normalize('parent/dst/dir2') },
+            type: 'DirMove',
+            was: { path: path.normalize('parent/dst/dir') }
+          },
+          {
+            doc: { path: path.normalize('parent/dst') },
+            type: 'DirMove',
+            was: { path: path.normalize('parent/src') }
+          },
+          {
+            doc: { path: path.normalize('parent/dst/dir2/empty-subdir') },
+            type: 'DescendantChange',
+            was: { path: path.normalize('parent/src/dir/empty-subdir') }
+          },
+          {
+            doc: { path: path.normalize('parent/dst/dir2/subdir/file2') },
+            type: 'FileMove',
+            was: { path: path.normalize('parent/dst/dir2/subdir/file') }
+          },
+          {
+            doc: { path: path.normalize('parent/dst/dir2/subdir') },
+            type: 'DescendantChange',
+            was: { path: path.normalize('parent/src/dir/subdir') }
+          }
+        ])
+      })
+
+      it('sorts correctly order2', function() {
+        const order2 = [
+          remoteDocsByPath['parent/dst/dir2/subdir/'],
+          remoteDocsByPath['parent/dst/'],
+          remoteDocsByPath['parent/dst/dir2/'],
+          remoteDocsByPath['parent/dst/dir2/subdir/file2'],
+          remoteDocsByPath['parent/dst/dir2/empty-subdir/']
+        ]
+        should(
+          this.watcher.identifyAll(order2, olds).map(changeInfo)
+        ).deepEqual([
+          {
+            doc: { path: path.normalize('parent/dst/dir2/subdir') },
+            type: 'DescendantChange',
+            was: { path: path.normalize('parent/src/dir/subdir') }
+          },
+          {
+            doc: { path: path.normalize('parent/dst') },
+            type: 'DirMove',
+            was: { path: path.normalize('parent/src') }
+          },
+          {
+            doc: { path: path.normalize('parent/dst/dir2') },
+            type: 'DirMove',
+            was: { path: path.normalize('parent/dst/dir') }
+          },
+          {
+            doc: { path: path.normalize('parent/dst/dir2/subdir/file2') },
+            type: 'FileMove',
+            was: { path: path.normalize('parent/dst/dir2/subdir/file') }
+          },
+          {
+            doc: { path: path.normalize('parent/dst/dir2/empty-subdir') },
+            type: 'DescendantChange',
+            was: { path: path.normalize('parent/src/dir/empty-subdir') }
+          }
+        ])
+      })
     })
   })
 
