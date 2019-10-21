@@ -1,5 +1,49 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.0-beta.4 - 2019-10-21
+
+Improvements for all users:
+
+- When upgrading Electron to v5.0.0, we broke the onboarding process because of
+  a new security restriction in Chromium (which is packaged with Electron)
+  preventing us from redirecting to the folder selection window after connecting
+  to your Cozy and authorizing the Cozy Desktop app.
+  The redirection is now handled differently to avoid the security issue and
+  load the folder selection window.
+- Our remote changes watcher tries to recreate the changes that were executed
+  on the remote Cozy from the resulting documents and the old versions we have
+  locally. We found out that we were not correctly detecting and thus handling
+  complex hierarchy changes like:
+  * child only moves (i.e. we detect a move on a folder descendant which is due
+    to its ancestor move and should not result in any local action)
+  * moves inside move (i.e. renaming/moving the child of a moved parent within
+    that same parent)
+  * moves from inside a move (i.e. moving the child of a moved parent outside
+    that parent)
+  Handling those changes correctly should result in a lot less unmerged changes
+  and their consequences.
+
+Improvements for MacOS users:
+
+- With the new Apple notarization process, we need to specify which OS
+  permissions will be required and requested by our app. By default, apps are
+  not allowed to load code frameworks that were not signed by the same team ID
+  or by Apple itself.
+  Since we use the Electron framework which is not signed by us or Apple, we
+  need to disable circumvent this restriction or the app won't start.
+- The way we store documents metadata (e.g. their paths) means we have to modify
+  the saved metadata of the moved folder itself but also all its descendants
+  (i.e. so their paths in our database reflects their path on the filesystem).
+  We found an issue in our moves handling logic that prevented us from detecting
+  moves from inside a move (i.e. we move a folder to another location from a
+  parent that was just moved as well).
+  We're now detecting them correctly which means those changes will now be
+  propagated to the remote Cozy as expected.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.0-beta.3 - 2019-10-18
 
 Improvements for MacOS users:
