@@ -188,7 +188,7 @@ class RemoteWatcher {
     remoteDoc /*: RemoteDoc|RemoteDeletion */,
     was /*: ?Metadata */,
     previousChanges /*: Array<RemoteChange> */,
-    originalMoves /*: Array<RemoteDirMove> */
+    originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
   ) /*: RemoteChange */ {
     const oldpath /*: ?string */ = was && was.path
     log.debug(
@@ -257,7 +257,7 @@ class RemoteWatcher {
     remoteDoc /*: RemoteDoc */,
     was /*: ?Metadata */,
     previousChanges /*: Array<RemoteChange> */,
-    originalMoves /*: Array<RemoteDirMove> */
+    originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
   ) /*: RemoteChange */ {
     let doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
     try {
