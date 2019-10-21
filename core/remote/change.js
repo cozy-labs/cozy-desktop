@@ -352,47 +352,54 @@ const ignoredPath = (a /*: RemoteChange */) /*: ?string */ =>
   isIgnore(a) && typeof a.doc.path === 'string' ? a.doc.path : null
 const areParentChild = (p /*: ?string */, c /*: ?string */) /*: boolean */ =>
   !!p && !!c && c.startsWith(p + path.sep)
+const areEqual = (a /*: ?string */, b /*: ?string */) /*: boolean */ =>
+  !!a && !!b && a === b
 const lower = (p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ =>
   !!p1 && !!p2 && p1 < p2
 
 const aFirst = -1
 const bFirst = 1
 
-const sorter = (a, b) => {
+const sortByPath = (a, b) => {
+  // order ignored actions by path
+  if (lower(ignoredPath(a), ignoredPath(b))) return aFirst
+  if (lower(ignoredPath(b), ignoredPath(a))) return bFirst
+
+  // otherwise, order by add path
+  if (lower(createdPath(a), createdPath(b))) return aFirst
+  if (lower(createdPath(b), createdPath(a))) return bFirst
+
+  // if there isn't 2 add paths, sort by del path
+  if (lower(deletedPath(b), deletedPath(a))) return aFirst
+  if (lower(deletedPath(a), deletedPath(b))) return bFirst
+
+  // if there isnt 2 del paths, don't change order
+  return 0
+}
+
+const sortByAction = (a, b) => {
   // if there is one ignored change, it is put back to the end
   if (ignoredPath(a) && !ignoredPath(b)) return bFirst
   if (ignoredPath(b) && !ignoredPath(a)) return aFirst
-  if (lower(ignoredPath(a), ignoredPath(b))) return aFirst
-  if (lower(ignoredPath(b), ignoredPath(a))) return bFirst
 
   // if one action is the parent of another, it takes priority
   if (areParentChild(createdPath(a), createdPath(b))) return aFirst
   if (areParentChild(createdPath(b), createdPath(a))) return bFirst
   if (areParentChild(deletedPath(b), deletedPath(a))) return aFirst
   if (areParentChild(deletedPath(a), deletedPath(b))) return bFirst
-  if (areParentChild(createdPath(a), deletedPath(b))) return aFirst
-  if (areParentChild(createdPath(b), deletedPath(a))) return bFirst
-  if (areParentChild(deletedPath(a), createdPath(b))) return bFirst
-  if (areParentChild(deletedPath(b), createdPath(a))) return aFirst
 
-  if (deletedId(a) && createdId(b) && deletedId(a) === createdId(b))
-    return aFirst
-  if (deletedId(b) && createdId(a) && deletedId(b) === createdId(a))
-    return bFirst
-  if (deletedPath(a) && createdPath(b) && deletedPath(a) === createdPath(b))
-    return aFirst
-  if (deletedPath(b) && createdPath(a) && deletedPath(b) === createdPath(a))
-    return bFirst
+  // if one action would replace the source of another one, it comes last
+  if (areParentChild(deletedId(a), createdId(b))) return aFirst
+  if (areParentChild(deletedId(b), createdId(a))) return bFirst
+  if (areParentChild(createdId(a), deletedId(b))) return bFirst
+  if (areParentChild(createdId(b), deletedId(a))) return aFirst
+  if (areEqual(deletedId(a), createdId(b))) return aFirst
+  if (areEqual(deletedId(b), createdId(a))) return bFirst
 
-  // otherwise, order by add path
-  if (lower(createdPath(a), createdPath(b))) return aFirst
-  if (lower(createdPath(b), createdPath(a))) return bFirst
-
-  // if there isnt 2 add paths, sort by del path
-  if (lower(deletedPath(b), deletedPath(a))) return aFirst
-  return bFirst
+  // Don't change order if unnecessary
+  return 0
 }
 
 function sort(changes /*: Array<RemoteChange> */) /*: Array<RemoteChange> */ {
-  return changes.sort(sorter)
+  return changes.sort(sortByPath).sort(sortByAction)
 }
