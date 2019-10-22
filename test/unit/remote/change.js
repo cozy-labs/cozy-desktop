@@ -52,17 +52,107 @@ describe('sorter()', () => {
     })
   })
 
+  describe('with replacing move', () => {
+    it('sorts move of replaced before move of replacing', () => {
+      const moveReplacing = {
+        type: 'DirMove',
+        doc: { path: path.normalize('dirA') },
+        was: { path: path.normalize('dirB') }
+      }
+      const moveReplaced = {
+        type: 'DirMove',
+        doc: { path: path.normalize('dirC') },
+        was: { path: path.normalize('dirA') }
+      }
+
+      should(remoteChange.sort([moveReplacing, moveReplaced])).deepEqual([
+        moveReplaced,
+        moveReplacing
+      ])
+      should(remoteChange.sort([moveReplaced, moveReplacing])).deepEqual([
+        moveReplaced,
+        moveReplacing
+      ])
+    })
+
+    it('sorts move of replaced before child move of replacing', () => {
+      const moveReplacing = {
+        type: 'DescendantChange',
+        doc: { path: path.normalize('dirA/dir/subdir/empty-subsubdir') },
+        was: { path: path.normalize('dirB/dir/subdir/empty-subsubdir') }
+      }
+      const moveReplaced = {
+        type: 'DirMove',
+        doc: { path: path.normalize('dirC') },
+        was: { path: path.normalize('dirA') }
+      }
+
+      should(remoteChange.sort([moveReplacing, moveReplaced])).deepEqual([
+        moveReplaced,
+        moveReplacing
+      ])
+      should(remoteChange.sort([moveReplaced, moveReplacing])).deepEqual([
+        moveReplaced,
+        moveReplacing
+      ])
+    })
+
+    it('sorts child move of replaced before move of replacing', () => {
+      const moveReplacing = {
+        type: 'DirMove',
+        doc: { path: path.normalize('dirA') },
+        was: { path: path.normalize('dirB') }
+      }
+      const moveReplaced = {
+        type: 'DescendantChange',
+        doc: { path: path.normalize('dirC/dir/empty-subdir-a') },
+        was: { path: path.normalize('dirA/dir/empty-subdir-a') }
+      }
+
+      should(remoteChange.sort([moveReplacing, moveReplaced])).deepEqual([
+        moveReplaced,
+        moveReplacing
+      ])
+      should(remoteChange.sort([moveReplaced, moveReplacing])).deepEqual([
+        moveReplaced,
+        moveReplacing
+      ])
+    })
+
+    it('sorts child move of replaced and child move of replacing by created path', () => {
+      const moveReplacing = {
+        type: 'DescendantChange',
+        doc: { path: path.normalize('dirA/dir/subdir') },
+        was: { path: path.normalize('dirB/dir/subdir') }
+      }
+      const moveReplaced = {
+        type: 'DescendantChange',
+        doc: { path: path.normalize('dirC/dir/empty-subdir') },
+        was: { path: path.normalize('dirA/dir/empty-subdir') }
+      }
+
+      should(remoteChange.sort([moveReplacing, moveReplaced])).deepEqual([
+        moveReplacing,
+        moveReplaced
+      ])
+      should(remoteChange.sort([moveReplaced, moveReplacing])).deepEqual([
+        moveReplacing,
+        moveReplaced
+      ])
+    })
+  })
+
   onPlatforms(['darwin', 'win32'], () => {
     describe('with addition of trashed identical id', () => {
       it('sorts tashing before addition when addition has greater path', () => {
         const trashing = {
           type: 'DirTrashing',
-          doc: { path: '.cozy_trash/DIR' },
-          was: { path: 'dst/DIR' }
+          doc: { path: path.normalize('.cozy_trash/DIR') },
+          was: { path: path.normalize('dst/DIR') }
         }
         const addition = {
           type: 'DirAddition',
-          doc: { path: 'dst/dir' }
+          doc: { path: path.normalize('dst/dir') }
         }
         should(remoteChange.sort([trashing, addition])).deepEqual([
           trashing,
@@ -77,12 +167,12 @@ describe('sorter()', () => {
       it('sorts tashing before addition when addition has lower path', () => {
         const trashing = {
           type: 'DirTrashing',
-          doc: { path: '.cozy_trash/dir' },
-          was: { path: 'dst/dir' }
+          doc: { path: path.normalize('.cozy_trash/dir') },
+          was: { path: path.normalize('dst/dir') }
         }
         const addition = {
           type: 'DirAddition',
-          doc: { path: 'dst/DIR' }
+          doc: { path: path.normalize('dst/DIR') }
         }
         should(remoteChange.sort([trashing, addition])).deepEqual([
           trashing,
@@ -99,13 +189,13 @@ describe('sorter()', () => {
       it('sorts tashing before move when moved change has greater path', () => {
         const trashing = {
           type: 'DirTrashing',
-          doc: { path: '.cozy_trash/DIR' },
-          was: { path: 'dst/DIR' }
+          doc: { path: path.normalize('.cozy_trash/DIR') },
+          was: { path: path.normalize('dst/DIR') }
         }
         const move = {
           type: 'DirMove',
-          doc: { path: 'dst/dir' },
-          was: { path: 'src/dir' }
+          doc: { path: path.normalize('dst/dir') },
+          was: { path: path.normalize('src/dir') }
         }
         should(remoteChange.sort([trashing, move])).deepEqual([trashing, move])
         should(remoteChange.sort([move, trashing])).deepEqual([trashing, move])
@@ -114,13 +204,13 @@ describe('sorter()', () => {
       it('sorts tashing before move when moved change has lower path', () => {
         const trashing = {
           type: 'DirTrashing',
-          doc: { path: '.cozy_trash/dir' },
-          was: { path: 'dst/dir' }
+          doc: { path: path.normalize('.cozy_trash/dir') },
+          was: { path: path.normalize('dst/dir') }
         }
         const move = {
           type: 'DirMove',
-          doc: { path: 'dst/DIR' },
-          was: { path: 'src/DIR' }
+          doc: { path: path.normalize('dst/DIR') },
+          was: { path: path.normalize('src/DIR') }
         }
         should(remoteChange.sort([trashing, move])).deepEqual([trashing, move])
         should(remoteChange.sort([move, trashing])).deepEqual([trashing, move])
@@ -272,6 +362,136 @@ describe('sorter()', () => {
       remoteChange.sort(changes)
       should(changes).deepEqual([deleted, created])
     })
+
+    context('with replacing move', () => {
+      it('sorts replacing move after move of replaced', () => {
+        const changes = [
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirC/dir/empty-subdir-a') },
+            was: { path: path.normalize('dirA/dir/empty-subdir-a') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirC/dir/subdir') },
+            was: { path: path.normalize('dirA/dir/subdir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirC/dir/empty-subdir') },
+            was: { path: path.normalize('dirA/dir/empty-subdir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirC/dir/subdir/empty-subsubdir') },
+            was: { path: path.normalize('dirA/dir/subdir/empty-subsubdir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirC/dir') },
+            was: { path: path.normalize('dirA/dir') }
+          },
+          {
+            type: 'DirMove',
+            doc: { path: path.normalize('dirC') },
+            was: { path: path.normalize('dirA') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirA/dir/subdir/empty-subsubdir') },
+            was: { path: path.normalize('dirB/dir/subdir/empty-subsubdir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirA/dir') },
+            was: { path: path.normalize('dirB/dir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirA/dir/empty-subdir') },
+            was: { path: path.normalize('dirB/dir/empty-subdir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirA/dir/empty-subdir-b') },
+            was: { path: path.normalize('dirB/dir/empty-subdir-b') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirA/dir/subdir') },
+            was: { path: path.normalize('dirB/dir/subdir') }
+          },
+          {
+            type: 'DirMove',
+            doc: { path: path.normalize('dirA') },
+            was: { path: path.normalize('dirB') }
+          }
+        ]
+
+        should(remoteChange.sort(changes)).deepEqual([
+          {
+            type: 'DirMove',
+            doc: { path: path.normalize('dirC') },
+            was: { path: path.normalize('dirA') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirC/dir') },
+            was: { path: path.normalize('dirA/dir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirC/dir/empty-subdir') },
+            was: { path: path.normalize('dirA/dir/empty-subdir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirC/dir/empty-subdir-a') },
+            was: { path: path.normalize('dirA/dir/empty-subdir-a') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirC/dir/subdir') },
+            was: { path: path.normalize('dirA/dir/subdir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirC/dir/subdir/empty-subsubdir') },
+            was: { path: path.normalize('dirA/dir/subdir/empty-subsubdir') }
+          },
+          {
+            type: 'DirMove',
+            doc: { path: path.normalize('dirA') },
+            was: { path: path.normalize('dirB') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirA/dir') },
+            was: { path: path.normalize('dirB/dir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirA/dir/empty-subdir') },
+            was: { path: path.normalize('dirB/dir/empty-subdir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirA/dir/empty-subdir-b') },
+            was: { path: path.normalize('dirB/dir/empty-subdir-b') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirA/dir/subdir') },
+            was: { path: path.normalize('dirB/dir/subdir') }
+          },
+          {
+            type: 'DescendantChange',
+            doc: { path: path.normalize('dirA/dir/subdir/empty-subsubdir') },
+            was: { path: path.normalize('dirB/dir/subdir/empty-subsubdir') }
+          }
+        ])
+      })
+    })
   })
 })
 
@@ -388,9 +608,9 @@ describe('isChildMove(p, c)', () => {
 
 describe('isOnlyChildMove(p, c)', () => {
   const p = {
-    doc: { path: 'dst' },
+    doc: { path: path.normalize('dst') },
     type: 'DirMove',
-    was: { path: 'src' }
+    was: { path: path.normalize('src') }
   }
 
   it('returns false if c is not a move', () => {
@@ -413,7 +633,7 @@ describe('isOnlyChildMove(p, c)', () => {
     const c1 = {
       doc: { path: path.normalize('dir/file') },
       type: 'FileMove',
-      was: { path: 'file' }
+      was: { path: path.normalize('file') }
     }
 
     should(remoteChange.isOnlyChildMove(p, c1)).be.false()
@@ -421,7 +641,7 @@ describe('isOnlyChildMove(p, c)', () => {
     const c2 = {
       doc: { path: path.normalize('dst/file') },
       type: 'FileMove',
-      was: { path: 'file' }
+      was: { path: path.normalize('file') }
     }
 
     should(remoteChange.isOnlyChildMove(p, c2)).be.false()
@@ -429,7 +649,7 @@ describe('isOnlyChildMove(p, c)', () => {
     const c3 = {
       doc: { path: path.normalize('src/file') },
       type: 'FileMove',
-      was: { path: 'file' }
+      was: { path: path.normalize('file') }
     }
 
     should(remoteChange.isOnlyChildMove(p, c3)).be.false()
@@ -437,7 +657,7 @@ describe('isOnlyChildMove(p, c)', () => {
     const c4 = {
       doc: { path: path.normalize('src/dir') },
       type: 'DirMove',
-      was: { path: 'dir' }
+      was: { path: path.normalize('dir') }
     }
 
     should(remoteChange.isOnlyChildMove(p, c4)).be.false()
@@ -445,7 +665,7 @@ describe('isOnlyChildMove(p, c)', () => {
     const c5 = {
       doc: { path: path.normalize('dst/dir') },
       type: 'DirMove',
-      was: { path: 'dir' }
+      was: { path: path.normalize('dir') }
     }
 
     should(remoteChange.isOnlyChildMove(p, c5)).be.false()
@@ -453,7 +673,7 @@ describe('isOnlyChildMove(p, c)', () => {
     const c6 = {
       doc: { path: path.normalize('parent/dir') },
       type: 'DirMove',
-      was: { path: 'dir' }
+      was: { path: path.normalize('dir') }
     }
 
     should(remoteChange.isOnlyChildMove(p, c6)).be.false()
@@ -461,7 +681,7 @@ describe('isOnlyChildMove(p, c)', () => {
 
   it('returns false if c is a move of a child of p outside p', () => {
     const c1 = {
-      doc: { path: 'file' },
+      doc: { path: path.normalize('file') },
       type: 'FileMove',
       was: { path: path.normalize('src/file') }
     }
@@ -469,7 +689,7 @@ describe('isOnlyChildMove(p, c)', () => {
     should(remoteChange.isOnlyChildMove(p, c1)).be.false()
 
     const c2 = {
-      doc: { path: 'file' },
+      doc: { path: path.normalize('file') },
       type: 'FileMove',
       was: { path: path.normalize('dst/file') }
     }
@@ -477,7 +697,7 @@ describe('isOnlyChildMove(p, c)', () => {
     should(remoteChange.isOnlyChildMove(p, c2)).be.false()
 
     const c3 = {
-      doc: { path: 'dir' },
+      doc: { path: path.normalize('dir') },
       type: 'DirMove',
       was: { path: path.normalize('src/dir') }
     }
@@ -485,7 +705,7 @@ describe('isOnlyChildMove(p, c)', () => {
     should(remoteChange.isOnlyChildMove(p, c3)).be.false()
 
     const c4 = {
-      doc: { path: 'dir' },
+      doc: { path: path.normalize('dir') },
       type: 'DirMove',
       was: { path: path.normalize('dst/dir') }
     }
