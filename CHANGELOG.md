@@ -1,5 +1,22 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.0-beta.5 - 2019-10-22
+
+Improvements for all users:
+
+- After fixing the remote changes identification logic, we found out that our
+  sorting algorithm (necessary to avoid potential collisions when applying them
+  locally) was not stable and the resulting order depended greatly on the
+  original changes and their order.
+  We separated the criterias on which we sort the changes to come up with 2
+  sorting algorithms called on after the other so the result of each one is
+  predictable and thus the end result too. This should prevent some conflicts
+  and mis-applied changes.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.0-beta.4 - 2019-10-21
 
 Improvements for all users:
