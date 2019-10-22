@@ -2,27 +2,30 @@
 /* @flow */
 
 const faker = require('faker')
-const fs = require('fs')
 const should = require('should')
 
 const chokidarEvent = require('../../../../core/local/chokidar/event')
+const stater = require('../../../../core/local/stater')
 const { onPlatform } = require('../../../support/helpers/platform')
 
 onPlatform('darwin', () => {
   describe('core/local/chokidar/event', () => {
     describe('build', () => {
-      let path, stats
+      let path, fileStats, dirStats
 
-      before(() => {
+      before(async () => {
         path = faker.system.fileName()
-        stats = new fs.Stats()
+        fileStats = await stater.stat(__filename)
+        dirStats = await stater.stat(__dirname)
       })
 
       it('builds an FS event with path and stats', () => {
-        for (let type of ['add', 'addDir', 'change']) {
-          const event = chokidarEvent.build(type, path, stats)
-          should(event).deepEqual({ type, path, stats })
+        for (let type of ['add', 'change']) {
+          const event = chokidarEvent.build(type, path, fileStats)
+          should(event).deepEqual({ type, path, stats: fileStats })
         }
+        const event = chokidarEvent.build('addDir', path, dirStats)
+        should(event).deepEqual({ type: 'addDir', path, stats: dirStats })
       })
 
       it('builds an FS event with path only', () => {
@@ -39,10 +42,33 @@ onPlatform('darwin', () => {
       })
 
       it('does not swallow the empty path of the watched dir', () => {
-        for (let type of ['addDir', 'change']) {
-          const event = chokidarEvent.build(type, '', stats)
-          should(event).deepEqual({ type, path: '', stats })
-        }
+        const changeEvent = chokidarEvent.build('change', '', fileStats)
+        should(changeEvent).deepEqual({
+          type: 'change',
+          path: '',
+          stats: fileStats
+        })
+        const addDirEvent = chokidarEvent.build('addDir', '', dirStats)
+        should(addDirEvent).deepEqual({
+          type: 'addDir',
+          path: '',
+          stats: dirStats
+        })
+      })
+
+      it('fixes incorrect event types based on stats', () => {
+        const addEvent = chokidarEvent.build('add', path, dirStats)
+        should(addEvent).deepEqual({
+          type: 'addDir',
+          path,
+          stats: dirStats
+        })
+        const addDirEvent = chokidarEvent.build('addDir', path, fileStats)
+        should(addDirEvent).deepEqual({
+          type: 'add',
+          path,
+          stats: fileStats
+        })
       })
     })
   })

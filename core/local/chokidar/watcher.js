@@ -147,6 +147,12 @@ class LocalWatcher {
           const isInitialScan = this.initialScan && !this.initialScan.flushed
           log.chokidar.debug({ path, stats, isInitialScan }, eventType)
           const newEvent = chokidarEvent.build(eventType, path, stats)
+          if (newEvent.type !== eventType) {
+            log.info(
+              { eventType, event: newEvent },
+              'fixed wrong fsevents event type'
+            )
+          }
           this.buffer.push(newEvent)
           this.events.emit('buffering-start')
         })

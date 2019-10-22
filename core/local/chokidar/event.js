@@ -15,6 +15,8 @@
  * @flow
  */
 
+const stater = require('../stater')
+
 /*::
 import type fs from 'fs'
 import type {Metadata} from '../../metadata'
@@ -63,10 +65,32 @@ function build(
   path /*: ?string */,
   stats /*: ?fs.Stats */
 ) /*: ChokidarEvent */ {
-  const event /*: Object */ = { type }
+  const event /*: Object */ = { type: eventType(type, stats) }
   if (path != null) event.path = path
   if (stats != null) event.stats = stats
   return event
+}
+
+/**
+ * Makes sure the event type matches the document's type.
+ *
+ * This is necessary because chokidar/fsevents can fire `add` events for
+ * directories and `addDir` events for files, making their handling error prone
+ * (e.g. computing the checksum of a directory).
+ *
+ * @return string
+ */
+function eventType(type /*: string */, stats /*: ?fs.Stats */) /*: string */ {
+  if (stats == null) return type
+
+  switch (type) {
+    case 'add':
+      return stater.isDirectory(stats) ? 'addDir' : 'add'
+    case 'addDir':
+      return stater.isDirectory(stats) ? 'addDir' : 'add'
+    default:
+      return type
+  }
 }
 
 function pretendUnlinkFromMetadata(
