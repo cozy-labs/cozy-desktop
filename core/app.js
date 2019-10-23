@@ -217,7 +217,6 @@ class App {
       const req = https.request(
         {
           method: 'PUT',
-          protocol: 'https:',
           hostname: 'desktop-upload.cozycloud.cc',
           path: `/${incident}/${name}`,
           headers: {
