@@ -1,5 +1,30 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.0-beta.6 - 2019-10-24
+
+Improvements for all users:
+
+- When you send a message to our support via the application, we also securely
+  send your last log file to one of our servers for analysis so we can better
+  identify the issues you might be facing. When we upgraded Electron, the
+  expected configuration of this request has changed and the log file would not
+  be sent anymore.
+  We've updated this configuration and log files are joined to your message
+  again.
+
+Improvements for MacOS users:
+
+- We found out that the libraries we use to watch the changes done to your files
+  on your filesystem could sometimes fire events with the wrong type. Indeed,
+  we've seen events for the addition of files with a directory type and
+  vice-versa.
+  We rely on this type to decide which actions to run so we're now verifying
+  that the type we received is correct before we proceed.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.0-beta.5 - 2019-10-22
 
 Improvements for all users:
