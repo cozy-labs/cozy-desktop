@@ -41,7 +41,7 @@ module.exports.init = (app, listener) => {
   tray.on('double-click', clicked)
   tray.setToolTip('loading')
 
-  if (!isMac && !isWindows) {
+  if (!isMac) {
     // When click events are not triggered, we need to display a context menu so
     // users can open the app's window.
     const cm = Menu.buildFromTemplate([
