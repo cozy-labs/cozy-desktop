@@ -4,9 +4,10 @@
  * @flow
  */
 
-const Sentry = require('raven')
+const Sentry = require('@sentry/electron')
 const bunyan = require('bunyan')
 const url = require('url')
+const os = require('os')
 
 const logger = require('./logger')
 const log = logger({
@@ -66,16 +67,16 @@ function setup(clientInfos /*: ClientInfo */) {
   try {
     const { appVersion, cozyUrl } = clientInfos
     const { domain, instance, environment } = toSentryContext(cozyUrl)
-    Sentry.config(SENTRY_DSN, {
+    Sentry.init({
+      dsn: SENTRY_DSN,
       release: appVersion,
-      environment,
-      tags: { domain, instance }
-    }).install((err, sendErr, eventId) => {
-      // fatal error handler
-      if (sendErr)
-        log.error({ err, sendErr }, 'Fatal error, unable to send to sentry')
-      else log.error({ err, eventId }, 'Fatal error, sent to sentry')
-      process.exit(1) // eslint-disable-line no-process-exit
+      environment
+    })
+    Sentry.configureScope(scope => {
+      scope.setUser({ username: instance })
+      scope.setTag('domain', domain)
+      scope.setTag('instance', instance)
+      scope.setTag('server_name', os.hostname())
     })
     logger.defaultLogger.addStream({
       type: 'raw',
@@ -116,32 +117,31 @@ const handleBunyanMessage = msg => {
 
   // for now only logs marked explicitly for sentry get sent
   if (msg.sentry || (msg.err && msg.err.sentry)) {
-    if (msg.err) {
-      const extra = _.omit(msg, [
-        'err',
-        'tags',
-        'v',
-        'hostname',
-        'sentry',
-        'pid',
-        'level'
-      ])
-      Sentry.captureException(bunyanErrObjectToError(msg.err), { extra, level })
-    } else {
-      const extra = _.omit(msg, [
-        'err',
-        'tags',
-        'v',
-        'hostname',
-        'sentry',
-        'pid',
-        'level'
-      ])
-      Sentry.captureMessage(msg.msg, { extra, level })
-    }
+    const extra = _.omit(msg, [
+      'err',
+      'tags',
+      'v',
+      'hostname',
+      'sentry',
+      'pid',
+      'level'
+    ])
+
+    Sentry.withScope(scope => {
+      scope.setLevel(level)
+      for (const key in extra) {
+        scope.setExtra(key, extra[key])
+      }
+
+      if (msg.err) {
+        Sentry.captureException(bunyanErrObjectToError(msg.err))
+      } else {
+        Sentry.captureMessage(msg.msg)
+      }
+    })
   } else {
     // keep it as breadcrumb
-    Sentry.captureBreadcrumb({
+    Sentry.addBreadcrumb({
       message: msg.msg,
       category: msg.component,
       data: _.omit(msg, [
