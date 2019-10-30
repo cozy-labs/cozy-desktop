@@ -152,6 +152,13 @@ class Pouch {
 
   /* Mini ODM */
 
+  async allDocs() /*: Promise<void> */ {
+    const results = await this.db.allDocs({ include_docs: true })
+    return Array.from(results.rows)
+      .filter(row => !row.key.startsWith('_'))
+      .map(row => row.doc)
+  }
+
   put(doc /*: Metadata */) /*: Promise<void> */ {
     metadata.invariants(doc)
     const { local, remote } = doc.sides
