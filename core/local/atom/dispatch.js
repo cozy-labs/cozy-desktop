@@ -59,9 +59,19 @@ function loop(
 
 function step(opts /*: DispatchOptions */) {
   return async (batch /*: AtomBatch */) => {
+    opts.events.emit('local-start')
     for (const event of batch) {
       try {
         await dispatchEvent(event, opts)
+        let target = -1
+        try {
+          target = (await opts.pouch.db.changes({ limit: 1, descending: true }))
+            .last_seq
+        } catch (err) {
+          log.warn({ err })
+          /* ignore err */
+        }
+        opts.events.emit('sync-target', target)
       } catch (err) {
         log.error({ err, event })
       } finally {
@@ -70,6 +80,7 @@ function step(opts /*: DispatchOptions */) {
         }
       }
     }
+    opts.events.emit('local-end')
     return batch
   }
 }

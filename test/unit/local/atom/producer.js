@@ -10,6 +10,7 @@ const path = require('path')
 const Producer = require('../../../../core/local/atom/producer')
 const { Ignore } = require('../../../../core/ignore')
 const stater = require('../../../../core/local/stater')
+const EventEmitter = require('events')
 
 const { ContextDir } = require('../../../support/helpers/context_dir')
 const { onPlatforms } = require('../../../support/helpers/platform')
@@ -19,13 +20,15 @@ onPlatforms(['linux', 'win32'], () => {
     let syncDir
     let syncPath
     let ignore
+    let events
     let producer
 
     beforeEach(() => {
       syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'Cozy Drive.test-'))
       syncDir = new ContextDir(syncPath)
       ignore = new Ignore([])
-      producer = new Producer({ syncPath, ignore })
+      events = new EventEmitter()
+      producer = new Producer({ syncPath, ignore, events })
     })
 
     describe('scan()', () => {
@@ -36,7 +39,7 @@ onPlatforms(['linux', 'win32'], () => {
 
         beforeEach(async () => {
           ignore = new Ignore([ignoredDir])
-          producer = new Producer({ syncPath, ignore })
+          producer = new Producer({ syncPath, ignore, events })
 
           await syncDir.makeTree([
             `${ignoredDir}/`,

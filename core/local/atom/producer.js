@@ -17,6 +17,7 @@ const logger = require('../../utils/logger')
 /*::
 import type { Ignore } from '../../ignore'
 import type { AtomEvent } from './event'
+import type EventEmitter from 'events'
 
 export type Scanner = (string) => Promise<void>
 */
@@ -60,12 +61,16 @@ class Producer {
   channel: Channel
   syncPath: string
   ignore: Ignore
+  events: EventEmitter
   watcher: *
   */
-  constructor(opts /*: { syncPath: string, ignore: Ignore } */) {
+  constructor(
+    opts /*: { syncPath: string, ignore: Ignore, events: EventEmitter } */
+  ) {
     this.channel = new Channel()
     this.syncPath = opts.syncPath
     this.ignore = opts.ignore
+    this.events = opts.events
     this.watcher = null
     autoBind(this)
   }
@@ -90,6 +95,7 @@ class Producer {
    * the recursive option.
    */
   async start() {
+    this.events.emit('buffering-start')
     this.watcher = await watcher.watchPath(
       this.syncPath,
       { recursive: true },
@@ -108,6 +114,7 @@ class Producer {
     // been emited.
     await Promise.delay(1000)
     this.channel.push([INITIAL_SCAN_DONE])
+    this.events.emit('buffering-end')
   }
 
   async scan(

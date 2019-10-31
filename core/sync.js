@@ -143,13 +143,13 @@ class Sync {
     let seq = await this.pouch.getLocalSeqAsync()
     log.trace({ seq }, 'Waiting for changes since seq')
     if (waitForNewChanges) await this.waitForNewChanges(seq)
-    this.events.emit('sync-start')
     const release = await this.pouch.lock(this)
+    this.events.emit('sync-start')
     try {
       await this.syncBatch()
     } finally {
-      release()
       this.events.emit('sync-end')
+      release()
     }
     log.debug('No more metadata changes for now')
   }

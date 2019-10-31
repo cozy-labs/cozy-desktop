@@ -26,6 +26,7 @@ const checksumer = require('./../checksumer')
 const Producer = require('./producer')
 const addInfos = require('./add_infos')
 const filterIgnored = require('./filter_ignored')
+const fireLocatStartEvent = require('./fire_local_start_event')
 const winDetectMove = require('./win_detect_move')
 const winIdenticalRenaming = require('./win_identical_renaming')
 const scanFolder = require('./scan_folder')
@@ -70,6 +71,7 @@ const only = (platform, step) => platform === process.platform && step
 const steps = _.compact([
   addInfos,
   filterIgnored,
+  fireLocatStartEvent,
   only('win32', winIdenticalRenaming),
   only('win32', winDetectMove),
   scanFolder,
@@ -143,23 +145,10 @@ class AtomWatcher {
       this._runningResolve = resolve
       this._runningReject = reject
     })
-    this.events.emit('local-start')
     await stepsInitialState(this.state, this)
     this.producer.start()
     const scanDone = new Promise(resolve => {
       this.events.on('initial-scan-done', resolve)
-    })
-    scanDone.then(async () => {
-      let target = -1
-      try {
-        target = (await this.pouch.db.changes({ limit: 1, descending: true }))
-          .last_seq
-      } catch (err) {
-        log.warn({ err })
-        /* ignore err */
-      }
-      this.events.emit('sync-target', target)
-      this.events.emit('local-end')
     })
     return scanDone
   }
