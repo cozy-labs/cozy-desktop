@@ -9,6 +9,7 @@ const sinon = require('sinon')
 const Builders = require('../../../support/builders')
 const { ContextDir } = require('../../../support/helpers/context_dir')
 const configHelpers = require('../../../support/helpers/config')
+const pouchHelpers = require('../../../support/helpers/pouch')
 
 const metadata = require('../../../../core/metadata')
 const stater = require('../../../../core/local/stater')
@@ -29,9 +30,14 @@ describe('core/local/atom/incomplete_fixer', () => {
   let builders
 
   before('create config', configHelpers.createConfig)
-  before('create helpers', function() {
+  beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+  beforeEach('create helpers', function() {
     syncDir = new ContextDir(this.syncPath)
-    builders = new Builders()
+    builders = new Builders({ pouch: this.pouch })
+  })
+  afterEach('clean pouch', pouchHelpers.cleanDatabase)
+  afterEach('clean files', function() {
+    syncDir.clean()
   })
   after('cleanup config', configHelpers.cleanConfig)
 
@@ -59,7 +65,8 @@ describe('core/local/atom/incomplete_fixer', () => {
       const inputChannel = new Channel()
       const outputChannel = incompleteFixer.loop(inputChannel, {
         syncPath,
-        checksumer
+        checksumer,
+        pouch: this.pouch
       })
 
       inputChannel.push([createdEvent])
@@ -67,8 +74,8 @@ describe('core/local/atom/incomplete_fixer', () => {
 
       should(await outputChannel.pop()).deepEqual(
         await incompleteFixer.step(
-          [{ event: createdEvent, timestamp: Date.now() }],
-          { syncPath, checksumer }
+          { incompletes: [{ event: createdEvent, timestamp: Date.now() }] },
+          { syncPath, checksumer, pouch: this.pouch }
         )([renamedEvent])
       )
     })
@@ -107,10 +114,14 @@ describe('core/local/atom/incomplete_fixer', () => {
         ]
         const incompletes = []
 
-        const outputBatch = await incompleteFixer.step(incompletes, {
-          syncPath,
-          checksumer
-        })(inputBatch)
+        const outputBatch = await incompleteFixer.step(
+          { incompletes },
+          {
+            syncPath,
+            checksumer,
+            pouch: this.pouch
+          }
+        )(inputBatch)
         should(outputBatch).be.empty()
       })
     })
@@ -137,14 +148,18 @@ describe('core/local/atom/incomplete_fixer', () => {
         ]
         const incompletes = []
 
-        const outputBatch = await incompleteFixer.step(incompletes, {
-          syncPath,
-          checksumer
-        })(inputBatch)
+        const outputBatch = await incompleteFixer.step(
+          { incompletes },
+          {
+            syncPath,
+            checksumer,
+            pouch: this.pouch
+          }
+        )(inputBatch)
         should(outputBatch).deepEqual(inputBatch)
       })
 
-      it('rebuilds the first incomplete event matching the "renamed" event old path', async function() {
+      it('rebuilds the all incomplete events matching the "renamed" event old path', async function() {
         const { syncPath } = this
 
         await syncDir.makeTree([
@@ -204,17 +219,21 @@ describe('core/local/atom/incomplete_fixer', () => {
         const outputBatches = []
 
         for (const inputBatch of [incompleteEvents, [renamedEvent]]) {
-          const outputBatch = await incompleteFixer.step(incompletes, {
-            syncPath,
-            checksumer
-          })(inputBatch)
+          const outputBatch = await incompleteFixer.step(
+            { incompletes },
+            {
+              syncPath,
+              checksumer,
+              pouch: this.pouch
+            }
+          )(inputBatch)
           outputBatches.push(completionChanges(outputBatch))
         }
 
         should(outputBatches).deepEqual([
           [],
           [
-            completedEvent(renamedEvent),
+            renamedEvent,
             {
               _id: metadata.id(path.normalize('dst/foo1')),
               path: path.normalize('dst/foo1'),
@@ -222,6 +241,30 @@ describe('core/local/atom/incomplete_fixer', () => {
               action: 'created',
               md5sum: CHECKSUM,
               stats: await stater.stat(path.join(syncPath, 'dst/foo1'))
+            },
+            {
+              _id: metadata.id(path.normalize('dst/foo2')),
+              path: path.normalize('dst/foo2'),
+              kind: 'file',
+              action: 'modified',
+              md5sum: CHECKSUM,
+              stats: await stater.stat(path.join(syncPath, 'dst/foo2'))
+            },
+            {
+              _id: metadata.id(path.normalize('dst/foo3')),
+              path: path.normalize('dst/foo3'),
+              kind: 'file',
+              action: 'deleted',
+              md5sum: CHECKSUM,
+              stats: await stater.stat(path.join(syncPath, 'dst/foo3'))
+            },
+            {
+              _id: metadata.id(path.normalize('dst/foo5')),
+              path: path.normalize('dst/foo5'),
+              kind: 'file',
+              action: 'scan',
+              md5sum: CHECKSUM,
+              stats: await stater.stat(path.join(syncPath, 'dst/foo5'))
             }
           ]
         ])
@@ -245,10 +288,14 @@ describe('core/local/atom/incomplete_fixer', () => {
           .build()
         const incompletes = []
 
-        const outputBatch = await incompleteFixer.step(incompletes, {
-          syncPath,
-          checksumer
-        })([ignoredEvent, renamedEvent])
+        const outputBatch = await incompleteFixer.step(
+          { incompletes },
+          {
+            syncPath,
+            checksumer,
+            pouch: this.pouch
+          }
+        )([ignoredEvent, renamedEvent])
         should(outputBatch).deepEqual([renamedEvent])
       })
 
@@ -275,10 +322,14 @@ describe('core/local/atom/incomplete_fixer', () => {
         const inputBatch = [createdEvent, renamedEvent]
         const incompletes = []
 
-        const outputBatch = await incompleteFixer.step(incompletes, {
-          syncPath,
-          checksumer
-        })(inputBatch)
+        const outputBatch = await incompleteFixer.step(
+          { incompletes },
+          {
+            syncPath,
+            checksumer,
+            pouch: this.pouch
+          }
+        )(inputBatch)
         should(completionChanges(outputBatch)).deepEqual([
           {
             _id: renamedEvent._id,
@@ -316,10 +367,14 @@ describe('core/local/atom/incomplete_fixer', () => {
         const outputBatches = []
 
         for (const inputBatch of [[renamedEvent], [deletedEvent]]) {
-          const outputBatch = await incompleteFixer.step(incompletes, {
-            syncPath,
-            checksumer
-          })(inputBatch)
+          const outputBatch = await incompleteFixer.step(
+            { incompletes },
+            {
+              syncPath,
+              checksumer,
+              pouch: this.pouch
+            }
+          )(inputBatch)
           outputBatches.push(outputBatch)
         }
 
@@ -368,10 +423,14 @@ describe('core/local/atom/incomplete_fixer', () => {
         const outputBatches = []
 
         for (const inputBatch of [[firstRenamedEvent], [secondRenamedEvent]]) {
-          const outputBatch = await incompleteFixer.step(incompletes, {
-            syncPath,
-            checksumer
-          })(inputBatch)
+          const outputBatch = await incompleteFixer.step(
+            { incompletes },
+            {
+              syncPath,
+              checksumer,
+              pouch: this.pouch
+            }
+          )(inputBatch)
           outputBatches.push(outputBatch)
         }
 
@@ -436,10 +495,14 @@ describe('core/local/atom/incomplete_fixer', () => {
           [secondRenamedEvent],
           [thirdRenamedEvent]
         ]) {
-          const outputBatch = await incompleteFixer.step(incompletes, {
-            syncPath,
-            checksumer
-          })(inputBatch)
+          const outputBatch = await incompleteFixer.step(
+            { incompletes },
+            {
+              syncPath,
+              checksumer,
+              pouch: this.pouch
+            }
+          )(inputBatch)
           outputBatches.push(completionChanges(outputBatch))
         }
 
@@ -487,14 +550,234 @@ describe('core/local/atom/incomplete_fixer', () => {
         const outputBatches = []
 
         for (const inputBatch of [[firstRenamedEvent], [secondRenamedEvent]]) {
-          const outputBatch = await incompleteFixer.step(incompletes, {
-            syncPath,
-            checksumer
-          })(inputBatch)
+          const outputBatch = await incompleteFixer.step(
+            { incompletes },
+            {
+              syncPath,
+              checksumer,
+              pouch: this.pouch
+            }
+          )(inputBatch)
           outputBatches.push(outputBatch)
         }
 
         should(outputBatches).deepEqual([[], []])
+      })
+    })
+
+    describe('incomplete created for merged file then renamed', () => {
+      const src = 'src'
+      const dst = 'dst'
+
+      beforeEach(async function() {
+        await builders
+          .metafile()
+          .path(src)
+          .sides({ local: 1 })
+          .create()
+      })
+
+      it('results in the renamed event', async function() {
+        const { syncPath, pouch } = this
+
+        await syncDir.ensureFile(dst)
+        const createdEvent = builders
+          .event()
+          .kind('file')
+          .action('created')
+          .path(src)
+          .incomplete()
+          .build()
+        const renamedEvent = builders
+          .event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(src)
+          .path(dst)
+          .build()
+        const incompletes = []
+        const outputBatches = []
+
+        for (const inputBatch of [[createdEvent], [renamedEvent]]) {
+          const outputBatch = await incompleteFixer.step(
+            { incompletes },
+            {
+              syncPath,
+              checksumer,
+              pouch
+            }
+          )(inputBatch)
+          outputBatches.push(outputBatch)
+        }
+
+        should(outputBatches).deepEqual([[], [renamedEvent]])
+      })
+    })
+
+    describe('incomplete modified for merged file then renamed', () => {
+      const src = 'src'
+      const dst = 'dst'
+
+      beforeEach(async function() {
+        await builders
+          .metafile()
+          .path(src)
+          .sides({ local: 1 })
+          .create()
+      })
+
+      it('results in the renamed event followed by the rebuilt modified event', async function() {
+        const { syncPath, pouch } = this
+
+        await syncDir.ensureFile(dst)
+        const modifiedEvent = builders
+          .event()
+          .kind('file')
+          .action('modified')
+          .path(src)
+          .incomplete()
+          .build()
+        const renamedEvent = builders
+          .event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(src)
+          .path(dst)
+          .build()
+        const incompletes = []
+        const outputBatches = []
+
+        for (const inputBatch of [[modifiedEvent], [renamedEvent]]) {
+          const outputBatch = await incompleteFixer.step(
+            { incompletes },
+            {
+              syncPath,
+              checksumer,
+              pouch
+            }
+          )(inputBatch)
+          outputBatches.push(outputBatch)
+        }
+
+        should(outputBatches).deepEqual([
+          [],
+          [
+            renamedEvent,
+            {
+              _id: metadata.id(dst),
+              action: 'modified',
+              incompleteFixer: {
+                incompleteEvent: modifiedEvent,
+                completingEvent: renamedEvent
+              },
+              kind: 'file',
+              md5sum: CHECKSUM,
+              path: dst,
+              stats: await stater.stat(path.join(syncPath, dst))
+            }
+          ]
+        ])
+      })
+    })
+
+    describe('incomplete modified for merged file then renamed twice', () => {
+      const src = 'src'
+      const dst1 = 'dst1'
+      const dst2 = 'dst2'
+
+      beforeEach(async function() {
+        await builders
+          .metafile()
+          .path(src)
+          .sides({ local: 1 })
+          .create()
+      })
+
+      it('results in one renamed event followed by the rebuilt modified event', async function() {
+        const { syncPath, pouch } = this
+
+        await syncDir.ensureFile(dst2)
+        const modifiedEvent = builders
+          .event()
+          .kind('file')
+          .action('modified')
+          .path(src)
+          .incomplete()
+          .build()
+        const firstRenamedEvent = builders
+          .event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(src)
+          .path(dst1)
+          .incomplete()
+          .build()
+        const secondRenamedEvent = builders
+          .event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(dst1)
+          .path(dst2)
+          .build()
+        const incompletes = []
+        const outputBatches = []
+
+        for (const inputBatch of [
+          [modifiedEvent],
+          [firstRenamedEvent],
+          [secondRenamedEvent]
+        ]) {
+          const outputBatch = await incompleteFixer.step(
+            { incompletes },
+            {
+              syncPath,
+              checksumer,
+              pouch
+            }
+          )(inputBatch)
+          outputBatches.push(outputBatch)
+        }
+
+        should(outputBatches).deepEqual([
+          [],
+          [],
+          [
+            {
+              _id: metadata.id(dst2),
+              action: 'renamed',
+              incompleteFixer: {
+                incompleteEvent: firstRenamedEvent,
+                completingEvent: secondRenamedEvent
+              },
+              kind: 'file',
+              md5sum: CHECKSUM,
+              oldPath: src,
+              path: dst2,
+              stats: await stater.stat(path.join(syncPath, dst2))
+            },
+            {
+              _id: metadata.id(dst2),
+              action: 'modified',
+              incompleteFixer: {
+                incompleteEvent: {
+                  ...modifiedEvent,
+                  path: dst1,
+                  _id: metadata.id(dst1),
+                  md5sum: undefined,
+                  incompleteFixer: {
+                    incompleteEvent: modifiedEvent,
+                    completingEvent: firstRenamedEvent
+                  }
+                },
+                completingEvent: secondRenamedEvent
+              },
+              kind: 'file',
+              md5sum: CHECKSUM,
+              path: dst2,
+              stats: await stater.stat(path.join(syncPath, dst2))
+            }
+          ]
+        ])
       })
     })
   })

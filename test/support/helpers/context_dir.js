@@ -5,11 +5,13 @@ const Promise = require('bluebird')
 const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
+const rimraf = require('rimraf')
 
 const checksumer = require('../../../core/local/checksumer')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 
 Promise.promisifyAll(checksumer)
+const rimrafAsync = Promise.promisify(rimraf)
 
 function getPath(target /*: string | {path: string} */) /*: string */ {
   return typeof target === 'string' ? target : target.path
@@ -28,6 +30,12 @@ class ContextDir {
   constructor(root /*: string */) {
     this.root = root
     autoBind(this)
+  }
+
+  async clean() {
+    for (const pattern of ['*', '.*']) {
+      await rimrafAsync(path.join(this.root, pattern))
+    }
   }
 
   abspath(target /*: string | {path: string} */) /*: string */ {
