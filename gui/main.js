@@ -171,11 +171,33 @@ const sendErrorToMainWindow = msg => {
   notif.show()
 }
 
-const updateState = (newState, filename) => {
-  if (newState === 'error') errorMessage = filename
-  if (state === 'error' && newState === 'offline') return
-  state = newState
-  tray.setState(state, filename)
+const updateState = (newState, data) => {
+  if (newState === 'error') errorMessage = data
+  if (newState === 'online' && state !== 'offline') return
+  if (newState === 'offline' && state === 'error') return
+
+  // Update window status bar
+  if (newState === 'online') {
+    trayWindow.send('up-to-date')
+  } else if (newState === 'offline') {
+    trayWindow.send('offline')
+  } else if (newState === 'error') {
+    sendErrorToMainWindow(data)
+  } else if (newState === 'sync-status') {
+    trayWindow.send('sync-status', data)
+  } else if (newState === 'syncing' && data && data.filename) {
+    trayWindow.send('transfer', data)
+  }
+
+  if (newState === 'sync-status') {
+    state = data.label === 'uptodate' ? 'up-to-date' : 'syncing'
+  } else if (newState === 'uptodate') {
+    state = 'up-to-date'
+  } else {
+    state = newState
+  }
+  // Update systray icon and tooltip
+  tray.setState(state, data)
 }
 
 const addFile = info => {
@@ -186,9 +208,8 @@ const addFile = info => {
     size: info.size || 0,
     updated: +new Date()
   }
-  updateState('syncing', file.filename)
+  updateState('syncing', file)
   lastFiles.add(file)
-  trayWindow.send('transfer', file)
   lastFiles.persists()
 }
 
@@ -200,8 +221,9 @@ const removeFile = info => {
     size: 0,
     updated: 0
   }
-  lastFiles.remove(file)
+  updateState('syncing')
   trayWindow.send('delete-file', file)
+  lastFiles.remove(file)
   lastFiles.persists()
 }
 
@@ -248,17 +270,13 @@ const startSync = force => {
   } else {
     updateState('syncing')
     desktop.events.on('sync-status', status => {
-      updateState(status.label === 'uptodate' ? 'online' : 'syncing')
-      trayWindow.send('sync-status', status)
+      updateState('sync-status', status)
     })
-
     desktop.events.on('online', () => {
       updateState('online')
-      trayWindow.send('up-to-date')
     })
     desktop.events.on('offline', () => {
       updateState('offline')
-      trayWindow.send('offline')
     })
     desktop.events.on('remoteWarnings', warnings => {
       if (warnings.length > 0) {
@@ -317,7 +335,6 @@ const startSync = force => {
             : err.message
         updateState('error', msg)
         sendDiskUsage()
-        sendErrorToMainWindow(msg)
       })
     sendDiskUsage()
   }

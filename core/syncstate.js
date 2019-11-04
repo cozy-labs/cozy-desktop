@@ -32,23 +32,24 @@ module.exports = class SyncState extends EventEmitter {
       : this.buffering
       ? 'buffering'
       : 'uptodate'
+    const remaining =
+      this.syncLastSeq && this.syncCurrentSeq
+        ? this.syncLastSeq - this.syncCurrentSeq
+        : 1
 
-    super.emit('sync-status', {
-      label: label,
-      remaining: Math.max(1, this.syncLastSeq - this.syncCurrentSeq)
-    })
+    super.emit('sync-status', { label, remaining })
 
     if (this.wasSpinning && !this.shouldSpin()) {
+      this.wasSpinning = false
       this.emit('up-to-date')
     }
-
-    if (this.shouldSpin() && !this.wasSpinning) {
+    if (!this.wasSpinning && this.shouldSpin()) {
+      this.wasSpinning = true
       this.emit('syncing')
     }
   }
 
   emit(name, ...args) {
-    this.wasSpinning = this.shouldSpin()
     switch (name) {
       case 'buffering-start':
         this.buffering = true
@@ -67,6 +68,8 @@ module.exports = class SyncState extends EventEmitter {
         this.emitStatus()
         break
       case 'sync-start':
+        this.localSyncing = false
+        this.remoteSyncing = false
         this.syncSyncing = true
         this.emitStatus()
         break

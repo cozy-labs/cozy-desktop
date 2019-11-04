@@ -33,7 +33,12 @@ function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
 
     for (const call of calls) {
       if (!dispatchedCalls[method]) dispatchedCalls[method] = []
-      dispatchedCalls[method].push(call.args)
+      if (
+        method !== 'emit' ||
+        !['local-start', 'local-end', 'sync-target'].includes(call.args[0])
+      ) {
+        dispatchedCalls[method].push(call.args)
+      }
     }
   }
 

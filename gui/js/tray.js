@@ -103,15 +103,15 @@ if (newReleaseAvailable) {
 tray.setContextMenu(menu)
 */
 
-var setState = (module.exports.setState = (state, filename) => {
+var setState = (module.exports.setState = (state, data) => {
   let statusLabel = ''
   let icon = 'idle'
   if (state === 'error') {
     icon = 'error'
-    statusLabel = filename
-  } else if (filename) {
+    statusLabel = data
+  } else if (state === 'syncing' && data && data.filename) {
     icon = 'sync'
-    statusLabel = `${translate('Tray Syncing')} ‟${filename}“`
+    statusLabel = `${translate('Tray Syncing')} ‟${data.filename}“`
   } else if (state === 'up-to-date' || state === 'online') {
     icon = 'idle'
     statusLabel = translate('Tray Your cozy is up to date')
