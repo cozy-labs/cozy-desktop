@@ -11,6 +11,7 @@ const proxy = require('./js/proxy')
 const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/cozy')
 const migrations = require('../core/pouch/migrations')
 const config = require('../core/config')
+const winRegistry = require('../core/utils/win_registry')
 
 const autoLaunch = require('./js/autolaunch')
 const lastFiles = require('./js/lastfiles')
@@ -355,6 +356,18 @@ const startSync = force => {
         updateState('error', err.message)
       }
       return
+    }
+
+    // We do it here since Sentry's setup happens in `desktop.setup()`
+    if (process.platform === 'win32') {
+      winRegistry.removeOldUninstallKey().catch(err => {
+        if (err instanceof winRegistry.RegeditError) {
+          log.error(
+            { err, sentry: true },
+            'Failed to remove uninstall registry key'
+          )
+        }
+      })
     }
 
     desktop
