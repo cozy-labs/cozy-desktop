@@ -36,6 +36,7 @@ const DELAY = 3000
 import type Channel from './channel'
 import type { AtomEvent, AtomBatch } from './event'
 import type { Checksumer } from '../checksumer'
+import type { Pouch } from '../../pouch'
 
 type IncompleteItem = {
   event: AtomEvent,
@@ -44,12 +45,13 @@ type IncompleteItem = {
 
 type IncompleteFixerOptions = {
   syncPath: string,
-  checksumer: Checksumer
+  checksumer: Checksumer,
+  pouch: Pouch
 }
 
 type Completion =
-  | { ignored: false, rebuilt: AtomEvent }
-  | { ignored: true }
+  | {| rebuilt: AtomEvent |}
+  | {| ignored: true |}
 */
 
 module.exports = {
@@ -102,18 +104,18 @@ function completeEventPaths(
 async function rebuildIncompleteEvent(
   previousEvent /*: AtomEvent */,
   nextEvent /*: AtomEvent */,
-  opts /*: { syncPath: string , checksumer: Checksumer } */
+  opts /*: { syncPath: string , checksumer: Checksumer, pouch: Pouch } */
 ) /*: Promise<Completion> */ {
-  const { path: relPath, oldPath } = completeEventPaths(
+  const { path: rebuiltPath, oldPath: rebuiltOldPath } = completeEventPaths(
     previousEvent,
     nextEvent
   )
 
-  if (relPath === oldPath) {
+  if (rebuiltPath === rebuiltOldPath) {
     return { ignored: true }
   }
 
-  const absPath = path.join(opts.syncPath, relPath)
+  const absPath = path.join(opts.syncPath, rebuiltPath)
   const stats = await stater.statMaybe(absPath)
   const incomplete = stats == null
   const kind = stats ? stater.kind(stats) : previousEvent.kind
@@ -126,16 +128,16 @@ async function rebuildIncompleteEvent(
       completingEvent: nextEvent
     },
     action: previousEvent.action,
-    path: relPath,
-    _id: metadata.id(relPath),
+    path: rebuiltPath,
+    _id: metadata.id(rebuiltPath),
     kind,
     md5sum
   }
-  if (oldPath) rebuilt.oldPath = oldPath
+  if (rebuiltOldPath) rebuilt.oldPath = rebuiltOldPath
   if (stats) rebuilt.stats = stats
   if (incomplete) rebuilt.incomplete = incomplete
 
-  return { rebuilt, ignored: false }
+  return { rebuilt }
 }
 
 function buildDeletedFromRenamed(
@@ -144,7 +146,6 @@ function buildDeletedFromRenamed(
 ) /*: Completion */ {
   const { oldPath, kind } = previousEvent
   return {
-    ignored: false,
     rebuilt: {
       [STEP_NAME]: {
         incompleteEvent: previousEvent,
@@ -160,81 +161,123 @@ function buildDeletedFromRenamed(
   }
 }
 
+function keepEvent(event, { incompletes, batch }) {
+  if (event.incomplete) {
+    incompletes.add({ event, timestamp: Date.now() })
+  } else {
+    batch.add(event)
+  }
+}
+
 function loop(
   channel /*: Channel */,
   opts /*: IncompleteFixerOptions */
 ) /*: Channel */ {
   const incompletes = []
-  return channel.asyncMap(step(incompletes, opts))
+  return channel.asyncMap(step({ incompletes }, opts))
 }
 
 function step(
-  incompletes /*: IncompleteItem[] */,
+  state /*: { incompletes: IncompleteItem[] } */,
   opts /*: IncompleteFixerOptions */
 ) {
   return async (events /*: AtomBatch */) /*: Promise<AtomBatch> */ => {
-    const batch = []
+    const batch = new Set()
 
     // Filter incomplete events
     for (const event of events) {
       if (event.incomplete && event.action !== 'ignored') {
         log.debug({ path: event.path, action: event.action }, 'incomplete')
-        incompletes.push({ event, timestamp: Date.now() })
+        state.incompletes.push({ event, timestamp: Date.now() })
       }
     }
 
     // Let's see if we can match an incomplete event with a renamed or deleted event
     for (const event of events) {
+      const now = Date.now()
+      for (let i = 0; i < state.incompletes.length; i++) {
+        const item = state.incompletes[i]
+
+        // Remove the expired incomplete events
+        if (item.timestamp + DELAY < now) {
+          log.debug(
+            { path: item.event.path, event: item.event },
+            'Dropping expired incomplete event'
+          )
+          state.incompletes.splice(i, 1)
+          i--
+        }
+      }
+
       if (
-        incompletes.length === 0 ||
+        state.incompletes.length === 0 ||
         !['renamed', 'deleted'].includes(event.action)
       ) {
         if (!event.incomplete) {
-          batch.push(event)
+          batch.add(event)
         }
         continue
       }
 
-      const now = Date.now()
-      for (let i = 0; i < incompletes.length; i++) {
-        const item = incompletes[i]
-
-        // Remove the expired incomplete events
-        if (item.timestamp + DELAY < now) {
-          log.debug({ event: item.event }, 'Dropping expired incomplete event')
-          incompletes.splice(i, 1)
-          i--
-          continue
-        }
+      const incompletes = new Set()
+      for (let i = 0; i < state.incompletes.length; i++) {
+        const item = state.incompletes[i]
 
         try {
           const completion = await detectCompletion(item.event, event, opts)
           if (!completion) {
+            incompletes.add(item)
             if (!event.incomplete) {
-              batch.push(event)
+              batch.add(event)
             }
             continue
           } else if (completion.ignored) {
-            break
-          }
-
-          const { rebuilt } = completion
-          log.debug(
-            { path: rebuilt.path, action: rebuilt.action },
-            'rebuilt event'
-          )
-
-          if (rebuilt.incomplete) {
-            incompletes.splice(i, 1, { event: rebuilt, timestamp: Date.now() })
+            incompletes.add(item)
             continue
           }
 
-          if (rebuilt.path.startsWith(event.path + path.sep)) {
-            batch.push(event) // Could we be pushing it multiple times?
+          const { rebuilt } = completion
+          log.debug({ path: event.path, rebuilt }, 'rebuilt event')
+
+          // If the incomplete event is for a document that was previously saved
+          // (e.g. a temporary document now renamed), we'll want to make sure the old
+          // document is removed to avoid having 2 documents with the same inode.
+          // We can do this by keeping the completing renamed event.
+          const incompleteForExistingDoc = await opts.pouch.byIdMaybeAsync(
+            metadata.id(item.event.path)
+          )
+          if (
+            incompleteForExistingDoc &&
+            (item.event.action === 'created' || item.event.action === 'scan')
+          ) {
+            // Simply drop the incomplete event since we already have a document at this
+            // path in Pouch.
+            keepEvent(event, { incompletes, batch })
+          } else if (
+            incompleteForExistingDoc &&
+            item.event.action === 'modified'
+          ) {
+            // Keep the completed modified event to make sure we don't miss any
+            // content changes but process the completing event (i.e. probably a
+            // renamed event) to make sure we apply the modifications on the right
+            // document.
+            keepEvent(event, { incompletes, batch })
+            keepEvent(rebuilt, { incompletes, batch })
+          } else if (rebuilt.path.startsWith(event.path + path.sep)) {
+            // Keep the completing event if it's the parent of the completed event since
+            // they don't apply to the same document.
+            keepEvent(event, { incompletes, batch })
+            keepEvent(rebuilt, { incompletes, batch })
+          } else {
+            keepEvent(rebuilt, { incompletes, batch })
           }
-          batch.push(rebuilt)
-          incompletes.splice(i, 1)
-          break
+
+          if (rebuilt.incomplete) {
+            // The rebuilt being incomplete, we'll keep it in the list of
+            // incompletes and should replace the existing incomplete event
+            // since it was still rebuilt.
+            state.incompletes.splice(i, 1)
+          }
         } catch (err) {
           log.error(
             { err, event, item },
@@ -243,9 +286,12 @@ function step(
           // If we have an error, there is probably not much that we can do
         }
       }
+      // Replace the state's incompletes with the newly built set.
+      state.incompletes.length = 0
+      state.incompletes.push(...incompletes)
     }
 
-    return batch
+    return Array.from(batch)
   }
 }
 
