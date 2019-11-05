@@ -10,6 +10,7 @@ const os = require('os')
 const proxy = require('./js/proxy')
 const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/cozy')
 const migrations = require('../core/pouch/migrations')
+const config = require('../core/config')
 
 const autoLaunch = require('./js/autolaunch')
 const lastFiles = require('./js/lastfiles')
@@ -87,6 +88,7 @@ const showWindow = bounds => {
 
 let revokedAlertShown = false
 let syncDirUnlinkedShown = false
+let invalidConfigShown = false
 
 const sendErrorToMainWindow = msg => {
   if (msg === COZY_CLIENT_REVOKED_MESSAGE) {
@@ -144,6 +146,40 @@ const sendErrorToMainWindow = msg => {
       .then(() => log.info('removed'))
       .then(() => trayWindow.doRestart())
       .catch(err => log.error(err))
+    return // no notification
+  } else if (msg === config.INVALID_CONFIG_ERROR) {
+    msg = translate('InvalidConfiguration Invalid configuration')
+    trayWindow.send('sync-error', msg)
+
+    if (invalidConfigShown) return
+    invalidConfigShown = true // prevent the alert from appearing twice
+
+    const options = {
+      type: 'warning',
+      title: translate('InvalidConfiguration Invalid configuration'),
+      message: translate(
+        'InvalidConfiguration The client configuration is invalid'
+      ),
+      detail: translate(
+        'InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc'
+      ),
+      buttons: [
+        translate('InvalidConfiguration Log out'),
+        translate('InvalidConfiguration Contact support')
+      ],
+      defaultId: 0
+    }
+    trayWindow.hide()
+    const userChoice = dialog.showMessageBox(null, options)
+    if (userChoice === 0) {
+      desktop
+        .removeConfig()
+        .then(() => log.info('removed'))
+        .then(() => trayWindow.doRestart())
+        .catch(err => log.error(err))
+    } else {
+      helpWindow.show()
+    }
     return // no notification
   } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
     msg = translate('Error ' + msg)
@@ -308,8 +344,21 @@ const startSync = force => {
       sendErrorToMainWindow('Syncdir has been unlinked')
     })
     desktop.events.on('delete-file', removeFile)
+
+    try {
+      desktop.setup()
+    } catch (err) {
+      log.fatal({ err, sentry: true }, 'Could not setup app')
+      if (err instanceof config.InvalidConfigError) {
+        updateState('error', err.name)
+      } else {
+        updateState('error', err.message)
+      }
+      return
+    }
+
     desktop
-      .synchronize(desktop.config.fileConfig.mode)
+      .startSync(desktop.config.fileConfig.mode)
       .then(() => sendErrorToMainWindow('stopped'))
       .catch(err => {
         if (err.status === 402) {
