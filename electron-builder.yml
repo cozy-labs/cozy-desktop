@@ -20,6 +20,13 @@ asarUnpack:
 - gui/scripts/**
 directories:
   buildResources: gui/assets
+mac:
+  hardenedRuntime: true
+  entitlements: './build/entitlements.mac.inherit.plist'
+  category: public.app-category.productivity
+  target:
+  - dmg
+  - zip
 dmg:
   contents:
     - x: 110
@@ -31,13 +38,6 @@ dmg:
 win:
   target:
   - nsis
-mac:
-  hardenedRuntime: true
-  entitlements: './build/entitlements.mac.inherit.plist'
-  category: public.app-category.productivity
-  target:
-  - dmg
-  - zip
 linux:
   target:
   - AppImage
@@ -50,3 +50,5 @@ linux:
     anytime with the mobile application and share them with the world or just your
     friends and colleagues. You can host your own Cozy Cloud, and or use the hosting
     services. Your freedom to chose is why you can trust us.
+appImage:
+  artifactName: 'Cozy-Drive-${version}-${arch}.${ext}'
