@@ -212,28 +212,28 @@ const updateState = (newState, data) => {
   if (newState === 'online' && state !== 'offline') return
   if (newState === 'offline' && state === 'error') return
 
-  // Update window status bar
   if (newState === 'online') {
+    tray.setState('up-to-date')
     trayWindow.send('up-to-date')
   } else if (newState === 'offline') {
+    tray.setState('offline')
     trayWindow.send('offline')
   } else if (newState === 'error') {
+    tray.setState('error', data)
     sendErrorToMainWindow(data)
   } else if (newState === 'sync-status') {
+    tray.setState(data.label === 'uptodate' ? 'up-to-date' : 'syncing')
     trayWindow.send('sync-status', data)
   } else if (newState === 'syncing' && data && data.filename) {
+    tray.setState('syncing', data)
     trayWindow.send('transfer', data)
   }
 
   if (newState === 'sync-status') {
     state = data.label === 'uptodate' ? 'up-to-date' : 'syncing'
-  } else if (newState === 'uptodate') {
-    state = 'up-to-date'
   } else {
     state = newState
   }
-  // Update systray icon and tooltip
-  tray.setState(state, data)
 }
 
 const addFile = info => {
@@ -376,13 +376,11 @@ const startSync = force => {
           trayWindow.send('user-action-required', userActionRequired)
           desktop.remote.warningsPoller.switchMode('medium')
           return
+        } else if (err instanceof migrations.MigrationFailedError) {
+          updateState('error', err.name)
+        } else {
+          updateState('error', err.message)
         }
-
-        const msg =
-          err instanceof migrations.MigrationFailedError
-            ? err.name
-            : err.message
-        updateState('error', msg)
         sendDiskUsage()
       })
     sendDiskUsage()
