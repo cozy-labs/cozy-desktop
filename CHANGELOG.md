@@ -1,5 +1,23 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.1-beta.2 - 2019-11-06
+
+Improvements for Windows users:
+
+- The library used to package our binaries changed the format of the created
+  Uninstall Windows registry subkey without cleaning up old keys when updating
+  the application. This means that Windows users updating from a version prior
+  to v3.16.0 to v3.16.0 will have 2 Cozy Drive applications listed in the
+  Windows programs manager and uninstalling the old version will actually
+  uninstall the most recent and leave them with a seemingly un-uninstallable
+  Cozy Drive version.
+  We added some cleanup logic to Cozy Drive to take care of removing the old
+  registry subkey automatically.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.1-beta.1 - 2019-11-05
 
 Improvements for all users:
