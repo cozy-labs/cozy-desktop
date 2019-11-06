@@ -52,3 +52,8 @@ linux:
     services. Your freedom to chose is why you can trust us.
 appImage:
   artifactName: 'Cozy-Drive-${version}-${arch}.${ext}'
+extraResources:
+  - from: 'node_modules/regedit/vbs'
+    to: 'regedit/vbs'
+    filter:
+      - '**/*'
