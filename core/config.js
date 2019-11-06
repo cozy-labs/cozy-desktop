@@ -22,6 +22,13 @@ export type SyncMode = 'full' | 'pull' | 'push'
 type FileConfig = Object
 */
 
+const INVALID_CONFIG_ERROR = 'InvalidConfigError'
+const INVALID_CONFIG_MESSAGE = 'Invalid client configuration'
+function InvalidConfigError() {
+  this.name = INVALID_CONFIG_ERROR
+  this.message = INVALID_CONFIG_MESSAGE
+}
+
 // Config can keep some configuration parameters in a JSON file,
 // like the devices credentials or the mount path
 class Config {
@@ -264,6 +271,8 @@ function validateWatcherType(watcherType /*: ?string */) /*: ?WatcherType */ {
 }
 
 module.exports = {
+  INVALID_CONFIG_ERROR,
+  InvalidConfigError,
   Config,
   environmentWatcherType,
   load,

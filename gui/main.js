@@ -10,6 +10,8 @@ const os = require('os')
 const proxy = require('./js/proxy')
 const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/cozy')
 const migrations = require('../core/pouch/migrations')
+const config = require('../core/config')
+const winRegistry = require('../core/utils/win_registry')
 
 const autoLaunch = require('./js/autolaunch')
 const lastFiles = require('./js/lastfiles')
@@ -87,6 +89,7 @@ const showWindow = bounds => {
 
 let revokedAlertShown = false
 let syncDirUnlinkedShown = false
+let invalidConfigShown = false
 
 const sendErrorToMainWindow = msg => {
   if (msg === COZY_CLIENT_REVOKED_MESSAGE) {
@@ -145,6 +148,40 @@ const sendErrorToMainWindow = msg => {
       .then(() => trayWindow.doRestart())
       .catch(err => log.error(err))
     return // no notification
+  } else if (msg === config.INVALID_CONFIG_ERROR) {
+    msg = translate('InvalidConfiguration Invalid configuration')
+    trayWindow.send('sync-error', msg)
+
+    if (invalidConfigShown) return
+    invalidConfigShown = true // prevent the alert from appearing twice
+
+    const options = {
+      type: 'warning',
+      title: translate('InvalidConfiguration Invalid configuration'),
+      message: translate(
+        'InvalidConfiguration The client configuration is invalid'
+      ),
+      detail: translate(
+        'InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc'
+      ),
+      buttons: [
+        translate('InvalidConfiguration Log out'),
+        translate('InvalidConfiguration Contact support')
+      ],
+      defaultId: 0
+    }
+    trayWindow.hide()
+    const userChoice = dialog.showMessageBox(null, options)
+    if (userChoice === 0) {
+      desktop
+        .removeConfig()
+        .then(() => log.info('removed'))
+        .then(() => trayWindow.doRestart())
+        .catch(err => log.error(err))
+    } else {
+      helpWindow.show()
+    }
+    return // no notification
   } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
     msg = translate('Error ' + msg)
     trayWindow.send('sync-error', msg)
@@ -176,28 +213,28 @@ const updateState = (newState, data) => {
   if (newState === 'online' && state !== 'offline') return
   if (newState === 'offline' && state === 'error') return
 
-  // Update window status bar
   if (newState === 'online') {
+    tray.setState('up-to-date')
     trayWindow.send('up-to-date')
   } else if (newState === 'offline') {
+    tray.setState('offline')
     trayWindow.send('offline')
   } else if (newState === 'error') {
+    tray.setState('error', data)
     sendErrorToMainWindow(data)
   } else if (newState === 'sync-status') {
+    tray.setState(data.label === 'uptodate' ? 'up-to-date' : 'syncing')
     trayWindow.send('sync-status', data)
   } else if (newState === 'syncing' && data && data.filename) {
+    tray.setState('syncing', data)
     trayWindow.send('transfer', data)
   }
 
   if (newState === 'sync-status') {
     state = data.label === 'uptodate' ? 'up-to-date' : 'syncing'
-  } else if (newState === 'uptodate') {
-    state = 'up-to-date'
   } else {
     state = newState
   }
-  // Update systray icon and tooltip
-  tray.setState(state, data)
 }
 
 const addFile = info => {
@@ -308,8 +345,33 @@ const startSync = force => {
       sendErrorToMainWindow('Syncdir has been unlinked')
     })
     desktop.events.on('delete-file', removeFile)
+
+    try {
+      desktop.setup()
+    } catch (err) {
+      log.fatal({ err, sentry: true }, 'Could not setup app')
+      if (err instanceof config.InvalidConfigError) {
+        updateState('error', err.name)
+      } else {
+        updateState('error', err.message)
+      }
+      return
+    }
+
+    // We do it here since Sentry's setup happens in `desktop.setup()`
+    if (process.platform === 'win32') {
+      winRegistry.removeOldUninstallKey().catch(err => {
+        if (err instanceof winRegistry.RegeditError) {
+          log.error(
+            { err, sentry: true },
+            'Failed to remove uninstall registry key'
+          )
+        }
+      })
+    }
+
     desktop
-      .synchronize(desktop.config.fileConfig.mode)
+      .startSync(desktop.config.fileConfig.mode)
       .then(() => sendErrorToMainWindow('stopped'))
       .catch(err => {
         if (err.status === 402) {
@@ -327,13 +389,11 @@ const startSync = force => {
           trayWindow.send('user-action-required', userActionRequired)
           desktop.remote.warningsPoller.switchMode('medium')
           return
+        } else if (err instanceof migrations.MigrationFailedError) {
+          updateState('error', err.name)
+        } else {
+          updateState('error', err.message)
         }
-
-        const msg =
-          err instanceof migrations.MigrationFailedError
-            ? err.name
-            : err.message
-        updateState('error', msg)
         sendDiskUsage()
       })
     sendDiskUsage()

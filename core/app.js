@@ -320,19 +320,13 @@ class App {
     return this.sync.stop()
   }
 
-  // Start database sync process and setup file change watcher
-  synchronize(mode /*: SyncMode */) {
-    log.info(this.clientInfo(), 'synchronize')
+  setup() {
+    log.info(this.clientInfo(), 'user config')
     sentry.setup(this.clientInfo())
     if (!this.config.isValid()) {
-      log.error(
-        'No configuration found, please run add-remote-cozy' +
-          'command before running a synchronization.'
-      )
-      throw new Error('No client configured')
+      throw new config.InvalidConfigError()
     }
     this.instanciate()
-    return this.startSync(mode)
   }
 
   clientInfo() {

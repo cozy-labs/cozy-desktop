@@ -181,7 +181,7 @@ module.exports = class TrayWM extends WindowManager {
       'unlink-cozy': this.onUnlink,
       'manual-start-sync': () =>
         this.desktop.stopSync().then(() => {
-          this.desktop.synchronize('full')
+          this.desktop.startSync('full')
         })
     }
   }
