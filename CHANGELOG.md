@@ -1,5 +1,20 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.1-beta.3 - 2019-11-06
+
+Improvements for Windows users:
+
+- Files within the app's asar archive are not accessible at runtime while the
+  library we use to modify the Windows registry loads `.vbs` files to execute
+  the modifications.
+  We've bypassed this limitation by copying the `.vbs` files to the app's
+  `resources` folder and telling the library where to find them for our registry
+  modifications to work.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.1-beta.2 - 2019-11-06
 
 Improvements for Windows users:
