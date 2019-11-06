@@ -18,6 +18,7 @@
  */
 
 const regedit = require('regedit')
+regedit.setExternalVBSLocation('resources/regedit/vbs')
 
 // Key used prior to v3.16.0
 const OLD_UNINSTALL_KEY =
