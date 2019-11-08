@@ -1,5 +1,69 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.1 - 2019-11-08
+
+Improvements for all users:
+
+- We use a monitoring system (hosted on our own infrastructure) to receive
+  reports of errors happening when you use Cozy Desktop. This system requires a
+  client to be setup in our app to send those reports to the server. We used an
+  older version of that client which stopped working when we upgraded Electron
+  in the previous version and that lead to app crashes whenever we tried to send
+  a report.
+  We've migrated to the latest version of that client so you shouldn't
+  experience those crashes anymore and we'll even get a bit more of information
+  in each report which might help us help you.
+- We have detected that in some very specific situations, the app can enter a
+  local loop of conflict renaming on one or more documents. Those loops would
+  prevent your document to be synchronized with the remote Cozy or for it to be
+  continuously renamed and, in the most extreme cases, lead to app crashes on
+  start-up due to the size of the document (each conflict renaming would
+  increase its size).
+  One of those situations is the presence of more than one document in our
+  database with the same unique filesystem identifier, resulting from the
+  mis-interpretation of some filesystem events. We've taken some steps to
+  prevent the presence of those 2 documents at the same time, not preventing
+  possible future conflicts on the sole document left but preventing a conflict
+  loop to start from there.
+- For those of you who have already experienced extreme local conflict loops and
+  can't get the app to start without crashing, we have re-evaluated our strategy
+  to load all the existing documents during start-up so their size would not
+  matter and the app keep working.
+- We have decided to reassess how we compute the application state and how we
+  communicate it, especially via the systray icon, so that you're more aware of
+  its activities. This is notably true for the upload of large files during
+  which the spinner would stop and the app would state it is up-to-date while
+  the upload is actually not finished and shutting done the application would
+  cancel it.
+
+Improvements for Windows users:
+
+- We brought back the systray icon contextual menu (i.e. the one showing up on
+  right-clicks) mistakenly removed in a previous version, meaning you would have
+  to open the app window and use the button in the Preferences tab to shut it
+  down.
+- The library used to package our binaries changed the format of the created
+  Uninstall Windows registry subkey without cleaning up old keys when updating
+  the application. This means that Windows users updating from a version prior
+  to v3.16.0 to v3.16.0 will have 2 Cozy Drive applications listed in the
+  Windows programs manager and uninstalling the old version will actually
+  uninstall the most recent and leave them with a Cozy Drive version seemingly
+  seemingly impossible to uninstall.
+  We added some cleanup logic to Cozy Drive to take care of removing the old
+  registry subkey automatically.
+
+Improvements for GNU/Linux users:
+
+- On Linux, every time you updated the application, you had to re-enable
+  auto-launch if it was previously enabled because the auto-launch entry
+  contained the application's version and would not match the new version.
+  We've changed the entry's name to just `Cozy-Desktop` so all versions will
+  match and the auto-launch will stay enabled after an update.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.1-beta.4 - 2019-11-08
 
 Improvements for GNU/Linux users:
