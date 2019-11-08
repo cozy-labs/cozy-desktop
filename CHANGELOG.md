@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.1-beta.4 - 2019-11-08
+
+Improvements for GNU/Linux users:
+
+- On Linux, every time you updated the application, you had to re-enable
+  auto-launch if it was previously enabled because the auto-launch entry
+  contained the application's version and would not match the new version.
+  We've changed the entry's name to just `Cozy-Desktop` so all versions will
+  match and the auto-launch will stay enabled after an update.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.1-beta.3 - 2019-11-06
 
 Improvements for Windows users:
