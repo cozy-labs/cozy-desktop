@@ -213,6 +213,36 @@ if (process.platform === 'win32') {
             }
           })
 
+          describe(`+ created ${kind} (same path, same fileid)`, () => {
+            let createdEvent
+
+            beforeEach(async () => {
+              createdEvent = builders
+                .event()
+                .action('created')
+                .kind(kind)
+                .path(srcPath)
+                .ino(srcIno)
+                .build()
+            })
+
+            it(`is an ignored ${kind} (aggregated)`, async function() {
+              inputBatch([deletedEvent, createdEvent])
+              should(await outputBatch()).deepEqual([
+                {
+                  _id: metadata.id(srcPath),
+                  action: 'ignored',
+                  kind,
+                  path: srcPath,
+                  stats: createdEvent.stats,
+                  winDetectMove: {
+                    aggregatedEvents: { createdEvent, deletedEvent }
+                  }
+                }
+              ])
+            })
+          })
+
           describe(`+ created ${kind} (temporary path, incomplete)`, () => {
             const tmpPath = 'tmp'
             let createdTmpEvent

@@ -165,8 +165,12 @@ function aggregateEvents(createdEvent, deletedEvent) {
     deletedEvent,
     createdEvent: _.clone(createdEvent)
   }
-  createdEvent.action = 'renamed'
-  createdEvent.oldPath = deletedEvent.path
+  if (createdEvent.path !== deletedEvent.path) {
+    createdEvent.action = 'renamed'
+    createdEvent.oldPath = deletedEvent.path
+  } else {
+    createdEvent.action = 'ignored'
+  }
   _.set(createdEvent, [STEP_NAME, 'aggregatedEvents'], aggregatedEvents)
 }
 
@@ -222,10 +226,12 @@ async function winDetectMove(
       const pendingIndex = indexOfMatchingDeletedEvent(event, pendingItems)
       if (pendingIndex !== -1) {
         const pendingDeleted = pendingItems[pendingIndex]
-        aggregateEvents(event, pendingDeleted.event)
         clearTimeout(pendingDeleted.timeout)
         pendingItems.splice(pendingIndex, 1)
-        unmergedRenamedEvents.add(event)
+        aggregateEvents(event, pendingDeleted.event)
+        if (event.action === 'renamed') {
+          unmergedRenamedEvents.add(event)
+        }
       }
     }
 
