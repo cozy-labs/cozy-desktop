@@ -15,6 +15,7 @@ files:
 - gui/scripts/**
 - package.json
 forceCodeSigning: true
+afterPack: './build/afterPackHook.js'
 afterSign: './build/afterSignHook.js'
 asarUnpack:
 - gui/scripts/**
@@ -53,6 +54,8 @@ linux:
 appImage:
   artifactName: 'Cozy-Drive-${version}-${arch}.${ext}'
 extraResources:
+  - from: 'build/launcher-script.sh'
+    to: 'launcher-script.sh'
   - from: 'node_modules/regedit/vbs'
     to: 'regedit/vbs'
     filter:
