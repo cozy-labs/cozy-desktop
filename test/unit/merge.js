@@ -316,15 +316,43 @@ describe('Merge', function() {
             await this.merge.addFileAsync('local', _.cloneDeep(sameFile))
 
             const savedFile = await this.pouch.db.get(existingFile._id)
-            should(savedFile).have.properties({
-              fileid: sameFile.fileid,
-              sides: {
-                target: existingFile.sides.target + 1,
-                local: existingFile.sides.local + 1,
-                remote: existingFile.sides.remote + 1
-              }
-            })
+            should(savedFile).have.properties({ fileid: sameFile.fileid })
           })
+
+          for (const side of ['local', 'remote', 'both']) {
+            context(`when existing file has ${side} side`, () => {
+              beforeEach(async () => {
+                const sides =
+                  side === 'both' ? { local: 2, remote: 2 } : { [side]: 1 }
+                existingFile = await builders
+                  .metafile(existingFile)
+                  .sides(sides)
+                  .create()
+                sameFile = builders
+                  .metafile(existingFile)
+                  .ino(1)
+                  .build()
+              })
+
+              it(`migrates ${side} side`, async function() {
+                await this.merge.addFileAsync('local', _.cloneDeep(sameFile))
+
+                const expectedSides =
+                  side === 'both'
+                    ? {
+                        target: existingFile.sides.target + 1,
+                        local: existingFile.sides.local + 1,
+                        remote: existingFile.sides.remote + 1
+                      }
+                    : {
+                        target: existingFile.sides.target + 1,
+                        [side]: existingFile.sides[side] + 1
+                      }
+                const savedFile = await this.pouch.db.get(existingFile._id)
+                should(savedFile).have.properties({ sides: expectedSides })
+              })
+            })
+          }
         })
 
         context('when new file does not have a fileid', () => {
@@ -2609,12 +2637,39 @@ describe('Merge', function() {
     })
   })
 
-  onPlatform('win32', () => {
-    describe('migrateFileid(existing, fileid)', () => {
-      const fileid = '0x0000000000000001'
-      let existing, updatedDoc
+  describe('migrateFileid(existing, fileid)', () => {
+    const fileid = '0x0000000000000001'
+    let existing, updatedDoc
 
-      describe('when existing doc is already up-to-date but missing a fileid', () => {
+    context('when existing doc is not synced but missing a fileid', () => {
+      beforeEach(async function() {
+        existing = await builders
+          .metadata()
+          .ino(1)
+          .noFileid()
+          .sides({ local: 1 })
+          .noRemote()
+          .create()
+      })
+
+      it('does not raise Invariant errors', async function() {
+        should(() => {
+          this.merge.migrateFileid(_.cloneDeep(existing), fileid)
+        }).not.throw()
+      })
+
+      it('updates doc with the fileid', async function() {
+        await this.merge.migrateFileid(_.cloneDeep(existing), fileid)
+
+        updatedDoc = await this.pouch.db.get(existing._id)
+
+        should(updatedDoc).have.property('fileid', fileid)
+      })
+    })
+
+    context(
+      'when existing doc is already up-to-date but missing a fileid',
+      () => {
         beforeEach(async function() {
           existing = await builders
             .metadata()
@@ -2635,30 +2690,30 @@ describe('Merge', function() {
         it('does not make the doc out-of-date in order to prevent useless sync', async function() {
           should.not.exist(metadata.outOfDateSide(updatedDoc))
         })
+      }
+    )
+
+    context('when existing doc is being synced and missing a fileid', () => {
+      beforeEach(async function() {
+        existing = await builders
+          .metadata()
+          .upToDate()
+          .changedSide(this.side)
+          .ino(1)
+          .noFileid()
+          .create()
+
+        await this.merge.migrateFileid(_.cloneDeep(existing), fileid)
+
+        updatedDoc = await this.pouch.db.get(existing._id)
       })
 
-      describe('when existing doc is being synced and missing a fileid', () => {
-        beforeEach(async function() {
-          existing = await builders
-            .metadata()
-            .upToDate()
-            .changedSide(this.side)
-            .ino(1)
-            .noFileid()
-            .create()
+      it('updates doc with the fileid', async () => {
+        should(updatedDoc).have.property('fileid', fileid)
+      })
 
-          await this.merge.migrateFileid(_.cloneDeep(existing), fileid)
-
-          updatedDoc = await this.pouch.db.get(existing._id)
-        })
-
-        it('updates doc with the fileid', async () => {
-          should(updatedDoc).have.property('fileid', fileid)
-        })
-
-        it('keeps the same out-of-date side in order not to prevent sync', async function() {
-          should(metadata.outOfDateSide(updatedDoc)).equal(otherSide(this.side))
-        })
+      it('keeps the same out-of-date side in order not to prevent sync', async function() {
+        should(metadata.outOfDateSide(updatedDoc)).equal(otherSide(this.side))
       })
     })
   })
