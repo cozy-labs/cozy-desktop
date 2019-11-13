@@ -552,10 +552,14 @@ function markSide(
 }
 
 function incSides(doc /*: Metadata */) /*: void */ {
-  doc.sides = {
-    target: target(doc) + 1,
-    local: side(doc, 'local') + 1,
-    remote: side(doc, 'remote') + 1
+  const prevTarget = target(doc)
+  const local = side(doc, 'local')
+  const remote = side(doc, 'remote')
+
+  if (prevTarget) {
+    doc.sides.target = prevTarget + 1
+    if (local) doc.sides.local = local + 1
+    if (remote) doc.sides.remote = remote + 1
   }
 }
 

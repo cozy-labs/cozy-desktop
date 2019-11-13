@@ -792,15 +792,14 @@ describe('metadata', function() {
       return doc
     }
 
-    it('increments both sides by 1 in-place', () => {
-      should(docAfterIncSides({})).deepEqual({
-        sides: { target: 1, local: 1, remote: 1 }
-      })
+    it('increments existing sides by 1 in-place', () => {
+      should(docAfterIncSides({})).deepEqual({})
+      should(docAfterIncSides({ sides: {} })).deepEqual({ sides: {} })
       should(docAfterIncSides({ sides: { target: 1, local: 1 } })).deepEqual({
-        sides: { target: 2, local: 2, remote: 1 }
+        sides: { target: 2, local: 2 }
       })
       should(docAfterIncSides({ sides: { target: 1, remote: 1 } })).deepEqual({
-        sides: { target: 2, local: 1, remote: 2 }
+        sides: { target: 2, remote: 2 }
       })
       should(
         docAfterIncSides({ sides: { target: 2, local: 2, remote: 2 } })
