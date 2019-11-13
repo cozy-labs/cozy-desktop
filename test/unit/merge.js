@@ -316,15 +316,43 @@ describe('Merge', function() {
             await this.merge.addFileAsync('local', _.cloneDeep(sameFile))
 
             const savedFile = await this.pouch.db.get(existingFile._id)
-            should(savedFile).have.properties({
-              fileid: sameFile.fileid,
-              sides: {
-                target: existingFile.sides.target + 1,
-                local: existingFile.sides.local + 1,
-                remote: existingFile.sides.remote + 1
-              }
-            })
+            should(savedFile).have.properties({ fileid: sameFile.fileid })
           })
+
+          for (const side of ['local', 'remote', 'both']) {
+            context(`when existing file has ${side} side`, () => {
+              beforeEach(async () => {
+                const sides =
+                  side === 'both' ? { local: 2, remote: 2 } : { [side]: 1 }
+                existingFile = await builders
+                  .metafile(existingFile)
+                  .sides(sides)
+                  .create()
+                sameFile = builders
+                  .metafile(existingFile)
+                  .ino(1)
+                  .build()
+              })
+
+              it(`migrates ${side} side`, async function() {
+                await this.merge.addFileAsync('local', _.cloneDeep(sameFile))
+
+                const expectedSides =
+                  side === 'both'
+                    ? {
+                        target: existingFile.sides.target + 1,
+                        local: existingFile.sides.local + 1,
+                        remote: existingFile.sides.remote + 1
+                      }
+                    : {
+                        target: existingFile.sides.target + 1,
+                        [side]: existingFile.sides[side] + 1
+                      }
+                const savedFile = await this.pouch.db.get(existingFile._id)
+                should(savedFile).have.properties({ sides: expectedSides })
+              })
+            })
+          }
         })
 
         context('when new file does not have a fileid', () => {
