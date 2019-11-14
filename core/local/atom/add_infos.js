@@ -22,11 +22,17 @@ const log = logger({
 })
 
 /*::
+import type { Pouch } from '../../pouch'
+import type { Metadata } from '../../metadata'
 import type Channel from './channel'
 import type { AtomEvent } from './event'
 */
 
+const kind = (doc /*: Metadata */) =>
+  doc.docType === 'folder' ? 'directory' : doc.docType
+
 module.exports = {
+  STEP_NAME,
   loop
 }
 
@@ -38,7 +44,7 @@ module.exports = {
  */
 function loop(
   channel /*: Channel */,
-  opts /*: { syncPath: string } */
+  opts /*: { syncPath: string, pouch: Pouch } */
 ) /*: Channel */ {
   return channel.asyncMap(async events => {
     const batch = []
@@ -65,7 +71,10 @@ function loop(
             // If kind is unknown, we say it's a file arbitrary
             if (event.kind !== 'directory' && event.kind !== 'file') {
               _.set(event, [STEP_NAME, 'kindConvertedFrom'], event.kind)
-              event.kind = 'file'
+
+              const doc =
+                event._id && (await opts.pouch.byIdMaybeAsync(event._id))
+              event.kind = doc ? kind(doc) : 'file'
             }
           }
         }
