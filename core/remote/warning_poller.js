@@ -101,7 +101,9 @@ class RemoteWarningPoller {
   scheduleNext(ticks /*: Ticks */) {
     clearTimeout(this.timeout)
     this.ticks = ticks
-    this.timeout = setTimeout(this.poll, ticks.next)
+    this.timeout = setTimeout(() => {
+      this.poll()
+    }, ticks.next)
     log.debug({ ticks }, `Next polling in ${ticks.next} milliseconds`)
   }
 
