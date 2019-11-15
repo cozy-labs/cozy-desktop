@@ -1,5 +1,65 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.2-beta.1 - 2019-11-15
+
+Improvements for all users:
+
+- In some situations like unsigned Terms of Service, requests to the remote Cozy
+  will result in errors and the synchronization will fail. To anticipate those,
+  we have a poller that requests from the Cozy required user actions and that
+  turns them into alerts that Cozy Desktop will show you. A technical error in
+  the poller resulted in failure to schedule polls past the first one and you
+  would miss those very precious information unless you would restart the
+  application.
+  You should now be shown those alerts as early as possible without restarting
+  the application thus enabling you to anticipate synchronization errors.
+
+Improvements for Windows and GNU/Linux users:
+
+- The library we use to watch for changes on the local filesystem, Atom Watcher,
+  can sometimes generate events without a document type for deletions. In those
+  situations we had decided to force the type to `file` but this would lead to
+  type mismatches when a directory was deleted.
+  When the event type is unknown, we're now looking into the local Pouch
+  database for an existing document at the deleted path and if one does exist,
+  we use its type. If we can't find any existing document, we resort back to
+  forcing the type to `file` as we don't have any mean to detect the actual type
+  (i.e. the file or directory does not exist anymore so we can't request stats
+  from the filesystem).
+
+Improvements for Windows users:
+
+- We found out that when applying on the local filesystem a file modification
+  from the Cozy, a rename event was generated from the file path to itself, thus
+  firing an `Invalid move` error.
+  While we have no indications that this would have any impact on your usage,
+  we've made sure this event is not generated anymore.
+- We introduced in Cozy Desktop v3.13.1 a mechanism to identify files and
+  directories with more precision on Windows. This required to modify every
+  single document in the local Pouch database to make sure the new identifier
+  was saved and could be used (e.g. in movement detection). While this worked
+  for most documents, users who had local unsynchronized documents when this
+  migration took place, ended up with an unsyncable version of those which could
+  not be fixed.
+  Fortunately, those versions were not actually saved in the database and we
+  could fix the migration itself so those documents will get their precise
+  identifier and will be synchronized from now on.
+
+Improvements for GNU/Linux users:
+
+- Since the v3.16.0 and the Electron update to v5, the Chromium sandbox is
+  activated by default and since it requires kernel features that are disabled
+  by default in Debian issued kernels, users of those kernels could not start
+  the application without using the `--no-sandbox` flag. This would mean either
+  launching the app from the command line or modifying the `.desktop` file used
+  as a shortcut.
+  We found a way to detect when the kernel feature is disabled and apply the
+  `--no-sandbox` flag in those situations without any actions from the user.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.1 - 2019-11-08
 
 Improvements for all users:
