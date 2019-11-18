@@ -208,11 +208,14 @@ const sendErrorToMainWindow = msg => {
   notif.show()
 }
 
+const SYNC_STATUS_DELAY = 1000 // milliseconds
+let syncStatusTimeout = null
 const updateState = (newState, data) => {
   if (newState === 'error') errorMessage = data
   if (newState === 'online' && state !== 'offline') return
   if (newState === 'offline' && state === 'error') return
 
+  clearTimeout(syncStatusTimeout)
   if (newState === 'online') {
     tray.setState('up-to-date')
     trayWindow.send('up-to-date')
@@ -222,12 +225,19 @@ const updateState = (newState, data) => {
   } else if (newState === 'error') {
     tray.setState('error', data)
     sendErrorToMainWindow(data)
-  } else if (newState === 'sync-status') {
-    tray.setState(data.label === 'uptodate' ? 'up-to-date' : 'syncing')
+  } else if (newState === 'sync-status' && data && data.label === 'sync') {
+    tray.setState('syncing')
     trayWindow.send('sync-status', data)
   } else if (newState === 'syncing' && data && data.filename) {
     tray.setState('syncing', data)
     trayWindow.send('transfer', data)
+  } else if (newState === 'sync-status') {
+    syncStatusTimeout = setTimeout(() => {
+      tray.setState(
+        data && data.label === 'uptodate' ? 'up-to-date' : 'syncing'
+      )
+      trayWindow.send('sync-status', data)
+    }, SYNC_STATUS_DELAY)
   }
 
   if (newState === 'sync-status') {
