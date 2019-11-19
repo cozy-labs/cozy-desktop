@@ -14,6 +14,7 @@ const stubSide = require('../support/doubles/side')
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
 const Builders = require('../support/builders')
+const dbBuilders = require('../support/builders/db')
 
 describe('Sync', function() {
   before('instanciate config', configHelpers.createConfig)
@@ -178,6 +179,10 @@ describe('Sync', function() {
             local: 2,
             remote: 1
           },
+          remote: {
+            _id: '1234567890',
+            _rev: '1-39dj39ek39'
+          },
           trashed: true
         }
       }
@@ -314,30 +319,32 @@ describe('Sync', function() {
       })
     })
 
-    it('calls updateFileMetadataAsync for updated file metadata', async function() {
-      let doc = {
-        _id: 'update/foo/bar',
-        md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
-        docType: 'file',
-        sides: {
-          target: 2,
-          local: 2,
-          remote: 2
-        }
-      }
-      const created = await this.pouch.db.put(doc)
-      doc._rev = created.rev
-      doc.tags = ['courge']
-      doc.sides = {
-        target: 3,
-        local: 3,
-        remote: 2
-      }
-      await this.pouch.db.put(doc)
-      await this.sync.applyDoc(doc, this.remote, 'remote', 2)
-      this.remote.overwriteFileAsync.called.should.be.false()
-      let ufm = this.remote.updateFileMetadataAsync
-      ufm.calledWith(doc).should.be.true()
+    it('calls updateFileMetadataAsync with previous revision for updated file metadata', async function() {
+      const doc = await builders
+        .metafile()
+        .path('udpate/foo/without-errors')
+        .sides({ local: 1 })
+        .noRemote()
+        .create()
+      const synced = await builders
+        .metafile(doc)
+        .upToDate()
+        .remoteId(dbBuilders.id())
+        .create()
+      const updated = await builders
+        .metafile(synced)
+        .tags(['courge'])
+        .changedSide('local')
+        .create()
+
+      await this.sync.applyDoc(
+        updated,
+        this.remote,
+        'remote',
+        updated.sides.remote
+      )
+      should(this.remote.overwriteFileAsync).not.be.called()
+      should(this.remote.updateFileMetadataAsync).be.calledWith(updated, synced)
     })
 
     it('calls moveFileAsync for a moved file', async function() {
