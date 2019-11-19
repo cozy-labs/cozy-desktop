@@ -406,10 +406,11 @@ class Pouch {
       if (err) {
         return callback(err)
       } else {
-        let { ids } = infos[0].ok._revisions
-        let { start } = infos[0].ok._revisions
-        let revId = ids[start - revDiff]
-        let rev = `${revDiff}-${revId}`
+        const { ids } = infos[0].ok._revisions
+        const { start } = infos[0].ok._revisions
+        const shortRev = start - revDiff
+        const revId = ids[revDiff]
+        const rev = `${shortRev}-${revId}`
         return this.db.get(id, { rev }, function(err, doc) {
           if (err) {
             log.debug(infos[0].doc)

@@ -603,17 +603,33 @@ if (doc.docType === 'folder') {
   describe('Helpers', function() {
     describe('getPreviousRev', () =>
       it('retrieves previous document informations', async function() {
-        let id = metadata.id(path.join('my-folder', 'folder-1'))
-        let doc = await this.pouch.db.get(id)
-        doc.tags = ['yipee']
-        const updated = await this.pouch.db.put(doc)
+        const id = metadata.id(path.join('my-folder', 'folder-1'))
+        const doc = await this.pouch.db.get(id)
+
+        // Update 1
+        const tags = ['yipee']
+        const updated = await this.pouch.db.put({
+          ...doc,
+          tags
+        })
+        // Update 2
         await this.pouch.db.remove(id, updated.rev)
-        doc = await this.pouch.getPreviousRevAsync(id, 1)
-        doc._id.should.equal(id)
-        doc.tags.should.not.equal(['yipee'])
-        doc = await this.pouch.getPreviousRevAsync(id, 2)
-        doc._id.should.equal(id)
-        doc.tags.join(',').should.equal('yipee')
+
+        // Get doc as it was 2 revisions ago
+        should(await this.pouch.getPreviousRevAsync(id, 2)).have.properties({
+          _id: id,
+          tags: doc.tags
+        })
+        // Get doc as it was 1 revision ago
+        should(await this.pouch.getPreviousRevAsync(id, 1)).have.properties({
+          _id: id,
+          tags
+        })
+        // Get doc as it is now
+        should(await this.pouch.getPreviousRevAsync(id, 0)).have.properties({
+          _id: id,
+          _deleted: true
+        })
       }))
   })
 
