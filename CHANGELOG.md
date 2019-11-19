@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.2-beta.2 - 2019-11-19
+
+Improvements for all users:
+
+- With version 3.16.1 of the app, we decided to increase the visibility of the
+  synchronization activity especially during the upload of large files or the
+  preparation of local changes. This made the application's status and icon
+  "blink" for some users and would give a bad feeling about its behavior.
+  We made some more changes to the status display so you should now see no
+  blinking and better delimited activity phases that should better reflect the
+  ongoing synchronization.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.2-beta.1 - 2019-11-15
 
 Improvements for all users:
