@@ -1,5 +1,27 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.2-beta.3 - 2019-11-20
+
+Improvements for all users:
+
+- We use a local Pouch database to keep track of all documents and their
+  metadata. Part of this metadata are the remote identifier of each document on
+  the Cozy and its last known revision. Whenever we make a change on a document,
+  we fetch its previous version from the local Pouch database so we can access
+  its old metadata. When the change happened locally, we pass along to the Cozy
+  this old metadata's remote revision so it can validate we're not overwriting a
+  document that was changed on the Cozy without our knowledge. It appears we
+  made a mistake in the order old revisions are returned to us by Pouch and that
+  we were not always fetching previous revision but usually the second known
+  revision. This would mean local changes on the document would not get
+  propagated to the remote Cozy.
+  We fixed this revision selection which should avoid quite a lot of propagation
+  issues and further down the road conflicts as well.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.2-beta.2 - 2019-11-19
 
 Improvements for all users:
