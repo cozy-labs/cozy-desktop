@@ -127,6 +127,10 @@ class RemoteCozy {
     return this.client.auth.unregisterClient()
   }
 
+  update() /*: Promise<void> */ {
+    return this.client.auth.updateClient()
+  }
+
   diskUsage() /* Promise<*> */ {
     return this.client.settings.diskUsage()
   }
