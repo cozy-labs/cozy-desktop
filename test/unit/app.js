@@ -174,15 +174,18 @@ describe('App', function() {
 
       const info = app.clientInfo()
 
-      should(info.appVersion).equal(version)
-      should(info.configPath).startWith(basePath)
-      should.not.exist(info.configVersion)
-      should.not.exist(info.cozyUrl)
-      should(info.deviceName).equal('')
-      should.exist(info.osRelease)
-      should.exist(info.osType)
-      should(info.permissions).deepEqual([])
-      should.not.exist(info.syncPath)
+      should(info).deepEqual({
+        appVersion: version,
+        configPath: path.join(basePath, '.cozy-desktop', 'config.json'),
+        configVersion: '',
+        cozyUrl: undefined,
+        deviceName: '',
+        osRelease: os.release(),
+        osType: os.type(),
+        osArch: os.arch(),
+        permissions: [],
+        syncPath: undefined
+      })
     })
 
     it('works when app is configured', function() {

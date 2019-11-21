@@ -144,11 +144,11 @@ class Config {
   }
 
   get version() /*: ?string */ {
-    return _.get(this.fileConfig, 'creds.client.softwareVersion')
+    return _.get(this.fileConfig, 'creds.client.softwareVersion', '')
   }
 
-  get permissions() /*: * */ {
-    const scope = _.get(this.fileConfig, 'creds.token.scope')
+  get permissions() /*: string[] */ {
+    const scope = _.get(this.fileConfig, 'creds.token.scope', '')
     return scope ? scope.split(' ') : []
   }
 
