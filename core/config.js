@@ -132,7 +132,7 @@ class Config {
 
   // Return the name of the registered client
   get deviceName() /*: ?string */ {
-    return _.get(this, 'config.creds.client.clientName', '')
+    return _.get(this.fileConfig, 'creds.client.clientName', '')
   }
 
   // Return config related to the OAuth client
@@ -144,11 +144,11 @@ class Config {
   }
 
   get version() /*: ?string */ {
-    return _.get(this, 'config.creds.client.softwareVersion')
+    return _.get(this.fileConfig, 'creds.client.softwareVersion')
   }
 
   get permissions() /*: * */ {
-    const scope = _.get(this, 'config.creds.token.scope')
+    const scope = _.get(this.fileConfig, 'creds.token.scope')
     return scope ? scope.split(' ') : []
   }
 
