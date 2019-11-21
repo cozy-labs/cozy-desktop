@@ -52,9 +52,8 @@ module.exports = class UpdaterWM extends WindowManager {
     autoUpdater.on('update-available', info => {
       this.clearTimeoutIfAny()
       log.info({ update: info, skipped: this.skipped }, 'Update available')
-      // Make sure UI don't show up in front of onboarding after timeout
+      // Make sure UI doesn't show up after timeout
       if (!this.skipped) {
-        this.skipped = true
         const shouldUpdate =
           dialog.showMessageBox({
             icon: path.resolve(__dirname, '..', 'images', 'icon.png'),
@@ -66,11 +65,12 @@ module.exports = class UpdaterWM extends WindowManager {
             type: 'question',
             buttons: ['Update', 'Cancel'].map(translate)
           }) === 0
+
         if (shouldUpdate) {
           autoUpdater.downloadUpdate()
           this.show()
         } else {
-          this.skipped = false
+          this.skipUpdate('refused update')
         }
       }
     })
@@ -123,6 +123,7 @@ module.exports = class UpdaterWM extends WindowManager {
   }
 
   checkForUpdates() {
+    this.skipped = false
     this.timeout = setTimeout(() => {
       this.skipUpdate(`check is taking more than ${UPDATE_CHECK_TIMEOUT} ms`)
     }, UPDATE_CHECK_TIMEOUT)
@@ -130,7 +131,7 @@ module.exports = class UpdaterWM extends WindowManager {
   }
 
   skipUpdate(reason) {
-    log.info(`Not updating: ${reason}`)
+    log.info({ sentry: true }, `Not updating: ${reason}`)
     this.skipped = true
 
     // Disable handler & warn on future calls
