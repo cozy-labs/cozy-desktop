@@ -36,6 +36,19 @@ import type { Config } from './config'
 import type stream from 'stream'
 import type { Callback } from './utils/func'
 import type { SyncMode } from './sync'
+
+export type ClientInfo = {
+  appVersion: string,
+  configPath: string,
+  configVersion: ?string,
+  cozyUrl: string,
+  deviceName: ?string,
+  osType: string,
+  osRelease: string,
+  osArch: string,
+  permissions: string[],
+  syncPath: string
+}
 */
 
 const log = logger({
@@ -329,7 +342,7 @@ class App {
     this.instanciate()
   }
 
-  clientInfo() {
+  clientInfo() /*: ClientInfo */ {
     const config = this.config || {}
 
     return {
