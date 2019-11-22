@@ -7,7 +7,6 @@
 const Sentry = require('@sentry/electron')
 const bunyan = require('bunyan')
 const url = require('url')
-const os = require('os')
 
 const logger = require('./logger')
 const log = logger({
@@ -56,10 +55,7 @@ const bunyanErrObjectToError = data => {
 let isSentryConfigured = false
 
 /*::
-type ClientInfo = {
-  appVersion: string,
-  cozyUrl: string
-}
+import type { ClientInfo } from '../app'
 */
 
 function setup(clientInfos /*: ClientInfo */) {
@@ -76,7 +72,7 @@ function setup(clientInfos /*: ClientInfo */) {
       scope.setUser({ username: instance })
       scope.setTag('domain', domain)
       scope.setTag('instance', instance)
-      scope.setTag('server_name', os.hostname())
+      scope.setTag('server_name', clientInfos.deviceName)
     })
     logger.defaultLogger.addStream({
       type: 'raw',

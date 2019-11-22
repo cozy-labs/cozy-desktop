@@ -36,6 +36,19 @@ import type { Config } from './config'
 import type stream from 'stream'
 import type { Callback } from './utils/func'
 import type { SyncMode } from './sync'
+
+export type ClientInfo = {
+  appVersion: string,
+  configPath: string,
+  configVersion: ?string,
+  cozyUrl: string,
+  deviceName: ?string,
+  osType: string,
+  osRelease: string,
+  osArch: string,
+  permissions: string[],
+  syncPath: string
+}
 */
 
 const log = logger({
@@ -321,15 +334,43 @@ class App {
   }
 
   setup() {
-    log.info(this.clientInfo(), 'user config')
-    sentry.setup(this.clientInfo())
+    const clientInfo = this.clientInfo()
+    log.info(clientInfo, 'user config')
+
+    sentry.setup(clientInfo)
+
     if (!this.config.isValid()) {
       throw new config.InvalidConfigError()
     }
+
+    let wasUpdated = clientInfo.configVersion !== clientInfo.appVersion
+    if (wasUpdated) {
+      try {
+        this.config.version = clientInfo.appVersion
+      } catch (err) {
+        log.error(
+          { err, clientInfo },
+          'could not update config version after app update'
+        )
+        wasUpdated = false
+      }
+    }
+
     this.instanciate()
+
+    if (wasUpdated && this.remote) {
+      try {
+        this.remote.update()
+      } catch (err) {
+        log.error(
+          { err, config: this.config },
+          'could not update OAuth client after app update'
+        )
+      }
+    }
   }
 
-  clientInfo() {
+  clientInfo() /*: ClientInfo */ {
     const config = this.config || {}
 
     return {
