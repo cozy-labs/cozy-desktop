@@ -135,6 +135,10 @@ class RemoteCozy {
     return this.client.settings.diskUsage()
   }
 
+  updateLastSync() /*: Promise<void> */ {
+    return this.client.settings.updateLastSync()
+  }
+
   createFile(
     data /*: Readable */,
     options /*: {name: string,
