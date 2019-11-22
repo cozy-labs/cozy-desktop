@@ -1,5 +1,29 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.2-beta.4 - 2019-11-22
+
+Improvements for all users:
+
+- We found out that if you encountered a network timeout during the release
+  availability check, we would stop alerting you whenever a new release is
+  available unless you'd restart the app.
+  We're now making sure that each successful availability check (we're running
+  a check every 24 hours) we'll offer you to install any update.
+- In case you encounter an error such as a synchronization error, we're now
+  making sure you'll get notified only once and not every time you open the
+  application window.
+- If you look at the Settings application on your Cozy, you will list is
+  Connected Devices tab. This page lists all clients that were ever connected to
+  your Cozy and were not revoked. This page also tells you when each client was
+  synchronized for the last time. Unfortunately, the Desktop client was not
+  updating this date so you would only see its device name.
+  We're now updating this date each time the app reaches the up-to-date status,
+  be there any changes to sync or not.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.2-beta.3 - 2019-11-20
 
 Improvements for all users:
