@@ -242,11 +242,18 @@ const updateState = (newState, data) => {
     tray.setState('syncing', data)
     trayWindow.send('transfer', data)
   } else if (newState === 'sync-status') {
-    syncStatusTimeout = setTimeout(() => {
-      tray.setState(
-        data && data.label === 'uptodate' ? 'up-to-date' : 'syncing'
-      )
+    syncStatusTimeout = setTimeout(async () => {
+      const upToDate = data && data.label === 'uptodate'
+      tray.setState(upToDate ? 'up-to-date' : 'syncing')
       trayWindow.send('sync-status', data)
+      if (upToDate) {
+        try {
+          await desktop.remote.updateLastSync()
+          log.debug('last sync updated')
+        } catch (err) {
+          log.warn({ err }, 'could not update last sync date')
+        }
+      }
     }, SYNC_STATUS_DELAY)
   }
 

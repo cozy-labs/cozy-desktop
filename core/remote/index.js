@@ -95,6 +95,10 @@ class Remote /*:: implements Reader, Writer */ {
     return this.remoteCozy.update()
   }
 
+  updateLastSync() {
+    return this.remoteCozy.updateLastSync()
+  }
+
   /** Create a readable stream for the given doc */
   async createReadStreamAsync(
     doc /*: Metadata */
