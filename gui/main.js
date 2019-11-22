@@ -55,6 +55,13 @@ let helpWindow = null
 let updaterWindow = null
 let trayWindow = null
 
+const notificationsState = {
+  revokedAlertShown: false,
+  syncDirUnlinkedShown: false,
+  invalidConfigShown: false,
+  notifiedMsg: ''
+}
+
 const toggleWindow = bounds => {
   if (trayWindow.shown()) trayWindow.hide()
   else showWindow(bounds)
@@ -74,7 +81,11 @@ const showWindowStartApp = () => {
 }
 
 const showWindow = bounds => {
-  if (revokedAlertShown || syncDirUnlinkedShown) return
+  if (
+    notificationsState.revokedAlertShown ||
+    notificationsState.syncDirUnlinkedShown
+  )
+    return
   if (updaterWindow && updaterWindow.shown()) return updaterWindow.focus()
   if (!desktop.config.syncPath) {
     onboardingWindow.show(bounds)
@@ -87,14 +98,10 @@ const showWindow = bounds => {
   }
 }
 
-let revokedAlertShown = false
-let syncDirUnlinkedShown = false
-let invalidConfigShown = false
-
 const sendErrorToMainWindow = msg => {
   if (msg === COZY_CLIENT_REVOKED_MESSAGE) {
-    if (revokedAlertShown) return
-    revokedAlertShown = true // prevent the alert from appearing twice
+    if (notificationsState.revokedAlertShown) return
+    notificationsState.revokedAlertShown = true // prevent the alert from appearing twice
     const options = {
       type: 'warning',
       title: pkg.productName,
@@ -124,8 +131,8 @@ const sendErrorToMainWindow = msg => {
     }
     return // no notification
   } else if (msg === 'Syncdir has been unlinked') {
-    if (syncDirUnlinkedShown) return
-    syncDirUnlinkedShown = true // prevent the alert from appearing twice
+    if (notificationsState.syncDirUnlinkedShown) return
+    notificationsState.syncDirUnlinkedShown = true // prevent the alert from appearing twice
     const options = {
       type: 'warning',
       title: translate('SyncDirUnlinked Title'),
@@ -152,8 +159,8 @@ const sendErrorToMainWindow = msg => {
     msg = translate('InvalidConfiguration Invalid configuration')
     trayWindow.send('sync-error', msg)
 
-    if (invalidConfigShown) return
-    invalidConfigShown = true // prevent the alert from appearing twice
+    if (notificationsState.invalidConfigShown) return
+    notificationsState.invalidConfigShown = true // prevent the alert from appearing twice
 
     const options = {
       type: 'warning',
@@ -204,8 +211,11 @@ const sendErrorToMainWindow = msg => {
     msg = translate('Dashboard Synchronization incomplete')
     trayWindow.send('sync-error', msg)
   }
-  const notif = new Notification({ title: 'Cozy Drive', body: msg })
-  notif.show()
+
+  if (notificationsState.notifiedMsg !== msg) {
+    notificationsState.notifiedMsg = msg
+    new Notification({ title: 'Cozy Drive', body: msg }).show()
+  }
 }
 
 const SYNC_STATUS_DELAY = 1000 // milliseconds
