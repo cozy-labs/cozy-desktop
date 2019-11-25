@@ -1,5 +1,100 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.16.2 - 2019-11-25
+
+Improvements for all users:
+
+- In some situations like unsigned Terms of Service, requests to the remote Cozy
+  will result in errors and the synchronization will fail. To anticipate those,
+  we have a poller that requests from the Cozy required user actions and that
+  turns them into alerts that Cozy Desktop will show you. A technical error in
+  the poller resulted in failure to schedule polls past the first one and you
+  would miss those very precious information unless you would restart the
+  application.
+  You should now be shown those alerts as early as possible without restarting
+  the application thus enabling you to anticipate synchronization errors.
+- With version 3.16.1 of the app, we decided to increase the visibility of the
+  synchronization activity especially during the upload of large files or the
+  preparation of local changes. This made the application's status and icon
+  "blink" for some users and would give a bad feeling about its behavior.
+  We made some more changes to the status display so you should now see no
+  blinking and better delimited activity phases that should better reflect the
+  ongoing synchronization.
+- We use a local Pouch database to keep track of all documents and their
+  metadata. Part of this metadata are the remote identifier of each document on
+  the Cozy and its last known revision. Whenever we make a change on a document,
+  we fetch its previous version from the local Pouch database so we can access
+  its old metadata. When the change happened locally, we pass along to the Cozy
+  this old metadata's remote revision so it can validate we're not overwriting a
+  document that was changed on the Cozy without our knowledge. It appears we
+  made a mistake in the order old revisions are returned to us by Pouch and that
+  we were not always fetching previous revision but usually the second known
+  revision. This would mean local changes on the document would not get
+  propagated to the remote Cozy.
+  We fixed this revision selection which should avoid quite a lot of propagation
+  issues and further down the road conflicts as well.
+- We found out that if you encountered a network timeout during the release
+  availability check, we would stop alerting you whenever a new release is
+  available unless you'd restart the app.
+  We're now making sure that each successful availability check (we're running
+  a check every 24 hours) we'll offer you to install any update.
+- In case you encounter an error such as a synchronization error, we're now
+  making sure you'll get notified only once and not every time you open the
+  application window.
+- If you look at the Settings application on your Cozy, you will list is
+  Connected Devices tab. This page lists all clients that were ever connected to
+  your Cozy and were not revoked. This page also tells you when each client was
+  synchronized for the last time. Unfortunately, the Desktop client was not
+  updating this date so you would only see its device name.
+  We're now updating this date each time the app reaches the up-to-date status,
+  be there any changes to sync or not.
+
+Improvements for Windows and GNU/Linux users:
+
+- The library we use to watch for changes on the local filesystem, Atom Watcher,
+  can sometimes generate events without a document type for deletions. In those
+  situations we had decided to force the type to `file` but this would lead to
+  type mismatches when a directory was deleted.
+  When the event type is unknown, we're now looking into the local Pouch
+  database for an existing document at the deleted path and if one does exist,
+  we use its type. If we can't find any existing document, we resort back to
+  forcing the type to `file` as we don't have any mean to detect the actual type
+  (i.e. the file or directory does not exist anymore so we can't request stats
+  from the filesystem).
+
+Improvements for Windows users:
+
+- We found out that when applying on the local filesystem a file modification
+  from the Cozy, a rename event was generated from the file path to itself, thus
+  firing an `Invalid move` error.
+  While we have no indications that this would have any impact on your usage,
+  we've made sure this event is not generated anymore.
+- We introduced in Cozy Desktop v3.13.1 a mechanism to identify files and
+  directories with more precision on Windows. This required to modify every
+  single document in the local Pouch database to make sure the new identifier
+  was saved and could be used (e.g. in movement detection). While this worked
+  for most documents, users who had local unsynchronized documents when this
+  migration took place, ended up with an unsyncable version of those which could
+  not be fixed.
+  Fortunately, those versions were not actually saved in the database and we
+  could fix the migration itself so those documents will get their precise
+  identifier and will be synchronized from now on.
+
+Improvements for GNU/Linux users:
+
+- Since the v3.16.0 and the Electron update to v5, the Chromium sandbox is
+  activated by default and since it requires kernel features that are disabled
+  by default in Debian issued kernels, users of those kernels could not start
+  the application without using the `--no-sandbox` flag. This would mean either
+  launching the app from the command line or modifying the `.desktop` file used
+  as a shortcut.
+  We found a way to detect when the kernel feature is disabled and apply the
+  `--no-sandbox` flag in those situations without any actions from the user.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.2-beta.4 - 2019-11-22
 
 Improvements for all users:
