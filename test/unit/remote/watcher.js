@@ -16,7 +16,6 @@ const pouchHelpers = require('../../support/helpers/pouch')
 const { builders } = require('../../support/helpers/cozy')
 
 const metadata = require('../../../core/metadata')
-const { MergeMissingParentError } = require('../../../core/merge')
 const { FILES_DOCTYPE } = require('../../../core/remote/constants')
 const Prep = require('../../../core/prep')
 const {
@@ -261,32 +260,23 @@ describe('RemoteWatcher', function() {
     })
 
     context('when apply() rejects some file/dir', function() {
-      let errType
-
       beforeEach(function() {
-        errType = Error
         apply.callsFake(async (
           change /*: RemoteChange */
-        ) /*: Promise<void> */ => {
-          if (change.type === 'FileAddition') throw new errType(change.doc)
+        ) /*: Promise<?{ change: RemoteChange, err: Error }> */ => {
+          if (change.type === 'FileAddition')
+            return { change, err: new Error(change.doc) }
         })
       })
 
-      it('resolves with an array of errors', function() {
-        const errors = [new errType(remoteDocs[0])]
-        return should(this.watcher.pullMany(remoteDocs)).be.fulfilledWith(
-          errors
-        )
-      })
-
-      it('ignores MergeMissingParentError', async function() {
-        errType = MergeMissingParentError
-        await should(this.watcher.pullMany(remoteDocs)).be.fulfilledWith([])
+      it('resolves with an array of errors', async function() {
+        const errors = await this.watcher.pullMany(remoteDocs)
+        should(errors).have.size(1)
+        should(errors[0].err).eql(new Error(remoteDocs[0]))
       })
 
       it('still tries to pull other files/dirs', async function() {
         await this.watcher.pullMany(remoteDocs).catch(() => {})
-        should(apply).have.been.calledTwice()
         should(apply.args[0][0]).have.properties({
           type: 'FileAddition',
           doc: validMetadata(remoteDocs[0])
@@ -297,10 +287,45 @@ describe('RemoteWatcher', function() {
         })
       })
 
+      it('retries failed changes application until none can be applied', async function() {
+        const remoteDocs = [
+          builders.remoteFile().build(),
+          {
+            ...builders.remoteFile().build(),
+            _deleted: true
+          },
+          builders.remoteFile().build()
+        ]
+        await this.watcher.pullMany(remoteDocs).catch(() => {})
+        should(apply).have.callCount(5)
+        should(apply.args[0][0]).have.properties({
+          type: 'FileAddition',
+          doc: validMetadata(remoteDocs[0])
+        })
+        should(apply.args[1][0]).have.properties({
+          type: 'FileAddition',
+          doc: validMetadata(remoteDocs[2])
+        })
+        should(apply.args[3][0]).have.properties({
+          type: 'FileAddition',
+          doc: validMetadata(remoteDocs[0])
+        })
+        should(apply.args[4][0]).have.properties({
+          type: 'FileAddition',
+          doc: validMetadata(remoteDocs[2])
+        })
+      })
+
       it('releases the Pouch lock', async function() {
         await this.watcher.pullMany(remoteDocs).catch(() => {})
         const nextLockPromise = this.pouch.lock('nextLock')
         await should(nextLockPromise).be.fulfilled()
+      })
+
+      it('does not update the remote sequence', async function() {
+        const remoteSeq = await this.pouch.getRemoteSeqAsync()
+        await this.watcher.pullMany(remoteDocs).catch(() => {})
+        should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(remoteSeq)
       })
     })
 
