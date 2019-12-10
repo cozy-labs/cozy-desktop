@@ -1,5 +1,22 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.17.0-beta.1 - 2019-12-10
+
+Improvements for all users:
+
+- Merging multiple changes at once often requires that they are in the correct
+  order (i.e. the order in which they were made) or we might not be able to
+  merge some of them. We don't always get those changes in the correct order
+  from the Cozy and this can block the synchronization although we have all the
+  required changes in the list.
+  We introduced a retry mechanism in this part of the application that will put
+  any change that we failed to merge at the end of the list so we can retry
+  after we've merged the others and thus potentially unlock the situation.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.16.2 - 2019-11-25
 
 Improvements for all users:
