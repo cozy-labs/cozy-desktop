@@ -18,6 +18,7 @@ const _ = require('lodash')
 module.exports = {
   setup,
   flag,
+  format,
   toSentryContext
 }
 
@@ -40,16 +41,6 @@ function toSentryContext(cozyUrl /*: string */) {
   const instance = urlParts.slice(-3).join('.')
   const environment = DOMAIN_TO_ENV[domain] || 'selfhost'
   return { domain, instance, environment }
-}
-
-const bunyanErrObjectToError = data => {
-  if (data instanceof Error) return data
-  // TODO: make Flow happy with extended error type
-  const error /*: Object */ = new Error(data.message)
-  error.name = data.name
-  error.stack = data.stack
-  error.code = data.code
-  return error
 }
 
 let isSentryConfigured = false
@@ -130,7 +121,8 @@ const handleBunyanMessage = msg => {
       }
 
       if (msg.err) {
-        Sentry.captureException(bunyanErrObjectToError(msg.err))
+        if (msg.err.reason) scope.setExtra('reason', msg.err.reason)
+        Sentry.captureException(format(msg.err))
       } else {
         Sentry.captureMessage(msg.msg)
       }
@@ -158,4 +150,79 @@ const handleBunyanMessage = msg => {
 function flag(err /*: Object */) {
   err.sentry = true
   return err
+}
+
+/**
+ * Make sure the given error object has the required attributes for Sentry to
+ * group events with the same error together via `exception` fingerprinting.
+ *
+ * @see https://docs.sentry.io/data-management/event-grouping/
+ *
+ * For more details on the available attributes:
+ * - @see {@link https://github.com/cozy/cozy-client-js/blob/master/src/fetch.js|cozy-client-js}
+ * - @see {@link https://github.com/bitinn/node-fetch/blob/master/ERROR-HANDLING.md|node-fetch}
+ * - @see {@link https://github.com/arantes555/electron-fetch/blob/master/ERROR-HANDLING.md|electron-fetch}
+ * - @see {@link https://nodejs.org/api/errors.html|Node.js}
+ */
+function format(err /*: Object */) {
+  switch (err.name) {
+    case 'FetchError':
+      if (err.reason) return cozyErrObjectToError(bunyanErrObjectToError(err))
+      else if (err.type)
+        return fetchErrObjectToError(bunyanErrObjectToError(err))
+      return bunyanErrObjectToError(err)
+    case 'Error':
+      if (err.code) return systemErrObjectToError(bunyanErrObjectToError(err))
+      else return bunyanErrObjectToError(err)
+    default:
+      return bunyanErrObjectToError(err)
+  }
+}
+
+function cozyErrObjectToError(err) {
+  switch (typeof err.reason) {
+    case 'string':
+      err.message = err.reason
+      break
+    case 'object':
+      err.message =
+        err.reason.errors && err.reason.errors.length
+          ? err.reason.errors[0].detail
+          : err.reason.detail
+      break
+  }
+  err.type = err.type || 'FetchError'
+
+  return err
+}
+
+function fetchErrObjectToError(err) {
+  switch (err.type) {
+    case 'system':
+    case 'proxy':
+      err.message = err.code
+      break
+    default:
+      err.message = err.type
+  }
+  err.type = 'FetchError'
+
+  return err
+}
+
+function systemErrObjectToError(err) {
+  err.type = 'Error'
+  err.message = err.code
+
+  return err
+}
+
+function bunyanErrObjectToError(data) {
+  const error /*: Object */ = new Error(data.message)
+  for (const attr in data) {
+    error[attr] = data[attr]
+  }
+  if (!error.reason) error.reason = data.message
+
+  return error
 }
