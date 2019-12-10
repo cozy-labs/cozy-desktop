@@ -37,7 +37,7 @@ const MAX_SYNC_ATTEMPTS = 3
 const TRASHING_DELAY = 1000
 
 /*::
-type MetadataChange = {
+export type MetadataChange = {
   changes: {rev: string}[],
   doc: Metadata,
   id: string,
@@ -429,20 +429,24 @@ class Sync {
     err /*: * */
   ) {
     const { path } = change.doc
-    log.error({ path, err, change })
     if (err.code === 'ENOSPC') {
+      log.error({ path, err, change })
       throw new Error('No more disk space')
     } else if (err.status === 412) {
-      log.warn({ path }, 'Sync error 412 needs Merge')
+      log.warn({ path, err, change }, 'Sync error 412 needs Merge')
       change.doc.errors = MAX_SYNC_ATTEMPTS
       return this.updateErrors(change, sideName)
     } else if (err.status === 413) {
+      log.error({ path, err, change })
       throw new Error('Cozy is full')
     }
     try {
       await this.diskUsage()
     } catch (err) {
-      const result = handleCommonCozyErrors(err, { events: this.events, log })
+      const result = handleCommonCozyErrors(
+        { err, change },
+        { events: this.events, log }
+      )
       if (result === 'offline') {
         // The client is offline, wait that it can connect again to the server
         // eslint-disable-next-line no-constant-condition

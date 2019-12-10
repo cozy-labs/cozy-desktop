@@ -61,7 +61,7 @@ describe('core/remote/cozy', () => {
 
           it(`throws a CozyClientRevokedError to notify the GUI`, () => {
             should(() => {
-              handleCommonCozyErrors(err, { events, log })
+              handleCommonCozyErrors({ err }, { events, log })
             }).throw(new CozyClientRevokedError())
           })
         })
@@ -76,7 +76,7 @@ describe('core/remote/cozy', () => {
 
           it('throws an error decorated with JSON parsed from the original message', () => {
             should(() => {
-              handleCommonCozyErrors(err, { events, log })
+              handleCommonCozyErrors({ err }, { events, log })
             }).throw({ status, message })
           })
         })
@@ -87,7 +87,7 @@ describe('core/remote/cozy', () => {
 
           it('throws a permissions error', () => {
             should(() => {
-              handleCommonCozyErrors(err, { events, log })
+              handleCommonCozyErrors({ err }, { events, log })
             }).throw(/permissions/)
           })
         })
@@ -96,12 +96,14 @@ describe('core/remote/cozy', () => {
           const err = new FetchError(randomMessage())
 
           it('emits "offline" to notify the GUI', () => {
-            handleCommonCozyErrors(err, { events, log })
+            handleCommonCozyErrors({ err }, { events, log })
             should(events.emit).have.been.calledWith('offline')
           })
 
           it('returns "offline" to allow custom behavior', () => {
-            should(handleCommonCozyErrors(err, { events, log })).eql('offline')
+            should(handleCommonCozyErrors({ err }, { events, log })).eql(
+              'offline'
+            )
           })
         })
 
@@ -110,7 +112,7 @@ describe('core/remote/cozy', () => {
 
           it('throws the error', () => {
             should(() => {
-              handleCommonCozyErrors(err, { events, log })
+              handleCommonCozyErrors({ err }, { events, log })
             }).throw(err)
           })
         })

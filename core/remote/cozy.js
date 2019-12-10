@@ -48,6 +48,8 @@ function CozyClientRevokedError() {
 
 /*::
 import type FetchError from 'electron-fetch'
+import type { RemoteChange } from './change'
+import type { MetadataChange } from '../sync'
 
 type CommonCozyErrorHandlingOptions = {
   events: EventEmitter,
@@ -69,26 +71,32 @@ type CozyFetchError = Error & {
 */
 
 const handleCommonCozyErrors = (
-  err /*: FetchError | CozyFetchError | Error */,
+  {
+    err,
+    change
+  } /*: { err: FetchError | CozyFetchError | Error, change?: RemoteChange | MetadataChange } */,
   { events, log } /*: CommonCozyErrorHandlingOptions */
 ) /*: CommonCozyErrorHandlingResult */ => {
   if (err.name === 'FetchError') {
     if (err.status === 400) {
-      log.error({ err })
+      log.error({ err, change })
       throw new CozyClientRevokedError()
     } else if (err.status === 402) {
-      log.error({ err }, 'User action required')
+      log.error({ err, change }, 'User action required')
       throw userActionRequired.includeJSONintoError(err)
     } else if (err.status === 403) {
-      log.error({ err }, 'Client has wrong permissions (lack disk-usage)')
+      log.error(
+        { err, change },
+        'Client has wrong permissions (lack disk-usage)'
+      )
       throw new Error('Client has wrong permissions (lack disk-usage)')
     } else {
-      log.warn({ err }, 'Assuming offline')
+      log.warn({ err, change }, 'Assuming offline')
       events.emit('offline')
       return 'offline'
     }
   } else {
-    log.error({ err })
+    log.error({ err, change })
     throw err
   }
 }

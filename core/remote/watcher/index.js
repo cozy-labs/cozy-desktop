@@ -8,7 +8,6 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 
 const metadata = require('../../metadata')
-const { MergeMissingParentError } = require('../../merge')
 const remoteChange = require('../change')
 const { handleCommonCozyErrors } = require('../cozy')
 const { inRemoteTrash } = require('../document')
@@ -98,7 +97,7 @@ class RemoteWatcher {
   }
 
   async watch() {
-    let errors = []
+    let errors /*: Array<{ err: Error, change?: * }> */ = []
 
     try {
       const seq = await this.pouch.getRemoteSeqAsync()
@@ -112,7 +111,7 @@ class RemoteWatcher {
 
       try {
         let target = -1
-        errors = errors.concat(await this.pullMany(docs))
+        errors = await this.pullMany(docs)
         if (errors.length === 0) {
           target = (await this.pouch.db.changes({ limit: 1, descending: true }))
             .last_seq
@@ -125,7 +124,7 @@ class RemoteWatcher {
         log.debug('No more remote changes for now')
       }
     } catch (err) {
-      errors.push(err)
+      errors.push({ err })
     }
 
     for (const err of errors) {
@@ -141,7 +140,7 @@ class RemoteWatcher {
    */
   async pullMany(
     docs /*: Array<RemoteDoc|RemoteDeletion> */
-  ) /*: Promise<Error[]> */ {
+  ) /*: Promise<Array<{ change: RemoteChange, err: Error }>> */ {
     const remoteIds = docs.reduce((ids, doc) => ids.add(doc._id), new Set())
     const olds = await this.pouch.allByRemoteIds(remoteIds)
 
@@ -359,97 +358,78 @@ class RemoteWatcher {
     return squashMoves(doc, was, previousChanges, originalMoves)
   }
 
-  async applyAll(changes /*: Array<RemoteChange> */) /*: Promise<Error[]> */ {
-    const errors = []
-
-    for (let change of changes) {
-      try {
-        await this.apply(change)
-      } catch (err) {
-        log.error({ path: _.get(change, 'doc.path'), err })
-        if (err instanceof MergeMissingParentError) continue
-        errors.push(err)
-      }
-    }
-
-    return errors
+  async applyAll(
+    changes /*: Array<RemoteChange> */
+  ) /*: Promise<Array<{ change: RemoteChange, err: Error }>> */ {
+    const errors = await Promise.mapSeries(
+      changes,
+      async change => await this.apply(change)
+    ).filter(err => err)
+    if (errors.length === 0 || errors.length === changes.length) return errors
+    return this.applyAll(errors.map(error => error.change))
   }
 
-  async apply(change /*: RemoteChange */) /*: Promise<void> */ {
+  async apply(
+    change /*: RemoteChange */
+  ) /*: Promise<?{ change: RemoteChange, err: Error }> */ {
     const docType = _.get(change, 'doc.docType')
     const path = _.get(change, 'doc.path')
 
-    switch (change.type) {
-      case 'InvalidChange':
-        throw change.error
-      case 'DescendantChange':
-        log.debug(
-          { path, remoteId: change.doc._id },
-          `${_.get(change, 'doc.docType')} was moved as descendant of ${
-            change.ancestorPath
-          }`
-        )
-        break
-      case 'IgnoredChange':
-        log.debug({ path, remoteId: change.doc._id }, change.detail)
-        break
-      case 'FileTrashing':
-        log.info({ path }, 'file was trashed remotely')
-        await this.prep.trashFileAsync(sideName, change.was, change.doc)
-        break
-      case 'DirTrashing':
-        log.info({ path }, 'folder was trashed remotely')
-        await this.prep.trashFolderAsync(sideName, change.was, change.doc)
-        break
-      case 'FileDeletion':
-        log.info({ path }, 'file was deleted permanently')
-        await this.prep.deleteFileAsync(sideName, change.doc)
-        break
-      case 'DirDeletion':
-        log.info({ path }, 'folder was deleted permanently')
-        await this.prep.deleteFolderAsync(sideName, change.doc)
-        break
-      case 'FileAddition':
-        log.info({ path }, 'file was added remotely')
-        await this.prep.addFileAsync(sideName, change.doc)
-        break
-      case 'DirAddition':
-        log.info({ path }, 'folder was added remotely')
-        await this.prep.putFolderAsync(sideName, change.doc)
-        break
-      case 'FileRestoration':
-        log.info({ path }, 'file was restored remotely')
-        await this.prep.restoreFileAsync(sideName, change.doc, change.was)
-        break
-      case 'DirRestoration':
-        log.info({ path }, 'folder was restored remotely')
-        await this.prep.restoreFolderAsync(sideName, change.doc, change.was)
-        break
-      case 'FileUpdate':
-        log.info({ path }, 'file was updated remotely')
-        await this.prep.updateFileAsync(sideName, change.doc)
-        break
-      case 'FileMove':
-        log.info(
-          { path, oldpath: change.was.path },
-          'file was moved or renamed remotely'
-        )
-        if (change.needRefetch) {
-          change.was = await this.pouch.byRemoteIdMaybeAsync(
-            change.was.remote._id
+    try {
+      switch (change.type) {
+        case 'InvalidChange':
+          throw change.error
+        case 'DescendantChange':
+          log.debug(
+            { path, remoteId: change.doc._id },
+            `${_.get(change, 'doc.docType')} was moved as descendant of ${
+              change.ancestorPath
+            }`
           )
-          change.was.childMove = false
-        }
-        await this.prep.moveFileAsync(sideName, change.doc, change.was)
-        if (change.update) {
+          break
+        case 'IgnoredChange':
+          log.debug({ path, remoteId: change.doc._id }, change.detail)
+          break
+        case 'FileTrashing':
+          log.info({ path }, 'file was trashed remotely')
+          await this.prep.trashFileAsync(sideName, change.was, change.doc)
+          break
+        case 'DirTrashing':
+          log.info({ path }, 'folder was trashed remotely')
+          await this.prep.trashFolderAsync(sideName, change.was, change.doc)
+          break
+        case 'FileDeletion':
+          log.info({ path }, 'file was deleted permanently')
+          await this.prep.deleteFileAsync(sideName, change.doc)
+          break
+        case 'DirDeletion':
+          log.info({ path }, 'folder was deleted permanently')
+          await this.prep.deleteFolderAsync(sideName, change.doc)
+          break
+        case 'FileAddition':
+          log.info({ path }, 'file was added remotely')
+          await this.prep.addFileAsync(sideName, change.doc)
+          break
+        case 'DirAddition':
+          log.info({ path }, 'folder was added remotely')
+          await this.prep.putFolderAsync(sideName, change.doc)
+          break
+        case 'FileRestoration':
+          log.info({ path }, 'file was restored remotely')
+          await this.prep.restoreFileAsync(sideName, change.doc, change.was)
+          break
+        case 'DirRestoration':
+          log.info({ path }, 'folder was restored remotely')
+          await this.prep.restoreFolderAsync(sideName, change.doc, change.was)
+          break
+        case 'FileUpdate':
+          log.info({ path }, 'file was updated remotely')
           await this.prep.updateFileAsync(sideName, change.doc)
-        }
-        break
-      case 'DirMove':
-        {
+          break
+        case 'FileMove':
           log.info(
             { path, oldpath: change.was.path },
-            'folder was moved or renamed remotely'
+            'file was moved or renamed remotely'
           )
           if (change.needRefetch) {
             change.was = await this.pouch.byRemoteIdMaybeAsync(
@@ -457,33 +437,53 @@ class RemoteWatcher {
             )
             change.was.childMove = false
           }
-          const newRemoteRevs /*: RemoteRevisionsByID */ = {}
-          const descendants = change.descendantMoves || []
-          for (let descendant of descendants) {
-            if (descendant.doc.remote) {
-              newRemoteRevs[descendant.doc.remote._id] =
-                descendant.doc.remote._rev
+          await this.prep.moveFileAsync(sideName, change.doc, change.was)
+          if (change.update) {
+            await this.prep.updateFileAsync(sideName, change.doc)
+          }
+          break
+        case 'DirMove':
+          {
+            log.info(
+              { path, oldpath: change.was.path },
+              'folder was moved or renamed remotely'
+            )
+            if (change.needRefetch) {
+              change.was = await this.pouch.byRemoteIdMaybeAsync(
+                change.was.remote._id
+              )
+              change.was.childMove = false
+            }
+            const newRemoteRevs /*: RemoteRevisionsByID */ = {}
+            const descendants = change.descendantMoves || []
+            for (let descendant of descendants) {
+              if (descendant.doc.remote) {
+                newRemoteRevs[descendant.doc.remote._id] =
+                  descendant.doc.remote._rev
+              }
+            }
+            await this.prep.moveFolderAsync(
+              sideName,
+              change.doc,
+              change.was,
+              newRemoteRevs
+            )
+            for (let descendant of descendants) {
+              if (descendant.update) {
+                await this.prep.updateFileAsync(sideName, descendant.doc)
+              }
             }
           }
-          await this.prep.moveFolderAsync(
-            sideName,
-            change.doc,
-            change.was,
-            newRemoteRevs
-          )
-          for (let descendant of descendants) {
-            if (descendant.update) {
-              await this.prep.updateFileAsync(sideName, descendant.doc)
-            }
-          }
-        }
-        break
-      case 'UpToDate':
-        log.info({ path }, `${docType} is up-to-date`)
-        break
-      default:
-        throw new Error(`Unexpected change type: ${change.type}`)
-    } // switch
+          break
+        case 'UpToDate':
+          log.info({ path }, `${docType} is up-to-date`)
+          break
+        default:
+          throw new Error(`Unexpected change type: ${change.type}`)
+      } // switch
+    } catch (err) {
+      return { err, change }
+    }
   }
 }
 
