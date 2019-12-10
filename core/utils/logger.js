@@ -27,7 +27,7 @@ const defaultLogger = bunyan.createLogger({
   name: 'Cozy Desktop',
   level: 'trace',
   serializers: {
-    err: bunyan.stdSerializers.err
+    err: errSerializer
   },
   streams: [
     {
@@ -69,6 +69,22 @@ if (process.env.TESTDEBUG) {
       }
     }
   })
+}
+
+function errSerializer(err) {
+  const obj = bunyan.stdSerializers.err(err)
+  const { type, reason, address, dest, info, path, port, syscall } = err
+
+  if (type) obj.type = type
+  if (reason) obj.reason = reason
+  if (address) obj.address = err.address
+  if (dest) obj.dest = err.dest
+  if (info) obj.info = info
+  if (path) obj.path = path
+  if (port) obj.port = port
+  if (syscall) obj.syscall = syscall
+
+  return obj
 }
 
 function logger(options) {
