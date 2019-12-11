@@ -114,6 +114,7 @@ describe('core/local/atom/dispatch.loop()', function() {
 
   context('when channel contains a scan file event', () => {
     const filePath = 'foo'
+    const updatedAt = new Date()
 
     beforeEach(() => {
       channel.push([
@@ -122,6 +123,8 @@ describe('core/local/atom/dispatch.loop()', function() {
           .action('scan')
           .kind('file')
           .path(filePath)
+          .mtime(updatedAt)
+          .ctime(updatedAt)
           .ino(1)
           .data('')
           .build()
@@ -132,6 +135,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       const doc = builders
         .metafile()
         .path(filePath)
+        .updatedAt(updatedAt)
         .ino(1)
         .noTags()
         .unmerged('local')
@@ -147,6 +151,7 @@ describe('core/local/atom/dispatch.loop()', function() {
 
   context('when channel contains a scan directory event', () => {
     const directoryPath = 'foo'
+    const updatedAt = new Date()
 
     beforeEach(() => {
       channel.push([
@@ -155,6 +160,8 @@ describe('core/local/atom/dispatch.loop()', function() {
           .action('scan')
           .kind('directory')
           .path(directoryPath)
+          .mtime(updatedAt)
+          .ctime(updatedAt)
           .ino(1)
           .build()
       ])
@@ -164,6 +171,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       const doc = builders
         .metadir()
         .path(directoryPath)
+        .updatedAt(updatedAt)
         .ino(1)
         .noTags()
         .unmerged('local')
@@ -179,6 +187,7 @@ describe('core/local/atom/dispatch.loop()', function() {
 
   context('when channel contains a created file event', () => {
     const filePath = 'foo'
+    const updatedAt = new Date()
 
     beforeEach(() => {
       channel.push([
@@ -187,6 +196,8 @@ describe('core/local/atom/dispatch.loop()', function() {
           .action('created')
           .kind('file')
           .path(filePath)
+          .mtime(updatedAt)
+          .ctime(updatedAt)
           .ino(1)
           .data('')
           .build()
@@ -197,6 +208,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       const doc = builders
         .metafile()
         .path(filePath)
+        .updatedAt(updatedAt)
         .ino(1)
         .noTags()
         .unmerged('local')
@@ -212,6 +224,7 @@ describe('core/local/atom/dispatch.loop()', function() {
 
   context('when channel contains a created directory event', () => {
     const directoryPath = 'foo'
+    const updatedAt = new Date()
 
     beforeEach(() => {
       channel.push([
@@ -220,6 +233,8 @@ describe('core/local/atom/dispatch.loop()', function() {
           .action('created')
           .kind('directory')
           .path(directoryPath)
+          .mtime(updatedAt)
+          .ctime(updatedAt)
           .ino(1)
           .build()
       ])
@@ -229,6 +244,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       const doc = builders
         .metadir()
         .path(directoryPath)
+        .updatedAt(updatedAt)
         .ino(1)
         .noTags()
         .unmerged('local')
@@ -244,6 +260,7 @@ describe('core/local/atom/dispatch.loop()', function() {
 
   context('when channel contains a modified file event', () => {
     const filePath = 'foo'
+    const updatedAt = new Date()
 
     beforeEach(() => {
       channel.push([
@@ -252,6 +269,8 @@ describe('core/local/atom/dispatch.loop()', function() {
           .action('modified')
           .kind('file')
           .path(filePath)
+          .mtime(updatedAt)
+          .ctime(updatedAt)
           .ino(1)
           .data('')
           .build()
@@ -262,6 +281,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       const doc = builders
         .metafile()
         .path(filePath)
+        .updatedAt(updatedAt)
         .ino(1)
         .noTags()
         .unmerged('local')
@@ -277,6 +297,7 @@ describe('core/local/atom/dispatch.loop()', function() {
 
   context('when channel contains a modified directory event', () => {
     const directoryPath = 'foo'
+    const updatedAt = new Date()
 
     beforeEach(() => {
       channel.push([
@@ -285,6 +306,8 @@ describe('core/local/atom/dispatch.loop()', function() {
           .action('modified')
           .kind('directory')
           .path(directoryPath)
+          .mtime(updatedAt)
+          .ctime(updatedAt)
           .ino(1)
           .build()
       ])
@@ -294,6 +317,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       const doc = builders
         .metadir()
         .path(directoryPath)
+        .updatedAt(updatedAt)
         .ino(1)
         .noTags()
         .unmerged('local')
@@ -311,6 +335,7 @@ describe('core/local/atom/dispatch.loop()', function() {
     const filePath = 'foo'
     const newFilePath = 'bar'
     const fileIno = 1
+    const updatedAt = new Date()
 
     beforeEach(() => {
       channel.push([
@@ -320,6 +345,8 @@ describe('core/local/atom/dispatch.loop()', function() {
           .kind('file')
           .oldPath(filePath)
           .path(newFilePath)
+          .mtime(updatedAt)
+          .ctime(updatedAt)
           .ino(fileIno)
           .data('')
           .build()
@@ -342,6 +369,7 @@ describe('core/local/atom/dispatch.loop()', function() {
           const doc = builders
             .metafile()
             .path(newFilePath)
+            .updatedAt(updatedAt)
             .ino(1)
             .noTags()
             .unmerged('local')
@@ -376,6 +404,7 @@ describe('core/local/atom/dispatch.loop()', function() {
   context('when channel contains a overwriting renamed file event', () => {
     const filePath = 'foo'
     const newFilePath = 'bar'
+    const updatedAt = new Date()
 
     beforeEach(() => {
       channel.push([
@@ -385,6 +414,8 @@ describe('core/local/atom/dispatch.loop()', function() {
           .kind('file')
           .oldPath(filePath)
           .path(newFilePath)
+          .mtime(updatedAt)
+          .ctime(updatedAt)
           .ino(1)
           .data('')
           .overwrite()
@@ -418,6 +449,7 @@ describe('core/local/atom/dispatch.loop()', function() {
           const doc = builders
             .metafile()
             .path(newFilePath)
+            .updatedAt(updatedAt)
             .ino(1)
             .noTags()
             .unmerged('local')
@@ -446,6 +478,7 @@ describe('core/local/atom/dispatch.loop()', function() {
         const doc = builders
           .metafile()
           .path(newFilePath)
+          .updatedAt(updatedAt)
           .ino(1)
           .noTags()
           .unmerged('local')
@@ -471,6 +504,7 @@ describe('core/local/atom/dispatch.loop()', function() {
     const directoryPath = 'foo'
     const newDirectoryPath = 'bar'
     const dirIno = 1
+    const updatedAt = new Date()
 
     beforeEach(() => {
       channel.push([
@@ -480,6 +514,8 @@ describe('core/local/atom/dispatch.loop()', function() {
           .kind('directory')
           .oldPath(directoryPath)
           .path(newDirectoryPath)
+          .mtime(updatedAt)
+          .ctime(updatedAt)
           .ino(dirIno)
           .build()
       ])
@@ -501,6 +537,7 @@ describe('core/local/atom/dispatch.loop()', function() {
           const doc = builders
             .metadir()
             .path(newDirectoryPath)
+            .updatedAt(updatedAt)
             .ino(1)
             .noRemote()
             .noTags()
@@ -536,6 +573,7 @@ describe('core/local/atom/dispatch.loop()', function() {
         const doc = builders
           .metadir()
           .path(newDirectoryPath)
+          .updatedAt(updatedAt)
           .ino(1)
           .noRemote()
           .noTags()
