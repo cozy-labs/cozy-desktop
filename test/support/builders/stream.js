@@ -5,10 +5,12 @@ const stream = require('stream')
 module.exports = class StreamBuilder {
   /*::
   data: string
+  err: ?Error
   */
 
   constructor() {
     this.data = ''
+    this.err = null
   }
 
   push(data /*: string */) /*: StreamBuilder */ {
@@ -16,12 +18,22 @@ module.exports = class StreamBuilder {
     return this
   }
 
+  error(err /*: Error */) /* StreamBuilder */ {
+    this.err = err
+    return this
+  }
+
   build() /*: stream.Readable */ {
-    const result = new stream.Readable()
-
-    result.push(this.data)
-    result.push(null)
-
-    return result
+    const builder = this
+    return new stream.Readable({
+      read: function() {
+        if (builder.err) {
+          this.emit('error', builder.err)
+        } else {
+          this.push(builder.data)
+          this.push(null)
+        }
+      }
+    })
   }
 }
