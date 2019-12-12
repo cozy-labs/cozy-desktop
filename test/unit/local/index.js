@@ -372,6 +372,43 @@ describe('Local', function() {
         })
       })
     })
+
+    describe('when we encounter a network error during the download', () => {
+      const message = 'ERR_CONNECTION_RESET'
+      const data = 'hello'
+      let doc
+
+      beforeEach('set up doc', () => {
+        doc = builders
+          .metafile()
+          .data(data)
+          .build()
+      })
+
+      beforeEach('stub #createReadStreamAsync() on the other side', function() {
+        this.local.other = {
+          async createReadStreamAsync(docToStream) {
+            should(docToStream).equal(doc)
+            return builders
+              .stream()
+              .push(data)
+              .error(new Error(message))
+              .build()
+          }
+        }
+      })
+
+      afterEach(
+        'restore #createReadStreamAsync() on the other side',
+        function() {
+          this.local.other = null
+        }
+      )
+
+      it('rejects', async function() {
+        await should(this.local.addFileAsync(doc)).be.rejectedWith(message)
+      })
+    })
   })
 
   describe('addFolder', function() {

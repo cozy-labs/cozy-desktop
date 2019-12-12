@@ -9,6 +9,7 @@ const autoBind = require('auto-bind')
 const fse = require('fs-extra')
 const path = require('path')
 const trash = require('trash')
+const stream = require('stream')
 
 const bluebird = require('bluebird')
 
@@ -258,14 +259,10 @@ class Local /*:: implements Reader, Writer */ {
               fse.copy(existingFilePath, tmpFile, next)
             } else {
               this.other.createReadStreamAsync(doc).then(
-                stream => {
-                  // Don't use async callback here!
-                  // Async does some magic and the stream can throw an
-                  // 'error' event before the next async is called...
-                  let target = fse.createWriteStream(tmpFile)
-                  stream.pipe(target)
-                  target.on('finish', next)
-                  target.on('error', next)
+                source => {
+                  stream.pipeline(source, fse.createWriteStream(tmpFile), err =>
+                    next(err)
+                  )
                 },
                 err => {
                   next(err)
@@ -317,7 +314,7 @@ class Local /*:: implements Reader, Writer */ {
       function(err) {
         stopMeasure()
         if (err) {
-          log.warn({ path: doc.path }, 'addFile failed:', err, doc)
+          log.warn({ path: doc.path, err, doc }, 'addFile failed')
         }
         fse.unlink(tmpFile, () => callback(err))
       }
