@@ -1,5 +1,29 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.17.0 - 2019-12-16
+
+Improvements for all users:
+
+- Merging multiple changes at once often requires that they are in the correct
+  order (i.e. the order in which they were made) or we might not be able to
+  merge some of them. We don't always get those changes in the correct order
+  from the Cozy and this can block the synchronization although we have all the
+  required changes in the list.
+  We introduced a retry mechanism in this part of the application that will put
+  any change that we failed to merge at the end of the list so we can retry
+  after we've merged the others and thus potentially unlock the situation.
+- We found out that errors while downloading a file from the remote Cozy (mostly
+  network errors which are quite common) were not handled at all. The result was
+  that the synchronization was stopped without notice (not even an error message
+  in the status bar) and would only work again after restarting the application.
+  We now catch them so the synchronization won't get completely blocked, we'll
+  wait for an internet connection to come back in the event of network errors
+  and we'll try downloading the file up to 3 times before giving up.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.17.0-beta.2 - 2019-12-13
 
 Improvements for all users:
