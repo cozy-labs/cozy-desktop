@@ -534,7 +534,7 @@ describe('RemoteWatcher', function() {
 
       describe('when moved source is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('detects the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', function() {
             const remoteDocs = [srcFileMoved, dstFileTrashed]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -553,19 +553,19 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('detects the move before the trashing', function() {
+          it('sorts the move before the trashing', function() {
             const remoteDocs = [srcFileMoved, dstFileTrashed]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
-                type: 'FileMove',
-                doc: { path: 'dst/file' },
-                was: { path: 'src/file' }
-              },
-              {
                 type: 'FileTrashing',
                 doc: { path: '.cozy_trash/FILE' },
                 was: { path: 'dst/FILE' }
+              },
+              {
+                type: 'FileMove',
+                doc: { path: 'dst/file' },
+                was: { path: 'src/file' }
               }
             ])
           })
@@ -574,7 +574,7 @@ describe('RemoteWatcher', function() {
 
       describe('when trashed destination is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('detects the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', function() {
             const remoteDocs = [dstFileTrashed, srcFileMoved]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -593,19 +593,19 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('detects the move before the trashing', function() {
+          it('sorts the move before the trashing', function() {
             const remoteDocs = [dstFileTrashed, srcFileMoved]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
-                type: 'FileMove',
-                doc: { path: 'dst/file' },
-                was: { path: 'src/file' }
-              },
-              {
                 type: 'FileTrashing',
                 doc: { path: '.cozy_trash/FILE' },
                 was: { path: 'dst/FILE' }
+              },
+              {
+                type: 'FileMove',
+                doc: { path: 'dst/file' },
+                was: { path: 'src/file' }
               }
             ])
           })
@@ -748,7 +748,7 @@ describe('RemoteWatcher', function() {
 
       describe('when moved source is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('detects the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', function() {
             const remoteDocs = [srcMoved, dstTrashed]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -767,19 +767,19 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('is detects the move before the trashing', function() {
+          it('sorts the trashing before the move ', function() {
             const remoteDocs = [srcMoved, dstTrashed]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
-                type: 'DirMove',
-                doc: { path: 'dst/dir' },
-                was: { path: 'src/dir' }
-              },
-              {
                 type: 'DirTrashing',
                 doc: { path: '.cozy_trash/DIR' },
                 was: { path: 'dst/DIR' }
+              },
+              {
+                type: 'DirMove',
+                doc: { path: 'dst/dir' },
+                was: { path: 'src/dir' }
               }
             ])
           })
@@ -788,7 +788,7 @@ describe('RemoteWatcher', function() {
 
       describe('when trashed destination is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('detects the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', function() {
             const remoteDocs = [dstTrashed, srcMoved]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -807,19 +807,19 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('detects the move before the trashing ', function() {
+          it('sorts the trashing before the move', function() {
             const remoteDocs = [dstTrashed, srcMoved]
             const changes = this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
-                type: 'DirMove',
-                doc: { path: 'dst/dir' },
-                was: { path: 'src/dir' }
-              },
-              {
                 type: 'DirTrashing',
                 doc: { path: '.cozy_trash/DIR' },
                 was: { path: 'dst/DIR' }
+              },
+              {
+                type: 'DirMove',
+                doc: { path: 'dst/dir' },
+                was: { path: 'src/dir' }
               }
             ])
           })

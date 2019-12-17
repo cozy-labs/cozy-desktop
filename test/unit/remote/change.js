@@ -120,7 +120,7 @@ describe('sorter()', () => {
       ])
     })
 
-    it('sorts child move of replaced and child move of replacing by created path', () => {
+    it('sorts child move of replaced and child move of replacing by deleted path', () => {
       const moveReplacing = {
         type: 'DescendantChange',
         doc: { path: path.normalize('dirA/dir/subdir') },
@@ -133,12 +133,12 @@ describe('sorter()', () => {
       }
 
       should(remoteChange.sort([moveReplacing, moveReplaced])).deepEqual([
-        moveReplacing,
-        moveReplaced
+        moveReplaced,
+        moveReplacing
       ])
       should(remoteChange.sort([moveReplaced, moveReplacing])).deepEqual([
-        moveReplacing,
-        moveReplaced
+        moveReplaced,
+        moveReplacing
       ])
     })
   })
@@ -227,16 +227,6 @@ describe('sorter()', () => {
         was: { path: path.normalize('parent/src/dir') }
       },
       {
-        doc: { path: path.normalize('parent/dst/dir/empty-subdir') },
-        type: 'DescendantChange',
-        was: { path: path.normalize('parent/src/dir/empty-subdir') }
-      },
-      {
-        doc: { path: path.normalize('parent/dst/dir/subdir') },
-        type: 'DescendantChange',
-        was: { path: path.normalize('parent/src/dir/subdir') }
-      },
-      {
         doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed') },
         type: 'FileMove',
         was: { path: path.normalize('parent/dst/dir/subdir/file') }
@@ -245,10 +235,20 @@ describe('sorter()', () => {
         doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed2') },
         type: 'FileMove',
         was: { path: path.normalize('parent/dst/dir/subdir/file2') }
+      },
+      {
+        doc: { path: path.normalize('parent/dst/dir/empty-subdir') },
+        type: 'DescendantChange',
+        was: { path: path.normalize('parent/src/dir/empty-subdir') }
+      },
+      {
+        doc: { path: path.normalize('parent/dst/dir/subdir') },
+        type: 'DescendantChange',
+        was: { path: path.normalize('parent/src/dir/subdir') }
       }
     ]
 
-    it('sorts parents before children', () => {
+    it('sorts moves before descendant moves', () => {
       const order1 = [
         {
           doc: { path: path.normalize('parent/dst/dir/subdir/filerenamed2') },
