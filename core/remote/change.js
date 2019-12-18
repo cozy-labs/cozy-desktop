@@ -316,10 +316,14 @@ const isDelete = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirDeletion' || a.type === 'FileDeletion'
 const isAdd = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirAddition' || a.type === 'FileAddition'
+const isDescendant = (a /*: RemoteChange */) /*: boolean %checks */ =>
+  a.type === 'DescendantChange'
 const isMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
-  a.type === 'DirMove' || a.type === 'FileMove' || a.type === 'DescendantChange'
+  isFileMove(a) || isFolderMove(a)
+const isFileMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
+  a.type === 'FileMove' || (isDescendant(a) && a.doc.docType === 'File')
 const isFolderMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
-  a.type === 'DirMove' || a.type === 'DescendantChange'
+  a.type === 'DirMove' || (isDescendant(a) && a.doc.docType === 'Folder')
 const isTrash = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirTrashing' || a.type === 'FileTrashing'
 const isRestore = (a /*: RemoteChange */) /*: boolean %checks */ =>
@@ -337,15 +341,21 @@ function includeDescendant(
 }
 
 const createdPath = (a /*: RemoteChange */) /*: ?string */ =>
-  isAdd(a) || isMove(a) || isRestore(a) ? a.doc.path : null
+  isAdd(a) || isMove(a) || isDescendant(a) || isRestore(a) ? a.doc.path : null
 const createdId = (a /*: RemoteChange */) /*: ?string */ =>
-  isAdd(a) || isMove(a) || isRestore(a) ? metadata.id(a.doc.path) : null
+  isAdd(a) || isMove(a) || isDescendant(a) || isRestore(a)
+    ? metadata.id(a.doc.path)
+    : null
 const deletedPath = (a /*: RemoteChange */) /*: ?string */ =>
-  isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
+  isDelete(a)
+    ? a.doc.path
+    : isMove(a) || isDescendant(a) || isTrash(a)
+    ? a.was.path
+    : null
 const deletedId = (a /*: RemoteChange */) /*: ?string */ =>
   isDelete(a)
     ? metadata.id(a.doc.path)
-    : isMove(a) || isTrash(a)
+    : isMove(a) || isDescendant(a) || isTrash(a)
     ? metadata.id(a.was.path)
     : null
 const ignoredPath = (a /*: RemoteChange */) /*: ?string */ =>
@@ -360,46 +370,114 @@ const lower = (p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ =>
 const aFirst = -1
 const bFirst = 1
 
-const sortByPath = (a, b) => {
-  // order ignored actions by path
+const sortForDelete = (del, b, delFirst) => {
+  if (isDelete(b) || isTrash(b)) {
+    if (lower(deletedPath(del), deletedPath(b))) return delFirst
+    if (lower(deletedPath(b), deletedPath(del))) return -delFirst
+
+    return 0
+  }
+
+  return delFirst
+}
+
+const sortForDescendant = (desc, b, descFirst) => {
+  if (areParentChild(deletedPath(desc), createdPath(b))) return descFirst
+  if (areParentChild(deletedPath(b), createdPath(desc))) return -descFirst
+
+  if (areParentChild(createdPath(b), deletedPath(desc))) return descFirst
+  if (areParentChild(createdPath(desc), deletedPath(b))) return -descFirst
+
+  if (areEqual(deletedId(desc), createdId(b))) return descFirst
+  if (areEqual(deletedId(b), createdId(desc))) return descFirst
+
+  return -descFirst
+}
+
+const sortForMove = (move, b, moveFirst) => {
+  if (isMove(b) || isDescendant(b)) {
+    if (isDescendant(move) && isDescendant(b)) {
+      if (areParentChild(deletedPath(move), deletedPath(b))) return moveFirst
+      if (areParentChild(deletedPath(b), deletedPath(move))) return -moveFirst
+
+      if (areEqual(deletedId(move), createdId(b))) return moveFirst
+      if (areEqual(deletedId(b), createdId(move))) return -moveFirst
+
+      if (lower(deletedPath(move), deletedPath(b))) return moveFirst
+      if (lower(deletedPath(b), deletedPath(move))) return -moveFirst
+
+      return 0
+    }
+    if (isDescendant(move) && !isDescendant(b))
+      return sortForDescendant(move, b, moveFirst)
+    if (!isDescendant(move) && isDescendant(b))
+      return sortForDescendant(b, move, -moveFirst)
+
+    if (areParentChild(deletedPath(b), deletedPath(move))) return moveFirst
+    if (areParentChild(deletedPath(move), deletedPath(b))) return -moveFirst
+
+    if (areParentChild(deletedPath(b), createdPath(move))) return moveFirst
+    if (areParentChild(deletedPath(move), createdPath(b))) return -moveFirst
+
+    if (areParentChild(createdPath(move), createdPath(b))) return moveFirst
+    if (areParentChild(createdPath(b), createdPath(move))) return -moveFirst
+
+    if (areParentChild(createdPath(move), deletedPath(b))) return moveFirst
+    if (areParentChild(createdPath(b), deletedPath(move))) return -moveFirst
+
+    // Both orders would be "valid" but if there already is a document at this
+    // path, processing `created` first would lead to a conflict.
+    // On the other hand, if there aren't any documents at this path,
+    // processing `deleted` first will lead to an error that can be recovered
+    // from via a retry.
+    //
+    // We use the `*Id` methods here since multiple paths can replace the same
+    // path on macOS and Windows.
+    if (areEqual(deletedId(move), createdId(b))) return moveFirst
+    if (areEqual(deletedId(b), createdId(move))) return -moveFirst
+
+    if (lower(createdPath(move), createdPath(b))) return moveFirst
+    if (lower(createdPath(b), createdPath(move))) return -moveFirst
+
+    return 0
+  }
+
+  return moveFirst
+}
+
+const sortForAdd = (add, b, addFirst) => {
+  if (isRestore(b) || isAdd(b)) {
+    if (areParentChild(createdPath(add), createdPath(b))) return addFirst
+    if (areParentChild(createdPath(b), createdPath(add))) return -addFirst
+
+    if (lower(createdPath(add), createdPath(b))) return addFirst
+    if (lower(createdPath(b), createdPath(add))) return -addFirst
+
+    return 0
+  }
+
+  return addFirst
+}
+
+// Priorities:
+// isDelete > isTrash > isMove > isDescendant > isRestore > isAdd > isIgnore
+const sortChanges = (a, b) => {
+  if (isDelete(a) || isTrash(a)) return sortForDelete(a, b, aFirst)
+  if (isDelete(b) || isTrash(b)) return sortForDelete(b, a, bFirst)
+
+  if (isMove(a) || isDescendant(a)) return sortForMove(a, b, aFirst)
+  if (isMove(b) || isDescendant(b)) return sortForMove(b, a, bFirst)
+
+  if (isRestore(a) || isAdd(a)) return sortForAdd(a, b, aFirst)
+  if (isRestore(b) || isAdd(b)) return sortForAdd(b, a, bFirst)
+
   if (lower(ignoredPath(a), ignoredPath(b))) return aFirst
   if (lower(ignoredPath(b), ignoredPath(a))) return bFirst
 
-  // otherwise, order by add path
-  if (lower(createdPath(a), createdPath(b))) return aFirst
-  if (lower(createdPath(b), createdPath(a))) return bFirst
-
-  // if there isn't 2 add paths, sort by del path
-  if (lower(deletedPath(b), deletedPath(a))) return aFirst
-  if (lower(deletedPath(a), deletedPath(b))) return bFirst
-
-  // if there isnt 2 del paths, don't change order
-  return 0
-}
-
-const sortByAction = (a, b) => {
-  // if there is one ignored change, it is put back to the end
-  if (ignoredPath(a) && !ignoredPath(b)) return bFirst
-  if (ignoredPath(b) && !ignoredPath(a)) return aFirst
-
-  // if one action is the parent of another, it takes priority
-  if (areParentChild(createdPath(a), createdPath(b))) return aFirst
-  if (areParentChild(createdPath(b), createdPath(a))) return bFirst
-  if (areParentChild(deletedPath(b), deletedPath(a))) return aFirst
-  if (areParentChild(deletedPath(a), deletedPath(b))) return bFirst
-
-  // if one action would replace the source of another one, it comes last
-  if (areParentChild(deletedId(a), createdId(b))) return aFirst
-  if (areParentChild(deletedId(b), createdId(a))) return bFirst
-  if (areParentChild(createdId(a), deletedId(b))) return bFirst
-  if (areParentChild(createdId(b), deletedId(a))) return aFirst
-  if (areEqual(deletedId(a), createdId(b))) return aFirst
-  if (areEqual(deletedId(b), createdId(a))) return bFirst
-
-  // Don't change order if unnecessary
   return 0
 }
 
 function sort(changes /*: Array<RemoteChange> */) /*: Array<RemoteChange> */ {
-  return changes.sort(sortByPath).sort(sortByAction)
+  // return changes.sort(sortByPath).sort(sortByAction)
+  return changes.sort(sortChanges)
 }
