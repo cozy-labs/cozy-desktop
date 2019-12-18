@@ -3,6 +3,7 @@
 const path = require('path')
 const should = require('should')
 
+const metadata = require('../../../core/metadata')
 const remoteChange = require('../../../core/remote/change')
 const { onPlatforms } = require('../../support/helpers/platform')
 
@@ -361,6 +362,60 @@ describe('sorter()', () => {
       const changes = [created, deleted]
       remoteChange.sort(changes)
       should(changes).deepEqual([deleted, created])
+    })
+
+    it('when there are other changes', () => {
+      const deletedPath = '.cozy_trash/fichier.pptx'
+      const createdPath = '1_Dossier/fichier.pptx'
+
+      const changes = [
+        {
+          type: 'DirAddition',
+          doc: {
+            path: '2_Dossier/2_SousDossier/SousSousDossier',
+            docType: 'folder',
+            _id: metadata.id('2_Dossier/2_SousDossier/SousSousDossier')
+          }
+        },
+        {
+          type: 'FileAddition',
+          doc: {
+            path: '2_Dossier/1_SousDossier/fichier.xml',
+            docType: 'file',
+            _id: metadata.id('2_Dossier/1_SousDossier/fichier.xml')
+          }
+        },
+        {
+          type: 'FileTrashing',
+          doc: {
+            path: deletedPath,
+            docType: 'file',
+            _id: metadata.id(deletedPath)
+          },
+          was: {
+            path: createdPath,
+            docType: 'file',
+            _id: metadata.id(createdPath)
+          }
+        },
+        {
+          type: 'FileAddition',
+          doc: {
+            path: createdPath,
+            docType: 'file',
+            _id: metadata.id(createdPath)
+          }
+        }
+      ]
+
+      const sortedChanges = remoteChange.sort(changes)
+      const deleteIndex = sortedChanges.findIndex(
+        c => c.doc.path === deletedPath
+      )
+      const createIndex = sortedChanges.findIndex(
+        c => c.doc.path === createdPath
+      )
+      should(deleteIndex).be.lessThan(createIndex)
     })
 
     context('with replacing move', () => {
