@@ -24,9 +24,16 @@ type FileConfig = Object
 
 const INVALID_CONFIG_ERROR = 'InvalidConfigError'
 const INVALID_CONFIG_MESSAGE = 'Invalid client configuration'
-function InvalidConfigError() {
-  this.name = INVALID_CONFIG_ERROR
-  this.message = INVALID_CONFIG_MESSAGE
+class InvalidConfigError extends Error {
+  constructor() {
+    super(INVALID_CONFIG_MESSAGE)
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, InvalidConfigError)
+    }
+
+    this.name = INVALID_CONFIG_ERROR
+  }
 }
 
 // Config can keep some configuration parameters in a JSON file,
