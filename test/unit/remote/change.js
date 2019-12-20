@@ -76,6 +76,52 @@ describe('sorter()', () => {
       ])
     })
 
+    context('and move to replacing', () => {
+      it.only('sorts move of replaced before move of replacing', () => {
+        const moveReplaced = {
+          type: 'DirMove',
+          doc: { path: path.normalize('rep_C') },
+          was: { path: path.normalize('rep_B') }
+        }
+        const moveReplacing = {
+          type: 'DirMove',
+          doc: { path: path.normalize('rep_B') },
+          was: { path: path.normalize('rep_A') }
+        }
+        const moveInReplacing = {
+          type: 'FileMove',
+          doc: { path: path.normalize('rep_B/fic_C') },
+          was: { path: path.normalize('fic_C') }
+        }
+
+        should(
+          remoteChange.sort([moveReplacing, moveReplaced, moveInReplacing])
+        ).deepEqual([moveReplaced, moveReplacing, moveInReplacing])
+
+        /*
+        should(
+          remoteChange.sort([moveReplacing, moveInReplacing, moveReplaced])
+        ).deepEqual([moveReplaced, moveReplacing, moveInReplacing])
+
+        should(
+          remoteChange.sort([moveReplaced, moveInReplacing, moveReplacing])
+        ).deepEqual([moveReplaced, moveReplacing, moveInReplacing])
+
+        should(
+          remoteChange.sort([moveReplaced, moveReplacing, moveInReplacing])
+        ).deepEqual([moveReplaced, moveReplacing, moveInReplacing])
+
+        should(
+          remoteChange.sort([moveInReplacing, moveReplacing, moveReplaced])
+        ).deepEqual([moveReplaced, moveReplacing, moveInReplacing])
+
+        should(
+          remoteChange.sort([moveInReplacing, moveReplaced, moveReplacing])
+        ).deepEqual([moveReplaced, moveReplacing, moveInReplacing])
+        */
+      })
+    })
+
     it('sorts move of replaced before child move of replacing', () => {
       const moveReplacing = {
         type: 'DescendantChange',

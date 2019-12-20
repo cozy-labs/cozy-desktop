@@ -395,6 +395,7 @@ const sortForDescendant = (desc, b, descFirst) => {
 }
 
 const sortForMove = (move, b, moveFirst) => {
+  console.log({ move, b, moveFirst })
   if (isMove(b) || isDescendant(b)) {
     if (isDescendant(move) && isDescendant(b)) {
       if (areParentChild(deletedPath(move), deletedPath(b))) return moveFirst
@@ -416,6 +417,9 @@ const sortForMove = (move, b, moveFirst) => {
     if (areParentChild(deletedPath(b), deletedPath(move))) return moveFirst
     if (areParentChild(deletedPath(move), deletedPath(b))) return -moveFirst
 
+    console.log({
+      parentChild: areParentChild(deletedPath(b), createdPath(move))
+    })
     if (areParentChild(deletedPath(b), createdPath(move))) return moveFirst
     if (areParentChild(deletedPath(move), createdPath(b))) return -moveFirst
 
@@ -433,6 +437,7 @@ const sortForMove = (move, b, moveFirst) => {
     //
     // We use the `*Id` methods here since multiple paths can replace the same
     // path on macOS and Windows.
+    console.log({ equal: areEqual(deletedId(move), createdId(b)) })
     if (areEqual(deletedId(move), createdId(b))) return moveFirst
     if (areEqual(deletedId(b), createdId(move))) return -moveFirst
 
