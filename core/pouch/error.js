@@ -24,10 +24,14 @@ class PouchError extends Error {
       message
     } /*:{ name: string, status: number, message: string } */
   ) {
-    super()
+    super(message)
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, PouchError)
+    }
+
     this.name = name
     this.status = status
-    this.message = message
   }
 
   toString() {

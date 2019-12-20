@@ -82,6 +82,11 @@ class MigrationFailedError extends Error {
 
   constructor(migration /*: Migration */, errors /*: PouchError[] */) {
     super(migration.description)
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, MigrationFailedError)
+    }
+
     this.name = MIGRATION_RESULT_FAILED
     this.errors = errors
     this.sentry = true

@@ -33,17 +33,37 @@ const log = logger({
   component: 'RemoteCozy'
 })
 
-function DirectoryNotFound(path /*: string */, cozyURL /*: string */) {
-  this.name = 'DirectoryNotFound'
-  this.message = `Directory ${path} was not found on Cozy ${cozyURL}`
-  this.stack = new Error().stack
+class DirectoryNotFound extends Error {
+  /*::
+  path: string
+  cozyURL: string
+  */
+
+  constructor(path /*: string */, cozyURL /*: string */) {
+    super(`Directory ${path} was not found on Cozy ${cozyURL}`)
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, DirectoryNotFound)
+    }
+
+    this.name = 'DirectoryNotFound'
+    this.path = path
+    this.cozyURL = cozyURL
+  }
 }
 
 const COZY_CLIENT_REVOKED_ERROR = 'CozyClientRevokedError'
 const COZY_CLIENT_REVOKED_MESSAGE = 'Client has been revoked' // Only necessary for the GUI
-function CozyClientRevokedError() {
-  this.name = COZY_CLIENT_REVOKED_ERROR
-  this.message = COZY_CLIENT_REVOKED_MESSAGE
+class CozyClientRevokedError extends Error {
+  constructor() {
+    super(COZY_CLIENT_REVOKED_MESSAGE)
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, CozyClientRevokedError)
+    }
+
+    this.name = COZY_CLIENT_REVOKED_ERROR
+  }
 }
 
 /*::

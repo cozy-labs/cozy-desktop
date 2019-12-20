@@ -15,6 +15,8 @@
  *  We introduce here a registry cleanup during the app startup phase so
  *  that our users won't have to manually edit their registry to remove
  *  the old subkey.
+ *
+ * @flow
  */
 
 const regedit = require('regedit')
@@ -26,10 +28,25 @@ const OLD_UNINSTALL_KEY =
 
 const REGEDIT_INEXISTANT_PATH_ERROR_CODE = 2
 const REGEDIT_ERROR = 'RegeditError'
-function RegeditError(code, msg) {
-  this.name = REGEDIT_ERROR
-  this.code = code
-  this.message = msg
+class RegeditError extends Error {
+  /*::
+  code: number
+  */
+
+  constructor(code /*: number */, msg /*: string */) {
+    super(msg)
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, RegeditError)
+    }
+
+    this.name = REGEDIT_ERROR
+    this.code = code
+  }
+
+  toString() {
+    return `(${this.code}) ${this.name}: ${this.message}`
+  }
 }
 
 async function removeOldUninstallKey() {
