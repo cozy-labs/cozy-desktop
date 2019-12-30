@@ -106,7 +106,11 @@ update msg model =
             ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
         Updated ->
-            ( { model | status = UpToDate }, Cmd.none )
+            let
+                ( settings, _ ) =
+                    Settings.update Settings.EndManualSync model.settings
+            in
+            ( { model | status = UpToDate, settings = settings }, Cmd.none )
 
         StartSyncing n ->
             ( { model | status = Syncing n }, Cmd.none )

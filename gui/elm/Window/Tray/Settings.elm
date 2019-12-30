@@ -17,7 +17,6 @@ import Html.Events exposing (..)
 import Locale exposing (Helpers)
 import Ports
 import View.ProgressBar as ProgressBar
-import Window.Tray.StatusBar exposing (statusToString)
 
 
 
@@ -33,6 +32,7 @@ type alias Model =
     , disk : DiskSpace
     , busyUnlinking : Bool
     , busyQuitting : Bool
+    , manualSyncRequested : Bool
     }
 
 
@@ -49,6 +49,7 @@ init version =
         }
     , busyUnlinking = False
     , busyQuitting = False
+    , manualSyncRequested = False
     }
 
 
@@ -68,6 +69,7 @@ type Msg
     | ShowHelp
     | CloseApp
     | Sync
+    | EndManualSync
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -106,7 +108,10 @@ update msg model =
             ( { model | busyQuitting = True }, Ports.closeApp () )
 
         Sync ->
-            ( model, Ports.manualStartSync () )
+            ( { model | manualSyncRequested = True }, Ports.manualStartSync () )
+
+        EndManualSync ->
+            ( { model | manualSyncRequested = False }, Cmd.none )
 
 
 
@@ -172,7 +177,7 @@ view helpers status model =
             , text (helpers.t "Settings Startup")
             ]
         , h2 [] [ text (helpers.t "Settings Synchronize manually") ]
-        , syncButton helpers status
+        , syncButton helpers status model
         , h2 [] [ text (helpers.t "Account About") ]
         , p []
             [ strong [] [ text (helpers.t "Account Account" ++ " ") ]
@@ -223,16 +228,19 @@ view helpers status model =
         ]
 
 
-syncButton : Helpers -> Status -> Html Msg
-syncButton helpers status =
+syncButton : Helpers -> Status -> Model -> Html Msg
+syncButton helpers status model =
+    let
+        enabled =
+            status == UpToDate && not model.manualSyncRequested
+    in
     a
         [ class "btn"
         , href "#"
-        , case status of
-            UpToDate ->
-                onClick Sync
+        , if enabled then
+            onClick Sync
 
-            _ ->
-                attribute "disabled" "true"
+          else
+            attribute "disabled" "true"
         ]
         [ text (helpers.t "Settings Sync") ]
