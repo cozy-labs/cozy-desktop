@@ -33,7 +33,6 @@ type alias Model =
     , disk : DiskSpace
     , busyUnlinking : Bool
     , busyQuitting : Bool
-    , status : Status
     }
 
 
@@ -50,7 +49,6 @@ init version =
         }
     , busyUnlinking = False
     , busyQuitting = False
-    , status = Starting
     }
 
 
@@ -151,8 +149,8 @@ versionLine helpers model =
             span [ class "version-uptodate" ] [ text model.version ]
 
 
-view : Helpers -> Model -> Html Msg
-view helpers model =
+view : Helpers -> Status -> Model -> Html Msg
+view helpers status model =
     section [ class "two-panes__content two-panes__content--settings" ]
         [ h2 [] [ text (helpers.t "Account Cozy disk space") ]
         , diskQuotaLine helpers model
@@ -174,7 +172,7 @@ view helpers model =
             , text (helpers.t "Settings Startup")
             ]
         , h2 [] [ text (helpers.t "Settings Synchronize manually") ]
-        , syncButton helpers model.status
+        , syncButton helpers status
         , h2 [] [ text (helpers.t "Account About") ]
         , p []
             [ strong [] [ text (helpers.t "Account Account" ++ " ") ]

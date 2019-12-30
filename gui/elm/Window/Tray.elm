@@ -230,10 +230,7 @@ viewTabsWithContent helpers model =
                 Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
 
             SettingsPage ->
-                let
-                    settingsModel = model.settings
-                in
-                    Html.map SettingsMsg (Settings.view helpers { settingsModel | status = model.status } )
+                Html.map SettingsMsg (Settings.view helpers model.status model.settings)
         ]
 
 
