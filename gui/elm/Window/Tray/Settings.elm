@@ -17,7 +17,6 @@ import Html.Events exposing (..)
 import Locale exposing (Helpers)
 import Ports
 import View.ProgressBar as ProgressBar
-import Window.Tray.StatusBar exposing (statusToString)
 
 
 
@@ -33,7 +32,7 @@ type alias Model =
     , disk : DiskSpace
     , busyUnlinking : Bool
     , busyQuitting : Bool
-    , status : Status
+    , manualSyncRequested : Bool
     }
 
 
@@ -50,7 +49,7 @@ init version =
         }
     , busyUnlinking = False
     , busyQuitting = False
-    , status = Starting
+    , manualSyncRequested = False
     }
 
 
@@ -70,6 +69,7 @@ type Msg
     | ShowHelp
     | CloseApp
     | Sync
+    | EndManualSync
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -108,7 +108,10 @@ update msg model =
             ( { model | busyQuitting = True }, Ports.closeApp () )
 
         Sync ->
-            ( model, Ports.manualStartSync () )
+            ( { model | manualSyncRequested = True }, Ports.manualStartSync () )
+
+        EndManualSync ->
+            ( { model | manualSyncRequested = False }, Cmd.none )
 
 
 
@@ -151,8 +154,8 @@ versionLine helpers model =
             span [ class "version-uptodate" ] [ text model.version ]
 
 
-view : Helpers -> Model -> Html Msg
-view helpers model =
+view : Helpers -> Status -> Model -> Html Msg
+view helpers status model =
     section [ class "two-panes__content two-panes__content--settings" ]
         [ h2 [] [ text (helpers.t "Account Cozy disk space") ]
         , diskQuotaLine helpers model
@@ -174,7 +177,7 @@ view helpers model =
             , text (helpers.t "Settings Startup")
             ]
         , h2 [] [ text (helpers.t "Settings Synchronize manually") ]
-        , syncButton helpers model.status
+        , syncButton helpers status model
         , h2 [] [ text (helpers.t "Account About") ]
         , p []
             [ strong [] [ text (helpers.t "Account Account" ++ " ") ]
@@ -225,16 +228,19 @@ view helpers model =
         ]
 
 
-syncButton : Helpers -> Status -> Html Msg
-syncButton helpers status =
+syncButton : Helpers -> Status -> Model -> Html Msg
+syncButton helpers status model =
+    let
+        enabled =
+            status == UpToDate && not model.manualSyncRequested
+    in
     a
         [ class "btn"
         , href "#"
-        , case status of
-            UpToDate ->
-                onClick Sync
+        , if enabled then
+            onClick Sync
 
-            _ ->
-                attribute "disabled" "true"
+          else
+            attribute "disabled" "true"
         ]
         [ text (helpers.t "Settings Sync") ]

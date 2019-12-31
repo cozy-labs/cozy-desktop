@@ -106,7 +106,11 @@ update msg model =
             ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
         Updated ->
-            ( { model | status = UpToDate }, Cmd.none )
+            let
+                ( settings, _ ) =
+                    Settings.update Settings.EndManualSync model.settings
+            in
+            ( { model | status = UpToDate, settings = settings }, Cmd.none )
 
         StartSyncing n ->
             ( { model | status = Syncing n }, Cmd.none )
@@ -230,10 +234,7 @@ viewTabsWithContent helpers model =
                 Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
 
             SettingsPage ->
-                let
-                    settingsModel = model.settings
-                in
-                    Html.map SettingsMsg (Settings.view helpers { settingsModel | status = model.status } )
+                Html.map SettingsMsg (Settings.view helpers model.status model.settings)
         ]
 
 
