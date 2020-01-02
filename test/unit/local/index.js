@@ -75,6 +75,19 @@ describe('Local', function() {
   })
 
   describe('updateMetadataAsync', () => {
+    it('makes Cozy Notes read-only', async function() {
+      const doc = {
+        docType: 'file',
+        mime: 'text/vnd.cozy.note+markdown',
+        path: 'my-note.cozy-note'
+      }
+      await syncDir.ensureFileMode(doc.path, 0o777)
+
+      await this.local.updateMetadataAsync(doc)
+
+      should(await syncDir.octalMode(doc)).equal('444')
+    })
+
     it('chmod -x for a non-executable file', async function() {
       const doc = {
         docType: 'file',

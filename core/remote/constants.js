@@ -16,5 +16,8 @@ module.exports = {
   ROOT_DIR_ID: 'io.cozy.files.root-dir',
   TRASH_DIR_ID: 'io.cozy.files.trash-dir',
 
-  TRASH_DIR_NAME: '.cozy_trash'
+  TRASH_DIR_NAME: '.cozy_trash',
+
+  // Special MIME types
+  NOTE_MIME_TYPE: 'text/vnd.cozy.note+markdown'
 }
