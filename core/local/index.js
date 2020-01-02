@@ -14,6 +14,7 @@ const stream = require('stream')
 const bluebird = require('bluebird')
 
 const { TMP_DIR_NAME } = require('./constants')
+const { NOTE_MIME_TYPE } = require('../remote/constants')
 const stater = require('./stater')
 const { isUpToDate } = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
@@ -162,8 +163,12 @@ class Local /*:: implements Reader, Writer */ {
     let filePath = path.resolve(this.syncPath, doc.path)
 
     if (doc.docType === 'file') {
-      // TODO: Honor existing read/write permissions
-      await fse.chmod(filePath, doc.executable ? 0o755 : 0o644)
+      if (doc.mime === NOTE_MIME_TYPE) {
+        await fse.chmod(filePath, 0o444)
+      } else {
+        // TODO: Honor existing read/write permissions
+        await fse.chmod(filePath, doc.executable ? 0o755 : 0o644)
+      }
     }
 
     if (doc.updated_at) {
