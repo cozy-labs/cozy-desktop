@@ -441,7 +441,12 @@ class Sync {
       throw new Error('Cozy is full')
     }
     try {
-      await this.diskUsage()
+      if (sideName === 'remote' && err.status === 409) {
+        log.error({ path, err, change }, 'Document already exists on Cozy')
+        await this.resolveRemoteConflict(change)
+      } else {
+        await this.diskUsage()
+      }
     } catch (err) {
       const result = handleCommonCozyErrors(
         { err, change },
@@ -464,6 +469,15 @@ class Sync {
       }
     }
     await this.updateErrors(change, sideName)
+  }
+
+  async resolveRemoteConflict(change /*: MetadataChange */) {
+    const remoteDoc = await this.remote.remoteCozy.findFileByPath(
+      `/${change.doc.path}`
+    )
+    const doc = metadata.fromRemoteDoc(remoteDoc)
+    const dst = metadata.createConflictingDoc(doc)
+    await this.remote.renameConflictingDocAsync(doc, dst.path)
   }
 
   // Increment the counter of errors for this document

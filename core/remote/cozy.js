@@ -52,6 +52,25 @@ class DirectoryNotFound extends Error {
   }
 }
 
+class FileNotFound extends Error {
+  /*::
+  path: string
+  cozyURL: string
+  */
+
+  constructor(path /*: string */, cozyURL /*: string */) {
+    super(`File ${path} was not found on Cozy ${cozyURL}`)
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, FileNotFound)
+    }
+
+    this.name = 'FileNotFound'
+    this.path = path
+    this.cozyURL = cozyURL
+  }
+}
+
 const COZY_CLIENT_REVOKED_ERROR = 'CozyClientRevokedError'
 const COZY_CLIENT_REVOKED_MESSAGE = 'Client has been revoked' // Only necessary for the GUI
 class CozyClientRevokedError extends Error {
@@ -268,10 +287,26 @@ class RemoteCozy {
     }
   }
 
-  async findDirectoryByPath(path /*: string */) /*: Promise<RemoteDoc> */ {
-    const index = await this.client.data.defineIndex(FILES_DOCTYPE, ['path'])
-    const results = await this.client.data.query(index, { selector: { path } })
+  async search(selector /*: Object */) /*: Promise<Array<Object>> */ {
+    const index = await this.client.data.defineIndex(
+      FILES_DOCTYPE,
+      Object.keys(selector)
+    )
+    return await this.client.data.query(index, { selector })
+  }
 
+  async findFileByPath(path /*: string */) /*: Promise<RemoteDoc> */ {
+    const name = posix.basename(path)
+    const { _id: dirID } = await this.findDirectoryByPath(posix.dirname(path))
+
+    const results = await this.search({ dir_id: dirID, name })
+    if (results.length === 0) throw new FileNotFound(path, this.url)
+
+    return this.toRemoteDoc(results[0])
+  }
+
+  async findDirectoryByPath(path /*: string */) /*: Promise<RemoteDoc> */ {
+    const results = await this.search({ path })
     if (results.length === 0) throw new DirectoryNotFound(path, this.url)
 
     // FIXME: cozy-client-js query results have no _type
