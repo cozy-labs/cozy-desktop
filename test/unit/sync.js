@@ -7,7 +7,6 @@ const should = require('should')
 const { Ignore } = require('../../core/ignore')
 const metadata = require('../../core/metadata')
 const { otherSide } = require('../../core/side')
-const migrations = require('../../core/pouch/migrations')
 const Sync = require('../../core/sync')
 
 const stubSide = require('../support/doubles/side')
@@ -89,20 +88,6 @@ describe('Sync', function() {
       this.local.start.calledOnce.should.be.true()
       this.remote.start.called.should.be.false()
       this.sync.sync.calledOnce.should.be.false()
-    })
-
-    it('runs all available Pouch migrations', async function() {
-      sinon.spy(this.pouch, 'runMigrations')
-
-      await should(this.sync.start('full')).be.rejectedWith({
-        message: 'stopped'
-      })
-
-      should(
-        this.pouch.runMigrations.withArgs(migrations.migrations)
-      ).have.been.calledOnce()
-
-      this.pouch.runMigrations.restore()
     })
   })
 

@@ -18,6 +18,7 @@ require('./globals')
 const pkg = require('../package.json')
 const config = require('./config')
 const { Pouch } = require('./pouch')
+const { migrations } = require('./pouch/migrations')
 const Ignore = require('./ignore')
 const { Merge } = require('./merge')
 const Prep = require('./prep')
@@ -333,7 +334,7 @@ class App {
     return this.sync.stop()
   }
 
-  setup() {
+  async setup() {
     const clientInfo = this.clientInfo()
     log.info(clientInfo, 'user config')
 
@@ -357,6 +358,9 @@ class App {
     }
 
     this.instanciate()
+
+    await this.pouch.addAllViewsAsync()
+    await this.pouch.runMigrations(migrations)
 
     if (wasUpdated && this.remote) {
       try {
