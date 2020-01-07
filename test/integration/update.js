@@ -256,7 +256,6 @@ describe('Update file', () => {
           was
         )
       )
-      helpers._sync.stopped = false
       await helpers.syncAll()
       const doc = await pouch.byRemoteIdMaybeAsync(file._id)
       should(doc.errors).be.undefined()

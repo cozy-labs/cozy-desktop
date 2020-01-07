@@ -66,7 +66,6 @@ class TestHelpers {
     this._local = merge.local = local
     this._remote = merge.remote = remote
     this._sync = sync
-    this._sync.stopped = false
     this._sync.diskUsage = this._remote.diskUsage
     this.pouch = pouch
     this.local = localHelpers

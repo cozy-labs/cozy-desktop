@@ -321,17 +321,12 @@ class App {
   // Start the synchronization
   startSync(mode /*: SyncMode */) {
     this.config.saveMode(mode)
-    log.info('Run first synchronisation...')
     return this.sync.start(mode)
   }
 
   // Stop the synchronisation
   stopSync() {
-    if (!this.sync) {
-      // $FlowFixMe
-      return Promise.resolve()
-    }
-    return this.sync.stop()
+    return this.sync && this.sync.stop()
   }
 
   async setup() {

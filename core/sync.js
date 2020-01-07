@@ -60,8 +60,10 @@ class Sync {
   local: Local
   pouch: Pouch
   remote: Remote
-  stopped: ?boolean
   moveTo: ?string
+  stopRequested: Promise
+  started: ?Promise<boolean>
+  running: ?Promise
 
   diskUsage: () => Promise<*>
   */
@@ -82,6 +84,7 @@ class Sync {
     this.events = events
     this.local.other = this.remote
     this.remote.other = this.local
+    this.stopRequested = false
 
     autoBind(this)
   }
@@ -95,51 +98,91 @@ class Sync {
   // - push if only changes from the fs are applied to the remote cozy
   // - full for the full synchronization of the both sides
   async start(mode /*: SyncMode */) /*: Promise<*> */ {
-    this.stopped = false
+    if (this.started && (await this.started)) return
 
-    let sidePromises = []
-    if (mode !== 'pull') {
-      await this.local.start()
-      sidePromises.push(this.local.watcher.running)
-    }
-    if (mode !== 'push') {
-      const { running, started } = this.remote.start()
-      sidePromises.push(running)
-      await started
-    }
-    await new Promise(
-      async function(resolve, reject) {
-        Promise.all(sidePromises).catch(err => reject(err))
-        try {
-          // eslint-disable-next-line no-constant-condition
-          while (true) {
-            await this.sync()
-          }
-        } catch (err) {
-          reject(err)
-        }
-      }.bind(this)
-    ).catch(err => {
-      this.stop()
-      throw err
+    let runningResolve, runningReject
+    this.running = new Promise((resolve, reject) => {
+      runningResolve = resolve
+      runningReject = reject
     })
+
+    this.started = new Promise(async (resolve, reject) => {
+      if (this.stopRequested) {
+        reject()
+        return
+      }
+
+      log.info('Starting Sync...')
+
+      try {
+        let sidePromises = []
+        if (mode !== 'pull') {
+          await this.local.start()
+          sidePromises.push(this.local.watcher.running)
+        }
+        if (mode !== 'push') {
+          const { running, started } = this.remote.start()
+          await started
+          sidePromises.push(running)
+        }
+
+        Promise.all(sidePromises).catch(err => {
+          if (runningReject) runningReject(err)
+        })
+      } catch (err) {
+        log.error({ err }, 'Could not start watchers')
+        this.local.stop()
+        this.remote.stop()
+        reject(err)
+      }
+      resolve(true)
+    })
+
+    await this.started
+
+    log.info('Sync started')
+
+    try {
+      // eslint-disable-next-line no-constant-condition
+      while (!this.stopRequested) {
+        await this.sync()
+      }
+    } catch (err) {
+      log.error({ err }, 'Sync error')
+      throw err
+    } finally {
+      if (this.changes) {
+        this.changes.cancel()
+        this.changes = null
+      }
+
+      await Promise.all([this.local.stop(), this.remote.stop()])
+
+      this.started = null
+      if (runningResolve) {
+        runningResolve()
+      }
+    }
   }
 
   // Stop the synchronization
-  stop() {
-    this.stopped = true
-    if (this.changes) {
-      this.changes.cancel()
-      this.changes = null
-    }
-    return Promise.all([this.local.stop(), this.remote.stop()])
+  async stop() {
+    if (this.started) await this.started
+    log.info('Stopping Sync...')
+    this.stopRequested = true
+    this.events.emit('stopRequested')
+    await this.running
+    this.stopRequested = false
+    log.info('Sync stopped')
   }
 
   // TODO: remove waitForNewChanges to .start while(true)
   async sync(waitForNewChanges /*: boolean */ = true) /*: Promise<*> */ {
     let seq = await this.pouch.getLocalSeqAsync()
-    log.trace({ seq }, 'Waiting for changes since seq')
-    if (waitForNewChanges) await this.waitForNewChanges(seq)
+    if (waitForNewChanges) {
+      const change = await this.waitForNewChanges(seq)
+      if (change == null) return
+    }
     const release = await this.pouch.lock(this)
     this.events.emit('sync-start')
     try {
@@ -155,18 +198,17 @@ class Sync {
   async syncBatch() {
     let seq = null
     // eslint-disable-next-line no-constant-condition
-    while (true) {
-      if (this.stopped) break
+    while (!this.stopRequested) {
       seq = await this.pouch.getLocalSeqAsync()
       // TODO: Prevent infinite loop
-      let change = await this.getNextChange(seq)
+      const change = await this.getNextChange(seq)
       if (change == null) break
       this.events.emit('sync-current', change.seq)
       try {
         await this.apply(change)
         // XXX: apply should call setLocalSeqAsync
       } catch (err) {
-        if (!this.stopped) throw err
+        if (!this.stopRequested) throw err
       }
     }
   }
@@ -186,23 +228,33 @@ class Sync {
   }
 
   async waitForNewChanges(seq /*: number */) {
+    log.trace({ seq }, 'Waiting for changes since seq')
     const opts = await this.baseChangeOptions(seq)
     opts.live = true
     return new Promise((resolve, reject) => {
+      const resolver = data => {
+        this.events.off('stopRequested', resolver)
+        resolve(data)
+      }
+      const rejecter = err => {
+        this.events.off('stopRequested', resolver)
+        reject(err)
+      }
+      this.events.on('stopRequested', resolver)
       this.changes = this.pouch.db
         .changes(opts)
-        .on('change', () => {
+        .on('change', c => {
           if (this.changes) {
             this.changes.cancel()
             this.changes = null
-            resolve()
+            resolver(c)
           }
         })
         .on('error', err => {
           if (this.changes) {
             // FIXME: pas de cancel ici ??
             this.changes = null
-            reject(err)
+            rejecter(err)
           }
         })
     })
@@ -213,13 +265,22 @@ class Sync {
     const opts = await this.baseChangeOptions(seq)
     opts.include_docs = true
     const p = new Promise((resolve, reject) => {
+      const resolver = data => {
+        this.events.off('stopRequested', resolver)
+        resolve(data)
+      }
+      const rejecter = err => {
+        this.events.off('stopRequested', resolver)
+        reject(err)
+      }
+      this.events.on('stopRequested', resolver)
       this.pouch.db
         .changes(opts)
-        .on('change', info => resolve(info))
-        .on('error', err => reject(err))
+        .on('change', info => resolver(info))
+        .on('error', err => rejecter(err))
         .on('complete', info => {
           if (info.results == null || info.results.length === 0) {
-            resolve(null)
+            resolver(null)
           }
         })
     })

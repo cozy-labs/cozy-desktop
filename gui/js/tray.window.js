@@ -180,9 +180,14 @@ module.exports = class TrayWM extends WindowManager {
       'open-file': (event, path) => this.openPath(path),
       'unlink-cozy': this.onUnlink,
       'manual-start-sync': () =>
-        this.desktop.stopSync().then(() => {
-          this.desktop.startSync('full')
-        })
+        this.desktop
+          .stopSync()
+          .then(() => {
+            this.desktop.startSync('full')
+          })
+          .catch(err => {
+            if (err) log.error({ err }, 'Could not run manual sync')
+          })
     }
   }
 

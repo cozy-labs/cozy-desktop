@@ -397,32 +397,29 @@ const startSync = async force => {
       })
     }
 
-    desktop
-      .startSync(desktop.config.fileConfig.mode)
-      .then(() => sendErrorToMainWindow('stopped'))
-      .catch(err => {
-        if (err.status === 402) {
-          // Only show notification popup on the first check (the GUI will
-          // include a warning anyway).
-          if (!userActionRequired) UserActionRequiredDialog.show(err)
+    desktop.startSync(desktop.config.fileConfig.mode).catch(err => {
+      if (err.status === 402) {
+        // Only show notification popup on the first check (the GUI will
+        // include a warning anyway).
+        if (!userActionRequired) UserActionRequiredDialog.show(err)
 
-          userActionRequired = pick(err, [
-            'title',
-            'code',
-            'detail',
-            'links',
-            'message'
-          ])
-          trayWindow.send('user-action-required', userActionRequired)
-          desktop.remote.warningsPoller.switchMode('medium')
-          return
-        } else if (err instanceof migrations.MigrationFailedError) {
-          updateState('error', err.name)
-        } else {
-          updateState('error', err.message)
-        }
-        sendDiskUsage()
-      })
+        userActionRequired = pick(err, [
+          'title',
+          'code',
+          'detail',
+          'links',
+          'message'
+        ])
+        trayWindow.send('user-action-required', userActionRequired)
+        desktop.remote.warningsPoller.switchMode('medium')
+        return
+      } else if (err instanceof migrations.MigrationFailedError) {
+        updateState('error', err.name)
+      } else {
+        updateState('error', err.message)
+      }
+      sendDiskUsage()
+    })
     sendDiskUsage()
   }
   autoLaunch.isEnabled().then(enabled => {
