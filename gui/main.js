@@ -311,7 +311,7 @@ const sendDiskUsage = () => {
   }
 }
 
-const startSync = force => {
+const startSync = async force => {
   trayWindow.send(
     'synchronization',
     desktop.config.cozyUrl,
@@ -374,7 +374,7 @@ const startSync = force => {
     desktop.events.on('delete-file', removeFile)
 
     try {
-      desktop.setup()
+      await desktop.setup()
     } catch (err) {
       log.fatal({ err, sentry: true }, 'Could not setup app')
       if (err instanceof config.InvalidConfigError) {
