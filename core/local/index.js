@@ -10,6 +10,7 @@ const fse = require('fs-extra')
 const path = require('path')
 const trash = require('trash')
 const stream = require('stream')
+const _ = require('lodash')
 
 const bluebird = require('bluebird')
 
@@ -443,6 +444,17 @@ class Local /*:: implements Reader, Writer */ {
     }
     log.warn({ path: doc.path }, 'Folder is not empty!')
     await this.trashAsync(doc)
+  }
+
+  async createBackupCopyAsync(doc /*: Metadata */) /*: Promise<Metadata> */ {
+    const backupPath = `${doc.path}.bck`
+    await fse.copy(
+      path.join(this.syncPath, doc.path),
+      path.join(this.syncPath, backupPath)
+    )
+    const copy = _.cloneDeep(doc)
+    copy.path = backupPath
+    return copy
   }
 
   /** Rename a file/folder to resolve a conflict */

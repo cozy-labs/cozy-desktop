@@ -257,16 +257,28 @@ class Merge {
           doc.mime = file.mime
         }
       } else if (!metadata.isAtLeastUpToDate(side, file)) {
-        await this.resolveConflictAsync(side, doc, file)
-        if (side === 'remote') {
+        if (side === 'local') {
+          // We have a merged but unsynced remote update and we can't create a
+          // conflict because the local rename will trigger an overwrite of the
+          // remote file with the local content.
+          // We hope the local update isn't real (the difference between the
+          // orginal content and the remotely updated content).
+          metadata.markSide('remote', file, file)
+          delete file.overwrite
+          return this.pouch.put(file)
+        } else {
+          // We have an update on the same file on both sides
+          // so we create a conflict
+          await this.resolveConflictAsync(side, doc, file)
           // we just renamed the remote file as a conflict
           // the old file should be dissociated from the remote
           delete file.remote
-          if (file.sides) delete file.sides.remote
+          delete file.sides.remote
           metadata.markSide('local', file, file)
-          await this.pouch.put(file)
+          return await this.pouch.put(file)
         }
-        return
+      } else {
+        doc.overwrite = file
       }
       if (metadata.sameFile(file, doc)) {
         log.info({ path }, 'up to date')
