@@ -18,7 +18,6 @@ const log = logger({
 
 /*::
 export type WatcherType = 'atom' | 'chokidar'
-export type SyncMode = 'full' | 'pull' | 'push'
 type FileConfig = Object
 */
 
@@ -172,22 +171,6 @@ class Config {
 
   get watcherType() /*: WatcherType */ {
     return watcherType(this.fileConfig)
-  }
-
-  // Set the pull, push or full mode for this device
-  // It will throw an exception if the mode is not compatible with the last
-  // mode used!
-  saveMode(mode /*: SyncMode */) {
-    const old = this.fileConfig.mode
-    if (old === mode) {
-      return true
-    } else if (old) {
-      throw new Error(
-        `Once you set mode to "${old}", you cannot switch to "${mode}"`
-      )
-    }
-    this.fileConfig.mode = mode
-    this.persist()
   }
 
   // Implement the Storage interface for cozy-client-js oauth

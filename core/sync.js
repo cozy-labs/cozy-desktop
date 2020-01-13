@@ -92,12 +92,7 @@ class Sync {
   // Start to synchronize the remote cozy with the local filesystem
   // First, start metadata synchronization in pouch, with the watchers
   // Then, when a stable state is reached, start applying changes from pouch
-  //
-  // The mode can be:
-  // - pull if only changes from the remote cozy are applied to the fs
-  // - push if only changes from the fs are applied to the remote cozy
-  // - full for the full synchronization of the both sides
-  async start(mode /*: SyncMode */) /*: Promise<*> */ {
+  async start() /*: Promise<void> */ {
     if (this.started && (await this.started)) return
 
     let runningResolve, runningReject
@@ -115,18 +110,15 @@ class Sync {
       log.info('Starting Sync...')
 
       try {
-        let sidePromises = []
-        if (mode !== 'pull') {
-          await this.local.start()
-          sidePromises.push(this.local.watcher.running)
-        }
-        if (mode !== 'push') {
-          const { running, started } = this.remote.start()
-          await started
-          sidePromises.push(running)
-        }
+        await this.local.start()
+        const localRunning = this.local.watcher.running
+        const {
+          running: remoteRunning,
+          started: remoteStarted
+        } = this.remote.start()
+        await remoteStarted
 
-        Promise.all(sidePromises).catch(err => {
+        Promise.all([localRunning, remoteRunning]).catch(err => {
           if (runningReject) runningReject(err)
         })
       } catch (err) {
@@ -169,7 +161,7 @@ class Sync {
   // Manually force a full synchronization
   async forceSync() {
     await this.stop()
-    await this.start('full')
+    await this.start()
   }
 
   // Stop the synchronization

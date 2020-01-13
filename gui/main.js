@@ -397,7 +397,7 @@ const startSync = async force => {
       })
     }
 
-    desktop.startSync(desktop.config.fileConfig.mode).catch(err => {
+    desktop.startSync().catch(err => {
       if (err.status === 402) {
         // Only show notification popup on the first check (the GUI will
         // include a warning anyway).
