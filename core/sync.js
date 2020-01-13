@@ -162,7 +162,14 @@ class Sync {
       if (runningResolve) {
         runningResolve()
       }
+      log.info('Sync stopped')
     }
+  }
+
+  // Manually force a full synchronization
+  async forceSync() {
+    await this.stop()
+    await this.start('full')
   }
 
   // Stop the synchronization
@@ -171,9 +178,11 @@ class Sync {
     log.info('Stopping Sync...')
     this.stopRequested = true
     this.events.emit('stopRequested')
-    await this.running
-    this.stopRequested = false
-    log.info('Sync stopped')
+    const stopped = this.running || Promise.resolve()
+    stopped.then(() => {
+      this.stopRequested = false
+    })
+    return stopped
   }
 
   // TODO: remove waitForNewChanges to .start while(true)
