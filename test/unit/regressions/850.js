@@ -3,7 +3,7 @@
 const fse = require('fs-extra')
 const path = require('path')
 const sinon = require('sinon')
-// import should from 'should'
+const EventEmitter = require('events')
 
 // import { TMP_DIR_NAME } from '../../../core/local/constants'
 const ChokidarEvent = require('../../../core/local/chokidar/event')
@@ -35,7 +35,7 @@ describe('issue 850', function() {
       }),
       stop: sinon.stub().resolves()
     }
-    this.events = { emit: () => {} }
+    this.events = new EventEmitter()
     this.ignore = new Ignore([])
     this.sync = new Sync(
       this.pouch,

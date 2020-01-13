@@ -3,6 +3,7 @@
 const _ = require('lodash')
 const sinon = require('sinon')
 const should = require('should')
+const EventEmitter = require('events')
 
 const { Ignore } = require('../../core/ignore')
 const metadata = require('../../core/metadata')
@@ -25,7 +26,7 @@ describe('Sync', function() {
     this.local = stubSide()
     this.remote = stubSide()
     this.ignore = new Ignore(['ignored'])
-    this.events = { emit: sinon.spy() }
+    this.events = new EventEmitter()
     this.sync = new Sync(
       this.pouch,
       this.local,
@@ -47,6 +48,7 @@ describe('Sync', function() {
         running: new Promise(() => {})
       }
       this.local.start = sinon.stub().resolves()
+      this.local.watcher.running = sinon.stub().resolves()
       this.local.stop = sinon.stub().resolves()
       this.remote.start = sinon.stub().returns(ret)
       this.remote.stop = sinon.stub().resolves()
@@ -94,7 +96,18 @@ describe('Sync', function() {
   // TODO: Test lock request/acquisition/release
 
   describe('sync', function() {
+    beforeEach('stub lifecycle', function() {
+      this.sync.events = new EventEmitter()
+    })
+    afterEach('restore lifecycle', function() {
+      this.sync.events.emit('stopped')
+      delete this.sync.events
+    })
+
     it('waits for and applies available changes', async function() {
+      const apply = sinon.stub(this.sync, 'apply')
+      apply.callsFake(change => this.pouch.setLocalSeqAsync(change.seq))
+
       const doc1 = {
         _id: 'doc1',
         docType: 'file',
@@ -107,10 +120,9 @@ describe('Sync', function() {
       }
       await this.pouch.db.put(doc1)
       await this.pouch.db.put(doc2)
-      const apply = sinon.stub(this.sync, 'apply')
-      apply.callsFake(change => this.pouch.setLocalSeqAsync(change.seq))
 
       await this.sync.sync()
+
       should(apply).have.been.calledTwice()
       should(apply.args[0][0].doc).have.properties(doc1)
       should(apply.args[1][0].doc).have.properties(doc2)

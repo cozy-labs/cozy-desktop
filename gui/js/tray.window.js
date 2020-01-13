@@ -176,12 +176,15 @@ module.exports = class TrayWM extends WindowManager {
       'go-to-cozy': () => shell.openExternal(this.desktop.config.cozyUrl),
       'go-to-folder': () => shell.openItem(this.desktop.config.syncPath),
       'auto-launcher': (event, enabled) => autoLaunch.setEnabled(enabled),
-      'close-app': () => this.desktop.stopSync().then(() => this.app.quit()),
+      'close-app': () => {
+        this.desktop.stopSync()
+        this.app.quit()
+      },
       'open-file': (event, path) => this.openPath(path),
       'unlink-cozy': this.onUnlink,
       'manual-start-sync': () =>
-        this.desktop.stopSync().then(() => {
-          this.desktop.startSync('full')
+        this.desktop.sync.forceSync().catch(err => {
+          if (err) log.error({ err }, 'Could not run manual sync')
         })
     }
   }
