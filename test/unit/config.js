@@ -218,19 +218,6 @@ describe('core/config', function() {
         should(this.config.watcherType).equal(config.watcherType())
       })
     })
-
-    describe('saveMode', function() {
-      it('sets the pull or push mode', function() {
-        this.config.saveMode('push')
-        should(this.config.fileConfig.mode).equal('push')
-      })
-
-      it('throws an error for incompatible mode', function() {
-        this.config.saveMode('push')
-        should.throws(() => this.config.saveMode('pull'), /you cannot switch/)
-        should.throws(() => this.config.saveMode('full'), /you cannot switch/)
-      })
-    })
   })
 
   describe('.watcherType()', () => {

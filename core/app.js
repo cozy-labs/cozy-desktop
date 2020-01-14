@@ -319,9 +319,8 @@ class App {
   }
 
   // Start the synchronization
-  startSync(mode /*: SyncMode */) {
-    this.config.saveMode(mode)
-    return this.sync.start(mode)
+  startSync() {
+    return this.sync.start()
   }
 
   // Stop the synchronisation

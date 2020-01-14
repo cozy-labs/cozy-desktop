@@ -55,26 +55,8 @@ describe('Sync', function() {
       this.sync.sync = sinon.stub().rejects(new Error('stopped'))
     })
 
-    it('starts the metadata replication of remote in read only', async function() {
-      await should(this.sync.start('pull')).be.rejectedWith({
-        message: 'stopped'
-      })
-      this.local.start.called.should.be.false()
-      this.remote.start.calledOnce.should.be.true()
-      this.sync.sync.calledOnce.should.be.true()
-    })
-
-    it('starts the metadata replication of local in write only', async function() {
-      await should(this.sync.start('push')).be.rejectedWith({
-        message: 'stopped'
-      })
-      this.local.start.calledOnce.should.be.true()
-      this.remote.start.called.should.be.false()
-      this.sync.sync.calledOnce.should.be.true()
-    })
-
-    it('starts the metadata replication of both in full', async function() {
-      await should(this.sync.start('full')).be.rejectedWith({
+    it('starts the metadata replication of both sides', async function() {
+      await should(this.sync.start()).be.rejectedWith({
         message: 'stopped'
       })
       this.local.start.calledOnce.should.be.true()
@@ -84,7 +66,7 @@ describe('Sync', function() {
 
     it('does not start sync if metadata replication fails', async function() {
       this.local.start = sinon.stub().rejects(new Error('failed'))
-      await should(this.sync.start('full')).be.rejectedWith({
+      await should(this.sync.start()).be.rejectedWith({
         message: 'failed'
       })
       this.local.start.calledOnce.should.be.true()
