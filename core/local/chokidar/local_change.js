@@ -664,7 +664,7 @@ function includeChangeEventIntoFileMove(
   const moveChange /*: ?LocalFileMove */ = maybeMoveFile(sameInodeChange)
   if (!moveChange) return
   log.debug({ path: e.path }, 'FileMove + change')
-  moveChange.md5sum = moveChange.old.md5sum || moveChange.md5sum
+  moveChange.md5sum = e.md5sum
   moveChange.update = _.defaults(
     {
       // In almost all cases, change event has the destination path.

@@ -161,7 +161,6 @@ const step = async (
           break
         case 'FileMove':
           await onMoveFile(c, prep)
-          if (c.update) await onChange(c.update, prep)
           break
         case 'DirMove':
           await onMoveFolder(c, prep)
