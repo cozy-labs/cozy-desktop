@@ -1,5 +1,33 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.18.0-beta.2 - 2020-01-15
+
+Improvements for all users:
+
+- As a follow-up to the manual synchronization button changes, we've worked on
+  the underlying synchronization stop requests to make sure every component
+  involved in the synchronization process is stopped prior to starting a new
+  process.
+  This means that we should not see problems coming from manual synchronizations
+  anymore but also that some actions that involve stopping or deleting the
+  PouchDB database will wait for the completion of the current synchronization
+  and thus may take longer. This does not affect stopping the client.
+- We've found out that some remote file updates (i.e. pushed by another client)
+  may be lost during a client restart (actually they can now be recovered via
+  the versions management) if they were detected by the client but not
+  propagated to the file system prior to the restart. In this situation, the
+  file was renamed with a `-conflict-…` suffix and its local version was pushed
+  to the Cozy thus overwriting the remote update.
+  We've decided to keep the remote changes in this situation and forcibly
+  propagate it to the local file system. Since there could be a legitimate file
+  update on the file system as well, we'll create a backup copy of the local
+  file before overwriting it. This backup copy will have the `.bck` extension
+  and will be trashed for a cleaner experience.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.18.0-beta.1 - 2020-01-02
 
 Improvements for all users:
