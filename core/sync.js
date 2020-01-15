@@ -426,6 +426,10 @@ class Sync {
             await side.updateFileMetadataAsync(doc, old)
           }
         } else {
+          if (sideName === 'local' && !doc.overwrite) {
+            const copy = await this.local.createBackupCopyAsync(doc)
+            await this.local.trashAsync(copy)
+          }
           await side.overwriteFileAsync(doc, old)
           this.events.emit('transfer-started', _.clone(doc))
         }

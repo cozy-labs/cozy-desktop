@@ -376,7 +376,7 @@ onPlatform('darwin', () => {
               sideName,
               type: 'FileMove',
               path: 'dst',
-              md5sum: old.md5sum,
+              md5sum: 'yata',
               ino: 1,
               stats,
               old,

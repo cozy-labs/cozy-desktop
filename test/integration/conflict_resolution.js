@@ -138,82 +138,74 @@ describe('Conflict resolution', () => {
 
     const expectedTree = ['concurrent-edited', 'concurrent-edited-conflict-...']
 
-    it('local merged first -> conflict', async () => {
-      await simulateLocalUpdateMerge()
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
-      await helpers.remote.pullChanges()
-      await helpers.local.scan()
-      await helpers.syncAll()
+    context('local merged first', () => {
+      beforeEach('run actions', async () => {
+        await simulateLocalUpdateMerge()
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+        await helpers.remote.pullChanges()
+        await helpers.local.scan()
+        await helpers.syncAll()
+      })
 
-      should(await helpers.trees()).deepEqual({
-        remote: expectedTree,
-        local: expectedTree
+      it('creates a conflict', async () => {
+        should(await helpers.trees()).deepEqual({
+          remote: expectedTree,
+          local: expectedTree
+        })
+      })
+
+      it('conflict correction local', async () => {
+        const conflictedPath = (await fse.readdir(
+          helpers.local.syncPath
+        )).filter(x => x.indexOf('-conflict-') !== -1)[0]
+
+        await helpers.local.syncDir.remove(conflictedPath)
+        await helpers.local.syncDir.outputFile('concurrent-edited', 'content5')
+        await helpers.local.scan()
+        await helpers.syncAll()
+
+        should(await helpers.trees()).deepEqual({
+          remote: ['concurrent-edited'],
+          local: ['concurrent-edited']
+        })
+      })
+
+      it('conflict correction remote', async () => {
+        const conflictedPath = (await fse.readdir(
+          helpers.local.syncPath
+        )).filter(x => x.indexOf('-conflict-') !== -1)[0]
+
+        const remoteBadFile = await cozy.files.statByPath('/' + conflictedPath)
+        const remoteFile = await cozy.files.statByPath(`/concurrent-edited`)
+        await cozy.files.trashById(remoteBadFile._id)
+        await cozy.files.updateById(remoteFile._id, `content6`, {
+          contentType: 'text/plain'
+        })
+
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+
+        should(await helpers.trees()).deepEqual({
+          remote: ['concurrent-edited'],
+          local: ['/Trash/concurrent-edited-conflict-...', 'concurrent-edited']
+        })
       })
     })
 
-    it('remote merged first -> conflict', async () => {
-      await helpers.remote.pullChanges()
-      await simulateLocalUpdateMerge()
-      await helpers.syncAll()
-      await helpers.remote.pullChanges()
-      await helpers.local.scan()
-      await helpers.syncAll()
+    context('remote merged first', () => {
+      it('it trashes a backup copy of local and overwrites the original', async () => {
+        await helpers.remote.pullChanges()
+        await simulateLocalUpdateMerge()
+        await helpers.syncAll()
+        await helpers.remote.pullChanges()
+        await helpers.local.scan()
+        await helpers.syncAll()
 
-      should(await helpers.trees()).deepEqual({
-        remote: expectedTree,
-        local: expectedTree
-      })
-    })
-
-    it('conflict correction local', async () => {
-      await helpers.remote.pullChanges()
-      await simulateLocalUpdateMerge()
-      await helpers.syncAll()
-      await helpers.remote.pullChanges()
-      await helpers.local.scan()
-      await helpers.syncAll()
-
-      const conflictedPath = (await fse.readdir(helpers.local.syncPath)).filter(
-        x => x.indexOf('-conflict-') !== -1
-      )[0]
-
-      await helpers.local.syncDir.remove(conflictedPath)
-      await helpers.local.syncDir.outputFile('concurrent-edited', 'content5')
-      await helpers.local.scan()
-      await helpers.syncAll()
-
-      should(await helpers.trees()).deepEqual({
-        remote: ['concurrent-edited'],
-        local: ['concurrent-edited']
-      })
-    })
-
-    it('conflict correction remote', async () => {
-      await helpers.remote.pullChanges()
-      await simulateLocalUpdateMerge()
-      await helpers.syncAll()
-      await helpers.remote.pullChanges()
-      await helpers.local.scan()
-      await helpers.syncAll()
-
-      const conflictedPath = (await fse.readdir(helpers.local.syncPath)).filter(
-        x => x.indexOf('-conflict-') !== -1
-      )[0]
-
-      const remoteBadFile = await cozy.files.statByPath('/' + conflictedPath)
-      const remoteFile = await cozy.files.statByPath(`/concurrent-edited`)
-      await cozy.files.trashById(remoteBadFile._id)
-      await cozy.files.updateById(remoteFile._id, `content6`, {
-        contentType: 'text/plain'
-      })
-
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
-
-      should(await helpers.trees()).deepEqual({
-        remote: ['concurrent-edited'],
-        local: ['/Trash/concurrent-edited-conflict-...', 'concurrent-edited']
+        should(await helpers.trees()).deepEqual({
+          remote: ['concurrent-edited'],
+          local: ['/Trash/concurrent-edited.bck', 'concurrent-edited']
+        })
       })
     })
   })

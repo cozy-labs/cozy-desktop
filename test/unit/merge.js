@@ -450,7 +450,9 @@ describe('Merge', function() {
           savedDocs: [
             _.defaults(
               {
-                sides: increasedSides(initialFile.sides, 'local', 1)
+                sides: increasedSides(initialFile.sides, 'local', 1),
+                // omit because builder.noRemote sets remote to undefined
+                overwrite: _.omit(initialFile, ['remote'])
               },
               _.omit(offUpdate, ['_rev', 'fileid', 'remote'])
             )
@@ -492,7 +494,8 @@ describe('Merge', function() {
           savedDocs: [
             _.defaultsDeep(
               {
-                sides: increasedSides(firstUpdate.sides, 'local', 1)
+                sides: increasedSides(firstUpdate.sides, 'local', 1),
+                overwrite: firstUpdate
               },
               _.omit(secondUpdate, ['_rev', 'fileid'])
             )
@@ -501,7 +504,7 @@ describe('Merge', function() {
         })
       })
 
-      it('resolves a conflict between an unchanged file & an unsynced remote update', async function() {
+      it('updates without overwrite an unchanged file with an unsynced remote update', async function() {
         const initial = await builders
           .metafile()
           .sides({ local: 1 })
@@ -516,6 +519,7 @@ describe('Merge', function() {
           .metafile(synced)
           .changedSide('remote')
           .data('remote update')
+          .overwrite(synced)
           .create()
         const sameAsSynced = builders
           .metafile(synced)
@@ -527,14 +531,19 @@ describe('Merge', function() {
         )
 
         should(sideEffects).deepEqual({
-          savedDocs: [],
-          resolvedConflicts: [
-            ['local', _.pick(remoteUpdate, ['path', 'remote'])]
-          ]
+          savedDocs: [
+            _.defaultsDeep(
+              {
+                sides: increasedSides(remoteUpdate.sides, 'remote', 1)
+              },
+              _.omit(remoteUpdate, ['overwrite', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
         })
       })
 
-      it('resolves a conflict between a local update & an already merged remote update', async function() {
+      it('updates without overwrite a locally updated file with an unsynced remote update', async function() {
         const initial = await builders
           .metafile()
           .sides({ local: 1 })
@@ -549,6 +558,7 @@ describe('Merge', function() {
           .metafile(synced)
           .changedSide('remote')
           .data('remote update')
+          .overwrite(synced)
           .create()
         const localUpdate = builders
           .metafile(synced)
@@ -561,10 +571,15 @@ describe('Merge', function() {
         )
 
         should(sideEffects).deepEqual({
-          savedDocs: [],
-          resolvedConflicts: [
-            ['local', _.pick(remoteUpdate, ['path', 'remote'])]
-          ]
+          savedDocs: [
+            _.defaultsDeep(
+              {
+                sides: increasedSides(remoteUpdate.sides, 'remote', 1)
+              },
+              _.omit(remoteUpdate, ['overwrite', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
         })
       })
     })
@@ -635,7 +650,7 @@ describe('Merge', function() {
       })
     })
 
-    it('overwrite the content when it was changed', async function() {
+    it('overwrites the content when it was changed', async function() {
       const doc = builders
         .metafile(file)
         .data('new content')
@@ -651,7 +666,8 @@ describe('Merge', function() {
           _.defaults(
             {
               _id: file._id,
-              sides: increasedSides(file.sides, this.side, 1)
+              sides: increasedSides(file.sides, this.side, 1),
+              overwrite: file
             },
             _.omit(doc, ['_rev', 'fileid'])
           )
@@ -722,7 +738,7 @@ describe('Merge', function() {
       })
     })
 
-    it('resolves a conflict between a new local update and a previous remote one', async function() {
+    it('updates without overwrite a locally updated file with an unsynced remote update', async function() {
       const initial = await builders
         .metafile()
         .sides({ local: 1 })
@@ -733,10 +749,11 @@ describe('Merge', function() {
         .upToDate()
         .remoteId(dbBuilders.id())
         .create()
-      await builders
+      const remoteUpdate = await builders
         .metafile(synced)
         .changedSide('remote')
         .data('remote update')
+        .overwrite(synced)
         .create()
       const newLocalUpdate = builders
         .metafile(synced)
@@ -749,16 +766,15 @@ describe('Merge', function() {
       )
 
       should(sideEffects).deepEqual({
-        savedDocs: [],
-        resolvedConflicts: [
-          [
-            'local',
-            _.defaults(
-              _.pick(synced, ['remote']),
-              _.pick(newLocalUpdate, ['path'])
-            )
-          ]
-        ]
+        savedDocs: [
+          _.defaultsDeep(
+            {
+              sides: increasedSides(remoteUpdate.sides, 'remote', 1)
+            },
+            _.omit(remoteUpdate, ['overwrite', '_rev'])
+          )
+        ],
+        resolvedConflicts: []
       })
     })
 
