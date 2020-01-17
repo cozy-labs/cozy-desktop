@@ -1,5 +1,61 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.18.0 - 2020-01-17
+
+Improvements for all users:
+
+- We've completely changed our sorting algorithm for changes coming from the
+  Cozy. We may not receive changes in the order they were made and this can make
+  their application on the local file system impossible. To mitigate this
+  situation we sort the changes to make their application possible. It is a
+  difficult task and we've made a lot of changes in the past to try and fix bugs
+  in different situations.
+  We've yet again seen new problematic situations recently and decided to try a
+  new approach with a completely new algorithm, focusing more on essential
+  changes that need to happen first rather than trying to recreate the very
+  specific order in which changes were made.
+- We've noticed that when requesting a manual synchronization, the button is not
+  disabled right away but only when the synchronization actually starts. This
+  means that, in the meantime, you can potentially click multiple times on the
+  button (e.g. you think that your request was not taken into account) thus
+  piling up synchronization requests.
+  We believe that multiple synchronization requests can lead to unexpected
+  behavior and have decided to disable the button right after your click so
+  we'll be sure only one request will be made until the requested
+  synchronization is complete.
+- Since the introduction of the new Cozy Notes application, we've started
+  synchronizing `.cozy-note` files with Cozy Desktop. Those files contain a
+  markdown export of your Notes, written using the remote application. Those
+  files are not meant to be modified as they're only exports. They only exist so
+  you can read them without going to the remote application and later as an
+  entrypoint to the application.
+  As a hint, we've decided to make those files read-only so you will be less
+  likely to modify them outside the Cozy Notes application and thus possibly
+  lose content.
+- As a follow-up to the manual synchronization button changes, we've worked on
+  the underlying synchronization stop requests to make sure every component
+  involved in the synchronization process is stopped prior to starting a new
+  process.
+  This means that we should not see problems coming from manual synchronizations
+  anymore but also that some actions that involve stopping or deleting the
+  PouchDB database will wait for the completion of the current synchronization
+  and thus may take longer. This does not affect stopping the client.
+- We've found out that some remote file updates (i.e. pushed by another client)
+  may be lost during a client restart (actually they can now be recovered via
+  the versions management) if they were detected by the client but not
+  propagated to the file system prior to the restart. In this situation, the
+  file was renamed with a `-conflict-…` suffix and its local version was pushed
+  to the Cozy thus overwriting the remote update.
+  We've decided to keep the remote changes in this situation and forcibly
+  propagate it to the local file system. Since there could be a legitimate file
+  update on the file system as well, we'll create a backup copy of the local
+  file before overwriting it. This backup copy will have the `.bck` extension
+  and will be trashed for a cleaner experience.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.18.0-beta.2 - 2020-01-15
 
 Improvements for all users:
