@@ -21,6 +21,12 @@ asarUnpack:
 - gui/scripts/**
 directories:
   buildResources: gui/assets
+fileAssociations:
+  ext: cozy-note
+  name: Cozy Note
+  description: Cozy Note markdown export
+  mimeType: 'text/vnd.cozy.note+markdown'
+  role: Viewer
 mac:
   hardenedRuntime: true
   entitlements: './build/entitlements.mac.inherit.plist'
@@ -60,3 +66,5 @@ extraResources:
     to: 'regedit/vbs'
     filter:
       - '**/*'
+  - from: 'build/vnd.cozy.note+markdown.xml'
+    to: 'vnd.cozy.note+markdown.xml'
