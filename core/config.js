@@ -149,6 +149,21 @@ class Config {
     return this.fileConfig.creds.client
   }
 
+  get capabilities() /*: * */ {
+    return _.get(this.fileConfig, 'instance.capabilities', {})
+  }
+
+  set capabilities({ flatSubdomains } /*: { flatSubdomains?: boolean } */) {
+    if (flatSubdomains != null) {
+      _.set(
+        this.fileConfig,
+        'instance.capabilities.flatSubdomains',
+        flatSubdomains
+      )
+      this.persist()
+    }
+  }
+
   get version() /*: ?string */ {
     return _.get(this.fileConfig, 'creds.client.softwareVersion', '')
   }
