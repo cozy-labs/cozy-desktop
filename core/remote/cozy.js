@@ -4,7 +4,8 @@
  */
 
 const autoBind = require('auto-bind')
-const CozyClient = require('cozy-client-js').Client
+const OldCozyClient = require('cozy-client-js').Client
+const CozyClient = require('cozy-client').default
 const _ = require('lodash')
 const path = require('path')
 
@@ -131,12 +132,12 @@ const handleCommonCozyErrors = (
 class RemoteCozy {
   /*::
   url: string
-  client: CozyClient
+  client: OldCozyClient
   */
 
   constructor(config /*: Config */) {
     this.url = config.cozyUrl
-    this.client = new CozyClient({
+    this.client = new OldCozyClient({
       cozyURL: this.url,
       oauth: {
         clientParams: config.client,
@@ -351,6 +352,16 @@ class RemoteCozy {
       }
     }
   }
+
+  async capabilities() /*: Promise<{ flatSubdomains: boolean }> */ {
+    const client = await CozyClient.fromOldOAuthClient(this.client)
+    const {
+      data: {
+        attributes: { flat_subdomains: flatSubdomains }
+      }
+    } = await client.query(client.get('io.cozy.settings', 'capabilities'))
+    return { flatSubdomains }
+  }
 }
 
 module.exports = {
@@ -364,7 +375,7 @@ module.exports = {
 
 async function getChangesFeed(
   since /*: string */,
-  client /*: CozyClient */
+  client /*: OldCozyClient */
 ) /*: Promise<{pending: number, last_seq: string, results: Array<any> }> */ {
   const response = await client.data.changesFeed(FILES_DOCTYPE, {
     since,

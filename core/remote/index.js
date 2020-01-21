@@ -54,6 +54,7 @@ export type RemoteOptions = {
 class Remote /*:: implements Reader, Writer */ {
   /*::
   other: Reader
+  config: Config
   pouch: Pouch
   events: EventEmitter
   watcher: RemoteWatcher
@@ -62,6 +63,7 @@ class Remote /*:: implements Reader, Writer */ {
   */
 
   constructor({ config, prep, pouch, events } /*: RemoteOptions */) {
+    this.config = config
     this.pouch = pouch
     this.events = events
     this.remoteCozy = new RemoteCozy(config)
@@ -402,6 +404,15 @@ class Remote /*:: implements Reader, Writer */ {
 
   diskUsage() /*: Promise<*> */ {
     return this.remoteCozy.diskUsage()
+  }
+
+  async usesFlatDomains() /*: Promise<boolean> */ {
+    let { flatSubdomains } = this.config.capabilities
+    if (flatSubdomains == null) {
+      ;({ flatSubdomains } = await this.remoteCozy.capabilities())
+      this.config.capabilities = { flatSubdomains }
+    }
+    return flatSubdomains
   }
 
   // TODO add tests

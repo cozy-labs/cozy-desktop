@@ -522,4 +522,47 @@ describe('RemoteCozy', function() {
       })
     }
   })
+
+  describe('#capabilities', () => {
+    beforeEach(async function() {
+      this.config.cozyUrl = cozyStackDouble.url()
+      remoteCozy = new RemoteCozy(this.config)
+      remoteCozy.client._authcreds = Promise.resolve({
+        token: 'fake OAuth token'
+      })
+    })
+
+    const stubCapabilitiesResponse = ({ flat_subdomains }) => {
+      cozyStackDouble.stub((req, res) => {
+        if (req.url.match('/settings/capabilities')) {
+          res.setHeader('Content-Type', 'application/json')
+          res.writeHead(200)
+          res.end(
+            JSON.stringify({
+              data: {
+                type: 'io.cozy.settings',
+                id: 'io.cozy.settings.capabilities',
+                attributes: { flat_subdomains }
+              }
+            })
+          )
+        } else {
+          res.writeHead(404)
+          res.end()
+        }
+      })
+    }
+
+    it('returns an object with a flatSubdomains boolean attribute', async () => {
+      stubCapabilitiesResponse({ flat_subdomains: true })
+      should(await remoteCozy.capabilities()).deepEqual({
+        flatSubdomains: true
+      })
+
+      stubCapabilitiesResponse({ flat_subdomains: false })
+      should(await remoteCozy.capabilities()).deepEqual({
+        flatSubdomains: false
+      })
+    })
+  })
 })
