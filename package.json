@@ -16,7 +16,7 @@
     "url": "git://github.com/cozy-labs/cozy-desktop.git"
   },
   "engines": {
-    "node": ">=10.0.0"
+    "node": ">=10.6.0"
   },
   "keywords": [
     "Electron",
@@ -88,6 +88,7 @@
     "btoa": "^1.1.2",
     "bunyan": "^2.0.2",
     "chokidar": "^3.2.2",
+    "cozy-client": "^10.1.0",
     "cozy-client-js": "0.15.0",
     "deep-diff": "^1.0.2",
     "dtrace-provider": "^0.8.8",

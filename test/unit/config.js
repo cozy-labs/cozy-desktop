@@ -208,6 +208,16 @@ describe('core/config', function() {
       })
     })
 
+    describe('capabilities', function() {
+      it('accepts object with flatSubdomains key', function() {
+        this.config.capabilities = { flatSubdomains: false }
+        should(this.config.capabilities.flatSubdomains).be.false()
+
+        this.config.capabilities = { flatSubdomains: true }
+        should(this.config.capabilities.flatSubdomains).be.true()
+      })
+    })
+
     describe('#watcherType', function() {
       it('returns valid watcher type from file config if any', function() {
         this.config.fileConfig.watcherType = 'atom'
