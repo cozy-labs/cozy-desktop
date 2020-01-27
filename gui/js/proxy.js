@@ -43,7 +43,7 @@ const config = (argv = process.argv) => {
 const formatCertificate = certif =>
   `Certificate(${certif.issuerName} ${certif.subjectName})`
 
-const setup = (app, config, session, userAgent, doneSetup) => {
+const setup = async (app, config, session, userAgent, doneSetup) => {
   const loginByRealm = {}
   if (config['login-by-realm']) {
     config['login-by-realm'].split(',').forEach(lbr => {
@@ -137,23 +137,19 @@ const setup = (app, config, session, userAgent, doneSetup) => {
     return originalHttpsRequest.call(https, parseRequestOptions(options), cb)
   }
 
-  const callback = () => {
-    doneSetup({
-      originalFetch,
-      originalHttpRequest,
-      originalHttpsRequest
+  if (config['proxy-script'] || config['proxy-rules']) {
+    await session.defaultSession.setProxy({
+      pacScript: config['proxy-script'],
+      proxyRules: config['proxy-rules'],
+      proxyBypassRules: config['proxy-bypassrules']
     })
   }
-  if (config['proxy-script'] || config['proxy-rules']) {
-    session.defaultSession.setProxy(
-      {
-        pacScript: config['proxy-script'],
-        proxyRules: config['proxy-rules'],
-        proxyBypassRules: config['proxy-bypassrules']
-      },
-      callback
-    )
-  } else callback()
+
+  await doneSetup({
+    originalFetch,
+    originalHttpRequest,
+    originalHttpsRequest
+  })
 }
 
 module.exports = {
