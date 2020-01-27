@@ -125,10 +125,7 @@ const showInvalidConfigError = () => {
     detail: translate(
       'InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc'
     ),
-    buttons: [
-      translate('InvalidConfiguration Log out'),
-      translate('InvalidConfiguration Contact support')
-    ],
+    buttons: [translate('Button Log out'), translate('Button Contact support')],
     defaultId: 0
   }
   const userChoice = dialog.showMessageBox(null, options)
@@ -138,6 +135,27 @@ const showInvalidConfigError = () => {
       .then(() => log.info('removed'))
       .catch(err => log.error(err))
   } else {
+    helpWindow = new HelpWM(app, desktop)
+    helpWindow.show()
+  }
+}
+
+const showMigrationError = (err /*: Error */) => {
+  const errorDetails = [`${err.name}:`]
+  errorDetails.concat(err.errors.map(pouchErr => pouchErr.toString()))
+
+  const options = {
+    type: 'error',
+    title: translate('AppUpgrade App upgrade failed'),
+    message: translate(
+      'AppUpgrade An error happened after we tried upgrading your Cozy Desktop version. Please contact support at contact@cozycloud.cc.'
+    ),
+    detail: errorDetails.join('\n'),
+    buttons: [translate('Button Contact support')],
+    defaultId: 0
+  }
+  const userChoice = dialog.showMessageBox(null, options)
+  if (userChoice === 0) {
     helpWindow = new HelpWM(app, desktop)
     helpWindow.show()
   }
@@ -214,10 +232,6 @@ const sendErrorToMainWindow = msg => {
     dialog.showMessageBox(null, options)
     desktop.stopSync().catch(err => log.error(err))
     return // no notification
-  } else if (msg === migrations.MIGRATION_RESULT_FAILED) {
-    desktop.stopSync().catch(err => log.error(err))
-    msg = translate('Dashboard App upgrade failed')
-    trayWindow.send('sync-error', msg)
   } else {
     msg = translate('Dashboard Synchronization incomplete')
     trayWindow.send('sync-error', msg)
@@ -389,8 +403,6 @@ const startSync = async () => {
       trayWindow.send('user-action-required', userActionRequired)
       desktop.remote.warningsPoller.switchMode('medium')
       return
-    } else if (err instanceof migrations.MigrationFailedError) {
-      updateState('error', err.name)
     } else {
       updateState('error', err.message)
     }
@@ -465,6 +477,8 @@ app.on('ready', async () => {
 
       if (err instanceof config.InvalidConfigError) {
         showInvalidConfigError()
+      } else if (err instanceof migrations.MigrationFailedError) {
+        showMigrationError(err)
       } else {
         dialog.showMessageBox({
           type: 'error',
