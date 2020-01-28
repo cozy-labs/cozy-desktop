@@ -55,6 +55,12 @@ let helpWindow = null
 let updaterWindow = null
 let trayWindow = null
 
+let desktopIsReady, desktopIsKO
+const whenDesktopReady = new Promise((resolve, reject) => {
+  desktopIsReady = resolve
+  desktopIsKO = reject
+})
+
 const notificationsState = {
   revokedAlertShown: false,
   syncDirUnlinkedShown: false,
@@ -67,8 +73,7 @@ const toggleWindow = bounds => {
   else showWindow(bounds)
 }
 
-// @TODO facto with showWindow after making args clear with tray position
-const showWindowStartApp = () => {
+const startApp = () => {
   if (!desktop.config.syncPath) {
     onboardingWindow.show()
     // registration is done, but we need a syncPath
@@ -94,7 +99,65 @@ const showWindow = bounds => {
       onboardingWindow.jumpToSyncPath()
     }
   } else {
-    trayWindow.show(bounds).then(() => startSync())
+    if (desktop.sync) {
+      if (userActionRequired) {
+        trayWindow.send('user-action-required', userActionRequired)
+      } else if (state === 'up-to-date' || state === 'online') {
+        trayWindow.send('up-to-date')
+      } else if (state === 'offline') {
+        trayWindow.send('offline')
+      } else if (state === 'error') {
+        sendErrorToMainWindow(errorMessage)
+      }
+      sendDiskUsage()
+    }
+    trayWindow.show(bounds)
+  }
+}
+
+const showInvalidConfigError = () => {
+  const options = {
+    type: 'warning',
+    title: translate('InvalidConfiguration Invalid configuration'),
+    message: translate(
+      'InvalidConfiguration The client configuration is invalid'
+    ),
+    detail: translate(
+      'InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc'
+    ),
+    buttons: [translate('Button Log out'), translate('Button Contact support')],
+    defaultId: 0
+  }
+  const userChoice = dialog.showMessageBox(null, options)
+  if (userChoice === 0) {
+    desktop
+      .removeConfig()
+      .then(() => log.info('removed'))
+      .catch(err => log.error(err))
+  } else {
+    helpWindow = new HelpWM(app, desktop)
+    helpWindow.show()
+  }
+}
+
+const showMigrationError = (err /*: Error */) => {
+  const errorDetails = [`${err.name}:`]
+  errorDetails.concat(err.errors.map(pouchErr => pouchErr.toString()))
+
+  const options = {
+    type: 'error',
+    title: translate('AppUpgrade App upgrade failed'),
+    message: translate(
+      'AppUpgrade An error happened after we tried upgrading your Cozy Desktop version. Please contact support at contact@cozycloud.cc.'
+    ),
+    detail: errorDetails.join('\n'),
+    buttons: [translate('Button Contact support')],
+    defaultId: 0
+  }
+  const userChoice = dialog.showMessageBox(null, options)
+  if (userChoice === 0) {
+    helpWindow = new HelpWM(app, desktop)
+    helpWindow.show()
   }
 }
 
@@ -155,40 +218,6 @@ const sendErrorToMainWindow = msg => {
       .then(() => trayWindow.doRestart())
       .catch(err => log.error(err))
     return // no notification
-  } else if (msg === config.INVALID_CONFIG_ERROR) {
-    msg = translate('InvalidConfiguration Invalid configuration')
-    trayWindow.send('sync-error', msg)
-
-    if (notificationsState.invalidConfigShown) return
-    notificationsState.invalidConfigShown = true // prevent the alert from appearing twice
-
-    const options = {
-      type: 'warning',
-      title: translate('InvalidConfiguration Invalid configuration'),
-      message: translate(
-        'InvalidConfiguration The client configuration is invalid'
-      ),
-      detail: translate(
-        'InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc'
-      ),
-      buttons: [
-        translate('InvalidConfiguration Log out'),
-        translate('InvalidConfiguration Contact support')
-      ],
-      defaultId: 0
-    }
-    trayWindow.hide()
-    const userChoice = dialog.showMessageBox(null, options)
-    if (userChoice === 0) {
-      desktop
-        .removeConfig()
-        .then(() => log.info('removed'))
-        .then(() => trayWindow.doRestart())
-        .catch(err => log.error(err))
-    } else {
-      helpWindow.show()
-    }
-    return // no notification
   } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
     msg = translate('Error ' + msg)
     trayWindow.send('sync-error', msg)
@@ -203,10 +232,6 @@ const sendErrorToMainWindow = msg => {
     dialog.showMessageBox(null, options)
     desktop.stopSync().catch(err => log.error(err))
     return // no notification
-  } else if (msg === migrations.MIGRATION_RESULT_FAILED) {
-    desktop.stopSync().catch(err => log.error(err))
-    msg = translate('Dashboard App upgrade failed')
-    trayWindow.send('sync-error', msg)
   } else {
     msg = translate('Dashboard Synchronization incomplete')
     trayWindow.send('sync-error', msg)
@@ -311,7 +336,7 @@ const sendDiskUsage = () => {
   }
 }
 
-const startSync = async force => {
+const startSync = async () => {
   trayWindow.send(
     'synchronization',
     desktop.config.cozyUrl,
@@ -320,108 +345,71 @@ const startSync = async force => {
   for (let file of lastFiles.list()) {
     trayWindow.send('transfer', file)
   }
-  if (desktop.sync && !force) {
-    if (userActionRequired) {
+
+  updateState('syncing')
+  desktop.events.on('sync-status', status => {
+    updateState('sync-status', status)
+  })
+  desktop.events.on('online', () => {
+    updateState('online')
+  })
+  desktop.events.on('offline', () => {
+    updateState('offline')
+  })
+  desktop.events.on('remoteWarnings', warnings => {
+    if (warnings.length > 0) {
+      trayWindow.send('remoteWarnings', warnings)
+    } else if (userActionRequired) {
+      log.info('User action complete.')
+      trayWindow.doRestart()
+    }
+  })
+  desktop.events.on('transfer-started', addFile)
+  desktop.events.on('transfer-copy', addFile)
+  desktop.events.on('transfer-move', (info, old) => {
+    addFile(info)
+    removeFile(old)
+  })
+  const notifyIncompatibilities = debounce(
+    incompatibilities => {
+      sendErrorToMainWindow(incompatibilitiesErrorMessage(incompatibilities))
+    },
+    5000,
+    { leading: true }
+  )
+  desktop.events.on('platform-incompatibilities', incompatibilitiesList => {
+    incompatibilitiesList.forEach(incompatibilities => {
+      notifyIncompatibilities(incompatibilities)
+    })
+  })
+  desktop.events.on('syncdir-unlinked', () => {
+    sendErrorToMainWindow('Syncdir has been unlinked')
+  })
+  desktop.events.on('delete-file', removeFile)
+
+  desktop.startSync().catch(err => {
+    if (err.status === 402) {
+      // Only show notification popup on the first check (the GUI will
+      // include a warning anyway).
+      if (!userActionRequired) UserActionRequiredDialog.show(err)
+
+      userActionRequired = pick(err, [
+        'title',
+        'code',
+        'detail',
+        'links',
+        'message'
+      ])
       trayWindow.send('user-action-required', userActionRequired)
-    } else if (state === 'up-to-date' || state === 'online') {
-      trayWindow.send('up-to-date')
-    } else if (state === 'offline') {
-      trayWindow.send('offline')
-    } else if (state === 'error') {
-      sendErrorToMainWindow(errorMessage)
-    }
-    sendDiskUsage()
-  } else {
-    updateState('syncing')
-    desktop.events.on('sync-status', status => {
-      updateState('sync-status', status)
-    })
-    desktop.events.on('online', () => {
-      updateState('online')
-    })
-    desktop.events.on('offline', () => {
-      updateState('offline')
-    })
-    desktop.events.on('remoteWarnings', warnings => {
-      if (warnings.length > 0) {
-        trayWindow.send('remoteWarnings', warnings)
-      } else if (userActionRequired) {
-        log.info('User action complete.')
-        trayWindow.doRestart()
-      }
-    })
-    desktop.events.on('transfer-started', addFile)
-    desktop.events.on('transfer-copy', addFile)
-    desktop.events.on('transfer-move', (info, old) => {
-      addFile(info)
-      removeFile(old)
-    })
-    const notifyIncompatibilities = debounce(
-      incompatibilities => {
-        sendErrorToMainWindow(incompatibilitiesErrorMessage(incompatibilities))
-      },
-      5000,
-      { leading: true }
-    )
-    desktop.events.on('platform-incompatibilities', incompatibilitiesList => {
-      incompatibilitiesList.forEach(incompatibilities => {
-        notifyIncompatibilities(incompatibilities)
-      })
-    })
-    desktop.events.on('syncdir-unlinked', () => {
-      sendErrorToMainWindow('Syncdir has been unlinked')
-    })
-    desktop.events.on('delete-file', removeFile)
-
-    try {
-      await desktop.setup()
-    } catch (err) {
-      log.fatal({ err, sentry: true }, 'Could not setup app')
-      if (err instanceof config.InvalidConfigError) {
-        updateState('error', err.name)
-      } else {
-        updateState('error', err.message)
-      }
+      desktop.remote.warningsPoller.switchMode('medium')
       return
+    } else {
+      updateState('error', err.message)
     }
-
-    // We do it here since Sentry's setup happens in `desktop.setup()`
-    if (process.platform === 'win32') {
-      winRegistry.removeOldUninstallKey().catch(err => {
-        if (err instanceof winRegistry.RegeditError) {
-          log.error(
-            { err, sentry: true },
-            'Failed to remove uninstall registry key'
-          )
-        }
-      })
-    }
-
-    desktop.startSync().catch(err => {
-      if (err.status === 402) {
-        // Only show notification popup on the first check (the GUI will
-        // include a warning anyway).
-        if (!userActionRequired) UserActionRequiredDialog.show(err)
-
-        userActionRequired = pick(err, [
-          'title',
-          'code',
-          'detail',
-          'links',
-          'message'
-        ])
-        trayWindow.send('user-action-required', userActionRequired)
-        desktop.remote.warningsPoller.switchMode('medium')
-        return
-      } else if (err instanceof migrations.MigrationFailedError) {
-        updateState('error', err.name)
-      } else {
-        updateState('error', err.message)
-      }
-      sendDiskUsage()
-    })
     sendDiskUsage()
-  }
+  })
+  sendDiskUsage()
+
   autoLaunch.isEnabled().then(enabled => {
     trayWindow.send('auto-launch', enabled)
   })
@@ -430,11 +418,18 @@ const startSync = async force => {
 const dumbhash = k =>
   k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
 
-app.on('second-instance', () => {
-  showWindow()
+app.on('second-instance', async () => {
+  try {
+    await whenDesktopReady
+  } catch (err) {
+    return
+  }
+
+  // Make sure the main window exists before trying to show it
+  if (trayWindow) showWindow()
 })
 
-app.on('ready', () => {
+app.on('ready', async () => {
   // Once configured and running in the tray, the app doesn't need to be
   // visible anymore in macOS dock (and cmd+tab), even when the tray popover
   // is visible, until another window shows up.
@@ -444,7 +439,7 @@ app.on('ready', () => {
 
   const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
   let userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
-  proxy.setup(app, proxy.config(), session, userAgent, () => {
+  await proxy.setup(app, proxy.config(), session, userAgent, async () => {
     log.info('Loading CLI...')
     i18n.init(app)
     try {
@@ -458,6 +453,40 @@ app.on('ready', () => {
         app.quit()
         return
       } else throw err
+    }
+
+    try {
+      await desktop.setup()
+      desktopIsReady()
+
+      // We do it here since Sentry's setup happens in `desktop.setup()`
+      if (process.platform === 'win32') {
+        winRegistry.removeOldUninstallKey().catch(err => {
+          if (err instanceof winRegistry.RegeditError) {
+            log.error(
+              { err, sentry: true },
+              'Failed to remove uninstall registry key'
+            )
+          }
+        })
+      }
+    } catch (err) {
+      log.fatal({ err }, 'Could not setup app')
+
+      desktopIsKO(err)
+
+      if (err instanceof config.InvalidConfigError) {
+        showInvalidConfigError()
+      } else if (err instanceof migrations.MigrationFailedError) {
+        showMigrationError(err)
+      } else {
+        dialog.showMessageBox({
+          type: 'error',
+          message: err.message
+        })
+      }
+      app.quit()
+      return
     }
     tray.init(app, toggleWindow)
     lastFiles.init(desktop)
@@ -476,14 +505,14 @@ app.on('ready', () => {
       updaterWindow = new UpdaterWM(app, desktop)
       updaterWindow.onUpToDate(() => {
         updaterWindow.hide()
-        showWindowStartApp()
+        startApp()
       })
       updaterWindow.checkForUpdates()
       setInterval(() => {
         updaterWindow.checkForUpdates()
       }, DAILY)
     } else {
-      showWindowStartApp()
+      startApp()
     }
 
     // Os X wants all application to have a menu
