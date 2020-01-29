@@ -1,0 +1,19 @@
+[
+  {
+    "_id": "2491b75e6a47270ab274a59ae6005335",
+    "_rev": "2-5d1ab2c2ca77d0a3ffb62a8364e318ad",
+    "class": "text",
+    "created_at": "2020-01-29T16:48:43.338589143Z",
+    "dir_id": "2491b75e6a47270ab274a59ae60046fe",
+    "executable": false,
+    "md5sum": "ihJ0JyvnormYrQkI6TUGyg==",
+    "mime": "text/plain",
+    "name": "AccuséRéception.pdf",
+    "size": "14",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2020-01-29T16:48:43.338589143Z",
+    "path": "/Impôts Gérard/AccuséRéception.pdf"
+  }
+]
