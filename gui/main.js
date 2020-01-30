@@ -227,7 +227,8 @@ const sendErrorToMainWindow = msg => {
       type: 'warning',
       title: translate('SyncDirEmpty Title'),
       message: translate('SyncDirEmpty Message'),
-      detail: translate('SyncDirEmpty Detail')
+      detail: translate('SyncDirEmpty Detail'),
+      buttons: [translate('AppMenu Close')]
     }
     dialog.showMessageBox(null, options)
     desktop.stopSync().catch(err => log.error(err))
@@ -446,9 +447,10 @@ app.on('ready', async () => {
       desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
     } catch (err) {
       if (err.message.match(/GLIBCXX/)) {
-        dialog.showMessageBox({
+        dialog.showMessageBox(null, {
           type: 'error',
-          message: translate('Error Bad GLIBCXX version')
+          message: translate('Error Bad GLIBCXX version'),
+          buttons: [translate('AppMenu Close')]
         })
         app.quit()
         return
@@ -480,9 +482,10 @@ app.on('ready', async () => {
       } else if (err instanceof migrations.MigrationFailedError) {
         showMigrationError(err)
       } else {
-        dialog.showMessageBox({
+        dialog.showMessageBox(null, {
           type: 'error',
-          message: err.message
+          message: err.message,
+          buttons: [translate('AppMenu Close')]
         })
       }
       app.quit()
