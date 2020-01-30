@@ -115,7 +115,8 @@ export type Metadata = {
   incompatibilities?: *,
   ino?: ?number,
   fileid?: ?string,
-  moveFrom?: Metadata
+  moveFrom?: Metadata,
+  cozyMetadata?: Object
 }
 */
 
@@ -205,7 +206,14 @@ function fromRemoteDoc(remoteDoc /*: RemoteDoc */) /*: Metadata */ {
     doc.size = parseInt(remoteDoc.size, 10)
   }
 
-  for (let field of ['md5sum', 'executable', 'class', 'mime', 'tags']) {
+  const fields = Object.getOwnPropertyNames(remoteDoc).filter(
+    field =>
+      // Filter out fields already used above
+      !['_id', '_rev', '_type', 'path', 'type', 'updated_at', 'size'].includes(
+        field
+      )
+  )
+  for (const field of fields) {
     if (remoteDoc[field]) {
       doc[field] = remoteDoc[field]
     }
