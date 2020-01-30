@@ -11,6 +11,7 @@ files:
 - gui/locales
 - gui/main.js
 - gui/node_modules
+- gui/notes/**
 - gui/ports.js
 - gui/scripts/**
 - package.json
