@@ -1337,15 +1337,15 @@ cozy-client-js@0.15.0:
     pouchdb-browser "7.0.0"
     pouchdb-find "7.0.0"
 
-cozy-client@^10.1.0:
-  version "10.1.0"
-  resolved "https://registry.yarnpkg.com/cozy-client/-/cozy-client-10.1.0.tgz#8d6e7f22abb9caffb092edac2a60833f5bae70e3"
-  integrity sha512-HDUpI/d4f/2CZ3aOGw8x94XzF/9RqaGIqHlwOMWOtWl7z32d7nyumVDRw5yamY1ZA8pfw95u+BHqW5/2ity2Aw==
+cozy-client@^10.7.0:
+  version "10.7.0"
+  resolved "https://registry.yarnpkg.com/cozy-client/-/cozy-client-10.7.0.tgz#0cc76491f79caba7dfaee87ab19908d0e1f315f2"
+  integrity sha512-U7z9zQeGO4Tft1PhS+d+zJtl/ZmZPyxC3bmDsSazR1B2kfJhMf/WsI3Exp2yYu2KeKmQ9FUYhVxdAnhtwK+ppg==
   dependencies:
     btoa "^1.2.1"
     cozy-device-helper "^1.7.3"
     cozy-logger "^1.6.0"
-    cozy-stack-client "^10.0.0"
+    cozy-stack-client "^10.7.0"
     isomorphic-fetch "^2.2.1"
     lodash "^4.17.13"
     microee "^0.0.6"
@@ -1373,10 +1373,10 @@ cozy-logger@^1.6.0:
     chalk "^2.4.2"
     json-stringify-safe "5.0.1"
 
-cozy-stack-client@^10.0.0:
-  version "10.0.0"
-  resolved "https://registry.yarnpkg.com/cozy-stack-client/-/cozy-stack-client-10.0.0.tgz#2201d104972608251d1204d70ea0a9ba6e88d2f4"
-  integrity sha512-jHBNV001TcvVExEOu34ZXUKYbr9vCXJQzQvxobYg3aKVTDVpSrUecYYe6xCvjCEySenlD3NAmK82Z7MhBXbIjA==
+cozy-stack-client@^10.7.0:
+  version "10.7.0"
+  resolved "https://registry.yarnpkg.com/cozy-stack-client/-/cozy-stack-client-10.7.0.tgz#2f9a886af423abe9111d6c1524104c29d2ed517f"
+  integrity sha512-O2z9sFwDhcbn/rZJr0f2BL3CAc2L37QMzmIlQXY/70x/SqkSd+zyFhgwfYImqlwYsByf6Mo6qwtpwv5goRj9Ig==
   dependencies:
     detect-node "^2.0.4"
     mime "^2.4.0"
@@ -3239,9 +3239,9 @@ highlight.js@^9.3.0:
   integrity sha512-RoV7OkQm0T3os3Dd2VHLNMoaoDVx77Wygln3n9l5YV172XonWG6rgQD3XnF/BuFFZw9A0TJgmMSO8FEWQgvcXw==
 
 hoist-non-react-statics@^3.3.0:
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/hoist-non-react-statics/-/hoist-non-react-statics-3.3.1.tgz#101685d3aff3b23ea213163f6e8e12f4f111e19f"
-  integrity sha512-wbg3bpgA/ZqWrZuMOeJi8+SKMhr7X9TesL/rXMjTzh0p0JUBo3II8DHboYbuIXWRlttrUFxwcu/5kygrCw8fJw==
+  version "3.3.2"
+  resolved "https://registry.yarnpkg.com/hoist-non-react-statics/-/hoist-non-react-statics-3.3.2.tgz#ece0acaf71d62c2969c2ec59feff42a4b1a85b45"
+  integrity sha512-/gGivxi8JPKWNm/W0jSmzcMPpfpPLc3dY/6GxhX2hQ9iGj3aDfklV4ET7NjKpSinLpJ5vafa9iiGIEZg10SfBw==
   dependencies:
     react-is "^16.7.0"
 
