@@ -40,7 +40,7 @@
   "AppMenu Undo": "Undo",
   "AppMenu Window": "Window",
   "AppUpgrade App upgrade failed": "Cozy Desktop upgrade failed",
-  "AppUpgrade An error happened during the upgrade of Cozy Desktop. Please contact support at contact@cozycloud.cc.": "AppUpgrade An error happened after we tried upgrading your Cozy Desktop version. Please contact support at contact@cozycloud.cc.",
+  "AppUpgrade An error happened during the upgrade of Cozy Desktop. Please contact support at contact@cozycloud.cc.": "An error happened after we tried upgrading your Cozy Desktop version. Please contact support at contact@cozycloud.cc.",
   "Bar GoToCozy": "Open Cozy",
   "Bar GoToFolder": "Open Folder",
   "Button Log out": "Log out",
