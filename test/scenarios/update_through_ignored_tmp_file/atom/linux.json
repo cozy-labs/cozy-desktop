@@ -1,0 +1,44 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "~jk432.tmp"
+    },
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "~jk432.tmp"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "~jk432.tmp",
+      "oldPath": "file.docx"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "~jk432.tmp"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "~jk432.tmp"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "file.docx",
+      "oldPath": "~jk432.tmp"
+    }
+  ]
+]
