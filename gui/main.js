@@ -1,11 +1,13 @@
 'use strict'
 
 const Desktop = require('../core/app.js')
+const notes = require('./notes')
 const pkg = require('../package.json')
 
 const { debounce, pick } = require('lodash')
 const path = require('path')
 const os = require('os')
+const fse = require('fs-extra')
 
 const proxy = require('./js/proxy')
 const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/cozy')
@@ -27,7 +29,7 @@ const i18n = require('./js/i18n')
 const { translate } = i18n
 const { incompatibilitiesErrorMessage } = require('./js/incompatibilitiesmsg')
 const UserActionRequiredDialog = require('./js/components/UserActionRequiredDialog')
-const { app, Menu, Notification, ipcMain, dialog } = require('electron')
+const { app, Menu, Notification, ipcMain, dialog, shell } = require('electron')
 
 const DAILY = 3600 * 24 * 1000
 
@@ -419,15 +421,90 @@ const startSync = async () => {
 const dumbhash = k =>
   k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
 
-app.on('second-instance', async () => {
+const openNote = async filePath => {
+  if (!(await fse.pathExists(filePath))) return false
+
+  try {
+    await notes.openNote(filePath, { shell, desktop })
+  } catch (err) {
+    switch (err.name) {
+      case 'CozyDocumentMissingError':
+        dialog.showMessageBox(null, {
+          type: 'error',
+          message: translate(
+            'Notes We could not find the following note on your Cozy:'
+          ),
+          detail: err.doc.name,
+          buttons: [translate('AppMenu Close')]
+        })
+        return true
+      case 'UnreachableError':
+        dialog.showMessageBox(null, {
+          type: 'error',
+          message: translate('Error We cannot reach your Cozy.'),
+          details: translate(
+            'Error Is your internet connexion working? Try again later.'
+          ),
+          buttons: [translate('AppMenu Close')]
+        })
+        return true
+    }
+    return false
+  }
+  return true
+}
+
+/* This event is emitted inside the primary instance and is guaranteed to be
+ * emitted after the `ready` event of `app` gets emitted.
+ *
+ * @see https://www.electronjs.org/docs/api/app#event-second-instance
+ *
+ * This means we can be sure that `desktop` will be assigned and setup at some
+ * point.
+ * To avoid race conditions, we'll wait for that setup to be done.
+ */
+app.on('second-instance', async (event, argv) => {
   try {
     await whenDesktopReady
   } catch (err) {
     return
   }
 
+  if (argv && argv.length > 2) {
+    const filePath = argv[argv.length - 1]
+    log.info({ filePath }, 'second instance invoked with arguments')
+
+    // If we found a note to open, stop here. Otherwise, show main window.
+    if (await openNote(filePath)) return
+  }
+
   // Make sure the main window exists before trying to show it
   if (trayWindow) showWindow()
+})
+
+/* macOS only.
+ *
+ * @see https://www.electronjs.org/docs/api/app?q=ope#event-open-file-macos
+ *
+ * Per the `electron` documentation, we should listen for this event as soon as
+ * possible, even before the `ready` event is emitted to handle the case where a
+ * file is dropped onto the dock icon.
+ *
+ * However, we have the same requirement around the setup of `desktop`
+ * than for the `second-instance` event listener so we'll wait for that setup to
+ * be done.
+ */
+app.on('open-file', async (event, filePath) => {
+  try {
+    await whenDesktopReady
+  } catch (err) {
+    return
+  }
+
+  event.preventDefault()
+  log.info({ filePath }, 'open-file invoked')
+  await openNote(filePath)
+  app.exit()
 })
 
 app.on('ready', async () => {
@@ -491,6 +568,19 @@ app.on('ready', async () => {
       app.quit()
       return
     }
+
+    if (process.argv && process.argv.length > 2) {
+      const { argv } = process
+      const filePath = argv[argv.length - 1]
+      log.info({ filePath }, 'main instance invoked with arguments')
+
+      // If we found a note to open, stop here. Otherwise, start sync app.
+      if (await openNote(filePath)) {
+        app.exit()
+        return
+      }
+    }
+
     tray.init(app, toggleWindow)
     lastFiles.init(desktop)
     log.trace('Setting up tray WM...')

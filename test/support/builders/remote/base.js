@@ -42,7 +42,8 @@ module.exports = class RemoteBaseBuilder {
         name,
         path: posix.join(posix.sep, name),
         tags: [],
-        updated_at: defaultTimestamp
+        updated_at: defaultTimestamp,
+        cozyMetadata: {}
       }
     }
   }

@@ -7,7 +7,6 @@
 const { uniq } = require('lodash')
 
 const {
-  DIR_TYPE,
   FILE_TYPE,
   ROOT_DIR_ID,
   TRASH_DIR_ID,
@@ -45,7 +44,8 @@ export type RemoteDoc = {
   tags: string[],
   trashed?: true,
   type: string,
-  updated_at: string
+  updated_at: string,
+  cozyMetadata?: Object
 }
 
 export type RemoteDeletion = {
@@ -83,7 +83,8 @@ export type JsonApiAttributes = {
   size?: string, // file only
   tags: string[],
   type: string,
-  updated_at: string
+  updated_at: string,
+  cozyMetadata?: Object
 }
 
 export type JsonApiDoc = {
@@ -97,34 +98,16 @@ export type JsonApiDoc = {
 function jsonApiToRemoteDoc(json /*: JsonApiDoc */) /*: * */ {
   let remoteDoc = {}
 
-  Object.assign(remoteDoc, {
-    _id: json._id,
-    _rev: json._rev,
-    _type: json._type,
-    dir_id: json.attributes.dir_id,
-    name: json.attributes.name,
-    tags: json.attributes.tags,
-    type: json.attributes.type,
-    updated_at: json.attributes.updated_at
-  })
-
-  switch (remoteDoc.type) {
-    case DIR_TYPE:
-      Object.assign(remoteDoc, {
-        path: json.attributes.path
-      })
-      break
-
-    case FILE_TYPE:
-      Object.assign(remoteDoc, {
-        class: json.attributes.class,
-        executable: json.attributes.executable,
-        md5sum: json.attributes.md5sum,
-        mime: json.attributes.mime,
-        size: json.attributes.size
-      })
-      break
-  }
+  Object.assign(
+    remoteDoc,
+    {
+      _id: json._id,
+      _rev: json._rev,
+      _type: json._type,
+      cozyMetadata: json.attributes.cozyMetadata
+    },
+    json.attributes
+  )
 
   return remoteDoc
 }

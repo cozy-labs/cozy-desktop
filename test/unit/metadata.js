@@ -55,7 +55,11 @@ describe('metadata', function() {
         size: '78',
         tags: ['foo'],
         type: 'file',
-        updated_at: timestamp.stringify(timestamp.build(2017, 9, 8, 7, 6, 5))
+        updated_at: timestamp.stringify(timestamp.build(2017, 9, 8, 7, 6, 5)),
+        cozyMetadata: {
+          createdOn: 'alice.mycozy.cloud'
+        },
+        someUnusedProperty: 'unused value'
       }
       let doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
 
@@ -65,13 +69,19 @@ describe('metadata', function() {
         docType: 'file',
         updated_at: '2017-09-08T07:06:05Z',
         mime: 'test/html',
+        name: 'bar',
         path: 'foo/bar',
+        dir_id: '56',
         remote: {
           _id: '12',
           _rev: '34'
         },
         size: 78,
-        tags: ['foo']
+        tags: ['foo'],
+        cozyMetadata: {
+          createdOn: 'alice.mycozy.cloud'
+        },
+        someUnusedProperty: 'unused value'
       })
 
       remoteDoc.executable = true
@@ -98,6 +108,8 @@ describe('metadata', function() {
         docType: 'folder',
         updated_at: '2017-09-08T07:06:05Z',
         path: 'foo/bar',
+        name: 'bar',
+        dir_id: '56',
         remote: {
           _id: '12',
           _rev: '34'

@@ -281,17 +281,17 @@ describe('RemoteCozy', function() {
   describe('findDirectoryByPath', function() {
     it('resolves when the directory exists remotely', async function() {
       const dir = await builders.remoteDir().create()
+      delete dir.cozyMetadata
       const subdir = await builders
         .remoteDir()
         .inDir(dir)
         .create()
+      delete subdir.cozyMetadata
 
       const foundDir = await remoteCozy.findDirectoryByPath(dir.path)
-      delete foundDir.created_at
       should(foundDir).have.properties(dir)
 
       const foundSubdir = await remoteCozy.findDirectoryByPath(subdir.path)
-      delete foundSubdir.created_at
       should(foundSubdir).have.properties(subdir)
     })
 
@@ -325,11 +325,14 @@ describe('RemoteCozy', function() {
   describe('findOrCreateDirectoryByPath', () => {
     it('resolves with the exisisting directory if any', async function() {
       const root = await remoteCozy.findDirectoryByPath('/')
+      delete root.cozyMetadata
       const dir = await builders.remoteDir().create()
+      delete dir.cozyMetadata
       const subdir = await builders
         .remoteDir()
         .inDir(dir)
         .create()
+      delete subdir.cozyMetadata
 
       let result = await remoteCozy.findOrCreateDirectoryByPath(root.path)
       should(result).have.properties(root)
