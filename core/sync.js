@@ -493,15 +493,17 @@ class Sync {
   ) {
     const { path } = change.doc
     if (err.code === 'ENOSPC') {
-      log.error({ path, err, change })
+      log.error({ path, err, change }, 'No more disk space')
       throw new Error('No more disk space')
     } else if (err.status === 412) {
       log.warn({ path, err, change }, 'Sync error 412 needs Merge')
       change.doc.errors = MAX_SYNC_ATTEMPTS
       return this.updateErrors(change, sideName)
     } else if (err.status === 413) {
-      log.error({ path, err, change })
+      log.error({ path, err, change }, 'Cozy is full')
       throw new Error('Cozy is full')
+    } else {
+      log.error({ path, err, change }, 'Unknown sync error')
     }
     try {
       await this.diskUsage()
