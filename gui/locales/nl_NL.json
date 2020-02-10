@@ -129,6 +129,7 @@
   "InvalidConfiguration The client configuration is invalid": "De clientconfiguratie is onjuist",
   "InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc": "Log uit en probeer het opnieuw, of neem contact met ons op: contact@cozycloud.cc",
   "Notes We could not find the following note on your Cozy:": "We could not find the following note on your Cozy:",
+  "MarkdownViewer Why do I see this?": "Waarom krijg ik dit te zien?",
   "Password Login": "Inloggen",
   "Password Password": "Wachtwoord",
   "Password Wrong cozy address?": "Verkeerd Cozy-adres?",

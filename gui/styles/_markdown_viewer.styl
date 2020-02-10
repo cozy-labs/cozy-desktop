@@ -1,0 +1,110 @@
+black = #000
+chablis = #fff2f2
+charcoalGrey = #32363f
+coolGrey = #95999d
+paleGrey = #f5f6f7
+pomegranate = #f52d2d
+
+bannerHeight = 6rem
+.banner
+  position: fixed
+  top: 0
+  width: 100%
+  min-height: bannerHeight
+  padding: 1rem 1.5rem
+  color: black
+  font-size: 1rem
+  line-height: 1.5
+
+  & + *
+    margin-top: bannerHeight
+    transition: margin-top 0.5s ease-out
+
+.banner--closed
+  display: none
+
+  & + *
+    margin-top: 0
+
+@css {
+  .banner {
+    box-sizing: border-box;
+    box-shadow: 0 4px 16px 0 rgba(0, 0, 0, 0.08), 0 2px 4px 0 rgba(50, 54, 63, 0.08);
+  }
+}
+
+.banner__main
+  padding-left: 2rem
+
+  &:before
+    position: absolute
+    left: 1rem
+    font-size: 2rem
+    line-height: 1
+
+    .banner--error &
+      content: '\2755'
+
+    .banner--info &
+      content: 'ⓘ'
+
+.banner__main-title
+  display: block
+  font-size: 0.8rem
+  line-height: 1rem
+
+.banner__error-title
+  display: block
+  font-weight: bold
+  line-height: 1rem
+
+.banner__error-details
+  margin: .5rem 0
+  line-height: 1
+  color: charcoalGrey
+
+.banner--error
+  background-color: chablis
+
+  .banner__main
+    color: pomegranate
+
+.banner--info
+  background-color: paleGrey
+
+  .banner__main
+    color: charcoalGrey
+
+.banner__close
+  position: fixed
+  top: 0
+  right: 0
+  padding: 1rem
+  width: 2rem
+  height: 2rem
+  font-size: 2rem
+  line-height: 1
+  text-align: center
+  color: coolGrey
+  cursor: pointer
+
+.markdown-viewer
+  padding: 1rem 1.5rem
+  white-space: pre-line
+  overflow: auto
+
+  h1
+    font-size: 1.8rem
+
+  h1, h2, h3, h4, h5, h6
+    font-weight: 500
+
+.markdown-viewer__filename
+  height: 3rem
+  margin-bottom: 2rem
+  text-align: center
+
+  h1
+    font-size: 2rem
+    line-height: 1.2
+    font-weight: 900

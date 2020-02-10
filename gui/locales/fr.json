@@ -129,6 +129,7 @@
   "InvalidConfiguration The client configuration is invalid": "La configuration du client est invalide",
   "InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc": "Veuillez vous déconnecter et réinitialiser votre client  ou contactez nous sur contact@cozycloud.cc",
   "Notes We could not find the following note on your Cozy:": "Nous n'avons pas trouvé la note suivante sur votre Cozy :",
+  "MarkdownViewer Why do I see this?": "Pourquoi ce mode d'affichage ?",
   "Password Login": "Se connecter",
   "Password Password": "Mot de passe",
   "Password Wrong cozy address?": "Mauvaise adresse Cozy ?",
