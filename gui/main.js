@@ -143,8 +143,9 @@ const showInvalidConfigError = () => {
 }
 
 const showMigrationError = (err /*: Error */) => {
-  const errorDetails = [`${err.name}:`]
-  errorDetails.concat(err.errors.map(pouchErr => pouchErr.toString()))
+  const errorDetails = [`${err.name}:`].concat(
+    err.errors.map(pouchErr => pouchErr.toString())
+  )
 
   const options = {
     type: 'error',
