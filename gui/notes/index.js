@@ -86,20 +86,26 @@ const computeNoteURL = async (
   })
 }
 
+const getCozyClient = async (desktop /*: App */) /*: CozyClient */ => {
+  await desktop.remote.remoteCozy.client.authorize()
+  return await CozyClient.fromOldOAuthClient(desktop.remote.remoteCozy.client)
+}
+
 const openNote = async (
   filePath /*: string */,
   { shell, desktop } /*: { shell: Shell, desktop: App } */
 ) => {
   try {
     let note = await localDoc(filePath, desktop)
-    if (!note.cozyMetadata) {
-      note = metadata.fromRemoteDoc(await remoteDoc(note, desktop))
+    log.info({ note }, 'note object')
+
+    const client = await getCozyClient(desktop)
+    if (!client) {
+      throw new UnreachableError({
+        cozyURL: desktop.config.cozyUrl
+      })
     }
 
-    log.info({ note }, 'note object')
-    const client = await CozyClient.fromOldOAuthClient(
-      desktop.remote.remoteCozy.client
-    )
     const noteURL = await computeNoteURL(note.remote._id, client)
     log.info({ noteURL }, 'computed url')
     shell.openExternal(noteURL)
