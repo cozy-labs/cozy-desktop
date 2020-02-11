@@ -207,7 +207,7 @@ describe('gui/notes/index', () => {
       })
 
       it('points to the public notes view', async function() {
-        should(await computeNoteURL(myNoteId, client)).containEql('public')
+        should(await computeNoteURL(myNoteId, client)).containEql('public/')
       })
 
       it('includes the appropriate share code', async function() {
