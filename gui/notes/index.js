@@ -74,7 +74,7 @@ const computeNoteURL = async (
   if (sharecode) searchParams.push(['sharecode', sharecode])
   if (public_name) searchParams.push(['username', public_name])
 
-  const pathname = sharecode ? '/public' : ''
+  const pathname = sharecode ? '/public/' : ''
 
   return generateWebLink({
     cozyUrl: `${protocol}://${instance}`,
