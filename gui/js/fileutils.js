@@ -12,6 +12,8 @@ module.exports.selectIcon = info => {
     return 'pdf'
   } else if (info.mime === 'application/x-binary') {
     return 'binary'
+  } else if (info.mime === 'text/vnd.cozy.note+markdown') {
+    return 'cozy-note'
   } else if (!info.mime) {
     return 'file'
   } else if (info.mime.match(/[/-][bg]?zip2?$/)) {
