@@ -3,6 +3,6 @@
   <mime-type type="text/vnd.cozy.note+markdown">
     <glob pattern="*.cozy-note"/>
     <comment>Cozy Note markdown export</comment>
-    <icon name="x-office-document" />
+    <generic-icon name="text-x-cozy-note" />
   </mime-type>
 </mime-info>

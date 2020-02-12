@@ -71,3 +71,5 @@ extraResources:
       - '**/*'
   - from: 'build/vnd.cozy.note+markdown.xml'
     to: 'vnd.cozy.note+markdown.xml'
+  - from: 'build/text-x-cozy-note.svg'
+    to: 'text-x-cozy-note.svg'

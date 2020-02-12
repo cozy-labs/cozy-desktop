@@ -5,9 +5,12 @@
 
 APP_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 RESOURCES_DIR="$APP_DIR/resources"
+ICONS_DATABASE_DIR="$HOME/.local/share/icons/hicolor"
 DESKTOP_DATABASE_DIR="$HOME/.local/share/applications"
 MIME_DATABASE_DIR="$HOME/.local/share/mime"
+CUSTOM_ICON_DIR="$ICONS_DATABASE_DIR/scalable/mimetypes"
 CUSTOM_MIME_DIR="$MIME_DATABASE_DIR/packages"
+COZY_NOTE_MIME_TYPE_ICON_FILENAME="text-x-cozy-note.svg"
 COZY_NOTE_MIME_TYPE_DECLARATION_FILENAME="vnd.cozy.note+markdown.xml"
 
 function isCozyNoteMimeTypeDeclared() {
@@ -15,6 +18,15 @@ function isCozyNoteMimeTypeDeclared() {
     [[ -f "$CUSTOM_MIME_DIR/$COZY_NOTE_MIME_TYPE_DECLARATION_FILENAME" ]] && return
 
     false
+}
+
+function copyCozyNoteMimeTypeIcon() {
+    # make sure the `scalable` mimetypes folder exists
+    mkdir -p "$CUSTOM_ICON_DIR"
+    # copy our custom icon file
+    cp "$RESOURCES_DIR/$COZY_NOTE_MIME_TYPE_ICON_FILENAME" "$CUSTOM_ICON_DIR/$COZY_NOTE_MIME_TYPE_ICON_FILENAME"
+    # rebuild the local icons cache with force (-f) and ignore them index (-t) options
+    gtk-update-icon-cache -f -t "$ICONS_DATABASE_DIR"
 }
 
 function declareCozyNoteMimeType() {
@@ -35,6 +47,7 @@ function declareCozyNoteMimeType() {
 # To avoid overwriting modifications made by the user to the type once declared,
 # we don't overwrite the file if it exists.
 if ! isCozyNoteMimeTypeDeclared; then
+    copyCozyNoteMimeTypeIcon
     declareCozyNoteMimeType
 fi
 
