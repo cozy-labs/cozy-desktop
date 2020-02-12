@@ -22,6 +22,7 @@ const TrayWM = require('./js/tray.window.js')
 const UpdaterWM = require('./js/updater.window.js')
 const HelpWM = require('./js/help.window.js')
 const OnboardingWM = require('./js/onboarding.window.js')
+const MarkdownViewerWindow = require('./js/markdown-viewer.window.js')
 
 const { selectIcon } = require('./js/fileutils')
 const { buildAppMenu } = require('./js/appmenu')
@@ -422,35 +423,73 @@ const startSync = async () => {
 const dumbhash = k =>
   k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
 
+const openMarkdownViewer = (filename, content, banner = null) => {
+  return new Promise(resolve => {
+    let viewerWindow = new MarkdownViewerWindow(app, desktop)
+    viewerWindow
+      .show()
+      .then(() => viewerWindow.loadContent(filename, content, banner))
+    viewerWindow.on('closed', () => {
+      viewerWindow = null
+      resolve()
+    })
+  })
+}
+
 const openNote = async filePath => {
   if (!(await fse.pathExists(filePath))) return false
 
   try {
     await notes.openNote(filePath, { shell, desktop })
   } catch (err) {
-    switch (err.name) {
-      case 'CozyDocumentMissingError':
-        dialog.showMessageBox(null, {
-          type: 'error',
-          message: translate(
-            'Notes We could not find the following note on your Cozy:'
-          ),
-          detail: err.doc.name,
-          buttons: [translate('AppMenu Close')]
-        })
-        return true
-      case 'UnreachableError':
-        dialog.showMessageBox(null, {
-          type: 'error',
-          message: translate('Error We cannot reach your Cozy.'),
-          details: translate(
-            'Error Is your internet connexion working? Try again later.'
-          ),
-          buttons: [translate('AppMenu Close')]
-        })
-        return true
+    try {
+      const content = await fse.readFile(filePath, 'utf8')
+      let banner
+      switch (err.name) {
+        case 'CozyDocumentMissingError':
+          banner = {
+            level: 'error',
+            title: translate('Error This note could not be found'),
+            details: translate(
+              "Error Check that the note still exists either on your Cozy or its owner's." +
+                ' This could also mean that the note is out of sync.'
+            )
+          }
+          break
+        case 'UnreachableError':
+          banner = {
+            level: 'info',
+            title: translate('Error Your Cozy is unreachable'),
+            details: translate(
+              'Error Are you connected to the Internet?' +
+                ' You can nevertheless read the content of your note below in degraded mode.'
+            )
+          }
+          break
+        default:
+          banner = {
+            level: 'error',
+            title: translate('Error Unexpected error'),
+            details: `${err.name}: ${err.message}`
+          }
+      }
+      await openMarkdownViewer(path.basename(filePath), content, banner)
+      return true
+    } catch (err) {
+      log.error(
+        { err, path: filePath, filePath },
+        'Could not display markdown content of note'
+      )
+
+      dialog.showMessageBox(null, {
+        type: 'error',
+        message: translate('Error Unexpected error'),
+        details: `${err.name}: ${err.message}`,
+        buttons: [translate('AppMenu Close')]
+      })
+
+      return false
     }
-    return false
   }
   return true
 }

@@ -104,7 +104,10 @@ module.exports = class WindowManager {
 
   create() {
     this.log.debug('create')
-    const opts = this.windowOptions()
+    const opts = {
+      indexPath: path.resolve(__dirname, '..', 'index.html'),
+      ...this.windowOptions()
+    }
     opts.webPreferences = {
       ...opts.webPreferences,
       nodeIntegration: true
@@ -178,8 +181,7 @@ module.exports = class WindowManager {
       }
     }).catch(err => log.error(err))
 
-    let indexPath = path.resolve(__dirname, '..', 'index.html')
-    this.win.loadURL(`file://${indexPath}${this.hash()}`)
+    this.win.loadURL(`file://${opts.indexPath}${this.hash()}`)
 
     // devTools
     if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {

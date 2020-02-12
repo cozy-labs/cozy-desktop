@@ -15,6 +15,8 @@ files:
 - gui/ports.js
 - gui/scripts/**
 - package.json
+- gui/markdown-viewer.html
+- gui/markdown-viewer.js
 forceCodeSigning: true
 afterPack: './build/afterPackHook.js'
 afterSign: './build/afterSignHook.js'
