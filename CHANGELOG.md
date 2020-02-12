@@ -1,5 +1,37 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.19.0-beta.1 - 2020-02-12
+
+Improvements for all users:
+
+- A new Cozy Notes application was released recently, allowing you to create
+  `cozy-note` documents. Those are automatically exported to a markdown format
+  and stored in your Drive so that it can be synchronized with all your devices.
+  Those files cannot be modified directly as it would break their format. To
+  allow you to easily open and modify them we've set Cozy Desktop as the default
+  application to open them. Opening a `cozy-note` file locally with Cozy Desktop
+  installed (or run at least once on Linux) will open in the Cozy Notes web
+  application in your browser even if it's a note that was shared with you. If
+  you're not connected to the Internet or we cannot find the note on its owner's
+  Cozy, we'll show its content in a downgraded rendered markdown form.
+
+Improvements for MacOS users:
+
+- MacOS users who synchronize a folder on an HFS+ volume could see errors by
+  adding files with accentuated names via Cozy Drive Web to a folder with an
+  accentuated name that was created on their local volume. This is because HFS+
+  volumes automatically rename files and folders with utf-8 characters so that
+  they follow the NFD norm while most of the time those are originally follow
+  the NFC norm. We were expecting the whole path to follow the same norm but in
+  this situation, the remotely added files were not following the same norm as
+  their parent folder and we would wrongly view this as a movement.
+  We're now dealing with each part of a file or folder path separately so that
+  we can manage different utf-8 norms.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.18.0 - 2020-01-17
 
 Improvements for all users:
