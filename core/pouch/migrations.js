@@ -69,6 +69,26 @@ const migrations /*: Migration[] */ = [
         return doc
       })
     }
+  },
+  {
+    baseSchemaVersion: 1,
+    targetSchemaVersion: 2,
+    description: 'Removing overwrite attribute of synced documents',
+    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.filter(
+        doc =>
+          doc.overwrite &&
+          doc.sides &&
+          doc.sides.target === doc.sides.local &&
+          doc.sides.target === doc.sides.remote
+      )
+    },
+    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.map(doc => {
+        if (doc.overwrite) delete doc.overwrite
+        return doc
+      })
+    }
   }
 ]
 

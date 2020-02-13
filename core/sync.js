@@ -319,7 +319,11 @@ class Sync {
         }
       } else {
         await this.applyDoc(doc, side, sideName, rev)
+        // Clean up documents so that we don't mistakenly take action based on
+        // previous changes and keep our Pouch documents as small as possible
+        // and especially avoid deep nesting levels.
         delete doc.moveFrom
+        delete doc.overwrite
       }
 
       log.trace({ path, seq }, `Applied change on ${sideName} side`)
