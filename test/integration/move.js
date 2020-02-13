@@ -423,6 +423,159 @@ describe('Move', () => {
       ])
     })
 
+    describe('with synced file update', () => {
+      let file
+      beforeEach(async () => {
+        file = await cozy.files.create('initial file content', {
+          name: 'file',
+          dirID: dir._id
+        })
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+
+        await cozy.files.updateById(file._id, 'updated file content', {})
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+      })
+
+      it('local', async () => {
+        should(await helpers.local.tree()).deepEqual([
+          'parent/',
+          'parent/dst/',
+          'parent/src/',
+          'parent/src/dir/',
+          'parent/src/dir/empty-subdir/',
+          'parent/src/dir/file',
+          'parent/src/dir/subdir/',
+          'parent/src/dir/subdir/file'
+        ])
+        await helpers.local.syncDir.rename('parent/src/dir/', 'dir2')
+        await helpers.local.scan()
+        await helpers.syncAll()
+
+        should(await helpers.docByPath('parent/src/dir2/file')).match({
+          remote: { _id: file._id }
+        })
+        should(await helpers.remote.readFile('parent/src/dir2/file')).eql(
+          'updated file content'
+        )
+        should(await helpers.local.readFile('parent/src/dir2/file')).eql(
+          'updated file content'
+        )
+      })
+
+      it('remote', async () => {
+        should(await helpers.local.tree()).deepEqual([
+          'parent/',
+          'parent/dst/',
+          'parent/src/',
+          'parent/src/dir/',
+          'parent/src/dir/empty-subdir/',
+          'parent/src/dir/file',
+          'parent/src/dir/subdir/',
+          'parent/src/dir/subdir/file'
+        ])
+        const was = await pouch.byRemoteIdAsync(dir._id)
+        await helpers._remote.moveFolderAsync(
+          {
+            ...was,
+            path: path.normalize('parent/src/dir2')
+          },
+          was
+        )
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+
+        should(await helpers.docByPath('parent/src/dir2/file')).match({
+          remote: { _id: file._id }
+        })
+        should(await helpers.remote.readFile('parent/src/dir2/file')).eql(
+          'updated file content'
+        )
+        should(await helpers.local.readFile('parent/src/dir2/file')).eql(
+          'updated file content'
+        )
+      })
+    })
+
+    describe('with unsynced file update', () => {
+      let file
+      beforeEach(async () => {
+        file = await cozy.files.create('initial file content', {
+          name: 'file',
+          dirID: dir._id
+        })
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+      })
+
+      it('local', async () => {
+        should(await helpers.local.tree()).deepEqual([
+          'parent/',
+          'parent/dst/',
+          'parent/src/',
+          'parent/src/dir/',
+          'parent/src/dir/empty-subdir/',
+          'parent/src/dir/file',
+          'parent/src/dir/subdir/',
+          'parent/src/dir/subdir/file'
+        ])
+        await helpers.local.syncDir.outputFile(
+          'parent/src/dir/file',
+          'updated file content'
+        )
+        await helpers.local.scan()
+        await helpers.local.syncDir.rename('parent/src/dir/', 'dir2')
+        await helpers.local.scan()
+        await helpers.syncAll()
+
+        should(await helpers.docByPath('parent/src/dir2/file')).match({
+          remote: { _id: file._id }
+        })
+        should(await helpers.remote.readFile('parent/src/dir2/file')).eql(
+          'updated file content'
+        )
+        should(await helpers.local.readFile('parent/src/dir2/file')).eql(
+          'updated file content'
+        )
+      })
+
+      it('remote', async () => {
+        should(await helpers.local.tree()).deepEqual([
+          'parent/',
+          'parent/dst/',
+          'parent/src/',
+          'parent/src/dir/',
+          'parent/src/dir/empty-subdir/',
+          'parent/src/dir/file',
+          'parent/src/dir/subdir/',
+          'parent/src/dir/subdir/file'
+        ])
+        await cozy.files.updateById(file._id, 'updated file content', {})
+        await helpers.remote.pullChanges()
+        const was = await pouch.byRemoteIdAsync(dir._id)
+        await helpers._remote.moveFolderAsync(
+          {
+            ...was,
+            path: path.normalize('parent/src/dir2')
+          },
+          was
+        )
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+
+        should(await helpers.docByPath('parent/src/dir2/file')).match({
+          remote: { _id: file._id }
+        })
+        should(await helpers.remote.readFile('parent/src/dir2/file')).eql(
+          'updated file content'
+        )
+        should(await helpers.local.readFile('parent/src/dir2/file')).eql(
+          'updated file content'
+        )
+      })
+    })
+
     describe('with unsynced file', () => {
       beforeEach(async () => {
         await helpers.local.syncDir.ensureDir('parent/src/dir')

@@ -494,6 +494,10 @@ class Merge {
       let dst = _.cloneDeep(doc)
       dst._id = makeDestinationID(doc)
       dst.path = doc.path.replace(was.path, folder.path)
+      // If the source needs to be overwritten, we'll take care of it during
+      // Sync while it does not say anything about the existence of a document
+      // at the destination.
+      if (dst.overwrite) delete dst.overwrite
 
       const singleSide = metadata.detectSingleSide(src)
       if (singleSide) {
