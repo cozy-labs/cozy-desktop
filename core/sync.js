@@ -319,7 +319,11 @@ class Sync {
         }
       } else {
         await this.applyDoc(doc, side, sideName, rev)
+        // Clean up documents so that we don't mistakenly take action based on
+        // previous changes and keep our Pouch documents as small as possible
+        // and especially avoid deep nesting levels.
         delete doc.moveFrom
+        delete doc.overwrite
       }
 
       log.trace({ path, seq }, `Applied change on ${sideName} side`)
@@ -394,7 +398,10 @@ class Sync {
         await this.doMove(side, doc, from)
       }
       delete doc.moveFrom // the move succeeded, delete moveFrom before attempting overwrite
-      if (!metadata.sameBinary(from, doc)) {
+      if (
+        !metadata.sameBinary(from, doc) ||
+        (from.overwrite && !metadata.sameBinary(from.overwrite, doc))
+      ) {
         await side.overwriteFileAsync(doc, doc) // move & update
       }
     } else if (doc._deleted) {
