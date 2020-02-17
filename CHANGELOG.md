@@ -1,5 +1,27 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.19.0-beta.2 - 2020-02-17
+
+Improvements for all users:
+
+- A regression was introduced in version 3.18.0 which leads to errors when
+  moving files after they've been updated. From what we've seen the
+  modifications are not lost and the file ends up at the expected location but
+  this could be the base for issues further down the road.
+  We've made sure that the regression was fixed and added a data migration to do
+  some cleanup in your local databases.
+- The first beta version of v3.19.0 changed the order in which we initialize the
+  different parts of the application to be able to lookup notes and open them
+  without starting the file synchronization process. This change unexpectedly
+  prevented users to go through the on-boarding process and the end to start the
+  application if the client was not already connected to their Cozy.
+  We've reorganized the initial steps so that they're applied in order even when
+  a client configuration does not exist yet.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.19.0-beta.1 - 2020-02-12
 
 Improvements for all users:
