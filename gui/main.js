@@ -76,7 +76,44 @@ const toggleWindow = bounds => {
   else showWindow(bounds)
 }
 
-const startApp = () => {
+const setupDesktop = async () => {
+  try {
+    await desktop.setup()
+    desktopIsReady()
+
+    // We do it here since Sentry's setup happens in `desktop.setup()`
+    if (process.platform === 'win32') {
+      winRegistry.removeOldUninstallKey().catch(err => {
+        if (err instanceof winRegistry.RegeditError) {
+          log.error(
+            { err, sentry: true },
+            'Failed to remove uninstall registry key'
+          )
+        }
+      })
+    }
+  } catch (err) {
+    log.fatal({ err }, 'Could not setup app')
+
+    desktopIsKO(err)
+
+    if (err instanceof config.InvalidConfigError) {
+      showInvalidConfigError()
+    } else if (err instanceof migrations.MigrationFailedError) {
+      showMigrationError(err)
+    } else {
+      dialog.showMessageBox(null, {
+        type: 'error',
+        message: err.message,
+        buttons: [translate('AppMenu Close')]
+      })
+    }
+    app.quit()
+    return
+  }
+}
+
+const startApp = async () => {
   if (!desktop.config.syncPath) {
     onboardingWindow.show()
     // registration is done, but we need a syncPath
@@ -84,6 +121,7 @@ const startApp = () => {
       onboardingWindow.jumpToSyncPath()
     }
   } else {
+    await setupDesktop()
     startSync()
   }
 }
@@ -574,50 +612,22 @@ app.on('ready', async () => {
       } else throw err
     }
 
-    try {
-      await desktop.setup()
-      desktopIsReady()
-
-      // We do it here since Sentry's setup happens in `desktop.setup()`
-      if (process.platform === 'win32') {
-        winRegistry.removeOldUninstallKey().catch(err => {
-          if (err instanceof winRegistry.RegeditError) {
-            log.error(
-              { err, sentry: true },
-              'Failed to remove uninstall registry key'
-            )
-          }
-        })
-      }
-    } catch (err) {
-      log.fatal({ err }, 'Could not setup app')
-
-      desktopIsKO(err)
-
-      if (err instanceof config.InvalidConfigError) {
-        showInvalidConfigError()
-      } else if (err instanceof migrations.MigrationFailedError) {
-        showMigrationError(err)
-      } else {
-        dialog.showMessageBox(null, {
-          type: 'error',
-          message: err.message,
-          buttons: [translate('AppMenu Close')]
-        })
-      }
-      app.quit()
-      return
-    }
-
     if (process.argv && process.argv.length > 2) {
-      const { argv } = process
-      const filePath = argv[argv.length - 1]
-      log.info({ filePath }, 'main instance invoked with arguments')
+      // We need a valid config to start the App and open the requested note.
+      // We assume users won't have notes they want to open without a connected
+      // client.
+      if (desktop.config.syncPath) {
+        await setupDesktop()
 
-      // If we found a note to open, stop here. Otherwise, start sync app.
-      if (await openNote(filePath)) {
-        app.exit()
-        return
+        const { argv } = process
+        const filePath = argv[argv.length - 1]
+        log.info({ filePath }, 'main instance invoked with arguments')
+
+        // If we found a note to open, stop here. Otherwise, start sync app.
+        if (await openNote(filePath)) {
+          app.exit()
+          return
+        }
       }
     }
 
@@ -629,7 +639,8 @@ app.on('ready', async () => {
     helpWindow = new HelpWM(app, desktop)
     log.trace('Setting up onboarding WM...')
     onboardingWindow = new OnboardingWM(app, desktop)
-    onboardingWindow.onOnboardingDone(() => {
+    onboardingWindow.onOnboardingDone(async () => {
+      await setupDesktop()
       onboardingWindow.hide()
       trayWindow.show().then(() => startSync())
     })
