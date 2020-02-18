@@ -324,8 +324,12 @@ class App {
   }
 
   // Stop the synchronisation
-  stopSync() {
-    return this.sync && this.sync.stop()
+  stopSync() /*: Promise<void> */ {
+    if (this.sync) {
+      return this.sync.stop()
+    } else {
+      return Promise.resolve()
+    }
   }
 
   async setup() {

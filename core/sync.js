@@ -165,7 +165,7 @@ class Sync {
   }
 
   // Stop the synchronization
-  async stop() {
+  async stop() /*: Promise<void> */ {
     if (this.started) await this.started
     log.info('Stopping Sync...')
     this.stopRequested = true

@@ -167,6 +167,32 @@ describe('App', function() {
     }
   })
 
+  describe('stopSync', () => {
+    let app
+    beforeEach('create app', function() {
+      configHelpers.createConfig.call(this)
+      configHelpers.registerClient.call(this)
+      this.config.persist() // the config helper does not persist it
+      app = new App(this.basePath)
+    })
+
+    context('when we have an instanciated Sync', () => {
+      beforeEach('instanciate app', function() {
+        app.instanciate()
+      })
+
+      it('returns a Promise', () => {
+        should(app.stopSync()).be.a.Promise()
+      })
+    })
+
+    context('when we do not have an instanciated Sync', () => {
+      it('returns a Promise', () => {
+        should(app.stopSync()).be.a.Promise()
+      })
+    })
+  })
+
   describe('clientInfo', () => {
     it('works when app is not configured', () => {
       const basePath = fse.mkdtempSync(path.join(os.tmpdir(), 'base-dir-'))
