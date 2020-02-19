@@ -1,5 +1,26 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.19.0-beta.3 - 2020-02-19
+
+Improvements for all users:
+
+- We introduced a regression around auto-updates with the opening of notes. The
+  application would not be restarted after the update was downloaded and
+  installed.
+  This is now fixed and updates are now fully applied again.
+- On macOS, opening a note while the application was already started and syncing
+  would close it and closing one of multiple markdown viewer windows would close
+  all of them. Also the synchronization process would be started even when
+  launching the app just to open a note.
+  The behavior is now the same as on the other two OSes. Opening a note while
+  the app is not started will not start the synchronization, opening it while
+  the app is started will not close it and closing one markdown viewer window
+  will not close all of them if more than one are opened.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.19.0-beta.2 - 2020-02-17
 
 Improvements for all users:
