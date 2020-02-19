@@ -567,6 +567,14 @@ app.on('second-instance', async (event, argv) => {
 
 /* macOS only.
  *
+ * This will be used to store promises that resolve once each open note request
+ * has been fulfilled either by displaying it in the browser or displaying the
+ * markdown viewer and closing the window.
+ */
+const openedNotes = []
+
+/* macOS only.
+ *
  * @see https://www.electronjs.org/docs/api/app?q=ope#event-open-file-macos
  *
  * Per the `electron` documentation, we should listen for this event as soon as
@@ -580,6 +588,8 @@ app.on('second-instance', async (event, argv) => {
 app.on('open-file', async (event, filePath) => {
   // If the app was invoked with a file path, `open-file` is triggered before
   // `ready`. This means the app is not ready at this time.
+  // Since we just want to open a note, not start the Sync, we'll want to quit
+  // the app when all opened notes will be closed.
   const noSync = openedNotes.length === 0 && !app.isReady()
   if (noSync) preventSyncStart()
 
@@ -592,8 +602,18 @@ app.on('open-file', async (event, filePath) => {
     return
   }
 
-  await openNote(filePath)
-  app.exit()
+  openedNotes.push(openNote(filePath))
+  if (await Promise.all(openedNotes)) {
+    if (noSync) {
+      log.info('all notes are closed. Quitting app')
+      app.quit()
+    }
+    return
+  }
+
+  // If note could not be opened, display the main window.
+  // Make sure it exists before trying to show it.
+  if (trayWindow) showWindow()
 })
 
 app.on('ready', async () => {
@@ -636,7 +656,7 @@ app.on('ready', async () => {
 
         // If we found a note to open, stop here. Otherwise, start sync app.
         if (await openNote(filePath)) {
-          app.exit()
+          app.quit()
           return
         }
       }
