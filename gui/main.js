@@ -64,6 +64,11 @@ const whenDesktopReady = new Promise((resolve, reject) => {
   desktopIsKO = reject
 })
 
+let shouldStartSync = true
+const preventSyncStart = () => {
+  shouldStartSync = false
+}
+
 const notificationsState = {
   revokedAlertShown: false,
   syncDirUnlinkedShown: false,
@@ -573,14 +578,20 @@ app.on('second-instance', async (event, argv) => {
  * be done.
  */
 app.on('open-file', async (event, filePath) => {
+  // If the app was invoked with a file path, `open-file` is triggered before
+  // `ready`. This means the app is not ready at this time.
+  const noSync = openedNotes.length === 0 && !app.isReady()
+  if (noSync) preventSyncStart()
+
+  log.info({ filePath }, 'open-file invoked')
+  event.preventDefault()
+
   try {
     await whenDesktopReady
   } catch (err) {
     return
   }
 
-  event.preventDefault()
-  log.info({ filePath }, 'open-file invoked')
   await openNote(filePath)
   app.exit()
 })
@@ -612,13 +623,13 @@ app.on('ready', async () => {
       } else throw err
     }
 
-    if (process.argv && process.argv.length > 2) {
-      // We need a valid config to start the App and open the requested note.
-      // We assume users won't have notes they want to open without a connected
-      // client.
-      if (desktop.config.syncPath) {
-        await setupDesktop()
+    // We need a valid config to start the App and open the requested note.
+    // We assume users won't have notes they want to open without a connected
+    // client.
+    if (desktop.config.syncPath) {
+      await setupDesktop()
 
+      if (process.argv && process.argv.length > 2) {
         const { argv } = process
         const filePath = argv[argv.length - 1]
         log.info({ filePath }, 'main instance invoked with arguments')
@@ -631,40 +642,42 @@ app.on('ready', async () => {
       }
     }
 
-    tray.init(app, toggleWindow)
-    lastFiles.init(desktop)
-    log.trace('Setting up tray WM...')
-    trayWindow = new TrayWM(app, desktop)
-    log.trace('Setting up help WM...')
-    helpWindow = new HelpWM(app, desktop)
-    log.trace('Setting up onboarding WM...')
-    onboardingWindow = new OnboardingWM(app, desktop)
-    onboardingWindow.onOnboardingDone(async () => {
-      await setupDesktop()
-      onboardingWindow.hide()
-      trayWindow.show().then(() => startSync())
-    })
-    if (app.isPackaged) {
-      log.trace('Setting up updater WM...')
-      updaterWindow = new UpdaterWM(app, desktop)
-      updaterWindow.onUpToDate(() => {
-        updaterWindow.hide()
-        startApp()
+    if (shouldStartSync) {
+      tray.init(app, toggleWindow)
+      lastFiles.init(desktop)
+      log.trace('Setting up tray WM...')
+      trayWindow = new TrayWM(app, desktop)
+      log.trace('Setting up help WM...')
+      helpWindow = new HelpWM(app, desktop)
+      log.trace('Setting up onboarding WM...')
+      onboardingWindow = new OnboardingWM(app, desktop)
+      onboardingWindow.onOnboardingDone(async () => {
+        await setupDesktop()
+        onboardingWindow.hide()
+        trayWindow.show().then(() => startSync())
       })
-      updaterWindow.checkForUpdates()
-      setInterval(() => {
+      if (app.isPackaged) {
+        log.trace('Setting up updater WM...')
+        updaterWindow = new UpdaterWM(app, desktop)
+        updaterWindow.onUpToDate(() => {
+          updaterWindow.hide()
+          startApp()
+        })
         updaterWindow.checkForUpdates()
-      }, DAILY)
-    } else {
-      startApp()
+        setInterval(() => {
+          updaterWindow.checkForUpdates()
+        }, DAILY)
+      } else {
+        startApp()
+      }
+
+      // Os X wants all application to have a menu
+      Menu.setApplicationMenu(buildAppMenu(app))
+
+      // On OS X it's common to re-create a window in the app when the
+      // dock icon is clicked and there are no other windows open.
+      app.on('activate', showWindow)
     }
-
-    // Os X wants all application to have a menu
-    Menu.setApplicationMenu(buildAppMenu(app))
-
-    // On OS X it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    app.on('activate', showWindow)
   })
 })
 
