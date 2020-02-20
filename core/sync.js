@@ -104,6 +104,7 @@ class Sync {
     this.started = new Promise(async (resolve, reject) => {
       if (this.stopRequested) {
         reject()
+        runningReject()
         return
       }
 
@@ -119,13 +120,14 @@ class Sync {
         await remoteStarted
 
         Promise.all([localRunning, remoteRunning]).catch(err => {
-          if (runningReject) runningReject(err)
+          throw err
         })
       } catch (err) {
         log.error({ err }, 'Could not start watchers')
         this.local.stop()
         this.remote.stop()
         reject(err)
+        runningReject(err)
       }
       resolve(true)
     })
@@ -166,15 +168,21 @@ class Sync {
 
   // Stop the synchronization
   async stop() /*: Promise<void> */ {
-    if (this.started) await this.started
+    try {
+      if (this.started) await this.started
+    } catch (err) {
+      log.error({ err }, 'started errored out during Sync stop')
+    }
     log.info('Stopping Sync...')
     this.stopRequested = true
     this.events.emit('stopRequested')
     const stopped = this.running || Promise.resolve()
-    stopped.then(() => {
+    try {
+      await stopped
       this.stopRequested = false
-    })
-    return stopped
+    } catch (err) {
+      log.error({ err }, 'running errored out during Sync stop')
+    }
   }
 
   // TODO: remove waitForNewChanges to .start while(true)
