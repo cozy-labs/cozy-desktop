@@ -31,6 +31,22 @@ onPlatforms(['linux', 'win32'], () => {
       producer = new Producer({ syncPath, ignore, events })
     })
 
+    describe('start()', () => {
+      context('on readdir error on dir', () => {
+        beforeEach(
+          'create content with missing read permission',
+          async function() {
+            await syncDir.makeTree(['dirA/fileA', 'dirB/fileB', 'dirC/fileC'])
+            await syncDir.chmod('dirB', 0o220)
+          }
+        )
+
+        it('should not reject', async function() {
+          await should(producer.start()).be.fulfilled()
+        })
+      })
+    })
+
     describe('scan()', () => {
       context('when a directory is ignored', () => {
         const ignoredDir = 'ignored-dir'
