@@ -126,6 +126,7 @@ class Producer {
   ) {
     const entries = []
     const fullPath = path.join(this.syncPath, relPath)
+
     for (const entry of await readdir(fullPath)) {
       try {
         const absPath = path.join(this.syncPath, relPath, entry)
@@ -152,7 +153,11 @@ class Producer {
 
     for (const entry of entries) {
       if (entry.stats && stater.isDirectory(entry.stats)) {
-        await this.scan(entry.path)
+        try {
+          await this.scan(entry.path)
+        } catch (err) {
+          log.error({ err, path: entry.path }, 'could not scan dir')
+        }
       }
     }
   }
