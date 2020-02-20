@@ -146,10 +146,12 @@ class AtomWatcher {
       this._runningReject = reject
     })
     await stepsInitialState(this.state, this)
-    this.producer.start()
-    const scanDone = new Promise(resolve => {
+    let rejectScan
+    const scanDone = new Promise((resolve, reject) => {
+      rejectScan = reject
       this.events.on('initial-scan-done', resolve)
     })
+    this.producer.start().catch(err => rejectScan(err))
     return scanDone
   }
 
