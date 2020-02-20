@@ -1,5 +1,35 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.19.0-beta.4 - 2020-02-20
+
+Improvements for all users:
+
+- We found out that revoking your device from the Connected Devices page in your
+  Cozy Settings would trigger an error in the Cozy Desktop application
+  preventing it from finishing the disconnection.
+  From now on, when you choose to disconnect the application following the
+  device revocation (i.e. choosing `Disconnect` in the modal window that shows
+  up when the application detects it's been revoked) will bring you back to the
+  on-boarding process so you can reconnect it if you want.
+  NB: On Windows, another issue is still preventing you from disconnecting the
+  application completely.
+
+Improvements for Linux and Windows users:
+
+- We found out that system errors triggered while trying to read the content of
+  one of your directories during the application start would not be caught and
+  would prevent the application from discovering all the files and directories
+  within your synced folder and thus prevent their synchronization. This would
+  also prevent the module that watches for changes on your Cozy from being
+  started so we were also missing remote changes in this situation.
+  We're now catching those errors and ignoring those that don't relate to the
+  synced directory itself. The content of those directories will not be
+  synchronized but the other directories and files will.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.19.0-beta.3 - 2020-02-19
 
 Improvements for all users:
