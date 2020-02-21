@@ -4,7 +4,7 @@
  */
 
 const path = require('path')
-const { default: CozyClient, generateWebLink } = require('cozy-client')
+const { default: CozyClient, models } = require('cozy-client')
 
 const metadata = require('../../core/metadata')
 const {
@@ -59,33 +59,6 @@ const remoteDoc = async (
   }
 }
 
-const computeNoteURL = async (
-  noteId /*: string */,
-  client /*: CozyClient */
-) /*: Promise<string> */ => {
-  const {
-    data: { note_id, subdomain, protocol, instance, sharecode, public_name }
-  } = await client
-    .getStackClient()
-    .collection('io.cozy.notes')
-    .fetchURL({ _id: noteId })
-
-  const searchParams = [['id', note_id]]
-  if (sharecode) searchParams.push(['sharecode', sharecode])
-  if (public_name) searchParams.push(['username', public_name])
-
-  const pathname = sharecode ? '/public/' : ''
-
-  return generateWebLink({
-    cozyUrl: `${protocol}://${instance}`,
-    searchParams,
-    pathname,
-    hash: `/n/${note_id}`,
-    slug: 'notes',
-    subDomainType: subdomain
-  })
-}
-
 const getCozyClient = async (desktop /*: App */) /*: CozyClient */ => {
   await desktop.remote.remoteCozy.client.authorize()
   return await CozyClient.fromOldOAuthClient(desktop.remote.remoteCozy.client)
@@ -106,7 +79,7 @@ const openNote = async (
       })
     }
 
-    const noteURL = await computeNoteURL(note.remote._id, client)
+    const noteURL = await models.note.fetchURL(client, { id: note.remote._id })
     log.info({ noteURL }, 'computed url')
     shell.openExternal(noteURL)
   } catch (err) {
@@ -129,4 +102,4 @@ const openNote = async (
   }
 }
 
-module.exports = { localDoc, remoteDoc, computeNoteURL, openNote }
+module.exports = { localDoc, remoteDoc, openNote }

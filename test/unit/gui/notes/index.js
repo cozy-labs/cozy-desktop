@@ -11,12 +11,7 @@ const cozyHelpers = require('../../../support/helpers/cozy')
 const { RemoteTestHelpers } = require('../../../support/helpers/remote')
 const Builders = require('../../../support/builders')
 
-const {
-  localDoc,
-  remoteDoc,
-  computeNoteURL,
-  openNote
-} = require('../../../../gui/notes')
+const { localDoc, remoteDoc, openNote } = require('../../../../gui/notes')
 const { CozyDocumentMissingError } = require('../../../../core/remote/errors')
 
 const cozy = cozyHelpers.cozy
@@ -124,110 +119,6 @@ describe('gui/notes/index', () => {
       await should(
         remoteDoc(doc, { config: this.config, remote: remoteHelpers.side })
       ).be.rejectedWith(CozyDocumentMissingError)
-    })
-  })
-
-  describe('computeNoteURL', () => {
-    const myName = 'alice'
-    const myNoteId = '1234'
-    const herNoteId = '2343829043232'
-    const sharecode = '84930290432'
-    const myCozy = 'alice.mycozy.cloud'
-    const herCozy = 'bob.other.domain'
-
-    const flat = instance => {
-      const parts = instance.split('.')
-      return `${parts[0]}-notes.${parts[1]}.${parts[2]}`
-    }
-    const nested = instance => `notes.${instance}`
-    const stubClient = (
-      { isMine, flat = true } /*: { isMine: boolean, flat?: boolean } */
-    ) => ({
-      getStackClient: () => ({
-        collection: docType => ({
-          fetchURL: async ({ _id }) => {
-            if (docType !== 'io.cozy.notes') throw new Error('wrong doctype')
-            return {
-              _id,
-              _type: 'io.cozy.notes.url',
-              id: _id,
-              type: 'io.cozy.notes.url',
-              data: {
-                note_id: isMine ? _id : herNoteId,
-                subdomain: flat ? 'flat' : 'nested',
-                protocol: 'https',
-                instance: isMine ? myCozy : herCozy,
-                sharecode: isMine ? undefined : sharecode,
-                public_name: myName
-              }
-            }
-          }
-        })
-      })
-    })
-
-    context('when the note is mine', () => {
-      const client = stubClient({ isMine: true, flat: true })
-
-      it('returns an url pointing to my cozy if the note is mine', async function() {
-        should(await computeNoteURL(myNoteId, client)).containEql(flat(myCozy))
-      })
-
-      it('does not point to the public notes view', async function() {
-        should(await computeNoteURL(myNoteId, client)).not.containEql('public')
-      })
-
-      it('does not include any share code', async function() {
-        should(await computeNoteURL(myNoteId, client)).not.containEql(
-          'sharecode'
-        )
-      })
-
-      it('uses my note id', async function() {
-        should(await computeNoteURL(myNoteId, client)).not.containEql(herNoteId)
-        should(await computeNoteURL(myNoteId, client)).containEql(
-          `id=${myNoteId}`
-        )
-      })
-
-      it('contains my user name', async function() {
-        should(await computeNoteURL(myNoteId, client)).containEql(
-          `username=${myName}`
-        )
-      })
-    })
-
-    context('when the note is not mine', () => {
-      const client = stubClient({ isMine: false, flat: false })
-
-      it('returns an url pointing to the cozy of the owner', async function() {
-        should(await computeNoteURL(myNoteId, client)).containEql(
-          nested(herCozy)
-        )
-      })
-
-      it('points to the public notes view', async function() {
-        should(await computeNoteURL(myNoteId, client)).containEql('public/')
-      })
-
-      it('includes the appropriate share code', async function() {
-        should(await computeNoteURL(myNoteId, client)).containEql(
-          `sharecode=${sharecode}`
-        )
-      })
-
-      it('uses the owner note id', async function() {
-        should(await computeNoteURL(myNoteId, client)).not.containEql(myNoteId)
-        should(await computeNoteURL(myNoteId, client)).containEql(
-          `id=${herNoteId}`
-        )
-      })
-
-      it('contains my user name', async function() {
-        should(await computeNoteURL(myNoteId, client)).containEql(
-          `username=${myName}`
-        )
-      })
     })
   })
 
