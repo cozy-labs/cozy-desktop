@@ -138,7 +138,7 @@
   "Password You don't have filled the password!": "Vous n’avez pas rempli le mot de passe !",
   "Password Your password for the cozy address:": "Le mot de passe pour cette adresse Cozy :",
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "Dans le cas contraire, contactez nous sur contact@cozycloud.cc",
-  "Revoked Log out": "Se déconnecter",
+  "Revoked Reconnect": "Reconnecter",
   "Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?": "La synchronisation avec votre Cozy est impossible, peut-être avez-vous révoqué cet ordinateur ?",
   "Revoked Try again later": "Réessayer plus tard",
   "Settings A new release is available": "Une nouvelle version est disponible",

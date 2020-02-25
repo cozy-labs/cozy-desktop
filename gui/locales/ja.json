@@ -138,7 +138,7 @@
   "Password You don't have filled the password!": "パスワードが入力されていません!",
   "Password Your password for the cozy address:": "cozy アドレスのパスワード:",
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "行っていない場合は contact@cozycloud.cc にご連絡ください",
-  "Revoked Log out": "ログアウト",
+  "Revoked Reconnect": "Reconnect",
   "Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?": "お使いの Cozy との同期が利用できません。このコンピュータを無効にしましたか?",
   "Revoked Try again later": "後でもう一度やり直してください",
   "Settings A new release is available": "新しいリリースが利用可能です",

@@ -138,7 +138,7 @@
   "Password You don't have filled the password!": "Je hebt geen wachtwoord ingevoerd!",
   "Password Your password for the cozy address:": "Je wachtwoord voor het Cozy-adres:",
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "Als dat niet het geval is, neem dan contact met ons op via contact@cozycloud.cc",
-  "Revoked Log out": "Uitloggen",
+  "Revoked Reconnect": "Reconnect",
   "Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?": "Cozy-synchronisatie is niet beschikbaar. Heb je de machtiging voor deze computer ingetrokken?",
   "Revoked Try again later": "Probeer het later opnieuw",
   "Settings A new release is available": "Er is een nieuwe versie beschikbaar",
