@@ -1,5 +1,64 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.19.0 - 2020-02-25
+
+Improvements for all users:
+
+- We found out that revoking your device from the Connected Devices page in your
+  Cozy Settings would trigger an error in the Cozy Desktop application
+  preventing it from finishing the disconnection.
+  From now on, when you choose to disconnect the application following the
+  device revocation (i.e. choosing `Disconnect` in the modal window that shows
+  up when the application detects it's been revoked) will bring you back to the
+  on-boarding process so you can reconnect it if you want.
+  NB: On Windows, another issue is still preventing you from disconnecting the
+  application completely.
+- A new Cozy Notes application was released recently, allowing you to create
+  `cozy-note` documents. Those are automatically exported to a markdown format
+  and stored in your Drive so that it can be synchronized with all your devices.
+  Those files cannot be modified directly as it would break their format. To
+  allow you to easily open and modify them we've set Cozy Desktop as the default
+  application to open them. Opening a `cozy-note` file locally with Cozy Desktop
+  installed (or run at least once on Linux) will open in the Cozy Notes web
+  application in your browser even if it's a note that was shared with you. If
+  you're not connected to the Internet or we cannot find the note on its owner's
+  Cozy, we'll show its content in a downgraded rendered markdown form.
+- A regression was introduced in version 3.18.0 which leads to errors when
+  moving files after they've been updated. From what we've seen the
+  modifications are not lost and the file ends up at the expected location but
+  this could be the base for issues further down the road.
+  We've made sure that the regression was fixed and added a data migration to do
+  some cleanup in your local databases.
+
+Improvements for MacOS users:
+
+- MacOS users who synchronize a folder on an HFS+ volume could see errors by
+  adding files with accentuated names via Cozy Drive Web to a folder with an
+  accentuated name that was created on their local volume. This is because HFS+
+  volumes automatically rename files and folders with utf-8 characters so that
+  they follow the NFD norm while most of the time those are originally follow
+  the NFC norm. We were expecting the whole path to follow the same norm but in
+  this situation, the remotely added files were not following the same norm as
+  their parent folder and we would wrongly view this as a movement.
+  We're now dealing with each part of a file or folder path separately so that
+  we can manage different utf-8 norms.
+
+Improvements for Linux and Windows users:
+
+- We found out that system errors triggered while trying to read the content of
+  one of your directories during the application start would not be caught and
+  would prevent the application from discovering all the files and directories
+  within your synced folder and thus prevent their synchronization. This would
+  also prevent the module that watches for changes on your Cozy from being
+  started so we were also missing remote changes in this situation.
+  We're now catching those errors and ignoring those that don't relate to the
+  synced directory itself. The content of those directories will not be
+  synchronized but the other directories and files will.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.19.0-beta.4 - 2020-02-20
 
 Improvements for all users:
