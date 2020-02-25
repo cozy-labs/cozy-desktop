@@ -222,7 +222,7 @@ const sendErrorToMainWindow = msg => {
         "Revoked In case you didn't, contact us at contact@cozycloud.cc"
       ),
       buttons: [
-        translate('Revoked Log out'),
+        translate('Revoked Reconnect'),
         translate('Revoked Try again later')
       ],
       defaultId: 1
