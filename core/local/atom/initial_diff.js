@@ -12,9 +12,9 @@
 const _ = require('lodash')
 const path = require('path')
 
-const { id } = require('../../metadata')
-const Channel = require('./channel')
+const { id, kind } = require('../../metadata')
 const logger = require('../../utils/logger')
+const Channel = require('./channel')
 
 /*::
 import type { Pouch } from '../../pouch'
@@ -332,8 +332,4 @@ function foundUntouchedFile(event, was) /*: boolean %checks */ {
     event.kind === 'file' &&
     eventUpdateTime(event) === docUpdateTime(was)
   )
-}
-
-function kind(doc /*: Metadata */) /*: EventKind */ {
-  return doc.docType === 'folder' ? 'directory' : doc.docType
 }
