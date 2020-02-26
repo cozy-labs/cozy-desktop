@@ -57,6 +57,7 @@ import type { RemoteDoc } from './remote/document'
 import type { Stats } from './local/stater'
 import type { Ignore } from './ignore'
 import type { SideName } from './side'
+import type { EventKind } from './local/atom/event'
 */
 
 const log = logger({
@@ -146,6 +147,7 @@ module.exports = {
   assignPlatformIncompatibilities,
   fromRemoteDoc,
   isFile,
+  kind,
   id,
   invalidPath,
   invariants,
@@ -224,6 +226,14 @@ function fromRemoteDoc(remoteDoc /*: RemoteDoc */) /*: Metadata */ {
 
 function isFile(doc /*: Metadata */) /*: bool */ {
   return doc.docType === 'file'
+}
+
+function kind(doc /*: Metadata */) /*: EventKind */ {
+  return doc.docType == null
+    ? 'file'
+    : doc.docType === 'folder'
+    ? 'directory'
+    : doc.docType
 }
 
 // Build an _id from the path for a case sensitive file system (Linux, BSD)

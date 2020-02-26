@@ -21,9 +21,8 @@ module.exports = {
 
 /** Fire a local-start event for every batch of events
  *
- * Arbitrarily assume event kind is file by default.
- *
- * Return a new Channel where new events with stats will be pushed.
+ * Return a new Channel where all events will be pushed after we've emitted a
+ * `local-start` event for each of them.
  */
 function loop(
   channel /*: Channel */,

@@ -11,9 +11,9 @@
 const _ = require('lodash')
 const path = require('path')
 
-const { id } = require('../../metadata')
-const stater = require('../stater')
+const { id, kind } = require('../../metadata')
 const logger = require('../../utils/logger')
+const stater = require('../stater')
 
 const STEP_NAME = 'addInfos'
 
@@ -27,9 +27,6 @@ import type { Metadata } from '../../metadata'
 import type Channel from './channel'
 import type { AtomEvent } from './event'
 */
-
-const kind = (doc /*: Metadata */) =>
-  doc.docType === 'folder' ? 'directory' : doc.docType
 
 module.exports = {
   STEP_NAME,
