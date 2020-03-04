@@ -1,14 +1,8 @@
 /* @flow */
 
-/*:: import type { Scenario } from '..' */
+/*:: import type { Scenario } from '../..' */
 
 module.exports = ({
-  side: 'local',
-  disabled: {
-    'atom/linux': 'Does not work with AtomWatcher yet.',
-    'atom/win32': 'Does not work with AtomWatcher yet.',
-    stopped: 'Does not work with AtomWatcher yet.'
-  },
   init: [
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'dst/dir/' },
@@ -39,10 +33,26 @@ module.exports = ({
       'dst/dir/subdir/subsub/',
       'src/'
     ],
-    // remoteTrash: [
-    //   'file',
-    //   'file (__cozy__:'
-    // ],
+    // When the overwrite happens while the client is turned off, we won't detect
+    // the files' deletion before the folder's movement so we won't trash them
+    // by themselves and will thus be trashed as part of the folder hierarchy.
+    remoteTrash: process.env.STOPPED_CLIENT
+      ? [
+          'dir/',
+          'dir/file',
+          'dir/file3',
+          'dir/subdir/',
+          'dir/subdir/file',
+          'dir/subdir/file5'
+        ]
+      : [
+          'dir/',
+          'dir/file',
+          'dir/subdir/',
+          'dir/subdir/file',
+          'file3',
+          'file5'
+        ],
     contents: {
       'dst/dir/file': 'overwriter',
       'dst/dir/subdir/file': 'sub-overwriter'
