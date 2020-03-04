@@ -468,21 +468,29 @@ class Merge {
       doc.remote = was.remote
     }
 
-    if (folder && !doc.overwrite && doc.path === folder.path) {
-      if (side === 'local' && !folder.sides.remote) {
-        doc.overwrite = folder
+    if (folder) {
+      // TODO: check if sameFolder?
+      if (doc.overwrite || metadata.isAtLeastUpToDate(side, folder)) {
+        // On macOS and Windows, two documents can share the same id with a
+        // different path.
+        // This means we'll see moves with both `folder` and `doc` sharing the
+        // same id when changing the folder name's case or encoding and in this
+        // situation we're not actually doing an overwriting move so we
+        // shouldn't reuse the existing `folder`'s rev nor overwrite it.
+        if (folder.path === doc.path) {
+          doc.overwrite = folder
+          doc._rev = folder._rev
+        }
+        await this.ensureParentExistAsync(side, doc)
+        return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
       } else {
         const dst = await this.resolveConflictAsync(side, doc, folder)
         return this.moveFolderRecursivelyAsync(side, dst, was, newRemoteRevs)
       }
+    } else {
+      await this.ensureParentExistAsync(side, doc)
+      return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
     }
-
-    if (folder && doc.overwrite) {
-      doc.overwrite = folder
-      doc._rev = folder._rev
-    }
-    await this.ensureParentExistAsync(side, doc)
-    return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
   }
 
   // Move a folder and all the things inside it
