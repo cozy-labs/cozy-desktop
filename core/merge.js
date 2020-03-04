@@ -390,18 +390,28 @@ class Merge {
         doc.remote = was.remote
       }
       move(side, was, doc)
-      if (file && metadata.sameFile(file, doc)) {
-        log.info({ path }, 'up to date (move)')
-        return null
-      } else if (file && !doc.overwrite && doc.path === file.path) {
-        const dst = await this.resolveConflictAsync(side, doc, file)
-        was.moveTo = dst._id
-        dst.sides = { target: 1, [side]: 1 }
-        return this.pouch.bulkDocs([was, dst])
-      } else if (file && doc.overwrite) {
-        doc._rev = file._rev
-        await this.ensureParentExistAsync(side, doc)
-        return this.pouch.bulkDocs([was, doc])
+      if (file) {
+        if (metadata.sameFile(file, doc)) {
+          log.info({ path }, 'up to date (move)')
+          return null
+        } else if (doc.overwrite) {
+          // On macOS and Windows, two documents can share the same id with a
+          // different path.
+          // This means we'll see moves with both `file` and `doc` sharing the
+          // same id when changing the file name's case or encoding and in this
+          // situation we're not actually doing an overwriting move so we
+          // shouldn't reuse the existing `file`'s rev nor overwrite it.
+          if (file.path === doc.path) {
+            doc._rev = file._rev
+          }
+          await this.ensureParentExistAsync(side, doc)
+          return this.pouch.bulkDocs([was, doc])
+        } else {
+          const dst = await this.resolveConflictAsync(side, doc, file)
+          was.moveTo = dst._id
+          dst.sides = { target: 1, [side]: 1 }
+          return this.pouch.bulkDocs([was, dst])
+        }
       } else {
         await this.ensureParentExistAsync(side, doc)
 
