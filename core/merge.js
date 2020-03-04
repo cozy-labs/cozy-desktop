@@ -546,6 +546,30 @@ class Merge {
         dst.incompatibilities = incompatibilities
       else delete dst.incompatibilities
       bulk.push(dst)
+
+      if (folder.overwrite) {
+        // If the overwriting folder has a deep hierarchy, there's a good chance
+        // we'll end up merging the movement of its child folders before we
+        // merge the movement of the folder itself.
+        // In this situation, the Sync would apply the movement of the children
+        // first as well and when we'll apply the overwriting movement of the
+        // folder, we'll lose its previously moved content.
+        // To avoid this, we'll update the moved children again to mark them as
+        // child movement and remove any `overwrite` markers since the overwrite
+        // will happen with their parent.
+        const dstChildren = await this.pouch.byRecursivePathAsync(folder._id)
+        for (const dstChild of dstChildren) {
+          if (
+            !bulk.find(doc => doc._id === dstChild._id) &&
+            metadata.outOfDateSide(dstChild) === otherSide(side)
+          ) {
+            metadata.markSide(side, dstChild, dstChild)
+            dstChild.moveFrom.childMove = true
+            if (dstChild.overwrite) delete dstChild.overwrite
+            bulk.push(dstChild)
+          }
+        }
+      }
     }
     return this.pouch.bulkDocs(bulk)
   }
