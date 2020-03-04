@@ -9,7 +9,6 @@ const glob = require('glob')
 const _ = require('lodash')
 const path = require('path')
 const crypto = require('crypto')
-const mergedirs = require('merge-dirs').default
 
 const stater = require('../../../core/local/stater')
 const metadata = require('../../../core/metadata')
@@ -179,6 +178,32 @@ const getInoAndFileId = async ({ path, fakeIno, trashed, useRealInodes }) => {
   }
 }
 
+const merge = async (srcPath, dstPath) => {
+  let srcStats, dstStats
+  try {
+    srcStats = await fse.stat(srcPath)
+    dstStats = await fse.stat(dstPath)
+  } catch (err) {
+    debug('stat', err)
+  }
+
+  if (!dstStats || dstStats.isFile()) {
+    await fse.rename(srcPath, dstPath)
+  } else if (srcStats && srcStats.isFile()) {
+    await fse.rmdir(dstPath, { recursive: true })
+    await fse.rename(srcPath, dstPath)
+  } else {
+    for (const entry of await fse.readdir(srcPath)) {
+      await merge(path.join(srcPath, entry), path.join(dstPath, entry))
+    }
+  }
+  try {
+    await fse.rmdir(srcPath)
+  } catch (err) {
+    debug('rmdir', err)
+  }
+}
+
 module.exports.init = async (
   scenario,
   pouch,
@@ -343,9 +368,7 @@ module.exports.runActions = (
       case 'mv':
         debug('- mv', action.force ? 'force' : '', action.src, action.dst)
         if (action.merge) {
-          // FIXME: Does this preserve inode ?
-          mergedirs(abspath(action.src), abspath(action.dst), 'overwrite')
-          return fse.remove(abspath(action.src))
+          return merge(abspath(action.src), abspath(action.dst))
         } else if (action.force) {
           return fse.move(abspath(action.src), abspath(action.dst), {
             overwrite: true
