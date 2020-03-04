@@ -394,7 +394,7 @@ class Merge {
         if (metadata.sameFile(file, doc)) {
           log.info({ path }, 'up to date (move)')
           return null
-        } else if (doc.overwrite) {
+        } else if (doc.overwrite || metadata.isAtLeastUpToDate(side, file)) {
           // On macOS and Windows, two documents can share the same id with a
           // different path.
           // This means we'll see moves with both `file` and `doc` sharing the
@@ -403,6 +403,13 @@ class Merge {
           // shouldn't reuse the existing `file`'s rev nor overwrite it.
           if (file.path === doc.path) {
             doc._rev = file._rev
+            doc.overwrite = file
+            if (side === 'local') {
+              doc.remote = file.remote
+            } else {
+              doc.ino = file.ino
+              if (file.fileid) doc.fileid = file.fileid
+            }
           }
           await this.ensureParentExistAsync(side, doc)
           return this.pouch.bulkDocs([was, doc])
