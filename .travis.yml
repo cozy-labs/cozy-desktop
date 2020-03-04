@@ -81,7 +81,10 @@ before_install: | # install cozy stack for integration test
       travis_retry docker run -d -p 5984:5984 --name couch apache/couchdb:2.2;
     fi
     if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-      travis_retry brew cask install https://raw.githubusercontent.com/Homebrew/homebrew-cask/master/Casks/apache-couchdb.rb;
+      wget https://dl.bintray.com/apache/couchdb/mac/2.3.1/Apache-CouchDB-2.3.1.zip
+      unzip Apache-CouchDB-2.3.1.zip
+      mv "Apache CouchDB.app" /Applications/
+      #travis_retry brew cask install https://raw.githubusercontent.com/Homebrew/homebrew-cask/master/Casks/apache-couchdb.rb;
       printf "\n[log]\nlevel = warn\n" >> /Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/etc/local.ini;
       ulimit -S -n 1024;
       (/Applications/Apache\ CouchDB.app/Contents/Resources/couchdbx-core/bin/couchdb >couchdb.log 2>&1 &);
