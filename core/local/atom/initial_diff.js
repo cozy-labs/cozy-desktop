@@ -88,6 +88,10 @@ async function initialState(
   // file/folder has been moved or renamed
   const byInode /*: Map<number|string, Metadata> */ = new Map()
   const docs /*: Metadata[] */ = await opts.pouch.allDocs()
+  // Make sure all paths are sorted in reverse path order so that missing
+  // children will be deleted before missing parents and folders that would not
+  // have any content are not trashed but completely deleted
+  docs.sort((a, b) => (a.path < b.path ? 1 : a.path > b.path ? -1 : 0))
   for (const doc of docs) {
     if (doc.ino != null) {
       // Process only files/dirs that were created locally or synchronized
