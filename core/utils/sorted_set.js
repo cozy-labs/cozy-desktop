@@ -27,13 +27,20 @@ class SortedSet /* ::<A> */ {
     this._values = []
   }
 
+  get size() {
+    return this._set.size
+  }
+
   has(value /*: A */) {
     return this._set.has(value)
   }
 
   add(value /*: A */) {
+    const prevSize = this.size
     this._set.add(value)
-    this._values.push(value)
+    if (this.size > prevSize) {
+      this._values.push(value)
+    }
     return this
   }
 
