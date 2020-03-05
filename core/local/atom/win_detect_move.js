@@ -55,8 +55,7 @@ type WinDetectMoveOptions = {
 module.exports = {
   forget,
   initialState,
-  loop,
-  previousPaths
+  loop
 }
 
 const areParentChildPaths = (p /*: string */, c /*: string */) /*: boolean */ =>
