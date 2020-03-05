@@ -116,7 +116,10 @@ class RemoteTestHelpers {
     const ellipsizeDate = opts.ellipsize
       ? conflictHelpers.ellipsizeDate
       : _.identity
-    return relPaths.sort().map(ellipsizeDate)
+    return relPaths
+      .sort()
+      .map(ellipsizeDate)
+      .map(p => p.replace(/\(__cozy__: \d+\)/, '(__cozy__: ...)'))
   }
 
   async treeWithoutTrash(
