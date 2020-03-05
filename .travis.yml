@@ -55,23 +55,23 @@ branches:
 jobs:
     fast_finish: true
     exclude:
-        - os: linux
+        - if: os = linux
           env: JOB=unit COZY_DESKTOP_FS=APFS
-        - os: linux
+        - if: os = linux
           env: JOB=scenarios COZY_DESKTOP_FS=APFS
-        - os: linux
+        - if: os = linux
           env: JOB=stopped_scenarios COZY_DESKTOP_FS=APFS
-        - os: linux
+        - if: os = linux
           env: JOB=dist COZY_DESKTOP_FS=APFS
-        - os: linux
+        - if: os = linux
           env: JOB=scenarios COZY_DESKTOP_FS=HFS+
-        - os: osx
+        - if: os = osx
           env: JOB=unit CC=gcc-8 CXX=g++-8
-        - os: osx
+        - if: os = osx
           env: JOB=scenarios CC=gcc-8 CXX=g++-8
-        - os: osx
+        - if: os = osx
           env: JOB=stopped_scenarios CC=gcc-8 CXX=g++-8
-        - os: osx
+        - if: os = osx
           env: JOB=dist CC=gcc-8 CXX=g++-8
 script: travis_wait ./dev/ci/script.sh
 
