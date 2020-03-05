@@ -400,18 +400,6 @@ describe('core/local/atom/initial_diff', () => {
 
       should(events).deepEqual([
         {
-          _id: bar._id,
-          action: 'deleted',
-          initialDiff: {
-            notFound: _.defaults(
-              { kind: kind(bar) },
-              _.pick(bar, ['path', 'md5sum', 'updated_at'])
-            )
-          },
-          kind: 'file',
-          path: bar.path
-        },
-        {
           _id: foo._id,
           action: 'deleted',
           initialDiff: {
@@ -422,6 +410,18 @@ describe('core/local/atom/initial_diff', () => {
           },
           kind: 'directory',
           path: foo.path
+        },
+        {
+          _id: bar._id,
+          action: 'deleted',
+          initialDiff: {
+            notFound: _.defaults(
+              { kind: kind(bar) },
+              _.pick(bar, ['path', 'md5sum', 'updated_at'])
+            )
+          },
+          kind: 'file',
+          path: bar.path
         },
         initialScanDone
       ])
