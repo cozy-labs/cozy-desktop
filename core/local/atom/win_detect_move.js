@@ -41,6 +41,7 @@ type PendingItem = {
 
 export type WinDetectMoveState = {
   [typeof STEP_NAME]: {
+    pendingItems: PendingItem[],
     unmergedRenamedEvents: SortedSet<AtomEvent>
   }
 }
@@ -54,7 +55,8 @@ type WinDetectMoveOptions = {
 module.exports = {
   forget,
   initialState,
-  loop
+  loop,
+  previousPaths
 }
 
 const areParentChildPaths = (p /*: string */, c /*: string */) /*: boolean */ =>
@@ -63,6 +65,7 @@ const areParentChildPaths = (p /*: string */, c /*: string */) /*: boolean */ =>
 async function initialState() /* Promise<WinDetectMoveState> */ {
   return {
     [STEP_NAME]: {
+      pendingItems: [],
       // eslint-disable-next-line
       unmergedRenamedEvents: new SortedSet /*:: <AtomEvent> */ ()
     }
@@ -145,14 +148,26 @@ async function assignDebugInfos(event, deletedIno, oldPaths) {
 }
 
 function eventHasIno(event, ino) {
-  return ino === (event.stats.fileid || event.stats.ino)
+  return event.stats && ino === (event.stats.fileid || event.stats.ino)
 }
 
-function indexOfMatchingDeletedEvent(event, pendingItems) {
+function indexOfMatchingEvent(event, pendingItems, deletedIno) {
   if (event.action === 'created' && !event.incomplete) {
     for (let i = 0; i < pendingItems.length; i++) {
       const { deletedIno } = pendingItems[i]
       if (deletedIno && eventHasIno(event, deletedIno)) {
+        return i
+      }
+    }
+  } else if (event.action === 'deleted') {
+    for (let i = 0; i < pendingItems.length; i++) {
+      const { event: createdEvent } = pendingItems[i]
+      if (
+        createdEvent.action === 'created' &&
+        !createdEvent.incomplete &&
+        deletedIno &&
+        eventHasIno(createdEvent, deletedIno)
+      ) {
         return i
       }
     }
@@ -179,7 +194,7 @@ function sendReadyBatches(
   output /*: (AtomBatch) => void */
 ) {
   while (waiting.length > 0) {
-    if (waiting[0].deletedIno) {
+    if (waiting[0].deletedIno || waiting[0].event.action === 'created') {
       break
     }
     const item = waiting.shift()
@@ -193,8 +208,6 @@ async function winDetectMove(
   output,
   opts /*: WinDetectMoveOptions */
 ) {
-  const pendingItems /*: PendingItem[] */ = []
-
   // eslint-disable-next-line no-constant-condition
   while (true) {
     // Wait for a new batch of events
@@ -202,7 +215,7 @@ async function winDetectMove(
     const {
       pouch,
       state: {
-        [STEP_NAME]: { unmergedRenamedEvents }
+        [STEP_NAME]: { pendingItems, unmergedRenamedEvents }
       }
     } = opts
 
@@ -223,15 +236,35 @@ async function winDetectMove(
       pendingItems.push({ event, deletedIno, timeout })
 
       // Then, see if a created event matches a deleted event
-      const pendingIndex = indexOfMatchingDeletedEvent(event, pendingItems)
+      const pendingIndex = indexOfMatchingEvent(event, pendingItems, deletedIno)
       if (pendingIndex !== -1) {
-        const pendingDeleted = pendingItems[pendingIndex]
-        clearTimeout(pendingDeleted.timeout)
-        pendingItems.splice(pendingIndex, 1)
-        aggregateEvents(event, pendingDeleted.event)
-        if (event.action === 'renamed') {
-          unmergedRenamedEvents.add(event)
+        if (event.action === 'created') {
+          const pendingDeleted = pendingItems[pendingIndex]
+
+          clearTimeout(pendingDeleted.timeout)
+          pendingItems.splice(pendingIndex, 1)
+          aggregateEvents(event, pendingDeleted.event)
+
+          if (event.action === 'renamed') {
+            unmergedRenamedEvents.add(event)
+          }
+        } else if (event.action === 'deleted') {
+          const pendingCreated = pendingItems[pendingIndex]
+          const deletedIndex = pendingItems.findIndex(
+            pending => pending.event === event
+          )
+          const pendingDeleted = pendingItems[deletedIndex]
+
+          clearTimeout(pendingDeleted.timeout)
+          pendingItems.splice(deletedIndex, 1)
+          aggregateEvents(pendingCreated.event, event)
+
+          if (pendingCreated.event.action === 'renamed') {
+            unmergedRenamedEvents.add(pendingCreated.event)
+          }
         }
+      } else if (event.action === 'renamed') {
+        unmergedRenamedEvents.add(event)
       }
     }
 

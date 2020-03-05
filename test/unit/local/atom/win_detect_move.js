@@ -166,7 +166,11 @@ if (process.platform === 'win32') {
                     })
 
                     it(`is a renamed child ${childKind} (aggregated)`, async function() {
-                      const outputBatches = await timesAsync(2, outputBatch)
+                      const outputBatches = [
+                        await outputBatch(),
+                        await outputBatch()
+                      ]
+                      //  await timesAsync(2, outputBatch)
                       should(outputBatches).deepEqual([
                         [
                           {
@@ -321,6 +325,179 @@ if (process.platform === 'win32') {
                   ])
                 })
               })
+            })
+          })
+        })
+
+        // START
+        describe(`created ${kind}`, () => {
+          const createdIno = 1
+          const createdPath = 'dst'
+          let createdEvent
+
+          beforeEach(async () => {
+            createdEvent = builders
+              .event()
+              .action('created')
+              .kind(kind)
+              .path(createdPath)
+              .ino(createdIno)
+              .build()
+          })
+
+          describe(`+ deleted ${kind} (different path, same fileid)`, () => {
+            const deletedPath = 'src'
+            let deletedEvent
+
+            beforeEach(async () => {
+              await metadataBuilderByKind(kind)
+                .path(deletedPath)
+                .ino(createdIno)
+                .create()
+              deletedEvent = builders
+                .event()
+                .action('deleted')
+                .kind(kind)
+                .path(deletedPath)
+                .build()
+            })
+
+            it(`is a renamed ${kind} (aggregated)`, async function() {
+              inputBatch([createdEvent, deletedEvent])
+              should(await outputBatch()).deepEqual([
+                {
+                  _id: metadata.id(createdPath),
+                  action: 'renamed',
+                  kind,
+                  oldPath: deletedPath,
+                  path: createdPath,
+                  stats: createdEvent.stats,
+                  winDetectMove: {
+                    aggregatedEvents: { createdEvent, deletedEvent }
+                  }
+                }
+              ])
+            })
+
+            if (kind === 'directory') {
+              for (const childKind of ['directory']) {
+                describe(`+ deleted child ${childKind} (missing doc because path changed)`, () => {
+                  const childIno = createdIno + 2
+                  const childName = `sub${childKind}`
+                  const childTmpPath = path.join(createdPath, childName)
+                  let deletedChildEvent
+
+                  beforeEach(async () => {
+                    await metadataBuilderByKind(childKind)
+                      .path(path.join(deletedPath, childName))
+                      .ino(childIno)
+                      .create()
+                    deletedChildEvent = builders
+                      .event()
+                      .action('deleted')
+                      .kind(childKind)
+                      .path(childTmpPath)
+                      .build()
+                  })
+
+                  describe(`+ created child ${childKind} (path outside parent)`, () => {
+                    const childDstPath = childName
+                    let createdChildEvent
+
+                    beforeEach(async () => {
+                      createdChildEvent = builders
+                        .event()
+                        .action('created')
+                        .kind(childKind)
+                        .path(childDstPath)
+                        .ino(childIno)
+                        .build()
+                      inputBatch([createdEvent])
+                      inputBatch([deletedEvent])
+                      inputBatch([createdChildEvent])
+                      inputBatch([deletedChildEvent])
+                    })
+
+                    it(`is a renamed child ${childKind} (aggregated)`, async function() {
+                      const outputBatches = await timesAsync(2, outputBatch)
+                      should(outputBatches).deepEqual([
+                        [
+                          {
+                            _id: metadata.id(createdPath),
+                            action: 'renamed',
+                            kind,
+                            oldPath: deletedPath,
+                            path: createdPath,
+                            stats: createdEvent.stats,
+                            winDetectMove: {
+                              aggregatedEvents: {
+                                createdEvent,
+                                deletedEvent
+                              }
+                            }
+                          }
+                        ],
+                        [
+                          {
+                            _id: metadata.id(childDstPath),
+                            action: 'renamed',
+                            kind: childKind,
+                            oldPath: childTmpPath,
+                            path: childDstPath,
+                            stats: createdChildEvent.stats,
+                            winDetectMove: {
+                              aggregatedEvents: {
+                                createdEvent: createdChildEvent,
+                                deletedEvent: {
+                                  ...deletedChildEvent,
+                                  winDetectMove: {
+                                    oldPaths: [
+                                      path.join(deletedPath, childName)
+                                    ]
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        ]
+                      ])
+                    })
+                  })
+                })
+              }
+            }
+          })
+
+          describe(`+ deleted ${kind} (same path, same fileid)`, () => {
+            let deletedEvent
+
+            beforeEach(async () => {
+              await metadataBuilderByKind(kind)
+                .path(createdPath)
+                .ino(createdIno)
+                .create()
+              deletedEvent = builders
+                .event()
+                .action('deleted')
+                .kind(kind)
+                .path(createdPath)
+                .build()
+            })
+
+            it(`is an ignored ${kind} (aggregated)`, async function() {
+              inputBatch([createdEvent, deletedEvent])
+              should(await outputBatch()).deepEqual([
+                {
+                  _id: metadata.id(createdPath),
+                  action: 'ignored',
+                  kind,
+                  path: createdPath,
+                  stats: createdEvent.stats,
+                  winDetectMove: {
+                    aggregatedEvents: { createdEvent, deletedEvent }
+                  }
+                }
+              ])
             })
           })
         })
