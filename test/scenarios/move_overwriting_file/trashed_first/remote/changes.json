@@ -1,0 +1,37 @@
+[
+  {
+    "_id": "feb557f36d10ce243ce2c0d6b9222f54",
+    "_rev": "3-9d80b61395aa2991ed45639940bbec3f",
+    "class": "files",
+    "created_at": "2019-09-26T12:59:49.801420365Z",
+    "dir_id": "io.cozy.files.trash-dir",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "file",
+    "restore_path": "/dst",
+    "size": "20",
+    "tags": [],
+    "trashed": true,
+    "type": "file",
+    "updated_at": "2019-09-26T12:59:49.801420365Z",
+    "path": "/.cozy_trash/file"
+  },
+  {
+    "_id": "feb557f36d10ce243ce2c0d6b9223658",
+    "_rev": "3-c74284ebb317aeb8064ba731ee5a105e",
+    "class": "files",
+    "created_at": "2019-09-26T12:59:49.970311708Z",
+    "dir_id": "feb557f36d10ce243ce2c0d6b9222dd5",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "file",
+    "size": "20",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2019-09-26T12:59:49.970311708Z",
+    "path": "/dst/file"
+  }
+]

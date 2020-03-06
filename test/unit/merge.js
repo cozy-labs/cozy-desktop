@@ -1104,10 +1104,11 @@ describe('Merge', function() {
         existing = await builders
           .metafile()
           .path('DST_FILE')
+          .upToDate()
           .create()
       })
 
-      it('resolves a conflict', async function() {
+      it('overrides the existing destination document', async function() {
         const was = await builders
           .metafile()
           .path('SRC_FILE')
@@ -1128,14 +1129,9 @@ describe('Merge', function() {
           )
         )
 
-        const { _id: dstId, path: dstPath } = _.find(
-          sideEffects.savedDocs,
-          ({ path }) => path.match(/conflict/)
-        )
-
         const movedSrc = _.defaults(
           {
-            moveTo: dstId,
+            moveTo: doc._id,
             _deleted: true
           },
           was
@@ -1145,17 +1141,81 @@ describe('Merge', function() {
             _.omit(movedSrc, ['_rev']),
             _.defaults(
               {
-                _id: dstId,
-                path: dstPath,
-                sides: { target: 1, [this.side]: 1 },
-                moveFrom: movedSrc
+                _id: doc._id,
+                path: doc.path,
+                sides: increasedSides(was.sides, this.side, 1),
+                moveFrom: movedSrc,
+                overwrite: existing
               },
-              doc
+              this.side === 'local'
+                ? { remote: existing.remote }
+                : { ino: existing.ino, fileid: existing.fileid },
+              _.omit(was, ['_rev'])
             )
           ],
-          resolvedConflicts: [
-            [this.side, { path: doc.path, remote: doc.remote }]
-          ]
+          resolvedConflicts: []
+        })
+      })
+
+      context('and we have unapplied modifications on the other side', () => {
+        beforeEach(async function() {
+          const doc = builders
+            .metafile(existing)
+            .data('new content')
+            .build()
+          await this.merge.updateFileAsync(otherSide(this.side), doc)
+        })
+
+        it('resolves a conflict', async function() {
+          const was = await builders
+            .metafile()
+            .path('SRC_FILE')
+            .upToDate()
+            .remoteId(dbBuilders.id())
+            .create()
+          const doc = builders
+            .metafile(was)
+            .path(existing.path)
+            .noRev()
+            .build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.moveFileAsync(
+              this.side,
+              _.cloneDeep(doc),
+              _.cloneDeep(was)
+            )
+          )
+
+          const { _id: dstId, path: dstPath } = _.find(
+            sideEffects.savedDocs,
+            ({ path }) => path.match(/conflict/)
+          )
+
+          const movedSrc = _.defaults(
+            {
+              moveTo: dstId,
+              _deleted: true
+            },
+            was
+          )
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              _.omit(movedSrc, ['_rev']),
+              _.defaults(
+                {
+                  _id: dstId,
+                  path: dstPath,
+                  sides: { target: 1, [this.side]: 1 },
+                  moveFrom: movedSrc
+                },
+                doc
+              )
+            ],
+            resolvedConflicts: [
+              [this.side, { path: doc.path, remote: doc.remote }]
+            ]
+          })
         })
       })
     })
@@ -1652,61 +1712,119 @@ describe('Merge', function() {
     context('when the destination exists', () => {
       let existing
 
-      beforeEach(async function() {
-        existing = await builders
-          .metadir()
-          .path('DST_DIR')
-          .upToDate()
-          .create()
+      context('and it is up-to-date', () => {
+        beforeEach(async function() {
+          existing = await builders
+            .metadir()
+            .path('DST_DIR')
+            .upToDate()
+            .create()
+        })
+
+        it('overwrites the destination', async function() {
+          const was = await builders
+            .metadir()
+            .path('SRC_DIR')
+            .upToDate()
+            .remoteId(dbBuilders.id())
+            .create()
+          const doc = builders
+            .metadir(was)
+            .path(existing.path)
+            .noRev()
+            .build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.moveFolderAsync(
+              this.side,
+              _.cloneDeep(doc),
+              _.cloneDeep(was)
+            )
+          )
+
+          const movedSrc = _.defaults(
+            {
+              moveTo: existing._id,
+              _deleted: true
+            },
+            was
+          )
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              _.omit(movedSrc, ['_rev']),
+              _.defaults(
+                {
+                  _id: existing._id,
+                  path: existing.path,
+                  sides: increasedSides(was.sides, this.side, 1),
+                  moveFrom: movedSrc,
+                  overwrite: existing
+                },
+                doc
+              )
+            ],
+            resolvedConflicts: []
+          })
+        })
       })
 
-      it('resolves a conflict', async function() {
-        const was = await builders
-          .metadir()
-          .path('SRC_DIR')
-          .upToDate()
-          .remoteId(dbBuilders.id())
-          .create()
-        const doc = builders
-          .metadir(was)
-          .path(existing.path)
-          .noRev()
-          .build()
+      context('and it is not at least up-to-date on the movement side', () => {
+        beforeEach(async function() {
+          existing = await builders
+            .metadir()
+            .path('DST_DIR')
+            .changedSide(otherSide(this.side))
+            .create()
+        })
 
-        const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.moveFolderAsync(
-            this.side,
-            _.cloneDeep(doc),
-            _.cloneDeep(was)
-          )
-        )
+        it('resolves a conflict', async function() {
+          const was = await builders
+            .metadir()
+            .path('SRC_DIR')
+            .upToDate()
+            .remoteId(dbBuilders.id())
+            .create()
+          const doc = builders
+            .metadir(was)
+            .path(existing.path)
+            .noRev()
+            .build()
 
-        const { _id: dstId, path: dstPath } = _.find(
-          sideEffects.savedDocs,
-          ({ path }) => path.match(/conflict/)
-        )
-
-        const movedSrc = _.defaults(
-          {
-            moveTo: dstId,
-            _deleted: true
-          },
-          was
-        )
-        should(sideEffects).deepEqual({
-          savedDocs: [
-            _.omit(movedSrc, ['_rev']),
-            _.defaults(
-              {
-                _id: dstId,
-                path: dstPath,
-                sides: increasedSides(was.sides, this.side, 1),
-                moveFrom: movedSrc
-              },
-              doc
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.moveFolderAsync(
+              this.side,
+              _.cloneDeep(doc),
+              _.cloneDeep(was)
             )
-          ],
-          resolvedConflicts: [[this.side, _.pick(doc, ['path', 'remote'])]]
+          )
+
+          const { _id: dstId, path: dstPath } = _.find(
+            sideEffects.savedDocs,
+            ({ path }) => path.match(/conflict/)
+          )
+
+          const movedSrc = _.defaults(
+            {
+              moveTo: dstId,
+              _deleted: true
+            },
+            was
+          )
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              _.omit(movedSrc, ['_rev']),
+              _.defaults(
+                {
+                  _id: dstId,
+                  path: dstPath,
+                  sides: increasedSides(was.sides, this.side, 1),
+                  moveFrom: movedSrc
+                },
+                doc
+              )
+            ],
+            resolvedConflicts: [[this.side, _.pick(doc, ['path', 'remote'])]]
+          })
         })
       })
     })

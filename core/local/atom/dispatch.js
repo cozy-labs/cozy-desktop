@@ -192,6 +192,10 @@ actions = {
     log.info({ event }, 'Dir moved')
 
     const doc = buildDir(event.path, event.stats)
+    if (event.overwrite) {
+      const existing = await pouch.byIdMaybeAsync(id(event.path))
+      doc.overwrite = existing
+    }
 
     await prep.moveFolderAsync(SIDE, doc, was)
   },
