@@ -1,5 +1,50 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.20.0-beta.1 - 2020-03-06
+
+Improvements for all users:
+
+- In an attempt to avoid losing your data, we were very cautious when we
+  detected movements that would overwrite documents we were aware of and would
+  create a conflict document instead. There are a number of situations where
+  this is not ideal because you actually wanted to overwrite this destination
+  document (e.g. saving a file from an office software which uses a temporary
+  file, overwriting a directory on purpose).
+  With all the safeties we have in place today (i.e. trash bins on both your
+  computer and your Cozy plus file versioning on your Cozy) we decided to accept
+  more overwriting movements when we did not detect un-synchronized changes that
+  would be overwritten by this. This should mean a lot less conflicts when using
+  Microsoft Office softwares and the possibility to overwrite both files and
+  directories.
+
+Improvements for Linux and Windows users:
+
+- During the initial scan of your local synchronization folder, we emit deletion
+  events when we detect a know document is not present anymore (i.e. we assume
+  you've deleted it while the client was not running). The order in which we
+  emit those events is important because it will be the order in which those
+  actions will be synchronized and if we try to synchronize the deletion of a
+  directory before the deletion of its content, the folder will end up in your
+  Cozy trash bin instead of being completely removed.
+  This is not a big issue but to avoid any confusion as to why we'd put those
+  files and directories in your trash, we've modified our algorithm to emit
+  events for children of deleted directories before the event for the directory
+  itself.
+
+Improvements for Windows users:
+
+- We found that in some situations, the order in which local file system events
+  are received by our local changes watcher was not as expected, resulting in
+  some movements not being detected as such. We would then delete the source
+  documents and recreate them at the destination, losing in the process some
+  important metadata like sharings.
+  Our Windows movement detector is now more resilient to the order of events and
+  should detect all movements as such.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.19.0 - 2020-02-25
 
 Improvements for all users:
