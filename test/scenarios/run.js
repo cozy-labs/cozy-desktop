@@ -27,22 +27,22 @@ const { platform } = process
 
 const stoppedEnvVar = 'STOPPED_CLIENT'
 
+const logger = require('../../core/utils/logger')
+const log = new logger({ component: 'TEST' })
+
 describe('Test scenarios', function() {
   let helpers
 
-  before(configHelpers.createConfig)
-  before(configHelpers.registerClient)
+  beforeEach(configHelpers.createConfig)
+  beforeEach(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
-  beforeEach('set up synced dir', async function() {
-    await fse.emptyDir(this.syncPath)
-  })
   beforeEach('set up outside dir', async function() {
     await fse.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
   })
 
   afterEach(pouchHelpers.cleanDatabase)
-  after(configHelpers.cleanConfig)
+  afterEach(configHelpers.cleanConfig)
 
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
