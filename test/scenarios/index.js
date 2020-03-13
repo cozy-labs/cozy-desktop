@@ -80,6 +80,7 @@ export type Scenario = {|
   platforms?: Array<'win32'|'darwin'|'linux'>,
   side?: SideName,
   disabled?: ScenarioCompletelyDisabled | ScenarioTestsDisabled,
+  useCaptures?: boolean,
   init?: Array<{|
     ino: number, path: string, content?: string
   |}>,

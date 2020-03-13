@@ -174,6 +174,7 @@ class LocalTestHelpers {
   async simulateAtomStart() {
     const watcher = this._ensureAtomWatcher()
     await atomWatcher.stepsInitialState(watcher.state, watcher)
+    await watcher.producer.scan('.')
     watcher.producer.channel.push([INITIAL_SCAN_DONE])
   }
 
