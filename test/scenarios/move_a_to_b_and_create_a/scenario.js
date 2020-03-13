@@ -13,6 +13,7 @@ module.exports = ({
   ],
   expected: {
     tree: ['a', 'b'],
+    trash: [],
     contents: {
       a: 'new content',
       b: 'initial content'

@@ -15,6 +15,7 @@ module.exports = ({
   ],
   expected: {
     tree: ['dst/', 'dst/file', 'src/'],
+    trash: [],
     contents: {
       'dst/file': 'updated content'
     }

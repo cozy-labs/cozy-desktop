@@ -18,6 +18,6 @@ module.exports = ({
   ],
   expected: {
     tree: [nfdDir, `${nfdDir}${nfdFile}`],
-    remoteTrash: []
+    trash: []
   }
 } /*: Scenario */)

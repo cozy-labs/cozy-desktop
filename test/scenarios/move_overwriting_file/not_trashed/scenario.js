@@ -13,7 +13,7 @@ module.exports = ({
   actions: [{ type: 'mv', src: 'src/file', dst: 'dst/file' }],
   expected: {
     tree: ['dst/', 'dst/file', 'src/'],
-    remoteTrash: ['file'],
+    trash: ['file'],
     contents: {
       'dst/file': 'src-content'
     }

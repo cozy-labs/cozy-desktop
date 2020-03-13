@@ -13,6 +13,7 @@ module.exports = ({
     { type: 'wait', ms: 1500 }
   ],
   expected: {
-    tree: ['src/', 'src/B/']
+    tree: ['src/', 'src/B/'],
+    trash: []
   }
 } /*: Scenario */)

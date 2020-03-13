@@ -30,6 +30,6 @@ module.exports = ({
       'parent/file',
       'parent/other_dir/'
     ],
-    remoteTrash: []
+    trash: []
   }
 } /*: Scenario */)

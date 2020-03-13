@@ -10,6 +10,6 @@ module.exports = ({
   actions: [],
   expected: {
     tree: ['Partages reçus/'],
-    remoteTrash: []
+    trash: []
   }
 } /*: Scenario */)

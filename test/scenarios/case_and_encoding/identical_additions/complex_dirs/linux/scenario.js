@@ -18,6 +18,6 @@ module.exports = ({
       'john/exact-same-subdir/b.txt',
       'john/other-subdir-john-2/'
     ],
-    remoteTrash: []
+    trash: []
   }
 } /*: Scenario */)

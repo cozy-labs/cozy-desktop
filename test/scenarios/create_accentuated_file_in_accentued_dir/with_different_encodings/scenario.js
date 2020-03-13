@@ -17,7 +17,7 @@ module.exports = ({
     }
   ],
   expected: {
-    localTree: [nfdDir, `${nfdDir}${nfcFile}`],
-    remoteTrash: []
+    tree: [nfdDir, `${nfdDir}${nfcFile}`],
+    trash: []
   }
 } /*: Scenario */)

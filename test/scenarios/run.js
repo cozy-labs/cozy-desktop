@@ -194,7 +194,10 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
   await helpers.syncAll()
   await helpers.pullAndSyncAll()
 
-  await verifyExpectations(scenario, helpers, { includeRemoteTrash: true })
+  await verifyExpectations(scenario, helpers, {
+    includeLocalTrash: false,
+    includeRemoteTrash: true
+  })
 }
 
 async function runLocalChokidar(scenario, eventsFile, flushAfter, helpers) {
@@ -225,7 +228,10 @@ async function runLocalChokidar(scenario, eventsFile, flushAfter, helpers) {
   }
   await helpers.pullAndSyncAll()
 
-  await verifyExpectations(scenario, helpers, { includeRemoteTrash: true })
+  await verifyExpectations(scenario, helpers, {
+    includeLocalTrash: false,
+    includeRemoteTrash: true
+  })
 
   // TODO: pull
 }
@@ -252,7 +258,10 @@ async function runLocalStopped(scenario, helpers) {
   await helpers.local.scan()
   await helpers.syncAll()
 
-  await verifyExpectations(scenario, helpers, { includeRemoteTrash: true })
+  await verifyExpectations(scenario, helpers, {
+    includeLocalTrash: false,
+    includeRemoteTrash: true
+  })
 }
 
 async function runRemote(scenario, helpers) {
@@ -291,21 +300,30 @@ async function runRemote(scenario, helpers) {
   await helpers.local.side.watcher.stop()
   await helpers.syncAll()
 
-  await verifyExpectations(scenario, helpers, { includeRemoteTrash: false })
+  await verifyExpectations(scenario, helpers, {
+    includeLocalTrash: true,
+    includeRemoteTrash: false
+  })
 
   // TODO: Local trash assertions
 }
 
-async function verifyExpectations(scenario, helpers, { includeRemoteTrash }) {
+async function verifyExpectations(
+  scenario,
+  helpers,
+  { includeLocalTrash, includeRemoteTrash }
+) {
   // TODO: Wrap in custom expectation
   if (scenario.expected) {
     const expectedLocalTree =
       scenario.expected.tree || scenario.expected.localTree
     const expectedRemoteTree =
       scenario.expected.tree || scenario.expected.remoteTree
-    const expected = includeRemoteTrash
-      ? _.pick(scenario.expected, ['remoteTrash'])
-      : {}
+    const expectedLocalTrash =
+      scenario.expected.trash || scenario.expected.localTrash
+    const expectedRemoteTrash =
+      scenario.expected.trash || scenario.expected.remoteTrash
+    const expected = {}
     const actual = {}
 
     if (expectedLocalTree) {
@@ -322,7 +340,12 @@ async function verifyExpectations(scenario, helpers, { includeRemoteTrash }) {
       expected.remoteTree = expectedRemoteTree
       actual.remoteTree = await helpers.remote.treeWithoutTrash()
     }
-    if (includeRemoteTrash && scenario.expected.remoteTrash) {
+    if (expectedLocalTrash && includeLocalTrash) {
+      expected.localTrash = expectedLocalTrash
+      actual.localTrash = await helpers.local.trash()
+    }
+    if (expectedRemoteTrash && includeRemoteTrash) {
+      expected.remoteTrash = expectedRemoteTrash
       actual.remoteTrash = await helpers.remote.trash()
     }
     if (scenario.expected.contents) {

@@ -21,6 +21,6 @@ module.exports = ({
       a: 'content b',
       c: 'content a'
     },
-    remoteTrash: []
+    trash: []
   }
 } /*: Scenario */)

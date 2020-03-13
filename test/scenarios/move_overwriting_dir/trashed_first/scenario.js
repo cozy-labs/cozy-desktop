@@ -36,7 +36,7 @@ module.exports = ({
     // When the overwrite happens while the client is turned off, we won't detect
     // the files' deletion before the folder's movement so we won't trash them
     // by themselves and will thus be trashed as part of the folder hierarchy.
-    remoteTrash: process.env.STOPPED_CLIENT
+    trash: process.env.STOPPED_CLIENT
       ? [
           'dir/',
           'dir/file',

@@ -19,6 +19,6 @@ module.exports = ({
       'john-conflict.../exact-same-subdir/b.txt',
       'john-conflict.../other-subdir-john-2/'
     ],
-    remoteTrash: []
+    trash: []
   }
 } /*: Scenario */)

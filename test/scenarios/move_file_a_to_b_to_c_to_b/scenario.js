@@ -3,6 +3,7 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
+  useCaptures: false,
   init: [{ ino: 1, path: 'src/' }, { ino: 2, path: 'src/A' }],
   actions: [
     { type: 'mv', src: 'src/A', dst: 'src/B' },
@@ -14,6 +15,7 @@ module.exports = ({
   ],
   expected: {
     tree: ['src/', 'src/B'],
+    trash: [],
     contents: {
       'src/B': 'foo'
     }
