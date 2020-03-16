@@ -11,6 +11,6 @@ module.exports = ({
   actions: [{ type: 'mv', src: 'src/dir', dst: 'dst/dir' }],
   expected: {
     tree: ['dst/', 'dst/dir/', 'src/'],
-    remoteTrash: []
+    trash: []
   }
 } /*: Scenario */)

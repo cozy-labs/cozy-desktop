@@ -19,6 +19,6 @@ module.exports = ({
       'dst/dir/subdir/',
       'dst/dir/subdir/file'
     ],
-    remoteTrash: []
+    trash: []
   }
 } /*: Scenario */)

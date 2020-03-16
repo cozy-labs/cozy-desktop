@@ -13,7 +13,7 @@ module.exports = ({
   ],
   expected: {
     tree: ['file.ods'],
-    remoteTrash: [],
+    trash: [],
     contents: {
       'file.ods': 'updated content #1'
     }

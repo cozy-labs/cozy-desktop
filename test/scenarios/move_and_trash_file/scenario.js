@@ -3,6 +3,8 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
+  disabled: 'requires handling moveFrom + trashed', // FIXME
+  useCaptures: false,
   init: [
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'src/' },
@@ -11,10 +13,11 @@ module.exports = ({
   actions: [
     { type: 'mv', src: 'src/file', dst: 'dst/file' },
     { type: 'wait', ms: 1500 },
-    { type: 'trash', path: 'dst/file' }
+    { type: 'trash', path: 'dst/file' },
+    { type: 'wait', ms: 1500 }
   ],
   expected: {
     tree: ['dst/', 'src/'],
-    remoteTrash: ['file']
+    trash: ['file']
   }
 } /*: Scenario */)

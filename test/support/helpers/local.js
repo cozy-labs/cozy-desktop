@@ -83,12 +83,16 @@ class LocalTestHelpers {
     this.side._trash = this.trashFunc
   }
 
+  async trash() {
+    return await this.trashDir.tree()
+  }
+
   async tree(
     opts /*: {ellipsize: boolean} */ = { ellipsize: true }
   ) /*: Promise<string[]> */ {
     let trashContents
     try {
-      trashContents = await this.trashDir.tree()
+      trashContents = await this.trash()
     } catch (err) {
       if (err.code !== 'ENOENT') throw err
       throw new Error(
@@ -174,6 +178,7 @@ class LocalTestHelpers {
   async simulateAtomStart() {
     const watcher = this._ensureAtomWatcher()
     await atomWatcher.stepsInitialState(watcher.state, watcher)
+    await watcher.producer.scan('.')
     watcher.producer.channel.push([INITIAL_SCAN_DONE])
   }
 

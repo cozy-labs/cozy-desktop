@@ -16,6 +16,6 @@ module.exports = ({
   ],
   expected: {
     tree: ['dst/', 'dst/file1', 'dst/file2', 'src/'],
-    remoteTrash: []
+    trash: []
   }
 } /*: Scenario */)

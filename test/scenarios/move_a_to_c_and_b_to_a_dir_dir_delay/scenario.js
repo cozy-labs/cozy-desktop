@@ -18,6 +18,7 @@ module.exports = ({
     { type: 'mv', src: 'b', dst: 'a' }
   ],
   expected: {
-    tree: ['a/', 'a/file-b', 'c/', 'c/file-a']
+    tree: ['a/', 'a/file-b', 'c/', 'c/file-a'],
+    trash: []
   }
 } /*: Scenario */)

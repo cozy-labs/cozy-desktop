@@ -19,13 +19,7 @@ module.exports = ({
   actions: [{ type: 'trash', path: 'parent/dir' }],
   expected: {
     tree: ['parent/', 'parent/other_dir/'],
-    remoteTrash: [
-      'file'
-      // TODO: Trash with ancestor dir:
-      // 'dir/',
-      // 'dir/empty-subdir/',
-      // 'dir/subdir/',
-      // 'dir/subdir/file'
-    ]
+    localTrash: ['dir/', 'dir/empty-subdir/', 'dir/subdir/', 'dir/subdir/file'],
+    remoteTrash: ['file']
   }
 } /*: Scenario */)

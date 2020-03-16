@@ -22,7 +22,7 @@ module.exports = ({
   expected: {
     tree: ['dst/', 'dst/file'],
     // FIXME: old file will end up in the trash with chokidar, not with atom.
-    // remoteTrash: [],
+    trash: [],
     contents: {
       'dst/file': 'new content'
     }

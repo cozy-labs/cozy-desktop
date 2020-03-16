@@ -21,6 +21,6 @@ module.exports = ({
       // foo-conflict-.../ will be synced on next polling
     ],
     remoteTree: ['FOO/', 'FOO/subdir/', 'FOO/subdir/file', 'foo-conflict-...'],
-    remoteTrash: []
+    trash: []
   }
 } /*: Scenario */)

@@ -34,6 +34,6 @@ module.exports = ({
       'dir-nfc-to-nfd-e\u0301/',
       'file-nfc-to-nfd-e\u0301'
     ],
-    remoteTrash: []
+    trash: []
   }
 } /*: Scenario */)

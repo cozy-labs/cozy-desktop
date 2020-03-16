@@ -76,20 +76,32 @@ type ScenarioTestName =
 type ScenarioCompletelyDisabled = Explanation
 type ScenarioTestsDisabled = {[ScenarioTestName]: Explanation}
 
+type ScenarioTreeExpectation =
+  | {
+    localTree: Array<string>,
+    remoteTree: Array<string>,
+    }
+  | { tree: Array<string>, }
+type ScenarioTrashExpectation =
+  | {
+    localTrash: Array<string>,
+    remoteTrash: Array<string>,
+    }
+  | { trash: Array<string>, }
+type ScenarioExpectations =
+  & ScenarioTreeExpectation
+  & ScenarioTrashExpectation
+  & { contents?: { [string]: string } }
+
 export type Scenario = {|
   platforms?: Array<'win32'|'darwin'|'linux'>,
   side?: SideName,
   disabled?: ScenarioCompletelyDisabled | ScenarioTestsDisabled,
+  useCaptures?: boolean,
   init?: Array<{|
     ino: number, path: string, content?: string
   |}>,
   actions: Array<FSAction>,
-  expected: {|
-    localTree?: Array<string>,
-    remoteTree?: Array<string>,
-    tree?: Array<string>,
-    remoteTrash?: Array<string>,
-    contents?: { [string]: string }
-  |}
+  expected: ScenarioExpectations,
 |}
 */

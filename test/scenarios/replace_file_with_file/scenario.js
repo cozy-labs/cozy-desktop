@@ -10,7 +10,7 @@ module.exports = ({
   ],
   expected: {
     tree: ['file'],
-    remoteTrash: [],
+    trash: [],
     contents: {
       file: 'new content'
     }

@@ -8,6 +8,6 @@ module.exports = ({
   actions: [{ type: 'delete', path: 'foo' }],
   expected: {
     tree: [],
-    remoteTrash: ['foo']
+    trash: ['foo']
   }
 } /*: Scenario */)

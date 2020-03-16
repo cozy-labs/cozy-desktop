@@ -27,22 +27,22 @@ const { platform } = process
 
 const stoppedEnvVar = 'STOPPED_CLIENT'
 
+const logger = require('../../core/utils/logger')
+const log = new logger({ component: 'TEST' })
+
 describe('Test scenarios', function() {
   let helpers
 
-  before(configHelpers.createConfig)
-  before(configHelpers.registerClient)
+  beforeEach(configHelpers.createConfig)
+  beforeEach(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
-  beforeEach('set up synced dir', async function() {
-    await fse.emptyDir(this.syncPath)
-  })
   beforeEach('set up outside dir', async function() {
     await fse.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
   })
 
   afterEach(pouchHelpers.cleanDatabase)
-  after(configHelpers.cleanConfig)
+  afterEach(configHelpers.cleanConfig)
 
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
@@ -160,7 +160,6 @@ function injectChokidarBreakpoints(eventsFile) {
 }
 
 async function runLocalAtom(scenario, atomCapture, helpers) {
-  await helpers.local.simulateAtomStart()
   if (scenario.init) {
     let relpathFix = _.identity
     if (process.platform === 'win32' && atomCapture.name.match(/win32/)) {
@@ -175,12 +174,30 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
     )
   }
 
-  await runActions(scenario, helpers.local.syncDir.abspath, { skipWait: true })
-  await helpers.local.simulateAtomEvents(atomCapture.batches)
+  if (scenario.useCaptures) {
+    log.info('simulating atom start')
+    await helpers.local.simulateAtomStart()
+  } else {
+    await helpers.local.side.watcher.start()
+  }
+
+  await runActions(scenario, helpers.local.syncDir.abspath, {
+    skipWait: scenario.useCaptures
+  })
+
+  if (scenario.useCaptures) {
+    await helpers.local.simulateAtomEvents(atomCapture.batches)
+  } else {
+    await helpers.local.side.watcher.stop()
+  }
+
   await helpers.syncAll()
   await helpers.pullAndSyncAll()
 
-  await verifyExpectations(scenario, helpers, { includeRemoteTrash: true })
+  await verifyExpectations(scenario, helpers, {
+    includeLocalTrash: false,
+    includeRemoteTrash: true
+  })
 }
 
 async function runLocalChokidar(scenario, eventsFile, flushAfter, helpers) {
@@ -211,7 +228,10 @@ async function runLocalChokidar(scenario, eventsFile, flushAfter, helpers) {
   }
   await helpers.pullAndSyncAll()
 
-  await verifyExpectations(scenario, helpers, { includeRemoteTrash: true })
+  await verifyExpectations(scenario, helpers, {
+    includeLocalTrash: false,
+    includeRemoteTrash: true
+  })
 
   // TODO: pull
 }
@@ -238,7 +258,10 @@ async function runLocalStopped(scenario, helpers) {
   await helpers.local.scan()
   await helpers.syncAll()
 
-  await verifyExpectations(scenario, helpers, { includeRemoteTrash: true })
+  await verifyExpectations(scenario, helpers, {
+    includeLocalTrash: false,
+    includeRemoteTrash: true
+  })
 }
 
 async function runRemote(scenario, helpers) {
@@ -277,21 +300,30 @@ async function runRemote(scenario, helpers) {
   await helpers.local.side.watcher.stop()
   await helpers.syncAll()
 
-  await verifyExpectations(scenario, helpers, { includeRemoteTrash: false })
+  await verifyExpectations(scenario, helpers, {
+    includeLocalTrash: true,
+    includeRemoteTrash: false
+  })
 
   // TODO: Local trash assertions
 }
 
-async function verifyExpectations(scenario, helpers, { includeRemoteTrash }) {
+async function verifyExpectations(
+  scenario,
+  helpers,
+  { includeLocalTrash, includeRemoteTrash }
+) {
   // TODO: Wrap in custom expectation
   if (scenario.expected) {
     const expectedLocalTree =
       scenario.expected.tree || scenario.expected.localTree
     const expectedRemoteTree =
       scenario.expected.tree || scenario.expected.remoteTree
-    const expected = includeRemoteTrash
-      ? _.pick(scenario.expected, ['remoteTrash'])
-      : {}
+    const expectedLocalTrash =
+      scenario.expected.trash || scenario.expected.localTrash
+    const expectedRemoteTrash =
+      scenario.expected.trash || scenario.expected.remoteTrash
+    const expected = {}
     const actual = {}
 
     if (expectedLocalTree) {
@@ -308,7 +340,12 @@ async function verifyExpectations(scenario, helpers, { includeRemoteTrash }) {
       expected.remoteTree = expectedRemoteTree
       actual.remoteTree = await helpers.remote.treeWithoutTrash()
     }
-    if (includeRemoteTrash && scenario.expected.remoteTrash) {
+    if (expectedLocalTrash && includeLocalTrash) {
+      expected.localTrash = expectedLocalTrash
+      actual.localTrash = await helpers.local.trash()
+    }
+    if (expectedRemoteTrash && includeRemoteTrash) {
+      expected.remoteTrash = expectedRemoteTrash
       actual.remoteTrash = await helpers.remote.trash()
     }
     if (scenario.expected.contents) {

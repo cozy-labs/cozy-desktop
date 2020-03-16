@@ -44,6 +44,9 @@ const scenarioByPath = (module.exports.scenarioByPath = scenarioPath => {
     }
   }
 
+  scenario.useCaptures =
+    scenario.useCaptures != null ? scenario.useCaptures : true
+
   return scenario
 })
 

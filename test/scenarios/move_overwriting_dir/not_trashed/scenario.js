@@ -36,7 +36,7 @@ module.exports = ({
       'dst/dir/subdir/subsub/',
       'src/'
     ],
-    remoteTrash: ['file', 'file (__cozy__: ...)'],
+    trash: ['file', 'file (__cozy__: ...)'],
     contents: {
       'dst/dir/file': 'overwriter',
       'dst/dir/subdir/file': 'sub-overwriter'

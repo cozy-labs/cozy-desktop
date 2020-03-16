@@ -7,7 +7,7 @@ module.exports = ({
   actions: [{ type: 'update_file', path: 'file', content: 'updated content' }],
   expected: {
     tree: ['file'],
-    remoteTrash: [],
+    trash: [],
     contents: {
       file: 'updated content'
     }
