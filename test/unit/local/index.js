@@ -735,7 +735,6 @@ describe('Local', function() {
       await this.local.deleteFolderAsync(doc)
 
       should(await fse.pathExists(fullPath(doc))).be.false()
-      should(this.events.emit.args).deepEqual([['delete-file', doc]])
     })
 
     it('trashes a non-empty folder (ENOTEMPTY)', async function() {
