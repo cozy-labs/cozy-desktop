@@ -11,6 +11,10 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
 
+/*::
+import type { RemoteDoc } from '../../core/remote/document'
+*/
+
 describe('Platform incompatibilities', () => {
   if (process.platform !== 'win32') {
     it.skip(`is not tested on ${process.platform}`, () => {})
@@ -264,9 +268,16 @@ describe('Platform incompatibilities', () => {
 
     // Simulate local move
     const dir = await helpers.pouch.byRemoteIdAsync(remoteDocs['dir/']._id)
-    const stats = { mtime: new Date(), ctime: new Date(), ino: dir.ino }
-    // $FlowFixMe
-    const dir2 = metadata.buildDir('dir2', stats)
+    const dir2 = metadata.buildDir('dir2', {
+      atime: new Date(),
+      mtime: new Date(),
+      ctime: new Date(),
+      directory: true,
+      symbolicLink: false,
+      size: dir.size,
+      fileid: dir.fileid,
+      ino: dir.ino
+    })
     await helpers.prep.moveFolderAsync('local', dir2, dir)
     await helpers.syncAll()
 
@@ -276,6 +287,40 @@ describe('Platform incompatibilities', () => {
       'dir2/sub:dir/',
       'dir2/sub:dir/file'
     ])
+    should(await helpers.incompatibleTree()).deepEqual([
+      'dir2/sub:dir/',
+      'dir2/sub:dir/file'
+    ])
+  })
+
+  it('move remote dir with incompatible metadata & remote content', async () => {
+    const remoteDocs = await helpers.remote.createTree([
+      'dir/',
+      'dir/sub:dir/',
+      'dir/sub:dir/file'
+    ])
+    await helpers.pullAndSyncAll()
+
+    // Simulate remote move
+    const remoteDoc /*: RemoteDoc */ = remoteDocs['dir/']
+    const dir = await helpers.pouch.byRemoteIdAsync(remoteDoc._id)
+    const newRemoteDoc = {
+      ...remoteDoc,
+      _rev: '2-xxxxxx',
+      name: 'dir2',
+      path: '/dir2',
+      updated_at: new Date().toISOString()
+    }
+    await helpers.remote.side.remoteCozy.updateAttributesById(
+      remoteDoc._id,
+      newRemoteDoc,
+      { ifMatch: remoteDoc._rev }
+    )
+    const dir2 = metadata.fromRemoteDoc(newRemoteDoc)
+    await helpers.prep.moveFolderAsync('remote', dir2, dir)
+    await helpers.syncAll()
+
+    should(await helpers.local.tree()).deepEqual(['dir2/'])
     should(await helpers.incompatibleTree()).deepEqual([
       'dir2/sub:dir/',
       'dir2/sub:dir/file'
