@@ -153,7 +153,7 @@ class Remote /*:: implements Reader, Writer */ {
     } catch (err) {
       if (err.code === 'ENOENT') {
         log.warn({ path }, 'Local file does not exist anymore.')
-        doc._deleted = true // XXX: This prevents the doc to be saved with new revs
+        doc.deleted = true // XXX: This prevents the doc to be saved with new revs
         return doc
       }
       throw err
@@ -193,7 +193,7 @@ class Remote /*:: implements Reader, Writer */ {
     } catch (err) {
       if (err.code === 'ENOENT') {
         log.warn({ path }, 'Local file does not exist anymore.')
-        doc._deleted = true // XXX: This prevents the doc to be saved with new revs
+        doc.deleted = true // XXX: This prevents the doc to be saved with new revs
         return doc
       }
       throw err

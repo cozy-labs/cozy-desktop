@@ -104,13 +104,13 @@ function previousPaths(deletedPath, unmergedRenamedEvents) {
 
 async function findDeletedInoById(id, pouch) {
   const doc = await pouch.byIdMaybeAsync(id)
-  return doc && { deletedIno: doc.fileid || doc.ino }
+  return doc && !doc.deleted && { deletedIno: doc.fileid || doc.ino }
 }
 
 async function findDeletedInoRecentlyRenamed(previousPaths, pouch) {
   for (const [index, previousPath] of previousPaths.entries()) {
     const doc = await pouch.byIdMaybeAsync(id(previousPath))
-    if (doc) {
+    if (doc && !doc.deleted) {
       return {
         deletedIno: doc.fileid || doc.ino,
         oldPaths: previousPaths.slice(index)

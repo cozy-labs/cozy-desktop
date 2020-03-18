@@ -199,8 +199,8 @@ describe('Move', () => {
         )
 
         should(
-          helpers.putDocs('path', '_deleted', 'trashed', 'moveFrom')
-        ).deepEqual([{ path: path.normalize('src/file'), _deleted: true }])
+          helpers.putDocs('path', 'deleted', 'trashed', 'moveFrom')
+        ).deepEqual([{ path: path.normalize('src/file'), deleted: true }])
 
         await helpers.syncAll()
 
@@ -245,11 +245,11 @@ describe('Move', () => {
           )
 
           should(
-            helpers.putDocs('path', '_deleted', 'trashed', 'moveFrom')
+            helpers.putDocs('path', 'deleted', 'trashed', 'moveFrom')
           ).deepEqual([
             {
               path: intermediaryPath,
-              _deleted: true
+              deleted: true
             }
           ])
 
@@ -663,21 +663,21 @@ describe('Move', () => {
         await prep.moveFolderAsync('local', doc, oldFolder)
 
         should(
-          helpers.putDocs('path', '_deleted', 'trashed', 'childMove')
+          helpers.putDocs('path', 'deleted', 'trashed', 'childMove')
         ).deepEqual([
           {
             path: path.normalize('parent/src/dir/subdir/file'),
-            _deleted: true
+            deleted: true
           },
           {
             path: path.normalize('parent/src/dir/subdir'),
-            _deleted: true
+            deleted: true
           },
           {
             path: path.normalize('parent/src/dir/empty-subdir'),
-            _deleted: true
+            deleted: true
           },
-          { path: path.normalize('parent/src/dir'), _deleted: true }
+          { path: path.normalize('parent/src/dir'), deleted: true }
         ])
 
         await helpers.syncAll()
@@ -718,21 +718,21 @@ describe('Move', () => {
           await prep.moveFolderAsync('local', doc, oldFolder)
 
           should(
-            helpers.putDocs('path', '_deleted', 'trashed', 'childMove')
+            helpers.putDocs('path', 'deleted', 'trashed', 'childMove')
           ).deepEqual([
             {
               path: path.normalize('parent/dst/dir/subdir/file'),
-              _deleted: true
+              deleted: true
             },
             {
               path: path.normalize('parent/dst/dir/subdir'),
-              _deleted: true
+              deleted: true
             },
             {
               path: path.normalize('parent/dst/dir/empty-subdir'),
-              _deleted: true
+              deleted: true
             },
-            { path: path.normalize('parent/dst/dir'), _deleted: true }
+            { path: path.normalize('parent/dst/dir'), deleted: true }
           ])
 
           await helpers.syncAll()

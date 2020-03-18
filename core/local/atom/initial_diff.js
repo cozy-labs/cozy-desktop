@@ -87,7 +87,9 @@ async function initialState(
   // which files/folders have been deleted, as it is stable even if the
   // file/folder has been moved or renamed
   const byInode /*: Map<number|string, Metadata> */ = new Map()
-  const docs /*: Metadata[] */ = await opts.pouch.allDocs()
+  const docs /*: Metadata[] */ = (await opts.pouch.allDocs()).filter(
+    doc => !doc.deleted
+  )
   // Make sure all paths are sorted in reverse path order so that missing
   // children will be deleted before missing parents and folders that would not
   // have any content are not trashed but completely deleted

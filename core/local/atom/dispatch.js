@@ -146,6 +146,7 @@ actions = {
 
   renamedfile: async (event, { pouch, prep }) => {
     const was = await pouch.byIdMaybeAsync(id(event.oldPath))
+    // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a file is added when the client is
@@ -172,6 +173,7 @@ actions = {
 
   renameddirectory: async (event, { pouch, prep }) => {
     const was = await pouch.byIdMaybeAsync(id(event.oldPath))
+    // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a dir is added when the client is
@@ -202,7 +204,7 @@ actions = {
 
   deletedfile: async (event, { pouch, prep }) => {
     const was = await pouch.byIdMaybeAsync(event._id)
-    if (!was) {
+    if (!was || was.deleted) {
       log.debug({ event }, 'Assuming file already removed')
       // The file was already marked as deleted in pouchdb
       // => we can ignore safely this event
@@ -214,7 +216,7 @@ actions = {
 
   deleteddirectory: async (event, { pouch, prep }) => {
     const was = await pouch.byIdMaybeAsync(event._id)
-    if (!was) {
+    if (!was || was.deleted) {
       log.debug({ event }, 'Assuming dir already removed')
       // The dir was already marked as deleted in pouchdb
       // => we can ignore safely this event

@@ -95,6 +95,7 @@ export type MetadataSidesInfo = {
 // The files/dirs metadata, as stored in PouchDB
 export type Metadata = {
   _deleted?: true,
+  deleted?: true,
   _id: string,
   _rev?: string,
   md5sum?: string,
@@ -407,7 +408,11 @@ function isAtLeastUpToDate(sideName /*: SideName */, doc /*: Metadata */) {
 
 function markAsUnsyncable(side /*: SideName */, doc /*: Metadata */) {
   doc._deleted = true
-  markSide(side, doc, doc)
+  if (wasSynced(doc)) {
+    markAsUpToDate(doc)
+  } else {
+    markSide(side, doc, doc)
+  }
 }
 
 function markAsNew(doc /*: Metadata */) {
