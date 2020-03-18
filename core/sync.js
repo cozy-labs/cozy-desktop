@@ -366,6 +366,7 @@ class Sync {
             `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`
           )
           await side.trashAsync(was)
+          this.events.emit('delete-file', _.clone(was))
         } else {
           log.debug(
             { path: doc.path, incompatibilities: doc.incompatibilities },
@@ -416,6 +417,7 @@ class Sync {
       log.debug({ path: doc.path }, `Applying ${doc.docType} deletion`)
       if (doc.docType === 'file') await side.trashAsync(doc)
       else await side.deleteFolderAsync(doc)
+      this.events.emit('delete-file', _.clone(doc))
     } else if (rev === 0) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} addition`)
       await this.doAdd(side, doc)
@@ -647,6 +649,7 @@ class Sync {
 
     log.info(`${doc.path}: should be trashed by itself`)
     await side.trashAsync(doc)
+    this.events.emit('delete-file', _.clone(doc))
     return true
   }
 }

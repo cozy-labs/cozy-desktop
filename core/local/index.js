@@ -420,7 +420,6 @@ class Local /*:: implements Reader, Writer */ {
 
   async trashAsync(doc /*: Metadata */) /*: Promise<void> */ {
     log.info({ path: doc.path }, 'Moving to the OS trash...')
-    this.events.emit('delete-file', doc)
     const fullpath = path.join(this.syncPath, doc.path)
     try {
       await this._trash([fullpath])
@@ -444,7 +443,6 @@ class Local /*:: implements Reader, Writer */ {
     try {
       log.info({ path: doc.path }, 'Deleting empty folder...')
       await fse.rmdir(fullpath)
-      this.events.emit('delete-file', doc)
       return
     } catch (err) {
       if (err.code === 'ENOENT') {

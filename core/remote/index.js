@@ -329,6 +329,7 @@ class Remote /*:: implements Reader, Writer */ {
   async trashAsync(doc /*: Metadata */) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Moving to the trash...')
+
     let newRemoteDoc /*: RemoteDoc */
     try {
       newRemoteDoc = await this.remoteCozy.trashById(doc.remote._id, {
