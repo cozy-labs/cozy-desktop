@@ -190,7 +190,8 @@ class Pouch {
     for (let [idx, result] of results.entries()) {
       if (result.error) {
         const err = new PouchError(result)
-        log.error({ doc: docs[idx] }, err)
+        const doc = docs[idx]
+        log.error({ path: doc.path, doc }, err)
         throw err
       }
     }
