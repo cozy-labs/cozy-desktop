@@ -394,7 +394,7 @@ class Sync {
         `Applying ${doc.docType} change with moveFrom`
       )
 
-      if (from.incompatibilities) {
+      if (from.incompatibilities && sideName === 'local') {
         await this.doAdd(side, doc)
       } else if (from.childMove) {
         await side.assignNewRev(doc)
