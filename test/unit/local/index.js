@@ -748,15 +748,35 @@ describe('Local', function() {
       should(this.local.trashAsync.args).deepEqual([[doc]])
     })
 
-    it('does not swallow fs errors', async function() {
+    it('does nothing if the folder is missing (ENOENT)', async function() {
       const doc = builders.metadir().build()
 
-      await should(this.local.deleteFolderAsync(doc)).be.rejectedWith(/ENOENT/)
+      await should(this.local.deleteFolderAsync(doc)).be.fulfilled()
+    })
+
+    it('throws when given folder metadata points to a file', async function() {
+      const doc = builders
+        .metadir()
+        .path('FILE-TO-DELETE')
+        .build()
+      await fse.ensureFile(fullPath(doc))
+
+      if (process.platform === 'win32') {
+        await should(this.local.deleteFolderAsync(doc)).be.rejectedWith(
+          /ENOENT/
+        )
+      } else {
+        await should(this.local.deleteFolderAsync(doc)).be.rejectedWith(
+          /ENOTDIR/
+        )
+      }
     })
 
     it('throws when given non-folder metadata', async function() {
-      // TODO: FileMetadataBuilder
-      const doc = { path: 'FILE-TO-DELETE', docType: 'file' }
+      const doc = builders
+        .metafile()
+        .path('FILE-TO-DELETE')
+        .build()
       await fse.ensureFile(fullPath(doc))
 
       await should(this.local.deleteFolderAsync(doc)).be.rejectedWith(
