@@ -95,6 +95,7 @@ export type MetadataSidesInfo = {
 // The files/dirs metadata, as stored in PouchDB
 export type Metadata = {
   _deleted?: true,
+  deleted?: true,
   _id: string,
   _rev?: string,
   md5sum?: string,

@@ -307,6 +307,10 @@ class Sync {
 
     if (metadata.shouldIgnore(doc, this.ignore)) {
       return this.pouch.setLocalSeqAsync(change.seq)
+    } else if (!metadata.wasSynced(doc) && doc.deleted) {
+      doc._deleted = true
+      await this.pouch.put(doc)
+      return this.pouch.setLocalSeqAsync(change.seq)
     }
 
     // FIXME: Acquire lock for as many changes as possible to prevent next huge
@@ -332,13 +336,12 @@ class Sync {
         // and especially avoid deep nesting levels.
         delete doc.moveFrom
         delete doc.overwrite
+        if (doc.deleted) doc._deleted = true
       }
 
       log.trace({ path, seq }, `Applied change on ${sideName} side`)
       await this.pouch.setLocalSeqAsync(change.seq)
-      if (!change.doc._deleted) {
-        await this.updateRevs(change.doc, sideName)
-      }
+      await this.updateRevs(doc, sideName)
     } catch (err) {
       await this.handleApplyError(change, sideName, err)
     } finally {
@@ -381,7 +384,7 @@ class Sync {
       }
     } else if (doc.docType !== 'file' && doc.docType !== 'folder') {
       throw new Error(`Unknown docType: ${doc.docType}`)
-    } else if (doc._deleted && rev === 0) {
+    } else if (doc.deleted && rev === 0) {
       // do nothing
     } else if (doc.moveTo != null) {
       log.debug(
@@ -413,7 +416,7 @@ class Sync {
       ) {
         await side.overwriteFileAsync(doc, doc) // move & update
       }
-    } else if (doc._deleted) {
+    } else if (doc.deleted) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} deletion`)
       if (doc.docType === 'file') await side.trashAsync(doc)
       else await side.deleteFolderAsync(doc)
@@ -597,7 +600,13 @@ class Sync {
     doc /*: Metadata */,
     side /*: SideName */
   ) /*: Promise<*> */ {
-    metadata.markAsUpToDate(doc)
+    if (doc.remote != null) {
+      metadata.markAsUpToDate(doc)
+    } else if (doc.sides && doc.sides.remote != null) {
+      // Avoid Metadata has sides.remote but no remote error when saving the an
+      // erased document.
+      delete doc.sides.remote
+    }
     try {
       await this.pouch.put(doc)
     } catch (err) {

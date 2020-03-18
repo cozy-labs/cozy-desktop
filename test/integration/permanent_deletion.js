@@ -38,8 +38,8 @@ describe('Permanent deletion remote', () => {
     await cozy.files.destroyById(file._id)
     await helpers.remote.pullChanges()
 
-    should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-      { path: 'file', _deleted: true }
+    should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
+      { path: 'file', deleted: true }
     ])
 
     await helpers.syncAll()

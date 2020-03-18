@@ -147,6 +147,25 @@ describe('Sync', function() {
       this.sync.applyDoc.called.should.be.false()
     })
 
+    it('does nothing for an up-to-date _deleted document', async function() {
+      let change = {
+        seq: 122,
+        doc: {
+          _id: 'foo',
+          docType: 'folder',
+          _deleted: true,
+          sides: {
+            target: 2,
+            local: 2,
+            remote: 2
+          }
+        }
+      }
+      this.sync.applyDoc = sinon.spy()
+      await this.sync.apply(change)
+      this.sync.applyDoc.called.should.be.false()
+    })
+
     it('trashes a locally deleted file or folder', async function() {
       const change = {
         seq: 145,
@@ -456,7 +475,7 @@ describe('Sync', function() {
       let doc = {
         _id: 'foo/baz',
         _rev: '4-1234567890',
-        _deleted: true,
+        deleted: true,
         docType: 'file',
         sides: {
           target: 2,
@@ -472,7 +491,7 @@ describe('Sync', function() {
       let doc = {
         _id: 'tmp/fooz',
         _rev: '2-1234567890',
-        _deleted: true,
+        deleted: true,
         docType: 'file',
         sides: {
           target: 2,
@@ -517,7 +536,7 @@ describe('Sync', function() {
       let was = {
         _id: 'foobar/bar',
         _rev: '3-9876543210',
-        _deleted: true,
+        deleted: true,
         moveTo: 'foobar/baz',
         docType: 'folder',
         tags: ['qux'],
@@ -549,7 +568,7 @@ describe('Sync', function() {
       let doc = {
         _id: 'foobar/baz',
         _rev: '4-1234567890',
-        _deleted: true,
+        deleted: true,
         docType: 'folder',
         sides: {
           target: 2,
@@ -565,7 +584,7 @@ describe('Sync', function() {
       let doc = {
         _id: 'tmp/foobaz',
         _rev: '2-1234567890',
-        _deleted: true,
+        deleted: true,
         docType: 'folder',
         sides: {
           target: 2,
@@ -795,7 +814,7 @@ describe('Sync', function() {
       should.not.exist(rev)
     })
 
-    it('returns an empty array if a local only doc is deleted', function() {
+    it('returns an empty array if a local only doc is erased', function() {
       let doc = {
         _id: 'selectSide/5',
         _rev: '5-0123456789',
@@ -812,7 +831,7 @@ describe('Sync', function() {
       should.not.exist(rev)
     })
 
-    it('returns an empty array if a remote only doc is deleted', function() {
+    it('returns an empty array if a remote only doc is erased', function() {
       let doc = {
         _id: 'selectSide/5',
         _rev: '5-0123456789',

@@ -48,8 +48,8 @@ describe('Trash', () => {
     it('local', async () => {
       await prep.trashFileAsync('local', { path: 'parent/file' })
 
-      should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-        { path: path.normalize('parent/file'), _deleted: true }
+      should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
+        { path: path.normalize('parent/file'), deleted: true }
       ])
       await should(pouch.db.get(file._id)).be.rejectedWith({ status: 404 })
 
@@ -67,8 +67,8 @@ describe('Trash', () => {
 
       await helpers.remote.pullChanges()
 
-      should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-        { path: path.normalize('parent/file'), _deleted: true }
+      should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
+        { path: path.normalize('parent/file'), deleted: true }
       ])
       await should(pouch.db.get(file._id)).be.rejectedWith({ status: 404 })
 
@@ -102,11 +102,11 @@ describe('Trash', () => {
         path: path.normalize('parent/dir')
       })
 
-      should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
+      should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
         // XXX: Why isn't file deleted? (it works anyway)
-        { path: path.normalize('parent/dir/subdir'), _deleted: true },
-        { path: path.normalize('parent/dir/empty-subdir'), _deleted: true },
-        { path: path.normalize('parent/dir'), _deleted: true }
+        { path: path.normalize('parent/dir/subdir'), deleted: true },
+        { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
+        { path: path.normalize('parent/dir'), deleted: true }
       ])
 
       await helpers.syncAll()
@@ -125,11 +125,11 @@ describe('Trash', () => {
       // FIXME: should pass a remote doc, or trash from Cozy
       await prep.trashFolderAsync('remote', { path: 'parent/dir' })
 
-      should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
+      should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
         // XXX: Why isn't file deleted? (it works anyway)
-        { path: path.normalize('parent/dir/subdir'), _deleted: true },
-        { path: path.normalize('parent/dir/empty-subdir'), _deleted: true },
-        { path: path.normalize('parent/dir'), _deleted: true }
+        { path: path.normalize('parent/dir/subdir'), deleted: true },
+        { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
+        { path: path.normalize('parent/dir'), deleted: true }
       ])
 
       await helpers.syncAll()
