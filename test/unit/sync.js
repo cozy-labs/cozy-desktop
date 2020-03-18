@@ -124,9 +124,9 @@ describe('Sync', function() {
           }
         }
       }
-      this.sync.folderChanged = sinon.spy()
+      this.sync.applyDoc = sinon.spy()
       await this.sync.apply(change)
-      this.sync.folderChanged.called.should.be.false()
+      this.sync.applyDoc.called.should.be.false()
     })
 
     it('does nothing for an up-to-date document', async function() {
@@ -142,9 +142,9 @@ describe('Sync', function() {
           }
         }
       }
-      this.sync.folderChanged = sinon.spy()
+      this.sync.applyDoc = sinon.spy()
       await this.sync.apply(change)
-      this.sync.folderChanged.called.should.be.false()
+      this.sync.applyDoc.called.should.be.false()
     })
 
     it('trashes a locally deleted file or folder', async function() {
@@ -171,7 +171,7 @@ describe('Sync', function() {
       should(this.sync.trashWithParentOrByItself.called).be.true()
     })
 
-    it('calls fileChanged for a file', async function() {
+    it('calls applyDoc for a modified file', async function() {
       let change = {
         seq: 123,
         doc: {
@@ -187,8 +187,7 @@ describe('Sync', function() {
         }
       }
       await this.sync.apply(change)
-      const doc = await this.pouch.db.get(change.doc._id)
-      doc.should.have.properties({
+      should(await this.pouch.db.get(change.doc._id)).have.properties({
         _id: 'foo/bar',
         docType: 'file',
         sides: {
@@ -197,9 +196,10 @@ describe('Sync', function() {
           remote: 4
         }
       })
+      should(await this.pouch.getLocalSeqAsync()).equal(123)
     })
 
-    it('calls folderChanged for a folder', async function() {
+    it('calls applyDoc for a modified folder', async function() {
       let change = {
         seq: 124,
         doc: {
@@ -207,14 +207,24 @@ describe('Sync', function() {
           docType: 'folder',
           tags: [],
           sides: {
-            target: 1,
-            local: 1
-          }
+            target: 3,
+            local: 3,
+            remote: 2
+          },
+          remote: { _id: 'XXX', _rev: '2-abc' }
         }
       }
       await this.sync.apply(change)
-      const seq = await this.pouch.getLocalSeqAsync()
-      seq.should.equal(124)
+      should(await this.pouch.db.get(change.doc._id)).have.properties({
+        _id: 'foo/baz',
+        docType: 'folder',
+        sides: {
+          target: 4,
+          local: 4,
+          remote: 4
+        }
+      })
+      should(await this.pouch.getLocalSeqAsync()).equal(124)
     })
 
     it('calls addFileAsync for an added file', async function() {
