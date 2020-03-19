@@ -1206,7 +1206,7 @@ describe('Merge', function() {
                 {
                   _id: dstId,
                   path: dstPath,
-                  sides: { target: 1, [this.side]: 1 },
+                  sides: increasedSides(was.sides, this.side, 1),
                   moveFrom: movedSrc
                 },
                 doc
