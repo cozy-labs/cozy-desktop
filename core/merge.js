@@ -159,54 +159,53 @@ class Merge {
   async addFileAsync(side /*: SideName */, doc /*: Metadata */) {
     log.debug({ path: doc.path }, 'addFileAsync')
     const { path } = doc
-    const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
-    metadata.markSide(side, doc, file)
-    metadata.assignMaxDate(doc, file)
-    if (file) {
-      if (file.deleted) {
+    const existing /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
+    metadata.markSide(side, doc, existing)
+    metadata.assignMaxDate(doc, existing)
+    if (existing) {
+      if (existing.deleted) {
         return this.updateFileAsync(side, doc)
       }
 
       const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
         { side, doc },
-        file
+        existing
       )
       if (idConflict) {
         log.warn({ idConflict }, IdConflict.description(idConflict))
-        await this.resolveConflictAsync(side, doc, file)
+        await this.resolveConflictAsync(side, doc, existing)
         return
       }
 
-      if (file && file.docType === 'folder') {
-        return this.resolveConflictAsync(side, doc, file)
+      if (existing && existing.docType === 'folder') {
+        return this.resolveConflictAsync(side, doc, existing)
       }
 
-      if (metadata.sameBinary(file, doc)) {
-        doc._rev = file._rev
+      if (metadata.sameBinary(existing, doc)) {
         if (doc.size == null) {
-          doc.size = file.size
+          doc.size = existing.size
         }
         if (doc.class == null) {
-          doc.class = file.class
+          doc.class = existing.class
         }
         if (doc.mime == null) {
-          doc.mime = file.mime
+          doc.mime = existing.mime
         }
         if (doc.tags == null) {
-          doc.tags = file.tags || []
+          doc.tags = existing.tags || []
         }
         if (doc.remote == null) {
-          doc.remote = file.remote
+          doc.remote = existing.remote
         }
         if (doc.ino == null) {
-          doc.ino = file.ino
+          doc.ino = existing.ino
         }
         if (doc.fileid == null) {
-          doc.fileid = file.fileid
+          doc.fileid = existing.fileid
         }
-        if (metadata.sameFile(file, doc)) {
-          if (needsFileidMigration(file, doc.fileid)) {
-            return this.migrateFileid(file, doc.fileid)
+        if (metadata.sameFile(existing, doc)) {
+          if (needsFileidMigration(existing, doc.fileid)) {
+            return this.migrateFileid(existing, doc.fileid)
           }
           log.info({ path }, 'up to date')
           return null
@@ -215,11 +214,11 @@ class Merge {
         }
       }
 
-      if (side === 'local' && file.sides.local != null) {
+      if (side === 'local' && existing.sides.local != null) {
         return this.updateFileAsync('local', doc)
       }
 
-      return this.resolveConflictAsync(side, doc, file)
+      return this.resolveConflictAsync(side, doc, existing)
     }
 
     if (doc.tags == null) {
@@ -312,37 +311,37 @@ class Merge {
   async putFolderAsync(side /*: SideName */, doc /*: * */) {
     log.debug({ path: doc.path }, 'putFolderAsync')
     const { path } = doc
-    const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
-    metadata.markSide(side, doc, folder)
-    if (folder && folder.docType === 'file') {
-      return this.resolveConflictAsync(side, doc, folder)
+    const existing /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
+    metadata.markSide(side, doc, existing)
+    if (existing && existing.docType === 'file') {
+      return this.resolveConflictAsync(side, doc, existing)
     }
-    metadata.assignMaxDate(doc, folder)
+    metadata.assignMaxDate(doc, existing)
     const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
       { side, doc },
-      folder
+      existing
     )
     if (idConflict) {
       log.warn({ idConflict }, IdConflict.description(idConflict))
-      await this.resolveConflictAsync(side, doc, folder)
+      await this.resolveConflictAsync(side, doc, existing)
       return
-    } else if (folder) {
-      doc._rev = folder._rev
+    } else if (existing) {
+      doc._rev = existing._rev
       if (doc.tags == null) {
-        doc.tags = folder.tags || []
+        doc.tags = existing.tags || []
       }
       if (doc.remote == null) {
-        doc.remote = folder.remote
+        doc.remote = existing.remote
       }
-      if (doc.ino == null && folder.ino) {
-        doc.ino = folder.ino
+      if (doc.ino == null && existing.ino) {
+        doc.ino = existing.ino
       }
       if (doc.fileid == null) {
-        doc.fileid = folder.fileid
+        doc.fileid = existing.fileid
       }
-      if (metadata.sameFolder(folder, doc)) {
-        if (needsFileidMigration(folder, doc.fileid)) {
-          return this.migrateFileid(folder, doc.fileid)
+      if (metadata.sameFolder(existing, doc)) {
+        if (needsFileidMigration(existing, doc.fileid)) {
+          return this.migrateFileid(existing, doc.fileid)
         }
         log.info({ path }, 'up to date')
         return null
