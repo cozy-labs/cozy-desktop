@@ -270,9 +270,11 @@ class Merge {
           // We have a merged but unsynced remote update and we can't create a
           // conflict because the local rename will trigger an overwrite of the
           // remote file with the local content.
-          // We hope the local update isn't real (the difference between the
-          // orginal content and the remotely updated content).
+          // We hope the local update isn't real (i.e. it's only the difference
+          // between the orginal content and the remotely updated content).
           metadata.markSide('remote', file, file)
+          // This lets the Sync module know that we need to create a backup copy
+          // of the file and trash that copy.
           delete file.overwrite
           return this.pouch.put(file)
         } else {
@@ -281,10 +283,13 @@ class Merge {
           await this.resolveConflictAsync(side, doc, file)
           // we just renamed the remote file as a conflict
           // the old file should be dissociated from the remote
+          metadata.markSide('local', file, file)
           delete file.remote
           delete file.sides.remote
-          metadata.markSide('local', file, file)
-          return await this.pouch.put(file)
+          // We dissociated the local and remote versions so we don't want to
+          // overwrite/trash the local version.
+          delete file.overwrite
+          return this.pouch.put(file)
         }
       } else {
         doc.overwrite = file
