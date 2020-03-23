@@ -1,0 +1,72 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "file.txt"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "2019"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "2020"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file.txt"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "2019"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "2020"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "2020"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "2020"
+    }
+  ]
+]

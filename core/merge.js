@@ -160,9 +160,17 @@ class Merge {
     log.debug({ path: doc.path }, 'addFileAsync')
     const { path } = doc
     const existing /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
-    metadata.markSide(side, doc, existing)
-    metadata.assignMaxDate(doc, existing)
-    if (existing) {
+
+    if (existing && existing.docType === 'folder') {
+      if (!existing.deleted) {
+        return this.resolveConflictAsync(side, doc, existing)
+      }
+
+      doc.overwrite = existing
+      doc._rev = existing._rev
+    }
+
+    if (existing && existing.docType === 'file') {
       if (existing.deleted) {
         return this.updateFileAsync(side, doc)
       }
@@ -177,9 +185,8 @@ class Merge {
         return
       }
 
-      if (existing && existing.docType === 'folder') {
-        return this.resolveConflictAsync(side, doc, existing)
-      }
+      metadata.markSide(side, doc, existing)
+      metadata.assignMaxDate(doc, existing)
 
       if (metadata.sameBinary(existing, doc)) {
         if (doc.size == null) {
@@ -203,15 +210,17 @@ class Merge {
         if (doc.fileid == null) {
           doc.fileid = existing.fileid
         }
+
         if (metadata.sameFile(existing, doc)) {
           if (needsFileidMigration(existing, doc.fileid)) {
             return this.migrateFileid(existing, doc.fileid)
           }
           log.info({ path }, 'up to date')
           return null
-        } else {
-          return this.pouch.put(doc)
         }
+
+        doc._rev = existing._rev
+        return this.pouch.put(doc)
       }
 
       if (side === 'local' && existing.sides.local != null) {
@@ -221,9 +230,11 @@ class Merge {
       return this.resolveConflictAsync(side, doc, existing)
     }
 
+    metadata.markSide(side, doc)
     if (doc.tags == null) {
       doc.tags = []
     }
+
     await this.ensureParentExistAsync(side, doc)
 
     return this.pouch.put(doc)
@@ -312,21 +323,32 @@ class Merge {
     log.debug({ path: doc.path }, 'putFolderAsync')
     const { path } = doc
     const existing /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
-    metadata.markSide(side, doc, existing)
+
     if (existing && existing.docType === 'file') {
-      return this.resolveConflictAsync(side, doc, existing)
-    }
-    metadata.assignMaxDate(doc, existing)
-    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
-      { side, doc },
-      existing
-    )
-    if (idConflict) {
-      log.warn({ idConflict }, IdConflict.description(idConflict))
-      await this.resolveConflictAsync(side, doc, existing)
-      return
-    } else if (existing) {
+      if (!existing.deleted) {
+        return this.resolveConflictAsync(side, doc, existing)
+      }
+
+      doc.overwrite = existing
       doc._rev = existing._rev
+    }
+
+    if (existing && existing.docType === 'folder') {
+      if (!existing.deleted) {
+        const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
+          { side, doc },
+          existing
+        )
+        if (idConflict) {
+          log.warn({ idConflict }, IdConflict.description(idConflict))
+          await this.resolveConflictAsync(side, doc, existing)
+          return
+        }
+      }
+
+      metadata.markSide(side, doc, existing)
+      metadata.assignMaxDate(doc, existing)
+
       if (doc.tags == null) {
         doc.tags = existing.tags || []
       }
@@ -345,13 +367,17 @@ class Merge {
         }
         log.info({ path }, 'up to date')
         return null
-      } else {
-        return this.pouch.put(doc)
       }
+
+      doc._rev = existing._rev
+      return this.pouch.put(doc)
     }
+
+    metadata.markSide(side, doc)
     if (doc.tags == null) {
       doc.tags = []
     }
+
     await this.ensureParentExistAsync(side, doc)
 
     return this.pouch.put(doc)

@@ -418,11 +418,14 @@ class Sync {
       }
     } else if (doc.deleted) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} deletion`)
-      if (doc.docType === 'file') await side.trashAsync(doc)
-      else await side.deleteFolderAsync(doc)
-      this.events.emit('delete-file', _.clone(doc))
+      await this.doDelete(side, doc)
     } else if (rev === 0) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} addition`)
+      if (doc.overwrite) {
+        log.debug({ path: doc.path }, `Deleting existing document`)
+        // $FlowFixMe Flow believes our log method can modify doc.overwrite
+        await this.doDelete(side, doc.overwrite)
+      }
       await this.doAdd(side, doc)
     } else {
       log.debug({ path: doc.path }, `Applying else for ${doc.docType} change`)
@@ -497,6 +500,13 @@ class Sync {
         await this.trashWithParentOrByItself(doc.overwrite, side)
       await side.moveFolderAsync(doc, old)
     }
+  }
+
+  async doDelete(side /*: Writer */, doc /*: Metadata */) /*: Promise<void> */ {
+    if (doc.docType === 'file') await side.trashAsync(doc)
+    else await side.deleteFolderAsync(doc)
+
+    this.events.emit('delete-file', _.clone(doc))
   }
 
   // Select which side will apply the change
