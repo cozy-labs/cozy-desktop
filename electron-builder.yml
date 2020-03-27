@@ -22,6 +22,7 @@ afterPack: './build/afterPackHook.js'
 afterSign: './build/afterSignHook.js'
 asarUnpack:
 - gui/scripts/**
+- '*.node' # see https://www.electronjs.org/docs/tutorial/application-packaging#adding-unpacked-files-to-asar-archives
 directories:
   buildResources: gui/assets
 fileAssociations:
