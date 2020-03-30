@@ -324,8 +324,8 @@ onPlatform('darwin', () => {
         return
       }
 
-      beforeEach('reset pouchdb', function(done) {
-        this.pouch.resetDatabase(done)
+      beforeEach('reset pouchdb', async function() {
+        await this.pouch.resetDatabase()
       })
 
       it.skip('deletes the source and adds the destination', function(done) {
@@ -378,8 +378,8 @@ onPlatform('darwin', () => {
         return
       }
 
-      before('reset pouchdb', function(done) {
-        this.pouch.resetDatabase(done)
+      before('reset pouchdb', async function() {
+        await this.pouch.resetDatabase()
       })
 
       it.skip('deletes the source and adds the destination', function(done) {

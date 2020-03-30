@@ -221,6 +221,17 @@ describe('Pouch', function() {
       })
     })
 
+    describe('destroyDatabase', () => {
+      it('does not throw any errors', async function() {
+        await should(this.pouch.destroyDatabase()).be.fulfilled()
+      })
+
+      it('resets the pouch.db attribute', async function() {
+        await this.pouch.destroyDatabase()
+        should(this.pouch.db).be.null()
+      })
+    })
+
     describe('remove', () => {
       let doc, old
 

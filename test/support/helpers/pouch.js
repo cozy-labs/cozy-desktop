@@ -9,11 +9,10 @@ module.exports = {
     return this.pouch.addAllViews(done)
   },
 
-  cleanDatabase(done) {
-    this.pouch.db.destroy(() => {
-      this.pouch = null
-      done()
-    })
+  async cleanDatabase() {
+    if (this.pouch && this.pouch.db) {
+      await this.pouch.destroyDatabase()
+    }
   },
 
   createParentFolder(pouch, callback) {

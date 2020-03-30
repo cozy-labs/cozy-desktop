@@ -55,9 +55,7 @@ class Pouch {
     this.config = config
     this.nextLockId = 0
     this._lock = { id: this.nextLockId++, promise: Promise.resolve(null) }
-    this.db = new PouchDB(this.config.dbPath)
-    this.db.setMaxListeners(100)
-    this.db.on('error', err => log.warn(err))
+    this.createDatabase()
     this.updater = async.queue((task, callback) => {
       return this.db.get(task._id, (err, doc) => {
         if (err && err.status === 404) {
@@ -76,7 +74,6 @@ class Pouch {
   }
 
   /*::
-  resetDatabaseAsync: () => Promise<*>
   byPathAsync: (string) => Promise<Metadata>
   byChecksumAsync: (string) => Promise<Metadata[]>
   byRecursivePathAsync: (string) => Promise<*>
@@ -91,15 +88,26 @@ class Pouch {
   treeAsync: () => Promise<Array<string>>
   */
 
+  createDatabase() {
+    fse.ensureDirSync(this.config.dbPath)
+    this.db = new PouchDB(this.config.dbPath)
+    this.db.setMaxListeners(100)
+    this.db.on('error', err => log.warn(err))
+  }
+
   // Create database and recreate all filters
-  resetDatabase(callback) {
-    this.db.destroy(() => {
-      fse.ensureDirSync(this.config.dbPath)
-      this.db = new PouchDB(this.config.dbPath)
-      this.db.setMaxListeners(100)
-      this.db.on('error', err => log.warn(err))
-      return this.addAllViews(callback)
-    })
+  async resetDatabase() {
+    await this.destroyDatabase()
+    this.createDatabase()
+    await this.addAllViewsAsync()
+  }
+
+  async destroyDatabase() {
+    if (process.platform === 'win32') {
+      await this.db.close()
+    }
+    await this.db.destroy()
+    this.db = null
   }
 
   lock(component /*: * */) /*: Promise<Function> */ {

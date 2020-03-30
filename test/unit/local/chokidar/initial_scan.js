@@ -29,8 +29,8 @@ onPlatform('darwin', () => {
     after('clean config directory', configHelpers.cleanConfig)
 
     describe('.detectOfflineUnlinkEvents()', function() {
-      beforeEach('reset pouchdb', function(done) {
-        this.pouch.resetDatabase(done)
+      beforeEach('reset pouchdb', async function() {
+        await this.pouch.resetDatabase()
       })
 
       it('detects deleted files and folders', async function() {

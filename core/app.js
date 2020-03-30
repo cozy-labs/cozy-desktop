@@ -215,7 +215,7 @@ class App {
   }
 
   async removeConfig() {
-    await this.pouch.db.destroy()
+    await this.pouch.destroyDatabase()
     for (const name of await fse.readdir(this.basePath)) {
       if (name.startsWith(LOG_FILENAME)) continue
       await fse.remove(path.join(this.basePath, name))
