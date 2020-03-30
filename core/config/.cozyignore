@@ -29,7 +29,7 @@
 .Trash-*
 
 # Microsoft Office
-~$*.{doc,xls,ppt}*
+~$*
 
 # OSX
 .DS_Store
