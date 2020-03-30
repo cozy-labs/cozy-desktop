@@ -126,7 +126,6 @@ const startApp = async () => {
       onboardingWindow.jumpToSyncPath()
     }
   } else {
-    await setupDesktop()
     startSync()
   }
 }
