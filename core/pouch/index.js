@@ -103,11 +103,20 @@ class Pouch {
   }
 
   async destroyDatabase() {
-    if (process.platform === 'win32') {
-      await this.db.close()
+    //if (process.platform === 'win32') {
+    //  await this.db.close()
+    //}
+    try {
+      await this.db.destroy()
+      this.db = null
+    } catch (err) {
+      // Retry deleting in case some resources were still using the db storage
+      // and preventing the database removal.
+      // Add some delay to help.
+      await Promise.delay(200)
+      await this.db.destroy()
+      this.db = null
     }
-    await this.db.destroy()
-    this.db = null
   }
 
   lock(component /*: * */) /*: Promise<Function> */ {
