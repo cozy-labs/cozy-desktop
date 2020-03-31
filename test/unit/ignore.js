@@ -305,6 +305,12 @@ describe('Ignore', function() {
           isFolder: false
         })
         .should.be.true()
+      ignore
+        .isIgnored({
+          relativePath: metadata.id('~$whatever.ods'),
+          isFolder: false
+        })
+        .should.be.true()
     })
 
     it('ignores hidden folder $Recycle.bin', () => {
