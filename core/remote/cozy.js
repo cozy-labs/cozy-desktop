@@ -148,6 +148,14 @@ class RemoteCozy {
     autoBind(this)
   }
 
+  async newClient() /*: Promise<CozyClient>  */ {
+    if (this.client.oauth) {
+      return await CozyClient.fromOldOAuthClient(this.client)
+    } else {
+      return await CozyClient.fromOldClient(this.client)
+    }
+  }
+
   createJob(workerType /*: string */, args /*: any */) /*: Promise<*> */ {
     return this.client.jobs.create(workerType, args)
   }
@@ -354,7 +362,7 @@ class RemoteCozy {
   }
 
   async capabilities() /*: Promise<{ flatSubdomains: boolean }> */ {
-    const client = await CozyClient.fromOldOAuthClient(this.client)
+    const client = await this.newClient()
     const {
       data: {
         attributes: { flat_subdomains: flatSubdomains }
