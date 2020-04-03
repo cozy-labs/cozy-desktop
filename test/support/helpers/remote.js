@@ -8,6 +8,7 @@ const conflictHelpers = require('./conflict')
 const cozyHelpers = require('./cozy')
 
 const { Remote } = require('../../../core/remote')
+const { jsonApiToRemoteDoc } = require('../../../core/remote/document')
 const { TRASH_DIR_NAME } = require('../../../core/remote/constants')
 
 /*::
@@ -147,6 +148,14 @@ class RemoteTestHelpers {
     if (!path.startsWith('/')) path = '/' + path
     const resp = await this.cozy.files.downloadByPath(path)
     return resp.text()
+  }
+
+  async byIdMaybe(id /*: string */) {
+    try {
+      return jsonApiToRemoteDoc(await this.cozy.files.statById(id))
+    } catch (err) {
+      return null
+    }
   }
 }
 
