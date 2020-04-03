@@ -78,7 +78,7 @@ script: travis_wait ./dev/ci/script.sh
 before_install: | # install cozy stack for integration test
     # CouchDB
     if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-      travis_retry docker run -d -p 5984:5984 --name couch apache/couchdb:2.2;
+      travis_retry docker run -d -p 5984:5984 --name couch apache/couchdb:2.3.1;
     fi
     if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       wget https://dl.bintray.com/apache/couchdb/mac/2.3.1/Apache-CouchDB-2.3.1.zip
@@ -98,8 +98,8 @@ before_install: | # install cozy stack for integration test
       travis_retry brew install imagemagick;
     fi
     if [[ ! -f $GOPATH/bin/cozy-stack ]]; then
-      travis_retry gimme 1.12;
-      source ~/.gimme/envs/go1.12.env;
+      travis_retry gimme 1.14;
+      source ~/.gimme/envs/go1.14.env;
       travis_retry go get github.com/cozy/cozy-stack;
     fi
 
