@@ -383,7 +383,14 @@ class Local /*:: implements Reader, Writer */ {
     doc /*: Metadata */,
     old /*: Metadata */
   ) /*: Promise<void> */ {
-    log.info({ path: doc.path, oldpath: old.path }, `Moving ${old.docType}`)
+    log.info(
+      { path: doc.path, oldpath: old.path },
+      `Moving ${old.docType}${doc.overwrite ? ' (with overwrite)' : ''}`
+    )
+
+    if (doc.overwrite && doc.overwrite.path !== old.path) {
+      await this.trashAsync(doc.overwrite)
+    }
 
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)

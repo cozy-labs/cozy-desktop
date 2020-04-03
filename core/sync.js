@@ -481,7 +481,6 @@ class Sync {
     doc /*: Metadata */,
     old /*: Metadata */
   ) /*: Promise<void> */ {
-    if (doc.overwrite) await this.trashWithParentOrByItself(doc.overwrite, side)
     await side.moveAsync(doc, old)
     if (doc.docType === 'file') {
       this.events.emit('transfer-move', _.clone(doc), _.clone(old))

@@ -300,8 +300,23 @@ class Remote /*:: implements Reader, Writer */ {
     const { path } = newMetadata
     log.info(
       { path, oldpath: oldMetadata.path },
-      `Moving ${oldMetadata.docType}`
+      `Moving ${oldMetadata.docType}${
+        newMetadata.overwrite ? ' (with overwrite)' : ''
+      }`
     )
+
+    const { overwrite } = newMetadata
+    if (overwrite && overwrite.remote._id !== oldMetadata.remote._id) {
+      const referencedBy = await this.remoteCozy.getReferencedBy(
+        overwrite.remote._id
+      )
+      const { _rev } = await this.remoteCozy.addReferencedBy(
+        oldMetadata.remote._id,
+        referencedBy
+      )
+      oldMetadata.remote._rev = _rev
+      await this.trashAsync(overwrite)
+    }
 
     const [newDirPath, newName] /*: [string, string] */ = dirAndName(path)
     const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(
