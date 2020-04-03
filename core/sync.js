@@ -482,10 +482,10 @@ class Sync {
     old /*: Metadata */
   ) /*: Promise<void> */ {
     if (doc.overwrite) await this.trashWithParentOrByItself(doc.overwrite, side)
+    await side.moveAsync(doc, old)
     if (doc.docType === 'file') {
-      await side.moveFileAsync(doc, old)
       this.events.emit('transfer-move', _.clone(doc), _.clone(old))
-    } else await side.moveFolderAsync(doc, old)
+    }
   }
 
   // Select which side will apply the change

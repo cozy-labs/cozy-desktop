@@ -336,7 +336,7 @@ describe('Sync', function() {
       should(this.remote.updateFileMetadataAsync).be.calledWith(updated, synced)
     })
 
-    it('calls moveFileAsync for a moved file', async function() {
+    it('calls moveAsync for a moved file', async function() {
       let was = {
         _id: 'foo/bar',
         _rev: '3-9876543210',
@@ -365,10 +365,10 @@ describe('Sync', function() {
       this.remote.trashAsync.called.should.be.false()
       await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.addFileAsync.called.should.be.false()
-      this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
+      this.remote.moveAsync.calledWith(doc, was).should.be.true()
     })
 
-    it('calls moveFileAsync and overwriteFileAsync for a moved-updated file', async function() {
+    it('calls moveAsync and overwriteFileAsync for a moved-updated file', async function() {
       let was = {
         _id: 'foo/bar',
         _rev: '3-9876543210',
@@ -399,7 +399,7 @@ describe('Sync', function() {
       this.remote.trashAsync.called.should.be.false()
       await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.addFileAsync.called.should.be.false()
-      this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
+      this.remote.moveAsync.calledWith(doc, was).should.be.true()
       this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
     })
 
@@ -441,7 +441,7 @@ describe('Sync', function() {
 
       this.remote.addFileAsync.called.should.be.false()
       this.remote.trashAsync.called.should.be.false()
-      this.remote.moveFileAsync.calledWith(doc, was).should.be.true()
+      this.remote.moveAsync.calledWith(doc, was).should.be.true()
       this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
 
       const newMetadata = await this.pouch.db.get('foo/baz2')
@@ -513,7 +513,7 @@ describe('Sync', function() {
       this.local.updateFolderAsync.calledWith(doc).should.be.true()
     })
 
-    it('calls moveFolderAsync for a moved folder', async function() {
+    it('calls moveAsync for a moved folder', async function() {
       let was = {
         _id: 'foobar/bar',
         _rev: '3-9876543210',
@@ -542,7 +542,7 @@ describe('Sync', function() {
       this.remote.trashAsync.called.should.be.false()
       await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.addFolderAsync.called.should.be.false()
-      this.remote.moveFolderAsync.calledWith(doc, was).should.be.true()
+      this.remote.moveAsync.calledWith(doc, was).should.be.true()
     })
 
     it('calls trashAsync for a deleted folder', async function() {

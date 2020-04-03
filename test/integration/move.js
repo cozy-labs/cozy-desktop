@@ -211,7 +211,7 @@ describe('Move', () => {
         await helpers.remote.pullChanges()
         await helpers.syncAll()
         const was = await pouch.byRemoteIdAsync(file._id)
-        await helpers._remote.moveFileAsync(
+        await helpers._remote.moveAsync(
           {
             ...was,
             path: path.normalize('src/file2')
@@ -259,7 +259,7 @@ describe('Move', () => {
         await cozy.files.updateById(file._id, 'updated file content', {})
         await helpers.remote.pullChanges()
         const was = await pouch.byRemoteIdAsync(file._id)
-        await helpers._remote.moveFileAsync(
+        await helpers._remote.moveAsync(
           {
             ...was,
             path: path.normalize('src/file2')
@@ -433,7 +433,7 @@ describe('Move', () => {
 
     it('from remote client', async () => {
       const was = await pouch.byRemoteIdAsync(dir._id)
-      await helpers._remote.moveFolderAsync(
+      await helpers._remote.moveAsync(
         {
           ...was,
           path: path.normalize('parent/dst/dir')
@@ -619,7 +619,7 @@ describe('Move', () => {
           'parent/src/dir/subdir/file'
         ])
         const was = await pouch.byRemoteIdAsync(dir._id)
-        await helpers._remote.moveFolderAsync(
+        await helpers._remote.moveAsync(
           {
             ...was,
             path: path.normalize('parent/src/dir2')
@@ -697,7 +697,7 @@ describe('Move', () => {
         await cozy.files.updateById(file._id, 'updated file content', {})
         await helpers.remote.pullChanges()
         const was = await pouch.byRemoteIdAsync(dir._id)
-        await helpers._remote.moveFolderAsync(
+        await helpers._remote.moveAsync(
           {
             ...was,
             path: path.normalize('parent/src/dir2')
@@ -785,7 +785,7 @@ describe('Move', () => {
           'parent/src/dir/subdir/file'
         ])
         const was = await pouch.byRemoteIdAsync(dir._id)
-        await helpers._remote.moveFolderAsync(
+        await helpers._remote.moveAsync(
           {
             ...was,
             path: path.normalize('parent/dst/dir')

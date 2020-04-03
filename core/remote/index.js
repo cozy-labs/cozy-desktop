@@ -243,39 +243,6 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async moveFileAsync(
-    newMetadata /*: Metadata */,
-    oldMetadata /*: Metadata */
-  ) /*: Promise<void> */ {
-    const { path } = newMetadata
-    log.info({ path, oldpath: oldMetadata.path }, 'Moving file')
-
-    const [newDirPath, newName] /*: [string, string] */ = dirAndName(path)
-    const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(
-      newDirPath
-    )
-
-    const attrs = {
-      name: newName,
-      dir_id: newDir._id,
-      updated_at: newMetadata.updated_at
-    }
-    const opts = {
-      ifMatch: oldMetadata.remote._rev
-    }
-
-    let newRemoteDoc /*: RemoteDoc */ = await this.remoteCozy.updateAttributesById(
-      oldMetadata.remote._id,
-      attrs,
-      opts
-    )
-
-    newMetadata.remote = {
-      _id: newRemoteDoc._id,
-      _rev: newRemoteDoc._rev
-    }
-  }
-
   async updateFolderAsync(
     doc /*: Metadata */,
     old /*: Metadata */
@@ -326,6 +293,42 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
+  async moveAsync(
+    newMetadata /*: Metadata */,
+    oldMetadata /*: Metadata */
+  ) /*: Promise<void> */ {
+    const { path } = newMetadata
+    log.info(
+      { path, oldpath: oldMetadata.path },
+      `Moving ${oldMetadata.docType}`
+    )
+
+    const [newDirPath, newName] /*: [string, string] */ = dirAndName(path)
+    const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(
+      newDirPath
+    )
+
+    const attrs = {
+      name: newName,
+      dir_id: newDir._id,
+      updated_at: newMetadata.updated_at
+    }
+    const opts = {
+      ifMatch: oldMetadata.remote._rev
+    }
+
+    const newRemoteDoc /*: RemoteDoc */ = await this.remoteCozy.updateAttributesById(
+      oldMetadata.remote._id,
+      attrs,
+      opts
+    )
+
+    newMetadata.remote = {
+      _id: newRemoteDoc._id, // XXX: Why do we reassign id? Isn't it the same as before?
+      _rev: newRemoteDoc._rev
+    }
+  }
+
   async trashAsync(doc /*: Metadata */) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Moving to the trash...')
@@ -367,40 +370,6 @@ class Remote /*:: implements Reader, Writer */ {
     log.info({ path: doc.path }, 'Assigning new rev...')
     const { _rev } = await this.remoteCozy.client.files.statById(doc.remote._id)
     doc.remote._rev = _rev
-  }
-
-  async moveFolderAsync(
-    newMetadata /*: Metadata */,
-    oldMetadata /*: Metadata */
-  ) /*: Promise<void> */ {
-    // FIXME: same as moveFileAsync? Rename to moveAsync?
-    const { path } = newMetadata
-    log.info({ path, oldpath: oldMetadata.path }, 'Moving dir')
-
-    const [newDirPath, newName] /*: [string, string] */ = dirAndName(path)
-    const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(
-      newDirPath
-    )
-
-    const attrs = {
-      name: newName,
-      dir_id: newDir._id,
-      updated_at: newMetadata.updated_at
-    }
-    const opts = {
-      ifMatch: oldMetadata.remote._rev
-    }
-
-    const newRemoteDoc /*: RemoteDoc */ = await this.remoteCozy.updateAttributesById(
-      oldMetadata.remote._id,
-      attrs,
-      opts
-    )
-
-    newMetadata.remote = {
-      _id: newRemoteDoc._id, // XXX: Why do we reassign id? Isn't it the same as before?
-      _rev: newRemoteDoc._rev
-    }
   }
 
   diskUsage() /*: Promise<*> */ {
