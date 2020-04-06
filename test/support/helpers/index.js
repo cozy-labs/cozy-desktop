@@ -129,6 +129,11 @@ class TestHelpers {
     sinon.spy(this.pouch, 'bulkDocs')
   }
 
+  resetPouchSpy() {
+    this.pouch.put.reset()
+    this.pouch.bulkDocs.reset()
+  }
+
   putDocs(...props /*: string[] */) {
     const results = []
 

@@ -28,6 +28,11 @@ import type { Logger } from '../utils/logger'
 import type { Readable } from 'stream'
 import type { RemoteDoc, RemoteDeletion } from './document'
 import type { Warning } from './warning'
+
+export type Reference = {
+  id: string,
+  type: string
+}
 */
 
 const log = logger({
@@ -146,6 +151,14 @@ class RemoteCozy {
     })
 
     autoBind(this)
+  }
+
+  async newClient() /*: Promise<CozyClient>  */ {
+    if (this.client.oauth) {
+      return await CozyClient.fromOldOAuthClient(this.client)
+    } else {
+      return await CozyClient.fromOldClient(this.client)
+    }
   }
 
   createJob(workerType /*: string */, args /*: any */) /*: Promise<*> */ {
@@ -354,13 +367,44 @@ class RemoteCozy {
   }
 
   async capabilities() /*: Promise<{ flatSubdomains: boolean }> */ {
-    const client = await CozyClient.fromOldOAuthClient(this.client)
+    const client = await this.newClient()
     const {
       data: {
         attributes: { flat_subdomains: flatSubdomains }
       }
     } = await client.query(client.get('io.cozy.settings', 'capabilities'))
     return { flatSubdomains }
+  }
+
+  async getReferencedBy(id /*: string */) /*: Promise<Reference[]> */ {
+    const client = await this.newClient()
+    const files = client.collection(FILES_DOCTYPE)
+    const { data } = await files.get(id)
+    return (
+      (data &&
+        data.relationships &&
+        data.relationships.referenced_by &&
+        data.relationships.referenced_by.data) ||
+      []
+    )
+  }
+
+  async addReferencedBy(
+    _id /*: string */,
+    referencedBy /*: Reference[] */
+  ) /*: Promise<{_rev: string, referencedBy: Reference[] }> */ {
+    const client = await this.newClient()
+    const files = client.collection(FILES_DOCTYPE)
+    const doc = { _id, _type: FILES_DOCTYPE }
+    const references = referencedBy.map(ref => ({
+      _id: ref.id,
+      _type: ref.type
+    }))
+    const {
+      meta: { rev: _rev },
+      data
+    } = await files.addReferencedBy(doc, references)
+    return { _rev, referencedBy: data }
   }
 }
 

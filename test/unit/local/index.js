@@ -524,161 +524,163 @@ describe('Local', function() {
     })
   })
 
-  describe('moveFile', function() {
-    let dstFile, srcFile
+  describe('move', function() {
+    context('with file', function() {
+      let dstFile, srcFile
 
-    beforeEach(async () => {
-      srcFile = builders
-        .metafile()
-        .path('src/file')
-        .build()
-      dstFile = builders
-        .metafile()
-        .path('dst/file')
-        .olderThan(srcFile)
-        .build()
+      beforeEach(async () => {
+        srcFile = builders
+          .metafile()
+          .path('src/file')
+          .build()
+        dstFile = builders
+          .metafile()
+          .path('dst/file')
+          .olderThan(srcFile)
+          .build()
 
-      await fse.emptyDir(syncDir.root)
-    })
-
-    it('moves the file and updates its mtime', async function() {
-      await syncDir.outputFile(srcFile, 'foobar')
-      await syncDir.ensureParentDir(dstFile)
-
-      await this.local.moveFileAsync(dstFile, srcFile)
-
-      should(await syncDir.tree()).deepEqual(['dst/', 'dst/file', 'src/'])
-      should((await syncDir.mtime(dstFile)).getTime()).equal(
-        new Date(dstFile.updated_at).getTime()
-      )
-      should(await syncDir.readFile(dstFile)).equal('foobar')
-    })
-
-    it('throws ENOENT on missing source', async function() {
-      await syncDir.emptyDir(path.dirname(srcFile.path))
-      await syncDir.emptyDir(path.dirname(dstFile.path))
-
-      await should(this.local.moveFileAsync(dstFile, srcFile)).be.rejectedWith({
-        code: 'ENOENT'
+        await fse.emptyDir(syncDir.root)
       })
 
-      should(await syncDir.tree()).deepEqual(['dst/', 'src/'])
-    })
+      it('moves the file and updates its mtime', async function() {
+        await syncDir.outputFile(srcFile, 'foobar')
+        await syncDir.ensureParentDir(dstFile)
 
-    it('throws ENOENT on missing destination parent', async function() {
-      await syncDir.outputFile(srcFile, 'foobar')
-      await syncDir.removeParentDir(dstFile)
+        await this.local.moveAsync(dstFile, srcFile)
 
-      await should(this.local.moveFileAsync(dstFile, srcFile)).be.rejectedWith({
-        code: 'ENOENT'
+        should(await syncDir.tree()).deepEqual(['dst/', 'dst/file', 'src/'])
+        should((await syncDir.mtime(dstFile)).getTime()).equal(
+          new Date(dstFile.updated_at).getTime()
+        )
+        should(await syncDir.readFile(dstFile)).equal('foobar')
       })
 
-      should(await syncDir.tree()).deepEqual(['src/', 'src/file'])
-    })
+      it('throws ENOENT on missing source', async function() {
+        await syncDir.emptyDir(path.dirname(srcFile.path))
+        await syncDir.emptyDir(path.dirname(dstFile.path))
 
-    it('throws a custom Error on existing destination', async function() {
-      await syncDir.outputFile(srcFile, 'src/file content')
-      await syncDir.outputFile(dstFile, 'dst/file content')
+        await should(this.local.moveAsync(dstFile, srcFile)).be.rejectedWith({
+          code: 'ENOENT'
+        })
 
-      await should(this.local.moveFileAsync(dstFile, srcFile)).be.rejectedWith(
-        /already exists/
-      )
-
-      should(await syncDir.tree()).deepEqual([
-        'dst/',
-        'dst/file',
-        'src/',
-        'src/file'
-      ])
-    })
-
-    it('throws a custom Error on existing destination (and missing source)', async function() {
-      await syncDir.ensureParentDir(srcFile)
-      await syncDir.outputFile(dstFile, 'dst/file content')
-
-      await should(this.local.moveFileAsync(dstFile, srcFile)).be.rejectedWith(
-        /already exists/
-      )
-
-      should(await syncDir.tree()).deepEqual(['dst/', 'dst/file', 'src/'])
-    })
-  })
-
-  describe('moveFolder', function() {
-    let dstDir, srcDir
-
-    beforeEach(async () => {
-      srcDir = builders
-        .metadir()
-        .path('src/dir')
-        .build()
-      dstDir = builders
-        .metadir()
-        .path('dst/dir')
-        .olderThan(srcDir)
-        .build()
-
-      await fse.emptyDir(syncDir.root)
-    })
-
-    it('moves the folder and updates its mtime', async function() {
-      await syncDir.ensureDir(srcDir)
-      await syncDir.ensureParentDir(dstDir)
-
-      await this.local.moveFolderAsync(dstDir, srcDir)
-
-      should(await syncDir.tree()).deepEqual(['dst/', 'dst/dir/', 'src/'])
-      should((await syncDir.mtime(dstDir)).getTime()).equal(
-        new Date(dstDir.updated_at).getTime()
-      )
-    })
-
-    it('throws ENOENT on missing source', async function() {
-      await syncDir.ensureParentDir(srcDir)
-      await syncDir.ensureParentDir(dstDir)
-
-      await should(this.local.moveFolderAsync(dstDir, srcDir)).be.rejectedWith({
-        code: 'ENOENT'
+        should(await syncDir.tree()).deepEqual(['dst/', 'src/'])
       })
 
-      should(await syncDir.tree()).deepEqual(['dst/', 'src/'])
-    })
+      it('throws ENOENT on missing destination parent', async function() {
+        await syncDir.outputFile(srcFile, 'foobar')
+        await syncDir.removeParentDir(dstFile)
 
-    it('throws ENOENT on missing destination parent', async function() {
-      await syncDir.ensureDir(srcDir)
+        await should(this.local.moveAsync(dstFile, srcFile)).be.rejectedWith({
+          code: 'ENOENT'
+        })
 
-      await should(this.local.moveFolderAsync(dstDir, srcDir)).be.rejectedWith({
-        code: 'ENOENT'
+        should(await syncDir.tree()).deepEqual(['src/', 'src/file'])
       })
 
-      should(await syncDir.tree()).deepEqual(['src/', 'src/dir/'])
+      it('throws a custom Error on existing destination', async function() {
+        await syncDir.outputFile(srcFile, 'src/file content')
+        await syncDir.outputFile(dstFile, 'dst/file content')
+
+        await should(this.local.moveAsync(dstFile, srcFile)).be.rejectedWith(
+          /already exists/
+        )
+
+        should(await syncDir.tree()).deepEqual([
+          'dst/',
+          'dst/file',
+          'src/',
+          'src/file'
+        ])
+      })
+
+      it('throws a custom Error on existing destination (and missing source)', async function() {
+        await syncDir.ensureParentDir(srcFile)
+        await syncDir.outputFile(dstFile, 'dst/file content')
+
+        await should(this.local.moveAsync(dstFile, srcFile)).be.rejectedWith(
+          /already exists/
+        )
+
+        should(await syncDir.tree()).deepEqual(['dst/', 'dst/file', 'src/'])
+      })
     })
 
-    it('throws a custom Error on existing destination', async function() {
-      await syncDir.ensureDir(srcDir)
-      await syncDir.ensureDir(dstDir)
+    context('with folder', function() {
+      let dstDir, srcDir
 
-      await should(this.local.moveFolderAsync(dstDir, srcDir)).be.rejectedWith(
-        /already exists/
-      )
+      beforeEach(async () => {
+        srcDir = builders
+          .metadir()
+          .path('src/dir')
+          .build()
+        dstDir = builders
+          .metadir()
+          .path('dst/dir')
+          .olderThan(srcDir)
+          .build()
 
-      should(await syncDir.tree()).deepEqual([
-        'dst/',
-        'dst/dir/',
-        'src/',
-        'src/dir/'
-      ])
-    })
+        await fse.emptyDir(syncDir.root)
+      })
 
-    it('throws a custom Error on existing destination (and missing source)', async function() {
-      await syncDir.ensureParentDir(srcDir)
-      await syncDir.ensureDir(dstDir)
+      it('moves the folder and updates its mtime', async function() {
+        await syncDir.ensureDir(srcDir)
+        await syncDir.ensureParentDir(dstDir)
 
-      await should(this.local.moveFolderAsync(dstDir, srcDir)).be.rejectedWith(
-        /already exists/
-      )
+        await this.local.moveAsync(dstDir, srcDir)
 
-      should(await syncDir.tree()).deepEqual(['dst/', 'dst/dir/', 'src/'])
+        should(await syncDir.tree()).deepEqual(['dst/', 'dst/dir/', 'src/'])
+        should((await syncDir.mtime(dstDir)).getTime()).equal(
+          new Date(dstDir.updated_at).getTime()
+        )
+      })
+
+      it('throws ENOENT on missing source', async function() {
+        await syncDir.ensureParentDir(srcDir)
+        await syncDir.ensureParentDir(dstDir)
+
+        await should(this.local.moveAsync(dstDir, srcDir)).be.rejectedWith({
+          code: 'ENOENT'
+        })
+
+        should(await syncDir.tree()).deepEqual(['dst/', 'src/'])
+      })
+
+      it('throws ENOENT on missing destination parent', async function() {
+        await syncDir.ensureDir(srcDir)
+
+        await should(this.local.moveAsync(dstDir, srcDir)).be.rejectedWith({
+          code: 'ENOENT'
+        })
+
+        should(await syncDir.tree()).deepEqual(['src/', 'src/dir/'])
+      })
+
+      it('throws a custom Error on existing destination', async function() {
+        await syncDir.ensureDir(srcDir)
+        await syncDir.ensureDir(dstDir)
+
+        await should(this.local.moveAsync(dstDir, srcDir)).be.rejectedWith(
+          /already exists/
+        )
+
+        should(await syncDir.tree()).deepEqual([
+          'dst/',
+          'dst/dir/',
+          'src/',
+          'src/dir/'
+        ])
+      })
+
+      it('throws a custom Error on existing destination (and missing source)', async function() {
+        await syncDir.ensureParentDir(srcDir)
+        await syncDir.ensureDir(dstDir)
+
+        await should(this.local.moveAsync(dstDir, srcDir)).be.rejectedWith(
+          /already exists/
+        )
+
+        should(await syncDir.tree()).deepEqual(['dst/', 'dst/dir/', 'src/'])
+      })
     })
   })
 

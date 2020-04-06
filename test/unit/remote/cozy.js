@@ -530,6 +530,7 @@ describe('RemoteCozy', function() {
     beforeEach(async function() {
       this.config.cozyUrl = cozyStackDouble.url()
       remoteCozy = new RemoteCozy(this.config)
+      remoteCozy.client.oauth = true
       remoteCozy.client._authcreds = Promise.resolve({
         token: 'fake OAuth token'
       })

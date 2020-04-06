@@ -1147,9 +1147,6 @@ describe('Merge', function() {
                 moveFrom: movedSrc,
                 overwrite: existing
               },
-              this.side === 'local'
-                ? { remote: existing.remote }
-                : { ino: existing.ino, fileid: existing.fileid },
               _.omit(was, ['_rev'])
             )
           ],

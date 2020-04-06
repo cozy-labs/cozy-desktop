@@ -408,12 +408,6 @@ class Merge {
           if (file.path === doc.path) {
             doc._rev = file._rev
             doc.overwrite = file
-            if (side === 'local') {
-              doc.remote = file.remote
-            } else {
-              doc.ino = file.ino
-              if (file.fileid) doc.fileid = file.fileid
-            }
           }
           await this.ensureParentExistAsync(side, doc)
           return this.pouch.bulkDocs([was, doc])

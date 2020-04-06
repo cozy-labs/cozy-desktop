@@ -365,24 +365,6 @@ class Local /*:: implements Reader, Writer */ {
     log.info({ path: doc.path }, 'Local assignNewRev = noop')
   }
 
-  /** Move a file, eventually updating its content */
-  async moveFileAsync(
-    doc /*: Metadata */,
-    old /*: Metadata */
-  ) /*: Promise<void> */ {
-    log.info({ path: doc.path, oldpath: old.path }, 'Moving file')
-    await this._move(doc, old)
-  }
-
-  /** Move a folder */
-  async moveFolderAsync(
-    doc /*: Metadata */,
-    old /*: Metadata */
-  ) /*: Promise<void> */ {
-    log.info({ path: doc.path, oldpath: old.path }, 'Moving folder')
-    await this._move(doc, old)
-  }
-
   /** Move a file or folder. In case of a file, content is unchanged.
    *
    * On GNU/Linux, it should be possible to prevent overwriting the destination
@@ -397,7 +379,19 @@ class Local /*:: implements Reader, Writer */ {
    *
    * TODO: atomic local destination check + move
    */
-  async _move(doc /*: Metadata */, old /*: Metadata */) /*: Promise<void> */ {
+  async moveAsync(
+    doc /*: Metadata */,
+    old /*: Metadata */
+  ) /*: Promise<void> */ {
+    log.info(
+      { path: doc.path, oldpath: old.path },
+      `Moving ${old.docType}${doc.overwrite ? ' (with overwrite)' : ''}`
+    )
+
+    if (doc.overwrite && doc.overwrite.path !== old.path) {
+      await this.trashAsync(doc.overwrite)
+    }
+
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
 

@@ -42,10 +42,10 @@ describe('Move', () => {
   })
 
   describe('file', () => {
-    let file, src
+    let file, src, dst
 
     beforeEach(async () => {
-      await cozy.files.createDirectory({ name: 'dst' })
+      dst = await cozy.files.createDirectory({ name: 'dst' })
       src = await cozy.files.createDirectory({ name: 'src' })
       file = await cozy.files.create('foo', { name: 'file', dirID: src._id })
 
@@ -120,6 +120,69 @@ describe('Move', () => {
       should(await helpers.local.tree()).deepEqual(['dst/', 'dst/file', 'src/'])
     })
 
+    it('local overwriting other file', async () => {
+      const existing = await cozy.files.create('foo', {
+        name: 'file',
+        dirID: dst._id
+      })
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+      // We don't want the calls made above to show up in our expectations
+      helpers.resetPouchSpy()
+
+      const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
+      await prep.moveFileAsync(
+        'local',
+        _.merge(
+          {
+            path: 'dst/file',
+            updated_at: '2017-06-19T08:19:26.769Z'
+          },
+          _.pick(oldFile, [
+            'docType',
+            'md5sum',
+            'mime',
+            'class',
+            'size',
+            'sides'
+          ])
+        ),
+        oldFile
+      )
+
+      should(
+        helpers.putDocs(
+          'path',
+          '_deleted',
+          'trashed',
+          'moveFrom',
+          'overwrite.path'
+        )
+      ).deepEqual([
+        { path: path.normalize('src/file'), _deleted: true },
+        {
+          path: path.normalize('dst/file'),
+          moveFrom: oldFile,
+          overwrite: { path: 'dst/file' }
+        }
+      ])
+
+      await helpers.syncAll()
+
+      should(await helpers.remote.tree()).deepEqual([
+        '.cozy_trash/',
+        '.cozy_trash/file',
+        'dst/',
+        'dst/file',
+        'src/'
+      ])
+      should(await helpers.remote.byIdMaybe(existing._id)).have.property(
+        'trashed',
+        true
+      )
+      should(await helpers.remote.byIdMaybe(oldFile.remote._id)).not.be.null()
+    })
+
     describe('with synced file update', () => {
       it('local', async () => {
         await helpers.local.syncDir.outputFile(
@@ -148,7 +211,7 @@ describe('Move', () => {
         await helpers.remote.pullChanges()
         await helpers.syncAll()
         const was = await pouch.byRemoteIdAsync(file._id)
-        await helpers._remote.moveFileAsync(
+        await helpers._remote.moveAsync(
           {
             ...was,
             path: path.normalize('src/file2')
@@ -196,7 +259,7 @@ describe('Move', () => {
         await cozy.files.updateById(file._id, 'updated file content', {})
         await helpers.remote.pullChanges()
         const was = await pouch.byRemoteIdAsync(file._id)
-        await helpers._remote.moveFileAsync(
+        await helpers._remote.moveAsync(
           {
             ...was,
             path: path.normalize('src/file2')
@@ -370,7 +433,7 @@ describe('Move', () => {
 
     it('from remote client', async () => {
       const was = await pouch.byRemoteIdAsync(dir._id)
-      await helpers._remote.moveFolderAsync(
+      await helpers._remote.moveAsync(
         {
           ...was,
           path: path.normalize('parent/dst/dir')
@@ -421,6 +484,86 @@ describe('Move', () => {
         'parent/dst/dir/subdir/file',
         'parent/src/'
       ])
+    })
+
+    it('local overwriting other directory', async () => {
+      const existing = await cozy.files.createDirectory({
+        name: 'dir',
+        dirID: dst._id
+      })
+      // The file deletion would be merged by another event but even without
+      // that event, we'll delete it remotely.
+      await cozy.files.create('foo', {
+        name: 'file',
+        dirID: existing._id
+      })
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+      // We don't want the calls made above to show up in our expectations
+      helpers.resetPouchSpy()
+
+      const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
+      const doc = builders
+        .metadir()
+        .path('parent/dst/dir')
+        .build()
+
+      await prep.moveFolderAsync('local', doc, oldFolder)
+
+      should(
+        helpers.putDocs(
+          'path',
+          '_deleted',
+          'trashed',
+          'childMove',
+          'overwrite.path'
+        )
+      ).deepEqual([
+        { path: path.normalize('parent/src/dir'), _deleted: true },
+        {
+          path: path.normalize('parent/dst/dir'),
+          overwrite: { path: 'parent/dst/dir' }
+        },
+        {
+          path: path.normalize('parent/src/dir/empty-subdir'),
+          _deleted: true,
+          childMove: true
+        },
+        { path: path.normalize('parent/dst/dir/empty-subdir') },
+        {
+          path: path.normalize('parent/src/dir/subdir'),
+          _deleted: true,
+          childMove: true
+        },
+        { path: path.normalize('parent/dst/dir/subdir') },
+        {
+          path: path.normalize('parent/src/dir/subdir/file'),
+          _deleted: true,
+          childMove: true
+        },
+        { path: path.normalize('parent/dst/dir/subdir/file') }
+      ])
+
+      await helpers.syncAll()
+
+      should(await helpers.remote.tree()).deepEqual([
+        '.cozy_trash/',
+        '.cozy_trash/dir/',
+        '.cozy_trash/dir/file',
+        'parent/',
+        'parent/dst/',
+        'parent/dst/dir/',
+        'parent/dst/dir/empty-subdir/',
+        'parent/dst/dir/subdir/',
+        'parent/dst/dir/subdir/file',
+        'parent/src/'
+      ])
+
+      should(await helpers.remote.byIdMaybe(existing._id)).have.property(
+        'path',
+        '/.cozy_trash/dir'
+      )
+      should(await helpers.remote.byIdMaybe(oldFolder.remote._id)).not.be.null()
     })
 
     describe('with synced file update', () => {
@@ -476,7 +619,7 @@ describe('Move', () => {
           'parent/src/dir/subdir/file'
         ])
         const was = await pouch.byRemoteIdAsync(dir._id)
-        await helpers._remote.moveFolderAsync(
+        await helpers._remote.moveAsync(
           {
             ...was,
             path: path.normalize('parent/src/dir2')
@@ -554,7 +697,7 @@ describe('Move', () => {
         await cozy.files.updateById(file._id, 'updated file content', {})
         await helpers.remote.pullChanges()
         const was = await pouch.byRemoteIdAsync(dir._id)
-        await helpers._remote.moveFolderAsync(
+        await helpers._remote.moveAsync(
           {
             ...was,
             path: path.normalize('parent/src/dir2')
@@ -642,7 +785,7 @@ describe('Move', () => {
           'parent/src/dir/subdir/file'
         ])
         const was = await pouch.byRemoteIdAsync(dir._id)
-        await helpers._remote.moveFolderAsync(
+        await helpers._remote.moveAsync(
           {
             ...was,
             path: path.normalize('parent/dst/dir')
