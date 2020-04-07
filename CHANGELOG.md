@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.20.0-beta.3 - 2020-04-07
+
+Improvements for all users:
+
+- This release fixes a small typo that prevented the overwriting moves to
+  function properly.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.20.0-beta.2 - 2020-04-06
 
 Improvements for all users:
