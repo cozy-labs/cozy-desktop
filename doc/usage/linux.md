@@ -49,6 +49,7 @@ The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
 | Ubuntu 14.04 (Trusty Tahr)                | no        | 3.4.19    |                       |
 | **Ubuntu 16.04 (Xenial Xerus)**           | **yes**   | 3.4.21    | some issues on Unity  |
 | **Ubuntu 17.10 (Artful Aardvark)**        | **yes**   | 3.4.24    | GNOME 3               |
+| **Ubuntu 19.10 (Eoan Ermine)**            | **yes**   | 3.4.28    |                       |
 | [Add your distribution][Edit] (see below) | ...       | ...       |                       |
 
 **Before** requesting for your distribution to be added to the list, please:
