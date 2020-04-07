@@ -154,7 +154,7 @@ class RemoteCozy {
   }
 
   async newClient() /*: Promise<CozyClient>  */ {
-    if (this.client.oauth) {
+    if (this.client._oauth) {
       return await CozyClient.fromOldOAuthClient(this.client)
     } else {
       return await CozyClient.fromOldClient(this.client)
