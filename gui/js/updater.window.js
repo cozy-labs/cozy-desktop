@@ -1,11 +1,16 @@
 const Promise = require('bluebird')
 const WindowManager = require('./window_manager')
 const { autoUpdater } = require('electron-updater')
+const { autoUpdaterLogParser } = require('./autoUpdaterLogParser')
 const { translate } = require('./i18n')
 const { dialog } = require('electron')
 const path = require('path')
+const { logger } = require('../../core/app')
 
-const log = require('../../core/app').logger({
+const log = logger({
+  component: 'GUI:autoupdater'
+})
+const autoUpdaterLogger = logger({
   component: 'GUI:autoupdater'
 })
 
@@ -22,7 +27,7 @@ const log = require('../../core/app').logger({
  * Except for downtimes, users with fast connection should still get a fast
  * available or unavailable update answer anyway.
  */
-const UPDATE_CHECK_TIMEOUT = 10000
+const UPDATE_CHECK_TIMEOUT = 60000
 
 const UPDATE_RETRY_DELAY = 1000
 
@@ -47,7 +52,28 @@ module.exports = class UpdaterWM extends WindowManager {
   }
 
   constructor(...opts) {
-    autoUpdater.logger = log
+    super(...opts)
+
+    this.progressObj = {
+      percent: 0,
+      bytesPerSecond: 0,
+      total: 0,
+      transferred: 0,
+      lastChunkStartTime: 0
+    }
+
+    autoUpdaterLogger.addSerializers({
+      msg: msg => {
+        try {
+          const progress = autoUpdaterLogParser(msg)
+          this.updateDownloadProgress(progress)
+        } catch (err) {
+          log.error({ err })
+        }
+        return msg
+      }
+    })
+    autoUpdater.logger = autoUpdaterLogger
     autoUpdater.autoDownload = false
     autoUpdater.on('update-available', info => {
       this.clearTimeoutIfAny()
@@ -104,8 +130,26 @@ module.exports = class UpdaterWM extends WindowManager {
           .catch(err => this.send('error-updating', this.humanError(err)))
       )
     })
+  }
 
-    super(...opts)
+  updateDownloadProgress({ totalSize, chunkStart }) {
+    if (totalSize) {
+      this.progressObj.total = totalSize
+    }
+    if (chunkStart) {
+      const { lastChunkStartTime, transferred, totalSize } = this.progressObj
+
+      const lastChunkDownloadDuration = (Date.now() - lastChunkStartTime) * 1000 // seconds
+      const lastChunkEnd = chunkStart - 1
+      const downloadedBytes = lastChunkEnd - transferred
+
+      this.progressObj.transferred = lastChunkEnd
+      this.progressObj.bytesPerSecond =
+        downloadedBytes / lastChunkDownloadDuration
+      this.progressObj.percent = (lastChunkEnd * 100) / totalSize
+    }
+
+    autoUpdater.emit('download-progress', this.progressObj)
   }
 
   clearTimeoutIfAny() {
