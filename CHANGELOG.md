@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.20.0-beta.4 - 2020-04-09
+
+Improvements for all users:
+
+- Following some feedback on the app updater window which could give the feeling
+  that the update was not going to complete, we've made a small redesign of this
+  window, replacing the indeterminate progress bar with a spinner and adding
+  emphasizing the text asking you to be patient until the download is complete.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.20.0-beta.3 - 2020-04-07
 
 Improvements for all users:
