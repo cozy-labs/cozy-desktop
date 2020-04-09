@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.20.0-beta.6 - 2020-04-09
+
+Improvements for all users:
+
+- The updater window was smaller than anticipated when bringing the window
+  redesign to life so all the content would not fit inside, especially with
+  French text. The spinner has been shrinked down to leave more room for the
+  text and the French translation modified so that the first sentence would fit
+  in one line.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.20.0-beta.5 - 2020-04-09
 
 Nothing to see here. This release let's us test the previous redesign of the updater window.
