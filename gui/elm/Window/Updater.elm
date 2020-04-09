@@ -99,12 +99,7 @@ view helpers model =
 
             ( Nothing, Nothing ) ->
                 progressView helpers
-                    [ div [ class "progress indeterminate" ]
-                        [ div
-                            [ class "progress-inner" ]
-                            []
-                        ]
-                    ]
+                    [ span [ class "progress-spinner" ] [] ]
         )
 
 
@@ -117,5 +112,8 @@ progressView helpers localProgressBar =
     , div [ class "spacer" ]
         localProgressBar
     , p []
-        [ text (helpers.t "Updater Please wait") ]
+        [ strong [] [ text (helpers.t "Updater Please wait") ]
+        , br [] []
+        , text (helpers.t "Updater It may take a while")
+        ]
     ]
