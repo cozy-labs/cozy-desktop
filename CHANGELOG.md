@@ -1,5 +1,9 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.20.0-beta.5 - 2020-04-09
+
+Nothing to see here. This release let's us test the previous redesign of the updater window.
+
 ## 3.20.0-beta.4 - 2020-04-09
 
 Improvements for all users:
