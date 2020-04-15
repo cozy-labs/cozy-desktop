@@ -159,6 +159,44 @@ describe('Trash', () => {
         })
       })
     })
+
+    context('destroyed on the remote Cozy', () => {
+      context('before the file was moved on the local filesystem', () => {
+        it('does not trash the file on the local filesystem and re-uploads it', async () => {
+          await cozy.files.destroyById(file._id)
+          await helpers.remote.pullChanges()
+          await helpers.local.syncDir.move(
+            path.normalize('parent/file'),
+            'file'
+          )
+          await helpers.local.scan()
+          await helpers.syncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: ['file', 'parent/'],
+            remote: ['file', 'parent/']
+          })
+        })
+      })
+
+      context('after the file was moved on the local filesystem', () => {
+        it('does not trash the file on the local filesystem and re-uploads it', async () => {
+          await helpers.local.syncDir.move(
+            path.normalize('parent/file'),
+            'file'
+          )
+          await helpers.local.scan()
+          await cozy.files.destroyById(file._id)
+          await helpers.remote.pullChanges()
+          await helpers.syncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: ['file', 'parent/'],
+            remote: ['file', 'parent/']
+          })
+        })
+      })
+    })
   })
 
   describe('directory', () => {

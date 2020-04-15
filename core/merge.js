@@ -754,6 +754,16 @@ class Merge {
       // We don't want Sync to pick up this move hint and try to synchronize a
       // move so we delete it.
       delete file.moveFrom
+
+      if (side === 'remote') {
+        // The file was moved locally and we don't want to delete it as we think
+        // users delete "paths" but the file was completely destroyed on the
+        // Cozy and cannot be restored from the trash so we dissociate our
+        // record from its previous remote version to force its re-upload.
+        delete file.remote
+        delete file.sides.remote
+        return this.pouch.put(file)
+      }
     }
     if (file.sides && file.sides[side]) {
       metadata.markSide(side, file, file)
