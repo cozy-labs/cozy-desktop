@@ -62,6 +62,49 @@ describe('Trash', () => {
           'parent/'
         ])
       })
+
+      context('before the file was moved on the remote Cozy', () => {
+        it('does not trash the file on the remote Cozy and re-downloads it', async () => {
+          // TODO: Works only because the deletion could not be synced since the
+          // Cozy refuses it after the moved changed the remote rev.
+          // Could use the deletion marker.
+          await helpers.local.syncDir.remove('parent/file')
+          await helpers.local.scan()
+          await cozy.files.updateAttributesById(file._id, {
+            name: 'file',
+            dir_id: parent.attributes.dir_id
+          })
+          await helpers.remote.pullChanges()
+          await helpers.syncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: ['file', 'parent/'],
+            remote: ['file', 'parent/']
+          })
+        })
+      })
+
+      // This situation can happen if the synchronization is stopped after
+      // we've merged the remote file movement but before it's been applied
+      // and the local deletion is done afterwards, while the client is
+      // stopped.
+      context('after the file was moved on the remote Cozy', () => {
+        it('does not trash the file on the remote Cozy and re-downloads it', async () => {
+          await cozy.files.updateAttributesById(file._id, {
+            name: 'file',
+            dir_id: parent.attributes.dir_id
+          })
+          await helpers.remote.pullChanges()
+          await helpers.local.syncDir.remove('parent/file')
+          await helpers.local.scan()
+          await helpers.syncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: ['file', 'parent/'],
+            remote: ['file', 'parent/']
+          })
+        })
+      })
     })
 
     context('on the remote Cozy', () => {
@@ -78,6 +121,42 @@ describe('Trash', () => {
         await helpers.syncAll()
 
         should(await helpers.local.tree()).deepEqual(['/Trash/file', 'parent/'])
+      })
+
+      context('before the file was moved on the local filesystem', () => {
+        it('does not trash the file on the local filesystem and restores it', async () => {
+          await cozy.files.trashById(file._id)
+          await helpers.remote.pullChanges()
+          await helpers.local.syncDir.move(
+            path.normalize('parent/file'),
+            'file'
+          )
+          await helpers.local.scan()
+          await helpers.syncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: ['file', 'parent/'],
+            remote: ['file', 'parent/']
+          })
+        })
+      })
+
+      context('after the file was moved on the local filesystem', () => {
+        it('does not trash the file on the local filesystem and restores it', async () => {
+          await helpers.local.syncDir.move(
+            path.normalize('parent/file'),
+            'file'
+          )
+          await helpers.local.scan()
+          await cozy.files.trashById(file._id)
+          await helpers.remote.pullChanges()
+          await helpers.syncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: ['file', 'parent/'],
+            remote: ['file', 'parent/']
+          })
+        })
       })
     })
   })

@@ -671,6 +671,26 @@ class Merge {
       log.error({ doc, was, sentry: true }, 'Mismatch on doctype for doTrash')
       return
     }
+    if (was.moveFrom) {
+      // The file was moved and we don't want to delete it as we think users
+      // delete "paths".
+      if (side === 'remote') {
+        // We update the remote rev so we can send the file again and undo the
+        // remote trashing.
+        was.remote._rev = doc.remote._rev
+        // We keep the `moveFrom` hint so we will update the remote file and
+        // restore it from the trash instead of re-uploading it.
+        was.moveFrom.remote._rev = doc.remote._rev
+      } else {
+        // We remove the hint that the file should be moved since it has
+        // actually been deleted locally and should be recreated instead.
+        delete was.moveFrom
+        // The file was deleted locally so it should not have a local side so we
+        // can re-create it.
+        delete was.sides.local
+      }
+      return this.pouch.put(was)
+    }
     return this.doTrash(side, was, doc)
   }
 
