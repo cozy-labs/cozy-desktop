@@ -2763,20 +2763,24 @@ describe('Merge', function() {
     })
   })
 
-  describe('doTrash', () => {
+  describe('trashFileAsync', () => {
     context('when metadata are found in Pouch', () => {
       it('deletes it with trashed property and up-to-date sides info', async function() {
         const was = await builders
-          .metadata()
+          .metafile()
           .upToDate()
           .create()
         const doc = builders
-          .metadata(was)
+          .metafile(was)
           .trashed()
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.doTrash(this.side, _.cloneDeep(was), _.cloneDeep(doc))
+          this.merge.trashFileAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
         )
 
         should(sideEffects).deepEqual({
@@ -2796,14 +2800,18 @@ describe('Merge', function() {
 
     context('when metadata are not found in Pouch', () => {
       it('does nothing', async function() {
-        const was = builders.metadata().build()
+        const was = builders.metafile().build()
         const doc = builders
-          .metadata(was)
+          .metafile(was)
           .trashed()
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.doTrash(this.side, _.cloneDeep(was), _.cloneDeep(doc))
+          this.merge.trashFileAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
         )
 
         should(sideEffects).deepEqual({
@@ -2823,7 +2831,94 @@ describe('Merge', function() {
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.doTrash(this.side, _.cloneDeep(was), _.cloneDeep(doc))
+          this.merge.trashFileAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [],
+          resolvedConflicts: []
+        })
+      })
+    })
+  })
+
+  describe('trashFolderAsync', () => {
+    context('when metadata are found in Pouch', () => {
+      it('deletes it with trashed property and up-to-date sides info', async function() {
+        const was = await builders
+          .metadir()
+          .upToDate()
+          .create()
+        const doc = builders
+          .metadir(was)
+          .trashed()
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFolderAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: increasedSides(was.sides, this.side, 1),
+                _deleted: true
+              },
+              _.omit(was, ['_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when metadata are not found in Pouch', () => {
+      it('does nothing', async function() {
+        const was = builders.metadir().build()
+        const doc = builders
+          .metadir(was)
+          .trashed()
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFolderAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when docType does not match', () => {
+      it('does nothing', async function() {
+        const was = await builders.metadir().create()
+        const doc = builders
+          .metafile()
+          .path(was.path)
+          .trashed()
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFolderAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
         )
 
         should(sideEffects).deepEqual({

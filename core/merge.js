@@ -624,43 +624,29 @@ class Merge {
 
   async doTrash(
     side /*: SideName */,
-    was /*: * */,
-    doc /*: * */
+    was /*: Metadata */,
+    doc /*: Metadata */
   ) /*: Promise<void> */ {
     const { path } = doc
-    const oldMetadata /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(
-      was._id
-    )
-    if (!oldMetadata) {
-      log.debug({ path }, 'Nothing to trash')
-      return
-    }
-    if (doc.docType !== oldMetadata.docType) {
-      log.error(
-        { doc, oldMetadata, sentry: true },
-        'Mismatch on doctype for doTrash'
-      )
-      return
-    }
-    if (side === 'remote' && !metadata.sameBinary(oldMetadata, doc)) {
+    if (side === 'remote' && !metadata.sameBinary(was, doc)) {
       // We have a conflict: the file was updated in local and trashed on the
       // remote. We dissociate the file on the remote to be able to apply the
       // local change.
-      delete oldMetadata.remote
-      if (oldMetadata.sides) delete oldMetadata.sides.remote
-      return this.pouch.put(oldMetadata)
+      delete was.remote
+      if (was.sides) delete was.sides.remote
+      return this.pouch.put(was)
     }
-    delete oldMetadata.errors
-    const newMetadata = _.cloneDeep(oldMetadata)
-    metadata.markSide(side, newMetadata, oldMetadata)
+    delete was.errors
+    const newMetadata = _.cloneDeep(was)
+    metadata.markSide(side, newMetadata, was)
     newMetadata._id = doc._id
     newMetadata._rev = doc._rev
     newMetadata.trashed = true
-    if (oldMetadata.sides && oldMetadata.sides[side]) {
-      metadata.markSide(side, oldMetadata, oldMetadata)
-      oldMetadata._deleted = true
+    if (was.sides && was.sides[side]) {
+      metadata.markSide(side, was, was)
+      was._deleted = true
       try {
-        await this.pouch.put(oldMetadata)
+        await this.pouch.put(was)
         return
       } catch (err) {
         log.warn({ path, err })
@@ -671,20 +657,39 @@ class Merge {
 
   async trashFileAsync(
     side /*: SideName */,
-    was /*: * */,
-    doc /*: * */
+    trashed /*: {_id: string, path: string} */,
+    doc /*: Metadata */
   ) /*: Promise<void> */ {
-    log.debug({ path: doc.path, oldpath: was.path }, 'trashFileAsync')
+    const { path } = trashed
+    log.debug({ path }, 'trashFileAsync')
+    const was /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(trashed._id)
+    if (!was) {
+      log.debug({ path }, 'Nothing to trash')
+      return
+    }
+    if (doc.docType !== was.docType) {
+      log.error({ doc, was, sentry: true }, 'Mismatch on doctype for doTrash')
+      return
+    }
     return this.doTrash(side, was, doc)
   }
 
   async trashFolderAsync(
     side /*: SideName */,
-    was /*: * */,
-    doc /*: * */
+    trashed /*: {_id: string, path: string} */,
+    doc /*: Metadata */
   ) /*: Promise<*> */ {
-    log.debug({ path: doc.path, oldpath: was.path }, 'trashFolderAsync')
-    const { path } = doc
+    const { path } = trashed
+    log.debug({ path }, 'trashFolderAsync')
+    const was /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(trashed._id)
+    if (!was) {
+      log.debug({ path }, 'Nothing to trash')
+      return
+    }
+    if (doc.docType !== was.docType) {
+      log.error({ doc, was, sentry: true }, 'Mismatch on doctype for doTrash')
+      return
+    }
     // Don't trash a folder if the other side has added a new file in it (or updated one)
     let children = await this.pouch.byRecursivePathAsync(was._id)
     children = children.reverse()
