@@ -2606,6 +2606,38 @@ describe('Merge', function() {
         resolvedConflicts: []
       })
     })
+
+    it('removes move hints', async function() {
+      const old = await builders
+        .metafile()
+        .path('FILE')
+        .data('content')
+        .sides({ [this.side]: 1 })
+        .create()
+      const doc = await builders
+        .metafile(old)
+        .moveFrom(old)
+        .path('MOVED')
+        .sides({ [this.side]: 2 })
+        .create()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.deleteFileAsync(this.side, _.cloneDeep(doc))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              sides: increasedSides(doc.sides, this.side, 1),
+              _deleted: true
+            },
+            _.omit(doc, ['moveFrom', '_rev'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
   })
 
   describe('deleteFolder', function() {
@@ -2690,6 +2722,40 @@ describe('Merge', function() {
               _deleted: true
             },
             _.omit(doc, ['_rev'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
+    it('removes move hints', async function() {
+      // TODO: make sure we remove the move hints on children. This will be part
+      // of a larger refactoring to make sure folders are trashed with their
+      // hierarchy.
+      const old = await builders
+        .metadir()
+        .path('FOLDER')
+        .sides({ [this.side]: 1 })
+        .create()
+      const doc = await builders
+        .metadir(old)
+        .moveFrom(old)
+        .path('MOVED')
+        .sides({ [this.side]: 1 })
+        .create()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.deleteFolderAsync(this.side, _.cloneDeep(doc))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              sides: increasedSides(doc.sides, this.side, 1),
+              _deleted: true
+            },
+            _.omit(doc, ['moveFrom', '_rev'])
           )
         ],
         resolvedConflicts: []

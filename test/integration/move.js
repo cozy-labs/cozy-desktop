@@ -183,6 +183,88 @@ describe('Move', () => {
       should(await helpers.remote.byIdMaybe(oldFile.remote._id)).not.be.null()
     })
 
+    context('local to an ignored path', () => {
+      it('trashes the file on the remote Cozy', async () => {
+        const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
+        await prep.moveFileAsync(
+          'local',
+          _.merge(
+            {
+              path: 'dst/file.tmp',
+              updated_at: '2017-06-19T08:19:26.769Z'
+            },
+            _.pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
+          ),
+          oldFile
+        )
+
+        should(
+          helpers.putDocs('path', '_deleted', 'trashed', 'moveFrom')
+        ).deepEqual([{ path: path.normalize('src/file'), _deleted: true }])
+
+        await helpers.syncAll()
+
+        should(await helpers.remote.tree()).deepEqual([
+          '.cozy_trash/',
+          '.cozy_trash/file',
+          'dst/',
+          'src/'
+        ])
+      })
+
+      context('after a previous local move', () => {
+        const intermediaryPath = path.normalize('dst/file-moved')
+        beforeEach(async () => {
+          const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
+          await prep.moveFileAsync(
+            'local',
+            _.merge(
+              {
+                path: intermediaryPath,
+                updated_at: '2017-06-19T08:19:26.769Z'
+              },
+              _.pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
+            ),
+            oldFile
+          )
+          helpers.resetPouchSpy()
+        })
+
+        it('trashes the file on the remote Cozy', async () => {
+          const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
+          await prep.moveFileAsync(
+            'local',
+            _.merge(
+              {
+                path: 'dst/file.tmp',
+                updated_at: '2017-06-19T08:19:26.769Z'
+              },
+              _.pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
+            ),
+            oldFile
+          )
+
+          should(
+            helpers.putDocs('path', '_deleted', 'trashed', 'moveFrom')
+          ).deepEqual([
+            {
+              path: intermediaryPath,
+              _deleted: true
+            }
+          ])
+
+          await helpers.syncAll()
+
+          should(await helpers.remote.tree()).deepEqual([
+            '.cozy_trash/',
+            '.cozy_trash/file',
+            'dst/',
+            'src/'
+          ])
+        })
+      })
+    })
+
     describe('with synced file update', () => {
       it('local', async () => {
         await helpers.local.syncDir.outputFile(
@@ -564,6 +646,109 @@ describe('Move', () => {
         '/.cozy_trash/dir'
       )
       should(await helpers.remote.byIdMaybe(oldFolder.remote._id)).not.be.null()
+    })
+
+    context('local to an ignored path', () => {
+      // XXX: We should try to trash the entire folder and keep its hierarchy
+      // but we're deleting the content first so the file is deleted before its
+      // parents which get completely erased from the Cozy since they're empty
+      // when we finally trash them.
+      it('trashes the folder content on the remote Cozy', async () => {
+        const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
+        const doc = builders
+          .metadir()
+          .path('.system-tmp-cozy-drive/dir')
+          .build()
+
+        await prep.moveFolderAsync('local', doc, oldFolder)
+
+        should(
+          helpers.putDocs('path', '_deleted', 'trashed', 'childMove')
+        ).deepEqual([
+          {
+            path: path.normalize('parent/src/dir/subdir/file'),
+            _deleted: true
+          },
+          {
+            path: path.normalize('parent/src/dir/subdir'),
+            _deleted: true
+          },
+          {
+            path: path.normalize('parent/src/dir/empty-subdir'),
+            _deleted: true
+          },
+          { path: path.normalize('parent/src/dir'), _deleted: true }
+        ])
+
+        await helpers.syncAll()
+
+        should(await helpers.remote.tree()).deepEqual([
+          '.cozy_trash/',
+          '.cozy_trash/file',
+          'parent/',
+          'parent/dst/',
+          'parent/src/'
+        ])
+      })
+
+      context('after a previous local move', () => {
+        beforeEach(async () => {
+          const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
+          const doc = builders
+            .metadir(oldFolder)
+            .path('parent/dst/dir')
+            .build()
+
+          await prep.moveFolderAsync('local', doc, oldFolder)
+          helpers.resetPouchSpy()
+        })
+
+        // XXX: We have the expected behavior of trashing the entire directory
+        // with its hierarchy because the `moveFrom` and `childMove` attributes
+        // of its children records are not deleted and thus Sync tries to apply
+        // child moves rather than deletions and child moves are not applied (we
+        // move their parent instead).
+        it('trashes the folder content on the remote Cozy', async () => {
+          const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
+          const doc = builders
+            .metadir(oldFolder)
+            .path('.system-tmp-cozy-drive/dir')
+            .build()
+
+          await prep.moveFolderAsync('local', doc, oldFolder)
+
+          should(
+            helpers.putDocs('path', '_deleted', 'trashed', 'childMove')
+          ).deepEqual([
+            {
+              path: path.normalize('parent/dst/dir/subdir/file'),
+              _deleted: true
+            },
+            {
+              path: path.normalize('parent/dst/dir/subdir'),
+              _deleted: true
+            },
+            {
+              path: path.normalize('parent/dst/dir/empty-subdir'),
+              _deleted: true
+            },
+            { path: path.normalize('parent/dst/dir'), _deleted: true }
+          ])
+
+          await helpers.syncAll()
+
+          should(await helpers.remote.tree()).deepEqual([
+            '.cozy_trash/',
+            '.cozy_trash/dir/',
+            '.cozy_trash/dir/empty-subdir/',
+            '.cozy_trash/dir/subdir/',
+            '.cozy_trash/dir/subdir/file',
+            'parent/',
+            'parent/dst/',
+            'parent/src/'
+          ])
+        })
+      })
     })
 
     describe('with synced file update', () => {
