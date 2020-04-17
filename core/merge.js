@@ -725,6 +725,11 @@ class Merge {
     log.debug({ path: doc.path }, 'deleteFileAsync')
     const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     if (!file) return null
+    if (file.moveFrom) {
+      // We don't want Sync to pick up this move hint and try to synchronize a
+      // move so we delete it.
+      delete file.moveFrom
+    }
     if (file.sides && file.sides[side]) {
       metadata.markSide(side, file, file)
       file._deleted = true
@@ -747,6 +752,11 @@ class Merge {
     log.debug({ path: doc.path }, 'deleteFolderAsync')
     const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     if (!folder) return null
+    if (folder.moveFrom) {
+      // We don't want Sync to pick up this move hint and try to synchronize a
+      // move so we delete it.
+      delete folder.moveFrom
+    }
     if (folder.sides && folder.sides[side]) {
       return this.deleteFolderRecursivelyAsync(side, folder)
     } else {
