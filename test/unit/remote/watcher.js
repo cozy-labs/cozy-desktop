@@ -22,6 +22,7 @@ const {
   CozyClientRevokedError,
   RemoteCozy
 } = require('../../../core/remote/cozy')
+const { MergeMissingParentError } = require('../../../core/merge')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 
 const { assignId, ensureValidPath } = metadata
@@ -195,9 +196,11 @@ describe('RemoteWatcher', function() {
 
     context('on Pouch reserved ids error', () => {
       const reservedIdsError = {
-        name: 'bad_request',
-        status: 400,
-        message: 'Only reserved document ids may start with underscore.'
+        err: {
+          name: 'bad_request',
+          status: 400,
+          message: 'Only reserved document ids may start with underscore.'
+        }
       }
 
       beforeEach(function() {
@@ -214,6 +217,20 @@ describe('RemoteWatcher', function() {
         } catch (e) {
           should(e).not.be.an.instanceof(CozyClientRevokedError)
         }
+      })
+    })
+
+    context('on MergeMissingParentError', () => {
+      const missingParentError = {
+        err: new MergeMissingParentError(builders.metadata().build())
+      }
+
+      beforeEach(function() {
+        this.watcher.pullMany.returns([missingParentError])
+      })
+
+      it('does not reject any errors', async function() {
+        await should(this.watcher.watch()).be.fulfilled()
       })
     })
   })

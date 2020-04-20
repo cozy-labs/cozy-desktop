@@ -8,6 +8,7 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 
 const metadata = require('../../metadata')
+const { MergeMissingParentError } = require('../../merge')
 const remoteChange = require('../change')
 const { handleCommonCozyErrors } = require('../cozy')
 const { inRemoteTrash } = require('../document')
@@ -127,8 +128,16 @@ class RemoteWatcher {
       errors.push({ err })
     }
 
-    for (const err of errors) {
-      handleCommonCozyErrors(err, { events: this.events, log })
+    for (const { err, change } of errors) {
+      if (err instanceof MergeMissingParentError) {
+        log.error(
+          { err, change, path: change && change.doc.path },
+          'swallowing missing parent metadata error'
+        )
+        continue
+      }
+
+      handleCommonCozyErrors({ err, change }, { events: this.events, log })
       // No need to handle 'offline' result since next pollings will switch
       // back to 'online' as soon as the changesfeed can be fetched.
     }
