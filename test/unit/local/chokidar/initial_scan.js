@@ -50,6 +50,15 @@ onPlatform('darwin', () => {
           trashed: true,
           docType: 'folder'
         }
+        const folder4 = {
+          _id: 'folder4',
+          path: 'folder4',
+          docType: 'folder',
+          moveFrom: {
+            _id: 'folder1/folder4',
+            path: 'folder1/folder4'
+          }
+        }
         let file1 = {
           _id: 'file1',
           path: 'file1',
@@ -66,7 +75,25 @@ onPlatform('darwin', () => {
           trashed: true,
           docType: 'file'
         }
-        for (let doc of [folder1, folder2, folder3, file1, file2, file3]) {
+        const file4 = {
+          _id: 'file4',
+          path: 'file4',
+          docType: 'file',
+          moveFrom: {
+            _id: 'folder1/file4',
+            path: 'folder1/file4'
+          }
+        }
+        for (let doc of [
+          folder1,
+          folder2,
+          folder3,
+          folder4,
+          file1,
+          file2,
+          file3,
+          file4
+        ]) {
           const { rev } = await this.pouch.db.put(doc)
           doc._rev = rev
         }
@@ -78,7 +105,9 @@ onPlatform('darwin', () => {
         )
 
         should(offlineEvents).deepEqual([
+          { type: 'unlinkDir', path: 'folder4', old: folder4 },
           { type: 'unlinkDir', path: 'folder2', old: folder2 },
+          { type: 'unlink', path: 'file4', old: file4 },
           { type: 'unlink', path: 'file2', old: file2 }
         ])
       })

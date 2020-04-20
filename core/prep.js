@@ -226,6 +226,10 @@ class Prep {
   ) {
     log.debug({ path: doc && doc.path, oldpath: was.path }, 'trashFileAsync')
     metadata.ensureValidPath(was)
+    const trashed = {
+      path: was.path,
+      _id: metadata.id(was.path)
+    }
 
     if (!doc) {
       doc = clone(was)
@@ -233,13 +237,12 @@ class Prep {
     }
 
     metadata.ensureValidPath(doc)
-
     doc.trashed = true
     doc.docType = 'file'
     metadata.assignId(doc)
-    metadata.assignId(was)
+
     // TODO metadata.shouldIgnore
-    return this.merge.trashFileAsync(side, was, doc)
+    return this.merge.trashFileAsync(side, trashed, doc)
   }
 
   // TODO add comments + tests
@@ -250,6 +253,10 @@ class Prep {
   ) {
     log.debug({ path: doc && doc.path, oldpath: was.path }, 'trashFolderAsync')
     metadata.ensureValidPath(was)
+    const trashed = {
+      path: was.path,
+      _id: metadata.id(was.path)
+    }
 
     if (!doc) {
       doc = clone(was)
@@ -257,13 +264,12 @@ class Prep {
     }
 
     metadata.ensureValidPath(doc)
-
     doc.trashed = true
     doc.docType = 'folder'
     metadata.assignId(doc)
-    metadata.assignId(was)
+
     // TODO metadata.shouldIgnore
-    return this.merge.trashFolderAsync(side, was, doc)
+    return this.merge.trashFolderAsync(side, trashed, doc)
   }
 
   // Expectations:

@@ -50,7 +50,7 @@ const detectOfflineUnlinkEvents = async (
   for (const doc of docs) {
     if (inInitialScan(doc) || doc.trashed || doc.incompatibilities) {
       emptySyncDir = false
-    } else if (doc.moveFrom) {
+    } else if (doc.moveFrom && inInitialScan(doc.moveFrom)) {
       // unapplied move
       unappliedMoves.push(metadata.id(doc.moveFrom.path))
     } else {

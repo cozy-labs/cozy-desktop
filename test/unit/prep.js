@@ -2,9 +2,12 @@
 
 const sinon = require('sinon')
 const should = require('should')
+const path = require('path')
 
 const { Ignore } = require('../../core/ignore')
 const Prep = require('../../core/prep')
+const metadata = require('../../core/metadata')
+const { TRASH_DIR_NAME } = require('../../core/remote/constants')
 
 describe('Prep', function() {
   beforeEach('instanciate prep', function() {
@@ -365,11 +368,16 @@ describe('Prep', function() {
         path: 'file-to-be-trashed',
         md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
       }
+      const docId = metadata.id(doc.path)
 
-      await this.prep.trashFileAsync(this.side, doc)
+      await this.prep.trashFileAsync(this.side, doc, doc)
 
-      should(doc).have.property('_id')
-      should(this.merge.trashFileAsync.calledOnce).be.true()
+      should(this.merge.trashFileAsync).be.calledOnce()
+      should(this.merge.trashFileAsync).be.calledWith(
+        this.side,
+        { path: doc.path, _id: docId },
+        { ...doc, trashed: true, _id: docId, docType: 'file' }
+      )
     })
 
     it('throws when path is invalid', async function() {
@@ -378,6 +386,28 @@ describe('Prep', function() {
       return this.prep
         .trashFileAsync(this.side, doc)
         .then(() => should.fail(), err => err.should.match(/Invalid path/))
+    })
+
+    it('generates a doc when none is passed', async function() {
+      const was = {
+        path: 'file-to-be-trashed',
+        md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
+      }
+
+      await this.prep.trashFileAsync(this.side, was)
+
+      should(this.merge.trashFileAsync).be.calledOnce()
+      should(this.merge.trashFileAsync).be.calledWith(
+        this.side,
+        { path: was.path, _id: metadata.id(was.path) },
+        {
+          ...was,
+          path: path.join(TRASH_DIR_NAME, was.path),
+          _id: metadata.id(path.join(TRASH_DIR_NAME, was.path)),
+          trashed: true,
+          docType: 'file'
+        }
+      )
     })
 
     // FIXME
@@ -392,15 +422,17 @@ describe('Prep', function() {
 
   describe('trashFolderAsync', () => {
     it('merges the metadata with an _id and a docType', async function() {
-      const doc = {
-        path: 'folder-to-be-trashed',
-        md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
-      }
+      const doc = { path: 'folder-to-be-trashed' }
+      const docId = metadata.id(doc.path)
 
-      await this.prep.trashFolderAsync(this.side, doc)
+      await this.prep.trashFolderAsync(this.side, doc, doc)
 
-      should(doc).have.property('_id')
       should(this.merge.trashFolderAsync).be.calledOnce()
+      should(this.merge.trashFolderAsync).be.calledWith(
+        this.side,
+        { path: doc.path, _id: docId },
+        { ...doc, trashed: true, _id: docId, docType: 'folder' }
+      )
     })
 
     it('throws when path is invalid', async function() {
@@ -409,6 +441,25 @@ describe('Prep', function() {
       return this.prep
         .trashFolderAsync(this.side, doc)
         .then(() => should.fail(), err => err.should.match(/Invalid path/))
+    })
+
+    it('generates a doc when none is passed', async function() {
+      const was = { path: 'folder-to-be-trashed' }
+
+      await this.prep.trashFolderAsync(this.side, was)
+
+      should(this.merge.trashFolderAsync).be.calledOnce()
+      should(this.merge.trashFolderAsync).be.calledWith(
+        this.side,
+        { path: was.path, _id: metadata.id(was.path) },
+        {
+          ...was,
+          path: path.join(TRASH_DIR_NAME, was.path),
+          _id: metadata.id(path.join(TRASH_DIR_NAME, was.path)),
+          trashed: true,
+          docType: 'folder'
+        }
+      )
     })
 
     // FIXME
