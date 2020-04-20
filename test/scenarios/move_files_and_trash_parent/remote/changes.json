@@ -1,0 +1,71 @@
+[
+  {
+    "_id": "0a28634c011532ee1608c470b72c4927",
+    "_rev": "2-ab8d3d94a80f6b78e1337bbebd3af616",
+    "class": "files",
+    "cozyMetadata": {
+      "createdAt": "2020-04-20T16:40:25.562724358Z",
+      "createdByApp": "cozy-desktop",
+      "createdOn": "http://cozy.tools:8080/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2020-04-20T16:40:26.133741173Z",
+      "updatedByApps": [
+        {
+          "date": "2020-04-20T16:40:26.133741173Z",
+          "instance": "http://cozy.tools:8080/",
+          "slug": "cozy-desktop"
+        }
+      ],
+      "uploadedAt": "2020-04-20T16:40:25.562724358Z",
+      "uploadedBy": {
+        "oauthClient": {
+          "id": "0a28634c011532ee1608c470b7004236",
+          "kind": "",
+          "name": "test"
+        },
+        "slug": "cozy-desktop"
+      },
+      "uploadedOn": "http://cozy.tools:8080/"
+    },
+    "created_at": "2020-04-20T16:40:25.562716639Z",
+    "dir_id": "io.cozy.files.root-dir",
+    "executable": false,
+    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
+    "mime": "application/octet-stream",
+    "name": "file",
+    "size": "20",
+    "tags": [],
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2020-04-20T16:40:25.562716639Z",
+    "path": "/file"
+  },
+  {
+    "_id": "0a28634c011532ee1608c470b72c39f2",
+    "_rev": "2-2bb279576f055eea20ec13f6962e2053",
+    "cozyMetadata": {
+      "createdAt": "2020-04-20T16:40:25.496542516Z",
+      "createdByApp": "cozy-desktop",
+      "createdOn": "http://cozy.tools:8080/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2020-04-20T16:40:27.696422574Z",
+      "updatedByApps": [
+        {
+          "date": "2020-04-20T16:40:27.696422574Z",
+          "instance": "http://cozy.tools:8080/",
+          "slug": "cozy-desktop"
+        }
+      ]
+    },
+    "created_at": "2020-04-20T16:40:25.496536282Z",
+    "dir_id": "io.cozy.files.trash-dir",
+    "name": "src",
+    "path": "/.cozy_trash/src",
+    "restore_path": "/",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2020-04-20T16:40:25.496536282Z"
+  }
+]
