@@ -451,10 +451,10 @@ class Sync {
       log.debug({ path: doc.path }, `Applying else for ${doc.docType} change`)
       let old
       try {
-        old = await this.pouch.getPreviousRevAsync(
+        old = (await this.pouch.getPreviousRevAsync(
           doc._id,
           doc.sides.target - rev
-        )
+        ) /*: ?Metadata */)
       } catch (err) {
         await this.doOverwrite(side, doc)
       }
@@ -622,7 +622,7 @@ class Sync {
       // a thumbnail before apply has finished. In that case, we try to
       // reconciliate the documents.
       if (err && err.status === 409) {
-        const unsynced = await this.pouch.db.get(doc._id)
+        const unsynced /*: Metadata */ = await this.pouch.db.get(doc._id)
         const other = otherSide(side)
         await this.pouch.put({
           ...unsynced,
@@ -647,7 +647,7 @@ class Sync {
   ) /*: Promise<boolean> */ {
     let parentId = dirname(doc._id)
     if (parentId !== '.') {
-      let parent = await this.pouch.db.get(parentId)
+      let parent /*: Metadata */ = await this.pouch.db.get(parentId)
 
       if (!parent.trashed) {
         await Promise.delay(TRASHING_DELAY)

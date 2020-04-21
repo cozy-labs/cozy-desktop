@@ -18,6 +18,7 @@ const NB_OF_DELETABLE_ELEMENT = 3
 import type { ChokidarEvent } from './event'
 import type LocalEventBuffer from './event_buffer'
 import type { Pouch } from '../../pouch'
+import type { Metadata } from '../../metadata'
 
 export type InitialScan = {
   ids: string[],
@@ -39,7 +40,8 @@ const detectOfflineUnlinkEvents = async (
 ) /*: Promise<{offlineEvents: Array<ChokidarEvent>, unappliedMoves: string[], emptySyncDir: boolean}> */ => {
   // Try to detect removed files & folders
   const events /*: Array<ChokidarEvent> */ = []
-  const docs = (await pouch.allDocs()).filter(doc => !doc.deleted)
+  const docs = (await pouch.allDocs() /*: Metadata[] */)
+    .filter(doc => !doc.deleted)
   const inInitialScan = doc =>
     initialScan.ids.indexOf(metadata.id(doc.path)) !== -1
 

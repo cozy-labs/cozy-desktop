@@ -89,7 +89,9 @@ const indexDeletedEvent = (event, state) => {
 /** Possibly fix oldPath when event is identical renamed. */
 const fixIdenticalRenamed = async (event, { byIdMaybeAsync }) => {
   if (event.path === event.oldPath) {
-    const doc = event._id && (await byIdMaybeAsync(event._id))
+    const doc /*: ?Metadata */ = event._id
+      ? await byIdMaybeAsync(event._id)
+      : null
 
     if (doc && !doc.deleted && doc.path !== event.oldPath) {
       _.set(event, [STEP_NAME, 'oldPathBeforeFix'], event.oldPath)

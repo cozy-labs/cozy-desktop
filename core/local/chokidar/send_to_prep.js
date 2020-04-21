@@ -138,8 +138,7 @@ const step = async (
   const errors /*: Error[] */ = []
   for (let c of changes) {
     try {
-      if (c.needRefetch) {
-        // $FlowFixMe
+      if (c.type !== 'Ignored' && c.needRefetch && c.old) {
         c.old = await pouch.db.get(metadata.id(c.old.path))
       }
       switch (c.type) {

@@ -32,6 +32,7 @@ const DELAY = 1000
 /*::
 import type { AtomEvent, AtomBatch } from './event'
 import type { Pouch } from '../../pouch'
+import type { Metadata } from '../../metadata'
 
 type PendingItem = {
   event: AtomEvent,
@@ -102,14 +103,22 @@ function previousPaths(deletedPath, unmergedRenamedEvents) {
   return previousPaths
 }
 
-async function findDeletedInoById(id, pouch) {
-  const doc = await pouch.byIdMaybeAsync(id)
-  return doc && !doc.deleted && { deletedIno: doc.fileid || doc.ino }
+async function findDeletedInoById(
+  id,
+  pouch
+) /*: Promise<?{ deletedIno: ?number|string }> */ {
+  const doc /*: ?Metadata */ = await pouch.byIdMaybeAsync(id)
+  if (doc && !doc.deleted) {
+    return { deletedIno: doc.fileid || doc.ino }
+  }
 }
 
-async function findDeletedInoRecentlyRenamed(previousPaths, pouch) {
+async function findDeletedInoRecentlyRenamed(
+  previousPaths,
+  pouch
+) /*: Promise<?{ deletedIno: ?number|string, oldPaths: string[] }> */ {
   for (const [index, previousPath] of previousPaths.entries()) {
-    const doc = await pouch.byIdMaybeAsync(id(previousPath))
+    const doc /*: ?Metadata */ = await pouch.byIdMaybeAsync(id(previousPath))
     if (doc && !doc.deleted) {
       return {
         deletedIno: doc.fileid || doc.ino,
@@ -137,11 +146,11 @@ async function findDeletedIno(event, pouch, unmergedRenamedEvents) {
   }
 }
 
-async function assignDebugInfos(event, deletedIno, oldPaths) {
+async function assignDebugInfos(event, found) {
   if (event.action !== 'deleted') return
-  if (oldPaths) {
-    _.set(event, [STEP_NAME, 'oldPaths'], oldPaths)
-  } else if (!deletedIno) {
+  if (found.oldPaths) {
+    _.set(event, [STEP_NAME, 'oldPaths'], found.oldPaths)
+  } else if (!found.deletedIno) {
     _.set(event, [STEP_NAME, 'deletedIno'], 'unresolved')
   }
 }
@@ -220,13 +229,10 @@ async function winDetectMove(
 
     for (const event of events) {
       // First, push the new events in the pending queue
-      const { deletedIno, oldPaths } = await findDeletedIno(
-        event,
-        pouch,
-        unmergedRenamedEvents
-      )
+      const found = await findDeletedIno(event, pouch, unmergedRenamedEvents)
+      const { deletedIno } = found
 
-      assignDebugInfos(event, deletedIno, oldPaths)
+      assignDebugInfos(event, found)
 
       const timeout = setTimeout(() => {
         output([pendingItems.shift().event])

@@ -151,7 +151,7 @@ class RemoteWatcher {
     docs /*: Array<RemoteDoc|RemoteDeletion> */
   ) /*: Promise<Array<{ change: RemoteChange, err: Error }>> */ {
     const remoteIds = docs.reduce((ids, doc) => ids.add(doc._id), new Set())
-    const olds = await this.pouch.allByRemoteIds(remoteIds)
+    const olds /*: Metadata[] */ = await this.pouch.allByRemoteIds(remoteIds)
 
     const changes = this.analyse(docs, olds)
 

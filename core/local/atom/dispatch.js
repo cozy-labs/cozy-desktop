@@ -30,6 +30,7 @@ import type { WinDetectMoveState } from './win_detect_move'
 import type EventEmitter from 'events'
 import type Prep from '../../prep'
 import type { Pouch } from '../../pouch'
+import type { Metadata } from '../../metadata'
 
 export type AtomEventsDispatcher = (AtomBatch) => Promise<AtomBatch>
 
@@ -145,7 +146,7 @@ actions = {
   },
 
   renamedfile: async (event, { pouch, prep }) => {
-    const was = await pouch.byIdMaybeAsync(id(event.oldPath))
+    const was /*: ?Metadata */ = await pouch.byIdMaybeAsync(id(event.oldPath))
     // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
       // A renamed event where the source does not exist can be seen as just an
@@ -172,7 +173,7 @@ actions = {
   },
 
   renameddirectory: async (event, { pouch, prep }) => {
-    const was = await pouch.byIdMaybeAsync(id(event.oldPath))
+    const was /*: ?Metadata */ = await pouch.byIdMaybeAsync(id(event.oldPath))
     // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
       // A renamed event where the source does not exist can be seen as just an
@@ -203,7 +204,7 @@ actions = {
   },
 
   deletedfile: async (event, { pouch, prep }) => {
-    const was = await pouch.byIdMaybeAsync(event._id)
+    const was /*: ?Metadata */ = await pouch.byIdMaybeAsync(event._id)
     if (!was || was.deleted) {
       log.debug({ event }, 'Assuming file already removed')
       // The file was already marked as deleted in pouchdb
@@ -215,7 +216,7 @@ actions = {
   },
 
   deleteddirectory: async (event, { pouch, prep }) => {
-    const was = await pouch.byIdMaybeAsync(event._id)
+    const was /*: ?Metadata */ = await pouch.byIdMaybeAsync(event._id)
     if (!was || was.deleted) {
       log.debug({ event }, 'Assuming dir already removed')
       // The dir was already marked as deleted in pouchdb

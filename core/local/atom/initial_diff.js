@@ -70,7 +70,7 @@ function loop(
   opts /*: { pouch: Pouch, state: InitialDiffState } */
 ) /*: Channel */ {
   const out = new Channel()
-  initialDiff(channel, out, opts.pouch, opts.state).catch(err => {
+  initialDiff(channel, out, opts.state).catch(err => {
     log.error({ err })
   })
   return out
@@ -87,9 +87,8 @@ async function initialState(
   // which files/folders have been deleted, as it is stable even if the
   // file/folder has been moved or renamed
   const byInode /*: Map<number|string, Metadata> */ = new Map()
-  const docs /*: Metadata[] */ = (await opts.pouch.allDocs()).filter(
-    doc => !doc.deleted
-  )
+  const docs = (await opts.pouch.allDocs() /*: Metadata[] */)
+    .filter(doc => !doc.deleted)
   // Make sure all paths are sorted in reverse path order so that missing
   // children will be deleted before missing parents and folders that would not
   // have any content are not trashed but completely deleted
@@ -124,7 +123,6 @@ function clearState(state /*: InitialDiffState */) {
 async function initialDiff(
   channel /*: Channel */,
   out /*: Channel */,
-  pouch /*: Pouch */,
   state /*: InitialDiffState */
 ) /*: Promise<void> */ {
   // eslint-disable-next-line no-constant-condition
