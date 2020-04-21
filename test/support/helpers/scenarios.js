@@ -357,7 +357,15 @@ module.exports.init = async (
     } // for (... of scenario.init)
   }
   for (let remoteDoc of remoteDocsToTrash) {
-    await cozy.files.trashById(remoteDoc._id)
+    debug(
+      `- trashing remote ${remoteDoc.attributes.type}: ${remoteDoc.attributes.path}`
+    )
+    try {
+      await cozy.files.trashById(remoteDoc._id)
+    } catch (err) {
+      if (err.status === 400) continue
+      throw err
+    }
   }
 }
 
