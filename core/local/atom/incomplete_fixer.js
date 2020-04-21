@@ -248,6 +248,7 @@ function step(
           )
           if (
             incompleteForExistingDoc &&
+            !incompleteForExistingDoc.deleted &&
             (item.event.action === 'created' || item.event.action === 'scan')
           ) {
             // Simply drop the incomplete event since we already have a document at this
@@ -255,6 +256,7 @@ function step(
             keepEvent(event, { incompletes, batch })
           } else if (
             incompleteForExistingDoc &&
+            !incompleteForExistingDoc.deleted &&
             item.event.action === 'modified'
           ) {
             // Keep the completed modified event to make sure we don't miss any

@@ -49,8 +49,8 @@ describe('Trash', () => {
       it('trashes the file on the remote Cozy', async () => {
         await prep.trashFileAsync('local', { path: 'parent/file' })
 
-        should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-          { path: path.normalize('parent/file'), _deleted: true }
+        should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
+          { path: path.normalize('parent/file'), deleted: true }
         ])
         await should(pouch.db.get(file._id)).be.rejectedWith({ status: 404 })
 
@@ -65,9 +65,6 @@ describe('Trash', () => {
 
       context('before the file was moved on the remote Cozy', () => {
         it('does not trash the file on the remote Cozy and re-downloads it', async () => {
-          // TODO: Works only because the deletion could not be synced since the
-          // Cozy refuses it after the moved changed the remote rev.
-          // Could use the deletion marker.
           await helpers.local.syncDir.remove('parent/file')
           await helpers.local.scan()
           await cozy.files.updateAttributesById(file._id, {
@@ -113,8 +110,8 @@ describe('Trash', () => {
 
         await helpers.remote.pullChanges()
 
-        should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-          { path: path.normalize('parent/file'), _deleted: true }
+        should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
+          { path: path.normalize('parent/file'), deleted: true }
         ])
         await should(pouch.db.get(file._id)).be.rejectedWith({ status: 404 })
 
@@ -224,11 +221,11 @@ describe('Trash', () => {
           path: path.normalize('parent/dir')
         })
 
-        should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
+        should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
           // XXX: Why isn't file deleted? (it works anyway)
-          { path: path.normalize('parent/dir/subdir'), _deleted: true },
-          { path: path.normalize('parent/dir/empty-subdir'), _deleted: true },
-          { path: path.normalize('parent/dir'), _deleted: true }
+          { path: path.normalize('parent/dir/subdir'), deleted: true },
+          { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
+          { path: path.normalize('parent/dir'), deleted: true }
         ])
 
         await helpers.syncAll()
@@ -249,11 +246,12 @@ describe('Trash', () => {
         await cozy.files.trashById(dir._id)
 
         await helpers.remote.pullChanges()
-        should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-          { path: path.normalize('parent/dir/subdir'), _deleted: true },
-          { path: path.normalize('parent/dir/empty-subdir'), _deleted: true },
-          { path: path.normalize('parent/dir'), _deleted: true },
-          { path: path.normalize('parent/dir/subdir/file'), _deleted: true }
+        should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
+          // XXX: Why isn't file deleted? (it works anyway)
+          { path: path.normalize('parent/dir/subdir'), deleted: true },
+          { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
+          { path: path.normalize('parent/dir'), deleted: true },
+          { path: path.normalize('parent/dir/subdir/file'), deleted: true }
         ])
 
         await helpers.syncAll()

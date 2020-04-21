@@ -69,6 +69,8 @@ function loop(
             if (event.kind !== 'directory' && event.kind !== 'file') {
               _.set(event, [STEP_NAME, 'kindConvertedFrom'], event.kind)
 
+              // Even if the doc is deleted, we probably have a better chance to
+              // get the right kind by using its own.
               const doc =
                 event._id && (await opts.pouch.byIdMaybeAsync(event._id))
               event.kind = doc ? kind(doc) : 'file'

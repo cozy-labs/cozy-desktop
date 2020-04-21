@@ -103,7 +103,7 @@ class Merge {
 
     try {
       const folder = await this.pouch.db.get(parentId)
-      if (folder) {
+      if (folder && !folder.deleted) {
         return
       }
     } catch (err) {
@@ -163,6 +163,10 @@ class Merge {
     metadata.markSide(side, doc, file)
     metadata.assignMaxDate(doc, file)
     if (file) {
+      if (file.deleted) {
+        return this.updateFileAsync(side, doc)
+      }
+
       const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
         { side, doc },
         file
@@ -261,7 +265,7 @@ class Merge {
         if (doc.mime == null) {
           doc.mime = file.mime
         }
-      } else if (!metadata.isAtLeastUpToDate(side, file)) {
+      } else if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
         if (side === 'local') {
           // We have a merged but unsynced remote update and we can't create a
           // conflict because the local rename will trigger an overwrite of the
@@ -357,7 +361,7 @@ class Merge {
   ) /*: Promise<*> */ {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
     const { path } = doc
-    if (!metadata.wasSynced(was)) {
+    if (!metadata.wasSynced(was) || was.deleted) {
       metadata.markAsUnsyncable(side, was)
       await this.pouch.put(was)
       return this.addFileAsync(side, doc)
@@ -388,6 +392,10 @@ class Merge {
 
       const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
       if (file) {
+        if (file.deleted) {
+          doc.overwrite = file
+        }
+
         const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
           { side, doc, was },
           file
@@ -462,6 +470,10 @@ class Merge {
 
     const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     if (folder) {
+      if (folder.deleted) {
+        doc.overwrite = folder
+      }
+
       const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
         { side, doc, was },
         folder
@@ -547,6 +559,8 @@ class Merge {
       bulk.push(src)
 
       const existingDstRev = existingDstRevs[dst._id]
+      // Filtering out deleted destination docs would mean failing to save the new version.
+      // However, replacing the deleted docs will mean failing to propagate the change.
       if (existingDstRev && folder.overwrite) {
         dst._rev = existingDstRev
       }
@@ -644,7 +658,7 @@ class Merge {
     newMetadata.trashed = true
     if (was.sides && was.sides[side]) {
       metadata.markSide(side, was, was)
-      was._deleted = true
+      was.deleted = true
       try {
         await this.pouch.put(was)
         return
@@ -663,7 +677,7 @@ class Merge {
     const { path } = trashed
     log.debug({ path }, 'trashFileAsync')
     const was /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(trashed._id)
-    if (!was) {
+    if (!was || was.deleted) {
       log.debug({ path }, 'Nothing to trash')
       return
     }
@@ -702,7 +716,7 @@ class Merge {
     const { path } = trashed
     log.debug({ path }, 'trashFolderAsync')
     const was /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(trashed._id)
-    if (!was) {
+    if (!was || was.deleted) {
       log.debug({ path }, 'Nothing to trash')
       return
     }
@@ -714,7 +728,11 @@ class Merge {
     let children = await this.pouch.byRecursivePathAsync(was._id)
     children = children.reverse()
     for (let child of Array.from(children)) {
-      if (child.docType === 'file' && !metadata.isUpToDate(side, child)) {
+      if (
+        child.docType === 'file' &&
+        !child.deleted &&
+        !metadata.isUpToDate(side, child)
+      ) {
         delete was.trashed
         delete was.errors
         if (was.sides) {
@@ -724,14 +742,18 @@ class Merge {
           // information.
           was.sides = { target: 1, [otherSide(side)]: 1 }
         }
+        // TODO: why prevent removing all files that were up-to-date?
         return this.putFolderAsync(otherSide(side), was)
       }
     }
     // Remove in pouchdb the sub-folders
+    //
+    // TODO: We could only one loop if the update of one child would not prevent
+    // the trashing of the other children.
     for (let child of Array.from(children)) {
       if (child.docType === 'folder') {
         try {
-          child._deleted = true
+          child.deleted = true
           await this.pouch.put(child)
         } catch (err) {
           log.warn({ path, err })
@@ -749,7 +771,7 @@ class Merge {
   async deleteFileAsync(side /*: SideName */, doc /*: Metadata */) {
     log.debug({ path: doc.path }, 'deleteFileAsync')
     const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
-    if (!file) return null
+    if (!file || file.deleted) return null
     if (file.moveFrom) {
       // We don't want Sync to pick up this move hint and try to synchronize a
       // move so we delete it.
@@ -767,7 +789,7 @@ class Merge {
     }
     if (file.sides && file.sides[side]) {
       metadata.markSide(side, file, file)
-      file._deleted = true
+      file.deleted = true
       delete file.errors
       return this.pouch.put(file)
     } else {
@@ -786,7 +808,7 @@ class Merge {
   async deleteFolderAsync(side /*: SideName */, doc /*: Metadata */) {
     log.debug({ path: doc.path }, 'deleteFolderAsync')
     const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
-    if (!folder) return null
+    if (!folder || folder.deleted) return null
     if (folder.moveFrom) {
       // We don't want Sync to pick up this move hint and try to synchronize a
       // move so we delete it.
@@ -811,7 +833,9 @@ class Merge {
     docs = docs.reverse()
     docs.push(folder)
     const toPreserve = new Set()
-    for (let doc of Array.from(docs)) {
+    for (let doc of docs) {
+      if (doc.deleted) continue
+
       if (
         toPreserve.has(doc.path) ||
         (doc.sides && !metadata.isUpToDate(side, doc))
@@ -830,7 +854,7 @@ class Merge {
         toPreserve.add(path.dirname(doc.path))
       } else {
         metadata.markSide(side, doc, doc)
-        doc._deleted = true
+        doc.deleted = true
         delete doc.errors
       }
     }

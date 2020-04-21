@@ -39,7 +39,7 @@ const detectOfflineUnlinkEvents = async (
 ) /*: Promise<{offlineEvents: Array<ChokidarEvent>, unappliedMoves: string[], emptySyncDir: boolean}> */ => {
   // Try to detect removed files & folders
   const events /*: Array<ChokidarEvent> */ = []
-  const docs = await pouch.allDocs()
+  const docs = (await pouch.allDocs()).filter(doc => !doc.deleted)
   const inInitialScan = doc =>
     initialScan.ids.indexOf(metadata.id(doc.path)) !== -1
 

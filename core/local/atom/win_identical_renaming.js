@@ -91,7 +91,7 @@ const fixIdenticalRenamed = async (event, { byIdMaybeAsync }) => {
   if (event.path === event.oldPath) {
     const doc = event._id && (await byIdMaybeAsync(event._id))
 
-    if (doc && doc.path !== event.oldPath) {
+    if (doc && !doc.deleted && doc.path !== event.oldPath) {
       _.set(event, [STEP_NAME, 'oldPathBeforeFix'], event.oldPath)
       event.oldPath = doc.path
     }

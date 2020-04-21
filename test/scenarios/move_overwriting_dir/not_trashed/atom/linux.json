@@ -1,6 +1,13 @@
 [
   [
     {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/dir/deletedFile"
+    }
+  ],
+  [
+    {
       "action": "renamed",
       "kind": "file",
       "path": "dst/dir/file",
