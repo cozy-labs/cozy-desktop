@@ -182,43 +182,6 @@ class Prep {
   }
 
   // TODO add comments + tests
-  async restoreFileAsync(
-    side /*: SideName */,
-    was /*: Metadata */,
-    doc /*: Metadata */
-  ) {
-    log.debug({ path: doc.path, oldpath: was.path }, 'restoreFileAsync')
-    metadata.ensureValidPath(doc)
-    metadata.ensureValidPath(was)
-    metadata.ensureValidChecksum(doc)
-
-    delete doc.trashed
-    doc.docType = 'file'
-    metadata.assignId(doc)
-    metadata.assignId(was)
-    // TODO metadata.shouldIgnore
-    return this.merge.restoreFileAsync(side, was, doc)
-  }
-
-  // TODO add comments + tests
-  async restoreFolderAsync(
-    side /*: SideName */,
-    was /*: Metadata */,
-    doc /*: Metadata */
-  ) {
-    log.debug({ path: doc.path, oldpath: was.path }, 'restoreFolderAsync')
-    metadata.ensureValidPath(doc)
-    metadata.ensureValidPath(was)
-
-    delete doc.trashed
-    doc.docType = 'folder'
-    metadata.assignId(doc)
-    metadata.assignId(was)
-    // TODO metadata.shouldIgnore
-    return this.merge.restoreFolderAsync(side, was, doc)
-  }
-
-  // TODO add comments + tests
   async trashFileAsync(
     side /*: SideName */,
     was /*: {path: string} */,

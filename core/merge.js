@@ -603,39 +603,6 @@ class Merge {
     return this.pouch.bulkDocs(bulk)
   }
 
-  async restoreFileAsync(
-    side /*: SideName */,
-    was /*: Metadata */,
-    doc /*: Metadata */
-  ) /*: Promise<*> */ {
-    log.debug({ path: doc.path, oldpath: was.path }, 'restoreFileAsync')
-    const { path } = doc
-    // TODO we can probably do something smarter for conflicts and avoiding to
-    // transfer again the file
-    try {
-      await this.deleteFileAsync(side, was)
-    } catch (err) {
-      log.warn({ path, err })
-    }
-    return this.updateFileAsync(side, doc)
-  }
-
-  async restoreFolderAsync(
-    side /*: SideName */,
-    was /*: Metadata */,
-    doc /*: Metadata */
-  ) /*: Promise<*> */ {
-    log.debug({ path: doc.path, oldpath: was.path }, 'restoreFolderAsync')
-    const { path } = doc
-    // TODO we can probably do something smarter for conflicts
-    try {
-      await this.deleteFolderAsync(side, was)
-    } catch (err) {
-      log.warn({ path, err })
-    }
-    return this.putFolderAsync(side, doc)
-  }
-
   async doTrash(
     side /*: SideName */,
     was /*: Metadata */,

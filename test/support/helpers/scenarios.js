@@ -1,6 +1,7 @@
 /** Test scenario helpers
  *
  * @module test/support/helpers/scenarios
+ * @flow weak
  */
 
 const Promise = require('bluebird')
@@ -15,8 +16,14 @@ const metadata = require('../../../core/metadata')
 
 const { cozy } = require('./cozy')
 
-// eslint-disable-next-line no-console
-const debug = process.env.TESTDEBUG ? console.log : () => {}
+/*::
+import type { ScenarioInit } from '../../scenarios'
+import type { Metadata } from '../../../core/metadata'
+*/
+
+const debug = (...args) =>
+  // eslint-disable-next-line no-console
+  process.env.TESTDEBUG ? console.log(...args) : () => {}
 
 const scenariosDir = path.resolve(__dirname, '../../scenarios')
 
@@ -208,7 +215,7 @@ const merge = async (srcPath, dstPath) => {
 }
 
 module.exports.init = async (
-  scenario,
+  scenario /*: { init: ScenarioInit } */,
   pouch,
   abspath,
   relpathFix,
@@ -216,124 +223,149 @@ module.exports.init = async (
 ) => {
   debug('[init]')
   const remoteDocsToTrash = []
-  for (let { path: relpath, ino: fakeIno, trashed, content } of scenario.init) {
-    debug(relpath)
-    const isOutside = relpath.startsWith('../outside')
-    let remoteParent
-    if (!isOutside) {
-      const remoteParentPath = path.posix.join('/', path.posix.dirname(relpath))
-      debug(`- retrieve remote parent: ${remoteParentPath}`)
-      remoteParent = await cozy.files.statByPath(remoteParentPath)
-    }
-    const remoteName = path.posix.basename(relpath)
-    const remotePath = path.posix.join(
-      _.get(remoteParent, 'attributes.path', ''),
-      remoteName
-    )
-    const localPath = relpathFix(_.trimEnd(relpath, '/'))
-    const lastModifiedDate = new Date('2011-04-11T10:20:30Z')
-    if (relpath.endsWith('/')) {
-      if (!trashed) {
-        debug(`- create local dir: ${localPath}`)
-        await fse.ensureDir(abspath(localPath))
-      }
-
-      const stats = await getInoAndFileId({
-        path: abspath(localPath),
-        fakeIno,
-        trashed,
-        useRealInodes
-      })
-      const doc = {
-        _id: metadata.id(localPath),
-        docType: 'folder',
-        updated_at: lastModifiedDate,
-        path: localPath,
-        tags: [],
-        sides: { target: 2, local: 2, remote: 2 }
-      }
-      stater.assignInoAndFileId(doc, stats)
-
+  if (scenario.init) {
+    for (let {
+      path: relpath,
+      ino: fakeIno,
+      trashed,
+      content
+    } of scenario.init) {
+      debug(relpath)
+      const isOutside = relpath.startsWith('../outside')
+      let remoteParent
       if (!isOutside) {
-        debug(
-          `- create${trashed ? ' and trash' : ''} remote dir: ${remotePath}`
+        const remoteParentPath = path.posix.join(
+          '/',
+          path.posix.dirname(relpath)
         )
-        const remoteDir = await cozy.files.createDirectory({
-          name: remoteName,
-          dirID: remoteParent._id,
-          lastModifiedDate
-        })
-        doc.remote = _.pick(remoteDir, ['_id', '_rev'])
-        if (trashed) remoteDocsToTrash.push(remoteDir)
-        else {
-          debug(`- create dir metadata: ${doc._id}`)
-          const { rev } = await pouch.put(doc)
-          doc._rev = rev
-          await pouch.put(doc)
-        }
+        debug(`- retrieve remote parent: ${remoteParentPath}`)
+        remoteParent = await cozy.files.statByPath(remoteParentPath)
       }
-    } else {
-      let md5sum
-      if (!content) {
-        content = 'foo'
-        md5sum = 'rL0Y20zC+Fzt72VPzMSk2A=='
+      const remoteName = path.posix.basename(relpath)
+      const remotePath = path.posix.join(
+        _.get(remoteParent, 'attributes.path', ''),
+        remoteName
+      )
+      const localPath = relpathFix(_.trimEnd(relpath, '/'))
+      const lastModifiedDate = new Date('2011-04-11T10:20:30Z')
+      if (relpath.endsWith('/')) {
+        if (!trashed) {
+          debug(`- create local dir: ${localPath}`)
+          await fse.ensureDir(abspath(localPath))
+        }
+
+        const stats = await getInoAndFileId({
+          path: abspath(localPath),
+          fakeIno,
+          trashed,
+          useRealInodes
+        })
+        const doc /*: Metadata */ = {
+          _id: metadata.id(localPath),
+          docType: 'folder',
+          updated_at: lastModifiedDate.toISOString(),
+          path: localPath,
+          tags: [],
+          remote: { _id: 'xxx', _rev: 'xxx' },
+          sides: { target: 2, local: 2, remote: 2 }
+        }
+        stater.assignInoAndFileId(doc, stats)
+
+        if (!isOutside && remoteParent) {
+          debug(
+            `- create${trashed ? ' and trash' : ''} remote dir: ${remotePath}`
+          )
+          const remoteDir = await cozy.files.createDirectory({
+            name: remoteName,
+            dirID: remoteParent._id,
+            lastModifiedDate
+          })
+          doc.remote = _.pick(remoteDir, ['_id', '_rev'])
+          if (trashed) remoteDocsToTrash.push(remoteDir)
+          else {
+            debug(`- create dir metadata: ${doc._id}`)
+            const { rev } = await pouch.put(doc)
+            doc._rev = rev
+            await pouch.put(doc)
+          }
+        } else {
+          delete doc.remote
+          delete doc.sides.remote
+        }
       } else {
-        md5sum = crypto
-          .createHash('md5')
-          .update(content)
-          .digest()
-          .toString('base64')
-      }
-
-      if (!trashed) {
-        debug(`- create local file: ${localPath}`)
-        await fse.outputFile(abspath(localPath), content)
-      }
-
-      const stats = await getInoAndFileId({
-        path: abspath(localPath),
-        fakeIno,
-        trashed,
-        useRealInodes
-      })
-      const doc = {
-        _id: metadata.id(localPath),
-        md5sum,
-        class: 'text',
-        docType: 'file',
-        executable: false,
-        updated_at: lastModifiedDate,
-        mime: 'text/plain',
-        path: localPath,
-        size: content.length,
-        tags: [],
-        sides: { target: 2, local: 2, remote: 2 }
-      }
-      stater.assignInoAndFileId(doc, stats)
-      if (!isOutside) {
-        debug(
-          `- create${trashed ? ' and trash' : ''} remote file: ${remotePath}`
-        )
-        const remoteFile = await cozy.files.create(content, {
-          name: remoteName,
-          dirID: remoteParent._id,
-          checksum: md5sum,
-          contentType: 'text/plain',
-          lastModifiedDate
-        })
-        doc.remote = _.pick(remoteFile, ['_id', '_rev'])
-        if (trashed) remoteDocsToTrash.push(remoteFile)
-        else {
-          debug(`- create file metadata: ${doc._id}`)
-          const { rev } = await pouch.put(doc)
-          doc._rev = rev
-          await pouch.put(doc)
+        let md5sum
+        if (!content) {
+          content = 'foo'
+          md5sum = 'rL0Y20zC+Fzt72VPzMSk2A=='
+        } else {
+          md5sum = crypto
+            .createHash('md5')
+            .update(content)
+            .digest()
+            .toString('base64')
         }
-      }
-    } // if relpath ...
-  } // for (... of scenario.init)
+
+        if (!trashed) {
+          debug(`- create local file: ${localPath}`)
+          await fse.outputFile(abspath(localPath), content)
+        }
+
+        const stats = await getInoAndFileId({
+          path: abspath(localPath),
+          fakeIno,
+          trashed,
+          useRealInodes
+        })
+        const doc /*: Metadata */ = {
+          _id: metadata.id(localPath),
+          md5sum,
+          class: 'text',
+          docType: 'file',
+          updated_at: lastModifiedDate.toISOString(),
+          mime: 'text/plain',
+          path: localPath,
+          size: content.length,
+          tags: [],
+          remote: { _id: 'xxx', _rev: 'xxx' },
+          sides: { target: 2, local: 2, remote: 2 }
+        }
+        stater.assignInoAndFileId(doc, stats)
+        if (!isOutside && remoteParent) {
+          debug(
+            `- create${trashed ? ' and trash' : ''} remote file: ${remotePath}`
+          )
+          const remoteFile = await cozy.files.create(content, {
+            name: remoteName,
+            dirID: remoteParent._id,
+            checksum: md5sum,
+            contentType: 'text/plain',
+            lastModifiedDate
+          })
+          doc.remote = _.pick(remoteFile, ['_id', '_rev'])
+          if (trashed) remoteDocsToTrash.push(remoteFile)
+          else {
+            debug(`- create file metadata: ${doc._id}`)
+            const { rev } = await pouch.put(doc)
+            doc._rev = rev
+            await pouch.put(doc)
+          }
+        } else {
+          delete doc.remote
+          delete doc.sides.remote
+        }
+      } // if relpath ...
+    } // for (... of scenario.init)
+  }
   for (let remoteDoc of remoteDocsToTrash) {
-    await cozy.files.trashById(remoteDoc._id)
+    debug(
+      `- trashing remote ${remoteDoc.attributes.type}: ${remoteDoc.attributes.path}`
+    )
+    try {
+      await cozy.files.trashById(remoteDoc._id)
+    } catch (err) {
+      if (err.status === 400) continue
+      throw err
+    }
   }
 }
 

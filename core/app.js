@@ -37,6 +37,7 @@ import type { Config } from './config'
 import type stream from 'stream'
 import type { Callback } from './utils/func'
 import type { SyncMode } from './sync'
+import type { Metadata } from './metadata'
 
 export type ClientInfo = {
   appVersion: string,
@@ -265,7 +266,7 @@ class App {
       level: 3
     })
     const logs = fse.createReadStream(LOG_FILE)
-    const pouchdbTree = await this.pouch.treeAsync()
+    const pouchdbTree /*: Metadata[] */ = await this.pouch.treeAsync()
 
     const logsSent = Promise.all([
       this.uploadFileToSupport(incidentID, 'logs.gz', logs.pipe(zipper)),

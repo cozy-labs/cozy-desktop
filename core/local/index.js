@@ -198,14 +198,14 @@ class Local /*:: implements Reader, Writer */ {
 
   /** Check if a file corresponding to given checksum already exists */
   fileExistsLocally(checksum /*: string */, callback /*: Callback */) {
-    this.pouch.byChecksum(checksum, (err, docs) => {
+    this.pouch.byChecksum(checksum, (err, docs /*: Metadata[] */) => {
       if (err) {
         callback(err)
       } else if (docs == null || docs.length === 0) {
         callback(null, false)
       } else {
         let paths = Array.from(docs)
-          .filter(doc => isUpToDate('local', doc))
+          .filter((doc /*: Metadata */) => isUpToDate('local', doc))
           .map(doc => path.resolve(this.syncPath, doc.path))
         async.detect(
           paths,

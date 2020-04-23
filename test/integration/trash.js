@@ -266,3 +266,101 @@ describe('Trash', () => {
     })
   })
 })
+
+describe('Restore', () => {
+  let cozy, helpers
+
+  before(configHelpers.createConfig)
+  before(configHelpers.registerClient)
+  beforeEach(pouchHelpers.createDatabase)
+  beforeEach(cozyHelpers.deleteAll)
+
+  afterEach(() => helpers.local.clean())
+  afterEach(pouchHelpers.cleanDatabase)
+  after(configHelpers.cleanConfig)
+
+  beforeEach(async function() {
+    cozy = cozyHelpers.cozy
+    helpers = TestHelpers.init(this)
+
+    await helpers.local.setupTrash()
+    await helpers.remote.ignorePreviousChanges()
+  })
+
+  describe('file', () => {
+    let parent, file
+
+    beforeEach(async () => {
+      parent = await cozy.files.createDirectory({ name: 'parent' })
+      file = await cozy.files.create('File content...', {
+        name: 'file',
+        dirID: parent._id
+      })
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+      helpers.spyPouch()
+    })
+
+    context('before trash is applied on local file system', () => {
+      it('does not create a conflict', async () => {
+        // Fetch and merge trashing
+        await cozy.files.trashById(file._id)
+        await helpers.remote.pullChanges()
+
+        await cozy.files.restoreById(file._id)
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+
+        should(await helpers.trees()).deepEqual({
+          local: ['parent/', 'parent/file'],
+          remote: ['parent/', 'parent/file']
+        })
+      })
+    })
+  })
+
+  describe('folder', () => {
+    let remoteDocs
+
+    beforeEach(async () => {
+      remoteDocs = await helpers.remote.createTree([
+        'parent/',
+        'parent/dir/',
+        'parent/dir/empty-subdir/',
+        'parent/dir/subdir/',
+        'parent/dir/subdir/file'
+      ])
+
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+    })
+
+    context('before trash is applied on local file system', () => {
+      it('does not create conflicts', async () => {
+        await cozy.files.trashById(remoteDocs['parent/dir/']._id)
+        await helpers.remote.pullChanges()
+
+        await cozy.files.restoreById(remoteDocs['parent/dir/']._id)
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+
+        should(await helpers.trees()).deepEqual({
+          local: [
+            'parent/',
+            'parent/dir/',
+            'parent/dir/empty-subdir/',
+            'parent/dir/subdir/',
+            'parent/dir/subdir/file'
+          ],
+          remote: [
+            'parent/',
+            'parent/dir/',
+            'parent/dir/empty-subdir/',
+            'parent/dir/subdir/',
+            'parent/dir/subdir/file'
+          ]
+        })
+      })
+    })
+  })
+})

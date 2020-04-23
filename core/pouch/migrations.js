@@ -146,7 +146,7 @@ async function migrate(
 
     let result /*: MigrationResult */
     try {
-      const docs = await pouch.allDocs()
+      const docs /*: Metadata[] */ = await pouch.allDocs()
       const affectedDocs = migration.affectedDocs(docs)
       const migratedDocs = migration.run(affectedDocs)
 

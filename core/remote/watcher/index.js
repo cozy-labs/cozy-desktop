@@ -151,7 +151,7 @@ class RemoteWatcher {
     docs /*: Array<RemoteDoc|RemoteDeletion> */
   ) /*: Promise<Array<{ change: RemoteChange, err: Error }>> */ {
     const remoteIds = docs.reduce((ids, doc) => ids.add(doc._id), new Set())
-    const olds = await this.pouch.allByRemoteIds(remoteIds)
+    const olds /*: Metadata[] */ = await this.pouch.allByRemoteIds(remoteIds)
 
     const changes = this.analyse(docs, olds)
 
@@ -338,11 +338,9 @@ class RemoteWatcher {
       }
       return remoteChange.trashed(doc, was)
     }
-    if (!was) {
+
+    if (!was || was.trashed) {
       return remoteChange.added(doc)
-    }
-    if (!inRemoteTrash(remoteDoc) && was.trashed) {
-      return remoteChange.restored(doc, was)
     }
     if (was._id === doc._id && was.path === doc.path) {
       if (
@@ -422,14 +420,6 @@ class RemoteWatcher {
         case 'DirAddition':
           log.info({ path }, 'folder was added remotely')
           await this.prep.putFolderAsync(sideName, change.doc)
-          break
-        case 'FileRestoration':
-          log.info({ path }, 'file was restored remotely')
-          await this.prep.restoreFileAsync(sideName, change.doc, change.was)
-          break
-        case 'DirRestoration':
-          log.info({ path }, 'folder was restored remotely')
-          await this.prep.restoreFolderAsync(sideName, change.doc, change.was)
           break
         case 'FileUpdate':
           log.info({ path }, 'file was updated remotely')

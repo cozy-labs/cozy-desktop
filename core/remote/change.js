@@ -131,7 +131,6 @@ module.exports = {
   added,
   trashed,
   deleted,
-  restored,
   upToDate,
   updated,
   isChildSource,
@@ -200,27 +199,6 @@ function deleted(
       sideName,
       type: 'DirDeletion',
       doc
-    }
-  }
-}
-
-function restored(
-  doc /*: Metadata */,
-  was /*: Metadata */
-) /*: RemoteFileRestoration | RemoteDirRestoration */ {
-  if (metadata.isFile(doc)) {
-    return {
-      sideName,
-      type: 'FileRestoration',
-      doc,
-      was
-    }
-  } else {
-    return {
-      sideName,
-      type: 'DirRestoration',
-      doc,
-      was
     }
   }
 }
