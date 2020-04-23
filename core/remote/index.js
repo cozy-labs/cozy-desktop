@@ -74,11 +74,7 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   start() {
-    const { started, running } = this.watcher.start()
-    return {
-      started: started.then(() => this.warningsPoller.start()),
-      running
-    }
+    return this.watcher.start().then(() => this.warningsPoller.start())
   }
 
   stop() {

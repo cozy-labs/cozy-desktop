@@ -43,14 +43,11 @@ describe('Sync', function() {
 
   describe('start', function() {
     beforeEach('instanciate sync', function() {
-      const ret = {
-        started: Promise.resolve(),
-        running: new Promise(() => {})
-      }
       this.local.start = sinon.stub().resolves()
       this.local.watcher.running = sinon.stub().resolves()
       this.local.stop = sinon.stub().resolves()
-      this.remote.start = sinon.stub().returns(ret)
+      this.remote.start = sinon.stub().resolves()
+      this.remote.watcher.running = sinon.stub().resolves()
       this.remote.stop = sinon.stub().resolves()
       this.sync.sync = sinon.stub().rejects(new Error('stopped'))
     })

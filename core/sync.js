@@ -131,14 +131,12 @@ class Sync {
 
       try {
         await this.local.start()
-        const localRunning = this.local.watcher.running
-        const {
-          running: remoteRunning,
-          started: remoteStarted
-        } = this.remote.start()
-        await remoteStarted
+        await this.remote.start()
 
-        Promise.all([localRunning, remoteRunning]).catch(err => {
+        Promise.all([
+          this.local.watcher.running,
+          this.remote.watcher.running
+        ]).catch(err => {
           throw err
         })
       } catch (err) {

@@ -8,6 +8,7 @@ const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
 const CozyClient = require('cozy-client-js').Client
+const { Promise } = require('bluebird')
 
 const configHelpers = require('../../support/helpers/config')
 const { posixifyPath } = require('../../support/helpers/context_dir')
@@ -72,17 +73,30 @@ describe('RemoteWatcher', function() {
   })
 
   describe('start', function() {
-    beforeEach(function() {
+    it('calls watch() a first time', async function() {
       sinon.stub(this.watcher, 'watch').returns(Promise.resolve())
-      return this.watcher.start()
-    })
-
-    afterEach(function() {
-      this.watcher.watch.restore()
-    })
-
-    it('calls watch() a first time', function() {
+      await this.watcher.start()
       this.watcher.watch.callCount.should.equal(1)
+    })
+
+    async function fakeWatch() {
+      throw new Error('from watch')
+    }
+
+    it('returns a promise that rejects on error during first watch()', async function() {
+      sinon.stub(this.watcher, 'watch').callsFake(fakeWatch)
+      await should(this.watcher.start()).be.rejectedWith('from watch')
+    })
+
+    it('sets a "running" promise that rejects on error during second watch()', async function() {
+      sinon
+        .stub(this.watcher, 'watch')
+        .onFirstCall()
+        .resolves()
+        .onSecondCall()
+        .callsFake(fakeWatch)
+      await this.watcher.start()
+      await should(this.watcher.running).be.rejectedWith('from watch')
     })
   })
 
@@ -96,14 +110,15 @@ describe('RemoteWatcher', function() {
     })
 
     it('ensures watch is not called anymore', async function() {
-      await this.watcher.start().started
+      await this.watcher.start()
       should(this.watcher.runningResolve).not.be.null()
       this.watcher.stop()
       should(this.watcher.runningResolve).be.null()
+      await should(this.watcher.running).be.fulfilled()
     })
 
     it('does nothing when called again', async function() {
-      await this.watcher.start().started
+      await this.watcher.start()
       this.watcher.stop()
       this.watcher.stop()
     })
