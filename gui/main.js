@@ -434,7 +434,7 @@ const startSync = async () => {
   })
   desktop.events.on('delete-file', removeFile)
 
-  desktop.startSync().catch(err => {
+  desktop.events.on('sync-error', err => {
     if (err.status === 402) {
       // Only show notification popup on the first check (the GUI will
       // include a warning anyway).
@@ -455,6 +455,8 @@ const startSync = async () => {
     }
     sendDiskUsage()
   })
+
+  desktop.startSync()
   sendDiskUsage()
 
   autoLaunch.isEnabled().then(enabled => {

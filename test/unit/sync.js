@@ -50,25 +50,98 @@ describe('Sync', function() {
       this.remote.watcher.running = sinon.stub().resolves()
       this.remote.stop = sinon.stub().resolves()
       this.sync.sync = sinon.stub().rejects(new Error('stopped'))
+      sinon.spy(this.sync, 'stop')
+      sinon.spy(this.sync.events, 'emit')
     })
 
     it('starts the metadata replication of both sides', async function() {
-      await should(this.sync.start()).be.rejectedWith({
-        message: 'stopped'
-      })
-      this.local.start.calledOnce.should.be.true()
-      this.remote.start.calledOnce.should.be.true()
-      this.sync.sync.calledOnce.should.be.true()
+      await this.sync.start()
+      should(this.local.start).be.calledOnce()
+      should(this.remote.start).be.calledOnce()
+      should(this.sync.sync).be.calledOnce()
     })
 
-    it('does not start sync if metadata replication fails', async function() {
-      this.local.start = sinon.stub().rejects(new Error('failed'))
-      await should(this.sync.start()).be.rejectedWith({
-        message: 'failed'
+    context('if local watcher fails to start', () => {
+      beforeEach(function() {
+        this.local.start = sinon.stub().rejects(new Error('failed'))
       })
-      this.local.start.calledOnce.should.be.true()
-      this.remote.start.called.should.be.false()
-      this.sync.sync.calledOnce.should.be.false()
+
+      it('does not start replication', async function() {
+        await this.sync.start()
+        should(this.sync.sync).not.be.called()
+      })
+
+      it('does not start remote watcher', async function() {
+        await this.sync.start()
+        should(this.remote.start).not.be.called()
+      })
+
+      it('stops local watcher', async function() {
+        await this.sync.start()
+        should(this.local.stop).be.calledOnce()
+      })
+
+      it('emits a sync error', async function() {
+        await this.sync.start()
+        should(this.sync.events.emit).have.been.calledWith('sync-error')
+      })
+    })
+
+    context('if remote watcher fails to start', () => {
+      beforeEach(function() {
+        this.remote.start = sinon.stub().rejects(new Error('failed'))
+      })
+
+      it('does not start replication', async function() {
+        await this.sync.start()
+        should(this.sync.sync).not.be.called()
+      })
+
+      it('starts local watcher', async function() {
+        await this.sync.start()
+        should(this.local.start).be.calledOnce()
+      })
+
+      it('stops local watcher', async function() {
+        await this.sync.start()
+        should(this.local.stop).be.calledOnce()
+      })
+
+      it('stops remote watcher', async function() {
+        await this.sync.start()
+        should(this.remote.stop).be.calledOnce()
+      })
+
+      it('emits a sync error', async function() {
+        await this.sync.start()
+        should(this.sync.events.emit).have.been.calledWith('sync-error')
+      })
+    })
+
+    context('if local watcher rejects while running', () => {
+      beforeEach(function() {
+        this.local.watcher.running = sinon.stub().rejects(new Error('failed'))
+      })
+
+      it('stops replication', async function() {
+        await this.sync.start()
+        should(this.sync.stop).be.calledOnce()
+      })
+
+      it('stops local watcher', async function() {
+        await this.sync.start()
+        should(this.local.stop).be.calledOnce()
+      })
+
+      it('stops remote watcher', async function() {
+        await this.sync.start()
+        should(this.remote.stop).be.calledOnce()
+      })
+
+      it('emits a sync error', async function() {
+        await this.sync.start()
+        should(this.sync.events.emit).have.been.calledWith('sync-error')
+      })
     })
   })
 
@@ -77,10 +150,12 @@ describe('Sync', function() {
   describe('sync', function() {
     beforeEach('stub lifecycle', function() {
       this.sync.events = new EventEmitter()
+      this.sync.lifecycle.end('start')
     })
     afterEach('restore lifecycle', function() {
       this.sync.events.emit('stopped')
       delete this.sync.events
+      this.sync.lifecycle.end('stop')
     })
 
     it('waits for and applies available changes', async function() {
