@@ -141,27 +141,31 @@ class AtomWatcher {
 
   async start() {
     log.debug('starting...')
-    this.running = new Promise((resolve, reject) => {
-      this._runningResolve = resolve
-      this._runningReject = reject
-    })
+
     await stepsInitialState(this.state, this)
-    let rejectScan
-    const scanDone = new Promise((resolve, reject) => {
-      rejectScan = reject
+    const scanDone = new Promise(resolve => {
       this.events.on('initial-scan-done', resolve)
     })
-    this.producer.start().catch(err => rejectScan(err))
-    return scanDone
+    await this.producer.start()
+    await scanDone
+
+    this.running = new Promise((resolve, reject) => {
+      this._runningResolve = resolve
+      // XXX: This rejecter is never used. How can the watcher fail? How to
+      // catch those errors and feed them to this rejecter?
+      this._runningReject = reject
+    })
   }
 
   async stop() /*: Promise<*> */ {
     log.debug('stopping...')
+
+    this.producer.stop()
+
     if (this._runningResolve) {
       this._runningResolve()
       this._runningResolve = null
     }
-    this.producer.stop()
   }
 }
 

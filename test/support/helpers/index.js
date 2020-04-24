@@ -75,7 +75,9 @@ class TestHelpers {
   }
 
   async syncAll() {
+    this._sync.lifecycle.end('start')
     await this._sync.sync(false)
+    this._sync.lifecycle.end('stop')
   }
 
   async pullAndSyncAll() {

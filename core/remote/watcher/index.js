@@ -43,7 +43,7 @@ class RemoteWatcher {
   remoteCozy: RemoteCozy
   events: EventEmitter
   runningResolve: ?() => void
-  runningReject: ?() => void
+  running: Promise
   */
 
   constructor(
@@ -56,26 +56,21 @@ class RemoteWatcher {
     this.prep = prep
     this.remoteCozy = remoteCozy
     this.events = events
+    this.running = new Promise(() => {})
 
     autoBind(this)
   }
 
-  start() {
-    const started /*: Promise<void> */ = this.watch()
-    const running /*: Promise<void> */ = started.then(() =>
-      Promise.race([
-        // run until either stop is called or watchLoop reject
-        new Promise(resolve => {
-          this.runningResolve = resolve
-        }),
-        this.watchLoop()
-      ])
-    )
+  async start() {
+    await this.watch()
 
-    return {
-      started: started,
-      running: running
-    }
+    this.running = Promise.race([
+      // run until either stop is called or watchLoop reject
+      new Promise(resolve => {
+        this.runningResolve = resolve
+      }),
+      this.watchLoop()
+    ])
   }
 
   stop() {
