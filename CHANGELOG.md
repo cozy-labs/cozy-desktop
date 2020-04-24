@@ -1,5 +1,49 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.21.0-beta.1 - 2020-04-24
+
+Improvements for all users:
+
+- Moving a document to an ignored location (see
+  https://github.com/cozy-labs/cozy-desktop/blob/master/core/config/.cozyignore
+  and your local `.cozyignore` rules file) after another move would result in
+  the first move being propagated to the remote Cozy and the document being
+  desynchronized after that.
+  From now on, the second move to the ignored location will cancel the first
+  move and the client will correctly propagate a deletion to the remote Cozy.
+- Deleting a file on your Cozy while moving it on your local filesystem with
+  your client stopped would lead to the desynchronisation of the file. It would
+  be deleted on your Cozy but would still exist on your local filesystem and all
+  later modifications would not be propagated.
+  We're now refusing the deletion because we believe the movement indicates a
+  desire to keep the file and it seems easier for the user to understand and fix
+  the situation if that was not the expected behavior. The file move will then
+  be propagated to the remote Cozy and kept in sync.
+- In some situations we can detect changes made on your remote Cozy on documents
+  of which we haven't yet received the parent folders. We can't process orphaned
+  documents so we require the parents of all documents before we allow
+  processing those and if we don't have them, we'll issue an error that results
+  in the "Synchronization incomplete" status message, literally blocking the
+  synchronization process.
+  We believe that most of those issues could resolve themselves by merely
+  refusing the orphan change and synchronizing the other changes so we've
+  decided not to block the synchronization process anymore when we encounter
+  orphan changes.
+- We detected that the remote watcher whose role is to detect, fetch and analyze
+  changes coming from your remote Cozy could fail without the synchronization
+  process stopping and alerting you. This means that in such cases, the changes
+  made on your local filesystem would still be detected and potentially
+  propagated to your remote Cozy but the changes made remotely would not be
+  applied locally until a client restart.
+  We've refactored the life-cycle management of the whole synchronization
+  process and the remote watcher and we made sure that errors coming from the
+  remote watcher are caught by the synchronization process which will in turn
+  alert you and stop itself and both local and remote watchers.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.20.0 - 2020-04-10
 
 Improvements for all users:
