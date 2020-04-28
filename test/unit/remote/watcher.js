@@ -1820,6 +1820,38 @@ describe('RemoteWatcher', function() {
       should(addArgs[1]).have.properties(metadata.fromRemoteDoc(newDir))
     })
 
+    describe('restored file before trashing was synced', () => {
+      it('returns a FileAddition', function() {
+        const origFile = builders
+          .remoteFile()
+          .name('foo')
+          .trashed()
+          .shortRev(2)
+          .build()
+        const trashedFile = builders
+          .metafile()
+          .fromRemote(origFile)
+          .deleted()
+          .build()
+        const newFile = builders
+          .remoteFile(origFile)
+          .restored()
+          .shortRev(3)
+          .build()
+
+        should(
+          this.watcher.identifyChange(newFile, trashedFile, [], [])
+        ).have.properties({
+          sideName: 'remote',
+          type: 'FileAddition',
+          doc: builders
+            .metafile()
+            .fromRemote(newFile)
+            .build()
+        })
+      })
+    })
+
     describe('added file', () => {
       let addedRemoteFile
 

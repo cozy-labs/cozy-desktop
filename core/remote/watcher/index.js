@@ -334,7 +334,7 @@ class RemoteWatcher {
       return remoteChange.trashed(doc, was)
     }
 
-    if (!was || was.trashed) {
+    if (!was || was.deleted) {
       return remoteChange.added(doc)
     }
     if (was._id === doc._id && was.path === doc.path) {
