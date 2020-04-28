@@ -145,6 +145,11 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  deleted() /*: this */ {
+    this.doc.deleted = true
+    return this
+  }
+
   updatedAt(date /*: Date */) /*: this */ {
     this.doc.updated_at = timestamp.fromDate(date).toISOString()
     return this
