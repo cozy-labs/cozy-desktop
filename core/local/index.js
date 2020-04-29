@@ -312,6 +312,26 @@ class Local /*:: implements Reader, Writer */ {
           })
         },
 
+        next => {
+          // Cozy Notes files are read-only to prevent users from modifying them
+          // on their filesystem and thus breaking them but this prevents the
+          // file update on Windows so we need to make them writable again
+          // before we update their content.
+          // The metadataUpdater will make them read-only once again after the update.
+          if (doc.mime === NOTE_MIME_TYPE) {
+            fse
+              .exists(filePath)
+              .then(exists => {
+                if (!exists) return
+                return fse.chmod(filePath, 0o644)
+              })
+              .then(next)
+              .catch(next)
+          } else {
+            next()
+          }
+        },
+
         next =>
           fse.ensureDir(parent, () => fse.rename(tmpFile, filePath, next)),
 
