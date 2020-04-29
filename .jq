@@ -1,6 +1,37 @@
 # Custom jq filters for log analysis.
 # See doc/developer/log_analysis.md to get started.
 
+
+# Remove notes content
+def delNoteMetadata(obj):
+  obj |=
+    (.
+    | del(.metadata.content)
+    | del(.metadata.schema)
+    | if .moveFrom then delNoteMetadata(.moveFrom) else . end
+    )
+;
+
+def cleanNote:
+  .
+  | if .doc then delNoteMetadata(.doc) else . end
+  | if .was then delNoteMetadata(.was) else . end
+  | if .remoteDoc then delNoteMetadata(.remoteDoc) else . end
+  | if .change then .
+    | .change |= (. | delNoteMetadata(.doc))
+    | .change |= (. | delNoteMetadata(.was))
+    else . end
+;
+
+  #del(.doc.metadata.content) |
+  #del(.doc.moveFrom.metadata.content) |
+  #del(.was.metadata.content) |
+  #del(.was.moveFrom.metadata.content) |
+  #del(.change.doc.metadata.content) |
+  #del(.change.doc.moveFrom.metadata.content) |
+  #del(.change.was.metadata.content) |
+  #del(.change.was.moveFrom.metadata.content);
+
 # Remove fields that are almost never used while debugging.
 # To be used in other filters.
 def clean:
@@ -11,6 +42,7 @@ def clean:
   del(.level) |
   del(.local) |
   del(.remote) |
+  cleanNote |
   {time,component,msg,path}+(del(.time)|del(.component)|del(.msg)|del(.path));
 
 # Filter by log level:
