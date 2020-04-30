@@ -294,7 +294,7 @@ describe('Pouch', function() {
     describe('getAll', () =>
       it('returns all the documents matching the query', async function() {
         let params = {
-          key: metadata.id('my-folder'),
+          key: metadata.id('my-folder') + path.sep,
           include_docs: true
         }
         const docs = await this.pouch.getAllAsync('byPath', params)
@@ -426,6 +426,24 @@ describe('Pouch', function() {
             tags: []
           })
         }
+      })
+
+      it('does not return the content of other folders starting with the same path', async function() {
+        // create my-folder/folder-11
+        const similarFolderPath = path.join('my-folder', 'folder-1 other')
+        await pouchHelpers.createFolder(this.pouch, similarFolderPath)
+        const similarFolderContentPath = path.join(
+          'my-folder',
+          'folder-1 other',
+          'file'
+        )
+        await pouchHelpers.createFolder(this.pouch, similarFolderContentPath)
+
+        const docs = await this.pouch.byRecursivePathAsync(
+          metadata.id(path.join('my-folder', 'folder-1'))
+        )
+        const paths = docs.map(d => d.path)
+        should(paths).not.containEql(similarFolderContentPath)
       })
     })
 
