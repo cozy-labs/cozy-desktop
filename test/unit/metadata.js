@@ -33,6 +33,7 @@ const { Ignore } = require('../../core/ignore')
 const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const stater = require('../../core/local/stater')
 const timestamp = require('../../core/utils/timestamp')
+const { NOTE_MIME_TYPE } = require('../../core/remote/constants')
 
 const { platform } = process
 
@@ -858,7 +859,31 @@ describe('metadata', function() {
         docType: 'file',
         md5sum,
         ino: stats.ino,
-        size: 29865
+        size: 29865,
+        mime: 'image/jpeg'
+      })
+      doc.should.have.property('updated_at')
+      should.not.exist(doc.executable)
+
+      const remote = { _id: 'foo', _rev: '456' }
+      should(
+        buildFile('chat-mignon.jpg', stats, md5sum, remote).remote
+      ).deepEqual(remote)
+    })
+
+    it('sets the correct MIME type for Cozy Notes', async function() {
+      const stats = await fse.stat(
+        path.join(__dirname, '../fixtures/chat-mignon.jpg')
+      )
+      const md5sum = '+HBGS7uN4XdB0blqLv5tFQ=='
+      const doc = buildFile('chat-mignon.cozy-note', stats, md5sum)
+      doc.should.have.properties({
+        path: 'chat-mignon.cozy-note',
+        docType: 'file',
+        md5sum,
+        ino: stats.ino,
+        size: 29865,
+        mime: NOTE_MIME_TYPE
       })
       doc.should.have.property('updated_at')
       should.not.exist(doc.executable)
