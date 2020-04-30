@@ -248,9 +248,9 @@ class Pouch {
   }
 
   // Return all the files and folders in this path, only at first level
-  byPath(path, callback) {
-    let params = {
-      key: path,
+  byPath(basePath, callback) {
+    const params = {
+      key: basePath === '' ? basePath : basePath + path.sep,
       include_docs: true
     }
     return this.getAll('byPath', params, callback)
@@ -263,7 +263,7 @@ class Pouch {
       params = { include_docs: true }
     } else {
       params = {
-        startkey: `${basePath}`,
+        startkey: `${basePath}${path.sep}`,
         endkey: `${basePath}${path.sep}\ufff0`,
         include_docs: true
       }
@@ -323,9 +323,10 @@ class Pouch {
     let query = `
       function (doc) {
         if ('docType' in doc) {
-          let parts = doc._id.split(${sep})
+          const parts = doc._id.split(${sep})
           parts.pop()
-          return emit(parts.join(${sep}), {_id: doc._id})
+          const basePath = parts.concat('').join(${sep})
+          return emit(basePath, {_id: doc._id})
         }
       }
     `

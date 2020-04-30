@@ -67,8 +67,14 @@ describe('RemoteWatcher', function() {
     await pouchHelpers.createParentFolder(this.pouch)
     // FIXME: Tests pass without folder 3 & file 3
     for (let i of [1, 2, 3]) {
-      await pouchHelpers.createFolder(this.pouch, i)
-      await pouchHelpers.createFile(this.pouch, i)
+      await pouchHelpers.createFolder(
+        this.pouch,
+        path.join('my-folder', `folder-${i}`)
+      )
+      await pouchHelpers.createFile(
+        this.pouch,
+        path.join('my-folder', `file-${i}`)
+      )
     }
   })
 
@@ -1513,15 +1519,16 @@ describe('RemoteWatcher', function() {
     it('calls updateDoc when tags are updated', async function() {
       this.prep.updateFileAsync = sinon.stub()
       this.prep.updateFileAsync.resolves(null)
+      const filePath = path.join('my-folder', 'file-1')
       let remoteDoc /*: RemoteDoc */ = {
-        _id: '12345678901',
+        _id: `1234567890-${filePath}`,
         _rev: '2-abcdef',
         _type: FILES_DOCTYPE,
         dir_id: '23456789012',
         type: 'file',
         path: '/my-folder/file-1',
         name: 'file-1',
-        md5sum: '1111111111111111111111111111111111111111',
+        md5sum: `111111111111111111111111111111111111111${filePath}`,
         tags: ['foo', 'bar', 'baz'],
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         binary: {
@@ -1542,7 +1549,7 @@ describe('RemoteWatcher', function() {
 
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
-        path: path.normalize('my-folder/file-1'),
+        path: filePath,
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
@@ -1556,8 +1563,9 @@ describe('RemoteWatcher', function() {
     it('calls updateDoc when content is overwritten', async function() {
       this.prep.updateFileAsync = sinon.stub()
       this.prep.updateFileAsync.resolves(null)
+      const filePath = path.join('my-folder', 'file-1')
       let remoteDoc /*: RemoteDoc */ = {
-        _id: '12345678901',
+        _id: `1234567890-${filePath}`,
         _rev: '3-abcdef',
         _type: FILES_DOCTYPE,
         type: 'file',
@@ -1579,7 +1587,7 @@ describe('RemoteWatcher', function() {
 
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
-        path: path.normalize('my-folder/file-1'),
+        path: filePath,
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
@@ -1594,15 +1602,16 @@ describe('RemoteWatcher', function() {
     it('calls moveFile when file is renamed', async function() {
       this.prep.moveFileAsync = sinon.stub()
       this.prep.moveFileAsync.resolves(null)
+      const filePath = path.join('my-folder', 'file-2')
       let remoteDoc /*: RemoteDoc */ = {
-        _id: '12345678902',
+        _id: `1234567890-${filePath}`,
         _rev: '4-abcdef',
         _type: FILES_DOCTYPE,
         type: 'file',
         dir_id: 'whatever',
         path: '/my-folder',
         name: 'file-2-bis',
-        md5sum: '1111111111111111111111111111111111111112',
+        md5sum: `111111111111111111111111111111111111111${filePath}`,
         tags: [],
         updated_at: '2017-01-30T09:09:15.217662611+01:00'
       }
@@ -1619,12 +1628,12 @@ describe('RemoteWatcher', function() {
       // $FlowFixMe
       const src = change.was
       should(src).have.properties({
-        path: path.normalize('my-folder/file-2'),
+        path: filePath,
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
         remote: {
-          _id: '12345678902'
+          _id: `1234567890-${filePath}`
         }
       })
       const dst = change.doc
@@ -1644,15 +1653,16 @@ describe('RemoteWatcher', function() {
     it('calls moveFile when file is moved', async function() {
       this.prep.moveFileAsync = sinon.stub()
       this.prep.moveFileAsync.resolves(null)
+      const filePath = path.join('my-folder', 'file-2')
       let remoteDoc /*: RemoteDoc */ = {
-        _id: '12345678902',
+        _id: `1234567890-${filePath}`,
         _rev: '5-abcdef',
         _type: FILES_DOCTYPE,
         type: 'file',
         dir_id: 'whatever',
         path: '/another-folder/in/some/place',
         name: 'file-2-ter',
-        md5sum: '1111111111111111111111111111111111111112',
+        md5sum: `111111111111111111111111111111111111111${filePath}`,
         tags: [],
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         binary: {
@@ -1662,9 +1672,7 @@ describe('RemoteWatcher', function() {
           }
         }
       }
-      const was /*: Metadata */ = await this.pouch.db.get(
-        metadata.id(path.normalize('my-folder/file-2'))
-      )
+      const was /*: Metadata */ = await this.pouch.db.get(metadata.id(filePath))
       await this.pouch.db.put(was)
 
       const change /*: RemoteChange */ = this.watcher.identifyChange(
@@ -1679,12 +1687,12 @@ describe('RemoteWatcher', function() {
       // $FlowFixMe
       const src = change.was
       should(src).have.properties({
-        path: path.normalize('my-folder/file-2'),
+        path: filePath,
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
         remote: {
-          _id: '12345678902'
+          _id: `1234567890-${filePath}`
         }
       })
       const dst = change.doc
