@@ -3,6 +3,7 @@
 
 const should = require('should')
 const sinon = require('sinon')
+const path = require('path')
 
 const { PouchError } = require('../../../core/pouch/error')
 const {
@@ -32,8 +33,14 @@ describe('core/pouch/migrations', function() {
   beforeEach('create folders and files', async function() {
     await pouchHelpers.createParentFolder(this.pouch)
     for (let i of [1, 2, 3]) {
-      await pouchHelpers.createFolder(this.pouch, i)
-      await pouchHelpers.createFile(this.pouch, i)
+      await pouchHelpers.createFolder(
+        this.pouch,
+        path.join('my-folder', `folder-${i}`)
+      )
+      await pouchHelpers.createFile(
+        this.pouch,
+        path.join('my-folder', `file-${i}`)
+      )
     }
   })
 

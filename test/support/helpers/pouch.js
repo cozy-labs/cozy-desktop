@@ -1,5 +1,3 @@
-const path = require('path')
-
 const { assignId } = require('../../../core/metadata')
 const { Pouch } = require('../../../core/pouch')
 
@@ -35,14 +33,14 @@ module.exports = {
     return pouch.db.put(doc).asCallback(callback)
   },
 
-  createFolder(pouch, i, callback) {
+  createFolder(pouch, folderPath, callback) {
     let doc = {
-      path: path.join('my-folder', `folder-${i}`),
+      path: folderPath,
       docType: 'folder',
       updated_at: new Date(),
       tags: [],
       remote: {
-        _id: `123456789${i}`
+        _id: `123456789-${folderPath}`
       },
       sides: {
         local: 1,
@@ -53,15 +51,15 @@ module.exports = {
     return pouch.db.put(doc).asCallback(callback)
   },
 
-  createFile(pouch, i, callback) {
+  createFile(pouch, filePath, callback) {
     let doc = {
-      path: path.join('my-folder', `file-${i}`),
+      path: filePath,
       docType: 'file',
-      md5sum: `111111111111111111111111111111111111111${i}`,
+      md5sum: `111111111111111111111111111111111111111${filePath}`,
       updated_at: new Date(),
       tags: [],
       remote: {
-        _id: `1234567890${i}`
+        _id: `1234567890-${filePath}`
       },
       sides: {
         local: 1,

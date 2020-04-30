@@ -24,8 +24,14 @@ describe('Pouch', function() {
   beforeEach('create folders and files', async function() {
     await pouchHelpers.createParentFolder(this.pouch)
     for (let i of [1, 2, 3]) {
-      await pouchHelpers.createFolder(this.pouch, i)
-      await pouchHelpers.createFile(this.pouch, i)
+      await pouchHelpers.createFolder(
+        this.pouch,
+        path.join('my-folder', `folder-${i}`)
+      )
+      await pouchHelpers.createFile(
+        this.pouch,
+        path.join('my-folder', `file-${i}`)
+      )
     }
   })
 
@@ -337,8 +343,9 @@ describe('Pouch', function() {
 
     describe('byChecksum', () =>
       it('gets all the files with this checksum', async function() {
-        let _id = metadata.id(path.join('my-folder', 'file-1'))
-        let checksum = '1111111111111111111111111111111111111111'
+        const filePath = path.join('my-folder', 'file-1')
+        const _id = metadata.id(filePath)
+        const checksum = `111111111111111111111111111111111111111${filePath}`
         const docs = await this.pouch.byChecksumAsync(checksum)
         docs.length.should.be.equal(1)
         docs[0]._id.should.equal(_id)
@@ -424,7 +431,8 @@ describe('Pouch', function() {
 
     describe('byRemoteId', function() {
       it('gets all the file with this remote id', async function() {
-        let id = '12345678901'
+        const filePath = path.join('my-folder', 'file-1')
+        const id = `1234567890-${filePath}`
         const doc = await this.pouch.byRemoteIdAsync(id)
         doc.remote._id.should.equal(id)
         should.exist(doc._id)
@@ -441,7 +449,8 @@ describe('Pouch', function() {
 
     describe('byRemoteIdMaybe', function() {
       it('does the same as byRemoteId() when document exists', async function() {
-        let id = '12345678901'
+        const filePath = path.join('my-folder', 'file-1')
+        const id = `1234567890-${filePath}`
         const doc = await this.pouch.byRemoteIdMaybeAsync(id)
         doc.remote._id.should.equal(id)
         should.exist(doc._id)
