@@ -20,7 +20,10 @@ const Prep = require('../../../core/prep')
 const remote = require('../../../core/remote')
 const { Remote } = remote
 const { DirectoryNotFound } = require('../../../core/remote/cozy')
-const { TRASH_DIR_ID } = require('../../../core/remote/constants')
+const {
+  TRASH_DIR_ID,
+  NOTE_MIME_TYPE
+} = require('../../../core/remote/constants')
 const timestamp = require('../../../core/utils/timestamp')
 
 const configHelpers = require('../../support/helpers/config')
@@ -330,7 +333,7 @@ describe('remote.Remote', function() {
             _id: created._id,
             md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
             updated_at: timestamp.stringify(
-              timestamp.build(2015, 11, 16, 16, 12, 1)
+              timestamp.build(2015, 12, 16, 16, 12, 1)
             ),
             sides: {
               local: 1
@@ -357,7 +360,8 @@ describe('remote.Remote', function() {
           type: 'file',
           dir_id: created.dir_id,
           name: created.name,
-          updated_at: '2015-11-16T16:12:01Z'
+          md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
+          updated_at: '2015-12-16T16:12:01Z'
         })
         should(doc.remote._rev).equal(file._rev)
       })
@@ -403,6 +407,53 @@ describe('remote.Remote', function() {
         should.exist(doc.remote._id)
         should.exist(doc.remote._rev)
         should.exist(doc.deleted)
+      })
+
+      it('does not send any request if the file is a Cozy Note', async function() {
+        const created = await builders
+          .remoteFile()
+          .name('My Note.cozy-note')
+          .contentType(NOTE_MIME_TYPE)
+          .data('foo')
+          .timestamp(2015, 11, 16, 16, 12, 1)
+          .create()
+        const old = metadata.fromRemoteDoc(created)
+        const doc /*: Metadata */ = _.defaults(
+          {
+            _id: created._id,
+            md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
+            updated_at: timestamp.stringify(
+              timestamp.build(2015, 12, 16, 16, 12, 1)
+            ),
+            sides: {
+              local: 1
+            }
+          },
+          old
+        )
+        await this.pouch.db.put(doc)
+        this.remote.other = {
+          createReadStreamAsync(localDoc) {
+            localDoc.should.equal(doc)
+            const stream = builders
+              .stream()
+              .push('bar')
+              .build()
+            return Promise.resolve(stream)
+          }
+        }
+
+        await this.remote.overwriteFileAsync(_.cloneDeep(doc), old)
+
+        const file = await cozy.files.statById(doc.remote._id)
+        should(file.attributes).have.properties({
+          type: 'file',
+          dir_id: created.dir_id,
+          name: created.name,
+          md5sum: 'rL0Y20zC+Fzt72VPzMSk2A==',
+          updated_at: '2015-11-16T16:12:01Z'
+        })
+        should(doc.remote._rev).equal(file._rev)
       })
     })
   }

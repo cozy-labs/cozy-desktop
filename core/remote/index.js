@@ -12,6 +12,7 @@ const { posix, sep } = path
 const { RemoteCozy } = require('./cozy')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
+const { NOTE_MIME_TYPE } = require('./constants')
 const { withContentLength } = require('../reader')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
@@ -180,6 +181,14 @@ class Remote /*:: implements Reader, Writer */ {
     doc /*: Metadata */,
     old /*: ?Metadata */
   ) /*: Promise<void> */ {
+    if (doc.mime === NOTE_MIME_TYPE) {
+      log.error(
+        { path: doc.path, doc, old },
+        'Local note updates should not be propagated'
+      )
+      return
+    }
+
     const { path } = doc
     log.info({ path }, 'Uploading new file version...')
 
