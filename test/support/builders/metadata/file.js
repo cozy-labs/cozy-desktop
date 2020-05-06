@@ -1,6 +1,6 @@
 /* @flow */
 
-const mime = require('mime')
+const mime = require('../../../../core/utils/mime')
 const crypto = require('crypto')
 
 const BaseMetadataBuilder = require('./base')

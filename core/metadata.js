@@ -35,7 +35,7 @@
 
 const _ = require('lodash')
 const { clone } = _
-const mime = require('mime')
+const mime = require('./utils/mime')
 const deepDiff = require('deep-diff').diff
 const path = require('path')
 
