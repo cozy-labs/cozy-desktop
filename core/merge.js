@@ -135,17 +135,13 @@ class Merge {
   // A suffix composed of -conflict- and the date is added to the path.
   async resolveConflictAsync(
     side /*: SideName */,
-    doc /*: Metadata */,
-    was /*: ?Metadata */
+    doc /*: Metadata */
   ) /*: Promise<Metadata> */ {
-    log.warn(
-      { path: doc.path, oldpath: was && was.path, doc, was },
-      'resolveConflictAsync'
-    )
     const dst = metadata.createConflictingDoc(doc)
+    log.warn({ path: dst.path, oldpath: doc.path }, 'Resolving conflict')
     try {
       // $FlowFixMe
-      await this[side].renameConflictingDocAsync(doc, dst.path)
+      await this[side].moveAsync(dst, doc)
     } catch (err) {
       throw err
     }
@@ -173,12 +169,12 @@ class Merge {
       )
       if (idConflict) {
         log.warn({ idConflict }, IdConflict.description(idConflict))
-        await this.resolveConflictAsync(side, doc, file)
+        await this.resolveConflictAsync(side, doc)
         return
       }
 
       if (file && file.docType === 'folder') {
-        return this.resolveConflictAsync(side, doc, file)
+        return this.resolveConflictAsync(side, doc)
       }
 
       if (metadata.sameBinary(file, doc)) {
@@ -219,7 +215,7 @@ class Merge {
         return this.updateFileAsync('local', doc)
       }
 
-      return this.resolveConflictAsync(side, doc, file)
+      return this.resolveConflictAsync(side, doc)
     }
 
     if (doc.tags == null) {
@@ -276,13 +272,16 @@ class Merge {
           delete file.overwrite
           return this.pouch.put(file)
         } else {
-          // We have an update on the same file on both sides
-          // so we create a conflict
-          await this.resolveConflictAsync(side, doc, file)
           // we just renamed the remote file as a conflict
           // the old file should be dissociated from the remote
           delete file.remote
           delete file.sides.remote
+          // We have a merged but unsynced local update.
+          // In this case we can dissociate the remote since we'll be renaming
+          // it and thus trigger a new change that will be fetched later.
+          // We use `doc` and not `file` because the remote document has changed
+          // and so has its revision which is available in `doc`.
+          await this.resolveConflictAsync('remote', doc)
           metadata.markSide('local', file, file)
           return await this.pouch.put(file)
         }
@@ -310,7 +309,7 @@ class Merge {
     const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     metadata.markSide(side, doc, folder)
     if (folder && folder.docType === 'file') {
-      return this.resolveConflictAsync(side, doc, folder)
+      return this.resolveConflictAsync(side, doc)
     }
     metadata.assignMaxDate(doc, folder)
     const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
@@ -319,7 +318,7 @@ class Merge {
     )
     if (idConflict) {
       log.warn({ idConflict }, IdConflict.description(idConflict))
-      await this.resolveConflictAsync(side, doc, folder)
+      await this.resolveConflictAsync(side, doc)
       return
     } else if (folder) {
       doc._rev = folder._rev
@@ -402,7 +401,7 @@ class Merge {
         )
         if (idConflict) {
           log.warn({ idConflict }, IdConflict.description(idConflict))
-          await this.resolveConflictAsync(side, doc, file)
+          await this.resolveConflictAsync(side, doc)
           return
         }
 
@@ -426,7 +425,7 @@ class Merge {
           return this.pouch.put(was)
         }
 
-        const dst = await this.resolveConflictAsync(side, doc, file)
+        const dst = await this.resolveConflictAsync(side, doc)
         was.moveTo = dst._id
         return this.pouch.bulkDocs([was, dst])
       } else {
@@ -480,7 +479,7 @@ class Merge {
       )
       if (idConflict) {
         log.warn({ idConflict }, IdConflict.description(idConflict))
-        await this.resolveConflictAsync(side, doc, folder)
+        await this.resolveConflictAsync(side, doc)
         return
       }
 
@@ -505,7 +504,7 @@ class Merge {
         return this.pouch.put(was)
       }
 
-      const dst = await this.resolveConflictAsync(side, doc, folder)
+      const dst = await this.resolveConflictAsync(side, doc)
       return this.moveFolderRecursivelyAsync(side, dst, was, newRemoteRevs)
     } else {
       await this.ensureParentExistAsync(side, doc)

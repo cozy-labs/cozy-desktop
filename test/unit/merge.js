@@ -84,8 +84,8 @@ describe('Merge', function() {
   beforeEach('instanciate merge', function() {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
-    this.merge.local = { renameConflictingDocAsync: sinon.stub().resolves() }
-    this.merge.remote = { renameConflictingDocAsync: sinon.stub().resolves() }
+    this.merge.local = { moveAsync: sinon.stub().resolves() }
+    this.merge.remote = { moveAsync: sinon.stub().resolves() }
     builders = new Builders({ pouch: this.pouch })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
