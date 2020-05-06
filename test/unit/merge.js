@@ -28,7 +28,12 @@ async function mergeSideEffects(
 ) {
   const { last_seq: lastSeq } = await pouch.db.changes({ since: 'now' })
 
-  sinon.spy(merge, 'resolveConflictAsync')
+  if (merge.resolveConflictAsync.restore) merge.resolveConflictAsync.restore()
+  const { resolveConflictAsync } = merge
+  sinon.stub(merge, 'resolveConflictAsync').callsFake((...args) => {
+    const clones = args.map(arg => _.cloneDeep(arg))
+    return resolveConflictAsync(...clones)
+  })
 
   await mergeCall()
 
