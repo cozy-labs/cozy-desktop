@@ -9,6 +9,7 @@ def delNoteMetadata(obj):
     | del(.metadata.content)
     | del(.metadata.schema)
     | if .moveFrom then delNoteMetadata(.moveFrom) else . end
+    | if .overwrite then delNoteMetadata(.overwrite) else . end
     )
 ;
 
