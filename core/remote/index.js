@@ -293,30 +293,17 @@ class Remote /*:: implements Reader, Writer */ {
     newMetadata /*: Metadata */,
     oldMetadata /*: Metadata */
   ) /*: Promise<void> */ {
-    const { path } = newMetadata
-    log.info(
-      { path, oldpath: oldMetadata.path },
-      `Moving ${oldMetadata.docType}${
-        newMetadata.overwrite ? ' (with overwrite)' : ''
-      }`
-    )
-
-    const { overwrite } = newMetadata
-    if (
+    const { path, overwrite } = newMetadata
+    const isOverwritingTarget =
       overwrite &&
       overwrite.remote &&
       overwrite.remote._id !== oldMetadata.remote._id
-    ) {
-      const referencedBy = await this.remoteCozy.getReferencedBy(
-        overwrite.remote._id
-      )
-      const { _rev } = await this.remoteCozy.addReferencedBy(
-        oldMetadata.remote._id,
-        referencedBy
-      )
-      oldMetadata.remote._rev = _rev
-      await this.trashAsync(overwrite)
-    }
+    log.info(
+      { path, oldpath: oldMetadata.path },
+      `Moving ${oldMetadata.docType}${
+        isOverwritingTarget ? ' (with overwrite)' : ''
+      }`
+    )
 
     const [newDirPath, newName] /*: [string, string] */ = dirAndName(path)
     const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(
@@ -332,15 +319,25 @@ class Remote /*:: implements Reader, Writer */ {
       ifMatch: oldMetadata.remote._rev
     }
 
+    if (overwrite && isOverwritingTarget) {
+      await this.trashAsync(overwrite)
+    }
+
     const newRemoteDoc /*: RemoteDoc */ = await this.remoteCozy.updateAttributesById(
       oldMetadata.remote._id,
       attrs,
       opts
     )
-
     newMetadata.remote = {
       _id: newRemoteDoc._id, // XXX: Why do we reassign id? Isn't it the same as before?
       _rev: newRemoteDoc._rev
+    }
+
+    if (overwrite && isOverwritingTarget) {
+      const referencedBy = await this.remoteCozy.getReferencedBy(
+        overwrite.remote._id
+      )
+      await this.remoteCozy.addReferencedBy(newRemoteDoc._id, referencedBy)
     }
   }
 
