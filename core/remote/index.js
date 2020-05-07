@@ -111,7 +111,7 @@ class Remote /*:: implements Reader, Writer */ {
     log.info({ path }, 'Creating folder...')
 
     const [parentPath, name] = dirAndName(doc.path)
-    const parent /*: RemoteDoc */ = await this.remoteCozy.findOrCreateDirectoryByPath(
+    const parent /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(
       parentPath
     )
     let dir /*: RemoteDoc */

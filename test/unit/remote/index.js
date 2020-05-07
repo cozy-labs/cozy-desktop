@@ -19,6 +19,7 @@ const { ensureValidPath } = metadata
 const Prep = require('../../../core/prep')
 const remote = require('../../../core/remote')
 const { Remote } = remote
+const { DirectoryNotFound } = require('../../../core/remote/cozy')
 const { TRASH_DIR_ID } = require('../../../core/remote/constants')
 const timestamp = require('../../../core/utils/timestamp')
 
@@ -302,13 +303,14 @@ describe('remote.Remote', function() {
       })
     })
 
-    it('creates the parent folder when missing', async function() {
+    it('throws an error if the parent folder is missing', async function() {
       const doc /*: Metadata */ = builders
         .metadir()
         .path(path.join('foo', 'bar', 'qux'))
         .build()
-      await this.remote.addFolderAsync(doc)
-      await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
+      await should(this.remote.addFolderAsync(doc)).be.rejectedWith(
+        DirectoryNotFound
+      )
     })
   })
 
