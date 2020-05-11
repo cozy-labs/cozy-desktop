@@ -3,12 +3,8 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
-  disabled: {
-    'atom/linux': 'Does not work with AtomWatcher yet.',
-    'local/darwin': 'Does not work with all flush points',
-    stopped: 'Does not work with AtomWatcher yet.'
-  },
   side: 'local',
+  disabled: 'Does not work yet on all watchers',
   init: [
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'src/' },
