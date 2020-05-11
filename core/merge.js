@@ -653,22 +653,37 @@ class Merge {
       return
     }
     if (was.moveFrom) {
-      // The file was moved and we don't want to delete it as we think users
-      // delete "paths".
-      if (side === 'remote') {
-        // We update the remote rev so we can send the file again and undo the
-        // remote trashing.
-        was.remote._rev = doc.remote._rev
-        // We keep the `moveFrom` hint so we will update the remote file and
-        // restore it from the trash instead of re-uploading it.
-        was.moveFrom.remote._rev = doc.remote._rev
-      } else {
-        // We remove the hint that the file should be moved since it has
-        // actually been deleted locally and should be recreated instead.
+      // XXX: Flow needs this to keep track of the non-null value of
+      // `was.moveFrom` event after we've made function calls with `was` as a
+      // parameter.
+      // Without this assignment, the call to `isAtLeastUpToDate` will
+      // invalidate the `was.moveFrom` presence check and accessing its
+      // properties like `remote` will then raise linting errors.
+      // See https://flow.org/en/docs/lang/refinements/#toc-refinement-invalidations
+      const moveFrom = was.moveFrom
+
+      if (metadata.isAtLeastUpToDate(side, was)) {
+        // Remove move hint so that Sync won't try to perform the file move
         delete was.moveFrom
-        // The file was deleted locally so it should not have a local side so we
-        // can re-create it.
-        delete was.sides.local
+        metadata.markAsUnsyncable(side, was)
+      } else {
+        // The file was moved on the other side and we don't want to delete it as
+        // we think users delete "paths".
+        if (side === 'remote') {
+          // We update the remote rev so we can send the file again and undo the
+          // remote trashing.
+          was.remote._rev = doc.remote._rev
+          // We keep the `moveFrom` hint so we will update the remote file and
+          // restore it from the trash instead of re-uploading it.
+          moveFrom.remote._rev = doc.remote._rev
+        } else {
+          // We remove the hint that the file should be moved since it has
+          // actually been deleted locally and should be recreated instead.
+          delete was.moveFrom
+          // The file was deleted locally so it should not have a local side so we
+          // can re-create it.
+          delete was.sides.local
+        }
       }
       return this.pouch.put(was)
     }

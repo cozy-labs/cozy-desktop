@@ -2765,7 +2765,7 @@ describe('Merge', function() {
 
   describe('trashFileAsync', () => {
     context('when metadata are found in Pouch', () => {
-      it('deletes it with trashed property and up-to-date sides info', async function() {
+      it('marks it for deletion and updates the current side', async function() {
         const was = await builders
           .metafile()
           .upToDate()
@@ -2840,6 +2840,85 @@ describe('Merge', function() {
 
         should(sideEffects).deepEqual({
           savedDocs: [],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when the file was moved on the same side', () => {
+      it('marks the file for deletion', async function() {
+        const was = await builders
+          .metafile()
+          .upToDate()
+          .create()
+        const moved = await builders
+          .metafile(was)
+          .moveFrom(was)
+          .path('new-name')
+          .changedSide(this.side)
+          .create()
+        const doc = builders
+          .metafile(moved)
+          .changedSide(this.side)
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFileAsync(
+            this.side,
+            _.cloneDeep(moved),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: { target: 4, remote: 4, local: 4 }, // up-to-date doc
+                _deleted: true
+              },
+              _.omit(moved, ['moveFrom', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when the file was moved on the other side', () => {
+      it('it changes the move into an addition on the other side', async function() {
+        const was = await builders
+          .metafile()
+          .upToDate()
+          .create()
+        const moved = await builders
+          .metafile(was)
+          .moveFrom(was)
+          .path('new-name')
+          .changedSide(otherSide(this.side))
+          .create()
+        const doc = builders
+          .metafile(moved)
+          .changedSide(this.side)
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFileAsync(
+            this.side,
+            _.cloneDeep(moved),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: _.omit(moved.sides, [this.side])
+              },
+              _.omit(moved, ['moveFrom', '_rev'])
+            )
+          ],
           resolvedConflicts: []
         })
       })
