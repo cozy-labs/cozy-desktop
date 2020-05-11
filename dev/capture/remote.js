@@ -186,6 +186,13 @@ const setupPouch = async (config /*: * */) => {
 }
 
 const captureScenario = async (scenario /*: * */) => {
+  if (
+    (scenario.platforms && !scenario.platforms.includes(process.platform)) ||
+    (scenario.side && scenario.side !== 'remote')
+  ) {
+    return
+  }
+
   // Setup
   const config = setupConfig()
   const pouch = await setupPouch(config)

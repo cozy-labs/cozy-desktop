@@ -196,6 +196,13 @@ const runAndRecordFSEvents =
     : runAndRecordChokidarEvents
 
 const captureScenario = (scenario /*: Scenario & {path: string} */) => {
+  if (
+    (scenario.platforms && !scenario.platforms.includes(process.platform)) ||
+    (scenario.side && scenario.side !== 'local')
+  ) {
+    return
+  }
+
   return fse
     .emptyDir(syncPath)
     .then(() => fse.emptyDir(outsidePath))
