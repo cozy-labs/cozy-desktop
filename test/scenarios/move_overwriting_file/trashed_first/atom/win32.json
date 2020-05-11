@@ -11,7 +11,9 @@
       "action": "deleted",
       "kind": "file",
       "path": "src\\file"
-    },
+    }
+  ],
+  [
     {
       "action": "created",
       "kind": "file",

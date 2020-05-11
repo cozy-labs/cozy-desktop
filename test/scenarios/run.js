@@ -161,17 +161,7 @@ function injectChokidarBreakpoints(eventsFile) {
 
 async function runLocalAtom(scenario, atomCapture, helpers) {
   if (scenario.init) {
-    let relpathFix = _.identity
-    if (process.platform === 'win32' && atomCapture.name.match(/win32/)) {
-      relpathFix = relpath => relpath.replace(/\//g, '\\')
-    }
-    await init(
-      scenario,
-      helpers.pouch,
-      helpers.local.syncDir.abspath,
-      relpathFix,
-      true
-    )
+    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath, true)
   }
 
   if (scenario.useCaptures) {
@@ -202,16 +192,7 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
 
 async function runLocalChokidar(scenario, eventsFile, flushAfter, helpers) {
   if (scenario.init) {
-    let relpathFix = _.identity
-    if (process.platform === 'win32' && eventsFile.name.match(/win32/)) {
-      relpathFix = relpath => relpath.replace(/\//g, '\\')
-    }
-    await init(
-      scenario,
-      helpers.pouch,
-      helpers.local.syncDir.abspath,
-      relpathFix
-    )
+    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath)
   }
 
   const eventsBefore = eventsFile.events.slice(0, flushAfter)
@@ -240,17 +221,7 @@ async function runLocalStopped(scenario, helpers) {
   // TODO: Find why we need this to prevent random failures and fix it.
   await Promise.delay(500)
   if (scenario.init) {
-    let relpathFix = _.identity
-    if (process.platform === 'win32' && scenario.name.match(/win32/)) {
-      relpathFix = relpath => relpath.replace(/\//g, '\\')
-    }
-    await init(
-      scenario,
-      helpers.pouch,
-      helpers.local.syncDir.abspath,
-      relpathFix,
-      true
-    )
+    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath, true)
   }
 
   await runActions(scenario, helpers.local.syncDir.abspath, { skipWait: true })
@@ -267,15 +238,10 @@ async function runLocalStopped(scenario, helpers) {
 async function runRemote(scenario, helpers) {
   if (scenario.init) {
     const useRealInodes = true
-    let relpathFix = _.identity
-    if (process.platform === 'win32') {
-      relpathFix = relpath => relpath.replace(/\//g, '\\')
-    }
     await init(
       scenario,
       helpers.pouch,
       helpers.local.syncDir.abspath,
-      relpathFix,
       useRealInodes
     )
     await helpers.remote.ignorePreviousChanges()

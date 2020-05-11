@@ -11,9 +11,7 @@
       "action": "created",
       "kind": "file",
       "path": "foo"
-    }
-  ],
-  [
+    },
     {
       "action": "modified",
       "kind": "file",

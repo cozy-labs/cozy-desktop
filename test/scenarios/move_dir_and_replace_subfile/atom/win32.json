@@ -23,6 +23,13 @@
   ],
   [
     {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst\\file.tmp"
+    }
+  ],
+  [
+    {
       "action": "deleted",
       "kind": "file",
       "path": "dst\\file"
@@ -34,7 +41,9 @@
       "kind": "file",
       "path": "dst\\file",
       "oldPath": "dst\\file.tmp"
-    },
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",

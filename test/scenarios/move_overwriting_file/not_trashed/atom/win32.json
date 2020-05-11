@@ -16,7 +16,9 @@
       "action": "created",
       "kind": "file",
       "path": "dst\\file"
-    },
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",

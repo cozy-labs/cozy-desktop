@@ -15,6 +15,13 @@
   ],
   [
     {
+      "action": "modified",
+      "kind": "file",
+      "path": "file"
+    }
+  ],
+  [
+    {
       "action": "deleted",
       "kind": "file",
       "path": "file"

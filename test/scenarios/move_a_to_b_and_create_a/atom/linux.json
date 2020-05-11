@@ -1,0 +1,24 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "b",
+      "oldPath": "a"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "a"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "a"
+    }
+  ]
+]

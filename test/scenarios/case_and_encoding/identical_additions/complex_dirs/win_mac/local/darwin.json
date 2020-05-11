@@ -8,100 +8,60 @@
     "type": "addDir",
     "path": "JOHN",
     "stats": {
-      "ino": 1468317,
-      "size": 4096,
-      "mtime": "2018-10-10T11:54:48.653Z",
-      "ctime": "2018-10-10T11:54:48.653Z"
+      "ino": 1224629,
+      "size": 160,
+      "mtime": "2020-05-07T11:37:40.874Z",
+      "ctime": "2020-05-07T11:37:40.874Z"
     }
   },
   {
     "type": "addDir",
     "path": "JOHN/exact-same-subdir",
     "stats": {
-      "ino": 1582213,
-      "size": 4096,
-      "mtime": "2018-10-10T11:54:48.653Z",
-      "ctime": "2018-10-10T11:54:48.653Z"
+      "ino": 1224630,
+      "size": 128,
+      "mtime": "2020-05-07T11:37:40.869Z",
+      "ctime": "2020-05-07T11:37:40.869Z"
     }
   },
   {
     "type": "addDir",
     "path": "JOHN/other-subdir-JOHN-1",
     "stats": {
-      "ino": 1582215,
-      "size": 4096,
-      "mtime": "2018-10-10T11:54:48.653Z",
-      "ctime": "2018-10-10T11:54:48.653Z"
+      "ino": 1224633,
+      "size": 64,
+      "mtime": "2020-05-07T11:37:40.870Z",
+      "ctime": "2020-05-07T11:37:40.870Z"
     }
   },
   {
     "type": "addDir",
-    "path": "john",
+    "path": "JOHN/other-subdir-john-2",
     "stats": {
-      "ino": 1582216,
-      "size": 4096,
-      "mtime": "2018-10-10T11:54:48.658Z",
-      "ctime": "2018-10-10T11:54:48.658Z"
+      "ino": 1224634,
+      "size": 64,
+      "mtime": "2020-05-07T11:37:40.874Z",
+      "ctime": "2020-05-07T11:37:40.874Z"
     }
   },
   {
     "type": "add",
     "path": "JOHN/exact-same-subdir/a.txt",
     "stats": {
-      "ino": 1573788,
+      "ino": 1224631,
       "size": 8,
-      "mtime": "2018-10-10T11:54:48.652Z",
-      "ctime": "2018-10-10T11:54:48.652Z"
+      "mtime": "2020-05-07T11:37:40.872Z",
+      "ctime": "2020-05-07T11:37:40.872Z"
     }
   },
   {
     "type": "add",
     "path": "JOHN/exact-same-subdir/b.txt",
     "stats": {
-      "ino": 1573802,
+      "ino": 1224632,
       "size": 8,
-      "mtime": "2018-10-10T11:54:48.653Z",
-      "ctime": "2018-10-10T11:54:48.653Z"
-    }
-  },
-  {
-    "type": "addDir",
-    "path": "john/exact-same-subdir",
-    "stats": {
-      "ino": 1582217,
-      "size": 4096,
-      "mtime": "2018-10-10T11:54:48.658Z",
-      "ctime": "2018-10-10T11:54:48.658Z"
-    }
-  },
-  {
-    "type": "addDir",
-    "path": "john/other-subdir-john-2",
-    "stats": {
-      "ino": 1582218,
-      "size": 4096,
-      "mtime": "2018-10-10T11:54:48.658Z",
-      "ctime": "2018-10-10T11:54:48.658Z"
-    }
-  },
-  {
-    "type": "add",
-    "path": "john/exact-same-subdir/b.txt",
-    "stats": {
-      "ino": 1573807,
-      "size": 8,
-      "mtime": "2018-10-10T11:54:48.658Z",
-      "ctime": "2018-10-10T11:54:48.658Z"
-    }
-  },
-  {
-    "type": "add",
-    "path": "john/exact-same-subdir/a.txt",
-    "stats": {
-      "ino": 1573803,
-      "size": 8,
-      "mtime": "2018-10-10T11:54:48.657Z",
-      "ctime": "2018-10-10T11:54:48.657Z"
+      "mtime": "2020-05-07T11:37:40.873Z",
+      "ctime": "2020-05-07T11:37:40.873Z"
     }
   }
 ]

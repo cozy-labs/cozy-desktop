@@ -1,63 +1,148 @@
 [
   {
-    "_id": "feb557f36d10ce243ce2c0d6b904abf9",
-    "_rev": "3-54fe1d4115787f54a798a73b6433b7f3",
-    "created_at": "2019-09-11T14:07:23.093454469Z",
-    "dir_id": "feb557f36d10ce243ce2c0d6b9047afe",
-    "name": "dir2",
-    "path": "/parent/dst/dir2",
-    "tags": [],
-    "type": "directory",
-    "updated_at": "2019-09-11T14:07:23.093454469Z"
-  },
-  {
-    "_id": "feb557f36d10ce243ce2c0d6b9050bc9",
-    "_rev": "3-d2617b56fc0a7a00bfeaf0b5cc4aa5bf",
-    "created_at": "2019-09-11T14:07:23.290407345Z",
-    "dir_id": "feb557f36d10ce243ce2c0d6b904abf9",
-    "name": "empty-subdir",
-    "path": "/parent/dst/dir2/empty-subdir",
-    "tags": [],
-    "type": "directory",
-    "updated_at": "2019-09-11T14:07:23.290407345Z"
-  },
-  {
-    "_id": "feb557f36d10ce243ce2c0d6b9051406",
-    "_rev": "3-83c741c9b1bd62d35d0acb2080675c29",
-    "created_at": "2019-09-11T14:07:23.433639777Z",
-    "dir_id": "feb557f36d10ce243ce2c0d6b904abf9",
-    "name": "subdir",
-    "path": "/parent/dst/dir2/subdir",
-    "tags": [],
-    "type": "directory",
-    "updated_at": "2019-09-11T14:07:23.433639777Z"
-  },
-  {
-    "_id": "feb557f36d10ce243ce2c0d6b9047afe",
-    "_rev": "2-fa5229de3779a8b54d20e708e04b7b2a",
-    "created_at": "2019-09-11T14:07:22.955027253Z",
-    "dir_id": "feb557f36d10ce243ce2c0d6b90441f5",
+    "_id": "a5f50206697951be5992df4a055607c4",
+    "_rev": "2-fde359aac189297eadec4881dab92674",
+    "cozyMetadata": {
+      "createdAt": "2020-05-11T10:37:57.031420191Z",
+      "createdByApp": "cozy-desktop",
+      "createdOn": "http://cozy.tools:8080/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2020-05-11T10:37:58.131742762Z",
+      "updatedByApps": [
+        {
+          "date": "2020-05-11T10:37:58.131742762Z",
+          "instance": "http://cozy.tools:8080/",
+          "slug": "cozy-desktop"
+        }
+      ]
+    },
+    "created_at": "2020-05-11T10:37:57.031413722Z",
+    "dir_id": "a5f50206697951be5992df4a0555fa7a",
     "name": "dst",
     "path": "/parent/dst",
     "tags": [],
     "type": "directory",
-    "updated_at": "2019-09-11T14:07:22.955027253Z"
+    "updated_at": "2020-05-11T10:37:57.031413722Z"
   },
   {
-    "_id": "feb557f36d10ce243ce2c0d6b9051f58",
-    "_rev": "3-e74123b9941b0115d1076e59dafd2656",
-    "class": "files",
-    "created_at": "2019-09-11T14:07:23.485683655Z",
-    "dir_id": "feb557f36d10ce243ce2c0d6b9051406",
+    "_id": "a5f50206697951be5992df4a05561557",
+    "_rev": "3-310bb166225288b8479b7aea5b1c3455",
+    "cozyMetadata": {
+      "createdAt": "2020-05-11T10:37:57.231746652Z",
+      "createdByApp": "cozy-desktop",
+      "createdOn": "http://cozy.tools:8080/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2020-05-11T10:37:57.231746652Z",
+      "updatedByApps": [
+        {
+          "date": "2020-05-11T10:37:57.231746652Z",
+          "instance": "http://cozy.tools:8080/",
+          "slug": "cozy-desktop"
+        }
+      ]
+    },
+    "created_at": "2020-05-11T10:37:57.231740991Z",
+    "dir_id": "a5f50206697951be5992df4a055608d2",
+    "name": "empty-subdir",
+    "path": "/parent/dst/dir2/empty-subdir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2020-05-11T10:37:57.231740991Z"
+  },
+  {
+    "_id": "a5f50206697951be5992df4a0556186b",
+    "_rev": "3-4f41d7ecf688af1e0f698c13baf84cdc",
+    "cozyMetadata": {
+      "createdAt": "2020-05-11T10:37:57.377173616Z",
+      "createdByApp": "cozy-desktop",
+      "createdOn": "http://cozy.tools:8080/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2020-05-11T10:37:57.377173616Z",
+      "updatedByApps": [
+        {
+          "date": "2020-05-11T10:37:57.377173616Z",
+          "instance": "http://cozy.tools:8080/",
+          "slug": "cozy-desktop"
+        }
+      ]
+    },
+    "created_at": "2020-05-11T10:37:57.37716683Z",
+    "dir_id": "a5f50206697951be5992df4a055608d2",
+    "name": "subdir",
+    "path": "/parent/dst/dir2/subdir",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2020-05-11T10:37:57.37716683Z"
+  },
+  {
+    "_id": "a5f50206697951be5992df4a055608d2",
+    "_rev": "3-0d826a7ef69c1637c4c0b2ea1f98cc3e",
+    "cozyMetadata": {
+      "createdAt": "2020-05-11T10:37:57.122772551Z",
+      "createdByApp": "cozy-desktop",
+      "createdOn": "http://cozy.tools:8080/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2020-05-11T10:37:58.215361437Z",
+      "updatedByApps": [
+        {
+          "date": "2020-05-11T10:37:58.215361437Z",
+          "instance": "http://cozy.tools:8080/",
+          "slug": "cozy-desktop"
+        }
+      ]
+    },
+    "created_at": "2020-05-11T10:37:57.122766024Z",
+    "dir_id": "a5f50206697951be5992df4a055607c4",
+    "name": "dir2",
+    "path": "/parent/dst/dir2",
+    "tags": [],
+    "type": "directory",
+    "updated_at": "2020-05-11T10:37:57.122766024Z"
+  },
+  {
+    "_id": "a5f50206697951be5992df4a05562001",
+    "_rev": "2-37229e04e6cd2788eac651118c7b3a6f",
+    "class": "text",
+    "cozyMetadata": {
+      "createdAt": "2020-05-11T10:37:57.42162658Z",
+      "createdByApp": "cozy-desktop",
+      "createdOn": "http://cozy.tools:8080/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2020-05-11T10:37:58.317915495Z",
+      "updatedByApps": [
+        {
+          "date": "2020-05-11T10:37:58.317915495Z",
+          "instance": "http://cozy.tools:8080/",
+          "slug": "cozy-desktop"
+        }
+      ],
+      "uploadedAt": "2020-05-11T10:37:57.42162658Z",
+      "uploadedBy": {
+        "oauthClient": {
+          "id": "a5f50206697951be5992df4a05007005",
+          "kind": "",
+          "name": "test"
+        },
+        "slug": "cozy-desktop"
+      },
+      "uploadedOn": "http://cozy.tools:8080/"
+    },
+    "created_at": "2020-05-11T10:37:57.421618604Z",
+    "dir_id": "a5f50206697951be5992df4a0556186b",
     "executable": false,
-    "md5sum": "Bg5OnjC8ua5nWoAyioemhw==",
-    "mime": "application/octet-stream",
+    "md5sum": "AIxZJsqGECPB0qNmU/2I4g==",
+    "mime": "text/plain",
     "name": "file2",
-    "size": "20",
+    "size": "8",
     "tags": [],
     "trashed": false,
     "type": "file",
-    "updated_at": "2019-09-11T14:07:23.485683655Z",
+    "updated_at": "2020-05-11T10:37:57.421618604Z",
     "path": "/parent/dst/dir2/subdir/file2"
   }
 ]

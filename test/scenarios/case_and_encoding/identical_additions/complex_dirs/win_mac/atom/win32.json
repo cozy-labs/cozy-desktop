@@ -8,13 +8,6 @@
   ],
   [
     {
-      "action": "scan",
-      "path": "JOHN\\exact-same-subdir",
-      "kind": "directory"
-    }
-  ],
-  [
-    {
       "action": "created",
       "kind": "directory",
       "path": "JOHN\\exact-same-subdir"
@@ -29,13 +22,6 @@
   ],
   [
     {
-      "action": "scan",
-      "path": "JOHN\\exact-same-subdir\\a.txt",
-      "kind": "file"
-    }
-  ],
-  [
-    {
       "action": "modified",
       "kind": "file",
       "path": "JOHN\\exact-same-subdir\\a.txt"
@@ -43,9 +29,9 @@
   ],
   [
     {
-      "action": "scan",
-      "path": "JOHN\\exact-same-subdir\\a.txt",
-      "kind": "file"
+      "action": "modified",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\a.txt"
     }
   ],
   [
@@ -81,6 +67,11 @@
       "action": "modified",
       "kind": "file",
       "path": "JOHN\\exact-same-subdir\\a.txt"
+    },
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\a.txt"
     }
   ],
   [
@@ -103,5 +94,85 @@
       "kind": "directory",
       "path": "JOHN\\other-subdir-john-2"
     }
-  ]
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "JOHN\\exact-same-subdir\\a.txt",
+      "kind": "file",
+      "stats": {
+        "fileid": "0x0008000000016059",
+        "ino": 2251799813775449,
+        "size": 8,
+        "atime": "2020-05-07T13:28:01.000Z",
+        "mtime": "2020-05-07T13:28:01.000Z",
+        "ctime": "2020-05-07T13:28:01.000Z",
+        "directory": false,
+        "symbolicLink": false
+      }
+    },
+    {
+      "action": "scan",
+      "path": "JOHN\\exact-same-subdir\\b.txt",
+      "kind": "file",
+      "stats": {
+        "fileid": "0x000200000002A599",
+        "ino": 562949953594777,
+        "size": 8,
+        "atime": "2020-05-07T13:28:01.000Z",
+        "mtime": "2020-05-07T13:28:01.000Z",
+        "ctime": "2020-05-07T13:28:01.000Z",
+        "directory": false,
+        "symbolicLink": false
+      }
+    }
+  ],
+  [
+    {
+      "action": "scan",
+      "path": "JOHN\\exact-same-subdir",
+      "kind": "directory",
+      "stats": {
+        "fileid": "0x000A00000000789D",
+        "ino": 2814749767137437,
+        "size": 0,
+        "atime": "2020-05-07T13:28:01.000Z",
+        "mtime": "2020-05-07T13:28:01.000Z",
+        "ctime": "2020-05-07T13:28:01.000Z",
+        "directory": true,
+        "symbolicLink": false
+      }
+    },
+    {
+      "action": "scan",
+      "path": "JOHN\\other-subdir-JOHN-1",
+      "kind": "directory",
+      "stats": {
+        "fileid": "0x000200000002A59A",
+        "ino": 562949953594778,
+        "size": 0,
+        "atime": "2020-05-07T13:28:01.000Z",
+        "mtime": "2020-05-07T13:28:01.000Z",
+        "ctime": "2020-05-07T13:28:01.000Z",
+        "directory": true,
+        "symbolicLink": false
+      }
+    },
+    {
+      "action": "scan",
+      "path": "JOHN\\other-subdir-john-2",
+      "kind": "directory",
+      "stats": {
+        "fileid": "0x000200000002A59B",
+        "ino": 562949953594779,
+        "size": 0,
+        "atime": "2020-05-07T13:28:01.000Z",
+        "mtime": "2020-05-07T13:28:01.000Z",
+        "ctime": "2020-05-07T13:28:01.000Z",
+        "directory": true,
+        "symbolicLink": false
+      }
+    }
+  ],
+  []
 ]

@@ -4,6 +4,7 @@
 
 module.exports = ({
   side: 'remote',
+  disabled: 'Captures do not take trashed attribute into account',
   init: [
     { ino: 1, path: 'parent/' },
     { ino: 2, path: 'parent/dir/', trashed: true },

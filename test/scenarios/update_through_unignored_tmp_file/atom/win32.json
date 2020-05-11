@@ -4,7 +4,7 @@
       "action": "renamed",
       "kind": "file",
       "path": "other-file.ods",
-      "oldPath": "file"
+      "oldPath": "file.ods"
     },
     {
       "action": "modified",
@@ -24,7 +24,9 @@
       "action": "modified",
       "kind": "file",
       "path": "file.ods"
-    },
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",

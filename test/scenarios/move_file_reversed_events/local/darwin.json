@@ -3,17 +3,17 @@
     "breakpoints": [0]
   },
   {
+    "type": "unlink",
+    "path": "src/file"
+  },
+  {
     "type": "add",
     "path": "dst/file",
     "stats": {
       "ino": 3,
       "size": 8,
-      "mtime": "2017-10-05T10:29:41.000Z",
-      "ctime": "2017-10-05T10:29:41.000Z"
+      "mtime": "2020-05-07T11:38:59.051Z",
+      "ctime": "2020-05-07T11:38:59.057Z"
     }
-  },
-  {
-    "type": "unlink",
-    "path": "src/file"
   }
 ]

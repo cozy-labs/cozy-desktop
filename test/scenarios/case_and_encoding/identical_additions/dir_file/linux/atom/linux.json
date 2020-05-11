@@ -31,7 +31,27 @@
     {
       "action": "scan",
       "path": "FOO/subdir",
-      "kind": "directory"
+      "kind": "directory",
+      "stats": {
+        "dev": 64771,
+        "mode": 16893,
+        "nlink": 2,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 19791975,
+        "size": 4096,
+        "blocks": 8,
+        "atimeMs": 1588861594784.0808,
+        "mtimeMs": 1588861594785.0808,
+        "ctimeMs": 1588861594785.0808,
+        "birthtimeMs": 1588861594784.0808,
+        "atime": "2020-05-07T14:26:34.784Z",
+        "mtime": "2020-05-07T14:26:34.785Z",
+        "ctime": "2020-05-07T14:26:34.785Z",
+        "birthtime": "2020-05-07T14:26:34.784Z"
+      }
     }
   ],
   [
@@ -39,7 +59,9 @@
       "action": "created",
       "kind": "file",
       "path": "foo"
-    },
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",
@@ -50,14 +72,54 @@
     {
       "action": "scan",
       "path": "FOO/subdir/file",
-      "kind": "file"
+      "kind": "file",
+      "stats": {
+        "dev": 64771,
+        "mode": 33204,
+        "nlink": 1,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 19791976,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1588861594785.0808,
+        "mtimeMs": 1588861594785.0808,
+        "ctimeMs": 1588861594785.0808,
+        "birthtimeMs": 1588861594785.0808,
+        "atime": "2020-05-07T14:26:34.785Z",
+        "mtime": "2020-05-07T14:26:34.785Z",
+        "ctime": "2020-05-07T14:26:34.785Z",
+        "birthtime": "2020-05-07T14:26:34.785Z"
+      }
     }
   ],
   [
     {
       "action": "scan",
       "path": "FOO/subdir/file",
-      "kind": "file"
+      "kind": "file",
+      "stats": {
+        "dev": 64771,
+        "mode": 33204,
+        "nlink": 1,
+        "uid": 1000,
+        "gid": 1000,
+        "rdev": 0,
+        "blksize": 4096,
+        "ino": 19791976,
+        "size": 8,
+        "blocks": 8,
+        "atimeMs": 1588861594785.0808,
+        "mtimeMs": 1588861594785.0808,
+        "ctimeMs": 1588861594785.0808,
+        "birthtimeMs": 1588861594785.0808,
+        "atime": "2020-05-07T14:26:34.785Z",
+        "mtime": "2020-05-07T14:26:34.785Z",
+        "ctime": "2020-05-07T14:26:34.785Z",
+        "birthtime": "2020-05-07T14:26:34.785Z"
+      }
     }
   ]
 ]

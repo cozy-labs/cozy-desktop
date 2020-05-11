@@ -51,9 +51,16 @@ const captureScenariosEvents = async (scenarios, sides) => {
       console.log(`  ${scenario.name}/`)
       for (let side of sides) {
         try {
-          const outputFilename = await side.captureScenario(scenario)
-          // eslint-disable-next-line no-console
-          console.log(`    \x1B[1;32m✓\x1B[0m ${outputFilename}`)
+          const outputFilename /*: ?string */ = await side.captureScenario(
+            scenario
+          )
+          if (outputFilename) {
+            // eslint-disable-next-line no-console
+            console.log(`    \x1B[1;32m✓\x1B[0m ${outputFilename}`)
+          } else {
+            // eslint-disable-next-line no-console
+            console.log(`    \x1B[1;37m-\x1B[0m ${scenario.path} skipped`)
+          }
         } catch (err) {
           // eslint-disable-next-line no-console
           console.log(`    \x1B[1;31m✗\x1B[0m ${side.name}/`)

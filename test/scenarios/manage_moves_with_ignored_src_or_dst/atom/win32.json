@@ -1,0 +1,53 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file1.tmp"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file1.tmp"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file1.tmp"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "file1",
+      "oldPath": "file1.tmp"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file1"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "path": "file2.tmp",
+      "oldPath": "file2"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "file2.tmp"
+    }
+  ]
+]

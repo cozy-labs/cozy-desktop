@@ -1,12 +1,12 @@
 [
   {
-    "type": "add",
-    "path": "dst/dir/subdir/file",
+    "type": "addDir",
+    "path": "dst/dir",
     "stats": {
-      "ino": 5,
-      "size": 8,
-      "mtime": "2017-10-05T15:09:06.000Z",
-      "ctime": "2017-10-05T15:09:06.000Z"
+      "ino": 2,
+      "size": 128,
+      "mtime": "2020-05-07T11:38:34.407Z",
+      "ctime": "2020-05-07T11:38:34.412Z"
     }
   },
   {
@@ -14,19 +14,9 @@
     "path": "dst/dir/empty-subdir",
     "stats": {
       "ino": 3,
-      "size": 68,
-      "mtime": "2017-10-05T15:09:06.000Z",
-      "ctime": "2017-10-05T15:09:06.000Z"
-    }
-  },
-  {
-    "type": "addDir",
-    "path": "dst/dir",
-    "stats": {
-      "ino": 2,
-      "size": 136,
-      "mtime": "2017-10-05T15:09:06.000Z",
-      "ctime": "2017-10-05T15:09:06.000Z"
+      "size": 64,
+      "mtime": "2020-05-07T11:38:34.407Z",
+      "ctime": "2020-05-07T11:38:34.407Z"
     }
   },
   {
@@ -34,9 +24,19 @@
     "path": "dst/dir/subdir",
     "stats": {
       "ino": 4,
-      "size": 102,
-      "mtime": "2017-10-05T15:09:06.000Z",
-      "ctime": "2017-10-05T15:09:06.000Z"
+      "size": 96,
+      "mtime": "2020-05-07T11:38:34.408Z",
+      "ctime": "2020-05-07T11:38:34.408Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "dst/dir/subdir/file",
+    "stats": {
+      "ino": 5,
+      "size": 8,
+      "mtime": "2020-05-07T11:38:34.408Z",
+      "ctime": "2020-05-07T11:38:34.408Z"
     }
   }
 ]
