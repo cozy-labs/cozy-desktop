@@ -218,7 +218,6 @@ module.exports.init = async (
   scenario /*: { init: ScenarioInit } */,
   pouch,
   abspath,
-  relpathFix,
   useRealInodes
 ) => {
   debug('[init]')
@@ -246,7 +245,7 @@ module.exports.init = async (
         _.get(remoteParent, 'attributes.path', ''),
         remoteName
       )
-      const localPath = relpathFix(_.trimEnd(relpath, '/'))
+      const localPath = path.normalize(_.trimEnd(relpath, '/'))
       const lastModifiedDate = new Date('2011-04-11T10:20:30Z')
       if (relpath.endsWith('/')) {
         if (!trashed) {
