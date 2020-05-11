@@ -111,7 +111,7 @@ class Remote /*:: implements Reader, Writer */ {
     log.info({ path }, 'Creating folder...')
 
     const [parentPath, name] = dirAndName(doc.path)
-    const parent /*: RemoteDoc */ = await this.remoteCozy.findOrCreateDirectoryByPath(
+    const parent /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(
       parentPath
     )
     let dir /*: RemoteDoc */
@@ -302,7 +302,11 @@ class Remote /*:: implements Reader, Writer */ {
     )
 
     const { overwrite } = newMetadata
-    if (overwrite && overwrite.remote._id !== oldMetadata.remote._id) {
+    if (
+      overwrite &&
+      overwrite.remote &&
+      overwrite.remote._id !== oldMetadata.remote._id
+    ) {
       const referencedBy = await this.remoteCozy.getReferencedBy(
         overwrite.remote._id
       )
