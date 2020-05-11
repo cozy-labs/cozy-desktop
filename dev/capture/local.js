@@ -54,7 +54,7 @@ const setupInitialState = (scenario /*: Scenario */) => {
   if (scenario.init == null) return
   debug('[init]')
   return Promise.each(scenario.init, opts => {
-    let { ino, path: relpath } = opts
+    let { ino, path: relpath, content } = opts
     if (relpath.endsWith('/')) {
       debug('- mkdir', relpath)
       return fse
@@ -66,7 +66,7 @@ const setupInitialState = (scenario /*: Scenario */) => {
     } else {
       debug('- >', relpath)
       return fse
-        .outputFile(abspath(relpath), 'whatever')
+        .outputFile(abspath(relpath), content || 'whatever')
         .then(() => fse.stat(abspath(relpath)))
         .then(stats => {
           mapInode[stats.ino] = ino

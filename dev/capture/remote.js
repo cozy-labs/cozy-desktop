@@ -8,6 +8,7 @@ const Promise = require('bluebird')
 const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
+const crypto = require('crypto')
 
 const metadata = require('../../core/metadata')
 const { Pouch } = require('../../core/pouch')
@@ -44,14 +45,21 @@ const createInitialTree = async function(
       })
     } else {
       debug('- create_file', relpath)
+      const content = doc.content || 'whatever'
+      const md5sum = crypto
+        .createHash('md5')
+        .update(content)
+        .digest()
+        .toString('base64')
       const parent = await cozy.files.statByPath(path.posix.dirname(relpath))
-      let remoteFile = await cozy.files.create(Buffer.from(''), {
+      let remoteFile = await cozy.files.create(content, {
         dirID: parent._id,
-        name: path.basename(relpath)
+        name: path.basename(relpath),
+        contentType: 'text/plain'
       })
       await pouch.db.put({
         _id: metadata.id(relpath),
-        md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==', // ''
+        md5sum,
         class: 'text',
         docType: 'file',
         executable: false,
