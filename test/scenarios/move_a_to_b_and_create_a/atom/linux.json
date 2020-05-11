@@ -1,21 +1,24 @@
 [
   [
     {
-      "action": "deleted",
-      "kind": "directory",
-      "path": "foo"
+      "action": "renamed",
+      "kind": "file",
+      "path": "b",
+      "oldPath": "a"
     }
   ],
   [
     {
       "action": "created",
       "kind": "file",
-      "path": "foo"
-    },
+      "path": "a"
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",
-      "path": "foo"
+      "path": "a"
     }
   ]
 ]

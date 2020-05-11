@@ -5,9 +5,7 @@
       "kind": "directory",
       "path": "parent/dst/dir",
       "oldPath": "parent/src/dir"
-    }
-  ],
-  [
+    },
     {
       "action": "renamed",
       "kind": "directory",
