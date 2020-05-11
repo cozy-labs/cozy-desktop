@@ -1,12 +1,42 @@
 [
   {
-    "type": "add",
-    "path": "dst1/file",
+    "type": "addDir",
+    "path": "src",
     "stats": {
-      "ino": 4,
-      "size": 8,
-      "mtime": "2017-10-05T09:41:50.000Z",
-      "ctime": "2017-10-05T09:41:50.000Z"
+      "ino": 3,
+      "size": 64,
+      "mtime": "2020-05-07T11:39:01.103Z",
+      "ctime": "2020-05-07T11:39:01.103Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dst1",
+    "stats": {
+      "ino": 1,
+      "size": 96,
+      "mtime": "2020-05-07T11:39:01.103Z",
+      "ctime": "2020-05-07T11:39:01.103Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dst2",
+    "stats": {
+      "ino": 2,
+      "size": 64,
+      "mtime": "2020-05-07T11:39:01.097Z",
+      "ctime": "2020-05-07T11:39:01.097Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "src",
+    "stats": {
+      "ino": 3,
+      "size": 64,
+      "mtime": "2020-05-07T11:39:01.103Z",
+      "ctime": "2020-05-07T11:39:01.103Z"
     }
   },
   {
@@ -15,16 +45,26 @@
   },
   {
     "type": "add",
-    "path": "dst2/file",
+    "path": "dst1/file",
     "stats": {
       "ino": 4,
       "size": 8,
-      "mtime": "2017-10-05T09:41:50.000Z",
-      "ctime": "2017-10-05T09:41:50.000Z"
+      "mtime": "2020-05-07T11:39:01.099Z",
+      "ctime": "2020-05-07T11:39:01.103Z"
     }
   },
   {
     "type": "unlink",
     "path": "dst1/file"
+  },
+  {
+    "type": "add",
+    "path": "dst2/file",
+    "stats": {
+      "ino": 4,
+      "size": 8,
+      "mtime": "2020-05-07T11:39:01.099Z",
+      "ctime": "2020-05-07T11:39:02.604Z"
+    }
   }
 ]

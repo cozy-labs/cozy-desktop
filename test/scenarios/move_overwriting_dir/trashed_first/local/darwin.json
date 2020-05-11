@@ -1,0 +1,118 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "src/dir/subdir/subsub"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "src/dir/subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "src/dir"
+  },
+  {
+    "type": "addDir",
+    "path": "dst/dir/subdir",
+    "stats": {
+      "ino": 10,
+      "size": 160,
+      "mtime": "2020-05-07T11:39:19.776Z",
+      "ctime": "2020-05-07T11:39:19.776Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dst/dir",
+    "stats": {
+      "ino": 9,
+      "size": 160,
+      "mtime": "2020-05-07T11:39:19.775Z",
+      "ctime": "2020-05-07T11:39:19.797Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dst/dir",
+    "stats": {
+      "ino": 9,
+      "size": 160,
+      "mtime": "2020-05-07T11:39:19.775Z",
+      "ctime": "2020-05-07T11:39:19.797Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dst/dir/subdir/subsub",
+    "stats": {
+      "ino": 15,
+      "size": 64,
+      "mtime": "2020-05-07T11:39:19.776Z",
+      "ctime": "2020-05-07T11:39:19.776Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "dst/dir/file3"
+  },
+  {
+    "type": "unlink",
+    "path": "dst/dir/subdir/file5"
+  },
+  {
+    "type": "unlink",
+    "path": "src/dir/file"
+  },
+  {
+    "type": "unlink",
+    "path": "src/dir/file2"
+  },
+  {
+    "type": "unlink",
+    "path": "src/dir/subdir/file"
+  },
+  {
+    "type": "unlink",
+    "path": "src/dir/subdir/file6"
+  },
+  {
+    "type": "change",
+    "path": "dst/dir/file",
+    "stats": {
+      "ino": 11,
+      "size": 10,
+      "mtime": "2020-05-07T11:39:19.768Z",
+      "ctime": "2020-05-07T11:39:19.768Z"
+    }
+  },
+  {
+    "type": "change",
+    "path": "dst/dir/subdir/file",
+    "stats": {
+      "ino": 12,
+      "size": 14,
+      "mtime": "2020-05-07T11:39:19.771Z",
+      "ctime": "2020-05-07T11:39:19.771Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "dst/dir/subdir/file6",
+    "stats": {
+      "ino": 13,
+      "size": 9,
+      "mtime": "2020-05-07T11:39:19.773Z",
+      "ctime": "2020-05-07T11:39:19.773Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "dst/dir/file2",
+    "stats": {
+      "ino": 14,
+      "size": 5,
+      "mtime": "2020-05-07T11:39:19.775Z",
+      "ctime": "2020-05-07T11:39:19.775Z"
+    }
+  }
+]

@@ -1,0 +1,50 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "src"
+  },
+  {
+    "type": "addDir",
+    "path": "dst",
+    "stats": {
+      "ino": 1,
+      "size": 96,
+      "mtime": "2020-05-07T11:38:30.753Z",
+      "ctime": "2020-05-07T11:38:30.758Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dst",
+    "stats": {
+      "ino": 1,
+      "size": 96,
+      "mtime": "2020-05-07T11:38:30.753Z",
+      "ctime": "2020-05-07T11:38:30.758Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "src/file"
+  },
+  {
+    "type": "add",
+    "path": "dst/file",
+    "stats": {
+      "ino": 2,
+      "size": 15,
+      "mtime": "2020-05-07T11:38:30.753Z",
+      "ctime": "2020-05-07T11:38:30.753Z"
+    }
+  },
+  {
+    "type": "change",
+    "path": "dst/file",
+    "stats": {
+      "ino": 2,
+      "size": 15,
+      "mtime": "2020-05-07T11:38:32.261Z",
+      "ctime": "2020-05-07T11:38:32.261Z"
+    }
+  }
+]

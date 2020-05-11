@@ -1,0 +1,50 @@
+[
+  {
+    "type": "change",
+    "path": "file2",
+    "stats": {
+      "ino": 2,
+      "size": 15,
+      "mtime": "2020-05-07T11:37:53.506Z",
+      "ctime": "2020-05-07T11:37:53.506Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "file1.tmp",
+    "stats": {
+      "ino": 1224656,
+      "size": 8,
+      "mtime": "2020-05-07T11:37:53.510Z",
+      "ctime": "2020-05-07T11:37:53.510Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "file1.tmp"
+  },
+  {
+    "type": "unlink",
+    "path": "file2"
+  },
+  {
+    "type": "add",
+    "path": "file1",
+    "stats": {
+      "ino": 1224656,
+      "size": 8,
+      "mtime": "2020-05-07T11:37:53.510Z",
+      "ctime": "2020-05-07T11:37:55.013Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "file2.tmp",
+    "stats": {
+      "ino": 2,
+      "size": 15,
+      "mtime": "2020-05-07T11:37:53.506Z",
+      "ctime": "2020-05-07T11:37:55.014Z"
+    }
+  }
+]
