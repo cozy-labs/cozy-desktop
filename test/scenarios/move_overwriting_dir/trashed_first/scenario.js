@@ -50,8 +50,8 @@ module.exports = ({
           'dir/file',
           'dir/subdir/',
           'dir/subdir/file',
-          'file3',
-          'file5'
+          'file3', // With breakpoint 7 on darwin, this is inside the parent folder
+          'file5' // With breakpoint 7 on darwin, this is inside the parent folder
         ],
     contents: {
       'dst/dir/file': 'overwriter',

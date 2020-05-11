@@ -1,5 +1,8 @@
 [
   {
+    "breakpoints": [0, 1, 2, 3, 4, 6]
+  },
+  {
     "type": "addDir",
     "path": "src",
     "stats": {
