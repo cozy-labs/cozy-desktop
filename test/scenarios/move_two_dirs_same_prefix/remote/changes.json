@@ -1,24 +1,54 @@
 [
   {
-    "_id": "0b92f45b12ad022ee57423c4ba3789db",
-    "_rev": "2-62836558861f23a2710912469b16bed4",
-    "created_at": "2017-10-17T16:31:02.267148616Z",
-    "dir_id": "0b92f45b12ad022ee57423c4ba37a2f1",
+    "_id": "a5f50206697951be5992df4a0558b94f",
+    "_rev": "2-ae2f61c5d723bfbc675e4157a5c164d3",
+    "cozyMetadata": {
+      "createdAt": "2020-05-11T10:38:35.691398432Z",
+      "createdByApp": "cozy-desktop",
+      "createdOn": "http://cozy.tools:8080/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2020-05-11T10:38:37.697672255Z",
+      "updatedByApps": [
+        {
+          "date": "2020-05-11T10:38:37.697672255Z",
+          "instance": "http://cozy.tools:8080/",
+          "slug": "cozy-desktop"
+        }
+      ]
+    },
+    "created_at": "2020-05-11T10:38:35.691394189Z",
+    "dir_id": "a5f50206697951be5992df4a0558cbc3",
     "name": "dir1",
     "path": "/dst/dir1",
     "tags": [],
     "type": "directory",
-    "updated_at": "2017-10-17T16:31:02.267148616Z"
+    "updated_at": "2020-05-11T10:38:35.691394189Z"
   },
   {
-    "_id": "0b92f45b12ad022ee57423c4ba37963a",
-    "_rev": "2-c01890dac2c30427cd12184f4d5ad655",
-    "created_at": "2017-10-17T16:31:02.406826409Z",
-    "dir_id": "0b92f45b12ad022ee57423c4ba37a2f1",
+    "_id": "a5f50206697951be5992df4a0558bebb",
+    "_rev": "2-d3af6bdde5d198da6bf820858c92dc77",
+    "cozyMetadata": {
+      "createdAt": "2020-05-11T10:38:35.760249654Z",
+      "createdByApp": "cozy-desktop",
+      "createdOn": "http://cozy.tools:8080/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2020-05-11T10:38:39.258443429Z",
+      "updatedByApps": [
+        {
+          "date": "2020-05-11T10:38:39.258443429Z",
+          "instance": "http://cozy.tools:8080/",
+          "slug": "cozy-desktop"
+        }
+      ]
+    },
+    "created_at": "2020-05-11T10:38:35.760245816Z",
+    "dir_id": "a5f50206697951be5992df4a0558cbc3",
     "name": "dir12",
     "path": "/dst/dir12",
     "tags": [],
     "type": "directory",
-    "updated_at": "2017-10-17T16:31:02.406826409Z"
+    "updated_at": "2020-05-11T10:38:35.760245816Z"
   }
 ]
