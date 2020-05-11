@@ -1,28 +1,31 @@
 [
   [
     {
-      "action": "deleted",
+      "action": "renamed",
       "kind": "file",
-      "path": "dst\\file"
+      "path": "b",
+      "oldPath": "a"
     }
   ],
   [
     {
-      "action": "deleted",
+      "action": "modified",
       "kind": "file",
-      "path": "src\\file"
+      "path": "b"
     }
   ],
   [
     {
       "action": "created",
       "kind": "file",
-      "path": "dst\\file"
-    },
+      "path": "a"
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",
-      "path": "dst\\file"
+      "path": "a"
     }
   ]
 ]

@@ -19,5 +19,12 @@
       "kind": "file",
       "path": "foo"
     }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "foo"
+    }
   ]
 ]

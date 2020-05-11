@@ -4,9 +4,7 @@
       "action": "deleted",
       "kind": "directory",
       "path": "src\\dir1"
-    }
-  ],
-  [
+    },
     {
       "action": "created",
       "kind": "directory",

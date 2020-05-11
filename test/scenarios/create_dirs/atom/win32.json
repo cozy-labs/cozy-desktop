@@ -12,12 +12,5 @@
       "kind": "directory",
       "path": "foo\\bar"
     }
-  ],
-  [
-    {
-      "action": "scan",
-      "path": "foo\\bar",
-      "kind": "directory"
-    }
   ]
 ]

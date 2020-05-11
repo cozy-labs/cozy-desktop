@@ -10,7 +10,10 @@ module.exports = ({
     { ino: 4, path: '../outside/dir/subdir/' },
     { ino: 5, path: '../outside/dir/subdir/file' }
   ],
-  actions: [{ type: 'mv', src: '../outside/dir', dst: 'dst/dir' }],
+  actions: [
+    { type: 'mv', src: '../outside/dir', dst: 'dst/dir' },
+    { type: 'wait', ms: 3000 } // Wait for all dirs to be scanned so file is found
+  ],
   expected: {
     tree: [
       'dst/',

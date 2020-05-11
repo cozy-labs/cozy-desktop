@@ -10,19 +10,50 @@
     {
       "action": "scan",
       "path": "dst\\dir\\empty-subdir",
-      "kind": "directory"
+      "kind": "directory",
+      "stats": {
+        "fileid": "0x000500000002A909",
+        "ino": 3,
+        "size": 0,
+        "atime": "2020-05-07T15:41:50.000Z",
+        "mtime": "2020-05-07T15:41:50.000Z",
+        "ctime": "2020-05-07T15:41:50.000Z",
+        "directory": true,
+        "symbolicLink": false
+      }
     },
     {
       "action": "scan",
       "path": "dst\\dir\\subdir",
-      "kind": "directory"
+      "kind": "directory",
+      "stats": {
+        "fileid": "0x000400000002A90B",
+        "ino": 4,
+        "size": 0,
+        "atime": "2020-05-07T15:41:50.000Z",
+        "mtime": "2020-05-07T15:41:50.000Z",
+        "ctime": "2020-05-07T15:41:50.000Z",
+        "directory": true,
+        "symbolicLink": false
+      }
     }
   ],
+  [],
   [
     {
       "action": "scan",
       "path": "dst\\dir\\subdir\\file",
-      "kind": "file"
+      "kind": "file",
+      "stats": {
+        "fileid": "0x000300000002A915",
+        "ino": 5,
+        "size": 8,
+        "atime": "2020-05-07T15:41:50.000Z",
+        "mtime": "2020-05-07T15:41:50.000Z",
+        "ctime": "2020-05-07T15:41:50.000Z",
+        "directory": false,
+        "symbolicLink": false
+      }
     }
   ]
 ]

@@ -11,14 +11,14 @@
       "action": "created",
       "kind": "directory",
       "path": "parent\\dst\\dir"
-    },
+    }
+  ],
+  [
     {
       "action": "deleted",
       "kind": "directory",
       "path": "parent\\dst\\dir\\subdir"
-    }
-  ],
-  [
+    },
     {
       "action": "created",
       "kind": "directory",

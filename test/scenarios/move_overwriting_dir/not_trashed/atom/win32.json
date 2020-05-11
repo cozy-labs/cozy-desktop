@@ -3,6 +3,13 @@
     {
       "action": "deleted",
       "kind": "file",
+      "path": "src\\dir\\deletedFile"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
       "path": "dst\\dir\\file"
     },
     {
@@ -14,7 +21,9 @@
       "action": "created",
       "kind": "file",
       "path": "dst\\dir\\file"
-    },
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",
@@ -26,14 +35,14 @@
       "action": "deleted",
       "kind": "file",
       "path": "src\\dir\\file2"
-    },
+    }
+  ],
+  [
     {
       "action": "created",
       "kind": "file",
       "path": "dst\\dir\\file2"
-    }
-  ],
-  [
+    },
     {
       "action": "modified",
       "kind": "file",
@@ -45,7 +54,9 @@
       "action": "deleted",
       "kind": "file",
       "path": "dst\\dir\\subdir\\file"
-    },
+    }
+  ],
+  [
     {
       "action": "deleted",
       "kind": "file",
@@ -97,7 +108,9 @@
       "action": "created",
       "kind": "directory",
       "path": "dst\\dir\\subdir\\subsub"
-    },
+    }
+  ],
+  [
     {
       "action": "deleted",
       "kind": "directory",

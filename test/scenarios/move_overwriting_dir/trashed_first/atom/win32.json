@@ -4,7 +4,9 @@
       "action": "deleted",
       "kind": "file",
       "path": "dst\\dir\\file"
-    },
+    }
+  ],
+  [
     {
       "action": "deleted",
       "kind": "file",
@@ -15,15 +17,13 @@
     {
       "action": "deleted",
       "kind": "file",
-      "path": "dst\\dir\\subdir\\file"
-    },
-    {
-      "action": "deleted",
-      "kind": "file",
       "path": "dst\\dir\\subdir\\file5"
-    }
-  ],
-  [
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst\\dir\\subdir\\file"
+    },
     {
       "action": "deleted",
       "kind": "directory",
@@ -35,128 +35,6 @@
       "action": "deleted",
       "kind": "directory",
       "path": "dst\\dir"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "dst\\dir"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "dst\\dir\\file"
-    },
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "dst\\dir\\subdir"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "dst\\dir\\file2"
-    },
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\dir\\file2"
-    },
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\dir\\file"
-    },
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\dir\\file2"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "dst\\dir\\subdir\\file"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "dst\\dir\\subdir\\file6"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "dst\\dir\\subdir\\subsub"
-    },
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\dir\\subdir\\file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\dir\\subdir\\file6"
-    },
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\dir\\subdir\\file6"
-    },
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\dir\\subdir\\file"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "file",
-      "path": "src\\dir\\file"
-    },
-    {
-      "action": "deleted",
-      "kind": "file",
-      "path": "src\\dir\\file2"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "file",
-      "path": "src\\dir\\subdir\\file"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "file",
-      "path": "src\\dir\\subdir\\file6"
-    },
-    {
-      "action": "deleted",
-      "kind": "directory",
-      "path": "src\\dir\\subdir\\subsub"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "directory",
-      "path": "src\\dir\\subdir"
     }
   ],
   [
@@ -164,6 +42,13 @@
       "action": "deleted",
       "kind": "directory",
       "path": "src\\dir"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst\\dir"
     }
   ]
 ]

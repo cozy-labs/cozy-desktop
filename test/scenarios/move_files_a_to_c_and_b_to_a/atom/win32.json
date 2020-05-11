@@ -5,7 +5,9 @@
       "kind": "file",
       "path": "c",
       "oldPath": "a"
-    },
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",
@@ -18,7 +20,9 @@
       "kind": "file",
       "path": "a",
       "oldPath": "b"
-    },
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",

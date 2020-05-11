@@ -32,7 +32,9 @@
       "action": "created",
       "kind": "file",
       "path": "dst2\\file"
-    },
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",

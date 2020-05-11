@@ -5,14 +5,14 @@
       "kind": "file",
       "path": "parent\\src\\dir\\subdir\\filerenamed",
       "oldPath": "parent\\src\\dir\\subdir\\file"
-    },
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",
       "path": "parent\\src\\dir\\subdir\\filerenamed"
-    }
-  ],
-  [
+    },
     {
       "action": "deleted",
       "kind": "directory",
@@ -24,15 +24,15 @@
       "action": "created",
       "kind": "directory",
       "path": "parent\\dst\\dir"
-    }
-  ],
-  [
+    },
     {
       "action": "renamed",
       "kind": "file",
       "path": "parent\\dst\\dir\\subdir\\filerenamed2",
       "oldPath": "parent\\dst\\dir\\subdir\\file2"
-    },
+    }
+  ],
+  [
     {
       "action": "modified",
       "kind": "file",

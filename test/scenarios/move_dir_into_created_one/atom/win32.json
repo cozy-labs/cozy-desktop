@@ -4,7 +4,9 @@
       "action": "created",
       "kind": "directory",
       "path": "dir2"
-    },
+    }
+  ],
+  [
     {
       "action": "deleted",
       "kind": "directory",
