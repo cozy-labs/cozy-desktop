@@ -13,6 +13,7 @@ const move = require('./move')
 const { otherSide } = require('./side')
 const logger = require('./utils/logger')
 const timestamp = require('./utils/timestamp')
+const { NOTE_MIME_TYPE } = require('./remote/constants')
 
 /*::
 import type { IdConflictInfo } from './IdConflict'
@@ -148,6 +149,50 @@ class Merge {
     return dst
   }
 
+  // Resolve Cozy Note conflict when its content is updated on the local
+  // filesystem and would therefore break the actual Note.
+  // We always rename the remote document since this method should only be
+  // called in case of a local update and the local file could still be open in
+  // the user's editor and renaming it could create issues (e.g. the editor does
+  // not detect the renaming and we'd create a new conflict each time the open
+  // file would be saved).
+  async resolveNoteConflict(doc /*: Metadata */, was /*: ?Metadata */) {
+    // We move the existing Cozy Note to a conflicting path since we've
+    // updated it locally.
+    await this.resolveConflictAsync('remote', doc)
+
+    if (was) {
+      // If we are resolving a conflict as part of move, we have a second record
+      // to account for, the move source, `was`.
+      // We want to make sure the remote watcher won't detect the movement of the
+      // remote note as such because the file on the local filesystem has already
+      // been moved.
+      // So we make sure the source document is erased from PouchDB. The remote
+      // watcher will then detect the new, conflicting note, as a file creation.
+      metadata.markAsUnsyncable(was)
+      await this.pouch.put(was)
+    }
+
+    if (doc.overwrite) {
+      // If this conflict would still result in a document overwrite (i.e. it's
+      // an update or an overwriting move), we need to erase the existing
+      // PouchDB record for the overwritten note so we can create a new record
+      // in its stead.
+      // The note has been renamed on the remote Cozy and will be pulled back
+      // with the next remote watcher cycle.
+      const { overwrite } = doc
+      metadata.markAsUnsyncable(overwrite)
+      await this.pouch.put(overwrite)
+      // We're not overwriting a document anymore
+      delete doc.overwrite
+    }
+
+    // We create it at the destination location
+    metadata.markAsNew(doc)
+    metadata.dissociateRemote(doc)
+    return this.addFileAsync('local', doc)
+  }
+
   /* Actions */
 
   // Add a file, if it doesn't already exist,
@@ -261,6 +306,11 @@ class Merge {
         if (doc.mime == null) {
           doc.mime = file.mime
         }
+      } else if (side === 'local' && file.mime === NOTE_MIME_TYPE) {
+        // We'll need a reference to the "overwritten" note during the conflict
+        // resolution.
+        doc.overwrite = file
+        return this.resolveNoteConflict(doc)
       } else if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
         if (side === 'local') {
           // We have a merged but unsynced remote update.
@@ -419,6 +469,15 @@ class Merge {
             doc.overwrite = file
           }
           await this.ensureParentExistAsync(side, doc)
+
+          if (
+            side === 'local' &&
+            doc.mime === NOTE_MIME_TYPE &&
+            doc.md5sum !== was.md5sum
+          ) {
+            return this.resolveNoteConflict(doc, was)
+          }
+
           return this.pouch.bulkDocs([was, doc])
         }
 
@@ -432,6 +491,14 @@ class Merge {
         return this.pouch.bulkDocs([was, dst])
       } else {
         await this.ensureParentExistAsync(side, doc)
+
+        if (
+          side === 'local' &&
+          doc.mime === NOTE_MIME_TYPE &&
+          doc.md5sum !== was.md5sum
+        ) {
+          return this.resolveNoteConflict(doc, was)
+        }
 
         return this.pouch.bulkDocs([was, doc])
       }

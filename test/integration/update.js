@@ -4,7 +4,6 @@
 const Promise = require('bluebird')
 const _ = require('lodash')
 const should = require('should')
-const fse = require('fs-extra')
 
 const logger = require('../../core/utils/logger')
 
@@ -13,8 +12,6 @@ const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-
-const { NOTE_MIME_TYPE } = require('../../core/remote/constants')
 
 const log = logger({ component: 'mocha' })
 
@@ -39,49 +36,6 @@ describe('Update file', () => {
     await helpers.local.clean()
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
-  })
-
-  describe('remote note update', () => {
-    let note
-    beforeEach('create note', async () => {
-      note = await builders
-        .remoteFile()
-        .contentType(NOTE_MIME_TYPE)
-        .name('note.cozy-note')
-        .data('Initial content')
-        .timestamp(2018, 5, 15, 21, 1, 53)
-        .create()
-      await helpers.pullAndSyncAll()
-    })
-
-    it('updates the note content on the filesystem', async () => {
-      await builders
-        .remoteFile(note)
-        .data('updated content')
-        .update()
-      await helpers.pullAndSyncAll()
-
-      should(await helpers.local.syncDir.readFile('note.cozy-note')).eql(
-        'updated content'
-      )
-    })
-
-    it('leaves the note in read-only mode', async () => {
-      await builders
-        .remoteFile(note)
-        .data('updated content')
-        .update()
-      await helpers.pullAndSyncAll()
-
-      const expectedErrorCode =
-        process.platform === 'win32' ? /EPERM/ : /EACCES/
-      await should(
-        fse.access(
-          helpers.local.syncDir.abspath('note.cozy-note'),
-          fse.constants.F_OK | fse.constants.W_OK
-        )
-      ).be.rejectedWith(expectedErrorCode)
-    })
   })
 
   describe('local offline change with unsynced previous local change', () => {
