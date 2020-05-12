@@ -1,5 +1,59 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.21.0-beta.3 - 2020-05-12
+
+Improvements for all users:
+
+- The client would not detect the correct mime type for `.cozy-note` files when
+  detected on the local filesystem. This would change the saved mime type of
+  notes moved on the local filesystem and not show the correct icon in the
+  Recent changes list in our main window.
+  We've switched to a custom mime detector for those files to detect our custom
+  mime type.
+- Since propagating a local file update to a remote Cozy Note would break this
+  note (i.e. it would not be detected as such and we would lose its actual
+  content while still keeping its markdown export within the associated Cozy
+  file), we've decided to prevent all local note updates to be propagated to the
+  remote Cozy.
+- In order to still synchronize your local updates to notes with your remote
+  Cozy, we're now using the conflict mechanism to rename the original note on
+  the remote Cozy before upload your new content to the appropriate location.
+  This way, you have both your updated content and the original note that can
+  still be edited within the Cozy Notes application.
+- We've found that when renaming a folder while another folder within the same
+  parent starts with the renamed folder's original name (e.g. renaming `cozy` to
+  `cozy cloud` while you have `cozy company` in the same parent) would lead to
+  the incorrect movement of the content of the other folder (i.e. the content of
+  `cozy compnany` in our example).
+  We've fixed the algorithm that lists the content of a folder so that it looks
+  only within the exact given location and not similar locations.
+- In some situations, locally creating a folder within a moved or renamed parent
+  could lead to the creation of a new parent folder on the remote Cozy at the
+  target location, thus making the parent movement impossible since a document
+  would already exist at the target location. This situation was caused by some
+  logic we implemented to help create complex hierarchies in any order. We would
+  create a missing parent folder when creating a new folder on the remote Cozy.
+  We've now stopped doing this and will not synchronize the creation of a folder
+  if its parent does not exist. In case the parent location would be created
+  later by the client (e.g. when propagating the parent movement), the new
+  folder will eventually be synchronized.
+
+Improvements for Windows users:
+
+- To emphasize the fact that Cozy Notes should not be edited on your local
+  filesystem we mark the local note files as read-only. This does not prevent us
+  from overwriting them with new remote updates on Linux and macOS but it does
+  on Windows in some cases. In those cases, the local file content does not
+  reflect the remote content anymore and it can even lead to the remote Note
+  being broken after a Desktop client restart.
+  We're now adding write permissions the local file when we want to update it
+  with new content coming from the remote Cozy and switch it back to a read-only
+  mode afterwards.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.21.0-beta.2 - 2020-04-28
 
 Improvements for all users:
