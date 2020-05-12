@@ -263,27 +263,29 @@ class Merge {
         }
       } else if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
         if (side === 'local') {
-          // We have a merged but unsynced remote update and we can't create a
-          // conflict because the local rename will trigger an overwrite of the
-          // remote file with the local content.
+          // We have a merged but unsynced remote update.
+          // We can't create a conflict because we can't dissociate the remote
+          // record from the PouchDB record (or we'd lose the link between the
+          // two) and the local rename would therefore trigger an overwrite of
+          // the remote file with the local content.
           // We hope the local update isn't real (the difference between the
           // orginal content and the remotely updated content).
           metadata.markSide('remote', file, file)
           delete file.overwrite
           return this.pouch.put(file)
         } else {
-          // we just renamed the remote file as a conflict
-          // the old file should be dissociated from the remote
-          delete file.remote
-          delete file.sides.remote
           // We have a merged but unsynced local update.
           // In this case we can dissociate the remote since we'll be renaming
           // it and thus trigger a new change that will be fetched later.
           // We use `doc` and not `file` because the remote document has changed
           // and so has its revision which is available in `doc`.
           await this.resolveConflictAsync('remote', doc)
+          // We dissociate the local record from its remote counterpart that was
+          // just renamed.
+          metadata.dissociateRemote(file)
+          // We make sure Sync will detect and propagate the local update
           metadata.markSide('local', file, file)
-          return await this.pouch.put(file)
+          return this.pouch.put(file)
         }
       } else {
         doc.overwrite = file
@@ -361,7 +363,7 @@ class Merge {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
     const { path } = doc
     if (!metadata.wasSynced(was) || was.deleted) {
-      metadata.markAsUnsyncable(side, was)
+      metadata.markAsUnsyncable(was)
       await this.pouch.put(was)
       return this.addFileAsync(side, doc)
     } else if (was.sides && was.sides[side]) {
@@ -426,7 +428,7 @@ class Merge {
         }
 
         const dst = await this.resolveConflictAsync(side, doc)
-        was.moveTo = dst._id
+        move(side, was, dst)
         return this.pouch.bulkDocs([was, dst])
       } else {
         await this.ensureParentExistAsync(side, doc)
@@ -448,7 +450,7 @@ class Merge {
   ) {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFolderAsync')
     if (!metadata.wasSynced(was)) {
-      metadata.markAsUnsyncable(side, was)
+      metadata.markAsUnsyncable(was)
       await this.pouch.put(was)
       return this.putFolderAsync(side, doc)
     }

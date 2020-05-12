@@ -1295,22 +1295,21 @@ describe('Merge', function() {
         this.merge.moveFileAsync('local', _.cloneDeep(doc), _.cloneDeep(was))
       )
 
+      const unsyncedFile = _.defaults(
+        {
+          sides: {},
+          _deleted: true
+        },
+        _.omit(was, ['_rev', 'remote'])
+      )
+      const fileAddition = _.defaults(
+        {
+          sides: { target: 1, local: 1 }
+        },
+        doc
+      )
       should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              sides: increasedSides(was.sides, 'local', 1),
-              _deleted: true
-            },
-            _.omit(was, ['_rev'])
-          ),
-          _.defaults(
-            {
-              sides: { target: 1, local: 1 }
-            },
-            doc
-          )
-        ],
+        savedDocs: [unsyncedFile, fileAddition],
         resolvedConflicts: []
       })
     })
@@ -1689,24 +1688,22 @@ describe('Merge', function() {
         this.merge.moveFolderAsync('local', _.cloneDeep(doc), _.cloneDeep(was))
       )
 
-      const movedSrc = _.defaults(
+      const unsyncedFolder = _.defaults(
         {
-          sides: increasedSides(was.sides, 'local', 1),
+          sides: {},
           _deleted: true
         },
-        was
+        _.omit(was, ['_rev', 'fileid', 'remote'])
+      )
+      const folderAddition = _.defaults(
+        {
+          sides: { target: 1, local: 1 }
+        },
+        _.pick(was, ['ino']),
+        _.omit(doc, ['_rev', 'fileid'])
       )
       should(sideEffects).deepEqual({
-        savedDocs: [
-          _.omit(movedSrc, ['_rev', 'fileid']),
-          _.defaults(
-            {
-              sides: { target: 1, local: 1 }
-            },
-            _.pick(was, ['ino']),
-            _.omit(doc, ['_rev', 'fileid'])
-          )
-        ],
+        savedDocs: [unsyncedFolder, folderAddition],
         resolvedConflicts: []
       })
     })
@@ -2322,10 +2319,10 @@ describe('Merge', function() {
           ),
           _.defaults(
             {
-              sides: increasedSides(unsyncedFile.sides, this.side, 1),
+              sides: {},
               _deleted: true
             },
-            _.omit(unsyncedFile, ['_rev'])
+            _.omit(unsyncedFile, ['_rev', 'remote'])
           ),
           _.defaults(
             {
@@ -2386,10 +2383,10 @@ describe('Merge', function() {
           ),
           _.defaults(
             {
-              sides: { target: 2, [otherSide(this.side)]: 2 },
+              sides: {},
               _deleted: true
             },
-            _.omit(unsyncedFile, ['_rev']) // TODO: Compare _revs
+            _.omit(unsyncedFile, ['_rev', 'remote']) // TODO: Compare _revs
           ),
           _.defaults(
             {

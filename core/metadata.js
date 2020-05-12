@@ -159,6 +159,8 @@ module.exports = {
   extractRevNumber,
   isUpToDate,
   isAtLeastUpToDate,
+  removeActionHints,
+  dissociateRemote,
   markAsNew,
   markAsUnsyncable,
   markAsUpToDate,
@@ -406,18 +408,31 @@ function isAtLeastUpToDate(sideName /*: SideName */, doc /*: Metadata */) {
   return side(doc, sideName) >= target(doc)
 }
 
-function markAsUnsyncable(side /*: SideName */, doc /*: Metadata */) {
-  doc._deleted = true
-  if (wasSynced(doc)) {
-    markAsUpToDate(doc)
-  } else {
-    markSide(side, doc, doc)
+function removeActionHints(doc /*: Metadata */) {
+  if (doc.sides) {
+    // We remove parts of sides individually because of the invariant on sides
+    if (doc.sides.local) delete doc.sides.local
+    if (doc.sides.remote) delete doc.sides.remote
+    if (doc.sides.target) delete doc.sides.target
   }
+  if (doc.moveFrom) delete doc.moveFrom
+  if (doc.moveTo) delete doc.moveTo
+}
+
+function dissociateRemote(doc /*: Metadata */) {
+  if (doc.sides && doc.sides.remote) delete doc.sides.remote
+  if (doc.remote) delete doc.remote
+}
+
+function markAsUnsyncable(doc /*: Metadata */) {
+  removeActionHints(doc)
+  dissociateRemote(doc)
+  doc._deleted = true
 }
 
 function markAsNew(doc /*: Metadata */) {
-  delete doc._rev
-  delete doc.sides
+  removeActionHints(doc)
+  if (doc._rev) delete doc._rev
 }
 
 function markAsUpToDate(doc /*: Metadata */) {
@@ -604,12 +619,14 @@ function detectSingleSide(doc /*: Metadata */) /*: ?SideName */ {
   }
 }
 
+function hasBothSides(doc /*: Metadata */) /*: boolean %checks */ {
+  return doc.sides && doc.sides.local != null && doc.sides.remote != null
+}
+
 function wasSynced(doc /*: Metadata */) /*: boolean */ {
-  const hasBothSides /*: boolean */ =
-    doc.sides && doc.sides.local != null && doc.sides.remote != null
   const comesFromSyncedDoc /*: boolean */ = doc.moveFrom != null
 
-  return hasBothSides || comesFromSyncedDoc
+  return hasBothSides(doc) || comesFromSyncedDoc
 }
 
 function buildDir(
@@ -671,11 +688,11 @@ function createConflictingDoc(doc /*: Metadata */) /*: Metadata */ {
     ? replacePreviousConflictSuffix(doc.path)
     : addConflictSuffix(doc.path)
 
-  return {
-    ...doc,
-    path: newPath,
-    _id: id(newPath)
-  }
+  const dst = _.cloneDeep(doc)
+  dst.path = newPath
+  dst._id = id(newPath)
+
+  return dst
 }
 
 function conflictSuffix() /*: string */ {
