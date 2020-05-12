@@ -6,7 +6,6 @@ const crypto = require('crypto')
 const EventEmitter = require('events')
 const fse = require('fs-extra')
 const _ = require('lodash')
-const { pick } = _
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
@@ -892,28 +891,6 @@ describe('remote.Remote', function() {
       doc.path = 'dst-dir/foo' // File metadata was updated as part of the move
       await this.remote.assignNewRev(doc)
       should(doc).deepEqual(metadata.fromRemoteDoc(remote.dst.foo))
-    })
-  })
-
-  describe('renameConflictingDocAsync', () => {
-    it('renames the file/folder', async function() {
-      const remoteDoc /*: RemoteDoc */ = await builders
-        .remoteFile()
-        .name('cat9')
-        .create()
-      const src /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
-      ensureValidPath(src)
-      const newPath = 'cat9-conflict-2015-12-01T01:02:03Z.jpg'
-      await this.remote.renameConflictingDocAsync(src, newPath)
-      const file /*: JsonApiDoc */ = await cozy.files.statById(remoteDoc._id)
-      should(file.attributes).have.properties(
-        _.merge(
-          {
-            name: newPath
-          },
-          pick(remoteDoc, ['dir_id', 'type', 'updated_at', 'size', 'md5sum'])
-        )
-      )
     })
   })
 })

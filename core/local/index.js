@@ -488,19 +488,6 @@ class Local /*:: implements Reader, Writer */ {
     copy.path = backupPath
     return copy
   }
-
-  /** Rename a file/folder to resolve a conflict */
-  renameConflictingDoc(
-    doc /*: Metadata */,
-    newPath /*: string */,
-    callback /*: Callback */
-  ) {
-    log.info({ path: doc.path }, `Resolve a conflict: ${doc.path} → ${newPath}`)
-    let srcPath = path.join(this.syncPath, doc.path)
-    let dstPath = path.join(this.syncPath, newPath)
-    fse.rename(srcPath, dstPath, callback)
-    // TODO: Don't fire an event for the deleted file?
-  }
 }
 
 module.exports = Local

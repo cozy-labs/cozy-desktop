@@ -155,7 +155,12 @@ class ContextDir {
     return fse.outputFile(this.abspath(target), data)
   }
 
-  async move(src /*: string */, dst /*: string */) {
+  async move(
+    src /*: string */,
+    dst /*: string */,
+    opts /*: { overwrite: boolean } */ = { overwrite: false }
+  ) {
+    if (opts.overwrite) await this.remove(dst)
     return fse.rename(this.abspath(src), this.abspath(dst))
   }
 

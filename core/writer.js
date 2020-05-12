@@ -20,6 +20,5 @@ export interface Writer {
   assignNewRev (doc: Metadata): Promise<void>;
   trashAsync (doc: Metadata): Promise<void>;
   deleteFolderAsync (doc: Metadata): Promise<void>;
-  renameConflictingDocAsync (doc: Metadata, newPath: string): Promise<void>;
 }
 */

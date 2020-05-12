@@ -17,7 +17,7 @@ describe('Merge Helpers', function() {
     this.merge = new Merge(this.pouch)
     this.merge.putFolderAsync = sinon.stub()
     this.merge.local = {}
-    this.merge.local.renameConflictingDocAsync = sinon.stub()
+    this.merge.local.moveAsync = sinon.stub()
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
@@ -106,36 +106,36 @@ describe('Merge Helpers', function() {
   describe('resolveConflict', function() {
     it('appends -conflict- and the date to the path', async function() {
       let doc = { path: 'foo/bar' }
-      let spy = this.merge.local.renameConflictingDocAsync
+      let spy = this.merge.local.moveAsync
       spy.resolves()
       await this.merge.resolveConflictAsync(this.side, doc)
       spy.called.should.be.true()
-      let newPath = spy.args[0][1]
-      let parts = newPath.split('-conflict-')
+      let dstPath = spy.args[0][0].path
+      let parts = dstPath.split('-conflict-')
       parts[0].should.equal(path.normalize('foo/bar'))
       parts[1].should.match(/^\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}.\d{3}Z$/)
-      let src = spy.args[0][0]
-      src.path.should.equal(doc.path)
+      let srcPath = spy.args[0][1].path
+      srcPath.should.equal(doc.path)
     })
 
     it('preserves the extension', async function() {
       let doc = { path: 'foo/bar.jpg' }
-      let spy = this.merge.local.renameConflictingDocAsync
+      let spy = this.merge.local.moveAsync
       spy.resolves()
       await this.merge.resolveConflictAsync(this.side, doc)
       spy.called.should.be.true()
-      let dstPath = spy.args[0][1]
+      let dstPath = spy.args[0][0].path
       dstPath.indexOf('conflict').should.not.equal(-1)
       path.extname(dstPath).should.equal('.jpg')
     })
 
     it('do not chain conflicts', async function() {
       let doc = { path: 'foo/baz-conflict-2018-11-08T01_02_03.004Z.jpg' }
-      let spy = this.merge.local.renameConflictingDocAsync
+      let spy = this.merge.local.moveAsync
       spy.resolves()
       await this.merge.resolveConflictAsync(this.side, doc)
       spy.called.should.be.true()
-      let dstPath = spy.args[0][1]
+      let dstPath = spy.args[0][0].path
       dstPath.split('-conflict-').should.have.length(2)
     })
   })

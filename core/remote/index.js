@@ -405,19 +405,6 @@ class Remote /*:: implements Reader, Writer */ {
     }
     return flatSubdomains
   }
-
-  // TODO add tests
-  async renameConflictingDocAsync(
-    doc /*: Metadata */,
-    newPath /*: string */
-  ) /*: Promise<void> */ {
-    const { path } = doc
-    log.info({ path }, `Resolve a conflict: ${path} → ${newPath}`)
-    const newName = dirAndName(newPath)[1]
-    await this.remoteCozy.updateAttributesById(doc.remote._id, {
-      name: newName
-    })
-  }
 }
 
 /** Extract the remote parent path and leaf name from a local path */

@@ -785,25 +785,4 @@ describe('Local', function() {
       )
     })
   })
-
-  describe('renameConflictingDoc', () =>
-    it('renames the file', async function() {
-      let doc = {
-        path: 'conflict/file',
-        updated_at: new Date('2015-10-08T05_05_09Z')
-      }
-      let newPath = 'conflict/file-conflict-2015-10-09T05_05_10Z'
-      let srcPath = syncDir.abspath(doc.path)
-      let dstPath = syncDir.abspath(newPath)
-      fse.ensureDirSync(path.dirname(srcPath))
-      fse.writeFileSync(srcPath, 'foobar')
-      await this.local.renameConflictingDocAsync(doc, newPath)
-      fse.existsSync(srcPath).should.be.false()
-      fse
-        .statSync(dstPath)
-        .isFile()
-        .should.be.true()
-      let enc = { encoding: 'utf-8' }
-      fse.readFileSync(dstPath, enc).should.equal('foobar')
-    }))
 })
