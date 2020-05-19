@@ -1,5 +1,22 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.21.0-beta.4 - 2020-05-19
+
+Improvements for all users:
+
+- Remote changes resulting in an `MergeMissingParentError` do not block the
+  synchronization process since v3.21.0-beta.1 but the changes from the affected
+  batch and the ones coming after will be fetched over and over again until the
+  errors are resolved, which might never come.
+  We've identified a few sources of those errors that should be fixed really
+  soon and believe we should not encounter solvable missing parent issues
+  anymore so we've decided to mark them as processed anyway and rely on the next
+  changes to resolve those missing parents issues.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.21.0-beta.3 - 2020-05-12
 
 Improvements for all users:
