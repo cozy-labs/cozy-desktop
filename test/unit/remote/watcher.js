@@ -225,7 +225,7 @@ describe('RemoteWatcher', function() {
       }
 
       beforeEach(function() {
-        this.watcher.pullMany.returns([reservedIdsError])
+        this.watcher.pullMany.throws(reservedIdsError)
       })
 
       it('rejects', async function() {
@@ -252,6 +252,13 @@ describe('RemoteWatcher', function() {
 
       it('does not reject any errors', async function() {
         await should(this.watcher.watch()).be.fulfilled()
+      })
+
+      it('updates the last update sequence in local db', async function() {
+        await this.watcher.watch()
+        this.pouch.setRemoteSeqAsync.should.be
+          .calledOnce()
+          .and.be.calledWithExactly(lastRemoteSeq)
       })
     })
   })
@@ -297,7 +304,7 @@ describe('RemoteWatcher', function() {
       should(apply.args[1][0].doc).deepEqual(remoteDocs[1])
     })
 
-    context('when apply() rejects some file/dir', function() {
+    context('when apply() returns an error for some file/dir', function() {
       beforeEach(function() {
         apply.callsFake(async (
           change /*: RemoteChange */
@@ -307,10 +314,10 @@ describe('RemoteWatcher', function() {
         })
       })
 
-      it('resolves with an array of errors', async function() {
-        const errors = await this.watcher.pullMany(remoteDocs)
-        should(errors).have.size(1)
-        should(errors[0].err).eql(new Error(remoteDocs[0]))
+      it('rejects with the first error', async function() {
+        await should(this.watcher.pullMany(remoteDocs)).be.rejectedWith(
+          new Error(remoteDocs[0])
+        )
       })
 
       it('still tries to pull other files/dirs', async function() {
