@@ -93,8 +93,6 @@ class RemoteWatcher {
   }
 
   async watch() {
-    let errors /*: Array<{ err: Error, change?: * }> */ = []
-
     try {
       const seq = await this.pouch.getRemoteSeqAsync()
       const { last_seq, docs } = await this.remoteCozy.changes(seq)
@@ -107,34 +105,21 @@ class RemoteWatcher {
 
       try {
         let target = -1
-        errors = await this.pullMany(docs)
-        if (errors.length === 0) {
-          target = (await this.pouch.db.changes({ limit: 1, descending: true }))
-            .last_seq
-          this.events.emit('sync-target', target)
-          await this.pouch.setRemoteSeqAsync(last_seq)
-        }
+        await this.pullMany(docs)
+        target = (await this.pouch.db.changes({ limit: 1, descending: true }))
+          .last_seq
+        this.events.emit('sync-target', target)
+        await this.pouch.setRemoteSeqAsync(last_seq)
       } finally {
         release()
         this.events.emit('remote-end')
         log.debug('No more remote changes for now')
       }
     } catch (err) {
-      errors.push({ err })
-    }
-
-    for (const { err, change } of errors) {
-      if (err instanceof MergeMissingParentError) {
-        log.error(
-          { err, change, path: change && change.doc.path },
-          'swallowing missing parent metadata error'
-        )
-        continue
-      }
-
-      handleCommonCozyErrors({ err, change }, { events: this.events, log })
-      // No need to handle 'offline' result since next pollings will switch
-      // back to 'online' as soon as the changesfeed can be fetched.
+      handleCommonCozyErrors({ err }, { events: this.events, log })
+      // If we were offline, we'll wait for the next pollings to switch back
+      // to 'online' as soon as the changesfeed can be fetched and retry to
+      // merge the failed changes.
     }
   }
 
@@ -144,7 +129,7 @@ class RemoteWatcher {
    */
   async pullMany(
     docs /*: Array<RemoteDoc|RemoteDeletion> */
-  ) /*: Promise<Array<{ change: RemoteChange, err: Error }>> */ {
+  ) /*: Promise<void> */ {
     const remoteIds = docs.reduce((ids, doc) => ids.add(doc._id), new Set())
     const olds /*: Metadata[] */ = await this.pouch.allByRemoteIds(remoteIds)
 
@@ -153,8 +138,18 @@ class RemoteWatcher {
     log.trace('Apply changes...')
     const errors = await this.applyAll(changes)
 
+    for (const { err, change } of errors) {
+      if (err instanceof MergeMissingParentError) {
+        log.warn(
+          { err, change, path: change && change.doc.path },
+          'swallowing missing parent metadata error'
+        )
+        continue
+      }
+      throw err
+    }
+
     log.trace('Done with pull.')
-    return errors
   }
 
   analyse(
@@ -367,8 +362,15 @@ class RemoteWatcher {
       changes,
       async change => await this.apply(change)
     ).filter(err => err)
-    if (errors.length === 0 || errors.length === changes.length) return errors
-    return this.applyAll(errors.map(error => error.change))
+
+    switch (errors.length) {
+      case 0:
+        return []
+      case changes.length:
+        return errors
+      default:
+        return this.applyAll(errors.map(error => error.change))
+    }
   }
 
   async apply(
