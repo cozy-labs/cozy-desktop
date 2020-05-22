@@ -86,19 +86,6 @@ describe('Local', function() {
   })
 
   describe('updateMetadataAsync', () => {
-    it('makes Cozy Notes read-only', async function() {
-      const doc = {
-        docType: 'file',
-        mime: 'text/vnd.cozy.note+markdown',
-        path: 'my-note.cozy-note'
-      }
-      await syncDir.ensureFileMode(doc.path, 0o777)
-
-      await this.local.updateMetadataAsync(doc)
-
-      should(await syncDir.octalMode(doc)).equal('444')
-    })
-
     it('chmod -x for a non-executable file', async function() {
       const doc = {
         docType: 'file',
@@ -302,6 +289,32 @@ describe('Local', function() {
       )
       this.local.other = null
       fse.existsSync(filePath).should.be.false()
+    })
+
+    it('adds write permission to existing read-only Cozy Note', async function() {
+      const doc = {
+        docType: 'file',
+        mime: 'text/vnd.cozy.note+markdown',
+        path: 'my-note.cozy-note',
+        updated_at: new Date('2015-10-09T04:05:19Z'),
+        md5sum: 'gDOOedLKm5wJDrqqLvKTxw=='
+      }
+
+      await syncDir.outputFile(doc.path, 'initial content')
+      await syncDir.ensureFileMode(doc.path, 0o444)
+
+      this.local.other = streamer(doc, 'foobaz')
+      await this.local.addFileAsync(doc)
+      this.local.other = null
+
+      const filePath = syncDir.abspath(doc.path)
+      should(fse.statSync(filePath).isFile()).be.true()
+      should(fse.readFileSync(filePath, { encoding: 'utf-8' })).equal('foobaz')
+      should(fse.statSync(filePath)).have.property('mtime', doc.updated_at)
+
+      should(await syncDir.octalMode(doc)).equal(
+        process.platform === 'win32' ? WINDOWS_DEFAULT_MODE : '644'
+      )
     })
 
     describe('when md5sum matches but size does not', () => {

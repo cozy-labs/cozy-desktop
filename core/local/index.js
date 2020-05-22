@@ -164,12 +164,8 @@ class Local /*:: implements Reader, Writer */ {
     let filePath = path.resolve(this.syncPath, doc.path)
 
     if (doc.docType === 'file') {
-      if (doc.mime === NOTE_MIME_TYPE) {
-        await fse.chmod(filePath, 0o444)
-      } else {
-        // TODO: Honor existing read/write permissions
-        await fse.chmod(filePath, doc.executable ? 0o755 : 0o644)
-      }
+      // TODO: Honor existing read/write permissions
+      await fse.chmod(filePath, doc.executable ? 0o755 : 0o644)
     }
 
     if (doc.updated_at) {
@@ -312,28 +308,23 @@ class Local /*:: implements Reader, Writer */ {
           })
         },
 
-        next => {
-          // Cozy Notes files are read-only to prevent users from modifying them
-          // on their filesystem and thus breaking them but this prevents the
-          // file update on Windows so we need to make them writable again
-          // before we update their content.
-          // The metadataUpdater will make them read-only once again after the update.
-          if (doc.mime === NOTE_MIME_TYPE) {
-            fse
-              .exists(filePath)
-              .then(exists => {
-                if (!exists) return
-                return fse.chmod(filePath, 0o644)
-              })
-              .then(next)
-              .catch(next)
-          } else {
-            next()
-          }
-        },
-
         next =>
-          fse.ensureDir(parent, () => fse.rename(tmpFile, filePath, next)),
+          fse.ensureDir(parent, () =>
+            fse.rename(tmpFile, filePath, err => {
+              if (
+                err != null &&
+                err.code === 'EPERM' &&
+                doc.mime === NOTE_MIME_TYPE
+              ) {
+                // Old Cozy Note with read-only permissions.
+                // We need to remove the old version before we can write the
+                // new one.
+                fse.move(tmpFile, filePath, { overwrite: true }, next)
+              } else {
+                next(err)
+              }
+            })
+          ),
 
         this.metadataUpdater(doc)
       ],
