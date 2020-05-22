@@ -6,7 +6,6 @@ const fse = require('fs-extra')
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
-const { Readable } = require('stream')
 
 const Local = require('../../../core/local')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
@@ -16,6 +15,18 @@ const configHelpers = require('../../support/helpers/config')
 const { ContextDir } = require('../../support/helpers/context_dir')
 const { WINDOWS_DEFAULT_MODE } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
+
+const streamer = (doc, content, err) => ({
+  createReadStreamAsync(docToStream) {
+    docToStream.should.equal(doc)
+    const stream = new Builders()
+      .stream()
+      .push(content)
+      .error(err)
+      .build()
+    return Promise.resolve(stream)
+  }
+})
 
 describe('Local', function() {
   let builders, syncDir
@@ -219,18 +230,7 @@ describe('Local', function() {
         updated_at: new Date('2015-10-09T04:05:06Z'),
         md5sum: 'OFj2IjCsPJFfMAxmQxLGPw=='
       }
-      this.local.other = {
-        createReadStreamAsync(docToStream) {
-          docToStream.should.equal(doc)
-          let stream = new Readable()
-          stream._read = function() {}
-          setTimeout(function() {
-            stream.push('foobar')
-            stream.push(null)
-          }, 100)
-          return Promise.resolve(stream)
-        }
-      }
+      this.local.other = streamer(doc, 'foobar')
       let filePath = syncDir.abspath(doc.path)
       await this.local.addFileAsync(doc)
       this.local.other = null
@@ -274,18 +274,7 @@ describe('Local', function() {
         updated_at: new Date('2015-10-09T04:05:19Z'),
         md5sum: 'gDOOedLKm5wJDrqqLvKTxw=='
       }
-      this.local.other = {
-        createReadStreamAsync(docToStream) {
-          docToStream.should.equal(doc)
-          let stream = new Readable()
-          stream._read = function() {}
-          setTimeout(function() {
-            stream.push('foobaz')
-            stream.push(null)
-          }, 100)
-          return Promise.resolve(stream)
-        }
-      }
+      this.local.other = streamer(doc, 'foobaz')
       let filePath = syncDir.abspath(doc.path)
       await this.local.addFileAsync(doc)
       this.local.other = null
@@ -306,18 +295,7 @@ describe('Local', function() {
         updated_at: new Date('2015-10-09T04:05:16Z'),
         md5sum: '8843d7f92416211de9ebb963ff4ce28125932878'
       }
-      this.local.other = {
-        createReadStreamAsync(docToStream) {
-          docToStream.should.equal(doc)
-          let stream = new Readable()
-          stream._read = function() {}
-          setTimeout(function() {
-            stream.push('foo')
-            stream.push(null)
-          }, 100)
-          return Promise.resolve(stream)
-        }
-      }
+      this.local.other = streamer(doc, 'foo')
       let filePath = syncDir.abspath(doc.path)
       await should(this.local.addFileAsync(doc)).be.rejectedWith(
         'Invalid checksum'
@@ -341,15 +319,7 @@ describe('Local', function() {
       })
 
       beforeEach('stub #createReadStreamAsync() on the other side', function() {
-        this.local.other = {
-          async createReadStreamAsync(docToStream) {
-            should(docToStream).equal(doc)
-            return builders
-              .stream()
-              .push(corruptData)
-              .build()
-          }
-        }
+        this.local.other = streamer(doc, corruptData)
       })
 
       afterEach(
@@ -399,16 +369,7 @@ describe('Local', function() {
       })
 
       beforeEach('stub #createReadStreamAsync() on the other side', function() {
-        this.local.other = {
-          async createReadStreamAsync(docToStream) {
-            should(docToStream).equal(doc)
-            return builders
-              .stream()
-              .push(data)
-              .error(new Error(message))
-              .build()
-          }
-        }
+        this.local.other = streamer(doc, data, new Error(message))
       })
 
       afterEach(
@@ -467,18 +428,7 @@ describe('Local', function() {
         updated_at: new Date('2015-10-09T05:06:07Z'),
         md5sum: 'PiWWCnnbxptnTNTsZ6csYg=='
       }
-      this.local.other = {
-        createReadStreamAsync(docToStream) {
-          docToStream.should.equal(doc)
-          let stream = new Readable()
-          stream._read = function() {}
-          setTimeout(function() {
-            stream.push('Hello world')
-            stream.push(null)
-          }, 100)
-          return Promise.resolve(stream)
-        }
-      }
+      this.local.other = streamer(doc, 'Hello world')
       let filePath = syncDir.abspath(doc.path)
       fse.writeFileSync(filePath, 'old content')
       await this.local.overwriteFileAsync(doc, {})
