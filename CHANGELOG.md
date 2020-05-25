@@ -1,5 +1,26 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.21.0-beta.5 - 2020-05-25
+
+Improvements for all users:
+
+- The recent change we introduced to fix the propagation of remote Cozy Notes
+  changes to the local filesystem brought some new timing issues. These can
+  result in invalid metadata being sent to the remote Cozy after propagating an
+  update. In case the note was in a shared directory, the metadata change is in
+  turn propagated via the sharing to other Cozies and we can end up with a
+  desynchronized note.
+  This new issue comes from the fact we have to add write permissions on the
+  local note file to let the client write the new markdown export. The read-only
+  protection was added to prevent local changes that would break the actual note
+  on the remote Cozy. Since we're now managing those changes within the
+  synchronization process (i.e. with the creation of a conflict) we can remove
+  the read-only limitation altogether and avoid the new timing issues.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.21.0-beta.4 - 2020-05-19
 
 Improvements for all users:
