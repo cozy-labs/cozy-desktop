@@ -2,7 +2,6 @@
 /* eslint-env mocha */
 
 const should = require('should')
-const fse = require('fs-extra')
 const path = require('path')
 
 const Builders = require('../support/builders')
@@ -58,17 +57,6 @@ describe('Note update', () => {
       should(await helpers.local.syncDir.readFile('note.cozy-note')).eql(
         'updated content'
       )
-    })
-
-    it('leaves the note in read-only mode', async () => {
-      const expectedErrorCode =
-        process.platform === 'win32' ? /EPERM/ : /EACCES/
-      await should(
-        fse.access(
-          helpers.local.syncDir.abspath('note.cozy-note'),
-          fse.constants.F_OK | fse.constants.W_OK
-        )
-      ).be.rejectedWith(expectedErrorCode)
     })
   })
 
