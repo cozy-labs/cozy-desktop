@@ -346,7 +346,11 @@ class Remote /*:: implements Reader, Writer */ {
       const referencedBy = await this.remoteCozy.getReferencedBy(
         overwrite.remote._id
       )
-      await this.remoteCozy.addReferencedBy(newRemoteDoc._id, referencedBy)
+      const { _rev } = await this.remoteCozy.addReferencedBy(
+        newRemoteDoc._id,
+        referencedBy
+      )
+      newMetadata.remote._rev = _rev
     }
   }
 
