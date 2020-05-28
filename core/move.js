@@ -8,6 +8,8 @@
  * @flow
  */
 
+const _ = require('lodash')
+
 const metadata = require('./metadata')
 
 /*::
@@ -22,6 +24,20 @@ move.convertToDestinationAddition = convertToDestinationAddition
 // Modify the given src/dst docs so they can be merged then moved accordingly
 // during sync.
 function move(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
+  // Copy all fields from `src` that are not Sync action hints or PouchDB
+  // attributes to `dst` if they're not already defined.
+  const pouchdbReserved = ['_id', '_rev', '_deleted']
+  const actionHints = ['moveTo', 'moveFrom', 'overwrite', 'incompatibilities']
+  const fields = Object.getOwnPropertyNames(src).filter(
+    f => !pouchdbReserved.concat(actionHints).includes(f)
+  )
+  for (const field of fields) {
+    if (dst[field] == null) {
+      dst[field] = _.cloneDeep(src[field])
+    }
+  }
+  if (dst.tags == null) dst.tags = []
+
   // moveTo is used for comparison. It's safer to take _id
   // than path for this case, as explained in doc/developer/design.md
   src.moveTo = dst._id
@@ -47,8 +63,8 @@ function move(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
 // Same as move() but mark the source as a child move so it will be moved with
 // its ancestor, not by itself, during sync.
 function child(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
-  src.childMove = true
   move(side, src, dst)
+  src.childMove = true
 }
 
 function convertToDestinationAddition(

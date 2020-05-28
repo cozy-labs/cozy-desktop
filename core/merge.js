@@ -418,27 +418,6 @@ class Merge {
       return this.addFileAsync(side, doc)
     } else if (was.sides && was.sides[side]) {
       metadata.assignMaxDate(doc, was)
-      if (doc.size == null) {
-        doc.size = was.size
-      }
-      if (doc.class == null) {
-        doc.class = was.class
-      } // FIXME: Seems useless since metadata.buildFile adds it
-      if (doc.mime == null) {
-        doc.mime = was.mime
-      } // FIXME: Seems useless since metadata.buildFile adds it
-      if (doc.tags == null) {
-        doc.tags = was.tags || []
-      }
-      if (doc.ino == null) {
-        doc.ino = was.ino
-      }
-      if (doc.fileid == null) {
-        doc.fileid = was.fileid
-      }
-      if (doc.remote == null) {
-        doc.remote = was.remote
-      }
       move(side, was, doc)
 
       const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
@@ -523,18 +502,6 @@ class Merge {
     }
 
     metadata.assignMaxDate(doc, was)
-    if (doc.tags == null) {
-      doc.tags = was.tags || []
-    }
-    if (doc.ino == null) {
-      doc.ino = was.ino
-    }
-    if (doc.fileid == null) {
-      doc.fileid = was.fileid
-    }
-    if (doc.remote == null) {
-      doc.remote = was.remote
-    }
 
     const folder /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     if (folder) {
