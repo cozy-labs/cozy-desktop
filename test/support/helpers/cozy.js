@@ -3,7 +3,8 @@
 
 require('../../../core/globals')
 
-const CozyClient = require('cozy-client-js').Client
+const OldCozyClient = require('cozy-client-js').Client
+const CozyClient = require('cozy-client').default
 
 const {
   FILES_DOCTYPE,
@@ -34,15 +35,26 @@ if (!process.env.COZY_STACK_TOKEN) {
 }
 
 // A cozy-client-js instance
-const cozy = new CozyClient({
+const cozy = new OldCozyClient({
   cozyURL: COZY_URL,
   token: process.env.COZY_STACK_TOKEN
 })
 
+// Build a new cozy-client instance from an old cozy-client-js instance
+const newClient = async (
+  oldClient /*: OldCozyClient */
+) /*: Promise<CozyClient>  */ => {
+  if (oldClient._oauth) {
+    return await CozyClient.fromOldOAuthClient(oldClient)
+  } else {
+    return await CozyClient.fromOldClient(oldClient)
+  }
+}
 
 module.exports = {
   COZY_URL,
   cozy,
+  newClient,
   deleteAll
 }
 
