@@ -27,12 +27,10 @@ const timestamp = require('../../../core/utils/timestamp')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
-const {
-  cozy,
-  builders,
-  deleteAll,
-  createTheCouchdbFolder
-} = require('../../support/helpers/cozy')
+const { cozy, deleteAll } = require('../../support/helpers/cozy')
+const Builders = require('../../support/builders')
+
+const builders = new Builders({ cozy })
 
 /*::
 import type { Metadata } from '../../../core/metadata'
@@ -50,7 +48,13 @@ describe('remote.Remote', function() {
     this.remote = new Remote(this)
   })
   beforeEach(deleteAll)
-  beforeEach(createTheCouchdbFolder)
+  beforeEach('create the couchdb folder', async function() {
+    await builders
+      .remoteDir()
+      .name('couchdb-folder')
+      .inRootDir()
+      .create()
+  })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 

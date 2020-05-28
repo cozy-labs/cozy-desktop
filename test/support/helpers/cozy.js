@@ -10,7 +10,6 @@ const {
   ROOT_DIR_ID,
   TRASH_DIR_ID
 } = require('../../../core/remote/constants')
-const Builders = require('../builders')
 
 // The URL of the Cozy instance used for tests
 const COZY_URL = process.env.COZY_URL || 'http://cozy.tools:8080'
@@ -40,15 +39,11 @@ const cozy = new CozyClient({
   token: process.env.COZY_STACK_TOKEN
 })
 
-// Facade for all the test data builders
-const builders = new Builders({ cozy })
 
 module.exports = {
   COZY_URL,
   cozy,
-  builders,
-  deleteAll,
-  createTheCouchdbFolder
+  deleteAll
 }
 
 // List files and directories in the root directory
@@ -76,15 +71,4 @@ async function deleteAll() {
   }
 
   return cozy.files.clearTrash()
-}
-
-// Creates a root directory named 'couchdb-folder', used in a lot of v2 tests.
-//
-// TODO: Use test data builders instead
-async function createTheCouchdbFolder() {
-  await builders
-    .remoteDir()
-    .name('couchdb-folder')
-    .inRootDir()
-    .create()
 }
