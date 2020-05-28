@@ -12,26 +12,26 @@ const pouchHelpers = require('../support/helpers/pouch')
 
 const { TRASH_DIR_ID } = require('../../core/remote/constants')
 
-describe('Note update', () => {
-  let builders, helpers
+let builders, helpers
 
-  before(configHelpers.createConfig)
-  before(configHelpers.registerClient)
-  beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
+before(configHelpers.createConfig)
+before(configHelpers.registerClient)
+beforeEach(pouchHelpers.createDatabase)
+beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(pouchHelpers.cleanDatabase)
-  after(configHelpers.cleanConfig)
+afterEach(pouchHelpers.cleanDatabase)
+after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
-    builders = new Builders({ cozy: cozyHelpers.cozy })
-    helpers = TestHelpers.init(this)
+beforeEach(async function() {
+  builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
+  helpers = TestHelpers.init(this)
 
-    await helpers.local.clean()
-    await helpers.local.setupTrash()
-    await helpers.remote.ignorePreviousChanges()
-  })
+  await helpers.local.clean()
+  await helpers.local.setupTrash()
+  await helpers.remote.ignorePreviousChanges()
+})
 
+describe('Cozy Note update', () => {
   let note
   beforeEach('create note', async () => {
     note = await builders
@@ -61,7 +61,6 @@ describe('Note update', () => {
 
   describe('on local filesystem', () => {
     beforeEach('update local note', async () => {
-      await helpers.local.syncDir.chmod('note.cozy-note', 0o777)
       await helpers.local.syncDir.outputFile(
         'note.cozy-note',
         'updated content'
@@ -70,7 +69,7 @@ describe('Note update', () => {
     })
 
     it('renames the original remote note with a conflict suffix', async () => {
-      const updatedRemote = await helpers.remote.byIdMaybe(note._id)
+      const updatedRemote = (await helpers.remote.byIdMaybe(note._id)) || {}
       should(updatedRemote)
         .have.property('name')
         .match(/-conflict-/)
@@ -88,26 +87,7 @@ describe('Note update', () => {
   })
 })
 
-describe('Note move with update', () => {
-  let builders, helpers
-
-  before(configHelpers.createConfig)
-  before(configHelpers.registerClient)
-  beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
-
-  afterEach(pouchHelpers.cleanDatabase)
-  after(configHelpers.cleanConfig)
-
-  beforeEach(async function() {
-    builders = new Builders({ cozy: cozyHelpers.cozy })
-    helpers = TestHelpers.init(this)
-
-    await helpers.local.clean()
-    await helpers.local.setupTrash()
-    await helpers.remote.ignorePreviousChanges()
-  })
-
+describe('Cozy Note move with update', () => {
   let dst, note
   beforeEach('create note', async () => {
     dst = await builders
@@ -123,59 +103,56 @@ describe('Note move with update', () => {
     await helpers.pullAndSyncAll()
   })
 
-  context('on local filesystem', () => {
+  describe('on local filesystem', () => {
     const srcPath = 'note.cozy-note'
     const dstPath = path.normalize('dst/note.cozy-note')
 
-    beforeEach('move and update local note', async () => {
-      await helpers.local.syncDir.move(srcPath, dstPath)
-      await helpers.local.syncDir.chmod(dstPath, 0o777)
-      await helpers.local.syncDir.outputFile(dstPath, 'updated content')
-      await helpers.flushLocalAndSyncAll()
-    })
+    describe('to a free target location', () => {
+      beforeEach('move and update local note', async () => {
+        await helpers.local.syncDir.move(srcPath, dstPath)
+        await helpers.local.syncDir.outputFile(dstPath, 'updated content')
+        await helpers.flushLocalAndSyncAll()
+      })
 
-    it('moves the original remote note then rename it with a conflict suffix', async () => {
-      const updatedRemote = await helpers.remote.byIdMaybe(note._id)
-      should(updatedRemote)
-        .have.property('name')
-        .match(/-conflict-/)
-      should(updatedRemote).have.properties({
-        md5sum: note.md5sum,
-        dir_id: dst._id
+      it('moves the original remote note then rename it with a conflict suffix', async () => {
+        const updatedRemote = await helpers.remote.byIdMaybe(note._id)
+        should(updatedRemote)
+          .have.property('name')
+          .match(/-conflict-/)
+        should(updatedRemote).have.properties({
+          md5sum: note.md5sum,
+          dir_id: dst._id
+        })
+      })
+
+      it('uploads the new content to the Cozy at the target location', async () => {
+        should(await helpers.remote.readFile('dst/note.cozy-note')).eql(
+          'updated content'
+        )
       })
     })
 
-    it('uploads the new content to the Cozy at the target location', async () => {
-      should(await helpers.remote.readFile('dst/note.cozy-note')).eql(
-        'updated content'
-      )
-    })
-  })
+    describe('overwriting existing note at target location', () => {
+      const srcPath = 'note.cozy-note'
+      const dstPath = path.normalize('dst/note.cozy-note')
 
-  describe('overwriting existing note at target location', () => {
-    const srcPath = 'note.cozy-note'
-    const dstPath = path.normalize('dst/note.cozy-note')
+      let existing
+      beforeEach('create note at target location', async () => {
+        existing = await builders
+          .remoteNote()
+          .inDir(dst)
+          .name('note.cozy-note')
+          .data('overwritten content')
+          .timestamp(2018, 5, 15, 21, 1, 53)
+          .create()
+        await helpers.pullAndSyncAll()
+      })
+      beforeEach('move and update local note', async () => {
+        await helpers.local.syncDir.move(srcPath, dstPath, { overwrite: true })
+        await helpers.local.syncDir.outputFile(dstPath, 'updated content')
+        await helpers.flushLocalAndSyncAll()
+      })
 
-    let existing
-    beforeEach('create note at target location', async () => {
-      existing = await builders
-        .remoteNote()
-        .inDir(dst)
-        .name('note.cozy-note')
-        .data('overwritten content')
-        .timestamp(2018, 5, 15, 21, 1, 53)
-        .create()
-      await helpers.pullAndSyncAll()
-    })
-    beforeEach('move and update local note', async () => {
-      await helpers.local.syncDir.chmod(dstPath, 0o777)
-      await helpers.local.syncDir.move(srcPath, dstPath, { overwrite: true })
-      await helpers.local.syncDir.chmod(dstPath, 0o777)
-      await helpers.local.syncDir.outputFile(dstPath, 'updated content')
-      await helpers.flushLocalAndSyncAll()
-    })
-
-    context('on local filesystem', () => {
       it('moves the original remote note then rename it with a conflict suffix', async () => {
         const updatedRemote = await helpers.remote.byIdMaybe(note._id)
         should(updatedRemote)
