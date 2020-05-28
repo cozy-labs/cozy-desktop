@@ -45,7 +45,8 @@ export type RemoteDoc = {
   trashed?: true,
   type: string,
   updated_at: string,
-  cozyMetadata?: Object
+  cozyMetadata?: Object,
+  metadata?: Object
 }
 
 export type RemoteDeletion = {
@@ -84,7 +85,8 @@ export type JsonApiAttributes = {
   tags: string[],
   type: string,
   updated_at: string,
-  cozyMetadata?: Object
+  cozyMetadata?: Object,
+  metadata?: Object
 }
 
 export type JsonApiDoc = {
@@ -103,8 +105,7 @@ function jsonApiToRemoteDoc(json /*: JsonApiDoc */) /*: * */ {
     {
       _id: json._id,
       _rev: json._rev,
-      _type: json._type,
-      cozyMetadata: json.attributes.cozyMetadata
+      _type: json._type
     },
     json.attributes
   )

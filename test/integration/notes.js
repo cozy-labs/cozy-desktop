@@ -10,7 +10,7 @@ const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
-const { NOTE_MIME_TYPE, TRASH_DIR_ID } = require('../../core/remote/constants')
+const { TRASH_DIR_ID } = require('../../core/remote/constants')
 
 describe('Note update', () => {
   let builders, helpers
@@ -35,8 +35,7 @@ describe('Note update', () => {
   let note
   beforeEach('create note', async () => {
     note = await builders
-      .remoteFile()
-      .contentType(NOTE_MIME_TYPE)
+      .remoteNote()
       .name('note.cozy-note')
       .data('Initial content')
       .timestamp(2018, 5, 15, 21, 1, 53)
@@ -47,7 +46,7 @@ describe('Note update', () => {
   describe('on remote Cozy', () => {
     beforeEach('update remote note', async () => {
       await builders
-        .remoteFile(note)
+        .remoteNote(note)
         .data('updated content')
         .update()
       await helpers.pullAndSyncAll()
@@ -55,7 +54,7 @@ describe('Note update', () => {
 
     it('updates the note content on the filesystem', async () => {
       should(await helpers.local.syncDir.readFile('note.cozy-note')).eql(
-        'updated content'
+        'note\n\nupdated content'
       )
     })
   })
@@ -116,8 +115,7 @@ describe('Note move with update', () => {
       .name('dst')
       .create()
     note = await builders
-      .remoteFile()
-      .contentType(NOTE_MIME_TYPE)
+      .remoteNote()
       .name('note.cozy-note')
       .data('Initial content')
       .timestamp(2018, 5, 15, 21, 1, 53)
@@ -161,9 +159,8 @@ describe('Note move with update', () => {
     let existing
     beforeEach('create note at target location', async () => {
       existing = await builders
-        .remoteFile()
+        .remoteNote()
         .inDir(dst)
-        .contentType(NOTE_MIME_TYPE)
         .name('note.cozy-note')
         .data('overwritten content')
         .timestamp(2018, 5, 15, 21, 1, 53)

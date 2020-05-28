@@ -19,10 +19,7 @@ const Prep = require('../../../core/prep')
 const remote = require('../../../core/remote')
 const { Remote } = remote
 const { DirectoryNotFound } = require('../../../core/remote/cozy')
-const {
-  TRASH_DIR_ID,
-  NOTE_MIME_TYPE
-} = require('../../../core/remote/constants')
+const { TRASH_DIR_ID } = require('../../../core/remote/constants')
 const timestamp = require('../../../core/utils/timestamp')
 
 const configHelpers = require('../../support/helpers/config')
@@ -414,9 +411,8 @@ describe('remote.Remote', function() {
 
       it('does not send any request if the file is a Cozy Note', async function() {
         const created = await builders
-          .remoteFile()
+          .remoteNote()
           .name('My Note.cozy-note')
-          .contentType(NOTE_MIME_TYPE)
           .data('foo')
           .timestamp(2015, 11, 16, 16, 12, 1)
           .create()
@@ -453,8 +449,8 @@ describe('remote.Remote', function() {
           type: 'file',
           dir_id: created.dir_id,
           name: created.name,
-          md5sum: 'rL0Y20zC+Fzt72VPzMSk2A==',
-          updated_at: '2015-11-16T16:12:01Z'
+          md5sum: created.md5sum,
+          updated_at: created.updated_at
         })
         should(doc.remote._rev).equal(file._rev)
       })
