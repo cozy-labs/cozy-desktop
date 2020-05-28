@@ -13,7 +13,7 @@ const move = require('./move')
 const { otherSide } = require('./side')
 const logger = require('./utils/logger')
 const timestamp = require('./utils/timestamp')
-const { NOTE_MIME_TYPE } = require('./remote/constants')
+const { isNote } = require('./utils/notes')
 
 /*::
 import type { IdConflictInfo } from './IdConflict'
@@ -306,7 +306,7 @@ class Merge {
         if (doc.mime == null) {
           doc.mime = file.mime
         }
-      } else if (side === 'local' && file.mime === NOTE_MIME_TYPE) {
+      } else if (side === 'local' && isNote(file)) {
         // We'll need a reference to the "overwritten" note during the conflict
         // resolution.
         doc.overwrite = file
@@ -449,11 +449,7 @@ class Merge {
           }
           await this.ensureParentExistAsync(side, doc)
 
-          if (
-            side === 'local' &&
-            doc.mime === NOTE_MIME_TYPE &&
-            doc.md5sum !== was.md5sum
-          ) {
+          if (side === 'local' && isNote(was) && doc.md5sum !== was.md5sum) {
             return this.resolveNoteConflict(doc, was)
           }
 
@@ -471,11 +467,7 @@ class Merge {
       } else {
         await this.ensureParentExistAsync(side, doc)
 
-        if (
-          side === 'local' &&
-          doc.mime === NOTE_MIME_TYPE &&
-          doc.md5sum !== was.md5sum
-        ) {
+        if (side === 'local' && isNote(was) && doc.md5sum !== was.md5sum) {
           return this.resolveNoteConflict(doc, was)
         }
 
