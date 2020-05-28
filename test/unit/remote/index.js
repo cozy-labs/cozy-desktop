@@ -27,12 +27,10 @@ const timestamp = require('../../../core/utils/timestamp')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
-const {
-  cozy,
-  builders,
-  deleteAll,
-  createTheCouchdbFolder
-} = require('../../support/helpers/cozy')
+const { cozy, deleteAll } = require('../../support/helpers/cozy')
+const Builders = require('../../support/builders')
+
+const builders = new Builders({ cozy })
 
 /*::
 import type { Metadata } from '../../../core/metadata'
@@ -50,7 +48,13 @@ describe('remote.Remote', function() {
     this.remote = new Remote(this)
   })
   beforeEach(deleteAll)
-  beforeEach(createTheCouchdbFolder)
+  beforeEach('create the couchdb folder', async function() {
+    await builders
+      .remoteDir()
+      .name('couchdb-folder')
+      .inRootDir()
+      .create()
+  })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
@@ -761,6 +765,93 @@ describe('remote.Remote', function() {
           type: 'directory',
           updated_at: '2018-07-31T05:37:43.77Z' // No ms
         })
+      })
+    })
+
+    context('when overwriting an existing file', function() {
+      const existingRefs = [{ _id: 'blah', _type: 'io.cozy.photos.albums' }]
+
+      let existing /*: Metadata */
+      let old /*: Metadata */
+      let doc /*: Metadata */
+      let newDir /*: RemoteDoc */
+
+      beforeEach(async () => {
+        newDir = await builders
+          .remoteDir()
+          .name('moved-to')
+          .inRootDir()
+          .create()
+
+        const remote1 /*: RemoteDoc */ = await builders
+          .remoteFile()
+          .inDir(newDir)
+          .name('cat7.jpg')
+          .data('woof')
+          .referencedBy(existingRefs)
+          .create()
+        existing = metadata.fromRemoteDoc(remote1)
+
+        const remote2 /*: RemoteDoc */ = await builders
+          .remoteFile()
+          .name('cat6.jpg')
+          .data('meow')
+          .create()
+        old = metadata.fromRemoteDoc(remote2)
+
+        doc = _.defaults(
+          {
+            path: path.normalize('moved-to/cat7.jpg'),
+            name: 'cat7.jpg',
+            overwrite: existing,
+            remote: undefined
+          },
+          old
+        )
+      })
+
+      it('moves the file', async function() {
+        await this.remote.moveAsync(doc, old)
+
+        should(doc.remote._id).equal(old.remote._id)
+        should(doc.remote._rev).not.equal(old.remote._rev)
+        const file = await cozy.files.statById(doc.remote._id)
+        should(file).have.properties({
+          _id: old.remote._id,
+          _rev: doc.remote._rev
+        })
+        should(file.attributes).have.properties({
+          dir_id: newDir._id,
+          name: 'cat7.jpg',
+          type: 'file',
+          updated_at: doc.updated_at,
+          size: '4'
+        })
+      })
+
+      it('trashes the existing file at target location', async function() {
+        await this.remote.moveAsync(doc, old)
+
+        should(
+          (await cozy.files.statById(existing.remote._id)).attributes
+        ).have.property('trashed', true)
+      })
+
+      it('transfers the existing file references to the moved one', async function() {
+        await this.remote.moveAsync(doc, old)
+
+        should(
+          (await cozy.files.statById(doc.remote._id)).relationships
+            .referenced_by.data
+        ).eql(existingRefs.map(ref => ({ id: ref._id, type: ref._type })))
+      })
+
+      it('updates the doc revision', async function() {
+        await this.remote.moveAsync(doc, old)
+
+        should((await cozy.files.statById(doc.remote._id))._rev).eql(
+          doc.remote._rev
+        )
       })
     })
   })

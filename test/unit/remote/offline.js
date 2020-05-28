@@ -10,11 +10,10 @@ const { Remote } = require('../../../core/remote')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
-const {
-  deleteAll,
-  createTheCouchdbFolder
-} = require('../../support/helpers/cozy')
+const cozyHelpers = require('../../support/helpers/cozy')
+const Builders = require('../../support/builders')
 
+const builders = new Builders({ cozy: cozyHelpers.cozy })
 /*::
 import type { Metadata } from '../../../core/metadata'
 import type { RemoteDoc, JsonApiDoc } from '../../../core/remote/document'
@@ -30,8 +29,14 @@ describe('Remote', function() {
     this.events = new EventEmitter()
     this.remote = new Remote(this)
   })
-  beforeEach(deleteAll)
-  beforeEach(createTheCouchdbFolder)
+  beforeEach(cozyHelpers.deleteAll)
+  beforeEach('create the couchdb folder', async function() {
+    await builders
+      .remoteDir()
+      .name('couchdb-folder')
+      .inRootDir()
+      .create()
+  })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 

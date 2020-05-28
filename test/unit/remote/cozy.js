@@ -20,10 +20,12 @@ const {
 } = require('../../../core/remote/cozy')
 
 const configHelpers = require('../../support/helpers/config')
-const { COZY_URL, builders, deleteAll } = require('../../support/helpers/cozy')
+const { COZY_URL, cozy, deleteAll } = require('../../support/helpers/cozy')
 const CozyStackDouble = require('../../support/doubles/cozy_stack')
+const Builders = require('../../support/builders')
 
 const cozyStackDouble = new CozyStackDouble()
+const builders = new Builders({ cozy })
 
 describe('core/remote/cozy', () => {
   describe('.handleCommonCozyErrors()', () => {
@@ -281,12 +283,10 @@ describe('RemoteCozy', function() {
   describe('findDirectoryByPath', function() {
     it('resolves when the directory exists remotely', async function() {
       const dir = await builders.remoteDir().create()
-      delete dir.cozyMetadata
       const subdir = await builders
         .remoteDir()
         .inDir(dir)
         .create()
-      delete subdir.cozyMetadata
 
       const foundDir = await remoteCozy.findDirectoryByPath(dir.path)
       should(foundDir).have.properties(dir)

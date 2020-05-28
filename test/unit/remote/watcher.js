@@ -14,7 +14,8 @@ const configHelpers = require('../../support/helpers/config')
 const { posixifyPath } = require('../../support/helpers/context_dir')
 const { onPlatform, onPlatforms } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
-const { builders } = require('../../support/helpers/cozy')
+const cozyHelpers = require('../../support/helpers/cozy')
+const Builders = require('../../support/builders')
 
 const metadata = require('../../../core/metadata')
 const { FILES_DOCTYPE } = require('../../../core/remote/constants')
@@ -27,6 +28,7 @@ const { MergeMissingParentError } = require('../../../core/merge')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 
 const { assignId, ensureValidPath } = metadata
+const builders = new Builders({ cozy: cozyHelpers.cozy })
 
 /*::
 import type { RemoteChange } from '../../../core/remote/change'

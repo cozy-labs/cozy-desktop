@@ -88,6 +88,12 @@ module.exports = class RemoteBaseBuilder {
     return this
   }
 
+  referencedBy(refs /*: Array<{ _id: string, _type: string }> */) /*: this */ {
+    // $FlowFixMe exists only in RemoteBuilders documents
+    this.remoteDoc.referenced_by = refs
+    return this
+  }
+
   build() /*: Object */ {
     return _.clone(this.remoteDoc)
   }

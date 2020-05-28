@@ -5,8 +5,10 @@ const fs = require('fs')
 const { posix } = require('path')
 
 const RemoteBaseBuilder = require('./base')
+const cozyHelpers = require('../../helpers/cozy')
 
 const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
+const { FILES_DOCTYPE } = require('../../../../core/remote/constants')
 
 /*::
 import type stream from 'stream'
@@ -17,6 +19,20 @@ import type { RemoteDoc } from '../../../../core/remote/document'
 // Used to generate readable unique filenames
 var fileNumber = 1
 
+const addReferencedBy = async (
+  cozy /*: * */,
+  remoteDoc /*: RemoteDoc */,
+  refs /*: Array<{ _id: string, _type: string }> */
+) => {
+  const client = await cozyHelpers.newClient(cozy)
+  const files = client.collection(FILES_DOCTYPE)
+  const doc = { _id: remoteDoc._id, _type: FILES_DOCTYPE }
+  const {
+    meta: { rev: _rev },
+    data
+  } = await files.addReferencedBy(doc, refs)
+  return { _rev, referencedBy: data }
+}
 // Build a RemoteDoc representing a remote Cozy file:
 //
 //     const file /*: RemoteDoc */ = builders.remoteFile().inDir(...).build()
@@ -86,6 +102,19 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
         name: this.remoteDoc.name
       })
     )
+
+    // $FlowFixMe exists only in RemoteBuilders documents
+    if (this.remoteDoc.referenced_by && this.remoteDoc.referenced_by.length) {
+      const { _rev, referencedBy } = await addReferencedBy(
+        cozy,
+        doc,
+        // $FlowFixMe exists only in RemoteBuilders documents
+        this.remoteDoc.referenced_by
+      )
+      doc._rev = _rev
+      // $FlowFixMe exists only in RemoteBuilders documents
+      doc.referenced_by = referencedBy
+    }
 
     const parentDir = await cozy.files.statById(doc.dir_id)
     doc.path = posix.join(parentDir.attributes.path, doc.name)
