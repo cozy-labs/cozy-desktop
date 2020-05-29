@@ -35,7 +35,7 @@ describe('Local', function() {
   before('instanciate pouch', pouchHelpers.createDatabase)
   before('instanciate local', function() {
     this.prep = {}
-    this.events = {}
+    this.events = { emit: () => {}, on: () => {} }
     this.local = new Local(this)
 
     builders = new Builders({ pouch: this.pouch })

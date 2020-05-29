@@ -28,6 +28,8 @@ export interface Watcher {
   running: Promise<*>,
   start (): Promise<*>,
   stop (force: ?bool): Promise<*>,
+  pause (): void,
+  resume (): void,
 }
 
 export type LocalWatcherOptions = {

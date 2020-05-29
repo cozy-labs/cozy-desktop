@@ -330,6 +330,7 @@ class Sync {
           return
         }
       } else {
+        if (sideName === 'local') this.local.watcher.pause()
         await this.applyDoc(doc, side, sideName, rev)
       }
 
@@ -350,6 +351,7 @@ class Sync {
     } catch (err) {
       await this.handleApplyError(change, sideName, err)
     } finally {
+      this.local.watcher.resume()
       stopMeasure()
     }
   }

@@ -24,6 +24,7 @@ const _ = require('lodash')
 
 const checksumer = require('./../checksumer')
 const Producer = require('./producer')
+const pause = require('./pause')
 const addInfos = require('./add_infos')
 const filterIgnored = require('./filter_ignored')
 const fireLocatStartEvent = require('./fire_local_start_event')
@@ -69,6 +70,7 @@ const only = (platform, step) => platform === process.platform && step
 
 /** The steps for the current platform. */
 const steps = _.compact([
+  pause,
   addInfos,
   filterIgnored,
   fireLocatStartEvent,
@@ -166,6 +168,14 @@ class AtomWatcher {
       this._runningResolve()
       this._runningResolve = null
     }
+  }
+
+  pause() {
+    this.events.emit('pause')
+  }
+
+  resume() {
+    this.events.emit('resume')
   }
 }
 

@@ -26,5 +26,7 @@ module.exports = function stubSide() /*: Writer */ {
   }
   double.watcher = {}
   double.watcher.running = new Promise(() => {})
+  double.watcher.pause = sinon.stub().returns()
+  double.watcher.resume = sinon.stub().returns()
   return double
 }

@@ -263,6 +263,14 @@ class LocalWatcher {
     })
   }
 
+  pause() {
+    this.buffer.switchMode('idle')
+  }
+
+  resume() {
+    this.buffer.switchMode('timeout')
+  }
+
   /* Helpers */
   async checksum(filePath /*: string */) /*: Promise<string> */ {
     const absPath = path.join(this.syncPath, filePath)
