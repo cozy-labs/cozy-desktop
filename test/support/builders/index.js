@@ -12,6 +12,7 @@ const DirMetadataBuilder = require('./metadata/dir')
 const FileMetadataBuilder = require('./metadata/file')
 const RemoteDirBuilder = require('./remote/dir')
 const RemoteFileBuilder = require('./remote/file')
+const RemoteNoteBuilder = require('./remote/note')
 const StreamBuilder = require('./stream')
 const AtomEventBuilder = require('./atom_event')
 
@@ -61,6 +62,10 @@ module.exports = class Builders {
     return new RemoteFileBuilder(this.cozy, old)
   }
 
+  remoteNote(old /*: ?RemoteDoc */) /*: RemoteNoteBuilder */ {
+    return new RemoteNoteBuilder(this.cozy, old)
+  }
+
   buildRemoteTree(
     paths /*: Array<string|[string, number]> */
   ) /*: { [string]: RemoteDoc } */ {
@@ -83,6 +88,12 @@ module.exports = class Builders {
 
       if (docPath.endsWith('/')) {
         remoteDocsByPath[docPath] = this.remoteDir()
+          .name(name)
+          .inDir(parentDir)
+          .shortRev(shortRev)
+          .build()
+      } else if (docPath.endsWith('cozy-note')) {
+        remoteDocsByPath[docPath] = this.remoteNote()
           .name(name)
           .inDir(parentDir)
           .shortRev(shortRev)

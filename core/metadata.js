@@ -118,7 +118,8 @@ export type Metadata = {
   ino?: ?number,
   fileid?: ?string,
   moveFrom?: Metadata,
-  cozyMetadata?: Object
+  cozyMetadata?: Object,
+  metadata?: Object
 }
 */
 
