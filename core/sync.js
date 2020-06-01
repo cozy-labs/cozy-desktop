@@ -414,12 +414,17 @@ class Sync {
         }
         await this.doMove(side, doc, from)
       }
-      delete doc.moveFrom // the move succeeded, delete moveFrom before attempting overwrite
       if (
         !metadata.sameBinary(from, doc) ||
         (from.overwrite && !metadata.sameBinary(from.overwrite, doc))
       ) {
-        await side.overwriteFileAsync(doc, doc) // move & update
+        try {
+          await side.overwriteFileAsync(doc, doc) // move & update
+        } catch (err) {
+          // the move succeeded, delete moveFrom to avoid re-applying it
+          delete doc.moveFrom
+          throw err
+        }
       }
     } else if (isMarkedForDeletion(doc)) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} deletion`)

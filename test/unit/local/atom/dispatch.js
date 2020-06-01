@@ -399,6 +399,34 @@ describe('core/local/atom/dispatch.loop()', function() {
         })
       })
     })
+
+    context('for a propagated remote move', () => {
+      beforeEach('build records for moved doc', async function() {
+        const src = await builders
+          .metafile()
+          .path(filePath)
+          .ino(1)
+          .create()
+        this.pouch.put({ ...src, _deleted: true })
+
+        const dst = await builders
+          .metafile(src)
+          .path(newFilePath)
+          .moveFrom(src)
+          .updatedAt(updatedAt)
+          .create()
+        // Simulate Sync removing the moveFrom attribute after propagating the
+        // remote move.
+        delete dst.moveFrom
+        this.pouch.put(dst)
+      })
+
+      it('does not trigger any call to prep', async function() {
+        await dispatch.loop(channel, stepOptions).pop()
+
+        should(dispatchedCalls(prep)).deepEqual({})
+      })
+    })
   })
 
   context('when channel contains a overwriting renamed file event', () => {
@@ -591,6 +619,34 @@ describe('core/local/atom/dispatch.loop()', function() {
 
         should(batch).have.length(1)
         should(batch[0]).not.have.property('oldPath')
+      })
+    })
+
+    context('for a propagated remote move', () => {
+      beforeEach('build records for moved doc', async function() {
+        const src = await builders
+          .metadir()
+          .path(directoryPath)
+          .ino(1)
+          .create()
+        this.pouch.put({ ...src, _deleted: true })
+
+        const dst = await builders
+          .metadir(src)
+          .path(newDirectoryPath)
+          .moveFrom(src)
+          .updatedAt(updatedAt)
+          .create()
+        // Simulate Sync removing the moveFrom attribute after propagating the
+        // remote move.
+        delete dst.moveFrom
+        this.pouch.put(dst)
+      })
+
+      it('does not trigger any call to prep', async function() {
+        await dispatch.loop(channel, stepOptions).pop()
+
+        should(dispatchedCalls(prep)).deepEqual({})
       })
     })
   })
