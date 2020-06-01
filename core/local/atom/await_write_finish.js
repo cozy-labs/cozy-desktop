@@ -65,7 +65,7 @@ function countFileWriteEvents(events /*: AtomEvent[] */) /*: number */ {
     }
     if (
       event.kind === 'file' &&
-      ['created', 'modified'].includes(event.action)
+      ['created', 'modified', 'renamed'].includes(event.action)
     ) {
       nbCandidates++
     }
@@ -107,25 +107,35 @@ function isAggregationCandidate(event) {
   return (
     !event.incomplete &&
     event.kind === 'file' &&
-    ['created', 'modified', 'deleted'].includes(event.action)
+    ['created', 'modified', 'deleted', 'renamed'].includes(event.action)
   )
 }
 
 function aggregateEvents(oldEvent, recentEvent) {
-  if (recentEvent.action === 'deleted' && oldEvent.action === 'created') {
-    // It's just a temporary file that we can ignore
-    log.debug(
-      { createdEvent: oldEvent, deletedEvent: recentEvent },
-      `Ignore ${oldEvent.kind} ${oldEvent.action} then ${recentEvent.action}`
-    )
+  if (recentEvent.action === 'deleted') {
+    if (oldEvent.action === 'created') {
+      // It's just a temporary file that we can ignore
+      log.debug(
+        { createdEvent: oldEvent, deletedEvent: recentEvent },
+        `Ignore ${oldEvent.kind} ${oldEvent.action} then ${recentEvent.action}`
+      )
 
-    return
+      return
+    } else if (oldEvent.action === 'renamed') {
+      addDebugInfo(recentEvent, oldEvent)
+
+      recentEvent.path = oldEvent.oldPath
+    }
   }
 
   if (recentEvent.action === 'modified') {
     addDebugInfo(recentEvent, oldEvent)
     // Preserve the action from the first event (it can be a created file)
     recentEvent.action = oldEvent.action
+
+    if (oldEvent.action === 'renamed') {
+      recentEvent.oldPath = oldEvent.oldPath
+    }
   }
 
   return recentEvent
@@ -182,7 +192,7 @@ function debounce(waiting /*: WaitingItem[] */, events /*: AtomEvent[] */) {
           const e = w.events[k]
 
           if (
-            ['created', 'modified'].includes(e.action) &&
+            ['created', 'modified', 'renamed'].includes(e.action) &&
             e.path === event.path
           ) {
             w.events.splice(k, 1)
@@ -192,16 +202,28 @@ function debounce(waiting /*: WaitingItem[] */, events /*: AtomEvent[] */) {
               addDebugInfo(event, e)
               // Preserve the action from the first event (it can be a created file)
               event.action = e.action
+
+              if (e.action === 'renamed') {
+                event.oldPath = e.oldPath
+              }
             }
 
-            if (event.action === 'deleted' && e.action === 'created') {
-              // It's just a temporary file that we can ignore
-              log.debug(
-                { createdEvent: e, deletedEvent: event },
-                `Ignore ${e.kind} ${e.action} then ${event.action}`
-              )
-              events.splice(i, 1)
-              i--
+            if (event.action === 'deleted') {
+              if (e.action === 'created') {
+                // It's just a temporary file that we can ignore
+                log.debug(
+                  { createdEvent: e, deletedEvent: event },
+                  `Ignore ${e.kind} ${e.action} then ${event.action}`
+                )
+                events.splice(i, 1)
+                i--
+              } else if (e.action === 'renamed') {
+                addDebugInfo(event, e)
+                // Delete document at oldPath instead of moving then deleting
+                if (e.oldPath) {
+                  event.path = e.oldPath
+                }
+              }
             }
 
             break
