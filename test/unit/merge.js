@@ -1328,6 +1328,40 @@ describe('Merge', function() {
       })
     })
 
+    it('keeps the overwrite attribute if it exists', async function() {
+      const firstUpdate = await builders
+        .metafile(file)
+        .overwrite(file)
+        .data('new content')
+        .tags('qux', 'quux')
+        .changedSide(this.side)
+        .create()
+      const doc = builders
+        .metafile(firstUpdate)
+        .data('final content')
+        .tags('qux', 'quux')
+        .unmerged(this.side)
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync(this.side, _.cloneDeep(doc))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              sides: increasedSides(file.sides, this.side, 2),
+              overwrite: file,
+              [otherSide(this.side)]: firstUpdate[otherSide(this.side)]
+            },
+            _.omit(doc, ['_id', '_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
     it('rejects an unresolvable conflict with an existing directory', async function() {
       // FIXME: Why don't we resolve the conflict like everywhere else?
       const existingLocalDir = await builders
@@ -2026,6 +2060,58 @@ describe('Merge', function() {
         )
 
         const movedSrc = _.defaultsDeep(
+          {
+            moveTo: doc.path,
+            _deleted: true
+          },
+          was
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.omit(movedSrc, ['_id', '_rev']),
+            _.defaults(
+              {
+                path: doc.path,
+                sides: increasedSides(was.sides, this.side, 1),
+                moveFrom: movedSrc,
+                overwrite: existing,
+                [this.side]: doc[this.side]
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+
+      it('keeps the overwrite attribute if it exists', async function() {
+        await builders
+          .metafile(existing)
+          .overwrite(existing)
+          .changedSide(this.side)
+          .data('new content')
+          .tags('qux', 'quux')
+          .create()
+        const was = await builders
+          .metafile()
+          .path('SRC_FILE')
+          .upToDate()
+          .create()
+        const doc = builders
+          .metafile(was)
+          .path(existing.path)
+          .unmerged(this.side)
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFileAsync(
+            this.side,
+            _.cloneDeep(doc),
+            _.cloneDeep(was)
+          )
+        )
+
+        const movedSrc = _.defaults(
           {
             moveTo: doc.path,
             _deleted: true

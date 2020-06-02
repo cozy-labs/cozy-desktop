@@ -236,7 +236,7 @@ class Merge {
         if (side === 'local' && isNote(file)) {
           // We'll need a reference to the "overwritten" note during the conflict
           // resolution.
-          doc.overwrite = file
+          doc.overwrite = file.overwrite || file
           return this.resolveNoteConflict(doc)
         } else if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
           if (side === 'local') {
@@ -386,7 +386,7 @@ class Merge {
       const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
       if (file) {
         if (file.deleted) {
-          doc.overwrite = file
+          doc.overwrite = file.overwrite || file
         }
 
         const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
@@ -409,7 +409,7 @@ class Merge {
           if (file.path === doc.path) {
             doc._id = file._id
             doc._rev = file._rev
-            doc.overwrite = file
+            doc.overwrite = file.overwrite || file
           }
 
           if (side === 'local' && isNote(was) && doc.md5sum !== was.md5sum) {
@@ -466,7 +466,7 @@ class Merge {
     const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
     if (folder) {
       if (folder.deleted) {
-        doc.overwrite = folder
+        doc.overwrite = folder.overwrite || folder
       }
 
       const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
@@ -489,7 +489,7 @@ class Merge {
         if (folder.path === doc.path) {
           doc._id = folder._id
           doc._rev = folder._rev
-          doc.overwrite = folder
+          doc.overwrite = folder.overwrite || folder
         }
         return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
       }
@@ -563,7 +563,7 @@ class Merge {
         if (dstChild) {
           dst._id = dstChild._id
           dst._rev = dstChild._rev
-          dst.overwrite = dstChild
+          dst.overwrite = dstChild.overwrite || dstChild
         }
       }
       // TODO: manage conflicts if not overwriting and docs exist at destination?
