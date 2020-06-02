@@ -3,6 +3,7 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
+  useCaptures: false,
   init: [
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'src/' },
@@ -10,8 +11,9 @@ module.exports = ({
   ],
   actions: [
     { type: 'mv', src: 'src/file', dst: 'dst/file' },
-    { type: 'wait', ms: 1500 },
-    { type: 'update_file', path: 'dst/file', content: 'updated content' }
+    { type: 'wait', ms: 500 },
+    { type: 'update_file', path: 'dst/file', content: 'updated content' },
+    { type: 'wait', ms: 1000 }
   ],
   expected: {
     tree: ['dst/', 'dst/file', 'src/'],

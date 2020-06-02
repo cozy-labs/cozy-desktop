@@ -149,6 +149,11 @@ actions = {
     const was /*: ?Metadata */ = await pouch.byIdMaybeAsync(id(event.oldPath))
     // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
+      if (await docWasAlreadyMoved(event.oldPath, event.path, pouch)) {
+        log.debug({ event }, 'Assuming file already moved')
+        return
+      }
+
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a file is added when the client is
       // stopped, and is moved before it was scanned.
@@ -176,6 +181,11 @@ actions = {
     const was /*: ?Metadata */ = await pouch.byIdMaybeAsync(id(event.oldPath))
     // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
+      if (await docWasAlreadyMoved(event.oldPath, event.path, pouch)) {
+        log.debug({ event }, 'Assuming dir already moved')
+        return
+      }
+
       // A renamed event where the source does not exist can be seen as just an
       // add. It can happen on Linux when a dir is added when the client is
       // stopped, and is moved before it was scanned.
@@ -225,5 +235,27 @@ actions = {
     }
     log.info({ event }, 'Dir removed')
     await prep.trashFolderAsync(SIDE, was)
+  }
+}
+
+/* docWasAlreadyMoved checks if the move we're trying to merge was done by the
+ * Sync and thus should be canceled.
+ *
+ * We check the previous revision of the possibly existing destination
+ * record since we'll call this method only if the source record does not
+ * exist anymore (i.e. so it cannot be retrieved) and after the lock was
+ * released and the Sync has removed the moveFrom attribute from the record.
+ */
+async function docWasAlreadyMoved(
+  src /*: string */,
+  dst /*: string */,
+  pouch /*: Pouch */
+) /*: Promise<boolean> */ {
+  try {
+    const existing = await pouch.getPreviousRevAsync(id(dst), 1)
+    return existing && existing.moveFrom && existing.moveFrom.path === src
+  } catch (err) {
+    // Doc not found so it was not moved
+    return false
   }
 }
