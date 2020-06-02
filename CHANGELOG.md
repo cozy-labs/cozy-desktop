@@ -1,5 +1,30 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.21.0-beta.6 - 2020-06-02
+
+Improvements for all users:
+
+- The local Cozy Notes edit protection (i.e. notes were marked as read-only) was
+  generating a new conflict every time the note was modified on the remote Cozy.
+  Those conflicts originating from the change of permissions to write the new
+  version, we decided to stop marking notes as read-only. The conflict mechanism
+  should be enough to protect remote Cozy Notes from being broken by a local
+  edit.
+
+Improvements for Windows and Linux users:
+
+- If a Cozy Note was moved and updated while a client was offline, the
+  propagation to the local filesystem of these changes would lead to the
+  creation of a conflicting markdown file and the renaming of the remote note
+  with a conflict suffix.
+  We made sure that applying more than one change on the same document on the
+  filesystem will not lead to the detection of fake changes like the
+  modification of a note.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.21.0-beta.5 - 2020-05-25
 
 Improvements for all users:
