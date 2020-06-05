@@ -1,5 +1,24 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.21.0-beta.7 - 2020-06-05
+
+Improvements for all users:
+
+- Until now the connection to your Cozy would always go through our own
+  infrastructure only. We're adding the possibility for partners to offer their
+  users to connect via their own SSO portal so we now run the connection flow in
+  a dedicated sandbox.
+  This has two advantages when an SSO portal is involved:
+  1. the portal code is run in a browser like environment with no alterations so
+     it should work out of the box
+  2. the portal code is isolated from the rest of our application adding another
+     layer of security preventing malicious code on the portal itself to access
+     your computer
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.21.0-beta.6 - 2020-06-02
 
 Improvements for all users:
