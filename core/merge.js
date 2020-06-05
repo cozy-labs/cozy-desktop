@@ -307,11 +307,6 @@ class Merge {
         if (doc.mime == null) {
           doc.mime = file.mime
         }
-      } else if (side === 'local' && isNote(file)) {
-        // We'll need a reference to the "overwritten" note during the conflict
-        // resolution.
-        doc.overwrite = file
-        return this.resolveNoteConflict(doc)
       } else if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
         if (side === 'local') {
           // We have a merged but unsynced remote update.
@@ -338,6 +333,11 @@ class Merge {
           metadata.markSide('local', file, file)
           return this.pouch.put(file)
         }
+      } else if (side === 'local' && isNote(file)) {
+        // We'll need a reference to the "overwritten" note during the conflict
+        // resolution.
+        doc.overwrite = file
+        return this.resolveNoteConflict(doc)
       } else {
         doc.overwrite = file
       }
