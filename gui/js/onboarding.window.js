@@ -1,5 +1,5 @@
 const { addFileManagerShortcut } = require('./shortcut')
-const { dialog, session } = require('electron')
+const { dialog, session, BrowserView } = require('electron')
 const autoLaunch = require('./autolaunch')
 const defaults = require('./defaults')
 const { translate } = require('./i18n')
@@ -53,6 +53,39 @@ module.exports = class OnboardingWM extends WindowManager {
     })
   }
 
+  openOAuthView(url) {
+    try {
+      // Open remote OAuth flow in separate view, without Node integration.
+      // This avoids giving access to Node's API to remote code and allows
+      // remote code to load and make use of jQuery since it can't be loaded via
+      // usual webpage means if a global `module` variable is defined (which is
+      // the case with Node integration).
+      this.oauthView = new BrowserView()
+      this.win.setBrowserView(this.oauthView)
+
+      // We want the view to take the entire available space so we get the
+      // current window's bounds.
+      // BrowserViews are positionned within their parent window so we need to
+      // set the top left corner of the view to the origin.
+      const bounds = this.win.getContentBounds()
+      this.oauthView.setBounds({ ...bounds, x: 0, y: 0 })
+
+      this.oauthView.webContents.on(
+        'did-fail-load',
+        (event, errorCode, errorDescription, url, isMainFrame) => {
+          this.log.error({ errorCode, url, isMainFrame }, errorDescription)
+        }
+      )
+      this.oauthView.webContents.loadURL(url)
+    } catch (err) {
+      log.error(err)
+    }
+  }
+
+  closeOAuthView() {
+    this.win.removeBrowserView(this.oauthView)
+  }
+
   create() {
     return super.create().then(() => {
       if (this.shouldJumpToSyncPath) {
@@ -77,15 +110,16 @@ module.exports = class OnboardingWM extends WindowManager {
       )
     }
     desktop.config.cozyUrl = cozyUrl
+
     const onRegistered = (client, url) => {
+      // TODO only centerOnScreen if needed to display the whole login screen
+      //      and if the user hasn't moved the window before
+      this.centerOnScreen(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT)
+
       let resolveP
       const promise = new Promise(resolve => {
         resolveP = resolve
       })
-      // TODO only centerOnScreen if needed to display the whole login screen
-      //      and if the user hasn't moved the window before
-      this.centerOnScreen(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT)
-      this.win.loadURL(url)
       session.defaultSession.webRequest.onBeforeRequest(({ url }, callback) => {
         if (url.match(/^file:\/\//)) {
           // Chrome won't honor server redirects to local files and the window
@@ -105,6 +139,8 @@ module.exports = class OnboardingWM extends WindowManager {
           resolveP(redirectURL)
         }
       })
+
+      this.openOAuthView(url)
       return promise
     }
     desktop.registerRemote(cozyUrl, arg.location, onRegistered).then(
@@ -117,6 +153,7 @@ module.exports = class OnboardingWM extends WindowManager {
           }, 20)
         })
         this.win.loadURL(reg.client.redirectURI)
+        this.closeOAuthView()
         if (!process.env.DEBUG) {
           autoLaunch.setEnabled(true)
         }
