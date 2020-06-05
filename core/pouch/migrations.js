@@ -89,6 +89,32 @@ const migrations /*: Migration[] */ = [
         return doc
       })
     }
+  },
+  {
+    baseSchemaVersion: 2,
+    targetSchemaVersion: 3,
+    description: 'Marking Cozy Notes for refetch to avoid conflicts',
+    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.filter(
+        doc =>
+          doc.mime === 'text/vnd.cozy.note+markdown' &&
+          doc.metadata &&
+          doc.metadata.content &&
+          doc.sides &&
+          doc.sides.local &&
+          doc.sides.remote
+      )
+    },
+    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.map(doc => {
+        if (doc.sides && doc.sides.local && doc.sides.remote) {
+          doc.sides.target =
+            Math.max(doc.sides.target, doc.sides.local, doc.sides.remote) + 1
+          doc.sides.remote = doc.sides.target
+        }
+        return doc
+      })
+    }
   }
 ]
 
