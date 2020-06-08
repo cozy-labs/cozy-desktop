@@ -187,9 +187,10 @@ class Merge {
       delete doc.overwrite
     }
 
-    // We create it at the destination location
+    // We create it at the destination location as a normal local file
     metadata.markAsNew(doc)
     metadata.dissociateRemote(doc)
+    metadata.removeNoteMetadata(doc)
     return this.addFileAsync('local', doc)
   }
 

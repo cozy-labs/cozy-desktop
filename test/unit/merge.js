@@ -10,6 +10,7 @@ const metadata = require('../../core/metadata')
 const { otherSide } = require('../../core/side')
 
 const configHelpers = require('../support/helpers/config')
+const cozyHelpers = require('../support/helpers/cozy')
 const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
 const dbBuilders = require('../support/builders/db')
@@ -91,9 +92,10 @@ describe('Merge', function() {
     this.merge = new Merge(this.pouch)
     this.merge.local = { moveAsync: sinon.stub().resolves() }
     this.merge.remote = { moveAsync: sinon.stub().resolves() }
-    builders = new Builders({ pouch: this.pouch })
+    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
+  afterEach('clean remote', cozyHelpers.deleteAll)
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('addFile', function() {
@@ -815,6 +817,41 @@ describe('Merge', function() {
       should(sideEffects).deepEqual({
         savedDocs: [],
         resolvedConflicts: []
+      })
+    })
+
+    it('creates a conflict when the file is a Cozy Note export', async function() {
+      const remoteNote = await builders
+        .remoteNote()
+        .name('my-note.cozy-note')
+        .data('initial content')
+        .create()
+      const synced = await builders
+        .metafile()
+        .fromRemote(remoteNote)
+        .upToDate()
+        .create()
+      const localUpdate = builders
+        .metafile(synced)
+        .changedSide('local')
+        .data('local update')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync('local', _.cloneDeep(localUpdate))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              sides: { target: 1, local: 1 },
+              metadata: {}
+            },
+            _.omit(localUpdate, ['_rev', 'remote'])
+          )
+        ],
+        resolvedConflicts: [['remote', { path: synced.path }]]
       })
     })
   })
