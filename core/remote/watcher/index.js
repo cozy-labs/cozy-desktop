@@ -62,6 +62,7 @@ class RemoteWatcher {
   }
 
   async start() {
+    log.debug('Starting watcher')
     await this.watch()
 
     this.running = Promise.race([
@@ -74,6 +75,8 @@ class RemoteWatcher {
   }
 
   stop() {
+    log.debug('Stop requested')
+    if (this.runningResolve) log.debug('Stopping watcher')
     if (this.runningResolve) {
       this.runningResolve()
       this.runningResolve = null
@@ -86,6 +89,7 @@ class RemoteWatcher {
       await Promise.delay(HEARTBEAT)
       if (!this.runningResolve) {
         // stopped
+        log.debug('Watcher stopped')
         return
       }
       await this.watch()
@@ -98,7 +102,10 @@ class RemoteWatcher {
       const { last_seq, docs } = await this.remoteCozy.changes(seq)
       this.events.emit('online')
 
-      if (docs.length === 0) return
+      if (docs.length === 0) {
+        log.debug('No remote changes for now')
+        return
+      }
 
       const release = await this.pouch.lock(this)
       this.events.emit('remote-start')
@@ -116,6 +123,7 @@ class RemoteWatcher {
         log.debug('No more remote changes for now')
       }
     } catch (err) {
+      // TODO: If FetchError && status === 412 → error during conflict resolution
       handleCommonCozyErrors({ err }, { events: this.events, log })
       // If we were offline, we'll wait for the next pollings to switch back
       // to 'online' as soon as the changesfeed can be fetched and retry to
