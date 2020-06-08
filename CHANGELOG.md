@@ -1,5 +1,17 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.21.0-beta.8 - 2020-06-08
+
+Improvements for all users:
+
+- We added a migration to force a refetch of all remote Cozy Notes in order to
+  avoid as many dispensable conflicts as we can during the first reboot after
+  this release installation.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.21.0-beta.7 - 2020-06-05
 
 Improvements for all users:
