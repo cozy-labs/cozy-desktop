@@ -161,6 +161,7 @@ module.exports = {
   isUpToDate,
   isAtLeastUpToDate,
   removeActionHints,
+  removeNoteMetadata,
   dissociateRemote,
   markAsNew,
   markAsUnsyncable,
@@ -418,6 +419,15 @@ function removeActionHints(doc /*: Metadata */) {
   }
   if (doc.moveFrom) delete doc.moveFrom
   if (doc.moveTo) delete doc.moveTo
+}
+
+function removeNoteMetadata(doc /*: Metadata */) {
+  if (doc.metadata) {
+    if (doc.metadata.content) delete doc.metadata.content
+    if (doc.metadata.schema) delete doc.metadata.schema
+    if (doc.metadata.title) delete doc.metadata.title
+    if (doc.metadata.version) delete doc.metadata.version
+  }
 }
 
 function dissociateRemote(doc /*: Metadata */) {
