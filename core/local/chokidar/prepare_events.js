@@ -111,7 +111,7 @@ const step = async (
           } catch (err) {
             // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
             // Chokidar reports a change event when a file is replaced by a directory
-            if (err.code.match(/ENOENT/)) {
+            if (err.code && err.code.match(/ENOENT/)) {
               log.debug(
                 { path: e.path, ino: e.stats.ino },
                 'Checksum failed: file does not exist anymore'
@@ -149,7 +149,8 @@ const parentPathNormalized = (
     p => p.normalize() === path.dirname(childPath).normalize()
   )
 
-const isNFD = string => string === string.normalize('NFD')
+const isNFD = string =>
+  string === string.normalize('NFD') && string !== string.normalize('NFC')
 
 const normalizedPath = (
   event /*: ChokidarEvent */,

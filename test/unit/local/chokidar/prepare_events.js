@@ -14,13 +14,13 @@ onPlatform('darwin', () => {
     let builders
 
     before('instanciate config', configHelpers.createConfig)
-    before('instanciate pouch', pouchHelpers.createDatabase)
+    beforeEach('instanciate pouch', pouchHelpers.createDatabase)
 
     beforeEach('set up builders', function() {
       builders = new Builders({ pouch: this.pouch })
     })
 
-    after('clean pouch', pouchHelpers.cleanDatabase)
+    afterEach('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
 
     describe('#oldMetadata()', () => {
@@ -42,6 +42,97 @@ onPlatform('darwin', () => {
           change: old,
           unlink: old,
           unlinkDir: old
+        })
+      })
+    })
+
+    describe('step', () => {
+      const accentuatedName = 'AccuséRéception.pdf'
+      const nonAccentuatedName = 'AccuseReception.pdf'
+
+      let step
+      beforeEach(function() {
+        step = (event, existing) =>
+          prepareEvents.step([event], {
+            checksum: () => existing.md5sum,
+            pouch: this.pouch,
+            syncPath: this.syncPath
+          })
+      })
+
+      context('with existing document name normalized with NFC', () => {
+        it('normalizes accentuated, NFD event doc name to NFC', async function() {
+          const existing = await builders
+            .metafile()
+            .path(accentuatedName.normalize('NFC'))
+            .data('content')
+            .upToDate()
+            .create()
+          const event = { type: 'add', path: existing.path.normalize('NFD') }
+          should(await step(event, existing)).deepEqual([
+            {
+              type: 'add',
+              path: existing.path,
+              old: existing,
+              md5sum: existing.md5sum
+            }
+          ])
+        })
+
+        it('does not normalize non-accentuated event doc name to NFC', async function() {
+          const existing = await builders
+            .metafile()
+            .path(nonAccentuatedName.normalize('NFC'))
+            .data('content')
+            .upToDate()
+            .create()
+          const event = { type: 'add', path: existing.path }
+          should(await step(event, existing)).deepEqual([
+            {
+              type: 'add',
+              path: existing.path,
+              old: existing,
+              md5sum: existing.md5sum
+            }
+          ])
+        })
+      })
+
+      context('with existing document name normalized with NFD', () => {
+        it('does not normalize NFD event doc name to NFC', async function() {
+          const existing = await builders
+            .metafile()
+            .path(accentuatedName.normalize('NFD'))
+            .data('content')
+            .upToDate()
+            .create()
+          const event = { type: 'add', path: existing.path }
+          should(await step(event, existing)).deepEqual([
+            {
+              type: 'add',
+              path: existing.path,
+              old: existing,
+              md5sum: existing.md5sum
+            }
+          ])
+        })
+
+        it('does not normalize non-accentuated event doc name to NFC', async function() {
+          const existing = await builders
+            .metafile()
+            .path(nonAccentuatedName.normalize('NFD'))
+            .data('content')
+            .upToDate()
+            .create()
+          const event = { type: 'add', path: existing.path }
+          should(await step(event, existing)).deepEqual([
+            {
+              type: 'add',
+              path: existing.path,
+              old: existing,
+              md5sum: existing.md5sum
+            }
+          ])
         })
       })
     })
