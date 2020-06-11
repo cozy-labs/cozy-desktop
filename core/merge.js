@@ -246,6 +246,9 @@ class Merge {
         if (doc.fileid == null) {
           doc.fileid = file.fileid
         }
+        if (file.metadata && doc.metadata == null) {
+          doc.metadata = file.metadata
+        }
         if (metadata.sameFile(file, doc)) {
           if (needsFileidMigration(file, doc.fileid)) {
             return this.migrateFileid(file, doc.fileid)
@@ -296,6 +299,9 @@ class Merge {
       }
       if (doc.fileid == null) {
         doc.fileid = file.fileid
+      }
+      if (file.metadata && doc.metadata == null) {
+        doc.metadata = file.metadata
       }
       if (metadata.sameBinary(file, doc)) {
         if (doc.size == null) {
@@ -387,6 +393,9 @@ class Merge {
       if (doc.fileid == null) {
         doc.fileid = folder.fileid
       }
+      if (folder.metadata && doc.metadata == null) {
+        doc.metadata = folder.metadata
+      }
       if (metadata.sameFolder(folder, doc)) {
         if (needsFileidMigration(folder, doc.fileid)) {
           return this.migrateFileid(folder, doc.fileid)
@@ -413,6 +422,7 @@ class Merge {
   ) /*: Promise<*> */ {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
     const { path } = doc
+
     if (!metadata.wasSynced(was) || was.deleted) {
       metadata.markAsUnsyncable(was)
       await this.pouch.put(was)
@@ -488,6 +498,7 @@ class Merge {
     newRemoteRevs /*: ?RemoteRevisionsByID */
   ) {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFolderAsync')
+
     if (!metadata.wasSynced(was)) {
       metadata.markAsUnsyncable(was)
       await this.pouch.put(was)

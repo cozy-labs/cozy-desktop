@@ -52,12 +52,19 @@ describe('Cozy Note update', () => {
         .data('updated content')
         .update()
       await helpers.pullAndSyncAll()
+      await helpers.flushLocalAndSyncAll()
     })
 
     it('updates the note content on the filesystem', async () => {
       should(await helpers.local.syncDir.readFile('note.cozy-note')).eql(
         'note\n\nupdated content'
       )
+    })
+
+    it('keeps the note metadata', async () => {
+      const updatedDoc = await helpers.pouch.byRemoteIdMaybeAsync(note._id)
+      // FIXME: check for metadata update once the builder can do it
+      should(updatedDoc).have.property('metadata')
     })
   })
 
@@ -68,6 +75,7 @@ describe('Cozy Note update', () => {
         'updated content'
       )
       await helpers.flushLocalAndSyncAll()
+      await helpers.pullAndSyncAll()
     })
 
     it('renames the original remote note with a conflict suffix', async () => {
@@ -86,6 +94,63 @@ describe('Cozy Note update', () => {
       should(await helpers.remote.readFile('note.cozy-note')).eql(
         'updated content'
       )
+    })
+
+    it('keeps the original note metadata', async () => {
+      const updatedDoc = await helpers.pouch.byRemoteIdMaybeAsync(note._id)
+      should(updatedDoc).have.property('metadata')
+    })
+  })
+})
+
+describe('Cozy Note move', () => {
+  let note
+  beforeEach('create note', async () => {
+    await builders
+      .remoteDir()
+      .name('dst')
+      .create()
+    note = await builders
+      .remoteNote()
+      .name('note.cozy-note')
+      .data('Initial content')
+      .timestamp(2018, 5, 15, 21, 1, 53)
+      .create()
+    await helpers.pullAndSyncAll()
+  })
+
+  describe('on local filesystem', () => {
+    const srcPath = 'note.cozy-note'
+    const dstPath = path.normalize('dst/note.cozy-note')
+
+    describe('to a free target location', () => {
+      beforeEach('move local note', async () => {
+        await helpers.local.syncDir.move(srcPath, dstPath)
+        await helpers.flushLocalAndSyncAll()
+        await helpers.pullAndSyncAll()
+      })
+
+      it('keeps the note metadata', async () => {
+        const updatedDoc = await helpers.pouch.byRemoteIdMaybeAsync(note._id)
+        should(updatedDoc).have.property('metadata')
+      })
+    })
+  })
+
+  describe('on remote Cozy', () => {
+    const dstPath = path.normalize('dst/note.cozy-note')
+
+    describe('to a free target location', () => {
+      beforeEach('move local note', async () => {
+        await helpers.remote.move(note._id, dstPath)
+        await helpers.pullAndSyncAll()
+        await helpers.flushLocalAndSyncAll()
+      })
+
+      it('keeps the note metadata', async () => {
+        const updatedDoc = await helpers.pouch.byRemoteIdMaybeAsync(note._id)
+        should(updatedDoc).have.property('metadata')
+      })
     })
   })
 })
@@ -115,6 +180,7 @@ describe('Cozy Note move with update', () => {
         await helpers.local.syncDir.move(srcPath, dstPath)
         await helpers.local.syncDir.outputFile(dstPath, 'updated content')
         await helpers.flushLocalAndSyncAll()
+        await helpers.pullAndSyncAll()
       })
 
       it('moves the original remote note then rename it with a conflict suffix', async () => {
@@ -133,6 +199,11 @@ describe('Cozy Note move with update', () => {
         should(await helpers.remote.readFile('dst/note.cozy-note')).eql(
           'updated content'
         )
+      })
+
+      it('keeps the original note metadata', async () => {
+        const updatedDoc = await helpers.pouch.byRemoteIdMaybeAsync(note._id)
+        should(updatedDoc).have.property('metadata')
       })
     })
 
