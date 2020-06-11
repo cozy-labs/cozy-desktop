@@ -7,7 +7,7 @@ const path = require('path')
 const conflictHelpers = require('./conflict')
 const cozyHelpers = require('./cozy')
 
-const { Remote } = require('../../../core/remote')
+const { Remote, dirAndName } = require('../../../core/remote')
 const { jsonApiToRemoteDoc } = require('../../../core/remote/document')
 const { TRASH_DIR_NAME } = require('../../../core/remote/constants')
 
@@ -16,6 +16,7 @@ import type cozy from 'cozy-client-js'
 import type { Pouch } from '../../../core/pouch'
 import type { RemoteOptions } from '../../../core/remote'
 import type { RemoteDoc } from '../../../core/remote/document'
+import type { Metadata } from '../../../core/metadata'
 */
 
 class RemoteTestHelpers {
@@ -156,6 +157,18 @@ class RemoteTestHelpers {
     } catch (err) {
       return null
     }
+  }
+
+  async move(id /*: string */, newPath /*: string */) {
+    const [newDirPath, newName] /*: [string, string] */ = dirAndName(newPath)
+    const newDir /*: RemoteDoc */ = await this.side.remoteCozy.findDirectoryByPath(
+      newDirPath
+    )
+    const attrs = {
+      name: newName,
+      ir_id: newDir._id
+    }
+    await this.side.remoteCozy.updateAttributesById(id, attrs, {})
   }
 }
 

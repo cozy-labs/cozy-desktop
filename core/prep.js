@@ -152,13 +152,12 @@ class Prep {
     const { path } = doc
     metadata.ensureValidPath(doc)
     metadata.ensureValidPath(was)
+
     if (doc.path === was.path) {
       const msg = 'Invalid move'
       log.warn({ path, doc, was }, msg)
       throw new Error(msg)
-    }
-
-    if (!was._rev) {
+    } else if (!was._rev) {
       const msg = 'Missing rev'
       log.warn({ path, doc, was }, msg)
       throw new Error(msg)

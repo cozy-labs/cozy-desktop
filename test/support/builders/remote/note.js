@@ -147,6 +147,7 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder {
 
     // FIXME: use new cozy-client updateFile() method once we can pass something
     // else than HTML5 File objects as data.
+    // FIXME: update note metadata
     const doc = jsonApiToRemoteDoc(
       await cozy.files.updateById(this.remoteDoc._id, this._data, {
         dirID: this.remoteDoc.dir_id,
