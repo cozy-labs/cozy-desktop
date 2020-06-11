@@ -47,11 +47,14 @@ module.exports = {
 function sendReadyBatches(waiting /*: WaitingItem[] */, out /*: Channel */) {
   while (waiting.length > 0) {
     if (waiting[0].nbCandidates !== 0) {
+      //log.debug({ waiting }, 'waiting has candidates')
       break
     }
     const item = waiting.shift()
     clearTimeout(item.timeout)
-    out.push(item.events)
+    const { events } = item
+    //log.debug({ events, item, waiting }, 'flushing ready events')
+    out.push(events)
   }
 }
 
@@ -239,13 +242,17 @@ async function awaitWriteFinish(channel /*: Channel */, out /*: Channel */) {
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const events = aggregateBatch(await channel.pop())
+    const batch = await channel.pop()
+    //log.debug({ events: batch, waiting }, 'debouncing events')
+    const events = aggregateBatch(batch)
     let nbCandidates = countFileWriteEvents(events)
     debounce(waiting, events)
 
     // Push the new batch of events in the queue
     const timeout = setTimeout(() => {
-      out.push(waiting.shift().events)
+      const ready = waiting.shift().events
+      //log.debug({ events: ready }, 'flushing old events')
+      out.push(ready)
       sendReadyBatches(waiting, out)
     }, DELAY)
     waiting.push({ events, nbCandidates, timeout })

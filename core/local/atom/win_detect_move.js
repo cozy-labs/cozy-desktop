@@ -284,6 +284,7 @@ function loop(
 ) /*: Channel */ {
   const out = new Channel()
   const output = batch => {
+    //log.debug({ events: batch }, 'flushing events')
     out.push(batch)
   }
   winDetectMove(channel, output, opts).catch(err => {

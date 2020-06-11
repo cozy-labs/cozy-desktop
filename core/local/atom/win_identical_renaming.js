@@ -136,9 +136,11 @@ const step = async (
 }
 
 const _loop = async (channel, out, opts) => {
-  const output = pending => {
+  const output = (pending, fastTrackEvents) => {
     clearTimeout(pending.timeout)
+    //log.debug({ events: pending.events, fastTrackEvents }, 'flushing events')
     out.push(pending.events)
+    if (fastTrackEvents) out.push(fastTrackEvents)
     pending.deletedEventsById = new Map()
     pending.events = []
   }
@@ -146,14 +148,21 @@ const _loop = async (channel, out, opts) => {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const events = await channel.pop()
+    //log.debug({ events }, 'popping new events')
     const {
       state: { [STEP_NAME]: state }
     } = opts
 
     await step(events, opts)
 
-    output(state.pending)
-    rotateState(state, events)
+    const firstDeleted = events.findIndex(event => event.action === 'deleted')
+    if (firstDeleted === -1) {
+      output(state.pending, events)
+      rotateState(state, [])
+    } else {
+      output(state.pending, events.slice(0, firstDeleted))
+      rotateState(state, events.slice(firstDeleted))
+    }
 
     const { pending } = state
     pending.timeout = setTimeout(() => {

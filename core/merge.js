@@ -246,6 +246,9 @@ class Merge {
         if (doc.fileid == null) {
           doc.fileid = file.fileid
         }
+        if (file.metadata && doc.metadata == null) {
+          doc.metadata = file.metadata
+        }
         if (metadata.sameFile(file, doc)) {
           if (needsFileidMigration(file, doc.fileid)) {
             return this.migrateFileid(file, doc.fileid)
@@ -296,6 +299,9 @@ class Merge {
       }
       if (doc.fileid == null) {
         doc.fileid = file.fileid
+      }
+      if (file.metadata && doc.metadata == null) {
+        doc.metadata = file.metadata
       }
       if (metadata.sameBinary(file, doc)) {
         if (doc.size == null) {

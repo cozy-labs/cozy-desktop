@@ -7,8 +7,14 @@
  * @flow
  */
 
+const logger = require('../../utils/logger')
+
 // eslint-disable-next-line no-unused-vars
 const STEP_NAME = 'fireLocatStartEvent'
+
+const log = logger({
+  component: `atom/${STEP_NAME}`
+})
 
 /*::
 import type Channel from './channel'
@@ -28,8 +34,9 @@ function loop(
   channel /*: Channel */,
   opts /*: { events: EventEmitter } */
 ) /*: Channel */ {
-  return channel.asyncMap(async events => {
+  return channel.map(events => {
     opts.events.emit('local-start')
+    //log.debug({ events }, 'flushing events')
     return events
   })
 }

@@ -110,6 +110,10 @@ class Prep {
     metadata.ensureValidPath(was)
     metadata.ensureValidChecksum(doc)
 
+    if (was.metadata && doc.metadata == null) {
+      doc.metadata = was.metadata
+    }
+
     if (doc.path === was.path) {
       const msg = 'Invalid move'
       log.warn({ path, doc, was }, msg)

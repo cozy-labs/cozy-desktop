@@ -54,6 +54,7 @@ function loop(
       }
     }
 
+    //log.debug({ events: batch }, 'flushing events')
     return batch
   })
 }
