@@ -28,7 +28,7 @@ function loop(
   channel /*: Channel */,
   opts /*: { events: EventEmitter } */
 ) /*: Channel */ {
-  return channel.asyncMap(async events => {
+  return channel.map(events => {
     opts.events.emit('local-start')
     return events
   })

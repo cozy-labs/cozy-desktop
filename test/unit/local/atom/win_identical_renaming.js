@@ -170,6 +170,9 @@ if (process.platform === 'win32') {
         */
         const scenarios /*: Scenario[] */ = [
           { action: 'created', kind: 'directory', path: 'unknown' },
+          { action: 'created', kind: 'file', path: 'newFile' },
+          { action: 'modified', kind: 'file', path: 'newFile' },
+          { action: 'deleted', kind: 'file', path: 'newFile' },
           { action: 'deleted', kind: 'file', path: 'file' },
           {
             action: 'renamed',
@@ -180,23 +183,39 @@ if (process.platform === 'win32') {
           { action: 'renamed', kind: 'file', oldPath: 'file', path: 'FILE' }
         ]
 
+        const buildEvent = ({ action, kind, path, oldPath }) => {
+          let event = builders
+            .event()
+            .action(action)
+            .kind(kind)
+            .path(path)
+          if (oldPath) event.oldPath(oldPath)
+          return event.build()
+        }
+
         for (const { action, kind, oldPath, path } of scenarios) {
           it(`forwards ${action} ${kind} (${
             oldPath ? oldPath + ' -> ' : ''
-          }${path}) after .DELAY`, async () => {
-            let event = builders
-              .event()
-              .action(action)
-              .kind(kind)
-              .path(path)
-            if (oldPath) event.oldPath(oldPath)
-            const batch = [event.build()]
+          }${path})`, async () => {
+            const batch = [buildEvent({ action, kind, path, oldPath })]
 
             inputBatch(batch)
 
             should(await outputBatch()).deepEqual(batch)
           })
         }
+
+        it('forwards all events preceding first deleted event without delay', async () => {
+          const batch = scenarios.map(buildEvent)
+
+          inputBatch(batch)
+
+          const firstDeletedEventIndex = 3
+          // The events preceding the first deleted event
+          should(await outputBatch()).deepEqual(
+            batch.slice(0, firstDeletedEventIndex)
+          )
+        })
       })
     })
   })

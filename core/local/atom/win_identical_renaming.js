@@ -136,9 +136,9 @@ const step = async (
 }
 
 const _loop = async (channel, out, opts) => {
-  const output = pending => {
+  const output = (pending, fastTrackEvents = []) => {
     clearTimeout(pending.timeout)
-    out.push(pending.events)
+    out.push(pending.events.concat(fastTrackEvents))
     pending.deletedEventsById = new Map()
     pending.events = []
   }
@@ -152,8 +152,14 @@ const _loop = async (channel, out, opts) => {
 
     await step(events, opts)
 
-    output(state.pending)
-    rotateState(state, events)
+    const firstDeleted = events.findIndex(event => event.action === 'deleted')
+    if (firstDeleted === -1) {
+      output(state.pending, events)
+      rotateState(state, [])
+    } else {
+      output(state.pending, events.slice(0, firstDeleted))
+      rotateState(state, events.slice(firstDeleted))
+    }
 
     const { pending } = state
     pending.timeout = setTimeout(() => {
