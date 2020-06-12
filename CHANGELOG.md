@@ -1,5 +1,23 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.21.0-beta.9 - 2020-06-12
+
+Improvements for all users:
+
+- We made sure a Cozy Note is still identified as such after saving changes like
+  an update on the remote Cozy. This will ensure they will stay protected from
+  local updates afterwards.
+
+Improvements for Windows users:
+
+- We made sure the application of the move and update of a file on the local
+  filesystem does not trigger invalid changes that would be propagated to the
+  remote Cozy.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.21.0-beta.8 - 2020-06-08
 
 Improvements for all users:
