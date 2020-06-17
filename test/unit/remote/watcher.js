@@ -1856,15 +1856,15 @@ describe('RemoteWatcher', function() {
           .shortRev(3)
           .build()
 
+        const doc = metadata.fromRemoteDoc(newFile)
+        metadata.assignId(doc)
+
         should(
           this.watcher.identifyChange(newFile, trashedFile, [], [])
         ).have.properties({
           sideName: 'remote',
           type: 'FileAddition',
-          doc: builders
-            .metafile()
-            .fromRemote(newFile)
-            .build()
+          doc
         })
       })
     })

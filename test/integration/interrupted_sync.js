@@ -85,17 +85,8 @@ describe('Sync gets interrupted, initialScan occurs', () => {
 
       // but not sync (client restart)
 
-      await helpers.local.scan()
-      await helpers.syncAll()
-
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
-
-      // A conflict version is created
-      should(await helpers.trees()).deepEqual({
-        remote: ['file'],
-        local: ['/Trash/file.bck', 'file']
-      })
+      await helpers.flushLocalAndSyncAll()
+      await helpers.pullAndSyncAll()
 
       // Contents are kept untouched
       const resp = await helpers.remote.cozy.files.downloadById(doc.remote._id)

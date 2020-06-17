@@ -57,8 +57,7 @@ describe('Executable handling', () => {
     onPlatforms(['darwin', 'linux'], () => {
       it('is executable everywhere', async () => {
         await syncDir.ensureFileMode('file', 0o777)
-        await helpers.local.scan()
-        await helpers.syncAll()
+        await helpers.flushLocalAndSyncAll()
 
         should(await executableStatus('file')).deepEqual({
           local: '777',
@@ -73,8 +72,7 @@ describe('Executable handling', () => {
   describe('adding a local non-executable file', () => {
     it('is non-executable anywhere', async () => {
       await syncDir.ensureFileMode('file', 0o666)
-      await helpers.local.scan()
-      await helpers.syncAll()
+      await helpers.flushLocalAndSyncAll()
 
       should(await executableStatus('file')).deepEqual({
         local:
@@ -93,6 +91,7 @@ describe('Executable handling', () => {
       await cozy.files.create('whatever content', { name: 'file' })
       await cozy.files.updateAttributesByPath('/file', { executable: true })
       await helpers.pullAndSyncAll()
+      await helpers.flushLocalAndSyncAll()
 
       should(await executableStatus('file')).deepEqual({
         local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '755', // assuming umask 022
@@ -107,6 +106,7 @@ describe('Executable handling', () => {
     it('is not executable anywhere', async () => {
       await cozy.files.create('whatever content', { name: 'file' })
       await helpers.pullAndSyncAll()
+      await helpers.flushLocalAndSyncAll()
 
       should(await executableStatus('file')).deepEqual({
         local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '644', // assuming umask 022
@@ -120,16 +120,14 @@ describe('Executable handling', () => {
   context('with a synced non-executable file', () => {
     beforeEach(async () => {
       await syncDir.ensureFileMode('file', 0o666)
-      await helpers.local.scan()
-      await helpers.syncAll()
+      await helpers.flushLocalAndSyncAll()
     })
 
     describe('making it executable locally', () => {
       onPlatforms(['darwin', 'linux'], () => {
         it('makes it executable everywhere', async () => {
           await syncDir.chmod('file', 0o766)
-          await helpers.local.scan()
-          await helpers.syncAll()
+          await helpers.flushLocalAndSyncAll()
 
           should(await executableStatus('file')).deepEqual({
             local: '766',
@@ -145,6 +143,7 @@ describe('Executable handling', () => {
       it('is executable everywhere, forcing 755 locally, except on Windows', async () => {
         await cozy.files.updateAttributesByPath('/file', { executable: true })
         await helpers.pullAndSyncAll()
+        await helpers.flushLocalAndSyncAll()
 
         should(await executableStatus('file')).deepEqual({
           local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '755',
@@ -167,8 +166,7 @@ describe('Executable handling', () => {
       onPlatforms(['darwin', 'linux'], () => {
         it('is non-executable everywhere', async () => {
           await syncDir.chmod('file', 0o644)
-          await helpers.local.scan()
-          await helpers.syncAll()
+          await helpers.flushLocalAndSyncAll()
 
           should(await executableStatus('file')).deepEqual({
             local: '644',
@@ -184,6 +182,7 @@ describe('Executable handling', () => {
       it('is non-executable everywhere', async () => {
         await cozy.files.updateAttributesByPath('/file', { executable: false })
         await helpers.pullAndSyncAll()
+        await helpers.flushLocalAndSyncAll()
 
         should(await executableStatus('file')).deepEqual({
           local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '644',

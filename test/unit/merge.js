@@ -297,6 +297,66 @@ describe('Merge', function() {
       })
     })
 
+    it('updates the local metadata when only it has changed', async function() {
+      const mergedFile = await builders
+        .metafile()
+        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
+        .upToDate()
+        .remoteId(dbBuilders.id())
+        .create()
+      const sameFile = builders
+        .metafile(mergedFile)
+        .updatedAt(new Date())
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.addFileAsync('local', _.cloneDeep(sameFile))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              local: sameFile.local
+            },
+            _.omit(mergedFile, ['_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
+    it('keeps an existing local metadata when it is not present in the new doc', async function() {
+      const mergedFile = await builders
+        .metafile()
+        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
+        .upToDate()
+        .remoteId(dbBuilders.id())
+        .create()
+      const sameFile = builders
+        .metafile(mergedFile)
+        .noLocal()
+        .remoteRev(3)
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.addFileAsync('remote', _.cloneDeep(sameFile))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaultsDeep(
+            {
+              sides: increasedSides(mergedFile.sides, 'remote', 1),
+              local: mergedFile.local
+            },
+            _.omit(sameFile, ['_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
     onPlatform('win32', () => {
       describe('for an existing file without fileid', () => {
         let existingFile
@@ -581,7 +641,8 @@ describe('Merge', function() {
           savedDocs: [
             _.defaultsDeep(
               {
-                sides: increasedSides(remoteUpdate.sides, 'remote', 1)
+                sides: increasedSides(remoteUpdate.sides, 'remote', 1),
+                local: localUpdate.local
               },
               _.omit(remoteUpdate, ['overwrite', '_rev'])
             )
@@ -604,6 +665,7 @@ describe('Merge', function() {
         .type('image/jpeg')
         .tags('foo')
         .upToDate()
+        .updatedAt(new Date(2020, 5, 17, 15, 33, 30, 0)) // Necessary for date change tests
         .remoteId(dbBuilders.id())
         .create()
     })
@@ -633,14 +695,16 @@ describe('Merge', function() {
       })
     })
 
-    it('updates the metadata when content is the same', async function() {
+    it('updates the remote metadata when content is the same', async function() {
       const doc = builders
         .metafile(file)
         .tags('bar', 'baz')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.updateFileAsync(this.side, _.cloneDeep(doc))
+        // Tags are only coming from the Cozy so we should not expect any tags
+        // update coming from the local side.
+        this.merge.updateFileAsync('remote', _.cloneDeep(doc))
       )
 
       should(sideEffects).deepEqual({
@@ -648,9 +712,67 @@ describe('Merge', function() {
           _.defaults(
             {
               _id: file._id,
-              sides: increasedSides(file.sides, this.side, 1)
+              sides: increasedSides(file.sides, 'remote', 1)
             },
             _.omit(doc, ['_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
+    it('updates the local metadata when content is the same', async function() {
+      const doc = builders
+        .metafile(file)
+        .updatedAt(new Date())
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync('local', _.cloneDeep(doc))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              local: doc.local
+            },
+            _.omit(file, ['_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
+    it('keeps an existing local metadata when it is not present in the new doc', async function() {
+      const initial = await builders
+        .metafile()
+        .data('initial content')
+        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
+        .upToDate()
+        .remoteId(dbBuilders.id())
+        .create()
+      const update = builders
+        .metafile(initial)
+        .noLocal()
+        .data('updated content')
+        .updatedAt(new Date())
+        .remoteRev(3)
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync('remote', _.cloneDeep(update))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaultsDeep(
+            {
+              sides: increasedSides(initial.sides, 'remote', 1),
+              local: initial.local,
+              overwrite: initial
+            },
+            _.omit(update, ['_rev', 'fileid'])
           )
         ],
         resolvedConflicts: []
@@ -776,7 +898,8 @@ describe('Merge', function() {
         savedDocs: [
           _.defaultsDeep(
             {
-              sides: increasedSides(remoteUpdate.sides, 'remote', 1)
+              sides: increasedSides(remoteUpdate.sides, 'remote', 1),
+              local: newLocalUpdate.local
             },
             _.omit(remoteUpdate, ['overwrite', '_rev'])
           )
@@ -803,10 +926,12 @@ describe('Merge', function() {
         .create()
       const updateSynced = await builders
         .metafile(update)
+        .updatedAt(new Date(2020, 5, 12, 10, 15, 0))
         .upToDate()
         .create()
       const sameUpdate = builders
         .metafile(updateSynced)
+        .updatedAt(new Date())
         .sides(update.sides)
         .build()
 
@@ -815,7 +940,14 @@ describe('Merge', function() {
       )
 
       should(sideEffects).deepEqual({
-        savedDocs: [],
+        savedDocs: [
+          _.defaults(
+            {
+              local: sameUpdate.local
+            },
+            _.omit(updateSynced, ['_rev'])
+          )
+        ],
         resolvedConflicts: []
       })
     })
@@ -1146,6 +1278,7 @@ describe('Merge', function() {
         existing = await builders
           .metafile()
           .path('DST_FILE')
+          .updatedAt(new Date(2020, 5, 19, 12, 12, 0))
           .upToDate()
           .create()
       })

@@ -23,6 +23,7 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
     if (this.doc.md5sum == null) {
       this.data('')
     }
+    this.buildLocal = true
   }
 
   data(data /*: string */) /*: this */ {

@@ -204,6 +204,7 @@ class Merge {
     const file /*: ?Metadata */ = await this.pouch.byIdMaybeAsync(doc._id)
     metadata.markSide(side, doc, file)
     metadata.assignMaxDate(doc, file)
+
     if (file) {
       if (file.deleted) {
         return this.updateFileAsync(side, doc)
@@ -249,12 +250,24 @@ class Merge {
         if (file.metadata && doc.metadata == null) {
           doc.metadata = file.metadata
         }
+        if (file.local && doc.local == null) {
+          doc.local = file.local
+        }
         if (metadata.sameFile(file, doc)) {
           if (needsFileidMigration(file, doc.fileid)) {
             return this.migrateFileid(file, doc.fileid)
           }
           log.info({ path }, 'up to date')
-          return null
+          if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
+            metadata.updateLocal(file, doc.local)
+            const outdated = metadata.outOfDateSide(file)
+            if (outdated) {
+              metadata.markSide(otherSide(outdated), file, file)
+            }
+            return this.pouch.put(file)
+          } else {
+            return null
+          }
         } else {
           return this.pouch.put(doc)
         }
@@ -285,6 +298,7 @@ class Merge {
       throw new Error("Can't resolve this conflict!")
     }
     metadata.assignMaxDate(doc, file)
+
     if (file) {
       doc._rev = file._rev
       doc.moveFrom = file.moveFrom
@@ -300,9 +314,15 @@ class Merge {
       if (doc.fileid == null) {
         doc.fileid = file.fileid
       }
+      // If file is updated on local filesystem, doc won't have metadata attribute
       if (file.metadata && doc.metadata == null) {
         doc.metadata = file.metadata
       }
+      // If file was updated on remote Cozy, doc won't have local attribute
+      if (file.local && doc.local == null) {
+        doc.local = file.local
+      }
+
       if (metadata.sameBinary(file, doc)) {
         if (doc.size == null) {
           doc.size = file.size
@@ -324,6 +344,9 @@ class Merge {
           // orginal content and the remotely updated content).
           metadata.markSide('remote', file, file)
           delete file.overwrite
+          if (!metadata.sameLocal(file.local, doc.local)) {
+            metadata.updateLocal(file, doc.local)
+          }
           return this.pouch.put(file)
         } else {
           // We have a merged but unsynced local update.
@@ -349,6 +372,14 @@ class Merge {
       }
       if (metadata.sameFile(file, doc)) {
         log.info({ path }, 'up to date')
+        if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
+          metadata.updateLocal(file, doc.local)
+          const outdated = metadata.outOfDateSide(file)
+          if (outdated) {
+            metadata.markSide(otherSide(outdated), file, file)
+          }
+          return this.pouch.put(file)
+        }
         return null
       } else {
         return this.pouch.put(doc)
@@ -468,8 +499,20 @@ class Merge {
         }
 
         if (metadata.sameFile(file, doc)) {
+          // FIXME: this code block seems unreachable. Removing it does not
+          // break any test.
+          // We should make sure that is correct and remove it.
           log.info({ path }, 'up to date (move)')
-          return this.pouch.put(was)
+          if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
+            metadata.updateLocal(file, doc.local)
+            const outdated = metadata.outOfDateSide(file)
+            if (outdated) {
+              metadata.markSide(otherSide(outdated), file, file)
+            }
+            return this.pouch.bulkDocs([was, file])
+          } else {
+            return this.pouch.put(was)
+          }
         }
 
         const dst = await this.resolveConflictAsync(side, doc)
@@ -612,6 +655,7 @@ class Merge {
       if (incompatibilities.length > 0)
         dst.incompatibilities = incompatibilities
       else delete dst.incompatibilities
+
       bulk.push(dst)
 
       if (folder.overwrite) {

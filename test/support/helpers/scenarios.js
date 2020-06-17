@@ -259,6 +259,7 @@ module.exports.init = async (
           trashed,
           useRealInodes
         })
+        // $FlowFixMe local attribute does not exist for folders yet
         const doc /*: Metadata */ = {
           _id: metadata.id(localPath),
           docType: 'folder',
@@ -326,9 +327,18 @@ module.exports.init = async (
           size: content.length,
           tags: [],
           remote: { _id: 'xxx', _rev: 'xxx' },
+          local: {
+            class: 'text',
+            docType: 'file',
+            md5sum,
+            mime: 'text/plain',
+            size: content.length,
+            updated_at: lastModifiedDate.toISOString()
+          },
           sides: { target: 2, local: 2, remote: 2 }
         }
         stater.assignInoAndFileId(doc, stats)
+        stater.assignInoAndFileId(doc.local, stats)
         if (!isOutside && remoteParent) {
           debug(
             `- create${trashed ? ' and trash' : ''} remote file: ${remotePath}`
