@@ -323,6 +323,26 @@ class Merge {
         doc.local = file.local
       }
 
+      if (side === 'local' && metadata.sameFile(file.local, doc.local)) {
+        log.debug({ path: doc.path, doc, file }, 'Same local binary')
+        if (!metadata.sameLocal(file.local, doc.local)) {
+          metadata.updateLocal(file, doc.local)
+          const outdated = metadata.outOfDateSide(file)
+          if (outdated) {
+            // In case a change was merged but not applied, we want to make sure
+            // Sync will compare the curret record version with the correct
+            // "previous" version (i.e. the one before the actual change was
+            // merged and not the one before we mergedd the new local metadata).
+            // Therefore, we mark the changed side once more to account for the
+            // new record save.
+            metadata.markSide(otherSide(outdated), file, file)
+          }
+          return this.pouch.put(file)
+        } else {
+          return
+        }
+      }
+
       if (metadata.sameBinary(file, doc)) {
         if (doc.size == null) {
           doc.size = file.size
@@ -335,6 +355,14 @@ class Merge {
         }
       } else if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
         if (side === 'local') {
+          // FIXME: We should probably not do this anymore. With the
+          // introduction of the local state and the sameFile check done line
+          // 322 we can detect when the remote change has not been applied and
+          // overwrite the local file in this case only.
+          // This also means we could stop using the overwrite attribute for
+          // file updates and avoid the issue of losing overwriting move details
+          // when an update is performed afterwards.
+
           // We have a merged but unsynced remote update.
           // We can't create a conflict because we can't dissociate the remote
           // record from the PouchDB record (or we'd lose the link between the

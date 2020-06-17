@@ -571,7 +571,7 @@ describe('Merge', function() {
         })
       })
 
-      it('updates without overwrite an unchanged file with an unsynced remote update', async function() {
+      it('does not update a locally unchanged file with an unsynced remote update', async function() {
         const initial = await builders
           .metafile()
           .sides({ local: 1 })
@@ -582,7 +582,7 @@ describe('Merge', function() {
           .upToDate()
           .remoteId(dbBuilders.id())
           .create()
-        const remoteUpdate = await builders
+        await builders
           .metafile(synced)
           .changedSide('remote')
           .data('remote update')
@@ -598,14 +598,7 @@ describe('Merge', function() {
         )
 
         should(sideEffects).deepEqual({
-          savedDocs: [
-            _.defaultsDeep(
-              {
-                sides: increasedSides(remoteUpdate.sides, 'remote', 1)
-              },
-              _.omit(remoteUpdate, ['overwrite', '_rev'])
-            )
-          ],
+          savedDocs: [],
           resolvedConflicts: []
         })
       })
@@ -864,6 +857,38 @@ describe('Merge', function() {
         resolvedConflicts: [
           ['remote', _.pick(newRemoteUpdate, ['path', 'remote'])]
         ]
+      })
+    })
+
+    it('does not update a locally unchanged file with an unsynced remote update', async function() {
+      const initial = await builders
+        .metafile()
+        .sides({ local: 1 })
+        .data('initial content')
+        .create()
+      const synced = await builders
+        .metafile(initial)
+        .upToDate()
+        .remoteId(dbBuilders.id())
+        .create()
+      await builders
+        .metafile(synced)
+        .changedSide('remote')
+        .data('remote update')
+        .overwrite(synced)
+        .create()
+      const unchangedLocal = builders
+        .metafile(synced)
+        .unmerged('local')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync('local', _.cloneDeep(unchangedLocal))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [],
+        resolvedConflicts: []
       })
     })
 
