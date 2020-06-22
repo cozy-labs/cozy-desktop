@@ -8,30 +8,21 @@ def delNoteMetadata(obj):
     (.
     | del(.metadata.content)
     | del(.metadata.schema)
-    | if .moveFrom then delNoteMetadata(.moveFrom) else . end
-    | if .overwrite then delNoteMetadata(.overwrite) else . end
+    | if isempty(.moveFrom | objects) | not then delNoteMetadata(.moveFrom) else . end
+    | if isempty(.overwrite | objects) | not then delNoteMetadata(.overwrite) else . end
     )
 ;
 
 def cleanNote:
   .
-  | if .doc then delNoteMetadata(.doc) else . end
-  | if .was then delNoteMetadata(.was) else . end
-  | if .remoteDoc then delNoteMetadata(.remoteDoc) else . end
-  | if .change then .
+  | if isempty(.doc | objects) |not then delNoteMetadata(.doc) else . end
+  | if isempty(.was | objects) |not then delNoteMetadata(.was) else . end
+  | if isempty(.remoteDoc | objects) |not then delNoteMetadata(.remoteDoc) else . end
+  | if isempty(.change | objects) | not then .
     | .change |= (. | delNoteMetadata(.doc))
     | .change |= (. | delNoteMetadata(.was))
     else . end
 ;
-
-  #del(.doc.metadata.content) |
-  #del(.doc.moveFrom.metadata.content) |
-  #del(.was.metadata.content) |
-  #del(.was.moveFrom.metadata.content) |
-  #del(.change.doc.metadata.content) |
-  #del(.change.doc.moveFrom.metadata.content) |
-  #del(.change.was.metadata.content) |
-  #del(.change.was.moveFrom.metadata.content);
 
 # Remove fields that are almost never used while debugging.
 # To be used in other filters.
