@@ -6,6 +6,7 @@ const _ = require('lodash')
 const should = require('should')
 
 const logger = require('../../core/utils/logger')
+const metadata = require('../../core/metadata')
 
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
@@ -216,14 +217,16 @@ describe('Update file', () => {
         .name('file')
         .data('Initial content')
         .create()
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
+      await helpers.pullAndSyncAll()
+      await helpers.flushLocalAndSyncAll()
       const was = await pouch.byRemoteIdMaybeAsync(file._id)
 
-      await prep.updateFileAsync('local', _.defaults({ ino: was.ino + 1 }, was))
+      const doc = _.defaults({ ino: was.ino + 1 }, was)
+      metadata.updateLocal(doc)
+      await prep.updateFileAsync('local', doc)
+
       await helpers.syncAll()
-      const doc = await pouch.byRemoteIdMaybeAsync(file._id)
-      should(doc)
+      should(await pouch.byRemoteIdMaybeAsync(file._id))
         .have.propertyByPath('remote', '_rev')
         .not.eql(was.remote._rev)
 
@@ -241,8 +244,8 @@ describe('Update file', () => {
         .data('Initial content')
         .timestamp(2018, 5, 15, 21, 1, 53)
         .create()
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
+      await helpers.pullAndSyncAll()
+      await helpers.flushLocalAndSyncAll()
       const was = await pouch.byRemoteIdMaybeAsync(file._id)
       should(was).have.property('updated_at', '2018-05-15T21:01:53Z')
 
@@ -264,9 +267,9 @@ describe('Update file', () => {
 
   describe('M1, local merge M1, M2, remote sync M1, local merge M2', () => {
     it('fails remote sync M1 & local merge M2', async () => {
-      const file = await cozy.files.create('Initial content', { name: 'file' })
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
+      await cozy.files.create('Initial content', { name: 'file' })
+      await helpers.pullAndSyncAll()
+      await helpers.flushLocalAndSyncAll()
 
       log.info('-------- M1 --------')
       const m1 = 'M1'
@@ -276,16 +279,7 @@ describe('Update file', () => {
       should(await helpers.local.syncDir.checksum('file')).equal(
         '8x4e7yD2RzOhjFOAc+eDlg=='
       )
-      await prep.updateFileAsync(
-        'local',
-        _.defaults(
-          {
-            md5sum: await helpers.local.syncDir.checksum('file'),
-            size: 2
-          },
-          await pouch.byRemoteIdMaybeAsync(file._id)
-        )
-      )
+      await helpers.local.scan()
 
       log.info('-------- M2 --------')
       const m2 = 'M2'
@@ -298,16 +292,7 @@ describe('Update file', () => {
       should(await helpers.local.syncDir.checksum('file')).equal(
         'nYMiUwtn4jZuWxumcIHe2Q=='
       )
-      await prep.updateFileAsync(
-        'local',
-        _.defaults(
-          {
-            md5sum: await helpers.local.syncDir.checksum('file'),
-            size: 2
-          },
-          await pouch.byRemoteIdMaybeAsync(file._id)
-        )
-      )
+      await helpers.local.scan()
 
       log.info('-------- remote sync M2 --------')
       await helpers.syncAll()

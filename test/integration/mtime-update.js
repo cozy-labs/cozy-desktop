@@ -3,6 +3,8 @@
 
 const should = require('should')
 
+const timestamp = require('../../core/utils/timestamp')
+
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -28,35 +30,41 @@ describe('Update only a file mtime', () => {
   })
 
   context('when update is made on local filesystem', () => {
-    let file, oldUpdatedAt
+    let oldUpdatedAt
     beforeEach('create file and update mtime', async function() {
       await helpers.remote.ignorePreviousChanges()
 
       oldUpdatedAt = new Date()
       oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-      file = await cozy.files.create('basecontent', {
+      await cozy.files.create('basecontent', {
         name: 'file',
         lastModifiedDate: oldUpdatedAt
       })
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
+      await helpers.pullAndSyncAll()
+      await helpers.flushLocalAndSyncAll()
     })
 
-    it('does not update the document in Pouch', async () => {
+    it('only updates the local document state in Pouch', async () => {
       helpers.spyPouch()
 
       const newUpdatedAt = new Date()
       newUpdatedAt.setDate(oldUpdatedAt.getDate() + 1)
+      helpers.local.syncDir.utimes('file', newUpdatedAt)
 
-      const oldFile = await helpers.pouch.byRemoteIdMaybeAsync(file._id)
-      await helpers.prep.updateFileAsync('local', {
-        ...oldFile,
-        updated_at: newUpdatedAt.toISOString()
-      })
+      await helpers.flushLocalAndSyncAll()
 
-      await helpers.syncAll()
-      should(helpers.putDocs('path')).deepEqual([])
+      should(
+        helpers.putDocs('path', 'updated_at', 'local.updated_at')
+      ).deepEqual([
+        {
+          path: 'file',
+          updated_at: timestamp.stringify(timestamp.fromDate(oldUpdatedAt)),
+          local: {
+            updated_at: timestamp.fromDate(newUpdatedAt).toISOString()
+          }
+        }
+      ])
     })
   })
 

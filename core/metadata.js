@@ -72,10 +72,34 @@ const CONFLICT_REGEXP = new RegExp(
   `-conflict-${DATE_REGEXP}${SEPARATOR_REGEXP}`
 )
 
+const LOCAL_ATTRIBUTES = [
+  'md5sum',
+  'class',
+  'docType',
+  'executable',
+  'updated_at',
+  'mime',
+  'size',
+  'ino',
+  'fileid'
+]
+
 /*::
 export type DocType =
   | "file"
   | "folder";
+
+export type MetadataLocalInfo = {
+  class?: string,
+  docType: DocType,
+  executable?: true,
+  fileid?: string,
+  ino?: number,
+  md5sum?: string,
+  mime?: string,
+  size?: number,
+  updated_at?: string,
+}
 
 export type MetadataRemoteInfo = {
   _id: string,
@@ -109,14 +133,15 @@ export type Metadata = {
   overwrite?: Metadata,
   childMove?: boolean,
   path: string,
+  local: MetadataLocalInfo,
   remote: MetadataRemoteInfo,
   size?: number,
   tags?: string[],
   sides: MetadataSidesInfo,
   trashed?: true,
   incompatibilities?: *,
-  ino?: ?number,
-  fileid?: ?string,
+  ino?: number,
+  fileid?: string,
   moveFrom?: Metadata,
   cozyMetadata?: Object,
   metadata?: Object
@@ -169,6 +194,7 @@ module.exports = {
   sameFolder,
   sameFile,
   sameFileIgnoreRev,
+  sameLocal,
   sameBinary,
   detectSingleSide,
   markSide,
@@ -181,7 +207,8 @@ module.exports = {
   outOfDateSide,
   createConflictingDoc,
   CONFLICT_REGEXP,
-  shouldIgnore
+  shouldIgnore,
+  updateLocal
 }
 
 function localDocType(remoteDocType /*: string */) /*: string */ {
@@ -507,7 +534,11 @@ const makeComparator = (name, interestingFields) => {
   }
   return (one, two) => {
     const diff = deepDiff(one, two, filter)
-    log.trace({ path: two.path, diff }, name)
+    if (two.path) {
+      log.trace({ path: two.path, diff }, name)
+    } else {
+      log.trace({ diff }, name)
+    }
     if (diff && !_.every(diff, canBeIgnoredDiff)) {
       return false
     }
@@ -559,8 +590,13 @@ const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev', [
   'executable'
 ])
 
+const sameLocalComparator = makeComparator('sameLocal', LOCAL_ATTRIBUTES)
+
 // Return true if the metadata of the two files are the same
-function sameFile(one /*: Metadata */, two /*: Metadata */) {
+function sameFile /*::<T: Metadata|MetadataLocalInfo>*/(
+  one /*: T */,
+  two /*: T */
+) {
   ;[one, two] = ensureExecutable(one, two)
   return sameFileComparator(one, two)
 }
@@ -570,6 +606,10 @@ function sameFile(one /*: Metadata */, two /*: Metadata */) {
 function sameFileIgnoreRev(one /*: Metadata */, two /*: Metadata */) {
   ;[one, two] = ensureExecutable(one, two)
   return sameFileIgnoreRevComparator(one, two)
+}
+
+function sameLocal(one /*: MetadataLocalInfo */, two /*: MetadataLocalInfo */) {
+  return sameLocalComparator(one, two)
 }
 
 // Return true if the two files have the same binary content
@@ -670,19 +710,22 @@ function buildFile(
   remote /*: ?MetadataRemoteInfo */
 ) /*: Metadata */ {
   const mimeType = mime.lookup(filePath)
-  const { mtime, ctime } = stats
+  const className = mimeType.split('/')[0]
+  const { mtime, ctime, ino, size } = stats
+  const updated_at = timestamp
+    .fromDate(timestamp.maxDate(mtime, ctime))
+    .toISOString()
+
   const doc /*: Object */ = {
     _id: id(filePath),
     path: filePath,
     docType: 'file',
     md5sum,
-    ino: stats.ino,
-    updated_at: timestamp
-      .fromDate(timestamp.maxDate(mtime, ctime))
-      .toISOString(),
+    ino,
+    updated_at,
     mime: mimeType,
-    class: mimeType.split('/')[0],
-    size: stats.size,
+    class: className,
+    size,
     remote
   }
   if (stats.mode && (+stats.mode & EXECUTABLE_MASK) !== 0) {
@@ -691,6 +734,7 @@ function buildFile(
   if (stats.fileid) {
     doc.fileid = stats.fileid
   }
+  updateLocal(doc)
   return doc
 }
 
@@ -734,4 +778,8 @@ function shouldIgnore(
     relativePath: doc._id,
     isFolder: doc.docType === 'folder'
   })
+}
+
+function updateLocal(doc /*: Metadata */, newLocal /*: Object */) {
+  doc.local = _.pick(newLocal || doc, LOCAL_ATTRIBUTES)
 }

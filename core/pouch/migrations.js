@@ -115,6 +115,30 @@ const migrations /*: Migration[] */ = [
         return doc
       })
     }
+  },
+  {
+    baseSchemaVersion: 3,
+    targetSchemaVersion: 4,
+    description: 'Generating files local Metadata info with current Metadata',
+    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.filter(doc => doc.docType === 'file')
+    },
+    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.map(doc => {
+        doc.local = {
+          md5sum: doc.md5sum,
+          class: doc.class,
+          docType: 'file',
+          executable: doc.executable,
+          updated_at: doc.updated_at,
+          mime: doc.mime,
+          size: doc.size,
+          ino: doc.ino,
+          fileid: doc.fileid
+        }
+        return doc
+      })
+    }
   }
 ]
 

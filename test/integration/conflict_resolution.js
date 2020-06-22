@@ -8,6 +8,8 @@ const fse = require('fs-extra')
 const _ = require('lodash')
 const { FetchError } = require('electron-fetch')
 
+const metadata = require('../../core/metadata')
+
 const Builders = require('../support/builders')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -113,27 +115,32 @@ describe('Conflict resolution', () => {
   describe('concurrent edit', () => {
     let remoteFile, pouchFile
     beforeEach(async () => {
-      await helpers.local.syncDir.outputFile('concurrent-edited', 'content1')
-      await helpers.local.scan()
-      await helpers.syncAll()
+      await helpers.local.syncDir.outputFile(
+        'concurrent-edited',
+        'original content'
+      )
+      await helpers.flushLocalAndSyncAll()
+      await helpers.pullAndSyncAll()
 
       // change both concurrently
-      await helpers.local.syncDir.outputFile('concurrent-edited', 'content2')
+      await helpers.local.syncDir.outputFile(
+        'concurrent-edited',
+        'local update'
+      )
       remoteFile = await cozy.files.statByPath(`/concurrent-edited`)
       pouchFile = await helpers.pouch.byRemoteIdMaybeAsync(remoteFile._id)
-      await cozy.files.updateById(remoteFile._id, `content3`, {
+      await cozy.files.updateById(remoteFile._id, 'remote update', {
         contentType: 'text/plain'
       })
     })
 
     const simulateLocalUpdateMerge = async () => {
-      await helpers.prep.updateFileAsync(
-        'local',
-        _.merge(pouchFile, {
-          updated_at: new Date().toISOString(),
-          md5sum: await helpers.local.syncDir.checksum('concurrent-edited')
-        })
-      )
+      const localUpdate = _.merge(pouchFile, {
+        updated_at: new Date().toISOString(),
+        md5sum: await helpers.local.syncDir.checksum('concurrent-edited')
+      })
+      metadata.updateLocal(localUpdate)
+      await helpers.prep.updateFileAsync('local', localUpdate)
     }
 
     const expectedTree = ['concurrent-edited', 'concurrent-edited-conflict-...']
@@ -141,11 +148,9 @@ describe('Conflict resolution', () => {
     context('local merged first', () => {
       beforeEach('run actions', async () => {
         await simulateLocalUpdateMerge()
-        await helpers.remote.pullChanges()
-        await helpers.syncAll()
-        await helpers.remote.pullChanges()
-        await helpers.local.scan()
-        await helpers.syncAll()
+        await helpers.pullAndSyncAll() // creates remote conflict
+        await helpers.flushLocalAndSyncAll()
+        await helpers.pullAndSyncAll() // fetches remote conflict
       })
 
       it('creates a conflict', async () => {
@@ -162,8 +167,7 @@ describe('Conflict resolution', () => {
 
         await helpers.local.syncDir.remove(conflictedPath)
         await helpers.local.syncDir.outputFile('concurrent-edited', 'content5')
-        await helpers.local.scan()
-        await helpers.syncAll()
+        await helpers.flushLocalAndSyncAll()
 
         should(await helpers.trees()).deepEqual({
           remote: ['concurrent-edited'],
@@ -196,11 +200,10 @@ describe('Conflict resolution', () => {
     context('remote merged first', () => {
       it('it trashes a backup copy of local and overwrites the original', async () => {
         await helpers.remote.pullChanges()
-        await simulateLocalUpdateMerge()
+        await simulateLocalUpdateMerge() // Client restart with wrong update detection
         await helpers.syncAll()
-        await helpers.remote.pullChanges()
-        await helpers.local.scan()
-        await helpers.syncAll()
+        await helpers.pullAndSyncAll()
+        await helpers.flushLocalAndSyncAll()
 
         should(await helpers.trees()).deepEqual({
           remote: ['concurrent-edited'],

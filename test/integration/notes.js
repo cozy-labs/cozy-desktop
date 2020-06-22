@@ -43,6 +43,7 @@ describe('Cozy Note update', () => {
       .timestamp(2018, 5, 15, 21, 1, 53)
       .create()
     await helpers.pullAndSyncAll()
+    await helpers.flushLocalAndSyncAll()
   })
 
   describe('on remote Cozy', () => {
@@ -268,6 +269,7 @@ describe('Markdown file with Cozy Note mime type update', () => {
       .timestamp(2018, 5, 15, 21, 1, 53)
       .create()
     await helpers.pullAndSyncAll()
+    await helpers.flushLocalAndSyncAll()
   })
   beforeEach('change note into markdown file', async function() {
     const doc = await this.pouch.byIdMaybeAsync(metadata.id('note.cozy-note'))

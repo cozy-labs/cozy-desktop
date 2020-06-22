@@ -136,6 +136,10 @@ class ContextDir {
     await fse.chmod(this.abspath(target), mode)
   }
 
+  async utimes(target /*: string | {path: string} */, updatedAt /*: Date */) {
+    await fse.utimes(this.abspath(target), updatedAt, updatedAt)
+  }
+
   async ensureFileMode(
     target /*: string | {path: string} */,
     mode /*: number */

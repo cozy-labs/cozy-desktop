@@ -49,8 +49,8 @@ describe('Move', () => {
       src = await cozy.files.createDirectory({ name: 'src' })
       file = await cozy.files.create('foo', { name: 'file', dirID: src._id })
 
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
+      await helpers.pullAndSyncAll()
+      await helpers.flushLocalAndSyncAll()
       helpers.spyPouch()
     })
 
@@ -271,11 +271,9 @@ describe('Move', () => {
           'src/file',
           'updated file content'
         )
-        await helpers.local.scan()
-        await helpers.syncAll()
+        await helpers.flushLocalAndSyncAll()
         await helpers.local.syncDir.rename('src/file', 'file2')
-        await helpers.local.scan()
-        await helpers.syncAll()
+        await helpers.flushLocalAndSyncAll()
 
         should(await helpers.docByPath('src/file2')).match({
           remote: { _id: file._id }
@@ -290,8 +288,7 @@ describe('Move', () => {
 
       it('remote', async () => {
         await cozy.files.updateById(file._id, 'updated file content', {})
-        await helpers.remote.pullChanges()
-        await helpers.syncAll()
+        await helpers.pullAndSyncAll()
         const was = await pouch.byRemoteIdAsync(file._id)
         await helpers._remote.moveAsync(
           {
@@ -300,8 +297,7 @@ describe('Move', () => {
           },
           was
         )
-        await helpers.remote.pullChanges()
-        await helpers.syncAll()
+        await helpers.pullAndSyncAll()
 
         should(await helpers.docByPath('src/file2')).match({
           remote: { _id: file._id }
@@ -323,8 +319,7 @@ describe('Move', () => {
         )
         await helpers.local.scan()
         await helpers.local.syncDir.rename('src/file', 'file2')
-        await helpers.local.scan()
-        await helpers.syncAll()
+        await helpers.flushLocalAndSyncAll()
 
         should(await helpers.docByPath('src/file2')).match({
           remote: { _id: file._id }
@@ -348,8 +343,7 @@ describe('Move', () => {
           },
           was
         )
-        await helpers.remote.pullChanges()
-        await helpers.syncAll()
+        await helpers.pullAndSyncAll()
 
         should(await helpers.docByPath('src/file2')).match({
           remote: { _id: file._id }
@@ -833,8 +827,8 @@ describe('Move', () => {
           name: 'file',
           dirID: dir._id
         })
-        await helpers.remote.pullChanges()
-        await helpers.syncAll()
+        await helpers.pullAndSyncAll()
+        await helpers.flushLocalAndSyncAll()
       })
 
       it('local', async () => {

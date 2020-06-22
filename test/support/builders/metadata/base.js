@@ -26,6 +26,7 @@ module.exports = class BaseMetadataBuilder {
   pouch: ?Pouch
   doc: Metadata
   old: ?Metadata
+  buildLocal: boolean
   */
 
   constructor(pouch /*: ?Pouch */, old /*: ?Metadata */) {
@@ -47,6 +48,7 @@ module.exports = class BaseMetadataBuilder {
       }
       this.doc = doc
     }
+    this.buildLocal = false // Default docType is folder
   }
 
   fromRemote(remoteDoc /*: RemoteDoc */) /*: this */ {
@@ -91,6 +93,12 @@ module.exports = class BaseMetadataBuilder {
      * buildDir to set remote to undefined
      */
     this.doc.remote = undefined
+    return this
+  }
+
+  noLocal() /*: this */ {
+    this.buildLocal = false
+    if (this.doc.local) delete this.doc.local
     return this
   }
 
@@ -234,6 +242,10 @@ module.exports = class BaseMetadataBuilder {
     // Don't detect incompatibilities according to syncPath for test data, to
     // prevent environment related failures.
     metadata.assignPlatformIncompatibilities(this.doc, '')
+
+    if (this.buildLocal && metadata.isAtLeastUpToDate('local', this.doc)) {
+      metadata.updateLocal(this.doc)
+    }
 
     return _.cloneDeep(this.doc)
   }

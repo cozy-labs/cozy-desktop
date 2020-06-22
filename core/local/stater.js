@@ -14,7 +14,7 @@ if (process.platform === 'win32') {
 }
 
 /*::
-import type { Metadata } from '../metadata'
+import type { Metadata, MetadataLocalInfo } from '../metadata'
 import type { Callback } from '../utils/func'
 
 export type WinStats = {|
@@ -86,7 +86,10 @@ module.exports = {
     return this.isDirectory(stats) ? 'directory' : 'file'
   },
 
-  assignInoAndFileId(doc /*: Metadata */, stats /*: Stats */) {
+  assignInoAndFileId(
+    doc /*: Metadata|MetadataLocalInfo */,
+    stats /*: Stats */
+  ) {
     doc.ino = stats.ino
     if (typeof stats.fileid === 'string') {
       doc.fileid = stats.fileid
