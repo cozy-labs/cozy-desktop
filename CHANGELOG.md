@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.21.0-beta.10 - 2020-06-22
+
+Improvements for all users:
+
+- We introduced a new way to store and compare local file states. This is the
+  first step to solve different problems. We're solving a first issue by
+  preventing fake metadata (i.e. size and content checksum) from being
+  propagated to the remote Cozy when a Cozy Note is both renamed and modified
+  during a very short period.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.21.0-beta.9 - 2020-06-12
 
 Improvements for all users:
