@@ -27,6 +27,7 @@ const checksumer = require('../checksumer')
 const chokidarEvent = require('./event')
 const LocalEventBuffer = require('./event_buffer')
 const initialScan = require('./initial_scan')
+const normalizePaths = require('./normalize_paths')
 const prepareEvents = require('./prepare_events')
 const sendToPrep = require('./send_to_prep')
 const syncDir = require('../sync_dir')
@@ -216,12 +217,17 @@ class LocalWatcher {
 
     const changes /*: LocalChange[] */ = analysis(preparedEvents, this)
 
+    const normalizedChanges /*: LocalChange[] */ = await normalizePaths.step(
+      changes,
+      this
+    )
+
     // TODO: Don't even acquire lock changes list is empty
     // FIXME: Shouldn't we acquire the lock before preparing the events?
     const release = await this.pouch.lock(this)
     let target = -1
     try {
-      await sendToPrep.step(changes, this)
+      await sendToPrep.step(normalizedChanges, this)
       target = (await this.pouch.db.changes({ limit: 1, descending: true }))
         .last_seq
     } finally {

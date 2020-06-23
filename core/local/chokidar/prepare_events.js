@@ -75,20 +75,14 @@ const step = async (
   events /*: ChokidarEvent[] */,
   { checksum, initialScan, pouch, syncPath } /*: PrepareEventsOpts */
 ) /*: Promise<LocalEvent[]> */ => {
-  const normalizedPaths = []
-
   return Promise.map(
     events,
     async (e /*: ChokidarEvent */) /*: Promise<?LocalEvent> */ => {
       const abspath = path.join(syncPath, e.path)
 
       const old = await oldMetadata(e, pouch)
-      const eventPath = normalizedPath(e, old, normalizedPaths)
-      normalizedPaths.push(eventPath)
-
       const e2 /*: Object */ = {
         ...e,
-        path: eventPath,
         old
       }
 
@@ -139,55 +133,6 @@ const step = async (
     },
     { concurrency: 50 }
   ).filter((e /*: ?LocalEvent */) => e != null)
-}
-
-const parentPathNormalized = (
-  childPath /*: string */,
-  normalizedPaths /*: string[] */
-) /*: ?string */ =>
-  normalizedPaths.find(
-    p => p.normalize() === path.dirname(childPath).normalize()
-  )
-
-const isNFD = string => string === string.normalize('NFD')
-
-const normalizedPath = (
-  event /*: ChokidarEvent */,
-  existing /*: ?Metadata */,
-  normalizedPaths /*: string[] */
-) /*: string */ => {
-  if (existing != null && existing.path != null) {
-    // Curent event's path parts
-    const name = path.basename(event.path)
-    const normalizedParentPath = parentPathNormalized(
-      event.path,
-      normalizedPaths
-    )
-    // Existing Pouch document's path parts
-    const existingName = path.basename(existing.path)
-    const existingParentPath = path.dirname(existing.path)
-
-    if (isNFD(name) && !isNFD(existingName)) {
-      const normalizedName = name.normalize('NFC')
-      log.info(
-        { path: event.path, existingPath: existing.path, normalizedName },
-        'normalizing local NFD path to match existing NFC path'
-      )
-
-      // We expect the parent path to have been normalized via other events.
-      // This might not be true if the parent's normalization hasn't been saved
-      // to PouchDB yet.
-      // So we look for a normalized parent path from a previous event and use
-      // it or use the existing parent path otherwise.
-      return normalizedParentPath
-        ? path.join(normalizedParentPath, normalizedName)
-        : existingParentPath != '.'
-        ? path.join(existingParentPath, normalizedName)
-        : normalizedName
-    }
-  }
-
-  return event.path
 }
 
 module.exports = {
