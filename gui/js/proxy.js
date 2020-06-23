@@ -15,6 +15,8 @@ const log = require('../../core/app').logger({
   component: 'GUI:proxy'
 })
 
+const SESSION_PARTITION_NAME = 'persist:sync'
+
 const config = (argv = process.argv) => {
   const config = yargs
     .env('COZY_DRIVE')
@@ -44,6 +46,10 @@ const formatCertificate = certif =>
   `Certificate(${certif.issuerName} ${certif.subjectName})`
 
 const setup = async (app, config, session, userAgent, doneSetup) => {
+  const syncSession = session.fromPartition(SESSION_PARTITION_NAME, {
+    cache: false
+  })
+
   const loginByRealm = {}
   if (config['login-by-realm']) {
     config['login-by-realm'].split(',').forEach(lbr => {
@@ -53,12 +59,10 @@ const setup = async (app, config, session, userAgent, doneSetup) => {
   }
 
   if (config['proxy-ntlm-domains']) {
-    session.defaultSession.allowNTLMCredentialsForDomains(
-      config['proxy-ntlm-domains']
-    )
+    syncSession.allowNTLMCredentialsForDomains(config['proxy-ntlm-domains'])
   }
 
-  session.defaultSession.setCertificateVerifyProc((request, callback) => {
+  syncSession.setCertificateVerifyProc((request, callback) => {
     const { hostname, certificate, verificationResult, errorCode } = request
     if (verificationResult < 0) {
       log.warn(
@@ -108,13 +112,13 @@ const setup = async (app, config, session, userAgent, doneSetup) => {
   const originalFetch = global.fetch
   const electronFetch = require('electron-fetch')
   global.fetch = (url, opts = {}) => {
-    opts.session = session.defaultSession
+    opts.session = syncSession
     opts.headers = opts.headers || {}
     opts.headers['User-Agent'] = userAgent
     return electronFetch(url, opts)
   }
   http.Agent.globalAgent = http.globalAgent = https.globalAgent = new ElectronProxyAgent(
-    session.defaultSession
+    syncSession
   )
   const parseRequestOptions = options => {
     if (typeof options === 'string') {
@@ -138,7 +142,7 @@ const setup = async (app, config, session, userAgent, doneSetup) => {
   }
 
   if (config['proxy-script'] || config['proxy-rules']) {
-    await session.defaultSession.setProxy({
+    await syncSession.setProxy({
       pacScript: config['proxy-script'],
       proxyRules: config['proxy-rules'],
       proxyBypassRules: config['proxy-bypassrules']
@@ -153,6 +157,7 @@ const setup = async (app, config, session, userAgent, doneSetup) => {
 }
 
 module.exports = {
+  SESSION_PARTITION_NAME,
   config,
   setup
 }

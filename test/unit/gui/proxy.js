@@ -99,9 +99,10 @@ describe('gui/js/proxy', function() {
       ]) {
         app.removeAllListeners(event)
       }
-      session.defaultSession.setCertificateVerifyProc(null)
-      session.defaultSession.allowNTLMCredentialsForDomains('')
-      session.defaultSession.setProxy({}, done)
+      const syncSession = session.fromPartition(proxy.SESSION_PARTITION_NAME)
+      syncSession.setCertificateVerifyProc(null)
+      syncSession.allowNTLMCredentialsForDomains('')
+      syncSession.setProxy({}, done)
     }
 
     afterEach(revertProxySideEffects)
