@@ -3,6 +3,7 @@ const { dialog, session, BrowserView } = require('electron')
 const autoLaunch = require('./autolaunch')
 const defaults = require('./defaults')
 const { translate } = require('./i18n')
+const { SESSION_PARTITION_NAME } = require('./proxy')
 
 const log = require('../../core/app').logger({
   component: 'GUI'
@@ -60,7 +61,9 @@ module.exports = class OnboardingWM extends WindowManager {
       // remote code to load and make use of jQuery since it can't be loaded via
       // usual webpage means if a global `module` variable is defined (which is
       // the case with Node integration).
-      this.oauthView = new BrowserView()
+      this.oauthView = new BrowserView({
+        webPreferences: { partition: SESSION_PARTITION_NAME }
+      })
       this.win.setBrowserView(this.oauthView)
 
       // We want the view to take the entire available space so we get the
@@ -99,6 +102,8 @@ module.exports = class OnboardingWM extends WindowManager {
   }
 
   onRegisterRemote(event, arg) {
+    const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
+
     let desktop = this.desktop
     let cozyUrl
     try {
@@ -120,19 +125,19 @@ module.exports = class OnboardingWM extends WindowManager {
       const promise = new Promise(resolve => {
         resolveP = resolve
       })
-      session.defaultSession.webRequest.onBeforeRequest(({ url }, callback) => {
+      syncSession.webRequest.onBeforeRequest(({ url }, callback) => {
         if (url.match(/^file:\/\//)) {
           // Chrome won't honor server redirects to local files and the window
           // will hang if we don't cancel it.
-          session.defaultSession.webRequest.onBeforeRequest(null)
+          syncSession.webRequest.onBeforeRequest(null)
           callback({ cancel: true })
         } else {
           callback({ cancel: false })
         }
       })
-      session.defaultSession.webRequest.onBeforeRedirect(({ redirectURL }) => {
+      syncSession.webRequest.onBeforeRedirect(({ redirectURL }) => {
         if (redirectURL.match(/^file:\/\//)) {
-          session.defaultSession.webRequest.onBeforeRedirect(null)
+          syncSession.webRequest.onBeforeRedirect(null)
           // TODO only centerOnScreen if needed to display the whole folder screen
           //      and if the user hasn't moved the window before
           this.centerOnScreen(ONBOARDING_SCREEN_WIDTH, ONBOARDING_SCREEN_HEIGHT)
@@ -145,7 +150,7 @@ module.exports = class OnboardingWM extends WindowManager {
     }
     desktop.registerRemote(cozyUrl, arg.location, onRegistered).then(
       reg => {
-        session.defaultSession.clearStorageData()
+        syncSession.clearStorageData()
         this.win.webContents.once('dom-ready', () => {
           setTimeout(() => {
             event.sender.send('registration-done')
@@ -161,7 +166,7 @@ module.exports = class OnboardingWM extends WindowManager {
       err => {
         log.error(err)
         if (err.code && err.code.match(/PROXY/)) {
-          session.defaultSession.resolveProxy(cozyUrl, p => {
+          syncSession.resolveProxy(cozyUrl, p => {
             event.sender.send(
               'registration-error',
               translate('Address Proxy issue') + p

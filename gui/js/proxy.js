@@ -18,6 +18,8 @@ const log = require('../../core/app').logger({
 import { App, Session } from 'electron'
 */
 
+const SESSION_PARTITION_NAME = 'persist:sync'
+
 const config = (argv /*: Array<*> */ = process.argv) => {
   const config = yargs
     .env('COZY_DRIVE')
@@ -52,6 +54,10 @@ const setup = async (
   session /*: Session */,
   userAgent /*: string */
 ) => {
+  const syncSession = session.fromPartition(SESSION_PARTITION_NAME, {
+    cache: false
+  })
+
   const loginByRealm = {}
   if (config['login-by-realm']) {
     config['login-by-realm'].split(',').forEach(lbr => {
@@ -61,12 +67,10 @@ const setup = async (
   }
 
   if (config['proxy-ntlm-domains']) {
-    session.defaultSession.allowNTLMCredentialsForDomains(
-      config['proxy-ntlm-domains']
-    )
+    syncSession.allowNTLMCredentialsForDomains(config['proxy-ntlm-domains'])
   }
 
-  session.defaultSession.setCertificateVerifyProc((request, callback) => {
+  syncSession.setCertificateVerifyProc((request, callback) => {
     const { hostname, certificate, verificationResult, errorCode } = request
     if (verificationResult < 0) {
       log.warn(
@@ -116,7 +120,7 @@ const setup = async (
   const originalFetch = global.fetch
   const electronFetch = require('electron-fetch').default
   global.fetch = (url, opts = {}) => {
-    opts.session = session.defaultSession
+    opts.session = syncSession
     opts.headers = opts.headers || {}
     opts.headers['User-Agent'] = userAgent
     return electronFetch(url, opts)
@@ -124,7 +128,7 @@ const setup = async (
 
   // $FlowFixMe
   http.Agent.globalAgent = http.globalAgent = https.globalAgent = new ElectronProxyAgent(
-    session.defaultSession
+    syncSession
   )
 
   const parseRequestOptions = (options /* * */) => {
@@ -185,7 +189,7 @@ const setup = async (
   }
 
   if (config['proxy-script'] || config['proxy-rules']) {
-    await session.defaultSession.setProxy({
+    await syncSession.setProxy({
       pacScript: config['proxy-script'],
       proxyRules: config['proxy-rules'],
       proxyBypassRules: config['proxy-bypassrules']
@@ -226,12 +230,14 @@ const reset = async (
     app.removeAllListeners(event)
   }
 
-  session.defaultSession.setCertificateVerifyProc(null)
-  session.defaultSession.allowNTLMCredentialsForDomains('')
-  await session.defaultSession.setProxy({})
+  const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
+  syncSession.setCertificateVerifyProc(null)
+  syncSession.allowNTLMCredentialsForDomains('')
+  await syncSession.setProxy({})
 }
 
 module.exports = {
+  SESSION_PARTITION_NAME,
   config,
   setup,
   reset
