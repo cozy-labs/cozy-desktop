@@ -1,5 +1,132 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.21.0 - 2020-06-25
+
+Improvements for all users:
+
+- Moving a document to an ignored location (see
+  https://github.com/cozy-labs/cozy-desktop/blob/master/core/config/.cozyignore
+  and your local `.cozyignore` rules file) after another move would result in
+  the first move being propagated to the remote Cozy and the document being
+  desynchronized after that.
+  From now on, the second move to the ignored location will cancel the first
+  move and the client will correctly propagate a deletion to the remote Cozy.
+- Deleting a file on your Cozy while moving it on your local filesystem with
+  your client stopped would lead to the desynchronisation of the file. It would
+  be deleted on your Cozy but would still exist on your local filesystem and all
+  later modifications would not be propagated.
+  We're now refusing the deletion because we believe the movement indicates a
+  desire to keep the file and it seems easier for the user to understand and fix
+  the situation if that was not the expected behavior. The file move will then
+  be propagated to the remote Cozy and kept in sync.
+- In some situations we can detect changes made on your remote Cozy on documents
+  of which we haven't yet received the parent folders. We can't process orphaned
+  documents so we require the parents of all documents before we allow
+  processing those and if we don't have them, we'll issue an error that results
+  in the "Synchronization incomplete" status message, literally blocking the
+  synchronization process.
+  We believe that most of those issues could resolve themselves by merely
+  refusing the orphan change and synchronizing the other changes so we've
+  decided not to block the synchronization process anymore when we encounter
+  orphan changes.
+- We detected that the remote watcher whose role is to detect, fetch and analyze
+  changes coming from your remote Cozy could fail without the synchronization
+  process stopping and alerting you. This means that in such cases, the changes
+  made on your local filesystem would still be detected and potentially
+  propagated to your remote Cozy but the changes made remotely would not be
+  applied locally until a client restart.
+  We've refactored the life-cycle management of the whole synchronization
+  process and the remote watcher and we made sure that errors coming from the
+  remote watcher are caught by the synchronization process which will in turn
+  alert you and stop itself and both local and remote watchers.
+- The client would not detect the correct mime type for `.cozy-note` files when
+  detected on the local filesystem. This would change the saved mime type of
+  notes moved on the local filesystem and not show the correct icon in the
+  Recent changes list in our main window.
+  We've switched to a custom mime detector for those files to detect our custom
+  mime type.
+- Since propagating a local file update to a remote Cozy Note would break this
+  note (i.e. it would not be detected as such and we would lose its actual
+  content while still keeping its markdown export within the associated Cozy
+  file), we've decided to prevent all local note updates to be propagated to the
+  remote Cozy.
+- In order to still synchronize your local updates to notes with your remote
+  Cozy, we're now using the conflict mechanism to rename the original note on
+  the remote Cozy before upload your new content to the appropriate location.
+  This way, you have both your updated content and the original note that can
+  still be edited within the Cozy Notes application.
+- We've found that when renaming a folder while another folder within the same
+  parent starts with the renamed folder's original name (e.g. renaming `cozy` to
+  `cozy cloud` while you have `cozy company` in the same parent) would lead to
+  the incorrect movement of the content of the other folder (i.e. the content of
+  `cozy company` in our example).
+  We've fixed the algorithm that lists the content of a folder so that it looks
+  only within the exact given location and not similar locations.
+- In some situations, locally creating a folder within a moved or renamed parent
+  could lead to the creation of a new parent folder on the remote Cozy at the
+  target location, thus making the parent movement impossible since a document
+  would already exist at the target location. This situation was caused by some
+  logic we implemented to help create complex hierarchies in any order. We would
+  create a missing parent folder when creating a new folder on the remote Cozy.
+  We've now stopped doing this and will not synchronize the creation of a folder
+  if its parent does not exist. In case the parent location would be created
+  later by the client (e.g. when propagating the parent movement), the new
+  folder will eventually be synchronized.
+- Remote changes resulting in an `MergeMissingParentError` do not block the
+  synchronization process since v3.21.0-beta.1 but the changes from the affected
+  batch and the ones coming after will be fetched over and over again until the
+  errors are resolved, which might never come.
+  We've identified a few sources of those errors that should be fixed really
+  soon and believe we should not encounter solvable missing parent issues
+  anymore so we've decided to mark them as processed anyway and rely on the next
+  changes to resolve those missing parents issues.
+- We added a migration to force a refetch of all remote Cozy Notes in order to
+  avoid as many dispensable conflicts as we can during the first reboot after
+  this release installation.
+- We made sure a Cozy Note is still identified as such after saving changes like
+  an update on the remote Cozy. This will ensure they will stay protected from
+  local updates afterwards.
+- Until now the authentication of your Cozy during the initial connection of the
+  client would always be done by our own remote application. We're adding the
+  possibility for partners to offer their users to connect via their own SSO
+  portal so we now run the connection flow in a dedicated sandbox.
+  This has two advantages when an SSO portal is involved:
+  1. the portal code is run in a browser like environment with no alterations so
+     it should work out of the box
+  2. the portal code is isolated from the rest of our application adding another
+     layer of security preventing malicious code on the portal itself to access
+     your computer
+- We made sure the application of the move and update of a file on the local
+  filesystem does not trigger invalid changes that would be propagated to the
+  remote Cozy.
+- We discovered timing issues during the propagation of remote file changes to
+  the local filesystem. These can result in invalid metadata being sent to the
+  remote Cozy after propagating a grouped content update and file renaming. In
+  case the file was in a shared directory, the metadata change would in turn be
+  propagated via the sharing to other Cozies and we can end up with a
+  completely desynchronized file and conflicts.
+  To prevent these invalid metadata from being propagated to the remote Cozy, we
+  introduced a new way to store and compare local file states. This also helps
+  us detect during a client restart when a remote file modification was fetched
+  but not completely propagated to the file system and avoid creating a
+  conflict.
+
+Improvements for Windows users:
+
+- To emphasize the fact that Cozy Notes should not be edited on your local
+  filesystem we were marking the local note files as read-only. This was not
+  preventing us from overwriting them with new remote updates on Linux and
+  macOS but it was on Windows in some cases. When this would happen, the local
+  file content would not reflect the remote content anymore and it could even
+  lead to the remote Note being broken after a Desktop client restart.
+  Since we've now introduced a conflict mechanism to protect Cozy Notes from
+  local modifications, we can remove the read-only permission and remote updates
+  will be propagated to the local filesystem on all platforms.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.21.0-beta.10 - 2020-06-22
 
 Improvements for all users:
