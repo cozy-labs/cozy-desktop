@@ -3,24 +3,24 @@
 
 
 # Remove notes content
-def delNoteMetadata(obj):
+def redactNote(obj):
   obj |=
     (.
-    | del(.metadata.content)
-    | del(.metadata.schema)
-    | if isempty(.moveFrom | objects) | not then delNoteMetadata(.moveFrom) else . end
-    | if isempty(.overwrite | objects) | not then delNoteMetadata(.overwrite) else . end
+    | if isempty(.metadata.content | objects) | not then .metadata.content |= "[redacted]" else . end
+    | if isempty(.metadata.schema | objects) | not then .metadata.schema |= "[redacted]" else . end
+    | if isempty(.moveFrom | objects) | not then redactNote(.moveFrom) else . end
+    | if isempty(.overwrite | objects) | not then redactNote(.overwrite) else . end
     )
 ;
 
 def cleanNote:
   .
-  | if isempty(.doc | objects) |not then delNoteMetadata(.doc) else . end
-  | if isempty(.was | objects) |not then delNoteMetadata(.was) else . end
-  | if isempty(.remoteDoc | objects) |not then delNoteMetadata(.remoteDoc) else . end
+  | if isempty(.doc | objects) |not then redactNote(.doc) else . end
+  | if isempty(.was | objects) |not then redactNote(.was) else . end
+  | if isempty(.remoteDoc | objects) |not then redactNote(.remoteDoc) else . end
   | if isempty(.change | objects) | not then .
-    | .change |= (. | delNoteMetadata(.doc))
-    | .change |= (. | delNoteMetadata(.was))
+    | .change |= (. | redactNote(.doc))
+    | .change |= (. | redactNote(.was))
     else . end
 ;
 
@@ -107,7 +107,7 @@ def noproxy: select(.component | test("GUI:proxy") | not);
 #
 #     yarn jq -c conflict path/to/logs*
 #
-def is_conflict: .msg == "resolveConflictAsync";
+def is_conflict: .msg | test("resolveConflictAsync|Resolving conflict");
 def conflict: clean | select(is_conflict);
 
 # Non-issue filters (so we can ignore them when looking for real issues):
