@@ -99,12 +99,12 @@ class LocalChangeMap {
     path /*: string */,
     callback /*: (LocalChange) => T */
   ) /*: ?T */ {
-    const change = this.changesByPath.get(path)
+    const change = this.changesByPath.get(path.normalize())
     if (change) return callback(change)
   }
 
   put(c /*: LocalChange */) {
-    this.changesByPath.set(c.path, c)
+    this.changesByPath.set(c.path.normalize(), c)
     if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
     else this.changes.push(c)
   }
@@ -280,8 +280,8 @@ function sortBeforeSquash(changes /*: LocalChange[] */) {
   changes.sort((a, b) => {
     if (a.type === 'DirMove' || a.type === 'FileMove') {
       if (b.type === 'DirMove' || b.type === 'FileMove') {
-        if (a.path < b.path) return -1
-        else if (a.path > b.path) return 1
+        if (a.path.normalize() < b.path.normalize()) return -1
+        else if (a.path.normalize() > b.path.normalize()) return 1
         else return 0
       } else return -1
     } else if (b.type === 'DirMove' || b.type === 'FileMove') {
@@ -300,24 +300,26 @@ function squashMoves(changes /*: LocalChange[] */) {
   const stopMeasure = measureTime('LocalWatcher#squashMoves')
 
   for (let i = 0; i < changes.length; i++) {
-    let a = changes[i]
+    const a = changes[i]
     if (a.type !== 'DirMove' && a.type !== 'FileMove') continue
+    const pathA = a.path.normalize()
+    const oldPathA = a.old && a.old.path.normalize()
 
     for (let j = i + 1; j < changes.length; j++) {
-      let b = changes[j]
+      const b = changes[j]
       if (b.type !== 'DirMove' && b.type !== 'FileMove') continue
+      const pathB = b.path.normalize()
+      const oldPathB = b.old && b.old.path.normalize()
 
       // inline of LocalChange.isChildMove
       if (
         a.type === 'DirMove' &&
-        (b.path.indexOf(a.path + path.sep) === 0 ||
-          (a.old && b.old && b.old.path.indexOf(a.old.path + path.sep) === 0))
+        (pathB.startsWith(pathA + path.sep) ||
+          (oldPathA && oldPathB && oldPathB.startsWith(oldPathA + path.sep)))
       ) {
         log.debug({ oldpath: b.old.path, path: b.path }, 'descendant move')
         a.wip = a.wip || b.wip
-        if (
-          b.path.substr(a.path.length) === b.old.path.substr(a.old.path.length)
-        ) {
+        if (pathB.substr(pathA.length) === oldPathB.substr(oldPathA.length)) {
           log.debug(
             { oldpath: b.old.path, path: b.path },
             'ignoring explicit child move'
