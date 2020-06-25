@@ -99,12 +99,12 @@ class LocalChangeMap {
     path /*: string */,
     callback /*: (LocalChange) => T */
   ) /*: ?T */ {
-    const change = this.changesByPath.get(path)
+    const change = this.changesByPath.get(path.normalize())
     if (change) return callback(change)
   }
 
   put(c /*: LocalChange */) {
-    this.changesByPath.set(c.path, c)
+    this.changesByPath.set(c.path.normalize(), c)
     if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
     else this.changes.push(c)
   }
@@ -280,8 +280,8 @@ function sortBeforeSquash(changes /*: LocalChange[] */) {
   changes.sort((a, b) => {
     if (a.type === 'DirMove' || a.type === 'FileMove') {
       if (b.type === 'DirMove' || b.type === 'FileMove') {
-        if (a.path < b.path) return -1
-        else if (a.path > b.path) return 1
+        if (a.path.normalize() < b.path.normalize()) return -1
+        else if (a.path.normalize() > b.path.normalize()) return 1
         else return 0
       } else return -1
     } else if (b.type === 'DirMove' || b.type === 'FileMove') {

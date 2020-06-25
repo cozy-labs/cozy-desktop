@@ -216,10 +216,10 @@ function isChildMove(
   return (
     a.type === 'DirMove' &&
     (b.type === 'DirMove' || b.type === 'FileMove') &&
-    b.path.indexOf(a.path + path.sep) === 0 &&
+    b.path.normalize().startsWith(a.path.normalize() + path.sep) &&
     a.old &&
     b.old &&
-    b.old.path.indexOf(a.old.path + path.sep) === 0
+    b.old.path.normalize().startsWith(a.old.path.normalize() + path.sep)
   )
 }
 
@@ -233,19 +233,28 @@ const isUpdate = (a /*: LocalChange */) /*: boolean %checks */ =>
   a.type === 'FileUpdate'
 
 function addPath(a /*: LocalChange */) /*: ?string */ {
-  return isAdd(a) || isMove(a) ? a.path : null
+  return isAdd(a) || isMove(a) ? a.path.normalize() : null
 }
 function delPath(a /*: LocalChange */) /*: ?string */ {
-  return isDelete(a) ? a.path : isMove(a) ? a.old.path : null
+  return isDelete(a)
+    ? a.path.normalize()
+    : isMove(a)
+    ? a.old.path.normalize()
+    : null
 }
 function updatePath(a /*: LocalChange */) /*: ?string */ {
-  return isUpdate(a) ? a.path : null
+  return isUpdate(a) ? a.path.normalize() : null
 }
 function childOf(p /*: ?string */, c /*: ?string */) /*: boolean */ {
-  return p != null && c != null && c !== p && c.startsWith(p + path.sep)
+  return (
+    p != null &&
+    c != null &&
+    c.normalize() !== p.normalize() &&
+    c.normalize().startsWith(p.normalize() + path.sep)
+  )
 }
 function lower(p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ {
-  return p1 != null && p2 != null && p2 !== p1 && p1 < p2
+  return p1 != null && p2 != null && !(p1.normalize() >= p2.normalize())
 }
 
 function isChildDelete(a /*: LocalChange */, b /*: LocalChange */) {
@@ -341,7 +350,7 @@ function fileMoveFromUnlinkAdd(
     sameInodeChange
   )
   if (!unlinkChange) return
-  if (_.get(unlinkChange, 'old.path') === e.path) return
+  if (_.get(unlinkChange, 'old.path').normalize() === e.path.normalize()) return
   const fileMove /*: Object */ = build('FileMove', e.path, {
     stats: e.stats,
     md5sum: e.md5sum,
@@ -367,7 +376,7 @@ function dirMoveFromUnlinkAdd(
     sameInodeChange
   )
   if (!unlinkChange) return
-  if (_.get(unlinkChange, 'old.path') === e.path) return
+  if (_.get(unlinkChange, 'old.path').normalize() === e.path.normalize()) return
   if (!e.wip) {
     log.debug(
       { oldpath: unlinkChange.path, path: e.path },
@@ -461,7 +470,7 @@ function fileMoveIdentical(
   if (
     !addChange ||
     metadata.id(addChange.path) !== metadata.id(e.path) ||
-    addChange.path === e.path
+    addChange.path.normalize() === e.path.normalize()
   )
     return
   log.debug(
@@ -483,7 +492,7 @@ function fileMoveIdenticalOffline(
   const srcDoc = dstEvent.old
   if (
     !srcDoc ||
-    srcDoc.path === dstEvent.path ||
+    srcDoc.path.normalize() === dstEvent.path.normalize() ||
     srcDoc.ino !== dstEvent.stats.ino
   )
     return
@@ -510,7 +519,7 @@ function dirRenamingCaseOnlyFromAddAdd(
   if (
     !addChange ||
     metadata.id(addChange.path) !== metadata.id(e.path) ||
-    addChange.path === e.path
+    addChange.path.normalize() === e.path.normalize()
   ) {
     return
   }
@@ -532,7 +541,7 @@ function dirMoveIdenticalOffline(
   const srcDoc = dstEvent.old
   if (
     !srcDoc ||
-    srcDoc.path === dstEvent.path ||
+    srcDoc.path.normalize() === dstEvent.path.normalize() ||
     srcDoc.ino !== dstEvent.stats.ino
   )
     return
@@ -563,7 +572,7 @@ function includeAddEventInFileMove(
   if (!moveChange) return
   if (
     !moveChange.wip &&
-    moveChange.path === e.path &&
+    moveChange.path.normalize() === e.path.normalize() &&
     moveChange.stats.ino === e.stats.ino &&
     moveChange.md5sum === e.md5sum
   )
@@ -600,7 +609,7 @@ function dirMoveOverwriteOnMacAPFS(
   if (!moveChange) return
   if (
     !moveChange.wip &&
-    moveChange.path === e.path &&
+    moveChange.path.normalize() === e.path.normalize() &&
     moveChange.stats.ino === e.stats.ino
   ) {
     log.debug(
@@ -618,7 +627,7 @@ function dirRenamingIdenticalLoopback(
 ) {
   const moveChange /*: ?LocalDirMove */ = maybeMoveFolder(sameInodeChange)
   if (!moveChange) return
-  if (moveChange.old.path === e.path) {
+  if (moveChange.old.path.normalize() === e.path.normalize()) {
     log.debug(
       {
         path: moveChange.path,
