@@ -708,6 +708,106 @@ onPlatform('darwin', () => {
       })
     })
 
+    describe('DirMove(é => è) + FileMove(é/à => è/à)', () => {
+      const dirStats = { ino: 765 }
+      const fileStats = { ino: 766 }
+
+      context('when é and à are encoded with NFC in PouchDB', () => {
+        const oldDirPath = 'é'
+        const newDirPath = 'è'
+        const filename = 'à'
+
+        it('is a DirMove to è encoded with NFD', () => {
+          const oldDir = {
+            path: oldDirPath.normalize('NFC'),
+            ino: dirStats.ino
+          }
+          const oldFile = {
+            path: path.join(oldDir.path, filename.normalize('NFC')),
+            ino: fileStats.ino
+          }
+
+          const events /*: LocalEvent[] */ = [
+            {
+              type: 'unlinkDir',
+              path: oldDir.path,
+              old: oldDir
+            },
+            {
+              type: 'addDir',
+              path: newDirPath.normalize('NFD'),
+              stats: dirStats
+            },
+            {
+              type: 'unlink',
+              path: oldFile.path,
+              old: oldFile
+            },
+            {
+              type: 'add',
+              path: path.join(newDirPath, filename).normalize('NFD'),
+              stats: fileStats
+            }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'DirMove',
+              path: newDirPath.normalize('NFD'),
+              ino: dirStats.ino,
+              stats: dirStats,
+              old: oldDir,
+              wip: undefined
+            }
+          ])
+          should(pendingChanges).deepEqual([])
+        })
+      })
+    })
+
+    describe('FileUpdate(é/à)', () => {
+      const dirStats = { ino: 765 }
+      const fileStats = { ino: 766 }
+
+      context('when é and à are encoded with NFC in PouchDB', () => {
+        const dirPath = 'é'
+        const filename = 'à'
+
+        it('is a FileUpdate to è encoded with NFD', () => {
+          const oldDir = { path: dirPath.normalize('NFC'), ino: dirStats.ino }
+          const oldFile = {
+            path: path.join(oldDir.path, filename.normalize('NFC')),
+            ino: fileStats.ino
+          }
+
+          const events /*: LocalEvent[] */ = [
+            {
+              type: 'change',
+              path: oldFile.path.normalize('NFD'),
+              stats: fileStats,
+              old: oldFile
+            }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'FileUpdate',
+              path: oldFile.path.normalize('NFD'),
+              ino: fileStats.ino,
+              stats: fileStats,
+              old: oldFile,
+              md5sum: undefined // XXX: We're just not computing it
+            }
+          ])
+          should(pendingChanges).deepEqual([])
+        })
+      })
+    })
+
     describe('move from inside move', () => {
       it('happened when client was stopped (unlink* events are made up)', () => {
         const src /*: Metadata */ = builders
