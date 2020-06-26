@@ -191,6 +191,8 @@ module.exports = {
   markAsNew,
   markAsUnsyncable,
   markAsUpToDate,
+  samePath,
+  areParentChildPaths,
   sameFolder,
   sameFile,
   sameFileIgnoreRev,
@@ -503,6 +505,34 @@ function assignMaxDate(doc /*: Metadata */, was /*: ?Metadata */) {
   const docUpdatedAt = new Date(doc.updated_at)
   if (docUpdatedAt < wasUpdatedAt) {
     doc.updated_at = was.updated_at
+  }
+}
+
+function samePath(
+  one /*: string|{path:string} */,
+  two /*: string|{path:string} */
+) {
+  const pathOne = typeof one === 'string' ? one : one.path
+  const pathTwo = typeof two === 'string' ? two : two.path
+
+  if (process.platform === 'darwin') {
+    return pathOne.normalize() === pathTwo.normalize()
+  } else {
+    return pathOne === pathTwo
+  }
+}
+
+function areParentChildPaths(
+  parent /*: string|{path:string} */,
+  child /*: string|{path:string} */
+) {
+  const parentPath = typeof parent === 'string' ? parent : parent.path
+  const childPath = typeof child === 'string' ? child : child.path
+
+  if (process.platform === 'darwin') {
+    return childPath.normalize().startsWith(parentPath.normalize() + path.sep)
+  } else {
+    return childPath.startsWith(parentPath + path.sep)
   }
 }
 

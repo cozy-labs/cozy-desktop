@@ -314,14 +314,14 @@ class RemoteWatcher {
           detail: `${docType} was created and trashed remotely`
         }
       }
+      const oldPath = was.path
       const previousMoveToSamePath = _.find(
         previousChanges,
         change =>
           (change.type === 'DescendantChange' ||
             change.type === 'FileMove' ||
             change.type === 'DirMove') &&
-          // $FlowFixMe
-          change.doc.path === was.path
+          metadata.samePath(change.doc, oldPath)
       )
 
       if (previousMoveToSamePath) {
@@ -340,7 +340,7 @@ class RemoteWatcher {
     if (!was || was.deleted) {
       return remoteChange.added(doc)
     }
-    if (was._id === doc._id && was.path === doc.path) {
+    if (was._id === doc._id && metadata.samePath(was, doc)) {
       if (
         doc.docType === 'file' &&
         doc.md5sum === was.md5sum &&

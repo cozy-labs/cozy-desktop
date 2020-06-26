@@ -6,6 +6,7 @@
 const _ = require('lodash')
 const path = require('path')
 
+const metadata = require('../../metadata')
 const remoteChange = require('../change')
 
 const sideName = 'remote'
@@ -217,7 +218,7 @@ const squashMoves = (
     if (
       previousChange.type === 'FileTrashing' &&
       change.type === 'FileMove' &&
-      previousChange.was.path === change.doc.path
+      metadata.samePath(previousChange.was, change.doc)
     ) {
       _.assign(previousChange, {
         type: 'IgnoredChange',
@@ -230,7 +231,7 @@ const squashMoves = (
     if (
       previousChange.type === 'DirTrashing' &&
       change.type === 'DirMove' &&
-      previousChange.was.path === change.doc.path
+      metadata.samePath(previousChange.was, change.doc)
     ) {
       _.assign(previousChange, {
         type: 'IgnoredChange',

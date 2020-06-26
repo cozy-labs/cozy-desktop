@@ -243,7 +243,11 @@ function isChildDestination(
   p /*: RemoteChange */,
   c /*: RemoteChange */
 ) /*: boolean %checks */ {
-  return isFolderMove(p) && isMove(c) && path.dirname(c.doc.path) === p.doc.path
+  return (
+    isFolderMove(p) &&
+    isMove(c) &&
+    metadata.samePath(path.dirname(c.doc.path), p.doc.path)
+  )
 }
 
 function isChildSource(
@@ -255,7 +259,7 @@ function isChildSource(
     isMove(c) &&
     p.was &&
     c.was &&
-    path.dirname(c.was.path) === p.was.path
+    metadata.samePath(path.dirname(c.was.path), p.was.path)
   )
 }
 
@@ -271,7 +275,7 @@ function isOnlyChildMove(
   return (
     isChildSource(p, c) &&
     isChildDestination(p, c) &&
-    path.basename(c.doc.path) === path.basename(c.was.path)
+    metadata.samePath(path.basename(c.doc.path), path.basename(c.was.path))
   )
 }
 
@@ -339,7 +343,7 @@ const deletedId = (a /*: RemoteChange */) /*: ?string */ =>
 const ignoredPath = (a /*: RemoteChange */) /*: ?string */ =>
   isIgnore(a) && typeof a.doc.path === 'string' ? a.doc.path : null
 const areParentChild = (p /*: ?string */, c /*: ?string */) /*: boolean */ =>
-  !!p && !!c && c.startsWith(p + path.sep)
+  !!p && !!c && metadata.areParentChildPaths(p, c)
 const areEqual = (a /*: ?string */, b /*: ?string */) /*: boolean */ =>
   !!a && !!b && a === b
 const lower = (p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ =>
