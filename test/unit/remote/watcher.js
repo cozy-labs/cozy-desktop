@@ -455,6 +455,361 @@ describe('RemoteWatcher', function() {
       })
     })
 
+    onPlatform('darwin', () => {
+      describe('file update', () => {
+        context('at root with normalization change', () => {
+          it('is not identified as a move', async function() {
+            const oldRemote = builders
+              .remoteFile()
+              .name('énoncé'.normalize('NFC'))
+              .build()
+            const oldDoc = await builders
+              .metafile()
+              .fromRemote(oldRemote)
+              .create()
+
+            const newRemote = builders
+              .remoteFile(oldRemote)
+              .name(oldRemote.name.normalize('NFD'))
+              .shortRev(2)
+              .build()
+
+            const [change] = this.watcher.analyse([newRemote], [oldDoc])
+
+            should(change).have.property('type', 'FileUpdate')
+            should(change.doc).have.property('path', oldDoc.path)
+          })
+        })
+
+        context('in accented folder with normalization change', () => {
+          it('is not identified as a move', async function() {
+            const oldRemoteDir = builders
+              .remoteDir()
+              .name('énoncés'.normalize('NFD'))
+              .build()
+            const oldDir = await builders
+              .metadir()
+              .fromRemote(oldRemoteDir)
+              .create()
+            const oldRemoteFile = builders
+              .remoteFile()
+              .inDir(oldRemoteDir)
+              .name('file')
+              .build()
+            const oldFile = await builders
+              .metafile()
+              .fromRemote(oldRemoteFile)
+              .create()
+
+            const newRemoteDir = builders
+              .remoteDir(oldRemoteDir)
+              .name(oldRemoteDir.name.normalize('NFC'))
+              .shortRev(2)
+              .build()
+            const newRemoteFile = builders
+              .remoteFile(oldRemoteFile)
+              .inDir(newRemoteDir)
+              .shortRev(2)
+              .build()
+
+            const [dirChange, fileChange] = this.watcher.analyse(
+              [newRemoteDir, newRemoteFile],
+              [oldDir, oldFile]
+            )
+
+            should(dirChange).have.property('type', 'DirAddition')
+            should(dirChange.doc).have.property('path', oldDir.path)
+            should(fileChange).have.property('type', 'FileUpdate')
+            should(fileChange.doc).have.property('path', oldFile.path)
+          })
+        })
+
+        context(
+          'in accented folder with different local/remote normalizations',
+          () => {
+            it('is not identified as a move', async function() {
+              const oldRemoteDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const oldDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(oldRemoteDir.path.normalize('NFD'))
+                .create()
+              const oldRemoteFile = builders
+                .remoteFile()
+                .inDir(oldRemoteDir)
+                .name('file')
+                .build()
+              const oldFile = await builders
+                .metafile()
+                .fromRemote(oldRemoteFile)
+                .path(path.join(oldDir.path, oldRemoteFile.name))
+                .create()
+
+              const newRemoteFile = builders
+                .remoteFile(oldRemoteFile)
+                .shortRev(2)
+                .build()
+
+              const [fileChange] = this.watcher.analyse(
+                [newRemoteFile],
+                [oldFile]
+              )
+
+              should(fileChange).have.property('type', 'FileUpdate')
+              should(fileChange.doc).have.property('path', oldFile.path)
+            })
+          }
+        )
+
+        context(
+          'in renamed accented folder with different local/remote normalizations',
+          () => {
+            it('is identified as a descendant change with old parent normalization', async function() {
+              const oldRemoteDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const oldDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(oldRemoteDir.path.normalize('NFD'))
+                .create()
+              const oldRemoteFile = builders
+                .remoteFile()
+                .inDir(oldRemoteDir)
+                .name('file')
+                .build()
+              const oldFile = await builders
+                .metafile()
+                .fromRemote(oldRemoteFile)
+                .path(path.join(oldDir.path, oldRemoteFile.name))
+                .create()
+
+              const newRemoteDir = builders
+                .remoteDir(oldRemoteDir)
+                .name('corrigés'.normalize('NFC'))
+                .shortRev(2)
+                .build()
+              const newRemoteFile = builders
+                .remoteFile(oldRemoteFile)
+                .inDir(newRemoteDir)
+                .shortRev(2)
+                .build()
+
+              const [dirChange, fileChange] = this.watcher.analyse(
+                [newRemoteDir, newRemoteFile],
+                [oldDir, oldFile]
+              )
+
+              const oldNFDName = oldRemoteDir.name.normalize('NFD')
+              const newNFDName = newRemoteDir.name.normalize('NFD')
+              should(dirChange).have.property('type', 'DirMove')
+              should(dirChange.doc).have.property(
+                'path',
+                oldDir.path.replace(oldNFDName, newNFDName)
+              )
+              should(fileChange).have.property('type', 'DescendantChange')
+              should(fileChange.doc).have.property(
+                'path',
+                oldFile.path.replace(oldNFDName, newNFDName)
+              )
+            })
+          }
+        )
+
+        context(
+          'in renamed folder with different local/remote normalizations',
+          () => {
+            it('is identified as a descendant change with old parent normalization', async function() {
+              const oldRemoteDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const oldDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(oldRemoteDir.path.normalize('NFD'))
+                .create()
+              const oldRemoteFile = builders
+                .remoteFile()
+                .inDir(oldRemoteDir)
+                .name('file')
+                .build()
+              const oldFile = await builders
+                .metafile()
+                .fromRemote(oldRemoteFile)
+                .path(path.join(oldDir.path, oldRemoteFile.name))
+                .create()
+
+              const newRemoteDir = builders
+                .remoteDir(oldRemoteDir)
+                .name('corrigés'.normalize('NFC'))
+                .shortRev(2)
+                .build()
+              const newRemoteFile = builders
+                .remoteFile(oldRemoteFile)
+                .inDir(newRemoteDir)
+                .shortRev(2)
+                .build()
+
+              const [dirChange, fileChange] = this.watcher.analyse(
+                [newRemoteDir, newRemoteFile],
+                [oldDir, oldFile]
+              )
+
+              const oldNFDName = oldRemoteDir.name.normalize('NFD')
+              const newNFDName = newRemoteDir.name.normalize('NFD')
+              should(dirChange).have.property('type', 'DirMove')
+              should(dirChange.doc).have.property(
+                'path',
+                oldDir.path.replace(oldNFDName, newNFDName)
+              )
+              should(fileChange).have.property('type', 'DescendantChange')
+              should(fileChange.doc).have.property(
+                'path',
+                oldFile.path.replace(oldNFDName, newNFDName)
+              )
+            })
+          }
+        )
+      })
+
+      describe('file addition', () => {
+        context(
+          'in accented folder with different local/remote normalizations',
+          () => {
+            it('is identified as an addition with old parent normalization', async function() {
+              const oldRemoteDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const oldDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(oldRemoteDir.path.normalize('NFD'))
+                .create()
+
+              const newRemoteFile = builders
+                .remoteFile()
+                .inDir(oldRemoteDir)
+                .name('file')
+                .build()
+
+              const [fileChange] = this.watcher.analyse([newRemoteFile], [])
+
+              should(fileChange).have.property('type', 'FileAddition')
+              should(fileChange.doc).have.property(
+                'path',
+                path.join(oldDir.path, newRemoteFile.name)
+              )
+            })
+          }
+        )
+
+        context(
+          'in created folder in accented folder with different local/remote normalizations',
+          () => {
+            it('is identified as an addition with old ancestor normalization', async function() {
+              const remoteParentDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const parentDir = await builders
+                .metadir()
+                .fromRemote(remoteParentDir)
+                .path(remoteParentDir.path.normalize('NFD'))
+                .create()
+
+              const newRemoteDir = builders
+                .remoteDir()
+                .inDir(remoteParentDir)
+                .name('algébre'.normalize('NFC'))
+                .build()
+              const newRemoteFile = builders
+                .remoteFile()
+                .inDir(newRemoteDir)
+                .name('file')
+                .build()
+
+              const [dirChange, fileChange] = this.watcher.analyse(
+                [newRemoteDir, newRemoteFile],
+                []
+              )
+
+              should(dirChange).have.property('type', 'DirAddition')
+              should(dirChange.doc).have.property(
+                'path',
+                path.join(parentDir.path, newRemoteDir.name)
+              )
+              should(fileChange).have.property('type', 'FileAddition')
+              should(fileChange.doc).have.property(
+                'path',
+                path.join(parentDir.path, newRemoteDir.name, newRemoteFile.name)
+              )
+            })
+          }
+        )
+      })
+
+      describe('file move', () => {
+        context(
+          'with different local/remote normalizations to accented folder with different local/remote normalizations',
+          () => {
+            it('is identified as move with old normalization and new parent normalization', async function() {
+              const oldRemoteDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const oldDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(oldRemoteDir.path.normalize('NFD'))
+                .create()
+              const newRemoteDir = builders
+                .remoteDir()
+                .name('corrigés'.normalize('NFC'))
+                .build()
+              const newDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(newRemoteDir.path.normalize('NFD'))
+                .create()
+              const oldRemoteFile = builders
+                .remoteFile()
+                .inDir(oldRemoteDir)
+                .name('éssai 1.txt')
+                .build()
+              const oldFile = await builders
+                .metafile()
+                .fromRemote(oldRemoteFile)
+                .path(oldRemoteFile.path.normalize('NFD'))
+                .create()
+
+              const newRemoteFile = builders
+                .remoteFile(oldRemoteFile)
+                .inDir(newRemoteDir)
+                .shortRev(2)
+                .build()
+
+              const [fileChange] = this.watcher.analyse(
+                [newRemoteFile],
+                [oldFile]
+              )
+
+              should(fileChange).have.property('type', 'FileMove')
+              should(fileChange.doc).have.property(
+                'path',
+                oldFile.path.replace(oldDir.path, newDir.path)
+              )
+            })
+          }
+        )
+      })
+    })
+
     describe('file move overwriting trashed destination', () => {
       let srcFileDoc, dstFileDoc, olds, srcFileMoved, dstFileTrashed
 
