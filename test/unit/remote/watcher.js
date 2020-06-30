@@ -426,7 +426,7 @@ describe('RemoteWatcher', function() {
 
   describe('analyse', () => {
     describe('case-only renaming', () => {
-      it('is identified as a move', function() {
+      it('is identified as a move', async function() {
         const oldRemote = builders
           .remoteFile()
           .name('foo')
@@ -443,7 +443,7 @@ describe('RemoteWatcher', function() {
           oldRemote
         )
 
-        const changes = this.watcher.analyse([newRemote], [oldDoc])
+        const changes = await this.watcher.analyse([newRemote], [oldDoc])
 
         should(changes.map(c => c.type)).deepEqual(['FileMove'])
         should(changes[0])
@@ -474,7 +474,7 @@ describe('RemoteWatcher', function() {
               .shortRev(2)
               .build()
 
-            const [change] = this.watcher.analyse([newRemote], [oldDoc])
+            const [change] = await this.watcher.analyse([newRemote], [oldDoc])
 
             should(change).have.property('type', 'FileUpdate')
             should(change.doc).have.property('path', oldDoc.path)
@@ -512,7 +512,7 @@ describe('RemoteWatcher', function() {
               .shortRev(2)
               .build()
 
-            const [dirChange, fileChange] = this.watcher.analyse(
+            const [dirChange, fileChange] = await this.watcher.analyse(
               [newRemoteDir, newRemoteFile],
               [oldDir, oldFile]
             )
@@ -553,7 +553,7 @@ describe('RemoteWatcher', function() {
                 .shortRev(2)
                 .build()
 
-              const [fileChange] = this.watcher.analyse(
+              const [fileChange] = await this.watcher.analyse(
                 [newRemoteFile],
                 [oldFile]
               )
@@ -599,7 +599,7 @@ describe('RemoteWatcher', function() {
                 .shortRev(2)
                 .build()
 
-              const [dirChange, fileChange] = this.watcher.analyse(
+              const [dirChange, fileChange] = await this.watcher.analyse(
                 [newRemoteDir, newRemoteFile],
                 [oldDir, oldFile]
               )
@@ -655,7 +655,7 @@ describe('RemoteWatcher', function() {
                 .shortRev(2)
                 .build()
 
-              const [dirChange, fileChange] = this.watcher.analyse(
+              const [dirChange, fileChange] = await this.watcher.analyse(
                 [newRemoteDir, newRemoteFile],
                 [oldDir, oldFile]
               )
@@ -698,7 +698,10 @@ describe('RemoteWatcher', function() {
                 .name('file')
                 .build()
 
-              const [fileChange] = this.watcher.analyse([newRemoteFile], [])
+              const [fileChange] = await this.watcher.analyse(
+                [newRemoteFile],
+                []
+              )
 
               should(fileChange).have.property('type', 'FileAddition')
               should(fileChange.doc).have.property(
@@ -734,7 +737,7 @@ describe('RemoteWatcher', function() {
                 .name('file')
                 .build()
 
-              const [dirChange, fileChange] = this.watcher.analyse(
+              const [dirChange, fileChange] = await this.watcher.analyse(
                 [newRemoteDir, newRemoteFile],
                 []
               )
@@ -794,7 +797,7 @@ describe('RemoteWatcher', function() {
                 .shortRev(2)
                 .build()
 
-              const [fileChange] = this.watcher.analyse(
+              const [fileChange] = await this.watcher.analyse(
                 [newRemoteFile],
                 [oldFile]
               )
@@ -859,9 +862,9 @@ describe('RemoteWatcher', function() {
           return props
         })
 
-      it('is detected when moved source is first', function() {
+      it('is detected when moved source is first', async function() {
         const remoteDocs = [srcFileMoved, dstFileTrashed]
-        const changes = this.watcher.analyse(remoteDocs, olds)
+        const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
           {
             type: 'FileMove',
@@ -876,9 +879,9 @@ describe('RemoteWatcher', function() {
         ])
       })
 
-      it('is detected when trashed destination is first', function() {
+      it('is detected when trashed destination is first', async function() {
         const remoteDocs = [dstFileTrashed, srcFileMoved]
-        const changes = this.watcher.analyse(remoteDocs, olds)
+        const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
           {
             type: 'FileMove',
@@ -945,9 +948,9 @@ describe('RemoteWatcher', function() {
 
       describe('when moved source is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', async function() {
             const remoteDocs = [srcFileMoved, dstFileTrashed]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'FileTrashing',
@@ -964,9 +967,9 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the move before the trashing', function() {
+          it('sorts the move before the trashing', async function() {
             const remoteDocs = [srcFileMoved, dstFileTrashed]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'FileTrashing',
@@ -985,9 +988,9 @@ describe('RemoteWatcher', function() {
 
       describe('when trashed destination is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', async function() {
             const remoteDocs = [dstFileTrashed, srcFileMoved]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'FileTrashing',
@@ -1004,9 +1007,9 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the move before the trashing', function() {
+          it('sorts the move before the trashing', async function() {
             const remoteDocs = [dstFileTrashed, srcFileMoved]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'FileTrashing',
@@ -1073,9 +1076,9 @@ describe('RemoteWatcher', function() {
           return props
         })
 
-      it('is detected when moved source is first', function() {
+      it('is detected when moved source is first', async function() {
         const remoteDocs = [srcMoved, dstTrashed]
-        const changes = this.watcher.analyse(remoteDocs, olds)
+        const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
           {
             type: 'DirMove',
@@ -1090,9 +1093,9 @@ describe('RemoteWatcher', function() {
         ])
       })
 
-      it('is detected when trashed destination is first', function() {
+      it('is detected when trashed destination is first', async function() {
         const remoteDocs = [dstTrashed, srcMoved]
-        const changes = this.watcher.analyse(remoteDocs, olds)
+        const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
           {
             type: 'DirMove',
@@ -1159,9 +1162,9 @@ describe('RemoteWatcher', function() {
 
       describe('when moved source is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', async function() {
             const remoteDocs = [srcMoved, dstTrashed]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'DirTrashing',
@@ -1178,9 +1181,9 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the trashing before the move ', function() {
+          it('sorts the trashing before the move ', async function() {
             const remoteDocs = [srcMoved, dstTrashed]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'DirTrashing',
@@ -1199,9 +1202,9 @@ describe('RemoteWatcher', function() {
 
       describe('when trashed destination is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', async function() {
             const remoteDocs = [dstTrashed, srcMoved]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'DirTrashing',
@@ -1218,9 +1221,9 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the trashing before the move', function() {
+          it('sorts the trashing before the move', async function() {
             const remoteDocs = [dstTrashed, srcMoved]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'DirTrashing',
@@ -1239,7 +1242,7 @@ describe('RemoteWatcher', function() {
     })
 
     describe('descendantMoves', () => {
-      it('handles correctly descendantMoves', function() {
+      it('handles correctly descendantMoves', async function() {
         const remoteDir1 = builders
           .remoteDir()
           .name('src')
@@ -1303,7 +1306,7 @@ describe('RemoteWatcher', function() {
         }
 
         shouldBeExpected(
-          this.watcher.analyse(
+          await this.watcher.analyse(
             [
               updated(remoteFile, { path: '/dst/parent/child' }),
               updated(remoteDir2, { path: '/dst/parent' }),
@@ -1314,7 +1317,7 @@ describe('RemoteWatcher', function() {
         )
 
         shouldBeExpected(
-          this.watcher.analyse(
+          await this.watcher.analyse(
             [
               updated(remoteDir1, { name: 'dst', path: '/dst' }),
               updated(remoteDir2, { path: '/dst/parent' }),
@@ -1325,7 +1328,7 @@ describe('RemoteWatcher', function() {
         )
 
         shouldBeExpected(
-          this.watcher.analyse(
+          await this.watcher.analyse(
             [
               updated(remoteDir1, { name: 'dst', path: '/dst' }),
               updated(remoteFile, { path: '/dst/parent/child' }),

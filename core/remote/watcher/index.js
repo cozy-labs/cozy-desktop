@@ -13,6 +13,7 @@ const remoteChange = require('../change')
 const { handleCommonCozyErrors } = require('../cozy')
 const { inRemoteTrash } = require('../document')
 const squashMoves = require('./squashMoves')
+const normalizePaths = require('./normalizePaths')
 const logger = require('../../utils/logger')
 
 /*::
@@ -141,7 +142,7 @@ class RemoteWatcher {
     const remoteIds = docs.reduce((ids, doc) => ids.add(doc._id), new Set())
     const olds /*: Metadata[] */ = await this.pouch.allByRemoteIds(remoteIds)
 
-    const changes = this.analyse(docs, olds)
+    const changes = await this.analyse(docs, olds)
 
     log.trace('Apply changes...')
     const errors = await this.applyAll(changes)
@@ -160,18 +161,25 @@ class RemoteWatcher {
     log.trace('Done with pull.')
   }
 
-  analyse(
+  async analyse(
     remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */,
     olds /*: Array<Metadata> */
-  ) /*: Array<RemoteChange> */ {
+  ) /*: Promise<RemoteChange[]> */ {
     log.trace('Contextualize and analyse changesfeed results...')
     const changes = this.identifyAll(remoteDocs, olds)
     log.trace('Done with analysis.')
 
-    log.trace('Sort changes...')
-    remoteChange.sort(changes)
+    const normalizedChanges =
+      process.platform === 'darwin'
+        ? await normalizePaths(changes, {
+            pouch: this.pouch
+          })
+        : changes
 
-    return changes
+    log.trace('Sort changes...')
+    remoteChange.sort(normalizedChanges)
+
+    return normalizedChanges
   }
 
   identifyAll(
