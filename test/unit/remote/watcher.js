@@ -28,7 +28,6 @@ const { MergeMissingParentError } = require('../../../core/merge')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 
 const { assignId, ensureValidPath } = metadata
-const builders = new Builders({ cozy: cozyHelpers.cozy })
 
 /*::
 import type { RemoteChange } from '../../../core/remote/change'
@@ -37,6 +36,8 @@ import type { Metadata } from '../../../core/metadata'
 */
 
 describe('RemoteWatcher', function() {
+  let builders
+
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
@@ -55,6 +56,7 @@ describe('RemoteWatcher', function() {
       this.remoteCozy,
       this.events
     )
+    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
   afterEach(function() {
     this.watcher.stop()
@@ -135,10 +137,14 @@ describe('RemoteWatcher', function() {
   describe('watch', function() {
     const lastLocalSeq = '123'
     const lastRemoteSeq = lastLocalSeq + '456'
-    const changes = {
-      last_seq: lastRemoteSeq,
-      docs: [builders.remoteFile().build(), builders.remoteDir().build()]
-    }
+
+    let changes
+    beforeEach(function() {
+      changes = {
+        last_seq: lastRemoteSeq,
+        docs: [builders.remoteFile().build(), builders.remoteDir().build()]
+      }
+    })
 
     beforeEach(function() {
       sinon.stub(this.pouch, 'getRemoteSeqAsync')
@@ -244,9 +250,12 @@ describe('RemoteWatcher', function() {
     })
 
     context('on MergeMissingParentError', () => {
-      const missingParentError = {
-        err: new MergeMissingParentError(builders.metadata().build())
-      }
+      let missingParentError
+      beforeEach(function() {
+        missingParentError = {
+          err: new MergeMissingParentError(builders.metadata().build())
+        }
+      })
 
       beforeEach(function() {
         this.watcher.pullMany.returns([missingParentError])
@@ -273,19 +282,19 @@ describe('RemoteWatcher', function() {
   }
 
   describe('pullMany', function() {
-    const remoteDocs = [
-      builders.remoteFile().build(),
-      {
-        ...builders.remoteFile().build(),
-        _deleted: true
-      }
-    ]
     let apply
     let findMaybe
-
+    let remoteDocs
     beforeEach(function() {
       apply = sinon.stub(this.watcher, 'apply')
       findMaybe = sinon.stub(this.remoteCozy, 'findMaybe')
+      remoteDocs = [
+        builders.remoteFile().build(),
+        {
+          ...builders.remoteFile().build(),
+          _deleted: true
+        }
+      ]
     })
 
     afterEach(function() {
