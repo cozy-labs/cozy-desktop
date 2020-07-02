@@ -28,7 +28,6 @@ const { MergeMissingParentError } = require('../../../core/merge')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 
 const { assignId, ensureValidPath } = metadata
-const builders = new Builders({ cozy: cozyHelpers.cozy })
 
 /*::
 import type { RemoteChange } from '../../../core/remote/change'
@@ -37,6 +36,8 @@ import type { Metadata } from '../../../core/metadata'
 */
 
 describe('RemoteWatcher', function() {
+  let builders
+
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
@@ -55,6 +56,7 @@ describe('RemoteWatcher', function() {
       this.remoteCozy,
       this.events
     )
+    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
   afterEach(function() {
     this.watcher.stop()
@@ -135,10 +137,14 @@ describe('RemoteWatcher', function() {
   describe('watch', function() {
     const lastLocalSeq = '123'
     const lastRemoteSeq = lastLocalSeq + '456'
-    const changes = {
-      last_seq: lastRemoteSeq,
-      docs: [builders.remoteFile().build(), builders.remoteDir().build()]
-    }
+
+    let changes
+    beforeEach(function() {
+      changes = {
+        last_seq: lastRemoteSeq,
+        docs: [builders.remoteFile().build(), builders.remoteDir().build()]
+      }
+    })
 
     beforeEach(function() {
       sinon.stub(this.pouch, 'getRemoteSeqAsync')
@@ -244,9 +250,12 @@ describe('RemoteWatcher', function() {
     })
 
     context('on MergeMissingParentError', () => {
-      const missingParentError = {
-        err: new MergeMissingParentError(builders.metadata().build())
-      }
+      let missingParentError
+      beforeEach(function() {
+        missingParentError = {
+          err: new MergeMissingParentError(builders.metadata().build())
+        }
+      })
 
       beforeEach(function() {
         this.watcher.pullMany.returns([missingParentError])
@@ -273,19 +282,19 @@ describe('RemoteWatcher', function() {
   }
 
   describe('pullMany', function() {
-    const remoteDocs = [
-      builders.remoteFile().build(),
-      {
-        ...builders.remoteFile().build(),
-        _deleted: true
-      }
-    ]
     let apply
     let findMaybe
-
+    let remoteDocs
     beforeEach(function() {
       apply = sinon.stub(this.watcher, 'apply')
       findMaybe = sinon.stub(this.remoteCozy, 'findMaybe')
+      remoteDocs = [
+        builders.remoteFile().build(),
+        {
+          ...builders.remoteFile().build(),
+          _deleted: true
+        }
+      ]
     })
 
     afterEach(function() {
@@ -417,7 +426,7 @@ describe('RemoteWatcher', function() {
 
   describe('analyse', () => {
     describe('case-only renaming', () => {
-      it('is identified as a move', function() {
+      it('is identified as a move', async function() {
         const oldRemote = builders
           .remoteFile()
           .name('foo')
@@ -434,7 +443,7 @@ describe('RemoteWatcher', function() {
           oldRemote
         )
 
-        const changes = this.watcher.analyse([newRemote], [oldDoc])
+        const changes = await this.watcher.analyse([newRemote], [oldDoc])
 
         should(changes.map(c => c.type)).deepEqual(['FileMove'])
         should(changes[0])
@@ -443,6 +452,364 @@ describe('RemoteWatcher', function() {
         should(changes[0])
           .have.propertyByPath('was', 'path')
           .eql('foo')
+      })
+    })
+
+    onPlatform('darwin', () => {
+      describe('file update', () => {
+        context('at root with normalization change', () => {
+          it('is not identified as a move', async function() {
+            const oldRemote = builders
+              .remoteFile()
+              .name('énoncé'.normalize('NFC'))
+              .build()
+            const oldDoc = await builders
+              .metafile()
+              .fromRemote(oldRemote)
+              .create()
+
+            const newRemote = builders
+              .remoteFile(oldRemote)
+              .name(oldRemote.name.normalize('NFD'))
+              .shortRev(2)
+              .build()
+
+            const [change] = await this.watcher.analyse([newRemote], [oldDoc])
+
+            should(change).have.property('type', 'FileUpdate')
+            should(change.doc).have.property('path', oldDoc.path)
+          })
+        })
+
+        context('in accented folder with normalization change', () => {
+          it('is not identified as a move', async function() {
+            const oldRemoteDir = builders
+              .remoteDir()
+              .name('énoncés'.normalize('NFD'))
+              .build()
+            const oldDir = await builders
+              .metadir()
+              .fromRemote(oldRemoteDir)
+              .create()
+            const oldRemoteFile = builders
+              .remoteFile()
+              .inDir(oldRemoteDir)
+              .name('file')
+              .build()
+            const oldFile = await builders
+              .metafile()
+              .fromRemote(oldRemoteFile)
+              .create()
+
+            const newRemoteDir = builders
+              .remoteDir(oldRemoteDir)
+              .name(oldRemoteDir.name.normalize('NFC'))
+              .shortRev(2)
+              .build()
+            const newRemoteFile = builders
+              .remoteFile(oldRemoteFile)
+              .inDir(newRemoteDir)
+              .shortRev(2)
+              .build()
+
+            const [dirChange, fileChange] = await this.watcher.analyse(
+              [newRemoteDir, newRemoteFile],
+              [oldDir, oldFile]
+            )
+
+            should(dirChange).have.property('type', 'DirAddition')
+            should(dirChange.doc).have.property('path', oldDir.path)
+            should(fileChange).have.property('type', 'FileUpdate')
+            should(fileChange.doc).have.property('path', oldFile.path)
+          })
+        })
+
+        context(
+          'in accented folder with different local/remote normalizations',
+          () => {
+            it('is not identified as a move', async function() {
+              const oldRemoteDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const oldDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(oldRemoteDir.path.normalize('NFD'))
+                .create()
+              const oldRemoteFile = builders
+                .remoteFile()
+                .inDir(oldRemoteDir)
+                .name('file')
+                .build()
+              const oldFile = await builders
+                .metafile()
+                .fromRemote(oldRemoteFile)
+                .path(path.join(oldDir.path, oldRemoteFile.name))
+                .create()
+
+              const newRemoteFile = builders
+                .remoteFile(oldRemoteFile)
+                .shortRev(2)
+                .build()
+
+              const [fileChange] = await this.watcher.analyse(
+                [newRemoteFile],
+                [oldFile]
+              )
+
+              should(fileChange).have.property('type', 'FileUpdate')
+              should(fileChange.doc).have.property('path', oldFile.path)
+            })
+          }
+        )
+
+        context(
+          'in renamed accented folder with different local/remote normalizations',
+          () => {
+            it('is identified as a descendant change with old parent normalization', async function() {
+              const oldRemoteDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const oldDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(oldRemoteDir.path.normalize('NFD'))
+                .create()
+              const oldRemoteFile = builders
+                .remoteFile()
+                .inDir(oldRemoteDir)
+                .name('file')
+                .build()
+              const oldFile = await builders
+                .metafile()
+                .fromRemote(oldRemoteFile)
+                .path(path.join(oldDir.path, oldRemoteFile.name))
+                .create()
+
+              const newRemoteDir = builders
+                .remoteDir(oldRemoteDir)
+                .name('corrigés'.normalize('NFC'))
+                .shortRev(2)
+                .build()
+              const newRemoteFile = builders
+                .remoteFile(oldRemoteFile)
+                .inDir(newRemoteDir)
+                .shortRev(2)
+                .build()
+
+              const [dirChange, fileChange] = await this.watcher.analyse(
+                [newRemoteDir, newRemoteFile],
+                [oldDir, oldFile]
+              )
+
+              const oldNFDName = oldRemoteDir.name.normalize('NFD')
+              const newNFDName = newRemoteDir.name.normalize('NFD')
+              should(dirChange).have.property('type', 'DirMove')
+              should(dirChange.doc).have.property(
+                'path',
+                oldDir.path.replace(oldNFDName, newNFDName)
+              )
+              should(fileChange).have.property('type', 'DescendantChange')
+              should(fileChange.doc).have.property(
+                'path',
+                oldFile.path.replace(oldNFDName, newNFDName)
+              )
+            })
+          }
+        )
+
+        context(
+          'in renamed folder with different local/remote normalizations',
+          () => {
+            it('is identified as a descendant change with old parent normalization', async function() {
+              const oldRemoteDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const oldDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(oldRemoteDir.path.normalize('NFD'))
+                .create()
+              const oldRemoteFile = builders
+                .remoteFile()
+                .inDir(oldRemoteDir)
+                .name('file')
+                .build()
+              const oldFile = await builders
+                .metafile()
+                .fromRemote(oldRemoteFile)
+                .path(path.join(oldDir.path, oldRemoteFile.name))
+                .create()
+
+              const newRemoteDir = builders
+                .remoteDir(oldRemoteDir)
+                .name('corrigés'.normalize('NFC'))
+                .shortRev(2)
+                .build()
+              const newRemoteFile = builders
+                .remoteFile(oldRemoteFile)
+                .inDir(newRemoteDir)
+                .shortRev(2)
+                .build()
+
+              const [dirChange, fileChange] = await this.watcher.analyse(
+                [newRemoteDir, newRemoteFile],
+                [oldDir, oldFile]
+              )
+
+              const oldNFDName = oldRemoteDir.name.normalize('NFD')
+              const newNFDName = newRemoteDir.name.normalize('NFD')
+              should(dirChange).have.property('type', 'DirMove')
+              should(dirChange.doc).have.property(
+                'path',
+                oldDir.path.replace(oldNFDName, newNFDName)
+              )
+              should(fileChange).have.property('type', 'DescendantChange')
+              should(fileChange.doc).have.property(
+                'path',
+                oldFile.path.replace(oldNFDName, newNFDName)
+              )
+            })
+          }
+        )
+      })
+
+      describe('file addition', () => {
+        context(
+          'in accented folder with different local/remote normalizations',
+          () => {
+            it('is identified as an addition with old parent normalization', async function() {
+              const oldRemoteDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const oldDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(oldRemoteDir.path.normalize('NFD'))
+                .create()
+
+              const newRemoteFile = builders
+                .remoteFile()
+                .inDir(oldRemoteDir)
+                .name('file')
+                .build()
+
+              const [fileChange] = await this.watcher.analyse(
+                [newRemoteFile],
+                []
+              )
+
+              should(fileChange).have.property('type', 'FileAddition')
+              should(fileChange.doc).have.property(
+                'path',
+                path.join(oldDir.path, newRemoteFile.name)
+              )
+            })
+          }
+        )
+
+        context(
+          'in created folder in accented folder with different local/remote normalizations',
+          () => {
+            it('is identified as an addition with old ancestor normalization', async function() {
+              const remoteParentDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const parentDir = await builders
+                .metadir()
+                .fromRemote(remoteParentDir)
+                .path(remoteParentDir.path.normalize('NFD'))
+                .create()
+
+              const newRemoteDir = builders
+                .remoteDir()
+                .inDir(remoteParentDir)
+                .name('algébre'.normalize('NFC'))
+                .build()
+              const newRemoteFile = builders
+                .remoteFile()
+                .inDir(newRemoteDir)
+                .name('file')
+                .build()
+
+              const [dirChange, fileChange] = await this.watcher.analyse(
+                [newRemoteDir, newRemoteFile],
+                []
+              )
+
+              should(dirChange).have.property('type', 'DirAddition')
+              should(dirChange.doc).have.property(
+                'path',
+                path.join(parentDir.path, newRemoteDir.name)
+              )
+              should(fileChange).have.property('type', 'FileAddition')
+              should(fileChange.doc).have.property(
+                'path',
+                path.join(parentDir.path, newRemoteDir.name, newRemoteFile.name)
+              )
+            })
+          }
+        )
+      })
+
+      describe('file move', () => {
+        context(
+          'with different local/remote normalizations to accented folder with different local/remote normalizations',
+          () => {
+            it('is identified as move with old normalization and new parent normalization', async function() {
+              const oldRemoteDir = builders
+                .remoteDir()
+                .name('énoncés'.normalize('NFC'))
+                .build()
+              const oldDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(oldRemoteDir.path.normalize('NFD'))
+                .create()
+              const newRemoteDir = builders
+                .remoteDir()
+                .name('corrigés'.normalize('NFC'))
+                .build()
+              const newDir = await builders
+                .metadir()
+                .fromRemote(oldRemoteDir)
+                .path(newRemoteDir.path.normalize('NFD'))
+                .create()
+              const oldRemoteFile = builders
+                .remoteFile()
+                .inDir(oldRemoteDir)
+                .name('éssai 1.txt')
+                .build()
+              const oldFile = await builders
+                .metafile()
+                .fromRemote(oldRemoteFile)
+                .path(oldRemoteFile.path.normalize('NFD'))
+                .create()
+
+              const newRemoteFile = builders
+                .remoteFile(oldRemoteFile)
+                .inDir(newRemoteDir)
+                .shortRev(2)
+                .build()
+
+              const [fileChange] = await this.watcher.analyse(
+                [newRemoteFile],
+                [oldFile]
+              )
+
+              should(fileChange).have.property('type', 'FileMove')
+              should(fileChange.doc).have.property(
+                'path',
+                oldFile.path.replace(oldDir.path, newDir.path)
+              )
+            })
+          }
+        )
       })
     })
 
@@ -495,9 +862,9 @@ describe('RemoteWatcher', function() {
           return props
         })
 
-      it('is detected when moved source is first', function() {
+      it('is detected when moved source is first', async function() {
         const remoteDocs = [srcFileMoved, dstFileTrashed]
-        const changes = this.watcher.analyse(remoteDocs, olds)
+        const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
           {
             type: 'FileMove',
@@ -512,9 +879,9 @@ describe('RemoteWatcher', function() {
         ])
       })
 
-      it('is detected when trashed destination is first', function() {
+      it('is detected when trashed destination is first', async function() {
         const remoteDocs = [dstFileTrashed, srcFileMoved]
-        const changes = this.watcher.analyse(remoteDocs, olds)
+        const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
           {
             type: 'FileMove',
@@ -581,9 +948,9 @@ describe('RemoteWatcher', function() {
 
       describe('when moved source is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', async function() {
             const remoteDocs = [srcFileMoved, dstFileTrashed]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'FileTrashing',
@@ -600,9 +967,9 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the move before the trashing', function() {
+          it('sorts the move before the trashing', async function() {
             const remoteDocs = [srcFileMoved, dstFileTrashed]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'FileTrashing',
@@ -621,9 +988,9 @@ describe('RemoteWatcher', function() {
 
       describe('when trashed destination is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', async function() {
             const remoteDocs = [dstFileTrashed, srcFileMoved]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'FileTrashing',
@@ -640,9 +1007,9 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the move before the trashing', function() {
+          it('sorts the move before the trashing', async function() {
             const remoteDocs = [dstFileTrashed, srcFileMoved]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'FileTrashing',
@@ -709,9 +1076,9 @@ describe('RemoteWatcher', function() {
           return props
         })
 
-      it('is detected when moved source is first', function() {
+      it('is detected when moved source is first', async function() {
         const remoteDocs = [srcMoved, dstTrashed]
-        const changes = this.watcher.analyse(remoteDocs, olds)
+        const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
           {
             type: 'DirMove',
@@ -726,9 +1093,9 @@ describe('RemoteWatcher', function() {
         ])
       })
 
-      it('is detected when trashed destination is first', function() {
+      it('is detected when trashed destination is first', async function() {
         const remoteDocs = [dstTrashed, srcMoved]
-        const changes = this.watcher.analyse(remoteDocs, olds)
+        const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
           {
             type: 'DirMove',
@@ -795,9 +1162,9 @@ describe('RemoteWatcher', function() {
 
       describe('when moved source is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', async function() {
             const remoteDocs = [srcMoved, dstTrashed]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'DirTrashing',
@@ -814,9 +1181,9 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the trashing before the move ', function() {
+          it('sorts the trashing before the move ', async function() {
             const remoteDocs = [srcMoved, dstTrashed]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'DirTrashing',
@@ -835,9 +1202,9 @@ describe('RemoteWatcher', function() {
 
       describe('when trashed destination is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', function() {
+          it('sorts the trashing before the move to prevent id confusion', async function() {
             const remoteDocs = [dstTrashed, srcMoved]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'DirTrashing',
@@ -854,9 +1221,9 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the trashing before the move', function() {
+          it('sorts the trashing before the move', async function() {
             const remoteDocs = [dstTrashed, srcMoved]
-            const changes = this.watcher.analyse(remoteDocs, olds)
+            const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
               {
                 type: 'DirTrashing',
@@ -875,7 +1242,7 @@ describe('RemoteWatcher', function() {
     })
 
     describe('descendantMoves', () => {
-      it('handles correctly descendantMoves', function() {
+      it('handles correctly descendantMoves', async function() {
         const remoteDir1 = builders
           .remoteDir()
           .name('src')
@@ -939,7 +1306,7 @@ describe('RemoteWatcher', function() {
         }
 
         shouldBeExpected(
-          this.watcher.analyse(
+          await this.watcher.analyse(
             [
               updated(remoteFile, { path: '/dst/parent/child' }),
               updated(remoteDir2, { path: '/dst/parent' }),
@@ -950,7 +1317,7 @@ describe('RemoteWatcher', function() {
         )
 
         shouldBeExpected(
-          this.watcher.analyse(
+          await this.watcher.analyse(
             [
               updated(remoteDir1, { name: 'dst', path: '/dst' }),
               updated(remoteDir2, { path: '/dst/parent' }),
@@ -961,7 +1328,7 @@ describe('RemoteWatcher', function() {
         )
 
         shouldBeExpected(
-          this.watcher.analyse(
+          await this.watcher.analyse(
             [
               updated(remoteDir1, { name: 'dst', path: '/dst' }),
               updated(remoteFile, { path: '/dst/parent/child' }),

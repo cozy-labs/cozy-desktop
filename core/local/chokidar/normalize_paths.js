@@ -49,7 +49,7 @@ const step = async (
 ) /*: Promise<LocalChange[]> */ => {
   const normalizedPaths = []
 
-  return new Promise.map(changes, async (
+  return new Promise.mapSeries(changes, async (
     c /*: LocalChange */
   ) /*: Promise<LocalChange> */ => {
     if (c.type !== 'Ignored') {
@@ -58,7 +58,12 @@ const step = async (
         parentPath !== '.'
           ? await pouch.byIdMaybeAsync(metadata.id(parentPath))
           : null
-      c.path = normalizedPath(c, parent, normalizedPaths)
+      c.path = normalizedPath(
+        c.path,
+        c.old && c.old.path,
+        parent,
+        normalizedPaths
+      )
       normalizedPaths.push(c.path)
     }
 
@@ -75,29 +80,31 @@ const previouslyNormalizedPath = (
 const isNFD = string => string === string.normalize('NFD')
 
 const normalizedPath = (
-  change /*: Change */,
+  newPath /*: string */,
+  oldPath /*: ?string */,
   parent /*: ?Metadata */,
   normalizedPaths /*: string[] */
 ) /*: string */ => {
   // Curent change's path parts
-  const name = path.basename(change.path)
-  const parentPath = path.dirname(change.path)
+  const name = path.basename(newPath)
+  const parentPath = path.dirname(newPath)
 
   const normalizedParentPath = parent
     ? parent.path
     : parentPath != '.'
     ? previouslyNormalizedPath(parentPath, normalizedPaths) || parentPath
     : ''
-  const { old } = change
-  const normalizedName =
-    old && isNFD(name) && !isNFD(path.basename(old.path))
-      ? name.normalize('NFC')
-      : name
+  const oldName = oldPath && path.basename(oldPath)
+  const normalizedName = oldName
+    ? isNFD(oldName)
+      ? name.normalize('NFD')
+      : name.normalize('NFC')
+    : name
   const normalizedPath = path.join(normalizedParentPath, normalizedName)
 
-  if (change.path !== normalizedPath) {
+  if (newPath !== normalizedPath) {
     log.info(
-      { path: change.path, normalizedPath },
+      { path: newPath, normalizedPath },
       'normalizing local path to match existing doc and parent norms'
     )
   }
@@ -105,5 +112,6 @@ const normalizedPath = (
 }
 
 module.exports = {
-  step
+  step,
+  normalizedPath
 }
