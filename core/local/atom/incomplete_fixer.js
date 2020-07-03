@@ -81,6 +81,18 @@ function itemDestinationWasDeleted(
   )
 }
 
+function renamedItemWasReplaced(
+  previousEvent /*: AtomEvent */,
+  nextEvent /*: AtomEvent */
+) /*: boolean %checks */ {
+  return !!(
+    nextEvent.action === 'created' &&
+    previousEvent.oldPath &&
+    nextEvent.path === previousEvent.oldPath &&
+    nextEvent.kind === previousEvent.kind
+  )
+}
+
 function completeEventPaths(
   previousEvent /*: AtomEvent */,
   nextEvent /*: AtomEvent */
@@ -162,6 +174,22 @@ function buildDeletedFromRenamed(
   }
 }
 
+function buildModifiedFromRenamed(
+  previousEvent /*: AtomEvent */,
+  nextEvent /*: AtomEvent */
+) /*: Completion */ {
+  return {
+    rebuilt: {
+      ...nextEvent,
+      action: 'modified',
+      [STEP_NAME]: {
+        incompleteEvent: previousEvent,
+        completingEvent: nextEvent
+      }
+    }
+  }
+}
+
 function keepEvent(event, { incompletes, batch }) {
   if (event.incomplete) {
     incompletes.add({ event, timestamp: Date.now() })
@@ -212,7 +240,7 @@ function step(
 
       if (
         state.incompletes.length === 0 ||
-        !['renamed', 'deleted'].includes(event.action)
+        !['renamed', 'deleted', 'created'].includes(event.action)
       ) {
         if (!event.incomplete) {
           batch.add(event)
@@ -309,5 +337,7 @@ async function detectCompletion(
   } else if (itemDestinationWasDeleted(previousEvent, nextEvent)) {
     // We have a match, try to replace the incomplete event
     return buildDeletedFromRenamed(previousEvent, nextEvent)
+  } else if (renamedItemWasReplaced(previousEvent, nextEvent)) {
+    return buildModifiedFromRenamed(previousEvent, nextEvent)
   }
 }
