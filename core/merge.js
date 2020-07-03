@@ -323,7 +323,11 @@ class Merge {
         doc.local = file.local
       }
 
-      if (side === 'local' && metadata.sameFile(file.local, doc.local)) {
+      if (
+        side === 'local' &&
+        file.local &&
+        metadata.sameFile(file.local, doc.local)
+      ) {
         log.debug({ path: doc.path, doc, file }, 'Same local binary')
         if (!metadata.sameLocal(file.local, doc.local)) {
           metadata.updateLocal(file, doc.local)
