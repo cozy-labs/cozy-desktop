@@ -565,6 +565,82 @@ describe('core/local/atom/incomplete_fixer', () => {
       })
     })
 
+    describe('file renamed to backup location and replaced by new file', () => {
+      it('is modified once and not deleted', async function() {
+        const { syncPath } = this
+
+        const src = 'src'
+        const tmp = 'src.tmp'
+        await syncDir.ensureFile(src)
+        const renamedEvent = builders
+          .event()
+          .kind('file')
+          .action('renamed')
+          .oldPath(src)
+          .path(tmp)
+          .incomplete()
+          .build()
+        const createdEvent = builders
+          .event()
+          .kind('file')
+          .action('created')
+          .path(src)
+          .md5sum(CHECKSUM)
+          .build()
+        const stats = createdEvent.stats
+        const deletedEvent = builders
+          .event()
+          .kind('file')
+          .action('deleted')
+          .path(tmp)
+          .build()
+        const incompletes = []
+        const outputBatches = []
+
+        for (const inputBatch of [
+          [renamedEvent],
+          [createdEvent],
+          [deletedEvent]
+        ]) {
+          const outputBatch = await incompleteFixer.step(
+            { incompletes },
+            {
+              syncPath,
+              checksumer,
+              pouch: this.pouch
+            }
+          )(inputBatch)
+          outputBatches.push(outputBatch)
+        }
+
+        should(outputBatches).deepEqual([
+          [],
+          [
+            {
+              _id: metadata.id(src),
+              action: 'modified',
+              kind: 'file',
+              md5sum: CHECKSUM,
+              path: src,
+              incompleteFixer: {
+                incompleteEvent: renamedEvent,
+                completingEvent: createdEvent
+              },
+              stats
+            }
+          ],
+          [
+            {
+              _id: metadata.id(tmp),
+              action: 'deleted',
+              kind: 'file',
+              path: tmp
+            }
+          ]
+        ])
+      })
+    })
+
     describe('incomplete created for merged file then renamed', () => {
       const src = 'src'
       const dst = 'dst'
