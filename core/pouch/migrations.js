@@ -139,6 +139,26 @@ const migrations /*: Migration[] */ = [
         return doc
       })
     }
+  },
+  {
+    baseSchemaVersion: 4,
+    targetSchemaVersion: 5,
+    description: 'Removing moveFrom attribute of synced documents',
+    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.filter(
+        doc =>
+          doc.moveFrom &&
+          doc.sides &&
+          doc.sides.target === doc.sides.local &&
+          doc.sides.target === doc.sides.remote
+      )
+    },
+    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.map(doc => {
+        if (doc.moveFrom) delete doc.moveFrom
+        return doc
+      })
+    }
   }
 ]
 
