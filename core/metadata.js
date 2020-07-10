@@ -727,9 +727,7 @@ function buildDir(
     _id: id(fpath),
     path: fpath,
     docType: 'folder',
-    updated_at: timestamp
-      .fromDate(timestamp.maxDate(stats.mtime, stats.ctime))
-      .toISOString(),
+    updated_at: stats.mtime.toISOString(),
     ino: stats.ino,
     remote
   }
@@ -749,10 +747,8 @@ function buildFile(
 ) /*: Metadata */ {
   const mimeType = mime.lookup(filePath)
   const className = mimeType.split('/')[0]
-  const { mtime, ctime, ino, size } = stats
-  const updated_at = timestamp
-    .fromDate(timestamp.maxDate(mtime, ctime))
-    .toISOString()
+  const { mtime, ino, size } = stats
+  const updated_at = mtime.toISOString()
 
   const doc /*: Object */ = {
     _id: id(filePath),

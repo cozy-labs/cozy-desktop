@@ -4,7 +4,6 @@ const _ = require('lodash')
 const path = require('path')
 
 const metadata = require('../../../../core/metadata')
-const timestamp = require('../../../../core/utils/timestamp')
 
 const dbBuilders = require('../db')
 const statsBuilder = require('../stats')
@@ -21,18 +20,18 @@ import type { RemoteDoc } from '../../../../core/remote/document'
 import type { SideName } from '../../../../core/side'
 */
 
+const SOME_MEANINGLESS_TIME_OFFSET = 2000 // 2 seconds
+
 module.exports = class BaseMetadataBuilder {
   /*::
   pouch: ?Pouch
-  doc: Metadata
-  old: ?Metadata
+  doc: Object
   buildLocal: boolean
   */
 
   constructor(pouch /*: ?Pouch */, old /*: ?Metadata */) {
     this.pouch = pouch
     if (old) {
-      this.old = old
       this.doc = _.cloneDeep(old)
     } else {
       const doc /*: Object */ = {
@@ -44,7 +43,7 @@ module.exports = class BaseMetadataBuilder {
           _rev: dbBuilders.rev()
         },
         tags: [],
-        updated_at: timestamp.current().toISOString()
+        updated_at: new Date().toISOString()
       }
       this.doc = doc
     }
@@ -132,8 +131,8 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  stats({ ino, mtime, ctime } /*: fs.Stats */) /*: this */ {
-    return this.ino(ino).updatedAt(timestamp.maxDate(mtime, ctime))
+  stats({ ino, mtime } /*: fs.Stats */) /*: this */ {
+    return this.ino(ino).updatedAt(mtime)
   }
 
   path(newPath /*: string */) /*: this */ {
@@ -158,22 +157,22 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  updatedAt(date /*: Date */) /*: this */ {
-    this.doc.updated_at = timestamp.fromDate(date).toISOString()
+  updatedAt(date /*: string|Date */) /*: this */ {
+    this.doc.updated_at = typeof date === 'string' ? date : date.toISOString()
     return this
   }
 
   newerThan(doc /*: Metadata */) /*: this */ {
-    this.doc.updated_at = timestamp
-      .fromDate(new Date(timestamp.fromDate(doc.updated_at).getTime() + 2000))
-      .toISOString()
+    this.doc.updated_at = new Date(
+      new Date(doc.updated_at).getTime() + SOME_MEANINGLESS_TIME_OFFSET
+    ).toISOString()
     return this
   }
 
   olderThan(doc /*: Metadata */) /*: this */ {
-    this.doc.updated_at = timestamp
-      .fromDate(new Date(timestamp.fromDate(doc.updated_at).getTime() - 2000))
-      .toISOString()
+    this.doc.updated_at = new Date(
+      new Date(doc.updated_at).getTime() - SOME_MEANINGLESS_TIME_OFFSET
+    ).toISOString()
     return this
   }
 

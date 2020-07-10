@@ -2415,11 +2415,12 @@ describe('Merge', function() {
           _.omit(movedSrcFile, ['_rev']),
           _.defaults(
             {
+              _id: dstFile._id,
+              path: dstFile.path,
               sides: increasedSides(srcFile.sides, this.side, 1),
               moveFrom: movedSrcFile
             },
-            _.pick(srcFile, ['remote']),
-            _.omit(dstFile, ['_rev'])
+            _.omit(srcFile, ['_rev'])
           )
         ],
         resolvedConflicts: []

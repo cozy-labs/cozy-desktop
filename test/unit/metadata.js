@@ -32,7 +32,6 @@ const {
 const { Ignore } = require('../../core/ignore')
 const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const stater = require('../../core/local/stater')
-const timestamp = require('../../core/utils/timestamp')
 const { NOTE_MIME_TYPE } = require('../../core/remote/constants')
 
 const { platform } = process
@@ -912,22 +911,22 @@ describe('metadata', function() {
   })
 
   describe('buildDir', () => {
-    it('sets the latest of ctime & mtime as #updated_at', () => {
+    it('sets #updated_at with mtime', () => {
       const path = 'whatever'
       const d1 = new Date('2018-01-18T16:46:18.362Z')
       const d2 = new Date('2018-02-18T16:46:18.362Z')
       const ino = 123
       should(buildDir(path, { mtime: d1, ctime: d1, ino })).have.property(
         'updated_at',
-        timestamp.fromDate(d1).toISOString()
+        d1.toISOString()
       )
       should(buildDir(path, { mtime: d1, ctime: d2, ino })).have.property(
         'updated_at',
-        timestamp.fromDate(d2).toISOString()
+        d1.toISOString()
       )
       should(buildDir(path, { mtime: d2, ctime: d1, ino })).have.property(
         'updated_at',
-        timestamp.fromDate(d2).toISOString()
+        d2.toISOString()
       )
     })
 

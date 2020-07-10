@@ -63,7 +63,7 @@ describe('Update only a file mtime', () => {
             created.attributes.updated_at
           ),
           local: {
-            updated_at: timestamp.fromDate(newUpdatedAt).toISOString()
+            updated_at: newUpdatedAt.toISOString()
           }
         }
       ])

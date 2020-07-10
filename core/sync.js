@@ -448,7 +448,11 @@ class Sync {
 
       if (old) {
         if (doc.docType === 'folder') {
-          await side.updateFolderAsync(doc, old)
+          if (metadata.sameFolder(old, doc)) {
+            log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
+          } else {
+            await side.updateFolderAsync(doc, old)
+          }
         } else if (metadata.sameBinary(old, doc)) {
           if (metadata.sameFile(old, doc)) {
             log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
