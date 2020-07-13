@@ -56,7 +56,8 @@ describe('metadata', function() {
         size: '78',
         tags: ['foo'],
         type: 'file',
-        updated_at: timestamp.stringify(timestamp.build(2017, 9, 8, 7, 6, 5)),
+        created_at: '2017-09-07T07:06:05Z',
+        updated_at: '2017-09-08T07:06:05Z',
         cozyMetadata: {
           createdOn: 'alice.mycozy.cloud'
         },
@@ -68,7 +69,8 @@ describe('metadata', function() {
         md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
         class: 'document',
         docType: 'file',
-        updated_at: '2017-09-08T07:06:05Z',
+        created_at: '2017-09-07T07:06:05.000Z',
+        updated_at: '2017-09-08T07:06:05.000Z',
         mime: 'test/html',
         name: 'bar',
         path: 'foo/bar',
@@ -100,14 +102,16 @@ describe('metadata', function() {
         path: '/foo/bar',
         tags: ['foo'],
         type: 'directory',
-        updated_at: timestamp.stringify(timestamp.build(2017, 9, 8, 7, 6, 5))
+        created_at: '2017-09-07T07:06:05Z',
+        updated_at: '2017-09-08T07:06:05Z'
       }
 
       const doc = metadata.fromRemoteDoc(remoteDoc)
 
       should(doc).deepEqual({
         docType: 'folder',
-        updated_at: '2017-09-08T07:06:05Z',
+        created_at: '2017-09-07T07:06:05.000Z',
+        updated_at: '2017-09-08T07:06:05.000Z',
         path: 'foo/bar',
         name: 'bar',
         dir_id: '56',

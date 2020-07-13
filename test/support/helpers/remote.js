@@ -59,7 +59,8 @@ class RemoteTestHelpers {
           .createDirectory({
             name,
             dirID,
-            lastModifiedDate: new Date()
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           })
           .then(this.side.remoteCozy.toRemoteDoc)
       } else {
@@ -67,7 +68,8 @@ class RemoteTestHelpers {
           .create(`Content of file ${p}`, {
             name,
             dirID,
-            lastModifiedDate: new Date()
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           })
           .then(this.side.remoteCozy.toRemoteDoc)
       }

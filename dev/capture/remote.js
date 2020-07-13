@@ -79,10 +79,15 @@ const createInitialTree = async function(
 const runActions = (scenario /*: * */, cozy /*: * */) => {
   debug('[actions]')
   return Promise.each(scenario.actions, async action => {
+    const now = new Date().toISOString()
+
     switch (action.type) {
       case 'mkdir':
         debug('- mkdir', action.path)
-        return cozy.files.createDirectoryByPath(`/${action.path}`)
+        return cozy.files.createDirectoryByPath(`/${action.path}`, {
+          createdAt: now,
+          updatedAt: now
+        })
 
       case 'create_file':
         debug('- create_file', action.path)
@@ -93,7 +98,9 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
           return cozy.files.create(action.content || 'whatever', {
             name: path.posix.basename(action.path),
             dirID: parentDir._id,
-            contentType: 'text/plain'
+            contentType: 'text/plain',
+            createdAt: now,
+            updatedAt: now
           })
         }
 
@@ -102,7 +109,8 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
         {
           const remoteFile = await cozy.files.statByPath(`/${action.path}`)
           return cozy.files.updateById(remoteFile._id, action.content, {
-            contentType: 'text/plain'
+            contentType: 'text/plain',
+            updatedAt: now
           })
         }
 

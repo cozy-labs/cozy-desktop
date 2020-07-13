@@ -18,8 +18,6 @@ import type { Cozy } from 'cozy-client-js'
 import type { RemoteDoc } from '../../../../core/remote/document'
 */
 
-const defaultTimestamp = timestamp.stringify(timestamp.current())
-
 module.exports = class RemoteBaseBuilder {
   /*::
   cozy: ?Cozy
@@ -32,17 +30,16 @@ module.exports = class RemoteBaseBuilder {
       this.remoteDoc = _.cloneDeep(old)
     } else {
       const name = 'whatever'
+      // $FlowFixMe dates are added in build
       this.remoteDoc = {
         _id: dbBuilders.id(),
         _rev: dbBuilders.rev(1),
         _type: FILES_DOCTYPE,
         type: 'directory',
-        created_at: defaultTimestamp,
         dir_id: ROOT_DIR_ID,
         name,
         path: posix.join(posix.sep, name),
         tags: [],
-        updated_at: defaultTimestamp,
         cozyMetadata: {}
       }
     }
@@ -77,8 +74,13 @@ module.exports = class RemoteBaseBuilder {
     return this
   }
 
-  timestamp(...args /*: number[] */) /*: this */ {
-    this.remoteDoc.updated_at = timestamp.stringify(timestamp.build(...args))
+  createdAt(...args /*: number[] */) /*: this */ {
+    this.remoteDoc.created_at = timestamp.build(...args).toISOString()
+    return this
+  }
+
+  updatedAt(...args /*: number[] */) /*: this */ {
+    this.remoteDoc.updated_at = timestamp.build(...args).toISOString()
     return this
   }
 
@@ -95,6 +97,10 @@ module.exports = class RemoteBaseBuilder {
   }
 
   build() /*: Object */ {
+    const now = new Date().toISOString()
+    if (!this.remoteDoc.created_at) this.remoteDoc.created_at = now
+    if (!this.remoteDoc.updated_at) this.remoteDoc.updated_at = now
+
     return _.clone(this.remoteDoc)
   }
 

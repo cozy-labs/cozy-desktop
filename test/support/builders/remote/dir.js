@@ -36,7 +36,8 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
       await cozy.files.createDirectory({
         name: this.remoteDoc.name,
         dirID: this.remoteDoc.dir_id,
-        lastModifiedDate: this.remoteDoc.updated_at
+        createdAt: this.remoteDoc.created_at,
+        updatedAt: this.remoteDoc.updated_at
       })
     )
   }

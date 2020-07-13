@@ -108,15 +108,28 @@ describe('timestamp', () => {
       const t = timestamp.build(2017, 2, 16, 8, 59, 18)
       should.equal(timestamp.stringify(t), '2017-02-16T08:59:18Z')
     })
+  })
 
-    // it('throws when timestamp is not valid', () => {
-    //   should.throws(() => {
-    //     timestamp.stringify(nonDate)
-    //   }, InvalidTimestampError)
+  describe('roundedRemoteDate', () => {
+    it('adds the milliseconds when they are missing', function() {
+      const time = '2015-12-31T23:59:59Z'
+      should(timestamp.roundedRemoteDate(time)).equal(
+        '2015-12-31T23:59:59.000Z'
+      )
+    })
 
-    //   should.throws(() => {
-    //     timestamp.stringify(dateWithMilliseconds)
-    //   }, InvalidTimestampError)
-    // })
+    it('pads the milliseconds with 0s if they have less than 3 digits', function() {
+      const a = '2015-12-31T23:59:59.5Z'
+      const b = '2015-12-31T23:59:59.54Z'
+      should(timestamp.roundedRemoteDate(a)).equal('2015-12-31T23:59:59.500Z')
+      should(timestamp.roundedRemoteDate(b)).equal('2015-12-31T23:59:59.540Z')
+    })
+
+    it('increments the time by 1 millisecond if they have more than 3 digits', function() {
+      const time = '2015-12-31T23:59:59.999232345Z'
+      should(timestamp.roundedRemoteDate(time)).equal(
+        '2016-01-01T00:00:00.000Z'
+      )
+    })
   })
 })

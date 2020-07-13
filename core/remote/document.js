@@ -44,6 +44,7 @@ export type RemoteDoc = {
   tags: string[],
   trashed?: true,
   type: string,
+  created_at: string,
   updated_at: string,
   cozyMetadata?: Object,
   metadata?: Object
@@ -98,7 +99,7 @@ export type JsonApiDoc = {
 */
 
 function jsonApiToRemoteDoc(json /*: JsonApiDoc */) /*: * */ {
-  let remoteDoc = {}
+  let remoteDoc /*: RemoteDoc */ = {}
 
   Object.assign(
     remoteDoc,

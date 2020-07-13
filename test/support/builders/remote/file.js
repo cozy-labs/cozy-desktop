@@ -98,7 +98,8 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
         contentType: this.remoteDoc.mime,
         dirID: this.remoteDoc.dir_id,
         executable: this.remoteDoc.executable,
-        lastModifiedDate: this.remoteDoc.updated_at,
+        createdAt: this.remoteDoc.created_at,
+        updatedAt: this.remoteDoc.updated_at || this.remoteDoc.created_at,
         name: this.remoteDoc.name
       })
     )
@@ -130,7 +131,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
         contentType: this.remoteDoc.mime,
         dirID: this.remoteDoc.dir_id,
         executable: this.remoteDoc.executable,
-        lastModifiedDate: this.remoteDoc.updated_at,
+        updatedAt: this.remoteDoc.updated_at,
         name: this.remoteDoc.name
       })
     )

@@ -231,7 +231,8 @@ function fromRemoteDoc(remoteDoc /*: RemoteDoc */) /*: Metadata */ {
   const doc /*: Object */ = {
     path: remoteDoc.path.substring(1),
     docType: localDocType(remoteDoc.type),
-    updated_at: remoteDoc.updated_at,
+    created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
+    updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at),
     remote: {
       _id: remoteDoc._id,
       _rev: remoteDoc._rev
@@ -245,9 +246,16 @@ function fromRemoteDoc(remoteDoc /*: RemoteDoc */) /*: Metadata */ {
   const fields = Object.getOwnPropertyNames(remoteDoc).filter(
     field =>
       // Filter out fields already used above
-      !['_id', '_rev', '_type', 'path', 'type', 'updated_at', 'size'].includes(
-        field
-      )
+      ![
+        '_id',
+        '_rev',
+        '_type',
+        'path',
+        'type',
+        'created_at',
+        'updated_at',
+        'size'
+      ].includes(field)
   )
   for (const field of fields) {
     if (remoteDoc[field]) {
