@@ -642,7 +642,9 @@ class Merge {
     move(side, was, folder)
     let bulk = [was, folder]
 
-    const makeDestinationID = doc => doc._id.replace(was._id, folder._id)
+    const makeDestinationPath = doc =>
+      metadata.newChildPath(doc.path, was.path, folder.path)
+    const makeDestinationID = doc => metadata.id(makeDestinationPath(doc))
     const existingDstRevs = await this.pouch.getAllRevsAsync(
       docs.map(makeDestinationID)
     )
@@ -656,7 +658,7 @@ class Merge {
       let src = _.cloneDeep(doc)
       let dst = _.cloneDeep(doc)
       dst._id = makeDestinationID(doc)
-      dst.path = doc.path.replace(was.path, folder.path)
+      dst.path = makeDestinationPath(doc)
       // If the source needs to be overwritten, we'll take care of it during
       // Sync while it does not say anything about the existence of a document
       // at the destination.
