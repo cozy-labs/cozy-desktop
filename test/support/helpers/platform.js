@@ -14,7 +14,8 @@ module.exports = {
   onMacOSAtLeast,
   onMacOSAtMost,
   onPlatforms,
-  onPlatform
+  onPlatform,
+  localUpdatedAt
 }
 
 // Usage:
@@ -69,4 +70,17 @@ function onPlatforms(
 
 function onPlatform(platform /*: string */, spec /*: Function */) {
   onPlatforms([platform], spec)
+}
+
+function localUpdatedAt(date /*: string|Date */) /*: string */ {
+  if (process.platform === 'win32') {
+    const win32Date = new Date(date)
+    // The Windows mtime precision is up to the second only
+    win32Date.setMilliseconds(0)
+    return win32Date.toISOString()
+  } else if (typeof date === 'string') {
+    return date
+  } else {
+    return date.toISOString()
+  }
 }

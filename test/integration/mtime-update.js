@@ -9,6 +9,7 @@ const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
+const platform = require('../support/helpers/platform')
 
 const cozy = cozyHelpers.cozy
 
@@ -63,7 +64,7 @@ describe('Update only a file mtime', () => {
             created.attributes.updated_at
           ),
           local: {
-            updated_at: newUpdatedAt.toISOString()
+            updated_at: platform.localUpdatedAt(newUpdatedAt)
           }
         }
       ])
