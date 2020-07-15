@@ -78,7 +78,7 @@ describe('Case or encoding change', () => {
         case 'darwin':
           should(tree).deepEqual([
             'FOO/',
-            '\u00e9/' // 'é/'
+            'e\u0301/' // 'é/'
           ])
           break
 
