@@ -394,6 +394,7 @@ describe('RemoteWatcher', function() {
         dir_id: 'whatever',
         name: 'whatever',
         path: '/whatever',
+        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         md5sum: '9999999999999999999999999999999999999999',
         tags: [],
@@ -1736,6 +1737,7 @@ describe('RemoteWatcher', function() {
         name: 'whatever',
         path: '',
         md5sum: '9999999999999999999999999999999999999999',
+        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         tags: [],
         binary: {
@@ -1780,11 +1782,14 @@ describe('RemoteWatcher', function() {
 
     onPlatform('win32', () => {
       it('detects path/platform incompatibilities if any', async function() {
+        const time = new Date().toISOString()
         const remoteDoc = {
           _id: 'whatever',
           path: '/f:oo/b<a>r',
           md5sum: '9999999999999999999999999999999999999999',
-          type: 'file'
+          type: 'file',
+          created_at: time,
+          updated_at: time
         }
         const change /*: RemoteChange */ = this.watcher.identifyChange(
           remoteDoc,
@@ -1815,12 +1820,15 @@ describe('RemoteWatcher', function() {
       })
 
       it('does not detect any when file/dir is in the trash', async function() {
+        const time = new Date().toISOString()
         const change /*: RemoteChange */ = this.watcher.identifyChange(
           {
             _id: 'whatever',
             path: '/.cozy_trash/f:oo/b<a>r',
             md5sum: '9999999999999999999999999999999999999999',
-            type: 'file'
+            type: 'file',
+            created_at: time,
+            updated_at: time
           },
           null,
           [],
@@ -1832,11 +1840,14 @@ describe('RemoteWatcher', function() {
 
     onPlatform('darwin', () => {
       it('does not mistakenly assume a new file is incompatible', async function() {
+        const time = new Date().toISOString()
         const remoteDoc = {
           _id: 'whatever',
           path: '/f:oo/b<a>r',
           md5sum: '9999999999999999999999999999999999999999',
-          type: 'file'
+          type: 'file',
+          created_at: time,
+          updated_at: time
         }
         const change /*: RemoteChange */ = this.watcher.identifyChange(
           remoteDoc,
@@ -1862,6 +1873,7 @@ describe('RemoteWatcher', function() {
         name: 'file-5',
         md5sum: '9999999999999999999999999999999999999999',
         tags: [],
+        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         binary: {
           file: {
@@ -1906,6 +1918,7 @@ describe('RemoteWatcher', function() {
         name: 'file-1',
         md5sum: `111111111111111111111111111111111111111${filePath}`,
         tags: ['foo', 'bar', 'baz'],
+        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         binary: {
           file: {
@@ -1949,6 +1962,7 @@ describe('RemoteWatcher', function() {
         path: '/my-folder/file-1',
         name: 'file-1',
         md5sum: '9999999999999999999999999999999999999999',
+        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         tags: ['foo', 'bar', 'baz']
       }
@@ -1989,6 +2003,7 @@ describe('RemoteWatcher', function() {
         name: 'file-2-bis',
         md5sum: `111111111111111111111111111111111111111${filePath}`,
         tags: [],
+        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00'
       }
 
@@ -2040,6 +2055,7 @@ describe('RemoteWatcher', function() {
         name: 'file-2-ter',
         md5sum: `111111111111111111111111111111111111111${filePath}`,
         tags: [],
+        created_at: '2017-01-30T09:09:15.217662611+01:00',
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         binary: {
           file: {

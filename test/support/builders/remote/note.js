@@ -128,7 +128,8 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder {
       executable: this.remoteDoc.executable,
       metadata: this.remoteDoc.metadata,
       contentType: this.remoteDoc.mime,
-      lastModifiedDate: this.remoteDoc.updated_at
+      createdAt: this.remoteDoc.created_at,
+      updatedAt: this.remoteDoc.updated_at || this.remoteDoc.created_at
     })
     const doc = jsonApiToRemoteDoc(data)
     doc._rev = data.meta.rev
@@ -151,7 +152,7 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder {
     const doc = jsonApiToRemoteDoc(
       await cozy.files.updateById(this.remoteDoc._id, this._data, {
         dirID: this.remoteDoc.dir_id,
-        lastModifiedDate: this.remoteDoc.updated_at,
+        updatedAt: this.remoteDoc.updated_at,
         name: this.remoteDoc.name
       })
     )

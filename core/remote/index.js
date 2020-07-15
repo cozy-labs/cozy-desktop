@@ -118,11 +118,9 @@ class Remote /*:: implements Reader, Writer */ {
     let dir /*: RemoteDoc */
 
     try {
-      dir = await this.remoteCozy.createDirectory({
-        name,
-        dirID: parent._id,
-        lastModifiedDate: doc.updated_at
-      })
+      dir = await this.remoteCozy.createDirectory(
+        newDocumentAttributes(name, parent._id, doc.updated_at)
+      )
     } catch (err) {
       if (err.status !== 409) {
         throw err
@@ -160,13 +158,11 @@ class Remote /*:: implements Reader, Writer */ {
     const dir = await this.remoteCozy.findOrCreateDirectoryByPath(dirPath)
 
     const created = await this.remoteCozy.createFile(stream, {
-      name,
-      dirID: dir._id,
+      ...newDocumentAttributes(name, dir._id, doc.updated_at),
       checksum: doc.md5sum,
-      executable: doc.executable,
+      executable: doc.executable || false,
       contentLength: stream.contentLength,
-      contentType: doc.mime,
-      lastModifiedDate: new Date(doc.updated_at)
+      contentType: doc.mime
     })
 
     doc.remote = {
@@ -207,7 +203,8 @@ class Remote /*:: implements Reader, Writer */ {
     const options = {
       contentType: doc.mime,
       checksum: doc.md5sum,
-      lastModifiedDate: new Date(doc.updated_at),
+      updatedAt: doc.updated_at,
+      executable: doc.executable || false,
       ifMatch: ''
     }
     if (old && old.remote) {
@@ -285,11 +282,9 @@ class Remote /*:: implements Reader, Writer */ {
       }
 
       log.warn({ path }, "Directory doesn't exist anymore. Recreating it...")
-      newRemoteDoc = await this.remoteCozy.createDirectory({
-        name: newName,
-        dirID: newParentDir._id,
-        lastModifiedDate: doc.updated_at
-      })
+      newRemoteDoc = await this.remoteCozy.createDirectory(
+        newDocumentAttributes(newName, newParentDir._id, doc.updated_at)
+      )
     }
 
     doc.remote = {
@@ -421,6 +416,22 @@ function dirAndName(localPath /*: string */) /*: [string, string] */ {
       .join('/')
   const name = path.basename(localPath)
   return [dir, name]
+}
+
+function newDocumentAttributes(
+  name /*: string */,
+  dirID /*: string */,
+  updatedAt /*: string */
+) {
+  return {
+    name,
+    dirID,
+    // We force the creation date otherwise the stack will set it with the
+    // current date and could possibly update the modification date to be
+    // greater.
+    createdAt: updatedAt,
+    updatedAt
+  }
 }
 
 module.exports = {

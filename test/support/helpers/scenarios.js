@@ -246,7 +246,7 @@ module.exports.init = async (
         remoteName
       )
       const localPath = path.normalize(_.trimEnd(relpath, '/'))
-      const lastModifiedDate = new Date('2011-04-11T10:20:30Z')
+      const updatedAt = new Date('2011-04-11T10:20:30Z').toISOString()
       if (relpath.endsWith('/')) {
         if (!trashed) {
           debug(`- create local dir: ${localPath}`)
@@ -263,7 +263,8 @@ module.exports.init = async (
         const doc /*: Metadata */ = {
           _id: metadata.id(localPath),
           docType: 'folder',
-          updated_at: lastModifiedDate.toISOString(),
+          created_at: updatedAt,
+          updated_at: updatedAt,
           path: localPath,
           tags: [],
           remote: { _id: 'xxx', _rev: 'xxx' },
@@ -278,7 +279,8 @@ module.exports.init = async (
           const remoteDir = await cozy.files.createDirectory({
             name: remoteName,
             dirID: remoteParent._id,
-            lastModifiedDate
+            createdAt: updatedAt,
+            updatedAt
           })
           doc.remote = _.pick(remoteDir, ['_id', '_rev'])
           if (trashed) remoteDocsToTrash.push(remoteDir)
@@ -321,7 +323,8 @@ module.exports.init = async (
           md5sum,
           class: 'text',
           docType: 'file',
-          updated_at: lastModifiedDate.toISOString(),
+          created_at: updatedAt,
+          updated_at: updatedAt,
           mime: 'text/plain',
           path: localPath,
           size: content.length,
@@ -333,7 +336,7 @@ module.exports.init = async (
             md5sum,
             mime: 'text/plain',
             size: content.length,
-            updated_at: lastModifiedDate.toISOString()
+            updated_at: updatedAt
           },
           sides: { target: 2, local: 2, remote: 2 }
         }
@@ -348,7 +351,8 @@ module.exports.init = async (
             dirID: remoteParent._id,
             checksum: md5sum,
             contentType: 'text/plain',
-            lastModifiedDate
+            createdAt: updatedAt,
+            updatedAt
           })
           doc.remote = _.pick(remoteFile, ['_id', '_rev'])
           if (trashed) remoteDocsToTrash.push(remoteFile)

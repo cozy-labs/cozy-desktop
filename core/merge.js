@@ -12,7 +12,6 @@ const metadata = require('./metadata')
 const move = require('./move')
 const { otherSide } = require('./side')
 const logger = require('./utils/logger')
-const timestamp = require('./utils/timestamp')
 const { isNote } = require('./utils/notes')
 
 /*::
@@ -120,7 +119,7 @@ class Merge {
       _id: parentId,
       path: path.dirname(doc.path),
       docType: 'folder',
-      updated_at: timestamp.fromDate(new Date()).toISOString()
+      updated_at: new Date().toISOString()
     }
 
     try {

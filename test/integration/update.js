@@ -242,12 +242,12 @@ describe('Update file', () => {
         .remoteFile()
         .name('file')
         .data('Initial content')
-        .timestamp(2018, 5, 15, 21, 1, 53)
+        .createdAt(2018, 5, 15, 21, 1, 53)
         .create()
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
       const was = await pouch.byRemoteIdMaybeAsync(file._id)
-      should(was).have.property('updated_at', '2018-05-15T21:01:53Z')
+      should(was).have.property('updated_at', '2018-05-15T21:01:53.000Z')
 
       await prep.updateFileAsync(
         'local',

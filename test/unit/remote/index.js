@@ -102,7 +102,7 @@ describe('remote.Remote', function() {
         md5sum: await checksumer.computeChecksumAsync(CHAT_MIGNON_MOD_PATH),
         class: 'image',
         executable: true,
-        updated_at: timestamp.current(),
+        updated_at: new Date().toISOString(),
         mime: 'image/jpg',
         size: 36901,
         sides: {
@@ -129,9 +129,11 @@ describe('remote.Remote', function() {
         mime: 'image/jpg',
         name: 'cat2.jpg',
         size: '36901',
-        type: 'file',
-        updated_at: timestamp.stringify(doc.updated_at)
+        type: 'file'
       })
+      should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+        doc.updated_at
+      )
     })
 
     it('does not reupload an existing file', async function() {
@@ -151,7 +153,7 @@ describe('remote.Remote', function() {
         path: path.normalize('backup/cat3.jpg'),
         docType: 'file',
         md5sum,
-        updated_at: timestamp.current(),
+        updated_at: new Date().toISOString(),
         size: 36901,
         sides: {
           local: 1
@@ -162,7 +164,7 @@ describe('remote.Remote', function() {
         path: path.normalize('ORIGINAL/CAT3.JPG'),
         docType: 'file',
         md5sum,
-        updated_at: timestamp.current(),
+        updated_at: new Date().toISOString(),
         size: 36901,
         remote: {
           _id: '05161241-ca73',
@@ -185,9 +187,11 @@ describe('remote.Remote', function() {
         dir_id: backupDir._id,
         name: 'cat3.jpg',
         type: 'file',
-        updated_at: timestamp.stringify(doc.updated_at),
         size: '36901'
       })
+      should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+        doc.updated_at
+      )
     })
 
     it('fails if the md5sum does not match the content', async function() {
@@ -198,7 +202,7 @@ describe('remote.Remote', function() {
         md5sum: 'BADBEEF',
         class: 'image',
         executable: true,
-        updated_at: timestamp.current(),
+        updated_at: new Date().toISOString(),
         mime: 'image/jpg',
         size: 36901,
         sides: {
@@ -259,11 +263,10 @@ describe('remote.Remote', function() {
 
   describe('addFolderAsync', () => {
     it('adds a folder to couchdb', async function() {
-      const dateString = '2017-02-14T15:03:27Z'
-      let doc /*: Object */ = {
+      const doc /*: Object */ = {
         path: path.normalize('couchdb-folder/folder-1'),
         docType: 'folder',
-        updated_at: dateString
+        updated_at: timestamp.build(2017, 2, 14, 15, 3, 27).toISOString()
       }
       await this.remote.addFolderAsync(doc)
       should.exist(doc.remote._id)
@@ -273,9 +276,11 @@ describe('remote.Remote', function() {
       should(folder.attributes).have.properties({
         path: '/couchdb-folder/folder-1',
         name: 'folder-1',
-        type: 'directory',
-        updated_at: dateString
+        type: 'directory'
       })
+      should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
+        doc.updated_at
+      )
     })
 
     it('does nothing when the folder already exists', async function() {
@@ -325,16 +330,14 @@ describe('remote.Remote', function() {
         const created = await builders
           .remoteFile()
           .data('foo')
-          .timestamp(2015, 11, 16, 16, 12, 1)
+          .createdAt(2015, 11, 16, 16, 12, 1)
           .create()
         const old = metadata.fromRemoteDoc(created)
         const doc /*: Metadata */ = _.defaults(
           {
             _id: created._id,
             md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
-            updated_at: timestamp.stringify(
-              timestamp.build(2015, 12, 16, 16, 12, 1)
-            ),
+            updated_at: timestamp.build(2015, 12, 16, 16, 12, 1).toISOString(),
             sides: {
               local: 1
             }
@@ -360,9 +363,11 @@ describe('remote.Remote', function() {
           type: 'file',
           dir_id: created.dir_id,
           name: created.name,
-          md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
-          updated_at: '2015-12-16T16:12:01Z'
+          md5sum: 'N7UdGUp1E+RbVvZSTy1R8g=='
         })
+        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+          doc.updated_at
+        )
         should(doc.remote._rev).equal(file._rev)
       })
 
@@ -414,16 +419,14 @@ describe('remote.Remote', function() {
           .remoteNote()
           .name('My Note.cozy-note')
           .data('foo')
-          .timestamp(2015, 11, 16, 16, 12, 1)
+          .createdAt(2015, 11, 16, 16, 12, 1)
           .create()
         const old = metadata.fromRemoteDoc(created)
         const doc /*: Metadata */ = _.defaults(
           {
             _id: created._id,
             md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
-            updated_at: timestamp.stringify(
-              timestamp.build(2015, 12, 16, 16, 12, 1)
-            ),
+            updated_at: timestamp.build(2015, 12, 16, 16, 12, 1).toISOString(),
             sides: {
               local: 1
             }
@@ -507,7 +510,7 @@ describe('remote.Remote', function() {
         .name('file-7')
         .inDir(dir)
         .data('foo')
-        .timestamp(2015, 11, 16, 16, 13, 1)
+        .createdAt(2015, 11, 16, 16, 13, 1)
         .create()
 
       const doc /*: Object */ = {
@@ -544,7 +547,7 @@ describe('remote.Remote', function() {
       const created /*: RemoteDoc */ = await builders
         .remoteDir()
         .name('old-name')
-        .timestamp(2017, 11, 15, 8, 12, 9)
+        .createdAt(2017, 11, 15, 8, 12, 9)
         .create()
       const old /*: Metadata */ = metadata.fromRemoteDoc(created)
       const newParentDir /*: RemoteDoc */ = await builders
@@ -555,7 +558,7 @@ describe('remote.Remote', function() {
       const doc /*: Metadata */ = _.defaults(
         {
           path: path.normalize('new-parent-dir/new-name'),
-          updated_at: '2017-11-16T16:14:45Z'
+          updated_at: '2017-11-16T16:14:45.123Z'
         },
         old
       )
@@ -584,13 +587,14 @@ describe('remote.Remote', function() {
         .remoteDir()
         .name('deleted-dir')
         .inDir(parentDir)
-        .timestamp(2016, 1, 2, 3, 4, 5)
+        .createdAt(2016, 1, 2, 3, 4, 5)
         .create()
       const oldMetadata /*: Metadata */ = metadata.fromRemoteDoc(deletedDir)
       const newMetadata /*: Metadata */ = _.defaults(
         {
           name: 'new-dir-name',
-          path: path.normalize('parent-dir/new-dir-name')
+          path: path.normalize('parent-dir/new-dir-name'),
+          updated_at: new Date().toISOString()
         },
         oldMetadata
       )
@@ -605,9 +609,11 @@ describe('remote.Remote', function() {
         type: 'directory',
         name: 'new-dir-name',
         dir_id: deletedDir.dir_id,
-        updated_at: newMetadata.updated_at,
         tags: newMetadata.tags
       })
+      should(timestamp.roundedRemoteDate(created.attributes.updated_at)).equal(
+        newMetadata.updated_at
+      )
       should(newMetadata.remote).have.properties({
         _id: created._id,
         _rev: created._rev
@@ -618,7 +624,7 @@ describe('remote.Remote', function() {
       const oldMetadata /*: Metadata */ = _.defaults(
         {
           remote: undefined,
-          updated_at: timestamp.stringify(timestamp.build(2015, 1, 1, 1, 1, 1))
+          updated_at: timestamp.build(2015, 1, 1, 1, 1, 1).toISOString()
         },
         metadata.fromRemoteDoc(
           builders
@@ -629,7 +635,7 @@ describe('remote.Remote', function() {
       )
       const newMetadata /*: Metadata */ = _.defaults(
         {
-          updated_at: timestamp.stringify(timestamp.build(2015, 2, 2, 2, 2, 2))
+          updated_at: timestamp.build(2015, 2, 2, 2, 2, 2).toISOString()
         },
         oldMetadata
       )
@@ -643,9 +649,11 @@ describe('remote.Remote', function() {
         type: 'directory',
         name: 'foo',
         dir_id: 'io.cozy.files.root-dir',
-        updated_at: newMetadata.updated_at,
         tags: newMetadata.tags
       })
+      should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
+        newMetadata.updated_at
+      )
     })
   })
 
@@ -691,9 +699,11 @@ describe('remote.Remote', function() {
           dir_id: newDir._id,
           name: 'cat7.jpg',
           type: 'file',
-          updated_at: doc.updated_at,
           size: '4'
         })
+        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+          doc.updated_at
+        )
       })
     })
 
@@ -703,20 +713,25 @@ describe('remote.Remote', function() {
         const created = await cozy.files.createDirectory({
           name: 'folder-4',
           dirID: couchdbFolder._id,
-          lastModifiedDate: '2018-01-02T05:31:30.564Z'
+          createdAt: '2018-01-02T05:31:30.564Z',
+          updatedAt: '2018-01-02T05:31:30.564Z'
         })
-        let doc = {
-          path: path.join('couchdb-folder', 'folder-5'),
+        const { created_at, updated_at } = created.attributes
+        const old = {
+          path: path.join('couchdb-folder', 'folder-4'),
           docType: 'folder',
-          updated_at: new Date('2018-07-31T05:37:43.770Z'),
+          created_at: timestamp.roundedRemoteDate(created_at),
+          updated_at: timestamp.roundedRemoteDate(updated_at),
           remote: {
             _id: created._id,
             _rev: created._rev
           }
         }
-        let old = {
-          path: path.join('couchdb-folder', 'folder-4'),
+        const doc = {
+          path: path.join('couchdb-folder', 'folder-5'),
           docType: 'folder',
+          created_at: old.created_at,
+          updated_at: new Date('2018-07-31T05:37:43.770Z').toISOString(),
           remote: {
             _id: created._id,
             _rev: created._rev
@@ -727,9 +742,11 @@ describe('remote.Remote', function() {
         should(folder.attributes).have.properties({
           dir_id: couchdbFolder._id,
           name: 'folder-5',
-          type: 'directory',
-          updated_at: '2018-07-31T05:37:43.77Z' // No ms
+          type: 'directory'
         })
+        should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
+          doc.updated_at
+        )
       })
 
       it('adds a folder to the Cozy if the folder does not exist', async function() {
@@ -737,16 +754,20 @@ describe('remote.Remote', function() {
         const created = await cozy.files.createDirectory({
           name: 'folder-6',
           dirID: couchdbFolder._id,
-          lastModifiedDate: '2018-01-02T05:31:30.564Z'
+          createdAt: '2018-01-02T05:31:30.564Z',
+          updatedAt: '2018-01-02T05:31:30.564Z'
         })
-        let doc = {
+        const doc = {
           path: path.join('couchdb-folder', 'folder-7'),
           docType: 'folder',
-          updated_at: new Date('2018-07-31T05:37:43.770Z')
+          createdAt: created.createdAt,
+          updated_at: '2018-07-31T05:37:43.770Z'
         }
-        let old = {
+        const old = {
           path: path.join('couchdb-folder', 'folder-6'),
           docType: 'folder',
+          createdAt: created.createdAt,
+          updatedAt: created.updatedAt,
           remote: {
             _id: created._id,
             _rev: created._rev
@@ -758,9 +779,11 @@ describe('remote.Remote', function() {
         should(folder.attributes).have.properties({
           dir_id: couchdbFolder._id,
           name: 'folder-7',
-          type: 'directory',
-          updated_at: '2018-07-31T05:37:43.77Z' // No ms
+          type: 'directory'
         })
+        should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
+          doc.updated_at
+        )
       })
     })
 
@@ -820,9 +843,11 @@ describe('remote.Remote', function() {
           dir_id: newDir._id,
           name: 'cat7.jpg',
           type: 'file',
-          updated_at: doc.updated_at,
           size: '4'
         })
+        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+          doc.updated_at
+        )
       })
 
       it('trashes the existing file at target location', async function() {

@@ -231,7 +231,8 @@ function fromRemoteDoc(remoteDoc /*: RemoteDoc */) /*: Metadata */ {
   const doc /*: Object */ = {
     path: remoteDoc.path.substring(1),
     docType: localDocType(remoteDoc.type),
-    updated_at: remoteDoc.updated_at,
+    created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
+    updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at),
     remote: {
       _id: remoteDoc._id,
       _rev: remoteDoc._rev
@@ -245,9 +246,16 @@ function fromRemoteDoc(remoteDoc /*: RemoteDoc */) /*: Metadata */ {
   const fields = Object.getOwnPropertyNames(remoteDoc).filter(
     field =>
       // Filter out fields already used above
-      !['_id', '_rev', '_type', 'path', 'type', 'updated_at', 'size'].includes(
-        field
-      )
+      ![
+        '_id',
+        '_rev',
+        '_type',
+        'path',
+        'type',
+        'created_at',
+        'updated_at',
+        'size'
+      ].includes(field)
   )
   for (const field of fields) {
     if (remoteDoc[field]) {
@@ -719,9 +727,7 @@ function buildDir(
     _id: id(fpath),
     path: fpath,
     docType: 'folder',
-    updated_at: timestamp
-      .fromDate(timestamp.maxDate(stats.mtime, stats.ctime))
-      .toISOString(),
+    updated_at: stats.mtime.toISOString(),
     ino: stats.ino,
     remote
   }
@@ -741,10 +747,8 @@ function buildFile(
 ) /*: Metadata */ {
   const mimeType = mime.lookup(filePath)
   const className = mimeType.split('/')[0]
-  const { mtime, ctime, ino, size } = stats
-  const updated_at = timestamp
-    .fromDate(timestamp.maxDate(mtime, ctime))
-    .toISOString()
+  const { mtime, ino, size } = stats
+  const updated_at = mtime.toISOString()
 
   const doc /*: Object */ = {
     _id: id(filePath),

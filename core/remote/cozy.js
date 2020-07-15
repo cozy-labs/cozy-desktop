@@ -184,15 +184,20 @@ class RemoteCozy {
   createFile(
     data /*: Readable */,
     options /*: {name: string,
-                          dirID?: ?string,
-                          contentType?: ?string,
-                          lastModifiedDate?: ?Date} */
+                 dirID?: ?string,
+                 contentType?: ?string,
+                 createdAt: ?string,
+                 updatedAt: ?string,
+                 executable: boolean} */
   ) /*: Promise<RemoteDoc> */ {
     return this.client.files.create(data, options).then(this.toRemoteDoc)
   }
 
   createDirectory(
-    options /*: {name: string, dirID?: string} */
+    options /*: {name: string,
+                 dirID?: string,
+                 createdAt: ?string,
+                 updatedAt: ?string} */
   ) /*: Promise<RemoteDoc> */ {
     return this.client.files.createDirectory(options).then(this.toRemoteDoc)
   }
@@ -201,7 +206,8 @@ class RemoteCozy {
     id /*: string */,
     data /*: Readable */,
     options /*: {contentType?: ?string,
-                               lastModifiedDate?: ?Date} */
+                 updatedAt: ?string,
+                 executable: boolean} */
   ) /*: Promise<RemoteDoc> */ {
     return this.client.files
       .updateById(id, data, options)
@@ -309,9 +315,15 @@ class RemoteCozy {
         parentPath
       )
       const dirID = parentDir._id
+      const createdAt = new Date().toISOString()
 
       log.info({ path, name, dirID }, 'Creating directory...')
-      return this.createDirectory({ name, dirID })
+      return this.createDirectory({
+        name,
+        dirID,
+        createdAt,
+        updatedAt: createdAt
+      })
     }
   }
 
