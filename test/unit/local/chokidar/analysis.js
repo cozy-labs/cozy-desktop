@@ -809,112 +809,181 @@ onPlatform('darwin', () => {
     })
 
     describe('move from inside move', () => {
-      it('happened when client was stopped (unlink* events are made up)', () => {
-        const src /*: Metadata */ = builders
-          .metadir()
-          .path('src')
-          .ino(1)
-          .build()
-        const dst /*: Metadata */ = builders
-          .metadir()
-          .path('dst')
-          .ino(2)
-          .build()
-        const dst2 /*: Metadata */ = builders
-          .metadir()
-          .path('dst2')
-          .ino(3)
-          .build()
-        const dir /*: Metadata */ = builders
-          .metadir()
-          .path(path.normalize('src/dir'))
-          .ino(4)
-          .build()
-        const emptySubdir /*: Metadata */ = builders
-          .metadir()
-          .path(path.normalize('src/dir/empty-subdir'))
-          .ino(5)
-          .build()
-        const subdir /*: Metadata */ = builders
-          .metadir()
-          .path(path.normalize('src/dir/subdir'))
-          .ino(6)
-          .build()
-        const file /*: Metadata */ = builders
-          .metafile()
-          .path(path.normalize('src/dir/subdir/file'))
-          .ino(7)
-          .data('Initial content')
-          .build()
-        const events /*: LocalEvent[] */ = [
-          { type: 'addDir', path: 'dst', stats: { ino: dst.ino } },
-          { type: 'addDir', path: 'dst2', stats: { ino: dst2.ino } },
-          { type: 'addDir', path: 'src', stats: { ino: src.ino } },
-          { type: 'addDir', path: 'dst2/subdir', stats: { ino: subdir.ino } },
-          { type: 'addDir', path: 'dst/dir', stats: { ino: dir.ino } },
-          { type: 'add', path: 'dst2/subdir/file', stats: { ino: file.ino } },
-          {
-            type: 'addDir',
-            path: 'dst/dir/empty-subdir',
-            stats: { ino: emptySubdir.ino }
-          },
-          // generated events
-          { type: 'unlinkDir', path: 'src/dir', old: dir },
-          { type: 'unlinkDir', path: 'src/dir/empty-subdir', old: emptySubdir },
-          { type: 'unlinkDir', path: 'src/dir/subdir', old: subdir },
-          {
-            type: 'unlink',
-            path: path.normalize('src/dir/subdir/file'),
-            old: file
-          }
-        ]
-        const pendingChanges = []
-        should(
-          analysis(events, { pendingChanges, initialScan: true })
-        ).deepEqual([
-          {
-            sideName,
-            type: 'DirAddition',
-            path: 'dst',
-            ino: dst.ino,
-            stats: { ino: dst.ino }
-          },
-          {
-            sideName,
-            type: 'DirMove',
-            path: 'dst/dir',
-            ino: dir.ino,
-            stats: { ino: dir.ino },
-            old: dir,
-            wip: undefined // FIXME: Remove useless wip key
-          },
-          {
-            sideName,
-            type: 'DirAddition',
-            path: 'dst2',
-            ino: dst2.ino,
-            stats: { ino: dst2.ino }
-          },
-          {
-            sideName,
-            type: 'DirMove',
-            path: 'dst2/subdir',
-            ino: subdir.ino,
-            stats: { ino: subdir.ino },
-            old: subdir,
-            needRefetch: true,
-            wip: undefined // FIXME: Remove useless wip key
-          },
-          {
-            sideName,
-            type: 'DirAddition',
-            path: 'src',
-            ino: src.ino,
-            stats: { ino: src.ino }
-          }
-        ])
-        should(pendingChanges).deepEqual([])
+      context('when parent path normalization differs in child path', () => {
+        it('correctly replaces the parent path within the child move old path', () => {
+          const parent /*: Metadata */ = builders
+            .metadir()
+            .path('énoncés'.normalize('NFD'))
+            .ino(1)
+            .build()
+          const child /*: Metadata */ = builders
+            .metadir()
+            .path(path.join('énoncés'.normalize('NFC'), 'économie'))
+            .ino(2)
+            .build()
+          const events /*: LocalEvent[] */ = [
+            { type: 'addDir', path: 'corrigés', stats: { ino: parent.ino } },
+            {
+              type: 'addDir',
+              path: 'corrigés/Économie',
+              stats: { ino: child.ino }
+            },
+            // generated events
+            { type: 'unlinkDir', path: parent.path, old: parent },
+            { type: 'unlinkDir', path: child.path, old: child }
+          ]
+          const pendingChanges = []
+          should(
+            analysis(events, { pendingChanges, initialScan: true })
+          ).deepEqual([
+            {
+              sideName,
+              type: 'DirMove',
+              path: 'corrigés',
+              ino: parent.ino,
+              stats: { ino: parent.ino },
+              old: parent,
+              wip: undefined // FIXME: Remove useless wip key
+            },
+            {
+              sideName,
+              type: 'DirMove',
+              path: 'corrigés/Économie',
+              ino: child.ino,
+              stats: { ino: child.ino },
+              old: {
+                ...child,
+                path: 'corrigés/économie'
+              },
+              needRefetch: true
+            }
+          ])
+        })
       })
+
+      context(
+        'happened when client was stopped (unlink* events are made up)',
+        () => {
+          it('is not detected as a child move', () => {
+            const src /*: Metadata */ = builders
+              .metadir()
+              .path('src')
+              .ino(1)
+              .build()
+            const dst /*: Metadata */ = builders
+              .metadir()
+              .path('dst')
+              .ino(2)
+              .build()
+            const dst2 /*: Metadata */ = builders
+              .metadir()
+              .path('dst2')
+              .ino(3)
+              .build()
+            const dir /*: Metadata */ = builders
+              .metadir()
+              .path('src/dir')
+              .ino(4)
+              .build()
+            const emptySubdir /*: Metadata */ = builders
+              .metadir()
+              .path('src/dir/empty-subdir')
+              .ino(5)
+              .build()
+            const subdir /*: Metadata */ = builders
+              .metadir()
+              .path('src/dir/subdir')
+              .ino(6)
+              .build()
+            const file /*: Metadata */ = builders
+              .metafile()
+              .path('src/dir/subdir/file')
+              .ino(7)
+              .data('Initial content')
+              .build()
+            const events /*: LocalEvent[] */ = [
+              { type: 'addDir', path: 'dst', stats: { ino: dst.ino } },
+              { type: 'addDir', path: 'dst2', stats: { ino: dst2.ino } },
+              { type: 'addDir', path: 'src', stats: { ino: src.ino } },
+              {
+                type: 'addDir',
+                path: 'dst2/subdir',
+                stats: { ino: subdir.ino }
+              },
+              { type: 'addDir', path: 'dst/dir', stats: { ino: dir.ino } },
+              {
+                type: 'add',
+                path: 'dst2/subdir/file',
+                stats: { ino: file.ino }
+              },
+              {
+                type: 'addDir',
+                path: 'dst/dir/empty-subdir',
+                stats: { ino: emptySubdir.ino }
+              },
+              // generated events
+              { type: 'unlinkDir', path: 'src/dir', old: dir },
+              {
+                type: 'unlinkDir',
+                path: 'src/dir/empty-subdir',
+                old: emptySubdir
+              },
+              { type: 'unlinkDir', path: 'src/dir/subdir', old: subdir },
+              {
+                type: 'unlink',
+                path: path.normalize('src/dir/subdir/file'),
+                old: file
+              }
+            ]
+            const pendingChanges = []
+            should(
+              analysis(events, { pendingChanges, initialScan: true })
+            ).deepEqual([
+              {
+                sideName,
+                type: 'DirAddition',
+                path: 'dst',
+                ino: dst.ino,
+                stats: { ino: dst.ino }
+              },
+              {
+                sideName,
+                type: 'DirMove',
+                path: 'dst/dir',
+                ino: dir.ino,
+                stats: { ino: dir.ino },
+                old: dir,
+                wip: undefined // FIXME: Remove useless wip key
+              },
+              {
+                sideName,
+                type: 'DirAddition',
+                path: 'dst2',
+                ino: dst2.ino,
+                stats: { ino: dst2.ino }
+              },
+              {
+                sideName,
+                type: 'DirMove',
+                path: 'dst2/subdir',
+                ino: subdir.ino,
+                stats: { ino: subdir.ino },
+                old: subdir,
+                needRefetch: true,
+                wip: undefined // FIXME: Remove useless wip key
+              },
+              {
+                sideName,
+                type: 'DirAddition',
+                path: 'src',
+                ino: src.ino,
+                stats: { ino: src.ino }
+              }
+            ])
+            should(pendingChanges).deepEqual([])
+          })
+        }
+      )
     })
 
     describe('DirMove(src/ → dst/) + FileUpdate(dst/file)', () => {

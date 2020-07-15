@@ -35,6 +35,7 @@ const { getInode } = require('./local_event')
 const localChange = require('./local_change')
 const logger = require('../../utils/logger')
 const measureTime = require('../../utils/perfs')
+const metadata = require('../../metadata')
 
 /*::
 import type { LocalEvent } from './local_event'
@@ -339,7 +340,7 @@ function squashMoves(changes /*: LocalChange[] */) {
           }
         } else {
           log.debug({ oldpath: b.old.path, path: b.path }, 'move inside move')
-          b.old.path = b.old.path.replace(a.old.path, a.path)
+          b.old.path = metadata.newChildPath(b.old.path, a.old.path, a.path)
           b.needRefetch = true
         }
       }
