@@ -399,7 +399,7 @@ class Local /*:: implements Reader, Writer */ {
       `Moving ${old.docType}${doc.overwrite ? ' (with overwrite)' : ''}`
     )
 
-    if (doc.overwrite && doc.overwrite.path !== old.path) {
+    if (doc.overwrite && doc.overwrite._id !== old._id) {
       await this.trashAsync(doc.overwrite)
     }
 
