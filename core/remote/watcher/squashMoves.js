@@ -111,6 +111,7 @@ const buildMoveInsideMove = (
 ) /*: RemoteFileMove|RemoteDirMove */ => {
   const correctedSrc /*: Metadata */ = _.clone(child.was)
   correctedSrc.path = path.join(parent.doc.path, path.basename(child.was.path))
+  correctedSrc._id = metadata.id(correctedSrc.path)
 
   if (child.type === 'FileMove') {
     return {
