@@ -4,6 +4,7 @@
 const _ = require('lodash')
 const sinon = require('sinon')
 const should = require('should')
+const path = require('path')
 
 const { Merge } = require('../../core/merge')
 const metadata = require('../../core/metadata')
@@ -2785,6 +2786,205 @@ describe('Merge', function() {
           resolvedConflicts: []
         })
       })
+    })
+
+    onPlatform('darwin', () => {
+      context(
+        'when the parent normalization differs in its children paths',
+        () => {
+          it('correctly replaces the NFD parent part in the children paths', async function() {
+            const nfdParentPath = 'Énoncés'.normalize('NFD')
+            const nfcParentPath = nfdParentPath.normalize('NFC')
+            const was = await builders
+              .metadir()
+              .path(nfcParentPath)
+              .upToDate()
+              .remoteId(dbBuilders.id())
+              .create()
+            const subdir = await builders
+              .metadir()
+              .path(path.join(nfdParentPath, 'folder-9'))
+              .upToDate()
+              .remoteId(dbBuilders.id())
+              .create()
+            const subfile = await builders
+              .metafile()
+              .path(path.join(subdir.path, 'file-9'))
+              .upToDate()
+              .remoteId(dbBuilders.id())
+              .create()
+            const doc = builders
+              .metadir(was)
+              .path('DESTINATION')
+              .changedSide(this.side)
+              .remoteId(dbBuilders.id())
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.moveFolderRecursivelyAsync(
+                this.side,
+                _.cloneDeep(doc),
+                _.cloneDeep(was)
+              )
+            )
+
+            const movedDir = _.defaults(
+              {
+                moveTo: doc._id,
+                _deleted: true
+              },
+              was
+            )
+            const movedSubdirPath = path.join(doc.path, 'folder-9')
+            const movedSubdir = _.defaults(
+              {
+                moveTo: metadata.id(movedSubdirPath),
+                childMove: true,
+                _deleted: true
+              },
+              subdir
+            )
+            const movedSubfilePath = path.join(movedSubdirPath, 'file-9')
+            const movedSubfile = _.defaults(
+              {
+                moveTo: metadata.id(movedSubfilePath),
+                childMove: true,
+                _deleted: true
+              },
+              subfile
+            )
+            should(sideEffects).deepEqual({
+              savedDocs: [
+                _.omit(movedDir, ['_rev']),
+                _.defaults(
+                  {
+                    sides: increasedSides(was.sides, this.side, 1),
+                    moveFrom: movedDir
+                  },
+                  _.omit(doc, ['_rev'])
+                ),
+                _.omit(movedSubdir, ['_rev']),
+                _.defaults(
+                  {
+                    _id: metadata.id(movedSubdirPath),
+                    path: movedSubdirPath,
+                    sides: increasedSides(subdir.sides, this.side, 1),
+                    moveFrom: movedSubdir
+                  },
+                  _.omit(subdir, ['_rev'])
+                ),
+                _.omit(movedSubfile, ['_rev']),
+                _.defaults(
+                  {
+                    _id: metadata.id(movedSubfilePath),
+                    path: movedSubfilePath,
+                    sides: increasedSides(subfile.sides, this.side, 1),
+                    moveFrom: movedSubfile
+                  },
+                  _.omit(subfile, ['_rev'])
+                )
+              ],
+              resolvedConflicts: []
+            })
+          })
+
+          it('correctly replaces the NFC parent part in the children paths', async function() {
+            const nfdParentPath = 'Énoncés'.normalize('NFD')
+            const nfcParentPath = nfdParentPath.normalize('NFC')
+            const was = await builders
+              .metadir()
+              .path(nfdParentPath)
+              .upToDate()
+              .remoteId(dbBuilders.id())
+              .create()
+            const subdir = await builders
+              .metadir()
+              .path(path.join(nfcParentPath, 'folder-9'))
+              .upToDate()
+              .remoteId(dbBuilders.id())
+              .create()
+            const subfile = await builders
+              .metafile()
+              .path(path.join(subdir.path, 'file-9'))
+              .upToDate()
+              .remoteId(dbBuilders.id())
+              .create()
+            const doc = builders
+              .metadir(was)
+              .path('DESTINATION')
+              .changedSide(this.side)
+              .remoteId(dbBuilders.id())
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.moveFolderRecursivelyAsync(
+                this.side,
+                _.cloneDeep(doc),
+                _.cloneDeep(was)
+              )
+            )
+
+            const movedDir = _.defaults(
+              {
+                moveTo: doc._id,
+                _deleted: true
+              },
+              was
+            )
+            const movedSubdirPath = path.join(doc.path, 'folder-9')
+            const movedSubdir = _.defaults(
+              {
+                moveTo: metadata.id(movedSubdirPath),
+                childMove: true,
+                _deleted: true
+              },
+              subdir
+            )
+            const movedSubfilePath = path.join(movedSubdirPath, 'file-9')
+            const movedSubfile = _.defaults(
+              {
+                moveTo: metadata.id(movedSubfilePath),
+                childMove: true,
+                _deleted: true
+              },
+              subfile
+            )
+            should(sideEffects).deepEqual({
+              savedDocs: [
+                _.omit(movedDir, ['_rev']),
+                _.defaults(
+                  {
+                    sides: increasedSides(was.sides, this.side, 1),
+                    moveFrom: movedDir
+                  },
+                  _.omit(doc, ['_rev'])
+                ),
+                _.omit(movedSubdir, ['_rev']),
+                _.defaults(
+                  {
+                    _id: metadata.id(movedSubdirPath),
+                    path: movedSubdirPath,
+                    sides: increasedSides(subdir.sides, this.side, 1),
+                    moveFrom: movedSubdir
+                  },
+                  _.omit(subdir, ['_rev'])
+                ),
+                _.omit(movedSubfile, ['_rev']),
+                _.defaults(
+                  {
+                    _id: metadata.id(movedSubfilePath),
+                    path: movedSubfilePath,
+                    sides: increasedSides(subfile.sides, this.side, 1),
+                    moveFrom: movedSubfile
+                  },
+                  _.omit(subfile, ['_rev'])
+                )
+              ],
+              resolvedConflicts: []
+            })
+          })
+        }
+      )
     })
   })
 

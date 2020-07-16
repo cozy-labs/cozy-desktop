@@ -193,6 +193,7 @@ module.exports = {
   markAsUpToDate,
   samePath,
   areParentChildPaths,
+  newChildPath,
   sameFolder,
   sameFile,
   sameFileIgnoreRev,
@@ -542,6 +543,19 @@ function areParentChildPaths(
   } else {
     return childPath.startsWith(parentPath + path.sep)
   }
+}
+
+function newChildPath(
+  oldChildPath /*: string */,
+  oldParentPath /*: string */,
+  newParentPath /*: string */
+) {
+  const parentParts = oldParentPath.split(path.sep)
+  const childParts = oldChildPath.split(path.sep)
+
+  // We keep only the old child parts that are within in the old parent path, no
+  // matter what their normalizations are within both paths.
+  return path.join(newParentPath, ...childParts.slice(parentParts.length))
 }
 
 const ensureExecutable = (one, two) => {

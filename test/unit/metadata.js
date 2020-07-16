@@ -1228,4 +1228,128 @@ describe('metadata', function() {
       ])
     })
   })
+
+  describe('newChildPath', () => {
+    context(
+      'when both the parent part and the parent path are normalized with NFC',
+      () => {
+        it('replaces the parent part with its new value', () => {
+          const oldParentPath = 'énoncés'.normalize('NFC')
+          const newParentPath = 'Énoncés'
+          const childName = 'DS-1.pdf'
+          const oldChildPath = path.join(oldParentPath, childName)
+
+          should(
+            metadata.newChildPath(oldChildPath, oldParentPath, newParentPath)
+          ).equal(path.join(newParentPath, childName))
+        })
+      }
+    )
+
+    context(
+      'when both the parent part and the parent path are normalized with NFD',
+      () => {
+        it('replaces the parent part with its new value', () => {
+          const oldParentPath = 'énoncés'.normalize('NFD')
+          const newParentPath = 'Énoncés'
+          const childName = 'DS-1.pdf'
+          const oldChildPath = path.join(oldParentPath, childName)
+
+          should(
+            metadata.newChildPath(oldChildPath, oldParentPath, newParentPath)
+          ).equal(path.join(newParentPath, childName))
+        })
+      }
+    )
+
+    context(
+      'when the parent part is normalized with NFC and the parent path with NFD',
+      () => {
+        it('replaces the parent part with its new value', () => {
+          const oldParentPath = 'énoncés'.normalize('NFD')
+          const newParentPath = 'Énoncés'
+          const childName = 'DS-1.pdf'
+          const oldChildPath = path.join(
+            oldParentPath.normalize('NFC'),
+            childName
+          )
+
+          should(
+            metadata.newChildPath(oldChildPath, oldParentPath, newParentPath)
+          ).equal(path.join(newParentPath, childName))
+        })
+      }
+    )
+
+    context(
+      'when the parent part is normalized with NFD and the parent path with NFC',
+      () => {
+        it('replaces the parent part with its new value', () => {
+          const oldParentPath = 'énoncés'.normalize('NFC')
+          const newParentPath = 'Énoncés'
+          const childName = 'DS-1.pdf'
+          const oldChildPath = path.join(
+            oldParentPath.normalize('NFD'),
+            childName
+          )
+
+          should(
+            metadata.newChildPath(oldChildPath, oldParentPath, newParentPath)
+          ).equal(path.join(newParentPath, childName))
+        })
+      }
+    )
+
+    context('when the parent is moved', () => {
+      it('replaces the parent part with its new value', () => {
+        const oldParentPath = 'énoncés'.normalize('NFC')
+        const newParentPath = 'Économie/Énoncés'
+        const childName = 'DS-1.pdf'
+        const oldChildPath = path.join(
+          oldParentPath.normalize('NFD'),
+          childName
+        )
+
+        should(
+          metadata.newChildPath(oldChildPath, oldParentPath, newParentPath)
+        ).equal(path.join(newParentPath, childName))
+      })
+    })
+
+    context('when ancestors have different normalizations', () => {
+      it('replaces the parent part with its new value', () => {
+        const ancestorPath = 'énoncés'.normalize('NFC')
+        const oldParentName = 'économie'.normalize('NFD')
+        const oldParentPath = path.join(
+          ancestorPath.normalize('NFD'),
+          oldParentName
+        )
+        const newParentPath = oldParentPath.replace(oldParentName, 'Économie')
+        const childName = 'DS-1.pdf'
+        const oldChildPath = path.join(ancestorPath, oldParentName, childName)
+
+        should(
+          metadata.newChildPath(oldChildPath, oldParentPath, newParentPath)
+        ).equal(path.join(newParentPath, childName))
+      })
+
+      context('when the parent is moved', () => {
+        it('replaces the parent part with its new value', () => {
+          const ancestorPath = 'énoncés'.normalize('NFC')
+          const oldParentName = 'économie'.normalize('NFD')
+          const oldParentPath = path.join(
+            ancestorPath.normalize('NFD'),
+            oldParentName
+          )
+          const newParentPath = path.join(ancestorPath, 'L1', 'Économie')
+          const childName = 'DS-1.pdf'
+          const oldChildPath = path.join(ancestorPath, oldParentName, childName)
+
+          should(
+            metadata.newChildPath(oldChildPath, oldParentPath, newParentPath)
+          ).equal(path.join(newParentPath, childName))
+        })
+      })
+    })
+  })
 })
