@@ -11,6 +11,7 @@ const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
+const { onPlatform } = require('../support/helpers/platform')
 
 const builders = new Builders()
 const cozy = cozyHelpers.cozy
@@ -312,48 +313,52 @@ describe('Move', () => {
     })
 
     describe('with unsynced file update', () => {
-      it('local', async () => {
-        await helpers.local.syncDir.outputFile(
-          'src/file',
-          'updated file content'
-        )
-        await helpers.local.scan()
-        await helpers.local.syncDir.rename('src/file', 'file2')
-        await helpers.flushLocalAndSyncAll()
+      context('local', () => {
+        it('moves and updates the file on the remote Cozy', async () => {
+          await helpers.local.syncDir.outputFile(
+            'src/file',
+            'updated file content'
+          )
+          await helpers.local.scan()
+          await helpers.local.syncDir.rename('src/file', 'file2')
+          await helpers.flushLocalAndSyncAll()
 
-        should(await helpers.docByPath('src/file2')).match({
-          remote: { _id: file._id }
+          should(await helpers.docByPath('src/file2')).match({
+            remote: { _id: file._id }
+          })
+          should(await helpers.remote.readFile('src/file2')).eql(
+            'updated file content'
+          )
+          should(await helpers.local.readFile('src/file2')).eql(
+            'updated file content'
+          )
         })
-        should(await helpers.remote.readFile('src/file2')).eql(
-          'updated file content'
-        )
-        should(await helpers.local.readFile('src/file2')).eql(
-          'updated file content'
-        )
       })
 
-      it('remote', async () => {
-        await cozy.files.updateById(file._id, 'updated file content', {})
-        await helpers.remote.pullChanges()
-        const was = await pouch.byRemoteIdAsync(file._id)
-        await helpers._remote.moveAsync(
-          {
-            ...was,
-            path: path.normalize('src/file2')
-          },
-          was
-        )
-        await helpers.pullAndSyncAll()
+      context('remote', () => {
+        it('moves and updates the file on the local filesystem', async () => {
+          await cozy.files.updateById(file._id, 'updated file content', {})
+          await helpers.remote.pullChanges()
+          const was = await pouch.byRemoteIdAsync(file._id)
+          await helpers._remote.moveAsync(
+            {
+              ...was,
+              path: path.normalize('src/file2')
+            },
+            was
+          )
+          await helpers.pullAndSyncAll()
 
-        should(await helpers.docByPath('src/file2')).match({
-          remote: { _id: file._id }
+          should(await helpers.docByPath('src/file2')).match({
+            remote: { _id: file._id }
+          })
+          should(await helpers.remote.readFile('src/file2')).eql(
+            'updated file content'
+          )
+          should(await helpers.local.readFile('src/file2')).eql(
+            'updated file content'
+          )
         })
-        should(await helpers.remote.readFile('src/file2')).eql(
-          'updated file content'
-        )
-        should(await helpers.local.readFile('src/file2')).eql(
-          'updated file content'
-        )
       })
     })
   })
@@ -1048,6 +1053,87 @@ describe('Move', () => {
       should(await helpers.trees('metadata', 'remote')).deepEqual({
         remote: ['dst/', 'dst/final/', 'src/'],
         metadata: ['dst/', 'dst/final/', 'src/']
+      })
+    })
+  })
+
+  onPlatform('darwin', () => {
+    describe('unsynced remote file move followed by content update', () => {
+      context('with a case change in file name', () => {
+        let file
+        beforeEach('create normalized file', async () => {
+          const parent = await cozy.files.createDirectory({
+            name: 'Sujets'
+          })
+          file = await cozy.files.create('initial content', {
+            name: 'ds-1.pdf',
+            dirID: parent._id
+          })
+          await helpers.pullAndSyncAll()
+          await helpers.flushLocalAndSyncAll()
+        })
+
+        it('does not trash the file', async () => {
+          await cozy.files.updateAttributesById(file._id, {
+            name: 'DS-1.pdf'
+          })
+          await helpers.remote.pullChanges()
+          await cozy.files.updateById(file._id, 'updated content', {})
+          await helpers.pullAndSyncAll()
+
+          should(await helpers.docByPath('Sujets/DS-1.pdf')).match({
+            remote: { _id: file._id }
+          })
+          should(await helpers.remote.readFile('Sujets/DS-1.pdf')).eql(
+            'updated content'
+          )
+          should(await helpers.local.readFile('Sujets/DS-1.pdf')).eql(
+            'updated content'
+          )
+        })
+      })
+
+      context('with a normalization difference in parent path', () => {
+        let file
+        beforeEach('create normalized file', async () => {
+          const parent = await cozy.files.createDirectory({
+            name: 'énoncés'
+          })
+          file = await cozy.files.create('initial content', {
+            name: 'sujet.pdf',
+            dirID: parent._id
+          })
+          await helpers.pullAndSyncAll()
+          await helpers.flushLocalAndSyncAll()
+
+          // Fake local re-normalization from NFC to NFD
+          const doc = await helpers.docByPath(
+            path.join(parent.attributes.name, file.attributes.name)
+          )
+          await helpers.pouch.put({
+            ...doc,
+            path: doc.path.normalize('NFD')
+          })
+        })
+
+        it('does not trash the file', async () => {
+          await cozy.files.updateAttributesById(file._id, {
+            name: 'DS-1.pdf'
+          })
+          await helpers.remote.pullChanges()
+          await cozy.files.updateById(file._id, 'updated content', {})
+          await helpers.pullAndSyncAll()
+
+          should(await helpers.docByPath('énoncés/DS-1.pdf')).match({
+            remote: { _id: file._id }
+          })
+          should(await helpers.remote.readFile('énoncés/DS-1.pdf')).eql(
+            'updated content'
+          )
+          should(await helpers.local.readFile('énoncés/DS-1.pdf')).eql(
+            'updated content'
+          )
+        })
       })
     })
   })
