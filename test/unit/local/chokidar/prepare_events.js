@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
 const should = require('should')
+const sinon = require('sinon')
 
 const prepareEvents = require('../../../../core/local/chokidar/prepare_events')
 
@@ -43,6 +44,75 @@ onPlatform('darwin', () => {
           unlink: old,
           unlinkDir: old
         })
+      })
+    })
+
+    describe('#step()', () => {
+      it('does not compute checksum of untouched file', async function() {
+        const untouched = await builders
+          .metafile()
+          .path('untouched')
+          .data('initial')
+          .create()
+        const sameContent = await builders
+          .metafile()
+          .path('sameContent')
+          .data('initial')
+          .create()
+        const events /*: ChokidarEvent[] */ = [
+          {
+            type: 'add',
+            path: untouched.path,
+            old: untouched,
+            stats: {
+              mtime: new Date(untouched.updated_at)
+            }
+          },
+          {
+            type: 'change',
+            path: sameContent.path,
+            old: sameContent,
+            stats: {
+              mtime: new Date(sameContent.updated_at)
+            }
+          }
+        ]
+
+        const checksum = sinon.spy()
+        await prepareEvents.step(events, {
+          checksum,
+          initialScan: true,
+          pouch: this.pouch,
+          syncPath: this.config.syncPath
+        })
+        should(checksum).not.have.been.called()
+      })
+
+      it('does not compute checksum after only a path normalization change', async function() {
+        const old = await builders
+          .metafile()
+          .path('énoncé'.normalize('NFC'))
+          .data('initial')
+          .create()
+        const events /*: ChokidarEvent[] */ = [
+          {
+            type: 'add',
+            path: old.path.normalize('NFD'),
+            old,
+            stats: {
+              mtime: new Date(old.updated_at)
+            }
+          }
+        ]
+
+        const checksum = sinon.spy()
+        await prepareEvents.step(events, {
+          checksum,
+          initialScan: true,
+          pouch: this.pouch,
+          syncPath: this.config.syncPath
+        })
+        should(checksum).not.have.been.called()
       })
     })
   })

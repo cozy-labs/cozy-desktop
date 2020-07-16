@@ -501,12 +501,6 @@ describe('core/local/atom/initial_diff', () => {
     })
 
     it('does not reuse the checksum of modified files', async function() {
-      const updatedMetadata = await builders
-        .metafile()
-        .path('updatedMetadata')
-        .ino(1)
-        .data('content')
-        .create()
       const updatedContent = await builders
         .metafile()
         .path('updatedContent')
@@ -517,29 +511,19 @@ describe('core/local/atom/initial_diff', () => {
       const state = await initialDiff.initialState({ pouch: this.pouch })
 
       const updateTime = new Date(Date.now() + 1000)
-      const updatedMetadataScan = builders
-        .event()
-        .fromDoc(updatedMetadata)
-        .action('scan')
-        .ctime(updateTime)
-        .build()
       const updatedContentScan = builders
         .event()
         .fromDoc(updatedContent)
         .action('scan')
         .mtime(updateTime)
         .build()
-      inputBatch([updatedMetadataScan, updatedContentScan, initialScanDone])
+      inputBatch([updatedContentScan, initialScanDone])
 
       const events = await initialDiff
         .loop(channel, { pouch: this.pouch, state })
         .pop()
 
-      should(events).deepEqual([
-        updatedMetadataScan,
-        updatedContentScan,
-        initialScanDone
-      ])
+      should(events).deepEqual([updatedContentScan, initialScanDone])
     })
 
     it('ignores events for unapplied moves', async function() {

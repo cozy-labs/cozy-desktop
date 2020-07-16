@@ -11,6 +11,7 @@ type DispatchedCalls = {
 
 const should = require('should')
 const sinon = require('sinon')
+const _ = require('lodash')
 
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
@@ -144,7 +145,17 @@ describe('core/local/atom/dispatch.loop()', function() {
       await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
-        addFileAsync: [['local', doc]]
+        addFileAsync: [
+          [
+            'local',
+            _.defaultsDeep(
+              {
+                local: { updated_at: updatedAt.toISOString() }
+              },
+              doc
+            )
+          ]
+        ]
       })
     })
   })
@@ -217,7 +228,17 @@ describe('core/local/atom/dispatch.loop()', function() {
       await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
-        addFileAsync: [['local', doc]]
+        addFileAsync: [
+          [
+            'local',
+            _.defaultsDeep(
+              {
+                local: { updated_at: updatedAt.toISOString() }
+              },
+              doc
+            )
+          ]
+        ]
       })
     })
   })
@@ -290,7 +311,17 @@ describe('core/local/atom/dispatch.loop()', function() {
       await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({
-        updateFileAsync: [['local', doc]]
+        updateFileAsync: [
+          [
+            'local',
+            _.defaultsDeep(
+              {
+                local: { updated_at: updatedAt.toISOString() }
+              },
+              doc
+            )
+          ]
+        ]
       })
     })
   })
@@ -378,7 +409,18 @@ describe('core/local/atom/dispatch.loop()', function() {
           await dispatch.loop(channel, stepOptions).pop()
 
           should(dispatchedCalls(prep)).deepEqual({
-            moveFileAsync: [['local', doc, oldDoc]]
+            moveFileAsync: [
+              [
+                'local',
+                _.defaultsDeep(
+                  {
+                    local: { updated_at: updatedAt.toISOString() }
+                  },
+                  doc
+                ),
+                oldDoc
+              ]
+            ]
           })
         })
       })
@@ -489,10 +531,13 @@ describe('core/local/atom/dispatch.loop()', function() {
             moveFileAsync: [
               [
                 'local',
-                {
-                  ...doc,
-                  overwrite: existingDoc
-                },
+                _.defaultsDeep(
+                  {
+                    overwrite: existingDoc,
+                    local: { updated_at: updatedAt.toISOString() }
+                  },
+                  doc
+                ),
                 oldDoc
               ]
             ]
@@ -515,7 +560,15 @@ describe('core/local/atom/dispatch.loop()', function() {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
-          addFileAsync: [['local', doc]]
+          addFileAsync: [
+            [
+              'local',
+              _.defaultsDeep(
+                { local: { updated_at: updatedAt.toISOString() } },
+                doc
+              )
+            ]
+          ]
         })
       })
 
