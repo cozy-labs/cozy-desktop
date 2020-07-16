@@ -1,5 +1,79 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.22.0-beta.1 - 2020-07-16
+
+Improvements for all users:
+
+- As a multi-device platform, Cozy Cloud tries to keep the modification dates of
+  documents in sync across all your devices (i.e. Drive Web, Drive Mobile,
+  Cozy Desktop, other people's Cozies…). When modifications happen on the Cozy
+  itself, the modification date is set by the server. On the other hand, when
+  the modification is made on on your computer, we get the date from your
+  filesystem. We were using the most recent date between the content
+  modification date and the metadata modification date but we think the content
+  modification date is the most important and that it should not be affected by
+  movements, renamings, permission changes, etc.
+  For this reason, from now on we will only use the content modification date on
+  Cozy Desktop.
+- When you start your Cozy Desktop client, we scan the whole synchronization
+  folder on your computer to detect document additions, modifications,
+  movements… The file modification detection is done in 2 steps to avoid time
+  consuming computation:
+  1. we compare the modification date fetched from your filesystem with the one
+     we last saved in our database
+  2. if and only if they differ, we compute the file's checksum to compare it
+     with the one saved in the database
+  Our modification date was not completely reliable, especially on Windows and
+  Linux so we were computing a lot of checksums for files that were not modified
+  while the client was stopped.
+  We're now using the local file state which holds a reliable content
+  modification date and we should avoid a lot of checksum computations thus
+  saving you a lot of time during a client start and a lot of CPU resources.
+
+Improvements for Windows and macOS users:
+
+- A file name case change on the remote Cozy followed by a remote content update
+  could lead in some situations to the local file being trashed on the computer.
+  On macOS this could also happen if the renaming was simply a normalization
+  change or there was a normalization difference in the name of one of its
+  ancestors.
+  We've changed the way we handle the conjunction of those 2 changes to make
+  sure case and normalization changes don't affect them. The file should now be
+  properly moved and updated on the local filesystem.
+
+Improvements for Windows users:
+
+- Some Windows software save modifications made on a file by moving this file to
+  a backup location before writing the new version in its stead. The events
+  received by Cozy Desktop in this situation were not correctly interpreted as
+  we did not expect it and the client would trash the file on the remote Cozy
+  before uploading the new version. If the client were to be stopped before the
+  new version was uploaded, the file could stay trashed until the client was
+  started again.
+  We're now expecting this suite of events to happen and are applying a specific
+  behavior to transform them into a file update that will be correctly
+  propagated to the remote Cozy as one change thus avoiding situations where the
+  file is trashed.
+- The local file state introduced in the previous release was not fully
+  populated on Windows when propagating the addition of a file from the Cozy to
+  the local filesystem due to a bug.
+  While it should have been without consequences, the bug was fixed and the
+  features requiring this local state to be populated (e.g. limiting the number
+  of file checksum computations during a client start) should be fully
+  functional.
+
+Improvements for macOS users:
+
+- A lot of improvements around the support of NFD/NFC UTF-8 normalizations for
+  document paths, especially when they differ between the remote Cozy and the
+  local filesystem.
+  You shouldn't see synchronization errors due to the renaming, movement,
+  addition, modification of files and folders with accented names.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.21.0 - 2020-06-25
 
 Improvements for all users:
