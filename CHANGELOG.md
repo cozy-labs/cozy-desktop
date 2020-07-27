@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.22.0-beta.2 - 2020-07-27
+
+Improvements for all users:
+
+- Files with remote creation or modification dates in a timezone other than UTC
+  would raise an error in the remote watcher when converting them into PouchDB
+  records.
+  We're now rounding those dates with a timezone agnostic method and those
+  errors should not happen anymore.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.22.0-beta.1 - 2020-07-16
 
 Improvements for all users:
