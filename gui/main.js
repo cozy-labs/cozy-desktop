@@ -156,7 +156,12 @@ const showWindow = bounds => {
       }
       sendDiskUsage()
     }
-    trayWindow.show(bounds)
+    trayWindow.show(bounds).then(async () => {
+      const files = await lastFiles.list()
+      for (const file of files) {
+        trayWindow.send('transfer', file)
+      }
+    })
   }
 }
 
@@ -336,7 +341,7 @@ const updateState = (newState, data) => {
   }
 }
 
-const addFile = info => {
+const addFile = async info => {
   const file = {
     filename: path.basename(info.path),
     path: info.path,
@@ -345,11 +350,11 @@ const addFile = info => {
     updated: +new Date()
   }
   updateState('syncing', file)
-  lastFiles.add(file)
-  lastFiles.persists()
+  await lastFiles.add(file)
+  await lastFiles.persist()
 }
 
-const removeFile = info => {
+const removeFile = async info => {
   const file = {
     filename: path.basename(info.path),
     path: info.path,
@@ -359,8 +364,8 @@ const removeFile = info => {
   }
   updateState('syncing')
   trayWindow.send('delete-file', file)
-  lastFiles.remove(file)
-  lastFiles.persists()
+  await lastFiles.remove(file)
+  await lastFiles.persist()
 }
 
 const sendDiskUsage = () => {
@@ -389,10 +394,6 @@ const startSync = async () => {
     desktop.config.cozyUrl,
     desktop.config.deviceName
   )
-  for (let file of lastFiles.list()) {
-    trayWindow.send('transfer', file)
-  }
-
   updateState('syncing')
   desktop.events.on('sync-status', status => {
     updateState('sync-status', status)

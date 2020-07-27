@@ -7,7 +7,7 @@ const fs = require('fs')
 const path = require('path')
 
 let lastFilesPath = ''
-let lastFiles = []
+let lastFiles = Promise.resolve([])
 
 const log = require('../../core/app').logger({
   component: 'GUI'
@@ -15,31 +15,39 @@ const log = require('../../core/app').logger({
 
 module.exports.init = desktop => {
   lastFilesPath = path.join(desktop.basePath, 'last-files')
-  fs.readFile(lastFilesPath, 'utf-8', (err, data) => {
-    if (!err && data) {
-      try {
-        lastFiles = JSON.parse(data)
-      } catch (err) {
+  lastFiles = new Promise(resolve => {
+    fs.readFile(lastFilesPath, 'utf-8', (err, data) => {
+      if (!err && data) {
+        try {
+          resolve(JSON.parse(data))
+        } catch (err) {
+          log.warn({ err }, 'Failed loading last files')
+          resolve([])
+        }
+      } else {
         log.warn({ err }, 'Failed loading last files')
+        resolve([])
       }
-    }
+    })
   })
 }
 
-module.exports.persists = () => {
-  const data = JSON.stringify(lastFiles)
+module.exports.persist = async () => {
+  const data = JSON.stringify(await lastFiles)
   fs.writeFile(lastFilesPath, data, err => {
     if (err) {
-      log.error(err)
+      log.warn({ err }, 'Failed to persist last files')
     }
   })
 }
 
-module.exports.list = () => lastFiles
-module.exports.add = file => {
-  lastFiles.push(file)
-  lastFiles = lastFiles.slice(-250)
+module.exports.list = async () => await lastFiles
+module.exports.add = async file => {
+  const previousList = await lastFiles
+  previousList.push(file)
+  lastFiles = Promise.resolve(previousList.slice(-250))
 }
-module.exports.remove = file => {
-  lastFiles = lastFiles.filter(f => f.path !== file.path)
+module.exports.remove = async file => {
+  const previousList = await lastFiles
+  lastFiles = Promise.resolve(previousList.filter(f => f.path !== file.path))
 }
