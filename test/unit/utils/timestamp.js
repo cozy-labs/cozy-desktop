@@ -131,5 +131,17 @@ describe('timestamp', () => {
         '2016-01-01T00:00:00.000Z'
       )
     })
+
+    it('handles dates with timezones other than UTC', function() {
+      // All previous examples with a different timezone
+      const a = '2020-04-05T19:50:06+02:00'
+      const b = '2020-04-05T19:50:06.029+02:00'
+      const c = '2020-04-05T19:50:06.02+02:00'
+      const d = '2020-04-05T19:50:06.229928394+02:00'
+      should(timestamp.roundedRemoteDate(a)).equal('2020-04-05T17:50:06.000Z')
+      should(timestamp.roundedRemoteDate(b)).equal('2020-04-05T17:50:06.029Z')
+      should(timestamp.roundedRemoteDate(c)).equal('2020-04-05T17:50:06.020Z')
+      should(timestamp.roundedRemoteDate(d)).equal('2020-04-05T17:50:06.230Z')
+    })
   })
 })

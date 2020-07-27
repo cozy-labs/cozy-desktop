@@ -77,8 +77,8 @@ function stringify(t /*: Timestamp */) {
 function roundedRemoteDate(isoDate /*: string */) /*: string */ {
   const date = new Date(isoDate)
 
-  const milliseconds = isoDate.split(/\.|Z/)[1]
-  if (milliseconds.length > 3) {
+  const [hasMilliseconds, milliseconds] = /\.(\d+)/.exec(isoDate) || [false, '']
+  if (hasMilliseconds && milliseconds.length > 3) {
     // In this situation (i.e. more than 3 milliseconds digits) we need to
     // "truncate" the date to fit our 3 milliseconds digits standard.
     //
