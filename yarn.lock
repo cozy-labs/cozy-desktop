@@ -127,9 +127,9 @@
     ajv "^6.1.0"
     ajv-keywords "^3.1.0"
 
-"@gyselroth/windows-fsstat@https://github.com/taratatach/node-windows-fsstat.git#support-node-12":
-  version "0.0.7"
-  resolved "https://github.com/taratatach/node-windows-fsstat.git#7b33c5d04e0107cd1c4b84def4a977c12d596be8"
+"@gyselroth/windows-fsstat@https://github.com/taratatach/node-windows-fsstat.git":
+  version "0.0.8"
+  resolved "https://github.com/taratatach/node-windows-fsstat.git#d5295cef25d2c258e0b99a312544b22f78056853"
   dependencies:
     nan "^2.14.0"
     node-gyp "^5.0.4"
