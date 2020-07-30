@@ -15,7 +15,7 @@ module.exports = {
 }
 
 function show(err) {
-  const userChoice = dialog.showMessageBox(null, options(err))
+  const userChoice = dialog.showMessageBoxSync(null, options(err))
   if (userChoice === 0) opn(err.links.self)
   else log.warn({ userChoice }, 'Unexpected user choice')
 }

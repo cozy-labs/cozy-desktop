@@ -226,7 +226,7 @@ module.exports = class TrayWM extends WindowManager {
       cancelId: 0,
       defaultId: 1
     }
-    const response = dialog.showMessageBox(this.win, options)
+    const response = dialog.showMessageBoxSync(this.win, options)
     if (response === 0) {
       this.send('cancel-unlink')
       return
