@@ -234,19 +234,25 @@ module.exports = class TrayWM extends WindowManager {
     this.desktop
       .stopSync()
       .then(() => this.desktop.removeRemote())
-      .then(() => log.info('removed'))
+      .then(() => log.info('remote removed'))
       .then(() => this.doRestart())
       .catch(err => log.error(err))
   }
 
   doRestart() {
-    setTimeout(() => {
+    if (process.env.APPIMAGE) {
+      setTimeout(() => {
+        log.info('Exiting old client...')
+        this.app.exit(0)
+      }, 50)
+      const args = process.argv.slice(1).filter(a => a !== '--isHidden')
+      log.info({ args, cmd: process.argv[0] }, 'Starting new client...')
+      spawn(process.argv[0], args, { detached: true })
+    } else {
+      this.app.relaunch()
       log.info('Exiting old client...')
-      this.app.quit()
-    }, 50)
-    const args = process.argv.slice(1).filter(a => a !== '--isHidden')
-    log.info({ args, cmd: process.argv[0] }, 'Starting new client...')
-    spawn(process.argv[0], args, { detached: true })
+      this.app.exit(0)
+    }
   }
 }
 
