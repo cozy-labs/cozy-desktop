@@ -157,6 +157,9 @@ const showWindow = bounds => {
       sendDiskUsage()
     }
     trayWindow.show(bounds).then(async () => {
+      const { cozyUrl, deviceName } = desktop.config
+      trayWindow.send('synchronization', cozyUrl, deviceName)
+
       const files = await lastFiles.list()
       for (const file of files) {
         trayWindow.send('transfer', file)
@@ -389,11 +392,6 @@ const sendDiskUsage = () => {
 }
 
 const startSync = async () => {
-  trayWindow.send(
-    'synchronization',
-    desktop.config.cozyUrl,
-    desktop.config.deviceName
-  )
   updateState('syncing')
   desktop.events.on('sync-status', status => {
     updateState('sync-status', status)
