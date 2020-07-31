@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.22.0-beta.3 - 2020-07-31
+
+Improvements for all users:
+
+- The list of recently synchronized files and the linked Cozy information would
+  sometimes not be displayed after a client restart, especially on Windows.
+  The data was correctly persisted though and we've made sure it is correctly
+  loaded and displayed now.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.22.0-beta.2 - 2020-07-27
 
 Improvements for all users:
