@@ -125,7 +125,7 @@
     "debug-menu": "^0.6.1",
     "del": "^4.0.0",
     "devtron": "^1.4.0",
-    "electron": "^6.0.0",
+    "electron": "^7.0.0",
     "electron-builder": "^21.2.0",
     "electron-mocha": "^8.1.2",
     "electron-notarize": "^0.1.1",
