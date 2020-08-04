@@ -124,6 +124,10 @@ const setup = async (app, config, session, userAgent, doneSetup) => {
     }
     options.agent = options.agent || http.globalAgent
     options.headers = options.headers || {}
+    // ElectronProxyAgent removes the `host` header and uses `hostname` instead.
+    // However, we need this header so we set it back before sending the
+    // request.
+    // See https://github.com/felicienfrancois/node-electron-proxy-agent/blob/f6757f10c50c8dfcd5dc4ad9943aaf55e3788e0c/index.js#L93
     if (options.hostname) options.headers.host = options.hostname
     options.headers['User-Agent'] = userAgent
     return options

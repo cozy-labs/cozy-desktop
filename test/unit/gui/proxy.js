@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 const { app, session } = require('electron')
 const faker = require('faker')
 const fs = require('fs')
@@ -52,7 +54,7 @@ describe('gui/js/proxy', function() {
     let received
     let proxySideEffects
 
-    beforeEach('start HTTP server', () => {
+    before('start HTTP server', () => {
       httpServer = http.createServer((req, res) => {
         received = req
         res.end()
@@ -60,11 +62,11 @@ describe('gui/js/proxy', function() {
       httpServer.listen(httpPort)
     })
 
-    afterEach('stop HTTP server', done => {
+    after('stop HTTP server', done => {
       httpServer.close(done)
     })
 
-    beforeEach('start HTTPS server', () => {
+    before('start HTTPS server', () => {
       const options = {
         pfx,
         passphrase: 'cozy'
@@ -76,17 +78,20 @@ describe('gui/js/proxy', function() {
       httpsServer.listen(httpsPort)
     })
 
-    afterEach('stop HTTPS server', done => {
+    after('stop HTTPS server', done => {
       httpsServer.close(done)
     })
 
-    const proxySetupHook = config => done => {
-      proxy.setup(app, config, session, userAgent, sideEffects => {
+    beforeEach('reset received request', () => {
+      received = null
+    })
+
+    const proxySetupHook = config => async () => {
+      await proxy.setup(app, config, session, userAgent, sideEffects => {
         proxySideEffects = sideEffects
-        done()
       })
     }
-    const revertProxySideEffects = done => {
+    const revertProxySideEffects = async () => {
       global.fetch = proxySideEffects.originalFetch
       http.Agent.globalAgent = http.globalAgent = new http.Agent()
       http.request = proxySideEffects.originalHttpRequest
@@ -101,7 +106,7 @@ describe('gui/js/proxy', function() {
       }
       session.defaultSession.setCertificateVerifyProc(null)
       session.defaultSession.allowNTLMCredentialsForDomains('')
-      session.defaultSession.setProxy({}, done)
+      await session.defaultSession.setProxy({})
     }
 
     afterEach(revertProxySideEffects)
