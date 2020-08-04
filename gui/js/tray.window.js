@@ -1,7 +1,7 @@
 const electron = require('electron')
 const { dialog, shell } = electron
 const { spawn } = require('child_process')
-const { dirname, join } = require('path')
+const { join } = require('path')
 const autoLaunch = require('./autolaunch')
 const DASHBOARD_SCREEN_WIDTH = 330
 const DASHBOARD_SCREEN_HEIGHT = 830
@@ -192,24 +192,7 @@ module.exports = class TrayWM extends WindowManager {
   openPath(pathToOpen) {
     pathToOpen = join(this.desktop.config.syncPath, pathToOpen)
 
-    if (shell.showItemInFolder(pathToOpen)) return
-    if (shell.openItem(dirname(pathToOpen))) return
-
-    const spawnOpts = {
-      detached: true,
-      stdio: ['ignore', 'ignore', 'ignore']
-    }
-
-    switch (process.platform) {
-      case 'darwin':
-        spawn('open', ['-R', pathToOpen], spawnOpts)
-        break
-      case 'win32':
-        spawn('explorer.exe', ['/select,"' + pathToOpen + '"'], spawnOpts)
-        break
-      default:
-        spawn('xdg-open', [dirname(pathToOpen)], spawnOpts)
-    }
+    shell.showItemInFolder(pathToOpen)
   }
 
   onUnlink() {
