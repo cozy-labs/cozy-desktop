@@ -106,7 +106,7 @@ const setup = async (app, config, session, userAgent, doneSetup) => {
 
   // XXX even if we swicth from electron-fetch, keep the custom user-agent
   const originalFetch = global.fetch
-  const electronFetch = require('electron-fetch')
+  const electronFetch = require('electron-fetch').default
   global.fetch = (url, opts = {}) => {
     opts.session = session.defaultSession
     opts.headers = opts.headers || {}
