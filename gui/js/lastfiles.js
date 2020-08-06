@@ -5,15 +5,22 @@
 
 const fs = require('fs')
 const path = require('path')
+const async = require('async')
 
 let lastFilesPath = ''
 let lastFiles = Promise.resolve([])
+let persistQueue = null
 
 const log = require('../../core/app').logger({
   component: 'GUI'
 })
 
+const writeJSON = (data, callback) => {
+  fs.writeFile(lastFilesPath, data, callback)
+}
+
 const init = desktop => {
+  persistQueue = Promise.promisifyAll(async.queue(writeJSON))
   lastFilesPath = path.join(desktop.basePath, 'last-files')
   lastFiles = new Promise(resolve => {
     fs.readFile(lastFilesPath, 'utf-8', (err, data) => {
@@ -34,11 +41,11 @@ const init = desktop => {
 
 const persist = async () => {
   const data = JSON.stringify(await lastFiles)
-  fs.writeFile(lastFilesPath, data, err => {
-    if (err) {
+  if (persistQueue) {
+    persistQueue.pushAsync(data).catch(err => {
       log.warn({ err }, 'Failed to persist last files')
-    }
-  })
+    })
+  }
 }
 
 const list = async () => await lastFiles
