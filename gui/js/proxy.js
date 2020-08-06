@@ -1,21 +1,24 @@
-/* eslint standard/no-callback-literal: 0 */
 /** Proxy management.
  *
  * @module gui/js/proxy
+ * @flow
  */
 
 const ElectronProxyAgent = require('electron-proxy-agent')
 const url = require('url')
 const http = require('http')
 const https = require('https')
-const process = require('process')
 const yargs = require('yargs')
 
 const log = require('../../core/app').logger({
   component: 'GUI:proxy'
 })
 
-const config = (argv = process.argv) => {
+/*::
+import { App, Session } from 'electron'
+*/
+
+const config = (argv /*: Array<*> */ = process.argv) => {
   const config = yargs
     .env('COZY_DRIVE')
     .conflicts('proxy-script', 'proxy-rules')
@@ -43,7 +46,12 @@ const config = (argv = process.argv) => {
 const formatCertificate = certif =>
   `Certificate(${certif.issuerName} ${certif.subjectName})`
 
-const setup = async (app, config, session, userAgent, doneSetup) => {
+const setup = async (
+  app /*: App */,
+  config /*: Object */,
+  session /*: Session */,
+  userAgent /*: string */
+) => {
   const loginByRealm = {}
   if (config['login-by-realm']) {
     config['login-by-realm'].split(',').forEach(lbr => {
@@ -113,12 +121,44 @@ const setup = async (app, config, session, userAgent, doneSetup) => {
     opts.headers['User-Agent'] = userAgent
     return electronFetch(url, opts)
   }
+
+  // $FlowFixMe
   http.Agent.globalAgent = http.globalAgent = https.globalAgent = new ElectronProxyAgent(
     session.defaultSession
   )
-  const parseRequestOptions = options => {
+
+  const parseRequestOptions = (options /* * */) => {
     if (typeof options === 'string') {
-      options = new url.URL(options)
+      const {
+        hash,
+        host,
+        hostname,
+        href,
+        origin,
+        password,
+        pathname,
+        port,
+        protocol,
+        search,
+        searchParams,
+        username
+      } = new url.URL(options)
+      options = {
+        agent: http.globalAgent,
+        hash,
+        headers: {},
+        host,
+        hostname,
+        href,
+        origin,
+        password,
+        pathname,
+        port,
+        protocol,
+        search,
+        searchParams,
+        username
+      }
     } else {
       options = Object.assign({}, options)
     }
@@ -132,11 +172,14 @@ const setup = async (app, config, session, userAgent, doneSetup) => {
     options.headers['User-Agent'] = userAgent
     return options
   }
+
   const originalHttpRequest = http.request
+  // $FlowFixMe
   http.request = function(options, cb) {
     return originalHttpRequest.call(http, parseRequestOptions(options), cb)
   }
   const originalHttpsRequest = https.request
+  // $FlowFixMe
   https.request = function(options, cb) {
     return originalHttpsRequest.call(https, parseRequestOptions(options), cb)
   }
@@ -149,14 +192,47 @@ const setup = async (app, config, session, userAgent, doneSetup) => {
     })
   }
 
-  await doneSetup({
+  return {
     originalFetch,
     originalHttpRequest,
     originalHttpsRequest
-  })
+  }
+}
+
+const reset = async (
+  app /*: App */,
+  session /*: Session */,
+  {
+    originalFetch,
+    originalHttpRequest,
+    originalHttpsRequest
+  } /*: { originalFetch: Function, originalHttpRequest: Function, originalHttpsRequest: Function } */
+) => {
+  global.fetch = originalFetch
+  // $FlowFixMe
+  http.Agent.globalAgent = http.globalAgent = new http.Agent()
+  // $FlowFixMe
+  http.request = originalHttpRequest
+  // $FlowFixMe
+  https.Agent.globalAgent = https.globalAgent = new https.Agent()
+  // $FlowFixMe
+  https.request = originalHttpsRequest
+
+  for (const event of [
+    'select-client-certificate',
+    'certificate-error',
+    'login'
+  ]) {
+    app.removeAllListeners(event)
+  }
+
+  session.defaultSession.setCertificateVerifyProc(null)
+  session.defaultSession.allowNTLMCredentialsForDomains('')
+  await session.defaultSession.setProxy({})
 }
 
 module.exports = {
   config,
-  setup
+  setup,
+  reset
 }

@@ -626,79 +626,78 @@ app.on('ready', async () => {
 
   const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
   let userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
-  await proxy.setup(app, proxy.config(), session, userAgent, async () => {
-    log.info('Loading CLI...')
-    i18n.init(app)
-    try {
-      desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
-    } catch (err) {
-      if (err.message.match(/GLIBCXX/)) {
-        dialog.showMessageBoxSync(null, {
-          type: 'error',
-          message: translate('Error Bad GLIBCXX version'),
-          buttons: [translate('AppMenu Close')]
-        })
+  await proxy.setup(app, proxy.config(), session, userAgent)
+  log.info('Loading CLI...')
+  i18n.init(app)
+  try {
+    desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
+  } catch (err) {
+    if (err.message.match(/GLIBCXX/)) {
+      dialog.showMessageBoxSync(null, {
+        type: 'error',
+        message: translate('Error Bad GLIBCXX version'),
+        buttons: [translate('AppMenu Close')]
+      })
+      app.quit()
+      return
+    } else throw err
+  }
+
+  // We need a valid config to start the App and open the requested note.
+  // We assume users won't have notes they want to open without a connected
+  // client.
+  if (desktop.config.syncPath) {
+    await setupDesktop()
+
+    if (process.argv && process.argv.length > 2) {
+      const { argv } = process
+      const filePath = argv[argv.length - 1]
+      log.info({ filePath }, 'main instance invoked with arguments')
+
+      // If we found a note to open, stop here. Otherwise, start sync app.
+      if (await openNote(filePath)) {
         app.quit()
         return
-      } else throw err
+      }
     }
+  }
 
-    // We need a valid config to start the App and open the requested note.
-    // We assume users won't have notes they want to open without a connected
-    // client.
-    if (desktop.config.syncPath) {
+  if (shouldStartSync) {
+    tray.init(app, toggleWindow)
+    lastFiles.init(desktop)
+    log.trace('Setting up tray WM...')
+    trayWindow = new TrayWM(app, desktop)
+    log.trace('Setting up help WM...')
+    helpWindow = new HelpWM(app, desktop)
+    log.trace('Setting up onboarding WM...')
+    onboardingWindow = new OnboardingWM(app, desktop)
+    onboardingWindow.onOnboardingDone(async () => {
       await setupDesktop()
-
-      if (process.argv && process.argv.length > 2) {
-        const { argv } = process
-        const filePath = argv[argv.length - 1]
-        log.info({ filePath }, 'main instance invoked with arguments')
-
-        // If we found a note to open, stop here. Otherwise, start sync app.
-        if (await openNote(filePath)) {
-          app.quit()
-          return
-        }
-      }
-    }
-
-    if (shouldStartSync) {
-      tray.init(app, toggleWindow)
-      lastFiles.init(desktop)
-      log.trace('Setting up tray WM...')
-      trayWindow = new TrayWM(app, desktop)
-      log.trace('Setting up help WM...')
-      helpWindow = new HelpWM(app, desktop)
-      log.trace('Setting up onboarding WM...')
-      onboardingWindow = new OnboardingWM(app, desktop)
-      onboardingWindow.onOnboardingDone(async () => {
-        await setupDesktop()
-        onboardingWindow.hide()
-        trayWindow.show().then(() => startSync())
-      })
-      if (app.isPackaged) {
-        log.trace('Setting up updater WM...')
-        updaterWindow = new UpdaterWM(app, desktop)
-        updaterWindow.onUpToDate(() => {
-          updaterWindow.hide()
-          startApp()
-        })
-        updaterWindow.checkForUpdates()
-        setInterval(() => {
-          updaterWindow.checkForUpdates()
-        }, DAILY)
-      } else {
+      onboardingWindow.hide()
+      trayWindow.show().then(() => startSync())
+    })
+    if (app.isPackaged) {
+      log.trace('Setting up updater WM...')
+      updaterWindow = new UpdaterWM(app, desktop)
+      updaterWindow.onUpToDate(() => {
+        updaterWindow.hide()
         startApp()
-      }
-
-      // Os X wants all application to have a menu
-      Menu.setApplicationMenu(buildAppMenu(app))
-
-      // On OS X it's common to re-create a window in the app when the
-      // dock icon is clicked and there are no other windows open.
-      app.on('activate', showWindow)
+      })
+      updaterWindow.checkForUpdates()
+      setInterval(() => {
+        updaterWindow.checkForUpdates()
+      }, DAILY)
+    } else {
+      startApp()
     }
-  })
+
+    // Os X wants all application to have a menu
+    Menu.setApplicationMenu(buildAppMenu(app))
+
+    // On OS X it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    app.on('activate', showWindow)
+  }
 })
 
 // Don't quit the app when all windows are closed, keep the tray icon

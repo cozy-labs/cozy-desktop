@@ -10,6 +10,8 @@ const process = require('process')
 const should = require('should')
 const { URL } = require('url')
 
+const cozyHelpers = require('../../support/helpers/cozy')
+
 const proxy = require('../../../gui/js/proxy')
 
 describe('gui/js/proxy', function() {
@@ -20,6 +22,17 @@ describe('gui/js/proxy', function() {
     'proxy-rules': undefined,
     'proxy-script': undefined
   }
+
+  before('reset global proxy', async () => {
+    // We'll play with the proxy in these tests so we disable the global test
+    // proxy in the meantime.
+    await cozyHelpers.resetGlobalProxy()
+  })
+  after('setup global proxy again', async () => {
+    // Other test files will benefit from it so we setup the gloabal test proxy
+    // again.
+    await cozyHelpers.setupGlobalProxy()
+  })
 
   describe('.config()', () => {
     let config
@@ -87,26 +100,10 @@ describe('gui/js/proxy', function() {
     })
 
     const proxySetupHook = config => async () => {
-      await proxy.setup(app, config, session, userAgent, sideEffects => {
-        proxySideEffects = sideEffects
-      })
+      proxySideEffects = await proxy.setup(app, config, session, userAgent)
     }
     const revertProxySideEffects = async () => {
-      global.fetch = proxySideEffects.originalFetch
-      http.Agent.globalAgent = http.globalAgent = new http.Agent()
-      http.request = proxySideEffects.originalHttpRequest
-      https.Agent.globalAgent = https.globalAgent = new https.Agent()
-      https.request = proxySideEffects.originalHttpsRequest
-      for (const event of [
-        'select-client-certificate',
-        'certificate-error',
-        'login'
-      ]) {
-        app.removeAllListeners(event)
-      }
-      session.defaultSession.setCertificateVerifyProc(null)
-      session.defaultSession.allowNTLMCredentialsForDomains('')
-      await session.defaultSession.setProxy({})
+      await proxy.reset(app, session, proxySideEffects)
     }
 
     afterEach(revertProxySideEffects)
