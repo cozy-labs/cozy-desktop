@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.22.0-beta.4 - 2020-08-08
+
+Improvements for all users:
+
+- The list of recently synchronized files could be persisted multiple times
+  concurrently, leading to malformed JSON content which could not be loaded back
+  into the client's GUI during the next start.
+  We're now making sure each write is done sequentially so that the list is
+  always saved as valid JSON.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.22.0-beta.3 - 2020-07-31
 
 Improvements for all users:
