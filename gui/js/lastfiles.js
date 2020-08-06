@@ -13,7 +13,7 @@ const log = require('../../core/app').logger({
   component: 'GUI'
 })
 
-module.exports.init = desktop => {
+const init = desktop => {
   lastFilesPath = path.join(desktop.basePath, 'last-files')
   lastFiles = new Promise(resolve => {
     fs.readFile(lastFilesPath, 'utf-8', (err, data) => {
@@ -32,7 +32,7 @@ module.exports.init = desktop => {
   })
 }
 
-module.exports.persist = async () => {
+const persist = async () => {
   const data = JSON.stringify(await lastFiles)
   fs.writeFile(lastFilesPath, data, err => {
     if (err) {
@@ -41,13 +41,21 @@ module.exports.persist = async () => {
   })
 }
 
-module.exports.list = async () => await lastFiles
-module.exports.add = async file => {
+const list = async () => await lastFiles
+const add = async file => {
   const previousList = await lastFiles
   previousList.push(file)
   lastFiles = Promise.resolve(previousList.slice(-250))
 }
-module.exports.remove = async file => {
+const remove = async file => {
   const previousList = await lastFiles
   lastFiles = Promise.resolve(previousList.filter(f => f.path !== file.path))
+}
+
+module.exports = {
+  init,
+  list,
+  add,
+  remove,
+  persist
 }
