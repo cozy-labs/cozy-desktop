@@ -4,18 +4,14 @@
  */
 
 module.exports.selectIcon = info => {
-  if (['image', 'video'].indexOf(info.class) !== -1) {
-    return info.class
-  } else if (info.class === 'music') {
-    return 'audio'
+  if (!info.mime) {
+    return 'file'
   } else if (info.mime === 'application/pdf') {
     return 'pdf'
   } else if (info.mime === 'application/x-binary') {
     return 'binary'
   } else if (info.mime === 'text/vnd.cozy.note+markdown') {
     return 'cozy-note'
-  } else if (!info.mime) {
-    return 'file'
   } else if (info.mime.match(/[/-][bg]?zip2?$/)) {
     return 'archive'
   } else if (info.mime.match(/^(text|application)\/(html|xml)/)) {
@@ -30,6 +26,11 @@ module.exports.selectIcon = info => {
     return 'presentation'
   } else if (info.mime.match(/excel/)) {
     return 'spreadsheet'
+  } else if (['image', 'video'].includes(info.class)) {
+    return info.class
+  } else if (['music', 'audio'].includes(info.class)) {
+    return 'audio'
   }
+
   return 'file'
 }
