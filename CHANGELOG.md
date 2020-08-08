@@ -1,5 +1,22 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.22.0-beta.5 - 2020-08-08
+
+Improvements for all users:
+
+- The list of recently synchronized files could contain folder items when their
+  parent was moved or renamed.
+  We're now making sure only file items will be displayed in this list until we
+  officially support folder items.
+- We increased the number of file types that will be displayed with a specific
+  icon to help you check more easily which elements were synchronized. This
+  includes 2 new icons for links (i.e. `.url` files) and contacts (i.e. `.vcf`
+  files).
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.22.0-beta.4 - 2020-08-08
 
 Improvements for all users:
