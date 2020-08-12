@@ -164,6 +164,10 @@ const showWindow = bounds => {
       for (const file of files) {
         trayWindow.send('transfer', file)
       }
+
+      autoLaunch.isEnabled().then(enabled => {
+        trayWindow.send('auto-launch', enabled)
+      })
     })
   }
 }
@@ -457,10 +461,6 @@ const startSync = async () => {
 
   desktop.startSync()
   sendDiskUsage()
-
-  autoLaunch.isEnabled().then(enabled => {
-    trayWindow.send('auto-launch', enabled)
-  })
 }
 
 const dumbhash = k =>
