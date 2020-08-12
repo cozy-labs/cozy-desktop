@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.22.0-beta.6 - 2020-08-12
+
+Improvements for all users:
+
+- The autolaunch setting could be displayed as enabled when it was disabled from
+  the OS settings panel instead of the Cozy Desktop client settings.
+  We've made sure the interface shows the actual value of this setting and the
+  switch is off when the autolaunch is disabled.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.22.0-beta.5 - 2020-08-08
 
 Improvements for all users:
