@@ -174,7 +174,10 @@ module.exports = class TrayWM extends WindowManager {
   ipcEvents() {
     return {
       'go-to-cozy': () => shell.openExternal(this.desktop.config.cozyUrl),
-      'go-to-folder': () => shell.openItem(this.desktop.config.syncPath),
+      'go-to-folder': () =>
+        shell.openPath(this.desktop.config.syncPath).catch(err => {
+          log.error({ err }, 'Could not open sync folder')
+        }),
       'auto-launcher': (event, enabled) => autoLaunch.setEnabled(enabled),
       'close-app': () => {
         this.desktop.stopSync()
