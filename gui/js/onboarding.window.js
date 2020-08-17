@@ -180,7 +180,7 @@ module.exports = class OnboardingWM extends WindowManager {
   onChooseFolder(event) {
     // FIXME: The modal may appear on background, either every time (e.g. Ubuntu)
     // or only the second time (e.g. Fedora)
-    let folders = dialog.showOpenDialog({
+    let folders = dialog.showOpenDialogSync({
       properties: ['openDirectory', 'createDirectory']
     })
     if (folders && folders.length > 0) {

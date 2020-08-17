@@ -55,7 +55,7 @@ module.exports = class UpdaterWM extends WindowManager {
       // Make sure UI doesn't show up after timeout
       if (!this.skipped) {
         const shouldUpdate =
-          dialog.showMessageBox({
+          dialog.showMessageBoxSync({
             icon: path.resolve(__dirname, '..', 'images', 'icon.png'),
             title: 'Cozy Drive',
             message: 'Cozy Drive',

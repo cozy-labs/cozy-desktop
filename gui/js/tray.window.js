@@ -1,7 +1,7 @@
 const electron = require('electron')
 const { dialog, shell } = electron
 const { spawn } = require('child_process')
-const { dirname, join } = require('path')
+const { join } = require('path')
 const autoLaunch = require('./autolaunch')
 const DASHBOARD_SCREEN_WIDTH = 330
 const DASHBOARD_SCREEN_HEIGHT = 830
@@ -192,24 +192,7 @@ module.exports = class TrayWM extends WindowManager {
   openPath(pathToOpen) {
     pathToOpen = join(this.desktop.config.syncPath, pathToOpen)
 
-    if (shell.showItemInFolder(pathToOpen)) return
-    if (shell.openItem(dirname(pathToOpen))) return
-
-    const spawnOpts = {
-      detached: true,
-      stdio: ['ignore', 'ignore', 'ignore']
-    }
-
-    switch (process.platform) {
-      case 'darwin':
-        spawn('open', ['-R', pathToOpen], spawnOpts)
-        break
-      case 'win32':
-        spawn('explorer.exe', ['/select,"' + pathToOpen + '"'], spawnOpts)
-        break
-      default:
-        spawn('xdg-open', [dirname(pathToOpen)], spawnOpts)
-    }
+    shell.showItemInFolder(pathToOpen)
   }
 
   onUnlink() {
@@ -226,7 +209,7 @@ module.exports = class TrayWM extends WindowManager {
       cancelId: 0,
       defaultId: 1
     }
-    const response = dialog.showMessageBox(this.win, options)
+    const response = dialog.showMessageBoxSync(this.win, options)
     if (response === 0) {
       this.send('cancel-unlink')
       return
@@ -234,19 +217,25 @@ module.exports = class TrayWM extends WindowManager {
     this.desktop
       .stopSync()
       .then(() => this.desktop.removeRemote())
-      .then(() => log.info('removed'))
+      .then(() => log.info('remote removed'))
       .then(() => this.doRestart())
       .catch(err => log.error(err))
   }
 
   doRestart() {
-    setTimeout(() => {
+    if (process.env.APPIMAGE) {
+      setTimeout(() => {
+        log.info('Exiting old client...')
+        this.app.exit(0)
+      }, 50)
+      const args = process.argv.slice(1).filter(a => a !== '--isHidden')
+      log.info({ args, cmd: process.argv[0] }, 'Starting new client...')
+      spawn(process.argv[0], args, { detached: true })
+    } else {
+      this.app.relaunch()
       log.info('Exiting old client...')
-      this.app.quit()
-    }, 50)
-    const args = process.argv.slice(1).filter(a => a !== '--isHidden')
-    log.info({ args, cmd: process.argv[0] }, 'Starting new client...')
-    spawn(process.argv[0], args, { detached: true })
+      this.app.exit(0)
+    }
   }
 }
 

@@ -107,7 +107,7 @@ const setupDesktop = async () => {
     } else if (err instanceof migrations.MigrationFailedError) {
       showMigrationError(err)
     } else {
-      dialog.showMessageBox(null, {
+      dialog.showMessageBoxSync(null, {
         type: 'error',
         message: err.message,
         buttons: [translate('AppMenu Close')]
@@ -185,7 +185,7 @@ const showInvalidConfigError = () => {
     buttons: [translate('Button Log out'), translate('Button Contact support')],
     defaultId: 0
   }
-  const userChoice = dialog.showMessageBox(null, options)
+  const userChoice = dialog.showMessageBoxSync(null, options)
   if (userChoice === 0) {
     desktop
       .removeConfig()
@@ -212,7 +212,7 @@ const showMigrationError = (err /*: Error */) => {
     buttons: [translate('Button Contact support')],
     defaultId: 0
   }
-  const userChoice = dialog.showMessageBox(null, options)
+  const userChoice = dialog.showMessageBoxSync(null, options)
   if (userChoice === 0) {
     helpWindow = new HelpWM(app, desktop)
     helpWindow.show()
@@ -239,7 +239,7 @@ const sendErrorToMainWindow = msg => {
       defaultId: 1
     }
     trayWindow.hide()
-    const userChoice = dialog.showMessageBox(null, options)
+    const userChoice = dialog.showMessageBoxSync(null, options)
     if (userChoice === 0) {
       desktop
         .stopSync()
@@ -264,7 +264,7 @@ const sendErrorToMainWindow = msg => {
       defaultId: 0
     }
     trayWindow.hide()
-    dialog.showMessageBox(null, options)
+    dialog.showMessageBoxSync(null, options)
     desktop
       .stopSync()
       .then(() => desktop.pouch.db.destroy())
@@ -288,7 +288,7 @@ const sendErrorToMainWindow = msg => {
       detail: translate('SyncDirEmpty Detail'),
       buttons: [translate('AppMenu Close')]
     }
-    dialog.showMessageBox(null, options)
+    dialog.showMessageBoxSync(null, options)
     desktop.stopSync().catch(err => log.error(err))
     return // no notification
   } else {
@@ -524,7 +524,7 @@ const openNote = async filePath => {
         'Could not display markdown content of note'
       )
 
-      dialog.showMessageBox(null, {
+      dialog.showMessageBoxSync(null, {
         type: 'error',
         message: translate('Error Unexpected error'),
         details: `${err.name}: ${err.message}`,
@@ -633,7 +633,7 @@ app.on('ready', async () => {
       desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
     } catch (err) {
       if (err.message.match(/GLIBCXX/)) {
-        dialog.showMessageBox(null, {
+        dialog.showMessageBoxSync(null, {
           type: 'error',
           message: translate('Error Bad GLIBCXX version'),
           buttons: [translate('AppMenu Close')]
