@@ -147,7 +147,7 @@ versionLine helpers model =
             span [ class "version-need-update" ]
                 [ text model.version
                 , a [ onClick QuitAndInstall, href "#", class "btn btn--action" ]
-                    [ text (helpers.t "Settings Install the new release and restart the application") ]
+                    [ span [] [ text (helpers.t "Settings Install the new release and restart the application") ] ]
                 ]
 
         Nothing ->
@@ -197,7 +197,7 @@ view helpers status model =
             , href "#"
             , onClick ShowHelp
             ]
-            [ text (helpers.t "Help Send us a message") ]
+            [ span [] [ text (helpers.t "Help Send us a message") ] ]
         , h2 [] [ text (helpers.t "Tray Quit application") ]
         , a
             [ class "btn btn--danger"
@@ -208,7 +208,7 @@ view helpers status model =
               else
                 onClick CloseApp
             ]
-            [ text (helpers.t "AppMenu Quit") ]
+            [ span [] [ text (helpers.t "AppMenu Quit") ] ]
         , h2 [] [ text (helpers.t "Account Unlink Cozy") ]
         , p []
             [ text (helpers.t "Account It will unlink your account to this computer." ++ " ")
@@ -224,7 +224,7 @@ view helpers status model =
               else
                 onClick UnlinkCozy
             ]
-            [ text (helpers.t "Account Unlink this Cozy") ]
+            [ span [] [ text (helpers.t "Account Unlink this Cozy") ] ]
         ]
 
 
@@ -243,4 +243,4 @@ syncButton helpers status model =
           else
             attribute "disabled" "true"
         ]
-        [ text (helpers.t "Settings Sync") ]
+        [ span [] [ text (helpers.t "Settings Sync") ] ]

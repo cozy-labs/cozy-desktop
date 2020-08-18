@@ -39,7 +39,7 @@ view helpers platform =
                 , href "#"
                 , onClick NextPage
                 ]
-                [ text (helpers.t "Welcome Sign in to your Cozy") ]
+                [ span [] [ text (helpers.t "Welcome Sign in to your Cozy") ] ]
             , a
                 [ href ("https://cozy.io/en/try-it/?from=desktop-" ++ platform)
                 , class "more-info"

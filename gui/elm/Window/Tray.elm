@@ -273,7 +273,7 @@ viewWarning helpers model =
                     , href links.self
                     , onClick ClearCurrentWarning
                     ]
-                    [ text (helpers.t actionLabel) ]
+                    [ span [] [ text (helpers.t actionLabel) ] ]
                 ]
 
         _ ->

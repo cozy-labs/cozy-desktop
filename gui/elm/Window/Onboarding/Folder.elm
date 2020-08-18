@@ -127,6 +127,6 @@ view helpers model =
                   else
                     attribute "disabled" "true"
                 ]
-                [ text (helpers.t "Folder Use Cozy Drive") ]
+                [ span [] [ text (helpers.t "Folder Use Cozy Drive") ] ]
             ]
         ]
