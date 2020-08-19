@@ -123,6 +123,7 @@ const setup = async (
     opts.session = syncSession
     opts.headers = opts.headers || {}
     opts.headers['User-Agent'] = userAgent
+    opts.useSessionCookies = true // Send cookies stored in Electron's Session
     return electronFetch(url, opts)
   }
 
