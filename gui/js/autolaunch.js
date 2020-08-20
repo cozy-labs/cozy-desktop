@@ -23,19 +23,20 @@ if (process.env.APPIMAGE) {
   // after an app update.
   // See https://github.com/Teamwork/node-auto-launch/issues/92
 
-  // Check if there is an autolaunch entry with the app's path.
-  const pathAutoLaunchEnabled = autoLauncher.isEnabled()
-  // Remove it to avoid having multiple entries.
-  if (pathAutoLaunchEnabled) {
-    autoLauncher.disable()
-  }
   // Make sure the autolaunch entry will use the app's name.
   autoLauncher.opts.appName = APP_NAME
-  // Create an autolaunch entry with the app's name if there was an entry with
-  // the app's path.
-  if (pathAutoLaunchEnabled) {
-    autoLauncher.enable()
-  }
+
+  // Check if there is an autolaunch entry with the app's path.
+  autoLauncher.isEnabled().then(pathAutoLaunchEnabled => {
+    if (pathAutoLaunchEnabled) {
+      // Remove it to avoid having multiple entries.
+      autoLauncher.disable()
+
+      // Create an autolaunch entry with the app's name if there was an entry
+      // with the app's path.
+      autoLauncher.enable()
+    }
+  })
 }
 
 module.exports.isEnabled = () => autoLauncher.isEnabled()
