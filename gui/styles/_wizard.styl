@@ -25,13 +25,13 @@
   will-change transform
 
   h1
-    color charcoal-grey
+    color var(--charcoalGrey)
     font-size: 1.5rem
 
 a.more-info
   display: inline-block
-  color dodger-blue
-  padding-top em(13px, 14px)
+  color var(--dodgerBlue)
+  padding-top rem(13px, 14px)
   margin-left .25em
   text-decoration: none
 
@@ -73,12 +73,12 @@ a.more-info
     flex 0 0
     padding: 0.9em 0.3em
     font-size: 1.1em
-    color black
+    color var(--black)
   input
     flex 1 0
 .step-address .cozy-form-tip
   font-style: italic
-  color grey
+  color var(--slateGrey)
 
 
 .folder__selector
@@ -96,19 +96,19 @@ a.more-info
 .step-folder
   left 200vw
   .svg-wrapper
-    background-color: emerald
+    background-color: var(--emerald)
   &.step-error
     .folder-helper
-      color black
+      color var(--black)
     .folder__selector
-      border-color: pomegranate
+      border-color: var(--pomegranate)
     .error-message
       margin .5em 0
 
 .step-error
-  color pomegranate
+  color var(--pomegranate)
   .svg-wrapper
-    background-color pomegranate
+    background-color var(--pomegranate)
   .btn
     opacity  .5
     cursor   not-allowed

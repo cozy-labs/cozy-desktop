@@ -11,7 +11,7 @@
   text-align: center
 
   .spacer, h1, p
-    color grey-07
+    color var(--slateGrey)
 
   h1, p, .progress
     width 70vw
@@ -22,7 +22,9 @@
     margin-top: .5em
 
   .progress-spinner
-    @extend $icon-spinner-blue
+    @extend $icon-spin
+    background-image embedurl('./node_modules/cozy-ui/assets/icons/ui/spinner.svg')
+    fill: var(--primaryColor)
     display: inline-block
     width: 4em
     height: 4em

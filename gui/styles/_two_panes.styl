@@ -1,3 +1,8 @@
+@require './node_modules/cozy-ui/react/Tabs/styles.styl'
+@require './node_modules/cozy-ui/stylus/components/button.styl'
+@require './node_modules/cozy-ui/stylus/components/tabs.styl'
+@require './node_modules/cozy-ui/stylus/settings/icons.styl'
+@require './node_modules/cozy-ui/stylus/settings/palette.styl'
 @require '_spin'
 
 .container
@@ -6,10 +11,52 @@
   width 100vw
   height 100vh
 
+.status
+  flex 0 0 3em
+  background-color var(--paleGrey)
+  color var(--coolGrey)
+  line-height 3em
+  height: 3em
+  width: 100vw
+  display: flex
+  align-items: center
+
+  .status_text
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+
+  .status_img
+    flex 0 0 3em
+
+    img.status__icon
+      @extend $icon-24
+
+      display: block
+      margin-left: 25%
+      padding: 0.2em
+      vertical-align: middle
+      border-radius: 1.5em
+
+    .spin
+      @extend $icon-16
+      @extend $spin
+      background-color: var(--primaryColor)
+      margin-left: 1em
+      margin-top: 1em
+
+  &.blue
+    .status__icon--uptodate
+      background-color: var(--dodgerBlue)
+    .status__icon--offline
+      background-color: var(--coolGrey)
+    .status__icon--error
+      background-color: var(--pomegranate)
+
 .bottom-bar
   flex 0 0 3em
-  background-color pale-grey
-  color #95999D
+  background-color: var(--paleGrey)
+  color var(--coolGrey)
   line-height 3em
   height: 3em
   width: 100vw
@@ -29,10 +76,10 @@
     text-align: center
 
     &:hover
-      color slate-grey
+      color var(--slateGrey)
       svg
         path
-          fill slate-grey
+          fill var(--slateGrey)
 
 
     svg
@@ -43,63 +90,23 @@
       margin 0px 0.5em .2em 0.5em
 
 .warningbar
-  color white
-  background-color #297ef1
+  color var(--white)
+  background-color var(--dodgerBlue)
   padding: 1em
   font-size: .8em
 
   .btn
     font-size: 1em
-    border 1px solid white
+    border 1px solid var(--white)
     display: inline-block
     width: auto
     float: right
 
 
     &:hover
-        border 1px solid white !important
-        background-color: #0b61d5
+        border 1px solid var(--white) !important
+        background-color: var(--scienceBlue)
 
-
-.status
-  flex 0 0 3em
-  background-color pale-grey
-  color #95999D
-  line-height 3em
-  height: 3em
-  width: 100vw
-  display: flex
-  align-items: center
-  span.status_text
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-  span.status_img
-    flex 0 0 3em
-    display inline-block
-    img
-      width: 50%
-      margin: 25%
-      vertical-align: middle
-
-    .spin
-      @extend $icon-spinner-blue
-      display: inline-block
-      width: 1em
-      height: 1em
-      margin-left: 1em
-      margin-top: 1em
-
-&.blue span.status_img img
-      border-radius: 1.5em
-      display: block
-      padding: 0.2em
-      &.status__icon--uptodate
-        background-color: #297EF2
-      &.status__icon--offline
-        background-color: #95999D
-      &.status__icon--error
-        background-color: #f52d2d
 
 .two-panes
   flex 1 0
@@ -109,15 +116,11 @@
 
 .two-panes__menu
   @extend $tabs-base .coz-tab-list
-  flex 0 0 2.5em
-  display flex
-  flex-direction line
 
 .two-panes__menu__item
   @extend $tabs-base .coz-tab
-  flex 0 1 50%
-  text-align: center
-  height: 1.4em
+  font-size: rem(16)
+  font-weight: normal
 
 .two-panes__menu__item--active
   @extend $tabs-base .coz-tab--active
@@ -129,7 +132,7 @@
   flex: 1
 
   a:not(.btn)
-    color blue
+    color var(--scienceBlue)
     text-decoration none
 
   h2
@@ -141,7 +144,7 @@
 
   h3
     a
-      color grey-06
+      color var(--coolGrey)
       font-size 1em
 
   .help-list
@@ -176,26 +179,6 @@
       background-position -384px 0
     .icon--documentation
       background-position -480px 0
-
-  .status__icon
-    flex-shrink 0
-    box-sizing border-box
-    width 2em
-    height 2em
-    border-radius 1em
-    margin-right .5em
-  .status__icon--uptodate
-    background-color #27d179
-    padding .2em
-  .status__icon--offline
-    background-color orange
-    padding .2em
-  .status__icon--sync
-    background-color blue
-    padding .1em
-    // animation rotate linear 1.3s infinite
-  .status__icon--error
-    background-color red
 
   .disk-space
     display flex
@@ -249,15 +232,15 @@
     font-size: 1.1em
 
     .file-name-name
-      color #32363f
+      color var(--charcoalGrey)
       font-size: 1.1em
 
     .file-name-ext
-      color #95999d
+      color var(--coolGrey)
 
   .file-extra
     font-size: 0.9em
-    color #95999d
+    color var(--coolGrey)
 
     .file-time-ago::after
       content ' · '
@@ -273,31 +256,31 @@
       text-decoration  none
       cursor           pointer
       font-family: Lato
-      color #32363f
+      color var(--charcoalGrey)
       font-weight: bold;
       padding: .8em 2em .8em 2em;
       border: 1px solid #d6d8da;
       border-radius: 2px
 
       &:hover, &:active
-        background-color: #d6d8da
+        background-color: var(--silver)
         border 1px solid #d6d8da
 
   .send-mail-to-support
     textarea
       width 100%
       height 10em
-      background-color grey-01
+      background-color var(--paleGrey)
       border 1px solid grey-03
       border-radius 5px
       margin-bottom .5em
 
   .message--success
-    color blue
+    color var(--dodgerBlue)
     font-weight bold
 
   .message--error
-    color red
+    color var(--pomegranate)
     font-weight bold
 
   &.user-action-required
@@ -319,14 +302,14 @@
 .progress
   width 100%
   height .5em
-  border 1px solid cool-grey
+  border 1px solid var(--coolGrey)
   border-radius .1em
   overflow hidden
-  background-color pale-grey
+  background-color var(--paleGrey)
 
   .progress-inner
     height 100%
-    background-color blue
+    background-color var(--scienceBlue)
     transition: .3s
 
   &.indeterminate
@@ -341,12 +324,13 @@
 
   strong
     width 25%
-    color cool-grey
+    color var(--coolGrey)
     display inline-block
 
   .btn--danger
     @extend $button
     @extend $button--danger-outline
+    @extend $button--center
     width 100%
 
     &:active, &:not([disabled]):not([aria-disabled=true]):hover, &:focus
@@ -356,7 +340,7 @@
     // properly placed spinner
     &[aria-busy=true]
       &:hover, &:active, &:focus
-        background-color: white !important
+        background-color: var(--white) !important
         cursor: default
 
       &::after
@@ -377,7 +361,7 @@
 
   .btn--msg
     @extend $button
-    @extend $button--regular
+    @extend $button--center
 
     // TODO figure out why we need to add that for
     // properly placed spinner

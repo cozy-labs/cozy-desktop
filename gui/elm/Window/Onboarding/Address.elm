@@ -217,6 +217,6 @@ view helpers model =
                   else
                     onClick RegisterRemote
                 ]
-                [ text (helpers.t "Address Next") ]
+                [ span [] [ text (helpers.t "Address Next") ] ]
             ]
         ]

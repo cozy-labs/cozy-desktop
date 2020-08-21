@@ -27,7 +27,7 @@ view helpers { code, title, detail, links } msg =
                 , text (helpers.t "CGU Updated Required rest")
                 ]
             , a [ class "btn", href links.self, onClick msg ]
-                [ text (helpers.t "CGU Updated See") ]
+                [ span [] [ text (helpers.t "CGU Updated See") ] ]
             ]
 
          else

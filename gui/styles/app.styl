@@ -1,4 +1,8 @@
-@import 'cozy-ui'
+@require './node_modules/cozy-ui/dist/cozy-ui.min.css'
+@require './node_modules/cozy-ui/stylus/components/button.styl'
+@require './node_modules/cozy-ui/stylus/components/forms.styl'
+@require './node_modules/cozy-ui/stylus/settings/fontstack.styl'
+@require './node_modules/cozy-ui/stylus/utilities/typography.styl'
 
 @keyframes spin
   from
@@ -51,14 +55,14 @@ blue = dodger-blue
 body
   @extend $font-labor
   margin 0
-  background-color white
+  background-color var(--white)
 
 h1
-  @extend $font-title
+  @extend $title-default
   font-size 2rem
 
 h2
-  @extend $font-title
+  @extend $title-default
   font-size 1.5rem
 
 p

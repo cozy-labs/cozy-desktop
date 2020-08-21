@@ -1,7 +1,13 @@
+@require './node_modules/cozy-ui/stylus/settings/icons.styl'
+@require './node_modules/cozy-ui/stylus/settings/palette.styl'
+
 $spin
-  position absolute
-  top 50%
-  left 50%
-  transform translateX(-50%) translateY(-50%)
-  animation 1s linear infinite spin
-  margin-left 0
+  @extend $icon-spin
+  display: inline-block
+  vertical-align: middle
+  -webkit-mask-image: embedurl('./node_modules/cozy-ui/assets/icons/ui/spinner.svg')
+  -webkit-mask-position: center
+  -webkit-mask-size: cover
+  mask-image: embedurl('./node_modules/cozy-ui/assets/icons/ui/spinner.svg')
+  mask-position: center
+  mask-size: cover
