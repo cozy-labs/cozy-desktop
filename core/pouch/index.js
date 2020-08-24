@@ -471,6 +471,32 @@ class Pouch {
     return this.updater.push(task, callback)
   }
 
+  async unsyncedDocIds() {
+    const localSeq = await this.getLocalSeqAsync()
+    return new Promise((resolve, reject) => {
+      this.db
+        .changes({
+          since: localSeq,
+          filter: '_view',
+          view: 'byPath'
+        })
+        .on('complete', ({ results }) => resolve(results.map(r => r.id)))
+        .on('error', err => reject(err))
+    })
+  }
+
+  // Touch existing documents with the given ids to make sure they appear in the
+  // changesfeed.
+  // Careful: this will change their _rev value!
+  async touchDocs(ids /*: string[] */) {
+    const results = await this.db.allDocs({ include_docs: true, keys: ids })
+    return this.bulkDocs(
+      Array.from(results.rows)
+        .filter(row => row.doc)
+        .map(row => row.doc)
+    )
+  }
+
   tree(callback) {
     this.db.allDocs((err, result) => {
       if (err) return callback(err)

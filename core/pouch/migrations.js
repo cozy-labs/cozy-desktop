@@ -216,6 +216,9 @@ async function migrate(
 
     let result /*: MigrationResult */
     try {
+      // Keep track of docs that were not read from the changesfeed already
+      const unsyncedDocIds = await pouch.unsyncedDocIds()
+
       const docs /*: Metadata[] */ = await pouch.allDocs()
       const affectedDocs = migration.affectedDocs(docs)
       const migratedDocs = migration.run(affectedDocs)
@@ -235,6 +238,7 @@ async function migrate(
           await updateSchemaVersion(migration.targetSchemaVersion, migrationDB)
           await pouch.resetDatabaseAsync()
           await replicateDB(migrationDB, pouch.db)
+          await pouch.touchDocs(unsyncedDocIds)
           break
       }
     } catch (err) {

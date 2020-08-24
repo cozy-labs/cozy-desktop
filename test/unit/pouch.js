@@ -21,16 +21,21 @@ describe('Pouch', function() {
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
+  let createdDocs
   beforeEach('create folders and files', async function() {
-    await pouchHelpers.createParentFolder(this.pouch)
+    createdDocs = [await pouchHelpers.createParentFolder(this.pouch)]
     for (let i of [1, 2, 3]) {
-      await pouchHelpers.createFolder(
-        this.pouch,
-        path.join('my-folder', `folder-${i}`)
+      createdDocs.push(
+        await pouchHelpers.createFolder(
+          this.pouch,
+          path.join('my-folder', `folder-${i}`)
+        )
       )
-      await pouchHelpers.createFile(
-        this.pouch,
-        path.join('my-folder', `file-${i}`)
+      createdDocs.push(
+        await pouchHelpers.createFile(
+          this.pouch,
+          path.join('my-folder', `file-${i}`)
+        )
       )
     }
   })
@@ -694,6 +699,51 @@ if (doc.docType === 'folder') {
           { concurrency: 2 }
         )
       })
+    })
+  })
+
+  describe('unsyncedDocIds', function() {
+    it('returns the list of changed docs since the current local sequence', async function() {
+      const changedDocIds = createdDocs.map(d => d._id)
+
+      await should(this.pouch.unsyncedDocIds()).be.fulfilledWith(changedDocIds)
+    })
+
+    it('can be called multiple times in a row', async function() {
+      const unsyncedDocIds = await this.pouch.unsyncedDocIds()
+
+      await should(this.pouch.unsyncedDocIds()).be.fulfilledWith(unsyncedDocIds)
+    })
+  })
+
+  describe('touchDocs', function() {
+    it('does nothing when no document ids are given', async function() {
+      await should(this.pouch.touchDocs([])).be.fulfilledWith([])
+    })
+
+    it('does nothing when no documents exist with the given ids', async function() {
+      await should(
+        this.pouch.touchDocs(['inexistant-doc-id'])
+      ).be.fulfilledWith([])
+    })
+
+    it('updates the _rev value of all existing documents with the given ids', async function() {
+      const touchResult = await this.pouch.touchDocs(
+        createdDocs.map(d => d._id)
+      )
+      should(touchResult).have.length(createdDocs.length)
+
+      // Check that the short _rev has been incremented but nothing else has
+      // changed.
+      const shortRev = rev => Number(rev.split('-')[0])
+      const expected = createdDocs.map(({ _rev, ...rest }) => ({
+        shortRev: shortRev(_rev) + 1,
+        ...rest
+      }))
+      const touchedDocs = await Promise.all(
+        touchResult.map(({ id }) => this.pouch.byIdMaybeAsync(id))
+      ).map(({ _rev, ...rest }) => ({ shortRev: shortRev(_rev), ...rest }))
+      should(touchedDocs).deepEqual(expected)
     })
   })
 
