@@ -152,10 +152,23 @@ class Pouch {
 
   /* Mini ODM */
 
-  async allDocs() /*: Promise<void> */ {
+  async allDocs() /*: Promise<Metadata[]> */ {
     const results = await this.db.allDocs({ include_docs: true })
     return Array.from(results.rows)
       .filter(row => !row.key.startsWith('_'))
+      .map(row => row.doc)
+  }
+
+  async initialScanDocs() /*: Promise<Metadata[]> */ {
+    const results = await this.db.allDocs({ include_docs: true })
+    return Array.from(results.rows)
+      .filter(
+        row =>
+          !row.key.startsWith('_') && // Filter out design docs
+          !row.doc.deleted && // Filter out docs already marked for deletion
+          row.doc.sides &&
+          row.doc.sides.local // Keep only docs that have existed locally
+      )
       .map(row => row.doc)
   }
 

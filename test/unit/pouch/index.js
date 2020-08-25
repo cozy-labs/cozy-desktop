@@ -8,12 +8,12 @@ const sinon = require('sinon')
 const _ = require('lodash')
 const { uniq } = _
 
-const metadata = require('../../core/metadata')
-const migrations = require('../../core/pouch/migrations')
+const metadata = require('../../../core/metadata')
+const migrations = require('../../../core/pouch/migrations')
 
-const Builders = require('../support/builders')
-const configHelpers = require('../support/helpers/config')
-const pouchHelpers = require('../support/helpers/pouch')
+const Builders = require('../../support/builders')
+const configHelpers = require('../../support/helpers/config')
+const pouchHelpers = require('../../support/helpers/pouch')
 
 describe('Pouch', function() {
   before('instanciate config', configHelpers.createConfig)

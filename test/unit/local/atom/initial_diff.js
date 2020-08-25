@@ -32,11 +32,24 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('foo')
         .ino(1)
+        .upToDate()
         .create()
       const fizz = await builders
         .metafile()
         .path('fizz')
         .ino(2)
+        .upToDate()
+        .create()
+      const bar = await builders
+        .metadir()
+        .path('bar')
+        .ino(3)
+        .sides({ local: 1 })
+        .create()
+      await builders
+        .metafile()
+        .path('baz')
+        .sides({ remote: 1 })
         .create()
 
       const state = await initialDiff.initialState(this)
@@ -46,7 +59,8 @@ describe('core/local/atom/initial_diff', () => {
         scannedPaths: new Set(),
         byInode: new Map([
           [foo.fileid || foo.ino, foo],
-          [fizz.fileid || fizz.ino, fizz]
+          [fizz.fileid || fizz.ino, fizz],
+          [bar.fileid || bar.ino, bar]
         ])
       })
     })
@@ -58,6 +72,7 @@ describe('core/local/atom/initial_diff', () => {
         .metadata()
         .path('foo')
         .ino(1)
+        .upToDate()
         .build()
       const waiting = [
         { batch: [], nbCandidates: 0, timeout: setTimeout(() => {}, 0) }
@@ -114,11 +129,13 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('foo')
         .ino(1)
+        .upToDate()
         .create()
       await builders
         .metafile()
         .path('fizz')
         .ino(2)
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -165,16 +182,19 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('foo')
         .ino(1)
+        .upToDate()
         .create()
       await builders
         .metafile()
         .path('foo/baz')
         .ino(2)
+        .upToDate()
         .create()
       await builders
         .metadir()
         .path('bar')
         .ino(3)
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -234,21 +254,25 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('foo')
         .ino(1)
+        .upToDate()
         .create()
       await builders
         .metafile()
         .path('bar')
         .ino(2)
+        .upToDate()
         .create()
       await builders
         .metadir()
         .path('fizz')
         .ino(3)
+        .upToDate()
         .create()
       await builders
         .metafile()
         .path('buzz')
         .ino(4)
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -297,11 +321,13 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('foo')
         .ino(1)
+        .upToDate()
         .create()
       await builders
         .metafile()
         .path('bar')
         .ino(2)
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -340,11 +366,13 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('foo')
         .ino(1)
+        .upToDate()
         .create()
       await builders
         .metafile()
         .path('bar')
         .ino(2)
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -383,11 +411,13 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('foo')
         .ino(1)
+        .upToDate()
         .create()
       const bar = await builders
         .metafile()
         .path('bar')
         .ino(2)
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -433,12 +463,14 @@ describe('core/local/atom/initial_diff', () => {
         .path('stillEmptyFile')
         .ino(2)
         .data('')
+        .upToDate()
         .create()
       const sameContentFile = await builders
         .metafile()
         .path('sameContentFile')
         .ino(3)
         .data('content')
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -481,6 +513,7 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('dir')
         .ino(1)
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -506,6 +539,7 @@ describe('core/local/atom/initial_diff', () => {
         .path('updatedContent')
         .ino(2)
         .data('content')
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -531,6 +565,7 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('foo')
         .ino(1)
+        .upToDate()
         .build()
       await builders
         .metadir(wasDir)
@@ -542,6 +577,7 @@ describe('core/local/atom/initial_diff', () => {
         .metafile()
         .path('fizz')
         .ino(2)
+        .upToDate()
         .build()
       await builders
         .metafile(wasFile)
@@ -592,16 +628,19 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('parent')
         .ino(1)
+        .upToDate()
         .create()
       await builders
         .metadir()
         .path('parent/foo')
         .ino(2)
+        .upToDate()
         .create()
       await builders
         .metadir()
         .path('parent/foo/bar')
         .ino(3)
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -673,16 +712,19 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('parent')
         .ino(1)
+        .upToDate()
         .create()
       await builders
         .metadir()
         .path('parent/foo')
         .ino(2)
+        .upToDate()
         .create()
       const missingDoc = await builders
         .metadir()
         .path('parent/foo/bar')
         .ino(3)
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -754,12 +796,14 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('parent')
         .ino(1)
+        .upToDate()
         .create()
       await builders
         .metafile()
         .path('parent/foo')
         .ino(2)
         .data('initial content')
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -813,12 +857,14 @@ describe('core/local/atom/initial_diff', () => {
         .metadir()
         .path('parent')
         .ino(1)
+        .upToDate()
         .create()
       await builders
         .metafile()
         .path('parent/foo')
         .ino(2)
         .data('initial content')
+        .upToDate()
         .create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
@@ -854,6 +900,32 @@ describe('core/local/atom/initial_diff', () => {
         fooScan,
         initialScanDone
       ])
+    })
+
+    it('does not delete unsynced remote additions', async function() {
+      await builders
+        .metadir()
+        .path('dir')
+        .ino(1)
+        .sides({ remote: 1 })
+        .create()
+      await builders
+        .metafile()
+        .path('file')
+        .ino(2)
+        .data('initial content')
+        .sides({ remote: 1 })
+        .create()
+
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+
+      inputBatch([initialScanDone])
+
+      const events = await initialDiff
+        .loop(channel, { pouch: this.pouch, state })
+        .pop()
+
+      should(events).deepEqual([initialScanDone])
     })
   })
 })
