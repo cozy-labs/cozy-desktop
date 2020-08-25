@@ -6,7 +6,6 @@
 
 const cheerio = require('cheerio')
 const crypto = require('crypto')
-const request = require('request-promise')
 const url = require('url')
 const Registration = require('../../core/remote/registration')
 const logger = require('../../core/utils/logger')
@@ -15,12 +14,16 @@ const log = logger({
   component: 'remote/automated_registration'
 })
 
-const client = request.defaults({
-  jar: true, // Enable cookies so the stack doesn't change the CSRF token.
-  resolveWithFullResponse: true, // So we can check headers & status code.
-  simple: false, // Don't reject on redirect (e.g. after login).
-  timeout: 120000 // Registration from AppVeyor can be slow.
-})
+/** Transform an object into an `x-www-form-urlencoded` string */
+const formBody = form => {
+  const body = []
+  for (const key in form) {
+    const encodedKey = encodeURIComponent(key)
+    var encodedValue = encodeURIComponent(form[key])
+    body.push(encodedKey + '=' + encodedValue)
+  }
+  return body.join('&')
+}
 
 /** Resolve with the CSRF token from the cozy-stack login page.
  *
@@ -28,13 +31,12 @@ const client = request.defaults({
  */
 const _getLoginInfo = async cozyUrl => {
   log.debug('Get CSRF token...')
-  const { body } = await client.get({ url: cozyUrl('/auth/login') })
+  const res = await fetch(cozyUrl('/auth/login'))
+  const body = await res.text()
   const $ = cheerio.load(body)
   const csrf_token = $('#csrf_token').val()
   if (`${csrf_token}` === '') {
-    throw new Error(
-      `Could not parse CSRF token from login page:\n  ${$.text()}`
-    )
+    throw new Error(`Could not parse CSRF token from login page:\n  ${body}`)
   }
   const form = $('#login-form')
   const salt = form.data('salt')
@@ -58,15 +60,24 @@ const login = async (cozyUrl, passphrase) => {
   if (iterations > 0) {
     passphrase = await _hashPassphrase(passphrase, salt, iterations)
   }
-  const form = { passphrase, csrf_token }
-  const response = await client.post({
-    url: cozyUrl('/auth/login'),
-    form
+  const response = await fetch(cozyUrl('/auth/login'), {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'content-type': 'application/x-www-form-urlencoded'
+    },
+    body: formBody({
+      passphrase,
+      'two-factor-trusted-device-token': '',
+      'long-run-session': '1',
+      redirect: '',
+      csrf_token
+    })
   })
-  if (!response.headers.location) {
-    const $ = cheerio.load(response.body)
+  const body = await response.json()
+  if (!body.redirect) {
     throw new Error(
-      `Login failed (no redirect, code ${response.statusCode}):\n  ${$.text()}`
+      `Login failed (no redirect, code ${response.status}):\n  ${body}`
     )
   }
 }
@@ -80,10 +91,10 @@ const login = async (cozyUrl, passphrase) => {
  */
 const _getAuthorizationForm = async authorizeUrl => {
   log.debug('Load authorization form...')
-  const authorizePageResp = await client({ url: authorizeUrl })
+  const authorizePageResp = await fetch(authorizeUrl)
 
   log.debug('Parse authorization form...')
-  const $ = cheerio.load(authorizePageResp.body)
+  const $ = cheerio.load(await authorizePageResp.text())
   return $('form.auth')
     .serializeArray()
     .reduce((data, param) => {
@@ -102,16 +113,21 @@ const _getAuthorizationForm = async authorizeUrl => {
 const authorize = async authorizeUrl => {
   const form = await _getAuthorizationForm(authorizeUrl)
   log.debug('Authorize...')
-  const res = await client.post({ url: authorizeUrl, form })
-  const redirectUrl = res.headers.location
+  const res = await fetch(authorizeUrl, {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'content-type': 'application/x-www-form-urlencoded'
+    },
+    body: formBody(form)
+  })
+  const body = await res.json()
+  const redirectUrl = body.deeplink
 
   if (redirectUrl) {
-    return res.headers.location
+    return redirectUrl
   } else {
-    const $ = cheerio.load(res.body)
-    throw new Error(
-      `Authorization failed (code ${res.statusCode}):\n  ${$.text()}`
-    )
+    throw new Error(`Authorization failed (code ${res.status}):\n  ${body}`)
   }
 }
 
@@ -124,7 +140,7 @@ const automatedRegistration = (
   const cozyUrl = path => new url.URL(path, cozyBaseUrl).toString()
   const saveCredentials = async redirectUrl => {
     log.debug('Saving credentials...')
-    await client({ url: redirectUrl })
+    await fetch(redirectUrl)
   }
 
   return new Registration(cozyBaseUrl, storage, async authorizeUrl => {

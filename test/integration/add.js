@@ -36,24 +36,60 @@ describe('Add', () => {
   })
 
   describe('file', () => {
-    it('local')
+    describe('local', () => {
+      const filename = 'Texte.txt'
+      context('when file is completely empty', () => {
+        it('creates an empty file on the remote Cozy', async () => {
+          await helpers.local.syncDir.touchFile(filename)
 
-    it('remote', async () => {
-      await cozy.files.create('foo', { name: 'file', dirID: parent._id })
-      await helpers.remote.pullChanges()
+          await helpers.flushLocalAndSyncAll()
+          await helpers.pullAndSyncAll()
 
-      should(helpers.putDocs('path', '_deleted', 'trashed', 'sides')).deepEqual(
-        [
+          should(await helpers.trees()).deepEqual({
+            local: [filename, 'parent/'],
+            remote: [filename, 'parent/']
+          })
+          should(await helpers.local.readFile(filename)).eql('')
+          should(await helpers.remote.readFile(filename)).eql('')
+        })
+      })
+
+      context('when file has content', () => {
+        it('uploads the file with its local content', async () => {
+          const filecontent = 'My local content'
+          await helpers.local.syncDir.outputFile(filename, filecontent)
+
+          await helpers.flushLocalAndSyncAll()
+          await helpers.pullAndSyncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: [filename, 'parent/'],
+            remote: [filename, 'parent/']
+          })
+          should(await helpers.local.readFile(filename)).eql(filecontent)
+          should(await helpers.remote.readFile(filename)).eql(filecontent)
+        })
+      })
+    })
+
+    describe('remote', () => {
+      it('downloads the new file', async () => {
+        await cozy.files.create('foo', { name: 'file', dirID: parent._id })
+        await helpers.remote.pullChanges()
+
+        should(
+          helpers.putDocs('path', '_deleted', 'trashed', 'sides')
+        ).deepEqual([
           {
             path: path.normalize('parent/file'),
             sides: { target: 1, remote: 1 }
           }
-        ]
-      )
+        ])
 
-      await helpers.syncAll()
+        await helpers.syncAll()
 
-      should(await helpers.local.tree()).deepEqual(['parent/', 'parent/file'])
+        should(await helpers.local.tree()).deepEqual(['parent/', 'parent/file'])
+      })
     })
   })
 

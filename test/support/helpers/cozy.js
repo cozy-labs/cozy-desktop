@@ -3,6 +3,22 @@
 
 require('../../../core/globals')
 
+// Setup proxy so that all test requests will go through `electron-fetch`
+const { app, session } = require('electron')
+const proxy = require('../../../gui/js/proxy')
+
+let originalNet
+const setupGlobalProxy = async () => {
+  originalNet = await proxy.setup(app, {}, session, '')
+}
+const resetGlobalProxy = async () => {
+  if (originalNet && (await originalNet)) {
+    await proxy.reset(app, session, originalNet)
+    originalNet = null
+  }
+}
+setupGlobalProxy()
+
 const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
 
@@ -55,7 +71,9 @@ module.exports = {
   COZY_URL,
   cozy,
   newClient,
-  deleteAll
+  deleteAll,
+  setupGlobalProxy,
+  resetGlobalProxy
 }
 
 // List files and directories in the root directory

@@ -159,6 +159,13 @@ class ContextDir {
     return fse.outputFile(this.abspath(target), data)
   }
 
+  async touchFile(target /*: string | {path: string} */) {
+    const { S_IRUSR, S_IWUSR, S_IRGRP, S_IROTH } = fse.constants
+    const mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH
+    const file = await fse.open(this.abspath(target), 'w', mode)
+    return fse.close(file)
+  }
+
   async move(
     src /*: string */,
     dst /*: string */,

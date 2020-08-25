@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 const { app, session } = require('electron')
 const faker = require('faker')
 const fs = require('fs')
@@ -7,6 +9,8 @@ const path = require('path')
 const process = require('process')
 const should = require('should')
 const { URL } = require('url')
+
+const cozyHelpers = require('../../support/helpers/cozy')
 
 const proxy = require('../../../gui/js/proxy')
 
@@ -18,6 +22,17 @@ describe('gui/js/proxy', function() {
     'proxy-rules': undefined,
     'proxy-script': undefined
   }
+
+  before('reset global proxy', async () => {
+    // We'll play with the proxy in these tests so we disable the global test
+    // proxy in the meantime.
+    await cozyHelpers.resetGlobalProxy()
+  })
+  after('setup global proxy again', async () => {
+    // Other test files will benefit from it so we setup the gloabal test proxy
+    // again.
+    await cozyHelpers.setupGlobalProxy()
+  })
 
   describe('.config()', () => {
     let config
@@ -52,7 +67,7 @@ describe('gui/js/proxy', function() {
     let received
     let proxySideEffects
 
-    beforeEach('start HTTP server', () => {
+    before('start HTTP server', () => {
       httpServer = http.createServer((req, res) => {
         received = req
         res.end()
@@ -60,11 +75,11 @@ describe('gui/js/proxy', function() {
       httpServer.listen(httpPort)
     })
 
-    afterEach('stop HTTP server', done => {
+    after('stop HTTP server', done => {
       httpServer.close(done)
     })
 
-    beforeEach('start HTTPS server', () => {
+    before('start HTTPS server', () => {
       const options = {
         pfx,
         passphrase: 'cozy'
@@ -76,32 +91,19 @@ describe('gui/js/proxy', function() {
       httpsServer.listen(httpsPort)
     })
 
-    afterEach('stop HTTPS server', done => {
+    after('stop HTTPS server', done => {
       httpsServer.close(done)
     })
 
-    const proxySetupHook = config => done => {
-      proxy.setup(app, config, session, userAgent, sideEffects => {
-        proxySideEffects = sideEffects
-        done()
-      })
+    beforeEach('reset received request', () => {
+      received = null
+    })
+
+    const proxySetupHook = config => async () => {
+      proxySideEffects = await proxy.setup(app, config, session, userAgent)
     }
-    const revertProxySideEffects = done => {
-      global.fetch = proxySideEffects.originalFetch
-      http.Agent.globalAgent = http.globalAgent = new http.Agent()
-      http.request = proxySideEffects.originalHttpRequest
-      https.Agent.globalAgent = https.globalAgent = new https.Agent()
-      https.request = proxySideEffects.originalHttpsRequest
-      for (const event of [
-        'select-client-certificate',
-        'certificate-error',
-        'login'
-      ]) {
-        app.removeAllListeners(event)
-      }
-      session.defaultSession.setCertificateVerifyProc(null)
-      session.defaultSession.allowNTLMCredentialsForDomains('')
-      session.defaultSession.setProxy({}, done)
+    const revertProxySideEffects = async () => {
+      await proxy.reset(app, session, proxySideEffects)
     }
 
     afterEach(revertProxySideEffects)

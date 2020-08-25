@@ -1,9 +1,11 @@
 require('../../core/globals')
 const cozy = require('cozy-client-js')
 const fse = require('fs-extra')
+const { app, session } = require('electron')
 
 const pkg = require('../../package.json')
 const automatedRegistration = require('./automated_registration')
+const proxy = require('../../gui/js/proxy')
 
 const cozyUrl =
   chooseCozyUrl(process.env.BUILD_JOB) ||
@@ -38,17 +40,22 @@ NODE_ENV=test
   )
 }
 
-automatedRegistration(cozyUrl, passphrase, storage)
-  .process(pkg)
-  .then(readAccessToken)
-  .then(generateTestEnv)
-  .then(() => {
-    // eslint-disable-next-line no-console
-    console.log('Remote bootstrap complete.')
-    process.exit(0) // eslint-disable-line no-process-exit
-  })
-  .catch(err => {
-    // eslint-disable-next-line no-console
-    console.error(err)
-    process.exit(1) // eslint-disable-line no-process-exit
-  })
+app.whenReady().then(() =>
+  proxy
+    .setup(app, {}, session, '')
+    .then(() =>
+      automatedRegistration(cozyUrl, passphrase, storage).process(pkg)
+    )
+    .then(readAccessToken)
+    .then(generateTestEnv)
+    .then(() => {
+      // eslint-disable-next-line no-console
+      console.log('Remote bootstrap complete.')
+      process.exit(0) // eslint-disable-line no-process-exit
+    })
+    .catch(err => {
+      // eslint-disable-next-line no-console
+      console.error(err)
+      process.exit(1) // eslint-disable-line no-process-exit
+    })
+)
