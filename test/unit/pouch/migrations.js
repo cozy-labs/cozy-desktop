@@ -30,16 +30,21 @@ describe('core/pouch/migrations', function() {
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
+  let createdDocs
   beforeEach('create folders and files', async function() {
-    await pouchHelpers.createParentFolder(this.pouch)
+    createdDocs = [await pouchHelpers.createParentFolder(this.pouch)]
     for (let i of [1, 2, 3]) {
-      await pouchHelpers.createFolder(
-        this.pouch,
-        path.join('my-folder', `folder-${i}`)
+      createdDocs.push(
+        await pouchHelpers.createFolder(
+          this.pouch,
+          path.join('my-folder', `folder-${i}`)
+        )
       )
-      await pouchHelpers.createFile(
-        this.pouch,
-        path.join('my-folder', `file-${i}`)
+      createdDocs.push(
+        await pouchHelpers.createFile(
+          this.pouch,
+          path.join('my-folder', `file-${i}`)
+        )
       )
     }
   })
@@ -274,8 +279,8 @@ describe('core/pouch/migrations', function() {
             })
 
             it('sets the localSeq to the last change seq', async function() {
-              await migrate(migration, this.pouch)
               const expected = await this.pouch.db.changes({ since: 0 })
+              await migrate(migration, this.pouch)
               await should(this.pouch.getLocalSeqAsync()).be.fulfilledWith(
                 expected.last_seq
               )
@@ -287,6 +292,19 @@ describe('core/pouch/migrations', function() {
               await migrate(migration, this.pouch)
               await should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(
                 expected
+              )
+            })
+
+            it('does not prevent synchronizing merged changes', async function() {
+              // We should have 7 unsynced docs, created in the main beforeEach
+              const unsyncedDocIds = createdDocs.map(d => d._id)
+
+              await should(this.pouch.unsyncedDocIds()).be.fulfilledWith(
+                unsyncedDocIds
+              )
+              await migrate(migration, this.pouch)
+              await should(this.pouch.unsyncedDocIds()).be.fulfilledWith(
+                unsyncedDocIds
               )
             })
           })

@@ -14,11 +14,11 @@ module.exports = {
     })
   },
 
-  createParentFolder(pouch, callback) {
+  createParentFolder(pouch) {
     let doc = {
       path: 'my-folder',
       docType: 'folder',
-      updated_at: new Date(),
+      updated_at: new Date().toISOString(),
       tags: [],
       remote: {
         _id: `XXX`,
@@ -30,14 +30,14 @@ module.exports = {
       }
     }
     assignId(doc)
-    return pouch.db.put(doc).asCallback(callback)
+    return pouch.db.put(doc).then(({ rev }) => ({ ...doc, _rev: rev }))
   },
 
-  createFolder(pouch, folderPath, callback) {
+  createFolder(pouch, folderPath) {
     let doc = {
       path: folderPath,
       docType: 'folder',
-      updated_at: new Date(),
+      updated_at: new Date().toISOString(),
       tags: [],
       remote: {
         _id: `123456789-${folderPath}`
@@ -48,15 +48,15 @@ module.exports = {
       }
     }
     assignId(doc)
-    return pouch.db.put(doc).asCallback(callback)
+    return pouch.db.put(doc).then(({ rev }) => ({ ...doc, _rev: rev }))
   },
 
-  createFile(pouch, filePath, callback) {
+  createFile(pouch, filePath) {
     let doc = {
       path: filePath,
       docType: 'file',
       md5sum: `111111111111111111111111111111111111111${filePath}`,
-      updated_at: new Date(),
+      updated_at: new Date().toISOString(),
       tags: [],
       remote: {
         _id: `1234567890-${filePath}`
@@ -67,6 +67,6 @@ module.exports = {
       }
     }
     assignId(doc)
-    return pouch.db.put(doc).asCallback(callback)
+    return pouch.db.put(doc).then(({ rev }) => ({ ...doc, _rev: rev }))
   }
 }
