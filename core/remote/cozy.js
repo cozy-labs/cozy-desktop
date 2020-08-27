@@ -208,6 +208,7 @@ class RemoteCozy {
     id /*: string */,
     data /*: Readable */,
     options /*: {|contentType: string,
+                 contentLength: number,
                  checksum: string,
                  updatedAt: string,
                  executable: boolean,

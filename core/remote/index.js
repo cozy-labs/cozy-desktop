@@ -208,6 +208,7 @@ class Remote /*:: implements Reader, Writer */ {
       {
         checksum: doc.md5sum,
         executable: doc.executable || false,
+        contentLength: doc.size,
         contentType: doc.mime,
         updatedAt: doc.updated_at,
         ifMatch: old && old.remote ? old.remote._rev : ''
