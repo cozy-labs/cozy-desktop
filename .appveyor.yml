@@ -11,7 +11,7 @@ environment:
       - BUILD_JOB: "scenarios_build"
 
 install:
-  - ps: Install-Product node 10.13.0 x64
+  - ps: Install-Product node 12.14.1 x64
   - cmd: appveyor-retry yarn install:all
   - cmd: appveyor-retry yarn bootstrap:remote
 

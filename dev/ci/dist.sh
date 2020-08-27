@@ -15,7 +15,7 @@ if [ "$TRAVIS_OS_NAME" == "linux" ]; then
     -v ${PWD}:/project \
     -v ~/.cache/electron:/root/.cache/electron \
     -v ~/.cache/electron-builder:/root/.cache/electron-builder \
-    electronuserland/builder:8 \
+    electronuserland/builder:12 \
     /bin/bash -c "yarn dist:all"
 else
   yarn dist:all
