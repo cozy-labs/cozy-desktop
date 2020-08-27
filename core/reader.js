@@ -7,36 +7,11 @@
  * @flow
  */
 
-// FIXME:
-// eslint-disable-next-line
-const stream = require('stream')
-
 /*::
+import type { Readable } from 'stream'
 import type { Metadata } from './metadata'
-*/
 
-class ReadableWithContentLength /*:: extends stream.Readable */ {
-  /*::
-  contentLength: ?number
-  */
-}
-
-function withContentLength(
-  s /*: stream.Readable */,
-  contentLength /*: ?number */
-) /*: ReadableWithContentLength */ {
-  const s2 /*: ReadableWithContentLength */ = (s /*: any */)
-  s2.contentLength = contentLength
-  return s2
-}
-
-/*::
 export interface Reader {
-  createReadStreamAsync (Metadata): Promise<ReadableWithContentLength>;
+  createReadStreamAsync (Metadata): Promise<Readable>;
 }
 */
-
-module.exports = {
-  ReadableWithContentLength,
-  withContentLength
-}

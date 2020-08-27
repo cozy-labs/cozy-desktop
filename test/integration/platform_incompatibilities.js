@@ -311,9 +311,10 @@ describe('Platform incompatibilities', () => {
       path: '/dir2',
       updated_at: new Date().toISOString()
     }
+    const { name, dir_id, executable, updated_at } = newRemoteDoc
     await helpers.remote.side.remoteCozy.updateAttributesById(
       remoteDoc._id,
-      newRemoteDoc,
+      { name, dir_id, executable, updated_at },
       { ifMatch: remoteDoc._rev }
     )
     const dir2 = metadata.fromRemoteDoc(newRemoteDoc)

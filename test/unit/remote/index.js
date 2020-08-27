@@ -11,7 +11,6 @@ const sinon = require('sinon')
 const should = require('should')
 const stream = require('stream')
 
-const { withContentLength } = require('../../../core/reader')
 const checksumer = require('../../../core/local/checksumer')
 const metadata = require('../../../core/metadata')
 const { ensureValidPath } = metadata
@@ -229,15 +228,11 @@ describe('remote.Remote', function() {
         .build()
       this.remote.other = {
         createReadStreamAsync() {
-          const empty = withContentLength(
-            new stream.Readable({
-              read: function() {
-                this.push(null)
-              }
-            }),
-            0
-          )
-          return empty
+          return new stream.Readable({
+            read: function() {
+              this.push(null)
+            }
+          })
         }
       }
       await this.remote.addFileAsync(doc)

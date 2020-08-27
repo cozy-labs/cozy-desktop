@@ -13,7 +13,6 @@ const { RemoteCozy } = require('./cozy')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
 const { isNote } = require('../utils/notes')
-const { withContentLength } = require('../reader')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
 
@@ -24,7 +23,7 @@ import type { Metadata } from '../metadata'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { RemoteDoc } from './document'
-import type { ReadableWithContentLength, Reader } from '../reader' // eslint-disable-line
+import type { Reader } from '../reader' // eslint-disable-line
 import type { Writer } from '../writer'
 */
 
@@ -33,6 +32,8 @@ const log = logger({
 })
 
 /*::
+import type { Readable } from 'stream'
+
 export type RemoteOptions = {
   config: Config,
   events: EventEmitter,
@@ -99,11 +100,8 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   /** Create a readable stream for the given doc */
-  async createReadStreamAsync(
-    doc /*: Metadata */
-  ) /*: Promise<ReadableWithContentLength> */ {
-    const stream = await this.remoteCozy.downloadBinary(doc.remote._id)
-    return withContentLength(stream, doc.size)
+  async createReadStreamAsync(doc /*: Metadata */) /*: Promise<Readable> */ {
+    return this.remoteCozy.downloadBinary(doc.remote._id)
   }
 
   /** Create a folder on the remote cozy instance */
@@ -142,7 +140,7 @@ class Remote /*:: implements Reader, Writer */ {
     log.info({ path }, 'Uploading new file...')
     const stopMeasure = measureTime('RemoteWriter#addFile')
 
-    let stream /*: ReadableWithContentLength */
+    let stream
     try {
       stream = await this.other.createReadStreamAsync(doc)
     } catch (err) {
@@ -161,7 +159,7 @@ class Remote /*:: implements Reader, Writer */ {
       ...newDocumentAttributes(name, dir._id, doc.updated_at),
       checksum: doc.md5sum,
       executable: doc.executable || false,
-      contentLength: stream.contentLength,
+      contentLength: doc.size,
       contentType: doc.mime
     })
 
@@ -200,16 +198,21 @@ class Remote /*:: implements Reader, Writer */ {
       throw err
     }
 
-    const options = {
-      contentType: doc.mime,
-      checksum: doc.md5sum,
-      updatedAt: doc.updated_at,
-      executable: doc.executable || false,
-      ifMatch: ''
-    }
-    if (old && old.remote) {
-      options.ifMatch = old.remote._rev
-    }
+    // Object.assign gives us the opportunity to enforce required options with
+    // Flow while they're only optional in the Metadata type. For example,
+    // `md5sum` and `mime` are optional in Metadata because they only apply to
+    // files. But we're sure we have files at this point and that they do have
+    // those attributes.
+    const options = Object.assign(
+      {},
+      {
+        checksum: doc.md5sum,
+        executable: doc.executable || false,
+        contentType: doc.mime,
+        updatedAt: doc.updated_at,
+        ifMatch: old && old.remote ? old.remote._rev : ''
+      }
+    )
     const updated = await this.remoteCozy.updateFileById(
       doc.remote._id,
       stream,
@@ -375,8 +378,9 @@ class Remote /*:: implements Reader, Writer */ {
     try {
       if (await this.remoteCozy.isEmpty(doc.remote._id)) {
         log.info({ path }, 'Deleting folder from the Cozy trash...')
-        const opts = doc.remote._rev ? { ifMatch: doc.remote._rev } : undefined
-        await this.remoteCozy.destroyById(doc.remote._id, opts)
+        await this.remoteCozy.destroyById(doc.remote._id, {
+          ifMatch: doc.remote._rev
+        })
       } else {
         log.warn({ path }, 'Folder is not empty and cannot be deleted!')
       }
