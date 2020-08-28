@@ -20,7 +20,6 @@ const stater = require('./stater')
 const { isUpToDate } = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
 const watcher = require('./watcher')
-const { withContentLength } = require('../reader')
 const syncDir = require('./sync_dir')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
@@ -29,7 +28,7 @@ const sentry = require('../utils/sentry')
 /*::
 import type EventEmitter from 'events'
 import type { Config } from '../config'
-import type { ReadableWithContentLength, Reader } from '../reader'
+import type { Reader } from '../reader'
 import type { Ignore } from '../ignore'
 import type { AtomEventsDispatcher } from './atom/dispatch'
 import type { Metadata } from '../metadata'
@@ -118,23 +117,13 @@ class Local /*:: implements Reader, Writer */ {
    */
   async createReadStreamAsync(
     doc /*: Metadata */
-  ) /*: Promise<ReadableWithContentLength> */ {
-    try {
-      let filePath = path.resolve(this.syncPath, doc.path)
-      let pStats = fse.stat(filePath)
-      let pStream = new Promise((resolve, reject) => {
-        let stream = fse.createReadStream(filePath)
-        stream.on('open', () => resolve(stream))
-        stream.on('error', err => reject(err))
-      })
-      const [
-        stream /*: ReadableWithContentLength */,
-        stat /*: fs.Stat */
-      ] = await Promise.all([pStream, pStats])
-      return withContentLength(stream, stat.size)
-    } catch (err) {
-      return Promise.reject(err)
-    }
+  ) /*: Promise<stream.Readable> */ {
+    const filePath = path.resolve(this.syncPath, doc.path)
+    return new Promise((resolve, reject) => {
+      const contentStream = fse.createReadStream(filePath)
+      contentStream.on('open', () => resolve(contentStream))
+      contentStream.on('error', err => reject(err))
+    })
   }
 
   /* Helpers */

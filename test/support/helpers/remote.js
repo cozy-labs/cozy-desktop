@@ -161,16 +161,17 @@ class RemoteTestHelpers {
     }
   }
 
-  async move(id /*: string */, newPath /*: string */) {
+  async move({ _id, updated_at } /*: RemoteDoc */, newPath /*: string */) {
     const [newDirPath, newName] /*: [string, string] */ = dirAndName(newPath)
     const newDir /*: RemoteDoc */ = await this.side.remoteCozy.findDirectoryByPath(
       newDirPath
     )
     const attrs = {
       name: newName,
-      ir_id: newDir._id
+      dir_id: newDir._id,
+      updated_at
     }
-    await this.side.remoteCozy.updateAttributesById(id, attrs, {})
+    await this.side.remoteCozy.updateAttributesById(_id, attrs, { ifMatch: '' })
   }
 }
 

@@ -143,7 +143,7 @@ describe('Cozy Note move', () => {
 
     describe('to a free target location', () => {
       beforeEach('move local note', async () => {
-        await helpers.remote.move(note._id, dstPath)
+        await helpers.remote.move(note, dstPath)
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
       })

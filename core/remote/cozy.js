@@ -183,21 +183,23 @@ class RemoteCozy {
 
   createFile(
     data /*: Readable */,
-    options /*: {name: string,
+    options /*: {|name: string,
                  dirID?: ?string,
-                 contentType?: ?string,
-                 createdAt: ?string,
-                 updatedAt: ?string,
-                 executable: boolean} */
+                 contentType: string,
+                 contentLength: number,
+                 checksum: string,
+                 createdAt: string,
+                 updatedAt: string,
+                 executable: boolean|} */
   ) /*: Promise<RemoteDoc> */ {
     return this.client.files.create(data, options).then(this.toRemoteDoc)
   }
 
   createDirectory(
-    options /*: {name: string,
+    options /*: {|name: string,
                  dirID?: string,
-                 createdAt: ?string,
-                 updatedAt: ?string} */
+                 createdAt: string,
+                 updatedAt: string|} */
   ) /*: Promise<RemoteDoc> */ {
     return this.client.files.createDirectory(options).then(this.toRemoteDoc)
   }
@@ -205,9 +207,12 @@ class RemoteCozy {
   updateFileById(
     id /*: string */,
     data /*: Readable */,
-    options /*: {contentType?: ?string,
-                 updatedAt: ?string,
-                 executable: boolean} */
+    options /*: {|contentType: string,
+                 contentLength: number,
+                 checksum: string,
+                 updatedAt: string,
+                 executable: boolean,
+                 ifMatch: string|} */
   ) /*: Promise<RemoteDoc> */ {
     return this.client.files
       .updateById(id, data, options)
@@ -216,8 +221,11 @@ class RemoteCozy {
 
   updateAttributesById(
     id /*: string */,
-    attrs /*: Object */,
-    options /*: ?{ifMatch?: string} */
+    attrs /*: {|name?: string,
+               dir_id?: string,
+               executable?: boolean,
+               updated_at: string|} */,
+    options /*: {|ifMatch: string|} */
   ) /*: Promise<RemoteDoc> */ {
     return this.client.files
       .updateAttributesById(id, attrs, options)
@@ -226,14 +234,14 @@ class RemoteCozy {
 
   trashById(
     id /*: string */,
-    options /*: ?{ifMatch: string} */
+    options /*: {|ifMatch: string|} */
   ) /*: Promise<RemoteDoc> */ {
     return this.client.files.trashById(id, options).then(this.toRemoteDoc)
   }
 
   destroyById(
     id /*: string */,
-    options /*: ?{ifMatch: string} */
+    options /*: {|ifMatch: string|} */
   ) /*: Promise<void> */ {
     return this.client.files.destroyById(id, options)
   }
