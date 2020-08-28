@@ -1,5 +1,37 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.23.0-beta.1 - 2020-08-28
+
+Improvements for all users:
+
+- We upgraded the framework upon which our application is built, Electron, to
+  v9.2.1 which is the 2nd latest major version (v10.0.0 was released 4 days
+  ago). This should bring more stability to the application overall and prevent
+  some crashes. We can also expect smaller bundles. This upgrade brings us
+  official support back for a while.
+- Data migrations run after some client upgrades should not prevent not fully
+  synchronized changes from being detected and synchronized after the
+  migration.
+- Documents added on your remote Cozy, detected by the client but not fully
+  synchronized before it is stopped should be synchronized correctly after the
+  next client launch. The client should not try to delete them on your Cozy
+  because it does not find them locally (the deletions never went through
+  fortunately).
+
+Improvements for Windows users:
+
+- With the Electron upgrade, you should be able to disconnect your client from
+  your remote Cozy via the client interface.
+
+Improvements for Linux users:
+
+- If you have disabled the client autolaunch upon your computer startup it
+  should not be re-enabled during your next application launch anymore.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.22.0 - 2020-08-13
 
 Improvements for all users:
