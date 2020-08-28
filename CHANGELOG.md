@@ -1,5 +1,15 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.23.0-beta.2 - 2020-08-28
+
+Improvements for all users:
+
+- Fixes a technical issue that prevented the built application from running.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.23.0-beta.1 - 2020-08-28
 
 Improvements for all users:
