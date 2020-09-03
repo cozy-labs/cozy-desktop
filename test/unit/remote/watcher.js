@@ -147,13 +147,13 @@ describe('RemoteWatcher', function() {
     })
 
     beforeEach(function() {
-      sinon.stub(this.pouch, 'getRemoteSeqAsync')
-      sinon.stub(this.pouch, 'setRemoteSeqAsync')
+      sinon.stub(this.pouch, 'getRemoteSeq')
+      sinon.stub(this.pouch, 'setRemoteSeq')
       sinon.stub(this.watcher, 'pullMany')
       sinon.stub(this.remoteCozy, 'changes')
       sinon.spy(this.events, 'emit')
 
-      this.pouch.getRemoteSeqAsync.resolves(lastLocalSeq)
+      this.pouch.getRemoteSeq.resolves(lastLocalSeq)
       this.watcher.pullMany.resolves([])
       this.remoteCozy.changes.resolves(changes)
     })
@@ -162,8 +162,8 @@ describe('RemoteWatcher', function() {
       this.events.emit.restore()
       this.remoteCozy.changes.restore()
       this.watcher.pullMany.restore()
-      this.pouch.setRemoteSeqAsync.restore()
-      this.pouch.getRemoteSeqAsync.restore()
+      this.pouch.setRemoteSeq.restore()
+      this.pouch.getRemoteSeq.restore()
     })
 
     it('pulls the changed files/dirs', async function() {
@@ -175,7 +175,7 @@ describe('RemoteWatcher', function() {
 
     it('updates the last update sequence in local db', async function() {
       await this.watcher.watch()
-      this.pouch.setRemoteSeqAsync.should.be
+      this.pouch.setRemoteSeq.should.be
         .calledOnce()
         .and.be.calledWithExactly(lastRemoteSeq)
     })
@@ -267,7 +267,7 @@ describe('RemoteWatcher', function() {
 
       it('updates the last update sequence in local db', async function() {
         await this.watcher.watch()
-        this.pouch.setRemoteSeqAsync.should.be
+        this.pouch.setRemoteSeq.should.be
           .calledOnce()
           .and.be.calledWithExactly(lastRemoteSeq)
       })
@@ -379,9 +379,9 @@ describe('RemoteWatcher', function() {
       })
 
       it('does not update the remote sequence', async function() {
-        const remoteSeq = await this.pouch.getRemoteSeqAsync()
+        const remoteSeq = await this.pouch.getRemoteSeq()
         await this.watcher.pullMany(remoteDocs).catch(() => {})
-        should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(remoteSeq)
+        should(this.pouch.getRemoteSeq()).be.fulfilledWith(remoteSeq)
       })
     })
 
@@ -1975,7 +1975,7 @@ describe('RemoteWatcher', function() {
           }
         }
       }
-      const was = await this.pouch.byRemoteIdAsync(remoteDoc._id)
+      const was = await this.pouch.byRemoteId(remoteDoc._id)
 
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
@@ -2014,7 +2014,7 @@ describe('RemoteWatcher', function() {
         updated_at: '2017-01-30T09:09:15.217662611+01:00',
         tags: ['foo', 'bar', 'baz']
       }
-      const was = await this.pouch.byRemoteIdAsync(remoteDoc._id)
+      const was = await this.pouch.byRemoteId(remoteDoc._id)
 
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
@@ -2055,7 +2055,7 @@ describe('RemoteWatcher', function() {
         updated_at: '2017-01-30T09:09:15.217662611+01:00'
       }
 
-      const was = await this.pouch.byRemoteIdMaybeAsync(remoteDoc._id)
+      const was = await this.pouch.byRemoteIdMaybe(remoteDoc._id)
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
         was,

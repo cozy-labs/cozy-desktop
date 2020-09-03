@@ -195,7 +195,7 @@ class Sync {
 
   // TODO: remove waitForNewChanges to .start while(true)
   async sync(waitForNewChanges /*: boolean */ = true) /*: Promise<*> */ {
-    let seq = await this.pouch.getLocalSeqAsync()
+    let seq = await this.pouch.getLocalSeq()
     if (waitForNewChanges) {
       const change = await this.waitForNewChanges(seq)
       if (change == null) return
@@ -216,14 +216,14 @@ class Sync {
     let seq = null
     // eslint-disable-next-line no-constant-condition
     while (!this.lifecycle.willStop()) {
-      seq = await this.pouch.getLocalSeqAsync()
+      seq = await this.pouch.getLocalSeq()
       // TODO: Prevent infinite loop
       const change = await this.getNextChange(seq)
       if (change == null) break
       this.events.emit('sync-current', change.seq)
       try {
         await this.apply(change)
-        // XXX: apply should call setLocalSeqAsync
+        // XXX: apply should call setLocalSeq
       } catch (err) {
         if (!this.lifecycle.willStop()) throw err
       }
@@ -307,10 +307,10 @@ class Sync {
     log.debug({ path, seq, doc }, 'Applying change...')
 
     if (metadata.shouldIgnore(doc, this.ignore)) {
-      return this.pouch.setLocalSeqAsync(change.seq)
+      return this.pouch.setLocalSeq(change.seq)
     } else if (!metadata.wasSynced(doc) && isMarkedForDeletion(doc)) {
       await eraseDocument(doc, this)
-      return this.pouch.setLocalSeqAsync(change.seq)
+      return this.pouch.setLocalSeq(change.seq)
     }
 
     // FIXME: Acquire lock for as many changes as possible to prevent next huge
@@ -322,7 +322,7 @@ class Sync {
 
       if (!side) {
         log.info({ path }, 'up to date')
-        return this.pouch.setLocalSeqAsync(change.seq)
+        return this.pouch.setLocalSeq(change.seq)
       } else if (sideName === 'remote' && doc.trashed) {
         // File or folder was just deleted locally
         const byItself = await this.trashWithParentOrByItself(doc, side)
@@ -333,7 +333,7 @@ class Sync {
         await this.applyDoc(doc, side, sideName, rev)
       }
 
-      await this.pouch.setLocalSeqAsync(change.seq)
+      await this.pouch.setLocalSeq(change.seq)
       log.trace({ path, seq }, `Applied change on ${sideName} side`)
 
       // Clean up documents so that we don't mistakenly take action based on
@@ -440,7 +440,7 @@ class Sync {
       log.debug({ path: doc.path }, `Applying else for ${doc.docType} change`)
       let old
       try {
-        old = (await this.pouch.getPreviousRevAsync(
+        old = (await this.pouch.getPreviousRev(
           doc._id,
           doc.sides.target - rev
         ) /*: ?Metadata */)
@@ -585,7 +585,7 @@ class Sync {
         { path: doc.path, oldpath: _.get(change, 'was.path') },
         `Failed to sync ${MAX_SYNC_ATTEMPTS} times. Giving up.`
       )
-      await this.pouch.setLocalSeqAsync(change.seq)
+      await this.pouch.setLocalSeq(change.seq)
       // FIXME: final doc.errors is not saved which works but may be confusing.
       return
     }
@@ -598,7 +598,7 @@ class Sync {
       // If the doc can't be saved, it's because of a new revision.
       // So, we can skip this revision
       log.info(`Ignored ${change.seq}`, err)
-      await this.pouch.setLocalSeqAsync(change.seq)
+      await this.pouch.setLocalSeq(change.seq)
     }
   }
 

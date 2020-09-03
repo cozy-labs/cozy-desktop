@@ -266,7 +266,7 @@ class App {
       level: 3
     })
     const logs = fse.createReadStream(LOG_FILE)
-    const pouchdbTree /*: Metadata[] */ = await this.pouch.treeAsync()
+    const pouchdbTree /*: Metadata[] */ = await this.pouch.tree()
 
     const logsSent = Promise.all([
       this.uploadFileToSupport(incidentID, 'logs.gz', logs.pipe(zipper)),
@@ -358,7 +358,7 @@ class App {
 
     this.instanciate()
 
-    await this.pouch.addAllViewsAsync()
+    await this.pouch.addAllViews()
     await this.pouch.runMigrations(migrations)
 
     if (wasUpdated && this.remote) {

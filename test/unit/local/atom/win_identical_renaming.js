@@ -36,7 +36,7 @@ if (process.platform === 'win32') {
         inputChannel = new Channel()
         outputChannel = winIdenticalRenaming.loop(inputChannel, {
           pouch: {
-            byIdMaybeAsync: async id => _.cloneDeep(docs[id])
+            byIdMaybe: async id => _.cloneDeep(docs[id])
           },
           state: winIdenticalRenaming.initialState()
         })

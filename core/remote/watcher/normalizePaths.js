@@ -41,11 +41,11 @@ const normalizePaths = async (
       const old =
         c.type === 'FileMove' || c.type === 'DirMove'
           ? c.was
-          : await pouch.byIdMaybeAsync(c.doc._id)
+          : await pouch.byIdMaybe(c.doc._id)
       const parentPath = path.dirname(c.doc.path)
       const parent =
         parentPath !== '.'
-          ? await pouch.byIdMaybeAsync(metadata.id(parentPath))
+          ? await pouch.byIdMaybe(metadata.id(parentPath))
           : null
       c.doc.path = normalizedPath(
         c.doc.path,

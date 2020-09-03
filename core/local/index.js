@@ -179,23 +179,19 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   /** Check if a file corresponding to given checksum already exists */
-  fileExistsLocally(checksum /*: string */, callback /*: Callback */) {
-    this.pouch.byChecksum(checksum, (err, docs /*: Metadata[] */) => {
-      if (err) {
-        callback(err)
-      } else if (docs == null || docs.length === 0) {
-        callback(null, false)
-      } else {
-        let paths = Array.from(docs)
-          .filter((doc /*: Metadata */) => isUpToDate('local', doc))
-          .map(doc => path.resolve(this.syncPath, doc.path))
-        async.detect(
-          paths,
-          (filePath, next) => fse.exists(filePath, found => next(null, found)),
-          callback
-        )
+  async fileExistsLocally(checksum /*: string */) {
+    const docs /*: Metadata[] */ = await this.pouch.byChecksum(checksum)
+    if (docs == null || docs.length === 0) {
+      return false
+    }
+
+    for (const doc of docs) {
+      if (isUpToDate('local', doc)) {
+        const filePath = path.resolve(this.syncPath, doc.path)
+        if (await fse.exists(filePath)) return filePath
       }
-    })
+    }
+    return false
   }
 
   /* Write operations */
@@ -227,11 +223,11 @@ class Local /*:: implements Reader, Writer */ {
 
     async.waterfall(
       [
-        next => {
+        async () => {
           if (doc.md5sum != null) {
-            this.fileExistsLocally(doc.md5sum, next)
+            return this.fileExistsLocally(doc.md5sum)
           } else {
-            next(null, false)
+            return false
           }
         },
 

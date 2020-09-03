@@ -324,9 +324,8 @@ onPlatform('darwin', () => {
         return
       }
 
-      beforeEach('reset pouchdb', function(done) {
-        this.pouch.resetDatabase(done)
-      })
+      beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+      afterEach('clean pouch', pouchHelpers.cleanDatabase)
 
       it.skip('deletes the source and adds the destination', function(done) {
         // This test does not create the file in pouchdb.
@@ -378,9 +377,8 @@ onPlatform('darwin', () => {
         return
       }
 
-      before('reset pouchdb', function(done) {
-        this.pouch.resetDatabase(done)
-      })
+      beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+      afterEach('clean pouch', pouchHelpers.cleanDatabase)
 
       it.skip('deletes the source and adds the destination', function(done) {
         // This test does not create the file in pouchdb.

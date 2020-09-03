@@ -236,7 +236,7 @@ async function migrate(
           break
         case MIGRATION_RESULT_COMPLETE:
           await updateSchemaVersion(migration.targetSchemaVersion, migrationDB)
-          await pouch.resetDatabaseAsync()
+          await pouch.resetDatabase()
           await replicateDB(migrationDB, pouch.db)
           await pouch.touchDocs(unsyncedDocIds)
           break

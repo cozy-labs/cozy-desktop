@@ -63,7 +63,7 @@ describe('Cozy Note update', () => {
     })
 
     it('keeps the note metadata', async () => {
-      const updatedDoc = await helpers.pouch.byRemoteIdMaybeAsync(note._id)
+      const updatedDoc = await helpers.pouch.byRemoteIdMaybe(note._id)
       // FIXME: check for metadata update once the builder can do it
       should(updatedDoc).have.property('metadata')
     })
@@ -98,7 +98,7 @@ describe('Cozy Note update', () => {
     })
 
     it('keeps the original note metadata', async () => {
-      const updatedDoc = await helpers.pouch.byRemoteIdMaybeAsync(note._id)
+      const updatedDoc = await helpers.pouch.byRemoteIdMaybe(note._id)
       should(updatedDoc).have.property('metadata')
     })
   })
@@ -132,7 +132,7 @@ describe('Cozy Note move', () => {
       })
 
       it('keeps the note metadata', async () => {
-        const updatedDoc = await helpers.pouch.byRemoteIdMaybeAsync(note._id)
+        const updatedDoc = await helpers.pouch.byRemoteIdMaybe(note._id)
         should(updatedDoc).have.property('metadata')
       })
     })
@@ -149,7 +149,7 @@ describe('Cozy Note move', () => {
       })
 
       it('keeps the note metadata', async () => {
-        const updatedDoc = await helpers.pouch.byRemoteIdMaybeAsync(note._id)
+        const updatedDoc = await helpers.pouch.byRemoteIdMaybe(note._id)
         should(updatedDoc).have.property('metadata')
       })
     })
@@ -203,7 +203,7 @@ describe('Cozy Note move with update', () => {
       })
 
       it('keeps the original note metadata', async () => {
-        const updatedDoc = await helpers.pouch.byRemoteIdMaybeAsync(note._id)
+        const updatedDoc = await helpers.pouch.byRemoteIdMaybe(note._id)
         should(updatedDoc).have.property('metadata')
       })
     })
@@ -273,7 +273,7 @@ describe('Markdown file with Cozy Note mime type update', () => {
     await helpers.flushLocalAndSyncAll()
   })
   beforeEach('change note into markdown file', async function() {
-    const doc = await this.pouch.byIdMaybeAsync(metadata.id('note.cozy-note'))
+    const doc = await this.pouch.byIdMaybe(metadata.id('note.cozy-note'))
     // remove everything that makes a note a Cozy Note
     await this.pouch.put({ ...doc, metadata: {} })
   })
@@ -317,7 +317,7 @@ describe('Markdown file with Cozy Note mime type move with update', () => {
     await helpers.pullAndSyncAll()
   })
   beforeEach('change note into markdown file', async function() {
-    const doc = await this.pouch.byIdMaybeAsync(metadata.id('note.cozy-note'))
+    const doc = await this.pouch.byIdMaybe(metadata.id('note.cozy-note'))
     // remove everything that makes a note a Cozy Note
     await this.pouch.put({ ...doc, metadata: {} })
   })

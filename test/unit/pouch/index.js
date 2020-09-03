@@ -1,12 +1,10 @@
 /* eslint-env mocha */
 
 const Promise = require('bluebird')
-const jsv = require('jsverify')
 const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
 const _ = require('lodash')
-const { uniq } = _
 
 const metadata = require('../../../core/metadata')
 const migrations = require('../../../core/pouch/migrations')
@@ -107,7 +105,7 @@ describe('Pouch', function() {
     it('runs all given migrations', async function() {
       await this.pouch.runMigrations(availableMigrations)
 
-      const docs = await this.pouch.byRecursivePathAsync('')
+      const docs = await this.pouch.byRecursivePath('')
       should(docs).matchEach(doc => {
         should(doc.migration1).be.true()
         should(doc.migration2).be.true()
@@ -138,7 +136,7 @@ describe('Pouch', function() {
       await this.pouch.runMigrations(availableMigrations)
 
       should(migrationFailingOnce.run).have.been.calledTwice()
-      const docs = await this.pouch.byRecursivePathAsync('')
+      const docs = await this.pouch.byRecursivePath('')
       should(docs).matchEach(doc => {
         should(doc.migration1).be.true()
         should(doc.migration2).be.true()
@@ -168,7 +166,7 @@ describe('Pouch', function() {
         should(err).be.instanceof(migrations.MigrationFailedError)
         should(err).have.property('message', migrationFailing.description)
       }
-      const docs = await this.pouch.byRecursivePathAsync('')
+      const docs = await this.pouch.byRecursivePath('')
       should(docs).matchEach(doc => {
         should(doc.migration1).be.true()
         should(doc.migration2).be.undefined()
@@ -302,7 +300,7 @@ describe('Pouch', function() {
           key: metadata.id('my-folder') + path.sep,
           include_docs: true
         }
-        const docs = await this.pouch.getAllAsync('byPath', params)
+        const docs = await this.pouch.getAll('byPath', params)
         docs.length.should.equal(6)
         for (let i = 1; i <= 3; i++) {
           docs[i - 1].should.have.properties({
@@ -318,9 +316,9 @@ describe('Pouch', function() {
         }
       }))
 
-    describe('byIdMaybeAsync', () => {
+    describe('byIdMaybe', () => {
       it('resolves with a doc matching the given _id if any', async function() {
-        const doc = await this.pouch.byIdMaybeAsync(metadata.id('my-folder'))
+        const doc = await this.pouch.byIdMaybe(metadata.id('my-folder'))
         should(doc).have.properties({
           docType: 'folder',
           path: 'my-folder'
@@ -328,7 +326,7 @@ describe('Pouch', function() {
       })
 
       it('resolves with nothing otherwise', async function() {
-        const doc = await this.pouch.byIdMaybeAsync('not-found')
+        const doc = await this.pouch.byIdMaybe('not-found')
         should(doc).be.undefined()
       })
 
@@ -338,7 +336,7 @@ describe('Pouch', function() {
         const get = sinon.stub(this.pouch.db, 'get').rejects(err)
         try {
           await should(
-            this.pouch.byIdMaybeAsync(metadata.id('my-folder'))
+            this.pouch.byIdMaybe(metadata.id('my-folder'))
           ).be.rejectedWith(err)
         } finally {
           get.restore()
@@ -351,7 +349,7 @@ describe('Pouch', function() {
         const filePath = path.join('my-folder', 'file-1')
         const _id = metadata.id(filePath)
         const checksum = `111111111111111111111111111111111111111${filePath}`
-        const docs = await this.pouch.byChecksumAsync(checksum)
+        const docs = await this.pouch.byChecksum(checksum)
         docs.length.should.be.equal(1)
         docs[0]._id.should.equal(_id)
         docs[0].md5sum.should.equal(checksum)
@@ -359,7 +357,7 @@ describe('Pouch', function() {
 
     describe('byPath', function() {
       it('gets all the files and folders in this path', async function() {
-        const docs = await this.pouch.byPathAsync(metadata.id('my-folder'))
+        const docs = await this.pouch.byPath(metadata.id('my-folder'))
         docs.length.should.be.equal(6)
         for (let i = 1; i <= 3; i++) {
           docs[i - 1].should.have.properties({
@@ -376,7 +374,7 @@ describe('Pouch', function() {
       })
 
       it('gets only files and folders in the first level', async function() {
-        const docs = await this.pouch.byPathAsync('')
+        const docs = await this.pouch.byPath('')
         docs.length.should.be.equal(1)
         docs[0].should.have.properties({
           _id: metadata.id('my-folder'),
@@ -386,16 +384,14 @@ describe('Pouch', function() {
       })
 
       it('ignores design documents', async function() {
-        const docs = await this.pouch.byPathAsync('_design')
+        const docs = await this.pouch.byPath('_design')
         docs.length.should.be.equal(0)
       })
     })
 
     describe('byRecurivePath', function() {
       it('gets the files and folders in this path recursively', async function() {
-        const docs = await this.pouch.byRecursivePathAsync(
-          metadata.id('my-folder')
-        )
+        const docs = await this.pouch.byRecursivePath(metadata.id('my-folder'))
         docs.length.should.be.equal(6)
         for (let i = 1; i <= 3; i++) {
           docs[i - 1].should.have.properties({
@@ -412,7 +408,7 @@ describe('Pouch', function() {
       })
 
       it('gets the files and folders from root', async function() {
-        const docs = await this.pouch.byRecursivePathAsync('')
+        const docs = await this.pouch.byRecursivePath('')
         docs.length.should.be.equal(7)
         docs[0].should.have.properties({
           _id: metadata.id('my-folder'),
@@ -444,7 +440,7 @@ describe('Pouch', function() {
         )
         await pouchHelpers.createFolder(this.pouch, similarFolderContentPath)
 
-        const docs = await this.pouch.byRecursivePathAsync(
+        const docs = await this.pouch.byRecursivePath(
           metadata.id(path.join('my-folder', 'folder-1'))
         )
         const paths = docs.map(d => d.path)
@@ -456,7 +452,7 @@ describe('Pouch', function() {
       it('gets all the file with this remote id', async function() {
         const filePath = path.join('my-folder', 'file-1')
         const id = `1234567890-${filePath}`
-        const doc = await this.pouch.byRemoteIdAsync(id)
+        const doc = await this.pouch.byRemoteId(id)
         doc.remote._id.should.equal(id)
         should.exist(doc._id)
         should.exist(doc.docType)
@@ -464,7 +460,7 @@ describe('Pouch', function() {
 
       it('returns a 404 error if no file matches', async function() {
         let id = 'abcdef'
-        await should(this.pouch.byRemoteIdAsync(id)).be.rejectedWith({
+        await should(this.pouch.byRemoteId(id)).be.rejectedWith({
           status: 404
         })
       })
@@ -474,7 +470,7 @@ describe('Pouch', function() {
       it('does the same as byRemoteId() when document exists', async function() {
         const filePath = path.join('my-folder', 'file-1')
         const id = `1234567890-${filePath}`
-        const doc = await this.pouch.byRemoteIdMaybeAsync(id)
+        const doc = await this.pouch.byRemoteIdMaybe(id)
         doc.remote._id.should.equal(id)
         should.exist(doc._id)
         should.exist(doc.docType)
@@ -482,7 +478,7 @@ describe('Pouch', function() {
 
       it('returns null when document does not exist', async function() {
         let id = 'abcdef'
-        const doc = await this.pouch.byRemoteIdMaybeAsync(id)
+        const doc = await this.pouch.byRemoteIdMaybe(id)
         should.equal(null, doc)
       })
 
@@ -490,9 +486,9 @@ describe('Pouch', function() {
         const otherError = new Error('not a 404')
         sinon.stub(this.pouch, 'byRemoteId').yields(otherError)
 
-        await should(
-          this.pouch.byRemoteIdMaybeAsync('12345678901')
-        ).be.rejectedWith(otherError)
+        await should(this.pouch.byRemoteIdMaybe('12345678901')).be.rejectedWith(
+          otherError
+        )
       })
     })
 
@@ -554,37 +550,35 @@ describe('Pouch', function() {
 
   describe('Views', function() {
     describe('createDesignDoc', function() {
-      let query = `\
-function (doc) {
-    if (doc.docType === 'file') {
-        emit(doc._id);
-    }
-}\
-`
+      const query = `function (doc) {
+        if (doc.docType === 'file') {
+          emit(doc._id)
+        }
+      }`
 
       it('creates a new design doc', async function() {
-        await this.pouch.createDesignDocAsync('file', query)
-        const docs = await this.pouch.getAllAsync('file')
-        docs.length.should.equal(3)
-        for (let i = 1; i <= 3; i++) {
-          docs[i - 1].docType.should.equal('file')
+        await this.pouch.createDesignDoc('file', query)
+        const docs = await this.pouch.getAll('file')
+        should(docs).have.length(3)
+        for (const doc of docs) {
+          should(doc.docType).equal('file')
         }
       })
 
       it('does not update the same design doc', async function() {
-        await this.pouch.createDesignDocAsync('file', query)
+        await this.pouch.createDesignDoc('file', query)
         const was = await this.pouch.db.get('_design/file')
-        await this.pouch.createDesignDocAsync('file', query)
+        await this.pouch.createDesignDoc('file', query)
         const designDoc = await this.pouch.db.get('_design/file')
         designDoc._id.should.equal(was._id)
         designDoc._rev.should.equal(was._rev)
       })
 
       it('updates the design doc if the query change', async function() {
-        await this.pouch.createDesignDocAsync('file', query)
+        await this.pouch.createDesignDoc('file', query)
         const was = await this.pouch.db.get('_design/file')
         let newQuery = query.replace('file', 'File')
-        await this.pouch.createDesignDocAsync('file', newQuery)
+        await this.pouch.createDesignDoc('file', newQuery)
         const designDoc = await this.pouch.db.get('_design/file')
         designDoc._id.should.equal(was._id)
         designDoc._rev.should.not.equal(was._rev)
@@ -594,21 +588,21 @@ function (doc) {
 
     describe('addByPathView', () =>
       it('creates the path view', async function() {
-        await this.pouch.addByPathViewAsync()
+        await this.pouch.addByPathView()
         const doc = await this.pouch.db.get('_design/byPath')
         should.exist(doc)
       }))
 
     describe('addByChecksumView', () =>
       it('creates the checksum view', async function() {
-        await this.pouch.addByChecksumViewAsync()
+        await this.pouch.addByChecksumView()
         const doc = await this.pouch.db.get('_design/byChecksum')
         should.exist(doc)
       }))
 
     describe('addByRemoteIdView', () =>
       it('creates the remote id view', async function() {
-        await this.pouch.addByRemoteIdViewAsync()
+        await this.pouch.addByRemoteIdView()
         const doc = await this.pouch.db.get('_design/byRemoteId')
         should.exist(doc)
       }))
@@ -622,11 +616,11 @@ if (doc.docType === 'folder') {
 }
 }\
 `
-        await this.pouch.createDesignDocAsync('folder', query)
-        const docs = await this.pouch.getAllAsync('folder')
+        await this.pouch.createDesignDoc('folder', query)
+        const docs = await this.pouch.getAll('folder')
         docs.length.should.be.above(1)
-        await this.pouch.removeDesignDocAsync('folder')
-        await should(this.pouch.getAllAsync('folder')).be.rejectedWith({
+        await this.pouch.removeDesignDoc('folder')
+        await should(this.pouch.getAll('folder')).be.rejectedWith({
           status: 404
         })
       }))
@@ -648,17 +642,17 @@ if (doc.docType === 'folder') {
         await this.pouch.db.remove(id, updated.rev)
 
         // Get doc as it was 2 revisions ago
-        should(await this.pouch.getPreviousRevAsync(id, 2)).have.properties({
+        should(await this.pouch.getPreviousRev(id, 2)).have.properties({
           _id: id,
           tags: doc.tags
         })
         // Get doc as it was 1 revision ago
-        should(await this.pouch.getPreviousRevAsync(id, 1)).have.properties({
+        should(await this.pouch.getPreviousRev(id, 1)).have.properties({
           _id: id,
           tags
         })
         // Get doc as it is now
-        should(await this.pouch.getPreviousRevAsync(id, 0)).have.properties({
+        should(await this.pouch.getPreviousRev(id, 0)).have.properties({
           _id: id,
           _deleted: true
         })
@@ -668,34 +662,34 @@ if (doc.docType === 'folder') {
   describe('Sequence numbers', function() {
     describe('getLocalSeq', () =>
       it('gets 0 when the local seq number is not initialized', async function() {
-        await should(this.pouch.getLocalSeqAsync()).be.fulfilledWith(0)
+        await should(this.pouch.getLocalSeq()).be.fulfilledWith(0)
       }))
 
     describe('setLocalSeq', () =>
       it('saves the local sequence number', async function() {
-        await this.pouch.setLocalSeqAsync(21)
-        await should(this.pouch.getLocalSeqAsync()).be.fulfilledWith(21)
-        await this.pouch.setLocalSeqAsync(22)
-        await should(this.pouch.getLocalSeqAsync()).be.fulfilledWith(22)
+        await this.pouch.setLocalSeq(21)
+        await should(this.pouch.getLocalSeq()).be.fulfilledWith(21)
+        await this.pouch.setLocalSeq(22)
+        await should(this.pouch.getLocalSeq()).be.fulfilledWith(22)
       }))
 
     describe('getRemoteSeq', () =>
       it('gets 0 when the remote seq number is not initialized', async function() {
-        await should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(0)
+        await should(this.pouch.getRemoteSeq()).be.fulfilledWith(0)
       }))
 
     describe('setRemoteSeq', function() {
       it('saves the remote sequence number', async function() {
-        await this.pouch.setRemoteSeqAsync(31)
-        await should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(31)
-        await this.pouch.setRemoteSeqAsync(32)
-        await should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(32)
+        await this.pouch.setRemoteSeq(31)
+        await should(this.pouch.getRemoteSeq()).be.fulfilledWith(31)
+        await this.pouch.setRemoteSeq(32)
+        await should(this.pouch.getRemoteSeq()).be.fulfilledWith(32)
       })
 
       it('can be called multiple times in parallel', async function() {
         await Promise.map(
           _.range(1, 101),
-          seq => this.pouch.setRemoteSeqAsync(seq),
+          seq => this.pouch.setRemoteSeq(seq),
           { concurrency: 2 }
         )
       })
@@ -741,75 +735,9 @@ if (doc.docType === 'folder') {
         ...rest
       }))
       const touchedDocs = await Promise.all(
-        touchResult.map(({ id }) => this.pouch.byIdMaybeAsync(id))
+        touchResult.map(({ id }) => this.pouch.byIdMaybe(id))
       ).map(({ _rev, ...rest }) => ({ shortRev: shortRev(_rev), ...rest }))
       should(touchedDocs).deepEqual(expected)
-    })
-  })
-
-  // Disable this test on travis because it can be really slow...
-  if (process.env.CI) {
-    return
-  }
-  describe('byRecursivePath (bis)', function() {
-    // TODO counter  rngState: 0020bacd4697fe1358;
-    //               Counterexample: [".", "Æ\u0004]"]
-    //               rngState: 0d2c085d3e964fb71a;
-    //               Counterexample: [".", "a\u0012%"];
-    //               rngState: 8df0312a56cde9b748;
-    //               Counterexample: ["."];
-
-    // jsverify only works with Promise for async stuff
-    if (typeof Promise !== 'function') {
-      return
-    }
-
-    it('gets the nested files and folders', function(done) {
-      let base = 'byRecursivePath'
-      let property = jsv.forall('nearray nestring', paths => {
-        paths = uniq(paths.concat([base]))
-        return new Promise((resolve, reject) => {
-          return this.pouch.resetDatabase(function(err) {
-            if (err) {
-              return reject(err)
-            } else {
-              return resolve()
-            }
-          })
-        })
-          .then(() => {
-            return Promise.all(
-              paths.map(p => {
-                let doc = {
-                  _id: metadata.id(path.join(base, p)),
-                  docType: 'folder'
-                }
-                return this.pouch.db.put(doc)
-              })
-            )
-          })
-          .then(() => {
-            return new Promise((resolve, reject) => {
-              return this.pouch.byRecursivePath(metadata.id(base), function(
-                err,
-                docs
-              ) {
-                if (err) {
-                  return reject(err)
-                } else {
-                  return resolve(docs.length === paths.length)
-                }
-              })
-            })
-          })
-      })
-      jsv.assert(property, { tests: 10 }).then(function(res) {
-        if (res === true) {
-          done()
-        } else {
-          return done(res)
-        }
-      })
     })
   })
 })

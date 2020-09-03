@@ -189,7 +189,7 @@ const setupConfig = () => {
 
 const setupPouch = async (config /*: * */) => {
   const pouch = new Pouch(config)
-  await pouch.addAllViewsAsync()
+  await pouch.addAllViews()
   return pouch
 }
 

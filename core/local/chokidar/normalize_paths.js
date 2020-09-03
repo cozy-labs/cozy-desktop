@@ -56,7 +56,7 @@ const step = async (
       const parentPath = path.dirname(c.path)
       const parent =
         parentPath !== '.'
-          ? await pouch.byIdMaybeAsync(metadata.id(parentPath))
+          ? await pouch.byIdMaybe(metadata.id(parentPath))
           : null
       c.path = normalizedPath(
         c.path,
