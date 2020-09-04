@@ -455,15 +455,30 @@ class Merge {
       if (doc.fileid == null) {
         doc.fileid = folder.fileid
       }
+      // If folder is updated on local filesystem, doc won't have metadata attribute
       if (folder.metadata && doc.metadata == null) {
         doc.metadata = folder.metadata
       }
+      // If folder was updated on remote Cozy, doc won't have local attribute
+      if (folder.local && doc.local == null) {
+        doc.local = folder.local
+      }
+
       if (metadata.sameFolder(folder, doc)) {
         if (needsFileidMigration(folder, doc.fileid)) {
           return this.migrateFileid(folder, doc.fileid)
         }
         log.info({ path }, 'up to date')
-        return null
+        if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
+          metadata.updateLocal(folder, doc.local)
+          const outdated = metadata.outOfDateSide(folder)
+          if (outdated) {
+            metadata.markSide(otherSide(outdated), folder, folder)
+          }
+          return this.pouch.put(folder)
+        } else {
+          return null
+        }
       } else {
         return this.pouch.put(doc)
       }

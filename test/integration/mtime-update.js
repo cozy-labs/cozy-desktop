@@ -3,6 +3,7 @@
 
 const should = require('should')
 
+const { ROOT_DIR_ID } = require('../../core/remote/constants')
 const timestamp = require('../../core/utils/timestamp')
 
 const configHelpers = require('../support/helpers/config')
@@ -13,7 +14,7 @@ const platform = require('../support/helpers/platform')
 
 const cozy = cozyHelpers.cozy
 
-describe('Update only a file mtime', () => {
+describe('Update only mtime', () => {
   let helpers
 
   before(configHelpers.createConfig)
@@ -30,81 +31,130 @@ describe('Update only a file mtime', () => {
     helpers.local.setupTrash()
   })
 
-  context('when update is made on local filesystem', () => {
-    let oldUpdatedAt, created
-    beforeEach('create file and update mtime', async function() {
-      await helpers.remote.ignorePreviousChanges()
+  describe('of a file', () => {
+    context('when update is made on local filesystem', () => {
+      let oldUpdatedAt, created
+      beforeEach('create file and update mtime', async function() {
+        await helpers.remote.ignorePreviousChanges()
 
-      oldUpdatedAt = new Date()
-      oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
+        oldUpdatedAt = new Date()
+        oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-      created = await cozy.files.create('basecontent', {
-        name: 'file',
-        updatedAt: oldUpdatedAt.toISOString()
+        created = await cozy.files.create('basecontent', {
+          name: 'file',
+          updatedAt: oldUpdatedAt.toISOString()
+        })
+        await helpers.pullAndSyncAll()
+        await helpers.flushLocalAndSyncAll()
       })
-      await helpers.pullAndSyncAll()
-      await helpers.flushLocalAndSyncAll()
+
+      it('only updates the local document state in Pouch', async () => {
+        helpers.spyPouch()
+
+        const newUpdatedAt = new Date()
+        newUpdatedAt.setDate(oldUpdatedAt.getDate() + 1)
+        helpers.local.syncDir.utimes('file', newUpdatedAt)
+
+        await helpers.flushLocalAndSyncAll()
+
+        should(
+          helpers.putDocs('path', 'updated_at', 'local.updated_at')
+        ).deepEqual([
+          {
+            path: 'file',
+            updated_at: timestamp.roundedRemoteDate(
+              created.attributes.updated_at
+            ),
+            local: {
+              updated_at: platform.localUpdatedAt(newUpdatedAt)
+            }
+          }
+        ])
+      })
     })
 
-    it('only updates the local document state in Pouch', async () => {
-      helpers.spyPouch()
+    context('when update is made on remote Cozy', () => {
+      let file, oldUpdatedAt
+      beforeEach('create file and update mtime', async function() {
+        await helpers.remote.ignorePreviousChanges()
 
-      const newUpdatedAt = new Date()
-      newUpdatedAt.setDate(oldUpdatedAt.getDate() + 1)
-      helpers.local.syncDir.utimes('file', newUpdatedAt)
+        oldUpdatedAt = new Date()
+        oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-      await helpers.flushLocalAndSyncAll()
+        file = await cozy.files.create('basecontent', {
+          name: 'file',
+          updatedAt: oldUpdatedAt.toISOString()
+        })
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+      })
 
-      should(
-        helpers.putDocs('path', 'updated_at', 'local.updated_at')
-      ).deepEqual([
-        {
-          path: 'file',
-          updated_at: timestamp.roundedRemoteDate(
-            created.attributes.updated_at
-          ),
-          local: {
-            updated_at: platform.localUpdatedAt(newUpdatedAt)
+      it('updates the document in Pouch with the new remote rev and mtime', async () => {
+        helpers.spyPouch()
+
+        // update only the file mtime
+        await cozy.files.updateById(file._id, 'changedcontent', {
+          contentType: 'text/plain'
+        })
+        const newFile = await cozy.files.updateById(file._id, 'basecontent', {
+          contentType: 'text/plain'
+        })
+
+        await helpers.remote.pullChanges()
+        should(helpers.putDocs('path', 'updated_at')).deepEqual([
+          {
+            path: file.attributes.name,
+            updated_at: timestamp.roundedRemoteDate(
+              newFile.attributes.updated_at
+            )
           }
-        }
-      ])
+        ])
+      })
     })
   })
 
-  context('when update is made on remote Cozy', () => {
-    let file, oldUpdatedAt
-    beforeEach('create file and update mtime', async function() {
-      await helpers.remote.ignorePreviousChanges()
+  describe('of a folder', () => {
+    context('when update is made on local filesystem', () => {
+      let oldUpdatedAt, created
+      beforeEach('create folder and update mtime', async function() {
+        await helpers.remote.ignorePreviousChanges()
 
-      oldUpdatedAt = new Date()
-      oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
+        oldUpdatedAt = new Date()
+        oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-      file = await cozy.files.create('basecontent', {
-        name: 'file',
-        updatedAt: oldUpdatedAt.toISOString()
-      })
-      await helpers.remote.pullChanges()
-      await helpers.syncAll()
-    })
-
-    it('updates the document in Pouch with the new remote rev and mtime', async () => {
-      helpers.spyPouch()
-
-      // update only the file mtime
-      await cozy.files.updateById(file._id, 'changedcontent', {
-        contentType: 'text/plain'
-      })
-      const newFile = await cozy.files.updateById(file._id, 'basecontent', {
-        contentType: 'text/plain'
+        created = await cozy.files.createDirectory({
+          name: 'folder',
+          dirID: ROOT_DIR_ID,
+          createdAt: oldUpdatedAt.toISOString(),
+          updatedAt: oldUpdatedAt.toISOString()
+        })
+        await helpers.pullAndSyncAll()
+        await helpers.flushLocalAndSyncAll()
       })
 
-      await helpers.remote.pullChanges()
-      should(helpers.putDocs('path', 'updated_at')).deepEqual([
-        {
-          path: file.attributes.name,
-          updated_at: timestamp.roundedRemoteDate(newFile.attributes.updated_at)
-        }
-      ])
+      it('only updates the local document state in Pouch', async () => {
+        helpers.spyPouch()
+
+        const newUpdatedAt = new Date()
+        newUpdatedAt.setDate(oldUpdatedAt.getDate() + 1)
+        helpers.local.syncDir.utimes('folder', newUpdatedAt)
+
+        await helpers.flushLocalAndSyncAll()
+
+        should(
+          helpers.putDocs('path', 'updated_at', 'local.updated_at')
+        ).deepEqual([
+          {
+            path: 'folder',
+            updated_at: timestamp.roundedRemoteDate(
+              created.attributes.updated_at
+            ),
+            local: {
+              updated_at: platform.localUpdatedAt(newUpdatedAt)
+            }
+          }
+        ])
+      })
     })
   })
 })
