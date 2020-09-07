@@ -22,10 +22,8 @@
     margin-top: .5em
 
   .progress-spinner
-    @extend $icon-spin
-    background-image embedurl('./node_modules/cozy-ui/assets/icons/ui/spinner.svg')
-    fill: var(--primaryColor)
-    display: inline-block
+    @extend $spin
+    background-color: var(--primaryColor)
     width: 4em
     height: 4em
     translate: 0 50%
