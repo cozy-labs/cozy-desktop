@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.23.0-beta.4 - 2020-09-07
+
+Improvements for all users:
+
+- Fixes the infinite spinner of the Updater window, displayed when download
+  progress info is not available.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.23.0-beta.3 - 2020-09-07
 
 Improvements for all users:
