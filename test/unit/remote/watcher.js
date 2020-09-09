@@ -730,7 +730,7 @@ describe('RemoteWatcher', function() {
               const newRemoteDir = builders
                 .remoteDir()
                 .inDir(remoteParentDir)
-                .name('algébre'.normalize('NFC'))
+                .name('algèbre'.normalize('NFC'))
                 .build()
               const newRemoteFile = builders
                 .remoteFile()
@@ -754,6 +754,54 @@ describe('RemoteWatcher', function() {
                 path.join(parentDir.path, newRemoteDir.name, newRemoteFile.name)
               )
             })
+
+            context(
+              'with the folder creation ordered after the file creation',
+              () => {
+                it('is identified as an addition with old ancestor normalization', async function() {
+                  const remoteParentDir = builders
+                    .remoteDir()
+                    .name('énoncés'.normalize('NFC'))
+                    .build()
+                  const parentDir = await builders
+                    .metadir()
+                    .fromRemote(remoteParentDir)
+                    .path(remoteParentDir.path.normalize('NFD'))
+                    .create()
+
+                  const newRemoteDir = builders
+                    .remoteDir()
+                    .inDir(remoteParentDir)
+                    .name('algèbre'.normalize('NFC'))
+                    .build()
+                  const newRemoteFile = builders
+                    .remoteFile()
+                    .inDir(newRemoteDir)
+                    .name('file')
+                    .build()
+
+                  const [dirChange, fileChange] = await this.watcher.analyse(
+                    [newRemoteFile, newRemoteDir],
+                    []
+                  )
+
+                  should(dirChange).have.property('type', 'DirAddition')
+                  should(dirChange.doc).have.property(
+                    'path',
+                    path.join(parentDir.path, newRemoteDir.name)
+                  )
+                  should(fileChange).have.property('type', 'FileAddition')
+                  should(fileChange.doc).have.property(
+                    'path',
+                    path.join(
+                      parentDir.path,
+                      newRemoteDir.name,
+                      newRemoteFile.name
+                    )
+                  )
+                })
+              }
+            )
           }
         )
       })

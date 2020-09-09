@@ -82,7 +82,7 @@ export type RemoteDirTrashing = {
 export type RemoteIgnoredChange = {
   sideName: 'remote',
   type: 'IgnoredChange',
-  doc: Metadata|RemoteDoc|RemoteDeletion,
+  doc: *,
   was?: Metadata,
   detail: string
 }
@@ -139,7 +139,8 @@ module.exports = {
   isOnlyChildMove,
   includeDescendant,
   applyMoveInsideMove,
-  sort
+  sort,
+  sortByPath
 }
 
 const sideName = 'remote'
@@ -459,4 +460,23 @@ const sortChanges = (a, b) => {
 function sort(changes /*: Array<RemoteChange> */) /*: Array<RemoteChange> */ {
   // return changes.sort(sortByPath).sort(sortByAction)
   return changes.sort(sortChanges)
+}
+
+function sortByPath(
+  changes /*: Array<RemoteChange> */
+) /*: Array<RemoteChange> */ {
+  return changes.sort((
+    { doc: aDoc } /*: RemoteChange */,
+    { doc: bDoc } /*: RemoteChange */
+  ) => {
+    if (!aDoc.path) return 1
+    if (!bDoc.path) return -1
+
+    const aPath = aDoc.path.normalize()
+    const bPath = bDoc.path.normalize()
+
+    if (aPath < bPath) return -1
+    if (aPath > bPath) return 1
+    return 0
+  })
 }

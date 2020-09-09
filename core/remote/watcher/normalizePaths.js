@@ -5,6 +5,11 @@ const { Promise } = require('bluebird')
 
 const metadata = require('../../metadata')
 const { normalizedPath } = require('../../local/chokidar/normalize_paths')
+const logger = require('../../utils/logger')
+
+const log = logger({
+  component: 'RemoteWatcher/normalize_paths'
+})
 
 /*::
 import type { Pouch } from '../../pouch'
@@ -49,6 +54,13 @@ const normalizePaths = async (
         normalizedPaths
       )
       normalizedPaths.push(c.doc.path)
+
+      if (c.doc.path !== normalizedPath) {
+        log.info(
+          { path: c.doc.path, normalizedPath },
+          'normalizing local path to match existing doc and parent norms'
+        )
+      }
     }
 
     return c
