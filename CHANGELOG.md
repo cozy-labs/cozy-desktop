@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.23.0-beta.5 - 2020-09-09
+
+Improvements for macOS users:
+
+- The order in which changes fetched from the remote Cozy were processed could
+  hinder the paths normalization and lead to issues like conflicts.
+  We're now sorting changes before the normalization to make sure the process
+  will complete as expected.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.23.0-beta.4 - 2020-09-07
 
 Improvements for all users:
