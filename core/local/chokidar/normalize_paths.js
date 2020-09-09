@@ -65,6 +65,13 @@ const step = async (
         normalizedPaths
       )
       normalizedPaths.push(c.path)
+
+      if (c.path !== normalizedPath) {
+        log.info(
+          { path: c.path, normalizedPath },
+          'normalizing local path to match existing doc and parent norms'
+        )
+      }
     }
 
     return c
@@ -100,15 +107,8 @@ const normalizedPath = (
       ? name.normalize('NFD')
       : name.normalize('NFC')
     : name
-  const normalizedPath = path.join(normalizedParentPath, normalizedName)
 
-  if (newPath !== normalizedPath) {
-    log.info(
-      { path: newPath, normalizedPath },
-      'normalizing local path to match existing doc and parent norms'
-    )
-  }
-  return normalizedPath
+  return path.join(normalizedParentPath, normalizedName)
 }
 
 module.exports = {
