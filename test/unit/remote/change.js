@@ -838,3 +838,111 @@ describe('isOnlyChildMove(p, c)', () => {
     should(remoteChange.isOnlyChildMove(p, c2)).be.false()
   })
 })
+
+describe('sortByPath', () => {
+  it('sorts changes by ascending alphanumerical destination path order', () => {
+    const one = {
+      doc: { path: path.normalize('dst/dir/file') },
+      type: 'FileMove',
+      was: { path: path.normalize('dir/file') }
+    }
+    const two = {
+      doc: { path: path.normalize('dst/dir') },
+      type: 'DirMove',
+      was: { path: path.normalize('dir') }
+    }
+    const three = {
+      doc: { path: path.normalize('dst/dir/file2') },
+      type: 'FileMove',
+      was: { path: path.normalize('a/file2') }
+    }
+    const four = {
+      doc: { path: path.normalize('dst/dir/spreadsheet') },
+      type: 'FileAddition'
+    }
+    const five = {
+      doc: { path: path.normalize('doc') },
+      type: 'FileAddition'
+    }
+
+    should(remoteChange.sortByPath([one, two, three, four, five])).deepEqual([
+      five,
+      two,
+      one,
+      three,
+      four
+    ])
+  })
+
+  it('is normalization agnostic', () => {
+    // XXX: A string encoded with NFC is alphanumerically smaller than the same
+    // string encoded with NFD.
+
+    const one = {
+      doc: {
+        path: path.join(
+          'décibels'.normalize('NFD'),
+          'hélice'.normalize('NFC'),
+          'file'
+        )
+      },
+      type: 'FileMove',
+      was: { path: path.normalize('dir/file') }
+    }
+    const two = {
+      doc: {
+        path: path.join('décibels'.normalize('NFC'), 'hélice'.normalize('NFD'))
+      },
+      type: 'DirMove',
+      was: { path: path.normalize('dir') }
+    }
+    const three = {
+      doc: { path: path.normalize('décibels/hélice/file2'.normalize('NFC')) },
+      type: 'FileMove',
+      was: { path: path.normalize('a/file2') }
+    }
+    const four = {
+      doc: {
+        path: path.normalize('décibels/hélice/spreadsheet'.normalize('NFD'))
+      },
+      type: 'FileAddition'
+    }
+    const five = {
+      doc: { path: path.normalize('décibel'.normalize('NFC')) },
+      type: 'FileAddition'
+    }
+
+    should(remoteChange.sortByPath([one, two, three, four, five])).deepEqual([
+      five,
+      two,
+      one,
+      three,
+      four
+    ])
+  })
+
+  it('sorts changes without paths last', () => {
+    const one = {
+      type: 'IgnoredChange',
+      doc: { _id: 'whatever', _rev: '2-xxx', _deleted: true },
+      was: { path: path.normalize('spreadsheet') },
+      detail: 'Deleted document'
+    }
+    const two = {
+      doc: { path: path.normalize('doc') },
+      type: 'FileAddition'
+    }
+    const three = {
+      type: 'IgnoredChange',
+      doc: { _id: 'whatever', _rev: '2-xxx', _deleted: true },
+      was: { path: path.normalize('dir') },
+      detail: 'Deleted document'
+    }
+
+    should(remoteChange.sortByPath([one, two, three])).deepEqual([
+      two,
+      one,
+      three
+    ])
+  })
+})

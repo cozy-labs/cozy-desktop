@@ -169,6 +169,8 @@ class RemoteWatcher {
     const changes = this.identifyAll(remoteDocs, olds)
     log.trace('Done with analysis.')
 
+    remoteChange.sortByPath(changes)
+
     const normalizedChanges =
       process.platform === 'darwin'
         ? await normalizePaths(changes, {
