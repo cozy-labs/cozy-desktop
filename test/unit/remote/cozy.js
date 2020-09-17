@@ -312,6 +312,61 @@ describe('RemoteCozy', function() {
     })
   })
 
+  describe('isNameTaken', function() {
+    it('returns true when a doc with the given name exists in the given directory', async () => {
+      const remoteDir = await builders
+        .remoteDir()
+        .name('foo')
+        .inRootDir()
+        .create()
+      await builders
+        .remoteFile()
+        .name('bar')
+        .inDir(remoteDir)
+        .create()
+      await builders
+        .remoteDir()
+        .name('baz')
+        .inDir(remoteDir)
+        .create()
+
+      await should(
+        remoteCozy.isNameTaken({ name: 'bar', dir_id: remoteDir._id })
+      ).be.fulfilledWith(true)
+      await should(
+        remoteCozy.isNameTaken({ name: 'baz', dir_id: remoteDir._id })
+      ).be.fulfilledWith(true)
+    })
+
+    it('returns false when there are no docs with the given name', async () => {
+      const remoteDir = await builders
+        .remoteDir()
+        .name('foo')
+        .inRootDir()
+        .create()
+
+      await should(
+        remoteCozy.isNameTaken({ name: 'bar', dir_id: remoteDir._id })
+      ).be.fulfilledWith(false)
+    })
+
+    it('returns false when a doc with the given name exists in another directory', async () => {
+      const remoteDir = await builders
+        .remoteDir()
+        .name('foo')
+        .inRootDir()
+        .create()
+      await builders
+        .remoteFile()
+        .name('bar')
+        .create()
+
+      await should(
+        remoteCozy.isNameTaken({ name: 'bar', dir_id: remoteDir._id })
+      ).be.fulfilledWith(false)
+    })
+  })
+
   describe('findDirectoryByPath', function() {
     it('resolves when the directory exists remotely', async function() {
       const dir = await builders.remoteDir().create()

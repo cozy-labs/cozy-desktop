@@ -307,6 +307,20 @@ class RemoteCozy {
     }
   }
 
+  async isNameTaken(
+    { name, dir_id } /*: { name: string, dir_id: string } */
+  ) /*: Promise<boolean> */ {
+    const index = await this.client.data.defineIndex(FILES_DOCTYPE, [
+      'dir_id',
+      'name'
+    ])
+    const results = await this.client.data.query(index, {
+      selector: { dir_id, name }
+    })
+
+    return results.length !== 0
+  }
+
   async findDirectoryByPath(path /*: string */) /*: Promise<RemoteDoc> */ {
     const index = await this.client.data.defineIndex(FILES_DOCTYPE, ['path'])
     const results = await this.client.data.query(index, { selector: { path } })
