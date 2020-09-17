@@ -181,10 +181,10 @@ class RemoteCozy {
     return this.client.settings.updateLastSync()
   }
 
-  createFile(
+  async createFile(
     data /*: Readable */,
     options /*: {|name: string,
-                 dirID?: ?string,
+                 dirID: string,
                  contentType: string,
                  contentLength: number,
                  checksum: string,
@@ -192,19 +192,21 @@ class RemoteCozy {
                  updatedAt: string,
                  executable: boolean|} */
   ) /*: Promise<RemoteDoc> */ {
-    return this.client.files.create(data, options).then(this.toRemoteDoc)
+    const file = await this.client.files.create(data, options)
+    return this.toRemoteDoc(file)
   }
 
-  createDirectory(
+  async createDirectory(
     options /*: {|name: string,
                  dirID?: string,
                  createdAt: string,
                  updatedAt: string|} */
   ) /*: Promise<RemoteDoc> */ {
-    return this.client.files.createDirectory(options).then(this.toRemoteDoc)
+    const folder = await this.client.files.createDirectory(options)
+    return this.toRemoteDoc(folder)
   }
 
-  updateFileById(
+  async updateFileById(
     id /*: string */,
     data /*: Readable */,
     options /*: {|contentType: string,
@@ -214,12 +216,11 @@ class RemoteCozy {
                  executable: boolean,
                  ifMatch: string|} */
   ) /*: Promise<RemoteDoc> */ {
-    return this.client.files
-      .updateById(id, data, options)
-      .then(this.toRemoteDoc)
+    const updated = await this.client.files.updateById(id, data, options)
+    return this.toRemoteDoc(updated)
   }
 
-  updateAttributesById(
+  async updateAttributesById(
     id /*: string */,
     attrs /*: {|name?: string,
                dir_id?: string,
@@ -227,16 +228,20 @@ class RemoteCozy {
                updated_at: string|} */,
     options /*: {|ifMatch: string|} */
   ) /*: Promise<RemoteDoc> */ {
-    return this.client.files
-      .updateAttributesById(id, attrs, options)
-      .then(this.toRemoteDoc)
+    const updated = await this.client.files.updateAttributesById(
+      id,
+      attrs,
+      options
+    )
+    return this.toRemoteDoc(updated)
   }
 
-  trashById(
+  async trashById(
     id /*: string */,
     options /*: {|ifMatch: string|} */
   ) /*: Promise<RemoteDoc> */ {
-    return this.client.files.trashById(id, options).then(this.toRemoteDoc)
+    const trashed = await this.client.files.trashById(id, options)
+    return this.toRemoteDoc(trashed)
   }
 
   destroyById(
