@@ -139,6 +139,38 @@ describe('RemoteCozy', function() {
     remoteCozy = new RemoteCozy(this.config)
   })
 
+  describe('hasEnoughSpace', () => {
+    it('returns true if the Cozy does not have a quota', async () => {
+      const fakeSettings = sinon
+        .stub(remoteCozy.client.settings, 'diskUsage')
+        .resolves({ attributes: { used: 843 } })
+
+      await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(true)
+
+      fakeSettings.restore()
+    })
+
+    it('returns true if the remaining quota is greater than the given file size', async () => {
+      const fakeSettings = sinon
+        .stub(remoteCozy.client.settings, 'diskUsage')
+        .resolves({ attributes: { quota: 5000, used: 4800 } })
+
+      await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(true)
+
+      fakeSettings.restore()
+    })
+
+    it('returns false if the remaining quota is smaller than the given file size', async () => {
+      const fakeSettings = sinon
+        .stub(remoteCozy.client.settings, 'diskUsage')
+        .resolves({ attributes: { quota: 5000, used: 4801 } })
+
+      await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(false)
+
+      fakeSettings.restore()
+    })
+  })
+
   describe('changes', function() {
     it('resolves with changes since then given seq', async function() {
       const { last_seq } = await remoteCozy.changes()

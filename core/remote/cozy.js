@@ -177,6 +177,12 @@ class RemoteCozy {
     return this.client.settings.diskUsage()
   }
 
+  hasEnoughSpace(size /*: number */) /*: Promise<boolean> */ {
+    return this.diskUsage().then(
+      ({ attributes: { used, quota } }) => !quota || +quota - +used >= size
+    )
+  }
+
   updateLastSync() /*: Promise<void> */ {
     return this.client.settings.updateLastSync()
   }
