@@ -455,6 +455,11 @@ abbrev@1.0.x:
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.0.9.tgz#91b4792588a7738c25f35dd6f63752a2f8776135"
   integrity sha1-kbR5JYinc4wl813W9jdSovh3YTU=
 
+abortcontroller-polyfill@^1.5.0:
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/abortcontroller-polyfill/-/abortcontroller-polyfill-1.5.0.tgz#2c562f530869abbcf88d949a2b60d1d402e87a7c"
+  integrity sha512-O6Xk757Jb4o0LMzMOMdWvxpHWrQzruYBaUruFaIOfAQRnWFxfdXYobw12jrVHGtoXk6WiiyYzc0QWN9aL62HQA==
+
 abstract-leveldown@2.4.1:
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/abstract-leveldown/-/abstract-leveldown-2.4.1.tgz#b3bfedb884eb693a12775f0c55e9f0a420ccee64"
@@ -2141,10 +2146,10 @@ electron-fetch@1.3.0:
   dependencies:
     encoding "^0.1.12"
 
-electron-fetch@^1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/electron-fetch/-/electron-fetch-1.6.0.tgz#39f92cb077d8fa3b5d95f8e0711100e1c9b7c0b1"
-  integrity sha512-8qpUtmwISThQr3smP8O61zj1fZTr9VI2VybJeDrg3NBJspgnq/HsyZDQwlag7FIk3KqO22wdtODCF/qb3Bm+sg==
+electron-fetch@^1.7.1:
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/electron-fetch/-/electron-fetch-1.7.1.tgz#2e777c42557652e28a67ae6ca29e825d280a195e"
+  integrity sha512-Vmzb6Lx/jghH5ZNI1ParfqQPKePMncI+Sg5oA92HBVa2TGUcEQJ/noU/zdf4gpugk/imh0qu3xcNY5C/5R8nlg==
   dependencies:
     encoding "^0.1.13"
 
@@ -5059,9 +5064,9 @@ min-document@^2.19.0:
   dependencies:
     dom-walk "^0.1.0"
 
-"minilog@git+https://github.com/cozy/minilog.git#master":
+"minilog@https://github.com/cozy/minilog.git#master":
   version "3.1.0"
-  resolved "git+https://github.com/cozy/minilog.git#f01f7d9dfe20981177dd34b9662c2f077d818f82"
+  resolved "https://github.com/cozy/minilog.git#f01f7d9dfe20981177dd34b9662c2f077d818f82"
   dependencies:
     microee "0.0.6"
 

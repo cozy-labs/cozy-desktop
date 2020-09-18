@@ -9,6 +9,9 @@ const CozyClient = require('cozy-client').default
 const { FetchError } = require('cozy-stack-client')
 const _ = require('lodash')
 const path = require('path')
+const {
+  AbortController
+} = require('abortcontroller-polyfill/dist/cjs-ponyfill')
 
 const { FILES_DOCTYPE, FILE_TYPE } = require('./constants')
 const {
@@ -205,6 +208,9 @@ class RemoteCozy {
     fn /*: () => Promise<RemoteDoc> */
   ) /*: Promise<RemoteDoc> */ {
     return new Promise((resolve, reject) => {
+      const abortController = new AbortController()
+      options.signal = abortController.signal
+
       process.once('unhandledRejection', async err => {
         try {
           const { name, dirID: dir_id, contentLength } = options
@@ -220,9 +226,15 @@ class RemoteCozy {
               'The file is too big and exceeds the disk quota'
             )
           }
+          // Reject our domain function call
           reject(err)
         } catch (err) {
+          // Reject our domain function call
           reject(err)
+        } finally {
+          // Abort the underlying fetch request in case we caught an unrelated
+          // unhandled promise rejection and still reject the domain request.
+          abortController.abort()
         }
       })
 
