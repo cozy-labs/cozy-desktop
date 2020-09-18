@@ -177,6 +177,59 @@ class RemoteCozy {
     return this.client.settings.updateLastSync()
   }
 
+  // Catches unhandled and cryptic promise rejections thrown during requests
+  // made to the remote Cozy by the underlying network stack
+  // (i.e. Electron/Chromium) and rejects our request promise with a domain
+  // error instead.
+  //
+  // When a chunk encoded request, sent via HTTP/2 fails and the remote Cozy
+  // returns an error (e.g. 413 because the file is too large), Chromium will
+  // replace the response header status with a simple
+  // `net:ERR_HTTP2_PROTOCOL_ERROR`, leaving us with no information about the
+  // reason why the request failed.
+  // See https://bugs.chromium.org/p/chromium/issues/detail?id=1033945
+  //
+  // Besides, in this situation, Electron will reject a promise with a
+  // `mojo result is not ok` error message in a way that does not let us catch
+  // it.
+  // See https://github.com/electron/electron/blob/1719f073c1c97c5b421194f9bf710509f4d464d5/shell/browser/api/electron_api_url_loader.cc#L190.
+  // Our only recourse here is to make use of the Node's `unhandledRejection`
+  // event handler to reject our own request and make sure the client does not
+  // hang forever on this failed request.
+  //
+  // To make sense of the situation, we run checks on the remote Cozy to try
+  // and recreate the error that was returned by the remote Cozy and take
+  // appropriate action down the Sync process.
+  _withUnhandledRejectionProtection(
+    options /*: Object */,
+    fn /*: () => Promise<RemoteDoc> */
+  ) /*: Promise<RemoteDoc> */ {
+    return new Promise((resolve, reject) => {
+      process.once('unhandledRejection', async err => {
+        try {
+          const { name, dirID: dir_id, contentLength } = options
+
+          if (name && dir_id && (await this.isNameTaken({ name, dir_id }))) {
+            err = new FetchError(
+              { url: '', status: 409 },
+              'Conflict: name already taken'
+            )
+          } else if (!(await this.hasEnoughSpace(contentLength))) {
+            err = new FetchError(
+              { url: '', status: 413 },
+              'The file is too big and exceeds the disk quota'
+            )
+          }
+          reject(err)
+        } catch (err) {
+          reject(err)
+        }
+      })
+
+      fn().then(resolve, reject)
+    })
+  }
+
   async createFile(
     data /*: Readable */,
     options /*: {|name: string,
@@ -188,8 +241,10 @@ class RemoteCozy {
                  updatedAt: string,
                  executable: boolean|} */
   ) /*: Promise<RemoteDoc> */ {
-    const file = await this.client.files.create(data, options)
-    return this.toRemoteDoc(file)
+    return this._withUnhandledRejectionProtection(options, async () => {
+      const file = await this.client.files.create(data, options)
+      return this.toRemoteDoc(file)
+    })
   }
 
   async createDirectory(
@@ -212,8 +267,10 @@ class RemoteCozy {
                  executable: boolean,
                  ifMatch: string|} */
   ) /*: Promise<RemoteDoc> */ {
-    const updated = await this.client.files.updateById(id, data, options)
-    return this.toRemoteDoc(updated)
+    return this._withUnhandledRejectionProtection(options, async () => {
+      const updated = await this.client.files.updateById(id, data, options)
+      return this.toRemoteDoc(updated)
+    })
   }
 
   async updateAttributesById(
