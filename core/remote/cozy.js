@@ -6,6 +6,7 @@
 const autoBind = require('auto-bind')
 const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
+const { FetchError } = require('cozy-stack-client')
 const _ = require('lodash')
 const path = require('path')
 
@@ -38,6 +39,19 @@ export type Reference = {
 const log = logger({
   component: 'RemoteCozy'
 })
+
+/*::
+import type { RemoteChange } from './change'
+import type { MetadataChange } from '../sync'
+
+type CommonCozyErrorHandlingOptions = {
+  events: EventEmitter,
+  log: Logger
+}
+
+type CommonCozyErrorHandlingResult =
+  | 'offline'
+*/
 
 class DirectoryNotFound extends Error {
   /*::
@@ -72,35 +86,11 @@ class CozyClientRevokedError extends Error {
   }
 }
 
-/*::
-import type FetchError from 'electron-fetch'
-import type { RemoteChange } from './change'
-import type { MetadataChange } from '../sync'
-
-type CommonCozyErrorHandlingOptions = {
-  events: EventEmitter,
-  log: Logger
-}
-
-type CommonCozyErrorHandlingResult =
-  | 'offline'
-
-// See definition at https://github.com/cozy/cozy-client-js/blob/v0.13.0/src/fetch.js#L152
-type CozyFetchError = Error & {
-  name: 'FetchError',
-  response: *,
-  url: string,
-  status: number,
-  reason: { message: string } | string,
-  message: string
-}
-*/
-
 const handleCommonCozyErrors = (
   {
     err,
     change
-  } /*: { err: FetchError | CozyFetchError | Error, change?: RemoteChange | MetadataChange } */,
+  } /*: { err: FetchError |  Error, change?: RemoteChange | MetadataChange } */,
   { events, log } /*: CommonCozyErrorHandlingOptions */
 ) /*: CommonCozyErrorHandlingResult */ => {
   if (err.name === 'FetchError') {
