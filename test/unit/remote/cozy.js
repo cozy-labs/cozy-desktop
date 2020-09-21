@@ -6,9 +6,12 @@ const _ = require('lodash')
 const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
+const stream = require('stream')
+const { FetchError } = require('cozy-client')
 
 const {
   FILES_DOCTYPE,
+  ROOT_DIR_ID,
   TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
@@ -137,6 +140,173 @@ describe('RemoteCozy', function() {
   beforeEach(function() {
     this.config.cozyUrl = COZY_URL
     remoteCozy = new RemoteCozy(this.config)
+  })
+
+  describe('hasEnoughSpace', () => {
+    it('returns true if the Cozy does not have a quota', async () => {
+      const fakeSettings = sinon
+        .stub(remoteCozy.client.settings, 'diskUsage')
+        .resolves({ attributes: { used: 843 } })
+
+      await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(true)
+
+      fakeSettings.restore()
+    })
+
+    it('returns true if the remaining quota is greater than the given file size', async () => {
+      const fakeSettings = sinon
+        .stub(remoteCozy.client.settings, 'diskUsage')
+        .resolves({ attributes: { quota: 5000, used: 4800 } })
+
+      await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(true)
+
+      fakeSettings.restore()
+    })
+
+    it('returns false if the remaining quota is smaller than the given file size', async () => {
+      const fakeSettings = sinon
+        .stub(remoteCozy.client.settings, 'diskUsage')
+        .resolves({ attributes: { quota: 5000, used: 4801 } })
+
+      await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(false)
+
+      fakeSettings.restore()
+    })
+  })
+
+  describe('createFile', () => {
+    context(
+      'when the request fails with an unhandled promise rejection',
+      () => {
+        beforeEach(() => {
+          sinon.stub(remoteCozy.client.files, 'create').callsFake(() => {
+            return new Promise(() => {
+              Promise.reject(new Error('mojo result is not ok'))
+            })
+          })
+        })
+        afterEach(() => {
+          remoteCozy.client.files.create.restore()
+        })
+
+        it('catches the unhandled promise rejection', async () => {
+          await should(
+            remoteCozy.createFile(new stream.Readable(), {
+              name: 'foo',
+              dirID: ROOT_DIR_ID,
+              contentType: 'text/plain',
+              contentLength: 300,
+              checksum: 'md5sum',
+              executable: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            })
+          ).be.rejectedWith('mojo result is not ok')
+        })
+
+        it('returns a 409 FetchError if a doc with the same path exists', async () => {
+          await builders
+            .remoteDir()
+            .inRootDir()
+            .name('foo')
+            .create()
+
+          await should(
+            remoteCozy.createFile(new stream.Readable(), {
+              name: 'foo',
+              dirID: ROOT_DIR_ID,
+              contentType: 'text/plain',
+              contentLength: 300,
+              checksum: 'md5sum',
+              executable: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            })
+          ).be.rejectedWith(FetchError, { status: 409 })
+        })
+
+        it('returns a 413 FetchError if the file is larger than the available quota', async () => {
+          const fakeSettings = sinon
+            .stub(remoteCozy.client.settings, 'diskUsage')
+            .resolves({ attributes: { quota: 5000, used: 4800 } })
+
+          await should(
+            remoteCozy.createFile(new stream.Readable(), {
+              name: 'foo',
+              dirID: ROOT_DIR_ID,
+              contentType: 'text/plain',
+              contentLength: 300,
+              checksum: 'md5sum',
+              executable: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            })
+          ).be.rejectedWith(FetchError, { status: 413 })
+
+          fakeSettings.restore()
+        })
+      }
+    )
+  })
+
+  describe('updateFileById', () => {
+    context(
+      'when the request fails with an unhandled promise rejection',
+      () => {
+        let remoteFile
+        beforeEach(async () => {
+          remoteFile = await builders
+            .remoteFile()
+            .inRootDir()
+            .name('foo')
+            .data('initial content')
+            .create()
+
+          sinon.stub(remoteCozy.client.files, 'updateById').callsFake(() => {
+            return new Promise(() => {
+              Promise.reject(new Error('mojo result is not ok'))
+            })
+          })
+        })
+        afterEach(() => {
+          remoteCozy.client.files.updateById.restore()
+        })
+
+        it('catches the unhandled promise rejection', async () => {
+          await should(
+            remoteCozy.updateFileById(remoteFile._id, new stream.Readable(), {
+              contentType: 'text/plain',
+              contentLength: 300,
+              checksum: 'md5sum',
+              executable: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              ifMatch: remoteFile._rev
+            })
+          ).be.rejectedWith('mojo result is not ok')
+        })
+
+        it('returns a 413 FetchError if the file is larger than the available quota', async () => {
+          const fakeSettings = sinon
+            .stub(remoteCozy.client.settings, 'diskUsage')
+            .resolves({ attributes: { quota: 5000, used: 4800 } })
+
+          await should(
+            remoteCozy.updateFileById(remoteFile._id, new stream.Readable(), {
+              contentType: 'text/plain',
+              contentLength: 300,
+              checksum: 'md5sum',
+              executable: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              ifMatch: remoteFile._rev
+            })
+          ).be.rejectedWith(FetchError, { status: 413 })
+
+          fakeSettings.restore()
+        })
+      }
+    )
   })
 
   describe('changes', function() {
@@ -277,6 +447,61 @@ describe('RemoteCozy', function() {
       const found = await remoteCozy.findMaybe('missing')
 
       should.not.exist(found)
+    })
+  })
+
+  describe('isNameTaken', function() {
+    it('returns true when a doc with the given name exists in the given directory', async () => {
+      const remoteDir = await builders
+        .remoteDir()
+        .name('foo')
+        .inRootDir()
+        .create()
+      await builders
+        .remoteFile()
+        .name('bar')
+        .inDir(remoteDir)
+        .create()
+      await builders
+        .remoteDir()
+        .name('baz')
+        .inDir(remoteDir)
+        .create()
+
+      await should(
+        remoteCozy.isNameTaken({ name: 'bar', dir_id: remoteDir._id })
+      ).be.fulfilledWith(true)
+      await should(
+        remoteCozy.isNameTaken({ name: 'baz', dir_id: remoteDir._id })
+      ).be.fulfilledWith(true)
+    })
+
+    it('returns false when there are no docs with the given name', async () => {
+      const remoteDir = await builders
+        .remoteDir()
+        .name('foo')
+        .inRootDir()
+        .create()
+
+      await should(
+        remoteCozy.isNameTaken({ name: 'bar', dir_id: remoteDir._id })
+      ).be.fulfilledWith(false)
+    })
+
+    it('returns false when a doc with the given name exists in another directory', async () => {
+      const remoteDir = await builders
+        .remoteDir()
+        .name('foo')
+        .inRootDir()
+        .create()
+      await builders
+        .remoteFile()
+        .name('bar')
+        .create()
+
+      await should(
+        remoteCozy.isNameTaken({ name: 'bar', dir_id: remoteDir._id })
+      ).be.fulfilledWith(false)
     })
   })
 

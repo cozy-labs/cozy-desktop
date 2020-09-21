@@ -111,10 +111,7 @@ class Local /*:: implements Reader, Writer */ {
     return this.watcher.stop()
   }
 
-  /** Create a readable stream for the given doc.
-   *
-   * adds a contentLength property to be used
-   */
+  /** Create a readable stream for the given doc */
   async createReadStreamAsync(
     doc /*: Metadata */
   ) /*: Promise<stream.Readable> */ {

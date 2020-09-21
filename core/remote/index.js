@@ -75,12 +75,13 @@ class Remote /*:: implements Reader, Writer */ {
     autoBind(this)
   }
 
-  start() {
-    return this.watcher.start().then(() => this.warningsPoller.start())
+  async start() {
+    await this.watcher.start()
+    return this.warningsPoller.start()
   }
 
-  stop() {
-    return Promise.all([this.watcher.stop(), this.warningsPoller.stop()])
+  async stop() {
+    await Promise.all([this.watcher.stop(), this.warningsPoller.stop()])
   }
 
   sendMail(args /*: any */) {

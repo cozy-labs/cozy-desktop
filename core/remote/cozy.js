@@ -6,8 +6,12 @@
 const autoBind = require('auto-bind')
 const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
+const { FetchError } = require('cozy-stack-client')
 const _ = require('lodash')
 const path = require('path')
+const {
+  AbortController
+} = require('abortcontroller-polyfill/dist/cjs-ponyfill')
 
 const { FILES_DOCTYPE, FILE_TYPE } = require('./constants')
 const {
@@ -38,6 +42,19 @@ export type Reference = {
 const log = logger({
   component: 'RemoteCozy'
 })
+
+/*::
+import type { RemoteChange } from './change'
+import type { MetadataChange } from '../sync'
+
+type CommonCozyErrorHandlingOptions = {
+  events: EventEmitter,
+  log: Logger
+}
+
+type CommonCozyErrorHandlingResult =
+  | 'offline'
+*/
 
 class DirectoryNotFound extends Error {
   /*::
@@ -72,35 +89,11 @@ class CozyClientRevokedError extends Error {
   }
 }
 
-/*::
-import type FetchError from 'electron-fetch'
-import type { RemoteChange } from './change'
-import type { MetadataChange } from '../sync'
-
-type CommonCozyErrorHandlingOptions = {
-  events: EventEmitter,
-  log: Logger
-}
-
-type CommonCozyErrorHandlingResult =
-  | 'offline'
-
-// See definition at https://github.com/cozy/cozy-client-js/blob/v0.13.0/src/fetch.js#L152
-type CozyFetchError = Error & {
-  name: 'FetchError',
-  response: *,
-  url: string,
-  status: number,
-  reason: { message: string } | string,
-  message: string
-}
-*/
-
 const handleCommonCozyErrors = (
   {
     err,
     change
-  } /*: { err: FetchError | CozyFetchError | Error, change?: RemoteChange | MetadataChange } */,
+  } /*: { err: FetchError |  Error, change?: RemoteChange | MetadataChange } */,
   { events, log } /*: CommonCozyErrorHandlingOptions */
 ) /*: CommonCozyErrorHandlingResult */ => {
   if (err.name === 'FetchError') {
@@ -177,14 +170,82 @@ class RemoteCozy {
     return this.client.settings.diskUsage()
   }
 
+  hasEnoughSpace(size /*: number */) /*: Promise<boolean> */ {
+    return this.diskUsage().then(
+      ({ attributes: { used, quota } }) => !quota || +quota - +used >= size
+    )
+  }
+
   updateLastSync() /*: Promise<void> */ {
     return this.client.settings.updateLastSync()
   }
 
-  createFile(
+  // Catches unhandled and cryptic promise rejections thrown during requests
+  // made to the remote Cozy by the underlying network stack
+  // (i.e. Electron/Chromium) and rejects our request promise with a domain
+  // error instead.
+  //
+  // When a chunk encoded request, sent via HTTP/2 fails and the remote Cozy
+  // returns an error (e.g. 413 because the file is too large), Chromium will
+  // replace the response header status with a simple
+  // `net:ERR_HTTP2_PROTOCOL_ERROR`, leaving us with no information about the
+  // reason why the request failed.
+  // See https://bugs.chromium.org/p/chromium/issues/detail?id=1033945
+  //
+  // Besides, in this situation, Electron will reject a promise with a
+  // `mojo result is not ok` error message in a way that does not let us catch
+  // it.
+  // See https://github.com/electron/electron/blob/1719f073c1c97c5b421194f9bf710509f4d464d5/shell/browser/api/electron_api_url_loader.cc#L190.
+  // Our only recourse here is to make use of the Node's `unhandledRejection`
+  // event handler to reject our own request and make sure the client does not
+  // hang forever on this failed request.
+  //
+  // To make sense of the situation, we run checks on the remote Cozy to try
+  // and recreate the error that was returned by the remote Cozy and take
+  // appropriate action down the Sync process.
+  _withUnhandledRejectionProtection(
+    options /*: Object */,
+    fn /*: () => Promise<RemoteDoc> */
+  ) /*: Promise<RemoteDoc> */ {
+    return new Promise((resolve, reject) => {
+      const abortController = new AbortController()
+      options.signal = abortController.signal
+
+      process.once('unhandledRejection', async err => {
+        try {
+          const { name, dirID: dir_id, contentLength } = options
+
+          if (name && dir_id && (await this.isNameTaken({ name, dir_id }))) {
+            err = new FetchError(
+              { url: '', status: 409 },
+              'Conflict: name already taken'
+            )
+          } else if (!(await this.hasEnoughSpace(contentLength))) {
+            err = new FetchError(
+              { url: '', status: 413 },
+              'The file is too big and exceeds the disk quota'
+            )
+          }
+          // Reject our domain function call
+          reject(err)
+        } catch (err) {
+          // Reject our domain function call
+          reject(err)
+        } finally {
+          // Abort the underlying fetch request in case we caught an unrelated
+          // unhandled promise rejection and still reject the domain request.
+          abortController.abort()
+        }
+      })
+
+      fn().then(resolve, reject)
+    })
+  }
+
+  async createFile(
     data /*: Readable */,
     options /*: {|name: string,
-                 dirID?: ?string,
+                 dirID: string,
                  contentType: string,
                  contentLength: number,
                  checksum: string,
@@ -192,19 +253,23 @@ class RemoteCozy {
                  updatedAt: string,
                  executable: boolean|} */
   ) /*: Promise<RemoteDoc> */ {
-    return this.client.files.create(data, options).then(this.toRemoteDoc)
+    return this._withUnhandledRejectionProtection(options, async () => {
+      const file = await this.client.files.create(data, options)
+      return this.toRemoteDoc(file)
+    })
   }
 
-  createDirectory(
+  async createDirectory(
     options /*: {|name: string,
                  dirID?: string,
                  createdAt: string,
                  updatedAt: string|} */
   ) /*: Promise<RemoteDoc> */ {
-    return this.client.files.createDirectory(options).then(this.toRemoteDoc)
+    const folder = await this.client.files.createDirectory(options)
+    return this.toRemoteDoc(folder)
   }
 
-  updateFileById(
+  async updateFileById(
     id /*: string */,
     data /*: Readable */,
     options /*: {|contentType: string,
@@ -214,12 +279,13 @@ class RemoteCozy {
                  executable: boolean,
                  ifMatch: string|} */
   ) /*: Promise<RemoteDoc> */ {
-    return this.client.files
-      .updateById(id, data, options)
-      .then(this.toRemoteDoc)
+    return this._withUnhandledRejectionProtection(options, async () => {
+      const updated = await this.client.files.updateById(id, data, options)
+      return this.toRemoteDoc(updated)
+    })
   }
 
-  updateAttributesById(
+  async updateAttributesById(
     id /*: string */,
     attrs /*: {|name?: string,
                dir_id?: string,
@@ -227,16 +293,20 @@ class RemoteCozy {
                updated_at: string|} */,
     options /*: {|ifMatch: string|} */
   ) /*: Promise<RemoteDoc> */ {
-    return this.client.files
-      .updateAttributesById(id, attrs, options)
-      .then(this.toRemoteDoc)
+    const updated = await this.client.files.updateAttributesById(
+      id,
+      attrs,
+      options
+    )
+    return this.toRemoteDoc(updated)
   }
 
-  trashById(
+  async trashById(
     id /*: string */,
     options /*: {|ifMatch: string|} */
   ) /*: Promise<RemoteDoc> */ {
-    return this.client.files.trashById(id, options).then(this.toRemoteDoc)
+    const trashed = await this.client.files.trashById(id, options)
+    return this.toRemoteDoc(trashed)
   }
 
   destroyById(
@@ -294,6 +364,20 @@ class RemoteCozy {
     } catch (err) {
       return null
     }
+  }
+
+  async isNameTaken(
+    { name, dir_id } /*: { name: string, dir_id: string } */
+  ) /*: Promise<boolean> */ {
+    const index = await this.client.data.defineIndex(FILES_DOCTYPE, [
+      'dir_id',
+      'name'
+    ])
+    const results = await this.client.data.query(index, {
+      selector: { dir_id, name }
+    })
+
+    return results.length !== 0
   }
 
   async findDirectoryByPath(path /*: string */) /*: Promise<RemoteDoc> */ {
