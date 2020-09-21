@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.23.0-beta.6 - 2020-09-21
+
+Improvements for all users:
+
+- Failing file uploads could block the client in an ever ending synchronization
+  state because of the way Electron/Chromium treats those errors.
+  We've added some workarounds to catch and process those errors to make sure
+  the file upload attempt finishes (it will still be failed) and releases
+  control back to the synchronization process.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.23.0-beta.5 - 2020-09-09
 
 Improvements for macOS users:
