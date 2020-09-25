@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.23.0-beta.7 - 2020-09-25
+
+Improvements for all users:
+
+- We upgraded `cozy-client-js` for the request abortion, shipped in the previous
+  beta release, to work.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.23.0-beta.6 - 2020-09-21
 
 Improvements for all users:
