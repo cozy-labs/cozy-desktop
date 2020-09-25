@@ -91,7 +91,7 @@
     "bunyan": "^2.0.2",
     "chokidar": "^3.2.2",
     "cozy-client": "^14.6.0",
-    "cozy-client-js": "^0.17.1",
+    "cozy-client-js": "^0.17.4",
     "cozy-stack-client": "^14.1.2",
     "deep-diff": "^1.0.2",
     "dtrace-provider": "^0.8.8",
