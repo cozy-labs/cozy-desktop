@@ -152,6 +152,11 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  erased() /*: this */ {
+    this.doc._deleted = true
+    return this
+  }
+
   updatedAt(date /*: string|Date */) /*: this */ {
     this.doc.updated_at = typeof date === 'string' ? date : date.toISOString()
     return this

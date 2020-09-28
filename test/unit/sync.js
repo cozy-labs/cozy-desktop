@@ -220,22 +220,18 @@ describe('Sync', function() {
     })
 
     it('does nothing for an up-to-date _deleted document', async function() {
-      let change = {
+      const change = {
         seq: 122,
-        doc: {
-          _id: 'foo',
-          docType: 'folder',
-          _deleted: true,
-          sides: {
-            target: 2,
-            local: 2,
-            remote: 2
-          }
-        }
+        doc: await builders
+          .metadir()
+          .path('foo')
+          .erased()
+          .upToDate()
+          .create()
       }
       this.sync.applyDoc = sinon.spy()
       await this.sync.apply(change)
-      this.sync.applyDoc.called.should.be.false()
+      should(this.sync.applyDoc).have.not.been.called()
     })
 
     it('trashes a locally deleted file or folder', async function() {
@@ -887,37 +883,23 @@ describe('Sync', function() {
     })
 
     it('returns an empty array if a local only doc is erased', function() {
-      let doc = {
-        _id: 'selectSide/5',
-        _rev: '5-0123456789',
-        _deleted: true,
-        docType: 'file',
-        sides: {
-          target: 5,
-          local: 5
-        }
-      }
-      let [side, name, rev] = this.sync.selectSide(doc)
-      should.not.exist(side)
-      should.not.exist(name)
-      should.not.exist(rev)
+      const doc = builders
+        .metafile()
+        .path('selectSide/5')
+        .erased()
+        .sides({ local: 5 })
+        .build()
+      should(this.sync.selectSide(doc)).deepEqual([])
     })
 
     it('returns an empty array if a remote only doc is erased', function() {
-      let doc = {
-        _id: 'selectSide/5',
-        _rev: '5-0123456789',
-        _deleted: true,
-        docType: 'file',
-        sides: {
-          target: 5,
-          remote: 5
-        }
-      }
-      let [side, name, rev] = this.sync.selectSide(doc)
-      should.not.exist(side)
-      should.not.exist(name)
-      should.not.exist(rev)
+      const doc = builders
+        .metafile()
+        .path('selectSide/5')
+        .erased()
+        .sides({ remote: 5 })
+        .build()
+      should(this.sync.selectSide(doc)).deepEqual([])
     })
   })
 })
