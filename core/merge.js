@@ -199,7 +199,6 @@ class Merge {
   // and create the tree structure if needed
   async addFileAsync(side /*: SideName */, doc /*: Metadata */) {
     log.debug({ path: doc.path }, 'addFileAsync')
-    const { path } = doc
     const file /*: ?Metadata */ = await this.pouch.byIdMaybe(doc._id)
     metadata.markSide(side, doc, file)
     metadata.assignMaxDate(doc, file)
@@ -219,67 +218,12 @@ class Merge {
         return
       }
 
-      if (file && file.docType === 'folder') {
+      if (file.docType === 'folder') {
         return this.resolveConflictAsync(side, doc)
       }
 
-      if (metadata.sameBinary(file, doc)) {
-        doc._rev = file._rev
-        if (doc.size == null) {
-          doc.size = file.size
-        }
-        if (doc.class == null) {
-          doc.class = file.class
-        }
-        if (doc.mime == null) {
-          doc.mime = file.mime
-        }
-        if (doc.tags == null) {
-          doc.tags = file.tags || []
-        }
-        if (doc.remote == null) {
-          doc.remote = file.remote
-        }
-        if (doc.ino == null) {
-          doc.ino = file.ino
-        }
-        if (doc.fileid == null) {
-          doc.fileid = file.fileid
-        }
-        if (file.metadata && doc.metadata == null) {
-          doc.metadata = file.metadata
-        }
-        if (file.local && doc.local == null) {
-          doc.local = file.local
-        }
-        // If file is updated on Windows, it will never be executable so we keep
-        // the existing value.
-        if (side === 'local' && process.platform === 'win32') {
-          doc.executable = file.executable
-        }
-
-        if (metadata.sameFile(file, doc)) {
-          if (needsFileidMigration(file, doc.fileid)) {
-            return this.migrateFileid(file, doc.fileid)
-          }
-          log.info({ path }, 'up to date')
-          if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
-            metadata.updateLocal(file, doc.local)
-            const outdated = metadata.outOfDateSide(file)
-            if (outdated) {
-              metadata.markSide(otherSide(outdated), file, file)
-            }
-            return this.pouch.put(file)
-          } else {
-            return null
-          }
-        } else {
-          return this.pouch.put(doc)
-        }
-      }
-
-      if (side === 'local' && file.sides.local != null) {
-        return this.updateFileAsync('local', doc)
+      if (file.sides && file.sides[side] != null) {
+        return this.updateFileAsync(side, doc)
       }
 
       return this.resolveConflictAsync(side, doc)
