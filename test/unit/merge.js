@@ -1490,7 +1490,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
@@ -1549,7 +1549,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
@@ -1594,7 +1594,7 @@ describe('Merge', function() {
 
       const movedSrc = _.defaults(
         {
-          moveTo: doc._id,
+          moveTo: doc.path,
           _deleted: true
         },
         was
@@ -1649,7 +1649,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaultsDeep(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
@@ -1709,7 +1709,7 @@ describe('Merge', function() {
 
           const movedSrc = _.defaults(
             {
-              moveTo: dstId,
+              moveTo: dstPath,
               _deleted: true
             },
             was
@@ -1769,7 +1769,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
@@ -1911,14 +1911,14 @@ describe('Merge', function() {
 
       const movedSrc = _.defaults(
         {
-          moveTo: dst._id,
+          moveTo: dst.path,
           _deleted: true
         },
         src
       )
       const movedFile = _.defaults(
         {
-          moveTo: doc._id,
+          moveTo: doc.path,
           childMove: true,
           _deleted: true
         },
@@ -1983,7 +1983,7 @@ describe('Merge', function() {
 
       const movedSrc = _.defaults(
         {
-          moveTo: doc._id,
+          moveTo: doc.path,
           _deleted: true
         },
         was
@@ -2033,7 +2033,7 @@ describe('Merge', function() {
                 path: BANANA.path,
                 moveFrom: _.defaults(
                   {
-                    moveTo: BANANA._id,
+                    moveTo: BANANA.path,
                     _deleted: true
                   },
                   banana
@@ -2103,7 +2103,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: BANANA._id,
+            moveTo: BANANA.path,
             _deleted: true
           },
           banana
@@ -2150,7 +2150,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
@@ -2207,7 +2207,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
@@ -2263,7 +2263,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
@@ -2402,7 +2402,7 @@ describe('Merge', function() {
 
           const movedSrc = _.defaults(
             {
-              moveTo: existing._id,
+              moveTo: existing.path,
               _deleted: true
             },
             was
@@ -2463,7 +2463,7 @@ describe('Merge', function() {
 
           const movedSrc = _.defaults(
             {
-              moveTo: dstId,
+              moveTo: dstPath,
               _deleted: true
             },
             was
@@ -2521,7 +2521,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
@@ -2570,7 +2570,7 @@ describe('Merge', function() {
 
       const movedSrc = _.defaults(
         {
-          moveTo: doc._id,
+          moveTo: doc.path,
           _deleted: true
         },
         was
@@ -2621,7 +2621,7 @@ describe('Merge', function() {
                 path: APPLE.path,
                 moveFrom: _.defaults(
                   {
-                    moveTo: APPLE._id,
+                    moveTo: APPLE.path,
                     _deleted: true
                   },
                   apple
@@ -2689,7 +2689,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: APPLE._id,
+            moveTo: APPLE.path,
             _deleted: true
           },
           apple
@@ -2736,7 +2736,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: nukem._id,
+            moveTo: nukem.path,
             _deleted: true
           },
           duke
@@ -2796,14 +2796,14 @@ describe('Merge', function() {
 
       const movedSrcDir = _.defaults(
         {
-          moveTo: dstDir._id,
+          moveTo: dstDir.path,
           _deleted: true
         },
         srcDir
       )
       const movedSrcFile = _.defaults(
         {
-          moveTo: dstFile._id,
+          moveTo: dstFile.path,
           childMove: true,
           _deleted: true
         },
@@ -2873,14 +2873,14 @@ describe('Merge', function() {
 
       const movedDir = _.defaults(
         {
-          moveTo: doc._id,
+          moveTo: doc.path,
           _deleted: true
         },
         was
       )
       const movedSubfile = _.defaults(
         {
-          moveTo: metadata.id(movedPath(subfile)),
+          moveTo: movedPath(subfile),
           childMove: true,
           _deleted: true
         },
@@ -2888,7 +2888,7 @@ describe('Merge', function() {
       )
       const movedSubdir = _.defaults(
         {
-          moveTo: metadata.id(movedPath(subdir)),
+          moveTo: movedPath(subdir),
           childMove: true,
           _deleted: true
         },
@@ -2970,7 +2970,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
@@ -3047,7 +3047,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
@@ -3117,7 +3117,7 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
@@ -3180,14 +3180,14 @@ describe('Merge', function() {
 
         const movedDir = _.defaults(
           {
-            moveTo: doc._id,
+            moveTo: doc.path,
             _deleted: true
           },
           was
         )
         const movedChild = _.defaults(
           {
-            moveTo: metadata.id(movedPath(child)),
+            moveTo: movedPath(child),
             childMove: true,
             _deleted: true
           },
@@ -3259,7 +3259,7 @@ describe('Merge', function() {
 
             const movedDir = _.defaults(
               {
-                moveTo: doc._id,
+                moveTo: doc.path,
                 _deleted: true
               },
               was
@@ -3267,7 +3267,7 @@ describe('Merge', function() {
             const movedSubdirPath = path.join(doc.path, 'folder-9')
             const movedSubdir = _.defaults(
               {
-                moveTo: metadata.id(movedSubdirPath),
+                moveTo: movedSubdirPath,
                 childMove: true,
                 _deleted: true
               },
@@ -3276,7 +3276,7 @@ describe('Merge', function() {
             const movedSubfilePath = path.join(movedSubdirPath, 'file-9')
             const movedSubfile = _.defaultsDeep(
               {
-                moveTo: metadata.id(movedSubfilePath),
+                moveTo: movedSubfilePath,
                 childMove: true,
                 _deleted: true
               },
@@ -3354,7 +3354,7 @@ describe('Merge', function() {
 
             const movedDir = _.defaults(
               {
-                moveTo: doc._id,
+                moveTo: doc.path,
                 _deleted: true
               },
               was
@@ -3362,7 +3362,7 @@ describe('Merge', function() {
             const movedSubdirPath = path.join(doc.path, 'folder-9')
             const movedSubdir = _.defaults(
               {
-                moveTo: metadata.id(movedSubdirPath),
+                moveTo: movedSubdirPath,
                 childMove: true,
                 _deleted: true
               },
@@ -3371,7 +3371,7 @@ describe('Merge', function() {
             const movedSubfilePath = path.join(movedSubdirPath, 'file-9')
             const movedSubfile = _.defaults(
               {
-                moveTo: metadata.id(movedSubfilePath),
+                moveTo: movedSubfilePath,
                 childMove: true,
                 _deleted: true
               },

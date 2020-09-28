@@ -63,8 +63,8 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  moveTo(path /*: string */) /*: this */ {
-    this.doc.moveTo = metadata.id(path)
+  moveTo(docpath /*: string */) /*: this */ {
+    this.doc.moveTo = docpath
     this.doc._deleted = true
     return this
   }
@@ -305,7 +305,7 @@ module.exports = class BaseMetadataBuilder {
     metadata.assignId(this.doc)
 
     if (this.doc.moveFrom) {
-      this.doc.moveFrom.moveTo = this.doc._id
+      this.doc.moveFrom.moveTo = this.doc.path
     }
   }
 

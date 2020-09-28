@@ -523,7 +523,7 @@ describe('metadata', function() {
       should(sameFolder(c, e)).be.false()
       should(sameFolder(d, e)).be.false()
       should(
-        sameFolder(a, _.merge({ _deleted: true, moveTo: b._id }, a))
+        sameFolder(a, _.merge({ _deleted: true, moveTo: b.path }, a))
       ).be.true()
       should(
         sameFolder(
@@ -676,7 +676,7 @@ describe('metadata', function() {
       should(sameFile(d, f)).be.false()
       should(sameFile(e, f)).be.false()
       should(
-        sameFile(a, _.merge({ _deleted: true, moveTo: b._id }, a))
+        sameFile(a, _.merge({ _deleted: true, moveTo: b.path }, a))
       ).be.true()
       should(
         sameFile(

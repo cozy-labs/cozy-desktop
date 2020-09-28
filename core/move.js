@@ -38,9 +38,7 @@ function move(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
   }
   if (dst.tags == null) dst.tags = []
 
-  // moveTo is used for comparison. It's safer to take _id
-  // than path for this case, as explained in doc/developer/design.md
-  src.moveTo = dst._id
+  src.moveTo = dst.path
   src._deleted = true
 
   delete src.errors
