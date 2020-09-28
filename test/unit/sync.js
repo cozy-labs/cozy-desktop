@@ -686,19 +686,12 @@ describe('Sync', function() {
     })
 
     it('retries on second remote -> local sync error', async function() {
-      let doc = {
-        _id: 'second/failure',
-        errors: 1,
-        sides: {
-          target: 4,
-          local: 2,
-          remote: 4
-        }
-      }
-      let infos = await this.pouch.db.put(doc)
-      doc._rev = infos.rev
-      infos = await this.pouch.db.put(doc)
-      doc._rev = infos.rev
+      const doc = await builders
+        .metadata()
+        .path('second/failure')
+        .errors(1)
+        .sides({ local: 2, remote: 4 })
+        .create()
 
       await this.sync.updateErrors({ doc }, 'local')
 
@@ -710,20 +703,18 @@ describe('Sync', function() {
     })
 
     it('stops retrying after 3 errors', async function() {
-      let doc = {
-        _id: 'third/failure',
-        errors: 3,
-        sides: {
-          target: 4,
-          remote: 4
-        }
-      }
-      const infos = await this.pouch.db.put(doc)
-      doc._rev = infos.rev
+      const doc = await builders
+        .metadata()
+        .path('third/failure')
+        .errors(3)
+        .sides({ remote: 4 })
+        .create()
+
       await this.sync.updateErrors({ doc }, 'local')
+
       const actual = await this.pouch.db.get(doc._id)
-      actual.errors.should.equal(3)
-      actual._rev.should.equal(doc._rev)
+      should(actual.errors).equal(3)
+      should(actual._rev).equal(doc._rev)
       should(metadata.isUpToDate('remote', actual)).be.true()
     })
   })
