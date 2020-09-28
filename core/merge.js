@@ -793,8 +793,9 @@ class Merge {
       return
     }
     // Don't trash a folder if the other side has added a new file in it (or updated one)
-    let children = await this.pouch.byRecursivePath(was.path)
-    children = children.reverse()
+    const children = await this.pouch.byRecursivePath(was.path, {
+      descending: true
+    })
     for (let child of Array.from(children)) {
       if (
         child.docType === 'file' &&
@@ -895,10 +896,11 @@ class Merge {
     side /*: SideName */,
     folder /*: Metadata */
   ) {
-    let docs = await this.pouch.byRecursivePath(folder.path)
     // In the changes feed, nested subfolder must be deleted
     // before their parents, hence the reverse order.
-    docs = docs.reverse()
+    const docs = await this.pouch.byRecursivePath(folder.path, {
+      descending: true
+    })
     docs.push(folder)
     const toPreserve = new Set()
     for (let doc of docs) {

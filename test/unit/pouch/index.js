@@ -444,6 +444,22 @@ describe('Pouch', function() {
         }
       })
 
+      context('in descending mode', () => {
+        it('sorts the results in descending path order', async function() {
+          const docs = await this.pouch.byRecursivePath('', {
+            descending: true
+          })
+          should(docs).have.length(7)
+          should(docs).deepEqual(
+            createdDocs.sort((a, b) => {
+              if (metadata.id(a.path) < metadata.id(b.path)) return 1
+              if (metadata.id(a.path) > metadata.id(b.path)) return -1
+              return 0
+            })
+          )
+        })
+      })
+
       it('does not return the content of other folders starting with the same path', async function() {
         // create my-folder/folder-11
         const similarFolderPath = path.join('my-folder', 'folder-1 other')
@@ -641,9 +657,7 @@ describe('Pouch', function() {
         const docs = await this.pouch.getAll('folder')
         docs.length.should.be.above(1)
         await this.pouch.removeDesignDoc('folder')
-        await should(this.pouch.getAll('folder')).be.rejectedWith({
-          status: 404
-        })
+        await should(this.pouch.getAll('folder')).be.fulfilledWith([])
       })
     })
   })

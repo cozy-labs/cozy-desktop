@@ -188,9 +188,13 @@ class Pouch {
 
   // Run a query and get all the results
   async getAll(query, params = { include_docs: true }) {
-    const { rows } = await this.db.query(query, params)
-
-    return rows.filter(row => row.doc != null).map(row => row.doc)
+    try {
+      const { rows } = await this.db.query(query, params)
+      return rows.filter(row => row.doc != null).map(row => row.doc)
+    } catch (err) {
+      log.fatal({ err }, `could not run ${query} query`)
+      return []
+    }
   }
 
   // Get current revision for multiple docs by ids as an index id => rev
@@ -251,15 +255,19 @@ class Pouch {
   }
 
   // Return all the files and folders in this path, even in subfolders
-  async byRecursivePath(basePath) {
+  async byRecursivePath(basePath, { descending = false } = {}) {
     let params
     if (basePath === '') {
-      params = { include_docs: true }
+      params = { include_docs: true, descending }
     } else {
       const key = metadata.id(basePath + path.sep)
+      // XXX: In descending mode, startkey and endkey must be in reversed order
+      const startkey = descending ? [key + '\ufff0'] : [key]
+      const endkey = descending ? [key] : [key + '\ufff0']
       params = {
-        startkey: [key],
-        endkey: [key + '\ufff0'],
+        startkey,
+        endkey,
+        descending,
         include_docs: true
       }
     }
