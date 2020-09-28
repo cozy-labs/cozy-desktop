@@ -101,11 +101,6 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  noTags() /*: this */ {
-    delete this.doc.tags
-    return this
-  }
-
   incompatible() /*: this */ {
     const { platform } = process
 
@@ -231,9 +226,8 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  type(mime /*: string */) /*: this */ {
-    this.doc.class = mime.split('/')[0]
-    this.doc.mime = mime
+  noTags() /*: this */ {
+    delete this.doc.tags
     return this
   }
 

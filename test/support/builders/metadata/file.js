@@ -35,4 +35,10 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
       .toString('base64')
     return this
   }
+
+  type(mime /*: string */) /*: this */ {
+    this.doc.class = mime.split('/')[0]
+    this.doc.mime = mime
+    return this
+  }
 }
