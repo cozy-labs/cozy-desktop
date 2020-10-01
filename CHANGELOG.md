@@ -1,5 +1,53 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.23.0 - 2020-10-01
+
+Improvements for all users:
+
+- We upgraded the framework upon which our application is built, Electron, to
+  v9.2.1 which is the 2nd latest major version. This should bring more
+  stability to the application overall and prevent some crashes. We can also
+  expect smaller bundles. This upgrade brings us official support back for a
+  while.
+- Data migrations run after some client upgrades should not prevent not fully
+  synchronized changes from being detected and synchronized after the
+  migration.
+- Documents added on your remote Cozy, detected by the client but not fully
+  synchronized before it is stopped should be synchronized correctly after the
+  next client launch. The client should not try to delete them on your Cozy
+  because it does not find them locally (the deletions never went through
+  fortunately).
+- Fixes the displayed icon of recently synchronized files whose type is
+  identified as text.
+- Fixes the infinite spinner of the Updater window, displayed when download
+  progress info is not available.
+- Failing file uploads could block the client in an ever ending synchronization
+  state because of the way Electron/Chromium treats those errors.
+  We've added some workarounds to catch and process those errors to make sure
+  the file upload attempt finishes (it will still be failed) and releases
+  control back to the synchronization process.
+
+Improvements for Windows users:
+
+- With the Electron upgrade, you should be able to disconnect your client from
+  your remote Cozy via the client interface.
+
+Improvements for macOS users:
+
+- The order in which changes fetched from the remote Cozy were processed could
+  hinder the paths normalization and lead to issues like conflicts.
+  We're now sorting changes before the normalization to make sure the process
+  will complete as expected.
+
+Improvements for Linux users:
+
+- If you have disabled the client autolaunch upon your computer startup it
+  should not be re-enabled during your next application launch anymore.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.23.0-beta.7 - 2020-09-25
 
 Improvements for all users:
