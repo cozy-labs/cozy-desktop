@@ -146,7 +146,7 @@ actions = {
   },
 
   renamedfile: async (event, { pouch, prep }) => {
-    const was /*: ?Metadata */ = await pouch.byIdMaybeAsync(id(event.oldPath))
+    const was /*: ?Metadata */ = await pouch.byIdMaybe(id(event.oldPath))
     // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
       if (await docWasAlreadyMoved(event.oldPath, event.path, pouch)) {
@@ -170,7 +170,7 @@ actions = {
 
     const doc = buildFile(event.path, event.stats, event.md5sum)
     if (event.overwrite) {
-      const existing = await pouch.byIdMaybeAsync(id(event.path))
+      const existing = await pouch.byIdMaybe(id(event.path))
       doc.overwrite = existing
     }
 
@@ -178,7 +178,7 @@ actions = {
   },
 
   renameddirectory: async (event, { pouch, prep }) => {
-    const was /*: ?Metadata */ = await pouch.byIdMaybeAsync(id(event.oldPath))
+    const was /*: ?Metadata */ = await pouch.byIdMaybe(id(event.oldPath))
     // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
       if (await docWasAlreadyMoved(event.oldPath, event.path, pouch)) {
@@ -206,7 +206,7 @@ actions = {
 
     const doc = buildDir(event.path, event.stats)
     if (event.overwrite) {
-      const existing = await pouch.byIdMaybeAsync(id(event.path))
+      const existing = await pouch.byIdMaybe(id(event.path))
       doc.overwrite = existing
     }
 
@@ -214,7 +214,7 @@ actions = {
   },
 
   deletedfile: async (event, { pouch, prep }) => {
-    const was /*: ?Metadata */ = await pouch.byIdMaybeAsync(event._id)
+    const was /*: ?Metadata */ = await pouch.byIdMaybe(event._id)
     if (!was || was.deleted) {
       log.debug({ event }, 'Assuming file already removed')
       // The file was already marked as deleted in pouchdb
@@ -226,7 +226,7 @@ actions = {
   },
 
   deleteddirectory: async (event, { pouch, prep }) => {
-    const was /*: ?Metadata */ = await pouch.byIdMaybeAsync(event._id)
+    const was /*: ?Metadata */ = await pouch.byIdMaybe(event._id)
     if (!was || was.deleted) {
       log.debug({ event }, 'Assuming dir already removed')
       // The dir was already marked as deleted in pouchdb
@@ -252,7 +252,7 @@ async function docWasAlreadyMoved(
   pouch /*: Pouch */
 ) /*: Promise<boolean> */ {
   try {
-    const existing = await pouch.getPreviousRevAsync(id(dst), 1)
+    const existing = await pouch.getPreviousRev(id(dst), 1)
     return existing && existing.moveFrom && existing.moveFrom.path === src
   } catch (err) {
     // Doc not found so it was not moved

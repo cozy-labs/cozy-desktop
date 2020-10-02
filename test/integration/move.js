@@ -56,7 +56,7 @@ describe('Move', () => {
     })
 
     it('local', async () => {
-      const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
+      const oldFile = await pouch.byRemoteIdMaybe(file._id)
       await prep.moveFileAsync(
         'local',
         _.merge(
@@ -87,7 +87,7 @@ describe('Move', () => {
     })
 
     it('remote', async () => {
-      const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
+      const oldFile = await pouch.byRemoteIdMaybe(file._id)
       await prep.moveFileAsync(
         'remote',
         _.merge(
@@ -131,7 +131,7 @@ describe('Move', () => {
       // We don't want the calls made above to show up in our expectations
       helpers.resetPouchSpy()
 
-      const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
+      const oldFile = await pouch.byRemoteIdMaybe(file._id)
       await prep.moveFileAsync(
         'local',
         _.merge(
@@ -186,7 +186,7 @@ describe('Move', () => {
 
     context('local to an ignored path', () => {
       it('trashes the file on the remote Cozy', async () => {
-        const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
+        const oldFile = await pouch.byRemoteIdMaybe(file._id)
         await prep.moveFileAsync(
           'local',
           _.merge(
@@ -216,7 +216,7 @@ describe('Move', () => {
       context('after a previous local move', () => {
         const intermediaryPath = path.normalize('dst/file-moved')
         beforeEach(async () => {
-          const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
+          const oldFile = await pouch.byRemoteIdMaybe(file._id)
           await prep.moveFileAsync(
             'local',
             _.merge(
@@ -232,7 +232,7 @@ describe('Move', () => {
         })
 
         it('trashes the file on the remote Cozy', async () => {
-          const oldFile = await pouch.byRemoteIdMaybeAsync(file._id)
+          const oldFile = await pouch.byRemoteIdMaybe(file._id)
           await prep.moveFileAsync(
             'local',
             _.merge(
@@ -290,7 +290,7 @@ describe('Move', () => {
       it('remote', async () => {
         await cozy.files.updateById(file._id, 'updated file content', {})
         await helpers.pullAndSyncAll()
-        const was = await pouch.byRemoteIdAsync(file._id)
+        const was = await pouch.byRemoteId(file._id)
         await helpers._remote.moveAsync(
           {
             ...was,
@@ -339,7 +339,7 @@ describe('Move', () => {
         it('moves and updates the file on the local filesystem', async () => {
           await cozy.files.updateById(file._id, 'updated file content', {})
           await helpers.remote.pullChanges()
-          const was = await pouch.byRemoteIdAsync(file._id)
+          const was = await pouch.byRemoteId(file._id)
           await helpers._remote.moveAsync(
             {
               ...was,
@@ -433,7 +433,7 @@ describe('Move', () => {
     })
 
     it('local', async () => {
-      const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
+      const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
       const doc = builders
         .metadir()
         .path('parent/dst/dir')
@@ -507,13 +507,13 @@ describe('Move', () => {
       ])
 
       const subdir = await cozy.files.statByPath('/parent/dst/dir/subdir')
-      should(await helpers.pouch.byRemoteIdAsync(subdir._id))
+      should(await helpers.pouch.byRemoteId(subdir._id))
         .have.propertyByPath('remote', '_rev')
         .eql(subdir._rev)
     })
 
     it('from remote client', async () => {
-      const was = await pouch.byRemoteIdAsync(dir._id)
+      const was = await pouch.byRemoteId(dir._id)
       await helpers._remote.moveAsync(
         {
           ...was,
@@ -583,7 +583,7 @@ describe('Move', () => {
       // We don't want the calls made above to show up in our expectations
       helpers.resetPouchSpy()
 
-      const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
+      const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
       const doc = builders
         .metadir()
         .path('parent/dst/dir')
@@ -653,7 +653,7 @@ describe('Move', () => {
       // parents which get completely erased from the Cozy since they're empty
       // when we finally trash them.
       it('trashes the folder content on the remote Cozy', async () => {
-        const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
+        const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
         const doc = builders
           .metadir()
           .path('.system-tmp-cozy-drive/dir')
@@ -692,7 +692,7 @@ describe('Move', () => {
 
       context('after a previous local move', () => {
         beforeEach(async () => {
-          const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
+          const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
           const doc = builders
             .metadir(oldFolder)
             .path('parent/dst/dir')
@@ -708,7 +708,7 @@ describe('Move', () => {
         // child moves rather than deletions and child moves are not applied (we
         // move their parent instead).
         it('trashes the folder content on the remote Cozy', async () => {
-          const oldFolder = await pouch.byRemoteIdMaybeAsync(dir._id)
+          const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
           const doc = builders
             .metadir(oldFolder)
             .path('.system-tmp-cozy-drive/dir')
@@ -802,7 +802,7 @@ describe('Move', () => {
           'parent/src/dir/subdir/',
           'parent/src/dir/subdir/file'
         ])
-        const was = await pouch.byRemoteIdAsync(dir._id)
+        const was = await pouch.byRemoteId(dir._id)
         await helpers._remote.moveAsync(
           {
             ...was,
@@ -880,7 +880,7 @@ describe('Move', () => {
         ])
         await cozy.files.updateById(file._id, 'updated file content', {})
         await helpers.remote.pullChanges()
-        const was = await pouch.byRemoteIdAsync(dir._id)
+        const was = await pouch.byRemoteId(dir._id)
         await helpers._remote.moveAsync(
           {
             ...was,
@@ -968,7 +968,7 @@ describe('Move', () => {
           'parent/src/dir/subdir/',
           'parent/src/dir/subdir/file'
         ])
-        const was = await pouch.byRemoteIdAsync(dir._id)
+        const was = await pouch.byRemoteId(dir._id)
         await helpers._remote.moveAsync(
           {
             ...was,

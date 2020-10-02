@@ -22,10 +22,6 @@ type OverwriteState = {
   }
 }
 
-type PouchFunctions = {
-  byIdMaybeAsync: (string) => Promise<?Metadata>
-}
-
 type OverwriteOptions = {
   state: {
     [typeof STEP_NAME]: OverwriteState

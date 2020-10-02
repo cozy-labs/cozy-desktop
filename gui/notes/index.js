@@ -32,7 +32,7 @@ const localDoc = async (
   { config, pouch } /*: { config: Config, pouch: Pouch } */
 ) /*: Promise<Metadata> */ => {
   const relPath = path.relative(config.syncPath, filePath)
-  const doc = await pouch.byIdMaybeAsync(metadata.id(relPath))
+  const doc = await pouch.byIdMaybe(metadata.id(relPath))
   if (!doc || doc.deleted) {
     throw new CozyDocumentMissingError({
       cozyURL: config.cozyUrl,

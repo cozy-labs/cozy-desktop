@@ -190,11 +190,12 @@ describe('Local', function() {
 
   describe('fileExistsLocally', () =>
     it('checks file existence as a binary in the db and on disk', async function() {
-      let filePath = path.resolve(this.syncPath, 'folder', 'testfile')
-      let exist = await this.local.fileExistsLocallyAsync('deadcafe')
-      exist.should.not.be.ok()
+      const filePath = path.resolve(this.syncPath, 'folder', 'testfile')
+      await should(this.local.fileExistsLocally('deadcafe')).be.fulfilledWith(
+        false
+      )
       fse.ensureFileSync(filePath)
-      let doc = {
+      const doc = {
         _id: 'folder/testfile',
         path: 'folder/testfile',
         docType: 'file',
@@ -205,8 +206,9 @@ describe('Local', function() {
         }
       }
       this.pouch.db.put(doc)
-      exist = await this.local.fileExistsLocallyAsync('deadcafe')
-      exist.should.be.equal(filePath)
+      await should(this.local.fileExistsLocally('deadcafe')).be.fulfilledWith(
+        filePath
+      )
     }))
 
   describe('addFile', function() {
@@ -233,15 +235,15 @@ describe('Local', function() {
     })
 
     it('creates the file from another file with same checksum', async function() {
-      let doc = {
+      const doc = {
         path: 'files/file-with-same-checksum',
         updated_at: new Date('2015-10-09T04:05:07Z'),
         md5sum: 'qwesux5JaAGTet+nckJL9w=='
       }
-      let alt = syncDir.abspath('files/my-checkum-is-456')
+      const alt = syncDir.abspath('files/my-checkum-is-456')
       fse.writeFileSync(alt, 'foo bar baz')
-      let stub = sinon.stub(this.local, 'fileExistsLocally').yields(null, alt)
-      let filePath = syncDir.abspath(doc.path)
+      const stub = sinon.stub(this.local, 'fileExistsLocally').resolves(alt)
+      const filePath = syncDir.abspath(doc.path)
       await this.local.addFileAsync(doc)
       stub.restore()
       stub.calledWith(doc.md5sum).should.be.true()
@@ -249,10 +251,10 @@ describe('Local', function() {
         .statSync(filePath)
         .isFile()
         .should.be.true()
-      let content = fse.readFileSync(filePath, { encoding: 'utf-8' })
-      content.should.equal('foo bar baz')
-      let mtime = +fse.statSync(filePath).mtime
-      mtime.should.equal(+doc.updated_at)
+      await should(
+        fse.readFile(filePath, { encoding: 'utf-8' })
+      ).be.fulfilledWith('foo bar baz')
+      should(+(await fse.stat(filePath)).mtime).equal(+doc.updated_at)
     })
 
     it('can create a file in the root', async function() {

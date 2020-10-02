@@ -77,7 +77,7 @@ describe('Sync gets interrupted, initialScan occurs', () => {
       await helpers.local.syncDir.outputFile(path, 'original content')
       await helpers.flushLocalAndSyncAll()
 
-      const doc = await this.pouch.byIdMaybeAsync(_id)
+      const doc = await this.pouch.byIdMaybe(_id)
       await cozy.files.updateById(doc.remote._id, 'remote content', {
         contentType: 'text/plain'
       })

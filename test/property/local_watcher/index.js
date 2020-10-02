@@ -51,7 +51,7 @@ describe('Local watcher', function() {
       expected = expected.map(item => item.replace(/\/$/, ''))
       expected = expected.map(item => path.normalize(id(item)))
       expected = expected.sort((a, b) => a.localeCompare(b))
-      let actual = await state.pouchdb.treeAsync()
+      let actual = await state.pouchdb.tree()
       actual = actual.filter(item => !item.startsWith('_design/'))
       actual = actual.sort((a, b) => a.localeCompare(b))
       should(actual).deepEqual(expected)
@@ -72,7 +72,7 @@ describe('Local watcher', function() {
           referenced = (stats.mode & fs.constants.S_IWGRP) !== 0
         }
         if (referenced) {
-          const doc = await state.pouchdb.byIdMaybeAsync(id(relpath))
+          const doc = await state.pouchdb.byIdMaybe(id(relpath))
           should(doc.remote).be.equal(stats.ino)
         }
       }

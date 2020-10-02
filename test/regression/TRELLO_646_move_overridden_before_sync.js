@@ -35,7 +35,7 @@ describe('TRELLO #646: Déplacement écrasé avant synchro (malgré la synchro p
   it('is broken', async function() {
     this.timeout(30000)
     const pouchTree = async () =>
-      _.chain(await this.pouch.byRecursivePathAsync(''))
+      _.chain(await this.pouch.byRecursivePath(''))
         .map('_id')
         .sort()
         .value()

@@ -219,14 +219,14 @@ describe('Update file', () => {
         .create()
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
-      const was = await pouch.byRemoteIdMaybeAsync(file._id)
+      const was = await pouch.byRemoteIdMaybe(file._id)
 
       const doc = _.defaults({ ino: was.ino + 1 }, was)
       metadata.updateLocal(doc)
       await prep.updateFileAsync('local', doc)
 
       await helpers.syncAll()
-      should(await pouch.byRemoteIdMaybeAsync(file._id))
+      should(await pouch.byRemoteIdMaybe(file._id))
         .have.propertyByPath('remote', '_rev')
         .not.eql(was.remote._rev)
 
@@ -246,7 +246,7 @@ describe('Update file', () => {
         .create()
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
-      const was = await pouch.byRemoteIdMaybeAsync(file._id)
+      const was = await pouch.byRemoteIdMaybe(file._id)
       should(was).have.property('updated_at', '2018-05-15T21:01:53.000Z')
 
       await prep.updateFileAsync(
@@ -260,7 +260,7 @@ describe('Update file', () => {
         )
       )
       await helpers.syncAll()
-      const doc = await pouch.byRemoteIdMaybeAsync(file._id)
+      const doc = await pouch.byRemoteIdMaybe(file._id)
       should(doc.errors).be.undefined()
     })
   })

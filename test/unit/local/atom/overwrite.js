@@ -42,7 +42,7 @@ describe('core/local/atom/overwrite', () => {
       inputChannel = new Channel()
       outputChannel = overwrite.loop(inputChannel, {
         pouch: {
-          byIdMaybeAsync: async id => _.cloneDeep(docs[id])
+          byIdMaybe: async id => _.cloneDeep(docs[id])
         },
         state: overwrite.initialState()
       })

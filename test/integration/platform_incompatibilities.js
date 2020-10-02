@@ -267,7 +267,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     // Simulate local move
-    const dir = await helpers.pouch.byRemoteIdAsync(remoteDocs['dir/']._id)
+    const dir = await helpers.pouch.byRemoteId(remoteDocs['dir/']._id)
     const dir2 = metadata.buildDir('dir2', {
       atime: new Date(),
       mtime: new Date(),
@@ -303,7 +303,7 @@ describe('Platform incompatibilities', () => {
 
     // Simulate remote move
     const remoteDoc /*: RemoteDoc */ = remoteDocs['dir/']
-    const dir = await helpers.pouch.byRemoteIdAsync(remoteDoc._id)
+    const dir = await helpers.pouch.byRemoteId(remoteDoc._id)
     const newRemoteDoc = {
       ...remoteDoc,
       _rev: '2-xxxxxx',

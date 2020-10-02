@@ -69,7 +69,7 @@ describe('Conflict resolution', () => {
 
       // Update file remotely
       const remoteFile = await cozy.files.statByPath('/concurrent-edited')
-      await helpers.pouch.byRemoteIdMaybeAsync(remoteFile._id)
+      await helpers.pouch.byRemoteIdMaybe(remoteFile._id)
       await cozy.files.updateById(remoteFile._id, 'remote-content', {
         contentType: 'text/plain'
       })
@@ -128,7 +128,7 @@ describe('Conflict resolution', () => {
         'local update'
       )
       remoteFile = await cozy.files.statByPath(`/concurrent-edited`)
-      pouchFile = await helpers.pouch.byRemoteIdMaybeAsync(remoteFile._id)
+      pouchFile = await helpers.pouch.byRemoteIdMaybe(remoteFile._id)
       await cozy.files.updateById(remoteFile._id, 'remote update', {
         contentType: 'text/plain'
       })

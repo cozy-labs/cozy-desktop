@@ -58,57 +58,32 @@ class Pouch {
     this.db = new PouchDB(this.config.dbPath)
     this.db.setMaxListeners(100)
     this.db.on('error', err => log.warn(err))
-    this.updater = async.queue((task, callback) => {
-      return this.db.get(task._id, (err, doc) => {
-        if (err && err.status === 404) {
-          return this.db.put(task, callback)
-        } else if (err) {
-          return callback(err)
-        } else {
-          task._rev = doc._rev
-          return this.db.put(task, callback)
-        }
-      })
+    this.updater = async.queue(async task => {
+      const taskDoc = await this.byIdMaybe(task._id)
+      if (taskDoc) return this.db.put({ ...task, _rev: taskDoc._rev })
+      else return this.db.put(task)
     })
 
     autoBind(this)
-    Promise.promisifyAll(this)
   }
 
-  /*::
-  resetDatabaseAsync: () => Promise<*>
-  byPathAsync: (string) => Promise<Metadata>
-  byChecksumAsync: (string) => Promise<Metadata[]>
-  byRecursivePathAsync: (string) => Promise<*>
-  byRemoteIdAsync: (id: string) => Promise<*>
-  byRemoteIdMaybeAsync: (id: string) => Promise<*>
-  addAllViewsAsync: () => Promise<*>
-  getPreviousRevAsync: (id: string, revDiff: number) => Promise<Metadata>
-  getLocalSeqAsync: () => Promise<number>
-  setLocalSeqAsync: (number) => Promise<*>
-  getRemoteSeqAsync: () => string
-  setRemoteSeqAsync: (seq: string) => Promise<*>
-  treeAsync: () => Promise<Array<string>>
-  */
-
   // Create database and recreate all filters
-  resetDatabase(callback) {
-    this.db.destroy(() => {
-      fse.ensureDirSync(this.config.dbPath)
-      this.db = new PouchDB(this.config.dbPath)
-      this.db.setMaxListeners(100)
-      this.db.on('error', err => log.warn(err))
-      return this.addAllViews(callback)
-    })
+  async resetDatabase() {
+    await this.db.destroy()
+    await fse.ensureDir(this.config.dbPath)
+    this.db = new PouchDB(this.config.dbPath)
+    this.db.setMaxListeners(100)
+    this.db.on('error', err => log.warn(err))
+    return this.addAllViews()
   }
 
   lock(component /*: * */) /*: Promise<Function> */ {
     const id = this.nextLockId++
     if (typeof component !== 'string') component = component.constructor.name
     log.trace({ component, lock: { id, state: 'requested' } }, 'lock requested')
-    let pCurrent = this._lock.promise
+    const pCurrent = this._lock.promise
     let _resolve
-    let pReleased = new Promise(resolve => {
+    const pReleased = new Promise(resolve => {
       _resolve = resolve
     })
     this._lock = { id, promise: pCurrent.then(() => pReleased) }
@@ -212,65 +187,49 @@ class Pouch {
   }
 
   // Run a query and get all the results
-  getAll(query, params, callback) {
-    if (typeof params === 'function') {
-      callback = params
-      params = { include_docs: true }
-    }
-    // XXX Pouchdb does sometimes send us undefined values in docs.
-    // It's rare and we didn't find a way to extract a proper test case.
-    // So, we keep a workaround and hope that this bug will be fixed.
-    this.db.query(query, params, function(err, res) {
-      if (err) {
-        return callback(err)
-      } else {
-        let docs = Array.from(res.rows)
-          .filter(row => row.doc != null)
-          .map(row => row.doc)
-        return callback(null, docs)
-      }
-    })
+  async getAll(query, params = { include_docs: true }) {
+    const { rows } = await this.db.query(query, params)
+
+    return rows.filter(row => row.doc != null).map(row => row.doc)
   }
 
   // Get current revision for multiple docs by ids as an index id => rev
   // non-existing documents will not be added to the index
-  async getAllRevsAsync(ids) {
+  async getAllRevs(ids) {
     const result = await this.db.allDocs({ keys: ids })
     const index = {}
     for (let row of result.rows) if (row.value) index[row.key] = row.value.rev
     return index
   }
 
-  async byIdMaybeAsync(id /*: string */) /*: Promise<?Metadata> */ {
-    let doc
+  async byIdMaybe(id /*: string */) /*: Promise<?Metadata> */ {
     try {
-      doc = await this.db.get(id)
+      return await this.db.get(id)
     } catch (err) {
       if (err.status !== 404) throw err
     }
-    return doc
   }
 
   // Return all the files with this checksum
-  byChecksum(checksum, callback) {
+  byChecksum(checksum) {
     let params = {
       key: checksum,
       include_docs: true
     }
-    return this.getAll('byChecksum', params, callback)
+    return this.getAll('byChecksum', params)
   }
 
   // Return all the files and folders in this path, only at first level
-  byPath(basePath, callback) {
+  byPath(basePath) {
     const params = {
       key: basePath === '' ? basePath : basePath + path.sep,
       include_docs: true
     }
-    return this.getAll('byPath', params, callback)
+    return this.getAll('byPath', params)
   }
 
   // Return all the files and folders in this path, even in subfolders
-  byRecursivePath(basePath, callback) {
+  byRecursivePath(basePath) {
     let params
     if (basePath === '') {
       params = { include_docs: true }
@@ -281,35 +240,31 @@ class Pouch {
         include_docs: true
       }
     }
-    return this.getAll('byPath', params, callback)
+    return this.getAll('byPath', params)
   }
 
   // Return the file/folder with this remote id
-  byRemoteId(id, callback) {
-    let params = {
+  async byRemoteId(id) {
+    const params = {
       key: id,
       include_docs: true
     }
-    this.db.query('byRemoteId', params, function(err, res) {
-      if (err) {
-        return callback(err)
-      } else if (res.rows.length === 0) {
-        // eslint-disable-next-line standard/no-callback-literal
-        return callback({ status: 404, message: 'missing' })
-      } else {
-        return callback(null, res.rows[0].doc)
-      }
-    })
+    const { rows } = await this.db.query('byRemoteId', params)
+    if (rows.length === 0) {
+      throw { status: 404, message: 'missing' }
+    } else {
+      return rows[0].doc
+    }
   }
 
-  byRemoteIdMaybe(id, callback) {
-    this.byRemoteId(id, (err, was) => {
+  async byRemoteIdMaybe(id) {
+    try {
+      return await this.byRemoteId(id)
+    } catch (err) {
       if (err && err.status !== 404) {
-        callback(err)
-      } else {
-        callback(null, was)
+        throw err
       }
-    })
+    }
   }
 
   async allByRemoteIds(remoteIds /*: * */) /* Promise<Metadata[]> */ {
@@ -321,171 +276,164 @@ class Pouch {
   /* Views */
 
   // Create all required views in the database
-  addAllViews(callback) {
-    return async.series(
-      [this.addByPathView, this.addByChecksumView, this.addByRemoteIdView],
-      err => callback(err)
-    )
+  addAllViews() {
+    return new Promise((resolve, reject) => {
+      async.series(
+        [this.addByPathView, this.addByChecksumView, this.addByRemoteIdView],
+        err => {
+          if (err) reject(err)
+          else resolve()
+        }
+      )
+    })
   }
 
   // Create a view to list files and folders inside a path
   // The path for a file/folder in root will be '',
   // not '.' as with node's path.dirname
-  addByPathView(callback) {
+  async addByPathView() {
     const sep = JSON.stringify(path.sep)
-    let query = `
-      function (doc) {
-        if ('docType' in doc) {
-          const parts = doc._id.split(${sep})
-          parts.pop()
-          const basePath = parts.concat('').join(${sep})
-          return emit(basePath, {_id: doc._id})
-        }
+    const query = `function(doc) {
+      if ('docType' in doc) {
+        const parts = doc._id.split(${sep})
+        parts.pop()
+        const basePath = parts.concat('').join(${sep})
+        return emit(basePath, { _id: doc._id })
       }
-    `
-    return this.createDesignDoc('byPath', query, callback)
+    }`
+    await this.createDesignDoc('byPath', query)
   }
 
   // Create a view to find files by their checksum
-  addByChecksumView(callback) {
+  async addByChecksumView() {
     /* !pragma no-coverage-next */
     /* istanbul ignore next */
-    let query = function(doc) {
+    const query = function(doc) {
       if ('md5sum' in doc) {
         // $FlowFixMe
         return emit(doc.md5sum) // eslint-disable-line no-undef
       }
     }.toString()
-    return this.createDesignDoc('byChecksum', query, callback)
+    await this.createDesignDoc('byChecksum', query)
   }
 
   // Create a view to find file/folder by their _id on a remote cozy
-  addByRemoteIdView(callback) {
+  async addByRemoteIdView() {
     /* !pragma no-coverage-next */
     /* istanbul ignore next */
-    let query = function(doc) {
+    const query = function(doc) {
       if ('remote' in doc) {
         // $FlowFixMe
         return emit(doc.remote._id) // eslint-disable-line no-undef
       }
     }.toString()
-    return this.createDesignDoc('byRemoteId', query, callback)
+    await this.createDesignDoc('byRemoteId', query)
   }
 
   // Create or update given design doc
-  createDesignDoc(name, query, callback) {
-    let doc = {
+  async createDesignDoc(name, query) {
+    const doc = {
       _id: `_design/${name}`,
-      views: {}
-    }
-    doc.views[name] = { map: query }
-    this.db.get(doc._id, (_, designDoc) => {
-      if (designDoc != null) {
-        // $FlowFixMe
-        doc._rev = designDoc._rev
-        if (isEqual(doc, designDoc)) {
-          return callback()
-        }
+      _rev: null,
+      views: {
+        [name]: { map: query }
       }
-      return this.db.put(doc, function(err) {
-        if (!err) {
-          log.debug(`Design document created: ${name}`)
-        }
-        return callback(err)
-      })
-    })
+    }
+    const designDoc = await this.byIdMaybe(doc._id)
+    if (designDoc) doc._rev = designDoc._rev
+    if (isEqual(doc, designDoc)) {
+      return
+    } else {
+      await this.db.put(doc)
+      log.debug(`Design document created: ${name}`)
+    }
   }
 
   // Remove a design document for a given docType
-  removeDesignDoc(docType, callback) {
-    let id = `_design/${docType}`
-    this.db.get(id, (err, designDoc) => {
-      if (designDoc != null) {
-        return this.db.remove(id, designDoc._rev, callback)
-      } else {
-        return callback(err)
-      }
-    })
+  async removeDesignDoc(docType) {
+    const id = `_design/${docType}`
+    const designDoc = await this.db.get(id)
+    return this.db.remove(id, designDoc._rev)
   }
 
   /* Helpers */
 
   // Retrieve a previous doc revision from its id
-  getPreviousRev(id, revDiff, callback) {
-    let options = {
+  async getPreviousRev(id, revDiff) {
+    const options = {
       revs: true,
       revs_info: true,
       open_revs: 'all'
     }
-    this.db.get(id, options, (err, infos) => {
-      if (err) {
-        return callback(err)
-      } else {
-        const { ids } = infos[0].ok._revisions
-        const { start } = infos[0].ok._revisions
-        const shortRev = start - revDiff
-        const revId = ids[revDiff]
-        const rev = `${shortRev}-${revId}`
-        return this.db.get(id, { rev }, function(err, doc) {
-          if (err) {
-            log.debug(infos[0].doc)
-          }
-          return callback(err, doc)
-        })
-      }
-    })
+    const [{ ok, doc }] = await this.db.get(id, options)
+    const { ids, start } = ok._revisions
+    const shortRev = start - revDiff
+    const revId = ids[revDiff]
+    const rev = `${shortRev}-${revId}`
+
+    try {
+      return await this.db.get(id, { rev })
+    } catch (err) {
+      log.debug(
+        { path: doc.path, rev, doc },
+        'could fetch fetch previous revision'
+      )
+      throw err
+    }
   }
 
   /* Sequence numbers */
 
   // Get last local replication sequence,
   // ie the last change from pouchdb that have been applied
-  getLocalSeq(callback) {
-    this.db.get('_local/localSeq', function(err, doc) {
-      if (err && err.status === 404) {
-        callback(null, 0)
-      } else {
-        callback(err, doc && doc.seq)
-      }
-    })
+  async getLocalSeq() {
+    const doc = await this.byIdMaybe('_local/localSeq')
+    if (doc) return doc.seq
+    else return 0
   }
 
   // Set last local replication sequence
   // It is saved in PouchDB as a local document
   // See http://pouchdb.com/guides/local-documents.html
-  setLocalSeq(seq, callback) {
-    let task = {
+  setLocalSeq(seq) {
+    const task = {
       _id: '_local/localSeq',
       seq
     }
-    return this.updater.push(task, callback)
+    return new Promise((resolve, reject) => {
+      this.updater.push(task, err => {
+        if (err) reject(err)
+        else resolve()
+      })
+    })
   }
 
   // Get last remote replication sequence,
   // ie the last change from couchdb that have been saved in pouch
-  getRemoteSeq(callback) {
-    this.db.get('_local/remoteSeq', function(err, doc) {
-      if (err && err.status === 404) {
-        callback(null, 0)
-      } else {
-        callback(err, doc && doc.seq)
-      }
-    })
+  async getRemoteSeq() {
+    const doc = await this.byIdMaybe('_local/remoteSeq')
+    if (doc) return doc.seq
+    else return 0
   }
 
   // Set last remote replication sequence
   // It is saved in PouchDB as a local document
   // See http://pouchdb.com/guides/local-documents.html
-  setRemoteSeq(seq, callback) {
-    let task = {
+  setRemoteSeq(seq) {
+    const task = {
       _id: '_local/remoteSeq',
       seq
     }
-    return this.updater.push(task, callback)
+    return new Promise((resolve, reject) => {
+      this.updater.push(task, err => {
+        if (err) reject(err)
+        else resolve()
+      })
+    })
   }
 
   async unsyncedDocIds() {
-    const localSeq = await this.getLocalSeqAsync()
+    const localSeq = await this.getLocalSeq()
     return new Promise((resolve, reject) => {
       this.db
         .changes({
@@ -510,11 +458,9 @@ class Pouch {
     )
   }
 
-  tree(callback) {
-    this.db.allDocs((err, result) => {
-      if (err) return callback(err)
-      callback(null, result.rows.map(row => row.id).sort())
-    })
+  tree() {
+    const { rows } = this.db.allDocs()
+    return rows.map(row => row.id).sort()
   }
 }
 

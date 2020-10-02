@@ -19,20 +19,16 @@ onPlatform('darwin', () => {
     let builders
 
     before('instanciate config', configHelpers.createConfig)
-    before('instanciate pouch', pouchHelpers.createDatabase)
+    beforeEach('instanciate pouch', pouchHelpers.createDatabase)
 
     beforeEach('set up builders', function() {
       builders = new Builders({ pouch: this.pouch })
     })
 
-    after('clean pouch', pouchHelpers.cleanDatabase)
+    afterEach('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
 
     describe('.detectOfflineUnlinkEvents()', function() {
-      beforeEach('reset pouchdb', function(done) {
-        this.pouch.resetDatabase(done)
-      })
-
       it('detects deleted files and folders', async function() {
         // Folder still exists
         const folder1 = {

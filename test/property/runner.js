@@ -36,7 +36,7 @@ async function step(state /*: Object */, op /*: Object */) {
         syncPath: state.dir.root
       }
       state.pouchdb = new Pouch(state.config)
-      await state.pouchdb.addAllViewsAsync()
+      await state.pouchdb.addAllViews()
     // break omitted intentionally
     case 'restart_watcher':
       {
@@ -139,7 +139,7 @@ async function step(state /*: Object */, op /*: Object */) {
             stats = await fse.stat(abspath)
           }
           release = await state.pouchdb.lock('test')
-          const doc = await state.pouchdb.byIdMaybeAsync(id(op.path))
+          const doc = await state.pouchdb.byIdMaybe(id(op.path))
           if (doc && !doc.sides.remote) {
             doc.sides.remote = doc.sides.local + 1
             doc.remote = stats.ino

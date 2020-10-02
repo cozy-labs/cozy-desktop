@@ -99,7 +99,7 @@ class RemoteWatcher {
 
   async watch() {
     try {
-      const seq = await this.pouch.getRemoteSeqAsync()
+      const seq = await this.pouch.getRemoteSeq()
       const { last_seq, docs } = await this.remoteCozy.changes(seq)
       this.events.emit('online')
 
@@ -117,7 +117,7 @@ class RemoteWatcher {
         target = (await this.pouch.db.changes({ limit: 1, descending: true }))
           .last_seq
         this.events.emit('sync-target', target)
-        await this.pouch.setRemoteSeqAsync(last_seq)
+        await this.pouch.setRemoteSeq(last_seq)
       } finally {
         release()
         this.events.emit('remote-end')
@@ -446,9 +446,7 @@ class RemoteWatcher {
             'file was moved or renamed remotely'
           )
           if (change.needRefetch) {
-            change.was = await this.pouch.byRemoteIdMaybeAsync(
-              change.was.remote._id
-            )
+            change.was = await this.pouch.byRemoteIdMaybe(change.was.remote._id)
             change.was.childMove = false
           }
           await this.prep.moveFileAsync(sideName, change.doc, change.was)
@@ -463,7 +461,7 @@ class RemoteWatcher {
               'folder was moved or renamed remotely'
             )
             if (change.needRefetch) {
-              change.was = await this.pouch.byRemoteIdMaybeAsync(
+              change.was = await this.pouch.byRemoteIdMaybe(
                 change.was.remote._id
               )
               change.was.childMove = false

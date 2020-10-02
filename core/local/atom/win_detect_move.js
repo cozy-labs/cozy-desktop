@@ -107,7 +107,7 @@ async function findDeletedInoById(
   id,
   pouch
 ) /*: Promise<?{ deletedIno: ?number|string }> */ {
-  const doc /*: ?Metadata */ = await pouch.byIdMaybeAsync(id)
+  const doc /*: ?Metadata */ = await pouch.byIdMaybe(id)
   if (doc && !doc.deleted) {
     return { deletedIno: doc.fileid || doc.ino }
   }
@@ -118,7 +118,7 @@ async function findDeletedInoRecentlyRenamed(
   pouch
 ) /*: Promise<?{ deletedIno: ?number|string, oldPaths: string[] }> */ {
   for (const [index, previousPath] of previousPaths.entries()) {
-    const doc /*: ?Metadata */ = await pouch.byIdMaybeAsync(id(previousPath))
+    const doc /*: ?Metadata */ = await pouch.byIdMaybe(id(previousPath))
     if (doc && !doc.deleted) {
       return {
         deletedIno: doc.fileid || doc.ino,

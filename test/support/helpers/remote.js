@@ -39,7 +39,7 @@ class RemoteTestHelpers {
 
   async ignorePreviousChanges() {
     const { last_seq } = await this.side.remoteCozy.changes()
-    await this.pouch.setRemoteSeqAsync(last_seq)
+    await this.pouch.setRemoteSeq(last_seq)
   }
 
   async pullChanges() {

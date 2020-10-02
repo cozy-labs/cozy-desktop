@@ -52,7 +52,7 @@ describe('core/pouch/migrations', function() {
   describe('currentSchemaVersion()', () => {
     context('without schema', () => {
       beforeEach('remove schema', async function() {
-        if (await this.pouch.byIdMaybeAsync(SCHEMA_DOC_ID)) {
+        if (await this.pouch.byIdMaybe(SCHEMA_DOC_ID)) {
           await this.pouch.db.put({ _id: SCHEMA_DOC_ID, _deleted: true })
         }
       })
@@ -96,7 +96,7 @@ describe('core/pouch/migrations', function() {
 
     context('without schema', () => {
       beforeEach('remove schema', async function() {
-        if (await this.pouch.byIdMaybeAsync(SCHEMA_DOC_ID)) {
+        if (await this.pouch.byIdMaybe(SCHEMA_DOC_ID)) {
           await this.pouch.db.put({ _id: SCHEMA_DOC_ID, _deleted: true })
         }
       })
@@ -240,7 +240,7 @@ describe('core/pouch/migrations', function() {
           it('does not save any docs', async function() {
             await migrate(migration, this.pouch)
 
-            const docs = await this.pouch.byRecursivePathAsync('')
+            const docs = await this.pouch.byRecursivePath('')
             const migratedDocs = docs.filter(d => d.migrated)
             should(migratedDocs).be.empty()
           })
@@ -255,7 +255,7 @@ describe('core/pouch/migrations', function() {
 
         context('and some docs needed to be migrated', () => {
           it('runs the migration on all affected docs', async function() {
-            const docs = await this.pouch.byRecursivePathAsync('')
+            const docs = await this.pouch.byRecursivePath('')
 
             await migrate(migration, this.pouch)
             should(migration.run).have.been.calledOnce()
@@ -265,7 +265,7 @@ describe('core/pouch/migrations', function() {
           it('saves the migrated docs', async function() {
             await migrate(migration, this.pouch)
 
-            const docs = await this.pouch.byRecursivePathAsync('')
+            const docs = await this.pouch.byRecursivePath('')
             const migratedDocs = docs.filter(d => d.migrated)
             should(migratedDocs.length).equal(docs.length)
           })
@@ -281,18 +281,16 @@ describe('core/pouch/migrations', function() {
             it('sets the localSeq to the last change seq', async function() {
               const expected = await this.pouch.db.changes({ since: 0 })
               await migrate(migration, this.pouch)
-              await should(this.pouch.getLocalSeqAsync()).be.fulfilledWith(
+              await should(this.pouch.getLocalSeq()).be.fulfilledWith(
                 expected.last_seq
               )
             })
 
             it('does not update the remoteSeq', async function() {
-              const expected = await this.pouch.getRemoteSeqAsync()
+              const expected = await this.pouch.getRemoteSeq()
 
               await migrate(migration, this.pouch)
-              await should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(
-                expected
-              )
+              await should(this.pouch.getRemoteSeq()).be.fulfilledWith(expected)
             })
 
             it('does not prevent synchronizing merged changes', async function() {
@@ -331,12 +329,12 @@ describe('core/pouch/migrations', function() {
             })
 
             it('reverts all changes', async function() {
-              const docs = await this.pouch.byRecursivePathAsync('')
+              const docs = await this.pouch.byRecursivePath('')
 
               await migrate(migration, this.pouch)
-              await should(
-                this.pouch.byRecursivePathAsync('')
-              ).be.fulfilledWith(docs)
+              await should(this.pouch.byRecursivePath('')).be.fulfilledWith(
+                docs
+              )
             })
 
             it('does not update the schema version', async function() {
@@ -351,21 +349,17 @@ describe('core/pouch/migrations', function() {
             })
 
             it('does not update the localSeq', async function() {
-              const expected = await this.pouch.getLocalSeqAsync()
+              const expected = await this.pouch.getLocalSeq()
 
               await migrate(migration, this.pouch)
-              await should(this.pouch.getLocalSeqAsync()).be.fulfilledWith(
-                expected
-              )
+              await should(this.pouch.getLocalSeq()).be.fulfilledWith(expected)
             })
 
             it('does not update the remoteSeq', async function() {
-              const expected = await this.pouch.getRemoteSeqAsync()
+              const expected = await this.pouch.getRemoteSeq()
 
               await migrate(migration, this.pouch)
-              await should(this.pouch.getRemoteSeqAsync()).be.fulfilledWith(
-                expected
-              )
+              await should(this.pouch.getRemoteSeq()).be.fulfilledWith(expected)
             })
           })
         })
@@ -386,7 +380,7 @@ describe('core/pouch/migrations', function() {
     context('with only valid docs', () => {
       let docs
       beforeEach('fetch and update docs', async function() {
-        docs = await this.pouch.byRecursivePathAsync('')
+        docs = await this.pouch.byRecursivePath('')
         docs.forEach(d => {
           d.migrated = true
         })
@@ -402,7 +396,7 @@ describe('core/pouch/migrations', function() {
       it('saves the new version of all documents', async function() {
         await save(docs, this.pouch.db)
 
-        const savedDocs = await this.pouch.byRecursivePathAsync('')
+        const savedDocs = await this.pouch.byRecursivePath('')
         const migratedDocs = savedDocs.filter(d => d.migrated)
         should(migratedDocs.length).equal(savedDocs.length)
       })
@@ -413,7 +407,7 @@ describe('core/pouch/migrations', function() {
 
       let docs
       beforeEach('fetch and update docs', async function() {
-        docs = await this.pouch.byRecursivePathAsync('')
+        docs = await this.pouch.byRecursivePath('')
         docs.forEach((d, index) => {
           d.migrated = true
           if (isCorruptedDoc(index)) d._rev = d._rev.replace(/\d/, '9')
@@ -439,7 +433,7 @@ describe('core/pouch/migrations', function() {
       it('saves the new version of all valid documents', async function() {
         await save(docs, this.pouch.db)
 
-        const maybeMigratedDocs = await this.pouch.byRecursivePathAsync('')
+        const maybeMigratedDocs = await this.pouch.byRecursivePath('')
         maybeMigratedDocs.forEach((md, index) => {
           if (isCorruptedDoc(index)) {
             should(md.migrated).be.undefined()
@@ -456,7 +450,7 @@ describe('core/pouch/migrations', function() {
 
     describe('affectedDocs()', () => {
       it('returns an empty array when all docs have sides.target', async function() {
-        const docs = await this.pouch.byRecursivePathAsync('').map(doc => {
+        const docs = (await this.pouch.byRecursivePath('')).map(doc => {
           doc.sides.target = 2
           return doc
         })
@@ -464,7 +458,7 @@ describe('core/pouch/migrations', function() {
       })
 
       it('returns only docs missing sides.target', async function() {
-        const docs = await this.pouch.byRecursivePathAsync('')
+        const docs = await this.pouch.byRecursivePath('')
         const incompleteDocs = docs.filter((doc, index) => index % 2 === 0)
         docs
           .filter((doc, index) => index % 2 === 1)
@@ -478,7 +472,7 @@ describe('core/pouch/migrations', function() {
 
     describe('run()', () => {
       it('sets sides.target with the short rev extracted from _rev', async function() {
-        const docs = await this.pouch.byRecursivePathAsync('')
+        const docs = await this.pouch.byRecursivePath('')
         const expected = docs.map(doc => ({
           ...doc,
           sides: {

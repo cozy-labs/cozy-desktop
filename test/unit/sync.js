@@ -160,7 +160,7 @@ describe('Sync', function() {
 
     it('waits for and applies available changes', async function() {
       const apply = sinon.stub(this.sync, 'apply')
-      apply.callsFake(change => this.pouch.setLocalSeqAsync(change.seq))
+      apply.callsFake(change => this.pouch.setLocalSeq(change.seq))
 
       const doc1 = {
         _id: 'doc1',
@@ -287,7 +287,7 @@ describe('Sync', function() {
           remote: 4
         }
       })
-      should(await this.pouch.getLocalSeqAsync()).equal(123)
+      should(await this.pouch.getLocalSeq()).equal(123)
     })
 
     it('calls applyDoc for a modified folder', async function() {
@@ -315,7 +315,7 @@ describe('Sync', function() {
           remote: 4
         }
       })
-      should(await this.pouch.getLocalSeqAsync()).equal(124)
+      should(await this.pouch.getLocalSeq()).equal(124)
     })
 
     it('calls addFileAsync for an added file', async function() {
@@ -375,7 +375,7 @@ describe('Sync', function() {
           .data('updated content')
           .create()
 
-        await this.pouch.setLocalSeqAsync(previousSeq)
+        await this.pouch.setLocalSeq(previousSeq)
       })
 
       const applyChange = async function() {
@@ -394,7 +394,7 @@ describe('Sync', function() {
         })
 
         it('saves seq to skip the change', async function() {
-          should(await this.pouch.getLocalSeqAsync()).equal(seq)
+          should(await this.pouch.getLocalSeq()).equal(seq)
         })
       })
     })

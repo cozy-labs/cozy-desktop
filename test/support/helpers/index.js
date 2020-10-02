@@ -184,7 +184,7 @@ class TestHelpers {
   }
 
   async metadataTree() {
-    return _.chain(await this.pouch.byRecursivePathAsync(''))
+    return _.chain(await this.pouch.byRecursivePath(''))
       .map(
         ({ docType, path }) =>
           posixifyPath(path) + (docType === 'folder' ? '/' : '')
@@ -194,7 +194,7 @@ class TestHelpers {
   }
 
   async incompatibleTree() {
-    return _.chain(await this.pouch.byRecursivePathAsync(''))
+    return _.chain(await this.pouch.byRecursivePath(''))
       .filter(doc => doc.incompatibilities)
       .map(
         ({ docType, path }) =>

@@ -2,16 +2,14 @@ const { assignId } = require('../../../core/metadata')
 const { Pouch } = require('../../../core/pouch')
 
 module.exports = {
-  createDatabase(done) {
+  async createDatabase() {
     this.pouch = new Pouch(this.config)
-    return this.pouch.addAllViews(done)
+    await this.pouch.addAllViews()
   },
 
-  cleanDatabase(done) {
-    this.pouch.db.destroy(() => {
-      this.pouch = null
-      done()
-    })
+  async cleanDatabase() {
+    await this.pouch.db.destroy()
+    this.pouch = null
   },
 
   createParentFolder(pouch) {
