@@ -659,25 +659,26 @@ describe('remote.Remote', function() {
       let newDir /*: RemoteDoc */
 
       beforeEach(async () => {
-        const remoteDoc /*: RemoteDoc */ = await builders
-          .remoteFile()
-          .name('cat6.jpg')
-          .data('meow')
-          .create()
-        old = metadata.fromRemoteDoc(remoteDoc)
-        doc = _.defaults(
-          {
-            path: path.normalize('moved-to/cat7.jpg'),
-            name: 'cat7.jpg',
-            remote: undefined
-          },
-          old
-        )
         newDir = await builders
           .remoteDir()
           .name('moved-to')
           .inRootDir()
           .create()
+        const remoteDoc /*: RemoteDoc */ = await builders
+          .remoteFile()
+          .name('cat6.jpg')
+          .data('meow')
+          .create()
+        old = builders
+          .metafile()
+          .fromRemote(remoteDoc)
+          .moveTo('moved-to/cat7.jpg')
+          .build()
+        doc = builders
+          .metafile()
+          .moveFrom(old)
+          .path('moved-to/cat7.jpg')
+          .build()
       })
 
       it('moves the file', async function() {
@@ -746,28 +747,25 @@ describe('remote.Remote', function() {
 
       it('adds a folder to the Cozy if the folder does not exist', async function() {
         const couchdbFolder = await cozy.files.statByPath('/couchdb-folder')
-        const created = await cozy.files.createDirectory({
-          name: 'folder-6',
-          dirID: couchdbFolder._id,
-          createdAt: '2018-01-02T05:31:30.564Z',
-          updatedAt: '2018-01-02T05:31:30.564Z'
-        })
-        const doc = {
-          path: path.join('couchdb-folder', 'folder-7'),
-          docType: 'folder',
-          createdAt: created.createdAt,
-          updated_at: '2018-07-31T05:37:43.770Z'
-        }
-        const old = {
-          path: path.join('couchdb-folder', 'folder-6'),
-          docType: 'folder',
-          createdAt: created.createdAt,
-          updatedAt: created.updatedAt,
-          remote: {
-            _id: created._id,
-            _rev: created._rev
-          }
-        }
+        const created = await builders
+          .remoteDir()
+          .name('folder-6')
+          .inDir({ _id: couchdbFolder._id, path: '/couchdb-folder' })
+          .createdAt(2018, 1, 2, 5, 31, 30, 564)
+          .updatedAt(2018, 1, 2, 5, 31, 30, 564)
+          .create()
+        const old = builders
+          .metadir()
+          .fromRemote(created)
+          .moveTo('couchdb-folder/folder-7')
+          .build()
+        const doc = builders
+          .metadir()
+          .moveFrom(old)
+          .path('couchdb-folder/folder-7')
+          .updatedAt('2018-07-31T05:37:43.770Z')
+          .build()
+
         await this.remote.moveAsync(doc, old)
         // $FlowFixMe
         const folder = await cozy.files.statById(doc.remote._id)
@@ -811,17 +809,18 @@ describe('remote.Remote', function() {
           .name('cat6.jpg')
           .data('meow')
           .create()
-        old = metadata.fromRemoteDoc(remote2)
+        old = builders
+          .metafile()
+          .fromRemote(remote2)
+          .moveTo('moved-to/cat7.jpg')
+          .build()
 
-        doc = _.defaults(
-          {
-            path: path.normalize('moved-to/cat7.jpg'),
-            name: 'cat7.jpg',
-            overwrite: existing,
-            remote: undefined
-          },
-          old
-        )
+        doc = builders
+          .metafile()
+          .moveFrom(old)
+          .path('moved-to/cat7.jpg')
+          .overwrite(existing)
+          .build()
       })
 
       it('moves the file', async function() {

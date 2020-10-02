@@ -57,9 +57,18 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  moveTo(path /*: string */) /*: this */ {
+    this.doc.moveTo = metadata.id(path)
+    this.doc._deleted = true
+    return this
+  }
+
   moveFrom(was /*: Metadata */) /*: this */ {
-    this.doc.moveFrom = _.defaultsDeep({ moveTo: this.doc._id }, was)
-    this.noRev()
+    if (!was.moveTo) throw new Error('Missing moveTo attribute on was')
+
+    this.doc = _.cloneDeep(_.omit(was, ['_id', '_rev', '_deleted', 'moveTo']))
+    this.doc.moveFrom = was
+
     return this
   }
 
