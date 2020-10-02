@@ -114,12 +114,12 @@ class Remote /*:: implements Reader, Writer */ {
     const parent /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(
       parentPath
     )
-    let dir /*: RemoteDoc */
 
     try {
-      dir = await this.remoteCozy.createDirectory(
+      const dir = await this.remoteCozy.createDirectory(
         newDocumentAttributes(name, parent._id, doc.updated_at)
       )
+      doc.remote = dir
     } catch (err) {
       if (err.status !== 409) {
         throw err
@@ -127,12 +127,8 @@ class Remote /*:: implements Reader, Writer */ {
 
       log.info({ path }, 'Folder already exists')
       const remotePath = '/' + posix.join(...doc.path.split(sep))
-      dir = await this.remoteCozy.findDirectoryByPath(remotePath)
-    }
-
-    doc.remote = {
-      _id: dir._id,
-      _rev: dir._rev
+      const dir = await this.remoteCozy.findDirectoryByPath(remotePath)
+      doc.remote = dir
     }
   }
 
@@ -163,11 +159,7 @@ class Remote /*:: implements Reader, Writer */ {
       contentLength: doc.size,
       contentType: doc.mime
     })
-
-    doc.remote = {
-      _id: created._id,
-      _rev: created._rev
-    }
+    doc.remote = created
 
     stopMeasure()
   }
@@ -220,8 +212,7 @@ class Remote /*:: implements Reader, Writer */ {
       stream,
       options
     )
-
-    doc.remote._rev = updated._rev
+    doc.remote = updated
   }
 
   async updateFileMetadataAsync(
@@ -243,11 +234,7 @@ class Remote /*:: implements Reader, Writer */ {
       attrs,
       opts
     )
-
-    doc.remote = {
-      _id: updated._id,
-      _rev: updated._rev
-    }
+    doc.remote = updated
   }
 
   async updateFolderAsync(
@@ -264,7 +251,6 @@ class Remote /*:: implements Reader, Writer */ {
     const newParentDir = await this.remoteCozy.findDirectoryByPath(
       newParentDirPath
     )
-    let newRemoteDoc /*: RemoteDoc */
 
     const attrs = {
       name: newName,
@@ -276,25 +262,22 @@ class Remote /*:: implements Reader, Writer */ {
     }
 
     try {
-      newRemoteDoc = await this.remoteCozy.updateAttributesById(
+      const newRemoteDoc = await this.remoteCozy.updateAttributesById(
         old.remote._id,
         attrs,
         opts
       )
+      doc.remote = newRemoteDoc
     } catch (err) {
       if (err.status !== 404) {
         throw err
       }
 
       log.warn({ path }, "Directory doesn't exist anymore. Recreating it...")
-      newRemoteDoc = await this.remoteCozy.createDirectory(
+      const newRemoteDoc = await this.remoteCozy.createDirectory(
         newDocumentAttributes(newName, newParentDir._id, doc.updated_at)
       )
-    }
-
-    doc.remote = {
-      _id: newRemoteDoc._id,
-      _rev: newRemoteDoc._rev
+      doc.remote = newRemoteDoc
     }
   }
 
@@ -332,25 +315,19 @@ class Remote /*:: implements Reader, Writer */ {
       await this.trashAsync(overwrite)
     }
 
-    const newRemoteDoc /*: RemoteDoc */ = await this.remoteCozy.updateAttributesById(
+    const newRemoteDoc = await this.remoteCozy.updateAttributesById(
       oldMetadata.remote._id,
       attrs,
       opts
     )
-    newMetadata.remote = {
-      _id: newRemoteDoc._id, // XXX: Why do we reassign id? Isn't it the same as before?
-      _rev: newRemoteDoc._rev
-    }
+    newMetadata.remote = newRemoteDoc
 
     if (overwrite && isOverwritingTarget) {
       const referencedBy = await this.remoteCozy.getReferencedBy(
         overwrite.remote._id
       )
-      const { _rev } = await this.remoteCozy.addReferencedBy(
-        newRemoteDoc._id,
-        referencedBy
-      )
-      newMetadata.remote._rev = _rev
+      await this.remoteCozy.addReferencedBy(newRemoteDoc._id, referencedBy)
+      await this.assignNewRemote(newMetadata)
     }
   }
 
@@ -370,7 +347,7 @@ class Remote /*:: implements Reader, Writer */ {
       }
       throw err
     }
-    doc.remote._rev = newRemoteDoc._rev
+    doc.remote = newRemoteDoc
   }
 
   async deleteFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
@@ -392,10 +369,10 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async assignNewRev(doc /*: Metadata */) /*: Promise<void> */ {
-    log.info({ path: doc.path }, 'Assigning new rev...')
-    const { _rev } = await this.remoteCozy.client.files.statById(doc.remote._id)
-    doc.remote._rev = _rev
+  async assignNewRemote(doc /*: Metadata */) /*: Promise<void> */ {
+    log.info({ path: doc.path }, 'Assigning new remote...')
+    const newRemoteDoc = await this.remoteCozy.find(doc.remote._id)
+    doc.remote = newRemoteDoc
   }
 
   diskUsage() /*: Promise<*> */ {

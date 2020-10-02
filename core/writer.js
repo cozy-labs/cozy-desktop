@@ -17,7 +17,7 @@ export interface Writer {
   updateFileMetadataAsync (doc: Metadata, old: Metadata): Promise<void>;
   updateFolderAsync (doc: Metadata, old: Metadata): Promise<void>;
   moveAsync (doc: Metadata, from: Metadata): Promise<void>;
-  assignNewRev (doc: Metadata): Promise<void>;
+  assignNewRemote (doc: Metadata): Promise<void>;
   trashAsync (doc: Metadata): Promise<void>;
   deleteFolderAsync (doc: Metadata): Promise<void>;
 }

@@ -1896,10 +1896,7 @@ describe('RemoteWatcher', function() {
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
-        remote: {
-          _id: remoteDoc._id,
-          _rev: remoteDoc._rev
-        }
+        remote: remoteDoc
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
@@ -1927,10 +1924,7 @@ describe('RemoteWatcher', function() {
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
-        remote: {
-          _id: remoteDoc._id,
-          _rev: remoteDoc._rev
-        }
+        remote: remoteDoc
       })
     })
 
@@ -1957,10 +1951,7 @@ describe('RemoteWatcher', function() {
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
-        remote: {
-          _id: remoteDoc._id,
-          _rev: remoteDoc._rev
-        }
+        remote: remoteDoc
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
@@ -1989,10 +1980,7 @@ describe('RemoteWatcher', function() {
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
-        remote: {
-          _id: remoteDoc._id,
-          _rev: remoteDoc._rev
-        }
+        remote: remoteDoc
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
@@ -2026,10 +2014,7 @@ describe('RemoteWatcher', function() {
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
-        remote: {
-          _id: remoteDoc._id,
-          _rev: remoteDoc._rev
-        }
+        remote: remoteDoc
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })

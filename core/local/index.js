@@ -354,8 +354,8 @@ class Local /*:: implements Reader, Writer */ {
     await this.addFolderAsync(doc)
   }
 
-  async assignNewRev(doc /*: Metadata */) /*: Promise<void> */ {
-    log.info({ path: doc.path }, 'Local assignNewRev = noop')
+  async assignNewRemote(doc /*: Metadata */) /*: Promise<void> */ {
+    log.info({ path: doc.path }, 'Local assignNewRemote = noop')
   }
 
   /** Move a file or folder. In case of a file, content is unchanged.

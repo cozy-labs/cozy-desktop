@@ -234,10 +234,7 @@ function fromRemoteDoc(remoteDoc /*: RemoteDoc */) /*: Metadata */ {
     docType: localDocType(remoteDoc.type),
     created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
     updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at),
-    remote: {
-      _id: remoteDoc._id,
-      _rev: remoteDoc._rev
-    }
+    remote: _.cloneDeep(remoteDoc)
   }
 
   if (remoteDoc.size) {
