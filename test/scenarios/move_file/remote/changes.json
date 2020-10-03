@@ -1,44 +1,44 @@
 [
   {
-    "_id": "a5f50206697951be5992df4a0557ba77",
-    "_rev": "2-2f06740222b8e98c76cfb0a4a36ea8cb",
-    "class": "text",
+    "_id": "b6f32dd442095bfe2c3639f240d96d17",
+    "_rev": "2-e5bfbffe362e0afdb2b0d8e79cf3d91f",
+    "class": "files",
     "cozyMetadata": {
-      "createdAt": "2020-05-11T10:38:25.782443787Z",
+      "createdAt": "2020-10-03T13:00:14.366000905Z",
       "createdByApp": "cozy-desktop",
       "createdOn": "http://cozy.tools:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
-      "updatedAt": "2020-05-11T10:38:26.737343524Z",
+      "updatedAt": "2020-10-03T13:00:21.759568204Z",
       "updatedByApps": [
         {
-          "date": "2020-05-11T10:38:26.737343524Z",
+          "date": "2020-10-03T13:00:21.759568204Z",
           "instance": "http://cozy.tools:8080/",
           "slug": "cozy-desktop"
         }
       ],
-      "uploadedAt": "2020-05-11T10:38:25.782443787Z",
+      "uploadedAt": "2020-10-03T13:00:14.366000905Z",
       "uploadedBy": {
         "oauthClient": {
-          "id": "a5f50206697951be5992df4a05007005",
+          "id": "b6f32dd442095bfe2c3639f240758316",
           "kind": "",
-          "name": "test"
+          "name": "test-8"
         },
         "slug": "cozy-desktop"
       },
       "uploadedOn": "http://cozy.tools:8080/"
     },
-    "created_at": "2020-05-11T10:38:25.782438336Z",
-    "dir_id": "a5f50206697951be5992df4a0557a539",
+    "created_at": "2020-09-03T15:00:14Z",
+    "dir_id": "b6f32dd442095bfe2c3639f240d95457",
     "executable": false,
     "md5sum": "AIxZJsqGECPB0qNmU/2I4g==",
-    "mime": "text/plain",
+    "mime": "application/octet-stream",
     "name": "file",
     "size": "8",
     "tags": [],
     "trashed": false,
     "type": "file",
-    "updated_at": "2020-05-11T10:38:25.782438336Z",
+    "updated_at": "2020-09-03T15:00:14Z",
     "path": "/dst/file"
   }
 ]

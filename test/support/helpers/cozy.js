@@ -9,6 +9,7 @@ const proxy = require('../../../gui/js/proxy')
 
 let originalNet
 const setupGlobalProxy = async () => {
+  await app.whenReady()
   originalNet = await proxy.setup(app, {}, session, '')
 }
 const resetGlobalProxy = async () => {

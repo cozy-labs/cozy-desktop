@@ -1,87 +1,87 @@
 [
   {
-    "_id": "a5f50206697951be5992df4a05541410",
-    "_rev": "1-7a6c984157c8caf168bbe8aa33f84d8f",
+    "_id": "b6f32dd442095bfe2c3639f240d6155c",
+    "_rev": "1-730727392eb3faf828966a7d9876d4fd",
     "cozyMetadata": {
-      "createdAt": "2020-05-11T10:37:09.679765749Z",
+      "createdAt": "2020-10-03T12:56:15.09609933Z",
       "createdByApp": "cozy-desktop",
       "createdOn": "http://cozy.tools:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
-      "updatedAt": "2020-05-11T10:37:09.679765749Z",
+      "updatedAt": "2020-10-03T12:56:15.09609933Z",
       "updatedByApps": [
         {
-          "date": "2020-05-11T10:37:09.679765749Z",
+          "date": "2020-10-03T12:56:15.09609933Z",
           "instance": "http://cozy.tools:8080/",
           "slug": "cozy-desktop"
         }
       ]
     },
-    "created_at": "2020-05-11T10:37:09.679761319Z",
+    "created_at": "2020-10-03T12:56:15.096094466Z",
     "dir_id": "io.cozy.files.root-dir",
     "name": "JOHN",
     "path": "/JOHN",
     "tags": [],
     "type": "directory",
-    "updated_at": "2020-05-11T10:37:09.679761319Z"
+    "updated_at": "2020-10-03T12:56:15.096094466Z"
   },
   {
-    "_id": "a5f50206697951be5992df4a055422fb",
-    "_rev": "1-887543cebb2da2bd772f91379055cce8",
+    "_id": "b6f32dd442095bfe2c3639f240d61e99",
+    "_rev": "1-a032474bf6f97fbe3bea2a915e571740",
     "cozyMetadata": {
-      "createdAt": "2020-05-11T10:37:09.936990841Z",
+      "createdAt": "2020-10-03T12:56:15.196174026Z",
       "createdByApp": "cozy-desktop",
       "createdOn": "http://cozy.tools:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
-      "updatedAt": "2020-05-11T10:37:09.936990841Z",
+      "updatedAt": "2020-10-03T12:56:15.196174026Z",
       "updatedByApps": [
         {
-          "date": "2020-05-11T10:37:09.936990841Z",
+          "date": "2020-10-03T12:56:15.196174026Z",
           "instance": "http://cozy.tools:8080/",
           "slug": "cozy-desktop"
         }
       ]
     },
-    "created_at": "2020-05-11T10:37:09.936985755Z",
-    "dir_id": "a5f50206697951be5992df4a05541410",
+    "created_at": "2020-10-03T12:56:15.19616766Z",
+    "dir_id": "b6f32dd442095bfe2c3639f240d6155c",
     "name": "exact-same-subdir",
     "path": "/JOHN/exact-same-subdir",
     "tags": [],
     "type": "directory",
-    "updated_at": "2020-05-11T10:37:09.936985755Z"
+    "updated_at": "2020-10-03T12:56:15.19616766Z"
   },
   {
-    "_id": "a5f50206697951be5992df4a0554246d",
-    "_rev": "1-186ee25c8983f8dd94b9a746a8bbdb75",
+    "_id": "b6f32dd442095bfe2c3639f240d626ce",
+    "_rev": "1-371973a786d9d65af4c3f2574b95e5cf",
     "class": "text",
     "cozyMetadata": {
-      "createdAt": "2020-05-11T10:37:09.978128282Z",
+      "createdAt": "2020-10-03T12:56:15.239203422Z",
       "createdByApp": "cozy-desktop",
       "createdOn": "http://cozy.tools:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
-      "updatedAt": "2020-05-11T10:37:09.978128282Z",
+      "updatedAt": "2020-10-03T12:56:15.239203422Z",
       "updatedByApps": [
         {
-          "date": "2020-05-11T10:37:09.978128282Z",
+          "date": "2020-10-03T12:56:15.239203422Z",
           "instance": "http://cozy.tools:8080/",
           "slug": "cozy-desktop"
         }
       ],
-      "uploadedAt": "2020-05-11T10:37:09.978128282Z",
+      "uploadedAt": "2020-10-03T12:56:15.239203422Z",
       "uploadedBy": {
         "oauthClient": {
-          "id": "a5f50206697951be5992df4a05007005",
+          "id": "b6f32dd442095bfe2c3639f240758316",
           "kind": "",
-          "name": "test"
+          "name": "test-8"
         },
         "slug": "cozy-desktop"
       },
       "uploadedOn": "http://cozy.tools:8080/"
     },
-    "created_at": "2020-05-11T10:37:09.978111198Z",
-    "dir_id": "a5f50206697951be5992df4a055422fb",
+    "created_at": "2020-10-03T12:56:15.212Z",
+    "dir_id": "b6f32dd442095bfe2c3639f240d61e99",
     "executable": false,
     "md5sum": "AIxZJsqGECPB0qNmU/2I4g==",
     "mime": "text/plain",
@@ -90,40 +90,40 @@
     "tags": [],
     "trashed": false,
     "type": "file",
-    "updated_at": "2020-05-11T10:37:09.978111198Z",
+    "updated_at": "2020-10-03T12:56:15.212Z",
     "path": "/JOHN/exact-same-subdir/a.txt"
   },
   {
-    "_id": "a5f50206697951be5992df4a05542f36",
-    "_rev": "1-59b0b92df08ce3b89a158e1339e2403a",
+    "_id": "b6f32dd442095bfe2c3639f240d630e3",
+    "_rev": "1-d5ac80517e471bc99329656a41f3fc3a",
     "class": "text",
     "cozyMetadata": {
-      "createdAt": "2020-05-11T10:37:10.028287008Z",
+      "createdAt": "2020-10-03T12:56:15.292603683Z",
       "createdByApp": "cozy-desktop",
       "createdOn": "http://cozy.tools:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
-      "updatedAt": "2020-05-11T10:37:10.028287008Z",
+      "updatedAt": "2020-10-03T12:56:15.292603683Z",
       "updatedByApps": [
         {
-          "date": "2020-05-11T10:37:10.028287008Z",
+          "date": "2020-10-03T12:56:15.292603683Z",
           "instance": "http://cozy.tools:8080/",
           "slug": "cozy-desktop"
         }
       ],
-      "uploadedAt": "2020-05-11T10:37:10.028287008Z",
+      "uploadedAt": "2020-10-03T12:56:15.292603683Z",
       "uploadedBy": {
         "oauthClient": {
-          "id": "a5f50206697951be5992df4a05007005",
+          "id": "b6f32dd442095bfe2c3639f240758316",
           "kind": "",
-          "name": "test"
+          "name": "test-8"
         },
         "slug": "cozy-desktop"
       },
       "uploadedOn": "http://cozy.tools:8080/"
     },
-    "created_at": "2020-05-11T10:37:10.028281535Z",
-    "dir_id": "a5f50206697951be5992df4a055422fb",
+    "created_at": "2020-10-03T12:56:15.263Z",
+    "dir_id": "b6f32dd442095bfe2c3639f240d61e99",
     "executable": false,
     "md5sum": "AIxZJsqGECPB0qNmU/2I4g==",
     "mime": "text/plain",
@@ -132,118 +132,118 @@
     "tags": [],
     "trashed": false,
     "type": "file",
-    "updated_at": "2020-05-11T10:37:10.028281535Z",
+    "updated_at": "2020-10-03T12:56:15.263Z",
     "path": "/JOHN/exact-same-subdir/b.txt"
   },
   {
-    "_id": "a5f50206697951be5992df4a05543deb",
-    "_rev": "1-f2a80e18d265d596e808c29f4e204129",
+    "_id": "b6f32dd442095bfe2c3639f240d63afb",
+    "_rev": "1-df4572242f0150b95cc1dfe6a5b23301",
     "cozyMetadata": {
-      "createdAt": "2020-05-11T10:37:10.10331962Z",
+      "createdAt": "2020-10-03T12:56:15.373309531Z",
       "createdByApp": "cozy-desktop",
       "createdOn": "http://cozy.tools:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
-      "updatedAt": "2020-05-11T10:37:10.10331962Z",
+      "updatedAt": "2020-10-03T12:56:15.373309531Z",
       "updatedByApps": [
         {
-          "date": "2020-05-11T10:37:10.10331962Z",
+          "date": "2020-10-03T12:56:15.373309531Z",
           "instance": "http://cozy.tools:8080/",
           "slug": "cozy-desktop"
         }
       ]
     },
-    "created_at": "2020-05-11T10:37:10.103314276Z",
-    "dir_id": "a5f50206697951be5992df4a05541410",
+    "created_at": "2020-10-03T12:56:15.373304796Z",
+    "dir_id": "b6f32dd442095bfe2c3639f240d6155c",
     "name": "other-subdir-JOHN-1",
     "path": "/JOHN/other-subdir-JOHN-1",
     "tags": [],
     "type": "directory",
-    "updated_at": "2020-05-11T10:37:10.103314276Z"
+    "updated_at": "2020-10-03T12:56:15.373304796Z"
   },
   {
-    "_id": "a5f50206697951be5992df4a0554406f",
-    "_rev": "1-646357f107776fb39b3c0046b4228adf",
+    "_id": "b6f32dd442095bfe2c3639f240d63d45",
+    "_rev": "1-10886138b6d0f94dc9f26764a275aa91",
     "cozyMetadata": {
-      "createdAt": "2020-05-11T10:37:10.163216451Z",
+      "createdAt": "2020-10-03T12:56:15.426754647Z",
       "createdByApp": "cozy-desktop",
       "createdOn": "http://cozy.tools:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
-      "updatedAt": "2020-05-11T10:37:10.163216451Z",
+      "updatedAt": "2020-10-03T12:56:15.426754647Z",
       "updatedByApps": [
         {
-          "date": "2020-05-11T10:37:10.163216451Z",
+          "date": "2020-10-03T12:56:15.426754647Z",
           "instance": "http://cozy.tools:8080/",
           "slug": "cozy-desktop"
         }
       ]
     },
-    "created_at": "2020-05-11T10:37:10.163210274Z",
+    "created_at": "2020-10-03T12:56:15.426749983Z",
     "dir_id": "io.cozy.files.root-dir",
     "name": "john",
     "path": "/john",
     "tags": [],
     "type": "directory",
-    "updated_at": "2020-05-11T10:37:10.163210274Z"
+    "updated_at": "2020-10-03T12:56:15.426749983Z"
   },
   {
-    "_id": "a5f50206697951be5992df4a05544e51",
-    "_rev": "1-7a7cde005852e0853d41cb0c3002455f",
+    "_id": "b6f32dd442095bfe2c3639f240d644e2",
+    "_rev": "1-e04e3329f100047c39ab1eeee0201208",
     "cozyMetadata": {
-      "createdAt": "2020-05-11T10:37:10.239250876Z",
+      "createdAt": "2020-10-03T12:56:15.495708894Z",
       "createdByApp": "cozy-desktop",
       "createdOn": "http://cozy.tools:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
-      "updatedAt": "2020-05-11T10:37:10.239250876Z",
+      "updatedAt": "2020-10-03T12:56:15.495708894Z",
       "updatedByApps": [
         {
-          "date": "2020-05-11T10:37:10.239250876Z",
+          "date": "2020-10-03T12:56:15.495708894Z",
           "instance": "http://cozy.tools:8080/",
           "slug": "cozy-desktop"
         }
       ]
     },
-    "created_at": "2020-05-11T10:37:10.239241362Z",
-    "dir_id": "a5f50206697951be5992df4a0554406f",
+    "created_at": "2020-10-03T12:56:15.495704319Z",
+    "dir_id": "b6f32dd442095bfe2c3639f240d63d45",
     "name": "exact-same-subdir",
     "path": "/john/exact-same-subdir",
     "tags": [],
     "type": "directory",
-    "updated_at": "2020-05-11T10:37:10.239241362Z"
+    "updated_at": "2020-10-03T12:56:15.495704319Z"
   },
   {
-    "_id": "a5f50206697951be5992df4a05544e9b",
-    "_rev": "1-29a1bdbcc2d5d64b54e0e5a5013eb6f1",
+    "_id": "b6f32dd442095bfe2c3639f240d65373",
+    "_rev": "1-4bf916a48ad6df4124989b9aa247502a",
     "class": "text",
     "cozyMetadata": {
-      "createdAt": "2020-05-11T10:37:10.292772842Z",
+      "createdAt": "2020-10-03T12:56:15.538252579Z",
       "createdByApp": "cozy-desktop",
       "createdOn": "http://cozy.tools:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
-      "updatedAt": "2020-05-11T10:37:10.292772842Z",
+      "updatedAt": "2020-10-03T12:56:15.538252579Z",
       "updatedByApps": [
         {
-          "date": "2020-05-11T10:37:10.292772842Z",
+          "date": "2020-10-03T12:56:15.538252579Z",
           "instance": "http://cozy.tools:8080/",
           "slug": "cozy-desktop"
         }
       ],
-      "uploadedAt": "2020-05-11T10:37:10.292772842Z",
+      "uploadedAt": "2020-10-03T12:56:15.538252579Z",
       "uploadedBy": {
         "oauthClient": {
-          "id": "a5f50206697951be5992df4a05007005",
+          "id": "b6f32dd442095bfe2c3639f240758316",
           "kind": "",
-          "name": "test"
+          "name": "test-8"
         },
         "slug": "cozy-desktop"
       },
       "uploadedOn": "http://cozy.tools:8080/"
     },
-    "created_at": "2020-05-11T10:37:10.292766062Z",
-    "dir_id": "a5f50206697951be5992df4a05544e51",
+    "created_at": "2020-10-03T12:56:15.512Z",
+    "dir_id": "b6f32dd442095bfe2c3639f240d644e2",
     "executable": false,
     "md5sum": "AIxZJsqGECPB0qNmU/2I4g==",
     "mime": "text/plain",
@@ -252,40 +252,40 @@
     "tags": [],
     "trashed": false,
     "type": "file",
-    "updated_at": "2020-05-11T10:37:10.292766062Z",
+    "updated_at": "2020-10-03T12:56:15.512Z",
     "path": "/john/exact-same-subdir/a.txt"
   },
   {
-    "_id": "a5f50206697951be5992df4a0554575e",
-    "_rev": "1-d7ff606e379739f4f056357a1742e545",
+    "_id": "b6f32dd442095bfe2c3639f240d65f04",
+    "_rev": "1-6121668e05768865061b9c2fcde064b0",
     "class": "text",
     "cozyMetadata": {
-      "createdAt": "2020-05-11T10:37:10.365053446Z",
+      "createdAt": "2020-10-03T12:56:15.588379623Z",
       "createdByApp": "cozy-desktop",
       "createdOn": "http://cozy.tools:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
-      "updatedAt": "2020-05-11T10:37:10.365053446Z",
+      "updatedAt": "2020-10-03T12:56:15.588379623Z",
       "updatedByApps": [
         {
-          "date": "2020-05-11T10:37:10.365053446Z",
+          "date": "2020-10-03T12:56:15.588379623Z",
           "instance": "http://cozy.tools:8080/",
           "slug": "cozy-desktop"
         }
       ],
-      "uploadedAt": "2020-05-11T10:37:10.365053446Z",
+      "uploadedAt": "2020-10-03T12:56:15.588379623Z",
       "uploadedBy": {
         "oauthClient": {
-          "id": "a5f50206697951be5992df4a05007005",
+          "id": "b6f32dd442095bfe2c3639f240758316",
           "kind": "",
-          "name": "test"
+          "name": "test-8"
         },
         "slug": "cozy-desktop"
       },
       "uploadedOn": "http://cozy.tools:8080/"
     },
-    "created_at": "2020-05-11T10:37:10.365046374Z",
-    "dir_id": "a5f50206697951be5992df4a05544e51",
+    "created_at": "2020-10-03T12:56:15.561Z",
+    "dir_id": "b6f32dd442095bfe2c3639f240d644e2",
     "executable": false,
     "md5sum": "AIxZJsqGECPB0qNmU/2I4g==",
     "mime": "text/plain",
@@ -294,33 +294,33 @@
     "tags": [],
     "trashed": false,
     "type": "file",
-    "updated_at": "2020-05-11T10:37:10.365046374Z",
+    "updated_at": "2020-10-03T12:56:15.561Z",
     "path": "/john/exact-same-subdir/b.txt"
   },
   {
-    "_id": "a5f50206697951be5992df4a05545812",
-    "_rev": "1-f12b285284078db7ba5487ac29840734",
+    "_id": "b6f32dd442095bfe2c3639f240d66303",
+    "_rev": "1-320f998cfbedb95ee6d8bb359e6f822f",
     "cozyMetadata": {
-      "createdAt": "2020-05-11T10:37:10.450955759Z",
+      "createdAt": "2020-10-03T12:56:15.662825709Z",
       "createdByApp": "cozy-desktop",
       "createdOn": "http://cozy.tools:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
-      "updatedAt": "2020-05-11T10:37:10.450955759Z",
+      "updatedAt": "2020-10-03T12:56:15.662825709Z",
       "updatedByApps": [
         {
-          "date": "2020-05-11T10:37:10.450955759Z",
+          "date": "2020-10-03T12:56:15.662825709Z",
           "instance": "http://cozy.tools:8080/",
           "slug": "cozy-desktop"
         }
       ]
     },
-    "created_at": "2020-05-11T10:37:10.450949963Z",
-    "dir_id": "a5f50206697951be5992df4a0554406f",
+    "created_at": "2020-10-03T12:56:15.662821367Z",
+    "dir_id": "b6f32dd442095bfe2c3639f240d63d45",
     "name": "other-subdir-john-2",
     "path": "/john/other-subdir-john-2",
     "tags": [],
     "type": "directory",
-    "updated_at": "2020-05-11T10:37:10.450949963Z"
+    "updated_at": "2020-10-03T12:56:15.662821367Z"
   }
 ]

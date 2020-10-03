@@ -1,7 +1,7 @@
 /** Test scenario helpers
  *
  * @module test/support/helpers/scenarios
- * @flow weak
+ * @flow
  */
 
 const Promise = require('bluebird')
@@ -9,16 +9,18 @@ const fse = require('fs-extra')
 const glob = require('glob')
 const _ = require('lodash')
 const path = require('path')
-const crypto = require('crypto')
 
 const stater = require('../../../core/local/stater')
-const metadata = require('../../../core/metadata')
+const timestamp = require('../../../core/utils/timestamp')
 
 const { cozy } = require('./cozy')
+const Builders = require('../builders')
 
 /*::
-import type { ScenarioInit } from '../../scenarios'
+import type { Scenario, ScenarioInit, FSAction } from '../../scenarios'
 import type { Metadata } from '../../../core/metadata'
+import type { Pouch } from '../../../core/pouch'
+import type { Stats } from '../../../core/local/stater'
 */
 
 const debug = (...args) =>
@@ -27,7 +29,9 @@ const debug = (...args) =>
 
 const scenariosDir = path.resolve(__dirname, '../../scenarios')
 
-const scenarioByPath = (module.exports.scenarioByPath = scenarioPath => {
+const scenarioByPath = (module.exports.scenarioByPath = (
+  scenarioPath /*: string */
+) => {
   // $FlowFixMe
   const scenario = require(scenarioPath)
   scenario.name = path
@@ -101,13 +105,18 @@ const disabledScenario = scenario =>
  * with file extension. Although it may be useless in many cases, stripping
  * them will make sure code always works.
  */
-const disabledScenarioTest = (scenario, testName) =>
+const disabledScenarioTest = (
+  scenario /*: Scenario */,
+  testName /*: string */
+) =>
   disabledScenario(scenario) ||
   _.get(scenario, ['disabled', testName.replace(path.extname(testName), '')])
 
 module.exports.disabledScenarioTest = disabledScenarioTest
 
-module.exports.loadFSEventFiles = scenario => {
+module.exports.loadFSEventFiles = (
+  scenario /*: Scenario & { path: string } */
+) => {
   const eventFiles = glob.sync(
     path.join(path.dirname(scenario.path), 'local', '*.json*')
   )
@@ -141,7 +150,9 @@ module.exports.loadFSEventFiles = scenario => {
   })
 }
 
-module.exports.loadAtomCaptures = scenario => {
+module.exports.loadAtomCaptures = (
+  scenario /*: Scenario & { path: string } */
+) => {
   const eventFiles = glob.sync(
     path.join(path.dirname(scenario.path), 'atom', '*.json*')
   )
@@ -169,7 +180,9 @@ module.exports.loadAtomCaptures = scenario => {
   })
 }
 
-module.exports.loadRemoteChangesFiles = scenario => {
+module.exports.loadRemoteChangesFiles = (
+  scenario /*: Scenario & { path: string } */
+) => {
   const pattern = path.join(path.dirname(scenario.path), 'remote', '*.json*')
 
   return glob.sync(pattern).map(f => {
@@ -180,7 +193,12 @@ module.exports.loadRemoteChangesFiles = scenario => {
   })
 }
 
-const getInoAndFileId = async ({ path, fakeIno, trashed, useRealInodes }) => {
+const getInoAndFileId = async ({
+  path,
+  fakeIno,
+  trashed,
+  useRealInodes
+}) /*: Promise<Stats> */ => {
   if (trashed || !useRealInodes) {
     return { ino: fakeIno }
   } else {
@@ -214,165 +232,132 @@ const merge = async (srcPath, dstPath) => {
   }
 }
 
+const isOutside = relpath => relpath.startsWith('../outside')
+
 module.exports.init = async (
   scenario /*: { init: ScenarioInit } */,
-  pouch,
-  abspath,
-  useRealInodes
+  pouch /*: Pouch */,
+  abspath /*: (string) => string */,
+  useRealInodes /*: boolean */ = false
 ) => {
   debug('[init]')
+  const builders = new Builders({ cozy, pouch })
   const remoteDocsToTrash = []
+
   if (scenario.init) {
-    for (let {
+    for (const {
       path: relpath,
       ino: fakeIno,
       trashed,
-      content
+      content = 'foo'
     } of scenario.init) {
       debug(relpath)
-      const isOutside = relpath.startsWith('../outside')
-      let remoteParent
-      if (!isOutside) {
-        const remoteParentPath = path.posix.join(
-          '/',
-          path.posix.dirname(relpath)
-        )
-        debug(`- retrieve remote parent: ${remoteParentPath}`)
-        remoteParent = await cozy.files.statByPath(remoteParentPath)
+
+      const localPath = path.normalize(_.trimEnd(relpath, '/'))
+      if (!trashed) {
+        if (relpath.endsWith('/')) {
+          debug(`- create local dir: ${localPath}`)
+          await fse.ensureDir(abspath(localPath))
+        } else {
+          debug(`- create local file: ${localPath}`)
+          await fse.outputFile(abspath(localPath), content)
+        }
       }
+
+      if (isOutside(relpath)) continue
+
+      const remoteParentPath = path.posix.join('/', path.posix.dirname(relpath))
+      debug(`- retrieve remote parent: ${remoteParentPath}`)
+      const remoteParent = await cozy.files.statByPath(remoteParentPath)
+      if (!remoteParent) {
+        debug(`Could not retrieve remote parent: ${remoteParentPath}`)
+        return
+      }
+
       const remoteName = path.posix.basename(relpath)
       const remotePath = path.posix.join(
         _.get(remoteParent, 'attributes.path', ''),
         remoteName
       )
-      const localPath = path.normalize(_.trimEnd(relpath, '/'))
       const updatedAt = new Date('2011-04-11T10:20:30Z').toISOString()
+
       if (relpath.endsWith('/')) {
-        if (!trashed) {
-          debug(`- create local dir: ${localPath}`)
-          await fse.ensureDir(abspath(localPath))
-        }
-
-        const stats = await getInoAndFileId({
-          path: abspath(localPath),
-          fakeIno,
-          trashed,
-          useRealInodes
-        })
-        // $FlowFixMe local attribute does not exist for folders yet
-        const doc /*: Metadata */ = {
-          _id: metadata.id(localPath),
-          docType: 'folder',
-          created_at: updatedAt,
-          updated_at: updatedAt,
-          path: localPath,
-          tags: [],
-          remote: { _id: 'xxx', _rev: 'xxx' },
-          sides: { target: 2, local: 2, remote: 2 }
-        }
-        stater.assignInoAndFileId(doc, stats)
-
-        if (!isOutside && remoteParent) {
-          debug(
-            `- create${trashed ? ' and trash' : ''} remote dir: ${remotePath}`
-          )
-          const remoteDir = await cozy.files.createDirectory({
-            name: remoteName,
-            dirID: remoteParent._id,
-            createdAt: updatedAt,
-            updatedAt
+        debug(
+          `- create${trashed ? ' and trash' : ''} remote dir: ${remotePath}`
+        )
+        const remoteDir = await builders
+          .remoteDir()
+          .name(remoteName)
+          .inDir({
+            _id: remoteParent._id,
+            path: remoteParent.attributes.path
           })
-          doc.remote = _.pick(remoteDir, ['_id', '_rev'])
-          if (trashed) remoteDocsToTrash.push(remoteDir)
-          else {
-            debug(`- create dir metadata: ${doc._id}`)
-            const { rev } = await pouch.put(doc)
-            doc._rev = rev
-            await pouch.put(doc)
-          }
+          .createdAt(...timestamp.spread(updatedAt))
+          .updatedAt(...timestamp.spread(updatedAt))
+          .create()
+
+        if (trashed) {
+          remoteDocsToTrash.push(remoteDir)
         } else {
-          delete doc.remote
-          delete doc.sides.remote
+          const stats = await getInoAndFileId({
+            path: abspath(localPath),
+            fakeIno,
+            trashed,
+            useRealInodes
+          })
+          const doc = builders
+            .metadir()
+            .fromRemote(remoteDir)
+            .upToDate()
+            .build()
+          stater.assignInoAndFileId(doc, stats)
+
+          debug(`- create dir metadata: ${doc._id}`)
+          await pouch.put(doc)
         }
       } else {
-        let md5sum
-        if (!content) {
-          content = 'foo'
-          md5sum = 'rL0Y20zC+Fzt72VPzMSk2A=='
-        } else {
-          md5sum = crypto
-            .createHash('md5')
-            .update(content)
-            .digest()
-            .toString('base64')
-        }
-
-        if (!trashed) {
-          debug(`- create local file: ${localPath}`)
-          await fse.outputFile(abspath(localPath), content)
-        }
-
-        const stats = await getInoAndFileId({
-          path: abspath(localPath),
-          fakeIno,
-          trashed,
-          useRealInodes
-        })
-        const doc /*: Metadata */ = {
-          _id: metadata.id(localPath),
-          md5sum,
-          class: 'text',
-          docType: 'file',
-          created_at: updatedAt,
-          updated_at: updatedAt,
-          mime: 'text/plain',
-          path: localPath,
-          size: content.length,
-          tags: [],
-          remote: { _id: 'xxx', _rev: 'xxx' },
-          local: {
-            class: 'text',
-            docType: 'file',
-            md5sum,
-            mime: 'text/plain',
-            size: content.length,
-            updated_at: updatedAt
-          },
-          sides: { target: 2, local: 2, remote: 2 }
-        }
-        stater.assignInoAndFileId(doc, stats)
-        stater.assignInoAndFileId(doc.local, stats)
-        if (!isOutside && remoteParent) {
-          debug(
-            `- create${trashed ? ' and trash' : ''} remote file: ${remotePath}`
-          )
-          const remoteFile = await cozy.files.create(content, {
-            name: remoteName,
-            dirID: remoteParent._id,
-            checksum: md5sum,
-            contentType: 'text/plain',
-            createdAt: updatedAt,
-            updatedAt
+        debug(
+          `- create${trashed ? ' and trash' : ''} remote file: ${remotePath}`
+        )
+        const remoteFile = await builders
+          .remoteFile()
+          .name(remoteName)
+          .inDir({
+            _id: remoteParent._id,
+            path: remoteParent.attributes.path
           })
-          doc.remote = _.pick(remoteFile, ['_id', '_rev'])
-          if (trashed) remoteDocsToTrash.push(remoteFile)
-          else {
-            debug(`- create file metadata: ${doc._id}`)
-            const { rev } = await pouch.put(doc)
-            doc._rev = rev
-            await pouch.put(doc)
-          }
+          .data(content)
+          .executable(false)
+          .createdAt(...timestamp.spread(updatedAt))
+          .updatedAt(...timestamp.spread(updatedAt))
+          .create()
+
+        if (trashed) {
+          remoteDocsToTrash.push(remoteFile)
         } else {
-          delete doc.remote
-          delete doc.sides.remote
+          const stats = await getInoAndFileId({
+            path: abspath(localPath),
+            fakeIno,
+            trashed,
+            useRealInodes
+          })
+          const doc = builders
+            .metafile()
+            .fromRemote(remoteFile)
+            .upToDate()
+            .build()
+          stater.assignInoAndFileId(doc, stats)
+          stater.assignInoAndFileId(doc.local, stats)
+
+          debug(`- create file metadata: ${doc._id}`)
+          await pouch.put(doc)
         }
       } // if relpath ...
     } // for (... of scenario.init)
   }
-  for (let remoteDoc of remoteDocsToTrash) {
-    debug(
-      `- trashing remote ${remoteDoc.attributes.type}: ${remoteDoc.attributes.path}`
-    )
+
+  for (const remoteDoc of remoteDocsToTrash) {
+    debug(`- trashing remote ${remoteDoc.type}: ${remoteDoc.path}`)
     try {
       await cozy.files.trashById(remoteDoc._id)
     } catch (err) {
@@ -383,8 +368,8 @@ module.exports.init = async (
 }
 
 module.exports.runActions = (
-  scenario,
-  abspath,
+  scenario /*: { actions: Array<FSAction>, name?: string } */,
+  abspath /*: (string) => string */,
   opts /*: {skipWait?: true} */ = {}
 ) => {
   debug('[actions]')
@@ -433,7 +418,9 @@ module.exports.runActions = (
       default:
         return Promise.reject(
           new Error(
-            `Unknown action ${action.type} for scenario ${scenario.name}`
+            `Unknown action ${action.type} ${
+              scenario.name ? 'for scenario' + scenario.name : ''
+            }`
           )
         )
     }

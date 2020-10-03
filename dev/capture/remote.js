@@ -6,19 +6,29 @@
 
 const Promise = require('bluebird')
 const fse = require('fs-extra')
-const _ = require('lodash')
 const path = require('path')
-const crypto = require('crypto')
+const _ = require('lodash')
 
-const metadata = require('../../core/metadata')
 const { Pouch } = require('../../core/pouch')
 const { RemoteCozy } = require('../../core/remote/cozy')
+const { ROOT_DIR_ID } = require('../../core/remote/constants')
+const timestamp = require('../../core/utils/timestamp')
 
 const configHelpers = require('../../test/support/helpers/config')
 const cozyHelpers = require('../../test/support/helpers/cozy')
+const Builders = require('../../test/support/builders')
+
+/*::
+import type { RemoteDoc } from '../../core/remote/document'
+*/
 
 // eslint-disable-next-line no-console,no-unused-vars
 const debug = process.env.TESTDEBUG != null ? console.log : (...args) => {}
+
+const ROOT_DIR = {
+  _id: ROOT_DIR_ID,
+  path: '/'
+}
 
 const createInitialTree = async function(
   scenario /*: * */,
@@ -26,52 +36,72 @@ const createInitialTree = async function(
   pouch /*: Pouch */
 ) {
   if (!scenario.init) return
+
+  const builders = new Builders({ cozy, pouch })
+  const remoteDocs /*: { [string]: RemoteDoc } */ = {}
+  const remoteDocsToTrash /*: RemoteDoc[] */ = []
+
   debug('[init]')
-  for (let doc of scenario.init) {
-    let relpath = '/' + doc.path
-    if (relpath.endsWith('/')) {
-      relpath = _.trimEnd(relpath, '/') // XXX: Check in metadata.id?
-      debug('- mkdir', relpath)
-      const remoteDir = await cozy.files.createDirectoryByPath(relpath)
-      await pouch.db.put({
-        _id: metadata.id(relpath),
-        docType: 'folder',
-        updated_at: new Date(),
-        path: relpath,
-        ino: doc.ino,
-        tags: [],
-        sides: { local: 1, remote: 1 },
-        remote: { _id: remoteDir._id, _rev: remoteDir._rev }
-      })
+  for (const initDoc of scenario.init) {
+    const remotePath = '/' + _.trimEnd(initDoc.path, '/')
+    const remoteName = path.posix.basename(remotePath)
+    const remoteParent = remoteDocs[path.posix.dirname(remotePath)] || ROOT_DIR
+    const updatedAt = new Date()
+
+    if (initDoc.path.endsWith('/')) {
+      debug('- create dir', remotePath)
+      const remoteDir = await builders
+        .remoteDir()
+        .inDir(remoteParent)
+        .name(remoteName)
+        .createdAt(...timestamp.spread(updatedAt))
+        .updatedAt(...timestamp.spread(updatedAt))
+        .create()
+      remoteDocs[remotePath] = remoteDir
+
+      if (initDoc.trashed) {
+        remoteDocsToTrash.push(remoteDir)
+      } else {
+        await builders
+          .metadir()
+          .fromRemote(remoteDir)
+          .ino(initDoc.ino)
+          .upToDate()
+          .create()
+      }
     } else {
-      debug('- create_file', relpath)
-      const content = doc.content || 'whatever'
-      const md5sum = crypto
-        .createHash('md5')
-        .update(content)
-        .digest()
-        .toString('base64')
-      const parent = await cozy.files.statByPath(path.posix.dirname(relpath))
-      let remoteFile = await cozy.files.create(content, {
-        dirID: parent._id,
-        name: path.basename(relpath),
-        contentType: 'text/plain'
-      })
-      await pouch.db.put({
-        _id: metadata.id(relpath),
-        md5sum,
-        class: 'text',
-        docType: 'file',
-        executable: false,
-        updated_at: new Date(),
-        mime: 'text/plain',
-        path: relpath,
-        ino: doc.ino,
-        size: 0,
-        tags: [],
-        sides: { local: 1, remote: 1 },
-        remote: { _id: remoteFile._id, _rev: remoteFile._rev }
-      })
+      debug('- create_file', remotePath)
+      const remoteFile = await builders
+        .remoteFile()
+        .inDir(remoteParent)
+        .name(remoteName)
+        .data(initDoc.content || 'whatever')
+        .executable(false)
+        .createdAt(...timestamp.spread(updatedAt))
+        .updatedAt(...timestamp.spread(updatedAt))
+        .create()
+      remoteDocs[remotePath] = remoteFile
+
+      if (initDoc.trashed) {
+        remoteDocsToTrash.push(remoteFile)
+      } else {
+        await builders
+          .metafile()
+          .fromRemote(remoteFile)
+          .ino(initDoc.ino)
+          .upToDate()
+          .create()
+      }
+    }
+  }
+
+  for (const remoteDoc of remoteDocsToTrash) {
+    debug(`- trashing remote ${remoteDoc.type}: ${remoteDoc.path}`)
+    try {
+      await cozy.files.trashById(remoteDoc._id)
+    } catch (err) {
+      if (err.status === 400) continue
+      throw err
     }
   }
 }

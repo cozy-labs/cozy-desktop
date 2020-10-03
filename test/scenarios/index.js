@@ -48,7 +48,7 @@ type FSWaitAction = {|
   ms: number
 |}
 
-type FSAction
+export type FSAction
   = FSAddDirAction
   | FSCreateFileAction
   | FSDeleteAction
@@ -98,6 +98,7 @@ export type ScenarioInit = Array<{|
 |}>
 
 export type Scenario = {|
+  name?: string,
   platforms?: Array<'win32'|'darwin'|'linux'>,
   side?: SideName,
   disabled?: ScenarioCompletelyDisabled | ScenarioTestsDisabled,
