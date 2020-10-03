@@ -301,24 +301,19 @@ describe('Pouch', function() {
           include_docs: true
         }
         const docs = await this.pouch.getAll('byPath', params)
-        docs.length.should.equal(6)
-        for (let i = 1; i <= 3; i++) {
-          docs[i - 1].should.have.properties({
-            _id: metadata.id(path.join('my-folder', `file-${i}`)),
-            docType: 'file',
-            tags: []
-          })
-          docs[i + 2].should.have.properties({
-            _id: metadata.id(path.join('my-folder', `folder-${i}`)),
-            docType: 'folder',
-            tags: []
-          })
-        }
+        should(docs).have.length(6)
+        should(docs).containDeep(
+          createdDocs.filter(d => d.path !== 'my-folder') // Parent dir is not returned
+        )
       }))
 
     describe('byIdMaybe', () => {
       it('resolves with a doc matching the given _id if any', async function() {
-        const doc = await this.pouch.byIdMaybe(metadata.id('my-folder'))
+        const existing = await this.pouch.db.post({
+          docType: 'folder',
+          path: 'my-folder'
+        })
+        const doc = await this.pouch.byIdMaybe(existing.id)
         should(doc).have.properties({
           docType: 'folder',
           path: 'my-folder'
@@ -352,32 +347,31 @@ describe('Pouch', function() {
         const docs = await this.pouch.byChecksum(checksum)
         docs.length.should.be.equal(1)
         docs[0]._id.should.equal(_id)
+        docs[0].path.should.equal(filePath)
         docs[0].md5sum.should.equal(checksum)
       }))
 
     describe('byPath', function() {
       it('gets all the files and folders in this path', async function() {
         const docs = await this.pouch.byPath(metadata.id('my-folder'))
-        docs.length.should.be.equal(6)
-        for (let i = 1; i <= 3; i++) {
-          docs[i - 1].should.have.properties({
-            _id: metadata.id(path.join('my-folder', `file-${i}`)),
-            docType: 'file',
-            tags: []
-          })
-          docs[i + 2].should.have.properties({
-            _id: metadata.id(path.join('my-folder', `folder-${i}`)),
-            docType: 'folder',
-            tags: []
-          })
-        }
+        should(docs).have.length(6)
+        should(docs).containDeep(
+          createdDocs.filter(d => d.path !== 'my-folder') // Parent dir is not returned
+        )
       })
 
       it('gets only files and folders in the first level', async function() {
+        createdDocs.push(
+          await pouchHelpers.createFile(
+            this.pouch,
+            path.join('my-folder', 'folder-2', 'hello')
+          )
+        )
         const docs = await this.pouch.byPath('')
         docs.length.should.be.equal(1)
         docs[0].should.have.properties({
           _id: metadata.id('my-folder'),
+          path: 'my-folder',
           docType: 'folder',
           tags: []
         })
@@ -396,11 +390,13 @@ describe('Pouch', function() {
         for (let i = 1; i <= 3; i++) {
           docs[i - 1].should.have.properties({
             _id: metadata.id(path.join('my-folder', `file-${i}`)),
+            path: path.join('my-folder', `file-${i}`),
             docType: 'file',
             tags: []
           })
           docs[i + 2].should.have.properties({
             _id: metadata.id(path.join('my-folder', `folder-${i}`)),
+            path: path.join('my-folder', `folder-${i}`),
             docType: 'folder',
             tags: []
           })
@@ -412,17 +408,20 @@ describe('Pouch', function() {
         docs.length.should.be.equal(7)
         docs[0].should.have.properties({
           _id: metadata.id('my-folder'),
+          path: 'my-folder',
           docType: 'folder',
           tags: []
         })
         for (let i = 1; i <= 3; i++) {
           docs[i].should.have.properties({
             _id: metadata.id(path.join('my-folder', `file-${i}`)),
+            path: path.join('my-folder', `file-${i}`),
             docType: 'file',
             tags: []
           })
           docs[i + 3].should.have.properties({
             _id: metadata.id(path.join('my-folder', `folder-${i}`)),
+            path: path.join('my-folder', `folder-${i}`),
             docType: 'folder',
             tags: []
           })
@@ -455,6 +454,7 @@ describe('Pouch', function() {
         const doc = await this.pouch.byRemoteId(id)
         doc.remote._id.should.equal(id)
         should.exist(doc._id)
+        should.equal(doc.path, filePath)
         should.exist(doc.docType)
       })
 
@@ -473,6 +473,7 @@ describe('Pouch', function() {
         const doc = await this.pouch.byRemoteIdMaybe(id)
         doc.remote._id.should.equal(id)
         should.exist(doc._id)
+        should.equal(doc.path, filePath)
         should.exist(doc.docType)
       })
 

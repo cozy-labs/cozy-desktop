@@ -11,22 +11,18 @@ const sinon = require('sinon')
 const should = require('should')
 const stream = require('stream')
 
-const checksumer = require('../../../core/local/checksumer')
 const metadata = require('../../../core/metadata')
-const { ensureValidPath } = metadata
 const Prep = require('../../../core/prep')
 const remote = require('../../../core/remote')
 const { Remote } = remote
 const { DirectoryNotFound } = require('../../../core/remote/cozy')
-const { TRASH_DIR_ID } = require('../../../core/remote/constants')
+const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../../core/remote/constants')
 const timestamp = require('../../../core/utils/timestamp')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { cozy, deleteAll } = require('../../support/helpers/cozy')
 const Builders = require('../../support/builders')
-
-const builders = new Builders({ cozy })
 
 /*::
 import type { Metadata } from '../../../core/metadata'
@@ -35,9 +31,14 @@ import type { RemoteDoc, JsonApiDoc } from '../../../core/remote/document'
 const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
 
 describe('remote.Remote', function() {
+  let builders, couchdbFolder
+
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)
+  before('prepare builders', function() {
+    builders = new Builders({ cozy, pouch: this.pouch })
+  })
   before('instanciate remote', function() {
     this.prep = sinon.createStubInstance(Prep)
     this.events = new EventEmitter()
@@ -45,7 +46,7 @@ describe('remote.Remote', function() {
   })
   beforeEach(deleteAll)
   beforeEach('create the couchdb folder', async function() {
-    await builders
+    couchdbFolder = await builders
       .remoteDir()
       .name('couchdb-folder')
       .inRootDir()
@@ -82,33 +83,32 @@ describe('remote.Remote', function() {
       checksum.setEncoding('base64')
       stream.pipe(checksum)
 
-      await new Promise(resolve => {
-        stream.on('end', function() {
-          checksum.end()
-          should.equal(expectedChecksum, checksum.read())
-          resolve()
+      await should(
+        new Promise(resolve => {
+          stream.on('end', function() {
+            checksum.end()
+            resolve(checksum.read())
+          })
         })
-      })
+      ).be.fulfilledWith(expectedChecksum)
     })
   })
 
   describe('addFileAsync', function() {
+    let image
+    before('read image', async () => {
+      image = await fse.readFile(CHAT_MIGNON_MOD_PATH)
+    })
+
     it('adds a file to the remote Cozy', async function() {
-      const doc /*: Object */ = {
-        _id: 'cat2.jpg',
-        path: 'cat2.jpg',
-        docType: 'file',
-        md5sum: await checksumer.computeChecksumAsync(CHAT_MIGNON_MOD_PATH),
-        class: 'image',
-        executable: true,
-        updated_at: new Date().toISOString(),
-        mime: 'image/jpg',
-        size: 36901,
-        sides: {
-          local: 1
-        }
-      }
-      await this.pouch.db.put(doc)
+      const doc = await builders
+        .metafile()
+        .path('cat2.jpg')
+        .data(image)
+        .type('image/jpg')
+        .executable(true)
+        .sides({ local: 1 })
+        .create()
 
       this.remote.other = {
         createReadStreamAsync() {
@@ -118,8 +118,8 @@ describe('remote.Remote', function() {
       }
 
       await this.remote.addFileAsync(doc)
-      should.exist(doc.remote._id)
-      should.exist(doc.remote._rev)
+
+      should(doc).have.propertyByPath('remote', '_id')
 
       const file = await cozy.files.statById(doc.remote._id)
       should(file.attributes).have.properties({
@@ -135,80 +135,16 @@ describe('remote.Remote', function() {
       )
     })
 
-    it('does not reupload an existing file', async function() {
-      const backupDir = await builders
-        .remoteDir()
-        .name('backup')
-        .inRootDir()
-        .create()
-      await builders
-        .remoteDir()
-        .name('ORIGINAL')
-        .inRootDir()
-        .create()
-      let md5sum = await checksumer.computeChecksumAsync(CHAT_MIGNON_MOD_PATH)
-      let doc /*: Object */ = {
-        _id: path.normalize('backup/cat3.jpg'),
-        path: path.normalize('backup/cat3.jpg'),
-        docType: 'file',
-        md5sum,
-        updated_at: new Date().toISOString(),
-        size: 36901,
-        sides: {
-          local: 1
-        }
-      }
-      let same = {
-        _id: path.normalize('ORIGINAL/CAT3.JPG'),
-        path: path.normalize('ORIGINAL/CAT3.JPG'),
-        docType: 'file',
-        md5sum,
-        updated_at: new Date().toISOString(),
-        size: 36901,
-        remote: {
-          _id: '05161241-ca73',
-          _rev: '1-abcdef'
-        },
-        sides: {
-          local: 1,
-          remote: 1
-        }
-      }
-      await this.pouch.db.put(doc)
-      await this.pouch.db.put(same)
-
-      await this.remote.addFileAsync(doc)
-
-      should.exist(doc.remote._id)
-      should.exist(doc.remote._rev)
-      const file = await cozy.files.statById(doc.remote._id)
-      should(file.attributes).have.properties({
-        dir_id: backupDir._id,
-        name: 'cat3.jpg',
-        type: 'file',
-        size: '36901'
-      })
-      should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
-        doc.updated_at
-      )
-    })
-
     it('fails if the md5sum does not match the content', async function() {
-      const doc /*: Object */ = {
-        _id: 'cat2b.jpg',
-        path: 'cat2b.jpg',
-        docType: 'file',
-        md5sum: 'BADBEEF',
-        class: 'image',
-        executable: true,
-        updated_at: new Date().toISOString(),
-        mime: 'image/jpg',
-        size: 36901,
-        sides: {
-          local: 1
-        }
-      }
-      await this.pouch.db.put(doc)
+      const doc = await builders
+        .metafile()
+        .path('cat2b.jpg')
+        .data('BADBEEF')
+        .size(36901) // XXX: size of CHAT_MIGNON_MOD_PATH
+        .type('image/jpg')
+        .executable(true)
+        .sides({ local: 1 })
+        .create()
 
       this.remote.other = {
         createReadStreamAsync() {
@@ -217,7 +153,7 @@ describe('remote.Remote', function() {
         }
       }
       await should(this.remote.addFileAsync(doc)).be.rejectedWith({
-        status: 422
+        status: 412
       })
     })
 
@@ -243,6 +179,7 @@ describe('remote.Remote', function() {
       const doc /*: Metadata */ = builders
         .metafile()
         .path('foo')
+        .noRemote()
         .build()
       this.remote.other = {
         createReadStreamAsync() {
@@ -250,22 +187,24 @@ describe('remote.Remote', function() {
         }
       }
       await this.remote.addFileAsync(doc)
-      should.exist(doc.remote._id)
-      should.exist(doc.remote._rev)
-      should.exist(doc.deleted)
+      should(doc)
+        .have.property('deleted')
+        .and.not.have.property('remote')
     })
   })
 
   describe('addFolderAsync', () => {
     it('adds a folder to couchdb', async function() {
-      const doc /*: Object */ = {
-        path: path.normalize('couchdb-folder/folder-1'),
-        docType: 'folder',
-        updated_at: timestamp.build(2017, 2, 14, 15, 3, 27).toISOString()
-      }
+      const doc = builders
+        .metadir()
+        .path('couchdb-folder/folder-1')
+        .noRemote()
+        .updatedAt(timestamp.build(2017, 2, 14, 15, 3, 27))
+        .build()
+
       await this.remote.addFolderAsync(doc)
-      should.exist(doc.remote._id)
-      should.exist(doc.remote._rev)
+
+      should(doc).have.propertyByPath('remote', '_id')
 
       const folder = await cozy.files.statById(doc.remote._id)
       should(folder.attributes).have.properties({
@@ -278,31 +217,35 @@ describe('remote.Remote', function() {
       )
     })
 
-    it('does nothing when the folder already exists', async function() {
-      const parentDir /*: RemoteDoc */ = await builders.remoteDir().create()
-      const remoteDir /*: RemoteDoc */ = await builders
+    it('links any existing folder', async function() {
+      const remoteDir = await builders
         .remoteDir()
-        .inDir(parentDir)
+        .inRootDir()
+        .createdAt(2017, 2, 14, 15, 3, 27)
+        .updatedAt(2017, 2, 14, 15, 3, 27)
         .create()
-      const doc /*: Metadata */ = _.merge(
-        { remote: undefined },
-        metadata.fromRemoteDoc(remoteDir)
-      )
-      ensureValidPath(doc)
+      const doc = builders
+        .metadir()
+        .fromRemote(remoteDir)
+        .noRemote()
+        .updatedAt(new Date().toISOString())
+        .build()
 
       await this.remote.addFolderAsync(doc)
 
       const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
-      const { path, name, type, updated_at } = remoteDir
+      const { path, name, type } = remoteDir
       should(folder.attributes).have.properties({
         path,
         name,
-        type,
-        updated_at
+        type
       })
+      should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
+        '2017-02-14T15:03:27.000Z' // remoteDir.updated_at
+      )
       should(doc.remote).have.properties({
         _id: remoteDir._id,
-        _rev: remoteDir._rev
+        _rev: folder._rev
       })
     })
 
@@ -397,6 +340,7 @@ describe('remote.Remote', function() {
         const doc /*: Metadata */ = builders
           .metafile()
           .path('foo')
+          .noRemote()
           .build()
         this.remote.other = {
           createReadStreamAsync() {
@@ -404,9 +348,10 @@ describe('remote.Remote', function() {
           }
         }
         await this.remote.overwriteFileAsync(doc)
-        should.exist(doc.remote._id)
-        should.exist(doc.remote._rev)
-        should.exist(doc.deleted)
+
+        should(doc)
+          .have.property('deleted')
+          .and.not.have.propertyByPath('remote')
       })
 
       it('does not send any request if the file is a Cozy Note', async function() {
@@ -462,7 +407,11 @@ describe('remote.Remote', function() {
         .executable(false)
         .create()
       const old = metadata.fromRemoteDoc(oldRemote)
-      const doc = _.defaults({ executable: true }, old)
+      const doc = builders
+        .metafile()
+        .fromRemote(oldRemote)
+        .executable(true)
+        .build()
 
       await this.remote.updateFileMetadataAsync(doc, old)
 
@@ -481,8 +430,11 @@ describe('remote.Remote', function() {
         .executable(true)
         .create()
       const old = metadata.fromRemoteDoc(oldRemote)
-      const doc = _.clone(old)
-      delete doc.executable
+      const doc = builders
+        .metafile()
+        .fromRemote(oldRemote)
+        .executable(false)
+        .build()
 
       await this.remote.updateFileMetadataAsync(doc, old)
 
@@ -508,21 +460,14 @@ describe('remote.Remote', function() {
         .createdAt(2015, 11, 16, 16, 13, 1)
         .create()
 
-      const doc /*: Object */ = {
-        path: 'dir/file-7',
-        docType: 'file',
-        md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==', // foo
-        updated_at: '2015-11-16T16:13:01.001Z'
-      }
-      const old = {
-        path: 'dir/file-7',
-        docType: 'file',
-        md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
-        remote: {
-          _id: created._id,
-          _rev: created._rev
-        }
-      }
+      const old = await builders
+        .metafile()
+        .fromRemote(created)
+        .create()
+      const doc = builders
+        .metafile(old)
+        .updatedAt('2015-11-17T16:13:01.001Z')
+        .build()
 
       await this.remote.updateFileMetadataAsync(doc, old)
 
@@ -531,7 +476,7 @@ describe('remote.Remote', function() {
         type: 'file',
         dir_id: dir._id,
         name: 'file-7',
-        updated_at: '2015-11-16T16:13:01.001Z'
+        updated_at: '2015-11-17T16:13:01.001Z'
       })
       should(doc.remote._rev).equal(file._rev)
     })
@@ -539,32 +484,28 @@ describe('remote.Remote', function() {
 
   describe('updateFolder', function() {
     it('updates the metadata of a folder', async function() {
-      const created /*: RemoteDoc */ = await builders
+      const created = await builders
         .remoteDir()
-        .name('old-name')
+        .inRootDir()
+        .name('created')
         .createdAt(2017, 11, 15, 8, 12, 9)
         .create()
-      const old /*: Metadata */ = metadata.fromRemoteDoc(created)
-      const newParentDir /*: RemoteDoc */ = await builders
-        .remoteDir()
-        .name('new-parent-dir')
-        .inRootDir()
+      const old = await builders
+        .metadir()
+        .fromRemote(created)
         .create()
-      const doc /*: Metadata */ = _.defaults(
-        {
-          path: path.normalize('new-parent-dir/new-name'),
-          updated_at: '2017-11-16T16:14:45.123Z'
-        },
-        old
-      )
+      const doc = builders
+        .metadir(old)
+        .updatedAt('2017-11-16T16:14:45.123Z')
+        .build()
 
       await this.remote.updateFolderAsync(doc, old)
 
       const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
       should(folder.attributes).have.properties({
-        path: '/new-parent-dir/new-name',
+        path: '/created',
         type: 'directory',
-        dir_id: newParentDir._id,
+        dir_id: ROOT_DIR_ID,
         updated_at: doc.updated_at
       })
       should(doc.remote).have.properties({
@@ -574,80 +515,68 @@ describe('remote.Remote', function() {
     })
 
     it('creates the dir if it does not exist', async function() {
-      const parentDir /*: RemoteDoc */ = await builders
-        .remoteDir()
-        .name('parent-dir')
-        .create()
       const deletedDir /*: RemoteDoc */ = await builders
         .remoteDir()
         .name('deleted-dir')
-        .inDir(parentDir)
+        .inRootDir()
         .createdAt(2016, 1, 2, 3, 4, 5)
         .create()
-      const oldMetadata /*: Metadata */ = metadata.fromRemoteDoc(deletedDir)
-      const newMetadata /*: Metadata */ = _.defaults(
-        {
-          name: 'new-dir-name',
-          path: path.normalize('parent-dir/new-dir-name'),
-          updated_at: new Date().toISOString()
-        },
-        oldMetadata
-      )
       await cozy.files.destroyById(deletedDir._id)
+      const was = await builders
+        .metadir()
+        .fromRemote(deletedDir)
+        .updatedAt(new Date().toISOString())
+        .create()
+      const doc = builders.metadir(was).build()
 
-      await this.remote.updateFolderAsync(newMetadata, oldMetadata)
+      await this.remote.updateFolderAsync(doc, was)
 
       const created /*: JsonApiDoc */ = await cozy.files.statByPath(
-        '/parent-dir/new-dir-name'
+        '/deleted-dir'
       )
       should(created.attributes).have.properties({
         type: 'directory',
-        name: 'new-dir-name',
+        name: 'deleted-dir',
         dir_id: deletedDir.dir_id,
-        tags: newMetadata.tags
+        tags: doc.tags
       })
       should(timestamp.roundedRemoteDate(created.attributes.updated_at)).equal(
-        newMetadata.updated_at
+        doc.updated_at
       )
-      should(newMetadata.remote).have.properties({
+      should(doc.remote).have.properties({
         _id: created._id,
         _rev: created._rev
       })
     })
 
-    it('creates the dir if it has no remote info', async function() {
-      const oldMetadata /*: Metadata */ = _.defaults(
-        {
-          remote: undefined,
-          updated_at: timestamp.build(2015, 1, 1, 1, 1, 1).toISOString()
-        },
-        metadata.fromRemoteDoc(
-          builders
-            .remoteDir()
-            .name('foo')
-            .build()
-        )
-      )
-      const newMetadata /*: Metadata */ = _.defaults(
-        {
-          updated_at: timestamp.build(2015, 2, 2, 2, 2, 2).toISOString()
-        },
-        oldMetadata
-      )
+    it('links the dir if it has no remote info', async function() {
+      const remoteDir = await builders
+        .remoteDir()
+        .name('foo')
+        .createdAt(2015, 2, 2, 2, 2, 2)
+        .updatedAt(2015, 2, 2, 2, 2, 2)
+        .create()
+      const was = await builders
+        .metadir()
+        .fromRemote(remoteDir)
+        .noRemote()
+        .create()
+      const doc = builders
+        .metadir(was)
+        .updatedAt('2015-02-03T02:02:02.000Z')
+        .build()
 
-      await this.remote.updateFolderAsync(newMetadata, oldMetadata)
+      await this.remote.updateFolderAsync(doc, was)
 
-      const folder /*: JsonApiDoc */ = await cozy.files.statById(
-        newMetadata.remote._id
-      )
+      const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
       should(folder.attributes).have.properties({
         type: 'directory',
         name: 'foo',
         dir_id: 'io.cozy.files.root-dir',
-        tags: newMetadata.tags
+        tags: doc.tags
       })
       should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
-        newMetadata.updated_at
+        '2015-02-02T02:02:02.000Z' // remoteDir.updated_at
       )
     })
   })
@@ -684,8 +613,6 @@ describe('remote.Remote', function() {
       it('moves the file', async function() {
         await this.remote.moveAsync(doc, old)
 
-        should(doc.remote._id).equal(old.remote._id)
-        should(doc.remote._rev).not.equal(old.remote._rev)
         const file = await cozy.files.statById(doc.remote._id)
         should(file).have.properties({
           _id: old.remote._id,
@@ -705,34 +632,22 @@ describe('remote.Remote', function() {
 
     context('with a folder', function() {
       it('moves the folder in the Cozy', async function() {
-        const couchdbFolder = await cozy.files.statByPath('/couchdb-folder')
-        const created = await cozy.files.createDirectory({
-          name: 'folder-4',
-          dirID: couchdbFolder._id,
-          createdAt: '2018-01-02T05:31:30.564Z',
-          updatedAt: '2018-01-02T05:31:30.564Z'
-        })
-        const { created_at, updated_at } = created.attributes
-        const old = {
-          path: path.join('couchdb-folder', 'folder-4'),
-          docType: 'folder',
-          created_at: timestamp.roundedRemoteDate(created_at),
-          updated_at: timestamp.roundedRemoteDate(updated_at),
-          remote: {
-            _id: created._id,
-            _rev: created._rev
-          }
-        }
-        const doc = {
-          path: path.join('couchdb-folder', 'folder-5'),
-          docType: 'folder',
-          created_at: old.created_at,
-          updated_at: new Date('2018-07-31T05:37:43.770Z').toISOString(),
-          remote: {
-            _id: created._id,
-            _rev: created._rev
-          }
-        }
+        const created = await builders
+          .remoteDir()
+          .name('folder-4')
+          .inDir(couchdbFolder)
+          .createdAt(2018, 1, 2, 5, 31, 30, 564)
+          .updatedAt(2018, 1, 2, 5, 31, 30, 564)
+          .create()
+        const old = builders
+          .metadir()
+          .fromRemote(created)
+          .build()
+        const doc = builders
+          .metadir(old)
+          .path('couchdb-folder/folder-5')
+          .updatedAt('2018-07-31T05:37:43.770Z')
+          .build()
         await this.remote.moveAsync(doc, old)
         const folder = await cozy.files.statById(doc.remote._id)
         should(folder.attributes).have.properties({
@@ -767,7 +682,7 @@ describe('remote.Remote', function() {
           .build()
 
         await this.remote.moveAsync(doc, old)
-        // $FlowFixMe
+
         const folder = await cozy.files.statById(doc.remote._id)
         should(folder.attributes).have.properties({
           dir_id: couchdbFolder._id,
@@ -847,24 +762,24 @@ describe('remote.Remote', function() {
       it('trashes the existing file at target location', async function() {
         await this.remote.moveAsync(doc, old)
 
-        should(
-          (await cozy.files.statById(existing.remote._id)).attributes
-        ).have.property('trashed', true)
+        should(await cozy.files.statById(existing.remote._id))
+          .have.propertyByPath('attributes', 'trashed')
+          .be.true()
       })
 
       it('transfers the existing file references to the moved one', async function() {
         await this.remote.moveAsync(doc, old)
 
-        should(
-          (await cozy.files.statById(doc.remote._id)).relationships
-            .referenced_by.data
-        ).eql(existingRefs.map(ref => ({ id: ref._id, type: ref._type })))
+        should(await cozy.files.statById(doc.remote._id))
+          .have.propertyByPath('relationships', 'referenced_by', 'data')
+          .eql(existingRefs.map(ref => ({ id: ref._id, type: ref._type })))
       })
 
       it('updates the doc revision', async function() {
         await this.remote.moveAsync(doc, old)
 
-        should((await cozy.files.statById(doc.remote._id))._rev).eql(
+        should(await cozy.files.statById(doc.remote._id)).have.property(
+          '_rev',
           doc.remote._rev
         )
       })
@@ -1004,15 +919,15 @@ describe('remote.Remote', function() {
 describe('remote', function() {
   describe('.dirAndName()', () => {
     it('returns the remote path and name', function() {
-      let [dir, name] = remote.dirAndName('foo')
-      should(dir).equal('/')
-      should(name).equal('foo')
-      ;[dir, name] = remote.dirAndName(path.normalize('foo/bar'))
-      should(dir).equal('/foo')
-      should(name).equal('bar')
-      ;[dir, name] = remote.dirAndName(path.normalize('foo/bar/baz'))
-      should(dir).equal('/foo/bar')
-      should(name).equal('baz')
+      should(remote.dirAndName('foo')).deepEqual(['/', 'foo'])
+      should(remote.dirAndName(path.normalize('foo/bar'))).deepEqual([
+        '/foo',
+        'bar'
+      ])
+      should(remote.dirAndName(path.normalize('foo/bar/baz'))).deepEqual([
+        '/foo/bar',
+        'baz'
+      ])
     })
   })
 })

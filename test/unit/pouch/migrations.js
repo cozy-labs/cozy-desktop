@@ -240,7 +240,7 @@ describe('core/pouch/migrations', function() {
           it('does not save any docs', async function() {
             await migrate(migration, this.pouch)
 
-            const docs = await this.pouch.byRecursivePath('')
+            const docs = await this.pouch.allDocs()
             const migratedDocs = docs.filter(d => d.migrated)
             should(migratedDocs).be.empty()
           })
@@ -255,7 +255,7 @@ describe('core/pouch/migrations', function() {
 
         context('and some docs needed to be migrated', () => {
           it('runs the migration on all affected docs', async function() {
-            const docs = await this.pouch.byRecursivePath('')
+            const docs = await this.pouch.allDocs()
 
             await migrate(migration, this.pouch)
             should(migration.run).have.been.calledOnce()
@@ -265,7 +265,7 @@ describe('core/pouch/migrations', function() {
           it('saves the migrated docs', async function() {
             await migrate(migration, this.pouch)
 
-            const docs = await this.pouch.byRecursivePath('')
+            const docs = await this.pouch.allDocs()
             const migratedDocs = docs.filter(d => d.migrated)
             should(migratedDocs.length).equal(docs.length)
           })
@@ -320,6 +320,7 @@ describe('core/pouch/migrations', function() {
                   }
 
                   if (isCorruptedDoc(index)) {
+                    newDoc._id = doc._id
                     newDoc._rev = doc._rev.replace(/\d/, '9')
                   }
 
@@ -329,12 +330,10 @@ describe('core/pouch/migrations', function() {
             })
 
             it('reverts all changes', async function() {
-              const docs = await this.pouch.byRecursivePath('')
+              const docs = await this.pouch.allDocs()
 
               await migrate(migration, this.pouch)
-              await should(this.pouch.byRecursivePath('')).be.fulfilledWith(
-                docs
-              )
+              await should(this.pouch.allDocs()).be.fulfilledWith(docs)
             })
 
             it('does not update the schema version', async function() {
@@ -380,7 +379,7 @@ describe('core/pouch/migrations', function() {
     context('with only valid docs', () => {
       let docs
       beforeEach('fetch and update docs', async function() {
-        docs = await this.pouch.byRecursivePath('')
+        docs = await this.pouch.allDocs()
         docs.forEach(d => {
           d.migrated = true
         })
@@ -396,7 +395,7 @@ describe('core/pouch/migrations', function() {
       it('saves the new version of all documents', async function() {
         await save(docs, this.pouch.db)
 
-        const savedDocs = await this.pouch.byRecursivePath('')
+        const savedDocs = await this.pouch.allDocs()
         const migratedDocs = savedDocs.filter(d => d.migrated)
         should(migratedDocs.length).equal(savedDocs.length)
       })
@@ -407,7 +406,7 @@ describe('core/pouch/migrations', function() {
 
       let docs
       beforeEach('fetch and update docs', async function() {
-        docs = await this.pouch.byRecursivePath('')
+        docs = await this.pouch.allDocs()
         docs.forEach((d, index) => {
           d.migrated = true
           if (isCorruptedDoc(index)) d._rev = d._rev.replace(/\d/, '9')
@@ -433,7 +432,7 @@ describe('core/pouch/migrations', function() {
       it('saves the new version of all valid documents', async function() {
         await save(docs, this.pouch.db)
 
-        const maybeMigratedDocs = await this.pouch.byRecursivePath('')
+        const maybeMigratedDocs = await this.pouch.allDocs()
         maybeMigratedDocs.forEach((md, index) => {
           if (isCorruptedDoc(index)) {
             should(md.migrated).be.undefined()
@@ -450,7 +449,7 @@ describe('core/pouch/migrations', function() {
 
     describe('affectedDocs()', () => {
       it('returns an empty array when all docs have sides.target', async function() {
-        const docs = (await this.pouch.byRecursivePath('')).map(doc => {
+        const docs = (await this.pouch.allDocs()).map(doc => {
           doc.sides.target = 2
           return doc
         })
@@ -458,7 +457,7 @@ describe('core/pouch/migrations', function() {
       })
 
       it('returns only docs missing sides.target', async function() {
-        const docs = await this.pouch.byRecursivePath('')
+        const docs = await this.pouch.allDocs()
         const incompleteDocs = docs.filter((doc, index) => index % 2 === 0)
         docs
           .filter((doc, index) => index % 2 === 1)
@@ -472,7 +471,7 @@ describe('core/pouch/migrations', function() {
 
     describe('run()', () => {
       it('sets sides.target with the short rev extracted from _rev', async function() {
-        const docs = await this.pouch.byRecursivePath('')
+        const docs = await this.pouch.allDocs()
         const expected = docs.map(doc => ({
           ...doc,
           sides: {

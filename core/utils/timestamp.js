@@ -10,6 +10,7 @@ export type Timestamp = Date
 
 module.exports = {
   build,
+  spread,
   current,
   fromDate,
   sameDate,
@@ -28,6 +29,19 @@ function build(
   second /*: number */
 ) /*: Timestamp */ {
   return new Date(Date.UTC(year, month - 1, day, hour, minute, second))
+}
+
+function spread(date /*: string|Date|Timestamp */) /*: number[] */ {
+  const timestamp = new Date(date)
+  const year = timestamp.getFullYear()
+  const month = timestamp.getMonth()
+  const day = timestamp.getDate()
+  const hours = timestamp.getHours()
+  const minutes = timestamp.getMinutes()
+  const seconds = timestamp.getSeconds()
+  const milliseconds = timestamp.getMilliseconds()
+
+  return [year, month, day, hours, minutes, seconds, milliseconds]
 }
 
 function current() /*: Timestamp */ {

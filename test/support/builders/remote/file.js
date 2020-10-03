@@ -81,6 +81,12 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder {
     return this
   }
 
+  // Should only be used to build invalid docs. Prefer using `data()`.
+  size(newSize /*: string */) /*: this */ {
+    this.remoteDoc.size = newSize
+    return this
+  }
+
   dataFromFile(path /*: string */) /*: RemoteFileBuilder */ {
     return this.data(fs.createReadStream(path))
   }

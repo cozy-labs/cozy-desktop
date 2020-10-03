@@ -3,9 +3,11 @@
 const path = require('path')
 const should = require('should')
 
-const metadata = require('../../../core/metadata')
 const remoteChange = require('../../../core/remote/change')
 const { onPlatforms } = require('../../support/helpers/platform')
+const Builders = require('../../support/builders')
+
+const builders = new Builders()
 
 describe('sorter()', () => {
   describe('with identical additions', () => {
@@ -365,46 +367,41 @@ describe('sorter()', () => {
     })
 
     it('when there are other changes', () => {
-      const deletedPath = '.cozy_trash/fichier.pptx'
-      const createdPath = '1_Dossier/fichier.pptx'
+      const deletedPath = path.normalize('.cozy_trash/fichier.pptx')
+      const createdPath = path.normalize('1_Dossier/fichier.pptx')
 
       const changes = [
         {
           type: 'DirAddition',
-          doc: {
-            path: '2_Dossier/2_SousDossier/SousSousDossier',
-            docType: 'folder',
-            _id: metadata.id('2_Dossier/2_SousDossier/SousSousDossier')
-          }
+          doc: builders
+            .metadir()
+            .path('2_Dossier/2_SousDossier/SousSousDossier')
+            .build()
         },
         {
           type: 'FileAddition',
-          doc: {
-            path: '2_Dossier/1_SousDossier/fichier.xml',
-            docType: 'file',
-            _id: metadata.id('2_Dossier/1_SousDossier/fichier.xml')
-          }
+          doc: builders
+            .metafile()
+            .path('2_Dossier/1_SousDossier/fichier.xml')
+            .build()
         },
         {
           type: 'FileTrashing',
-          doc: {
-            path: deletedPath,
-            docType: 'file',
-            _id: metadata.id(deletedPath)
-          },
-          was: {
-            path: createdPath,
-            docType: 'file',
-            _id: metadata.id(createdPath)
-          }
+          doc: builders
+            .metafile()
+            .path(deletedPath)
+            .build(),
+          was: builders
+            .metafile()
+            .path(createdPath)
+            .build()
         },
         {
           type: 'FileAddition',
-          doc: {
-            path: createdPath,
-            docType: 'file',
-            _id: metadata.id(createdPath)
-          }
+          doc: builders
+            .metafile()
+            .path(createdPath)
+            .build()
         }
       ]
 
@@ -925,17 +922,26 @@ describe('sortByPath', () => {
     const one = {
       type: 'IgnoredChange',
       doc: { _id: 'whatever', _rev: '2-xxx', _deleted: true },
-      was: { path: path.normalize('spreadsheet') },
+      was: builders
+        .metafile()
+        .path('spreadsheet')
+        .build(),
       detail: 'Deleted document'
     }
     const two = {
-      doc: { path: path.normalize('doc') },
+      doc: builders
+        .metafile()
+        .path('doc')
+        .build(),
       type: 'FileAddition'
     }
     const three = {
       type: 'IgnoredChange',
       doc: { _id: 'whatever', _rev: '2-xxx', _deleted: true },
-      was: { path: path.normalize('dir') },
+      was: builders
+        .metadir()
+        .path('dir')
+        .build(),
       detail: 'Deleted document'
     }
 

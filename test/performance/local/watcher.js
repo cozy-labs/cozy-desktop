@@ -6,10 +6,10 @@ const fse = require('fs-extra')
 const path = require('path')
 
 const Watcher = require('../../../core/local/chokidar/watcher')
-const metadata = require('../../../core/metadata')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
+const Builders = require('../../support/builders')
 
 class SpyPrep {
   /*::
@@ -43,32 +43,24 @@ class SpyPrep {
 
 let abspath
 
-const createDoc = async (pouch, dir, relpath /*: string */, ino) => {
+const createDoc = async (builders, dir, relpath /*: string */, ino) => {
   if (dir) {
-    await pouch.put({
-      _id: metadata.id(relpath),
-      docType: 'folder',
-      updated_at: new Date(),
-      path: relpath,
-      ino,
-      tags: [],
-      sides: { local: 1, remote: 1 }
-    })
+    await builders
+      .metadir()
+      .path(relpath)
+      .ino(ino)
+      .upToDate()
+      .create()
   } else {
-    await pouch.put({
-      _id: metadata.id(relpath),
-      md5sum: '1B2M2Y8AsgTpgAmY7PhCfg==', // ''
-      class: 'text',
-      docType: 'file',
-      executable: false,
-      updated_at: new Date(),
-      mime: 'text/plain',
-      path: relpath,
-      ino,
-      size: 0,
-      tags: [],
-      sides: { local: 1, remote: 1 }
-    })
+    await builders
+      .metafile()
+      .path(relpath)
+      .data('')
+      .type('text/plain')
+      .executable(false)
+      .ino(ino)
+      .upToDate()
+      .create()
   }
 }
 
@@ -79,9 +71,12 @@ describe('LocalWatcher charge', () => {
   }
 
   const N = 100 * 1000
-  let watcher, prep
+  let watcher, prep, builders
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
+  before('prepare builders', function() {
+    builders = new Builders({ pouch: this.pouch })
+  })
   before('create outside dir', async function() {
     await fse.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
   })
@@ -119,7 +114,7 @@ describe('LocalWatcher charge', () => {
           await fse.writeFileSync(abspath(p))
         }
       } else {
-        await createDoc(this.pouch, i % 3, p, i)
+        await createDoc(builders, i % 3, p, i)
       }
       // $FlowFixMe
       events[i] = { type, path: p, stats }

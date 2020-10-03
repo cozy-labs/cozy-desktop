@@ -59,6 +59,8 @@ module.exports = class RemoteBaseBuilder {
   }
 
   trashed() /*: this */ {
+    this.remoteDoc.trashed = true
+    this.remoteDoc.restore_path = posix.dirname(this.remoteDoc.path)
     return this.inDir({
       _id: TRASH_DIR_ID,
       path: `/${TRASH_DIR_NAME}`
@@ -66,7 +68,19 @@ module.exports = class RemoteBaseBuilder {
   }
 
   restored() /*: this */ {
+    if (this.remoteDoc.trashed) delete this.remoteDoc.trashed
+    if (this.remoteDoc.restore_path) delete this.remoteDoc.restore_path
     return this.inRootDir()
+  }
+
+  tags(...tags /*: string[] */) /*: this */ {
+    this.remoteDoc.tags = tags
+    return this
+  }
+
+  noTags() /*: this */ {
+    delete this.remoteDoc.tags
+    return this
   }
 
   shortRev(revNumber /*: number */) /*: this */ {

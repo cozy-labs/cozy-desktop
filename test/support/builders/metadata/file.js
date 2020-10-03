@@ -26,7 +26,7 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
     this.buildLocal = true
   }
 
-  data(data /*: string */) /*: this */ {
+  data(data /*: string | Buffer */) /*: this */ {
     this.doc.size = Buffer.from(data).length
     this.doc.md5sum = crypto
       .createHash('md5')
@@ -39,6 +39,21 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
   type(mime /*: string */) /*: this */ {
     this.doc.class = mime.split('/')[0]
     this.doc.mime = mime
+    return this
+  }
+
+  // Should only be used to build invalid docs. Prefer using `data()`.
+  size(newSize /*: number */) /*: this */ {
+    this.doc.size = newSize
+    return this
+  }
+
+  executable(isExecutable /*: boolean */) /*: this */ {
+    if (!isExecutable && this.doc.executable) {
+      delete this.doc.executable
+    } else if (isExecutable) {
+      this.doc.executable = isExecutable
+    }
     return this
   }
 }

@@ -4,12 +4,16 @@ const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
 
+const metadata = require('../../core/metadata')
 const { Merge, MergeMissingParentError } = require('../../core/merge')
 
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
+const Builders = require('../support/builders')
 
 describe('Merge Helpers', function() {
+  let builders
+
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('instanciate merge', function() {
@@ -19,6 +23,9 @@ describe('Merge Helpers', function() {
     this.merge.local = {}
     this.merge.local.moveAsync = sinon.stub()
   })
+  beforeEach('prepare builders', function() {
+    builders = new Builders(this)
+  })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
@@ -26,52 +33,59 @@ describe('Merge Helpers', function() {
     for (const side of ['local', 'remote']) {
       context(side, () => {
         it('works when in the root folder', async function() {
-          await this.merge.ensureParentExistAsync(side, { _id: 'foo' })
+          await this.merge.ensureParentExistAsync(
+            side,
+            builders
+              .metadata()
+              .path('foo')
+              .build()
+          )
         })
 
         it('works if the parent directory is present', async function() {
-          let doc = {
-            _id: 'exists',
-            docType: 'folder'
-          }
-          let child = {
-            _id: 'exists/child',
-            docType: 'folder'
-          }
-          await this.pouch.db.put(doc)
+          builders
+            .metadir()
+            .path('exists')
+            .create()
+          const child = builders
+            .metadir()
+            .path('exists/child')
+            .build()
           await this.merge.ensureParentExistAsync(side, child)
         })
 
         if (side === 'local') {
           it('creates the parent directory if missing', async function() {
+            const doc = builders
+              .metadata()
+              .path('missing/child')
+              .build()
             this.merge.putFolderAsync.resolves('OK')
-            let doc = {
-              _id: 'MISSING/CHILD',
-              path: 'missing/child'
-            }
             await this.merge.ensureParentExistAsync(side, doc)
-            this.merge.putFolderAsync.called.should.be.true()
+            should(this.merge.putFolderAsync).have.been.called()
             this.merge.putFolderAsync.args[0][1].should.have.properties({
-              _id: 'MISSING',
+              _id: metadata.id('missing'),
               path: 'missing',
               docType: 'folder'
             })
           })
 
           it('creates the full tree if needed', async function() {
+            const doc = builders
+              .metadata()
+              .path('a/b/c/d/e')
+              .build()
             this.merge.putFolderAsync.resolves('OK')
-            let doc = {
-              _id: 'a/b/c/d/e',
-              path: 'a/b/c/d/e'
-            }
             await this.merge.ensureParentExistAsync(side, doc)
-            let iterable = ['a', 'a/b', 'a/b/c', 'a/b/c/d']
+            const iterable = ['a', 'a/b', 'a/b/c', 'a/b/c/d'].map(
+              path.normalize
+            )
             for (let i = 0; i < iterable.length; i++) {
-              let id = iterable[i]
-              this.merge.putFolderAsync.called.should.be.true()
+              const path = iterable[i]
+              should(this.merge.putFolderAsync).have.been.called()
               this.merge.putFolderAsync.args[i][1].should.have.properties({
-                _id: id,
-                path: id,
+                _id: metadata.id(path),
+                path,
                 docType: 'folder'
               })
             }
@@ -80,20 +94,20 @@ describe('Merge Helpers', function() {
 
         if (side === 'remote') {
           it('throws MergeMissingParentError when the parent directory is missing', async function() {
-            const doc = {
-              _id: 'MISSING/CHILD',
-              path: 'missing/child'
-            }
+            const doc = builders
+              .metadata()
+              .path('missing/child')
+              .build()
             await should(
               this.merge.ensureParentExistAsync(side, doc)
             ).be.rejectedWith(MergeMissingParentError)
           })
 
           it('throws MergeMissingParentError when the full tree is missing', async function() {
-            const doc = {
-              _id: 'a/b/c/d/e',
-              path: 'a/b/c/d/e'
-            }
+            const doc = builders
+              .metadata()
+              .path('a/b/c/d/e')
+              .build()
             await should(
               this.merge.ensureParentExistAsync(side, doc)
             ).be.rejectedWith(MergeMissingParentError)
@@ -105,38 +119,51 @@ describe('Merge Helpers', function() {
 
   describe('resolveConflict', function() {
     it('appends -conflict- and the date to the path', async function() {
-      let doc = { path: 'foo/bar' }
-      let spy = this.merge.local.moveAsync
+      const doc = builders
+        .metadata()
+        .path('foo/bar')
+        .build()
+      const spy = this.merge.local.moveAsync
       spy.resolves()
       await this.merge.resolveConflictAsync(this.side, doc)
-      spy.called.should.be.true()
-      let dstPath = spy.args[0][0].path
-      let parts = dstPath.split('-conflict-')
-      parts[0].should.equal(path.normalize('foo/bar'))
-      parts[1].should.match(/^\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}.\d{3}Z$/)
-      let srcPath = spy.args[0][1].path
-      srcPath.should.equal(doc.path)
+      should(spy).have.been.called()
+      const dstPath = spy.args[0][0].path
+      should(dstPath)
+        .match(/foo(\/|\\)bar/)
+        .and.match(metadata.CONFLICT_REGEXP)
+      const srcPath = spy.args[0][1].path
+      should(srcPath).equal(doc.path)
     })
 
     it('preserves the extension', async function() {
-      let doc = { path: 'foo/bar.jpg' }
-      let spy = this.merge.local.moveAsync
+      const doc = builders
+        .metafile()
+        .path('foo/bar.jpg')
+        .build()
+      const spy = this.merge.local.moveAsync
       spy.resolves()
       await this.merge.resolveConflictAsync(this.side, doc)
-      spy.called.should.be.true()
-      let dstPath = spy.args[0][0].path
-      dstPath.indexOf('conflict').should.not.equal(-1)
-      path.extname(dstPath).should.equal('.jpg')
+      should(spy).have.been.called()
+      const dstPath = spy.args[0][0].path
+      should(dstPath)
+        .match(/foo(\/|\\)bar/)
+        .and.match(metadata.CONFLICT_REGEXP)
+      should(path.extname(dstPath)).equal('.jpg')
     })
 
     it('do not chain conflicts', async function() {
-      let doc = { path: 'foo/baz-conflict-2018-11-08T01_02_03.004Z.jpg' }
-      let spy = this.merge.local.moveAsync
+      const doc = builders
+        .metafile()
+        .path('foo/baz-conflict-2018-11-08T01_02_03.004Z.jpg')
+        .build()
+      const spy = this.merge.local.moveAsync
       spy.resolves()
       await this.merge.resolveConflictAsync(this.side, doc)
-      spy.called.should.be.true()
-      let dstPath = spy.args[0][0].path
-      dstPath.split('-conflict-').should.have.length(2)
+      should(spy).have.been.called()
+      const dstPath = spy.args[0][0].path
+      should(dstPath)
+        .match(/foo(\/|\\)baz/)
+        .and.match(metadata.CONFLICT_REGEXP)
     })
   })
 })

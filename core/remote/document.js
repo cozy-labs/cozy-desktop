@@ -43,6 +43,7 @@ export type RemoteDoc = {
   size?: string,
   tags: string[],
   trashed?: true,
+  restore_path?: string,
   type: string,
   created_at: string,
   updated_at: string,

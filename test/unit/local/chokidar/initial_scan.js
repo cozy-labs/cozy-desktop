@@ -31,102 +31,83 @@ onPlatform('darwin', () => {
     describe('.detectOfflineUnlinkEvents()', function() {
       it('detects deleted files and folders', async function() {
         // Folder still exists
-        const folder1 = {
-          _id: 'folder1',
-          path: 'folder1',
-          docType: 'folder',
-          sides: { target: 2, local: 2, remote: 2 }
-        }
+        await builders
+          .metadir()
+          .path('folder1')
+          .upToDate()
+          .create()
         // Folder does not exist anymore
-        const folder2 = {
-          _id: 'folder2',
-          path: 'folder2',
-          docType: 'folder',
-          sides: { target: 2, local: 2, remote: 2 }
-        }
+        const folder2 = await builders
+          .metadir()
+          .path('folder2')
+          .upToDate()
+          .create()
         // Folder was already trashed remotely
-        const folder3 = {
-          _id: '.cozy_trash/folder3',
-          path: '.cozy_trash/folder3',
-          trashed: true,
-          docType: 'folder',
-          sides: { target: 3, local: 2, remote: 3 }
-        }
+        await builders
+          .metadir()
+          .path('.cozy_trash/folder3')
+          .trashed()
+          .changedSide('remote')
+          .create()
         // Folder was moved locally
-        const folder4 = {
-          _id: 'folder4',
-          path: 'folder4',
-          docType: 'folder',
-          moveFrom: {
-            _id: 'folder1/folder4',
-            path: 'folder1/folder4'
-          },
-          sides: { target: 3, local: 3, remote: 2 }
-        }
+        const srcFolder4 = await builders
+          .metadir()
+          .path('folder1/folder4')
+          .moveTo('folder4')
+          .upToDate()
+          .create()
+        const folder4 = await builders
+          .metadir()
+          .moveFrom(srcFolder4)
+          .path('folder4')
+          .changedSide('local')
+          .create()
         // Folder was already trashed remotely and marked for deletion
-        const folder5 = {
-          _id: '.cozy_trash/folder5',
-          path: '.cozy_trash/folder5',
-          deleted: true,
-          docType: 'folder',
-          sides: { target: 3, local: 2, remote: 3 }
-        }
+        await builders
+          .metadir()
+          .path('.cozy_trash/folder5')
+          .deleted()
+          .changedSide('remote')
+          .create()
         // File still exists
-        const file1 = {
-          _id: 'file1',
-          path: 'file1',
-          docType: 'file',
-          sides: { target: 2, local: 2, remote: 2 }
-        }
+        builders
+          .metafile()
+          .path('file1')
+          .upToDate()
+          .create()
         // File does not exist anymore
-        const file2 = {
-          _id: 'file2',
-          path: 'file2',
-          docType: 'file',
-          sides: { target: 2, local: 2, remote: 2 }
-        }
+        const file2 = await builders
+          .metafile()
+          .path('file2')
+          .upToDate()
+          .create()
         // File was trashed remotely
-        const file3 = {
-          _id: '.cozy_trash/folder3/file3',
-          path: '.cozy_trash/folder3/file3',
-          trashed: true,
-          docType: 'file',
-          sides: { target: 3, local: 2, remote: 3 }
-        }
+        builders
+          .metafile()
+          .path('.cozy_trash/folder3/file3')
+          .trashed()
+          .changedSide('remote')
+          .create()
         // File was moved locally
-        const file4 = {
-          _id: 'file4',
-          path: 'file4',
-          docType: 'file',
-          moveFrom: {
-            _id: 'folder1/file4',
-            path: 'folder1/file4'
-          },
-          sides: { target: 3, local: 3, remote: 2 }
-        }
+        const srcFile4 = await builders
+          .metafile()
+          .path('folder1/file4')
+          .moveTo('file4')
+          .upToDate()
+          .create()
+        const file4 = await builders
+          .metafile()
+          .moveFrom(srcFile4)
+          .path('file4')
+          .changedSide('local')
+          .create()
         // File was already deleted locally and marked for deletion
-        const file5 = {
-          _id: 'folder1/file5',
-          path: 'folder1/file5',
-          deleted: true,
-          docType: 'file',
-          sides: { target: 3, local: 3, remote: 2 }
-        }
-        for (let doc of [
-          folder1,
-          folder2,
-          folder3,
-          folder4,
-          folder5,
-          file1,
-          file2,
-          file3,
-          file4,
-          file5
-        ]) {
-          const { rev } = await this.pouch.db.put(doc)
-          doc._rev = rev
-        }
+        builders
+          .metafile()
+          .path('folder1/file5')
+          .deleted()
+          .changedSide('local')
+          .create()
         const initialScan = { ids: ['folder1', 'file1'].map(metadata.id) }
 
         const { offlineEvents } = await detectOfflineUnlinkEvents(
