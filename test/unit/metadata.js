@@ -41,7 +41,7 @@ describe('metadata', function() {
 
   describe('.fromRemoteDoc()', () => {
     it('builds the metadata for a remote file', () => {
-      let remoteDoc /*: RemoteDoc */ = {
+      const remoteDoc /*: RemoteDoc */ = {
         _id: '12',
         _rev: '34',
         _type: FILES_DOCTYPE,
@@ -62,7 +62,7 @@ describe('metadata', function() {
         },
         someUnusedProperty: 'unused value'
       }
-      let doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
+      const doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
 
       should(doc).deepEqual({
         md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
@@ -87,8 +87,10 @@ describe('metadata', function() {
       })
 
       remoteDoc.executable = true
-      doc = metadata.fromRemoteDoc(remoteDoc)
-      should(doc.executable).equal(true)
+      should(metadata.fromRemoteDoc(remoteDoc)).have.property(
+        'executable',
+        true
+      )
     })
 
     it('builds the metadata for a remote dir', () => {
@@ -391,63 +393,48 @@ describe('metadata', function() {
 
   describe('sameFolder', () => {
     it('returns true if the folders are the same', function() {
-      let a = {
-        _id: 'FOO/BAR',
-        docType: 'folder',
-        path: 'foo/bar',
-        updated_at: '2015-12-01T11:22:56.517Z',
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        },
-        ino: 234
-      }
-      let b = {
-        _id: 'FOO/BAR',
-        docType: 'folder',
-        path: 'FOO/BAR',
-        updated_at: '2015-12-01T11:22:57.000Z',
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        },
-        ino: 234
-      }
-      let c = {
-        _id: 'FOO/BAR',
-        docType: 'folder',
-        path: 'FOO/BAR',
-        updated_at: '2015-12-01T11:22:57.000Z',
-        tags: ['qux', 'courge'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        }
-      }
-      let d = {
-        _id: 'FOO/BAR',
-        docType: 'folder',
-        path: 'FOO/BAR',
-        updated_at: '2015-12-01T11:22:57.000Z',
-        tags: ['qux', 'courge'],
-        remote: {
-          id: '123',
-          rev: '8-901'
-        }
-      }
-      let e = {
-        _id: 'FOO/BAZ',
-        docType: 'folder',
-        path: 'FOO/BAZ',
-        updated_at: '2015-12-01T11:22:57.000Z',
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        }
-      }
+      const a = builders
+        .metadir()
+        .ino(234)
+        .path('foo/bar')
+        .tags('qux')
+        .updatedAt('2015-12-01T11:22:56.517Z')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .build()
+      const b = builders
+        .metadir()
+        .ino(234)
+        .path('FOO/BAR')
+        .tags('qux')
+        .updatedAt('2015-12-01T11:22:57.000Z')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .build()
+      const c = builders
+        .metadir()
+        .path('FOO/BAR')
+        .tags('qux', 'courge')
+        .updatedAt('2015-12-01T11:22:57.000Z')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .build()
+      const d = builders
+        .metadir()
+        .path('FOO/BAR')
+        .tags('qux', 'courge')
+        .updatedAt('2015-12-01T11:22:57.000Z')
+        .remoteId('123')
+        .remoteRev('8-901')
+        .build()
+      const e = builders
+        .metadir()
+        .path('FOO/BAZ')
+        .tags('qux')
+        .updatedAt('2015-12-01T11:22:57.000Z')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .build()
       const g = _.merge({}, a, { ino: a.ino + 2 })
       sameFolder(a, a).should.be.true()
       sameFolder(a, b).should.be.false()
@@ -482,19 +469,16 @@ describe('metadata', function() {
     })
 
     it('does not fail when a property is absent on one side and undefined on the other', function() {
-      let a = {
-        _id: 'FOO/BAR',
-        docType: 'folder',
-        path: 'foo/bar',
-        updated_at: '2015-12-01T11:22:56.517Z',
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        },
-        ino: 234,
-        trashed: false
-      }
+      const a = builders
+        .metadir()
+        .path('foo/bar')
+        .tags('qux')
+        .updatedAt('2015-12-01T11:22:56.517Z')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .ino(234)
+        .trashed(false)
+        .build()
 
       _.each(
         ['path', 'docType', 'remote', 'tags', 'trashed', 'ino'],
@@ -531,85 +515,71 @@ describe('metadata', function() {
 
   describe('sameFile', function() {
     it('returns true if the files are the same', function() {
-      let a = {
-        _id: 'FOO/BAR',
-        docType: 'file',
-        path: 'foo/bar',
-        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        updated_at: '2015-12-01T11:22:56.517Z',
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        },
-        ino: 1
-      }
-      let b = {
-        _id: 'FOO/BAR',
-        docType: 'file',
-        path: 'FOO/BAR',
-        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        updated_at: '2015-12-01T11:22:57.000Z',
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        },
-        ino: 1
-      }
-      let c = {
-        _id: 'FOO/BAR',
-        docType: 'file',
-        path: 'FOO/BAR',
-        md5sum: '000000047681546bd781d6a5166d18737223b3f6',
-        updated_at: '2015-12-01T11:22:57.000Z',
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        }
-      }
-      let d = {
-        _id: 'FOO/BAR',
-        docType: 'file',
-        path: 'FOO/BAR',
-        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        updated_at: '2015-12-01T11:22:57.000Z',
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '8-901'
-        }
-      }
-      let e = {
-        _id: 'FOO/BAZ',
-        docType: 'file',
-        path: 'FOO/BAZ',
-        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        updated_at: '2015-12-01T11:22:57.000Z',
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        }
-      }
-      let f = {
-        _id: 'FOO/BAR',
-        docType: 'file',
-        path: 'foo/bar',
-        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        updated_at: '2015-12-01T11:22:56.517Z',
-        size: 12345,
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        }
-      }
-      const g = _.merge({}, a, { ino: a.ino + 1 })
-      const h = _.merge({}, a, {
-        remote: _.merge({}, a.remote, { _id: '321' })
-      })
+      const a = builders
+        .metafile()
+        .path('foo/bar')
+        .ino(1)
+        .data('some data')
+        .tags('qux')
+        .updatedAt('2015-12-01T11:22:56.517Z')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .build()
+      const b = builders
+        .metafile()
+        .path('FOO/BAR')
+        .ino(1)
+        .data('some data')
+        .tags('qux')
+        .updatedAt('2015-12-01T11:22:56.517Z')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .build()
+      const c = builders
+        .metafile()
+        .path('FOO/BAR')
+        .data('other data')
+        .tags('qux')
+        .updatedAt('2015-12-01T11:22:56.517Z')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .build()
+      const d = builders
+        .metafile()
+        .path('FOO/BAR')
+        .data('some data')
+        .tags('qux')
+        .updatedAt('2015-12-01T11:22:56.517Z')
+        .remoteId('123')
+        .remoteRev('8-901')
+        .build()
+      const e = builders
+        .metafile()
+        .path('FOO/BAZ')
+        .data('some data')
+        .tags('qux')
+        .updatedAt('2015-12-01T11:22:56.517Z')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .build()
+      const f = builders
+        .metafile()
+        .path('foo/bar')
+        .data('some data')
+        .size(12345)
+        .tags('qux')
+        .updatedAt('2015-12-01T11:22:56.517Z')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .build()
+      const g = builders
+        .metafile(a)
+        .ino(a.ino + 1)
+        .build()
+      const h = builders
+        .metafile(a)
+        .remoteId('321')
+        .build()
       sameFile(a, a).should.be.true()
       sameFile(a, b).should.be.false()
       sameFile(a, c).should.be.false()
@@ -651,23 +621,20 @@ describe('metadata', function() {
     })
 
     it('does not fail when one file has executable: undefined', function() {
-      let a = {
-        _id: 'FOO/BAR',
-        docType: 'file',
-        path: 'foo/bar',
-        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        updated_at: '2015-12-01T11:22:56.517Z',
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        }
-      }
-      let b = _.clone(a)
+      const a = builders
+        .metafile()
+        .path('foo/bar')
+        .data('some data')
+        .tags('qux')
+        .updatedAt('2015-12-01T11:22:56.517Z')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .build()
+      const b = _.clone(a)
       b.executable = undefined
-      let c = _.clone(a)
+      const c = _.clone(a)
       c.executable = false
-      let d = _.clone(a)
+      const d = _.clone(a)
       d.executable = true
       sameFile(a, b).should.be.true()
       sameFile(a, c).should.be.true()
@@ -678,22 +645,18 @@ describe('metadata', function() {
     })
 
     it('does not fail when a property is absent on one side and undefined on the other', function() {
-      let a = {
-        _id: 'FOO/BAR',
-        docType: 'file',
-        path: 'foo/bar',
-        ino: 23452,
-        md5sum: '9440ca447681546bd781d6a5166d18737223b3f6',
-        size: 22,
-        updated_at: '2015-12-01T11:22:56.517Z',
-        tags: ['qux'],
-        remote: {
-          id: '123',
-          rev: '4-567'
-        },
-        trashed: false,
-        executable: false
-      }
+      const a = builders
+        .metafile()
+        .path('foo/bar')
+        .ino(23452)
+        .data('some data')
+        .trashed(false)
+        .executable(false)
+        .tags('qux')
+        .updatedAt('9440ca447681546bd781d6a5166d18737223b3f6')
+        .remoteId('123')
+        .remoteRev('4-567')
+        .build()
 
       _.each(
         [
@@ -740,32 +703,27 @@ describe('metadata', function() {
 
   describe('sameBinary', function() {
     it('returns true for two docs with the same checksum', function() {
-      let one = {
+      const one = {
         docType: 'file',
         md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
       }
-      let two = {
+      const two = {
         docType: 'file',
         md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
       }
-      let ret = sameBinary(one, two)
-      ret.should.be.true()
+      should(sameBinary(one, two)).be.true()
     })
 
-    it('returns false for two different documents', function() {
-      let one = {
+    it('returns false for two docs with different checksums', function() {
+      const one = {
         docType: 'file',
         md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
       }
-      let two = {
+      const two = {
         docType: 'file',
-        md5sum: '2082e7f715f058acab2398d25d135cf5f4c0ce41',
-        remote: {
-          _id: 'f00b4r'
-        }
+        md5sum: '2082e7f715f058acab2398d25d135cf5f4c0ce41'
       }
-      let ret = sameBinary(one, two)
-      ret.should.be.false()
+      should(sameBinary(one, two)).be.false()
     })
   })
 

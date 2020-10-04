@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* @flow */
 
 const _ = require('lodash')
 const sinon = require('sinon')
@@ -30,6 +31,7 @@ describe('Sync', function() {
     this.sync = new Sync(
       this.pouch,
       this.local,
+      // $FlowFixMe the remote stub is not recognized as a Remote instance
       this.remote,
       this.ignore,
       this.events
@@ -56,9 +58,9 @@ describe('Sync', function() {
 
     it('starts the metadata replication of both sides', async function() {
       await this.sync.start()
-      should(this.local.start).be.calledOnce()
-      should(this.remote.start).be.calledOnce()
-      should(this.sync.sync).be.calledOnce()
+      should(this.local.start).have.been.calledOnce()
+      should(this.remote.start).have.been.calledOnce()
+      should(this.sync.sync).have.been.calledOnce()
     })
 
     context('if local watcher fails to start', () => {
@@ -68,17 +70,17 @@ describe('Sync', function() {
 
       it('does not start replication', async function() {
         await this.sync.start()
-        should(this.sync.sync).not.be.called()
+        should(this.sync.sync).not.have.been.called()
       })
 
       it('does not start remote watcher', async function() {
         await this.sync.start()
-        should(this.remote.start).not.be.called()
+        should(this.remote.start).not.have.been.called()
       })
 
       it('stops local watcher', async function() {
         await this.sync.start()
-        should(this.local.stop).be.calledOnce()
+        should(this.local.stop).have.been.calledOnce()
       })
 
       it('emits a sync error', async function() {
@@ -94,22 +96,22 @@ describe('Sync', function() {
 
       it('does not start replication', async function() {
         await this.sync.start()
-        should(this.sync.sync).not.be.called()
+        should(this.sync.sync).not.have.been.called()
       })
 
       it('starts local watcher', async function() {
         await this.sync.start()
-        should(this.local.start).be.calledOnce()
+        should(this.local.start).have.been.calledOnce()
       })
 
       it('stops local watcher', async function() {
         await this.sync.start()
-        should(this.local.stop).be.calledOnce()
+        should(this.local.stop).have.been.calledOnce()
       })
 
       it('stops remote watcher', async function() {
         await this.sync.start()
-        should(this.remote.stop).be.calledOnce()
+        should(this.remote.stop).have.been.calledOnce()
       })
 
       it('emits a sync error', async function() {
@@ -125,17 +127,17 @@ describe('Sync', function() {
 
       it('stops replication', async function() {
         await this.sync.start()
-        should(this.sync.stop).be.calledOnce()
+        should(this.sync.stop).have.been.calledOnce()
       })
 
       it('stops local watcher', async function() {
         await this.sync.start()
-        should(this.local.stop).be.calledOnce()
+        should(this.local.stop).have.been.calledOnce()
       })
 
       it('stops remote watcher', async function() {
         await this.sync.start()
-        should(this.remote.stop).be.calledOnce()
+        should(this.remote.stop).have.been.calledOnce()
       })
 
       it('emits a sync error', async function() {
@@ -162,18 +164,16 @@ describe('Sync', function() {
       const apply = sinon.stub(this.sync, 'apply')
       apply.callsFake(change => this.pouch.setLocalSeq(change.seq))
 
-      const doc1 = {
-        _id: 'doc1',
-        docType: 'file',
-        sides: { target: 1, local: 1 }
-      }
-      const doc2 = {
-        _id: 'doc2',
-        docType: 'folder',
-        sides: { target: 1, remote: 1 }
-      }
-      await this.pouch.db.put(doc1)
-      await this.pouch.db.put(doc2)
+      const doc1 = await builders
+        .metafile()
+        .path('doc1')
+        .sides({ local: 1 })
+        .create()
+      const doc2 = await builders
+        .metadir()
+        .path('doc2')
+        .sides({ remote: 1 })
+        .create()
 
       await this.sync.sync()
 
@@ -185,101 +185,84 @@ describe('Sync', function() {
 
   describe('apply', function() {
     it('does nothing for an ignored document', async function() {
-      let change = {
+      const change = {
         seq: 121,
-        doc: {
-          _id: 'ignored',
-          docType: 'folder',
-          sides: {
-            target: 1,
-            local: 1
-          }
-        }
+        doc: await builders
+          .metadir()
+          .path('ignored')
+          .sides({ local: 1 })
+          .create()
       }
       this.sync.applyDoc = sinon.spy()
       await this.sync.apply(change)
-      this.sync.applyDoc.called.should.be.false()
+      should(this.sync.applyDoc).have.not.been.called()
     })
 
     it('does nothing for an up-to-date document', async function() {
-      let change = {
+      const change = {
         seq: 122,
-        doc: {
-          _id: 'foo',
-          docType: 'folder',
-          sides: {
-            target: 2,
-            local: 2,
-            remote: 2
-          }
-        }
+        doc: await builders
+          .metadir()
+          .path('foo')
+          .upToDate()
+          .create()
       }
       this.sync.applyDoc = sinon.spy()
       await this.sync.apply(change)
-      this.sync.applyDoc.called.should.be.false()
+      should(this.sync.applyDoc).have.not.been.called()
     })
 
     it('does nothing for an up-to-date _deleted document', async function() {
-      let change = {
+      const change = {
         seq: 122,
-        doc: {
-          _id: 'foo',
-          docType: 'folder',
-          _deleted: true,
-          sides: {
-            target: 2,
-            local: 2,
-            remote: 2
-          }
-        }
+        doc: await builders
+          .metadir()
+          .path('foo')
+          .erased()
+          .upToDate()
+          .create()
       }
       this.sync.applyDoc = sinon.spy()
       await this.sync.apply(change)
-      this.sync.applyDoc.called.should.be.false()
+      should(this.sync.applyDoc).have.not.been.called()
     })
 
     it('trashes a locally deleted file or folder', async function() {
       const change = {
         seq: 145,
-        doc: {
-          _id: 'foo',
-          path: 'foo',
-          sides: {
-            target: 2,
-            local: 2,
-            remote: 1
-          },
-          remote: {
-            _id: '1234567890',
-            _rev: '1-39dj39ek39'
-          },
-          trashed: true
-        }
+        doc: await builders
+          .metadata()
+          .path('foo')
+          .trashed()
+          .changedSide('local')
+          .create()
       }
 
       this.sync.trashWithParentOrByItself = sinon.stub().resolves(true)
       await this.sync.apply(change)
-      should(this.sync.trashWithParentOrByItself.called).be.true()
+      should(this.sync.trashWithParentOrByItself).have.been.called()
     })
 
     it('calls applyDoc for a modified file', async function() {
-      let change = {
+      const initial = await builders
+        .metafile()
+        .path('foo/bar')
+        .data('initial content')
+        .upToDate()
+        .create()
+
+      const change = {
         seq: 123,
-        doc: {
-          _id: 'foo/bar',
-          docType: 'file',
-          md5sum: '0000000000000000000000000000000000000000',
-          sides: {
-            target: 3,
-            local: 3,
-            remote: 2
-          },
-          remote: { _id: 'XXX', _rev: '2-abc' }
-        }
+        doc: await builders
+          .metafile(initial)
+          .overwrite(initial)
+          .data('updated content')
+          .changedSide('local')
+          .create()
       }
       await this.sync.apply(change)
       should(await this.pouch.db.get(change.doc._id)).have.properties({
-        _id: 'foo/bar',
+        path: initial.path,
         docType: 'file',
         sides: {
           target: 4,
@@ -291,23 +274,23 @@ describe('Sync', function() {
     })
 
     it('calls applyDoc for a modified folder', async function() {
-      let change = {
+      const initial = await builders
+        .metadir()
+        .path('foo/baz')
+        .upToDate()
+        .create()
+
+      const change = {
         seq: 124,
-        doc: {
-          _id: 'foo/baz',
-          docType: 'folder',
-          tags: [],
-          sides: {
-            target: 3,
-            local: 3,
-            remote: 2
-          },
-          remote: { _id: 'XXX', _rev: '2-abc' }
-        }
+        doc: await builders
+          .metadir(initial)
+          .tags('qux')
+          .changedSide('local')
+          .create()
       }
       await this.sync.apply(change)
       should(await this.pouch.db.get(change.doc._id)).have.properties({
-        _id: 'foo/baz',
+        path: initial.path,
         docType: 'folder',
         sides: {
           target: 4,
@@ -319,39 +302,29 @@ describe('Sync', function() {
     })
 
     it('calls addFileAsync for an added file', async function() {
-      let doc = {
-        _id: 'foo/bar',
-        _rev: '1-abcdef0123456789',
-        md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
-        docType: 'file',
-        sides: {
-          target: 1,
-          local: 1
-        }
-      }
+      const doc = await builders
+        .metafile()
+        .path('foo/bar')
+        .data('file content')
+        .sides({ local: 1 })
+        .create()
       await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.addFileAsync.calledWith(doc).should.be.true()
     })
 
     it('calls overwriteFileAsync for an overwritten file', async function() {
-      let doc = {
-        _id: 'overwrite/foo/bar',
-        md5sum: '391f7abfca1124c3ca937e5f85687352bcd9f261',
-        docType: 'file',
-        sides: {
-          target: 1,
-          local: 1
-        }
-      }
-      const created = await this.pouch.db.put(doc)
-      doc._rev = created.rev
-      doc.md5sum = '389dd709c94a6a7ea56e1d55cbf65eef31b9bc5e'
-      doc.sides = {
-        target: 2,
-        local: 2,
-        remote: 1
-      }
-      await this.pouch.db.put(doc)
+      const initial = await builders
+        .metafile()
+        .path('overwrite/foo/bar')
+        .data('initial content')
+        .upToDate()
+        .create()
+      const doc = await builders
+        .metafile(initial)
+        .overwrite(initial)
+        .data('updated content')
+        .changedSide('local')
+        .create()
       await this.sync.applyDoc(doc, this.remote, 'remote', 1)
       this.remote.updateFileMetadataAsync.called.should.be.false()
       this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
@@ -413,7 +386,7 @@ describe('Sync', function() {
         .create()
       const updated = await builders
         .metafile(synced)
-        .tags(['courge'])
+        .tags('courge')
         .changedSide('local')
         .create()
 
@@ -428,99 +401,67 @@ describe('Sync', function() {
     })
 
     it('calls moveAsync for a moved file', async function() {
-      let was = {
-        _id: 'foo/bar',
-        _rev: '3-9876543210',
-        _deleted: true,
-        moveTo: 'foo/baz',
-        docType: 'file',
-        tags: ['qux'],
-        sides: {
-          target: 3,
-          local: 3,
-          remote: 2
-        }
-      }
-      let doc = {
-        _id: 'foo/baz',
-        _rev: '1-abcdef',
-        moveFrom: was,
-        docType: 'file',
-        tags: ['qux'],
-        sides: {
-          target: 1,
-          local: 1
-        }
-      }
+      const was = await builders
+        .metafile()
+        .path('foo/bar')
+        .moveTo('foo/baz')
+        .tags('qux')
+        .changedSide('local')
+        .create()
+      const doc = await builders
+        .metafile()
+        .moveFrom(was)
+        .path('foo/baz')
+        .create()
+
       await this.sync.applyDoc(was, this.remote, 'remote', 2)
-      this.remote.trashAsync.called.should.be.false()
+      should(this.remote.trashAsync).not.have.been.called()
       await this.sync.applyDoc(doc, this.remote, 'remote', 0)
-      this.remote.addFileAsync.called.should.be.false()
-      this.remote.moveAsync.calledWith(doc, was).should.be.true()
+      should(this.remote.addFileAsync).not.have.been.called()
+      should(this.remote.moveAsync).have.been.calledWith(doc, was)
     })
 
     it('calls moveAsync and overwriteFileAsync for a moved-updated file', async function() {
-      let was = {
-        _id: 'foo/bar',
-        _rev: '3-9876543210',
-        _deleted: true,
-        moveTo: 'foo/baz',
-        md5sum: 'wasMD5',
-        docType: 'file',
-        tags: ['qux'],
-        sides: {
-          target: 3,
-          local: 3,
-          remote: 2
-        }
-      }
-      let doc = {
-        _id: 'foo/baz',
-        _rev: '1-abcdef',
-        moveFrom: was,
-        md5sum: 'newMD5',
-        docType: 'file',
-        tags: ['qux'],
-        sides: {
-          target: 1,
-          local: 1
-        }
-      }
+      const was = await builders
+        .metafile()
+        .path('foo/bar')
+        .data('initial content')
+        .moveTo('foo/baz')
+        .tags('qux')
+        .changedSide('local')
+        .create()
+      const doc = await builders
+        .metafile()
+        .moveFrom(was)
+        .path('foo/baz')
+        .data('updated content')
+        .changedSide('local')
+        .create()
+
       await this.sync.applyDoc(was, this.remote, 'remote', 2)
-      this.remote.trashAsync.called.should.be.false()
+      should(this.remote.trashAsync).not.have.been.called()
       await this.sync.applyDoc(doc, this.remote, 'remote', 0)
-      this.remote.addFileAsync.called.should.be.false()
-      this.remote.moveAsync.calledWith(doc, was).should.be.true()
-      this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
+      should(this.remote.addFileAsync).not.have.been.called()
+      should(this.remote.moveAsync).have.been.calledWith(doc, was)
+      should(this.remote.overwriteFileAsync).have.been.calledWith(doc)
     })
 
     it('does not break when move works but not update', async function() {
-      let was = {
-        _id: 'foo/bar2',
-        _deleted: true,
-        moveTo: 'foo/baz',
-        md5sum: 'wasMD5',
-        docType: 'file',
-        tags: ['qux'],
-        sides: {
-          target: 3,
-          local: 3,
-          remote: 2
-        }
-      }
-      let doc = {
-        _id: 'foo/baz2',
-        moveFrom: was,
-        md5sum: 'newMD5',
-        docType: 'file',
-        tags: ['qux'],
-        sides: {
-          target: 1,
-          local: 1
-        }
-      }
-      was._rev = (await this.pouch.db.put(was)).rev
-      doc._rev = (await this.pouch.db.put(doc)).rev
+      const was = await builders
+        .metafile()
+        .path('foo/bar2')
+        .moveTo('foo/baz2')
+        .data('initial content')
+        .tags('qux')
+        .changedSide('local')
+        .create()
+      const doc = await builders
+        .metafile()
+        .moveFrom(was)
+        .path('foo/baz2')
+        .data('updated content')
+        .changedSide('local')
+        .create()
 
       // re-stubs overwriteFileAsync to fail
       this.remote.overwriteFileAsync = sinon
@@ -535,7 +476,7 @@ describe('Sync', function() {
       this.remote.moveAsync.calledWith(doc, was).should.be.true()
       this.remote.overwriteFileAsync.calledWith(doc).should.be.true()
 
-      const newMetadata = await this.pouch.db.get('foo/baz2')
+      const newMetadata = await this.pouch.db.get(doc._id)
       should(newMetadata).not.have.property('moveFrom')
       should(newMetadata).have.property('errors')
 
@@ -543,126 +484,92 @@ describe('Sync', function() {
       this.remote.overwriteFileAsync = sinon.stub().resolves()
     })
 
-    it('calls trashAsync for a deleted file', async function() {
-      let doc = {
-        _id: 'foo/baz',
-        _rev: '4-1234567890',
-        deleted: true,
-        docType: 'file',
-        sides: {
-          target: 2,
-          local: 1,
-          remote: 2
-        }
-      }
+    it('calls trashAsync for a deleted synced file', async function() {
+      const doc = await builders
+        .metafile()
+        .path('foo/baz')
+        .deleted()
+        .changedSide('remote')
+        .create()
       await this.sync.applyDoc(doc, this.local, 'local', 1)
       this.local.trashAsync.calledWith(doc).should.be.true()
     })
 
-    it('does nothing for a deleted file that was not added', async function() {
-      let doc = {
-        _id: 'tmp/fooz',
-        _rev: '2-1234567890',
-        deleted: true,
-        docType: 'file',
-        sides: {
-          target: 2,
-          local: 2
-        }
-      }
+    it('does nothing for a deleted file that was not synced', async function() {
+      const doc = await builders
+        .metafile()
+        .path('tmp/fooz')
+        .deleted()
+        .sides({ local: 2 })
+        .create()
       await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.trashAsync.called.should.be.false()
     })
 
     it('calls addFolderAsync for an added folder', async function() {
-      let doc = {
-        _id: 'foobar/bar',
-        _rev: '1-abcdef0123456789',
-        docType: 'folder',
-        sides: {
-          target: 1,
-          local: 1
-        }
-      }
+      const doc = await builders
+        .metadir()
+        .path('foobar/bar')
+        .sides({ local: 1 })
+        .create()
       await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.addFolderAsync.calledWith(doc).should.be.true()
     })
 
-    xit('calls updateFolderAsync for an updated folder', async function() {
-      let doc = {
-        _id: 'foobar/bar',
-        _rev: '2-abcdef9876543210',
-        docType: 'folder',
-        tags: ['qux'],
-        sides: {
-          target: 2,
-          local: 1,
-          remote: 2
-        }
-      }
-      await this.sync.applyDoc(doc, this.local, 'local', 1)
+    it('calls updateFolderAsync for an updated folder', async function() {
+      const initial = await builders
+        .metadir()
+        .path('foobar/baz')
+        .upToDate()
+        .create()
+      const doc = await builders
+        .metadir(initial)
+        .tags('qux')
+        .changedSide('remote')
+        .create()
+      await this.sync.applyDoc(doc, this.local, 'local', 2)
       this.local.updateFolderAsync.calledWith(doc).should.be.true()
     })
 
     it('calls moveAsync for a moved folder', async function() {
-      let was = {
-        _id: 'foobar/bar',
-        _rev: '3-9876543210',
-        deleted: true,
-        moveTo: 'foobar/baz',
-        docType: 'folder',
-        tags: ['qux'],
-        sides: {
-          target: 3,
-          local: 3,
-          remote: 2
-        }
-      }
-      let doc = {
-        _id: 'foobar/baz',
-        _rev: '1-abcdef',
-        moveFrom: was,
-        docType: 'folder',
-        tags: ['qux'],
-        sides: {
-          target: 1,
-          local: 1
-        }
-      }
+      const was = await builders
+        .metadir()
+        .path('foobar/bar')
+        .tags('qux')
+        .moveTo('foobar/baz')
+        .changedSide('local')
+        .create()
+      const doc = await builders
+        .metadir()
+        .moveFrom(was)
+        .path('foobar/baz')
+        .changedSide('local')
+        .create()
       await this.sync.applyDoc(was, this.remote, 'remote', 2)
-      this.remote.trashAsync.called.should.be.false()
+      should(this.remote.trashAsync).not.have.been.called()
       await this.sync.applyDoc(doc, this.remote, 'remote', 0)
-      this.remote.addFolderAsync.called.should.be.false()
-      this.remote.moveAsync.calledWith(doc, was).should.be.true()
+      should(this.remote.addFolderAsync).not.have.been.called()
+      should(this.remote.moveAsync).have.been.calledWith(doc, was)
     })
 
-    it('calls trashAsync for a deleted folder', async function() {
-      let doc = {
-        _id: 'foobar/baz',
-        _rev: '4-1234567890',
-        deleted: true,
-        docType: 'folder',
-        sides: {
-          target: 2,
-          local: 1,
-          remote: 2
-        }
-      }
+    it('calls trashAsync for a deleted synced folder', async function() {
+      const doc = await builders
+        .metadir()
+        .path('foobar/baz')
+        .deleted()
+        .changedSide('remote')
+        .create()
       await this.sync.applyDoc(doc, this.local, 'local', 1)
       this.local.deleteFolderAsync.calledWith(doc).should.be.true()
     })
 
     it('does nothing for a deleted folder that was not added', async function() {
-      let doc = {
-        _id: 'tmp/foobaz',
-        _rev: '2-1234567890',
-        deleted: true,
-        docType: 'folder',
-        sides: {
-          target: 2,
-          local: 2
-        }
-      }
+      const doc = await builders
+        .metadir()
+        .path('tmp/foobaz')
+        .deleted()
+        .sides({ local: 2 })
+        .create()
       await this.sync.applyDoc(doc, this.remote, 'remote', 0)
       this.remote.trashAsync.called.should.be.false()
     })
@@ -670,15 +577,11 @@ describe('Sync', function() {
 
   describe('updateErrors', function() {
     it('retries on first local -> remote sync error', async function() {
-      let doc = {
-        _id: 'first/failure',
-        sides: {
-          target: 1,
-          local: 1
-        }
-      }
-      const infos = await this.pouch.db.put(doc)
-      doc._rev = infos.rev
+      const doc = await builders
+        .metadata()
+        .path('first/failure')
+        .sides({ local: 1 })
+        .create()
 
       await this.sync.updateErrors({ doc }, 'remote')
 
@@ -690,19 +593,12 @@ describe('Sync', function() {
     })
 
     it('retries on second remote -> local sync error', async function() {
-      let doc = {
-        _id: 'second/failure',
-        errors: 1,
-        sides: {
-          target: 4,
-          local: 2,
-          remote: 4
-        }
-      }
-      let infos = await this.pouch.db.put(doc)
-      doc._rev = infos.rev
-      infos = await this.pouch.db.put(doc)
-      doc._rev = infos.rev
+      const doc = await builders
+        .metadata()
+        .path('second/failure')
+        .errors(1)
+        .sides({ local: 2, remote: 4 })
+        .create()
 
       await this.sync.updateErrors({ doc }, 'local')
 
@@ -714,20 +610,18 @@ describe('Sync', function() {
     })
 
     it('stops retrying after 3 errors', async function() {
-      let doc = {
-        _id: 'third/failure',
-        errors: 3,
-        sides: {
-          target: 4,
-          remote: 4
-        }
-      }
-      const infos = await this.pouch.db.put(doc)
-      doc._rev = infos.rev
+      const doc = await builders
+        .metadata()
+        .path('third/failure')
+        .errors(3)
+        .sides({ remote: 4 })
+        .create()
+
       await this.sync.updateErrors({ doc }, 'local')
+
       const actual = await this.pouch.db.get(doc._id)
-      actual.errors.should.equal(3)
-      actual._rev.should.equal(doc._rev)
+      should(actual.errors).equal(3)
+      should(actual._rev).equal(doc._rev)
       should(metadata.isUpToDate('remote', actual)).be.true()
     })
   })
@@ -810,76 +704,55 @@ describe('Sync', function() {
 
   describe('selectSide', function() {
     it('selects the local side if remote is up-to-date', function() {
-      let doc = {
-        _id: 'selectSide/1',
-        _rev: '1-0123456789',
-        docType: 'file',
-        sides: {
-          target: 1,
-          remote: 1
-        }
-      }
-      let [side, name, rev] = this.sync.selectSide(doc)
+      const doc1 = builders
+        .metafile()
+        .path('selectSide/1')
+        .sides({ remote: 1 })
+        .build()
+      let [side, name, rev] = this.sync.selectSide(doc1)
       side.should.equal(this.sync.local)
       name.should.equal('local')
       rev.should.equal(0)
-      doc = {
-        _id: 'selectSide/2',
-        _rev: '3-0123456789',
-        docType: 'file',
-        sides: {
-          target: 3,
-          remote: 3,
-          local: 2
-        }
-      }
-      ;[side, name, rev] = this.sync.selectSide(doc)
+
+      const doc2 = builders
+        .metafile()
+        .path('selectSide/2')
+        .sides({ local: 2, remote: 3 })
+        .build()
+      ;[side, name, rev] = this.sync.selectSide(doc2)
       side.should.equal(this.sync.local)
       name.should.equal('local')
       rev.should.equal(2)
     })
 
     it('selects the remote side if local is up-to-date', function() {
-      let doc = {
-        _id: 'selectSide/3',
-        _rev: '1-0123456789',
-        docType: 'file',
-        sides: {
-          target: 1,
-          local: 1
-        }
-      }
-      let [side, name, rev] = this.sync.selectSide(doc)
+      const doc1 = builders
+        .metafile()
+        .path('selectSide/3')
+        .sides({ local: 1 })
+        .build()
+      let [side, name, rev] = this.sync.selectSide(doc1)
       side.should.equal(this.sync.remote)
       name.should.equal('remote')
       rev.should.equal(0)
-      doc = {
-        _id: 'selectSide/4',
-        _rev: '4-0123456789',
-        docType: 'file',
-        sides: {
-          target: 4,
-          remote: 3,
-          local: 4
-        }
-      }
-      ;[side, name, rev] = this.sync.selectSide(doc)
+
+      const doc2 = builders
+        .metafile()
+        .path('selectSide/4')
+        .sides({ local: 4, remote: 3 })
+        .build()
+      ;[side, name, rev] = this.sync.selectSide(doc2)
       side.should.equal(this.sync.remote)
       name.should.equal('remote')
       rev.should.equal(3)
     })
 
     it('returns an empty array if both sides are up-to-date', function() {
-      let doc = {
-        _id: 'selectSide/5',
-        _rev: '5-0123456789',
-        docType: 'file',
-        sides: {
-          target: 5,
-          remote: 5,
-          local: 5
-        }
-      }
+      const doc = builders
+        .metafile()
+        .path('selectSide/5')
+        .sides({ local: 5, remote: 5 })
+        .build()
       let [side, name, rev] = this.sync.selectSide(doc)
       should.not.exist(side)
       should.not.exist(name)
@@ -887,37 +760,23 @@ describe('Sync', function() {
     })
 
     it('returns an empty array if a local only doc is erased', function() {
-      let doc = {
-        _id: 'selectSide/5',
-        _rev: '5-0123456789',
-        _deleted: true,
-        docType: 'file',
-        sides: {
-          target: 5,
-          local: 5
-        }
-      }
-      let [side, name, rev] = this.sync.selectSide(doc)
-      should.not.exist(side)
-      should.not.exist(name)
-      should.not.exist(rev)
+      const doc = builders
+        .metafile()
+        .path('selectSide/5')
+        .erased()
+        .sides({ local: 5 })
+        .build()
+      should(this.sync.selectSide(doc)).deepEqual([])
     })
 
     it('returns an empty array if a remote only doc is erased', function() {
-      let doc = {
-        _id: 'selectSide/5',
-        _rev: '5-0123456789',
-        _deleted: true,
-        docType: 'file',
-        sides: {
-          target: 5,
-          remote: 5
-        }
-      }
-      let [side, name, rev] = this.sync.selectSide(doc)
-      should.not.exist(side)
-      should.not.exist(name)
-      should.not.exist(rev)
+      const doc = builders
+        .metafile()
+        .path('selectSide/5')
+        .erased()
+        .sides({ remote: 5 })
+        .build()
+      should(this.sync.selectSide(doc)).deepEqual([])
     })
   })
 })

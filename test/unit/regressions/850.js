@@ -18,13 +18,19 @@ const metadata = require('../../../core/metadata')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { onPlatform } = require('../../support/helpers/platform')
+const Builders = require('../../support/builders')
 
 onPlatform('darwin', () => {
   describe('issue 850', function() {
     this.timeout(10000)
 
+    let builders
+
     before('instanciate config', configHelpers.createConfig)
     before('instanciate pouch', pouchHelpers.createDatabase)
+    before('prepare builders', function() {
+      builders = new Builders({ pouch: this.pouch })
+    })
     before('instanciate local watcher', function() {
       this.merge = new Merge(this.pouch)
       this.local = {
@@ -65,19 +71,15 @@ onPlatform('darwin', () => {
     after('clean config directory', configHelpers.cleanConfig)
 
     before('create dst dir', async function() {
-      let dirPath = path.join(this.syncPath, 'dst')
+      const dirPath = path.join(this.syncPath, 'dst')
       await fse.mkdirp(dirPath)
-      let stat = await fse.stat(dirPath)
-      await this.pouch.put({
-        _id: metadata.id('dst'),
-        docType: 'folder',
-        updated_at: new Date(),
-        path: 'dst',
-        ino: stat.ino,
-        tags: [],
-        sides: { local: 1, remote: 1 },
-        remote: { _id: 'XXX', _rev: '1-abc' }
-      })
+      const stat = await fse.stat(dirPath)
+      await builders
+        .metadir()
+        .path(dirPath)
+        .ino(stat.ino)
+        .upToDate()
+        .create()
       await this.sync.sync()
     })
 

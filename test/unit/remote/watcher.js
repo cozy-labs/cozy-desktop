@@ -18,7 +18,6 @@ const cozyHelpers = require('../../support/helpers/cozy')
 const Builders = require('../../support/builders')
 
 const metadata = require('../../../core/metadata')
-const { FILES_DOCTYPE } = require('../../../core/remote/constants')
 const Prep = require('../../../core/prep')
 const {
   CozyClientRevokedError,
@@ -30,13 +29,13 @@ const { RemoteWatcher } = require('../../../core/remote/watcher')
 const { assignId, ensureValidPath } = metadata
 
 /*::
-import type { RemoteChange } from '../../../core/remote/change'
+import type { RemoteChange, RemoteInvalidChange } from '../../../core/remote/change'
 import type { RemoteDoc, RemoteDeletion } from '../../../core/remote/document'
 import type { Metadata } from '../../../core/metadata'
 */
 
 describe('RemoteWatcher', function() {
-  let builders
+  let builders, remoteTree /*: Object */
 
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
@@ -68,17 +67,29 @@ describe('RemoteWatcher', function() {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    await pouchHelpers.createParentFolder(this.pouch)
-    // FIXME: Tests pass without folder 3 & file 3
-    for (let i of [1, 2, 3]) {
-      await pouchHelpers.createFolder(
-        this.pouch,
-        path.join('my-folder', `folder-${i}`)
-      )
-      await pouchHelpers.createFile(
-        this.pouch,
-        path.join('my-folder', `file-${i}`)
-      )
+    remoteTree = builders.buildRemoteTree([
+      'my-folder/',
+      'my-folder/folder-1/',
+      'my-folder/folder-2/',
+      'my-folder/folder-3/',
+      'my-folder/file-1',
+      'my-folder/file-2',
+      'my-folder/file-3'
+    ])
+
+    for (const key in remoteTree) {
+      const remoteDoc = remoteTree[key]
+      if (remoteDoc.type === 'folder') {
+        await builders
+          .metadir()
+          .fromRemote(remoteDoc)
+          .create()
+      } else {
+        await builders
+          .metafile()
+          .fromRemote(remoteDoc)
+          .create()
+      }
     }
   })
 
@@ -386,42 +397,28 @@ describe('RemoteWatcher', function() {
     })
 
     it('applies the changes when the document still exists on remote', async function() {
-      let remoteDoc /*: RemoteDoc */ = {
-        _id: '12345678904',
-        _rev: '1-abcdef',
-        _type: FILES_DOCTYPE,
-        type: 'file',
-        dir_id: 'whatever',
-        name: 'whatever',
-        path: '/whatever',
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
-        updated_at: '2017-01-30T09:09:15.217662611+01:00',
-        md5sum: '9999999999999999999999999999999999999999',
-        tags: [],
-        binary: {
-          file: {
-            id: '123'
-          }
-        }
-      }
+      const remoteDoc = builders
+        .remoteFile()
+        .name('whatever')
+        .build()
 
       await this.watcher.pullMany([remoteDoc])
 
-      should(apply.calledOnce).be.true()
+      should(apply).be.calledOnce()
       should(apply.args[0][0].doc).deepEqual(validMetadata(remoteDoc))
     })
 
     it('tries to apply a deletion otherwise', async function() {
-      const remoteDoc /*: RemoteDeletion */ = {
+      const remoteDeletion /*: RemoteDeletion */ = {
         _id: 'missing',
         _rev: 'whatever',
         _deleted: true
       }
 
-      await this.watcher.pullMany([remoteDoc])
+      await this.watcher.pullMany([remoteDeletion])
 
-      should(apply.calledOnce).be.true()
-      should(apply.args[0][0].doc).deepEqual(remoteDoc)
+      should(apply).be.calledOnce()
+      should(apply.args[0][0].doc).deepEqual(remoteDeletion)
     })
   })
 
@@ -1776,75 +1773,44 @@ describe('RemoteWatcher', function() {
 
   describe('identifyChange', function() {
     it('does not fail when the path is missing', function() {
-      let remoteDoc /*: RemoteDoc */ = {
-        _id: '12345678904',
-        _rev: '1-abcdef',
-        _type: FILES_DOCTYPE,
-        type: 'file',
-        dir_id: 'whatever',
-        name: 'whatever',
-        path: '',
-        md5sum: '9999999999999999999999999999999999999999',
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
-        updated_at: '2017-01-30T09:09:15.217662611+01:00',
-        tags: [],
-        binary: {
-          file: {
-            id: '123'
-          }
-        }
-      }
+      const remoteDoc = builders
+        .remoteFile()
+        .name('whatever')
+        .build()
+      remoteDoc.path = ''
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(
+      const change /*: RemoteInvalidChange */ = this.watcher.identifyChange(
         remoteDoc,
         null,
         [],
         []
       )
       should(change.type).equal('InvalidChange')
-      // $FlowFixMe
       should(change.error.message).equal('Invalid path')
     })
 
     // TODO: missing doctype test
     // TODO: file without checksum
 
-    it('does not fail on ghost file', async function() {
-      let remoteDoc = {
-        _id: '12345678904',
-        _rev: '1-abcdef',
-        docType: 'file',
-        md5sum: '9999999999999999999999999999999999999999',
-        path: 'foo',
-        name: 'bar'
-      }
-      const change /*: RemoteChange */ = this.watcher.identifyChange(
-        remoteDoc,
-        null,
-        [],
-        []
-      )
-
-      should(change.type).equal('InvalidChange')
-    })
-
     onPlatform('win32', () => {
       it('detects path/platform incompatibilities if any', async function() {
-        const time = new Date().toISOString()
-        const remoteDoc = {
-          _id: 'whatever',
-          path: '/f:oo/b<a>r',
-          md5sum: '9999999999999999999999999999999999999999',
-          type: 'file',
-          created_at: time,
-          updated_at: time
-        }
+        const remoteDir = builders
+          .remoteDir()
+          .name('f:oo')
+          .build()
+        const remoteDoc = builders
+          .remoteFile()
+          .inDir(remoteDir)
+          .name('b<a>r')
+          .build()
+
         const change /*: RemoteChange */ = this.watcher.identifyChange(
           remoteDoc,
           null,
           [],
           []
         )
+
         const platform = process.platform
         should(change.type).equal('FileAddition')
         should(change.doc).have.property('incompatibilities', [
@@ -1868,35 +1834,34 @@ describe('RemoteWatcher', function() {
       })
 
       it('does not detect any when file/dir is in the trash', async function() {
-        const time = new Date().toISOString()
+        const remoteDoc = builders
+          .remoteFile()
+          .name('f:oo/b<a>r')
+          .trashed()
+          .build()
+
         const change /*: RemoteChange */ = this.watcher.identifyChange(
-          {
-            _id: 'whatever',
-            path: '/.cozy_trash/f:oo/b<a>r',
-            md5sum: '9999999999999999999999999999999999999999',
-            type: 'file',
-            created_at: time,
-            updated_at: time
-          },
+          remoteDoc,
           null,
           [],
           []
         )
-        should(change.type).not.equal('RemotePlatformIncompatibleChange')
+        should(change.doc).not.have.property('incompatibilities')
       })
     })
 
     onPlatform('darwin', () => {
       it('does not mistakenly assume a new file is incompatible', async function() {
-        const time = new Date().toISOString()
-        const remoteDoc = {
-          _id: 'whatever',
-          path: '/f:oo/b<a>r',
-          md5sum: '9999999999999999999999999999999999999999',
-          type: 'file',
-          created_at: time,
-          updated_at: time
-        }
+        const remoteDir = builders
+          .remoteDir()
+          .name('f:oo')
+          .build()
+        const remoteDoc = builders
+          .remoteFile()
+          .inDir(remoteDir)
+          .name('b<a>r')
+          .build()
+
         const change /*: RemoteChange */ = this.watcher.identifyChange(
           remoteDoc,
           null,
@@ -1904,32 +1869,19 @@ describe('RemoteWatcher', function() {
           []
         )
         should(change.type).equal('FileAddition')
-        should((change /*: any */).doc.incompatibilities).be.undefined()
+        should(change.doc).not.have.property('incompatibilities')
       })
     })
 
     it('calls addDoc for a new doc', async function() {
       this.prep.addFileAsync = sinon.stub()
       this.prep.addFileAsync.resolves(null)
-      let remoteDoc /*: RemoteDoc */ = {
-        _id: '12345678905',
-        _rev: '1-abcdef',
-        _type: FILES_DOCTYPE,
-        type: 'file',
-        dir_id: '23456789012',
-        path: '/my-folder',
-        name: 'file-5',
-        md5sum: '9999999999999999999999999999999999999999',
-        tags: [],
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
-        updated_at: '2017-01-30T09:09:15.217662611+01:00',
-        binary: {
-          file: {
-            id: '1234',
-            rev: '5-6789'
-          }
-        }
-      }
+      const remoteDoc = builders
+        .remoteFile()
+        .inDir(remoteTree['my-folder/'])
+        .name('file-5')
+        .data('some data')
+        .build()
 
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
@@ -1940,7 +1892,7 @@ describe('RemoteWatcher', function() {
 
       should(change.type).equal('FileAddition')
       should(change.doc).have.properties({
-        path: 'my-folder',
+        path: path.join('my-folder', 'file-5'),
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
@@ -1955,26 +1907,11 @@ describe('RemoteWatcher', function() {
     it('calls updateDoc when tags are updated', async function() {
       this.prep.updateFileAsync = sinon.stub()
       this.prep.updateFileAsync.resolves(null)
-      const filePath = path.join('my-folder', 'file-1')
-      let remoteDoc /*: RemoteDoc */ = {
-        _id: `1234567890-${filePath}`,
-        _rev: '2-abcdef',
-        _type: FILES_DOCTYPE,
-        dir_id: '23456789012',
-        type: 'file',
-        path: '/my-folder/file-1',
-        name: 'file-1',
-        md5sum: `111111111111111111111111111111111111111${filePath}`,
-        tags: ['foo', 'bar', 'baz'],
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
-        updated_at: '2017-01-30T09:09:15.217662611+01:00',
-        binary: {
-          file: {
-            id: '1234',
-            rev: '5-6789'
-          }
-        }
-      }
+      const remoteDoc = builders
+        .remoteFile(remoteTree['my-folder/file-1'])
+        .tags('foo', 'bar', 'baz')
+        .shortRev(5)
+        .build()
       const was = await this.pouch.byRemoteId(remoteDoc._id)
 
       const change /*: RemoteChange */ = this.watcher.identifyChange(
@@ -1986,7 +1923,7 @@ describe('RemoteWatcher', function() {
 
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
-        path: filePath,
+        path: path.join('my-folder', 'file-1'),
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
@@ -1998,22 +1935,13 @@ describe('RemoteWatcher', function() {
     })
 
     it('calls updateDoc when content is overwritten', async function() {
-      this.prep.updateFileAsync = sinon.stub()
-      this.prep.updateFileAsync.resolves(null)
-      const filePath = path.join('my-folder', 'file-1')
-      let remoteDoc /*: RemoteDoc */ = {
-        _id: `1234567890-${filePath}`,
-        _rev: '3-abcdef',
-        _type: FILES_DOCTYPE,
-        type: 'file',
-        dir_id: 'whatever',
-        path: '/my-folder/file-1',
-        name: 'file-1',
-        md5sum: '9999999999999999999999999999999999999999',
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
-        updated_at: '2017-01-30T09:09:15.217662611+01:00',
-        tags: ['foo', 'bar', 'baz']
-      }
+      this.prep.updateFileAsync = sinon.stub().resolves(null)
+
+      const remoteDoc = builders
+        .remoteFile(remoteTree['my-folder/file-1'])
+        .data('whatever data change')
+        .shortRev(5)
+        .build()
       const was = await this.pouch.byRemoteId(remoteDoc._id)
 
       const change /*: RemoteChange */ = this.watcher.identifyChange(
@@ -2025,7 +1953,7 @@ describe('RemoteWatcher', function() {
 
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
-        path: filePath,
+        path: path.join('my-folder', 'file-1'),
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
@@ -2040,20 +1968,11 @@ describe('RemoteWatcher', function() {
     it('calls moveFile when file is renamed', async function() {
       this.prep.moveFileAsync = sinon.stub()
       this.prep.moveFileAsync.resolves(null)
-      const filePath = path.join('my-folder', 'file-2')
-      let remoteDoc /*: RemoteDoc */ = {
-        _id: `1234567890-${filePath}`,
-        _rev: '4-abcdef',
-        _type: FILES_DOCTYPE,
-        type: 'file',
-        dir_id: 'whatever',
-        path: '/my-folder',
-        name: 'file-2-bis',
-        md5sum: `111111111111111111111111111111111111111${filePath}`,
-        tags: [],
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
-        updated_at: '2017-01-30T09:09:15.217662611+01:00'
-      }
+      const remoteDoc = builders
+        .remoteFile(remoteTree['my-folder/file-2'])
+        .name('file-2-bis')
+        .shortRev(5)
+        .build()
 
       const was = await this.pouch.byRemoteIdMaybe(remoteDoc._id)
       const change /*: RemoteChange */ = this.watcher.identifyChange(
@@ -2063,21 +1982,10 @@ describe('RemoteWatcher', function() {
         []
       )
 
+      should(change).have.property('update', false)
       should(change.type).equal('FileMove')
-      // $FlowFixMe
-      const src = change.was
-      should(src).have.properties({
-        path: filePath,
-        docType: 'file',
-        md5sum: remoteDoc.md5sum,
-        tags: remoteDoc.tags,
-        remote: {
-          _id: `1234567890-${filePath}`
-        }
-      })
-      const dst = change.doc
-      should(dst).have.properties({
-        path: 'my-folder',
+      should(change.doc).have.properties({
+        path: path.join('my-folder', 'file-2-bis'),
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
@@ -2086,34 +1994,23 @@ describe('RemoteWatcher', function() {
           _rev: remoteDoc._rev
         }
       })
-      should(dst).not.have.properties(['_rev', 'path', 'name'])
+      should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
 
     it('calls moveFile when file is moved', async function() {
       this.prep.moveFileAsync = sinon.stub()
       this.prep.moveFileAsync.resolves(null)
-      const filePath = path.join('my-folder', 'file-2')
-      let remoteDoc /*: RemoteDoc */ = {
-        _id: `1234567890-${filePath}`,
-        _rev: '5-abcdef',
-        _type: FILES_DOCTYPE,
-        type: 'file',
-        dir_id: 'whatever',
-        path: '/another-folder/in/some/place',
-        name: 'file-2-ter',
-        md5sum: `111111111111111111111111111111111111111${filePath}`,
-        tags: [],
-        created_at: '2017-01-30T09:09:15.217662611+01:00',
-        updated_at: '2017-01-30T09:09:15.217662611+01:00',
-        binary: {
-          file: {
-            id: '4321',
-            rev: '9-8765'
-          }
-        }
-      }
-      const was /*: Metadata */ = await this.pouch.db.get(metadata.id(filePath))
-      await this.pouch.db.put(was)
+      const remoteDir = builders
+        .remoteDir()
+        .name('other-folder')
+        .build()
+      const remoteDoc = builders
+        .remoteFile(remoteTree['my-folder/file-2'])
+        .inDir(remoteDir)
+        .name('file-2-ter')
+        .shortRev(5)
+        .build()
+      const was = await this.pouch.byRemoteIdMaybe(remoteDoc._id)
 
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
@@ -2122,22 +2019,10 @@ describe('RemoteWatcher', function() {
         []
       )
 
-      should(change.type).equal('FileMove')
       should(change).have.property('update', false)
-      // $FlowFixMe
-      const src = change.was
-      should(src).have.properties({
-        path: filePath,
-        docType: 'file',
-        md5sum: remoteDoc.md5sum,
-        tags: remoteDoc.tags,
-        remote: {
-          _id: `1234567890-${filePath}`
-        }
-      })
-      const dst = change.doc
-      should(dst).have.properties({
-        path: path.normalize('another-folder/in/some/place'),
+      should(change.type).equal('FileMove')
+      should(change.doc).have.properties({
+        path: path.join('other-folder', 'file-2-ter'),
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
@@ -2146,7 +2031,7 @@ describe('RemoteWatcher', function() {
           _rev: remoteDoc._rev
         }
       })
-      should(dst).not.have.properties(['_rev', 'path', 'name'])
+      should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
 
     it('detects when file was both moved and updated', async function() {
@@ -2183,14 +2068,17 @@ describe('RemoteWatcher', function() {
     })
 
     it('is invalid when local or remote file is corrupt', async function() {
-      const remoteDoc /*: RemoteDoc */ = builders.remoteFile().build()
-      const was /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
-      metadata.ensureValidPath(was)
-      metadata.assignId(was)
+      const remoteDoc /*: RemoteDoc */ = builders
+        .remoteFile()
+        .size('123')
+        .build()
+      const was /*: Metadata */ = builders
+        .metafile()
+        .fromRemote(remoteDoc)
+        .size(456)
+        .remoteRev(0)
+        .build()
       should(remoteDoc.md5sum).equal(was.md5sum)
-      remoteDoc.size = '123'
-      was.size = 456
-      was.remote._rev = '0'
 
       const change /*: RemoteChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),

@@ -3063,11 +3063,12 @@ describe('Merge', function() {
       const old = await builders
         .metafile()
         .path('FILE')
+        .moveTo('MOVED')
         .data('content')
         .sides({ [this.side]: 1 })
         .create()
       const doc = await builders
-        .metafile(old)
+        .metafile()
         .moveFrom(old)
         .path('MOVED')
         .sides({ [this.side]: 2 })
@@ -3187,10 +3188,11 @@ describe('Merge', function() {
       const old = await builders
         .metadir()
         .path('FOLDER')
+        .moveTo('MOVED')
         .sides({ [this.side]: 1 })
         .create()
       const doc = await builders
-        .metadir(old)
+        .metadir()
         .moveFrom(old)
         .path('MOVED')
         .sides({ [this.side]: 1 })

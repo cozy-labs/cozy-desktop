@@ -447,14 +447,14 @@ describe('core/local/atom/dispatch.loop()', function() {
         const src = await builders
           .metafile()
           .path(filePath)
+          .moveTo(newFilePath)
           .ino(1)
           .create()
-        this.pouch.put({ ...src, _deleted: true })
 
         const dst = await builders
-          .metafile(src)
-          .path(newFilePath)
+          .metafile()
           .moveFrom(src)
+          .path(newFilePath)
           .updatedAt(updatedAt)
           .create()
         // Simulate Sync removing the moveFrom attribute after propagating the
@@ -680,14 +680,14 @@ describe('core/local/atom/dispatch.loop()', function() {
         const src = await builders
           .metadir()
           .path(directoryPath)
+          .moveTo(newDirectoryPath)
           .ino(1)
           .create()
-        this.pouch.put({ ...src, _deleted: true })
 
         const dst = await builders
-          .metadir(src)
-          .path(newDirectoryPath)
+          .metadir()
           .moveFrom(src)
+          .path(newDirectoryPath)
           .updatedAt(updatedAt)
           .create()
         // Simulate Sync removing the moveFrom attribute after propagating the

@@ -57,9 +57,18 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  moveTo(path /*: string */) /*: this */ {
+    this.doc.moveTo = metadata.id(path)
+    this.doc._deleted = true
+    return this
+  }
+
   moveFrom(was /*: Metadata */) /*: this */ {
-    this.doc.moveFrom = _.defaultsDeep({ moveTo: this.doc._id }, was)
-    this.noRev()
+    if (!was.moveTo) throw new Error('Missing moveTo attribute on was')
+
+    this.doc = _.cloneDeep(_.omit(was, ['_id', '_rev', '_deleted', 'moveTo']))
+    this.doc.moveFrom = was
+
     return this
   }
 
@@ -98,11 +107,6 @@ module.exports = class BaseMetadataBuilder {
   noLocal() /*: this */ {
     this.buildLocal = false
     if (this.doc.local) delete this.doc.local
-    return this
-  }
-
-  noTags() /*: this */ {
-    delete this.doc.tags
     return this
   }
 
@@ -154,6 +158,11 @@ module.exports = class BaseMetadataBuilder {
 
   deleted() /*: this */ {
     this.doc.deleted = true
+    return this
+  }
+
+  erased() /*: this */ {
+    this.doc._deleted = true
     return this
   }
 
@@ -231,9 +240,13 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  type(mime /*: string */) /*: this */ {
-    this.doc.class = mime.split('/')[0]
-    this.doc.mime = mime
+  noTags() /*: this */ {
+    delete this.doc.tags
+    return this
+  }
+
+  errors(count /*: number */) /*: this */ {
+    this.doc.errors = count
     return this
   }
 

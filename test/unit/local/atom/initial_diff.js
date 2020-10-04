@@ -564,25 +564,27 @@ describe('core/local/atom/initial_diff', () => {
       const wasDir = builders
         .metadir()
         .path('foo')
+        .moveTo('foo2')
         .ino(1)
         .upToDate()
         .build()
       await builders
-        .metadir(wasDir)
-        .path('foo2')
+        .metadir()
         .moveFrom(wasDir)
+        .path('foo2')
         .changedSide('remote')
         .create()
       const wasFile = builders
         .metafile()
         .path('fizz')
+        .moveTo('fizz2')
         .ino(2)
         .upToDate()
         .build()
       await builders
-        .metafile(wasFile)
-        .path('fizz2')
+        .metafile()
         .moveFrom(wasFile)
+        .path('fizz2')
         .changedSide('remote')
         .create()
 

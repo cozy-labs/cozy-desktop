@@ -461,27 +461,26 @@ describe('Local', function() {
 
   describe('updateFileMetadata', () => {
     it('updates metadata', async function() {
-      let doc = {
-        path: 'file-to-update',
-        docType: 'file',
-        updated_at: new Date('2015-11-10T05:06:07Z')
-      }
-      let filePath = syncDir.abspath(doc.path)
+      const doc = builders
+        .metafile()
+        .path('file-to-update')
+        .updatedAt('2015-11-10T05:06:07Z')
+        .build()
+      const filePath = syncDir.abspath(doc.path)
       fse.ensureFileSync(filePath)
       await this.local.updateFileMetadataAsync(doc, {})
       fse.existsSync(filePath).should.be.true()
       let mtime = +fse.statSync(filePath).mtime
-      mtime.should.equal(+doc.updated_at)
+      mtime.should.equal(+new Date(doc.updated_at))
     })
   })
 
   describe('updateFolder', () => {
     it('calls addFolder', async function() {
-      let doc = {
-        path: 'a-folder-to-update',
-        docType: 'folder',
-        updated_at: new Date()
-      }
+      const doc = builders
+        .metadir()
+        .path('a-folder-to-update')
+        .build()
       sinon.stub(this.local, 'addFolderAsync').resolves()
       await this.local.updateFolderAsync(doc, {})
       this.local.addFolderAsync.calledWith(doc).should.be.true()
