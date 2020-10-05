@@ -704,6 +704,14 @@ class Merge {
         dst.incompatibilities = incompatibilities
       else delete dst.incompatibilities
 
+      if (side === 'local' && dst.sides.local) {
+        // Update the local attribute of children existing in the local folder
+        metadata.updateLocal(dst)
+      } else if (side === 'remote' && dst.sides.remote) {
+        // Update the remote attribute of children existing in the remote folder
+        metadata.updateRemote(dst, { path: dst.path })
+      }
+
       bulk.push(dst)
 
       if (folder.overwrite) {
