@@ -775,12 +775,11 @@ describe('remote.Remote', function() {
           .eql(existingRefs.map(ref => ({ id: ref._id, type: ref._type })))
       })
 
-      it('updates the doc revision', async function() {
+      it('updates the remote attribute', async function() {
         await this.remote.moveAsync(doc, old)
 
-        should(await cozy.files.statById(doc.remote._id)).have.property(
-          '_rev',
-          doc.remote._rev
+        should(doc.remote).deepEqual(
+          await this.remote.remoteCozy.find(doc.remote._id)
         )
       })
     })
@@ -888,30 +887,43 @@ describe('remote.Remote', function() {
     })
   })
 
-  describe('assignNewRev', () => {
-    it('updates the rev of a moved file', async function() {
-      const remote = { src: {}, dst: {} }
-
-      remote.src.dir = await builders
+  describe('assignNewRemote', () => {
+    it('updates the remote attribute of a moved document', async function() {
+      const remoteSrc = await builders
         .remoteDir()
         .name('src-dir')
         .inRootDir()
         .create()
-      remote.src.foo = await builders
+      const remoteFile = await builders
         .remoteFile()
         .name('foo')
-        .inDir(remote.src.dir)
+        .inDir(remoteSrc)
         .create()
-      remote.dst.dir = await this.remote.remoteCozy.updateAttributesById(
-        remote.src.dir._id,
-        { name: 'dst-dir' }
-      )
-      remote.dst.foo = await this.remote.remoteCozy.find(remote.src.foo._id)
+      const file = builders
+        .metafile()
+        .fromRemote(remoteFile)
+        .build()
+      const remoteDir = await builders
+        .remoteDir()
+        .name('foo-dir')
+        .inDir(remoteSrc)
+        .create()
+      const dir = builders
+        .metadir()
+        .fromRemote(remoteDir)
+        .build()
 
-      const doc /*: Metadata */ = metadata.fromRemoteDoc(remote.src.foo)
-      doc.path = 'dst-dir/foo' // File metadata was updated as part of the move
-      await this.remote.assignNewRev(doc)
-      should(doc).deepEqual(metadata.fromRemoteDoc(remote.dst.foo))
+      await this.remote.remoteCozy.updateAttributesById(remoteSrc._id, {
+        name: 'dst-dir'
+      })
+
+      const movedFile = await this.remote.remoteCozy.find(remoteFile._id)
+      await this.remote.assignNewRemote(file)
+      should(file.remote).deepEqual(movedFile)
+
+      const movedDir = await this.remote.remoteCozy.find(remoteDir._id)
+      await this.remote.assignNewRemote(dir)
+      should(dir.remote).deepEqual(movedDir)
     })
   })
 })

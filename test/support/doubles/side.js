@@ -13,7 +13,7 @@ const METHODS = [
   'updateFileMetadataAsync',
   'updateFolderAsync',
   'moveAsync',
-  'assignNewRev',
+  'assignNewRemote',
   'trashAsync',
   'deleteFolderAsync',
   'renameConflictingDocAsync'

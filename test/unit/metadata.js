@@ -74,10 +74,7 @@ describe('metadata', function() {
         name: 'bar',
         path: 'foo/bar',
         dir_id: '56',
-        remote: {
-          _id: '12',
-          _rev: '34'
-        },
+        remote: remoteDoc,
         size: 78,
         tags: ['foo'],
         cozyMetadata: {
@@ -116,10 +113,7 @@ describe('metadata', function() {
         path: 'foo/bar',
         name: 'bar',
         dir_id: '56',
-        remote: {
-          _id: '12',
-          _rev: '34'
-        },
+        remote: remoteDoc,
         tags: ['foo']
       })
     })
