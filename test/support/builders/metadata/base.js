@@ -47,7 +47,7 @@ module.exports = class BaseMetadataBuilder {
       }
       this.doc = doc
     }
-    this.buildLocal = false // Default docType is folder
+    this.buildLocal = true
   }
 
   fromRemote(remoteDoc /*: RemoteDoc */) /*: this */ {

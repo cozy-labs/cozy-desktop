@@ -745,6 +745,7 @@ function buildDir(
   if (stats.fileid) {
     doc.fileid = stats.fileid
   }
+  updateLocal(doc)
   return doc
 }
 
@@ -833,7 +834,7 @@ function updateLocal(doc /*: Metadata */, newLocal /*: ?Object */ = {}) {
   // This is the case for `executable` and we need to provide a default falsy
   // value to override the `newLocal` executable value in all cases.
   doc.local = _.pick(
-    _.defaults(newLocal, { executable: false }, doc),
+    _.defaults(newLocal, isFile(doc) ? { executable: false } : {}, doc),
     LOCAL_ATTRIBUTES
   )
 }

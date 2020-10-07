@@ -159,6 +159,25 @@ const migrations /*: Migration[] */ = [
         return doc
       })
     }
+  },
+  {
+    baseSchemaVersion: 5,
+    targetSchemaVersion: 6,
+    description: 'Generating folders local Metadata info with current Metadata',
+    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.filter(doc => doc.docType === 'folders')
+    },
+    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.map(doc => {
+        doc.local = {
+          docType: 'folder',
+          updated_at: doc.updated_at,
+          ino: doc.ino,
+          fileid: doc.fileid
+        }
+        return doc
+      })
+    }
   }
 ]
 

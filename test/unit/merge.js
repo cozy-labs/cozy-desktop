@@ -298,7 +298,7 @@ describe('Merge', function() {
       })
     })
 
-    it('updates the local metadata when only it has changed', async function() {
+    it('updates the local metadata only when it has changed', async function() {
       const mergedFile = await builders
         .metafile()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
@@ -1201,6 +1201,93 @@ describe('Merge', function() {
       })
     })
 
+    it('updates the local metadata only when it has changed', async function() {
+      const mergedFolder = await builders
+        .metadir()
+        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
+        .upToDate()
+        .remoteId(dbBuilders.id())
+        .create()
+      const sameFolder = builders
+        .metadir(mergedFolder)
+        .updatedAt(new Date())
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.putFolderAsync('local', _.cloneDeep(sameFolder))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              local: sameFolder.local
+            },
+            _.omit(mergedFolder, ['_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
+    it('sets the local metadata when it is missing', async function() {
+      const mergedFolder = await builders
+        .metadir()
+        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
+        .upToDate()
+        .remoteId(dbBuilders.id())
+        .noLocal()
+        .create()
+      const sameFolder = builders.metadir(mergedFolder).build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.putFolderAsync('local', _.cloneDeep(sameFolder))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              local: sameFolder.local
+            },
+            _.omit(mergedFolder, ['_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
+    it('keeps an existing local metadata when it is not present in the new doc', async function() {
+      const mergedFolder = await builders
+        .metadir()
+        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
+        .upToDate()
+        .remoteId(dbBuilders.id())
+        .create()
+      const sameFolder = builders
+        .metadir(mergedFolder)
+        .noLocal()
+        .remoteRev(3)
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.putFolderAsync('remote', _.cloneDeep(sameFolder))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaultsDeep(
+            {
+              sides: increasedSides(mergedFolder.sides, 'remote', 1),
+              local: mergedFolder.local
+            },
+            _.omit(sameFolder, ['_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
     context(
       'when doc can have an identity conflict with an existing dir',
       () => {
@@ -1301,6 +1388,7 @@ describe('Merge', function() {
               sides: increasedSides(was.sides, this.side, 1),
               moveFrom: movedSrc
             },
+            _.pick(was, ['ino', 'local']),
             _.omit(doc, ['_rev'])
           )
         ],
@@ -1911,7 +1999,7 @@ describe('Merge', function() {
               sides: increasedSides(was.sides, this.side, 1),
               moveFrom: movedSrc
             },
-            _.pick(was, ['ino']),
+            _.pick(was, ['ino', 'local']),
             _.omit(doc, ['_rev', 'fileid'])
           )
         ],
@@ -2868,6 +2956,7 @@ describe('Merge', function() {
                   {
                     _id: metadata.id(movedSubdirPath),
                     path: movedSubdirPath,
+                    local: { path: movedSubdirPath },
                     sides: increasedSides(subdir.sides, this.side, 1),
                     moveFrom: movedSubdir
                   },
@@ -2964,6 +3053,7 @@ describe('Merge', function() {
                   {
                     _id: metadata.id(movedSubdirPath),
                     path: movedSubdirPath,
+                    local: { path: movedSubdirPath },
                     sides: increasedSides(subdir.sides, this.side, 1),
                     moveFrom: movedSubdir
                   },
