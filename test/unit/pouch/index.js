@@ -501,10 +501,12 @@ describe('Pouch', function() {
         dir = await builders
           .metadir()
           .path('dir-with-remote-id')
+          .upToDate()
           .create()
         file = await builders
           .metafile()
           .path('file-with-remote-id')
+          .upToDate()
           .create()
       })
 

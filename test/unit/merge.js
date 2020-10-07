@@ -209,19 +209,21 @@ describe('Merge', function() {
         await builders
           .metafile()
           .path('bar')
+          .upToDate()
           .create()
         const doc = builders
           .metafile()
           .path('BAR')
+          .sides({ remote: 1 })
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.addFileAsync(this.side, _.cloneDeep(doc))
+          this.merge.addFileAsync('remote', _.cloneDeep(doc))
         )
 
         should(sideEffects).deepEqual({
           savedDocs: [],
-          resolvedConflicts: [[this.side, _.pick(doc, ['path', 'remote'])]]
+          resolvedConflicts: [['remote', _.pick(doc, ['path', 'remote'])]]
         })
       })
     })
@@ -231,21 +233,23 @@ describe('Merge', function() {
         await builders
           .metafile()
           .path('bar')
+          .upToDate()
           .create()
         const doc = builders
           .metafile()
           .path('BAR')
+          .sides({ remote: 1 })
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.addFileAsync(this.side, _.cloneDeep(doc))
+          this.merge.addFileAsync('remote', _.cloneDeep(doc))
         )
 
         should(sideEffects).deepEqual({
           savedDocs: [
             _.defaults(
               {
-                sides: { target: 1, [this.side]: 1 }
+                sides: { target: 1, remote: 1 }
               },
               doc
             )
@@ -2716,6 +2720,7 @@ describe('Merge', function() {
           _.defaults(
             {
               sides: increasedSides(was.sides, this.side, 1),
+              remote: was.remote,
               moveFrom: movedSrc
             },
             doc
@@ -2886,26 +2891,26 @@ describe('Merge', function() {
             const was = await builders
               .metadir()
               .path(nfcParentPath)
-              .upToDate()
               .remoteId(dbBuilders.id())
+              .upToDate()
               .create()
             const subdir = await builders
               .metadir()
               .path(path.join(nfdParentPath, 'folder-9'))
-              .upToDate()
               .remoteId(dbBuilders.id())
+              .upToDate()
               .create()
             const subfile = await builders
               .metafile()
               .path(path.join(subdir.path, 'file-9'))
-              .upToDate()
               .remoteId(dbBuilders.id())
+              .upToDate()
               .create()
             const doc = builders
               .metadir(was)
               .path('DESTINATION')
-              .changedSide(this.side)
               .remoteId(dbBuilders.id())
+              .changedSide(this.side)
               .build()
 
             const sideEffects = await mergeSideEffects(this, () =>

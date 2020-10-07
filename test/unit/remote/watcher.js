@@ -88,11 +88,13 @@ describe('RemoteWatcher', function() {
         await builders
           .metadir()
           .fromRemote(remoteDoc)
+          .upToDate()
           .create()
       } else {
         await builders
           .metafile()
           .fromRemote(remoteDoc)
+          .upToDate()
           .create()
       }
     }
@@ -471,6 +473,7 @@ describe('RemoteWatcher', function() {
             const oldDoc = await builders
               .metafile()
               .fromRemote(oldRemote)
+              .upToDate()
               .create()
 
             const newRemote = builders
@@ -495,6 +498,7 @@ describe('RemoteWatcher', function() {
             const oldDir = await builders
               .metadir()
               .fromRemote(oldRemoteDir)
+              .upToDate()
               .create()
             const oldRemoteFile = builders
               .remoteFile()
@@ -504,6 +508,7 @@ describe('RemoteWatcher', function() {
             const oldFile = await builders
               .metafile()
               .fromRemote(oldRemoteFile)
+              .upToDate()
               .create()
 
             const newRemoteDir = builders
@@ -541,6 +546,7 @@ describe('RemoteWatcher', function() {
                 .metadir()
                 .fromRemote(oldRemoteDir)
                 .path(oldRemoteDir.path.normalize('NFD'))
+                .upToDate()
                 .create()
               const oldRemoteFile = builders
                 .remoteFile()
@@ -551,6 +557,7 @@ describe('RemoteWatcher', function() {
                 .metafile()
                 .fromRemote(oldRemoteFile)
                 .path(path.join(oldDir.path, oldRemoteFile.name))
+                .upToDate()
                 .create()
 
               const newRemoteFile = builders
@@ -581,6 +588,7 @@ describe('RemoteWatcher', function() {
                 .metadir()
                 .fromRemote(oldRemoteDir)
                 .path(oldRemoteDir.path.normalize('NFD'))
+                .upToDate()
                 .create()
               const oldRemoteFile = builders
                 .remoteFile()
@@ -591,6 +599,7 @@ describe('RemoteWatcher', function() {
                 .metafile()
                 .fromRemote(oldRemoteFile)
                 .path(path.join(oldDir.path, oldRemoteFile.name))
+                .upToDate()
                 .create()
 
               const newRemoteDir = builders
@@ -637,6 +646,7 @@ describe('RemoteWatcher', function() {
                 .metadir()
                 .fromRemote(oldRemoteDir)
                 .path(oldRemoteDir.path.normalize('NFD'))
+                .upToDate()
                 .create()
               const oldRemoteFile = builders
                 .remoteFile()
@@ -647,6 +657,7 @@ describe('RemoteWatcher', function() {
                 .metafile()
                 .fromRemote(oldRemoteFile)
                 .path(path.join(oldDir.path, oldRemoteFile.name))
+                .upToDate()
                 .create()
 
               const newRemoteDir = builders
@@ -823,6 +834,7 @@ describe('RemoteWatcher', function() {
                 .metadir()
                 .fromRemote(oldRemoteDir)
                 .path(oldRemoteDir.path.normalize('NFD'))
+                .upToDate()
                 .create()
               const newRemoteDir = builders
                 .remoteDir()
@@ -830,8 +842,9 @@ describe('RemoteWatcher', function() {
                 .build()
               const newDir = await builders
                 .metadir()
-                .fromRemote(oldRemoteDir)
+                .fromRemote(newRemoteDir)
                 .path(newRemoteDir.path.normalize('NFD'))
+                .upToDate()
                 .create()
               const oldRemoteFile = builders
                 .remoteFile()
@@ -842,6 +855,7 @@ describe('RemoteWatcher', function() {
                 .metafile()
                 .fromRemote(oldRemoteFile)
                 .path(oldRemoteFile.path.normalize('NFD'))
+                .upToDate()
                 .create()
 
               const newRemoteFile = builders

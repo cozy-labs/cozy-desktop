@@ -79,6 +79,7 @@ describe('gui/notes/index', () => {
       const doc = await builders
         .metafile()
         .fromRemote(remote)
+        .upToDate()
         .build()
 
       await should(
@@ -95,6 +96,7 @@ describe('gui/notes/index', () => {
         .metafile()
         .path(docPath)
         .remoteId('3232')
+        .upToDate()
         .build()
 
       await should(
@@ -114,6 +116,7 @@ describe('gui/notes/index', () => {
       const doc = await builders
         .metafile()
         .path(docPath)
+        .upToDate()
         .build()
 
       await should(

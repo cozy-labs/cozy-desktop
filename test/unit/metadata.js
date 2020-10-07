@@ -468,6 +468,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
         .remoteRev(4)
+        .upToDate()
         .build()
       const b = builders
         .metadir()
@@ -477,6 +478,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:57.000Z')
         .remoteId('123')
         .remoteRev(4)
+        .upToDate()
         .build()
       const c = builders
         .metadir()
@@ -485,6 +487,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:57.000Z')
         .remoteId('123')
         .remoteRev(4)
+        .upToDate()
         .build()
       const d = builders
         .metadir()
@@ -493,6 +496,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:57.000Z')
         .remoteId('123')
         .remoteRev(8)
+        .upToDate()
         .build()
       const e = builders
         .metadir()
@@ -545,6 +549,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
         .remoteRev(4)
+        .upToDate()
         .build()
 
       _.each(['path', 'docType', 'remote', 'tags', 'ino'], property => {
@@ -588,6 +593,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
         .remoteRev(4)
+        .upToDate()
         .build()
       const b = builders
         .metafile()
@@ -598,6 +604,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
         .remoteRev(4)
+        .upToDate()
         .build()
       const c = builders
         .metafile()
@@ -607,6 +614,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
         .remoteRev(4)
+        .upToDate()
         .build()
       const d = builders
         .metafile()
@@ -616,6 +624,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
         .remoteRev(8)
+        .upToDate()
         .build()
       const e = builders
         .metafile()
@@ -625,6 +634,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
         .remoteRev(4)
+        .upToDate()
         .build()
       const f = builders
         .metafile()
@@ -635,6 +645,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
         .remoteRev(4)
+        .upToDate()
         .build()
       const g = builders
         .metafile(a)
@@ -693,6 +704,7 @@ describe('metadata', function() {
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
         .remoteRev(4)
+        .upToDate()
         .build()
       const b = _.clone(a)
       b.executable = undefined
@@ -718,6 +730,7 @@ describe('metadata', function() {
         .tags('qux')
         .remoteId('123')
         .remoteRev(4)
+        .upToDate()
         .build()
 
       _.each(
@@ -1051,8 +1064,8 @@ describe('metadata', function() {
     it('throws when trying to put bad doc (no md5sum)', async () => {
       doc = builders
         .metafile()
-        .upToDate()
         .remoteId('badbeef')
+        .upToDate()
         .build()
       // $FlowFixMe md5sum is null on purpose
       should(() => invariants(Object.assign(doc, { md5sum: null }))).throw(
