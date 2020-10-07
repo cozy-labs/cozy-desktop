@@ -21,9 +21,9 @@ import type EventEmitter from 'events'
 import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
 import type { RemoteCozy } from '../cozy'
-import type { Metadata, RemoteRevisionsByID } from '../../metadata'
+import type { Metadata, MetadataRemoteInfo, RemoteRevisionsByID } from '../../metadata'
 import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from '../change'
-import type { RemoteDoc, RemoteDeletion } from '../document'
+import type { RemoteDeletion } from '../document'
 */
 
 const log = logger({
@@ -137,7 +137,7 @@ class RemoteWatcher {
    * FIXME: Misleading method name?
    */
   async pullMany(
-    docs /*: Array<RemoteDoc|RemoteDeletion> */
+    docs /*: Array<MetadataRemoteInfo|RemoteDeletion> */
   ) /*: Promise<void> */ {
     const remoteIds = docs.reduce((ids, doc) => ids.add(doc._id), new Set())
     const olds /*: Metadata[] */ = await this.pouch.allByRemoteIds(remoteIds)
@@ -162,7 +162,7 @@ class RemoteWatcher {
   }
 
   async analyse(
-    remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */,
+    remoteDocs /*: Array<MetadataRemoteInfo|RemoteDeletion> */,
     olds /*: Array<Metadata> */
   ) /*: Promise<RemoteChange[]> */ {
     log.trace('Contextualize and analyse changesfeed results...')
@@ -185,7 +185,7 @@ class RemoteWatcher {
   }
 
   identifyAll(
-    remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */,
+    remoteDocs /*: Array<MetadataRemoteInfo|RemoteDeletion> */,
     olds /*: Array<Metadata> */
   ) {
     const changes /*: Array<RemoteChange> */ = []
@@ -201,7 +201,7 @@ class RemoteWatcher {
   }
 
   identifyChange(
-    remoteDoc /*: RemoteDoc|RemoteDeletion */,
+    remoteDoc /*: MetadataRemoteInfo|RemoteDeletion */,
     was /*: ?Metadata */,
     previousChanges /*: Array<RemoteChange> */,
     originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
@@ -270,7 +270,7 @@ class RemoteWatcher {
    * the trash just after, it looks like it appeared directly on the trash.
    */
   identifyExistingDocChange(
-    remoteDoc /*: RemoteDoc */,
+    remoteDoc /*: MetadataRemoteInfo */,
     was /*: ?Metadata */,
     previousChanges /*: Array<RemoteChange> */,
     originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */

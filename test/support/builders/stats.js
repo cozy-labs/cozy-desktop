@@ -142,6 +142,8 @@ const fromStats = (baseStats /*: ?(WinStats | fs.Stats) */) => {
 }
 
 module.exports = {
+  DefaultStatsBuilder,
+  WinStatsBuilder,
   fileIdFromNumber,
   fromStats
 }

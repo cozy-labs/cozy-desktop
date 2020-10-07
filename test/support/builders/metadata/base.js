@@ -50,7 +50,7 @@ module.exports = class BaseMetadataBuilder {
     this.buildLocal = true
   }
 
-  fromRemote(remoteDoc /*: RemoteDoc */) /*: this */ {
+  fromRemote(remoteDoc /*: MetadataRemoteInfo */) /*: this */ {
     this.doc = metadata.fromRemoteDoc(remoteDoc)
     metadata.ensureValidPath(this.doc)
     this._assignId()

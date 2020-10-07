@@ -4,6 +4,11 @@
  * @flow
  */
 
+/*::
+export type FILE_TYPE = 'file'
+export type DIR_TYPE = 'directory'
+*/
+
 module.exports = {
   // Doctypes
   FILES_DOCTYPE: 'io.cozy.files',

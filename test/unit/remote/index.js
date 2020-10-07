@@ -515,7 +515,7 @@ describe('remote.Remote', function() {
     })
 
     it('creates the dir if it does not exist', async function() {
-      const deletedDir /*: RemoteDoc */ = await builders
+      const deletedDir = await builders
         .remoteDir()
         .name('deleted-dir')
         .inRootDir()
@@ -593,7 +593,7 @@ describe('remote.Remote', function() {
           .name('moved-to')
           .inRootDir()
           .create()
-        const remoteDoc /*: RemoteDoc */ = await builders
+        const remoteDoc = await builders
           .remoteFile()
           .name('cat6.jpg')
           .data('meow')
@@ -710,7 +710,7 @@ describe('remote.Remote', function() {
           .inRootDir()
           .create()
 
-        const remote1 /*: RemoteDoc */ = await builders
+        const remote1 = await builders
           .remoteFile()
           .inDir(newDir)
           .name('cat7.jpg')
@@ -719,7 +719,7 @@ describe('remote.Remote', function() {
           .create()
         existing = metadata.fromRemoteDoc(remote1)
 
-        const remote2 /*: RemoteDoc */ = await builders
+        const remote2 = await builders
           .remoteFile()
           .name('cat6.jpg')
           .data('meow')

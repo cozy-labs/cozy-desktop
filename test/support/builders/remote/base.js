@@ -16,15 +16,18 @@ const dbBuilders = require('../db')
 /*::
 import type { Cozy } from 'cozy-client-js'
 import type { RemoteDoc } from '../../../../core/remote/document'
+import type { MetadataRemoteInfo } from '../../../../core/metadata'
+
+type Ref = { _id: string, _type: string }
 */
 
-module.exports = class RemoteBaseBuilder {
+module.exports = class RemoteBaseBuilder /*:: <T: MetadataRemoteInfo> */ {
   /*::
   cozy: ?Cozy
-  remoteDoc: RemoteDoc
+  remoteDoc: T & { referenced_by: Ref[] }
   */
 
-  constructor(cozy /*: ?Cozy */, old /*: ?RemoteDoc */) {
+  constructor(cozy /*: ?Cozy */, old /*: ?(RemoteDoc|T) */) {
     this.cozy = cozy
     if (old) {
       this.remoteDoc = _.cloneDeep(old)
@@ -45,7 +48,7 @@ module.exports = class RemoteBaseBuilder {
     }
   }
 
-  inDir(dir /*: RemoteDoc | {_id: string, path: string} */) /*: this */ {
+  inDir(dir /*: {_id: string, path: string} */) /*: this */ {
     this.remoteDoc.dir_id = dir._id
     this.remoteDoc.path = posix.join(dir.path, this.remoteDoc.name)
     return this
@@ -71,6 +74,11 @@ module.exports = class RemoteBaseBuilder {
     if (this.remoteDoc.trashed) delete this.remoteDoc.trashed
     if (this.remoteDoc.restore_path) delete this.remoteDoc.restore_path
     return this.inRootDir()
+  }
+
+  erased() /*: this */ {
+    this.remoteDoc._deleted = true
+    return this
   }
 
   tags(...tags /*: string[] */) /*: this */ {
@@ -104,13 +112,12 @@ module.exports = class RemoteBaseBuilder {
     return this
   }
 
-  referencedBy(refs /*: Array<{ _id: string, _type: string }> */) /*: this */ {
-    // $FlowFixMe exists only in RemoteBuilders documents
+  referencedBy(refs /*: Ref[] */) /*: this */ {
     this.remoteDoc.referenced_by = refs
     return this
   }
 
-  build() /*: Object */ {
+  build() /*: T */ {
     const now = new Date().toISOString()
     if (!this.remoteDoc.created_at) this.remoteDoc.created_at = now
     if (!this.remoteDoc.updated_at) this.remoteDoc.updated_at = now

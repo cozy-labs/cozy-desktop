@@ -47,13 +47,12 @@ const {
   detectPathIncompatibilities,
   detectPathLengthIncompatibility
 } = require('./incompatibilities/platform')
-const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
+const { DIR_TYPE, FILE_TYPE, TRASH_DIR_ID } = require('./remote/constants')
 const { SIDE_NAMES, otherSide } = require('./side')
 
 /*::
-import type fs from 'fs'
 import type { PlatformIncompatibility } from './incompatibilities/platform'
-import type { RemoteDoc } from './remote/document'
+import type { RemoteBase, RemoteFile, RemoteDir } from './remote/document'
 import type { Stats } from './local/stater'
 import type { Ignore } from './ignore'
 import type { SideName } from './side'
@@ -101,10 +100,9 @@ export type MetadataLocalInfo = {
   updated_at?: string,
 }
 
-export type MetadataRemoteInfo = {
-  _id: string,
-  _rev: string
-}
+export type MetadataRemoteFile = RemoteFile & { path: string }
+export type MetadataRemoteDir = RemoteDir
+export type MetadataRemoteInfo = MetadataRemoteFile|MetadataRemoteDir
 
 type RemoteID = string
 type RemoteRev = string
@@ -134,7 +132,7 @@ export type Metadata = {
   childMove?: boolean,
   path: string,
   local: MetadataLocalInfo,
-  remote: MetadataRemoteInfo,
+  remote: MetadataRemoteDir|MetadataRemoteFile,
   size?: number,
   tags?: string[],
   sides: MetadataSidesInfo,
@@ -211,7 +209,8 @@ module.exports = {
   createConflictingDoc,
   CONFLICT_REGEXP,
   shouldIgnore,
-  updateLocal
+  updateLocal,
+  updateRemote
 }
 
 function localDocType(remoteDocType /*: string */) /*: string */ {
@@ -228,20 +227,57 @@ function localDocType(remoteDocType /*: string */) /*: string */ {
 // Transform a remote document into metadata, as stored in Pouch.
 // Please note the path is not normalized yet!
 // Normalization is done as a side effect of metadata.invalidPath() :/
-function fromRemoteDoc(remoteDoc /*: RemoteDoc */) /*: Metadata */ {
+function fromRemoteDoc(remoteDoc /*: MetadataRemoteInfo */) /*: Metadata */ {
+  const doc =
+    remoteDoc.type === FILE_TYPE
+      ? fromRemoteFile(remoteDoc)
+      : fromRemoteDir(remoteDoc)
+
+  updateRemote(doc, remoteDoc)
+
+  return doc
+}
+
+function fromRemoteDir(remoteDir /*: MetadataRemoteDir */) /*: Metadata */ {
   const doc /*: Object */ = {
-    path: remoteDoc.path.substring(1),
-    docType: localDocType(remoteDoc.type),
-    created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
-    updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at),
-    remote: _.cloneDeep(remoteDoc)
+    docType: localDocType(remoteDir.type),
+    path: remoteDir.path.substring(1),
+    created_at: timestamp.roundedRemoteDate(remoteDir.created_at),
+    updated_at: timestamp.roundedRemoteDate(remoteDir.updated_at)
   }
 
-  if (remoteDoc.size) {
-    doc.size = parseInt(remoteDoc.size, 10)
+  const fields = Object.getOwnPropertyNames(remoteDir).filter(
+    field =>
+      // Filter out fields already used above
+      ![
+        '_id',
+        '_rev',
+        '_type',
+        'path',
+        'type',
+        'created_at',
+        'updated_at'
+      ].includes(field)
+  )
+  for (const field of fields) {
+    if (remoteDir[field]) {
+      doc[field] = _.cloneDeep(remoteDir[field])
+    }
   }
 
-  const fields = Object.getOwnPropertyNames(remoteDoc).filter(
+  return doc
+}
+
+function fromRemoteFile(remoteFile /*: MetadataRemoteFile */) /*: Metadata */ {
+  const doc /*: Object */ = {
+    docType: localDocType(remoteFile.type),
+    path: remoteFile.path.substring(1),
+    size: parseInt(remoteFile.size, 10),
+    created_at: timestamp.roundedRemoteDate(remoteFile.created_at),
+    updated_at: timestamp.roundedRemoteDate(remoteFile.updated_at)
+  }
+
+  const fields = Object.getOwnPropertyNames(remoteFile).filter(
     field =>
       // Filter out fields already used above
       ![
@@ -256,8 +292,8 @@ function fromRemoteDoc(remoteDoc /*: RemoteDoc */) /*: Metadata */ {
       ].includes(field)
   )
   for (const field of fields) {
-    if (remoteDoc[field]) {
-      doc[field] = remoteDoc[field]
+    if (remoteFile[field]) {
+      doc[field] = _.cloneDeep(remoteFile[field])
     }
   }
 
@@ -834,7 +870,33 @@ function updateLocal(doc /*: Metadata */, newLocal /*: ?Object */ = {}) {
   // This is the case for `executable` and we need to provide a default falsy
   // value to override the `newLocal` executable value in all cases.
   doc.local = _.pick(
-    _.defaults(newLocal, isFile(doc) ? { executable: false } : {}, doc),
+    _.defaults(
+      _.cloneDeep(newLocal),
+      isFile(doc) ? { executable: false } : {},
+      _.cloneDeep(doc)
+    ),
     LOCAL_ATTRIBUTES
+  )
+}
+
+function updateRemote(
+  doc /*: Metadata */,
+  newRemote /*: {| path: string |}|RemoteDir|RemoteBase */
+) {
+  const remotePath =
+    typeof newRemote.path === 'string' ? newRemote.path : undefined
+
+  doc.remote = _.defaultsDeep(
+    _.cloneDeep(newRemote),
+    {
+      path: remotePath
+        ? remotePath.startsWith('/')
+          ? remotePath.substring(1)
+          : remotePath
+        : newRemote.trashed
+        ? path.posix.join(TRASH_DIR_ID, newRemote.name)
+        : path.posix.join(...doc.path.split(path.sep))
+    },
+    _.cloneDeep(doc.remote)
   )
 }

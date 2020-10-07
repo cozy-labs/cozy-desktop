@@ -1,27 +1,30 @@
 /* @flow */
 
+const _ = require('lodash')
+
 const RemoteBaseBuilder = require('./base')
 const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
-import type { RemoteDoc } from '../../../../core/remote/document'
+import type { RemoteDir } from '../../../../core/remote/document'
+import type { MetadataRemoteDir } from '../../../../core/metadata'
 */
 
 // Used to generate readable unique dirnames
 var dirNumber = 1
 
-// Build a RemoteDoc representing a remote Cozy directory:
+// Build a MetadataRemoteDir representing a remote Cozy directory:
 //
-//     const dir: RemoteDoc = builders.remoteDir().inDir(...).build()
+//     const dir: MetadataRemoteDir = builders.remoteDir().inDir(...).build()
 //
 // To actually create the corresponding directory on the Cozy, use the async
 // #create() method instead:
 //
-//     const dir: RemoteDoc = await builders.remoteDir().inDir(...).create()
+//     const dir: MetadataRemoteDir = await builders.remoteDir().inDir(...).create()
 //
-module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
-  constructor(cozy /*: Cozy */, old /*: ?RemoteDoc */) {
+module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <MetadataRemoteDir> */ {
+  constructor(cozy /*: Cozy */, old /*: ?(RemoteDir|MetadataRemoteDir) */) {
     super(cozy, old)
 
     if (!old) {
@@ -30,15 +33,18 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder {
     this.remoteDoc.type = 'directory'
   }
 
-  async create() /*: Promise<RemoteDoc> */ {
+  async create() /*: Promise<MetadataRemoteDir> */ {
     const cozy = this._ensureCozy()
-    return jsonApiToRemoteDoc(
-      await cozy.files.createDirectory({
-        name: this.remoteDoc.name,
-        dirID: this.remoteDoc.dir_id,
-        createdAt: this.remoteDoc.created_at,
-        updatedAt: this.remoteDoc.updated_at
-      })
+
+    return _.clone(
+      jsonApiToRemoteDoc(
+        await cozy.files.createDirectory({
+          name: this.remoteDoc.name,
+          dirID: this.remoteDoc.dir_id,
+          createdAt: this.remoteDoc.created_at,
+          updatedAt: this.remoteDoc.updated_at
+        })
+      )
     )
   }
 }

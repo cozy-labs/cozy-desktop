@@ -2956,7 +2956,6 @@ describe('Merge', function() {
                   {
                     _id: metadata.id(movedSubdirPath),
                     path: movedSubdirPath,
-                    local: { path: movedSubdirPath },
                     sides: increasedSides(subdir.sides, this.side, 1),
                     moveFrom: movedSubdir
                   },
@@ -3053,7 +3052,6 @@ describe('Merge', function() {
                   {
                     _id: metadata.id(movedSubdirPath),
                     path: movedSubdirPath,
-                    local: { path: movedSubdirPath },
                     sides: increasedSides(subdir.sides, this.side, 1),
                     moveFrom: movedSubdir
                   },

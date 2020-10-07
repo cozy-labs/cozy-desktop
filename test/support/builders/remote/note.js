@@ -2,6 +2,7 @@
 
 const crypto = require('crypto')
 const { posix } = require('path')
+const _ = require('lodash')
 
 const RemoteBaseBuilder = require('./base')
 const cozyHelpers = require('../../helpers/cozy')
@@ -15,7 +16,8 @@ const {
 /*::
 import type stream from 'stream'
 import type { Cozy } from 'cozy-client'
-import type { RemoteDoc } from '../../../../core/remote/document'
+import type { RemoteFile } from '../../../../core/remote/document'
+import type { MetadataRemoteFile } from '../../../../core/metadata'
 */
 
 // Used to generate readable unique filenames
@@ -28,23 +30,23 @@ const baseMetadata = {
   version: 1
 }
 
-// Build a RemoteDoc representing a remote Cozy Note:
+// Build a MetadataRemoteFile representing a remote Cozy Note:
 //
-//     const note /*: RemoteDoc */ = builders.remoteNote().inDir(...).build()
+//     const note /*: MetadataRemoteFile */ = builders.remoteNote().inDir(...).build()
 //
 // To actually create the corresponding note on the Cozy, use the async
 // #create() method instead:
 //
-//     const note /*: RemoteDoc */ = await builders.remoteNote().inDir(...).create()
+//     const note /*: MetadataRemoteFile */ = await builders.remoteNote().inDir(...).create()
 //
-module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder {
+module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <MetadataRemoteFile> */ {
   /*::
   _title: string
   _content: string
   _data: string
   */
 
-  constructor(cozy /*: Cozy */, old /*: ?RemoteDoc */) {
+  constructor(cozy /*: Cozy */, old /*: ?(RemoteFile|MetadataRemoteFile) */) {
     super(cozy, old)
 
     if (!old) {
@@ -115,7 +117,7 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder {
     return super.build()
   }
 
-  async create() /*: Promise<RemoteDoc> */ {
+  async create() /*: Promise<MetadataRemoteFile> */ {
     this._updateMetadata()
     this._updateExport()
 
@@ -131,16 +133,19 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder {
       createdAt: this.remoteDoc.created_at,
       updatedAt: this.remoteDoc.updated_at || this.remoteDoc.created_at
     })
-    const doc = jsonApiToRemoteDoc(data)
-    doc._rev = data.meta.rev
+    const remoteFile /*: RemoteFile */ = _.clone(jsonApiToRemoteDoc(data))
+    remoteFile._rev = data.meta.rev
 
-    const { data: parentDir } = await files.statById(doc.dir_id)
-    doc.path = posix.join(parentDir.attributes.path, doc.name)
+    const { data: parentDir } = await files.statById(remoteFile.dir_id)
+    const doc /*: MetadataRemoteFile */ = {
+      ...remoteFile,
+      path: posix.join(parentDir.attributes.path, remoteFile.name)
+    }
 
     return doc
   }
 
-  async update() /*: Promise<RemoteDoc> */ {
+  async update() /*: Promise<MetadataRemoteFile> */ {
     this._updateMetadata()
     this._updateExport()
 
@@ -149,16 +154,21 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder {
     // FIXME: use new cozy-client updateFile() method once we can pass something
     // else than HTML5 File objects as data.
     // FIXME: update note metadata
-    const doc = jsonApiToRemoteDoc(
-      await cozy.files.updateById(this.remoteDoc._id, this._data, {
-        dirID: this.remoteDoc.dir_id,
-        updatedAt: this.remoteDoc.updated_at,
-        name: this.remoteDoc.name
-      })
+    const remoteFile /*: RemoteFile */ = _.clone(
+      jsonApiToRemoteDoc(
+        await cozy.files.updateById(this.remoteDoc._id, this._data, {
+          dirID: this.remoteDoc.dir_id,
+          updatedAt: this.remoteDoc.updated_at,
+          name: this.remoteDoc.name
+        })
+      )
     )
 
-    const parentDir = await cozy.files.statById(doc.dir_id)
-    doc.path = posix.join(parentDir.attributes.path, doc.name)
+    const parentDir = await cozy.files.statById(remoteFile.dir_id)
+    const doc /*: MetadataRemoteFile */ = {
+      ...remoteFile,
+      path: posix.join(parentDir.attributes.path, remoteFile.name)
+    }
 
     return doc
   }

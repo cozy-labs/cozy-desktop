@@ -12,7 +12,8 @@ const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
 
 /*::
-import type { RemoteDoc } from '../../core/remote/document'
+import type { RemoteDir } from '../../core/remote/document'
+import type { MetadataRemoteInfo, MetadataRemoteDir } from '../../core/metadata'
 */
 
 describe('Platform incompatibilities', () => {
@@ -294,15 +295,16 @@ describe('Platform incompatibilities', () => {
   })
 
   it('move remote dir with incompatible metadata & remote content', async () => {
-    const remoteDocs = await helpers.remote.createTree([
-      'dir/',
-      'dir/sub:dir/',
-      'dir/sub:dir/file'
-    ])
+    const remoteDocs /*: { [string]: MetadataRemoteInfo } */ = await helpers.remote.createTree(
+      ['dir/', 'dir/sub:dir/', 'dir/sub:dir/file']
+    )
     await helpers.pullAndSyncAll()
 
     // Simulate remote move
-    const remoteDoc /*: RemoteDoc */ = remoteDocs['dir/']
+    if (remoteDocs['dir/'].type !== 'directory') {
+      throw new Error('Unexpected remote file with dir/ path')
+    }
+    const remoteDoc = remoteDocs['dir/']
     const dir = await helpers.pouch.byRemoteId(remoteDoc._id)
     const newRemoteDoc = {
       ...remoteDoc,
@@ -311,10 +313,10 @@ describe('Platform incompatibilities', () => {
       path: '/dir2',
       updated_at: new Date().toISOString()
     }
-    const { name, dir_id, executable, updated_at } = newRemoteDoc
+    const { name, dir_id, updated_at } = newRemoteDoc
     await helpers.remote.side.remoteCozy.updateAttributesById(
       remoteDoc._id,
-      { name, dir_id, executable, updated_at },
+      { name, dir_id, updated_at },
       { ifMatch: remoteDoc._rev }
     )
     const dir2 = metadata.fromRemoteDoc(newRemoteDoc)
