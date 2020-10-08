@@ -15,14 +15,16 @@ const RemoteFileBuilder = require('./remote/file')
 const RemoteNoteBuilder = require('./remote/note')
 const StreamBuilder = require('./stream')
 const AtomEventBuilder = require('./atom_event')
+const { DefaultStatsBuilder, WinStatsBuilder } = require('./stats')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
-import type { Metadata } from '../../../core/metadata'
+import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Warning } from '../../../core/remote/warning'
-import type { RemoteDoc } from '../../../core/remote/document'
+import type { RemoteDoc, RemoteFile, RemoteDir } from '../../../core/remote/document'
 import type { AtomEvent } from '../../../core/local/atom/event'
+import type { StatsBuilder } from './stats'
 */
 
 // Test data builders facade.
@@ -54,21 +56,25 @@ module.exports = class Builders {
     return new FileMetadataBuilder(this.pouch, old)
   }
 
-  remoteDir(old /*: ?RemoteDoc */) /*: RemoteDirBuilder */ {
+  remoteDir(old /*: ?RemoteDir|MetadataRemoteDir */) /*: RemoteDirBuilder */ {
     return new RemoteDirBuilder(this.cozy, old)
   }
 
-  remoteFile(old /*: ?RemoteDoc */) /*: RemoteFileBuilder */ {
+  remoteFile(
+    old /*: ?RemoteFile|MetadataRemoteFile */
+  ) /*: RemoteFileBuilder */ {
     return new RemoteFileBuilder(this.cozy, old)
   }
 
-  remoteNote(old /*: ?RemoteDoc */) /*: RemoteNoteBuilder */ {
+  remoteNote(
+    old /*: ?RemoteFile|MetadataRemoteFile */
+  ) /*: RemoteNoteBuilder */ {
     return new RemoteNoteBuilder(this.cozy, old)
   }
 
   buildRemoteTree(
     paths /*: Array<string|[string, number]> */
-  ) /*: { [string]: RemoteDoc } */ {
+  ) /*: { [string]: MetadataRemoteFile|MetadataRemoteDir } */ {
     const remoteDocsByPath = {}
     for (const p of paths) {
       let docPath, shortRev
@@ -144,5 +150,11 @@ module.exports = class Builders {
         .path(`dir-from-batch-${batchNumber}`)
         .build()
     ]
+  }
+
+  stats() /*: StatsBuilder */ {
+    return process.platform === 'win32'
+      ? new WinStatsBuilder()
+      : new DefaultStatsBuilder()
   }
 }

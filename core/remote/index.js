@@ -9,12 +9,13 @@ const Promise = require('bluebird')
 const path = require('path')
 const { posix, sep } = path
 
-const { RemoteCozy } = require('./cozy')
-const { RemoteWarningPoller } = require('./warning_poller')
-const { RemoteWatcher } = require('./watcher')
 const { isNote } = require('../utils/notes')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
+const metadata = require('../metadata')
+const { RemoteCozy } = require('./cozy')
+const { RemoteWarningPoller } = require('./warning_poller')
+const { RemoteWatcher } = require('./watcher')
 
 /*::
 import type EventEmitter from 'events'
@@ -119,7 +120,7 @@ class Remote /*:: implements Reader, Writer */ {
       const dir = await this.remoteCozy.createDirectory(
         newDocumentAttributes(name, parent._id, doc.updated_at)
       )
-      doc.remote = dir
+      metadata.updateRemote(doc, dir)
     } catch (err) {
       if (err.status !== 409) {
         throw err
@@ -128,7 +129,7 @@ class Remote /*:: implements Reader, Writer */ {
       log.info({ path }, 'Folder already exists')
       const remotePath = '/' + posix.join(...doc.path.split(sep))
       const dir = await this.remoteCozy.findDirectoryByPath(remotePath)
-      doc.remote = dir
+      metadata.updateRemote(doc, dir)
     }
   }
 
@@ -159,7 +160,7 @@ class Remote /*:: implements Reader, Writer */ {
       contentLength: doc.size,
       contentType: doc.mime
     })
-    doc.remote = created
+    metadata.updateRemote(doc, created)
 
     stopMeasure()
   }
@@ -212,7 +213,7 @@ class Remote /*:: implements Reader, Writer */ {
       stream,
       options
     )
-    doc.remote = updated
+    metadata.updateRemote(doc, updated)
   }
 
   async updateFileMetadataAsync(
@@ -234,7 +235,7 @@ class Remote /*:: implements Reader, Writer */ {
       attrs,
       opts
     )
-    doc.remote = updated
+    metadata.updateRemote(doc, updated)
   }
 
   async updateFolderAsync(
@@ -267,7 +268,7 @@ class Remote /*:: implements Reader, Writer */ {
         attrs,
         opts
       )
-      doc.remote = newRemoteDoc
+      metadata.updateRemote(doc, newRemoteDoc)
     } catch (err) {
       if (err.status !== 404) {
         throw err
@@ -277,7 +278,7 @@ class Remote /*:: implements Reader, Writer */ {
       const newRemoteDoc = await this.remoteCozy.createDirectory(
         newDocumentAttributes(newName, newParentDir._id, doc.updated_at)
       )
-      doc.remote = newRemoteDoc
+      metadata.updateRemote(doc, newRemoteDoc)
     }
   }
 
@@ -320,7 +321,7 @@ class Remote /*:: implements Reader, Writer */ {
       attrs,
       opts
     )
-    newMetadata.remote = newRemoteDoc
+    metadata.updateRemote(newMetadata, newRemoteDoc)
 
     if (overwrite && isOverwritingTarget) {
       const referencedBy = await this.remoteCozy.getReferencedBy(
@@ -335,11 +336,11 @@ class Remote /*:: implements Reader, Writer */ {
     const { path } = doc
     log.info({ path }, 'Moving to the trash...')
 
-    let newRemoteDoc /*: RemoteDoc */
     try {
-      newRemoteDoc = await this.remoteCozy.trashById(doc.remote._id, {
+      const newRemoteDoc = await this.remoteCozy.trashById(doc.remote._id, {
         ifMatch: doc.remote._rev
       })
+      metadata.updateRemote(doc, newRemoteDoc)
     } catch (err) {
       if (err.status === 404) {
         log.warn({ path }, `Cannot trash remotely deleted ${doc.docType}.`)
@@ -347,7 +348,6 @@ class Remote /*:: implements Reader, Writer */ {
       }
       throw err
     }
-    doc.remote = newRemoteDoc
   }
 
   async deleteFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
@@ -372,7 +372,7 @@ class Remote /*:: implements Reader, Writer */ {
   async assignNewRemote(doc /*: Metadata */) /*: Promise<void> */ {
     log.info({ path: doc.path }, 'Assigning new remote...')
     const newRemoteDoc = await this.remoteCozy.find(doc.remote._id)
-    doc.remote = newRemoteDoc
+    metadata.updateRemote(doc, newRemoteDoc)
   }
 
   diskUsage() /*: Promise<*> */ {

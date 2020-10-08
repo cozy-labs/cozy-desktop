@@ -1,3 +1,4 @@
+/* @flow */
 /* eslint-env mocha */
 
 const _ = require('lodash')
@@ -34,6 +35,10 @@ const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const stater = require('../../core/local/stater')
 const { NOTE_MIME_TYPE } = require('../../core/remote/constants')
 
+/*::
+import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../core/metadata'
+*/
+
 const { platform } = process
 
 describe('metadata', function() {
@@ -41,7 +46,7 @@ describe('metadata', function() {
 
   describe('.fromRemoteDoc()', () => {
     it('builds the metadata for a remote file', () => {
-      const remoteDoc /*: RemoteDoc */ = {
+      const remoteDoc /*: MetadataRemoteFile */ = {
         _id: '12',
         _rev: '34',
         _type: FILES_DOCTYPE,
@@ -91,7 +96,7 @@ describe('metadata', function() {
     })
 
     it('builds the metadata for a remote dir', () => {
-      const remoteDoc /*: RemoteDoc */ = {
+      const remoteDoc /*: MetadataRemoteDir */ = {
         _id: '12',
         _rev: '34',
         _type: FILES_DOCTYPE,
@@ -123,14 +128,14 @@ describe('metadata', function() {
     it('is available', function() {
       let doc = { path: 'FOO' }
       assignId(doc)
-      doc._id.should.equal('FOO')
+      should(doc).have.property('_id', 'FOO')
     })
 
     if (['linux', 'freebsd', 'sunos'].includes(platform)) {
       it('is case insensitive on UNIX', function() {
         let doc = { path: 'foo/bar/café' }
         assignId(doc)
-        doc._id.should.equal('foo/bar/café')
+        should(doc).have.property('_id', 'foo/bar/café')
       })
     }
 
@@ -138,7 +143,7 @@ describe('metadata', function() {
       it('is case sensitive on OSX', function() {
         let doc = { path: 'foo/bar/café' }
         assignId(doc)
-        doc._id.should.equal('FOO/BAR/CAFÉ')
+        should(doc).have.property('_id', 'FOO/BAR/CAFÉ')
       })
     }
 
@@ -146,7 +151,7 @@ describe('metadata', function() {
       it('is case sensitive on Windows', () => {
         let doc = { path: 'foo/bar/caf\u00E9' }
         assignId(doc)
-        doc._id.should.equal('FOO/BAR/CAF\u00C9')
+        should(doc).have.property('_id', 'FOO/BAR/CAF\u00C9')
       })
     }
   })
@@ -185,44 +190,104 @@ describe('metadata', function() {
 
   describe('invalidChecksum', function() {
     it('returns true if the checksum is missing for a file', function() {
-      let ret = invalidChecksum({ docType: 'file' })
-      ret.should.be.true()
-      ret = invalidChecksum({ docType: 'file', md5sum: null })
-      ret.should.be.true()
-      ret = invalidChecksum({ docType: 'file', md5sum: undefined })
-      ret.should.be.true()
+      const missingMd5sum = builders.metafile().build()
+      delete missingMd5sum.md5sum
+      should(invalidChecksum(missingMd5sum)).be.true()
+      should(
+        invalidChecksum(
+          builders
+            .metafile()
+            .md5sum(null)
+            .build()
+        )
+      ).be.true()
+      should(
+        invalidChecksum(
+          builders
+            .metafile()
+            .md5sum(undefined)
+            .build()
+        )
+      ).be.true()
     })
 
     it('returns false if the checksum is missing for a folder', function() {
-      should(invalidChecksum({ docType: 'folder' })).be.false()
+      should(invalidChecksum(builders.metadir().build())).be.false()
     })
 
     it('returns true if the checksum is incorrect', function() {
-      let ret = invalidChecksum({ md5sum: '' })
-      ret.should.be.true()
-      ret = invalidChecksum({ md5sum: 'f00' })
-      ret.should.be.true()
-      let sha1 = '68b329da9893e34099c7d8ad5cb9c94068b329da'
-      ret = invalidChecksum({ md5sum: sha1 })
-      ret.should.be.true()
-      let md5hex = 'adc83b19e793491b1c6ea0fd8b46cd9f'
-      ret = invalidChecksum({ md5sum: md5hex })
-      ret.should.be.true()
-      let md5base64truncated = 'rcg7GeeTSRscbqD9i0bNn'
-      ret = invalidChecksum({ md5sum: md5base64truncated })
-      ret.should.be.true()
-      let sha1base64 = 'aLMp2piT40CZx9itXLnJQGizKdo='
-      ret = invalidChecksum({ md5sum: sha1base64 })
-      ret.should.be.true()
-      let md5base64NonPadded = 'rcg7GeeTSRscbqD9i0bNnw'
-      ret = invalidChecksum({ md5sum: md5base64NonPadded })
-      ret.should.be.true()
+      should(
+        invalidChecksum(
+          builders
+            .metafile()
+            .md5sum('')
+            .build()
+        )
+      ).be.true()
+      should(
+        invalidChecksum(
+          builders
+            .metafile()
+            .md5sum('f00')
+            .build()
+        )
+      ).be.true()
+      const sha1 = '68b329da9893e34099c7d8ad5cb9c94068b329da'
+      should(
+        invalidChecksum(
+          builders
+            .metafile()
+            .md5sum(sha1)
+            .build()
+        )
+      ).be.true()
+      const md5hex = 'adc83b19e793491b1c6ea0fd8b46cd9f'
+      should(
+        invalidChecksum(
+          builders
+            .metafile()
+            .md5sum(md5hex)
+            .build()
+        )
+      ).be.true()
+      const md5base64truncated = 'rcg7GeeTSRscbqD9i0bNn'
+      should(
+        invalidChecksum(
+          builders
+            .metafile()
+            .md5sum(md5base64truncated)
+            .build()
+        )
+      ).be.true()
+      const sha1base64 = 'aLMp2piT40CZx9itXLnJQGizKdo='
+      should(
+        invalidChecksum(
+          builders
+            .metafile()
+            .md5sum(sha1base64)
+            .build()
+        )
+      ).be.true()
+      const md5base64NonPadded = 'rcg7GeeTSRscbqD9i0bNnw'
+      should(
+        invalidChecksum(
+          builders
+            .metafile()
+            .md5sum(md5base64NonPadded)
+            .build()
+        )
+      ).be.true()
     })
 
     it('returns false if the checksum is OK', function() {
-      let doc = { md5sum: 'rcg7GeeTSRscbqD9i0bNnw==' }
-      let ret = invalidChecksum(doc)
-      ret.should.be.false()
+      should(
+        invalidChecksum(
+          builders
+            .metafile()
+            .data('')
+            .build()
+        )
+      ).be.false()
     })
   })
 
@@ -230,14 +295,19 @@ describe('metadata', function() {
     const syncPath = ';'
 
     it('is null when all names in the path are compatible', () => {
-      const doc = { path: path.normalize('foo/bar'), docType: 'file' }
+      const doc = builders
+        .metafile()
+        .path('foo/bar')
+        .build()
       should(detectIncompatibilities(doc, syncPath)).deepEqual([])
     })
 
     onPlatform('win32', () => {
       it('lists platform incompatibilities for all names in the path', () => {
-        const path = 'f?o:o\\ba|r\\baz\\q"ux'
-        const doc = { path, docType: 'file' }
+        const doc = builders
+          .metafile()
+          .path('f?o:o\\ba|r\\baz\\q"ux')
+          .build()
         should(detectIncompatibilities(doc, syncPath)).deepEqual([
           {
             type: 'reservedChars',
@@ -269,8 +339,10 @@ describe('metadata', function() {
 
     onPlatforms(['darwin', 'linux'], () => {
       it('does not list Windows incompatibilities', () => {
-        const path = 'foo/b:ar/qux'
-        const doc = { path, docType: 'folder' }
+        const doc = builders
+          .metadir()
+          .path('foo/b:ar/qux')
+          .build()
         should(detectIncompatibilities(doc, syncPath)).deepEqual([])
       })
     })
@@ -278,12 +350,13 @@ describe('metadata', function() {
 
   describe('extractRevNumber', function() {
     it('extracts the revision number', function() {
-      let infos = { _rev: '42-0123456789' }
-      extractRevNumber(infos).should.equal(42)
+      const infos = { _rev: '42-0123456789' }
+      should(extractRevNumber(infos)).equal(42)
     })
 
     it('returns 0 if not found', function() {
-      extractRevNumber({}).should.equal(0)
+      // $FlowFixMe the _rev attribute is missing on purpose
+      should(extractRevNumber({})).equal(0)
     })
   })
 
@@ -394,7 +467,7 @@ describe('metadata', function() {
         .tags('qux')
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
-        .remoteRev('4-567')
+        .remoteRev(4)
         .build()
       const b = builders
         .metadir()
@@ -403,7 +476,7 @@ describe('metadata', function() {
         .tags('qux')
         .updatedAt('2015-12-01T11:22:57.000Z')
         .remoteId('123')
-        .remoteRev('4-567')
+        .remoteRev(4)
         .build()
       const c = builders
         .metadir()
@@ -411,7 +484,7 @@ describe('metadata', function() {
         .tags('qux', 'courge')
         .updatedAt('2015-12-01T11:22:57.000Z')
         .remoteId('123')
-        .remoteRev('4-567')
+        .remoteRev(4)
         .build()
       const d = builders
         .metadir()
@@ -419,7 +492,7 @@ describe('metadata', function() {
         .tags('qux', 'courge')
         .updatedAt('2015-12-01T11:22:57.000Z')
         .remoteId('123')
-        .remoteRev('8-901')
+        .remoteRev(8)
         .build()
       const e = builders
         .metadir()
@@ -427,21 +500,22 @@ describe('metadata', function() {
         .tags('qux')
         .updatedAt('2015-12-01T11:22:57.000Z')
         .remoteId('123')
-        .remoteRev('4-567')
+        .remoteRev(4)
+        .upToDate()
         .build()
       const g = _.merge({}, a, { ino: a.ino + 2 })
-      sameFolder(a, a).should.be.true()
-      sameFolder(a, b).should.be.false()
-      sameFolder(a, c).should.be.false()
-      sameFolder(a, d).should.be.false()
-      sameFolder(a, e).should.be.false()
-      sameFolder(a, g).should.be.false()
-      sameFolder(b, c).should.be.false()
-      sameFolder(b, d).should.be.false()
-      sameFolder(b, e).should.be.false()
-      sameFolder(c, d).should.be.false()
-      sameFolder(c, e).should.be.false()
-      sameFolder(d, e).should.be.false()
+      should(sameFolder(a, a)).be.true()
+      should(sameFolder(a, b)).be.false()
+      should(sameFolder(a, c)).be.false()
+      should(sameFolder(a, d)).be.false()
+      should(sameFolder(a, e)).be.false()
+      should(sameFolder(a, g)).be.false()
+      should(sameFolder(b, c)).be.false()
+      should(sameFolder(b, d)).be.false()
+      should(sameFolder(b, e)).be.false()
+      should(sameFolder(c, d)).be.false()
+      should(sameFolder(c, e)).be.false()
+      should(sameFolder(d, e)).be.false()
       should(
         sameFolder(a, _.merge({ _deleted: true, moveTo: b._id }, a))
       ).be.true()
@@ -466,44 +540,40 @@ describe('metadata', function() {
       const a = builders
         .metadir()
         .path('foo/bar')
+        .ino(234)
         .tags('qux')
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
-        .remoteRev('4-567')
-        .ino(234)
-        .trashed(false)
+        .remoteRev(4)
         .build()
 
-      _.each(
-        ['path', 'docType', 'remote', 'tags', 'trashed', 'ino'],
-        property => {
-          let b = _.clone(a)
-          b[property] = undefined
-          let c = _.clone(a)
-          c[property] = null
-          let d = _.clone(a)
-          delete d[property]
+      _.each(['path', 'docType', 'remote', 'tags', 'ino'], property => {
+        let b = _.clone(a)
+        b[property] = undefined
+        let c = _.clone(a)
+        c[property] = null
+        let d = _.clone(a)
+        delete d[property]
 
-          sameFolder(a, b).should.be.false(
-            `undefined ${property} is same as ${a[property]}`
-          )
-          sameFolder(a, c).should.be.false(
-            `null ${property} is same as ${a[property]}`
-          )
-          sameFolder(a, d).should.be.false(
-            `absent ${property} is same as ${a[property]}`
-          )
-          sameFolder(b, c).should.be.true(
-            `undefined ${property} is not same as null`
-          )
-          sameFolder(b, d).should.be.true(
-            `undefined ${property} is not as absent`
-          )
-          sameFolder(c, d).should.be.true(
-            `null ${property} is not same as absent`
-          )
-        }
-      )
+        should(sameFolder(a, b)).be.false(
+          `undefined ${property} is same as ${a[property]}`
+        )
+        should(sameFolder(a, c)).be.false(
+          `null ${property} is same as ${a[property]}`
+        )
+        should(sameFolder(a, d)).be.false(
+          `absent ${property} is same as ${a[property]}`
+        )
+        should(sameFolder(b, c)).be.true(
+          `undefined ${property} is not same as null`
+        )
+        should(sameFolder(b, d)).be.true(
+          `undefined ${property} is not as absent`
+        )
+        should(sameFolder(c, d)).be.true(
+          `null ${property} is not same as absent`
+        )
+      })
     })
   })
 
@@ -517,7 +587,7 @@ describe('metadata', function() {
         .tags('qux')
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
-        .remoteRev('4-567')
+        .remoteRev(4)
         .build()
       const b = builders
         .metafile()
@@ -527,7 +597,7 @@ describe('metadata', function() {
         .tags('qux')
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
-        .remoteRev('4-567')
+        .remoteRev(4)
         .build()
       const c = builders
         .metafile()
@@ -536,7 +606,7 @@ describe('metadata', function() {
         .tags('qux')
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
-        .remoteRev('4-567')
+        .remoteRev(4)
         .build()
       const d = builders
         .metafile()
@@ -545,7 +615,7 @@ describe('metadata', function() {
         .tags('qux')
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
-        .remoteRev('8-901')
+        .remoteRev(8)
         .build()
       const e = builders
         .metafile()
@@ -554,7 +624,7 @@ describe('metadata', function() {
         .tags('qux')
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
-        .remoteRev('4-567')
+        .remoteRev(4)
         .build()
       const f = builders
         .metafile()
@@ -564,7 +634,7 @@ describe('metadata', function() {
         .tags('qux')
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
-        .remoteRev('4-567')
+        .remoteRev(4)
         .build()
       const g = builders
         .metafile(a)
@@ -574,24 +644,24 @@ describe('metadata', function() {
         .metafile(a)
         .remoteId('321')
         .build()
-      sameFile(a, a).should.be.true()
-      sameFile(a, b).should.be.false()
-      sameFile(a, c).should.be.false()
-      sameFile(a, d).should.be.false()
-      sameFile(a, e).should.be.false()
-      sameFile(a, f).should.be.false()
-      sameFile(a, g).should.be.false()
-      sameFile(a, h).should.be.false()
-      sameFile(b, c).should.be.false()
-      sameFile(b, d).should.be.false()
-      sameFile(b, e).should.be.false()
-      sameFile(b, f).should.be.false()
-      sameFile(c, d).should.be.false()
-      sameFile(c, e).should.be.false()
-      sameFile(c, f).should.be.false()
-      sameFile(d, e).should.be.false()
-      sameFile(d, f).should.be.false()
-      sameFile(e, f).should.be.false()
+      should(sameFile(a, a)).be.true()
+      should(sameFile(a, b)).be.false()
+      should(sameFile(a, c)).be.false()
+      should(sameFile(a, d)).be.false()
+      should(sameFile(a, e)).be.false()
+      should(sameFile(a, f)).be.false()
+      should(sameFile(a, g)).be.false()
+      should(sameFile(a, h)).be.false()
+      should(sameFile(b, c)).be.false()
+      should(sameFile(b, d)).be.false()
+      should(sameFile(b, e)).be.false()
+      should(sameFile(b, f)).be.false()
+      should(sameFile(c, d)).be.false()
+      should(sameFile(c, e)).be.false()
+      should(sameFile(c, f)).be.false()
+      should(sameFile(d, e)).be.false()
+      should(sameFile(d, f)).be.false()
+      should(sameFile(e, f)).be.false()
       should(
         sameFile(a, _.merge({ _deleted: true, moveTo: b._id }, a))
       ).be.true()
@@ -606,7 +676,7 @@ describe('metadata', function() {
             mime: 'other-class/other-type',
             overwrite: b,
             childMove: true,
-            sides: { local: 123, remote: 124 },
+            sides: { target: 124, local: 123, remote: 124 },
             incompatibilities: [{ type: 'nameMaxBytes' }],
             moveFrom: a
           })
@@ -622,7 +692,7 @@ describe('metadata', function() {
         .tags('qux')
         .updatedAt('2015-12-01T11:22:56.517Z')
         .remoteId('123')
-        .remoteRev('4-567')
+        .remoteRev(4)
         .build()
       const b = _.clone(a)
       b.executable = undefined
@@ -630,12 +700,12 @@ describe('metadata', function() {
       c.executable = false
       const d = _.clone(a)
       d.executable = true
-      sameFile(a, b).should.be.true()
-      sameFile(a, c).should.be.true()
-      sameFile(a, d).should.be.false()
-      sameFile(b, c).should.be.true()
-      sameFile(b, d).should.be.false()
-      sameFile(c, d).should.eql(process.platform === 'win32')
+      should(sameFile(a, b)).be.true()
+      should(sameFile(a, c)).be.true()
+      should(sameFile(a, d)).be.false()
+      should(sameFile(b, c)).be.true()
+      should(sameFile(b, d)).be.false()
+      should(sameFile(c, d)).eql(process.platform === 'win32')
     })
 
     it('does not fail when a property is absent on one side and undefined on the other', function() {
@@ -644,26 +714,14 @@ describe('metadata', function() {
         .path('foo/bar')
         .ino(23452)
         .data('some data')
-        .trashed(false)
         .executable(false)
         .tags('qux')
-        .updatedAt('9440ca447681546bd781d6a5166d18737223b3f6')
         .remoteId('123')
-        .remoteRev('4-567')
+        .remoteRev(4)
         .build()
 
       _.each(
-        [
-          'path',
-          'docType',
-          'md5sum',
-          'remote',
-          'remote',
-          'tags',
-          'size',
-          'trashed',
-          'ino'
-        ],
+        ['path', 'docType', 'md5sum', 'remote', 'tags', 'size', 'ino'],
         property => {
           let b = _.clone(a)
           b[property] = undefined
@@ -672,22 +730,22 @@ describe('metadata', function() {
           let d = _.clone(a)
           delete d[property]
 
-          sameFile(a, b).should.be.false(
+          should(sameFile(a, b)).be.false(
             `undefined ${property} is same as ${a[property]}`
           )
-          sameFile(a, c).should.be.false(
+          should(sameFile(a, c)).be.false(
             `null ${property} is same as ${a[property]}`
           )
-          sameFile(a, d).should.be.false(
+          should(sameFile(a, d)).be.false(
             `absent ${property} is same as ${a[property]}`
           )
-          sameFile(b, c).should.be.true(
+          should(sameFile(b, c)).be.true(
             `undefined ${property} is not same as null`
           )
-          sameFile(b, d).should.be.true(
+          should(sameFile(b, d)).be.true(
             `undefined ${property} is not as absent`
           )
-          sameFile(c, d).should.be.true(
+          should(sameFile(c, d)).be.true(
             `null ${property} is not same as absent`
           )
         }
@@ -697,26 +755,26 @@ describe('metadata', function() {
 
   describe('sameBinary', function() {
     it('returns true for two docs with the same checksum', function() {
-      const one = {
-        docType: 'file',
-        md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
-      }
-      const two = {
-        docType: 'file',
-        md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
-      }
+      const one = builders
+        .metafile()
+        .md5sum('adc83b19e793491b1c6ea0fd8b46cd9f32e592fc')
+        .build()
+      const two = builders
+        .metafile()
+        .md5sum('adc83b19e793491b1c6ea0fd8b46cd9f32e592fc')
+        .build()
       should(sameBinary(one, two)).be.true()
     })
 
     it('returns false for two docs with different checksums', function() {
-      const one = {
-        docType: 'file',
-        md5sum: 'adc83b19e793491b1c6ea0fd8b46cd9f32e592fc'
-      }
-      const two = {
-        docType: 'file',
-        md5sum: '2082e7f715f058acab2398d25d135cf5f4c0ce41'
-      }
+      const one = builders
+        .metafile()
+        .md5sum('adc83b19e793491b1c6ea0fd8b46cd9f32e592fc')
+        .build()
+      const two = builders
+        .metafile()
+        .md5sum('2082e7f715f058acab2398d25d135cf5f4c0ce41')
+        .build()
       should(sameBinary(one, two)).be.false()
     })
   })
@@ -755,49 +813,92 @@ describe('metadata', function() {
   })
 
   describe('incSides', () => {
-    const docAfterIncSides = doc => {
+    const sidesAfterInc = (doc /*: Metadata */) => {
       metadata.incSides(doc)
-      return doc
+      return doc.sides
     }
 
     it('increments existing sides by 1 in-place', () => {
-      should(docAfterIncSides({})).deepEqual({})
-      should(docAfterIncSides({ sides: {} })).deepEqual({ sides: {} })
-      should(docAfterIncSides({ sides: { target: 1, local: 1 } })).deepEqual({
-        sides: { target: 2, local: 2 }
-      })
-      should(docAfterIncSides({ sides: { target: 1, remote: 1 } })).deepEqual({
-        sides: { target: 2, remote: 2 }
-      })
+      should(sidesAfterInc({})).deepEqual(undefined)
       should(
-        docAfterIncSides({ sides: { target: 2, local: 2, remote: 2 } })
-      ).deepEqual({
-        sides: { target: 3, local: 3, remote: 3 }
-      })
+        sidesAfterInc(
+          builders
+            .metadata()
+            .sides({})
+            .build()
+        )
+      ).deepEqual({ target: 0 })
       should(
-        docAfterIncSides({ sides: { target: 3, local: 3, remote: 2 } })
-      ).deepEqual({
-        sides: { target: 4, local: 4, remote: 3 }
-      })
+        sidesAfterInc(
+          builders
+            .metadata()
+            .sides({ local: 1 })
+            .build()
+        )
+      ).deepEqual({ target: 2, local: 2 })
+      should(
+        sidesAfterInc(
+          builders
+            .metadata()
+            .sides({ remote: 1 })
+            .build()
+        )
+      ).deepEqual({ target: 2, remote: 2 })
+      should(
+        sidesAfterInc(
+          builders
+            .metadata()
+            .sides({ local: 2, remote: 2 })
+            .build()
+        )
+      ).deepEqual({ target: 3, local: 3, remote: 3 })
+      should(
+        sidesAfterInc(
+          builders
+            .metadata()
+            .sides({ local: 3, remote: 2 })
+            .build()
+        )
+      ).deepEqual({ target: 4, local: 4, remote: 3 })
     })
   })
 
   describe('detectSingleSide', () => {
     it('returns `local` if `remote` side is absent', () => {
-      should(metadata.detectSingleSide({ sides: { local: 1 } })).equal('local')
+      should(
+        metadata.detectSingleSide(
+          builders
+            .metadata()
+            .sides({ local: 1 })
+            .build()
+        )
+      ).equal('local')
     })
 
     it('returns `remote` if `local` side is absent', () => {
-      should(metadata.detectSingleSide({ sides: { remote: 1 } })).equal(
-        'remote'
-      )
+      should(
+        metadata.detectSingleSide(
+          builders
+            .metadata()
+            .sides({ remote: 1 })
+            .build()
+        )
+      ).equal('remote')
     })
 
     it('returns undefined if both sides are absent', () => {
-      should(metadata.detectSingleSide({ sides: {} })).be.undefined()
+      should(
+        metadata.detectSingleSide(
+          builders
+            .metadata()
+            .sides({})
+            .build()
+        )
+      ).be.undefined()
     })
 
     it('returns undefined if `sides` is absent', () => {
+      // $FlowFixMe sides is missing on purpose
       should(metadata.detectSingleSide({})).be.undefined()
     })
   })
@@ -809,7 +910,7 @@ describe('metadata', function() {
       )
       const md5sum = '+HBGS7uN4XdB0blqLv5tFQ=='
       const doc = buildFile('chat-mignon.jpg', stats, md5sum)
-      doc.should.have.properties({
+      should(doc).have.properties({
         path: 'chat-mignon.jpg',
         docType: 'file',
         md5sum,
@@ -817,10 +918,10 @@ describe('metadata', function() {
         size: 29865,
         mime: 'image/jpeg'
       })
-      doc.should.have.property('updated_at')
+      should(doc).have.property('updated_at')
       should.not.exist(doc.executable)
 
-      const remote = { _id: 'foo', _rev: '456' }
+      const remote = builders.remoteFile().build()
       should(
         buildFile('chat-mignon.jpg', stats, md5sum, remote).remote
       ).deepEqual(remote)
@@ -832,7 +933,7 @@ describe('metadata', function() {
       )
       const md5sum = '+HBGS7uN4XdB0blqLv5tFQ=='
       const doc = buildFile('chat-mignon.cozy-note', stats, md5sum)
-      doc.should.have.properties({
+      should(doc).have.properties({
         path: 'chat-mignon.cozy-note',
         docType: 'file',
         md5sum,
@@ -840,10 +941,10 @@ describe('metadata', function() {
         size: 29865,
         mime: NOTE_MIME_TYPE
       })
-      doc.should.have.property('updated_at')
+      should(doc).have.property('updated_at')
       should.not.exist(doc.executable)
 
-      const remote = { _id: 'foo', _rev: '456' }
+      const remote = builders.remoteFile().build()
       should(
         buildFile('chat-mignon.jpg', stats, md5sum, remote).remote
       ).deepEqual(remote)
@@ -868,25 +969,56 @@ describe('metadata', function() {
       const d1 = new Date('2018-01-18T16:46:18.362Z')
       const d2 = new Date('2018-02-18T16:46:18.362Z')
       const ino = 123
-      should(buildDir(path, { mtime: d1, ctime: d1, ino })).have.property(
-        'updated_at',
-        d1.toISOString()
-      )
-      should(buildDir(path, { mtime: d1, ctime: d2, ino })).have.property(
-        'updated_at',
-        d1.toISOString()
-      )
-      should(buildDir(path, { mtime: d2, ctime: d1, ino })).have.property(
-        'updated_at',
-        d2.toISOString()
-      )
+
+      should(
+        buildDir(
+          path,
+          builders
+            .stats()
+            .ino(ino)
+            .mtime(d1)
+            .ctime(d1)
+            .build()
+        )
+      ).have.property('updated_at', d1.toISOString())
+      should(
+        buildDir(
+          path,
+          builders
+            .stats()
+            .ino(ino)
+            .mtime(d1)
+            .ctime(d2)
+            .build()
+        )
+      ).have.property('updated_at', d1.toISOString())
+      should(
+        buildDir(
+          path,
+          builders
+            .stats()
+            .ino(ino)
+            .mtime(d2)
+            .ctime(d1)
+            .build()
+        )
+      ).have.property('updated_at', d2.toISOString())
     })
 
     it('accepts remote info', () => {
       const path = 'whatever'
       const ctime = new Date()
-      const remote = { _id: 'foo', _rev: '456' }
-      const doc = buildDir(path, { ctime, mtime: ctime, ino: 123 }, remote)
+      const remote = builders.remoteDir().build()
+      const doc = buildDir(
+        path,
+        builders
+          .stats()
+          .ctime(ctime)
+          .mtime(ctime)
+          .ino(123)
+          .build(),
+        remote
+      )
       should(doc.remote).deepEqual(remote)
     })
   })
@@ -895,31 +1027,34 @@ describe('metadata', function() {
     let doc
     beforeEach(async () => {
       const builders = new Builders({ pouch: this.pouch })
-      doc = await builders
+      doc = builders
         .metadata()
-        .upToDate()
         .remoteId('badbeef')
+        .upToDate()
         .build()
     })
 
     it('throws when trying to put bad doc (no sides)', async () => {
+      // $FlowFixMe sides is null on purpose
       should(() => invariants(Object.assign(doc, { sides: null }))).throw(
         /sides/
       )
     })
 
     it('throws when trying to put bad doc (no remote)', async () => {
+      // $FlowFixMe remote is null on purpose
       should(() => invariants(Object.assign(doc, { remote: null }))).throw(
         /sides\.remote/
       )
     })
 
     it('throws when trying to put bad doc (no md5sum)', async () => {
-      doc = await builders
+      doc = builders
         .metafile()
         .upToDate()
         .remoteId('badbeef')
         .build()
+      // $FlowFixMe md5sum is null on purpose
       should(() => invariants(Object.assign(doc, { md5sum: null }))).throw(
         /checksum/
       )
@@ -930,8 +1065,10 @@ describe('metadata', function() {
         invariants(
           Object.assign(doc, {
             _deleted: true,
-            sides: { local: 0, remote: 0 },
+            sides: { target: 0, local: 0, remote: 0 },
+            // $FlowFixMe remote is null on purpose
             remote: null,
+            // $FlowFixMe md5sum is null on purpose
             md5sum: null
           })
         )
@@ -1028,15 +1165,19 @@ describe('metadata', function() {
   })
 
   describe('createConflictingDoc', () => {
-    const runSharedExamples = ({
-      base,
-      ext = '',
-      ancestors = '',
-      conflict = ''
-    }) => {
+    const runSharedExamples = (
+      {
+        base,
+        ext = '',
+        ancestors = '',
+        conflict = ''
+      } /*: { base: string, ext?: string, ancestors?: string, conflict?: string } */
+    ) => {
       const filepath = () => ancestors + base + conflict + ext
-      const _id = () => metadata.id(filepath())
-      const doc = { path: filepath(), _id: _id() }
+      const doc = builders
+        .metafile()
+        .path(filepath())
+        .build()
 
       it('returns a doc with a conflict path', () => {
         const newDoc = createConflictingDoc(doc)
@@ -1084,9 +1225,10 @@ describe('metadata', function() {
     context('with complex extension `.tar.gz`', () => {
       it('should but does not keep complete extension', () => {
         // FIXME: must be docname-conflict-:ISODATE:.tar.gz instead of docname.tar-conflict-:ISODATE:.gz
-        const doc = {
-          path: 'docname.tar.gz'
-        }
+        const doc = builders
+          .metafile()
+          .path('docname.tar.gz')
+          .build()
         const newDoc = createConflictingDoc(doc)
         should(path.extname(newDoc.path)).equal('.gz')
       })
@@ -1129,9 +1271,10 @@ describe('metadata', function() {
       runSharedExamples({ ancestors, base, ext })
 
       it('should not replace the conflict suffix of a parent', () => {
-        const doc = {
-          path: ancestors + base + ext
-        }
+        const doc = builders
+          .metafile()
+          .path(ancestors + base + ext)
+          .build()
         const newDoc = createConflictingDoc(doc)
         should(newDoc.path)
           .startWith(`${ancestors}${base}-conflict-`)
@@ -1161,7 +1304,10 @@ describe('metadata', function() {
     })
 
     it('calls isIgnored with the document _id and true when document is a folder', () => {
-      const doc = { _id: 'food', docType: 'folder' }
+      const doc = builders
+        .metadir()
+        .path('food')
+        .build()
       metadata.shouldIgnore(doc, ignore)
 
       should(isIgnored.calledOnce).be.true()
@@ -1171,7 +1317,10 @@ describe('metadata', function() {
     })
 
     it('calls isIgnored with the document _id and false when document is a file', () => {
-      const doc = { _id: 'food', docType: 'file' }
+      const doc = builders
+        .metafile()
+        .path('food')
+        .build()
       metadata.shouldIgnore(doc, ignore)
 
       should(isIgnored.calledOnce).be.true()

@@ -19,7 +19,7 @@ const cozyHelpers = require('../../test/support/helpers/cozy')
 const Builders = require('../../test/support/builders')
 
 /*::
-import type { RemoteDoc } from '../../core/remote/document'
+import type { MetadataRemoteInfo } from '../../core/metadata'
 */
 
 // eslint-disable-next-line no-console,no-unused-vars
@@ -38,8 +38,8 @@ const createInitialTree = async function(
   if (!scenario.init) return
 
   const builders = new Builders({ cozy, pouch })
-  const remoteDocs /*: { [string]: RemoteDoc } */ = {}
-  const remoteDocsToTrash /*: RemoteDoc[] */ = []
+  const remoteDocs /*: { [string]: MetadataRemoteInfo } */ = {}
+  const remoteDocsToTrash /*: MetadataRemoteInfo[] */ = []
 
   debug('[init]')
   for (const initDoc of scenario.init) {

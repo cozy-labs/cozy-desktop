@@ -23,15 +23,20 @@ const {
   CozyClientRevokedError,
   RemoteCozy
 } = require('../../../core/remote/cozy')
+const { FILE_TYPE, DIR_TYPE } = require('../../../core/remote/constants')
 const { MergeMissingParentError } = require('../../../core/merge')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 
 const { assignId, ensureValidPath } = metadata
 
+const isFile = (remoteFile) /*: boolean %checks */ =>
+  remoteFile.type === FILE_TYPE
+const isDir = (remoteDir) /*: boolean %checks */ => remoteDir.type === DIR_TYPE
+
 /*::
 import type { RemoteChange, RemoteInvalidChange } from '../../../core/remote/change'
-import type { RemoteDoc, RemoteDeletion } from '../../../core/remote/document'
-import type { Metadata } from '../../../core/metadata'
+import type { RemoteDoc, RemoteDeletion, RemoteFile, RemoteDir } from '../../../core/remote/document'
+import type { Metadata, MetadataRemoteInfo, MetadataRemoteFile } from '../../../core/metadata'
 */
 
 describe('RemoteWatcher', function() {
@@ -285,7 +290,9 @@ describe('RemoteWatcher', function() {
     })
   })
 
-  const validMetadata = (remoteDoc /*: RemoteDoc */) /*: Metadata */ => {
+  const validMetadata = (
+    remoteDoc /*: MetadataRemoteInfo */
+  ) /*: Metadata */ => {
     const doc = metadata.fromRemoteDoc(remoteDoc)
     ensureValidPath(doc)
     assignId(doc)
@@ -295,16 +302,16 @@ describe('RemoteWatcher', function() {
   describe('pullMany', function() {
     let apply
     let findMaybe
-    let remoteDocs
+    let remoteDocs /*: MetadataRemoteInfo[] */
     beforeEach(function() {
       apply = sinon.stub(this.watcher, 'apply')
       findMaybe = sinon.stub(this.remoteCozy, 'findMaybe')
       remoteDocs = [
         builders.remoteFile().build(),
-        {
-          ...builders.remoteFile().build(),
-          _deleted: true
-        }
+        builders
+          .remoteFile()
+          .erased()
+          .build()
       ]
     })
 
@@ -355,12 +362,12 @@ describe('RemoteWatcher', function() {
       })
 
       it('retries failed changes application until none can be applied', async function() {
-        const remoteDocs = [
+        const remoteDocs /*: MetadataRemoteInfo[] */ = [
           builders.remoteFile().build(),
-          {
-            ...builders.remoteFile().build(),
-            _deleted: true
-          },
+          builders
+            .remoteFile()
+            .erased()
+            .build(),
           builders.remoteFile().build()
         ]
         await this.watcher.pullMany(remoteDocs).catch(() => {})
@@ -884,16 +891,20 @@ describe('RemoteWatcher', function() {
         olds = [srcFileDoc, dstFileDoc]
 
         /* Moving /src/file to /dst/file (overwriting the destination) */
-        srcFileMoved = builders
-          .remoteFile(remoteDocs['src/file'])
-          .shortRev(2)
-          .inDir(remoteDocs['dst/'])
-          .build()
-        dstFileTrashed = builders
-          .remoteFile(remoteDocs['dst/file'])
-          .shortRev(2)
-          .trashed()
-          .build()
+        srcFileMoved = isFile(remoteDocs['src/file'])
+          ? builders
+              .remoteFile(remoteDocs['src/file'])
+              .shortRev(2)
+              .inDir(remoteDocs['dst/'])
+              .build()
+          : undefined
+        dstFileTrashed = isFile(remoteDocs['dst/file'])
+          ? builders
+              .remoteFile(remoteDocs['dst/file'])
+              .shortRev(2)
+              .trashed()
+              .build()
+          : undefined
       })
 
       const relevantChangesProps = changes =>
@@ -968,16 +979,20 @@ describe('RemoteWatcher', function() {
         olds = [srcFileDoc, dstFileDoc]
 
         /* Moving /src/file to /dst/file (overwriting the destination) */
-        srcFileMoved = builders
-          .remoteFile(remoteDocs['src/file'])
-          .shortRev(2)
-          .inDir(remoteDocs['dst/'])
-          .build()
-        dstFileTrashed = builders
-          .remoteFile(remoteDocs['dst/FILE'])
-          .shortRev(2)
-          .trashed()
-          .build()
+        srcFileMoved = isFile(remoteDocs['src/file'])
+          ? builders
+              .remoteFile(remoteDocs['src/file'])
+              .shortRev(2)
+              .inDir(remoteDocs['dst/'])
+              .build()
+          : undefined
+        dstFileTrashed = isFile(remoteDocs['dst/FILE'])
+          ? builders
+              .remoteFile(remoteDocs['dst/FILE'])
+              .shortRev(2)
+              .trashed()
+              .build()
+          : undefined
       })
 
       const relevantChangesProps = changes =>
@@ -1098,16 +1113,20 @@ describe('RemoteWatcher', function() {
         olds = [srcDoc, dstDoc]
 
         /* Moving /src/dir to /dst/dir (overwriting the destination) */
-        srcMoved = builders
-          .remoteDir(remoteDocs['src/dir/'])
-          .shortRev(2)
-          .inDir(remoteDocs['dst/'])
-          .build()
-        dstTrashed = builders
-          .remoteDir(remoteDocs['dst/dir/'])
-          .shortRev(2)
-          .trashed()
-          .build()
+        srcMoved = isDir(remoteDocs['src/dir/'])
+          ? builders
+              .remoteDir(remoteDocs['src/dir/'])
+              .shortRev(2)
+              .inDir(remoteDocs['dst/'])
+              .build()
+          : undefined
+        dstTrashed = isDir(remoteDocs['dst/dir/'])
+          ? builders
+              .remoteDir(remoteDocs['dst/dir/'])
+              .shortRev(2)
+              .trashed()
+              .build()
+          : undefined
       })
 
       const relevantChangesProps = changes =>
@@ -1182,16 +1201,20 @@ describe('RemoteWatcher', function() {
         olds = [srcDoc, dstDoc]
 
         /* Moving /src/dir to /dst/dir (overwriting the destination) */
-        srcMoved = builders
-          .remoteDir(remoteDocs['src/dir/'])
-          .shortRev(2)
-          .inDir(remoteDocs['dst/'])
-          .build()
-        dstTrashed = builders
-          .remoteDir(remoteDocs['dst/DIR/'])
-          .shortRev(2)
-          .trashed()
-          .build()
+        srcMoved = isDir(remoteDocs['src/dir/'])
+          ? builders
+              .remoteDir(remoteDocs['src/dir/'])
+              .shortRev(2)
+              .inDir(remoteDocs['dst/'])
+              .build()
+          : undefined
+        dstTrashed = isDir(remoteDocs['dst/DIR/'])
+          ? builders
+              .remoteDir(remoteDocs['dst/DIR/'])
+              .shortRev(2)
+              .trashed()
+              .build()
+          : undefined
       })
 
       const relevantChangesProps = changes =>
@@ -2020,7 +2043,7 @@ describe('RemoteWatcher', function() {
     })
 
     it('detects when file was both moved and updated', async function() {
-      const file /*: RemoteDoc */ = await builders
+      const file = await builders
         .remoteFile()
         .name('meow.txt')
         .data('meow')
@@ -2053,9 +2076,10 @@ describe('RemoteWatcher', function() {
     })
 
     it('is invalid when local or remote file is corrupt', async function() {
-      const remoteDoc /*: RemoteDoc */ = builders
+      const remoteDoc = builders
         .remoteFile()
         .size('123')
+        .shortRev(1)
         .build()
       const was /*: Metadata */ = builders
         .metafile()
@@ -2065,7 +2089,7 @@ describe('RemoteWatcher', function() {
         .build()
       should(remoteDoc.md5sum).equal(was.md5sum)
 
-      const change /*: RemoteChange */ = this.watcher.identifyChange(
+      const change /*: RemoteInvalidChange */ = this.watcher.identifyChange(
         _.clone(remoteDoc),
         was,
         [],
@@ -2073,7 +2097,6 @@ describe('RemoteWatcher', function() {
       )
 
       should(change).have.property('type', 'InvalidChange')
-      // $FlowFixMe
       should(change.error).match(/corrupt/)
     })
 
@@ -2082,7 +2105,7 @@ describe('RemoteWatcher', function() {
       this.prep.deleteFolderAsync.returnsPromise().resolves(null)
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
-      const oldDir /*: RemoteDoc */ = builders
+      const oldDir = builders
         .remoteDir()
         .name('foo')
         .build()
@@ -2090,7 +2113,7 @@ describe('RemoteWatcher', function() {
         .metadir()
         .fromRemote(oldDir)
         .create()
-      const newDir /*: RemoteDoc */ = builders
+      const newDir = builders
         .remoteDir(oldDir)
         .trashed()
         .build()
@@ -2114,7 +2137,7 @@ describe('RemoteWatcher', function() {
       this.prep.deleteFolder.returnsPromise().resolves(null)
       this.prep.addFolderAsync = sinon.stub()
       this.prep.addFolderAsync.returnsPromise().resolves(null)
-      const oldDir /*: RemoteDoc */ = builders
+      const oldDir = builders
         .remoteDir()
         .name('foo')
         .trashed()
@@ -2122,7 +2145,7 @@ describe('RemoteWatcher', function() {
       const oldMeta /*: Metadata */ = await builders.metadir
         .fromRemote(oldDir)
         .create()
-      const newDir /*: RemoteDoc */ = builders
+      const newDir = builders
         .remoteDir(oldDir)
         .restored()
         .build()

@@ -16,7 +16,7 @@ import type cozy from 'cozy-client-js'
 import type { Pouch } from '../../../core/pouch'
 import type { RemoteOptions } from '../../../core/remote'
 import type { RemoteDoc } from '../../../core/remote/document'
-import type { Metadata } from '../../../core/metadata'
+import type { Metadata, MetadataRemoteInfo } from '../../../core/metadata'
 */
 
 class RemoteTestHelpers {
@@ -48,7 +48,7 @@ class RemoteTestHelpers {
 
   async createTree(
     paths /*: Array<string> */
-  ) /*: Promise<{ [string]: RemoteDoc}> */ {
+  ) /*: Promise<{ [string]: MetadataRemoteInfo}> */ {
     const remoteDocsByPath = {}
     for (const p of paths) {
       const name = path.posix.basename(p)
