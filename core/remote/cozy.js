@@ -209,7 +209,7 @@ class RemoteCozy {
       const abortController = new AbortController()
       options.signal = abortController.signal
 
-      process.once('unhandledRejection', async err => {
+      const unhandledRejectionHandler = async err => {
         try {
           const { name, dirID: dir_id, contentLength } = options
 
@@ -234,9 +234,19 @@ class RemoteCozy {
           // unhandled promise rejection and still reject the domain request.
           abortController.abort()
         }
-      })
+      }
+      process.once('unhandledRejection', unhandledRejectionHandler)
 
-      fn().then(resolve, reject)
+      fn().then(
+        result => {
+          process.off('unhandledRejection', unhandledRejectionHandler)
+          resolve(result)
+        },
+        err => {
+          process.off('unhandledRejection', unhandledRejectionHandler)
+          reject(err)
+        }
+      )
     })
   }
 
