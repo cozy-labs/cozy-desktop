@@ -270,19 +270,19 @@ describe('remote.Remote', function() {
           .data('foo')
           .createdAt(2015, 11, 16, 16, 12, 1)
           .create()
-        const old = metadata.fromRemoteDoc(created)
-        const doc /*: Metadata */ = _.defaults(
-          {
-            _id: created._id,
-            md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
-            updated_at: timestamp.build(2015, 12, 16, 16, 12, 1).toISOString(),
-            sides: {
-              local: 1
-            }
-          },
-          old
-        )
-        await this.pouch.db.put(doc)
+        const old = await builders
+          .metafile()
+          .fromRemote(created)
+          .upToDate()
+          .create()
+        const doc = await builders
+          .metafile(old)
+          .overwrite(old)
+          .data('bar')
+          .changedSide('local')
+          .updatedAt(timestamp.build(2015, 12, 16, 16, 12, 1).toISOString())
+          .create()
+
         this.remote.other = {
           createReadStreamAsync(localDoc) {
             localDoc.should.equal(doc)
@@ -314,8 +314,18 @@ describe('remote.Remote', function() {
           .remoteFile()
           .data('foo')
           .create()
-        const old = metadata.fromRemoteDoc(created)
-        const doc = _.defaults({ md5sum: 'Invalid///////////////==' }, old)
+        const old = builders
+          .metafile()
+          .fromRemote(created)
+          .upToDate()
+          .build()
+        const doc = builders
+          .metafile(old)
+          .overwrite(old)
+          .md5sum('Invalid///////////////==')
+          .changedSide('local')
+          .build()
+
         this.remote.other = {
           createReadStreamAsync() {
             const stream = builders
@@ -361,19 +371,19 @@ describe('remote.Remote', function() {
           .data('foo')
           .createdAt(2015, 11, 16, 16, 12, 1)
           .create()
-        const old = metadata.fromRemoteDoc(created)
-        const doc /*: Metadata */ = _.defaults(
-          {
-            _id: created._id,
-            md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
-            updated_at: timestamp.build(2015, 12, 16, 16, 12, 1).toISOString(),
-            sides: {
-              local: 1
-            }
-          },
-          old
-        )
-        await this.pouch.db.put(doc)
+        const old = await builders
+          .metafile()
+          .fromRemote(created)
+          .upToDate()
+          .create()
+        const doc = await builders
+          .metafile(old)
+          .overwrite(old)
+          .data('bar')
+          .updatedAt(timestamp.build(2015, 12, 16, 16, 12, 1).toISOString())
+          .changedSide('local')
+          .create()
+
         this.remote.other = {
           createReadStreamAsync(localDoc) {
             localDoc.should.equal(doc)
@@ -406,11 +416,15 @@ describe('remote.Remote', function() {
         .remoteFile()
         .executable(false)
         .create()
-      const old = metadata.fromRemoteDoc(oldRemote)
-      const doc = builders
+      const old = builders
         .metafile()
         .fromRemote(oldRemote)
+        .upToDate()
+        .build()
+      const doc = builders
+        .metafile(old)
         .executable(true)
+        .changedSide('local')
         .build()
 
       await this.remote.updateFileMetadataAsync(doc, old)
@@ -429,11 +443,15 @@ describe('remote.Remote', function() {
         .remoteFile()
         .executable(true)
         .create()
-      const old = metadata.fromRemoteDoc(oldRemote)
-      const doc = builders
+      const old = builders
         .metafile()
         .fromRemote(oldRemote)
+        .upToDate()
+        .build()
+      const doc = builders
+        .metafile(old)
         .executable(false)
+        .changedSide('local')
         .build()
 
       await this.remote.updateFileMetadataAsync(doc, old)
@@ -463,10 +481,12 @@ describe('remote.Remote', function() {
       const old = await builders
         .metafile()
         .fromRemote(created)
+        .upToDate()
         .create()
       const doc = builders
         .metafile(old)
         .updatedAt('2015-11-17T16:13:01.001Z')
+        .changedSide('local')
         .build()
 
       await this.remote.updateFileMetadataAsync(doc, old)
@@ -493,10 +513,13 @@ describe('remote.Remote', function() {
       const old = await builders
         .metadir()
         .fromRemote(created)
+        .upToDate()
         .create()
       const doc = builders
         .metadir(old)
+        .overwrite(old)
         .updatedAt('2017-11-16T16:14:45.123Z')
+        .changedSide('local')
         .build()
 
       await this.remote.updateFolderAsync(doc, old)
@@ -602,6 +625,7 @@ describe('remote.Remote', function() {
           .metafile()
           .fromRemote(remoteDoc)
           .moveTo('moved-to/cat7.jpg')
+          .changedSide('local')
           .build()
         doc = builders
           .metafile()
@@ -642,9 +666,12 @@ describe('remote.Remote', function() {
         const old = builders
           .metadir()
           .fromRemote(created)
+          .moveTo('couchdb-folder/folder-5')
+          .changedSide('local')
           .build()
         const doc = builders
-          .metadir(old)
+          .metadir()
+          .moveFrom(old)
           .path('couchdb-folder/folder-5')
           .updatedAt('2018-07-31T05:37:43.770Z')
           .build()
@@ -673,6 +700,7 @@ describe('remote.Remote', function() {
           .metadir()
           .fromRemote(created)
           .moveTo('couchdb-folder/folder-7')
+          .changedSide('local')
           .build()
         const doc = builders
           .metadir()
@@ -717,7 +745,11 @@ describe('remote.Remote', function() {
           .data('woof')
           .referencedBy(existingRefs)
           .create()
-        existing = metadata.fromRemoteDoc(remote1)
+        existing = builders
+          .metafile()
+          .fromRemote(remote1)
+          .upToDate()
+          .build()
 
         const remote2 = await builders
           .remoteFile()
@@ -728,6 +760,7 @@ describe('remote.Remote', function() {
           .metafile()
           .fromRemote(remote2)
           .moveTo('moved-to/cat7.jpg')
+          .changedSide('local')
           .build()
 
         doc = builders
@@ -735,6 +768,7 @@ describe('remote.Remote', function() {
           .moveFrom(old)
           .path('moved-to/cat7.jpg')
           .overwrite(existing)
+          .updatedAt(new Date())
           .build()
       })
 
@@ -788,7 +822,11 @@ describe('remote.Remote', function() {
   describe('trash', () => {
     it('moves the file or folder to the Cozy trash', async function() {
       const folder = await builders.remoteDir().create()
-      const doc = metadata.fromRemoteDoc(folder)
+      const doc = builders
+        .metadir()
+        .fromRemote(folder)
+        .changedSide('local')
+        .build()
 
       await this.remote.trashAsync(doc)
 
@@ -800,7 +838,11 @@ describe('remote.Remote', function() {
 
     it('does nothing when file or folder does not exist anymore', async function() {
       const folder = await builders.remoteDir().build()
-      const doc = metadata.fromRemoteDoc(folder)
+      const doc = builders
+        .metadir()
+        .fromRemote(folder)
+        .changedSide('local')
+        .build()
 
       await this.remote.trashAsync(doc)
 
@@ -813,7 +855,11 @@ describe('remote.Remote', function() {
   describe('deleteFolderAsync', () => {
     it('deletes permanently an empty folder', async function() {
       const folder = await builders.remoteDir().create()
-      const doc = metadata.fromRemoteDoc(folder)
+      const doc = builders
+        .metadir()
+        .fromRemote(folder)
+        .changedSide('local')
+        .build()
 
       await this.remote.deleteFolderAsync(doc)
 
@@ -824,7 +870,11 @@ describe('remote.Remote', function() {
 
     it('trashes a non-empty folder', async function() {
       const dir = await builders.remoteDir().create()
-      const doc = metadata.fromRemoteDoc(dir)
+      const doc = builders
+        .metadir()
+        .fromRemote(dir)
+        .changedSide('local')
+        .build()
       await builders
         .remoteDir()
         .inDir(dir)
@@ -840,7 +890,11 @@ describe('remote.Remote', function() {
 
     it('resolves when folder does not exist anymore', async function() {
       const dir = await builders.remoteDir().build()
-      const doc = metadata.fromRemoteDoc(dir)
+      const doc = builders
+        .metadir()
+        .fromRemote(dir)
+        .changedSide('local')
+        .build()
 
       await this.remote.deleteFolderAsync(doc)
 
@@ -851,7 +905,11 @@ describe('remote.Remote', function() {
 
     it('resolves when folder is being deleted (race condition)', async function() {
       const dir = await builders.remoteDir().create()
-      const doc = metadata.fromRemoteDoc(dir)
+      const doc = builders
+        .metadir()
+        .fromRemote(dir)
+        .changedSide('local')
+        .build()
       sinon.stub(this.remote.remoteCozy, 'isEmpty').callsFake(async id => {
         await cozy.files.destroyById(id)
         return true
@@ -869,19 +927,31 @@ describe('remote.Remote', function() {
         .remoteDir()
         .trashed()
         .create()
-      const doc = metadata.fromRemoteDoc(dir)
+      const doc = builders
+        .metadir()
+        .fromRemote(dir)
+        .changedSide('local')
+        .build()
       await should(this.remote.deleteFolderAsync(doc)).be.rejected()
     })
 
     it('does not swallow emptiness check errors', async function() {
       const file = await builders.remoteFile().create()
-      const doc = metadata.fromRemoteDoc(file)
+      const doc = builders
+        .metafile()
+        .fromRemote(file)
+        .changedSide('local')
+        .build()
       await should(this.remote.deleteFolderAsync(doc)).be.rejected()
     })
 
     it('does not swallow destroy errors', async function() {
       const dir = await builders.remoteDir().create()
-      const doc = metadata.fromRemoteDoc(dir)
+      const doc = builders
+        .metadir()
+        .fromRemote(dir)
+        .changedSide('local')
+        .build()
       sinon.stub(this.remote.remoteCozy, 'destroyById').rejects('whatever')
       await should(this.remote.deleteFolderAsync(doc)).be.rejected()
     })
@@ -902,6 +972,7 @@ describe('remote.Remote', function() {
       const file = builders
         .metafile()
         .fromRemote(remoteFile)
+        .upToDate()
         .build()
       const remoteDir = await builders
         .remoteDir()
@@ -911,6 +982,7 @@ describe('remote.Remote', function() {
       const dir = builders
         .metadir()
         .fromRemote(remoteDir)
+        .upToDate()
         .build()
 
       await this.remote.remoteCozy.updateAttributesById(remoteSrc._id, {

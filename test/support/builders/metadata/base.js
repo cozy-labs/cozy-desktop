@@ -4,7 +4,10 @@ const _ = require('lodash')
 const path = require('path')
 
 const metadata = require('../../../../core/metadata')
+const timestamp = require('../../../../core/utils/timestamp')
 
+const RemoteFileBuilder = require('../remote/file')
+const RemoteDirBuilder = require('../remote/dir')
 const dbBuilders = require('../db')
 const statsBuilder = require('../stats')
 
@@ -13,11 +16,14 @@ import type fs from 'fs-extra'
 import type {
   Metadata,
   MetadataRemoteInfo,
+  MetadataRemoteFile,
+  MetadataRemoteDir,
   MetadataSidesInfo,
 } from '../../../../core/metadata'
 import type { Pouch } from '../../../../core/pouch'
 import type { RemoteDoc } from '../../../../core/remote/document'
 import type { SideName } from '../../../../core/side'
+import type RemoteBaseBuilder from '../remote/base'
 */
 
 const SOME_MEANINGLESS_TIME_OFFSET = 2000 // 2 seconds
@@ -27,6 +33,8 @@ module.exports = class BaseMetadataBuilder {
   pouch: ?Pouch
   doc: Object
   buildLocal: boolean
+  buildRemote: boolean
+  _remoteBuilder: ?*
   */
 
   constructor(pouch /*: ?Pouch */, old /*: ?Metadata */) {
@@ -38,16 +46,13 @@ module.exports = class BaseMetadataBuilder {
         _id: metadata.id('foo'),
         docType: 'folder', // To make flow happy (overridden by subclasses)
         path: 'foo',
-        remote: {
-          _id: dbBuilders.id(),
-          _rev: dbBuilders.rev()
-        },
         tags: [],
         updated_at: new Date().toISOString()
       }
       this.doc = doc
     }
     this.buildLocal = true
+    this.buildRemote = true
   }
 
   fromRemote(remoteDoc /*: MetadataRemoteInfo */) /*: this */ {
@@ -101,6 +106,7 @@ module.exports = class BaseMetadataBuilder {
      * buildDir to set remote to undefined
      */
     this.doc.remote = undefined
+    this.buildRemote = false
     return this
   }
 
@@ -186,14 +192,17 @@ module.exports = class BaseMetadataBuilder {
   }
 
   remoteId(_id /*: string */) /*: this */ {
-    this.doc.remote = {
-      _id,
-      _rev: dbBuilders.rev()
-    }
+    this.buildRemote = true
+    this._ensureRemote()
+
+    this.doc.remote._id = _id
     return this
   }
 
   remoteRev(shortRev /*: number */) /*: this */ {
+    this.buildRemote = true
+    this._ensureRemote()
+
     this.doc.remote._rev = dbBuilders.rev(shortRev)
     return this
   }
@@ -213,6 +222,8 @@ module.exports = class BaseMetadataBuilder {
   }
 
   changedSide(side /*: SideName */) /*: this */ {
+    if (this.doc.sides == null) this.upToDate()
+
     metadata.markSide(side, this.doc, this.doc)
     return this
   }
@@ -259,6 +270,12 @@ module.exports = class BaseMetadataBuilder {
       metadata.updateLocal(this.doc)
     }
 
+    if (this.buildRemote && _.get(this.doc, 'sides.remote') != null) {
+      this._ensureRemote()
+    } else if (this.doc.remote) {
+      this.noRemote()
+    }
+
     return _.cloneDeep(this.doc)
   }
 
@@ -284,5 +301,29 @@ module.exports = class BaseMetadataBuilder {
     if (this.doc.moveFrom) {
       this.doc.moveFrom.moveTo = this.doc._id
     }
+  }
+
+  // XXX: This method will create a remote object with the correct schema but
+  // its attributes won't necessarily match those of the created Metadata
+  // object, especially those of files.
+  // The proper way to create those two objects is to firt generate a remote
+  // object and then use the `fromRemote()` method.
+  _ensureRemote() /*: void */ {
+    if (this.doc.remote != null) return
+
+    if (this._remoteBuilder == null) {
+      if (this.doc.docType === 'file') {
+        this._remoteBuilder = (new RemoteFileBuilder() /*: RemoteBaseBuilder<MetadataRemoteFile> */)
+      } else {
+        this._remoteBuilder = (new RemoteDirBuilder() /*: RemoteBaseBuilder<MetadataRemoteDir> */)
+      }
+    }
+
+    this.doc.remote = this._remoteBuilder
+      .name(path.basename(this.doc.path))
+      .createdAt(...timestamp.spread(this.doc.updated_at))
+      .updatedAt(...timestamp.spread(this.doc.updated_at))
+      .build()
+    this.doc.remote.path = '/' + path.posix.normalize(this.doc.path)
   }
 }
