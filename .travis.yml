@@ -113,7 +113,7 @@ before_install: | # install cozy stack for integration test
 
     # COZY_DESKTOP_DIR
     if [ "${TRAVIS_OS_NAME}" == "osx" ]; then
-      hdiutil create -megabytes 10 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR";
+      hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR";
       hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR";
     else
       mkdir -p "$COZY_DESKTOP_DIR";
