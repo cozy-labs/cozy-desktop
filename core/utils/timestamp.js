@@ -34,7 +34,7 @@ function build(
 function spread(date /*: string|Date|Timestamp */) /*: number[] */ {
   const timestamp = new Date(date)
   const year = timestamp.getFullYear()
-  const month = timestamp.getMonth()
+  const month = timestamp.getMonth() + 1 // Months start with 0 in javascript
   const day = timestamp.getDate()
   const hours = timestamp.getHours()
   const minutes = timestamp.getMinutes()

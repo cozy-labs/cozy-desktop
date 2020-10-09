@@ -13,6 +13,7 @@ const pouchHelpers = require('../support/helpers/pouch')
 const { TRASH_DIR_ID } = require('../../core/remote/constants')
 const { isNote } = require('../../core/utils/notes')
 const metadata = require('../../core/metadata')
+const timestamp = require('../../core/utils/timestamp')
 
 describe('Update', () => {
   let builders, helpers
@@ -52,6 +53,7 @@ describe('Update', () => {
         await builders
           .remoteNote(note)
           .data('updated content')
+          .updatedAt(...timestamp.spread(new Date()))
           .update()
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
