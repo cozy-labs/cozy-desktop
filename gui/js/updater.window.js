@@ -138,7 +138,7 @@ module.exports = class UpdaterWM extends WindowManager {
     const handler = this.afterUpToDate
     this.afterUpToDate = () => {}
 
-    handler()
+    if (typeof handler === 'function') handler()
   }
 
   hash() {
