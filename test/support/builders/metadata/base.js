@@ -56,6 +56,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   fromRemote(remoteDoc /*: MetadataRemoteInfo */) /*: this */ {
+    this.buildRemote = true
     this.doc = metadata.fromRemoteDoc(remoteDoc)
     metadata.ensureValidPath(this.doc)
     this._assignId()
@@ -85,8 +86,15 @@ module.exports = class BaseMetadataBuilder {
   }
 
   unmerged(sideName /*: SideName */) /*: this */ {
-    if (this.doc.docType === 'file') delete this.doc.sides
-    if (sideName === 'local') this.noRemote()
+    if (sideName === 'remote') {
+      this.noLocal()
+      this.buildRemote = true
+    }
+    if (sideName === 'local') {
+      this.noRemote()
+      this.buildLocal = true
+    }
+    this.noSides()
     return this.noRev()
   }
 
@@ -101,12 +109,8 @@ module.exports = class BaseMetadataBuilder {
   }
 
   noRemote() /*: this */ {
-    /*
-     * $FlowFixMe Flow is lying to us when allowing metadata's buildFile and
-     * buildDir to set remote to undefined
-     */
-    this.doc.remote = undefined
     this.buildRemote = false
+    if (this.doc.remote) delete this.doc.remote
     return this
   }
 
@@ -266,11 +270,13 @@ module.exports = class BaseMetadataBuilder {
     // prevent environment related failures.
     metadata.assignPlatformIncompatibilities(this.doc, '')
 
-    if (this.buildLocal && metadata.isAtLeastUpToDate('local', this.doc)) {
-      metadata.updateLocal(this.doc)
+    if (this.buildLocal) {
+      this._ensureLocal()
+    } else {
+      this.noLocal()
     }
 
-    if (this.buildRemote && _.get(this.doc, 'sides.remote') != null) {
+    if (this.buildRemote) {
       this._ensureRemote()
     } else if (this.doc.remote) {
       this.noRemote()
@@ -303,13 +309,31 @@ module.exports = class BaseMetadataBuilder {
     }
   }
 
+  _ensureLocal() /*: void */ {
+    if (
+      this.doc.local != null &&
+      this.doc.sides &&
+      this.doc.sides.local <= this.doc.sides.remote
+    ) {
+      return
+    }
+
+    metadata.updateLocal(this.doc)
+  }
+
   // XXX: This method will create a remote object with the correct schema but
   // its attributes won't necessarily match those of the created Metadata
   // object, especially those of files.
   // The proper way to create those two objects is to firt generate a remote
   // object and then use the `fromRemote()` method.
   _ensureRemote() /*: void */ {
-    if (this.doc.remote != null) return
+    if (
+      this.doc.remote != null &&
+      (!this.doc.sides ||
+        (this.doc.sides && this.doc.sides.remote <= this.doc.sides.local))
+    ) {
+      return
+    }
 
     if (this._remoteBuilder == null) {
       if (this.doc.docType === 'file') {

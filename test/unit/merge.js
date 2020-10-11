@@ -14,7 +14,6 @@ const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
-const dbBuilders = require('../support/builders/db')
 const Builders = require('../support/builders')
 
 /* Resolves with an object describing the side-effects of a Merge call.
@@ -106,6 +105,7 @@ describe('Merge', function() {
         .path('new-file')
         .data('content')
         .tags('courge', 'quux')
+        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -142,6 +142,7 @@ describe('Merge', function() {
           .metafile()
           .path(path)
           .data('file content')
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -174,7 +175,6 @@ describe('Merge', function() {
           .type('image/jpeg')
           .ino(123)
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
       })
 
@@ -182,7 +182,7 @@ describe('Merge', function() {
         const doc = builders
           .metafile(file)
           .tags('bar', 'baz')
-          .changedSide(this.side)
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -214,7 +214,7 @@ describe('Merge', function() {
         const doc = builders
           .metafile()
           .path('BAR')
-          .sides({ remote: 1 })
+          .unmerged('remote')
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -238,7 +238,7 @@ describe('Merge', function() {
         const doc = builders
           .metafile()
           .path('BAR')
-          .sides({ remote: 1 })
+          .unmerged('remote')
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -307,11 +307,11 @@ describe('Merge', function() {
         .metafile()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const sameFile = builders
         .metafile(mergedFile)
         .updatedAt(new Date())
+        .unmerged('local')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -336,10 +336,12 @@ describe('Merge', function() {
         .metafile()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .remoteId(dbBuilders.id())
         .noLocal()
         .create()
-      const sameFile = builders.metafile(mergedFile).build()
+      const sameFile = builders
+        .metafile(mergedFile)
+        .unmerged('local')
+        .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.addFileAsync('local', _.cloneDeep(sameFile))
@@ -359,16 +361,20 @@ describe('Merge', function() {
     })
 
     it('keeps an existing local metadata when it is not present in the new doc', async function() {
+      const oldRemoteFile = await builders
+        .remoteFile()
+        .updatedAt(2020, 5, 19, 11, 9, 0)
+        .build()
       const mergedFile = await builders
         .metafile()
-        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
+        .fromRemote(oldRemoteFile)
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
+      const newRemoteFile = await builders.remoteFile(oldRemoteFile).build()
       const sameFile = builders
-        .metafile(mergedFile)
-        .noLocal()
-        .remoteRev(3)
+        .metafile()
+        .fromRemote(newRemoteFile)
+        .unmerged('remote')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -396,7 +402,6 @@ describe('Merge', function() {
           existingFile = await builders
             .metafile()
             .upToDate()
-            .remoteId(dbBuilders.id())
             .ino(1)
             .noFileid()
             .create()
@@ -408,6 +413,7 @@ describe('Merge', function() {
             sameFile = builders
               .metafile(existingFile)
               .ino(1)
+              .unmerged('local')
               .build()
           })
 
@@ -430,6 +436,7 @@ describe('Merge', function() {
                 sameFile = builders
                   .metafile(existingFile)
                   .ino(1)
+                  .unmerged('local')
                   .build()
               })
 
@@ -457,7 +464,10 @@ describe('Merge', function() {
         context('when new file does not have a fileid', () => {
           let sameFile
           beforeEach(() => {
-            sameFile = builders.metafile(existingFile).build()
+            sameFile = builders
+              .metafile(existingFile)
+              .unmerged('local')
+              .build()
           })
 
           it('does not migrate the existing file', async function() {
@@ -479,13 +489,15 @@ describe('Merge', function() {
           existingFile = await builders
             .metafile()
             .upToDate()
-            .remoteId(dbBuilders.id())
             .ino(1)
             .create()
         })
 
         it('does not migrate the existing file', async function() {
-          const sameFile = builders.metafile(existingFile).build()
+          const sameFile = builders
+            .metafile(existingFile)
+            .unmerged('local')
+            .build()
 
           const sideEffects = await mergeSideEffects(this, () =>
             this.merge.addFileAsync('local', _.cloneDeep(sameFile))
@@ -503,14 +515,13 @@ describe('Merge', function() {
       const unsyncedLocalFile = await builders
         .metafile()
         .sides({ local: 1 })
-        .noRemote()
         .data('local content')
         .create()
       const newRemoteFile = builders
         .metafile()
         .path(unsyncedLocalFile.path)
-        .sides({ remote: 1 })
         .data('remote content')
+        .unmerged('remote')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -534,15 +545,15 @@ describe('Merge', function() {
           .noRemote()
           .data('initial content')
           .create()
-        const offUpdate = await builders
+        const offlineUpdate = await builders
           .metafile(initialFile)
-          .changedSide('local')
-          .data('off update')
+          .data('offline update')
           .newerThan(initialFile)
+          .unmerged('local')
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.addFileAsync('local', _.cloneDeep(offUpdate))
+          this.merge.addFileAsync('local', _.cloneDeep(offlineUpdate))
         )
 
         should(sideEffects).deepEqual({
@@ -553,7 +564,7 @@ describe('Merge', function() {
                 // omit because builder.noRemote sets remote to undefined
                 overwrite: _.omit(initialFile, ['remote'])
               },
-              _.omit(offUpdate, ['_rev', 'fileid', 'remote'])
+              _.omit(offlineUpdate, ['_rev', 'fileid', 'remote'])
             )
           ],
           resolvedConflicts: []
@@ -571,7 +582,6 @@ describe('Merge', function() {
         const synced = await builders
           .metafile(initial)
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const firstUpdate = await builders
           .metafile(synced)
@@ -580,9 +590,9 @@ describe('Merge', function() {
           .create()
         const secondUpdate = builders
           .metafile(firstUpdate)
-          .changedSide('local')
           .data('second update')
           .newerThan(firstUpdate)
+          .unmerged('local')
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -594,7 +604,8 @@ describe('Merge', function() {
             _.defaultsDeep(
               {
                 sides: increasedSides(firstUpdate.sides, 'local', 1),
-                overwrite: firstUpdate
+                overwrite: firstUpdate,
+                remote: synced.remote
               },
               _.omit(secondUpdate, ['_rev', 'fileid'])
             )
@@ -612,7 +623,6 @@ describe('Merge', function() {
         const synced = await builders
           .metafile(initial)
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         await builders
           .metafile(synced)
@@ -644,7 +654,6 @@ describe('Merge', function() {
         const synced = await builders
           .metafile(initial)
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const remoteUpdate = await builders
           .metafile(synced)
@@ -654,8 +663,8 @@ describe('Merge', function() {
           .create()
         const localUpdate = builders
           .metafile(synced)
-          .changedSide('local')
           .data('local update')
+          .unmerged('local')
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -691,7 +700,6 @@ describe('Merge', function() {
         .tags('foo')
         .upToDate()
         .updatedAt(new Date(2020, 5, 17, 15, 33, 30, 0)) // Necessary for date change tests
-        .remoteId(dbBuilders.id())
         .create()
     })
 
@@ -701,6 +709,7 @@ describe('Merge', function() {
         .path('NEW-FILE')
         .data('content')
         .tags('courge', 'quux')
+        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -724,6 +733,7 @@ describe('Merge', function() {
       const doc = builders
         .metafile(file)
         .tags('bar', 'baz')
+        .unmerged('remote')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -737,7 +747,8 @@ describe('Merge', function() {
           _.defaults(
             {
               _id: file._id,
-              sides: increasedSides(file.sides, 'remote', 1)
+              sides: increasedSides(file.sides, 'remote', 1),
+              local: file.local
             },
             _.omit(doc, ['_rev', 'fileid'])
           )
@@ -750,6 +761,7 @@ describe('Merge', function() {
       const doc = builders
         .metafile(file)
         .updatedAt(new Date())
+        .unmerged('local')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -774,10 +786,12 @@ describe('Merge', function() {
         .metafile()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .remoteId(dbBuilders.id())
         .noLocal()
         .create()
-      const sameFile = builders.metafile(mergedFile).build()
+      const sameFile = builders
+        .metafile(mergedFile)
+        .unmerged('local')
+        .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.updateFileAsync('local', _.cloneDeep(sameFile))
@@ -802,14 +816,12 @@ describe('Merge', function() {
         .data('initial content')
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const update = builders
         .metafile(initial)
-        .noLocal()
         .data('updated content')
         .updatedAt(new Date())
-        .remoteRev(3)
+        .unmerged('remote')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -836,6 +848,7 @@ describe('Merge', function() {
         .metafile(file)
         .data('new content')
         .tags('qux', 'quux')
+        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -848,7 +861,8 @@ describe('Merge', function() {
             {
               _id: file._id,
               sides: increasedSides(file.sides, this.side, 1),
-              overwrite: file
+              overwrite: file,
+              [otherSide(this.side)]: file[otherSide(this.side)]
             },
             _.omit(doc, ['_rev', 'fileid'])
           )
@@ -884,7 +898,6 @@ describe('Merge', function() {
       const synced = await builders
         .metafile(initial)
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const mergedLocalUpdate = await builders
         .metafile(synced)
@@ -893,8 +906,8 @@ describe('Merge', function() {
         .create()
       const newRemoteUpdate = builders
         .metafile(synced)
-        .changedSide('remote')
         .data('remote update')
+        .unmerged('remote')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -928,7 +941,6 @@ describe('Merge', function() {
       const synced = await builders
         .metafile(initial)
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       await builders
         .metafile(synced)
@@ -960,7 +972,6 @@ describe('Merge', function() {
       const synced = await builders
         .metafile(initial)
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const remoteUpdate = await builders
         .metafile(synced)
@@ -970,8 +981,8 @@ describe('Merge', function() {
         .create()
       const newLocalUpdate = builders
         .metafile(synced)
-        .changedSide('local')
         .data('local update')
+        .unmerged('local')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -1001,7 +1012,6 @@ describe('Merge', function() {
       const initialSynced = await builders
         .metafile(initial)
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const update = await builders
         .metafile(initialSynced)
@@ -1016,7 +1026,7 @@ describe('Merge', function() {
       const sameUpdate = builders
         .metafile(updateSynced)
         .updatedAt(new Date())
-        .sides(update.sides)
+        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -1027,7 +1037,7 @@ describe('Merge', function() {
         savedDocs: [
           _.defaults(
             {
-              local: sameUpdate.local
+              [this.side]: sameUpdate[this.side]
             },
             _.omit(updateSynced, ['_rev'])
           )
@@ -1049,8 +1059,8 @@ describe('Merge', function() {
         .create()
       const localUpdate = builders
         .metafile(synced)
-        .changedSide('local')
         .data('local update')
+        .unmerged('local')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -1077,8 +1087,8 @@ describe('Merge', function() {
       const doc = builders
         .metadir()
         .path('NEW-FOLDER')
-        .sides({ [this.side]: 1 })
         .tags('courge', 'quux')
+        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -1107,7 +1117,7 @@ describe('Merge', function() {
       const doc = builders
         .metadir(old)
         .whateverChange()
-        .noRev()
+        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -1118,7 +1128,8 @@ describe('Merge', function() {
         savedDocs: [
           _.defaults(
             {
-              sides: increasedSides(old.sides, this.side, 1)
+              sides: increasedSides(old.sides, this.side, 1),
+              [otherSide(this.side)]: old[otherSide(this.side)]
             },
             _.omit(doc, ['_rev'])
           )
@@ -1143,7 +1154,7 @@ describe('Merge', function() {
         const doc = builders
           .metadir()
           .path(path)
-          .noRev()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -1168,8 +1179,12 @@ describe('Merge', function() {
       const old = await builders
         .metadir()
         .path('up-to-date-folder')
+        .upToDate()
         .create()
-      const doc = builders.metadir(old).build()
+      const doc = builders
+        .metadir(old)
+        .unmerged(this.side)
+        .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.putFolderAsync(this.side, _.cloneDeep(doc))
@@ -1189,8 +1204,7 @@ describe('Merge', function() {
       const newRemoteDir = builders
         .metadir()
         .path(existingLocalFile.path)
-        .sides({ remote: 1 })
-        .remoteId(dbBuilders.id())
+        .unmerged('remote')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -1210,11 +1224,11 @@ describe('Merge', function() {
         .metadir()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const sameFolder = builders
         .metadir(mergedFolder)
         .updatedAt(new Date())
+        .unmerged('local')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -1239,10 +1253,12 @@ describe('Merge', function() {
         .metadir()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .remoteId(dbBuilders.id())
         .noLocal()
         .create()
-      const sameFolder = builders.metadir(mergedFolder).build()
+      const sameFolder = builders
+        .metadir(mergedFolder)
+        .unmerged('local')
+        .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
         this.merge.putFolderAsync('local', _.cloneDeep(sameFolder))
@@ -1262,16 +1278,20 @@ describe('Merge', function() {
     })
 
     it('keeps an existing local metadata when it is not present in the new doc', async function() {
+      const oldRemoteDir = await builders
+        .remoteDir()
+        .updatedAt(2020, 5, 19, 11, 9, 0)
+        .build()
       const mergedFolder = await builders
         .metadir()
-        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
+        .fromRemote(oldRemoteDir)
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
+      const newRemoteDir = await builders.remoteDir(oldRemoteDir).build()
       const sameFolder = builders
-        .metadir(mergedFolder)
-        .noLocal()
-        .remoteRev(3)
+        .metadir()
+        .fromRemote(newRemoteDir)
+        .unmerged('remote')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -1301,13 +1321,12 @@ describe('Merge', function() {
           await builders
             .metadir()
             .path('alfred')
-            .sides({ [this.side]: 1 })
+            .sides({ [otherSide(this.side)]: 1 })
             .create()
           Alfred = await builders
             .metadir()
             .path('Alfred')
-            .sides({ [otherSide(this.side)]: 1 })
-            .remoteId(dbBuilders.id())
+            .unmerged(this.side)
             .build()
         })
 
@@ -1358,45 +1377,111 @@ describe('Merge', function() {
         .create()
     })
 
-    it('saves the new file and deletes the old one with move hints for writers', async function() {
-      const was = await builders
-        .metafile()
-        .path('FOO/OLD')
-        .upToDate()
-        .remoteId(dbBuilders.id())
-        .data('content')
-        .tags('courge', 'quux')
-        .create()
-      const doc = builders
-        .metafile(was)
-        .path('FOO/NEW')
-        .noRev()
-        .build()
+    context('local', () => {
+      it('saves the new file and deletes the old one with move hints for writers', async function() {
+        const was = await builders
+          .metafile()
+          .path('FOO/OLD')
+          .ino(1)
+          .upToDate()
+          .data('content')
+          .tags('courge', 'quux')
+          .create()
+        const doc = builders
+          .metafile(was)
+          .path('FOO/NEW')
+          .unmerged('local')
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFileAsync(this.side, _.cloneDeep(doc), _.cloneDeep(was))
-      )
-
-      const movedSrc = _.defaults(
-        {
-          moveTo: doc._id,
-          _deleted: true
-        },
-        was
-      )
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.omit(movedSrc, ['_rev']),
-          _.defaults(
-            {
-              sides: increasedSides(was.sides, this.side, 1),
-              moveFrom: movedSrc
-            },
-            _.pick(was, ['ino', 'local']),
-            _.omit(doc, ['_rev'])
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFileAsync(
+            this.side,
+            _.cloneDeep(doc),
+            _.cloneDeep(was)
           )
-        ],
-        resolvedConflicts: []
+        )
+
+        const movedSrc = _.defaults(
+          {
+            moveTo: doc._id,
+            _deleted: true
+          },
+          was
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.omit(movedSrc, ['_rev', 'fileid']),
+            _.defaultsDeep(
+              {
+                sides: increasedSides(was.sides, this.side, 1),
+                moveFrom: movedSrc,
+                [otherSide(this.side)]: was[otherSide(this.side)],
+                ino: was.ino
+              },
+              _.omit(doc, ['_rev', 'fileid'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('remote', () => {
+      it('saves the new file and deletes the old one with move hints for writers', async function() {
+        const oldRemoteFile = await builders
+          .remoteFile()
+          .inRootDir()
+          .name('OLD')
+          .data('content')
+          .shortRev(1)
+          .build()
+        const was = await builders
+          .metafile()
+          .fromRemote(oldRemoteFile)
+          .ino(1)
+          .upToDate()
+          .create()
+        const newRemoteFile = await builders
+          .remoteFile(oldRemoteFile)
+          .name('NEW')
+          .shortRev(2)
+          .build()
+        const doc = builders
+          .metafile()
+          .fromRemote(newRemoteFile)
+          .unmerged('remote')
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFileAsync(
+            this.side,
+            _.cloneDeep(doc),
+            _.cloneDeep(was)
+          )
+        )
+
+        const movedSrc = _.defaults(
+          {
+            moveTo: doc._id,
+            _deleted: true
+          },
+          was
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.omit(movedSrc, ['_rev', 'fileid']),
+            _.defaultsDeep(
+              {
+                sides: increasedSides(was.sides, this.side, 1),
+                moveFrom: movedSrc,
+                [this.side]: was[this.side],
+                ino: was.ino
+              },
+              _.omit(doc, ['_rev', 'fileid'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
@@ -1409,12 +1494,11 @@ describe('Merge', function() {
         .type('image/jpeg')
         .tags('courge', 'quux')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const doc = builders
         .metafile(was)
         .path('FOO/NEW-MISSING-FIELDS.JPG')
-        .noRev()
+        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -1434,7 +1518,8 @@ describe('Merge', function() {
           _.defaults(
             {
               sides: increasedSides(was.sides, this.side, 1),
-              moveFrom: movedSrc
+              moveFrom: movedSrc,
+              [otherSide(this.side)]: was[otherSide(this.side)]
             },
             _.omit(doc, ['fileid'])
           )
@@ -1460,12 +1545,11 @@ describe('Merge', function() {
           .metafile()
           .path('SRC_FILE')
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const doc = builders
           .metafile(was)
           .path(existing.path)
-          .noRev()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -1492,7 +1576,8 @@ describe('Merge', function() {
                 path: doc.path,
                 sides: increasedSides(was.sides, this.side, 1),
                 moveFrom: movedSrc,
-                overwrite: existing
+                overwrite: existing,
+                [this.side]: doc[this.side]
               },
               _.omit(was, ['_rev'])
             )
@@ -1503,11 +1588,11 @@ describe('Merge', function() {
 
       context('and we have unapplied modifications on the other side', () => {
         beforeEach(async function() {
-          const doc = builders
+          existing = await builders
             .metafile(existing)
             .data('new content')
-            .build()
-          await this.merge.updateFileAsync(otherSide(this.side), doc)
+            .changedSide('remote')
+            .create()
         })
 
         it('resolves a conflict', async function() {
@@ -1515,17 +1600,16 @@ describe('Merge', function() {
             .metafile()
             .path('SRC_FILE')
             .upToDate()
-            .remoteId(dbBuilders.id())
             .create()
           const doc = builders
             .metafile(was)
             .path(existing.path)
-            .noRev()
+            .unmerged('local')
             .build()
 
           const sideEffects = await mergeSideEffects(this, () =>
             this.merge.moveFileAsync(
-              this.side,
+              'local',
               _.cloneDeep(doc),
               _.cloneDeep(was)
             )
@@ -1550,14 +1634,15 @@ describe('Merge', function() {
                 {
                   _id: dstId,
                   path: dstPath,
-                  sides: increasedSides(was.sides, this.side, 1),
-                  moveFrom: movedSrc
+                  sides: increasedSides(was.sides, 'local', 1),
+                  moveFrom: movedSrc,
+                  remote: was.remote
                 },
                 doc
               )
             ],
             resolvedConflicts: [
-              [this.side, { path: doc.path, remote: doc.remote }]
+              ['local', { path: doc.path, remote: was.remote }]
             ]
           })
         })
@@ -1580,12 +1665,11 @@ describe('Merge', function() {
           .metafile()
           .path('SRC_FILE')
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const doc = builders
           .metafile(was)
           .path(path)
-          .noRev()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -1609,7 +1693,8 @@ describe('Merge', function() {
             _.defaults(
               {
                 sides: increasedSides(was.sides, this.side, 1),
-                moveFrom: movedSrc
+                moveFrom: movedSrc,
+                [otherSide(this.side)]: was[otherSide(this.side)]
               },
               doc
             )
@@ -1619,7 +1704,7 @@ describe('Merge', function() {
       })
     })
 
-    it('identifies a local move without existing remote side as an addition', async function() {
+    it('replaces a local move with an addition for a local-only file', async function() {
       const was = await builders
         .metafile()
         .path('FOO/OLD')
@@ -1630,7 +1715,7 @@ describe('Merge', function() {
       const doc = builders
         .metafile(was)
         .path('FOO/NEW')
-        .noRev()
+        .unmerged('local')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -1642,11 +1727,56 @@ describe('Merge', function() {
           sides: {},
           _deleted: true
         },
-        _.omit(was, ['_rev', 'remote'])
+        _.omit(was, ['_rev', 'local', 'remote'])
       )
       const fileAddition = _.defaults(
         {
           sides: { target: 1, local: 1 }
+        },
+        doc
+      )
+      should(sideEffects).deepEqual({
+        savedDocs: [unsyncedFile, fileAddition],
+        resolvedConflicts: []
+      })
+    })
+
+    it('replaces a remote move with an addition for a remote-only file', async function() {
+      const oldRemoteFile = builders
+        .remoteFile()
+        .inRootDir()
+        .name('OLD')
+        .data('content')
+        .build()
+      const was = await builders
+        .metafile()
+        .fromRemote(oldRemoteFile)
+        .sides({ remote: 1 })
+        .create()
+      const newRemoteFile = builders
+        .remoteFile(oldRemoteFile)
+        .name('NEW')
+        .build()
+      const doc = builders
+        .metafile()
+        .fromRemote(newRemoteFile)
+        .unmerged('remote')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.moveFileAsync('remote', _.cloneDeep(doc), _.cloneDeep(was))
+      )
+
+      const unsyncedFile = _.defaults(
+        {
+          sides: {},
+          _deleted: true
+        },
+        _.omit(was, ['_rev', 'local', 'remote'])
+      )
+      const fileAddition = _.defaults(
+        {
+          sides: { target: 1, remote: 1 }
         },
         doc
       )
@@ -1661,17 +1791,16 @@ describe('Merge', function() {
         .metadir()
         .path('SRC')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const file = await builders
         .metafile()
         .path('SRC/FILE')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const file2 = builders
         .metafile(file)
         .path('SRC/FILE2')
+        .unmerged('local')
         .build()
       await this.merge.moveFileAsync(
         'local',
@@ -1682,7 +1811,7 @@ describe('Merge', function() {
       const dst = builders
         .metadir(src)
         .path('DST')
-        .noRev()
+        .unmerged('local')
         .build()
       const doc = await builders
         .metafile(was)
@@ -1714,7 +1843,8 @@ describe('Merge', function() {
           _.defaults(
             {
               sides: increasedSides(src.sides, this.side, 1),
-              moveFrom: movedSrc
+              moveFrom: movedSrc,
+              remote: src.remote
             },
             _.omit(dst, ['_rev'])
           ),
@@ -1722,7 +1852,8 @@ describe('Merge', function() {
           _.defaults(
             {
               sides: increasedSides(was.sides, this.side, 1),
-              moveFrom: movedFile
+              moveFrom: movedFile,
+              remote: was.remote
             },
             _.omit(doc, ['_rev'])
           )
@@ -1736,18 +1867,16 @@ describe('Merge', function() {
         .metadir()
         .path('SRC')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       await builders
         .metafile()
         .path('SRC/FILE')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const dst = builders
         .metadir(src)
         .path('DST')
-        .noRev()
+        .unmerged('local')
         .build()
       await this.merge.moveFolderAsync(
         'local',
@@ -1763,6 +1892,7 @@ describe('Merge', function() {
       const doc = await builders
         .metafile(was)
         .path('DST/FILE2')
+        .unmerged('local')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -1782,7 +1912,8 @@ describe('Merge', function() {
           _.defaults(
             {
               sides: increasedSides(was.sides, 'local', 1),
-              moveFrom: movedSrc
+              moveFrom: movedSrc,
+              remote: was.remote
             },
             _.omit(doc, ['_rev'])
           )
@@ -1797,12 +1928,11 @@ describe('Merge', function() {
           .metafile()
           .path('banana')
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const BANANA = builders
           .metafile(banana)
           .path('BANANA')
-          .noRev()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -1825,7 +1955,8 @@ describe('Merge', function() {
                     _deleted: true
                   },
                   banana
-                )
+                ),
+                [this.side]: BANANA[this.side]
               },
               _.omit(banana, ['_rev'])
             )
@@ -1847,6 +1978,7 @@ describe('Merge', function() {
         const doc = builders
           .metafile(was)
           .path('qux')
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -1859,7 +1991,9 @@ describe('Merge', function() {
 
         should(sideEffects).deepEqual({
           savedDocs: [],
-          resolvedConflicts: [[this.side, _.pick(doc, ['path', 'remote'])]]
+          resolvedConflicts: [
+            [this.side, { path: doc.path, remote: was.remote }]
+          ]
         })
       })
     })
@@ -1870,12 +2004,11 @@ describe('Merge', function() {
           .metafile()
           .path('banana')
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const BANANA = builders
           .metafile(banana)
           .path('BANANA')
-          .noRev()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -1899,7 +2032,8 @@ describe('Merge', function() {
             _.defaults(
               {
                 sides: increasedSides(banana.sides, this.side, 1),
-                moveFrom: movedSrc
+                moveFrom: movedSrc,
+                [otherSide(this.side)]: banana[otherSide(this.side)]
               },
               BANANA
             )
@@ -1913,7 +2047,6 @@ describe('Merge', function() {
           .metafile()
           .path('baz')
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         await builders
           .metafile()
@@ -1922,6 +2055,7 @@ describe('Merge', function() {
         const doc = builders
           .metafile(was)
           .path('qux')
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -1945,7 +2079,8 @@ describe('Merge', function() {
             _.defaults(
               {
                 sides: increasedSides(was.sides, this.side, 1),
-                moveFrom: movedSrc
+                moveFrom: movedSrc,
+                [otherSide(this.side)]: was[otherSide(this.side)]
               },
               _.omit(doc, ['_rev'])
             )
@@ -1965,53 +2100,111 @@ describe('Merge', function() {
         .create()
     })
 
-    it('saves the new folder and deletes the old one with hints for writers', async function() {
-      const was = await builders
-        .metadir()
-        .path('FOOBAR/OLD')
-        .ino(666)
-        .tags('courge', 'quux')
-        .upToDate()
-        .remoteId(dbBuilders.id())
-        .create()
-      const doc = builders
-        .metadir(was)
-        .path('FOOBAR/NEW')
-        .tags('courge', 'quux')
-        .build()
+    context('local', () => {
+      it('saves the new folder and deletes the old one with hints for writers', async function() {
+        const was = await builders
+          .metadir()
+          .path('FOOBAR/OLD')
+          .ino(666)
+          .tags('courge', 'quux')
+          .upToDate()
+          .create()
+        const doc = builders
+          .metadir(was)
+          .path('FOOBAR/NEW')
+          .unmerged('local')
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFolderAsync(
-          this.side,
-          _.cloneDeep(doc),
-          _.cloneDeep(was)
-        )
-      )
-
-      const movedSrc = _.defaults(
-        {
-          moveTo: doc._id,
-          _deleted: true
-        },
-        was
-      )
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.omit(movedSrc, ['_rev', 'fileid']),
-          _.defaults(
-            {
-              sides: increasedSides(was.sides, this.side, 1),
-              moveFrom: movedSrc
-            },
-            _.pick(was, ['ino', 'local']),
-            _.omit(doc, ['_rev', 'fileid'])
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFolderAsync(
+            'local',
+            _.cloneDeep(doc),
+            _.cloneDeep(was)
           )
-        ],
-        resolvedConflicts: []
+        )
+
+        const movedSrc = _.defaults(
+          {
+            moveTo: doc._id,
+            _deleted: true
+          },
+          was
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.omit(movedSrc, ['_rev', 'fileid']),
+            _.defaults(
+              {
+                sides: increasedSides(was.sides, 'local', 1),
+                moveFrom: movedSrc,
+                remote: was.remote
+              },
+              _.omit(doc, ['_rev', 'fileid'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
-    it('replaces the move with an addition for a local-only folder', async function() {
+    context('remote', () => {
+      it('saves the new folder and deletes the old one with hints for writers', async function() {
+        const oldRemoteDir = builders
+          .remoteDir()
+          .inRootDir()
+          .name('OLD')
+          .build()
+        const was = await builders
+          .metadir()
+          .fromRemote(oldRemoteDir)
+          .ino(666)
+          .upToDate()
+          .create()
+        const newRemoteDir = builders
+          .remoteDir(oldRemoteDir)
+          .inRootDir()
+          .name('NEW')
+          .build()
+        const doc = builders
+          .metadir()
+          .fromRemote(newRemoteDir)
+          .unmerged('remote')
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFolderAsync(
+            'remote',
+            _.cloneDeep(doc),
+            _.cloneDeep(was)
+          )
+        )
+
+        const movedSrc = _.defaults(
+          {
+            moveTo: doc._id,
+            _deleted: true
+          },
+          was
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.omit(movedSrc, ['_rev', 'fileid']),
+            _.defaults(
+              {
+                sides: increasedSides(was.sides, 'remote', 1),
+                moveFrom: movedSrc,
+                local: was.local,
+                ino: was.ino
+              },
+              _.omit(doc, ['_rev', 'fileid'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    it('replaces a local move with an addition for a local-only folder', async function() {
       const was = await builders
         .metadir()
         .path('FOOBAR/OLD')
@@ -2023,7 +2216,7 @@ describe('Merge', function() {
         .metadir(was)
         .path('FOOBAR/NEW')
         .tags('courge', 'quux')
-        .noRev()
+        .unmerged('local')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -2035,14 +2228,57 @@ describe('Merge', function() {
           sides: {},
           _deleted: true
         },
-        _.omit(was, ['_rev', 'fileid', 'remote'])
+        _.omit(was, ['_rev', 'fileid', 'local', 'remote'])
       )
       const folderAddition = _.defaults(
         {
           sides: { target: 1, local: 1 }
         },
-        _.pick(was, ['ino']),
         _.omit(doc, ['_rev', 'fileid'])
+      )
+      should(sideEffects).deepEqual({
+        savedDocs: [unsyncedFolder, folderAddition],
+        resolvedConflicts: []
+      })
+    })
+
+    it('replaces a remote move with an addition for a remote-only folder', async function() {
+      const oldRemoteDir = builders
+        .remoteDir()
+        .inRootDir()
+        .name('OLD')
+        .build()
+      const was = await builders
+        .metadir()
+        .fromRemote(oldRemoteDir)
+        .sides({ remote: 1 })
+        .create()
+      const newRemoteDir = builders
+        .remoteDir(oldRemoteDir)
+        .name('NEW')
+        .build()
+      const doc = builders
+        .metadir()
+        .fromRemote(newRemoteDir)
+        .unmerged('remote')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.moveFolderAsync('remote', _.cloneDeep(doc), _.cloneDeep(was))
+      )
+
+      const unsyncedFolder = _.defaults(
+        {
+          sides: {},
+          _deleted: true
+        },
+        _.omit(was, ['_rev', 'fileid', 'local', 'remote'])
+      )
+      const folderAddition = _.defaults(
+        {
+          sides: { target: 1, remote: 1 }
+        },
+        _.omit(doc, ['_rev'])
       )
       should(sideEffects).deepEqual({
         savedDocs: [unsyncedFolder, folderAddition],
@@ -2067,12 +2303,11 @@ describe('Merge', function() {
             .metadir()
             .path('SRC_DIR')
             .upToDate()
-            .remoteId(dbBuilders.id())
             .create()
           const doc = builders
             .metadir(was)
             .path(existing.path)
-            .noRev()
+            .unmerged(this.side)
             .build()
 
           const sideEffects = await mergeSideEffects(this, () =>
@@ -2099,7 +2334,8 @@ describe('Merge', function() {
                   path: existing.path,
                   sides: increasedSides(was.sides, this.side, 1),
                   moveFrom: movedSrc,
-                  overwrite: existing
+                  overwrite: existing,
+                  [otherSide(this.side)]: was[otherSide(this.side)]
                 },
                 doc
               )
@@ -2123,12 +2359,11 @@ describe('Merge', function() {
             .metadir()
             .path('SRC_DIR')
             .upToDate()
-            .remoteId(dbBuilders.id())
             .create()
           const doc = builders
             .metadir(was)
             .path(existing.path)
-            .noRev()
+            .unmerged(this.side)
             .build()
 
           const sideEffects = await mergeSideEffects(this, () =>
@@ -2159,7 +2394,8 @@ describe('Merge', function() {
                   _id: dstId,
                   path: dstPath,
                   sides: increasedSides(was.sides, this.side, 1),
-                  moveFrom: movedSrc
+                  moveFrom: movedSrc,
+                  [otherSide(this.side)]: was[otherSide(this.side)]
                 },
                 doc
               )
@@ -2186,12 +2422,11 @@ describe('Merge', function() {
           .metadir()
           .path('SRC_DIR')
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const doc = builders
           .metadir(was)
           .path(path)
-          .noRev()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -2215,9 +2450,9 @@ describe('Merge', function() {
             _.defaults(
               {
                 sides: increasedSides(was.sides, this.side, 1),
-                moveFrom: movedSrc
+                moveFrom: movedSrc,
+                [otherSide(this.side)]: was[otherSide(this.side)]
               },
-              _.pick(was, ['ino']),
               doc
             )
           ],
@@ -2236,12 +2471,11 @@ describe('Merge', function() {
         .metadir()
         .path('SRC_DIR')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const doc = builders
         .metadir(was)
         .path(existing.path)
-        .noRev()
+        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -2266,7 +2500,8 @@ describe('Merge', function() {
             {
               sides: increasedSides(was.sides, this.side, 1),
               moveFrom: movedSrc,
-              overwrite: existing
+              overwrite: existing,
+              [otherSide(this.side)]: was[otherSide(this.side)]
             },
             doc
           )
@@ -2281,12 +2516,11 @@ describe('Merge', function() {
           .metadir()
           .path('apple')
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const APPLE = builders
           .metadir(apple)
           .path('APPLE')
-          .noRev()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -2308,7 +2542,8 @@ describe('Merge', function() {
                     _deleted: true
                   },
                   apple
-                )
+                ),
+                [otherSide(this.side)]: apple[otherSide(this.side)]
               },
               APPLE
             )
@@ -2326,11 +2561,11 @@ describe('Merge', function() {
           .metadir()
           .path('torvalds')
           .upToDate()
-          .remoteId(dbBuilders.id())
-          .build()
+          .create()
         const linux = builders
           .metadir(torvalds)
           .path('linux')
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -2354,12 +2589,11 @@ describe('Merge', function() {
           .metadir()
           .path('apple')
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const APPLE = builders
           .metadir(apple)
           .path('APPLE')
-          .noRev()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -2383,7 +2617,8 @@ describe('Merge', function() {
             _.defaults(
               {
                 sides: increasedSides(apple.sides, this.side, 1),
-                moveFrom: movedSrc
+                moveFrom: movedSrc,
+                [otherSide(this.side)]: apple[otherSide(this.side)]
               },
               APPLE
             )
@@ -2401,12 +2636,11 @@ describe('Merge', function() {
           .metadir()
           .path('duke')
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const nukem = builders
           .metadir(duke)
           .path('nukem')
-          .noRev()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -2430,7 +2664,8 @@ describe('Merge', function() {
             _.defaults(
               {
                 sides: increasedSides(duke.sides, this.side, 1),
-                moveFrom: movedSrc
+                moveFrom: movedSrc,
+                [otherSide(this.side)]: duke[otherSide(this.side)]
               },
               nukem
             )
@@ -2445,30 +2680,27 @@ describe('Merge', function() {
         .metadir()
         .path('src')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const srcFile = await builders
         .metafile()
         .path('src/file')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const oldDst = await builders
         .metadir()
         .path('dst')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const dstFile = await builders
         .metafile()
         .path('dst/file')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const dstDir = builders
         .metadir(srcDir)
         .path('dst')
         .overwrite(oldDst)
+        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -2501,7 +2733,8 @@ describe('Merge', function() {
             {
               sides: increasedSides(srcDir.sides, this.side, 1),
               moveFrom: movedSrcDir,
-              overwrite: oldDst
+              overwrite: oldDst,
+              [otherSide(this.side)]: srcDir[otherSide(this.side)]
             },
             _.omit(dstDir, ['_rev'])
           ),
@@ -2527,25 +2760,21 @@ describe('Merge', function() {
         .metadir()
         .path('my-folder')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const subdir = await builders
         .metadir()
         .path('my-folder/folder-9')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const subfile = await builders
         .metafile()
         .path('my-folder/file-9')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .create()
       const doc = builders
         .metadir(was)
         .path('DESTINATION')
-        .changedSide(this.side)
-        .remoteId(dbBuilders.id())
+        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -2587,7 +2816,8 @@ describe('Merge', function() {
           _.defaults(
             {
               sides: increasedSides(was.sides, this.side, 1),
-              moveFrom: movedDir
+              moveFrom: movedDir,
+              [otherSide(this.side)]: was[otherSide(this.side)]
             },
             _.omit(doc, ['_rev'])
           ),
@@ -2597,7 +2827,8 @@ describe('Merge', function() {
               _id: metadata.id(movedPath(subfile)),
               path: movedPath(subfile),
               sides: increasedSides(subfile.sides, this.side, 1),
-              moveFrom: movedSubfile
+              moveFrom: movedSubfile,
+              [otherSide(this.side)]: movedSubfile[otherSide(this.side)]
             },
             _.omit(subfile, ['_rev'])
           ),
@@ -2607,7 +2838,8 @@ describe('Merge', function() {
               _id: metadata.id(movedPath(subdir)),
               path: movedPath(subdir),
               sides: increasedSides(subdir.sides, this.side, 1),
-              moveFrom: movedSubdir
+              moveFrom: movedSubdir,
+              [otherSide(this.side)]: movedSubdir[otherSide(this.side)]
             },
             _.omit(subdir, ['_rev'])
           )
@@ -2616,132 +2848,153 @@ describe('Merge', function() {
       })
     })
 
-    it('adds an unsynced file to the destination folder', async function() {
-      const was = await builders
-        .metadir()
-        .path('ADDED_DIR')
-        .upToDate()
-        .remoteId(dbBuilders.id())
-        .create()
-      const unsyncedFile = await builders
-        .metafile()
-        .path('ADDED_DIR/unsynced-file')
-        .sides({ [this.side]: 1 })
-        .create()
-      const doc = builders
-        .metadir(was)
-        .path('MOVED_DIR')
-        .build()
+    context('local', () => {
+      it('adds an unsynced remote file to the destination folder', async function() {
+        const was = await builders
+          .metadir()
+          .path('ADDED_DIR')
+          .upToDate()
+          .create()
+        const doc = builders
+          .metadir(was)
+          .path('MOVED_DIR')
+          .unmerged('local')
+          .build()
+        const unsyncedRemoteFile = await builders
+          .remoteFile()
+          .inDir(was.remote)
+          .name('unsynced-file')
+          .build()
+        const unsyncedFile = await builders
+          .metafile()
+          .fromRemote(unsyncedRemoteFile)
+          .noLocal()
+          .sides({ remote: 1 })
+          .create()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFolderRecursivelyAsync(
-          this.side,
-          _.cloneDeep(doc),
-          _.cloneDeep(was)
-        )
-      )
-
-      const movedPath = oldDoc => oldDoc.path.replace(was.path, doc.path)
-
-      const movedSrc = _.defaults(
-        {
-          moveTo: doc._id,
-          _deleted: true
-        },
-        was
-      )
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.omit(movedSrc, ['_rev']),
-          _.defaults(
-            {
-              sides: increasedSides(was.sides, this.side, 1),
-              moveFrom: movedSrc
-            },
-            _.omit(doc, ['_rev'])
-          ),
-          _.defaults(
-            {
-              sides: {},
-              _deleted: true
-            },
-            _.omit(unsyncedFile, ['_rev', 'remote'])
-          ),
-          _.defaults(
-            {
-              _id: metadata.id(movedPath(unsyncedFile)),
-              path: movedPath(unsyncedFile),
-              sides: { target: 1, [this.side]: 1 }
-            },
-            _.omit(unsyncedFile, ['_rev'])
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFolderRecursivelyAsync(
+            'local',
+            _.cloneDeep(doc),
+            _.cloneDeep(was)
           )
-        ],
-        resolvedConflicts: []
+        )
+
+        const movedPath = oldDoc => oldDoc.path.replace(was.path, doc.path)
+
+        const movedSrc = _.defaults(
+          {
+            moveTo: doc._id,
+            _deleted: true
+          },
+          was
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.omit(movedSrc, ['_rev']), // TODO: Compare _revs
+            _.defaults(
+              {
+                sides: increasedSides(was.sides, 'local', 1),
+                moveFrom: movedSrc,
+                remote: was.remote
+              },
+              _.omit(doc, ['_rev'])
+            ),
+            _.defaults(
+              {
+                sides: {},
+                _deleted: true
+              },
+              _.omit(unsyncedFile, ['_rev', 'remote']) // TODO: Compare _revs
+            ),
+            _.defaults(
+              {
+                _id: metadata.id(movedPath(unsyncedFile)),
+                path: movedPath(unsyncedFile),
+                sides: { target: 1, remote: 1 }
+              },
+              _.omit(unsyncedFile, ['_rev']) // TODO: Compare _revs
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
-    it('adds an unsynced file from the other side to the destination folder', async function() {
-      const was = await builders
-        .metadir()
-        .path('ADDED_DIR')
-        .sides({ [this.side]: 2, [otherSide(this.side)]: 2 })
-        .remoteId(dbBuilders.id())
-        .create()
-      const unsyncedFile = await builders
-        .metafile()
-        .path('ADDED_DIR/unsynced-file')
-        .sides({ [otherSide(this.side)]: 1 })
-        .create()
-      const doc = builders
-        .metadir()
-        .path('MOVED_DIR')
-        .build()
+    context('remote', () => {
+      it('adds an unsynced local file to the destination folder', async function() {
+        const oldRemoteDir = builders
+          .remoteDir()
+          .inRootDir()
+          .name('ADDED_DIR')
+          .build()
+        const was = await builders
+          .metadir()
+          .fromRemote(oldRemoteDir)
+          .upToDate()
+          .create()
+        const newRemoteDir = builders
+          .remoteDir(oldRemoteDir)
+          .name('MOVED_DIR')
+          .build()
+        const doc = builders
+          .metadir()
+          .fromRemote(newRemoteDir)
+          .unmerged('remote')
+          .build()
+        const unsyncedFile = await builders
+          .metafile()
+          .path('ADDED_DIR/unsynced-file')
+          .noRemote()
+          .sides({ local: 1 })
+          .create()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFolderRecursivelyAsync(
-          this.side,
-          _.cloneDeep(doc),
-          _.cloneDeep(was)
-        )
-      )
-
-      const movedPath = oldDoc => oldDoc.path.replace(was.path, doc.path)
-
-      const movedSrc = _.defaults(
-        {
-          moveTo: doc._id,
-          _deleted: true
-        },
-        was
-      )
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.omit(movedSrc, ['_rev']), // TODO: Compare _revs
-          _.defaults(
-            {
-              sides: increasedSides(was.sides, this.side, 1),
-              remote: was.remote,
-              moveFrom: movedSrc
-            },
-            doc
-          ),
-          _.defaults(
-            {
-              sides: {},
-              _deleted: true
-            },
-            _.omit(unsyncedFile, ['_rev', 'remote']) // TODO: Compare _revs
-          ),
-          _.defaults(
-            {
-              _id: metadata.id(movedPath(unsyncedFile)),
-              path: movedPath(unsyncedFile),
-              sides: { target: 1, [otherSide(this.side)]: 1 }
-            },
-            _.omit(unsyncedFile, ['_rev']) // TODO: Compare _revs
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFolderRecursivelyAsync(
+            'remote',
+            _.cloneDeep(doc),
+            _.cloneDeep(was)
           )
-        ],
-        resolvedConflicts: []
+        )
+
+        const movedPath = oldDoc => oldDoc.path.replace(was.path, doc.path)
+
+        const movedSrc = _.defaults(
+          {
+            moveTo: doc._id,
+            _deleted: true
+          },
+          was
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.omit(movedSrc, ['_rev']), // TODO: Compare _revs
+            _.defaults(
+              {
+                sides: increasedSides(was.sides, 'remote', 1),
+                moveFrom: movedSrc,
+                local: was.local
+              },
+              doc
+            ),
+            _.defaults(
+              {
+                sides: {},
+                _deleted: true
+              },
+              _.omit(unsyncedFile, ['_rev', 'local']) // TODO: Compare _revs
+            ),
+            _.defaults(
+              {
+                _id: metadata.id(movedPath(unsyncedFile)),
+                path: movedPath(unsyncedFile),
+                sides: { target: 1, local: 1 }
+              },
+              _.omit(unsyncedFile, ['_rev']) // TODO: Compare _revs
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
@@ -2761,11 +3014,11 @@ describe('Merge', function() {
           .metadir()
           .path('SRC_DIR')
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const doc = builders
           .metadir(was)
           .path(path)
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -2789,7 +3042,8 @@ describe('Merge', function() {
             _.defaults(
               {
                 sides: increasedSides(was.sides, this.side, 1),
-                moveFrom: movedSrc
+                moveFrom: movedSrc,
+                [otherSide(this.side)]: was[otherSide(this.side)]
               },
               _.omit(doc, ['_rev'])
             )
@@ -2816,18 +3070,16 @@ describe('Merge', function() {
           .metadir()
           .path('SRC_DIR')
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const child = await builders
           .metadata()
           .path(`SRC_DIR/${childName}`)
           .upToDate()
-          .remoteId(dbBuilders.id())
           .create()
         const doc = builders
           .metadir(was)
           .path(parentPath)
-          .noRev()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -2861,12 +3113,13 @@ describe('Merge', function() {
             _.defaults(
               {
                 sides: increasedSides(was.sides, this.side, 1),
-                moveFrom: movedDir
+                moveFrom: movedDir,
+                [otherSide(this.side)]: was[otherSide(this.side)]
               },
               doc
             ),
             _.omit(movedChild, ['_rev']),
-            _.defaults(
+            _.defaultsDeep(
               {
                 _id: metadata.id(movedPath(child)),
                 path: movedPath(child),
@@ -2891,26 +3144,22 @@ describe('Merge', function() {
             const was = await builders
               .metadir()
               .path(nfcParentPath)
-              .remoteId(dbBuilders.id())
               .upToDate()
               .create()
             const subdir = await builders
               .metadir()
               .path(path.join(nfdParentPath, 'folder-9'))
-              .remoteId(dbBuilders.id())
               .upToDate()
               .create()
             const subfile = await builders
               .metafile()
               .path(path.join(subdir.path, 'file-9'))
-              .remoteId(dbBuilders.id())
               .upToDate()
               .create()
             const doc = builders
               .metadir(was)
               .path('DESTINATION')
-              .remoteId(dbBuilders.id())
-              .changedSide(this.side)
+              .unmerged(this.side)
               .build()
 
             const sideEffects = await mergeSideEffects(this, () =>
@@ -2952,7 +3201,8 @@ describe('Merge', function() {
                 _.defaults(
                   {
                     sides: increasedSides(was.sides, this.side, 1),
-                    moveFrom: movedDir
+                    moveFrom: movedDir,
+                    [otherSide(this.side)]: was[otherSide(this.side)]
                   },
                   _.omit(doc, ['_rev'])
                 ),
@@ -2988,25 +3238,21 @@ describe('Merge', function() {
               .metadir()
               .path(nfdParentPath)
               .upToDate()
-              .remoteId(dbBuilders.id())
               .create()
             const subdir = await builders
               .metadir()
               .path(path.join(nfcParentPath, 'folder-9'))
               .upToDate()
-              .remoteId(dbBuilders.id())
               .create()
             const subfile = await builders
               .metafile()
               .path(path.join(subdir.path, 'file-9'))
               .upToDate()
-              .remoteId(dbBuilders.id())
               .create()
             const doc = builders
               .metadir(was)
               .path('DESTINATION')
-              .changedSide(this.side)
-              .remoteId(dbBuilders.id())
+              .unmerged(this.side)
               .build()
 
             const sideEffects = await mergeSideEffects(this, () =>
@@ -3048,7 +3294,8 @@ describe('Merge', function() {
                 _.defaults(
                   {
                     sides: increasedSides(was.sides, this.side, 1),
-                    moveFrom: movedDir
+                    moveFrom: movedDir,
+                    [otherSide(this.side)]: was[otherSide(this.side)]
                   },
                   _.omit(doc, ['_rev'])
                 ),
@@ -3087,7 +3334,6 @@ describe('Merge', function() {
         .metadir()
         .path('trashed-folder')
         .upToDate()
-        .remoteId(dbBuilders.id())
         .trashed()
         .create()
       await builders
@@ -3098,6 +3344,7 @@ describe('Merge', function() {
       const doc = await builders
         .metadir(was)
         .path(`.cozy_trash/${was.path}`)
+        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -3320,6 +3567,7 @@ describe('Merge', function() {
         const doc = builders
           .metafile(was)
           .trashed()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -3351,6 +3599,7 @@ describe('Merge', function() {
         const doc = builders
           .metafile(was)
           .trashed()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -3375,6 +3624,7 @@ describe('Merge', function() {
           .metadir()
           .path(was.path)
           .trashed()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -3403,6 +3653,7 @@ describe('Merge', function() {
         const doc = builders
           .metadir(was)
           .trashed()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -3434,6 +3685,7 @@ describe('Merge', function() {
         const doc = builders
           .metadir(was)
           .trashed()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -3458,6 +3710,7 @@ describe('Merge', function() {
           .metafile()
           .path(was.path)
           .trashed()
+          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -3541,7 +3794,6 @@ describe('Merge', function() {
           .ino(1)
           .noFileid()
           .create()
-
         await this.merge.migrateFileid(_.cloneDeep(existing), fileid)
 
         updatedDoc = await this.pouch.db.get(existing._id)

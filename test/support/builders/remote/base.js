@@ -9,6 +9,7 @@ const {
   TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../../core/remote/constants')
+const metadata = require('../../../../core/metadata')
 const timestamp = require('../../../../core/utils/timestamp')
 
 const dbBuilders = require('../db')
@@ -31,6 +32,7 @@ module.exports = class RemoteBaseBuilder /*:: <T: MetadataRemoteInfo> */ {
     this.cozy = cozy
     if (old) {
       this.remoteDoc = _.cloneDeep(old)
+      this.shortRev(metadata.extractRevNumber(old) + 1)
     } else {
       const name = 'whatever'
       // $FlowFixMe dates are added in build

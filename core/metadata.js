@@ -506,9 +506,15 @@ function dissociateRemote(doc /*: Metadata */) {
   if (doc.remote) delete doc.remote
 }
 
+function dissociateLocal(doc /*: Metadata */) {
+  if (doc.sides && doc.sides.local) delete doc.sides.local
+  if (doc.local) delete doc.local
+}
+
 function markAsUnsyncable(doc /*: Metadata */) {
   removeActionHints(doc)
   dissociateRemote(doc)
+  dissociateLocal(doc)
   doc._deleted = true
 }
 
