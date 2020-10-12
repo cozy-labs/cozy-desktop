@@ -73,11 +73,9 @@ function convertToDestinationAddition(
   dst /*: Metadata */
 ) {
   // Delete source
-  if (src.moveTo) delete src.moveTo
   metadata.markAsUnsyncable(src)
 
   // Create destination
-  if (dst.moveFrom) delete dst.moveFrom
   metadata.markAsNew(dst)
   metadata.markSide(side, dst)
 }

@@ -31,12 +31,13 @@ const {
   CONFLICT_REGEXP
 } = metadata
 const { Ignore } = require('../../core/ignore')
-const { FILES_DOCTYPE } = require('../../core/remote/constants')
+const { FILES_DOCTYPE, TRASH_DIR_NAME } = require('../../core/remote/constants')
 const stater = require('../../core/local/stater')
 const { NOTE_MIME_TYPE } = require('../../core/remote/constants')
 
 /*::
 import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../core/metadata'
+import type { RemoteBase } from '../../core/remote/document'
 */
 
 const { platform } = process
@@ -1464,6 +1465,229 @@ describe('metadata', function() {
           ).equal(path.join(newParentPath, childName))
         })
       })
+    })
+  })
+
+  describe('updateLocal', () => {
+    it('adds the local attribute if it is missing', () => {
+      const doc = builders
+        .metafile()
+        .ino(1)
+        .unmerged('local')
+        .noLocal()
+        .build()
+      const expectedAttributes =
+        process.platform === 'win32'
+          ? metadata.LOCAL_ATTRIBUTES
+          : _.without(metadata.LOCAL_ATTRIBUTES, 'fileid')
+
+      metadata.updateLocal(doc)
+
+      should(doc).have.property('local')
+      should(doc.local).have.properties(expectedAttributes)
+    })
+
+    it('fetches the local attributes from the main doc', () => {
+      const file = builders
+        .metafile()
+        .ino(1)
+        .md5sum('checksum')
+        .size(666)
+        .type('georges/washington')
+        .executable(true)
+        .updatedAt('1989-11-14T03:30:23.293Z')
+        .unmerged('local')
+        .noLocal()
+        .build()
+
+      metadata.updateLocal(file)
+
+      should(file.local).have.properties({
+        docType: 'file',
+        ino: 1,
+        md5sum: 'checksum',
+        size: 666,
+        class: 'georges',
+        mime: 'georges/washington',
+        // XXX: files are never executable on Windows
+        executable: process.platform === 'win32' ? false : true,
+        updated_at: '1989-11-14T03:30:23.293Z'
+      })
+
+      const dir = builders
+        .metadir()
+        .ino(2)
+        .updatedAt('2020-11-14T03:30:23.293Z')
+        .unmerged('local')
+        .noLocal()
+        .build()
+
+      metadata.updateLocal(dir)
+
+      should(dir.local).have.properties({
+        docType: 'folder',
+        ino: 2,
+        updated_at: '2020-11-14T03:30:23.293Z'
+      })
+      should(dir.local).not.have.properties([
+        'md5sum',
+        'size',
+        'class',
+        'mime',
+        'executable'
+      ])
+    })
+
+    it('prefers the provided local attributes', () => {
+      const file = builders
+        .metafile()
+        .ino(1)
+        .md5sum('checksum')
+        .size(666)
+        .type('georges/washington')
+        .updatedAt('1989-11-14T03:30:23.293Z')
+        .unmerged('local')
+        .noLocal()
+        .build()
+
+      metadata.updateLocal(file, {
+        ino: 2,
+        md5sum: 'other',
+        size: 333,
+        mime: 'text/plain',
+        executable: true,
+        updated_at: '2020-11-14T03:30:23.293Z'
+      })
+
+      should(file.local).have.properties({
+        docType: 'file',
+        ino: 2,
+        md5sum: 'other',
+        size: 333,
+        // XXX: we should maybe make sure mime and class are in sync
+        class: 'georges',
+        mime: 'text/plain',
+        // XXX: files are never executable on Windows
+        executable: process.platform === 'win32' ? false : true,
+        updated_at: '2020-11-14T03:30:23.293Z'
+      })
+    })
+
+    it('sets the local executable attribute to false if it is missing in the main doc', () => {
+      const doc = builders
+        .metafile()
+        .noLocal()
+        .build()
+      should.not.exist(doc.executable)
+
+      metadata.updateLocal(doc)
+
+      should(doc.local).have.property('executable', false)
+    })
+  })
+
+  describe('updateRemote', () => {
+    it('adds the remote attribute if it is missing', () => {
+      const remoteFile = builders.remoteFile().build()
+      const doc = builders
+        .metafile()
+        .unmerged('remote')
+        .noRemote()
+        .build()
+
+      metadata.updateRemote(doc, remoteFile)
+
+      should(doc).have.property('remote')
+      // XXX: Non exhaustive list of attributes
+      should(doc.remote).have.properties([
+        'type',
+        '_id',
+        '_rev',
+        'path',
+        'created_at',
+        'updated_at',
+        'cozyMetadata'
+      ])
+    })
+
+    it('keeps non-overwritten remote attributes', () => {
+      const file = builders
+        .metafile()
+        .path('parent/OLD')
+        .md5sum('checksum')
+        .size(666)
+        .type('georges/washington')
+        .executable(true)
+        .updatedAt('1989-11-14T03:30:23.293Z')
+        .unmerged('remote')
+        .build()
+
+      metadata.updateRemote(file, {
+        path: '/parent/NEW'
+      })
+
+      should(file.remote).have.properties({
+        type: file.remote.type,
+        _id: file.remote._id,
+        _rev: file.remote._rev,
+        path: '/parent/NEW',
+        created_at: file.remote.created_at,
+        updated_at: file.remote.updated_at,
+        cozyMetadata: file.remote.cozyMetadata
+      })
+    })
+
+    it('builds the remote path if it is missing in the new remote', () => {
+      const trashedRemoteFile /*: RemoteBase */ = {
+        _id: '123abc',
+        _rev: '1-xxx',
+        _type: 'file',
+        dir_id: '456def',
+        name: 'OLD',
+        trashed: true,
+        tags: [],
+        created_at: '1989-11-14T03:30:23.293Z',
+        updated_at: '1989-11-14T03:30:23.293Z'
+      }
+      const trashedFile = builders
+        .metafile()
+        .path('parent/dir/OLD')
+        .updatedAt('1989-11-14T03:30:23.293Z')
+        .sides({ local: 1 })
+        .build()
+
+      metadata.updateRemote(trashedFile, trashedRemoteFile)
+
+      should(trashedFile).have.property('remote')
+      should(trashedFile.remote).have.property(
+        'path',
+        path.posix.join(TRASH_DIR_NAME, 'OLD')
+      )
+
+      const remoteFile /*: RemoteBase */ = {
+        _id: '123abc',
+        _rev: '1-xxx',
+        _type: 'file',
+        dir_id: '456def',
+        name: 'OLD',
+        tags: [],
+        created_at: '1989-11-14T03:30:23.293Z',
+        updated_at: '1989-11-14T03:30:23.293Z'
+      }
+      const file = builders
+        .metafile()
+        .path('parent/OLD')
+        .updatedAt('1989-11-14T03:30:23.293Z')
+        .sides({ local: 1 })
+        .build()
+
+      metadata.updateRemote(file, remoteFile)
+
+      should(file).have.property('remote')
+      should(file.remote).have.property(
+        'path',
+        path.posix.join(...file.path.split(path.sep))
+      )
     })
   })
 })

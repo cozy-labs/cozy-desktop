@@ -47,7 +47,7 @@ const {
   detectPathIncompatibilities,
   detectPathLengthIncompatibility
 } = require('./incompatibilities/platform')
-const { DIR_TYPE, FILE_TYPE, TRASH_DIR_ID } = require('./remote/constants')
+const { DIR_TYPE, FILE_TYPE, TRASH_DIR_NAME } = require('./remote/constants')
 const { SIDE_NAMES, otherSide } = require('./side')
 
 /*::
@@ -167,6 +167,7 @@ switch (platform) {
 }
 
 module.exports = {
+  LOCAL_ATTRIBUTES,
   assignId,
   assignMaxDate,
   assignPlatformIncompatibilities,
@@ -506,9 +507,15 @@ function dissociateRemote(doc /*: Metadata */) {
   if (doc.remote) delete doc.remote
 }
 
+function dissociateLocal(doc /*: Metadata */) {
+  if (doc.sides && doc.sides.local) delete doc.sides.local
+  if (doc.local) delete doc.local
+}
+
 function markAsUnsyncable(doc /*: Metadata */) {
   removeActionHints(doc)
   dissociateRemote(doc)
+  dissociateLocal(doc)
   doc._deleted = true
 }
 
@@ -864,17 +871,19 @@ function shouldIgnore(
   })
 }
 
-function updateLocal(doc /*: Metadata */, newLocal /*: ?Object */ = {}) {
+function updateLocal(doc /*: Metadata */, newLocal /*: Object */ = {}) {
   // Boolean attributes not set in doc when false will not override an existing
   // truthy value.
   // This is the case for `executable` and we need to provide a default falsy
   // value to override the `newLocal` executable value in all cases.
+  const defaults =
+    isFile(doc) &&
+    (process.platform === 'win32' ||
+      (doc.executable == null && newLocal.executable == null))
+      ? { executable: false }
+      : {}
   doc.local = _.pick(
-    _.defaults(
-      _.cloneDeep(newLocal),
-      isFile(doc) ? { executable: false } : {},
-      _.cloneDeep(doc)
-    ),
+    _.defaults(defaults, _.cloneDeep(newLocal), _.cloneDeep(doc)),
     LOCAL_ATTRIBUTES
   )
 }
@@ -894,7 +903,7 @@ function updateRemote(
           ? remotePath.substring(1)
           : remotePath
         : newRemote.trashed
-        ? path.posix.join(TRASH_DIR_ID, newRemote.name)
+        ? path.posix.join(TRASH_DIR_NAME, newRemote.name)
         : path.posix.join(...doc.path.split(path.sep))
     },
     _.cloneDeep(doc.remote)

@@ -38,6 +38,13 @@ function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
         method !== 'emit' ||
         !['local-start', 'local-end', 'sync-target'].includes(call.args[0])
       ) {
+        // XXX: buildFile & buildDir always add the `remote` attribute even when
+        // it's not defined.
+        // Metadata builders won't add it though and changing the implementation
+        // will mean a lot of tests to update so we simply remove the attribute
+        // if it's undefined to match the builders data.
+        const doc = call.args[1]
+        if (doc && doc.remote == undefined) delete doc.remote
         dispatchedCalls[method].push(call.args)
       }
     }
@@ -620,8 +627,8 @@ describe('core/local/atom/dispatch.loop()', function() {
             .path(newDirectoryPath)
             .updatedAt(updatedAt)
             .ino(1)
-            .noRemote()
             .noTags()
+            .unmerged('local')
             .build()
 
           await dispatch.loop(channel, stepOptions).pop()
@@ -656,8 +663,8 @@ describe('core/local/atom/dispatch.loop()', function() {
           .path(newDirectoryPath)
           .updatedAt(updatedAt)
           .ino(1)
-          .noRemote()
           .noTags()
+          .unmerged('local')
           .build()
 
         await dispatch.loop(channel, stepOptions).pop()
