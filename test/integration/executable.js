@@ -17,13 +17,13 @@ const { platform } = process
 describe('Executable handling', () => {
   let cozy, helpers, syncDir
 
-  before(configHelpers.createConfig)
-  before(configHelpers.registerClient)
+  beforeEach(configHelpers.createConfig)
+  beforeEach(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
 
   afterEach(pouchHelpers.cleanDatabase)
-  after(configHelpers.cleanConfig)
+  afterEach(configHelpers.cleanConfig)
 
   beforeEach(async function() {
     cozy = cozyHelpers.cozy
@@ -41,7 +41,12 @@ describe('Executable handling', () => {
 
     return {
       local: mode,
-      pouch: doc.executable,
+      pouch: {
+        local: doc.local && doc.local.executable,
+        remote:
+          doc.remote && doc.remote.type === 'file' && doc.remote.executable,
+        synced: doc.executable
+      },
       remote: remote.attributes.executable
     }
   }
@@ -61,7 +66,11 @@ describe('Executable handling', () => {
 
         should(await executableStatus('file')).deepEqual({
           local: '777',
-          pouch: true,
+          pouch: {
+            local: true,
+            remote: true,
+            synced: true
+          },
           remote: true
         })
         should(await unmergedChanges()).deepEqual([])
@@ -79,7 +88,11 @@ describe('Executable handling', () => {
           platform === 'win32'
             ? WINDOWS_DEFAULT_MODE // actually the same, but better separate
             : '666',
-        pouch: undefined,
+        pouch: {
+          local: false,
+          remote: false,
+          synced: false
+        },
         remote: false
       })
       should(await unmergedChanges()).deepEqual([])
@@ -95,7 +108,11 @@ describe('Executable handling', () => {
 
       should(await executableStatus('file')).deepEqual({
         local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '755', // assuming umask 022
-        pouch: true,
+        pouch: {
+          local: platform !== 'win32',
+          remote: true,
+          synced: true
+        },
         remote: true
       })
       should(await unmergedChanges()).deepEqual([])
@@ -110,7 +127,11 @@ describe('Executable handling', () => {
 
       should(await executableStatus('file')).deepEqual({
         local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '644', // assuming umask 022
-        pouch: undefined,
+        pouch: {
+          local: false,
+          remote: false,
+          synced: false
+        },
         remote: false
       })
       should(await unmergedChanges()).deepEqual([])
@@ -131,7 +152,11 @@ describe('Executable handling', () => {
 
           should(await executableStatus('file')).deepEqual({
             local: '766',
-            pouch: true,
+            pouch: {
+              local: true,
+              remote: true,
+              synced: true
+            },
             remote: true
           })
           should(await unmergedChanges()).deepEqual([])
@@ -146,8 +171,12 @@ describe('Executable handling', () => {
         await helpers.flushLocalAndSyncAll()
 
         should(await executableStatus('file')).deepEqual({
-          local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '755',
-          pouch: true,
+          local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '755', // assuming umask 022
+          pouch: {
+            local: platform !== 'win32',
+            remote: true,
+            synced: true
+          },
           remote: true
         })
         should(await unmergedChanges()).deepEqual([])
@@ -170,7 +199,11 @@ describe('Executable handling', () => {
 
           should(await executableStatus('file')).deepEqual({
             local: '644',
-            pouch: undefined,
+            pouch: {
+              local: false,
+              remote: false,
+              synced: false
+            },
             remote: false
           })
           should(await unmergedChanges()).deepEqual([])
@@ -186,8 +219,49 @@ describe('Executable handling', () => {
 
         should(await executableStatus('file')).deepEqual({
           local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '644',
-          pouch: undefined,
+          pouch: {
+            local: false,
+            remote: false,
+            synced: false
+          },
           remote: false
+        })
+        should(await unmergedChanges()).deepEqual([])
+      })
+    })
+
+    describe('moving it locally', () => {
+      it('is executable everywhere, except on Windows', async () => {
+        await syncDir.move('file', 'moved')
+        await helpers.flushLocalAndSyncAll()
+
+        should(await executableStatus('moved')).deepEqual({
+          local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '755',
+          pouch: {
+            local: platform != 'win32',
+            remote: true,
+            synced: true
+          },
+          remote: true
+        })
+        should(await unmergedChanges()).deepEqual([])
+      })
+    })
+
+    describe('moving it remotely', () => {
+      it('is executable everywhere, except on Windows', async () => {
+        await cozy.files.updateAttributesByPath('/file', { name: 'moved' })
+        await helpers.pullAndSyncAll()
+        await helpers.flushLocalAndSyncAll()
+
+        should(await executableStatus('moved')).deepEqual({
+          local: platform === 'win32' ? WINDOWS_DEFAULT_MODE : '755',
+          pouch: {
+            local: platform != 'win32',
+            remote: true,
+            synced: true
+          },
+          remote: true
         })
         should(await unmergedChanges()).deepEqual([])
       })

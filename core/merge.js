@@ -252,6 +252,12 @@ class Merge {
         if (file.local && doc.local == null) {
           doc.local = file.local
         }
+        // If file is updated on Windows, it will never be executable so we keep
+        // the existing value.
+        if (side === 'local' && process.platform === 'win32') {
+          doc.executable = file.executable
+        }
+
         if (metadata.sameFile(file, doc)) {
           if (needsFileidMigration(file, doc.fileid)) {
             return this.migrateFileid(file, doc.fileid)
@@ -320,6 +326,11 @@ class Merge {
       // If file was updated on remote Cozy, doc won't have local attribute
       if (file.local && doc.local == null) {
         doc.local = file.local
+      }
+      // If file is updated on Windows, it will never be executable so we keep
+      // the existing value.
+      if (side === 'local' && process.platform === 'win32') {
+        doc.executable = file.executable
       }
 
       if (
@@ -507,6 +518,12 @@ class Merge {
     } else if (was.sides && was.sides[side]) {
       metadata.assignMaxDate(doc, was)
       move(side, was, doc)
+
+      // If file is moved on Windows, it will never be executable so we keep the
+      // existing value.
+      if (side === 'local' && process.platform === 'win32') {
+        doc.executable = was.executable
+      }
 
       const file /*: ?Metadata */ = await this.pouch.byIdMaybe(doc._id)
       if (file) {

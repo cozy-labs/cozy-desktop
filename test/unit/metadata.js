@@ -83,6 +83,7 @@ describe('metadata', function() {
         remote: remoteDoc,
         size: 78,
         tags: ['foo'],
+        executable: false,
         cozyMetadata: {
           createdOn: 'alice.mycozy.cloud'
         },
@@ -696,31 +697,6 @@ describe('metadata', function() {
       ).be.true()
     })
 
-    it('does not fail when one file has executable: undefined', function() {
-      const a = builders
-        .metafile()
-        .path('foo/bar')
-        .data('some data')
-        .tags('qux')
-        .updatedAt('2015-12-01T11:22:56.517Z')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-      const b = _.clone(a)
-      b.executable = undefined
-      const c = _.clone(a)
-      c.executable = false
-      const d = _.clone(a)
-      d.executable = true
-      should(sameFile(a, b)).be.true()
-      should(sameFile(a, c)).be.true()
-      should(sameFile(a, d)).be.false()
-      should(sameFile(b, c)).be.true()
-      should(sameFile(b, d)).be.false()
-      should(sameFile(c, d)).eql(process.platform === 'win32')
-    })
-
     it('does not fail when a property is absent on one side and undefined on the other', function() {
       const a = builders
         .metafile()
@@ -933,7 +909,7 @@ describe('metadata', function() {
         mime: 'image/jpeg'
       })
       should(doc).have.property('updated_at')
-      should.not.exist(doc.executable)
+      should(doc).have.property('executable', false)
 
       const remote = builders.remoteFile().build()
       should(
@@ -956,7 +932,7 @@ describe('metadata', function() {
         mime: NOTE_MIME_TYPE
       })
       should(doc).have.property('updated_at')
-      should.not.exist(doc.executable)
+      should(doc).have.property('executable', false)
 
       const remote = builders.remoteFile().build()
       should(
@@ -1488,7 +1464,7 @@ describe('metadata', function() {
     })
 
     it('fetches the local attributes from the main doc', () => {
-      const file = builders
+      const file1 = builders
         .metafile()
         .ino(1)
         .md5sum('checksum')
@@ -1500,9 +1476,9 @@ describe('metadata', function() {
         .noLocal()
         .build()
 
-      metadata.updateLocal(file)
+      metadata.updateLocal(file1)
 
-      should(file.local).have.properties({
+      should(file1.local).have.properties({
         docType: 'file',
         ino: 1,
         md5sum: 'checksum',
@@ -1513,6 +1489,19 @@ describe('metadata', function() {
         executable: process.platform === 'win32' ? false : true,
         updated_at: '1989-11-14T03:30:23.293Z'
       })
+
+      const file2 = builders
+        .metafile()
+        .executable(false)
+        .unmerged('local')
+        .noLocal()
+        .build()
+
+      metadata.updateLocal(file2)
+
+      should(file2.local)
+        .have.property('executable')
+        .be.false()
 
       const dir = builders
         .metadir()
@@ -1571,18 +1560,6 @@ describe('metadata', function() {
         executable: process.platform === 'win32' ? false : true,
         updated_at: '2020-11-14T03:30:23.293Z'
       })
-    })
-
-    it('sets the local executable attribute to false if it is missing in the main doc', () => {
-      const doc = builders
-        .metafile()
-        .noLocal()
-        .build()
-      should.not.exist(doc.executable)
-
-      metadata.updateLocal(doc)
-
-      should(doc.local).have.property('executable', false)
     })
   })
 
