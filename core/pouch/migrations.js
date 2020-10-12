@@ -12,7 +12,7 @@ const metadata = require('../metadata')
 
 /*::
 import type { Pouch } from './'
-import type { Metadata } from '../metadata'
+import type { SavedMetadata } from '../metadata'
 
 type PouchDBInfo = {
   db_name: string,
@@ -40,8 +40,8 @@ export type Migration = {
   baseSchemaVersion: SchemaVersion,
   targetSchemaVersion: SchemaVersion,
   description: string,
-  affectedDocs: (Metadata[]) => Metadata[],
-  run: (Metadata[]) => Metadata[]
+  affectedDocs: (SavedMetadata[]) => SavedMetadata[],
+  run: (SavedMetadata[]) => SavedMetadata[]
 }
 */
 
@@ -60,10 +60,10 @@ const migrations /*: Migration[] */ = [
     baseSchemaVersion: SCHEMA_INITIAL_VERSION,
     targetSchemaVersion: 1,
     description: 'Adding sides.target with value of _rev',
-    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(doc => doc.sides == null || doc.sides.target == null)
     },
-    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.map(doc => {
         doc.sides = doc.sides || {}
         doc.sides.target = metadata.extractRevNumber(doc)
@@ -75,7 +75,7 @@ const migrations /*: Migration[] */ = [
     baseSchemaVersion: 1,
     targetSchemaVersion: 2,
     description: 'Removing overwrite attribute of synced documents',
-    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(
         doc =>
           doc.overwrite &&
@@ -84,7 +84,7 @@ const migrations /*: Migration[] */ = [
           doc.sides.target === doc.sides.remote
       )
     },
-    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.map(doc => {
         if (doc.overwrite) delete doc.overwrite
         return doc
@@ -95,7 +95,7 @@ const migrations /*: Migration[] */ = [
     baseSchemaVersion: 2,
     targetSchemaVersion: 3,
     description: 'Marking Cozy Notes for refetch to avoid conflicts',
-    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(
         doc =>
           doc.mime === 'text/vnd.cozy.note+markdown' &&
@@ -106,7 +106,7 @@ const migrations /*: Migration[] */ = [
           doc.sides.remote
       )
     },
-    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.map(doc => {
         if (doc.sides && doc.sides.local && doc.sides.remote) {
           doc.sides.target =
@@ -121,10 +121,10 @@ const migrations /*: Migration[] */ = [
     baseSchemaVersion: 3,
     targetSchemaVersion: 4,
     description: 'Generating files local Metadata info with current Metadata',
-    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(doc => doc.docType === 'file')
     },
-    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.map(doc => {
         // $FlowFixMe path was not present when this migration was created
         doc.local = {
@@ -146,7 +146,7 @@ const migrations /*: Migration[] */ = [
     baseSchemaVersion: 4,
     targetSchemaVersion: 5,
     description: 'Removing moveFrom attribute of synced documents',
-    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(
         doc =>
           doc.moveFrom &&
@@ -155,7 +155,7 @@ const migrations /*: Migration[] */ = [
           doc.sides.target === doc.sides.remote
       )
     },
-    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.map(doc => {
         if (doc.moveFrom) delete doc.moveFrom
         return doc
@@ -166,10 +166,10 @@ const migrations /*: Migration[] */ = [
     baseSchemaVersion: 5,
     targetSchemaVersion: 6,
     description: 'Generating folders local Metadata info with current Metadata',
-    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(doc => doc.docType === 'folders')
     },
-    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.map(doc => {
         // $FlowFixMe path was not present when this migration was created
         doc.local = {
@@ -186,10 +186,10 @@ const migrations /*: Migration[] */ = [
     baseSchemaVersion: 6,
     targetSchemaVersion: 7,
     description: 'Add path to local and remote metadata',
-    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(doc => doc.local != null || doc.remote != null)
     },
-    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.map(doc => {
         if (doc.local) doc.local.path = doc.path
         if (doc.remote)
@@ -202,12 +202,12 @@ const migrations /*: Migration[] */ = [
     baseSchemaVersion: 7,
     targetSchemaVersion: 8,
     description: 'Set all files executable attribute',
-    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(
         doc => doc.docType === 'file' && doc.executable == null
       )
     },
-    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.map(doc => {
         doc.executable = false
         if (doc.local && doc.local.executable == null) {
@@ -276,7 +276,7 @@ async function migrate(
       // Keep track of docs that were not read from the changesfeed already
       const unsyncedDocIds = await pouch.unsyncedDocIds()
 
-      const docs /*: Metadata[] */ = await pouch.allDocs()
+      const docs /*: SavedMetadata[] */ = await pouch.allDocs()
       const affectedDocs = migration.affectedDocs(docs)
       const migratedDocs = migration.run(affectedDocs)
 
@@ -387,7 +387,7 @@ async function safeReplicate(
 }
 
 async function save(
-  docs /*: Metadata[] */,
+  docs /*: SavedMetadata[] */,
   db /*: PouchDB */
 ) /*: Promise<MigrationResult> */ {
   const migrationResult /* MigrationResult */ = migrationNoop()

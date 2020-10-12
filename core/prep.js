@@ -15,7 +15,11 @@ const logger = require('./utils/logger')
 import type { Config } from './config'
 import type { Ignore } from './ignore'
 import type { Merge } from './merge'
-import type { Metadata, RemoteRevisionsByID } from './metadata'
+import type {
+  Metadata,
+  SavedMetadata,
+  RemoteRevisionsByID
+} from './metadata'
 import type { SideName } from './side'
 */
 
@@ -56,7 +60,6 @@ class Prep {
     metadata.ensureValidChecksum(doc)
 
     doc.docType = 'file'
-    metadata.assignId(doc)
     if (side === 'local' && metadata.shouldIgnore(doc, this.ignore)) {
       return
     }
@@ -72,7 +75,6 @@ class Prep {
     metadata.ensureValidChecksum(doc)
 
     doc.docType = 'file'
-    metadata.assignId(doc)
     if (side === 'local' && metadata.shouldIgnore(doc, this.ignore)) {
       return
     }
@@ -86,7 +88,6 @@ class Prep {
     metadata.ensureValidPath(doc)
 
     doc.docType = 'folder'
-    metadata.assignId(doc)
     if (side === 'local' && metadata.shouldIgnore(doc, this.ignore)) {
       return
     }
@@ -102,7 +103,7 @@ class Prep {
   async moveFileAsync(
     side /*: SideName */,
     doc /*: Metadata */,
-    was /*: Metadata */
+    was /*: SavedMetadata */
   ) {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
     const { path } = doc
@@ -121,8 +122,6 @@ class Prep {
     }
 
     doc.docType = 'file'
-    metadata.assignId(doc)
-    metadata.assignId(was)
     let docIgnored = metadata.shouldIgnore(doc, this.ignore)
     let wasIgnored = metadata.shouldIgnore(was, this.ignore)
     if (side === 'local' && docIgnored && wasIgnored) {
@@ -145,7 +144,7 @@ class Prep {
   async moveFolderAsync(
     side /*: SideName */,
     doc /*: Metadata */,
-    was /*: Metadata */,
+    was /*: SavedMetadata */,
     newRemoteRevs /*: ?RemoteRevisionsByID */
   ) {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFolderAsync')
@@ -164,8 +163,6 @@ class Prep {
     }
 
     doc.docType = 'folder'
-    metadata.assignId(doc)
-    metadata.assignId(was)
     let docIgnored = metadata.shouldIgnore(doc, this.ignore)
     let wasIgnored = metadata.shouldIgnore(was, this.ignore)
     if (side === 'local' && docIgnored && wasIgnored) {
@@ -189,8 +186,7 @@ class Prep {
     log.debug({ path: doc && doc.path, oldpath: was.path }, 'trashFileAsync')
     metadata.ensureValidPath(was)
     const trashed = {
-      path: was.path,
-      _id: metadata.id(was.path)
+      path: was.path
     }
 
     if (!doc) {
@@ -201,7 +197,6 @@ class Prep {
     metadata.ensureValidPath(doc)
     doc.trashed = true
     doc.docType = 'file'
-    metadata.assignId(doc)
 
     // TODO metadata.shouldIgnore
     return this.merge.trashFileAsync(side, trashed, doc)
@@ -216,8 +211,7 @@ class Prep {
     log.debug({ path: doc && doc.path, oldpath: was.path }, 'trashFolderAsync')
     metadata.ensureValidPath(was)
     const trashed = {
-      path: was.path,
-      _id: metadata.id(was.path)
+      path: was.path
     }
 
     if (!doc) {
@@ -228,7 +222,6 @@ class Prep {
     metadata.ensureValidPath(doc)
     doc.trashed = true
     doc.docType = 'folder'
-    metadata.assignId(doc)
 
     // TODO metadata.shouldIgnore
     return this.merge.trashFolderAsync(side, trashed, doc)
@@ -236,12 +229,11 @@ class Prep {
 
   // Expectations:
   //   - the file path is present and valid
-  async deleteFileAsync(side /*: SideName */, doc /*: Metadata */) {
+  async deleteFileAsync(side /*: SideName */, doc /*: SavedMetadata */) {
     log.debug({ path: doc.path }, 'deleteFileAsync')
     metadata.ensureValidPath(doc)
 
     doc.docType = 'file'
-    metadata.assignId(doc)
     if (side === 'local' && metadata.shouldIgnore(doc, this.ignore)) {
       return
     }
@@ -250,12 +242,11 @@ class Prep {
 
   // Expectations:
   //   - the folder path is present and valid
-  async deleteFolderAsync(side /*: SideName */, doc /*: Metadata */) {
+  async deleteFolderAsync(side /*: SideName */, doc /*: SavedMetadata */) {
     log.debug({ path: doc.path }, 'deleteFolderAsync')
     metadata.ensureValidPath(doc)
 
     doc.docType = 'folder'
-    metadata.assignId(doc)
     if (side === 'local' && metadata.shouldIgnore(doc, this.ignore)) {
       return
     }

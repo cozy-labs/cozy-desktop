@@ -13,6 +13,10 @@ const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
 const { onPlatform } = require('../support/helpers/platform')
 
+/*::
+import type { SavedMetadata } from '../../core/metadata'
+*/
+
 const builders = new Builders()
 const cozy = cozyHelpers.cozy
 
@@ -29,10 +33,6 @@ describe('Move', () => {
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(() => helpers.local.clean())
-  afterEach(pouchHelpers.cleanDatabase)
-  after(configHelpers.cleanConfig)
-
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
     pouch = helpers.pouch
@@ -41,6 +41,10 @@ describe('Move', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+
+  afterEach(() => helpers.local.clean())
+  afterEach(pouchHelpers.cleanDatabase)
+  after(configHelpers.cleanConfig)
 
   describe('file', () => {
     let file, src, dst
@@ -1110,10 +1114,12 @@ describe('Move', () => {
           const doc = await helpers.docByPath(
             path.join(parent.attributes.name, file.attributes.name)
           )
-          await helpers.pouch.put({
-            ...doc,
-            path: doc.path.normalize('NFD')
-          })
+          await helpers.pouch.put(
+            ({
+              ...doc,
+              path: doc.path.normalize('NFD')
+            } /*: SavedMetadata */)
+          )
         })
 
         it('does not trash the file', async () => {

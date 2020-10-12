@@ -304,13 +304,13 @@ function squashMoves(changes /*: LocalChange[] */) {
     const a = changes[i]
     if (a.type !== 'DirMove' && a.type !== 'FileMove') continue
     const pathA = a.path.normalize()
-    const oldPathA = a.old && a.old.path.normalize()
+    const oldPathA = a.old.path.normalize()
 
     for (let j = i + 1; j < changes.length; j++) {
       const b = changes[j]
       if (b.type !== 'DirMove' && b.type !== 'FileMove') continue
       const pathB = b.path.normalize()
-      const oldPathB = b.old && b.old.path.normalize()
+      const oldPathB = b.old.path.normalize()
 
       // inline of LocalChange.isChildMove
       if (

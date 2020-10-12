@@ -12,7 +12,7 @@
 const _ = require('lodash')
 const path = require('path')
 
-const { id, kind } = require('../../metadata')
+const { kind } = require('../../metadata')
 const logger = require('../../utils/logger')
 const Channel = require('./channel')
 
@@ -169,7 +169,6 @@ async function initialDiff(
             batch.push({
               action: 'deleted',
               kind: kind(was),
-              _id: id(was.path),
               [STEP_NAME]: { inodeReuse: event },
               path: was.path
             })
@@ -205,7 +204,6 @@ async function initialDiff(
           const deletedEvent /*: AtomEvent */ = {
             action: 'deleted',
             kind: kind(doc),
-            _id: id(doc.path),
             path: doc.path
           }
           fixPathsAfterParentMove(renamedEvents, deletedEvent)
@@ -308,7 +306,6 @@ function fixPathsAfterParentMove(renamedEvents, event) {
       )
       if (event.oldPath !== pathFixed) {
         event.path = pathFixed
-        event._id = id(event.path)
       }
       _.set(
         event,

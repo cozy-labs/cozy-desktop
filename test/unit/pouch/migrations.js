@@ -22,6 +22,7 @@ const pouchHelpers = require('../../support/helpers/pouch')
 
 /*::
 import type { Migration } from '../../../core/pouch/migrations'
+import type { SavedMetadata } from '../../../core/metadata'
 */
 
 describe('core/pouch/migrations', function() {
@@ -148,6 +149,7 @@ describe('core/pouch/migrations', function() {
       description: 'Test migration',
       affectedDocs: docs => docs,
       run: docs =>
+        // $FlowFixMe the type of doc does not change here…
         docs.map(d => ({
           ...d,
           migrated: true

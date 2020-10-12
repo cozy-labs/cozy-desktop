@@ -24,9 +24,11 @@ const {
 
 /*::
 import type { Config } from '../config'
-import type { Metadata } from '../metadata'
+import type { Metadata, SavedMetadata } from '../metadata'
 import type { Callback } from '../utils/func'
 import type { Migration } from './migrations'
+
+export type PouchRecord = { _id: string, _rev: string, _deleted?: true }
 */
 
 const log = logger({
@@ -127,14 +129,15 @@ class Pouch {
 
   /* Mini ODM */
 
-  async allDocs() /*: Promise<Metadata[]> */ {
+  async allDocs() /*: Promise<SavedMetadata[]> */ {
     const results = await this.db.allDocs({ include_docs: true })
     return Array.from(results.rows)
       .filter(row => !row.key.startsWith('_'))
       .map(row => row.doc)
+      .sort(sortByPath)
   }
 
-  async initialScanDocs() /*: Promise<Metadata[]> */ {
+  async initialScanDocs() /*: Promise<SavedMetadata[]> */ {
     const results = await this.db.allDocs({ include_docs: true })
     return Array.from(results.rows)
       .filter(
@@ -145,26 +148,42 @@ class Pouch {
           row.doc.sides.local // Keep only docs that have existed locally
       )
       .map(row => row.doc)
+      .sort(sortByPath)
   }
 
-  put(doc /*: Metadata */) /*: Promise<void> */ {
+  async put /*:: <T: Metadata|SavedMetadata> */(
+    doc /*: T */
+  ) /*: Promise<SavedMetadata> */ {
     metadata.invariants(doc)
     const { local, remote } = doc.sides
     log.debug(
       { path: doc.path, local, remote, _deleted: doc._deleted, doc },
       'Saving metadata...'
     )
-    return this.db.put(doc)
+    if (!doc._id) {
+      const { id: _id, rev: _rev } = await this.db.post(doc)
+      return {
+        ...doc,
+        _id,
+        _rev
+      }
+    }
+    const { id: _id, rev: _rev } = await this.db.put(doc)
+    return {
+      ...doc,
+      _id,
+      _rev
+    }
   }
 
-  remove(doc /*: Metadata */) /*: Promise<*> */ {
+  remove(doc /*: SavedMetadata */) /*: Promise<SavedMetadata> */ {
     return this.put(_.defaults({ _deleted: true }, doc))
   }
 
   // WARNING: bulkDocs is not a transaction, some updates can be applied while
   // others do not.
   // Make sure lock is acquired before using it to avoid conflict.
-  async bulkDocs(docs /*: Metadata[] */) {
+  async bulkDocs /*:: <T: Metadata|SavedMetadata> */(docs /*: Array<T> */) {
     for (const doc of docs) {
       metadata.invariants(doc)
       const { path } = doc
@@ -187,7 +206,10 @@ class Pouch {
   }
 
   // Run a query and get all the results
-  async getAll(query, params = { include_docs: true }) {
+  async getAll(
+    query,
+    params = { include_docs: true }
+  ) /*: Promise<SavedMetadata[]> */ {
     try {
       const { rows } = await this.db.query(query, params)
       return rows.filter(row => row.doc != null).map(row => row.doc)
@@ -199,7 +221,7 @@ class Pouch {
 
   // Get current revision for multiple docs by ids as an index id => rev
   // non-existing documents will not be added to the index
-  async getAllRevs(paths) {
+  async getAllRevs(paths) /*: Promise<string[]> */ {
     const result = await this.db.query('byPath', {
       keys: paths.map(byPathKey)
     })
@@ -209,7 +231,7 @@ class Pouch {
     return index
   }
 
-  async byIdMaybe(id /*: string */) /*: Promise<?Metadata> */ {
+  async byIdMaybe(id /*: string */) /*: Promise<?SavedMetadata> */ {
     try {
       return await this.db.get(id)
     } catch (err) {
@@ -218,7 +240,7 @@ class Pouch {
   }
 
   // Return all the files with this checksum
-  byChecksum(checksum) {
+  byChecksum(checksum) /*: Promise<SavedMetadata[]> */ {
     let params = {
       key: checksum,
       include_docs: true
@@ -227,7 +249,7 @@ class Pouch {
   }
 
   // Return all the files and folders in this path, only at first level
-  byPath(basePath) {
+  byPath(basePath) /*: Promise<SavedMetadata[]> */ {
     const key =
       basePath === '' ? metadata.id(basePath) : metadata.id(basePath) + path.sep
     const params = {
@@ -238,7 +260,7 @@ class Pouch {
     return this.getAll('byPath', params)
   }
 
-  async bySyncedPath(fpath) {
+  async bySyncedPath(fpath) /*: Promise<?SavedMetadata> */ {
     if (!fpath) {
       return undefined
     }
@@ -255,7 +277,10 @@ class Pouch {
   }
 
   // Return all the files and folders in this path, even in subfolders
-  async byRecursivePath(basePath, { descending = false } = {}) {
+  async byRecursivePath(
+    basePath,
+    { descending = false } = {}
+  ) /*: Promise<SavedMetadata[]> */ {
     let params
     if (basePath === '') {
       params = { include_docs: true, descending }
@@ -276,7 +301,7 @@ class Pouch {
   }
 
   // Return the file/folder with this remote id
-  async byRemoteId(id) {
+  async byRemoteId(id) /*: Promise<SavedMetadata> */ {
     const params = {
       key: id,
       include_docs: true
@@ -289,7 +314,7 @@ class Pouch {
     }
   }
 
-  async byRemoteIdMaybe(id) {
+  async byRemoteIdMaybe(id) /*: Promise<?SavedMetadata> */ {
     try {
       return await this.byRemoteId(id)
     } catch (err) {
@@ -299,7 +324,9 @@ class Pouch {
     }
   }
 
-  async allByRemoteIds(remoteIds /*: * */) /* Promise<Metadata[]> */ {
+  async allByRemoteIds(
+    remoteIds /*: string[]|Set<string> */
+  ) /* Promise<SavedMetadata[]> */ {
     const params = { keys: Array.from(remoteIds), include_docs: true }
     const results = await this.db.query('byRemoteId', params)
     return results.rows.map(row => row.doc)
@@ -410,7 +437,7 @@ class Pouch {
   /* Helpers */
 
   // Retrieve a previous doc revision from its id
-  async getPreviousRev(id, revDiff) {
+  async getPreviousRev(id, revDiff) /*: Promise<SavedMetadata> */ {
     const options = {
       revs: true,
       revs_info: true,
@@ -522,6 +549,12 @@ const byPathKey = fpath => {
   const parentPath = parts.concat('').join(path.sep)
 
   return [parentPath, name]
+}
+
+const sortByPath = (docA, docB) => {
+  if (docA.path < docB.path) return -1
+  if (docA.path > docB.path) return 1
+  return 0
 }
 
 module.exports = { Pouch }

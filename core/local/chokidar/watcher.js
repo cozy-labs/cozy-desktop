@@ -34,7 +34,6 @@ const syncDir = require('../sync_dir')
 const logger = require('../../utils/logger')
 
 /*::
-import type { Metadata } from '../../metadata'
 import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
 import type { Checksumer } from '../checksumer'

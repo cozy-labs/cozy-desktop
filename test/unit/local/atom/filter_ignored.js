@@ -8,7 +8,6 @@ const { onPlatforms } = require('../../../support/helpers/platform')
 const Builders = require('../../../support/builders')
 
 const { Ignore } = require('../../../../core/ignore')
-const metadata = require('../../../../core/metadata')
 const { INITIAL_SCAN_DONE } = require('../../../../core/local/atom/event')
 const Channel = require('../../../../core/local/atom/channel')
 const filterIgnored = require('../../../../core/local/atom/filter_ignored')
@@ -123,8 +122,6 @@ onPlatforms(['linux', 'win32'], () => {
         const renamedToDeletedEvent = {
           ...ignoredRenamedDstEvent,
           action: 'deleted',
-          // $FlowFixMe ignoredRenamedDstEvent does have an oldPath attribute
-          _id: metadata.id(ignoredRenamedDstEvent.oldPath),
           path: ignoredRenamedDstEvent.oldPath,
           [filterIgnored.STEP_NAME]: {
             movedToIgnoredPath: ignoredRenamedDstEvent.path
@@ -169,8 +166,6 @@ onPlatforms(['linux', 'win32'], () => {
         const renamedToDeletedEvent = {
           ...ignoredRenamedDstEvent,
           action: 'deleted',
-          // $FlowFixMe ignoredRenamedDstEvent does have an oldPath attribute
-          _id: metadata.id(ignoredRenamedDstEvent.oldPath),
           path: ignoredRenamedDstEvent.oldPath,
           [filterIgnored.STEP_NAME]: {
             movedToIgnoredPath: ignoredRenamedDstEvent.path

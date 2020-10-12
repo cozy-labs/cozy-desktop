@@ -12,7 +12,6 @@ const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 
 const metadata = require('../../core/metadata')
 const {
-  assignId,
   assignMaxDate,
   extractRevNumber,
   invalidChecksum,
@@ -124,38 +123,6 @@ describe('metadata', function() {
         tags: ['foo']
       })
     })
-  })
-
-  describe('assignId', function() {
-    it('is available', function() {
-      let doc = { path: 'FOO' }
-      assignId(doc)
-      should(doc).have.property('_id', 'FOO')
-    })
-
-    if (['linux', 'freebsd', 'sunos'].includes(platform)) {
-      it('is case insensitive on UNIX', function() {
-        let doc = { path: 'foo/bar/café' }
-        assignId(doc)
-        should(doc).have.property('_id', 'foo/bar/café')
-      })
-    }
-
-    if (platform === 'darwin') {
-      it('is case sensitive on OSX', function() {
-        let doc = { path: 'foo/bar/café' }
-        assignId(doc)
-        should(doc).have.property('_id', 'FOO/BAR/CAFÉ')
-      })
-    }
-
-    if (platform === 'win32') {
-      it('is case sensitive on Windows', () => {
-        let doc = { path: 'foo/bar/caf\u00E9' }
-        assignId(doc)
-        should(doc).have.property('_id', 'FOO/BAR/CAF\u00C9')
-      })
-    }
   })
 
   describe('invalidPath', function() {
@@ -1193,18 +1160,16 @@ describe('metadata', function() {
           .and.endWith(ext)
       })
 
-      it('returns a doc with a correct _id', () => {
-        const newDoc = createConflictingDoc(doc)
-        should(newDoc._id)
-          .be.a.String()
-          .and.equal(metadata.id(newDoc.path))
-      })
-
       it('returns a doc with the first 180 characters of the base file name', () => {
         const newDoc = createConflictingDoc(doc)
         const conflictStart = path.basename(newDoc.path).search(CONFLICT_REGEXP)
         should(conflictStart).be.lessThanOrEqual(180)
         should(doc.path).startWith(newDoc.path.slice(0, conflictStart))
+      })
+
+      it('does not change the other attributes', () => {
+        const newDoc = createConflictingDoc(doc)
+        should(_.omit(newDoc, ['path'])).deepEqual(_.omit(doc, ['path']))
       })
     }
 
@@ -1293,29 +1258,47 @@ describe('metadata', function() {
       isIgnored.restore()
     })
 
-    it('calls isIgnored with the document _id and true when document is a folder', () => {
+    it('calls isIgnored with the document normalized path', () => {
+      metadata.shouldIgnore(
+        builders
+          .metadir()
+          .path('échange/nourriture')
+          .build(),
+        ignore
+      )
+      metadata.shouldIgnore(
+        builders
+          .metafile()
+          .path('échange/nourriture')
+          .build(),
+        ignore
+      )
+
+      should(isIgnored).have.been.calledTwice()
+    })
+
+    it('returns true when document is a folder', () => {
       const doc = builders
         .metadir()
-        .path('food')
+        .path('échange/nourriture')
         .build()
       metadata.shouldIgnore(doc, ignore)
 
       should(isIgnored.calledOnce).be.true()
       should(isIgnored.args[0]).deepEqual([
-        { relativePath: doc._id, isFolder: true }
+        { relativePath: metadata.id(doc.path), isFolder: true }
       ])
     })
 
-    it('calls isIgnored with the document _id and false when document is a file', () => {
+    it('returns false when document is a file', () => {
       const doc = builders
         .metafile()
-        .path('food')
+        .path('échange/nourriture')
         .build()
       metadata.shouldIgnore(doc, ignore)
 
-      should(isIgnored.calledOnce).be.true()
       should(isIgnored.args[0]).deepEqual([
-        { relativePath: doc._id, isFolder: false }
+        { relativePath: metadata.id(doc.path), isFolder: false }
       ])
     })
   })

@@ -2,7 +2,6 @@
  *
  * ### File
  *
- * - `_id`: the normalized path
  * - `_rev`: from PouchDB
  * - `docType`: always 'file'
  * - `path`: the original path to this file
@@ -19,7 +18,6 @@
  *
  * ### Folder
  *
- * - `_id`: the normalized path
  * - `_rev`: from PouchDB
  * - `docType`: always 'folder'
  * - `path`: the original path to this file
@@ -57,6 +55,7 @@ import type { Stats } from './local/stater'
 import type { Ignore } from './ignore'
 import type { SideName } from './side'
 import type { EventKind } from './local/atom/event'
+import type { PouchRecord } from './pouch'
 */
 
 const log = logger({
@@ -118,10 +117,11 @@ export type MetadataSidesInfo = {
 
 // The files/dirs metadata, as stored in PouchDB
 export type Metadata = {
-  _deleted?: true,
-  deleted?: true,
-  _id: string,
+  _id?: string,
   _rev?: string,
+  _deleted?: true,
+
+  deleted?: true,
   md5sum?: string,
   class?: string,
   docType: DocType,
@@ -130,7 +130,7 @@ export type Metadata = {
   updated_at: string,
   mime?: string,
   moveTo?: string, // Destination id
-  overwrite?: Metadata,
+  overwrite?: SavedMetadata,
   childMove?: boolean,
   path: string,
   local: MetadataLocalInfo,
@@ -142,14 +142,16 @@ export type Metadata = {
   incompatibilities?: *,
   ino?: number,
   fileid?: string,
-  moveFrom?: Metadata,
+  moveFrom?: SavedMetadata,
   cozyMetadata?: Object,
   metadata?: Object
 }
+
+export type SavedMetadata = PouchRecord & Metadata
 */
+
 module.exports = {
   LOCAL_ATTRIBUTES,
-  assignId,
   assignMaxDate,
   assignPlatformIncompatibilities,
   fromRemoteDoc,
@@ -244,11 +246,6 @@ function idApfsOrHfs(fpath /*: string */) {
 // Build an _id from the path for Windows (NTFS file system)
 function idNTFS(fpath /*: string */) {
   return fpath.toUpperCase()
-}
-
-// Assign an Id to a document
-function assignId(doc /*: any */) {
-  doc._id = id(doc.path)
 }
 
 function localDocType(remoteDocType /*: string */) /*: string */ {
@@ -378,7 +375,7 @@ function ensureValidPath(doc /*: {path: string} */) {
   }
 }
 
-function invariants(doc /*: Metadata */) {
+function invariants /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
   let err
   if (!doc.sides) {
     err = new Error(`Metadata has no sides`)
@@ -507,19 +504,21 @@ function dissociateLocal(doc /*: Metadata */) {
   if (doc.local) delete doc.local
 }
 
-function markAsUnsyncable(doc /*: Metadata */) {
+function markAsUnsyncable(doc /*: SavedMetadata */) {
   removeActionHints(doc)
   dissociateRemote(doc)
   dissociateLocal(doc)
   doc._deleted = true
 }
 
-function markAsNew(doc /*: Metadata */) {
+function markAsNew(doc /*: Metadata|SavedMetadata */) {
   removeActionHints(doc)
+  if (doc._id) delete doc._id
   if (doc._rev) delete doc._rev
+  if (doc._deleted) delete doc._deleted
 }
 
-function markAsUpToDate(doc /*: Metadata */) {
+function markAsUpToDate /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
   const newTarget = target(doc) + 1
   doc.sides = {
     target: newTarget,
@@ -530,7 +529,9 @@ function markAsUpToDate(doc /*: Metadata */) {
   return newTarget
 }
 
-function outOfDateSide(doc /*: Metadata */) /*: ?SideName */ {
+function outOfDateSide /*:: <T: Metadata|SavedMetadata> */(
+  doc /*: T */
+) /*: ?SideName */ {
   const localRev = _.get(doc, 'sides.local', 0)
   const remoteRev = _.get(doc, 'sides.remote', 0)
   if ((localRev === 0 || remoteRev === 0) && doc._deleted) {
@@ -685,8 +686,11 @@ function sameLocal(one /*: MetadataLocalInfo */, two /*: MetadataLocalInfo */) {
 }
 
 // Return true if the two files have the same binary content
-function sameBinary(one /*: Metadata */, two /*: Metadata */) {
-  return one.md5sum === two.md5sum
+function sameBinary(
+  one /*: { md5sum: string }|{ md5sum?: string } */,
+  two /*: { md5sum: string }|{ md5sum?: string } */
+) /*: boolean %checks */ {
+  return !!one.md5sum && !!two.md5sum && one.md5sum === two.md5sum
 }
 
 // Mark the next rev for this side
@@ -724,11 +728,14 @@ function incSides(doc /*: Metadata */) /*: void */ {
   }
 }
 
-function target(doc /*: ?Metadata */) /*: number */ {
+function target(doc /*: ?$ReadOnly<Metadata> */) /*: number */ {
   return (doc && doc.sides && doc.sides.target) || 0
 }
 
-function side(doc /*: Metadata */, sideName /*: SideName */) /*: number */ {
+function side(
+  doc /*: $ReadOnly<Metadata> */,
+  sideName /*: SideName */
+) /*: number */ {
   return (doc.sides || {})[sideName] || 0
 }
 
@@ -758,7 +765,6 @@ function buildDir(
   remote /*: ?MetadataRemoteInfo */
 ) /*: Metadata */ {
   const doc /*: Object */ = {
-    _id: id(fpath),
     path: fpath,
     docType: 'folder',
     updated_at: stats.mtime.toISOString(),
@@ -787,7 +793,6 @@ function buildFile(
   const executable = stats.mode ? (+stats.mode & EXECUTABLE_MASK) !== 0 : false
 
   const doc /*: Object */ = {
-    _id: id(filePath),
     path: filePath,
     docType: 'file',
     md5sum,
@@ -813,7 +818,6 @@ function createConflictingDoc(doc /*: Metadata */) /*: Metadata */ {
 
   const dst = _.cloneDeep(doc)
   dst.path = newPath
-  dst._id = id(newPath)
 
   return dst
 }
@@ -843,7 +847,7 @@ function shouldIgnore(
   ignoreRules /*: Ignore */
 ) /*: boolean */ {
   return ignoreRules.isIgnored({
-    relativePath: doc._id,
+    relativePath: id(doc.path),
     isFolder: doc.docType === 'folder'
   })
 }

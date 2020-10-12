@@ -11,7 +11,6 @@
 
 const _ = require('lodash')
 
-const metadata = require('../../metadata')
 const logger = require('../../utils/logger')
 
 /*::
@@ -102,7 +101,6 @@ function movedToIgnoredPath(event /*: AtomEvent */) /*: AtomEvent */ {
     action: 'deleted'
   }
   _.set(deletedEvent, [STEP_NAME, 'movedToIgnoredPath'], deletedEvent.path)
-  deletedEvent._id = metadata.id(deletedEvent.oldPath)
   deletedEvent.path = deletedEvent.oldPath
   delete deletedEvent.oldPath
 

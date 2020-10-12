@@ -4,7 +4,6 @@ const _ = require('lodash')
 const path = require('path')
 const crypto = require('crypto')
 
-const metadata = require('../../../core/metadata')
 const events = require('../../../core/local/atom/event')
 
 const statsBuilder = require('./stats')
@@ -42,8 +41,7 @@ module.exports = class AtomEventBuilder {
       this._event = {
         action: randomPick(events.ACTIONS),
         kind,
-        path: defaultPath,
-        _id: metadata.id(defaultPath)
+        path: defaultPath
       }
     }
     this._ensureStatsBuilder()
@@ -90,17 +88,11 @@ module.exports = class AtomEventBuilder {
 
   path(newPath /*: string */) /*: this */ {
     this._event.path = path.normalize(newPath)
-    this._event._id = metadata.id(this._event.path)
     return this
   }
 
   oldPath(newPath /*: string */) /*: this */ {
     this._event.oldPath = path.normalize(newPath)
-    return this
-  }
-
-  id(newId /*: string */) /*: this */ {
-    this._event._id = newId
     return this
   }
 

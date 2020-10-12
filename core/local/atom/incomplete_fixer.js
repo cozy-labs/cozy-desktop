@@ -16,7 +16,6 @@
 const path = require('path')
 
 const stater = require('../stater')
-const metadata = require('../../metadata')
 const logger = require('../../utils/logger')
 
 const STEP_NAME = 'incompleteFixer'
@@ -142,7 +141,6 @@ async function rebuildIncompleteEvent(
     },
     action: previousEvent.action,
     path: rebuiltPath,
-    _id: metadata.id(rebuiltPath),
     kind,
     md5sum
   }
@@ -167,8 +165,6 @@ function buildDeletedFromRenamed(
       action: nextEvent.action,
       // $FlowFixMe: renamed events always have an oldPath
       path: oldPath,
-      // $FlowFixMe: renamed events always have an oldPath
-      _id: metadata.id(oldPath),
       kind
     }
   }

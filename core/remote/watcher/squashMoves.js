@@ -12,7 +12,7 @@ const remoteChange = require('../change')
 const sideName = 'remote'
 
 /*::
-import type { Metadata } from '../../metadata'
+import type { Metadata, SavedMetadata } from '../../metadata'
 import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from '../change'
 */
 
@@ -49,7 +49,8 @@ const findParentMoves = (
       if (
         (previousChange.type === 'DirMove' ||
           previousChange.type === 'DescendantChange') &&
-        previousChange.doc._id === parentMove.doc._id
+        metadata.id(previousChange.doc.path) ===
+          metadata.id(parentMove.doc.path)
       ) {
         squashedParentMove = previousChange
         break
@@ -109,9 +110,8 @@ const buildMoveInsideMove = (
   child /*: RemoteFileMove|RemoteDirMove */,
   parent /*: RemoteDirMove|RemoteDescendantChange */
 ) /*: RemoteFileMove|RemoteDirMove */ => {
-  const correctedSrc /*: Metadata */ = _.clone(child.was)
+  const correctedSrc /*: SavedMetadata */ = _.clone(child.was)
   correctedSrc.path = path.join(parent.doc.path, path.basename(child.was.path))
-  correctedSrc._id = metadata.id(correctedSrc.path)
 
   if (child.type === 'FileMove') {
     return {
@@ -179,7 +179,7 @@ const squashChildren = (
   encounteredMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
 ) => {
   const originalChange = encounteredMoves.find(
-    move => move.doc._id === change.doc._id
+    move => metadata.id(move.doc.path) === metadata.id(change.doc.path)
   )
   const childrenMoves = findChildrenMoves(
     change,
@@ -207,7 +207,7 @@ const squashChildren = (
 
 const squashMoves = (
   doc /*: Metadata */,
-  was /*: Metadata */,
+  was /*: SavedMetadata */,
   previousChanges /*: RemoteChange[] */,
   encounteredMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
 ) /*: RemoteDirMove|RemoteFileMove|RemoteDescendantChange */ => {

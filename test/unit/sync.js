@@ -262,7 +262,6 @@ describe('Sync', function() {
       }
       await this.sync.apply(change)
       should(await this.pouch.bySyncedPath(change.doc.path)).have.properties({
-        _id: metadata.id('foo/bar'),
         path: initial.path,
         docType: 'file',
         sides: {
@@ -291,7 +290,6 @@ describe('Sync', function() {
       }
       await this.sync.apply(change)
       should(await this.pouch.bySyncedPath(change.doc.path)).have.properties({
-        _id: metadata.id('foo/baz'),
         path: initial.path,
         docType: 'folder',
         sides: {
@@ -652,7 +650,7 @@ describe('Sync', function() {
 
       context('without changes merged during Sync', function() {
         it('marks doc as up-to-date', async function() {
-          await updateRevs(this, doc)
+          await updateRevs(this, _.cloneDeep(doc))
 
           const updated = await this.pouch.bySyncedPath(doc.path)
           should(metadata.outOfDateSide(updated)).be.undefined()
