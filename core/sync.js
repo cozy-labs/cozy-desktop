@@ -315,8 +315,8 @@ class Sync {
 
     // FIXME: Acquire lock for as many changes as possible to prevent next huge
     // remote/local batches to acquite it first
+    const [side, sideName] = this.selectSide(doc)
     let stopMeasure = () => {}
-    let [side, sideName, rev] = this.selectSide(doc)
     try {
       stopMeasure = measureTime('Sync#applyChange:' + sideName)
 
@@ -330,7 +330,7 @@ class Sync {
           return
         }
       } else {
-        await this.applyDoc(doc, side, sideName, rev)
+        await this.applyDoc(doc, side, sideName)
       }
 
       await this.pouch.setLocalSeq(change.seq)
@@ -357,9 +357,10 @@ class Sync {
   async applyDoc(
     doc /*: Metadata */,
     side /*: Writer */,
-    sideName /*: SideName */,
-    rev /*: number */
+    sideName /*: SideName */
   ) /*: Promise<*> */ {
+    const currentRev = metadata.side(doc, sideName)
+
     if (doc.incompatibilities && sideName === 'local' && doc.moveTo == null) {
       const was = doc.moveFrom
       if (was != null && was.incompatibilities == null) {
@@ -389,7 +390,7 @@ class Sync {
       }
     } else if (doc.docType !== 'file' && doc.docType !== 'folder') {
       throw new Error(`Unknown docType: ${doc.docType}`)
-    } else if (isMarkedForDeletion(doc) && rev === 0) {
+    } else if (isMarkedForDeletion(doc) && currentRev === 0) {
       // do nothing
     } else if (doc.moveTo != null) {
       log.debug(
@@ -433,7 +434,7 @@ class Sync {
       if (doc.docType === 'file') await side.trashAsync(doc)
       else await side.deleteFolderAsync(doc)
       this.events.emit('delete-file', _.clone(doc))
-    } else if (rev === 0) {
+    } else if (currentRev === 0) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} addition`)
       await this.doAdd(side, doc)
     } else {
@@ -442,7 +443,7 @@ class Sync {
       try {
         old = (await this.pouch.getPreviousRev(
           doc._id,
-          doc.sides.target - rev
+          doc.sides.target - currentRev
         ) /*: ?Metadata */)
       } catch (err) {
         await this.doOverwrite(side, doc)
@@ -511,9 +512,9 @@ class Sync {
   selectSide(doc /*: Metadata */) {
     switch (metadata.outOfDateSide(doc)) {
       case 'local':
-        return [this.local, 'local', doc.sides.local || 0]
+        return [this.local, 'local']
       case 'remote':
-        return [this.remote, 'remote', doc.sides.remote || 0]
+        return [this.remote, 'remote']
       default:
         return []
     }
