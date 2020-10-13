@@ -397,7 +397,7 @@ describe('Sync', function() {
         updated.sides.remote
       )
       should(this.remote.overwriteFileAsync).not.be.called()
-      should(this.remote.updateFileMetadataAsync).be.calledWith(updated, synced)
+      should(this.remote.updateFileMetadataAsync).be.calledWith(updated)
     })
 
     it('calls moveAsync for a moved file', async function() {
