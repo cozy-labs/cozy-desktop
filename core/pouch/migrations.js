@@ -5,6 +5,7 @@
 
 const PouchDB = require('pouchdb')
 const uuid = require('uuid/v4')
+const path = require('path')
 
 const { PouchError } = require('./error')
 const metadata = require('../metadata')
@@ -125,6 +126,7 @@ const migrations /*: Migration[] */ = [
     },
     run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
       return docs.map(doc => {
+        // $FlowFixMe path was not present when this migration was created
         doc.local = {
           md5sum: doc.md5sum,
           class: doc.class,
@@ -169,12 +171,29 @@ const migrations /*: Migration[] */ = [
     },
     run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
       return docs.map(doc => {
+        // $FlowFixMe path was not present when this migration was created
         doc.local = {
           docType: 'folder',
           updated_at: doc.updated_at,
           ino: doc.ino,
           fileid: doc.fileid
         }
+        return doc
+      })
+    }
+  },
+  {
+    baseSchemaVersion: 6,
+    targetSchemaVersion: 7,
+    description: 'Add path to local and remote metadata',
+    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.filter(doc => doc.local != null || doc.remote != null)
+    },
+    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.map(doc => {
+        if (doc.local) doc.local.path = doc.path
+        if (doc.remote)
+          doc.remote.path = '/' + path.posix.join(...doc.path.split(path.sep))
         return doc
       })
     }

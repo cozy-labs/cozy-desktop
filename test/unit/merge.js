@@ -1560,7 +1560,7 @@ describe('Merge', function() {
           )
         )
 
-        const movedSrc = _.defaults(
+        const movedSrc = _.defaultsDeep(
           {
             moveTo: doc._id,
             _deleted: true
@@ -1945,7 +1945,7 @@ describe('Merge', function() {
 
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.defaults(
+            _.defaultsDeep(
               {
                 sides: increasedSides(banana.sides, this.side, 1),
                 path: BANANA.path,
@@ -2533,9 +2533,10 @@ describe('Merge', function() {
 
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.defaults(
+            _.defaultsDeep(
               {
                 sides: increasedSides(apple.sides, this.side, 1),
+                path: APPLE.path,
                 moveFrom: _.defaults(
                   {
                     moveTo: APPLE._id,
@@ -2543,9 +2544,9 @@ describe('Merge', function() {
                   },
                   apple
                 ),
-                [otherSide(this.side)]: apple[otherSide(this.side)]
+                [this.side]: APPLE[this.side]
               },
-              APPLE
+              _.omit(apple, ['_rev'])
             )
           ],
           resolvedConflicts: []
@@ -2739,12 +2740,13 @@ describe('Merge', function() {
             _.omit(dstDir, ['_rev'])
           ),
           _.omit(movedSrcFile, ['_rev']),
-          _.defaults(
+          _.defaultsDeep(
             {
               _id: dstFile._id,
               path: dstFile.path,
               sides: increasedSides(srcFile.sides, this.side, 1),
-              moveFrom: movedSrcFile
+              moveFrom: movedSrcFile,
+              [this.side]: { path: dstFile[this.side].path }
             },
             _.omit(srcFile, ['_rev'])
           )
@@ -2822,23 +2824,25 @@ describe('Merge', function() {
             _.omit(doc, ['_rev'])
           ),
           _.omit(movedSubfile, ['_rev']),
-          _.defaults(
+          _.defaultsDeep(
             {
               _id: metadata.id(movedPath(subfile)),
               path: movedPath(subfile),
               sides: increasedSides(subfile.sides, this.side, 1),
               moveFrom: movedSubfile,
+              [this.side]: { path: movedPath(subfile) },
               [otherSide(this.side)]: movedSubfile[otherSide(this.side)]
             },
             _.omit(subfile, ['_rev'])
           ),
           _.omit(movedSubdir, ['_rev']),
-          _.defaults(
+          _.defaultsDeep(
             {
               _id: metadata.id(movedPath(subdir)),
               path: movedPath(subdir),
               sides: increasedSides(subdir.sides, this.side, 1),
               moveFrom: movedSubdir,
+              [this.side]: { path: movedPath(subdir) },
               [otherSide(this.side)]: movedSubdir[otherSide(this.side)]
             },
             _.omit(subdir, ['_rev'])
@@ -3124,7 +3128,8 @@ describe('Merge', function() {
                 _id: metadata.id(movedPath(child)),
                 path: movedPath(child),
                 sides: increasedSides(child.sides, this.side, 1),
-                moveFrom: movedChild
+                moveFrom: movedChild,
+                [this.side]: { path: movedPath(child) }
               },
               _.omit(child, ['_rev'])
             )
@@ -3187,7 +3192,7 @@ describe('Merge', function() {
               subdir
             )
             const movedSubfilePath = path.join(movedSubdirPath, 'file-9')
-            const movedSubfile = _.defaults(
+            const movedSubfile = _.defaultsDeep(
               {
                 moveTo: metadata.id(movedSubfilePath),
                 childMove: true,
@@ -3207,22 +3212,24 @@ describe('Merge', function() {
                   _.omit(doc, ['_rev'])
                 ),
                 _.omit(movedSubdir, ['_rev']),
-                _.defaults(
+                _.defaultsDeep(
                   {
                     _id: metadata.id(movedSubdirPath),
                     path: movedSubdirPath,
                     sides: increasedSides(subdir.sides, this.side, 1),
-                    moveFrom: movedSubdir
+                    moveFrom: movedSubdir,
+                    [this.side]: { path: movedSubdirPath }
                   },
                   _.omit(subdir, ['_rev'])
                 ),
                 _.omit(movedSubfile, ['_rev']),
-                _.defaults(
+                _.defaultsDeep(
                   {
                     _id: metadata.id(movedSubfilePath),
                     path: movedSubfilePath,
                     sides: increasedSides(subfile.sides, this.side, 1),
-                    moveFrom: movedSubfile
+                    moveFrom: movedSubfile,
+                    [this.side]: { path: movedSubfilePath }
                   },
                   _.omit(subfile, ['_rev'])
                 )
@@ -3300,22 +3307,24 @@ describe('Merge', function() {
                   _.omit(doc, ['_rev'])
                 ),
                 _.omit(movedSubdir, ['_rev']),
-                _.defaults(
+                _.defaultsDeep(
                   {
                     _id: metadata.id(movedSubdirPath),
                     path: movedSubdirPath,
                     sides: increasedSides(subdir.sides, this.side, 1),
-                    moveFrom: movedSubdir
+                    moveFrom: movedSubdir,
+                    [this.side]: { path: movedSubdirPath }
                   },
                   _.omit(subdir, ['_rev'])
                 ),
                 _.omit(movedSubfile, ['_rev']),
-                _.defaults(
+                _.defaultsDeep(
                   {
                     _id: metadata.id(movedSubfilePath),
                     path: movedSubfilePath,
                     sides: increasedSides(subfile.sides, this.side, 1),
-                    moveFrom: movedSubfile
+                    moveFrom: movedSubfile,
+                    [this.side]: { path: movedSubfilePath }
                   },
                   _.omit(subfile, ['_rev'])
                 )

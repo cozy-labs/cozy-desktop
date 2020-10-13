@@ -72,6 +72,7 @@ const CONFLICT_REGEXP = new RegExp(
 )
 
 const LOCAL_ATTRIBUTES = [
+  'path',
   'md5sum',
   'class',
   'docType',
@@ -94,6 +95,7 @@ export type MetadataLocalInfo = {
   executable?: true,
   fileid?: string,
   ino?: number,
+  path: string,
   md5sum?: string,
   mime?: string,
   size?: number,
@@ -823,9 +825,7 @@ function buildFile(
   if (stats.fileid) {
     doc.fileid = stats.fileid
   }
-  updateLocal(doc, {
-    updated_at: mtime.toISOString()
-  })
+  updateLocal(doc)
   return doc
 }
 
