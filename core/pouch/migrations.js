@@ -197,6 +197,25 @@ const migrations /*: Migration[] */ = [
         return doc
       })
     }
+  },
+  {
+    baseSchemaVersion: 7,
+    targetSchemaVersion: 8,
+    description: 'Set all files executable attribute',
+    affectedDocs: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.filter(
+        doc => doc.docType === 'file' && doc.executable == null
+      )
+    },
+    run: (docs /*: Metadata[] */) /*: Metadata[] */ => {
+      return docs.map(doc => {
+        doc.executable = false
+        if (doc.local && doc.local.executable == null) {
+          doc.local.executable = false
+        }
+        return doc
+      })
+    }
   }
 ]
 

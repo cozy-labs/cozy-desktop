@@ -19,6 +19,7 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
     this.doc.docType = 'file'
     this.doc.mime = mimeType
     this.doc.class = mimeType.split('/')[0]
+    this.doc.executable = old ? old.executable : false
 
     if (this.doc.md5sum == null) {
       this.data('')
@@ -55,11 +56,7 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
   }
 
   executable(isExecutable /*: boolean */) /*: this */ {
-    if (!isExecutable && this.doc.executable) {
-      delete this.doc.executable
-    } else if (isExecutable) {
-      this.doc.executable = isExecutable
-    }
+    this.doc.executable = isExecutable
     return this
   }
 }

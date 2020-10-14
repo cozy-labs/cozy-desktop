@@ -14,7 +14,7 @@
  * - `mime`: the precise mime-type (example: image/jpeg)
  * - `remote`: id and rev of the associated documents in the remote CouchDB
  * - `sides`: for tracking what is applied on local file system and remote cozy
- * - `executable`: true if the file is executable (UNIX permission), undefined else
+ * - `executable`: true if the file is executable (UNIX permission)
  * - `errors`: the number of errors while applying the last modification
  *
  * ### Folder
@@ -92,7 +92,7 @@ export type DocType =
 export type MetadataLocalInfo = {
   class?: string,
   docType: DocType,
-  executable?: true,
+  executable: boolean,
   fileid?: string,
   ino?: number,
   path: string,
@@ -126,7 +126,7 @@ export type Metadata = {
   class?: string,
   docType: DocType,
   errors?: number,
-  executable?: true,
+  executable: boolean,
   updated_at: string,
   mime?: string,
   moveTo?: string, // Destination id
@@ -276,6 +276,7 @@ function fromRemoteFile(remoteFile /*: MetadataRemoteFile */) /*: Metadata */ {
     docType: localDocType(remoteFile.type),
     path: remoteFile.path.substring(1),
     size: parseInt(remoteFile.size, 10),
+    executable: !!remoteFile.executable,
     created_at: timestamp.roundedRemoteDate(remoteFile.created_at),
     updated_at: timestamp.roundedRemoteDate(remoteFile.updated_at)
   }
@@ -600,17 +601,6 @@ function newChildPath(
   return path.join(newParentPath, ...childParts.slice(parentParts.length))
 }
 
-const ensureExecutable = (one, two) => {
-  two =
-    process.platform === 'win32'
-      ? _.defaults({ executable: one.executable }, two)
-      : two
-  return [
-    _.merge({ executable: !!one.executable }, one),
-    _.merge({ executable: !!two.executable }, two)
-  ]
-}
-
 const makeComparator = (name, interestingFields) => {
   const interestingPaths = interestingFields.map(f => f.split('.'))
   const filter = (path, key) => {
@@ -691,14 +681,12 @@ function sameFile /*::<T: Metadata|MetadataLocalInfo>*/(
   one /*: T */,
   two /*: T */
 ) {
-  ;[one, two] = ensureExecutable(one, two)
   return sameFileComparator(one, two)
 }
 
 // Return true if the metadata of the two files are the same,
 // ignoring revision
 function sameFileIgnoreRev(one /*: Metadata */, two /*: Metadata */) {
-  ;[one, two] = ensureExecutable(one, two)
   return sameFileIgnoreRevComparator(one, two)
 }
 
@@ -806,6 +794,7 @@ function buildFile(
   const className = mimeType.split('/')[0]
   const { mtime, ino, size } = stats
   const updated_at = mtime.toISOString()
+  const executable = stats.mode ? (+stats.mode & EXECUTABLE_MASK) !== 0 : false
 
   const doc /*: Object */ = {
     _id: id(filePath),
@@ -817,10 +806,8 @@ function buildFile(
     mime: mimeType,
     class: className,
     size,
+    executable,
     remote
-  }
-  if (stats.mode && (+stats.mode & EXECUTABLE_MASK) !== 0) {
-    doc.executable = true
   }
   if (stats.fileid) {
     doc.fileid = stats.fileid
@@ -872,16 +859,8 @@ function shouldIgnore(
 }
 
 function updateLocal(doc /*: Metadata */, newLocal /*: Object */ = {}) {
-  // Boolean attributes not set in doc when false will not override an existing
-  // truthy value.
-  // This is the case for `executable` and we need to provide a default falsy
-  // value to override the `newLocal` executable value in all cases.
-  const defaults =
-    isFile(doc) &&
-    (process.platform === 'win32' ||
-      (doc.executable == null && newLocal.executable == null))
-      ? { executable: false }
-      : {}
+  const defaults = process.platform === 'win32' ? { executable: false } : {}
+
   doc.local = _.pick(
     _.defaults(defaults, _.cloneDeep(newLocal), _.cloneDeep(doc)),
     LOCAL_ATTRIBUTES
