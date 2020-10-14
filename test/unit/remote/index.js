@@ -217,7 +217,7 @@ describe('remote.Remote', function() {
       )
     })
 
-    it('links any existing folder', async function() {
+    it('links and updates any existing folder', async function() {
       const remoteDir = await builders
         .remoteDir()
         .inRootDir()
@@ -241,7 +241,7 @@ describe('remote.Remote', function() {
         type
       })
       should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
-        '2017-02-14T15:03:27.000Z' // remoteDir.updated_at
+        doc.updated_at
       )
       should(doc.remote).have.properties({
         _id: remoteDir._id,
@@ -554,7 +554,7 @@ describe('remote.Remote', function() {
       })
     })
 
-    it('links the dir if it has no remote info', async function() {
+    it('links and updates the dir if it has no remote info', async function() {
       const remoteDir = await builders
         .remoteDir()
         .name('foo')
@@ -583,7 +583,7 @@ describe('remote.Remote', function() {
         tags: doc.tags
       })
       should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
-        '2015-02-02T02:02:02.000Z' // remoteDir.updated_at
+        doc.updated_at
       )
     })
   })

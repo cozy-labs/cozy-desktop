@@ -130,6 +130,7 @@ class Remote /*:: implements Reader, Writer */ {
       const remotePath = '/' + posix.join(...doc.path.split(sep))
       const dir = await this.remoteCozy.findDirectoryByPath(remotePath)
       metadata.updateRemote(doc, dir)
+      return this.updateFolderAsync(doc)
     }
   }
 
