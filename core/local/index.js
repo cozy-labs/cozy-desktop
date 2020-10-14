@@ -94,7 +94,7 @@ class Local /*:: implements Reader, Writer */ {
   /*::
   addFileAsync: (Metadata) => Promise<*>
   addFolderAsync: (Metadata) => Promise<*>
-  updateFileMetadataAsync: (Metadata, Metadata) => Promise<*>
+  updateFileMetadataAsync: (Metadata) => Promise<*>
   renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<void>
   */
 
@@ -342,7 +342,6 @@ class Local /*:: implements Reader, Writer */ {
   /** Update the metadata of a file */
   updateFileMetadata(
     doc /*: Metadata */,
-    old /*: Metadata */,
     callback /*: Callback */
   ) /*: void */ {
     log.info({ path: doc.path }, 'Updating file metadata...')

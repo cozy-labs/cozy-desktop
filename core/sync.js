@@ -453,13 +453,13 @@ class Sync {
           if (metadata.sameFolder(old, doc)) {
             log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
           } else {
-            await side.updateFolderAsync(doc, old)
+            await side.updateFolderAsync(doc)
           }
         } else if (metadata.sameBinary(old, doc)) {
           if (metadata.sameFile(old, doc)) {
             log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
           } else {
-            await side.updateFileMetadataAsync(doc, old)
+            await side.updateFileMetadataAsync(doc)
           }
         } else {
           if (sideName === 'local' && !doc.overwrite) {

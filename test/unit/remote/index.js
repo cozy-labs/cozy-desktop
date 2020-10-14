@@ -416,22 +416,18 @@ describe('remote.Remote', function() {
         .remoteFile()
         .executable(false)
         .create()
-      const old = builders
+      const doc = builders
         .metafile()
         .fromRemote(oldRemote)
-        .upToDate()
-        .build()
-      const doc = builders
-        .metafile(old)
         .executable(true)
         .changedSide('local')
         .build()
 
-      await this.remote.updateFileMetadataAsync(doc, old)
+      await this.remote.updateFileMetadataAsync(doc)
 
       should(doc)
         .have.propertyByPath('remote', '_rev')
-        .not.eql(old.remote._rev)
+        .not.eql(oldRemote._rev)
       const newRemote = await cozy.files.statById(oldRemote._id)
       should(newRemote)
         .have.propertyByPath('attributes', 'executable')
@@ -443,22 +439,18 @@ describe('remote.Remote', function() {
         .remoteFile()
         .executable(true)
         .create()
-      const old = builders
+      const doc = builders
         .metafile()
         .fromRemote(oldRemote)
-        .upToDate()
-        .build()
-      const doc = builders
-        .metafile(old)
         .executable(false)
         .changedSide('local')
         .build()
 
-      await this.remote.updateFileMetadataAsync(doc, old)
+      await this.remote.updateFileMetadataAsync(doc)
 
       should(doc)
         .have.propertyByPath('remote', '_rev')
-        .not.eql(old.remote._rev)
+        .not.eql(oldRemote._rev)
       const newRemote = await cozy.files.statById(oldRemote._id)
       should(newRemote)
         .have.propertyByPath('attributes', 'executable')
@@ -478,18 +470,14 @@ describe('remote.Remote', function() {
         .createdAt(2015, 11, 16, 16, 13, 1)
         .create()
 
-      const old = await builders
+      const doc = builders
         .metafile()
         .fromRemote(created)
-        .upToDate()
-        .create()
-      const doc = builders
-        .metafile(old)
         .updatedAt('2015-11-17T16:13:01.001Z')
         .changedSide('local')
         .build()
 
-      await this.remote.updateFileMetadataAsync(doc, old)
+      await this.remote.updateFileMetadataAsync(doc)
 
       const file = await cozy.files.statById(doc.remote._id)
       should(file.attributes).have.properties({
@@ -510,19 +498,14 @@ describe('remote.Remote', function() {
         .name('created')
         .createdAt(2017, 11, 15, 8, 12, 9)
         .create()
-      const old = await builders
+      const doc = builders
         .metadir()
         .fromRemote(created)
-        .upToDate()
-        .create()
-      const doc = builders
-        .metadir(old)
-        .overwrite(old)
         .updatedAt('2017-11-16T16:14:45.123Z')
         .changedSide('local')
         .build()
 
-      await this.remote.updateFolderAsync(doc, old)
+      await this.remote.updateFolderAsync(doc)
 
       const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
       should(folder.attributes).have.properties({
@@ -532,7 +515,7 @@ describe('remote.Remote', function() {
         updated_at: doc.updated_at
       })
       should(doc.remote).have.properties({
-        _id: old.remote._id,
+        _id: created._id,
         _rev: folder._rev
       })
     })
@@ -545,14 +528,13 @@ describe('remote.Remote', function() {
         .createdAt(2016, 1, 2, 3, 4, 5)
         .create()
       await cozy.files.destroyById(deletedDir._id)
-      const was = await builders
+      const doc = builders
         .metadir()
         .fromRemote(deletedDir)
         .updatedAt(new Date().toISOString())
-        .create()
-      const doc = builders.metadir(was).build()
+        .build()
 
-      await this.remote.updateFolderAsync(doc, was)
+      await this.remote.updateFolderAsync(doc)
 
       const created /*: JsonApiDoc */ = await cozy.files.statByPath(
         '/deleted-dir'
@@ -587,11 +569,13 @@ describe('remote.Remote', function() {
       const doc = builders
         .metadir(was)
         .updatedAt('2015-02-03T02:02:02.000Z')
+        .noRemote()
         .build()
 
-      await this.remote.updateFolderAsync(doc, was)
+      await this.remote.updateFolderAsync(doc)
 
       const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
+      should(folder._id).equal(remoteDir._id)
       should(folder.attributes).have.properties({
         type: 'directory',
         name: 'foo',

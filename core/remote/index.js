@@ -216,10 +216,7 @@ class Remote /*:: implements Reader, Writer */ {
     metadata.updateRemote(doc, updated)
   }
 
-  async updateFileMetadataAsync(
-    doc /*: Metadata */,
-    old /*: any */
-  ) /*: Promise<void> */ {
+  async updateFileMetadataAsync(doc /*: Metadata */) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Updating file metadata...')
 
@@ -228,22 +225,19 @@ class Remote /*:: implements Reader, Writer */ {
       updated_at: doc.updated_at
     }
     const opts = {
-      ifMatch: old.remote._rev
+      ifMatch: doc.remote._rev
     }
     const updated = await this.remoteCozy.updateAttributesById(
-      old.remote._id,
+      doc.remote._id,
       attrs,
       opts
     )
     metadata.updateRemote(doc, updated)
   }
 
-  async updateFolderAsync(
-    doc /*: Metadata */,
-    old /*: Metadata */
-  ) /*: Promise<void> */ {
+  async updateFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
     const { path } = doc
-    if (!old.remote) {
+    if (!doc.remote) {
       return this.addFolderAsync(doc)
     }
     log.info({ path }, 'Updating metadata...')
@@ -254,17 +248,15 @@ class Remote /*:: implements Reader, Writer */ {
     )
 
     const attrs = {
-      name: newName,
-      dir_id: newParentDir._id,
       updated_at: doc.updated_at
     }
     const opts = {
-      ifMatch: old.remote._rev
+      ifMatch: doc.remote._rev
     }
 
     try {
       const newRemoteDoc = await this.remoteCozy.updateAttributesById(
-        old.remote._id,
+        doc.remote._id,
         attrs,
         opts
       )
@@ -286,11 +278,10 @@ class Remote /*:: implements Reader, Writer */ {
     newMetadata /*: Metadata */,
     oldMetadata /*: Metadata */
   ) /*: Promise<void> */ {
+    const remoteId = oldMetadata.remote._id
     const { path, overwrite } = newMetadata
     const isOverwritingTarget =
-      overwrite &&
-      overwrite.remote &&
-      overwrite.remote._id !== oldMetadata.remote._id
+      overwrite && overwrite.remote && overwrite.remote._id !== remoteId
     log.info(
       { path, oldpath: oldMetadata.path },
       `Moving ${oldMetadata.docType}${
@@ -317,7 +308,7 @@ class Remote /*:: implements Reader, Writer */ {
     }
 
     const newRemoteDoc = await this.remoteCozy.updateAttributesById(
-      oldMetadata.remote._id,
+      remoteId,
       attrs,
       opts
     )
@@ -327,7 +318,7 @@ class Remote /*:: implements Reader, Writer */ {
       const referencedBy = await this.remoteCozy.getReferencedBy(
         overwrite.remote._id
       )
-      await this.remoteCozy.addReferencedBy(newRemoteDoc._id, referencedBy)
+      await this.remoteCozy.addReferencedBy(remoteId, referencedBy)
       await this.assignNewRemote(newMetadata)
     }
   }
