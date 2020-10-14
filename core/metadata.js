@@ -626,9 +626,7 @@ const makeComparator = (name, interestingFields) => {
     if (diff && !_.every(diff, canBeIgnoredDiff)) {
       return false
     }
-    // XXX The fileid can be missing in some old documents in pouchdb.
-    // So, we compare them only if it's present on both documents.
-    if (process.platform === 'win32' && one.fileid && two.fileid) {
+    if (process.platform === 'win32') {
       return one.fileid === two.fileid
     }
     return true

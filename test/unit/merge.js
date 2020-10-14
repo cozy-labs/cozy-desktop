@@ -125,6 +125,58 @@ describe('Merge', function() {
       })
     })
 
+    context('remote', function() {
+      context('when a file with the same path exists', function() {
+        let oldRemoteFile, file
+
+        beforeEach('create a file', async function() {
+          oldRemoteFile = await builders
+            .remoteFile()
+            .inRootDir()
+            .name('BUZZ.JPG')
+            .data('image')
+            .tags('foo')
+            .contentType('image/jpeg')
+            .build()
+          file = await builders
+            .metafile()
+            .fromRemote(oldRemoteFile)
+            .upToDate()
+            .create()
+        })
+
+        it('can update the metadata', async function() {
+          const newRemoteFile = await builders
+            .remoteFile(oldRemoteFile)
+            .tags('bar', 'baz')
+            .build()
+          const doc = builders
+            .metafile()
+            .fromRemote(newRemoteFile)
+            .unmerged('remote')
+            .build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.addFileAsync('remote', _.cloneDeep(doc))
+          )
+
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              _.defaults(
+                {
+                  tags: ['bar', 'baz'],
+                  sides: increasedSides(file.sides, 'remote', 1),
+                  remote: newRemoteFile
+                },
+                _.omit(file, ['_rev', 'fileid'])
+              )
+            ],
+            resolvedConflicts: []
+          })
+        })
+      })
+    })
+
     context('when the path was used in the past', function() {
       const path = 'file-created-deleted-and-then-recreated'
 
@@ -171,30 +223,63 @@ describe('Merge', function() {
           .metafile()
           .path('BUZZ.JPG')
           .data('image')
-          .tags('foo')
           .type('image/jpeg')
           .ino(123)
+          .updatedAt(new Date())
           .upToDate()
           .create()
       })
 
       it('can update the metadata', async function() {
+        const newDate = new Date().toISOString()
         const doc = builders
           .metafile(file)
-          .tags('bar', 'baz')
-          .unmerged(this.side)
+          .updatedAt(newDate)
+          .unmerged('local')
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.addFileAsync(this.side, _.cloneDeep(doc))
+          this.merge.addFileAsync('local', _.cloneDeep(doc))
         )
 
         should(sideEffects).deepEqual({
           savedDocs: [
             _.defaults(
               {
-                tags: ['bar', 'baz'],
-                sides: increasedSides(file.sides, this.side, 1)
+                local: doc.local
+              },
+              _.omit(file, ['_rev', 'fileid'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+
+      it('can update the file record', async function() {
+        const newDate = new Date().toISOString()
+        const doc = builders
+          .metafile(file)
+          .ino(456)
+          .data('new image')
+          .updatedAt(newDate)
+          .unmerged('local')
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.addFileAsync('local', _.cloneDeep(doc))
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                ino: doc.ino,
+                md5sum: doc.md5sum,
+                size: doc.size,
+                updated_at: doc.updated_at,
+                sides: increasedSides(file.sides, 'local', 1),
+                overwrite: file,
+                local: doc.local
               },
               _.omit(file, ['_rev', 'fileid'])
             )
@@ -407,7 +492,7 @@ describe('Merge', function() {
             .create()
         })
 
-        context('when new file has a fileid', () => {
+        context('when new local file metadata has a fileid', () => {
           let sameFile
           beforeEach(() => {
             sameFile = builders
@@ -424,7 +509,7 @@ describe('Merge', function() {
             should(savedFile).have.properties({ fileid: sameFile.fileid })
           })
 
-          for (const side of ['local', 'remote', 'both']) {
+          for (const side of ['local', 'both']) {
             context(`when existing file has ${side} side`, () => {
               beforeEach(async () => {
                 const sides =
@@ -440,7 +525,7 @@ describe('Merge', function() {
                   .build()
               })
 
-              it(`migrates ${side} side`, async function() {
+              it(`migrates local side`, async function() {
                 await this.merge.addFileAsync('local', _.cloneDeep(sameFile))
 
                 const expectedSides =
@@ -448,11 +533,11 @@ describe('Merge', function() {
                     ? {
                         target: existingFile.sides.target + 1,
                         local: existingFile.sides.local + 1,
-                        remote: existingFile.sides.remote + 1
+                        remote: existingFile.sides.remote
                       }
                     : {
                         target: existingFile.sides.target + 1,
-                        [side]: existingFile.sides[side] + 1
+                        local: existingFile.sides.local + 1
                       }
                 const savedFile = await this.pouch.db.get(existingFile._id)
                 should(savedFile).have.properties({ sides: expectedSides })
