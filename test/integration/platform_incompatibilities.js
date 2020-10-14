@@ -55,6 +55,7 @@ describe('Platform incompatibilities', () => {
     should(await helpers.local.tree()).be.empty()
     should(await helpers.incompatibleTree()).deepEqual(['di:r/', 'fi:le'])
   })
+
   it('add incompatible dir with two colons', async () => {
     await builders
       .remoteDir()
@@ -64,6 +65,7 @@ describe('Platform incompatibilities', () => {
     should(await helpers.local.tree()).be.empty()
     should(await helpers.incompatibleTree()).deepEqual(['d:i:r/'])
   })
+
   it('add compatible dir with some incompatible content', async () => {
     await helpers.remote.createTree([
       'dir/',
@@ -88,6 +90,7 @@ describe('Platform incompatibilities', () => {
       'dir/sub:dir/file'
     ])
   })
+
   it('rename incompatible -> incompatible', async () => {
     await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()

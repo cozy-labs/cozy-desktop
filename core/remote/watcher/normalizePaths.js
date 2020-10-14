@@ -3,7 +3,6 @@
 const path = require('path')
 const { Promise } = require('bluebird')
 
-const metadata = require('../../metadata')
 const { normalizedPath } = require('../../local/chokidar/normalize_paths')
 const logger = require('../../utils/logger')
 
@@ -41,12 +40,10 @@ const normalizePaths = async (
       const old =
         c.type === 'FileMove' || c.type === 'DirMove'
           ? c.was
-          : await pouch.byIdMaybe(c.doc._id)
+          : await pouch.bySyncedPath(c.doc.path)
       const parentPath = path.dirname(c.doc.path)
       const parent =
-        parentPath !== '.'
-          ? await pouch.byIdMaybe(metadata.id(parentPath))
-          : null
+        parentPath !== '.' ? await pouch.bySyncedPath(parentPath) : null
       c.doc.path = normalizedPath(
         c.doc.path,
         old && old.path,

@@ -29,7 +29,7 @@ type WinIdenticalRenamingState = {
 }
 
 type PouchFunctions = {
-  byIdMaybe: (string) => Promise<?Metadata>
+  bySyncedPath: (string) => Promise<?Metadata>
 }
 
 type WinIdenticalRenamingOptions = {
@@ -87,9 +87,9 @@ const indexDeletedEvent = (event, state) => {
 }
 
 /** Possibly fix oldPath when event is identical renamed. */
-const fixIdenticalRenamed = async (event, { byIdMaybe }) => {
+const fixIdenticalRenamed = async (event, { bySyncedPath }) => {
   if (event.path === event.oldPath) {
-    const doc /*: ?Metadata */ = event._id ? await byIdMaybe(event._id) : null
+    const doc /*: ?Metadata */ = await bySyncedPath(event.path)
 
     if (doc && !doc.deleted && doc.path !== event.oldPath) {
       _.set(event, [STEP_NAME, 'oldPathBeforeFix'], event.oldPath)

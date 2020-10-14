@@ -651,8 +651,8 @@ describe('Pouch', function() {
   describe('Helpers', function() {
     describe('getPreviousRev', () =>
       it('retrieves previous document informations', async function() {
-        const id = metadata.id(path.join('my-folder', 'folder-1'))
-        const doc = await this.pouch.db.get(id)
+        const dirPath = path.join('my-folder', 'folder-1')
+        const doc = await this.pouch.bySyncedPath(dirPath)
 
         // Update 1
         const tags = ['yipee']
@@ -661,23 +661,24 @@ describe('Pouch', function() {
           tags
         })
         // Update 2
-        await this.pouch.db.remove(id, updated.rev)
+        await this.pouch.db.remove(doc._id, updated.rev)
 
         // Get doc as it was 2 revisions ago
-        should(await this.pouch.getPreviousRev(id, 2)).have.properties({
-          _id: id,
+        should(await this.pouch.getPreviousRev(doc._id, 2)).have.properties({
+          path: dirPath,
           tags: doc.tags
         })
         // Get doc as it was 1 revision ago
-        should(await this.pouch.getPreviousRev(id, 1)).have.properties({
-          _id: id,
+        should(await this.pouch.getPreviousRev(doc._id, 1)).have.properties({
+          path: dirPath,
           tags
         })
         // Get doc as it is now
-        should(await this.pouch.getPreviousRev(id, 0)).have.properties({
-          _id: id,
-          _deleted: true
-        })
+        should(await this.pouch.getPreviousRev(doc._id, 0))
+          .have.properties({
+            _deleted: true
+          })
+          .and.not.have.properties(['path', 'tags']) // erased by PouchDB.remove
       }))
   })
 

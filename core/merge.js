@@ -91,18 +91,18 @@ class Merge {
   // Be sure that the tree structure for the given path exists
   async ensureParentExistAsync(side /*: SideName */, doc /*: * */) {
     log.trace({ path: doc.path }, 'ensureParentExistAsync')
-    let parentId = path.dirname(doc._id)
-    if (parentId === '.') {
+    let parentPath = path.dirname(doc.path)
+    if (parentPath === '.') {
       return
     }
 
     // BUG on windows with incompatible names like "D:IR"
-    if (path.dirname(parentId) === parentId) {
+    if (path.dirname(parentPath) === parentPath) {
       return
     }
 
     try {
-      const folder = await this.pouch.db.get(parentId)
+      const folder = await this.pouch.bySyncedPath(parentPath)
       if (folder && !folder.deleted) {
         return
       }
@@ -116,8 +116,8 @@ class Merge {
     }
 
     let parentDoc = {
-      _id: parentId,
-      path: path.dirname(doc.path),
+      _id: metadata.id(parentPath),
+      path: parentPath,
       docType: 'folder',
       updated_at: new Date().toISOString()
     }
@@ -199,7 +199,7 @@ class Merge {
   // and create the tree structure if needed
   async addFileAsync(side /*: SideName */, doc /*: Metadata */) {
     log.debug({ path: doc.path }, 'addFileAsync')
-    const file /*: ?Metadata */ = await this.pouch.byIdMaybe(doc._id)
+    const file /*: ?Metadata */ = await this.pouch.bySyncedPath(doc.path)
     metadata.markSide(side, doc, file)
     metadata.assignMaxDate(doc, file)
 
@@ -241,7 +241,7 @@ class Merge {
   async updateFileAsync(side /*: SideName */, doc /*: Metadata */) {
     log.debug({ path: doc.path }, 'updateFileAsync')
     const { path } = doc
-    const file /*: ?Metadata */ = await this.pouch.byIdMaybe(doc._id)
+    const file /*: ?Metadata */ = await this.pouch.bySyncedPath(doc.path)
     metadata.markSide(side, doc, file)
     if (file && file.docType === 'folder') {
       throw new Error("Can't resolve this conflict!")
@@ -382,7 +382,7 @@ class Merge {
   async putFolderAsync(side /*: SideName */, doc /*: * */) {
     log.debug({ path: doc.path }, 'putFolderAsync')
     const { path } = doc
-    const folder /*: ?Metadata */ = await this.pouch.byIdMaybe(doc._id)
+    const folder /*: ?Metadata */ = await this.pouch.bySyncedPath(doc.path)
     metadata.markSide(side, doc, folder)
     if (folder && folder.docType === 'file') {
       return this.resolveConflictAsync(side, doc)
@@ -469,7 +469,7 @@ class Merge {
         doc.executable = was.executable
       }
 
-      const file /*: ?Metadata */ = await this.pouch.byIdMaybe(doc._id)
+      const file /*: ?Metadata */ = await this.pouch.bySyncedPath(doc.path)
       if (file) {
         if (file.deleted) {
           doc.overwrite = file
@@ -557,7 +557,7 @@ class Merge {
 
     metadata.assignMaxDate(doc, was)
 
-    const folder /*: ?Metadata */ = await this.pouch.byIdMaybe(doc._id)
+    const folder /*: ?Metadata */ = await this.pouch.bySyncedPath(doc.path)
     if (folder) {
       if (folder.deleted) {
         doc.overwrite = folder
@@ -613,7 +613,8 @@ class Merge {
       { path: folder.path, oldpath: was.path },
       'moveFolderRecursivelyAsync'
     )
-    const docs = await this.pouch.byRecursivePath(was._id)
+    const docs = await this.pouch.byRecursivePath(was.path)
+    const dstChildren = await this.pouch.byRecursivePath(folder.path)
 
     move(side, was, folder)
     let bulk = [was, folder]
@@ -622,7 +623,7 @@ class Merge {
       metadata.newChildPath(doc.path, was.path, folder.path)
     const makeDestinationID = doc => metadata.id(makeDestinationPath(doc))
     const existingDstRevs = await this.pouch.getAllRevs(
-      docs.map(makeDestinationID)
+      docs.map(makeDestinationPath)
     )
 
     for (let doc of docs) {
@@ -631,10 +632,11 @@ class Merge {
       const newRemoteRev = _.get(newRemoteRevs, _.get(doc, 'remote._id'))
       if (newRemoteRev) doc.remote._rev = newRemoteRev
 
-      let src = _.cloneDeep(doc)
-      let dst = _.cloneDeep(doc)
+      const src = _.cloneDeep(doc)
+      const dst = _.cloneDeep(doc)
       dst._id = makeDestinationID(doc)
       dst.path = makeDestinationPath(doc)
+
       // If the source needs to be overwritten, we'll take care of it during
       // Sync while it does not say anything about the existence of a document
       // at the destination.
@@ -685,7 +687,6 @@ class Merge {
         // To avoid this, we'll update the moved children again to mark them as
         // child movements and remove any `overwrite` markers since the
         // overwrite will happen with their parent.
-        const dstChildren = await this.pouch.byRecursivePath(folder._id)
         for (const dstChild of dstChildren) {
           if (
             !bulk.find(doc => doc._id === dstChild._id) &&
@@ -743,7 +744,7 @@ class Merge {
   ) /*: Promise<void> */ {
     const { path } = trashed
     log.debug({ path }, 'trashFileAsync')
-    const was /*: ?Metadata */ = await this.pouch.byIdMaybe(trashed._id)
+    const was /*: ?Metadata */ = await this.pouch.bySyncedPath(trashed.path)
     if (!was || was.deleted) {
       log.debug({ path }, 'Nothing to trash')
       return
@@ -782,7 +783,7 @@ class Merge {
   ) /*: Promise<*> */ {
     const { path } = trashed
     log.debug({ path }, 'trashFolderAsync')
-    const was /*: ?Metadata */ = await this.pouch.byIdMaybe(trashed._id)
+    const was /*: ?Metadata */ = await this.pouch.bySyncedPath(trashed.path)
     if (!was || was.deleted) {
       log.debug({ path }, 'Nothing to trash')
       return
@@ -792,7 +793,7 @@ class Merge {
       return
     }
     // Don't trash a folder if the other side has added a new file in it (or updated one)
-    let children = await this.pouch.byRecursivePath(was._id)
+    let children = await this.pouch.byRecursivePath(was.path)
     children = children.reverse()
     for (let child of Array.from(children)) {
       if (
@@ -837,7 +838,7 @@ class Merge {
   // already been removed. This is not considered as an error.
   async deleteFileAsync(side /*: SideName */, doc /*: Metadata */) {
     log.debug({ path: doc.path }, 'deleteFileAsync')
-    const file /*: ?Metadata */ = await this.pouch.byIdMaybe(doc._id)
+    const file /*: ?Metadata */ = await this.pouch.bySyncedPath(doc.path)
     if (!file || file.deleted) return null
     if (file.moveFrom) {
       // We don't want Sync to pick up this move hint and try to synchronize a
@@ -874,7 +875,7 @@ class Merge {
   // the folder is missing in pouchdb (error 404).
   async deleteFolderAsync(side /*: SideName */, doc /*: Metadata */) {
     log.debug({ path: doc.path }, 'deleteFolderAsync')
-    const folder /*: ?Metadata */ = await this.pouch.byIdMaybe(doc._id)
+    const folder /*: ?Metadata */ = await this.pouch.bySyncedPath(doc.path)
     if (!folder || folder.deleted) return null
     if (folder.moveFrom) {
       // We don't want Sync to pick up this move hint and try to synchronize a
@@ -894,7 +895,7 @@ class Merge {
     side /*: SideName */,
     folder /*: Metadata */
   ) {
-    let docs = await this.pouch.byRecursivePath(folder._id)
+    let docs = await this.pouch.byRecursivePath(folder.path)
     // In the changes feed, nested subfolder must be deleted
     // before their parents, hence the reverse order.
     docs = docs.reverse()

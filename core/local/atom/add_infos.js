@@ -71,9 +71,9 @@ function loop(
 
               // Even if the doc is deleted, we probably have a better chance to
               // get the right kind by using its own.
-              const doc /*: ?Metadata */ = event._id
-                ? await opts.pouch.byIdMaybe(event._id)
-                : null
+              const doc /*: ?Metadata */ = await opts.pouch.bySyncedPath(
+                event.path
+              )
               event.kind = doc ? kind(doc) : 'file'
             }
           }

@@ -7,7 +7,6 @@
 const Promise = require('bluebird')
 const path = require('path')
 
-const metadata = require('../../metadata')
 const logger = require('../../utils/logger')
 
 const log = logger({
@@ -55,9 +54,7 @@ const step = async (
     if (c.type !== 'Ignored') {
       const parentPath = path.dirname(c.path)
       const parent =
-        parentPath !== '.'
-          ? await pouch.byIdMaybe(metadata.id(parentPath))
-          : null
+        parentPath !== '.' ? await pouch.bySyncedPath(parentPath) : null
       c.path = normalizedPath(
         c.path,
         c.old && c.old.path,

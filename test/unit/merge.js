@@ -505,7 +505,7 @@ describe('Merge', function() {
           it('migrates the existing file', async function() {
             await this.merge.addFileAsync('local', _.cloneDeep(sameFile))
 
-            const savedFile = await this.pouch.db.get(existingFile._id)
+            const savedFile = await this.pouch.bySyncedPath(existingFile.path)
             should(savedFile).have.properties({ fileid: sameFile.fileid })
           })
 
@@ -539,7 +539,9 @@ describe('Merge', function() {
                         target: existingFile.sides.target + 1,
                         local: existingFile.sides.local + 1
                       }
-                const savedFile = await this.pouch.db.get(existingFile._id)
+                const savedFile = await this.pouch.bySyncedPath(
+                  existingFile.path
+                )
                 should(savedFile).have.properties({ sides: expectedSides })
               })
             })
@@ -1892,7 +1894,7 @@ describe('Merge', function() {
         _.cloneDeep(file2),
         _.cloneDeep(file)
       )
-      const was = await this.pouch.db.get(file2._id)
+      const was = await this.pouch.bySyncedPath(file2.path)
       const dst = builders
         .metadir(src)
         .path('DST')
@@ -1968,12 +1970,7 @@ describe('Merge', function() {
         _.cloneDeep(dst),
         _.cloneDeep(src)
       )
-      const was = await this.pouch.db.get(
-        builders
-          .metafile()
-          .path('DST/FILE')
-          .build()._id
-      )
+      const was = await this.pouch.bySyncedPath(path.normalize('DST/FILE'))
       const doc = await builders
         .metafile(was)
         .path('DST/FILE2')
@@ -3847,7 +3844,7 @@ describe('Merge', function() {
       it('updates doc with the fileid', async function() {
         await this.merge.migrateFileid(_.cloneDeep(existing), fileid)
 
-        updatedDoc = await this.pouch.db.get(existing._id)
+        updatedDoc = await this.pouch.bySyncedPath(existing.path)
 
         should(updatedDoc).have.property('fileid', fileid)
       })
@@ -3866,7 +3863,7 @@ describe('Merge', function() {
 
           await this.merge.migrateFileid(_.cloneDeep(existing), fileid)
 
-          updatedDoc = await this.pouch.db.get(existing._id)
+          updatedDoc = await this.pouch.bySyncedPath(existing.path)
         })
 
         it('updates doc with the fileid', async () => {
@@ -3890,7 +3887,7 @@ describe('Merge', function() {
           .create()
         await this.merge.migrateFileid(_.cloneDeep(existing), fileid)
 
-        updatedDoc = await this.pouch.db.get(existing._id)
+        updatedDoc = await this.pouch.bySyncedPath(existing.path)
       })
 
       it('updates doc with the fileid', async () => {

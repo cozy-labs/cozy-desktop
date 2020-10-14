@@ -6,7 +6,6 @@ const { pick } = _
 const sinon = require('sinon')
 
 const { Ignore } = require('../../../core/ignore')
-const metadata = require('../../../core/metadata')
 const { Merge } = require('../../../core/merge')
 const Prep = require('../../../core/prep')
 const Sync = require('../../../core/sync')
@@ -206,7 +205,7 @@ class TestHelpers {
   }
 
   async docByPath(relpath /*: string */) /*: Promise<Metadata> */ {
-    const doc = await this.pouch.db.get(metadata.id(relpath))
+    const doc = await this.pouch.bySyncedPath(relpath)
     if (doc) return doc
     else throw new Error(`No doc with path ${JSON.stringify(relpath)}`)
   }

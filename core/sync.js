@@ -616,7 +616,7 @@ class Sync {
       // a thumbnail before apply has finished. In that case, we try to
       // reconciliate the documents.
       if (err && err.status === 409) {
-        const unsynced /*: Metadata */ = await this.pouch.db.get(doc._id)
+        const unsynced /*: Metadata */ = await this.pouch.bySyncedPath(doc.path)
         const other = otherSide(side)
         await this.pouch.put({
           ...unsynced,
@@ -639,13 +639,13 @@ class Sync {
     doc /*: Metadata */,
     side /*: Writer */
   ) /*: Promise<boolean> */ {
-    let parentId = dirname(doc._id)
-    if (parentId !== '.') {
-      let parent /*: Metadata */ = await this.pouch.db.get(parentId)
+    const parentPath = dirname(doc.path)
+    if (parentPath !== '.') {
+      let parent /*: Metadata */ = await this.pouch.bySyncedPath(parentPath)
 
       if (!parent.trashed) {
         await Promise.delay(TRASHING_DELAY)
-        parent = await this.pouch.db.get(parentId)
+        parent = await this.pouch.bySyncedPath(parentPath)
       }
 
       if (parent.trashed && !metadata.isUpToDate('remote', parent)) {

@@ -6,6 +6,7 @@ const should = require('should')
 
 const Channel = require('../../../../core/local/atom/channel')
 const winIdenticalRenaming = require('../../../../core/local/atom/win_identical_renaming')
+const metadata = require('../../../../core/metadata')
 
 const Builders = require('../../../support/builders')
 
@@ -36,7 +37,7 @@ if (process.platform === 'win32') {
         inputChannel = new Channel()
         outputChannel = winIdenticalRenaming.loop(inputChannel, {
           pouch: {
-            byIdMaybe: async id => _.cloneDeep(docs[id])
+            bySyncedPath: async path => _.cloneDeep(docs[metadata.id(path)])
           },
           state: winIdenticalRenaming.initialState()
         })

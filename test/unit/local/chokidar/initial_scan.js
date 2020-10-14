@@ -108,7 +108,7 @@ onPlatform('darwin', () => {
           .deleted()
           .changedSide('local')
           .create()
-        const initialScan = { ids: ['folder1', 'file1'].map(metadata.id) }
+        const initialScan = { paths: ['folder1', 'file1'].map(metadata.id) }
 
         const { offlineEvents } = await detectOfflineUnlinkEvents(
           initialScan,

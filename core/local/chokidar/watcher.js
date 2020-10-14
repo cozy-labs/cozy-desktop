@@ -163,7 +163,7 @@ class LocalWatcher {
       // cozy-desktop, we keep all the paths seen by chokidar during its
       // initial scan in @paths to compare them with pouchdb database.
       this.initialScan = {
-        ids: [],
+        paths: [],
         emptyDirRetryCount: 3,
         resolve,
         flushed: false

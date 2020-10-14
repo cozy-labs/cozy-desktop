@@ -12,7 +12,6 @@ const _ = require('lodash')
 const path = require('path')
 
 const SortedSet = require('../../utils/sorted_set')
-const { id } = require('../../metadata')
 const Channel = require('./channel')
 const logger = require('../../utils/logger')
 
@@ -103,11 +102,11 @@ function previousPaths(deletedPath, unmergedRenamedEvents) {
   return previousPaths
 }
 
-async function findDeletedInoById(
-  id,
+async function findDeletedInoByPath(
+  dpath,
   pouch
 ) /*: Promise<?{ deletedIno: ?number|string }> */ {
-  const doc /*: ?Metadata */ = await pouch.byIdMaybe(id)
+  const doc /*: ?Metadata */ = await pouch.bySyncedPath(dpath)
   if (doc && !doc.deleted) {
     return { deletedIno: doc.fileid || doc.ino }
   }
@@ -118,7 +117,7 @@ async function findDeletedInoRecentlyRenamed(
   pouch
 ) /*: Promise<?{ deletedIno: ?number|string, oldPaths: string[] }> */ {
   for (const [index, previousPath] of previousPaths.entries()) {
-    const doc /*: ?Metadata */ = await pouch.byIdMaybe(id(previousPath))
+    const doc /*: ?Metadata */ = await pouch.bySyncedPath(previousPath)
     if (doc && !doc.deleted) {
       return {
         deletedIno: doc.fileid || doc.ino,
@@ -134,7 +133,7 @@ async function findDeletedIno(event, pouch, unmergedRenamedEvents) {
   const release = await pouch.lock('winDetectMove')
   try {
     return (
-      (await findDeletedInoById(event._id, pouch)) ||
+      (await findDeletedInoByPath(event.path, pouch)) ||
       (await findDeletedInoRecentlyRenamed(
         previousPaths(event.path, unmergedRenamedEvents),
         pouch

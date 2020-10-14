@@ -7,7 +7,6 @@ const fse = require('fs-extra')
 const EventEmitter = require('events')
 const Promise = require('bluebird')
 
-const { id } = require('../../core/metadata')
 const { Ignore } = require('../../core/ignore')
 const { Merge } = require('../../core/merge')
 const { Pouch } = require('../../core/pouch')
@@ -139,7 +138,7 @@ async function step(state /*: Object */, op /*: Object */) {
             stats = await fse.stat(abspath)
           }
           release = await state.pouchdb.lock('test')
-          const doc = await state.pouchdb.byIdMaybe(id(op.path))
+          const doc = await state.pouchdb.bySyncedPath(op.path)
           if (doc && !doc.sides.remote) {
             doc.sides.remote = doc.sides.local + 1
             doc.remote = stats.ino

@@ -195,10 +195,13 @@ class Pouch {
 
   // Get current revision for multiple docs by ids as an index id => rev
   // non-existing documents will not be added to the index
-  async getAllRevs(ids) {
-    const result = await this.db.allDocs({ keys: ids })
+  async getAllRevs(paths) {
+    const result = await this.db.query('byPath', {
+      keys: paths.map(byPathKey)
+    })
     const index = {}
-    for (let row of result.rows) if (row.value) index[row.key] = row.value.rev
+    for (const row of result.rows)
+      if (row.value) index[row.key.join('')] = row.value.rev
     return index
   }
 
@@ -236,14 +239,8 @@ class Pouch {
       return undefined
     }
 
-    const normalized = metadata.id(fpath)
-    const parentPath =
-      path.dirname(normalized) === '.'
-        ? ''
-        : path.dirname(normalized) + path.sep
-    const name = path.basename(normalized)
     const params = {
-      key: [parentPath, name],
+      key: byPathKey(fpath),
       include_docs: true
     }
     const matches = await this.getAll('byPath', params)
@@ -254,7 +251,7 @@ class Pouch {
   }
 
   // Return all the files and folders in this path, even in subfolders
-  byRecursivePath(basePath) {
+  async byRecursivePath(basePath) {
     let params
     if (basePath === '') {
       params = { include_docs: true }
@@ -266,7 +263,8 @@ class Pouch {
         include_docs: true
       }
     }
-    return this.getAll('byPath', params)
+
+    return await this.getAll('byPath', params)
   }
 
   // Return the file/folder with this remote id
@@ -505,8 +503,17 @@ class Pouch {
 
   tree() {
     const { rows } = this.db.allDocs()
-    return rows.map(row => row.id).sort()
+    return rows.map(row => row.doc).map(doc => doc.id)
   }
+}
+
+const byPathKey = fpath => {
+  const normalized = metadata.id(fpath)
+  const parts = normalized.split(path.sep)
+  const name = parts.pop()
+  const parentPath = parts.concat('').join(path.sep)
+
+  return [parentPath, name]
 }
 
 module.exports = { Pouch }

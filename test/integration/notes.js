@@ -12,7 +12,6 @@ const pouchHelpers = require('../support/helpers/pouch')
 
 const { TRASH_DIR_ID } = require('../../core/remote/constants')
 const { isNote } = require('../../core/utils/notes')
-const metadata = require('../../core/metadata')
 const timestamp = require('../../core/utils/timestamp')
 
 describe('Update', () => {
@@ -278,7 +277,7 @@ describe('Update', () => {
       await helpers.flushLocalAndSyncAll()
     })
     beforeEach('change note into markdown file', async function() {
-      const doc = await this.pouch.byIdMaybe(metadata.id('note.cozy-note'))
+      const doc = await this.pouch.bySyncedPath('note.cozy-note')
       // remove everything that makes a note a Cozy Note
       await this.pouch.put({ ...doc, metadata: {} })
     })
@@ -322,7 +321,7 @@ describe('Update', () => {
       await helpers.pullAndSyncAll()
     })
     beforeEach('change note into markdown file', async function() {
-      const doc = await this.pouch.byIdMaybe(metadata.id('note.cozy-note'))
+      const doc = await this.pouch.bySyncedPath('note.cozy-note')
       // remove everything that makes a note a Cozy Note
       await this.pouch.put({ ...doc, metadata: {} })
     })
