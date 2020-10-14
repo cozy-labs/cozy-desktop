@@ -294,10 +294,11 @@ describe('Pouch', function() {
       })
     })
 
-    describe('getAll', () =>
+    describe('getAll', () => {
       it('returns all the documents matching the query', async function() {
-        let params = {
-          key: metadata.id('my-folder') + path.sep,
+        const params = {
+          startkey: [metadata.id('my-folder') + path.sep, ''],
+          endkey: [metadata.id('my-folder') + path.sep, '\ufff0'],
           include_docs: true
         }
         const docs = await this.pouch.getAll('byPath', params)
@@ -305,7 +306,8 @@ describe('Pouch', function() {
         should(docs).containDeep(
           createdDocs.filter(d => d.path !== 'my-folder') // Parent dir is not returned
         )
-      }))
+      })
+    })
 
     describe('byIdMaybe', () => {
       it('resolves with a doc matching the given _id if any', async function() {
@@ -339,7 +341,20 @@ describe('Pouch', function() {
       })
     })
 
-    describe('byChecksum', () =>
+    describe('bySyncedPath', () => {
+      it('resolves with the doc whose path attribute matches the given path', async function() {
+        for (const doc of createdDocs) {
+          await should(this.pouch.bySyncedPath(doc.path)).be.fulfilledWith(doc)
+        }
+      })
+
+      it('resolves with nothing otherwise', async function() {
+        const doc = await this.pouch.bySyncedPath('not-found')
+        should(doc).be.undefined()
+      })
+    })
+
+    describe('byChecksum', () => {
       it('gets all the files with this checksum', async function() {
         const filePath = path.join('my-folder', 'file-1')
         const _id = metadata.id(filePath)
@@ -349,7 +364,8 @@ describe('Pouch', function() {
         docs[0]._id.should.equal(_id)
         docs[0].path.should.equal(filePath)
         docs[0].md5sum.should.equal(checksum)
-      }))
+      })
+    })
 
     describe('byPath', function() {
       it('gets all the files and folders in this path', async function() {
@@ -385,7 +401,7 @@ describe('Pouch', function() {
 
     describe('byRecurivePath', function() {
       it('gets the files and folders in this path recursively', async function() {
-        const docs = await this.pouch.byRecursivePath(metadata.id('my-folder'))
+        const docs = await this.pouch.byRecursivePath('my-folder')
         docs.length.should.be.equal(6)
         for (let i = 1; i <= 3; i++) {
           docs[i - 1].should.have.properties({
@@ -589,36 +605,38 @@ describe('Pouch', function() {
       })
     })
 
-    describe('addByPathView', () =>
-      it('creates the path view', async function() {
+    describe('addByPathView', () => {
+      it('creates the byPath view', async function() {
         await this.pouch.addByPathView()
         const doc = await this.pouch.db.get('_design/byPath')
         should.exist(doc)
-      }))
+      })
+    })
 
-    describe('addByChecksumView', () =>
-      it('creates the checksum view', async function() {
+    describe('addByChecksumView', () => {
+      it('creates the byChecksum view', async function() {
         await this.pouch.addByChecksumView()
         const doc = await this.pouch.db.get('_design/byChecksum')
         should.exist(doc)
-      }))
+      })
+    })
 
-    describe('addByRemoteIdView', () =>
-      it('creates the remote id view', async function() {
+    describe('addByRemoteIdView', () => {
+      it('creates the byRemoteId view', async function() {
         await this.pouch.addByRemoteIdView()
         const doc = await this.pouch.db.get('_design/byRemoteId')
         should.exist(doc)
-      }))
+      })
+    })
 
-    describe('removeDesignDoc', () =>
+    describe('removeDesignDoc', () => {
       it('removes given view', async function() {
-        let query = `\
-function (doc) {
-if (doc.docType === 'folder') {
-  emit(doc._id);
-}
-}\
-`
+        let query = `function (doc) {
+          if (doc.docType === 'folder') {
+            emit(doc._id);
+          }
+        }`
+
         await this.pouch.createDesignDoc('folder', query)
         const docs = await this.pouch.getAll('folder')
         docs.length.should.be.above(1)
@@ -626,7 +644,8 @@ if (doc.docType === 'folder') {
         await should(this.pouch.getAll('folder')).be.rejectedWith({
           status: 404
         })
-      }))
+      })
+    })
   })
 
   describe('Helpers', function() {

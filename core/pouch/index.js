@@ -221,11 +221,36 @@ class Pouch {
 
   // Return all the files and folders in this path, only at first level
   byPath(basePath) {
+    const key =
+      basePath === '' ? metadata.id(basePath) : metadata.id(basePath) + path.sep
     const params = {
-      key: basePath === '' ? basePath : basePath + path.sep,
+      startkey: [key, ''],
+      endkey: [key, '\ufff0'],
       include_docs: true
     }
     return this.getAll('byPath', params)
+  }
+
+  async bySyncedPath(fpath) {
+    if (!fpath) {
+      return undefined
+    }
+
+    const normalized = metadata.id(fpath)
+    const parentPath =
+      path.dirname(normalized) === '.'
+        ? ''
+        : path.dirname(normalized) + path.sep
+    const name = path.basename(normalized)
+    const params = {
+      key: [parentPath, name],
+      include_docs: true
+    }
+    const matches = await this.getAll('byPath', params)
+    // TODO: Do we need to handle cases in which we have more than one match?
+    // This should probably not happen if we handle correctly id conflicts on
+    // Windows and macOS.
+    return matches.length ? matches[0] : undefined
   }
 
   // Return all the files and folders in this path, even in subfolders
@@ -234,9 +259,10 @@ class Pouch {
     if (basePath === '') {
       params = { include_docs: true }
     } else {
+      const key = metadata.id(basePath + path.sep)
       params = {
-        startkey: `${basePath}${path.sep}`,
-        endkey: `${basePath}${path.sep}\ufff0`,
+        startkey: [key],
+        endkey: [key + '\ufff0'],
         include_docs: true
       }
     }
@@ -288,17 +314,36 @@ class Pouch {
     })
   }
 
-  // Create a view to list files and folders inside a path
-  // The path for a file/folder in root will be '',
-  // not '.' as with node's path.dirname
+  // Create a view to find records based on their `path` attribute via a
+  // composite key.
+  // The key is separated in two parts:
+  // - the parent path
+  // - the document's name
+  // This allows us to either fetch documents via their full path or their
+  // parent path, recursively or not.
+  // The parent path of a document in the root folder will be '', not '.' as
+  // with Node's path.dirname() result.
   async addByPathView() {
+    const platform = JSON.stringify(process.platform)
     const sep = JSON.stringify(path.sep)
     const query = `function(doc) {
-      if ('docType' in doc) {
-        const parts = doc._id.split(${sep})
-        parts.pop()
-        const basePath = parts.concat('').join(${sep})
-        return emit(basePath, { _id: doc._id })
+      if ('path' in doc) {
+        let normalized
+        switch (${platform}) {
+          case 'darwin':
+            normalized = doc.path.normalize('NFD').toUpperCase()
+            break;
+          case 'win32':
+            normalized = doc.path.toUpperCase()
+            break;
+          default:
+            normalized = doc.path
+        }
+        const parts = normalized.split(${sep})
+        const name = parts.pop()
+        const parentPath = parts.concat('').join(${sep})
+
+        return emit([parentPath, name], { rev: doc._rev })
       }
     }`
     await this.createDesignDoc('byPath', query)
