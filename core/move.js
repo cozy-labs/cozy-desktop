@@ -13,7 +13,7 @@ const _ = require('lodash')
 const metadata = require('./metadata')
 
 /*::
-import type { Metadata } from './metadata'
+import type { Metadata, SavedMetadata } from './metadata'
 import type { SideName } from './side'
 */
 
@@ -23,7 +23,11 @@ move.convertToDestinationAddition = convertToDestinationAddition
 
 // Modify the given src/dst docs so they can be merged then moved accordingly
 // during sync.
-function move(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
+function move(
+  side /*: SideName */,
+  src /*: SavedMetadata */,
+  dst /*: Metadata */
+) {
   // Copy all fields from `src` that are not Sync action hints or PouchDB
   // attributes to `dst` if they're not already defined.
   const pouchdbReserved = ['_id', '_rev', '_deleted']
@@ -38,9 +42,7 @@ function move(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
   }
   if (dst.tags == null) dst.tags = []
 
-  // moveTo is used for comparison. It's safer to take _id
-  // than path for this case, as explained in doc/developer/design.md
-  src.moveTo = dst._id
+  src.moveTo = dst.path
   src._deleted = true
 
   delete src.errors
@@ -55,6 +57,7 @@ function move(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
   dst.moveFrom = src
 
   if (!dst.overwrite) {
+    delete dst._id
     delete dst._rev
   }
   metadata.markSide(side, dst, src)
@@ -62,14 +65,18 @@ function move(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
 
 // Same as move() but mark the source as a child move so it will be moved with
 // its ancestor, not by itself, during sync.
-function child(side /*: SideName */, src /*: Metadata */, dst /*: Metadata */) {
+function child(
+  side /*: SideName */,
+  src /*: SavedMetadata */,
+  dst /*: Metadata */
+) {
   move(side, src, dst)
   src.childMove = true
 }
 
 function convertToDestinationAddition(
   side /*: SideName */,
-  src /*: Metadata */,
+  src /*: SavedMetadata */,
   dst /*: Metadata */
 ) {
   // Delete source

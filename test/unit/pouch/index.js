@@ -186,16 +186,14 @@ describe('Pouch', function() {
           .metafile()
           .path('doc')
           .create()
-        doc = _.clone(old)
+        doc = _.cloneDeep(old)
       })
 
       it('does not update doc without sides', async function() {
         _.unset(doc, 'sides')
 
-        await (() => {
-          this.pouch.put(doc)
-        }).should.throw()
-        should((await this.pouch.db.get(doc._id))._rev).equal(old._rev)
+        await should(this.pouch.put(doc)).be.rejected()
+        await should(this.pouch.byIdMaybe(doc._id)).be.fulfilledWith(old)
       })
 
       context('when doc is not deleted', () => {
@@ -206,10 +204,8 @@ describe('Pouch', function() {
         it('does not update doc with a remote side and no remote', async function() {
           _.assign(doc, { remote: undefined, sides: { remote: 1 } })
 
-          await (() => {
-            this.pouch.put(doc)
-          }).should.throw()
-          should((await this.pouch.db.get(doc._id))._rev).equal(old._rev)
+          await should(this.pouch.put(doc)).be.rejected()
+          await should(this.pouch.byIdMaybe(doc._id)).be.fulfilledWith(old)
         })
       })
 
@@ -222,10 +218,8 @@ describe('Pouch', function() {
         it('does not update doc with a remote side and no remote', async function() {
           _.assign(doc, { remote: undefined })
 
-          await (() => {
-            this.pouch.put(doc)
-          }).should.throw()
-          should((await this.pouch.db.get(doc._id))._rev).equal(old._rev)
+          await should(this.pouch.put(doc)).be.rejected()
+          await should(this.pouch.byIdMaybe(doc._id)).be.fulfilledWith(old)
         })
       })
     })
@@ -257,10 +251,10 @@ describe('Pouch', function() {
     })
 
     describe('bulkDocs', () => {
-      let doc1, doc2, old1, old2
+      let builders, doc1, doc2, old1, old2
 
       beforeEach(async function() {
-        const builders = new Builders({ pouch: this.pouch })
+        builders = new Builders({ pouch: this.pouch })
 
         old1 = await builders
           .metafile()
@@ -273,6 +267,21 @@ describe('Pouch', function() {
 
         doc1 = _.clone(old1)
         doc2 = _.clone(old2)
+      })
+
+      it('adds missing ids', async function() {
+        await should(
+          this.pouch.bulkDocs([
+            builders
+              .metafile()
+              .upToDate()
+              .build(),
+            builders
+              .metadir()
+              .upToDate()
+              .build()
+          ])
+        ).be.fulfilled()
       })
 
       it(`does not save two docs swallowing error on first one`, async function() {
@@ -357,11 +366,9 @@ describe('Pouch', function() {
     describe('byChecksum', () => {
       it('gets all the files with this checksum', async function() {
         const filePath = path.join('my-folder', 'file-1')
-        const _id = metadata.id(filePath)
         const checksum = `111111111111111111111111111111111111111${filePath}`
         const docs = await this.pouch.byChecksum(checksum)
         docs.length.should.be.equal(1)
-        docs[0]._id.should.equal(_id)
         docs[0].path.should.equal(filePath)
         docs[0].md5sum.should.equal(checksum)
       })
@@ -386,7 +393,6 @@ describe('Pouch', function() {
         const docs = await this.pouch.byPath('')
         docs.length.should.be.equal(1)
         docs[0].should.have.properties({
-          _id: metadata.id('my-folder'),
           path: 'my-folder',
           docType: 'folder',
           tags: []
@@ -405,13 +411,11 @@ describe('Pouch', function() {
         docs.length.should.be.equal(6)
         for (let i = 1; i <= 3; i++) {
           docs[i - 1].should.have.properties({
-            _id: metadata.id(path.join('my-folder', `file-${i}`)),
             path: path.join('my-folder', `file-${i}`),
             docType: 'file',
             tags: []
           })
           docs[i + 2].should.have.properties({
-            _id: metadata.id(path.join('my-folder', `folder-${i}`)),
             path: path.join('my-folder', `folder-${i}`),
             docType: 'folder',
             tags: []
@@ -423,25 +427,38 @@ describe('Pouch', function() {
         const docs = await this.pouch.byRecursivePath('')
         docs.length.should.be.equal(7)
         docs[0].should.have.properties({
-          _id: metadata.id('my-folder'),
           path: 'my-folder',
           docType: 'folder',
           tags: []
         })
         for (let i = 1; i <= 3; i++) {
           docs[i].should.have.properties({
-            _id: metadata.id(path.join('my-folder', `file-${i}`)),
             path: path.join('my-folder', `file-${i}`),
             docType: 'file',
             tags: []
           })
           docs[i + 3].should.have.properties({
-            _id: metadata.id(path.join('my-folder', `folder-${i}`)),
             path: path.join('my-folder', `folder-${i}`),
             docType: 'folder',
             tags: []
           })
         }
+      })
+
+      context('in descending mode', () => {
+        it('sorts the results in descending path order', async function() {
+          const docs = await this.pouch.byRecursivePath('', {
+            descending: true
+          })
+          should(docs).have.length(7)
+          should(docs).deepEqual(
+            createdDocs.sort((a, b) => {
+              if (metadata.id(a.path) < metadata.id(b.path)) return 1
+              if (metadata.id(a.path) > metadata.id(b.path)) return -1
+              return 0
+            })
+          )
+        })
       })
 
       it('does not return the content of other folders starting with the same path', async function() {
@@ -469,7 +486,6 @@ describe('Pouch', function() {
         const id = `1234567890-${filePath}`
         const doc = await this.pouch.byRemoteId(id)
         doc.remote._id.should.equal(id)
-        should.exist(doc._id)
         should.equal(doc.path, filePath)
         should.exist(doc.docType)
       })
@@ -488,7 +504,6 @@ describe('Pouch', function() {
         const id = `1234567890-${filePath}`
         const doc = await this.pouch.byRemoteIdMaybe(id)
         doc.remote._id.should.equal(id)
-        should.exist(doc._id)
         should.equal(doc.path, filePath)
         should.exist(doc.docType)
       })
@@ -641,9 +656,7 @@ describe('Pouch', function() {
         const docs = await this.pouch.getAll('folder')
         docs.length.should.be.above(1)
         await this.pouch.removeDesignDoc('folder')
-        await should(this.pouch.getAll('folder')).be.rejectedWith({
-          status: 404
-        })
+        await should(this.pouch.getAll('folder')).be.fulfilledWith([])
       })
     })
   })
@@ -651,8 +664,8 @@ describe('Pouch', function() {
   describe('Helpers', function() {
     describe('getPreviousRev', () =>
       it('retrieves previous document informations', async function() {
-        const id = metadata.id(path.join('my-folder', 'folder-1'))
-        const doc = await this.pouch.db.get(id)
+        const dirPath = path.join('my-folder', 'folder-1')
+        const doc = await this.pouch.bySyncedPath(dirPath)
 
         // Update 1
         const tags = ['yipee']
@@ -661,23 +674,24 @@ describe('Pouch', function() {
           tags
         })
         // Update 2
-        await this.pouch.db.remove(id, updated.rev)
+        await this.pouch.db.remove(doc._id, updated.rev)
 
         // Get doc as it was 2 revisions ago
-        should(await this.pouch.getPreviousRev(id, 2)).have.properties({
-          _id: id,
+        should(await this.pouch.getPreviousRev(doc._id, 2)).have.properties({
+          path: dirPath,
           tags: doc.tags
         })
         // Get doc as it was 1 revision ago
-        should(await this.pouch.getPreviousRev(id, 1)).have.properties({
-          _id: id,
+        should(await this.pouch.getPreviousRev(doc._id, 1)).have.properties({
+          path: dirPath,
           tags
         })
         // Get doc as it is now
-        should(await this.pouch.getPreviousRev(id, 0)).have.properties({
-          _id: id,
-          _deleted: true
-        })
+        should(await this.pouch.getPreviousRev(doc._id, 0))
+          .have.properties({
+            _deleted: true
+          })
+          .and.not.have.properties(['path', 'tags']) // erased by PouchDB.remove
       }))
   })
 

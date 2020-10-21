@@ -6,7 +6,7 @@
 
 /*::
 import type { RemoteDoc, RemoteDeletion } from './document'
-import type { Metadata } from '../metadata'
+import type { Metadata, SavedMetadata } from '../metadata'
 */
 
 const path = require('path')
@@ -22,13 +22,13 @@ export type RemoteFileAddition = {
 export type RemoteFileDeletion = {
   sideName: 'remote',
   type: 'FileDeletion',
-  doc: Metadata
+  doc: SavedMetadata
 }
 export type RemoteFileMove = {
   sideName: 'remote',
   type: 'FileMove',
   doc: Metadata,
-  was: Metadata,
+  was: SavedMetadata,
   needRefetch?: true,
   update?: boolean
 }
@@ -42,7 +42,7 @@ export type RemoteFileTrashing = {
   sideName: 'remote',
   type: 'FileTrashing',
   doc: Metadata,
-  was: Metadata
+  was: SavedMetadata
 }
 export type RemoteFileUpdate = {
   sideName: 'remote',
@@ -57,13 +57,13 @@ export type RemoteDirAddition = {
 export type RemoteDirDeletion = {
   sideName: 'remote',
   type: 'DirDeletion',
-  doc: Metadata
+  doc: SavedMetadata
 }
 export type RemoteDirMove = {
   sideName: 'remote',
   type: 'DirMove',
   doc: Metadata,
-  was: Metadata,
+  was: SavedMetadata,
   needRefetch?: true,
   descendantMoves?: RemoteDescendantChange[]
 }
@@ -77,33 +77,33 @@ export type RemoteDirTrashing = {
   sideName: 'remote',
   type: 'DirTrashing',
   doc: Metadata,
-  was: Metadata
+  was: SavedMetadata
 }
 export type RemoteIgnoredChange = {
   sideName: 'remote',
   type: 'IgnoredChange',
   doc: *,
-  was?: Metadata,
+  was?: SavedMetadata,
   detail: string
 }
 export type RemoteInvalidChange = {
   sideName: 'remote',
   type: 'InvalidChange',
   doc: *,
-  was?: Metadata,
+  was?: SavedMetadata,
   error: Error
 }
 export type RemoteUpToDate = {
   sideName: 'remote',
   type: 'UpToDate',
   doc: Metadata,
-  was: Metadata
+  was: SavedMetadata
 }
 export type RemoteDescendantChange = {
   sideName: 'remote',
   type: 'DescendantChange',
   doc: Metadata,
-  was: Metadata,
+  was: SavedMetadata,
   ancestorPath: string,
   descendantMoves?: RemoteDescendantChange[],
   update?: boolean
@@ -166,7 +166,7 @@ function added(
 
 function trashed(
   doc /*: Metadata */,
-  was /*: Metadata */
+  was /*: SavedMetadata */
 ) /*: RemoteFileTrashing | RemoteDirTrashing */ {
   if (metadata.isFile(doc)) {
     return {
@@ -186,7 +186,7 @@ function trashed(
 }
 
 function deleted(
-  doc /*: Metadata */
+  doc /*: SavedMetadata */
 ) /*: RemoteFileDeletion | RemoteDirDeletion */ {
   if (metadata.isFile(doc)) {
     return {
@@ -205,7 +205,7 @@ function deleted(
 
 function upToDate(
   doc /*: Metadata */,
-  was /*: Metadata */
+  was /*: SavedMetadata */
 ) /*: RemoteUpToDate */ {
   return { sideName, type: 'UpToDate', doc, was }
 }
@@ -257,8 +257,8 @@ function isChildSource(
   return (
     isFolderMove(p) &&
     isMove(c) &&
-    p.was &&
-    c.was &&
+    !!p.was &&
+    !!c.was &&
     metadata.samePath(path.dirname(c.was.path), p.was.path)
   )
 }
@@ -289,7 +289,6 @@ function applyMoveInsideMove(
     parentMove.was.path,
     parentMove.doc.path
   )
-  childMove.was._id = metadata.id(childMove.was.path)
 }
 
 const isDelete = (a /*: RemoteChange */) /*: boolean %checks */ =>
@@ -465,18 +464,20 @@ function sort(changes /*: Array<RemoteChange> */) /*: Array<RemoteChange> */ {
 function sortByPath(
   changes /*: Array<RemoteChange> */
 ) /*: Array<RemoteChange> */ {
-  return changes.sort((
-    { doc: aDoc } /*: RemoteChange */,
-    { doc: bDoc } /*: RemoteChange */
-  ) => {
-    if (!aDoc.path) return 1
-    if (!bDoc.path) return -1
+  return changes.sort(
+    (
+      { doc: aDoc /*: { path: string } */ },
+      { doc: bDoc /*: { path: string } */ }
+    ) => {
+      if (!aDoc.path) return 1
+      if (!bDoc.path) return -1
 
-    const aPath = aDoc.path.normalize()
-    const bPath = bDoc.path.normalize()
+      const aPath = aDoc.path.normalize()
+      const bPath = bDoc.path.normalize()
 
-    if (aPath < bPath) return -1
-    if (aPath > bPath) return 1
-    return 0
-  })
+      if (aPath < bPath) return -1
+      if (aPath > bPath) return 1
+      return 0
+    }
+  )
 }

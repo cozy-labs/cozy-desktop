@@ -8,7 +8,6 @@ const should = require('should')
 
 const Channel = require('../../../../core/local/atom/channel')
 const winDetectMove = require('../../../../core/local/atom/win_detect_move')
-const metadata = require('../../../../core/metadata')
 
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
@@ -112,7 +111,6 @@ if (process.platform === 'win32') {
               inputBatch([deletedEvent, createdEvent])
               should(await outputBatch()).deepEqual([
                 {
-                  _id: metadata.id(dstPath),
                   action: 'renamed',
                   kind,
                   oldPath: srcPath,
@@ -174,7 +172,6 @@ if (process.platform === 'win32') {
                       should(outputBatches).deepEqual([
                         [
                           {
-                            _id: metadata.id(dstPath),
                             action: 'renamed',
                             kind,
                             oldPath: srcPath,
@@ -190,7 +187,6 @@ if (process.platform === 'win32') {
                         ],
                         [
                           {
-                            _id: metadata.id(childDstPath),
                             action: 'renamed',
                             kind: childKind,
                             oldPath: childTmpPath,
@@ -234,7 +230,6 @@ if (process.platform === 'win32') {
               inputBatch([deletedEvent, createdEvent])
               should(await outputBatch()).deepEqual([
                 {
-                  _id: metadata.id(srcPath),
                   action: 'ignored',
                   kind,
                   path: srcPath,
@@ -308,7 +303,6 @@ if (process.platform === 'win32') {
                     ],
                     [
                       {
-                        _id: metadata.id(dstPath),
                         action: 'renamed',
                         kind,
                         oldPath: srcPath,
@@ -366,7 +360,6 @@ if (process.platform === 'win32') {
               inputBatch([createdEvent, deletedEvent])
               should(await outputBatch()).deepEqual([
                 {
-                  _id: metadata.id(createdPath),
                   action: 'renamed',
                   kind,
                   oldPath: deletedPath,
@@ -423,7 +416,6 @@ if (process.platform === 'win32') {
                       should(outputBatches).deepEqual([
                         [
                           {
-                            _id: metadata.id(createdPath),
                             action: 'renamed',
                             kind,
                             oldPath: deletedPath,
@@ -439,7 +431,6 @@ if (process.platform === 'win32') {
                         ],
                         [
                           {
-                            _id: metadata.id(childDstPath),
                             action: 'renamed',
                             kind: childKind,
                             oldPath: childTmpPath,
@@ -488,7 +479,6 @@ if (process.platform === 'win32') {
               inputBatch([createdEvent, deletedEvent])
               should(await outputBatch()).deepEqual([
                 {
-                  _id: metadata.id(createdPath),
                   action: 'ignored',
                   kind,
                   path: createdPath,

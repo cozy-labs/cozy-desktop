@@ -139,7 +139,7 @@ const step = async (
   for (let c of changes) {
     try {
       if (c.type !== 'Ignored' && c.needRefetch && c.old) {
-        c.old = await pouch.db.get(metadata.id(c.old.path))
+        c.old = await pouch.bySyncedPath(c.old.path)
       }
       switch (c.type) {
         // TODO: Inline old LocalWatcher methods

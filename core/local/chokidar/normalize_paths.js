@@ -7,7 +7,6 @@
 const Promise = require('bluebird')
 const path = require('path')
 
-const metadata = require('../../metadata')
 const logger = require('../../utils/logger')
 
 const log = logger({
@@ -15,28 +14,9 @@ const log = logger({
 })
 
 /*::
-import type {  } from './local_change'
-import type { Metadata } from '../../metadata'
+import type { SavedMetadata } from '../../metadata'
 import type { Pouch } from '../../pouch'
-import type {
-  LocalChange,
-  LocalDirAddition,
-  LocalDirDeletion,
-  LocalDirMove,
-  LocalFileAddition,
-  LocalFileDeletion,
-  LocalFileMove,
-  LocalFileUpdate
-} from './local_change'
-
-type Change =
-  | LocalDirAddition
-  | LocalDirDeletion
-  | LocalDirMove
-  | LocalFileAddition
-  | LocalFileDeletion
-  | LocalFileMove
-  | LocalFileUpdate
+import type { LocalChange } from './local_change'
 
 type NormalizePathsOpts = {
   pouch: Pouch,
@@ -55,12 +35,10 @@ const step = async (
     if (c.type !== 'Ignored') {
       const parentPath = path.dirname(c.path)
       const parent =
-        parentPath !== '.'
-          ? await pouch.byIdMaybe(metadata.id(parentPath))
-          : null
+        parentPath !== '.' ? await pouch.bySyncedPath(parentPath) : null
       c.path = normalizedPath(
         c.path,
-        c.old && c.old.path,
+        c.old ? c.old.path : undefined,
         parent,
         normalizedPaths
       )
@@ -89,7 +67,7 @@ const isNFD = string => string === string.normalize('NFD')
 const normalizedPath = (
   newPath /*: string */,
   oldPath /*: ?string */,
-  parent /*: ?Metadata */,
+  parent /*: ?SavedMetadata */,
   normalizedPaths /*: string[] */
 ) /*: string */ => {
   // Curent change's path parts

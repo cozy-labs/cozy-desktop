@@ -6,7 +6,6 @@ const path = require('path')
 
 const { Ignore } = require('../../core/ignore')
 const Prep = require('../../core/prep')
-const metadata = require('../../core/metadata')
 const { TRASH_DIR_NAME } = require('../../core/remote/constants')
 
 describe('Prep', function() {
@@ -67,7 +66,6 @@ describe('Prep', function() {
         await this.prep.addFileAsync(this.side, doc)
         this.merge.addFileAsync.calledWith(this.side, doc).should.be.true()
         doc.docType.should.equal('file')
-        should.exist(doc._id)
         // FIXME: should.exist(doc.updated_at)
       })
 
@@ -118,7 +116,6 @@ describe('Prep', function() {
         await this.prep.updateFileAsync(this.side, doc)
         this.merge.updateFileAsync.calledWith(this.side, doc).should.be.true()
         doc.docType.should.equal('file')
-        should.exist(doc._id)
         // FIXME: should.exist(doc.updated_at)
       })
 
@@ -145,7 +142,6 @@ describe('Prep', function() {
         await this.prep.putFolderAsync(this.side, doc)
         this.merge.putFolderAsync.calledWith(this.side, doc).should.be.true()
         doc.docType.should.equal('folder')
-        should.exist(doc._id)
         // FIXME: should.exist(doc.updated_at)
       })
 
@@ -226,7 +222,6 @@ describe('Prep', function() {
           md5sum: 'uhNoeJzOlbV03scN/UduYQ=='
         }
         let was = {
-          _id: 'FOO/OLD-MISSING-FIELDS.JPG',
           _rev: '456',
           path: 'FOO/OLD-MISSING-FIELDS.JPG',
           md5sum: 'uhNoeJzOlbV03scN/UduYQ==',
@@ -242,7 +237,6 @@ describe('Prep', function() {
           .calledWith(this.side, doc, was)
           .should.be.true()
         doc.docType.should.equal('file')
-        should.exist(doc._id)
         // FIXME: should.exist(doc.updated_at)
       })
     })
@@ -296,7 +290,6 @@ describe('Prep', function() {
         this.merge.moveFolderAsync.resolves()
         let doc = { path: 'FOOBAR/new-missing-fields' }
         let was = {
-          _id: 'FOOBAR/OLD-MISSING-FIELDS',
           _rev: '456',
           path: 'FOOBAR/OLD-MISSING-FIELDS',
           docType: 'folder',
@@ -308,7 +301,6 @@ describe('Prep', function() {
           .calledWith(this.side, doc, was)
           .should.be.true()
         doc.docType.should.equal('folder')
-        should.exist(doc._id)
         // FIXME: should.exist(doc.updated_at)
       })
     })
@@ -328,7 +320,6 @@ describe('Prep', function() {
         await this.prep.deleteFileAsync(this.side, doc)
         this.merge.deleteFileAsync.calledWith(this.side, doc).should.be.true()
         doc.docType.should.equal('file')
-        should.exist(doc._id)
       })
 
       it('does nothing for ignored paths on local', async function() {
@@ -351,7 +342,6 @@ describe('Prep', function() {
         await this.prep.deleteFolderAsync(this.side, doc)
         this.merge.deleteFolderAsync.calledWith(this.side, doc).should.be.true()
         doc.docType.should.equal('folder')
-        should.exist(doc._id)
       })
 
       it('does nothing for ignored paths on local', async function() {
@@ -368,15 +358,13 @@ describe('Prep', function() {
         path: 'file-to-be-trashed',
         md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
       }
-      const docId = metadata.id(doc.path)
-
       await this.prep.trashFileAsync(this.side, doc, doc)
 
       should(this.merge.trashFileAsync).be.calledOnce()
       should(this.merge.trashFileAsync).be.calledWith(
         this.side,
-        { path: doc.path, _id: docId },
-        { ...doc, trashed: true, _id: docId, docType: 'file' }
+        { path: doc.path },
+        { ...doc, trashed: true, docType: 'file' }
       )
     })
 
@@ -399,11 +387,10 @@ describe('Prep', function() {
       should(this.merge.trashFileAsync).be.calledOnce()
       should(this.merge.trashFileAsync).be.calledWith(
         this.side,
-        { path: was.path, _id: metadata.id(was.path) },
+        { path: was.path },
         {
           ...was,
           path: path.join(TRASH_DIR_NAME, was.path),
-          _id: metadata.id(path.join(TRASH_DIR_NAME, was.path)),
           trashed: true,
           docType: 'file'
         }
@@ -423,15 +410,14 @@ describe('Prep', function() {
   describe('trashFolderAsync', () => {
     it('merges the metadata with an _id and a docType', async function() {
       const doc = { path: 'folder-to-be-trashed' }
-      const docId = metadata.id(doc.path)
 
       await this.prep.trashFolderAsync(this.side, doc, doc)
 
       should(this.merge.trashFolderAsync).be.calledOnce()
       should(this.merge.trashFolderAsync).be.calledWith(
         this.side,
-        { path: doc.path, _id: docId },
-        { ...doc, trashed: true, _id: docId, docType: 'folder' }
+        { path: doc.path },
+        { ...doc, trashed: true, docType: 'folder' }
       )
     })
 
@@ -451,11 +437,10 @@ describe('Prep', function() {
       should(this.merge.trashFolderAsync).be.calledOnce()
       should(this.merge.trashFolderAsync).be.calledWith(
         this.side,
-        { path: was.path, _id: metadata.id(was.path) },
+        { path: was.path },
         {
           ...was,
           path: path.join(TRASH_DIR_NAME, was.path),
-          _id: metadata.id(path.join(TRASH_DIR_NAME, was.path)),
           trashed: true,
           docType: 'folder'
         }

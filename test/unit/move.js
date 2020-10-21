@@ -4,19 +4,29 @@
 const _ = require('lodash')
 const should = require('should')
 const move = require('../../core/move')
+
+const configHelpers = require('../support/helpers/config')
+const pouchHelpers = require('../support/helpers/pouch')
 const Builders = require('../support/builders')
 
-const builders = new Builders()
-
 describe('move', () => {
-  it('transfers all src attributes not already defined in dst', () => {
-    const src = builders
+  let builders
+  before('instanciate config', configHelpers.createConfig)
+  beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+  beforeEach('prepare builders', function() {
+    builders = new Builders({ pouch: this.pouch })
+  })
+  afterEach('clean pouch', pouchHelpers.cleanDatabase)
+  after('clean config directory', configHelpers.cleanConfig)
+
+  it('transfers all src attributes not already defined in dst', async () => {
+    const src = await builders
       .metafile()
       .path('src/file')
       .data('hello')
       .tags('qux')
       .sides({ local: 2, remote: 1 })
-      .build()
+      .create()
     src.metadata = {
       test: 'kept metadata'
     }
@@ -36,7 +46,6 @@ describe('move', () => {
       remote: src.remote
     })
     // PouchDB reserved attributes are not transfered
-    should(dst._id).not.eql(src._id)
     should(dst._deleted).be.undefined()
     should(dst._rev).be.undefined()
     // defined attributes are not overwritten
@@ -46,11 +55,11 @@ describe('move', () => {
   })
 
   describe('.child()', () => {
-    it('ensures destination will be moved as part of its ancestor directory', () => {
-      const src = builders
+    it('ensures destination will be moved as part of its ancestor directory', async () => {
+      const src = await builders
         .metadata()
         .path('whatever/src')
-        .build()
+        .create()
       const dst = _.defaults({ path: 'whatever/dst' }, src)
 
       move.child('local', src, dst)
@@ -65,12 +74,12 @@ describe('move', () => {
     const side = 'local'
     let src, dst
 
-    beforeEach(() => {
-      src = builders
+    beforeEach(async () => {
+      src = await builders
         .metadata()
         .path('src')
         .upToDate()
-        .build()
+        .create()
       dst = builders
         .metadata(src)
         .path('destination')

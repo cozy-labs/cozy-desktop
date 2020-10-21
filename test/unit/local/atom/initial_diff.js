@@ -11,7 +11,6 @@ const pouchHelpers = require('../../../support/helpers/pouch')
 
 const Channel = require('../../../../core/local/atom/channel')
 const initialDiff = require('../../../../core/local/atom/initial_diff')
-const metadata = require('../../../../core/metadata')
 
 const kind = doc => (doc.docType === 'folder' ? 'directory' : 'file')
 
@@ -430,7 +429,6 @@ describe('core/local/atom/initial_diff', () => {
 
       should(events).deepEqual([
         {
-          _id: foo._id,
           action: 'deleted',
           initialDiff: {
             notFound: _.defaults(
@@ -442,7 +440,6 @@ describe('core/local/atom/initial_diff', () => {
           path: foo.path
         },
         {
-          _id: bar._id,
           action: 'deleted',
           initialDiff: {
             notFound: _.defaults(
@@ -775,7 +772,6 @@ describe('core/local/atom/initial_diff', () => {
         {
           action: 'deleted',
           kind: 'directory',
-          _id: metadata.id(deletedPath),
           path: deletedPath,
           [initialDiff.STEP_NAME]: {
             notFound: {

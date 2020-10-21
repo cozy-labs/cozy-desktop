@@ -10,7 +10,7 @@
  */
 
 /*::
-import type { Metadata } from '../../metadata'
+import type { SavedMetadata } from '../../metadata'
 import type {
   ChokidarAdd,
   ChokidarAddDir,
@@ -20,22 +20,22 @@ import type {
 } from './event'
 
 export type LocalDirAdded = ChokidarAddDir & {
-  old: ?Metadata,
+  old: ?SavedMetadata,
   wip?: true
 }
 export type LocalDirUnlinked = ChokidarUnlinkDir & {
-  old: ?Metadata
+  old: ?SavedMetadata
 }
 export type LocalFileAdded = ChokidarAdd & {
-  old: ?Metadata,
+  old: ?SavedMetadata,
   md5sum: string,
   wip?: true
 }
 export type LocalFileUnlinked = ChokidarUnlink & {
-  old: ?Metadata
+  old: ?SavedMetadata
 }
 export type LocalFileUpdated = ChokidarChange & {
-  old: ?Metadata,
+  old: ?SavedMetadata,
   md5sum: string,
   wip?: true
 }

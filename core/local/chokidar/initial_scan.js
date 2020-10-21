@@ -18,10 +18,10 @@ const NB_OF_DELETABLE_ELEMENT = 3
 import type { ChokidarEvent } from './event'
 import type LocalEventBuffer from './event_buffer'
 import type { Pouch } from '../../pouch'
-import type { Metadata } from '../../metadata'
+import type { SavedMetadata } from '../../metadata'
 
 export type InitialScan = {
-  ids: string[],
+  paths: string[],
   emptyDirRetryCount: number,
   flushed: boolean,
   resolve: () => void
@@ -40,9 +40,9 @@ const detectOfflineUnlinkEvents = async (
 ) /*: Promise<{offlineEvents: Array<ChokidarEvent>, unappliedMoves: string[], emptySyncDir: boolean}> */ => {
   // Try to detect removed files & folders
   const events /*: Array<ChokidarEvent> */ = []
-  const docs /*: Metadata[] */ = await pouch.initialScanDocs()
+  const docs /*: SavedMetadata[] */ = await pouch.initialScanDocs()
   const inInitialScan = doc =>
-    initialScan.ids.indexOf(metadata.id(doc.path)) !== -1
+    initialScan.paths.indexOf(metadata.id(doc.path)) !== -1
 
   // the Syncdir is empty error only occurs if there was some docs beforehand
   let emptySyncDir = docs.length > NB_OF_DELETABLE_ELEMENT
@@ -69,10 +69,10 @@ const step = async (
 ) /*: Promise<?Array<ChokidarEvent>> */ => {
   let events = rawEvents.filter(e => e.path !== '') // @TODO handle root dir events
   if (initialScan != null) {
-    const ids = initialScan.ids
+    const paths = initialScan.paths
     events
       .filter(e => e.type.startsWith('add'))
-      .forEach(e => ids.push(metadata.id(e.path)))
+      .forEach(e => paths.push(metadata.id(e.path)))
 
     const {
       offlineEvents,

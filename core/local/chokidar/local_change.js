@@ -15,7 +15,7 @@ const logger = require('../../utils/logger')
 
 /*::
 import type fs from 'fs'
-import type { Metadata } from '../../metadata'
+import type { Metadata, SavedMetadata } from '../../metadata'
 import type {
   LocalDirAdded,
   LocalDirUnlinked,
@@ -79,7 +79,7 @@ export type LocalDirAddition = {
   sideName: 'local',
   type: 'DirAddition',
   path: string,
-  old?: Metadata,
+  old?: SavedMetadata,
   ino: number,
   stats: fs.Stats,
   wip?: true
@@ -88,14 +88,14 @@ export type LocalDirDeletion = {
   sideName: 'local',
   type: 'DirDeletion',
   path: string,
-  old?: Metadata,
+  old?: SavedMetadata,
   ino?: number
 }
 export type LocalDirMove = {
   sideName: 'local',
   type: 'DirMove',
   path: string,
-  old: Metadata,
+  old: SavedMetadata,
   ino: number,
   stats: fs.Stats,
   wip?: true,
@@ -106,7 +106,7 @@ export type LocalFileAddition = {
   sideName: 'local',
   type: 'FileAddition',
   path: string,
-  old?: Metadata,
+  old?: SavedMetadata,
   ino: number,
   stats: fs.Stats,
   md5sum: string,
@@ -116,27 +116,27 @@ export type LocalFileDeletion = {
   sideName: 'local',
   type: 'FileDeletion',
   path: string,
-  old?: Metadata,
+  old?: SavedMetadata,
   ino?: number
 }
 export type LocalFileMove = {
   sideName: 'local',
   type: 'FileMove',
   path: string,
-  old: Metadata,
+  old: SavedMetadata,
   ino: number,
   stats: fs.Stats,
   md5sum: string,
   wip?: true,
   needRefetch?: boolean,
   update?: LocalFileAdded|LocalFileUpdated,
-  overwrite?: Metadata
+  overwrite?: SavedMetadata
 }
 export type LocalFileUpdate = {
   sideName: 'local',
   type: 'FileUpdate',
   path: string,
-  old?: Metadata,
+  old?: SavedMetadata,
   ino: number,
   stats: fs.Stats,
   md5sum: string,
@@ -165,7 +165,7 @@ const sideName = 'local'
 function build(
   type /*: string */,
   path /*: string */,
-  opts /*: ?{stats?: fs.Stats, md5sum?: string, old?: ?Metadata} */
+  opts /*: ?{stats?: fs.Stats, md5sum?: string, old?: ?SavedMetadata} */
 ) /*: LocalChange */ {
   const change /*: Object */ = _.assign({ sideName, type, path }, opts)
   if (change.wip == null) delete change.wip
@@ -217,8 +217,8 @@ function isChildMove(
     a.type === 'DirMove' &&
     (b.type === 'DirMove' || b.type === 'FileMove') &&
     b.path.normalize().startsWith(a.path.normalize() + path.sep) &&
-    a.old &&
-    b.old &&
+    !!a.old &&
+    !!b.old &&
     b.old.path.normalize().startsWith(a.old.path.normalize() + path.sep)
   )
 }

@@ -6,7 +6,6 @@
 const path = require('path')
 const { default: CozyClient, models } = require('cozy-client')
 
-const metadata = require('../../core/metadata')
 const {
   CozyDocumentMissingError,
   UnreachableError
@@ -32,7 +31,7 @@ const localDoc = async (
   { config, pouch } /*: { config: Config, pouch: Pouch } */
 ) /*: Promise<Metadata> */ => {
   const relPath = path.relative(config.syncPath, filePath)
-  const doc = await pouch.byIdMaybe(metadata.id(relPath))
+  const doc = await pouch.bySyncedPath(relPath)
   if (!doc || doc.deleted) {
     throw new CozyDocumentMissingError({
       cozyURL: config.cozyUrl,

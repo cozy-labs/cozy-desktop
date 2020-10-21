@@ -11,7 +11,6 @@ const { ContextDir } = require('../../../support/helpers/context_dir')
 const configHelpers = require('../../../support/helpers/config')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
-const metadata = require('../../../../core/metadata')
 const stater = require('../../../../core/local/stater')
 const Channel = require('../../../../core/local/atom/channel')
 const incompleteFixer = require('../../../../core/local/atom/incomplete_fixer')
@@ -235,7 +234,6 @@ describe('core/local/atom/incomplete_fixer', () => {
           [
             renamedEvent,
             {
-              _id: metadata.id(path.normalize('dst/foo1')),
               path: path.normalize('dst/foo1'),
               kind: 'file',
               action: 'created',
@@ -243,7 +241,6 @@ describe('core/local/atom/incomplete_fixer', () => {
               stats: await stater.stat(path.join(syncPath, 'dst/foo1'))
             },
             {
-              _id: metadata.id(path.normalize('dst/foo2')),
               path: path.normalize('dst/foo2'),
               kind: 'file',
               action: 'modified',
@@ -251,7 +248,6 @@ describe('core/local/atom/incomplete_fixer', () => {
               stats: await stater.stat(path.join(syncPath, 'dst/foo2'))
             },
             {
-              _id: metadata.id(path.normalize('dst/foo3')),
               path: path.normalize('dst/foo3'),
               kind: 'file',
               action: 'deleted',
@@ -259,7 +255,6 @@ describe('core/local/atom/incomplete_fixer', () => {
               stats: await stater.stat(path.join(syncPath, 'dst/foo3'))
             },
             {
-              _id: metadata.id(path.normalize('dst/foo5')),
               path: path.normalize('dst/foo5'),
               kind: 'file',
               action: 'scan',
@@ -332,7 +327,6 @@ describe('core/local/atom/incomplete_fixer', () => {
         )(inputBatch)
         should(completionChanges(outputBatch)).deepEqual([
           {
-            _id: renamedEvent._id,
             path: renamedEvent.path,
             md5sum: CHECKSUM,
             stats: await stater.stat(path.join(syncPath, renamedEvent.path)),
@@ -382,7 +376,6 @@ describe('core/local/atom/incomplete_fixer', () => {
           [],
           [
             {
-              _id: metadata.id(src),
               action: 'deleted',
               incompleteFixer: {
                 incompleteEvent: renamedEvent,
@@ -438,7 +431,6 @@ describe('core/local/atom/incomplete_fixer', () => {
           [],
           [
             {
-              _id: metadata.id(dst2),
               action: 'renamed',
               incompleteFixer: {
                 incompleteEvent: firstRenamedEvent,
@@ -511,7 +503,6 @@ describe('core/local/atom/incomplete_fixer', () => {
           [],
           [
             {
-              _id: metadata.id(dst3),
               action: 'renamed',
               kind: 'file',
               md5sum: CHECKSUM,
@@ -617,7 +608,6 @@ describe('core/local/atom/incomplete_fixer', () => {
           [],
           [
             {
-              _id: metadata.id(src),
               action: 'modified',
               kind: 'file',
               md5sum: CHECKSUM,
@@ -631,7 +621,6 @@ describe('core/local/atom/incomplete_fixer', () => {
           ],
           [
             {
-              _id: metadata.id(tmp),
               action: 'deleted',
               kind: 'file',
               path: tmp
@@ -740,7 +729,6 @@ describe('core/local/atom/incomplete_fixer', () => {
           [
             renamedEvent,
             {
-              _id: metadata.id(dst),
               action: 'modified',
               incompleteFixer: {
                 incompleteEvent: modifiedEvent,
@@ -819,7 +807,6 @@ describe('core/local/atom/incomplete_fixer', () => {
           [],
           [
             {
-              _id: metadata.id(dst2),
               action: 'renamed',
               incompleteFixer: {
                 incompleteEvent: firstRenamedEvent,
@@ -832,13 +819,11 @@ describe('core/local/atom/incomplete_fixer', () => {
               stats: await stater.stat(path.join(syncPath, dst2))
             },
             {
-              _id: metadata.id(dst2),
               action: 'modified',
               incompleteFixer: {
                 incompleteEvent: {
                   ...modifiedEvent,
                   path: dst1,
-                  _id: metadata.id(dst1),
                   md5sum: undefined,
                   incompleteFixer: {
                     incompleteEvent: modifiedEvent,

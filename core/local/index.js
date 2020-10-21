@@ -17,7 +17,7 @@ const bluebird = require('bluebird')
 const { TMP_DIR_NAME } = require('./constants')
 const { NOTE_MIME_TYPE } = require('../remote/constants')
 const stater = require('./stater')
-const { isUpToDate } = require('../metadata')
+const metadata = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
 const watcher = require('./watcher')
 const syncDir = require('./sync_dir')
@@ -186,7 +186,7 @@ class Local /*:: implements Reader, Writer */ {
     }
 
     for (const doc of docs) {
-      if (isUpToDate('local', doc)) {
+      if (metadata.isUpToDate('local', doc)) {
         const filePath = path.resolve(this.syncPath, doc.path)
         if (await fse.exists(filePath)) return filePath
       }
@@ -380,14 +380,17 @@ class Local /*:: implements Reader, Writer */ {
       `Moving ${old.docType}${doc.overwrite ? ' (with overwrite)' : ''}`
     )
 
-    if (doc.overwrite && doc.overwrite._id !== old._id) {
+    if (
+      doc.overwrite &&
+      metadata.id(doc.overwrite.path) !== metadata.id(old.path)
+    ) {
       await this.trashAsync(doc.overwrite)
     }
 
     let oldPath = path.join(this.syncPath, old.path)
     let newPath = path.join(this.syncPath, doc.path)
 
-    if (doc._id !== old._id) {
+    if (metadata.id(doc.path) !== metadata.id(old.path)) {
       try {
         const stats = await fse.stat(newPath)
         const err = new Error(`Move destination already exists: ${newPath}`)

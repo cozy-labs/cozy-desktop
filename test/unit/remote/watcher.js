@@ -27,7 +27,7 @@ const { FILE_TYPE, DIR_TYPE } = require('../../../core/remote/constants')
 const { MergeMissingParentError } = require('../../../core/merge')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 
-const { assignId, ensureValidPath } = metadata
+const { ensureValidPath } = metadata
 
 const isFile = (remoteFile) /*: boolean %checks */ =>
   remoteFile.type === FILE_TYPE
@@ -297,7 +297,6 @@ describe('RemoteWatcher', function() {
   ) /*: Metadata */ => {
     const doc = metadata.fromRemoteDoc(remoteDoc)
     ensureValidPath(doc)
-    assignId(doc)
     return doc
   }
 
@@ -440,7 +439,6 @@ describe('RemoteWatcher', function() {
           .build()
         const oldDoc = metadata.fromRemoteDoc(oldRemote)
         metadata.ensureValidPath(oldDoc)
-        metadata.assignId(oldDoc)
         const newRemote = _.defaults(
           {
             _rev: oldRemote._rev.replace(/^1/, '2'),
@@ -1343,7 +1341,6 @@ describe('RemoteWatcher', function() {
         const olds = [remoteDir1, remoteDir2, remoteFile].map(oldRemote => {
           const oldDoc = metadata.fromRemoteDoc(oldRemote)
           metadata.ensureValidPath(oldDoc)
-          metadata.assignId(oldDoc)
           return oldDoc
         })
 
@@ -2064,7 +2061,6 @@ describe('RemoteWatcher', function() {
         .build()
       const was /*: Metadata */ = metadata.fromRemoteDoc(file)
       metadata.ensureValidPath(was)
-      metadata.assignId(was)
       file._rev = '2'
       file.name = 'woof.txt'
       file.path = '/' + file.name
@@ -2198,7 +2194,6 @@ describe('RemoteWatcher', function() {
           .build()
 
         const doc = metadata.fromRemoteDoc(newFile)
-        metadata.assignId(doc)
 
         should(
           this.watcher.identifyChange(newFile, trashedFile, [], [])

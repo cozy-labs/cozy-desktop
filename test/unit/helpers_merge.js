@@ -64,7 +64,6 @@ describe('Merge Helpers', function() {
             await this.merge.ensureParentExistAsync(side, doc)
             should(this.merge.putFolderAsync).have.been.called()
             this.merge.putFolderAsync.args[0][1].should.have.properties({
-              _id: metadata.id('missing'),
               path: 'missing',
               docType: 'folder'
             })
@@ -84,7 +83,6 @@ describe('Merge Helpers', function() {
               const path = iterable[i]
               should(this.merge.putFolderAsync).have.been.called()
               this.merge.putFolderAsync.args[i][1].should.have.properties({
-                _id: metadata.id(path),
                 path,
                 docType: 'folder'
               })

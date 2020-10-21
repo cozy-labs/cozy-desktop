@@ -72,7 +72,7 @@ describe('Local watcher', function() {
           referenced = (stats.mode & fs.constants.S_IWGRP) !== 0
         }
         if (referenced) {
-          const doc = await state.pouchdb.byIdMaybe(id(relpath))
+          const doc = await state.pouchdb.bySyncedPath(relpath)
           should(doc.remote).be.equal(stats.ino)
         }
       }

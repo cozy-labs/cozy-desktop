@@ -19,6 +19,7 @@ import type {
   MetadataRemoteFile,
   MetadataRemoteDir,
   MetadataSidesInfo,
+  SavedMetadata,
 } from '../../../../core/metadata'
 import type { Pouch } from '../../../../core/pouch'
 import type { RemoteDoc } from '../../../../core/remote/document'
@@ -43,7 +44,6 @@ module.exports = class BaseMetadataBuilder {
       this.doc = _.cloneDeep(old)
     } else {
       const doc /*: Object */ = {
-        _id: metadata.id('foo'),
         docType: 'folder', // To make flow happy (overridden by subclasses)
         path: 'foo',
         tags: [],
@@ -58,13 +58,12 @@ module.exports = class BaseMetadataBuilder {
   fromRemote(remoteDoc /*: MetadataRemoteInfo */) /*: this */ {
     this.buildRemote = true
     this.doc = metadata.fromRemoteDoc(remoteDoc)
-    metadata.ensureValidPath(this.doc)
-    this._assignId()
+    this._consolidatePaths()
     return this
   }
 
-  moveTo(path /*: string */) /*: this */ {
-    this.doc.moveTo = metadata.id(path)
+  moveTo(docpath /*: string */) /*: this */ {
+    this.doc.moveTo = docpath
     this.doc._deleted = true
     return this
   }
@@ -95,16 +94,13 @@ module.exports = class BaseMetadataBuilder {
       this.buildLocal = true
     }
     this.noSides()
-    return this.noRev()
-  }
-
-  rev(rev /*: string */) /*: this */ {
-    this.doc._rev = rev
+    this.noRecord()
     return this
   }
 
-  noRev() /*: this */ {
-    delete this.doc._rev
+  noRecord() /*: this */ {
+    if (this.doc._id) delete this.doc._id
+    if (this.doc._rev) delete this.doc._rev
     return this
   }
 
@@ -117,6 +113,11 @@ module.exports = class BaseMetadataBuilder {
   noLocal() /*: this */ {
     this.buildLocal = false
     if (this.doc.local) delete this.doc.local
+    return this
+  }
+
+  rev(rev /*: string */) /*: this */ {
+    this.doc._rev = rev
     return this
   }
 
@@ -151,8 +152,7 @@ module.exports = class BaseMetadataBuilder {
 
   path(newPath /*: string */) /*: this */ {
     this.doc.path = path.normalize(newPath)
-    metadata.ensureValidPath(this.doc)
-    this._assignId()
+    this._consolidatePaths()
     return this
   }
 
@@ -239,8 +239,18 @@ module.exports = class BaseMetadataBuilder {
     const sides /*: MetadataSidesInfo */ = {
       target: Math.max(local || 0, remote || 0)
     }
-    if (local) sides.local = local
-    if (remote) sides.remote = remote
+    if (local) {
+      this.buildLocal = true
+      sides.local = local
+    } else {
+      this.noLocal()
+    }
+    if (remote) {
+      this.buildRemote = true
+      sides.remote = remote
+    } else {
+      this.noRemote()
+    }
     this.doc.sides = sides
     return this
   }
@@ -285,7 +295,7 @@ module.exports = class BaseMetadataBuilder {
     return _.cloneDeep(this.doc)
   }
 
-  async create() /*: Promise<Metadata> */ {
+  async create() /*: Promise<SavedMetadata> */ {
     const { pouch } = this
     if (pouch == null) {
       throw new Error('Cannot create dir metadata without Pouch')
@@ -295,17 +305,13 @@ module.exports = class BaseMetadataBuilder {
     doc.sides = doc.sides || { local: 1 }
     doc.sides.target = Math.max(doc.sides.local || 0, doc.sides.remote || 0)
 
-    const { rev: newRev } = await pouch.db.put(doc)
-    doc._rev = newRev
-
-    return doc
+    return await pouch.put(doc)
   }
 
-  _assignId() /* void */ {
-    metadata.assignId(this.doc)
-
+  _consolidatePaths() /* void */ {
+    metadata.ensureValidPath(this.doc)
     if (this.doc.moveFrom) {
-      this.doc.moveFrom.moveTo = this.doc._id
+      this.doc.moveFrom.moveTo = this.doc.path
     }
   }
 

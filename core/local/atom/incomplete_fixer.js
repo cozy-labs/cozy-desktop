@@ -16,7 +16,6 @@
 const path = require('path')
 
 const stater = require('../stater')
-const metadata = require('../../metadata')
 const logger = require('../../utils/logger')
 
 const STEP_NAME = 'incompleteFixer'
@@ -142,7 +141,6 @@ async function rebuildIncompleteEvent(
     },
     action: previousEvent.action,
     path: rebuiltPath,
-    _id: metadata.id(rebuiltPath),
     kind,
     md5sum
   }
@@ -167,8 +165,6 @@ function buildDeletedFromRenamed(
       action: nextEvent.action,
       // $FlowFixMe: renamed events always have an oldPath
       path: oldPath,
-      // $FlowFixMe: renamed events always have an oldPath
-      _id: metadata.id(oldPath),
       kind
     }
   }
@@ -272,8 +268,8 @@ function step(
           // (e.g. a temporary document now renamed), we'll want to make sure the old
           // document is removed to avoid having 2 documents with the same inode.
           // We can do this by keeping the completing renamed event.
-          const incompleteForExistingDoc /*: ?Metadata */ = await opts.pouch.byIdMaybe(
-            metadata.id(item.event.path)
+          const incompleteForExistingDoc /*: ?Metadata */ = await opts.pouch.bySyncedPath(
+            item.event.path
           )
           if (
             incompleteForExistingDoc &&

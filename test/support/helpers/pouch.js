@@ -1,4 +1,3 @@
-const { assignId } = require('../../../core/metadata')
 const { Pouch } = require('../../../core/pouch')
 
 module.exports = {
@@ -27,8 +26,7 @@ module.exports = {
         remote: 1
       }
     }
-    assignId(doc)
-    return pouch.db.put(doc).then(({ rev }) => ({ ...doc, _rev: rev }))
+    return pouch.put(doc)
   },
 
   createFolder(pouch, folderPath) {
@@ -45,8 +43,7 @@ module.exports = {
         remote: 1
       }
     }
-    assignId(doc)
-    return pouch.db.put(doc).then(({ rev }) => ({ ...doc, _rev: rev }))
+    return pouch.put(doc)
   },
 
   createFile(pouch, filePath) {
@@ -64,7 +61,6 @@ module.exports = {
         remote: 1
       }
     }
-    assignId(doc)
-    return pouch.db.put(doc).then(({ rev }) => ({ ...doc, _rev: rev }))
+    return pouch.put(doc)
   }
 }

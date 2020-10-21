@@ -3,8 +3,6 @@
 
 const should = require('should')
 
-const metadata = require('../../core/metadata')
-
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -44,7 +42,7 @@ describe('Full watch/merge/sync/repeat loop', () => {
 
     should(await helpers.local.tree()).deepEqual(['file'])
 
-    const doc = await helpers.pouch.db.get(metadata.id('file'))
+    const doc = await helpers.pouch.bySyncedPath('file')
     should(doc.ino).be.a.Number()
     should(doc.sides).deepEqual({ target: 2, local: 2, remote: 2 })
     await helpers._local.watcher.stop()

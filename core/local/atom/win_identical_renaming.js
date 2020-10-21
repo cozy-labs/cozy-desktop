@@ -14,22 +14,23 @@ const _ = require('lodash')
 
 const Channel = require('./channel')
 const logger = require('../../utils/logger')
+const metadata = require('../../metadata')
 
 /*::
 import type { AtomEvent, AtomBatch } from './event'
 import type { Metadata } from '../../metadata'
 
 type WinIdenticalRenamingState = {
-  deletedEventsById: Map<string, AtomEvent>,
+  deletedEventsByNormalizedPath: Map<string, AtomEvent>,
   pending: {
-    deletedEventsById: Map<string, AtomEvent>,
+    deletedEventsByNormalizedPath: Map<string, AtomEvent>,
     events: AtomBatch,
     timeout?: TimeoutID
   }
 }
 
 type PouchFunctions = {
-  byIdMaybe: (string) => Promise<?Metadata>
+  bySyncedPath: (string) => Promise<?Metadata>
 }
 
 type WinIdenticalRenamingOptions = {
@@ -55,10 +56,10 @@ const DELAY = 500
 const initialState = () => ({
   [STEP_NAME]: {
     // eslint-disable-next-line
-    deletedEventsById: new Map /*:: <string,AtomEvent> */ (),
+    deletedEventsByNormalizedPath: new Map /*:: <string,AtomEvent> */ (),
     pending: {
       // eslint-disable-next-line
-      deletedEventsById: new Map /*:: <string,AtomEvent> */ (),
+      deletedEventsByNormalizedPath: new Map /*:: <string,AtomEvent> */ (),
       events: []
     }
   }
@@ -73,23 +74,23 @@ const initialState = () => ({
  */
 const rotateState = (state, events) => {
   state.pending = {
-    deletedEventsById: state.deletedEventsById,
+    deletedEventsByNormalizedPath: state.deletedEventsByNormalizedPath,
     events
   }
-  state.deletedEventsById = new Map()
+  state.deletedEventsByNormalizedPath = new Map()
 }
 
 /** Broken deleted event ids match identical renamed ones. */
 const indexDeletedEvent = (event, state) => {
-  if (event.action === 'deleted' && event._id != null) {
-    state.deletedEventsById.set(event._id, event)
+  if (event.action === 'deleted') {
+    state.deletedEventsByNormalizedPath.set(metadata.id(event.path), event)
   }
 }
 
 /** Possibly fix oldPath when event is identical renamed. */
-const fixIdenticalRenamed = async (event, { byIdMaybe }) => {
+const fixIdenticalRenamed = async (event, { bySyncedPath }) => {
   if (event.path === event.oldPath) {
-    const doc /*: ?Metadata */ = event._id ? await byIdMaybe(event._id) : null
+    const doc /*: ?Metadata */ = await bySyncedPath(event.path)
 
     if (doc && !doc.deleted && doc.path !== event.oldPath) {
       _.set(event, [STEP_NAME, 'oldPathBeforeFix'], event.oldPath)
@@ -103,10 +104,9 @@ const fixIdenticalRenamed = async (event, { byIdMaybe }) => {
  * In case it is a broken deleted event related to an identical renaming.
  */
 const ignoreDeletedBeforeIdenticalRenamed = (event, state) => {
-  const { _id: id } = event
   const pendingDeletedEvent =
-    id &&
-    (state.deletedEventsById.get(id) || state.pending.deletedEventsById.get(id))
+    state.deletedEventsByNormalizedPath.get(metadata.id(event.path)) ||
+    state.pending.deletedEventsByNormalizedPath.get(metadata.id(event.path))
   if (pendingDeletedEvent) {
     pendingDeletedEvent.action = 'ignored'
     _.set(pendingDeletedEvent, [STEP_NAME, 'deletedBeforeRenamed'], event)
@@ -137,7 +137,7 @@ const _loop = async (channel, out, opts) => {
   const output = (pending, fastTrackEvents = []) => {
     clearTimeout(pending.timeout)
     out.push(pending.events.concat(fastTrackEvents))
-    pending.deletedEventsById = new Map()
+    pending.deletedEventsByNormalizedPath = new Map()
     pending.events = []
   }
 

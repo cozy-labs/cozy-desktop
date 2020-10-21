@@ -7,7 +7,6 @@ const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
-const metadata = require('../../../../core/metadata')
 const addInfos = require('../../../../core/local/atom/add_infos')
 const Channel = require('../../../../core/local/atom/channel')
 
@@ -88,17 +87,14 @@ describe('core/local/atom/add_infos.loop()', () => {
     should(deletedEvent).eql({
       action: batch[0].action,
       kind: 'directory',
-      path: batch[0].path,
-      _id: metadata.id(batch[0].path)
+      path: batch[0].path
     })
     should(ignoredEvent).eql({
       action: batch[1].action,
       kind: 'directory',
-      path: batch[1].path,
-      _id: metadata.id(batch[1].path)
+      path: batch[1].path
     })
     otherEvents.forEach(event => {
-      should(event._id).eql(metadata.id(event.path))
       should(event.kind).eql('directory')
       should.exist(event.stats)
     })
@@ -139,14 +135,12 @@ describe('core/local/atom/add_infos.loop()', () => {
             action: 'deleted',
             kind: 'file',
             path: 'file',
-            _id: metadata.id('file'),
             [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' }
           },
           {
             action: 'deleted',
             kind: 'directory',
             path: 'dir',
-            _id: metadata.id('dir'),
             [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' }
           }
         ])
@@ -176,14 +170,12 @@ describe('core/local/atom/add_infos.loop()', () => {
             action: 'deleted',
             kind: 'file',
             path: __filename,
-            _id: metadata.id(__filename),
             [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' }
           },
           {
             action: 'deleted',
             kind: 'file',
             path: __dirname,
-            _id: metadata.id(__dirname),
             [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' }
           }
         ])

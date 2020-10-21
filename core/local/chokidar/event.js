@@ -19,7 +19,7 @@ const stater = require('../stater')
 
 /*::
 import type fs from 'fs'
-import type {Metadata} from '../../metadata'
+import type { SavedMetadata } from '../../metadata'
 
 export type ChokidarAdd = {
   type: 'add',
@@ -39,12 +39,12 @@ export type ChokidarChange = {
 export type ChokidarUnlink = {
   type: 'unlink',
   path: string,
-  old?: Metadata
+  old?: SavedMetadata
 }
 export type ChokidarUnlinkDir = {
   type: 'unlinkDir',
   path: string,
-  old?: Metadata
+  old?: SavedMetadata
 }
 
 export type ChokidarEvent =
@@ -94,7 +94,7 @@ function eventType(type /*: string */, stats /*: ?fs.Stats */) /*: string */ {
 }
 
 function pretendUnlinkFromMetadata(
-  doc /*: Metadata */
+  doc /*: SavedMetadata */
 ) /*: ChokidarUnlink|ChokidarUnlinkDir */ {
   const type = doc.docType === 'file' ? 'unlink' : 'unlinkDir'
   const path = doc.path

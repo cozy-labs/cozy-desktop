@@ -4,6 +4,7 @@
 const should = require('should')
 
 const metadata = require('../../core/metadata')
+const timestamp = require('../../core/utils/timestamp')
 
 const Builders = require('../support/builders')
 const configHelpers = require('../support/helpers/config')
@@ -55,6 +56,7 @@ describe('Platform incompatibilities', () => {
     should(await helpers.local.tree()).be.empty()
     should(await helpers.incompatibleTree()).deepEqual(['di:r/', 'fi:le'])
   })
+
   it('add incompatible dir with two colons', async () => {
     await builders
       .remoteDir()
@@ -64,6 +66,7 @@ describe('Platform incompatibilities', () => {
     should(await helpers.local.tree()).be.empty()
     should(await helpers.incompatibleTree()).deepEqual(['d:i:r/'])
   })
+
   it('add compatible dir with some incompatible content', async () => {
     await helpers.remote.createTree([
       'dir/',
@@ -88,6 +91,7 @@ describe('Platform incompatibilities', () => {
       'dir/sub:dir/file'
     ])
   })
+
   it('rename incompatible -> incompatible', async () => {
     await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
@@ -306,20 +310,15 @@ describe('Platform incompatibilities', () => {
     }
     const remoteDoc = remoteDocs['dir/']
     const dir = await helpers.pouch.byRemoteId(remoteDoc._id)
-    const newRemoteDoc = {
-      ...remoteDoc,
-      _rev: '2-xxxxxx',
-      name: 'dir2',
-      path: '/dir2',
-      updated_at: new Date().toISOString()
-    }
-    const { name, dir_id, updated_at } = newRemoteDoc
-    await helpers.remote.side.remoteCozy.updateAttributesById(
-      remoteDoc._id,
-      { name, dir_id, updated_at },
-      { ifMatch: remoteDoc._rev }
-    )
-    const dir2 = metadata.fromRemoteDoc(newRemoteDoc)
+    const newRemoteDoc = await builders
+      .remoteDir(remoteDoc)
+      .name('dir2')
+      .updatedAt(...timestamp.spread(new Date()))
+      .create()
+    const dir2 = builders
+      .metadir()
+      .fromRemote(newRemoteDoc)
+      .build()
     await helpers.prep.moveFolderAsync('remote', dir2, dir)
     await helpers.syncAll()
 

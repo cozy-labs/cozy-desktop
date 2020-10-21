@@ -11,7 +11,7 @@
 const _ = require('lodash')
 const path = require('path')
 
-const { id, kind } = require('../../metadata')
+const { kind } = require('../../metadata')
 const logger = require('../../utils/logger')
 const stater = require('../stater')
 
@@ -33,7 +33,7 @@ module.exports = {
   loop
 }
 
-/** Add _id & stats to event batches pulled from the given channel.
+/** Add stats to event batches pulled from the given channel.
  *
  * Arbitrarily assume event kind is file by default.
  *
@@ -53,7 +53,6 @@ function loop(
       }
       try {
         if (event.action !== 'initial-scan-done') {
-          event._id = id(event.path)
           if (needsStats(event)) {
             log.debug({ path: event.path, action: event.action }, 'stat')
             event.stats = await stater.stat(
@@ -71,9 +70,9 @@ function loop(
 
               // Even if the doc is deleted, we probably have a better chance to
               // get the right kind by using its own.
-              const doc /*: ?Metadata */ = event._id
-                ? await opts.pouch.byIdMaybe(event._id)
-                : null
+              const doc /*: ?Metadata */ = await opts.pouch.bySyncedPath(
+                event.path
+              )
               event.kind = doc ? kind(doc) : 'file'
             }
           }

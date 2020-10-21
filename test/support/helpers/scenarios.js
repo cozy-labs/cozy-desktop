@@ -312,7 +312,7 @@ module.exports.init = async (
             .build()
           stater.assignInoAndFileId(doc, stats)
 
-          debug(`- create dir metadata: ${doc._id}`)
+          debug(`- create dir metadata: ${doc.path}`)
           await pouch.put(doc)
         }
       } else {
@@ -349,7 +349,7 @@ module.exports.init = async (
           stater.assignInoAndFileId(doc, stats)
           stater.assignInoAndFileId(doc.local, stats)
 
-          debug(`- create file metadata: ${doc._id}`)
+          debug(`- create file metadata: ${doc.path}`)
           await pouch.put(doc)
         }
       } // if relpath ...

@@ -16,6 +16,8 @@
 
 const _ = require('lodash')
 
+const metadata = require('./metadata')
+
 /*::
 import type { Metadata } from './metadata'
 import type { SideName } from './side'
@@ -49,7 +51,7 @@ function description(
 ) /*: string */ {
   const newPathRepr = JSON.stringify(change.doc.path)
   const existingPathRepr = JSON.stringify(existingDoc.path)
-  const idRepr = JSON.stringify(existingDoc._id)
+  const idRepr = JSON.stringify(metadata.id(existingDoc.path))
   return (
     `Identity conflict between new ${change.side} ${change.doc.docType} ${newPathRepr} ` +
     `and existing ${existingDoc.docType} ${existingPathRepr}: ` +
@@ -78,7 +80,7 @@ function detectOnId(
   existingDoc /*: Metadata */
 ) /*: boolean */ {
   return (
-    doc._id === existingDoc._id &&
+    metadata.id(doc.path) === metadata.id(existingDoc.path) &&
     doc.path !== existingDoc.path &&
     (was == null || was.path !== existingDoc.path)
   )

@@ -3,8 +3,6 @@
 
 const should = require('should')
 
-const metadata = require('../../core/metadata')
-
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -72,12 +70,11 @@ describe('Sync gets interrupted, initialScan occurs', () => {
   describe('remote file update', () => {
     it('does not override the remote file with the local version', async function() {
       const path = 'file'
-      const _id = metadata.id(path)
 
       await helpers.local.syncDir.outputFile(path, 'original content')
       await helpers.flushLocalAndSyncAll()
 
-      const doc = await this.pouch.byIdMaybe(_id)
+      const doc = await this.pouch.bySyncedPath(path)
       await cozy.files.updateById(doc.remote._id, 'remote content', {
         contentType: 'text/plain'
       })

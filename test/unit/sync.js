@@ -261,7 +261,7 @@ describe('Sync', function() {
           .create()
       }
       await this.sync.apply(change)
-      should(await this.pouch.db.get(change.doc._id)).have.properties({
+      should(await this.pouch.bySyncedPath(change.doc.path)).have.properties({
         path: initial.path,
         docType: 'file',
         sides: {
@@ -289,7 +289,7 @@ describe('Sync', function() {
           .create()
       }
       await this.sync.apply(change)
-      should(await this.pouch.db.get(change.doc._id)).have.properties({
+      should(await this.pouch.bySyncedPath(change.doc.path)).have.properties({
         path: initial.path,
         docType: 'folder',
         sides: {
@@ -362,7 +362,7 @@ describe('Sync', function() {
         beforeEach(applyChange)
 
         it('keeps sides unchanged', async function() {
-          const synced = await this.pouch.db.get(file._id)
+          const synced = await this.pouch.bySyncedPath(file.path)
           should(synced.sides).deepEqual(merged.sides)
         })
 
@@ -471,7 +471,7 @@ describe('Sync', function() {
       should(this.remote.moveAsync).have.been.calledWith(doc, was)
       should(this.remote.overwriteFileAsync).have.been.calledWith(doc)
 
-      const newMetadata = await this.pouch.db.get(doc._id)
+      const newMetadata = await this.pouch.bySyncedPath(doc.path)
       should(newMetadata).not.have.property('moveFrom')
       should(newMetadata).have.property('errors')
 
@@ -582,7 +582,7 @@ describe('Sync', function() {
 
       await this.sync.updateErrors({ doc }, 'remote')
 
-      const actual = await this.pouch.db.get(doc._id)
+      const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(1)
       should(actual._rev).not.equal(doc._rev)
       should(actual.sides).deepEqual({ target: 2, local: 2 })
@@ -599,7 +599,7 @@ describe('Sync', function() {
 
       await this.sync.updateErrors({ doc }, 'local')
 
-      const actual = await this.pouch.db.get(doc._id)
+      const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(2)
       should(actual._rev).not.equal(doc._rev)
       should(actual.sides).deepEqual({ target: 5, local: 2, remote: 5 })
@@ -616,7 +616,7 @@ describe('Sync', function() {
 
       await this.sync.updateErrors({ doc }, 'local')
 
-      const actual = await this.pouch.db.get(doc._id)
+      const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(3)
       should(actual._rev).equal(doc._rev)
       should(metadata.isUpToDate('remote', actual)).be.true()
@@ -650,9 +650,9 @@ describe('Sync', function() {
 
       context('without changes merged during Sync', function() {
         it('marks doc as up-to-date', async function() {
-          await updateRevs(this, doc)
+          await updateRevs(this, _.cloneDeep(doc))
 
-          const updated = await this.pouch.db.get(doc._id)
+          const updated = await this.pouch.bySyncedPath(doc.path)
           should(metadata.outOfDateSide(updated)).be.undefined()
           should(metadata.target(updated)).equal(metadata.target(doc) + 1)
         })
@@ -675,7 +675,7 @@ describe('Sync', function() {
 
               await updateRevs(this, doc) // rev == 4, syncSide == 3, mergedSide == 4 + extra - 1
 
-              updated = await this.pouch.db.get(doc._id)
+              updated = await this.pouch.bySyncedPath(doc.path)
             })
 
             it(`keeps ${syncSide} out-of-date information`, async function() {

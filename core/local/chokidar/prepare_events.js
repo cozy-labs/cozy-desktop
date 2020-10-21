@@ -28,7 +28,6 @@ const Promise = require('bluebird')
 const fse = require('fs-extra')
 const path = require('path')
 
-const metadata = require('../../metadata')
 const logger = require('../../utils/logger')
 
 /*::
@@ -60,7 +59,7 @@ const oldMetadata = async (
   pouch /*: Pouch */
 ) /*: Promise<?Metadata> */ => {
   if (e.old) return e.old
-  const old /*: ?Metadata */ = await pouch.byIdMaybe(metadata.id(e.path))
+  const old /*: ?Metadata */ = await pouch.bySyncedPath(e.path)
   if (old && !old.deleted) return old
 }
 

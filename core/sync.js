@@ -23,7 +23,7 @@ import type { Ignore } from './ignore'
 import type Local from './local'
 import type { Pouch } from './pouch'
 import type { Remote } from './remote'
-import type { Metadata } from './metadata'
+import type { SavedMetadata } from './metadata'
 import type { SideName } from './side'
 import type { Writer } from './writer'
 */
@@ -39,7 +39,7 @@ const TRASHING_DELAY = 1000
 /*::
 export type MetadataChange = {
   changes: {rev: string}[],
-  doc: Metadata,
+  doc: SavedMetadata,
   id: string,
   seq: number
 };
@@ -50,7 +50,7 @@ export type SyncMode =
   | "full";
 */
 
-const isMarkedForDeletion = (doc /*: Metadata */) => {
+const isMarkedForDeletion = (doc /*: SavedMetadata */) => {
   // During a transition period, we'll need to consider both documents with the
   // deletion marker and documents which were deleted but not yet synced before
   // the application was updated and are thus completely _deleted from PouchDB.
@@ -63,7 +63,7 @@ const isMarkedForDeletion = (doc /*: Metadata */) => {
 // (erasing documents generates changes) and thus result in an attempt to take
 // action.
 const eraseDocument = async (
-  { _id, _rev } /*: Metadata */,
+  { _id, _rev } /*: SavedMetadata */,
   { pouch } /*: { pouch: Pouch } */
 ) => {
   await pouch.db.put({ _id, _rev, _deleted: true })
@@ -304,7 +304,7 @@ class Sync {
   async apply(change /*: MetadataChange */) /*: Promise<*> */ {
     let { doc, seq } = change
     const { path } = doc
-    log.debug({ path, seq, doc }, 'Applying change...')
+    log.debug({ path, seq, doc }, `Applying change ${seq}...`)
 
     if (metadata.shouldIgnore(doc, this.ignore)) {
       return this.pouch.setLocalSeq(change.seq)
@@ -355,7 +355,7 @@ class Sync {
   }
 
   async applyDoc(
-    doc /*: Metadata */,
+    doc /*: SavedMetadata */,
     side /*: Writer */,
     sideName /*: SideName */
   ) /*: Promise<*> */ {
@@ -398,7 +398,7 @@ class Sync {
         `Ignoring deleted ${doc.docType} metadata as move source`
       )
     } else if (doc.moveFrom != null) {
-      const from = (doc.moveFrom /*: Metadata */)
+      const from = (doc.moveFrom /*: SavedMetadata */)
       log.debug(
         { path: doc.path },
         `Applying ${doc.docType} change with moveFrom`
@@ -418,8 +418,9 @@ class Sync {
         await this.doMove(side, doc, from)
       }
       if (
-        !metadata.sameBinary(from, doc) ||
-        (from.overwrite && !metadata.sameBinary(from.overwrite, doc))
+        doc.docType === 'file' &&
+        (!metadata.sameBinary(from, doc) ||
+          (from.overwrite && !metadata.sameBinary(from.overwrite, doc)))
       ) {
         try {
           await side.overwriteFileAsync(doc, doc) // move & update
@@ -444,7 +445,7 @@ class Sync {
         old = (await this.pouch.getPreviousRev(
           doc._id,
           doc.sides.target - currentRev
-        ) /*: ?Metadata */)
+        ) /*: ?SavedMetadata */)
       } catch (err) {
         await this.doOverwrite(side, doc)
       }
@@ -474,7 +475,10 @@ class Sync {
     }
   }
 
-  async doAdd(side /*: Writer */, doc /*: Metadata */) /*: Promise<void> */ {
+  async doAdd(
+    side /*: Writer */,
+    doc /*: SavedMetadata */
+  ) /*: Promise<void> */ {
     if (doc.docType === 'file') {
       await side.addFileAsync(doc)
       this.events.emit('transfer-started', _.clone(doc))
@@ -485,7 +489,7 @@ class Sync {
 
   async doOverwrite(
     side /*: Writer */,
-    doc /*: Metadata */
+    doc /*: SavedMetadata */
   ) /*: Promise<void> */ {
     if (doc.docType === 'file') {
       // TODO: risky overwrite without If-Match
@@ -498,8 +502,8 @@ class Sync {
 
   async doMove(
     side /*: Writer */,
-    doc /*: Metadata */,
-    old /*: Metadata */
+    doc /*: SavedMetadata */,
+    old /*: SavedMetadata */
   ) /*: Promise<void> */ {
     await side.moveAsync(doc, old)
     if (doc.docType === 'file') {
@@ -509,7 +513,7 @@ class Sync {
 
   // Select which side will apply the change
   // It returns the side, its name, and also the last rev applied by this side
-  selectSide(doc /*: Metadata */) {
+  selectSide(doc /*: SavedMetadata */) {
     switch (metadata.outOfDateSide(doc)) {
       case 'local':
         return [this.local, 'local']
@@ -586,8 +590,22 @@ class Sync {
         { path: doc.path, oldpath: _.get(change, 'was.path') },
         `Failed to sync ${MAX_SYNC_ATTEMPTS} times. Giving up.`
       )
-      await this.pouch.setLocalSeq(change.seq)
+      // TODO: We should probably mark every change in error was synced before
+      // incrementing the errors counter.
+      // In conjunction with a forced remote watch loop we could probably solve
+      // most of them during the next Sync loop.
+      // e.g.:
+      // 1. `file.txt` is added locally
+      // 2. `file.txt` is added remotely while we're sending the local one
+      // 3. 409 conflict; Local `file.txt` is marked as synced then we increment
+      //    its errors counter
+      // 4. Remote watcher runs and fetches remote `file.txt`
+      // 5. Conflict is created (remote file is renamed)
+      // 6. Sync runs and:
+      //    - sends local `file.txt` (no more errors since remote has been renamed)
+      //    - fetches remote `file-conflict-….txt`
       // FIXME: final doc.errors is not saved which works but may be confusing.
+      await this.pouch.setLocalSeq(change.seq)
       return
     }
     try {
@@ -605,7 +623,7 @@ class Sync {
 
   // Update rev numbers for both local and remote sides
   async updateRevs(
-    doc /*: Metadata */,
+    doc /*: SavedMetadata */,
     side /*: SideName */
   ) /*: Promise<*> */ {
     metadata.markAsUpToDate(doc)
@@ -616,7 +634,9 @@ class Sync {
       // a thumbnail before apply has finished. In that case, we try to
       // reconciliate the documents.
       if (err && err.status === 409) {
-        const unsynced /*: Metadata */ = await this.pouch.db.get(doc._id)
+        const unsynced /*: SavedMetadata */ = await this.pouch.bySyncedPath(
+          doc.path
+        )
         const other = otherSide(side)
         await this.pouch.put({
           ...unsynced,
@@ -636,16 +656,18 @@ class Sync {
   // only this folder on the remote, not every files and folders inside it, to
   // preserve the tree in the trash.
   async trashWithParentOrByItself(
-    doc /*: Metadata */,
+    doc /*: SavedMetadata */,
     side /*: Writer */
   ) /*: Promise<boolean> */ {
-    let parentId = dirname(doc._id)
-    if (parentId !== '.') {
-      let parent /*: Metadata */ = await this.pouch.db.get(parentId)
+    const parentPath = dirname(doc.path)
+    if (parentPath !== '.') {
+      let parent /*: SavedMetadata */ = await this.pouch.bySyncedPath(
+        parentPath
+      )
 
       if (!parent.trashed) {
         await Promise.delay(TRASHING_DELAY)
-        parent = await this.pouch.db.get(parentId)
+        parent = await this.pouch.bySyncedPath(parentPath)
       }
 
       if (parent.trashed && !metadata.isUpToDate('remote', parent)) {

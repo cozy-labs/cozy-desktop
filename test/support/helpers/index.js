@@ -6,7 +6,6 @@ const { pick } = _
 const sinon = require('sinon')
 
 const { Ignore } = require('../../../core/ignore')
-const metadata = require('../../../core/metadata')
 const { Merge } = require('../../../core/merge')
 const Prep = require('../../../core/prep')
 const Sync = require('../../../core/sync')
@@ -21,7 +20,7 @@ const { RemoteTestHelpers } = require('./remote')
 import type cozy from 'cozy-client-js'
 import type { Config } from '../../../core/config'
 import type Local from '../../../core/local'
-import type { Metadata } from '../../../core/metadata'
+import type { SavedMetadata } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Remote } from '../../../core/remote'
 
@@ -205,8 +204,8 @@ class TestHelpers {
       .value()
   }
 
-  async docByPath(relpath /*: string */) /*: Promise<Metadata> */ {
-    const doc = await this.pouch.db.get(metadata.id(relpath))
+  async docByPath(relpath /*: string */) /*: Promise<SavedMetadata> */ {
+    const doc = await this.pouch.bySyncedPath(relpath)
     if (doc) return doc
     else throw new Error(`No doc with path ${JSON.stringify(relpath)}`)
   }

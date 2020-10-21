@@ -22,14 +22,14 @@ describe('Update only mtime', () => {
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(() => helpers.local.clean())
-  afterEach(pouchHelpers.cleanDatabase)
-  after(configHelpers.cleanConfig)
-
   beforeEach(function() {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
   })
+
+  afterEach(() => helpers.local.clean())
+  afterEach(pouchHelpers.cleanDatabase)
+  after(configHelpers.cleanConfig)
 
   describe('of a file', () => {
     context('when update is made on local filesystem', () => {

@@ -40,7 +40,7 @@ describe('Sync state', () => {
       ['syncing'],
       // FIXME: 3 attempts to download a missing file
       // FIXME: in debug.log with DEBUG=1: Sync: Seq was already synced! (seq=0)
-      ['sync-current', 4],
+      ['sync-current', 4], // XXX: update seq includes design docs creation
       ['sync-current', 5],
       ['sync-current', 6],
       ['sync-end'],

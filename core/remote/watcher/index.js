@@ -21,7 +21,7 @@ import type EventEmitter from 'events'
 import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
 import type { RemoteCozy } from '../cozy'
-import type { Metadata, MetadataRemoteInfo, RemoteRevisionsByID } from '../../metadata'
+import type { Metadata, MetadataRemoteInfo, SavedMetadata, RemoteRevisionsByID } from '../../metadata'
 import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from '../change'
 import type { RemoteDeletion } from '../document'
 */
@@ -140,7 +140,9 @@ class RemoteWatcher {
     docs /*: Array<MetadataRemoteInfo|RemoteDeletion> */
   ) /*: Promise<void> */ {
     const remoteIds = docs.reduce((ids, doc) => ids.add(doc._id), new Set())
-    const olds /*: Metadata[] */ = await this.pouch.allByRemoteIds(remoteIds)
+    const olds /*: SavedMetadata[] */ = await this.pouch.allByRemoteIds(
+      remoteIds
+    )
 
     const changes = await this.analyse(docs, olds)
 
@@ -163,7 +165,7 @@ class RemoteWatcher {
 
   async analyse(
     remoteDocs /*: Array<MetadataRemoteInfo|RemoteDeletion> */,
-    olds /*: Array<Metadata> */
+    olds /*: Array<SavedMetadata> */
   ) /*: Promise<RemoteChange[]> */ {
     log.trace('Contextualize and analyse changesfeed results...')
     const changes = this.identifyAll(remoteDocs, olds)
@@ -186,14 +188,14 @@ class RemoteWatcher {
 
   identifyAll(
     remoteDocs /*: Array<MetadataRemoteInfo|RemoteDeletion> */,
-    olds /*: Array<Metadata> */
+    olds /*: Array<SavedMetadata> */
   ) {
     const changes /*: Array<RemoteChange> */ = []
     const originalMoves = []
 
     const oldsByRemoteId = _.keyBy(olds, 'remote._id')
     for (const remoteDoc of remoteDocs) {
-      const was /*: ?Metadata */ = oldsByRemoteId[remoteDoc._id]
+      const was /*: ?SavedMetadata */ = oldsByRemoteId[remoteDoc._id]
       changes.push(this.identifyChange(remoteDoc, was, changes, originalMoves))
     }
 
@@ -202,14 +204,14 @@ class RemoteWatcher {
 
   identifyChange(
     remoteDoc /*: MetadataRemoteInfo|RemoteDeletion */,
-    was /*: ?Metadata */,
+    was /*: ?SavedMetadata */,
     previousChanges /*: Array<RemoteChange> */,
     originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
   ) /*: RemoteChange */ {
-    const oldpath /*: ?string */ = was && was.path
+    const oldpath /*: ?string */ = was ? was.path : undefined
     log.debug(
       {
-        path: (remoteDoc /*: Object */).path || oldpath,
+        path: (remoteDoc /*: $Shape<MetadataRemoteInfo> */).path || oldpath,
         oldpath,
         remoteDoc,
         was
@@ -226,7 +228,6 @@ class RemoteWatcher {
           detail: 'file or directory was created, trashed, and removed remotely'
         }
       }
-      // $FlowFixMe
       return remoteChange.deleted(was)
     } else {
       if (remoteDoc.type !== 'directory' && remoteDoc.type !== 'file') {
@@ -271,11 +272,11 @@ class RemoteWatcher {
    */
   identifyExistingDocChange(
     remoteDoc /*: MetadataRemoteInfo */,
-    was /*: ?Metadata */,
+    was /*: ?SavedMetadata */,
     previousChanges /*: Array<RemoteChange> */,
     originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
   ) /*: RemoteChange */ {
-    let doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
+    const doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
     try {
       metadata.ensureValidPath(doc)
     } catch (error) {
@@ -287,7 +288,6 @@ class RemoteWatcher {
       }
     }
     const { docType, path } = doc
-    metadata.assignId(doc)
 
     if (doc.docType !== 'file' && doc.docType !== 'folder') {
       return {
@@ -350,7 +350,7 @@ class RemoteWatcher {
     if (!was || was.deleted) {
       return remoteChange.added(doc)
     }
-    if (was._id === doc._id && metadata.samePath(was, doc)) {
+    if (metadata.samePath(was, doc)) {
       if (
         doc.docType === 'file' &&
         doc.md5sum === was.md5sum &&
@@ -403,14 +403,17 @@ class RemoteWatcher {
           throw change.error
         case 'DescendantChange':
           log.debug(
-            { path, remoteId: change.doc._id },
+            { path, remoteId: change.doc.remote._id },
             `${_.get(change, 'doc.docType')} was moved as descendant of ${
               change.ancestorPath
             }`
           )
           break
         case 'IgnoredChange':
-          log.debug({ path, remoteId: change.doc._id }, change.detail)
+          log.debug(
+            { path, remoteId: change.doc.remote && change.doc.remote._id },
+            change.detail
+          )
           break
         case 'FileTrashing':
           log.info({ path }, 'file was trashed remotely')
@@ -494,6 +497,10 @@ class RemoteWatcher {
           throw new Error(`Unexpected change type: ${change.type}`)
       } // switch
     } catch (err) {
+      log.debug(
+        { err, path: change.doc.path, change },
+        'could not apply change'
+      )
       return { err, change }
     }
   }
