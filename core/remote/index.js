@@ -20,7 +20,7 @@ const { RemoteWatcher } = require('./watcher')
 /*::
 import type EventEmitter from 'events'
 import type { Config } from '../config'
-import type { Metadata } from '../metadata'
+import type { SavedMetadata } from '../metadata'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { RemoteDoc } from './document'
@@ -102,12 +102,14 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   /** Create a readable stream for the given doc */
-  async createReadStreamAsync(doc /*: Metadata */) /*: Promise<Readable> */ {
+  async createReadStreamAsync(
+    doc /*: SavedMetadata */
+  ) /*: Promise<Readable> */ {
     return this.remoteCozy.downloadBinary(doc.remote._id)
   }
 
   /** Create a folder on the remote cozy instance */
-  async addFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
+  async addFolderAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Creating folder...')
 
@@ -134,7 +136,7 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async addFileAsync(doc /*: Metadata */) /*: Promise<void> */ {
+  async addFileAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Uploading new file...')
     const stopMeasure = measureTime('RemoteWriter#addFile')
@@ -167,8 +169,8 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async overwriteFileAsync(
-    doc /*: Metadata */,
-    old /*: ?Metadata */
+    doc /*: SavedMetadata */,
+    old /*: ?SavedMetadata */
   ) /*: Promise<void> */ {
     if (old && isNote(old)) {
       log.error(
@@ -217,7 +219,7 @@ class Remote /*:: implements Reader, Writer */ {
     metadata.updateRemote(doc, updated)
   }
 
-  async updateFileMetadataAsync(doc /*: Metadata */) /*: Promise<void> */ {
+  async updateFileMetadataAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Updating file metadata...')
 
@@ -236,7 +238,7 @@ class Remote /*:: implements Reader, Writer */ {
     metadata.updateRemote(doc, updated)
   }
 
-  async updateFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
+  async updateFolderAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     const { path } = doc
     if (!doc.remote) {
       return this.addFolderAsync(doc)
@@ -276,8 +278,8 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async moveAsync(
-    newMetadata /*: Metadata */,
-    oldMetadata /*: Metadata */
+    newMetadata /*: SavedMetadata */,
+    oldMetadata /*: SavedMetadata */
   ) /*: Promise<void> */ {
     const remoteId = oldMetadata.remote._id
     const { path, overwrite } = newMetadata
@@ -324,7 +326,7 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async trashAsync(doc /*: Metadata */) /*: Promise<void> */ {
+  async trashAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Moving to the trash...')
 
@@ -342,7 +344,7 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async deleteFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
+  async deleteFolderAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     await this.trashAsync(doc)
     const { path } = doc
 
@@ -361,7 +363,7 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async assignNewRemote(doc /*: Metadata */) /*: Promise<void> */ {
+  async assignNewRemote(doc /*: SavedMetadata */) /*: Promise<void> */ {
     log.info({ path: doc.path }, 'Assigning new remote...')
     const newRemoteDoc = await this.remoteCozy.find(doc.remote._id)
     metadata.updateRemote(doc, newRemoteDoc)

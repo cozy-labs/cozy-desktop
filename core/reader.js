@@ -9,9 +9,9 @@
 
 /*::
 import type { Readable } from 'stream'
-import type { Metadata } from './metadata'
+import type { SavedMetadata } from './metadata'
 
 export interface Reader {
-  createReadStreamAsync (Metadata): Promise<Readable>;
+  createReadStreamAsync (SavedMetadata): Promise<Readable>;
 }
 */
