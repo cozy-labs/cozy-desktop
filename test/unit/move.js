@@ -34,7 +34,7 @@ describe('move', () => {
       .metafile()
       .path('dst/file')
       .noRemote()
-      .noTags()
+      .tags('courge')
       .build()
     should(dst.metadata).be.undefined()
 
@@ -42,7 +42,7 @@ describe('move', () => {
 
     should(dst).have.properties({
       metadata: src.metadata,
-      tags: src.tags,
+      tags: ['qux', 'courge'],
       remote: src.remote
     })
     // PouchDB reserved attributes are not transfered

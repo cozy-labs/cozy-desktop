@@ -239,9 +239,6 @@ class Merge {
 
     metadata.markSide(side, doc)
     metadata.assignMaxDate(doc)
-    if (doc.tags == null) {
-      doc.tags = []
-    }
     await this.ensureParentExistAsync(side, doc)
 
     return this.pouch.put(doc)
@@ -262,9 +259,6 @@ class Merge {
       doc._id = file._id
       doc._rev = file._rev
       doc.moveFrom = file.moveFrom
-      if (doc.tags == null) {
-        doc.tags = file.tags || []
-      }
       if (doc.remote == null) {
         doc.remote = file.remote
       }
@@ -382,9 +376,6 @@ class Merge {
         return this.pouch.put(doc)
       }
     }
-    if (doc.tags == null) {
-      doc.tags = []
-    }
     await this.ensureParentExistAsync(side, doc)
     return this.pouch.put(doc)
   }
@@ -410,9 +401,6 @@ class Merge {
     } else if (folder) {
       doc._id = folder._id
       doc._rev = folder._rev
-      if (doc.tags == null) {
-        doc.tags = folder.tags || []
-      }
       if (doc.remote == null) {
         doc.remote = folder.remote
       }
@@ -449,9 +437,6 @@ class Merge {
       } else {
         return this.pouch.put(doc)
       }
-    }
-    if (doc.tags == null) {
-      doc.tags = []
     }
     await this.ensureParentExistAsync(side, doc)
 

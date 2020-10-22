@@ -216,6 +216,20 @@ const migrations /*: Migration[] */ = [
         return doc
       })
     }
+  },
+  {
+    baseSchemaVersion: 8,
+    targetSchemaVersion: 9,
+    description: 'Default tags attribute to an empty Array',
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      return docs.filter(doc => doc.docType != null && !doc.tags)
+    },
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      return docs.map(doc => {
+        doc.tags = []
+        return doc
+      })
+    }
   }
 ]
 
