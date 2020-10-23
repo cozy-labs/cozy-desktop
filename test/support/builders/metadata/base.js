@@ -266,7 +266,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   noTags() /*: this */ {
-    delete this.doc.tags
+    this.doc.tags = []
     return this
   }
 

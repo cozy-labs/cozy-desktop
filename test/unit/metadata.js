@@ -873,7 +873,8 @@ describe('metadata', function() {
         md5sum,
         ino: stats.ino,
         size: 29865,
-        mime: 'image/jpeg'
+        mime: 'image/jpeg',
+        tags: []
       })
       should(doc).have.property('updated_at')
       should(doc).have.property('executable', false)
@@ -896,7 +897,8 @@ describe('metadata', function() {
         md5sum,
         ino: stats.ino,
         size: 29865,
-        mime: NOTE_MIME_TYPE
+        mime: NOTE_MIME_TYPE,
+        tags: []
       })
       should(doc).have.property('updated_at')
       should(doc).have.property('executable', false)
@@ -921,6 +923,21 @@ describe('metadata', function() {
   })
 
   describe('buildDir', () => {
+    it('creates a document for an existing folder', async function() {
+      const stats = await fse.stat(path.join(__dirname, '../fixtures'))
+      const doc = buildDir('fixtures', stats)
+      should(doc).have.properties({
+        path: 'fixtures',
+        docType: 'folder',
+        ino: stats.ino,
+        tags: []
+      })
+      should(doc).have.property('updated_at')
+
+      const remote = builders.remoteDir().build()
+      should(buildDir('fixtures', stats, remote).remote).deepEqual(remote)
+    })
+
     it('sets #updated_at with mtime', () => {
       const path = 'whatever'
       const d1 = new Date('2018-01-18T16:46:18.362Z')

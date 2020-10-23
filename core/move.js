@@ -36,11 +36,12 @@ function move(
     f => !pouchdbReserved.concat(actionHints).includes(f)
   )
   for (const field of fields) {
-    if (dst[field] == null) {
+    if (Array.isArray(src[field]) && Array.isArray(dst[field])) {
+      dst[field] = _.uniq(_.cloneDeep(src[field]).concat(dst[field]))
+    } else if (dst[field] == null) {
       dst[field] = _.cloneDeep(src[field])
     }
   }
-  if (dst.tags == null) dst.tags = []
 
   src.moveTo = dst.path
   src._deleted = true

@@ -136,7 +136,7 @@ export type Metadata = {
   local: MetadataLocalInfo,
   remote: MetadataRemoteDir|MetadataRemoteFile,
   size?: number,
-  tags?: string[],
+  tags: string[],
   sides: MetadataSidesInfo,
   trashed?: true,
   incompatibilities?: *,
@@ -769,6 +769,7 @@ function buildDir(
     docType: 'folder',
     updated_at: stats.mtime.toISOString(),
     ino: stats.ino,
+    tags: [],
     remote
   }
   if (stats.fileid) {
@@ -802,6 +803,7 @@ function buildFile(
     class: className,
     size,
     executable,
+    tags: [],
     remote
   }
   if (stats.fileid) {
