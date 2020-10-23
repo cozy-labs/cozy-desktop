@@ -31,7 +31,7 @@ import type { Config } from '../config'
 import type { Reader } from '../reader'
 import type { Ignore } from '../ignore'
 import type { AtomEventsDispatcher } from './atom/dispatch'
-import type { Metadata } from '../metadata'
+import type { SavedMetadata } from '../metadata'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { Writer } from '../writer'
@@ -92,10 +92,10 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   /*::
-  addFileAsync: (Metadata) => Promise<*>
-  addFolderAsync: (Metadata) => Promise<*>
-  updateFileMetadataAsync: (Metadata) => Promise<*>
-  renameConflictingDocAsync: (doc: Metadata, newPath: string) => Promise<void>
+  addFileAsync: (SavedMetadata) => Promise<*>
+  addFolderAsync: (SavedMetadata) => Promise<*>
+  updateFileMetadataAsync: (SavedMetadata) => Promise<*>
+  renameConflictingDocAsync: (doc: SavedMetadata, newPath: string) => Promise<void>
   */
 
   /** Start initial replication + watching changes in live */
@@ -113,7 +113,7 @@ class Local /*:: implements Reader, Writer */ {
 
   /** Create a readable stream for the given doc */
   async createReadStreamAsync(
-    doc /*: Metadata */
+    doc /*: SavedMetadata */
   ) /*: Promise<stream.Readable> */ {
     const filePath = path.resolve(this.syncPath, doc.path)
     return new Promise((resolve, reject) => {
@@ -136,7 +136,7 @@ class Local /*:: implements Reader, Writer */ {
    * This function updates utime and ctime according to the last
    * modification date.
    */
-  metadataUpdater(doc /*: Metadata */) {
+  metadataUpdater(doc /*: SavedMetadata */) {
     return (callback /*: Callback */) => {
       this.updateMetadataAsync(doc)
         .then(() => {
@@ -146,7 +146,7 @@ class Local /*:: implements Reader, Writer */ {
     }
   }
 
-  async updateMetadataAsync(doc /*: Metadata */) /*: Promise<void> */ {
+  async updateMetadataAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     let filePath = path.resolve(this.syncPath, doc.path)
 
     if (doc.docType === 'file') {
@@ -164,7 +164,7 @@ class Local /*:: implements Reader, Writer */ {
     }
   }
 
-  inodeSetter(doc /*: Metadata */) {
+  inodeSetter(doc /*: SavedMetadata */) {
     let abspath = path.resolve(this.syncPath, doc.path)
     return (callback /*: Callback */) => {
       stater.withStats(abspath, (err, stats) => {
@@ -180,7 +180,7 @@ class Local /*:: implements Reader, Writer */ {
 
   /** Check if a file corresponding to given checksum already exists */
   async fileExistsLocally(checksum /*: string */) {
-    const docs /*: Metadata[] */ = await this.pouch.byChecksum(checksum)
+    const docs /*: SavedMetadata[] */ = await this.pouch.byChecksum(checksum)
     if (docs == null || docs.length === 0) {
       return false
     }
@@ -213,7 +213,7 @@ class Local /*:: implements Reader, Writer */ {
    * file. The checksum will then be computed and added to the document, and
    * then pushed to CouchDB.
    */
-  addFile(doc /*: Metadata */, callback /*: Callback */) /*: void */ {
+  addFile(doc /*: SavedMetadata */, callback /*: Callback */) /*: void */ {
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
     let filePath = path.resolve(this.syncPath, doc.path)
     let parent = path.resolve(this.syncPath, path.dirname(doc.path))
@@ -321,7 +321,7 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   /** Create a new folder */
-  addFolder(doc /*: Metadata */, callback /*: Callback */) /*: void */ {
+  addFolder(doc /*: SavedMetadata */, callback /*: Callback */) /*: void */ {
     let folderPath = path.join(this.syncPath, doc.path)
     log.info({ path: doc.path }, 'Put folder')
     async.series(
@@ -335,13 +335,13 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   /** Overwrite a file */
-  async overwriteFileAsync(doc /*: Metadata */) /*: Promise<void> */ {
+  async overwriteFileAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     await this.addFileAsync(doc)
   }
 
   /** Update the metadata of a file */
   updateFileMetadata(
-    doc /*: Metadata */,
+    doc /*: SavedMetadata */,
     callback /*: Callback */
   ) /*: void */ {
     log.info({ path: doc.path }, 'Updating file metadata...')
@@ -349,11 +349,11 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   /** Update a folder */
-  async updateFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
+  async updateFolderAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     await this.addFolderAsync(doc)
   }
 
-  async assignNewRemote(doc /*: Metadata */) /*: Promise<void> */ {
+  async assignNewRemote(doc /*: SavedMetadata */) /*: Promise<void> */ {
     log.info({ path: doc.path }, 'Local assignNewRemote = noop')
   }
 
@@ -372,8 +372,8 @@ class Local /*:: implements Reader, Writer */ {
    * TODO: atomic local destination check + move
    */
   async moveAsync(
-    doc /*: Metadata */,
-    old /*: Metadata */
+    doc /*: SavedMetadata */,
+    old /*: SavedMetadata */
   ) /*: Promise<void> */ {
     log.info(
       { path: doc.path, oldpath: old.path },
@@ -407,7 +407,7 @@ class Local /*:: implements Reader, Writer */ {
     await this.updateMetadataAsync(doc)
   }
 
-  async trashAsync(doc /*: Metadata */) /*: Promise<void> */ {
+  async trashAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     log.info({ path: doc.path }, 'Moving to the OS trash...')
     const fullpath = path.join(this.syncPath, doc.path)
     try {
@@ -424,7 +424,7 @@ class Local /*:: implements Reader, Writer */ {
     }
   }
 
-  async deleteFolderAsync(doc /*: Metadata */) /*: Promise<void> */ {
+  async deleteFolderAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     if (doc.docType !== 'folder')
       throw new Error(`Not folder metadata: ${doc.path}`)
     const fullpath = path.join(this.syncPath, doc.path)
@@ -453,7 +453,9 @@ class Local /*:: implements Reader, Writer */ {
     await this.trashAsync(doc)
   }
 
-  async createBackupCopyAsync(doc /*: Metadata */) /*: Promise<Metadata> */ {
+  async createBackupCopyAsync(
+    doc /*: SavedMetadata */
+  ) /*: Promise<SavedMetadata> */ {
     const backupPath = `${doc.path}.bck`
     await fse.copy(
       path.join(this.syncPath, doc.path),

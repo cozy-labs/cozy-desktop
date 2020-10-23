@@ -7,18 +7,18 @@
  */
 
 /*::
-import type { Metadata } from './metadata'
+import type { SavedMetadata } from './metadata'
 import type { SideName } from './side'
 
 export interface Writer {
-  addFileAsync (doc: Metadata): Promise<void>;
-  addFolderAsync (doc: Metadata): Promise<void>;
-  overwriteFileAsync (doc: Metadata, old: ?Metadata): Promise<void>;
-  updateFileMetadataAsync (doc: Metadata): Promise<void>;
-  updateFolderAsync (doc: Metadata): Promise<void>;
-  moveAsync (doc: Metadata, from: Metadata): Promise<void>;
-  assignNewRemote (doc: Metadata): Promise<void>;
-  trashAsync (doc: Metadata): Promise<void>;
-  deleteFolderAsync (doc: Metadata): Promise<void>;
+  addFileAsync (doc: SavedMetadata): Promise<void>;
+  addFolderAsync (doc: SavedMetadata): Promise<void>;
+  overwriteFileAsync (doc: SavedMetadata, old: ?SavedMetadata): Promise<void>;
+  updateFileMetadataAsync (doc: SavedMetadata): Promise<void>;
+  updateFolderAsync (doc: SavedMetadata): Promise<void>;
+  moveAsync (doc: SavedMetadata, from: SavedMetadata): Promise<void>;
+  assignNewRemote (doc: SavedMetadata): Promise<void>;
+  trashAsync (doc: SavedMetadata): Promise<void>;
+  deleteFolderAsync (doc: SavedMetadata): Promise<void>;
 }
 */
