@@ -127,55 +127,114 @@ describe('Merge', function() {
     })
 
     context('remote', function() {
-      context('when a file with the same path exists', function() {
-        let oldRemoteFile, file
+      context(
+        'when an unsynced local file record with the same path but different content exists',
+        () => {
+          const filepath = 'BUZZ.JPG'
 
-        beforeEach('create a file', async function() {
-          oldRemoteFile = await builders
-            .remoteFile()
-            .inRootDir()
-            .name('BUZZ.JPG')
-            .data('image')
-            .tags('foo')
-            .contentType('image/jpeg')
-            .build()
-          file = await builders
-            .metafile()
-            .fromRemote(oldRemoteFile)
-            .upToDate()
-            .create()
-        })
-
-        it('can update the metadata', async function() {
-          const newRemoteFile = await builders
-            .remoteFile(oldRemoteFile)
-            .tags('bar', 'baz')
-            .build()
-          const doc = builders
-            .metafile()
-            .fromRemote(newRemoteFile)
-            .unmerged('remote')
-            .build()
-
-          const sideEffects = await mergeSideEffects(this, () =>
-            this.merge.addFileAsync('remote', _.cloneDeep(doc))
-          )
-
-          should(sideEffects).deepEqual({
-            savedDocs: [
-              _.defaults(
-                {
-                  tags: ['bar', 'baz'],
-                  sides: increasedSides(file.sides, 'remote', 1),
-                  remote: newRemoteFile
-                },
-                _.omit(file, ['_id', '_rev', 'fileid'])
-              )
-            ],
-            resolvedConflicts: []
+          beforeEach('create a file', async function() {
+            await builders
+              .metafile()
+              .path(filepath)
+              .data('local content')
+              .sides({ local: 1 })
+              .create()
           })
-        })
-      })
+
+          it('creates a remote conflict', async function() {
+            const newRemoteFile = await builders
+              .remoteFile()
+              .inRootDir()
+              .name(filepath)
+              .data('remote content')
+              .tags('foo')
+              .contentType('image/jpeg')
+              .build()
+            const doc = builders
+              .metafile()
+              .fromRemote(newRemoteFile)
+              .unmerged('remote')
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.addFileAsync('remote', _.cloneDeep(doc))
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [],
+              resolvedConflicts: [
+                ['remote', { path: filepath, remote: doc.remote }]
+              ]
+            })
+          })
+        }
+      )
+
+      context(
+        'when an unsynced local file record with the same path and content exists',
+        () => {
+          const filepath = 'BUZZ.JPG'
+
+          let file
+          beforeEach('create a file', async function() {
+            file = await builders
+              .metafile()
+              .path(filepath)
+              .data('same content')
+              .sides({ local: 1 })
+              .create()
+          })
+
+          it('updates the record with the remote metadata', async function() {
+            const newRemoteFile = await builders
+              .remoteFile()
+              .inRootDir()
+              .name(filepath)
+              .data('same content')
+              .tags('foo')
+              .contentType('image/jpeg')
+              .build()
+            const doc = builders
+              .metafile()
+              .fromRemote(newRemoteFile)
+              .unmerged('remote')
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.addFileAsync('remote', _.cloneDeep(doc))
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [
+                _.defaults(
+                  {
+                    mime: doc.mime,
+                    class: doc.class,
+                    tags: ['foo'],
+                    executable: doc.executable,
+                    updated_at: doc.updated_at,
+                    sides: {
+                      local: file.sides.local,
+                      remote: file.sides.target + 1,
+                      target: file.sides.target + 1
+                    },
+                    remote: doc.remote,
+                    cozyMetadata: doc.cozyMetadata,
+                    // FIXME: $FlowFixMe not part of Metadata but still saved in PouchDB
+                    created_at: doc.created_at,
+                    // FIXME: $FlowFixMe not part of Metadata but still saved in PouchDB
+                    dir_id: doc.dir_id,
+                    // FIXME: $FlowFixMe not part of Metadata but still saved in PouchDB
+                    name: doc.name
+                  },
+                  _.omit(file, ['_id', '_rev'])
+                )
+              ],
+              resolvedConflicts: []
+            })
+          })
+        }
+      )
     })
 
     context('when the path was used in the past', function() {
@@ -596,31 +655,6 @@ describe('Merge', function() {
             resolvedConflicts: []
           })
         })
-      })
-    })
-
-    it('resolves a conflict on remote file addition with unsynced local file addition', async function() {
-      const unsyncedLocalFile = await builders
-        .metafile()
-        .sides({ local: 1 })
-        .data('local content')
-        .create()
-      const newRemoteFile = builders
-        .metafile()
-        .path(unsyncedLocalFile.path)
-        .data('remote content')
-        .unmerged('remote')
-        .build()
-
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.addFileAsync('remote', _.cloneDeep(newRemoteFile))
-      )
-
-      should(sideEffects).deepEqual({
-        savedDocs: [],
-        resolvedConflicts: [
-          ['remote', _.pick(newRemoteFile, ['path', 'remote'])]
-        ]
       })
     })
 

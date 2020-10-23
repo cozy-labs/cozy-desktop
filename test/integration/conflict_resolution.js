@@ -234,18 +234,34 @@ describe('Conflict resolution', () => {
   const bothSides = tree => ({ local: tree, remote: tree })
 
   describe('merging local file then remote one', () => {
-    it('renames one of them', async () => {
-      await helpers.local.syncDir.outputFile('same-name', 'content1')
-      await cozy.files.create('content2', {
-        name: 'same-name',
-        contentType: 'text/plain'
+    context('when the content differs', () => {
+      it('renames one of them', async () => {
+        await helpers.local.syncDir.outputFile('same-name', 'content1')
+        await cozy.files.create('content2', {
+          name: 'same-name',
+          contentType: 'text/plain'
+        })
+
+        await fullSyncStartingFrom('local')
+
+        should(await helpers.trees()).deepEqual(
+          bothSides(['same-name', 'same-name-conflict-...'])
+        )
       })
+    })
 
-      await fullSyncStartingFrom('local')
+    context('when the content is the same', () => {
+      it('links the two within the same PouchDB record', async () => {
+        await helpers.local.syncDir.outputFile('same-name', 'same content')
+        await cozy.files.create('same content', {
+          name: 'same-name',
+          contentType: 'text/plain'
+        })
 
-      should(await helpers.trees()).deepEqual(
-        bothSides(['same-name', 'same-name-conflict-...'])
-      )
+        await fullSyncStartingFrom('local')
+
+        should(await helpers.trees()).deepEqual(bothSides(['same-name']))
+      })
     })
   })
 
