@@ -32,7 +32,7 @@ const SOME_MEANINGLESS_TIME_OFFSET = 2000 // 2 seconds
 module.exports = class BaseMetadataBuilder {
   /*::
   pouch: ?Pouch
-  doc: Object
+  doc: $Shape<Metadata>
   buildLocal: boolean
   buildRemote: boolean
   _remoteBuilder: ?*
@@ -43,13 +43,12 @@ module.exports = class BaseMetadataBuilder {
     if (old) {
       this.doc = _.cloneDeep(old)
     } else {
-      const doc /*: Object */ = {
+      this.doc = {
         docType: 'folder', // To make flow happy (overridden by subclasses)
         path: 'foo',
         tags: [],
         updated_at: new Date().toISOString()
       }
-      this.doc = doc
     }
     this.buildLocal = true
     this.buildRemote = true
@@ -156,7 +155,7 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  overwrite(existingDoc /*: Metadata */) /*: this */ {
+  overwrite(existingDoc /*: SavedMetadata */) /*: this */ {
     this.doc.overwrite = existingDoc
     return this
   }
@@ -319,7 +318,8 @@ module.exports = class BaseMetadataBuilder {
     if (
       this.doc.local != null &&
       this.doc.sides &&
-      this.doc.sides.local <= this.doc.sides.remote
+      (!this.doc.sides.remote ||
+        (this.doc.sides.local && this.doc.sides.local <= this.doc.sides.remote))
     ) {
       return
     }
@@ -336,7 +336,9 @@ module.exports = class BaseMetadataBuilder {
     if (
       this.doc.remote != null &&
       (!this.doc.sides ||
-        (this.doc.sides && this.doc.sides.remote <= this.doc.sides.local))
+        (!this.doc.sides.local ||
+          (this.doc.sides.remote &&
+            this.doc.sides.remote <= this.doc.sides.local)))
     ) {
       return
     }
