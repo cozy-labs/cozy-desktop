@@ -45,7 +45,11 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
 
   // Should only be used to build invalid docs. Prefer using `data()`.
   md5sum(newMd5sum /*: ?string */) /*: this */ {
-    this.doc.md5sum = newMd5sum
+    if (newMd5sum) {
+      this.doc.md5sum = newMd5sum
+    } else {
+      delete this.doc.md5sum
+    }
     return this
   }
 

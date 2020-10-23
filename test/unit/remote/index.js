@@ -25,7 +25,7 @@ const { cozy, deleteAll } = require('../../support/helpers/cozy')
 const Builders = require('../../support/builders')
 
 /*::
-import type { Metadata } from '../../../core/metadata'
+import type { Metadata, SavedMetadata } from '../../../core/metadata'
 import type { RemoteDoc, JsonApiDoc } from '../../../core/remote/document'
 */
 const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
@@ -314,11 +314,11 @@ describe('remote.Remote', function() {
           .remoteFile()
           .data('foo')
           .create()
-        const old = builders
+        const old = await builders
           .metafile()
           .fromRemote(created)
           .upToDate()
-          .build()
+          .create()
         const doc = builders
           .metafile(old)
           .overwrite(old)
@@ -710,8 +710,8 @@ describe('remote.Remote', function() {
     context('when overwriting an existing file', function() {
       const existingRefs = [{ _id: 'blah', _type: 'io.cozy.photos.albums' }]
 
-      let existing /*: Metadata */
-      let old /*: Metadata */
+      let existing /*: SavedMetadata */
+      let old /*:SavedMetadata */
       let doc /*: Metadata */
       let newDir /*: RemoteDoc */
 
@@ -729,23 +729,23 @@ describe('remote.Remote', function() {
           .data('woof')
           .referencedBy(existingRefs)
           .create()
-        existing = builders
+        existing = await builders
           .metafile()
           .fromRemote(remote1)
           .upToDate()
-          .build()
+          .create()
 
         const remote2 = await builders
           .remoteFile()
           .name('cat6.jpg')
           .data('meow')
           .create()
-        old = builders
+        old = await builders
           .metafile()
           .fromRemote(remote2)
           .moveTo('moved-to/cat7.jpg')
           .changedSide('local')
-          .build()
+          .create()
 
         doc = builders
           .metafile()
