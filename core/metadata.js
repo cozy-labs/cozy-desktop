@@ -765,15 +765,18 @@ function buildDir(
   stats /*: Stats */,
   remote /*: ?MetadataRemoteInfo */
 ) /*: Metadata */ {
-  const doc /*: Object */ = {
+  const doc /*: $Shape<Metadata> */ = {
     path: fpath,
     docType: 'folder',
     updated_at: stats.mtime.toISOString(),
     ino: stats.ino,
-    tags: [],
-    remote
+    tags: []
   }
-  if (stats.fileid) {
+  // FIXME: we should probably not set remote at this point
+  if (remote) {
+    doc.remote = remote
+  }
+  if (typeof stats.fileid === 'string') {
     doc.fileid = stats.fileid
   }
   updateLocal(doc)
@@ -794,7 +797,7 @@ function buildFile(
   const updated_at = mtime.toISOString()
   const executable = stats.mode ? (+stats.mode & EXECUTABLE_MASK) !== 0 : false
 
-  const doc /*: Object */ = {
+  const doc /*: $Shape<Metadata> */ = {
     path: filePath,
     docType: 'file',
     md5sum,
@@ -804,10 +807,13 @@ function buildFile(
     class: className,
     size,
     executable,
-    tags: [],
-    remote
+    tags: []
   }
-  if (stats.fileid) {
+  // FIXME: we should probably not set remote at this point
+  if (remote) {
+    doc.remote = remote
+  }
+  if (typeof stats.fileid === 'string') {
     doc.fileid = stats.fileid
   }
   updateLocal(doc)

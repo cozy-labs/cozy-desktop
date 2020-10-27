@@ -243,39 +243,16 @@ class Merge {
   // Update a file, when its metadata or its content has changed
   async updateFileAsync(side /*: SideName */, doc /*: Metadata */) {
     log.debug({ path: doc.path }, 'updateFileAsync')
-    const { path } = doc
-    const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
-    metadata.markSide(side, doc, file && file.deleted ? null : file)
-    if (file && file.docType === 'folder') {
-      throw new Error("Can't resolve this conflict!")
-    }
-    metadata.assignMaxDate(doc, file)
 
-    if (file) {
-      doc._id = file._id
-      doc._rev = file._rev
-      doc.moveFrom = file.moveFrom
-      if (doc.remote == null) {
-        doc.remote = file.remote
-      }
-      if (doc.ino == null) {
-        doc.ino = file.ino
-      }
-      if (doc.fileid == null) {
-        doc.fileid = file.fileid
-      }
-      // If file is updated on local filesystem, doc won't have metadata attribute
-      if (file.metadata && doc.metadata == null) {
-        doc.metadata = file.metadata
-      }
-      // If file was updated on remote Cozy, doc won't have local attribute
-      if (file.local && doc.local == null) {
-        doc.local = file.local
-      }
-      // If file is updated on Windows, it will never be executable so we keep
-      // the existing value.
-      if (side === 'local' && process.platform === 'win32') {
-        doc.executable = file.executable
+    const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
+    if (!file) {
+      metadata.markSide(side, doc)
+      metadata.assignMaxDate(doc)
+      await this.ensureParentExistAsync(side, doc)
+      return this.pouch.put(doc)
+    } else {
+      if (file.docType === 'folder') {
+        throw new Error("Can't resolve this conflict!")
       }
 
       if (
@@ -289,9 +266,9 @@ class Merge {
           const outdated = metadata.outOfDateSide(file)
           if (outdated) {
             // In case a change was merged but not applied, we want to make sure
-            // Sync will compare the curret record version with the correct
+            // Sync will compare the current record version with the correct
             // "previous" version (i.e. the one before the actual change was
-            // merged and not the one before we mergedd the new local metadata).
+            // merged and not the one before we merged the new local metadata).
             // Therefore, we mark the changed side once more to account for the
             // new record save.
             metadata.markSide(otherSide(outdated), file, file)
@@ -302,58 +279,73 @@ class Merge {
         }
       }
 
-      if (metadata.sameBinary(file, doc)) {
-        if (doc.size == null) {
-          doc.size = file.size
-        }
-        if (doc.class == null) {
-          doc.class = file.class
-        }
-        if (doc.mime == null) {
-          doc.mime = file.mime
-        }
-      } else if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
-        if (side === 'local') {
-          // We have a merged but unsynced remote update so we create a conflict.
-          await this.resolveConflictAsync('local', file)
-
-          if (file.local) {
-            // In this case we can dissociate the remote record from its local
-            // counterpart that was just renamed and will be merged later.
-            metadata.dissociateLocal(file)
-            // We make sure Sync will detect and propagate the remote update
-            metadata.markSide('remote', file, file)
-            return this.pouch.put(file)
-          } else {
-            return
-          }
-        } else {
-          // We have a merged but unsynced local update so we create a conflict.
-          // We use `doc` and not `file` because the remote document has changed
-          // and its new revision is only available in `doc`.
-          await this.resolveConflictAsync('remote', doc)
-
-          if (file.remote) {
-            // In this case we can dissociate the local record from its remote
-            // counterpart that was just renamed and will be fetched later.
-            metadata.dissociateRemote(file)
-            // We make sure Sync will detect and propagate the local update
-            metadata.markSide('local', file, file)
-            return this.pouch.put(file)
-          } else {
-            return
-          }
-        }
-      } else if (side === 'local' && isNote(file)) {
-        // We'll need a reference to the "overwritten" note during the conflict
-        // resolution.
-        doc.overwrite = file
-        return this.resolveNoteConflict(doc)
+      if (file.deleted) {
+        // If the existing record was marked for deletion, we only keep the
+        // PouchDB attributes that will allow us to overwrite it.
+        doc._id = file._id
+        doc._rev = file._rev
       } else {
-        doc.overwrite = file
+        // Otherwise we merge the relevant attributes
+        doc = {
+          ..._.cloneDeep(file),
+          ...doc,
+          // Tags come from the remote document and will always be empty in a new
+          // local document.
+          tags: doc.tags.length === 0 ? file.tags : doc.tags,
+          // if file is updated on windows, it will never be executable so we keep
+          // the existing value.
+          executable:
+            side === 'local' && process.platform === 'win32'
+              ? file.executable
+              : doc.executable
+        }
       }
+
+      if (!metadata.sameBinary(file, doc)) {
+        if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
+          if (side === 'local') {
+            // We have a merged but unsynced remote update so we create a conflict.
+            await this.resolveConflictAsync('local', file)
+
+            if (file.local) {
+              // In this case we can dissociate the remote record from its local
+              // counterpart that was just renamed and will be merged later.
+              metadata.dissociateLocal(file)
+              // We make sure Sync will detect and propagate the remote update
+              metadata.markSide('remote', file, file)
+              return this.pouch.put(file)
+            } else {
+              return
+            }
+          } else {
+            // We have a merged but unsynced local update so we create a conflict.
+            // We use `doc` and not `file` because the remote document has changed
+            // and its new revision is only available in `doc`.
+            await this.resolveConflictAsync('remote', doc)
+
+            if (file.remote) {
+              // In this case we can dissociate the local record from its remote
+              // counterpart that was just renamed and will be fetched later.
+              metadata.dissociateRemote(file)
+              // We make sure Sync will detect and propagate the local update
+              metadata.markSide('local', file, file)
+              return this.pouch.put(file)
+            } else {
+              return
+            }
+          }
+        } else if (side === 'local' && isNote(file)) {
+          // We'll need a reference to the "overwritten" note during the conflict
+          // resolution.
+          doc.overwrite = file
+          return this.resolveNoteConflict(doc)
+        } else {
+          doc.overwrite = file
+        }
+      }
+
       if (metadata.sameFile(file, doc)) {
-        log.info({ path }, 'up to date')
+        log.info({ path: doc.path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
           metadata.updateLocal(file, doc.local)
           const outdated = metadata.outOfDateSide(file)
@@ -364,11 +356,11 @@ class Merge {
         }
         return null
       } else {
+        metadata.markSide(side, doc, file.deleted ? null : file)
+        metadata.assignMaxDate(doc, file)
         return this.pouch.put(doc)
       }
     }
-    await this.ensureParentExistAsync(side, doc)
-    return this.pouch.put(doc)
   }
 
   // Create or update a folder

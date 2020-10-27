@@ -287,10 +287,7 @@ describe('Merge', function() {
                     sides: {
                       remote: 1,
                       target: 1
-                    },
-                    // FIXME: we should not keep this attribute since the local
-                    // file has been trashed and we'll replace it.
-                    local: file.local
+                    }
                   },
                   _.omit(doc, ['_id', '_rev'])
                 )
@@ -372,6 +369,49 @@ describe('Merge', function() {
       const filepath = 'BUZZ.JPG'
 
       context(
+        'when an unsynced remote file record with the same path but different content exists',
+        () => {
+          let file
+          beforeEach('create a file', async function() {
+            const remoteFile = await builders
+              .remoteFile()
+              .inRootDir()
+              .name(filepath)
+              .data('remote content')
+              .tags('foo')
+              .contentType('image/jpeg')
+              .build()
+            file = await builders
+              .metafile()
+              .fromRemote(remoteFile)
+              .sides({ remote: 1 })
+              .create()
+          })
+
+          it('creates a local conflict', async function() {
+            const doc = await builders
+              .metafile()
+              .path(filepath)
+              .data('local content')
+              .ino(123)
+              .unmerged('local')
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.addFileAsync('local', _.cloneDeep(doc))
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [],
+              resolvedConflicts: [
+                ['local', { path: filepath, remote: file.remote }]
+              ]
+            })
+          })
+        }
+      )
+
+      context(
         'when an unsynced remote file record with the same path and content exists',
         () => {
           let file
@@ -415,8 +455,6 @@ describe('Merge', function() {
                         : doc.executable,
                     mime: doc.mime,
                     class: doc.class,
-                    // FIXME: we should not lose the remote attributes
-                    tags: [],
                     updated_at: doc.updated_at,
                     sides: {
                       remote: file.sides.remote,
@@ -425,15 +463,7 @@ describe('Merge', function() {
                     },
                     local: doc.local
                   },
-                  // FIXME: we should not lose the remote attributes
-                  _.omit(file, [
-                    '_id',
-                    '_rev',
-                    'name',
-                    'dir_id',
-                    'created_at',
-                    'cozyMetadata'
-                  ])
+                  _.omit(file, ['_id', '_rev'])
                 )
               ],
               resolvedConflicts: []
@@ -529,11 +559,7 @@ describe('Merge', function() {
                     sides: {
                       local: 1,
                       target: 1
-                    },
-                    // FIXME: we should not keep this attribute since we don't
-                    // want to update the remotely trashed file but upload a new
-                    // one.
-                    remote: file.remote
+                    }
                   },
                   _.omit(doc, ['_id', '_rev'])
                 )
