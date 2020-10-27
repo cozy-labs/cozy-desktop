@@ -237,6 +237,71 @@ describe('Merge', function() {
       )
 
       context(
+        'when a deleted local file record with the same path but different content exists',
+        () => {
+          const filepath = 'BUZZ.JPG'
+
+          let synced, file
+          beforeEach('create a file', async function() {
+            const remoteFile = await builders
+              .remoteFile()
+              .inRootDir()
+              .name(filepath)
+              .data('initial content')
+              .tags('foo')
+              .contentType('image/jpeg')
+              .build()
+            synced = await builders
+              .metafile()
+              .fromRemote(remoteFile)
+              .upToDate()
+              .create()
+            file = await builders
+              .metafile(synced)
+              .deleted()
+              .changedSide('local')
+              .create()
+          })
+
+          it('overwrites the existing record', async function() {
+            const newRemoteFile = await builders
+              // $FlowFixMe: synced.remote has the right type but Flow can't know it
+              .remoteFile(synced.remote)
+              .data('updated content')
+              .build()
+            const doc = builders
+              .metafile()
+              .fromRemote(newRemoteFile)
+              .unmerged('remote')
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.addFileAsync('remote', _.cloneDeep(doc))
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [
+                _.defaults(
+                  {
+                    overwrite: file,
+                    sides: {
+                      remote: 1,
+                      target: 1
+                    },
+                    // FIXME: we should not keep this attribute since the local
+                    // file has been trashed and we'll replace it.
+                    local: file.local
+                  },
+                  _.omit(doc, ['_id', '_rev'])
+                )
+              ],
+              resolvedConflicts: []
+            })
+          })
+        }
+      )
+
+      context(
         'when an up-to-date file record with the same path exists',
         () => {
           const filepath = 'BUZZ.JPG'
@@ -369,6 +434,108 @@ describe('Merge', function() {
                     'created_at',
                     'cozyMetadata'
                   ])
+                )
+              ],
+              resolvedConflicts: []
+            })
+          })
+        }
+      )
+
+      context(
+        'when a deleted remote file record with the same path and content exists',
+        () => {
+          let synced
+          beforeEach('create a file', async function() {
+            const remoteFile = await builders
+              .remoteFile()
+              .inRootDir()
+              .name(filepath)
+              .data('same content')
+              .tags('foo')
+              .contentType('image/jpeg')
+              .build()
+            synced = await builders
+              .metafile()
+              .fromRemote(remoteFile)
+              .upToDate()
+              .create()
+            await builders
+              .metafile(synced)
+              .deleted()
+              .changedSide('remote')
+              .create()
+          })
+
+          it('does not overwrite the existing record', async function() {
+            const doc = await builders
+              .metafile(synced)
+              .unmerged('local')
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.addFileAsync('local', _.cloneDeep(doc))
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [],
+              resolvedConflicts: []
+            })
+          })
+        }
+      )
+
+      context(
+        'when a deleted remote file record with the same path but different content exists',
+        () => {
+          let synced, file
+          beforeEach('create a file', async function() {
+            const remoteFile = await builders
+              .remoteFile()
+              .inRootDir()
+              .name(filepath)
+              .data('remote content')
+              .tags('foo')
+              .contentType('image/jpeg')
+              .build()
+            synced = await builders
+              .metafile()
+              .fromRemote(remoteFile)
+              .upToDate()
+              .create()
+            file = await builders
+              .metafile(synced)
+              .deleted()
+              .changedSide('remote')
+              .create()
+          })
+
+          it('overwrites the existing record', async function() {
+            const doc = await builders
+              .metafile(synced)
+              .data('local content')
+              .unmerged('local')
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.addFileAsync('local', _.cloneDeep(doc))
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [
+                _.defaults(
+                  {
+                    overwrite: file,
+                    sides: {
+                      local: 1,
+                      target: 1
+                    },
+                    // FIXME: we should not keep this attribute since we don't
+                    // want to update the remotely trashed file but upload a new
+                    // one.
+                    remote: file.remote
+                  },
+                  _.omit(doc, ['_id', '_rev'])
                 )
               ],
               resolvedConflicts: []
@@ -902,15 +1069,19 @@ describe('Merge', function() {
 
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.defaultsDeep(
+            _.defaults(
               {
-                sides: increasedSides(remoteUpdate.sides, 'remote', 1),
-                local: localUpdate.local
+                sides: {
+                  remote: remoteUpdate.sides.remote + 1,
+                  target: remoteUpdate.sides.target + 1
+                }
               },
-              _.omit(remoteUpdate, ['_id', '_rev', 'overwrite'])
+              _.omit(remoteUpdate, ['_id', '_rev', 'local'])
             )
           ],
-          resolvedConflicts: []
+          resolvedConflicts: [
+            ['local', { path: localUpdate.path, remote: remoteUpdate.remote }]
+          ]
         })
       })
     })
@@ -1211,15 +1382,19 @@ describe('Merge', function() {
 
       should(sideEffects).deepEqual({
         savedDocs: [
-          _.defaultsDeep(
+          _.defaults(
             {
-              sides: increasedSides(remoteUpdate.sides, 'remote', 1),
-              local: newLocalUpdate.local
+              sides: {
+                remote: remoteUpdate.sides.remote + 1,
+                target: remoteUpdate.sides.remote + 1
+              }
             },
-            _.omit(remoteUpdate, ['_id', '_rev', 'overwrite'])
+            _.omit(remoteUpdate, ['_id', '_rev', 'local'])
           )
         ],
-        resolvedConflicts: []
+        resolvedConflicts: [
+          ['local', { path: newLocalUpdate.path, remote: remoteUpdate.remote }]
+        ]
       })
     })
 

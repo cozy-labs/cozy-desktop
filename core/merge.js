@@ -245,7 +245,7 @@ class Merge {
     log.debug({ path: doc.path }, 'updateFileAsync')
     const { path } = doc
     const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
-    metadata.markSide(side, doc, file)
+    metadata.markSide(side, doc, file && file.deleted ? null : file)
     if (file && file.docType === 'folder') {
       throw new Error("Can't resolve this conflict!")
     }
@@ -314,27 +314,19 @@ class Merge {
         }
       } else if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
         if (side === 'local') {
-          // FIXME: We should probably not do this anymore. With the
-          // introduction of the local state and the sameFile check done line
-          // 322 we can detect when the remote change has not been applied and
-          // overwrite the local file in this case only.
-          // This also means we could stop using the overwrite attribute for
-          // file updates and avoid the issue of losing overwriting move details
-          // when an update is performed afterwards.
+          // We have a merged but unsynced remote update so we create a conflict.
+          await this.resolveConflictAsync('local', file)
 
-          // We have a merged but unsynced remote update.
-          // We can't create a conflict because we can't dissociate the remote
-          // record from the PouchDB record (or we'd lose the link between the
-          // two) and the local rename would therefore trigger an overwrite of
-          // the remote file with the local content.
-          // We hope the local update isn't real (the difference between the
-          // orginal content and the remotely updated content).
-          metadata.markSide('remote', file, file)
-          delete file.overwrite
-          if (!metadata.sameLocal(file.local, doc.local)) {
-            metadata.updateLocal(file, doc.local)
+          if (file.local) {
+            // In this case we can dissociate the remote record from its local
+            // counterpart that was just renamed and will be merged later.
+            metadata.dissociateLocal(file)
+            // We make sure Sync will detect and propagate the remote update
+            metadata.markSide('remote', file, file)
+            return this.pouch.put(file)
+          } else {
+            return
           }
-          return this.pouch.put(file)
         } else {
           // We have a merged but unsynced local update so we create a conflict.
           // We use `doc` and not `file` because the remote document has changed

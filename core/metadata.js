@@ -170,6 +170,7 @@ module.exports = {
   removeActionHints,
   removeNoteMetadata,
   dissociateRemote,
+  dissociateLocal,
   markAsNew,
   markAsUnsyncable,
   markAsUpToDate,

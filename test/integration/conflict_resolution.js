@@ -198,7 +198,7 @@ describe('Conflict resolution', () => {
     })
 
     context('remote merged first', () => {
-      it('it trashes a backup copy of local and overwrites the original', async () => {
+      it('creates a local conflict', async () => {
         await helpers.remote.pullChanges()
         await simulateLocalUpdateMerge() // Client restart with wrong update detection
         await helpers.syncAll()
@@ -206,8 +206,8 @@ describe('Conflict resolution', () => {
         await helpers.flushLocalAndSyncAll()
 
         should(await helpers.trees()).deepEqual({
-          remote: ['concurrent-edited'],
-          local: ['/Trash/concurrent-edited.bck', 'concurrent-edited']
+          remote: expectedTree,
+          local: expectedTree
         })
       })
     })
