@@ -235,6 +235,196 @@ describe('Merge', function() {
           })
         }
       )
+
+      context(
+        'when an up-to-date file record with the same path exists',
+        () => {
+          const filepath = 'BUZZ.JPG'
+
+          let file
+          beforeEach('create a file', async function() {
+            file = await builders
+              .metafile()
+              .path(filepath)
+              .data('initial content')
+              .ino(123)
+              .upToDate()
+              .create()
+          })
+
+          it('updates the existing record', async function() {
+            const newRemoteFile = await builders
+              .remoteFile()
+              .inRootDir()
+              .name(filepath)
+              .data('new content')
+              .tags('foo')
+              .contentType('image/jpeg')
+              .build()
+            const doc = builders
+              .metafile()
+              .fromRemote(newRemoteFile)
+              .unmerged('remote')
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.addFileAsync('remote', _.cloneDeep(doc))
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [
+                _.defaults(
+                  {
+                    md5sum: doc.md5sum,
+                    size: doc.size,
+                    mime: doc.mime,
+                    class: doc.class,
+                    executable: doc.executable,
+                    tags: doc.tags,
+                    updated_at: doc.updated_at,
+                    overwrite: file,
+                    sides: increasedSides(file.sides, 'remote', 1),
+                    remote: doc.remote,
+                    cozyMetadata: doc.cozyMetadata,
+                    // FIXME: $FlowFixMe not part of Metadata but still saved in PouchDB
+                    created_at: doc.created_at,
+                    // FIXME: $FlowFixMe not part of Metadata but still saved in PouchDB
+                    dir_id: doc.dir_id,
+                    // FIXME: $FlowFixMe not part of Metadata but still saved in PouchDB
+                    name: doc.name
+                  },
+                  _.omit(file, ['_id', '_rev', 'fileid'])
+                )
+              ],
+              resolvedConflicts: []
+            })
+          })
+        }
+      )
+    })
+
+    context('local', function() {
+      const filepath = 'BUZZ.JPG'
+
+      context(
+        'when an unsynced remote file record with the same path and content exists',
+        () => {
+          let file
+          beforeEach('create a file', async function() {
+            const remoteFile = await builders
+              .remoteFile()
+              .inRootDir()
+              .name(filepath)
+              .data('same content')
+              .tags('foo')
+              .contentType('image/jpeg')
+              .build()
+            file = await builders
+              .metafile()
+              .fromRemote(remoteFile)
+              .sides({ remote: 1 })
+              .create()
+          })
+
+          it('updates the record with the local metadata', async function() {
+            const doc = await builders
+              .metafile()
+              .path(filepath)
+              .data('same content')
+              .ino(123)
+              .unmerged('local')
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.addFileAsync('local', _.cloneDeep(doc))
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [
+                _.defaults(
+                  {
+                    ino: doc.ino,
+                    executable:
+                      process.platform === 'win32'
+                        ? file.executable
+                        : doc.executable,
+                    mime: doc.mime,
+                    class: doc.class,
+                    // FIXME: we should not lose the remote attributes
+                    tags: [],
+                    updated_at: doc.updated_at,
+                    sides: {
+                      remote: file.sides.remote,
+                      local: file.sides.target + 1,
+                      target: file.sides.target + 1
+                    },
+                    local: doc.local
+                  },
+                  // FIXME: we should not lose the remote attributes
+                  _.omit(file, [
+                    '_id',
+                    '_rev',
+                    'name',
+                    'dir_id',
+                    'created_at',
+                    'cozyMetadata'
+                  ])
+                )
+              ],
+              resolvedConflicts: []
+            })
+          })
+        }
+      )
+
+      context(
+        'when an up-to-date file record with the same path exists',
+        () => {
+          let file
+          beforeEach('create a file', async function() {
+            file = await builders
+              .metafile()
+              .path(filepath)
+              .data('initial content')
+              .ino(123)
+              .upToDate()
+              .create()
+          })
+
+          it('updates the existing record', async function() {
+            const doc = builders
+              .metafile()
+              .path(filepath)
+              .data('new content')
+              .ino(456)
+              .updatedAt(new Date())
+              .unmerged('local')
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.addFileAsync('local', _.cloneDeep(doc))
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [
+                _.defaults(
+                  {
+                    ino: doc.ino,
+                    md5sum: doc.md5sum,
+                    size: doc.size,
+                    updated_at: doc.updated_at,
+                    sides: increasedSides(file.sides, 'local', 1),
+                    overwrite: file,
+                    local: doc.local
+                  },
+                  _.omit(file, ['_id', '_rev', 'fileid'])
+                )
+              ],
+              resolvedConflicts: []
+            })
+          })
+        }
+      )
     })
 
     context('when the path was used in the past', function() {
@@ -268,80 +458,6 @@ describe('Merge', function() {
                 sides: { target: 1, [this.side]: 1 }
               },
               doc
-            )
-          ],
-          resolvedConflicts: []
-        })
-      })
-    })
-
-    context('when a file with the same path exists', function() {
-      let file
-
-      beforeEach('create a file', async function() {
-        file = await builders
-          .metafile()
-          .path('BUZZ.JPG')
-          .data('image')
-          .type('image/jpeg')
-          .ino(123)
-          .updatedAt(new Date())
-          .upToDate()
-          .create()
-      })
-
-      it('can update the metadata', async function() {
-        const newDate = new Date().toISOString()
-        const doc = builders
-          .metafile(file)
-          .updatedAt(newDate)
-          .unmerged('local')
-          .build()
-
-        const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.addFileAsync('local', _.cloneDeep(doc))
-        )
-
-        should(sideEffects).deepEqual({
-          savedDocs: [
-            _.defaults(
-              {
-                local: doc.local
-              },
-              _.omit(file, ['_id', '_rev', 'fileid'])
-            )
-          ],
-          resolvedConflicts: []
-        })
-      })
-
-      it('can update the file record', async function() {
-        const newDate = new Date().toISOString()
-        const doc = builders
-          .metafile(file)
-          .ino(456)
-          .data('new image')
-          .updatedAt(newDate)
-          .unmerged('local')
-          .build()
-
-        const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.addFileAsync('local', _.cloneDeep(doc))
-        )
-
-        should(sideEffects).deepEqual({
-          savedDocs: [
-            _.defaults(
-              {
-                ino: doc.ino,
-                md5sum: doc.md5sum,
-                size: doc.size,
-                updated_at: doc.updated_at,
-                sides: increasedSides(file.sides, 'local', 1),
-                overwrite: file,
-                local: doc.local
-              },
-              _.omit(file, ['_id', '_rev', 'fileid'])
             )
           ],
           resolvedConflicts: []
@@ -735,21 +851,17 @@ describe('Merge', function() {
         })
       })
 
-      it('does not update a locally unchanged file with an unsynced remote update', async function() {
-        const initial = await builders
-          .metafile()
-          .sides({ local: 1 })
-          .data('previous content')
-          .create()
+      it('does not overwrite an unsynced remote update with a locally unchanged file', async function() {
         const synced = await builders
-          .metafile(initial)
+          .metafile()
+          .data('previous content')
           .upToDate()
           .create()
         await builders
           .metafile(synced)
-          .changedSide('remote')
-          .data('remote update')
           .overwrite(synced)
+          .data('remote update')
+          .changedSide('remote')
           .create()
         const sameAsSynced = builders
           .metafile(synced)
@@ -766,21 +878,17 @@ describe('Merge', function() {
         })
       })
 
-      it('updates without overwrite a locally updated file with an unsynced remote update', async function() {
-        const initial = await builders
-          .metafile()
-          .sides({ local: 1 })
-          .data('initial content')
-          .create()
+      it('does not overwrite an unsynced remote update with a locally updated file and creates a local conflict', async function() {
         const synced = await builders
-          .metafile(initial)
+          .metafile()
+          .data('initial content')
           .upToDate()
           .create()
         const remoteUpdate = await builders
           .metafile(synced)
-          .changedSide('remote')
-          .data('remote update')
           .overwrite(synced)
+          .data('remote update')
+          .changedSide('remote')
           .create()
         const localUpdate = builders
           .metafile(synced)
@@ -1052,21 +1160,17 @@ describe('Merge', function() {
       })
     })
 
-    it('does not update a locally unchanged file with an unsynced remote update', async function() {
-      const initial = await builders
-        .metafile()
-        .sides({ local: 1 })
-        .data('initial content')
-        .create()
+    it('does not overwrite an unsynced remote update with a locally unchanged file', async function() {
       const synced = await builders
-        .metafile(initial)
+        .metafile()
+        .data('initial content')
         .upToDate()
         .create()
       await builders
         .metafile(synced)
-        .changedSide('remote')
-        .data('remote update')
         .overwrite(synced)
+        .data('remote update')
+        .changedSide('remote')
         .create()
       const unchangedLocal = builders
         .metafile(synced)
@@ -1083,21 +1187,17 @@ describe('Merge', function() {
       })
     })
 
-    it('updates without overwrite a locally updated file with an unsynced remote update', async function() {
-      const initial = await builders
-        .metafile()
-        .sides({ local: 1 })
-        .data('initial content')
-        .create()
+    it('does not overwrite an unsynced remote update with a locally updated file and creates a local conflict', async function() {
       const synced = await builders
-        .metafile(initial)
+        .metafile()
+        .data('initial content')
         .upToDate()
         .create()
       const remoteUpdate = await builders
         .metafile(synced)
-        .changedSide('remote')
-        .data('remote update')
         .overwrite(synced)
+        .data('remote update')
+        .changedSide('remote')
         .create()
       const newLocalUpdate = builders
         .metafile(synced)
