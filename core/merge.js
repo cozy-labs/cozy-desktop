@@ -230,11 +230,7 @@ class Merge {
         return this.resolveConflictAsync(side, doc)
       }
 
-      if (file.sides && file.sides[side] != null) {
-        return this.updateFileAsync(side, doc)
-      }
-
-      return this.resolveConflictAsync(side, doc)
+      return this.updateFileAsync(side, doc)
     }
 
     metadata.markSide(side, doc)
@@ -340,18 +336,21 @@ class Merge {
           }
           return this.pouch.put(file)
         } else {
-          // We have a merged but unsynced local update.
-          // In this case we can dissociate the remote since we'll be renaming
-          // it and thus trigger a new change that will be fetched later.
+          // We have a merged but unsynced local update so we create a conflict.
           // We use `doc` and not `file` because the remote document has changed
-          // and so has its revision which is available in `doc`.
+          // and its new revision is only available in `doc`.
           await this.resolveConflictAsync('remote', doc)
-          // We dissociate the local record from its remote counterpart that was
-          // just renamed.
-          metadata.dissociateRemote(file)
-          // We make sure Sync will detect and propagate the local update
-          metadata.markSide('local', file, file)
-          return this.pouch.put(file)
+
+          if (file.remote) {
+            // In this case we can dissociate the local record from its remote
+            // counterpart that was just renamed and will be fetched later.
+            metadata.dissociateRemote(file)
+            // We make sure Sync will detect and propagate the local update
+            metadata.markSide('local', file, file)
+            return this.pouch.put(file)
+          } else {
+            return
+          }
         }
       } else if (side === 'local' && isNote(file)) {
         // We'll need a reference to the "overwritten" note during the conflict
