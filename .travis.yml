@@ -1,5 +1,8 @@
 ---
-dist: trusty
+dist: focal
+virt: lxd
+arch: arm64-graviton2
+group: edge
 language: node_js
 node_js: 12.14.1
 osx_image: xcode11
