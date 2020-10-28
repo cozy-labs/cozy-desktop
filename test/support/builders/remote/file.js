@@ -66,6 +66,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <Metadat
 
   contentType(contentType /*: string */) /*: this */ {
     this.remoteDoc.mime = contentType
+    this.remoteDoc.class = contentType.split('/')[0]
     return this
   }
 
