@@ -1,5 +1,49 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.24.0-beta.1 - 2020-10-30
+
+Improvements for all users:
+
+- This release lays the ground work for a future synchronization algorithm. We
+  now store the complete remote metadata of each document and the local metadata
+  of both files and directories. This will allow us to make deeper comparisons
+  and take better action in complex situations (e.g. a file modification and
+  renaming on the local filesystem with a parent directory renaming on the
+  Cozy).
+  Another part of this base work is the move to generated PouchDB records ids.
+  Those were previously based on the document's path and this scheme had several
+  limitations (e.g. when a document was moved or renamed, its record id had to
+  change).
+- The move to generated PouchDB ids allows you to synchronize documents whose
+  name start with an underscore (`_`), in the root synchronization folder. Those
+  previously resulted in reserved PouchDB ids and could not be stored thus
+  synchronized.
+- The upload requests rejection protection does not create memory leaks anymore
+  as it will be cleaned up after the requests terminate, whether they're
+  successful or not.
+- When a new directory is linked with an existing directory on the other side
+  (i.e. either the local filesystem or the remote Cozy) with the same name in
+  the same parent directory, we'll update the existing directory's metadata with
+  the new directory's metadata to make sure they're in sync.
+- Now that we track the local metadata of files, we can still detect during the
+  start-up local scan if a the file was updated on the local filesystem even if
+  a remote update was saved in PouchDB but not synced before the client was
+  stopped. With this detection we can decide if a conflict needs to be created
+  or not without losing any data and stop applying the remote update in all
+  cases.
+
+Improvements for Windows users:
+
+- Files marked as executable and downloaded from the Cozy will remain marked as
+  executable on the Cozy and all the devices recognizing this flag (i.e. on
+  Linux or macOS). Since this flag is not recognized on Windows, synchronizing
+  an executable file with a Windows device would previously remove the flag for
+  everybody.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.23.0 - 2020-10-01
 
 Improvements for all users:
