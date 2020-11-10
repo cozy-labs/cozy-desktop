@@ -73,29 +73,31 @@ function countFileWriteEvents(events /*: AtomEvent[] */) /*: number */ {
   return nbCandidates
 }
 
+function ino(event /*: AtomEvent */) {
+  return event.stats && (event.stats.fileid || event.stats.ino)
+}
+
 function aggregateBatch(events) {
   const lastWritesByPath = new Map()
   const aggregatedEvents = []
 
   events.forEach(event => {
-    if (isAggregationCandidate(event)) {
-      const lastWrite = lastWritesByPath.get(event.path)
-      if (lastWrite) {
-        const aggregatedEvent = aggregateEvents(lastWrite, event)
-        const lastWriteIndex = aggregatedEvents.indexOf(lastWrite)
+    const lastWrite = lastWritesByPath.get(event.path)
+    if (lastWrite && isAggregationCandidate(event, lastWrite)) {
+      const aggregatedEvent = aggregateEvents(lastWrite, event)
+      const lastWriteIndex = aggregatedEvents.indexOf(lastWrite)
 
-        if (aggregatedEvent) {
-          aggregatedEvents.splice(lastWriteIndex, 1, aggregatedEvent)
-        } else {
-          aggregatedEvents.splice(lastWriteIndex, 1)
-        }
-
-        lastWritesByPath.set(lastWrite.path, aggregatedEvent)
+      if (aggregatedEvent) {
+        aggregatedEvents.splice(lastWriteIndex, 1, aggregatedEvent)
       } else {
-        lastWritesByPath.set(event.path, event)
-        aggregatedEvents.push(event)
+        aggregatedEvents.splice(lastWriteIndex, 1)
       }
+
+      lastWritesByPath.set(lastWrite.path, aggregatedEvent)
     } else {
+      if (!event.incomplete) {
+        lastWritesByPath.set(event.path, event)
+      }
       aggregatedEvents.push(event)
     }
   })
@@ -103,11 +105,12 @@ function aggregateBatch(events) {
   return aggregatedEvents
 }
 
-function isAggregationCandidate(event) {
+function isAggregationCandidate(event, lastWrite) {
   return (
     !event.incomplete &&
     event.kind === 'file' &&
-    ['created', 'modified', 'deleted', 'renamed'].includes(event.action)
+    ['created', 'modified', 'deleted', 'renamed'].includes(event.action) &&
+    (lastWrite.action !== 'renamed' || ino(event) === ino(lastWrite))
   )
 }
 
@@ -192,7 +195,8 @@ function debounce(waiting /*: WaitingItem[] */, events /*: AtomEvent[] */) {
           const e = w.events[k]
 
           if (
-            ['created', 'modified', 'renamed'].includes(e.action) &&
+            (['created', 'modified'].includes(e.action) ||
+              (e.action === 'renamed' && ino(e) === ino(event))) &&
             e.path === event.path
           ) {
             w.events.splice(k, 1)
