@@ -19,6 +19,7 @@ const { INITIAL_SCAN_DONE } = require('../../../core/local/atom/event')
 const rimrafAsync = Promise.promisify(rimraf)
 
 /*::
+import type { Ignore } from '../../../core/ignore'
 import type { LocalOptions } from '../../../core/local'
 import type { ChokidarEvent } from '../../../core/local/chokidar/event'
 import type { AtomBatch } from '../../../core/local/atom/event'
@@ -34,6 +35,7 @@ const simulationCompleteBatch = [
 
 class LocalTestHelpers {
   /*::
+  ignore: Ignore
   side: Local
   syncDir: ContextDir
   trashDir: ContextDir
@@ -47,6 +49,7 @@ class LocalTestHelpers {
       } /*: Object */),
       opts
     )
+    this.ignore = opts.ignore
     this.side = new Local(localOptions)
     this.syncDir = new ContextDir(this.side.syncPath)
     autoBind(this)
@@ -58,6 +61,13 @@ class LocalTestHelpers {
 
   get trashPath() /*: string */ {
     return path.join(this.side.tmpPath, '.test-trash')
+  }
+
+  isIgnored(
+    relativePath /*: string */,
+    isFolder /*: boolean */
+  ) /*: boolean */ {
+    return this.ignore.isIgnored({ relativePath, isFolder })
   }
 
   async clean() {
@@ -83,16 +93,19 @@ class LocalTestHelpers {
     this.side._trash = this.trashFunc
   }
 
-  async trash() {
-    return await this.trashDir.tree()
+  async trash({ withIno = false } /*: { withIno?: boolean } */ = {}) {
+    return withIno
+      ? await this.trashDir.treeWithIno()
+      : await this.trashDir.tree()
   }
 
-  async tree(
-    opts /*: {ellipsize: boolean} */ = { ellipsize: true }
-  ) /*: Promise<string[]> */ {
+  async tree({
+    ellipsize = true,
+    withIno = false
+  } /*: { ellipsize?: boolean, withIno?: boolean } */ = {}) {
     let trashContents
     try {
-      trashContents = await this.trash()
+      trashContents = await this.trash({ withIno })
     } catch (err) {
       if (err.code !== 'ENOENT') throw err
       throw new Error(
@@ -100,15 +113,38 @@ class LocalTestHelpers {
           'beforeEach block) before calling helpers.local.tree() in a test'
       )
     }
-    const ellipsizeDate = opts.ellipsize
-      ? conflictHelpers.ellipsizeDate
-      : _.identity
-    return trashContents
-      .map(relPath => path.posix.join('/Trash', relPath))
-      .concat(await this.syncDir.tree())
-      .map(ellipsizeDate)
-      .filter(relpath => !relpath.match(TMP_DIR_NAME))
-      .sort()
+
+    const syncDirContent = withIno
+      ? await this.syncDir.treeWithIno()
+      : await this.syncDir.tree()
+
+    const ellipsizeDate = ellipsize ? conflictHelpers.ellipsizeDate : _.identity
+
+    return withIno
+      ? trashContents
+          .map(({ ino, fileid, path: relPath }) => ({
+            ino,
+            fileid,
+            path: path.posix.join('/Trash', relPath)
+          }))
+          .concat(syncDirContent)
+          .map(({ ino, fileid, path: relPath }) => ({
+            ino,
+            fileid,
+            path: ellipsizeDate(relPath)
+          }))
+          .filter(({ path }) => !path.match(TMP_DIR_NAME))
+          .sort((a, b) => {
+            if (a.path < b.path) return -1
+            if (a.path > b.path) return 1
+            return 0
+          })
+      : trashContents
+          .map(relPath => path.posix.join('/Trash', relPath))
+          .concat(syncDirContent)
+          .map(ellipsizeDate)
+          .filter(relpath => !relpath.match(TMP_DIR_NAME))
+          .sort()
   }
 
   async scan() {
@@ -116,8 +152,14 @@ class LocalTestHelpers {
     await this.side.watcher.stop()
   }
 
-  async treeWithoutTrash() {
-    return (await this.tree()).filter(p => !p.startsWith('/Trash/'))
+  async treeWithoutTrash({
+    withIno = false
+  } /*: { withIno?: boolean } */ = {}) {
+    return withIno
+      ? (await this.tree({ withIno })).filter(
+          p => !p.path.startsWith('/Trash/')
+        )
+      : (await this.tree()).filter(p => !p.startsWith('/Trash/'))
   }
 
   async simulateEvents(events /*: ChokidarEvent[] */) {

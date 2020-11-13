@@ -150,13 +150,13 @@ const runAndRecordChokidarEvents = scenario => {
       })
     }
 
-    watcher.on('ready', () => {
+    watcher.on('ready', async () => {
       record = true
-      fixturesHelpers
-        .runActions(scenario, abspath)
-        .delay(1000)
-        .then(triggerDone)
-        .catch(reject)
+      await fixturesHelpers.runActions(scenario, abspath, {
+        saveInodeChanges: false
+      })
+      await Promise.delay(1000)
+      triggerDone()
     })
 
     watcher.on('error', reject)
@@ -171,7 +171,7 @@ const runAndRecordAtomEvents = async scenario => {
   const capturedBatches = []
   const watcher = new AtomWatcher({ syncPath, prep, pouch, events, ignore })
 
-  pouch.allDocs = sinon.stub().callsFake(() => [])
+  pouch.initialScanDocs = sinon.stub().callsFake(() => [])
 
   try {
     await watcher.start()
@@ -183,7 +183,10 @@ const runAndRecordAtomEvents = async scenario => {
       capturedBatches.push(_.cloneDeep(batch))
       actualPush.call(channel, batch)
     }
-    await fixturesHelpers.runActions(scenario, abspath).delay(1000)
+    await fixturesHelpers.runActions(scenario, abspath, {
+      saveInodeChanges: false
+    })
+    await Promise.delay(1000)
     return saveFSEventsToFile(scenario, capturedBatches, 'atom')
   } finally {
     await watcher.stop()

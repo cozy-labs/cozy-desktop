@@ -2,14 +2,17 @@
 
 /*:: import type { Scenario } from '..' */
 
-//const save = 'Partages reçus/'
+const nfcDir = 'Partages reçus/'
+const localDir =
+  process.env.COZY_DESKTOP_FS === 'HFS+' ? nfcDir.normalize('NFD') : nfcDir
 
 module.exports = ({
   side: 'remote',
-  init: [{ path: 'Partages reçus/', ino: 1 }],
+  init: [{ path: nfcDir, ino: 1 }],
   actions: [],
   expected: {
-    tree: ['Partages reçus/'],
+    localTree: [localDir],
+    remoteTree: [nfcDir],
     trash: []
   }
 } /*: Scenario */)

@@ -8,6 +8,7 @@ const path = require('path')
 const rimraf = require('rimraf')
 
 const checksumer = require('../../../core/local/checksumer')
+const stater = require('../../../core/local/stater')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 
 Promise.promisifyAll(checksumer)
@@ -56,8 +57,9 @@ class ContextDir {
     }
   }
 
-  async tree() /*: Promise<string[]> */ {
-    const dirsToRead = [this.root]
+  async tree(
+    dirsToRead /*: string[] */ = [this.root]
+  ) /*: Promise<string[]> */ {
     const relPaths = []
 
     // eslint-disable-next-line no-constant-condition
@@ -67,10 +69,10 @@ class ContextDir {
 
       for (const name of await fse.readdir(dir)) {
         const absPath = path.join(dir, name)
-        const stat = await fse.stat(absPath)
+        const stat = await stater.stat(absPath)
         let relPath = this.relpath(absPath)
 
-        if (stat.isDirectory()) {
+        if (stater.isDirectory(stat)) {
           dirsToRead.push(absPath)
           relPath = relPath + path.posix.sep
         }
@@ -81,6 +83,35 @@ class ContextDir {
 
     return relPaths
       .sort((a, b) => a.localeCompare(b))
+      .filter(relPath => relPath !== `${TMP_DIR_NAME}/`)
+  }
+
+  async treeWithIno(
+    dirsToRead /*: string[] */ = [this.root]
+  ) /*: Promise<Array<{ ino: number, path: string }>> */ {
+    const tree = []
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const dir = dirsToRead.shift()
+      if (dir == null) break
+
+      for (const name of await fse.readdir(dir)) {
+        const absPath = path.join(dir, name)
+        const stat = await stater.stat(absPath)
+        let relPath = this.relpath(absPath)
+
+        if (stater.isDirectory(stat)) {
+          dirsToRead.push(absPath)
+          relPath = relPath + path.posix.sep
+        }
+
+        tree.push({ path: relPath, ino: stat.ino, fileid: stat.fileid })
+      }
+    }
+
+    return tree
+      .sort((a, b) => a.path.localeCompare(b.path))
       .filter(relPath => relPath !== `${TMP_DIR_NAME}/`)
   }
 
@@ -113,7 +144,9 @@ class ContextDir {
   async octalMode(
     target /*: string | {path: string} */
   ) /*: Promise<string> */ {
-    const stats = await this.stat(target)
+    // The Stats object returned by `stater` does not contain the `mode` field
+    // (at least on Windows) so we have to use the Node `stat` method instead.
+    const stats = await fse.stat(this.abspath(target))
     return _.padStart((0o777 & stats.mode).toString(8), 3, '0')
   }
 
@@ -180,7 +213,7 @@ class ContextDir {
   }
 
   stat(target /*: string | {path: string} */) /*: Promise<fse.Stat> */ {
-    return fse.stat(this.abspath(target))
+    return stater.stat(this.abspath(target))
   }
 
   remove(target /*: string | {path: string} */) /*: Promise<void> */ {
