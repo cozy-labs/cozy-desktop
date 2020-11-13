@@ -60,7 +60,8 @@ describe('core/local/atom/initial_diff', () => {
           [foo.fileid || foo.ino, foo],
           [fizz.fileid || fizz.ino, fizz],
           [bar.fileid || bar.ino, bar]
-        ])
+        ]),
+        initialScanDone: false
       })
     })
   })
@@ -90,7 +91,8 @@ describe('core/local/atom/initial_diff', () => {
           waiting,
           renamedEvents,
           scannedPaths,
-          byInode
+          byInode,
+          initialScanDone: false
         }
       }
 
@@ -101,7 +103,8 @@ describe('core/local/atom/initial_diff', () => {
           waiting: [],
           renamedEvents: [],
           scannedPaths: new Set(),
-          byInode: new Map()
+          byInode: new Map(),
+          initialScanDone: true
         }
       })
     })
@@ -121,6 +124,81 @@ describe('core/local/atom/initial_diff', () => {
         .kind('unknown')
         .path('')
         .build()
+    })
+
+    it('forwards events untouched when initial scan is done', async function() {
+      await builders
+        .metadir()
+        .path('foo')
+        .ino(1)
+        .upToDate()
+        .create()
+
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+      initialDiff.clearState(state)
+
+      const fooRenamed = builders
+        .event()
+        .action('renamed')
+        .kind('directory')
+        .oldPath('foo')
+        .path('bar')
+        .ino(1)
+        .build()
+      const fooCreated = builders
+        .event()
+        .action('created')
+        .kind('directory')
+        .path('foo')
+        .ino(2)
+        .build()
+      const fooBuzzCreated = builders
+        .event()
+        .action('created')
+        .kind('file')
+        .path('foo/buzz')
+        .ino(3)
+        .build()
+      inputBatch([fooRenamed, fooCreated, fooBuzzCreated, initialScanDone])
+
+      const events = await initialDiff
+        .loop(channel, { pouch: this.pouch, state })
+        .pop()
+
+      should(events).deepEqual([
+        fooRenamed,
+        fooCreated,
+        fooBuzzCreated,
+        initialScanDone
+      ])
+    })
+
+    it('clears the state after initial-scan-done is received', async function() {
+      const state = await initialDiff.initialState({ pouch: this.pouch })
+      const outChannel = initialDiff.loop(channel, { pouch: this.pouch, state })
+
+      // Send normal event
+      const fooScan = builders
+        .event()
+        .action('scan')
+        .kind('file')
+        .path('foo')
+        .ino(1)
+        .build()
+      inputBatch([fooScan])
+      await outChannel.pop()
+
+      should(state.initialDiff)
+        .have.property('initialScanDone')
+        .be.false()
+
+      // Send initial-scan-done
+      inputBatch([initialScanDone])
+      await outChannel.pop()
+
+      should(state.initialDiff)
+        .have.property('initialScanDone')
+        .be.true()
     })
 
     it('detects documents moved while client was stopped', async function() {

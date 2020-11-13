@@ -19,7 +19,7 @@ import type { Ignore } from '../../ignore'
 import type { AtomEvent } from './event'
 import type EventEmitter from 'events'
 
-export type Scanner = (string) => Promise<void>
+export type Scanner = (string, ?{ readdir?: *, stater?: * }) => Promise<void>
 */
 
 const log = logger({
@@ -63,6 +63,7 @@ class Producer {
   ignore: Ignore
   events: EventEmitter
   watcher: *
+  scan: Scanner
   */
   constructor(
     opts /*: { syncPath: string, ignore: Ignore, events: EventEmitter } */
@@ -122,8 +123,8 @@ class Producer {
     {
       readdir = fse.readdir,
       stater = defaultStater
-    } /*: { readdir: *, stater: * } */ = {}
-  ) {
+    } /*: { readdir?: *, stater?: * } */ = {}
+  ) /*: Promise<void> */ {
     const entries = []
     const fullPath = path.join(this.syncPath, relPath)
 

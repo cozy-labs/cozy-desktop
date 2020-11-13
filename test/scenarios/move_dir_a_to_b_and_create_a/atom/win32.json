@@ -1,0 +1,59 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "b",
+      "oldPath": "a"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "a"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "a\\file.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "a\\file.txt"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "a\\subdir"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "a\\subdir\\child.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "a\\subdir\\child.txt"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "a\\subdir\\child.txt"
+    }
+  ]
+]

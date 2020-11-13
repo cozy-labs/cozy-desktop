@@ -27,6 +27,7 @@ type InitialDiffState = {
     renamedEvents: AtomEvent[],
     scannedPaths: Set<string>,
     byInode: Map<number|string, Metadata>,
+    initialScanDone: boolean,
   }
 }
 
@@ -100,7 +101,13 @@ async function initialState(
   }
 
   return {
-    [STEP_NAME]: { waiting, renamedEvents, scannedPaths, byInode }
+    [STEP_NAME]: {
+      waiting,
+      renamedEvents,
+      scannedPaths,
+      byInode,
+      initialScanDone: false
+    }
   }
 }
 
@@ -115,6 +122,7 @@ function clearState(state /*: InitialDiffState */) {
 
   state[STEP_NAME].waiting = []
   state[STEP_NAME].renamedEvents = []
+  state[STEP_NAME].initialScanDone = true
   scannedPaths.clear()
   byInode.clear()
 }
@@ -128,8 +136,19 @@ async function initialDiff(
   while (true) {
     const events = await channel.pop()
     const {
-      [STEP_NAME]: { waiting, renamedEvents, scannedPaths, byInode }
+      [STEP_NAME]: {
+        waiting,
+        renamedEvents,
+        scannedPaths,
+        byInode,
+        initialScanDone
+      }
     } = state
+
+    if (initialScanDone) {
+      out.push(events)
+      continue
+    }
 
     let nbCandidates = 0
 

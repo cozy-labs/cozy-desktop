@@ -1,0 +1,92 @@
+[
+  {
+    "type": "addDir",
+    "path": "a",
+    "stats": {
+      "ino": 3410465,
+      "size": 128,
+      "mtime": "2020-11-16T09:06:34.008Z",
+      "ctime": "2020-11-16T09:06:34.008Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "b",
+    "stats": {
+      "ino": 1,
+      "size": 128,
+      "mtime": "2020-11-16T09:06:33.999Z",
+      "ctime": "2020-11-16T09:06:34.005Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "a",
+    "stats": {
+      "ino": 3410465,
+      "size": 128,
+      "mtime": "2020-11-16T09:06:34.008Z",
+      "ctime": "2020-11-16T09:06:34.008Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "a/subdir",
+    "stats": {
+      "ino": 3410467,
+      "size": 96,
+      "mtime": "2020-11-16T09:06:34.008Z",
+      "ctime": "2020-11-16T09:06:34.008Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "b/subdir",
+    "stats": {
+      "ino": 3,
+      "size": 96,
+      "mtime": "2020-11-16T09:06:34.000Z",
+      "ctime": "2020-11-16T09:06:34.000Z"
+    }
+  },
+  {
+    "type": "change",
+    "path": "a/subdir/child.txt",
+    "stats": {
+      "ino": 3410468,
+      "size": 17,
+      "mtime": "2020-11-16T09:06:34.009Z",
+      "ctime": "2020-11-16T09:06:34.009Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "b/file.txt",
+    "stats": {
+      "ino": 2,
+      "size": 20,
+      "mtime": "2020-11-16T09:06:33.999Z",
+      "ctime": "2020-11-16T09:06:33.999Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "b/subdir/child.txt",
+    "stats": {
+      "ino": 4,
+      "size": 21,
+      "mtime": "2020-11-16T09:06:34.000Z",
+      "ctime": "2020-11-16T09:06:34.000Z"
+    }
+  },
+  {
+    "type": "change",
+    "path": "a/file.txt",
+    "stats": {
+      "ino": 3410466,
+      "size": 16,
+      "mtime": "2020-11-16T09:06:34.007Z",
+      "ctime": "2020-11-16T09:06:34.007Z"
+    }
+  }
+]
