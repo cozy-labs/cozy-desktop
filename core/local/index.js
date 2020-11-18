@@ -94,7 +94,6 @@ class Local /*:: implements Reader, Writer */ {
   /*::
   addFileAsync: (SavedMetadata) => Promise<*>
   addFolderAsync: (SavedMetadata) => Promise<*>
-  updateFileMetadataAsync: (SavedMetadata) => Promise<*>
   renameConflictingDocAsync: (doc: SavedMetadata, newPath: string) => Promise<void>
   */
 
@@ -308,7 +307,11 @@ class Local /*:: implements Reader, Writer */ {
             })
           ),
 
-        this.metadataUpdater(doc)
+        this.metadataUpdater(doc),
+        next => {
+          metadata.updateLocal(doc)
+          next()
+        }
       ],
       function(err) {
         stopMeasure()
@@ -328,7 +331,11 @@ class Local /*:: implements Reader, Writer */ {
       [
         cb => fse.ensureDir(folderPath, cb),
         this.inodeSetter(doc),
-        this.metadataUpdater(doc)
+        this.metadataUpdater(doc),
+        cb => {
+          metadata.updateLocal(doc)
+          cb()
+        }
       ],
       callback
     )
@@ -340,12 +347,15 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   /** Update the metadata of a file */
-  updateFileMetadata(
-    doc /*: SavedMetadata */,
-    callback /*: Callback */
-  ) /*: void */ {
+  async updateFileMetadataAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     log.info({ path: doc.path }, 'Updating file metadata...')
-    this.metadataUpdater(doc)(callback)
+    await new Promise((resolve, reject) => {
+      this.metadataUpdater(doc)(err => {
+        if (err) reject(err)
+        else resolve()
+      })
+    })
+    metadata.updateLocal(doc)
   }
 
   /** Update a folder */
@@ -354,7 +364,8 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   async assignNewRemote(doc /*: SavedMetadata */) /*: Promise<void> */ {
-    log.info({ path: doc.path }, 'Local assignNewRemote = noop')
+    log.info({ path: doc.path }, 'Local assignNewRemote = updateLocal')
+    metadata.updateLocal(doc)
   }
 
   /** Move a file or folder. In case of a file, content is unchanged.
@@ -405,6 +416,7 @@ class Local /*:: implements Reader, Writer */ {
 
     await fse.rename(oldPath, newPath)
     await this.updateMetadataAsync(doc)
+    metadata.updateLocal(doc)
   }
 
   async trashAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
