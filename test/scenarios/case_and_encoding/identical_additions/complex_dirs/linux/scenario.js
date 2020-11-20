@@ -4,6 +4,7 @@
 
 module.exports = ({
   platforms: ['linux'],
+  useCaptures: false,
   actions: require('../actions'),
   expected: {
     tree: [

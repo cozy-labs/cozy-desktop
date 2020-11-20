@@ -11,7 +11,6 @@ const _ = require('lodash')
 const path = require('path')
 
 const stater = require('../../../core/local/stater')
-const timestamp = require('../../../core/utils/timestamp')
 
 const { cozy } = require('./cozy')
 const Builders = require('../builders')
@@ -21,6 +20,9 @@ import type { Scenario, ScenarioInit, FSAction } from '../../scenarios'
 import type { Metadata } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Stats } from '../../../core/local/stater'
+import type { AtomEvent } from '../../../core/local/atom/event'
+import type { ChokidarEvent } from '../../../core/local/chokidar/event'
+import type { ContextDir } from './context_dir'
 */
 
 const debug = (...args) =>
@@ -39,21 +41,6 @@ const scenarioByPath = (module.exports.scenarioByPath = (
     .replace(scenariosDir + path.sep, '')
     .replace(/\\/g, '/')
   scenario.path = scenarioPath
-
-  if (
-    process.platform === 'win32' &&
-    scenario.expected &&
-    scenario.expected.prepCalls
-  ) {
-    for (let prepCall of scenario.expected.prepCalls) {
-      if (prepCall.src) {
-        prepCall.src = prepCall.src.split('/').join('\\')
-        // @TODO why is src in maj
-      }
-      if (prepCall.path) prepCall.path = prepCall.path.split('/').join('\\')
-      if (prepCall.dst) prepCall.dst = prepCall.dst.split('/').join('\\')
-    }
-  }
 
   scenario.useCaptures =
     scenario.useCaptures != null ? scenario.useCaptures : true
@@ -193,16 +180,29 @@ module.exports.loadRemoteChangesFiles = (
   })
 }
 
-const getInoAndFileId = async ({
-  path,
-  fakeIno,
-  trashed,
-  useRealInodes
-}) /*: Promise<Stats> */ => {
-  if (trashed || !useRealInodes) {
-    return { ino: fakeIno }
-  } else {
-    return stater.stat(path)
+const fixCaptureInodes = (
+  capture /*: {| batches: AtomEvent[][] |} | {| events: ChokidarEvent[] |} */,
+  inoMap /*: Map<number, number> */
+) => {
+  if (capture.events) {
+    // Chokidar capture
+    capture.events.forEach((event /*: ChokidarEvent */) => {
+      if (event.type === 'unlink' || event.type === 'unlinkDir') return
+
+      const ino = inoMap.get(event.stats.ino)
+      if (ino) event.stats.ino = ino
+    })
+  } else if (capture.batches) {
+    // Atom capture
+    capture.batches.forEach(batch => {
+      batch.forEach(event => {
+        const { stats } = event
+        if (stats == null) return
+
+        const ino = inoMap.get(stats.ino)
+        if (ino) stats.ino = ino
+      })
+    })
   }
 }
 
@@ -238,11 +238,12 @@ module.exports.init = async (
   scenario /*: { init: ScenarioInit } */,
   pouch /*: Pouch */,
   abspath /*: (string) => string */,
-  useRealInodes /*: boolean */ = false
+  localCapture /*: ?({| batches: AtomEvent[][] |} | {| events: ChokidarEvent[] |}) */
 ) => {
   debug('[init]')
   const builders = new Builders({ cozy, pouch })
   const remoteDocsToTrash = []
+  const inoMap = new Map()
 
   if (scenario.init) {
     for (const {
@@ -254,14 +255,21 @@ module.exports.init = async (
       debug(relpath)
 
       const localPath = path.normalize(_.trimEnd(relpath, '/'))
+      let stats
       if (!trashed) {
         if (relpath.endsWith('/')) {
           debug(`- create local dir: ${localPath}`)
           await fse.ensureDir(abspath(localPath))
         } else {
           debug(`- create local file: ${localPath}`)
+          // Writing the file seems to be changing the parent folder's mtime and
+          // thus trigger a PouchDB write when launching the local watcher to
+          // update the local updated_at value.
           await fse.outputFile(abspath(localPath), content)
         }
+
+        stats = await stater.stat(abspath(localPath))
+        inoMap.set(fakeIno, stats.ino)
       }
 
       if (isOutside(relpath)) continue
@@ -279,7 +287,6 @@ module.exports.init = async (
         _.get(remoteParent, 'attributes.path', ''),
         remoteName
       )
-      const updatedAt = new Date('2011-04-11T10:20:30Z').toISOString()
 
       if (relpath.endsWith('/')) {
         debug(
@@ -292,25 +299,19 @@ module.exports.init = async (
             _id: remoteParent._id,
             path: remoteParent.attributes.path
           })
-          .createdAt(...timestamp.spread(updatedAt))
-          .updatedAt(...timestamp.spread(updatedAt))
           .create()
 
         if (trashed) {
           remoteDocsToTrash.push(remoteDir)
-        } else {
-          const stats = await getInoAndFileId({
-            path: abspath(localPath),
-            fakeIno,
-            trashed,
-            useRealInodes
-          })
+        } else if (stats) {
+          // We should always have stats if doc is not trashed
           const doc = builders
             .metadir()
             .fromRemote(remoteDir)
             .upToDate()
             .build()
           stater.assignInoAndFileId(doc, stats)
+          stater.assignInoAndFileId(doc.local, stats)
 
           debug(`- create dir metadata: ${doc.path}`)
           await pouch.put(doc)
@@ -328,19 +329,12 @@ module.exports.init = async (
           })
           .data(content)
           .executable(false)
-          .createdAt(...timestamp.spread(updatedAt))
-          .updatedAt(...timestamp.spread(updatedAt))
           .create()
 
         if (trashed) {
           remoteDocsToTrash.push(remoteFile)
-        } else {
-          const stats = await getInoAndFileId({
-            path: abspath(localPath),
-            fakeIno,
-            trashed,
-            useRealInodes
-          })
+        } else if (stats) {
+          // We should always have stats if doc is not trashed
           const doc = builders
             .metafile()
             .fromRemote(remoteFile)
@@ -354,6 +348,10 @@ module.exports.init = async (
         }
       } // if relpath ...
     } // for (... of scenario.init)
+
+    if (localCapture) {
+      fixCaptureInodes(localCapture, inoMap)
+    }
   }
 
   for (const remoteDoc of remoteDocsToTrash) {
@@ -367,28 +365,49 @@ module.exports.init = async (
   }
 }
 
-module.exports.runActions = (
+const saveInodeChange = async (inodeChanges, abspath, action) => {
+  // $FlowFixMe if action.dst is not defined, action.path is
+  const newPath = action.dst ? action.dst : action.path
+  const stats = await stater.stat(abspath(newPath))
+  inodeChanges.unshift({ path: newPath, ino: stats.ino })
+
+  if (action.dst && stater.isDirectory(stats)) {
+    for (const child of await fse.readdir(abspath(action.dst))) {
+      await saveInodeChange(inodeChanges, abspath, {
+        src: '',
+        dst: path.join(action.dst, child)
+      })
+    }
+  }
+}
+
+module.exports.runActions = async (
   scenario /*: { actions: Array<FSAction>, name?: string } */,
   abspath /*: (string) => string */,
-  opts /*: {skipWait?: true} */ = {}
+  {
+    skipWait,
+    saveInodeChanges = true
+  } /*: {skipWait?: true, saveInodeChanges?: boolean} */ = {}
 ) => {
+  const inodeChanges /*: Array<{ path: string, ino: number }> */ = []
+
   debug('[actions]')
-  return Promise.each(scenario.actions, action => {
+  await Promise.each(scenario.actions, async action => {
     switch (action.type) {
       case 'mkdir':
         debug('- mkdir', action.path)
-        return fse.ensureDir(abspath(action.path))
+        await fse.ensureDir(abspath(action.path))
+        break
 
       case 'create_file':
         debug('- create_file', action.path)
-        return fse.outputFile(
-          abspath(action.path),
-          action.content || 'whatever'
-        )
+        await fse.outputFile(abspath(action.path), action.content || 'whatever')
+        break
 
       case 'update_file':
         debug('- update_file', action.path)
-        return fse.writeFile(abspath(action.path), action.content)
+        await fse.writeFile(abspath(action.path), action.content)
+        break
 
       case 'trash':
         debug('- trash', action.path)
@@ -401,17 +420,18 @@ module.exports.runActions = (
       case 'mv':
         debug('- mv', action.force ? 'force' : '', action.src, action.dst)
         if (action.merge) {
-          return merge(abspath(action.src), abspath(action.dst))
+          await merge(abspath(action.src), abspath(action.dst))
         } else if (action.force) {
-          return fse.move(abspath(action.src), abspath(action.dst), {
+          await fse.move(abspath(action.src), abspath(action.dst), {
             overwrite: true
           })
         } else {
-          return fse.rename(abspath(action.src), abspath(action.dst))
+          await fse.rename(abspath(action.src), abspath(action.dst))
         }
+        break
 
       case 'wait':
-        if (opts.skipWait) return Promise.resolve()
+        if (skipWait) return Promise.resolve()
         debug('- wait', action.ms)
         return Promise.delay(action.ms)
 
@@ -424,5 +444,9 @@ module.exports.runActions = (
           )
         )
     }
+
+    return !!saveInodeChanges && saveInodeChange(inodeChanges, abspath, action)
   })
+
+  return inodeChanges
 }

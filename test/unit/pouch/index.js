@@ -516,7 +516,7 @@ describe('Pouch', function() {
 
       it('returns any non-404 error', async function() {
         const otherError = new Error('not a 404')
-        sinon.stub(this.pouch, 'byRemoteId').yields(otherError)
+        sinon.stub(this.pouch, 'byRemoteId').throws(otherError)
 
         await should(this.pouch.byRemoteIdMaybe('12345678901')).be.rejectedWith(
           otherError

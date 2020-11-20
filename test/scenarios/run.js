@@ -5,7 +5,10 @@ const Promise = require('bluebird')
 const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
-const should = require('should')
+const chai = require('chai')
+const chaiLike = require('chai-like')
+chai.use(chaiLike)
+chai.Should()
 
 const config = require('../../core/config')
 
@@ -93,7 +96,12 @@ describe('Test scenarios', function() {
 
         for (let flushAfter of breakpoints) {
           it(localTestName + ' flushAfter=' + flushAfter, async function() {
-            await runLocalChokidar(scenario, eventsFile, flushAfter, helpers)
+            await runLocalChokidar(
+              scenario,
+              _.cloneDeep(eventsFile),
+              flushAfter,
+              helpers
+            )
           })
         }
       }
@@ -161,7 +169,12 @@ function injectChokidarBreakpoints(eventsFile) {
 
 async function runLocalAtom(scenario, atomCapture, helpers) {
   if (scenario.init) {
-    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath, true)
+    await init(
+      scenario,
+      helpers.pouch,
+      helpers.local.syncDir.abspath,
+      atomCapture
+    )
   }
 
   if (scenario.useCaptures) {
@@ -192,21 +205,62 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
 
 async function runLocalChokidar(scenario, eventsFile, flushAfter, helpers) {
   if (scenario.init) {
-    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath)
+    await init(
+      scenario,
+      helpers.pouch,
+      helpers.local.syncDir.abspath,
+      eventsFile
+    )
   }
 
   const eventsBefore = eventsFile.events.slice(0, flushAfter)
   const eventsAfter = eventsFile.events.slice(flushAfter)
 
-  await runActions(scenario, helpers.local.syncDir.abspath, { skipWait: true })
+  const inodeChanges = await runActions(
+    scenario,
+    helpers.local.syncDir.abspath,
+    {
+      skipWait: scenario.useCaptures
+    }
+  )
+
   if (eventsBefore.length) {
-    await helpers.local.simulateEvents(eventsBefore)
+    for (const event of eventsBefore.reverse()) {
+      for (const change of inodeChanges) {
+        if (
+          change.ino &&
+          event.stats &&
+          event.stats.ino &&
+          event.path === change.path
+        ) {
+          event.stats.ino = change.ino
+          break
+        }
+      }
+    }
+
+    await helpers.local.simulateEvents(eventsBefore.reverse())
     await helpers.syncAll()
   }
   if (eventsAfter.length) {
-    await helpers.local.simulateEvents(eventsAfter)
+    for (const event of eventsAfter.reverse()) {
+      for (const change of inodeChanges) {
+        if (
+          change.ino &&
+          event.stats &&
+          event.stats.ino &&
+          event.path === change.path
+        ) {
+          event.stats.ino = change.ino
+          break
+        }
+      }
+    }
+
+    await helpers.local.simulateEvents(eventsAfter.reverse())
     await helpers.syncAll()
   }
+
   await helpers.pullAndSyncAll()
 
   await verifyExpectations(scenario, helpers, {
@@ -221,10 +275,12 @@ async function runLocalStopped(scenario, helpers) {
   // TODO: Find why we need this to prevent random failures and fix it.
   await Promise.delay(500)
   if (scenario.init) {
-    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath, true)
+    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath)
   }
 
-  await runActions(scenario, helpers.local.syncDir.abspath, { skipWait: true })
+  await runActions(scenario, helpers.local.syncDir.abspath, {
+    skipWait: true
+  })
 
   await helpers.local.scan()
   await helpers.syncAll()
@@ -237,13 +293,7 @@ async function runLocalStopped(scenario, helpers) {
 
 async function runRemote(scenario, helpers) {
   if (scenario.init) {
-    const useRealInodes = true
-    await init(
-      scenario,
-      helpers.pouch,
-      helpers.local.syncDir.abspath,
-      useRealInodes
-    )
+    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath)
     await helpers.remote.ignorePreviousChanges()
   }
 
@@ -292,19 +342,38 @@ async function verifyExpectations(
     const expected = {}
     const actual = {}
 
+    const localTree = await helpers.local.treeWithoutTrash({ withIno: true })
+    const pouchTree = await helpers.pouch.allDocs()
+    const remoteTree = await helpers.remote.treeWithoutTrash()
+
     if (expectedLocalTree) {
-      if (process.env.COZY_DESKTOP_FS === 'HFS+') {
-        expected.localTree = expectedLocalTree.map(relpath =>
-          relpath.normalize ? relpath.normalize('NFD') : relpath
+      expected.localTree = expectedLocalTree.map(fpath => {
+        const isFolder = fpath.endsWith('/')
+        const localPath = path.normalize(isFolder ? fpath.slice(0, -1) : fpath)
+
+        const pouchItem = pouchTree.find(
+          // FIXME: we should not have to compare `localPath` with the
+          // normalized form of `local.path` but `local.path` is normalized on
+          // macOS since it's derived from local events' paths which are
+          // normalized by `Chokidar.normalizedPaths` and so does not always
+          // reflect the local path but the one that should be stored as the
+          // main PouchDB record `path` attribute.
+          d => d.local && d.local.path.normalize() === localPath.normalize()
         )
-      } else {
-        expected.localTree = expectedLocalTree
-      }
-      actual.localTree = await helpers.local.treeWithoutTrash()
+        return helpers.local.isIgnored(localPath, isFolder)
+          ? { path: fpath }
+          : {
+              path: fpath,
+              ino: pouchItem && pouchItem.local && pouchItem.local.ino,
+              fileid: pouchItem && pouchItem.local && pouchItem.local.fileid // undefined if not running on Windows
+            }
+      })
+      actual.localTree = localTree
     }
     if (expectedRemoteTree) {
+      // TODO: fetch tree with id and rev to compare them
       expected.remoteTree = expectedRemoteTree
-      actual.remoteTree = await helpers.remote.treeWithoutTrash()
+      actual.remoteTree = remoteTree
     }
     if (expectedLocalTrash && includeLocalTrash) {
       expected.localTrash = expectedLocalTrash
@@ -329,6 +398,6 @@ async function verifyExpectations(
       }
     }
 
-    should(actual).deepEqual(expected)
+    actual.should.be.like(expected)
   }
 }

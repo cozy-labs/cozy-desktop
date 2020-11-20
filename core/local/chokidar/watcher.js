@@ -19,7 +19,6 @@
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const chokidar = require('chokidar')
-const fse = require('fs-extra')
 const path = require('path')
 
 const analysis = require('./analysis')
@@ -30,6 +29,7 @@ const initialScan = require('./initial_scan')
 const normalizePaths = require('./normalize_paths')
 const prepareEvents = require('./prepare_events')
 const sendToPrep = require('./send_to_prep')
+const stater = require('../stater')
 const syncDir = require('../sync_dir')
 const logger = require('../../utils/logger')
 
@@ -42,6 +42,7 @@ import type { InitialScan } from './initial_scan'
 import type { LocalEvent } from './local_event'
 import type { LocalChange } from './local_change'
 import type EventEmitter from 'events'
+import fs from 'fs'
 */
 
 const log = logger({
@@ -142,7 +143,7 @@ class LocalWatcher {
       ]) {
         this.watcher.on(eventType, (
           path /*: ?string */,
-          stats /*: ?fse.Stats */
+          stats /*: ?fs.Stats */
         ) => {
           const isInitialScan = this.initialScan && !this.initialScan.flushed
           log.chokidar.debug({ path, stats, isInitialScan }, eventType)
@@ -247,7 +248,7 @@ class LocalWatcher {
       for (let relpath in this.watcher._pendingWrites) {
         try {
           const fullpath = path.join(this.watcher.options.cwd, relpath)
-          const curStat = await fse.stat(fullpath)
+          const curStat = await stater.stat(fullpath)
           this.watcher.emit('add', relpath, curStat)
         } catch (err) {
           log.warn({ err }, 'Could not fire remaining add events')

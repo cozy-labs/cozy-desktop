@@ -7,12 +7,15 @@ const should = require('should')
 const awaitWriteFinish = require('../../../../core/local/atom/await_write_finish')
 const Channel = require('../../../../core/local/atom/channel')
 const stater = require('../../../../core/local/stater')
+const Builders = require('../../../support/builders')
 
 const lastEventToCheckEmptyness = {
   action: 'initial-scan-done',
   kind: 'unknown',
   path: ''
 }
+
+const builders = new Builders()
 
 async function heuristicIsEmpty(channel) {
   const expected = await channel.pop()
@@ -255,6 +258,39 @@ describe('core/local/atom/await_write_finish.loop()', () => {
           path: 'whatever.txt'
         }
       ])
+      should(await heuristicIsEmpty(enhancedChannel)).be.true()
+    })
+
+    it('should not reduce renamed→modified with different inodes', async () => {
+      const channel = new Channel()
+      const originalBatch = [
+        {
+          action: 'renamed',
+          kind: 'file',
+          oldPath: 'whatever.txt',
+          path: __filename,
+          stats: builders
+            .stats()
+            .ino(1)
+            .build()
+        },
+        {
+          action: 'modified',
+          kind: 'file',
+          path: __filename,
+          stats: builders
+            .stats()
+            .ino(2)
+            .build()
+        },
+        lastEventToCheckEmptyness
+      ]
+      originalBatch.forEach(event => {
+        channel.push([Object.assign({}, event)])
+      })
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await enhancedChannel.pop()).eql([originalBatch[0]])
+      should(await enhancedChannel.pop()).eql([originalBatch[1]])
       should(await heuristicIsEmpty(enhancedChannel)).be.true()
     })
 
@@ -579,6 +615,35 @@ describe('core/local/atom/await_write_finish.loop()', () => {
         },
         lastEventToCheckEmptyness
       ])
+    })
+
+    it('should not reduce renamed→modified with different inodes', async () => {
+      const channel = new Channel()
+      const originalBatch = [
+        {
+          action: 'renamed',
+          kind: 'file',
+          oldPath: 'whatever.txt',
+          path: __filename,
+          stats: builders
+            .stats()
+            .ino(1)
+            .build()
+        },
+        {
+          action: 'modified',
+          kind: 'file',
+          path: __filename,
+          stats: builders
+            .stats()
+            .ino(2)
+            .build()
+        },
+        lastEventToCheckEmptyness
+      ]
+      channel.push(_.cloneDeep(originalBatch))
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await enhancedChannel.pop()).eql(originalBatch)
     })
 
     it('should reduce modified→modified to latest modified', async () => {

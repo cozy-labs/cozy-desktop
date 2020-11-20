@@ -44,6 +44,10 @@ module.exports = {
         // XXX It would be better to avoid sync IO operations, but
         // before node 10.5.0, it's our only choice for reliable fileIDs.
         // TODO move to node v10.5.0+ when a release of electron supports it
+        // FIXME: this `stat` does not provide the same functionnality as
+        // `fs.stat`: fields are missing (e.g. `mode`) and the date fields don't
+        // have the same values (i.e. the `winfs` version truncates the time to
+        // the second while the `fs` version provides milliseconds).
         resolve(winfs.lstatSync(filepath))
       } catch (err) {
         reject(err)

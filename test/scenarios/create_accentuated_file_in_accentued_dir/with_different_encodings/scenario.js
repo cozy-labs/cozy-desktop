@@ -6,6 +6,11 @@
 const nfdDir = 'Impo\u0302ts Ge\u0301rard/'
 const nfcFile = 'Accus\u00E9R\u00E9ception.pdf'
 
+const localFile =
+  process.env.COZY_DESKTOP_FS === 'HFS+'
+    ? `${nfdDir}${nfcFile.normalize('NFD')}`
+    : `${nfdDir}${nfcFile}`
+
 module.exports = ({
   side: 'remote',
   init: [{ path: nfdDir, ino: 1 }],
@@ -17,7 +22,8 @@ module.exports = ({
     }
   ],
   expected: {
-    tree: [nfdDir, `${nfdDir}${nfcFile}`],
+    localTree: [nfdDir, localFile],
+    remoteTree: [nfdDir, `${nfdDir}${nfcFile}`],
     trash: []
   }
 } /*: Scenario */)
