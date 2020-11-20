@@ -1,5 +1,24 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.24.0-beta.2 - 2020-11-20
+
+Improvements for all users:
+
+- We'll now track more closely the local modifications resulting from the
+  application on the filesystem of changes fetched from the remote Cozy. This is
+  important especially for tracking movements and make sure opposite movements
+  won't be wrongly "detected" after a client restart.
+
+Improvements for Windows and Linux users:
+
+- We've made sure the logic dedicated to the initial scan, run after a client
+  start, won't be used after the initial scan is done. This was the source of
+  bugs when applying folder movements fetched from the remote Cozy.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.24.0-beta.1 - 2020-10-30
 
 Improvements for all users:
