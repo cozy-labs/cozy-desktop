@@ -500,15 +500,15 @@ function fileMoveIdenticalOffline(
     { oldpath: srcDoc.path, path: dstEvent.path },
     'add = FileMove (same id, offline)'
   )
-  return ({
-    sideName,
-    type: 'FileMove',
-    path: dstEvent.path,
+
+  const fileMove /*: Object */ = build('FileMove', dstEvent.path, {
     stats: dstEvent.stats,
     md5sum: dstEvent.md5sum,
     old: srcDoc,
-    ino: dstEvent.stats.ino
-  } /*: LocalFileMove */)
+    ino: dstEvent.stats.ino,
+    wip: dstEvent.wip
+  })
+  return fileMove
 }
 
 function dirRenamingCaseOnlyFromAddAdd(
@@ -545,18 +545,18 @@ function dirMoveIdenticalOffline(
     srcDoc.ino !== dstEvent.stats.ino
   )
     return
+
+  const dirMove /*: Object */ = build('DirMove', dstEvent.path, {
+    stats: dstEvent.stats,
+    old: srcDoc,
+    ino: dstEvent.stats.ino,
+    wip: dstEvent.wip
+  })
   log.debug(
     { oldpath: srcDoc.path, path: dstEvent.path },
     'addDir = DirMove (same id, offline)'
   )
-  return {
-    sideName,
-    type: 'DirMove',
-    path: dstEvent.path,
-    stats: dstEvent.stats,
-    old: srcDoc,
-    ino: dstEvent.stats.ino
-  }
+  return dirMove
 }
 
 /*::
@@ -573,12 +573,13 @@ function includeAddEventInFileMove(
   if (
     !moveChange.wip &&
     moveChange.path.normalize() === e.path.normalize() &&
-    moveChange.stats.ino === e.stats.ino &&
+    moveChange.ino === e.stats.ino &&
     moveChange.md5sum === e.md5sum
   )
     return
   moveChange.path = e.path
   moveChange.stats = e.stats
+  moveChange.ino = e.stats.ino
   moveChange.md5sum = e.md5sum
 
   if (e.md5sum) {
@@ -650,6 +651,7 @@ function includeAddDirEventInDirMove(
   if (!moveChange) return
   moveChange.path = e.path
   moveChange.stats = e.stats
+  moveChange.ino = e.stats.ino
   if (!e.wip) {
     delete moveChange.wip
     log.debug(
@@ -686,6 +688,8 @@ function includeChangeEventIntoFileMove(
     },
     e
   )
+  moveChange.stats = e.stats
+  moveChange.ino = e.stats.ino
   return true
 }
 
