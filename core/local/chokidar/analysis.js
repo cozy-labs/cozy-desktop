@@ -222,9 +222,7 @@ function analyseEvent(
         const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(
           sameInodeChange
         )
-        /* istanbul ignore next */
-        if (moveChange) {
-          // TODO: Pending move
+        if (moveChange && !moveChange.wip) {
           panic(
             { path: e.path, moveChange, event: e },
             'We should not have both move and unlink changes since ' +
@@ -249,8 +247,7 @@ function analyseEvent(
           sameInodeChange
         )
         /* istanbul ignore next */
-        if (moveChange) {
-          // TODO: pending move
+        if (moveChange && !moveChange.wip) {
           panic(
             { path: e.path, moveChange, event: e },
             'We should not have both move and unlinkDir changes since ' +
