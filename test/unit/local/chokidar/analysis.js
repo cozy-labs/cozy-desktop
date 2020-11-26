@@ -354,6 +354,40 @@ onPlatform('darwin', () => {
           should(pendingChanges).deepEqual([])
         })
       })
+
+      describe('unlink(src) + wip add(tmp) + unlink(tmp) + add(dst)', () => {
+        // This can happen when the user moves a file with an NFC encoded path
+        // just downloaded from the remote Cozy on an HFS+ disk.
+        it('is a complete FileMove', () => {
+          const old /*: Metadata */ = builders
+            .metafile()
+            .path('src')
+            .ino(1)
+            .build()
+          const stats = { ino: 1 }
+          const { md5sum } = old
+          const events /*: LocalEvent[] */ = [
+            { type: 'unlink', path: 'src', old },
+            { type: 'add', path: 'dst1', stats, wip: true },
+            { type: 'unlink', path: 'dst1', old },
+            { type: 'add', path: 'dst2', stats, md5sum }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'FileMove',
+              path: 'dst2',
+              ino: 1,
+              md5sum,
+              stats,
+              old
+            }
+          ])
+          should(pendingChanges).deepEqual([])
+        })
+      })
     })
 
     describe('FileMove.update(src => dst)', () => {
@@ -651,6 +685,38 @@ onPlatform('darwin', () => {
               old
             }
           ])
+        })
+      })
+
+      describe('unlinkDir(src) + wip addDir(tmp) + unlinkDir(tmp) + addDir(dst)', () => {
+        // This can happen when the user moves a directory with an NFC encoded
+        // path just downloaded from the remote Cozy on an HFS+ disk.
+        it('is a complete DirMove', () => {
+          const old /*: Metadata */ = builders
+            .metadir()
+            .path('src')
+            .ino(1)
+            .build()
+          const stats = { ino: 1 }
+          const events /*: LocalEvent[] */ = [
+            { type: 'unlinkDir', path: 'src', old },
+            { type: 'addDir', path: 'dst1', stats, wip: true },
+            { type: 'unlinkDir', path: 'dst1', old },
+            { type: 'addDir', path: 'dst2', stats }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'DirMove',
+              path: 'dst2',
+              ino: 1,
+              stats,
+              old
+            }
+          ])
+          should(pendingChanges).deepEqual([])
         })
       })
     })
