@@ -8,6 +8,9 @@ inputs:
   cozy-passphrase:
     description: 'The user passphrase of the created Cozy instance'
     required: false
+env:
+  ASSETS_PATH: "${{ runner.temp }}/assets"
+  SSHFS_VERSION: '2.5.0'
 runs:
   using: composite
   steps:
@@ -31,15 +34,35 @@ runs:
           echo "COZY_PASSPHRASE=${{ inputs.cozy-passphrase }}" >> $GITHUB_ENV
         fi
 
+    - name: Cache sshfs pkg
+      id: cache-node-modules
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-sshfs-pkg
+      with:
+        path: ${{ env.ASSETS_PATH }}/sshfs-${{ env.SSHFS_VERSION }}.pkg
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.SSHFS_VERSION }}
+
+    - name: Install sshfs
+      env:
+        PKG_PATH: "${{ env.ASSETS_PATH }}/sshfs-${{ env.SSHFS_VERSION }}.pkg"
+      run: |
+        if [ "${{ runner.os }}" == "osx" ]; then
+          if [[ ! -f $PKG_PATH ]]; then
+              curl -L https://github.com/osxfuse/sshfs/releases/download/osxfuse-sshfs-${{ env.SSHFS_VERSION }}/sshfs-${{ env.SSHFS_VERSION }}.pkg --output $PKG_PATH
+          fi
+
+          brew install --cask osxfuse
+          sudo installer -pkg $PKG_PATH -target /
+        fi
+
+
     - name: Create cozy-stack storage
       shell: bash
       run: |
         mkdir -p $COZY_STACK_STORAGE
 
         if [ "${{ runner.os }}" == "macOS" ]; then
-          brew install --cask osxfuse
-          curl -L https://github.com/osxfuse/sshfs/releases/download/osxfuse-sshfs-2.5.0/sshfs-2.5.0.pkg --output sshfs-2.5.0.pkg
-          sudo installer -pkg ./sshfs-2.5.0.pkg -target /
           podman-machine ssh box -- mkdir /home/tc/storage
           podman-machine mount box:/home/tc/storage $COZY_STACK_STORAGE
         fi
