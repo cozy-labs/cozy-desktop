@@ -9,18 +9,41 @@ inputs:
     description: 'The port on which to expose the internal CouchDB port'
     required: false
     default: 5984
+env:
+  ASSETS_PATH: "${{ runner.temp }}/assets"
+  PODMAN_MACHINE_VERSION: 'v0.17'
+  BOOT2PODMAN_ISO_NAME: 'fedora'
+  BOOT2PODMAN_ISO_VERSION: 'af598af'
 runs:
   using: composite
   steps:
+    - name: Cache podman-machine
+      uses: actions/cache@v2
+      env:
+        cache-name: cache-podman-machine
+      with:
+        path: ${{ env.ASSETS_PATH }}/podman-machine
+        key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ env.PODMAN_MACHINE_VERSION }}-${{ env.BOOT2PODMAN_ISO_NAME }}_${{ env.BOOT2PODMAN_ISO_VERSION }}
+
     - name: Setup podman-machine
       shell: bash
+      env:
+        EXEC_PATH: "${{ env.ASSETS_PATH }}/podman-machine/podman-machine"
+        ISO_PATH: "${{ env.ASSETS_PATH }}/podman-machine/boot2podman-${{ env.BOOT2PODMAN_ISO_NAME }}-${{ env.BOOT2PODMAN_ISO_VERSION }}.iso"
       run: |
-        curl -L https://github.com/boot2podman/machine/releases/download/v0.17/podman-machine.darwin-amd64 --output /usr/local/bin/podman-machine
+        if [[ ! -f $EXEC_PATH ]]; then
+          curl -L https://github.com/boot2podman/machine/releases/download/${{ env.PODMAN_MACHINE_VERSION }}/podman-machine.darwin-amd64 --output $EXEC_PATH
+        fi
+        mv $EXEC_PATH /usr/local/bin/podman-machine
         chmod +x /usr/local/bin/podman-machine
+
+        if [[ ! -f ${{ env.ASSETS_PATH }}/podman-machine/podman-machine ]]; then
+          curl -L https://github.com/boot2podman/boot2podman-${{ env.BOOT2PODMAN_ISO_NAME }}-iso/releases/download/${{ env.BOOT2PODMAN_ISO_VERSION }}/boot2podman-${{ env.BOOT2PODMAN_ISO_NAME }}.iso --output $ISO_PATH
+        fi
         until [[ $(podman-machine status box) == "Running" ]]
         do
           podman-machine create \
-          --virtualbox-boot2podman-url https://github.com/boot2podman/boot2podman-fedora-iso/releases/download/af598af/boot2podman-fedora.iso \
+          --virtualbox-boot2podman-url "file://$ISO_PATH" \
           --virtualbox-hostonly-cidr "192.168.56.1/24" \
           box || true
           sleep 1
