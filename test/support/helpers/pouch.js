@@ -7,7 +7,9 @@ module.exports = {
   },
 
   async cleanDatabase() {
-    await this.pouch.db.destroy()
+    if (this.pouch && this.pouch.db) {
+      await this.pouch.db.destroy()
+    }
     this.pouch = null
   },
 
