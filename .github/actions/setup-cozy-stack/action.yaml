@@ -1,0 +1,53 @@
+name: Setup cozy-stack
+author: Erwan Guyader
+description: Downloads cozy-stack, starts it and create a test instance.
+inputs:
+  cozy-stack-storage:
+    description: 'The folder location where the remote cozy-stack files will be stored'
+    required: false
+  cozy-passphrase:
+    description: 'The user passphrase of the created Cozy instance'
+    required: false
+runs:
+  using: composite
+  steps:
+    - name: Download cozy-stack
+      shell: bash
+      run: go get github.com/cozy/cozy-stack
+
+    - name: Set env variables
+      shell: bash
+      run: |
+        if [[ -z $COZY_STACK_STORAGE ]]; then
+          echo "COZY_STACK_STORAGE=${{ inputs.cozy-stack-storage }}" >> $GITHUB_ENV
+        fi
+        if [[ -z $COZY_PASSPHRASE ]]; then
+          echo "COZY_PASSPHRASE=${{ inputs.cozy-passphrase }}" >> $GITHUB_ENV
+        fi
+
+    - name: Create cozy-stack storage
+      shell: bash
+      run: |
+        mkdir -p $COZY_STACK_STORAGE
+
+        if [ "${{ runner.os }}" == "macOS" ]; then
+          brew cask install osxfuse
+          curl -L https://github.com/osxfuse/sshfs/releases/download/osxfuse-sshfs-2.5.0/sshfs-2.5.0.pkg --output sshfs-2.5.0.pkg
+          sudo installer -pkg ./sshfs-2.5.0.pkg -target /
+          podman-machine ssh box -- mkdir /home/tc/storage
+          podman-machine mount box:/home/tc/storage $COZY_STACK_STORAGE
+        fi
+
+    - name: Create a local instance and an OAuth client
+      shell: bash
+      run: |
+        cozy-stack serve --fs-url "file://$COZY_STACK_STORAGE" --log-level warning >cozy-stack.log 2>&1 &
+        until cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" localhost:8080
+        do
+          sleep 1
+        done
+        COZY_CLIENT_ID=$(cozy-stack instances client-oauth localhost:8080 http://localhost/ test github.com/cozy-labs/cozy-desktop)
+        COZY_STACK_TOKEN=$(cozy-stack instances token-oauth localhost:8080 "$COZY_CLIENT_ID" io.cozy.files io.cozy.settings)
+        # Variables are not directly available in next steps; we need to write them into a special file
+        echo "COZY_CLIENT_ID=$COZY_CLIENT_ID" >> $GITHUB_ENV
+        echo "COZY_STACK_TOKEN=$COZY_STACK_TOKEN" >> $GITHUB_ENV
