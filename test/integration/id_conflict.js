@@ -12,15 +12,6 @@ const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
 
 describe('Identity conflict', () => {
-  if (process.env.TRAVIS && process.platform === 'darwin') {
-    it.skip(
-      'cannot work on macOS Travis since the cozy-stack is currently using ' +
-        'APFS instead of EXT4 (but at least it works on AppVeyor)',
-      () => {}
-    )
-    return
-  }
-
   let cozy, helpers
 
   before(configHelpers.createConfig)
