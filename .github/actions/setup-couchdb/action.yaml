@@ -1,0 +1,31 @@
+name: Setup CouchDB
+author: Erwan Guyader
+description: Starts a CouchDB server of the given version on the given port.
+inputs:
+  couchdb-version:
+    description: 'The version of CouchDB to run'
+    required: true
+  couchdb-port:
+    description: 'The port on which to expose the internal CouchDB port'
+    required: false
+    default: 5984
+runs:
+  using: composite
+  steps:
+    - name: Setup podman-machine
+      shell: bash
+      run: |
+        curl -L https://github.com/boot2podman/machine/releases/download/v0.17/podman-machine.darwin-amd64 --output /usr/local/bin/podman-machine
+        chmod +x /usr/local/bin/podman-machine
+        until podman-machine create --virtualbox-boot2podman-url https://github.com/boot2podman/boot2podman-fedora-iso/releases/download/af598af/boot2podman-fedora.iso box
+        do
+          sleep 1
+        done
+
+    - name: Setup CouchDB
+      shell: bash
+      run: |
+        podman-machine ssh box -L ${{ inputs.couchdb-port }}:localhost:5984 -N &
+        podman-machine ssh box -- sudo podman run -d -p 5984:5984 --name couch apache/couchdb:${{ inputs.couchdb-version }}
+        sleep 5
+        curl -X PUT http://localhost:${{ inputs.couchdb-port }}/{_users,_replicator,_global_changes}
