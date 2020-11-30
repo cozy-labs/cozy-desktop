@@ -1,0 +1,216 @@
+name: macOS
+
+# To debug a job, add the following step:
+# - name: Debug with tmate
+#   uses: mxschmitt/action-tmate@v3
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths-ignore:
+      - '.github/workflows/linux.yaml'
+
+env:
+  COZY_DESKTOP_DIR: "${{ github.workspace }}/cozy-desktop"
+  COZY_STACK_STORAGE: "${{ github.workspace }}/storage"
+  COZY_URL: "http://localhost:8080"
+  COZY_PASSPHRASE: "cozy"
+  GO111MODULE: "on"
+  NO_BREAKPOINTS: "1"
+  NODE_ENV: "test"
+  COZY_DESKTOP_HEARTBEAT: "1000"
+  DISPLAY: ":99.0"
+  NODE_VERSION: "12.14.1"
+  GO_VERSION: "1.14"
+  COUCHDB_VERSION: "2.3.1"
+
+jobs:
+  unit:
+    runs-on: macos-latest
+    name: Unit tests
+    strategy:
+      matrix:
+        fs: ['APFS']
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache node modules
+        id: cache-node-modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+      - name: Setup node
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: true
+      - name: Setup golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Setup CouchDB
+        uses: ./.github/actions/setup-couchdb
+        with:
+          couchdb-version: ${{ env.COUCHDB_VERSION }}
+      - name: Setup cozy-stack
+        uses: ./.github/actions/setup-cozy-stack
+      - name: Setup local env
+        env:
+            COZY_DESKTOP_FS: ${{ matrix.fs }}
+        run: |
+          hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
+          hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
+          echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+      - name: Install dependencies
+        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        run: yarn install:all
+      - name: Start Xvfb
+        run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
+      - name: Unit tests
+        run: yarn test:unit
+
+  integration:
+    runs-on: macos-latest
+    name: Integration tests
+    strategy:
+      matrix:
+        fs: ['APFS']
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache node modules
+        id: cache-node-modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+      - name: Setup node
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: true
+      - name: Setup golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Setup CouchDB
+        uses: ./.github/actions/setup-couchdb
+        with:
+          couchdb-version: ${{ env.COUCHDB_VERSION }}
+      - name: Setup cozy-stack
+        uses: ./.github/actions/setup-cozy-stack
+      - name: Setup local env
+        env:
+            COZY_DESKTOP_FS: ${{ matrix.fs }}
+        run: |
+          hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
+          hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
+          echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+      - name: Install dependencies
+        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        run: yarn install:all
+      - name: Start Xvfb
+        run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
+      - name: Integration tests
+        run: yarn test:integration
+
+  scenarios:
+    runs-on: macos-latest
+    name: Scenarios
+    strategy:
+      matrix:
+        stopped_client: ['', 'STOPPED']
+        fs: ['APFS', 'HFS+']
+      fail-fast: false
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache node modules
+        id: cache-node-modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+      - name: Setup node
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: true
+      - name: Setup golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: Setup CouchDB
+        uses: ./.github/actions/setup-couchdb
+        with:
+          couchdb-version: ${{ env.COUCHDB_VERSION }}
+      - name: Setup cozy-stack
+        uses: ./.github/actions/setup-cozy-stack
+      - name: Setup local env
+        env:
+            COZY_DESKTOP_FS: ${{ matrix.fs }}
+        run: |
+          hdiutil create -megabytes 100 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
+          hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
+          echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+      - name: Install dependencies
+        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        run: yarn install:all
+      - name: Start Xvfb
+        run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
+      - name: Scenarios
+        env:
+            STOPPED_CLIENT: ${{ matrix.stopped_client == 'STOPPED' }}
+        run: yarn test:scenarios
+
+  build:
+    runs-on: macos-latest
+    name: Build packages
+    steps:
+      - uses: actions/checkout@v2
+      - name: Cache node modules
+        id: cache-node-modules
+        uses: actions/cache@v2
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            ${{ github.workspace }}/node_modules
+            ~/.cache/electron
+            ~/.cache/electron-builder
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+      - name: Setup node
+        uses: actions/setup-node@v2-beta
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: true
+      - name: Install dependencies
+        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        run: yarn install:all
+      - name: Build assets
+        run: yarn build
+      - name: Build package
+        uses: ./.github/actions/build-and-publish
+        with:
+          gh-token: "${{ secrets.github_token }}"
+          mac-cert: "${{ secrets.mac_cert }}"
+          mac-cert-password: "${{ secrets.mac_cert_password }}"
+          apple-id: "${{ secrets.apple_id }}"
+          apple-id-password: "${{ secrets.apple_id_password }}"
