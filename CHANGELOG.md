@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.24.0-beta.3 - 2020-12-01
+
+Improvements for macOS users:
+
+- We're now handling moving the same document multiple times in a short delay
+  and moving a document just downloaded from the Cozy to a path including UTF-8
+  characters on HFS+ filesystems.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+
 ## 3.24.0-beta.2 - 2020-11-20
 
 Improvements for all users:
