@@ -7,7 +7,7 @@ name: Linux
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
     paths-ignore:
       - '.github/workflows/macos.yaml'
