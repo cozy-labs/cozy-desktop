@@ -15,9 +15,6 @@ const { ContextDir } = require('../../../support/helpers/context_dir')
 const { onPlatform, onPlatforms } = require('../../../support/helpers/platform')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
-const { TRAVIS } = process.env
-const { platform } = process
-
 onPlatform('darwin', () => {
   describe('ChokidarWatcher Tests', function() {
     let builders
@@ -316,14 +313,6 @@ onPlatform('darwin', () => {
       }))
 
     describe('when a file is moved', function() {
-      // This integration test is unstable on travis + OSX (too often red).
-      // It's disabled for the moment, but we should find a way to make it
-      // more stable on travis, and enable it again.
-      if (TRAVIS && platform === 'darwin') {
-        it('is unstable on travis')
-        return
-      }
-
       beforeEach('instanciate pouch', pouchHelpers.createDatabase)
       afterEach('clean pouch', pouchHelpers.cleanDatabase)
 
@@ -369,14 +358,6 @@ onPlatform('darwin', () => {
     })
 
     describe('when a directory is moved', function() {
-      // This integration test is unstable on travis + OSX (too often red).
-      // It's disabled for the moment, but we should find a way to make it
-      // more stable on travis, and enable it again.
-      if (TRAVIS && platform === 'darwin') {
-        it('is unstable on travis')
-        return
-      }
-
       beforeEach('instanciate pouch', pouchHelpers.createDatabase)
       afterEach('clean pouch', pouchHelpers.cleanDatabase)
 

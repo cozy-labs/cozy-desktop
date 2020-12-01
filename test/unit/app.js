@@ -46,8 +46,8 @@ describe('App', function() {
     beforeEach(configHelpers.createConfig)
 
     // FIXME
-    if (process.env.TRAVIS) {
-      it('does not work on Travis')
+    if (process.env.TRAVIS || process.env.GITHUB_ENV) {
+      it('works only on AppVeyor since it uses an actual Cozy.')
       return
     }
 

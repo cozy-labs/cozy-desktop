@@ -1,0 +1,46 @@
+name: Build and Publish
+author: Erwan Guyader
+description: Builds Cozy Desktop binaries and publish them to the latest Github release draft.
+inputs:
+  gh-token:
+    description: 'The Github token used to attach binaries to releases.'
+    required: true
+  mac-cert:
+    description: 'The code signing certificate encoded in base64.'
+    required: false
+  mac-cert-password:
+    description: 'The code signing certificate password.'
+    required: false
+  apple-id:
+    description: 'The Apple notarization account id.'
+    required: false
+  apple-id-password:
+    description: 'The Apple notarization account password.'
+    required: false
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: "${{ inputs.gh-token }}"
+        CSC_FOR_PULL_REQUEST: true
+        CSC_LINK: "${{ inputs.mac-cert }}"
+        CSC_KEY_PASSWORD: "${{ inputs.mac-cert-password }}"
+        APPLE_ID: "${{ inputs.apple-id }}"
+        APPLE_ID_PASSWORD: "${{ inputs.apple-id-password }}"
+      run: |
+        if [ "${{ runner.os }}" == "Linux" ]; then
+          docker run --rm \
+            $(env | \
+              grep -Eo '^[^\s=]*(NODE_|ELECTRON_|YARN_|NPM_|CI|GITHUB_|CSC_|_TOKEN|_KEY)[^\s=]*' | \
+              sed 's/^/-e /;/^$/d' | \
+              paste -sd ' ' \
+            ) \
+            -v ${PWD}:/project \
+            -v ~/.cache/electron:/root/.cache/electron \
+            -v ~/.cache/electron-builder:/root/.cache/electron-builder \
+            electronuserland/builder:12 \
+            /bin/bash -c "yarn dist:all"
+        else
+          yarn dist:all
+        fi
