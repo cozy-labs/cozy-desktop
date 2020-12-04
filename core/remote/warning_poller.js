@@ -80,10 +80,10 @@ class RemoteWarningPoller {
       log.info(`${warnings.length} warnings`)
       if (warnings.length > 0) log.trace({ warnings })
 
-      const remoteErrors = warnings.map(warning =>
-        RemoteError.fromWarning(warning)
-      )
-      this.events.emit('remoteWarnings', remoteErrors)
+      for (const warning of warnings) {
+        const err = RemoteError.fromWarning(warning)
+        this.events.emit('user-action-required', err)
+      }
     } catch (err) {
       log.error({ err })
     } finally {

@@ -17,6 +17,7 @@ files:
 - package.json
 - gui/markdown-viewer.html
 - gui/markdown-viewer.js
+- node_modules/cozy-ui/dist/*.css
 forceCodeSigning: true
 afterPack: './build/afterPackHook.js'
 afterSign: './build/afterSignHook.js'

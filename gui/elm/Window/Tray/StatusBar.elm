@@ -35,7 +35,7 @@ icon status platform =
                     imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "uptodate"
 
                 UserActionRequired ->
-                    imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "offline"
+                    imgIcon "images/tray-icon-osx/pauseTemplate@2x.png" "offline"
 
                 Offline ->
                     imgIcon "images/tray-icon-osx/offlineTemplate@2x.png" "offline"
@@ -52,7 +52,7 @@ icon status platform =
                     imgIcon "images/tray-icon-win/idle.png" "uptodate"
 
                 UserActionRequired ->
-                    imgIcon "images/tray-icon-win/idle.png" "offline"
+                    imgIcon "images/tray-icon-win/pause.png" "offline"
 
                 Offline ->
                     imgIcon "images/tray-icon-win/offline.png" "offline"
@@ -74,7 +74,7 @@ statusToString helpers status =
             helpers.t "Dashboard Offline"
 
         UserActionRequired ->
-            helpers.t "Dashboard Synchronization impossible"
+            helpers.t "Dashboard Synchronization suspended"
 
         Starting ->
             helpers.t "Dashboard Analyze"

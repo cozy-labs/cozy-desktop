@@ -8,6 +8,17 @@ const EventEmitter = require('events')
 const deepDiff = require('deep-diff').diff
 
 /*::
+type UserActionStatus = 'Required'|'InProgress'
+type UserAction = {
+  code: string,
+  doc?: {
+    docType: string,
+    path: string,
+  },
+  links: ?{ self: string },
+  status: UserActionStatus
+}
+
 type State = {
   offline: boolean,
   syncTargetSeq: number,
@@ -17,6 +28,7 @@ type State = {
   syncing: boolean,
   localPrep: boolean,
   remotePrep: boolean,
+  userActions: UserAction[]
 }
 
 export type SyncStatus =
@@ -25,7 +37,54 @@ export type SyncStatus =
   | 'offline'
   | 'sync'
   | 'uptodate'
+  | 'user-action-required'
 */
+
+const makeAction = (data /*: Object */) /*: UserAction */ => {
+  const { doc } = data
+  const links = data.links || (data.originalErr && data.originalErr.links)
+
+  return {
+    status: 'Required',
+    code: data.code,
+    doc: doc || null,
+    links: links || null
+  }
+}
+
+const addAction = (
+  actions /*: UserAction[] */,
+  newAction /*: UserAction */
+) /*: UserAction[] */ => {
+  const existingAction = actions.find(action => action.code === newAction.code)
+  if (existingAction) {
+    existingAction.status = 'Required'
+    return actions
+  } else {
+    return actions.concat(newAction)
+  }
+}
+
+const actionInProgress = (
+  actions /*: UserAction[] */,
+  action /*: UserAction */
+) /*: UserAction[] */ => {
+  const index = actions.findIndex(a => a.code === action.code)
+  if (index !== -1) {
+    return actions
+      .slice(0, index)
+      .concat({ ...action, status: 'InProgress' })
+      .concat(actions.slice(index + 1))
+  }
+  return actions
+}
+
+const removeAction = (
+  actions /*: UserAction[] */,
+  action /*: UserAction */
+) /*: UserAction[] */ => {
+  return actions.filter(a => a.code !== action.code)
+}
 
 module.exports = class SyncState extends EventEmitter {
   /*::
@@ -43,7 +102,8 @@ module.exports = class SyncState extends EventEmitter {
       buffering: false,
       syncing: false,
       localPrep: false,
-      remotePrep: false
+      remotePrep: false,
+      userActions: []
     }
 
     autoBind(this)
@@ -56,20 +116,24 @@ module.exports = class SyncState extends EventEmitter {
       buffering,
       syncing,
       localPrep,
-      remotePrep
+      remotePrep,
+      userActions
     } = this.state
 
-    const status /*: SyncStatus */ = offline
-      ? 'offline'
-      : syncing
-      ? 'sync'
-      : buffering
-      ? 'buffering'
-      : localPrep || remotePrep
-      ? 'squashprepmerge'
-      : 'uptodate'
+    const status /*: SyncStatus */ =
+      userActions.length > 0
+        ? 'user-action-required'
+        : offline
+        ? 'offline'
+        : syncing
+        ? 'sync'
+        : buffering
+        ? 'buffering'
+        : localPrep || remotePrep
+        ? 'squashprepmerge'
+        : 'uptodate'
 
-    super.emit('sync-state', { status, remaining })
+    super.emit('sync-state', { status, remaining, userActions })
   }
 
   update(newState /*: $Shape<State> */) {
@@ -150,6 +214,29 @@ module.exports = class SyncState extends EventEmitter {
         if (typeof args[0] === 'number') {
           this.update({ syncCurrentSeq: args[0] })
         }
+        break
+      case 'user-action-required':
+        this.update({
+          userActions: addAction(this.state.userActions, makeAction(args[0]))
+        })
+        break
+      case 'user-action-inprogress':
+        this.update({
+          userActions: actionInProgress(
+            this.state.userActions,
+            makeAction(args[0])
+          )
+        })
+        break
+      case 'user-action-done':
+        this.update({
+          userActions: removeAction(this.state.userActions, makeAction(args[0]))
+        })
+        break
+      case 'user-action-skipped':
+        this.update({
+          userActions: removeAction(this.state.userActions, makeAction(args[0]))
+        })
         break
     }
 

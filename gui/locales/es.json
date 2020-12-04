@@ -1,5 +1,6 @@
 {
   "A new version is available, do you want to update?": "Una nueva versión esta disponible, ¿quiere actualizar?",
+
   "Account About": "Acerca de",
   "Account Account": "Cuenta",
   "Account Are you sure to unlink this account?": "¿Esta seguro de desvincular esta cuenta?",
@@ -10,6 +11,7 @@
   "Account Unlink Cozy": "Desvincular Cozy",
   "Account Unlink this Cozy": "Desvincular este Cozy",
   "Account Your files won't be deleted.": "Sus archivos no serán borrados.",
+
   "Address Cozy address": "Dirección Cozy",
   "Address Cozy not cosy": "Oh la la, la dirección no es correcta. Ensaye con \"cozy\" con \"z\".",
   "Address Don't have an account? Request one here": "¿No tiene una cuenta? Solicite una aquí",
@@ -24,6 +26,7 @@
   "Address Please introduce your cozy address": "Por favor, escriba su dirección Cozy",
   "Address This is the web address you use to sign in to your cozy.": "¡No hay una instancia cozy en esta dirección!",
   "Address You don't have filled the address!": "¡Usted no ha llenado la dirección!",
+
   "AppMenu Bring All to Front": "Traer todo al Frente",
   "AppMenu Close": "Cerrar",
   "AppMenu Copy": "Copiar",
@@ -39,19 +42,22 @@
   "AppMenu Show All": "Visualizar Todo",
   "AppMenu Undo": "Anular",
   "AppMenu Window": "Ventana",
+
   "AppUpgrade App upgrade failed": "Cozy Desktop upgrade failed",
   "AppUpgrade An error happened during the upgrade of Cozy Desktop. Please contact support at contact@cozycloud.cc.": "An error happened after we tried upgrading your Cozy Desktop version. Please contact support at contact@cozycloud.cc.",
+
   "Bar GoToCozy": "Abrir Cozy",
   "Bar GoToFolder": "Abrir Folder",
+
   "Button Log out": "Log out",
   "Button Contact support": "Contact support",
+
   "Cancel": "Cancelar",
-  "CGU GDPR Link": "https://en.wikipedia.org/wiki/General_Data_Protection_Regulation",
-  "CGU Updated Detail": "Cumpliendo con la GDPR, Cozy actualiza sus Term",
-  "CGU Updated Required rest": "para seguir utilizando su Cozy.",
-  "CGU Updated Required strong": "Se requiere aceptar el nuevo TOS",
-  "CGU Updated See": "Ver el nuevo TOS",
-  "CGU Updated": "Cozy está actualizando su TOS",
+
+  "CGUUpdated Cozy has updated its ToS": "Cozy has updated its ToS",
+  "CGUUpdated In accordance with the RGPD, Cozy informs you of changes to its Terms of Service. Accepting the new ToS is required to keep using your Cozy.": "In accordance with the RGPD, Cozy informs you of changes to its Terms of Service. Accepting the new ToS is required to keep using your Cozy.",
+  "CGUUpdated Read the new ToS": "Read the new ToS",
+
   "Dashboard Analyze": "Digitalización en curso",
   "Dashboard Dashboard": "Consola",
   "Dashboard Error:": "Error:",
@@ -62,10 +68,11 @@
   "Dashboard Recent activities": "Actividades recientes",
   "Dashboard Show more files": "Mostrar más archivos",
   "Dashboard Synchronization impossible": "Sincronización imposible",
-  "Dashboard Synchronization incomplete": "Sincronización incompleta",
+  "Dashboard Synchronization suspended": "Synchronization suspended",
   "Dashboard Synchronize": "Synchronización",
   "Dashboard Syncing": "Sincronizando",
   "Dashboard Your cozy is up to date!": "¡Su cozy esta actualizado!",
+
   "Error {0} names cannot end with character {1}": "{0} nombres no pueden terminar con el carácter  {1}",
   "Error {0} names cannot include characters {1}": "{0} nombres no pueden contener los caracteres {1}",
   "Error Bad GLIBCXX version": "Su sistema tiene una versión antigua del glibc. Necesita actualizar su distribución, vea https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
@@ -85,12 +92,14 @@
   "Error This note could not be found": "This note could not be found",
   "Error You should rename it in your Cozy.": "Usted tiene que cambiarle el nombre en su Cozy.",
   "Error Unexpected error": "Unexpected error",
+
   "Folder All done": "Efectuado",
   "Folder Please choose an empty directory": "Por favor, escoja una carpeta vacía.",
   "Folder Please choose another folder": "Por favor, escoja otra carpeta",
   "Folder Select a location for your Cozy folder:": "Seleccione la ubicación de su carpeta Cozy.",
   "Folder Use Cozy Drive": "Usar Cozy Drive",
   "Folder You cannot synchronize your whole system or personal folder": "Usted no puede sincronizar el conjunto de su sistema o de una carpeta persona",
+
   "Help [ The more you can say about the issue, the better: do you have many files? Are they big? Is your cozy up-to-date? ]": "[Lo más que pueda decir acerca de ese problema: ¿tiene muchos archivos? ¿Son muy grandes?¿Está actualizado su cozy?]",
   "Help An error occured while sending your email": "Ha ocurrido un error al enviar su email. Por favor contactar el servicio técnico.",
   "Help Community Support": "Soporte de la Comunidad",
@@ -128,19 +137,24 @@
   "Helpers Just now": "Ahora mismo",
   "Helpers KB": "KO",
   "Helpers MB": "MO",
+
   "InvalidConfiguration Invalid configuration": "Invalid configuration",
   "InvalidConfiguration The client configuration is invalid": "The client configuration is invalid",
   "InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc": "Please log out and go through the onboarding again or contact us at contact@cozycloud.cc",
+
   "MarkdownViewer Why do I see this?": "Why do I see this?",
+
   "Password Login": "Nombre de acceso",
   "Password Password": "Contraseña",
   "Password Wrong cozy address?": "¿Dirección cozy erronea?",
   "Password You don't have filled the password!": "¡Usted no ha escrito la contraseña!",
   "Password Your password for the cozy address:": "Su contraseña para la direccion cozy:",
+
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "En caso de que no pueda, contáctenos en contact@cozycloud.cc",
   "Revoked Reconnect": "Reconnect",
   "Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?": "La sincronización con su Cozy no está disponible, quizás usted ha suspendido este computador.",
   "Revoked Try again later": "Vuelva a ensayar más tarde",
+
   "Settings A new release is available": "Una nueva versión está disponible",
   "Settings Github Page": "Página GitHub",
   "Settings Install the new release and restart the application": "Instalar la nueva versión y reiniciar la aplicación",
@@ -150,13 +164,16 @@
   "Settings Sync": "Sincronizar",
   "Settings Synchronize manually": "Sincronizar manualmente",
   "Settings Version": "Versión",
+
   "SyncDirEmpty Detail": "Para evitar la pérdida de datos, estos no se sincronizarán. Si realmente desea restablecer la sincronización, sólo tiene que eliminar la carpeta Cozy.",
   "SyncDirEmpty Message": "Mire si su carpeta Cozy está llena. Quizás su disco duro no está conectado en este momento.",
   "SyncDirEmpty Title": "Su carpeta Cozy está vacía",
+
   "SyncDirUnlinked Choose Folder": "Escoja una carpeta",
   "SyncDirUnlinked The client will restart": "Para habilitarlo de nuevo, debe seleccionar una nueva carpeta Cozy",
   "SyncDirUnlinked Title": "Usted ha borrado su carpeta Cozy",
   "SyncDirUnlinked You have removed your sync dir.": "Como usted ha borrado su carpeta Cozy, se ha parado la sincronización.",
+
   "Tray A new release is available": "Una nueva versión está disponible",
   "Tray Go to my Cozy": "Ir a mi Cozy",
   "Tray Help": "Ayuda",
@@ -168,20 +185,25 @@
   "Tray Show application": "Mostrar la aplicación",
   "Tray Syncing": "Sincronizando",
   "Tray Your cozy is up to date": "Su cozy esta actualizado",
+
   "TwoPanes Help": "Ayuda",
   "TwoPanes Recents": "Recientes",
   "TwoPanes Settings": "Ajustes",
+
   "Unlink Cancel": "Anular",
   "Unlink Detail": "Su archivo ya no será sincronizado con su Cozy.",
   "Unlink Message": "¿Está usted seguro que quiere desvincular su Cozy?",
   "Unlink OK": "Cerrar sesión",
   "Unlink Title": "Desconexión",
+
   "Unlinked Else, you can just close Cozy Drive.": "Si no, basta con cerrar Cozy Drive.",
   "Unlinked If you want to register it again, you can restart Cozy Drive.": "Si quiere registrarlo de nuevo, puede reiniciar Cozy Drive",
   "Unlinked Restart Cozy Drive": "Reiniciar Cozy Drive",
   "Unlinked Your device has been unlinked": "Su perférico ha sido desvinculado",
   "Unlinked Your device is no longer registered on your Cozy.": "Su periférico ya no está registrado en su Cozy.",
+
   "Update": "Actualizar",
+
   "Updater Checking for Update": "Verificando las actualizaciones...",
   "Updater Downloading": "Actualizando Cozy Drive",
   "Updater Error ENOSPC": "Su disco está lleno, la actualización no puede cargardse.",
@@ -190,9 +212,10 @@
   "Updater Error": "Error al actualizar",
   "Updater Please wait": "Por favor, espere que se cargue la actualización.",
   "Updater It may take a while": "Puede tomar un momento, dependiendo de la velocidad de su conexión internet.",
-  "UserActionRequiredDialog Title": "Acción que se requiere para seguir utilizando su Cozy",
-  "Warning Ok": "Ok",
-  "Warning Read": "Leer ahora",
+
+  "UserAction OK": "OK",
+  "UserAction Read": "Read now",
+
   "Welcome Sign in to your Cozy": "Iniciar sesión en mi Cozy",
   "Welcome Your own private cloud": "¡Bienvenido a Cozy Drive para ordenadores de escritorio!"
 }

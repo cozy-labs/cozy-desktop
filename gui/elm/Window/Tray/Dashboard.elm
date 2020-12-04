@@ -12,6 +12,7 @@ module Window.Tray.Dashboard exposing
     )
 
 import Data.File as File exposing (EncodedFile, File)
+import Data.UserAction as UserAction exposing (UserAction)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -28,6 +29,7 @@ type alias Model =
     { now : Time.Posix
     , files : List File
     , page : Int
+    , userActions : List UserAction
     }
 
 
@@ -36,6 +38,7 @@ init =
     { now = Time.millisToPosix 0
     , files = []
     , page = 1
+    , userActions = []
     }
 
 
@@ -58,11 +61,9 @@ type Msg
     | Tick Time.Posix
     | ShowMore
     | Reset
-
-
-samePath : File -> File -> Bool
-samePath a b =
-    a.path == b.path
+    | GotUserActions (List UserAction)
+    | UserActionSkipped
+    | UserActionInProgress
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
@@ -101,6 +102,33 @@ update msg model =
 
         Reset ->
             ( { model | page = 1 }, Cmd.none )
+
+        GotUserActions actions ->
+            ( { model | userActions = actions }, Cmd.none )
+
+        UserActionSkipped ->
+            let
+                cmd =
+                    case currentUserAction model of
+                        Just action ->
+                            Ports.userActionSkipped (UserAction.encode action)
+
+                        Nothing ->
+                            Cmd.none
+            in
+            ( model |> removeCurrentAction, cmd )
+
+        UserActionInProgress ->
+            let
+                cmd =
+                    case currentUserAction model of
+                        Just action ->
+                            Ports.userActionInProgress (UserAction.encode action)
+
+                        Nothing ->
+                            Cmd.none
+            in
+            ( model, cmd )
 
 
 
@@ -142,6 +170,58 @@ showMoreButton helpers =
         ]
 
 
+viewActions : Helpers -> List UserAction -> Html Msg
+viewActions helpers userActions =
+    case userActions of
+        action :: _ ->
+            viewAction helpers action
+
+        _ ->
+            Html.text ""
+
+
+viewAction : Helpers -> UserAction -> Html Msg
+viewAction helpers action =
+    let
+        title =
+            UserAction.title action
+                |> helpers.t
+                |> text
+
+        content =
+            UserAction.details action
+                |> helpers.t
+                |> text
+
+        link =
+            UserAction.getLink action
+
+        primaryLabel =
+            UserAction.primaryLabel action
+                |> helpers.t
+                |> text
+
+        buttons =
+            [ button
+                [ class "c-btn c-btn--ghost"
+                , onClick UserActionSkipped
+                ]
+                [ span [] [ text (helpers.t "UserAction OK") ] ]
+            , a
+                [ class "c-btn" --u-flex-auto"
+                , href link
+                , onClick UserActionInProgress
+                ]
+                [ span [] [ primaryLabel ] ]
+            ]
+    in
+    div [ class "u-p-1 u-bg-paleGrey" ]
+        [ header [ class "u-title-h1" ] [ title ]
+        , p [ class "u-text" ] [ content ]
+        , div [ class "u-flex u-flex-justify-between" ] buttons
+        ]
+
+
 view : Helpers -> Model -> Html Msg
 view helpers model =
     let
@@ -155,7 +235,8 @@ view helpers model =
             List.take nbFiles model.files
     in
     section [ class "two-panes__content two-panes__content--dashboard" ]
-        [ div [ class "recent-files" ]
+        [ viewActions helpers model.userActions
+        , div [ class "recent-files" ]
             (List.map renderLine filesToRender
                 ++ (if List.length model.files > nbFiles then
                         [ showMoreButton helpers ]
@@ -165,3 +246,26 @@ view helpers model =
                    )
             )
         ]
+
+
+
+--HELPERS
+
+
+samePath : File -> File -> Bool
+samePath a b =
+    a.path == b.path
+
+
+removeCurrentAction : Model -> Model
+removeCurrentAction model =
+    { model
+        | userActions =
+            List.tail model.userActions
+                |> Maybe.withDefault []
+    }
+
+
+currentUserAction : Model -> Maybe UserAction
+currentUserAction model =
+    List.head model.userActions

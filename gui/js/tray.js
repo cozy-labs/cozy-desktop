@@ -107,6 +107,8 @@ const systrayInfo = (status, label) => {
   switch (status) {
     case 'error':
       return ['error', label]
+    case 'user-action-required':
+      return ['pause', label]
     case 'syncing':
       return ['sync', translate('Tray Syncing') + label ? `‟${label}“` : '…']
     case 'up-to-date':

@@ -19,7 +19,6 @@ port module Ports exposing
     , registerRemote
     , registrationDone
     , registrationError
-    , remoteWarnings
     , remove
     , sendMail
     , showHelp
@@ -32,16 +31,15 @@ port module Ports exposing
     , updateDownloading
     , updateError
     , userActionInProgress
-    , userActionRequired
+    , userActionSkipped
     )
 
 import Data.DiskSpace exposing (DiskSpace)
 import Data.File exposing (EncodedFile)
 import Data.Progress exposing (Progress)
-import Data.RemoteWarning exposing (RemoteWarning)
 import Data.SyncFolderConfig exposing (SyncFolderConfig)
 import Data.SyncState exposing (EncodedSyncState)
-import Data.UserActionRequiredError exposing (UserActionRequiredError)
+import Data.UserAction exposing (EncodedUserAction)
 
 
 port autoLauncher : Bool -> Cmd msg
@@ -101,9 +99,6 @@ port registrationDone : (Bool -> msg) -> Sub msg
 port registrationError : (String -> msg) -> Sub msg
 
 
-port remoteWarnings : (List RemoteWarning -> msg) -> Sub msg
-
-
 port remove : (EncodedFile -> msg) -> Sub msg
 
 
@@ -137,10 +132,10 @@ port updateDownloading : (Maybe Progress -> msg) -> Sub msg
 port updateError : (String -> msg) -> Sub msg
 
 
-port userActionInProgress : () -> Cmd msg
+port userActionInProgress : EncodedUserAction -> Cmd msg
 
 
-port userActionRequired : (UserActionRequiredError -> msg) -> Sub msg
+port userActionSkipped : EncodedUserAction -> Cmd msg
 
 
 port manualStartSync : () -> Cmd msg

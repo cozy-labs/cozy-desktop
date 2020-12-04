@@ -10,24 +10,6 @@
   width 100vw
   height 100vh
 
-.warningbar
-  color var(--white)
-  background-color var(--dodgerBlue)
-  padding: 1em
-  font-size: .8em
-
-  .btn
-    font-size: 1em
-    border 1px solid var(--white)
-    display: inline-block
-    width: auto
-    float: right
-
-
-    &:hover
-        border 1px solid var(--white) !important
-        background-color: var(--scienceBlue)
-
 .two-panes
   flex 1 0
   display flex
@@ -51,7 +33,7 @@
   overflow-x hidden
   flex: 1
 
-  a:not(.btn)
+  a:not([class*="btn"])
     color var(--scienceBlue)
     text-decoration none
 

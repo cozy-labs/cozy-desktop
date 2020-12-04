@@ -9,10 +9,8 @@ module Window.Tray exposing
     )
 
 import Data.Platform exposing (Platform)
-import Data.RemoteWarning exposing (RemoteWarning)
 import Data.Status as Status exposing (Status)
 import Data.SyncState as SyncState exposing (SyncState)
-import Data.UserActionRequiredError exposing (UserActionRequiredError)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -23,7 +21,6 @@ import Time
 import Window.Tray.Dashboard as Dashboard
 import Window.Tray.Settings as Settings
 import Window.Tray.StatusBar as StatusBar
-import Window.Tray.UserActionRequiredPage as UserActionRequiredPage
 
 
 
@@ -39,11 +36,9 @@ type alias Model =
     { dashboard : Dashboard.Model
     , page : Page
     , platform : Platform
-    , remoteWarnings : List RemoteWarning
     , settings : Settings.Model
     , status : Status
     , syncState : SyncState
-    , userActionRequired : Maybe UserActionRequiredError
     }
 
 
@@ -52,11 +47,9 @@ init version platform =
     { dashboard = Dashboard.init
     , page = DashboardPage
     , platform = platform
-    , remoteWarnings = []
     , settings = Settings.init version
     , status = Status.init
     , syncState = SyncState.init
-    , userActionRequired = Nothing
     }
 
 
@@ -67,17 +60,13 @@ init version platform =
 type Msg
     = GotSyncState SyncState
     | SyncStart ( String, String )
-    | UserActionRequired UserActionRequiredError
-    | UserActionInProgress
-    | RemoteWarnings (List RemoteWarning)
-    | ClearCurrentWarning
     | SetError String
-    | DashboardMsg Dashboard.Msg
-    | SettingsMsg Settings.Msg
     | GoToCozy
     | GoToFolder
     | GoToTab Page
     | GoToStrTab String
+    | DashboardMsg Dashboard.Msg
+    | SettingsMsg Settings.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -95,9 +84,13 @@ update msg model =
 
                         _ ->
                             ( model.settings, Cmd.none )
+
+                ( dashboard, cmd ) =
+                    Dashboard.update (Dashboard.GotUserActions syncState.userActions) model.dashboard
             in
             ( { model
                 | status = status
+                , dashboard = dashboard
                 , settings = settings
                 , syncState = syncState
               }
@@ -124,31 +117,6 @@ update msg model =
                     Settings.update subMsg model.settings
             in
             ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
-
-        UserActionRequired error ->
-            ( { model
-                | status = Status.UserActionRequired
-                , userActionRequired = Just error
-              }
-            , Cmd.none
-            )
-
-        UserActionInProgress ->
-            ( model
-            , Ports.userActionInProgress ()
-            )
-
-        RemoteWarnings warnings ->
-            ( { model | remoteWarnings = warnings }, Cmd.none )
-
-        ClearCurrentWarning ->
-            ( { model
-                | remoteWarnings =
-                    List.tail model.remoteWarnings
-                        |> Maybe.withDefault []
-              }
-            , Cmd.none
-            )
 
         SetError error ->
             ( { model | status = Status.Error error }, Cmd.none )
@@ -188,8 +156,6 @@ subscriptions model =
         , Ports.gototab GoToStrTab
         , Ports.syncError SetError
         , Ports.syncState (GotSyncState << SyncState.decode)
-        , Ports.remoteWarnings RemoteWarnings
-        , Ports.userActionRequired UserActionRequired
 
         -- Dashboard subscriptions
         , Time.every 1000 (DashboardMsg << Dashboard.Tick)
@@ -212,13 +178,7 @@ view : Helpers -> Model -> Html Msg
 view helpers model =
     div [ class "container" ]
         [ StatusBar.view helpers model.status model.platform
-        , case model.userActionRequired of
-            Just error ->
-                UserActionRequiredPage.view helpers error UserActionInProgress
-
-            Nothing ->
-                viewTabsWithContent helpers model
-        , viewWarning helpers model
+        , viewTabsWithContent helpers model
         , viewBottomBar helpers
         ]
 
@@ -250,35 +210,6 @@ viewTab helpers model title page =
         ]
         [ text (helpers.t ("TwoPanes " ++ title))
         ]
-
-
-viewWarning : Helpers -> Model -> Html Msg
-viewWarning helpers model =
-    case ( model.userActionRequired, model.remoteWarnings ) of
-        ( Just err, _ ) ->
-            text ""
-
-        ( _, { title, detail, links, code } :: _ ) ->
-            let
-                actionLabel =
-                    if code == "tos-updated" then
-                        "Warning Read"
-
-                    else
-                        "Warning Ok"
-            in
-            div [ class "warningbar" ]
-                [ p [] [ text detail ]
-                , a
-                    [ class "btn"
-                    , href links.self
-                    , onClick ClearCurrentWarning
-                    ]
-                    [ span [] [ text (helpers.t actionLabel) ] ]
-                ]
-
-        _ ->
-            text ""
 
 
 viewBottomBar : Helpers -> Html Msg

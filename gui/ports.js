@@ -135,21 +135,17 @@ elmectron.ports.openFile.subscribe(path => {
   ipcRenderer.send('open-file', path)
 })
 
-ipcRenderer.on('remoteWarnings', (event, warnings) => {
-  elmectron.ports.remoteWarnings.send(warnings)
+elmectron.ports.userActionInProgress.subscribe(action => {
+  ipcRenderer.send('userActionInProgress', action)
 })
 
-ipcRenderer.on('user-action-required', (event, userActionRequired) => {
-  elmectron.ports.userActionRequired.send(userActionRequired)
-})
-
-elmectron.ports.userActionInProgress.subscribe(() => {
-  ipcRenderer.send('userActionInProgress')
+elmectron.ports.userActionSkipped.subscribe(action => {
+  ipcRenderer.send('userActionSkipped', action)
 })
 
 ipcRenderer.on('sync-state', (
   event,
-  newState /*: { status: SyncStatus, remaining: number } */
+  newState /*: { status: SyncStatus, remaining: number, userActions: UserAction[] } */
 ) => {
   elmectron.ports.syncState.send(newState)
 })

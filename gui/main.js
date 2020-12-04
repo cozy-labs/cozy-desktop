@@ -4,16 +4,13 @@ const Desktop = require('../core/app.js')
 const notes = require('./notes')
 const pkg = require('../package.json')
 
-const { debounce, pick } = require('lodash')
+const { debounce } = require('lodash')
 const path = require('path')
 const os = require('os')
 const fse = require('fs-extra')
 
 const proxy = require('./js/proxy')
-const {
-  COZY_CLIENT_REVOKED_MESSAGE,
-  USER_ACTION_REQUIRED_CODE
-} = require('../core/remote/errors')
+const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/errors')
 const {
   SYNC_DIR_EMPTY_MESSAGE,
   SYNC_DIR_UNLINKED_MESSAGE
@@ -36,7 +33,6 @@ const { buildAppMenu } = require('./js/appmenu')
 const i18n = require('./js/i18n')
 const { translate } = i18n
 const { incompatibilitiesErrorMessage } = require('./js/incompatibilitiesmsg')
-const UserActionRequiredDialog = require('./js/components/UserActionRequiredDialog')
 const { app, Menu, Notification, ipcMain, dialog, shell } = require('electron')
 
 const DAILY = 3600 * 24 * 1000
@@ -56,7 +52,6 @@ if (!mainInstance && !process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
 }
 
 let desktop
-let userActionRequired = null
 let diskTimeout = null
 let onboardingWindow = null
 let helpWindow = null
@@ -288,7 +283,7 @@ const sendErrorToMainWindow = msg => {
     desktop.stopSync().catch(err => log.error(err))
     return // no notification
   } else {
-    msg = translate('Dashboard Synchronization incomplete')
+    msg = translate('Dashboard Synchronization impossible')
     trayWindow.send('sync-error', msg)
   }
 
@@ -306,6 +301,16 @@ const updateState = (newState, data) => {
 
     if (status === 'uptodate') tray.setStatus('online')
     else if (status === 'offline') tray.setStatus('offline')
+    else if (
+      status === 'user-action-required' &&
+      data &&
+      data.userActions &&
+      data.userActions.length
+    )
+      tray.setStatus(
+        'user-action-required',
+        translate('Dashboard Synchronization suspended')
+      )
     else tray.setStatus('syncing')
   } else {
     tray.setStatus(newState, data)
@@ -385,17 +390,6 @@ const startSync = async () => {
   desktop.events.on('sync-state', state => {
     updateState('sync-state', state)
   })
-  desktop.events.on('remoteWarnings', warnings => {
-    if (warnings.length > 0) {
-      const asObjects = warnings.map(warning => {
-        return Object.fromEntries(Object.entries(warning))
-      })
-      trayWindow.send('remoteWarnings', asObjects)
-    } else if (userActionRequired) {
-      log.info('User action complete.')
-      trayWindow.doRestart()
-    }
-  })
   desktop.events.on('transfer-started', addFile)
   desktop.events.on('transfer-copy', addFile)
   desktop.events.on('transfer-move', (info, old) => {
@@ -420,24 +414,7 @@ const startSync = async () => {
   desktop.events.on('delete-file', removeFile)
 
   desktop.events.on('Sync:fatal', err => {
-    if (err.code === USER_ACTION_REQUIRED_CODE) {
-      // Only show notification popup on the first check (the GUI will
-      // include a warning anyway).
-      if (!userActionRequired) UserActionRequiredDialog.show(err)
-
-      userActionRequired = pick(err, [
-        'title',
-        'code',
-        'detail',
-        'links',
-        'message'
-      ])
-      trayWindow.send('user-action-required', userActionRequired)
-      desktop.remote.warningsPoller.switchMode('medium')
-      return
-    } else {
-      updateState('error', err.message)
-    }
+    updateState('error', err.message)
     sendDiskUsage()
   })
 
@@ -690,10 +667,6 @@ app.on('window-all-closed', () => {
 
 ipcMain.on('show-help', () => {
   helpWindow.show()
-})
-
-ipcMain.on('userActionInProgress', () => {
-  desktop.remote.warningsPoller.switchMode('fast')
 })
 
 // On watch mode, automatically reload the window when sources are updated

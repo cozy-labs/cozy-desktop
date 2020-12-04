@@ -1,5 +1,6 @@
 {
   "A new version is available, do you want to update?": "Er is een nieuwe versie beschikbaar. Wil je nu bijwerken?",
+
   "Account About": "Over",
   "Account Account": "Account",
   "Account Are you sure to unlink this account?": "Weet je zeker dat je dit account wilt ontkoppelen?",
@@ -10,6 +11,7 @@
   "Account Unlink Cozy": "Cozy ontkoppelen",
   "Account Unlink this Cozy": "Deze Cozy ontkoppelen",
   "Account Your files won't be deleted.": "Je bestanden worden niet verwijderd.",
+
   "Address Cozy address": "Cozy-adres",
   "Address Cozy not cosy": "Oeps, het adres is onjuist. Probeer \"cozy\" met een \"z\" te schrijven!",
   "Address Don't have an account? Request one here": "Heb je nog geen account? Vraag er hier één aan.",
@@ -24,6 +26,7 @@
   "Address Please introduce your cozy address": "Voer je Cozy-adres in",
   "Address This is the web address you use to sign in to your cozy.": "Dit is het webadres dat je gebruikt om in te loggen op je Cozy.",
   "Address You don't have filled the address!": "Je hebt geen adres ingevoerd!",
+
   "AppMenu Bring All to Front": "Allen op voorgrond plaatsen",
   "AppMenu Close": "Sluiten",
   "AppMenu Copy": "Kopiëren",
@@ -39,19 +42,22 @@
   "AppMenu Show All": "Allen tonen",
   "AppMenu Undo": "Ongedaan maken",
   "AppMenu Window": "Venster",
+
   "AppUpgrade App upgrade failed": "Het bijwerken van Cozy Desktop is mislukt",
   "AppUpgrade An error happened during the upgrade of Cozy Desktop. Please contact support at contact@cozycloud.cc.": "Er is een fout opgetreden tijdens het bijwerken van Cozy Desktop. Neem contact met ons op: contact@cozycloud.cc",
+
   "Bar GoToCozy": "Cozy openen",
   "Bar GoToFolder": "Map openen",
+
   "Button Log out": "Uitloggen",
   "Button Contact support": "Contact opnemen",
+
   "Cancel": "Annuleren",
-  "CGU GDPR Link": "https://en.wikipedia.org/wiki/General_Data_Protection_Regulation",
-  "CGU Updated Detail": "Following the GDPR, Cozy updates its Term Of Service.",
-  "CGU Updated Required rest": "to keep using your Cozy.",
-  "CGU Updated Required strong": "Accepting the new TOS is required",
-  "CGU Updated See": "See the new TOS",
-  "CGU Updated": "Cozy is updating its TOS",
+
+  "CGUUpdated Cozy has updated its ToS": "Cozy has updated its ToS",
+  "CGUUpdated In accordance with the RGPD, Cozy informs you of changes to its Terms of Service. Accepting the new ToS is required to keep using your Cozy.": "In accordance with the RGPD, Cozy informs you of changes to its Terms of Service. Accepting the new ToS is required to keep using your Cozy.",
+  "CGUUpdated Read the new ToS": "Read the new ToS",
+
   "Dashboard Analyze": "Bezig met doorzoeken...",
   "Dashboard Dashboard": "Overzichtspaneel",
   "Dashboard Error:": "Fout:",
@@ -62,10 +68,11 @@
   "Dashboard Recent activities": "Recente activiteiten",
   "Dashboard Show more files": "Meer bestanden tonen",
   "Dashboard Synchronization impossible": "Synchronisatie niet mogelijk",
-  "Dashboard Synchronization incomplete": "Synchronization incomplete",
+  "Dashboard Synchronization suspended": "Synchronization suspended",
   "Dashboard Synchronize": "Synchroniseren",
   "Dashboard Syncing": "Bezig met synchroniseren...",
   "Dashboard Your cozy is up to date!": "Je Cozy is bijgewerkt!",
+
   "Error {0} names cannot end with character {1}": "Namen met {0} mogen niet eindigen op {1}",
   "Error {0} names cannot include characters {1}": "Namen met {0} mogen geen {1} bevatten",
   "Error Bad GLIBCXX version": "Je systeem gebruikt een oude versie van glibc; je moet je distributie bijwerken. Bekijk hiervoor https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
@@ -85,12 +92,14 @@
   "Error This note could not be found": "Deze notitie is niet aangetroffen",
   "Error You should rename it in your Cozy.": "Je moet de naam wijzigen op je Cozy.",
   "Error Unexpected error": "Onverwachte fout",
+
   "Folder All done": "Voltooid",
   "Folder Please choose an empty directory": "Kies een lege map.",
   "Folder Please choose another folder": "Kies een andere map",
   "Folder Select a location for your Cozy folder:": "Kies een locatie voor je Cozy-map:",
   "Folder Use Cozy Drive": "Cozy Drive gebruiken",
   "Folder You cannot synchronize your whole system or personal folder": "Je kunt niet je hele systeem of persoonlijke map synchroniseren.",
+
   "Help [ The more you can say about the issue, the better: do you have many files? Are they big? Is your cozy up-to-date? ]": "[ Hoe meer je vertelt over je probleem, hoe beter: heb je veel bestanden? Zijn ze groot? Is je Cozy bijgewerkt? ]",
   "Help An error occured while sending your email": "Er is een fout opgetreden tijdens het versturen van je bericht. Neem contact op met het ondersteuningsteam.",
   "Help Community Support": "Gemeenschapsondersteuning",
@@ -128,19 +137,24 @@
   "Helpers Just now": "Zojuist",
   "Helpers KB": "KB",
   "Helpers MB": "MB",
+
   "InvalidConfiguration Invalid configuration": "Onjuiste configuratie",
   "InvalidConfiguration The client configuration is invalid": "De clientconfiguratie is onjuist",
   "InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc": "Log uit en probeer het opnieuw, of neem contact met ons op: contact@cozycloud.cc",
+
   "MarkdownViewer Why do I see this?": "Waarom krijg ik dit te zien?",
+
   "Password Login": "Inloggen",
   "Password Password": "Wachtwoord",
   "Password Wrong cozy address?": "Verkeerd Cozy-adres?",
   "Password You don't have filled the password!": "Je hebt geen wachtwoord ingevoerd!",
   "Password Your password for the cozy address:": "Je wachtwoord voor het Cozy-adres:",
+
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "Als dat niet zo is, neem dan contact met ons op via contact@cozycloud.cc",
   "Revoked Reconnect": "Opnieuw verbinden",
   "Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?": "Synchronisatie is niet beschikbaar. Heb je de machtiging voor deze computer ingetrokken?",
   "Revoked Try again later": "Probeer het later opnieuw",
+
   "Settings A new release is available": "Er is een nieuwe versie beschikbaar",
   "Settings Github Page": "GitHub-pagina",
   "Settings Install the new release and restart the application": "Installeer de nieuwe versie en herstart de app",
@@ -150,13 +164,16 @@
   "Settings Sync": "Synchroniseren",
   "Settings Synchronize manually": "Handmatig synchroniseren",
   "Settings Version": "Versie",
+
   "SyncDirEmpty Detail": "Om gegevensverlies te voorkomen, is de synchronisatie gestopt. Als je synchronisatie wilt afdwingen, verwijder dan je Cozy-map.",
   "SyncDirEmpty Message": "Het lijkt erop dat je Cozy-map is geleegd. Bevindt deze zich op een harde schijf die momenteel niet is aangekoppeld?",
   "SyncDirEmpty Title": "Je Cozy-map is leeg",
+
   "SyncDirUnlinked Choose Folder": "Kies een map",
   "SyncDirUnlinked The client will restart": "Om dit weer in te schakelen, moet je een nieuwe Cozy-map kiezen",
   "SyncDirUnlinked Title": "Je hebt je Cozy-map verwijderd",
   "SyncDirUnlinked You have removed your sync dir.": "Je hebt je Cozy-map verwijderd; de synchronisatie is gestopt.",
+
   "Tray A new release is available": "Er is een nieuwe versie beschikbaar",
   "Tray Go to my Cozy": "Ga naar mijn Cozy",
   "Tray Help": "Hulp",
@@ -168,20 +185,25 @@
   "Tray Show application": "App tonen",
   "Tray Syncing": "Bezig met synchroniseren...",
   "Tray Your cozy is up to date": "Je Cozy is bijgewerkt",
+
   "TwoPanes Help": "Hulp",
   "TwoPanes Recents": "Recet",
   "TwoPanes Settings": "Instellingen",
+
   "Unlink Cancel": "Annuleren",
   "Unlink Detail": "Je bestanden worden niet langer gesynchroniseerd met je Cozy.",
   "Unlink Message": "Weet je zeker dat je je Cozy wilt ontkoppelen?",
   "Unlink OK": "Uitloggen",
   "Unlink Title": "Ontkoppeling",
+
   "Unlinked Else, you can just close Cozy Drive.": "Anders kun je Cozy Drive gewoon afsluiten.",
   "Unlinked If you want to register it again, you can restart Cozy Drive.": "Als je je apparaat opnieuw wilt registreren, herstart dan Cozy Drive.",
   "Unlinked Restart Cozy Drive": "Cozy Drive herstarten",
   "Unlinked Your device has been unlinked": "Je apparaat is ontkoppeld",
   "Unlinked Your device is no longer registered on your Cozy.": "Je apparaat is niet langer geregistreerd op je Cozy.",
+
   "Update": "Bijwerken",
+
   "Updater Checking for Update": "Bezig met controleren op updates...",
   "Updater Downloading": "Bezig met bijwerken van Cozy Drive",
   "Updater Error ENOSPC": "Je schijfruimte is volledig opgebruikt; de update kan niet worden gedownload.",
@@ -190,9 +212,10 @@
   "Updater Error": "Kan niet bijwerken",
   "Updater Please wait": "Please wait for the update to be downloaded.",
   "Updater It may take a while": "It may take a while, depending on your Internet connection speed.",
-  "UserActionRequiredDialog Title": "Action required to keep using your Cozy",
-  "Warning Ok": "Ok",
-  "Warning Read": "Read now",
+
+  "UserAction OK": "OK",
+  "UserAction Read": "Read now",
+
   "Welcome Sign in to your Cozy": "Inloggen op mijn Cozy",
   "Welcome Your own private cloud": "Welkom bij Cozy Drive voor computers!"
 }

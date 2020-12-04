@@ -567,6 +567,10 @@ class Sync {
             // Cozy is still unreachable
           }
         }
+      } else if (remoteErr.code === remoteErrors.USER_ACTION_REQUIRED_CODE) {
+        this.events.emit('user-action-required', remoteErr)
+        this.remote.warningsPoller.switchMode('medium')
+        throw remoteErr
       } else {
         throw remoteErr
       }
