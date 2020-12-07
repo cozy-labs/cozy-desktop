@@ -693,6 +693,46 @@ describe('Pouch', function() {
           })
           .and.not.have.properties(['path', 'tags']) // erased by PouchDB.remove
       }))
+
+    describe('localTree', () => {
+      let builders
+      beforeEach(async function() {
+        builders = new Builders({ pouch: this.pouch })
+      })
+
+      it('returns the local paths of all saved documents', async function() {
+        await should(this.pouch.localTree()).be.fulfilledWith(
+          createdDocs.map(d => d.local.path).sort()
+        )
+      })
+
+      it('does not return the paths of remote only documents', async function() {
+        await builders
+          .metafile()
+          .path('my-folder/remote-file')
+          .noLocal()
+          .create()
+
+        await should(this.pouch.localTree()).be.fulfilledWith(
+          createdDocs.map(d => d.local.path).sort()
+        )
+      })
+
+      it('resturns the paths of local only documents', async function() {
+        const localFile = await builders
+          .metafile()
+          .path('my-folder/remote-file')
+          .noRemote()
+          .create()
+
+        await should(this.pouch.localTree()).be.fulfilledWith(
+          createdDocs
+            .concat(localFile)
+            .map(d => d.local.path)
+            .sort()
+        )
+      })
+    })
   })
 
   describe('Sequence numbers', function() {
