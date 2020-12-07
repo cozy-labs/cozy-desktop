@@ -266,15 +266,23 @@ class App {
       level: 3
     })
     const logs = fse.createReadStream(LOG_FILE)
-    const pouchdbTree /*: Metadata[] */ = await this.pouch.tree()
+
+    let pouchdbTree /*: ?Metadata[] */
+    try {
+      pouchdbTree = await this.pouch.localTree()
+    } catch (err) {
+      log.error({ err }, 'FAILED TO FETCH LOCAL TREE')
+    }
 
     const logsSent = Promise.all([
       this.uploadFileToSupport(incidentID, 'logs.gz', logs.pipe(zipper)),
-      this.uploadFileToSupport(
-        incidentID,
-        'pouchdtree.json',
-        JSON.stringify(pouchdbTree)
-      )
+      pouchdbTree
+        ? this.uploadFileToSupport(
+            incidentID,
+            'pouchdtree.json',
+            JSON.stringify(pouchdbTree)
+          )
+        : Promise.resolve()
     ]).catch(err => {
       log.error({ err }, 'FAILED TO SEND LOGS')
     })
