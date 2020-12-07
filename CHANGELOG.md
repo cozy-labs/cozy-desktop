@@ -1,5 +1,17 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.24.1-beta.1 - 2020-12-07
+
+Improvements for all users:
+
+- We fixed the way we fetch the local documents tree to both prevent failures
+  when sending messages to support from the application and send the appropriate
+  paths.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.24.0 - 2020-12-07
 
 Improvements for all users:
