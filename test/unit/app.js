@@ -4,6 +4,7 @@ const fse = require('fs-extra')
 const os = require('os')
 const path = require('path')
 const should = require('should')
+const sinon = require('sinon')
 
 const { App } = require('../../core/app')
 const { LOG_FILENAME } = require('../../core/utils/logger')
@@ -231,6 +232,30 @@ describe('App', function() {
       should.exist(info.osType)
       should(info.permissions).deepEqual(this.config.permissions)
       should(info.syncPath).equal(this.syncPath)
+    })
+  })
+
+  describe('sendMailToSupport', () => {
+    it('sends email even without the local PouchDB tree', async function() {
+      configHelpers.createConfig.call(this)
+      configHelpers.registerClient.call(this)
+      this.config.persist() // the config helper does not persist it
+
+      const app = new App(this.basePath)
+      app.instanciate()
+
+      sinon.stub(app, 'uploadFileToSupport').resolves()
+      sinon
+        .stub(app.pouch, 'localTree')
+        .throws(new Error('Cannot fetch local tree'))
+      sinon.stub(app.remote, 'sendMail').resolves()
+
+      await should(app.sendMailToSupport()).be.fulfilled()
+      should(app.remote.sendMail).have.been.called()
+
+      app.uploadFileToSupport.restore()
+      app.pouch.localTree.restore()
+      app.remote.sendMail.restore()
     })
   })
 })

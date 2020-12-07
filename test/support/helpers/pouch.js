@@ -14,11 +14,16 @@ module.exports = {
   },
 
   createParentFolder(pouch) {
-    let doc = {
+    const updated_at = new Date().toISOString()
+    const doc = {
       path: 'my-folder',
       docType: 'folder',
-      updated_at: new Date().toISOString(),
+      updated_at,
       tags: [],
+      local: {
+        path: 'my-folder',
+        updated_at
+      },
       remote: {
         _id: `XXX`,
         _rev: '1-abc'
@@ -32,11 +37,16 @@ module.exports = {
   },
 
   createFolder(pouch, folderPath) {
-    let doc = {
+    const updated_at = new Date().toISOString()
+    const doc = {
       path: folderPath,
       docType: 'folder',
-      updated_at: new Date().toISOString(),
+      updated_at,
       tags: [],
+      local: {
+        path: folderPath,
+        updated_at
+      },
       remote: {
         _id: `123456789-${folderPath}`
       },
@@ -49,12 +59,17 @@ module.exports = {
   },
 
   createFile(pouch, filePath) {
-    let doc = {
+    const updated_at = new Date().toISOString()
+    const doc = {
       path: filePath,
       docType: 'file',
       md5sum: `111111111111111111111111111111111111111${filePath}`,
-      updated_at: new Date().toISOString(),
+      updated_at,
       tags: [],
+      local: {
+        path: filePath,
+        updated_at
+      },
       remote: {
         _id: `1234567890-${filePath}`
       },

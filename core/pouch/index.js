@@ -536,9 +536,9 @@ class Pouch {
     )
   }
 
-  tree() {
-    const { rows } = this.db.allDocs()
-    return rows.map(row => row.doc).map(doc => doc.id)
+  async localTree() /*: Promise<string[]> */ {
+    const docs = await this.allDocs()
+    return docs.filter(doc => doc.local).map(doc => doc.local.path)
   }
 }
 
