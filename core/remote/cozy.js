@@ -21,27 +21,14 @@ const {
   parentDirIds
 } = require('./document')
 const logger = require('../utils/logger')
-const userActionRequired = require('./user_action_required')
 
 const { posix } = path
 
 /*::
-import type EventEmitter from 'events'
 import type { Config } from '../config'
-import type { Logger } from '../utils/logger'
 import type { Readable } from 'stream'
 import type { JsonApiDoc, RemoteDoc, RemoteFile, RemoteDir, RemoteDeletion } from './document'
 import type { MetadataRemoteInfo, MetadataRemoteFile, MetadataRemoteDir } from '../metadata'
-import type { RemoteChange } from './change'
-import type { MetadataChange } from '../sync'
-
-type CommonCozyErrorHandlingOptions = {
-  events: EventEmitter,
-  log: Logger
-}
-
-type CommonCozyErrorHandlingResult =
-  | 'offline'
 
 export type Warning = {
   status: number,
@@ -78,51 +65,6 @@ class DirectoryNotFound extends Error {
     this.name = 'DirectoryNotFound'
     this.path = path
     this.cozyURL = cozyURL
-  }
-}
-
-const COZY_CLIENT_REVOKED_ERROR = 'CozyClientRevokedError'
-const COZY_CLIENT_REVOKED_MESSAGE = 'Client has been revoked' // Only necessary for the GUI
-class CozyClientRevokedError extends Error {
-  constructor() {
-    super(COZY_CLIENT_REVOKED_MESSAGE)
-
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, CozyClientRevokedError)
-    }
-
-    this.name = COZY_CLIENT_REVOKED_ERROR
-  }
-}
-
-const handleCommonCozyErrors = (
-  {
-    err,
-    change
-  } /*: { err: FetchError |  Error, change?: RemoteChange | MetadataChange } */,
-  { events, log } /*: CommonCozyErrorHandlingOptions */
-) /*: CommonCozyErrorHandlingResult */ => {
-  if (err.name === 'FetchError') {
-    if (err.status === 400) {
-      log.error({ err, change })
-      throw new CozyClientRevokedError()
-    } else if (err.status === 402) {
-      log.error({ err, change }, 'User action required')
-      throw userActionRequired.includeJSONintoError(err)
-    } else if (err.status === 403) {
-      log.error(
-        { err, change },
-        'Client has wrong permissions (lack disk-usage)'
-      )
-      throw new Error('Client has wrong permissions (lack disk-usage)')
-    } else {
-      log.warn({ err, change }, 'Assuming offline')
-      events.emit('offline')
-      return 'offline'
-    }
-  } else {
-    log.error({ err, change })
-    throw err
   }
 }
 
@@ -548,10 +490,6 @@ class RemoteCozy {
 
 module.exports = {
   DirectoryNotFound,
-  COZY_CLIENT_REVOKED_ERROR,
-  COZY_CLIENT_REVOKED_MESSAGE,
-  CozyClientRevokedError,
-  handleCommonCozyErrors,
   RemoteCozy
 }
 

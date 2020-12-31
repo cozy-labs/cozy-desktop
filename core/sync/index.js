@@ -10,8 +10,8 @@ const { dirname } = require('path')
 const _ = require('lodash')
 
 const metadata = require('../metadata')
-const { handleCommonCozyErrors } = require('../remote/cozy')
 const { HEARTBEAT: REMOTE_HEARTBEAT } = require('../remote/constants')
+const remoteErrors = require('../remote/errors')
 const { otherSide } = require('../side')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
@@ -547,12 +547,12 @@ class Sync {
     try {
       await this.diskUsage()
     } catch (err) {
-      const result = handleCommonCozyErrors(
-        { err, change },
-        { events: this.events, log }
-      )
-      if (result === 'offline') {
-        // The client is offline, wait that it can connect again to the server
+      const remoteErr = remoteErrors.wrapError(err)
+      if (remoteErr.code === remoteErrors.UNREACHABLE_COZY_CODE) {
+        // The Cozy could not be reached successfully, wait until we make a
+        // successful request to the server again.
+        log.warn({ err: remoteErr, change }, 'Assuming offline')
+        this.events.emit('offline')
         // eslint-disable-next-line no-constant-condition
         while (true) {
           try {
@@ -562,9 +562,11 @@ class Sync {
             log.warn({ path }, 'Client is online')
             return
           } catch (err) {
-            // Client is still offline
+            // Cozy is still unreachable
           }
         }
+      } else {
+        throw remoteErr
       }
     }
     await this.updateErrors(change, sideName)

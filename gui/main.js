@@ -10,7 +10,10 @@ const os = require('os')
 const fse = require('fs-extra')
 
 const proxy = require('./js/proxy')
-const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/cozy')
+const {
+  COZY_CLIENT_REVOKED_MESSAGE,
+  USER_ACTION_REQUIRED_CODE
+} = require('../core/remote/errors')
 const {
   SYNC_DIR_EMPTY_MESSAGE,
   SYNC_DIR_UNLINKED_MESSAGE
@@ -442,7 +445,7 @@ const startSync = async () => {
   desktop.events.on('delete-file', removeFile)
 
   desktop.events.on('sync-error', err => {
-    if (err.status === 402) {
+    if (err.code === USER_ACTION_REQUIRED_CODE) {
       // Only show notification popup on the first check (the GUI will
       // include a warning anyway).
       if (!userActionRequired) UserActionRequiredDialog.show(err)

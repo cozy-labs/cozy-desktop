@@ -10,8 +10,8 @@ const _ = require('lodash')
 const metadata = require('../../metadata')
 const { MergeMissingParentError } = require('../../merge')
 const remoteChange = require('../change')
-const { handleCommonCozyErrors } = require('../cozy')
 const { HEARTBEAT } = require('../constants')
+const remoteErrors = require('../errors')
 const { inRemoteTrash } = require('../document')
 const squashMoves = require('./squashMoves')
 const normalizePaths = require('./normalizePaths')
@@ -121,11 +121,17 @@ class RemoteWatcher {
         log.debug('No more remote changes for now')
       }
     } catch (err) {
-      // TODO: If FetchError && status === 412 → error during conflict resolution
-      handleCommonCozyErrors({ err }, { events: this.events, log })
-      // If we were offline, we'll wait for the next pollings to switch back
-      // to 'online' as soon as the changesfeed can be fetched and retry to
-      // merge the failed changes.
+      // TODO: Maybe wrap remote errors more closely to remote calls to avoid
+      // wrapping other kinds of errors? PouchDB errors for example.
+      const remoteErr = remoteErrors.wrapError(err)
+      if (remoteErr.code === remoteErrors.UNREACHABLE_COZY_CODE) {
+        // If we were offline, we'll wait for the next pollings to switch back
+        // to 'online' as soon as the changesfeed can be fetched and retry to
+        // merge the failed changes.
+        this.events.emit('offline')
+      } else {
+        throw remoteErr
+      }
     }
   }
 

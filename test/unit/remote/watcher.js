@@ -19,10 +19,8 @@ const Builders = require('../../support/builders')
 
 const metadata = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
-const {
-  CozyClientRevokedError,
-  RemoteCozy
-} = require('../../../core/remote/cozy')
+const { RemoteCozy } = require('../../../core/remote/cozy')
+const remoteErrors = require('../../../core/remote/errors')
 const { FILE_TYPE, DIR_TYPE } = require('../../../core/remote/constants')
 const { MergeMissingParentError } = require('../../../core/merge')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
@@ -224,9 +222,9 @@ describe('RemoteWatcher', function() {
         })
 
         it('rejects with a higher-level error', async function() {
-          await should(this.watcher.watch()).be.rejectedWith(
-            new CozyClientRevokedError()
-          )
+          await should(this.watcher.watch()).be.rejectedWith({
+            code: remoteErrors.COZY_CLIENT_REVOKED_CODE
+          })
         })
       })
 
@@ -262,7 +260,7 @@ describe('RemoteWatcher', function() {
         try {
           await this.watcher.watch()
         } catch (e) {
-          should(e).not.be.an.instanceof(CozyClientRevokedError)
+          should(e).not.match({ code: remoteErrors.COZY_CLIENT_REVOKED_CODE })
         }
       })
     })
