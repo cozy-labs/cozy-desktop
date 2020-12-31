@@ -54,6 +54,9 @@ export type LocalOptions = {
 }
 */
 
+const SYNC_DIR_EMPTY_MESSAGE = 'Syncdir is empty'
+const SYNC_DIR_UNLINKED_MESSAGE = 'Syncdir has been unlinked'
+
 /** `Local` is the class that interfaces cozy-desktop with the local filesystem.
  *
  * It uses a watcher, based on chokidar, to listen for file and folder changes.
@@ -479,4 +482,8 @@ class Local /*:: implements Reader, Writer */ {
   }
 }
 
-module.exports = Local
+module.exports = {
+  SYNC_DIR_EMPTY_MESSAGE,
+  SYNC_DIR_UNLINKED_MESSAGE,
+  Local
+}

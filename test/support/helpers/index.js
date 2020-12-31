@@ -19,7 +19,7 @@ const { RemoteTestHelpers } = require('./remote')
 /*::
 import type cozy from 'cozy-client-js'
 import type { Config } from '../../../core/config'
-import type Local from '../../../core/local'
+import type { Local } from '../../../core/local'
 import type { SavedMetadata } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Remote } from '../../../core/remote'

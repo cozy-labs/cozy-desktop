@@ -10,7 +10,7 @@ const rimraf = require('rimraf')
 const conflictHelpers = require('./conflict')
 const { ContextDir } = require('./context_dir')
 
-const Local = require('../../../core/local')
+const { Local } = require('../../../core/local')
 const atomWatcher = require('../../../core/local/atom/watcher')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const dispatch = require('../../../core/local/atom/dispatch')

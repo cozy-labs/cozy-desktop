@@ -7,6 +7,7 @@
 const chokidarEvent = require('./event')
 const logger = require('../../utils/logger')
 const metadata = require('../../metadata')
+const { SYNC_DIR_EMPTY_MESSAGE } = require('../../')
 
 const log = logger({
   component: 'chokidar/initial_scan'
@@ -90,7 +91,7 @@ const step = async (
       // push back the events and wait until next flush.
       buffer.unflush(rawEvents)
       if (--initialScan.emptyDirRetryCount === 0) {
-        throw new Error('Syncdir is empty')
+        throw new Error(SYNC_DIR_EMPTY_MESSAGE)
       }
       return initialScan.resolve()
     }

@@ -11,6 +11,10 @@ const fse = require('fs-extra')
 
 const proxy = require('./js/proxy')
 const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/cozy')
+const {
+  SYNC_DIR_EMPTY_MESSAGE,
+  SYNC_DIR_UNLINKED_MESSAGE
+} = require('../core/local')
 const migrations = require('../core/pouch/migrations')
 const config = require('../core/config')
 const winRegistry = require('../core/utils/win_registry')
@@ -251,7 +255,7 @@ const sendErrorToMainWindow = msg => {
       app.quit()
     }
     return // no notification
-  } else if (msg === 'Syncdir has been unlinked') {
+  } else if (msg === SYNC_DIR_UNLINKED_MESSAGE) {
     if (notificationsState.syncDirUnlinkedShown) return
     notificationsState.syncDirUnlinkedShown = true // prevent the alert from appearing twice
     const options = {
@@ -279,7 +283,7 @@ const sendErrorToMainWindow = msg => {
   } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
     msg = translate('Error ' + msg)
     trayWindow.send('sync-error', msg)
-  } else if (msg === 'Syncdir is empty') {
+  } else if (msg === SYNC_DIR_EMPTY_MESSAGE) {
     trayWindow.send('sync-error', translate('SyncDirEmpty Title'))
     const options = {
       type: 'warning',
@@ -433,7 +437,7 @@ const startSync = async () => {
     })
   })
   desktop.events.on('syncdir-unlinked', () => {
-    sendErrorToMainWindow('Syncdir has been unlinked')
+    sendErrorToMainWindow(SYNC_DIR_UNLINKED_MESSAGE)
   })
   desktop.events.on('delete-file', removeFile)
 
