@@ -11,6 +11,7 @@ const metadata = require('../../metadata')
 const { MergeMissingParentError } = require('../../merge')
 const remoteChange = require('../change')
 const { handleCommonCozyErrors } = require('../cozy')
+const { HEARTBEAT } = require('../constants')
 const { inRemoteTrash } = require('../document')
 const squashMoves = require('./squashMoves')
 const normalizePaths = require('./normalizePaths')
@@ -29,10 +30,6 @@ import type { RemoteDeletion } from '../document'
 const log = logger({
   component: 'RemoteWatcher'
 })
-
-const DEFAULT_HEARTBEAT /*: number */ = 1000 * 60 // 1 minute
-const HEARTBEAT /*: number */ =
-  parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
 
 const sideName = 'remote'
 
@@ -507,6 +504,5 @@ class RemoteWatcher {
 }
 
 module.exports = {
-  HEARTBEAT,
   RemoteWatcher
 }

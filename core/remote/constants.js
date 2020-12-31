@@ -9,6 +9,8 @@ export type FILE_TYPE = 'file'
 export type DIR_TYPE = 'directory'
 */
 
+const DEFAULT_HEARTBEAT = 1000 * 60 // 1 minute
+
 module.exports = {
   // Doctypes
   FILES_DOCTYPE: 'io.cozy.files',
@@ -24,5 +26,8 @@ module.exports = {
   TRASH_DIR_NAME: '.cozy_trash',
 
   // Special MIME types
-  NOTE_MIME_TYPE: 'text/vnd.cozy.note+markdown'
+  NOTE_MIME_TYPE: 'text/vnd.cozy.note+markdown',
+
+  // Remote watcher changes fetch interval
+  HEARTBEAT: parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
 }

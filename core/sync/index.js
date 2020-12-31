@@ -11,7 +11,7 @@ const _ = require('lodash')
 
 const metadata = require('../metadata')
 const { handleCommonCozyErrors } = require('../remote/cozy')
-const { HEARTBEAT } = require('../remote/watcher')
+const { HEARTBEAT: REMOTE_HEARTBEAT } = require('../remote/constants')
 const { otherSide } = require('../side')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
@@ -674,7 +674,7 @@ class Sync {
         await this.trashWithParentOrByItself(parent, side)
         // Wait long enough that the remote has fetched one changes feed
         // TODO find a way to trigger the changes feed instead of waiting for it
-        await Promise.delay(HEARTBEAT)
+        await Promise.delay(REMOTE_HEARTBEAT)
         return false
       }
     }
