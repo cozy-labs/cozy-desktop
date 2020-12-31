@@ -9,8 +9,7 @@ const logger = require('../utils/logger')
 
 /*::
 import type EventEmitter from 'events'
-import type { RemoteCozy } from './cozy'
-import type { Warning } from './warning'
+import type { RemoteCozy, Warning } from './cozy'
 import type { Delay } from '../utils/delay'
 
 type Mode = 'slow' | 'medium' | 'fast'

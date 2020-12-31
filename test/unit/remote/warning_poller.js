@@ -16,7 +16,7 @@ const {
 const Builders = require('../../support/builders')
 
 /*::
-import type { Warning } from '../../../core/remote/warning'
+import type { Warning } from '../../../core/remote/cozy'
 */
 
 const builders = new Builders()

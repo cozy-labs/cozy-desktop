@@ -32,7 +32,6 @@ import type { Logger } from '../utils/logger'
 import type { Readable } from 'stream'
 import type { JsonApiDoc, RemoteDoc, RemoteFile, RemoteDir, RemoteDeletion } from './document'
 import type { MetadataRemoteInfo, MetadataRemoteFile, MetadataRemoteDir } from '../metadata'
-import type { Warning } from './warning'
 import type { RemoteChange } from './change'
 import type { MetadataChange } from '../sync'
 
@@ -44,6 +43,15 @@ type CommonCozyErrorHandlingOptions = {
 type CommonCozyErrorHandlingResult =
   | 'offline'
 
+export type Warning = {
+  status: number,
+  title: string,
+  code: string,
+  detail: string,
+  links: {
+    self: string
+  }
+}
 export type Reference = {
   id: string,
   type: string
