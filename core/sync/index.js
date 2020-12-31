@@ -9,23 +9,23 @@ const Promise = require('bluebird')
 const { dirname } = require('path')
 const _ = require('lodash')
 
-const metadata = require('./metadata')
-const { handleCommonCozyErrors } = require('./remote/cozy')
-const { HEARTBEAT } = require('./remote/watcher')
-const { otherSide } = require('./side')
-const logger = require('./utils/logger')
-const measureTime = require('./utils/perfs')
-const { LifeCycle } = require('./utils/lifecycle')
+const metadata = require('../metadata')
+const { handleCommonCozyErrors } = require('../remote/cozy')
+const { HEARTBEAT } = require('../remote/watcher')
+const { otherSide } = require('../side')
+const logger = require('../utils/logger')
+const measureTime = require('../utils/perfs')
+const { LifeCycle } = require('../utils/lifecycle')
 
 /*::
 import type EventEmitter from 'events'
-import type { Ignore } from './ignore'
-import type Local from './local'
-import type { Pouch } from './pouch'
-import type { Remote } from './remote'
-import type { SavedMetadata } from './metadata'
-import type { SideName } from './side'
-import type { Writer } from './writer'
+import type { Ignore } from '../ignore'
+import type Local from '../local'
+import type { Pouch } from '../pouch'
+import type { Remote } from '../remote'
+import type { SavedMetadata } from '../metadata'
+import type { SideName } from '../side'
+import type { Writer } from '../writer'
 */
 
 const log = logger({
