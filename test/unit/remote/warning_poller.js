@@ -12,6 +12,7 @@ const {
   shiftTicks,
   ticks
 } = require('../../../core/remote/warning_poller')
+const remoteErrors = require('../../../core/remote/errors')
 
 const Builders = require('../../support/builders')
 
@@ -66,7 +67,13 @@ describe('RemoteWarningPoller', () => {
       remoteCozy.warnings.resolves(warnings)
       await poller.poll()
       should(events.emit).have.been.calledOnce()
-      should(events.emit).have.been.calledWith('remoteWarnings', warnings)
+      should(events.emit.firstCall.args[0]).eql('remoteWarnings')
+      should(events.emit.firstCall.args[1]).match(
+        warnings.map(warning => ({
+          ...warning,
+          code: remoteErrors.USER_ACTION_REQUIRED_CODE
+        }))
+      )
     })
 
     it('emits empty list when no warnings', async () => {
@@ -111,8 +118,17 @@ describe('RemoteWarningPoller', () => {
 
       should(remoteCozy.warnings).have.been.calledTwice()
       should(events.emit).have.been.calledTwice()
-      should(events.emit).have.been.calledWith('remoteWarnings', noWarnings)
-      should(events.emit).have.been.calledWith('remoteWarnings', warnings)
+      should(events.emit.firstCall).have.been.calledWith(
+        'remoteWarnings',
+        noWarnings
+      )
+      should(events.emit.secondCall.args[0]).eql('remoteWarnings')
+      should(events.emit.secondCall.args[1]).match(
+        warnings.map(warning => ({
+          ...warning,
+          code: remoteErrors.USER_ACTION_REQUIRED_CODE
+        }))
+      )
     })
   })
 

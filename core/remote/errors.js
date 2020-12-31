@@ -6,6 +6,7 @@
 /*::
 import type { RemoteChange } from './change'
 import type { MetadataChange } from '../sync'
+import type { Warning } from './cozy'
 
 import type { FetchError } from 'cozy-stack-client'
 export type { FetchError }
@@ -67,6 +68,15 @@ class RemoteError extends Error {
   code: string
   originalErr: Error
   */
+
+  static fromWarning(warning /*: Warning */) {
+    return new RemoteError({
+      code: USER_ACTION_REQUIRED_CODE,
+      message: warning.title,
+      extra: warning,
+      err: new Error(warning)
+    })
+  }
 
   constructor(
     {

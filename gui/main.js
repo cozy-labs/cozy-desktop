@@ -415,7 +415,10 @@ const startSync = async () => {
   })
   desktop.events.on('remoteWarnings', warnings => {
     if (warnings.length > 0) {
-      trayWindow.send('remoteWarnings', warnings)
+      const asObjects = warnings.map(warning => {
+        return Object.fromEntries(Object.entries(warning))
+      })
+      trayWindow.send('remoteWarnings', asObjects)
     } else if (userActionRequired) {
       log.info('User action complete.')
       trayWindow.doRestart()

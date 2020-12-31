@@ -4,6 +4,7 @@
  * @flow
  */
 
+const { RemoteError } = require('./errors')
 const delay = require('../utils/delay')
 const logger = require('../utils/logger')
 
@@ -79,7 +80,10 @@ class RemoteWarningPoller {
       log.info(`${warnings.length} warnings`)
       if (warnings.length > 0) log.trace({ warnings })
 
-      this.events.emit('remoteWarnings', warnings)
+      const remoteErrors = warnings.map(warning =>
+        RemoteError.fromWarning(warning)
+      )
+      this.events.emit('remoteWarnings', remoteErrors)
     } catch (err) {
       log.error({ err })
     } finally {
