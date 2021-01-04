@@ -128,13 +128,17 @@ class Sync {
     }
     this.lifecycle.end('start')
 
-    Promise.all([
-      this.local.watcher.running,
-      this.remote.watcher.running
-    ]).catch(err => {
+    this.remote.watcher.onError(err => {
       this.error(err)
       this.stop()
-      return
+    })
+    this.remote.watcher.onFatal(err => {
+      this.error(err)
+      this.stop()
+    })
+    this.local.watcher.running.catch(err => {
+      this.error(err)
+      this.stop()
     })
 
     try {

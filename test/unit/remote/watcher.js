@@ -8,7 +8,7 @@ const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
 const CozyClient = require('cozy-client-js').Client
-const { Promise } = require('bluebird')
+const { FetchError } = require('cozy-stack-client')
 
 const configHelpers = require('../../support/helpers/config')
 const { posixifyPath } = require('../../support/helpers/context_dir')
@@ -18,11 +18,11 @@ const cozyHelpers = require('../../support/helpers/cozy')
 const Builders = require('../../support/builders')
 
 const metadata = require('../../../core/metadata')
+const { MergeMissingParentError } = require('../../../core/merge')
 const Prep = require('../../../core/prep')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
 const { FILE_TYPE, DIR_TYPE } = require('../../../core/remote/constants')
-const { MergeMissingParentError } = require('../../../core/merge')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 
 const { ensureValidPath } = metadata
@@ -99,36 +99,97 @@ describe('RemoteWatcher', function() {
   })
 
   describe('start', function() {
-    it('calls watch() a first time', async function() {
-      sinon.stub(this.watcher, 'watch').returns(Promise.resolve())
+    const fatalError = new remoteErrors.RemoteError({
+      code: remoteErrors.COZY_CLIENT_REVOKED_CODE,
+      message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
+      err: new Error('from watch')
+    })
+    const nonFatalError = new Error('from watch')
+
+    beforeEach(function() {
+      sinon.stub(this.watcher, 'watch')
+      sinon.spy(this.events, 'emit')
+
+      this.watcher.watch.resolves()
+    })
+    afterEach(function() {
+      this.watcher.watch.restore()
+      this.events.emit.restore()
+    })
+
+    it('starts the watch timeout loop', async function() {
+      sinon.spy(this.watcher, 'resetTimeout')
+
       await this.watcher.start()
-      this.watcher.watch.callCount.should.equal(1)
+      should(this.watcher.resetTimeout).have.been.calledOnce()
+      should(this.watcher.running).be.true()
+      should(this.watcher.watchTimeout.hasRef()).be.true()
+
+      this.watcher.resetTimeout.restore()
     })
 
-    async function fakeWatch() {
-      throw new Error('from watch')
-    }
-
-    it('returns a promise that rejects on error during first watch()', async function() {
-      sinon.stub(this.watcher, 'watch').callsFake(fakeWatch)
-      await should(this.watcher.start()).be.rejectedWith('from watch')
+    it('can be called multiple times without resetting the timeout', async function() {
+      await this.watcher.start()
+      const timeoutID = this.watcher.watchTimeout.ref()
+      await this.watcher.start()
+      should(this.watcher.running).be.true()
+      should(this.watcher.watchTimeout.ref()).eql(timeoutID)
     })
 
-    it('sets a "running" promise that rejects on error during second watch()', async function() {
-      sinon
-        .stub(this.watcher, 'watch')
+    it('emits a RemoteWatcher:fatal event on fatal error during first watch()', async function() {
+      this.watcher.watch.resolves(fatalError)
+
+      await this.watcher.start()
+      should(this.events.emit).have.been.calledWith(
+        'RemoteWatcher:fatal',
+        fatalError
+      )
+    })
+
+    it('emits a RemoteWatcher:fatal event on fatal error during second watch()', async function() {
+      this.watcher.watch
         .onFirstCall()
         .resolves()
         .onSecondCall()
-        .callsFake(fakeWatch)
+        .resolves(fatalError)
+
       await this.watcher.start()
-      await should(this.watcher.running).be.rejectedWith('from watch')
+      await this.watcher.resetTimeout()
+      should(this.events.emit).have.been.calledWith(
+        'RemoteWatcher:fatal',
+        fatalError
+      )
+    })
+
+    it('emits a RemoteWatcher:error event on non-fatal error during first watch()', async function() {
+      this.watcher.watch.resolves(nonFatalError)
+
+      await this.watcher.start()
+      should(this.events.emit).have.been.calledWith(
+        'RemoteWatcher:error',
+        nonFatalError
+      )
+    })
+
+    it('emits a RemoteWatcher:error event on non-fatal error during second watch()', async function() {
+      this.watcher.watch
+        .onFirstCall()
+        .resolves()
+        .onSecondCall()
+        .resolves(nonFatalError)
+
+      await this.watcher.start()
+      await this.watcher.resetTimeout()
+      should(this.events.emit).have.been.calledWith(
+        'RemoteWatcher:error',
+        nonFatalError
+      )
     })
   })
 
   describe('stop', function() {
     beforeEach(function() {
-      sinon.stub(this.watcher, 'watch').returns(Promise.resolve())
+      sinon.stub(this.watcher, 'watch').resolves()
     })
 
     afterEach(function() {
@@ -137,16 +198,166 @@ describe('RemoteWatcher', function() {
 
     it('ensures watch is not called anymore', async function() {
       await this.watcher.start()
-      should(this.watcher.runningResolve).not.be.null()
       this.watcher.stop()
-      should(this.watcher.runningResolve).be.null()
-      await should(this.watcher.running).be.fulfilled()
+      should(this.watcher.running).be.false()
+      should(this.watcher.watchTimeout.hasRef()).be.false()
     })
 
-    it('does nothing when called again', async function() {
+    it('can be called multiple times', async function() {
       await this.watcher.start()
       this.watcher.stop()
       this.watcher.stop()
+      should(this.watcher.running).be.false()
+      should(this.watcher.watchTimeout.hasRef()).be.false()
+    })
+  })
+
+  describe('resetTimeout', function() {
+    beforeEach(async function() {
+      sinon.stub(this.watcher, 'watch')
+      sinon.spy(this.events, 'emit')
+
+      this.watcher.watch.resolves()
+      await this.watcher.start()
+      this.watcher.watch.resetHistory()
+    })
+
+    afterEach(function() {
+      this.events.emit.restore()
+      this.watcher.watch.restore()
+      this.watcher.stop()
+    })
+
+    it('clears the watch timeout', async function() {
+      sinon.spy(global, 'clearTimeout')
+
+      const timeoutID = this.watcher.watchTimeout
+      await this.watcher.resetTimeout()
+      should(clearTimeout).have.been.calledWith(timeoutID)
+
+      clearTimeout.restore()
+    })
+
+    context('when the watcher is running', () => {
+      it('calls watch()', async function() {
+        await this.watcher.resetTimeout()
+        should(this.watcher.watch).have.been.calledOnce()
+      })
+
+      it('schedules another watch timeout', async function() {
+        const timeoutID = this.watcher.watchTimeout
+        await this.watcher.resetTimeout()
+        should(this.watcher.watchTimeout.hasRef()).be.true()
+        should(this.watcher.watchTimeout.ref()).not.eql(timeoutID)
+      })
+
+      context('but is stopped while watch() was being executed', () => {
+        beforeEach(function() {
+          this.watcher.watch.callsFake(async () => {
+            this.watcher.running = false
+          })
+        })
+
+        it('does not schedule another watch timeout', async function() {
+          await this.watcher.resetTimeout()
+          should(this.watcher.watch).have.been.calledOnce()
+          should(this.watcher.watchTimeout.hasRef()).be.false()
+        })
+      })
+    })
+
+    context('when the watcher is stopped', () => {
+      beforeEach(function() {
+        this.watcher.running = false
+      })
+
+      it('does not call watch()', async function() {
+        await this.watcher.resetTimeout()
+        should(this.watcher.watch).not.have.been.called()
+      })
+    })
+
+    context('on error while calling watch', () => {
+      const randomMessage = faker.random.words
+      let err
+
+      context('when next #watch() has no chance to work anymore', () => {
+        beforeEach(function() {
+          err = new remoteErrors.RemoteError({
+            code: remoteErrors.COZY_CLIENT_REVOKED_CODE,
+            message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
+            err: new FetchError({ status: 400 }, randomMessage())
+          })
+          this.watcher.watch.resolves(err)
+        })
+
+        it('stops the watcher', async function() {
+          await this.watcher.resetTimeout()
+          should(this.watcher.running).be.false()
+        })
+
+        context('during a scheduled run', () => {
+          it('emits a RemoteWatcher:fatal event', async function() {
+            await this.watcher.resetTimeout()
+            await should(this.events.emit).have.been.calledWith(
+              'RemoteWatcher:fatal',
+              err
+            )
+          })
+        })
+
+        context('during a manual run', () => {
+          it('returns the error', async function() {
+            await should(
+              this.watcher.resetTimeout({ manualRun: true })
+            ).be.fulfilledWith(err)
+          })
+
+          it('does not emit any event', async function() {
+            await this.watcher.resetTimeout({ manualRun: true })
+            await should(this.events.emit).not.have.been.called()
+          })
+        })
+      })
+
+      context('when next #watch() could work', () => {
+        beforeEach(function() {
+          err = new remoteErrors.RemoteError({
+            code: remoteErrors.UNREACHABLE_COZY_CODE,
+            message: 'Cannot reach remote Cozy',
+            err: new FetchError({ status: 500 }, randomMessage())
+          })
+          this.watcher.watch.resolves(err)
+        })
+
+        it('does not stop the watcher', async function() {
+          await this.watcher.resetTimeout()
+          should(this.watcher.running).be.true()
+        })
+
+        context('during a scheduled run', () => {
+          it('emits a RemoteWatcher:error event', async function() {
+            await this.watcher.resetTimeout()
+            await should(this.events.emit).have.been.calledWith(
+              'RemoteWatcher:error',
+              err
+            )
+          })
+        })
+
+        context('during a manual run', () => {
+          it('returns the error', async function() {
+            await should(
+              this.watcher.resetTimeout({ manualRun: true })
+            ).be.fulfilledWith(err)
+          })
+
+          it('does not emit any event', async function() {
+            await this.watcher.resetTimeout({ manualRun: true })
+            await should(this.events.emit).not.have.been.called()
+          })
+        })
+      })
     })
   })
 
@@ -197,45 +408,35 @@ describe('RemoteWatcher', function() {
     })
 
     context('on error while fetching changes', () => {
-      /* cozy-client-js defines its own FetchError type which is not exported.
-       * This means we can't use the FetchError class from electron-fetch to
-       * simulate network errors in cozy-client-js calls.
-       */
-      const CozyFetchError = function(message) {
-        this.name = 'FetchError'
-        this.response = {}
-        this.url = faker.internet.url
-        this.reason = message
-        this.message = message
-      }
       const randomMessage = faker.random.words
       let err
 
       beforeEach(function() {
-        err = new CozyFetchError(randomMessage())
+        const response = {}
+        // FetchError objects defined in `cozy-stack-client` have the same
+        // signature as FetchError objects defined in `cozy-client-js`.
+        err = new FetchError(response, randomMessage())
         this.remoteCozy.changes.rejects(err)
       })
 
-      context('when next #watch() has no chance to work anymore', () => {
-        beforeEach(() => {
-          err.status = 400 // Revoked
-        })
-
-        it('rejects with a higher-level error', async function() {
-          await should(this.watcher.watch()).be.rejectedWith({
-            code: remoteErrors.COZY_CLIENT_REVOKED_CODE
+      it('resolves with a higher-level error', async function() {
+        err.status = 400 // Revoked
+        await should(this.watcher.watch()).be.fulfilledWith(
+          new remoteErrors.RemoteError({
+            code: remoteErrors.COZY_CLIENT_REVOKED_CODE,
+            message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
+            err
           })
-        })
-      })
+        )
 
-      context('when next #watch() could work', () => {
-        beforeEach(() => {
-          err.status = 500 // Possibly temporary error
-        })
-
-        it('does not reject', async function() {
-          await should(this.watcher.watch()).not.be.rejected()
-        })
+        err.status = 500 // Possibly temporary error
+        await should(this.watcher.watch()).be.fulfilledWith(
+          new remoteErrors.RemoteError({
+            code: remoteErrors.UNREACHABLE_COZY_CODE,
+            message: 'Cannot reach remote Cozy',
+            err
+          })
+        )
       })
     })
 
@@ -252,16 +453,10 @@ describe('RemoteWatcher', function() {
         this.watcher.pullMany.throws(reservedIdsError)
       })
 
-      it('rejects', async function() {
-        await should(this.watcher.watch()).be.rejected()
-      })
-
-      it('does not reject client revoked error', async function() {
-        try {
-          await this.watcher.watch()
-        } catch (e) {
-          should(e).not.match({ code: remoteErrors.COZY_CLIENT_REVOKED_CODE })
-        }
+      it('does not return client revoked error', async function() {
+        should(await this.watcher.watch()).match({
+          code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
+        })
       })
     })
 

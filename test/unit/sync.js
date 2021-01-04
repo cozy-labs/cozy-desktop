@@ -46,21 +46,24 @@ describe('Sync', function() {
   describe('start', function() {
     beforeEach('instanciate sync', function() {
       this.local.start = sinon.stub().resolves()
-      this.local.watcher.running = sinon.stub().resolves()
+      this.local.watcher.running = Promise.resolve()
       this.local.stop = sinon.stub().resolves()
       this.remote.start = sinon.stub().resolves()
-      this.remote.watcher.running = sinon.stub().resolves()
+      this.remote.watcher.running = true
+      this.remote.watcher.onError = sinon.stub().returns()
+      this.remote.watcher.onFatal = sinon.stub().returns()
       this.remote.stop = sinon.stub().resolves()
-      this.sync.sync = sinon.stub().rejects(new Error('stopped'))
+      this.sync.sync = sinon.stub().resolves()
       sinon.spy(this.sync, 'stop')
       sinon.spy(this.sync.events, 'emit')
     })
 
     it('starts the metadata replication of both sides', async function() {
-      await this.sync.start()
+      this.sync.start()
+      await this.sync.started()
       should(this.local.start).have.been.calledOnce()
       should(this.remote.start).have.been.calledOnce()
-      should(this.sync.sync).have.been.calledOnce()
+      should(this.sync.sync).have.been.called()
     })
 
     context('if local watcher fails to start', () => {
@@ -122,7 +125,7 @@ describe('Sync', function() {
 
     context('if local watcher rejects while running', () => {
       beforeEach(function() {
-        this.local.watcher.running = sinon.stub().rejects(new Error('failed'))
+        this.local.watcher.running = Promise.reject(new Error('failed'))
       })
 
       it('stops replication', async function() {
