@@ -117,28 +117,26 @@ class Sync {
     } catch (err) {
       return
     }
+
     try {
       await this.local.start()
       await this.remote.start()
     } catch (err) {
-      this.error(err)
+      // The start phase needs to be ended before calling fatal() or we won't be
+      // able to stop Sync.
       this.lifecycle.end('start')
-      await this.stop()
-      return
+      return this.fatal(err)
     }
     this.lifecycle.end('start')
 
     this.remote.watcher.onError(err => {
-      this.error(err)
-      this.stop()
+      this.fatal(err)
     })
     this.remote.watcher.onFatal(err => {
-      this.error(err)
-      this.stop()
+      this.fatal(err)
     })
     this.local.watcher.running.catch(err => {
-      this.error(err)
-      this.stop()
+      this.fatal(err)
     })
 
     try {
@@ -146,8 +144,7 @@ class Sync {
         await this.sync()
       }
     } catch (err) {
-      this.error(err)
-      await this.stop()
+      await this.fatal(err)
     }
   }
 
@@ -187,9 +184,10 @@ class Sync {
     await this.lifecycle.stopped()
   }
 
-  error(err /*: Error */) {
-    log.error({ err }, 'sync error')
-    this.events.emit('sync-error', err)
+  fatal(err /*: Error */) {
+    log.error({ err }, `Sync fatal: ${err.message}`)
+    this.events.emit('Sync:fatal', err)
+    return this.stop()
   }
 
   // TODO: remove waitForNewChanges to .start while(true)

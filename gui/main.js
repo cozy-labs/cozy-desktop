@@ -447,7 +447,7 @@ const startSync = async () => {
   })
   desktop.events.on('delete-file', removeFile)
 
-  desktop.events.on('sync-error', err => {
+  desktop.events.on('Sync:fatal', err => {
     if (err.code === USER_ACTION_REQUIRED_CODE) {
       // Only show notification popup on the first check (the GUI will
       // include a warning anyway).

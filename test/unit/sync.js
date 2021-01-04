@@ -86,9 +86,9 @@ describe('Sync', function() {
         should(this.local.stop).have.been.calledOnce()
       })
 
-      it('emits a sync error', async function() {
+      it('emits a Sync:fatal event', async function() {
         await this.sync.start()
-        should(this.sync.events.emit).have.been.calledWith('sync-error')
+        should(this.sync.events.emit).have.been.calledWith('Sync:fatal')
       })
     })
 
@@ -117,9 +117,9 @@ describe('Sync', function() {
         should(this.remote.stop).have.been.calledOnce()
       })
 
-      it('emits a sync error', async function() {
+      it('emits a Sync:fatal event', async function() {
         await this.sync.start()
-        should(this.sync.events.emit).have.been.calledWith('sync-error')
+        should(this.sync.events.emit).have.been.calledWith('Sync:fatal')
       })
     })
 
@@ -143,9 +143,9 @@ describe('Sync', function() {
         should(this.remote.stop).have.been.calledOnce()
       })
 
-      it('emits a sync error', async function() {
+      it('emits a Sync:fatal event', async function() {
         await this.sync.start()
-        should(this.sync.events.emit).have.been.calledWith('sync-error')
+        should(this.sync.events.emit).have.been.calledWith('Sync:fatal')
       })
     })
   })
