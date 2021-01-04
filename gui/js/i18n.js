@@ -29,6 +29,9 @@ module.exports.interpolate = (string, ...args) => {
   return string.replace(/{(\d+)}/g, (_, index) => args[parseInt(index)])
 }
 
+module.exports.capitalize = string =>
+  string.replace(string[0], string[0].toLocaleUpperCase(app.getLocale()))
+
 module.exports.platformName = () => {
   switch (process.platform) {
     case 'darwin':

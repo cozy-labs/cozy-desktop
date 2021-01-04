@@ -29,5 +29,8 @@ module.exports = {
   NOTE_MIME_TYPE: 'text/vnd.cozy.note+markdown',
 
   // Remote watcher changes fetch interval
-  HEARTBEAT: parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
+  HEARTBEAT: parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT,
+
+  // ToS updated warning code
+  TOS_UPDATED_WARNING_CODE: 'tos-updated'
 }

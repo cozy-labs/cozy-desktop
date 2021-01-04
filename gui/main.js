@@ -267,9 +267,6 @@ const sendErrorToMainWindow = msg => {
       .then(() => trayWindow.doRestart())
       .catch(err => log.error(err))
     return // no notification
-  } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
-    msg = translate('Error ' + msg)
-    trayWindow.send('sync-error', msg)
   } else if (msg === SYNC_DIR_EMPTY_MESSAGE) {
     trayWindow.send('sync-error', translate('SyncDirEmpty Title'))
     const options = {
@@ -390,6 +387,10 @@ const startSync = async () => {
   desktop.events.on('sync-state', state => {
     updateState('sync-state', state)
   })
+  desktop.events.on('Sync:fatal', err => {
+    updateState('error', err.message)
+    sendDiskUsage()
+  })
   desktop.events.on('transfer-started', addFile)
   desktop.events.on('transfer-copy', addFile)
   desktop.events.on('transfer-move', (info, old) => {
@@ -412,11 +413,6 @@ const startSync = async () => {
     sendErrorToMainWindow(SYNC_DIR_UNLINKED_MESSAGE)
   })
   desktop.events.on('delete-file', removeFile)
-
-  desktop.events.on('Sync:fatal', err => {
-    updateState('error', err.message)
-    sendDiskUsage()
-  })
 
   desktop.startSync()
   sendDiskUsage()

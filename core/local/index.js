@@ -11,6 +11,7 @@ const path = require('path')
 const trash = require('trash')
 const stream = require('stream')
 const _ = require('lodash')
+const diskUsage = require('diskusage')
 
 const bluebird = require('bluebird')
 
@@ -117,12 +118,16 @@ class Local /*:: implements Reader, Writer */ {
   async createReadStreamAsync(
     doc /*: SavedMetadata */
   ) /*: Promise<stream.Readable> */ {
-    const filePath = path.resolve(this.syncPath, doc.path)
+    const filePath = this.abspath(doc.path)
     return new Promise((resolve, reject) => {
       const contentStream = fse.createReadStream(filePath)
       contentStream.on('open', () => resolve(contentStream))
       contentStream.on('error', err => reject(err))
     })
+  }
+
+  abspath(fpath /*: string */) /*: string */ {
+    return path.resolve(this.syncPath, fpath)
   }
 
   /* Helpers */
@@ -149,7 +154,7 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   async updateMetadataAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
-    let filePath = path.resolve(this.syncPath, doc.path)
+    let filePath = this.abspath(doc.path)
 
     if (doc.docType === 'file') {
       // TODO: Honor existing read/write permissions
@@ -167,7 +172,7 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   inodeSetter(doc /*: SavedMetadata */) {
-    let abspath = path.resolve(this.syncPath, doc.path)
+    let abspath = this.abspath(doc.path)
     return (callback /*: Callback */) => {
       stater.withStats(abspath, (err, stats) => {
         if (err) {
@@ -189,7 +194,7 @@ class Local /*:: implements Reader, Writer */ {
 
     for (const doc of docs) {
       if (metadata.isUpToDate('local', doc)) {
-        const filePath = path.resolve(this.syncPath, doc.path)
+        const filePath = this.abspath(doc.path)
         if (await fse.exists(filePath)) return filePath
       }
     }
@@ -217,8 +222,8 @@ class Local /*:: implements Reader, Writer */ {
    */
   addFile(doc /*: SavedMetadata */, callback /*: Callback */) /*: void */ {
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
-    let filePath = path.resolve(this.syncPath, doc.path)
-    let parent = path.resolve(this.syncPath, path.dirname(doc.path))
+    let filePath = this.abspath(doc.path)
+    let parent = this.abspath(path.dirname(doc.path))
     const stopMeasure = measureTime('LocalWriter#addFile')
 
     log.info({ path: doc.path }, 'Put file')
@@ -479,6 +484,68 @@ class Local /*:: implements Reader, Writer */ {
     const copy = _.cloneDeep(doc)
     copy.path = backupPath
     return copy
+  }
+
+  async diskUsage() /*: Promise<{ available: number, total: number }> */ {
+    try {
+      return await diskUsage.check(this.syncPath)
+    } catch (err) {
+      log.error({ err }, 'Could not get local available disk space')
+      return { available: 0, total: 0 }
+    }
+  }
+
+  async canApplyChange(doc /*: SavedMetadata */) /*: Promise<boolean> */ {
+    try {
+      // Check if the source path of a move can be accessed
+      if (doc.moveFrom) {
+        const { moveFrom } = doc
+        await fse.access(
+          this.abspath(moveFrom.path),
+          fse.constants.R_OK | fse.constants.W_OK
+        )
+        await fse.access(
+          this.abspath(path.dirname(moveFrom.path)),
+          fse.constants.R_OK | fse.constants.W_OK
+        )
+      }
+      // Check if the temporary path can be accessed
+      if (doc.docType === 'file') {
+        await fse.access(this.tmpPath, fse.constants.R_OK | fse.constants.W_OK)
+      }
+      // Check if the parent path can be accessed
+      await fse.access(
+        this.abspath(path.dirname(doc.path)),
+        fse.constants.R_OK | fse.constants.W_OK
+      )
+    } catch (err) {
+      log.warn(
+        { err, path: doc.path, oldPath: doc.moveFrom && doc.moveFrom.path },
+        'Not allowed to apply change'
+      )
+      return false
+    }
+
+    try {
+      // Check if an existing destination path can be accessed
+      if (fse.exists(this.abspath(doc.path))) {
+        await fse.access(
+          this.abspath(doc.path),
+          fse.constants.R_OK | fse.constants.W_OK
+        )
+      }
+      return true
+    } catch (err) {
+      if (err.code === 'ENOENT') {
+        // File does not exist so we can write
+        return true
+      }
+      log.warn(
+        { err, path: doc.path, oldPath: doc.moveFrom && doc.moveFrom.path },
+        'Not allowed to apply change'
+      )
+      return false
+    }
   }
 }
 

@@ -54,8 +54,9 @@
 
   "Cancel": "Cancelar",
 
-  "CGUUpdated Cozy has updated its ToS": "Cozy has updated its ToS",
-  "CGUUpdated In accordance with the RGPD, Cozy informs you of changes to its Terms of Service. Accepting the new ToS is required to keep using your Cozy.": "In accordance with the RGPD, Cozy informs you of changes to its Terms of Service. Accepting the new ToS is required to keep using your Cozy.",
+  "CGUUpdated The ToS have been updated": "The ToS have been updated",
+  "CGUUpdated Your Cozy hosting provider informs you that it has updated its Terms of Service (ToS).": "Your Cozy hosting provider informs you that it has updated its Terms of Service (ToS).",
+  "CGUUpdated Their acceptance is required to continue using your Cozy.": "Their acceptance is required to continue using your Cozy.",
   "CGUUpdated Read the new ToS": "Read the new ToS",
 
   "Dashboard Analyze": "Digitalización en curso",
@@ -77,13 +78,17 @@
   "Error {0} names cannot include characters {1}": "{0} nombres no pueden contener los caracteres {1}",
   "Error Bad GLIBCXX version": "Su sistema tiene una versión antigua del glibc. Necesita actualizar su distribución, vea https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.": "Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.",
-  "Error Cozy is full": "El espacio del disco de su Cozy está lleno. Por favor, borre algunos archivos y vacíe su papelera antes de volver a cargar archivos. ",
+  "Error Your Cozy disk space is full": "Your Cozy disk space is full",
+  "Error The {0} {1} could not be written to your Cozy's disk because its maximum storage capacity has been reached.": "The {0} {1} could not be written to your Cozy's disk because its maximum storage capacity has been reached.",
+  "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files...), or increased its capacity.": "Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files...), or increased its capacity.",
   "Error Invalid path": "Ruta inválida",
   "Error Are you connected to the Internet? You can nevertheless read the content of your note below in degraded mode.": "Are you connected to the Internet? You can nevertheless read the content of your note below in degraded mode.",
   "Error it exceeds the folder name size limit": "excede el límite de la talla del nombre de la carpeta",
   "Error it exceeds the name size limit": "excede el límite de la talla del nombre",
   "Error it exceeds the path size limit": "excede el limite de la talla de la ruta",
-  "Error No more disk space": "¡Qué desilusión! El espacio disco de su computador está lleno. Trate de borrar algunos archivos de su computador y vuelva a sincronizarlo con su Cozy.",
+  "Error Your computer disk space is full": "Your computer disk space is full",
+  "Error The {0} {1} could not be written to your computer disk because there is not enough space available.": "The {0} {1} could not be written to your computer disk because there is not enough space available.",
+  "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files…).": "Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files…).",
   "Error Ok": "Ok",
   "Error Syncdir is empty": "Mire si su carpeta Cozy está llena. Quizás su disco duro no está conectado en este momento. Para evitar que sus datos se pierdan, no los sincronizaremos.",
   "Error The “{0}” {1} cannot be synchronized locally because {2} on the {3} system.": "The “{0}” {1} cannot be synchronized locally because {2} on the {3} system.",
@@ -92,6 +97,12 @@
   "Error This note could not be found": "This note could not be found",
   "Error You should rename it in your Cozy.": "Usted tiene que cambiarle el nombre en su Cozy.",
   "Error Unexpected error": "Unexpected error",
+  "Error Conflict with remote version": "Conflict with remote version",
+  "Error The {0} {1} has been simultaneously modified on your computer and your Cozy… This message persists if Cozy is unable to resolve this conflict.": "The {0} {1} has been simultaneously modified on your computer and your Cozy… This message persists if Cozy is unable to resolve this conflict.",
+  "Error In this case rename the version you want to keep and click on \"Give up\".": "In this case rename the version you want to keep and click on \"Give up\".",
+  "Error Missing filesystem permissions": "Missing filesystem permissions",
+  "Error The {0} {1} could not be updated on your computer to apply the changes made on your Cozy.": "The {0} {1} could not be updated on your computer to apply the changes made on your Cozy.",
+  "Error Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights.": "Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights.",
 
   "Folder All done": "Efectuado",
   "Folder Please choose an empty directory": "Por favor, escoja una carpeta vacía.",
@@ -215,6 +226,8 @@
 
   "UserAction OK": "OK",
   "UserAction Read": "Read now",
+  "UserAction Give up": "Give up",
+  "UserAction Retry": "Retry",
 
   "Welcome Sign in to your Cozy": "Iniciar sesión en mi Cozy",
   "Welcome Your own private cloud": "¡Bienvenido a Cozy Drive para ordenadores de escritorio!"

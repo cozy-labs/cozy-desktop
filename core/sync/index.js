@@ -16,6 +16,7 @@ const { otherSide } = require('../side')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
 const { LifeCycle } = require('../utils/lifecycle')
+const syncErrors = require('./errors')
 
 /*::
 import type EventEmitter from 'events'
@@ -23,9 +24,11 @@ import type { Ignore } from '../ignore'
 import type { Local } from '../local'
 import type { Pouch } from '../pouch'
 import type { Remote } from '../remote'
+import type { RemoteError } from '../remote/errors'
 import type { SavedMetadata } from '../metadata'
 import type { SideName } from '../side'
 import type { Writer } from '../writer'
+import type { SyncError } from './errors'
 */
 
 const log = logger({
@@ -33,7 +36,6 @@ const log = logger({
 })
 
 const MAX_SYNC_ATTEMPTS = 3
-
 const TRASHING_DELAY = 1000
 
 /*::
@@ -130,7 +132,7 @@ class Sync {
     this.lifecycle.end('start')
 
     this.remote.watcher.onError(err => {
-      this.fatal(err)
+      this.blockSyncFor(err)
     })
     this.remote.watcher.onFatal(err => {
       this.fatal(err)
@@ -141,6 +143,7 @@ class Sync {
 
     try {
       while (!this.lifecycle.willStop()) {
+        await this.lifecycle.ready()
         await this.sync()
       }
     } catch (err) {
@@ -177,6 +180,7 @@ class Sync {
     }
 
     await Promise.all([this.local.stop(), this.remote.stop()])
+    this.lifecycle.unblockFor('all')
     this.lifecycle.end('stop')
   }
 
@@ -190,39 +194,51 @@ class Sync {
     return this.stop()
   }
 
-  // TODO: remove waitForNewChanges to .start while(true)
-  async sync(waitForNewChanges /*: boolean */ = true) /*: Promise<*> */ {
+  async sync({
+    manualRun = false
+  } /*: { manualRun?: boolean } */ = {}) /*: Promise<*> */ {
     let seq = await this.pouch.getLocalSeq()
-    if (waitForNewChanges) {
+
+    if (!manualRun) {
       const change = await this.waitForNewChanges(seq)
       if (change == null) return
     }
-    const release = await this.pouch.lock(this)
     this.events.emit('sync-start')
     try {
-      await this.syncBatch()
+      await this.syncBatch({ manualRun })
     } finally {
       this.events.emit('sync-end')
-      release()
     }
-    log.debug('No more metadata changes for now')
   }
 
   // sync
-  async syncBatch() {
+  async syncBatch({
+    manualRun = false
+  } /*: { manualRun?: boolean } */ = {}) /*: Promise<void> */ {
     let seq = null
     // eslint-disable-next-line no-constant-condition
     while (!this.lifecycle.willStop()) {
-      seq = await this.pouch.getLocalSeq()
-      // TODO: Prevent infinite loop
-      const change = await this.getNextChange(seq)
-      if (change == null) break
-      this.events.emit('sync-current', change.seq)
+      await this.lifecycle.ready()
+
+      // FIXME: Acquire lock for as many changes as possible to prevent next huge
+      // remote/local batches to acquite it first
+      const release = await this.pouch.lock(this)
       try {
-        await this.apply(change)
-        // XXX: apply should call setLocalSeq
+        seq = await this.pouch.getLocalSeq()
+        // TODO: Prevent infinite loop
+        const change = await this.getNextChange(seq)
+        if (change == null) {
+          log.debug('No more metadata changes for now')
+          break
+        }
+
+        this.events.emit('sync-current', change.seq)
+
+        await this.apply(change, { manualRun })
       } catch (err) {
         if (!this.lifecycle.willStop()) throw err
+      } finally {
+        release()
       }
     }
   }
@@ -298,7 +314,10 @@ class Sync {
   // Apply a change to both local and remote
   // At least one side should say it has already this change
   // In some cases, both sides have the change
-  async apply(change /*: MetadataChange */) /*: Promise<*> */ {
+  async apply(
+    change /*: MetadataChange */,
+    { manualRun = false } /*: { manualRun?: boolean } */ = {}
+  ) /*: Promise<void> */ {
     let { doc, seq } = change
     const { path } = doc
     log.debug({ path, seq, doc }, `Applying change ${seq}...`)
@@ -310,8 +329,6 @@ class Sync {
       return this.pouch.setLocalSeq(change.seq)
     }
 
-    // FIXME: Acquire lock for as many changes as possible to prevent next huge
-    // remote/local batches to acquite it first
     const [side, sideName] = this.selectSide(doc)
     let stopMeasure = () => {}
     try {
@@ -345,7 +362,32 @@ class Sync {
         await this.updateRevs(doc, sideName)
       }
     } catch (err) {
-      await this.handleApplyError(change, sideName, err)
+      // XXX: We process the error directly here because our tests call
+      // `apply()` and some expect `updateErrors` to be called (e.g. when
+      // applying a move with a failing content change).
+      // This means we have to carry the `manualRun` variable down to `apply`
+      // which is not ideal.
+      const syncErr = syncErrors.wrapError(err, sideName, change)
+      log.error(
+        { err: syncErr, change, path: change.doc.path },
+        `Sync error: ${err.message}`
+      )
+      if (manualRun) {
+        await this.updateErrors(change, syncErr)
+      } else {
+        switch (syncErr.code) {
+          case syncErrors.MISSING_PERMISSIONS_CODE:
+          case syncErrors.NO_DISK_SPACE_CODE:
+          case remoteErrors.NO_COZY_SPACE_CODE:
+          case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
+          case remoteErrors.USER_ACTION_REQUIRED_CODE:
+          case remoteErrors.UNREACHABLE_COZY_CODE:
+            this.blockSyncFor(syncErr, change)
+            break
+          default:
+            await this.updateErrors(change, syncErr)
+        }
+      }
     } finally {
       stopMeasure()
     }
@@ -525,69 +567,108 @@ class Sync {
     }
   }
 
-  // Make the error explicit (offline, local disk full, quota exceeded, etc.)
-  // and keep track of the number of retries
-  async handleApplyError(
-    change /*: MetadataChange */,
-    sideName /*: SideName */,
-    err /*: * */
+  blockSyncFor(
+    err /*: RemoteError|SyncError */,
+    change /*: ?MetadataChange */
   ) {
-    const { path } = change.doc
-    if (err.code === 'ENOSPC') {
-      log.error({ path, err, change }, 'No more disk space')
-      throw new Error('No more disk space')
-    } else if (err.status === 412) {
-      log.warn({ path, err, change }, 'Sync error 412 needs Merge')
-      change.doc.errors = MAX_SYNC_ATTEMPTS
-      return this.updateErrors(change, sideName)
-    } else if (err.status === 413) {
-      log.error({ path, err, change }, 'Cozy is full')
-      throw new Error('Cozy is full')
-    } else {
-      log.error({ path, err, change }, 'Unknown sync error')
+    this.lifecycle.blockFor(err.code)
+
+    if (err instanceof remoteErrors.RemoteError) {
+      this.remote.watcher.stop()
     }
-    try {
-      await this.diskUsage()
-    } catch (err) {
-      const remoteErr = remoteErrors.wrapError(err)
-      if (remoteErr.code === remoteErrors.UNREACHABLE_COZY_CODE) {
-        // The Cozy could not be reached successfully, wait until we make a
-        // successful request to the server again.
-        log.warn({ err: remoteErr, change }, 'Assuming offline')
-        this.events.emit('offline')
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          try {
-            await Promise.delay(60000)
-            await this.diskUsage()
-            this.events.emit('online')
-            log.warn({ path }, 'Client is online')
-            return
-          } catch (err) {
-            // Cozy is still unreachable
-          }
+
+    const [retryDelay, checkFn] = syncErrors.checkFn(err, this)
+
+    let checkInterval
+    const check = async () => {
+      this.events.off('user-action-inprogress', check)
+      this.events.off('user-action-skipped', skip)
+
+      if (await checkFn()) {
+        this.lifecycle.unblockFor(err.code)
+        clearInterval(checkInterval)
+
+        if (err instanceof remoteErrors.RemoteError) {
+          this.remote.watcher.start()
         }
-      } else if (remoteErr.code === remoteErrors.USER_ACTION_REQUIRED_CODE) {
-        this.events.emit('user-action-required', remoteErr)
-        this.remote.warningsPoller.switchMode('medium')
-        throw remoteErr
+
+        switch (err.code) {
+          case remoteErrors.UNREACHABLE_COZY_CODE:
+            this.events.emit('online')
+            break
+          case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
+            break
+          default:
+            this.events.emit('user-action-done', err)
+        }
       } else {
-        throw remoteErr
+        this.events.once('user-action-inprogress', check)
+        this.events.once('user-action-skipped', skip)
+
+        switch (err.code) {
+          case remoteErrors.UNREACHABLE_COZY_CODE:
+            this.events.emit('offline')
+            break
+          case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
+            break
+          default:
+            this.events.emit('user-action-required', err)
+        }
       }
     }
-    await this.updateErrors(change, sideName)
+    checkInterval = setInterval(check, retryDelay)
+
+    const skip = async () => {
+      //this.events.off('user-action-inprogress', retry)
+      this.events.off('user-action-inprogress', check)
+      this.events.off('user-action-skipped', skip)
+
+      if (change) {
+        change.doc.errors = MAX_SYNC_ATTEMPTS
+        await this.updateErrors(change, err)
+      }
+
+      this.lifecycle.unblockFor(err.code)
+
+      if (err instanceof remoteErrors.RemoteError) {
+        this.remote.watcher.start()
+      }
+
+      //clearTimeout(retryTimeout)
+      clearInterval(checkInterval)
+
+      // We suppose the error triggered a user-action-required event since skip
+      // is only called when the user skips a user action.
+      this.events.emit('user-action-skipped', err)
+    }
+
+    //this.events.once('user-action-inprogress', retry)
+    this.events.once('user-action-inprogress', check)
+    this.events.once('user-action-skipped', skip)
+
+    switch (err.code) {
+      case remoteErrors.UNREACHABLE_COZY_CODE:
+        this.events.emit('offline')
+        break
+      case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
+        break
+      default:
+        this.events.emit('user-action-required', err)
+    }
   }
 
   // Increment the counter of errors for this document
   async updateErrors(
     change /*: MetadataChange */,
-    sideName /*: SideName */
+    err /*: RemoteError|SyncError */
   ) /*: Promise<void> */ {
     let { doc } = change
     if (!doc.errors) doc.errors = 0
     doc.errors++
 
     // Make sure isUpToDate(sourceSideName, doc) is still true
+    const sideName =
+      err instanceof remoteErrors.RemoteError ? 'remote' : 'local'
     const sourceSideName = otherSide(sideName)
     metadata.markSide(sourceSideName, doc, doc)
 

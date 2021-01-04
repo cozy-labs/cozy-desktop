@@ -5,11 +5,13 @@ const _ = require('lodash')
 const sinon = require('sinon')
 const should = require('should')
 const EventEmitter = require('events')
+const { FetchError } = require('cozy-stack-client')
 
 const { Ignore } = require('../../core/ignore')
 const metadata = require('../../core/metadata')
 const { otherSide } = require('../../core/side')
 const Sync = require('../../core/sync')
+const remoteErrors = require('../../core/remote/errors')
 
 const stubSide = require('../support/doubles/side')
 const configHelpers = require('../support/helpers/config')
@@ -337,7 +339,7 @@ describe('Sync', function() {
       const previousSeq = 759
       const seq = previousSeq + 1
 
-      let file, merged
+      let file, merged, change
 
       beforeEach('set up merged local file update', async function() {
         file = await builders
@@ -352,25 +354,43 @@ describe('Sync', function() {
           .create()
 
         await this.pouch.setLocalSeq(previousSeq)
+
+        change = { seq, doc: _.cloneDeep(merged) }
       })
 
       const applyChange = async function() {
-        await this.sync.apply({ seq, doc: _.cloneDeep(merged) })
+        await this.sync.apply(change)
       }
 
       describe('when .remote#overwriteFileAsync() throws status 412', () => {
+        beforeEach(function() {
+          sinon.spy(this.sync, 'blockSyncFor')
+        })
         beforeEach('simulate error 412', function() {
-          this.remote.overwriteFileAsync.rejects({ status: 412 })
+          this.remote.overwriteFileAsync.rejects(
+            new FetchError({ status: 412 }, 'simulated 412 sync error')
+          )
         })
         beforeEach(applyChange)
+        afterEach(function() {
+          this.sync.blockSyncFor.restore()
+        })
 
         it('keeps sides unchanged', async function() {
           const synced = await this.pouch.bySyncedPath(file.path)
           should(synced.sides).deepEqual(merged.sides)
         })
 
-        it('saves seq to skip the change', async function() {
-          should(await this.pouch.getLocalSeq()).equal(seq)
+        it('does not skip the change by saving seq', async function() {
+          should(await this.pouch.getLocalSeq()).equal(previousSeq)
+        })
+
+        it('blocks the synchronization so we can retry applying the change', async function() {
+          should(this.sync.blockSyncFor).have.been.calledOnce()
+          should(this.sync.blockSyncFor).have.been.calledWithMatch(
+            { code: remoteErrors.NEEDS_REMOTE_MERGE_CODE },
+            change
+          )
         })
       })
     })
@@ -583,7 +603,12 @@ describe('Sync', function() {
         .sides({ local: 1 })
         .create()
 
-      await this.sync.updateErrors({ doc }, 'remote')
+      await this.sync.updateErrors(
+        { doc },
+        new remoteErrors.RemoteError({
+          err: new Error('simulated remote error')
+        })
+      )
 
       const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(1)
@@ -600,7 +625,7 @@ describe('Sync', function() {
         .sides({ local: 2, remote: 4 })
         .create()
 
-      await this.sync.updateErrors({ doc }, 'local')
+      await this.sync.updateErrors({ doc }, new Error('simulated local error'))
 
       const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(2)
@@ -617,7 +642,7 @@ describe('Sync', function() {
         .sides({ remote: 4 })
         .create()
 
-      await this.sync.updateErrors({ doc }, 'local')
+      await this.sync.updateErrors({ doc }, new Error('simulated local error'))
 
       const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(3)

@@ -18,7 +18,7 @@ module Locale exposing
 
 import Dict exposing (Dict)
 import Json.Decode as Json
-import Regex exposing (fromString, replace)
+import Regex exposing (Regex)
 import Time
 
 
@@ -28,6 +28,14 @@ type alias Locale =
 
 type alias Translate =
     String -> String
+
+
+type alias Capitalize =
+    String -> String
+
+
+type alias Interpolate =
+    List String -> String -> String
 
 
 type alias Pluralize =
@@ -44,6 +52,8 @@ type alias NumberToHumanSize =
 
 type alias Helpers =
     { t : Translate
+    , capitalize : Capitalize
+    , interpolate : Interpolate
     , pluralize : Pluralize
     , distance_of_time_in_words : DistanceOfTime
     , number_to_human_size : NumberToHumanSize
@@ -68,6 +78,8 @@ decodeAll json =
 helpers : Locale -> Helpers
 helpers locale =
     Helpers (translate locale)
+        (capitalize locale)
+        (\chains string -> translate locale <| interpolate chains string)
         (pluralize locale)
         (distance_of_time_in_words locale)
         (number_to_human_size locale)
@@ -83,6 +95,18 @@ translate locale key =
 
         Just translation ->
             translation
+
+
+capitalize : Locale -> Capitalize
+capitalize locale lowercase =
+    case String.uncons lowercase of
+        Just ( l, rest ) ->
+            -- Char.toLocaleUpper does not allow passing in the locale so it
+            -- will use the system default locale
+            String.cons (Char.toLocaleUpper l) rest
+
+        Nothing ->
+            ""
 
 
 isSingular : Int -> Bool
@@ -103,14 +127,22 @@ pluralize locale count singular plural =
     String.fromInt count ++ " " ++ translated
 
 
-interpolate : String -> String -> String
-interpolate string arg =
-    case fromString "\\{\\d\\}" of
-        Nothing ->
-            string
+placeholder : Regex
+placeholder =
+    Maybe.withDefault Regex.never <|
+        Regex.fromString "\\{\\d+\\}"
 
-        Just regex ->
-            replace regex (\_ -> arg) string
+
+at : a -> Int -> List a -> a
+at default index list =
+    List.drop index list
+        |> List.head
+        |> Maybe.withDefault default
+
+
+interpolate : List String -> String -> String
+interpolate replacements string =
+    Regex.replace placeholder (\{ number } -> at "" (number - 1) replacements) string
 
 
 distance_of_time_in_words : Locale -> DistanceOfTime
@@ -140,7 +172,7 @@ distance_of_time_in_words locale from_time to_time =
                     else
                         "Helpers {0} " ++ what ++ "s ago"
             in
-            interpolate (translate locale key) (String.fromInt count)
+            interpolate [ String.fromInt count ] (translate locale key)
     in
     if distance_in_months > 0 then
         transform distance_in_months "month"

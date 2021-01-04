@@ -190,8 +190,15 @@ viewAction helpers action =
 
         content =
             UserAction.details action
-                |> helpers.t
-                |> text
+                |> List.map (Tuple.mapFirst helpers.t)
+                |> List.map (Tuple.mapSecond (List.map helpers.t))
+                |> List.map
+                    (\( string, chains ) ->
+                        Locale.interpolate chains string
+                    )
+                |> List.map helpers.capitalize
+                |> List.map text
+                |> List.intersperse (br [] [])
 
         link =
             UserAction.getLink action
@@ -201,23 +208,43 @@ viewAction helpers action =
                 |> helpers.t
                 |> text
 
+        secondaryLabel =
+            UserAction.secondaryLabel action
+                |> Maybe.map helpers.t
+                |> Maybe.map text
+
         buttons =
-            [ button
-                [ class "c-btn c-btn--ghost"
-                , onClick UserActionSkipped
-                ]
-                [ span [] [ text (helpers.t "UserAction OK") ] ]
-            , a
-                [ class "c-btn" --u-flex-auto"
-                , href link
-                , onClick UserActionInProgress
-                ]
-                [ span [] [ primaryLabel ] ]
-            ]
+            case secondaryLabel of
+                Just label ->
+                    [ button
+                        [ class "c-btn c-btn--danger-outline"
+                        , onClick UserActionSkipped
+                        ]
+                        [ span [] [ label ] ]
+                    , button
+                        [ class "c-btn"
+                        , onClick UserActionInProgress
+                        ]
+                        [ span [] [ primaryLabel ] ]
+                    ]
+
+                Nothing ->
+                    [ button
+                        [ class "c-btn c-btn--ghost"
+                        , onClick UserActionSkipped
+                        ]
+                        [ span [] [ text (helpers.t "UserAction OK") ] ]
+                    , a
+                        [ class "c-btn" --u-flex-auto"
+                        , href (Maybe.withDefault "" link)
+                        , onClick UserActionInProgress
+                        ]
+                        [ span [] [ primaryLabel ] ]
+                    ]
     in
     div [ class "u-p-1 u-bg-paleGrey" ]
         [ header [ class "u-title-h1" ] [ title ]
-        , p [ class "u-text" ] [ content ]
+        , p [ class "u-text" ] content
         , div [ class "u-flex u-flex-justify-between" ] buttons
         ]
 

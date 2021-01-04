@@ -8,6 +8,7 @@ module Data.UserAction exposing
     , inProgress
     , primaryLabel
     , same
+    , secondaryLabel
     , title
     )
 
@@ -18,7 +19,12 @@ type UserActionStatus
 
 
 type UserAction
-    = UserAction UserActionStatus RemoteActionInfo
+    = ClientAction UserActionStatus ClientActionInfo
+    | RemoteAction UserActionStatus RemoteActionInfo
+
+
+type alias ClientActionInfo =
+    { code : String, docType : String, path : String }
 
 
 type alias RemoteActionInfo =
@@ -26,8 +32,16 @@ type alias RemoteActionInfo =
 
 
 same : UserAction -> UserAction -> Bool
-same (UserAction _ a) (UserAction _ b) =
-    a.code == b.code
+same actionA actionB =
+    case ( actionA, actionB ) of
+        ( ClientAction _ a, ClientAction _ b ) ->
+            a.code == b.code
+
+        ( RemoteAction _ a, RemoteAction _ b ) ->
+            a.code == b.code
+
+        _ ->
+            False
 
 
 
@@ -37,6 +51,11 @@ same (UserAction _ a) (UserAction _ b) =
 type alias EncodedUserAction =
     { status : String
     , code : String
+    , doc :
+        Maybe
+            { docType : String
+            , path : String
+            }
     , links :
         Maybe
             { self : String
@@ -45,25 +64,41 @@ type alias EncodedUserAction =
 
 
 decode : EncodedUserAction -> Maybe UserAction
-decode { status, code, links } =
+decode { status, code, doc, links } =
     let
         decodedStatus =
             decodeUserActionStatus status
     in
-    case links of
-        Just { self } ->
-            Just (UserAction decodedStatus { code = code, link = self })
+    case ( doc, links ) of
+        ( Just { docType, path }, Just { self } ) ->
+            Just (RemoteAction decodedStatus { code = code, link = self })
+
+        ( Just { docType, path }, _ ) ->
+            Just (ClientAction decodedStatus { code = code, docType = docType, path = path })
+
+        ( _, Just { self } ) ->
+            Just (RemoteAction decodedStatus { code = code, link = self })
 
         _ ->
             Nothing
 
 
 encode : UserAction -> EncodedUserAction
-encode (UserAction s a) =
-    { status = encodeUserActionStatus s
-    , code = a.code
-    , links = Just { self = a.link }
-    }
+encode action =
+    case action of
+        ClientAction s a ->
+            { status = encodeUserActionStatus s
+            , code = a.code
+            , doc = Just { docType = a.docType, path = a.path }
+            , links = Nothing
+            }
+
+        RemoteAction s a ->
+            { status = encodeUserActionStatus s
+            , code = a.code
+            , links = Just { self = a.link }
+            , doc = Nothing
+            }
 
 
 decodeUserActionStatus : String -> UserActionStatus
@@ -94,18 +129,33 @@ encodeUserActionStatus status =
 
 
 getCode : UserAction -> String
-getCode (UserAction _ { code }) =
-    code
+getCode action =
+    case action of
+        ClientAction _ { code } ->
+            code
+
+        RemoteAction _ { code } ->
+            code
 
 
-getLink : UserAction -> String
-getLink (UserAction _ { link }) =
-    link
+getLink : UserAction -> Maybe String
+getLink action =
+    case action of
+        RemoteAction _ { link } ->
+            Just link
+
+        ClientAction _ _ ->
+            Nothing
 
 
 inProgress : UserAction -> Bool
-inProgress (UserAction status _) =
-    status == InProgress
+inProgress action =
+    case action of
+        RemoteAction status _ ->
+            status == InProgress
+
+        ClientAction status _ ->
+            status == InProgress
 
 
 title : UserAction -> String
@@ -117,13 +167,21 @@ title action =
     strings.title
 
 
-details : UserAction -> String
+details : UserAction -> List ( String, List String )
 details action =
     let
         strings =
             userActionStrings (getCode action)
+
+        interpolations =
+            case action of
+                ClientAction _ { docType, path } ->
+                    [ "Helpers " ++ docType, path ]
+
+                RemoteAction _ _ ->
+                    []
     in
-    strings.details
+    List.map (\line -> ( line, interpolations )) strings.details
 
 
 primaryLabel : UserAction -> String
@@ -136,8 +194,21 @@ primaryLabel action =
         ( _, Just l ) ->
             l
 
-        ( _, Nothing ) ->
+        ( ClientAction _ _, Nothing ) ->
+            "UserAction Retry"
+
+        ( RemoteAction _ _, Nothing ) ->
             "UserAction Read"
+
+
+secondaryLabel : UserAction -> Maybe String
+secondaryLabel action =
+    case action of
+        ClientAction _ _ ->
+            Just "UserAction Give up"
+
+        RemoteAction _ _ ->
+            Nothing
 
 
 
@@ -145,17 +216,56 @@ primaryLabel action =
 
 
 type alias UserActionStrings =
-    { title : String, details : String, label : Maybe String }
+    { title : String, details : List String, label : Maybe String }
 
 
 userActionStrings : String -> UserActionStrings
 userActionStrings code =
     case code of
+        "MissingPermissions" ->
+            { title = "Error Missing filesystem permissions"
+            , details =
+                [ "Error The {0} {1} could not be updated on your computer to apply the changes made on your Cozy."
+                , "Error Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights."
+                ]
+            , label = Nothing
+            }
+
+        "NoDiskSpace" ->
+            { title = "Error Your computer disk space is full"
+            , details =
+                [ "Error The {0} {1} could not be written to your computer disk because there is not enough space available."
+                , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files…)."
+                ]
+            , label = Nothing
+            }
+
+        "NoCozySpace" ->
+            { title = "Error Your Cozy disk space is full"
+            , details =
+                [ "Error The {0} {1} could not be written to your Cozy's disk because its maximum storage capacity has been reached."
+                , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files...), or increased its capacity."
+                ]
+            , label = Nothing
+            }
+
+        "NeedsRemoteMerge" ->
+            { title = "Error Conflict with remote version"
+            , details =
+                [ "Error The {0} {1} has been simultaneously modified on your computer and your Cozy… This message persists if Cozy is unable to resolve this conflict."
+                , "Error In this case rename the version you want to keep and click on \"Give up\"."
+                ]
+            , label = Nothing
+            }
+
         "UserActionRequired" ->
-            { title = "CGUUpdated Cozy has updated its ToS"
-            , details = "CGUUpdated In accordance with the RGPD, Cozy informs you of changes to its Terms of Service. Accepting the new ToS is required to keep using your Cozy."
+            { title = "CGUUpdated The ToS have been updated"
+            , details =
+                [ "CGUUpdated Your Cozy hosting provider informs you that it has updated its Terms of Service (ToS)."
+                , "CGUUpdated Their acceptance is required to continue using your Cozy."
+                ]
             , label = Just "CGUUpdated Read the new ToS"
             }
 
         _ ->
-            { title = "", details = "", label = Nothing }
+            { title = "", details = [], label = Nothing }
