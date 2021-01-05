@@ -44,9 +44,11 @@ type DispatchOptions = {
 */
 
 const SIDE = 'local'
+const LOCAL_END_NOTIFICATION_DELAY = 1000 // 1 second
 let actions
 
 module.exports = {
+  LOCAL_END_NOTIFICATION_DELAY,
   loop,
   step
 }
@@ -59,20 +61,13 @@ function loop(
 }
 
 function step(opts /*: DispatchOptions */) {
+  let localEndTimeout = null
   return async (batch /*: AtomBatch */) => {
+    clearTimeout(localEndTimeout)
     opts.events.emit('local-start')
     for (const event of batch) {
       try {
         await dispatchEvent(event, opts)
-        let target = -1
-        try {
-          target = (await opts.pouch.db.changes({ limit: 1, descending: true }))
-            .last_seq
-        } catch (err) {
-          log.warn({ err })
-          /* ignore err */
-        }
-        opts.events.emit('sync-target', target)
       } catch (err) {
         log.error({ err, event })
       } finally {
@@ -81,7 +76,9 @@ function step(opts /*: DispatchOptions */) {
         }
       }
     }
-    opts.events.emit('local-end')
+    localEndTimeout = setTimeout(() => {
+      opts.events.emit('local-end')
+    }, LOCAL_END_NOTIFICATION_DELAY)
     return batch
   }
 }
@@ -100,6 +97,16 @@ async function dispatchEvent(
     const release = await opts.pouch.lock(component)
     try {
       await actions[event.action + event.kind](event, opts)
+      try {
+        const target = (await opts.pouch.db.changes({
+          limit: 1,
+          descending: true
+        })).last_seq
+        opts.events.emit('sync-target', target)
+      } catch (err) {
+        log.warn({ err })
+        /* ignore err */
+      }
     } finally {
       release()
     }

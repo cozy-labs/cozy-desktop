@@ -12,6 +12,7 @@ type DispatchedCalls = {
 const should = require('should')
 const sinon = require('sinon')
 const _ = require('lodash')
+const { Promise } = require('bluebird')
 
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
@@ -34,19 +35,15 @@ function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
 
     for (const call of calls) {
       if (!dispatchedCalls[method]) dispatchedCalls[method] = []
-      if (
-        method !== 'emit' ||
-        !['local-start', 'local-end', 'sync-target'].includes(call.args[0])
-      ) {
-        // XXX: buildFile & buildDir always add the `remote` attribute even when
-        // it's not defined.
-        // Metadata builders won't add it though and changing the implementation
-        // will mean a lot of tests to update so we simply remove the attribute
-        // if it's undefined to match the builders data.
-        const doc = call.args[1]
-        if (doc && doc.remote == undefined) delete doc.remote
-        dispatchedCalls[method].push(call.args)
-      }
+
+      // XXX: buildFile & buildDir always add the `remote` attribute even when
+      // it's not defined.
+      // Metadata builders won't add it though and changing the implementation
+      // will mean a lot of tests to update so we simply remove the attribute
+      // if it's undefined to match the builders data.
+      const doc = call.args[1]
+      if (doc && doc.remote == undefined) delete doc.remote
+      dispatchedCalls[method].push(call.args)
     }
   }
 
@@ -91,8 +88,16 @@ describe('core/local/atom/dispatch.loop()', function() {
     it('emits an initial-scan-done event via the emitter', async function() {
       await dispatch.loop(channel, stepOptions).pop()
 
-      should(dispatchedCalls(events)).deepEqual({
+      should(dispatchedCalls(events)).containDeep({
         emit: [['initial-scan-done']]
+      })
+    })
+
+    it('does not emit a sync-target event via the emitter', async function() {
+      await dispatch.loop(channel, stepOptions).pop()
+
+      should(dispatchedCalls(events)).not.containDeep({
+        emit: [['sync-target']]
       })
     })
 
@@ -117,6 +122,119 @@ describe('core/local/atom/dispatch.loop()', function() {
       await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({})
+    })
+
+    it('does not emit a sync-target event via the emitter', async function() {
+      await dispatch.loop(channel, stepOptions).pop()
+
+      should(dispatchedCalls(events)).not.containDeep({
+        emit: [['sync-target']]
+      })
+    })
+  })
+
+  context('when channel contains non-ignored change events', () => {
+    let changeEvents
+    beforeEach(() => {
+      changeEvents = [
+        builders.event().build(),
+        builders.event().build(),
+        builders
+          .event()
+          .action('ignored')
+          .build(), // No events for this one
+        builders.event().build(),
+        builders.event().build()
+      ]
+      channel.push(changeEvents)
+    })
+
+    it('emits sync-target events via the emitter', async function() {
+      await dispatch.loop(channel, stepOptions).pop()
+
+      should(dispatchedCalls(events)).not.containDeep({
+        emit: [
+          ['sync-target'],
+          ['sync-target'],
+          ['sync-target'],
+          ['sync-target']
+        ]
+      })
+    })
+  })
+
+  context('when channel contains multiple batches', () => {
+    context('processed in less than a second', () => {
+      it('emits a local-start event for each batch via the emitter', async function() {
+        const outChannel = dispatch.loop(channel, stepOptions)
+
+        channel.push([builders.event().build()])
+        await outChannel.pop()
+        channel.push([builders.event().build()])
+        await outChannel.pop()
+
+        should(dispatchedCalls(events)).containDeep({
+          emit: [['local-start'], ['local-start']]
+        })
+      })
+
+      it('emits only one local-end event via the emitter', async function() {
+        const outChannel = dispatch.loop(channel, stepOptions)
+
+        channel.push([builders.event().build()])
+        await outChannel.pop()
+        channel.push([builders.event().build()])
+        await outChannel.pop()
+        // Wait for the local-end event
+        await Promise.delay(dispatch.LOCAL_END_NOTIFICATION_DELAY)
+
+        // Not two
+        should(dispatchedCalls(events)).not.containDeep({
+          emit: [['local-end'], ['local-end']]
+        })
+        // Just one
+        should(dispatchedCalls(events)).containDeep({
+          emit: [['local-end']]
+        })
+      })
+    })
+
+    context('processed in more than a second', () => {
+      it('emits a local-start event for each batch via the emitter', async function() {
+        const outChannel = dispatch.loop(channel, stepOptions)
+
+        channel.push([builders.event().build()])
+        await outChannel.pop()
+        //
+        // Wait for the local-end event
+        await Promise.delay(dispatch.LOCAL_END_NOTIFICATION_DELAY)
+
+        channel.push([builders.event().build()])
+        await outChannel.pop()
+
+        should(dispatchedCalls(events)).containDeep({
+          emit: [['local-start'], ['local-start']]
+        })
+      })
+
+      it('emits one local-end event for each batch via the emitter', async function() {
+        const outChannel = dispatch.loop(channel, stepOptions)
+
+        channel.push([builders.event().build()])
+        await outChannel.pop()
+
+        // Wait for the local-end event
+        await Promise.delay(dispatch.LOCAL_END_NOTIFICATION_DELAY)
+
+        channel.push([builders.event().build()])
+        await outChannel.pop()
+        // Wait for the local-end event
+        await Promise.delay(dispatch.LOCAL_END_NOTIFICATION_DELAY)
+
+        should(dispatchedCalls(events)).containDeep({
+          emit: [['local-end'], ['local-end']]
+        })
+      })
     })
   })
 
