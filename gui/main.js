@@ -56,8 +56,6 @@ if (!mainInstance && !process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
 }
 
 let desktop
-let state = 'not-configured'
-let errorMessage = ''
 let userActionRequired = null
 let diskTimeout = null
 let onboardingWindow = null
@@ -152,15 +150,6 @@ const showWindow = bounds => {
     }
   } else {
     if (desktop.sync) {
-      if (userActionRequired) {
-        trayWindow.send('user-action-required', userActionRequired)
-      } else if (state === 'up-to-date' || state === 'online') {
-        trayWindow.send('up-to-date')
-      } else if (state === 'offline') {
-        trayWindow.send('offline')
-      } else if (state === 'error') {
-        sendErrorToMainWindow(errorMessage)
-      }
       sendDiskUsage()
     }
     trayWindow.show(bounds).then(async () => {
@@ -309,49 +298,38 @@ const sendErrorToMainWindow = msg => {
   }
 }
 
-const SYNC_STATUS_DELAY = 1000 // milliseconds
-let syncStatusTimeout = null
+const LAST_SYNC_UPDATE_DELAY = 1000 // milliseconds
+let lastSyncTimeout = null
 const updateState = (newState, data) => {
-  if (newState === 'error') errorMessage = data
-  if (newState === 'online' && state !== 'offline') return
-  if (newState === 'offline' && state === 'error') return
+  if (newState === 'sync-state') {
+    const { status } = data
 
-  clearTimeout(syncStatusTimeout)
-  if (newState === 'online') {
-    tray.setState('up-to-date')
-    trayWindow.send('up-to-date')
-  } else if (newState === 'offline') {
-    tray.setState('offline')
-    trayWindow.send('offline')
-  } else if (newState === 'error') {
-    tray.setState('error', data)
+    if (status === 'uptodate') tray.setStatus('online')
+    else if (status === 'offline') tray.setStatus('offline')
+    else tray.setStatus('syncing')
+  } else {
+    tray.setStatus(newState, data)
+  }
+
+  if (newState === 'error') {
     sendErrorToMainWindow(data)
-  } else if (newState === 'sync-status' && data && data.label === 'sync') {
-    tray.setState('syncing')
-    trayWindow.send('sync-status', data)
   } else if (newState === 'syncing' && data && data.filename) {
-    tray.setState('syncing', data)
     trayWindow.send('transfer', data)
-  } else if (newState === 'sync-status') {
-    syncStatusTimeout = setTimeout(async () => {
-      const upToDate = data && data.label === 'uptodate'
-      tray.setState(upToDate ? 'up-to-date' : 'syncing')
-      trayWindow.send('sync-status', data)
-      if (upToDate) {
+  } else if (newState === 'sync-state') {
+    clearTimeout(lastSyncTimeout)
+
+    trayWindow.send('sync-state', data)
+
+    if (data.status === 'uptodate') {
+      lastSyncTimeout = setTimeout(async () => {
         try {
           await desktop.remote.updateLastSync()
           log.debug('last sync updated')
         } catch (err) {
           log.warn({ err }, 'could not update last sync date')
         }
-      }
-    }, SYNC_STATUS_DELAY)
-  }
-
-  if (newState === 'sync-status') {
-    state = data.label === 'uptodate' ? 'up-to-date' : 'syncing'
-  } else {
-    state = newState
+      }, LAST_SYNC_UPDATE_DELAY)
+    }
   }
 }
 
@@ -404,14 +382,8 @@ const sendDiskUsage = () => {
 
 const startSync = async () => {
   updateState('syncing')
-  desktop.events.on('sync-status', status => {
-    updateState('sync-status', status)
-  })
-  desktop.events.on('online', () => {
-    updateState('online')
-  })
-  desktop.events.on('offline', () => {
-    updateState('offline')
+  desktop.events.on('sync-state', state => {
+    updateState('sync-state', state)
   })
   desktop.events.on('remoteWarnings', warnings => {
     if (warnings.length > 0) {

@@ -1,7 +1,6 @@
 port module Ports exposing
     ( autoLauncher
     , autolaunch
-    , buffering
     , cancelUnlink
     , chooseFolder
     , closeApp
@@ -15,7 +14,6 @@ port module Ports exposing
     , mail
     , manualStartSync
     , newRelease
-    , offline
     , openFile
     , quitAndInstall
     , registerRemote
@@ -25,16 +23,14 @@ port module Ports exposing
     , remove
     , sendMail
     , showHelp
-    , squashPrepMerge
     , startSync
     , syncError
+    , syncState
     , synchonization
-    , syncing
     , transfer
     , unlinkCozy
     , updateDownloading
     , updateError
-    , updated
     , userActionInProgress
     , userActionRequired
     )
@@ -44,6 +40,7 @@ import Data.File exposing (EncodedFile)
 import Data.Progress exposing (Progress)
 import Data.RemoteWarning exposing (RemoteWarning)
 import Data.SyncFolderConfig exposing (SyncFolderConfig)
+import Data.SyncState exposing (EncodedSyncState)
 import Data.UserActionRequiredError exposing (UserActionRequiredError)
 
 
@@ -51,9 +48,6 @@ port autoLauncher : Bool -> Cmd msg
 
 
 port autolaunch : (Bool -> msg) -> Sub msg
-
-
-port buffering : (Bool -> msg) -> Sub msg
 
 
 port cancelUnlink : (Bool -> msg) -> Sub msg
@@ -92,9 +86,6 @@ port mail : (Maybe String -> msg) -> Sub msg
 port newRelease : (( String, String ) -> msg) -> Sub msg
 
 
-port offline : (Bool -> msg) -> Sub msg
-
-
 port openFile : String -> Cmd msg
 
 
@@ -122,9 +113,6 @@ port sendMail : String -> Cmd msg
 port showHelp : () -> Cmd msg
 
 
-port squashPrepMerge : (Bool -> msg) -> Sub msg
-
-
 port startSync : String -> Cmd msg
 
 
@@ -134,7 +122,7 @@ port syncError : (String -> msg) -> Sub msg
 port synchonization : (( String, String ) -> msg) -> Sub msg
 
 
-port syncing : (Int -> msg) -> Sub msg
+port syncState : (EncodedSyncState -> msg) -> Sub msg
 
 
 port transfer : (EncodedFile -> msg) -> Sub msg
@@ -147,9 +135,6 @@ port updateDownloading : (Maybe Progress -> msg) -> Sub msg
 
 
 port updateError : (String -> msg) -> Sub msg
-
-
-port updated : (Bool -> msg) -> Sub msg
 
 
 port userActionInProgress : () -> Cmd msg

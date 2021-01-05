@@ -10,7 +10,8 @@ module Window.Tray exposing
 
 import Data.Platform exposing (Platform)
 import Data.RemoteWarning exposing (RemoteWarning)
-import Data.Status exposing (Status(..))
+import Data.Status as Status exposing (Status)
+import Data.SyncState as SyncState exposing (SyncState)
 import Data.UserActionRequiredError exposing (UserActionRequiredError)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -41,6 +42,7 @@ type alias Model =
     , remoteWarnings : List RemoteWarning
     , settings : Settings.Model
     , status : Status
+    , syncState : SyncState
     , userActionRequired : Maybe UserActionRequiredError
     }
 
@@ -52,7 +54,8 @@ init version platform =
     , platform = platform
     , remoteWarnings = []
     , settings = Settings.init version
-    , status = Starting
+    , status = Status.init
+    , syncState = SyncState.init
     , userActionRequired = Nothing
     }
 
@@ -62,12 +65,8 @@ init version platform =
 
 
 type Msg
-    = SyncStart ( String, String )
-    | Updated
-    | StartSyncing Int
-    | StartBuffering
-    | StartSquashPrepMerging
-    | GoOffline
+    = GotSyncState SyncState
+    | SyncStart ( String, String )
     | UserActionRequired UserActionRequiredError
     | UserActionInProgress
     | RemoteWarnings (List RemoteWarning)
@@ -84,6 +83,27 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GotSyncState syncState ->
+            let
+                status =
+                    syncState.status
+
+                ( settings, _ ) =
+                    case syncState.status of
+                        Status.UpToDate ->
+                            Settings.update Settings.EndManualSync model.settings
+
+                        _ ->
+                            ( model.settings, Cmd.none )
+            in
+            ( { model
+                | status = status
+                , settings = settings
+                , syncState = syncState
+              }
+            , Cmd.none
+            )
+
         SyncStart info ->
             let
                 ( settings, _ ) =
@@ -105,28 +125,9 @@ update msg model =
             in
             ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
-        Updated ->
-            let
-                ( settings, _ ) =
-                    Settings.update Settings.EndManualSync model.settings
-            in
-            ( { model | status = UpToDate, settings = settings }, Cmd.none )
-
-        StartSyncing n ->
-            ( { model | status = Syncing n }, Cmd.none )
-
-        StartBuffering ->
-            ( { model | status = Buffering }, Cmd.none )
-
-        StartSquashPrepMerging ->
-            ( { model | status = SquashPrepMerging }, Cmd.none )
-
-        GoOffline ->
-            ( { model | status = Offline }, Cmd.none )
-
         UserActionRequired error ->
             ( { model
-                | status = Data.Status.UserActionRequired
+                | status = Status.UserActionRequired
                 , userActionRequired = Just error
               }
             , Cmd.none
@@ -150,7 +151,7 @@ update msg model =
             )
 
         SetError error ->
-            ( { model | status = Error error }, Cmd.none )
+            ( { model | status = Status.Error error }, Cmd.none )
 
         GoToCozy ->
             ( model, Ports.gotocozy () )
@@ -184,20 +185,20 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Ports.synchonization SyncStart
-        , Ports.newRelease (SettingsMsg << Settings.NewRelease)
         , Ports.gototab GoToStrTab
+        , Ports.syncError SetError
+        , Ports.syncState (GotSyncState << SyncState.decode)
+        , Ports.remoteWarnings RemoteWarnings
+        , Ports.userActionRequired UserActionRequired
+
+        -- Dashboard subscriptions
         , Time.every 1000 (DashboardMsg << Dashboard.Tick)
         , Ports.transfer (DashboardMsg << Dashboard.Transfer)
         , Ports.remove (DashboardMsg << Dashboard.Remove)
+
+        -- Settings subscriptions
+        , Ports.newRelease (SettingsMsg << Settings.NewRelease)
         , Ports.diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
-        , Ports.syncError SetError
-        , Ports.offline (always GoOffline)
-        , Ports.remoteWarnings RemoteWarnings
-        , Ports.userActionRequired UserActionRequired
-        , Ports.buffering (always StartBuffering)
-        , Ports.squashPrepMerge (always StartSquashPrepMerging)
-        , Ports.updated (always Updated)
-        , Ports.syncing StartSyncing
         , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
         , Ports.cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
         ]

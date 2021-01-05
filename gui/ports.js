@@ -3,6 +3,10 @@
 const electron = require('electron')
 const { ipcRenderer, remote } = electron
 
+/*::
+import type { SyncStatus } from '../core/syncstate'
+*/
+
 window.onerror = (message, url, line, column, err) => {
   ipcRenderer.send('renderer-error', { message, stack: err.stack })
 }
@@ -131,10 +135,6 @@ elmectron.ports.openFile.subscribe(path => {
   ipcRenderer.send('open-file', path)
 })
 
-ipcRenderer.on('offline', () => {
-  elmectron.ports.offline.send(true)
-})
-
 ipcRenderer.on('remoteWarnings', (event, warnings) => {
   elmectron.ports.remoteWarnings.send(warnings)
 })
@@ -147,25 +147,11 @@ elmectron.ports.userActionInProgress.subscribe(() => {
   ipcRenderer.send('userActionInProgress')
 })
 
-ipcRenderer.on('up-to-date', () => {
-  elmectron.ports.updated.send(true)
-})
-
-ipcRenderer.on('sync-status', (event, { label, remaining }) => {
-  switch (label) {
-    case 'sync':
-      elmectron.ports.syncing.send(remaining)
-      break
-    case 'squashprepmerge':
-      elmectron.ports.squashPrepMerge.send(true)
-      break
-    case 'buffering':
-      elmectron.ports.buffering.send(true)
-      break
-    case 'uptodate':
-      elmectron.ports.updated.send(true)
-      break
-  }
+ipcRenderer.on('sync-state', (
+  event,
+  newState /*: { status: SyncStatus, remaining: number } */
+) => {
+  elmectron.ports.syncState.send(newState)
 })
 
 ipcRenderer.on('transfer', (event, info) => {
