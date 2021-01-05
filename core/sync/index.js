@@ -43,11 +43,6 @@ export type MetadataChange = {
   id: string,
   seq: number
 };
-
-export type SyncMode =
-  | "pull"
-  | "push"
-  | "full";
 */
 
 const isMarkedForDeletion = (doc /*: SavedMetadata */) => {

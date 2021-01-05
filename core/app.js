@@ -35,8 +35,6 @@ const sentry = require('./utils/sentry')
 import type EventEmitter from 'events'
 import type { Config } from './config'
 import type stream from 'stream'
-import type { Callback } from './utils/func'
-import type { SyncMode } from './sync'
 import type { Metadata } from './metadata'
 
 export type ClientInfo = {
