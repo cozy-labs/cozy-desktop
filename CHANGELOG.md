@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.25.0-beta.1 - 2021-01-06
+
+Improvements for all users:
+
+- Some synchronization errors will now be notified to you within the main window
+  with information about the error itself and how to fix it and two options:
+  giving up on the change if it can't be synchronized or requesting an early
+  retry (automatic retries will be performed in the background).
+  Know that the synchronization will be blocked by the failing change until an
+  outcome is decided. This should avoid a lot of automatically dropped changes
+  as we would otherwise stop retrying after the third attempt.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.24.1 - 2020-12-07
 
 Improvements for all users:
