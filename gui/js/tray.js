@@ -57,7 +57,7 @@ module.exports.init = (app, listener) => {
     cm.insert(1, new MenuItem({ type: 'separator' }))
     tray.setContextMenu(cm)
   }
-  setState('idle')
+  setStatus('idle')
 }
 
 // old tray menu
@@ -103,27 +103,28 @@ if (newReleaseAvailable) {
 tray.setContextMenu(menu)
 */
 
-var setState = (module.exports.setState = (state, data) => {
-  let statusLabel = ''
-  let icon = 'idle'
-  if (state === 'error') {
-    icon = 'error'
-    statusLabel = data
-  } else if (state === 'syncing' && data && data.filename) {
-    icon = 'sync'
-    statusLabel = `${translate('Tray Syncing')} ‟${data.filename}“`
-  } else if (state === 'up-to-date' || state === 'online') {
-    icon = 'idle'
-    statusLabel = translate('Tray Your cozy is up to date')
-  } else if (state === 'syncing') {
-    icon = 'sync'
-    statusLabel = translate('Tray Syncing') + '…'
-  } else if (state === 'offline') {
-    icon = 'offline'
-    statusLabel = translate('Tray Offline')
+const systrayInfo = (status, label) => {
+  switch (status) {
+    case 'error':
+      return ['error', label]
+    case 'user-action-required':
+      return ['pause', label]
+    case 'syncing':
+      return ['sync', translate('Tray Syncing') + label ? `‟${label}“` : '…']
+    case 'up-to-date':
+    case 'online':
+      return ['idle', translate('Tray Your cozy is up to date')]
+    case 'offline':
+      return ['offline', translate('Tray Offline')]
+    default:
+      return ['idle', '']
   }
+}
 
-  tray.setToolTip(statusLabel)
+const setStatus = (module.exports.setStatus = (status, label) => {
+  const [icon, tooltip] = systrayInfo(status, label)
+
+  tray.setToolTip(tooltip)
   if (process.platform === 'darwin') {
     tray.setImage(`${imgs}/tray-icon-osx/${icon}Template.png`)
     tray.setPressedImage(`${imgs}/tray-icon-osx/${icon}Highlight.png`)

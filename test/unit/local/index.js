@@ -7,7 +7,7 @@ const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
 
-const Local = require('../../../core/local')
+const { Local } = require('../../../core/local')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const timestamp = require('../../../core/utils/timestamp')
 

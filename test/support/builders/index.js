@@ -21,7 +21,7 @@ const { DefaultStatsBuilder, WinStatsBuilder } = require('./stats')
 import type { Cozy } from 'cozy-client-js'
 import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
-import type { Warning } from '../../../core/remote/warning'
+import type { Warning } from '../../../core/remote/cozy'
 import type { RemoteDoc, RemoteFile, RemoteDir } from '../../../core/remote/document'
 import type { AtomEvent } from '../../../core/local/atom/event'
 import type { StatsBuilder } from './stats'
@@ -119,9 +119,10 @@ module.exports = class Builders {
   remoteWarnings() /*: Warning[] */ {
     return [
       {
-        error: 'tos-updated',
+        status: 402,
         title: 'TOS Updated',
-        detail: 'TOS have been updated',
+        code: 'tos-updated',
+        detail: 'Terms of services have been updated',
         links: {
           self: 'https://manager.cozycloud.cc/cozy/tos?domain=...'
         }

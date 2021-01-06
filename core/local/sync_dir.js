@@ -4,7 +4,9 @@
  * @flow
  */
 
-var fs = require('fs')
+const fs = require('fs')
+
+const { SYNC_DIR_UNLINKED_MESSAGE } = require('./')
 
 /*::
 import type EventEmitter from 'events'
@@ -25,7 +27,7 @@ function ensureExistsSync(
 ) /*: void */ {
   if (!fs.existsSync(syncPath)) {
     events.emit('syncdir-unlinked')
-    throw new Error('Syncdir has been unlinked')
+    throw new Error(SYNC_DIR_UNLINKED_MESSAGE)
   }
 }
 

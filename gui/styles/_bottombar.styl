@@ -1,0 +1,39 @@
+@require './node_modules/cozy-ui/stylus/settings/palette.styl'
+
+.bottom-bar
+  flex 0 0 3em
+  background-color: var(--paleGrey)
+  color var(--coolGrey)
+  line-height 3em
+  height: 3em
+  width: 100vw
+  display: flex
+  flex-direction: row
+  justify-content: space-around;
+  align-items: center;
+
+  a
+    flex 1
+    font-size: 0.8em
+    color inherit
+    text-transform uppercase
+    text-decoration none
+    font-weight bold
+    display inline-block
+    text-align: center
+
+    &:hover
+      color var(--slateGrey)
+      svg
+        path
+          fill var(--slateGrey)
+
+
+    svg
+      display inline-block
+      vertical-align middle
+      height 1.1em
+      width 1.1em
+      margin 0px 0.5em .2em 0.5em
+
+

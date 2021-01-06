@@ -4,13 +4,17 @@ const Desktop = require('../core/app.js')
 const notes = require('./notes')
 const pkg = require('../package.json')
 
-const { debounce, pick } = require('lodash')
+const { debounce } = require('lodash')
 const path = require('path')
 const os = require('os')
 const fse = require('fs-extra')
 
 const proxy = require('./js/proxy')
-const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/cozy')
+const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/errors')
+const {
+  SYNC_DIR_EMPTY_MESSAGE,
+  SYNC_DIR_UNLINKED_MESSAGE
+} = require('../core/local')
 const migrations = require('../core/pouch/migrations')
 const config = require('../core/config')
 const winRegistry = require('../core/utils/win_registry')
@@ -29,7 +33,6 @@ const { buildAppMenu } = require('./js/appmenu')
 const i18n = require('./js/i18n')
 const { translate } = i18n
 const { incompatibilitiesErrorMessage } = require('./js/incompatibilitiesmsg')
-const UserActionRequiredDialog = require('./js/components/UserActionRequiredDialog')
 const { app, Menu, Notification, ipcMain, dialog, shell } = require('electron')
 
 const DAILY = 3600 * 24 * 1000
@@ -49,9 +52,6 @@ if (!mainInstance && !process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
 }
 
 let desktop
-let state = 'not-configured'
-let errorMessage = ''
-let userActionRequired = null
 let diskTimeout = null
 let onboardingWindow = null
 let helpWindow = null
@@ -145,15 +145,6 @@ const showWindow = bounds => {
     }
   } else {
     if (desktop.sync) {
-      if (userActionRequired) {
-        trayWindow.send('user-action-required', userActionRequired)
-      } else if (state === 'up-to-date' || state === 'online') {
-        trayWindow.send('up-to-date')
-      } else if (state === 'offline') {
-        trayWindow.send('offline')
-      } else if (state === 'error') {
-        sendErrorToMainWindow(errorMessage)
-      }
       sendDiskUsage()
     }
     trayWindow.show(bounds).then(async () => {
@@ -251,7 +242,7 @@ const sendErrorToMainWindow = msg => {
       app.quit()
     }
     return // no notification
-  } else if (msg === 'Syncdir has been unlinked') {
+  } else if (msg === SYNC_DIR_UNLINKED_MESSAGE) {
     if (notificationsState.syncDirUnlinkedShown) return
     notificationsState.syncDirUnlinkedShown = true // prevent the alert from appearing twice
     const options = {
@@ -276,10 +267,7 @@ const sendErrorToMainWindow = msg => {
       .then(() => trayWindow.doRestart())
       .catch(err => log.error(err))
     return // no notification
-  } else if (msg === 'Cozy is full' || msg === 'No more disk space') {
-    msg = translate('Error ' + msg)
-    trayWindow.send('sync-error', msg)
-  } else if (msg === 'Syncdir is empty') {
+  } else if (msg === SYNC_DIR_EMPTY_MESSAGE) {
     trayWindow.send('sync-error', translate('SyncDirEmpty Title'))
     const options = {
       type: 'warning',
@@ -292,7 +280,7 @@ const sendErrorToMainWindow = msg => {
     desktop.stopSync().catch(err => log.error(err))
     return // no notification
   } else {
-    msg = translate('Dashboard Synchronization incomplete')
+    msg = translate('Dashboard Synchronization impossible')
     trayWindow.send('sync-error', msg)
   }
 
@@ -302,49 +290,48 @@ const sendErrorToMainWindow = msg => {
   }
 }
 
-const SYNC_STATUS_DELAY = 1000 // milliseconds
-let syncStatusTimeout = null
+const LAST_SYNC_UPDATE_DELAY = 1000 // milliseconds
+let lastSyncTimeout = null
 const updateState = (newState, data) => {
-  if (newState === 'error') errorMessage = data
-  if (newState === 'online' && state !== 'offline') return
-  if (newState === 'offline' && state === 'error') return
+  if (newState === 'sync-state') {
+    const { status } = data
 
-  clearTimeout(syncStatusTimeout)
-  if (newState === 'online') {
-    tray.setState('up-to-date')
-    trayWindow.send('up-to-date')
-  } else if (newState === 'offline') {
-    tray.setState('offline')
-    trayWindow.send('offline')
-  } else if (newState === 'error') {
-    tray.setState('error', data)
+    if (status === 'uptodate') tray.setStatus('online')
+    else if (status === 'offline') tray.setStatus('offline')
+    else if (
+      status === 'user-action-required' &&
+      data &&
+      data.userActions &&
+      data.userActions.length
+    )
+      tray.setStatus(
+        'user-action-required',
+        translate('Dashboard Synchronization suspended')
+      )
+    else tray.setStatus('syncing')
+  } else {
+    tray.setStatus(newState, data)
+  }
+
+  if (newState === 'error') {
     sendErrorToMainWindow(data)
-  } else if (newState === 'sync-status' && data && data.label === 'sync') {
-    tray.setState('syncing')
-    trayWindow.send('sync-status', data)
   } else if (newState === 'syncing' && data && data.filename) {
-    tray.setState('syncing', data)
     trayWindow.send('transfer', data)
-  } else if (newState === 'sync-status') {
-    syncStatusTimeout = setTimeout(async () => {
-      const upToDate = data && data.label === 'uptodate'
-      tray.setState(upToDate ? 'up-to-date' : 'syncing')
-      trayWindow.send('sync-status', data)
-      if (upToDate) {
+  } else if (newState === 'sync-state') {
+    clearTimeout(lastSyncTimeout)
+
+    trayWindow.send('sync-state', data)
+
+    if (data.status === 'uptodate') {
+      lastSyncTimeout = setTimeout(async () => {
         try {
           await desktop.remote.updateLastSync()
           log.debug('last sync updated')
         } catch (err) {
           log.warn({ err }, 'could not update last sync date')
         }
-      }
-    }, SYNC_STATUS_DELAY)
-  }
-
-  if (newState === 'sync-status') {
-    state = data.label === 'uptodate' ? 'up-to-date' : 'syncing'
-  } else {
-    state = newState
+      }, LAST_SYNC_UPDATE_DELAY)
+    }
   }
 }
 
@@ -397,22 +384,12 @@ const sendDiskUsage = () => {
 
 const startSync = async () => {
   updateState('syncing')
-  desktop.events.on('sync-status', status => {
-    updateState('sync-status', status)
+  desktop.events.on('sync-state', state => {
+    updateState('sync-state', state)
   })
-  desktop.events.on('online', () => {
-    updateState('online')
-  })
-  desktop.events.on('offline', () => {
-    updateState('offline')
-  })
-  desktop.events.on('remoteWarnings', warnings => {
-    if (warnings.length > 0) {
-      trayWindow.send('remoteWarnings', warnings)
-    } else if (userActionRequired) {
-      log.info('User action complete.')
-      trayWindow.doRestart()
-    }
+  desktop.events.on('Sync:fatal', err => {
+    updateState('error', err.message)
+    sendDiskUsage()
   })
   desktop.events.on('transfer-started', addFile)
   desktop.events.on('transfer-copy', addFile)
@@ -433,31 +410,9 @@ const startSync = async () => {
     })
   })
   desktop.events.on('syncdir-unlinked', () => {
-    sendErrorToMainWindow('Syncdir has been unlinked')
+    sendErrorToMainWindow(SYNC_DIR_UNLINKED_MESSAGE)
   })
   desktop.events.on('delete-file', removeFile)
-
-  desktop.events.on('sync-error', err => {
-    if (err.status === 402) {
-      // Only show notification popup on the first check (the GUI will
-      // include a warning anyway).
-      if (!userActionRequired) UserActionRequiredDialog.show(err)
-
-      userActionRequired = pick(err, [
-        'title',
-        'code',
-        'detail',
-        'links',
-        'message'
-      ])
-      trayWindow.send('user-action-required', userActionRequired)
-      desktop.remote.warningsPoller.switchMode('medium')
-      return
-    } else {
-      updateState('error', err.message)
-    }
-    sendDiskUsage()
-  })
 
   desktop.startSync()
   sendDiskUsage()
@@ -708,10 +663,6 @@ app.on('window-all-closed', () => {
 
 ipcMain.on('show-help', () => {
   helpWindow.show()
-})
-
-ipcMain.on('userActionInProgress', () => {
-  desktop.remote.warningsPoller.switchMode('fast')
 })
 
 // On watch mode, automatically reload the window when sources are updated

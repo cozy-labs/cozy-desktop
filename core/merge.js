@@ -16,7 +16,7 @@ const { isNote } = require('./utils/notes')
 
 /*::
 import type { IdConflictInfo } from './IdConflict'
-import type Local from './local'
+import type { Local } from './local'
 import type {
   Metadata,
   MetadataRemoteInfo,

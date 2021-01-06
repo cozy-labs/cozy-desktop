@@ -9,9 +9,8 @@ module Window.Tray exposing
     )
 
 import Data.Platform exposing (Platform)
-import Data.RemoteWarning exposing (RemoteWarning)
-import Data.Status exposing (Status(..))
-import Data.UserActionRequiredError exposing (UserActionRequiredError)
+import Data.Status as Status exposing (Status)
+import Data.SyncState as SyncState exposing (SyncState)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -22,7 +21,6 @@ import Time
 import Window.Tray.Dashboard as Dashboard
 import Window.Tray.Settings as Settings
 import Window.Tray.StatusBar as StatusBar
-import Window.Tray.UserActionRequiredPage as UserActionRequiredPage
 
 
 
@@ -38,10 +36,9 @@ type alias Model =
     { dashboard : Dashboard.Model
     , page : Page
     , platform : Platform
-    , remoteWarnings : List RemoteWarning
     , settings : Settings.Model
     , status : Status
-    , userActionRequired : Maybe UserActionRequiredError
+    , syncState : SyncState
     }
 
 
@@ -50,10 +47,9 @@ init version platform =
     { dashboard = Dashboard.init
     , page = DashboardPage
     , platform = platform
-    , remoteWarnings = []
     , settings = Settings.init version
-    , status = Starting
-    , userActionRequired = Nothing
+    , status = Status.init
+    , syncState = SyncState.init
     }
 
 
@@ -62,28 +58,45 @@ init version platform =
 
 
 type Msg
-    = SyncStart ( String, String )
-    | Updated
-    | StartSyncing Int
-    | StartBuffering
-    | StartSquashPrepMerging
-    | GoOffline
-    | UserActionRequired UserActionRequiredError
-    | UserActionInProgress
-    | RemoteWarnings (List RemoteWarning)
-    | ClearCurrentWarning
+    = GotSyncState SyncState
+    | SyncStart ( String, String )
     | SetError String
-    | DashboardMsg Dashboard.Msg
-    | SettingsMsg Settings.Msg
     | GoToCozy
     | GoToFolder
     | GoToTab Page
     | GoToStrTab String
+    | DashboardMsg Dashboard.Msg
+    | SettingsMsg Settings.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GotSyncState syncState ->
+            let
+                status =
+                    syncState.status
+
+                ( settings, _ ) =
+                    case syncState.status of
+                        Status.UpToDate ->
+                            Settings.update Settings.EndManualSync model.settings
+
+                        _ ->
+                            ( model.settings, Cmd.none )
+
+                ( dashboard, cmd ) =
+                    Dashboard.update (Dashboard.GotUserActions syncState.userActions) model.dashboard
+            in
+            ( { model
+                | status = status
+                , dashboard = dashboard
+                , settings = settings
+                , syncState = syncState
+              }
+            , Cmd.none
+            )
+
         SyncStart info ->
             let
                 ( settings, _ ) =
@@ -105,52 +118,8 @@ update msg model =
             in
             ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
-        Updated ->
-            let
-                ( settings, _ ) =
-                    Settings.update Settings.EndManualSync model.settings
-            in
-            ( { model | status = UpToDate, settings = settings }, Cmd.none )
-
-        StartSyncing n ->
-            ( { model | status = Syncing n }, Cmd.none )
-
-        StartBuffering ->
-            ( { model | status = Buffering }, Cmd.none )
-
-        StartSquashPrepMerging ->
-            ( { model | status = SquashPrepMerging }, Cmd.none )
-
-        GoOffline ->
-            ( { model | status = Offline }, Cmd.none )
-
-        UserActionRequired error ->
-            ( { model
-                | status = Data.Status.UserActionRequired
-                , userActionRequired = Just error
-              }
-            , Cmd.none
-            )
-
-        UserActionInProgress ->
-            ( model
-            , Ports.userActionInProgress ()
-            )
-
-        RemoteWarnings warnings ->
-            ( { model | remoteWarnings = warnings }, Cmd.none )
-
-        ClearCurrentWarning ->
-            ( { model
-                | remoteWarnings =
-                    List.tail model.remoteWarnings
-                        |> Maybe.withDefault []
-              }
-            , Cmd.none
-            )
-
         SetError error ->
-            ( { model | status = Error error }, Cmd.none )
+            ( { model | status = Status.Error error }, Cmd.none )
 
         GoToCozy ->
             ( model, Ports.gotocozy () )
@@ -184,20 +153,18 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Ports.synchonization SyncStart
-        , Ports.newRelease (SettingsMsg << Settings.NewRelease)
         , Ports.gototab GoToStrTab
+        , Ports.syncError SetError
+        , Ports.syncState (GotSyncState << SyncState.decode)
+
+        -- Dashboard subscriptions
         , Time.every 1000 (DashboardMsg << Dashboard.Tick)
         , Ports.transfer (DashboardMsg << Dashboard.Transfer)
         , Ports.remove (DashboardMsg << Dashboard.Remove)
+
+        -- Settings subscriptions
+        , Ports.newRelease (SettingsMsg << Settings.NewRelease)
         , Ports.diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
-        , Ports.syncError SetError
-        , Ports.offline (always GoOffline)
-        , Ports.remoteWarnings RemoteWarnings
-        , Ports.userActionRequired UserActionRequired
-        , Ports.buffering (always StartBuffering)
-        , Ports.squashPrepMerge (always StartSquashPrepMerging)
-        , Ports.updated (always Updated)
-        , Ports.syncing StartSyncing
         , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
         , Ports.cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
         ]
@@ -211,13 +178,7 @@ view : Helpers -> Model -> Html Msg
 view helpers model =
     div [ class "container" ]
         [ StatusBar.view helpers model.status model.platform
-        , case model.userActionRequired of
-            Just error ->
-                UserActionRequiredPage.view helpers error UserActionInProgress
-
-            Nothing ->
-                viewTabsWithContent helpers model
-        , viewWarning helpers model
+        , viewTabsWithContent helpers model
         , viewBottomBar helpers
         ]
 
@@ -249,35 +210,6 @@ viewTab helpers model title page =
         ]
         [ text (helpers.t ("TwoPanes " ++ title))
         ]
-
-
-viewWarning : Helpers -> Model -> Html Msg
-viewWarning helpers model =
-    case ( model.userActionRequired, model.remoteWarnings ) of
-        ( Just err, _ ) ->
-            text ""
-
-        ( _, { title, detail, links, code } :: _ ) ->
-            let
-                actionLabel =
-                    if code == "tos-updated" then
-                        "Warning Read"
-
-                    else
-                        "Warning Ok"
-            in
-            div [ class "warningbar" ]
-                [ p [] [ text detail ]
-                , a
-                    [ class "btn"
-                    , href links.self
-                    , onClick ClearCurrentWarning
-                    ]
-                    [ span [] [ text (helpers.t actionLabel) ] ]
-                ]
-
-        _ ->
-            text ""
 
 
 viewBottomBar : Helpers -> Html Msg

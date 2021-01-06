@@ -1,7 +1,6 @@
 port module Ports exposing
     ( autoLauncher
     , autolaunch
-    , buffering
     , cancelUnlink
     , chooseFolder
     , closeApp
@@ -15,45 +14,38 @@ port module Ports exposing
     , mail
     , manualStartSync
     , newRelease
-    , offline
     , openFile
     , quitAndInstall
     , registerRemote
     , registrationDone
     , registrationError
-    , remoteWarnings
     , remove
     , sendMail
     , showHelp
-    , squashPrepMerge
     , startSync
     , syncError
+    , syncState
     , synchonization
-    , syncing
     , transfer
     , unlinkCozy
     , updateDownloading
     , updateError
-    , updated
     , userActionInProgress
-    , userActionRequired
+    , userActionSkipped
     )
 
 import Data.DiskSpace exposing (DiskSpace)
 import Data.File exposing (EncodedFile)
 import Data.Progress exposing (Progress)
-import Data.RemoteWarning exposing (RemoteWarning)
 import Data.SyncFolderConfig exposing (SyncFolderConfig)
-import Data.UserActionRequiredError exposing (UserActionRequiredError)
+import Data.SyncState exposing (EncodedSyncState)
+import Data.UserAction exposing (EncodedUserAction)
 
 
 port autoLauncher : Bool -> Cmd msg
 
 
 port autolaunch : (Bool -> msg) -> Sub msg
-
-
-port buffering : (Bool -> msg) -> Sub msg
 
 
 port cancelUnlink : (Bool -> msg) -> Sub msg
@@ -92,9 +84,6 @@ port mail : (Maybe String -> msg) -> Sub msg
 port newRelease : (( String, String ) -> msg) -> Sub msg
 
 
-port offline : (Bool -> msg) -> Sub msg
-
-
 port openFile : String -> Cmd msg
 
 
@@ -110,9 +99,6 @@ port registrationDone : (Bool -> msg) -> Sub msg
 port registrationError : (String -> msg) -> Sub msg
 
 
-port remoteWarnings : (List RemoteWarning -> msg) -> Sub msg
-
-
 port remove : (EncodedFile -> msg) -> Sub msg
 
 
@@ -120,9 +106,6 @@ port sendMail : String -> Cmd msg
 
 
 port showHelp : () -> Cmd msg
-
-
-port squashPrepMerge : (Bool -> msg) -> Sub msg
 
 
 port startSync : String -> Cmd msg
@@ -134,7 +117,7 @@ port syncError : (String -> msg) -> Sub msg
 port synchonization : (( String, String ) -> msg) -> Sub msg
 
 
-port syncing : (Int -> msg) -> Sub msg
+port syncState : (EncodedSyncState -> msg) -> Sub msg
 
 
 port transfer : (EncodedFile -> msg) -> Sub msg
@@ -149,13 +132,10 @@ port updateDownloading : (Maybe Progress -> msg) -> Sub msg
 port updateError : (String -> msg) -> Sub msg
 
 
-port updated : (Bool -> msg) -> Sub msg
+port userActionInProgress : EncodedUserAction -> Cmd msg
 
 
-port userActionInProgress : () -> Cmd msg
-
-
-port userActionRequired : (UserActionRequiredError -> msg) -> Sub msg
+port userActionSkipped : EncodedUserAction -> Cmd msg
 
 
 port manualStartSync : () -> Cmd msg

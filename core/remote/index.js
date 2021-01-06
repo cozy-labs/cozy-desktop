@@ -19,21 +19,14 @@ const { RemoteWatcher } = require('./watcher')
 
 /*::
 import type EventEmitter from 'events'
+import type { Readable } from 'stream'
 import type { Config } from '../config'
 import type { SavedMetadata } from '../metadata'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { RemoteDoc } from './document'
-import type { Reader } from '../reader' // eslint-disable-line
+import type { Reader } from '../reader'
 import type { Writer } from '../writer'
-*/
-
-const log = logger({
-  component: 'RemoteWriter'
-})
-
-/*::
-import type { Readable } from 'stream'
 
 export type RemoteOptions = {
   config: Config,
@@ -42,6 +35,10 @@ export type RemoteOptions = {
   prep: Prep
 }
 */
+
+const log = logger({
+  component: 'RemoteWriter'
+})
 
 /** `Remote` is the class that interfaces cozy-desktop with the remote Cozy.
  *
@@ -154,6 +151,7 @@ class Remote /*:: implements Reader, Writer */ {
     }
 
     const [dirPath, name] = dirAndName(path)
+    // FIXME: stop creating parent folder and manage missing parent error
     const dir = await this.remoteCozy.findOrCreateDirectoryByPath(dirPath)
 
     const created = await this.remoteCozy.createFile(stream, {

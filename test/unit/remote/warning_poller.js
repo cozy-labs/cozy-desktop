@@ -12,11 +12,12 @@ const {
   shiftTicks,
   ticks
 } = require('../../../core/remote/warning_poller')
+const remoteErrors = require('../../../core/remote/errors')
 
 const Builders = require('../../support/builders')
 
 /*::
-import type { Warning } from '../../../core/remote/warning'
+import type { Warning } from '../../../core/remote/cozy'
 */
 
 const builders = new Builders()
@@ -61,20 +62,22 @@ describe('RemoteWarningPoller', () => {
   })
 
   describe('#poll()', () => {
-    it('emits warnings if any', async () => {
+    it('emits warnings one by one if any', async () => {
       const warnings /*: Warning[] */ = builders.remoteWarnings()
       remoteCozy.warnings.resolves(warnings)
       await poller.poll()
       should(events.emit).have.been.calledOnce()
-      should(events.emit).have.been.calledWith('remoteWarnings', warnings)
+      should(events.emit).have.been.calledWithMatch('user-action-required', {
+        code: remoteErrors.USER_ACTION_REQUIRED_CODE,
+        detail: warnings[0].detail
+      })
     })
 
-    it('emits empty list when no warnings', async () => {
+    it('does not emit when no warnings', async () => {
       const noWarnings = []
       remoteCozy.warnings.resolves(noWarnings)
       await poller.poll()
-      should(events.emit).have.been.calledOnce()
-      should(events.emit).have.been.calledWith('remoteWarnings', noWarnings)
+      should(events.emit).not.have.been.called()
     })
 
     it('does not stop working on error', async () => {
@@ -110,9 +113,11 @@ describe('RemoteWarningPoller', () => {
       await poller.polling
 
       should(remoteCozy.warnings).have.been.calledTwice()
-      should(events.emit).have.been.calledTwice()
-      should(events.emit).have.been.calledWith('remoteWarnings', noWarnings)
-      should(events.emit).have.been.calledWith('remoteWarnings', warnings)
+      should(events.emit).have.been.calledOnce()
+      should(events.emit).have.been.calledWithMatch('user-action-required', {
+        code: remoteErrors.USER_ACTION_REQUIRED_CODE,
+        detail: warnings[0].detail
+      })
     })
   })
 

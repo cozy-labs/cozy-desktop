@@ -188,7 +188,14 @@ module.exports = class TrayWM extends WindowManager {
       'manual-start-sync': () =>
         this.desktop.sync.forceSync().catch(err => {
           if (err) log.error({ err }, 'Could not run manual sync')
-        })
+        }),
+      userActionInProgress: (event, action) => {
+        this.desktop.events.emit('user-action-inprogress', action)
+      },
+
+      userActionSkipped: (event, action) => {
+        this.desktop.events.emit('user-action-skipped', action)
+      }
     }
   }
 

@@ -10,7 +10,8 @@ const _ = require('lodash')
 const metadata = require('../../metadata')
 const { MergeMissingParentError } = require('../../merge')
 const remoteChange = require('../change')
-const { handleCommonCozyErrors } = require('../cozy')
+const { HEARTBEAT } = require('../constants')
+const remoteErrors = require('../errors')
 const { inRemoteTrash } = require('../document')
 const squashMoves = require('./squashMoves')
 const normalizePaths = require('./normalizePaths')
@@ -24,15 +25,12 @@ import type { RemoteCozy } from '../cozy'
 import type { Metadata, MetadataRemoteInfo, SavedMetadata, RemoteRevisionsByID } from '../../metadata'
 import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from '../change'
 import type { RemoteDeletion } from '../document'
+import type { RemoteError } from '../errors'
 */
 
 const log = logger({
   component: 'RemoteWatcher'
 })
-
-const DEFAULT_HEARTBEAT /*: number */ = 1000 * 60 // 1 minute
-const HEARTBEAT /*: number */ =
-  parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT
 
 const sideName = 'remote'
 
@@ -43,8 +41,8 @@ class RemoteWatcher {
   prep: Prep
   remoteCozy: RemoteCozy
   events: EventEmitter
-  runningResolve: ?() => void
-  running: Promise
+  running: boolean
+  watchTimeout: TimeoutID
   */
 
   constructor(
@@ -57,47 +55,86 @@ class RemoteWatcher {
     this.prep = prep
     this.remoteCozy = remoteCozy
     this.events = events
-    this.running = new Promise(() => {})
+    this.running = false
 
     autoBind(this)
   }
 
   async start() {
-    log.debug('Starting watcher')
-    await this.watch()
-
-    this.running = Promise.race([
-      // run until either stop is called or watchLoop reject
-      new Promise(resolve => {
-        this.runningResolve = resolve
-      }),
-      this.watchLoop()
-    ])
+    if (!this.running) {
+      log.debug('Starting watcher')
+      this.running = true
+      await this.resetTimeout()
+    }
   }
 
   stop() {
-    log.debug('Stop requested')
-    if (this.runningResolve) log.debug('Stopping watcher')
-    if (this.runningResolve) {
-      this.runningResolve()
-      this.runningResolve = null
+    if (this.running) {
+      log.debug('Stopping watcher')
+      clearTimeout(this.watchTimeout)
+      this.running = false
     }
   }
 
-  async watchLoop() {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      await Promise.delay(HEARTBEAT)
-      if (!this.runningResolve) {
-        // stopped
-        log.debug('Watcher stopped')
+  onError(listener /*: (RemoteError) => any */) {
+    this.events.on('RemoteWatcher:error', listener)
+  }
+
+  error(err /*: RemoteError */) {
+    log.error({ err }, `Remote watcher error: ${err.message}`)
+    this.events.emit('RemoteWatcher:error', err)
+  }
+
+  onFatal(listener /*: Error => any */) {
+    this.events.on('RemoteWatcher:fatal', listener)
+  }
+
+  fatal(err /*: Error */) {
+    log.error({ err }, `Remote watcher fatal: ${err.message}`)
+    this.events.emit('RemoteWatcher:fatal', err)
+    this.stop()
+  }
+
+  async resetTimeout({
+    manualRun = false
+  } /*: { manualRun: boolean } */ = {}) /*: Promise<?RemoteError> */ {
+    try {
+      clearTimeout(this.watchTimeout)
+
+      if (!this.running) {
+        log.debug('Watcher stopped: skipping remote watch')
         return
       }
-      await this.watch()
+
+      const err = await this.watch()
+
+      if (this.running) {
+        this.watchTimeout = setTimeout(this.resetTimeout, HEARTBEAT)
+      }
+
+      if (manualRun) {
+        return err
+      } else if (err) {
+        switch (err.code) {
+          case remoteErrors.COZY_CLIENT_REVOKED_CODE:
+          case remoteErrors.MISSING_PERMISSIONS_CODE:
+            this.fatal(err)
+            break
+          default:
+            this.error(err)
+        }
+      }
+    } catch (err) {
+      if (manualRun) {
+        return err
+      } else {
+        this.fatal(err)
+      }
     }
   }
 
-  async watch() {
+  async watch() /*: Promise<?RemoteError> */ {
+    const release = await this.pouch.lock(this)
     try {
       const seq = await this.pouch.getRemoteSeq()
       const { last_seq, docs } = await this.remoteCozy.changes(seq)
@@ -108,27 +145,23 @@ class RemoteWatcher {
         return
       }
 
-      const release = await this.pouch.lock(this)
       this.events.emit('remote-start')
+      await this.pullMany(docs)
 
-      try {
-        let target = -1
-        await this.pullMany(docs)
-        target = (await this.pouch.db.changes({ limit: 1, descending: true }))
-          .last_seq
-        this.events.emit('sync-target', target)
-        await this.pouch.setRemoteSeq(last_seq)
-      } finally {
-        release()
-        this.events.emit('remote-end')
-        log.debug('No more remote changes for now')
-      }
+      let target = -1
+      target = (await this.pouch.db.changes({ limit: 1, descending: true }))
+        .last_seq
+      this.events.emit('sync-target', target)
+
+      await this.pouch.setRemoteSeq(last_seq)
     } catch (err) {
-      // TODO: If FetchError && status === 412 → error during conflict resolution
-      handleCommonCozyErrors({ err }, { events: this.events, log })
-      // If we were offline, we'll wait for the next pollings to switch back
-      // to 'online' as soon as the changesfeed can be fetched and retry to
-      // merge the failed changes.
+      // TODO: Maybe wrap remote errors more closely to remote calls to avoid
+      // wrapping other kinds of errors? PouchDB errors for example.
+      return remoteErrors.wrapError(err)
+    } finally {
+      release()
+      this.events.emit('remote-end')
+      log.debug('No more remote changes for now')
     }
   }
 
@@ -507,6 +540,5 @@ class RemoteWatcher {
 }
 
 module.exports = {
-  HEARTBEAT,
   RemoteWatcher
 }

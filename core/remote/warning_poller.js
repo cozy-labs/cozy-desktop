@@ -4,13 +4,13 @@
  * @flow
  */
 
+const { RemoteError } = require('./errors')
 const delay = require('../utils/delay')
 const logger = require('../utils/logger')
 
 /*::
 import type EventEmitter from 'events'
-import type { RemoteCozy } from './cozy'
-import type { Warning } from './warning'
+import type { RemoteCozy, Warning } from './cozy'
 import type { Delay } from '../utils/delay'
 
 type Mode = 'slow' | 'medium' | 'fast'
@@ -80,7 +80,10 @@ class RemoteWarningPoller {
       log.info(`${warnings.length} warnings`)
       if (warnings.length > 0) log.trace({ warnings })
 
-      this.events.emit('remoteWarnings', warnings)
+      for (const warning of warnings) {
+        const err = RemoteError.fromWarning(warning)
+        this.events.emit('user-action-required', err)
+      }
     } catch (err) {
       log.error({ err })
     } finally {

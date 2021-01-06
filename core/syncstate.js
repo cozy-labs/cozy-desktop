@@ -1,100 +1,245 @@
 /**
  * @module core/syncstate
+ * @flow
  */
 
 const autoBind = require('auto-bind')
 const EventEmitter = require('events')
+const deepDiff = require('deep-diff').diff
+
+/*::
+type UserActionStatus = 'Required'|'InProgress'
+type UserAction = {
+  code: string,
+  doc?: {
+    docType: string,
+    path: string,
+  },
+  links: ?{ self: string },
+  status: UserActionStatus
+}
+
+type State = {
+  offline: boolean,
+  syncTargetSeq: number,
+  syncCurrentSeq: number,
+  remaining: number,
+  buffering: boolean,
+  syncing: boolean,
+  localPrep: boolean,
+  remotePrep: boolean,
+  userActions: UserAction[]
+}
+
+export type SyncStatus =
+  | 'buffering'
+  | 'squashprepmerge'
+  | 'offline'
+  | 'sync'
+  | 'uptodate'
+  | 'user-action-required'
+*/
+
+const makeAction = (data /*: Object */) /*: UserAction */ => {
+  const { doc } = data
+  const links = data.links || (data.originalErr && data.originalErr.links)
+
+  return {
+    status: 'Required',
+    code: data.code,
+    doc: doc || null,
+    links: links || null
+  }
+}
+
+const addAction = (
+  actions /*: UserAction[] */,
+  newAction /*: UserAction */
+) /*: UserAction[] */ => {
+  const existingAction = actions.find(action => action.code === newAction.code)
+  if (existingAction) {
+    existingAction.status = 'Required'
+    return actions
+  } else {
+    return actions.concat(newAction)
+  }
+}
+
+const actionInProgress = (
+  actions /*: UserAction[] */,
+  action /*: UserAction */
+) /*: UserAction[] */ => {
+  const index = actions.findIndex(a => a.code === action.code)
+  if (index !== -1) {
+    return actions
+      .slice(0, index)
+      .concat({ ...action, status: 'InProgress' })
+      .concat(actions.slice(index + 1))
+  }
+  return actions
+}
+
+const removeAction = (
+  actions /*: UserAction[] */,
+  action /*: UserAction */
+) /*: UserAction[] */ => {
+  return actions.filter(a => a.code !== action.code)
+}
 
 module.exports = class SyncState extends EventEmitter {
   /*::
-  syncLastSeq: number
-  syncCurrentSeq: number
-  buffering: boolean
-  syncSyncing: boolean
-  localSyncing: boolean
-  remoteSyncing: boolean
+  state: State
   */
 
   constructor() {
     super()
+
+    this.state = {
+      offline: false,
+      syncTargetSeq: -1,
+      syncCurrentSeq: -1,
+      remaining: 0,
+      buffering: false,
+      syncing: false,
+      localPrep: false,
+      remotePrep: false,
+      userActions: []
+    }
+
     autoBind(this)
   }
 
-  shouldSpin() {
-    return this.localSyncing || this.remoteSyncing || this.syncSyncing
-  }
-
   emitStatus() {
-    const label = this.syncSyncing
-      ? 'sync'
-      : this.localSyncing || this.remoteSyncing
-      ? 'squashprepmerge'
-      : this.buffering
-      ? 'buffering'
-      : 'uptodate'
+    const {
+      offline,
+      remaining,
+      buffering,
+      syncing,
+      localPrep,
+      remotePrep,
+      userActions
+    } = this.state
+
+    const status /*: SyncStatus */ =
+      userActions.length > 0
+        ? 'user-action-required'
+        : offline
+        ? 'offline'
+        : syncing
+        ? 'sync'
+        : buffering
+        ? 'buffering'
+        : localPrep || remotePrep
+        ? 'squashprepmerge'
+        : 'uptodate'
+
+    super.emit('sync-state', { status, remaining, userActions })
+  }
+
+  update(newState /*: $Shape<State> */) {
+    const { state } = this
+
+    const syncCurrentSeq = newState.syncCurrentSeq || state.syncCurrentSeq
+    const syncTargetSeq = newState.syncTargetSeq || state.syncTargetSeq
     const remaining =
-      this.syncLastSeq && this.syncCurrentSeq
-        ? this.syncLastSeq - this.syncCurrentSeq
-        : 1
+      // If the current or target sequence have changed
+      (syncCurrentSeq !== state.syncCurrentSeq ||
+        syncTargetSeq !== state.syncTargetSeq) &&
+      // And we've merged some changes already
+      state.syncTargetSeq !== -1
+        ? // If the sync process has been started at least once
+          state.syncCurrentSeq !== -1
+          ? Math.max(syncTargetSeq - syncCurrentSeq, 0)
+          : // Else we're buffering changes to be synced
+            state.remaining + 1
+        : // Otherwise the remaining number of changes is still the same
+          state.remaining
 
-    super.emit('sync-status', { label, remaining })
-
-    if (this.wasSpinning && !this.shouldSpin()) {
-      this.wasSpinning = false
-      this.emit('up-to-date')
+    newState = {
+      ...state,
+      ...newState,
+      remaining
     }
-    if (!this.wasSpinning && this.shouldSpin()) {
-      this.wasSpinning = true
-      this.emit('syncing')
+
+    const diff = deepDiff(state, newState)
+    if (diff) {
+      // Limit the number of events sent to the Electron window
+      this.state = newState
+      this.emitStatus()
     }
   }
 
-  emit(name, ...args) {
+  emit(name /*: string */, ...args /*: any[] */) /*: boolean */ {
     switch (name) {
+      case 'online':
+        this.update({ offline: false })
+        break
+      case 'offline':
+        this.update({ offline: true })
+        break
       case 'buffering-start':
-        this.buffering = true
-        this.emitStatus()
+        this.update({ buffering: true })
         break
       case 'buffering-end':
-        this.buffering = false
-        this.emitStatus()
+        this.update({ buffering: false })
         break
       case 'local-start':
-        this.localSyncing = true
-        this.emitStatus()
+        this.update({ localPrep: true })
         break
       case 'remote-start':
-        this.remoteSyncing = true
-        this.emitStatus()
+        this.update({ remotePrep: true })
         break
       case 'sync-start':
-        this.localSyncing = false
-        this.remoteSyncing = false
-        this.syncSyncing = true
-        this.emitStatus()
+        this.update({
+          localPrep: false,
+          remotePrep: false,
+          syncing: true
+        })
         break
       case 'local-end':
-        this.localSyncing = false
-        this.emitStatus()
+        this.update({ localPrep: false })
         break
       case 'remote-end':
-        this.remoteSyncing = false
-        this.emitStatus()
+        this.update({ remotePrep: false })
         break
       case 'sync-end':
-        this.syncSyncing = false
-        this.emitStatus()
+        this.update({ syncing: false })
         break
       case 'sync-target':
-        if (args[0] !== -1) this.syncLastSeq = args[0]
-        this.emitStatus()
+        if (typeof args[0] === 'number') {
+          this.update({ syncTargetSeq: args[0] })
+        }
         break
       case 'sync-current':
-        this.syncCurrentSeq = args[0]
-        this.emitStatus()
+        if (typeof args[0] === 'number') {
+          this.update({ syncCurrentSeq: args[0] })
+        }
         break
-      default:
-        super.emit(name, ...args)
+      case 'user-action-required':
+        this.update({
+          userActions: addAction(this.state.userActions, makeAction(args[0]))
+        })
+        break
+      case 'user-action-inprogress':
+        this.update({
+          userActions: actionInProgress(
+            this.state.userActions,
+            makeAction(args[0])
+          )
+        })
+        break
+      case 'user-action-done':
+        this.update({
+          userActions: removeAction(this.state.userActions, makeAction(args[0]))
+        })
+        break
+      case 'user-action-skipped':
+        this.update({
+          userActions: removeAction(this.state.userActions, makeAction(args[0]))
+        })
+        break
     }
+
+    return super.emit(name, ...args)
   }
 }

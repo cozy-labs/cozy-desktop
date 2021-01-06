@@ -1,0 +1,47 @@
+@require './node_modules/cozy-ui/stylus/settings/icons.styl'
+@require './node_modules/cozy-ui/stylus/settings/palette.styl'
+@require '_spin'
+
+.status
+  flex 0 0 3em
+  background-color var(--paleGrey)
+  color var(--coolGrey)
+  line-height 3em
+  height: 3em
+  width: 100vw
+  display: flex
+  align-items: center
+
+  .status_text
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+
+  .status_img
+    flex 0 0 3em
+
+    img.status__icon
+      @extend $icon-24
+
+      display: block
+      margin-left: 25%
+      padding: 0.2em
+      vertical-align: middle
+      border-radius: 1.5em
+
+    .spin
+      @extend $icon-16
+      @extend $spin
+      background-color: var(--primaryColor)
+      margin-left: 1em
+      margin-top: 1em
+
+  &.blue
+    .status__icon--uptodate
+      background-color: var(--dodgerBlue)
+    .status__icon--offline
+      background-color: var(--coolGrey)
+    .status__icon--error
+      background-color: var(--pomegranate)
+
+

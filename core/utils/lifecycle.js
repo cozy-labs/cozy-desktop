@@ -14,12 +14,14 @@ type State = 'done-stop' | 'will-start' | 'done-start' | 'will-stop'
 class LifeCycle extends EventEmitter {
   /*::
   currentState: State
+  blockedFor: Set<string>
   log: Logger
   */
 
   constructor(logger /*: Logger */) {
     super()
     this.currentState = 'done-stop'
+    this.blockedFor = new Set()
     this.log = logger
   }
 
@@ -84,6 +86,23 @@ class LifeCycle extends EventEmitter {
 
   async started() {
     await this.transitionedTo('done-start')
+  }
+
+  blockFor(reason /*: string */) {
+    this.blockedFor.add(reason)
+  }
+
+  unblockFor(reason /*: string */) {
+    if (reason === 'all') this.blockedFor.clear()
+    else this.blockedFor.delete(reason)
+    if (this.blockedFor.size === 0) this.emit('ready')
+  }
+
+  async ready() /*: Promise<void> */ {
+    return new Promise(resolve => {
+      if (this.blockedFor.size === 0) resolve()
+      else this.once('ready', resolve)
+    })
   }
 }
 

@@ -3,10 +3,12 @@
 
 const EventEmitter = require('events')
 const sinon = require('sinon')
+const should = require('should')
 const { FetchError } = require('electron-fetch')
 
 const Prep = require('../../../core/prep')
 const { Remote } = require('../../../core/remote')
+const remoteErrors = require('../../../core/remote/errors')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
@@ -42,17 +44,24 @@ describe('Remote', function() {
 
   describe('offline management', () => {
     it('The remote can be started when offline ', async function() {
-      let fetchStub = sinon
+      sinon
         .stub(global, 'fetch')
         .rejects(new FetchError('net::ERR_INTERNET_DISCONNECTED'))
-      let eventsSpy = sinon.spy(this.events, 'emit')
+      sinon.spy(this.events, 'emit')
+
       await this.remote.start()
-      eventsSpy.should.have.been.calledWith('offline')
-      fetchStub.restore()
-      // skip waiting for HEARTBEAT
+      should(this.events.emit).have.been.calledWithMatch(
+        'RemoteWatcher:error',
+        { code: remoteErrors.UNREACHABLE_COZY_CODE }
+      )
+
+      fetch.restore()
+      this.events.emit.reset()
+
       await this.remote.watcher.watch()
-      eventsSpy.should.have.been.calledWith('online')
-      eventsSpy.restore()
+      should(this.events.emit).not.have.been.calledWith('RemoteWatcher:error')
+
+      this.events.emit.restore()
     }).timeout(120000)
   })
 })

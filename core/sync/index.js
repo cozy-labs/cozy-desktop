@@ -9,23 +9,26 @@ const Promise = require('bluebird')
 const { dirname } = require('path')
 const _ = require('lodash')
 
-const metadata = require('./metadata')
-const { handleCommonCozyErrors } = require('./remote/cozy')
-const { HEARTBEAT } = require('./remote/watcher')
-const { otherSide } = require('./side')
-const logger = require('./utils/logger')
-const measureTime = require('./utils/perfs')
-const { LifeCycle } = require('./utils/lifecycle')
+const metadata = require('../metadata')
+const { HEARTBEAT: REMOTE_HEARTBEAT } = require('../remote/constants')
+const remoteErrors = require('../remote/errors')
+const { otherSide } = require('../side')
+const logger = require('../utils/logger')
+const measureTime = require('../utils/perfs')
+const { LifeCycle } = require('../utils/lifecycle')
+const syncErrors = require('./errors')
 
 /*::
 import type EventEmitter from 'events'
-import type { Ignore } from './ignore'
-import type Local from './local'
-import type { Pouch } from './pouch'
-import type { Remote } from './remote'
-import type { SavedMetadata } from './metadata'
-import type { SideName } from './side'
-import type { Writer } from './writer'
+import type { Ignore } from '../ignore'
+import type { Local } from '../local'
+import type { Pouch } from '../pouch'
+import type { Remote } from '../remote'
+import type { RemoteError } from '../remote/errors'
+import type { SavedMetadata } from '../metadata'
+import type { SideName } from '../side'
+import type { Writer } from '../writer'
+import type { SyncError } from './errors'
 */
 
 const log = logger({
@@ -33,7 +36,6 @@ const log = logger({
 })
 
 const MAX_SYNC_ATTEMPTS = 3
-
 const TRASHING_DELAY = 1000
 
 /*::
@@ -43,11 +45,6 @@ export type MetadataChange = {
   id: string,
   seq: number
 };
-
-export type SyncMode =
-  | "pull"
-  | "push"
-  | "full";
 */
 
 const isMarkedForDeletion = (doc /*: SavedMetadata */) => {
@@ -122,33 +119,35 @@ class Sync {
     } catch (err) {
       return
     }
+
     try {
       await this.local.start()
       await this.remote.start()
     } catch (err) {
-      this.error(err)
+      // The start phase needs to be ended before calling fatal() or we won't be
+      // able to stop Sync.
       this.lifecycle.end('start')
-      await this.stop()
-      return
+      return this.fatal(err)
     }
     this.lifecycle.end('start')
 
-    Promise.all([
-      this.local.watcher.running,
-      this.remote.watcher.running
-    ]).catch(err => {
-      this.error(err)
-      this.stop()
-      return
+    this.remote.watcher.onError(err => {
+      this.blockSyncFor(err)
+    })
+    this.remote.watcher.onFatal(err => {
+      this.fatal(err)
+    })
+    this.local.watcher.running.catch(err => {
+      this.fatal(err)
     })
 
     try {
       while (!this.lifecycle.willStop()) {
+        await this.lifecycle.ready()
         await this.sync()
       }
     } catch (err) {
-      this.error(err)
-      await this.stop()
+      await this.fatal(err)
     }
   }
 
@@ -181,6 +180,7 @@ class Sync {
     }
 
     await Promise.all([this.local.stop(), this.remote.stop()])
+    this.lifecycle.unblockFor('all')
     this.lifecycle.end('stop')
   }
 
@@ -188,44 +188,57 @@ class Sync {
     await this.lifecycle.stopped()
   }
 
-  error(err /*: Error */) {
-    log.error({ err }, 'sync error')
-    this.events.emit('sync-error', err)
+  fatal(err /*: Error */) {
+    log.error({ err }, `Sync fatal: ${err.message}`)
+    this.events.emit('Sync:fatal', err)
+    return this.stop()
   }
 
-  // TODO: remove waitForNewChanges to .start while(true)
-  async sync(waitForNewChanges /*: boolean */ = true) /*: Promise<*> */ {
+  async sync({
+    manualRun = false
+  } /*: { manualRun?: boolean } */ = {}) /*: Promise<*> */ {
     let seq = await this.pouch.getLocalSeq()
-    if (waitForNewChanges) {
+
+    if (!manualRun) {
       const change = await this.waitForNewChanges(seq)
       if (change == null) return
     }
-    const release = await this.pouch.lock(this)
     this.events.emit('sync-start')
     try {
-      await this.syncBatch()
+      await this.syncBatch({ manualRun })
     } finally {
       this.events.emit('sync-end')
-      release()
     }
-    log.debug('No more metadata changes for now')
   }
 
   // sync
-  async syncBatch() {
+  async syncBatch({
+    manualRun = false
+  } /*: { manualRun?: boolean } */ = {}) /*: Promise<void> */ {
     let seq = null
     // eslint-disable-next-line no-constant-condition
     while (!this.lifecycle.willStop()) {
-      seq = await this.pouch.getLocalSeq()
-      // TODO: Prevent infinite loop
-      const change = await this.getNextChange(seq)
-      if (change == null) break
-      this.events.emit('sync-current', change.seq)
+      await this.lifecycle.ready()
+
+      // FIXME: Acquire lock for as many changes as possible to prevent next huge
+      // remote/local batches to acquite it first
+      const release = await this.pouch.lock(this)
       try {
-        await this.apply(change)
-        // XXX: apply should call setLocalSeq
+        seq = await this.pouch.getLocalSeq()
+        // TODO: Prevent infinite loop
+        const change = await this.getNextChange(seq)
+        if (change == null) {
+          log.debug('No more metadata changes for now')
+          break
+        }
+
+        this.events.emit('sync-current', change.seq)
+
+        await this.apply(change, { manualRun })
       } catch (err) {
         if (!this.lifecycle.willStop()) throw err
+      } finally {
+        release()
       }
     }
   }
@@ -301,7 +314,10 @@ class Sync {
   // Apply a change to both local and remote
   // At least one side should say it has already this change
   // In some cases, both sides have the change
-  async apply(change /*: MetadataChange */) /*: Promise<*> */ {
+  async apply(
+    change /*: MetadataChange */,
+    { manualRun = false } /*: { manualRun?: boolean } */ = {}
+  ) /*: Promise<void> */ {
     let { doc, seq } = change
     const { path } = doc
     log.debug({ path, seq, doc }, `Applying change ${seq}...`)
@@ -310,11 +326,12 @@ class Sync {
       return this.pouch.setLocalSeq(change.seq)
     } else if (!metadata.wasSynced(doc) && isMarkedForDeletion(doc)) {
       await eraseDocument(doc, this)
+      if (doc.docType === 'file') {
+        this.events.emit('delete-file', _.clone(doc))
+      }
       return this.pouch.setLocalSeq(change.seq)
     }
 
-    // FIXME: Acquire lock for as many changes as possible to prevent next huge
-    // remote/local batches to acquite it first
     const [side, sideName] = this.selectSide(doc)
     let stopMeasure = () => {}
     try {
@@ -341,6 +358,9 @@ class Sync {
       // and especially avoid deep nesting levels.
       if (doc.deleted) {
         await eraseDocument(doc, this)
+        if (doc.docType === 'file') {
+          this.events.emit('delete-file', _.clone(doc))
+        }
       } else {
         delete doc.moveFrom
         delete doc.overwrite
@@ -348,7 +368,32 @@ class Sync {
         await this.updateRevs(doc, sideName)
       }
     } catch (err) {
-      await this.handleApplyError(change, sideName, err)
+      // XXX: We process the error directly here because our tests call
+      // `apply()` and some expect `updateErrors` to be called (e.g. when
+      // applying a move with a failing content change).
+      // This means we have to carry the `manualRun` variable down to `apply`
+      // which is not ideal.
+      const syncErr = syncErrors.wrapError(err, sideName, change)
+      log.error(
+        { err: syncErr, change, path: change.doc.path },
+        `Sync error: ${err.message}`
+      )
+      if (manualRun) {
+        await this.updateErrors(change, syncErr)
+      } else {
+        switch (syncErr.code) {
+          case syncErrors.MISSING_PERMISSIONS_CODE:
+          case syncErrors.NO_DISK_SPACE_CODE:
+          case remoteErrors.NO_COZY_SPACE_CODE:
+          case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
+          case remoteErrors.USER_ACTION_REQUIRED_CODE:
+          case remoteErrors.UNREACHABLE_COZY_CODE:
+            this.blockSyncFor(syncErr, change)
+            break
+          default:
+            await this.updateErrors(change, syncErr)
+        }
+      }
     } finally {
       stopMeasure()
     }
@@ -375,7 +420,9 @@ class Sync {
             `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`
           )
           await side.trashAsync(was)
-          this.events.emit('delete-file', _.clone(was))
+          if (was.docType === 'file') {
+            this.events.emit('delete-file', _.clone(was))
+          }
         } else {
           log.debug(
             { path: doc.path, incompatibilities: doc.incompatibilities },
@@ -432,9 +479,12 @@ class Sync {
       }
     } else if (isMarkedForDeletion(doc)) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} deletion`)
-      if (doc.docType === 'file') await side.trashAsync(doc)
-      else await side.deleteFolderAsync(doc)
-      this.events.emit('delete-file', _.clone(doc))
+      if (doc.docType === 'file') {
+        await side.trashAsync(doc)
+        this.events.emit('delete-file', _.clone(doc))
+      } else {
+        await side.deleteFolderAsync(doc)
+      }
     } else if (currentRev === 0) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} addition`)
       await this.doAdd(side, doc)
@@ -528,63 +578,108 @@ class Sync {
     }
   }
 
-  // Make the error explicit (offline, local disk full, quota exceeded, etc.)
-  // and keep track of the number of retries
-  async handleApplyError(
-    change /*: MetadataChange */,
-    sideName /*: SideName */,
-    err /*: * */
+  blockSyncFor(
+    err /*: RemoteError|SyncError */,
+    change /*: ?MetadataChange */
   ) {
-    const { path } = change.doc
-    if (err.code === 'ENOSPC') {
-      log.error({ path, err, change }, 'No more disk space')
-      throw new Error('No more disk space')
-    } else if (err.status === 412) {
-      log.warn({ path, err, change }, 'Sync error 412 needs Merge')
-      change.doc.errors = MAX_SYNC_ATTEMPTS
-      return this.updateErrors(change, sideName)
-    } else if (err.status === 413) {
-      log.error({ path, err, change }, 'Cozy is full')
-      throw new Error('Cozy is full')
-    } else {
-      log.error({ path, err, change }, 'Unknown sync error')
+    this.lifecycle.blockFor(err.code)
+
+    if (err instanceof remoteErrors.RemoteError) {
+      this.remote.watcher.stop()
     }
-    try {
-      await this.diskUsage()
-    } catch (err) {
-      const result = handleCommonCozyErrors(
-        { err, change },
-        { events: this.events, log }
-      )
-      if (result === 'offline') {
-        // The client is offline, wait that it can connect again to the server
-        // eslint-disable-next-line no-constant-condition
-        while (true) {
-          try {
-            await Promise.delay(60000)
-            await this.diskUsage()
+
+    const [retryDelay, checkFn] = syncErrors.checkFn(err, this)
+
+    let checkInterval
+    const check = async () => {
+      this.events.off('user-action-inprogress', check)
+      this.events.off('user-action-skipped', skip)
+
+      if (await checkFn()) {
+        this.lifecycle.unblockFor(err.code)
+        clearInterval(checkInterval)
+
+        if (err instanceof remoteErrors.RemoteError) {
+          this.remote.watcher.start()
+        }
+
+        switch (err.code) {
+          case remoteErrors.UNREACHABLE_COZY_CODE:
             this.events.emit('online')
-            log.warn({ path }, 'Client is online')
-            return
-          } catch (err) {
-            // Client is still offline
-          }
+            break
+          case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
+            break
+          default:
+            this.events.emit('user-action-done', err)
+        }
+      } else {
+        this.events.once('user-action-inprogress', check)
+        this.events.once('user-action-skipped', skip)
+
+        switch (err.code) {
+          case remoteErrors.UNREACHABLE_COZY_CODE:
+            this.events.emit('offline')
+            break
+          case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
+            break
+          default:
+            this.events.emit('user-action-required', err)
         }
       }
     }
-    await this.updateErrors(change, sideName)
+    checkInterval = setInterval(check, retryDelay)
+
+    const skip = async () => {
+      //this.events.off('user-action-inprogress', retry)
+      this.events.off('user-action-inprogress', check)
+      this.events.off('user-action-skipped', skip)
+
+      if (change) {
+        change.doc.errors = MAX_SYNC_ATTEMPTS
+        await this.updateErrors(change, err)
+      }
+
+      this.lifecycle.unblockFor(err.code)
+
+      if (err instanceof remoteErrors.RemoteError) {
+        this.remote.watcher.start()
+      }
+
+      //clearTimeout(retryTimeout)
+      clearInterval(checkInterval)
+
+      // We suppose the error triggered a user-action-required event since skip
+      // is only called when the user skips a user action.
+      this.events.emit('user-action-skipped', err)
+    }
+
+    //this.events.once('user-action-inprogress', retry)
+    this.events.once('user-action-inprogress', check)
+    this.events.once('user-action-skipped', skip)
+
+    switch (err.code) {
+      case remoteErrors.UNREACHABLE_COZY_CODE:
+        this.events.emit('offline')
+        break
+      case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
+        break
+      default:
+        this.events.emit('user-action-required', err)
+    }
   }
 
   // Increment the counter of errors for this document
   async updateErrors(
     change /*: MetadataChange */,
-    sideName /*: SideName */
+    err /*: RemoteError|SyncError */
   ) /*: Promise<void> */ {
     let { doc } = change
     if (!doc.errors) doc.errors = 0
     doc.errors++
 
     // Make sure isUpToDate(sourceSideName, doc) is still true
+    const sideName =
+      err instanceof remoteErrors.RemoteError ? 'remote' : 'local'
     const sourceSideName = otherSide(sideName)
     metadata.markSide(sourceSideName, doc, doc)
 
@@ -679,14 +774,16 @@ class Sync {
         await this.trashWithParentOrByItself(parent, side)
         // Wait long enough that the remote has fetched one changes feed
         // TODO find a way to trigger the changes feed instead of waiting for it
-        await Promise.delay(HEARTBEAT)
+        await Promise.delay(REMOTE_HEARTBEAT)
         return false
       }
     }
 
     log.info(`${doc.path}: should be trashed by itself`)
     await side.trashAsync(doc)
-    this.events.emit('delete-file', _.clone(doc))
+    if (doc.docType === 'file') {
+      this.events.emit('delete-file', _.clone(doc))
+    }
     return true
   }
 }

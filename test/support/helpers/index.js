@@ -19,7 +19,7 @@ const { RemoteTestHelpers } = require('./remote')
 /*::
 import type cozy from 'cozy-client-js'
 import type { Config } from '../../../core/config'
-import type Local from '../../../core/local'
+import type { Local } from '../../../core/local'
 import type { SavedMetadata } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Remote } from '../../../core/remote'
@@ -75,7 +75,7 @@ class TestHelpers {
 
   async syncAll() {
     this._sync.lifecycle.end('start')
-    await this._sync.sync(false)
+    await this._sync.sync({ manualRun: true })
     this._sync.lifecycle.end('stop')
   }
 

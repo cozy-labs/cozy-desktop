@@ -22,7 +22,7 @@ const { migrations } = require('./pouch/migrations')
 const Ignore = require('./ignore')
 const { Merge } = require('./merge')
 const Prep = require('./prep')
-const Local = require('./local')
+const { Local } = require('./local')
 const { Remote } = require('./remote')
 const Sync = require('./sync')
 const SyncState = require('./syncstate')
@@ -35,8 +35,6 @@ const sentry = require('./utils/sentry')
 import type EventEmitter from 'events'
 import type { Config } from './config'
 import type stream from 'stream'
-import type { Callback } from './utils/func'
-import type { SyncMode } from './sync'
 import type { Metadata } from './metadata'
 
 export type ClientInfo = {
