@@ -134,6 +134,7 @@ class RemoteWatcher {
   }
 
   async watch() /*: Promise<?RemoteError> */ {
+    const release = await this.pouch.lock(this)
     try {
       const seq = await this.pouch.getRemoteSeq()
       const { last_seq, docs } = await this.remoteCozy.changes(seq)
@@ -144,25 +145,23 @@ class RemoteWatcher {
         return
       }
 
-      const release = await this.pouch.lock(this)
       this.events.emit('remote-start')
+      await this.pullMany(docs)
 
-      try {
-        let target = -1
-        await this.pullMany(docs)
-        target = (await this.pouch.db.changes({ limit: 1, descending: true }))
-          .last_seq
-        this.events.emit('sync-target', target)
-        await this.pouch.setRemoteSeq(last_seq)
-      } finally {
-        release()
-        this.events.emit('remote-end')
-        log.debug('No more remote changes for now')
-      }
+      let target = -1
+      target = (await this.pouch.db.changes({ limit: 1, descending: true }))
+        .last_seq
+      this.events.emit('sync-target', target)
+
+      await this.pouch.setRemoteSeq(last_seq)
     } catch (err) {
       // TODO: Maybe wrap remote errors more closely to remote calls to avoid
       // wrapping other kinds of errors? PouchDB errors for example.
       return remoteErrors.wrapError(err)
+    } finally {
+      release()
+      this.events.emit('remote-end')
+      log.debug('No more remote changes for now')
     }
   }
 
