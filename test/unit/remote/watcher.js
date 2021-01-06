@@ -123,7 +123,7 @@ describe('RemoteWatcher', function() {
       await this.watcher.start()
       should(this.watcher.resetTimeout).have.been.calledOnce()
       should(this.watcher.running).be.true()
-      should(this.watcher.watchTimeout.hasRef()).be.true()
+      should(this.watcher.watchTimeout._destroyed).be.false()
 
       this.watcher.resetTimeout.restore()
     })
@@ -200,7 +200,7 @@ describe('RemoteWatcher', function() {
       await this.watcher.start()
       this.watcher.stop()
       should(this.watcher.running).be.false()
-      should(this.watcher.watchTimeout.hasRef()).be.false()
+      should(this.watcher.watchTimeout._destroyed).be.true()
     })
 
     it('can be called multiple times', async function() {
@@ -208,7 +208,7 @@ describe('RemoteWatcher', function() {
       this.watcher.stop()
       this.watcher.stop()
       should(this.watcher.running).be.false()
-      should(this.watcher.watchTimeout.hasRef()).be.false()
+      should(this.watcher.watchTimeout._destroyed).be.true()
     })
   })
 
@@ -247,7 +247,7 @@ describe('RemoteWatcher', function() {
       it('schedules another watch timeout', async function() {
         const timeoutID = this.watcher.watchTimeout
         await this.watcher.resetTimeout()
-        should(this.watcher.watchTimeout.hasRef()).be.true()
+        should(this.watcher.watchTimeout._destroyed).be.false()
         should(this.watcher.watchTimeout.ref()).not.eql(timeoutID)
       })
 
@@ -261,7 +261,7 @@ describe('RemoteWatcher', function() {
         it('does not schedule another watch timeout', async function() {
           await this.watcher.resetTimeout()
           should(this.watcher.watch).have.been.calledOnce()
-          should(this.watcher.watchTimeout.hasRef()).be.false()
+          should(this.watcher.watchTimeout._destroyed).be.true()
         })
       })
     })
