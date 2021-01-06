@@ -326,6 +326,9 @@ class Sync {
       return this.pouch.setLocalSeq(change.seq)
     } else if (!metadata.wasSynced(doc) && isMarkedForDeletion(doc)) {
       await eraseDocument(doc, this)
+      if (doc.docType === 'file') {
+        this.events.emit('delete-file', _.clone(doc))
+      }
       return this.pouch.setLocalSeq(change.seq)
     }
 
@@ -355,6 +358,9 @@ class Sync {
       // and especially avoid deep nesting levels.
       if (doc.deleted) {
         await eraseDocument(doc, this)
+        if (doc.docType === 'file') {
+          this.events.emit('delete-file', _.clone(doc))
+        }
       } else {
         delete doc.moveFrom
         delete doc.overwrite
@@ -414,7 +420,9 @@ class Sync {
             `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`
           )
           await side.trashAsync(was)
-          this.events.emit('delete-file', _.clone(was))
+          if (was.docType === 'file') {
+            this.events.emit('delete-file', _.clone(was))
+          }
         } else {
           log.debug(
             { path: doc.path, incompatibilities: doc.incompatibilities },
@@ -471,9 +479,12 @@ class Sync {
       }
     } else if (isMarkedForDeletion(doc)) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} deletion`)
-      if (doc.docType === 'file') await side.trashAsync(doc)
-      else await side.deleteFolderAsync(doc)
-      this.events.emit('delete-file', _.clone(doc))
+      if (doc.docType === 'file') {
+        await side.trashAsync(doc)
+        this.events.emit('delete-file', _.clone(doc))
+      } else {
+        await side.deleteFolderAsync(doc)
+      }
     } else if (currentRev === 0) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} addition`)
       await this.doAdd(side, doc)
@@ -770,7 +781,9 @@ class Sync {
 
     log.info(`${doc.path}: should be trashed by itself`)
     await side.trashAsync(doc)
-    this.events.emit('delete-file', _.clone(doc))
+    if (doc.docType === 'file') {
+      this.events.emit('delete-file', _.clone(doc))
+    }
     return true
   }
 }
