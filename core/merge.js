@@ -315,6 +315,8 @@ class Merge {
               metadata.markSide('remote', file, file)
               return this.pouch.put(file)
             } else {
+              // TODO: should we save the new metadata anyway to make sure we
+              // have up-to-date side infos?
               return
             }
           } else {
@@ -331,6 +333,8 @@ class Merge {
               metadata.markSide('local', file, file)
               return this.pouch.put(file)
             } else {
+              // TODO: should we save the new metadata anyway to make sure we
+              // have up-to-date side infos?
               return
             }
           }
@@ -718,6 +722,7 @@ class Merge {
       return this.pouch.put(was)
     }
     delete was.errors
+
     const newMetadata = _.cloneDeep(was)
     metadata.markSide(side, newMetadata, was)
     newMetadata.trashed = true
@@ -729,6 +734,8 @@ class Merge {
         return
       } catch (err) {
         log.warn({ path: doc.path, err })
+        // Do we really want to save newMetadata in this situation? It will
+        // probably fail as well.
       }
     }
     return this.pouch.put(newMetadata)
@@ -744,14 +751,18 @@ class Merge {
     const was /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(
       trashed.path
     )
-    if (!was || was.deleted) {
+
+    if (!was) {
       log.debug({ path }, 'Nothing to trash')
       return
-    }
-    if (doc.docType !== was.docType) {
-      log.error({ doc, was, sentry: true }, 'Mismatch on doctype for doTrash')
+    } else if (doc.docType !== was.docType) {
+      log.error(
+        { doc, was, sentry: true },
+        'Mismatch on doctype for trashFileAsync'
+      )
       return
     }
+
     if (was.moveFrom) {
       // The file was moved and we don't want to delete it as we think users
       // delete "paths".
@@ -785,14 +796,18 @@ class Merge {
     const was /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(
       trashed.path
     )
-    if (!was || was.deleted) {
+
+    if (!was) {
       log.debug({ path }, 'Nothing to trash')
       return
-    }
-    if (doc.docType !== was.docType) {
-      log.error({ doc, was, sentry: true }, 'Mismatch on doctype for doTrash')
+    } else if (doc.docType !== was.docType) {
+      log.error(
+        { doc, was, sentry: true },
+        'Mismatch on doctype for trashFolderAsync'
+      )
       return
     }
+
     // Don't trash a folder if the other side has added a new file in it (or updated one)
     const children = await this.pouch.byRecursivePath(was.path, {
       descending: true
@@ -803,17 +818,22 @@ class Merge {
         !child.deleted &&
         !metadata.isUpToDate(side, child)
       ) {
-        delete was.trashed
-        delete was.errors
-        if (was.sides) {
-          delete was.sides[side]
+        // The parent folder was deleted on `side` so we remove this part anyway
+        if (was.sides) delete was.sides[side]
+        metadata.markSide(otherSide(side), was, was)
+        if (side === 'local') {
+          delete was.local
         } else {
-          // When "unlinked" from the local side, a folder doesn't have sides
-          // information.
-          was.sides = { target: 1, [otherSide(side)]: 1 }
+          delete was.remote
         }
+        delete was.errors
+        // Remove deletion markers as we want the folder to be recreated on
+        // `side` by Sync.
+        delete was.trashed
+        delete was.deleted
         // TODO: why prevent removing all files that were up-to-date?
-        return this.putFolderAsync(otherSide(side), was)
+        // Does this actually prevent removing the other files??
+        return this.pouch.put(was)
       }
     }
     // Remove in pouchdb the sub-folders
@@ -841,7 +861,12 @@ class Merge {
   async deleteFileAsync(side /*: SideName */, doc /*: SavedMetadata */) {
     log.debug({ path: doc.path }, 'deleteFileAsync')
     const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
-    if (!file || file.deleted) return null
+
+    if (!file) {
+      log.debug({ path }, 'Nothing to delete')
+      return
+    }
+
     if (file.moveFrom) {
       // We don't want Sync to pick up this move hint and try to synchronize a
       // move so we delete it.
@@ -863,7 +888,7 @@ class Merge {
       return this.pouch.put(file)
     } else {
       // It can happen after a conflict
-      return null
+      return
     }
   }
 
@@ -877,17 +902,23 @@ class Merge {
   async deleteFolderAsync(side /*: SideName */, doc /*: SavedMetadata */) {
     log.debug({ path: doc.path }, 'deleteFolderAsync')
     const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
-    if (!folder || folder.deleted) return null
+
+    if (!folder) {
+      log.debug({ path }, 'Nothing to delete')
+      return
+    }
+
     if (folder.moveFrom) {
       // We don't want Sync to pick up this move hint and try to synchronize a
       // move so we delete it.
       delete folder.moveFrom
     }
+
     if (folder.sides && folder.sides[side]) {
       return this.deleteFolderRecursivelyAsync(side, folder)
     } else {
       // It can happen after a conflict
-      return null
+      return
     }
   }
 
@@ -901,7 +932,6 @@ class Merge {
     const docs = await this.pouch.byRecursivePath(folder.path, {
       descending: true
     })
-    docs.push(folder)
     const toPreserve = new Set()
     for (let doc of docs) {
       if (doc.deleted) continue
@@ -927,6 +957,12 @@ class Merge {
         delete doc.errors
       }
     }
+
+    metadata.markSide(side, folder, folder)
+    folder.deleted = true
+    delete folder.errors
+    docs.push(folder)
+
     return this.pouch.bulkDocs(docs)
   }
 

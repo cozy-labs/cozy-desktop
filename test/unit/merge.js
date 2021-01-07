@@ -76,10 +76,11 @@ async function mergeSideEffects(
 }
 
 function increasedSides(sides, sideName, count) {
+  const increasedSide = sides[sideName] + count
   return {
     ...sides,
-    target: sides.target + count,
-    [sideName]: sides[sideName] + count
+    target: increasedSide,
+    [sideName]: increasedSide
   }
 }
 
@@ -3765,7 +3766,6 @@ describe('Merge', function() {
         .metadir()
         .path('trashed-folder')
         .upToDate()
-        .trashed()
         .create()
       await builders
         .metafile()
@@ -3775,6 +3775,7 @@ describe('Merge', function() {
       const doc = await builders
         .metadir(was)
         .path(`.cozy_trash/${was.path}`)
+        .trashed()
         .unmerged(this.side)
         .build()
 
@@ -3795,7 +3796,7 @@ describe('Merge', function() {
                 [otherSide(this.side)]: was.sides[otherSide(this.side)] + 1
               }
             },
-            _.omit(was, ['trashed', '_id', '_rev'])
+            _.omit(was, ['trashed', this.side, '_id', '_rev'])
           )
         ],
         resolvedConflicts: []
@@ -3803,194 +3804,340 @@ describe('Merge', function() {
     })
   })
 
-  describe('deleteFile', () => {
-    it('deletes a file', async function() {
-      const doc = await builders
-        .metafile()
-        .path('FILE')
-        .data('content')
-        .sides({ [this.side]: 1 })
-        .create()
+  describe('deleteFileAsync', () => {
+    context('when a record is found in Pouch', () => {
+      it('deletes a file', async function() {
+        const doc = await builders
+          .metafile()
+          .path('FILE')
+          .data('content')
+          .sides({ [this.side]: 1 })
+          .create()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.deleteFileAsync(this.side, _.cloneDeep(doc))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.deleteFileAsync(this.side, _.cloneDeep(doc))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              sides: increasedSides(doc.sides, this.side, 1),
-              deleted: true
-            },
-            _.omit(doc, ['_id', '_rev'])
-          )
-        ],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: increasedSides(doc.sides, this.side, 1),
+                deleted: true
+              },
+              _.omit(doc, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+
+      it('removes move hints', async function() {
+        const old = await builders
+          .metafile()
+          .path('FILE')
+          .moveTo('MOVED')
+          .data('content')
+          .sides({ [this.side]: 1 })
+          .create()
+        const doc = await builders
+          .metafile()
+          .moveFrom(old)
+          .path('MOVED')
+          .sides({ [this.side]: 2 })
+          .create()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.deleteFileAsync(this.side, _.cloneDeep(doc))
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: increasedSides(doc.sides, this.side, 1),
+                deleted: true
+              },
+              _.omit(doc, ['moveFrom', '_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
-    it('removes move hints', async function() {
-      const old = await builders
-        .metafile()
-        .path('FILE')
-        .moveTo('MOVED')
-        .data('content')
-        .sides({ [this.side]: 1 })
-        .create()
-      const doc = await builders
-        .metafile()
-        .moveFrom(old)
-        .path('MOVED')
-        .sides({ [this.side]: 2 })
-        .create()
+    context('when a trashed record is found in Pouch', () => {
+      it('marks it for deletion and updates sides info', async function() {
+        const was = await builders
+          .metafile()
+          .path('FILE')
+          .trashed()
+          .changedSide(otherSide(this.side))
+          .create()
+        const doc = builders
+          .metafile(was)
+          .unmerged(this.side)
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.deleteFileAsync(this.side, _.cloneDeep(doc))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.deleteFileAsync(this.side, _.cloneDeep(doc))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              sides: increasedSides(doc.sides, this.side, 1),
-              deleted: true
-            },
-            _.omit(doc, ['moveFrom', '_id', '_rev'])
-          )
-        ],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                // We increase the side by 2 since the other side was increased
+                // when `was` was trashed
+                sides: increasedSides(was.sides, this.side, 2),
+                [this.side]: doc[this.side],
+                deleted: true
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when a record marked for deletion is found in Pouch', () => {
+      it('keeps the deletion marker and updates sides info', async function() {
+        const was = await builders
+          .metafile()
+          .path('FILE')
+          .deleted()
+          .changedSide(otherSide(this.side))
+          .create()
+        const doc = builders
+          .metafile(was)
+          .unmerged(this.side)
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.deleteFileAsync(this.side, _.cloneDeep(doc))
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                // We increase the side by 2 since the other side was increased
+                // when `was` was marked for deletion
+                sides: increasedSides(was.sides, this.side, 2),
+                [this.side]: doc[this.side],
+                deleted: true
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
   })
 
-  describe('deleteFolder', function() {
-    it('deletes a folder', async function() {
-      const doc = await builders
-        .metadir()
-        .path('FOLDER')
-        .sides({ [this.side]: 1 })
-        .create()
+  describe('deleteFolderAsync', function() {
+    context('when a record is found in Pouch', () => {
+      it('deletes a folder', async function() {
+        const doc = await builders
+          .metadir()
+          .path('FOLDER')
+          .sides({ [this.side]: 1 })
+          .create()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.deleteFolderAsync(this.side, _.cloneDeep(doc))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.deleteFolderAsync(this.side, _.cloneDeep(doc))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              sides: increasedSides(doc.sides, this.side, 1),
-              deleted: true
-            },
-            _.omit(doc, ['_id', '_rev'])
-          )
-        ],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: increasedSides(doc.sides, this.side, 1),
+                deleted: true
+              },
+              _.omit(doc, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+
+      it('removes nested content', async function() {
+        const doc = await builders
+          .metadir()
+          .path('FOLDER')
+          .sides({ [this.side]: 1 })
+          .create()
+        const subdir = await builders
+          .metafile()
+          .path('FOLDER/DIR')
+          .sides({ [this.side]: 1 })
+          .create()
+        const subsubdir = await builders
+          .metafile()
+          .path('FOLDER/DIR/DIR')
+          .sides({ [this.side]: 1 })
+          .create()
+        const subsubsubfile = await builders
+          .metafile()
+          .path('FOLDER/DIR/DIR/FILE')
+          .sides({ [this.side]: 1 })
+          .data('content')
+          .create()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.deleteFolderAsync(this.side, _.cloneDeep(doc))
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: increasedSides(subsubsubfile.sides, this.side, 1),
+                deleted: true
+              },
+              _.omit(subsubsubfile, ['_id', '_rev'])
+            ),
+            _.defaults(
+              {
+                sides: increasedSides(subsubdir.sides, this.side, 1),
+                deleted: true
+              },
+              _.omit(subsubdir, ['_id', '_rev'])
+            ),
+            _.defaults(
+              {
+                sides: increasedSides(subdir.sides, this.side, 1),
+                deleted: true
+              },
+              _.omit(subdir, ['_id', '_rev'])
+            ),
+            _.defaults(
+              {
+                sides: increasedSides(doc.sides, this.side, 1),
+                deleted: true
+              },
+              _.omit(doc, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+
+      it('removes move hints', async function() {
+        // TODO: make sure we remove the move hints on children. This will be part
+        // of a larger refactoring to make sure folders are trashed with their
+        // hierarchy.
+        const old = await builders
+          .metadir()
+          .path('FOLDER')
+          .moveTo('MOVED')
+          .sides({ [this.side]: 1 })
+          .create()
+        const doc = await builders
+          .metadir()
+          .moveFrom(old)
+          .path('MOVED')
+          .sides({ [this.side]: 1 })
+          .create()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.deleteFolderAsync(this.side, _.cloneDeep(doc))
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: increasedSides(doc.sides, this.side, 1),
+                deleted: true
+              },
+              _.omit(doc, ['moveFrom', '_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
-    it('removes nested content', async function() {
-      const doc = await builders
-        .metadir()
-        .path('FOLDER')
-        .sides({ [this.side]: 1 })
-        .create()
-      const subdir = await builders
-        .metafile()
-        .path('FOLDER/DIR')
-        .sides({ [this.side]: 1 })
-        .create()
-      const subsubdir = await builders
-        .metafile()
-        .path('FOLDER/DIR/DIR')
-        .sides({ [this.side]: 1 })
-        .create()
-      const subsubsubfile = await builders
-        .metafile()
-        .path('FOLDER/DIR/DIR/FILE')
-        .sides({ [this.side]: 1 })
-        .data('content')
-        .create()
+    context('when a trashed record is found in Pouch', () => {
+      it('marks it for deletion and updates sides info', async function() {
+        const was = await builders
+          .metadir()
+          .path('FOLDER')
+          .trashed()
+          .changedSide(otherSide(this.side))
+          .create()
+        const doc = builders
+          .metadir(was)
+          .trashed()
+          .unmerged(this.side)
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.deleteFolderAsync(this.side, _.cloneDeep(doc))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.deleteFolderAsync(this.side, _.cloneDeep(doc))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              sides: increasedSides(subsubsubfile.sides, this.side, 1),
-              deleted: true
-            },
-            _.omit(subsubsubfile, ['_id', '_rev'])
-          ),
-          _.defaults(
-            {
-              sides: increasedSides(subsubdir.sides, this.side, 1),
-              deleted: true
-            },
-            _.omit(subsubdir, ['_id', '_rev'])
-          ),
-          _.defaults(
-            {
-              sides: increasedSides(subdir.sides, this.side, 1),
-              deleted: true
-            },
-            _.omit(subdir, ['_id', '_rev'])
-          ),
-          _.defaults(
-            {
-              sides: increasedSides(doc.sides, this.side, 1),
-              deleted: true
-            },
-            _.omit(doc, ['_id', '_rev'])
-          )
-        ],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                // We increase the side by 2 since the other side was increased
+                // when `was` was trashed
+                sides: increasedSides(was.sides, this.side, 2),
+                [this.side]: doc[this.side],
+                deleted: true
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
-    it('removes move hints', async function() {
-      // TODO: make sure we remove the move hints on children. This will be part
-      // of a larger refactoring to make sure folders are trashed with their
-      // hierarchy.
-      const old = await builders
-        .metadir()
-        .path('FOLDER')
-        .moveTo('MOVED')
-        .sides({ [this.side]: 1 })
-        .create()
-      const doc = await builders
-        .metadir()
-        .moveFrom(old)
-        .path('MOVED')
-        .sides({ [this.side]: 1 })
-        .create()
+    context('when a record marked for deletion is found in Pouch', () => {
+      it('keeps the deletion marker and updates sides info', async function() {
+        const was = await builders
+          .metadir()
+          .path('FOLDER')
+          .deleted()
+          .changedSide(otherSide(this.side))
+          .create()
+        const doc = builders
+          .metadir(was)
+          .trashed()
+          .unmerged(this.side)
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.deleteFolderAsync(this.side, _.cloneDeep(doc))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.deleteFolderAsync(this.side, _.cloneDeep(doc))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              sides: increasedSides(doc.sides, this.side, 1),
-              deleted: true
-            },
-            _.omit(doc, ['moveFrom', '_id', '_rev'])
-          )
-        ],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                // We increase the side by 2 since the other side was increased
+                // when `was` was marked for deletion
+                sides: increasedSides(was.sides, this.side, 2),
+                [this.side]: doc[this.side],
+                deleted: true
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
   })
 
   describe('trashFileAsync', () => {
-    context('when metadata are found in Pouch', () => {
-      it('deletes it with trashed property and up-to-date sides info', async function() {
+    context('when record is found in Pouch', () => {
+      it('marks it for deletion and updates sides info', async function() {
         const was = await builders
           .metafile()
           .upToDate()
@@ -4024,7 +4171,85 @@ describe('Merge', function() {
       })
     })
 
-    context('when metadata are not found in Pouch', () => {
+    context('when a trashed record is found in Pouch', () => {
+      it('marks it for deletion and updates sides info', async function() {
+        const was = await builders
+          .metafile()
+          .trashed()
+          .changedSide(otherSide(this.side))
+          .create()
+        const doc = builders
+          .metafile(was)
+          .trashed()
+          .unmerged(this.side)
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFileAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                // We increase the side by 2 since the other side was increased
+                // when `was` was trashed
+                sides: increasedSides(was.sides, this.side, 2),
+                [this.side]: doc[this.side],
+                deleted: true
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when a record marked for deletion is found in Pouch', () => {
+      it('keeps the deletion marker and updates sides info', async function() {
+        const was = await builders
+          .metafile()
+          .deleted()
+          .changedSide(otherSide(this.side))
+          .create()
+        const doc = builders
+          .metafile(was)
+          .trashed()
+          .unmerged(this.side)
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFileAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                // We increase the side by 2 since the other side was increased
+                // when `was` was marked for deletion
+                sides: increasedSides(was.sides, this.side, 2),
+                [this.side]: doc[this.side],
+                deleted: true
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when no records are found in Pouch', () => {
       it('does nothing', async function() {
         const was = builders.metafile().build()
         const doc = builders
@@ -4048,7 +4273,7 @@ describe('Merge', function() {
       })
     })
 
-    context('when docType does not match', () => {
+    context('when docType of found record does not match', () => {
       it('does nothing', async function() {
         const was = await builders.metafile().create()
         const doc = builders
@@ -4075,8 +4300,8 @@ describe('Merge', function() {
   })
 
   describe('trashFolderAsync', () => {
-    context('when metadata are found in Pouch', () => {
-      it('deletes it with trashed property and up-to-date sides info', async function() {
+    context('when record is found in Pouch', () => {
+      it('marks it for deletion and updates sides info', async function() {
         const was = await builders
           .metadir()
           .upToDate()
@@ -4110,7 +4335,85 @@ describe('Merge', function() {
       })
     })
 
-    context('when metadata are not found in Pouch', () => {
+    context('when a trashed record is found in Pouch', () => {
+      it('marks it for deletion and updates sides info', async function() {
+        const was = await builders
+          .metadir()
+          .trashed()
+          .changedSide(otherSide(this.side))
+          .create()
+        const doc = builders
+          .metadir(was)
+          .trashed()
+          .unmerged(this.side)
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFolderAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                // We increase the side by 2 since the other side was increased
+                // when `was` was trashed
+                sides: increasedSides(was.sides, this.side, 2),
+                [this.side]: doc[this.side],
+                deleted: true
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when a record marked for deletion is found in Pouch', () => {
+      it('keeps the deletion marker and updates sides info', async function() {
+        const was = await builders
+          .metadir()
+          .deleted()
+          .changedSide(otherSide(this.side))
+          .create()
+        const doc = builders
+          .metadir(was)
+          .trashed()
+          .unmerged(this.side)
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFolderAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                // We increase the side by 2 since the other side was increased
+                // when `was` was marked for deletion
+                sides: increasedSides(was.sides, this.side, 2),
+                [this.side]: doc[this.side],
+                deleted: true
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when no records are found in Pouch', () => {
       it('does nothing', async function() {
         const was = builders.metadir().build()
         const doc = builders
@@ -4134,7 +4437,7 @@ describe('Merge', function() {
       })
     })
 
-    context('when docType does not match', () => {
+    context('when docType of found record does not match', () => {
       it('does nothing', async function() {
         const was = await builders.metadir().create()
         const doc = builders
