@@ -129,8 +129,38 @@ class Pouch {
 
   /* Mini ODM */
 
+  /* Catch uncaught exceptions raised by PouchDB when calling `allDocs`.
+   * It seems to happen when the db is corrupt although this is not completely
+   * certain as we could not get known workarounds to work.
+   * See https://github.com/pouchdb/pouchdb/issues/4936
+   *
+   * At least we're raising an error that will be caught by our errors
+   * management and block the app with a "Synchronization impossible" status.
+   */
+  async _allDocs(options) {
+    return new Promise(async (resolve, reject) => {
+      const uncaughtExceptionHandler = async err => {
+        log.error(
+          { err, options },
+          'uncaughtException in _allDocs. PouchDB db might be corrupt.'
+        )
+        reject(err)
+      }
+      process.once('uncaughtException', uncaughtExceptionHandler)
+
+      try {
+        const results = await this.db.allDocs(options)
+        resolve(results)
+      } catch (err) {
+        reject(err)
+      } finally {
+        process.off('uncaughtException', uncaughtExceptionHandler)
+      }
+    })
+  }
+
   async allDocs() /*: Promise<SavedMetadata[]> */ {
-    const results = await this.db.allDocs({ include_docs: true })
+    const results = await this._allDocs({ include_docs: true })
     return Array.from(results.rows)
       .filter(row => !row.key.startsWith('_'))
       .map(row => row.doc)
@@ -138,7 +168,7 @@ class Pouch {
   }
 
   async initialScanDocs() /*: Promise<SavedMetadata[]> */ {
-    const results = await this.db.allDocs({ include_docs: true })
+    const results = await this._allDocs({ include_docs: true })
     return Array.from(results.rows)
       .filter(
         row =>
@@ -528,7 +558,7 @@ class Pouch {
   // changesfeed.
   // Careful: this will change their _rev value!
   async touchDocs(ids /*: string[] */) {
-    const results = await this.db.allDocs({ include_docs: true, keys: ids })
+    const results = await this._allDocs({ include_docs: true, keys: ids })
     return this.bulkDocs(
       Array.from(results.rows)
         .filter(row => row.doc)
