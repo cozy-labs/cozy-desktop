@@ -18,7 +18,9 @@ const {
   loadFSEventFiles,
   loadAtomCaptures,
   runActions,
-  scenarios
+  scenarios,
+  runWithBreakpoints,
+  runWithStoppedClient
 } = require('../support/helpers/scenarios')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -27,8 +29,6 @@ const pouchHelpers = require('../support/helpers/pouch')
 const remoteCaptureHelpers = require('../../dev/capture/remote')
 
 const { platform } = process
-
-const stoppedEnvVar = 'STOPPED_CLIENT'
 
 const logger = require('../../core/utils/logger')
 const log = new logger({ component: 'TEST' })
@@ -63,7 +63,7 @@ describe('Test scenarios', function() {
 
     if (scenario.side === 'remote') {
       it.skip(`test/scenarios/${scenario.name}/local/  (skip remote only test)`, () => {})
-    } else if (process.env[stoppedEnvVar] == null) {
+    } else if (!runWithStoppedClient()) {
       for (let atomCapture of loadAtomCaptures(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/atom/${atomCapture.name}`
         if (config.watcherType() !== 'atom') {
@@ -118,7 +118,7 @@ describe('Test scenarios', function() {
       }
     }
 
-    if (process.env[stoppedEnvVar]) continue
+    if (runWithStoppedClient()) continue
     const remoteTestName = `test/scenarios/${scenario.name}/remote/`
     const remoteTestSkipped = shouldSkipRemote(scenario)
     if (remoteTestSkipped) {
@@ -132,12 +132,12 @@ describe('Test scenarios', function() {
   }
 })
 
-function shouldSkipLocalStopped(scenario, env = process.env) {
+function shouldSkipLocalStopped(scenario) {
   const disabled = disabledScenarioTest(scenario, 'stopped')
   if (disabled) {
     return disabled
-  } else if (env[stoppedEnvVar] == null) {
-    return `${stoppedEnvVar} is not set`
+  } else if (!runWithStoppedClient()) {
+    return `STOPPED_CLIENT is not set`
   }
 }
 
@@ -163,7 +163,7 @@ function injectChokidarBreakpoints(eventsFile) {
     for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
   }
 
-  if (process.env.NO_BREAKPOINTS) breakpoints = [0]
+  if (!runWithBreakpoints()) breakpoints = [0]
   return breakpoints
 }
 
