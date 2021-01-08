@@ -73,9 +73,9 @@ jobs:
       - name: Elm tests
         run: yarn test:elm
       - name: World tests
-        run: yarn test:world
+        run: yarn test:world --forbid-only
       - name: Unit tests
-        run: yarn test:unit
+        run: yarn test:unit --forbid-only
 
   integration:
     runs-on: ubuntu-latest
@@ -118,7 +118,7 @@ jobs:
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
       - name: Integration tests
-        run: yarn test:integration
+        run: yarn test:integration --forbid-only
 
   scenarios:
     runs-on: ubuntu-latest
@@ -167,7 +167,7 @@ jobs:
       - name: Scenarios
         env:
             STOPPED_CLIENT: ${{ matrix.stopped_client == 'STOPPED' }}
-        run: yarn test:scenarios
+        run: yarn test:scenarios --forbid-only
 
   build:
     runs-on: ubuntu-latest
