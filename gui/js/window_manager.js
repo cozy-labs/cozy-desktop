@@ -110,7 +110,8 @@ module.exports = class WindowManager {
     }
     opts.webPreferences = {
       ...opts.webPreferences,
-      nodeIntegration: true
+      nodeIntegration: true,
+      enableRemoteModule: true
     }
     // https://github.com/AppImage/AppImageKit/wiki/Bundling-Electron-apps
     if (process.platform === 'linux') {
@@ -158,8 +159,12 @@ module.exports = class WindowManager {
     // allow per-window visibility.
     if (process.platform === 'darwin' && this.makesAppVisible()) {
       this.app.dock.show()
+      const showTime = Date.now()
       this.win.on('closed', () => {
-        this.app.dock.hide()
+        const hideTime = Date.now()
+        setTimeout(() => {
+          this.app.dock.hide()
+        }, 1000 - (hideTime - showTime))
       })
     }
 
