@@ -35,7 +35,7 @@ export type SyncStatus =
   | 'buffering'
   | 'squashprepmerge'
   | 'offline'
-  | 'sync'
+  | 'syncing'
   | 'uptodate'
   | 'user-action-required'
 */
@@ -126,7 +126,7 @@ module.exports = class SyncState extends EventEmitter {
         : offline
         ? 'offline'
         : syncing
-        ? 'sync'
+        ? 'syncing'
         : buffering
         ? 'buffering'
         : localPrep || remotePrep
