@@ -20,7 +20,7 @@ init =
 fromString : String -> Int -> Status
 fromString str remaining =
     case str of
-        "sync" ->
+        "syncing" ->
             Syncing remaining
 
         "buffering" ->

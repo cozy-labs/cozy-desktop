@@ -309,6 +309,8 @@ const updateState = (newState, data) => {
         translate('Dashboard Synchronization suspended')
       )
     else tray.setStatus('syncing')
+  } else if (newState === 'syncing' && data && data.filename) {
+    tray.setStatus(newState, data.filename)
   } else {
     tray.setStatus(newState, data)
   }
