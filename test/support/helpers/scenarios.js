@@ -73,6 +73,20 @@ const windowsPathFixer = (filename, event) => {
   }
 }
 
+const isTruthyVar = envVar => {
+  return envVar === '1' || envVar === 'true' || envVar === true
+}
+
+module.exports.runWithBreakpoints = () => {
+  const { NO_BREAKPOINTS } = process.env
+  return !isTruthyVar(NO_BREAKPOINTS)
+}
+
+module.exports.runWithStoppedClient = () => {
+  const { STOPPED_CLIENT } = process.env
+  return isTruthyVar(STOPPED_CLIENT)
+}
+
 // TODO: Refactor to function
 module.exports.scenarios = glob
   .sync(path.join(scenariosDir, '**/scenario.js*'), {})

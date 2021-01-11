@@ -1,5 +1,7 @@
 /* @flow */
 
+const { runWithStoppedClient } = require('../../../support/helpers/scenarios')
+
 /*:: import type { Scenario } from '../..' */
 
 module.exports = ({
@@ -36,7 +38,7 @@ module.exports = ({
     // When the overwrite happens while the client is turned off, we won't detect
     // the files' deletion before the folder's movement so we won't trash them
     // by themselves and will thus be trashed as part of the folder hierarchy.
-    trash: process.env.STOPPED_CLIENT
+    trash: runWithStoppedClient()
       ? [
           'dir/',
           'dir/file',
