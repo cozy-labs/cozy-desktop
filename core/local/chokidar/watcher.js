@@ -254,7 +254,7 @@ class LocalWatcher {
           log.warn({ err }, 'Could not fire remaining add events')
         }
       }
-      this.watcher.close()
+      await this.watcher.close()
       this.watcher = null
     }
     if (this._runningResolve) {
