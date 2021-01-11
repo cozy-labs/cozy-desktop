@@ -64,7 +64,7 @@ jobs:
         uses: ./.github/actions/setup-cozy-stack
       - name: Setup local env
         env:
-            COZY_DESKTOP_FS: ${{ matrix.fs }}
+          COZY_DESKTOP_FS: ${{ matrix.fs }}
         run: |
           hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
@@ -75,6 +75,8 @@ jobs:
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
       - name: Unit tests
+        env:
+          COZY_DESKTOP_FS: ${{ matrix.fs }}
         run: yarn test:unit --forbid-only
 
   integration:
@@ -114,7 +116,7 @@ jobs:
         uses: ./.github/actions/setup-cozy-stack
       - name: Setup local env
         env:
-            COZY_DESKTOP_FS: ${{ matrix.fs }}
+          COZY_DESKTOP_FS: ${{ matrix.fs }}
         run: |
           hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
@@ -125,6 +127,8 @@ jobs:
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
       - name: Integration tests
+        env:
+          COZY_DESKTOP_FS: ${{ matrix.fs }}
         run: yarn test:integration --forbid-only
 
   scenarios:
@@ -165,7 +169,7 @@ jobs:
         uses: ./.github/actions/setup-cozy-stack
       - name: Setup local env
         env:
-            COZY_DESKTOP_FS: ${{ matrix.fs }}
+          COZY_DESKTOP_FS: ${{ matrix.fs }}
         run: |
           hdiutil create -megabytes 100 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
@@ -177,7 +181,8 @@ jobs:
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
       - name: Scenarios
         env:
-            STOPPED_CLIENT: ${{ matrix.stopped_client == 'STOPPED' }}
+          STOPPED_CLIENT: ${{ matrix.stopped_client == 'STOPPED' }}
+          COZY_DESKTOP_FS: ${{ matrix.fs }}
         run: yarn test:scenarios --forbid-only
 
   build:
