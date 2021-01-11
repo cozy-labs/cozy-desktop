@@ -124,8 +124,9 @@ const runAndRecordChokidarEvents = scenario => {
     const watcher = chokidar.watch('.', chokidarOptions)
     const cleanCallback = cb =>
       function() {
-        watcher.close()
-        cb.apply(null, arguments)
+        watcher
+          .close()
+          .then(cb.apply(null, arguments), cb.apply(null, arguments))
       }
     resolve = cleanCallback(resolve)
     reject = cleanCallback(reject)

@@ -91,7 +91,7 @@
     "bunyan": "^2.0.2",
     "chai": "^4.2.0",
     "chai-like": "^1.1.1",
-    "chokidar": "^3.2.2",
+    "chokidar": "^3.5.0",
     "cozy-client": "^14.6.0",
     "cozy-client-js": "^0.17.4",
     "cozy-stack-client": "^14.1.2",
@@ -167,7 +167,6 @@
     "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git"
   },
   "resolutions": {
-    "chokidar": "3.2.2",
     "dtrace-provider": "0.8.8",
     "nan": "2.14.0",
     "node-abi": "2.19.3"
