@@ -14,6 +14,7 @@ module.exports = ({
   ],
   actions: [
     { type: 'mv', src: 'a', dst: 'b' },
+    { type: 'wait', ms: 500 },
     { type: 'mkdir', path: 'a' },
     { type: 'create_file', path: 'a/file.txt', content: 'new file content' },
     { type: 'mkdir', path: 'a/subdir' },

@@ -1,46 +1,6 @@
 [
   {
-    "breakpoints": [0, 1, 2, 3, 4, 6]
-  },
-  {
-    "type": "addDir",
-    "path": "src",
-    "stats": {
-      "ino": 3,
-      "size": 64,
-      "mtime": "2020-05-07T11:39:01.103Z",
-      "ctime": "2020-05-07T11:39:01.103Z"
-    }
-  },
-  {
-    "type": "addDir",
-    "path": "dst1",
-    "stats": {
-      "ino": 1,
-      "size": 96,
-      "mtime": "2020-05-07T11:39:01.103Z",
-      "ctime": "2020-05-07T11:39:01.103Z"
-    }
-  },
-  {
-    "type": "addDir",
-    "path": "dst2",
-    "stats": {
-      "ino": 2,
-      "size": 64,
-      "mtime": "2020-05-07T11:39:01.097Z",
-      "ctime": "2020-05-07T11:39:01.097Z"
-    }
-  },
-  {
-    "type": "addDir",
-    "path": "src",
-    "stats": {
-      "ino": 3,
-      "size": 64,
-      "mtime": "2020-05-07T11:39:01.103Z",
-      "ctime": "2020-05-07T11:39:01.103Z"
-    }
+    "breakpoints": [0, 2]
   },
   {
     "type": "unlink",
