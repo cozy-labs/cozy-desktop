@@ -91,7 +91,7 @@ class LocalWatcher {
     autoBind(this)
 
     // TODO: Read from config
-    const timeoutInMs = process.env.NODE_ENV === 'test' ? 1000 : 10000
+    const timeoutInMs = process.env.NODE_ENV === 'test' ? 2000 : 10000
     this.buffer = new LocalEventBuffer(timeoutInMs, async rawEvents => {
       try {
         await this.onFlush(rawEvents)
@@ -242,6 +242,7 @@ class LocalWatcher {
   }
 
   async stop(force /*: ?bool */) {
+    log.debug('Stopping watcher...')
     if (this.watcher) {
       // XXX manually fire events for added file, because chokidar will cancel
       // them if they are still in the awaitWriteFinish period

@@ -4,11 +4,11 @@
   },
   {
     "type": "unlinkDir",
-    "path": "parent/src/dir/empty-subdir"
+    "path": "parent/src/dir/subdir"
   },
   {
     "type": "unlinkDir",
-    "path": "parent/src/dir/subdir"
+    "path": "parent/src/dir/empty-subdir"
   },
   {
     "type": "unlinkDir",
@@ -20,8 +20,8 @@
     "stats": {
       "ino": 5,
       "size": 96,
-      "mtime": "2020-05-07T11:39:14.016Z",
-      "ctime": "2020-05-07T11:39:14.016Z"
+      "mtime": "2021-01-11T14:13:24.244Z",
+      "ctime": "2021-01-11T14:13:24.244Z"
     }
   },
   {
@@ -30,8 +30,8 @@
     "stats": {
       "ino": 7,
       "size": 96,
-      "mtime": "2020-05-07T11:39:14.004Z",
-      "ctime": "2020-05-07T11:39:14.016Z"
+      "mtime": "2021-01-11T14:13:24.234Z",
+      "ctime": "2021-01-11T14:13:24.244Z"
     }
   },
   {
@@ -40,8 +40,8 @@
     "stats": {
       "ino": 6,
       "size": 64,
-      "mtime": "2020-05-07T11:39:14.003Z",
-      "ctime": "2020-05-07T11:39:14.003Z"
+      "mtime": "2021-01-11T14:13:24.233Z",
+      "ctime": "2021-01-11T14:13:24.233Z"
     }
   },
   {
@@ -54,8 +54,8 @@
     "stats": {
       "ino": 8,
       "size": 8,
-      "mtime": "2020-05-07T11:39:14.005Z",
-      "ctime": "2020-05-07T11:39:14.005Z"
+      "mtime": "2021-01-11T14:13:24.235Z",
+      "ctime": "2021-01-11T14:13:24.235Z"
     }
   }
 ]

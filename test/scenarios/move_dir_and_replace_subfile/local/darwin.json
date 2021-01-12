@@ -1,40 +1,12 @@
 [
   {
-    "type": "unlinkDir",
-    "path": "src"
-  },
-  {
-    "type": "addDir",
-    "path": "dst",
-    "stats": {
-      "ino": 1,
-      "size": 96,
-      "mtime": "2020-05-07T11:38:27.105Z",
-      "ctime": "2020-05-07T11:38:27.109Z"
-    }
-  },
-  {
-    "type": "unlink",
-    "path": "src/file"
-  },
-  {
     "type": "add",
     "path": "dst/file",
     "stats": {
-      "ino": 2,
-      "size": 15,
-      "mtime": "2020-05-07T11:38:27.105Z",
-      "ctime": "2020-05-07T11:38:27.105Z"
-    }
-  },
-  {
-    "type": "change",
-    "path": "dst/file",
-    "stats": {
-      "ino": 1224693,
+      "ino": 4303456,
       "size": 11,
-      "mtime": "2020-05-07T11:38:28.613Z",
-      "ctime": "2020-05-07T11:38:28.614Z"
+      "mtime": "2021-01-11T14:12:35.534Z",
+      "ctime": "2021-01-11T14:12:35.536Z"
     }
   }
 ]
