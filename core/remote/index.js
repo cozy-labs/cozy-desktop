@@ -171,7 +171,7 @@ class Remote /*:: implements Reader, Writer */ {
     old /*: ?SavedMetadata */
   ) /*: Promise<void> */ {
     if (old && isNote(old)) {
-      log.error(
+      log.warn(
         { path: doc.path, doc, old },
         'Local note updates should not be propagated'
       )

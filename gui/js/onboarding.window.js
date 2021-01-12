@@ -76,12 +76,17 @@ module.exports = class OnboardingWM extends WindowManager {
       this.oauthView.webContents.on(
         'did-fail-load',
         (event, errorCode, errorDescription, url, isMainFrame) => {
-          this.log.error({ errorCode, url, isMainFrame }, errorDescription)
+          const err = new Error(errorDescription)
+          err.code = errorCode
+          this.log.error(
+            { err, url, isMainFrame, sentry: true },
+            'failed loading OAuth view'
+          )
         }
       )
       this.oauthView.webContents.loadURL(url)
     } catch (err) {
-      log.error(err)
+      log.error({ err, sentry: true }, 'failed loading OAuth view')
     }
   }
 
@@ -164,7 +169,7 @@ module.exports = class OnboardingWM extends WindowManager {
         }
       },
       err => {
-        log.error(err)
+        log.warn({ err, cozyUrl }, 'failed registering device with remote Cozy')
         if (err.code && err.code.match(/PROXY/)) {
           syncSession.resolveProxy(cozyUrl, p => {
             event.sender.send(
@@ -210,7 +215,7 @@ module.exports = class OnboardingWM extends WindowManager {
     }
     let desktop = this.desktop
     if (!desktop.config.isValid()) {
-      log.error('No client!')
+      log.warn('Cannot start desktop client. No valid config found!')
       return
     }
     try {
@@ -218,11 +223,11 @@ module.exports = class OnboardingWM extends WindowManager {
       try {
         addFileManagerShortcut(desktop.config)
       } catch (err) {
-        log.error(err)
+        log.warn({ err }, 'failed adding shortcuts in file manager')
       }
       this.afterOnboarding()
     } catch (err) {
-      log.error(err)
+      log.warn({ err }, 'failed starting sync')
       event.sender.send('folder-error', translate('Error Invalid path'))
     }
   }

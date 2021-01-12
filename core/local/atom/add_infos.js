@@ -47,7 +47,7 @@ function loop(
     const batch = []
     for (const event of events) {
       if (event.kind === 'symlink') {
-        log.error({ event }, 'Symlinks are not supported')
+        log.warn({ event }, 'Symlinks are not supported')
         // TODO display an error in the UI
         continue
       }

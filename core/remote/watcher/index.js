@@ -81,7 +81,7 @@ class RemoteWatcher {
   }
 
   error(err /*: RemoteError */) {
-    log.error({ err }, `Remote watcher error: ${err.message}`)
+    log.warn({ err }, `Remote watcher error: ${err.message}`)
     this.events.emit('RemoteWatcher:error', err)
   }
 
@@ -90,7 +90,7 @@ class RemoteWatcher {
   }
 
   fatal(err /*: Error */) {
-    log.error({ err }, `Remote watcher fatal: ${err.message}`)
+    log.error({ err, sentry: true }, `Remote watcher fatal: ${err.message}`)
     this.events.emit('RemoteWatcher:fatal', err)
     this.stop()
   }

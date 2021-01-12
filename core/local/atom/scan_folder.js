@@ -37,7 +37,7 @@ function loop(
       }
       if (event.action === 'created' && event.kind === 'directory') {
         opts.scan(event.path).catch(err => {
-          log.error({ err, event }, 'Error on scan')
+          log.warn({ err, event }, 'Error on folder scan')
         })
       }
     }

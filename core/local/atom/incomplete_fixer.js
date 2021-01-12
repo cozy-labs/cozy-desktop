@@ -306,7 +306,7 @@ function step(
             state.incompletes.splice(i, 1)
           }
         } catch (err) {
-          log.error(
+          log.warn(
             { err, event, item },
             'Error while rebuilding incomplete event'
           )

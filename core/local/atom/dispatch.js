@@ -69,7 +69,7 @@ function step(opts /*: DispatchOptions */) {
       try {
         await dispatchEvent(event, opts)
       } catch (err) {
-        log.error({ err, event })
+        log.warn({ err, event }, 'could not dispatch local event')
       } finally {
         if (process.platform === 'win32') {
           winDetectMove.forget(event, opts.state)

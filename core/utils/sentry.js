@@ -102,8 +102,8 @@ const handleBunyanMessage = msg => {
 
   if (!isSentryConfigured) return
 
-  // Send messages explicitly marked for sentry and all errors
-  if (msg.sentry || msg.err) {
+  // Send messages explicitly marked for sentry and all TypeError instances
+  if (msg.sentry || (msg.err && msg.err.name === 'TypeError')) {
     const extra = _.omit(msg, [
       'err',
       'tags',

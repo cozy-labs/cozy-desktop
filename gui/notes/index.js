@@ -82,20 +82,21 @@ const openNote = async (
     log.info({ noteURL }, 'computed url')
     shell.openExternal(noteURL)
   } catch (err) {
-    log.error({ err, path: filePath }, 'could not open note')
-
     if (err.name === 'FetchError') {
       if (err.status === 403 || err.status === 404) {
+        log.warn({ err, path: filePath }, 'could not find remote Note')
         throw new CozyDocumentMissingError({
           cozyURL: desktop.config.cozyUrl,
           doc: { name: path.basename(filePath) }
         })
       } else {
+        log.warn({ err, path: filePath }, 'could not reach remote Cozy')
         throw new UnreachableError({
           cozyURL: desktop.config.cozyUrl
         })
       }
     } else {
+      log.error({ err, path: filePath, sentry: true }, 'could not open note')
       throw err
     }
   }

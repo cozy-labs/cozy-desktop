@@ -490,7 +490,7 @@ class Local /*:: implements Reader, Writer */ {
     try {
       return await diskUsage.check(this.syncPath)
     } catch (err) {
-      log.error({ err }, 'Could not get local available disk space')
+      log.warn({ err }, 'Could not get local available disk space')
       return { available: 0, total: 0 }
     }
   }

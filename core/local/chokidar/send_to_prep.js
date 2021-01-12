@@ -44,7 +44,7 @@ const onAddFile = (
   { path: filePath, stats, md5sum } /*: LocalFileAddition */,
   prep /*: Prep */
 ) => {
-  const logError = err => log.error({ err, path: filePath })
+  const logError = err => log.warn({ err, path: filePath })
   const doc = metadata.buildFile(filePath, stats, md5sum)
   log.info({ path: filePath }, 'FileAddition')
   return prep.addFileAsync(SIDE, doc).catch(logError)
@@ -54,7 +54,7 @@ const onMoveFile = async (
   { path: filePath, stats, md5sum, old, overwrite } /*: LocalFileMove */,
   prep /*: Prep */
 ) => {
-  const logError = err => log.error({ err, path: filePath })
+  const logError = err => log.warn({ err, path: filePath })
   const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
   if (overwrite) doc.overwrite = overwrite
   log.info({ path: filePath, oldpath: old.path }, 'FileMove')
@@ -65,7 +65,7 @@ const onMoveFolder = (
   { path: folderPath, stats, old, overwrite } /*: LocalDirMove */,
   prep /*: Prep */
 ) => {
-  const logError = err => log.error({ err, path: folderPath })
+  const logError = err => log.warn({ err, path: folderPath })
   const doc = metadata.buildDir(folderPath, stats, old.remote)
   // $FlowFixMe we set doc.overwrite to true, it will be replaced by metadata in merge
   if (overwrite) doc.overwrite = overwrite
@@ -82,7 +82,7 @@ const onAddDir = (
   log.info({ path: folderPath }, 'DirAddition')
   return prep
     .putFolderAsync(SIDE, doc)
-    .catch(err => log.error({ err, path: folderPath }))
+    .catch(err => log.warn({ err, path: folderPath }))
 }
 
 /** File deletion detected
@@ -97,7 +97,7 @@ const onUnlinkFile = (
   log.info({ path: filePath }, 'FileDeletion')
   return prep
     .trashFileAsync(SIDE, { path: filePath })
-    .catch(err => log.error({ err, path: filePath }))
+    .catch(err => log.warn({ err, path: filePath }))
 }
 
 /** Folder deletion detected
@@ -112,7 +112,7 @@ const onUnlinkDir = (
   log.info({ path: folderPath }, 'DirDeletion')
   return prep
     .trashFolderAsync(SIDE, { path: folderPath })
-    .catch(err => log.error({ err, path: folderPath }))
+    .catch(err => log.warn({ err, path: folderPath }))
 }
 
 /** File update detected */
@@ -170,7 +170,7 @@ const step = async (
           throw new Error('wrong changes')
       }
     } catch (err) {
-      log.error({ path: c.path, err })
+      log.warn({ path: c.path, err })
       errors.push(err)
     }
   }

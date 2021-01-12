@@ -178,16 +178,22 @@ class App {
       log.info(`Device ${registered.deviceName} has been added to ${cozyUrl}`)
       this.saveConfig(cozyUrl, syncPath)
     } catch (err) {
-      log.error('An error occured while registering your device.')
       let parsed /*: Object */ = this.parseCozyUrl(cozyUrl)
       if (err === 'Bad credentials') {
-        log.warn(err)
-        log.warn('Are you sure there are no typo on the passphrase?')
+        log.warn(
+          { err },
+          'The Cozy passphrase used for registration is incorrect'
+        )
       } else if (err.code === 'ENOTFOUND') {
-        log.warn(`The DNS resolution for ${parsed.hostname} failed.`)
-        log.warn('Are you sure the domain is OK?')
+        log.warn(
+          { err },
+          `The DNS resolution for ${parsed.hostname} failed while registering the device.`
+        )
       } else {
-        log.error(err)
+        log.error(
+          { err, sentry: true },
+          'An error occured while registering the device.'
+        )
         if (parsed.protocol === 'http:') {
           log.warn('Did you try with an httpS URL?')
         }
@@ -207,8 +213,10 @@ class App {
       log.info('Current device properly removed from remote cozy.')
       return null
     } catch (err) {
-      log.error('An error occured while unregistering your device.')
-      log.error(err)
+      log.error(
+        { err, sentry: true },
+        'An error occured while unregistering the device.'
+      )
       return err
     }
   }
@@ -269,7 +277,7 @@ class App {
     try {
       pouchdbTree = await this.pouch.localTree()
     } catch (err) {
-      log.error({ err }, 'FAILED TO FETCH LOCAL TREE')
+      log.error({ err, sentry: true }, 'FAILED TO FETCH LOCAL TREE')
     }
 
     const logsSent = Promise.all([
@@ -282,7 +290,7 @@ class App {
           )
         : Promise.resolve()
     ]).catch(err => {
-      log.error({ err }, 'FAILED TO SEND LOGS')
+      log.error({ err, sentry: true }, 'FAILED TO SEND LOGS')
     })
 
     content =
@@ -355,7 +363,7 @@ class App {
         this.config.version = clientInfo.appVersion
       } catch (err) {
         log.error(
-          { err, clientInfo },
+          { err, clientInfo, sentry: true },
           'could not update config version after app update'
         )
         wasUpdated = false
@@ -372,7 +380,7 @@ class App {
         this.remote.update()
       } catch (err) {
         log.error(
-          { err, config: this.config },
+          { err, config: this.config, sentry: true },
           'could not update OAuth client after app update'
         )
       }

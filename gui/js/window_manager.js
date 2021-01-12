@@ -36,7 +36,7 @@ module.exports = class WindowManager {
         _.get(event, 'sender.browserWindowOptions.title') ===
         this.windowOptions().title
       ) {
-        this.log.error({ err }, err.message)
+        this.log.error({ err, sentry: true }, err.message)
       }
     })
   }
@@ -98,7 +98,7 @@ module.exports = class WindowManager {
       this.win.setSize(wantedWidth, wantedHeight, true)
       this.win.center()
     } catch (err) {
-      log.error({ err, wantedWidth, wantedHeight }, 'Fail to centerOnScreen')
+      log.warn({ err, wantedWidth, wantedHeight }, 'Failed to centerOnScreen')
     }
   }
 
@@ -131,7 +131,12 @@ module.exports = class WindowManager {
     this.win.webContents.on(
       'did-fail-load',
       (event, errorCode, errorDescription, url, isMainFrame) => {
-        this.log.error({ errorCode, url, isMainFrame }, errorDescription)
+        const err = new Error(errorDescription)
+        err.code = errorCode
+        this.log.error(
+          { err, url, isMainFrame, sentry: true },
+          'failed loading window content'
+        )
       }
     )
     this.centerOnScreen(opts.width, opts.height)
@@ -184,7 +189,7 @@ module.exports = class WindowManager {
           }, ELMSTARTUP)
         })
       }
-    }).catch(err => log.error(err))
+    }).catch(err => log.error({ err, sentry: true }, 'failed showing window'))
 
     this.win.loadURL(`file://${opts.indexPath}${this.hash()}`)
 

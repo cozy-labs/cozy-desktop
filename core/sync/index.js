@@ -189,7 +189,7 @@ class Sync {
   }
 
   fatal(err /*: Error */) {
-    log.error({ err }, `Sync fatal: ${err.message}`)
+    log.error({ err, sentry: true }, `Sync fatal: ${err.message}`)
     this.events.emit('Sync:fatal', err)
     return this.stop()
   }
@@ -374,7 +374,7 @@ class Sync {
       // This means we have to carry the `manualRun` variable down to `apply`
       // which is not ideal.
       const syncErr = syncErrors.wrapError(err, sideName, change)
-      log.error(
+      log.warn(
         { err: syncErr, change, path: change.doc.path },
         `Sync error: ${err.message}`
       )
@@ -630,9 +630,10 @@ class Sync {
     checkInterval = setInterval(check, retryDelay)
 
     const skip = async () => {
-      //this.events.off('user-action-inprogress', retry)
       this.events.off('user-action-inprogress', check)
       this.events.off('user-action-skipped', skip)
+
+      log.debug({ err, change }, 'user skipped required action')
 
       if (change) {
         change.doc.errors = MAX_SYNC_ATTEMPTS
@@ -686,7 +687,12 @@ class Sync {
     // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
     if (doc.errors && doc.errors >= MAX_SYNC_ATTEMPTS) {
       log.error(
-        { path: doc.path, oldpath: _.get(change, 'was.path') },
+        {
+          err,
+          path: doc.path,
+          oldpath: _.get(change, 'was.path'),
+          sentry: true
+        },
         `Failed to sync ${MAX_SYNC_ATTEMPTS} times. Giving up.`
       )
       // TODO: We should probably mark every change in error was synced before

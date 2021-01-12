@@ -27,7 +27,7 @@ async function hideOnWindows(path /*: string */) /*: Promise<void> */ {
   try {
     await childProcess.execAsync(`attrib +h "${path}"`)
   } catch (err) {
-    log.error(err)
+    log.warn(err)
   }
 }
 
