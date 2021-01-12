@@ -174,7 +174,7 @@ function analyseEvents(
       changesFound.put(result) // A new change was found
     } catch (err) {
       const sentry = err.name === 'InvalidLocalMoveEvent'
-      log.error({ err, path: e.path, sentry })
+      log.error({ err, path: e.path, sentry }, 'Invalid local move event')
       throw err
     }
   }

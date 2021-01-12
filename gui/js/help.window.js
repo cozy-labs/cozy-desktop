@@ -28,7 +28,7 @@ module.exports = class TrayWM extends WindowManager {
             event.sender.send('mail-sent')
           },
           err => {
-            log.error({ err })
+            log.error({ err, sentry: true }, 'failed sending mail to support')
             event.sender.send('mail-sent', {
               message: 'Help An error occured while sending your email'
             })

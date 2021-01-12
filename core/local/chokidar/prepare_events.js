@@ -113,7 +113,7 @@ const step = async (
               )
               e2.wip = true
             } else {
-              log.error({ path: e.path, err }, 'Checksum failed')
+              log.error({ path: e.path, err, sentry: true }, 'Checksum failed')
               return null
             }
           }

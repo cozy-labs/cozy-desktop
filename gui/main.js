@@ -43,7 +43,9 @@ if (process.platform === 'win32') app.setAppUserModelId('io.cozy.desktop')
 const log = Desktop.logger({
   component: 'GUI'
 })
-process.on('uncaughtException', err => log.error(err))
+process.on('uncaughtException', err =>
+  log.error({ err, sentry: true }, 'uncaught exception')
+)
 
 const mainInstance = app.requestSingleInstanceLock()
 if (!mainInstance && !process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
@@ -90,15 +92,12 @@ const setupDesktop = async () => {
     if (process.platform === 'win32') {
       winRegistry.removeOldUninstallKey().catch(err => {
         if (err instanceof winRegistry.RegeditError) {
-          log.error(
-            { err, sentry: true },
-            'Failed to remove uninstall registry key'
-          )
+          log.warn({ err }, 'Failed to remove uninstall registry key')
         }
       })
     }
   } catch (err) {
-    log.fatal({ err }, 'Could not setup app')
+    log.fatal({ err, sentry: true }, 'Could not setup app')
 
     desktopIsKO(err)
 
@@ -181,7 +180,9 @@ const showInvalidConfigError = () => {
     desktop
       .removeConfig()
       .then(() => log.info('removed'))
-      .catch(err => log.error(err))
+      .catch(err =>
+        log.error({ err, sentry: true }, 'failed disconnecting client')
+      )
   } else {
     helpWindow = new HelpWM(app, desktop)
     helpWindow.show()
@@ -237,7 +238,9 @@ const sendErrorToMainWindow = msg => {
         .then(() => desktop.removeConfig())
         .then(() => log.info('removed'))
         .then(() => trayWindow.doRestart())
-        .catch(err => log.error(err))
+        .catch(err =>
+          log.error({ err, sentry: true }, 'failed disconnecting client')
+        )
     } else {
       app.quit()
     }
@@ -265,7 +268,9 @@ const sendErrorToMainWindow = msg => {
       .then(() => desktop.config.persist())
       .then(() => log.info('removed'))
       .then(() => trayWindow.doRestart())
-      .catch(err => log.error(err))
+      .catch(err =>
+        log.error({ err, sentry: true }, 'failed disconnecting client')
+      )
     return // no notification
   } else if (msg === SYNC_DIR_EMPTY_MESSAGE) {
     trayWindow.send('sync-error', translate('SyncDirEmpty Title'))
@@ -277,7 +282,9 @@ const sendErrorToMainWindow = msg => {
       buttons: [translate('AppMenu Close')]
     }
     dialog.showMessageBoxSync(null, options)
-    desktop.stopSync().catch(err => log.error(err))
+    desktop
+      .stopSync()
+      .catch(err => log.error({ err, sentry: true }, 'failed stopping sync'))
     return // no notification
   } else {
     msg = translate('Dashboard Synchronization impossible')
@@ -379,7 +386,7 @@ const sendDiskUsage = () => {
         }
         trayWindow.send('disk-space', space)
       },
-      err => log.error(err)
+      err => log.warn({ err }, 'could not get remote disk usage')
     )
   }
 }
@@ -477,7 +484,7 @@ const openNote = async filePath => {
       return true
     } catch (err) {
       log.error(
-        { err, path: filePath, filePath },
+        { err, path: filePath, filePath, sentry: true },
         'Could not display markdown content of note'
       )
 

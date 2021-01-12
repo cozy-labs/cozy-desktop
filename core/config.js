@@ -230,7 +230,7 @@ function loadOrDeleteFile(configPath /*: string */) /*: FileConfig */ {
     return JSON.parse(content)
   } catch (e) {
     if (e instanceof SyntaxError) {
-      log.error(`Could not read config file at ${configPath}:`, e)
+      log.error({ err: e }, `Could not read config file at ${configPath}`)
       fse.unlinkSync(configPath)
       return {}
     } else {

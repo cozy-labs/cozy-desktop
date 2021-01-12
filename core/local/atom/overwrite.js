@@ -169,7 +169,7 @@ const loop = (channel /*: Channel */, opts /*: OverwriteOptions */) => {
   const out = new Channel()
 
   _loop(channel, out, opts).catch(err => {
-    log.error({ err })
+    log.warn({ err })
   })
 
   return out

@@ -96,7 +96,7 @@ class LocalWatcher {
       try {
         await this.onFlush(rawEvents)
       } catch (err) {
-        log.error({ err }, 'onFlushError')
+        log.error({ err, sentry: true }, 'fatal chokidar watcher error')
         this._runningReject && this._runningReject(err)
       }
     })
@@ -177,11 +177,12 @@ class LocalWatcher {
         .on('error', err => {
           if (err.message === 'watch ENOSPC') {
             log.error(
+              { err, sentry: true },
               'Sorry, the kernel is out of inotify watches! ' +
                 'See doc/usage/inotify.md for how to solve this issue.'
             )
           } else {
-            log.error({ err })
+            log.error({ err, sentry: true }, 'could not start chokidar watcher')
           }
         })
 

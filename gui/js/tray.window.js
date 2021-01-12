@@ -149,7 +149,7 @@ module.exports = class TrayWM extends WindowManager {
       this.win.setBounds(popover.newBounds)
       log.trace({ popover }, 'placeWithTray ok')
     } catch (err) {
-      log.error({ err, popover }, 'Fail to placeWithTray')
+      log.warn({ err, popover }, 'Fail to placeWithTray')
       this.centerOnScreen(wantedWidth, wantedHeight)
     }
   }
@@ -176,7 +176,7 @@ module.exports = class TrayWM extends WindowManager {
       'go-to-cozy': () => shell.openExternal(this.desktop.config.cozyUrl),
       'go-to-folder': () =>
         shell.openPath(this.desktop.config.syncPath).catch(err => {
-          log.error({ err }, 'Could not open sync folder')
+          log.error({ err, sentry: true }, 'Could not open sync folder')
         }),
       'auto-launcher': (event, enabled) => autoLaunch.setEnabled(enabled),
       'close-app': () => {
@@ -187,7 +187,7 @@ module.exports = class TrayWM extends WindowManager {
       'unlink-cozy': this.onUnlink,
       'manual-start-sync': () =>
         this.desktop.sync.forceSync().catch(err => {
-          if (err) log.error({ err }, 'Could not run manual sync')
+          if (err) log.error({ err, sentry: true }, 'Could not run manual sync')
         }),
       userActionInProgress: (event, action) => {
         this.desktop.events.emit('user-action-inprogress', action)
@@ -207,7 +207,7 @@ module.exports = class TrayWM extends WindowManager {
 
   onUnlink() {
     if (!this.desktop.config.isValid()) {
-      log.error('No client!')
+      log.warn('Could not unlink remote Cozy. No valid config found!')
       return
     }
     const options = {
@@ -229,7 +229,9 @@ module.exports = class TrayWM extends WindowManager {
       .then(() => this.desktop.removeRemote())
       .then(() => log.info('remote removed'))
       .then(() => this.doRestart())
-      .catch(err => log.error(err))
+      .catch(err =>
+        log.error({ err, sentry: true }, 'failed disconnecting client')
+      )
   }
 
   doRestart() {

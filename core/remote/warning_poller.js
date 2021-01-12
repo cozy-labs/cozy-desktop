@@ -85,7 +85,7 @@ class RemoteWarningPoller {
         this.events.emit('user-action-required', err)
       }
     } catch (err) {
-      log.error({ err })
+      log.warn({ err }, 'could not fetch remote warnings')
     } finally {
       this.polling = null
       this.scheduleNext(shiftTicks(this.ticks))

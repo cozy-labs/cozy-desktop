@@ -286,7 +286,7 @@ function loop(
     out.push(batch)
   }
   winDetectMove(channel, output, opts).catch(err => {
-    log.error({ err })
+    log.warn({ err })
   })
   return out
 }

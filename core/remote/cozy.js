@@ -298,7 +298,7 @@ class RemoteCozy {
 
         if (parent.error || parent.doc == null || parent.doc.path == null) {
           log.error(
-            { remoteDoc, parent },
+            { err: parent.error, remoteDoc, parent, sentry: true },
             'Could not compute doc path from parent'
           )
           continue

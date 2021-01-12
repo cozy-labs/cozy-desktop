@@ -118,7 +118,7 @@ class Pouch {
       if (result.type === MIGRATION_RESULT_FAILED) {
         // Error in case of second failure
         const err = new MigrationFailedError(migration, result.errors)
-        log.fatal({ err }, migrationLog(migration, result))
+        log.fatal({ err, sentry: true }, migrationLog(migration, result))
         throw err
       } else {
         log.info(migrationLog(migration, result))
@@ -141,7 +141,7 @@ class Pouch {
     return new Promise(async (resolve, reject) => {
       const uncaughtExceptionHandler = async err => {
         log.error(
-          { err, options },
+          { err, options, sentry: true },
           'uncaughtException in _allDocs. PouchDB db might be corrupt.'
         )
         reject(err)
@@ -228,7 +228,10 @@ class Pouch {
       if (result.error) {
         const err = new PouchError(result)
         const doc = docs[idx]
-        log.error({ path: doc.path, doc }, err)
+        log.error(
+          { err, path: doc.path, doc, sentry: true },
+          'could not save bulk metadata'
+        )
         throw err
       }
     }
@@ -244,7 +247,7 @@ class Pouch {
       const { rows } = await this.db.query(query, params)
       return rows.filter(row => row.doc != null).map(row => row.doc)
     } catch (err) {
-      log.fatal({ err }, `could not run ${query} query`)
+      log.error({ err }, `could not run ${query} query`)
       return []
     }
   }

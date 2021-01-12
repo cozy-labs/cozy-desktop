@@ -146,7 +146,10 @@ class Producer {
           log.debug({ event: scanEvent }, 'Ignored via .cozyignore')
         }
       } catch (err) {
-        log.error({ err, path: path.join(relPath, entry) })
+        log.error(
+          { err, path: path.join(relPath, entry) },
+          'could not get doc info'
+        )
       }
     }
     log.trace({ path: relPath, batch: entries }, 'scan')
