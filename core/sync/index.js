@@ -376,7 +376,7 @@ class Sync {
       const syncErr = syncErrors.wrapError(err, sideName, change)
       log.warn(
         { err: syncErr, change, path: change.doc.path },
-        `Sync error: ${err.message}`
+        `Sync error: ${syncErr.message}`
       )
       if (manualRun) {
         await this.updateErrors(change, syncErr)
@@ -592,6 +592,10 @@ class Sync {
 
     let checkInterval
     const check = async () => {
+      // Resest the timer for manual calls
+      // $FlowFixMe intervals have a refresh() method starting with Node v10
+      checkInterval.refresh()
+
       this.events.off('user-action-inprogress', check)
       this.events.off('user-action-skipped', skip)
 
