@@ -252,8 +252,8 @@ userActionStrings code =
         "NeedsRemoteMerge" ->
             { title = "Error Conflict with remote version"
             , details =
-                [ "Error The {0} {1} has been simultaneously modified on your computer and your Cozy… This message persists if Cozy is unable to resolve this conflict."
-                , "Error In this case rename the version you want to keep and click on \"Give up\"."
+                [ "Error The {0} {1} has been simultaneously modified on your computer and your Cozy."
+                , "Error This message persists if Cozy is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
                 ]
             , label = Nothing
             }
