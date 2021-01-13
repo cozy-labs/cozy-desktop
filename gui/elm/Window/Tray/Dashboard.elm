@@ -248,7 +248,7 @@ viewAction helpers action =
     div [ class "u-p-1 u-bg-paleGrey" ]
         [ header [ class "u-title-h1" ] [ title ]
         , p [ class "u-text" ] content
-        , div [ class "u-flex u-flex-justify-between" ] buttons
+        , div [ class "u-flex u-flex-justify-end" ] buttons
         ]
 
 
