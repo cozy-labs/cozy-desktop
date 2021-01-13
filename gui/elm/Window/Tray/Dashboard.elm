@@ -18,7 +18,9 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Locale exposing (Helpers)
 import Ports
+import Regex
 import Time
+import Util.List as List
 
 
 
@@ -197,8 +199,9 @@ viewAction helpers action =
                         Locale.interpolate chains string
                     )
                 |> List.map helpers.capitalize
-                |> List.map text
-                |> List.intersperse (br [] [])
+                |> List.map viewActionContentLine
+                |> List.intersperse [ br [] [] ]
+                |> List.concat
 
         link =
             UserAction.getLink action
@@ -296,3 +299,56 @@ removeCurrentAction model =
 currentUserAction : Model -> Maybe UserAction
 currentUserAction model =
     List.head model.userActions
+
+
+viewActionContentLine : String -> List (Html Msg)
+viewActionContentLine line =
+    let
+        decorated =
+            Regex.find decorationRegex line
+                |> List.map decoratedName
+
+        rest =
+            Regex.split decorationRegex line
+                |> List.map text
+    in
+    List.intersperseList decorated rest
+
+
+decorationRegex : Regex.Regex
+decorationRegex =
+    -- Find all groups of characters between backticks
+    Maybe.withDefault Regex.never <|
+        Regex.fromString "`(.+?)`"
+
+
+decoratedName : Regex.Match -> Html Msg
+decoratedName match =
+    let
+        path =
+            List.head match.submatches
+    in
+    case path of
+        Just (Just str) ->
+            viewName str
+
+        _ ->
+            text ""
+
+
+viewName : String -> Html Msg
+viewName path =
+    span
+        [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
+        , title path
+        ]
+        [ text (shortName path) ]
+
+
+shortName : String -> String
+shortName long =
+    String.split "/" long
+        |> List.filter (not << String.isEmpty)
+        |> List.reverse
+        |> List.head
+        |> Maybe.withDefault ""

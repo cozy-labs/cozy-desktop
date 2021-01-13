@@ -225,7 +225,7 @@ userActionStrings code =
         "MissingPermissions" ->
             { title = "Error Missing filesystem permissions"
             , details =
-                [ "Error The {0} {1} could not be updated on your computer to apply the changes made on your Cozy."
+                [ "Error The {0} `{1}` could not be updated on your computer to apply the changes made on your Cozy."
                 , "Error Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights."
                 ]
             , label = Nothing
@@ -234,7 +234,7 @@ userActionStrings code =
         "NoDiskSpace" ->
             { title = "Error Your computer disk space is full"
             , details =
-                [ "Error The {0} {1} could not be written to your computer disk because there is not enough space available."
+                [ "Error The {0} `{1}` could not be written to your computer disk because there is not enough space available."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files…)."
                 ]
             , label = Nothing
@@ -243,7 +243,7 @@ userActionStrings code =
         "NoCozySpace" ->
             { title = "Error Your Cozy disk space is full"
             , details =
-                [ "Error The {0} {1} could not be written to your Cozy's disk because its maximum storage capacity has been reached."
+                [ "Error The {0} `{1}` could not be written to your Cozy's disk because its maximum storage capacity has been reached."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files...), or increased its capacity."
                 ]
             , label = Nothing
@@ -252,7 +252,7 @@ userActionStrings code =
         "NeedsRemoteMerge" ->
             { title = "Error Conflict with remote version"
             , details =
-                [ "Error The {0} {1} has been simultaneously modified on your computer and your Cozy."
+                [ "Error The {0} `{1}` has been simultaneously modified on your computer and your Cozy."
                 , "Error This message persists if Cozy is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
                 ]
             , label = Nothing
