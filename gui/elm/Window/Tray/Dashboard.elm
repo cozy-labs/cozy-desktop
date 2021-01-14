@@ -59,7 +59,7 @@ maxActivities =
 type Msg
     = Transfer EncodedFile
     | Remove EncodedFile
-    | OpenFile File
+    | OpenPath String
     | Tick Time.Posix
     | ShowMore
     | Reset
@@ -93,8 +93,8 @@ update msg model =
             in
             ( { model | files = files }, Cmd.none )
 
-        OpenFile file ->
-            ( model, Ports.openFile file.path )
+        OpenPath path ->
+            ( model, Ports.openFile path )
 
         Tick now ->
             ( { model | now = now }, Cmd.none )
@@ -146,7 +146,7 @@ renderFile helpers model file =
     div
         [ class "file-line"
         , title file.path
-        , onClick (OpenFile file)
+        , onClick (OpenPath file.path)
         ]
         [ div [ class ("file-type file-type-" ++ file.icon) ] []
         , span [ class "file-line-content file-name-wrapper" ]
@@ -341,6 +341,7 @@ viewName path =
     span
         [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
         , title path
+        , onClick (OpenPath path)
         ]
         [ text (shortName path) ]
 
