@@ -1,5 +1,25 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.25.0-beta.2 - 2021-01-14
+
+Improvements for all users:
+
+- We upgraded the framework upon which our application is built, Electron, to
+  v11.1.1 which is the latest stable version. This should bring more stability
+  to the application overall and fix an issue on macOS Big Sur which was
+  preventing the application from restarting after an upgrade.
+- We've changed the way we handle the simultaneous deletions of the same
+  document on the remote Cozy and the local filesystem so that any resulting
+  synchronization conflict is only temporary (i.e. you would see an error
+  message but it should be resolved during the following retry).
+- Several improvements were made to synchronization error detection and messages
+  over the previous beta release. Messages should be cleaner with an outstanding
+  document name and filesystem locks detection should be better.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.25.0-beta.1 - 2021-01-06
 
 Improvements for all users:
