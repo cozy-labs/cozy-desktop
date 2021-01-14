@@ -3,7 +3,7 @@ const { dialog, shell } = electron
 const { spawn } = require('child_process')
 const { join } = require('path')
 const autoLaunch = require('./autolaunch')
-const DASHBOARD_SCREEN_WIDTH = 330
+const DASHBOARD_SCREEN_WIDTH = 440
 const DASHBOARD_SCREEN_HEIGHT = 830
 
 const { translate } = require('./i18n')
