@@ -223,7 +223,7 @@ userActionStrings : String -> UserActionStrings
 userActionStrings code =
     case code of
         "MissingPermissions" ->
-            { title = "Error Missing filesystem permissions"
+            { title = "Error Access denied temporarily"
             , details =
                 [ "Error The {0} `{1}` could not be updated on your computer to apply the changes made on your Cozy."
                 , "Error Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights."
@@ -232,7 +232,7 @@ userActionStrings code =
             }
 
         "NoDiskSpace" ->
-            { title = "Error Your computer disk space is full"
+            { title = "Error Your computer's disk space is insufficient"
             , details =
                 [ "Error The {0} `{1}` could not be written to your computer disk because there is not enough space available."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files…)."
@@ -241,7 +241,7 @@ userActionStrings code =
             }
 
         "NoCozySpace" ->
-            { title = "Error Your Cozy disk space is full"
+            { title = "Error Your Cozy's disk space is saturated"
             , details =
                 [ "Error The {0} `{1}` could not be written to your Cozy's disk because its maximum storage capacity has been reached."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files...), or increased its capacity."
