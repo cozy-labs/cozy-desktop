@@ -75,7 +75,7 @@
   "Dashboard Your cozy is up to date!": "Your cozy is up to date!",
 
   "Error {0} names cannot end with character `{1}`": "{0} names cannot end with character `{1}`",
-  "Error {0} names cannot include characters `{1}`": "{0} names cannot include characters `{1}``",
+  "Error {0} names cannot include characters `{1}`": "{0} names cannot include characters `{1}`",
   "Error Bad GLIBCXX version": "Your system has an old version of the glibc. You need to update your distribution, see https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.": "Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.",
   "Error Your Cozy disk space is full": "Your Cozy disk space is full",

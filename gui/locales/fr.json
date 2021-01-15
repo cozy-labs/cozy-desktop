@@ -74,8 +74,8 @@
   "Dashboard Syncing": "En cours de synchronisation",
   "Dashboard Your cozy is up to date!": "Votre Cozy est à jour !",
 
-  "Error {0} names cannot end with character {1}": "les noms de {0} ne peuvent pas se finir par le caractère {1}",
-  "Error {0} names cannot include characters {1}": "les noms de {0} ne peuvent pas inclure les caractères {1}",
+  "Error {0} names cannot end with character `{1}`": "les noms de {0} ne peuvent pas se finir par le caractère `{1}`",
+  "Error {0} names cannot include characters `{1}`": "les noms de {0} ne peuvent pas inclure les caractères `{1}`",
   "Error Bad GLIBCXX version": "Votre système a une ancienne version de la glibc. Vous devriez mettre à jour votre distribution pour utiliser Cozy Drive, cf https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.": "Vérifiez que la note existe toujours sur votre Cozy ou celui de son propriétaire. Cela peut aussi vouloir dire que la note n'est plus synchronisée.",
   "Error Your Cozy disk space is full": "L'espace disque de votre Cozy est saturé",
