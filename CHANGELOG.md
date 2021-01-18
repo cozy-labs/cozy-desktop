@@ -1,5 +1,26 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.25.0-beta.3 - 2021-01-18
+
+Improvements for all users:
+
+- To make sure you're not tempted to give up on some changes because of a
+  temporary error and end up with an desynchronized state and potentially lose
+  data, we've removed the possibility to manually give up for most errors that
+  are displayed to you in the main window. Instead, only conflicts with the
+  remote Cozy will be droppable as we sometimes find ourselves in a situation
+  where the conflict will never be resolved.
+
+Improvements for Windows users:
+
+- We've removed a duplicate retry mechanism for failed movements of locked
+  documents (e.g. opened Office documents or being checked by an Anti-Virus
+  software). This should speed up retries when the document is still locked.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.25.0-beta.2 - 2021-01-14
 
 Improvements for all users:
