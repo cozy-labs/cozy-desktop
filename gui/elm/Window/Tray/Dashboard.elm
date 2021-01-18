@@ -206,50 +206,60 @@ viewAction helpers action =
         link =
             UserAction.getLink action
 
-        primaryLabel =
-            UserAction.primaryLabel action
-                |> helpers.t
-                |> text
+        primaryButton =
+            case UserAction.primaryInteraction action of
+                UserAction.Retry label ->
+                    actionButton helpers UserActionInProgress [] label Nothing
 
-        secondaryLabel =
-            UserAction.secondaryLabel action
-                |> Maybe.map helpers.t
-                |> Maybe.map text
+                UserAction.Open label ->
+                    actionButton helpers UserActionInProgress [] label link
 
-        buttons =
-            case secondaryLabel of
-                Just label ->
-                    [ button
-                        [ class "c-btn c-btn--danger-outline"
-                        , onClick UserActionSkipped
-                        ]
-                        [ span [] [ label ] ]
-                    , button
-                        [ class "c-btn"
-                        , onClick UserActionInProgress
-                        ]
-                        [ span [] [ primaryLabel ] ]
-                    ]
+                _ ->
+                    actionButton helpers UserActionInProgress [] "UserAction Ok" Nothing
 
-                Nothing ->
-                    [ button
-                        [ class "c-btn c-btn--ghost"
-                        , onClick UserActionSkipped
-                        ]
-                        [ span [] [ text (helpers.t "UserAction OK") ] ]
-                    , a
-                        [ class "c-btn" --u-flex-auto"
-                        , href (Maybe.withDefault "" link)
-                        , onClick UserActionInProgress
-                        ]
-                        [ span [] [ primaryLabel ] ]
-                    ]
+        secondaryButton =
+            case UserAction.secondaryInteraction action of
+                Just UserAction.GiveUp ->
+                    actionButton helpers UserActionSkipped [ "c-btn--danger-outline" ] "UserAction Give up" Nothing
+
+                Just UserAction.Ok ->
+                    actionButton helpers UserActionSkipped [ "c-btn--ghost" ] "UserAction Ok" Nothing
+
+                _ ->
+                    []
     in
     div [ class "u-p-1 u-bg-paleGrey" ]
         [ header [ class "u-title-h1" ] [ title ]
         , p [ class "u-text" ] content
-        , div [ class "u-flex u-flex-justify-end" ] buttons
+        , div
+            [ class "u-flex u-flex-justify-end" ]
+            (List.append secondaryButton primaryButton)
         ]
+
+
+actionButton : Helpers -> Msg -> List String -> String -> Maybe String -> List (Html Msg)
+actionButton helpers msg classList label link =
+    let
+        classes =
+            String.join " " ([ "c-btn" ] ++ classList)
+    in
+    case link of
+        Just str ->
+            [ a
+                [ class classes
+                , href str
+                , onClick msg
+                ]
+                [ span [] [ text (helpers.t label) ] ]
+            ]
+
+        Nothing ->
+            [ button
+                [ class classes
+                , onClick msg
+                ]
+                [ span [] [ text (helpers.t label) ] ]
+            ]
 
 
 view : Helpers -> Model -> Html Msg

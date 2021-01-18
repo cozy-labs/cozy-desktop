@@ -1,14 +1,15 @@
 module Data.UserAction exposing
     ( EncodedUserAction
+    , Interaction(..)
     , UserAction(..)
     , decode
     , details
     , encode
     , getLink
     , inProgress
-    , primaryLabel
+    , primaryInteraction
     , same
-    , secondaryLabel
+    , secondaryInteraction
     , title
     )
 
@@ -162,7 +163,7 @@ title : UserAction -> String
 title action =
     let
         strings =
-            userActionStrings (getCode action)
+            view (getCode action)
     in
     strings.title
 
@@ -171,7 +172,7 @@ details : UserAction -> List ( String, List String )
 details action =
     let
         strings =
-            userActionStrings (getCode action)
+            view (getCode action)
 
         interpolations =
             case action of
@@ -184,43 +185,46 @@ details action =
     List.map (\line -> ( line, interpolations )) strings.details
 
 
-primaryLabel : UserAction -> String
-primaryLabel action =
+primaryInteraction : UserAction -> Interaction
+primaryInteraction action =
     let
-        { label } =
-            userActionStrings (getCode action)
+        strings =
+            view (getCode action)
     in
-    case ( action, label ) of
-        ( _, Just l ) ->
-            l
-
-        ( ClientAction _ _, Nothing ) ->
-            "UserAction Retry"
-
-        ( RemoteAction _ _, Nothing ) ->
-            "UserAction Read"
+    strings.primaryInteraction
 
 
-secondaryLabel : UserAction -> Maybe String
-secondaryLabel action =
-    case action of
-        ClientAction _ _ ->
-            Just "UserAction Give up"
-
-        RemoteAction _ _ ->
-            Nothing
+secondaryInteraction : UserAction -> Maybe Interaction
+secondaryInteraction action =
+    let
+        strings =
+            view (getCode action)
+    in
+    strings.secondaryInteraction
 
 
 
 -- Translation chains used in interface
 
 
-type alias UserActionStrings =
-    { title : String, details : List String, label : Maybe String }
+type Interaction
+    = Retry String
+    | Open String
+    | Ok
+    | GiveUp
 
 
-userActionStrings : String -> UserActionStrings
-userActionStrings code =
+type alias UserActionView =
+    { title : String
+    , details : List String
+    , primaryInteraction : Interaction
+    , secondaryInteraction : Maybe Interaction
+    , label : Maybe String
+    }
+
+
+view : String -> UserActionView
+view code =
     case code of
         "MissingPermissions" ->
             { title = "Error Access denied temporarily"
@@ -228,6 +232,8 @@ userActionStrings code =
                 [ "Error The {0} `{1}` could not be updated on your computer to apply the changes made on your Cozy."
                 , "Error Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights."
                 ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = Nothing
             , label = Nothing
             }
 
@@ -237,6 +243,8 @@ userActionStrings code =
                 [ "Error The {0} `{1}` could not be written to your computer disk because there is not enough space available."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files…)."
                 ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = Nothing
             , label = Nothing
             }
 
@@ -246,6 +254,8 @@ userActionStrings code =
                 [ "Error The {0} `{1}` could not be written to your Cozy's disk because its maximum storage capacity has been reached."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files...), or increased its capacity."
                 ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = Nothing
             , label = Nothing
             }
 
@@ -255,6 +265,8 @@ userActionStrings code =
                 [ "Error The {0} `{1}` has been simultaneously modified on your computer and your Cozy."
                 , "Error This message persists if Cozy is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
                 ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = Just GiveUp
             , label = Nothing
             }
 
@@ -264,8 +276,15 @@ userActionStrings code =
                 [ "CGUUpdated Your Cozy hosting provider informs you that it has updated its Terms of Service (ToS)."
                 , "CGUUpdated Their acceptance is required to continue using your Cozy."
                 ]
+            , primaryInteraction = Open "CGUUpdated Read the new ToS"
+            , secondaryInteraction = Just Ok
             , label = Just "CGUUpdated Read the new ToS"
             }
 
         _ ->
-            { title = "", details = [], label = Nothing }
+            { title = ""
+            , details = []
+            , primaryInteraction = Ok
+            , secondaryInteraction = Nothing
+            , label = Nothing
+            }
