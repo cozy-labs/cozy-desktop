@@ -129,7 +129,7 @@ const startApp = async () => {
   }
 }
 
-const showWindow = bounds => {
+const showWindow = async bounds => {
   if (
     notificationsState.revokedAlertShown ||
     notificationsState.syncDirUnlinkedShown
@@ -146,7 +146,10 @@ const showWindow = bounds => {
     if (desktop.sync) {
       sendDiskUsage()
     }
-    trayWindow.show(bounds).then(async () => {
+
+    try {
+      await trayWindow.show(bounds)
+
       const { cozyUrl, deviceName } = desktop.config
       trayWindow.send('synchronization', cozyUrl, deviceName)
 
@@ -155,10 +158,11 @@ const showWindow = bounds => {
         trayWindow.send('transfer', file)
       }
 
-      autoLaunch.isEnabled().then(enabled => {
-        trayWindow.send('auto-launch', enabled)
-      })
-    })
+      const hasAutolaunch = await autoLaunch.isEnabled()
+      trayWindow.send('auto-launch', hasAutolaunch)
+    } catch (err) {
+      log.warn({ err }, 'could not show tray window or recent files')
+    }
   }
 }
 
@@ -378,16 +382,16 @@ const sendDiskUsage = () => {
   }
   if (trayWindow) {
     diskTimeout = setTimeout(sendDiskUsage, 10 * 60 * 1000) // every 10 minutes
-    desktop.diskUsage().then(
-      res => {
+    desktop
+      .diskUsage()
+      .then(res => {
         const space = {
           used: +res.attributes.used,
           quota: +(res.attributes.quota || 0)
         }
         trayWindow.send('disk-space', space)
-      },
-      err => log.warn({ err }, 'could not get remote disk usage')
-    )
+      })
+      .catch(err => log.warn({ err }, 'could not get remote disk usage'))
   }
 }
 
