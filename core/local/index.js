@@ -6,6 +6,7 @@
 
 const async = require('async')
 const autoBind = require('auto-bind')
+const fs = require('fs').promises
 const fse = require('fs-extra')
 const path = require('path')
 const trash = require('trash')
@@ -422,7 +423,7 @@ class Local /*:: implements Reader, Writer */ {
       }
     }
 
-    await fse.rename(oldPath, newPath)
+    await fs.rename(oldPath, newPath)
     await this.updateMetadataAsync(doc)
     metadata.updateLocal(doc)
   }
