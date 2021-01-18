@@ -95,11 +95,14 @@ module.exports = class OnboardingWM extends WindowManager {
   }
 
   create() {
-    return super.create().then(() => {
-      if (this.shouldJumpToSyncPath) {
-        this.send('registration-done')
-      }
-    })
+    return super
+      .create()
+      .then(() => {
+        if (this.shouldJumpToSyncPath) {
+          this.send('registration-done')
+        }
+      })
+      .catch(err => log.warn({ err }, 'could not create Onboarding window'))
   }
 
   onOnboardingDone(handler) {

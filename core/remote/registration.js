@@ -30,32 +30,28 @@ module.exports = class Registration {
     autoBind(this)
   }
 
-  onRegistered(client, url) {
-    // TODO if the port is already taken, try again with a new port
+  async onRegistered(client, url) {
     let server
-    return new Promise((resolve, reject) => {
-      server = http.createServer((request, response) => {
-        if (request.url.indexOf('/callback') === 0) {
-          resolve(request.url)
-          response.end(
-            'Cozy-desktop has been successfully registered as a Cozy device'
-          )
-        }
+    try {
+      // TODO if the port is already taken, try again with a new port
+      const redirectURL = await new Promise((resolve, reject) => {
+        server = http.createServer((request, response) => {
+          if (request.url.indexOf('/callback') === 0) {
+            resolve(request.url)
+            response.end(
+              'Cozy-desktop has been successfully registered as a Cozy device'
+            )
+          }
+        })
+        server.listen(PORT_NUMBER, () => {
+          const pReady = this.onReady(url)
+          if (pReady.catch) pReady.catch(reject)
+        })
       })
-      server.listen(PORT_NUMBER, () => {
-        const pReady = this.onReady(url)
-        if (pReady.catch) pReady.catch(reject)
-      })
-    }).then(
-      url => {
-        server.close()
-        return url
-      },
-      err => {
-        server.close()
-        throw err
-      }
-    )
+      return redirectURL
+    } finally {
+      if (server) server.close()
+    }
   }
 
   clientParams(pkg, redirectURI, deviceName) {

@@ -5,6 +5,10 @@
 
 const AutoLaunch = require('auto-launch')
 
+const log = require('../../core/app').logger({
+  component: 'GUI'
+})
+
 const APP_NAME = 'Cozy-Desktop'
 const opts = {
   name: APP_NAME,
@@ -27,16 +31,21 @@ if (process.env.APPIMAGE) {
   autoLauncher.opts.appName = APP_NAME
 
   // Check if there is an autolaunch entry with the app's path.
-  autoLauncher.isEnabled().then(pathAutoLaunchEnabled => {
-    if (pathAutoLaunchEnabled) {
-      // Remove it to avoid having multiple entries.
-      autoLauncher.disable()
+  autoLauncher
+    .isEnabled()
+    .then(pathAutoLaunchEnabled => {
+      if (pathAutoLaunchEnabled) {
+        // Remove it to avoid having multiple entries.
+        autoLauncher.disable()
 
-      // Create an autolaunch entry with the app's name if there was an entry
-      // with the app's path.
-      autoLauncher.enable()
-    }
-  })
+        // Create an autolaunch entry with the app's name if there was an entry
+        // with the app's path.
+        autoLauncher.enable()
+      }
+    })
+    .catch(err =>
+      log.warn({ err }, 'could not check autolaunch or replace old one')
+    )
 }
 
 module.exports.isEnabled = () => autoLauncher.isEnabled()

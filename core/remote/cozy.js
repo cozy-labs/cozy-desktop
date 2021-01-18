@@ -187,16 +187,15 @@ class RemoteCozy {
       }
       process.once('unhandledRejection', unhandledRejectionHandler)
 
-      fn().then(
-        result => {
+      fn()
+        .then(result => {
           process.off('unhandledRejection', unhandledRejectionHandler)
           resolve(result)
-        },
-        err => {
+        })
+        .catch(err => {
           process.off('unhandledRejection', unhandledRejectionHandler)
           reject(err)
-        }
-      )
+        })
     })
   }
 

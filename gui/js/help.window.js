@@ -23,17 +23,19 @@ module.exports = class TrayWM extends WindowManager {
     let that = this
     return {
       'send-mail': (event, body) => {
-        that.desktop.sendMailToSupport(body).then(
-          () => {
+        that.desktop
+          .sendMailToSupport(body)
+          .then(() => {
             event.sender.send('mail-sent')
-          },
-          err => {
+          })
+          .catch(err => {
             log.error({ err, sentry: true }, 'failed sending mail to support')
-            event.sender.send('mail-sent', {
-              message: 'Help An error occured while sending your email'
-            })
-          }
-        )
+            if (event.sender) {
+              event.sender.send('mail-sent', {
+                message: 'Help An error occured while sending your email'
+              })
+            }
+          })
       }
     }
   }
