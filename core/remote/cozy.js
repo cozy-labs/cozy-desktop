@@ -165,12 +165,12 @@ class RemoteCozy {
 
           if (name && dir_id && (await this.isNameTaken({ name, dir_id }))) {
             err = new FetchError(
-              { url: '', status: 409 },
+              { status: 409 },
               'Conflict: name already taken'
             )
           } else if (!(await this.hasEnoughSpace(contentLength))) {
             err = new FetchError(
-              { url: '', status: 413 },
+              { status: 413 },
               'The file is too big and exceeds the disk quota'
             )
           }
