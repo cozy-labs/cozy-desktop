@@ -17,7 +17,7 @@ token=$(cozy-stack instances token-oauth \
 
 # Generate test env file
 cat >${ENVFILE:-$(dirname $0)/../.env.test} <<EOF
-COZY_DESKTOP_DIR=tmp/test
+COZY_DESKTOP_DIR=tmp
 COZY_DESKTOP_HEARTBEAT=1000
 COZY_CLIENT_ID=$client_id
 COZY_STACK_TOKEN=$token

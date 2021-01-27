@@ -46,9 +46,13 @@ describe('App', function() {
 
   describe('removeRemote', () => {
     beforeEach(configHelpers.createConfig)
-    beforeEach(configHelpers.registerClient)
 
-    it('returns removes the config even if the Cozy is unreachable', async function() {
+    it('removes the config even if the Cozy is unreachable', async function() {
+      // We have to call this helper here and not in a beforeEach otherwise the
+      // next test will actually delete the test OAuth client on the Cozy and
+      // other tests will subsequently fail.
+      await configHelpers.registerClient.call(this)
+
       const configDir = path.dirname(this.config.configPath)
       const basePath = path.dirname(configDir)
       const app = new App(basePath)
