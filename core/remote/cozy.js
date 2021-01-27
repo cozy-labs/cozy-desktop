@@ -488,6 +488,7 @@ class RemoteCozy {
 }
 
 module.exports = {
+  FetchError,
   DirectoryNotFound,
   RemoteCozy
 }

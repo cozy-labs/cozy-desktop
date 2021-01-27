@@ -10,6 +10,7 @@ const { App } = require('../../core/app')
 const { LOG_FILENAME } = require('../../core/utils/logger')
 const pkg = require('../../package.json')
 const { version } = pkg
+const { FetchError } = require('../../core/remote/cozy')
 
 const automatedRegistration = require('../../dev/remote/automated_registration')
 const configHelpers = require('../support/helpers/config')
@@ -45,6 +46,24 @@ describe('App', function() {
 
   describe('removeRemote', () => {
     beforeEach(configHelpers.createConfig)
+    beforeEach(configHelpers.registerClient)
+
+    it('returns removes the config even if the Cozy is unreachable', async function() {
+      const configDir = path.dirname(this.config.configPath)
+      const basePath = path.dirname(configDir)
+      const app = new App(basePath)
+      app.config = this.config
+      app.instanciate()
+
+      sinon.spy(app, 'removeConfig')
+      sinon
+        .stub(app.remote, 'unregister')
+        .rejects(new FetchError({ status: 404 }, 'Cannot reach Cozy'))
+
+      await app.removeRemote()
+
+      should(app.removeConfig).have.been.called()
+    })
 
     // FIXME
     if (process.env.TRAVIS || process.env.GITHUB_ENV) {
