@@ -205,10 +205,14 @@ class App {
   // the config file
   async removeRemote() {
     try {
-      if (!this.remote) {
-        this.instanciate()
+      if (!this.remote) this.instanciate()
+
+      try {
+        await this.remote.unregister()
+      } catch (err) {
+        if (!err.status || err.status !== 404) throw err
       }
-      await this.remote.unregister()
+
       await this.removeConfig()
       log.info('Current device properly removed from remote cozy.')
       return null
