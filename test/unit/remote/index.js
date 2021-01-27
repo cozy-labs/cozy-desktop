@@ -982,6 +982,25 @@ describe('remote.Remote', function() {
       should(dir.remote).deepEqual(movedDir)
     })
   })
+
+  describe('ping', () => {
+    before(function() {
+      sinon.stub(this.remote.remoteCozy, 'diskUsage')
+    })
+    after(function() {
+      this.remote.remoteCozy.diskUsage.restore()
+    })
+
+    it('resolves to true if we can successfuly fetch the remote disk usage', async function() {
+      this.remote.remoteCozy.diskUsage.resolves()
+      await should(this.remote.ping()).be.fulfilledWith(true)
+    })
+
+    it('resolves to false if we cannot successfuly fetch the remote disk usage', async function() {
+      this.remote.remoteCozy.diskUsage.rejects()
+      await should(this.remote.ping()).be.fulfilledWith(false)
+    })
+  })
 })
 
 describe('remote', function() {

@@ -66,6 +66,7 @@ type Msg
     | GotUserActions (List UserAction)
     | UserActionSkipped
     | UserActionInProgress
+    | UserActionDone
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
@@ -131,6 +132,18 @@ update msg model =
                             Cmd.none
             in
             ( model, cmd )
+
+        UserActionDone ->
+            let
+                cmd =
+                    case currentUserAction model of
+                        Just action ->
+                            Ports.userActionDone (UserAction.encode action)
+
+                        Nothing ->
+                            Cmd.none
+            in
+            ( model |> removeCurrentAction, cmd )
 
 
 
@@ -209,13 +222,13 @@ viewAction helpers action =
         primaryButton =
             case UserAction.primaryInteraction action of
                 UserAction.Retry label ->
-                    actionButton helpers UserActionInProgress [] label Nothing
+                    actionButton helpers UserActionDone [] label Nothing
 
                 UserAction.Open label ->
                     actionButton helpers UserActionInProgress [] label link
 
                 _ ->
-                    actionButton helpers UserActionInProgress [] "UserAction Ok" Nothing
+                    actionButton helpers UserActionDone [] "UserAction OK" Nothing
 
         secondaryButton =
             case UserAction.secondaryInteraction action of
@@ -223,7 +236,7 @@ viewAction helpers action =
                     actionButton helpers UserActionSkipped [ "c-btn--danger-outline" ] "UserAction Give up" Nothing
 
                 Just UserAction.Ok ->
-                    actionButton helpers UserActionSkipped [ "c-btn--ghost" ] "UserAction Ok" Nothing
+                    actionButton helpers UserActionSkipped [ "c-btn--ghost" ] "UserAction OK" Nothing
 
                 _ ->
                     []

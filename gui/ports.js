@@ -135,6 +135,10 @@ elmectron.ports.openFile.subscribe(path => {
   ipcRenderer.send('open-file', path)
 })
 
+elmectron.ports.userActionDone.subscribe(action => {
+  ipcRenderer.send('userActionDone', action)
+})
+
 elmectron.ports.userActionInProgress.subscribe(action => {
   ipcRenderer.send('userActionInProgress', action)
 })

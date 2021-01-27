@@ -334,7 +334,6 @@ class App {
       this.ignore,
       this.events
     )
-    this.sync.diskUsage = this.diskUsage
   }
 
   // Start the synchronization

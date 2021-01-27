@@ -12,12 +12,32 @@ const metadata = require('../../core/metadata')
 const { otherSide } = require('../../core/side')
 const Sync = require('../../core/sync')
 const remoteErrors = require('../../core/remote/errors')
+const syncErrors = require('../../core/sync/errors')
 
 const stubSide = require('../support/doubles/side')
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
 const Builders = require('../support/builders')
 const dbBuilders = require('../support/builders/db')
+
+const localSyncError = (msg, doc) =>
+  new syncErrors.SyncError({
+    code: syncErrors.UNKNOWN_SYNC_ERROR_CODE,
+    sideName: 'local',
+    err: new Error('Original simulated local error'),
+    doc
+  })
+
+const remoteSyncError = (msg, doc) =>
+  new syncErrors.SyncError({
+    code: syncErrors.UNKNOWN_SYNC_ERROR_CODE,
+    sideName: 'remote',
+    err: new remoteErrors.RemoteError({
+      code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE,
+      err: new Error('Original simulated remote error')
+    }),
+    doc
+  })
 
 describe('Sync', function() {
   before('instanciate config', configHelpers.createConfig)
@@ -38,6 +58,10 @@ describe('Sync', function() {
       this.ignore,
       this.events
     )
+  })
+
+  afterEach(async function() {
+    await this.sync.stop()
   })
 
   let builders
@@ -126,27 +150,36 @@ describe('Sync', function() {
     })
 
     context('if local watcher rejects while running', () => {
-      beforeEach(function() {
-        this.local.watcher.running = Promise.reject(new Error('failed'))
+      let rejectLocalWatcher
+      beforeEach(async function() {
+        this.local.watcher.running = new Promise((resolve, reject) => {
+          rejectLocalWatcher = reject
+        })
+        this.sync.start()
+        await this.sync.started()
       })
 
       it('stops replication', async function() {
-        await this.sync.start()
+        rejectLocalWatcher(new Error('failed'))
+        await this.sync.stopped()
         should(this.sync.stop).have.been.calledOnce()
       })
 
       it('stops local watcher', async function() {
-        await this.sync.start()
+        rejectLocalWatcher(new Error('failed'))
+        await this.sync.stopped()
         should(this.local.stop).have.been.calledOnce()
       })
 
       it('stops remote watcher', async function() {
-        await this.sync.start()
+        rejectLocalWatcher(new Error('failed'))
+        await this.sync.stopped()
         should(this.remote.stop).have.been.calledOnce()
       })
 
       it('emits a Sync:fatal event', async function() {
-        await this.sync.start()
+        rejectLocalWatcher(new Error('failed'))
+        await this.sync.stopped()
         should(this.sync.events.emit).have.been.calledWith('Sync:fatal')
       })
     })
@@ -387,10 +420,10 @@ describe('Sync', function() {
 
         it('blocks the synchronization so we can retry applying the change', async function() {
           should(this.sync.blockSyncFor).have.been.calledOnce()
-          should(this.sync.blockSyncFor).have.been.calledWithMatch(
-            { code: remoteErrors.NEEDS_REMOTE_MERGE_CODE },
+          should(this.sync.blockSyncFor).have.been.calledWithMatch({
+            err: { code: remoteErrors.NEEDS_REMOTE_MERGE_CODE },
             change
-          )
+          })
         })
       })
     })
@@ -605,9 +638,7 @@ describe('Sync', function() {
 
       await this.sync.updateErrors(
         { doc },
-        new remoteErrors.RemoteError({
-          err: new Error('simulated remote error')
-        })
+        remoteSyncError('simulated error', doc)
       )
 
       const actual = await this.pouch.bySyncedPath(doc.path)
@@ -625,7 +656,10 @@ describe('Sync', function() {
         .sides({ local: 2, remote: 4 })
         .create()
 
-      await this.sync.updateErrors({ doc }, new Error('simulated local error'))
+      await this.sync.updateErrors(
+        { doc },
+        localSyncError('simulated error', doc)
+      )
 
       const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(2)
@@ -642,7 +676,10 @@ describe('Sync', function() {
         .sides({ remote: 4 })
         .create()
 
-      await this.sync.updateErrors({ doc }, new Error('simulated local error'))
+      await this.sync.updateErrors(
+        { doc },
+        localSyncError('simulated error', doc)
+      )
 
       const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(3)

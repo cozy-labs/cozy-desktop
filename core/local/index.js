@@ -12,11 +12,10 @@ const path = require('path')
 const trash = require('trash')
 const stream = require('stream')
 const _ = require('lodash')
-const diskUsage = require('diskusage')
 
 const bluebird = require('bluebird')
 
-const { TMP_DIR_NAME, UV_FS_O_EXLOCK } = require('./constants')
+const { TMP_DIR_NAME } = require('./constants')
 const { NOTE_MIME_TYPE } = require('../remote/constants')
 const stater = require('./stater')
 const metadata = require('../metadata')
@@ -485,69 +484,6 @@ class Local /*:: implements Reader, Writer */ {
     const copy = _.cloneDeep(doc)
     copy.path = backupPath
     return copy
-  }
-
-  async diskUsage() /*: Promise<{ available: number, total: number }> */ {
-    try {
-      return await diskUsage.check(this.syncPath)
-    } catch (err) {
-      log.warn({ err }, 'Could not get local available disk space')
-      return { available: 0, total: 0 }
-    }
-  }
-
-  async tryOpening(
-    { docType, path } /*: { docType: DocType, path: string } */
-  ) /*: Promise<{ ok: boolean, err?: ErrnoError }> */ {
-    try {
-      if (docType === 'file' || docType === 'folder') {
-        // Use exclusive sharing mode so we can detect Windows locks when file is opened in another application.
-        // It does nothing for directories though.
-        const fd = await fse.open(
-          this.abspath(path),
-          fse.constants.O_RDWR | UV_FS_O_EXLOCK
-        )
-        await fse.close(fd)
-        return { ok: true }
-      } else {
-        // Should never happen
-        log.error(
-          { docType, path, sentry: true },
-          'could not open doc with invalid docType'
-        )
-        return { ok: false }
-      }
-    } catch (err) {
-      log.warn({ err, docType, path }, 'Could not open doc')
-      return { ok: false, err }
-    }
-  }
-
-  /* On Windows, this function won't tell us that we can't apply a change on a
-   * folder that is locked by one of its children. Node doesn't check ACLs so we
-   * don't have any built-in ways to detect the lock.
-   * However, it will work for files and could provide us some useful info in
-   * cases where a change can't be applied for another reason than a filesystem
-   * lock.
-   */
-  async canApplyChange(doc /*: SavedMetadata */) /*: Promise<boolean> */ {
-    log.debug(
-      { path: doc.path, oldPath: doc.moveFrom && doc.moveFrom.path },
-      'canApplyChange'
-    )
-    if (doc.moveFrom) {
-      const { ok } = await this.tryOpening(doc.moveFrom)
-      if (!ok) return false
-    } else {
-      const { ok, err } = await this.tryOpening({
-        docType: 'folder',
-        path: path.join(this.tmpPath, path.basename(doc.path))
-      })
-      return ok || (!!err && err.code === 'ENOENT')
-    }
-
-    const { ok, err } = await this.tryOpening(doc)
-    return ok || (!!err && err.code === 'ENOENT')
   }
 }
 

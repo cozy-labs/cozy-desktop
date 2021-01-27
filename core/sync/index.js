@@ -79,8 +79,7 @@ class Sync {
   remote: Remote
   moveTo: ?string
   lifecycle: LifeCycle
-
-  diskUsage: () => Promise<*>
+  retryInterval: ?IntervalID
   */
 
   // FIXME: static TRASHING_DELAY = TRASHING_DELAY
@@ -100,6 +99,9 @@ class Sync {
     this.local.other = this.remote
     this.remote.other = this.local
     this.lifecycle = new LifeCycle(log)
+
+    // Used only when the synchronization of a change failed and blocks
+    this.retryInterval = null
 
     autoBind(this)
   }
@@ -129,10 +131,9 @@ class Sync {
       this.lifecycle.end('start')
       return this.fatal(err)
     }
-    this.lifecycle.end('start')
 
     this.remote.watcher.onError(err => {
-      this.blockSyncFor(err)
+      this.blockSyncFor({ err })
     })
     this.remote.watcher.onFatal(err => {
       this.fatal(err)
@@ -140,6 +141,8 @@ class Sync {
     this.local.watcher.running.catch(err => {
       this.fatal(err)
     })
+
+    this.lifecycle.end('start')
 
     try {
       while (!this.lifecycle.willStop()) {
@@ -163,6 +166,11 @@ class Sync {
 
   // Stop the synchronization
   async stop() /*: Promise<void> */ {
+    // In case an interval timer was started, we clear it to make sure it won't
+    // trigger actions after Sync was stopped.
+    // This is especially useful in tests.
+    clearInterval(this.retryInterval)
+
     if (this.lifecycle.willStart()) {
       await this.lifecycle.started()
     } else {
@@ -388,7 +396,7 @@ class Sync {
           case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
           case remoteErrors.USER_ACTION_REQUIRED_CODE:
           case remoteErrors.UNREACHABLE_COZY_CODE:
-            this.blockSyncFor(syncErr, change)
+            this.blockSyncFor({ err: syncErr, change })
             break
           default:
             await this.updateErrors(change, syncErr)
@@ -579,87 +587,94 @@ class Sync {
   }
 
   blockSyncFor(
-    err /*: RemoteError|SyncError */,
-    change /*: ?MetadataChange */
+    cause
+    /*: {| err: RemoteError |} | {| err: SyncError, change: MetadataChange |} */
   ) {
+    const { err } = cause
+
     this.lifecycle.blockFor(err.code)
 
     if (err instanceof remoteErrors.RemoteError) {
       this.remote.watcher.stop()
     }
 
-    const [retryDelay, checkFn] = syncErrors.checkFn(err, this)
+    const retryDelay = syncErrors.retryDelay(err)
 
-    let checkInterval
-    const check = async () => {
+    const retry = async () => {
+      this.events.off('user-action-done', retry)
+      this.events.off('user-action-inprogress', waitBeforeRetry)
+      this.events.off('user-action-skipped', skip)
+
+      log.debug(cause, 'retrying failed change synchronization')
+
       // Resest the timer for manual calls
       // $FlowFixMe intervals have a refresh() method starting with Node v10
-      checkInterval.refresh()
+      if (this.retryInterval) this.retryInterval.refresh()
 
-      this.events.off('user-action-inprogress', check)
-      this.events.off('user-action-skipped', skip)
-
-      if (await checkFn()) {
-        this.lifecycle.unblockFor(err.code)
-        clearInterval(checkInterval)
-
-        if (err instanceof remoteErrors.RemoteError) {
-          this.remote.watcher.start()
-        }
-
-        switch (err.code) {
-          case remoteErrors.UNREACHABLE_COZY_CODE:
-            this.events.emit('online')
-            break
-          case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
-            break
-          default:
-            this.events.emit('user-action-done', err)
+      if (err.code === remoteErrors.UNREACHABLE_COZY_CODE) {
+        if (await this.remote.ping()) {
+          clearInterval(this.retryInterval)
+          this.events.emit('online')
+          this.lifecycle.unblockFor(err.code)
+        } else {
+          this.events.emit('offline')
         }
       } else {
-        this.events.once('user-action-inprogress', check)
-        this.events.once('user-action-skipped', skip)
-
-        switch (err.code) {
-          case remoteErrors.UNREACHABLE_COZY_CODE:
-            this.events.emit('offline')
-            break
-          case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
-            break
-          default:
-            this.events.emit('user-action-required', err)
+        clearInterval(this.retryInterval)
+        // Await to make sure we've fetched potential remote changes
+        if (this.remote.watcher.running) {
+          await this.remote.watcher.resetTimeout({ manualRun: true })
+        } else {
+          await this.remote.watcher.start()
         }
+        this.lifecycle.unblockFor(err.code)
       }
     }
-    checkInterval = setInterval(check, retryDelay)
+
+    const waitBeforeRetry = () => {
+      // The user is currently doing the required action so we postpone the next
+      // retry up to `retryDelay` to give the user enough time to complete the
+      // action.
+      // $FlowFixMe intervals have a refresh() method starting with Node v10
+      if (this.retryInterval) this.retryInterval.refresh()
+    }
 
     const skip = async () => {
-      this.events.off('user-action-inprogress', check)
+      this.events.off('user-action-done', retry)
+      this.events.off('user-action-inprogress', waitBeforeRetry)
       this.events.off('user-action-skipped', skip)
 
-      log.debug({ err, change }, 'user skipped required action')
+      log.debug(cause, 'user skipped required action')
 
-      if (change) {
+      // We need to check for the presence of `change` because Flow is not able
+      // to understand it will automatically be present if `err` is a
+      // `SyncError`…
+      if (err instanceof syncErrors.SyncError && cause.change) {
+        const change = cause.change
         change.doc.errors = MAX_SYNC_ATTEMPTS
         await this.updateErrors(change, err)
       }
-
-      this.lifecycle.unblockFor(err.code)
 
       if (err instanceof remoteErrors.RemoteError) {
         this.remote.watcher.start()
       }
 
       //clearTimeout(retryTimeout)
-      clearInterval(checkInterval)
+      clearInterval(this.retryInterval)
 
       // We suppose the error triggered a user-action-required event since skip
       // is only called when the user skips a user action.
-      this.events.emit('user-action-skipped', err)
+      // this.events.emit('user-action-skipped', err)
+
+      this.lifecycle.unblockFor(err.code)
     }
 
+    // We'll automatically retry to sync the change after a delay
+    this.retryInterval = setInterval(retry, retryDelay)
+
     //this.events.once('user-action-inprogress', retry)
-    this.events.once('user-action-inprogress', check)
+    this.events.once('user-action-done', retry)
+    this.events.once('user-action-inprogress', waitBeforeRetry)
     this.events.once('user-action-skipped', skip)
 
     switch (err.code) {
@@ -669,23 +684,25 @@ class Sync {
       case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
         break
       default:
-        this.events.emit('user-action-required', err)
+        this.events.emit(
+          'user-action-required',
+          err,
+          cause.change && cause.change.seq
+        )
     }
   }
 
   // Increment the counter of errors for this document
   async updateErrors(
     change /*: MetadataChange */,
-    err /*: RemoteError|SyncError */
+    err /*: SyncError */
   ) /*: Promise<void> */ {
     let { doc } = change
     if (!doc.errors) doc.errors = 0
     doc.errors++
 
     // Make sure isUpToDate(sourceSideName, doc) is still true
-    const sideName =
-      err instanceof remoteErrors.RemoteError ? 'remote' : 'local'
-    const sourceSideName = otherSide(sideName)
+    const sourceSideName = otherSide(err.sideName)
     metadata.markSide(sourceSideName, doc, doc)
 
     // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
