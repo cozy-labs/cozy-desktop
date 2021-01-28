@@ -83,6 +83,7 @@ function errSerializer(err) {
     port,
     syscall,
     code,
+    status,
     originalErr
   } = err
 
@@ -95,6 +96,7 @@ function errSerializer(err) {
   if (port) obj.port = port
   if (syscall) obj.syscall = syscall
   if (code) obj.code = code
+  if (status) obj.status = status
   if (originalErr) obj.originalErr = originalErr
 
   return obj
