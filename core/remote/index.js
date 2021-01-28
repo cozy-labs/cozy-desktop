@@ -13,9 +13,10 @@ const { isNote } = require('../utils/notes')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
 const metadata = require('../metadata')
-const { RemoteCozy } = require('./cozy')
+const { RemoteCozy, FetchError } = require('./cozy')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
+const errors = require('./errors')
 
 /*::
 import type EventEmitter from 'events'
@@ -154,6 +155,17 @@ class Remote /*:: implements Reader, Writer */ {
     // FIXME: stop creating parent folder and manage missing parent error
     const dir = await this.remoteCozy.findOrCreateDirectoryByPath(dirPath)
 
+    if (!(await this.hasEnoughSpace(doc))) {
+      throw new errors.RemoteError({
+        code: errors.NO_COZY_SPACE_CODE,
+        message: 'Not enough space available on remote Cozy',
+        err: new FetchError(
+          { status: 413 },
+          'The file is too big and exceeds the disk quota'
+        )
+      })
+    }
+
     const created = await this.remoteCozy.createFile(stream, {
       ...newDocumentAttributes(name, dir._id, doc.updated_at),
       checksum: doc.md5sum,
@@ -191,6 +203,17 @@ class Remote /*:: implements Reader, Writer */ {
         return doc
       }
       throw err
+    }
+
+    if (!(await this.hasEnoughSpace(doc))) {
+      throw new errors.RemoteError({
+        code: errors.NO_COZY_SPACE_CODE,
+        message: 'Not enough space available on remote Cozy',
+        err: new FetchError(
+          { status: 413 },
+          'The file is too big and exceeds the disk quota'
+        )
+      })
     }
 
     // Object.assign gives us the opportunity to enforce required options with
@@ -369,6 +392,11 @@ class Remote /*:: implements Reader, Writer */ {
 
   diskUsage() /*: Promise<*> */ {
     return this.remoteCozy.diskUsage()
+  }
+
+  async hasEnoughSpace(doc /*: SavedMetadata */) /*: Promise<boolean> */ {
+    const { size = 0 } = doc
+    return this.remoteCozy.hasEnoughSpace(size)
   }
 
   async ping() /*: Promise<boolean> */ {

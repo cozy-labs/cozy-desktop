@@ -17,6 +17,7 @@ const remote = require('../../../core/remote')
 const { Remote } = remote
 const { DirectoryNotFound } = require('../../../core/remote/cozy')
 const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../../core/remote/constants')
+const remoteErrors = require('../../../core/remote/errors')
 const timestamp = require('../../../core/utils/timestamp')
 
 const configHelpers = require('../../support/helpers/config')
@@ -190,6 +191,37 @@ describe('remote.Remote', function() {
       should(doc)
         .have.property('deleted')
         .and.not.have.property('remote')
+    })
+
+    it('does not try to send the file if there is not enough space on the Cozy', async function() {
+      sinon
+        .stub(this.remote.remoteCozy.client.settings, 'diskUsage')
+        .resolves({ attributes: { used: '9', quota: '10' } })
+      sinon.spy(this.remote.remoteCozy, 'createFile')
+
+      const doc = await builders
+        .metafile()
+        .path('cat2.jpg')
+        .data(image)
+        .type('image/jpg')
+        .executable(true)
+        .sides({ local: 1 })
+        .create()
+
+      this.remote.other = {
+        createReadStreamAsync() {
+          const stream = fse.createReadStream(CHAT_MIGNON_MOD_PATH)
+          return Promise.resolve(stream)
+        }
+      }
+
+      await should(this.remote.addFileAsync(doc)).be.rejectedWith({
+        code: remoteErrors.NO_COZY_SPACE_CODE
+      })
+      should(this.remote.remoteCozy.createFile).not.have.been.called()
+
+      this.remote.remoteCozy.client.settings.diskUsage.restore()
+      this.remote.remoteCozy.createFile.restore()
     })
   })
 
@@ -406,6 +438,50 @@ describe('remote.Remote', function() {
           updated_at: created.updated_at
         })
         should(doc.remote._rev).equal(file._rev)
+      })
+
+      it('does not try to send the file if there is not enough space on the Cozy', async function() {
+        sinon
+          .stub(this.remote.remoteCozy.client.settings, 'diskUsage')
+          .resolves({ attributes: { used: '9', quota: '10' } })
+        sinon.spy(this.remote.remoteCozy, 'updateFileById')
+
+        const created = await builders
+          .remoteFile()
+          .data('foo')
+          .createdAt(2015, 11, 16, 16, 12, 1)
+          .create()
+        const old = await builders
+          .metafile()
+          .fromRemote(created)
+          .upToDate()
+          .create()
+        const doc = await builders
+          .metafile(old)
+          .overwrite(old)
+          .data('bar')
+          .changedSide('local')
+          .updatedAt(timestamp.build(2015, 12, 16, 16, 12, 1).toISOString())
+          .create()
+
+        this.remote.other = {
+          createReadStreamAsync(localDoc) {
+            localDoc.should.equal(doc)
+            const stream = builders
+              .stream()
+              .push('bar')
+              .build()
+            return Promise.resolve(stream)
+          }
+        }
+
+        await should(this.remote.overwriteFileAsync(doc, old)).be.rejectedWith({
+          code: remoteErrors.NO_COZY_SPACE_CODE
+        })
+        should(this.remote.remoteCozy.updateFileById).not.have.been.called()
+
+        this.remote.remoteCozy.client.settings.diskUsage.restore()
+        this.remote.remoteCozy.updateFileById.restore()
       })
     })
   }
