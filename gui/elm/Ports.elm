@@ -30,6 +30,7 @@ port module Ports exposing
     , unlinkCozy
     , updateDownloading
     , updateError
+    , userActionDone
     , userActionInProgress
     , userActionSkipped
     )
@@ -130,6 +131,9 @@ port updateDownloading : (Maybe Progress -> msg) -> Sub msg
 
 
 port updateError : (String -> msg) -> Sub msg
+
+
+port userActionDone : EncodedUserAction -> Cmd msg
 
 
 port userActionInProgress : EncodedUserAction -> Cmd msg

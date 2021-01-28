@@ -8,8 +8,9 @@ const EventEmitter = require('events')
 const deepDiff = require('deep-diff').diff
 
 /*::
-type UserActionStatus = 'Required'|'InProgress'
+type UserActionStatus = 'Required'|'InProgress'|'Done'
 type UserAction = {
+  seq: ?number,
   code: string,
   doc?: {
     docType: string,
@@ -40,13 +41,17 @@ export type SyncStatus =
   | 'user-action-required'
 */
 
-const makeAction = (data /*: Object */) /*: UserAction */ => {
-  const { doc } = data
-  const links = data.links || (data.originalErr && data.originalErr.links)
+const makeAction = (
+  err /*: Object */,
+  seq /*: ?number */
+) /*: UserAction */ => {
+  const { doc } = err
+  const links = err.links || (err.originalErr && err.originalErr.links)
 
   return {
+    seq: err.seq || seq || null,
     status: 'Required',
-    code: data.code,
+    code: err.code,
     doc: doc || null,
     links: links || null
   }
@@ -65,18 +70,18 @@ const addAction = (
   }
 }
 
-const actionInProgress = (
+const updateAction = (
   actions /*: UserAction[] */,
-  action /*: UserAction */
+  action /*: UserAction */,
+  status /*: UserActionStatus */
 ) /*: UserAction[] */ => {
-  const index = actions.findIndex(a => a.code === action.code)
-  if (index !== -1) {
-    return actions
-      .slice(0, index)
-      .concat({ ...action, status: 'InProgress' })
-      .concat(actions.slice(index + 1))
-  }
-  return actions
+  return actions.reduce((prev, curr) => {
+    if (curr.code === action.code) {
+      return prev.concat({ ...action, status })
+    } else {
+      return prev.concat(curr)
+    }
+  }, [])
 }
 
 const removeAction = (
@@ -155,10 +160,25 @@ module.exports = class SyncState extends EventEmitter {
         : // Otherwise the remaining number of changes is still the same
           state.remaining
 
+    const updatedUserActions = newState.userActions || state.userActions
+    const userActions =
+      newState.syncCurrentSeq != null
+        ? updatedUserActions.reduce((actions, action) => {
+            if (action.seq && action.seq === newState.syncCurrentSeq) {
+              return actions.concat({ ...action, status: 'Done' })
+            } else if (action.seq && action.seq <= newState.syncCurrentSeq) {
+              return actions
+            } else {
+              return actions.concat(action)
+            }
+          }, [])
+        : updatedUserActions
+
     newState = {
       ...state,
       ...newState,
-      remaining
+      remaining,
+      userActions
     }
 
     const diff = deepDiff(state, newState)
@@ -217,20 +237,28 @@ module.exports = class SyncState extends EventEmitter {
         break
       case 'user-action-required':
         this.update({
-          userActions: addAction(this.state.userActions, makeAction(args[0]))
+          userActions: addAction(this.state.userActions, makeAction(...args))
         })
         break
       case 'user-action-inprogress':
         this.update({
-          userActions: actionInProgress(
+          userActions: updateAction(
             this.state.userActions,
-            makeAction(args[0])
+            makeAction(args[0]),
+            'InProgress'
           )
         })
         break
       case 'user-action-done':
         this.update({
           userActions: removeAction(this.state.userActions, makeAction(args[0]))
+          /*
+          userActions: updateAction(
+            this.state.userActions,
+            makeAction(args[0]),
+            'Done'
+          )
+          */
         })
         break
       case 'user-action-skipped':

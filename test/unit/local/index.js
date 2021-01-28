@@ -8,10 +8,7 @@ const sinon = require('sinon')
 const should = require('should')
 
 const { Local } = require('../../../core/local')
-const {
-  TMP_DIR_NAME,
-  UV_FS_O_EXLOCK
-} = require('../../../core/local/constants')
+const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const timestamp = require('../../../core/utils/timestamp')
 
 const Builders = require('../../support/builders')
@@ -755,73 +752,5 @@ describe('Local', function() {
         /metadata/
       )
     })
-  })
-
-  describe('tryOpening', () => {
-    let file, fullpath
-    beforeEach(async function() {
-      file = builders
-        .metafile()
-        .path('file-to-open.doc')
-        .build()
-      fullpath = syncDir.abspath(file.path)
-      await fse.ensureFile(fullpath)
-    })
-
-    if (process.platform === 'win32') {
-      context('on Windows', () => {
-        context('when doc is not opened anywhere', () => {
-          it('returns OK', async function() {
-            await should(this.local.tryOpening(file)).be.fulfilledWith({
-              ok: true
-            })
-          })
-        })
-
-        context('when doc is opened by another process (e.g. Office)', () => {
-          let fd
-          beforeEach(async function() {
-            // Use exclusive sharing mode flag
-            fd = await fse.open(fullpath, fse.constants.O_RDWR | UV_FS_O_EXLOCK)
-          })
-          afterEach(async function() {
-            await fse.close(fd)
-          })
-
-          it('returns NOK', async function() {
-            const { ok, err } = await this.local.tryOpening(file)
-            should(ok).be.false()
-            should(err).match({ message: /EBUSY/ })
-          })
-        })
-      })
-    } else {
-      context('on Linux and macOS', () => {
-        context('when doc is not opened anywhere', () => {
-          it('returns OK', async function() {
-            await should(this.local.tryOpening(file)).be.fulfilledWith({
-              ok: true
-            })
-          })
-        })
-
-        context('when doc is opened by another process (e.g. Office)', () => {
-          let fd
-          beforeEach(async function() {
-            // Use exclusive sharing mode flag
-            fd = await fse.open(fullpath, fse.constants.O_RDWR | UV_FS_O_EXLOCK)
-          })
-          afterEach(async function() {
-            await fse.close(fd)
-          })
-
-          it('returns OK', async function() {
-            await should(this.local.tryOpening(file)).be.fulfilledWith({
-              ok: true
-            })
-          })
-        })
-      })
-    }
   })
 })

@@ -17,6 +17,7 @@ module Data.UserAction exposing
 type UserActionStatus
     = Required
     | InProgress
+    | Done
 
 
 type UserAction
@@ -25,7 +26,7 @@ type UserAction
 
 
 type alias ClientActionInfo =
-    { code : String, docType : String, path : String }
+    { seq : Int, code : String, docType : String, path : String }
 
 
 type alias RemoteActionInfo =
@@ -36,7 +37,7 @@ same : UserAction -> UserAction -> Bool
 same actionA actionB =
     case ( actionA, actionB ) of
         ( ClientAction _ a, ClientAction _ b ) ->
-            a.code == b.code
+            a.seq == b.seq && a.code == b.code
 
         ( RemoteAction _ a, RemoteAction _ b ) ->
             a.code == b.code
@@ -50,7 +51,8 @@ same actionA actionB =
 
 
 type alias EncodedUserAction =
-    { status : String
+    { seq : Maybe Int
+    , status : String
     , code : String
     , doc :
         Maybe
@@ -65,19 +67,19 @@ type alias EncodedUserAction =
 
 
 decode : EncodedUserAction -> Maybe UserAction
-decode { status, code, doc, links } =
+decode { seq, status, code, doc, links } =
     let
         decodedStatus =
             decodeUserActionStatus status
     in
-    case ( doc, links ) of
-        ( Just { docType, path }, Just { self } ) ->
+    case ( doc, links, seq ) of
+        ( Just { docType, path }, Just { self }, _ ) ->
             Just (RemoteAction decodedStatus { code = code, link = self })
 
-        ( Just { docType, path }, _ ) ->
-            Just (ClientAction decodedStatus { code = code, docType = docType, path = path })
+        ( Just { docType, path }, _, Just num ) ->
+            Just (ClientAction decodedStatus { seq = num, code = code, docType = docType, path = path })
 
-        ( _, Just { self } ) ->
+        ( _, Just { self }, _ ) ->
             Just (RemoteAction decodedStatus { code = code, link = self })
 
         _ ->
@@ -88,14 +90,16 @@ encode : UserAction -> EncodedUserAction
 encode action =
     case action of
         ClientAction s a ->
-            { status = encodeUserActionStatus s
+            { seq = Just a.seq
+            , status = encodeUserActionStatus s
             , code = a.code
             , doc = Just { docType = a.docType, path = a.path }
             , links = Nothing
             }
 
         RemoteAction s a ->
-            { status = encodeUserActionStatus s
+            { seq = Nothing
+            , status = encodeUserActionStatus s
             , code = a.code
             , links = Just { self = a.link }
             , doc = Nothing
@@ -123,6 +127,9 @@ encodeUserActionStatus status =
 
         InProgress ->
             "InProgress"
+
+        Done ->
+            "Done"
 
 
 

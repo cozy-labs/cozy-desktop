@@ -371,6 +371,17 @@ class Remote /*:: implements Reader, Writer */ {
     return this.remoteCozy.diskUsage()
   }
 
+  async ping() /*: Promise<boolean> */ {
+    try {
+      // FIXME: find better way to check if Cozy is reachable?
+      await this.diskUsage()
+      return true
+    } catch (err) {
+      log.debug({ err }, 'Could not reach remote Cozy')
+      return false
+    }
+  }
+
   async usesFlatDomains() /*: Promise<boolean> */ {
     let { flatSubdomains } = this.config.capabilities
     if (flatSubdomains == null) {
