@@ -1,5 +1,30 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.25.0-beta.4 - 2021-01-29
+
+Improvements for all users:
+
+- Clients can now be disconnected from the remote Cozy even if it is no longer
+  reachable (e.g. completely deleted or deleted after being moved to another
+  domain). The local configuration and database will be wiped out.
+- Changes that we failed to synchronize and should be retried will now be
+  retried without previously running a check that validates if the
+  synchronization should be successful. All changes made either on the local
+  filesystem or the remote Cozy will thus be taken into account when retrying.
+- We'll now verify if the Cozy has enough space before uploading files to avoid
+  wasting time and resources to get an error at the end of the upload.
+- Sometimes, the creation and modification dates of documents created on the
+  remote Cozy at the initiative of the desktop client are different from those
+  supplied by the client. This can come from the presence of EXIF metadata in
+  photos for example. To avoid any refusal by the Cozy to apply future actions
+  on these documents, we will now always pass the most recent modification date
+  between that of the file system and that of the Cozy in requests sent to the
+  Cozy.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.25.0-beta.3 - 2021-01-18
 
 Improvements for all users:
