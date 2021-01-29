@@ -573,6 +573,7 @@ describe('remote.Remote', function() {
         .inRootDir()
         .name('created')
         .createdAt(2017, 11, 15, 8, 12, 9)
+        .updatedAt(2017, 11, 15, 8, 12, 9)
         .create()
       const doc = builders
         .metadir()
@@ -782,6 +783,63 @@ describe('remote.Remote', function() {
         )
       })
     })
+
+    context(
+      'when the remote updated_at value is more recent than the local one',
+      () => {
+        // It can happen when trying to move an image that was never modified
+        // after being uploaded to the remote Cozy and which has an EXIF date more
+        // recent than its filesystem modification date.
+        //
+        // To simplify the test we'll fake this by creating a remote document
+        // without specifying the updatedAt field so that the Cozy will use the
+        // current time as value.
+        let remoteFile, file
+        beforeEach(async () => {
+          remoteFile = await builders
+            .remoteFile()
+            .inRootDir()
+            .name('cat.jpg')
+            .data('maow')
+            .createdAt(2018, 1, 2, 6, 31, 30, 564)
+            .updatedAt(2018, 1, 2, 6, 31, 30, 564)
+            .create()
+          // We create the local doc from the remote one but in reality this
+          // would be the opposite. Our data builders give us this opportunity.
+          file = await builders
+            .metafile()
+            .fromRemote(remoteFile)
+            .updatedAt('2018-01-02T05:31:30.504Z') // 1 hour before the remote creation date
+            .upToDate()
+            .create()
+        })
+
+        it('moves the file on the Cozy', async function() {
+          const old = builders
+            .metafile(file)
+            .moveTo('My Cat.jpg')
+            .changedSide('local')
+            .build()
+          const doc = builders
+            .metafile()
+            .moveFrom(old)
+            .path('My Cat.jpg')
+            .build()
+
+          await this.remote.moveAsync(doc, old)
+
+          const movedFile = await cozy.files.statById(doc.remote._id)
+          should(movedFile).have.properties({
+            _id: old.remote._id,
+            _rev: doc.remote._rev
+          })
+          should(movedFile.attributes).have.properties({
+            name: 'My Cat.jpg',
+            updated_at: doc.remote.updated_at // The `remote` attribute of the PouchDB record is updated
+          })
+        })
+      }
+    )
 
     context('when overwriting an existing file', function() {
       const existingRefs = [{ _id: 'blah', _type: 'io.cozy.photos.albums' }]

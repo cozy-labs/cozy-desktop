@@ -97,9 +97,18 @@ describe('timestamp', () => {
     const d2 = new Date('2017-05-18T08:03:16.000Z')
 
     it('finds the most recent of two dates', () => {
-      should(maxDate(d1, d2)).equal(d2)
-      should(maxDate(d2, d1)).equal(d2)
-      should(maxDate(d1, d1)).equal(d1)
+      should(maxDate(d1, d2)).deepEqual(d2)
+      should(maxDate(d2, d1)).deepEqual(d2)
+      should(maxDate(d1, d1)).deepEqual(d1)
+    })
+
+    it('returns the most recent date when passed ISO date strings', () => {
+      const str1 = d1.toISOString()
+      const str2 = d2.toISOString()
+
+      should(maxDate(str1, str2)).deepEqual(d2)
+      should(maxDate(str2, str1)).deepEqual(d2)
+      should(maxDate(str1, str1)).deepEqual(d1)
     })
   })
 

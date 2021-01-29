@@ -17,6 +17,7 @@ const { RemoteCozy, FetchError } = require('./cozy')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
 const errors = require('./errors')
+const timestamp = require('../utils/timestamp')
 
 /*::
 import type EventEmitter from 'events'
@@ -228,7 +229,7 @@ class Remote /*:: implements Reader, Writer */ {
         executable: doc.executable || false,
         contentLength: doc.size,
         contentType: doc.mime,
-        updatedAt: doc.updated_at,
+        updatedAt: mostRecentUpdatedAt(doc),
         ifMatch: old && old.remote ? old.remote._rev : ''
       }
     )
@@ -246,7 +247,7 @@ class Remote /*:: implements Reader, Writer */ {
 
     const attrs = {
       executable: doc.executable || false,
-      updated_at: doc.updated_at
+      updated_at: mostRecentUpdatedAt(doc)
     }
     const opts = {
       ifMatch: doc.remote._rev
@@ -272,7 +273,7 @@ class Remote /*:: implements Reader, Writer */ {
     )
 
     const attrs = {
-      updated_at: doc.updated_at
+      updated_at: mostRecentUpdatedAt(doc)
     }
     const opts = {
       ifMatch: doc.remote._rev
@@ -321,7 +322,7 @@ class Remote /*:: implements Reader, Writer */ {
     const attrs = {
       name: newName,
       dir_id: newDir._id,
-      updated_at: newMetadata.updated_at
+      updated_at: mostRecentUpdatedAt(newMetadata)
     }
     const opts = {
       ifMatch: oldMetadata.remote._rev
@@ -445,6 +446,16 @@ function newDocumentAttributes(
     // greater.
     createdAt: updatedAt,
     updatedAt
+  }
+}
+
+function mostRecentUpdatedAt(doc /*: SavedMetadata */) {
+  if (doc.remote) {
+    return timestamp
+      .maxDate(doc.updated_at, doc.remote.updated_at)
+      .toISOString()
+  } else {
+    return doc.updated_at
   }
 }
 
