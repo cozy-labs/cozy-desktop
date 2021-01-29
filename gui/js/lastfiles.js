@@ -50,13 +50,18 @@ const persist = async () => {
 
 const list = async () => await lastFiles
 const add = async file => {
-  const previousList = await lastFiles
-  previousList.push(file)
-  lastFiles = Promise.resolve(previousList.slice(-250))
+  const previousList = await remove(file)
+  lastFiles = Promise.resolve(previousList.concat(file).slice(-250))
+  return lastFiles
 }
 const remove = async file => {
   const previousList = await lastFiles
   lastFiles = Promise.resolve(previousList.filter(f => f.path !== file.path))
+  return lastFiles
+}
+const reset = () => {
+  lastFiles = Promise.resolve([])
+  return lastFiles
 }
 
 module.exports = {
@@ -64,5 +69,6 @@ module.exports = {
   list,
   add,
   remove,
-  persist
+  persist,
+  reset
 }
