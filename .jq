@@ -8,6 +8,7 @@ def redactNote(obj):
     (.
     | if isempty(.metadata.content | objects) | not then .metadata.content |= "[redacted]" else . end
     | if isempty(.metadata.schema | objects) | not then .metadata.schema |= "[redacted]" else . end
+    | if isempty(.remote | objects) | not then redactNote(.remote) else . end
     | if isempty(.moveFrom | objects) | not then redactNote(.moveFrom) else . end
     | if isempty(.overwrite | objects) | not then redactNote(.overwrite) else . end
     )
