@@ -45,12 +45,12 @@ const {
   detectPathIncompatibilities,
   detectPathLengthIncompatibility
 } = require('./incompatibilities/platform')
-const { DIR_TYPE, FILE_TYPE, TRASH_DIR_NAME } = require('./remote/constants')
+const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
 const { SIDE_NAMES, otherSide } = require('./side')
 
 /*::
 import type { PlatformIncompatibility } from './incompatibilities/platform'
-import type { RemoteBase, RemoteFile, RemoteDir } from './remote/document'
+import type { RemoteBase, RemoteFile, RemoteDir, RemoteDeletion } from './remote/document'
 import type { Stats } from './local/stater'
 import type { Ignore } from './ignore'
 import type { SideName } from './side'
@@ -101,7 +101,7 @@ export type MetadataLocalInfo = {
   updated_at?: string,
 }
 
-export type MetadataRemoteFile = RemoteFile & { path: string }
+export type MetadataRemoteFile = { ...RemoteFile, path: string }
 export type MetadataRemoteDir = RemoteDir
 export type MetadataRemoteInfo = MetadataRemoteFile|MetadataRemoteDir
 
@@ -456,7 +456,7 @@ function ensureValidChecksum(doc /*: Metadata */) {
 }
 
 // Extract the revision number, or 0 it not found
-function extractRevNumber(doc /*: Metadata|{_rev: string} */) {
+function extractRevNumber(doc /*: { _rev: string } */) {
   try {
     // $FlowFixMe
     let rev = doc._rev.split('-')[0]
@@ -872,21 +872,14 @@ function updateLocal(doc /*: Metadata */, newLocal /*: Object */ = {}) {
 
 function updateRemote(
   doc /*: Metadata */,
-  newRemote /*: {| path: string |}|RemoteDir|RemoteBase */
+  newRemote /*: {| path: string |}|MetadataRemoteInfo */
 ) {
-  const remotePath =
-    typeof newRemote.path === 'string' ? newRemote.path : undefined
+  const remotePath = newRemote.path
 
   doc.remote = _.defaultsDeep(
     _.cloneDeep(newRemote),
     {
-      path: remotePath
-        ? remotePath.startsWith('/')
-          ? remotePath.substring(1)
-          : remotePath
-        : newRemote.trashed
-        ? path.posix.join(TRASH_DIR_NAME, newRemote.name)
-        : path.posix.join(...doc.path.split(path.sep))
+      path: remotePath.startsWith('/') ? remotePath.substring(1) : remotePath
     },
     _.cloneDeep(doc.remote)
   )
