@@ -69,10 +69,9 @@ class SyncError extends Error {
 
 const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
   if (err instanceof remoteErrors.RemoteError) {
+    // The error originates from the Remote Watcher and is not a change
+    // application error.
     switch (err.code) {
-      case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
-        return REMOTE_HEARTBEAT
-
       case remoteErrors.UNREACHABLE_COZY_CODE:
         return 10000
 
@@ -83,6 +82,7 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
         return REMOTE_HEARTBEAT
     }
   } else if (err instanceof SyncError) {
+    // The error originates from Sync and means we failed to apply a change.
     switch (err.code) {
       case MISSING_PERMISSIONS_CODE:
         return 10000
@@ -94,6 +94,7 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
         return 10000
 
       case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
+        // We want to make sure the remote watcher has run before retrying
         return REMOTE_HEARTBEAT
 
       case remoteErrors.UNREACHABLE_COZY_CODE:

@@ -590,13 +590,11 @@ class Sync {
     cause
     /*: {| err: RemoteError |} | {| err: SyncError, change: MetadataChange |} */
   ) {
+    log.debug(cause, 'blocking sync for error')
+
     const { err } = cause
 
     this.lifecycle.blockFor(err.code)
-
-    if (err instanceof remoteErrors.RemoteError) {
-      this.remote.watcher.stop()
-    }
 
     const retryDelay = syncErrors.retryDelay(err)
 
@@ -605,30 +603,33 @@ class Sync {
       this.events.off('user-action-inprogress', waitBeforeRetry)
       this.events.off('user-action-skipped', skip)
 
-      log.debug(cause, 'retrying failed change synchronization')
-
-      // Resest the timer for manual calls
-      // $FlowFixMe intervals have a refresh() method starting with Node v10
-      if (this.retryInterval) this.retryInterval.refresh()
+      log.debug(cause, 'retrying after blocking error')
 
       if (err.code === remoteErrors.UNREACHABLE_COZY_CODE) {
+        // We could simply fetch the remote changes but it could take time
+        // before we're done fetching them and we want to notify the GUI we're
+        // back online as soon as possible.
         if (await this.remote.ping()) {
-          clearInterval(this.retryInterval)
           this.events.emit('online')
-          this.lifecycle.unblockFor(err.code)
         } else {
           this.events.emit('offline')
+          // Resest the timer for manual calls
+          // $FlowFixMe intervals have a refresh() method starting with Node v10
+          if (this.retryInterval) this.retryInterval.refresh()
+          // We're still offline so no need to try fetching changes or
+          // synchronizing.
+          return
         }
-      } else {
-        clearInterval(this.retryInterval)
-        // Await to make sure we've fetched potential remote changes
-        if (this.remote.watcher.running) {
-          await this.remote.watcher.resetTimeout({ manualRun: true })
-        } else {
-          await this.remote.watcher.start()
-        }
-        this.lifecycle.unblockFor(err.code)
       }
+
+      clearInterval(this.retryInterval)
+
+      // Await to make sure we've fetched potential remote changes
+      if (!this.remote.watcher.running) {
+        await this.remote.watcher.start()
+      }
+
+      this.lifecycle.unblockFor(err.code)
     }
 
     const waitBeforeRetry = () => {
@@ -646,6 +647,8 @@ class Sync {
 
       log.debug(cause, 'user skipped required action')
 
+      clearInterval(this.retryInterval)
+
       // We need to check for the presence of `change` because Flow is not able
       // to understand it will automatically be present if `err` is a
       // `SyncError`…
@@ -655,16 +658,9 @@ class Sync {
         await this.updateErrors(change, err)
       }
 
-      if (err instanceof remoteErrors.RemoteError) {
-        this.remote.watcher.start()
+      if (!this.remote.watcher.running) {
+        await this.remote.watcher.start()
       }
-
-      //clearTimeout(retryTimeout)
-      clearInterval(this.retryInterval)
-
-      // We suppose the error triggered a user-action-required event since skip
-      // is only called when the user skips a user action.
-      // this.events.emit('user-action-skipped', err)
 
       this.lifecycle.unblockFor(err.code)
     }
@@ -676,6 +672,14 @@ class Sync {
     this.events.once('user-action-done', retry)
     this.events.once('user-action-inprogress', waitBeforeRetry)
     this.events.once('user-action-skipped', skip)
+
+    // In case the error comes from the RemoteWatcher and not a change
+    // application, we stop the watcher to avoid more errors.
+    // It will be started again with the next retry or if the user action is
+    // skipped.
+    if (err instanceof remoteErrors.RemoteError) {
+      this.remote.watcher.stop()
+    }
 
     switch (err.code) {
       case remoteErrors.UNREACHABLE_COZY_CODE:

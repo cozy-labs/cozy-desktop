@@ -5,6 +5,7 @@ const _ = require('lodash')
 const sinon = require('sinon')
 const should = require('should')
 const EventEmitter = require('events')
+const { Promise } = require('bluebird')
 const { FetchError } = require('cozy-stack-client')
 
 const { Ignore } = require('../../core/ignore')
@@ -824,6 +825,86 @@ describe('Sync', function() {
         .sides({ remote: 5 })
         .build()
       should(this.sync.selectSide(doc)).deepEqual([])
+    })
+  })
+
+  describe('blockSyncFor', () => {
+    beforeEach(function() {
+      sinon.spy(this.events, 'emit')
+      this.remote.watcher = {
+        start: sinon.stub().returns(),
+        stop: sinon.stub().returns()
+      }
+    })
+    afterEach(function() {
+      delete this.remote.watcher
+      this.events.emit.restore()
+    })
+
+    context('when Cozy is unreachable', () => {
+      beforeEach(function() {
+        this.sync.blockSyncFor({
+          err: remoteErrors.wrapError(
+            new FetchError({ status: 404 }, 'UnreachableCozy test error')
+          )
+        })
+      })
+
+      it('emits offline event', function() {
+        should(this.events.emit).have.been.calledWith('offline')
+      })
+
+      it('stops the remote watcher', function() {
+        should(this.remote.watcher.stop).have.been.called()
+      })
+
+      describe('retry', () => {
+        context('after Cozy is reachable again', () => {
+          beforeEach(async function() {
+            // Reset calls history
+            this.events.emit.reset()
+
+            // Cozy is reachable
+            this.remote.ping = sinon.stub().resolves(true)
+
+            // Force call to `retry`
+            this.events.emit('user-action-done')
+            // Wait for `retry` to run
+            await Promise.delay(1000)
+          })
+
+          it('emits online event', async function() {
+            should(this.events.emit).have.been.calledWith('online')
+          })
+
+          it('restarts the remote watcher', function() {
+            should(this.remote.watcher.start).have.been.called()
+          })
+        })
+
+        context('while Cozy is still unreachable', () => {
+          beforeEach(async function() {
+            // Reset calls history
+            this.events.emit.reset()
+
+            // Cozy is unreachable
+            this.remote.ping = sinon.stub().resolves(false)
+
+            // Force call to `retry`
+            this.events.emit('user-action-done')
+            // Wait for `retry` to run
+            await Promise.delay(1000)
+          })
+
+          it('emits offline event', async function() {
+            should(this.events.emit).have.been.calledWith('offline')
+          })
+
+          it('does not restart the remote watcher', function() {
+            should(this.remote.watcher.start).not.have.been.called()
+          })
+        })
+      })
     })
   })
 })
