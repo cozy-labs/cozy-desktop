@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.25.0-beta.5 - 2021-02-02
+
+Improvements for all users:
+
+- We're now correctly restarting the remote watcher when we detect the Cozy is
+  reachable again after a failed attempt at fetching changes from the remote
+  Cozy.
+- We're now making sure the list of recently synchronized files persisted to
+  disk includes only one occurrence of each file since we display only one of
+  them. With this change, the displayed list will always contain 250 elements
+  once this number is reached.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.25.0-beta.4 - 2021-01-29
 
 Improvements for all users:
