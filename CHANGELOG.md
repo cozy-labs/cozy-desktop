@@ -1,5 +1,45 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.25.0 - 2021-02-04
+
+Improvements for all users:
+
+- Some synchronization errors will now be notified to you within the main window
+  with information about the error itself and how to fix it. Although automatic
+  retries will be performed in the background, you'll have the opportunity to
+  request an early retry via the interface.
+  Know that the synchronization will be blocked by the failing change until it
+  can finally be applied. This should avoid a lot of automatically dropped
+  changes as we would otherwise stop retrying after the third failed attempt.
+- We upgraded the framework upon which our application is built, Electron, to
+  v11.1.1 which is the latest stable version. This should bring more stability
+  to the application overall and fix an issue on macOS Big Sur which was
+  preventing the application from restarting after an upgrade.
+- We've changed the way we handle the simultaneous deletions of the same
+  document on the remote Cozy and the local filesystem so that any resulting
+  synchronization conflict is only temporary (i.e. you would see an error
+  message but it should be resolved during the following retry).
+- Clients can now be disconnected from the remote Cozy even if it is no longer
+  reachable (e.g. completely deleted or deleted after being moved to another
+  domain). The local configuration and database will be wiped out.
+- We'll now verify if the Cozy has enough space before uploading files to avoid
+  wasting time and resources to get an error at the end of the upload.
+- Sometimes, the creation and modification dates of documents created on the
+  remote Cozy at the initiative of the desktop client are different from those
+  supplied by the client. This can come from the presence of EXIF metadata in
+  photos for example. To avoid any refusal by the Cozy to apply future actions
+  on these documents, we will now always pass the most recent modification date
+  between that of the file system and that of the Cozy in requests sent to the
+  Cozy.
+- We're now making sure the list of recently synchronized files persisted to
+  disk includes only one occurrence of each file since we display only one of
+  them. With this change, the displayed list will always contain 250 elements
+  once this number is reached.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.25.0-beta.5 - 2021-02-02
 
 Improvements for all users:
