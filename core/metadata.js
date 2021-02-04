@@ -117,28 +117,32 @@ export type MetadataSidesInfo = {
 
 // The files/dirs metadata, as stored in PouchDB
 export type Metadata = {
+  // Those attributes should not be included in this type
   _id?: string,
   _rev?: string,
   _deleted?: true,
 
-  deleted?: true,
-  md5sum?: string,
-  class?: string,
   docType: DocType,
-  errors?: number,
-  executable: boolean,
+  path: string,
   updated_at: string,
+  local: MetadataLocalInfo,
+  remote: MetadataRemoteDir|MetadataRemoteFile,
+  tags: string[],
+  sides: MetadataSidesInfo,
+
+  // File attributes
+  executable: boolean,
+  md5sum?: string,
+  size?: number,
   mime?: string,
+  class?: string,
+
+  trashed?: true,
+  deleted?: true,
+  errors?: number,
   moveTo?: string, // Destination id
   overwrite?: SavedMetadata,
   childMove?: boolean,
-  path: string,
-  local: MetadataLocalInfo,
-  remote: MetadataRemoteDir|MetadataRemoteFile,
-  size?: number,
-  tags: string[],
-  sides: MetadataSidesInfo,
-  trashed?: true,
   incompatibilities?: *,
   ino?: number,
   fileid?: string,
@@ -186,6 +190,7 @@ module.exports = {
   markSide,
   incSides,
   side,
+  sideInfo,
   target,
   wasSynced,
   buildDir,
@@ -337,8 +342,13 @@ function fromRemoteFile(remoteFile /*: MetadataRemoteFile */) /*: Metadata */ {
   return doc
 }
 
-function isFile(doc /*: Metadata */) /*: bool */ {
-  return doc.docType === 'file'
+function isFile(
+  doc /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
+) /*: boolean %checks */ {
+  return (
+    (doc.docType != null && doc.docType === 'file') ||
+    (doc.type !== null && doc.type === 'file')
+  )
 }
 
 function kind(doc /*: Metadata */) /*: EventKind */ {
@@ -740,6 +750,11 @@ function side(
   return (doc.sides || {})[sideName] || 0
 }
 
+function sideInfo(sideName /*: SideName */, doc /*: Metadata */) {
+  if (sideName === 'local') return doc.local
+  else return doc.remote
+}
+
 function detectSingleSide(doc /*: Metadata */) /*: ?SideName */ {
   if (doc.sides) {
     for (const sideName of SIDE_NAMES) {
@@ -879,7 +894,7 @@ function updateRemote(
   doc.remote = _.defaultsDeep(
     _.cloneDeep(newRemote),
     {
-      path: remotePath.startsWith('/') ? remotePath.substring(1) : remotePath
+      path: remotePath.startsWith('/') ? remotePath : '/' + remotePath
     },
     _.cloneDeep(doc.remote)
   )

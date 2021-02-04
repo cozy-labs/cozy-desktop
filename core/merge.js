@@ -709,18 +709,6 @@ class Merge {
     was /*: Metadata */,
     doc /*: Metadata */
   ) /*: Promise<void> */ {
-    if (
-      side === 'remote' &&
-      doc.docType === 'file' &&
-      !metadata.sameBinary(was, doc)
-    ) {
-      // We have a conflict: the file was updated in local and trashed on the
-      // remote. We dissociate the file on the remote to be able to apply the
-      // local change.
-      delete was.remote
-      if (was.sides) delete was.sides.remote
-      return this.pouch.put(was)
-    }
     delete was.errors
 
     const newMetadata = _.cloneDeep(was)
@@ -755,7 +743,7 @@ class Merge {
     if (!was) {
       log.debug({ path }, 'Nothing to trash')
       return
-    } else if (doc.docType !== was.docType) {
+    } else if (doc.docType !== was.docType || was.docType !== 'file') {
       log.error(
         { doc, was, sentry: true },
         'Mismatch on doctype for trashFileAsync'
@@ -783,6 +771,23 @@ class Merge {
       }
       return this.pouch.put(was)
     }
+
+    if (
+      was.local &&
+      was.remote &&
+      was.local.docType === 'file' &&
+      was.remote.type === 'file' &&
+      !metadata.sameBinary(was.local, was.remote)
+    ) {
+      // The record is not up-to-date on the trashed side and we're not dealing
+      // with a moved file so we have a conflict: the file was updated on one
+      // side and trashed on the other. We dissociate the trashed side metadata
+      // to be able to apply the content update as a file addition.
+      if (side === 'remote') metadata.dissociateRemote(was)
+      else metadata.dissociateLocal(was)
+      return this.pouch.put(was)
+    }
+
     return this.doTrash(side, was, doc)
   }
 
