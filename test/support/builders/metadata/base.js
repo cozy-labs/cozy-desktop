@@ -345,17 +345,28 @@ module.exports = class BaseMetadataBuilder {
 
     if (this._remoteBuilder == null) {
       if (this.doc.docType === 'file') {
-        this._remoteBuilder = (new RemoteFileBuilder() /*: RemoteBaseBuilder<MetadataRemoteFile> */)
+        this._remoteBuilder = new RemoteFileBuilder()
       } else {
-        this._remoteBuilder = (new RemoteDirBuilder() /*: RemoteBaseBuilder<MetadataRemoteDir> */)
+        this._remoteBuilder = new RemoteDirBuilder()
       }
     }
 
-    this.doc.remote = this._remoteBuilder
+    const builder = this._remoteBuilder
       .name(path.basename(this.doc.path))
       .createdAt(...timestamp.spread(this.doc.updated_at))
       .updatedAt(...timestamp.spread(this.doc.updated_at))
-      .build()
+
+    if (this.doc.docType === 'file') {
+      this.doc.remote = builder
+        // $FlowFixMe those methods exist in RemoteFileBuilder
+        .data(this._data)
+        .executable(this.doc.executable)
+        .contentType(this.doc.mime || '')
+        .build()
+    } else {
+      this.doc.remote = builder.build()
+    }
+
     this.doc.remote.path = '/' + path.posix.normalize(this.doc.path)
   }
 }

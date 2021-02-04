@@ -22,8 +22,7 @@ import { App } from '../../core/app'
 import { Config } from '../../core/config'
 import { Pouch } from '../../core/pouch'
 import { Remote } from '../../core/remote'
-import type { Metadata } from '../../core/metadata'
-import type { RemoteDoc } from '../../core/remote/document'
+import type { Metadata, MetadataRemoteInfo } from '../../core/metadata'
 */
 
 const localDoc = async (
@@ -44,7 +43,7 @@ const localDoc = async (
 const remoteDoc = async (
   localDoc /*: Metadata */,
   { config, remote } /*: { config: Config, remote: Remote } */
-) /*: Promise<RemoteDoc> */ => {
+) /*: Promise<MetadataRemoteInfo> */ => {
   try {
     return await remote.remoteCozy.find(localDoc.remote._id)
   } catch (err) {

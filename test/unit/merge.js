@@ -4297,6 +4297,42 @@ describe('Merge', function() {
         })
       })
     })
+
+    context('when found record was not synced', () => {
+      it('marks it for deletion and upadtes sides info', async function() {
+        const was = await builders
+          .metafile()
+          .sides({ [this.side]: 1 })
+          .create()
+        const doc = builders
+          .metafile(was)
+          .trashed()
+          .unmerged(this.side)
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFileAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: increasedSides(was.sides, this.side, 1),
+                [this.side]: doc[this.side],
+                deleted: true
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
   })
 
   describe('trashFolderAsync', () => {
@@ -4457,6 +4493,42 @@ describe('Merge', function() {
 
         should(sideEffects).deepEqual({
           savedDocs: [],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when found record was not synced', () => {
+      it('marks it for deletion and upadtes sides info', async function() {
+        const was = await builders
+          .metadir()
+          .sides({ [this.side]: 1 })
+          .create()
+        const doc = builders
+          .metadir(was)
+          .trashed()
+          .unmerged(this.side)
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFolderAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: increasedSides(was.sides, this.side, 1),
+                [this.side]: doc[this.side],
+                deleted: true
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
           resolvedConflicts: []
         })
       })

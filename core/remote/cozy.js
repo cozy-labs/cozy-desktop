@@ -151,10 +151,10 @@ class RemoteCozy {
   // To make sense of the situation, we run checks on the remote Cozy to try
   // and recreate the error that was returned by the remote Cozy and take
   // appropriate action down the Sync process.
-  _withUnhandledRejectionProtection(
+  _withUnhandledRejectionProtection /*:: <T: MetadataRemoteInfo> */(
     options /*: Object */,
-    fn /*: () => Promise<MetadataRemoteInfo> */
-  ) /*: Promise<MetadataRemoteInfo> */ {
+    fn /*: () => Promise<T> */
+  ) /*: Promise<T> */ {
     return new Promise((resolve, reject) => {
       const abortController = new AbortController()
       options.signal = abortController.signal
@@ -209,7 +209,7 @@ class RemoteCozy {
                  createdAt: string,
                  updatedAt: string,
                  executable: boolean|} */
-  ) /*: Promise<MetadataRemoteInfo> */ {
+  ) /*: Promise<MetadataRemoteFile> */ {
     return this._withUnhandledRejectionProtection(options, async () => {
       const file = await this.client.files.create(data, options)
       return this.toRemoteDoc(file)
@@ -221,7 +221,7 @@ class RemoteCozy {
                  dirID?: string,
                  createdAt: string,
                  updatedAt: string|} */
-  ) /*: Promise<MetadataRemoteInfo> */ {
+  ) /*: Promise<MetadataRemoteDir> */ {
     const folder = await this.client.files.createDirectory(options)
     return this.toRemoteDoc(folder)
   }
@@ -235,7 +235,7 @@ class RemoteCozy {
                  updatedAt: string,
                  executable: boolean,
                  ifMatch: string|} */
-  ) /*: Promise<MetadataRemoteInfo> */ {
+  ) /*: Promise<MetadataRemoteFile> */ {
     return this._withUnhandledRejectionProtection(options, async () => {
       const updated = await this.client.files.updateById(id, data, options)
       return this.toRemoteDoc(updated)
@@ -316,7 +316,7 @@ class RemoteCozy {
     return this.toRemoteDoc(await this.client.files.statById(id))
   }
 
-  async findDir(id /*: string */) /*: Promise<RemoteDir> */ {
+  async findDir(id /*: string */) /*: Promise<MetadataRemoteDir> */ {
     const remoteDir = await this.client.files.statById(id)
     const doc = await this.toRemoteDoc(remoteDir)
     if (doc.type !== DIR_TYPE) {
@@ -325,7 +325,7 @@ class RemoteCozy {
     return doc
   }
 
-  async findMaybe(id /*: string */) /*: Promise<?RemoteDoc> */ {
+  async findMaybe(id /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
     try {
       return await this.find(id)
     } catch (err) {
@@ -361,7 +361,7 @@ class RemoteCozy {
 
   async findOrCreateDirectoryByPath(
     path /*: string */
-  ) /*: Promise<MetadataRemoteInfo> */ {
+  ) /*: Promise<MetadataRemoteDir> */ {
     try {
       return await this.findDirectoryByPath(path)
     } catch (err) {
@@ -370,9 +370,7 @@ class RemoteCozy {
 
       const name = posix.basename(path)
       const parentPath = posix.dirname(path)
-      const parentDir /*: RemoteDoc */ = await this.findOrCreateDirectoryByPath(
-        parentPath
-      )
+      const parentDir = await this.findOrCreateDirectoryByPath(parentPath)
       const dirID = parentDir._id
       const createdAt = new Date().toISOString()
 
@@ -402,7 +400,7 @@ class RemoteCozy {
     return resp.body
   }
 
-  async toRemoteDoc(doc /*: JsonApiDoc */) /*: Promise<MetadataRemoteInfo> */ {
+  async toRemoteDoc /*:: <T: JsonApiDoc> */(doc /*: T */) /*: Promise<*> */ {
     const remoteDoc /*: RemoteDoc */ = jsonApiToRemoteDoc(doc)
     if (remoteDoc.type === FILE_TYPE) {
       const parentDir /*: RemoteDir */ = await this.findDir(remoteDoc.dir_id)

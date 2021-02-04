@@ -244,7 +244,7 @@ class RemoteWatcher {
     const oldpath /*: ?string */ = was ? was.path : undefined
     log.debug(
       {
-        path: (remoteDoc /*: $Shape<MetadataRemoteInfo> */).path || oldpath,
+        path: remoteDoc.path || oldpath,
         oldpath,
         remoteDoc,
         was

@@ -11,6 +11,10 @@ import type { Metadata } from '../../../../core/metadata'
 */
 
 module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
+  /*::
+  _data: string | Buffer
+  */
+
   constructor(pouch /*: ?Pouch */, old /*: ?Metadata */) {
     super(pouch, old)
 
@@ -28,6 +32,7 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
   }
 
   data(data /*: string | Buffer */) /*: this */ {
+    this._data = data
     this.doc.size = Buffer.from(data).length
     this.doc.md5sum = crypto
       .createHash('md5')

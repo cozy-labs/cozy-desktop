@@ -30,7 +30,7 @@ const {
   CONFLICT_REGEXP
 } = metadata
 const { Ignore } = require('../../core/ignore')
-const { FILES_DOCTYPE, TRASH_DIR_NAME } = require('../../core/remote/constants')
+const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const stater = require('../../core/local/stater')
 const { NOTE_MIME_TYPE } = require('../../core/remote/constants')
 
@@ -1612,59 +1612,6 @@ describe('metadata', function() {
         updated_at: file.remote.updated_at,
         cozyMetadata: file.remote.cozyMetadata
       })
-    })
-
-    it('builds the remote path if it is missing in the new remote', () => {
-      const trashedRemoteFile /*: RemoteBase */ = {
-        _id: '123abc',
-        _rev: '1-xxx',
-        _type: 'file',
-        dir_id: '456def',
-        name: 'OLD',
-        trashed: true,
-        tags: [],
-        created_at: '1989-11-14T03:30:23.293Z',
-        updated_at: '1989-11-14T03:30:23.293Z'
-      }
-      const trashedFile = builders
-        .metafile()
-        .path('parent/dir/OLD')
-        .updatedAt('1989-11-14T03:30:23.293Z')
-        .sides({ local: 1 })
-        .build()
-
-      metadata.updateRemote(trashedFile, trashedRemoteFile)
-
-      should(trashedFile).have.property('remote')
-      should(trashedFile.remote).have.property(
-        'path',
-        path.posix.join(TRASH_DIR_NAME, 'OLD')
-      )
-
-      const remoteFile /*: RemoteBase */ = {
-        _id: '123abc',
-        _rev: '1-xxx',
-        _type: 'file',
-        dir_id: '456def',
-        name: 'OLD',
-        tags: [],
-        created_at: '1989-11-14T03:30:23.293Z',
-        updated_at: '1989-11-14T03:30:23.293Z'
-      }
-      const file = builders
-        .metafile()
-        .path('parent/OLD')
-        .updatedAt('1989-11-14T03:30:23.293Z')
-        .sides({ local: 1 })
-        .build()
-
-      metadata.updateRemote(file, remoteFile)
-
-      should(file).have.property('remote')
-      should(file.remote).have.property(
-        'path',
-        path.posix.join(...file.path.split(path.sep))
-      )
     })
   })
 })

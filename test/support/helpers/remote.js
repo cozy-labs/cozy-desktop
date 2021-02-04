@@ -161,7 +161,10 @@ class RemoteTestHelpers {
     }
   }
 
-  async move({ _id, updated_at } /*: RemoteDoc */, newPath /*: string */) {
+  async move(
+    { _id, updated_at } /*: MetadataRemoteInfo|RemoteDoc */,
+    newPath /*: string */
+  ) {
     const [newDirPath, newName] /*: [string, string] */ = dirAndName(newPath)
     const newDir /*: RemoteDoc */ = await this.side.remoteCozy.findDirectoryByPath(
       newDirPath
