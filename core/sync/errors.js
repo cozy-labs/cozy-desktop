@@ -104,10 +104,14 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
         return 60000
 
       default:
-        return 0
+        // Arbutrary value to make sure we don't retry too soon and overload the
+        // server with requests.
+        return REMOTE_HEARTBEAT
     }
   } else {
-    return 0
+    // Arbutrary value to make sure we don't retry too soon and overload the
+    // server with requests.
+    return REMOTE_HEARTBEAT
   }
 }
 
