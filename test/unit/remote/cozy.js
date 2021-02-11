@@ -9,7 +9,6 @@ const stream = require('stream')
 const { FetchError } = require('cozy-client')
 
 const {
-  FILES_DOCTYPE,
   ROOT_DIR_ID,
   TRASH_DIR_ID,
   TRASH_DIR_NAME
@@ -525,7 +524,6 @@ describe('RemoteCozy', function() {
 
       should(trashed).have.properties({
         _id: orig._id,
-        _type: FILES_DOCTYPE,
         class: orig.class,
         dir_id: TRASH_DIR_ID,
         executable: orig.executable,

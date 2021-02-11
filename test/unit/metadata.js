@@ -100,7 +100,6 @@ describe('metadata', function() {
       const remoteDoc /*: MetadataRemoteDir */ = {
         _id: '12',
         _rev: '34',
-        _type: FILES_DOCTYPE,
         dir_id: '56',
         name: 'bar',
         path: '/foo/bar',

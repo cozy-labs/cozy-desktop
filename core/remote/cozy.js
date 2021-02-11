@@ -7,7 +7,6 @@ const autoBind = require('auto-bind')
 const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
 const { FetchError } = require('cozy-stack-client')
-const _ = require('lodash')
 const path = require('path')
 const {
   AbortController
@@ -353,8 +352,7 @@ class RemoteCozy {
 
     if (results.length === 0) throw new DirectoryNotFound(path, this.url)
 
-    // FIXME: cozy-client-js query results have no _type
-    return _.merge({ _type: FILES_DOCTYPE }, results[0])
+    return results[0]
   }
 
   // FIXME: created_at is returned by some methods, but not all of them
