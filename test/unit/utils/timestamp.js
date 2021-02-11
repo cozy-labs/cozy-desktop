@@ -83,8 +83,8 @@ describe('timestamp', () => {
   })
 
   describe('maxDate', () => {
-    const d1 = new Date('2017-05-18T08:02:36.000Z')
-    const d2 = new Date('2017-05-18T08:03:16.000Z')
+    const d1 = new Date('2017-05-18T08:02:36.000Z').toISOString()
+    const d2 = new Date('2017-05-18T08:03:16.000Z').toISOString()
 
     it('finds the most recent of two dates', () => {
       should(maxDate(d1, d2)).deepEqual(d2)
@@ -92,13 +92,11 @@ describe('timestamp', () => {
       should(maxDate(d1, d1)).deepEqual(d1)
     })
 
-    it('returns the most recent date when passed ISO date strings', () => {
-      const str1 = d1.toISOString()
-      const str2 = d2.toISOString()
+    it('increments the most recent date by 1 millisecond if it has more than 3 millisecond digits', function() {
+      const d1 = '2015-12-31T23:59:59.999232345Z'
+      const d2 = '2015-12-31T23:59:59.999Z'
 
-      should(maxDate(str1, str2)).deepEqual(d2)
-      should(maxDate(str2, str1)).deepEqual(d2)
-      should(maxDate(str1, str1)).deepEqual(d1)
+      should(maxDate(d1, d2)).equal('2016-01-01T00:00:00.000Z')
     })
   })
 

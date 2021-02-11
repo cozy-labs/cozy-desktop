@@ -449,11 +449,9 @@ function newDocumentAttributes(
   }
 }
 
-function mostRecentUpdatedAt(doc /*: SavedMetadata */) {
+function mostRecentUpdatedAt(doc /*: SavedMetadata */) /*: string */ {
   if (doc.remote) {
-    return timestamp
-      .maxDate(doc.updated_at, doc.remote.updated_at)
-      .toISOString()
+    return timestamp.maxDate(doc.updated_at, doc.remote.updated_at)
   } else {
     return doc.updated_at
   }

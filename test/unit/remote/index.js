@@ -281,6 +281,44 @@ describe('remote.Remote', function() {
       })
     })
 
+    it('links and updates a more recent remote folder', async function() {
+      // We store the date before creating the remote folder so the remote
+      // folder will be more recent.
+      const localUpdatedAt = new Date().toISOString()
+
+      // We create a remote dir without passing in created_at and updated_at
+      // dates so that the remote stack will assign them values.
+      const remoteDir = await builders
+        .remoteDir()
+        .inRootDir()
+        .create()
+      const doc = builders
+        .metadir()
+        .fromRemote(remoteDir)
+        .noRemote()
+        .updatedAt(localUpdatedAt)
+        .build()
+
+      await this.remote.addFolderAsync(doc)
+
+      const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
+      const { path, name, type } = remoteDir
+      should(folder.attributes).have.properties({
+        path,
+        name,
+        type
+      })
+      // The "synced" updated_at date is not modified because we haven't merged
+      // the remote change.
+      should(doc.updated_at).equal(localUpdatedAt)
+      should(doc.remote).have.properties({
+        _id: remoteDir._id,
+        _rev: folder._rev,
+        // But the remote updated_at date is the one created by remote Cozy
+        updated_at: timestamp.roundedRemoteDate(folder.attributes.updated_at)
+      })
+    })
+
     it('throws an error if the parent folder is missing', async function() {
       const doc /*: Metadata */ = builders
         .metadir()
