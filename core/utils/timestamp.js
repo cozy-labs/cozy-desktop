@@ -68,10 +68,10 @@ function almostSameDate(
   return Math.abs(twoT - oneT) <= 3000
 }
 
-function maxDate(d1 /*: string|Date */, d2 /*: string|Date */) /*: Date */ {
-  const one = new Date(d1)
-  const two = new Date(d2)
-  return one.getTime() > two.getTime() ? one : two
+function maxDate(isoDate1 /*: string */, isoDate2 /*: string */) /*: string */ {
+  const one = roundedRemoteDate(isoDate1)
+  const two = roundedRemoteDate(isoDate2)
+  return new Date(one).getTime() > new Date(two).getTime() ? one : two
 }
 
 function stringify(t /*: Timestamp */) {
