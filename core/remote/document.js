@@ -35,7 +35,6 @@ export type RemoteDirAttributes = {|
 export type RemoteBase = {|
   _id: string,
   _rev: string,
-  _type: string,
   _deleted?: true,
   dir_id: string,
   name: string,
@@ -138,7 +137,6 @@ function jsonApiToRemoteDoc(json /*: JsonApiDoc */) /*: RemoteDoc */ {
       type: DIR_TYPE,
       _id: json._id,
       _rev: json._rev,
-      _type: json._type,
       ...(json.attributes /*: JsonApiDirAttributes */)
     } /*: RemoteDir */)
 
@@ -150,7 +148,6 @@ function jsonApiToRemoteDoc(json /*: JsonApiDoc */) /*: RemoteDoc */ {
       type: FILE_TYPE,
       _id: json._id,
       _rev: json._rev,
-      _type: json._type,
       _deleted: json._deleted,
       ...(json.attributes /*: JsonApiFileAttributes */)
     } /*: RemoteFile */)
