@@ -131,7 +131,8 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <Metadat
       metadata: this.remoteDoc.metadata,
       contentType: this.remoteDoc.mime,
       createdAt: this.remoteDoc.created_at,
-      updatedAt: this.remoteDoc.updated_at || this.remoteDoc.created_at
+      updatedAt: this.remoteDoc.updated_at || this.remoteDoc.created_at,
+      noSanitize: true
     })
     const remoteFile /*: RemoteFile */ = _.clone(jsonApiToRemoteDoc(data))
     remoteFile._rev = data.meta.rev
@@ -159,7 +160,8 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <Metadat
         await cozy.files.updateById(this.remoteDoc._id, this._data, {
           dirID: this.remoteDoc.dir_id,
           updatedAt: this.remoteDoc.updated_at,
-          name: this.remoteDoc.name
+          name: this.remoteDoc.name,
+          noSanitize: true
         })
       )
     )
