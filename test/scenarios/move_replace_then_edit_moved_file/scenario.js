@@ -4,9 +4,6 @@
 
 module.exports = ({
   useCaptures: false,
-  // XXX: This scenario does not work on the local side yet as it generates name
-  // conflicts on the Cozy.
-  side: 'remote',
   init: [
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'src/' },

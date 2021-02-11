@@ -65,7 +65,7 @@ describe('Move', () => {
         'local',
         _.merge(
           {
-            path: 'dst/file',
+            path: path.normalize('dst/file'),
             updated_at: '2017-06-19T08:19:26.769Z'
           },
           _.pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
@@ -104,7 +104,7 @@ describe('Move', () => {
             'tags'
           ]),
           {
-            path: 'dst/file',
+            path: path.normalize('dst/file'),
             updated_at: '2017-06-19T08:19:26.769Z',
             remote: {
               _id: file._id,
@@ -140,7 +140,7 @@ describe('Move', () => {
         'local',
         _.merge(
           {
-            path: 'dst/file',
+            path: path.normalize('dst/file'),
             updated_at: '2017-06-19T08:19:26.769Z'
           },
           _.pick(oldFile, [
@@ -168,7 +168,7 @@ describe('Move', () => {
         {
           path: path.normalize('dst/file'),
           moveFrom: oldFile,
-          overwrite: { path: 'dst/file' }
+          overwrite: { path: path.normalize('dst/file') }
         }
       ])
 
@@ -195,7 +195,7 @@ describe('Move', () => {
           'local',
           _.merge(
             {
-              path: 'dst/file.tmp',
+              path: path.normalize('dst/file.tmp'),
               updated_at: '2017-06-19T08:19:26.769Z'
             },
             _.pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
@@ -241,7 +241,7 @@ describe('Move', () => {
             'local',
             _.merge(
               {
-                path: 'dst/file.tmp',
+                path: path.normalize('dst/file.tmp'),
                 updated_at: '2017-06-19T08:19:26.769Z'
               },
               _.pick(oldFile, ['docType', 'md5sum', 'mime', 'class', 'size'])
@@ -607,7 +607,7 @@ describe('Move', () => {
         { path: path.normalize('parent/src/dir'), _deleted: true },
         {
           path: path.normalize('parent/dst/dir'),
-          overwrite: { path: 'parent/dst/dir' }
+          overwrite: { path: path.normalize('parent/dst/dir') }
         },
         {
           path: path.normalize('parent/src/dir/empty-subdir'),

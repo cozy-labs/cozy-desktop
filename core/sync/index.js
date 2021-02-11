@@ -176,6 +176,7 @@ class Sync {
     }
 
     await Promise.all([this.local.stop(), this.remote.stop()])
+    clearInterval(this.retryInterval)
     this.lifecycle.unblockFor('all')
     this.lifecycle.end('stop')
   }
@@ -374,21 +375,64 @@ class Sync {
         { err: syncErr, change, path: change.doc.path },
         `Sync error: ${syncErr.message}`
       )
-      if (manualRun) {
-        await this.updateErrors(change, syncErr)
-      } else {
-        switch (syncErr.code) {
-          case syncErrors.MISSING_PERMISSIONS_CODE:
-          case syncErrors.NO_DISK_SPACE_CODE:
-          case remoteErrors.NO_COZY_SPACE_CODE:
-          case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
-          case remoteErrors.USER_ACTION_REQUIRED_CODE:
-          case remoteErrors.UNREACHABLE_COZY_CODE:
-            this.blockSyncFor({ err: syncErr, change })
-            break
-          default:
+      switch (syncErr.code) {
+        case syncErrors.MISSING_PERMISSIONS_CODE:
+        case syncErrors.NO_DISK_SPACE_CODE:
+        case remoteErrors.NO_COZY_SPACE_CODE:
+        case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
+        case remoteErrors.USER_ACTION_REQUIRED_CODE:
+        case remoteErrors.UNREACHABLE_COZY_CODE:
+          if (manualRun) {
             await this.updateErrors(change, syncErr)
-        }
+          } else {
+            this.blockSyncFor({ err: syncErr, change })
+          }
+          break
+        case remoteErrors.CONFLICTING_NAME_CODE:
+          /* When we fail to apply a change because of a name conflict on the
+           *  remote Cozy, it means we either:
+           *  1. have another change to apply that will free the give name by
+           *     moving the document or renaming it
+           *  2. have not yet merged the remote change that took the name and
+           *     would have generated a conflict copy
+           *  3. have not merged the remote change that took the name and never
+           *     will because we abandoned that change in the past
+           *
+           *  We can solve 1. by marking our local change with an increased
+           *  error counter so it can be retried later, after we've applied the
+           *  other changes that would free the conflicting name.
+           *
+           *  We can solve 2. by blocking the Sync process until we've fetched
+           *  and merged the new remote changes, thus generating a conflict
+           *  copy at the Merge level.
+           *
+           *  We can only solve 3. by detecting that we've tried the solutions
+           *  to 1. and 2., still can't apply the given change and thus generate
+           *  a remote conflict at the Sync level instead of doing it at the
+           *  Merge level.
+           */
+
+          // We will retry to apply the change twice just in case but we'll stop
+          // before reaching `MAX_SYNC_ATTEMPTS` (i.e. 3) otherwise the change
+          // would be abandoned by `updateErrors()`.
+          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS - 1) {
+            // Solve 1.
+            this.updateErrors(change, syncErr)
+            // Solve 2.
+            if (!manualRun) {
+              this.blockSyncFor({ err: syncErr, change })
+            }
+          } else {
+            log.error(
+              { path, err: syncErr, change },
+              'Document already exists on Cozy'
+            )
+            // Solve 3.
+            await this.remote.resolveRemoteConflict(change.doc)
+          }
+          break
+        default:
+          await this.updateErrors(change, syncErr)
       }
     } finally {
       stopMeasure()
@@ -674,6 +718,9 @@ class Sync {
         this.events.emit('offline')
         break
       case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
+        break
+      case remoteErrors.CONFLICTING_NAME_CODE:
+        // Hide the conflict from the user as we can solve it by ourselves
         break
       default:
         this.events.emit(

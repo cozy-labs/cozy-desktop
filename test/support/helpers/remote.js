@@ -8,7 +8,6 @@ const conflictHelpers = require('./conflict')
 const cozyHelpers = require('./cozy')
 
 const { Remote, dirAndName } = require('../../../core/remote')
-const { jsonApiToRemoteDoc } = require('../../../core/remote/document')
 const { TRASH_DIR_NAME } = require('../../../core/remote/constants')
 
 /*::
@@ -153,9 +152,14 @@ class RemoteTestHelpers {
     return resp.text()
   }
 
-  async byIdMaybe(id /*: string */) {
+  async byId(id /*: string */) /*: Promise<MetadataRemoteInfo> */ {
+    const remoteDoc = await this.cozy.files.statById(id)
+    return await this.side.remoteCozy.toRemoteDoc(remoteDoc)
+  }
+
+  async byIdMaybe(id /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
     try {
-      return jsonApiToRemoteDoc(await this.cozy.files.statById(id))
+      return await this.byId(id)
     } catch (err) {
       return null
     }

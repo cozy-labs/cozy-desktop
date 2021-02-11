@@ -94,6 +94,7 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
         return 10000
 
       case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
+      case remoteErrors.CONFLICTING_NAME_CODE:
         // We want to make sure the remote watcher has run before retrying
         return REMOTE_HEARTBEAT
 

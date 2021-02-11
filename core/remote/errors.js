@@ -12,13 +12,14 @@ import type { FetchError } from 'cozy-stack-client'
 export type { FetchError }
 */
 
+const CONFLICTING_NAME_CODE = 'ConflictingName'
 const COZY_CLIENT_REVOKED_CODE = 'CozyClientRevoked'
-const USER_ACTION_REQUIRED_CODE = 'UserActionRequired'
 const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
 const NEEDS_REMOTE_MERGE_CODE = 'NeedsRemoteMerge'
 const NO_COZY_SPACE_CODE = 'NoCozySpace'
-const UNREACHABLE_COZY_CODE = 'UnreachableCozy'
 const UNKNOWN_REMOTE_ERROR_CODE = 'UnknownRemoteError'
+const UNREACHABLE_COZY_CODE = 'UnreachableCozy'
+const USER_ACTION_REQUIRED_CODE = 'UserActionRequired'
 
 const COZY_CLIENT_REVOKED_MESSAGE = 'Cozy client has been revoked' // Only necessary for the GUI
 
@@ -162,6 +163,13 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
           message: 'Cozy client is missing permissions (lack disk-usage?)',
           err
         })
+      case 409:
+        return new RemoteError({
+          code: CONFLICTING_NAME_CODE,
+          message:
+            'A document with the same name already exists on the remote Cozy at the same location',
+          err
+        })
       case 412:
         return new RemoteError({
           code: NEEDS_REMOTE_MERGE_CODE,
@@ -194,12 +202,13 @@ module.exports = {
   RemoteError,
   UnreachableError,
   COZY_CLIENT_REVOKED_MESSAGE, // FIXME: should be removed once gui/main does not use it anymore
+  CONFLICTING_NAME_CODE,
   COZY_CLIENT_REVOKED_CODE,
-  USER_ACTION_REQUIRED_CODE,
   MISSING_PERMISSIONS_CODE,
   NEEDS_REMOTE_MERGE_CODE,
   NO_COZY_SPACE_CODE,
-  UNREACHABLE_COZY_CODE,
   UNKNOWN_REMOTE_ERROR_CODE,
+  UNREACHABLE_COZY_CODE,
+  USER_ACTION_REQUIRED_CODE,
   wrapError
 }

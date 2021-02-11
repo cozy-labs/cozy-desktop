@@ -191,6 +191,16 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
   if (scenario.useCaptures) {
     await helpers.local.simulateAtomEvents(atomCapture.batches)
   } else {
+    // Wait for all local events to be flushed or a 10s time limit in case no
+    // events are fired.
+    await Promise.race([
+      new Promise(resolve => {
+        helpers.local.side.events.on('local-end', resolve)
+      }),
+      new Promise(resolve => {
+        setTimeout(resolve, 10000)
+      })
+    ])
     await helpers.local.side.watcher.stop()
   }
 

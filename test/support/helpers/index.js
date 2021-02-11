@@ -1,6 +1,7 @@
 /* @flow */
 
 const autoBind = require('auto-bind')
+const path = require('path')
 const _ = require('lodash')
 const { pick } = _
 const sinon = require('sinon')
@@ -204,9 +205,10 @@ class TestHelpers {
   }
 
   async docByPath(relpath /*: string */) /*: Promise<SavedMetadata> */ {
-    const doc = await this.pouch.bySyncedPath(relpath)
+    const syncedPath = path.normalize(relpath)
+    const doc = await this.pouch.bySyncedPath(syncedPath)
     if (doc) return doc
-    else throw new Error(`No doc with path ${JSON.stringify(relpath)}`)
+    else throw new Error(`No doc with path ${JSON.stringify(syncedPath)}`)
   }
 }
 

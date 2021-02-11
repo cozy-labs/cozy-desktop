@@ -12,6 +12,7 @@ const { posix, sep } = path
 const { isNote } = require('../utils/notes')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
+const conflicts = require('../utils/conflicts')
 const metadata = require('../metadata')
 const { RemoteCozy, FetchError } = require('./cozy')
 const { RemoteWarningPoller } = require('./warning_poller')
@@ -23,7 +24,7 @@ const timestamp = require('../utils/timestamp')
 import type EventEmitter from 'events'
 import type { Readable } from 'stream'
 import type { Config } from '../config'
-import type { SavedMetadata } from '../metadata'
+import type { SavedMetadata, MetadataRemoteInfo } from '../metadata'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { RemoteDoc } from './document'
@@ -418,6 +419,35 @@ class Remote /*:: implements Reader, Writer */ {
       this.config.capabilities = { flatSubdomains }
     }
     return flatSubdomains
+  }
+
+  async findDocByPath(fpath /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
+    const [dir, name] = dirAndName(fpath)
+    const { _id: dirID } = await this.remoteCozy.findDirectoryByPath(dir)
+
+    const results = await this.remoteCozy.search({ dir_id: dirID, name })
+    if (results.length > 0) return results[0]
+  }
+
+  async resolveRemoteConflict(newMetadata /*: SavedMetadata */) {
+    // Find conflicting document on remote Cozy
+    const { _id: remoteId, _rev: remoteRev } = await this.findDocByPath(
+      newMetadata.path
+    )
+    // Generate a new name with a conflict suffix for the remote document
+    const newName = path.basename(
+      conflicts.generateConflictPath(newMetadata.path)
+    )
+
+    const attrs = {
+      name: newName,
+      updated_at: new Date().toISOString()
+    }
+    const opts = {
+      ifMatch: remoteRev
+    }
+
+    await this.remoteCozy.updateAttributesById(remoteId, attrs, opts)
   }
 }
 
