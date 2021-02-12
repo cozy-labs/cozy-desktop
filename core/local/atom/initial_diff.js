@@ -89,14 +89,10 @@ async function initialState(
   // file/folder has been moved or renamed
   const byInode /*: Map<number|string, Metadata> */ = new Map()
   const docs /*: Metadata[] */ = await opts.pouch.initialScanDocs()
-  // Make sure all paths are sorted in reverse path order so that missing
-  // children will be deleted before missing parents and folders that would not
-  // have any content are not trashed but completely deleted
-  docs.sort((a, b) => (a.path < b.path ? 1 : a.path > b.path ? -1 : 0))
   for (const doc of docs) {
-    if (doc.ino != null) {
+    if (doc.local.ino != null) {
       // Process only files/dirs that were created locally or synchronized
-      byInode.set(doc.fileid || doc.ino, doc)
+      byInode.set(doc.local.fileid || doc.local.ino, doc)
     }
   }
 
@@ -171,15 +167,15 @@ async function initialDiff(
           was = byInode.get(event.stats.ino)
         }
 
-        if (was && was.moveFrom && was.moveFrom.path === event.path) {
+        if (foundUnappliedMove(event, was)) {
           _.set(event, [STEP_NAME, 'unappliedMoveTo'], was.path)
           event.action = 'ignored'
-        } else if (was && was.path !== event.path) {
+        } else if (foundRenamedOrReplacedDoc(event, was)) {
           if (kind(was) === event.kind) {
             // TODO for a directory, maybe we should check the children
             _.set(event, [STEP_NAME, 'actionConvertedFrom'], event.action)
             event.action = 'renamed'
-            event.oldPath = was.path
+            event.oldPath = was.local.path
             nbCandidates++
           } else {
             // On linux, the inodes can have been reused: a file was deleted
@@ -189,12 +185,12 @@ async function initialDiff(
               action: 'deleted',
               kind: kind(was),
               [STEP_NAME]: { inodeReuse: event },
-              path: was.path,
-              deletedIno: was.fileid || was.ino
+              path: was.local.path,
+              deletedIno: was.local.fileid || was.local.ino
             })
           }
         } else if (foundUntouchedFile(event, was)) {
-          _.set(event, [STEP_NAME, 'md5sumReusedFrom'], was.path)
+          _.set(event, [STEP_NAME, 'md5sumReusedFrom'], was.local.path)
           event.md5sum = was.local.md5sum
         }
       }
@@ -221,23 +217,25 @@ async function initialDiff(
       if (event.action === 'initial-scan-done') {
         // Emit deleted events for all the remaining files/dirs
         for (const [, doc] of byInode) {
-          const deletedEvent /*: AtomEvent */ = {
-            action: 'deleted',
-            kind: kind(doc),
-            path: doc.path,
-            deletedIno: doc.fileid || doc.ino
-          }
-          fixPathsAfterParentMove(renamedEvents, deletedEvent)
-          _.set(
-            deletedEvent,
-            [STEP_NAME, 'notFound'],
-            _.defaults(
-              _.pick(deletedEvent, ['kind', 'path']),
-              _.pick(doc, ['md5sum', 'updated_at'])
+          if (doc.local) {
+            const deletedEvent /*: AtomEvent */ = {
+              action: 'deleted',
+              kind: kind(doc),
+              path: doc.local.path,
+              deletedIno: doc.local.fileid || doc.local.ino
+            }
+            fixPathsAfterParentMove(renamedEvents, deletedEvent)
+            _.set(
+              deletedEvent,
+              [STEP_NAME, 'notFound'],
+              _.defaults(
+                _.pick(deletedEvent, ['kind', 'path']),
+                _.pick(doc, ['md5sum', 'updated_at'])
+              )
             )
-          )
-          if (!scannedPaths.has(deletedEvent.path)) {
-            batch.push(deletedEvent)
+            if (!scannedPaths.has(deletedEvent.path)) {
+              batch.push(deletedEvent)
+            }
           }
         }
         clearState(state)
@@ -310,6 +308,9 @@ function fixPathsAfterParentMove(renamedEvents, event) {
       )
       if (event.path === oldPathFixed) {
         event.action = 'scan'
+        // TODO: We could probably ignore the event instead.
+        // At least we should remove the oldPath attribute and the
+        // initialDiff.actionConvertedFrom one.
       } else {
         event.oldPath = oldPathFixed
       }
@@ -342,7 +343,15 @@ function contentUpdateTime(event) {
 }
 
 function docUpdateTime(oldLocal) {
-  return new Date(oldLocal.updated_at).getTime()
+  return oldLocal.updated_at ? new Date(oldLocal.updated_at).getTime() : -1
+}
+
+function foundUnappliedMove(event, was) /*: boolean %checks */ {
+  return was != null && was.moveFrom != null && was.moveFrom.path === event.path
+}
+
+function foundRenamedOrReplacedDoc(event, was) /*: boolean %checks */ {
+  return was != null && was.local != null && was.local.path !== event.path
 }
 
 function foundUntouchedFile(event, was) /*: boolean %checks */ {

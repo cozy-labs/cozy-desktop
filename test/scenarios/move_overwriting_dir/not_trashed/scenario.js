@@ -1,5 +1,7 @@
 /* @flow */
 
+const { runWithStoppedClient } = require('../../../support/helpers/scenarios')
+
 /*:: import type { Scenario } from '../..' */
 
 module.exports = ({
@@ -44,7 +46,24 @@ module.exports = ({
       'dst/dir/subdir/subsub/',
       'src/'
     ],
-    trash: ['deletedFile', 'file', 'file (__cozy__: ...)'],
+    trash:
+      process.platform !== 'darwin' && runWithStoppedClient()
+        ? [
+            // Since we're merging here, the destination directories are kept while
+            // the source ones are trashed as initialDiff won't find them.
+            // On macOS, the local events are sorted so the children will be
+            // trashed first and the then empty parent directories will be
+            // completely erased from the Cozy.
+            // On Linux and Windows, events will be processed in path order so
+            // the parents will be trashed first. Since they're not empty at
+            // that point they will remain in the remote trash.
+            'dir/',
+            'dir/deletedFile',
+            'dir/subdir/',
+            'file',
+            'file (__cozy__: ...)'
+          ]
+        : ['deletedFile', 'file', 'file (__cozy__: ...)'],
     contents: {
       'dst/dir/deletedFile': 'should be kept',
       'dst/dir/file': 'overwriter',

@@ -268,7 +268,7 @@ function step(
           // (e.g. a temporary document now renamed), we'll want to make sure the old
           // document is removed to avoid having 2 documents with the same inode.
           // We can do this by keeping the completing renamed event.
-          const incompleteForExistingDoc /*: ?Metadata */ = await opts.pouch.bySyncedPath(
+          const incompleteForExistingDoc /*: ?Metadata */ = await opts.pouch.byLocalPath(
             item.event.path
           )
           if (

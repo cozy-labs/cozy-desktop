@@ -141,14 +141,14 @@ describe('core/local/atom/add_infos.loop()', () => {
             kind: 'file',
             path: 'file',
             [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' },
-            deletedIno: file.fileid || file.ino
+            deletedIno: file.local.fileid || file.local.ino
           },
           {
             action: 'deleted',
             kind: 'directory',
             path: 'dir',
             [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' },
-            deletedIno: dir.fileid || dir.ino
+            deletedIno: dir.local.fileid || dir.local.ino
           }
         ])
       })
@@ -189,4 +189,68 @@ describe('core/local/atom/add_infos.loop()', () => {
       })
     })
   })
+
+  context(
+    'when deleted document has different remote & synced path in Pouch',
+    () => {
+      let file, dir
+      beforeEach('populate Pouch with documents', async function() {
+        file = await builders
+          .metafile()
+          .path('file')
+          .ino(1)
+          .upToDate()
+          .create()
+        await builders
+          .metafile(file)
+          .path('other-file')
+          .changedSide('remote')
+          .create()
+        dir = await builders
+          .metadir()
+          .path('dir')
+          .ino(2)
+          .upToDate()
+          .create()
+        await builders
+          .metadir(dir)
+          .path('other-dir')
+          .changedSide('remote')
+          .create()
+      })
+
+      it('still finds its deleted local inode', async () => {
+        const batch = [
+          {
+            action: 'deleted',
+            kind: 'file',
+            path: 'file'
+          },
+          {
+            action: 'deleted',
+            kind: 'directory',
+            path: 'dir'
+          }
+        ]
+        const channel = new Channel()
+        channel.push(batch)
+        const enhancedChannel = addInfos.loop(channel, opts)
+
+        should(await enhancedChannel.pop()).deepEqual([
+          {
+            action: 'deleted',
+            kind: 'file',
+            path: 'file',
+            deletedIno: file.local.fileid || file.local.ino
+          },
+          {
+            action: 'deleted',
+            kind: 'directory',
+            path: 'dir',
+            deletedIno: dir.local.fileid || dir.local.ino
+          }
+        ])
+      })
+    }
+  )
 })
