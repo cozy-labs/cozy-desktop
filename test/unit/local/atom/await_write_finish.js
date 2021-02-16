@@ -6,7 +6,6 @@ const should = require('should')
 
 const awaitWriteFinish = require('../../../../core/local/atom/await_write_finish')
 const Channel = require('../../../../core/local/atom/channel')
-const stater = require('../../../../core/local/stater')
 const Builders = require('../../../support/builders')
 
 const lastEventToCheckEmptyness = {
@@ -30,21 +29,36 @@ async function heuristicIsEmpty(channel) {
   )
 }
 
+function aggregatedStats(event) {
+  return _.pick(event.stats, [
+    'ino',
+    'fileid',
+    'size',
+    'atime',
+    'mtime',
+    'ctime',
+    'birthtime'
+  ])
+}
+
 describe('core/local/atom/await_write_finish.loop()', () => {
   context('with many batches', () => {
     it('should reduce created→deleted to empty', async () => {
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'created',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'deleted',
-          kind: 'file',
-          path: __filename
-        },
+        builders
+          .event()
+          .action('created')
+          .kind('file')
+          .path(__filename)
+          .ino(1)
+          .build(),
+        builders
+          .event()
+          .action('deleted')
+          .kind('file')
+          .path(__filename)
+          .build(),
         lastEventToCheckEmptyness
       ]
       originalBatch.forEach(event => {
@@ -55,46 +69,87 @@ describe('core/local/atom/await_write_finish.loop()', () => {
     })
 
     it('should reduce modified→deleted to deleted', async () => {
+      const modified = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .build()
+      const deleted = builders
+        .event()
+        .action('deleted')
+        .kind('file')
+        .path(__filename)
+        .deletedIno(1)
+        .build()
+
       const channel = new Channel()
-      const originalBatch = [
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'deleted',
-          kind: 'file',
-          path: __filename
-        },
-        lastEventToCheckEmptyness
-      ]
+      const originalBatch = [modified, deleted, lastEventToCheckEmptyness]
       originalBatch.forEach(event => {
         channel.push([Object.assign({}, event)])
       })
       const enhancedChannel = awaitWriteFinish.loop(channel, {})
-      should(await enhancedChannel.pop()).eql([originalBatch[1]])
+      should(await enhancedChannel.pop()).eql([deleted])
+      should(await heuristicIsEmpty(enhancedChannel)).be.true()
+    })
+
+    it('should reduce modified→deleted with different inodes to deleted', async () => {
+      const modified = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(2)
+        .build()
+      const deleted = builders
+        .event()
+        .action('deleted')
+        .kind('file')
+        .path(__filename)
+        .deletedIno(1)
+        .build()
+
+      const channel = new Channel()
+      const originalBatch = [modified, deleted, lastEventToCheckEmptyness]
+      originalBatch.forEach(event => {
+        channel.push([Object.assign({}, event)])
+      })
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await enhancedChannel.pop()).eql([deleted])
       should(await heuristicIsEmpty(enhancedChannel)).be.true()
     })
 
     it('should reduce created→modified→modified to created', async () => {
+      const created = builders
+        .event()
+        .action('created')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .build()
+      const modified1 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(1)
+        .build()
+      const modified2 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(2)
+        .build()
+
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'created',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
+        created,
+        modified1,
+        modified2,
         lastEventToCheckEmptyness
       ]
       originalBatch.forEach(event => {
@@ -109,16 +164,19 @@ describe('core/local/atom/await_write_finish.loop()', () => {
             previousEvents: [
               {
                 // 2nd modified -> created
-                action: 'created'
+                action: 'created',
+                stats: aggregatedStats(modified1)
               },
               {
                 // 1st created
-                action: 'created'
+                action: 'created',
+                stats: aggregatedStats(created)
               }
             ]
           },
           kind: 'file',
-          path: __filename
+          path: __filename,
+          stats: modified2.stats
         }
       ])
       should(await heuristicIsEmpty(enhancedChannel)).be.true()
@@ -127,26 +185,33 @@ describe('core/local/atom/await_write_finish.loop()', () => {
     it('should reduce created→modified→modified→deleted to empty', async () => {
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'created',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'deleted',
-          kind: 'file',
-          path: __filename
-        },
+        builders
+          .event()
+          .action('created')
+          .kind('file')
+          .path(__filename)
+          .ino(1)
+          .build(),
+        builders
+          .event()
+          .action('modified')
+          .kind('file')
+          .path(__filename)
+          .ino(1)
+          .build(),
+        builders
+          .event()
+          .action('modified')
+          .kind('file')
+          .path(__filename)
+          .ino(1)
+          .build(),
+        builders
+          .event()
+          .action('deleted')
+          .kind('file')
+          .path(__filename)
+          .build(),
         lastEventToCheckEmptyness
       ]
       originalBatch.forEach(event => {
@@ -157,24 +222,36 @@ describe('core/local/atom/await_write_finish.loop()', () => {
     })
 
     it('should reduce renamed→modified→modified to renamed', async () => {
+      const renamed = builders
+        .event()
+        .action('renamed')
+        .kind('file')
+        .oldPath('whatever.txt')
+        .path(__filename)
+        .ino(1)
+        .build()
+      const modified1 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(1)
+        .build()
+      const modified2 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(2)
+        .build()
+
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'renamed',
-          kind: 'file',
-          oldPath: 'whatever.txt',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
+        renamed,
+        modified1,
+        modified2,
         lastEventToCheckEmptyness
       ]
       originalBatch.forEach(event => {
@@ -183,52 +260,68 @@ describe('core/local/atom/await_write_finish.loop()', () => {
       const enhancedChannel = awaitWriteFinish.loop(channel, {})
       should(await enhancedChannel.pop()).eql([
         {
-          // 3rd modified -> renamed
           action: 'renamed',
           awaitWriteFinish: {
             previousEvents: [
               {
-                // 2nd modified -> renamed
-                action: 'renamed'
+                // 1st modified
+                action: 'renamed',
+                stats: aggregatedStats(modified1)
               },
               {
                 // 1st renamed
-                action: 'renamed'
+                action: 'renamed',
+                stats: aggregatedStats(renamed)
               }
             ]
           },
           kind: 'file',
           oldPath: 'whatever.txt',
-          path: __filename
+          path: __filename,
+          stats: modified2.stats
         }
       ])
       should(await heuristicIsEmpty(enhancedChannel)).be.true()
     })
 
-    it('should reduce renamed→modified→modified→deleted to deleted', async () => {
+    it('should reduce renamed→modified→modified→deleted to renamed→deleted', async () => {
+      const renamed = builders
+        .event()
+        .action('renamed')
+        .kind('file')
+        .oldPath('whatever.txt')
+        .path(__filename)
+        .ino(1)
+        .build()
+      const modified1 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(1)
+        .build()
+      const modified2 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(2)
+        .build()
+      const deleted = builders
+        .event()
+        .action('deleted')
+        .kind('file')
+        .path(__filename)
+        .build()
+
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'renamed',
-          kind: 'file',
-          oldPath: 'whatever.txt',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'deleted',
-          kind: 'file',
-          path: __filename
-        },
+        renamed,
+        modified1,
+        modified2,
+        deleted,
         lastEventToCheckEmptyness
       ]
       originalBatch.forEach(event => {
@@ -237,89 +330,79 @@ describe('core/local/atom/await_write_finish.loop()', () => {
       const enhancedChannel = awaitWriteFinish.loop(channel, {})
       should(await enhancedChannel.pop()).eql([
         {
-          action: 'deleted',
+          action: 'renamed',
           awaitWriteFinish: {
             previousEvents: [
               {
-                // 3rd modified -> renamed
-                action: 'renamed'
-              },
-              {
-                // 2nd modified -> renamed
-                action: 'renamed'
+                // 1st modified -> renamed
+                action: 'renamed',
+                stats: aggregatedStats(modified1)
               },
               {
                 // 1st renamed
-                action: 'renamed'
+                action: 'renamed',
+                stats: aggregatedStats(renamed)
               }
             ]
           },
           kind: 'file',
-          path: 'whatever.txt'
+          oldPath: 'whatever.txt',
+          path: __filename,
+          stats: modified2.stats
         }
       ])
+      should(await enhancedChannel.pop()).eql([deleted])
       should(await heuristicIsEmpty(enhancedChannel)).be.true()
     })
 
     it('should not reduce renamed→modified with different inodes', async () => {
+      const renamed = builders
+        .event()
+        .action('renamed')
+        .kind('file')
+        .oldPath('whatever.txt')
+        .path(__filename)
+        .ino(1)
+        .build()
+      const modified = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(2)
+        .build()
+
       const channel = new Channel()
-      const originalBatch = [
-        {
-          action: 'renamed',
-          kind: 'file',
-          oldPath: 'whatever.txt',
-          path: __filename,
-          stats: builders
-            .stats()
-            .ino(1)
-            .build()
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename,
-          stats: builders
-            .stats()
-            .ino(2)
-            .build()
-        },
-        lastEventToCheckEmptyness
-      ]
+      const originalBatch = [renamed, modified, lastEventToCheckEmptyness]
       originalBatch.forEach(event => {
         channel.push([Object.assign({}, event)])
       })
       const enhancedChannel = awaitWriteFinish.loop(channel, {})
-      should(await enhancedChannel.pop()).eql([originalBatch[0]])
-      should(await enhancedChannel.pop()).eql([originalBatch[1]])
+      should(await enhancedChannel.pop()).eql([renamed])
+      should(await enhancedChannel.pop()).eql([modified])
       should(await heuristicIsEmpty(enhancedChannel)).be.true()
     })
 
     it('should reduce modified→modified to latest modified', async () => {
-      const fileStats = await stater.stat(__filename)
-      const stats1 = {
-        ...fileStats,
-        size: 1
-      }
-      const stats2 = {
-        ...fileStats,
-        size: 2
-      }
+      const modified1 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(1)
+        .build()
+      const modified2 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(2)
+        .build()
+
       const channel = new Channel()
-      const originalBatch = [
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename,
-          stats: stats1
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename,
-          stats: stats2
-        },
-        lastEventToCheckEmptyness
-      ]
+      const originalBatch = [modified1, modified2, lastEventToCheckEmptyness]
       originalBatch.forEach(event => {
         channel.push([Object.assign({}, event)])
       })
@@ -331,52 +414,53 @@ describe('core/local/atom/await_write_finish.loop()', () => {
             previousEvents: [
               {
                 action: 'modified',
-                stats: _.pick(stats1, [
-                  'ino',
-                  'fileid',
-                  'size',
-                  'atime',
-                  'mtime',
-                  'ctime',
-                  'birthtime'
-                ])
+                stats: aggregatedStats(modified1)
               }
             ]
           },
           kind: 'file',
           path: __filename,
-          stats: stats2
+          stats: modified2.stats
         }
       ])
       should(await heuristicIsEmpty(enhancedChannel)).be.true()
     })
 
     it('should not squash incomplete events', async () => {
+      const created = builders
+        .event()
+        .action('created')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .build()
+      const incomplete = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .incomplete()
+        .build()
+      const modified = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(2)
+        .build()
+
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'created',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename,
-          incomplete: true
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
+        created,
+        incomplete,
+        modified,
         lastEventToCheckEmptyness
       ]
       originalBatch.forEach(event => {
         channel.push([Object.assign({}, event)])
       })
       const enhancedChannel = awaitWriteFinish.loop(channel, {})
-      should(await enhancedChannel.pop()).eql([originalBatch[1]])
+      should(await enhancedChannel.pop()).eql([incomplete])
       should(await enhancedChannel.pop()).eql([
         {
           // 3rd modified -> created
@@ -385,12 +469,14 @@ describe('core/local/atom/await_write_finish.loop()', () => {
             previousEvents: [
               {
                 // 1st created -> created
-                action: 'created'
+                action: 'created',
+                stats: aggregatedStats(created)
               }
             ]
           },
           kind: 'file',
-          path: __filename
+          path: __filename,
+          stats: modified.stats
         }
       ])
       should(await heuristicIsEmpty(enhancedChannel)).be.true()
@@ -401,16 +487,19 @@ describe('core/local/atom/await_write_finish.loop()', () => {
     it('should reduce created→deleted to empty', async () => {
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'created',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'deleted',
-          kind: 'file',
-          path: __filename
-        },
+        builders
+          .event()
+          .action('created')
+          .kind('file')
+          .path(__filename)
+          .ino(1)
+          .build(),
+        builders
+          .event()
+          .action('deleted')
+          .kind('file')
+          .path(__filename)
+          .build(),
         lastEventToCheckEmptyness
       ]
       channel.push(_.cloneDeep(originalBatch))
@@ -419,46 +508,87 @@ describe('core/local/atom/await_write_finish.loop()', () => {
     })
 
     it('should reduce modified→deleted to deleted', async () => {
+      const modified = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .build()
+      const deleted = builders
+        .event()
+        .action('deleted')
+        .kind('file')
+        .path(__filename)
+        .deletedIno(1)
+        .build()
+
       const channel = new Channel()
-      const originalBatch = [
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'deleted',
-          kind: 'file',
-          path: __filename
-        },
-        lastEventToCheckEmptyness
-      ]
+      const originalBatch = [modified, deleted, lastEventToCheckEmptyness]
       channel.push(_.cloneDeep(originalBatch))
       const enhancedChannel = awaitWriteFinish.loop(channel, {})
       should(await enhancedChannel.pop()).eql([
-        originalBatch[1],
+        deleted,
+        lastEventToCheckEmptyness
+      ])
+    })
+
+    it('should reduce modified→deleted with different inodes to deleted', async () => {
+      const modified = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(2)
+        .build()
+      const deleted = builders
+        .event()
+        .action('deleted')
+        .kind('file')
+        .path(__filename)
+        .deletedIno(1)
+        .build()
+
+      const channel = new Channel()
+      const originalBatch = [modified, deleted, lastEventToCheckEmptyness]
+      channel.push(_.cloneDeep(originalBatch))
+      const enhancedChannel = awaitWriteFinish.loop(channel, {})
+      should(await enhancedChannel.pop()).eql([
+        deleted,
         lastEventToCheckEmptyness
       ])
     })
 
     it('should reduce created→modified→modified to created', async () => {
+      const created = builders
+        .event()
+        .action('created')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .build()
+      const modified1 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(1)
+        .build()
+      const modified2 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(2)
+        .build()
+
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'created',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
+        created,
+        modified1,
+        modified2,
         lastEventToCheckEmptyness
       ]
       channel.push(_.cloneDeep(originalBatch))
@@ -471,16 +601,19 @@ describe('core/local/atom/await_write_finish.loop()', () => {
             previousEvents: [
               {
                 // 2nd modified -> created
-                action: 'created'
+                action: 'created',
+                stats: aggregatedStats(modified1)
               },
               {
                 // 1st created
-                action: 'created'
+                action: 'created',
+                stats: aggregatedStats(created)
               }
             ]
           },
           kind: 'file',
-          path: __filename
+          path: __filename,
+          stats: modified2.stats
         },
         lastEventToCheckEmptyness
       ])
@@ -489,26 +622,33 @@ describe('core/local/atom/await_write_finish.loop()', () => {
     it('should reduce created→modified→modified→deleted to empty', async () => {
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'created',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'deleted',
-          kind: 'file',
-          path: __filename
-        },
+        builders
+          .event()
+          .action('created')
+          .kind('file')
+          .path(__filename)
+          .ino(1)
+          .build(),
+        builders
+          .event()
+          .action('modified')
+          .kind('file')
+          .path(__filename)
+          .ino(1)
+          .build(),
+        builders
+          .event()
+          .action('modified')
+          .kind('file')
+          .path(__filename)
+          .ino(1)
+          .build(),
+        builders
+          .event()
+          .action('deleted')
+          .kind('file')
+          .path(__filename)
+          .build(),
         lastEventToCheckEmptyness
       ]
       channel.push(_.cloneDeep(originalBatch))
@@ -517,102 +657,131 @@ describe('core/local/atom/await_write_finish.loop()', () => {
     })
 
     it('should reduce renamed→modified→modified to renamed', async () => {
+      const renamed = builders
+        .event()
+        .action('renamed')
+        .kind('file')
+        .oldPath('whatever.txt')
+        .path(__filename)
+        .ino(1)
+        .build()
+      const modified1 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(1)
+        .build()
+      const modified2 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(2)
+        .build()
+
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'renamed',
-          kind: 'file',
-          oldPath: 'whatever.txt',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
+        renamed,
+        modified1,
+        modified2,
         lastEventToCheckEmptyness
       ]
       channel.push(_.cloneDeep(originalBatch))
       const enhancedChannel = awaitWriteFinish.loop(channel, {})
       should(await enhancedChannel.pop()).eql([
         {
-          // 3rd modified -> renamed
           action: 'renamed',
           awaitWriteFinish: {
             previousEvents: [
               {
-                // 2nd modified -> renamed
-                action: 'renamed'
+                // 1st modified
+                action: 'renamed',
+                stats: aggregatedStats(modified1)
               },
               {
-                // 1st renamed
-                action: 'renamed'
+                // renamed
+                action: 'renamed',
+                stats: aggregatedStats(renamed)
               }
             ]
           },
           kind: 'file',
           oldPath: 'whatever.txt',
-          path: __filename
+          path: __filename,
+          stats: modified2.stats
         },
         lastEventToCheckEmptyness
       ])
     })
 
-    it('should reduce renamed→modified→modified→deleted to deleted', async () => {
+    it('should reduce renamed→modified→modified→deleted to renamed→deleted', async () => {
+      const renamed = builders
+        .event()
+        .action('renamed')
+        .kind('file')
+        .oldPath('whatever.txt')
+        .path(__filename)
+        .ino(1)
+        .build()
+      const modified1 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(1)
+        .build()
+      const modified2 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(2)
+        .build()
+      const deleted = builders
+        .event()
+        .action('deleted')
+        .kind('file')
+        .path(__filename)
+        .build()
+
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'renamed',
-          kind: 'file',
-          oldPath: 'whatever.txt',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'deleted',
-          kind: 'file',
-          path: __filename
-        },
+        renamed,
+        modified1,
+        modified2,
+        deleted,
         lastEventToCheckEmptyness
       ]
       channel.push(_.cloneDeep(originalBatch))
       const enhancedChannel = awaitWriteFinish.loop(channel, {})
       should(await enhancedChannel.pop()).eql([
         {
-          action: 'deleted',
+          action: 'renamed',
           awaitWriteFinish: {
             previousEvents: [
               {
-                // 3rd modified -> renamed
-                action: 'renamed'
-              },
-              {
                 // 2nd modified -> renamed
-                action: 'renamed'
+                action: 'renamed',
+                stats: aggregatedStats(modified1)
               },
               {
                 // 1st renamed
-                action: 'renamed'
+                action: 'renamed',
+                stats: aggregatedStats(renamed)
               }
             ]
           },
           kind: 'file',
-          path: 'whatever.txt'
+          oldPath: 'whatever.txt',
+          path: __filename,
+          stats: modified2.stats
         },
+        deleted,
         lastEventToCheckEmptyness
       ])
     })
@@ -620,25 +789,21 @@ describe('core/local/atom/await_write_finish.loop()', () => {
     it('should not reduce renamed→modified with different inodes', async () => {
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'renamed',
-          kind: 'file',
-          oldPath: 'whatever.txt',
-          path: __filename,
-          stats: builders
-            .stats()
-            .ino(1)
-            .build()
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename,
-          stats: builders
-            .stats()
-            .ino(2)
-            .build()
-        },
+        builders
+          .event()
+          .action('renamed')
+          .kind('file')
+          .oldPath('whatever.txt')
+          .path(__filename)
+          .ino(1)
+          .build(),
+        builders
+          .event()
+          .action('modified')
+          .kind('file')
+          .path(__filename)
+          .ino(2)
+          .build(),
         lastEventToCheckEmptyness
       ]
       channel.push(_.cloneDeep(originalBatch))
@@ -647,31 +812,25 @@ describe('core/local/atom/await_write_finish.loop()', () => {
     })
 
     it('should reduce modified→modified to latest modified', async () => {
-      const fileStats = await stater.stat(__filename)
-      const stats1 = {
-        ...fileStats,
-        size: 1
-      }
-      const stats2 = {
-        ...fileStats,
-        size: 2
-      }
+      const modified1 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(1)
+        .build()
+      const modified2 = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .size(2)
+        .build()
+
       const channel = new Channel()
-      const originalBatch = [
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename,
-          stats: stats1
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename,
-          stats: stats2
-        },
-        lastEventToCheckEmptyness
-      ]
+      const originalBatch = [modified1, modified2, lastEventToCheckEmptyness]
       channel.push(_.cloneDeep(originalBatch))
       const enhancedChannel = awaitWriteFinish.loop(channel, {})
       should(await enhancedChannel.pop()).eql([
@@ -681,45 +840,46 @@ describe('core/local/atom/await_write_finish.loop()', () => {
             previousEvents: [
               {
                 action: 'modified',
-                stats: _.pick(stats1, [
-                  'ino',
-                  'fileid',
-                  'size',
-                  'atime',
-                  'mtime',
-                  'ctime',
-                  'birthtime'
-                ])
+                stats: aggregatedStats(modified1)
               }
             ]
           },
           kind: 'file',
           path: __filename,
-          stats: stats2
+          stats: modified2.stats
         },
         lastEventToCheckEmptyness
       ])
     })
 
     it('should not squash incomplete events', async () => {
+      const created = builders
+        .event()
+        .action('created')
+        .kind('file')
+        .path(__filename)
+        .ino(1)
+        .build()
+      const incomplete = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .incomplete()
+        .build()
+      const modified = builders
+        .event()
+        .action('modified')
+        .kind('file')
+        .path(__filename)
+        .ino(2)
+        .build()
+
       const channel = new Channel()
       const originalBatch = [
-        {
-          action: 'created',
-          kind: 'file',
-          path: __filename
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename,
-          incomplete: true
-        },
-        {
-          action: 'modified',
-          kind: 'file',
-          path: __filename
-        },
+        created,
+        incomplete,
+        modified,
         lastEventToCheckEmptyness
       ]
       channel.push(_.cloneDeep(originalBatch))
@@ -732,14 +892,16 @@ describe('core/local/atom/await_write_finish.loop()', () => {
             previousEvents: [
               {
                 // 1st created
-                action: 'created'
+                action: 'created',
+                stats: aggregatedStats(created)
               }
             ]
           },
           kind: 'file',
-          path: __filename
+          path: __filename,
+          stats: modified.stats
         },
-        originalBatch[1],
+        incomplete,
         lastEventToCheckEmptyness
       ])
     })

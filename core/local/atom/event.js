@@ -27,6 +27,7 @@ export type AtomEvent = {
   oldPath?: string,
   _id?: string,
   stats?: Stats,
+  deletedIno?: number|string,
   md5sum?: string,
   incomplete?: bool,
   noIgnore?: bool,

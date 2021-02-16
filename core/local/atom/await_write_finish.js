@@ -74,7 +74,9 @@ function countFileWriteEvents(events /*: AtomEvent[] */) /*: number */ {
 }
 
 function ino(event /*: AtomEvent */) {
-  return event.stats && (event.stats.fileid || event.stats.ino)
+  return (
+    (event.stats && (event.stats.fileid || event.stats.ino)) || event.deletedIno
+  )
 }
 
 function aggregateBatch(events) {

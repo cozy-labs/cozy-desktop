@@ -102,14 +102,19 @@ describe('core/local/atom/add_infos.loop()', () => {
 
   context('when deleted event kind is unknown', () => {
     context('and document exists in Pouch', () => {
+      let file, dir
       beforeEach('populate Pouch with documents', async function() {
-        await builders
+        file = await builders
           .metafile()
           .path('file')
+          .ino(1)
+          .upToDate()
           .create()
-        await builders
+        dir = await builders
           .metadir()
           .path('dir')
+          .ino(2)
+          .upToDate()
           .create()
       })
 
@@ -135,13 +140,15 @@ describe('core/local/atom/add_infos.loop()', () => {
             action: 'deleted',
             kind: 'file',
             path: 'file',
-            [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' }
+            [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' },
+            deletedIno: file.fileid || file.ino
           },
           {
             action: 'deleted',
             kind: 'directory',
             path: 'dir',
-            [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' }
+            [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' },
+            deletedIno: dir.fileid || dir.ino
           }
         ])
       })

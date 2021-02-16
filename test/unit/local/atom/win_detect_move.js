@@ -40,12 +40,12 @@ if (process.platform === 'win32') {
       const inputBatch = events => inputChannel.push(_.cloneDeep(events))
       const outputBatch = () => outputChannel.pop()
 
-      const metadataBuilderByKind = kind => {
+      const metadataBuilderByKind = (kind, old) => {
         switch (kind) {
           case 'file':
-            return builders.metafile()
+            return builders.metafile(old)
           case 'directory':
-            return builders.metadir()
+            return builders.metadir(old)
           default:
             throw new Error(
               `Cannot find metadata builder for ${JSON.stringify(kind)}`
@@ -57,10 +57,10 @@ if (process.platform === 'win32') {
         describe(`deleted ${kind} (matching doc)`, () => {
           const srcIno = 1
           const srcPath = 'src'
-          let deletedEvent
+          let srcDoc, deletedEvent
 
           beforeEach(async () => {
-            await metadataBuilderByKind(kind)
+            srcDoc = await metadataBuilderByKind(kind)
               .path(srcPath)
               .ino(srcIno)
               .create()
@@ -69,6 +69,7 @@ if (process.platform === 'win32') {
               .action('deleted')
               .kind(kind)
               .path(srcPath)
+              .deletedIno(srcIno)
               .build()
           })
 
@@ -107,20 +108,52 @@ if (process.platform === 'win32') {
                 .build()
             })
 
-            it(`is a renamed ${kind} (aggregated)`, async function() {
-              inputBatch([deletedEvent, createdEvent])
-              should(await outputBatch()).deepEqual([
-                {
-                  action: 'renamed',
-                  kind,
-                  oldPath: srcPath,
-                  path: dstPath,
-                  stats: createdEvent.stats,
-                  winDetectMove: {
-                    aggregatedEvents: { createdEvent, deletedEvent }
+            context('when doc has not been moved in PouchDB', () => {
+              it(`is a renamed ${kind} (aggregated)`, async function() {
+                inputBatch([deletedEvent, createdEvent])
+                should(await outputBatch()).deepEqual([
+                  {
+                    action: 'renamed',
+                    kind,
+                    oldPath: srcPath,
+                    path: dstPath,
+                    stats: createdEvent.stats,
+                    winDetectMove: {
+                      aggregatedEvents: { createdEvent, deletedEvent }
+                    }
                   }
-                }
-              ])
+                ])
+              })
+            })
+
+            context('when doc has been moved in PouchDB', () => {
+              beforeEach(async () => {
+                const deletedSrc = await metadataBuilderByKind(kind, srcDoc)
+                  .moveTo(dstPath)
+                  .upToDate()
+                  .create()
+                await metadataBuilderByKind(kind)
+                  .moveFrom(deletedSrc)
+                  .path(dstPath)
+                  .upToDate()
+                  .create()
+              })
+
+              it(`is a renamed ${kind} (aggregated)`, async function() {
+                inputBatch([deletedEvent, createdEvent])
+                should(await outputBatch()).deepEqual([
+                  {
+                    action: 'renamed',
+                    kind,
+                    oldPath: srcPath,
+                    path: dstPath,
+                    stats: createdEvent.stats,
+                    winDetectMove: {
+                      aggregatedEvents: { createdEvent, deletedEvent }
+                    }
+                  }
+                ])
+              })
             })
 
             if (kind === 'directory') {
@@ -353,6 +386,7 @@ if (process.platform === 'win32') {
                 .action('deleted')
                 .kind(kind)
                 .path(deletedPath)
+                .deletedIno(createdIno)
                 .build()
             })
 
@@ -472,6 +506,7 @@ if (process.platform === 'win32') {
                 .action('deleted')
                 .kind(kind)
                 .path(createdPath)
+                .deletedIno(createdIno)
                 .build()
             })
 

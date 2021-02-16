@@ -189,7 +189,8 @@ async function initialDiff(
               action: 'deleted',
               kind: kind(was),
               [STEP_NAME]: { inodeReuse: event },
-              path: was.path
+              path: was.path,
+              deletedIno: was.fileid || was.ino
             })
           }
         } else if (foundUntouchedFile(event, was)) {
@@ -223,7 +224,8 @@ async function initialDiff(
           const deletedEvent /*: AtomEvent */ = {
             action: 'deleted',
             kind: kind(doc),
-            path: doc.path
+            path: doc.path,
+            deletedIno: doc.fileid || doc.ino
           }
           fixPathsAfterParentMove(renamedEvents, deletedEvent)
           _.set(

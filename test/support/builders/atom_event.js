@@ -101,6 +101,18 @@ module.exports = class AtomEventBuilder {
     return this
   }
 
+  deletedIno(ino /*: number */) /*: this */ {
+    if (this._event.action === 'deleted') {
+      this._event.deletedIno = statsBuilder.platformIno(ino)
+    }
+    return this
+  }
+
+  size(newSize /*: number */) /*: this */ {
+    this._ensureStatsBuilder().size(newSize)
+    return this
+  }
+
   mtime(newMtime /*: Date */) /*: this */ {
     this._ensureStatsBuilder().mtime(newMtime)
     return this

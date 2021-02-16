@@ -515,7 +515,8 @@ describe('core/local/atom/initial_diff', () => {
             )
           },
           kind: 'directory',
-          path: foo.path
+          path: foo.path,
+          deletedIno: foo.fileid || foo.ino
         },
         {
           action: 'deleted',
@@ -526,7 +527,8 @@ describe('core/local/atom/initial_diff', () => {
             )
           },
           kind: 'file',
-          path: bar.path
+          path: bar.path,
+          deletedIno: bar.fileid || bar.ino
         },
         initialScanDone
       ])
@@ -827,6 +829,7 @@ describe('core/local/atom/initial_diff', () => {
         .pop()
 
       const deletedPath = path.normalize('parent-2/foo-2/bar')
+      const deletedIno = missingDoc.fileid || missingDoc.ino
 
       should(events).deepEqual([
         {
@@ -861,7 +864,8 @@ describe('core/local/atom/initial_diff', () => {
               oldPath: path.normalize('parent-2/foo'),
               path: foo2Scan.path
             }
-          }
+          },
+          deletedIno
         },
         initialScanDone
       ])
