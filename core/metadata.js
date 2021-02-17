@@ -40,6 +40,7 @@ const path = require('path')
 const logger = require('./utils/logger')
 const timestamp = require('./utils/timestamp')
 const fsutils = require('./utils/fs')
+const pathUtils = require('./utils/path')
 
 const {
   detectPathIncompatibilities,
@@ -282,7 +283,7 @@ function fromRemoteDoc(remoteDoc /*: MetadataRemoteInfo */) /*: Metadata */ {
 function fromRemoteDir(remoteDir /*: MetadataRemoteDir */) /*: Metadata */ {
   const doc /*: Object */ = {
     docType: localDocType(remoteDir.type),
-    path: remoteDir.path.substring(1),
+    path: pathUtils.remoteToLocal(remoteDir.path),
     created_at: timestamp.roundedRemoteDate(remoteDir.created_at),
     updated_at: timestamp.roundedRemoteDate(remoteDir.updated_at)
   }
@@ -312,7 +313,7 @@ function fromRemoteDir(remoteDir /*: MetadataRemoteDir */) /*: Metadata */ {
 function fromRemoteFile(remoteFile /*: MetadataRemoteFile */) /*: Metadata */ {
   const doc /*: Object */ = {
     docType: localDocType(remoteFile.type),
-    path: remoteFile.path.substring(1),
+    path: pathUtils.remoteToLocal(remoteFile.path),
     size: parseInt(remoteFile.size, 10),
     executable: !!remoteFile.executable,
     created_at: timestamp.roundedRemoteDate(remoteFile.created_at),
@@ -564,6 +565,7 @@ function assignMaxDate(doc /*: Metadata */, was /*: ?Metadata */) {
   }
 }
 
+// TODO: move to core/utils/path and improve to compare local and remote paths safely
 function samePath(
   one /*: string|{path:string} */,
   two /*: string|{path:string} */
@@ -578,6 +580,7 @@ function samePath(
   }
 }
 
+// TODO: move to core/utils/path and improve to compare local and remote paths safely
 function areParentChildPaths(
   parent /*: string|{path:string} */,
   child /*: string|{path:string} */
@@ -592,6 +595,7 @@ function areParentChildPaths(
   }
 }
 
+// TODO: move to core/utils/path and improve to work with local and remote paths safely
 function newChildPath(
   oldChildPath /*: string */,
   oldParentPath /*: string */,
@@ -889,13 +893,11 @@ function updateRemote(
   doc /*: Metadata */,
   newRemote /*: {| path: string |}|MetadataRemoteInfo */
 ) {
-  const remotePath = newRemote.path
-
   doc.remote = _.defaultsDeep(
-    _.cloneDeep(newRemote),
     {
-      path: remotePath.startsWith('/') ? remotePath : '/' + remotePath
+      path: pathUtils.localToRemote(newRemote.path) // Works also if newRmote.path is formated as a remote path
     },
+    _.cloneDeep(newRemote),
     _.cloneDeep(doc.remote)
   )
 }

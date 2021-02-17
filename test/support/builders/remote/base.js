@@ -52,7 +52,10 @@ module.exports = class RemoteBaseBuilder /*:: <T: MetadataRemoteInfo> */ {
 
   inDir(dir /*: {_id: string, path: string} */) /*: this */ {
     this.remoteDoc.dir_id = dir._id
-    this.remoteDoc.path = posix.join(dir.path, this.remoteDoc.name)
+    this.remoteDoc.path = posix.join(
+      posix.normalize(dir.path),
+      this.remoteDoc.name
+    )
     return this
   }
 
