@@ -897,6 +897,16 @@ function updateRemote(
     {
       path: pathUtils.localToRemote(newRemote.path) // Works also if newRmote.path is formated as a remote path
     },
+    newRemote.created_at != null
+      ? {
+          created_at: timestamp.roundedRemoteDate(newRemote.created_at)
+        }
+      : {},
+    newRemote.updated_at != null
+      ? {
+          updated_at: timestamp.roundedRemoteDate(newRemote.updated_at)
+        }
+      : {},
     _.cloneDeep(newRemote),
     _.cloneDeep(doc.remote)
   )

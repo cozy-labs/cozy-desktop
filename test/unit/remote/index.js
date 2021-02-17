@@ -871,10 +871,12 @@ describe('remote.Remote', function() {
             _id: old.remote._id,
             _rev: doc.remote._rev
           })
-          should(movedFile.attributes).have.properties({
-            name: 'My Cat.jpg',
-            updated_at: doc.remote.updated_at // The `remote` attribute of the PouchDB record is updated
-          })
+          should(movedFile.attributes).have.property('name', 'My Cat.jpg')
+          // The `remote` attribute of the PouchDB record is updated
+          should(doc.remote).have.property(
+            'updated_at',
+            timestamp.roundedRemoteDate(movedFile.attributes.updated_at)
+          )
         })
       }
     )
@@ -968,9 +970,13 @@ describe('remote.Remote', function() {
       it('updates the remote attribute', async function() {
         await this.remote.moveAsync(doc, old)
 
-        should(doc.remote).deepEqual(
-          await this.remote.remoteCozy.find(doc.remote._id)
-        )
+        const udpatedFile = await this.remote.remoteCozy.find(doc.remote._id)
+
+        should(doc.remote).deepEqual({
+          ...udpatedFile,
+          created_at: timestamp.roundedRemoteDate(udpatedFile.created_at),
+          updated_at: timestamp.roundedRemoteDate(udpatedFile.updated_at)
+        })
       })
     })
   })
@@ -1147,11 +1153,19 @@ describe('remote.Remote', function() {
 
       const movedFile = await this.remote.remoteCozy.find(remoteFile._id)
       await this.remote.assignNewRemote(file)
-      should(file.remote).deepEqual(movedFile)
+      should(file.remote).deepEqual({
+        ...movedFile,
+        created_at: timestamp.roundedRemoteDate(movedFile.created_at),
+        updated_at: timestamp.roundedRemoteDate(movedFile.updated_at)
+      })
 
       const movedDir = await this.remote.remoteCozy.find(remoteDir._id)
       await this.remote.assignNewRemote(dir)
-      should(dir.remote).deepEqual(movedDir)
+      should(dir.remote).deepEqual({
+        ...movedDir,
+        created_at: timestamp.roundedRemoteDate(movedDir.created_at),
+        updated_at: timestamp.roundedRemoteDate(movedDir.updated_at)
+      })
     })
   })
 
