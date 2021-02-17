@@ -33,6 +33,7 @@ const { Ignore } = require('../../core/ignore')
 const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const stater = require('../../core/local/stater')
 const { NOTE_MIME_TYPE } = require('../../core/remote/constants')
+const pathUtils = require('../../core/utils/path')
 
 /*::
 import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../core/metadata'
@@ -77,7 +78,7 @@ describe('metadata', function() {
         updated_at: '2017-09-08T07:06:05.000Z',
         mime: 'test/html',
         name: 'bar',
-        path: 'foo/bar',
+        path: pathUtils.remoteToLocal('foo/bar'),
         dir_id: '56',
         remote: remoteDoc,
         size: 78,
@@ -115,7 +116,7 @@ describe('metadata', function() {
         docType: 'folder',
         created_at: '2017-09-07T07:06:05.000Z',
         updated_at: '2017-09-08T07:06:05.000Z',
-        path: 'foo/bar',
+        path: pathUtils.remoteToLocal('foo/bar'),
         name: 'bar',
         dir_id: '56',
         remote: remoteDoc,

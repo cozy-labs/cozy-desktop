@@ -5,6 +5,7 @@ const path = require('path')
 
 const metadata = require('../../../../core/metadata')
 const timestamp = require('../../../../core/utils/timestamp')
+const pathUtils = require('../../../../core/utils/path')
 
 const RemoteFileBuilder = require('../remote/file')
 const RemoteDirBuilder = require('../remote/dir')
@@ -62,7 +63,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   moveTo(docpath /*: string */) /*: this */ {
-    this.doc.moveTo = docpath
+    this.doc.moveTo = path.normalize(docpath)
     this.doc._deleted = true
     return this
   }
@@ -367,6 +368,6 @@ module.exports = class BaseMetadataBuilder {
       this.doc.remote = builder.build()
     }
 
-    this.doc.remote.path = '/' + path.posix.normalize(this.doc.path)
+    this.doc.remote.path = pathUtils.localToRemote(this.doc.path)
   }
 }
