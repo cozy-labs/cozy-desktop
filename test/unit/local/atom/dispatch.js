@@ -574,6 +574,7 @@ describe('core/local/atom/dispatch.loop()', function() {
           .path(filePath)
           .moveTo(newFilePath)
           .ino(1)
+          .upToDate()
           .create()
 
         const dst = await builders
@@ -581,6 +582,7 @@ describe('core/local/atom/dispatch.loop()', function() {
           .moveFrom(src)
           .path(newFilePath)
           .updatedAt(updatedAt)
+          .upToDate()
           .create()
         // Simulate Sync removing the moveFrom attribute after propagating the
         // remote move.
@@ -807,6 +809,7 @@ describe('core/local/atom/dispatch.loop()', function() {
           .path(directoryPath)
           .moveTo(newDirectoryPath)
           .ino(1)
+          .upToDate()
           .create()
 
         const dst = await builders
@@ -814,6 +817,7 @@ describe('core/local/atom/dispatch.loop()', function() {
           .moveFrom(src)
           .path(newDirectoryPath)
           .updatedAt(updatedAt)
+          .upToDate()
           .create()
         // Simulate Sync removing the moveFrom attribute after propagating the
         // remote move.
