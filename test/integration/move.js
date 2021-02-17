@@ -700,6 +700,7 @@ describe('Move', () => {
           const doc = builders
             .metadir(oldFolder)
             .path('parent/dst/dir')
+            .unmerged('local')
             .build()
 
           await prep.moveFolderAsync('local', doc, oldFolder)
@@ -716,6 +717,7 @@ describe('Move', () => {
           const doc = builders
             .metadir(oldFolder)
             .path('.system-tmp-cozy-drive/dir')
+            .unmerged('local')
             .build()
 
           await prep.moveFolderAsync('local', doc, oldFolder)

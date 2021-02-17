@@ -49,7 +49,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <Metadat
   _data: string | stream.Readable | Buffer
   */
 
-  constructor(cozy /*: Cozy */, old /*: ?(RemoteFile|MetadataRemoteFile) */) {
+  constructor(cozy /*: ?Cozy */, old /*: ?(RemoteFile|MetadataRemoteFile) */) {
     super(cozy, old)
 
     if (!old) {

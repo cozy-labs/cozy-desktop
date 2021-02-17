@@ -30,6 +30,21 @@ import type RemoteBaseBuilder from '../remote/base'
 
 const SOME_MEANINGLESS_TIME_OFFSET = 2000 // 2 seconds
 
+const localIsUpToDate = (doc /*: Metadata */) /*: boolean %checks */ => {
+  return _.isEqual(doc.local, _.pick(doc, metadata.LOCAL_ATTRIBUTES))
+}
+
+const remoteIsUpToDate = (doc /*: Metadata */) /*: boolean %checks */ => {
+  // Update the checked attributes if needed
+  return (
+    // This `normalize` method is not the same as `path.normalize()`. It
+    // normalizes characters and not path separators and such.
+    doc.remote.path.normalize() ===
+      pathUtils.localToRemote(doc.path).normalize() &&
+    (doc.remote.type === 'file' ? doc.remote.md5sum === doc.md5sum : true)
+  )
+}
+
 module.exports = class BaseMetadataBuilder {
   /*::
   pouch: ?Pouch
@@ -320,7 +335,9 @@ module.exports = class BaseMetadataBuilder {
       this.doc.local != null &&
       this.doc.sides &&
       (!this.doc.sides.remote ||
-        (this.doc.sides.local && this.doc.sides.local <= this.doc.sides.remote))
+        (this.doc.sides.local &&
+          (this.doc.sides.local < this.doc.sides.remote ||
+            localIsUpToDate(this.doc))))
     ) {
       return
     }
@@ -339,35 +356,36 @@ module.exports = class BaseMetadataBuilder {
       (!this.doc.sides ||
         (!this.doc.sides.local ||
           (this.doc.sides.remote &&
-            this.doc.sides.remote <= this.doc.sides.local)))
+            (this.doc.sides.remote < this.doc.sides.local ||
+              remoteIsUpToDate(this.doc)))))
     ) {
       return
     }
 
     if (this._remoteBuilder == null) {
       if (this.doc.docType === 'file') {
-        this._remoteBuilder = new RemoteFileBuilder()
+        // $FlowFixMe We assume this.doc.remote is a remoteFile
+        this._remoteBuilder = new RemoteFileBuilder(null, this.doc.remote)
       } else {
-        this._remoteBuilder = new RemoteDirBuilder()
+        // $FlowFixMe We assume this.doc.remote is a remoteDir
+        this._remoteBuilder = new RemoteDirBuilder(null, this.doc.remote)
       }
     }
 
-    const builder = this._remoteBuilder
+    let builder = this._remoteBuilder
       .name(path.basename(this.doc.path))
       .createdAt(...timestamp.spread(this.doc.updated_at))
       .updatedAt(...timestamp.spread(this.doc.updated_at))
 
     if (this.doc.docType === 'file') {
-      this.doc.remote = builder
+      builder = builder
         // $FlowFixMe those methods exist in RemoteFileBuilder
         .data(this._data)
         .executable(this.doc.executable)
         .contentType(this.doc.mime || '')
-        .build()
-    } else {
-      this.doc.remote = builder.build()
     }
 
+    this.doc.remote = builder.build()
     this.doc.remote.path = pathUtils.localToRemote(this.doc.path)
   }
 }
