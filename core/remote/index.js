@@ -450,7 +450,7 @@ function newDocumentAttributes(
 }
 
 function mostRecentUpdatedAt(doc /*: SavedMetadata */) /*: string */ {
-  if (doc.remote) {
+  if (doc.remote && doc.remote.updated_at) {
     return timestamp.maxDate(doc.updated_at, doc.remote.updated_at)
   } else {
     return doc.updated_at

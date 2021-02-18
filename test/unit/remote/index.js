@@ -521,6 +521,115 @@ describe('remote.Remote', function() {
         this.remote.remoteCozy.client.settings.diskUsage.restore()
         this.remote.remoteCozy.updateFileById.restore()
       })
+
+      it('sends the most recent modification date', async function() {
+        const created = await builders
+          .remoteFile()
+          .data('foo')
+          .createdAt(2015, 11, 16, 16, 12, 1)
+          .create()
+        const old = await builders
+          .metafile()
+          .fromRemote(created)
+          .upToDate()
+          .create()
+
+        // Request with local modification date older than remote one
+        const doc1 = await builders
+          .metafile(old)
+          .overwrite(old)
+          .data('bar')
+          .changedSide('local')
+          .updatedAt(timestamp.build(2015, 10, 16, 16, 12, 1).toISOString())
+          .create()
+
+        this.remote.other = {
+          createReadStreamAsync(localDoc) {
+            localDoc.should.equal(doc1)
+            const stream = builders
+              .stream()
+              .push('bar')
+              .build()
+            return Promise.resolve(stream)
+          }
+        }
+
+        await this.remote.overwriteFileAsync(doc1, old)
+
+        const update1 = await cozy.files.statById(doc1.remote._id)
+        should(
+          timestamp.roundedRemoteDate(update1.attributes.updated_at)
+        ).equal(timestamp.roundedRemoteDate(created.updated_at))
+        should(doc1.remote._rev).equal(update1._rev)
+
+        // Request with remote modification date older than local one
+        const doc2 = await builders
+          .metafile(doc1)
+          .overwrite(doc1)
+          .data('baz')
+          .changedSide('local')
+          .updatedAt(timestamp.build(2016, 10, 16, 16, 12, 1).toISOString())
+          .create()
+
+        this.remote.other = {
+          createReadStreamAsync(localDoc) {
+            localDoc.should.equal(doc2)
+            const stream = builders
+              .stream()
+              .push('baz')
+              .build()
+            return Promise.resolve(stream)
+          }
+        }
+
+        await this.remote.overwriteFileAsync(doc2, doc1)
+
+        const update2 = await cozy.files.statById(doc2.remote._id)
+        should(
+          timestamp.roundedRemoteDate(update2.attributes.updated_at)
+        ).equal(doc2.local.updated_at)
+        should(doc2.remote._rev).equal(update2._rev)
+
+        // Request without remote modification date. Old PouchDB records might
+        // not have any.
+        let doc3 = await builders
+          .metafile(doc2)
+          .overwrite(doc2)
+          .data('boom')
+          .changedSide('local')
+          .updatedAt(timestamp.build(2017, 10, 16, 16, 12, 1).toISOString())
+          .create()
+        doc3 = {
+          ...doc3,
+          remote: {
+            path: doc3.remote.path,
+            _id: doc3.remote._id,
+            _rev: doc3.remote._rev
+          }
+        }
+        // Fake old PouchDB record
+        const { rev } = await this.pouch.put(doc3)
+        doc3._rev = rev
+
+        this.remote.other = {
+          createReadStreamAsync(localDoc) {
+            localDoc.should.equal(doc3)
+            const stream = builders
+              .stream()
+              .push('boom')
+              .build()
+            return Promise.resolve(stream)
+          }
+        }
+
+        await this.remote.overwriteFileAsync(doc3, doc2)
+
+        const update3 = await cozy.files.statById(doc3.remote._id)
+        should(
+          timestamp.roundedRemoteDate(update3.attributes.updated_at)
+        ).equal(doc3.local.updated_at)
+        should(doc3.remote._rev).equal(update3._rev)
+      })
     })
   }
 
