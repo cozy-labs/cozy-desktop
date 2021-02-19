@@ -127,8 +127,14 @@ async function findDeletedInoRecentlyRenamed(
   }
 }
 
-async function findDeletedIno(event, pouch, unmergedRenamedEvents) {
+async function findDeletedIno(
+  event,
+  pouch,
+  unmergedRenamedEvents
+) /*: { deletedIno?: number|string, oldPaths?: string[] } */ {
   if (event.action !== 'deleted') return {}
+  if (event.deletedIno != null) return { deletedIno: event.deletedIno }
+
   // OPTIMIZE: Make .previousPaths() include event.path so we don't need a lock
   const release = await pouch.lock('winDetectMove')
   try {

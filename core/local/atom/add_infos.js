@@ -59,21 +59,26 @@ function loop(
               path.join(opts.syncPath, event.path)
             )
           }
+
           if (event.stats) {
             // created, modified, renamed, scan
             event.kind = stater.kind(event.stats)
-          } else {
-            // deleted
+          } else if (needsPouchRecord(event)) {
+            // Even if the doc is deleted, we probably have a better chance to
+            // get the right kind by using its own.
+            const doc /*: ?Metadata */ = await opts.pouch.bySyncedPath(
+              event.path
+            )
+
             // If kind is unknown, we say it's a file arbitrary
             if (event.kind !== 'directory' && event.kind !== 'file') {
               _.set(event, [STEP_NAME, 'kindConvertedFrom'], event.kind)
 
-              // Even if the doc is deleted, we probably have a better chance to
-              // get the right kind by using its own.
-              const doc /*: ?Metadata */ = await opts.pouch.bySyncedPath(
-                event.path
-              )
               event.kind = doc ? kind(doc) : 'file'
+            }
+            // We save the deleted inode for use in other steps
+            if (event.action === 'deleted' && doc) {
+              event.deletedIno = doc.fileid || doc.ino
             }
           }
         }
@@ -91,5 +96,12 @@ function needsStats(event /*: AtomEvent */) /*: boolean %checks */ {
   return (
     ['created', 'modified', 'renamed', 'scan'].includes(event.action) &&
     !event.stats
+  )
+}
+
+function needsPouchRecord(event /*: AtomEvent */) /*: boolean %checks */ {
+  return (
+    event.action === 'deleted' ||
+    (event.kind !== 'directory' && event.kind !== 'file')
   )
 }

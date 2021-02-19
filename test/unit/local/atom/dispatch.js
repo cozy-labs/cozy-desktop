@@ -137,14 +137,31 @@ describe('core/local/atom/dispatch.loop()', function() {
     let changeEvents
     beforeEach(() => {
       changeEvents = [
-        builders.event().build(),
-        builders.event().build(),
+        builders
+          .event()
+          .action('created')
+          .kind('file')
+          .build(),
+        builders
+          .event()
+          .action('created')
+          .kind('file')
+          .build(),
         builders
           .event()
           .action('ignored')
+          .kind('file')
           .build(), // No events for this one
-        builders.event().build(),
-        builders.event().build()
+        builders
+          .event()
+          .action('created')
+          .kind('file')
+          .build(),
+        builders
+          .event()
+          .action('created')
+          .kind('file')
+          .build()
       ]
       channel.push(changeEvents)
     })
@@ -152,14 +169,26 @@ describe('core/local/atom/dispatch.loop()', function() {
     it('emits sync-target events via the emitter', async function() {
       await dispatch.loop(channel, stepOptions).pop()
 
-      should(dispatchedCalls(events)).not.containDeep({
-        emit: [
-          ['sync-target'],
-          ['sync-target'],
-          ['sync-target'],
-          ['sync-target']
-        ]
-      })
+      // Make sure we emit exactly 4 sync-target events, one for each
+      // non-ignored event.
+      should(dispatchedCalls(events))
+        .containDeep({
+          emit: [
+            ['sync-target'],
+            ['sync-target'],
+            ['sync-target'],
+            ['sync-target']
+          ]
+        })
+        .and.not.containDeep({
+          emit: [
+            ['sync-target'],
+            ['sync-target'],
+            ['sync-target'],
+            ['sync-target'],
+            ['sync-target']
+          ]
+        })
     })
   })
 

@@ -12,6 +12,7 @@ import type { EventKind } from '../../../core/local/atom/event'
 
 export interface StatsBuilder {
   ino (number): StatsBuilder,
+  size (number): StatsBuilder,
   kind (EventKind): StatsBuilder,
   mtime (Date) : StatsBuilder,
   ctime (Date) : StatsBuilder,
@@ -53,6 +54,11 @@ class DefaultStatsBuilder {
 
   ino(newIno /*: number */) /*: this */ {
     this.stats.ino = newIno
+    return this
+  }
+
+  size(newSize /*: number */) /*: this */ {
+    this.stats.size = newSize
     return this
   }
 
@@ -111,6 +117,11 @@ class WinStatsBuilder {
     return this
   }
 
+  size(newSize /*: number */) /*: this */ {
+    this.winStats.size = newSize
+    return this
+  }
+
   kind(newKind /*: EventKind */) /*: this */ {
     this.winStats.directory = newKind === 'directory'
     this.winStats.symbolicLink = newKind === 'symlink'
@@ -141,9 +152,17 @@ const fromStats = (baseStats /*: ?(WinStats | fs.Stats) */) => {
   return forPlatform()
 }
 
+const platformIno = (
+  ino /*: number */,
+  platform /*: string */ = process.platform
+) /*: number|string */ => {
+  return platform === 'win32' ? fileIdFromNumber(ino) : ino
+}
+
 module.exports = {
   DefaultStatsBuilder,
   WinStatsBuilder,
   fileIdFromNumber,
-  fromStats
+  fromStats,
+  platformIno
 }
