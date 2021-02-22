@@ -346,11 +346,30 @@ class RemoteCozy {
     return results.length !== 0
   }
 
-  async findDirectoryByPath(path /*: string */) /*: Promise<RemoteDir> */ {
-    const index = await this.client.data.defineIndex(FILES_DOCTYPE, ['path'])
-    const results = await this.client.data.query(index, { selector: { path } })
+  async search(selector /*: Object */) /*: Promise<MetadataRemoteInfo[]> */ {
+    const index = await this.client.data.defineIndex(
+      FILES_DOCTYPE,
+      Object.keys(selector)
+    )
+    const results = await this.client.data.query(index, { selector })
+    return Promise.all(
+      results.map(async result => {
+        if (result.type === FILE_TYPE) {
+          const parentDir /*: RemoteDir */ = await this.findDir(result.dir_id)
+          return this._withPath(result, parentDir)
+        }
+        return result
+      })
+    )
+  }
 
-    if (results.length === 0) throw new DirectoryNotFound(path, this.url)
+  async findDirectoryByPath(
+    path /*: string */
+  ) /*: Promise<MetadataRemoteDir> */ {
+    const results = await this.search({ path })
+    if (results.length === 0 || results[0].type !== 'directory') {
+      throw new DirectoryNotFound(path, this.url)
+    }
 
     return results[0]
   }

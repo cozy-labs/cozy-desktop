@@ -39,8 +39,8 @@ const path = require('path')
 
 const logger = require('./utils/logger')
 const timestamp = require('./utils/timestamp')
-const fsutils = require('./utils/fs')
 const pathUtils = require('./utils/path')
+const conflicts = require('./utils/conflicts')
 
 const {
   detectPathIncompatibilities,
@@ -64,12 +64,6 @@ const log = logger({
 })
 
 const { platform } = process
-
-const DATE_REGEXP = '\\d{4}(?:-\\d{2}){2}T(?:\\d{2}_?){3}\\.\\d{3}Z'
-const SEPARATOR_REGEXP = `(?!.*\\${path.sep}.*)`
-const CONFLICT_REGEXP = new RegExp(
-  `-conflict-${DATE_REGEXP}${SEPARATOR_REGEXP}`
-)
 
 const LOCAL_ATTRIBUTES = [
   'path',
@@ -198,7 +192,6 @@ module.exports = {
   buildFile,
   outOfDateSide,
   createConflictingDoc,
-  CONFLICT_REGEXP,
   shouldIgnore,
   updateLocal,
   updateRemote
@@ -840,34 +833,10 @@ function buildFile(
 }
 
 function createConflictingDoc(doc /*: Metadata */) /*: Metadata */ {
-  const newPath = CONFLICT_REGEXP.test(doc.path)
-    ? replacePreviousConflictSuffix(doc.path)
-    : addConflictSuffix(doc.path)
-
   const dst = _.cloneDeep(doc)
-  dst.path = newPath
+  dst.path = conflicts.generateConflictPath(doc.path)
 
   return dst
-}
-
-function conflictSuffix() /*: string */ {
-  const date = fsutils.validName(new Date().toISOString())
-  return `-conflict-${date}`
-}
-
-function replacePreviousConflictSuffix(filePath /*: string */) /*: string */ {
-  return filePath.replace(CONFLICT_REGEXP, conflictSuffix())
-}
-
-function addConflictSuffix(filePath /*: string */) /*: string */ {
-  const dirname = path.dirname(filePath)
-  const extname = path.extname(filePath)
-  const filename = path.basename(filePath, extname)
-  const notTooLongFilename = filename.slice(0, 180)
-  return `${path.join(
-    dirname,
-    notTooLongFilename
-  )}${conflictSuffix()}${extname}`
 }
 
 function shouldIgnore(

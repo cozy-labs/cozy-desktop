@@ -1027,15 +1027,18 @@ describe('remote.Remote', function() {
           .metafile()
           .fromRemote(remote2)
           .moveTo('moved-to/cat7.jpg')
-          .changedSide('local')
+          .upToDate()
           .create()
 
+        // For whatever reason, the creation date of `remote2` is ahead of new Date() !!!
+        const updatedAt = new Date(new Date().getTime() + 1000).toISOString()
         doc = builders
           .metafile()
           .moveFrom(old)
           .path('moved-to/cat7.jpg')
           .overwrite(existing)
-          .updatedAt(new Date())
+          .updatedAt(updatedAt)
+          .changedSide('local')
           .build()
       })
 

@@ -4,7 +4,7 @@ const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
 
-const metadata = require('../../core/metadata')
+const conflicts = require('../../core/utils/conflicts')
 const { Merge, MergeMissingParentError } = require('../../core/merge')
 
 const configHelpers = require('../support/helpers/config')
@@ -128,7 +128,7 @@ describe('Merge Helpers', function() {
       const dstPath = spy.args[0][0].path
       should(dstPath)
         .match(/foo(\/|\\)bar/)
-        .and.match(metadata.CONFLICT_REGEXP)
+        .and.match(conflicts.CONFLICT_REGEXP)
       const srcPath = spy.args[0][1].path
       should(srcPath).equal(doc.path)
     })
@@ -145,7 +145,7 @@ describe('Merge Helpers', function() {
       const dstPath = spy.args[0][0].path
       should(dstPath)
         .match(/foo(\/|\\)bar/)
-        .and.match(metadata.CONFLICT_REGEXP)
+        .and.match(conflicts.CONFLICT_REGEXP)
       should(path.extname(dstPath)).equal('.jpg')
     })
 
@@ -161,7 +161,7 @@ describe('Merge Helpers', function() {
       const dstPath = spy.args[0][0].path
       should(dstPath)
         .match(/foo(\/|\\)baz/)
-        .and.match(metadata.CONFLICT_REGEXP)
+        .and.match(conflicts.CONFLICT_REGEXP)
     })
   })
 })
