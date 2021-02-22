@@ -510,25 +510,25 @@ describe('core/local/atom/initial_diff', () => {
           action: 'deleted',
           initialDiff: {
             notFound: _.defaults(
-              { kind: kind(foo) },
-              _.pick(foo, ['path', 'md5sum', 'updated_at'])
+              { kind: kind(bar), path: bar.local.path },
+              _.pick(bar, ['md5sum', 'updated_at'])
             )
           },
-          kind: 'directory',
-          path: foo.path,
-          deletedIno: foo.fileid || foo.ino
+          kind: 'file',
+          path: bar.local.path,
+          deletedIno: bar.local.fileid || bar.local.ino
         },
         {
           action: 'deleted',
           initialDiff: {
             notFound: _.defaults(
-              { kind: kind(bar) },
-              _.pick(bar, ['path', 'md5sum', 'updated_at'])
+              { kind: kind(foo), path: foo.local.path },
+              _.pick(foo, ['md5sum', 'updated_at'])
             )
           },
-          kind: 'file',
-          path: bar.path,
-          deletedIno: bar.fileid || bar.ino
+          kind: 'directory',
+          path: foo.local.path,
+          deletedIno: foo.local.fileid || foo.local.ino
         },
         initialScanDone
       ])
@@ -829,7 +829,7 @@ describe('core/local/atom/initial_diff', () => {
         .pop()
 
       const deletedPath = path.normalize('parent-2/foo-2/bar')
-      const deletedIno = missingDoc.fileid || missingDoc.ino
+      const deletedIno = missingDoc.local.fileid || missingDoc.local.ino
 
       should(events).deepEqual([
         {

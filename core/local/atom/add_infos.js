@@ -66,7 +66,7 @@ function loop(
           } else if (needsPouchRecord(event)) {
             // Even if the doc is deleted, we probably have a better chance to
             // get the right kind by using its own.
-            const doc /*: ?Metadata */ = await opts.pouch.bySyncedPath(
+            const doc /*: ?Metadata */ = await opts.pouch.byLocalPath(
               event.path
             )
 
@@ -78,7 +78,7 @@ function loop(
             }
             // We save the deleted inode for use in other steps
             if (event.action === 'deleted' && doc) {
-              event.deletedIno = doc.fileid || doc.ino
+              event.deletedIno = doc.local.fileid || doc.local.ino
             }
           }
         }

@@ -210,6 +210,15 @@ class Pouch {
     return this.put(_.defaults({ _deleted: true }, doc))
   }
 
+  // This method lets us completely erase a document from PouchDB while removing
+  // all attributes that could get picked up by Sync the next time the document
+  // shows up in the changesfeed (erasing documents generates changes) and thus
+  // result in an attempt to take action.
+  // This method also does not care about invariants like `remove()` does.
+  eraseDocument({ _id, _rev } /*: SavedMetadata */) {
+    return this.db.put({ _id, _rev, _deleted: true })
+  }
+
   // WARNING: bulkDocs is not a transaction, some updates can be applied while
   // others do not.
   // Make sure lock is acquired before using it to avoid conflict.
@@ -309,6 +318,22 @@ class Pouch {
     return matches.length ? matches[0] : undefined
   }
 
+  async byLocalPath(fpath) /*: Promise<?SavedMetadata> */ {
+    if (!fpath) {
+      return undefined
+    }
+
+    const params = {
+      key: byPathKey(fpath),
+      include_docs: true
+    }
+    const matches = await this.getAll('byLocalPath', params)
+    // TODO: Do we need to handle cases in which we have more than one match?
+    // This should probably not happen if we handle correctly id conflicts on
+    // Windows and macOS.
+    return matches.length ? matches[0] : undefined
+  }
+
   // Return all the files and folders in this path, even in subfolders
   async byRecursivePath(
     basePath,
@@ -371,7 +396,12 @@ class Pouch {
   addAllViews() {
     return new Promise((resolve, reject) => {
       async.series(
-        [this.addByPathView, this.addByChecksumView, this.addByRemoteIdView],
+        [
+          this.addByPathView,
+          this.addByLocalPathView,
+          this.addByChecksumView,
+          this.addByRemoteIdView
+        ],
         err => {
           if (err) reject(err)
           else resolve()
@@ -390,21 +420,21 @@ class Pouch {
   // The parent path of a document in the root folder will be '', not '.' as
   // with Node's path.dirname() result.
   async addByPathView() {
-    const platform = JSON.stringify(process.platform)
     const sep = JSON.stringify(path.sep)
+    let normalized
+    switch (process.platform) {
+      case 'darwin':
+        normalized = "doc.path.normalize('NFD').toUpperCase()"
+        break
+      case 'win32':
+        normalized = 'doc.path.toUpperCase()'
+        break
+      default:
+        normalized = 'doc.path'
+    }
     const query = `function(doc) {
       if ('path' in doc) {
-        let normalized
-        switch (${platform}) {
-          case 'darwin':
-            normalized = doc.path.normalize('NFD').toUpperCase()
-            break;
-          case 'win32':
-            normalized = doc.path.toUpperCase()
-            break;
-          default:
-            normalized = doc.path
-        }
+        let normalized = ${normalized}
         const parts = normalized.split(${sep})
         const name = parts.pop()
         const parentPath = parts.concat('').join(${sep})
@@ -413,6 +443,41 @@ class Pouch {
       }
     }`
     await this.createDesignDoc('byPath', query)
+  }
+
+  // Create a view to find records based on their `local.path` attribute via a
+  // composite key.
+  // The key is separated in two parts:
+  // - the parent path
+  // - the document's name
+  // This allows us to either fetch documents via their full path or their
+  // parent path, recursively or not.
+  // The parent path of a document in the root folder will be '', not '.' as
+  // with Node's path.dirname() result.
+  async addByLocalPathView() {
+    const sep = JSON.stringify(path.sep)
+    let normalized
+    switch (process.platform) {
+      case 'darwin':
+        normalized = "doc.local.path.normalize('NFD').toUpperCase()"
+        break
+      case 'win32':
+        normalized = 'doc.local.path.toUpperCase()'
+        break
+      default:
+        normalized = 'doc.local.path'
+    }
+    const query = `function(doc) {
+      if ('local' in doc && 'path' in doc.local) {
+        let normalized = ${normalized}
+        const parts = normalized.split(${sep})
+        const name = parts.pop()
+        const parentPath = parts.concat('').join(${sep})
+
+        return emit([parentPath, name], { rev: doc._rev })
+      }
+    }`
+    await this.createDesignDoc('byLocalPath', query)
   }
 
   // Create a view to find files by their checksum
@@ -575,7 +640,7 @@ class Pouch {
   }
 }
 
-const byPathKey = fpath => {
+const byPathKey = (fpath /*: string */) /*: [string, string] */ => {
   const normalized = metadata.id(fpath)
   const parts = normalized.split(path.sep)
   const name = parts.pop()
@@ -590,4 +655,4 @@ const sortByPath = (docA, docB) => {
   return 0
 }
 
-module.exports = { Pouch }
+module.exports = { Pouch, byPathKey }

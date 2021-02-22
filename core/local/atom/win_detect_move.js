@@ -106,9 +106,9 @@ async function findDeletedInoByPath(
   dpath,
   pouch
 ) /*: Promise<?{ deletedIno: ?number|string }> */ {
-  const doc /*: ?Metadata */ = await pouch.bySyncedPath(dpath)
-  if (doc && !doc.deleted) {
-    return { deletedIno: doc.fileid || doc.ino }
+  const doc /*: ?Metadata */ = await pouch.byLocalPath(dpath)
+  if (doc) {
+    return { deletedIno: doc.local.fileid || doc.local.ino }
   }
 }
 
@@ -117,10 +117,10 @@ async function findDeletedInoRecentlyRenamed(
   pouch
 ) /*: Promise<?{ deletedIno: ?number|string, oldPaths: string[] }> */ {
   for (const [index, previousPath] of previousPaths.entries()) {
-    const doc /*: ?Metadata */ = await pouch.bySyncedPath(previousPath)
-    if (doc && !doc.deleted) {
+    const doc /*: ?Metadata */ = await pouch.byLocalPath(previousPath)
+    if (doc) {
       return {
-        deletedIno: doc.fileid || doc.ino,
+        deletedIno: doc.local.fileid || doc.local.ino,
         oldPaths: previousPaths.slice(index)
       }
     }

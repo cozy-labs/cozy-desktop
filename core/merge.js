@@ -706,10 +706,22 @@ class Merge {
 
   async doTrash(
     side /*: SideName */,
-    was /*: Metadata */,
+    was /*: SavedMetadata */,
     doc /*: Metadata */
   ) /*: Promise<void> */ {
     delete was.errors
+
+    if (
+      was.deleted &&
+      metadata.isAtLeastUpToDate(otherSide(side), was) &&
+      !metadata.isAtLeastUpToDate(side, was)
+    ) {
+      log.debug(
+        { path: was.path, doc: was },
+        'Erasing doc already marked for deletion'
+      )
+      return this.pouch.eraseDocument(was)
+    }
 
     const newMetadata = _.cloneDeep(was)
     metadata.markSide(side, newMetadata, was)
@@ -731,14 +743,18 @@ class Merge {
 
   async trashFileAsync(
     side /*: SideName */,
-    trashed /*: {path: string} */,
+    trashed /*: SavedMetadata|{path: string} */,
     doc /*: Metadata */
   ) /*: Promise<void> */ {
     const { path } = trashed
     log.debug({ path }, 'trashFileAsync')
-    const was /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(
-      trashed.path
-    )
+    let was /*: ?SavedMetadata */
+    // $FlowFixMe _id exists in SavedMetadata
+    if (trashed._id != null) {
+      was = await this.pouch.byIdMaybe(trashed._id)
+    } else {
+      was = await this.pouch.bySyncedPath(trashed.path)
+    }
 
     if (!was) {
       log.debug({ path }, 'Nothing to trash')
@@ -793,14 +809,18 @@ class Merge {
 
   async trashFolderAsync(
     side /*: SideName */,
-    trashed /*: {path: string} */,
+    trashed /*: SavedMetadata|{path: string} */,
     doc /*: Metadata */
   ) /*: Promise<*> */ {
     const { path } = trashed
     log.debug({ path }, 'trashFolderAsync')
-    const was /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(
-      trashed.path
-    )
+    let was /*: ?SavedMetadata */
+    // $FlowFixMe _id exists in SavedMetadata
+    if (trashed._id != null) {
+      was = await this.pouch.byIdMaybe(trashed._id)
+    } else {
+      was = await this.pouch.bySyncedPath(trashed.path)
+    }
 
     if (!was) {
       log.debug({ path }, 'Nothing to trash')

@@ -6,7 +6,6 @@ const should = require('should')
 
 const Channel = require('../../../../core/local/atom/channel')
 const overwrite = require('../../../../core/local/atom/overwrite')
-const metadata = require('../../../../core/metadata')
 
 const Builders = require('../../../support/builders')
 
@@ -23,28 +22,8 @@ describe('core/local/atom/overwrite', () => {
 
     beforeEach(() => {
       builders = new Builders()
-      const docs = {
-        'SRC/FILE': builders
-          .metafile()
-          .path('src/file')
-          .ino(1)
-          .build(),
-        'SRC/DIR': builders
-          .metadir()
-          .path('src/dir')
-          .ino(2)
-          .build(),
-        'DST/FILE': builders
-          .metafile()
-          .path('dst/file')
-          .ino(3)
-          .build()
-      }
       inputChannel = new Channel()
       outputChannel = overwrite.loop(inputChannel, {
-        pouch: {
-          bySyncedPath: async path => _.cloneDeep(docs[metadata.id(path)])
-        },
         state: overwrite.initialState()
       })
     })

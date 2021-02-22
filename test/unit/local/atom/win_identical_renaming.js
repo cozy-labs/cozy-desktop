@@ -37,7 +37,7 @@ if (process.platform === 'win32') {
         inputChannel = new Channel()
         outputChannel = winIdenticalRenaming.loop(inputChannel, {
           pouch: {
-            bySyncedPath: async path => _.cloneDeep(docs[metadata.id(path)])
+            byLocalPath: async path => _.cloneDeep(docs[metadata.id(path)])
           },
           state: winIdenticalRenaming.initialState()
         })
