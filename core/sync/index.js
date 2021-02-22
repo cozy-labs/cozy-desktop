@@ -54,18 +54,6 @@ const isMarkedForDeletion = (doc /*: SavedMetadata */) => {
   return doc.deleted || doc._deleted
 }
 
-// This method lets us completely erase a document from PouchDB after the
-// propagation of a deleted doc while removing all attributes that could get
-// picked up by the Sync the next time the document shows up in the changesfeed
-// (erasing documents generates changes) and thus result in an attempt to take
-// action.
-const eraseDocument = async (
-  { _id, _rev } /*: SavedMetadata */,
-  { pouch } /*: { pouch: Pouch } */
-) => {
-  await pouch.db.put({ _id, _rev, _deleted: true })
-}
-
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
 // respectively.
@@ -333,7 +321,7 @@ class Sync {
     if (metadata.shouldIgnore(doc, this.ignore)) {
       return this.pouch.setLocalSeq(change.seq)
     } else if (!metadata.wasSynced(doc) && isMarkedForDeletion(doc)) {
-      await eraseDocument(doc, this)
+      await this.pouch.eraseDocument(doc)
       if (doc.docType === 'file') {
         this.events.emit('delete-file', _.clone(doc))
       }
@@ -365,7 +353,7 @@ class Sync {
       // previous changes and keep our Pouch documents as small as possible
       // and especially avoid deep nesting levels.
       if (doc.deleted) {
-        await eraseDocument(doc, this)
+        await this.pouch.eraseDocument(doc)
         if (doc.docType === 'file') {
           this.events.emit('delete-file', _.clone(doc))
         }

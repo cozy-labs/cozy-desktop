@@ -4,9 +4,11 @@
 const Promise = require('bluebird')
 const _ = require('lodash')
 const should = require('should')
+const path = require('path')
 
 const logger = require('../../core/utils/logger')
 const metadata = require('../../core/metadata')
+const { byPathKey } = require('../../core/pouch')
 
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
@@ -42,8 +44,7 @@ describe('Update file', () => {
   describe('local offline change with unsynced previous local change', () => {
     beforeEach(async () => {
       await helpers.local.syncDir.outputFile('file', 'initial content')
-      await helpers.local.scan()
-      await helpers.syncAll()
+      await helpers.flushLocalAndSyncAll()
 
       await helpers.local.syncDir.outputFile('file', 'first update')
       await helpers.local.scan()
@@ -52,8 +53,7 @@ describe('Update file', () => {
     it('synchronizes the latest change everywhere without conflicts', async () => {
       const secondUpdate = 'second update'
       await helpers.local.syncDir.outputFile('file', secondUpdate)
-      await helpers.local.scan()
-      await helpers.syncAll()
+      await helpers.flushLocalAndSyncAll()
       await helpers.pullAndSyncAll()
 
       const trees = await helpers.treesNonEllipsized()
@@ -90,9 +90,11 @@ describe('Update file', () => {
 
   describe('local change on unsynced child move', () => {
     beforeEach(async () => {
-      await helpers.local.syncDir.outputFile('src/file', 'initial content')
-      await helpers.local.scan()
-      await helpers.syncAll()
+      await helpers.local.syncDir.outputFile(
+        path.normalize('src/file'),
+        'initial content'
+      )
+      await helpers.flushLocalAndSyncAll()
 
       await helpers.local.syncDir.move('src', 'dst')
       await helpers.local.scan()
@@ -101,9 +103,11 @@ describe('Update file', () => {
 
     it('synchronizes the latest change everywhere without conflicts', async () => {
       const contentUpdate = 'content update'
-      await helpers.local.syncDir.outputFile('dst/file', contentUpdate)
-      await helpers.local.scan()
-      await helpers.syncAll()
+      await helpers.local.syncDir.outputFile(
+        path.normalize('dst/file'),
+        contentUpdate
+      )
+      await helpers.flushLocalAndSyncAll()
       await helpers.pullAndSyncAll()
 
       const trees = await helpers.treesNonEllipsized()
@@ -145,30 +149,34 @@ describe('Update file', () => {
   })
 
   describe('local change on unsynced child move to previously existing path', () => {
-    let existingPath = 'dst/file'
+    let existingPath = path.normalize('dst/file')
 
     beforeEach(async () => {
       await helpers.remote.ignorePreviousChanges()
       await helpers.local.syncDir.outputFile(existingPath, 'existing content')
-      await helpers.local.scan()
-      await helpers.syncAll()
+      await helpers.flushLocalAndSyncAll()
       await helpers.local.syncDir.remove(existingPath)
       await helpers.local.syncDir.removeParentDir(existingPath)
-      await helpers.local.scan()
-      await helpers.syncAll()
+      await helpers.flushLocalAndSyncAll()
 
-      await helpers.local.syncDir.outputFile('src/file', 'initial content')
-      await helpers.local.scan()
-      await helpers.syncAll()
+      await helpers.local.syncDir.outputFile(
+        path.normalize('src/file'),
+        'initial content'
+      )
+      await helpers.flushLocalAndSyncAll()
       await helpers.local.syncDir.move('src', 'dst')
       await helpers.local.scan()
     })
 
+    // FIXME: fails sometimes with wrong dst/file content because:
+    // - dst/file is updated more than once somehow
+    // - we don't handle well overwrites of overwrites (i.e. the overwrite
+    //   attribute is replaced)
+    // - we don't handle well 409 errors yet
     it('synchronizes the latest change everywhere without conflicts', async () => {
       const contentUpdate = 'content update'
       await helpers.local.syncDir.outputFile(existingPath, contentUpdate)
-      await helpers.local.scan()
-      await helpers.syncAll()
+      await helpers.flushLocalAndSyncAll()
       await helpers.pullAndSyncAll()
 
       const trees = await helpers.treesNonEllipsized()
@@ -177,6 +185,7 @@ describe('Update file', () => {
           trees.local,
           async (localContents, path) => {
             if (path.endsWith('/')) return localContents
+            if (path.includes('/Trash/')) return localContents
             localContents[path] = await helpers.local.syncDir.readFile(path)
             return localContents
           },
@@ -206,6 +215,14 @@ describe('Update file', () => {
           }
         }
       })
+
+      // Make sure we can still update the file
+      const params = {
+        key: byPathKey(existingPath),
+        include_docs: true
+      }
+      const docs = await pouch.getAll('byPath', params)
+      should(docs).have.size(1)
     })
   })
 

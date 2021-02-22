@@ -353,22 +353,7 @@ describe('Prep', function() {
   })
 
   describe('trashFileAsync', () => {
-    it('merges the metadata with an _id and a docType', async function() {
-      const doc = {
-        path: 'file-to-be-trashed',
-        md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
-      }
-      await this.prep.trashFileAsync(this.side, doc, doc)
-
-      should(this.merge.trashFileAsync).be.calledOnce()
-      should(this.merge.trashFileAsync).be.calledWith(
-        this.side,
-        { path: doc.path },
-        { ...doc, trashed: true, docType: 'file' }
-      )
-    })
-
-    it('throws when path is invalid', async function() {
+    it('throws when the trashed path is invalid', async function() {
       const doc = { path: '/' }
 
       return this.prep
@@ -385,16 +370,12 @@ describe('Prep', function() {
       await this.prep.trashFileAsync(this.side, was)
 
       should(this.merge.trashFileAsync).be.calledOnce()
-      should(this.merge.trashFileAsync).be.calledWith(
-        this.side,
-        { path: was.path },
-        {
-          ...was,
-          path: path.join(TRASH_DIR_NAME, was.path),
-          trashed: true,
-          docType: 'file'
-        }
-      )
+      should(this.merge.trashFileAsync).be.calledWith(this.side, was, {
+        ...was,
+        path: path.join(TRASH_DIR_NAME, was.path),
+        trashed: true,
+        docType: 'file'
+      })
     })
 
     // FIXME
@@ -408,20 +389,7 @@ describe('Prep', function() {
   })
 
   describe('trashFolderAsync', () => {
-    it('merges the metadata with an _id and a docType', async function() {
-      const doc = { path: 'folder-to-be-trashed' }
-
-      await this.prep.trashFolderAsync(this.side, doc, doc)
-
-      should(this.merge.trashFolderAsync).be.calledOnce()
-      should(this.merge.trashFolderAsync).be.calledWith(
-        this.side,
-        { path: doc.path },
-        { ...doc, trashed: true, docType: 'folder' }
-      )
-    })
-
-    it('throws when path is invalid', async function() {
+    it('throws when the trashed path is invalid', async function() {
       const doc = { path: '/' }
 
       return this.prep
@@ -435,16 +403,12 @@ describe('Prep', function() {
       await this.prep.trashFolderAsync(this.side, was)
 
       should(this.merge.trashFolderAsync).be.calledOnce()
-      should(this.merge.trashFolderAsync).be.calledWith(
-        this.side,
-        { path: was.path },
-        {
-          ...was,
-          path: path.join(TRASH_DIR_NAME, was.path),
-          trashed: true,
-          docType: 'folder'
-        }
-      )
+      should(this.merge.trashFolderAsync).be.calledWith(this.side, was, {
+        ...was,
+        path: path.join(TRASH_DIR_NAME, was.path),
+        trashed: true,
+        docType: 'folder'
+      })
     })
 
     // FIXME

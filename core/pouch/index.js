@@ -210,6 +210,15 @@ class Pouch {
     return this.put(_.defaults({ _deleted: true }, doc))
   }
 
+  // This method lets us completely erase a document from PouchDB while removing
+  // all attributes that could get picked up by Sync the next time the document
+  // shows up in the changesfeed (erasing documents generates changes) and thus
+  // result in an attempt to take action.
+  // This method also does not care about invariants like `remove()` does.
+  eraseDocument({ _id, _rev } /*: SavedMetadata */) {
+    return this.db.put({ _id, _rev, _deleted: true })
+  }
+
   // WARNING: bulkDocs is not a transaction, some updates can be applied while
   // others do not.
   // Make sure lock is acquired before using it to avoid conflict.
@@ -631,7 +640,7 @@ class Pouch {
   }
 }
 
-const byPathKey = fpath => {
+const byPathKey = (fpath /*: string */) /*: [string, string] */ => {
   const normalized = metadata.id(fpath)
   const parts = normalized.split(path.sep)
   const name = parts.pop()
@@ -646,4 +655,4 @@ const sortByPath = (docA, docB) => {
   return 0
 }
 
-module.exports = { Pouch }
+module.exports = { Pouch, byPathKey }
