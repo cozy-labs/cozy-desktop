@@ -42,7 +42,8 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <Metadata
           name: this.remoteDoc.name,
           dirID: this.remoteDoc.dir_id,
           createdAt: this.remoteDoc.created_at,
-          updatedAt: this.remoteDoc.updated_at
+          updatedAt: this.remoteDoc.updated_at,
+          noSanitize: true
         })
       )
     )

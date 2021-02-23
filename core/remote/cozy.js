@@ -210,7 +210,10 @@ class RemoteCozy {
                  executable: boolean|} */
   ) /*: Promise<MetadataRemoteFile> */ {
     return this._withUnhandledRejectionProtection(options, async () => {
-      const file = await this.client.files.create(data, options)
+      const file = await this.client.files.create(data, {
+        ...options,
+        noSanitize: true
+      })
       return this.toRemoteDoc(file)
     })
   }
@@ -221,7 +224,10 @@ class RemoteCozy {
                  createdAt: string,
                  updatedAt: string|} */
   ) /*: Promise<MetadataRemoteDir> */ {
-    const folder = await this.client.files.createDirectory(options)
+    const folder = await this.client.files.createDirectory({
+      ...options,
+      noSanitize: true
+    })
     return this.toRemoteDoc(folder)
   }
 
@@ -236,7 +242,10 @@ class RemoteCozy {
                  ifMatch: string|} */
   ) /*: Promise<MetadataRemoteFile> */ {
     return this._withUnhandledRejectionProtection(options, async () => {
-      const updated = await this.client.files.updateById(id, data, options)
+      const updated = await this.client.files.updateById(id, data, {
+        ...options,
+        noSanitize: true
+      })
       return this.toRemoteDoc(updated)
     })
   }
@@ -249,11 +258,10 @@ class RemoteCozy {
                updated_at: string|} */,
     options /*: {|ifMatch: string|} */
   ) /*: Promise<MetadataRemoteInfo> */ {
-    const updated = await this.client.files.updateAttributesById(
-      id,
-      attrs,
-      options
-    )
+    const updated = await this.client.files.updateAttributesById(id, attrs, {
+      ...options,
+      noSanitize: true
+    })
     return this.toRemoteDoc(updated)
   }
 

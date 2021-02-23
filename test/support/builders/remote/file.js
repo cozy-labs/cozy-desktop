@@ -110,7 +110,8 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <Metadat
           executable: this.remoteDoc.executable,
           createdAt: this.remoteDoc.created_at,
           updatedAt: this.remoteDoc.updated_at || this.remoteDoc.created_at,
-          name: this.remoteDoc.name
+          name: this.remoteDoc.name,
+          noSanitize: true
         })
       )
     )
@@ -144,7 +145,8 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <Metadat
           dirID: this.remoteDoc.dir_id,
           executable: this.remoteDoc.executable,
           updatedAt: this.remoteDoc.updated_at,
-          name: this.remoteDoc.name
+          name: this.remoteDoc.name,
+          noSanitize: true
         })
       )
     )

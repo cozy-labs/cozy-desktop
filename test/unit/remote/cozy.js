@@ -72,6 +72,32 @@ describe('RemoteCozy', function() {
   })
 
   describe('createFile', () => {
+    context('when the name starts or ends with a space', () => {
+      it('creates the file with the given name', async () => {
+        should(
+          await remoteCozy.createFile(
+            builders
+              .stream()
+              .push('')
+              .build(),
+            {
+              name: ' foo ',
+              dirID: ROOT_DIR_ID,
+              contentType: 'text/plain',
+              contentLength: 0,
+              checksum: '1B2M2Y8AsgTpgAmY7PhCfg==', // md5sum of an empty file
+              executable: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          )
+        ).have.properties({
+          type: 'file',
+          name: ' foo '
+        })
+      })
+    })
+
     context(
       'when the request fails with an unhandled promise rejection',
       () => {
@@ -146,7 +172,58 @@ describe('RemoteCozy', function() {
     )
   })
 
+  describe('createDirectory', () => {
+    context('when the name starts or ends with a space', () => {
+      it('creates the directory with the given name', async () => {
+        should(
+          await remoteCozy.createDirectory({
+            name: ' foo ',
+            dirID: ROOT_DIR_ID,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
+        ).have.properties({
+          type: 'directory',
+          name: ' foo '
+        })
+      })
+    })
+  })
+
   describe('updateFileById', () => {
+    context('when the name starts or ends with a space', () => {
+      it('updates the file with the given name', async () => {
+        const remoteFile = await builders
+          .remoteFile()
+          .inRootDir()
+          .name(' foo ')
+          .data('initial content')
+          .create()
+
+        should(
+          await remoteCozy.updateFileById(
+            remoteFile._id,
+            builders
+              .stream()
+              .push('')
+              .build(),
+            {
+              contentType: 'text/plain',
+              contentLength: 0,
+              checksum: '1B2M2Y8AsgTpgAmY7PhCfg==', // md5sum of an empty file
+              executable: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          )
+        ).have.properties({
+          type: 'file',
+          name: ' foo ',
+          md5sum: '1B2M2Y8AsgTpgAmY7PhCfg=='
+        })
+      })
+    })
+
     context(
       'when the request fails with an unhandled promise rejection',
       () => {
@@ -204,6 +281,29 @@ describe('RemoteCozy', function() {
         })
       }
     )
+  })
+
+  describe('updateAttributesById', () => {
+    context('when the name starts or ends with a space', () => {
+      it('updates the file with the given name', async () => {
+        const remoteFile = await builders
+          .remoteFile()
+          .inRootDir()
+          .name(' foo')
+          .data('initial content')
+          .create()
+
+        should(
+          await remoteCozy.updateAttributesById(remoteFile._id, {
+            name: 'bar ',
+            updatedAt: new Date().toISOString()
+          })
+        ).have.properties({
+          type: 'file',
+          name: 'bar '
+        })
+      })
+    })
   })
 
   describe('changes', function() {
