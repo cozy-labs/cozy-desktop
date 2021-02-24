@@ -3,6 +3,8 @@
  * @flow
  */
 
+const { DirectoryNotFound } = require('./cozy')
+
 /*::
 import type { RemoteChange } from './change'
 import type { MetadataChange } from '../sync'
@@ -15,6 +17,7 @@ export type { FetchError }
 const CONFLICTING_NAME_CODE = 'ConflictingName'
 const COZY_CLIENT_REVOKED_CODE = 'CozyClientRevoked'
 const INVALID_METADATA_CODE = 'InvalidMetadata'
+const MISSING_PARENT_CODE = 'MissingParent'
 const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
 const NEEDS_REMOTE_MERGE_CODE = 'NeedsRemoteMerge'
 const NO_COZY_SPACE_CODE = 'NoCozySpace'
@@ -197,6 +200,12 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
           err
         })
     }
+  } else if (err instanceof DirectoryNotFound) {
+    return new RemoteError({
+      code: MISSING_PARENT_CODE,
+      message: '',
+      err
+    })
   } else if (err instanceof RemoteError) {
     return err
   } else {
@@ -212,6 +221,7 @@ module.exports = {
   CONFLICTING_NAME_CODE,
   COZY_CLIENT_REVOKED_CODE,
   INVALID_METADATA_CODE,
+  MISSING_PARENT_CODE,
   MISSING_PERMISSIONS_CODE,
   NEEDS_REMOTE_MERGE_CODE,
   NO_COZY_SPACE_CODE,

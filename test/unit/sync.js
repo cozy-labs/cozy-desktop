@@ -833,7 +833,7 @@ describe('Sync', function() {
       beforeEach(function() {
         this.sync.blockSyncFor({
           err: remoteErrors.wrapError(
-            new FetchError({ status: 404 }, 'UnreachableCozy test error')
+            new FetchError({ status: 500 }, 'UnreachableCozy test error')
           )
         })
       })

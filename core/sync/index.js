@@ -395,26 +395,26 @@ class Sync {
           break
         case remoteErrors.CONFLICTING_NAME_CODE:
           /* When we fail to apply a change because of a name conflict on the
-           *  remote Cozy, it means we either:
-           *  1. have another change to apply that will free the give name by
-           *     moving the document or renaming it
-           *  2. have not yet merged the remote change that took the name and
-           *     would have generated a conflict copy
-           *  3. have not merged the remote change that took the name and never
-           *     will because we abandoned that change in the past
+           * remote Cozy, it means we either:
+           * 1. have another change to apply that will free the give name by
+           *    moving the document or renaming it
+           * 2. have not yet merged the remote change that took the name and
+           *    would have generated a conflict copy
+           * 3. have not merged the remote change that took the name and never
+           *    will because we abandoned that change in the past
            *
-           *  We can solve 1. by marking our local change with an increased
-           *  error counter so it can be retried later, after we've applied the
-           *  other changes that would free the conflicting name.
+           * We can solve 1. by marking our local change with an increased
+           * error counter so it can be retried later, after we've applied the
+           * other changes that would free the conflicting name.
            *
-           *  We can solve 2. by blocking the Sync process until we've fetched
-           *  and merged the new remote changes, thus generating a conflict
-           *  copy at the Merge level.
+           * We can solve 2. by blocking the Sync process until we've fetched
+           * and merged the new remote changes, thus generating a conflict
+           * copy at the Merge level.
            *
-           *  We can only solve 3. by detecting that we've tried the solutions
-           *  to 1. and 2., still can't apply the given change and thus generate
-           *  a remote conflict at the Sync level instead of doing it at the
-           *  Merge level.
+           * We can only solve 3. by detecting that we've tried the solutions
+           * to 1. and 2., still can't apply the given change and thus generate
+           * a remote conflict at the Sync level instead of doing it at the
+           * Merge level.
            */
 
           // We will retry to apply the change `MAX_SYNC_ATTEMPTS` times just
@@ -431,6 +431,52 @@ class Sync {
             )
             // Solve 3.
             await this.remote.resolveRemoteConflict(change.doc)
+          }
+          break
+        case remoteErrors.MISSING_PARENT_CODE:
+          /* When we fail to apply a change because its parent does not exist on
+           * the remote Cozy, it means we either:
+           * 1. have another change to apply that will create that parent
+           * 2. have not yet merged the remote change that removed that parent
+           * 3. have failed to sync the creation of the parent and will never
+           *    succeed because we abandoned in the past
+           * 4. have failed to merge its remote deletion and will never succeed
+           *    because we abandoned in the past
+           */
+          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
+            // Solve 1.
+            this.updateErrors(change, syncErr)
+            // Solve 2.
+            this.blockSyncFor({ err: syncErr, change })
+          } else {
+            log.error(
+              { path, err: syncErr, change },
+              'Parent directory is missing on Cozy'
+            )
+            const parent = await this.pouch.bySyncedPath(dirname(path))
+            if (!parent) {
+              // Solve 3.
+              // This is a weird situation where we don't have a parent in
+              // PouchDB. This should never be the case though.
+              log.error(
+                { path, err: syncErr, change, sentry: true },
+                'Parent directory could not be found either on Cozy or PouchDB. Abandoning.'
+              )
+              this.skipChange(change, syncErr)
+            } else if (parent.remote) {
+              // We're in a fishy situation where we have a folder whose synced
+              // path is the parent path of our document but its remote path is
+              // not and the synchronization did not change this.
+              // The database is corrupted and should be cleaned up.
+              log.error(
+                { path, err: syncErr, change, sentry: true },
+                'Parent directory is desynchronized. Abandoning.'
+              )
+              this.skipChange(change, syncErr)
+            } else {
+              // Solve 3. or 4.
+              await this.remote.addFolderAsync(parent)
+            }
           }
           break
         default:
@@ -725,6 +771,7 @@ class Sync {
       case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
         break
       case remoteErrors.CONFLICTING_NAME_CODE:
+      case remoteErrors.MISSING_PARENT_CODE:
         // Hide the conflict from the user as we can solve it by ourselves
         break
       default:
