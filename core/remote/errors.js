@@ -14,6 +14,7 @@ export type { FetchError }
 
 const CONFLICTING_NAME_CODE = 'ConflictingName'
 const COZY_CLIENT_REVOKED_CODE = 'CozyClientRevoked'
+const INVALID_METADATA_CODE = 'InvalidMetadata'
 const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
 const NEEDS_REMOTE_MERGE_CODE = 'NeedsRemoteMerge'
 const NO_COZY_SPACE_CODE = 'NoCozySpace'
@@ -182,6 +183,12 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
           message: 'Not enough space available on remote Cozy',
           err
         })
+      case 422:
+        return new RemoteError({
+          code: INVALID_METADATA_CODE,
+          message: 'The local metadata for the document is corrupted',
+          err
+        })
       default:
         // TODO: Merge with UnreachableError?!
         return new RemoteError({
@@ -204,6 +211,7 @@ module.exports = {
   COZY_CLIENT_REVOKED_MESSAGE, // FIXME: should be removed once gui/main does not use it anymore
   CONFLICTING_NAME_CODE,
   COZY_CLIENT_REVOKED_CODE,
+  INVALID_METADATA_CODE,
   MISSING_PERMISSIONS_CODE,
   NEEDS_REMOTE_MERGE_CODE,
   NO_COZY_SPACE_CODE,

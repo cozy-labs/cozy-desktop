@@ -364,17 +364,25 @@ class Sync {
       // `apply()` and some expect `updateErrors` to be called (e.g. when
       // applying a move with a failing content change).
       const syncErr = syncErrors.wrapError(err, sideName, change)
-      log.warn(
-        { err: syncErr, change, path: change.doc.path },
-        `Sync error: ${syncErr.message}`
-      )
+      if (syncErr.code === remoteErrors.INVALID_METADATA_CODE) {
+        log.error(
+          { err: syncErr, change, path, sentry: true },
+          `Sync error: ${syncErr.message}`
+        )
+      } else {
+        log.warn(
+          { err: syncErr, change, path },
+          `Sync error: ${syncErr.message}`
+        )
+      }
       switch (syncErr.code) {
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
-        case remoteErrors.NO_COZY_SPACE_CODE:
+        case remoteErrors.INVALID_METADATA_CODE:
         case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
-        case remoteErrors.USER_ACTION_REQUIRED_CODE:
+        case remoteErrors.NO_COZY_SPACE_CODE:
         case remoteErrors.UNREACHABLE_COZY_CODE:
+        case remoteErrors.USER_ACTION_REQUIRED_CODE:
           // We will keep retrying to apply the change until it's fixed or the
           // user contacts our support.
           // We increment the record's errors counter to keep track of the

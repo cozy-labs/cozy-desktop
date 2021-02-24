@@ -233,6 +233,17 @@ type alias UserActionView =
 view : String -> UserActionView
 view code =
     case code of
+        "InvalidMetadata" ->
+            { title = "Error Invalid document metadata"
+            , details =
+                [ "Error The {0} `{1}`'s metadata cannot be accepted by your Cozy."
+                , "Error This message persists if the local metadata of your document is corrupted. In this case try to move it out of the Cozy Drive folder and back again or contact support for help on the procedure."
+                ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = Nothing
+            , label = Nothing
+            }
+
         "MissingPermissions" ->
             { title = "Error Access denied temporarily"
             , details =

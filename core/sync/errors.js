@@ -93,11 +93,6 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
       case remoteErrors.NO_COZY_SPACE_CODE:
         return 10000
 
-      case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
-      case remoteErrors.CONFLICTING_NAME_CODE:
-        // We want to make sure the remote watcher has run before retrying
-        return REMOTE_HEARTBEAT
-
       case remoteErrors.UNREACHABLE_COZY_CODE:
         return 10000
 
@@ -107,6 +102,8 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
       default:
         // Arbutrary value to make sure we don't retry too soon and overload the
         // server with requests.
+        // This also gives us the opportunity to merge new remote changes and
+        // fix errors.
         return REMOTE_HEARTBEAT
     }
   } else {
