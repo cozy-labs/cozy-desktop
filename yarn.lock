@@ -1624,10 +1624,10 @@ core-util-is@1.0.2, core-util-is@~1.0.0:
   resolved "https://registry.yarnpkg.com/core-util-is/-/core-util-is-1.0.2.tgz#b5fd54220aa2bc5ab57aab7140c940754503c1a7"
   integrity sha1-tf1UIgqivFq1eqtxQMlAdUUDwac=
 
-cozy-client-js@^0.18.0:
-  version "0.18.0"
-  resolved "https://registry.yarnpkg.com/cozy-client-js/-/cozy-client-js-0.18.0.tgz#68e40f6206bc51ef1a60eb91637136b3337292a4"
-  integrity sha512-PXkyBLACDGvN6GnVsy+GLMKT4CQhafP0JaBHY9dSV25g0316hMGKwgzkKl2PTWuAO6Sc/7tPxi+kk2HD9YmJ7g==
+cozy-client-js@^0.19.0:
+  version "0.19.0"
+  resolved "https://registry.yarnpkg.com/cozy-client-js/-/cozy-client-js-0.19.0.tgz#ccfb0572d6c6f3aa7c187978c23dd89f04caf796"
+  integrity sha512-3EPLxLu7mg/GSmAHauW7rfdVMynCQb9Yj1vHvDO1Rpda/CV0xN04HRH1eq+3HhZiIx1g1L76zSh0jN1shgCknQ==
   dependencies:
     core-js "^3.6.5"
     cross-fetch "^3.0.6"
