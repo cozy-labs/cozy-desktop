@@ -17,6 +17,7 @@ export type { FetchError }
 const CONFLICTING_NAME_CODE = 'ConflictingName'
 const COZY_CLIENT_REVOKED_CODE = 'CozyClientRevoked'
 const INVALID_METADATA_CODE = 'InvalidMetadata'
+const MISSING_DOCUMENT_CODE = 'MissingDocument'
 const MISSING_PARENT_CODE = 'MissingParent'
 const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
 const NEEDS_REMOTE_MERGE_CODE = 'NeedsRemoteMerge'
@@ -167,6 +168,12 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
           message: 'Cozy client is missing permissions (lack disk-usage?)',
           err
         })
+      case 404:
+        return new RemoteError({
+          code: MISSING_DOCUMENT_CODE,
+          message: 'The updated document is missing on the remote Cozy',
+          err
+        })
       case 409:
         return new RemoteError({
           code: CONFLICTING_NAME_CODE,
@@ -221,6 +228,7 @@ module.exports = {
   CONFLICTING_NAME_CODE,
   COZY_CLIENT_REVOKED_CODE,
   INVALID_METADATA_CODE,
+  MISSING_DOCUMENT_CODE,
   MISSING_PARENT_CODE,
   MISSING_PERMISSIONS_CODE,
   NEEDS_REMOTE_MERGE_CODE,

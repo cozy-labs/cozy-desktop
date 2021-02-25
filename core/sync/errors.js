@@ -125,8 +125,11 @@ const wrapError = (
   sideName /*: SideName */,
   { doc } /*: { doc: SavedMetadata } */ = {}
 ) => {
-  if (sideName === 'remote') {
-    // The RemoteError code will be reused
+  if (sideName === 'remote' || err.name === 'FetchError') {
+    // FetchErrors can be raised from the LocalWriter when failing to download a
+    // file for example. In this case the sideName will be "local" but the error
+    // name will still be "FetchError".
+    // If err is a RemoteError, its code will be reused.
     return new SyncError({ sideName, err: remoteErrors.wrapError(err), doc })
   } else if (err.code && ['EACCES', 'EPERM', 'EBUSY'].includes(err.code)) {
     return new SyncError({ sideName, err, code: MISSING_PERMISSIONS_CODE, doc })

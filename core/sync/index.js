@@ -364,7 +364,12 @@ class Sync {
       // `apply()` and some expect `updateErrors` to be called (e.g. when
       // applying a move with a failing content change).
       const syncErr = syncErrors.wrapError(err, sideName, change)
-      if (syncErr.code === remoteErrors.INVALID_METADATA_CODE) {
+      if (
+        [
+          remoteErrors.INVALID_METADATA_CODE,
+          remoteErrors.MISSING_DOCUMENT_CODE
+        ].includes(syncErr.code)
+      ) {
         log.error(
           { err: syncErr, change, path, sentry: true },
           `Sync error: ${syncErr.message}`
@@ -431,6 +436,30 @@ class Sync {
             )
             // Solve 3.
             await this.remote.resolveRemoteConflict(change.doc)
+          }
+          break
+        case remoteErrors.MISSING_DOCUMENT_CODE:
+          // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
+          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
+            await this.updateErrors(change, syncErr)
+            this.blockSyncFor({ err: syncErr, change })
+          } else {
+            if (change.doc.deleted) {
+              await this.skipChange(change, syncErr)
+            } else if (sideName === 'remote') {
+              if (change.doc.moveFrom) delete change.doc.moveFrom
+
+              if (metadata.isFile(change.doc)) {
+                await this.remote.addFileAsync(change.doc)
+              } else {
+                await this.remote.addFolderAsync(change.doc)
+              }
+            } else {
+              await this.pouch.eraseDocument(change.doc)
+              if (doc.docType === 'file') {
+                this.events.emit('delete-file', _.clone(change.doc))
+              }
+            }
           }
           break
         case remoteErrors.MISSING_PARENT_CODE:
@@ -771,6 +800,7 @@ class Sync {
       case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
         break
       case remoteErrors.CONFLICTING_NAME_CODE:
+      case remoteErrors.MISSING_DOCUMENT_CODE:
       case remoteErrors.MISSING_PARENT_CODE:
         // Hide the conflict from the user as we can solve it by ourselves
         break
