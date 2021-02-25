@@ -25,6 +25,7 @@ const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
 const NEEDS_REMOTE_MERGE_CODE = 'NeedsRemoteMerge'
 const NO_COZY_SPACE_CODE = 'NoCozySpace'
 const PATH_TOO_DEEP_CODE = 'PathTooDeep'
+const UNKNOWN_INVALID_DATA_ERROR_CODE = 'UnknownInvalidDataError'
 const UNKNOWN_REMOTE_ERROR_CODE = 'UnknownRemoteError'
 const UNREACHABLE_COZY_CODE = 'UnreachableCozy'
 const USER_ACTION_REQUIRED_CODE = 'UserActionRequired'
@@ -144,8 +145,10 @@ class RemoteError extends Error {
 
 const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
   if (err.name === 'FetchError') {
-    // $FlowFixMe FetchErrors have a status attribute
-    switch (err.status) {
+    // $FlowFixMe FetchErrors missing status will fallback to the default case
+    const { status } = err
+
+    switch (status) {
       case 400:
         // TODO: Merge with ClientRevokedError
         return new RemoteError({
@@ -237,12 +240,21 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
           })
         }
       default:
-        // TODO: Merge with UnreachableError?!
-        return new RemoteError({
-          code: UNREACHABLE_COZY_CODE,
-          message: 'Cannot reach remote Cozy',
-          err
-        })
+        if (status > 400 && status < 500) {
+          return new RemoteError({
+            code: UNKNOWN_INVALID_DATA_ERROR_CODE,
+            message:
+              'The data sent to the remote Cozy is invalid for some unhandled reason',
+            err
+          })
+        } else {
+          // TODO: Merge with UnreachableError?!
+          return new RemoteError({
+            code: UNREACHABLE_COZY_CODE,
+            message: 'Cannot reach remote Cozy',
+            err
+          })
+        }
     }
   } else if (err instanceof DirectoryNotFound) {
     return new RemoteError({
@@ -280,6 +292,7 @@ module.exports = {
   NEEDS_REMOTE_MERGE_CODE,
   NO_COZY_SPACE_CODE,
   PATH_TOO_DEEP_CODE,
+  UNKNOWN_INVALID_DATA_ERROR_CODE,
   UNKNOWN_REMOTE_ERROR_CODE,
   UNREACHABLE_COZY_CODE,
   USER_ACTION_REQUIRED_CODE,

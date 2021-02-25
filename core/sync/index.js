@@ -368,7 +368,8 @@ class Sync {
         [
           remoteErrors.INVALID_FOLDER_MOVE_CODE,
           remoteErrors.INVALID_METADATA_CODE,
-          remoteErrors.MISSING_DOCUMENT_CODE
+          remoteErrors.MISSING_DOCUMENT_CODE,
+          remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE
         ].includes(syncErr.code)
       ) {
         log.error(
@@ -390,6 +391,7 @@ class Sync {
         case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
         case remoteErrors.NO_COZY_SPACE_CODE:
         case remoteErrors.PATH_TOO_DEEP_CODE:
+        case remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE:
         case remoteErrors.UNREACHABLE_COZY_CODE:
         case remoteErrors.USER_ACTION_REQUIRED_CODE:
           // We will keep retrying to apply the change until it's fixed or the
