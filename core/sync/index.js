@@ -384,6 +384,7 @@ class Sync {
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
         case remoteErrors.INVALID_METADATA_CODE:
+        case remoteErrors.INVALID_NAME_CODE:
         case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
         case remoteErrors.NO_COZY_SPACE_CODE:
         case remoteErrors.UNREACHABLE_COZY_CODE:

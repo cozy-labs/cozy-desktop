@@ -17,6 +17,7 @@ export type { FetchError }
 const CONFLICTING_NAME_CODE = 'ConflictingName'
 const COZY_CLIENT_REVOKED_CODE = 'CozyClientRevoked'
 const INVALID_METADATA_CODE = 'InvalidMetadata'
+const INVALID_NAME_CODE = 'InvalidName'
 const MISSING_DOCUMENT_CODE = 'MissingDocument'
 const MISSING_PARENT_CODE = 'MissingParent'
 const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
@@ -204,11 +205,20 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
           err
         })
       case 422:
-        return new RemoteError({
-          code: INVALID_METADATA_CODE,
-          message: 'The local metadata for the document is corrupted',
-          err
-        })
+        if (sourceParameter(err) === 'name') {
+          return new RemoteError({
+            code: INVALID_NAME_CODE,
+            message:
+              'The name of the document contains characters forbidden by the remote Cozy',
+            err
+          })
+        } else {
+          return new RemoteError({
+            code: INVALID_METADATA_CODE,
+            message: 'The local metadata for the document is corrupted',
+            err
+          })
+        }
       default:
         // TODO: Merge with UnreachableError?!
         return new RemoteError({
@@ -245,6 +255,7 @@ module.exports = {
   CONFLICTING_NAME_CODE,
   COZY_CLIENT_REVOKED_CODE,
   INVALID_METADATA_CODE,
+  INVALID_NAME_CODE,
   MISSING_DOCUMENT_CODE,
   MISSING_PARENT_CODE,
   MISSING_PERMISSIONS_CODE,
