@@ -310,6 +310,17 @@ view code =
             , label = Nothing
             }
 
+        "UnknownRemoteError" ->
+            { title = "Error Unhandled synchronization error"
+            , details =
+                [ "Error We encountered an unhandled error while trying to synchronise the {0} `{1}`."
+                , "Error Please contact our support to get help."
+                ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = Nothing
+            , label = Nothing
+            }
+
         "UserActionRequired" ->
             { title = "CGUUpdated The ToS have been updated"
             , details =
