@@ -299,6 +299,17 @@ view code =
             , label = Nothing
             }
 
+        "PathTooDeep" ->
+            { title = "Error Document path with too many levels"
+            , details =
+                [ "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy."
+                , "Error Try removing some parent levels or moving it to antoher folder."
+                ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = Nothing
+            , label = Nothing
+            }
+
         "UserActionRequired" ->
             { title = "CGUUpdated The ToS have been updated"
             , details =

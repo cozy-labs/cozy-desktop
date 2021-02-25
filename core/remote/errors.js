@@ -23,6 +23,7 @@ const MISSING_PARENT_CODE = 'MissingParent'
 const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
 const NEEDS_REMOTE_MERGE_CODE = 'NeedsRemoteMerge'
 const NO_COZY_SPACE_CODE = 'NoCozySpace'
+const PATH_TOO_DEEP_CODE = 'PathTooDeep'
 const UNKNOWN_REMOTE_ERROR_CODE = 'UnknownRemoteError'
 const UNREACHABLE_COZY_CODE = 'UnreachableCozy'
 const USER_ACTION_REQUIRED_CODE = 'UserActionRequired'
@@ -212,6 +213,13 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
               'The name of the document contains characters forbidden by the remote Cozy',
             err
           })
+        } else if (sourceParameter(err) === 'path') {
+          return new RemoteError({
+            code: PATH_TOO_DEEP_CODE,
+            message:
+              'The path of the document has too many levels for the remote Cozy',
+            err
+          })
         } else {
           return new RemoteError({
             code: INVALID_METADATA_CODE,
@@ -261,6 +269,7 @@ module.exports = {
   MISSING_PERMISSIONS_CODE,
   NEEDS_REMOTE_MERGE_CODE,
   NO_COZY_SPACE_CODE,
+  PATH_TOO_DEEP_CODE,
   UNKNOWN_REMOTE_ERROR_CODE,
   UNREACHABLE_COZY_CODE,
   USER_ACTION_REQUIRED_CODE,

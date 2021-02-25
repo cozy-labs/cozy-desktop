@@ -387,6 +387,7 @@ class Sync {
         case remoteErrors.INVALID_NAME_CODE:
         case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
         case remoteErrors.NO_COZY_SPACE_CODE:
+        case remoteErrors.PATH_TOO_DEEP_CODE:
         case remoteErrors.UNREACHABLE_COZY_CODE:
         case remoteErrors.USER_ACTION_REQUIRED_CODE:
           // We will keep retrying to apply the change until it's fixed or the
