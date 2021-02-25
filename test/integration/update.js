@@ -303,16 +303,20 @@ describe('Update file', () => {
       await helpers.local.syncDir.outputFile('file', m2)
 
       log.info('-------- remote sync M1 --------')
-      await helpers.syncAll()
+      // We don't await the end of the syncAll() call because it will raise 412
+      // errors that will only be fixed by the next local scan (i.e. the
+      // checksum of the file on the local filesystem is different from the one
+      // stored in PouchDB).
+      helpers.syncAll()
 
-      log.info('-------- local merge M2 --------')
+      log.info('-------- local merge (and remote sync) M2 --------')
       should(await helpers.local.syncDir.checksum('file')).equal(
         'nYMiUwtn4jZuWxumcIHe2Q=='
       )
       await helpers.local.scan()
 
-      log.info('-------- remote sync M2 --------')
-      await helpers.syncAll()
+      // Wait for Sync's retry to complete
+      await helpers._sync.stopped()
 
       should({
         localTree: await helpers.local.tree(),

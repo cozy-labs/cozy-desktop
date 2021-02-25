@@ -402,7 +402,10 @@ describe('Sync', function() {
         })
         beforeEach('simulate error 412', function() {
           this.remote.overwriteFileAsync.rejects(
-            new FetchError({ status: 412 }, 'simulated 412 sync error')
+            new FetchError(
+              { status: 412 },
+              { errors: [{ status: 412, source: { parameter: 'If-Match' } }] }
+            )
           )
         })
         beforeEach(applyChange)
@@ -424,6 +427,12 @@ describe('Sync', function() {
 
         it('does not skip the change by saving seq', async function() {
           should(await this.pouch.getLocalSeq()).equal(previousSeq)
+        })
+
+        it('keeps the out-of-date side', async function() {
+          const outOfDateSide = metadata.outOfDateSide(merged)
+          const synced = await this.pouch.bySyncedPath(merged.path)
+          should(metadata.outOfDateSide(synced)).equal(outOfDateSide)
         })
 
         it('blocks the synchronization so we can retry applying the change', async function() {
@@ -525,7 +534,12 @@ describe('Sync', function() {
       // re-stubs overwriteFileAsync to fail
       this.remote.overwriteFileAsync = sinon
         .stub()
-        .rejects(new Error('bad md5sum mock'))
+        .rejects(
+          new FetchError(
+            { status: 412, source: { parameter: 'hash' } },
+            'bad md5sum mock'
+          )
+        )
       this.sync.diskUsage = sinon.stub().resolves()
 
       await this.sync.apply({ doc }, this.remote, 'remote')

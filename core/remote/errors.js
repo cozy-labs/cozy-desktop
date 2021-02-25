@@ -182,11 +182,21 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
           err
         })
       case 412:
-        return new RemoteError({
-          code: NEEDS_REMOTE_MERGE_CODE,
-          message: 'Known remote document revision is outdated',
-          err
-        })
+        if (sourceParameter(err) === 'If-Match') {
+          // Revision error
+          return new RemoteError({
+            code: NEEDS_REMOTE_MERGE_CODE,
+            message: 'The known remote document revision is outdated',
+            err
+          })
+        } else {
+          // Invalid hash or content length error
+          return new RemoteError({
+            code: INVALID_METADATA_CODE,
+            message: 'The local metadata for the document is corrupted',
+            err
+          })
+        }
       case 413:
         return new RemoteError({
           code: NO_COZY_SPACE_CODE,
@@ -218,6 +228,13 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
   } else {
     return new RemoteError({ err })
   }
+}
+
+function sourceParameter(err /*: FetchError */) /*: ?string */ {
+  const { errors } = err.reason || {}
+  const { source } = (errors && errors[0]) || {}
+  const { parameter } = source || {}
+  return parameter
 }
 
 module.exports = {
