@@ -16,6 +16,7 @@ export type { FetchError }
 
 const CONFLICTING_NAME_CODE = 'ConflictingName'
 const COZY_CLIENT_REVOKED_CODE = 'CozyClientRevoked'
+const INVALID_FOLDER_MOVE_CODE = 'InvalidFolderMove'
 const INVALID_METADATA_CODE = 'InvalidMetadata'
 const INVALID_NAME_CODE = 'InvalidName'
 const MISSING_DOCUMENT_CODE = 'MissingDocument'
@@ -191,6 +192,14 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
             message: 'The known remote document revision is outdated',
             err
           })
+        } else if (sourceParameter(err) === 'dir-id') {
+          // The directory is asked to move to one of its sub-directories
+          return new RemoteError({
+            code: INVALID_FOLDER_MOVE_CODE,
+            message:
+              'The folder would be moved wihtin one of its sub-folders on the remote Cozy',
+            err
+          })
         } else {
           // Invalid hash or content length error
           return new RemoteError({
@@ -262,6 +271,7 @@ module.exports = {
   COZY_CLIENT_REVOKED_MESSAGE, // FIXME: should be removed once gui/main does not use it anymore
   CONFLICTING_NAME_CODE,
   COZY_CLIENT_REVOKED_CODE,
+  INVALID_FOLDER_MOVE_CODE,
   INVALID_METADATA_CODE,
   INVALID_NAME_CODE,
   MISSING_DOCUMENT_CODE,

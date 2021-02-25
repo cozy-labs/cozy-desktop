@@ -366,6 +366,7 @@ class Sync {
       const syncErr = syncErrors.wrapError(err, sideName, change)
       if (
         [
+          remoteErrors.INVALID_FOLDER_MOVE_CODE,
           remoteErrors.INVALID_METADATA_CODE,
           remoteErrors.MISSING_DOCUMENT_CODE
         ].includes(syncErr.code)
@@ -383,6 +384,7 @@ class Sync {
       switch (syncErr.code) {
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
+        case remoteErrors.INVALID_FOLDER_MOVE_CODE:
         case remoteErrors.INVALID_METADATA_CODE:
         case remoteErrors.INVALID_NAME_CODE:
         case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
@@ -802,6 +804,7 @@ class Sync {
       case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
         break
       case remoteErrors.CONFLICTING_NAME_CODE:
+      case remoteErrors.INVALID_FOLDER_MOVE_CODE:
       case remoteErrors.MISSING_DOCUMENT_CODE:
       case remoteErrors.MISSING_PARENT_CODE:
         // Hide the conflict from the user as we can solve it by ourselves
