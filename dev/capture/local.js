@@ -66,7 +66,10 @@ const setupInitialState = (scenario /*: Scenario */) => {
     } else {
       debug('- >', relpath)
       return fse
-        .outputFile(abspath(relpath), content || 'whatever')
+        .outputFile(
+          abspath(relpath),
+          content || fixturesHelpers.DEFAULT_FILE_CONTENT
+        )
         .then(() => fse.stat(abspath(relpath)))
         .then(stats => {
           mapInode[stats.ino] = ino

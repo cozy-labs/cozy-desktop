@@ -25,6 +25,8 @@ import type { ChokidarEvent } from '../../../core/local/chokidar/event'
 import type { ContextDir } from './context_dir'
 */
 
+const DEFAULT_FILE_CONTENT = (module.exports.DEFAULT_FILE_CONTENT = 'foo')
+
 const debug = (...args) =>
   // eslint-disable-next-line no-console
   process.env.TESTDEBUG ? console.log(...args) : () => {}
@@ -264,7 +266,7 @@ module.exports.init = async (
       path: relpath,
       ino: fakeIno,
       trashed,
-      content = 'foo'
+      content = DEFAULT_FILE_CONTENT
     } of scenario.init) {
       debug(relpath)
 
