@@ -333,7 +333,6 @@ class RemoteWatcher {
 
     if (
       was &&
-      was.remote &&
       metadata.extractRevNumber(was.remote) >=
         metadata.extractRevNumber(doc.remote)
     ) {
@@ -380,10 +379,9 @@ class RemoteWatcher {
       return remoteChange.trashed(doc, was)
     }
 
-    if (!was || was.deleted) {
+    if (!was || inRemoteTrash(was.remote)) {
       return remoteChange.added(doc)
-    }
-    if (metadata.samePath(was, doc)) {
+    } else if (metadata.samePath(was, doc)) {
       if (
         doc.docType === 'file' &&
         doc.md5sum === was.md5sum &&

@@ -2398,6 +2398,35 @@ describe('RemoteWatcher', function() {
       })
     })
 
+    describe('file moved while deleted on local filesystem', () => {
+      it('returns a FileMove', function() {
+        const origFile = builders
+          .remoteFile()
+          .name('foo')
+          .build()
+        const trashedFile = builders
+          .metafile()
+          .fromRemote(origFile)
+          .deleted()
+          .changedSide('local')
+          .build()
+        const movedFile = builders
+          .remoteFile(origFile)
+          .name('bar')
+          .build()
+
+        const doc = metadata.fromRemoteDoc(movedFile)
+
+        should(
+          this.watcher.identifyChange(movedFile, trashedFile, [], [])
+        ).have.properties({
+          sideName: 'remote',
+          type: 'FileMove',
+          doc
+        })
+      })
+    })
+
     describe('added file', () => {
       let addedRemoteFile
 
