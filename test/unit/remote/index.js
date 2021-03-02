@@ -17,7 +17,7 @@ const remote = require('../../../core/remote')
 const { Remote } = remote
 const { DirectoryNotFound } = require('../../../core/remote/cozy')
 const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../../core/remote/constants')
-const remoteErrors = require('../../../core/remote/errors')
+const { FetchError } = require('../../../core/remote/cozy')
 const timestamp = require('../../../core/utils/timestamp')
 
 const configHelpers = require('../../support/helpers/config')
@@ -193,11 +193,12 @@ describe('remote.Remote', function() {
         .and.not.have.property('remote')
     })
 
-    it('does not try to send the file if there is not enough space on the Cozy', async function() {
+    it('rejects if there is not enough space on the Cozy', async function() {
       sinon
-        .stub(this.remote.remoteCozy.client.settings, 'diskUsage')
-        .resolves({ attributes: { used: '9', quota: '10' } })
-      sinon.spy(this.remote.remoteCozy, 'createFile')
+        .stub(this.remote.remoteCozy, 'createFile')
+        .rejects(
+          new FetchError({ status: 413 }, 'Not enough space left on Cozy')
+        )
 
       const doc = await builders
         .metafile()
@@ -215,13 +216,14 @@ describe('remote.Remote', function() {
         }
       }
 
-      await should(this.remote.addFileAsync(doc)).be.rejectedWith({
-        code: remoteErrors.NO_COZY_SPACE_CODE
-      })
-      should(this.remote.remoteCozy.createFile).not.have.been.called()
-
-      this.remote.remoteCozy.client.settings.diskUsage.restore()
-      this.remote.remoteCozy.createFile.restore()
+      try {
+        await should(this.remote.addFileAsync(doc)).be.rejectedWith({
+          name: 'FetchError',
+          status: 413
+        })
+      } finally {
+        this.remote.remoteCozy.createFile.restore()
+      }
     })
   })
 
@@ -478,11 +480,12 @@ describe('remote.Remote', function() {
         should(doc.remote._rev).equal(file._rev)
       })
 
-      it('does not try to send the file if there is not enough space on the Cozy', async function() {
+      it('rejects if there is not enough space on the Cozy', async function() {
         sinon
-          .stub(this.remote.remoteCozy.client.settings, 'diskUsage')
-          .resolves({ attributes: { used: '9', quota: '10' } })
-        sinon.spy(this.remote.remoteCozy, 'updateFileById')
+          .stub(this.remote.remoteCozy, 'updateFileById')
+          .rejects(
+            new FetchError({ status: 413 }, 'Not enough space left on Cozy')
+          )
 
         const created = await builders
           .remoteFile()
@@ -513,13 +516,16 @@ describe('remote.Remote', function() {
           }
         }
 
-        await should(this.remote.overwriteFileAsync(doc, old)).be.rejectedWith({
-          code: remoteErrors.NO_COZY_SPACE_CODE
-        })
-        should(this.remote.remoteCozy.updateFileById).not.have.been.called()
-
-        this.remote.remoteCozy.client.settings.diskUsage.restore()
-        this.remote.remoteCozy.updateFileById.restore()
+        try {
+          await should(
+            this.remote.overwriteFileAsync(doc, old)
+          ).be.rejectedWith({
+            name: 'FetchError',
+            status: 413
+          })
+        } finally {
+          this.remote.remoteCozy.updateFileById.restore()
+        }
       })
 
       it('sends the most recent modification date', async function() {
