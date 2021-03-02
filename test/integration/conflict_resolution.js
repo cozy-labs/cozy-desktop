@@ -113,6 +113,9 @@ describe('Conflict resolution', () => {
   })
 
   describe('concurrent edit', () => {
+    const localUpdateContent = 'local update'
+    const remoteUpdateContent = 'remote update'
+
     let remoteFile, pouchFile
     beforeEach(async () => {
       await helpers.local.syncDir.outputFile(
@@ -125,19 +128,21 @@ describe('Conflict resolution', () => {
       // change both concurrently
       await helpers.local.syncDir.outputFile(
         'concurrent-edited',
-        'local update'
+        localUpdateContent
       )
       remoteFile = await cozy.files.statByPath(`/concurrent-edited`)
       pouchFile = await helpers.pouch.byRemoteIdMaybe(remoteFile._id)
-      await cozy.files.updateById(remoteFile._id, 'remote update', {
-        contentType: 'text/plain'
+      await cozy.files.updateById(remoteFile._id, remoteUpdateContent, {
+        contentType: 'text/plain',
+        contentLength: remoteUpdateContent.length
       })
     })
 
     const simulateLocalUpdateMerge = async () => {
       const localUpdate = _.merge(pouchFile, {
         updated_at: new Date().toISOString(),
-        md5sum: await helpers.local.syncDir.checksum('concurrent-edited')
+        md5sum: await helpers.local.syncDir.checksum('concurrent-edited'),
+        size: localUpdateContent.length
       })
       metadata.updateLocal(localUpdate)
       await helpers.prep.updateFileAsync('local', localUpdate)
