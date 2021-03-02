@@ -410,9 +410,16 @@ describe('Sync', function() {
           this.sync.blockSyncFor.restore()
         })
 
-        it('keeps sides unchanged', async function() {
-          const synced = await this.pouch.bySyncedPath(file.path)
-          should(synced.sides).deepEqual(merged.sides)
+        it('keeps the out-of-date side', async function() {
+          const outOfDateSide = metadata.outOfDateSide(merged)
+          const synced = await this.pouch.bySyncedPath(merged.path)
+          should(metadata.outOfDateSide(synced)).equal(outOfDateSide)
+        })
+
+        it('increases the record errors counter', async function() {
+          const errors = merged.errors || 0
+          const synced = await this.pouch.bySyncedPath(merged.path)
+          should(synced.errors).equal(errors + 1)
         })
 
         it('does not skip the change by saving seq', async function() {

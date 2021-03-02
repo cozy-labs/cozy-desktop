@@ -202,16 +202,14 @@ class Sync {
     }
     this.events.emit('sync-start')
     try {
-      await this.syncBatch({ manualRun })
+      await this.syncBatch()
     } finally {
       this.events.emit('sync-end')
     }
   }
 
   // sync
-  async syncBatch({
-    manualRun = false
-  } /*: { manualRun?: boolean } */ = {}) /*: Promise<void> */ {
+  async syncBatch() /*: Promise<void> */ {
     let seq = null
     // eslint-disable-next-line no-constant-condition
     while (!this.lifecycle.willStop()) {
@@ -231,7 +229,7 @@ class Sync {
 
         this.events.emit('sync-current', change.seq)
 
-        await this.apply(change, { manualRun })
+        await this.apply(change)
       } catch (err) {
         if (!this.lifecycle.willStop()) throw err
       } finally {
@@ -311,10 +309,7 @@ class Sync {
   // Apply a change to both local and remote
   // At least one side should say it has already this change
   // In some cases, both sides have the change
-  async apply(
-    change /*: MetadataChange */,
-    { manualRun = false } /*: { manualRun?: boolean } */ = {}
-  ) /*: Promise<void> */ {
+  async apply(change /*: MetadataChange */) /*: Promise<void> */ {
     let { doc, seq } = change
     const { path } = doc
     log.debug({ path, seq, doc }, `Applying change ${seq}...`)
@@ -368,8 +363,6 @@ class Sync {
       // XXX: We process the error directly here because our tests call
       // `apply()` and some expect `updateErrors` to be called (e.g. when
       // applying a move with a failing content change).
-      // This means we have to carry the `manualRun` variable down to `apply`
-      // which is not ideal.
       const syncErr = syncErrors.wrapError(err, sideName, change)
       log.warn(
         { err: syncErr, change, path: change.doc.path },
@@ -382,11 +375,15 @@ class Sync {
         case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
         case remoteErrors.USER_ACTION_REQUIRED_CODE:
         case remoteErrors.UNREACHABLE_COZY_CODE:
-          if (manualRun) {
-            await this.updateErrors(change, syncErr)
-          } else {
-            this.blockSyncFor({ err: syncErr, change })
-          }
+          // We will keep retrying to apply the change until it's fixed or the
+          // user contacts our support.
+          // We increment the record's errors counter to keep track of the
+          // retries and above all, save any changes made to the record by
+          // `applyDoc()` and such (e.g. when applying a file move with update,
+          // if the update fails, we want to remove the `moveFrom` attribute to
+          // avoid re-applying the move which was already applied).
+          await this.updateErrors(change, syncErr)
+          this.blockSyncFor({ err: syncErr, change })
           break
         case remoteErrors.CONFLICTING_NAME_CODE:
           /* When we fail to apply a change because of a name conflict on the
@@ -419,9 +416,7 @@ class Sync {
             // Solve 1.
             this.updateErrors(change, syncErr)
             // Solve 2.
-            if (!manualRun) {
-              this.blockSyncFor({ err: syncErr, change })
-            }
+            this.blockSyncFor({ err: syncErr, change })
           } else {
             log.error(
               { path, err: syncErr, change },
@@ -645,7 +640,6 @@ class Sync {
           this.events.emit('online')
         } else {
           this.events.emit('offline')
-          // Resest the timer for manual calls
           // $FlowFixMe intervals have a refresh() method starting with Node v10
           if (this.retryInterval) this.retryInterval.refresh()
           // We're still offline so no need to try fetching changes or
