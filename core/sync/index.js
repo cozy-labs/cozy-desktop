@@ -409,10 +409,9 @@ class Sync {
            *  Merge level.
            */
 
-          // We will retry to apply the change twice just in case but we'll stop
-          // before reaching `MAX_SYNC_ATTEMPTS` (i.e. 3) otherwise the change
-          // would be abandoned by `updateErrors()`.
-          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS - 1) {
+          // We will retry to apply the change `MAX_SYNC_ATTEMPTS` times just
+          // in case.
+          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
             // Solve 1.
             this.updateErrors(change, syncErr)
             // Solve 2.
@@ -427,7 +426,12 @@ class Sync {
           }
           break
         default:
-          await this.updateErrors(change, syncErr)
+          // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
+          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
+            await this.updateErrors(change, syncErr)
+          } else {
+            await this.skipChange(change, syncErr)
+          }
       }
     } finally {
       stopMeasure()
@@ -680,8 +684,7 @@ class Sync {
       // `SyncError`…
       if (err instanceof syncErrors.SyncError && cause.change) {
         const change = cause.change
-        change.doc.errors = MAX_SYNC_ATTEMPTS
-        await this.updateErrors(change, err)
+        await this.skipChange(change, err)
       }
 
       if (!this.remote.watcher.running) {
@@ -738,39 +741,7 @@ class Sync {
     const sourceSideName = otherSide(err.sideName)
     metadata.markSide(sourceSideName, doc, doc)
 
-    // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
-    if (doc.errors && doc.errors >= MAX_SYNC_ATTEMPTS) {
-      log.error(
-        {
-          err,
-          path: doc.path,
-          oldpath: _.get(change, 'was.path'),
-          sentry: true
-        },
-        `Failed to sync ${MAX_SYNC_ATTEMPTS} times. Giving up.`
-      )
-      // TODO: We should probably mark every change in error was synced before
-      // incrementing the errors counter.
-      // In conjunction with a forced remote watch loop we could probably solve
-      // most of them during the next Sync loop.
-      // e.g.:
-      // 1. `file.txt` is added locally
-      // 2. `file.txt` is added remotely while we're sending the local one
-      // 3. 409 conflict; Local `file.txt` is marked as synced then we increment
-      //    its errors counter
-      // 4. Remote watcher runs and fetches remote `file.txt`
-      // 5. Conflict is created (remote file is renamed)
-      // 6. Sync runs and:
-      //    - sends local `file.txt` (no more errors since remote has been renamed)
-      //    - fetches remote `file-conflict-….txt`
-      // FIXME: final doc.errors is not saved which works but may be confusing.
-      await this.pouch.setLocalSeq(change.seq)
-      return
-    }
     try {
-      // The sync error may be due to the remote cozy being overloaded.
-      // So, it's better to wait a bit before trying the next operation.
-      // TODO: Wait for some increasing delay before saving errors
       await this.pouch.db.put(doc)
     } catch (err) {
       // If the doc can't be saved, it's because of a new revision.
@@ -778,6 +749,24 @@ class Sync {
       log.info(`Ignored ${change.seq}`, err)
       await this.pouch.setLocalSeq(change.seq)
     }
+  }
+
+  async skipChange(
+    change /*: MetadataChange */,
+    err /*: SyncError */
+  ) /*: Promise<void> */ {
+    const { doc } = change
+    const { errors = 0 } = doc
+    log.error(
+      {
+        err,
+        path: doc.path,
+        oldpath: _.get(doc, 'moveFrom.path'),
+        sentry: true
+      },
+      `Failed to sync ${errors + 1} times. Giving up.`
+    )
+    return await this.pouch.setLocalSeq(change.seq)
   }
 
   // Update rev numbers for both local and remote sides

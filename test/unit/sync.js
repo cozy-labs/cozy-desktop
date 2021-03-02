@@ -675,25 +675,6 @@ describe('Sync', function() {
       should(actual.sides).deepEqual({ target: 5, local: 2, remote: 5 })
       should(metadata.isUpToDate('remote', actual)).be.true()
     })
-
-    it('stops retrying after 3 errors', async function() {
-      const doc = await builders
-        .metadata()
-        .path('third/failure')
-        .errors(3)
-        .sides({ remote: 4 })
-        .create()
-
-      await this.sync.updateErrors(
-        { doc },
-        localSyncError('simulated error', doc)
-      )
-
-      const actual = await this.pouch.bySyncedPath(doc.path)
-      should(actual.errors).equal(3)
-      should(actual._rev).equal(doc._rev)
-      should(metadata.isUpToDate('remote', actual)).be.true()
-    })
   })
 
   for (const syncSide of ['local', 'remote']) {
