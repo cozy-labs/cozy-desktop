@@ -33,15 +33,17 @@ describe('Sync state', () => {
   })
 
   it('1 sync error (missing remote file)', async () => {
-    await helpers._remote.watcher.pullMany([builders.remoteFile().build()])
+    const remoteFile = builders.remoteFile().build()
+    await helpers._remote.watcher.pullMany([remoteFile])
     await helpers.syncAll()
-    should(events.emit.args).deepEqual([
+    should(events.emit.args).containDeepOrdered([
       ['sync-start'],
-      // FIXME: 3 attempts to download a missing file
-      // FIXME: in debug.log with DEBUG=1: Sync: Seq was already synced! (seq=0)
-      ['sync-current', 5], // XXX: update seq includes design docs creation
-      ['sync-current', 6],
-      ['sync-current', 7],
+      // XXX: update seq includes design docs creation so it does not start at 1
+      ['sync-current', 5], // Attempt and fail to download file
+      ['sync-current', 6], // Retry 1
+      ['sync-current', 7], // Retry 2
+      ['sync-current', 8], // Retry 3
+      ['delete-file'], // Abandon change and delete PouchDB record
       ['sync-end']
     ])
   })

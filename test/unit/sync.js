@@ -402,7 +402,10 @@ describe('Sync', function() {
         })
         beforeEach('simulate error 412', function() {
           this.remote.overwriteFileAsync.rejects(
-            new FetchError({ status: 412 }, 'simulated 412 sync error')
+            new FetchError(
+              { status: 412 },
+              { errors: [{ status: 412, source: { parameter: 'If-Match' } }] }
+            )
           )
         })
         beforeEach(applyChange)
@@ -410,13 +413,26 @@ describe('Sync', function() {
           this.sync.blockSyncFor.restore()
         })
 
-        it('keeps sides unchanged', async function() {
-          const synced = await this.pouch.bySyncedPath(file.path)
-          should(synced.sides).deepEqual(merged.sides)
+        it('keeps the out-of-date side', async function() {
+          const outOfDateSide = metadata.outOfDateSide(merged)
+          const synced = await this.pouch.bySyncedPath(merged.path)
+          should(metadata.outOfDateSide(synced)).equal(outOfDateSide)
+        })
+
+        it('increases the record errors counter', async function() {
+          const errors = merged.errors || 0
+          const synced = await this.pouch.bySyncedPath(merged.path)
+          should(synced.errors).equal(errors + 1)
         })
 
         it('does not skip the change by saving seq', async function() {
           should(await this.pouch.getLocalSeq()).equal(previousSeq)
+        })
+
+        it('keeps the out-of-date side', async function() {
+          const outOfDateSide = metadata.outOfDateSide(merged)
+          const synced = await this.pouch.bySyncedPath(merged.path)
+          should(metadata.outOfDateSide(synced)).equal(outOfDateSide)
         })
 
         it('blocks the synchronization so we can retry applying the change', async function() {
@@ -518,7 +534,12 @@ describe('Sync', function() {
       // re-stubs overwriteFileAsync to fail
       this.remote.overwriteFileAsync = sinon
         .stub()
-        .rejects(new Error('bad md5sum mock'))
+        .rejects(
+          new FetchError(
+            { status: 412, source: { parameter: 'hash' } },
+            'bad md5sum mock'
+          )
+        )
       this.sync.diskUsage = sinon.stub().resolves()
 
       await this.sync.apply({ doc }, this.remote, 'remote')
@@ -666,25 +687,6 @@ describe('Sync', function() {
       should(actual.errors).equal(2)
       should(actual._rev).not.equal(doc._rev)
       should(actual.sides).deepEqual({ target: 5, local: 2, remote: 5 })
-      should(metadata.isUpToDate('remote', actual)).be.true()
-    })
-
-    it('stops retrying after 3 errors', async function() {
-      const doc = await builders
-        .metadata()
-        .path('third/failure')
-        .errors(3)
-        .sides({ remote: 4 })
-        .create()
-
-      await this.sync.updateErrors(
-        { doc },
-        localSyncError('simulated error', doc)
-      )
-
-      const actual = await this.pouch.bySyncedPath(doc.path)
-      should(actual.errors).equal(3)
-      should(actual._rev).equal(doc._rev)
       should(metadata.isUpToDate('remote', actual)).be.true()
     })
   })
@@ -845,7 +847,7 @@ describe('Sync', function() {
       beforeEach(function() {
         this.sync.blockSyncFor({
           err: remoteErrors.wrapError(
-            new FetchError({ status: 404 }, 'UnreachableCozy test error')
+            new FetchError({ status: 500 }, 'UnreachableCozy test error')
           )
         })
       })

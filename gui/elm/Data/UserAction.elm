@@ -233,6 +233,28 @@ type alias UserActionView =
 view : String -> UserActionView
 view code =
     case code of
+        "InvalidMetadata" ->
+            { title = "Error Invalid document metadata"
+            , details =
+                [ "Error The {0} `{1}`'s metadata cannot be accepted by your Cozy."
+                , "Error This message persists if the local metadata of your document is corrupted. In this case try to move it out of the Cozy Drive folder and back again or contact support for help on the procedure."
+                ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = Nothing
+            , label = Nothing
+            }
+
+        "InvalidName" ->
+            { title = "Error Invalid document name"
+            , details =
+                [ "Error The {0} `{1}`'s name contains characters forbidden by your Cozy."
+                , "Error Try renaming it without using the following characters: / \u{0000} \n \u{000D}."
+                ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = Nothing
+            , label = Nothing
+            }
+
         "MissingPermissions" ->
             { title = "Error Access denied temporarily"
             , details =
@@ -274,6 +296,28 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Just GiveUp
+            , label = Nothing
+            }
+
+        "PathTooDeep" ->
+            { title = "Error Document path with too many levels"
+            , details =
+                [ "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy."
+                , "Error Try removing some parent levels or moving it to antoher folder."
+                ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = Nothing
+            , label = Nothing
+            }
+
+        "UnknownRemoteError" ->
+            { title = "Error Unhandled synchronization error"
+            , details =
+                [ "Error We encountered an unhandled error while trying to synchronise the {0} `{1}`."
+                , "Error Please contact our support to get help."
+                ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = Nothing
             , label = Nothing
             }
 

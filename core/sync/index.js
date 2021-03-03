@@ -202,16 +202,14 @@ class Sync {
     }
     this.events.emit('sync-start')
     try {
-      await this.syncBatch({ manualRun })
+      await this.syncBatch()
     } finally {
       this.events.emit('sync-end')
     }
   }
 
   // sync
-  async syncBatch({
-    manualRun = false
-  } /*: { manualRun?: boolean } */ = {}) /*: Promise<void> */ {
+  async syncBatch() /*: Promise<void> */ {
     let seq = null
     // eslint-disable-next-line no-constant-condition
     while (!this.lifecycle.willStop()) {
@@ -231,7 +229,7 @@ class Sync {
 
         this.events.emit('sync-current', change.seq)
 
-        await this.apply(change, { manualRun })
+        await this.apply(change)
       } catch (err) {
         if (!this.lifecycle.willStop()) throw err
       } finally {
@@ -311,10 +309,7 @@ class Sync {
   // Apply a change to both local and remote
   // At least one side should say it has already this change
   // In some cases, both sides have the change
-  async apply(
-    change /*: MetadataChange */,
-    { manualRun = false } /*: { manualRun?: boolean } */ = {}
-  ) /*: Promise<void> */ {
+  async apply(change /*: MetadataChange */) /*: Promise<void> */ {
     let { doc, seq } = change
     const { path } = doc
     log.debug({ path, seq, doc }, `Applying change ${seq}...`)
@@ -368,60 +363,80 @@ class Sync {
       // XXX: We process the error directly here because our tests call
       // `apply()` and some expect `updateErrors` to be called (e.g. when
       // applying a move with a failing content change).
-      // This means we have to carry the `manualRun` variable down to `apply`
-      // which is not ideal.
       const syncErr = syncErrors.wrapError(err, sideName, change)
-      log.warn(
-        { err: syncErr, change, path: change.doc.path },
-        `Sync error: ${syncErr.message}`
-      )
+      if (
+        [
+          remoteErrors.INVALID_FOLDER_MOVE_CODE,
+          remoteErrors.INVALID_METADATA_CODE,
+          remoteErrors.MISSING_DOCUMENT_CODE,
+          remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE,
+          remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
+        ].includes(syncErr.code)
+      ) {
+        log.error(
+          { err: syncErr, change, path, sentry: true },
+          `Sync error: ${syncErr.message}`
+        )
+      } else {
+        log.warn(
+          { err: syncErr, change, path },
+          `Sync error: ${syncErr.message}`
+        )
+      }
       switch (syncErr.code) {
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
-        case remoteErrors.NO_COZY_SPACE_CODE:
+        case remoteErrors.INVALID_FOLDER_MOVE_CODE:
+        case remoteErrors.INVALID_METADATA_CODE:
+        case remoteErrors.INVALID_NAME_CODE:
         case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
-        case remoteErrors.USER_ACTION_REQUIRED_CODE:
+        case remoteErrors.NO_COZY_SPACE_CODE:
+        case remoteErrors.PATH_TOO_DEEP_CODE:
+        case remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE:
+        case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
         case remoteErrors.UNREACHABLE_COZY_CODE:
-          if (manualRun) {
-            await this.updateErrors(change, syncErr)
-          } else {
-            this.blockSyncFor({ err: syncErr, change })
-          }
+        case remoteErrors.USER_ACTION_REQUIRED_CODE:
+          // We will keep retrying to apply the change until it's fixed or the
+          // user contacts our support.
+          // We increment the record's errors counter to keep track of the
+          // retries and above all, save any changes made to the record by
+          // `applyDoc()` and such (e.g. when applying a file move with update,
+          // if the update fails, we want to remove the `moveFrom` attribute to
+          // avoid re-applying the move which was already applied).
+          await this.updateErrors(change, syncErr)
+          this.blockSyncFor({ err: syncErr, change })
           break
         case remoteErrors.CONFLICTING_NAME_CODE:
           /* When we fail to apply a change because of a name conflict on the
-           *  remote Cozy, it means we either:
-           *  1. have another change to apply that will free the give name by
-           *     moving the document or renaming it
-           *  2. have not yet merged the remote change that took the name and
-           *     would have generated a conflict copy
-           *  3. have not merged the remote change that took the name and never
-           *     will because we abandoned that change in the past
+           * remote Cozy, it means we either:
+           * 1. have another change to apply that will free the give name by
+           *    moving the document or renaming it
+           * 2. have not yet merged the remote change that took the name and
+           *    would have generated a conflict copy
+           * 3. have not merged the remote change that took the name and never
+           *    will because we abandoned that change in the past
            *
-           *  We can solve 1. by marking our local change with an increased
-           *  error counter so it can be retried later, after we've applied the
-           *  other changes that would free the conflicting name.
+           * We can solve 1. by marking our local change with an increased
+           * error counter so it can be retried later, after we've applied the
+           * other changes that would free the conflicting name.
            *
-           *  We can solve 2. by blocking the Sync process until we've fetched
-           *  and merged the new remote changes, thus generating a conflict
-           *  copy at the Merge level.
+           * We can solve 2. by blocking the Sync process until we've fetched
+           * and merged the new remote changes, thus generating a conflict
+           * copy at the Merge level.
            *
-           *  We can only solve 3. by detecting that we've tried the solutions
-           *  to 1. and 2., still can't apply the given change and thus generate
-           *  a remote conflict at the Sync level instead of doing it at the
-           *  Merge level.
+           * We can only solve 3. by detecting that we've tried the solutions
+           * to 1. and 2., still can't apply the given change and thus generate
+           * a remote conflict at the Sync level instead of doing it at the
+           * Merge level.
            */
 
-          // We will retry to apply the change twice just in case but we'll stop
-          // before reaching `MAX_SYNC_ATTEMPTS` (i.e. 3) otherwise the change
-          // would be abandoned by `updateErrors()`.
-          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS - 1) {
+          // We will retry to apply the change `MAX_SYNC_ATTEMPTS` times just
+          // in case.
+          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
             // Solve 1.
             this.updateErrors(change, syncErr)
             // Solve 2.
-            if (!manualRun) {
-              this.blockSyncFor({ err: syncErr, change })
-            }
+            this.blockSyncFor({ err: syncErr, change })
           } else {
             log.error(
               { path, err: syncErr, change },
@@ -431,8 +446,83 @@ class Sync {
             await this.remote.resolveRemoteConflict(change.doc)
           }
           break
+        case remoteErrors.MISSING_DOCUMENT_CODE:
+          // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
+          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
+            await this.updateErrors(change, syncErr)
+            this.blockSyncFor({ err: syncErr, change })
+          } else {
+            if (change.doc.deleted) {
+              await this.skipChange(change, syncErr)
+            } else if (sideName === 'remote') {
+              if (change.doc.moveFrom) delete change.doc.moveFrom
+
+              if (metadata.isFile(change.doc)) {
+                await this.remote.addFileAsync(change.doc)
+              } else {
+                await this.remote.addFolderAsync(change.doc)
+              }
+            } else {
+              await this.pouch.eraseDocument(change.doc)
+              if (doc.docType === 'file') {
+                this.events.emit('delete-file', _.clone(change.doc))
+              }
+            }
+          }
+          break
+        case remoteErrors.MISSING_PARENT_CODE:
+          /* When we fail to apply a change because its parent does not exist on
+           * the remote Cozy, it means we either:
+           * 1. have another change to apply that will create that parent
+           * 2. have not yet merged the remote change that removed that parent
+           * 3. have failed to sync the creation of the parent and will never
+           *    succeed because we abandoned in the past
+           * 4. have failed to merge its remote deletion and will never succeed
+           *    because we abandoned in the past
+           */
+          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
+            // Solve 1.
+            this.updateErrors(change, syncErr)
+            // Solve 2.
+            this.blockSyncFor({ err: syncErr, change })
+          } else {
+            log.error(
+              { path, err: syncErr, change },
+              'Parent directory is missing on Cozy'
+            )
+            const parent = await this.pouch.bySyncedPath(dirname(path))
+            if (!parent) {
+              // Solve 3.
+              // This is a weird situation where we don't have a parent in
+              // PouchDB. This should never be the case though.
+              log.error(
+                { path, err: syncErr, change, sentry: true },
+                'Parent directory could not be found either on Cozy or PouchDB. Abandoning.'
+              )
+              this.skipChange(change, syncErr)
+            } else if (parent.remote) {
+              // We're in a fishy situation where we have a folder whose synced
+              // path is the parent path of our document but its remote path is
+              // not and the synchronization did not change this.
+              // The database is corrupted and should be cleaned up.
+              log.error(
+                { path, err: syncErr, change, sentry: true },
+                'Parent directory is desynchronized. Abandoning.'
+              )
+              this.skipChange(change, syncErr)
+            } else {
+              // Solve 3. or 4.
+              await this.remote.addFolderAsync(parent)
+            }
+          }
+          break
         default:
-          await this.updateErrors(change, syncErr)
+          // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
+          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
+            await this.updateErrors(change, syncErr)
+          } else {
+            await this.skipChange(change, syncErr)
+          }
       }
     } finally {
       stopMeasure()
@@ -645,7 +735,6 @@ class Sync {
           this.events.emit('online')
         } else {
           this.events.emit('offline')
-          // Resest the timer for manual calls
           // $FlowFixMe intervals have a refresh() method starting with Node v10
           if (this.retryInterval) this.retryInterval.refresh()
           // We're still offline so no need to try fetching changes or
@@ -686,8 +775,7 @@ class Sync {
       // `SyncError`…
       if (err instanceof syncErrors.SyncError && cause.change) {
         const change = cause.change
-        change.doc.errors = MAX_SYNC_ATTEMPTS
-        await this.updateErrors(change, err)
+        await this.skipChange(change, err)
       }
 
       if (!this.remote.watcher.running) {
@@ -717,10 +805,11 @@ class Sync {
       case remoteErrors.UNREACHABLE_COZY_CODE:
         this.events.emit('offline')
         break
-      case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
-        break
       case remoteErrors.CONFLICTING_NAME_CODE:
-        // Hide the conflict from the user as we can solve it by ourselves
+      case remoteErrors.INVALID_FOLDER_MOVE_CODE:
+      case remoteErrors.MISSING_DOCUMENT_CODE:
+      case remoteErrors.MISSING_PARENT_CODE:
+        // Hide the error from the user as we should be able to solve it
         break
       default:
         this.events.emit(
@@ -744,39 +833,7 @@ class Sync {
     const sourceSideName = otherSide(err.sideName)
     metadata.markSide(sourceSideName, doc, doc)
 
-    // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
-    if (doc.errors && doc.errors >= MAX_SYNC_ATTEMPTS) {
-      log.error(
-        {
-          err,
-          path: doc.path,
-          oldpath: _.get(change, 'was.path'),
-          sentry: true
-        },
-        `Failed to sync ${MAX_SYNC_ATTEMPTS} times. Giving up.`
-      )
-      // TODO: We should probably mark every change in error was synced before
-      // incrementing the errors counter.
-      // In conjunction with a forced remote watch loop we could probably solve
-      // most of them during the next Sync loop.
-      // e.g.:
-      // 1. `file.txt` is added locally
-      // 2. `file.txt` is added remotely while we're sending the local one
-      // 3. 409 conflict; Local `file.txt` is marked as synced then we increment
-      //    its errors counter
-      // 4. Remote watcher runs and fetches remote `file.txt`
-      // 5. Conflict is created (remote file is renamed)
-      // 6. Sync runs and:
-      //    - sends local `file.txt` (no more errors since remote has been renamed)
-      //    - fetches remote `file-conflict-….txt`
-      // FIXME: final doc.errors is not saved which works but may be confusing.
-      await this.pouch.setLocalSeq(change.seq)
-      return
-    }
     try {
-      // The sync error may be due to the remote cozy being overloaded.
-      // So, it's better to wait a bit before trying the next operation.
-      // TODO: Wait for some increasing delay before saving errors
       await this.pouch.db.put(doc)
     } catch (err) {
       // If the doc can't be saved, it's because of a new revision.
@@ -784,6 +841,24 @@ class Sync {
       log.info(`Ignored ${change.seq}`, err)
       await this.pouch.setLocalSeq(change.seq)
     }
+  }
+
+  async skipChange(
+    change /*: MetadataChange */,
+    err /*: SyncError */
+  ) /*: Promise<void> */ {
+    const { doc } = change
+    const { errors = 0 } = doc
+    log.error(
+      {
+        err,
+        path: doc.path,
+        oldpath: _.get(doc, 'moveFrom.path'),
+        sentry: true
+      },
+      `Failed to sync ${errors + 1} times. Giving up.`
+    )
+    return await this.pouch.setLocalSeq(change.seq)
   }
 
   // Update rev numbers for both local and remote sides
