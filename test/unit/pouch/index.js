@@ -9,6 +9,7 @@ const _ = require('lodash')
 const { REV_CONFLICT } = require('pouchdb')
 
 const metadata = require('../../../core/metadata')
+const { sortByPath } = require('../../../core/pouch')
 const migrations = require('../../../core/pouch/migrations')
 
 const Builders = require('../../support/builders')
@@ -583,6 +584,49 @@ describe('Pouch', function() {
         const remoteIds = new Set(expectedDocs.map(doc => doc.remote._id))
         const docs = await this.pouch.allByRemoteIds(remoteIds)
         should(docs).deepEqual(expectedDocs)
+      })
+    })
+
+    describe('initialScanDocs', () => {
+      it('returns only existing docs with local side and metadata', async function() {
+        const builders = new Builders({ pouch: this.pouch })
+        const dir = await builders
+          .metadir()
+          .path('dir')
+          .upToDate()
+          .create()
+        const file = await builders
+          .metafile()
+          .path('file')
+          .sides({ local: 1 })
+          .create()
+
+        // Has been deleted
+        await builders
+          .metafile()
+          .path('deleted')
+          .deleted()
+          .changedSide('local')
+          .create()
+
+        // Has never existed locally
+        await builders
+          .metafile()
+          .path('remote-only')
+          .sides({ remote: 1 })
+          .create()
+
+        // Has local side but no local metadata
+        const corrupted = await builders
+          .metadir()
+          .path('corrupted')
+          .upToDate()
+          .create()
+        delete corrupted.local
+        await this.pouch.db.put(corrupted)
+
+        const sortedDocs = [dir, file].concat(createdDocs).sort(sortByPath)
+        await should(this.pouch.initialScanDocs()).be.fulfilledWith(sortedDocs)
       })
     })
   })

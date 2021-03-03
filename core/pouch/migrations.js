@@ -230,6 +230,37 @@ const migrations /*: Migration[] */ = [
         return doc
       })
     }
+  },
+  {
+    baseSchemaVersion: 9,
+    targetSchemaVersion: 10,
+    description: 'Cleanup corrupted record sides',
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      return docs.filter(
+        doc =>
+          doc.sides &&
+          ((doc.sides.local && !doc.local) || (doc.sides.remote && !doc.remote))
+      )
+    },
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      return docs.map(doc => {
+        if (doc.sides.local && !doc.local) {
+          // Remove local side when no local attribute exists
+          delete doc.sides.local
+        }
+        if (doc.sides.remote && !doc.remote) {
+          // Remove remote side when no remote attribute exists
+          delete doc.sides.remote
+        }
+        if (!doc.sides.local && !doc.sides.remote) {
+          // Erase record is no sides are remaining
+          doc._deleted = true
+        }
+        // Remove errors, in case this would result in a new Sync attempt
+        delete doc.errors
+        return doc
+      })
+    }
   }
 ]
 

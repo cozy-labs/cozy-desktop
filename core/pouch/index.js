@@ -174,8 +174,11 @@ class Pouch {
         row =>
           !row.key.startsWith('_') && // Filter out design docs
           !row.doc.deleted && // Filter out docs already marked for deletion
+          // Keep only docs that have existed locally
           row.doc.sides &&
-          row.doc.sides.local // Keep only docs that have existed locally
+          row.doc.sides.local &&
+          // Make sure the returned docs do have a local attribute
+          row.doc.local
       )
       .map(row => row.doc)
       .sort(sortByPath)
@@ -651,10 +654,10 @@ const byPathKey = (fpath /*: string */) /*: [string, string] */ => {
   return [parentPath, name]
 }
 
-const sortByPath = (docA, docB) => {
+const sortByPath = (docA /*: SavedMetadata */, docB /*: SavedMetadata */) => {
   if (docA.path < docB.path) return -1
   if (docA.path > docB.path) return 1
   return 0
 }
 
-module.exports = { Pouch, byPathKey }
+module.exports = { Pouch, byPathKey, sortByPath }
