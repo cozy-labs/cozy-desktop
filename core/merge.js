@@ -197,7 +197,7 @@ class Merge {
     }
 
     // We create it at the destination location as a normal local file
-    metadata.markAsNew(doc)
+    metadata.markAsUnmerged(doc)
     metadata.dissociateRemote(doc)
     metadata.removeNoteMetadata(doc)
     return this.addFileAsync('local', doc)
@@ -441,8 +441,9 @@ class Merge {
 
     if (!metadata.wasSynced(was) || was.deleted) {
       metadata.markAsUnsyncable(was)
-      metadata.markAsNew(doc)
       await this.pouch.put(was)
+
+      metadata.markAsUnmerged(doc)
       return this.addFileAsync(side, doc)
     } else if (was.sides && was.sides[side]) {
       metadata.assignMaxDate(doc, was)
@@ -537,8 +538,9 @@ class Merge {
 
     if (!metadata.wasSynced(was)) {
       metadata.markAsUnsyncable(was)
-      metadata.markAsNew(doc)
       await this.pouch.put(was)
+
+      metadata.markAsUnmerged(doc)
       return this.putFolderAsync(side, doc)
     }
 

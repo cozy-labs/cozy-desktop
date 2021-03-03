@@ -170,7 +170,7 @@ module.exports = {
   removeNoteMetadata,
   dissociateRemote,
   dissociateLocal,
-  markAsNew,
+  markAsUnmerged,
   markAsUnsyncable,
   markAsUpToDate,
   samePath,
@@ -516,7 +516,7 @@ function markAsUnsyncable(doc /*: SavedMetadata */) {
   doc._deleted = true
 }
 
-function markAsNew(doc /*: Metadata|SavedMetadata */) {
+function markAsUnmerged(doc /*: Metadata|SavedMetadata */) {
   removeActionHints(doc)
   if (doc._id) delete doc._id
   if (doc._rev) delete doc._rev
