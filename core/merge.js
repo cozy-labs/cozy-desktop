@@ -199,6 +199,7 @@ class Merge {
     // We create it at the destination location as a normal local file
     metadata.markAsUnmerged(doc)
     metadata.dissociateRemote(doc)
+    metadata.markSide('local', doc)
     metadata.removeNoteMetadata(doc)
     return this.addFileAsync('local', doc)
   }

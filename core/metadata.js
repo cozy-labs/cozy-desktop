@@ -381,6 +381,9 @@ function ensureValidPath(doc /*: {path: string} */) {
 }
 
 function invariants /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
+  // If the record is meant to be erased we don't care about invariants
+  if (doc._deleted && !doc.moveTo) return doc
+
   let err
   if (!doc.sides) {
     err = new Error(`Metadata has no sides`)
@@ -480,12 +483,7 @@ function isAtLeastUpToDate(sideName /*: SideName */, doc /*: Metadata */) {
 }
 
 function removeActionHints(doc /*: Metadata */) {
-  if (doc.sides) {
-    // We remove parts of sides individually because of the invariant on sides
-    if (doc.sides.local) delete doc.sides.local
-    if (doc.sides.remote) delete doc.sides.remote
-    if (doc.sides.target) delete doc.sides.target
-  }
+  if (doc.sides) delete doc.sides
   if (doc.moveFrom) delete doc.moveFrom
   if (doc.moveTo) delete doc.moveTo
 }

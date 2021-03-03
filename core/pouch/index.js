@@ -185,9 +185,8 @@ class Pouch {
     doc /*: T */
   ) /*: Promise<SavedMetadata> */ {
     metadata.invariants(doc)
-    const { local, remote } = doc.sides
     log.debug(
-      { path: doc.path, local, remote, _deleted: doc._deleted, doc },
+      { path: doc.path, _deleted: doc._deleted, doc },
       'Saving metadata...'
     )
     if (!doc._id) {

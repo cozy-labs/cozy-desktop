@@ -1493,10 +1493,9 @@ describe('Merge', function() {
         savedDocs: [
           _.defaults(
             {
-              _deleted: true,
-              sides: {}
+              _deleted: true
             },
-            _.omit(synced, ['_id', '_rev', 'local', 'remote'])
+            _.omit(synced, ['_id', '_rev', 'sides', 'local', 'remote'])
           ),
           _.defaults(
             {
@@ -2150,10 +2149,9 @@ describe('Merge', function() {
 
       const unsyncedFile = _.defaults(
         {
-          sides: {},
           _deleted: true
         },
-        _.omit(was, ['_id', '_rev', 'local', 'remote'])
+        _.omit(was, ['_id', '_rev', 'sides', 'local', 'remote'])
       )
       const fileAddition = _.defaults(
         {
@@ -2195,10 +2193,9 @@ describe('Merge', function() {
 
       const unsyncedFile = _.defaults(
         {
-          sides: {},
           _deleted: true
         },
-        _.omit(was, ['_id', '_rev', 'local', 'remote'])
+        _.omit(was, ['_id', '_rev', 'sides', 'local', 'remote'])
       )
       const fileAddition = _.defaults(
         {
@@ -2653,10 +2650,9 @@ describe('Merge', function() {
 
       const unsyncedFolder = _.defaults(
         {
-          sides: {},
           _deleted: true
         },
-        _.omit(was, ['_id', '_rev', 'fileid', 'local', 'remote'])
+        _.omit(was, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
       )
       const folderAddition = _.defaults(
         {
@@ -2697,10 +2693,9 @@ describe('Merge', function() {
 
       const unsyncedFolder = _.defaults(
         {
-          sides: {},
           _deleted: true
         },
-        _.omit(was, ['_id', '_rev', 'fileid', 'local', 'remote'])
+        _.omit(was, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
       )
       const folderAddition = _.defaults(
         {
@@ -3336,10 +3331,9 @@ describe('Merge', function() {
             ),
             _.defaults(
               {
-                sides: {},
                 _deleted: true
               },
-              _.omit(unsyncedFile, ['_id', '_rev', 'remote'])
+              _.omit(unsyncedFile, ['_id', '_rev', 'sides', 'remote'])
             ),
             _.defaults(
               {
@@ -3412,10 +3406,9 @@ describe('Merge', function() {
             ),
             _.defaults(
               {
-                sides: {},
                 _deleted: true
               },
-              _.omit(unsyncedFile, ['_id', '_rev', 'local'])
+              _.omit(unsyncedFile, ['_id', '_rev', 'sides', 'local'])
             ),
             _.defaults(
               {
