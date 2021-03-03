@@ -514,11 +514,19 @@ function markAsUnsyncable(doc /*: SavedMetadata */) {
   doc._deleted = true
 }
 
-function markAsUnmerged(doc /*: Metadata|SavedMetadata */) {
+function markAsUnmerged(
+  doc /*: Metadata|SavedMetadata */,
+  sideName /*: SideName */
+) {
   removeActionHints(doc)
   if (doc._id) delete doc._id
   if (doc._rev) delete doc._rev
   if (doc._deleted) delete doc._deleted
+  if (sideName === 'local') {
+    dissociateRemote(doc)
+  } else {
+    dissociateLocal(doc)
+  }
 }
 
 function markAsUpToDate /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
