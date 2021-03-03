@@ -1,6 +1,6 @@
 /**
  * @module core/pouch
- * @flow weak
+ * @flow
  */
 
 const autoBind = require('auto-bind')
@@ -53,7 +53,7 @@ class Pouch {
   nextLockId: number
   */
 
-  constructor(config) {
+  constructor(config /*: Config */) {
     this.config = config
     this.nextLockId = 0
     this._lock = { id: this.nextLockId++, promise: Promise.resolve(null) }
@@ -137,7 +137,7 @@ class Pouch {
    * At least we're raising an error that will be caught by our errors
    * management and block the app with a "Synchronization impossible" status.
    */
-  async _allDocs(options) {
+  async _allDocs(options /*: ?{ include_docs: boolean } */) {
     return new Promise(async (resolve, reject) => {
       const uncaughtExceptionHandler = async err => {
         log.error(
@@ -249,8 +249,8 @@ class Pouch {
 
   // Run a query and get all the results
   async getAll(
-    query,
-    params = { include_docs: true }
+    query /*: string */,
+    params /*: ?{ include_docs: boolean } */ = { include_docs: true }
   ) /*: Promise<SavedMetadata[]> */ {
     try {
       const { rows } = await this.db.query(query, params)
@@ -263,7 +263,7 @@ class Pouch {
 
   // Get current revision for multiple docs by ids as an index id => rev
   // non-existing documents will not be added to the index
-  async getAllRevs(paths) /*: Promise<string[]> */ {
+  async getAllRevs(paths /*: string[] */) /*: Promise<string[]> */ {
     const result = await this.db.query('byPath', {
       keys: paths.map(byPathKey)
     })
@@ -282,7 +282,7 @@ class Pouch {
   }
 
   // Return all the files with this checksum
-  byChecksum(checksum) /*: Promise<SavedMetadata[]> */ {
+  byChecksum(checksum /*: string */) /*: Promise<SavedMetadata[]> */ {
     let params = {
       key: checksum,
       include_docs: true
@@ -291,7 +291,7 @@ class Pouch {
   }
 
   // Return all the files and folders in this path, only at first level
-  byPath(basePath) /*: Promise<SavedMetadata[]> */ {
+  byPath(basePath /*: string */) /*: Promise<SavedMetadata[]> */ {
     const key =
       basePath === '' ? metadata.id(basePath) : metadata.id(basePath) + path.sep
     const params = {
@@ -302,7 +302,7 @@ class Pouch {
     return this.getAll('byPath', params)
   }
 
-  async bySyncedPath(fpath) /*: Promise<?SavedMetadata> */ {
+  async bySyncedPath(fpath /*: string */) /*: Promise<?SavedMetadata> */ {
     if (!fpath) {
       return undefined
     }
@@ -318,7 +318,7 @@ class Pouch {
     return matches.length ? matches[0] : undefined
   }
 
-  async byLocalPath(fpath) /*: Promise<?SavedMetadata> */ {
+  async byLocalPath(fpath /*: string */) /*: Promise<?SavedMetadata> */ {
     if (!fpath) {
       return undefined
     }
@@ -336,8 +336,8 @@ class Pouch {
 
   // Return all the files and folders in this path, even in subfolders
   async byRecursivePath(
-    basePath,
-    { descending = false } = {}
+    basePath /*: string */,
+    { descending = false } /*: { descending: boolean } */ = {}
   ) /*: Promise<SavedMetadata[]> */ {
     let params
     if (basePath === '') {
@@ -359,7 +359,7 @@ class Pouch {
   }
 
   // Return the file/folder with this remote id
-  async byRemoteId(id) /*: Promise<SavedMetadata> */ {
+  async byRemoteId(id /*: string */) /*: Promise<SavedMetadata> */ {
     const params = {
       key: id,
       include_docs: true
@@ -372,7 +372,7 @@ class Pouch {
     }
   }
 
-  async byRemoteIdMaybe(id) /*: Promise<?SavedMetadata> */ {
+  async byRemoteIdMaybe(id /*: string */) /*: Promise<?SavedMetadata> */ {
     try {
       return await this.byRemoteId(id)
     } catch (err) {
@@ -507,7 +507,7 @@ class Pouch {
   }
 
   // Create or update given design doc
-  async createDesignDoc(name, query) {
+  async createDesignDoc(name /*: string */, query /*: string */) {
     const doc = {
       _id: `_design/${name}`,
       _rev: null,
@@ -526,7 +526,7 @@ class Pouch {
   }
 
   // Remove a design document for a given docType
-  async removeDesignDoc(docType) {
+  async removeDesignDoc(docType /*: string */) {
     const id = `_design/${docType}`
     const designDoc = await this.db.get(id)
     return this.db.remove(id, designDoc._rev)
@@ -535,7 +535,10 @@ class Pouch {
   /* Helpers */
 
   // Retrieve a previous doc revision from its id
-  async getPreviousRev(id, revDiff) /*: Promise<SavedMetadata> */ {
+  async getPreviousRev(
+    id /*: string */,
+    revDiff /*: number */
+  ) /*: Promise<SavedMetadata> */ {
     const options = {
       revs: true,
       revs_info: true,
@@ -562,7 +565,7 @@ class Pouch {
 
   // Get last local replication sequence,
   // ie the last change from pouchdb that have been applied
-  async getLocalSeq() {
+  async getLocalSeq() /*: Promise<number> */ {
     const doc = await this.byIdMaybe('_local/localSeq')
     if (doc) return doc.seq
     else return 0
@@ -571,7 +574,7 @@ class Pouch {
   // Set last local replication sequence
   // It is saved in PouchDB as a local document
   // See http://pouchdb.com/guides/local-documents.html
-  setLocalSeq(seq) {
+  setLocalSeq(seq /*: number */) {
     const task = {
       _id: '_local/localSeq',
       seq
@@ -586,16 +589,16 @@ class Pouch {
 
   // Get last remote replication sequence,
   // ie the last change from couchdb that have been saved in pouch
-  async getRemoteSeq() {
+  async getRemoteSeq() /*: Promise<string> */ {
     const doc = await this.byIdMaybe('_local/remoteSeq')
     if (doc) return doc.seq
-    else return 0
+    else return '0'
   }
 
   // Set last remote replication sequence
   // It is saved in PouchDB as a local document
   // See http://pouchdb.com/guides/local-documents.html
-  setRemoteSeq(seq) {
+  setRemoteSeq(seq /*: string */) {
     const task = {
       _id: '_local/remoteSeq',
       seq
