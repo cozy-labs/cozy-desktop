@@ -1,17 +1,24 @@
 /* eslint-env mocha */
+/* @flow */
 
 const Promise = require('bluebird')
 const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
 const _ = require('lodash')
+const { REV_CONFLICT } = require('pouchdb')
 
 const metadata = require('../../../core/metadata')
+const { sortByPath } = require('../../../core/pouch')
 const migrations = require('../../../core/pouch/migrations')
 
 const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
+
+/*::
+import type { Migration } from '../../../core/pouch/migrations'
+*/
 
 describe('Pouch', function() {
   before('instanciate config', configHelpers.createConfig)
@@ -60,12 +67,13 @@ describe('Pouch', function() {
   })
 
   describe('runMigrations', () => {
-    let currentSchemaVersion, availableMigrations
+    let currentSchemaVersion /* number */
+    let availableMigrations /*: Migration[] */
     beforeEach('create migrations', async function() {
       currentSchemaVersion = await migrations.currentSchemaVersion(
         this.pouch.db
       )
-      availableMigrations /*: Migration[] */ = [
+      availableMigrations = [
         {
           baseSchemaVersion: currentSchemaVersion,
           targetSchemaVersion: currentSchemaVersion + 1,
@@ -337,13 +345,11 @@ describe('Pouch', function() {
       })
 
       it('does not swallow non-404 errors', async function() {
-        const err = new Error('non-404 error')
-        err.status = 500
-        const get = sinon.stub(this.pouch.db, 'get').rejects(err)
+        const get = sinon.stub(this.pouch.db, 'get').rejects(REV_CONFLICT)
         try {
           await should(
             this.pouch.byIdMaybe(metadata.id('my-folder'))
-          ).be.rejectedWith(err)
+          ).be.rejectedWith(REV_CONFLICT)
         } finally {
           get.restore()
         }
@@ -580,6 +586,49 @@ describe('Pouch', function() {
         should(docs).deepEqual(expectedDocs)
       })
     })
+
+    describe('initialScanDocs', () => {
+      it('returns only existing docs with local side and metadata', async function() {
+        const builders = new Builders({ pouch: this.pouch })
+        const dir = await builders
+          .metadir()
+          .path('dir')
+          .upToDate()
+          .create()
+        const file = await builders
+          .metafile()
+          .path('file')
+          .sides({ local: 1 })
+          .create()
+
+        // Has been deleted
+        await builders
+          .metafile()
+          .path('deleted')
+          .deleted()
+          .changedSide('local')
+          .create()
+
+        // Has never existed locally
+        await builders
+          .metafile()
+          .path('remote-only')
+          .sides({ remote: 1 })
+          .create()
+
+        // Has local side but no local metadata
+        const corrupted = await builders
+          .metadir()
+          .path('corrupted')
+          .upToDate()
+          .create()
+        delete corrupted.local
+        await this.pouch.db.put(corrupted)
+
+        const sortedDocs = [dir, file].concat(createdDocs).sort(sortByPath)
+        await should(this.pouch.initialScanDocs()).be.fulfilledWith(sortedDocs)
+      })
+    })
   })
 
   describe('Views', function() {
@@ -662,7 +711,7 @@ describe('Pouch', function() {
   })
 
   describe('Helpers', function() {
-    describe('getPreviousRev', () =>
+    describe('getPreviousRev', () => {
       it('retrieves previous document informations', async function() {
         const dirPath = path.join('my-folder', 'folder-1')
         const doc = await this.pouch.bySyncedPath(dirPath)
@@ -692,7 +741,8 @@ describe('Pouch', function() {
             _deleted: true
           })
           .and.not.have.properties(['path', 'tags']) // erased by PouchDB.remove
-      }))
+      })
+    })
 
     describe('localTree', () => {
       let builders
@@ -736,36 +786,39 @@ describe('Pouch', function() {
   })
 
   describe('Sequence numbers', function() {
-    describe('getLocalSeq', () =>
+    describe('getLocalSeq', () => {
       it('gets 0 when the local seq number is not initialized', async function() {
         await should(this.pouch.getLocalSeq()).be.fulfilledWith(0)
-      }))
+      })
+    })
 
-    describe('setLocalSeq', () =>
+    describe('setLocalSeq', () => {
       it('saves the local sequence number', async function() {
         await this.pouch.setLocalSeq(21)
         await should(this.pouch.getLocalSeq()).be.fulfilledWith(21)
         await this.pouch.setLocalSeq(22)
         await should(this.pouch.getLocalSeq()).be.fulfilledWith(22)
-      }))
+      })
+    })
 
-    describe('getRemoteSeq', () =>
+    describe('getRemoteSeq', () => {
       it('gets 0 when the remote seq number is not initialized', async function() {
-        await should(this.pouch.getRemoteSeq()).be.fulfilledWith(0)
-      }))
+        await should(this.pouch.getRemoteSeq()).be.fulfilledWith('0')
+      })
+    })
 
     describe('setRemoteSeq', function() {
       it('saves the remote sequence number', async function() {
-        await this.pouch.setRemoteSeq(31)
-        await should(this.pouch.getRemoteSeq()).be.fulfilledWith(31)
-        await this.pouch.setRemoteSeq(32)
-        await should(this.pouch.getRemoteSeq()).be.fulfilledWith(32)
+        await this.pouch.setRemoteSeq('31')
+        await should(this.pouch.getRemoteSeq()).be.fulfilledWith('31')
+        await this.pouch.setRemoteSeq('32')
+        await should(this.pouch.getRemoteSeq()).be.fulfilledWith('32')
       })
 
       it('can be called multiple times in parallel', async function() {
         await Promise.map(
           _.range(1, 101),
-          seq => this.pouch.setRemoteSeq(seq),
+          seq => this.pouch.setRemoteSeq(String(seq)),
           { concurrency: 2 }
         )
       })

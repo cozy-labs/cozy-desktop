@@ -34,6 +34,7 @@ async function step(state /*: Object */, op /*: Object */) {
         dbPath: { name: state.name, adapter: 'memory' },
         syncPath: state.dir.root
       }
+      // $FlowFixMe expects a Config object here
       state.pouchdb = new Pouch(state.config)
       await state.pouchdb.addAllViews()
     // break omitted intentionally

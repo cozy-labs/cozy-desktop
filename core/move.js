@@ -84,6 +84,6 @@ function convertToDestinationAddition(
   metadata.markAsUnsyncable(src)
 
   // Create destination
-  metadata.markAsNew(dst)
+  metadata.markAsUnmerged(dst, side)
   metadata.markSide(side, dst)
 }

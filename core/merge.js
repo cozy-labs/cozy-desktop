@@ -197,8 +197,8 @@ class Merge {
     }
 
     // We create it at the destination location as a normal local file
-    metadata.markAsNew(doc)
-    metadata.dissociateRemote(doc)
+    metadata.markAsUnmerged(doc, 'local')
+    metadata.markSide('local', doc)
     metadata.removeNoteMetadata(doc)
     return this.addFileAsync('local', doc)
   }
@@ -441,8 +441,9 @@ class Merge {
 
     if (!metadata.wasSynced(was) || was.deleted) {
       metadata.markAsUnsyncable(was)
-      metadata.markAsNew(doc)
       await this.pouch.put(was)
+
+      metadata.markAsUnmerged(doc, side)
       return this.addFileAsync(side, doc)
     } else if (was.sides && was.sides[side]) {
       metadata.assignMaxDate(doc, was)
@@ -537,8 +538,9 @@ class Merge {
 
     if (!metadata.wasSynced(was)) {
       metadata.markAsUnsyncable(was)
-      metadata.markAsNew(doc)
       await this.pouch.put(was)
+
+      metadata.markAsUnmerged(doc, side)
       return this.putFolderAsync(side, doc)
     }
 
@@ -783,7 +785,7 @@ class Merge {
         delete was.moveFrom
         // The file was deleted locally so it should not have a local side so we
         // can re-create it.
-        delete was.sides.local
+        metadata.dissociateLocal(was)
       }
       return this.pouch.put(was)
     }
@@ -844,13 +846,12 @@ class Merge {
         !metadata.isUpToDate(side, child)
       ) {
         // The parent folder was deleted on `side` so we remove this part anyway
-        if (was.sides) delete was.sides[side]
-        metadata.markSide(otherSide(side), was, was)
         if (side === 'local') {
-          delete was.local
+          metadata.dissociateLocal(was)
         } else {
-          delete was.remote
+          metadata.dissociateRemote(was)
         }
+        metadata.markSide(otherSide(side), was, was)
         delete was.errors
         // Remove deletion markers as we want the folder to be recreated on
         // `side` by Sync.
