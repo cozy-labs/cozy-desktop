@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.26.0-beta.2 - 2021-03-04
+
+Improvements for all users:
+
+- Some expectations made in the previous beta release on the local metadata
+  stored in PouchDB were not met and resulted in exceptions being thrown thus
+  stopping the synchronization.
+  We've taken measures to make sure those expectations are met in the future and
+  existing metadata is cleaned up to meet these expectations as well.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.26.0-beta.1 - 2021-03-03
 
 Improvements for all users:
