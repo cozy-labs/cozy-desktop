@@ -248,7 +248,7 @@ view code =
             { title = "Error Invalid document name"
             , details =
                 [ "Error The {0} `{1}`'s name contains characters forbidden by your Cozy."
-                , "Error Try renaming it without using the following characters: / \u{0000} \n \u{000D}."
+                , "Error Try renaming it without using the following characters: / \\u{0000} \\n \\u{000D}."
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
