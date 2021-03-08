@@ -1,5 +1,51 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.26.0 - 2021-03-08
+
+Improvements for all users:
+
+- Files that were modified then trashed on your Cozy before the Desktop client
+  could fetch the modification will be trashed on your computer and your Cozy
+  and not re-uploaded.
+- The workaround we introduced in the previous release to help synchronize
+  modifications to your remote Cozy when modification dates are not the same in
+  the local database and the remote Cozy created a regression for users who
+  locally modified documents that had not been modified in a very long time and
+  did not have the remote modification date stored in the local database.
+  For those documents, we'll skip the workaround and hope that the local
+  modification date is more recent than the remote one (which is very likely).
+- If some of your documents (files like directories) have local names starting
+  or ending with white-spaces, the client would remove those spaces when sending
+  them to your remote Cozy thus creating a de-synchronized state between their
+  local and remote versions. This would prevent the client from finding their
+  remote version in later requests.
+  We're now making sure their names are not modified when sending them to your
+  remote Cozy.
+- Because of a limitation in Electron v7+, we would not be able to advertise the
+  size of a file being uploaded to your remote Cozy, preventing it from refusing
+  the upload right away if the file was too large or not enough disk space was
+  available on the Cozy. In those cases, the client would thus send the whole
+  file to see it refused by the Cozy.
+  The Cozy can now receive the file size via a request parameter which allows us
+  to work around the Electron limitation and get feedback on the upload from the
+  very beginning thus saving time and resources.
+- In the previous release, we started managing and sometimes displaying
+  synchronization errors within the client's interface but we grouped a lot of
+  data and metadata related errors together as an "Unreachable Cozy" state. This
+  lead to a lot of confusion as the Cozy was most of the time perfectly
+  reachable and the underlying issues would not be solved.
+  We now try to manage most of those errors as best we can and provide ways to
+  solve the underlying issues either automatically or by notifying you.
+- Some expectations we were making on the shape of local metadata stored in
+  PouchDB were not met and resulted in exceptions being thrown with the recent
+  changes done to the initial scan.
+  We've taken measures to make sure those expectations are met in the future and
+  existing metadata is cleaned up to meet these expectations as well.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.26.0-beta.2 - 2021-03-04
 
 Improvements for all users:
