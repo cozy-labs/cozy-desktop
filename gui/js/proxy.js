@@ -4,6 +4,7 @@
  * @flow
  */
 
+const { powerMonitor, session } = require('electron')
 const ElectronProxyAgent = require('electron-proxy-agent')
 const url = require('url')
 const http = require('http')
@@ -51,11 +52,22 @@ const formatCertificate = certif =>
 const setup = async (
   app /*: App */,
   config /*: Object */,
-  session /*: Session */,
   userAgent /*: string */
 ) => {
   const syncSession = session.fromPartition(SESSION_PARTITION_NAME, {
     cache: false
+  })
+
+  powerMonitor.on('resume', () => {
+    // Cleanup all caches to prevent network error loops on Windows and macOS when
+    // resuming from sleep.
+    syncSession.clearCache()
+    syncSession.clearHostResolverCache()
+    syncSession.clearAuthCache()
+
+    session.defaultSession.clearCache()
+    session.defaultSession.clearHostResolverCache()
+    session.defaultSession.clearAuthCache()
   })
 
   const loginByRealm = {}
@@ -206,7 +218,6 @@ const setup = async (
 
 const reset = async (
   app /*: App */,
-  session /*: Session */,
   {
     originalFetch,
     originalHttpRequest,
@@ -230,6 +241,7 @@ const reset = async (
   ]) {
     app.removeAllListeners(event)
   }
+  powerMonitor.removeAllListeners('resume')
 
   const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
   syncSession.setCertificateVerifyProc(null)

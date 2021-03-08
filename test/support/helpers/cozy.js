@@ -4,17 +4,17 @@
 require('../../../core/globals')
 
 // Setup proxy so that all test requests will go through `electron-fetch`
-const { app, session } = require('electron')
+const { app } = require('electron')
 const proxy = require('../../../gui/js/proxy')
 
 let originalNet
 const setupGlobalProxy = async () => {
   await app.whenReady()
-  originalNet = await proxy.setup(app, {}, session, '')
+  originalNet = await proxy.setup(app, {}, '')
 }
 const resetGlobalProxy = async () => {
   if (originalNet && (await originalNet)) {
-    await proxy.reset(app, session, originalNet)
+    await proxy.reset(app, originalNet)
     originalNet = null
   }
 }

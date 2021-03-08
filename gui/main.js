@@ -594,11 +594,9 @@ app.on('ready', async () => {
     }, 1000)
   }
 
-  const { session } = require('electron')
-
   const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
   let userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
-  await proxy.setup(app, proxy.config(), session, userAgent)
+  await proxy.setup(app, proxy.config(), userAgent)
   log.info('Loading CLI...')
   i18n.init(app)
   try {

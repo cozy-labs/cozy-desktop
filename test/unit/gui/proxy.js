@@ -100,7 +100,7 @@ describe('gui/js/proxy', function() {
     })
 
     const proxySetupHook = config => async () => {
-      proxySideEffects = await proxy.setup(app, config, session, userAgent)
+      proxySideEffects = await proxy.setup(app, config, userAgent)
     }
     const revertProxySideEffects = async () => {
       await proxy.reset(app, session, proxySideEffects)
