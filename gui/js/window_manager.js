@@ -111,6 +111,7 @@ module.exports = class WindowManager {
     opts.webPreferences = {
       ...opts.webPreferences,
       nodeIntegration: true,
+      contextIsolation: false,
       enableRemoteModule: true
     }
     // https://github.com/AppImage/AppImageKit/wiki/Bundling-Electron-apps
