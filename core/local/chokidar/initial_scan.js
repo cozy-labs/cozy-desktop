@@ -7,7 +7,7 @@
 const chokidarEvent = require('./event')
 const logger = require('../../utils/logger')
 const metadata = require('../../metadata')
-const { SYNC_DIR_EMPTY_MESSAGE } = require('../../')
+const { SYNC_DIR_EMPTY_MESSAGE } = require('../errors')
 
 const log = logger({
   component: 'chokidar/initial_scan'

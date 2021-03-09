@@ -6,7 +6,7 @@
 
 const fs = require('fs')
 
-const { SYNC_DIR_UNLINKED_MESSAGE } = require('./')
+const { SYNC_DIR_UNLINKED_MESSAGE } = require('./errors')
 
 /*::
 import type EventEmitter from 'events'
