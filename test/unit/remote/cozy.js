@@ -6,7 +6,8 @@ const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
 const stream = require('stream')
-const { FetchError } = require('cozy-client')
+const electronFetch = require('electron-fetch')
+const { FetchError } = require('cozy-stack-client')
 
 const {
   ROOT_DIR_ID,
@@ -22,6 +23,17 @@ const Builders = require('../../support/builders')
 
 const cozyStackDouble = new CozyStackDouble()
 const builders = new Builders({ cozy })
+
+// This error with a mysterious reason is returned when the request is aborted
+// with an error message by the remote server while Chromium has sent all data.
+// See bugs.chromium.org/p/chromium/issues/detail?id=1033945
+// In this case, Electron returns this mysterious "mojo result not ok" reason.
+// See https://github.com/electron/electron/blob/ed126eced457fcaa3c998b32f97d68576e7f362c/shell/browser/api/electron_api_url_loader.cc#L212
+const CHROMIUM_ERROR = new electronFetch.FetchError(
+  `request to https://example.org failed, reason: mojo result not ok`,
+  'system',
+  new Error('mojo result not ok')
+)
 
 describe('RemoteCozy', function() {
   before(() => cozyStackDouble.start())
@@ -98,78 +110,56 @@ describe('RemoteCozy', function() {
       })
     })
 
-    context(
-      'when the request fails with an unhandled promise rejection',
-      () => {
-        beforeEach(() => {
-          sinon.stub(remoteCozy.client.files, 'create').callsFake(() => {
-            return new Promise(() => {
-              Promise.reject(new Error('mojo result is not ok'))
-            })
+    context('when the request fails with a mysterious Chromium error', () => {
+      beforeEach(() => {
+        sinon.stub(remoteCozy.client.files, 'create').rejects(CHROMIUM_ERROR)
+      })
+      afterEach(() => {
+        remoteCozy.client.files.create.restore()
+      })
+
+      it('returns a 409 FetchError if a doc with the same path exists', async () => {
+        await builders
+          .remoteDir()
+          .inRootDir()
+          .name('foo')
+          .create()
+
+        await should(
+          remoteCozy.createFile(new stream.Readable(), {
+            name: 'foo',
+            dirID: ROOT_DIR_ID,
+            contentType: 'text/plain',
+            contentLength: 300,
+            checksum: 'md5sum',
+            executable: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           })
-        })
-        afterEach(() => {
-          remoteCozy.client.files.create.restore()
-        })
+        ).be.rejectedWith(FetchError, { status: 409 })
+      })
 
-        it('catches the unhandled promise rejection', async () => {
-          await should(
-            remoteCozy.createFile(new stream.Readable(), {
-              name: 'foo',
-              dirID: ROOT_DIR_ID,
-              contentType: 'text/plain',
-              contentLength: 300,
-              checksum: 'md5sum',
-              executable: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            })
-          ).be.rejectedWith('mojo result is not ok')
-        })
+      it('returns a 413 FetchError if the file is larger than the available quota', async () => {
+        const fakeSettings = sinon
+          .stub(remoteCozy.client.settings, 'diskUsage')
+          .resolves({ attributes: { quota: 5000, used: 4800 } })
 
-        it('returns a 409 FetchError if a doc with the same path exists', async () => {
-          await builders
-            .remoteDir()
-            .inRootDir()
-            .name('foo')
-            .create()
+        await should(
+          remoteCozy.createFile(new stream.Readable(), {
+            name: 'foo',
+            dirID: ROOT_DIR_ID,
+            contentType: 'text/plain',
+            contentLength: 300,
+            checksum: 'md5sum',
+            executable: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
+        ).be.rejectedWith(FetchError, { status: 413 })
 
-          await should(
-            remoteCozy.createFile(new stream.Readable(), {
-              name: 'foo',
-              dirID: ROOT_DIR_ID,
-              contentType: 'text/plain',
-              contentLength: 300,
-              checksum: 'md5sum',
-              executable: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            })
-          ).be.rejectedWith(FetchError, { status: 409 })
-        })
-
-        it('returns a 413 FetchError if the file is larger than the available quota', async () => {
-          const fakeSettings = sinon
-            .stub(remoteCozy.client.settings, 'diskUsage')
-            .resolves({ attributes: { quota: 5000, used: 4800 } })
-
-          await should(
-            remoteCozy.createFile(new stream.Readable(), {
-              name: 'foo',
-              dirID: ROOT_DIR_ID,
-              contentType: 'text/plain',
-              contentLength: 300,
-              checksum: 'md5sum',
-              executable: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            })
-          ).be.rejectedWith(FetchError, { status: 413 })
-
-          fakeSettings.restore()
-        })
-      }
-    )
+        fakeSettings.restore()
+      })
+    })
   })
 
   describe('createDirectory', () => {
@@ -224,63 +214,44 @@ describe('RemoteCozy', function() {
       })
     })
 
-    context(
-      'when the request fails with an unhandled promise rejection',
-      () => {
-        let remoteFile
-        beforeEach(async () => {
-          remoteFile = await builders
-            .remoteFile()
-            .inRootDir()
-            .name('foo')
-            .data('initial content')
-            .create()
+    context('when the request fails with a mysterious Chromium error', () => {
+      let remoteFile
+      beforeEach(async () => {
+        remoteFile = await builders
+          .remoteFile()
+          .inRootDir()
+          .name('foo')
+          .data('initial content')
+          .create()
 
-          sinon.stub(remoteCozy.client.files, 'updateById').callsFake(() => {
-            return new Promise(() => {
-              Promise.reject(new Error('mojo result is not ok'))
-            })
+        sinon
+          .stub(remoteCozy.client.files, 'updateById')
+          .rejects(CHROMIUM_ERROR)
+      })
+      afterEach(() => {
+        remoteCozy.client.files.updateById.restore()
+      })
+
+      it('returns a 413 FetchError if the file is larger than the available quota', async () => {
+        const fakeSettings = sinon
+          .stub(remoteCozy.client.settings, 'diskUsage')
+          .resolves({ attributes: { quota: 5000, used: 4800 } })
+
+        await should(
+          remoteCozy.updateFileById(remoteFile._id, new stream.Readable(), {
+            contentType: 'text/plain',
+            contentLength: 300,
+            checksum: 'md5sum',
+            executable: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            ifMatch: remoteFile._rev
           })
-        })
-        afterEach(() => {
-          remoteCozy.client.files.updateById.restore()
-        })
+        ).be.rejectedWith(FetchError, { status: 413 })
 
-        it('catches the unhandled promise rejection', async () => {
-          await should(
-            remoteCozy.updateFileById(remoteFile._id, new stream.Readable(), {
-              contentType: 'text/plain',
-              contentLength: 300,
-              checksum: 'md5sum',
-              executable: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              ifMatch: remoteFile._rev
-            })
-          ).be.rejectedWith('mojo result is not ok')
-        })
-
-        it('returns a 413 FetchError if the file is larger than the available quota', async () => {
-          const fakeSettings = sinon
-            .stub(remoteCozy.client.settings, 'diskUsage')
-            .resolves({ attributes: { quota: 5000, used: 4800 } })
-
-          await should(
-            remoteCozy.updateFileById(remoteFile._id, new stream.Readable(), {
-              contentType: 'text/plain',
-              contentLength: 300,
-              checksum: 'md5sum',
-              executable: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              ifMatch: remoteFile._rev
-            })
-          ).be.rejectedWith(FetchError, { status: 413 })
-
-          fakeSettings.restore()
-        })
-      }
-    )
+        fakeSettings.restore()
+      })
+    })
   })
 
   describe('updateAttributesById', () => {
