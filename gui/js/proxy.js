@@ -58,7 +58,9 @@ const setup = async (
     cache: false
   })
 
-  powerMonitor.on('resume', () => {
+  const resetCaches = event => {
+    log.debug({ event }, 'resetting caches')
+
     // Cleanup all caches to prevent network error loops on Windows and macOS when
     // resuming from sleep.
     syncSession.clearCache()
@@ -68,7 +70,35 @@ const setup = async (
     session.defaultSession.clearCache()
     session.defaultSession.clearHostResolverCache()
     session.defaultSession.clearAuthCache()
-  })
+  }
+
+  powerMonitor.on('resume', resetCaches)
+  powerMonitor.on('on-ac', resetCaches)
+  powerMonitor.on('on-battery', resetCaches)
+  powerMonitor.on('unlock-screen', resetCaches)
+
+  syncSession.webRequest.onErrorOccurred(
+    ({ url, method, timestamp, fromCache, error }) => {
+      log.debug(
+        { err: error },
+        `[${timestamp}] syncSession request ${method} ${url} ${
+          fromCache ? '(fromCache)' : ''
+        } failed, reason: ${error.code}`
+      )
+      resetCaches()
+    }
+  )
+  session.defaultSession.webRequest.onErrorOccurred(
+    ({ url, method, timestamp, fromCache, error }) => {
+      log.debug(
+        { err: error },
+        `[${timestamp}] defaultSession request ${method} ${url} ${
+          fromCache ? '(fromCache)' : ''
+        } failed, reason: ${error.code}`
+      )
+      resetCaches()
+    }
+  )
 
   const loginByRealm = {}
   if (config['login-by-realm']) {
@@ -242,6 +272,9 @@ const reset = async (
     app.removeAllListeners(event)
   }
   powerMonitor.removeAllListeners('resume')
+  powerMonitor.removeAllListeners('on-ac')
+  powerMonitor.removeAllListeners('on-battery')
+  powerMonitor.removeAllListeners('unlock-screen')
 
   const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
   syncSession.setCertificateVerifyProc(null)
