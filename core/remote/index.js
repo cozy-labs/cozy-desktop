@@ -406,11 +406,13 @@ class Remote /*:: implements Reader, Writer */ {
     if (results.length > 0) return results[0]
   }
 
-  async resolveRemoteConflict(newMetadata /*: SavedMetadata */) {
+  async resolveRemoteConflict(
+    newMetadata /*: SavedMetadata */
+  ) /*: Promise<void> */ {
     // Find conflicting document on remote Cozy
-    const { _id: remoteId, _rev: remoteRev } = await this.findDocByPath(
-      newMetadata.path
-    )
+    const remoteDoc = await this.findDocByPath(newMetadata.path)
+    if (!remoteDoc) return
+
     // Generate a new name with a conflict suffix for the remote document
     const newName = path.basename(
       conflicts.generateConflictPath(newMetadata.path)
@@ -418,13 +420,16 @@ class Remote /*:: implements Reader, Writer */ {
 
     const attrs = {
       name: newName,
-      updated_at: new Date().toISOString()
+      updated_at: timestamp.maxDate(
+        new Date().toISOString(),
+        remoteDoc.updated_at
+      )
     }
     const opts = {
-      ifMatch: remoteRev
+      ifMatch: remoteDoc._rev
     }
 
-    await this.remoteCozy.updateAttributesById(remoteId, attrs, opts)
+    await this.remoteCozy.updateAttributesById(remoteDoc._id, attrs, opts)
   }
 }
 
