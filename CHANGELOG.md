@@ -1,5 +1,17 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.26.1-beta.2 - 2021-03-15
+
+Improvements for all users:
+
+- Whenever a file move or name change is synchronized, we'll properly remove its
+  source path entry from the Recent list in the main window. Its destination
+  path entry will remain as expected.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.26.1-beta.1 - 2021-03-15
 
 Improvements for all users:
