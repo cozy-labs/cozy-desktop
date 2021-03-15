@@ -19,6 +19,7 @@ const { DirectoryNotFound } = require('../../../core/remote/cozy')
 const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../../core/remote/constants')
 const { FetchError } = require('../../../core/remote/cozy')
 const timestamp = require('../../../core/utils/timestamp')
+const { CONFLICT_REGEXP } = require('../../../core/utils/conflicts')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
@@ -1226,14 +1227,20 @@ describe('remote.Remote', function() {
     })
 
     it('does not swallow destroy errors', async function() {
+      sinon.stub(this.remote.remoteCozy, 'destroyById').rejects('whatever')
+
       const dir = await builders.remoteDir().create()
       const doc = builders
         .metadir()
         .fromRemote(dir)
         .changedSide('local')
         .build()
-      sinon.stub(this.remote.remoteCozy, 'destroyById').rejects('whatever')
-      await should(this.remote.deleteFolderAsync(doc)).be.rejected()
+
+      try {
+        await should(this.remote.deleteFolderAsync(doc)).be.rejected()
+      } finally {
+        this.remote.remoteCozy.destroyById.restore()
+      }
     })
   })
 
@@ -1303,6 +1310,70 @@ describe('remote.Remote', function() {
     it('resolves to false if we cannot successfuly fetch the remote disk usage', async function() {
       this.remote.remoteCozy.diskUsage.rejects()
       await should(this.remote.ping()).be.fulfilledWith(false)
+    })
+  })
+
+  describe('resolveRemoteConflict', () => {
+    let remoteFile, file
+    beforeEach(async function() {
+      remoteFile = await builders
+        .remoteFile()
+        .name('file.txt')
+        .create()
+      file = await builders
+        .metafile()
+        .fromRemote(remoteFile)
+        .create()
+    })
+
+    it('does not fail if there are no remote documents with the given path', async function() {
+      await this.remote.remoteCozy.destroyById(remoteFile._id)
+
+      await should(this.remote.resolveRemoteConflict(file)).be.fulfilled()
+    })
+
+    it('renames the remote document with a conflict suffix', async function() {
+      await this.remote.resolveRemoteConflict(file)
+      should(await this.remote.remoteCozy.find(remoteFile._id))
+        .have.property('name')
+        .match(CONFLICT_REGEXP)
+    })
+
+    it('fails with a 412 error if file changes on remote Cozy during the call', async function() {
+      // Stub findDocByPath which is called by resolveRemoteConflict so that it
+      // returns the remote document and fakes an update closely following it.
+      sinon.stub(this.remote, 'findDocByPath').callsFake(async () => {
+        await builders
+          .remoteFile(remoteFile)
+          .data('update')
+          .update()
+        return remoteFile
+      })
+
+      try {
+        await should(this.remote.resolveRemoteConflict(file)).be.rejectedWith({
+          name: 'FetchError',
+          status: 412
+        })
+      } finally {
+        this.remote.findDocByPath.restore()
+      }
+    })
+
+    it('uses the most recent modification date between now and the remote date', async function() {
+      // Make sure remote file has modification date more recent than `now`.
+      const oneHour = 3600 * 1000 // milliseconds
+      const moreRecentDate = new Date(Date.now() + oneHour).toISOString()
+      const updatedRemoteFile = await this.remote.remoteCozy.updateAttributesById(
+        remoteFile._id,
+        { updated_at: moreRecentDate }
+      )
+
+      await this.remote.resolveRemoteConflict(file)
+      should(await this.remote.remoteCozy.find(remoteFile._id)).have.property(
+        'updated_at',
+        updatedRemoteFile.updated_at
+      )
     })
   })
 })
