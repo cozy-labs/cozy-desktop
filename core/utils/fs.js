@@ -4,15 +4,11 @@
 
 const Promise = require('bluebird')
 const childProcess = require('child_process')
+const { shell } = require('electron')
 
 const logger = require('./logger')
 
 Promise.promisifyAll(childProcess)
-
-module.exports = {
-  hideOnWindows,
-  validName
-}
 
 const log = logger({
   component: 'Fs'
@@ -39,4 +35,14 @@ const REPLACEMENT_CHARACTER = '_'
 // characters from the given file/dir name.
 function validName(name /*: string */) {
   return name.replace(ILLEGAL_CHARACTERS_REGEXP, REPLACEMENT_CHARACTER)
+}
+
+async function sendToTrash(fullpath /*: string */) {
+  return shell.trashItem(fullpath)
+}
+
+module.exports = {
+  hideOnWindows,
+  sendToTrash,
+  validName
 }

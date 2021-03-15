@@ -9,7 +9,6 @@ const autoBind = require('auto-bind')
 const fs = require('fs').promises
 const fse = require('fs-extra')
 const path = require('path')
-const trash = require('trash')
 const stream = require('stream')
 const _ = require('lodash')
 
@@ -51,7 +50,8 @@ export type LocalOptions = {
   prep: Prep,
   pouch: Pouch,
   events: EventEmitter,
-  ignore: Ignore
+  ignore: Ignore,
+  sendToTrash: (string) => Promise<void>
 }
 */
 
@@ -72,9 +72,9 @@ class Local /*:: implements Reader, Writer */ {
   syncPath: string
   syncDirCheckInterval: IntervalID
   tmpPath: string
+  sendToTrash: (string) => Promise<void>
   watcher: Watcher
   other: Reader
-  _trash: (Array<string>) => Promise<void>
   */
 
   constructor(opts /*: LocalOptions */) {
@@ -83,10 +83,10 @@ class Local /*:: implements Reader, Writer */ {
     this.events = opts.events
     this.syncPath = opts.config.syncPath
     this.tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
+    this.sendToTrash = opts.sendToTrash
     this.watcher = watcher.build(opts)
     // $FlowFixMe
     this.other = null
-    this._trash = trash
 
     autoBind(this)
     bluebird.promisifyAll(this)
@@ -428,7 +428,7 @@ class Local /*:: implements Reader, Writer */ {
     log.info({ path: doc.path }, 'Moving to the OS trash...')
     const fullpath = path.join(this.syncPath, doc.path)
     try {
-      await this._trash([fullpath])
+      await this.sendToTrash(fullpath)
     } catch (err) {
       if (err.code === 'ENOENT') {
         log.warn(
@@ -436,6 +436,11 @@ class Local /*:: implements Reader, Writer */ {
           `Cannot trash locally deleted ${doc.docType}.`
         )
         return
+      } else {
+        log.error(
+          { path: doc.path, err, sentry: true },
+          'Could not trash local document'
+        )
       }
       throw err
     }

@@ -30,6 +30,7 @@ const Registration = require('./remote/registration')
 const logger = require('./utils/logger')
 const { LOG_FILE, LOG_FILENAME } = logger
 const sentry = require('./utils/sentry')
+const { sendToTrash } = require('./utils/fs')
 
 /*::
 import type EventEmitter from 'events'
@@ -325,7 +326,7 @@ class App {
     this.ignore = Ignore.loadSync(this.userIgnoreRules())
     this.merge = new Merge(this.pouch)
     this.prep = new Prep(this.merge, this.ignore, this.config)
-    this.local = this.merge.local = new Local(this)
+    this.local = this.merge.local = new Local({ ...this, sendToTrash })
     this.remote = this.merge.remote = new Remote(this)
     this.sync = new Sync(
       this.pouch,
