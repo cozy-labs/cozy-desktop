@@ -18,8 +18,8 @@ module.exports = class StreamBuilder {
     return this
   }
 
-  error(err /*: Error */) /* StreamBuilder */ {
-    this.err = err
+  error(err /*: ?Error */) /* StreamBuilder */ {
+    if (err) this.err = err
     return this
   }
 
