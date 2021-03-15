@@ -1,5 +1,22 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.26.1-beta.1 - 2021-03-15
+
+Improvements for all users:
+
+- The mechanism we introduced in the last version to resolve conflicts from the
+  synchronization process when we've run out of options was assuming that the
+  current date of the computer would always be greater than the last
+  modification date of the document being renamed on the remote Cozy.
+  Since this is not always the case and the remote Cozy will refuse the renaming
+  in those situations, we'll use the same workaround than for the other requests
+  and send the most recent date between the current local date and the last
+  modification date of the remote document.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.26.0 - 2021-03-08
 
 Improvements for all users:
