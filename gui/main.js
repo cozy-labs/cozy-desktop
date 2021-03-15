@@ -1,5 +1,8 @@
 'use strict'
 
+// Initialize `remote` module so that renderer processes can use it.
+require('@electron/remote/main').initialize()
+
 const Desktop = require('../core/app.js')
 const notes = require('./notes')
 const pkg = require('../package.json')
