@@ -84,7 +84,8 @@ function errSerializer(err) {
     syscall,
     code,
     status,
-    originalErr
+    originalErr,
+    errors
   } = err
 
   if (type) obj.type = type
@@ -98,6 +99,7 @@ function errSerializer(err) {
   if (code) obj.code = code
   if (status) obj.status = status
   if (originalErr) obj.originalErr = originalErr
+  if (errors) obj.errors = errors
 
   return obj
 }

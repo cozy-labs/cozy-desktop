@@ -887,7 +887,10 @@ class Sync {
           }
         })
       } else {
-        log.warn({ path: doc.path, err }, 'Race condition')
+        log.error(
+          { path: doc.path, err, sentry: true },
+          'Race condition on updateRevs'
+        )
       }
     }
   }

@@ -104,24 +104,22 @@ class Pouch {
   async runMigrations(migrations /*: Migration[] */) {
     log.info('Running migrations...')
     for (const migration of migrations) {
-      let result
-
       // First attempt
-      result = await migrate(migration, this)
+      const result = await migrate(migration, this)
       log.info(migrationLog(migration, result))
 
       if (result.type === MIGRATION_RESULT_FAILED) {
         // Retry in case of failure
-        result = await migrate(migration, this)
-      }
+        const result = await migrate(migration, this)
 
-      if (result.type === MIGRATION_RESULT_FAILED) {
-        // Error in case of second failure
-        const err = new MigrationFailedError(migration, result.errors)
-        log.fatal({ err, sentry: true }, migrationLog(migration, result))
-        throw err
-      } else {
-        log.info(migrationLog(migration, result))
+        if (result.type === MIGRATION_RESULT_FAILED) {
+          // Error in case of second failure
+          const err = new MigrationFailedError(migration, result.errors)
+          log.fatal({ err, sentry: true }, migrationLog(migration, result))
+          throw err
+        } else {
+          log.info(migrationLog(migration, result))
+        }
       }
     }
     log.info('Migrations done.')
