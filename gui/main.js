@@ -406,9 +406,9 @@ const startSync = async () => {
   })
   desktop.events.on('transfer-started', addFile)
   desktop.events.on('transfer-copy', addFile)
-  desktop.events.on('transfer-move', (info, old) => {
-    addFile(info)
-    removeFile(old)
+  desktop.events.on('transfer-move', async (info, old) => {
+    await addFile(info)
+    await removeFile(old)
   })
   const notifyIncompatibilities = debounce(
     incompatibilities => {
