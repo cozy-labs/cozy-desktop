@@ -389,6 +389,8 @@ function invariants /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
     err = new Error(`Metadata has no sides`)
   } else if (doc.sides.remote && !doc.remote) {
     err = new Error(`Metadata has 'sides.remote' but no remote`)
+  } else if (doc.sides.local && !doc.local) {
+    err = new Error(`Metadata has 'sides.local' but no local`)
   } else if (doc.docType === 'file' && doc.md5sum == null) {
     err = new Error(`File metadata has no checksum`)
   }

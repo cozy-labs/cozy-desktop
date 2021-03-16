@@ -806,8 +806,13 @@ describe('Merge', function() {
         .metafile()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .noLocal()
         .create()
+
+      // Remove local attribute for the test
+      delete mergedFile.local
+      const { rev } = await this.pouch.db.put(mergedFile)
+      mergedFile._rev = rev
+
       const sameFile = builders
         .metafile(mergedFile)
         .unmerged('local')
@@ -1227,8 +1232,13 @@ describe('Merge', function() {
         .metafile()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .noLocal()
         .create()
+
+      // Remove local attribute for the test
+      delete mergedFile.local
+      const { rev } = await this.pouch.db.put(mergedFile)
+      mergedFile._rev = rev
+
       const sameFile = builders
         .metafile(mergedFile)
         .unmerged('local')
@@ -1696,8 +1706,13 @@ describe('Merge', function() {
         .metadir()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .noLocal()
         .create()
+
+      // Remove local attribute for the test
+      delete mergedFolder.local
+      const { rev } = await this.pouch.db.put(mergedFolder)
+      mergedFolder._rev = rev
+
       const sameFolder = builders
         .metadir(mergedFolder)
         .unmerged('local')

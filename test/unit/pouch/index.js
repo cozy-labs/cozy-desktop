@@ -760,7 +760,7 @@ describe('Pouch', function() {
         await builders
           .metafile()
           .path('my-folder/remote-file')
-          .noLocal()
+          .sides({ remote: 1 })
           .create()
 
         await should(this.pouch.localTree()).be.fulfilledWith(
