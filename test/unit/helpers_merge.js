@@ -32,7 +32,7 @@ describe('Merge Helpers', function() {
   describe('resolveConflict', function() {
     it('appends -conflict- and the date to the path', async function() {
       const doc = builders
-        .metadata()
+        .metadir()
         .path('foo/bar')
         .build()
       const spy = this.merge.local.moveAsync

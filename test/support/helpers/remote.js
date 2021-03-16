@@ -8,7 +8,10 @@ const conflictHelpers = require('./conflict')
 const cozyHelpers = require('./cozy')
 
 const { Remote, dirAndName } = require('../../../core/remote')
-const { TRASH_DIR_NAME } = require('../../../core/remote/constants')
+const {
+  ROOT_DIR_ID,
+  TRASH_DIR_NAME
+} = require('../../../core/remote/constants')
 
 /*::
 import type cozy from 'cozy-client-js'
@@ -45,6 +48,35 @@ class RemoteTestHelpers {
     await this.side.watcher.watch()
   }
 
+  async createDirectory(
+    name /*: string */,
+    dirID /*: string */ = ROOT_DIR_ID
+  ) /*: Promise<MetadataRemoteInfo> */ {
+    return this.cozy.files
+      .createDirectory({
+        name,
+        dirID,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+      .then(this.side.remoteCozy.toRemoteDoc)
+  }
+
+  async createFile(
+    name /*: string */,
+    dirID /*: string */ = ROOT_DIR_ID,
+    content /*: string */ = 'whatever'
+  ) /*: Promise<MetadataRemoteInfo> */ {
+    return this.cozy.files
+      .create(content, {
+        name,
+        dirID,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      })
+      .then(this.side.remoteCozy.toRemoteDoc)
+  }
+
   async createTree(
     paths /*: Array<string> */
   ) /*: Promise<{ [string]: MetadataRemoteInfo}> */ {
@@ -60,23 +92,13 @@ class RemoteTestHelpers {
         {}
       )._id
       if (p.endsWith('/')) {
-        remoteDocsByPath[p] = await this.cozy.files
-          .createDirectory({
-            name,
-            dirID,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          })
-          .then(this.side.remoteCozy.toRemoteDoc)
+        remoteDocsByPath[p] = await this.createDirectory(name, dirID)
       } else {
-        remoteDocsByPath[p] = await this.cozy.files
-          .create(`Content of file ${p}`, {
-            name,
-            dirID,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          })
-          .then(this.side.remoteCozy.toRemoteDoc)
+        remoteDocsByPath[p] = await this.createFile(
+          name,
+          dirID,
+          `Content of file ${p}`
+        )
       }
     }
 

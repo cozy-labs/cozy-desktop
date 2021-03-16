@@ -367,20 +367,22 @@ describe('Conflict resolution', () => {
 
   describe('migrating to Cozy Desktop 3.15', () => {
     it('does not generate conflicts on existing documents with NFD encoded paths', async () => {
-      const nfdPath = 'Partages reçus'.normalize('NFD')
+      const nfdName = 'Partages reçus'.normalize('NFD')
 
-      await helpers.local.syncDir.ensureDir(nfdPath)
-      const stats = await helpers.local.syncDir.stat(nfdPath)
+      await helpers.local.syncDir.ensureDir(nfdName)
+      const stats = await helpers.local.syncDir.stat(nfdName)
+      const remoteDir = await helpers.remote.createDirectory(nfdName)
       const doc = await builders
         .metadir()
-        .path(nfdPath)
+        .fromRemote(remoteDir)
         .stats(stats)
+        .upToDate()
         .create()
       await helpers.prep.putFolderAsync('local', doc)
 
       await fullSyncStartingFrom('local')
 
-      should(await helpers.trees()).deepEqual(bothSides([`${nfdPath}/`]))
+      should(await helpers.trees()).deepEqual(bothSides([`${nfdName}/`]))
     })
 
     it('does not generate conflicts on new documents with NFD encoded paths', async () => {

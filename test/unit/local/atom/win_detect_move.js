@@ -63,6 +63,7 @@ if (process.platform === 'win32') {
             srcDoc = await metadataBuilderByKind(kind)
               .path(srcPath)
               .ino(srcIno)
+              .upToDate()
               .create()
             deletedEvent = builders
               .event()
@@ -169,6 +170,7 @@ if (process.platform === 'win32') {
                       .metadir()
                       .path(path.join(srcPath, childName))
                       .ino(childIno)
+                      .upToDate()
                       .create()
                     deletedChildEvent = builders
                       .event()
@@ -380,6 +382,7 @@ if (process.platform === 'win32') {
               await metadataBuilderByKind(kind)
                 .path(deletedPath)
                 .ino(createdIno)
+                .upToDate()
                 .create()
               deletedEvent = builders
                 .event()
@@ -418,6 +421,7 @@ if (process.platform === 'win32') {
                     await metadataBuilderByKind(childKind)
                       .path(path.join(deletedPath, childName))
                       .ino(childIno)
+                      .upToDate()
                       .create()
                     deletedChildEvent = builders
                       .event()
@@ -500,6 +504,7 @@ if (process.platform === 'win32') {
               await metadataBuilderByKind(kind)
                 .path(createdPath)
                 .ino(createdIno)
+                .upToDate()
                 .create()
               deletedEvent = builders
                 .event()

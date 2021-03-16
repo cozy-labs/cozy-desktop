@@ -544,9 +544,10 @@ describe('core/local/atom/dispatch.loop()', function() {
 
         beforeEach(async () => {
           oldDoc = await builders
-            .metadata()
+            .metafile()
             .path(filePath)
             .ino(fileIno)
+            .upToDate()
             .create()
         })
 
@@ -582,9 +583,10 @@ describe('core/local/atom/dispatch.loop()', function() {
       context('but the inodes do not match', () => {
         beforeEach(async () => {
           await builders
-            .metadata()
+            .metafile()
             .path(filePath)
             .ino(fileIno + 1)
+            .upToDate()
             .create()
         })
 
@@ -654,9 +656,10 @@ describe('core/local/atom/dispatch.loop()', function() {
 
       beforeEach(async () => {
         oldDoc = await builders
-          .metadata()
+          .metafile()
           .path(filePath)
           .ino(1)
+          .upToDate()
           .create()
       })
 
@@ -665,9 +668,10 @@ describe('core/local/atom/dispatch.loop()', function() {
 
         beforeEach(async () => {
           existingDoc = await builders
-            .metadata()
+            .metafile()
             .path(newFilePath)
             .ino(2)
+            .upToDate()
             .create()
         })
 
@@ -764,9 +768,10 @@ describe('core/local/atom/dispatch.loop()', function() {
 
         beforeEach(async () => {
           oldDoc = await builders
-            .metadata()
+            .metadir()
             .path(directoryPath)
             .ino(dirIno)
+            .upToDate()
             .create()
         })
 
@@ -791,9 +796,10 @@ describe('core/local/atom/dispatch.loop()', function() {
       context('and the inodes do not match', () => {
         beforeEach(async () => {
           await builders
-            .metadata()
+            .metadir()
             .path(directoryPath)
             .ino(dirIno + 1)
+            .upToDate()
             .create()
         })
 
@@ -882,9 +888,10 @@ describe('core/local/atom/dispatch.loop()', function() {
 
       beforeEach(async () => {
         oldDoc = await builders
-          .metadata()
+          .metafile()
           .path(filePath)
           .ino(1)
+          .upToDate()
           .create()
       })
 
@@ -926,9 +933,10 @@ describe('core/local/atom/dispatch.loop()', function() {
 
       beforeEach(async () => {
         oldDoc = await builders
-          .metadata()
+          .metadir()
           .path(directoryPath)
           .ino(1)
+          .upToDate()
           .create()
       })
 

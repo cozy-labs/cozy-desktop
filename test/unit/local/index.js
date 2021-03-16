@@ -262,6 +262,7 @@ describe('Local', function() {
         .metafile()
         .path('files/my-checkum-is-456')
         .data(content)
+        .upToDate()
         .create()
       await syncDir.outputFile(other.path, content)
 
@@ -703,6 +704,7 @@ describe('Local', function() {
       const doc = await builders
         .metafile()
         .path('FILE-TO-DELETE')
+        .upToDate()
         .create()
       const filePath = syncDir.abspath(doc.path)
       fse.ensureFileSync(filePath)
@@ -716,6 +718,7 @@ describe('Local', function() {
       const doc = await builders
         .metadir()
         .path('FOLDER-TO-DELETE')
+        .upToDate()
         .create()
       const folderPath = syncDir.abspath(doc.path)
       fse.ensureDirSync(folderPath)
