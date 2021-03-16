@@ -85,7 +85,7 @@ module.exports = class UpdaterWM extends WindowManager {
         this.skipUpdate('assuming development environment')
       } else {
         await Promise.delay(UPDATE_RETRY_DELAY)
-        autoUpdater.checkForUpdates()
+        await autoUpdater.checkForUpdates()
       }
     })
     autoUpdater.on('download-progress', progressObj => {
@@ -122,12 +122,19 @@ module.exports = class UpdaterWM extends WindowManager {
     }
   }
 
-  checkForUpdates() {
+  async checkForUpdates() {
     this.skipped = false
     this.timeout = setTimeout(() => {
       this.skipUpdate(`check is taking more than ${UPDATE_CHECK_TIMEOUT} ms`)
     }, UPDATE_CHECK_TIMEOUT)
-    autoUpdater.checkForUpdates()
+
+    try {
+      await autoUpdater.checkForUpdates()
+    } catch (err) {
+      // Dealing with the error itself is alreay done via the listener on the
+      // `error` event.
+      log.error({ err })
+    }
   }
 
   skipUpdate(reason) {

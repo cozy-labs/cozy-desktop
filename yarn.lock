@@ -163,6 +163,11 @@
     global-agent "^2.0.2"
     global-tunnel-ng "^2.7.1"
 
+"@electron/remote@^1.0.4":
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@electron/remote/-/remote-1.0.4.tgz#f1c8cf3560bab762b462bfae9991919cced8bc33"
+  integrity sha512-kguDJRhL3ZynHrkbX8Tr7xoAzGsNgh4eqXkycXb6cgXbOgehGqkBVe+MnjSVMXz3QJykerGKPy28gqcM7AFGYw==
+
 "@emotion/cache@^10.0.27":
   version "10.0.29"
   resolved "https://registry.yarnpkg.com/@emotion/cache/-/cache-10.0.29.tgz#87e7e64f412c060102d589fe7c6dc042e6f9d1e0"
@@ -405,10 +410,10 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-12.11.1.tgz#1fd7b821f798b7fa29f667a1be8f3442bb8922a3"
   integrity sha512-TJtwsqZ39pqcljJpajeoofYRfeZ7/I/OMUQ5pR4q5wOKf2ocrUvBAZUMhWsOvKx3dVc/aaV5GluBivt0sWqA5A==
 
-"@types/node@^12.0.12":
-  version "12.12.54"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-12.12.54.tgz#a4b58d8df3a4677b6c08bfbc94b7ad7a7a5f82d1"
-  integrity sha512-ge4xZ3vSBornVYlDnk7yZ0gK6ChHf/CHB7Gl1I0Jhah8DDnEQqBzgohYG4FX4p81TNirSETOiSyn+y1r9/IR6w==
+"@types/node@^14.6.2":
+  version "14.14.33"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-14.14.33.tgz#9e4f8c64345522e4e8ce77b334a8aaa64e2b6c78"
+  integrity sha512-oJqcTrgPUF29oUP8AsUqbXGJNuPutsetaa9kTQAQce5Lx5dTYWV02ScBiT/k1BX/Z7pKeqedmvp39Wu4zR7N7g==
 
 "@types/prop-types@*":
   version "15.7.3"
@@ -2346,13 +2351,13 @@ electron-window@^0.8.0:
   dependencies:
     is-electron-renderer "^2.0.0"
 
-electron@^11.0.0:
-  version "11.1.1"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-11.1.1.tgz#188f036f8282798398dca9513e9bb3b10213e3aa"
-  integrity sha512-tlbex3xosJgfileN6BAQRotevPRXB/wQIq48QeQ08tUJJrXwE72c8smsM/hbHx5eDgnbfJ2G3a60PmRjHU2NhA==
+electron@^12.0.0:
+  version "12.0.0"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-12.0.0.tgz#b3b1d88cc64622e59c637521da5a6b6ab4df4eb5"
+  integrity sha512-p6oxZ4LG82hopPGAsIMOjyoL49fr6cexyFNH0kADA9Yf+mJ72DN7bjvBG+6V7r6QKhwYgsSsW8RpxBeVOUbxVQ==
   dependencies:
     "@electron/get" "^1.0.1"
-    "@types/node" "^12.0.12"
+    "@types/node" "^14.6.2"
     extract-zip "^1.0.3"
 
 elm-format@elm0.19.1:
@@ -5431,10 +5436,10 @@ nice-try@^1.0.4:
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-node-abi@2.19.3, node-abi@^2.19.3, node-abi@^2.7.0:
-  version "2.19.3"
-  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-2.19.3.tgz#252f5dcab12dad1b5503b2d27eddd4733930282d"
-  integrity sha512-9xZrlyfvKhWme2EXFKQhZRp1yNWT/uI1luYPr3sFl+H4keYY4xR+1jO7mvTTijIsHf1M+QDe9uWuKeEpLInIlg==
+node-abi@2.21.0, node-abi@^2.21.0, node-abi@^2.7.0:
+  version "2.21.0"
+  resolved "https://registry.yarnpkg.com/node-abi/-/node-abi-2.21.0.tgz#c2dc9ebad6f4f53d6ea9b531e7b8faad81041d48"
+  integrity sha512-smhrivuPqEM3H5LmnY3KU6HfYv0u4QklgAxfFyRNujKUzbUcYZ+Jc2EhukB9SRcD2VpqhxM7n/MIcp1Ua1/JMg==
   dependencies:
     semver "^5.4.1"
 

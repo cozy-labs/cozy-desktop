@@ -1,5 +1,8 @@
 'use strict'
 
+// Initialize `remote` module so that renderer processes can use it.
+require('@electron/remote/main').initialize()
+
 const Desktop = require('../core/app.js')
 const notes = require('./notes')
 const pkg = require('../package.json')
@@ -14,7 +17,7 @@ const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/errors')
 const {
   SYNC_DIR_EMPTY_MESSAGE,
   SYNC_DIR_UNLINKED_MESSAGE
-} = require('../core/local')
+} = require('../core/local/errors')
 const migrations = require('../core/pouch/migrations')
 const config = require('../core/config')
 const winRegistry = require('../core/utils/win_registry')

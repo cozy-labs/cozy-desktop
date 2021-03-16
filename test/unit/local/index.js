@@ -1,4 +1,5 @@
 /* eslint-env mocha */
+/* @flow */
 
 const Promise = require('bluebird')
 const crypto = require('crypto')
@@ -36,7 +37,7 @@ describe('Local', function() {
   before('instanciate pouch', pouchHelpers.createDatabase)
   before('instanciate local', function() {
     this.prep = {}
-    this.events = {}
+    this.events = { emit: () => {} }
     this.local = new Local(this)
 
     builders = new Builders({ pouch: this.pouch })
@@ -79,7 +80,7 @@ describe('Local', function() {
         stream.pipe(checksum)
         stream.on('end', function() {
           checksum.end()
-          checksum.read().should.equal(doc.md5sum)
+          should(checksum.read()).equal(doc.md5sum)
           done()
         })
       })
@@ -116,11 +117,11 @@ describe('Local', function() {
       })
       updater(function(err) {
         should.not.exist(err)
-        let mode = +fse.statSync(filePath).mode
+        const mode = +fse.statSync(filePath).mode
         if (process.platform === 'win32') {
-          ;(mode & 0o100).should.equal(0)
+          should(mode & 0o100).equal(0)
         } else {
-          ;(mode & 0o100).should.not.equal(0)
+          should(mode & 0o100).not.equal(0)
         }
         done()
       })
@@ -136,8 +137,8 @@ describe('Local', function() {
       })
       updater(function(err) {
         should.not.exist(err)
-        let mtime = +fse.statSync(filePath).mtime
-        mtime.should.equal(+date)
+        const mtime = +fse.statSync(filePath).mtime
+        should(mtime).equal(+date)
         done()
       })
     })
@@ -152,8 +153,8 @@ describe('Local', function() {
       })
       updater(function(err) {
         should.not.exist(err)
-        let mtime = +fse.statSync(folderPath).mtime
-        mtime.should.equal(+date)
+        const mtime = +fse.statSync(folderPath).mtime
+        should(mtime).equal(+date)
         done()
       })
     })
@@ -167,7 +168,9 @@ describe('Local', function() {
     })
 
     it('sets ino for a file', function(done) {
-      const doc = { path: 'file-needs-ino' }
+      const doc /*: { path: string, ino?: number } */ = {
+        path: 'file-needs-ino'
+      }
       fse.ensureFileSync(fullPath(doc))
       const inodeSetter = this.local.inodeSetter(doc)
       inodeSetter(err => {
@@ -178,7 +181,9 @@ describe('Local', function() {
     })
 
     it('sets ino for a directory', function(done) {
-      const doc = { path: 'dir-needs-ino' }
+      const doc /*: { path: string, ino?: number } */ = {
+        path: 'dir-needs-ino'
+      }
       fse.ensureDirSync(fullPath(doc))
       const inodeSetter = this.local.inodeSetter(doc)
       inodeSetter(err => {
@@ -189,7 +194,7 @@ describe('Local', function() {
     })
   })
 
-  describe('fileExistsLocally', () =>
+  describe('fileExistsLocally', () => {
     it('checks file existence as a binary in the db and on disk', async function() {
       const filePath = path.resolve(this.syncPath, 'folder', 'testfile')
       await should(this.local.fileExistsLocally('deadcafe')).be.fulfilledWith(
@@ -210,88 +215,124 @@ describe('Local', function() {
       await should(this.local.fileExistsLocally('deadcafe')).be.fulfilledWith(
         filePath
       )
-    }))
+    })
+  })
 
   describe('addFile', function() {
+    beforeEach(function() {
+      sinon.spy(this.events, 'emit')
+    })
+    afterEach(function() {
+      this.events.emit.restore()
+    })
+
     it('creates the file by downloading it', async function() {
-      this.events.emit = sinon.spy()
-      let doc = {
-        path: 'files/file-from-remote',
-        updated_at: new Date('2015-10-09T04:05:06Z'),
-        md5sum: 'OFj2IjCsPJFfMAxmQxLGPw=='
+      const content = 'foobar'
+      const doc = builders
+        .metafile()
+        .path('files/file-from-remote')
+        .updatedAt(new Date('2015-10-09T04:05:06Z'))
+        .data(content)
+        .build()
+      this.local.other = streamer(doc, content)
+
+      try {
+        await this.local.addFileAsync(doc)
+
+        const filePath = syncDir.abspath(doc.path)
+        const stats = await fse.stat(filePath)
+        should(stats.isFile()).be.true()
+        should(+stats.mtime).equal(new Date(doc.updated_at).getTime())
+        await should(
+          fse.readFile(filePath, { encoding: 'utf-8' })
+        ).be.fulfilledWith(content)
+        should(doc.ino).be.a.Number()
+      } finally {
+        this.local.other = null
       }
-      this.local.other = streamer(doc, 'foobar')
-      let filePath = syncDir.abspath(doc.path)
-      await this.local.addFileAsync(doc)
-      this.local.other = null
-      fse
-        .statSync(filePath)
-        .isFile()
-        .should.be.true()
-      let content = fse.readFileSync(filePath, { encoding: 'utf-8' })
-      content.should.equal('foobar')
-      let mtime = +fse.statSync(filePath).mtime
-      mtime.should.equal(+doc.updated_at)
-      should(doc.ino).be.a.Number()
     })
 
     it('creates the file from another file with same checksum', async function() {
-      const doc = {
-        path: 'files/file-with-same-checksum',
-        updated_at: new Date('2015-10-09T04:05:07Z'),
-        md5sum: 'qwesux5JaAGTet+nckJL9w=='
+      sinon.spy(this.local, 'fileExistsLocally')
+
+      const content = 'foo bar baz'
+
+      const other = await builders
+        .metafile()
+        .path('files/my-checkum-is-456')
+        .data(content)
+        .create()
+      await syncDir.outputFile(other.path, content)
+
+      const doc = builders
+        .metafile()
+        .path('files/file-with-same-checksum')
+        .updatedAt('2015-10-09T04:05:07Z')
+        .data(content)
+        .build()
+
+      try {
+        await this.local.addFileAsync(doc)
+
+        should(this.local.fileExistsLocally).have.been.calledWith(doc.md5sum)
+
+        const filePath = syncDir.abspath(doc.path)
+        const stats = await fse.stat(filePath)
+        should(stats.isFile()).be.true()
+        should(+stats.mtime).equal(new Date(doc.updated_at).getTime())
+        await should(
+          fse.readFile(filePath, { encoding: 'utf-8' })
+        ).be.fulfilledWith('foo bar baz')
+      } finally {
+        this.local.fileExistsLocally.restore()
       }
-      const alt = syncDir.abspath('files/my-checkum-is-456')
-      fse.writeFileSync(alt, 'foo bar baz')
-      const stub = sinon.stub(this.local, 'fileExistsLocally').resolves(alt)
-      const filePath = syncDir.abspath(doc.path)
-      await this.local.addFileAsync(doc)
-      stub.restore()
-      stub.calledWith(doc.md5sum).should.be.true()
-      fse
-        .statSync(filePath)
-        .isFile()
-        .should.be.true()
-      await should(
-        fse.readFile(filePath, { encoding: 'utf-8' })
-      ).be.fulfilledWith('foo bar baz')
-      should(+(await fse.stat(filePath)).mtime).equal(+doc.updated_at)
     })
 
     it('can create a file in the root', async function() {
-      let doc = {
-        path: 'file-in-root',
-        updated_at: new Date('2015-10-09T04:05:19Z'),
-        md5sum: 'gDOOedLKm5wJDrqqLvKTxw=='
+      const content = 'foobaz'
+      const doc = builders
+        .metafile()
+        .path('file-in-root')
+        .updatedAt(new Date('2015-10-09T04:05:19Z'))
+        .data(content)
+        .build()
+      this.local.other = streamer(doc, content)
+
+      try {
+        await this.local.addFileAsync(doc)
+
+        const filePath = syncDir.abspath(doc.path)
+        const stats = await fse.stat(filePath)
+        should(stats.isFile()).be.true()
+        should(+stats.mtime).equal(new Date(doc.updated_at).getTime())
+        await should(
+          fse.readFile(filePath, { encoding: 'utf-8' })
+        ).be.fulfilledWith(content)
+      } finally {
+        this.local.other = null
       }
-      this.local.other = streamer(doc, 'foobaz')
-      let filePath = syncDir.abspath(doc.path)
-      await this.local.addFileAsync(doc)
-      this.local.other = null
-      fse
-        .statSync(filePath)
-        .isFile()
-        .should.be.true()
-      let content = fse.readFileSync(filePath, { encoding: 'utf-8' })
-      content.should.equal('foobaz')
-      let mtime = +fse.statSync(filePath).mtime
-      mtime.should.equal(+doc.updated_at)
     })
 
     it('aborts when the download is incorrect', async function() {
-      this.events.emit = sinon.spy()
-      let doc = {
-        path: 'files/file-from-remote-2',
-        updated_at: new Date('2015-10-09T04:05:16Z'),
-        md5sum: '8843d7f92416211de9ebb963ff4ce28125932878'
+      const content = 'foo'
+      const invalidContent = 'bar'
+      const doc = builders
+        .metafile()
+        .path('files/file-from-remote-2')
+        .updatedAt(new Date('2015-10-09T04:05:16Z'))
+        .data(content)
+        .build()
+      this.local.other = streamer(doc, invalidContent)
+
+      try {
+        await should(this.local.addFileAsync(doc)).be.rejectedWith(
+          'Invalid checksum'
+        )
+        const filePath = syncDir.abspath(doc.path)
+        await should(fse.exists(filePath)).be.fulfilledWith(false)
+      } finally {
+        this.local.other = null
       }
-      this.local.other = streamer(doc, 'foo')
-      let filePath = syncDir.abspath(doc.path)
-      await should(this.local.addFileAsync(doc)).be.rejectedWith(
-        'Invalid checksum'
-      )
-      this.local.other = null
-      fse.existsSync(filePath).should.be.false()
     })
 
     it('adds write permission to existing read-only Cozy Note', async function() {
@@ -403,60 +444,64 @@ describe('Local', function() {
 
   describe('addFolder', function() {
     it('creates the folder', async function() {
-      let doc = {
-        path: 'parent/folder-to-create',
-        updated_at: new Date('2015-10-09T05:06:08Z')
-      }
-      let folderPath = syncDir.abspath(doc.path)
+      const doc = builders
+        .metadir()
+        .path('parent/folder-to-create')
+        .updatedAt(new Date('2015-10-09T05:06:08Z'))
+        .build()
+      const folderPath = syncDir.abspath(doc.path)
+
       await this.local.addFolderAsync(doc)
-      fse
-        .statSync(folderPath)
-        .isDirectory()
-        .should.be.true()
-      let mtime = +fse.statSync(folderPath).mtime
-      mtime.should.equal(+doc.updated_at)
+
+      const stats = await fse.stat(folderPath)
+      should(stats.isDirectory()).be.true()
+      should(+stats.mtime).equal(new Date(doc.updated_at).getTime())
       should(doc.ino).be.a.Number()
     })
 
     it('updates mtime if the folder already exists', async function() {
-      let doc = {
-        path: 'parent/folder-to-create',
-        updated_at: new Date('2015-10-09T05:06:08Z')
-      }
-      let folderPath = syncDir.abspath(doc.path)
+      const doc = builders
+        .metadir()
+        .path('parent/folder-to-create')
+        .updatedAt(new Date('2015-10-09T05:06:08Z'))
+        .build()
+      const folderPath = syncDir.abspath(doc.path)
       fse.ensureDirSync(folderPath)
+
       await this.local.addFolderAsync(doc)
-      fse
-        .statSync(folderPath)
-        .isDirectory()
-        .should.be.true()
-      let mtime = +fse.statSync(folderPath).mtime
-      mtime.should.equal(+doc.updated_at)
+
+      const stats = await fse.stat(folderPath)
+      should(stats.isDirectory()).be.true()
+      should(+stats.mtime).equal(new Date(doc.updated_at).getTime())
     })
   })
 
   describe('overwriteFile', () => {
     it('writes the new content of a file', async function() {
-      this.events.emit = sinon.spy()
-      let doc = {
-        path: 'a-file-to-overwrite',
-        docType: 'file',
-        updated_at: new Date('2015-10-09T05:06:07Z'),
-        md5sum: 'PiWWCnnbxptnTNTsZ6csYg=='
-      }
-      this.local.other = streamer(doc, 'Hello world')
-      let filePath = syncDir.abspath(doc.path)
+      const newContent = 'Hello world'
+      const doc = builders
+        .metafile()
+        .path('a-file-to-overwrite')
+        .data(newContent)
+        .updatedAt(new Date('2015-10-09T05:06:07Z'))
+        .build()
+      this.local.other = streamer(doc, newContent)
+
+      const filePath = syncDir.abspath(doc.path)
       fse.writeFileSync(filePath, 'old content')
-      await this.local.overwriteFileAsync(doc, {})
-      this.local.other = null
-      fse
-        .statSync(filePath)
-        .isFile()
-        .should.be.true()
-      let content = fse.readFileSync(filePath, { encoding: 'utf-8' })
-      content.should.equal('Hello world')
-      let mtime = +fse.statSync(filePath).mtime
-      mtime.should.equal(+doc.updated_at)
+
+      try {
+        await this.local.overwriteFileAsync(doc, {})
+
+        const stats = await fse.stat(filePath)
+        should(stats.isFile()).be.true()
+        should(+stats.mtime).equal(new Date(doc.updated_at).getTime())
+        await should(
+          fse.readFile(filePath, { encoding: 'utf-8' })
+        ).be.fulfilledWith(newContent)
+      } finally {
+        this.local.other = null
+      }
     })
   })
 
@@ -654,33 +699,29 @@ describe('Local', function() {
 
   describe('trash', () => {
     it('deletes a file from the local filesystem', async function() {
-      let doc = {
-        _id: 'FILE-TO-DELETE',
-        path: 'FILE-TO-DELETE',
-        docType: 'file'
-      }
-      let filePath = syncDir.abspath(doc.path)
+      const doc = await builders
+        .metafile()
+        .path('FILE-TO-DELETE')
+        .create()
+      const filePath = syncDir.abspath(doc.path)
       fse.ensureFileSync(filePath)
-      const inserted = await this.pouch.db.put(doc)
-      doc._rev = inserted.rev
+
       await this.pouch.db.remove(doc)
       await this.local.trashAsync(doc)
-      fse.existsSync(filePath).should.be.false()
+      await should(fse.exists(filePath)).be.fulfilledWith(false)
     })
 
     it('deletes a folder from the local filesystem', async function() {
-      let doc = {
-        _id: 'FOLDER-TO-DELETE',
-        path: 'FOLDER-TO-DELETE',
-        docType: 'folder'
-      }
-      let folderPath = syncDir.abspath(doc.path)
+      const doc = await builders
+        .metadir()
+        .path('FOLDER-TO-DELETE')
+        .create()
+      const folderPath = syncDir.abspath(doc.path)
       fse.ensureDirSync(folderPath)
-      const inserted = await this.pouch.db.put(doc)
-      doc._rev = inserted.rev
+
       await this.pouch.db.remove(doc)
       await this.local.trashAsync(doc)
-      fse.existsSync(folderPath).should.be.false()
+      await should(fse.exists(folderPath)).be.fulfilledWith(false)
     })
   })
 
@@ -690,11 +731,12 @@ describe('Local', function() {
     beforeEach(function() {
       fullPath = doc => syncDir.abspath(doc.path)
 
-      this.events.emit = sinon.spy()
+      sinon.spy(this.events, 'emit')
       sinon.spy(this.local, 'trashAsync')
     })
 
     afterEach(function() {
+      this.events.emit.restore()
       this.local.trashAsync.restore()
     })
 

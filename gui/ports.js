@@ -1,7 +1,8 @@
 'use strict'
 
 const electron = require('electron')
-const { ipcRenderer, remote } = electron
+const { ipcRenderer } = electron
+const remote = require('@electron/remote')
 
 /*::
 import type { SyncStatus } from '../core/syncstate'
