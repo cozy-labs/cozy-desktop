@@ -624,9 +624,10 @@ class Merge {
 
   async doTrash(
     side /*: SideName */,
-    was /*: SavedMetadata */,
-    doc /*: Metadata */
+    was /*: SavedMetadata */
   ) /*: Promise<void> */ {
+    log.debug({ path: was.path, side, was }, 'doTrash')
+
     delete was.errors
 
     if (
@@ -641,22 +642,20 @@ class Merge {
       return this.pouch.eraseDocument(was)
     }
 
-    const newMetadata = _.cloneDeep(was)
-    metadata.markSide(side, newMetadata, was)
-    newMetadata.trashed = true
     if (was.sides && was.sides[side]) {
       metadata.markSide(side, was, was)
       was.deleted = true
       try {
-        await this.pouch.put(was)
-        return
+        return await this.pouch.put(was)
       } catch (err) {
-        log.warn({ path: doc.path, err })
-        // Do we really want to save newMetadata in this situation? It will
+        log.warn({ path: was.path, err })
+        // Do we really want to save a trashed was in this situation? It will
         // probably fail as well.
       }
     }
-    return this.pouch.put(newMetadata)
+
+    was.trashed = true
+    return this.pouch.put(was)
   }
 
   async trashFileAsync(
@@ -726,7 +725,7 @@ class Merge {
       }
     }
 
-    return this.doTrash(side, was, doc)
+    return this.doTrash(side, was)
   }
 
   async trashFolderAsync(
@@ -796,7 +795,7 @@ class Merge {
         }
       }
     }
-    await this.doTrash(side, was, doc)
+    await this.doTrash(side, was)
   }
 
   // Remove a file from PouchDB
