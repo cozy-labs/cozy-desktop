@@ -417,6 +417,13 @@ class Remote /*:: implements Reader, Writer */ {
     const newName = path.basename(
       conflicts.generateConflictPath(newMetadata.path)
     )
+    log.info(
+      {
+        path: path.join(path.dirname(newMetadata.path), newName),
+        oldpath: newMetadata.path
+      },
+      'Resolving remote conflict...'
+    )
 
     const attrs = {
       name: newName,
