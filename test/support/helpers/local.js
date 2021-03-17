@@ -42,10 +42,11 @@ class LocalTestHelpers {
   _resolveSimulation: ?() => void
   */
 
-  constructor(opts /*: LocalOptions */) {
+  constructor(opts /*: $Shape<LocalOptions> */) {
     const localOptions /*: LocalOptions */ = Object.assign(
       ({
-        onAtomEvents: this.dispatchAtomEvents.bind(this)
+        onAtomEvents: this.dispatchAtomEvents.bind(this),
+        sendToTrash: this.sendToTrash.bind(this)
       } /*: Object */),
       opts
     )
@@ -76,21 +77,18 @@ class LocalTestHelpers {
     }
   }
 
-  async trashFunc(paths /*: string[] */) /*: Promise<void> */ {
-    for (const src of paths) {
-      const dst = path.join(this.trashPath, path.basename(src))
-      try {
-        await fse.rename(src, dst)
-      } catch (err) {
-        throw err
-      }
+  async sendToTrash(src /*: string */) /*: Promise<void> */ {
+    const dst = path.join(this.trashPath, path.basename(src))
+    try {
+      await fse.rename(src, dst)
+    } catch (err) {
+      throw err
     }
   }
 
   async setupTrash() {
     await fse.emptyDir(this.trashPath)
     this.trashDir = new ContextDir(this.trashPath)
-    this.side._trash = this.trashFunc
   }
 
   async trash({ withIno = false } /*: { withIno?: boolean } */ = {}) {

@@ -11,6 +11,7 @@ const should = require('should')
 const { Local } = require('../../../core/local')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const timestamp = require('../../../core/utils/timestamp')
+const { sendToTrash } = require('../../../core/utils/fs')
 
 const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
@@ -38,7 +39,7 @@ describe('Local', function() {
   before('instanciate local', function() {
     this.prep = {}
     this.events = { emit: () => {} }
-    this.local = new Local(this)
+    this.local = new Local({ ...this, sendToTrash })
 
     builders = new Builders({ pouch: this.pouch })
     syncDir = new ContextDir(this.syncPath)
