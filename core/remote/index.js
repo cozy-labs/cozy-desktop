@@ -154,7 +154,7 @@ class Remote /*:: implements Reader, Writer */ {
 
     const [dirPath, name] = dirAndName(path)
     // FIXME: stop creating parent folder and manage missing parent error
-    const dir = await this.remoteCozy.findOrCreateDirectoryByPath(dirPath)
+    const dir = await this.remoteCozy.findDirectoryByPath(dirPath)
 
     const created = await this.remoteCozy.createFile(stream, {
       ...newDocumentAttributes(name, dir._id, doc.updated_at),
