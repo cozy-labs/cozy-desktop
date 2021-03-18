@@ -13,12 +13,23 @@ const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
 const { onPlatform } = require('../support/helpers/platform')
 
+const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../core/remote/constants')
+
 /*::
 import type { SavedMetadata } from '../../core/metadata'
 */
 
 const builders = new Builders()
 const cozy = cozyHelpers.cozy
+
+const skipRemoteChanges = async ({ helpers, cozy }) => {
+  const since = await helpers.pouch.getRemoteSeq()
+  const { last_seq } = await cozy.data.changesFeed('io.cozy.files', {
+    since,
+    limit: 10000
+  })
+  await helpers.pouch.setRemoteSeq(last_seq)
+}
 
 describe('Move', () => {
   if (process.env.APPVEYOR) {
@@ -363,6 +374,132 @@ describe('Move', () => {
             'updated file content'
           )
         })
+      })
+    })
+  })
+
+  describe('synced file', () => {
+    let file
+
+    beforeEach(async () => {
+      file = await cozy.files.create('File content...', {
+        name: 'file',
+        dirID: ROOT_DIR_ID
+      })
+      await helpers.pullAndSyncAll()
+    })
+
+    const moveFile = async () => {
+      await helpers.local.syncDir.move('file', 'renamed')
+      await helpers.local.scan()
+    }
+
+    context('overwritting existing remote file', () => {
+      let existing
+
+      beforeEach(async () => {
+        existing = await cozy.files.create('Overwritten content...', {
+          name: 'renamed',
+          dirID: ROOT_DIR_ID
+        })
+        await helpers.pullAndSyncAll()
+      })
+
+      // This situation is an anomaly. We should not miss any remote
+      // changes as this would mean we're desynchronized.
+      // However, this does happen sometimes at the moment and we'll try to get
+      // back on our feets.
+      context('while we missed the overwritten file remote deletion', () => {
+        beforeEach(async () => {
+          // Destroy existing file on Cozy
+          await cozy.files.destroyById(existing._id)
+          // Fake missing the remote change by skipping its sequence
+          skipRemoteChanges({ helpers, cozy })
+        })
+
+        // We should be retrying a few times and then finally skip the change to
+        // avoid looping over it.
+        it('ends up moving the file', async () => {
+          await moveFile()
+          await helpers.syncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: ['renamed'],
+            remote: ['renamed']
+          })
+          await should(helpers.local.readFile('renamed')).be.fulfilledWith(
+            'File content...'
+          )
+          await should(helpers.remote.readFile('renamed')).be.fulfilledWith(
+            'File content...'
+          )
+        })
+      })
+
+      // This situation is an anomaly. We should not miss any remote
+      // changes as this would mean we're desynchronized.
+      // However, this does happen sometimes at the moment and we'll try to get
+      // back on our feets.
+      context('while we missed the moved file remote deletion', () => {
+        beforeEach(async () => {
+          // Destroy moved file on Cozy
+          await cozy.files.destroyById(file._id)
+          // Fake missing the remote change by skipping its sequence
+          skipRemoteChanges({ helpers, cozy })
+        })
+
+        // We should be retrying a few times and then finally skip the change to
+        // avoid looping over it.
+        it('ends up replacing the overwritten file', async () => {
+          await moveFile()
+          await helpers.syncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: ['renamed'],
+            remote: ['renamed']
+          })
+          await should(helpers.local.readFile('renamed')).be.fulfilledWith(
+            'File content...'
+          )
+          await should(helpers.remote.readFile('renamed')).be.fulfilledWith(
+            'File content...'
+          )
+          should(await helpers.remote.byIdMaybe(existing._id)).have.property(
+            'trashed',
+            true
+          )
+        })
+      })
+    })
+
+    // This situation is an anomaly. We should not miss any remote
+    // changes as this would mean we're desynchronized.
+    // However, this does happen sometimes at the moment and we'll try to get
+    // back on our feets.
+    context('while we missed the moved file remote deletion', () => {
+      beforeEach(async () => {
+        // Destroy moved file on Cozy
+        await cozy.files.destroyById(file._id)
+        // Fake missing the remote change by skipping its sequence
+        skipRemoteChanges({ helpers, cozy })
+      })
+
+      // We should be retrying a few times and then finally skip the change to
+      // avoid looping over it.
+      it('ends up re-uploading the file at the destination', async () => {
+        await moveFile()
+        await helpers.syncAll()
+
+        should(await helpers.trees()).deepEqual({
+          local: ['renamed'],
+          remote: ['renamed']
+        })
+        await should(helpers.local.readFile('renamed')).be.fulfilledWith(
+          'File content...'
+        )
+        await should(helpers.remote.readFile('renamed')).be.fulfilledWith(
+          'File content...'
+        )
       })
     })
   })
@@ -1005,6 +1142,150 @@ describe('Move', () => {
             'parent/src/'
           ]
         })
+      })
+    })
+  })
+
+  describe('synced directory', () => {
+    let dir
+
+    beforeEach(async () => {
+      dir = await cozy.files.createDirectory({
+        name: 'dir',
+        dirID: ROOT_DIR_ID
+      })
+      await cozy.files.create('File content...', {
+        name: 'file',
+        dirID: dir._id
+      })
+      await helpers.pullAndSyncAll()
+    })
+
+    const moveDir = async () => {
+      await helpers.local.syncDir.remove('renamed')
+      await helpers.local.syncDir.move('dir', 'renamed')
+      await helpers.local.scan()
+    }
+
+    context('overwritting existing remote directory', () => {
+      let existing, overwritten
+
+      beforeEach(async () => {
+        existing = await cozy.files.createDirectory({
+          name: 'renamed',
+          dirID: ROOT_DIR_ID
+        })
+        overwritten = await cozy.files.create('Overwritten content...', {
+          name: 'file',
+          dirID: existing._id
+        })
+        await helpers.pullAndSyncAll()
+      })
+
+      // This situation is an anomaly. We should not miss any remote
+      // changes as this would mean we're desynchronized.
+      // However, this does happen sometimes at the moment and we'll try to get
+      // back on our feets.
+      context(
+        'while we missed the overwritten directory remote deletion',
+        () => {
+          beforeEach(async () => {
+            // Destroy existing directory on Cozy
+            await cozy.files.destroyById(existing._id)
+            // Fake missing the remote changes by skipping its sequence
+            skipRemoteChanges({ helpers, cozy })
+          })
+
+          // We should be retrying a few times and then finally skip the change to
+          // avoid looping over it.
+          it('ends up moving the directory', async () => {
+            await moveDir()
+            await helpers.syncAll()
+
+            should(await helpers.trees()).deepEqual({
+              local: ['renamed/', 'renamed/file'],
+              remote: ['renamed/', 'renamed/file']
+            })
+            await should(
+              helpers.local.readFile('renamed/file')
+            ).be.fulfilledWith('File content...')
+            await should(
+              helpers.remote.readFile('renamed/file')
+            ).be.fulfilledWith('File content...')
+          })
+        }
+      )
+
+      // This situation is an anomaly. We should not miss any remote
+      // changes as this would mean we're desynchronized.
+      // However, this does happen sometimes at the moment and we'll try to get
+      // back on our feets.
+      context('while we missed the moved directory remote deletion', () => {
+        beforeEach(async () => {
+          // Destroy moved directory on Cozy
+          await cozy.files.destroyById(dir._id)
+          // Fake missing the remote changes by skipping its sequence
+          skipRemoteChanges({ helpers, cozy })
+        })
+
+        // We should be retrying a few times and then finally skip the change to
+        // avoid looping over it.
+        it('ends up replacing the overwritten file', async () => {
+          await moveDir()
+          await helpers.syncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: ['renamed/', 'renamed/file'],
+            remote: ['renamed/', 'renamed/file']
+          })
+          await should(helpers.local.readFile('renamed/file')).be.fulfilledWith(
+            'File content...'
+          )
+          await should(
+            helpers.remote.readFile('renamed/file')
+          ).be.fulfilledWith('File content...')
+          // Folders don't have a `trashed` attribute so we check it's in the
+          // trash via its parent `dir_id`.
+          should(await helpers.remote.byIdMaybe(existing._id)).have.property(
+            'dir_id',
+            TRASH_DIR_ID
+          )
+          should(await helpers.remote.byIdMaybe(overwritten._id)).have.property(
+            'trashed',
+            true
+          )
+        })
+      })
+    })
+
+    // This situation is an anomaly. We should not miss any remote
+    // changes as this would mean we're desynchronized.
+    // However, this does happen sometimes at the moment and we'll try to get
+    // back on our feets.
+    context('while we missed the moved directory remote deletion', () => {
+      beforeEach(async () => {
+        // Destroy moved directory on Cozy
+        await cozy.files.destroyById(dir._id)
+        // Fake missing the remote changes by skipping its sequence
+        skipRemoteChanges({ helpers, cozy })
+      })
+
+      // We should be retrying a few times and then finally skip the change to
+      // avoid looping over it.
+      it('ends up re-uploading the file at the destination', async () => {
+        await moveDir()
+        await helpers.syncAll()
+
+        should(await helpers.trees()).deepEqual({
+          local: ['renamed/', 'renamed/file'],
+          remote: ['renamed/', 'renamed/file']
+        })
+        await should(helpers.local.readFile('renamed/file')).be.fulfilledWith(
+          'File content...'
+        )
+        await should(helpers.remote.readFile('renamed/file')).be.fulfilledWith(
+          'File content...'
+        )
       })
     })
   })
