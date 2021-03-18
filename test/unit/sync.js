@@ -413,26 +413,8 @@ describe('Sync', function() {
           this.sync.blockSyncFor.restore()
         })
 
-        it('keeps the out-of-date side', async function() {
-          const outOfDateSide = metadata.outOfDateSide(merged)
-          const synced = await this.pouch.bySyncedPath(merged.path)
-          should(metadata.outOfDateSide(synced)).equal(outOfDateSide)
-        })
-
-        it('increases the record errors counter', async function() {
-          const errors = merged.errors || 0
-          const synced = await this.pouch.bySyncedPath(merged.path)
-          should(synced.errors).equal(errors + 1)
-        })
-
-        it('does not skip the change by saving seq', async function() {
-          should(await this.pouch.getLocalSeq()).equal(previousSeq)
-        })
-
-        it('keeps the out-of-date side', async function() {
-          const outOfDateSide = metadata.outOfDateSide(merged)
-          const synced = await this.pouch.bySyncedPath(merged.path)
-          should(metadata.outOfDateSide(synced)).equal(outOfDateSide)
+        it('removes moveFrom and overwrite attributes', async function() {
+          should(change.doc).not.have.properties(['moveFrom', 'overwrite'])
         })
 
         it('blocks the synchronization so we can retry applying the change', async function() {
@@ -512,49 +494,6 @@ describe('Sync', function() {
       should(this.remote.addFileAsync).not.have.been.called()
       should(this.remote.moveAsync).have.been.calledWith(doc, was)
       should(this.remote.overwriteFileAsync).have.been.calledWith(doc)
-    })
-
-    it('does not break when move works but not update', async function() {
-      const was = await builders
-        .metafile()
-        .path('foo/bar2')
-        .moveTo('foo/baz2')
-        .data('initial content')
-        .tags('qux')
-        .changedSide('local')
-        .create()
-      const doc = await builders
-        .metafile()
-        .moveFrom(was)
-        .path('foo/baz2')
-        .data('updated content')
-        .changedSide('local')
-        .create()
-
-      // re-stubs overwriteFileAsync to fail
-      this.remote.overwriteFileAsync = sinon
-        .stub()
-        .rejects(
-          new FetchError(
-            { status: 412, source: { parameter: 'hash' } },
-            'bad md5sum mock'
-          )
-        )
-      this.sync.diskUsage = sinon.stub().resolves()
-
-      await this.sync.apply({ doc }, this.remote, 'remote')
-
-      should(this.remote.addFileAsync).not.have.been.called()
-      should(this.remote.trashAsync).not.have.been.called()
-      should(this.remote.moveAsync).have.been.calledWith(doc, was)
-      should(this.remote.overwriteFileAsync).have.been.calledWith(doc)
-
-      const newMetadata = await this.pouch.bySyncedPath(doc.path)
-      should(newMetadata).not.have.property('moveFrom')
-      should(newMetadata).have.property('errors')
-
-      // restore
-      this.remote.overwriteFileAsync = sinon.stub().resolves()
     })
 
     it('calls trashAsync for a deleted synced file', async function() {
@@ -905,6 +844,98 @@ describe('Sync', function() {
           it('does not restart the remote watcher', function() {
             should(this.remote.watcher.start).not.have.been.called()
           })
+        })
+      })
+    })
+
+    context('when Sync failed to update file after moving it', () => {
+      let file, merged, change
+
+      const previousSeq = 1
+      const seq = 2
+      beforeEach(
+        'set up merged local overwriting file move with update',
+        async function() {
+          const overwritten = await builders
+            .metafile()
+            .path('dst')
+            .upToDate()
+            .create()
+          file = await builders
+            .metafile()
+            .path('src')
+            .moveTo('dst')
+            .data('initial content')
+            .upToDate()
+            .create()
+          merged = await builders
+            .metafile()
+            .moveFrom(file)
+            .overwrite(overwritten)
+            .data('updated content')
+            .changedSide('local')
+            .create()
+
+          await this.pouch.setLocalSeq(previousSeq)
+
+          // Fake removal of moveFrom and overwrite attributes as it would be
+          // done when catching the overwriteFileAsync error.
+          delete merged.moveFrom
+          delete merged.overwrite
+
+          change = { seq, doc: _.cloneDeep(merged) }
+        }
+      )
+
+      beforeEach(function() {
+        this.sync.blockSyncFor({
+          err: syncErrors.wrapError(
+            remoteErrors.wrapError(
+              new FetchError(
+                { status: 412 },
+                { errors: [{ status: 412, source: { parameter: 'If-Match' } }] }
+              )
+            ),
+            'remote',
+            change
+          ),
+          change
+        })
+      })
+
+      describe('retry', () => {
+        beforeEach(async function() {
+          // Reset calls history
+          this.events.emit.reset()
+
+          // Force call to `retry`
+          this.events.emit('user-action-done')
+          // Wait for `retry` to run
+          await Promise.delay(1000)
+        })
+
+        it('increases the record errors counter', async function() {
+          const errors = merged.errors || 0
+          const synced = await this.pouch.bySyncedPath(merged.path)
+          should(synced.errors).equal(errors + 1)
+        })
+
+        it('does not skip the change by saving seq', async function() {
+          should(await this.pouch.getLocalSeq()).equal(previousSeq)
+        })
+
+        it('keeps the out-of-date side', async function() {
+          const outOfDateSide = metadata.outOfDateSide(merged)
+          const synced = await this.pouch.bySyncedPath(merged.path)
+          should(metadata.outOfDateSide(synced)).equal(outOfDateSide)
+        })
+
+        it('removes moveFrom and overwrite attributes', async function() {
+          // It actually only saves the record and the attributes need to be
+          // removed before.
+          // But this is the goal.
+          const synced = await this.pouch.bySyncedPath(merged.path)
+          should(synced).not.have.properties(['moveFrom', 'overwrite'])
         })
       })
     })

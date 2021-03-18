@@ -9,6 +9,15 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
 
+const skipRemoteChange = async ({ helpers, cozy }) => {
+  const since = await helpers.pouch.getRemoteSeq()
+  const { last_seq } = await cozy.data.changesFeed('io.cozy.files', {
+    since,
+    limit: 10000
+  })
+  await helpers.pouch.setRemoteSeq(last_seq)
+}
+
 describe('Trash', () => {
   let cozy, helpers, pouch, prep
 
@@ -99,6 +108,61 @@ describe('Trash', () => {
           should(await helpers.trees()).deepEqual({
             local: ['file', 'parent/'],
             remote: ['file', 'parent/']
+          })
+        })
+      })
+
+      // This situation is an anomaly. We should not miss any remote
+      // changes as this would mean we're desynchronized.
+      // However, this does happen sometimes at the moment and we'll try to get
+      // back on our feets.
+      context('while we missed the remote file deletion', () => {
+        // We should be retrying a few times and then finally skip the change to
+        // avoid looping over it.
+        it('ends up skipping the change', async () => {
+          // Destroy file on Cozy
+          await cozy.files.destroyById(file._id)
+          // Fake missing the remote change by skipping its sequence
+          skipRemoteChange({ helpers, cozy })
+
+          await helpers.local.syncDir.remove('parent/file')
+          await helpers.local.scan()
+          await helpers.syncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: ['parent/'],
+            remote: ['parent/']
+          })
+        })
+      })
+
+      // This situation is an anomaly. We should not miss any remote
+      // changes as this would mean we're desynchronized.
+      // However, this does happen sometimes at the moment and we'll try to get
+      // back on our feets.
+      context('while we missed a remote file update', () => {
+        // The user should be able to skip it manually as we will otherwise keep
+        // trying forever.
+        it('can be skipped manually', async () => {
+          // Destroy file on Cozy
+          await cozy.files.updateById(file._id, 'remote update')
+          // Fake missing the remote change by skipping its sequence
+          skipRemoteChange({ helpers, cozy })
+
+          await helpers.local.syncDir.remove('parent/file')
+          await helpers.local.scan()
+
+          // We skip any required user action as a user would do
+          helpers.events.on('sync-state', ({ userActions }) => {
+            if (userActions.length) {
+              helpers.events.emit('user-action-skipped', userActions[0])
+            }
+          })
+          await helpers.syncAll()
+
+          should(await helpers.trees()).deepEqual({
+            local: ['parent/'],
+            remote: ['parent/', 'parent/file']
           })
         })
       })
