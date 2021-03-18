@@ -318,11 +318,22 @@ class Remote /*:: implements Reader, Writer */ {
     metadata.updateRemote(newMetadata, newRemoteDoc)
 
     if (overwrite && isOverwritingTarget) {
-      const referencedBy = await this.remoteCozy.getReferencedBy(
-        overwrite.remote._id
-      )
-      await this.remoteCozy.addReferencedBy(remoteId, referencedBy)
-      await this.assignNewRemote(newMetadata)
+      try {
+        const referencedBy = await this.remoteCozy.getReferencedBy(
+          overwrite.remote._id
+        )
+        await this.remoteCozy.addReferencedBy(remoteId, referencedBy)
+        await this.assignNewRemote(newMetadata)
+      } catch (err) {
+        if (err.status === 404) {
+          log.warn(
+            { path },
+            `Cannot fetch references of missing ${overwrite.docType}.`
+          )
+          return
+        }
+        throw err
+      }
     }
   }
 

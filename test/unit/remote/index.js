@@ -981,6 +981,7 @@ describe('remote.Remote', function() {
     context('when overwriting an existing file', function() {
       const existingRefs = [{ _id: 'blah', _type: 'io.cozy.photos.albums' }]
 
+      let existingRemote
       let existing /*: SavedMetadata */
       let old /*:SavedMetadata */
       let doc /*: Metadata */
@@ -993,7 +994,7 @@ describe('remote.Remote', function() {
           .inRootDir()
           .create()
 
-        const remote1 = await builders
+        existingRemote = await builders
           .remoteFile()
           .inDir(newDir)
           .name('cat7.jpg')
@@ -1002,7 +1003,7 @@ describe('remote.Remote', function() {
           .create()
         existing = await builders
           .metafile()
-          .fromRemote(remote1)
+          .fromRemote(existingRemote)
           .upToDate()
           .create()
 
@@ -1076,6 +1077,35 @@ describe('remote.Remote', function() {
           ...udpatedFile,
           created_at: timestamp.roundedRemoteDate(udpatedFile.created_at),
           updated_at: timestamp.roundedRemoteDate(udpatedFile.updated_at)
+        })
+      })
+
+      context('when the overwritten file does not exist anymore', () => {
+        beforeEach(async function() {
+          await cozy.files.destroyById(existingRemote._id)
+        })
+
+        it('successfuly moves the file', async function() {
+          await this.remote.moveAsync(doc, old)
+
+          should(doc.remote._id).equal(old.remote._id)
+          const file = await cozy.files.statById(doc.remote._id)
+          should(file).have.properties({
+            _id: old.remote._id,
+            _rev: doc.remote._rev
+          })
+          should(file.attributes).have.properties({
+            dir_id: newDir._id,
+            name: 'cat7.jpg'
+          })
+        })
+
+        it('does not transfer the deleted file references', async function() {
+          await this.remote.moveAsync(doc, old)
+
+          should(await cozy.files.statById(doc.remote._id))
+            .have.propertyByPath('relationships', 'referenced_by', 'data')
+            .be.null()
         })
       })
     })
