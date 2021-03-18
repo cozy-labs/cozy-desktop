@@ -245,11 +245,6 @@ class Remote /*:: implements Reader, Writer */ {
     }
     log.info({ path }, 'Updating metadata...')
 
-    const [newParentDirPath, newName] = dirAndName(path)
-    const newParentDir = await this.remoteCozy.findDirectoryByPath(
-      newParentDirPath
-    )
-
     const attrs = {
       updated_at: mostRecentUpdatedAt(doc)
     }
@@ -270,6 +265,11 @@ class Remote /*:: implements Reader, Writer */ {
       }
 
       log.warn({ path }, "Directory doesn't exist anymore. Recreating it...")
+      const [newParentDirPath, newName] = dirAndName(path)
+      const newParentDir = await this.remoteCozy.findDirectoryByPath(
+        newParentDirPath
+      )
+
       const newRemoteDoc = await this.remoteCozy.createDirectory(
         newDocumentAttributes(newName, newParentDir._id, doc.updated_at)
       )
@@ -349,6 +349,14 @@ class Remote /*:: implements Reader, Writer */ {
     } catch (err) {
       if (err.status === 404) {
         log.warn({ path }, `Cannot trash remotely deleted ${doc.docType}.`)
+        return
+      } else if (
+        err.status === 400 &&
+        err.reason &&
+        err.reason.errors &&
+        /already in the trash/.test(err.reason.errors[0].detail)
+      ) {
+        log.warn({ path }, `Not trashing already trashed ${doc.docType}.`)
         return
       }
       throw err

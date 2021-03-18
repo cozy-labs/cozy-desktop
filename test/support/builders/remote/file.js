@@ -138,18 +138,27 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <Metadat
     const cozy = this._ensureCozy()
 
     const parentDir = await cozy.files.statById(this.remoteDoc.dir_id)
-    const remoteFile /*: RemoteFile */ = _.clone(
-      jsonApiToRemoteDoc(
-        await cozy.files.updateById(this.remoteDoc._id, this._data, {
+    const json = this.remoteDoc._deleted
+      ? await cozy.files.destroyById(this.remoteDoc._id)
+      : this.remoteDoc.trashed
+      ? await cozy.files.trashById(this.remoteDoc._id, { dontRetry: true })
+      : this._data
+      ? await cozy.files.updateById(this.remoteDoc._id, this._data, {
           contentType: this.remoteDoc.mime,
-          dirID: this.remoteDoc.dir_id,
+          contentLength: this.remoteDoc.size,
+          checksum: this.remoteDoc.md5sum,
           executable: this.remoteDoc.executable,
           updatedAt: this.remoteDoc.updated_at,
-          name: this.remoteDoc.name,
           noSanitize: true
         })
-      )
-    )
+      : await cozy.files.updateAttributesById(this.remoteDoc._id, {
+          dir_id: this.remoteDoc.dir_id,
+          name: this.remoteDoc.name,
+          executable: this.remoteDoc.executable,
+          updated_at: this.remoteDoc.updated_at,
+          noSanitize: true
+        })
+    const remoteFile /*: RemoteFile */ = _.clone(jsonApiToRemoteDoc(json))
     const doc /*: MetadataRemoteFile */ = {
       ...remoteFile,
       path: posix.join(parentDir.attributes.path, this.remoteDoc.name)
