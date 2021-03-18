@@ -32,35 +32,6 @@ const log = logger({
   component: 'Merge'
 })
 
-/** Error occuring when parent of doc being merged is missing from Pouch.
- *
- * For now, this error only occurs when merging remote changes.
- *
- * In case the parent is missing, the made-up document would be inconsistent,
- * with `sides.remote` set but no `remote._id` nor `remote._rev`. Any
- * subsequent subsequent local change could fail because of those missing.
- *
- * Regarding local changes, one could wonder whether we should adopt the same
- * behavior: made-up documents will be missing an inode. Which could result in
- * subsequent moves not being detected correctly. But at least it should not
- * prevent subsequent remote changes from being synced since the inode is not
- * used in this case.
- *
- * This error is mostly caused by a bug, either in a previous Merge/Sync run
- * or related to some watcher events order.
- */
-class MergeMissingParentError extends Error {
-  /*::
-  doc: Metadata
-  */
-
-  constructor(doc /*: Metadata */) {
-    super('Cannot merge remote change: Missing parent metadata')
-    this.name = 'MergeMissingParentError'
-    this.doc = doc
-  }
-}
-
 // When the local filesystem or the remote cozy detects a change, it calls this
 // class to inform it (via Prep). This class will check how to operate this
 // change against the data in pouchdb and then will update pouchdb. It avoids a
@@ -92,50 +63,6 @@ class Merge {
   }
 
   /* Helpers */
-
-  // Be sure that the tree structure for the given path exists
-  async ensureParentExistAsync(side /*: SideName */, doc /*: * */) {
-    log.trace({ path: doc.path }, 'ensureParentExistAsync')
-    let parentPath = path.dirname(doc.path)
-    if (parentPath === '.') {
-      return
-    }
-
-    // BUG on windows with incompatible names like "D:IR"
-    if (path.dirname(parentPath) === parentPath) {
-      return
-    }
-
-    try {
-      const folder = await this.pouch.bySyncedPath(parentPath)
-      if (folder && !folder.deleted) {
-        return
-      }
-    } catch (err) {
-      if (err.status !== 404) {
-        log.warn(err)
-      }
-    }
-    if (side === 'remote') {
-      throw new MergeMissingParentError(doc)
-    }
-
-    let parentDoc = {
-      _id: metadata.id(parentPath),
-      path: parentPath,
-      docType: 'folder',
-      updated_at: new Date().toISOString()
-    }
-
-    try {
-      await this.ensureParentExistAsync(side, parentDoc)
-    } catch (err) {
-      throw err
-    }
-
-    // $FlowFixMe parent doc is incomplete
-    return this.putFolderAsync(side, parentDoc)
-  }
 
   // Resolve a conflict by renaming a file/folder
   // A suffix composed of -conflict- and the date is added to the path.
@@ -235,7 +162,6 @@ class Merge {
 
     metadata.markSide(side, doc)
     metadata.assignMaxDate(doc)
-    await this.ensureParentExistAsync(side, doc)
 
     return this.pouch.put(doc)
   }
@@ -248,7 +174,6 @@ class Merge {
     if (!file) {
       metadata.markSide(side, doc)
       metadata.assignMaxDate(doc)
-      await this.ensureParentExistAsync(side, doc)
       return this.pouch.put(doc)
     } else {
       if (file.docType === 'folder') {
@@ -425,7 +350,6 @@ class Merge {
         return this.pouch.put(doc)
       }
     }
-    await this.ensureParentExistAsync(side, doc)
 
     return this.pouch.put(doc)
   }
@@ -483,7 +407,6 @@ class Merge {
             doc._rev = file._rev
             doc.overwrite = file
           }
-          await this.ensureParentExistAsync(side, doc)
 
           if (side === 'local' && isNote(was) && doc.md5sum !== was.md5sum) {
             return this.resolveNoteConflict(doc, was)
@@ -513,8 +436,6 @@ class Merge {
         move(side, was, dst)
         return this.pouch.bulkDocs([was, dst])
       } else {
-        await this.ensureParentExistAsync(side, doc)
-
         if (side === 'local' && isNote(was) && doc.md5sum !== was.md5sum) {
           return this.resolveNoteConflict(doc, was)
         }
@@ -574,7 +495,6 @@ class Merge {
           doc._rev = folder._rev
           doc.overwrite = folder
         }
-        await this.ensureParentExistAsync(side, doc)
         return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
       }
 
@@ -587,7 +507,6 @@ class Merge {
       const dst = await this.resolveConflictAsync(side, doc)
       return this.moveFolderRecursivelyAsync(side, dst, was, newRemoteRevs)
     } else {
-      await this.ensureParentExistAsync(side, doc)
       return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
     }
   }
@@ -1073,6 +992,5 @@ const needsFileidMigration = (
 ) /*: boolean %checks */ => existing.fileid == null && fileid != null
 
 module.exports = {
-  Merge,
-  MergeMissingParentError
+  Merge
 }

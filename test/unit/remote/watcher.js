@@ -18,7 +18,6 @@ const cozyHelpers = require('../../support/helpers/cozy')
 const Builders = require('../../support/builders')
 
 const metadata = require('../../../core/metadata')
-const { MergeMissingParentError } = require('../../../core/merge')
 const Prep = require('../../../core/prep')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
@@ -457,30 +456,6 @@ describe('RemoteWatcher', function() {
         should(await this.watcher.watch()).match({
           code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
         })
-      })
-    })
-
-    context('on MergeMissingParentError', () => {
-      let missingParentError
-      beforeEach(function() {
-        missingParentError = {
-          err: new MergeMissingParentError(builders.metadata().build())
-        }
-      })
-
-      beforeEach(function() {
-        this.watcher.pullMany.returns([missingParentError])
-      })
-
-      it('does not reject any errors', async function() {
-        await should(this.watcher.watch()).be.fulfilled()
-      })
-
-      it('updates the last update sequence in local db', async function() {
-        await this.watcher.watch()
-        this.pouch.setRemoteSeq.should.be
-          .calledOnce()
-          .and.be.calledWithExactly(lastRemoteSeq)
       })
     })
   })

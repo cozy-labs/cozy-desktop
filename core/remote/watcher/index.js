@@ -8,7 +8,6 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 
 const metadata = require('../../metadata')
-const { MergeMissingParentError } = require('../../merge')
 const remoteChange = require('../change')
 const { HEARTBEAT } = require('../constants')
 const remoteErrors = require('../errors')
@@ -181,17 +180,7 @@ class RemoteWatcher {
 
     log.trace('Apply changes...')
     const errors = await this.applyAll(changes)
-
-    for (const { err, change } of errors) {
-      if (err instanceof MergeMissingParentError) {
-        log.warn(
-          { err, change, path: change && change.doc.path },
-          'swallowing missing parent metadata error'
-        )
-        continue
-      }
-      throw err
-    }
+    if (errors.length) throw errors[0].err
 
     log.trace('Done with pull.')
   }
