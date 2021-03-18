@@ -9,7 +9,6 @@ const _ = require('lodash')
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
-const stream = require('stream')
 
 const metadata = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
@@ -157,24 +156,6 @@ describe('remote.Remote', function() {
       await should(this.remote.addFileAsync(doc)).be.rejectedWith({
         status: 412
       })
-    })
-
-    it('creates the parent folder when missing', async function() {
-      const doc /*: Metadata */ = builders
-        .metafile()
-        .path(path.join('foo', 'bar', 'qux'))
-        .build()
-      this.remote.other = {
-        createReadStreamAsync() {
-          return new stream.Readable({
-            read: function() {
-              this.push(null)
-            }
-          })
-        }
-      }
-      await this.remote.addFileAsync(doc)
-      await should(cozy.files.statByPath('/foo/bar')).be.fulfilled()
     })
 
     it('does not throw if the file does not exists locally anymore', async function() {

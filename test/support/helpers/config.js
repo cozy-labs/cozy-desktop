@@ -34,7 +34,7 @@ module.exports = {
   cleanConfig() {
     this.timeout && this.timeout(5 * 60 * 1000)
     return del.sync(this.syncPath, {
-      force: process.env.TRAVIS || process.env.GITHUB_ENV
+      force: process.env.CI
     })
   }
 }

@@ -18,8 +18,6 @@ const {
 } = require('./document')
 const logger = require('../utils/logger')
 
-const { posix } = path
-
 /*::
 import type { Config } from '../config'
 import type { Readable } from 'stream'
@@ -359,33 +357,6 @@ class RemoteCozy {
     }
 
     return results[0]
-  }
-
-  // FIXME: created_at is returned by some methods, but not all of them
-
-  async findOrCreateDirectoryByPath(
-    path /*: string */
-  ) /*: Promise<MetadataRemoteDir> */ {
-    try {
-      return await this.findDirectoryByPath(path)
-    } catch (err) {
-      if (!(err instanceof DirectoryNotFound)) throw err
-      log.warn({ path }, 'Directory not found')
-
-      const name = posix.basename(path)
-      const parentPath = posix.dirname(path)
-      const parentDir = await this.findOrCreateDirectoryByPath(parentPath)
-      const dirID = parentDir._id
-      const createdAt = new Date().toISOString()
-
-      log.info({ path, name, dirID }, 'Creating directory...')
-      return this.createDirectory({
-        name,
-        dirID,
-        createdAt,
-        updatedAt: createdAt
-      })
-    }
   }
 
   async isEmpty(id /*: string */) /*: Promise<boolean> */ {
