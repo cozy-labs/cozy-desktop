@@ -398,12 +398,6 @@ class Sync {
         case remoteErrors.USER_ACTION_REQUIRED_CODE:
           // We will keep retrying to apply the change until it's fixed or the
           // user contacts our support.
-          // We increment the record's errors counter to keep track of the
-          // retries and above all, save any changes made to the record by
-          // `applyDoc()` and such (e.g. when applying a file move with update,
-          // if the update fails, we want to remove the `moveFrom` attribute to
-          // avoid re-applying the move which was already applied).
-          await this.updateErrors(change, syncErr)
           this.blockSyncFor({ err: syncErr, change })
           break
         case remoteErrors.CONFLICTING_NAME_CODE:
@@ -433,9 +427,7 @@ class Sync {
           // We will retry to apply the change `MAX_SYNC_ATTEMPTS` times just
           // in case.
           if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
-            // Solve 1.
-            this.updateErrors(change, syncErr)
-            // Solve 2.
+            // Solve 1. & 2.
             this.blockSyncFor({ err: syncErr, change })
           } else {
             log.error(
@@ -449,7 +441,6 @@ class Sync {
         case remoteErrors.MISSING_DOCUMENT_CODE:
           // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
           if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
-            await this.updateErrors(change, syncErr)
             this.blockSyncFor({ err: syncErr, change })
           } else {
             if (change.doc.deleted) {
@@ -481,9 +472,7 @@ class Sync {
            *    because we abandoned in the past
            */
           if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
-            // Solve 1.
-            this.updateErrors(change, syncErr)
-            // Solve 2.
+            // Solve 1. & 2.
             this.blockSyncFor({ err: syncErr, change })
           } else {
             log.error(
@@ -602,8 +591,10 @@ class Sync {
         try {
           await side.overwriteFileAsync(doc, doc) // move & update
         } catch (err) {
-          // the move succeeded, delete moveFrom to avoid re-applying it
+          // the move succeeded, delete moveFrom and overwriteto avoid
+          // re-applying these actions.
           delete doc.moveFrom
+          delete doc.overwrite
           throw err
         }
       }
@@ -745,6 +736,15 @@ class Sync {
 
       clearInterval(this.retryInterval)
 
+      if (cause.change) {
+        // We increment the record's errors counter to keep track of the
+        // retries and above all, save any changes made to the record by
+        // `applyDoc()` and such (e.g. when applying a file move with update,
+        // if the update fails, we want to remove the `moveFrom` attribute to
+        // avoid re-applying the move which was already applied).
+        await this.updateErrors(cause.change, cause.err)
+      }
+
       // Await to make sure we've fetched potential remote changes
       if (!this.remote.watcher.running) {
         await this.remote.watcher.start()
@@ -770,12 +770,8 @@ class Sync {
 
       clearInterval(this.retryInterval)
 
-      // We need to check for the presence of `change` because Flow is not able
-      // to understand it will automatically be present if `err` is a
-      // `SyncError`…
-      if (err instanceof syncErrors.SyncError && cause.change) {
-        const change = cause.change
-        await this.skipChange(change, err)
+      if (cause.change) {
+        await this.skipChange(cause.change, cause.err)
       }
 
       if (!this.remote.watcher.running) {
