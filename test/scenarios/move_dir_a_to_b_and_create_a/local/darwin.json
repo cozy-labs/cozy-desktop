@@ -1,92 +1,213 @@
 [
   {
-    "type": "addDir",
-    "path": "a",
-    "stats": {
-      "ino": 4303440,
-      "size": 128,
-      "mtime": "2021-01-11T14:12:25.240Z",
-      "ctime": "2021-01-11T14:12:25.240Z"
-    }
+    "breakpoints": [0]
+  },
+  {
+    "type": "unlinkDir",
+    "path": "a/subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "a"
   },
   {
     "type": "addDir",
     "path": "b",
     "stats": {
+      "dev": 16777221,
+      "mode": 16877,
+      "nlink": 4,
+      "uid": 501,
+      "gid": 20,
+      "rdev": 0,
+      "blksize": 4096,
       "ino": 1,
       "size": 128,
-      "mtime": "2021-01-11T14:12:25.226Z",
-      "ctime": "2021-01-11T14:12:25.235Z"
-    }
-  },
-  {
-    "type": "addDir",
-    "path": "a",
-    "stats": {
-      "ino": 4303440,
-      "size": 128,
-      "mtime": "2021-01-11T14:12:25.240Z",
-      "ctime": "2021-01-11T14:12:25.240Z"
-    }
-  },
-  {
-    "type": "addDir",
-    "path": "a/subdir",
-    "stats": {
-      "ino": 4303442,
-      "size": 96,
-      "mtime": "2021-01-11T14:12:25.242Z",
-      "ctime": "2021-01-11T14:12:25.242Z"
+      "blocks": 0,
+      "atimeMs": 1616579543019.2388,
+      "mtimeMs": 1616579543015.8708,
+      "ctimeMs": 1616579543020.921,
+      "birthtimeMs": 1616579543014.2944,
+      "atime": "2021-03-24T09:52:23.019Z",
+      "mtime": "2021-03-24T09:52:23.016Z",
+      "ctime": "2021-03-24T09:52:23.021Z",
+      "birthtime": "2021-03-24T09:52:23.014Z"
     }
   },
   {
     "type": "addDir",
     "path": "b/subdir",
     "stats": {
+      "dev": 16777221,
+      "mode": 16877,
+      "nlink": 3,
+      "uid": 501,
+      "gid": 20,
+      "rdev": 0,
+      "blksize": 4096,
       "ino": 3,
       "size": 96,
-      "mtime": "2021-01-11T14:12:25.228Z",
-      "ctime": "2021-01-11T14:12:25.228Z"
+      "blocks": 0,
+      "atimeMs": 1616579543019.3416,
+      "mtimeMs": 1616579543016.5977,
+      "ctimeMs": 1616579543016.5977,
+      "birthtimeMs": 1616579543015.8535,
+      "atime": "2021-03-24T09:52:23.019Z",
+      "mtime": "2021-03-24T09:52:23.017Z",
+      "ctime": "2021-03-24T09:52:23.017Z",
+      "birthtime": "2021-03-24T09:52:23.016Z"
     }
   },
   {
-    "type": "change",
-    "path": "a/subdir/child.txt",
+    "type": "unlink",
+    "path": "a/file.txt"
+  },
+  {
+    "type": "unlink",
+    "path": "a/subdir/child.txt"
+  },
+  {
+    "type": "addDir",
+    "path": "a",
     "stats": {
-      "ino": 4303443,
-      "size": 17,
-      "mtime": "2021-01-11T14:12:25.243Z",
-      "ctime": "2021-01-11T14:12:25.243Z"
+      "dev": 16777221,
+      "mode": 16877,
+      "nlink": 4,
+      "uid": 501,
+      "gid": 20,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 5293288,
+      "size": 128,
+      "blocks": 0,
+      "atimeMs": 1616579543536.6284,
+      "mtimeMs": 1616579543525.5442,
+      "ctimeMs": 1616579543525.5442,
+      "birthtimeMs": 1616579543522.8643,
+      "atime": "2021-03-24T09:52:23.537Z",
+      "mtime": "2021-03-24T09:52:23.526Z",
+      "ctime": "2021-03-24T09:52:23.526Z",
+      "birthtime": "2021-03-24T09:52:23.523Z"
     }
   },
   {
-    "type": "change",
-    "path": "a/file.txt",
+    "type": "addDir",
+    "path": "a/subdir",
     "stats": {
-      "ino": 4303441,
-      "size": 16,
-      "mtime": "2021-01-11T14:12:25.238Z",
-      "ctime": "2021-01-11T14:12:25.238Z"
-    }
-  },
-  {
-    "type": "add",
-    "path": "b/file.txt",
-    "stats": {
-      "ino": 2,
-      "size": 20,
-      "mtime": "2021-01-11T14:12:25.224Z",
-      "ctime": "2021-01-11T14:12:25.224Z"
+      "dev": 16777221,
+      "mode": 16877,
+      "nlink": 3,
+      "uid": 501,
+      "gid": 20,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 5293290,
+      "size": 96,
+      "blocks": 0,
+      "atimeMs": 1616579543535.3384,
+      "mtimeMs": 1616579543526.6775,
+      "ctimeMs": 1616579543526.6775,
+      "birthtimeMs": 1616579543525.5264,
+      "atime": "2021-03-24T09:52:23.535Z",
+      "mtime": "2021-03-24T09:52:23.527Z",
+      "ctime": "2021-03-24T09:52:23.527Z",
+      "birthtime": "2021-03-24T09:52:23.526Z"
     }
   },
   {
     "type": "add",
     "path": "b/subdir/child.txt",
     "stats": {
+      "dev": 16777221,
+      "mode": 33188,
+      "nlink": 1,
+      "uid": 501,
+      "gid": 20,
+      "rdev": 0,
+      "blksize": 4096,
       "ino": 4,
       "size": 21,
-      "mtime": "2021-01-11T14:12:25.229Z",
-      "ctime": "2021-01-11T14:12:25.229Z"
+      "blocks": 8,
+      "atimeMs": 1616579543620.2788,
+      "mtimeMs": 1616579543016.8137,
+      "ctimeMs": 1616579543016.8137,
+      "birthtimeMs": 1616579543016.582,
+      "atime": "2021-03-24T09:52:23.620Z",
+      "mtime": "2021-03-24T09:52:23.017Z",
+      "ctime": "2021-03-24T09:52:23.017Z",
+      "birthtime": "2021-03-24T09:52:23.017Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "b/file.txt",
+    "stats": {
+      "dev": 16777221,
+      "mode": 33188,
+      "nlink": 1,
+      "uid": 501,
+      "gid": 20,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 2,
+      "size": 20,
+      "blocks": 8,
+      "atimeMs": 1616579543622.204,
+      "mtimeMs": 1616579543015.2085,
+      "ctimeMs": 1616579543015.2085,
+      "birthtimeMs": 1616579543014.984,
+      "atime": "2021-03-24T09:52:23.622Z",
+      "mtime": "2021-03-24T09:52:23.015Z",
+      "ctime": "2021-03-24T09:52:23.015Z",
+      "birthtime": "2021-03-24T09:52:23.015Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "a/file.txt",
+    "stats": {
+      "dev": 16777221,
+      "mode": 33188,
+      "nlink": 1,
+      "uid": 501,
+      "gid": 20,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 5293289,
+      "size": 16,
+      "blocks": 8,
+      "atimeMs": 1616579543524.2583,
+      "mtimeMs": 1616579543524.554,
+      "ctimeMs": 1616579543524.554,
+      "birthtimeMs": 1616579543524.2583,
+      "atime": "2021-03-24T09:52:23.524Z",
+      "mtime": "2021-03-24T09:52:23.525Z",
+      "ctime": "2021-03-24T09:52:23.525Z",
+      "birthtime": "2021-03-24T09:52:23.524Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "a/subdir/child.txt",
+    "stats": {
+      "dev": 16777221,
+      "mode": 33188,
+      "nlink": 1,
+      "uid": 501,
+      "gid": 20,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 5293291,
+      "size": 17,
+      "blocks": 8,
+      "atimeMs": 1616579543526.6506,
+      "mtimeMs": 1616579543527.0662,
+      "ctimeMs": 1616579543527.0662,
+      "birthtimeMs": 1616579543526.6506,
+      "atime": "2021-03-24T09:52:23.527Z",
+      "mtime": "2021-03-24T09:52:23.527Z",
+      "ctime": "2021-03-24T09:52:23.527Z",
+      "birthtime": "2021-03-24T09:52:23.527Z"
     }
   }
 ]

@@ -9,6 +9,7 @@ const fse = require('fs-extra')
 const glob = require('glob')
 const _ = require('lodash')
 const path = require('path')
+const fs = require('fs')
 
 const stater = require('../../../core/local/stater')
 
@@ -196,7 +197,7 @@ module.exports.loadRemoteChangesFiles = (
   })
 }
 
-const fixCaptureInodes = (
+const fixCapture = (
   capture /*: {| batches: AtomEvent[][] |} | {| events: ChokidarEvent[] |} */,
   inoMap /*: Map<number, number> */
 ) => {
@@ -207,6 +208,7 @@ const fixCaptureInodes = (
 
       const ino = inoMap.get(event.stats.ino)
       if (ino) event.stats.ino = ino
+      event.stats = fsStatsFromObj(event.stats)
     })
   } else if (capture.batches) {
     // Atom capture
@@ -217,9 +219,51 @@ const fixCaptureInodes = (
 
         const ino = inoMap.get(stats.ino)
         if (ino) stats.ino = ino
+
+        if (!stats.fileid) {
+          // Make sure `event.stats` is an instance of `fs.Stats` so
+          // `stater.isDirectory()` returns the appropriate value.
+          // $FlowFixMe No `fileid` means `stats` is not a `WinStats` instance
+          event.stats = fsStatsFromObj(stats)
+        }
       })
     })
   }
+}
+
+const fsStatsFromObj = ({
+  dev,
+  mode,
+  nlink,
+  uid,
+  gid,
+  rdev,
+  blksize,
+  ino,
+  size,
+  blocks,
+  atimeMs,
+  mtimeMs,
+  ctimeMs,
+  birthtimeMs
+}) => {
+  // $FlowFixMe `fs.Stats` constructor does accept arguments
+  return new fs.Stats(
+    dev,
+    mode,
+    nlink,
+    uid,
+    gid,
+    rdev,
+    blksize,
+    ino,
+    size,
+    blocks,
+    atimeMs,
+    mtimeMs,
+    ctimeMs,
+    birthtimeMs
+  )
 }
 
 const merge = async (srcPath, dstPath) => {
@@ -366,7 +410,7 @@ module.exports.init = async (
     } // for (... of scenario.init)
 
     if (localCapture) {
-      fixCaptureInodes(localCapture, inoMap)
+      fixCapture(localCapture, inoMap)
     }
   }
 

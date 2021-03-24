@@ -81,9 +81,10 @@ module.exports = {
   isDirectory(stats /*: Stats */) {
     if (stats instanceof fs.Stats) {
       return stats.isDirectory()
-    } else {
+    } else if (stats.directory) {
       return stats.directory
     }
+    return false
   },
 
   kind(stats /*: Stats */) {

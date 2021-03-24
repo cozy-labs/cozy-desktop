@@ -80,8 +80,7 @@ const setupInitialState = (scenario /*: Scenario */) => {
 
 const buildFSEvent = (type, relpath, stats) => {
   const event /*: Object */ = { type, path: relpath }
-  if (stats != null)
-    event.stats = _.pick(stats, ['ino', 'size', 'mtime', 'ctime'])
+  if (stats != null) event.stats = stats
   return event
 }
 
