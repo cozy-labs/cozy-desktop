@@ -4873,6 +4873,133 @@ describe('Merge', function() {
       })
     })
 
+    context('when found record was moved on the same side', () => {
+      let initial, src
+      beforeEach(async function() {
+        initial = await builders
+          .metafile()
+          .path('initial')
+          .upToDate()
+          .create()
+        src = await builders
+          .metafile(initial)
+          .moveTo('moved')
+          .create()
+      })
+
+      it('marks the source for deletion and discards the destination', async function() {
+        const was = await builders
+          .metafile()
+          .moveFrom(src)
+          .changedSide(this.side)
+          .create()
+        const doc = builders
+          .metafile(was)
+          .trashed()
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFileAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                deleted: true,
+                sides: increasedSides(src.sides, this.side, 1)
+              },
+              _.omit(src, ['_id', '_rev', '_deleted', 'moveTo'])
+            ),
+            _.defaults(
+              {
+                _deleted: true
+              },
+              _.omit(was, [
+                '_id',
+                '_rev',
+                'sides',
+                'moveFrom',
+                'local',
+                'remote'
+              ])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+
+      context('and the move was overwriting an existing doc', () => {
+        let existing
+        beforeEach(async function() {
+          existing = await builders
+            .metafile()
+            .path('moved')
+            .upToDate()
+            .create()
+        })
+
+        it('also marks for deletion the overwritten doc', async function() {
+          const was = await builders
+            .metafile()
+            .moveFrom(src)
+            .overwrite(existing)
+            .changedSide(this.side)
+            .create()
+          const doc = builders
+            .metafile(was)
+            .trashed()
+            .build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.trashFileAsync(
+              this.side,
+              _.cloneDeep(was),
+              _.cloneDeep(doc)
+            )
+          )
+
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              _.defaults(
+                {
+                  deleted: true,
+                  sides: increasedSides(existing.sides, this.side, 1)
+                },
+                _.omit(existing, ['_id', '_rev'])
+              ),
+              _.defaults(
+                {
+                  deleted: true,
+                  sides: increasedSides(src.sides, this.side, 1)
+                },
+                _.omit(src, ['_id', '_rev', '_deleted', 'moveTo'])
+              ),
+              _.defaults(
+                {
+                  _deleted: true
+                },
+                _.omit(was, [
+                  '_id',
+                  '_rev',
+                  'sides',
+                  'moveFrom',
+                  'overwrite',
+                  'local',
+                  'remote'
+                ])
+              )
+            ],
+            resolvedConflicts: []
+          })
+        })
+      })
+    })
+
     context('when found record was modified on the same side', () => {
       it('marks it for deletion and updates sides info', async function() {
         const initial = await builders

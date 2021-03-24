@@ -511,6 +511,11 @@ function dissociateLocal(doc /*: Metadata */) {
 
 function markAsUnsyncable(doc /*: SavedMetadata */) {
   removeActionHints(doc)
+  // Cannot be done in removeActionHints as markAsUnmerged uses it as well and
+  // overwrite can be an attribute added before calling Merge (i.e. it can exist
+  // on an unmerged record).
+  delete doc.overwrite
+
   dissociateRemote(doc)
   dissociateLocal(doc)
   doc._deleted = true

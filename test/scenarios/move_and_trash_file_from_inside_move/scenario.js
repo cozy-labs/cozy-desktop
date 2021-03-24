@@ -1,10 +1,15 @@
 /* @flow */
 
+const { runWithStoppedClient } = require('../../support/helpers/scenarios')
+
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
   side: 'local',
-  disabled: 'Does not work yet on all watchers',
+  disabled:
+    process.platform === 'darwin' && runWithStoppedClient()
+      ? 'Does not work on macOS because buffered child events are not modified by parents move events'
+      : undefined,
   init: [
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'src/' },
