@@ -44,6 +44,10 @@ describe('remote.Remote', function() {
     this.prep = sinon.createStubInstance(Prep)
     this.events = new EventEmitter()
     this.remote = new Remote(this)
+    // TODO: find out why the client built by `new Remote()` doesn't behave
+    // correctly (i.e. its auth isn't totally set and we can end up getting
+    // errors from `cozy-client-js` because it's missing a `client_secret`).
+    this.remote.remoteCozy.client = cozy
   })
   beforeEach(deleteAll)
   beforeEach('create the couchdb folder', async function() {
@@ -981,6 +985,7 @@ describe('remote.Remote', function() {
     context('when overwriting an existing file', function() {
       const existingRefs = [{ _id: 'blah', _type: 'io.cozy.photos.albums' }]
 
+      let existingRemote
       let existing /*: SavedMetadata */
       let old /*:SavedMetadata */
       let doc /*: Metadata */
@@ -993,17 +998,12 @@ describe('remote.Remote', function() {
           .inRootDir()
           .create()
 
-        const remote1 = await builders
+        existingRemote = await builders
           .remoteFile()
           .inDir(newDir)
           .name('cat7.jpg')
           .data('woof')
           .referencedBy(existingRefs)
-          .create()
-        existing = await builders
-          .metafile()
-          .fromRemote(remote1)
-          .upToDate()
           .create()
 
         const remote2 = await builders
@@ -1017,6 +1017,14 @@ describe('remote.Remote', function() {
           .moveTo('moved-to/cat7.jpg')
           .upToDate()
           .create()
+      })
+
+      const saveMetadata = async () => {
+        existing = await builders
+          .metafile()
+          .fromRemote(existingRemote)
+          .upToDate()
+          .create()
 
         // For whatever reason, the creation date of `remote2` is ahead of new Date() !!!
         const updatedAt = new Date(new Date().getTime() + 1000).toISOString()
@@ -1028,9 +1036,11 @@ describe('remote.Remote', function() {
           .updatedAt(updatedAt)
           .changedSide('local')
           .build()
-      })
+      }
 
       it('moves the file', async function() {
+        await saveMetadata()
+
         await this.remote.moveAsync(doc, old)
 
         should(doc.remote._id).equal(old.remote._id)
@@ -1052,6 +1062,8 @@ describe('remote.Remote', function() {
       })
 
       it('trashes the existing file at target location', async function() {
+        await saveMetadata()
+
         await this.remote.moveAsync(doc, old)
 
         should(await cozy.files.statById(existing.remote._id))
@@ -1060,6 +1072,8 @@ describe('remote.Remote', function() {
       })
 
       it('transfers the existing file references to the moved one', async function() {
+        await saveMetadata()
+
         await this.remote.moveAsync(doc, old)
 
         should(await cozy.files.statById(doc.remote._id))
@@ -1068,6 +1082,8 @@ describe('remote.Remote', function() {
       })
 
       it('updates the remote attribute', async function() {
+        await saveMetadata()
+
         await this.remote.moveAsync(doc, old)
 
         const udpatedFile = await this.remote.remoteCozy.find(doc.remote._id)
@@ -1076,6 +1092,75 @@ describe('remote.Remote', function() {
           ...udpatedFile,
           created_at: timestamp.roundedRemoteDate(udpatedFile.created_at),
           updated_at: timestamp.roundedRemoteDate(udpatedFile.updated_at)
+        })
+      })
+
+      context('when the overwritten file is already in the Trash', () => {
+        beforeEach(async () => {
+          existingRemote = await builders
+            .remoteFile(existingRemote)
+            .trashed()
+            .update()
+        })
+
+        it('successfuly moves the file', async function() {
+          await saveMetadata()
+
+          await this.remote.moveAsync(doc, old)
+
+          should(doc.remote._id).equal(old.remote._id)
+          const file = await cozy.files.statById(doc.remote._id)
+          should(file).have.properties({
+            _id: old.remote._id,
+            _rev: doc.remote._rev
+          })
+          should(file.attributes).have.properties({
+            dir_id: newDir._id,
+            name: 'cat7.jpg'
+          })
+        })
+
+        it('transfers the existing file references to the moved one', async function() {
+          await saveMetadata()
+
+          await this.remote.moveAsync(doc, old)
+
+          should(await cozy.files.statById(doc.remote._id))
+            .have.propertyByPath('relationships', 'referenced_by', 'data')
+            .eql(existingRefs.map(ref => ({ id: ref._id, type: ref._type })))
+        })
+      })
+
+      context('when the overwritten file does not exist anymore', () => {
+        beforeEach(async function() {
+          await cozy.files.destroyById(existingRemote._id)
+        })
+
+        it('successfuly moves the file', async function() {
+          await saveMetadata()
+
+          await this.remote.moveAsync(doc, old)
+
+          should(doc.remote._id).equal(old.remote._id)
+          const file = await cozy.files.statById(doc.remote._id)
+          should(file).have.properties({
+            _id: old.remote._id,
+            _rev: doc.remote._rev
+          })
+          should(file.attributes).have.properties({
+            dir_id: newDir._id,
+            name: 'cat7.jpg'
+          })
+        })
+
+        it('does not transfer the deleted file references', async function() {
+          await saveMetadata()
+
+          await this.remote.moveAsync(doc, old)
+
+          should(await cozy.files.statById(doc.remote._id))
+            .have.propertyByPath('relationships', 'referenced_by', 'data')
+            .be.null()
         })
       })
     })
@@ -1185,15 +1270,13 @@ describe('remote.Remote', function() {
     })
 
     it('does not swallow trashing errors', async function() {
-      const dir = await builders
-        .remoteDir()
-        .trashed()
-        .create()
+      const dir = await builders.remoteDir().create()
       const doc = builders
         .metadir()
         .fromRemote(dir)
         .changedSide('local')
         .build()
+      await builders.remoteDir(dir).update()
       await should(this.remote.deleteFolderAsync(doc)).be.rejected()
     })
 

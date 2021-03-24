@@ -446,13 +446,16 @@ class Sync {
             if (change.doc.deleted) {
               await this.skipChange(change, syncErr)
             } else if (sideName === 'remote') {
-              if (change.doc.moveFrom) delete change.doc.moveFrom
+              delete change.doc.moveFrom
+              delete change.doc.overwrite
+              delete change.doc.remote
 
               if (metadata.isFile(change.doc)) {
                 await this.remote.addFileAsync(change.doc)
               } else {
                 await this.remote.addFolderAsync(change.doc)
               }
+              await this.updateRevs(change.doc, 'remote')
             } else {
               await this.pouch.eraseDocument(change.doc)
               if (doc.docType === 'file') {
