@@ -31,10 +31,10 @@ module.exports = {
     }
   },
 
-  cleanConfig() {
-    this.timeout && this.timeout(5 * 60 * 1000)
-    return del.sync(this.syncPath, {
-      force: process.env.CI
-    })
+  async cleanConfig() {
+    // We have to convert Windows paths to Posix paths as `del` does not handle
+    // backslash separators anymore.
+    const deletedPath = path.posix.join(...this.syncPath.split(path.sep))
+    return del(deletedPath, { force: process.env.CI })
   }
 }
