@@ -26,7 +26,17 @@ env:
   COUCHDB_VERSION: "2.3.1"
 
 jobs:
+  cancel:
+    name: 'Cancel Previous Runs'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: styfle/cancel-workflow-action@a7eadb6f3809d6ae84fa62ee7bd8538e289cb9a4
+        with:
+          access_token: ${{ github.token }}
+
   unit:
+    needs: cancel
     runs-on: ubuntu-latest
     name: Lint & Unit tests
     steps:
@@ -78,6 +88,7 @@ jobs:
         run: yarn test:unit --forbid-only
 
   integration:
+    needs: cancel
     runs-on: ubuntu-latest
     name: Integration tests
     steps:
@@ -121,6 +132,7 @@ jobs:
         run: yarn test:integration --forbid-only
 
   scenarios:
+    needs: cancel
     runs-on: ubuntu-latest
     name: Scenarios
     strategy:
@@ -170,6 +182,7 @@ jobs:
         run: yarn test:scenarios --forbid-only
 
   build:
+    needs: cancel
     runs-on: ubuntu-latest
     name: Build packages
     steps:
