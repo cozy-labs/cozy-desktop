@@ -73,6 +73,11 @@ class TestHelpers {
     autoBind(this)
   }
 
+  async stop() {
+    await this._remote.stop()
+    await this._local.stop()
+  }
+
   async syncAll() {
     this._sync.lifecycle.end('start')
     await this._sync.sync({ manualRun: true })

@@ -43,10 +43,6 @@ describe('Test scenarios', function() {
   beforeEach('set up outside dir', async function() {
     await fse.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
   })
-
-  afterEach(pouchHelpers.cleanDatabase)
-  afterEach(configHelpers.cleanConfig)
-
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
 
@@ -54,6 +50,12 @@ describe('Test scenarios', function() {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+
+  afterEach(async function() {
+    await helpers.stop()
+  })
+  afterEach(pouchHelpers.cleanDatabase)
+  afterEach(configHelpers.cleanConfig)
 
   for (let scenario of scenarios) {
     if (scenario.platforms && !scenario.platforms.includes(platform)) {

@@ -34,7 +34,11 @@ module.exports = {
   async cleanConfig() {
     // We have to convert Windows paths to Posix paths as `del` does not handle
     // backslash separators anymore.
-    const deletedPath = path.posix.join(...this.syncPath.split(path.sep))
-    return del(deletedPath, { force: process.env.CI })
+    const deletedPath = path.posix.join(...this.basePath.split(path.sep), '**')
+    try {
+      await del([deletedPath], { force: process.env.CI })
+    } catch (err) {
+      //
+    }
   }
 }

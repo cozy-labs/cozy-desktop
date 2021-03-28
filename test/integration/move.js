@@ -1290,7 +1290,7 @@ describe('Move', () => {
     })
   })
 
-  describe('unsynced local directory', () => {
+  describe('unsynced local directory with content', () => {
     beforeEach(async () => {
       await helpers.local.syncDir.ensureDir('src')
       await helpers.local.syncDir.ensureDir('dst')
@@ -1298,48 +1298,159 @@ describe('Move', () => {
       await helpers.syncAll()
 
       await helpers.local.syncDir.ensureDir('src/dir')
+      await helpers.local.syncDir.outputFile('src/dir/file', 'file content')
       await helpers.local.scan()
     })
 
-    it('moved during sync', async () => {
-      should(await helpers.local.tree()).deepEqual(['dst/', 'src/', 'src/dir/'])
-      await helpers.local.syncDir.move('src/dir', 'dst/dir')
-      // Sync will fail since file was already moved.
-      await helpers.syncAll()
-      // This will prepend made up unlink event to scan add one, ending up as
-      // the expected move.
-      await helpers.local.scan()
-      await helpers.syncAll()
+    describe('during sync', () => {
+      it('is created at destination', async () => {
+        should(await helpers.local.tree()).deepEqual([
+          'dst/',
+          'src/',
+          'src/dir/',
+          'src/dir/file'
+        ])
+        await helpers.local.syncDir.move('src/dir', 'dst/dir')
+        // Sync will fail since file was already moved.
+        await helpers.syncAll()
+        // This will prepend made up unlink event to scan add one, ending up as
+        // the expected move.
+        await helpers.local.scan()
+        await helpers.syncAll()
 
-      should(await helpers.trees('metadata', 'remote')).deepEqual({
-        remote: ['dst/', 'dst/dir/', 'src/'],
-        metadata: ['dst/', 'dst/dir/', 'src/']
+        should(await helpers.trees('metadata', 'remote')).deepEqual({
+          remote: ['dst/', 'dst/dir/', 'dst/dir/file', 'src/'],
+          metadata: ['dst/', 'dst/dir/', 'dst/dir/file', 'src/']
+        })
       })
     })
 
-    it('moved before sync', async () => {
-      should(await helpers.local.tree()).deepEqual(['dst/', 'src/', 'src/dir/'])
-      await helpers.local.syncDir.move('src/dir', 'dst/dir')
-      await helpers.local.scan()
-      await helpers.syncAll()
+    describe('before sync', () => {
+      it('is created at destination', async () => {
+        should(await helpers.local.tree()).deepEqual([
+          'dst/',
+          'src/',
+          'src/dir/',
+          'src/dir/file'
+        ])
+        await helpers.local.syncDir.move('src/dir', 'dst/dir')
+        await helpers.local.scan()
+        await helpers.syncAll()
 
-      should(await helpers.trees('metadata', 'remote')).deepEqual({
-        remote: ['dst/', 'dst/dir/', 'src/'],
-        metadata: ['dst/', 'dst/dir/', 'src/']
+        should(await helpers.trees('metadata', 'remote')).deepEqual({
+          remote: ['dst/', 'dst/dir/', 'dst/dir/file', 'src/'],
+          metadata: ['dst/', 'dst/dir/', 'dst/dir/file', 'src/']
+        })
       })
     })
 
-    it('moved twice before sync', async () => {
-      should(await helpers.local.tree()).deepEqual(['dst/', 'src/', 'src/dir/'])
-      await helpers.local.syncDir.move('src/dir', 'dst/dir')
-      await helpers.local.scan()
-      await helpers.local.syncDir.move('dst/dir', 'dst/final')
-      await helpers.local.scan()
+    describe('twice before sync', () => {
+      it('is created at destination', async () => {
+        should(await helpers.local.tree()).deepEqual([
+          'dst/',
+          'src/',
+          'src/dir/',
+          'src/dir/file'
+        ])
+        await helpers.local.syncDir.move('src/dir', 'dst/dir')
+        await helpers.local.scan()
+        await helpers.local.syncDir.move('dst/dir', 'dst/final')
+        await helpers.local.scan()
+        await helpers.syncAll()
+
+        should(await helpers.trees('metadata', 'remote')).deepEqual({
+          remote: ['dst/', 'dst/final/', 'dst/final/file', 'src/'],
+          metadata: ['dst/', 'dst/final/', 'dst/final/file', 'src/']
+        })
+      })
+    })
+  })
+
+  describe('unsynced remote directory with content', () => {
+    let syncedRemoteDocs, unsyncedRemoteDocs
+    beforeEach(async () => {
+      syncedRemoteDocs = await helpers.remote.createTree(['src/', 'dst/'])
+      await helpers.remote.pullChanges()
       await helpers.syncAll()
 
-      should(await helpers.trees('metadata', 'remote')).deepEqual({
-        remote: ['dst/', 'dst/final/', 'src/'],
-        metadata: ['dst/', 'dst/final/', 'src/']
+      unsyncedRemoteDocs = await helpers.remote.createTree([
+        'src/dir/',
+        'src/dir/file'
+      ])
+      await helpers.remote.pullChanges()
+    })
+
+    describe('during sync', () => {
+      it('is created at destination', async () => {
+        should(await helpers.remote.treeWithoutTrash()).deepEqual([
+          'dst/',
+          'src/',
+          'src/dir/',
+          'src/dir/file'
+        ])
+        await helpers.remote.cozy.files.updateAttributesById(
+          unsyncedRemoteDocs['src/dir/']._id,
+          { dir_id: syncedRemoteDocs['dst/']._id }
+        )
+        // Sync will fail since file was already moved.
+        await helpers.syncAll()
+        // This will prepend made up unlink event to scan add one, ending up as
+        // the expected move.
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+
+        should(await helpers.trees('metadata', 'remote')).deepEqual({
+          remote: ['dst/', 'dst/dir/', 'dst/dir/file', 'src/'],
+          metadata: ['dst/', 'dst/dir/', 'dst/dir/file', 'src/']
+        })
+      })
+    })
+
+    describe('before sync', () => {
+      it('is created at destination', async () => {
+        should(await helpers.remote.treeWithoutTrash()).deepEqual([
+          'dst/',
+          'src/',
+          'src/dir/',
+          'src/dir/file'
+        ])
+        await helpers.remote.cozy.files.updateAttributesById(
+          unsyncedRemoteDocs['src/dir/']._id,
+          { dir_id: syncedRemoteDocs['dst/']._id }
+        )
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+
+        should(await helpers.trees('metadata', 'remote')).deepEqual({
+          remote: ['dst/', 'dst/dir/', 'dst/dir/file', 'src/'],
+          metadata: ['dst/', 'dst/dir/', 'dst/dir/file', 'src/']
+        })
+      })
+    })
+
+    describe('twice before sync', () => {
+      it('is created at destination', async () => {
+        should(await helpers.remote.treeWithoutTrash()).deepEqual([
+          'dst/',
+          'src/',
+          'src/dir/',
+          'src/dir/file'
+        ])
+        const movedDirId = unsyncedRemoteDocs['src/dir/']._id
+        await helpers.remote.cozy.files.updateAttributesById(movedDirId, {
+          dir_id: syncedRemoteDocs['dst/']._id
+        })
+        await helpers.remote.pullChanges()
+        await helpers.remote.cozy.files.updateAttributesById(movedDirId, {
+          name: 'final'
+        })
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+
+        should(await helpers.trees('metadata', 'remote')).deepEqual({
+          remote: ['dst/', 'dst/final/', 'dst/final/file', 'src/'],
+          metadata: ['dst/', 'dst/final/', 'dst/final/file', 'src/']
+        })
       })
     })
   })

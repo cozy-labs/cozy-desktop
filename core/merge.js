@@ -457,14 +457,6 @@ class Merge {
   ) {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFolderAsync')
 
-    if (!metadata.wasSynced(was)) {
-      metadata.markAsUnsyncable(was)
-      await this.pouch.put(was)
-
-      metadata.markAsUnmerged(doc, side)
-      return this.putFolderAsync(side, doc)
-    }
-
     metadata.assignMaxDate(doc, was)
 
     const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
@@ -525,7 +517,12 @@ class Merge {
     const docs = await this.pouch.byRecursivePath(was.path)
     const dstChildren = await this.pouch.byRecursivePath(folder.path)
 
-    move(side, was, folder)
+    const singleSide = metadata.detectSingleSide(was)
+    if (singleSide) {
+      move.convertToDestinationAddition(singleSide, was, folder)
+    } else {
+      move(side, was, folder)
+    }
     let bulk = [was, folder]
 
     const makeDestinationPath = doc =>

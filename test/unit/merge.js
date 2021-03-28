@@ -9,6 +9,7 @@ const path = require('path')
 const { Merge } = require('../../core/merge')
 const metadata = require('../../core/metadata')
 const { otherSide } = require('../../core/side')
+const pathUtils = require('../../core/utils/path')
 
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -92,8 +93,22 @@ describe('Merge', function() {
   beforeEach('instanciate merge', function() {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
-    this.merge.local = { moveAsync: sinon.stub().resolves() }
-    this.merge.remote = { moveAsync: sinon.stub().resolves() }
+    this.merge.local = {
+      moveAsync: sinon.stub().callsFake(doc => {
+        // XXX: We cannot stub `fs.rename` as it's directly imported by `Local`
+        // but we care about the `local` attribute being updated so we
+        // explicitely call `metadata.updateLocal()`.
+        metadata.updateLocal(doc)
+      })
+    }
+    this.merge.remote = {
+      moveAsync: sinon.stub().callsFake(doc => {
+        // XXX: It would be cumbersome to stub the content of this method but we
+        // care about the `remote` attribute being updated so we explicitely
+        // call `metadata.updateRemote()`.
+        metadata.updateRemote(doc, { path: pathUtils.localToRemote(doc.path) })
+      })
+    }
     builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
@@ -2056,11 +2071,12 @@ describe('Merge', function() {
           should(sideEffects).deepEqual({
             savedDocs: [
               _.omit(movedSrc, ['_id', '_rev']),
-              _.defaults(
+              _.defaultsDeep(
                 {
                   path: dstPath,
                   sides: increasedSides(was.sides, 'local', 1),
                   moveFrom: movedSrc,
+                  local: { path: dstPath },
                   remote: was.remote
                 },
                 _.omit(doc, ['_id'])
@@ -2517,26 +2533,18 @@ describe('Merge', function() {
   })
 
   describe('moveFolderAsync', function() {
-    beforeEach('create parent directory', async function() {
-      await builders
-        .metadir()
-        .path('FOOBAR')
-        .upToDate()
-        .create()
-    })
-
     context('local', () => {
       it('saves the new folder and deletes the old one with hints for writers', async function() {
         const was = await builders
           .metadir()
-          .path('FOOBAR/OLD')
+          .path('OLD')
           .ino(666)
           .tags('courge', 'quux')
           .upToDate()
           .create()
         const doc = builders
           .metadir(was)
-          .path('FOOBAR/NEW')
+          .path('NEW')
           .unmerged('local')
           .build()
 
@@ -2568,6 +2576,249 @@ describe('Merge', function() {
             )
           ],
           resolvedConflicts: []
+        })
+      })
+
+      context('when the folder does not exist remotely', () => {
+        let was, child
+        beforeEach(async function() {
+          was = await builders
+            .metadir()
+            .path('OLD')
+            .ino(666)
+            .tags('courge', 'quux')
+            .sides({ local: 1 })
+            .create()
+          child = await builders
+            .metafile()
+            .path('OLD/child')
+            .sides({ local: 1 })
+            .create()
+        })
+
+        it('saves a local folder addition', async function() {
+          const doc = builders
+            .metadir(was)
+            .path('NEW')
+            .tags('courge', 'quux')
+            .unmerged('local')
+            .build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.moveFolderAsync(
+              'local',
+              _.cloneDeep(doc),
+              _.cloneDeep(was)
+            )
+          )
+
+          const unsyncedFolder = _.defaults(
+            {
+              _deleted: true
+            },
+            _.omit(was, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
+          )
+          const folderAddition = _.defaults(
+            {
+              sides: { target: 1, local: 1 }
+            },
+            _.omit(doc, ['_id', '_rev', 'fileid'])
+          )
+          const unsyncedChild = _.defaults(
+            { _deleted: true },
+            _.omit(child, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
+          )
+          const childAddition = _.defaultsDeep(
+            {
+              sides: { target: 1, local: 1 },
+              local: {
+                path: child.local.path.replace(was.local.path, doc.local.path)
+              },
+              path: child.path.replace(was.path, doc.path)
+            },
+            _.omit(child, ['_id', '_rev', 'fileid'])
+          )
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              unsyncedFolder,
+              folderAddition,
+              unsyncedChild,
+              childAddition
+            ],
+            resolvedConflicts: []
+          })
+        })
+
+        context('and the destination exists', () => {
+          let existing
+          context('and it is up-to-date', () => {
+            beforeEach(async function() {
+              existing = await builders
+                .metadir()
+                .path('NEW')
+                .upToDate()
+                .create()
+            })
+
+            it('overwrites the destination', async function() {
+              const doc = builders
+                .metadir(was)
+                .path(existing.path)
+                .unmerged('local')
+                .build()
+
+              const sideEffects = await mergeSideEffects(this, () =>
+                this.merge.moveFolderAsync(
+                  'local',
+                  _.cloneDeep(doc),
+                  _.cloneDeep(was)
+                )
+              )
+
+              const unsyncedFolder = _.defaults(
+                {
+                  _deleted: true
+                },
+                _.omit(was, [
+                  '_id',
+                  '_rev',
+                  'fileid',
+                  'sides',
+                  'local',
+                  'remote'
+                ])
+              )
+              const folderAddition = _.defaults(
+                {
+                  sides: { target: 1, local: 1 },
+                  overwrite: existing
+                },
+                _.omit(doc, ['_id', '_rev', 'fileid'])
+              )
+              const unsyncedChild = _.defaults(
+                { _deleted: true },
+                _.omit(child, [
+                  '_id',
+                  '_rev',
+                  'fileid',
+                  'sides',
+                  'local',
+                  'remote'
+                ])
+              )
+              const childAddition = _.defaultsDeep(
+                {
+                  sides: { target: 1, local: 1 },
+                  local: {
+                    path: child.local.path.replace(
+                      was.local.path,
+                      doc.local.path
+                    )
+                  },
+                  path: child.path.replace(was.path, doc.path)
+                },
+                _.omit(child, ['_id', '_rev', 'fileid'])
+              )
+              should(sideEffects).deepEqual({
+                savedDocs: [
+                  unsyncedFolder,
+                  folderAddition,
+                  unsyncedChild,
+                  childAddition
+                ],
+                resolvedConflicts: []
+              })
+            })
+          })
+
+          context(
+            'and it is not at least up-to-date on the movement side',
+            () => {
+              beforeEach(async function() {
+                existing = await builders
+                  .metadir()
+                  .path('NEW')
+                  .changedSide('remote')
+                  .create()
+              })
+
+              it('resolves a conflict', async function() {
+                const doc = builders
+                  .metadir(was)
+                  .path(existing.path)
+                  .unmerged('local')
+                  .build()
+
+                const sideEffects = await mergeSideEffects(this, () =>
+                  this.merge.moveFolderAsync(
+                    'local',
+                    _.cloneDeep(doc),
+                    _.cloneDeep(was)
+                  )
+                )
+
+                const { path: dstPath } = _.find(
+                  sideEffects.savedDocs,
+                  ({ path, docType }) =>
+                    docType === 'folder' && path.match(/conflict/)
+                )
+
+                const unsyncedFolder = _.defaults(
+                  {
+                    _deleted: true
+                  },
+                  _.omit(was, [
+                    '_id',
+                    '_rev',
+                    'fileid',
+                    'sides',
+                    'local',
+                    'remote'
+                  ])
+                )
+                const folderAddition = _.defaultsDeep(
+                  {
+                    path: dstPath,
+                    local: { path: dstPath },
+                    sides: { target: 1, local: 1 }
+                  },
+                  _.omit(doc, ['_id', '_rev', 'fileid'])
+                )
+                const unsyncedChild = _.defaults(
+                  { _deleted: true },
+                  _.omit(child, [
+                    '_id',
+                    '_rev',
+                    'fileid',
+                    'sides',
+                    'local',
+                    'remote'
+                  ])
+                )
+                const childAddition = _.defaultsDeep(
+                  {
+                    path: child.path.replace(was.path, dstPath),
+                    sides: { target: 1, local: 1 },
+                    local: {
+                      path: child.local.path.replace(was.local.path, dstPath)
+                    }
+                  },
+                  _.omit(child, ['_id', '_rev', 'fileid'])
+                )
+                should(sideEffects).deepEqual({
+                  savedDocs: [
+                    unsyncedFolder,
+                    folderAddition,
+                    unsyncedChild,
+                    childAddition
+                  ],
+                  resolvedConflicts: [
+                    ['local', _.pick(doc, ['path', 'remote'])]
+                  ]
+                })
+              })
+            }
+          )
         })
       })
     })
@@ -2627,85 +2878,274 @@ describe('Merge', function() {
           resolvedConflicts: []
         })
       })
-    })
 
-    it('replaces a local move with an addition for a local-only folder', async function() {
-      const was = await builders
-        .metadir()
-        .path('FOOBAR/OLD')
-        .ino(666)
-        .tags('courge', 'quux')
-        .sides({ local: 1 })
-        .create()
-      const doc = builders
-        .metadir(was)
-        .path('FOOBAR/NEW')
-        .tags('courge', 'quux')
-        .unmerged('local')
-        .build()
+      context('when the folder does not exist locally', () => {
+        let oldRemoteDir, was, child
+        beforeEach(async function() {
+          oldRemoteDir = builders
+            .remoteDir()
+            .inRootDir()
+            .name('OLD')
+            .build()
+          was = await builders
+            .metadir()
+            .fromRemote(oldRemoteDir)
+            .sides({ remote: 1 })
+            .create()
+          const remoteChild = builders
+            .remoteFile()
+            .inDir(oldRemoteDir)
+            .name('child')
+            .build()
+          child = await builders
+            .metafile()
+            .fromRemote(remoteChild)
+            .sides({ remote: 1 })
+            .create()
+        })
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFolderAsync('local', _.cloneDeep(doc), _.cloneDeep(was))
-      )
+        it('saves a remote folder addition', async function() {
+          const newRemoteDir = builders
+            .remoteDir(oldRemoteDir)
+            .name('NEW')
+            .build()
+          const doc = builders
+            .metadir()
+            .fromRemote(newRemoteDir)
+            .unmerged('remote')
+            .build()
 
-      const unsyncedFolder = _.defaults(
-        {
-          _deleted: true
-        },
-        _.omit(was, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
-      )
-      const folderAddition = _.defaults(
-        {
-          sides: { target: 1, local: 1 }
-        },
-        _.omit(doc, ['_id', '_rev', 'fileid'])
-      )
-      should(sideEffects).deepEqual({
-        savedDocs: [unsyncedFolder, folderAddition],
-        resolvedConflicts: []
-      })
-    })
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.moveFolderAsync(
+              'remote',
+              _.cloneDeep(doc),
+              _.cloneDeep(was)
+            )
+          )
 
-    it('replaces a remote move with an addition for a remote-only folder', async function() {
-      const oldRemoteDir = builders
-        .remoteDir()
-        .inRootDir()
-        .name('OLD')
-        .build()
-      const was = await builders
-        .metadir()
-        .fromRemote(oldRemoteDir)
-        .sides({ remote: 1 })
-        .create()
-      const newRemoteDir = builders
-        .remoteDir(oldRemoteDir)
-        .name('NEW')
-        .build()
-      const doc = builders
-        .metadir()
-        .fromRemote(newRemoteDir)
-        .unmerged('remote')
-        .build()
+          const unsyncedFolder = _.defaults(
+            {
+              _deleted: true
+            },
+            _.omit(was, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
+          )
+          const folderAddition = _.defaults(
+            {
+              sides: { target: 1, remote: 1 }
+            },
+            _.omit(doc, ['_id', '_rev', 'fileid'])
+          )
+          const unsyncedChild = _.defaults(
+            { _deleted: true },
+            _.omit(child, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
+          )
+          const childAddition = _.defaultsDeep(
+            {
+              sides: { target: 1, remote: 1 },
+              remote: {
+                path: child.remote.path.replace(
+                  was.remote.path,
+                  doc.remote.path
+                )
+              },
+              path: child.path.replace(was.path, doc.path)
+            },
+            _.omit(child, ['_id', '_rev', 'fileid'])
+          )
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              unsyncedFolder,
+              folderAddition,
+              unsyncedChild,
+              childAddition
+            ],
+            resolvedConflicts: []
+          })
+        })
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFolderAsync('remote', _.cloneDeep(doc), _.cloneDeep(was))
-      )
+        context('and the destination exists', () => {
+          let existing
+          context('and it is up-to-date', () => {
+            beforeEach(async function() {
+              existing = await builders
+                .metadir()
+                .path('NEW')
+                .upToDate()
+                .create()
+            })
 
-      const unsyncedFolder = _.defaults(
-        {
-          _deleted: true
-        },
-        _.omit(was, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
-      )
-      const folderAddition = _.defaults(
-        {
-          sides: { target: 1, remote: 1 }
-        },
-        _.omit(doc, ['_id', '_rev', 'fileid'])
-      )
-      should(sideEffects).deepEqual({
-        savedDocs: [unsyncedFolder, folderAddition],
-        resolvedConflicts: []
+            it('overwrites the destination', async function() {
+              const newRemoteDir = builders
+                .remoteDir(oldRemoteDir)
+                .name('NEW')
+                .build()
+              const doc = builders
+                .metadir(was)
+                .fromRemote(newRemoteDir)
+                .unmerged('remote')
+                .build()
+
+              const sideEffects = await mergeSideEffects(this, () =>
+                this.merge.moveFolderAsync(
+                  'remote',
+                  _.cloneDeep(doc),
+                  _.cloneDeep(was)
+                )
+              )
+
+              const unsyncedFolder = _.defaults(
+                {
+                  _deleted: true
+                },
+                _.omit(was, [
+                  '_id',
+                  '_rev',
+                  'fileid',
+                  'sides',
+                  'local',
+                  'remote'
+                ])
+              )
+              const folderAddition = _.defaults(
+                {
+                  sides: { target: 1, remote: 1 },
+                  overwrite: existing
+                },
+                _.omit(doc, ['_id', '_rev', 'fileid'])
+              )
+              const unsyncedChild = _.defaults(
+                { _deleted: true },
+                _.omit(child, [
+                  '_id',
+                  '_rev',
+                  'fileid',
+                  'sides',
+                  'local',
+                  'remote'
+                ])
+              )
+              const childAddition = _.defaultsDeep(
+                {
+                  sides: { target: 1, remote: 1 },
+                  remote: {
+                    path: child.remote.path.replace(
+                      was.remote.path,
+                      doc.remote.path
+                    )
+                  },
+                  path: child.path.replace(was.path, doc.path)
+                },
+                _.omit(child, ['_id', '_rev', 'fileid'])
+              )
+              should(sideEffects).deepEqual({
+                savedDocs: [
+                  unsyncedFolder,
+                  folderAddition,
+                  unsyncedChild,
+                  childAddition
+                ],
+                resolvedConflicts: []
+              })
+            })
+          })
+
+          context(
+            'and it is not at least up-to-date on the movement side',
+            () => {
+              beforeEach(async function() {
+                existing = await builders
+                  .metadir()
+                  .path('NEW')
+                  .changedSide('local')
+                  .create()
+              })
+
+              it('resolves a conflict', async function() {
+                const newRemoteDir = builders
+                  .remoteDir(oldRemoteDir)
+                  .name('NEW')
+                  .build()
+                const doc = builders
+                  .metadir(was)
+                  .fromRemote(newRemoteDir)
+                  .unmerged('remote')
+                  .build()
+
+                const sideEffects = await mergeSideEffects(this, () =>
+                  this.merge.moveFolderAsync(
+                    'remote',
+                    _.cloneDeep(doc),
+                    _.cloneDeep(was)
+                  )
+                )
+
+                const { path: dstPath } = _.find(
+                  sideEffects.savedDocs,
+                  ({ path, docType }) =>
+                    docType === 'folder' && path.match(/conflict/)
+                )
+                const remoteDstPath = pathUtils.localToRemote(dstPath)
+
+                const unsyncedFolder = _.defaults(
+                  {
+                    _deleted: true
+                  },
+                  _.omit(was, [
+                    '_id',
+                    '_rev',
+                    'fileid',
+                    'sides',
+                    'local',
+                    'remote'
+                  ])
+                )
+                const folderAddition = _.defaultsDeep(
+                  {
+                    path: dstPath,
+                    remote: { path: remoteDstPath },
+                    sides: { target: 1, remote: 1 }
+                  },
+                  _.omit(doc, ['_id', '_rev', 'fileid'])
+                )
+                const unsyncedChild = _.defaults(
+                  { _deleted: true },
+                  _.omit(child, [
+                    '_id',
+                    '_rev',
+                    'fileid',
+                    'sides',
+                    'local',
+                    'remote'
+                  ])
+                )
+                const childAddition = _.defaultsDeep(
+                  {
+                    path: child.path.replace(was.path, dstPath),
+                    sides: { target: 1, remote: 1 },
+                    remote: {
+                      path: child.remote.path.replace(
+                        was.remote.path,
+                        remoteDstPath
+                      )
+                    }
+                  },
+                  _.omit(child, ['_id', '_rev', 'fileid'])
+                )
+                should(sideEffects).deepEqual({
+                  savedDocs: [
+                    unsyncedFolder,
+                    folderAddition,
+                    unsyncedChild,
+                    childAddition
+                  ],
+                  resolvedConflicts: [
+                    ['remote', _.pick(doc, ['path', 'remote'])]
+                  ]
+                })
+              })
+            }
+          )
+        })
       })
     })
 
@@ -2810,11 +3250,12 @@ describe('Merge', function() {
           should(sideEffects).deepEqual({
             savedDocs: [
               _.omit(movedSrc, ['_id', '_rev']),
-              _.defaults(
+              _.defaultsDeep(
                 {
                   path: dstPath,
                   sides: increasedSides(was.sides, this.side, 1),
                   moveFrom: movedSrc,
+                  [this.side]: { path: dstPath },
                   [otherSide(this.side)]: was[otherSide(this.side)]
                 },
                 _.omit(doc, ['_id'])
