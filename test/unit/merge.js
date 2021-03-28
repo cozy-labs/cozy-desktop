@@ -2517,26 +2517,18 @@ describe('Merge', function() {
   })
 
   describe('moveFolderAsync', function() {
-    beforeEach('create parent directory', async function() {
-      await builders
-        .metadir()
-        .path('FOOBAR')
-        .upToDate()
-        .create()
-    })
-
     context('local', () => {
       it('saves the new folder and deletes the old one with hints for writers', async function() {
         const was = await builders
           .metadir()
-          .path('FOOBAR/OLD')
+          .path('OLD')
           .ino(666)
           .tags('courge', 'quux')
           .upToDate()
           .create()
         const doc = builders
           .metadir(was)
-          .path('FOOBAR/NEW')
+          .path('NEW')
           .unmerged('local')
           .build()
 
@@ -2568,6 +2560,49 @@ describe('Merge', function() {
             )
           ],
           resolvedConflicts: []
+        })
+      })
+
+      context('when the folder does not exist remotely', () => {
+        it('saves a local folder addition', async function() {
+          const was = await builders
+            .metadir()
+            .path('OLD')
+            .ino(666)
+            .tags('courge', 'quux')
+            .sides({ local: 1 })
+            .create()
+          const doc = builders
+            .metadir(was)
+            .path('NEW')
+            .tags('courge', 'quux')
+            .unmerged('local')
+            .build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.moveFolderAsync(
+              'local',
+              _.cloneDeep(doc),
+              _.cloneDeep(was)
+            )
+          )
+
+          const unsyncedFolder = _.defaults(
+            {
+              _deleted: true
+            },
+            _.omit(was, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
+          )
+          const folderAddition = _.defaults(
+            {
+              sides: { target: 1, local: 1 }
+            },
+            _.omit(doc, ['_id', '_rev', 'fileid'])
+          )
+          should(sideEffects).deepEqual({
+            savedDocs: [unsyncedFolder, folderAddition],
+            resolvedConflicts: []
+          })
         })
       })
     })
@@ -2627,85 +2662,54 @@ describe('Merge', function() {
           resolvedConflicts: []
         })
       })
-    })
 
-    it('replaces a local move with an addition for a local-only folder', async function() {
-      const was = await builders
-        .metadir()
-        .path('FOOBAR/OLD')
-        .ino(666)
-        .tags('courge', 'quux')
-        .sides({ local: 1 })
-        .create()
-      const doc = builders
-        .metadir(was)
-        .path('FOOBAR/NEW')
-        .tags('courge', 'quux')
-        .unmerged('local')
-        .build()
+      context('when the folder does not exist locally', () => {
+        it('saves a remote folder addition', async function() {
+          const oldRemoteDir = builders
+            .remoteDir()
+            .inRootDir()
+            .name('OLD')
+            .build()
+          const was = await builders
+            .metadir()
+            .fromRemote(oldRemoteDir)
+            .sides({ remote: 1 })
+            .create()
+          const newRemoteDir = builders
+            .remoteDir(oldRemoteDir)
+            .name('NEW')
+            .build()
+          const doc = builders
+            .metadir()
+            .fromRemote(newRemoteDir)
+            .unmerged('remote')
+            .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFolderAsync('local', _.cloneDeep(doc), _.cloneDeep(was))
-      )
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.moveFolderAsync(
+              'remote',
+              _.cloneDeep(doc),
+              _.cloneDeep(was)
+            )
+          )
 
-      const unsyncedFolder = _.defaults(
-        {
-          _deleted: true
-        },
-        _.omit(was, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
-      )
-      const folderAddition = _.defaults(
-        {
-          sides: { target: 1, local: 1 }
-        },
-        _.omit(doc, ['_id', '_rev', 'fileid'])
-      )
-      should(sideEffects).deepEqual({
-        savedDocs: [unsyncedFolder, folderAddition],
-        resolvedConflicts: []
-      })
-    })
-
-    it('replaces a remote move with an addition for a remote-only folder', async function() {
-      const oldRemoteDir = builders
-        .remoteDir()
-        .inRootDir()
-        .name('OLD')
-        .build()
-      const was = await builders
-        .metadir()
-        .fromRemote(oldRemoteDir)
-        .sides({ remote: 1 })
-        .create()
-      const newRemoteDir = builders
-        .remoteDir(oldRemoteDir)
-        .name('NEW')
-        .build()
-      const doc = builders
-        .metadir()
-        .fromRemote(newRemoteDir)
-        .unmerged('remote')
-        .build()
-
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFolderAsync('remote', _.cloneDeep(doc), _.cloneDeep(was))
-      )
-
-      const unsyncedFolder = _.defaults(
-        {
-          _deleted: true
-        },
-        _.omit(was, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
-      )
-      const folderAddition = _.defaults(
-        {
-          sides: { target: 1, remote: 1 }
-        },
-        _.omit(doc, ['_id', '_rev', 'fileid'])
-      )
-      should(sideEffects).deepEqual({
-        savedDocs: [unsyncedFolder, folderAddition],
-        resolvedConflicts: []
+          const unsyncedFolder = _.defaults(
+            {
+              _deleted: true
+            },
+            _.omit(was, ['_id', '_rev', 'fileid', 'sides', 'local', 'remote'])
+          )
+          const folderAddition = _.defaults(
+            {
+              sides: { target: 1, remote: 1 }
+            },
+            _.omit(doc, ['_id', '_rev', 'fileid'])
+          )
+          should(sideEffects).deepEqual({
+            savedDocs: [unsyncedFolder, folderAddition],
+            resolvedConflicts: []
+          })
+        })
       })
     })
 
