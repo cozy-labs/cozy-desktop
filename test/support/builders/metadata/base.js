@@ -110,6 +110,8 @@ module.exports = class BaseMetadataBuilder {
     }
     this.noSides()
     this.noRecord()
+    delete this.doc.moveFrom
+    delete this.doc.overwrite
     return this
   }
 

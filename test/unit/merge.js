@@ -4234,7 +4234,6 @@ describe('Merge', function() {
         .metadir(was)
         .path(`.cozy_trash/${was.path}`)
         .trashed()
-        .unmerged(this.side)
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -4603,7 +4602,6 @@ describe('Merge', function() {
         const doc = builders
           .metafile(was)
           .trashed()
-          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -4639,7 +4637,6 @@ describe('Merge', function() {
         const doc = builders
           .metafile(was)
           .trashed()
-          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -4679,7 +4676,6 @@ describe('Merge', function() {
           const doc = builders
             .metafile(was)
             .trashed()
-            .unmerged(this.side)
             .build()
 
           const sideEffects = await mergeSideEffects(this, () =>
@@ -4712,7 +4708,6 @@ describe('Merge', function() {
           const doc = builders
             .metafile(was)
             .trashed()
-            .unmerged(this.side)
             .build()
 
           const sideEffects = await mergeSideEffects(this, () =>
@@ -4746,7 +4741,6 @@ describe('Merge', function() {
         const doc = builders
           .metafile(was)
           .trashed()
-          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -4774,7 +4768,6 @@ describe('Merge', function() {
           .metadir()
           .path(was.path)
           .trashed()
-          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -4801,7 +4794,6 @@ describe('Merge', function() {
         const doc = builders
           .metafile(was)
           .trashed()
-          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -4827,6 +4819,190 @@ describe('Merge', function() {
         })
       })
     })
+
+    context('when found record was modified on the same side', () => {
+      it('marks it for deletion and updates sides info', async function() {
+        const initial = await builders
+          .metafile()
+          .data('initial')
+          .upToDate()
+          .create()
+        const was = await builders
+          .metafile(initial)
+          .data('updated')
+          .changedSide(this.side)
+          .create()
+        const doc = builders
+          .metafile(was)
+          .trashed()
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFileAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: increasedSides(was.sides, this.side, 1),
+                [this.side]: doc[this.side],
+                deleted: true
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when found record was modified on the other side', () => {
+      it('dissociates the record from the trashed side which is not saved', async function() {
+        const initial = await builders
+          .metafile()
+          .data('initial')
+          .upToDate()
+          .create()
+        const was = await builders
+          .metafile(initial)
+          .data('updated')
+          .changedSide(otherSide(this.side))
+          .create()
+        const doc = builders
+          .metafile(was)
+          .trashed()
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFileAsync(
+            this.side,
+            _.cloneDeep(was),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: _.omit(was.sides, this.side)
+              },
+              _.omit(was, ['_id', '_rev', this.side])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+    })
+
+    context('when trashed on local side', () => {
+      context('and found record was moved on the remote side', () => {
+        it('dissociates the record from the local side so it can be downloaded again', async function() {
+          const initial = await builders
+            .metafile()
+            .path('initial')
+            .upToDate()
+            .create()
+          const src = await builders
+            .metafile(initial)
+            .moveTo('moved')
+            .create()
+          const was = await builders
+            .metafile()
+            .moveFrom(src)
+            .changedSide('remote')
+            .create()
+          const doc = builders
+            .metafile(was)
+            .trashed()
+            .build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.trashFileAsync(
+              'local',
+              _.cloneDeep(was),
+              _.cloneDeep(doc)
+            )
+          )
+
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              _.defaults(
+                {
+                  sides: _.omit(was.sides, 'local')
+                },
+                _.omit(was, ['_id', '_rev', 'moveFrom', 'local'])
+              )
+            ],
+            resolvedConflicts: []
+          })
+        })
+      })
+    })
+
+    context('when trashed on remote side', () => {
+      context('and found record was moved on the local side', () => {
+        // FIXME: Moving a trashed file from outside the remote Trash is not
+        // intended and will result in issues later as the remote file will keep
+        // its `trashed` attribute.
+        // We need to find a solution for this (e.g. restore the file before
+        // moving it to its destination).
+        it('updates the record remote revs so it can be restored', async function() {
+          const initialRemote = await builders
+            .remoteFile()
+            .name('initial')
+            .build()
+          const initial = await builders
+            .metafile()
+            .fromRemote(initialRemote)
+            .upToDate()
+            .create()
+          const src = await builders
+            .metafile(initial)
+            .moveTo('moved')
+            .create()
+          const was = await builders
+            .metafile()
+            .moveFrom(src)
+            .changedSide('local')
+            .create()
+          const trashedRemote = await builders
+            .remoteFile(initialRemote)
+            .trashed()
+            .build()
+          const doc = builders
+            .metafile()
+            .fromRemote(trashedRemote)
+            .build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.trashFileAsync(
+              'remote',
+              _.cloneDeep(was),
+              _.cloneDeep(doc)
+            )
+          )
+
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              _.defaultsDeep(
+                {
+                  remote: { _rev: trashedRemote._rev },
+                  moveFrom: { remote: { _rev: trashedRemote._rev } }
+                },
+                _.omit(was, ['_id', '_rev'])
+              )
+            ],
+            resolvedConflicts: []
+          })
+        })
+      })
+    })
   })
 
   describe('trashFolderAsync', () => {
@@ -4839,7 +5015,6 @@ describe('Merge', function() {
         const doc = builders
           .metadir(was)
           .trashed()
-          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -4875,7 +5050,6 @@ describe('Merge', function() {
         const doc = builders
           .metadir(was)
           .trashed()
-          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -4915,7 +5089,6 @@ describe('Merge', function() {
           const doc = builders
             .metadir(was)
             .trashed()
-            .unmerged(this.side)
             .build()
 
           const sideEffects = await mergeSideEffects(this, () =>
@@ -4948,7 +5121,6 @@ describe('Merge', function() {
           const doc = builders
             .metadir(was)
             .trashed()
-            .unmerged(this.side)
             .build()
 
           const sideEffects = await mergeSideEffects(this, () =>
@@ -4982,7 +5154,6 @@ describe('Merge', function() {
         const doc = builders
           .metadir(was)
           .trashed()
-          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -5010,7 +5181,6 @@ describe('Merge', function() {
           .metafile()
           .path(was.path)
           .trashed()
-          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>
@@ -5037,7 +5207,6 @@ describe('Merge', function() {
         const doc = builders
           .metadir(was)
           .trashed()
-          .unmerged(this.side)
           .build()
 
         const sideEffects = await mergeSideEffects(this, () =>

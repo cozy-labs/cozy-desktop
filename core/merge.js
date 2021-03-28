@@ -624,9 +624,10 @@ class Merge {
 
   async doTrash(
     side /*: SideName */,
-    was /*: SavedMetadata */,
-    doc /*: Metadata */
+    was /*: SavedMetadata */
   ) /*: Promise<void> */ {
+    log.debug({ path: was.path, side, was }, 'doTrash')
+
     delete was.errors
 
     if (
@@ -641,22 +642,20 @@ class Merge {
       return this.pouch.eraseDocument(was)
     }
 
-    const newMetadata = _.cloneDeep(was)
-    metadata.markSide(side, newMetadata, was)
-    newMetadata.trashed = true
     if (was.sides && was.sides[side]) {
       metadata.markSide(side, was, was)
       was.deleted = true
       try {
-        await this.pouch.put(was)
-        return
+        return await this.pouch.put(was)
       } catch (err) {
-        log.warn({ path: doc.path, err })
-        // Do we really want to save newMetadata in this situation? It will
+        log.warn({ path: was.path, err })
+        // Do we really want to save a trashed was in this situation? It will
         // probably fail as well.
       }
     }
-    return this.pouch.put(newMetadata)
+
+    was.trashed = true
+    return this.pouch.put(was)
   }
 
   async trashFileAsync(
@@ -685,44 +684,48 @@ class Merge {
       return
     }
 
-    if (was.moveFrom) {
-      // The file was moved and we don't want to delete it as we think users
-      // delete "paths".
-      if (side === 'remote') {
-        // We update the remote rev so we can send the file again and undo the
-        // remote trashing.
-        was.remote._rev = doc.remote._rev
-        // We keep the `moveFrom` hint so we will update the remote file and
-        // restore it from the trash instead of re-uploading it.
-        was.moveFrom.remote._rev = doc.remote._rev
-      } else {
-        // We remove the hint that the file should be moved since it has
-        // actually been deleted locally and should be recreated instead.
-        delete was.moveFrom
-        // The file was deleted locally so it should not have a local side so we
-        // can re-create it.
-        metadata.dissociateLocal(was)
+    if (was.local && was.remote && !metadata.isAtLeastUpToDate(side, was)) {
+      // File has changed on the other side
+      if (was.moveFrom) {
+        // The file was moved and we don't want to delete it as we think users
+        // delete "paths". This is made possible because:
+        // - we use the `local` path to fetch the PouchDB record in the Atom
+        //   dispatch step (FIXME: use `byLocalPath` in Chokidar watcher)
+        // - we use the `remote` _id to fetch the PouchDB record in the remote
+        //   watcher
+        // We'll dissociate the moved side from the trashed one so it can be
+        // sent again by Sync.
+        if (side === 'remote') {
+          // FIXME: We keep the moveFrom and remote rev so we can undo the
+          // remote trashing. But, this will lead the client to move a `trashed`
+          // document outside the remote Trash which should never happen.
+          // In this situation we should restore the remote document first and
+          // then move it to its final destination.
+          was.remote._rev = doc.remote._rev
+          was.moveFrom.remote._rev = doc.remote._rev
+        } else {
+          // We remove the hint that the file should be moved since it has
+          // actually been deleted locally and should be recreated instead.
+          delete was.moveFrom
+          // The file was deleted locally so it should not have a local side so we
+          // can re-create it.
+          metadata.dissociateLocal(was)
+        }
+        return this.pouch.put(was)
       }
-      return this.pouch.put(was)
+
+      if (!metadata.sameBinary(was.local, was.remote)) {
+        // The record is not up-to-date on the trashed side and we're not dealing
+        // with a moved file so we have a conflict: the file was updated on one
+        // side and trashed on the other. We dissociate the trashed side metadata
+        // to be able to apply the content update as a file addition.
+        if (side === 'remote') metadata.dissociateRemote(was)
+        else metadata.dissociateLocal(was)
+        return this.pouch.put(was)
+      }
     }
 
-    if (
-      was.local &&
-      was.remote &&
-      was.local.docType === 'file' &&
-      was.remote.type === 'file' &&
-      !metadata.sameBinary(was.local, was.remote)
-    ) {
-      // The record is not up-to-date on the trashed side and we're not dealing
-      // with a moved file so we have a conflict: the file was updated on one
-      // side and trashed on the other. We dissociate the trashed side metadata
-      // to be able to apply the content update as a file addition.
-      if (side === 'remote') metadata.dissociateRemote(was)
-      else metadata.dissociateLocal(was)
-      return this.pouch.put(was)
-    }
-
-    return this.doTrash(side, was, doc)
+    return this.doTrash(side, was)
   }
 
   async trashFolderAsync(
@@ -792,7 +795,7 @@ class Merge {
         }
       }
     }
-    await this.doTrash(side, was, doc)
+    await this.doTrash(side, was)
   }
 
   // Remove a file from PouchDB
