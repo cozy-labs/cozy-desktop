@@ -9,6 +9,7 @@ const Promise = require('bluebird')
 const { dirname } = require('path')
 const _ = require('lodash')
 
+const { IncompatibleDocError } = require('../incompatibilities/platform')
 const metadata = require('../metadata')
 const { HEARTBEAT: REMOTE_HEARTBEAT } = require('../remote/constants')
 const remoteErrors = require('../remote/errors')
@@ -508,6 +509,9 @@ class Sync {
             }
           }
           break
+        case syncErrors.INCOMPATIBLE_DOC_CODE:
+          await this.skipChange(change, syncErr)
+          break
         default:
           // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
           if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
@@ -556,6 +560,7 @@ class Sync {
           { path: doc.path, incompatibilities: doc.incompatibilities },
           `Not syncing incompatible ${doc.docType}`
         )
+        throw new IncompatibleDocError({ doc })
       }
     } else if (doc.docType !== 'file' && doc.docType !== 'folder') {
       throw new Error(`Unknown docType: ${doc.docType}`)

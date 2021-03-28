@@ -10,6 +10,8 @@ const { sep } = path
 const _ = require('lodash')
 
 /*::
+import type { Incompatibility, SavedMetadata } from '../metadata'
+
 type SingleCharString = string
 
 type PlatformRestrictions = {
@@ -327,11 +329,31 @@ const detectPathLengthIncompatibility = (
   }
 }
 
+class IncompatibleDocError extends Error {
+  /*::
+  doc: SavedMetadata
+  incompatibilities: ?Incompatibility[]
+  */
+
+  constructor({ doc } /*: { doc: SavedMetadata } */) {
+    super('Document is incompatible with local platform')
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, IncompatibleDocError)
+    }
+
+    this.name = 'IncompatibleDocError'
+    this.doc = doc
+    this.incompatibilities = this.doc.incompatibilities
+  }
+}
+
 module.exports = {
   win,
   mac,
   linux,
   detectNameIncompatibilities,
   detectPathIncompatibilities,
-  detectPathLengthIncompatibility
+  detectPathLengthIncompatibility,
+  IncompatibleDocError
 }

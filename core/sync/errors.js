@@ -1,5 +1,6 @@
 /* @flow */
 
+const { IncompatibleDocError } = require('../incompatibilities/platform')
 const { HEARTBEAT: REMOTE_HEARTBEAT } = require('../remote/constants')
 const remoteErrors = require('../remote/errors')
 
@@ -12,6 +13,7 @@ import type { Warning } from '../remote/cozy'
 import type { RemoteError, FetchError } from '../remote/errors'
 */
 
+const INCOMPATIBLE_DOC_CODE = 'IncompatibleDoc'
 const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
 const NO_DISK_SPACE_CODE = 'NoDiskSpace'
 const UNKNOWN_SYNC_ERROR_CODE = 'UnknownSyncError'
@@ -125,22 +127,25 @@ const wrapError = (
   sideName /*: SideName */,
   { doc } /*: { doc: SavedMetadata } */ = {}
 ) => {
-  if (sideName === 'remote' || err.name === 'FetchError') {
+  if (err.code && ['EACCES', 'EPERM', 'EBUSY'].includes(err.code)) {
+    return new SyncError({ sideName, err, code: MISSING_PERMISSIONS_CODE, doc })
+  } else if (err.code && err.code === 'ENOSPC') {
+    return new SyncError({ sideName, err, code: NO_DISK_SPACE_CODE, doc })
+  } else if (err instanceof IncompatibleDocError) {
+    return new SyncError({ sideName, err, code: INCOMPATIBLE_DOC_CODE, doc })
+  } else if (sideName === 'remote' || err.name === 'FetchError') {
     // FetchErrors can be raised from the LocalWriter when failing to download a
     // file for example. In this case the sideName will be "local" but the error
     // name will still be "FetchError".
     // If err is a RemoteError, its code will be reused.
     return new SyncError({ sideName, err: remoteErrors.wrapError(err), doc })
-  } else if (err.code && ['EACCES', 'EPERM', 'EBUSY'].includes(err.code)) {
-    return new SyncError({ sideName, err, code: MISSING_PERMISSIONS_CODE, doc })
-  } else if (err.code && err.code === 'ENOSPC') {
-    return new SyncError({ sideName, err, code: NO_DISK_SPACE_CODE, doc })
   } else {
     return new SyncError({ sideName, err, doc })
   }
 }
 
 module.exports = {
+  INCOMPATIBLE_DOC_CODE,
   MISSING_PERMISSIONS_CODE,
   NO_DISK_SPACE_CODE,
   UNKNOWN_SYNC_ERROR_CODE,

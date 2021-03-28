@@ -404,7 +404,7 @@ function invariants /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
 }
 
 /*::
-export type Incompatibility = PlatformIncompatibility & {docType: string}
+export type Incompatibility = { ...PlatformIncompatibility, docType: string }
 */
 
 /** Identify incompatibilities that will prevent synchronization.
