@@ -52,7 +52,13 @@ class RemoteTestHelpers {
     for (const p of paths) {
       const name = path.posix.basename(p)
       const parentPath = path.posix.dirname(p)
-      const dirID = (remoteDocsByPath[parentPath + '/'] || {})._id
+      const dirID = (
+        remoteDocsByPath[parentPath + '/'] ||
+        (await this.cozy.files
+          .statByPath('/' + parentPath + '/')
+          .then(this.side.remoteCozy.toRemoteDoc)) ||
+        {}
+      )._id
       if (p.endsWith('/')) {
         remoteDocsByPath[p] = await this.cozy.files
           .createDirectory({
