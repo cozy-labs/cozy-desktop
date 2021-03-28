@@ -37,6 +37,7 @@ onPlatform('darwin', () => {
           await builders
             .metadir()
             .path(dirPath.normalize('NFC'))
+            .upToDate()
             .create()
         })
 
@@ -60,6 +61,7 @@ onPlatform('darwin', () => {
           await builders
             .metadir()
             .path(dirPath.normalize('NFD'))
+            .upToDate()
             .create()
         })
 
@@ -89,6 +91,7 @@ onPlatform('darwin', () => {
           dir = await builders
             .metadir()
             .path(dirPath.normalize('NFC'))
+            .upToDate()
             .create()
         })
 
@@ -99,6 +102,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFC')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -142,6 +146,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFD')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -191,6 +196,7 @@ onPlatform('darwin', () => {
           dir = await builders
             .metadir()
             .path(dirPath.normalize('NFD'))
+            .upToDate()
             .create()
         })
 
@@ -201,6 +207,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFC')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -250,6 +257,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFD')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -299,6 +307,7 @@ onPlatform('darwin', () => {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFC'))
+            .upToDate()
             .create()
         })
 
@@ -309,6 +318,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFC')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -351,6 +361,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFD')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -396,6 +407,7 @@ onPlatform('darwin', () => {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFD'))
+            .upToDate()
             .create()
         })
 
@@ -406,6 +418,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFC')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -451,6 +464,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFD')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -502,6 +516,7 @@ onPlatform('darwin', () => {
           dir = await builders
             .metadir()
             .path(dirPath.normalize('NFC'))
+            .upToDate()
             .create()
         })
 
@@ -512,6 +527,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFC')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -543,6 +559,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFD')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -577,6 +594,7 @@ onPlatform('darwin', () => {
           dir = await builders
             .metadir()
             .path(dirPath.normalize('NFD'))
+            .upToDate()
             .create()
         })
 
@@ -587,6 +605,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFC')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -621,6 +640,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFD')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -662,6 +682,7 @@ onPlatform('darwin', () => {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFC'))
+            .upToDate()
             .create()
         })
 
@@ -672,6 +693,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFC')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -714,6 +736,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFD')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -759,6 +782,7 @@ onPlatform('darwin', () => {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFD'))
+            .upToDate()
             .create()
         })
 
@@ -769,6 +793,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFC')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -814,6 +839,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFD')))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -866,6 +892,7 @@ onPlatform('darwin', () => {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFC'))
+            .upToDate()
             .create()
         })
 
@@ -876,6 +903,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(srcFilename.normalize('NFC'))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -918,6 +946,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(srcFilename.normalize('NFD'))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -963,6 +992,7 @@ onPlatform('darwin', () => {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFD'))
+            .upToDate()
             .create()
         })
 
@@ -973,6 +1003,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(srcFilename.normalize('NFC'))
               .data('initial content')
+              .upToDate()
               .create()
           })
 
@@ -1018,6 +1049,7 @@ onPlatform('darwin', () => {
               .metafile()
               .path(srcFilename.normalize('NFD'))
               .data('initial content')
+              .upToDate()
               .create()
           })
 

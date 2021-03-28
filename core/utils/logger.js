@@ -72,34 +72,25 @@ if (process.env.TESTDEBUG) {
 }
 
 function errSerializer(err) {
-  const obj = bunyan.stdSerializers.err(err)
-  const {
-    type,
-    reason,
-    address,
-    dest,
-    info,
-    path,
-    port,
-    syscall,
-    code,
-    status,
-    originalErr,
-    errors
-  } = err
-
-  if (type) obj.type = type
-  if (reason) obj.reason = reason
-  if (address) obj.address = err.address
-  if (dest) obj.dest = err.dest
-  if (info) obj.info = info
-  if (path) obj.path = path
-  if (port) obj.port = port
-  if (syscall) obj.syscall = syscall
-  if (code) obj.code = code
-  if (status) obj.status = status
-  if (originalErr) obj.originalErr = originalErr
-  if (errors) obj.errors = errors
+  const obj = _.defaults(
+    bunyan.stdSerializers.err(err),
+    _.pick(err, [
+      'type',
+      'reason',
+      'address',
+      'dest',
+      'info',
+      'path',
+      'port',
+      'syscall',
+      'code',
+      'status',
+      'originalErr',
+      'errors',
+      'doc',
+      'incompatibilities'
+    ])
+  )
 
   return obj
 }

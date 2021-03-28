@@ -780,7 +780,7 @@ describe('remote.Remote', function() {
       const was = await builders
         .metadir()
         .fromRemote(remoteDir)
-        .noRemote()
+        .upToDate()
         .create()
       const doc = builders
         .metadir(was)
@@ -1387,6 +1387,7 @@ describe('remote.Remote', function() {
       file = await builders
         .metafile()
         .fromRemote(remoteFile)
+        .sides({ local: 1 })
         .create()
     })
 

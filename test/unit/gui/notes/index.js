@@ -31,6 +31,7 @@ describe('gui/notes/index', () => {
       const doc = await builders
         .metafile()
         .path(docPath)
+        .upToDate()
         .create()
 
       await should(localDoc(filePath, this)).be.fulfilledWith(doc)
@@ -53,6 +54,7 @@ describe('gui/notes/index', () => {
       await builders
         .metafile()
         .path(docPath)
+        .upToDate()
         .create()
 
       await should(localDoc(filePath, this)).be.rejectedWith(

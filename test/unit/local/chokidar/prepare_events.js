@@ -26,7 +26,10 @@ onPlatform('darwin', () => {
 
     describe('#oldMetadata()', () => {
       it('resolves with the metadata whose id matches the event path', async function() {
-        const old = await builders.metadata().create()
+        const old = await builders
+          .metadata()
+          .upToDate()
+          .create()
         const resultByEventType = {}
         for (let type of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
           resultByEventType[type] = await prepareEvents.oldMetadata(
@@ -53,11 +56,13 @@ onPlatform('darwin', () => {
           .metafile()
           .path('untouched')
           .data('initial')
+          .upToDate()
           .create()
         const sameContent = await builders
           .metafile()
           .path('sameContent')
           .data('initial')
+          .upToDate()
           .create()
         const events /*: ChokidarEvent[] */ = [
           {
@@ -93,6 +98,7 @@ onPlatform('darwin', () => {
           .metafile()
           .path('énoncé'.normalize('NFC'))
           .data('initial')
+          .upToDate()
           .create()
         const events /*: ChokidarEvent[] */ = [
           {

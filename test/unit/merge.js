@@ -644,6 +644,7 @@ describe('Merge', function() {
           .metafile()
           .path(path)
           .data('content')
+          .upToDate()
           .create()
         await this.pouch.remove(was)
       })
@@ -806,8 +807,13 @@ describe('Merge', function() {
         .metafile()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .noLocal()
         .create()
+
+      // Remove local attribute for the test
+      delete mergedFile.local
+      const { rev } = await this.pouch.db.put(mergedFile)
+      mergedFile._rev = rev
+
       const sameFile = builders
         .metafile(mergedFile)
         .unmerged('local')
@@ -1227,8 +1233,13 @@ describe('Merge', function() {
         .metafile()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .noLocal()
         .create()
+
+      // Remove local attribute for the test
+      delete mergedFile.local
+      const { rev } = await this.pouch.db.put(mergedFile)
+      mergedFile._rev = rev
+
       const sameFile = builders
         .metafile(mergedFile)
         .unmerged('local')
@@ -1696,8 +1707,13 @@ describe('Merge', function() {
         .metadir()
         .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
         .upToDate()
-        .noLocal()
         .create()
+
+      // Remove local attribute for the test
+      delete mergedFolder.local
+      const { rev } = await this.pouch.db.put(mergedFolder)
+      mergedFolder._rev = rev
+
       const sameFolder = builders
         .metadir(mergedFolder)
         .unmerged('local')
@@ -2097,6 +2113,7 @@ describe('Merge', function() {
         const previous = await builders
           .metafile()
           .path(path)
+          .upToDate()
           .create()
         await this.pouch.remove(previous)
       })
@@ -2410,6 +2427,7 @@ describe('Merge', function() {
         await builders
           .metafile()
           .path('QUX')
+          .upToDate()
           .create()
         const was = await builders
           .metafile()
@@ -2492,6 +2510,7 @@ describe('Merge', function() {
         await builders
           .metafile()
           .path('QUX')
+          .upToDate()
           .create()
         const doc = builders
           .metafile(was)
@@ -3274,6 +3293,7 @@ describe('Merge', function() {
         const previous = await builders
           .metadir()
           .path(path)
+          .upToDate()
           .create()
         await this.pouch.remove(previous)
       })
@@ -3425,6 +3445,7 @@ describe('Merge', function() {
         await builders
           .metadir()
           .path('LINUX')
+          .upToDate()
           .create()
         const torvalds = await builders
           .metadir()
@@ -3500,6 +3521,7 @@ describe('Merge', function() {
         await builders
           .metadir()
           .path('NUKEM')
+          .upToDate()
           .create()
         const duke = await builders
           .metadir()
@@ -3871,6 +3893,7 @@ describe('Merge', function() {
         const previous = await builders
           .metadir()
           .path(path)
+          .upToDate()
           .create()
         await this.pouch.remove(previous)
       })
@@ -3927,6 +3950,7 @@ describe('Merge', function() {
         const previous = await builders
           .metadata()
           .path(`${parentPath}/${childName}`)
+          .upToDate()
           .create()
         await this.pouch.remove(previous)
       })
@@ -4742,7 +4766,10 @@ describe('Merge', function() {
 
     context('when docType of found record does not match', () => {
       it('does nothing', async function() {
-        const was = await builders.metafile().create()
+        const was = await builders
+          .metafile()
+          .upToDate()
+          .create()
         const doc = builders
           .metadir()
           .path(was.path)
@@ -4975,7 +5002,10 @@ describe('Merge', function() {
 
     context('when docType of found record does not match', () => {
       it('does nothing', async function() {
-        const was = await builders.metadir().create()
+        const was = await builders
+          .metadir()
+          .upToDate()
+          .create()
         const doc = builders
           .metafile()
           .path(was.path)

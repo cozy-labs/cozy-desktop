@@ -59,6 +59,7 @@ describe('move', () => {
       const src = await builders
         .metadata()
         .path('whatever/src')
+        .upToDate()
         .create()
       const dst = _.defaults({ path: 'whatever/dst' }, src)
 

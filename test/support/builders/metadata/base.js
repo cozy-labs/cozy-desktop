@@ -317,8 +317,9 @@ module.exports = class BaseMetadataBuilder {
     }
 
     const doc = this.build()
-    doc.sides = doc.sides || { local: 1 }
-    doc.sides.target = Math.max(doc.sides.local || 0, doc.sides.remote || 0)
+    if (doc.sides) {
+      doc.sides.target = Math.max(doc.sides.local || 0, doc.sides.remote || 0)
+    }
 
     return await pouch.put(doc)
   }

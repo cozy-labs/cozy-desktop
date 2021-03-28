@@ -193,6 +193,7 @@ describe('Pouch', function() {
         old = await builders
           .metafile()
           .path('doc')
+          .upToDate()
           .create()
         doc = _.cloneDeep(old)
       })
@@ -241,6 +242,7 @@ describe('Pouch', function() {
         old = await builders
           .metafile()
           .path('doc')
+          .upToDate()
           .create()
         doc = _.clone(old)
       })
@@ -267,10 +269,12 @@ describe('Pouch', function() {
         old1 = await builders
           .metafile()
           .path('doc1')
+          .upToDate()
           .create()
         old2 = await builders
           .metafile()
           .path('doc2')
+          .upToDate()
           .create()
 
         doc1 = _.clone(old1)
@@ -760,7 +764,7 @@ describe('Pouch', function() {
         await builders
           .metafile()
           .path('my-folder/remote-file')
-          .noLocal()
+          .sides({ remote: 1 })
           .create()
 
         await should(this.pouch.localTree()).be.fulfilledWith(
@@ -771,8 +775,8 @@ describe('Pouch', function() {
       it('resturns the paths of local only documents', async function() {
         const localFile = await builders
           .metafile()
-          .path('my-folder/remote-file')
-          .noRemote()
+          .path('my-folder/local-file')
+          .sides({ local: 1 })
           .create()
 
         await should(this.pouch.localTree()).be.fulfilledWith(

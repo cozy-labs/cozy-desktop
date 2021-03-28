@@ -872,6 +872,7 @@ describe('RemoteWatcher', function() {
                 .metadir()
                 .fromRemote(oldRemoteDir)
                 .path(oldRemoteDir.path.normalize('NFD'))
+                .upToDate()
                 .create()
 
               const newRemoteFile = builders
@@ -906,6 +907,7 @@ describe('RemoteWatcher', function() {
                 .metadir()
                 .fromRemote(remoteParentDir)
                 .path(remoteParentDir.path.normalize('NFD'))
+                .upToDate()
                 .create()
 
               const newRemoteDir = builders
@@ -948,6 +950,7 @@ describe('RemoteWatcher', function() {
                     .metadir()
                     .fromRemote(remoteParentDir)
                     .path(remoteParentDir.path.normalize('NFD'))
+                    .upToDate()
                     .create()
 
                   const newRemoteDir = builders
