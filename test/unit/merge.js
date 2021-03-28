@@ -9,6 +9,7 @@ const path = require('path')
 const { Merge } = require('../../core/merge')
 const metadata = require('../../core/metadata')
 const { otherSide } = require('../../core/side')
+const pathUtils = require('../../core/utils/path')
 
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -92,8 +93,22 @@ describe('Merge', function() {
   beforeEach('instanciate merge', function() {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
-    this.merge.local = { moveAsync: sinon.stub().resolves() }
-    this.merge.remote = { moveAsync: sinon.stub().resolves() }
+    this.merge.local = {
+      moveAsync: sinon.stub().callsFake(doc => {
+        // XXX: We cannot stub `fs.rename` as it's directly imported by `Local`
+        // but we care about the `local` attribute being updated so we
+        // explicitely call `metadata.updateLocal()`.
+        metadata.updateLocal(doc)
+      })
+    }
+    this.merge.remote = {
+      moveAsync: sinon.stub().callsFake(doc => {
+        // XXX: It would be cumbersome to stub the content of this method but we
+        // care about the `remote` attribute being updated so we explicitely
+        // call `metadata.updateRemote()`.
+        metadata.updateRemote(doc, { path: pathUtils.localToRemote(doc.path) })
+      })
+    }
     builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
@@ -2056,11 +2071,12 @@ describe('Merge', function() {
           should(sideEffects).deepEqual({
             savedDocs: [
               _.omit(movedSrc, ['_id', '_rev']),
-              _.defaults(
+              _.defaultsDeep(
                 {
                   path: dstPath,
                   sides: increasedSides(was.sides, 'local', 1),
                   moveFrom: movedSrc,
+                  local: { path: dstPath },
                   remote: was.remote
                 },
                 _.omit(doc, ['_id'])
@@ -2814,11 +2830,12 @@ describe('Merge', function() {
           should(sideEffects).deepEqual({
             savedDocs: [
               _.omit(movedSrc, ['_id', '_rev']),
-              _.defaults(
+              _.defaultsDeep(
                 {
                   path: dstPath,
                   sides: increasedSides(was.sides, this.side, 1),
                   moveFrom: movedSrc,
+                  [this.side]: { path: dstPath },
                   [otherSide(this.side)]: was[otherSide(this.side)]
                 },
                 _.omit(doc, ['_id'])
