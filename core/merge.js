@@ -649,6 +649,41 @@ class Merge {
     }
 
     if (was.sides && was.sides[side]) {
+      if (was.moveFrom) {
+        // We need to trash the source of the move instead of the destination
+        const { moveFrom, overwrite } = was
+        log.debug(
+          { path: was.path, oldPath: moveFrom.path },
+          'Trashing source of move instead of destination'
+        )
+
+        // The file isn't moved anymore.
+        delete moveFrom.moveTo
+        // It will be considered as a new record by PouchDB sicne it was
+        // _deleted. So we need to remove the revision.
+        delete moveFrom._rev
+        // We also remove the _deleted attribute since we only want it marked
+        // for deletion now.
+        delete moveFrom._deleted
+
+        // Mark source for deletion
+        metadata.markSide(side, moveFrom, moveFrom)
+        moveFrom.deleted = true
+        // Discard move destination record
+        metadata.markAsUnsyncable(was)
+
+        const docs = [moveFrom, was]
+        if (overwrite) {
+          // Mark overwritten doc for deletion
+          metadata.markSide(side, overwrite, overwrite)
+          overwrite.deleted = true
+
+          // Add it to the front of the list so we make sure it's synced first
+          docs.unshift(overwrite)
+        }
+        return this.pouch.bulkDocs(docs)
+      }
+
       metadata.markSide(side, was, was)
       was.deleted = true
       try {

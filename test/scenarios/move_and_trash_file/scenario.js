@@ -3,7 +3,6 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
-  disabled: 'requires handling moveFrom + trashed', // FIXME
   useCaptures: false,
   init: [
     { ino: 1, path: 'dst/' },

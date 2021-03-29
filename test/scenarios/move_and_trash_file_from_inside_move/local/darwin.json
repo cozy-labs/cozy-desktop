@@ -1,6 +1,6 @@
 [
   {
-    "breakpoints": [0, 2, 4]
+    "breakpoints": [0, 4]
   },
   {
     "type": "unlinkDir",

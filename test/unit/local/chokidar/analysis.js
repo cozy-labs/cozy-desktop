@@ -824,8 +824,7 @@ onPlatform('darwin', () => {
               path: newDirPath.normalize('NFD'),
               ino: dirStats.ino,
               stats: dirStats,
-              old: oldDir,
-              wip: undefined
+              old: oldDir
             }
           ])
           should(pendingChanges).deepEqual([])
@@ -908,8 +907,7 @@ onPlatform('darwin', () => {
               path: 'corrigés',
               ino: parent.ino,
               stats: { ino: parent.ino },
-              old: parent,
-              wip: undefined // FIXME: Remove useless wip key
+              old: parent
             },
             {
               sideName,
@@ -1018,8 +1016,7 @@ onPlatform('darwin', () => {
                 path: 'dst/dir',
                 ino: dir.ino,
                 stats: { ino: dir.ino },
-                old: dir,
-                wip: undefined // FIXME: Remove useless wip key
+                old: dir
               },
               {
                 sideName,
@@ -1035,8 +1032,7 @@ onPlatform('darwin', () => {
                 ino: subdir.ino,
                 stats: { ino: subdir.ino },
                 old: subdir,
-                needRefetch: true,
-                wip: undefined // FIXME: Remove useless wip key
+                needRefetch: true
               },
               {
                 sideName,
@@ -1097,8 +1093,7 @@ onPlatform('darwin', () => {
               path: 'dst',
               ino: dirIno,
               stats: { ino: dirIno },
-              old: srcDir,
-              wip: undefined // FIXME: Remove useless wip key
+              old: srcDir
             },
             {
               sideName,
@@ -1153,8 +1148,7 @@ onPlatform('darwin', () => {
               path: 'dst',
               ino: dirIno,
               stats: { ino: dirIno },
-              old: srcDir,
-              wip: undefined // FIXME: Remove useless wip key
+              old: srcDir
             },
             {
               sideName,
@@ -1347,8 +1341,7 @@ onPlatform('darwin', () => {
               path: 'dst',
               stats: dirStats,
               ino: dirStats.ino,
-              old: dirMetadata,
-              wip: undefined
+              old: dirMetadata
             },
             {
               sideName,
