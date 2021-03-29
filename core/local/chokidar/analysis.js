@@ -316,7 +316,6 @@ function squashMoves(changes /*: LocalChange[] */) {
           (oldPathA && oldPathB && oldPathB.startsWith(oldPathA + path.sep)))
       ) {
         log.debug({ oldpath: b.old.path, path: b.path }, 'descendant move')
-        a.wip = a.wip || b.wip
         if (pathB.substr(pathA.length) === oldPathB.substr(oldPathA.length)) {
           log.debug(
             { oldpath: b.old.path, path: b.path },
