@@ -1,0 +1,17 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src/subdir/file"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "dst/subdir",
+      "oldPath": "src/subdir"
+    }
+  ]
+]

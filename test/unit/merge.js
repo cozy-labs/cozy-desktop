@@ -2598,6 +2598,59 @@ describe('Merge', function() {
         })
       })
 
+      context('when the folder has children marked for deletion', () => {
+        it('does not move them', async function() {
+          const was = await builders
+            .metadir()
+            .path('OLD')
+            .ino(666)
+            .tags('courge', 'quux')
+            .upToDate()
+            .create()
+          await builders
+            .metafile()
+            .path('OLD/child')
+            .deleted()
+            .changedSide('local')
+            .create()
+          const doc = builders
+            .metadir(was)
+            .path('NEW')
+            .unmerged('local')
+            .build()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.moveFolderAsync(
+              'local',
+              _.cloneDeep(doc),
+              _.cloneDeep(was)
+            )
+          )
+
+          const movedSrc = _.defaults(
+            {
+              moveTo: doc.path,
+              _deleted: true
+            },
+            was
+          )
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              _.omit(movedSrc, ['_id', '_rev', 'fileid']),
+              _.defaults(
+                {
+                  sides: increasedSides(was.sides, 'local', 1),
+                  moveFrom: movedSrc,
+                  remote: was.remote
+                },
+                _.omit(doc, ['_rev', 'fileid'])
+              )
+            ],
+            resolvedConflicts: []
+          })
+        })
+      })
+
       context('when the folder does not exist remotely', () => {
         let was, child
         beforeEach(async function() {
