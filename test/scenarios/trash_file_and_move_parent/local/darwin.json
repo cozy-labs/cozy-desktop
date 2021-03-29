@@ -1,0 +1,37 @@
+[
+  {
+    "breakpoints": [0, 1]
+  },
+  {
+    "type": "unlink",
+    "path": "src/subdir/file"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "src/subdir"
+  },
+  {
+    "type": "addDir",
+    "path": "dst/subdir",
+    "stats": {
+      "dev": 16777221,
+      "mode": 16877,
+      "nlink": 2,
+      "uid": 501,
+      "gid": 20,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 3,
+      "size": 64,
+      "blocks": 0,
+      "atimeMs": 1617047406453.3965,
+      "mtimeMs": 1617047406220.4062,
+      "ctimeMs": 1617047407736.0093,
+      "birthtimeMs": 1617047406202.5964,
+      "atime": "2021-03-29T19:50:06.453Z",
+      "mtime": "2021-03-29T19:50:06.220Z",
+      "ctime": "2021-03-29T19:50:07.736Z",
+      "birthtime": "2021-03-29T19:50:06.203Z"
+    }
+  }
+]

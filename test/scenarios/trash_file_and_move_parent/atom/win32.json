@@ -1,0 +1,23 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src\\subdir\\file"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "src\\subdir"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst\\subdir"
+    }
+  ]
+]

@@ -532,6 +532,12 @@ class Merge {
     )
 
     for (let doc of docs) {
+      // Don't move children marked for deletion as we can simply propagate the
+      // deletion at their original path.
+      // Besides, as of today, `moveFrom` will have precedence over `deleted` in
+      // Sync and the deletion won't be propagated at all.
+      if (doc.deleted) continue
+
       // Update remote rev of documents which have been updated on the Cozy
       // after we've detected the move.
       const newRemoteRev = _.get(newRemoteRevs, _.get(doc, 'remote._id'))
