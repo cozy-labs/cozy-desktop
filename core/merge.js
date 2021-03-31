@@ -209,6 +209,12 @@ class Merge {
         // PouchDB attributes that will allow us to overwrite it.
         doc._id = file._id
         doc._rev = file._rev
+        if (side === 'local' && file.remote) {
+          doc.remote = file.remote
+        }
+        if (side === 'remote' && file.local) {
+          doc.local = file.local
+        }
       } else {
         // Otherwise we merge the relevant attributes
         doc = {
@@ -268,8 +274,6 @@ class Merge {
           // resolution.
           doc.overwrite = file
           return this.resolveNoteConflict(doc)
-        } else {
-          doc.overwrite = file
         }
       }
 
@@ -285,7 +289,7 @@ class Merge {
         }
         return null
       } else {
-        metadata.markSide(side, doc, file.deleted ? null : file)
+        metadata.markSide(side, doc, file)
         metadata.assignMaxDate(doc, file)
         return this.pouch.put(doc)
       }
