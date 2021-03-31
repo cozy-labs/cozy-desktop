@@ -669,17 +669,22 @@ class Merge {
         // Mark source for deletion
         metadata.markSide(side, moveFrom, moveFrom)
         moveFrom.deleted = true
-        // Discard move destination record
-        metadata.markAsUnsyncable(was)
 
-        const docs = [moveFrom, was]
+        const docs = [moveFrom]
         if (overwrite) {
           // Mark overwritten doc for deletion
-          metadata.markSide(side, overwrite, overwrite)
+          metadata.removeActionHints(overwrite)
           overwrite.deleted = true
+          // They share the same _id
+          overwrite._rev = was._rev
+          metadata.markSide(side, overwrite, was)
 
-          // Add it to the front of the list so we make sure it's synced first
-          docs.unshift(overwrite)
+          docs.push(overwrite)
+        } else {
+          // Discard move destination record
+          metadata.markAsUnsyncable(was)
+
+          docs.push(was)
         }
         return this.pouch.bulkDocs(docs)
       }

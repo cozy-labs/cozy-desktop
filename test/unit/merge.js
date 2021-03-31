@@ -4968,30 +4968,16 @@ describe('Merge', function() {
               _.defaults(
                 {
                   deleted: true,
-                  sides: increasedSides(existing.sides, this.side, 1)
-                },
-                _.omit(existing, ['_id', '_rev'])
-              ),
-              _.defaults(
-                {
-                  deleted: true,
                   sides: increasedSides(src.sides, this.side, 1)
                 },
                 _.omit(src, ['_id', '_rev', '_deleted', 'moveTo'])
               ),
               _.defaults(
                 {
-                  _deleted: true
+                  deleted: true,
+                  sides: increasedSides(was.sides, this.side, 1)
                 },
-                _.omit(was, [
-                  '_id',
-                  '_rev',
-                  'sides',
-                  'moveFrom',
-                  'overwrite',
-                  'local',
-                  'remote'
-                ])
+                _.omit(existing, ['_id', '_rev'])
               )
             ],
             resolvedConflicts: []
