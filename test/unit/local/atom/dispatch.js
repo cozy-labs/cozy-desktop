@@ -69,7 +69,10 @@ describe('core/local/atom/dispatch.loop()', function() {
       events,
       prep,
       pouch: this.pouch,
-      state: await winDetectMove.initialState()
+      state: {
+        ...(await dispatch.initialState()),
+        ...(await winDetectMove.initialState())
+      }
     }
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)

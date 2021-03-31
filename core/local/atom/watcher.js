@@ -79,7 +79,8 @@ const steps = _.compact([
   initialDiff,
   addChecksum,
   incompleteFixer,
-  overwrite
+  overwrite,
+  dispatch
 ])
 
 /** The producer for the current platform. */
@@ -132,11 +133,10 @@ class AtomWatcher {
       opts
     )
     // Here, we build the chain of steps.
-    const channel = steps.reduce(
+    steps.reduce(
       (chan, step) => step.loop(chan, stepOptions),
       this.producer.channel
     )
-    dispatch.loop(channel, stepOptions)
   }
 
   async start() {

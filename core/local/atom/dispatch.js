@@ -34,11 +34,17 @@ import type { Metadata } from '../../metadata'
 
 export type AtomEventsDispatcher = (AtomBatch) => Promise<AtomBatch>
 
+type DispatchState = {
+  [typeof STEP_NAME]: {
+    localEndTimeout: ?TimeoutID
+  }
+}
+
 type DispatchOptions = {
   events: EventEmitter,
   prep: Prep,
   pouch: Pouch,
-  state: WinDetectMoveState,
+  state: DispatchState & WinDetectMoveState,
   onAtomEvents?: AtomEventsDispatcher
 }
 */
@@ -49,8 +55,17 @@ let actions
 
 module.exports = {
   LOCAL_END_NOTIFICATION_DELAY,
+  initialState,
   loop,
   step
+}
+
+async function initialState() /*: Promise<DispatchState> */ {
+  return {
+    [STEP_NAME]: {
+      localEndTimeout: null
+    }
+  }
 }
 
 function loop(
@@ -61,9 +76,9 @@ function loop(
 }
 
 function step(opts /*: DispatchOptions */) {
-  let localEndTimeout = null
+  const { [STEP_NAME]: dispatchState } = opts.state
   return async (batch /*: AtomBatch */) => {
-    clearTimeout(localEndTimeout)
+    clearTimeout(dispatchState.localEndTimeout)
     opts.events.emit('local-start')
     for (const event of batch) {
       try {
@@ -76,7 +91,7 @@ function step(opts /*: DispatchOptions */) {
         }
       }
     }
-    localEndTimeout = setTimeout(() => {
+    dispatchState.localEndTimeout = setTimeout(() => {
       opts.events.emit('local-end')
     }, LOCAL_END_NOTIFICATION_DELAY)
     return batch
