@@ -315,7 +315,7 @@ class Pouch {
     // TODO: Do we need to handle cases in which we have more than one match?
     // This should probably not happen if we handle correctly id conflicts on
     // Windows and macOS.
-    return matches.length ? matches[0] : undefined
+    return matches && matches.length ? matches[0] : undefined
   }
 
   async byLocalPath(fpath /*: string */) /*: Promise<?SavedMetadata> */ {
@@ -331,7 +331,7 @@ class Pouch {
     // TODO: Do we need to handle cases in which we have more than one match?
     // This should probably not happen if we handle correctly id conflicts on
     // Windows and macOS.
-    return matches.length ? matches[0] : undefined
+    return matches && matches.length ? matches[0] : undefined
   }
 
   // Return all the files and folders in this path, even in subfolders
@@ -365,7 +365,7 @@ class Pouch {
       include_docs: true
     }
     const { rows } = await this.db.query('byRemoteId', params)
-    if (rows.length === 0) {
+    if (!rows || rows.length === 0) {
       throw { status: 404, message: 'missing' }
     } else {
       return rows[0].doc
