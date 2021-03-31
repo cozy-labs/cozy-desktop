@@ -253,13 +253,13 @@ describe('Merge', function() {
       )
 
       context(
-        'when a deleted local file record with the same path but different content exists',
+        'when a record with an unsynced local deletion and different content exists',
         () => {
           const filepath = 'BUZZ.JPG'
 
-          let synced, file
+          let remoteFile, deleted
           beforeEach('create a file', async function() {
-            const remoteFile = await builders
+            remoteFile = await builders
               .remoteFile()
               .inRootDir()
               .name(filepath)
@@ -267,22 +267,21 @@ describe('Merge', function() {
               .tags('foo')
               .contentType('image/jpeg')
               .build()
-            synced = await builders
+            const synced = await builders
               .metafile()
               .fromRemote(remoteFile)
               .upToDate()
               .create()
-            file = await builders
+            deleted = await builders
               .metafile(synced)
               .deleted()
               .changedSide('local')
               .create()
           })
 
-          it('overwrites the existing record', async function() {
+          it('updates the existing record', async function() {
             const newRemoteFile = await builders
-              // $FlowFixMe: synced.remote has the right type but Flow can't know it
-              .remoteFile(synced.remote)
+              .remoteFile(remoteFile)
               .data('updated content')
               .build()
             const doc = builders
@@ -299,11 +298,10 @@ describe('Merge', function() {
               savedDocs: [
                 _.defaults(
                   {
-                    overwrite: file,
-                    sides: {
-                      remote: 1,
-                      target: 1
-                    }
+                    // Remote side is increased by 2 to overcome the unsynced
+                    // local deletion.
+                    sides: increasedSides(deleted.sides, 'remote', 2),
+                    local: deleted.local
                   },
                   _.omit(doc, ['_id', '_rev'])
                 )
@@ -353,24 +351,10 @@ describe('Merge', function() {
               savedDocs: [
                 _.defaults(
                   {
-                    md5sum: doc.md5sum,
-                    size: doc.size,
-                    mime: doc.mime,
-                    class: doc.class,
-                    executable: doc.executable,
-                    tags: doc.tags,
-                    updated_at: doc.updated_at,
-                    overwrite: file,
                     sides: increasedSides(file.sides, 'remote', 1),
-                    remote: doc.remote,
-                    cozyMetadata: doc.cozyMetadata,
-                    // FIXME: $FlowFixMe not part of Metadata but still saved in PouchDB
-                    created_at: doc.created_at,
-                    // FIXME: $FlowFixMe not part of Metadata but still saved in PouchDB
-                    dir_id: doc.dir_id,
-                    // FIXME: $FlowFixMe not part of Metadata but still saved in PouchDB
-                    name: doc.name
+                    local: file.local
                   },
+                  doc,
                   _.omit(file, ['_id', '_rev', 'fileid'])
                 )
               ],
@@ -532,9 +516,9 @@ describe('Merge', function() {
       )
 
       context(
-        'when a deleted remote file record with the same path but different content exists',
+        'when a record with an unsynced remote deletion and different content exists',
         () => {
-          let synced, file
+          let synced, deleted
           beforeEach('create a file', async function() {
             const remoteFile = await builders
               .remoteFile()
@@ -549,14 +533,14 @@ describe('Merge', function() {
               .fromRemote(remoteFile)
               .upToDate()
               .create()
-            file = await builders
+            deleted = await builders
               .metafile(synced)
               .deleted()
               .changedSide('remote')
               .create()
           })
 
-          it('overwrites the existing record', async function() {
+          it('updates the existing record', async function() {
             const doc = await builders
               .metafile(synced)
               .data('local content')
@@ -571,11 +555,10 @@ describe('Merge', function() {
               savedDocs: [
                 _.defaults(
                   {
-                    overwrite: file,
-                    sides: {
-                      local: 1,
-                      target: 1
-                    }
+                    // Local side is increased by 2 to overcome the unsynced
+                    // remote deletion.
+                    sides: increasedSides(deleted.sides, 'local', 2),
+                    remote: deleted.remote
                   },
                   _.omit(doc, ['_id', '_rev'])
                 )
@@ -623,7 +606,6 @@ describe('Merge', function() {
                     size: doc.size,
                     updated_at: doc.updated_at,
                     sides: increasedSides(file.sides, 'local', 1),
-                    overwrite: file,
                     local: doc.local
                   },
                   _.omit(file, ['_id', '_rev', 'fileid'])
@@ -990,7 +972,7 @@ describe('Merge', function() {
     })
 
     context('on initial scan', function() {
-      it('overrides an unsynced local addition with a local update', async function() {
+      it('saves an offline update after an unsynced local addition', async function() {
         const initialFile = await builders
           .metafile()
           .sides({ local: 1 })
@@ -1013,8 +995,7 @@ describe('Merge', function() {
           savedDocs: [
             _.defaults(
               {
-                sides: increasedSides(initialFile.sides, 'local', 1),
-                overwrite: initialFile
+                sides: increasedSides(initialFile.sides, 'local', 1)
               },
               _.omit(offlineUpdate, ['_id', '_rev', 'fileid'])
             )
@@ -1023,20 +1004,16 @@ describe('Merge', function() {
         })
       })
 
-      it('overrides an unsynced local update with a new one', async function() {
+      it('saves an offline update after an unsynced local update', async function() {
         const initial = await builders
           .metafile()
           .path('yafile')
-          .sides({ local: 1 })
           .ino(37)
           .data('initial content')
-          .create()
-        const synced = await builders
-          .metafile(initial)
           .upToDate()
           .create()
         const firstUpdate = await builders
-          .metafile(synced)
+          .metafile(initial)
           .changedSide('local')
           .data('first update')
           .create()
@@ -1056,8 +1033,7 @@ describe('Merge', function() {
             _.defaultsDeep(
               {
                 sides: increasedSides(firstUpdate.sides, 'local', 1),
-                overwrite: firstUpdate,
-                remote: synced.remote
+                remote: initial.remote
               },
               _.omit(secondUpdate, ['_id', '_rev', 'fileid'])
             )
@@ -1066,7 +1042,7 @@ describe('Merge', function() {
         })
       })
 
-      it('does not overwrite an unsynced remote update with a locally unchanged file', async function() {
+      it('does nothing for an locally untouched file after an unsynced remote update', async function() {
         const synced = await builders
           .metafile()
           .data('previous content')
@@ -1074,7 +1050,6 @@ describe('Merge', function() {
           .create()
         await builders
           .metafile(synced)
-          .overwrite(synced)
           .data('remote update')
           .changedSide('remote')
           .create()
@@ -1093,7 +1068,9 @@ describe('Merge', function() {
         })
       })
 
-      it('does not overwrite an unsynced remote update with a locally updated file and creates a local conflict', async function() {
+      // XXX: This sides are increased on the remote update to make sure it will
+      // get synced.
+      it('creates a conflict for an oflline local update after an unsynced remote update', async function() {
         const synced = await builders
           .metafile()
           .data('initial content')
@@ -1101,7 +1078,6 @@ describe('Merge', function() {
           .create()
         const remoteUpdate = await builders
           .metafile(synced)
-          .overwrite(synced)
           .data('remote update')
           .changedSide('remote')
           .create()
@@ -1195,19 +1171,50 @@ describe('Merge', function() {
           _.defaults(
             {
               sides: increasedSides(file.sides, 'remote', 1),
-              local: file.local
+              remote: doc.remote,
+              tags: ['bar', 'baz']
             },
-            _.omit(doc, ['_id', '_rev', 'fileid'])
+            _.omit(file, ['_id', '_rev', 'fileid'])
           )
         ],
         resolvedConflicts: []
       })
     })
 
+    // XXX: Here we don't increase the sides as we don't want to propagate a
+    // simple change of modification date.
     it('updates the local metadata when content is the same', async function() {
       const doc = builders
         .metafile(file)
         .updatedAt(new Date())
+        .unmerged('local')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync('local', _.cloneDeep(doc))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaultsDeep(
+            {
+              local: { updated_at: doc.local.updated_at }
+            },
+            _.omit(file, ['_id', '_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
+    it('sets the local metadata when it is missing', async function() {
+      // Remove local attribute for the test
+      delete file.local
+      const { rev } = await this.pouch.db.put(file)
+      file._rev = rev
+
+      const doc = builders
+        .metafile(file)
         .unmerged('local')
         .build()
 
@@ -1228,77 +1235,110 @@ describe('Merge', function() {
       })
     })
 
-    it('sets the local metadata when it is missing', async function() {
-      const mergedFile = await builders
-        .metafile()
-        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
-        .upToDate()
-        .create()
-
-      // Remove local attribute for the test
-      delete mergedFile.local
-      const { rev } = await this.pouch.db.put(mergedFile)
-      mergedFile._rev = rev
-
-      const sameFile = builders
-        .metafile(mergedFile)
-        .unmerged('local')
-        .build()
-
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.updateFileAsync('local', _.cloneDeep(sameFile))
-      )
-
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              local: sameFile.local
-            },
-            _.omit(mergedFile, ['_id', '_rev', 'fileid'])
-          )
-        ],
-        resolvedConflicts: []
-      })
-    })
-
-    it('keeps an existing local metadata when it is not present in the new doc', async function() {
-      const initial = await builders
-        .metafile()
-        .data('initial content')
-        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
-        .upToDate()
-        .create()
-      const update = builders
-        .metafile(initial)
+    it('keeps an existing local metadata for a remote update', async function() {
+      const doc = builders
+        .metafile(file)
         .data('updated content')
         .updatedAt(new Date())
         .unmerged('remote')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.updateFileAsync('remote', _.cloneDeep(update))
+        this.merge.updateFileAsync('remote', _.cloneDeep(doc))
       )
 
       should(sideEffects).deepEqual({
         savedDocs: [
           _.defaultsDeep(
             {
-              sides: increasedSides(initial.sides, 'remote', 1),
-              local: initial.local,
-              overwrite: initial
+              sides: increasedSides(file.sides, 'remote', 1),
+              local: file.local
             },
-            _.omit(update, ['_id', '_rev', 'fileid'])
+            _.omit(doc, ['_id', '_rev', 'fileid'])
           )
         ],
         resolvedConflicts: []
       })
     })
 
-    it('overwrites the content when it was changed', async function() {
+    it('keeps an existing remote metadata for a local update', async function() {
       const doc = builders
         .metafile(file)
         .data('new content')
+        .updatedAt(new Date())
+        .unmerged('local')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync('local', _.cloneDeep(doc))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              sides: increasedSides(file.sides, 'local', 1),
+              remote: file.remote
+            },
+            _.omit(doc, ['_id', '_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
+    it('keeps the overwrite attribute if it exists', async function() {
+      // Overwrite file with a move
+      const src = await builders
+        .metafile()
+        .moveTo(file.path)
+        .changedSide(this.side)
+        .create()
+      const dst = await builders
+        .metafile()
+        .moveFrom(src)
+        .path(file.path)
+        .overwrite(file)
+        .changedSide(this.side)
+        .create()
+
+      const doc = builders
+        .metafile(dst)
+        .data('final content')
+        .unmerged(this.side)
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync(this.side, _.cloneDeep(doc))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              sides: increasedSides(dst.sides, this.side, 1),
+              moveFrom: src,
+              overwrite: file,
+              [otherSide(this.side)]: dst[otherSide(this.side)]
+            },
+            _.omit(doc, ['_id', '_rev', 'fileid'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
+    it('keeps the overwrite attribute if it exists', async function() {
+      const firstUpdate = await builders
+        .metafile(file)
+        .overwrite(file)
+        .data('new content')
+        .tags('qux', 'quux')
+        .changedSide(this.side)
+        .create()
+      const doc = builders
+        .metafile(firstUpdate)
+        .data('final content')
         .tags('qux', 'quux')
         .unmerged(this.side)
         .build()
@@ -1311,9 +1351,9 @@ describe('Merge', function() {
         savedDocs: [
           _.defaults(
             {
-              sides: increasedSides(file.sides, this.side, 1),
+              sides: increasedSides(file.sides, this.side, 2),
               overwrite: file,
-              [otherSide(this.side)]: file[otherSide(this.side)]
+              [otherSide(this.side)]: firstUpdate[otherSide(this.side)]
             },
             _.omit(doc, ['_id', '_rev', 'fileid'])
           )
@@ -2020,6 +2060,58 @@ describe('Merge', function() {
         )
 
         const movedSrc = _.defaultsDeep(
+          {
+            moveTo: doc.path,
+            _deleted: true
+          },
+          was
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.omit(movedSrc, ['_id', '_rev']),
+            _.defaults(
+              {
+                path: doc.path,
+                sides: increasedSides(was.sides, this.side, 1),
+                moveFrom: movedSrc,
+                overwrite: existing,
+                [this.side]: doc[this.side]
+              },
+              _.omit(was, ['_id', '_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+
+      it('keeps the overwrite attribute if it exists', async function() {
+        await builders
+          .metafile(existing)
+          .overwrite(existing)
+          .changedSide(this.side)
+          .data('new content')
+          .tags('qux', 'quux')
+          .create()
+        const was = await builders
+          .metafile()
+          .path('SRC_FILE')
+          .upToDate()
+          .create()
+        const doc = builders
+          .metafile(was)
+          .path(existing.path)
+          .unmerged(this.side)
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFileAsync(
+            this.side,
+            _.cloneDeep(doc),
+            _.cloneDeep(was)
+          )
+        )
+
+        const movedSrc = _.defaults(
           {
             moveTo: doc.path,
             _deleted: true

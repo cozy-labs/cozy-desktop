@@ -594,7 +594,9 @@ class Sync {
       if (
         doc.docType === 'file' &&
         (!metadata.sameBinary(from, doc) ||
-          (from.overwrite && !metadata.sameBinary(from.overwrite, doc)))
+          (from.local.docType === 'file' &&
+            from.remote.type === 'file' &&
+            !metadata.sameBinary(from.local, from.remote)))
       ) {
         try {
           await side.overwriteFileAsync(doc, doc) // move & update
@@ -643,14 +645,6 @@ class Sync {
             await side.updateFileMetadataAsync(doc)
           }
         } else {
-          // FIXME: with commit afd01767571915922a4f253beb2e53cc6eae4962, this
-          // block is unnecessary.
-          // However, we can't remove it already since some users could still be
-          // in a situation where they need it.
-          if (sideName === 'local' && !doc.overwrite) {
-            const copy = await this.local.createBackupCopyAsync(doc)
-            await this.local.trashAsync(copy)
-          }
           await side.overwriteFileAsync(doc, old)
           this.events.emit('transfer-started', _.clone(doc))
         }

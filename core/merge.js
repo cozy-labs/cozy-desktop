@@ -209,6 +209,12 @@ class Merge {
         // PouchDB attributes that will allow us to overwrite it.
         doc._id = file._id
         doc._rev = file._rev
+        if (side === 'local' && file.remote) {
+          doc.remote = file.remote
+        }
+        if (side === 'remote' && file.local) {
+          doc.local = file.local
+        }
       } else {
         // Otherwise we merge the relevant attributes
         doc = {
@@ -227,7 +233,12 @@ class Merge {
       }
 
       if (!metadata.sameBinary(file, doc)) {
-        if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
+        if (side === 'local' && isNote(file)) {
+          // We'll need a reference to the "overwritten" note during the conflict
+          // resolution.
+          doc.overwrite = file.overwrite || file
+          return this.resolveNoteConflict(doc)
+        } else if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
           if (side === 'local') {
             // We have a merged but unsynced remote update so we create a conflict.
             await this.resolveConflictAsync('local', file)
@@ -263,13 +274,6 @@ class Merge {
               return
             }
           }
-        } else if (side === 'local' && isNote(file)) {
-          // We'll need a reference to the "overwritten" note during the conflict
-          // resolution.
-          doc.overwrite = file
-          return this.resolveNoteConflict(doc)
-        } else {
-          doc.overwrite = file
         }
       }
 
@@ -285,7 +289,7 @@ class Merge {
         }
         return null
       } else {
-        metadata.markSide(side, doc, file.deleted ? null : file)
+        metadata.markSide(side, doc, file)
         metadata.assignMaxDate(doc, file)
         return this.pouch.put(doc)
       }
@@ -382,7 +386,7 @@ class Merge {
       const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
       if (file) {
         if (file.deleted) {
-          doc.overwrite = file
+          doc.overwrite = file.overwrite || file
         }
 
         const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
@@ -405,7 +409,7 @@ class Merge {
           if (file.path === doc.path) {
             doc._id = file._id
             doc._rev = file._rev
-            doc.overwrite = file
+            doc.overwrite = file.overwrite || file
           }
 
           if (side === 'local' && isNote(was) && doc.md5sum !== was.md5sum) {
@@ -462,7 +466,7 @@ class Merge {
     const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
     if (folder) {
       if (folder.deleted) {
-        doc.overwrite = folder
+        doc.overwrite = folder.overwrite || folder
       }
 
       const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
@@ -485,7 +489,7 @@ class Merge {
         if (folder.path === doc.path) {
           doc._id = folder._id
           doc._rev = folder._rev
-          doc.overwrite = folder
+          doc.overwrite = folder.overwrite || folder
         }
         return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
       }
@@ -559,7 +563,7 @@ class Merge {
         if (dstChild) {
           dst._id = dstChild._id
           dst._rev = dstChild._rev
-          dst.overwrite = dstChild
+          dst.overwrite = dstChild.overwrite || dstChild
         }
       }
       // TODO: manage conflicts if not overwriting and docs exist at destination?

@@ -177,21 +177,30 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
           const remoteDoc = await cozy.files.statByPath(`/${action.src}`)
           if (action.merge)
             throw new Error('Move.merge not implemented on remote')
-          if (action.force) {
-            try {
+          try {
+            return await cozy.files.updateAttributesById(remoteDoc._id, {
+              dir_id: newParent._id,
+              // path: '/' + action.dst,
+              name: path.posix.basename(action.dst)
+            })
+          } catch (err) {
+            if (err.status === 409) {
+              // Remove conflicting doc
               const remoteOverwriten = await cozy.files.statByPath(
                 `/${action.dst}`
               )
-              await cozy.files.trashById(remoteOverwriten._id)
-            } catch (err) {
-              debug('force not forced', err)
+              await cozy.files.destroyById(remoteOverwriten._id)
+
+              // Retry move
+              return cozy.files.updateAttributesById(remoteDoc._id, {
+                dir_id: newParent._id,
+                // path: '/' + action.dst,
+                name: path.posix.basename(action.dst)
+              })
+            } else {
+              throw err
             }
           }
-          return cozy.files.updateAttributesById(remoteDoc._id, {
-            dir_id: newParent._id,
-            // path: '/' + action.dst,
-            name: path.posix.basename(action.dst)
-          })
         }
 
       case 'wait':
