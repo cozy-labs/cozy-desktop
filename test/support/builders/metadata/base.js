@@ -309,6 +309,13 @@ module.exports = class BaseMetadataBuilder {
       this.noRemote()
     }
 
+    if (this.doc.overwrite && this.doc.moveFrom) {
+      // Emulate the _id reuse done when merging an overwriting move.
+      const { _id, _rev } = this.doc.overwrite
+      this.doc._id = _id
+      this.doc._rev = _rev
+    }
+
     return _.cloneDeep(this.doc)
   }
 
