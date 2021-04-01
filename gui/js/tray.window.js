@@ -184,6 +184,7 @@ module.exports = class TrayWM extends WindowManager {
         this.app.quit()
       },
       'open-file': (event, path) => this.openPath(path),
+      'show-in-parent': (event, path) => this.showInParent(path),
       'unlink-cozy': this.onUnlink,
       'manual-start-sync': () =>
         this.desktop.sync.forceSync().catch(err => {
@@ -202,6 +203,12 @@ module.exports = class TrayWM extends WindowManager {
   }
 
   openPath(pathToOpen) {
+    pathToOpen = join(this.desktop.config.syncPath, pathToOpen)
+
+    shell.showItemInFolder(pathToOpen)
+  }
+
+  showInParent(pathToOpen) {
     pathToOpen = join(this.desktop.config.syncPath, pathToOpen)
 
     shell.showItemInFolder(pathToOpen)
