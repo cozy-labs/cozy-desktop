@@ -2,6 +2,7 @@ module Data.File exposing
     ( EncodedFile
     , File
     , decode
+    , dirPath
     , splitName
     )
 
@@ -35,6 +36,11 @@ splitName filename =
 
         ext :: rest ->
             ( String.join "." (List.reverse rest), "." ++ ext )
+
+
+dirPath : String -> String -> String
+dirPath path filename =
+    "/" ++ String.replace filename "" path
 
 
 type alias EncodedFile =
