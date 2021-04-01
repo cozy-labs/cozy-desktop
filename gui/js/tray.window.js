@@ -205,7 +205,7 @@ module.exports = class TrayWM extends WindowManager {
   openPath(pathToOpen) {
     pathToOpen = join(this.desktop.config.syncPath, pathToOpen)
 
-    shell.showItemInFolder(pathToOpen)
+    shell.openPath(pathToOpen)
   }
 
   showInParent(pathToOpen) {

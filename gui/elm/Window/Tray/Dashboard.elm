@@ -378,7 +378,7 @@ viewName path =
     span
         [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
         , title path
-        , onClick (OpenPath path)
+        , onClick (ShowInParent path)
         ]
         [ text (shortName path) ]
 
