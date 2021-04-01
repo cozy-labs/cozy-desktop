@@ -4,13 +4,12 @@
 require('@electron/remote/main').initialize()
 
 const Desktop = require('../core/app.js')
-const notes = require('./notes')
+const { openNote } = require('./notes')
 const pkg = require('../package.json')
 
 const { debounce } = require('lodash')
 const path = require('path')
 const os = require('os')
-const fse = require('fs-extra')
 
 const proxy = require('./js/proxy')
 const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/errors')
@@ -29,14 +28,13 @@ const TrayWM = require('./js/tray.window.js')
 const UpdaterWM = require('./js/updater.window.js')
 const HelpWM = require('./js/help.window.js')
 const OnboardingWM = require('./js/onboarding.window.js')
-const MarkdownViewerWindow = require('./js/markdown-viewer.window.js')
 
 const { selectIcon } = require('./js/fileutils')
 const { buildAppMenu } = require('./js/appmenu')
 const i18n = require('./js/i18n')
 const { translate } = i18n
 const { incompatibilitiesErrorMessage } = require('./js/incompatibilitiesmsg')
-const { app, Menu, Notification, ipcMain, dialog, shell } = require('electron')
+const { app, Menu, Notification, ipcMain, dialog } = require('electron')
 
 const DAILY = 3600 * 24 * 1000
 
@@ -437,77 +435,6 @@ const startSync = async () => {
 const dumbhash = k =>
   k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
 
-const openMarkdownViewer = (filename, content, banner = null) => {
-  return new Promise(resolve => {
-    let viewerWindow = new MarkdownViewerWindow(app, desktop)
-    viewerWindow
-      .show()
-      .then(() => viewerWindow.loadContent(filename, content, banner))
-    viewerWindow.on('closed', () => {
-      viewerWindow = null
-      resolve()
-    })
-  })
-}
-
-const openNote = async filePath => {
-  if (!(await fse.pathExists(filePath))) return false
-
-  try {
-    await notes.openNote(filePath, { shell, desktop })
-  } catch (err) {
-    try {
-      const content = await fse.readFile(filePath, 'utf8')
-      let banner
-      switch (err.name) {
-        case 'CozyDocumentMissingError':
-          banner = {
-            level: 'error',
-            title: translate('Error This note could not be found'),
-            details: translate(
-              "Error Check that the note still exists either on your Cozy or its owner's." +
-                ' This could also mean that the note is out of sync.'
-            )
-          }
-          break
-        case 'UnreachableError':
-          banner = {
-            level: 'info',
-            title: translate('Error Your Cozy is unreachable'),
-            details: translate(
-              'Error Are you connected to the Internet?' +
-                ' You can nevertheless read the content of your note below in degraded mode.'
-            )
-          }
-          break
-        default:
-          banner = {
-            level: 'error',
-            title: translate('Error Unexpected error'),
-            details: `${err.name}: ${err.message}`
-          }
-      }
-      await openMarkdownViewer(path.basename(filePath), content, banner)
-      return true
-    } catch (err) {
-      log.error(
-        { err, path: filePath, filePath, sentry: true },
-        'Could not display markdown content of note'
-      )
-
-      dialog.showMessageBoxSync(null, {
-        type: 'error',
-        message: translate('Error Unexpected error'),
-        details: `${err.name}: ${err.message}`,
-        buttons: [translate('AppMenu Close')]
-      })
-
-      return false
-    }
-  }
-  return true
-}
-
 /* This event is emitted inside the primary instance and is guaranteed to be
  * emitted after the `ready` event of `app` gets emitted.
  *
@@ -529,7 +456,7 @@ app.on('second-instance', async (event, argv) => {
     log.info({ filePath }, 'second instance invoked with arguments')
 
     // If we found a note to open, stop here. Otherwise, show main window.
-    if (await openNote(filePath)) return
+    if (await openNote(filePath, { desktop })) return
   }
 
   // Make sure the main window exists before trying to show it
@@ -573,7 +500,7 @@ app.on('open-file', async (event, filePath) => {
     return
   }
 
-  openedNotes.push(openNote(filePath))
+  openedNotes.push(openNote(filePath, { desktop }))
   if (await Promise.all(openedNotes)) {
     if (noSync) {
       log.info('all notes are closed. Quitting app')
@@ -630,7 +557,7 @@ app.on('ready', async () => {
       log.info({ filePath }, 'main instance invoked with arguments')
 
       // If we found a note to open, stop here. Otherwise, start sync app.
-      if (await openNote(filePath)) {
+      if (await openNote(filePath, { desktop })) {
         app.quit()
         return
       }

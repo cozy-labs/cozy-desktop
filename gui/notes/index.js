@@ -3,102 +3,124 @@
  * @flow
  */
 
-const path = require('path')
-const { default: CozyClient, models } = require('cozy-client')
+const { app, dialog, shell } = require('electron')
 
-const {
-  CozyDocumentMissingError,
-  UnreachableError
-} = require('../../core/remote/errors')
+const Desktop = require('../../core/app.js')
+const MarkdownViewerWindow = require('../js/markdown-viewer.window.js')
+const i18n = require('../js/i18n')
+const { translate } = i18n
 
-const logger = require('../../core/utils/logger')
-const log = logger({
-  component: 'Notes'
+const log = Desktop.logger({
+  component: 'GUI'
 })
 
 /*::
-import { Shell } from 'electron'
 import { App } from '../../core/app'
-import { Config } from '../../core/config'
-import { Pouch } from '../../core/pouch'
-import { Remote } from '../../core/remote'
-import type { Metadata, MetadataRemoteInfo } from '../../core/metadata'
 */
 
-const localDoc = async (
-  filePath /*: string */,
-  { config, pouch } /*: { config: Config, pouch: Pouch } */
-) /*: Promise<Metadata> */ => {
-  const relPath = path.relative(config.syncPath, filePath)
-  const doc = await pouch.byLocalPath(relPath)
-  if (!doc || doc.deleted) {
-    throw new CozyDocumentMissingError({
-      cozyURL: config.cozyUrl,
-      doc: { name: path.basename(relPath) }
-    })
-  }
-  return doc
-}
-
-const remoteDoc = async (
-  localDoc /*: Metadata */,
-  { config, remote } /*: { config: Config, remote: Remote } */
-) /*: Promise<MetadataRemoteInfo> */ => {
-  try {
-    return await remote.remoteCozy.find(localDoc.remote._id)
-  } catch (err) {
-    if (err.name === 'FetchError' && err.status === 404) {
-      throw new CozyDocumentMissingError({
-        cozyURL: config.cozyUrl,
-        doc: { name: path.basename(localDoc.path) }
+const openMarkdownViewer = async (
+  filename /*: string */,
+  content /*: string */,
+  banner /*: ?{ level: string, title: string, details: string } */ = null,
+  { desktop } /*: { desktop: App } */
+) /*: Promise<void> */ => {
+  return new Promise((resolve, reject) => {
+    let viewerWindow = new MarkdownViewerWindow(app, desktop)
+    if (viewerWindow) {
+      viewerWindow.show().then(() => {
+        if (viewerWindow) {
+          viewerWindow.loadContent(filename, content, banner)
+        } else {
+          reject(new Error('could not load Markdown viewer content'))
+        }
       })
+      viewerWindow.on('closed', () => {
+        viewerWindow = null
+        resolve()
+      })
+    } else {
+      reject(new Error('could not open Markdown viewer window'))
     }
-    throw err
-  }
+  })
 }
 
-const getCozyClient = async (desktop /*: App */) /*: CozyClient */ => {
-  await desktop.remote.remoteCozy.client.authorize()
-  return await CozyClient.fromOldOAuthClient(desktop.remote.remoteCozy.client)
+const showGenericError = (filePath, err) => {
+  log.error(
+    { err, path: filePath, filePath, sentry: true },
+    'Could not display markdown content of note'
+  )
+
+  dialog.showMessageBoxSync(null, {
+    type: 'error',
+    message: translate('Error Unexpected error'),
+    details: `${err.name}: ${err.message}`,
+    buttons: [translate('AppMenu Close')]
+  })
 }
 
 const openNote = async (
   filePath /*: string */,
-  { shell, desktop } /*: { shell: Shell, desktop: App } */
+  { desktop } /*: { desktop: App } */
 ) => {
   try {
-    let note = await localDoc(filePath, desktop)
-    log.info({ note }, 'note object')
-
-    const client = await getCozyClient(desktop)
-    if (!client) {
-      throw new UnreachableError({
-        cozyURL: desktop.config.cozyUrl
-      })
-    }
-
-    const noteURL = await models.note.fetchURL(client, { id: note.remote._id })
-    log.info({ noteURL }, 'computed url')
-    shell.openExternal(noteURL)
+    const { noteUrl } = await desktop.findNote(filePath)
+    shell.openExternal(noteUrl)
   } catch (err) {
-    if (err.name === 'FetchError') {
-      if (err.status === 403 || err.status === 404) {
-        log.warn({ err, path: filePath }, 'could not find remote Note')
-        throw new CozyDocumentMissingError({
-          cozyURL: desktop.config.cozyUrl,
-          doc: { name: path.basename(filePath) }
-        })
-      } else {
-        log.warn({ err, path: filePath }, 'could not reach remote Cozy')
-        throw new UnreachableError({
-          cozyURL: desktop.config.cozyUrl
-        })
+    log.error(
+      { err, path: filePath, filePath, sentry: true },
+      'Could not find or open remote Note'
+    )
+
+    if (err.content) {
+      try {
+        let banner
+        switch (err.code) {
+          case 'CozyDocumentMissingError':
+            banner = {
+              level: 'error',
+              title: translate('Error This note could not be found'),
+              details: translate(
+                "Error Check that the note still exists either on your Cozy or its owner's." +
+                  ' This could also mean that the note is out of sync.'
+              )
+            }
+            break
+          case 'UnreachableError':
+            banner = {
+              level: 'info',
+              title: translate('Error Your Cozy is unreachable'),
+              details: translate(
+                'Error Are you connected to the Internet?' +
+                  ' You can nevertheless read the content of your note below in degraded mode.'
+              )
+            }
+            break
+          default:
+            banner = {
+              level: 'error',
+              title: translate('Error Unexpected error'),
+              details: `${err.name}: ${err.message}`
+            }
+        }
+        await openMarkdownViewer(
+          err.doc ? err.doc.name : filePath,
+          err.content,
+          banner,
+          {
+            desktop
+          }
+        )
+        return true
+      } catch (err) {
+        showGenericError(filePath, err)
+        return false
       }
     } else {
-      log.error({ err, path: filePath, sentry: true }, 'could not open note')
-      throw err
+      showGenericError(filePath, err)
+      return false
     }
   }
+  return true
 }
 
-module.exports = { localDoc, remoteDoc, openNote }
+module.exports = { openNote, openMarkdownViewer }
