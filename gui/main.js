@@ -4,7 +4,7 @@
 require('@electron/remote/main').initialize()
 
 const Desktop = require('../core/app.js')
-const { openNote } = require('./notes')
+const { openNote } = require('./utils/notes')
 const pkg = require('../package.json')
 
 const { debounce } = require('lodash')

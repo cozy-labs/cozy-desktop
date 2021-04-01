@@ -165,4 +165,10 @@ const findNote = async (
   }
 }
 
-module.exports = { isNote, localDoc, remoteDoc, findNote }
+module.exports = {
+  CozyNoteError,
+  findNote,
+  isNote,
+  localDoc,
+  remoteDoc
+}
