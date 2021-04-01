@@ -76,10 +76,12 @@ function loop(
 }
 
 function step(opts /*: DispatchOptions */) {
-  const { [STEP_NAME]: dispatchState } = opts.state
   return async (batch /*: AtomBatch */) => {
+    const { [STEP_NAME]: dispatchState } = opts.state
+
     clearTimeout(dispatchState.localEndTimeout)
     opts.events.emit('local-start')
+
     for (const event of batch) {
       try {
         await dispatchEvent(event, opts)
@@ -91,9 +93,11 @@ function step(opts /*: DispatchOptions */) {
         }
       }
     }
+
     dispatchState.localEndTimeout = setTimeout(() => {
       opts.events.emit('local-end')
     }, LOCAL_END_NOTIFICATION_DELAY)
+
     return batch
   }
 }
