@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.27.0-beta.2 - 2021-04-06
+
+Improvements for all users:
+
+- We forgot to modify the packaging configuration and some files were left out,
+  preventing the client from starting.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.27.0-beta.1 - 2021-04-06
 
 Improvements for all users:
