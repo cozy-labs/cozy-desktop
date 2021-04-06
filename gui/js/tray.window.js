@@ -2,15 +2,18 @@ const electron = require('electron')
 const { dialog, shell } = electron
 const { spawn } = require('child_process')
 const { join } = require('path')
-const autoLaunch = require('./autolaunch')
-const DASHBOARD_SCREEN_WIDTH = 440
-const DASHBOARD_SCREEN_HEIGHT = 830
 
+const autoLaunch = require('./autolaunch')
+const { openNote } = require('../utils/notes')
+const { openUrl } = require('../utils/urls')
 const { translate } = require('./i18n')
 
 const log = require('../../core/app').logger({
   component: 'GUI'
 })
+
+const DASHBOARD_SCREEN_WIDTH = 440
+const DASHBOARD_SCREEN_HEIGHT = 830
 
 const popoverBounds = (
   wantedWidth,
@@ -184,6 +187,7 @@ module.exports = class TrayWM extends WindowManager {
         this.app.quit()
       },
       'open-file': (event, path) => this.openPath(path),
+      'show-in-parent': (event, path) => this.showInParent(path),
       'unlink-cozy': this.onUnlink,
       'manual-start-sync': () =>
         this.desktop.sync.forceSync().catch(err => {
@@ -201,7 +205,24 @@ module.exports = class TrayWM extends WindowManager {
     }
   }
 
-  openPath(pathToOpen) {
+  async openPath(pathToOpen) {
+    const { desktop } = this
+
+    pathToOpen = join(desktop.config.syncPath, pathToOpen)
+
+    // TODO: find better way to check whether it's a note or not without
+    // requiring modules from main.
+    if (pathToOpen.endsWith('.cozy-note')) {
+      openNote(pathToOpen, { desktop })
+    } else if (process.platform === 'linux' && pathToOpen.endsWith('.url')) {
+      // Linux Desktops generally don't provide any way to open those shortcuts.
+      openUrl(pathToOpen)
+    } else {
+      shell.openPath(pathToOpen)
+    }
+  }
+
+  showInParent(pathToOpen) {
     pathToOpen = join(this.desktop.config.syncPath, pathToOpen)
 
     shell.showItemInFolder(pathToOpen)

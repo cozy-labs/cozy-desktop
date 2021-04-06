@@ -136,6 +136,10 @@ elmectron.ports.openFile.subscribe(path => {
   ipcRenderer.send('open-file', path)
 })
 
+elmectron.ports.showInParent.subscribe(path => {
+  ipcRenderer.send('show-in-parent', path)
+})
+
 elmectron.ports.userActionDone.subscribe(action => {
   ipcRenderer.send('userActionDone', action)
 })

@@ -22,6 +22,7 @@ port module Ports exposing
     , remove
     , sendMail
     , showHelp
+    , showInParent
     , startSync
     , syncError
     , syncState
@@ -86,6 +87,9 @@ port newRelease : (( String, String ) -> msg) -> Sub msg
 
 
 port openFile : String -> Cmd msg
+
+
+port showInParent : String -> Cmd msg
 
 
 port quitAndInstall : () -> Cmd msg

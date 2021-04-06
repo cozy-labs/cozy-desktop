@@ -5,18 +5,18 @@ const should = require('should')
 const path = require('path')
 const os = require('os')
 
-const configHelpers = require('../../../support/helpers/config')
-const pouchHelpers = require('../../../support/helpers/pouch')
-const cozyHelpers = require('../../../support/helpers/cozy')
-const { RemoteTestHelpers } = require('../../../support/helpers/remote')
-const Builders = require('../../../support/builders')
+const configHelpers = require('../../support/helpers/config')
+const pouchHelpers = require('../../support/helpers/pouch')
+const cozyHelpers = require('../../support/helpers/cozy')
+const { LocalTestHelpers } = require('../../support/helpers/local')
+const { RemoteTestHelpers } = require('../../support/helpers/remote')
+const Builders = require('../../support/builders')
 
-const { localDoc, remoteDoc, openNote } = require('../../../../gui/notes')
-const { CozyDocumentMissingError } = require('../../../../core/remote/errors')
+const { findNote, localDoc, remoteDoc } = require('../../../core/utils/notes')
 
 const cozy = cozyHelpers.cozy
 
-describe('gui/notes/index', () => {
+describe('utils/notes', () => {
   describe('localDoc', () => {
     before('instanciate config', configHelpers.createConfig)
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
@@ -37,16 +37,16 @@ describe('gui/notes/index', () => {
       await should(localDoc(filePath, this)).be.fulfilledWith(doc)
     })
 
-    it('throws a CozyDocumentMissingError if no doc exist with the given path', async function() {
+    it('throws a CozyNoteError with code CozyDocumentMissingError if no doc exist with the given path', async function() {
       const docPath = 'Notes/Some interesting stuff.cozy-note'
       const filePath = path.join(this.config.syncPath, docPath)
 
-      await should(localDoc(filePath, this)).be.rejectedWith(
-        CozyDocumentMissingError
-      )
+      await should(localDoc(filePath, this)).be.rejectedWith({
+        code: 'CozyDocumentMissingError'
+      })
     })
 
-    it('throws a CozyDocumentMissingError if the note is not within the synced folder', async function() {
+    it('throws a CozyNoteError with code CozyDocumentMissingError if the note is not within the synced folder', async function() {
       const docPath = 'Notes/Some interesting stuff.cozy-note'
       const filePath = path.join(os.tmpdir(), docPath)
 
@@ -57,9 +57,9 @@ describe('gui/notes/index', () => {
         .upToDate()
         .create()
 
-      await should(localDoc(filePath, this)).be.rejectedWith(
-        CozyDocumentMissingError
-      )
+      await should(localDoc(filePath, this)).be.rejectedWith({
+        code: 'CozyDocumentMissingError'
+      })
     })
   })
 
@@ -89,7 +89,7 @@ describe('gui/notes/index', () => {
       ).be.fulfilledWith(remote)
     })
 
-    it('throws a CozyDocumentMissingError if no remote doc exist for the given local doc', async function() {
+    it('throws a CozyNoteError with code CozyDocumentMissingError if no remote doc exist for the given local doc', async function() {
       const docPath = 'Some interesting stuff.cozy-note'
 
       const remoteHelpers = new RemoteTestHelpers(this)
@@ -103,10 +103,10 @@ describe('gui/notes/index', () => {
 
       await should(
         remoteDoc(doc, { config: this.config, remote: remoteHelpers.side })
-      ).be.rejectedWith(CozyDocumentMissingError)
+      ).be.rejectedWith({ code: 'CozyDocumentMissingError' })
     })
 
-    it('throws a CozyDocumentMissingError if the local doc is not associated with a remote doc', async function() {
+    it('throws a CozyNoteError with code CozyDocumentMissingError if the local doc is not associated with a remote doc', async function() {
       const docPath = 'Some interesting stuff.cozy-note'
 
       const remoteHelpers = new RemoteTestHelpers(this)
@@ -123,11 +123,11 @@ describe('gui/notes/index', () => {
 
       await should(
         remoteDoc(doc, { config: this.config, remote: remoteHelpers.side })
-      ).be.rejectedWith(CozyDocumentMissingError)
+      ).be.rejectedWith({ code: 'CozyDocumentMissingError' })
     })
   })
 
-  describe('openNote', () => {
+  describe('findNote', () => {
     before('instanciate config', configHelpers.createConfig)
     before('register cozy client', configHelpers.registerClient)
     beforeEach('clean remote cozy', cozyHelpers.deleteAll)
@@ -135,18 +135,21 @@ describe('gui/notes/index', () => {
     afterEach('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
 
-    it('throws a CozyDocumentMissingError when filePath does not correspond to a synced note', async function() {
+    it('throws an Error when filePath does not correspond to a synced note', async function() {
       const docPath = 'Notes/Some interesting stuff.cozy-note'
       const filePath = path.join(this.config.syncPath, docPath)
 
-      await should(
-        openNote(filePath, { shell: {}, desktop: this })
-      ).be.rejectedWith(CozyDocumentMissingError)
+      await should(findNote(filePath, this)).be.rejectedWith(
+        'could not find local note file'
+      )
     })
 
-    it('thows a CozyDocumentMissingError if the synced note does not exist anymore on the Cozy', async function() {
+    it('throws a CozyNoteError with code CozyDocumentMissingError if the synced note does not exist anymore on the Cozy', async function() {
       const docPath = 'Some interesting stuff.cozy-note'
+      const filePath = path.join(this.config.syncPath, docPath)
 
+      const localHelpers = new LocalTestHelpers(this)
+      await localHelpers.syncDir.outputFile(docPath, 'Note content')
       const builders = new Builders({ cozy })
       await builders
         .metafile()
@@ -154,9 +157,9 @@ describe('gui/notes/index', () => {
         .remoteId('3232')
         .build()
 
-      await should(
-        openNote(docPath, { shell: {}, desktop: this })
-      ).be.rejectedWith(CozyDocumentMissingError)
+      await should(findNote(filePath, this)).be.rejectedWith({
+        code: 'CozyDocumentMissingError'
+      })
     })
   })
 })

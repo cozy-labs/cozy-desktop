@@ -31,6 +31,7 @@ const logger = require('./utils/logger')
 const { LOG_FILE, LOG_FILENAME } = logger
 const sentry = require('./utils/sentry')
 const { sendToTrash } = require('./utils/fs')
+const notes = require('./utils/notes')
 
 /*::
 import type EventEmitter from 'events'
@@ -412,6 +413,10 @@ class App {
   diskUsage() /*: Promise<*> */ {
     if (!this.remote) this.instanciate()
     return this.remote.diskUsage()
+  }
+
+  findNote(filePath /*: string */) {
+    return notes.findNote(filePath, this)
   }
 }
 

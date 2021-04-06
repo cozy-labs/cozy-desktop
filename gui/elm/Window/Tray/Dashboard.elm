@@ -16,6 +16,7 @@ import Data.UserAction as UserAction exposing (UserAction)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import Json.Decode as Json
 import Locale exposing (Helpers)
 import Ports
 import Regex
@@ -60,6 +61,7 @@ type Msg
     = Transfer EncodedFile
     | Remove EncodedFile
     | OpenPath String
+    | ShowInParent String
     | Tick Time.Posix
     | ShowMore
     | Reset
@@ -96,6 +98,9 @@ update msg model =
 
         OpenPath path ->
             ( model, Ports.openFile path )
+
+        ShowInParent path ->
+            ( model, Ports.showInParent path )
 
         Tick now ->
             ( { model | now = now }, Cmd.none )
@@ -171,7 +176,13 @@ renderFile helpers model file =
             ]
         , span [ class "file-line-content file-extra" ]
             [ span [ class "file-time-ago" ] [ text (helpers.distance_of_time_in_words file.updated model.now) ]
-            , text dirPath
+            , span
+                [ class "file-parent-folder"
+                , stopPropagationOn "click" <|
+                    Json.map (\msg -> ( msg, True )) <|
+                        Json.succeed (ShowInParent file.path)
+                ]
+                [ text dirPath ]
             ]
         ]
 
@@ -367,7 +378,7 @@ viewName path =
     span
         [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
         , title path
-        , onClick (OpenPath path)
+        , onClick (ShowInParent path)
         ]
         [ text (shortName path) ]
 
