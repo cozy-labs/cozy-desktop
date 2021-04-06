@@ -1,5 +1,56 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.27.0-beta.1 - 2021-04-06
+
+Improvements for all users:
+
+- The Electron framework was upgraded to v12.0.0. This major version fixes a lot
+  of security errors as well as other smaller errors like crashes.
+- The Desktop client will now use the Electron API to send local folders and
+  files to the OS trash. This should ensure that these documents can be restored
+  from the trash via the default trash operations and that their names are
+  preserved.
+- Missing parent folders when merging or propagating a child change will not be
+  created by default as this could lead to conflicts down the road. We will
+  instead rely on retry mechanisms to make sure ancestor folders exist before
+  saving a document record in PouchDB or propagating it to the remote Cozy.
+  Local parent directories will still be created if missing when propagating a
+  remote change as this should not lead to conflicts.
+- The synchronization error management has been improved to make sure you don't
+  get stuck over a synchronization failure that should get resolved with retries
+  or could manually be skipped.
+- We've fixed a local watcher issue that prevented the synchronization of
+  folders moves or renamings before they got propagated to the remote Cozy if
+  they have child documents.
+- Platform incompatibilities errors raised during the propagation of remote
+  changes to the local filesystem (e.g. when characters forbidden by the local
+  filesystem are present in some document's name on the remote Cozy) will now be
+  handled as other synchronization errors. You will thus see an error message
+  within the GUI when this happens.
+- We've fixed a regression that prevented the propagation of a file deletion if
+  that file had been previously modified on the same side and this modification
+  was not yet propagated.
+- We've fixed an issue that prevented the propagation of a local document
+  deletion if its parent folder is then moved or renamed on the same side before
+  the deletion is propagated.
+- We've fixed an issue that prevented the propagation of a folder deletion if it
+  had been previously moved or renamed on the same side and this move was not
+  yet propagated.
+- We've fixed an issue that prevented the propagation of a file replacement with
+  an other synced file if it was modified on the same side before the
+  replacement could be propagated.
+- We've made some small changes to the design of the list of recently synced
+  files to harmonize it with the design you're used to in your Drive application
+  on the Web.
+- We've changed the default action executed when clicking on an element in the
+  list of recently synced files. It will now open the file in your OS default
+  application for its type. You can still show it in its parent folder by
+  clicking on its parent folder path, displayed right under its name.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.26.1 - 2021-03-16
 
 Improvements for all users:
