@@ -95,7 +95,7 @@
     width 100%
 
   .file-line
-    padding 1.3em .5em 1.3em 5em
+    padding 1.1em .5em 1.1em 5em
     font-weight: normal
     position: relative
     width 100%
@@ -104,7 +104,10 @@
     flex-direction: column
     border-bottom: 1px solid #d6d8da
     cursor: pointer;
+
     &:hover, &:active
+      background: var(--paleGrey)
+
       .file-path
         text-decoration: underline
 
@@ -124,6 +127,41 @@
         &.file-type-{mimetype}
             background-image url("./images/type-icons/icon-type-" + mimetype + ".svg")
 
+    &.file-type-link::before
+      content: ''
+      z-index: 1
+      position: absolute
+      height: 1.125rem
+      width: 1.125rem
+      top: 80%
+      right: 12%
+      transform: scale(1) translate(50%, -50%)
+      transform-origin: 100% 0%
+      background-color: var(--white)
+      border-radius: 12px
+      border: 1px solid var(--silver)
+
+    &.file-type-link::after
+      content: ''
+      z-index: 2
+      position: absolute
+      height: 1.125rem
+      width: 1.125rem
+      top: 80%
+      right: 12%
+      transform: scale(1) translate(50%, -50%)
+      transform-origin: 100% 0%
+
+      -webkit-mask-image: embedurl('./images/link.svg')
+      -webkit-mask-position: center
+      -webkit-mask-size: .625rem
+      -webkit-mask-repeat: no-repeat
+      mask-image: embedurl('./images/link.svg')
+      mask-position: center
+      mask-size: .625rem
+      mask-repeat: no-repeat
+      background-color: var(--slateGrey)
+
   .file-line-content
     overflow hidden
     text-overflow ellipsis
@@ -131,17 +169,18 @@
     display inline-block
 
   .file-name-wrapper
-    font-size: 1.1em
+    font-size: 1rem
+    line-height: 1.3
 
     .file-name-name
       color var(--charcoalGrey)
-      font-size: 1.1em
 
     .file-name-ext
       color var(--coolGrey)
 
   .file-extra
-    font-size: 0.9em
+    font-size: .75rem
+    line-height: 1.3
     color var(--coolGrey)
 
     .file-time-ago::after

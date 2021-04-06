@@ -155,6 +155,9 @@ renderFile helpers model file =
     let
         ( basename, extname ) =
             File.splitName file.filename
+
+        dirPath =
+            File.dirPath file.path file.filename
     in
     div
         [ class "file-line"
@@ -168,7 +171,7 @@ renderFile helpers model file =
             ]
         , span [ class "file-line-content file-extra" ]
             [ span [ class "file-time-ago" ] [ text (helpers.distance_of_time_in_words file.updated model.now) ]
-            , text file.path
+            , text dirPath
             ]
         ]
 
