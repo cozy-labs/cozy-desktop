@@ -8,6 +8,7 @@ files:
 - gui/images
 - gui/index.html
 - gui/js
+- gui/utils
 - gui/locales
 - gui/main.js
 - gui/node_modules
