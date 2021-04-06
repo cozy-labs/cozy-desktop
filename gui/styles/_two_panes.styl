@@ -127,6 +127,41 @@
         &.file-type-{mimetype}
             background-image url("./images/type-icons/icon-type-" + mimetype + ".svg")
 
+    &.file-type-link::before
+      content: ''
+      z-index: 1
+      position: absolute
+      height: 1.125rem
+      width: 1.125rem
+      top: 80%
+      right: 12%
+      transform: scale(1) translate(50%, -50%)
+      transform-origin: 100% 0%
+      background-color: var(--white)
+      border-radius: 12px
+      border: 1px solid var(--silver)
+
+    &.file-type-link::after
+      content: ''
+      z-index: 2
+      position: absolute
+      height: 1.125rem
+      width: 1.125rem
+      top: 80%
+      right: 12%
+      transform: scale(1) translate(50%, -50%)
+      transform-origin: 100% 0%
+
+      -webkit-mask-image: embedurl('./images/link.svg')
+      -webkit-mask-position: center
+      -webkit-mask-size: .625rem
+      -webkit-mask-repeat: no-repeat
+      mask-image: embedurl('./images/link.svg')
+      mask-position: center
+      mask-size: .625rem
+      mask-repeat: no-repeat
+      background-color: var(--slateGrey)
+
   .file-line-content
     overflow hidden
     text-overflow ellipsis
