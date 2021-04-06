@@ -121,7 +121,9 @@ describe('Sync', function() {
 
     context('if remote watcher fails to start', () => {
       beforeEach(function() {
-        this.remote.start = sinon.stub().rejects(new Error('failed'))
+        this.remote.start = sinon.stub().callsFake(() => {
+          this.remote.watcher.fatal(new Error('failed'))
+        })
       })
 
       it('does not start replication', async function() {

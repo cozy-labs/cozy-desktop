@@ -217,7 +217,7 @@ const showMigrationError = (err /*: Error */) => {
 }
 
 const sendErrorToMainWindow = msg => {
-  if (msg === COZY_CLIENT_REVOKED_MESSAGE) {
+  if (msg.includes(COZY_CLIENT_REVOKED_MESSAGE)) {
     if (notificationsState.revokedAlertShown) return
     notificationsState.revokedAlertShown = true // prevent the alert from appearing twice
     const options = {
