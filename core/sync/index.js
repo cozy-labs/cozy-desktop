@@ -111,6 +111,17 @@ class Sync {
       return
     }
 
+    // Errors emitted while the remote watcher is starting (e.g. revoked OAuth
+    // client) will not be thrown and thus not handled if this listener is not
+    // attached before starting the watcher.
+    // This results in the Sync starting without a remote watcher.
+    this.remote.watcher.onFatal(err => {
+      this.fatal(err)
+    })
+    this.remote.watcher.onError(err => {
+      this.blockSyncFor({ err })
+    })
+
     try {
       await this.local.start()
       await this.remote.start()
@@ -121,12 +132,6 @@ class Sync {
       return this.fatal(err)
     }
 
-    this.remote.watcher.onError(err => {
-      this.blockSyncFor({ err })
-    })
-    this.remote.watcher.onFatal(err => {
-      this.fatal(err)
-    })
     this.local.watcher.running.catch(err => {
       this.fatal(err)
     })
