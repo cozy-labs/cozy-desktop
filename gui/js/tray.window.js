@@ -5,6 +5,7 @@ const { join } = require('path')
 
 const autoLaunch = require('./autolaunch')
 const { openNote } = require('../utils/notes')
+const { openUrl } = require('../utils/urls')
 const { translate } = require('./i18n')
 
 const log = require('../../core/app').logger({
@@ -213,6 +214,9 @@ module.exports = class TrayWM extends WindowManager {
     // requiring modules from main.
     if (pathToOpen.endsWith('.cozy-note')) {
       openNote(pathToOpen, { desktop })
+    } else if (process.platform === 'linux' && pathToOpen.endsWith('.url')) {
+      // Linux Desktops generally don't provide any way to open those shortcuts.
+      openUrl(pathToOpen)
     } else {
       shell.openPath(pathToOpen)
     }
