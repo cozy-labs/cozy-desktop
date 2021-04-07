@@ -1,5 +1,20 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.27.0-beta.3 - 2021-04-07
+
+Improvements for all users:
+
+- We've put back the original globe icon for the "Open Cozy" button as it is the
+  illustration used for small icons when the newer globe is used for larger
+  ones.
+- We're now using abbreviations for the time units used in the recently
+  synchronized files list to express the time elapsed since the file was last
+  synchronized.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.27.0-beta.2 - 2021-04-06
 
 Improvements for all users:
