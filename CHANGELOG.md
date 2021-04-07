@@ -1,5 +1,31 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.27.0-beta.3 - 2021-04-10
+
+Improvements for all users:
+
+- We've put back the original globe icon for the "Open Cozy" button as it is the
+  illustration used for small icons when the newer globe is used for larger
+  ones.
+- We're now using abbreviations for the time units used in the recently
+  synchronized files list to express the time elapsed since the file was last
+  synchronized.
+- The tooltips displayed when hovering over a file line or its parent path will
+  now tell you which action will be performed on click (i.e. showing the file in
+  its parent path when clicking the parent folder path or opening the file in
+  the appropriate application).
+
+Improvements for Windows users:
+
+- The leading path separator in parent folder paths displayed in the recently
+  synchronized files list is now the current platform's main separator.
+  This means Windows users will now see a backslash (`\`) as is used in the rest
+  of the path.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.27.0-beta.2 - 2021-04-06
 
 Improvements for all users:
