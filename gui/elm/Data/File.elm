@@ -38,9 +38,9 @@ splitName filename =
             ( String.join "." (List.reverse rest), "." ++ ext )
 
 
-dirPath : String -> String -> String
-dirPath path filename =
-    "/" ++ String.replace filename "" path
+dirPath : String -> String -> String -> String
+dirPath pathSeparator path filename =
+    pathSeparator ++ String.replace filename "" path
 
 
 type alias EncodedFile =

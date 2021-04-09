@@ -44,7 +44,7 @@ type alias Model =
 
 init : String -> Platform -> Model
 init version platform =
-    { dashboard = Dashboard.init
+    { dashboard = Dashboard.init platform
     , page = DashboardPage
     , platform = platform
     , settings = Settings.init version

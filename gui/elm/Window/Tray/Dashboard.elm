@@ -12,6 +12,7 @@ module Window.Tray.Dashboard exposing
     )
 
 import Data.File as File exposing (EncodedFile, File)
+import Data.Platform as Platform exposing (Platform)
 import Data.UserAction as UserAction exposing (UserAction)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -32,15 +33,17 @@ type alias Model =
     { now : Time.Posix
     , files : List File
     , page : Int
+    , platform : Platform
     , userActions : List UserAction
     }
 
 
-init : Model
-init =
+init : Platform -> Model
+init platform =
     { now = Time.millisToPosix 0
     , files = []
     , page = 1
+    , platform = platform
     , userActions = []
     }
 
@@ -162,7 +165,7 @@ renderFile helpers model file =
             File.splitName file.filename
 
         dirPath =
-            File.dirPath file.path file.filename
+            File.dirPath (Platform.pathSeparator model.platform) file.path file.filename
     in
     div
         [ class "file-line"
