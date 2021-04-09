@@ -161,15 +161,33 @@ update msg model =
 renderFile : Helpers -> Model -> File -> Html Msg
 renderFile helpers model file =
     let
+        pathSeparator =
+            Platform.pathSeparator model.platform
+
         ( basename, extname ) =
             File.splitName file.filename
 
+        timeAgo =
+            helpers.distance_of_time_in_words file.updated model.now
+
         dirPath =
-            File.dirPath (Platform.pathSeparator model.platform) file.path file.filename
+            File.dirPath pathSeparator file.path file.filename
+
+        filenameTitle =
+            Locale.interpolate [ file.filename ] <|
+                helpers.t "Dashboard Open file {0}"
+
+        dirPathTitle =
+            if dirPath == pathSeparator then
+                helpers.t "Dashboard Show in parent folder"
+
+            else
+                Locale.interpolate [ dirPath ] <|
+                    helpers.t "Dashboard Show in folder {0}"
     in
     div
         [ class "file-line"
-        , title file.path
+        , title filenameTitle
         , onClick (OpenPath file.path)
         ]
         [ div [ class ("file-type file-type-" ++ file.icon) ] []
@@ -178,9 +196,10 @@ renderFile helpers model file =
             , span [ class "file-name-ext" ] [ text extname ]
             ]
         , span [ class "file-line-content file-extra" ]
-            [ span [ class "file-time-ago" ] [ text (helpers.distance_of_time_in_words file.updated model.now) ]
+            [ span [ class "file-time-ago" ] [ text timeAgo ]
             , span
                 [ class "file-parent-folder"
+                , title dirPathTitle
                 , stopPropagationOn "click" <|
                     Json.map (\msg -> ( msg, True )) <|
                         Json.succeed (ShowInParent file.path)

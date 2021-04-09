@@ -73,6 +73,9 @@
   "Dashboard Synchronize": "Synchronisation",
   "Dashboard Syncing": "En cours de synchronisation",
   "Dashboard Your cozy is up to date!": "Votre Cozy est à jour !",
+  "Dashboard Open file {0}": "Ouvrir le fichier {0}",
+  "Dashboard Show in folder {0}": "Afficher dans le dossier {0}",
+  "Dashboard Show in parent folder": "Afficher dans le dossier parent",
 
   "Error {0} names cannot end with character `{1}`": "les noms de {0} ne peuvent pas se finir par le caractère `{1}`",
   "Error {0} names cannot include characters `{1}`": "les noms de {0} ne peuvent pas inclure les caractères `{1}`",

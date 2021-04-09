@@ -73,6 +73,9 @@
   "Dashboard Synchronize": "同步",
   "Dashboard Syncing": "同步中",
   "Dashboard Your cozy is up to date!": "你的 cozy 已是最新状态！",
+  "Dashboard Open file {0}": "Open file {0}",
+  "Dashboard Show in folder {0}": "Show in folder {0}",
+  "Dashboard Show in parent folder": "Show in parent folder",
 
   "Error {0} names cannot end with character `{1}`": "{0} names cannot end with character `{1}`",
   "Error {0} names cannot include characters `{1}`": "{0} names cannot include characters `{1}`",
