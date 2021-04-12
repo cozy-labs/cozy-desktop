@@ -86,6 +86,17 @@ const setup = async (
     callback(-3) // use chrome validation
   })
 
+  // It's unclear if this actually works or not especially since we can't
+  // control that the Cache-Control header is really set.
+  // See https://github.com/electron/electron/issues/27895.
+  syncSession.webRequest.onHeadersReceived(
+    ({ statusLine, responseHeaders }, callback) => {
+      responseHeaders['Cache-Control'] = ['no-store']
+      statusLine += ' NO CACHE'
+      callback({ responseHeaders, statusLine })
+    }
+  )
+
   app.on(
     'select-client-certificate',
     (event, webContents, url, list, callback) => {

@@ -606,7 +606,9 @@ describe('RemoteCozy', function() {
 
     const stubWarningsResponse = (status /*: number */, data) => {
       cozyStackDouble.stub((req, res) => {
-        if (req.url === '/status/') res.end('{}')
+        // A strict equality check would prevent us from adding query-string
+        // parameters to the request.
+        if (req.url.includes('/status/')) res.end('{}')
         else {
           res.writeHead(status)
           res.end(JSON.stringify(data))

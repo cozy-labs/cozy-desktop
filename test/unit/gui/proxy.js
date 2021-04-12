@@ -122,10 +122,25 @@ describe('gui/js/proxy', function() {
 
       describe('fetch()', () => {
         describe('HTTP', () => {
-          beforeEach(() => global.fetch(httpUrl()))
+          let response
+          beforeEach(async () => {
+            response = await global.fetch(httpUrl())
+          })
 
           it('sets User-Agent', async () => {
             should(received.headers['user-agent']).equal(userAgent)
+          })
+
+          // FIXME: Returned response headers only contain the raw headers which
+          // are not modified by calls to onHeadersReceived.
+          // See https://github.com/electron/electron/issues/27895
+          //
+          // This means we can't see if the Cache-Control header is actually
+          // set.
+          // But it should still be interpreted by Chromium.
+          it.skip('sets reponse Cache-Control header to no-store', async () => {
+            // Prevent Chromium from caching requests to avoid net error loops
+            should(response.headers['Cache-Control']).equal('no-store')
           })
         })
 
