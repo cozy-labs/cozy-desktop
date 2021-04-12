@@ -86,6 +86,14 @@ const setup = async (
     callback(-3) // use chrome validation
   })
 
+  syncSession.webRequest.onHeadersReceived(
+    ({ statusLine, responseHeaders }, callback) => {
+      responseHeaders['Cache-Control'] = ['no-store']
+      statusLine += ' NO CACHE'
+      callback({ responseHeaders, statusLine })
+    }
+  )
+
   app.on(
     'select-client-certificate',
     (event, webContents, url, list, callback) => {
