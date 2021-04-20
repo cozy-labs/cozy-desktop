@@ -753,7 +753,7 @@ class Sync {
       }
 
       // Await to make sure we've fetched potential remote changes
-      if (!this.remote.watcher.running) {
+      if (this.remote.watcher && !this.remote.watcher.running) {
         await this.remote.watcher.start()
       }
 
@@ -788,6 +788,8 @@ class Sync {
       this.lifecycle.unblockFor(err.code)
     }
 
+    // Clear any existing interval since we'll replace it
+    clearInterval(this.retryInterval)
     // We'll automatically retry to sync the change after a delay
     this.retryInterval = setInterval(retry, retryDelay)
 
@@ -806,6 +808,7 @@ class Sync {
 
     switch (err.code) {
       case remoteErrors.UNREACHABLE_COZY_CODE:
+        this.remote.watcher.stop()
         this.events.emit('offline')
         break
       case remoteErrors.CONFLICTING_NAME_CODE:
