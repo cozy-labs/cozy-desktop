@@ -785,11 +785,13 @@ describe('Sync', function() {
     })
 
     context('when Cozy is unreachable', () => {
+      const unreachableSyncError = syncErrors.wrapError(
+        new FetchError({ status: 500 }, 'UnreachableCozy test error'),
+        'remote'
+      )
       beforeEach(function() {
         this.sync.blockSyncFor({
-          err: remoteErrors.wrapError(
-            new FetchError({ status: 500 }, 'UnreachableCozy test error')
-          )
+          err: unreachableSyncError
         })
       })
 
@@ -799,6 +801,36 @@ describe('Sync', function() {
 
       it('stops the remote watcher', function() {
         should(this.remote.watcher.stop).have.been.called()
+      })
+
+      // If the remote watcher encounters a network issue and throws an
+      // `UnreachableCozy` error while Sync has encountered a similar
+      // `UnreachableCozy` error right before that, there's a risk the remote
+      // watcher error will overwrite the `Sync.retryInterval` attribute with a
+      // new interval without clearing the one created by the Sync error.
+      // It this case we could have an endless Sync error retry loop. This test
+      // checks that this does not occur.
+      it('does not allow multiple retry intervals', async function() {
+        const unreachableRemoteError = remoteErrors.wrapError(
+          new FetchError({ status: 500 }, 'Concurrent UnreachableCozy error')
+        )
+        this.sync.blockSyncFor({
+          err: unreachableRemoteError
+        })
+
+        // Cozy is reachable
+        this.remote.ping = sinon.stub().resolves(true)
+
+        await Promise.delay(
+          // Wait for the first error retry to be called
+          syncErrors.retryDelay(unreachableSyncError) +
+            // Wait for the second error retry to be called
+            syncErrors.retryDelay(unreachableRemoteError) +
+            // Make sure the first error retry is not called anymore
+            syncErrors.retryDelay(unreachableSyncError)
+        )
+
+        should(this.remote.ping).have.been.calledOnce()
       })
 
       describe('retry', () => {

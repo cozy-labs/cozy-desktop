@@ -70,6 +70,9 @@ class SyncError extends Error {
 }
 
 const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
+  // Speed up tests
+  if (process.env.NODE_ENV === 'test') return 500
+
   if (err instanceof remoteErrors.RemoteError) {
     // The error originates from the Remote Watcher and is not a change
     // application error.
