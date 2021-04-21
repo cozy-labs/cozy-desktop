@@ -456,7 +456,11 @@ app.on('second-instance', async (event, argv) => {
     log.info({ filePath }, 'second instance invoked with arguments')
 
     // If we found a note to open, stop here. Otherwise, show main window.
-    if (await openNote(filePath, { desktop })) return
+    if (
+      filePath.endsWith('.cozy-note') &&
+      (await openNote(filePath, { desktop }))
+    )
+      return
   }
 
   // Make sure the main window exists before trying to show it
@@ -551,13 +555,16 @@ app.on('ready', async () => {
   if (desktop.config.syncPath) {
     await setupDesktop()
 
-    if (process.argv && process.argv.length > 2) {
-      const { argv } = process
+    const { argv } = process
+    if (argv && argv.length > 2) {
       const filePath = argv[argv.length - 1]
-      log.info({ filePath }, 'main instance invoked with arguments')
+      log.info({ filePath, argv }, 'main instance invoked with arguments')
 
       // If we found a note to open, stop here. Otherwise, start sync app.
-      if (await openNote(filePath, { desktop })) {
+      if (
+        filePath.endsWith('.cozy-note') &&
+        (await openNote(filePath, { desktop }))
+      ) {
         app.quit()
         return
       }
