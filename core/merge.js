@@ -336,9 +336,6 @@ class Merge {
       }
 
       if (metadata.sameFolder(folder, doc)) {
-        if (needsFileidMigration(folder, doc.fileid)) {
-          return this.migrateFileid(folder, doc.fileid)
-        }
         log.info({ path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
           metadata.updateLocal(folder, doc.local)
@@ -1024,22 +1021,7 @@ class Merge {
       doc
     )
   }
-
-  async migrateFileid(
-    existing /*: SavedMetadata */,
-    fileid /*: string */
-  ) /*: Promise<void> */ {
-    log.info({ path: existing.path, fileid }, 'Migrating fileid')
-    const doc = _.defaults({ fileid }, existing)
-    metadata.incSides(doc)
-    await this.pouch.put(doc)
-  }
 }
-
-const needsFileidMigration = (
-  existing /*: SavedMetadata */,
-  fileid /*: ?string */
-) /*: boolean %checks */ => existing.fileid == null && fileid != null
 
 module.exports = {
   Merge

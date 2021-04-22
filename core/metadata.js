@@ -640,9 +640,6 @@ const makeComparator = (name, interestingFields) => {
     if (diff && !_.every(diff, canBeIgnoredDiff)) {
       return false
     }
-    if (process.platform === 'win32') {
-      return one.fileid === two.fileid
-    }
     return true
   }
 }
@@ -653,7 +650,8 @@ const sameFolderComparator = makeComparator('sameFolder', [
   'remote',
   'tags',
   'trashed',
-  'ino'
+  'ino',
+  'fileid'
 ])
 
 // Return true if the metadata of the two folders are the same
@@ -671,6 +669,7 @@ const sameFileComparator = makeComparator('sameFile', [
   'size',
   'trashed',
   'ino',
+  'fileid',
   'executable'
 ])
 
@@ -683,6 +682,7 @@ const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev', [
   'size',
   'trashed',
   'ino',
+  'fileid',
   'executable'
 ])
 
