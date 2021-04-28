@@ -249,6 +249,26 @@ class Merge {
             : doc.executable
       }
 
+      if (metadata.sameFile(doc, file)) {
+        log.info({ path: doc.path }, 'up to date')
+        if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
+          metadata.updateLocal(file, doc.local)
+          const outdated = metadata.outOfDateSide(file)
+          if (outdated) {
+            // In case a change was merged but not applied, we want to make sure
+            // Sync will compare the current record version with the correct
+            // "previous" version (i.e. the one before the actual change was
+            // merged and not the one before we merged the new local metadata).
+            // Therefore, we mark the changed side once more to account for the
+            // new record save.
+            metadata.markSide(otherSide(outdated), file, file)
+          }
+          return this.pouch.put(file)
+        } else {
+          return
+        }
+      }
+
       if (!metadata.sameBinary(file, doc)) {
         if (side === 'local' && isNote(file)) {
           // We'll need a reference to the "overwritten" note during the conflict
@@ -295,22 +315,9 @@ class Merge {
       }
       // Any potential conflict has been dealt with
 
-      if (metadata.sameFile(file, doc)) {
-        log.info({ path: doc.path }, 'up to date')
-        if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
-          metadata.updateLocal(file, doc.local)
-          const outdated = metadata.outOfDateSide(file)
-          if (outdated) {
-            metadata.markSide(otherSide(outdated), file, file)
-          }
-          return this.pouch.put(file)
-        }
-        return null
-      } else {
-        metadata.markSide(side, doc, file)
-        metadata.assignMaxDate(doc, file)
-        return this.pouch.put(doc)
-      }
+      metadata.markSide(side, doc, file)
+      metadata.assignMaxDate(doc, file)
+      return this.pouch.put(doc)
     }
   }
 
