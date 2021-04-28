@@ -397,6 +397,7 @@ describe('core/local/atom/incomplete_fixer', () => {
         const dst1 = 'dst1'
         const dst2 = path.basename(__filename)
         await syncDir.ensureFile(dst2)
+
         const firstRenamedEvent = builders
           .event()
           .kind('file')
@@ -412,6 +413,9 @@ describe('core/local/atom/incomplete_fixer', () => {
           .oldPath(dst1)
           .path(dst2)
           .build()
+        const stats = await stater.stat(path.join(syncPath, dst2))
+        secondRenamedEvent.stats = stats
+
         const incompletes = []
         const outputBatches = []
 
@@ -440,7 +444,7 @@ describe('core/local/atom/incomplete_fixer', () => {
               md5sum: CHECKSUM,
               oldPath: src,
               path: dst2,
-              stats: await stater.stat(path.join(syncPath, dst2))
+              stats: secondRenamedEvent.stats
             }
           ]
         ])
