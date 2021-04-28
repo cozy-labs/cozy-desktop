@@ -285,7 +285,7 @@ describe('Merge', function() {
               .create()
           })
 
-          it('updates the existing record', async function() {
+          it('replaces the existing record with a new remote file record', async function() {
             const newRemoteFile = await builders
               .remoteFile(remoteFile)
               .data('updated content')
@@ -305,10 +305,7 @@ describe('Merge', function() {
                 _.defaults(
                   {
                     _id: deleted._id,
-                    // Remote side is increased by 2 to overcome the unsynced
-                    // local deletion.
-                    sides: increasedSides(deleted.sides, 'remote', 2),
-                    local: deleted.local
+                    sides: { target: 1, remote: 1 }
                   },
                   _.omit(doc, ['_rev'])
                 )

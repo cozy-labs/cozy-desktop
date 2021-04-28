@@ -203,33 +203,50 @@ class Merge {
           return
         }
       }
+      // Any local update call is an actual modification
 
       if (file.deleted) {
         // If the existing record was marked for deletion, we only keep the
         // PouchDB attributes that will allow us to overwrite it.
         doc._id = file._id
         doc._rev = file._rev
-        if (side === 'local' && file.remote) {
-          doc.remote = file.remote
-        }
-        if (side === 'remote' && file.local) {
+
+        // Keep other side metadata if we're updating the deleted side of file
+        if (
+          side === 'remote' &&
+          file.remote &&
+          (file.remote._deleted || file.remote.trashed)
+        ) {
           doc.local = file.local
+          metadata.markSide(side, doc, file)
+        } else if (
+          side === 'local' &&
+          (!file.remote || (!file.remote._deleted && !file.remote.trashed))
+        ) {
+          doc.remote = file.remote
+          metadata.markSide(side, doc, file)
+        } else {
+          metadata.markSide(side, doc)
         }
-      } else {
-        // Otherwise we merge the relevant attributes
-        doc = {
-          ..._.cloneDeep(file),
-          ...doc,
-          // Tags come from the remote document and will always be empty in a new
-          // local document.
-          tags: doc.tags.length === 0 ? file.tags : doc.tags,
-          // if file is updated on windows, it will never be executable so we keep
-          // the existing value.
-          executable:
-            side === 'local' && process.platform === 'win32'
-              ? file.executable
-              : doc.executable
-        }
+
+        metadata.assignMaxDate(doc, file)
+        return this.pouch.put(doc)
+      }
+      // The updated file was not deleted on either side
+
+      // Otherwise we merge the relevant attributes
+      doc = {
+        ..._.cloneDeep(file),
+        ...doc,
+        // Tags come from the remote document and will always be empty in a new
+        // local document.
+        tags: doc.tags.length === 0 ? file.tags : doc.tags,
+        // if file is updated on windows, it will never be executable so we keep
+        // the existing value.
+        executable:
+          side === 'local' && process.platform === 'win32'
+            ? file.executable
+            : doc.executable
       }
 
       if (!metadata.sameBinary(file, doc)) {
@@ -238,7 +255,7 @@ class Merge {
           // resolution.
           doc.overwrite = file.overwrite || file
           return this.resolveNoteConflict(doc)
-        } else if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
+        } else if (!metadata.isAtLeastUpToDate(side, file)) {
           if (side === 'local') {
             // We have a merged but unsynced remote update so we create a conflict.
             await this.resolveConflictAsync('local', file)
@@ -276,6 +293,7 @@ class Merge {
           }
         }
       }
+      // Any potential conflict has been dealt with
 
       if (metadata.sameFile(file, doc)) {
         log.info({ path: doc.path }, 'up to date')
@@ -335,7 +353,7 @@ class Merge {
         doc.local = folder.local
       }
 
-      if (metadata.sameFolder(folder, doc)) {
+      if (!folder.deleted && metadata.sameFolder(folder, doc)) {
         log.info({ path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
           metadata.updateLocal(folder, doc.local)
