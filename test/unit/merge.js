@@ -548,6 +548,7 @@ describe('Merge', function() {
             const doc = await builders
               .metafile(synced)
               .data('local content')
+              .updatedAt(new Date())
               .unmerged('local')
               .build()
 
@@ -969,11 +970,13 @@ describe('Merge', function() {
         const remoteUpdate = await builders
           .metafile(synced)
           .data('remote update')
+          .updatedAt(new Date())
           .changedSide('remote')
           .create()
         const localUpdate = builders
           .metafile(synced)
           .data('local update')
+          .updatedAt(new Date())
           .unmerged('local')
           .build()
 
@@ -1097,6 +1100,25 @@ describe('Merge', function() {
       })
     })
 
+    it('does nothing when the modification date is the same', async function() {
+      const doc = builders
+        .metafile(file)
+        .md5sum('xxx')
+        .size(file.size + 1)
+        .ino(file.ino + 1)
+        .unmerged('local')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync('local', _.cloneDeep(doc))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [],
+        resolvedConflicts: []
+      })
+    })
+
     it('sets the local metadata when it is missing', async function() {
       // Remove local attribute for the test
       delete file.local
@@ -1191,12 +1213,14 @@ describe('Merge', function() {
         .moveFrom(src)
         .path(file.path)
         .overwrite(file)
+        .updatedAt(new Date(new Date().getTime() - 1000))
         .changedSide(this.side)
         .create()
 
       const doc = builders
         .metafile(dst)
         .data('final content')
+        .updatedAt(new Date())
         .unmerged(this.side)
         .build()
 
@@ -1227,12 +1251,14 @@ describe('Merge', function() {
         .overwrite(file)
         .data('new content')
         .tags('qux', 'quux')
+        .updatedAt(new Date())
         .changedSide(this.side)
         .create()
       const doc = builders
         .metafile(firstUpdate)
         .data('final content')
         .tags('qux', 'quux')
+        .updatedAt(new Date())
         .unmerged(this.side)
         .build()
 
@@ -1353,13 +1379,14 @@ describe('Merge', function() {
         .create()
       const remoteUpdate = await builders
         .metafile(synced)
-        .overwrite(synced)
         .data('remote update')
+        .updatedAt(new Date())
         .changedSide('remote')
         .create()
       const newLocalUpdate = builders
         .metafile(synced)
         .data('local update')
+        .updatedAt(new Date())
         .unmerged('local')
         .build()
 
@@ -1388,25 +1415,17 @@ describe('Merge', function() {
     it('does nothing when existing file is up to date', async function() {
       const initial = await builders
         .metafile()
-        .sides({ [this.side]: 1 })
         .data('initial content')
-        .create()
-      const initialSynced = await builders
-        .metafile(initial)
         .upToDate()
         .create()
-      const update = await builders
-        .metafile(initialSynced)
-        .changedSide('local')
+      const updated = await builders
+        .metafile(initial)
         .data('updated content')
-        .create()
-      const updateSynced = await builders
-        .metafile(update)
         .updatedAt(new Date(2020, 5, 12, 10, 15, 0))
         .upToDate()
         .create()
       const sameUpdate = builders
-        .metafile(updateSynced)
+        .metafile(updated)
         .updatedAt(new Date())
         .unmerged(this.side)
         .build()
@@ -1421,7 +1440,7 @@ describe('Merge', function() {
             {
               [this.side]: sameUpdate[this.side]
             },
-            _.omit(updateSynced, ['_rev'])
+            _.omit(updated, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -1442,6 +1461,7 @@ describe('Merge', function() {
       const localUpdate = builders
         .metafile(synced)
         .data('local update')
+        .updatedAt(new Date())
         .unmerged('local')
         .build()
 

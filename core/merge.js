@@ -180,26 +180,15 @@ class Merge {
         throw new Error("Can't resolve this conflict!")
       }
 
-      if (
-        side === 'local' &&
-        file.local &&
-        metadata.sameFile(file.local, doc.local)
-      ) {
-        log.debug({ path: doc.path, doc, file }, 'Same local binary')
-        if (!metadata.sameLocal(file.local, doc.local)) {
-          metadata.updateLocal(file, doc.local)
-          const outdated = metadata.outOfDateSide(file)
-          if (outdated) {
-            // In case a change was merged but not applied, we want to make sure
-            // Sync will compare the current record version with the correct
-            // "previous" version (i.e. the one before the actual change was
-            // merged and not the one before we merged the new local metadata).
-            // Therefore, we mark the changed side once more to account for the
-            // new record save.
-            metadata.markSide(otherSide(outdated), file, file)
-          }
-          return this.pouch.put(file)
-        } else {
+      if (side === 'local' && file.local) {
+        if (
+          // Ignore local events when local metadata doesn't change
+          metadata.sameLocal(file.local, doc.local) ||
+          // Ignore events when content changes but modification date does not
+          (!metadata.sameBinary(file.local, doc.local) &&
+            file.local.updated_at === doc.local.updated_at)
+        ) {
+          log.debug({ path: doc.path, doc, file }, 'Same local metadata')
           return
         }
       }
