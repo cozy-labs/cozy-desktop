@@ -180,13 +180,67 @@ class Merge {
         throw new Error("Can't resolve this conflict!")
       }
 
-      if (
-        side === 'local' &&
-        file.local &&
-        metadata.sameFile(file.local, doc.local)
-      ) {
-        log.debug({ path: doc.path, doc, file }, 'Same local binary')
-        if (!metadata.sameLocal(file.local, doc.local)) {
+      if (side === 'local' && file.local) {
+        if (
+          // Ignore local events when local metadata doesn't change
+          metadata.sameLocal(file.local, doc.local) ||
+          // Ignore events when content changes but modification date does not
+          (!metadata.sameBinary(file.local, doc.local) &&
+            file.local.updated_at === doc.local.updated_at)
+        ) {
+          log.debug({ path: doc.path, doc, file }, 'Same local metadata')
+          return
+        }
+      }
+      // Any local update call is an actual modification
+
+      if (file.deleted) {
+        // If the existing record was marked for deletion, we only keep the
+        // PouchDB attributes that will allow us to overwrite it.
+        doc._id = file._id
+        doc._rev = file._rev
+
+        // Keep other side metadata if we're updating the deleted side of file
+        if (
+          side === 'remote' &&
+          file.remote &&
+          (file.remote._deleted || file.remote.trashed)
+        ) {
+          doc.local = file.local
+          metadata.markSide(side, doc, file)
+        } else if (
+          side === 'local' &&
+          (!file.remote || (!file.remote._deleted && !file.remote.trashed))
+        ) {
+          doc.remote = file.remote
+          metadata.markSide(side, doc, file)
+        } else {
+          metadata.markSide(side, doc)
+        }
+
+        metadata.assignMaxDate(doc, file)
+        return this.pouch.put(doc)
+      }
+      // The updated file was not deleted on either side
+
+      // Otherwise we merge the relevant attributes
+      doc = {
+        ..._.cloneDeep(file),
+        ...doc,
+        // Tags come from the remote document and will always be empty in a new
+        // local document.
+        tags: doc.tags.length === 0 ? file.tags : doc.tags,
+        // if file is updated on windows, it will never be executable so we keep
+        // the existing value.
+        executable:
+          side === 'local' && process.platform === 'win32'
+            ? file.executable
+            : doc.executable
+      }
+
+      if (metadata.sameFile(doc, file)) {
+        log.info({ path: doc.path }, 'up to date')
+        if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
           metadata.updateLocal(file, doc.local)
           const outdated = metadata.outOfDateSide(file)
           if (outdated) {
@@ -204,41 +258,13 @@ class Merge {
         }
       }
 
-      if (file.deleted) {
-        // If the existing record was marked for deletion, we only keep the
-        // PouchDB attributes that will allow us to overwrite it.
-        doc._id = file._id
-        doc._rev = file._rev
-        if (side === 'local' && file.remote) {
-          doc.remote = file.remote
-        }
-        if (side === 'remote' && file.local) {
-          doc.local = file.local
-        }
-      } else {
-        // Otherwise we merge the relevant attributes
-        doc = {
-          ..._.cloneDeep(file),
-          ...doc,
-          // Tags come from the remote document and will always be empty in a new
-          // local document.
-          tags: doc.tags.length === 0 ? file.tags : doc.tags,
-          // if file is updated on windows, it will never be executable so we keep
-          // the existing value.
-          executable:
-            side === 'local' && process.platform === 'win32'
-              ? file.executable
-              : doc.executable
-        }
-      }
-
       if (!metadata.sameBinary(file, doc)) {
         if (side === 'local' && isNote(file)) {
           // We'll need a reference to the "overwritten" note during the conflict
           // resolution.
           doc.overwrite = file.overwrite || file
           return this.resolveNoteConflict(doc)
-        } else if (!file.deleted && !metadata.isAtLeastUpToDate(side, file)) {
+        } else if (!metadata.isAtLeastUpToDate(side, file)) {
           if (side === 'local') {
             // We have a merged but unsynced remote update so we create a conflict.
             await this.resolveConflictAsync('local', file)
@@ -276,23 +302,11 @@ class Merge {
           }
         }
       }
+      // Any potential conflict has been dealt with
 
-      if (metadata.sameFile(file, doc)) {
-        log.info({ path: doc.path }, 'up to date')
-        if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
-          metadata.updateLocal(file, doc.local)
-          const outdated = metadata.outOfDateSide(file)
-          if (outdated) {
-            metadata.markSide(otherSide(outdated), file, file)
-          }
-          return this.pouch.put(file)
-        }
-        return null
-      } else {
-        metadata.markSide(side, doc, file)
-        metadata.assignMaxDate(doc, file)
-        return this.pouch.put(doc)
-      }
+      metadata.markSide(side, doc, file)
+      metadata.assignMaxDate(doc, file)
+      return this.pouch.put(doc)
     }
   }
 
@@ -335,10 +349,7 @@ class Merge {
         doc.local = folder.local
       }
 
-      if (metadata.sameFolder(folder, doc)) {
-        if (needsFileidMigration(folder, doc.fileid)) {
-          return this.migrateFileid(folder, doc.fileid)
-        }
+      if (!folder.deleted && metadata.sameFolder(folder, doc)) {
         log.info({ path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
           metadata.updateLocal(folder, doc.local)
@@ -960,86 +971,7 @@ class Merge {
 
     return this.pouch.bulkDocs(docs)
   }
-
-  async bulkFixSideInPouch(
-    {
-      side,
-      results,
-      docs
-    } /*: { side: SideName, results: { id: string, rev: string }[], docs: SavedMetadata[] } */
-  ) /*: Promise<any> */ {
-    log.debug({ side, results, docs }, 'bulkFixSideInPouch')
-    const fixedDocs = []
-    const uniqResultsById = _.chain(results)
-      .sortBy('rev')
-      .reverse()
-      .uniqBy('id')
-      .value()
-    const reusingRevs = uniqResultsById.filter(this.isReusingRev)
-    for (const { id, rev } of reusingRevs) {
-      const doc = _.find(docs, doc => !doc._rev && doc._id === id)
-      if (doc) {
-        fixedDocs.push(this.fixSide({ side, rev, doc }))
-      }
-    }
-
-    if (fixedDocs.length > 0) return this.pouch.bulkDocs(fixedDocs)
-  }
-
-  async fixSideInPouch(
-    {
-      side,
-      result,
-      doc
-    } /*: { side: SideName, result: { rev: string }, doc: SavedMetadata } */
-  ) /*: Promise<any> */ {
-    log.debug({ side, result, doc }, 'fixSideInPouch')
-    const { rev } = result
-
-    if (!doc._rev && this.isReusingRev(result)) {
-      const fixedDoc = this.fixSide({ side, rev, doc })
-      return this.pouch.put(fixedDoc)
-    }
-  }
-
-  isReusingRev({ rev } /*: { rev: string } */) /*: boolean */ {
-    return metadata.extractRevNumber({ _rev: rev }) > 1
-  }
-
-  fixSide(
-    {
-      side,
-      rev,
-      doc
-    } /*: { side: SideName, rev: string, doc: SavedMetadata } */
-  ) /*: SavedMetadata */ {
-    return _.defaults(
-      {
-        _rev: rev,
-        sides: _.defaults(
-          { [side]: metadata.extractRevNumber({ _rev: rev }) + 1 },
-          doc.sides
-        )
-      },
-      doc
-    )
-  }
-
-  async migrateFileid(
-    existing /*: SavedMetadata */,
-    fileid /*: string */
-  ) /*: Promise<void> */ {
-    log.info({ path: existing.path, fileid }, 'Migrating fileid')
-    const doc = _.defaults({ fileid }, existing)
-    metadata.incSides(doc)
-    await this.pouch.put(doc)
-  }
 }
-
-const needsFileidMigration = (
-  existing /*: SavedMetadata */,
-  fileid /*: ?string */
-) /*: boolean %checks */ => existing.fileid == null && fileid != null
 
 module.exports = {
   Merge

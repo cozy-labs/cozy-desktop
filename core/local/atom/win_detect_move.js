@@ -164,11 +164,30 @@ function eventHasIno(event, ino) {
   return event.stats && ino === (event.stats.fileid || event.stats.ino)
 }
 
+/*
+ * Try to match created and deleted events with the same inode (or deleted inode
+ * respectively).
+ *
+ * If a pending created event can be matched with a more recent deleted event,
+ * this means the created document has been deleted and we can aggregate the
+ * events into an ignored event.
+ *
+ * If a pending deleted event can be matched with a more recent created event,
+ * this probably means the deleted document was actually moved and we can
+ * aggregate the events into a renamed event.
+ * However, if both events have the exact same path, this is not a move! It's
+ * possibly the events fired by the local application of a remote update though.
+ * In any case, they should not be aggregated.
+ */
 function indexOfMatchingEvent(event, pendingItems, deletedIno) {
   if (event.action === 'created' && !event.incomplete) {
     for (let i = 0; i < pendingItems.length; i++) {
-      const { deletedIno } = pendingItems[i]
-      if (deletedIno && eventHasIno(event, deletedIno)) {
+      const { deletedIno, event: pendingEvent } = pendingItems[i]
+      if (
+        deletedIno &&
+        eventHasIno(event, deletedIno) &&
+        event.path !== pendingEvent.path
+      ) {
         return i
       }
     }
