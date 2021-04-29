@@ -261,19 +261,10 @@ if (process.platform === 'win32') {
                 .build()
             })
 
-            it(`is an ignored ${kind} (aggregated)`, async function() {
+            it(`is untouched`, async function() {
               inputBatch([deletedEvent, createdEvent])
-              should(await outputBatch()).deepEqual([
-                {
-                  action: 'ignored',
-                  kind,
-                  path: srcPath,
-                  stats: createdEvent.stats,
-                  winDetectMove: {
-                    aggregatedEvents: { createdEvent, deletedEvent }
-                  }
-                }
-              ])
+              should(await outputBatch()).deepEqual([deletedEvent])
+              should(await outputBatch()).deepEqual([createdEvent])
             })
           })
 
