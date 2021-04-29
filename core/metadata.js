@@ -67,15 +67,16 @@ const { platform } = process
 
 const LOCAL_ATTRIBUTES = [
   'path',
-  'md5sum',
-  'class',
   'docType',
-  'executable',
+  'md5sum',
   'updated_at',
+  'class',
   'mime',
   'size',
+  // trashed
   'ino',
-  'fileid'
+  'fileid',
+  'executable'
 ]
 
 /*::
