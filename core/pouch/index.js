@@ -207,6 +207,7 @@ class Pouch {
   }
 
   remove(doc /*: SavedMetadata */) /*: Promise<SavedMetadata> */ {
+    log.debug({ path, doc }, 'Removing record')
     return this.put(_.defaults({ _deleted: true }, doc))
   }
 
@@ -215,7 +216,8 @@ class Pouch {
   // shows up in the changesfeed (erasing documents generates changes) and thus
   // result in an attempt to take action.
   // This method also does not care about invariants like `remove()` does.
-  eraseDocument({ _id, _rev } /*: SavedMetadata */) {
+  eraseDocument({ _id, _rev, path } /*: SavedMetadata */) {
+    log.debug({ path, _id, _rev }, 'Erasing record')
     return this.db.put({ _id, _rev, _deleted: true })
   }
 
