@@ -1,15 +1,18 @@
-module Data.UserAction exposing
+port module Data.UserAction exposing
     ( EncodedUserAction
     , Interaction(..)
     , UserAction(..)
     , decode
     , details
     , encode
+    , end
     , getLink
     , inProgress
     , primaryInteraction
     , same
     , secondaryInteraction
+    , skip
+    , start
     , title
     )
 
@@ -48,6 +51,30 @@ same actionA actionB =
 
 
 --Read or write to and from Ports
+
+
+port userActionDone : EncodedUserAction -> Cmd msg
+
+
+port userActionInProgress : EncodedUserAction -> Cmd msg
+
+
+port userActionSkipped : EncodedUserAction -> Cmd msg
+
+
+end : UserAction -> Cmd msg
+end action =
+    userActionDone (encode action)
+
+
+start : UserAction -> Cmd msg
+start action =
+    userActionInProgress (encode action)
+
+
+skip : UserAction -> Cmd msg
+skip action =
+    userActionSkipped (encode action)
 
 
 type alias EncodedUserAction =

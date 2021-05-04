@@ -1,3 +1,5 @@
+/* @flow */
+
 'use strict'
 
 const electron = require('electron')
@@ -5,7 +7,7 @@ const { ipcRenderer } = electron
 const remote = require('@electron/remote')
 
 /*::
-import type { SyncStatus } from '../core/syncstate'
+import type { SyncStatus, UserAction } from '../core/syncstate'
 */
 
 window.onerror = (message, url, line, column, err) => {
@@ -39,7 +41,7 @@ const errMessage = err => {
     return null
   } else if (err.code === 'ENOTFOUND') {
     return "The host can't be found"
-  } else if (err.message) {
+  } else if (typeof err.message === 'string') {
     return err.message
   } else {
     return `${err}`
