@@ -3,9 +3,10 @@ const { dialog, shell } = electron
 const { spawn } = require('child_process')
 const { join } = require('path')
 
-const autoLaunch = require('./autolaunch')
 const { openNote } = require('../utils/notes')
 const { openUrl } = require('../utils/urls')
+const autoLaunch = require('./autolaunch')
+const DetailsWM = require('./details.window')
 const { translate } = require('./i18n')
 
 const log = require('../../core/app').logger({
@@ -193,6 +194,19 @@ module.exports = class TrayWM extends WindowManager {
         this.desktop.sync.forceSync().catch(err => {
           if (err) log.error({ err, sentry: true }, 'Could not run manual sync')
         }),
+      userActionDetails: (event, action) => {
+        let detailsWindow = new DetailsWM(this.app, this.desktop)
+        detailsWindow.show().then(() => {
+          if (detailsWindow) {
+            detailsWindow.loadContent(action)
+          } else {
+            log.error('could not load user action details content')
+          }
+        })
+        detailsWindow.on('closed', () => {
+          detailsWindow = null
+        })
+      },
       userActionDone: (event, action) => {
         this.desktop.events.emit('user-action-done', action)
       },

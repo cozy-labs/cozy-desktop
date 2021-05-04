@@ -16,6 +16,8 @@ files:
 - gui/ports.js
 - gui/scripts/**
 - package.json
+- gui/details.html
+- gui/details.js
 - gui/markdown-viewer.html
 - gui/markdown-viewer.js
 - node_modules/cozy-ui/dist/*.css

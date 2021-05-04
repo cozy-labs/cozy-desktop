@@ -142,6 +142,10 @@ elmectron.ports.showInParent.subscribe(path => {
   ipcRenderer.send('show-in-parent', path)
 })
 
+elmectron.ports.userActionDetails.subscribe(action => {
+  ipcRenderer.send('userActionDetails', action)
+})
+
 elmectron.ports.userActionDone.subscribe(action => {
   ipcRenderer.send('userActionDone', action)
 })

@@ -5,7 +5,7 @@
 
 let app
 
-module.exports.init = appRef => {
+const init = appRef => {
   app = appRef
   app.locale = 'en'
   app.translations = {}
@@ -22,17 +22,23 @@ module.exports.init = appRef => {
   app.translations = require(`../locales/${app.locale}.json`)
 }
 
-module.exports.translate = key =>
+const buildTranslations = keys =>
+  keys.reduce((translations, string) => {
+    translations[string] = translate(string)
+    return translations
+  }, {})
+
+const translate = key =>
   app.translations[key] || key.substr(key.indexOf(' ') + 1) // Key without prefix
 
-module.exports.interpolate = (string, ...args) => {
+const interpolate = (string, ...args) => {
   return string.replace(/{(\d+)}/g, (_, index) => args[parseInt(index)])
 }
 
-module.exports.capitalize = string =>
+const capitalize = string =>
   string.replace(string[0], string[0].toLocaleUpperCase(app.getLocale()))
 
-module.exports.platformName = () => {
+const platformName = () => {
   switch (process.platform) {
     case 'darwin':
       return 'macOS'
@@ -47,4 +53,13 @@ module.exports.platformName = () => {
     default:
       return process.platform
   }
+}
+
+module.exports = {
+  init,
+  buildTranslations,
+  translate,
+  interpolate,
+  capitalize,
+  platformName
 }

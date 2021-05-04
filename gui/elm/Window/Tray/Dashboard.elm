@@ -72,6 +72,7 @@ type Msg
     | UserActionSkipped UserAction
     | UserActionInProgress UserAction
     | UserActionDone UserAction
+    | UserActionDetails UserAction
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
@@ -126,6 +127,8 @@ update msg model =
         UserActionDone action ->
             ( model |> removeCurrentAction, UserAction.end action )
 
+        UserActionDetails action ->
+            ( model, UserAction.showDetails action )
 
 
 
@@ -247,6 +250,9 @@ viewAction helpers action =
 
                 UserAction.Ok ->
                     actionButton helpers (UserActionSkipped action) [ "c-btn--ghost" ] "UserAction OK" Nothing
+
+                UserAction.ShowDetails ->
+                    actionButton helpers (UserActionDetails action) [ "c-btn--ghost" ] "UserAction Read more" Nothing
 
                 _ ->
                     []

@@ -11,6 +11,7 @@ port module Data.UserAction exposing
     , primaryInteraction
     , same
     , secondaryInteraction
+    , showDetails
     , skip
     , start
     , title
@@ -53,6 +54,9 @@ same actionA actionB =
 --Read or write to and from Ports
 
 
+port userActionDetails : EncodedUserAction -> Cmd msg
+
+
 port userActionDone : EncodedUserAction -> Cmd msg
 
 
@@ -60,6 +64,11 @@ port userActionInProgress : EncodedUserAction -> Cmd msg
 
 
 port userActionSkipped : EncodedUserAction -> Cmd msg
+
+
+showDetails : UserAction -> Cmd msg
+showDetails action =
+    userActionDetails (encode action)
 
 
 end : UserAction -> Cmd msg
@@ -246,6 +255,7 @@ type Interaction
     | Open String
     | Ok
     | GiveUp
+    | ShowDetails
     | Nothing
 
 
@@ -260,6 +270,16 @@ type alias UserActionView =
 view : String -> UserActionView
 view code =
     case code of
+        "IncompatibleDoc" ->
+            { title = "Error Document path incompatible with current OS"
+            , details =
+                [ "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System."
+                , "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary."
+                ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = ShowDetails
+            }
+
         "InvalidMetadata" ->
             { title = "Error Invalid document metadata"
             , details =

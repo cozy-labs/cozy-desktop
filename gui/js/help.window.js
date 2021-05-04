@@ -6,7 +6,7 @@ const log = require('../../core/app').logger({
   component: 'GUI'
 })
 
-module.exports = class TrayWM extends WindowManager {
+module.exports = class HelpWM extends WindowManager {
   windowOptions() {
     return {
       title: 'HELP',
