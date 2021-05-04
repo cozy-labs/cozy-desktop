@@ -110,7 +110,7 @@ decode { seq, status, code, doc, links } =
             Just (RemoteAction decodedStatus { code = code, link = self })
 
         _ ->
-            Nothing
+            Maybe.Nothing
 
 
 encode : UserAction -> EncodedUserAction
@@ -121,15 +121,15 @@ encode action =
             , status = encodeUserActionStatus s
             , code = a.code
             , doc = Just { docType = a.docType, path = a.path }
-            , links = Nothing
+            , links = Maybe.Nothing
             }
 
         RemoteAction s a ->
-            { seq = Nothing
+            { seq = Maybe.Nothing
             , status = encodeUserActionStatus s
             , code = a.code
             , links = Just { self = a.link }
-            , doc = Nothing
+            , doc = Maybe.Nothing
             }
 
 
@@ -180,7 +180,7 @@ getLink action =
             Just link
 
         ClientAction _ _ ->
-            Nothing
+            Maybe.Nothing
 
 
 inProgress : UserAction -> Bool
@@ -228,7 +228,7 @@ primaryInteraction action =
     strings.primaryInteraction
 
 
-secondaryInteraction : UserAction -> Maybe Interaction
+secondaryInteraction : UserAction -> Interaction
 secondaryInteraction action =
     let
         strings =
@@ -246,14 +246,14 @@ type Interaction
     | Open String
     | Ok
     | GiveUp
+    | Nothing
 
 
 type alias UserActionView =
     { title : String
     , details : List String
     , primaryInteraction : Interaction
-    , secondaryInteraction : Maybe Interaction
-    , label : Maybe String
+    , secondaryInteraction : Interaction
     }
 
 
@@ -268,7 +268,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "InvalidName" ->
@@ -279,7 +278,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "MissingPermissions" ->
@@ -290,7 +288,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "NoDiskSpace" ->
@@ -301,7 +298,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "NoCozySpace" ->
@@ -312,7 +308,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "NeedsRemoteMerge" ->
@@ -322,8 +317,7 @@ view code =
                 , "Error This message persists if Cozy is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
                 ]
             , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = Just GiveUp
-            , label = Nothing
+            , secondaryInteraction = GiveUp
             }
 
         "PathTooDeep" ->
@@ -334,7 +328,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "UnknownRemoteError" ->
@@ -345,7 +338,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "UserActionRequired" ->
@@ -355,8 +347,7 @@ view code =
                 , "CGUUpdated Their acceptance is required to continue using your Cozy."
                 ]
             , primaryInteraction = Open "CGUUpdated Read the new ToS"
-            , secondaryInteraction = Just Ok
-            , label = Just "CGUUpdated Read the new ToS"
+            , secondaryInteraction = Ok
             }
 
         _ ->
@@ -364,5 +355,4 @@ view code =
             , details = []
             , primaryInteraction = Ok
             , secondaryInteraction = Nothing
-            , label = Nothing
             }

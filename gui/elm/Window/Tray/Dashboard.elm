@@ -242,10 +242,10 @@ viewAction helpers action =
 
         secondaryButton =
             case UserAction.secondaryInteraction action of
-                Just UserAction.GiveUp ->
+                UserAction.GiveUp ->
                     actionButton helpers (UserActionSkipped action) [ "c-btn--danger-outline" ] "UserAction Give up" Nothing
 
-                Just UserAction.Ok ->
+                UserAction.Ok ->
                     actionButton helpers (UserActionSkipped action) [ "c-btn--ghost" ] "UserAction OK" Nothing
 
                 _ ->
