@@ -1,3 +1,10 @@
+{-
+   XXX: UserAction ports are defined in the Data.UserAction module.
+   We should progressively migrate to this pattern to simplify usage of ports
+   and avoid circular dependencies.
+-}
+
+
 port module Ports exposing
     ( autoLauncher
     , autolaunch
@@ -31,9 +38,6 @@ port module Ports exposing
     , unlinkCozy
     , updateDownloading
     , updateError
-    , userActionDone
-    , userActionInProgress
-    , userActionSkipped
     )
 
 import Data.DiskSpace exposing (DiskSpace)
@@ -41,7 +45,6 @@ import Data.File exposing (EncodedFile)
 import Data.Progress exposing (Progress)
 import Data.SyncFolderConfig exposing (SyncFolderConfig)
 import Data.SyncState exposing (EncodedSyncState)
-import Data.UserAction exposing (EncodedUserAction)
 
 
 port autoLauncher : Bool -> Cmd msg
@@ -135,15 +138,6 @@ port updateDownloading : (Maybe Progress -> msg) -> Sub msg
 
 
 port updateError : (String -> msg) -> Sub msg
-
-
-port userActionDone : EncodedUserAction -> Cmd msg
-
-
-port userActionInProgress : EncodedUserAction -> Cmd msg
-
-
-port userActionSkipped : EncodedUserAction -> Cmd msg
 
 
 port manualStartSync : () -> Cmd msg

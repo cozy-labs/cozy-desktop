@@ -107,8 +107,8 @@ const platformRestrictions = (
  * @see https://msdn.microsoft.com/en-us/library/windows/desktop/aa365247(v=vs.85).aspx
  */
 const win = platformRestrictions({
-  pathMaxBytes: 259, // MAX_PATH without nul
-  nameMaxBytes: 256, // pathMaxBytes without drive (ex: 'C:\')
+  pathMaxBytes: 32766, // long paths MAX_PATH without nul
+  nameMaxBytes: 256, // short paths MAX_PATH without drive (ex: 'C:\')
   dirNameMaxBytes: 243, // nameMaxBytes without an 8.3 filename + separator
   reservedChars: new Set('<>:"/\\|?*'),
   forbiddenLastChars: new Set('. '),

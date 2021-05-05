@@ -390,6 +390,7 @@ class Sync {
         )
       }
       switch (syncErr.code) {
+        case syncErrors.INCOMPATIBLE_DOC_CODE:
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
         case remoteErrors.INVALID_FOLDER_MOVE_CODE:
@@ -456,11 +457,7 @@ class Sync {
               delete change.doc.overwrite
               delete change.doc.remote
 
-              if (metadata.isFile(change.doc)) {
-                await this.remote.addFileAsync(change.doc)
-              } else {
-                await this.remote.addFolderAsync(change.doc)
-              }
+              await this.doAdd(this.remote, change.doc)
               await this.updateRevs(change.doc, 'remote')
             } else {
               await this.pouch.eraseDocument(change.doc)
@@ -514,9 +511,6 @@ class Sync {
             }
           }
           break
-        case syncErrors.INCOMPATIBLE_DOC_CODE:
-          await this.skipChange(change, syncErr)
-          break
         default:
           // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
           if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
@@ -541,23 +535,14 @@ class Sync {
       const was = doc.moveFrom
       if (was != null && was.incompatibilities == null) {
         // Move compatible -> incompatible
-        if (was.childMove == null) {
+        if (!was.childMove) {
           log.warn(
             {
               path: doc.path,
               oldpath: was.path,
               incompatibilities: doc.incompatibilities
             },
-            `Trashing ${sideName} ${doc.docType} since new remote one is incompatible`
-          )
-          await side.trashAsync(was)
-          if (was.docType === 'file') {
-            this.events.emit('delete-file', _.clone(was))
-          }
-        } else {
-          log.debug(
-            { path: doc.path, incompatibilities: doc.incompatibilities },
-            `incompatible ${doc.docType} should have been trashed with parent`
+            `Not syncing ${sideName} ${doc.docType} since new remote one is incompatible`
           )
         }
       } else {
@@ -565,17 +550,14 @@ class Sync {
           { path: doc.path, incompatibilities: doc.incompatibilities },
           `Not syncing incompatible ${doc.docType}`
         )
-        throw new IncompatibleDocError({ doc })
       }
+      throw new IncompatibleDocError({ doc })
     } else if (doc.docType !== 'file' && doc.docType !== 'folder') {
       throw new Error(`Unknown docType: ${doc.docType}`)
     } else if (isMarkedForDeletion(doc) && currentRev === 0) {
       // do nothing
     } else if (doc.moveTo != null) {
-      log.debug(
-        { path: doc.path },
-        `Ignoring deleted ${doc.docType} metadata as move source`
-      )
+      log.debug({ path: doc.path }, `Ignoring ${doc.docType} move source`)
     } else if (doc.moveFrom != null) {
       const from = (doc.moveFrom /*: SavedMetadata */)
       log.debug(
@@ -661,7 +643,7 @@ class Sync {
     side /*: Writer */,
     doc /*: SavedMetadata */
   ) /*: Promise<void> */ {
-    if (doc.docType === 'file') {
+    if (metadata.isFile(doc)) {
       await side.addFileAsync(doc)
       this.events.emit('transfer-started', _.clone(doc))
     } else {

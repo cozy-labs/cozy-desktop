@@ -7,7 +7,6 @@ const Desktop = require('../core/app.js')
 const { openNote } = require('./utils/notes')
 const pkg = require('../package.json')
 
-const { debounce } = require('lodash')
 const path = require('path')
 const os = require('os')
 
@@ -33,7 +32,6 @@ const { selectIcon } = require('./js/fileutils')
 const { buildAppMenu } = require('./js/appmenu')
 const i18n = require('./js/i18n')
 const { translate } = i18n
-const { incompatibilitiesErrorMessage } = require('./js/incompatibilitiesmsg')
 const { app, Menu, Notification, ipcMain, dialog } = require('electron')
 
 const DAILY = 3600 * 24 * 1000
@@ -410,18 +408,6 @@ const startSync = async () => {
   desktop.events.on('transfer-move', async (info, old) => {
     await addFile(info)
     await removeFile(old)
-  })
-  const notifyIncompatibilities = debounce(
-    incompatibilities => {
-      sendErrorToMainWindow(incompatibilitiesErrorMessage(incompatibilities))
-    },
-    5000,
-    { leading: true }
-  )
-  desktop.events.on('platform-incompatibilities', incompatibilitiesList => {
-    incompatibilitiesList.forEach(incompatibilities => {
-      notifyIncompatibilities(incompatibilities)
-    })
   })
   desktop.events.on('syncdir-unlinked', () => {
     sendErrorToMainWindow(SYNC_DIR_UNLINKED_MESSAGE)

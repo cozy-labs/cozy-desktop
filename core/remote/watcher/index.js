@@ -334,7 +334,6 @@ class RemoteWatcher {
       const { incompatibilities } = doc
       if (incompatibilities) {
         log.debug({ path, oldpath: was && was.path, incompatibilities })
-        this.events.emit('platform-incompatibilities', incompatibilities)
       }
     } else {
       if (!was) {

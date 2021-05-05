@@ -1,6 +1,6 @@
 const path = require('path')
 
-const { translate } = require('./i18n')
+const { buildTranslations } = require('./i18n')
 const WindowManager = require('./window_manager')
 
 const VIEWER_SCREEN_WIDTH = 768
@@ -29,11 +29,7 @@ module.exports = class MarkdownViewerWindow extends WindowManager {
   }
 
   translations() {
-    return {
-      'MarkdownViewer Why do I see this?': translate(
-        'MarkdownViewer Why do I see this?'
-      )
-    }
+    return buildTranslations(['MarkdownViewer Why do I see this?'])
   }
 
   loadContent(filename, content, banner = null) {

@@ -130,7 +130,7 @@ pluralize locale count singular plural =
 placeholder : Regex
 placeholder =
     Maybe.withDefault Regex.never <|
-        Regex.fromString "\\{\\d+\\}"
+        Regex.fromString "\\{(\\d|[1-9]\\d+)\\}"
 
 
 at : a -> Int -> List a -> a

@@ -1,15 +1,19 @@
-module Data.UserAction exposing
+port module Data.UserAction exposing
     ( EncodedUserAction
     , Interaction(..)
     , UserAction(..)
     , decode
     , details
     , encode
+    , end
     , getLink
     , inProgress
     , primaryInteraction
     , same
     , secondaryInteraction
+    , showDetails
+    , skip
+    , start
     , title
     )
 
@@ -50,6 +54,38 @@ same actionA actionB =
 --Read or write to and from Ports
 
 
+port userActionDetails : EncodedUserAction -> Cmd msg
+
+
+port userActionDone : EncodedUserAction -> Cmd msg
+
+
+port userActionInProgress : EncodedUserAction -> Cmd msg
+
+
+port userActionSkipped : EncodedUserAction -> Cmd msg
+
+
+showDetails : UserAction -> Cmd msg
+showDetails action =
+    userActionDetails (encode action)
+
+
+end : UserAction -> Cmd msg
+end action =
+    userActionDone (encode action)
+
+
+start : UserAction -> Cmd msg
+start action =
+    userActionInProgress (encode action)
+
+
+skip : UserAction -> Cmd msg
+skip action =
+    userActionSkipped (encode action)
+
+
 type alias EncodedUserAction =
     { seq : Maybe Int
     , status : String
@@ -83,7 +119,7 @@ decode { seq, status, code, doc, links } =
             Just (RemoteAction decodedStatus { code = code, link = self })
 
         _ ->
-            Nothing
+            Maybe.Nothing
 
 
 encode : UserAction -> EncodedUserAction
@@ -94,15 +130,15 @@ encode action =
             , status = encodeUserActionStatus s
             , code = a.code
             , doc = Just { docType = a.docType, path = a.path }
-            , links = Nothing
+            , links = Maybe.Nothing
             }
 
         RemoteAction s a ->
-            { seq = Nothing
+            { seq = Maybe.Nothing
             , status = encodeUserActionStatus s
             , code = a.code
             , links = Just { self = a.link }
-            , doc = Nothing
+            , doc = Maybe.Nothing
             }
 
 
@@ -153,7 +189,7 @@ getLink action =
             Just link
 
         ClientAction _ _ ->
-            Nothing
+            Maybe.Nothing
 
 
 inProgress : UserAction -> Bool
@@ -201,7 +237,7 @@ primaryInteraction action =
     strings.primaryInteraction
 
 
-secondaryInteraction : UserAction -> Maybe Interaction
+secondaryInteraction : UserAction -> Interaction
 secondaryInteraction action =
     let
         strings =
@@ -219,20 +255,31 @@ type Interaction
     | Open String
     | Ok
     | GiveUp
+    | ShowDetails
+    | Nothing
 
 
 type alias UserActionView =
     { title : String
     , details : List String
     , primaryInteraction : Interaction
-    , secondaryInteraction : Maybe Interaction
-    , label : Maybe String
+    , secondaryInteraction : Interaction
     }
 
 
 view : String -> UserActionView
 view code =
     case code of
+        "IncompatibleDoc" ->
+            { title = "Error Document path incompatible with current OS"
+            , details =
+                [ "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System."
+                , "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary."
+                ]
+            , primaryInteraction = Retry "UserAction Retry"
+            , secondaryInteraction = ShowDetails
+            }
+
         "InvalidMetadata" ->
             { title = "Error Invalid document metadata"
             , details =
@@ -241,7 +288,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "InvalidName" ->
@@ -252,7 +298,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "MissingPermissions" ->
@@ -263,7 +308,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "NoDiskSpace" ->
@@ -274,7 +318,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "NoCozySpace" ->
@@ -285,7 +328,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "NeedsRemoteMerge" ->
@@ -295,8 +337,7 @@ view code =
                 , "Error This message persists if Cozy is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
                 ]
             , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = Just GiveUp
-            , label = Nothing
+            , secondaryInteraction = GiveUp
             }
 
         "PathTooDeep" ->
@@ -307,7 +348,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "UnknownRemoteError" ->
@@ -318,7 +358,6 @@ view code =
                 ]
             , primaryInteraction = Retry "UserAction Retry"
             , secondaryInteraction = Nothing
-            , label = Nothing
             }
 
         "UserActionRequired" ->
@@ -328,8 +367,7 @@ view code =
                 , "CGUUpdated Their acceptance is required to continue using your Cozy."
                 ]
             , primaryInteraction = Open "CGUUpdated Read the new ToS"
-            , secondaryInteraction = Just Ok
-            , label = Just "CGUUpdated Read the new ToS"
+            , secondaryInteraction = Ok
             }
 
         _ ->
@@ -337,5 +375,4 @@ view code =
             , details = []
             , primaryInteraction = Ok
             , secondaryInteraction = Nothing
-            , label = Nothing
             }

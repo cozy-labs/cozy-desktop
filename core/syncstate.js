@@ -9,7 +9,7 @@ const deepDiff = require('deep-diff').diff
 
 /*::
 type UserActionStatus = 'Required'|'InProgress'|'Done'
-type UserAction = {
+export type UserAction = {
   seq: ?number,
   code: string,
   doc?: {

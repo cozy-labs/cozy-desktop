@@ -595,6 +595,10 @@ class Merge {
         dst._rev = existingDstRev
       }
 
+      // TODO: make sure that detecting an incompatibility on a child's
+      // destination path actually blocks the synchronization of the parent
+      // directory.
+      //
       // FIXME: Find a cleaner way to pass the syncPath to the Merge
       const incompatibilities = metadata.detectIncompatibilities(
         dst,

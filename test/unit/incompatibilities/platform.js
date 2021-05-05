@@ -238,13 +238,11 @@ describe('core/incompatibilities/platform', () => {
     })
 
     it('computes the byte size from utf8 encoding', () => {
+      should(Buffer.byteLength('é')).eql(2)
       should(
-        detectPathLengthIncompatibility(
-          'é'.repeat(win.pathMaxBytes / 2 + 1),
-          'win32'
-        )
+        detectPathLengthIncompatibility('é'.repeat(win.pathMaxBytes), 'win32')
       ).have.properties({
-        pathBytes: win.pathMaxBytes + 1,
+        pathBytes: 2 * win.pathMaxBytes,
         pathMaxBytes: win.pathMaxBytes
       })
       should(
