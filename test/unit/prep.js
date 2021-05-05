@@ -183,22 +183,6 @@ describe('Prep', function() {
         ).be.rejectedWith('Invalid checksum')
       })
 
-      it('expects two different paths', async function() {
-        let doc = {
-          path: 'foo/bar',
-          docType: 'file',
-          md5sum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
-        }
-        let was = {
-          path: 'foo/bar',
-          docType: 'file',
-          md5sum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
-        }
-        await should(
-          this.prep.moveFileAsync(this.side, doc, was)
-        ).be.rejectedWith('Invalid move')
-      })
-
       it('expects a revision for was', async function() {
         let doc = {
           path: 'foo/bar',
@@ -213,6 +197,25 @@ describe('Prep', function() {
         await should(
           this.prep.moveFileAsync(this.side, doc, was)
         ).be.rejectedWith('Missing rev')
+      })
+
+      it('calls updateFileAsync if src and dst paths are the same', async function() {
+        sinon.spy(this.prep, 'updateFileAsync')
+
+        let doc = {
+          path: 'foo/bar',
+          docType: 'file',
+          md5sum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
+        }
+        let was = {
+          path: 'foo/bar',
+          docType: 'file',
+          md5sum: 'VVVVVVVVVVVVVVVVVVVVVQ=='
+        }
+        this.prep.moveFileAsync(this.side, doc, was)
+        should(this.prep.updateFileAsync).have.been.calledWith(this.side, doc)
+
+        this.prep.updateFileAsync.restore()
       })
 
       it('calls Merge with the correct fields', async function() {
@@ -258,20 +261,6 @@ describe('Prep', function() {
         ).be.rejectedWith('Invalid path')
       })
 
-      it('expects two different paths', async function() {
-        let doc = {
-          path: 'foo/bar',
-          docType: 'folder'
-        }
-        let was = {
-          path: 'foo/bar',
-          docType: 'folder'
-        }
-        await should(
-          this.prep.moveFolderAsync(this.side, doc, was)
-        ).be.rejectedWith('Invalid move')
-      })
-
       it('expects a revision for was', async function() {
         let doc = {
           path: 'foo/bar',
@@ -284,6 +273,23 @@ describe('Prep', function() {
         await should(
           this.prep.moveFolderAsync(this.side, doc, was)
         ).be.rejectedWith('Missing rev')
+      })
+
+      it('calls putFolderAsync if src and dst paths are the same', async function() {
+        sinon.spy(this.prep, 'putFolderAsync')
+
+        let doc = {
+          path: 'foo/bar',
+          docType: 'folder'
+        }
+        let was = {
+          path: 'foo/bar',
+          docType: 'folder'
+        }
+        this.prep.moveFolderAsync(this.side, doc, was)
+        should(this.prep.putFolderAsync).have.been.calledWith(this.side, doc)
+
+        this.prep.putFolderAsync.restore()
       })
 
       it('calls Merge with the correct fields', async function() {
