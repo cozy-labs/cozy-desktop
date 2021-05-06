@@ -505,13 +505,11 @@ app.on('open-file', async (event, filePath) => {
 })
 
 app.on('ready', async () => {
-  // Once configured and running in the tray, the app doesn't need to be
-  // visible anymore in macOS dock (and cmd+tab), even when the tray popover
-  // is visible, until another window shows up.
+  // Once configured and running in the tray, the app doesn't need to be visible
+  // anymore in macOS dock (and cmd+tab), even when the tray popover is visible,
+  // until another window shows up.
   if (process.platform === 'darwin') {
-    setTimeout(() => {
-      app.dock.hide()
-    }, 1000)
+    app.dock.hide()
   }
 
   const { session } = require('electron')
