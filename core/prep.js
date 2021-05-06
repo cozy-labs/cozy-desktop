@@ -112,9 +112,8 @@ class Prep {
     metadata.ensureValidChecksum(doc)
 
     if (doc.path === was.path) {
-      const msg = 'Invalid move'
-      log.warn({ path, doc, was }, msg)
-      throw new Error(msg)
+      log.warn({ path, doc, was }, 'Invalid move. Updating file')
+      return this.updateFileAsync(side, doc)
     } else if (!was._rev) {
       const msg = 'Missing rev'
       log.warn({ path, doc, was }, msg)
@@ -153,9 +152,8 @@ class Prep {
     metadata.ensureValidPath(was)
 
     if (doc.path === was.path) {
-      const msg = 'Invalid move'
-      log.warn({ path, doc, was }, msg)
-      throw new Error(msg)
+      log.warn({ path, doc, was }, 'Invalid move. Updating folder')
+      return this.putFolderAsync(side, doc)
     } else if (!was._rev) {
       const msg = 'Missing rev'
       log.warn({ path, doc, was }, msg)
