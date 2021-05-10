@@ -3,6 +3,7 @@ module Data.File exposing
     , File
     , decode
     , dirPath
+    , fileName
     , splitName
     )
 
@@ -41,6 +42,15 @@ splitName filename =
 dirPath : String -> String -> String -> String
 dirPath pathSeparator path filename =
     pathSeparator ++ String.replace filename "" path
+
+
+fileName : String -> String -> String
+fileName pathSeparator path =
+    String.split pathSeparator path
+        |> List.filter (not << String.isEmpty)
+        |> List.reverse
+        |> List.head
+        |> Maybe.withDefault ""
 
 
 type alias EncodedFile =

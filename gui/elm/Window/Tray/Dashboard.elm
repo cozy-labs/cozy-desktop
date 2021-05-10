@@ -198,18 +198,18 @@ showMoreButton helpers =
         ]
 
 
-viewActions : Helpers -> List UserAction -> Html Msg
-viewActions helpers userActions =
-    case userActions of
+viewActions : Helpers -> Model -> Html Msg
+viewActions helpers model =
+    case model.userActions of
         action :: _ ->
-            viewAction helpers action
+            viewAction helpers model action
 
         _ ->
             Html.text ""
 
 
-viewAction : Helpers -> UserAction -> Html Msg
-viewAction helpers action =
+viewAction : Helpers -> Model -> UserAction -> Html Msg
+viewAction helpers model action =
     let
         title =
             UserAction.title action
@@ -225,7 +225,7 @@ viewAction helpers action =
                         Locale.interpolate chains string
                     )
                 |> List.map helpers.capitalize
-                |> List.map viewActionContentLine
+                |> List.map (viewActionContentLine model)
                 |> List.intersperse [ br [] [] ]
                 |> List.concat
 
@@ -304,7 +304,7 @@ view helpers model =
             List.take nbFiles model.files
     in
     section [ class "two-panes__content two-panes__content--dashboard" ]
-        [ viewActions helpers model.userActions
+        [ viewActions helpers model
         , div [ class "recent-files" ]
             (List.map renderLine filesToRender
                 ++ (if List.length model.files > nbFiles then
@@ -340,12 +340,12 @@ currentUserAction model =
     List.head model.userActions
 
 
-viewActionContentLine : String -> List (Html Msg)
-viewActionContentLine line =
+viewActionContentLine : Model -> String -> List (Html Msg)
+viewActionContentLine model line =
     let
         decorated =
             Regex.find decorationRegex line
-                |> List.map decoratedName
+                |> List.map (decoratedName model)
 
         rest =
             Regex.split decorationRegex line
@@ -361,28 +361,32 @@ decorationRegex =
         Regex.fromString "`(.+?)`"
 
 
-decoratedName : Regex.Match -> Html Msg
-decoratedName match =
+decoratedName : Model -> Regex.Match -> Html Msg
+decoratedName model match =
     let
         path =
             List.head match.submatches
     in
     case path of
         Just (Just str) ->
-            viewName str
+            viewName model str
 
         _ ->
             text ""
 
 
-viewName : String -> Html Msg
-viewName path =
+viewName : Model -> String -> Html Msg
+viewName model path =
+    let
+        pathSeparator =
+            Platform.pathSeparator model.platform
+    in
     span
         [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
         , title path
         , onClick (ShowInParent path)
         ]
-        [ text (shortName path) ]
+        [ text (File.fileName pathSeparator path) ]
 
 
 shortName : String -> String
