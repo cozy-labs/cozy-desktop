@@ -64,14 +64,15 @@ type NameIncompatibility =
   | NameMaxBytesIncompatibility
   | DirNameMaxBytesIncompatibility
 
-type PathIncompatibility = NameIncompatibility & {path: string}
+type PathIncompatibility = { ...NameIncompatibility, path: string }
 
-export type PathLengthIncompatibility = {
+export type PathLengthIncompatibility = {|
+  type: 'pathMaxBytes',
   path: string,
-  pathBytes?: number,
-  pathMaxBytes?: number,
+  pathBytes: number,
+  pathMaxBytes: number,
   platform: string
-}
+|}
 
 export type PlatformIncompatibility =
   | PathIncompatibility
@@ -323,9 +324,7 @@ const detectPathLengthIncompatibility = (
   const { pathMaxBytes } = restrictionsByPlatform(platform)
   const pathBytes = Buffer.byteLength(path) // TODO: utf16?
   if (pathBytes > pathMaxBytes) {
-    // FIXME: The name is useless, but could not find a way to make flow happy
-    // without it.
-    return { name: path, path, pathBytes, pathMaxBytes, platform }
+    return { type: 'pathMaxBytes', path, pathBytes, pathMaxBytes, platform }
   }
 }
 

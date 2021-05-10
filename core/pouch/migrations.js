@@ -261,6 +261,69 @@ const migrations /*: Migration[] */ = [
         return doc
       })
     }
+  },
+  {
+    baseSchemaVersion: 10,
+    targetSchemaVersion: 11,
+    description: 'Add type attribute to pathMaxBytes incompatibilities',
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      return docs.filter(
+        doc =>
+          doc.incompatibilities &&
+          doc.incompatibilities.find(issue => issue.type == null) != null
+      )
+    },
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      return docs.map(doc => {
+        if (doc.incompatibilities) {
+          const issue = doc.incompatibilities.find(issue => issue.type == null)
+          if (issue) {
+            // $FlowFixMe `type` is not set so it can't be another value
+            issue.type = 'pathMaxBytes'
+          }
+        }
+        return doc
+      })
+    }
+  },
+  {
+    baseSchemaVersion: 11,
+    targetSchemaVersion: 12,
+    description: 'Remove unnecessary Windows path length incompatibilities',
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      return docs.filter(
+        doc =>
+          doc.incompatibilities &&
+          doc.incompatibilities.find(
+            issue =>
+              issue.platform === 'win32' &&
+              issue.type === 'pathMaxBytes' &&
+              issue.pathBytes <= 32766
+          ) != null
+      )
+    },
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      return docs.map(doc => {
+        if (doc.incompatibilities) {
+          if (doc.incompatibilities.length === 1) {
+            // Sync expects `incompatibilities` to be missing when there aren't
+            // any so if we're about to delete the last one, we remove the
+            // attribute altogether.
+            delete doc.incompatibilities
+          } else {
+            const { incompatibilities } = doc
+            const index = incompatibilities.findIndex(
+              issue =>
+                issue.platform === 'win32' &&
+                issue.type === 'pathMaxBytes' &&
+                issue.pathBytes < 32766
+            )
+            incompatibilities.splice(index, 1)
+          }
+        }
+        return doc
+      })
+    }
   }
 ]
 
