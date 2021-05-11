@@ -5,13 +5,13 @@ module Window.Tray.Dashboard exposing
     , maxActivities
     , nbActivitiesPerPage
     , renderFile
-    , samePath
     , showMoreButton
     , update
     , view
     )
 
 import Data.File as File exposing (EncodedFile, File)
+import Data.Path as Path exposing (Path)
 import Data.Platform as Platform exposing (Platform)
 import Data.UserAction as UserAction exposing (UserAction)
 import Html exposing (..)
@@ -63,8 +63,8 @@ maxActivities =
 type Msg
     = Transfer EncodedFile
     | Remove EncodedFile
-    | OpenPath String
-    | ShowInParent String
+    | OpenPath Path
+    | ShowInParent Path
     | Tick Time.Posix
     | ShowMore
     | Reset
@@ -81,11 +81,11 @@ update msg model =
         Transfer encodedFile ->
             let
                 file =
-                    File.decode encodedFile
+                    File.decode model.platform encodedFile
 
                 files =
                     file
-                        :: List.filter (samePath file >> not) model.files
+                        :: List.filter (File.samePath file >> not) model.files
                         |> List.take maxActivities
             in
             ( { model | files = files }, Cmd.none )
@@ -93,18 +93,18 @@ update msg model =
         Remove encodedFile ->
             let
                 file =
-                    File.decode encodedFile
+                    File.decode model.platform encodedFile
 
                 files =
-                    List.filter (samePath file >> not) model.files
+                    List.filter (File.samePath file >> not) model.files
             in
             ( { model | files = files }, Cmd.none )
 
         OpenPath path ->
-            ( model, Ports.openFile path )
+            ( model, Ports.openFile (Path.toString path) )
 
         ShowInParent path ->
-            ( model, Ports.showInParent path )
+            ( model, Ports.showInParent (Path.toString path) )
 
         Tick now ->
             ( { model | now = now }, Cmd.none )
@@ -138,9 +138,6 @@ update msg model =
 renderFile : Helpers -> Model -> File -> Html Msg
 renderFile helpers model file =
     let
-        pathSeparator =
-            Platform.pathSeparator model.platform
-
         ( basename, extname ) =
             File.splitName file.filename
 
@@ -148,18 +145,18 @@ renderFile helpers model file =
             helpers.distance_of_time_in_words file.updated model.now
 
         dirPath =
-            File.dirPath pathSeparator file.path file.filename
+            Path.parent file.path
 
         filenameTitle =
             Locale.interpolate [ file.filename ] <|
                 helpers.t "Dashboard Open file {0}"
 
         dirPathTitle =
-            if dirPath == pathSeparator then
+            if Path.isRoot dirPath then
                 helpers.t "Dashboard Show in parent folder"
 
             else
-                Locale.interpolate [ dirPath ] <|
+                Locale.interpolate [ Path.toString dirPath ] <|
                     helpers.t "Dashboard Show in folder {0}"
     in
     div
@@ -181,7 +178,7 @@ renderFile helpers model file =
                     Json.map (\msg -> ( msg, True )) <|
                         Json.succeed (ShowInParent file.path)
                 ]
-                [ text dirPath ]
+                [ text (Path.toString dirPath) ]
             ]
         ]
 
@@ -321,11 +318,6 @@ view helpers model =
 --HELPERS
 
 
-samePath : File -> File -> Bool
-samePath a b =
-    a.path == b.path
-
-
 removeCurrentAction : Model -> Model
 removeCurrentAction model =
     { model
@@ -341,17 +333,26 @@ currentUserAction model =
 
 
 viewActionContentLine : Model -> String -> List (Html Msg)
-viewActionContentLine model line =
+viewActionContentLine { platform } line =
     let
         decorated =
-            Regex.find decorationRegex line
-                |> List.map (decoratedName model)
+            decoratedStrings line
+                |> List.map (Maybe.map (Path.fromString platform))
+                |> List.map decoratedName
 
         rest =
             Regex.split decorationRegex line
                 |> List.map text
     in
     List.intersperseList decorated rest
+
+
+decoratedStrings : String -> List (Maybe String)
+decoratedStrings line =
+    Regex.find decorationRegex line
+        |> List.map .submatches
+        |> List.map List.head
+        |> List.map (Maybe.withDefault Nothing)
 
 
 decorationRegex : Regex.Regex
@@ -361,38 +362,16 @@ decorationRegex =
         Regex.fromString "`(.+?)`"
 
 
-decoratedName : Model -> Regex.Match -> Html Msg
-decoratedName model match =
-    let
-        path =
-            List.head match.submatches
-    in
+decoratedName : Maybe Path -> Html Msg
+decoratedName path =
     case path of
-        Just (Just str) ->
-            viewName model str
+        Just p ->
+            span
+                [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
+                , title (Path.toString p)
+                , onClick (ShowInParent p)
+                ]
+                [ text (Path.name p) ]
 
         _ ->
             text ""
-
-
-viewName : Model -> String -> Html Msg
-viewName model path =
-    let
-        pathSeparator =
-            Platform.pathSeparator model.platform
-    in
-    span
-        [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
-        , title path
-        , onClick (ShowInParent path)
-        ]
-        [ text (File.fileName pathSeparator path) ]
-
-
-shortName : String -> String
-shortName long =
-    String.split "/" long
-        |> List.filter (not << String.isEmpty)
-        |> List.reverse
-        |> List.head
-        |> Maybe.withDefault ""

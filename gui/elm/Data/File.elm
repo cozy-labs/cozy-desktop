@@ -2,18 +2,23 @@ module Data.File exposing
     ( EncodedFile
     , File
     , decode
-    , dirPath
-    , fileName
+    , samePath
     , splitName
     )
 
+import Data.Path as Path exposing (Path)
+import Data.Platform as Platform exposing (Platform)
 import Time
+
+
+
+-- File type and helpers
 
 
 type alias File =
     { filename : String
     , icon : String
-    , path : String
+    , path : Path
     , size : Int
     , updated : Time.Posix
     }
@@ -39,18 +44,9 @@ splitName filename =
             ( String.join "." (List.reverse rest), "." ++ ext )
 
 
-dirPath : String -> String -> String -> String
-dirPath pathSeparator path filename =
-    pathSeparator ++ String.replace filename "" path
-
-
-fileName : String -> String -> String
-fileName pathSeparator path =
-    String.split pathSeparator path
-        |> List.filter (not << String.isEmpty)
-        |> List.reverse
-        |> List.head
-        |> Maybe.withDefault ""
+samePath : File -> File -> Bool
+samePath a b =
+    a.path == b.path
 
 
 type alias EncodedFile =
@@ -62,8 +58,8 @@ type alias EncodedFile =
     }
 
 
-decode : EncodedFile -> File
-decode encoded =
+decode : Platform -> EncodedFile -> File
+decode platform encoded =
     let
         { filename, icon, path, size } =
             encoded
@@ -71,4 +67,9 @@ decode encoded =
         posixTime =
             Time.millisToPosix encoded.updated
     in
-    { filename = filename, icon = icon, path = path, size = size, updated = posixTime }
+    { filename = filename
+    , icon = icon
+    , path = Path.fromString platform path
+    , size = size
+    , updated = posixTime
+    }

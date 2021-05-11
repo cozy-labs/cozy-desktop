@@ -1,7 +1,6 @@
 module Data.Platform exposing
     ( Platform(..)
     , fromName
-    , pathSeparator
     )
 
 
@@ -26,13 +25,3 @@ fromName name =
         unknownPlatform ->
             Debug.log "unknown platform, assuming linux:" unknownPlatform
                 |> always Linux
-
-
-pathSeparator : Platform -> String
-pathSeparator platform =
-    case platform of
-        Windows ->
-            "\\"
-
-        _ ->
-            "/"
