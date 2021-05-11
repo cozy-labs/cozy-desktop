@@ -1,5 +1,25 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.28.0-beta.2 - 2021-05-11
+
+Improvements for Windows and macOS users:
+
+- After the remote Cozy has been found unreachable because of a network error
+  such as a interface change, the subsequent requests won't fail anymore with
+  the same error once a stable connection is back.
+
+Improvements for Windows users:
+
+- Documents that had been previously found incompatible with the local
+  filesystem because of the previous path length limit will be updated to take
+  the new limit into account. Most of them should thus become compatible.
+- Synchronization error messages displayed in the main window will now only
+  contain the name of the document involved instead of its complete path.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.28.0-beta.1 - 2021-05-06
 
 Improvements for all users:
