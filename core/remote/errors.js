@@ -3,8 +3,6 @@
  * @flow
  */
 
-const { DirectoryNotFound } = require('./cozy')
-
 /*::
 import type { RemoteChange } from './change'
 import type { MetadataChange } from '../sync'
@@ -50,6 +48,25 @@ class CozyDocumentMissingError extends Error {
     this.name = 'CozyDocumentMissingError'
     this.cozyURL = cozyURL
     this.doc = doc
+  }
+}
+
+class DirectoryNotFound extends Error {
+  /*::
+  path: string
+  cozyURL: string
+  */
+
+  constructor(path /*: string */, cozyURL /*: string */) {
+    super(`Directory ${path} was not found on Cozy ${cozyURL}`)
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, DirectoryNotFound)
+    }
+
+    this.name = 'DirectoryNotFound'
+    this.path = path
+    this.cozyURL = cozyURL
   }
 }
 
@@ -259,7 +276,8 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
   } else if (err instanceof DirectoryNotFound) {
     return new RemoteError({
       code: MISSING_PARENT_CODE,
-      message: '',
+      message:
+        'The parent directory of the document is missing on the remote Cozy',
       err
     })
   } else if (err instanceof RemoteError) {
@@ -278,6 +296,7 @@ function sourceParameter(err /*: FetchError */) /*: ?string */ {
 
 module.exports = {
   CozyDocumentMissingError,
+  DirectoryNotFound,
   RemoteError,
   UnreachableError,
   COZY_CLIENT_REVOKED_MESSAGE, // FIXME: should be removed once gui/main does not use it anymore

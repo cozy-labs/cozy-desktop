@@ -14,7 +14,8 @@ const {
   TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
-const { DirectoryNotFound, RemoteCozy } = require('../../../core/remote/cozy')
+const { RemoteCozy } = require('../../../core/remote/cozy')
+const { DirectoryNotFound } = require('../../../core/remote/errors')
 
 const configHelpers = require('../../support/helpers/config')
 const { COZY_URL, cozy, deleteAll } = require('../../support/helpers/cozy')
