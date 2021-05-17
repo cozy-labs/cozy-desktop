@@ -7,7 +7,7 @@ const { ipcRenderer } = electron
 const remote = require('@electron/remote')
 
 /*::
-import type { SyncStatus, UserAction } from '../core/syncstate'
+import type { SyncStatus, UserAction, SyncError } from '../core/syncstate'
 */
 
 window.onerror = (message, url, line, column, err) => {
@@ -160,7 +160,7 @@ elmectron.ports.userActionSkipped.subscribe(action => {
 
 ipcRenderer.on('sync-state', (
   event,
-  newState /*: { status: SyncStatus, remaining: number, userActions: UserAction[] } */
+  newState /*: { status: SyncStatus, remaining: number, userActions: UserAction[], errors: SyncError[] } */
 ) => {
   elmectron.ports.syncState.send(newState)
 })
@@ -174,10 +174,6 @@ ipcRenderer.on('delete-file', (event, info) => {
 
 ipcRenderer.on('disk-space', (event, info) => {
   elmectron.ports.diskSpace.send(info)
-})
-
-ipcRenderer.on('sync-error', (event, err) => {
-  elmectron.ports.syncError.send(err)
 })
 
 // Give focus to DOM nodes

@@ -29,7 +29,8 @@ type State = {
   syncing: boolean,
   localPrep: boolean,
   remotePrep: boolean,
-  userActions: UserAction[]
+  userActions: UserAction[],
+  errors: SyncError[]
 }
 
 export type SyncStatus =
@@ -39,6 +40,12 @@ export type SyncStatus =
   | 'syncing'
   | 'uptodate'
   | 'user-action-required'
+  | 'error'
+
+export type SyncError = {|
+  name: string,
+  code: string,
+|}
 */
 
 const makeAction = (
@@ -91,6 +98,27 @@ const removeAction = (
   return actions.filter(a => a.code !== action.code)
 }
 
+const makeError = (err /*: Object */) /*: SyncError */ => {
+  const { name, code } = err
+
+  return {
+    name,
+    code
+  }
+}
+
+const addError = (
+  errors /*: SyncError[] */,
+  newError /*: SyncError */
+) /*: SyncError[] */ => {
+  const existingError = errors.find(error => error.code === error.code)
+  if (existingError) {
+    return errors
+  } else {
+    return errors.concat(newError)
+  }
+}
+
 module.exports = class SyncState extends EventEmitter {
   /*::
   state: State
@@ -108,7 +136,8 @@ module.exports = class SyncState extends EventEmitter {
       syncing: false,
       localPrep: false,
       remotePrep: false,
-      userActions: []
+      userActions: [],
+      errors: []
     }
 
     autoBind(this)
@@ -122,11 +151,14 @@ module.exports = class SyncState extends EventEmitter {
       syncing,
       localPrep,
       remotePrep,
-      userActions
+      userActions,
+      errors
     } = this.state
 
     const status /*: SyncStatus */ =
-      userActions.length > 0
+      errors.length > 0
+        ? 'error'
+        : userActions.length > 0
         ? 'user-action-required'
         : offline
         ? 'offline'
@@ -138,7 +170,7 @@ module.exports = class SyncState extends EventEmitter {
         ? 'squashprepmerge'
         : 'uptodate'
 
-    super.emit('sync-state', { status, remaining, userActions })
+    super.emit('sync-state', { status, remaining, userActions, errors })
   }
 
   update(newState /*: $Shape<State> */) {
@@ -234,6 +266,9 @@ module.exports = class SyncState extends EventEmitter {
         if (typeof args[0] === 'number') {
           this.update({ syncCurrentSeq: args[0] })
         }
+        break
+      case 'Sync:fatal':
+        this.update({ errors: addError(this.state.errors, makeError(...args)) })
         break
       case 'user-action-required':
         this.update({

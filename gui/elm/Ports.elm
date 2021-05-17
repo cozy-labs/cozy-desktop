@@ -31,7 +31,6 @@ port module Ports exposing
     , showHelp
     , showInParent
     , startSync
-    , syncError
     , synchonization
     , transfer
     , unlinkCozy
@@ -115,9 +114,6 @@ port showHelp : () -> Cmd msg
 
 
 port startSync : String -> Cmd msg
-
-
-port syncError : (String -> msg) -> Sub msg
 
 
 port synchonization : (( String, String ) -> msg) -> Sub msg

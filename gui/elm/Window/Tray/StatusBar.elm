@@ -100,7 +100,7 @@ viewMessage helpers status =
         Error message ->
             [ text (statusToString helpers status)
             , text " "
-            , em [] [ text message ]
+            , em [] [ text (helpers.t message) ]
             ]
 
         _ ->

@@ -289,9 +289,6 @@ const sendErrorToMainWindow = msg => {
       .stopSync()
       .catch(err => log.error({ err, sentry: true }, 'failed stopping sync'))
     return // no notification
-  } else {
-    msg = translate('Dashboard Synchronization impossible')
-    trayWindow.send('sync-error', msg)
   }
 
   if (notificationsState.notifiedMsg !== msg) {
@@ -303,38 +300,37 @@ const sendErrorToMainWindow = msg => {
 const LAST_SYNC_UPDATE_DELAY = 1000 // milliseconds
 let lastSyncTimeout = null
 const updateState = (newState, data) => {
-  if (newState === 'sync-state') {
-    const { status } = data
+  const { status, filename, userActions, errors } = data || {}
 
+  if (newState === 'sync-state') {
     if (status === 'uptodate') tray.setStatus('online')
     else if (status === 'offline') tray.setStatus('offline')
+    else if (status === 'error' && errors && errors.length)
+      tray.setStatus('error', translate('Dashboard Synchronization impossible'))
     else if (
       status === 'user-action-required' &&
-      data &&
-      data.userActions &&
-      data.userActions.length
+      userActions &&
+      userActions.length
     )
       tray.setStatus(
         'user-action-required',
         translate('Dashboard Synchronization suspended')
       )
     else tray.setStatus('syncing')
-  } else if (newState === 'syncing' && data && data.filename) {
-    tray.setStatus(newState, data.filename)
+  } else if (newState === 'syncing' && filename) {
+    tray.setStatus(newState, filename)
   } else {
     tray.setStatus(newState, data)
   }
 
-  if (newState === 'error') {
-    sendErrorToMainWindow(data)
-  } else if (newState === 'syncing' && data && data.filename) {
+  if (newState === 'syncing' && filename) {
     trayWindow.send('transfer', data)
   } else if (newState === 'sync-state') {
     clearTimeout(lastSyncTimeout)
 
     trayWindow.send('sync-state', data)
 
-    if (data.status === 'uptodate') {
+    if (status === 'uptodate') {
       lastSyncTimeout = setTimeout(async () => {
         try {
           await desktop.remote.updateLastSync()
@@ -343,6 +339,12 @@ const updateState = (newState, data) => {
           log.warn({ err }, 'could not update last sync date')
         }
       }, LAST_SYNC_UPDATE_DELAY)
+    } else if (status === 'error' && errors && errors.length) {
+      // TODO: get rid of sendErrorToMainWindow and move all error management to
+      // main window?
+      sendErrorToMainWindow(
+        errors[0].message || translate('Dashboard Synchronization impossible')
+      )
     }
   }
 }
@@ -398,10 +400,6 @@ const startSync = async () => {
   updateState('syncing')
   desktop.events.on('sync-state', state => {
     updateState('sync-state', state)
-  })
-  desktop.events.on('Sync:fatal', err => {
-    updateState('error', err.message)
-    sendDiskUsage()
   })
   desktop.events.on('transfer-started', addFile)
   desktop.events.on('transfer-copy', addFile)
