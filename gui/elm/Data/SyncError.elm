@@ -25,5 +25,8 @@ decode { name, code } =
 message : SyncError -> String
 message error =
     case error.code of
+        "CozyNotFound" ->
+            "Error Your Cozy could not be found"
+
         _ ->
             "Dashboard Synchronization impossible"

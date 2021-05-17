@@ -90,6 +90,7 @@
   "Error Ok": "OK",
   "Error Syncdir is empty": "Cozy のフォルダーが空になったようです。 現在接続されていないハードドライブ上にある可能性がありますか? データの損失を避けるために、これは同期されません。",
   "Error Your Cozy is unreachable": "Cozy に接続できません",
+  "Error Your Cozy could not be found": "Your Cozy could not be found",
   "Error This note could not be found": "このメモが見つかりません",
   "Error Unexpected error": "予期しないエラー",
   "Error Conflict with remote version": "Conflict with remote version",

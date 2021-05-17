@@ -117,6 +117,7 @@ class RemoteWatcher {
         switch (err.code) {
           case remoteErrors.COZY_CLIENT_REVOKED_CODE:
           case remoteErrors.MISSING_PERMISSIONS_CODE:
+          case remoteErrors.COZY_NOT_FOUND_CODE:
             this.fatal(err)
             break
           default:
@@ -153,6 +154,7 @@ class RemoteWatcher {
       this.events.emit('sync-target', target)
 
       await this.pouch.setRemoteSeq(last_seq)
+      log.debug('No more remote changes for now')
     } catch (err) {
       // TODO: Maybe wrap remote errors more closely to remote calls to avoid
       // wrapping other kinds of errors? PouchDB errors for example.
@@ -160,7 +162,6 @@ class RemoteWatcher {
     } finally {
       release()
       this.events.emit('remote-end')
-      log.debug('No more remote changes for now')
     }
   }
 

@@ -90,6 +90,7 @@
   "Error Ok": "Oké",
   "Error Syncdir is empty": "Het lijkt erop dat je Cozy-map is geleegd. Bevinden de gegevens zich op een harde schijf die momenteel niet is aangekoppeld? Om gegevensverlies te voorkomen, vindt er geen synchronisatie plaats.",
   "Error Your Cozy is unreachable": "Your Cozy is unreachable",
+  "Error Your Cozy could not be found": "Your Cozy could not be found",
   "Error This note could not be found": "This note could not be found",
   "Error Unexpected error": "Unexpected error",
   "Error Conflict with remote version": "Conflict with remote version",
