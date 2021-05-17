@@ -1,5 +1,58 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.28.0 - 2021-05-17
+
+Improvements for all users:
+
+- The client will only trigger one synchronization retry loop when encountering
+  an unreachable Cozy error in both the synchronization process and the remote
+  watcher very closely.
+- New remote documents whose path would be incompatible with the local
+  filesystem will not be ignored anymore.
+- Local documents who've been moved or renamed remotely to a path that would be
+  incompatible with the local filesystem won't be trashed anymore.
+- Changes that can't be synchronized because the document has an incompatible
+  name or path with the local filesystem will now suspend the synchronization
+  and an error message will be displayed so you can take action.
+- Moves for which the destination path is exactly the same as the source path
+  will now be treated as modifications rather than triggering errors.
+
+Improvements for Windows and macOS users:
+
+- After the remote Cozy has been found unreachable because of a network error
+  such as a interface change, the subsequent requests won't fail anymore with
+  the same error once a stable connection is back.
+
+Improvements for Windows users:
+
+- The client should not create conflicts anymore when propagating on Windows the
+  combination of the move/renaming and the modification of a Cozy Note (via the
+  Notes web application).
+- It seems that paths on Windows created by the Desktop client can actually
+  exceed the 259 characters limit. Therefore we've increased the limit defined
+  in the client itself to 32766 characters.
+  Documents that had been previously found incompatible with the local
+  filesystem because of the previous path length limit will be updated to take
+  the new limit into account. Most of them should thus become compatible.
+- Synchronization error messages displayed in the main window will now only
+  contain the name of the document involved instead of its complete path.
+
+Improvements for macOS users:
+
+- Custom folder icons will now be ignored to avoid blocking the synchronization
+  as their name contains a character forbidden on remote Cozies.
+- The app dock icon should now only be visible when an app window other than the
+  main window is open. This should also prevent blocking the computer shutdown.
+
+Improvements for Linux users:
+
+- The client won't show a popup error message anymore when automatically
+  starting with the computer.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.28.0-beta.2 - 2021-05-11
 
 Improvements for Windows and macOS users:
