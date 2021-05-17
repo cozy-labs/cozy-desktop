@@ -155,7 +155,7 @@ subscriptions model =
         [ Ports.synchonization SyncStart
         , Ports.gototab GoToStrTab
         , Ports.syncError SetError
-        , Ports.syncState (GotSyncState << SyncState.decode)
+        , SyncState.gotNewState GotSyncState
 
         -- Dashboard subscriptions
         , Time.every 1000 (DashboardMsg << Dashboard.Tick)

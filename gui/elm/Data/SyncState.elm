@@ -1,4 +1,10 @@
-module Data.SyncState exposing (EncodedSyncState, SyncState, decode, init)
+port module Data.SyncState exposing
+    ( EncodedSyncState
+    , SyncState
+    , decode
+    , gotNewState
+    , init
+    )
 
 import Data.Status as Status exposing (Status)
 import Data.UserAction as UserAction exposing (EncodedUserAction, UserAction)
@@ -19,6 +25,14 @@ init =
 
 
 -- Communicate through Ports
+
+
+port syncState : (EncodedSyncState -> msg) -> Sub msg
+
+
+gotNewState : (SyncState -> msg) -> Sub msg
+gotNewState msg =
+    syncState (msg << decode)
 
 
 type alias EncodedSyncState =

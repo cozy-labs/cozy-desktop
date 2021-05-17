@@ -32,7 +32,6 @@ port module Ports exposing
     , showInParent
     , startSync
     , syncError
-    , syncState
     , synchonization
     , transfer
     , unlinkCozy
@@ -44,7 +43,6 @@ import Data.DiskSpace exposing (DiskSpace)
 import Data.File exposing (EncodedFile)
 import Data.Progress exposing (Progress)
 import Data.SyncFolderConfig exposing (SyncFolderConfig)
-import Data.SyncState exposing (EncodedSyncState)
 
 
 port autoLauncher : Bool -> Cmd msg
@@ -123,9 +121,6 @@ port syncError : (String -> msg) -> Sub msg
 
 
 port synchonization : (( String, String ) -> msg) -> Sub msg
-
-
-port syncState : (EncodedSyncState -> msg) -> Sub msg
 
 
 port transfer : (EncodedFile -> msg) -> Sub msg
