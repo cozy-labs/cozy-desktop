@@ -840,7 +840,12 @@ class Sync {
     } catch (err) {
       // If the doc can't be saved, it's because of a new revision.
       // So, we can skip this revision
-      log.info(`Ignored ${change.seq}`, err)
+      if (err.status === 409) {
+        const was = await this.pouch.byIdMaybe(doc._id)
+        log.info({ err, doc, was }, `Ignored ${change.seq}`)
+      } else {
+        log.info({ err }, `Ignored ${change.seq}`)
+      }
       await this.pouch.setLocalSeq(change.seq)
     }
   }
