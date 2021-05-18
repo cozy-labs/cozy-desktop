@@ -310,14 +310,14 @@ view code =
             , secondaryInteraction = Nothing
             }
 
-        "NoDiskSpace" ->
-            { title = "Error Your computer's disk space is insufficient"
+        "NeedsRemoteMerge" ->
+            { title = "Error Conflict with remote version"
             , details =
-                [ "Error The {0} `{1}` could not be written to your computer disk because there is not enough space available."
-                , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files…)."
+                [ "Error The {0} `{1}` has been simultaneously modified on your computer and your Cozy."
+                , "Error This message persists if Cozy is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
                 ]
             , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = Nothing
+            , secondaryInteraction = GiveUp
             }
 
         "NoCozySpace" ->
@@ -330,14 +330,14 @@ view code =
             , secondaryInteraction = Nothing
             }
 
-        "NeedsRemoteMerge" ->
-            { title = "Error Conflict with remote version"
+        "NoDiskSpace" ->
+            { title = "Error Your computer's disk space is insufficient"
             , details =
-                [ "Error The {0} `{1}` has been simultaneously modified on your computer and your Cozy."
-                , "Error This message persists if Cozy is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
+                [ "Error The {0} `{1}` could not be written to your computer disk because there is not enough space available."
+                , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files…)."
                 ]
             , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = GiveUp
+            , secondaryInteraction = Nothing
             }
 
         "PathTooDeep" ->
