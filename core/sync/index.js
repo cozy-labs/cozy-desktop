@@ -791,23 +791,32 @@ class Sync {
       this.remote.watcher.stop()
     }
 
-    switch (err.code) {
-      case remoteErrors.UNREACHABLE_COZY_CODE:
-        this.remote.watcher.stop()
-        this.events.emit('offline')
-        break
-      case remoteErrors.CONFLICTING_NAME_CODE:
-      case remoteErrors.INVALID_FOLDER_MOVE_CODE:
-      case remoteErrors.MISSING_DOCUMENT_CODE:
-      case remoteErrors.MISSING_PARENT_CODE:
+    if (err.code === remoteErrors.UNREACHABLE_COZY_CODE) {
+      this.remote.watcher.stop()
+      this.events.emit('offline')
+    } else if (err instanceof syncErrors.SyncError) {
+      switch (err.code) {
+        case syncErrors.INCOMPATIBLE_DOC_CODE:
+        case syncErrors.MISSING_PERMISSIONS_CODE:
+        case syncErrors.NO_DISK_SPACE_CODE:
+        case remoteErrors.INVALID_METADATA_CODE:
+        case remoteErrors.INVALID_NAME_CODE:
+        case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
+        case remoteErrors.NO_COZY_SPACE_CODE:
+        case remoteErrors.PATH_TOO_DEEP_CODE:
+        case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
+        case remoteErrors.USER_ACTION_REQUIRED_CODE:
+          this.events.emit(
+            'user-action-required',
+            err,
+            cause.change && cause.change.seq
+          )
+          break
+        default:
         // Hide the error from the user as we should be able to solve it
-        break
-      default:
-        this.events.emit(
-          'user-action-required',
-          err,
-          cause.change && cause.change.seq
-        )
+      }
+    } else {
+      // Hide the error from the user as we should be able to solve it
     }
   }
 
