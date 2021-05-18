@@ -8,7 +8,7 @@ const EventEmitter = require('events')
 const deepDiff = require('deep-diff').diff
 
 /*::
-type UserActionStatus = 'Required'|'InProgress'|'Done'
+type UserActionStatus = 'Required'|'InProgress'
 export type UserAction = {
   seq: ?number,
   code: string,
@@ -196,9 +196,7 @@ module.exports = class SyncState extends EventEmitter {
     const userActions =
       newState.syncCurrentSeq != null
         ? updatedUserActions.reduce((actions, action) => {
-            if (action.seq && action.seq === newState.syncCurrentSeq) {
-              return actions.concat({ ...action, status: 'Done' })
-            } else if (action.seq && action.seq <= newState.syncCurrentSeq) {
+            if (action.seq && action.seq <= newState.syncCurrentSeq) {
               return actions
             } else {
               return actions.concat(action)
@@ -287,13 +285,6 @@ module.exports = class SyncState extends EventEmitter {
       case 'user-action-done':
         this.update({
           userActions: removeAction(this.state.userActions, makeAction(args[0]))
-          /*
-          userActions: updateAction(
-            this.state.userActions,
-            makeAction(args[0]),
-            'Done'
-          )
-          */
         })
         break
       case 'user-action-skipped':
