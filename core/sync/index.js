@@ -408,6 +408,8 @@ class Sync {
         case remoteErrors.USER_ACTION_REQUIRED_CODE:
           // We will keep retrying to apply the change until it's fixed or the
           // user contacts our support.
+          // See `default` case for other blocking errors for which we'll stop
+          // retrying after 3 failed attempts.
           this.blockSyncFor({ err: syncErr, change })
           break
         case remoteErrors.CONFLICTING_NAME_CODE:
@@ -517,7 +519,7 @@ class Sync {
         default:
           // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
           if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
-            await this.updateErrors(change, syncErr)
+            this.blockSyncFor({ err: syncErr, change })
           } else {
             await this.skipChange(change, syncErr)
           }
