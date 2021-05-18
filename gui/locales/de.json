@@ -90,6 +90,7 @@
   "Error Ok": "Ok",
   "Error Syncdir is empty": "Es sieht so aus, als sei dein Cozy Ordner geleert worden. Vielleicht ist er auf einer Festplatte, die gerade nicht eingesteckt ist? Um Datenverlust zu verhindern, wird dies nicht synchronisiert.",
   "Error Your Cozy is unreachable": "Dein Cozy ist unerreichbar",
+  "Error Your Cozy could not be found": "Your Cozy could not be found",
   "Error This note could not be found": "Diese Notiz konnte nicht gefunden werden",
   "Error Unexpected error": "Unerwarteter Fehler",
   "Error Conflict with remote version": "Conflict with remote version",

@@ -10,6 +10,7 @@ const { FetchError } = require('cozy-stack-client')
 const path = require('path')
 
 const { FILES_DOCTYPE, FILE_TYPE, DIR_TYPE } = require('./constants')
+const { DirectoryNotFound } = require('./errors')
 const {
   dropSpecialDocs,
   jsonApiToRemoteDoc,
@@ -42,25 +43,6 @@ export type Reference = {
 const log = logger({
   component: 'RemoteCozy'
 })
-
-class DirectoryNotFound extends Error {
-  /*::
-  path: string
-  cozyURL: string
-  */
-
-  constructor(path /*: string */, cozyURL /*: string */) {
-    super(`Directory ${path} was not found on Cozy ${cozyURL}`)
-
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, DirectoryNotFound)
-    }
-
-    this.name = 'DirectoryNotFound'
-    this.path = path
-    this.cozyURL = cozyURL
-  }
-}
 
 /** A remote Cozy instance.
  *
@@ -460,12 +442,6 @@ class RemoteCozy {
   }
 }
 
-module.exports = {
-  FetchError,
-  DirectoryNotFound,
-  RemoteCozy
-}
-
 async function getChangesFeed(
   since /*: string */,
   client /*: OldCozyClient */
@@ -484,4 +460,9 @@ async function getChangesFeed(
     ...nextResponse,
     results: [...results, ...nextResponse.results]
   }
+}
+
+module.exports = {
+  FetchError,
+  RemoteCozy
 }

@@ -1,6 +1,13 @@
-module Data.SyncState exposing (EncodedSyncState, SyncState, decode, init)
+port module Data.SyncState exposing
+    ( EncodedSyncState
+    , SyncState
+    , decode
+    , gotNewState
+    , init
+    )
 
 import Data.Status as Status exposing (Status)
+import Data.SyncError as SyncError exposing (EncodedSyncError)
 import Data.UserAction as UserAction exposing (EncodedUserAction, UserAction)
 
 
@@ -21,15 +28,24 @@ init =
 -- Communicate through Ports
 
 
+port syncState : (EncodedSyncState -> msg) -> Sub msg
+
+
+gotNewState : (SyncState -> msg) -> Sub msg
+gotNewState msg =
+    syncState (msg << decode)
+
+
 type alias EncodedSyncState =
     { status : String
     , remaining : Int
     , userActions : List EncodedUserAction
+    , errors : List EncodedSyncError
     }
 
 
 decode : EncodedSyncState -> SyncState
-decode { status, remaining, userActions } =
+decode { status, remaining, userActions, errors } =
     let
         decodedActions =
             List.foldr
@@ -43,7 +59,13 @@ decode { status, remaining, userActions } =
                 )
                 []
                 userActions
+
+        latestError =
+            List.reverse errors
+                |> List.head
+                |> Maybe.map SyncError.message
+                |> Maybe.withDefault ""
     in
-    { status = Status.fromString status remaining
+    { status = Status.fromString status remaining latestError
     , userActions = decodedActions
     }

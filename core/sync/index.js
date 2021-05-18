@@ -390,6 +390,9 @@ class Sync {
         )
       }
       switch (syncErr.code) {
+        case remoteErrors.COZY_NOT_FOUND_CODE:
+          this.fatal(syncErr)
+          break
         case syncErrors.INCOMPATIBLE_DOC_CODE:
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:

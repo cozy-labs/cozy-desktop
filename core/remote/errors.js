@@ -3,8 +3,6 @@
  * @flow
  */
 
-const { DirectoryNotFound } = require('./cozy')
-
 /*::
 import type { RemoteChange } from './change'
 import type { MetadataChange } from '../sync'
@@ -16,6 +14,7 @@ export type { FetchError }
 
 const CONFLICTING_NAME_CODE = 'ConflictingName'
 const COZY_CLIENT_REVOKED_CODE = 'CozyClientRevoked'
+const COZY_NOT_FOUND_CODE = 'CozyNotFound'
 const INVALID_FOLDER_MOVE_CODE = 'InvalidFolderMove'
 const INVALID_METADATA_CODE = 'InvalidMetadata'
 const INVALID_NAME_CODE = 'InvalidName'
@@ -50,6 +49,25 @@ class CozyDocumentMissingError extends Error {
     this.name = 'CozyDocumentMissingError'
     this.cozyURL = cozyURL
     this.doc = doc
+  }
+}
+
+class DirectoryNotFound extends Error {
+  /*::
+  path: string
+  cozyURL: string
+  */
+
+  constructor(path /*: string */, cozyURL /*: string */) {
+    super(`Directory ${path} was not found on Cozy ${cozyURL}`)
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, DirectoryNotFound)
+    }
+
+    this.name = 'DirectoryNotFound'
+    this.path = path
+    this.cozyURL = cozyURL
   }
 }
 
@@ -175,11 +193,19 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
           err
         })
       case 404:
-        return new RemoteError({
-          code: MISSING_DOCUMENT_CODE,
-          message: 'The updated document is missing on the remote Cozy',
-          err
-        })
+        if (hasNoReason(err)) {
+          return new RemoteError({
+            code: COZY_NOT_FOUND_CODE,
+            message: 'Remote Cozy could not be found',
+            err
+          })
+        } else {
+          return new RemoteError({
+            code: MISSING_DOCUMENT_CODE,
+            message: 'The updated document is missing on the remote Cozy',
+            err
+          })
+        }
       case 409:
         return new RemoteError({
           code: CONFLICTING_NAME_CODE,
@@ -259,7 +285,8 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
   } else if (err instanceof DirectoryNotFound) {
     return new RemoteError({
       code: MISSING_PARENT_CODE,
-      message: '',
+      message:
+        'The parent directory of the document is missing on the remote Cozy',
       err
     })
   } else if (err instanceof RemoteError) {
@@ -276,13 +303,25 @@ function sourceParameter(err /*: FetchError */) /*: ?string */ {
   return parameter
 }
 
+function hasNoReason(err /*: FetchError */) /*: boolean %checks */ {
+  return (
+    err.reason != null &&
+    typeof err.reason === 'object' &&
+    err.reason.error != null &&
+    typeof err.reason.error === 'object' &&
+    Object.keys(err.reason.error).length === 0
+  )
+}
+
 module.exports = {
   CozyDocumentMissingError,
+  DirectoryNotFound,
   RemoteError,
   UnreachableError,
   COZY_CLIENT_REVOKED_MESSAGE, // FIXME: should be removed once gui/main does not use it anymore
   CONFLICTING_NAME_CODE,
   COZY_CLIENT_REVOKED_CODE,
+  COZY_NOT_FOUND_CODE,
   INVALID_FOLDER_MOVE_CODE,
   INVALID_METADATA_CODE,
   INVALID_NAME_CODE,

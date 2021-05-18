@@ -17,8 +17,8 @@ init =
     Starting
 
 
-fromString : String -> Int -> Status
-fromString str remaining =
+fromString : String -> Int -> String -> Status
+fromString str remaining latestError =
     case str of
         "syncing" ->
             Syncing remaining
@@ -37,6 +37,9 @@ fromString str remaining =
 
         "offline" ->
             Offline
+
+        "error" ->
+            Error latestError
 
         _ ->
             UpToDate

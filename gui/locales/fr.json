@@ -90,6 +90,7 @@
   "Error Ok": "Ok",
   "Error Syncdir is empty": "Oups ! On dirait que votre dossier Cozy a été vidé... Peut-être un disque dur mal branché ? Pour éviter une perte de donnée, cette suppression n'est pas synchronisée.",
   "Error Your Cozy is unreachable": "Votre Cozy est injoignable",
+  "Error Your Cozy could not be found": "Votre Cozy est introuvable",
   "Error This note could not be found": "Cette note est introuvable",
   "Error Unexpected error": "Erreur inattendue",
   "Error Conflict with remote version": "Conflit avec la version distante",

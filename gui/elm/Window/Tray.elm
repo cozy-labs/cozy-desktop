@@ -60,7 +60,6 @@ init version platform =
 type Msg
     = GotSyncState SyncState
     | SyncStart ( String, String )
-    | SetError String
     | GoToCozy
     | GoToFolder
     | GoToTab Page
@@ -118,9 +117,6 @@ update msg model =
             in
             ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
-        SetError error ->
-            ( { model | status = Status.Error error }, Cmd.none )
-
         GoToCozy ->
             ( model, Ports.gotocozy () )
 
@@ -154,8 +150,7 @@ subscriptions model =
     Sub.batch
         [ Ports.synchonization SyncStart
         , Ports.gototab GoToStrTab
-        , Ports.syncError SetError
-        , Ports.syncState (GotSyncState << SyncState.decode)
+        , SyncState.gotNewState GotSyncState
 
         -- Dashboard subscriptions
         , Time.every 1000 (DashboardMsg << Dashboard.Tick)
