@@ -312,8 +312,7 @@ function squashMoves(changes /*: LocalChange[] */) {
       // inline of LocalChange.isChildMove
       if (
         a.type === 'DirMove' &&
-        (pathB.startsWith(pathA + path.sep) ||
-          (oldPathA && oldPathB && oldPathB.startsWith(oldPathA + path.sep)))
+        (oldPathA && oldPathB && oldPathB.startsWith(oldPathA + path.sep))
       ) {
         log.debug({ oldpath: b.old.path, path: b.path }, 'descendant move')
         if (pathB.substr(pathA.length) === oldPathB.substr(oldPathA.length)) {
