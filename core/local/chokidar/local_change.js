@@ -388,7 +388,7 @@ function fileMoveFromUnlinkAdd(
       ino: fileMove.ino,
       wip: fileMove.wip
     },
-    `unlink + add  = FileMove${fileMove.update ? '(update)' : ''}`
+    `unlink + add = FileMove${fileMove.update ? '(update)' : ''}`
   )
 
   return fileMove

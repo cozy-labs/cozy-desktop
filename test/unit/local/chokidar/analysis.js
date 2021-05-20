@@ -1198,6 +1198,161 @@ onPlatform('darwin', () => {
       })
     })
 
+    describe('Move squashing', () => {
+      it('move into moved folder', () => {
+        const dirStats = { ino: 1 }
+        const dir = builders
+          .metadir()
+          .path('src/dir')
+          .ino(dirStats.ino)
+          .build()
+        const fileStats = { ino: 2 }
+        const file = builders
+          .metafile()
+          .path('file')
+          .ino(fileStats.ino)
+          .build()
+
+        const events /*: LocalEvent[] */ = [
+          { type: 'unlinkDir', path: dir.path, old: dir },
+          { type: 'addDir', path: 'dst/dir', stats: dirStats },
+          { type: 'unlink', path: file.path, old: file },
+          { type: 'add', path: 'dst/dir/file', stats: fileStats }
+        ]
+        const pendingChanges /*: LocalChange[] */ = []
+
+        const changes = analysis(events, {
+          pendingChanges,
+          initialScan: false
+        })
+        changes
+          .map(change => [
+            change.type,
+            change.old.path,
+            change.path,
+            change.needRefetch
+          ])
+          .should.deepEqual([
+            ['DirMove', 'src/dir', 'dst/dir', undefined],
+            ['FileMove', 'file', 'dst/dir/file', undefined]
+          ])
+      })
+
+      it('child move', () => {
+        const dirStats = { ino: 1 }
+        const dir = builders
+          .metadir()
+          .path('src/dir')
+          .ino(dirStats.ino)
+          .build()
+        const fileStats = { ino: 2 }
+        const file = builders
+          .metafile()
+          .path('src/dir/file')
+          .ino(fileStats.ino)
+          .build()
+
+        const events /*: LocalEvent[] */ = [
+          { type: 'unlinkDir', path: dir.path, old: dir },
+          { type: 'addDir', path: 'dst/dir', stats: dirStats },
+          { type: 'unlink', path: file.path, old: file },
+          { type: 'add', path: 'dst/dir/file', stats: fileStats }
+        ]
+        const pendingChanges /*: LocalChange[] */ = []
+
+        const changes = analysis(events, {
+          pendingChanges,
+          initialScan: false
+        })
+        changes
+          .map(change => [
+            change.type,
+            change.old.path,
+            change.path,
+            change.needRefetch
+          ])
+          .should.deepEqual([['DirMove', 'src/dir', 'dst/dir', undefined]])
+      })
+
+      it('child moved out of moved folder', () => {
+        const dirStats = { ino: 1 }
+        const dir = builders
+          .metadir()
+          .path('src/dir')
+          .ino(dirStats.ino)
+          .build()
+        const fileStats = { ino: 2 }
+        const file = builders
+          .metafile()
+          .path('src/dir/file')
+          .ino(fileStats.ino)
+          .build()
+
+        const events /*: LocalEvent[] */ = [
+          { type: 'unlinkDir', path: dir.path, old: dir },
+          { type: 'addDir', path: 'dst/dir', stats: dirStats },
+          { type: 'unlink', path: file.path, old: file },
+          { type: 'add', path: 'file', stats: fileStats }
+        ]
+        const pendingChanges /*: LocalChange[] */ = []
+
+        const changes = analysis(events, {
+          pendingChanges,
+          initialScan: false
+        })
+        changes
+          .map(change => [
+            change.type,
+            change.old.path,
+            change.path,
+            change.needRefetch
+          ])
+          .should.deepEqual([
+            ['DirMove', 'src/dir', 'dst/dir', undefined],
+            ['FileMove', 'dst/dir/file', 'file', true]
+          ])
+      })
+
+      it('child moved within moved dir', () => {
+        const dirStats = { ino: 1 }
+        const dir = builders
+          .metadir()
+          .path('src/dir')
+          .ino(dirStats.ino)
+          .build()
+        const fileStats = { ino: 2 }
+        const file = builders
+          .metafile()
+          .path('src/dir/file')
+          .ino(fileStats.ino)
+          .build()
+
+        const events /*: LocalEvent[] */ = [
+          { type: 'unlinkDir', path: dir.path, old: dir },
+          { type: 'addDir', path: 'dst/dir', stats: dirStats },
+          { type: 'unlink', path: file.path, old: file },
+          { type: 'add', path: 'dst/file', stats: fileStats }
+        ]
+        const pendingChanges /*: LocalChange[] */ = []
+
+        const changes = analysis(events, {
+          pendingChanges,
+          initialScan: false
+        })
+        changes
+          .map(change => [
+            change.type,
+            change.old.path,
+            change.path,
+            change.needRefetch
+          ])
+          .should.deepEqual([
+            ['DirMove', 'src/dir', 'dst/dir', undefined],
+            ['FileMove', 'dst/dir/file', 'dst/file', true]
+          ])
+      })
+    })
+
     describe('Sorting', () => {
       describe('using the initial scan sorter', () => {
         it('sorts correctly move a to b + add b/child', () => {
