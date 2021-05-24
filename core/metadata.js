@@ -476,13 +476,26 @@ function extractRevNumber(doc /*: { _rev: string } */) {
   }
 }
 
-// Return true if the remote file is up-to-date for this document
+// See isAtLeastUpToDate for why we have different checks when we have both
+// sides and when we don't.
 function isUpToDate(sideName /*: SideName */, doc /*: Metadata */) {
-  return side(doc, sideName) === target(doc)
+  return hasBothSides(doc)
+    ? side(doc, sideName) === target(doc)
+    : side(doc, sideName) > 0
 }
 
+// It appears we can end up in situations where the only side left is smaller
+// than the target.
+// Since this function is meant to detect when it is safe to merge a change on
+// one side because no changes were merged on the other one, we'll assume the
+// remaining side is up-to-date (or at least up-to-date) if it's present.
+//
+// FIXME: find out how we end up in this situation, fix it and remove this
+// mitigation.
 function isAtLeastUpToDate(sideName /*: SideName */, doc /*: Metadata */) {
-  return side(doc, sideName) >= target(doc)
+  return hasBothSides(doc)
+    ? side(doc, sideName) >= target(doc)
+    : side(doc, sideName) > 0
 }
 
 function removeActionHints(doc /*: Metadata */) {

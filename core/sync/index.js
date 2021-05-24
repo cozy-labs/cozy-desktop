@@ -615,6 +615,10 @@ class Sync {
       log.debug({ path: doc.path }, `Applying else for ${doc.docType} change`)
       let old
       try {
+        // FIXME: This is extremely fragile as we don't enforce updating the
+        // sides and target when saving a new record version.
+        // This means the previous version fetched here could be different from
+        // the one we're expecting.
         old = (await this.pouch.getPreviousRev(
           doc._id,
           doc.sides.target - currentRev
@@ -630,12 +634,10 @@ class Sync {
           } else {
             await side.updateFolderAsync(doc)
           }
+        } else if (metadata.sameFile(old, doc)) {
+          log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
         } else if (metadata.sameBinary(old, doc)) {
-          if (metadata.sameFile(old, doc)) {
-            log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
-          } else {
-            await side.updateFileMetadataAsync(doc)
-          }
+          await side.updateFileMetadataAsync(doc)
         } else {
           await side.overwriteFileAsync(doc, old)
           this.events.emit('transfer-started', _.clone(doc))
@@ -827,15 +829,15 @@ class Sync {
     change /*: MetadataChange */,
     err /*: SyncError */
   ) /*: Promise<void> */ {
-    let { doc } = change
-    if (!doc.errors) doc.errors = 0
-    doc.errors++
-
-    // Make sure isUpToDate(sourceSideName, doc) is still true
-    const sourceSideName = otherSide(err.sideName)
-    metadata.markSide(sourceSideName, doc, doc)
+    const { doc } = change
 
     try {
+      doc.errors = (doc.errors || 0) + 1
+
+      // Make sure isUpToDate(sourceSideName, doc) is still true
+      const sourceSideName = otherSide(err.sideName)
+      metadata.markSide(sourceSideName, doc, doc)
+
       await this.pouch.db.put(doc)
     } catch (err) {
       // If the doc can't be saved, it's because of a new revision.

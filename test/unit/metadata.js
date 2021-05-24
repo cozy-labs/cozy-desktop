@@ -347,7 +347,7 @@ describe('metadata', function() {
       should(metadata.isUpToDate('local', doc)).be.false()
     })
 
-    it('is true when the given side equals the short rev in doc', () => {
+    it('is true when the given side equals the target in doc', () => {
       const doc = builders
         .metafile()
         .rev('2-0123456')
@@ -356,13 +356,92 @@ describe('metadata', function() {
       should(metadata.isUpToDate('local', doc)).be.true()
     })
 
-    it('is false when the given side is lower than the short rev in doc', () => {
+    it('is false when the given side is lower than the target in doc', () => {
       const doc = builders
         .metafile()
         .rev('3-0123456')
         .sides({ remote: 3, local: 2 })
         .build()
       should(metadata.isUpToDate('local', doc)).be.false()
+    })
+
+    it('is true when the given side is the only one', () => {
+      const doc = builders
+        .metafile()
+        .rev('3-0123456')
+        .sides({ local: 2 })
+        .build()
+      should(metadata.isUpToDate('local', doc)).be.true()
+    })
+
+    // XXX: We implemented the same workaround as in `isAtLeastUpToDate()`
+    // although we haven't encountered the same issue yet but it is possible.
+    it('is true when the given side is the only one and lower than the target', () => {
+      const doc = builders
+        .metafile()
+        .rev('3-0123456')
+        .build()
+      doc.sides = { local: 2, target: 35 }
+      should(metadata.isUpToDate('local', doc)).be.true()
+    })
+  })
+
+  describe('isAtLeastUpToDate', () => {
+    it('is false when the given side is undefined in doc', function() {
+      const doc = builders
+        .metafile()
+        .rev('1-0123456')
+        .sides({ remote: 1 })
+        .build()
+      should(metadata.isAtLeastUpToDate('local', doc)).be.false()
+    })
+
+    it('is true when the given side equals the target in doc', () => {
+      const doc = builders
+        .metafile()
+        .rev('2-0123456')
+        .sides({ remote: 2, local: 2 })
+        .build()
+      should(metadata.isAtLeastUpToDate('local', doc)).be.true()
+    })
+
+    it('is true when the given side is greater than the target in doc', () => {
+      const doc = builders
+        .metafile()
+        .rev('3-0123456')
+        .sides({ remote: 3, local: 4 })
+        .build()
+      should(metadata.isAtLeastUpToDate('local', doc)).be.true()
+    })
+
+    it('is false when the given side is lower than the target in doc', () => {
+      const doc = builders
+        .metafile()
+        .rev('3-0123456')
+        .sides({ remote: 3, local: 2 })
+        .build()
+      should(metadata.isAtLeastUpToDate('local', doc)).be.false()
+    })
+
+    it('is true when the given side is the only one', () => {
+      const doc = builders
+        .metafile()
+        .rev('3-0123456')
+        .sides({ local: 2 })
+        .build()
+      should(metadata.isAtLeastUpToDate('local', doc)).be.true()
+    })
+
+    // XXX: It is yet unknown how we end up in this situation but it seems like
+    // it can happen when we have sync errors and maybe some side dissociation.
+    // Until we figure out the root cause, we try to prevent its consequences.
+    it('is true when the given side is the only one and lower than the target', () => {
+      const doc = builders
+        .metafile()
+        .rev('3-0123456')
+        .build()
+      doc.sides = { local: 2, target: 35 }
+      should(metadata.isAtLeastUpToDate('local', doc)).be.true()
     })
   })
 
