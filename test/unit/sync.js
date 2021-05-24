@@ -607,8 +607,6 @@ describe('Sync', function() {
       const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(1)
       should(actual._rev).not.equal(doc._rev)
-      should(actual.sides).deepEqual({ target: 2, local: 2 })
-      should(metadata.isUpToDate('local', actual)).be.true()
     })
 
     it('retries on second remote -> local sync error', async function() {
@@ -627,8 +625,6 @@ describe('Sync', function() {
       const actual = await this.pouch.bySyncedPath(doc.path)
       should(actual.errors).equal(2)
       should(actual._rev).not.equal(doc._rev)
-      should(actual.sides).deepEqual({ target: 5, local: 2, remote: 5 })
-      should(metadata.isUpToDate('remote', actual)).be.true()
     })
   })
 
