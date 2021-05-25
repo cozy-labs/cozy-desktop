@@ -1,5 +1,31 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.28.1-beta.1 - 2021-05-25
+
+Improvements for all users:
+
+- The client will now detect when the connected Cozy has been deleted and will
+  show an error message accordingly. The synchronization will be stopped until
+  you connect your client to another Cozy.
+- We've worked on the process which decides if a synchronization error needs to
+  be displayed or not to make sure you get alerted with the suspended
+  synchronization status only if accompanied with an explicit error message.
+- In some rare situations where a document that was previously synchronized is
+  now only present on one side (i.e. we're in the middle of re-synchronizing it)
+  a conflict could be generated if the document was modified on that remaining
+  side.
+  We've introduced some mitigations to avoid generating those conflicts.
+
+Improvements for macOS users:
+
+- Moving a local document to a folder that was just renamed or moved (e.g. a
+  folder that was just created with a custom name) will be properly handled and
+  not generate incoherent movements.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.28.0 - 2021-05-17
 
 Improvements for all users:
