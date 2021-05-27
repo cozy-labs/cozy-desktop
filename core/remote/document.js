@@ -28,14 +28,15 @@ export type RemoteFileAttributes = {|
   mime: string,
   size: string,
 |}
+
 export type RemoteDirAttributes = {|
   type: DIR,
   path: string,
 |}
+
 export type RemoteBase = {|
   _id: string,
   _rev: string,
-  _deleted?: true,
   dir_id: string,
   name: string,
   tags: string[],
@@ -50,21 +51,21 @@ export type RemoteFile = {| ...RemoteBase, ...RemoteFileAttributes |}
 export type RemoteDir = {| ...RemoteBase, ...RemoteDirAttributes |}
 export type RemoteDoc = RemoteFile|RemoteDir
 
-export type RemoteDeletion = {
+export type RemoteDeletion = {|
   _id: string,
   _rev: string,
   _deleted: true
-}
+|}
 
-export type JsonApiFileAttributes = {
+export type JsonApiFileAttributes = {|
   type: FILE,
-  class?: string,
+  class?: string, // file only
   dir_id: string,
   executable?: boolean,
   md5sum?: string,
   mime?: string,
   name: string,
-  size?: string,
+  size?: string, // file only
   tags: string[],
   trashed?: true,
   created_at: string,
@@ -72,12 +73,13 @@ export type JsonApiFileAttributes = {
   cozyMetadata?: Object,
   metadata?: Object,
   restore_path?: string,
-}
-export type JsonApiDirAttributes = {
+|}
+
+export type JsonApiDirAttributes = {|
   type: DIR,
   dir_id: string,
   name: string,
-  path?: string,
+  path?: string, // folder only
   tags: string[],
   trashed?: true,
   created_at: string,
@@ -85,16 +87,47 @@ export type JsonApiDirAttributes = {
   cozyMetadata?: Object,
   metadata?: Object,
   restore_path?: string,
-}
-export type JsonApiBase = {|
+|}
+
+// Old cozy-client-js responses type
+export type RemoteJsonFile = {|
   _id: string,
   _rev: string,
   _type: string,
-  _deleted?: true,
+  attributes: JsonApiFileAttributes,
 |}
-export type JsonApiFile = {| ...JsonApiBase, attributes: JsonApiFileAttributes |}
-export type JsonApiDir = {| ...JsonApiBase, attributes: JsonApiDirAttributes |}
-export type JsonApiDoc = JsonApiFile|JsonApiDir
+export type RemoteJsonDir = {|
+  _id: string,
+  _rev: string,
+  _type: string,
+  attributes: JsonApiDirAttributes,
+|}
+export type RemoteJsonDoc = RemoteJsonFile|RemoteJsonDir
+
+// New cozy-client responses types
+type JsonApiRef = {
+  id: string,
+  type: string,
+}
+
+type JsonApiDeletion = {|
+  id: string,
+  rev: string,
+  _deleted: true
+|}
+
+type JsonApiDoc =
+  {|
+    id: string,
+    type: string,
+    meta?: {
+      rev?: string
+    },
+    links: Object,
+    attributes: JsonApiFileAttributes|JsonApiDirAttributes,
+    relationships: { [string]: { data?: JsonApiRef | JsonApiRef[] } }
+  |}
+  | JsonApiDeletion
 */
 
 module.exports = {
@@ -103,44 +136,53 @@ module.exports = {
   keepFiles,
   parentDirIds,
   inRemoteTrash,
-  jsonApiToRemoteDoc
+  remoteJsonToRemoteDoc
 }
 
 function specialId(id /*: string */) {
   return id === ROOT_DIR_ID || id === TRASH_DIR_ID || id.startsWith('_design/')
 }
 
-function dropSpecialDocs(docs /*: RemoteDoc[] */) /*: RemoteDoc[] */ {
+function dropSpecialDocs(
+  docs /*: Array<RemoteDoc|RemoteDeletion> */
+) /*: Array<RemoteDoc|RemoteDeletion> */ {
   return docs.filter(doc => !specialId(doc._id))
 }
 
-function keepFiles(docs /*: RemoteDoc[] */) /*: RemoteDoc[] */ {
-  return docs.filter(doc => doc.type === FILE_TYPE)
+function isFile(doc /*: RemoteDoc|RemoteDeletion */) /*: boolean %checks */ {
+  return doc._deleted ? false : doc.type === FILE_TYPE
+}
+
+function keepFiles(
+  docs /*: Array<RemoteDoc|RemoteDeletion> */
+) /*: RemoteDoc[] */ {
+  // $FlowFixMe filter() removes the RemoteDeletion items
+  return docs.filter(isFile)
 }
 
 function parentDirIds(docs /*: RemoteDoc[] */) {
-  return uniq(docs.map(doc => doc.dir_id))
+  return uniq(docs.map(doc => doc && doc.dir_id))
 }
 
 function inRemoteTrash(
   doc /*: { trashed?: true, type: FILE, path: string } | { trashed?: true, type: DIR, path: string } */
-) /*: boolean */ {
+) /*: boolean %checks */ {
   return (
     !!doc.trashed ||
-    (doc.type === DIR_TYPE && doc.path.startsWith(`/${TRASH_DIR_NAME}/`))
+    (doc.path != null && doc.path.startsWith(`/${TRASH_DIR_NAME}/`))
   )
 }
 
-function jsonApiToRemoteDoc(json /*: JsonApiDoc */) /*: RemoteDoc */ {
+function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
+  json /*: T */
+) /*: RemoteDoc */ {
   if (json.attributes.type === DIR_TYPE) {
     const remoteDir = ({
       type: DIR_TYPE,
       _id: json._id,
       _rev: json._rev,
-      ...(json.attributes /*: JsonApiDirAttributes */)
+      ...json.attributes
     } /*: RemoteDir */)
-
-    if (json._deleted) remoteDir._deleted = true
 
     return remoteDir
   } else {
@@ -148,11 +190,8 @@ function jsonApiToRemoteDoc(json /*: JsonApiDoc */) /*: RemoteDoc */ {
       type: FILE_TYPE,
       _id: json._id,
       _rev: json._rev,
-      _deleted: json._deleted,
-      ...(json.attributes /*: JsonApiFileAttributes */)
+      ...json.attributes
     } /*: RemoteFile */)
-
-    if (json._deleted) remoteFile._deleted = true
 
     return remoteFile
   }

@@ -18,7 +18,7 @@ const Builders = require('../../support/builders')
 const builders = new Builders({ cozy: cozyHelpers.cozy })
 /*::
 import type { Metadata } from '../../../core/metadata'
-import type { RemoteDoc, JsonApiDoc } from '../../../core/remote/document'
+import type { RemoteDoc } from '../../../core/remote/document'
 */
 
 describe('Remote', function() {

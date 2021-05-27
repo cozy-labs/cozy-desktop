@@ -7,7 +7,7 @@ const _ = require('lodash')
 const RemoteBaseBuilder = require('./base')
 const cozyHelpers = require('../../helpers/cozy')
 
-const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
+const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
 const {
   FILES_DOCTYPE,
   NOTE_MIME_TYPE
@@ -134,7 +134,7 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <Metadat
       updatedAt: this.remoteDoc.updated_at || this.remoteDoc.created_at,
       noSanitize: true
     })
-    const remoteFile /*: RemoteFile */ = _.clone(jsonApiToRemoteDoc(data))
+    const remoteFile /*: RemoteFile */ = _.clone(remoteJsonToRemoteDoc(data))
     remoteFile._rev = data.meta.rev
 
     const { data: parentDir } = await files.statById(remoteFile.dir_id)
@@ -156,7 +156,7 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <Metadat
     // else than HTML5 File objects as data.
     // FIXME: update note metadata
     const remoteFile /*: RemoteFile */ = _.clone(
-      jsonApiToRemoteDoc(
+      remoteJsonToRemoteDoc(
         await cozy.files.updateById(this.remoteDoc._id, this._data, {
           dirID: this.remoteDoc.dir_id,
           updatedAt: this.remoteDoc.updated_at,

@@ -7,6 +7,7 @@
 /*::
 export type FILE_TYPE = 'file'
 export type DIR_TYPE = 'directory'
+export type FILES_DOCTYPE = 'io.cozy.files'
 */
 
 const DEFAULT_HEARTBEAT = 1000 * 60 // 1 minute

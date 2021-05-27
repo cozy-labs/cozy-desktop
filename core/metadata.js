@@ -97,7 +97,7 @@ export type MetadataLocalInfo = {
   updated_at?: string,
 }
 
-export type MetadataRemoteFile = { ...RemoteFile, path: string }
+export type MetadataRemoteFile = {| ...RemoteFile, path: string |}
 export type MetadataRemoteDir = RemoteDir
 export type MetadataRemoteInfo = MetadataRemoteFile|MetadataRemoteDir
 
@@ -122,7 +122,7 @@ export type Metadata = {
   path: string,
   updated_at: string,
   local: MetadataLocalInfo,
-  remote: MetadataRemoteDir|MetadataRemoteFile,
+  remote: MetadataRemoteInfo,
   tags: string[],
   sides: MetadataSidesInfo,
 
@@ -468,8 +468,7 @@ function ensureValidChecksum(doc /*: Metadata */) {
 // Extract the revision number, or 0 it not found
 function extractRevNumber(doc /*: { _rev: string } */) {
   try {
-    // $FlowFixMe
-    let rev = doc._rev.split('-')[0]
+    const rev = doc._rev.split('-')[0]
     return Number(rev)
   } catch (error) {
     return 0

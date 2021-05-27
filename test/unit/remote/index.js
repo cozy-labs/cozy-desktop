@@ -27,7 +27,7 @@ const Builders = require('../../support/builders')
 
 /*::
 import type { Metadata, SavedMetadata } from '../../../core/metadata'
-import type { RemoteDoc, JsonApiDoc } from '../../../core/remote/document'
+import type { RemoteDoc, RemoteJsonDoc } from '../../../core/remote/document'
 */
 const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
 
@@ -253,7 +253,9 @@ describe('remote.Remote', function() {
 
       await this.remote.addFolderAsync(doc)
 
-      const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
+      const folder /*: RemoteJsonDoc */ = await cozy.files.statById(
+        doc.remote._id
+      )
       const { path, name, type } = remoteDir
       should(folder.attributes).have.properties({
         path,
@@ -289,7 +291,9 @@ describe('remote.Remote', function() {
 
       await this.remote.addFolderAsync(doc)
 
-      const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
+      const folder /*: RemoteJsonDoc */ = await cozy.files.statById(
+        doc.remote._id
+      )
       const { path, name, type } = remoteDir
       should(folder.attributes).have.properties({
         path,
@@ -723,7 +727,9 @@ describe('remote.Remote', function() {
 
       await this.remote.updateFolderAsync(doc)
 
-      const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
+      const folder /*: RemoteJsonDoc */ = await cozy.files.statById(
+        doc.remote._id
+      )
       should(folder.attributes).have.properties({
         path: '/created',
         type: 'directory',
@@ -752,7 +758,7 @@ describe('remote.Remote', function() {
 
       await this.remote.updateFolderAsync(doc)
 
-      const created /*: JsonApiDoc */ = await cozy.files.statByPath(
+      const created /*: RemoteJsonDoc */ = await cozy.files.statByPath(
         '/deleted-dir'
       )
       should(created.attributes).have.properties({
@@ -790,7 +796,9 @@ describe('remote.Remote', function() {
 
       await this.remote.updateFolderAsync(doc)
 
-      const folder /*: JsonApiDoc */ = await cozy.files.statById(doc.remote._id)
+      const folder /*: RemoteJsonDoc */ = await cozy.files.statById(
+        doc.remote._id
+      )
       should(folder._id).equal(remoteDir._id)
       should(folder.attributes).have.properties({
         type: 'directory',

@@ -3,7 +3,7 @@
 const _ = require('lodash')
 
 const { ROOT_DIR_ID } = require('../../../../core/remote/constants')
-const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
+const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
 const metadata = require('../../../../core/metadata')
 
 const dbBuilders = require('../db')
@@ -72,10 +72,10 @@ module.exports = class RemoteDirBuilder {
 
     if (this.remoteDoc) {
       const json = await cozy.files.destroyById(this.remoteDoc._id)
-      return _.clone(jsonApiToRemoteDoc(json))
+      return _.clone(remoteJsonToRemoteDoc(json))
     } else {
       const remoteDir = _.clone(
-        jsonApiToRemoteDoc(
+        remoteJsonToRemoteDoc(
           await cozy.files.createDirectory({
             name: '',
             dirID: ROOT_DIR_ID,
@@ -84,7 +84,7 @@ module.exports = class RemoteDirBuilder {
         )
       )
       const json = await cozy.files.destroyById(remoteDir._id)
-      return _.clone(jsonApiToRemoteDoc(json))
+      return _.clone(remoteJsonToRemoteDoc(json))
     }
   }
 }

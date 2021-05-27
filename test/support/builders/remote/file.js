@@ -8,7 +8,7 @@ const _ = require('lodash')
 const RemoteBaseBuilder = require('./base')
 const cozyHelpers = require('../../helpers/cozy')
 
-const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
+const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
 const { FILES_DOCTYPE } = require('../../../../core/remote/constants')
 
 /*::
@@ -103,7 +103,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <Metadat
     const cozy = this._ensureCozy()
 
     const remoteFile /*: RemoteFile */ = _.clone(
-      jsonApiToRemoteDoc(
+      remoteJsonToRemoteDoc(
         await cozy.files.create(this._data, {
           contentType: this.remoteDoc.mime,
           dirID: this.remoteDoc.dir_id,
@@ -157,7 +157,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <Metadat
           updated_at: this.remoteDoc.updated_at,
           noSanitize: true
         })
-    const remoteFile /*: RemoteFile */ = _.clone(jsonApiToRemoteDoc(json))
+    const remoteFile /*: RemoteFile */ = _.clone(remoteJsonToRemoteDoc(json))
     const doc /*: MetadataRemoteFile */ = {
       ...remoteFile,
       path: posix.join(parentDir.attributes.path, this.remoteDoc.name)

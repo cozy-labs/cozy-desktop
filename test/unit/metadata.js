@@ -29,7 +29,6 @@ const {
   createConflictingDoc
 } = metadata
 const { Ignore } = require('../../core/ignore')
-const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const stater = require('../../core/local/stater')
 const { NOTE_MIME_TYPE } = require('../../core/remote/constants')
 const pathUtils = require('../../core/utils/path')
@@ -50,7 +49,6 @@ describe('metadata', function() {
       const remoteDoc /*: MetadataRemoteFile */ = {
         _id: '12',
         _rev: '34',
-        _type: FILES_DOCTYPE,
         class: 'document',
         dir_id: '56',
         executable: false,
@@ -65,8 +63,7 @@ describe('metadata', function() {
         updated_at: '2017-09-08T07:06:05Z',
         cozyMetadata: {
           createdOn: 'alice.mycozy.cloud'
-        },
-        someUnusedProperty: 'unused value'
+        }
       }
       const doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
 
@@ -90,8 +87,7 @@ describe('metadata', function() {
         executable: false,
         cozyMetadata: {
           createdOn: 'alice.mycozy.cloud'
-        },
-        someUnusedProperty: 'unused value'
+        }
       })
 
       remoteDoc.executable = true
