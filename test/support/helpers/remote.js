@@ -6,6 +6,7 @@ const path = require('path')
 
 const conflictHelpers = require('./conflict')
 const cozyHelpers = require('./cozy')
+const Builders = require('../builders')
 
 const { Remote, dirAndName } = require('../../../core/remote')
 const {
@@ -13,6 +14,7 @@ const {
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
 
+const builders = new Builders()
 /*::
 import type cozy from 'cozy-client-js'
 import type { Pouch } from '../../../core/pouch'
@@ -44,6 +46,13 @@ class RemoteTestHelpers {
     await this.pouch.setRemoteSeq(last_seq)
   }
 
+  async start() {
+    await this.side.watcher.start()
+  }
+
+  async stop() {
+    await this.side.watcher.stop()
+  }
   async pullChanges() {
     await this.side.watcher.watch()
   }
@@ -178,6 +187,29 @@ class RemoteTestHelpers {
     if (!path.startsWith('/')) path = '/' + path
     const resp = await this.cozy.files.downloadByPath(path)
     return resp.text()
+  }
+
+  async outputFile(fpath /*: string */, content /*: string */) {
+    // TODO: handle files with same name but in different folders
+    const docs = await this.side.remoteCozy.search({
+      name: path.basename(fpath)
+    })
+    if (!docs || docs.length === 0)
+      throw new Error(`could not find remote documents with path ${fpath}`)
+    if (docs[0].type !== 'file')
+      throw new Error(`remote document with path ${fpath} is not a file`)
+
+    const file = docs[0]
+
+    return await this.side.remoteCozy.updateFileById(
+      file._id,
+      builders
+        .stream()
+        .push(content)
+        .build(),
+      // $FlowFixMe we don't care about the other parameters here
+      { updatedAt: new Date().toISOString(), noSanitize: true }
+    )
   }
 
   async byId(id /*: string */) /*: Promise<MetadataRemoteInfo> */ {

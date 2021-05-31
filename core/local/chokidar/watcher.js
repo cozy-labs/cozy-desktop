@@ -107,6 +107,7 @@ class LocalWatcher {
    * @see https://github.com/paulmillr/chokidar
    */
   start() {
+    console.log({ time: new Date() }, 'starting')
     log.debug('Starting...')
 
     this.watcher = chokidar.watch('.', {
@@ -165,7 +166,10 @@ class LocalWatcher {
       this.initialScan = {
         paths: [],
         emptyDirRetryCount: 3,
-        resolve,
+        resolve: () => {
+          console.log({ time: new Date() }, 'started')
+          resolve()
+        },
         flushed: false
       }
 
@@ -203,6 +207,7 @@ class LocalWatcher {
 
     if (this.initialScan) this.initialScan.flushed = true
     this.events.emit('buffering-end')
+    console.log({ time: new Date() }, 'buffering-end')
     syncDir.ensureExistsSync(this)
     this.events.emit('local-start')
 
@@ -214,6 +219,8 @@ class LocalWatcher {
       events,
       this
     )
+    this.events.emit('prepare-end')
+    console.log({ time: new Date() }, 'prepare-end')
     log.trace('Done with events preparation.')
 
     const changes /*: LocalChange[] */ = analysis(preparedEvents, this)
@@ -225,6 +232,7 @@ class LocalWatcher {
 
     // TODO: Don't even acquire lock changes list is empty
     // FIXME: Shouldn't we acquire the lock before preparing the events?
+    console.log({ time: new Date() }, 'acquiring lock')
     const release = await this.pouch.lock(this)
     let target = -1
     try {
@@ -234,6 +242,7 @@ class LocalWatcher {
     } finally {
       this.events.emit('sync-target', target)
       release()
+      console.log({ time: new Date() }, 'local-end')
       this.events.emit('local-end')
     }
     if (this.initialScan != null) {
@@ -243,6 +252,7 @@ class LocalWatcher {
   }
 
   async stop(force /*: ?bool */) {
+    console.log({ time: new Date() }, 'stopping')
     log.debug('Stopping watcher...')
     if (this.watcher) {
       // XXX manually fire events for added file, because chokidar will cancel
@@ -267,7 +277,10 @@ class LocalWatcher {
     if (force) return Promise.resolve()
     // Give some time for awaitWriteFinish events to be managed
     return new Promise(resolve => {
-      setTimeout(resolve, 1000)
+      setTimeout(() => {
+        console.log({ time: new Date() }, 'stopped')
+        resolve()
+      }, 1000)
     })
   }
 
