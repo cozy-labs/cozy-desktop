@@ -466,16 +466,13 @@ describe('RemoteWatcher', function() {
   describe('pullMany', function() {
     let apply
     let findMaybe
-    let remoteDocs /*: MetadataRemoteInfo[] */
+    let remoteDocs
     beforeEach(function() {
       apply = sinon.stub(this.watcher, 'apply')
       findMaybe = sinon.stub(this.remoteCozy, 'findMaybe')
       remoteDocs = [
         builders.remoteFile().build(),
-        builders
-          .remoteFile()
-          .erased()
-          .build()
+        builders.remoteErased().build()
       ]
     })
 
@@ -526,12 +523,9 @@ describe('RemoteWatcher', function() {
       })
 
       it('retries failed changes application until none can be applied', async function() {
-        const remoteDocs /*: MetadataRemoteInfo[] */ = [
+        const remoteDocs = [
           builders.remoteFile().build(),
-          builders
-            .remoteFile()
-            .erased()
-            .build(),
+          builders.remoteErased().build(),
           builders.remoteFile().build()
         ]
         await this.watcher.pullMany(remoteDocs).catch(() => {})

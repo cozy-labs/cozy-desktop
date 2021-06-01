@@ -138,9 +138,8 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <Metadat
     const cozy = this._ensureCozy()
 
     const parentDir = await cozy.files.statById(this.remoteDoc.dir_id)
-    const json = this.remoteDoc._deleted
-      ? await cozy.files.destroyById(this.remoteDoc._id)
-      : this.remoteDoc.trashed
+
+    const json = this.remoteDoc.trashed
       ? await cozy.files.trashById(this.remoteDoc._id, { dontRetry: true })
       : this._data
       ? await cozy.files.updateById(this.remoteDoc._id, this._data, {

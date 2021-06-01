@@ -81,11 +81,6 @@ module.exports = class RemoteBaseBuilder /*:: <T: MetadataRemoteInfo> */ {
     return this.inRootDir()
   }
 
-  erased() /*: this */ {
-    this.remoteDoc._deleted = true
-    return this
-  }
-
   tags(...tags /*: string[] */) /*: this */ {
     this.remoteDoc.tags = tags
     return this

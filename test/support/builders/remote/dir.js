@@ -52,9 +52,7 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <Metadata
   async update() /*: Promise<MetadataRemoteDir> */ {
     const cozy = this._ensureCozy()
 
-    const json = this.remoteDoc._deleted
-      ? await cozy.files.destroyById(this.remoteDoc._id)
-      : this.remoteDoc.trashed
+    const json = this.remoteDoc.trashed
       ? await cozy.files.trashById(this.remoteDoc._id, { dontRetry: true })
       : await cozy.files.updateAttributesById(this.remoteDoc._id, {
           dir_id: this.remoteDoc.dir_id,

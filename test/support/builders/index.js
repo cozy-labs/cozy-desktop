@@ -13,6 +13,7 @@ const FileMetadataBuilder = require('./metadata/file')
 const RemoteDirBuilder = require('./remote/dir')
 const RemoteFileBuilder = require('./remote/file')
 const RemoteNoteBuilder = require('./remote/note')
+const RemoteErasedBuilder = require('./remote/erased')
 const StreamBuilder = require('./stream')
 const AtomEventBuilder = require('./atom_event')
 const { DefaultStatsBuilder, WinStatsBuilder } = require('./stats')
@@ -70,6 +71,12 @@ module.exports = class Builders {
     old /*: ?RemoteFile|MetadataRemoteFile */
   ) /*: RemoteNoteBuilder */ {
     return new RemoteNoteBuilder(this.cozy, old)
+  }
+
+  remoteErased(
+    old /*: ?RemoteFile|MetadataRemoteFile|RemoteDir|MetadataRemoteDir */
+  ) /*: RemoteErasedBuilder */ {
+    return new RemoteErasedBuilder(this.cozy, old)
   }
 
   buildRemoteTree(
