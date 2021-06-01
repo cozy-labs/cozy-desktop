@@ -36,6 +36,11 @@ const { app, Menu, Notification, ipcMain, dialog } = require('electron')
 
 const DAILY = 3600 * 24 * 1000
 
+// Disable Electron's Net HTTP cache to prevent net::ERR_FAILED errors on HTTP
+// requests.
+// https://stackoverflow.com/questions/63562516/electron-throws-err-failed-when-making-requests-using-net
+app.commandLine.appendSwitch('disable-http-cache')
+
 // FIXME: https://github.com/electron/electron/issues/10864
 if (process.platform === 'win32') app.setAppUserModelId('io.cozy.desktop')
 
