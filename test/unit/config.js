@@ -218,6 +218,19 @@ describe('core/config', function() {
       })
     })
 
+    describe('flags', () => {
+      it('returns an empty hash by default', function() {
+        should(this.config.flags).deepEqual({})
+      })
+
+      it('returns GUI configuration if any', function() {
+        const flagsConfig = { differentialSync: true }
+        this.config.fileConfig.flags = flagsConfig
+        should(this.config.flags).deepEqual(flagsConfig)
+        should(this.config.flags.differentialSync).be.true()
+      })
+    })
+
     describe('#watcherType', function() {
       it('returns valid watcher type from file config if any', function() {
         this.config.fileConfig.watcherType = 'atom'
