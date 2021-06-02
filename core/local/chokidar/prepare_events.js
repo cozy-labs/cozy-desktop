@@ -32,14 +32,14 @@ const logger = require('../../utils/logger')
 
 /*::
 import type { ChokidarEvent } from './event'
-import type { InitialScan } from './initial_scan'
+import type { InitialScanParams } from './initial_scan'
 import type { LocalEvent } from './local_event'
 import type { Metadata } from '../../metadata'
 import type { Pouch } from '../../pouch'
 
 type PrepareEventsOpts = {
   +checksum: (string) => Promise<string>,
-  initialScan: ?InitialScan,
+  initialScanParams: ?InitialScanParams,
   pouch: Pouch,
   syncPath: string
 }
@@ -71,7 +71,7 @@ const oldMetadata = async (
  */
 const step = async (
   events /*: ChokidarEvent[] */,
-  { checksum, initialScan, pouch, syncPath } /*: PrepareEventsOpts */
+  { checksum, initialScanParams, pouch, syncPath } /*: PrepareEventsOpts */
 ) /*: Promise<LocalEvent[]> */ => {
   return Promise.map(
     events,
@@ -86,7 +86,7 @@ const step = async (
 
       if (e.type === 'add' || e.type === 'change') {
         if (
-          initialScan &&
+          initialScanParams && // FIXME: remove this line so we don't recompute unnecessary checksumss after thee initial scan
           e2.old &&
           e2.path.normalize() === e2.old.path.normalize() &&
           e2.old.local &&

@@ -48,7 +48,7 @@ import type {
   LocalFileDeletion,
   LocalFileMove
 } from './local_change'
-import type { InitialScan } from './initial_scan'
+import type { InitialScanParams } from './initial_scan'
 */
 
 const log = logger({
@@ -59,13 +59,13 @@ module.exports = function analysis(
   events /*: LocalEvent[] */,
   {
     pendingChanges,
-    initialScan
-  } /*: { pendingChanges: LocalChange[], initialScan: ?InitialScan } */
+    initialScanParams
+  } /*: { pendingChanges: LocalChange[], initialScanParams: ?InitialScanParams } */
 ) /*: LocalChange[] */ {
   const changes /*: LocalChange[] */ = analyseEvents(events, pendingChanges)
   sortBeforeSquash(changes)
   squashMoves(changes)
-  sortChanges(changes, initialScan != null)
+  sortChanges(changes, initialScanParams != null)
   return separatePendingChanges(changes, pendingChanges)
 }
 

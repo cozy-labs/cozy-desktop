@@ -5,6 +5,7 @@ const fse = require('fs-extra')
 const path = require('path')
 const sinon = require('sinon')
 const should = require('should')
+const EventEmitter = require('events')
 
 const { TMP_DIR_NAME } = require('../../../../core/local/constants')
 const Watcher = require('../../../../core/local/chokidar/watcher')
@@ -12,7 +13,7 @@ const Watcher = require('../../../../core/local/chokidar/watcher')
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
 const { ContextDir } = require('../../../support/helpers/context_dir')
-const { onPlatform, onPlatforms } = require('../../../support/helpers/platform')
+const { onPlatform } = require('../../../support/helpers/platform')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
 onPlatform('darwin', () => {
@@ -138,6 +139,73 @@ onPlatform('darwin', () => {
       })
     })
 
+    describe('onFlush', () => {
+      beforeEach(function() {
+        this.prep.addFileAsync = sinon.stub().resolves()
+        this.prep.putFolderAsync = sinon.stub().resolves()
+      })
+      afterEach(function() {
+        delete this.prep.addFileAsync
+        delete this.prep.putFolderAsync
+      })
+
+      context('while an initial scan is being processed', () => {
+        const trigger = new EventEmitter()
+        const SECOND_FLUSH_TRIGGER = 'second-flush'
+        beforeEach(function() {
+          // Make sure we're in initial scan mode
+          this.watcher.initialScanParams = {
+            paths: [],
+            emptyDirRetryCount: 3,
+            resolve: Promise.resolve,
+            flushed: false
+          }
+          // Switch events buffer to manual flushing
+          this.watcher.buffer.switchMode('idle')
+
+          // Make sure the first initial scan does not end until we've flushed a
+          // second time.
+          const originalInitialScanDocs = this.watcher.pouch.initialScanDocs
+          sinon
+            .stub(this.watcher.pouch, 'initialScanDocs')
+            .callsFake(async () => {
+              return new Promise(async resolve => {
+                trigger.on(SECOND_FLUSH_TRIGGER, async () => {
+                  const data = await originalInitialScanDocs()
+                  resolve(data)
+                })
+              })
+            })
+
+          // Flush an initial scan event
+          this.watcher.buffer.push({
+            type: 'addDir',
+            path: __dirname,
+            stats: builders.stats().build()
+          })
+          this.watcher.buffer.flush()
+        })
+        afterEach(function() {
+          this.watcher.pouch.initialScanDocs.restore()
+        })
+
+        it('does not trigger a new initial scan', async function() {
+          this.watcher.buffer.push({
+            type: 'add',
+            path: __filename,
+            stats: builders.stats().build()
+          })
+          await new Promise(resolve => {
+            const flushDone = this.watcher.buffer.flush()
+            trigger.emit(SECOND_FLUSH_TRIGGER)
+            flushDone.then(resolve())
+          })
+
+          should(this.watcher.pouch.initialScanDocs).have.been.calledOnce()
+        })
+      })
+    })
+
     describe('onAddFile', () => {
       if (process.env.APPVEYOR) {
         it('is unstable on AppVeyor')
@@ -163,25 +231,23 @@ onPlatform('darwin', () => {
         })
       })
 
-      onPlatforms(['win32', 'darwin'], () => {
-        it('does not skip checksum computation when an identity conflict could occur during initial scan', async function() {
-          const syncDir = new ContextDir(this.syncPath)
-          const existing = await builders
-            .metafile()
-            .path('Alfred')
-            .data('Alfred content')
-            .sides({ remote: 1 })
-            .create()
-          this.prep.addFileAsync = sinon.stub().resolves()
+      it('does not skip checksum computation when an identity conflict could occur during initial scan', async function() {
+        const syncDir = new ContextDir(this.syncPath)
+        const existing = await builders
+          .metafile()
+          .path('Alfred')
+          .data('Alfred content')
+          .sides({ remote: 1 })
+          .create()
+        this.prep.addFileAsync = sinon.stub().resolves()
 
-          await syncDir.outputFile('alfred', 'alfred content')
-          await this.watcher.start()
-          await this.watcher.stop()
+        await syncDir.outputFile('alfred', 'alfred content')
+        await this.watcher.start()
+        await this.watcher.stop()
 
-          should(this.prep.addFileAsync).have.been.calledOnce()
-          const doc = this.prep.addFileAsync.args[0][1]
-          should(doc.md5sum).not.equal(existing.md5sum)
-        })
+        should(this.prep.addFileAsync).have.been.calledOnce()
+        const doc = this.prep.addFileAsync.args[0][1]
+        should(doc.md5sum).not.equal(existing.md5sum)
       })
     })
 

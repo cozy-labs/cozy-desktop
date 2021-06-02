@@ -21,7 +21,7 @@ import type LocalEventBuffer from './event_buffer'
 import type { Pouch } from '../../pouch'
 import type { SavedMetadata } from '../../metadata'
 
-export type InitialScan = {
+export type InitialScanParams = {
   paths: string[],
   emptyDirRetryCount: number,
   flushed: boolean,
@@ -30,20 +30,20 @@ export type InitialScan = {
 
 export type InitialScanOpts = {
   buffer: LocalEventBuffer<ChokidarEvent>,
-  initialScan: ?InitialScan,
+  initialScanParams: InitialScanParams,
   pouch: Pouch
 }
 */
 
 const detectOfflineUnlinkEvents = async (
-  initialScan /*: InitialScan */,
+  initialScanParams /*: InitialScanParams */,
   pouch /*: Pouch */
 ) /*: Promise<{offlineEvents: Array<ChokidarEvent>, unappliedMoves: string[], emptySyncDir: boolean}> */ => {
   // Try to detect removed files & folders
   const events /*: Array<ChokidarEvent> */ = []
   const docs /*: SavedMetadata[] */ = await pouch.initialScanDocs()
   const inInitialScan = doc =>
-    initialScan.paths.indexOf(metadata.id(doc.path)) !== -1
+    initialScanParams.paths.indexOf(metadata.id(doc.path)) !== -1
 
   // the Syncdir is empty error only occurs if there was some docs beforehand
   let emptySyncDir = docs.length > NB_OF_DELETABLE_ELEMENT
@@ -66,39 +66,39 @@ const detectOfflineUnlinkEvents = async (
 
 const step = async (
   rawEvents /*: ChokidarEvent[] */,
-  { buffer, initialScan, pouch } /*: InitialScanOpts */
-) /*: Promise<?Array<ChokidarEvent>> */ => {
-  let events = rawEvents.filter(e => e.path !== '') // @TODO handle root dir events
-  if (initialScan != null) {
-    const paths = initialScan.paths
-    events
-      .filter(e => e.type.startsWith('add'))
-      .forEach(e => paths.push(metadata.id(e.path)))
+  { buffer, initialScanParams, pouch } /*: InitialScanOpts */
+) /*: Promise<Array<ChokidarEvent>> */ => {
+  // We mark the initial scan as flushed as soon as possible to avoid
+  // concurrent initial scan processings from later flushes.
+  initialScanParams.flushed = true
+  let events = rawEvents
 
-    const {
-      offlineEvents,
-      unappliedMoves,
-      emptySyncDir
-    } = await detectOfflineUnlinkEvents(initialScan, pouch)
-    events = offlineEvents.concat(events)
+  events
+    .filter(e => e.type.startsWith('add'))
+    .forEach(e => initialScanParams.paths.push(metadata.id(e.path)))
 
-    events = events.filter(e => {
-      return unappliedMoves.indexOf(metadata.id(e.path)) === -1
-    })
+  const {
+    offlineEvents,
+    unappliedMoves,
+    emptySyncDir
+  } = await detectOfflineUnlinkEvents(initialScanParams, pouch)
+  events = offlineEvents.concat(events)
 
-    if (emptySyncDir) {
-      // it is possible this is a temporary faillure (too late mounting)
-      // push back the events and wait until next flush.
-      buffer.unflush(rawEvents)
-      if (--initialScan.emptyDirRetryCount === 0) {
-        throw new Error(SYNC_DIR_EMPTY_MESSAGE)
-      }
-      return initialScan.resolve()
+  events = events.filter(e => {
+    return unappliedMoves.indexOf(metadata.id(e.path)) === -1
+  })
+
+  if (emptySyncDir) {
+    // it is possible this is a temporary faillure (too late mounting)
+    // push back the events and wait until next flush.
+    buffer.unflush(rawEvents)
+    if (--initialScanParams.emptyDirRetryCount === 0) {
+      throw new Error(SYNC_DIR_EMPTY_MESSAGE)
     }
-
-    log.debug({ initialEvents: events })
+    return []
   }
 
+  log.debug({ initialEvents: events }, 'Done with initial scan')
   return events
 }
 

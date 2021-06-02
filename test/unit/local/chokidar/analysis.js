@@ -899,7 +899,10 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges = []
           should(
-            analysis(events, { pendingChanges, initialScan: true })
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { flushed: false }
+            })
           ).deepEqual([
             {
               sideName,
@@ -1001,7 +1004,10 @@ onPlatform('darwin', () => {
             ]
             const pendingChanges = []
             should(
-              analysis(events, { pendingChanges, initialScan: true })
+              analysis(events, {
+                pendingChanges,
+                initialScanParams: { flushed: false }
+              })
             ).deepEqual([
               {
                 sideName,
@@ -1223,7 +1229,7 @@ onPlatform('darwin', () => {
 
         const changes = analysis(events, {
           pendingChanges,
-          initialScan: false
+          initialScanParams: undefined
         })
         changes
           .map(change => [
@@ -1262,7 +1268,7 @@ onPlatform('darwin', () => {
 
         const changes = analysis(events, {
           pendingChanges,
-          initialScan: false
+          initialScanParams: undefined
         })
         changes
           .map(change => [
@@ -1298,7 +1304,7 @@ onPlatform('darwin', () => {
 
         const changes = analysis(events, {
           pendingChanges,
-          initialScan: false
+          initialScanParams: undefined
         })
         changes
           .map(change => [
@@ -1337,7 +1343,7 @@ onPlatform('darwin', () => {
 
         const changes = analysis(events, {
           pendingChanges,
-          initialScan: false
+          initialScanParams: undefined
         })
         changes
           .map(change => [
@@ -1374,7 +1380,7 @@ onPlatform('darwin', () => {
 
           const changes = analysis(events, {
             pendingChanges,
-            initialScan: true
+            initialScanParams: { flushed: false }
           })
           changes
             .map(change => [change.type, change.path])

@@ -38,7 +38,7 @@ import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
 import type { Checksumer } from '../checksumer'
 import type { ChokidarEvent } from './event'
-import type { InitialScan } from './initial_scan'
+import type { InitialScanParams } from './initial_scan'
 import type { LocalEvent } from './local_event'
 import type { LocalChange } from './local_change'
 import type EventEmitter from 'events'
@@ -52,6 +52,10 @@ log.chokidar = log.child({
   component: 'Chokidar'
 })
 
+function hasPath(event /*: ChokidarEvent */) /*: boolean %checks */ {
+  return event.path !== ''
+}
+
 /**
  * This file contains the filesystem watcher that will trigger operations when
  * a file or a folder is added/removed/changed locally.
@@ -64,7 +68,7 @@ class LocalWatcher {
   prep: Prep
   pouch: Pouch
   events: EventEmitter
-  initialScan: ?InitialScan
+  initialScanParams: ?InitialScanParams
   checksumer: Checksumer
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarEvent>
@@ -145,7 +149,8 @@ class LocalWatcher {
           path /*: ?string */,
           stats /*: ?fs.Stats */
         ) => {
-          const isInitialScan = this.initialScan && !this.initialScan.flushed
+          const isInitialScan =
+            this.initialScanParams && !this.initialScanParams.flushed
           log.chokidar.debug({ path, stats, isInitialScan }, eventType)
           const newEvent = chokidarEvent.build(eventType, path, stats)
           if (newEvent.type !== eventType) {
@@ -162,7 +167,7 @@ class LocalWatcher {
       // To detect which files&folders have been removed since the last run of
       // cozy-desktop, we keep all the paths seen by chokidar during its
       // initial scan in @paths to compare them with pouchdb database.
-      this.initialScan = {
+      this.initialScanParams = {
         paths: [],
         emptyDirRetryCount: 3,
         resolve,
@@ -201,13 +206,27 @@ class LocalWatcher {
   async onFlush(rawEvents /*: ChokidarEvent[] */) {
     log.debug(`Flushed ${rawEvents.length} events`)
 
-    if (this.initialScan) this.initialScan.flushed = true
     this.events.emit('buffering-end')
     syncDir.ensureExistsSync(this)
     this.events.emit('local-start')
 
-    const events = await initialScan.step(rawEvents, this)
-    if (!events) return
+    let events = rawEvents.filter(hasPath) // @TODO handle root dir events
+    if (events.length > 0) {
+      // We need to destructure `this` otherwise Flow won't detect that
+      // `this.initialScanParams` is not null even within the conditional block.
+      const { buffer, pouch, initialScanParams } = this
+      if (initialScanParams != null && !initialScanParams.flushed) {
+        events = await initialScan.step(events, {
+          initialScanParams,
+          buffer,
+          pouch
+        })
+      }
+    }
+    if (events.length === 0) {
+      if (this.initialScanParams != null) this.initialScanParams.resolve()
+      return
+    }
 
     log.trace('Prepare events...')
     const preparedEvents /*: LocalEvent[] */ = await prepareEvents.step(
@@ -236,9 +255,9 @@ class LocalWatcher {
       release()
       this.events.emit('local-end')
     }
-    if (this.initialScan != null) {
-      this.initialScan.resolve()
-      this.initialScan = null
+    if (this.initialScanParams != null) {
+      this.initialScanParams.resolve()
+      this.initialScanParams = null
     }
   }
 
