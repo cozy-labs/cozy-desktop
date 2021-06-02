@@ -51,12 +51,7 @@ describe('RemoteWatcher', function() {
       token: process.env.COZY_STACK_TOKEN
     })
     this.events = new EventEmitter()
-    this.watcher = new RemoteWatcher(
-      this.pouch,
-      this.prep,
-      this.remoteCozy,
-      this.events
-    )
+    this.watcher = new RemoteWatcher(this)
     builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
   afterEach(function() {

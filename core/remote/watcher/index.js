@@ -17,6 +17,7 @@ const normalizePaths = require('./normalizePaths')
 const logger = require('../../utils/logger')
 
 /*::
+import type { Config } from '../../config'
 import type EventEmitter from 'events'
 import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
@@ -25,6 +26,14 @@ import type { Metadata, MetadataRemoteInfo, SavedMetadata, RemoteRevisionsByID }
 import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from '../change'
 import type { RemoteDeletion } from '../document'
 import type { RemoteError } from '../errors'
+
+export type RemoteWatcherOptions = {
+  +config: Config,
+  events: EventEmitter,
+  pouch: Pouch,
+  prep: Prep,
+  remoteCozy: RemoteCozy
+}
 */
 
 const log = logger({
@@ -36,6 +45,7 @@ const sideName = 'remote'
 /** Get changes from the remote Cozy and prepare them for merge */
 class RemoteWatcher {
   /*::
+  config: Config
   pouch: Pouch
   prep: Prep
   remoteCozy: RemoteCozy
@@ -45,11 +55,9 @@ class RemoteWatcher {
   */
 
   constructor(
-    pouch /*: Pouch */,
-    prep /*: Prep */,
-    remoteCozy /*: RemoteCozy */,
-    events /*: EventEmitter */
+    { config, pouch, prep, remoteCozy, events } /*: RemoteWatcherOptions */
   ) {
+    this.config = config
     this.pouch = pouch
     this.prep = prep
     this.remoteCozy = remoteCozy
@@ -331,7 +339,7 @@ class RemoteWatcher {
 
     // TODO: Move to Prep?
     if (!inRemoteTrash(remoteDoc)) {
-      metadata.assignPlatformIncompatibilities(doc, this.prep.config.syncPath)
+      metadata.assignPlatformIncompatibilities(doc, this.config.syncPath)
       const { incompatibilities } = doc
       if (incompatibilities) {
         log.debug({ path, oldpath: was && was.path, incompatibilities })

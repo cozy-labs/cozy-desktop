@@ -70,7 +70,13 @@ class Remote /*:: implements Reader, Writer */ {
     this.events = events
     this.remoteCozy = new RemoteCozy(config)
     this.warningsPoller = new RemoteWarningPoller(this.remoteCozy, events)
-    this.watcher = new RemoteWatcher(pouch, prep, this.remoteCozy, events)
+    this.watcher = new RemoteWatcher({
+      config: this.config,
+      pouch: this.pouch,
+      events: this.events,
+      remoteCozy: this.remoteCozy,
+      prep
+    })
 
     autoBind(this)
   }
