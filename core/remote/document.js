@@ -136,7 +136,8 @@ module.exports = {
   keepFiles,
   parentDirIds,
   inRemoteTrash,
-  remoteJsonToRemoteDoc
+  remoteJsonToRemoteDoc,
+  jsonApiToRemoteJsonDoc
 }
 
 function specialId(id /*: string */) {
@@ -195,4 +196,34 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
 
     return remoteFile
   }
+}
+
+function jsonApiToRemoteJsonDoc(
+  json /*: JsonApiDoc */
+) /*: RemoteJsonDoc|RemoteDeletion */ {
+  if (json._deleted) {
+    return ({
+      _id: json.id,
+      _rev: json.rev,
+      _deleted: true
+    } /*: RemoteDeletion */)
+  }
+
+  if (!json.meta || !json.meta.rev) {
+    throw new Error('Missing meta.rev attribute in JsonAPI resource.')
+  }
+
+  return json.attributes.type === DIR_TYPE
+    ? ({
+        _id: json.id,
+        _type: json.type,
+        _rev: json.meta && json.meta.rev,
+        attributes: json.attributes
+      } /*: RemoteJsonDir */)
+    : ({
+        _id: json.id,
+        _type: json.type,
+        _rev: json.meta && json.meta.rev,
+        attributes: json.attributes
+      } /*: RemoteJsonFile */)
 }

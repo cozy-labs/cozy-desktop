@@ -33,6 +33,7 @@ const normalizePaths = async (
       c.type === 'FileAddition' ||
       c.type === 'DirAddition' ||
       c.type === 'FileUpdate' ||
+      c.type === 'DirUpdate' ||
       c.type === 'FileMove' ||
       c.type === 'DirMove' ||
       c.type === 'DescendantChange'

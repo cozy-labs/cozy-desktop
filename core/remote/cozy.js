@@ -14,6 +14,7 @@ const { DirectoryNotFound } = require('./errors')
 const {
   dropSpecialDocs,
   remoteJsonToRemoteDoc,
+  jsonApiToRemoteJsonDoc,
   keepFiles,
   parentDirIds
 } = require('./document')
@@ -368,6 +369,44 @@ class RemoteCozy {
     }
 
     return results[0]
+  }
+
+  async getDirectoryContent(
+    dir /*: RemoteDir */,
+    { client } /*: { client: ?CozyClient } */ = {}
+  ) /*: Promise<$ReadOnlyArray<MetadataRemoteInfo>> */ {
+    client = client || (await this.newClient())
+
+    let dirContent = []
+    let resp /*: { next: boolean, bookmark?: string, data: Object[] } */ = {
+      next: true,
+      data: []
+    }
+    while (resp && resp.next) {
+      const queryDef = client
+        .find(FILES_DOCTYPE)
+        .where({
+          dir_id: dir._id
+        })
+        .indexFields(['name'])
+        .sortBy([{ name: 'asc' }])
+        .limitBy(10000)
+        .offsetBookmark(resp.bookmark)
+      resp = await client.query(queryDef)
+      for (const j of resp.data) {
+        const remoteJson = jsonApiToRemoteJsonDoc(j)
+        if (remoteJson._deleted) continue
+
+        const remoteDoc = await this.toRemoteDoc(remoteJson, dir)
+        dirContent.push(remoteDoc)
+        if (remoteDoc.type === DIR_TYPE) {
+          // Fetch subdir content
+          dirContent.push(this.getDirectoryContent(remoteDoc, { client }))
+        }
+      }
+    }
+    // $FlowFixMe Array.prototype.flat is available in NodeJS v12
+    return (await Promise.all(dirContent)).flat()
   }
 
   async isEmpty(id /*: string */) /*: Promise<boolean> */ {

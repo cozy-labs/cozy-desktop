@@ -173,19 +173,43 @@ class RemoteWatcher {
     }
   }
 
+  async olds(
+    remoteDocs /*: $ReadOnlyArray<MetadataRemoteInfo|RemoteDeletion> */
+  ) /*: Promise<SavedMetadata[]> */ {
+    const remoteIds = remoteDocs.reduce(
+      (ids, doc) => ids.add(doc._id),
+      new Set()
+    )
+    return await this.pouch.allByRemoteIds(remoteIds)
+  }
+
   /** Pull multiple changed or deleted docs
    *
    * FIXME: Misleading method name?
    */
   async pullMany(
-    docs /*: Array<MetadataRemoteInfo|RemoteDeletion> */
+    docs /*: $ReadOnlyArray<MetadataRemoteInfo|RemoteDeletion> */
   ) /*: Promise<void> */ {
-    const remoteIds = docs.reduce((ids, doc) => ids.add(doc._id), new Set())
-    const olds /*: SavedMetadata[] */ = await this.pouch.allByRemoteIds(
-      remoteIds
-    )
+    let changes = await this.analyse(docs, await this.olds(docs))
 
-    const changes = await this.analyse(docs, olds)
+    if (process.env.NODE_ENV === 'test' || this.config.flags.differentialSync) {
+      log.trace('Fetching content of unknwon folders...')
+      for (const change of changes) {
+        if (
+          change.type === 'DirAddition' &&
+          metadata.extractRevNumber(change.doc.remote) > 1
+        ) {
+          const children = await this.remoteCozy.getDirectoryContent(
+            change.doc.remote
+          )
+          const childChanges = await this.analyse(
+            children,
+            await this.olds(children)
+          )
+          changes = changes.concat(childChanges)
+        }
+      }
+    }
 
     log.trace('Apply changes...')
     const errors = await this.applyAll(changes)
@@ -195,8 +219,8 @@ class RemoteWatcher {
   }
 
   async analyse(
-    remoteDocs /*: Array<MetadataRemoteInfo|RemoteDeletion> */,
-    olds /*: Array<SavedMetadata> */
+    remoteDocs /*: $ReadOnlyArray<MetadataRemoteInfo|RemoteDeletion> */,
+    olds /*: SavedMetadata[] */
   ) /*: Promise<RemoteChange[]> */ {
     log.trace('Contextualize and analyse changesfeed results...')
     const changes = this.identifyAll(remoteDocs, olds)
@@ -218,8 +242,8 @@ class RemoteWatcher {
   }
 
   identifyAll(
-    remoteDocs /*: Array<MetadataRemoteInfo|RemoteDeletion> */,
-    olds /*: Array<SavedMetadata> */
+    remoteDocs /*: $ReadOnlyArray<MetadataRemoteInfo|RemoteDeletion> */,
+    olds /*: SavedMetadata[] */
   ) {
     const changes /*: Array<RemoteChange> */ = []
     const originalMoves = []
@@ -470,6 +494,10 @@ class RemoteWatcher {
         case 'FileUpdate':
           log.info({ path }, 'file was updated remotely')
           await this.prep.updateFileAsync(sideName, change.doc)
+          break
+        case 'DirUpdate':
+          log.info({ path }, 'folder was updated remotely')
+          await this.prep.putFolderAsync(sideName, change.doc)
           break
         case 'FileMove':
           log.info(

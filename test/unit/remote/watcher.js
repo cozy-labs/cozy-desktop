@@ -23,6 +23,7 @@ const { RemoteCozy } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
 const { FILE_TYPE, DIR_TYPE } = require('../../../core/remote/constants')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
+const timestamp = require('../../../core/utils/timestamp')
 
 const { ensureValidPath } = metadata
 
@@ -31,10 +32,43 @@ const isFile = (remoteFile) /*: boolean %checks */ =>
 const isDir = (remoteDir) /*: boolean %checks */ => remoteDir.type === DIR_TYPE
 
 /*::
-import type { RemoteChange, RemoteInvalidChange } from '../../../core/remote/change'
-import type { RemoteDoc, RemoteDeletion, RemoteFile, RemoteDir } from '../../../core/remote/document'
-import type { Metadata, MetadataRemoteInfo, MetadataRemoteFile } from '../../../core/metadata'
+import type {
+  RemoteChange,
+  RemoteInvalidChange
+} from '../../../core/remote/change'
+import type {
+  RemoteDoc,
+  RemoteDeletion,
+  RemoteFile,
+  RemoteDir
+} from '../../../core/remote/document'
+import type {
+  Metadata,
+  MetadataRemoteInfo,
+  MetadataRemoteFile,
+  MetadataRemoteDir
+} from '../../../core/metadata'
+import type { RemoteTree } from '../../support/builders'
 */
+
+const saveTree = async (remoteTree, builders) => {
+  for (const key in remoteTree) {
+    const remoteDoc = remoteTree[key]
+    if (remoteDoc.type === 'folder') {
+      await builders
+        .metadir()
+        .fromRemote(remoteDoc)
+        .upToDate()
+        .create()
+    } else {
+      await builders
+        .metafile()
+        .fromRemote(remoteDoc)
+        .upToDate()
+        .create()
+    }
+  }
+}
 
 describe('RemoteWatcher', function() {
   let builders, remoteTree /*: Object */
@@ -54,17 +88,8 @@ describe('RemoteWatcher', function() {
     this.watcher = new RemoteWatcher(this)
     builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
-  afterEach(function() {
-    this.watcher.stop()
-  })
-  afterEach(function removeEventListeners() {
-    this.events.removeAllListeners()
-  })
-  afterEach(pouchHelpers.cleanDatabase)
-  after(configHelpers.cleanConfig)
-
   beforeEach(async function() {
-    remoteTree = builders.buildRemoteTree([
+    remoteTree = await builders.createRemoteTree([
       'my-folder/',
       'my-folder/folder-1/',
       'my-folder/folder-2/',
@@ -73,24 +98,17 @@ describe('RemoteWatcher', function() {
       'my-folder/file-2',
       'my-folder/file-3'
     ])
-
-    for (const key in remoteTree) {
-      const remoteDoc = remoteTree[key]
-      if (remoteDoc.type === 'folder') {
-        await builders
-          .metadir()
-          .fromRemote(remoteDoc)
-          .upToDate()
-          .create()
-      } else {
-        await builders
-          .metafile()
-          .fromRemote(remoteDoc)
-          .upToDate()
-          .create()
-      }
-    }
+    await saveTree(remoteTree, builders)
   })
+  afterEach(function() {
+    this.watcher.stop()
+  })
+  afterEach(function removeEventListeners() {
+    this.events.removeAllListeners()
+  })
+  afterEach(pouchHelpers.cleanDatabase)
+  afterEach(cozyHelpers.deleteAll)
+  after(configHelpers.cleanConfig)
 
   describe('start', function() {
     const fatalError = new remoteErrors.RemoteError({
@@ -585,6 +603,37 @@ describe('RemoteWatcher', function() {
       should(apply).be.calledOnce()
       should(apply.args[0][0].doc).deepEqual(remoteDeletion)
     })
+
+    it('fetches the content of old directories added to the feed', async function() {
+      const tree /*: RemoteTree */ = await builders.createRemoteTree([
+        'dir/',
+        'dir/subdir/',
+        'dir/subdir/file'
+      ])
+      const dir = (tree['dir/'] /*: any */)
+      const updatedDir = await builders
+        .remoteDir((dir /*: MetadataRemoteDir */))
+        .update()
+
+      await this.watcher.pullMany([updatedDir])
+      should(apply).be.calledThrice()
+      should(apply.args[0][0].doc).deepEqual(validMetadata(updatedDir))
+      should(apply.args[1][0].doc).deepEqual(validMetadata(tree['dir/subdir/']))
+      should(apply.args[2][0].doc).deepEqual(
+        validMetadata(tree['dir/subdir/file'])
+      )
+    })
+
+    it('does not fetch the content of known directories present in the feed', async function() {
+      const dir = (remoteTree['my-folder/'] /*: any */)
+      const updatedDir = await builders
+        .remoteDir((dir /*: MetadataRemoteDir */))
+        .update()
+
+      await this.watcher.pullMany([updatedDir])
+      should(apply).be.calledOnce()
+      should(apply.args[0][0].doc).deepEqual(validMetadata(updatedDir))
+    })
   })
 
   describe('analyse', () => {
@@ -682,7 +731,7 @@ describe('RemoteWatcher', function() {
               [oldDir, oldFile]
             )
 
-            should(dirChange).have.property('type', 'DirAddition')
+            should(dirChange).have.property('type', 'DirUpdate')
             should(dirChange.doc).have.property('path', oldDir.path)
             should(fileChange).have.property('type', 'FileUpdate')
             should(fileChange.doc).have.property('path', oldFile.path)
@@ -2118,7 +2167,11 @@ describe('RemoteWatcher', function() {
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
-        remote: remoteDoc
+        remote: {
+          ...remoteDoc,
+          created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
+          updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at)
+        }
       })
     })
 
@@ -2145,7 +2198,11 @@ describe('RemoteWatcher', function() {
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
-        remote: remoteDoc
+        remote: {
+          ...remoteDoc,
+          created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
+          updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at)
+        }
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
@@ -2174,7 +2231,11 @@ describe('RemoteWatcher', function() {
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
-        remote: remoteDoc
+        remote: {
+          ...remoteDoc,
+          created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
+          updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at)
+        }
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
@@ -2208,7 +2269,11 @@ describe('RemoteWatcher', function() {
         docType: 'file',
         md5sum: remoteDoc.md5sum,
         tags: remoteDoc.tags,
-        remote: remoteDoc
+        remote: {
+          ...remoteDoc,
+          created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
+          updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at)
+        }
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
