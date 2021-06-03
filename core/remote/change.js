@@ -79,6 +79,11 @@ export type RemoteDirTrashing = {
   doc: Metadata,
   was: SavedMetadata
 }
+export type RemoteDirUpdate = {
+  sideName: 'remote',
+  type: 'DirUpdate',
+  doc: Metadata
+}
 export type RemoteIgnoredChange = {
   sideName: 'remote',
   type: 'IgnoredChange',
@@ -115,6 +120,7 @@ export type RemoteChange =
   | RemoteDirMove
   | RemoteDirRestoration
   | RemoteDirTrashing
+  | RemoteDirUpdate
   | RemoteFileAddition
   | RemoteFileDeletion
   | RemoteFileMove
@@ -212,7 +218,7 @@ function upToDate(
 
 function updated(
   doc /*: Metadata */
-) /*: RemoteFileUpdate | RemoteDirAddition */ {
+) /*: RemoteFileUpdate | RemoteDirUpdate */ {
   if (metadata.isFile(doc)) {
     return {
       sideName,
@@ -222,7 +228,7 @@ function updated(
   } else {
     return {
       sideName,
-      type: 'DirAddition',
+      type: 'DirUpdate',
       doc
     }
   }

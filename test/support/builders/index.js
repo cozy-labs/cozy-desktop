@@ -13,6 +13,7 @@ const FileMetadataBuilder = require('./metadata/file')
 const RemoteDirBuilder = require('./remote/dir')
 const RemoteFileBuilder = require('./remote/file')
 const RemoteNoteBuilder = require('./remote/note')
+const RemoteErasedBuilder = require('./remote/erased')
 const StreamBuilder = require('./stream')
 const AtomEventBuilder = require('./atom_event')
 const { DefaultStatsBuilder, WinStatsBuilder } = require('./stats')
@@ -25,6 +26,8 @@ import type { Warning } from '../../../core/remote/cozy'
 import type { RemoteDoc, RemoteFile, RemoteDir } from '../../../core/remote/document'
 import type { AtomEvent } from '../../../core/local/atom/event'
 import type { StatsBuilder } from './stats'
+
+export type RemoteTree = { [string]: MetadataRemoteFile|MetadataRemoteDir }
 */
 
 // Test data builders facade.
@@ -72,9 +75,15 @@ module.exports = class Builders {
     return new RemoteNoteBuilder(this.cozy, old)
   }
 
+  remoteErased(
+    old /*: ?RemoteFile|MetadataRemoteFile|RemoteDir|MetadataRemoteDir */
+  ) /*: RemoteErasedBuilder */ {
+    return new RemoteErasedBuilder(this.cozy, old)
+  }
+
   buildRemoteTree(
     paths /*: Array<string|[string, number]> */
-  ) /*: { [string]: MetadataRemoteFile|MetadataRemoteDir } */ {
+  ) /*: RemoteTree */ {
     const remoteDocsByPath = {}
     for (const p of paths) {
       let docPath, shortRev
@@ -110,6 +119,37 @@ module.exports = class Builders {
           .inDir(parentDir)
           .shortRev(shortRev)
           .build()
+      }
+    }
+
+    return remoteDocsByPath
+  }
+
+  async createRemoteTree(paths /*: string[] */) /*: Promise<RemoteTree> */ {
+    const remoteDocsByPath = {}
+    for (const docPath of paths) {
+      const name = path.posix.basename(docPath)
+      const parentPath = path.posix.dirname(docPath)
+      const parentDir = remoteDocsByPath[parentPath + '/'] || {
+        _id: ROOT_DIR_ID,
+        path: '/'
+      }
+
+      if (docPath.endsWith('/')) {
+        remoteDocsByPath[docPath] = await this.remoteDir()
+          .name(name)
+          .inDir(parentDir)
+          .create()
+      } else if (docPath.endsWith('cozy-note')) {
+        remoteDocsByPath[docPath] = await this.remoteNote()
+          .name(name)
+          .inDir(parentDir)
+          .create()
+      } else {
+        remoteDocsByPath[docPath] = await this.remoteFile()
+          .name(name)
+          .inDir(parentDir)
+          .create()
       }
     }
 

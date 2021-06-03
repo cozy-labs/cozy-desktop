@@ -13,7 +13,8 @@ const { FILES_DOCTYPE, FILE_TYPE, DIR_TYPE } = require('./constants')
 const { DirectoryNotFound } = require('./errors')
 const {
   dropSpecialDocs,
-  jsonApiToRemoteDoc,
+  remoteJsonToRemoteDoc,
+  jsonApiToRemoteJsonDoc,
   keepFiles,
   parentDirIds
 } = require('./document')
@@ -22,7 +23,15 @@ const logger = require('../utils/logger')
 /*::
 import type { Config } from '../config'
 import type { Readable } from 'stream'
-import type { JsonApiDoc, RemoteDoc, RemoteFile, RemoteDir, RemoteDeletion } from './document'
+import type {
+  RemoteJsonDoc,
+  RemoteJsonFile,
+  RemoteJsonDir,
+  RemoteDoc,
+  RemoteFile,
+  RemoteDir,
+  RemoteDeletion,
+} from './document'
 import type { MetadataRemoteInfo, MetadataRemoteFile, MetadataRemoteDir } from '../metadata'
 
 export type Warning = {
@@ -38,6 +47,12 @@ export type Reference = {
   id: string,
   type: string
 }
+
+type ChangesFeedResponse = {|
+  pending: number,
+  last_seq: string,
+  results: Array<{ doc: RemoteDoc|RemoteDeletion }>
+|}
 */
 
 const log = logger({
@@ -169,7 +184,7 @@ class RemoteCozy {
                  executable: boolean|} */
   ) /*: Promise<MetadataRemoteFile> */ {
     return this._withDomainErrors(options, async () => {
-      const file = await this.client.files.create(data, {
+      const file /* RemoteJsonFile*/ = await this.client.files.create(data, {
         ...options,
         noSanitize: true
       })
@@ -183,10 +198,12 @@ class RemoteCozy {
                  createdAt: string,
                  updatedAt: string|} */
   ) /*: Promise<MetadataRemoteDir> */ {
-    const folder = await this.client.files.createDirectory({
-      ...options,
-      noSanitize: true
-    })
+    const folder /*: RemoteJsonDir */ = await this.client.files.createDirectory(
+      {
+        ...options,
+        noSanitize: true
+      }
+    )
     return this.toRemoteDoc(folder)
   }
 
@@ -201,10 +218,14 @@ class RemoteCozy {
                  ifMatch: string|} */
   ) /*: Promise<MetadataRemoteFile> */ {
     return this._withDomainErrors(options, async () => {
-      const updated = await this.client.files.updateById(id, data, {
-        ...options,
-        noSanitize: true
-      })
+      const updated /*: RemoteJsonFile */ = await this.client.files.updateById(
+        id,
+        data,
+        {
+          ...options,
+          noSanitize: true
+        }
+      )
       return this.toRemoteDoc(updated)
     })
   }
@@ -245,7 +266,19 @@ class RemoteCozy {
     const { last_seq, results } = await getChangesFeed(since, this.client)
 
     // The stack docs: dirs, files (without a path), deletions
-    const rawDocs /*: RemoteDoc[] */ = dropSpecialDocs(results.map(r => r.doc))
+    const remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */ = dropSpecialDocs(
+      results.map(r => r.doc)
+    )
+    const docs = await this.completeRemoteDocs(remoteDocs)
+
+    return { last_seq, docs }
+  }
+
+  async completeRemoteDocs(
+    rawDocs /*: Array<RemoteDoc|RemoteDeletion> */
+  ) /*: Promise<Array<MetadataRemoteInfo|RemoteDeletion>> */ {
+    // The final docs with their paths (except for deletions)
+    const remoteDocs /*: Array<MetadataRemoteInfo|RemoteDeletion> */ = []
 
     // The parent dirs for each file, indexed by id
     const fileParentsById = await this.client.data.findMany(
@@ -253,29 +286,26 @@ class RemoteCozy {
       parentDirIds(keepFiles(rawDocs))
     )
 
-    // The final docs with their paths (except for deletions)
-    const remoteDocs /*: Array<MetadataRemoteInfo|RemoteDeletion> */ = []
-
-    for (const remoteDoc of rawDocs) {
-      if (remoteDoc.type === FILE_TYPE) {
-        // File docs returned by the cozy-stack don't have a path
-        const parent = fileParentsById[remoteDoc.dir_id]
-
+    for (const rawDoc of rawDocs) {
+      if (rawDoc._deleted) {
+        remoteDocs.push(rawDoc)
+      } else if (rawDoc.type === FILE_TYPE) {
+        const parent = fileParentsById[rawDoc.dir_id]
         if (parent.error || parent.doc == null || parent.doc.path == null) {
           log.error(
-            { err: parent.error, remoteDoc, parent, sentry: true },
+            { err: parent.error, rawDoc, parent, sentry: true },
             'Could not compute doc path from parent'
           )
           continue
         } else {
-          remoteDocs.push(this._withPath(remoteDoc, parent.doc))
+          remoteDocs.push(this._withPath(rawDoc, parent.doc))
         }
       } else {
-        remoteDocs.push(remoteDoc)
+        remoteDocs.push(rawDoc)
       }
     }
 
-    return { last_seq, docs: remoteDocs }
+    return remoteDocs
   }
 
   async find(id /*: string */) /*: Promise<MetadataRemoteInfo> */ {
@@ -341,6 +371,44 @@ class RemoteCozy {
     return results[0]
   }
 
+  async getDirectoryContent(
+    dir /*: RemoteDir */,
+    { client } /*: { client: ?CozyClient } */ = {}
+  ) /*: Promise<$ReadOnlyArray<MetadataRemoteInfo>> */ {
+    client = client || (await this.newClient())
+
+    let dirContent = []
+    let resp /*: { next: boolean, bookmark?: string, data: Object[] } */ = {
+      next: true,
+      data: []
+    }
+    while (resp && resp.next) {
+      const queryDef = client
+        .find(FILES_DOCTYPE)
+        .where({
+          dir_id: dir._id
+        })
+        .indexFields(['name'])
+        .sortBy([{ name: 'asc' }])
+        .limitBy(10000)
+        .offsetBookmark(resp.bookmark)
+      resp = await client.query(queryDef)
+      for (const j of resp.data) {
+        const remoteJson = jsonApiToRemoteJsonDoc(j)
+        if (remoteJson._deleted) continue
+
+        const remoteDoc = await this.toRemoteDoc(remoteJson, dir)
+        dirContent.push(remoteDoc)
+        if (remoteDoc.type === DIR_TYPE) {
+          // Fetch subdir content
+          dirContent.push(this.getDirectoryContent(remoteDoc, { client }))
+        }
+      }
+    }
+    // $FlowFixMe Array.prototype.flat is available in NodeJS v12
+    return (await Promise.all(dirContent)).flat()
+  }
+
   async isEmpty(id /*: string */) /*: Promise<boolean> */ {
     const dir = await this.client.files.statById(id)
     if (dir.attributes.type !== 'directory') {
@@ -357,13 +425,16 @@ class RemoteCozy {
     return resp.body
   }
 
-  async toRemoteDoc /*:: <T: JsonApiDoc> */(doc /*: T */) /*: Promise<*> */ {
-    const remoteDoc /*: RemoteDoc */ = jsonApiToRemoteDoc(doc)
+  async toRemoteDoc(
+    doc /*: RemoteJsonDoc */,
+    parentDir /*: ?RemoteDir */
+  ) /*: Promise<*> */ {
+    const remoteDoc = remoteJsonToRemoteDoc(doc)
     if (remoteDoc.type === FILE_TYPE) {
-      const parentDir /*: RemoteDir */ = await this.findDir(remoteDoc.dir_id)
+      parentDir = parentDir || (await this.findDir(remoteDoc.dir_id))
       return this._withPath(remoteDoc, parentDir)
     }
-    return (remoteDoc /*: MetadataRemoteDir */)
+    return remoteDoc
   }
 
   /** Set the path of a remote file doc. */
@@ -445,7 +516,7 @@ class RemoteCozy {
 async function getChangesFeed(
   since /*: string */,
   client /*: OldCozyClient */
-) /*: Promise<{ pending: number, last_seq: string, results: Array<{ doc: RemoteDoc }> }> */ {
+) /*: Promise<ChangesFeedResponse> */ {
   const response = await client.data.changesFeed(FILES_DOCTYPE, {
     since,
     include_docs: true,

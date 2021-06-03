@@ -201,17 +201,10 @@ class Merge {
         doc._rev = file._rev
 
         // Keep other side metadata if we're updating the deleted side of file
-        if (
-          side === 'remote' &&
-          file.remote &&
-          (file.remote._deleted || file.remote.trashed)
-        ) {
+        if (side === 'remote' && file.remote && file.remote.trashed) {
           doc.local = file.local
           metadata.markSide(side, doc, file)
-        } else if (
-          side === 'local' &&
-          (!file.remote || (!file.remote._deleted && !file.remote.trashed))
-        ) {
+        } else if (side === 'local' && (!file.remote || !file.remote.trashed)) {
           doc.remote = file.remote
           metadata.markSide(side, doc, file)
         } else {

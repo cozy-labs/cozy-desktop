@@ -7,7 +7,8 @@ const should = require('should')
 const sinon = require('sinon')
 const stream = require('stream')
 const electronFetch = require('electron-fetch')
-const { FetchError } = require('cozy-stack-client')
+const { FetchError } = require('cozy-client') // Peut-être cozy-stack-client
+const CozyClient = require('cozy-client-js').Client
 
 const {
   ROOT_DIR_ID,
@@ -693,6 +694,74 @@ describe('RemoteCozy', function() {
       should(await remoteCozy.capabilities()).deepEqual({
         flatSubdomains: false
       })
+    })
+  })
+
+  describe('#getDirectoryContent', () => {
+    beforeEach(function() {
+      remoteCozy.client = new CozyClient({
+        cozyURL: this.config.cozyUrl,
+        token: process.env.COZY_STACK_TOKEN
+      })
+    })
+
+    it('returns the whole directory content, including the content of subdirectories', async () => {
+      const tree = await builders.createRemoteTree([
+        'dir/',
+        'dir/subdir/',
+        'dir/subdir/subsubdir/',
+        'dir/subdir/file',
+        'dir/file',
+        'dir/subdir/subsubdir/last',
+        'hello.txt',
+        'other-dir/',
+        'other-dir/content'
+      ])
+      await should(
+        remoteCozy.getDirectoryContent(tree['dir/'])
+      ).be.fulfilledWith([
+        tree['dir/file'],
+        tree['dir/subdir/'],
+        tree['dir/subdir/file'],
+        tree['dir/subdir/subsubdir/'],
+        tree['dir/subdir/subsubdir/last']
+      ])
+    })
+
+    it('does not fail on an empty directory', async () => {
+      const dir = await builders
+        .remoteDir()
+        .name('dir')
+        .create()
+      await should(remoteCozy.getDirectoryContent(dir)).be.fulfilledWith([])
+    })
+
+    it('fails on a sub-directory content request failure', async () => {
+      const tree = await builders.createRemoteTree([
+        'dir/',
+        'dir/subdir/',
+        'dir/subdir/subsubdir/',
+        'dir/subdir/file',
+        'dir/file',
+        'dir/subdir/subsubdir/last',
+        'hello.txt',
+        'other-dir/',
+        'other-dir/content'
+      ])
+
+      const stubbedClient = await remoteCozy.newClient()
+      const originalQuery = stubbedClient.query.bind(stubbedClient)
+      sinon.stub(stubbedClient, 'query').callsFake(async queryDef => {
+        if (queryDef.selector.dir_id === tree['dir/subdir/']._id) {
+          throw new Error('test error')
+        } else {
+          return originalQuery(queryDef)
+        }
+      })
+
+      await should(
+        remoteCozy.getDirectoryContent(tree['dir/'], { client: stubbedClient })
+      ).be.rejectedWith(/test error/)
     })
   })
 })

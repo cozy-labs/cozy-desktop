@@ -164,6 +164,12 @@ class Config {
     }
   }
 
+  // Flags are options that can be activated by the user via the config file.
+  // They can be used to activate incomplete features for example.
+  get flags() /*: { [string]: boolean } */ {
+    return _.get(this.fileConfig, 'flags', {})
+  }
+
   get version() /*: ?string */ {
     return _.get(this.fileConfig, 'creds.client.softwareVersion', '')
   }

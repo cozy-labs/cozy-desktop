@@ -3,7 +3,7 @@
 const _ = require('lodash')
 
 const RemoteBaseBuilder = require('./base')
-const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
+const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
@@ -37,7 +37,7 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <Metadata
     const cozy = this._ensureCozy()
 
     return _.clone(
-      jsonApiToRemoteDoc(
+      remoteJsonToRemoteDoc(
         await cozy.files.createDirectory({
           name: this.remoteDoc.name,
           dirID: this.remoteDoc.dir_id,
@@ -52,9 +52,7 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <Metadata
   async update() /*: Promise<MetadataRemoteDir> */ {
     const cozy = this._ensureCozy()
 
-    const json = this.remoteDoc._deleted
-      ? await cozy.files.destroyById(this.remoteDoc._id)
-      : this.remoteDoc.trashed
+    const json = this.remoteDoc.trashed
       ? await cozy.files.trashById(this.remoteDoc._id, { dontRetry: true })
       : await cozy.files.updateAttributesById(this.remoteDoc._id, {
           dir_id: this.remoteDoc.dir_id,
@@ -63,6 +61,6 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <Metadata
           noSanitize: true
         })
 
-    return _.clone(jsonApiToRemoteDoc(json))
+    return _.clone(remoteJsonToRemoteDoc(json))
   }
 }
