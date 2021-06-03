@@ -5,10 +5,12 @@ const http = require('http')
 module.exports = class CozyStackDouble {
   constructor() {
     this.clearStub()
+    this.sockets = []
 
     this.hostname = 'localhost'
     this.port = 9090
     this.server = http.createServer((...args) => this._stub(...args))
+    this.server.on('connection', socket => this.sockets.push(socket))
   }
 
   // The URL for RemoteCozy constructor
@@ -42,6 +44,7 @@ module.exports = class CozyStackDouble {
   // Returns a promise that resolves as soon as the server is not listening.
   stop() {
     return new Promise(resolve => {
+      this.sockets.forEach(socket => socket.destroy())
       this.server.close(resolve)
     })
   }
