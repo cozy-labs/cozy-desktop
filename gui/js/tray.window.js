@@ -7,6 +7,7 @@ const { openNote } = require('../utils/notes')
 const { openUrl } = require('../utils/urls')
 const autoLaunch = require('./autolaunch')
 const DetailsWM = require('./details.window')
+const CozyWebWM = require('./cozy-web.window')
 const { translate } = require('./i18n')
 
 const log = require('../../core/app').logger({
@@ -177,7 +178,17 @@ module.exports = class TrayWM extends WindowManager {
 
   ipcEvents() {
     return {
-      'go-to-cozy': () => shell.openExternal(this.desktop.config.cozyUrl),
+      'go-to-cozy': (event, showInWeb) => {
+        if (showInWeb) {
+          shell.openExternal(this.desktop.config.cozyUrl)
+        } else {
+          let cozyWebWindow = new CozyWebWM(this.app, this.desktop)
+          cozyWebWindow.show()
+          cozyWebWindow.on('closed', () => {
+            cozyWebWindow = null
+          })
+        }
+      },
       'go-to-folder': () =>
         shell.openPath(this.desktop.config.syncPath).catch(err => {
           log.error({ err, sentry: true }, 'Could not open sync folder')

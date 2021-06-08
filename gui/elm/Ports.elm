@@ -69,7 +69,7 @@ port folder : (SyncFolderConfig -> msg) -> Sub msg
 port folderError : (String -> msg) -> Sub msg
 
 
-port gotocozy : () -> Cmd msg
+port gotocozy : Bool -> Cmd msg
 
 
 port gotofolder : () -> Cmd msg

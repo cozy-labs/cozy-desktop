@@ -111,8 +111,8 @@ ipcRenderer.on('new-release-available', (event, notes, name) => {
 elmectron.ports.quitAndInstall.subscribe(() => {
   ipcRenderer.send('quit-and-install')
 })
-elmectron.ports.gotocozy.subscribe(() => {
-  ipcRenderer.send('go-to-cozy')
+elmectron.ports.gotocozy.subscribe(showInWeb => {
+  ipcRenderer.send('go-to-cozy', showInWeb)
 })
 elmectron.ports.gotofolder.subscribe(() => {
   ipcRenderer.send('go-to-folder')
