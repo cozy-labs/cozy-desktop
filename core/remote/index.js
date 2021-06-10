@@ -13,8 +13,11 @@ const { isNote } = require('../utils/notes')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
 const conflicts = require('../utils/conflicts')
+const pathUtils = require('../utils/path')
 const metadata = require('../metadata')
+const { ROOT_DIR_ID, DIR_TYPE } = require('./constants')
 const { RemoteCozy } = require('./cozy')
+const { DirectoryNotFound } = require('./errors')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
 const timestamp = require('../utils/timestamp')
@@ -24,7 +27,7 @@ import type EventEmitter from 'events'
 import type { SideName } from '../side'
 import type { Readable } from 'stream'
 import type { Config } from '../config'
-import type { SavedMetadata, MetadataRemoteInfo } from '../metadata'
+import type { SavedMetadata, MetadataRemoteInfo, MetadataRemoteDir } from '../metadata'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { RemoteDoc } from './document'
@@ -42,6 +45,21 @@ export type RemoteOptions = {
 const log = logger({
   component: 'RemoteWriter'
 })
+
+// A simplified version of the remote Root directory which will be used when
+// looking for the parent directory's _id of documents at the root of the Cozy.
+// The only information we care about are its _id, type and path.
+const ROOT_DIR /*: MetadataRemoteDir */ = {
+  _id: ROOT_DIR_ID,
+  _rev: '1',
+  dir_id: '',
+  name: '',
+  tags: [],
+  created_at: '',
+  updated_at: '',
+  type: DIR_TYPE,
+  path: '/'
+}
 
 /** `Remote` is the class that interfaces cozy-desktop with the remote Cozy.
  *
@@ -122,9 +140,7 @@ class Remote /*:: implements Reader, Writer */ {
     log.info({ path }, 'Creating folder...')
 
     const [parentPath, name] = dirAndName(doc.path)
-    const parent /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(
-      parentPath
-    )
+    const parent /*: RemoteDoc */ = await this.findDirectoryByPath(parentPath)
 
     try {
       const dir = await this.remoteCozy.createDirectory(
@@ -136,6 +152,8 @@ class Remote /*:: implements Reader, Writer */ {
         throw err
       }
 
+      // TODO: stop linking docs like this. Throw the error and let the remote
+      // watcher do its job.
       log.info({ path }, 'Folder already exists')
       const remotePath = '/' + posix.join(...doc.path.split(sep))
       const dir = await this.remoteCozy.findDirectoryByPath(remotePath)
@@ -149,6 +167,9 @@ class Remote /*:: implements Reader, Writer */ {
     log.info({ path }, 'Uploading new file...')
     const stopMeasure = measureTime('RemoteWriter#addFile')
 
+    const [parentPath, name] = dirAndName(path)
+    const parent = await this.findDirectoryByPath(parentPath)
+
     let stream
     try {
       stream = await this.other.createReadStreamAsync(doc)
@@ -161,11 +182,8 @@ class Remote /*:: implements Reader, Writer */ {
       throw err
     }
 
-    const [dirPath, name] = dirAndName(path)
-    const dir = await this.remoteCozy.findDirectoryByPath(dirPath)
-
     const created = await this.remoteCozy.createFile(stream, {
-      ...newDocumentAttributes(name, dir._id, doc.updated_at),
+      ...newDocumentAttributes(name, parent._id, doc.updated_at),
       checksum: doc.md5sum,
       executable: doc.executable || false,
       contentLength: doc.size,
@@ -270,13 +288,11 @@ class Remote /*:: implements Reader, Writer */ {
       }
 
       log.warn({ path }, "Directory doesn't exist anymore. Recreating it...")
-      const [newParentDirPath, newName] = dirAndName(path)
-      const newParentDir = await this.remoteCozy.findDirectoryByPath(
-        newParentDirPath
-      )
+      const [newParentPath, newName] = dirAndName(path)
+      const newParent = await this.findDirectoryByPath(newParentPath)
 
       const newRemoteDoc = await this.remoteCozy.createDirectory(
-        newDocumentAttributes(newName, newParentDir._id, doc.updated_at)
+        newDocumentAttributes(newName, newParent._id, doc.updated_at)
       )
       metadata.updateRemote(doc, newRemoteDoc)
     }
@@ -297,14 +313,14 @@ class Remote /*:: implements Reader, Writer */ {
       }`
     )
 
-    const [newDirPath, newName] /*: [string, string] */ = dirAndName(path)
-    const newDir /*: RemoteDoc */ = await this.remoteCozy.findDirectoryByPath(
-      newDirPath
+    const [newParentPath, newName] /*: [string, string] */ = dirAndName(path)
+    const newParent /*: MetadataRemoteDir */ = await this.findDirectoryByPath(
+      newParentPath
     )
 
     const attrs = {
       name: newName,
-      dir_id: newDir._id,
+      dir_id: newParent._id,
       updated_at: mostRecentUpdatedAt(newMetadata)
     }
     const opts = {
@@ -404,11 +420,31 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async findDocByPath(fpath /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
-    const [dir, name] = dirAndName(fpath)
-    const { _id: dirID } = await this.remoteCozy.findDirectoryByPath(dir)
+    const [parentPath, name] = dirAndName(fpath)
+    const { _id: dirID } = await this.findDirectoryByPath(parentPath)
 
     const results = await this.remoteCozy.search({ dir_id: dirID, name })
     if (results.length > 0) return results[0]
+  }
+
+  async findDirectoryByPath(
+    path /*: string */
+  ) /*: Promise<MetadataRemoteDir> */ {
+    if (path === '.') return ROOT_DIR
+
+    // XXX: We use the synced path instead of the remote path here as the goal
+    // is to find parent directories of documents during the synchronization of
+    // their changes and the parent can have been moved or renamed on the local
+    // filesystem and not on the remote Cozy yet.
+    // For now, the synced path is updated whenever the local or remote paths
+    // are changed but we'll need to review this when we start updating it only
+    // after a move has been fully synchronzed.
+    const dir = await this.pouch.bySyncedPath(pathUtils.remoteToLocal(path))
+    if (!dir || dir.docType !== 'folder' || !dir.remote) {
+      throw new DirectoryNotFound(path, this.config.cozyUrl)
+    }
+
+    return dir.remote
   }
 
   async resolveRemoteConflict(
@@ -447,12 +483,10 @@ class Remote /*:: implements Reader, Writer */ {
 
 /** Extract the remote parent path and leaf name from a local path */
 function dirAndName(localPath /*: string */) /*: [string, string] */ {
-  const dir =
-    '/' +
-    localPath
-      .split(path.sep)
-      .slice(0, -1)
-      .join('/')
+  const dir = path
+    .dirname(localPath)
+    .split(path.sep)
+    .join('/')
   const name = path.basename(localPath)
   return [dir, name]
 }

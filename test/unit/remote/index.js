@@ -12,10 +12,10 @@ const should = require('should')
 const metadata = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
 const remote = require('../../../core/remote')
-const { Remote } = remote
 const { DirectoryNotFound } = require('../../../core/remote/errors')
 const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../../core/remote/constants')
 const { FetchError } = require('../../../core/remote/cozy')
+const { remoteJsonToRemoteDoc } = require('../../../core/remote/document')
 const timestamp = require('../../../core/utils/timestamp')
 const { CONFLICT_REGEXP } = require('../../../core/utils/conflicts')
 
@@ -35,14 +35,14 @@ describe('remote.Remote', function() {
 
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
-  before('instanciate pouch', pouchHelpers.createDatabase)
-  before('prepare builders', function() {
+  beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+  beforeEach('prepare builders', function() {
     builders = new Builders({ cozy, pouch: this.pouch })
   })
-  before('instanciate remote', function() {
+  beforeEach('instanciate remote', function() {
     this.prep = sinon.createStubInstance(Prep)
     this.events = new EventEmitter()
-    this.remote = new Remote(this)
+    this.remote = new remote.Remote(this)
     // TODO: find out why the client built by `new Remote()` doesn't behave
     // correctly (i.e. its auth isn't totally set and we can end up getting
     // errors from `cozy-client-js` because it's missing a `client_secret`).
@@ -55,8 +55,13 @@ describe('remote.Remote', function() {
       .name('couchdb-folder')
       .inRootDir()
       .create()
+    await builders
+      .metadir()
+      .fromRemote(couchdbFolder)
+      .upToDate()
+      .create()
   })
-  after('clean pouch', pouchHelpers.cleanDatabase)
+  afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('constructor', () => {
@@ -172,6 +177,23 @@ describe('remote.Remote', function() {
         .and.not.have.property('remote')
     })
 
+    it('rejects with a DirectoryNotFound error if its parent is missing on the Cozy', async function() {
+      const doc /*: Metadata */ = builders
+        .metafile()
+        .path('dir/foo')
+        .sides({ local: 1 })
+        .build()
+      this.remote.other = {
+        createReadStreamAsync() {
+          // XXX: we should not care if the file exists locally or not
+          return fse.readFile('dir/foo')
+        }
+      }
+      await should(this.remote.addFileAsync(doc)).be.rejectedWith(
+        DirectoryNotFound
+      )
+    })
+
     it('rejects if there is not enough space on the Cozy', async function() {
       sinon
         .stub(this.remote.remoteCozy, 'createFile')
@@ -207,10 +229,10 @@ describe('remote.Remote', function() {
   })
 
   describe('addFolderAsync', () => {
-    it('adds a folder to couchdb', async function() {
+    it('adds a folder on the remote Cozy', async function() {
       const doc = builders
         .metadir()
-        .path('couchdb-folder/folder-1')
+        .path('folder-1')
         .sides({ local: 1 })
         .updatedAt(timestamp.build(2017, 2, 14, 15, 3, 27))
         .build()
@@ -221,7 +243,7 @@ describe('remote.Remote', function() {
 
       const folder = await cozy.files.statById(doc.remote._id)
       should(folder.attributes).have.properties({
-        path: '/couchdb-folder/folder-1',
+        path: '/folder-1',
         name: 'folder-1',
         type: 'directory'
       })
@@ -821,6 +843,11 @@ describe('remote.Remote', function() {
           .name('moved-to')
           .inRootDir()
           .create()
+        await builders
+          .metadir()
+          .fromRemote(newDir)
+          .upToDate()
+          .create()
         const remoteDoc = await builders
           .remoteFile()
           .name('cat6.jpg')
@@ -867,56 +894,24 @@ describe('remote.Remote', function() {
           .createdAt(2018, 1, 2, 5, 31, 30, 564)
           .updatedAt(2018, 1, 2, 5, 31, 30, 564)
           .create()
-        const old = builders
+        const old = await builders
           .metadir()
           .fromRemote(created)
           .changedSide('local')
-          .build()
-        const doc = builders
+          .create()
+        const doc = await builders
           .metadir()
           .moveFrom(old)
           .path('couchdb-folder/folder-5')
           .updatedAt('2018-07-31T05:37:43.770Z')
-          .build()
+          .create()
+
         await this.remote.moveAsync(doc, old)
+
         const folder = await cozy.files.statById(doc.remote._id)
         should(folder.attributes).have.properties({
           dir_id: couchdbFolder._id,
           name: 'folder-5',
-          type: 'directory'
-        })
-        should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
-          doc.updated_at
-        )
-      })
-
-      it('adds a folder to the Cozy if the folder does not exist', async function() {
-        const couchdbFolder = await cozy.files.statByPath('/couchdb-folder')
-        const created = await builders
-          .remoteDir()
-          .name('folder-6')
-          .inDir({ _id: couchdbFolder._id, path: '/couchdb-folder' })
-          .createdAt(2018, 1, 2, 5, 31, 30, 564)
-          .updatedAt(2018, 1, 2, 5, 31, 30, 564)
-          .create()
-        const old = builders
-          .metadir()
-          .fromRemote(created)
-          .changedSide('local')
-          .build()
-        const doc = builders
-          .metadir()
-          .moveFrom(old)
-          .path('couchdb-folder/folder-7')
-          .updatedAt('2018-07-31T05:37:43.770Z')
-          .build()
-
-        await this.remote.moveAsync(doc, old)
-
-        const folder = await cozy.files.statById(doc.remote._id)
-        should(folder.attributes).have.properties({
-          dir_id: couchdbFolder._id,
-          name: 'folder-7',
           type: 'directory'
         })
         should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
@@ -997,6 +992,11 @@ describe('remote.Remote', function() {
           .remoteDir()
           .name('moved-to')
           .inRootDir()
+          .create()
+        await builders
+          .metadir()
+          .fromRemote(newDir)
+          .upToDate()
           .create()
 
         existingRemote = await builders
@@ -1250,10 +1250,10 @@ describe('remote.Remote', function() {
   })
 
   describe('ping', () => {
-    before(function() {
+    beforeEach(function() {
       sinon.stub(this.remote.remoteCozy, 'diskUsage')
     })
-    after(function() {
+    afterEach(function() {
       this.remote.remoteCozy.diskUsage.restore()
     })
 
@@ -1265,6 +1265,112 @@ describe('remote.Remote', function() {
     it('resolves to false if we cannot successfuly fetch the remote disk usage', async function() {
       this.remote.remoteCozy.diskUsage.rejects()
       await should(this.remote.ping()).be.fulfilledWith(false)
+    })
+  })
+
+  describe('findDirectoryByPath', () => {
+    let oldRemoteDir, newRemoteDir, oldDir, dir
+    beforeEach(async function() {
+      oldRemoteDir = await builders
+        .remoteDir()
+        .name('old')
+        .create()
+      oldDir = await builders
+        .metadir()
+        .fromRemote(oldRemoteDir)
+        .upToDate()
+        .create()
+      dir = await builders
+        .metadir()
+        .moveFrom(oldDir)
+        .path('dir')
+        .changedSide('local')
+        .create()
+      newRemoteDir = await builders
+        .remoteDir()
+        .name('dir')
+        .create()
+    })
+
+    it('returns the directory metadata saved in PouchDB', async function() {
+      await should(this.remote.findDirectoryByPath('dir')).be.fulfilledWith(
+        dir.remote
+      )
+      should(dir.remote).have.properties({
+        _id: oldRemoteDir._id,
+        _rev: oldRemoteDir._rev
+      })
+      should(dir.remote).not.have.properties({
+        _id: newRemoteDir._id,
+        _rev: newRemoteDir._rev
+      })
+    })
+
+    it('handles different local and remote paths formats', async function() {
+      // XXX: The synced path of this directory on Windows will be
+      // `whatever\childDir` and since we search by synced path, this tests that
+      // we handle the conversion.
+      const childDir = await builders
+        .metadir()
+        .path('whatever/childDir')
+        .upToDate()
+        .create()
+
+      await should(
+        this.remote.findDirectoryByPath('whatever/childDir')
+      ).be.fulfilledWith(childDir.remote)
+    })
+
+    it('returns the remote root directory for path .', async function() {
+      // $FlowFixMe Root is a directory
+      const root /*: RemoteDir */ = remoteJsonToRemoteDoc(
+        // XXX: We call the cozy-client-js method directly to increase the
+        // likelyhood that the remote document is unaltered.
+        await this.remote.remoteCozy.client.files.statById(ROOT_DIR_ID)
+      )
+
+      should(await this.remote.findDirectoryByPath('.')).have.properties({
+        _id: root._id,
+        name: root.name,
+        path: root.path,
+        dir_id: root.dir_id,
+        type: root.type
+      })
+    })
+
+    it('returns a DirectoryNotFound error if the directory cannot be found in PouchDB', async function() {
+      await builders
+        .remoteDir()
+        .name('missing')
+        .create()
+
+      await should(this.remote.findDirectoryByPath('missing')).be.rejectedWith(
+        DirectoryNotFound
+      )
+    })
+
+    it('returns a DirectoryNotFound error if the local document is not a directory', async function() {
+      await builders
+        .metafile()
+        .path('wrong-type')
+        .upToDate()
+        .create()
+
+      await should(
+        this.remote.findDirectoryByPath('wrong-type')
+      ).be.rejectedWith(DirectoryNotFound)
+    })
+
+    it('returns a DirectoryNotFound error if the directory has no remote side', async function() {
+      await builders
+        .metadir()
+        .path('no-remote')
+        .sides({ local: 1 })
+        .create()
+
+      await should(
+        this.remote.findDirectoryByPath('no-remote')
+      ).be.rejectedWith(DirectoryNotFound)
     })
   })
 
@@ -1337,13 +1443,13 @@ describe('remote.Remote', function() {
 describe('remote', function() {
   describe('.dirAndName()', () => {
     it('returns the remote path and name', function() {
-      should(remote.dirAndName('foo')).deepEqual(['/', 'foo'])
+      should(remote.dirAndName('foo')).deepEqual(['.', 'foo'])
       should(remote.dirAndName(path.normalize('foo/bar'))).deepEqual([
-        '/foo',
+        'foo',
         'bar'
       ])
       should(remote.dirAndName(path.normalize('foo/bar/baz'))).deepEqual([
-        '/foo/bar',
+        'foo/bar',
         'baz'
       ])
     })
