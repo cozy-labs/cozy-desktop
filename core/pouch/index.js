@@ -183,9 +183,10 @@ class Pouch {
   }
 
   async put /*:: <T: Metadata|SavedMetadata> */(
-    doc /*: T */
+    doc /*: T */,
+    { checkInvariants = true } /*: { checkInvariants: boolean } */ = {}
   ) /*: Promise<SavedMetadata> */ {
-    metadata.invariants(doc)
+    if (checkInvariants) metadata.invariants(doc)
     log.debug(
       { path: doc.path, _deleted: doc._deleted, doc },
       'Saving metadata...'
