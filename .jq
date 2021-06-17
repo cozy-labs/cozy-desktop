@@ -16,10 +16,14 @@ def redactNote(obj):
 
 def cleanNote:
   .
-  | if isempty(.doc | objects) |not then redactNote(.doc) else . end
-  | if isempty(.was | objects) |not then redactNote(.was) else . end
-  | if isempty(.remoteDoc | objects) |not then redactNote(.remoteDoc) else . end
-  | if isempty(.note | objects) |not then redactNote(.note) else . end
+  | if isempty(.doc | objects) | not then redactNote(.doc) else . end
+  | if isempty(.was | objects) | not then redactNote(.was) else . end
+  | if isempty(.remoteDoc | objects) | not then redactNote(.remoteDoc) else . end
+  | if isempty(.note | objects) | not then redactNote(.note) else . end
+  | if isempty(.file | objects) | not then redactNote(.file) else . end
+  | if isempty(.err | objects) | not then .
+    | .err |= (. | redactNote(.doc))
+    else . end
   | if isempty(.change | objects) | not then .
     | .change |= (. | redactNote(.doc))
     | .change |= (. | redactNote(.was))
@@ -145,6 +149,15 @@ def path(pattern):
     )
       | strings
       | test(pattern)
+  );
+
+def shortPath:
+  (
+    .
+    | if isempty(.path | strings) | not then .path |= (. | split("\\") | last) else . end
+    | if isempty(.path | strings) | not then .path |= (. | split("/") | last) else . end
+    | if isempty(.oldpath | strings) | not then .oldpath |= (. | split("\\") | last) else . end
+    | if isempty(.oldpath | strings) | not then .oldpath |= (. | split("/") | last) else . end
   );
 
 # Include/exclude GUI stuff:
