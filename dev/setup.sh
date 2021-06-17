@@ -10,8 +10,8 @@ DEBUG=1
 EOF
 
 # Install cozy apps
-yarn docker:exec apt-get update
-yarn docker:exec apt-get install -y --no-install-recommends git
+apt-get update
+apt-get install -y --no-install-recommends git
 for app in home settings drive photos collect; do
-  yarn cozy-stack apps install "$app"
+  cozy-stack apps install "$app"
 done
