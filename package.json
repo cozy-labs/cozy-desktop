@@ -40,6 +40,7 @@
     "cozy-stack": "yarn docker:exec cozy-stack",
     "dev:setup": "yarn docker:exec /cozy-desktop/dev/setup.sh",
     "dev:elm": "yarn watch:css & yarn watch:elm & python2 -m SimpleHTTPServer 8000",
+    "dev:exclusions": "env-cmd .env.dev electron ./dev/remote/change-dir-exclusions.js",
     "dist": "electron-builder build",
     "dist:all": "yarn dist --x64 --ia32",
     "docker:exec": "docker exec -it cozy-desktop-stack",
@@ -163,7 +164,8 @@
     "should-sinon": "^0.0.5",
     "sinon": "^2.3.1",
     "source-map-support": "^0.5.11",
-    "stylus": "^0.54.5"
+    "stylus": "^0.54.5",
+    "treeify": "^1.1.0"
   },
   "optionalDependencies": {
     "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#1.0.0"
