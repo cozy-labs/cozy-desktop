@@ -589,13 +589,10 @@ class Sync {
       if (from.incompatibilities && side.name === 'local') {
         await this.doAdd(side, doc)
       } else if (from.childMove) {
-        await side.assignNewRemote(doc)
-        if (doc.docType === 'file') {
-          this.events.emit('transfer-move', _.clone(doc), _.clone(from))
-        }
+        await this.doChildMove(side, doc, from)
       } else {
         if (from.moveFrom && from.moveFrom.childMove) {
-          await side.assignNewRemote(from)
+          await this.doChildMove(side, from, from.moveFrom)
         }
         await this.doMove(side, doc, from)
       }
@@ -690,11 +687,22 @@ class Sync {
   async doMove(
     side /*: Writer */,
     doc /*: SavedMetadata */,
-    old /*: SavedMetadata */
+    from /*: SavedMetadata */
   ) /*: Promise<void> */ {
-    await side.moveAsync(doc, old)
+    await side.moveAsync(doc, from)
     if (doc.docType === 'file') {
-      this.events.emit('transfer-move', _.clone(doc), _.clone(old))
+      this.events.emit('transfer-move', _.clone(doc), _.clone(from))
+    }
+  }
+
+  async doChildMove(
+    side /*: Writer */,
+    doc /*: SavedMetadata */,
+    from /*: SavedMetadata */
+  ) /*: Promise<void> */ {
+    await side.assignNewRemote(doc)
+    if (doc.docType === 'file') {
+      this.events.emit('transfer-move', _.clone(doc), _.clone(from))
     }
   }
 
