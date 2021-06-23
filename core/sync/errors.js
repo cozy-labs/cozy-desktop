@@ -3,6 +3,7 @@
 const { IncompatibleDocError } = require('../incompatibilities/platform')
 const { HEARTBEAT: REMOTE_HEARTBEAT } = require('../remote/constants')
 const remoteErrors = require('../remote/errors')
+const logger = require('../utils/logger')
 
 /*::
 import type { SavedMetadata } from '../metadata'
@@ -11,7 +12,12 @@ import type { Local } from '../local'
 import type { Remote } from '../remote'
 import type { Warning } from '../remote/cozy'
 import type { RemoteError, FetchError } from '../remote/errors'
+import type { Sync, Change } from '.'
 */
+
+const log = logger({
+  component: 'Sync:errors'
+})
 
 const SECONDS = 1000
 const MINUTES = 60 * SECONDS
@@ -121,6 +127,63 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
   }
 }
 
+const retry = async (
+  cause /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */,
+  sync /*: Sync */
+) => {
+  log.debug(cause, 'retrying after blocking error')
+
+  const { err } = cause
+  if (err.code === remoteErrors.UNREACHABLE_COZY_CODE) {
+    // We could simply fetch the remote changes but it could take time
+    // before we're done fetching them and we want to notify the GUI we're
+    // back online as soon as possible.
+    if (await sync.remote.ping()) {
+      sync.events.emit('online')
+    } else {
+      sync.events.emit('offline')
+      // $FlowFixMe intervals have a refresh() method starting with Node v10
+      if (sync.retryInterval) sync.retryInterval.refresh()
+      // We're still offline so no need to try fetching changes or
+      // synchronizing.
+      return
+    }
+  }
+
+  clearInterval(sync.retryInterval)
+
+  if (cause.change) {
+    // We increment the record's errors counter to keep track of the
+    // retries and above all, save any changes made to the record by
+    // `applyDoc()` and such (e.g. when applying a file move with update,
+    // if the update fails, we want to remove the `moveFrom` attribute to
+    // avoid re-applying the move which was already applied).
+    await sync.updateErrors(cause.change, cause.err)
+  }
+
+  // Await to make sure we've fetched potential remote changes
+  if (sync.remote.watcher && !sync.remote.watcher.running) {
+    await sync.remote.watcher.start()
+  }
+}
+
+const skip = async (
+  cause /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */,
+  sync /*: Sync */
+) => {
+  log.debug(cause, 'user skipped required action')
+
+  clearInterval(sync.retryInterval)
+
+  if (cause.change) {
+    await sync.skipChange(cause.change, cause.err)
+  }
+
+  if (!sync.remote.watcher.running) {
+    await sync.remote.watcher.start()
+  }
+}
+
 /* This method wraps errors caught during a Sync.apply call.
  * Those errors were most probably raised from the Local or Remote side thus
  * making a SyncError type unnecessary.
@@ -161,5 +224,7 @@ module.exports = {
   UNKNOWN_SYNC_ERROR_CODE,
   SyncError,
   retryDelay,
+  retry,
+  skip,
   wrapError
 }

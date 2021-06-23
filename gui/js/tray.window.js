@@ -207,14 +207,11 @@ module.exports = class TrayWM extends WindowManager {
           detailsWindow = null
         })
       },
-      userActionDone: (event, action) => {
-        this.desktop.events.emit('user-action-done', action)
-      },
       userActionInProgress: (event, action) => {
         this.desktop.events.emit('user-action-inprogress', action)
       },
-      userActionSkipped: (event, action) => {
-        this.desktop.events.emit('user-action-skipped', action)
+      userActionCommand: (event, cmd, action) => {
+        this.desktop.events.emit('user-action-command', { cmd, action })
       }
     }
   }

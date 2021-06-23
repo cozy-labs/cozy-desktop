@@ -146,16 +146,12 @@ elmectron.ports.userActionDetails.subscribe(action => {
   ipcRenderer.send('userActionDetails', action)
 })
 
-elmectron.ports.userActionDone.subscribe(action => {
-  ipcRenderer.send('userActionDone', action)
-})
-
 elmectron.ports.userActionInProgress.subscribe(action => {
   ipcRenderer.send('userActionInProgress', action)
 })
 
-elmectron.ports.userActionSkipped.subscribe(action => {
-  ipcRenderer.send('userActionSkipped', action)
+elmectron.ports.userActionCommand.subscribe(([cmd, action]) => {
+  ipcRenderer.send('userActionCommand', cmd, action)
 })
 
 ipcRenderer.on('sync-state', (
