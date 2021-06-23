@@ -13,6 +13,9 @@ import type { Warning } from '../remote/cozy'
 import type { RemoteError, FetchError } from '../remote/errors'
 */
 
+const SECONDS = 1000
+const MINUTES = 60 * SECONDS
+
 const INCOMPATIBLE_DOC_CODE = 'IncompatibleDoc'
 const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
 const NO_DISK_SPACE_CODE = 'NoDiskSpace'
@@ -78,10 +81,10 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
     // application error.
     switch (err.code) {
       case remoteErrors.UNREACHABLE_COZY_CODE:
-        return 10000
+        return 10 * SECONDS
 
       case remoteErrors.USER_ACTION_REQUIRED_CODE:
-        return 60000
+        return 1 * MINUTES
 
       default:
         return REMOTE_HEARTBEAT
@@ -90,19 +93,19 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
     // The error originates from Sync and means we failed to apply a change.
     switch (err.code) {
       case MISSING_PERMISSIONS_CODE:
-        return 10000
+        return 10 * SECONDS
 
       case NO_DISK_SPACE_CODE:
-        return 60000
+        return 1 * MINUTES
 
       case remoteErrors.NO_COZY_SPACE_CODE:
-        return 10000
+        return 10 * SECONDS
 
       case remoteErrors.UNREACHABLE_COZY_CODE:
-        return 10000
+        return 10 * SECONDS
 
       case remoteErrors.USER_ACTION_REQUIRED_CODE:
-        return 60000
+        return 1 * MINUTES
 
       default:
         // Arbutrary value to make sure we don't retry too soon and overload the
