@@ -193,12 +193,15 @@ class RemoteWatcher {
     let changes = await this.analyse(docs, await this.olds(docs))
 
     if (process.env.NODE_ENV === 'test' || this.config.flags.differentialSync) {
-      log.trace('Fetching content of unknwon folders...')
       for (const change of changes) {
         if (
           change.type === 'DirAddition' &&
           metadata.extractRevNumber(change.doc.remote) > 1
         ) {
+          log.trace(
+            { path: change.doc.path },
+            'Fetching content of unknwon folder...'
+          )
           const children = await this.remoteCozy.getDirectoryContent(
             change.doc.remote
           )
