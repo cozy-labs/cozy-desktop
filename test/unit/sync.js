@@ -376,6 +376,7 @@ describe('Sync', function() {
     describe('local file update', () => {
       const previousSeq = 759
       const seq = previousSeq + 1
+      const sideName = 'local'
 
       let file, merged, change
 
@@ -387,32 +388,43 @@ describe('Sync', function() {
           .create()
         merged = await builders
           .metafile(file)
-          .changedSide('local')
+          .changedSide(sideName)
           .data('updated content')
           .create()
 
         await this.pouch.setLocalSeq(previousSeq)
 
         change = { seq, doc: _.cloneDeep(merged) }
+        sinon.stub(this.sync, 'getNextChanges').returns([change])
+      })
+      afterEach(function() {
+        this.sync.getNextChanges.restore()
       })
 
-      const applyChange = async function() {
-        await this.sync.apply(change)
-      }
-
-      describe('when .remote#overwriteFileAsync() throws status 412', () => {
+      describe('when apply throws a NEEDS_REMOTE_MERGE_CODE error', () => {
         beforeEach(function() {
-          sinon.spy(this.sync, 'blockSyncFor')
+          sinon.stub(this.sync, 'blockSyncFor').callsFake(() => {
+            this.sync.lifecycle.end('stop')
+          })
         })
-        beforeEach('simulate error 412', function() {
-          this.remote.overwriteFileAsync.rejects(
-            new FetchError(
-              { status: 412 },
-              { errors: [{ status: 412, source: { parameter: 'If-Match' } }] }
-            )
+        beforeEach('simulate error', async function() {
+          this.sync.lifecycle.end('start')
+          sinon.stub(this.sync, 'apply').rejects(
+            new syncErrors.SyncError({
+              code: remoteErrors.NEEDS_REMOTE_MERGE_CODE,
+              sideName,
+              err: new FetchError(
+                { status: 412 },
+                {
+                  errors: [{ status: 412, source: { parameter: 'If-Match' } }]
+                }
+              ),
+              doc: change.doc
+            })
           )
+          await this.sync.syncBatch()
+          this.sync.apply.restore()
         })
-        beforeEach(applyChange)
         afterEach(function() {
           this.sync.blockSyncFor.restore()
         })

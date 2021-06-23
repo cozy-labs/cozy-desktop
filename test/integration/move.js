@@ -757,11 +757,7 @@ describe('Move', () => {
     })
 
     context('local to an ignored path', () => {
-      // XXX: We should try to trash the entire folder and keep its hierarchy
-      // but we're deleting the content first so the file is deleted before its
-      // parents which get completely erased from the Cozy since they're empty
-      // when we finally trash them.
-      it('trashes the folder content on the remote Cozy', async () => {
+      it('trashes the folder and its content on the remote Cozy', async () => {
         const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
         const doc = builders
           .metadir()
