@@ -30,6 +30,8 @@ describe('Remote', function() {
     this.prep.config = this.config
     this.events = new EventEmitter()
     this.remote = new Remote(this)
+    // Use real OAuth client
+    this.remote.remoteCozy.client = cozyHelpers.cozy
   })
   beforeEach(cozyHelpers.deleteAll)
   beforeEach('create the couchdb folder', async function() {

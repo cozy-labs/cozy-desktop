@@ -24,7 +24,7 @@ import type { MetadataRemoteFile, MetadataRemoteDir } from '../../../../core/met
 //
 //     const doc: RemoteDeletion = await builders.remoteErased().create()
 //
-module.exports = class RemoteDirBuilder {
+module.exports = class RemoteErasedBuilder {
   /*::
   cozy: ?Cozy
   remoteDoc: ?RemoteFile|MetadataRemoteFile|RemoteDir|MetadataRemoteDir
@@ -71,10 +71,16 @@ module.exports = class RemoteDirBuilder {
     const cozy = this._ensureCozy()
 
     if (this.remoteDoc) {
-      const json = await cozy.files.destroyById(this.remoteDoc._id)
-      return _.clone(remoteJsonToRemoteDoc(json))
+      const { _id, _rev } = this.remoteDoc
+      await cozy.files.destroyById(_id)
+      return {
+        _id,
+        // Build a fake revision as destroyById does not return the deleted doc
+        _rev: dbBuilders.rev(metadata.extractRevNumber({ _rev }) + 1),
+        _deleted: true
+      }
     } else {
-      const remoteDir = _.clone(
+      const { _id, _rev } = _.clone(
         remoteJsonToRemoteDoc(
           await cozy.files.createDirectory({
             name: '',
@@ -83,8 +89,13 @@ module.exports = class RemoteDirBuilder {
           })
         )
       )
-      const json = await cozy.files.destroyById(remoteDir._id)
-      return _.clone(remoteJsonToRemoteDoc(json))
+      await cozy.files.destroyById(_id)
+      return {
+        _id,
+        // Build a fake revision as destroyById does not return the deleted doc
+        _rev: dbBuilders.rev(metadata.extractRevNumber({ _rev }) + 1),
+        _deleted: true
+      }
     }
   }
 }
