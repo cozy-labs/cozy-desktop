@@ -41,7 +41,7 @@ const defaultLogger = bunyan.createLogger({
 
 if (process.env.DEBUG) {
   const logPath = 'debug.log'
-  if (fse.existsSync(logPath)) fse.unlinkSync(logPath)
+  if (fse.existsSync(logPath)) fse.outputFile(logPath, '')
   defaultLogger.addStream({ type: 'file', path: logPath, level: 'trace' })
 }
 if (process.env.TESTDEBUG) {
