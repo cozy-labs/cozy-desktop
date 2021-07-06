@@ -163,7 +163,7 @@
     "stylus": "^0.54.5"
   },
   "optionalDependencies": {
-    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git"
+    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#1.0.0"
   },
   "resolutions": {
     "dtrace-provider": "0.8.8",

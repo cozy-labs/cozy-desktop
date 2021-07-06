@@ -224,9 +224,9 @@
   resolved "https://registry.yarnpkg.com/@emotion/weak-memoize/-/weak-memoize-0.2.5.tgz#8eed982e2ee6f7f4e44c253e12962980791efd46"
   integrity sha512-6U71C2Wp7r5XtFtQzYrW5iKFT67OixrSxjI4MptCHzdSVlgabczzqLe0ZSgnub/5Kp4hSbpDB1tMytZY9pwxxA==
 
-"@gyselroth/windows-fsstat@https://github.com/taratatach/node-windows-fsstat.git":
-  version "0.0.8"
-  resolved "https://github.com/taratatach/node-windows-fsstat.git#d5295cef25d2c258e0b99a312544b22f78056853"
+"@gyselroth/windows-fsstat@https://github.com/taratatach/node-windows-fsstat.git#1.0.0":
+  version "1.0.0"
+  resolved "https://github.com/taratatach/node-windows-fsstat.git#ece4512cfb40e58c5c8c00ac587a123a5e9dee52"
   dependencies:
     nan "^2.14.0"
     node-gyp "^5.0.4"
