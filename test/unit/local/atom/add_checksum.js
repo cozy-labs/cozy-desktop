@@ -2,24 +2,38 @@
 /* @flow */
 
 const should = require('should')
+const path = require('path')
+
+const configHelpers = require('../../../support/helpers/config')
+
 const checksumer = require('../../../../core/local/checksumer')
 const addChecksum = require('../../../../core/local/atom/add_checksum')
 const Channel = require('../../../../core/local/atom/channel')
 
 describe('core/local/atom/add_checksum.loop()', () => {
+  let config, dirpath, filepath
+  before(configHelpers.createConfig)
+  before(function() {
+    config = this.config
+    config.syncPath = path.dirname(__dirname)
+
+    dirpath = path.basename(__dirname)
+    filepath = path.join(dirpath, path.basename(__filename))
+  })
+
   it('should add checksum within a file event', async () => {
     const batch = [
       {
         action: 'scan',
         kind: 'file',
-        path: __filename
+        path: filepath
       }
     ]
     const channel = new Channel()
     channel.push(batch)
     const enhancedChannel = addChecksum.loop(channel, {
       checksumer: checksumer.init(),
-      syncPath: ''
+      config
     })
     const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch)
@@ -33,14 +47,14 @@ describe('core/local/atom/add_checksum.loop()', () => {
       {
         action: 'scan',
         kind: 'directory',
-        path: __dirname
+        path: dirpath
       }
     ]
     const channel = new Channel()
     channel.push(batch)
     const enhancedChannel = addChecksum.loop(channel, {
       checksumer: checksumer.init(),
-      syncPath: ''
+      config
     })
     const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch)
@@ -54,7 +68,7 @@ describe('core/local/atom/add_checksum.loop()', () => {
       {
         action: 'scan',
         kind: 'file',
-        path: __filename,
+        path: filepath,
         md5sum: 'checksum'
       }
     ]
@@ -62,7 +76,7 @@ describe('core/local/atom/add_checksum.loop()', () => {
     channel.push(batch)
     const enhancedChannel = addChecksum.loop(channel, {
       checksumer: checksumer.init(),
-      syncPath: ''
+      config
     })
     const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch)
@@ -76,27 +90,27 @@ describe('core/local/atom/add_checksum.loop()', () => {
     const createdEvent = {
       action: 'created',
       kind: 'file',
-      path: __filename
+      path: filepath
     }
     const modifiedEvent = {
       action: 'modified',
       kind: 'file',
-      path: __filename
+      path: filepath
     }
     const scanEvent = {
       action: 'scan',
       kind: 'file',
-      path: __filename
+      path: filepath
     }
     const renamedEvent = {
       action: 'renamed',
       kind: 'file',
-      path: __filename
+      path: filepath
     }
     const ignoredEvent = {
       action: 'ignored',
       kind: 'file',
-      path: __filename
+      path: filepath
     }
     const channel = new Channel()
     channel.push([
@@ -108,7 +122,7 @@ describe('core/local/atom/add_checksum.loop()', () => {
     ])
     const enhancedChannel = addChecksum.loop(channel, {
       checksumer: checksumer.init(),
-      syncPath: ''
+      config
     })
     const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch).deepEqual([

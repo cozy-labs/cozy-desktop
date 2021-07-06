@@ -118,6 +118,7 @@
     "react-markdown": "^4.3.1",
     "read": "1.0.7",
     "regedit": "^3.0.3",
+    "semver": "^7.3.2",
     "uuid": "^3.3.2",
     "yargs": "^11.0.0"
   },
@@ -163,7 +164,7 @@
     "stylus": "^0.54.5"
   },
   "optionalDependencies": {
-    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git"
+    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#1.0.0"
   },
   "resolutions": {
     "dtrace-provider": "0.8.8",

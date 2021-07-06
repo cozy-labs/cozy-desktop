@@ -3,8 +3,6 @@
 
 const _ = require('lodash')
 const should = require('should')
-const os = require('os')
-const fs = require('fs')
 const path = require('path')
 
 const Producer = require('../../../../core/local/atom/producer')
@@ -12,23 +10,25 @@ const { Ignore } = require('../../../../core/ignore')
 const stater = require('../../../../core/local/stater')
 const EventEmitter = require('events')
 
+const configHelpers = require('../../../support/helpers/config')
 const { ContextDir } = require('../../../support/helpers/context_dir')
 const { onPlatforms } = require('../../../support/helpers/platform')
 
 onPlatforms(['linux', 'win32'], () => {
   describe('core/local/atom/producer', () => {
     let syncDir
-    let syncPath
+    let config
     let ignore
     let events
     let producer
 
-    beforeEach(() => {
-      syncPath = fs.mkdtempSync(path.join(os.tmpdir(), 'Cozy Drive.test-'))
-      syncDir = new ContextDir(syncPath)
+    beforeEach('instanciate config', configHelpers.createConfig)
+    beforeEach(function() {
+      config = this.config
+      syncDir = new ContextDir(config.syncPath)
       ignore = new Ignore([])
       events = new EventEmitter()
-      producer = new Producer({ syncPath, ignore, events })
+      producer = new Producer({ config, ignore, events })
     })
 
     describe('start()', () => {
@@ -55,7 +55,7 @@ onPlatforms(['linux', 'win32'], () => {
 
         beforeEach(async () => {
           ignore = new Ignore([ignoredDir])
-          producer = new Producer({ syncPath, ignore, events })
+          producer = new Producer({ config, ignore, events })
 
           await syncDir.makeTree([
             `${ignoredDir}/`,

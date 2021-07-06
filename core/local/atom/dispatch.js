@@ -11,6 +11,7 @@ const _ = require('lodash')
 
 const winDetectMove = require('./win_detect_move')
 const { buildDir, buildFile } = require('../../metadata')
+const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../config')
 const logger = require('../../utils/logger')
 
 const STEP_NAME = 'dispatch'
@@ -28,6 +29,7 @@ import type {
 } from './event'
 import type { WinDetectMoveState } from './win_detect_move'
 import type EventEmitter from 'events'
+import type { Config } from '../../config'
 import type Prep from '../../prep'
 import type { Pouch } from '../../pouch'
 import type { Metadata } from '../../metadata'
@@ -41,6 +43,7 @@ type DispatchState = {
 }
 
 type DispatchOptions = {
+  config: Config,
   events: EventEmitter,
   prep: Prep,
   pouch: Pouch,
@@ -133,8 +136,12 @@ async function dispatchEvent(
 }
 
 actions = {
-  initialScanDone: ({ events }) => {
+  initialScanDone: ({ config, events }) => {
     log.info('Initial scan done')
+    // TODO: remove with flag WINDOWS_DATE_MIGRATION_FLAG
+    if (config.isFlagActive(WINDOWS_DATE_MIGRATION_FLAG)) {
+      config.setFlag(WINDOWS_DATE_MIGRATION_FLAG, false)
+    }
     events.emit('initial-scan-done')
   },
 

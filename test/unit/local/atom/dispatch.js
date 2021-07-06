@@ -66,6 +66,7 @@ describe('core/local/atom/dispatch.loop()', function() {
     events = sinon.createStubInstance(SyncState)
     prep = sinon.createStubInstance(Prep)
     stepOptions = {
+      config: this.config,
       events,
       prep,
       pouch: this.pouch,

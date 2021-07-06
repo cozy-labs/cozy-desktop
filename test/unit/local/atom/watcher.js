@@ -42,6 +42,7 @@ onPlatforms(['linux', 'win32'], () => {
         it('should reject with the same error', async function() {
           const watcher = new AtomWatcher({
             ...helpers,
+            config: this.config,
             ignore: helpers._sync.ignore,
             syncPath: this.config.syncPath
           })

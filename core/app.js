@@ -13,6 +13,7 @@ const url = require('url')
 const uuid = require('uuid/v4')
 const https = require('https')
 const { createGzip } = require('zlib')
+const semver = require('semver')
 
 require('./globals')
 const pkg = require('../package.json')
@@ -372,6 +373,23 @@ class App {
           'could not update config version after app update'
         )
         wasUpdated = false
+      }
+
+      // TODO: remove with flag WINDOWS_DATE_MIGRATION_FLAG
+      try {
+        if (
+          semver.lt(
+            clientInfo.configVersion,
+            config.WINDOWS_DATE_MIGRATION_APP_VERSION
+          )
+        ) {
+          this.config.setFlag(config.WINDOWS_DATE_MIGRATION_FLAG, true)
+        }
+      } catch (err) {
+        log.error(
+          { err, sentry: true },
+          `could not set ${config.WINDOWS_DATE_MIGRATION_FLAG} flag`
+        )
       }
     }
 

@@ -21,6 +21,22 @@ export type WatcherType = 'atom' | 'chokidar'
 type FileConfig = Object
 */
 
+/* Stat dates on Windows were previously truncated to the second while we now
+ * get the milliseconds as well.
+ * To avoid re-calculating all the local checksums during the initial scan
+ * because of the date migration, we'll truncate `scan` events dates to the
+ * second during the first initial scan following the publication of v3.28.1
+ * when checking if the checksum of a given file can be reused or not.
+ *
+ * When publishing v3.28.2 or greater, we can remove WINDOWS_DATE_MIGRATION_FLAG
+ * and stop truncating dates during the initial scan.
+ *
+ * Users who will have skipped the version introducing the flag will see all
+ * their checksums re-computed.
+ */
+const WINDOWS_DATE_MIGRATION_APP_VERSION = '3.28.1'
+const WINDOWS_DATE_MIGRATION_FLAG = 'roundWindowsDatesToSecondInInitialDiff'
+
 const INVALID_CONFIG_ERROR = 'InvalidConfigError'
 const INVALID_CONFIG_MESSAGE = 'Invalid client configuration'
 class InvalidConfigError extends Error {
@@ -170,6 +186,24 @@ class Config {
     return _.get(this.fileConfig, 'flags', {})
   }
 
+  isFlagActive(flagName /*: string */) /*: boolean */ {
+    return this.flags[flagName] || false
+  }
+
+  setFlag(flag /*: string */, isActive /*: boolean */) {
+    if (
+      typeof flag !== 'string' ||
+      typeof isActive !== 'boolean' ||
+      flag === ''
+    ) {
+      throw new Error(
+        `Invalid flag or value: [String(${flag})] → "${String(isActive)}"`
+      )
+    }
+    _.set(this.fileConfig, `flags.${flag}`, isActive)
+    this.persist()
+  }
+
   get version() /*: ?string */ {
     return _.get(this.fileConfig, 'creds.client.softwareVersion', '')
   }
@@ -288,6 +322,8 @@ function validateWatcherType(watcherType /*: ?string */) /*: ?WatcherType */ {
 
 module.exports = {
   INVALID_CONFIG_ERROR,
+  WINDOWS_DATE_MIGRATION_APP_VERSION,
+  WINDOWS_DATE_MIGRATION_FLAG,
   InvalidConfigError,
   Config,
   environmentWatcherType,

@@ -15,6 +15,7 @@ const defaultStater = require('../stater')
 const logger = require('../../utils/logger')
 
 /*::
+import type { Config } from '../../config'
 import type { Ignore } from '../../ignore'
 import type { AtomEvent } from './event'
 import type EventEmitter from 'events'
@@ -66,10 +67,10 @@ class Producer {
   scan: Scanner
   */
   constructor(
-    opts /*: { syncPath: string, ignore: Ignore, events: EventEmitter } */
+    opts /*: { config: Config, ignore: Ignore, events: EventEmitter } */
   ) {
     this.channel = new Channel()
-    this.syncPath = opts.syncPath
+    this.syncPath = opts.config.syncPath
     this.ignore = opts.ignore
     this.events = opts.events
     this.watcher = null

@@ -10,7 +10,6 @@ const should = require('should')
 
 const { Local } = require('../../../core/local')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
-const timestamp = require('../../../core/utils/timestamp')
 const { sendToTrash } = require('../../../core/utils/fs')
 
 const Builders = require('../../support/builders')
@@ -561,9 +560,7 @@ describe('Local', function() {
 
         should(await syncDir.tree()).deepEqual(['dst/', 'dst/file', 'src/'])
         should((await syncDir.mtime(dstFile)).getTime()).equal(
-          process.platform === 'win32'
-            ? timestamp.fromDate(dstFile.updated_at).getTime()
-            : new Date(dstFile.updated_at).getTime()
+          new Date(dstFile.updated_at).getTime()
         )
         should(await syncDir.readFile(dstFile)).equal('foobar')
       })
@@ -643,9 +640,7 @@ describe('Local', function() {
 
         should(await syncDir.tree()).deepEqual(['dst/', 'dst/dir/', 'src/'])
         should((await syncDir.mtime(dstDir)).getTime()).equal(
-          process.platform === 'win32'
-            ? timestamp.fromDate(dstDir.updated_at).getTime()
-            : new Date(dstDir.updated_at).getTime()
+          new Date(dstDir.updated_at).getTime()
         )
       })
 

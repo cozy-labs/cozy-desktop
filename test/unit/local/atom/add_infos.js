@@ -2,6 +2,7 @@
 /* @flow */
 
 const should = require('should')
+const path = require('path')
 
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
@@ -13,6 +14,7 @@ const Channel = require('../../../../core/local/atom/channel')
 describe('core/local/atom/add_infos.loop()', () => {
   let builders
   let opts
+  let filepath, dirpath
 
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
@@ -20,10 +22,10 @@ describe('core/local/atom/add_infos.loop()', () => {
     builders = new Builders({ pouch: this.pouch })
   })
   beforeEach('create step opts', async function() {
-    opts = {
-      syncPath: '',
-      pouch: this.pouch
-    }
+    this.config.syncPath = path.dirname(__dirname)
+    opts = this
+    filepath = path.basename(__filename)
+    dirpath = path.basename(__dirname)
   })
 
   it('returns an enhanced batch with infos', async () => {
@@ -31,7 +33,7 @@ describe('core/local/atom/add_infos.loop()', () => {
       {
         action: 'scan',
         kind: 'unknown',
-        path: __filename
+        path: filepath
       }
     ]
     const channel = new Channel()
@@ -48,32 +50,32 @@ describe('core/local/atom/add_infos.loop()', () => {
       {
         action: 'deleted',
         kind: 'directory',
-        path: __dirname
+        path: dirpath
       },
       {
         action: 'ignored',
         kind: 'directory',
-        path: __dirname
+        path: dirpath
       },
       {
         action: 'scan',
         kind: 'directory',
-        path: __dirname
+        path: dirpath
       },
       {
         action: 'created',
         kind: 'directory',
-        path: __dirname
+        path: dirpath
       },
       {
         action: 'modified',
         kind: 'directory',
-        path: __dirname
+        path: dirpath
       },
       {
         action: 'renamed',
         kind: 'directory',
-        path: __dirname
+        path: dirpath
       }
     ]
     const channel = new Channel()
@@ -160,12 +162,12 @@ describe('core/local/atom/add_infos.loop()', () => {
           {
             action: 'deleted',
             kind: 'unknown',
-            path: __filename
+            path: filepath
           },
           {
             action: 'deleted',
             kind: 'unknown',
-            path: __dirname
+            path: dirpath
           }
         ]
         const channel = new Channel()
@@ -176,13 +178,13 @@ describe('core/local/atom/add_infos.loop()', () => {
           {
             action: 'deleted',
             kind: 'file',
-            path: __filename,
+            path: filepath,
             [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' }
           },
           {
             action: 'deleted',
             kind: 'file',
-            path: __dirname,
+            path: dirpath,
             [addInfos.STEP_NAME]: { kindConvertedFrom: 'unknown' }
           }
         ])

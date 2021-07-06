@@ -12,7 +12,7 @@ const _ = require('lodash')
 const path = require('path')
 const sinon = require('sinon')
 
-const Config = require('../../core/config')
+const { Config, watcherType } = require('../../core/config')
 const { Ignore } = require('../../core/ignore')
 const { AtomWatcher } = require('../../core/local/atom/watcher')
 const { Pouch } = require('../../core/pouch')
@@ -25,9 +25,17 @@ import type { Scenario } from '../../test/scenarios'
 
 const cliDir = path.resolve(path.join(__dirname, '..', '..'))
 const syncDir = process.env.COZY_DESKTOP_DIR || cliDir
-const syncPath = path.join(syncDir, 'tmp', 'local_watcher', 'synced_dir')
+const config = new Config(path.join(syncDir, 'tmp', '.cozy-desktop'))
+const syncPath = (config.syncPath = path.join(
+  syncDir,
+  'tmp',
+  'local_watcher',
+  'synced_dir'
+))
 const outsidePath = path.join(syncDir, 'tmp', 'local_watcher', 'outside')
+
 const abspath = relpath => path.join(syncPath, relpath.replace(/\//g, path.sep))
+
 const chokidarOptions = {
   cwd: syncPath,
   ignored: /(^|[\/\\])\.system-tmp-cozy-drive/, // eslint-disable-line no-useless-escape
@@ -172,7 +180,7 @@ const runAndRecordAtomEvents = async scenario => {
   const events = new EventEmitter()
   const ignore = new Ignore([])
   const capturedBatches = []
-  const watcher = new AtomWatcher({ syncPath, prep, pouch, events, ignore })
+  const watcher = new AtomWatcher({ config, prep, pouch, events, ignore })
 
   pouch.initialScanDocs = sinon.stub().callsFake(() => [])
 
@@ -197,9 +205,7 @@ const runAndRecordAtomEvents = async scenario => {
 }
 
 const runAndRecordFSEvents =
-  Config.watcherType() === 'atom'
-    ? runAndRecordAtomEvents
-    : runAndRecordChokidarEvents
+  watcherType() === 'atom' ? runAndRecordAtomEvents : runAndRecordChokidarEvents
 
 const captureScenario = (scenario /*: Scenario & {path: string} */) => {
   if (
@@ -210,7 +216,7 @@ const captureScenario = (scenario /*: Scenario & {path: string} */) => {
   }
 
   return fse
-    .emptyDir(syncPath)
+    .emptyDir(config.syncPath)
     .then(() => fse.emptyDir(outsidePath))
     .then(() => setupInitialState(scenario))
     .then(() => runAndRecordFSEvents(scenario))

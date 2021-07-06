@@ -22,6 +22,7 @@ const log = logger({
 })
 
 /*::
+import type { Config } from '../../config'
 import type { Pouch } from '../../pouch'
 import type { Metadata } from '../../metadata'
 import type Channel from './channel'
@@ -41,8 +42,10 @@ module.exports = {
  */
 function loop(
   channel /*: Channel */,
-  opts /*: { syncPath: string, pouch: Pouch } */
+  opts /*: { config: Config, pouch: Pouch } */
 ) /*: Channel */ {
+  const syncPath = opts.config.syncPath
+
   return channel.asyncMap(async events => {
     const batch = []
     for (const event of events) {
@@ -55,9 +58,7 @@ function loop(
         if (event.action !== 'initial-scan-done') {
           if (needsStats(event)) {
             log.debug({ path: event.path, action: event.action }, 'stat')
-            event.stats = await stater.stat(
-              path.join(opts.syncPath, event.path)
-            )
+            event.stats = await stater.stat(path.join(syncPath, event.path))
           }
 
           if (event.stats) {
