@@ -35,6 +35,7 @@ const DELAY = 3000
 import type Channel from './channel'
 import type { AtomEvent, AtomBatch } from './event'
 import type { Checksumer } from '../checksumer'
+import type { Config } from '../../config'
 import type { Pouch } from '../../pouch'
 import type { Metadata } from '../../metadata'
 
@@ -44,7 +45,7 @@ type IncompleteItem = {
 }
 
 type IncompleteFixerOptions = {
-  syncPath: string,
+  config: Config,
   checksumer: Checksumer,
   pouch: Pouch
 }
@@ -116,7 +117,7 @@ function completeEventPaths(
 async function rebuildIncompleteEvent(
   previousEvent /*: AtomEvent */,
   nextEvent /*: AtomEvent */,
-  opts /*: { syncPath: string , checksumer: Checksumer, pouch: Pouch } */
+  opts /*: { config: Config , checksumer: Checksumer, pouch: Pouch } */
 ) /*: Promise<Completion> */ {
   const { path: rebuiltPath, oldPath: rebuiltOldPath } = completeEventPaths(
     previousEvent,
@@ -127,7 +128,7 @@ async function rebuildIncompleteEvent(
     return { ignored: true }
   }
 
-  const absPath = path.join(opts.syncPath, rebuiltPath)
+  const absPath = path.join(opts.config.syncPath, rebuiltPath)
   const stats = await stater.statMaybe(absPath)
   const incomplete = stats == null
   const kind = stats ? stater.kind(stats) : previousEvent.kind

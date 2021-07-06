@@ -28,6 +28,7 @@ const contentActions = new Set(['created', 'modified', 'renamed', 'scan'])
 
 /*::
 import type Channel from './channel'
+import type { Config } from '../../config'
 import type { Checksumer } from '../checksumer'
 import type { AtomEvent } from './event'
 */
@@ -50,8 +51,10 @@ module.exports = {
  */
 function loop(
   channel /*: Channel */,
-  opts /*: { syncPath: string , checksumer: Checksumer } */
+  opts /*: { config: Config , checksumer: Checksumer } */
 ) /*: Channel */ {
+  const syncPath = opts.config.syncPath
+
   return channel.asyncMap(async events => {
     for (const event of events) {
       try {
@@ -63,7 +66,7 @@ function loop(
             { path: event.path, action: event.action },
             'computing checksum'
           )
-          const absPath = path.join(opts.syncPath, event.path)
+          const absPath = path.join(syncPath, event.path)
           event.md5sum = await opts.checksumer.push(absPath)
         }
       } catch (err) {

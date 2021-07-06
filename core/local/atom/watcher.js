@@ -39,6 +39,7 @@ const dispatch = require('./dispatch')
 const logger = require('../../utils/logger')
 
 /*::
+import type { Config } from '../../config'
 import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
 import type EventEmitter from 'events'
@@ -48,7 +49,7 @@ import type { AtomEventsDispatcher } from './dispatch'
 import type { Scanner } from './producer'
 
 type AtomWatcherOptions = {
-  syncPath: string,
+  config: Config,
   onAtomEvents?: AtomEventsDispatcher,
   prep: Prep,
   pouch: Pouch,
@@ -107,6 +108,7 @@ const stepsInitialState = (
 
 class AtomWatcher {
   /*::
+  config: Config
   pouch: Pouch
   events: EventEmitter
   checksumer: Checksumer
@@ -118,6 +120,7 @@ class AtomWatcher {
   */
 
   constructor(opts /*: AtomWatcherOptions */) {
+    this.config = opts.config
     this.pouch = opts.pouch
     this.events = opts.events
     this.checksumer = checksumer.init()

@@ -42,7 +42,7 @@ describe('core/local/atom/incomplete_fixer', () => {
 
   describe('.loop()', () => {
     it('pushes the result of step() into the output Channel', async function() {
-      const { syncPath } = this
+      const { config } = this
 
       const src = 'missing'
       const dst = path.basename(__filename)
@@ -63,7 +63,7 @@ describe('core/local/atom/incomplete_fixer', () => {
         .build()
       const inputChannel = new Channel()
       const outputChannel = incompleteFixer.loop(inputChannel, {
-        syncPath,
+        config,
         checksumer,
         pouch: this.pouch
       })
@@ -74,7 +74,7 @@ describe('core/local/atom/incomplete_fixer', () => {
       should(await outputChannel.pop()).deepEqual(
         await incompleteFixer.step(
           { incompletes: [{ event: createdEvent, timestamp: Date.now() }] },
-          { syncPath, checksumer, pouch: this.pouch }
+          { config, checksumer, pouch: this.pouch }
         )([renamedEvent])
       )
     })
@@ -83,7 +83,7 @@ describe('core/local/atom/incomplete_fixer', () => {
   describe('.step()', () => {
     context('without any complete "renamed" event', () => {
       it('drops incomplete events', async function() {
-        const { syncPath } = this
+        const { config } = this
 
         const inputBatch = [
           builders
@@ -116,7 +116,7 @@ describe('core/local/atom/incomplete_fixer', () => {
         const outputBatch = await incompleteFixer.step(
           { incompletes },
           {
-            syncPath,
+            config,
             checksumer,
             pouch: this.pouch
           }
@@ -127,7 +127,7 @@ describe('core/local/atom/incomplete_fixer', () => {
 
     context('with a complete "renamed" event', () => {
       it('leaves complete events untouched', async function() {
-        const { syncPath } = this
+        const { config } = this
 
         const src = 'file'
         const dst = 'foo'
@@ -150,7 +150,7 @@ describe('core/local/atom/incomplete_fixer', () => {
         const outputBatch = await incompleteFixer.step(
           { incompletes },
           {
-            syncPath,
+            config,
             checksumer,
             pouch: this.pouch
           }
@@ -159,7 +159,7 @@ describe('core/local/atom/incomplete_fixer', () => {
       })
 
       it('rebuilds the all incomplete events matching the "renamed" event old path', async function() {
-        const { syncPath } = this
+        const { config } = this
 
         await syncDir.makeTree([
           'dst/',
@@ -221,7 +221,7 @@ describe('core/local/atom/incomplete_fixer', () => {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
             {
-              syncPath,
+              config,
               checksumer,
               pouch: this.pouch
             }
@@ -238,35 +238,35 @@ describe('core/local/atom/incomplete_fixer', () => {
               kind: 'file',
               action: 'created',
               md5sum: CHECKSUM,
-              stats: await stater.stat(path.join(syncPath, 'dst/foo1'))
+              stats: await stater.stat(path.join(config.syncPath, 'dst/foo1'))
             },
             {
               path: path.normalize('dst/foo2'),
               kind: 'file',
               action: 'modified',
               md5sum: CHECKSUM,
-              stats: await stater.stat(path.join(syncPath, 'dst/foo2'))
+              stats: await stater.stat(path.join(config.syncPath, 'dst/foo2'))
             },
             {
               path: path.normalize('dst/foo3'),
               kind: 'file',
               action: 'deleted',
               md5sum: CHECKSUM,
-              stats: await stater.stat(path.join(syncPath, 'dst/foo3'))
+              stats: await stater.stat(path.join(config.syncPath, 'dst/foo3'))
             },
             {
               path: path.normalize('dst/foo5'),
               kind: 'file',
               action: 'scan',
               md5sum: CHECKSUM,
-              stats: await stater.stat(path.join(syncPath, 'dst/foo5'))
+              stats: await stater.stat(path.join(config.syncPath, 'dst/foo5'))
             }
           ]
         ])
       })
 
       it('drops incomplete ignored events matching the "renamed" event old path', async function() {
-        const { syncPath } = this
+        const { config } = this
 
         await syncDir.makeTree(['dst/', 'dst/file'])
         const ignoredEvent = builders
@@ -286,7 +286,7 @@ describe('core/local/atom/incomplete_fixer', () => {
         const outputBatch = await incompleteFixer.step(
           { incompletes },
           {
-            syncPath,
+            config,
             checksumer,
             pouch: this.pouch
           }
@@ -295,7 +295,7 @@ describe('core/local/atom/incomplete_fixer', () => {
       })
 
       it('replaces the completing event if its path is the same as the rebuilt one', async function() {
-        const { syncPath } = this
+        const { config } = this
 
         const src = 'missing'
         const dst = path.basename(__filename)
@@ -320,7 +320,7 @@ describe('core/local/atom/incomplete_fixer', () => {
         const outputBatch = await incompleteFixer.step(
           { incompletes },
           {
-            syncPath,
+            config,
             checksumer,
             pouch: this.pouch
           }
@@ -329,7 +329,9 @@ describe('core/local/atom/incomplete_fixer', () => {
           {
             path: renamedEvent.path,
             md5sum: CHECKSUM,
-            stats: await stater.stat(path.join(syncPath, renamedEvent.path)),
+            stats: await stater.stat(
+              path.join(config.syncPath, renamedEvent.path)
+            ),
             action: createdEvent.action,
             kind: createdEvent.kind
           }
@@ -339,7 +341,7 @@ describe('core/local/atom/incomplete_fixer', () => {
 
     describe('file renamed then deleted', () => {
       it('is deleted at its original path', async function() {
-        const { syncPath } = this
+        const { config } = this
 
         const src = 'src'
         const dst = 'dst'
@@ -364,7 +366,7 @@ describe('core/local/atom/incomplete_fixer', () => {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
             {
-              syncPath,
+              config,
               checksumer,
               pouch: this.pouch
             }
@@ -391,7 +393,7 @@ describe('core/local/atom/incomplete_fixer', () => {
 
     describe('file renamed twice', () => {
       it('is renamed once as a whole', async function() {
-        const { syncPath } = this
+        const { config } = this
 
         const src = 'src'
         const dst1 = 'dst1'
@@ -413,7 +415,7 @@ describe('core/local/atom/incomplete_fixer', () => {
           .oldPath(dst1)
           .path(dst2)
           .build()
-        const stats = await stater.stat(path.join(syncPath, dst2))
+        const stats = await stater.stat(path.join(config.syncPath, dst2))
         secondRenamedEvent.stats = stats
 
         const incompletes = []
@@ -423,7 +425,7 @@ describe('core/local/atom/incomplete_fixer', () => {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
             {
-              syncPath,
+              config,
               checksumer,
               pouch: this.pouch
             }
@@ -453,7 +455,7 @@ describe('core/local/atom/incomplete_fixer', () => {
 
     describe('file renamed three times', () => {
       it('is renamed once as a whole', async function() {
-        const { syncPath } = this
+        const { config } = this
 
         const src = 'src'
         const dst1 = 'dst1'
@@ -494,7 +496,7 @@ describe('core/local/atom/incomplete_fixer', () => {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
             {
-              syncPath,
+              config,
               checksumer,
               pouch: this.pouch
             }
@@ -512,7 +514,7 @@ describe('core/local/atom/incomplete_fixer', () => {
               md5sum: CHECKSUM,
               oldPath: src,
               path: dst3,
-              stats: await stater.stat(path.join(syncPath, dst3))
+              stats: await stater.stat(path.join(config.syncPath, dst3))
             }
           ]
         ])
@@ -521,7 +523,7 @@ describe('core/local/atom/incomplete_fixer', () => {
 
     describe('file renamed and then renamed back to its previous name', () => {
       it('results in no events at all', async function() {
-        const { syncPath } = this
+        const { config } = this
 
         const src = 'src'
         const dst = 'dst'
@@ -548,7 +550,7 @@ describe('core/local/atom/incomplete_fixer', () => {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
             {
-              syncPath,
+              config,
               checksumer,
               pouch: this.pouch
             }
@@ -562,7 +564,7 @@ describe('core/local/atom/incomplete_fixer', () => {
 
     describe('file renamed to backup location and replaced by new file', () => {
       it('is modified once and not deleted', async function() {
-        const { syncPath } = this
+        const { config } = this
 
         const src = 'src'
         const tmp = 'src.tmp'
@@ -600,7 +602,7 @@ describe('core/local/atom/incomplete_fixer', () => {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
             {
-              syncPath,
+              config,
               checksumer,
               pouch: this.pouch
             }
@@ -647,7 +649,7 @@ describe('core/local/atom/incomplete_fixer', () => {
       })
 
       it('results in the renamed event', async function() {
-        const { syncPath, pouch } = this
+        const { config, pouch } = this
 
         await syncDir.ensureFile(dst)
         const createdEvent = builders
@@ -671,7 +673,7 @@ describe('core/local/atom/incomplete_fixer', () => {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
             {
-              syncPath,
+              config,
               checksumer,
               pouch
             }
@@ -696,7 +698,7 @@ describe('core/local/atom/incomplete_fixer', () => {
       })
 
       it('results in the renamed event followed by the rebuilt modified event', async function() {
-        const { syncPath, pouch } = this
+        const { config, pouch } = this
 
         await syncDir.ensureFile(dst)
         const modifiedEvent = builders
@@ -720,7 +722,7 @@ describe('core/local/atom/incomplete_fixer', () => {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
             {
-              syncPath,
+              config,
               checksumer,
               pouch
             }
@@ -741,7 +743,7 @@ describe('core/local/atom/incomplete_fixer', () => {
               kind: 'file',
               md5sum: CHECKSUM,
               path: dst,
-              stats: await stater.stat(path.join(syncPath, dst))
+              stats: await stater.stat(path.join(config.syncPath, dst))
             }
           ]
         ])
@@ -762,7 +764,7 @@ describe('core/local/atom/incomplete_fixer', () => {
       })
 
       it('results in one renamed event followed by the rebuilt modified event', async function() {
-        const { syncPath, pouch } = this
+        const { config, pouch } = this
 
         await syncDir.ensureFile(dst2)
         const modifiedEvent = builders
@@ -798,7 +800,7 @@ describe('core/local/atom/incomplete_fixer', () => {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
             {
-              syncPath,
+              config,
               checksumer,
               pouch
             }
@@ -820,7 +822,7 @@ describe('core/local/atom/incomplete_fixer', () => {
               md5sum: CHECKSUM,
               oldPath: src,
               path: dst2,
-              stats: await stater.stat(path.join(syncPath, dst2))
+              stats: await stater.stat(path.join(config.syncPath, dst2))
             },
             {
               action: 'modified',
@@ -839,7 +841,7 @@ describe('core/local/atom/incomplete_fixer', () => {
               kind: 'file',
               md5sum: CHECKSUM,
               path: dst2,
-              stats: await stater.stat(path.join(syncPath, dst2))
+              stats: await stater.stat(path.join(config.syncPath, dst2))
             }
           ]
         ])

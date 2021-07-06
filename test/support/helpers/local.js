@@ -190,6 +190,7 @@ class LocalTestHelpers {
       const watcher = this._ensureAtomWatcher()
       const stepOptions = Object.assign(
         ({
+          config: watcher.config,
           checksumer: watcher.checksumer,
           scan: watcher.producer.scan,
           state: watcher.state
