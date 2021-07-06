@@ -12,11 +12,13 @@
 const _ = require('lodash')
 const path = require('path')
 
+const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../config')
 const { kind } = require('../../metadata')
 const logger = require('../../utils/logger')
 const Channel = require('./channel')
 
 /*::
+import type { Config } from '../../config'
 import type { Pouch } from '../../pouch'
 import type { AtomEvent, AtomBatch, EventKind } from './event'
 import type { Metadata } from '../../metadata'
@@ -68,10 +70,10 @@ module.exports = {
 
 function loop(
   channel /*: Channel */,
-  opts /*: { pouch: Pouch, state: InitialDiffState } */
+  opts /*: { config: Config, state: InitialDiffState } */
 ) /*: Channel */ {
   const out = new Channel()
-  initialDiff(channel, out, opts.state).catch(err => {
+  initialDiff(channel, out, opts).catch(err => {
     log.warn({ err })
   })
   return out
@@ -126,7 +128,7 @@ function clearState(state /*: InitialDiffState */) {
 async function initialDiff(
   channel /*: Channel */,
   out /*: Channel */,
-  state /*: InitialDiffState */
+  { config, state } /*: { config: Config, state: InitialDiffState } */
 ) /*: Promise<void> */ {
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -140,6 +142,10 @@ async function initialDiff(
         initialScanDone
       }
     } = state
+    // TODO: remove with flag WINDOWS_DATE_MIGRATION_FLAG
+    const truncateWindowsDates = config.isFlagActive(
+      WINDOWS_DATE_MIGRATION_FLAG
+    )
 
     if (initialScanDone) {
       out.push(events)
@@ -189,7 +195,7 @@ async function initialDiff(
               deletedIno: was.local.fileid || was.local.ino
             })
           }
-        } else if (foundUntouchedFile(event, was)) {
+        } else if (foundUntouchedFile(event, was, truncateWindowsDates)) {
           _.set(event, [STEP_NAME, 'md5sumReusedFrom'], was.local.path)
           event.md5sum = was.local.md5sum
         }
@@ -338,8 +344,10 @@ function fixPathsAfterParentMove(renamedEvents, event) {
   }
 }
 
-function contentUpdateTime(event) {
-  return event.stats.mtime.getTime()
+function contentUpdateTime(event, truncateWindowsDates) {
+  return truncateWindowsDates
+    ? event.stats.mtime.getTime() - event.stats.mtime.getMilliseconds()
+    : event.stats.mtime.getTime()
 }
 
 function docUpdateTime(oldLocal) {
@@ -354,12 +362,16 @@ function foundRenamedOrReplacedDoc(event, was) /*: boolean %checks */ {
   return was != null && was.local != null && was.local.path !== event.path
 }
 
-function foundUntouchedFile(event, was) /*: boolean %checks */ {
+function foundUntouchedFile(
+  event,
+  was,
+  truncateWindowsDates
+) /*: boolean %checks */ {
   return (
     event.kind === 'file' &&
     was != null &&
     was.local != null &&
     was.local.md5sum != null &&
-    contentUpdateTime(event) === docUpdateTime(was.local)
+    contentUpdateTime(event, truncateWindowsDates) === docUpdateTime(was.local)
   )
 }

@@ -9,10 +9,13 @@ const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
+const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../../../core/config')
 const Channel = require('../../../../core/local/atom/channel')
 const initialDiff = require('../../../../core/local/atom/initial_diff')
 
 const kind = doc => (doc.docType === 'folder' ? 'directory' : 'file')
+
+const sameSecondDate = date => new Date(new Date(date).setMilliseconds(0))
 
 describe('core/local/atom/initial_diff', () => {
   let builders
@@ -162,7 +165,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([fooRenamed, fooCreated, fooBuzzCreated, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -175,7 +178,11 @@ describe('core/local/atom/initial_diff', () => {
 
     it('clears the state after initial-scan-done is received', async function() {
       const state = await initialDiff.initialState({ pouch: this.pouch })
-      const outChannel = initialDiff.loop(channel, { pouch: this.pouch, state })
+      const outChannel = initialDiff.loop(channel, {
+        config: this.config,
+        pouch: this.pouch,
+        state
+      })
 
       // Send normal event
       const fooScan = builders
@@ -234,7 +241,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([barScan, buzzScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -308,6 +315,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([barScan, barBazScan, initialScanDone])
 
       channel = initialDiff.loop(channel, {
+        config: this.config,
         pouch: this.pouch,
         state
       })
@@ -371,7 +379,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([fooScan, buzzScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -426,7 +434,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([fooScan, barScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -471,7 +479,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([fooScan, barScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -502,7 +510,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -567,7 +575,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([stillEmptyFileScan, sameContentFileScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -604,7 +612,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([dirScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([dirScan, initialScanDone])
@@ -631,10 +639,104 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([updatedContentScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([updatedContentScan, initialScanDone])
+    })
+
+    context('when WINDOWS_DATE_MIGRATION_FLAG is active', () => {
+      before(function() {
+        this.config.setFlag(WINDOWS_DATE_MIGRATION_FLAG, true)
+      })
+      after(function() {
+        this.config.setFlag(WINDOWS_DATE_MIGRATION_FLAG, false)
+      })
+
+      it('reuses the checksum of untouched files with a same second modification date', async function() {
+        const emptyFileUpdateDate = new Date()
+        const stillEmptyFile = await builders
+          .metafile()
+          .path('stillEmptyFile')
+          .ino(2)
+          .data('')
+          .updatedAt(sameSecondDate(emptyFileUpdateDate))
+          .upToDate()
+          .create()
+        const sameContentFileUpdateDate = new Date()
+        const sameContentFile = await builders
+          .metafile()
+          .path('sameContentFile')
+          .ino(3)
+          .data('content')
+          .updatedAt(sameSecondDate(sameContentFileUpdateDate))
+          .upToDate()
+          .create()
+
+        const state = await initialDiff.initialState({ pouch: this.pouch })
+
+        const stillEmptyFileScan = builders
+          .event()
+          .fromDoc(stillEmptyFile)
+          .action('scan')
+          .mtime(emptyFileUpdateDate)
+          .build()
+        const sameContentFileScan = builders
+          .event()
+          .fromDoc(sameContentFile)
+          .action('scan')
+          .ctime(sameContentFileUpdateDate)
+          .build()
+        inputBatch([stillEmptyFileScan, sameContentFileScan, initialScanDone])
+
+        const events = await initialDiff
+          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .pop()
+
+        should(events).deepEqual([
+          {
+            ...stillEmptyFileScan,
+            md5sum: stillEmptyFile.md5sum,
+            initialDiff: { md5sumReusedFrom: stillEmptyFile.path }
+          },
+          {
+            ...sameContentFileScan,
+            md5sum: sameContentFile.md5sum,
+            initialDiff: { md5sumReusedFrom: sameContentFile.path }
+          },
+          initialScanDone
+        ])
+      })
+    })
+
+    context('when WINDOWS_DATE_MIGRATION_FLAG is inactive', () => {
+      it('does not reuse the checksum of untouched files with a same second modification date', async function() {
+        const updatedContentUpdateDate = new Date()
+        const updatedContent = await builders
+          .metafile()
+          .path('updatedContent')
+          .ino(2)
+          .data('content')
+          .updatedAt(sameSecondDate(updatedContentUpdateDate))
+          .upToDate()
+          .create()
+
+        const state = await initialDiff.initialState({ pouch: this.pouch })
+
+        const updatedContentScan = builders
+          .event()
+          .fromDoc(updatedContent)
+          .action('scan')
+          .mtime(updatedContentUpdateDate)
+          .build()
+        inputBatch([updatedContentScan, initialScanDone])
+
+        const events = await initialDiff
+          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .pop()
+
+        should(events).deepEqual([updatedContentScan, initialScanDone])
+      })
     })
 
     it('ignores events for unapplied moves', async function() {
@@ -684,7 +786,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([fooScan, fizzScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -748,7 +850,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([parent2Scan, foo2Scan, bar2Scan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -825,7 +927,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([parent2Scan, foo2Scan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       const deletedPath = path.normalize('parent-2/foo-2/bar')
@@ -906,7 +1008,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([parent2Scan, fooScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -967,7 +1069,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([parent2Scan, fooScan, initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([
@@ -1002,7 +1104,7 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([initialScanDone])
 
       const events = await initialDiff
-        .loop(channel, { pouch: this.pouch, state })
+        .loop(channel, { config: this.config, pouch: this.pouch, state })
         .pop()
 
       should(events).deepEqual([initialScanDone])
