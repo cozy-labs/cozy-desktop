@@ -19,6 +19,7 @@ const { RemoteCozy } = require('../../../core/remote/cozy')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
 
 const configHelpers = require('../../support/helpers/config')
+const cozyHelpers = require('../../support/helpers/cozy')
 const { COZY_URL, cozy, deleteAll } = require('../../support/helpers/cozy')
 const CozyStackDouble = require('../../support/doubles/cozy_stack')
 const Builders = require('../../support/builders')
@@ -51,6 +52,8 @@ describe('RemoteCozy', function() {
   beforeEach(function() {
     this.config.cozyUrl = COZY_URL
     remoteCozy = new RemoteCozy(this.config)
+    // Use real OAuth client
+    remoteCozy.client = cozyHelpers.cozy
   })
 
   describe('hasEnoughSpace', () => {
@@ -295,19 +298,24 @@ describe('RemoteCozy', function() {
       should(ids.sort()).eql([file._id, dir._id].sort())
     })
 
-    it('resolves with all changes since the db creation when no seq given', async function() {
-      const dir = await builders.remoteDir().create()
-      const file = await builders
-        .remoteFile()
-        .inDir(dir)
-        .create()
+    context('when no seq given', function() {
+      it('resolves only with non deleted docs', async function() {
+        const dir = await builders.remoteDir().create()
+        const file = await builders
+          .remoteFile()
+          .inDir(dir)
+          .create()
+        const deletedFile = await builders
+          .remoteFile()
+          .inDir(dir)
+          .create()
+        await builders.remoteErased(deletedFile).create()
 
-      const { docs } = await remoteCozy.changes()
-      const ids = docs.map(doc => doc._id)
+        const { docs } = await remoteCozy.changes()
 
-      should(ids).containEql(dir._id)
-      should(ids).containEql(file._id)
-      should(ids.length).be.greaterThan(2)
+        const ids = docs.map(doc => doc._id)
+        should(ids).deepEqual([dir._id, file._id])
+      })
     })
 
     it('does not swallow errors', function() {
@@ -360,7 +368,9 @@ describe('RemoteCozy', function() {
           results: docsOnServer.slice(3)
         })
 
-      const { docs } = await remoteCozy.changes()
+      // `since` is not '0' so we don't try to run an initial fetch which is not
+      // faked here.
+      const { docs } = await remoteCozy.changes('')
       should(docs.map(doc => ({ doc }))).eql(docsOnServer)
     })
   })

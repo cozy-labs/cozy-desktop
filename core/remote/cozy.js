@@ -7,6 +7,7 @@ const autoBind = require('auto-bind')
 const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
 const { FetchError } = require('cozy-stack-client')
+const { Q } = require('cozy-client')
 const path = require('path')
 
 const { FILES_DOCTYPE, FILE_TYPE, DIR_TYPE } = require('./constants')
@@ -49,9 +50,8 @@ export type Reference = {
 }
 
 type ChangesFeedResponse = {|
-  pending: number,
   last_seq: string,
-  results: Array<{ doc: RemoteDoc|RemoteDeletion }>
+  remoteDocs: Array<RemoteDoc|RemoteDeletion>
 |}
 */
 
@@ -261,15 +261,16 @@ class RemoteCozy {
   }
 
   async changes(
-    since /*: string */ = '0'
+    since /*: string */ = '0',
+    batchSize /*: number */ = 10000
   ) /*: Promise<{last_seq: string, docs: Array<MetadataRemoteInfo|RemoteDeletion>}> */ {
-    const { last_seq, results } = await getChangesFeed(since, this.client)
+    const client = await this.newClient()
+    const { last_seq, remoteDocs } =
+      since === '0'
+        ? await fetchInitialChanges(client)
+        : await fetchChangesFromFeed(since, this.client, batchSize)
 
-    // The stack docs: dirs, files (without a path), deletions
-    const remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */ = dropSpecialDocs(
-      results.map(r => r.doc)
-    )
-    const docs = await this.completeRemoteDocs(remoteDocs)
+    const docs = await this.completeRemoteDocs(dropSpecialDocs(remoteDocs))
 
     return { last_seq, docs }
   }
@@ -513,24 +514,41 @@ class RemoteCozy {
   }
 }
 
-async function getChangesFeed(
+async function fetchChangesFromFeed(
   since /*: string */,
-  client /*: OldCozyClient */
+  client /*: OldCozyClient */,
+  batchSize /*: number */,
+  remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */ = []
 ) /*: Promise<ChangesFeedResponse> */ {
-  const response = await client.data.changesFeed(FILES_DOCTYPE, {
-    since,
-    include_docs: true,
-    limit: 10000
-  })
-  const { last_seq, pending, results } = response
+  const { last_seq, pending, results } = await client.data.changesFeed(
+    FILES_DOCTYPE,
+    {
+      since,
+      include_docs: true,
+      limit: batchSize
+    }
+  )
+  remoteDocs = remoteDocs.concat(results.map(r => r.doc))
+
   if (pending === 0) {
-    return response
+    return { last_seq, remoteDocs }
+  } else {
+    return fetchChangesFromFeed(last_seq, client, batchSize, remoteDocs)
   }
-  const nextResponse = await getChangesFeed(last_seq, client)
-  return {
-    ...nextResponse,
-    results: [...results, ...nextResponse.results]
-  }
+}
+
+async function fetchInitialChanges(
+  client /*: CozyClient */
+) /*: Promise<ChangesFeedResponse> */ {
+  const { newLastSeq: last_seq } = await client.stackClient
+    .collection(FILES_DOCTYPE)
+    .fetchChanges({
+      limit: 1,
+      descending: true
+    })
+  const remoteDocs = await client.queryAll(Q(FILES_DOCTYPE))
+
+  return { last_seq, remoteDocs }
 }
 
 module.exports = {
