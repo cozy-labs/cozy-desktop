@@ -1246,19 +1246,20 @@ describe('Merge', function() {
     })
 
     it('keeps the overwrite attribute if it exists', async function() {
+      const firstUpdateDate = new Date()
       const firstUpdate = await builders
         .metafile(file)
         .overwrite(file)
         .data('new content')
         .tags('qux', 'quux')
-        .updatedAt(new Date())
+        .updatedAt(firstUpdateDate)
         .changedSide(this.side)
         .create()
       const doc = builders
         .metafile(firstUpdate)
         .data('final content')
         .tags('qux', 'quux')
-        .updatedAt(new Date())
+        .updatedAt(new Date(firstUpdateDate.getTime() + 1))
         .unmerged(this.side)
         .build()
 
