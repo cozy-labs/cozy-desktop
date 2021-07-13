@@ -40,22 +40,32 @@ NODE_ENV=test
   )
 }
 
-app.whenReady().then(() =>
-  proxy
-    .setup(app, {}, session, '')
-    .then(() =>
-      automatedRegistration(cozyUrl, passphrase, storage).process(pkg)
-    )
-    .then(readAccessToken)
-    .then(generateTestEnv)
-    .then(() => {
-      // eslint-disable-next-line no-console
-      console.log('Remote bootstrap complete.')
-      process.exit(0) // eslint-disable-line no-process-exit
+app
+  .whenReady()
+  .then(() => {
+    const syncSession = session.fromPartition(proxy.SESSION_PARTITION_NAME, {
+      cache: false
     })
-    .catch(err => {
-      // eslint-disable-next-line no-console
-      console.error(err)
-      process.exit(1) // eslint-disable-line no-process-exit
-    })
-)
+    // Prevent login errors in case we run bootstrap twice by removing the
+    // session cookie which would trigger a redirect from the login page.
+    return syncSession.clearStorageData()
+  })
+  .then(() =>
+    proxy
+      .setup(app, {}, session, '')
+      .then(() =>
+        automatedRegistration(cozyUrl, passphrase, storage).process(pkg)
+      )
+      .then(readAccessToken)
+      .then(generateTestEnv)
+      .then(() => {
+        // eslint-disable-next-line no-console
+        console.log('Remote bootstrap complete.')
+        process.exit(0) // eslint-disable-line no-process-exit
+      })
+      .catch(err => {
+        // eslint-disable-next-line no-console
+        console.error(err)
+        process.exit(1) // eslint-disable-line no-process-exit
+      })
+  )

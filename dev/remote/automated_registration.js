@@ -95,7 +95,7 @@ const _getAuthorizationForm = async authorizeUrl => {
 
   log.debug('Parse authorization form...')
   const $ = cheerio.load(await authorizePageResp.text())
-  return $('form.auth')
+  return $('form')
     .serializeArray()
     .reduce((data, param) => {
       data[param.name] = param.value
