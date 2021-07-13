@@ -5,7 +5,6 @@ const _ = require('lodash')
 const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
-const stream = require('stream')
 const electronFetch = require('electron-fetch')
 const { FetchError } = require('cozy-stack-client')
 const CozyClient = require('cozy-client-js').Client
@@ -135,7 +134,7 @@ describe('RemoteCozy', function() {
         }
       })
 
-      it('returns a 409 FetchError if a doc with the same path exists', async () => {
+      it('rejects with a 409 FetchError if a doc with the same path exists', async () => {
         await builders
           .remoteDir()
           .inRootDir()
@@ -144,7 +143,7 @@ describe('RemoteCozy', function() {
 
         stubFetch()
         await should(
-          remoteCozy.createFile(new stream.Readable(), {
+          remoteCozy.createFile(builders.stream().build(), {
             name: 'foo',
             dirID: ROOT_DIR_ID,
             contentType: 'text/plain',
@@ -157,14 +156,64 @@ describe('RemoteCozy', function() {
         ).be.rejectedWith(FetchError, { status: 409 })
       })
 
-      it('returns a 413 FetchError if the file is larger than the available quota', async () => {
+      it('rejects with a 412 FetchError if the data sent is larger than the size in the metadata', async () => {
+        const data = 'data'
+        const checksum = await builders.checksum(data).create()
+
+        stubFetch()
+        await should(
+          remoteCozy.createFile(
+            builders
+              .stream()
+              .push(data)
+              .build(),
+            {
+              name: 'foo',
+              dirID: ROOT_DIR_ID,
+              contentType: 'text/plain',
+              contentLength: data.length - 1,
+              checksum,
+              executable: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          )
+        ).be.rejectedWith(FetchError, { status: 412 })
+      })
+
+      it('rejects with a 412 FetchError if the data sent is smaller than the size in the metadata', async () => {
+        const data = 'data'
+        const checksum = builders.checksum(data).build()
+
+        stubFetch()
+        await should(
+          remoteCozy.createFile(
+            builders
+              .stream()
+              .push(data)
+              .build(),
+            {
+              name: 'foo',
+              dirID: ROOT_DIR_ID,
+              contentType: 'text/plain',
+              contentLength: data.length + 1,
+              checksum,
+              executable: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          )
+        ).be.rejectedWith(FetchError, { status: 412 })
+      })
+
+      it('rejects with a 413 FetchError if the file is larger than the available quota', async () => {
         const fakeSettings = sinon
           .stub(remoteCozy.client.settings, 'diskUsage')
           .resolves({ attributes: { quota: 5000, used: 4800 } })
 
         stubFetch()
         await should(
-          remoteCozy.createFile(new stream.Readable(), {
+          remoteCozy.createFile(builders.stream().build(), {
             name: 'foo',
             dirID: ROOT_DIR_ID,
             contentType: 'text/plain',
@@ -179,10 +228,10 @@ describe('RemoteCozy', function() {
         fakeSettings.restore()
       })
 
-      it('returns a 413 FetchError if the file is larger than the max file size', async () => {
+      it('rejects with a 413 FetchError if the file is larger than the max file size', async () => {
         stubFetch()
         await should(
-          remoteCozy.createFile(new stream.Readable(), {
+          remoteCozy.createFile(builders.stream().build(), {
             name: 'foo',
             dirID: ROOT_DIR_ID,
             contentType: 'text/plain',
@@ -193,6 +242,30 @@ describe('RemoteCozy', function() {
             updatedAt: new Date().toISOString()
           })
         ).be.rejectedWith(FetchError, { status: 413 })
+      })
+
+      it('rejects with the Chromium error otherwise', async () => {
+        const data = 'data'
+
+        stubFetch()
+        await should(
+          remoteCozy.createFile(
+            builders
+              .stream()
+              .push(data)
+              .build(),
+            {
+              name: 'foo',
+              dirID: ROOT_DIR_ID,
+              contentType: 'text/plain',
+              contentLength: data.length,
+              checksum: 'md5sum', // Force a request failure with a bad checksum
+              executable: false,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString()
+            }
+          )
+        ).be.rejectedWith(CHROMIUM_ERROR)
       })
     })
   })
@@ -272,7 +345,7 @@ describe('RemoteCozy', function() {
           .resolves({ attributes: { quota: 5000, used: 4800 } })
 
         await should(
-          remoteCozy.updateFileById(remoteFile._id, new stream.Readable(), {
+          remoteCozy.updateFileById(remoteFile._id, builders.stream().build(), {
             contentType: 'text/plain',
             contentLength: 300,
             checksum: 'md5sum',
@@ -343,7 +416,9 @@ describe('RemoteCozy', function() {
         const { docs } = await remoteCozy.changes()
 
         const ids = docs.map(doc => doc._id)
-        should(ids).deepEqual([dir._id, file._id])
+        should(ids)
+          .containDeep([dir._id, file._id])
+          .and.have.length(2)
       })
     })
 

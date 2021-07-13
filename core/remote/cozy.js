@@ -9,6 +9,7 @@ const CozyClient = require('cozy-client').default
 const { FetchError } = require('cozy-stack-client')
 const { Q } = require('cozy-client')
 const path = require('path')
+const addSecretEventListener = require('secret-event-listener')
 
 const {
   FILES_DOCTYPE,
@@ -143,9 +144,12 @@ class RemoteCozy {
   // and recreate the error that was returned by the remote Cozy and take
   // appropriate action down the Sync process.
   async _withDomainErrors /*:: <T: MetadataRemoteInfo> */(
+    data /*: Readable */,
     options /*: Object */,
     fn /*: () => Promise<T> */
   ) /*: Promise<T> */ {
+    let readBytes = 0
+
     const domainError = async () => {
       try {
         const { name, dirID: dir_id, contentLength } = options
@@ -158,8 +162,23 @@ class RemoteCozy {
         ) {
           return new FetchError(
             { status: 413 },
-            'The file is too big and exceeds the disk quota'
+            'The file is too big or exceeds the disk quota'
           )
+        } else if (readBytes !== contentLength) {
+          const errBody = {
+            status: 412,
+            reason: {
+              errors: [
+                {
+                  status: 412,
+                  title: 'Precondition Failed',
+                  detail: 'Content length does not match',
+                  source: { parameter: 'Content-Length' }
+                }
+              ]
+            }
+          }
+          return new FetchError(errBody, JSON.stringify(errBody))
         }
       } catch (err) {
         return err
@@ -167,6 +186,14 @@ class RemoteCozy {
     }
 
     try {
+      // We use a secret event listener otherwise the data will start flowing
+      // before `cozy-client-js` starts handling it and we'll lose chunks.
+      // See https://nodejs.org/docs/latest-v12.x/api/stream.html#stream_event_data
+      // for more details.
+      addSecretEventListener(data, 'data', chunk => {
+        readBytes += chunk.length
+      })
+
       return await fn()
     } catch (err) {
       if (/mojo result/.test(err.message)) {
@@ -191,7 +218,7 @@ class RemoteCozy {
                  updatedAt: string,
                  executable: boolean|} */
   ) /*: Promise<MetadataRemoteFile> */ {
-    return this._withDomainErrors(options, async () => {
+    return this._withDomainErrors(data, options, async () => {
       const file /* RemoteJsonFile*/ = await this.client.files.create(data, {
         ...options,
         noSanitize: true
@@ -225,7 +252,7 @@ class RemoteCozy {
                  executable: boolean,
                  ifMatch: string|} */
   ) /*: Promise<MetadataRemoteFile> */ {
-    return this._withDomainErrors(options, async () => {
+    return this._withDomainErrors(data, options, async () => {
       const updated /*: RemoteJsonFile */ = await this.client.files.updateById(
         id,
         data,
