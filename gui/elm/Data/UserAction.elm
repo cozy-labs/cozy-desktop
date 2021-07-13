@@ -270,6 +270,16 @@ type alias UserActionView =
 view : String -> UserActionView
 view code =
     case code of
+        "FileTooLarge" ->
+            { title = "Error The file is too large"
+            , details =
+                [ "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB."
+                , "Error You need to remove it from your local synchronization folder or reduce its size."
+                ]
+            , primaryInteraction = GiveUp
+            , secondaryInteraction = Nothing
+            }
+
         "IncompatibleDoc" ->
             { title = "Error Document path incompatible with current OS"
             , details =

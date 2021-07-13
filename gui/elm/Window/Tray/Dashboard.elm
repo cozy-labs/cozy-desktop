@@ -231,6 +231,9 @@ viewAction helpers model action =
 
         primaryButton =
             case UserAction.primaryInteraction action of
+                UserAction.GiveUp ->
+                    actionButton helpers (UserActionSkipped action) [] "UserAction Give up" Nothing
+
                 UserAction.Retry label ->
                     actionButton helpers (UserActionDone action) [] label Nothing
 

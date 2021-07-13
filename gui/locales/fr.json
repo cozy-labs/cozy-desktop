@@ -114,6 +114,9 @@
   "Error Document path incompatible with current OS": "Chemin incompatible avec l'OS courant",
   "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System.": "Le nom du {0} `{1}` est reservé, contient des caractères interdits ou est trop long pour votre système d'exploitation.",
   "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary.": "Essayez de le renommer sur votre Cozy en n'utilisant pas de caractère spécial et en choisissant un nom plus court si besoin.",
+  "Error The file is too large": "Le fichier est trop volumineux",
+  "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.": "Le fichier `{0}` n'a pas pû être écrit sur le disque de votre Cozy car il dépasse la taille maximum autorisée par votre Cozy : 5 Gio.",
+  "Error You need to remove it from your local synchronization folder or reduce its size.": "Déplacez le hors du dossier local de synchronisation ou réduisez sa taille.",
 
   "Folder All done": "C’est bon",
   "Folder Please choose an empty directory": "Veuillez choisir un dossier vide.",

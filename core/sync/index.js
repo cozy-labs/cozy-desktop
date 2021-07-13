@@ -396,6 +396,7 @@ class Sync {
         case syncErrors.INCOMPATIBLE_DOC_CODE:
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
+        case remoteErrors.FILE_TOO_LARGE_CODE:
         case remoteErrors.INVALID_FOLDER_MOVE_CODE:
         case remoteErrors.INVALID_METADATA_CODE:
         case remoteErrors.INVALID_NAME_CODE:
@@ -803,6 +804,7 @@ class Sync {
         case syncErrors.INCOMPATIBLE_DOC_CODE:
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
+        case remoteErrors.FILE_TOO_LARGE_CODE:
         case remoteErrors.INVALID_METADATA_CODE:
         case remoteErrors.INVALID_NAME_CODE:
         case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
