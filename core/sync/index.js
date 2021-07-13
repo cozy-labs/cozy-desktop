@@ -55,6 +55,15 @@ const isMarkedForDeletion = (doc /*: SavedMetadata */) => {
   return doc.deleted || doc._deleted
 }
 
+const shouldAttemptRetry = (change /*: MetadataChange */) => {
+  // Don't try more than MAX_SYNC_ATTEMPTS for the same operation unless we're
+  // running a test during which we don't want to wait for a retry.
+  return (
+    !process.env.SYNC_SHOULD_NOT_RETRY &&
+    (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS)
+  )
+}
+
 // Sync listens to PouchDB about the metadata changes, and calls local and
 // remote sides to apply the changes on the filesystem and remote CouchDB
 // respectively.
@@ -437,9 +446,7 @@ class Sync {
            * Merge level.
            */
 
-          // We will retry to apply the change `MAX_SYNC_ATTEMPTS` times just
-          // in case.
-          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
+          if (shouldAttemptRetry(change)) {
             // Solve 1. & 2.
             this.blockSyncFor({ err: syncErr, change })
           } else {
@@ -452,8 +459,7 @@ class Sync {
           }
           break
         case remoteErrors.MISSING_DOCUMENT_CODE:
-          // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
-          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
+          if (shouldAttemptRetry(change)) {
             this.blockSyncFor({ err: syncErr, change })
           } else {
             if (change.doc.deleted) {
@@ -483,7 +489,7 @@ class Sync {
            * 4. have failed to merge its remote deletion and will never succeed
            *    because we abandoned in the past
            */
-          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
+          if (shouldAttemptRetry(change)) {
             // Solve 1. & 2.
             this.blockSyncFor({ err: syncErr, change })
           } else {
@@ -518,8 +524,7 @@ class Sync {
           }
           break
         default:
-          // Don't try more than MAX_SYNC_ATTEMPTS for the same operation
-          if (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS) {
+          if (shouldAttemptRetry(change)) {
             this.blockSyncFor({ err: syncErr, change })
           } else {
             await this.skipChange(change, syncErr)

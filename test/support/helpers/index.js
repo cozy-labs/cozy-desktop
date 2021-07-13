@@ -3,7 +3,7 @@
 const autoBind = require('auto-bind')
 const path = require('path')
 const _ = require('lodash')
-const { pick } = _
+const { defaults, pick } = _
 const sinon = require('sinon')
 
 const { Ignore } = require('../../../core/ignore')
@@ -133,6 +133,7 @@ class TestHelpers {
   spyPouch() {
     sinon.spy(this.pouch, 'put')
     sinon.spy(this.pouch, 'bulkDocs')
+    sinon.spy(this.pouch, 'eraseDocument')
   }
 
   resetPouchSpy() {
@@ -152,6 +153,11 @@ class TestHelpers {
     for (const args of this.pouch.put.args) {
       const doc = args[0]
       results.push(pick(doc, props))
+    }
+
+    for (const args of this.pouch.eraseDocument.args) {
+      const doc = args[0]
+      results.push(defaults({ _deleted: true }, pick(doc, props)))
     }
 
     return results

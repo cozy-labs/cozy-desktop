@@ -122,28 +122,6 @@ describe('Add', () => {
     })
 
     describe('remote', () => {
-      it('downloads the new file', async () => {
-        await cozy.files.create('foo', { name: 'file', dirID: parent._id })
-        await helpers.remote.pullChanges()
-
-        should(
-          helpers.putDocs('path', '_deleted', 'trashed', 'sides')
-        ).deepEqual([
-          {
-            path: path.normalize('parent/file'),
-            sides: { target: 1, remote: 1 }
-          }
-        ])
-
-        // $FlowFixMe
-        should(await helpers.remote.treeWithoutTrash()).deepEqual([
-          'parent/',
-          'parent/file'
-        ])
-      })
-    })
-
-    describe('on remote Cozy', () => {
       it('creates the file on the local file system', async () => {
         await createDoc('remote', 'file')
         await helpers.remote.pullChanges()
@@ -160,6 +138,48 @@ describe('Add', () => {
         await helpers.syncAll()
 
         should(await helpers.local.tree()).deepEqual(['parent/', 'parent/file'])
+      })
+
+      context('when the file is deleted before being downloaded', () => {
+        before('prevent Sync retries', () => {
+          // Otherwise we won't see the document erasing
+          process.env.SYNC_SHOULD_NOT_RETRY = 'true'
+        })
+        after('re-enable Sync retries', () => {
+          // Otherwise we won't see the document erasing
+          delete process.env.SYNC_SHOULD_NOT_RETRY
+        })
+
+        it('erases the local Pouch record', async () => {
+          const remoteFile = await createDoc('remote', 'file')
+          await helpers.remote.pullChanges()
+
+          should(
+            helpers.putDocs('path', '_deleted', 'trashed', 'sides')
+          ).deepEqual([
+            {
+              path: path.normalize('parent/file'),
+              sides: { target: 1, remote: 1 }
+            }
+          ])
+
+          // Destroy file before it is downloaded
+          await cozy.files.destroyById(remoteFile._id)
+
+          await helpers.syncAll()
+
+          helpers.resetPouchSpy()
+          should(
+            helpers.putDocs('path', '_deleted', 'trashed', 'sides')
+          ).deepEqual([
+            {
+              path: path.normalize('parent/file'),
+              sides: { target: 1, remote: 1 },
+              _deleted: true
+            }
+          ])
+          should(await helpers.local.tree()).deepEqual(['parent/'])
+        })
       })
     })
   })
