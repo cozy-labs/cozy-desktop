@@ -7,13 +7,14 @@ const should = require('should')
 const sinon = require('sinon')
 const stream = require('stream')
 const electronFetch = require('electron-fetch')
-const { FetchError } = require('cozy-client') // Peut-être cozy-stack-client
+const { FetchError } = require('cozy-stack-client')
 const CozyClient = require('cozy-client-js').Client
 
 const {
   ROOT_DIR_ID,
   TRASH_DIR_ID,
-  TRASH_DIR_NAME
+  TRASH_DIR_NAME,
+  MAX_FILE_SIZE
 } = require('../../../core/remote/constants')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
@@ -163,6 +164,21 @@ describe('RemoteCozy', function() {
         ).be.rejectedWith(FetchError, { status: 413 })
 
         fakeSettings.restore()
+      })
+
+      it('returns a 413 FetchError if the file is larger than the max file size', async () => {
+        await should(
+          remoteCozy.createFile(new stream.Readable(), {
+            name: 'foo',
+            dirID: ROOT_DIR_ID,
+            contentType: 'text/plain',
+            contentLength: MAX_FILE_SIZE + 1,
+            checksum: 'md5sum',
+            executable: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
+        ).be.rejectedWith(FetchError, { status: 413 })
       })
     })
   })

@@ -3,9 +3,12 @@
  * @flow
  */
 
+const { FILE_TYPE, MAX_FILE_SIZE } = require('./constants')
+
 /*::
-import type { RemoteChange } from './change'
 import type { MetadataChange } from '../sync'
+import type { SavedMetadata } from '../metadata'
+import type { RemoteChange } from './change'
 import type { Warning } from './cozy'
 
 import type { FetchError } from 'cozy-stack-client'
@@ -15,6 +18,7 @@ export type { FetchError }
 const CONFLICTING_NAME_CODE = 'ConflictingName'
 const COZY_CLIENT_REVOKED_CODE = 'CozyClientRevoked'
 const COZY_NOT_FOUND_CODE = 'CozyNotFound'
+const FILE_TOO_LARGE_CODE = 'FileTooLarge'
 const INVALID_FOLDER_MOVE_CODE = 'InvalidFolderMove'
 const INVALID_METADATA_CODE = 'InvalidMetadata'
 const INVALID_NAME_CODE = 'InvalidName'
@@ -161,7 +165,10 @@ class RemoteError extends Error {
   }
 }
 
-const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
+const wrapError = (
+  err /*: FetchError |  Error */,
+  doc /*: ?SavedMetadata */
+) /*: RemoteError */ => {
   if (err.name === 'FetchError') {
     // $FlowFixMe FetchErrors missing status will fallback to the default case
     const { status } = err
@@ -238,11 +245,19 @@ const wrapError = (err /*: FetchError |  Error */) /*: RemoteError */ => {
           })
         }
       case 413:
-        return new RemoteError({
-          code: NO_COZY_SPACE_CODE,
-          message: 'Not enough space available on remote Cozy',
-          err
-        })
+        if (isFileLargerThanAllowed(doc)) {
+          return new RemoteError({
+            code: FILE_TOO_LARGE_CODE,
+            message: 'The file is larger than allowed by the remote Cozy',
+            err
+          })
+        } else {
+          return new RemoteError({
+            code: NO_COZY_SPACE_CODE,
+            message: 'Not enough space available on remote Cozy',
+            err
+          })
+        }
       case 422:
         if (sourceParameter(err) === 'name') {
           return new RemoteError({
@@ -313,6 +328,17 @@ function hasNoReason(err /*: FetchError */) /*: boolean %checks */ {
   )
 }
 
+function isFileLargerThanAllowed(
+  doc /*: ?SavedMetadata */
+) /*: boolean %checks */ {
+  return (
+    doc != null &&
+    doc.docType === FILE_TYPE &&
+    doc.size != null &&
+    doc.size > MAX_FILE_SIZE
+  )
+}
+
 module.exports = {
   CozyDocumentMissingError,
   DirectoryNotFound,
@@ -322,6 +348,7 @@ module.exports = {
   CONFLICTING_NAME_CODE,
   COZY_CLIENT_REVOKED_CODE,
   COZY_NOT_FOUND_CODE,
+  FILE_TOO_LARGE_CODE,
   INVALID_FOLDER_MOVE_CODE,
   INVALID_METADATA_CODE,
   INVALID_NAME_CODE,

@@ -10,7 +10,12 @@ const { FetchError } = require('cozy-stack-client')
 const { Q } = require('cozy-client')
 const path = require('path')
 
-const { FILES_DOCTYPE, FILE_TYPE, DIR_TYPE } = require('./constants')
+const {
+  FILES_DOCTYPE,
+  FILE_TYPE,
+  DIR_TYPE,
+  MAX_FILE_SIZE
+} = require('./constants')
 const { DirectoryNotFound } = require('./errors')
 const {
   dropSpecialDocs,
@@ -147,7 +152,10 @@ class RemoteCozy {
 
         if (name && dir_id && (await this.isNameTaken({ name, dir_id }))) {
           return new FetchError({ status: 409 }, 'Conflict: name already taken')
-        } else if (!(await this.hasEnoughSpace(contentLength))) {
+        } else if (
+          contentLength > MAX_FILE_SIZE ||
+          !(await this.hasEnoughSpace(contentLength))
+        ) {
           return new FetchError(
             { status: 413 },
             'The file is too big and exceeds the disk quota'

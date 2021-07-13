@@ -141,7 +141,11 @@ const wrapError = (
     // file for example. In this case the sideName will be "local" but the error
     // name will still be "FetchError".
     // If err is a RemoteError, its code will be reused.
-    return new SyncError({ sideName, err: remoteErrors.wrapError(err), doc })
+    return new SyncError({
+      sideName,
+      err: remoteErrors.wrapError(err, doc),
+      doc
+    })
   } else {
     return new SyncError({ sideName, err, doc })
   }

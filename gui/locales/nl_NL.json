@@ -90,7 +90,7 @@
   "Error Ok": "Oké",
   "Error Syncdir is empty": "Het lijkt erop dat je Cozy-map is geleegd. Bevindt deze zich op een harde schijf die momenteel niet is aangekoppeld? Om gegevensverlies te voorkomen, is de synchronisatie gestopt.",
   "Error Your Cozy is unreachable": "Je Cozy is onbereikbaar",
-  "Error Your Cozy could not be found": "Your Cozy could not be found",
+  "Error Your Cozy could not be found": "Je Cozy is niet aangetroffen",
   "Error This note could not be found": "Deze notitie is niet aangetroffen",
   "Error Unexpected error": "Onverwachte fout",
   "Error Conflict with remote version": "Conflict met externe versie",
@@ -114,6 +114,9 @@
   "Error Document path incompatible with current OS": "Documentlocatie incompatibel met huidig systeem",
   "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System.": "{0} `{1}`'s naam bevat niet-toegestane of voorbehouden tekens, of is te lang voor je besturingssysteem.",
   "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary.": "Wijzig de naam op je Cozy en verwijder de speciale tekens. Kie‘ indien nodig, ook een kortere naam.",
+  "Error The file is too large": "The file is too large",
+  "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.": "The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.",
+  "Error You need to remove it from your local synchronization folder or reduce its size.": "You need to remove it from your local synchronization folder or reduce its size.",
 
   "Folder All done": "Voltooid",
   "Folder Please choose an empty directory": "Kies een lege map.",

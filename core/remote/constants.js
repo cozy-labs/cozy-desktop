@@ -11,6 +11,7 @@ export type FILES_DOCTYPE = 'io.cozy.files'
 */
 
 const DEFAULT_HEARTBEAT = 1000 * 60 // 1 minute
+const FIVE_GIGABYTES = 5368709122 // bytes
 
 module.exports = {
   // Doctypes
@@ -33,5 +34,9 @@ module.exports = {
   HEARTBEAT: parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT,
 
   // ToS updated warning code
-  TOS_UPDATED_WARNING_CODE: 'tos-updated'
+  TOS_UPDATED_WARNING_CODE: 'tos-updated',
+
+  // Maximum file size allowed by Swift thus the remote Cozy.
+  // See https://docs.openstack.org/kilo/config-reference/content/object-storage-constraints.html
+  MAX_FILE_SIZE: FIVE_GIGABYTES
 }
