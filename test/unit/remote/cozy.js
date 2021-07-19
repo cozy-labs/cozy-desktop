@@ -117,11 +117,22 @@ describe('RemoteCozy', function() {
     })
 
     context('when the request fails with a mysterious Chromium error', () => {
-      beforeEach(() => {
-        sinon.stub(remoteCozy.client.files, 'create').rejects(CHROMIUM_ERROR)
-      })
+      const stubFetch = () => {
+        // This cannot be declared outside `stubFetch()` as it would not have
+        // gone through the proxy setup yet and calls would fail.
+        const originalFetch = global.fetch
+
+        sinon.stub(global, 'fetch')
+        global.fetch.onFirstCall().callsFake(async (url, options) => {
+          await originalFetch(url, options)
+          throw CHROMIUM_ERROR
+        })
+        global.fetch.callThrough()
+      }
       afterEach(() => {
-        remoteCozy.client.files.create.restore()
+        if (global.fetch.restore) {
+          global.fetch.restore()
+        }
       })
 
       it('returns a 409 FetchError if a doc with the same path exists', async () => {
@@ -131,6 +142,7 @@ describe('RemoteCozy', function() {
           .name('foo')
           .create()
 
+        stubFetch()
         await should(
           remoteCozy.createFile(new stream.Readable(), {
             name: 'foo',
@@ -150,6 +162,7 @@ describe('RemoteCozy', function() {
           .stub(remoteCozy.client.settings, 'diskUsage')
           .resolves({ attributes: { quota: 5000, used: 4800 } })
 
+        stubFetch()
         await should(
           remoteCozy.createFile(new stream.Readable(), {
             name: 'foo',
@@ -167,6 +180,7 @@ describe('RemoteCozy', function() {
       })
 
       it('returns a 413 FetchError if the file is larger than the max file size', async () => {
+        stubFetch()
         await should(
           remoteCozy.createFile(new stream.Readable(), {
             name: 'foo',
