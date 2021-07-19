@@ -1,10 +1,10 @@
 /* @flow */
 
-const crypto = require('crypto')
 const { posix } = require('path')
 const _ = require('lodash')
 
 const RemoteBaseBuilder = require('./base')
+const ChecksumBuilder = require('../checksum')
 const cozyHelpers = require('../../helpers/cozy')
 
 const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
@@ -103,11 +103,7 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <Metadat
   _updateExport() {
     this._data = `${this._title}\n\n${this._content}`
     this.remoteDoc.size = Buffer.from(this._data).length.toString()
-    this.remoteDoc.md5sum = crypto
-      .createHash('md5')
-      .update(this._data)
-      .digest()
-      .toString('base64')
+    this.remoteDoc.md5sum = new ChecksumBuilder(this._data).build()
   }
 
   build() /*: Object */ {

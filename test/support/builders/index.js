@@ -17,8 +17,10 @@ const RemoteErasedBuilder = require('./remote/erased')
 const StreamBuilder = require('./stream')
 const AtomEventBuilder = require('./atom_event')
 const { DefaultStatsBuilder, WinStatsBuilder } = require('./stats')
+const ChecksumBuilder = require('./checksum')
 
 /*::
+import type { Readable } from 'stream'
 import type { Cozy } from 'cozy-client-js'
 import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
@@ -172,6 +174,10 @@ module.exports = class Builders {
 
   stream() /*: StreamBuilder */ {
     return new StreamBuilder()
+  }
+
+  checksum(data /*: string | Readable */) /*: ChecksumBuilder */ {
+    return new ChecksumBuilder(data)
   }
 
   event(old /*: ?AtomEvent */) /*: AtomEventBuilder */ {

@@ -92,23 +92,23 @@ describe('RemoteCozy', function() {
   describe('createFile', () => {
     context('when the name starts or ends with a space', () => {
       it('creates the file with the given name', async () => {
+        const data = builders
+          .stream()
+          .push('')
+          .build()
+        const checksum = builders.checksum('').build()
+
         should(
-          await remoteCozy.createFile(
-            builders
-              .stream()
-              .push('')
-              .build(),
-            {
-              name: ' foo ',
-              dirID: ROOT_DIR_ID,
-              contentType: 'text/plain',
-              contentLength: 0,
-              checksum: '1B2M2Y8AsgTpgAmY7PhCfg==', // md5sum of an empty file
-              executable: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          )
+          await remoteCozy.createFile(data, {
+            name: ' foo ',
+            dirID: ROOT_DIR_ID,
+            contentType: 'text/plain',
+            contentLength: 0,
+            checksum,
+            executable: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
         ).have.properties({
           type: 'file',
           name: ' foo '
@@ -225,22 +225,21 @@ describe('RemoteCozy', function() {
           .data('initial content')
           .create()
 
+        const data = builders
+          .stream()
+          .push('')
+          .build()
+        const checksum = builders.checksum('').build()
+
         should(
-          await remoteCozy.updateFileById(
-            remoteFile._id,
-            builders
-              .stream()
-              .push('')
-              .build(),
-            {
-              contentType: 'text/plain',
-              contentLength: 0,
-              checksum: '1B2M2Y8AsgTpgAmY7PhCfg==', // md5sum of an empty file
-              executable: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
-            }
-          )
+          await remoteCozy.updateFileById(remoteFile._id, data, {
+            contentType: 'text/plain',
+            contentLength: 0,
+            checksum,
+            executable: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          })
         ).have.properties({
           type: 'file',
           name: ' foo ',

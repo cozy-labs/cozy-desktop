@@ -2,7 +2,6 @@
 /* @flow */
 
 const Promise = require('bluebird')
-const crypto = require('crypto')
 const fse = require('fs-extra')
 const path = require('path')
 const sinon = require('sinon')
@@ -17,6 +16,8 @@ const configHelpers = require('../../support/helpers/config')
 const { ContextDir } = require('../../support/helpers/context_dir')
 const { WINDOWS_DEFAULT_MODE } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
+
+const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
 
 const streamer = (doc, content, err) => ({
   createReadStreamAsync(docToStream) {
@@ -65,25 +66,23 @@ describe('Local', function() {
       )
     })
 
-    it('creates a readable stream for the document', function(done) {
-      let src = path.join(__dirname, '../../fixtures/chat-mignon.jpg')
-      let dst = syncDir.abspath('read-stream.jpg')
+    it('creates a readable stream for the document', async function() {
+      const image = await fse.readFile(CHAT_MIGNON_MOD_PATH)
+
+      const src = CHAT_MIGNON_MOD_PATH
+      const dst = syncDir.abspath('read-stream.jpg')
       fse.copySync(src, dst)
-      let doc = {
-        path: 'read-stream.jpg',
-        md5sum: 'bf268fcb32d2fd7243780ad27af8ae242a6f0d30'
-      }
-      this.local.createReadStreamAsync(doc).then(stream => {
-        should.exist(stream)
-        let checksum = crypto.createHash('sha1')
-        checksum.setEncoding('hex')
-        stream.pipe(checksum)
-        stream.on('end', function() {
-          checksum.end()
-          should(checksum.read()).equal(doc.md5sum)
-          done()
-        })
-      })
+
+      const doc = builders
+        .metafile()
+        .path('read-stream.jpg')
+        .data(image)
+        .build()
+      const stream = await this.local.createReadStreamAsync(doc)
+      should.exist(stream)
+      await should(builders.checksum(stream).create()).be.fulfilledWith(
+        doc.md5sum
+      )
     })
   })
 
