@@ -7049,6 +7049,11 @@ schema-utils@^0.4.0:
     ajv "^6.1.0"
     ajv-keywords "^3.1.0"
 
+secret-event-listener@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/secret-event-listener/-/secret-event-listener-1.0.0.tgz#43f7d980cf6878b80e86fc77cd96c13a3812a536"
+  integrity sha512-6eRmDKmnDl57zawL3Y8XHLuVgIQfwU36D4s5Tg9Qxuu5TfqpHI8jIo9CqKfcdIXMh8b0Mr0tqK9cmfs0hPOexQ==
+
 semver-compare@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/semver-compare/-/semver-compare-1.0.0.tgz#0dee216a1c941ab37e9efb1788f6afc5ff5537fc"

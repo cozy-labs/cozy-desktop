@@ -1,9 +1,9 @@
 /* @flow */
 
 const mime = require('../../../../core/utils/mime')
-const crypto = require('crypto')
 
 const BaseMetadataBuilder = require('./base')
+const ChecksumBuilder = require('../checksum')
 
 /*::
 import type { Pouch } from '../../../../core/pouch'
@@ -34,11 +34,7 @@ module.exports = class FileMetadataBuilder extends BaseMetadataBuilder {
   data(data /*: string | Buffer */) /*: this */ {
     this._data = data
     this.doc.size = Buffer.from(data).length
-    this.doc.md5sum = crypto
-      .createHash('md5')
-      .update(data)
-      .digest()
-      .toString('base64')
+    this.doc.md5sum = new ChecksumBuilder(data).build()
     return this
   }
 

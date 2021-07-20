@@ -2,7 +2,6 @@
 /* eslint-env mocha */
 
 const Promise = require('bluebird')
-const crypto = require('crypto')
 const EventEmitter = require('events')
 const fse = require('fs-extra')
 const _ = require('lodash')
@@ -78,24 +77,15 @@ describe('remote.Remote', function() {
         .contentType('image/jpeg')
         .dataFromFile(fixture)
         .create()
-
       should(binary.md5sum).equal(expectedChecksum)
+
       const stream = await this.remote.createReadStreamAsync(
         metadata.fromRemoteDoc(binary)
       )
       should.exist(stream)
-      const checksum = crypto.createHash('md5')
-      checksum.setEncoding('base64')
-      stream.pipe(checksum)
-
-      await should(
-        new Promise(resolve => {
-          stream.on('end', function() {
-            checksum.end()
-            resolve(checksum.read())
-          })
-        })
-      ).be.fulfilledWith(expectedChecksum)
+      await should(builders.checksum(stream).create()).be.fulfilledWith(
+        expectedChecksum
+      )
     })
   })
 
@@ -117,8 +107,7 @@ describe('remote.Remote', function() {
 
       this.remote.other = {
         createReadStreamAsync() {
-          const stream = fse.createReadStream(CHAT_MIGNON_MOD_PATH)
-          return Promise.resolve(stream)
+          return fse.createReadStream(CHAT_MIGNON_MOD_PATH)
         }
       }
 

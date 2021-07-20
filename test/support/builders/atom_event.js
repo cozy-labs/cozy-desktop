@@ -2,11 +2,11 @@
 
 const _ = require('lodash')
 const path = require('path')
-const crypto = require('crypto')
 
 const events = require('../../../core/local/atom/event')
 
 const statsBuilder = require('./stats')
+const ChecksumBuilder = require('./checksum')
 
 /*::
 import type { Stats } from 'fs'
@@ -135,13 +135,7 @@ module.exports = class AtomEventBuilder {
   }
 
   data(fileContent /*: string */) /*: this */ {
-    return this.md5sum(
-      crypto
-        .createHash('md5')
-        .update(fileContent)
-        .digest()
-        .toString('base64')
-    )
+    return this.md5sum(new ChecksumBuilder(fileContent).build())
   }
 
   noIgnore() /*: this */ {

@@ -1,11 +1,11 @@
 /* @flow */
 
-const crypto = require('crypto')
 const fs = require('fs')
 const { posix } = require('path')
 const _ = require('lodash')
 
 const RemoteBaseBuilder = require('./base')
+const ChecksumBuilder = require('../checksum')
 const cozyHelpers = require('../../helpers/cozy')
 
 const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
@@ -74,11 +74,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <Metadat
     this._data = data
     if (typeof data === 'string') {
       this.remoteDoc.size = Buffer.from(data).length.toString()
-      this.remoteDoc.md5sum = crypto
-        .createHash('md5')
-        .update(data)
-        .digest()
-        .toString('base64')
+      this.remoteDoc.md5sum = new ChecksumBuilder(data).build()
     }
     // FIXME: Assuming doc will be created with data stream
     return this
