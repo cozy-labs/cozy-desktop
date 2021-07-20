@@ -86,7 +86,7 @@ onPlatform('darwin', () => {
         const checksum = sinon.spy()
         await prepareEvents.step(events, {
           checksum,
-          initialScan: true,
+          initialScanParams: { flushed: false },
           pouch: this.pouch,
           syncPath: this.config.syncPath
         })
@@ -114,7 +114,7 @@ onPlatform('darwin', () => {
         const checksum = sinon.spy()
         await prepareEvents.step(events, {
           checksum,
-          initialScan: true,
+          initialScanParams: { flushed: false },
           pouch: this.pouch,
           syncPath: this.config.syncPath
         })
