@@ -1,5 +1,40 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.28.1-beta.2 - 2021-07-20
+
+Improvements for Windows users:
+
+- The last modification and last access dates on Windows were not precise enough
+  for Cozy Desktop to detect sub-second local modifications. This would
+  sometimes lead to `Invalid metadata` errors when sending modifications to the
+  remote Cozy.
+  We've increased this precision to include milliseconds so we should not lose
+  any local modification anymore.
+
+Improvements for all users:
+
+- Due to a "bug" in Chromium (i.e. which we use through Electron to provide our
+  network stack), some error responses sent by the remote Cozy to our file
+  upload requests are transformed into a cryptic error which we cannot deal with
+  directly. In such cases, we end up interpreting them as unreachable Cozy
+  errors which is misleading to you.
+  We caught and fixed two of those cases:
+  * when sending files larger than the maximum allowed by the remote Cozy (i.e.
+    5 GiB for Cozies hosted by us)
+  * when the amount of data sent does not match the expected file size (i.e.
+    because the actual local file has grown since last we detected a change)
+
+Improvements for macOS users:
+
+- Some steps of the initial scan could be run twice if some local modifications
+  were detected while the initial scan was still running.
+  We've made sure we don't lose time of consume unnecessary computing resources
+  by making sure those steps are only run for the real initial scan.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.28.1-beta.1 - 2021-05-25
 
 Improvements for all users:
