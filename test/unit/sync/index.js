@@ -272,20 +272,97 @@ describe('Sync', function() {
       should(this.sync.applyDoc).have.not.been.called()
     })
 
-    it('trashes a locally deleted file or folder', async function() {
+    it('trashes a locally deleted file', async function() {
       const change = {
         seq: 145,
         doc: await builders
-          .metadata()
+          .metafile()
           .path('foo')
           .trashed()
           .changedSide('local')
           .create()
       }
 
-      this.sync.trashWithParentOrByItself = sinon.stub().resolves(true)
-      await this.sync.apply(change)
-      should(this.sync.trashWithParentOrByItself).have.been.called()
+      this.remote.trashAsync = sinon.stub().resolves(true)
+      sinon.spy(this.sync, 'trashWithParentOrByItself')
+      try {
+        await this.sync.apply(change)
+        should(this.sync.trashWithParentOrByItself).have.been.calledWith(
+          change.doc,
+          this.remote
+        )
+        should(this.remote.trashAsync)
+          .have.been.calledOnce()
+          .and.calledWith(change.doc)
+      } finally {
+        this.sync.trashWithParentOrByItself.restore()
+      }
+    })
+
+    it('trashes a locally deleted folder with content', async function() {
+      await builders
+        .metadata()
+        .path('foo/bar')
+        .trashed()
+        .changedSide('local')
+        .create()
+      const deletedParent = await builders
+        .metadir()
+        .path('foo')
+        .trashed()
+        .changedSide('local')
+        .create()
+      const change = {
+        seq: 145,
+        doc: deletedParent
+      }
+
+      this.remote.trashAsync = sinon.stub().resolves(true)
+      sinon.spy(this.sync, 'trashWithParentOrByItself')
+      try {
+        await this.sync.apply(change)
+        should(this.sync.trashWithParentOrByItself).have.been.calledWith(
+          deletedParent,
+          this.remote
+        )
+        should(this.remote.trashAsync)
+          .have.been.calledOnce()
+          .and.calledWith(deletedParent)
+      } finally {
+        this.sync.trashWithParentOrByItself.restore()
+      }
+    })
+
+    it('does not trash a locally deleted file if its parent is deleted', async function() {
+      const deletedChild = await builders
+        .metadata()
+        .path('foo/bar')
+        .trashed()
+        .changedSide('local')
+        .create()
+      await builders
+        .metadir()
+        .path('foo')
+        .trashed()
+        .changedSide('local')
+        .create()
+      const change = {
+        seq: 145,
+        doc: deletedChild
+      }
+
+      this.remote.trashAsync = sinon.stub().resolves(true)
+      sinon.spy(this.sync, 'trashWithParentOrByItself')
+      try {
+        await this.sync.apply(change)
+        should(this.sync.trashWithParentOrByItself).have.been.calledWith(
+          deletedChild,
+          this.remote
+        )
+        should(this.remote.trashAsync).not.have.been.called()
+      } finally {
+        this.sync.trashWithParentOrByItself.restore()
+      }
     })
 
     it('calls applyDoc for a modified file', async function() {
@@ -517,7 +594,7 @@ describe('Sync', function() {
     it('calls trashAsync for a deleted synced file', async function() {
       const doc = await builders
         .metafile()
-        .path('foo/baz')
+        .path('foo')
         .deleted()
         .changedSide('remote')
         .create()
@@ -586,12 +663,12 @@ describe('Sync', function() {
     it('calls trashAsync for a deleted synced folder', async function() {
       const doc = await builders
         .metadir()
-        .path('foobar/baz')
+        .path('baz')
         .deleted()
         .changedSide('remote')
         .create()
       await this.sync.applyDoc(doc, this.local, 'local')
-      should(this.local.deleteFolderAsync).have.been.calledWith(doc)
+      should(this.local.trashAsync).have.been.calledWith(doc)
     })
 
     it('does nothing for a deleted folder that was not added', async function() {

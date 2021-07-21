@@ -44,15 +44,11 @@ module.exports = ({
       'dst/dir/subdir/subsub/',
       'src/'
     ],
-    localTrash: [
-      // Why isn't the hierarchy preserved in the local trash on Windows?
-      'dir/',
-      'dir/deletedFile',
-      'dir/subdir/',
-      'file',
-      'file (__cozy__: ...)'
-    ],
-    remoteTrash:
+    trash:
+      // Since we're merging here, the destination directories are kept while
+      // the source ones are trashed on macOS and Linux.
+      // On Windows the source directories are moved after the destination
+      // directories are trashed so retain the full hierarchy in the trash.
       process.platform === 'win32'
         ? [
             'dir/',
@@ -62,17 +58,11 @@ module.exports = ({
             'dir/subdir/file'
           ]
         : [
-            // Since we're merging here, on Linux and macOs, the destination
-            // directories are kept while the source ones are trashed as
-            // initialDiff won't find them.
-            // On Windows though, the destination directories are deleted before
-            // the source ones are moved so the hierarchy of the deleted
-            // directories is preserved.
             'dir/',
             'dir/deletedFile',
             'dir/subdir/',
-            'file',
-            'file (__cozy__: ...)'
+            'file', // XXX: content is trashed before on disk
+            'file (__cozy__: ...)' // XXX: content is trashed before on disk
           ],
     contents: {
       'dst/dir/deletedFile': 'should be kept',

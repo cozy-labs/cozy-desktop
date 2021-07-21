@@ -232,7 +232,7 @@ actions = {
       )
     } else if (was.ino !== event.stats.ino) {
       _.set(event, [STEP_NAME, 'moveSrcReplacement'], _.clone(was))
-      log.warn({ event }, 'File move source has been replaced in Pouch')
+      log.warn({ event }, 'Dir move source has been replaced in Pouch')
       return
     }
     log.info({ event }, 'Dir moved')
