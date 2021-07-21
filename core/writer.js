@@ -20,6 +20,5 @@ export interface Writer {
   moveAsync (doc: SavedMetadata, from: SavedMetadata): Promise<void>;
   assignNewRemote (doc: SavedMetadata): Promise<void>;
   trashAsync (doc: SavedMetadata): Promise<void>;
-  deleteFolderAsync (doc: SavedMetadata): Promise<void>;
 }
 */

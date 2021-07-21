@@ -515,7 +515,7 @@ describe('Sync', function() {
     it('calls trashAsync for a deleted synced file', async function() {
       const doc = await builders
         .metafile()
-        .path('foo/baz')
+        .path('foo')
         .deleted()
         .changedSide('remote')
         .create()
@@ -585,12 +585,12 @@ describe('Sync', function() {
     it('calls trashAsync for a deleted synced folder', async function() {
       const doc = await builders
         .metadir()
-        .path('foobar/baz')
+        .path('baz')
         .deleted()
         .changedSide('remote')
         .create()
       await this.sync.applyDoc(doc, this.local, 'local')
-      should(this.local.deleteFolderAsync).have.been.calledWith(doc)
+      should(this.local.trashAsync).have.been.calledWith(doc)
     })
 
     it('does nothing for a deleted folder that was not added', async function() {

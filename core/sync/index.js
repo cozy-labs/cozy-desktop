@@ -11,7 +11,6 @@ const _ = require('lodash')
 
 const { IncompatibleDocError } = require('../incompatibilities/platform')
 const metadata = require('../metadata')
-const { HEARTBEAT: REMOTE_HEARTBEAT } = require('../remote/constants')
 const remoteErrors = require('../remote/errors')
 const { otherSide } = require('../side')
 const logger = require('../utils/logger')
@@ -37,7 +36,6 @@ const log = logger({
 })
 
 const MAX_SYNC_ATTEMPTS = 3
-const TRASHING_DELAY = 1000
 
 /*::
 export type MetadataChange = {
@@ -64,7 +62,7 @@ const isMarkedForDeletion = (doc /*: SavedMetadata */) => {
   // During a transition period, we'll need to consider both documents with the
   // deletion marker and documents which were deleted but not yet synced before
   // the application was updated and are thus completely _deleted from PouchDB.
-  return doc.deleted || doc._deleted
+  return doc.trashed || doc.deleted || doc._deleted
 }
 
 const shouldAttemptRetry = (change /*: MetadataChange */) => {
@@ -733,14 +731,6 @@ class Sync {
 
       stopMeasure = measureTime('Sync#applyChange:' + side.name)
 
-      if (side.name === 'remote' && doc.trashed) {
-        // File or folder was just deleted locally
-        const byItself = await this.trashWithParentOrByItself(doc, side)
-        if (!byItself) {
-          return
-        }
-      }
-
       try {
         await this.applyDoc(doc, side)
       } catch (err) {
@@ -841,12 +831,7 @@ class Sync {
       }
     } else if (isMarkedForDeletion(doc)) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} deletion`)
-      if (doc.docType === 'file') {
-        await side.trashAsync(doc)
-        this.events.emit('delete-file', _.clone(doc))
-      } else {
-        await side.deleteFolderAsync(doc)
-      }
+      await this.trashWithParentOrByItself(doc, side)
     } else if (currentRev === 0) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} addition`)
       await this.doAdd(side, doc)
@@ -1150,25 +1135,20 @@ class Sync {
   async trashWithParentOrByItself(
     doc /*: SavedMetadata */,
     side /*: Writer */
-  ) /*: Promise<boolean> */ {
+  ) /*: Promise<void> */ {
     const parentPath = dirname(doc.path)
     if (parentPath !== '.') {
-      let parent /*: SavedMetadata */ = await this.pouch.bySyncedPath(
+      const parent /*: SavedMetadata */ = await this.pouch.bySyncedPath(
         parentPath
       )
 
-      if (!parent.trashed) {
-        await Promise.delay(TRASHING_DELAY)
-        parent = await this.pouch.bySyncedPath(parentPath)
-      }
-
-      if (parent.trashed && !metadata.isUpToDate('remote', parent)) {
+      if (
+        parent &&
+        isMarkedForDeletion(parent) &&
+        !metadata.isUpToDate(side.name, parent)
+      ) {
         log.info(`${doc.path}: will be trashed with parent directory`)
-        await this.trashWithParentOrByItself(parent, side)
-        // Wait long enough that the remote has fetched one changes feed
-        // TODO find a way to trigger the changes feed instead of waiting for it
-        await Promise.delay(REMOTE_HEARTBEAT)
-        return false
+        return
       }
     }
 
@@ -1177,7 +1157,6 @@ class Sync {
     if (doc.docType === 'file') {
       this.events.emit('delete-file', _.clone(doc))
     }
-    return true
   }
 }
 

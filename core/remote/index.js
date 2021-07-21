@@ -371,25 +371,6 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async deleteFolderAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
-    await this.trashAsync(doc)
-    const { path } = doc
-
-    try {
-      if (await this.remoteCozy.isEmpty(doc.remote._id)) {
-        log.info({ path }, 'Deleting folder from the Cozy trash...')
-        await this.remoteCozy.destroyById(doc.remote._id, {
-          ifMatch: doc.remote._rev
-        })
-      } else {
-        log.warn({ path }, 'Folder is not empty and cannot be deleted!')
-      }
-    } catch (err) {
-      if (err.status === 404) return
-      throw err
-    }
-  }
-
   async assignNewRemote(doc /*: SavedMetadata */) /*: Promise<void> */ {
     log.info({ path: doc.path }, 'Assigning new remote...')
     const newRemoteDoc = await this.remoteCozy.find(doc.remote._id)

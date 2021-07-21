@@ -788,7 +788,10 @@ describe('Move', () => {
 
         should(await helpers.remote.tree()).deepEqual([
           '.cozy_trash/',
-          '.cozy_trash/file',
+          '.cozy_trash/dir/',
+          '.cozy_trash/dir/empty-subdir/',
+          '.cozy_trash/dir/subdir/',
+          '.cozy_trash/dir/subdir/file',
           'parent/',
           'parent/dst/',
           'parent/src/'
