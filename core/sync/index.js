@@ -339,26 +339,28 @@ class Sync {
       return this.pouch.setLocalSeq(change.seq)
     }
 
-    const [side, sideName] = this.selectSide(doc)
+    const side = this.selectSide(doc)
+    if (!side) {
+      log.info({ path }, 'up to date')
+      return this.pouch.setLocalSeq(change.seq)
+    }
+
     let stopMeasure = () => {}
     try {
-      stopMeasure = measureTime('Sync#applyChange:' + sideName)
+      stopMeasure = measureTime('Sync#applyChange:' + side.name)
 
-      if (!side) {
-        log.info({ path }, 'up to date')
-        return this.pouch.setLocalSeq(change.seq)
-      } else if (sideName === 'remote' && doc.trashed) {
+      if (side.name === 'remote' && doc.trashed) {
         // File or folder was just deleted locally
         const byItself = await this.trashWithParentOrByItself(doc, side)
         if (!byItself) {
           return
         }
       } else {
-        await this.applyDoc(doc, side, sideName)
+        await this.applyDoc(doc, side)
       }
 
       await this.pouch.setLocalSeq(change.seq)
-      log.trace({ path, seq }, `Applied change on ${sideName} side`)
+      log.trace({ path, seq }, `Applied change on ${side.name} side`)
 
       // Clean up documents so that we don't mistakenly take action based on
       // previous changes and keep our Pouch documents as small as possible
@@ -372,13 +374,13 @@ class Sync {
         delete doc.moveFrom
         delete doc.overwrite
         // We also update the sides in case the document is not erased
-        await this.updateRevs(doc, sideName)
+        await this.updateRevs(doc, side.name)
       }
     } catch (err) {
       // XXX: We process the error directly here because our tests call
       // `apply()` and some expect `updateErrors` to be called (e.g. when
       // applying a move with a failing content change).
-      const syncErr = syncErrors.wrapError(err, sideName, change)
+      const syncErr = syncErrors.wrapError(err, side.name, change)
       if (
         [
           remoteErrors.INVALID_FOLDER_MOVE_CODE,
@@ -464,7 +466,7 @@ class Sync {
           } else {
             if (change.doc.deleted) {
               await this.skipChange(change, syncErr)
-            } else if (sideName === 'remote') {
+            } else if (side.name === 'remote') {
               delete change.doc.moveFrom
               delete change.doc.overwrite
               delete change.doc.remote
@@ -537,12 +539,11 @@ class Sync {
 
   async applyDoc(
     doc /*: SavedMetadata */,
-    side /*: Writer */,
-    sideName /*: SideName */
+    side /*: Writer */
   ) /*: Promise<*> */ {
-    const currentRev = metadata.side(doc, sideName)
+    const currentRev = metadata.side(doc, side.name)
 
-    if (doc.incompatibilities && sideName === 'local' && doc.moveTo == null) {
+    if (doc.incompatibilities && side.name === 'local' && doc.moveTo == null) {
       const was = doc.moveFrom
       if (was != null && was.incompatibilities == null) {
         // Move compatible -> incompatible
@@ -553,7 +554,7 @@ class Sync {
               oldpath: was.path,
               incompatibilities: doc.incompatibilities
             },
-            `Not syncing ${sideName} ${doc.docType} since new remote one is incompatible`
+            `Not syncing ${side.name} ${doc.docType} since new remote one is incompatible`
           )
         }
       } else {
@@ -576,7 +577,7 @@ class Sync {
         `Applying ${doc.docType} change with moveFrom`
       )
 
-      if (from.incompatibilities && sideName === 'local') {
+      if (from.incompatibilities && side.name === 'local') {
         await this.doAdd(side, doc)
       } else if (from.childMove) {
         await side.assignNewRemote(doc)
@@ -690,14 +691,14 @@ class Sync {
 
   // Select which side will apply the change
   // It returns the side, its name, and also the last rev applied by this side
-  selectSide(doc /*: SavedMetadata */) {
+  selectSide(doc /*: SavedMetadata */) /*: ?Writer */ {
     switch (metadata.outOfDateSide(doc)) {
       case 'local':
-        return [this.local, 'local']
+        return this.local
       case 'remote':
-        return [this.remote, 'remote']
+        return this.remote
       default:
-        return []
+        return null
     }
   }
 

@@ -56,6 +56,10 @@ describe('Local', function() {
       let tmpPath = syncDir.abspath(TMP_DIR_NAME)
       this.local.tmpPath.should.equal(tmpPath)
     })
+
+    it('has a side name', function() {
+      should(this.local.name).eql('local')
+    })
   })
 
   describe('createReadStream', function() {

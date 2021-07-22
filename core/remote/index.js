@@ -21,6 +21,7 @@ const timestamp = require('../utils/timestamp')
 
 /*::
 import type EventEmitter from 'events'
+import type { SideName } from '../side'
 import type { Readable } from 'stream'
 import type { Config } from '../config'
 import type { SavedMetadata, MetadataRemoteInfo } from '../metadata'
@@ -55,6 +56,7 @@ const log = logger({
  */
 class Remote /*:: implements Reader, Writer */ {
   /*::
+  name: SideName
   other: Reader
   config: Config
   pouch: Pouch
@@ -65,6 +67,7 @@ class Remote /*:: implements Reader, Writer */ {
   */
 
   constructor({ config, prep, pouch, events } /*: RemoteOptions */) {
+    this.name = 'remote'
     this.config = config
     this.pouch = pouch
     this.events = events

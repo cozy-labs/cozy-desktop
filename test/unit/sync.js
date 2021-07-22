@@ -47,8 +47,8 @@ describe('Sync', function() {
   after('clean config directory', configHelpers.cleanConfig)
 
   beforeEach('instanciate sync', function() {
-    this.local = stubSide()
-    this.remote = stubSide()
+    this.local = stubSide('local')
+    this.remote = stubSide('remote')
     this.ignore = new Ignore(['ignored'])
     this.events = new EventEmitter()
     this.sync = new Sync(
@@ -711,14 +711,14 @@ describe('Sync', function() {
         .path('selectSide/1')
         .sides({ remote: 1 })
         .build()
-      should(this.sync.selectSide(doc1)).deepEqual([this.sync.local, 'local'])
+      should(this.sync.selectSide(doc1)).eql(this.sync.local)
 
       const doc2 = builders
         .metafile()
         .path('selectSide/2')
         .sides({ local: 2, remote: 3 })
         .build()
-      should(this.sync.selectSide(doc2)).deepEqual([this.sync.local, 'local'])
+      should(this.sync.selectSide(doc2)).eql(this.sync.local)
     })
 
     it('selects the remote side if local is up-to-date', function() {
@@ -727,14 +727,14 @@ describe('Sync', function() {
         .path('selectSide/3')
         .sides({ local: 1 })
         .build()
-      should(this.sync.selectSide(doc1)).deepEqual([this.sync.remote, 'remote'])
+      should(this.sync.selectSide(doc1)).eql(this.sync.remote)
 
       const doc2 = builders
         .metafile()
         .path('selectSide/4')
         .sides({ local: 4, remote: 3 })
         .build()
-      should(this.sync.selectSide(doc2)).deepEqual([this.sync.remote, 'remote'])
+      should(this.sync.selectSide(doc2)).eql(this.sync.remote)
     })
 
     it('returns an empty array if both sides are up-to-date', function() {
@@ -743,7 +743,7 @@ describe('Sync', function() {
         .path('selectSide/5')
         .sides({ local: 5, remote: 5 })
         .build()
-      should(this.sync.selectSide(doc)).deepEqual([])
+      should(this.sync.selectSide(doc)).be.null()
     })
 
     it('returns an empty array if a local only doc is erased', function() {
@@ -753,7 +753,7 @@ describe('Sync', function() {
         .erased()
         .sides({ local: 5 })
         .build()
-      should(this.sync.selectSide(doc)).deepEqual([])
+      should(this.sync.selectSide(doc)).be.null()
     })
 
     it('returns an empty array if a remote only doc is erased', function() {
@@ -763,7 +763,7 @@ describe('Sync', function() {
         .erased()
         .sides({ remote: 5 })
         .build()
-      should(this.sync.selectSide(doc)).deepEqual([])
+      should(this.sync.selectSide(doc)).be.null()
     })
   })
 
