@@ -38,7 +38,23 @@ function validName(name /*: string */) {
 }
 
 async function sendToTrash(fullpath /*: string */) {
-  return shell.trashItem(fullpath)
+  try {
+    await shell.trashItem(fullpath)
+  } catch (err) {
+    if (
+      err.message === 'Failed to move item to trash' || // Error message on Linux
+      err.message === 'Failed to parse path' || // Error message on Windows
+      /doesn’t exist/.test(err.message) // Error message on macOS
+    ) {
+      const error = new Error()
+      error.code = 'ENOENT'
+      error.path = fullpath
+      error.message = `${error.code}: No such file or directory, sendToTrash '${error.path}'`
+      throw error
+    }
+
+    throw err
+  }
 }
 
 module.exports = {

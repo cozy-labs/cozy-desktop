@@ -725,6 +725,22 @@ describe('Local', function() {
       await this.local.trashAsync(doc)
       await should(fse.exists(folderPath)).be.fulfilledWith(false)
     })
+
+    context('when the document is missing on the filesystem', () => {
+      it('does not throw', async function() {
+        const doc = await builders
+          .metafile()
+          .path('FILE-TO-DELETE')
+          .upToDate()
+          .create()
+        const filePath = syncDir.abspath(doc.path)
+        fse.remove(filePath)
+
+        await this.pouch.db.remove(doc)
+        await should(this.local.trashAsync(doc)).be.fulfilled()
+        await should(fse.exists(filePath)).be.fulfilledWith(false)
+      })
+    })
   })
 
   describe('deleteFolderAsync', () => {
