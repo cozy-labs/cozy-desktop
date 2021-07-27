@@ -460,6 +460,15 @@ class Sync {
             await this.remote.resolveRemoteConflict(change.doc)
           }
           break
+        case remoteErrors.DOCUMENT_IN_TRASH_CODE:
+          delete change.doc.moveFrom
+          delete change.doc.overwrite
+
+          // Go ahead and mark remote document as trashed
+          change.doc.remote.trashed = true
+
+          await this.updateRevs(change.doc, side.name)
+          break
         case remoteErrors.MISSING_DOCUMENT_CODE:
           if (shouldAttemptRetry(change)) {
             this.blockSyncFor({ err: syncErr, change })
