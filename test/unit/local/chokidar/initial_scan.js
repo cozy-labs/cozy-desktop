@@ -53,7 +53,6 @@ onPlatform('darwin', () => {
         const srcFolder4 = await builders
           .metadir()
           .path('folder1/folder4')
-          .moveTo('folder4')
           .upToDate()
           .create()
         const folder4 = await builders
@@ -92,7 +91,6 @@ onPlatform('darwin', () => {
         const srcFile4 = await builders
           .metafile()
           .path('folder1/file4')
-          .moveTo('file4')
           .upToDate()
           .create()
         const file4 = await builders

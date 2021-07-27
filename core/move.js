@@ -31,7 +31,7 @@ function move(
   // Copy all fields from `src` that are not Sync action hints or PouchDB
   // attributes to `dst` if they're not already defined.
   const pouchdbReserved = ['_id', '_rev', '_deleted']
-  const actionHints = ['moveTo', 'moveFrom', 'overwrite', 'incompatibilities']
+  const actionHints = ['moveFrom', 'overwrite', 'incompatibilities']
   const fields = Object.getOwnPropertyNames(src).filter(
     f => !pouchdbReserved.concat(actionHints).includes(f)
   )
@@ -43,24 +43,14 @@ function move(
     }
   }
 
-  src.moveTo = dst.path
-  src._deleted = true
-
-  delete src.errors
-
-  // Make sure newly moved docs have their fill of sync attempts
-  delete dst.errors
-
   // TODO: Find out wether or not it would make sense to also delete the
   // trashed property on the source, or explain why it doesn't.
   delete dst.trashed
 
   dst.moveFrom = src
+  dst._id = src._id
+  dst._rev = src._rev
 
-  if (!dst.overwrite) {
-    delete dst._id
-    delete dst._rev
-  }
   metadata.markSide(side, dst, src)
 }
 
@@ -80,10 +70,11 @@ function convertToDestinationAddition(
   src /*: SavedMetadata */,
   dst /*: Metadata */
 ) {
-  // Delete source
-  metadata.markAsUnsyncable(src)
+  metadata.removeActionHints(src)
 
   // Create destination
   metadata.markAsUnmerged(dst, side)
+  dst._id = src._id
+  dst._rev = src._rev
   metadata.markSide(side, dst)
 }

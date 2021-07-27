@@ -299,6 +299,7 @@ describe('Sync', function() {
           .overwrite(initial)
           .data('updated content')
           .changedSide('local')
+          .noRecord() // XXX: Prevent Pouch conflict from reusing `initial`'s _id
           .create()
       }
       await this.sync.apply(change)
@@ -365,6 +366,7 @@ describe('Sync', function() {
         .overwrite(initial)
         .data('updated content')
         .changedSide('local')
+        .noRecord() // XXX: Prevent Pouch conflict from reusing `initial`'s _id
         .create()
       await this.sync.applyDoc(doc, this.remote, 'remote')
       should(this.remote.updateFileMetadataAsync).not.have.been.called()
@@ -456,7 +458,6 @@ describe('Sync', function() {
       const was = await builders
         .metafile()
         .path('foo/bar')
-        .moveTo('foo/baz')
         .tags('qux')
         .changedSide('local')
         .create()
@@ -478,7 +479,6 @@ describe('Sync', function() {
         .metafile()
         .path('foo/bar')
         .data('initial content')
-        .moveTo('foo/baz')
         .tags('qux')
         .changedSide('local')
         .create()
@@ -552,7 +552,6 @@ describe('Sync', function() {
         .metadir()
         .path('foobar/bar')
         .tags('qux')
-        .moveTo('foobar/baz')
         .changedSide('local')
         .create()
       const doc = await builders
@@ -894,7 +893,6 @@ describe('Sync', function() {
           file = await builders
             .metafile()
             .path('src')
-            .moveTo('dst')
             .data('initial content')
             .upToDate()
             .create()

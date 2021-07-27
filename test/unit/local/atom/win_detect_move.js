@@ -130,7 +130,6 @@ if (process.platform === 'win32') {
             context('when doc has been moved in PouchDB', () => {
               beforeEach(async () => {
                 const deletedSrc = await metadataBuilderByKind(kind, srcDoc)
-                  .moveTo(dstPath)
                   .upToDate()
                   .create()
                 await metadataBuilderByKind(kind)

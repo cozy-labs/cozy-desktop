@@ -75,7 +75,6 @@ class Sync {
   local: Local
   pouch: Pouch
   remote: Remote
-  moveTo: ?string
   lifecycle: LifeCycle
   retryInterval: ?IntervalID
   */
@@ -552,7 +551,7 @@ class Sync {
   ) /*: Promise<*> */ {
     const currentRev = metadata.side(doc, side.name)
 
-    if (doc.incompatibilities && side.name === 'local' && doc.moveTo == null) {
+    if (doc.incompatibilities && side.name === 'local') {
       const was = doc.moveFrom
       if (was != null && was.incompatibilities == null) {
         // Move compatible -> incompatible
@@ -577,8 +576,6 @@ class Sync {
       throw new Error(`Unknown docType: ${doc.docType}`)
     } else if (isMarkedForDeletion(doc) && currentRev === 0) {
       // do nothing
-    } else if (doc.moveTo != null) {
-      log.debug({ path: doc.path }, `Ignoring ${doc.docType} move source`)
     } else if (doc.moveFrom != null) {
       const from = (doc.moveFrom /*: SavedMetadata */)
       log.debug(

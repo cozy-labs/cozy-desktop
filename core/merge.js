@@ -88,42 +88,39 @@ class Merge {
   // the user's editor and renaming it could create issues (e.g. the editor does
   // not detect the renaming and we'd create a new conflict each time the open
   // file would be saved).
-  async resolveNoteConflict(doc /*: Metadata */, was /*: ?SavedMetadata */) {
-    // We move the existing Cozy Note to a conflicting path since we've
-    // updated it locally.
-    await this.resolveConflictAsync('remote', doc)
-
-    if (was) {
-      // If we are resolving a conflict as part of move, we have a second record
-      // to account for, the move source, `was`.
-      // We want to make sure the remote watcher won't detect the movement of the
-      // remote note as such because the file on the local filesystem has already
-      // been moved.
-      // So we make sure the source document is erased from PouchDB. The remote
-      // watcher will then detect the new, conflicting note, as a file creation.
-      // TODO: change path instead of erasing document since we won't be writing
-      // to the same _id anymore.
-      metadata.markAsUnsyncable(was)
-      await this.pouch.put(was)
-    }
+  async resolveNoteConflict(
+    doc /*: Metadata */,
+    noteToRename /*: SavedMetadata */
+  ) {
+    // We have to pass the `noteToRename` record to generate the conflict as
+    // `doc` represents a modified document, with different checksum, size and
+    // modification date and we'll save the resulting record as the new
+    // `noteToRename`.
 
     if (doc.overwrite) {
-      // If this conflict would still result in a document overwrite (i.e. it's
-      // an update or an overwriting move), we need to erase the existing
-      // PouchDB record for the overwritten note so we can create a new record
-      // in its stead.
-      // The note has been renamed on the remote Cozy and will be pulled back
-      // with the next remote watcher cycle.
-      const { overwrite } = doc
-      // TODO: change path instead of erasing document since we won't be writing
-      // to the same _id anymore.
-      metadata.markAsUnsyncable(overwrite)
-      await this.pouch.put(overwrite)
-      // We're not overwriting a document anymore
+      // If the local change on the note was overwriting another document (i.e.
+      // another note, given the name), we need to handle the remote trashing of
+      // the overwritten document when renaming the remote note with a conflict
+      // suffix as overwrites are done only when renaming or moving a document.
+      noteToRename.overwrite = doc.overwrite
+      // The local document, which won't be a note, is note overwriting anything
+      // anymore.
       delete doc.overwrite
     }
 
-    // We create it at the destination location as a normal local file
+    // We use the new local path to resolve the conflict in case the note was
+    // not only renamed but also moved (i.e. otherwise the conflict resolution
+    // will happen in the current remote note's directory and it won't be
+    // moved).
+    noteToRename.path = doc.path
+
+    const renamed = await this.resolveConflictAsync('remote', noteToRename)
+    // XXX: shall we move this to resolveConflictAsync?
+    metadata.dissociateLocal(renamed)
+    await this.pouch.put(renamed)
+
+    // We now transform `doc` to represents the creation of a local markdown
+    // file at the destination location.
     metadata.markAsUnmerged(doc, 'local')
     metadata.markSide('local', doc)
     metadata.removeNoteMetadata(doc)
@@ -253,10 +250,7 @@ class Merge {
 
       if (!metadata.sameBinary(file, doc)) {
         if (side === 'local' && isNote(file)) {
-          // We'll need a reference to the "overwritten" note during the conflict
-          // resolution.
-          doc.overwrite = file.overwrite || file
-          return this.resolveNoteConflict(doc)
+          return this.resolveNoteConflict(doc, file)
         } else if (!metadata.isAtLeastUpToDate(side, file)) {
           if (side === 'local') {
             // We have a merged but unsynced remote update so we create a conflict.
@@ -372,11 +366,8 @@ class Merge {
     const { path } = doc
 
     if (!metadata.wasSynced(was) || was.deleted) {
-      metadata.markAsUnsyncable(was)
-      await this.pouch.put(was)
-
-      metadata.markAsUnmerged(doc, side)
-      return this.addFileAsync(side, doc)
+      move.convertToDestinationAddition(side, was, doc)
+      return this.pouch.put(doc)
     } else if (was.sides && was.sides[side]) {
       metadata.assignMaxDate(doc, was)
       move(side, was, doc)
@@ -411,44 +402,49 @@ class Merge {
           // situation we're not actually doing an overwriting move so we
           // shouldn't reuse the existing `file`'s rev nor overwrite it.
           if (file.path === doc.path) {
-            doc._id = file._id
-            doc._rev = file._rev
             doc.overwrite = file.overwrite || file
+            await this.pouch.eraseDocument(file)
           }
 
           if (side === 'local' && isNote(was) && doc.md5sum !== was.md5sum) {
             return this.resolveNoteConflict(doc, was)
           }
 
-          return this.pouch.bulkDocs([was, doc])
+          return this.pouch.put(doc)
         }
 
         if (metadata.sameFile(file, doc)) {
           // FIXME: this code block seems unreachable. Removing it does not
           // break any test.
           // We should make sure that is correct and remove it.
+          // It seems like reaching this block would mean we have duplicate
+          // records in PouchDB.
           log.info({ path }, 'up to date (move)')
+
+          // We erase the moved document as it's a duplicate of the existing one
+          // which we'll update if necessary.
+          await this.pouch.eraseDocument(was)
+
+          // If the moved document has changed locally but is the same in the
+          // main part, we update the local attribute of the kept `file`.
           if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
             metadata.updateLocal(file, doc.local)
             const outdated = metadata.outOfDateSide(file)
             if (outdated) {
               metadata.markSide(otherSide(outdated), file, file)
             }
-            return this.pouch.bulkDocs([was, file])
-          } else {
-            return this.pouch.put(was)
+            return this.pouch.put(file)
           }
         }
 
         const dst = await this.resolveConflictAsync(side, doc)
-        move(side, was, dst)
-        return this.pouch.bulkDocs([was, dst])
+        return this.pouch.put(dst)
       } else {
         if (side === 'local' && isNote(was) && doc.md5sum !== was.md5sum) {
           return this.resolveNoteConflict(doc, was)
         }
 
-        return this.pouch.bulkDocs([was, doc])
+        return this.pouch.put(doc)
       }
     } else {
       // It can happen after a conflict
@@ -457,6 +453,9 @@ class Merge {
   }
 
   // Rename or move a folder (and every file and folder inside it)
+  // TODO: handle cases where `was` has never been synced or is deleted as a
+  // creation at `doc`'s location (i.e. we need to change the children's paths
+  // as well).
   async moveFolderAsync(
     side /*: SideName */,
     doc /*: Metadata */,
@@ -491,9 +490,8 @@ class Merge {
         // situation we're not actually doing an overwriting move so we
         // shouldn't reuse the existing `folder`'s rev nor overwrite it.
         if (folder.path === doc.path) {
-          doc._id = folder._id
-          doc._rev = folder._rev
           doc.overwrite = folder.overwrite || folder
+          await this.pouch.eraseDocument(folder)
         }
         return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
       }
@@ -501,7 +499,8 @@ class Merge {
       if (metadata.sameFolder(folder, doc)) {
         log.info({ path }, 'up to date (move)')
         // TODO: what about the content that was maybe moved ?
-        return this.pouch.put(was)
+        doc._deleted = true
+        return this.pouch.put(doc)
       }
 
       const dst = await this.resolveConflictAsync(side, doc)
@@ -531,13 +530,10 @@ class Merge {
     } else {
       move(side, was, folder)
     }
-    let bulk = [was, folder]
+    let bulk = [folder]
 
     const makeDestinationPath = doc =>
       metadata.newChildPath(doc.path, was.path, folder.path)
-    const existingDstRevs = await this.pouch.getAllRevs(
-      docs.map(makeDestinationPath)
-    )
 
     for (let doc of docs) {
       // Don't move children marked for deletion as we can simply propagate the
@@ -548,6 +544,8 @@ class Merge {
 
       // Update remote rev of documents which have been updated on the Cozy
       // after we've detected the move.
+      // Useful for sub-directories as their `path` attribute is updated but we
+      // don't merge them as descendant changes.
       const newRemoteRev = _.get(newRemoteRevs, _.get(doc, 'remote._id'))
       if (newRemoteRev) doc.remote._rev = newRemoteRev
 
@@ -561,13 +559,13 @@ class Merge {
       if (dst.overwrite) delete dst.overwrite
 
       if (folder.overwrite) {
+        const dstId = metadata.id(dst.path)
         const dstChild = dstChildren.find(
-          child => metadata.id(child.path) === metadata.id(dst.path)
+          child => metadata.id(child.path) === dstId
         )
         if (dstChild) {
-          dst._id = dstChild._id
-          dst._rev = dstChild._rev
           dst.overwrite = dstChild.overwrite || dstChild
+          this.pouch.eraseDocument(dstChild)
         }
       }
       // TODO: manage conflicts if not overwriting and docs exist at destination?
@@ -577,15 +575,6 @@ class Merge {
         move.convertToDestinationAddition(singleSide, src, dst)
       } else {
         move.child(side, src, dst)
-      }
-
-      bulk.push(src)
-
-      const existingDstRev = existingDstRevs[metadata.id(dst.path)]
-      // Filtering out deleted destination docs would mean failing to save the new version.
-      // However, replacing the deleted docs will mean failing to propagate the change.
-      if (existingDstRev && folder.overwrite) {
-        dst._rev = existingDstRev
       }
 
       // TODO: make sure that detecting an incompatibility on a child's
@@ -662,43 +651,22 @@ class Merge {
 
     if (was.sides && was.sides[side]) {
       if (was.moveFrom) {
+        const { overwrite } = was
         // We need to trash the source of the move instead of the destination
-        const { moveFrom, overwrite } = was
         log.debug(
-          { path: was.path, oldPath: moveFrom.path },
+          { path: was.path, oldPath: was.moveFrom.path },
           'Trashing source of move instead of destination'
         )
+        delete was.moveFrom
+        delete was.overwrite
 
-        // The file isn't moved anymore.
-        delete moveFrom.moveTo
-        // It will be considered as a new record by PouchDB sicne it was
-        // _deleted. So we need to remove the revision.
-        delete moveFrom._rev
-        // We also remove the _deleted attribute since we only want it marked
-        // for deletion now.
-        delete moveFrom._deleted
-
-        // Mark source for deletion
-        metadata.markSide(side, moveFrom, moveFrom)
-        moveFrom.deleted = true
-
-        const docs = [moveFrom]
         if (overwrite) {
-          // Mark overwritten doc for deletion
-          metadata.removeActionHints(overwrite)
           overwrite.deleted = true
-          // They share the same _id
-          overwrite._rev = was._rev
-          metadata.markSide(side, overwrite, was)
+          metadata.markSide(side, overwrite, overwrite)
+          delete overwrite._rev
 
-          docs.push(overwrite)
-        } else {
-          // Discard move destination record
-          metadata.markAsUnsyncable(was)
-
-          docs.push(was)
+          await this.pouch.put(overwrite)
         }
-        return this.pouch.bulkDocs(docs)
       }
 
       metadata.markSide(side, was, was)
@@ -816,44 +784,13 @@ class Merge {
     const children = await this.pouch.byRecursivePath(was.path, {
       descending: true
     })
-    for (let child of Array.from(children)) {
-      if (
-        child.docType === 'file' &&
-        !child.deleted &&
-        !metadata.isUpToDate(side, child)
-      ) {
-        // The parent folder was deleted on `side` so we remove this part anyway
-        if (side === 'local') {
-          metadata.dissociateLocal(was)
-        } else {
-          metadata.dissociateRemote(was)
-        }
-        metadata.markSide(otherSide(side), was, was)
-        delete was.errors
-        // Remove deletion markers as we want the folder to be recreated on
-        // `side` by Sync.
-        delete was.trashed
-        delete was.deleted
-        // TODO: why prevent removing all files that were up-to-date?
-        // Does this actually prevent removing the other files??
-        return this.pouch.put(was)
-      }
+    const hasOutOfDateChild =
+      Array.from(children).find(
+        child => !metadata.isUpToDate(side, child) && !child.deleted
+      ) != null
+    if (!hasOutOfDateChild) {
+      await this.doTrash(side, was)
     }
-    // Remove in pouchdb the sub-folders
-    //
-    // TODO: We could only one loop if the update of one child would not prevent
-    // the trashing of the other children.
-    for (let child of Array.from(children)) {
-      if (child.docType === 'folder') {
-        try {
-          child.deleted = true
-          await this.pouch.put(child)
-        } catch (err) {
-          log.warn({ path, err })
-        }
-      }
-    }
-    await this.doTrash(side, was)
   }
 
   // Remove a file from PouchDB
