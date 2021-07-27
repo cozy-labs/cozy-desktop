@@ -27,6 +27,7 @@ const sentry = require('../utils/sentry')
 
 /*::
 import type EventEmitter from 'events'
+import type { SideName } from '../side'
 import type { Config } from '../config'
 import type { Reader } from '../reader'
 import type { Ignore } from '../ignore'
@@ -66,6 +67,7 @@ export type LocalOptions = {
  */
 class Local /*:: implements Reader, Writer */ {
   /*::
+  name: SideName
   prep: Prep
   pouch: Pouch
   events: EventEmitter
@@ -78,6 +80,7 @@ class Local /*:: implements Reader, Writer */ {
   */
 
   constructor(opts /*: LocalOptions */) {
+    this.name = 'local'
     this.prep = opts.prep
     this.pouch = opts.pouch
     this.events = opts.events

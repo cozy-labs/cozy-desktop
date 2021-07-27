@@ -3,6 +3,7 @@
 const sinon = require('sinon')
 
 /*::
+import type { SideName } from '../../../core/side'
 import type { Writer } from '../../../core/writer'
 */
 
@@ -20,11 +21,12 @@ const METHODS = [
   'diskUsage'
 ]
 
-module.exports = function stubSide() /*: Writer */ {
+module.exports = function stubSide(name /*: SideName */) /*: Writer */ {
   const double = {}
   for (let method of METHODS) {
     double[method] = sinon.stub().resolves()
   }
+  double.name = name
   double.watcher = {}
   double.watcher.running = new Promise(() => {})
   return double

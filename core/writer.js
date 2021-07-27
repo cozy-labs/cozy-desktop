@@ -11,6 +11,7 @@ import type { SavedMetadata } from './metadata'
 import type { SideName } from './side'
 
 export interface Writer {
+  name: SideName;
   addFileAsync (doc: SavedMetadata): Promise<void>;
   addFolderAsync (doc: SavedMetadata): Promise<void>;
   overwriteFileAsync (doc: SavedMetadata, old: ?SavedMetadata): Promise<void>;

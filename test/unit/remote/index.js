@@ -64,6 +64,10 @@ describe('remote.Remote', function() {
       should.exist(this.remote.remoteCozy)
       should.exist(this.remote.watcher)
     })
+
+    it('has a side name', function() {
+      should(this.remote.name).eql('remote')
+    })
   })
 
   describe('createReadStream', () => {
