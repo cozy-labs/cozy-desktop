@@ -290,9 +290,6 @@ describe('Trash', () => {
         })
 
         should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
-          // XXX: Why isn't file deleted? (it works anyway)
-          { path: path.normalize('parent/dir/subdir'), deleted: true },
-          { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
           { path: path.normalize('parent/dir'), deleted: true }
         ])
 
@@ -315,11 +312,6 @@ describe('Trash', () => {
 
         await helpers.remote.pullChanges()
         should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
-          // dir/subdir and dir/empty-subdir are deleted recursively when
-          // deleting dir/ and then deleted again when we merge their own remote
-          // changes.
-          { path: path.normalize('parent/dir/subdir'), deleted: true },
-          { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
           { path: path.normalize('parent/dir'), deleted: true },
           { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
           { path: path.normalize('parent/dir/subdir'), deleted: true },

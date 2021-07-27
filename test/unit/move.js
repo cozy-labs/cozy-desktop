@@ -19,7 +19,7 @@ describe('move', () => {
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  it('transfers all src attributes not already defined in dst', async () => {
+  it('keeps all src attributes not defined in dst', async () => {
     const src = await builders
       .metafile()
       .path('src/file')
@@ -43,13 +43,13 @@ describe('move', () => {
     should(dst).have.properties({
       metadata: src.metadata,
       tags: ['qux', 'courge'],
-      remote: src.remote
+      remote: src.remote,
+      _id: src._id,
+      _rev: src._rev
     })
     // PouchDB reserved attributes are not transfered
-    should(dst._deleted).be.undefined()
-    should(dst._rev).be.undefined()
-    // defined attributes are not overwritten
     should(dst).not.have.property('_deleted')
+    // defined attributes are not overwritten
     should(dst.md5sum).not.eql(src.md5sum)
     should(dst.size).not.eql(src.size)
   })
@@ -90,8 +90,8 @@ describe('move', () => {
       move.convertToDestinationAddition(side, src, dst)
     })
 
-    it('deletes the source document', () => {
-      should(src._deleted).be.true()
+    it('updates the source document', () => {
+      should(dst._id).eql(src._id)
     })
 
     it('marks the destination document as newly added on `side`', () => {

@@ -336,6 +336,7 @@ describe('remote.Remote', function() {
           .data('bar')
           .changedSide('local')
           .updatedAt(timestamp.build(2015, 12, 16, 16, 12, 1).toISOString())
+          .noRecord() // XXX: Prevent Pouch conflict from reusing `old`'s _id
           .create()
 
         this.remote.other = {
@@ -437,6 +438,7 @@ describe('remote.Remote', function() {
           .data('bar')
           .updatedAt(timestamp.build(2015, 12, 16, 16, 12, 1).toISOString())
           .changedSide('local')
+          .noRecord() // XXX: Prevent Pouch conflict from reusing `old`'s _id
           .create()
 
         this.remote.other = {
@@ -486,6 +488,7 @@ describe('remote.Remote', function() {
           .data('bar')
           .changedSide('local')
           .updatedAt(timestamp.build(2015, 12, 16, 16, 12, 1).toISOString())
+          .noRecord() // XXX: Prevent Pouch conflict from reusing `old`'s _id
           .create()
 
         this.remote.other = {
@@ -530,6 +533,7 @@ describe('remote.Remote', function() {
           .data('bar')
           .changedSide('local')
           .updatedAt(timestamp.build(2015, 10, 16, 16, 12, 1).toISOString())
+          .noRecord() // XXX: Prevent Pouch conflict from reusing `old`'s _id
           .create()
 
         this.remote.other = {
@@ -558,6 +562,7 @@ describe('remote.Remote', function() {
           .data('baz')
           .changedSide('local')
           .updatedAt(timestamp.build(2016, 10, 16, 16, 12, 1).toISOString())
+          .noRecord() // XXX: Prevent Pouch conflict from reusing `doc1`'s _id
           .create()
 
         this.remote.other = {
@@ -587,6 +592,7 @@ describe('remote.Remote', function() {
           .data('boom')
           .changedSide('local')
           .updatedAt(timestamp.build(2017, 10, 16, 16, 12, 1).toISOString())
+          .noRecord() // XXX: Prevent Pouch conflict from reusing `doc2`'s _id
           .create()
         doc3 = {
           ...doc3,

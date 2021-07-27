@@ -299,6 +299,7 @@ describe('Sync', function() {
           .overwrite(initial)
           .data('updated content')
           .changedSide('local')
+          .noRecord() // XXX: Prevent Pouch conflict from reusing `initial`'s _id
           .create()
       }
       await this.sync.apply(change)
@@ -365,6 +366,7 @@ describe('Sync', function() {
         .overwrite(initial)
         .data('updated content')
         .changedSide('local')
+        .noRecord() // XXX: Prevent Pouch conflict from reusing `initial`'s _id
         .create()
       await this.sync.applyDoc(doc, this.remote, 'remote')
       should(this.remote.updateFileMetadataAsync).not.have.been.called()

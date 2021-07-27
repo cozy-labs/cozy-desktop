@@ -141,6 +141,8 @@ class TestHelpers {
     this.pouch.bulkDocs.reset()
   }
 
+  // XXX: The order of calls is not respected here as we merge the calls of
+  // multiple methods together.
   putDocs(...props /*: string[] */) {
     const results = []
 

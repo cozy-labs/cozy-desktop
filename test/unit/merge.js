@@ -17,6 +17,11 @@ const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
 const Builders = require('../support/builders')
 
+const win32 = (
+  win32Data /*: Object */,
+  otherwise /*: ?Object */ = undefined
+) /*: ?Object */ => (process.platform === 'win32' ? win32Data : otherwise)
+
 /* Resolves with an object describing the side-effects of a Merge call.
  *
  * The returned object has the following properties:
@@ -53,9 +58,9 @@ async function mergeSideEffects(
       delete doc._rev
     }
 
-    // Don't include fileids in assertions: they are specific to Windows and
-    // not really useful at the Merge level.
-    delete doc.fileid
+    if (process.platform !== 'win32') {
+      delete doc.fileid
+    }
 
     return doc
   })
@@ -359,7 +364,7 @@ describe('Merge', function() {
                     local: file.local
                   },
                   doc,
-                  _.omit(file, ['_rev', 'fileid'])
+                  _.omit(file, ['_rev'])
                 )
               ],
               resolvedConflicts: []
@@ -451,12 +456,10 @@ describe('Merge', function() {
             should(sideEffects).deepEqual({
               savedDocs: [
                 _.defaults(
+                  win32({ fileid: doc.fileid }),
                   {
                     ino: doc.ino,
-                    executable:
-                      process.platform === 'win32'
-                        ? file.executable
-                        : doc.executable,
+                    executable: win32(file.executable, doc.executable),
                     mime: doc.mime,
                     class: doc.class,
                     updated_at: doc.updated_at,
@@ -606,6 +609,7 @@ describe('Merge', function() {
             should(sideEffects).deepEqual({
               savedDocs: [
                 _.defaults(
+                  win32({ fileid: doc.fileid }),
                   {
                     ino: doc.ino,
                     md5sum: doc.md5sum,
@@ -614,7 +618,7 @@ describe('Merge', function() {
                     sides: increasedSides(file.sides, 'local', 1),
                     local: doc.local
                   },
-                  _.omit(file, ['_rev', 'fileid'])
+                  _.omit(file, ['_rev'])
                 )
               ],
               resolvedConflicts: []
@@ -783,7 +787,7 @@ describe('Merge', function() {
             {
               local: sameFile.local
             },
-            _.omit(mergedFile, ['_rev', 'fileid'])
+            _.omit(mergedFile, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -817,7 +821,7 @@ describe('Merge', function() {
             {
               local: sameFile.local
             },
-            _.omit(mergedFile, ['_rev', 'fileid'])
+            _.omit(mergedFile, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -853,7 +857,7 @@ describe('Merge', function() {
               sides: increasedSides(mergedFile.sides, 'remote', 1),
               local: mergedFile.local
             },
-            _.omit(sameFile, ['_rev', 'fileid'])
+            _.omit(sameFile, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -887,7 +891,7 @@ describe('Merge', function() {
                 _id: initialFile._id,
                 sides: increasedSides(initialFile.sides, 'local', 1)
               },
-              _.omit(offlineUpdate, ['_rev', 'fileid'])
+              _.omit(offlineUpdate, ['_rev'])
             )
           ],
           resolvedConflicts: []
@@ -926,7 +930,7 @@ describe('Merge', function() {
                 sides: increasedSides(firstUpdate.sides, 'local', 1),
                 remote: initial.remote
               },
-              _.omit(secondUpdate, ['_rev', 'fileid'])
+              _.omit(secondUpdate, ['_rev'])
             )
           ],
           resolvedConflicts: []
@@ -1067,7 +1071,7 @@ describe('Merge', function() {
               remote: doc.remote,
               tags: ['bar', 'baz']
             },
-            _.omit(file, ['_rev', 'fileid'])
+            _.omit(file, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -1093,7 +1097,7 @@ describe('Merge', function() {
             {
               local: { updated_at: doc.local.updated_at }
             },
-            _.omit(file, ['_rev', 'fileid'])
+            _.omit(file, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -1140,7 +1144,7 @@ describe('Merge', function() {
             {
               local: doc.local
             },
-            _.omit(file, ['_rev', 'fileid'])
+            _.omit(file, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -1167,7 +1171,7 @@ describe('Merge', function() {
               sides: increasedSides(file.sides, 'remote', 1),
               local: file.local
             },
-            _.omit(doc, ['_rev', 'fileid'])
+            _.omit(doc, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -1194,7 +1198,7 @@ describe('Merge', function() {
               sides: increasedSides(file.sides, 'local', 1),
               remote: file.remote
             },
-            _.omit(doc, ['_rev', 'fileid'])
+            _.omit(doc, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -1232,13 +1236,13 @@ describe('Merge', function() {
         savedDocs: [
           _.defaults(
             {
-              _id: file._id,
               sides: increasedSides(dst.sides, this.side, 1),
               moveFrom: src,
               overwrite: file,
-              [otherSide(this.side)]: dst[otherSide(this.side)]
+              [otherSide(this.side)]: dst[otherSide(this.side)],
+              _id: src._id // XXX: should be the same as `dst._id`
             },
-            _.omit(doc, ['_rev', 'fileid'])
+            doc
           )
         ],
         resolvedConflicts: []
@@ -1254,6 +1258,7 @@ describe('Merge', function() {
         .tags('qux', 'quux')
         .updatedAt(firstUpdateDate)
         .changedSide(this.side)
+        .noRecord() // XXX: Prevent Pouch conflict from reusing `file`'s _id
         .create()
       const doc = builders
         .metafile(firstUpdate)
@@ -1276,7 +1281,7 @@ describe('Merge', function() {
               overwrite: file,
               [otherSide(this.side)]: firstUpdate[otherSide(this.side)]
             },
-            _.omit(doc, ['_rev', 'fileid'])
+            _.omit(doc, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -1336,7 +1341,7 @@ describe('Merge', function() {
               }
             },
             // We're dissociating the local doc from the remote doc
-            _.omit(mergedLocalUpdate, ['_rev', 'fileid', 'remote'])
+            _.omit(mergedLocalUpdate, ['_rev', 'remote'])
           )
         ],
         resolvedConflicts: [
@@ -1356,6 +1361,7 @@ describe('Merge', function() {
         .overwrite(synced)
         .data('remote update')
         .changedSide('remote')
+        .noRecord() // XXX: Prevent Pouch conflict from reusing `synced`'s _id
         .create()
       const unchangedLocal = builders
         .metafile(synced)
@@ -1470,23 +1476,33 @@ describe('Merge', function() {
         this.merge.updateFileAsync('local', _.cloneDeep(localUpdate))
       )
 
+      const { path: dstPath } = _.find(sideEffects.savedDocs, ({ path }) =>
+        path.match(/conflict/)
+      )
+      const remoteDstPath = pathUtils.localToRemote(dstPath)
+
       should(sideEffects).deepEqual({
         savedDocs: [
-          _.defaults(
+          _.defaultsDeep(
             {
-              _deleted: true
+              path: dstPath,
+              remote: {
+                path: remoteDstPath
+              }
             },
-            _.omit(synced, ['_rev', 'sides', 'local', 'remote'])
+            _.omit(synced, ['_rev'])
           ),
           _.defaults(
             {
               sides: { target: 1, local: 1 },
               metadata: {}
             },
-            _.omit(localUpdate, ['_id', '_rev'])
+            localUpdate
           )
         ],
-        resolvedConflicts: [['remote', { path: synced.path }]]
+        resolvedConflicts: [
+          ['remote', { path: synced.path, remote: synced.remote }]
+        ]
       })
     })
   })
@@ -1651,7 +1667,7 @@ describe('Merge', function() {
             {
               local: sameFolder.local
             },
-            _.omit(mergedFolder, ['_rev', 'fileid'])
+            _.omit(mergedFolder, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -1686,7 +1702,7 @@ describe('Merge', function() {
               _id: mergedFolder._id,
               local: sameFolder.local
             },
-            _.omit(mergedFolder, ['_id', '_rev', 'fileid'])
+            _.omit(mergedFolder, ['_id', '_rev'])
           )
         ],
         resolvedConflicts: []
@@ -1722,7 +1738,7 @@ describe('Merge', function() {
               sides: increasedSides(mergedFolder.sides, 'remote', 1),
               local: mergedFolder.local
             },
-            _.omit(sameFolder, ['_rev', 'fileid'])
+            _.omit(sameFolder, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -1795,7 +1811,7 @@ describe('Merge', function() {
     })
 
     context('local', () => {
-      it('saves the new file and deletes the old one with move hints for writers', async function() {
+      it('saves the moved file', async function() {
         const was = await builders
           .metafile()
           .path('FOO/OLD')
@@ -1820,22 +1836,22 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev', 'fileid']),
             _.defaultsDeep(
+              win32({ fileid: was.fileid }),
               {
                 sides: increasedSides(was.sides, this.side, 1),
                 moveFrom: movedSrc,
                 [otherSide(this.side)]: was[otherSide(this.side)],
-                ino: was.ino
+                ino: was.ino,
+                _id: was._id
               },
-              _.omit(doc, ['_id', '_rev', 'fileid'])
+              doc
             )
           ],
           resolvedConflicts: []
@@ -1844,7 +1860,7 @@ describe('Merge', function() {
     })
 
     context('remote', () => {
-      it('saves the new file and deletes the old one with move hints for writers', async function() {
+      it('saves the moved file', async function() {
         const oldRemoteFile = await builders
           .remoteFile()
           .inRootDir()
@@ -1879,22 +1895,22 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev', 'fileid']),
             _.defaultsDeep(
+              win32({ fileid: was.fileid }),
               {
                 sides: increasedSides(was.sides, this.side, 1),
                 moveFrom: movedSrc,
                 [this.side]: was[this.side],
-                ino: was.ino
+                ino: was.ino,
+                _id: was._id
               },
-              _.omit(doc, ['_id', '_rev', 'fileid'])
+              doc
             )
           ],
           resolvedConflicts: []
@@ -1915,6 +1931,7 @@ describe('Merge', function() {
       const doc = builders
         .metafile(was)
         .path('FOO/NEW-MISSING-FIELDS.JPG')
+        .noTags()
         .unmerged(this.side)
         .build()
 
@@ -1924,21 +1941,21 @@ describe('Merge', function() {
 
       const movedSrc = _.defaults(
         {
-          moveTo: doc.path,
-          _deleted: true
+          moveTo: doc.path
         },
         was
       )
       should(sideEffects).deepEqual({
         savedDocs: [
-          _.omit(movedSrc, ['_rev', 'fileid']),
           _.defaults(
             {
               sides: increasedSides(was.sides, this.side, 1),
               moveFrom: movedSrc,
-              [otherSide(this.side)]: was[otherSide(this.side)]
+              [otherSide(this.side)]: was[otherSide(this.side)],
+              tags: was.tags,
+              _id: was._id
             },
-            _.omit(doc, ['_id', 'fileid'])
+            doc
           )
         ],
         resolvedConflicts: []
@@ -1957,7 +1974,7 @@ describe('Merge', function() {
           .create()
       })
 
-      it('overrides the existing destination document', async function() {
+      it('erases the existing destination record and saves the moved file', async function() {
         const was = await builders
           .metafile()
           .path('SRC_FILE')
@@ -1979,24 +1996,26 @@ describe('Merge', function() {
 
         const movedSrc = _.defaultsDeep(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev']),
+            {
+              _deleted: true,
+              _id: existing._id
+            },
             _.defaults(
               {
-                _id: existing._id,
                 path: doc.path,
                 sides: increasedSides(was.sides, this.side, 1),
                 moveFrom: movedSrc,
                 overwrite: existing,
-                [this.side]: doc[this.side]
+                [otherSide(this.side)]: was[otherSide(this.side)],
+                _id: was._id
               },
-              _.omit(was, ['_rev'])
+              doc
             )
           ],
           resolvedConflicts: []
@@ -2004,12 +2023,13 @@ describe('Merge', function() {
       })
 
       it('keeps the overwrite attribute if it exists', async function() {
-        await builders
+        const overwritten = await builders
           .metafile(existing)
           .overwrite(existing)
           .changedSide(this.side)
           .data('new content')
           .tags('qux', 'quux')
+          .noRecord() // XXX: Prevent Pouch conflict from reusing `existing`'s _id
           .create()
         const was = await builders
           .metafile()
@@ -2032,24 +2052,26 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev']),
+            {
+              _deleted: true,
+              _id: overwritten._id
+            },
             _.defaults(
               {
-                _id: existing._id,
                 path: doc.path,
                 sides: increasedSides(was.sides, this.side, 1),
                 moveFrom: movedSrc,
                 overwrite: existing,
-                [this.side]: doc[this.side]
+                [otherSide(this.side)]: was[otherSide(this.side)],
+                _id: was._id
               },
-              _.omit(was, ['_rev'])
+              doc
             )
           ],
           resolvedConflicts: []
@@ -2091,23 +2113,22 @@ describe('Merge', function() {
 
           const movedSrc = _.defaults(
             {
-              moveTo: dstPath,
-              _deleted: true
+              moveTo: dstPath
             },
             was
           )
           should(sideEffects).deepEqual({
             savedDocs: [
-              _.omit(movedSrc, ['_rev']),
               _.defaultsDeep(
                 {
                   path: dstPath,
                   sides: increasedSides(was.sides, 'local', 1),
                   moveFrom: movedSrc,
                   local: { path: dstPath },
-                  remote: was.remote
+                  remote: was.remote,
+                  _id: was._id
                 },
-                _.omit(doc, ['_id'])
+                doc
               )
             ],
             resolvedConflicts: [
@@ -2130,7 +2151,7 @@ describe('Merge', function() {
         await this.pouch.remove(previous)
       })
 
-      it('saves the new file with the correct side', async function() {
+      it('saves the moved file with the correct side', async function() {
         const was = await builders
           .metafile()
           .path('SRC_FILE')
@@ -2152,21 +2173,20 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev']),
             _.defaults(
               {
                 sides: increasedSides(was.sides, this.side, 1),
                 moveFrom: movedSrc,
-                [otherSide(this.side)]: was[otherSide(this.side)]
+                [otherSide(this.side)]: was[otherSide(this.side)],
+                _id: was._id
               },
-              _.omit(doc, ['_id'])
+              doc
             )
           ],
           resolvedConflicts: []
@@ -2192,20 +2212,15 @@ describe('Merge', function() {
         this.merge.moveFileAsync('local', _.cloneDeep(doc), _.cloneDeep(was))
       )
 
-      const unsyncedFile = _.defaults(
-        {
-          _deleted: true
-        },
-        _.omit(was, ['_rev', 'sides', 'local', 'remote'])
-      )
       const fileAddition = _.defaults(
         {
-          sides: { target: 1, local: 1 }
+          sides: { target: 1, local: 1 },
+          _id: was._id
         },
-        _.omit(doc, ['_id'])
+        doc
       )
       should(sideEffects).deepEqual({
-        savedDocs: [unsyncedFile, fileAddition],
+        savedDocs: [fileAddition],
         resolvedConflicts: []
       })
     })
@@ -2236,25 +2251,20 @@ describe('Merge', function() {
         this.merge.moveFileAsync('remote', _.cloneDeep(doc), _.cloneDeep(was))
       )
 
-      const unsyncedFile = _.defaults(
-        {
-          _deleted: true
-        },
-        _.omit(was, ['_rev', 'sides', 'local', 'remote'])
-      )
       const fileAddition = _.defaults(
         {
-          sides: { target: 1, remote: 1 }
+          sides: { target: 1, remote: 1 },
+          _id: was._id
         },
         doc
       )
       should(sideEffects).deepEqual({
-        savedDocs: [unsyncedFile, fileAddition],
+        savedDocs: [fileAddition],
         resolvedConflicts: []
       })
     })
 
-    it('does not identify the child move of a file following another unsynced move as an addition', async function() {
+    it('does not identify the child file move following another unsynced move as an addition', async function() {
       const src = await builders
         .metadir()
         .path('SRC')
@@ -2275,15 +2285,12 @@ describe('Merge', function() {
         _.cloneDeep(file2),
         _.cloneDeep(file)
       )
+
       const was = await this.pouch.bySyncedPath(file2.path)
       const dst = builders
         .metadir(src)
         .path('DST')
         .unmerged('local')
-        .build()
-      const doc = await builders
-        .metafile(was)
-        .path('DST/FILE2')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
@@ -2292,38 +2299,39 @@ describe('Merge', function() {
 
       const movedSrc = _.defaults(
         {
-          moveTo: dst.path,
-          _deleted: true
+          moveTo: dst.path
         },
         src
       )
+      const fileDstPath = was.path.replace(src.path, dst.path)
       const movedFile = _.defaults(
         {
-          moveTo: doc.path,
-          childMove: true,
-          _deleted: true
+          moveTo: fileDstPath,
+          childMove: true
         },
         was
       )
       should(sideEffects).deepEqual({
         savedDocs: [
-          _.omit(movedSrc, ['_rev']),
           _.defaults(
             {
               sides: increasedSides(src.sides, this.side, 1),
               moveFrom: movedSrc,
-              remote: src.remote
+              remote: src.remote,
+              _id: src._id
             },
-            _.omit(dst, ['_id', '_rev'])
+            dst
           ),
-          _.omit(movedFile, ['_rev']),
-          _.defaults(
+          _.defaultsDeep(
             {
+              path: fileDstPath,
               sides: increasedSides(was.sides, this.side, 1),
               moveFrom: movedFile,
-              remote: was.remote
+              local: {
+                path: fileDstPath
+              }
             },
-            _.omit(doc, ['_id', '_rev'])
+            _.omit(was, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -2351,6 +2359,7 @@ describe('Merge', function() {
         _.cloneDeep(dst),
         _.cloneDeep(src)
       )
+
       const was = await this.pouch.bySyncedPath(path.normalize('DST/FILE'))
       const doc = await builders
         .metafile(was)
@@ -2364,21 +2373,20 @@ describe('Merge', function() {
 
       const movedSrc = _.defaults(
         {
-          moveTo: doc.path,
-          _deleted: true
+          moveTo: doc.path
         },
         was
       )
       should(sideEffects).deepEqual({
         savedDocs: [
-          _.omit(movedSrc, ['_rev']),
           _.defaults(
             {
               sides: increasedSides(was.sides, 'local', 1),
               moveFrom: movedSrc,
-              remote: was.remote
+              remote: was.remote,
+              _id: was._id
             },
-            _.omit(doc, ['_id', '_rev'])
+            doc
           )
         ],
         resolvedConflicts: []
@@ -2410,25 +2418,17 @@ describe('Merge', function() {
           savedDocs: [
             _.defaultsDeep(
               {
-                moveTo: BANANA.path,
-                _deleted: true
-              },
-              _.omit(banana, ['_rev'])
-            ),
-            _.defaultsDeep(
-              {
                 sides: increasedSides(banana.sides, this.side, 1),
-                path: BANANA.path,
                 moveFrom: _.defaults(
                   {
-                    moveTo: BANANA.path,
-                    _deleted: true
+                    moveTo: BANANA.path
                   },
                   banana
                 ),
-                [this.side]: BANANA[this.side]
+                [otherSide(this.side)]: banana[otherSide(this.side)],
+                _id: banana._id
               },
-              _.omit(banana, ['_id', '_rev'])
+              BANANA
             )
           ],
           resolvedConflicts: []
@@ -2492,21 +2492,20 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: BANANA.path,
-            _deleted: true
+            moveTo: BANANA.path
           },
           banana
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev']),
             _.defaults(
               {
                 sides: increasedSides(banana.sides, this.side, 1),
                 moveFrom: movedSrc,
-                [otherSide(this.side)]: banana[otherSide(this.side)]
+                [otherSide(this.side)]: banana[otherSide(this.side)],
+                _id: banana._id
               },
-              _.omit(BANANA, ['_id'])
+              BANANA
             )
           ],
           resolvedConflicts: []
@@ -2540,21 +2539,20 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev']),
             _.defaults(
               {
                 sides: increasedSides(was.sides, this.side, 1),
                 moveFrom: movedSrc,
-                [otherSide(this.side)]: was[otherSide(this.side)]
+                [otherSide(this.side)]: was[otherSide(this.side)],
+                _id: was._id
               },
-              _.omit(doc, ['_id', '_rev'])
+              doc
             )
           ],
           resolvedConflicts: []
@@ -2589,21 +2587,20 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev', 'fileid']),
             _.defaults(
               {
                 sides: increasedSides(was.sides, 'local', 1),
                 moveFrom: movedSrc,
-                remote: was.remote
+                remote: was.remote,
+                _id: was._id
               },
-              _.omit(doc, ['_rev', 'fileid'])
+              doc
             )
           ],
           resolvedConflicts: []
@@ -2641,21 +2638,20 @@ describe('Merge', function() {
 
           const movedSrc = _.defaults(
             {
-              moveTo: doc.path,
-              _deleted: true
+              moveTo: doc.path
             },
             was
           )
           should(sideEffects).deepEqual({
             savedDocs: [
-              _.omit(movedSrc, ['_rev', 'fileid']),
               _.defaults(
                 {
                   sides: increasedSides(was.sides, 'local', 1),
                   moveFrom: movedSrc,
-                  remote: was.remote
+                  remote: was.remote,
+                  _id: was._id
                 },
-                _.omit(doc, ['_rev', 'fileid'])
+                doc
               )
             ],
             resolvedConflicts: []
@@ -2696,21 +2692,12 @@ describe('Merge', function() {
             )
           )
 
-          const unsyncedFolder = _.defaults(
-            {
-              _deleted: true
-            },
-            _.omit(was, ['_rev', 'fileid', 'sides', 'local', 'remote'])
-          )
           const folderAddition = _.defaults(
             {
-              sides: { target: 1, local: 1 }
+              sides: { target: 1, local: 1 },
+              _id: was._id
             },
-            _.omit(doc, ['_id', '_rev', 'fileid'])
-          )
-          const unsyncedChild = _.defaults(
-            { _deleted: true },
-            _.omit(child, ['_rev', 'fileid', 'sides', 'local', 'remote'])
+            doc
           )
           const childAddition = _.defaultsDeep(
             {
@@ -2720,15 +2707,10 @@ describe('Merge', function() {
               },
               path: child.path.replace(was.path, doc.path)
             },
-            _.omit(child, ['_id', '_rev', 'fileid'])
+            _.omit(child, ['_rev'])
           )
           should(sideEffects).deepEqual({
-            savedDocs: [
-              unsyncedFolder,
-              folderAddition,
-              unsyncedChild,
-              childAddition
-            ],
+            savedDocs: [folderAddition, childAddition],
             resolvedConflicts: []
           })
         })
@@ -2759,22 +2741,17 @@ describe('Merge', function() {
                 )
               )
 
-              const unsyncedFolder = _.defaults(
-                {
-                  _deleted: true
-                },
-                _.omit(was, ['_rev', 'fileid', 'sides', 'local', 'remote'])
-              )
+              const overwrittenFolder = {
+                _deleted: true,
+                _id: existing._id
+              }
               const folderAddition = _.defaults(
                 {
                   sides: { target: 1, local: 1 },
-                  overwrite: existing
+                  overwrite: existing,
+                  _id: was._id
                 },
-                _.omit(doc, ['_id', '_rev', 'fileid'])
-              )
-              const unsyncedChild = _.defaults(
-                { _deleted: true },
-                _.omit(child, ['_rev', 'fileid', 'sides', 'local', 'remote'])
+                _.omit(doc, ['_rev'])
               )
               const childAddition = _.defaultsDeep(
                 {
@@ -2787,15 +2764,10 @@ describe('Merge', function() {
                   },
                   path: child.path.replace(was.path, doc.path)
                 },
-                _.omit(child, ['_id', '_rev', 'fileid'])
+                _.omit(child, ['_rev'])
               )
               should(sideEffects).deepEqual({
-                savedDocs: [
-                  unsyncedFolder,
-                  folderAddition,
-                  unsyncedChild,
-                  childAddition
-                ],
+                savedDocs: [overwrittenFolder, folderAddition, childAddition],
                 resolvedConflicts: []
               })
             })
@@ -2833,23 +2805,14 @@ describe('Merge', function() {
                     docType === 'folder' && path.match(/conflict/)
                 )
 
-                const unsyncedFolder = _.defaults(
-                  {
-                    _deleted: true
-                  },
-                  _.omit(was, ['_rev', 'fileid', 'sides', 'local', 'remote'])
-                )
                 const folderAddition = _.defaultsDeep(
                   {
                     path: dstPath,
                     local: { path: dstPath },
-                    sides: { target: 1, local: 1 }
+                    sides: { target: 1, local: 1 },
+                    _id: was._id
                   },
-                  _.omit(doc, ['_id', '_rev', 'fileid'])
-                )
-                const unsyncedChild = _.defaults(
-                  { _deleted: true },
-                  _.omit(child, ['_rev', 'fileid', 'sides', 'local', 'remote'])
+                  doc
                 )
                 const childAddition = _.defaultsDeep(
                   {
@@ -2859,15 +2822,10 @@ describe('Merge', function() {
                       path: child.local.path.replace(was.local.path, dstPath)
                     }
                   },
-                  _.omit(child, ['_id', '_rev', 'fileid'])
+                  _.omit(child, ['_rev'])
                 )
                 should(sideEffects).deepEqual({
-                  savedDocs: [
-                    unsyncedFolder,
-                    folderAddition,
-                    unsyncedChild,
-                    childAddition
-                  ],
+                  savedDocs: [folderAddition, childAddition],
                   resolvedConflicts: [
                     ['local', _.pick(doc, ['path', 'remote'])]
                   ]
@@ -2880,7 +2838,7 @@ describe('Merge', function() {
     })
 
     context('remote', () => {
-      it('saves the new folder and deletes the old one with hints for writers', async function() {
+      it('saves the moved folder', async function() {
         const oldRemoteDir = builders
           .remoteDir()
           .inRootDir()
@@ -2913,22 +2871,22 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev', 'fileid']),
             _.defaults(
+              win32({ fileid: was.fileid }),
               {
                 sides: increasedSides(was.sides, 'remote', 1),
                 moveFrom: movedSrc,
                 local: was.local,
-                ino: was.ino
+                ino: was.ino,
+                _id: was._id
               },
-              _.omit(doc, ['_rev', 'fileid'])
+              doc
             )
           ],
           resolvedConflicts: []
@@ -2979,21 +2937,12 @@ describe('Merge', function() {
             )
           )
 
-          const unsyncedFolder = _.defaults(
-            {
-              _deleted: true
-            },
-            _.omit(was, ['_rev', 'fileid', 'sides', 'local', 'remote'])
-          )
           const folderAddition = _.defaults(
             {
-              sides: { target: 1, remote: 1 }
+              sides: { target: 1, remote: 1 },
+              _id: was._id
             },
-            _.omit(doc, ['_id', '_rev', 'fileid'])
-          )
-          const unsyncedChild = _.defaults(
-            { _deleted: true },
-            _.omit(child, ['_rev', 'fileid', 'sides', 'local', 'remote'])
+            doc
           )
           const childAddition = _.defaultsDeep(
             {
@@ -3006,15 +2955,10 @@ describe('Merge', function() {
               },
               path: child.path.replace(was.path, doc.path)
             },
-            _.omit(child, ['_id', '_rev', 'fileid'])
+            _.omit(child, ['_rev'])
           )
           should(sideEffects).deepEqual({
-            savedDocs: [
-              unsyncedFolder,
-              folderAddition,
-              unsyncedChild,
-              childAddition
-            ],
+            savedDocs: [folderAddition, childAddition],
             resolvedConflicts: []
           })
         })
@@ -3049,22 +2993,13 @@ describe('Merge', function() {
                 )
               )
 
-              const unsyncedFolder = _.defaults(
-                {
-                  _deleted: true
-                },
-                _.omit(was, ['_rev', 'fileid', 'sides', 'local', 'remote'])
-              )
               const folderAddition = _.defaults(
                 {
                   sides: { target: 1, remote: 1 },
-                  overwrite: existing
+                  overwrite: existing,
+                  _id: was._id
                 },
-                _.omit(doc, ['_id', '_rev', 'fileid'])
-              )
-              const unsyncedChild = _.defaults(
-                { _deleted: true },
-                _.omit(child, ['_rev', 'fileid', 'sides', 'local', 'remote'])
+                doc
               )
               const childAddition = _.defaultsDeep(
                 {
@@ -3077,13 +3012,15 @@ describe('Merge', function() {
                   },
                   path: child.path.replace(was.path, doc.path)
                 },
-                _.omit(child, ['_id', '_rev', 'fileid'])
+                _.omit(child, ['_rev'])
               )
               should(sideEffects).deepEqual({
                 savedDocs: [
-                  unsyncedFolder,
+                  {
+                    _deleted: true,
+                    _id: existing._id
+                  },
                   folderAddition,
-                  unsyncedChild,
                   childAddition
                 ],
                 resolvedConflicts: []
@@ -3128,23 +3065,14 @@ describe('Merge', function() {
                 )
                 const remoteDstPath = pathUtils.localToRemote(dstPath)
 
-                const unsyncedFolder = _.defaults(
-                  {
-                    _deleted: true
-                  },
-                  _.omit(was, ['_rev', 'fileid', 'sides', 'local', 'remote'])
-                )
                 const folderAddition = _.defaultsDeep(
                   {
                     path: dstPath,
                     remote: { path: remoteDstPath },
-                    sides: { target: 1, remote: 1 }
+                    sides: { target: 1, remote: 1 },
+                    _id: was._id
                   },
-                  _.omit(doc, ['_id', '_rev', 'fileid'])
-                )
-                const unsyncedChild = _.defaults(
-                  { _deleted: true },
-                  _.omit(child, ['_rev', 'fileid', 'sides', 'local', 'remote'])
+                  doc
                 )
                 const childAddition = _.defaultsDeep(
                   {
@@ -3157,15 +3085,10 @@ describe('Merge', function() {
                       )
                     }
                   },
-                  _.omit(child, ['_id', '_rev', 'fileid'])
+                  _.omit(child, ['_rev'])
                 )
                 should(sideEffects).deepEqual({
-                  savedDocs: [
-                    unsyncedFolder,
-                    folderAddition,
-                    unsyncedChild,
-                    childAddition
-                  ],
+                  savedDocs: [folderAddition, childAddition],
                   resolvedConflicts: [
                     ['remote', _.pick(doc, ['path', 'remote'])]
                   ]
@@ -3211,24 +3134,26 @@ describe('Merge', function() {
 
           const movedSrc = _.defaults(
             {
-              moveTo: existing.path,
-              _deleted: true
+              moveTo: existing.path
             },
             was
           )
           should(sideEffects).deepEqual({
             savedDocs: [
-              _.omit(movedSrc, ['_rev']),
+              {
+                _deleted: true,
+                _id: existing._id
+              },
               _.defaults(
                 {
-                  _id: existing._id,
                   path: existing.path,
                   sides: increasedSides(was.sides, this.side, 1),
                   moveFrom: movedSrc,
                   overwrite: existing,
-                  [otherSide(this.side)]: was[otherSide(this.side)]
+                  [otherSide(this.side)]: was[otherSide(this.side)],
+                  _id: was._id
                 },
-                _.omit(doc, ['_id'])
+                doc
               )
             ],
             resolvedConflicts: []
@@ -3271,23 +3196,22 @@ describe('Merge', function() {
 
           const movedSrc = _.defaults(
             {
-              moveTo: dstPath,
-              _deleted: true
+              moveTo: dstPath
             },
             was
           )
           should(sideEffects).deepEqual({
             savedDocs: [
-              _.omit(movedSrc, ['_rev']),
               _.defaultsDeep(
                 {
                   path: dstPath,
                   sides: increasedSides(was.sides, this.side, 1),
                   moveFrom: movedSrc,
                   [this.side]: { path: dstPath },
-                  [otherSide(this.side)]: was[otherSide(this.side)]
+                  [otherSide(this.side)]: was[otherSide(this.side)],
+                  _id: was._id
                 },
-                _.omit(doc, ['_id'])
+                doc
               )
             ],
             resolvedConflicts: [[this.side, _.pick(doc, ['path', 'remote'])]]
@@ -3330,21 +3254,20 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev']),
             _.defaults(
               {
                 sides: increasedSides(was.sides, this.side, 1),
                 moveFrom: movedSrc,
-                [otherSide(this.side)]: was[otherSide(this.side)]
+                [otherSide(this.side)]: was[otherSide(this.side)],
+                _id: was._id
               },
-              _.omit(doc, ['_id'])
+              doc
             )
           ],
           resolvedConflicts: []
@@ -3379,23 +3302,25 @@ describe('Merge', function() {
 
       const movedSrc = _.defaults(
         {
-          moveTo: doc.path,
-          _deleted: true
+          moveTo: doc.path
         },
         was
       )
       should(sideEffects).deepEqual({
         savedDocs: [
-          _.omit(movedSrc, ['_rev']),
+          {
+            _deleted: true,
+            _id: existing._id
+          },
           _.defaults(
             {
-              _id: existing._id,
               sides: increasedSides(was.sides, this.side, 1),
               moveFrom: movedSrc,
               overwrite: existing,
-              [otherSide(this.side)]: was[otherSide(this.side)]
+              [otherSide(this.side)]: was[otherSide(this.side)],
+              _id: was._id
             },
-            _.omit(doc, ['_id'])
+            doc
           )
         ],
         resolvedConflicts: []
@@ -3427,25 +3352,17 @@ describe('Merge', function() {
           savedDocs: [
             _.defaultsDeep(
               {
-                moveTo: APPLE.path,
-                _deleted: true
-              },
-              _.omit(apple, ['_rev'])
-            ),
-            _.defaultsDeep(
-              {
                 sides: increasedSides(apple.sides, this.side, 1),
-                path: APPLE.path,
                 moveFrom: _.defaults(
                   {
-                    moveTo: APPLE.path,
-                    _deleted: true
+                    moveTo: APPLE.path
                   },
                   apple
                 ),
-                [this.side]: APPLE[this.side]
+                [otherSide(this.side)]: apple[otherSide(this.side)],
+                _id: apple._id
               },
-              _.omit(apple, ['_id', '_rev'])
+              APPLE
             )
           ],
           resolvedConflicts: []
@@ -3507,21 +3424,20 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: APPLE.path,
-            _deleted: true
+            moveTo: APPLE.path
           },
           apple
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev']),
             _.defaults(
               {
                 sides: increasedSides(apple.sides, this.side, 1),
                 moveFrom: movedSrc,
-                [otherSide(this.side)]: apple[otherSide(this.side)]
+                [otherSide(this.side)]: apple[otherSide(this.side)],
+                _id: apple._id
               },
-              _.omit(APPLE, ['_id'])
+              APPLE
             )
           ],
           resolvedConflicts: []
@@ -3553,23 +3469,21 @@ describe('Merge', function() {
           )
         )
 
-        const movedSrc = _.defaults(
-          {
-            moveTo: nukem.path,
-            _deleted: true
-          },
-          duke
-        )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev']),
             _.defaults(
               {
                 sides: increasedSides(duke.sides, this.side, 1),
-                moveFrom: movedSrc,
-                [otherSide(this.side)]: duke[otherSide(this.side)]
+                moveFrom: _.defaults(
+                  {
+                    moveTo: nukem.path
+                  },
+                  duke
+                ),
+                [otherSide(this.side)]: duke[otherSide(this.side)],
+                _id: duke._id
               },
-              _.omit(nukem, ['_id'])
+              nukem
             )
           ],
           resolvedConflicts: []
@@ -3615,43 +3529,46 @@ describe('Merge', function() {
 
       const movedSrcDir = _.defaults(
         {
-          moveTo: dstDir.path,
-          _deleted: true
+          moveTo: dstDir.path
         },
         srcDir
       )
       const movedSrcFile = _.defaults(
         {
           moveTo: oldDstFile.path,
-          childMove: true,
-          _deleted: true
+          childMove: true
         },
         srcFile
       )
       should(sideEffects).deepEqual({
         savedDocs: [
-          _.omit(movedSrcDir, ['_rev']),
+          {
+            _deleted: true,
+            _id: oldDst._id
+          },
+          {
+            _deleted: true,
+            _id: oldDstFile._id
+          },
           _.defaults(
             {
-              _id: oldDst._id,
               sides: increasedSides(srcDir.sides, this.side, 1),
               moveFrom: movedSrcDir,
               overwrite: oldDst,
-              [otherSide(this.side)]: srcDir[otherSide(this.side)]
+              [otherSide(this.side)]: srcDir[otherSide(this.side)],
+              _id: srcDir._id
             },
-            _.omit(dstDir, ['_id', '_rev'])
+            dstDir
           ),
-          _.omit(movedSrcFile, ['_rev']),
           _.defaultsDeep(
             {
-              _id: oldDstFile._id,
               path: oldDstFile.path,
               sides: increasedSides(srcFile.sides, this.side, 1),
               moveFrom: movedSrcFile,
               overwrite: oldDstFile,
               [this.side]: { path: oldDstFile[this.side].path }
             },
-            _.omit(srcFile, ['_id', '_rev'])
+            _.omit(srcFile, ['_rev'])
           )
         ],
         resolvedConflicts: []
@@ -3694,39 +3611,35 @@ describe('Merge', function() {
 
       const movedDir = _.defaults(
         {
-          moveTo: doc.path,
-          _deleted: true
+          moveTo: doc.path
         },
         was
       )
       const movedSubfile = _.defaults(
         {
           moveTo: movedPath(subfile),
-          childMove: true,
-          _deleted: true
+          childMove: true
         },
         subfile
       )
       const movedSubdir = _.defaults(
         {
           moveTo: movedPath(subdir),
-          childMove: true,
-          _deleted: true
+          childMove: true
         },
         subdir
       )
       should(sideEffects).deepEqual({
         savedDocs: [
-          _.omit(movedDir, ['_rev']),
           _.defaults(
             {
               sides: increasedSides(was.sides, this.side, 1),
               moveFrom: movedDir,
-              [otherSide(this.side)]: was[otherSide(this.side)]
+              [otherSide(this.side)]: was[otherSide(this.side)],
+              _id: was._id
             },
-            _.omit(doc, ['_id', '_rev'])
+            doc
           ),
-          _.omit(movedSubfile, ['_rev']),
           _.defaultsDeep(
             {
               path: movedPath(subfile),
@@ -3735,9 +3648,8 @@ describe('Merge', function() {
               [this.side]: { path: movedPath(subfile) },
               [otherSide(this.side)]: movedSubfile[otherSide(this.side)]
             },
-            _.omit(subfile, ['_id', '_rev'])
+            _.omit(subfile, ['_rev'])
           ),
-          _.omit(movedSubdir, ['_rev']),
           _.defaultsDeep(
             {
               path: movedPath(subdir),
@@ -3746,15 +3658,15 @@ describe('Merge', function() {
               [this.side]: { path: movedPath(subdir) },
               [otherSide(this.side)]: movedSubdir[otherSide(this.side)]
             },
-            _.omit(subdir, ['_id', '_rev'])
+            _.omit(subdir, ['_rev'])
           )
         ],
         resolvedConflicts: []
       })
     })
 
-    context('local', () => {
-      it('adds an unsynced remote file to the destination folder', async function() {
+    context('local with an unsynced remote file', () => {
+      it('adds the remote file to the destination folder', async function() {
         const was = await builders
           .metadir()
           .path('ADDED_DIR')
@@ -3773,7 +3685,6 @@ describe('Merge', function() {
         const unsyncedFile = await builders
           .metafile()
           .fromRemote(unsyncedRemoteFile)
-          .noLocal()
           .sides({ remote: 1 })
           .create()
 
@@ -3789,34 +3700,27 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev']),
             _.defaults(
               {
                 sides: increasedSides(was.sides, 'local', 1),
                 moveFrom: movedSrc,
-                remote: was.remote
+                remote: was.remote,
+                _id: was._id
               },
-              _.omit(doc, ['_rev'])
-            ),
-            _.defaults(
-              {
-                _deleted: true
-              },
-              _.omit(unsyncedFile, ['_rev', 'sides', 'remote'])
+              doc
             ),
             _.defaults(
               {
                 path: movedPath(unsyncedFile),
                 sides: { target: 1, remote: 1 }
               },
-              _.omit(unsyncedFile, ['_id', '_rev'])
+              _.omit(unsyncedFile, ['_rev'])
             )
           ],
           resolvedConflicts: []
@@ -3824,8 +3728,8 @@ describe('Merge', function() {
       })
     })
 
-    context('remote', () => {
-      it('adds an unsynced local file to the destination folder', async function() {
+    context('remote with an unsynced local file', () => {
+      it('adds the local file to the destination folder', async function() {
         const oldRemoteDir = builders
           .remoteDir()
           .inRootDir()
@@ -3848,7 +3752,6 @@ describe('Merge', function() {
         const unsyncedFile = await builders
           .metafile()
           .path('ADDED_DIR/unsynced-file')
-          .noRemote()
           .sides({ local: 1 })
           .create()
 
@@ -3864,34 +3767,27 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev']),
             _.defaults(
               {
                 sides: increasedSides(was.sides, 'remote', 1),
                 moveFrom: movedSrc,
-                local: was.local
+                local: was.local,
+                _id: was._id
               },
               doc
-            ),
-            _.defaults(
-              {
-                _deleted: true
-              },
-              _.omit(unsyncedFile, ['_rev', 'sides', 'local'])
             ),
             _.defaults(
               {
                 path: movedPath(unsyncedFile),
                 sides: { target: 1, local: 1 }
               },
-              _.omit(unsyncedFile, ['_id', '_rev'])
+              _.omit(unsyncedFile, ['_rev'])
             )
           ],
           resolvedConflicts: []
@@ -3933,21 +3829,20 @@ describe('Merge', function() {
 
         const movedSrc = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedSrc, ['_rev']),
             _.defaults(
               {
                 sides: increasedSides(was.sides, this.side, 1),
                 moveFrom: movedSrc,
-                [otherSide(this.side)]: was[otherSide(this.side)]
+                [otherSide(this.side)]: was[otherSide(this.side)],
+                _id: was._id
               },
-              _.omit(doc, ['_id', '_rev'])
+              doc
             )
           ],
           resolvedConflicts: []
@@ -3997,39 +3892,37 @@ describe('Merge', function() {
 
         const movedDir = _.defaults(
           {
-            moveTo: doc.path,
-            _deleted: true
+            moveTo: doc.path
           },
           was
         )
         const movedChild = _.defaults(
           {
             moveTo: movedPath(child),
-            childMove: true,
-            _deleted: true
+            childMove: true
           },
           child
         )
         should(sideEffects).deepEqual({
           savedDocs: [
-            _.omit(movedDir, ['_rev']),
             _.defaults(
               {
                 sides: increasedSides(was.sides, this.side, 1),
                 moveFrom: movedDir,
-                [otherSide(this.side)]: was[otherSide(this.side)]
+                [otherSide(this.side)]: was[otherSide(this.side)],
+                _id: was._id
               },
-              _.omit(doc, ['_id'])
+              doc
             ),
-            _.omit(movedChild, ['_rev']),
             _.defaultsDeep(
               {
                 path: movedPath(child),
                 sides: increasedSides(child.sides, this.side, 1),
                 moveFrom: movedChild,
-                [this.side]: { path: movedPath(child) }
+                [this.side]: { path: movedPath(child) },
+                _id: child._id
               },
-              _.omit(child, ['_id', '_rev'])
+              _.omit(child, ['_rev'])
             )
           ],
           resolvedConflicts: []
@@ -4075,8 +3968,7 @@ describe('Merge', function() {
 
             const movedDir = _.defaults(
               {
-                moveTo: doc.path,
-                _deleted: true
+                moveTo: doc.path
               },
               was
             )
@@ -4084,8 +3976,7 @@ describe('Merge', function() {
             const movedSubdir = _.defaults(
               {
                 moveTo: movedSubdirPath,
-                childMove: true,
-                _deleted: true
+                childMove: true
               },
               subdir
             )
@@ -4093,23 +3984,21 @@ describe('Merge', function() {
             const movedSubfile = _.defaultsDeep(
               {
                 moveTo: movedSubfilePath,
-                childMove: true,
-                _deleted: true
+                childMove: true
               },
               subfile
             )
             should(sideEffects).deepEqual({
               savedDocs: [
-                _.omit(movedDir, ['_rev']),
                 _.defaults(
                   {
                     sides: increasedSides(was.sides, this.side, 1),
                     moveFrom: movedDir,
-                    [otherSide(this.side)]: was[otherSide(this.side)]
+                    [otherSide(this.side)]: was[otherSide(this.side)],
+                    _id: was._id
                   },
-                  _.omit(doc, ['_id', '_rev'])
+                  doc
                 ),
-                _.omit(movedSubdir, ['_rev']),
                 _.defaultsDeep(
                   {
                     path: movedSubdirPath,
@@ -4117,9 +4006,8 @@ describe('Merge', function() {
                     moveFrom: movedSubdir,
                     [this.side]: { path: movedSubdirPath }
                   },
-                  _.omit(subdir, ['_id', '_rev'])
+                  _.omit(subdir, ['_rev'])
                 ),
-                _.omit(movedSubfile, ['_rev']),
                 _.defaultsDeep(
                   {
                     path: movedSubfilePath,
@@ -4127,7 +4015,7 @@ describe('Merge', function() {
                     moveFrom: movedSubfile,
                     [this.side]: { path: movedSubfilePath }
                   },
-                  _.omit(subfile, ['_id', '_rev'])
+                  _.omit(subfile, ['_rev'])
                 )
               ],
               resolvedConflicts: []
@@ -4258,17 +4146,7 @@ describe('Merge', function() {
       )
 
       should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              sides: {
-                target: was.sides.target + 1,
-                [otherSide(this.side)]: was.sides[otherSide(this.side)] + 1
-              }
-            },
-            _.omit(was, ['_rev', 'trashed', this.side])
-          )
-        ],
+        savedDocs: [],
         resolvedConflicts: []
       })
     })
@@ -4848,9 +4726,10 @@ describe('Merge', function() {
           .create()
       })
 
-      it('marks the source for deletion and discards the destination', async function() {
+      it('marks the moved document for deletion', async function() {
         const was = await builders
           .metafile()
+          .path('moved')
           .moveFrom(src)
           .changedSide(this.side)
           .create()
@@ -4872,15 +4751,9 @@ describe('Merge', function() {
             _.defaults(
               {
                 deleted: true,
-                sides: increasedSides(src.sides, this.side, 1)
+                sides: increasedSides(was.sides, this.side, 1)
               },
-              _.omit(src, ['_rev', '_deleted', 'moveTo'])
-            ),
-            _.defaults(
-              {
-                _deleted: true
-              },
-              _.omit(was, ['_rev', 'sides', 'moveFrom', 'local', 'remote'])
+              _.omit(was, ['_rev', 'moveFrom'])
             )
           ],
           resolvedConflicts: []
@@ -4897,9 +4770,10 @@ describe('Merge', function() {
             .create()
         })
 
-        it('also marks for deletion the overwritten doc', async function() {
+        it('marks the moved document for deletion', async function() {
           const was = await builders
             .metafile()
+            .path('moved')
             .moveFrom(src)
             .overwrite(existing)
             .changedSide(this.side)
@@ -4922,16 +4796,16 @@ describe('Merge', function() {
               _.defaults(
                 {
                   deleted: true,
-                  sides: increasedSides(src.sides, this.side, 1)
+                  sides: increasedSides(existing.sides, this.side, 1)
                 },
-                _.omit(src, ['_rev', '_deleted', 'moveTo'])
+                _.omit(existing, ['_rev'])
               ),
               _.defaults(
                 {
                   deleted: true,
                   sides: increasedSides(was.sides, this.side, 1)
                 },
-                _.omit(existing, ['_rev'])
+                _.omit(was, ['_rev', 'moveFrom', 'overwrite'])
               )
             ],
             resolvedConflicts: []
