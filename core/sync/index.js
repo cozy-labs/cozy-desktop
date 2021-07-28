@@ -715,18 +715,19 @@ class Sync {
       log.debug({ path, seq, doc }, `Applying change ${seq}...`)
 
       if (metadata.shouldIgnore(doc, this.ignore)) {
-        return
+        return this.pouch.setLocalSeq(seq)
       } else if (!metadata.wasSynced(doc) && isMarkedForDeletion(doc)) {
-        await this.pouch.setLocalSeq(change.seq)
+        await this.pouch.eraseDocument(doc)
         if (doc.docType === 'file') {
           this.events.emit('delete-file', _.clone(doc))
         }
+        return this.pouch.setLocalSeq(seq)
       }
 
       const side = this.selectSide(doc)
       if (!side) {
         log.info({ path }, 'up to date')
-        return this.pouch.setLocalSeq(change.seq)
+        return this.pouch.setLocalSeq(seq)
       }
 
       stopMeasure = measureTime('Sync#applyChange:' + side.name)
@@ -737,7 +738,7 @@ class Sync {
         throw syncErrors.wrapError(err, side.name, change)
       }
 
-      await this.pouch.setLocalSeq(change.seq)
+      await this.pouch.setLocalSeq(seq)
       log.trace({ path, seq }, `Applied change on ${side.name} side`)
 
       // Clean up documents so that we don't mistakenly take action based on
