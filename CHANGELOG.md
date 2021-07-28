@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.28.1-beta.3 - 2021-07-28
+
+Improvements for all users:
+
+- We'll now consider the propagation of a move to the trash either on the local
+  filesystem or the remote Cozy as successful when the given document does not
+  exist anymore.
+  This will prevent delays during the synchronization process since we won't
+  have to deal with retries.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.28.1-beta.2 - 2021-07-20
 
 Improvements for Windows users:
