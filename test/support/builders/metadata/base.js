@@ -224,16 +224,13 @@ module.exports = class BaseMetadataBuilder {
   }
 
   upToDate() /*: this */ {
-    this.doc.sides = {
-      ...this.doc.sides,
-      target: (this.doc.sides && this.doc.sides.target) || 1
-    }
-    metadata.markAsUpToDate(this.doc)
+    const target = (metadata.target(this.doc) || 1) + 1
+    this.sides({ local: target, remote: target })
     return this
   }
 
   notUpToDate() /*: this */ {
-    this.doc.sides = { target: 1, remote: 1 }
+    this.sides({ remote: 1 })
     return this
   }
 
@@ -382,6 +379,8 @@ module.exports = class BaseMetadataBuilder {
         .data(this._data)
         .executable(this.doc.executable)
         .contentType(this.doc.mime || '')
+        .md5sum(this.doc.md5sum)
+        .size(String(this.doc.size))
     }
 
     this.doc.remote = builder.build()

@@ -35,6 +35,9 @@ const addReferencedBy = async (
   } = await files.addReferencedBy(doc, refs)
   return { _rev, referencedBy: data }
 }
+
+const baseData = `Content of remote file ${fileNumber}`
+
 // Build a MetadataRemoteFile representing a remote Cozy file:
 //
 //     const file /*: MetadataRemoteFile */ = builders.remoteFile().inDir(...).build()
@@ -54,7 +57,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <Metadat
 
     if (!old) {
       this.name(`remote-file-${fileNumber}`)
-      this.data(`Content of remote file ${fileNumber}`)
+      this.data(baseData)
       this.remoteDoc.class = 'application'
       this.remoteDoc.mime = 'application/octet-stream'
       this.remoteDoc.executable = true
@@ -73,16 +76,32 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <Metadat
   data(data /*: string | stream.Readable | Buffer */) /*: this */ {
     this._data = data
     if (typeof data === 'string') {
-      this.remoteDoc.size = Buffer.from(data).length.toString()
-      this.remoteDoc.md5sum = new ChecksumBuilder(data).build()
+      this.size(Buffer.from(data).length.toString())
+      this.md5sum(new ChecksumBuilder(data).build())
     }
     // FIXME: Assuming doc will be created with data stream
     return this
   }
 
-  // Should only be used to build invalid docs. Prefer using `data()`.
-  size(newSize /*: string */) /*: this */ {
-    this.remoteDoc.size = newSize
+  // Should only be used to build invalid docs or in other builders.
+  // Prefer using `data()`.
+  md5sum(newMd5sum /*: ?string */) /*: this */ {
+    if (newMd5sum) {
+      this.remoteDoc.md5sum = newMd5sum
+    } else {
+      this.remoteDoc.md5sum = new ChecksumBuilder(baseData).build()
+    }
+    return this
+  }
+
+  // Should only be used to build invalid docs or in other builders.
+  // Prefer using `data()`.
+  size(newSize /*: ?string */) /*: this */ {
+    if (newSize) {
+      this.remoteDoc.size = newSize
+    } else {
+      this.remoteDoc.size = Buffer.from(baseData).length.toString()
+    }
     return this
   }
 
