@@ -46,7 +46,10 @@ const {
   detectPathIncompatibilities,
   detectPathLengthIncompatibility
 } = require('./incompatibilities/platform')
-const { DIR_TYPE, FILE_TYPE } = require('./remote/constants')
+const {
+  DIR_TYPE: REMOTE_DIR_TYPE,
+  FILE_TYPE: REMOTE_FILE_TYPE
+} = require('./remote/constants')
 const { SIDE_NAMES, otherSide } = require('./side')
 
 /*::
@@ -155,6 +158,7 @@ module.exports = {
   assignPlatformIncompatibilities,
   fromRemoteDoc,
   isFile,
+  isFolder,
   kind,
   id,
   invalidPath,
@@ -250,9 +254,9 @@ function idNTFS(fpath /*: string */) {
 
 function localDocType(remoteDocType /*: string */) /*: string */ {
   switch (remoteDocType) {
-    case FILE_TYPE:
+    case REMOTE_FILE_TYPE:
       return 'file'
-    case DIR_TYPE:
+    case REMOTE_DIR_TYPE:
       return 'folder'
     default:
       throw new Error(`Unexpected Cozy Files type: ${remoteDocType}`)
@@ -264,7 +268,7 @@ function localDocType(remoteDocType /*: string */) /*: string */ {
 // Normalization is done as a side effect of metadata.invalidPath() :/
 function fromRemoteDoc(remoteDoc /*: MetadataRemoteInfo */) /*: Metadata */ {
   const doc =
-    remoteDoc.type === FILE_TYPE
+    remoteDoc.type === REMOTE_FILE_TYPE
       ? fromRemoteFile(remoteDoc)
       : fromRemoteDir(remoteDoc)
 
@@ -339,10 +343,21 @@ function fromRemoteFile(remoteFile /*: MetadataRemoteFile */) /*: Metadata */ {
 function isFile(
   doc /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
 ) /*: boolean %checks */ {
-  return (
-    (doc.docType != null && doc.docType === 'file') ||
-    (doc.type !== null && doc.type === 'file')
-  )
+  return doc.docType != null
+    ? doc.docType === 'file'
+    : doc.type !== null
+    ? doc.type === REMOTE_FILE_TYPE
+    : false
+}
+
+function isFolder(
+  doc /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
+) /*: boolean %checks */ {
+  return doc.docType != null
+    ? doc.docType === 'folder'
+    : doc.type !== null
+    ? doc.type === REMOTE_DIR_TYPE
+    : false
 }
 
 function kind(doc /*: Metadata */) /*: EventKind */ {
@@ -666,7 +681,10 @@ const sameFolderComparator = makeComparator('sameFolder', [
 ])
 
 // Return true if the metadata of the two folders are the same
-function sameFolder(one /*: Metadata */, two /*: Metadata */) {
+function sameFolder(
+  one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
+  two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
+) {
   return sameFolderComparator(one, two)
 }
 
@@ -700,9 +718,9 @@ const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev', [
 const sameLocalComparator = makeComparator('sameLocal', LOCAL_ATTRIBUTES)
 
 // Return true if the metadata of the two files are the same
-function sameFile /*::<T: Metadata|MetadataLocalInfo>*/(
-  one /*: T */,
-  two /*: T */
+function sameFile(
+  one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
+  two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
 ) {
   return sameFileComparator(one, two)
 }
@@ -719,8 +737,8 @@ function sameLocal(one /*: MetadataLocalInfo */, two /*: MetadataLocalInfo */) {
 
 // Return true if the two files have the same binary content
 function sameBinary(
-  one /*: { md5sum: string }|{ md5sum?: string } */,
-  two /*: { md5sum: string }|{ md5sum?: string } */
+  one /*: $ReadOnly<{ md5sum?: string }> */,
+  two /*: $ReadOnly<{ md5sum?: string }> */
 ) /*: boolean %checks */ {
   return !!one.md5sum && !!two.md5sum && one.md5sum === two.md5sum
 }

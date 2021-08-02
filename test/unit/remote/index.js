@@ -159,7 +159,7 @@ describe('remote.Remote', function() {
       const doc /*: Metadata */ = builders
         .metafile()
         .path('foo')
-        .noRemote()
+        .sides({ local: 1 })
         .build()
       this.remote.other = {
         createReadStreamAsync() {
@@ -211,7 +211,7 @@ describe('remote.Remote', function() {
       const doc = builders
         .metadir()
         .path('couchdb-folder/folder-1')
-        .noRemote()
+        .sides({ local: 1 })
         .updatedAt(timestamp.build(2017, 2, 14, 15, 3, 27))
         .build()
 
@@ -240,7 +240,7 @@ describe('remote.Remote', function() {
       const doc = builders
         .metadir()
         .fromRemote(remoteDir)
-        .noRemote()
+        .sides({ local: 1 })
         .updatedAt(new Date().toISOString())
         .build()
 
@@ -278,7 +278,7 @@ describe('remote.Remote', function() {
       const doc = builders
         .metadir()
         .fromRemote(remoteDir)
-        .noRemote()
+        .sides({ local: 1 })
         .updatedAt(localUpdatedAt)
         .build()
 
@@ -350,7 +350,7 @@ describe('remote.Remote', function() {
           }
         }
 
-        await this.remote.overwriteFileAsync(doc, old)
+        await this.remote.overwriteFileAsync(doc)
 
         const file = await cozy.files.statById(doc.remote._id)
         should(file.attributes).have.properties({
@@ -392,7 +392,7 @@ describe('remote.Remote', function() {
           }
         }
 
-        await should(this.remote.overwriteFileAsync(doc, old)).be.rejectedWith({
+        await should(this.remote.overwriteFileAsync(doc)).be.rejectedWith({
           status: 412
         })
 
@@ -406,7 +406,7 @@ describe('remote.Remote', function() {
         const doc /*: Metadata */ = builders
           .metafile()
           .path('foo')
-          .noRemote()
+          .changedSide('local')
           .build()
         this.remote.other = {
           createReadStreamAsync() {
@@ -452,7 +452,7 @@ describe('remote.Remote', function() {
           }
         }
 
-        await this.remote.overwriteFileAsync(_.cloneDeep(doc), old)
+        await this.remote.overwriteFileAsync(_.cloneDeep(doc))
 
         const file = await cozy.files.statById(doc.remote._id)
         should(file.attributes).have.properties({
@@ -503,9 +503,7 @@ describe('remote.Remote', function() {
         }
 
         try {
-          await should(
-            this.remote.overwriteFileAsync(doc, old)
-          ).be.rejectedWith({
+          await should(this.remote.overwriteFileAsync(doc)).be.rejectedWith({
             name: 'FetchError',
             status: 413
           })
@@ -547,7 +545,7 @@ describe('remote.Remote', function() {
           }
         }
 
-        await this.remote.overwriteFileAsync(doc1, old)
+        await this.remote.overwriteFileAsync(doc1)
 
         const update1 = await cozy.files.statById(doc1.remote._id)
         should(
@@ -576,7 +574,7 @@ describe('remote.Remote', function() {
           }
         }
 
-        await this.remote.overwriteFileAsync(doc2, doc1)
+        await this.remote.overwriteFileAsync(doc2)
 
         const update2 = await cozy.files.statById(doc2.remote._id)
         should(
@@ -617,7 +615,7 @@ describe('remote.Remote', function() {
           }
         }
 
-        await this.remote.overwriteFileAsync(doc3, doc2)
+        await this.remote.overwriteFileAsync(doc3)
 
         const update3 = await cozy.files.statById(doc3.remote._id)
         should(
@@ -790,7 +788,7 @@ describe('remote.Remote', function() {
       const doc = builders
         .metadir(was)
         .updatedAt('2015-02-03T02:02:02.000Z')
-        .noRemote()
+        .sides({ local: 1 })
         .build()
 
       await this.remote.updateFolderAsync(doc)

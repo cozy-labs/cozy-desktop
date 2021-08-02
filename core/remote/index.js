@@ -176,13 +176,10 @@ class Remote /*:: implements Reader, Writer */ {
     stopMeasure()
   }
 
-  async overwriteFileAsync(
-    doc /*: SavedMetadata */,
-    old /*: ?SavedMetadata */
-  ) /*: Promise<void> */ {
-    if (old && isNote(old)) {
+  async overwriteFileAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
+    if (isNote(doc.remote)) {
       log.warn(
-        { path: doc.path, doc, old },
+        { path: doc.path, doc },
         'Local note updates should not be propagated'
       )
       return
@@ -216,7 +213,7 @@ class Remote /*:: implements Reader, Writer */ {
         contentLength: doc.size,
         contentType: doc.mime,
         updatedAt: mostRecentUpdatedAt(doc),
-        ifMatch: old && old.remote ? old.remote._rev : ''
+        ifMatch: doc.remote._rev
       }
     )
     const updated = await this.remoteCozy.updateFileById(

@@ -26,7 +26,7 @@ import type { Local } from '../local'
 import type { Pouch } from '../pouch'
 import type { Remote } from '../remote'
 import type { RemoteError } from '../remote/errors'
-import type { SavedMetadata } from '../metadata'
+import type { SavedMetadata, MetadataLocalInfo, MetadataRemoteInfo } from '../metadata'
 import type { SideName } from '../side'
 import type { Writer } from '../writer'
 import type { SyncError } from './errors'
@@ -62,6 +62,13 @@ const shouldAttemptRetry = (change /*: MetadataChange */) => {
     !process.env.SYNC_SHOULD_NOT_RETRY &&
     (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS)
   )
+}
+
+function oldFromDoc(
+  doc /*: SavedMetadata */,
+  sideName /*: SideName */
+) /*: ?MetadataLocalInfo|?MetadataRemoteInfo */ {
+  return sideName === 'remote' ? doc.remote : doc.local
 }
 
 // Sync listens to PouchDB about the metadata changes, and calls local and
@@ -601,7 +608,7 @@ class Sync {
             !metadata.sameBinary(from.local, from.remote)))
       ) {
         try {
-          await side.overwriteFileAsync(doc, doc) // move & update
+          await side.overwriteFileAsync(doc) // move & update
         } catch (err) {
           // the move succeeded, delete moveFrom and overwriteto avoid
           // re-applying these actions.
@@ -623,36 +630,35 @@ class Sync {
       await this.doAdd(side, doc)
     } else {
       log.debug({ path: doc.path }, `Applying else for ${doc.docType} change`)
-      let old
-      try {
-        // FIXME: This is extremely fragile as we don't enforce updating the
-        // sides and target when saving a new record version.
-        // This means the previous version fetched here could be different from
-        // the one we're expecting.
-        old = (await this.pouch.getPreviousRev(
-          doc._id,
-          doc.sides.target - currentRev
-        ) /*: ?SavedMetadata */)
-      } catch (err) {
-        await this.doOverwrite(side, doc)
-      }
-
+      const old = oldFromDoc(doc, side.name)
       if (old) {
-        if (doc.docType === 'folder') {
+        if (metadata.isFolder(old) && metadata.isFolder(doc)) {
           if (metadata.sameFolder(old, doc)) {
             log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
           } else {
             await side.updateFolderAsync(doc)
           }
-        } else if (metadata.sameFile(old, doc)) {
-          log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
-        } else if (metadata.sameBinary(old, doc)) {
-          await side.updateFileMetadataAsync(doc)
-        } else {
-          await side.overwriteFileAsync(doc, old)
-          this.events.emit('transfer-started', _.clone(doc))
+        } else if (metadata.isFile(old) && metadata.isFile(doc)) {
+          if (metadata.sameFile(old, doc)) {
+            log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
+          } else if (metadata.sameBinary(old, doc)) {
+            await side.updateFileMetadataAsync(doc)
+          } else {
+            await side.overwriteFileAsync(doc)
+            this.events.emit('transfer-started', _.clone(doc))
+          }
         }
-      } // TODO else what do we do ?
+      } else {
+        // If we don't have an opposite side (i.e. old), then it's a creation
+        // and it should have been dealt with by another conditionnal block.
+        // This means we should never run this code block but we'll add it just
+        // in case.
+        log.debug(
+          { path: doc.path, sentry: true },
+          `Applying unexpected ${doc.docType} addition`
+        )
+        await this.doAdd(side, doc)
+      }
     }
   }
 
@@ -662,19 +668,6 @@ class Sync {
   ) /*: Promise<void> */ {
     if (metadata.isFile(doc)) {
       await side.addFileAsync(doc)
-      this.events.emit('transfer-started', _.clone(doc))
-    } else {
-      await side.addFolderAsync(doc)
-    }
-  }
-
-  async doOverwrite(
-    side /*: Writer */,
-    doc /*: SavedMetadata */
-  ) /*: Promise<void> */ {
-    if (doc.docType === 'file') {
-      // TODO: risky overwrite without If-Match
-      await side.overwriteFileAsync(doc, null)
       this.events.emit('transfer-started', _.clone(doc))
     } else {
       await side.addFolderAsync(doc)
