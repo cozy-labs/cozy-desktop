@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.28.1-beta.4 - 2021-08-03
+
+Improvements for all users:
+
+- We've realized that the errors thrown when trying to trash a missing local
+  document would not always be caught because of an unexpected message
+  localization.
+  We've completely changed the way we catch these errors to not depend on their
+  message altogether.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.28.1-beta.3 - 2021-07-28
 
 Improvements for all users:
