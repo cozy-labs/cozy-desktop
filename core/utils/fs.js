@@ -5,6 +5,7 @@
 const Promise = require('bluebird')
 const childProcess = require('child_process')
 const { shell } = require('electron')
+const fse = require('fs-extra')
 
 const logger = require('./logger')
 
@@ -18,10 +19,10 @@ const log = logger({
  *
  * Errors are logged, not thrown.
  */
-async function hideOnWindows(path /*: string */) /*: Promise<void> */ {
+async function hideOnWindows(fullpath /*: string */) /*: Promise<void> */ {
   if (process.platform !== 'win32') return
   try {
-    await childProcess.execAsync(`attrib +h "${path}"`)
+    await childProcess.execAsync(`attrib +h "${fullpath}"`)
   } catch (err) {
     log.warn(err)
   }
@@ -41,19 +42,15 @@ async function sendToTrash(fullpath /*: string */) {
   try {
     await shell.trashItem(fullpath)
   } catch (err) {
-    if (
-      err.message === 'Failed to move item to trash' || // Error message on Linux
-      err.message === 'Failed to parse path' || // Error message on Windows
-      /doesn’t exist/.test(err.message) // Error message on macOS
-    ) {
+    if (await fse.exists(fullpath)) {
+      throw err
+    } else {
       const error = new Error()
       error.code = 'ENOENT'
       error.path = fullpath
       error.message = `${error.code}: No such file or directory, sendToTrash '${error.path}'`
       throw error
     }
-
-    throw err
   }
 }
 
