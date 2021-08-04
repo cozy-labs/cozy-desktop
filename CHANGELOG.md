@@ -1,5 +1,60 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.28.1 - 2021-08-04
+
+Improvements for all users:
+
+- The client will now detect when the connected Cozy has been deleted and will
+  show an error message accordingly.
+  The synchronization will be stopped until you connect your client to another
+  Cozy.
+- We've worked on the process which decides if a synchronization error needs to
+  be displayed or not to make sure you get alerted with the suspended
+  synchronization status only if accompanied with an explicit error message.
+- In some rare situations where a document that was previously synchronized is
+  now only present on one side (i.e. we're in the middle of re-synchronizing it)
+  a conflict could be generated if the document was modified on that remaining
+  side.
+  We've introduced some mitigations to avoid generating those conflicts.
+- Due to a "bug" in Chromium (i.e. which we use through Electron to provide our
+  network stack), some error responses sent by the remote Cozy to our file
+  upload requests are transformed into a cryptic error which we cannot deal with
+  directly. In such cases, we end up interpreting them as unreachable Cozy
+  errors which is misleading to you.
+  We caught and fixed two of those cases:
+  * when sending files larger than the maximum allowed by the remote Cozy (i.e.
+    5 GiB for Cozies hosted by us)
+  * when the amount of data sent does not match the expected file size (i.e.
+    because the actual local file has grown since last we detected a change)
+- We'll now consider the propagation of a move to the trash either on the local
+  filesystem or the remote Cozy as successful when the given document does not
+  exist anymore.
+  This will prevent delays during the synchronization process since we won't
+  have to deal with retries.
+
+Improvements for Windows users:
+
+- The last modification and last access dates on Windows were not precise enough
+  for Cozy Desktop to detect sub-second local modifications. This would
+  sometimes lead to `Invalid metadata` errors when sending modifications to the
+  remote Cozy.
+  We've increased this precision to include milliseconds so we should not lose
+  any local modification anymore.
+
+Improvements for macOS users:
+
+- Moving a local document to a folder that was just renamed or moved (e.g. a
+  folder that was just created with a custom name) will be properly handled and
+  not generate incoherent movements.
+- Some steps of the initial scan could be run twice if some local modifications
+  were detected while the initial scan was still running.
+  We've made sure we don't lose time of consume unnecessary computing resources
+  by making sure those steps are only run for the real initial scan.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.28.1-beta.4 - 2021-08-03
 
 Improvements for all users:
