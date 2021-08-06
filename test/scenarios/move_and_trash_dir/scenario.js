@@ -1,7 +1,5 @@
 /* @flow */
 
-const { runWithStoppedClient } = require('../../support/helpers/scenarios')
-
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
@@ -20,15 +18,6 @@ module.exports = ({
   ],
   expected: {
     tree: ['dst/', 'src/'],
-    remoteTrash:
-      process.platform !== 'darwin' && runWithStoppedClient()
-        ? // XXX: subdir is trashed first so it's not empty at that point and thus
-          // is not erased except on macOS where the local sorting algorithm puts
-          // the file trashing first.
-          ['subdir/', 'subdir/file']
-        : // XXX: file is trashed before subdir which is then empty and thus
-          // completely erased.
-          ['file'],
-    localTrash: ['subdir/', 'subdir/file']
+    trash: ['subdir/', 'subdir/file']
   }
 } /*: Scenario */)

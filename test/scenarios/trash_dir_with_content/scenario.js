@@ -11,15 +11,9 @@ module.exports = ({
     { ino: 5, path: 'parent/dir/subdir/file' },
     { ino: 6, path: 'parent/other_dir/' }
   ],
-  disabled: {
-    stopped:
-      'Remote trash content is ok on initial scan & ko on live change. ' +
-      'Disable the initial scan scenario until we fix the live case.'
-  },
   actions: [{ type: 'trash', path: 'parent/dir' }],
   expected: {
     tree: ['parent/', 'parent/other_dir/'],
-    localTrash: ['dir/', 'dir/empty-subdir/', 'dir/subdir/', 'dir/subdir/file'],
-    remoteTrash: ['file']
+    trash: ['dir/', 'dir/empty-subdir/', 'dir/subdir/', 'dir/subdir/file']
   }
 } /*: Scenario */)

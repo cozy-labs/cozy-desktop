@@ -6,9 +6,7 @@
 const { FILE_TYPE, MAX_FILE_SIZE } = require('./constants')
 
 /*::
-import type { MetadataChange } from '../sync'
 import type { SavedMetadata } from '../metadata'
-import type { RemoteChange } from './change'
 import type { Warning } from './cozy'
 
 import type { FetchError } from 'cozy-stack-client'

@@ -11,7 +11,7 @@ const { FetchError } = require('cozy-stack-client')
 const { Ignore } = require('../../../core/ignore')
 const metadata = require('../../../core/metadata')
 const { otherSide } = require('../../../core/side')
-const { Sync } = require('../../../core/sync')
+const { Sync, compareChanges } = require('../../../core/sync')
 const remoteErrors = require('../../../core/remote/errors')
 const syncErrors = require('../../../core/sync/errors')
 
@@ -20,6 +20,10 @@ const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 const Builders = require('../../support/builders')
 const dbBuilders = require('../../support/builders/db')
+
+/*::
+import type { SavedMetadata } from '../../../core/metadata'
+*/
 
 const localSyncError = (msg, doc) =>
   new syncErrors.SyncError({
@@ -376,6 +380,7 @@ describe('Sync', function() {
     describe('local file update', () => {
       const previousSeq = 759
       const seq = previousSeq + 1
+      const sideName = 'local'
 
       let file, merged, change
 
@@ -387,32 +392,43 @@ describe('Sync', function() {
           .create()
         merged = await builders
           .metafile(file)
-          .changedSide('local')
+          .changedSide(sideName)
           .data('updated content')
           .create()
 
         await this.pouch.setLocalSeq(previousSeq)
 
         change = { seq, doc: _.cloneDeep(merged) }
+        sinon.stub(this.sync, 'getNextChanges').returns([change])
+      })
+      afterEach(function() {
+        this.sync.getNextChanges.restore()
       })
 
-      const applyChange = async function() {
-        await this.sync.apply(change)
-      }
-
-      describe('when .remote#overwriteFileAsync() throws status 412', () => {
+      describe('when apply throws a NEEDS_REMOTE_MERGE_CODE error', () => {
         beforeEach(function() {
-          sinon.spy(this.sync, 'blockSyncFor')
+          sinon.stub(this.sync, 'blockSyncFor').callsFake(() => {
+            this.sync.lifecycle.end('stop')
+          })
         })
-        beforeEach('simulate error 412', function() {
-          this.remote.overwriteFileAsync.rejects(
-            new FetchError(
-              { status: 412 },
-              { errors: [{ status: 412, source: { parameter: 'If-Match' } }] }
-            )
+        beforeEach('simulate error', async function() {
+          this.sync.lifecycle.end('start')
+          sinon.stub(this.sync, 'apply').rejects(
+            new syncErrors.SyncError({
+              code: remoteErrors.NEEDS_REMOTE_MERGE_CODE,
+              sideName,
+              err: new FetchError(
+                { status: 412 },
+                {
+                  errors: [{ status: 412, source: { parameter: 'If-Match' } }]
+                }
+              ),
+              doc: change.doc
+            })
           )
+          await this.sync.syncBatch()
+          this.sync.apply.restore()
         })
-        beforeEach(applyChange)
         afterEach(function() {
           this.sync.blockSyncFor.restore()
         })
@@ -710,14 +726,14 @@ describe('Sync', function() {
         .path('selectSide/1')
         .sides({ remote: 1 })
         .build()
-      should(this.sync.selectSide(doc1)).eql(this.sync.local)
+      should(this.sync.selectSide({ doc: doc1 })).eql(this.sync.local)
 
       const doc2 = builders
         .metafile()
         .path('selectSide/2')
         .sides({ local: 2, remote: 3 })
         .build()
-      should(this.sync.selectSide(doc2)).eql(this.sync.local)
+      should(this.sync.selectSide({ doc: doc2 })).eql(this.sync.local)
     })
 
     it('selects the remote side if local is up-to-date', function() {
@@ -726,14 +742,14 @@ describe('Sync', function() {
         .path('selectSide/3')
         .sides({ local: 1 })
         .build()
-      should(this.sync.selectSide(doc1)).eql(this.sync.remote)
+      should(this.sync.selectSide({ doc: doc1 })).eql(this.sync.remote)
 
       const doc2 = builders
         .metafile()
         .path('selectSide/4')
         .sides({ local: 4, remote: 3 })
         .build()
-      should(this.sync.selectSide(doc2)).eql(this.sync.remote)
+      should(this.sync.selectSide({ doc: doc2 })).eql(this.sync.remote)
     })
 
     it('returns an empty array if both sides are up-to-date', function() {
@@ -742,7 +758,7 @@ describe('Sync', function() {
         .path('selectSide/5')
         .sides({ local: 5, remote: 5 })
         .build()
-      should(this.sync.selectSide(doc)).be.null()
+      should(this.sync.selectSide({ doc })).be.null()
     })
 
     it('returns an empty array if a local only doc is erased', function() {
@@ -752,7 +768,7 @@ describe('Sync', function() {
         .erased()
         .sides({ local: 5 })
         .build()
-      should(this.sync.selectSide(doc)).be.null()
+      should(this.sync.selectSide({ doc })).be.null()
     })
 
     it('returns an empty array if a remote only doc is erased', function() {
@@ -762,7 +778,7 @@ describe('Sync', function() {
         .erased()
         .sides({ remote: 5 })
         .build()
-      should(this.sync.selectSide(doc)).be.null()
+      should(this.sync.selectSide({ doc })).be.null()
     })
   })
 
@@ -966,6 +982,377 @@ describe('Sync', function() {
           should(synced).not.have.properties(['moveFrom', 'overwrite'])
         })
       })
+    })
+  })
+
+  describe('compareChanges', () => {
+    const makeChange = (
+      doc /*: SavedMetadata */,
+      opType,
+      { local, remote }
+    ) => {
+      const outdatedSide = metadata.outOfDateSide(doc)
+
+      return {
+        id: doc._id,
+        changes: [{ rev: doc._rev }],
+        // $FlowFixMe we don't rely on the seq so we set it to undefined
+        seq: (undefined /*: number */),
+        doc,
+        operation:
+          opType === 'SKIP' || opType === 'NULL'
+            ? { type: opType }
+            : outdatedSide == null
+            ? { type: 'SKIP' }
+            : {
+                type: opType,
+                side: outdatedSide === 'local' ? local : remote
+              }
+      }
+    }
+
+    context('when one of the changes has no side', () => {
+      it('returns 0', async function() {
+        const docA = await builders
+          .metafile()
+          .path('dir/file')
+          .upToDate()
+          .create()
+        const docB = await builders
+          .metadir()
+          .path('dir')
+          .upToDate()
+          .create()
+        const docC = await builders
+          .metadir()
+          .path('dir/subdir')
+          .changedSide('local')
+          .updatedAt(new Date())
+          .create()
+        const docD = await builders
+          .metafile()
+          .path('dir/subdir/file')
+          .changedSide('local')
+          .updatedAt(new Date())
+          .create()
+
+        const skipA = makeChange(docA, 'SKIP', this)
+        const skipB = makeChange(docB, 'SKIP', this)
+        const nullC = makeChange(docC, 'NULL', this)
+        const nullD = makeChange(docD, 'NULL', this)
+
+        should(compareChanges(skipA, skipB)).eql(0)
+        should(compareChanges(skipB, skipA)).eql(0)
+        should(compareChanges(nullC, nullD)).eql(0)
+        should(compareChanges(nullD, nullC)).eql(0)
+        should(compareChanges(skipA, nullC)).eql(0)
+        should(compareChanges(nullD, skipB)).eql(0)
+      })
+    })
+
+    context('when passing the same change twice', () => {
+      it('returns 0', async function() {
+        const add = await builders
+          .metafile()
+          .path('add')
+          .sides({ local: 1 })
+          .create()
+        const del = await builders
+          .metafile()
+          .path('del')
+          .trashed()
+          .changedSide('local')
+          .create()
+        const src = await builders
+          .metafile()
+          .path('src')
+          .upToDate()
+          .create()
+        const move = await builders
+          .metafile()
+          .moveFrom(src)
+          .path('move')
+          .changedSide('local')
+          .create()
+
+        const addChange = makeChange(add, 'ADD', this)
+        const delChange = makeChange(del, 'DEL', this)
+        const moveChange = makeChange(move, 'MOVE', this)
+
+        should(compareChanges(addChange, addChange)).eql(0)
+        should(compareChanges(delChange, delChange)).eql(0)
+        should(compareChanges(moveChange, moveChange)).eql(0)
+      })
+    })
+
+    context(
+      'with a move outside a directory and the deletion of said directory',
+      () => {
+        let move, del
+        beforeEach(async function() {
+          const dir = await builders
+            .metadir()
+            .path('dir')
+            .trashed()
+            .changedSide('local')
+            .create()
+          const srcFile = await builders
+            .metafile()
+            .path('dir/file')
+            .upToDate()
+            .create()
+          const dstFile = await builders
+            .metafile()
+            .moveFrom(srcFile)
+            .path('file')
+            .changedSide('local')
+            .create()
+
+          del = makeChange(dir, 'DEL', this)
+          move = makeChange(dstFile, 'MOVE', this)
+        })
+
+        it('returns -1 if move is passed as first argument', () => {
+          should(compareChanges(move, del)).eql(-1)
+        })
+
+        it('returns 1 if move is passed as second argument', () => {
+          should(compareChanges(del, move)).eql(1)
+        })
+      }
+    )
+
+    context(
+      'with a move within a directory and the deletion of said directory',
+      () => {
+        let move, del
+        beforeEach(async function() {
+          const dir = await builders
+            .metadir()
+            .path('dir')
+            .trashed()
+            .changedSide('local')
+            .create()
+          const srcFile = await builders
+            .metafile()
+            .path('dir/file')
+            .upToDate()
+            .create()
+          const dstFile = await builders
+            .metafile()
+            .moveFrom(srcFile)
+            .path('dir/file2')
+            .changedSide('local')
+            .create()
+
+          del = makeChange(dir, 'DEL', this)
+          move = makeChange(dstFile, 'MOVE', this)
+        })
+
+        it('returns 0', () => {
+          should(compareChanges(move, del)).eql(0)
+          should(compareChanges(del, move)).eql(0)
+        })
+      }
+    )
+
+    context(
+      'with a move into a directory and the deletion of said directory',
+      () => {
+        let move, del
+        beforeEach(async function() {
+          const dir = await builders
+            .metadir()
+            .path('dir')
+            .trashed()
+            .changedSide('local')
+            .create()
+          const srcFile = await builders
+            .metafile()
+            .path('file')
+            .upToDate()
+            .create()
+          const dstFile = await builders
+            .metafile()
+            .moveFrom(srcFile)
+            .path('dir/file')
+            .changedSide('local')
+            .create()
+
+          move = makeChange(dstFile, 'MOVE', this)
+          del = makeChange(dir, 'DEL', this)
+        })
+
+        it('returns 0', () => {
+          should(compareChanges(move, del)).eql(0)
+          should(compareChanges(del, move)).eql(0)
+        })
+      }
+    )
+
+    context('with a directory move and an addition into said directory', () => {
+      let move, add
+      beforeEach(async function() {
+        const srcDir = await builders
+          .metadir()
+          .path('src')
+          .upToDate()
+          .create()
+        const dstDir = await builders
+          .metadir()
+          .moveFrom(srcDir)
+          .path('dst')
+          .changedSide('local')
+          .create()
+        const file = await builders
+          .metafile()
+          .path('dst/file')
+          .sides({ local: 1 })
+          .create()
+
+        move = makeChange(dstDir, 'MOVE', this)
+        add = makeChange(file, 'ADD', this)
+      })
+
+      it('returns -1 if move is passed as first argument', () => {
+        should(compareChanges(move, add)).eql(-1)
+      })
+
+      it('returns 1 if move is passed as second argument', () => {
+        should(compareChanges(add, move)).eql(1)
+      })
+    })
+
+    context(
+      'with a directory addition and an addition into said directory',
+      () => {
+        let addDir, addFile
+        beforeEach(async function() {
+          const dir = await builders
+            .metadir()
+            .path('dir')
+            .sides({ local: 1 })
+            .create()
+          const file = await builders
+            .metafile()
+            .path('dir/file')
+            .sides({ local: 1 })
+            .create()
+
+          addDir = makeChange(dir, 'ADD', this)
+          addFile = makeChange(file, 'ADD', this)
+        })
+
+        it('returns -1 if addDir is passed as first argument', () => {
+          should(compareChanges(addDir, addFile)).eql(-1)
+        })
+
+        it('returns 1 if addDir is passed as second argument', () => {
+          should(compareChanges(addFile, addDir)).eql(1)
+        })
+      }
+    )
+
+    context(
+      'with a directory deletion and a deletion within said directory',
+      () => {
+        let delDir, delFile
+        beforeEach(async function() {
+          const dir = await builders
+            .metadir()
+            .path('dir')
+            .trashed()
+            .changedSide('local')
+            .create()
+          const file = await builders
+            .metafile()
+            .path('dir/file')
+            .trashed()
+            .changedSide('local')
+            .create()
+
+          delDir = makeChange(dir, 'DEL', this)
+          delFile = makeChange(file, 'DEL', this)
+        })
+
+        it('returns -1 if delDir is passed as first argument', () => {
+          should(compareChanges(delDir, delFile)).eql(-1)
+        })
+
+        it('returns 1 if delDir is passed as second argument', () => {
+          should(compareChanges(delFile, delDir)).eql(1)
+        })
+      }
+    )
+
+    context('with a directory move and the move of one of its children', () => {
+      let moveDir, moveFile
+      beforeEach(async function() {
+        const srcDir = await builders
+          .metadir()
+          .path('src')
+          .upToDate()
+          .create()
+        const dstDir = await builders
+          .metadir()
+          .moveFrom(srcDir)
+          .path('dst')
+          .changedSide('local')
+          .create()
+        const srcFile = await builders
+          .metafile()
+          .path('src/file')
+          .upToDate()
+          .create()
+        const dstFile = await builders
+          .metafile()
+          .moveFrom(srcFile)
+          .path('dst/file')
+          .changedSide('local')
+          .create()
+
+        moveDir = makeChange(dstDir, 'MOVE', this)
+        moveFile = makeChange(dstFile, 'MOVE', this)
+      })
+
+      it('returns -1 if moveDir is passed as first argument', () => {
+        should(compareChanges(moveDir, moveFile)).eql(-1)
+      })
+
+      it('returns 1 if moveDir is passed as second argument', () => {
+        should(compareChanges(moveFile, moveDir)).eql(1)
+      })
+    })
+
+    context('when outdated sides are not the same', () => {
+      // XXX: should be the same for every test but I'm trying to limit
+      // duplication.
+      context(
+        'with a directory addition and an addition into said directory',
+        () => {
+          let addDir, addFile
+          beforeEach(async function() {
+            const dir = await builders
+              .metadir()
+              .path('dir')
+              .sides({ remote: 1 })
+              .create()
+            const file = await builders
+              .metafile()
+              .path('dir/file')
+              .sides({ local: 1 })
+              .create()
+
+            addDir = makeChange(dir, 'ADD', this)
+            addFile = makeChange(file, 'ADD', this)
+          })
+
+          it('returns 0', () => {
+            should(compareChanges(addDir, addFile)).eql(0)
+            should(compareChanges(addFile, addDir)).eql(0)
+          })
+        }
+      )
     })
   })
 })

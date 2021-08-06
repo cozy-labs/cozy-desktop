@@ -88,7 +88,8 @@ function errSerializer(err) {
       'originalErr',
       'errors',
       'doc',
-      'incompatibilities'
+      'incompatibilities',
+      'change'
     ])
   )
 

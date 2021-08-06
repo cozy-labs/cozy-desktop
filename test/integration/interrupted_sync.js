@@ -2,6 +2,7 @@
 /* eslint-env mocha */
 
 const should = require('should')
+const sinon = require('sinon')
 
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -89,6 +90,56 @@ describe('Sync gets interrupted, initialScan occurs', () => {
       const resp = await helpers.remote.cozy.files.downloadById(doc.remote._id)
       should(await resp.text()).eql('remote content')
       should(await helpers.local.readFile('file')).eql('remote content')
+    })
+  })
+
+  describe('local file move outside dir then update then dir trashing', () => {
+    beforeEach('run actions', async function() {
+      const dirPath = 'dir/'
+      const fileSrcPath = 'dir/file'
+      const fileDstPath = 'file'
+
+      // Setup
+      await helpers.local.syncDir.makeTree([dirPath, fileSrcPath])
+      await helpers.flushLocalAndSyncAll()
+      await helpers.pullAndSyncAll()
+
+      // Run local actions
+      await helpers.local.syncDir.move(fileSrcPath, fileDstPath)
+      await helpers.local.scan()
+      await helpers.local.syncDir.remove(dirPath)
+      await helpers.local.scan()
+      await helpers.local.syncDir.outputFile(fileDstPath, 'updated content')
+      await helpers.local.scan()
+
+      // Sync first change then throw to force stop the sync and simulate a
+      // client stop.
+      const originalApply = helpers._sync.apply
+      sinon.stub(helpers._sync, 'apply')
+      try {
+        helpers._sync.apply.onFirstCall().callsFake(async change => {
+          await originalApply(change)
+          // Prevent sync of next changes
+          await helpers._sync.stop()
+          throw new Error('STUB')
+        })
+        helpers._sync.apply.callThrough()
+        await helpers.syncAll()
+
+        // Simulate client restart
+        await helpers.local.scan()
+        await helpers.remote.pullChanges()
+        await helpers.syncAll()
+      } finally {
+        helpers._sync.apply.restore()
+      }
+    })
+
+    it('moves the file and trashes the dir', async function() {
+      await should(helpers.trees('local', 'remote')).be.fulfilledWith({
+        local: ['file'],
+        remote: ['file']
+      })
     })
   })
 })
