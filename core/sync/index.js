@@ -556,8 +556,6 @@ class Sync {
     doc /*: SavedMetadata */,
     side /*: Writer */
   ) /*: Promise<*> */ {
-    const currentRev = metadata.side(doc, side.name)
-
     if (doc.incompatibilities && side.name === 'local') {
       const was = doc.moveFrom
       if (was != null && was.incompatibilities == null) {
@@ -581,7 +579,7 @@ class Sync {
       throw new IncompatibleDocError({ doc })
     } else if (doc.docType !== 'file' && doc.docType !== 'folder') {
       throw new Error(`Unknown docType: ${doc.docType}`)
-    } else if (isMarkedForDeletion(doc) && currentRev === 0) {
+    } else if (!metadata.wasSynced(doc) && isMarkedForDeletion(doc)) {
       // do nothing
     } else if (doc.moveFrom != null) {
       const from = (doc.moveFrom /*: SavedMetadata */)
@@ -625,7 +623,7 @@ class Sync {
       } else {
         await side.deleteFolderAsync(doc)
       }
-    } else if (currentRev === 0) {
+    } else if (!metadata.wasSynced(doc)) {
       log.debug({ path: doc.path }, `Applying ${doc.docType} addition`)
       await this.doAdd(side, doc)
     } else {
