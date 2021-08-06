@@ -954,4 +954,6 @@ class Sync {
   }
 }
 
-module.exports = Sync
+module.exports = {
+  Sync
+}

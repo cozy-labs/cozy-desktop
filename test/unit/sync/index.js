@@ -11,7 +11,7 @@ const { FetchError } = require('cozy-stack-client')
 const { Ignore } = require('../../../core/ignore')
 const metadata = require('../../../core/metadata')
 const { otherSide } = require('../../../core/side')
-const Sync = require('../../../core/sync')
+const { Sync } = require('../../../core/sync')
 const remoteErrors = require('../../../core/remote/errors')
 const syncErrors = require('../../../core/sync/errors')
 

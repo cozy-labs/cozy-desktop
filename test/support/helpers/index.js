@@ -9,7 +9,7 @@ const sinon = require('sinon')
 const { Ignore } = require('../../../core/ignore')
 const { Merge } = require('../../../core/merge')
 const Prep = require('../../../core/prep')
-const Sync = require('../../../core/sync')
+const { Sync } = require('../../../core/sync')
 const SyncState = require('../../../core/syncstate')
 
 const conflictHelpers = require('./conflict')
