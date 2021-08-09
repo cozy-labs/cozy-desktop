@@ -2,6 +2,7 @@
 
 const fse = require('fs-extra')
 const path = require('path')
+const tar = require('tar')
 const { default: CozyClient, models } = require('cozy-client')
 
 const { NOTE_MIME_TYPE } = require('../remote/constants')
@@ -106,6 +107,22 @@ const getCozyClient = async (
   return await CozyClient.fromOldOAuthClient(remote.remoteCozy.client)
 }
 
+const parseArchive = async archivePath => {
+  return new Promise((resolve, reject) => {
+    const markdown = []
+    const parser = new tar.Parse({
+      onentry: entry => {
+        entry.on('data', data => markdown.push(data))
+        entry.on('end', () => resolve(Buffer.concat(markdown).toString()))
+      },
+      onwarn: err => reject(err),
+      filter: path => path === 'index.md'
+    })
+
+    fse.createReadStream(archivePath).pipe(parser)
+  })
+}
+
 const findNote = async (
   filePath /*: string */,
   {
@@ -136,7 +153,20 @@ const findNote = async (
     return { noteUrl }
   } catch (err) {
     const filename = path.basename(filePath)
-    const content = await fse.readFile(filePath, 'utf8')
+    let content
+    try {
+      content = await parseArchive(filePath)
+    } catch (parseErr) {
+      log.warn(
+        { err: parseErr, path: filePath },
+        'could not parse given Cozy Note archive'
+      )
+      if (parseErr === 'TAR_ENTRY_INVALID' || parseErr === 'TAR_BAD_ARCHIVE') {
+        content = await fse.readFile(filePath, 'utf8')
+      } else {
+        content = ''
+      }
+    }
 
     if (err.name === 'FetchError') {
       if (err.status === 403 || err.status === 404) {
