@@ -120,6 +120,7 @@
     "regedit": "^3.0.3",
     "secret-event-listener": "1.0.0",
     "semver": "^7.3.2",
+    "tar": "^6.1.6",
     "uuid": "^3.3.2",
     "yargs": "^11.0.0"
   },
