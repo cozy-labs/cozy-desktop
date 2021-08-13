@@ -18,7 +18,7 @@ for testing cozy-desktop. See options in [`test/mocha.opt`][2].
 
 Unit, integration & scenario tests require that you have a Cozy stack up.
 It's also expected that you have an instance registered for
-`cozy.tools:8080` with the
+`cozy.localhost:8080` with the
 [test passphrase](../../test/support/helpers/passphrase.js).
 You can start a cozy-stack via the provided docker-compose file:
 

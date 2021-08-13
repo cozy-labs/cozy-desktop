@@ -5,14 +5,14 @@
     "cozyMetadata": {
       "createdAt": "2020-10-03T12:58:17.623963179Z",
       "createdByApp": "cozy-desktop",
-      "createdOn": "http://cozy.tools:8080/",
+      "createdOn": "http://cozy.localhost:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
       "updatedAt": "2020-10-03T12:58:24.521725433Z",
       "updatedByApps": [
         {
           "date": "2020-10-03T12:58:24.521725433Z",
-          "instance": "http://cozy.tools:8080/",
+          "instance": "http://cozy.localhost:8080/",
           "slug": "cozy-desktop"
         }
       ]
@@ -32,14 +32,14 @@
     "cozyMetadata": {
       "createdAt": "2020-10-03T12:58:17.665852582Z",
       "createdByApp": "cozy-desktop",
-      "createdOn": "http://cozy.tools:8080/",
+      "createdOn": "http://cozy.localhost:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
       "updatedAt": "2020-10-03T12:58:26.176477248Z",
       "updatedByApps": [
         {
           "date": "2020-10-03T12:58:26.176477248Z",
-          "instance": "http://cozy.tools:8080/",
+          "instance": "http://cozy.localhost:8080/",
           "slug": "cozy-desktop"
         }
       ],
@@ -52,7 +52,7 @@
         },
         "slug": "cozy-desktop"
       },
-      "uploadedOn": "http://cozy.tools:8080/"
+      "uploadedOn": "http://cozy.localhost:8080/"
     },
     "created_at": "2020-09-03T14:58:17Z",
     "dir_id": "io.cozy.files.trash-dir",
@@ -75,14 +75,14 @@
     "cozyMetadata": {
       "createdAt": "2020-10-03T12:58:26.091216958Z",
       "createdByApp": "cozy-desktop",
-      "createdOn": "http://cozy.tools:8080/",
+      "createdOn": "http://cozy.localhost:8080/",
       "doctypeVersion": "1",
       "metadataVersion": 1,
       "updatedAt": "2020-10-03T12:58:26.252185855Z",
       "updatedByApps": [
         {
           "date": "2020-10-03T12:58:26.252185855Z",
-          "instance": "http://cozy.tools:8080/",
+          "instance": "http://cozy.localhost:8080/",
           "slug": "cozy-desktop"
         }
       ],
@@ -95,7 +95,7 @@
         },
         "slug": "cozy-desktop"
       },
-      "uploadedOn": "http://cozy.tools:8080/"
+      "uploadedOn": "http://cozy.localhost:8080/"
     },
     "created_at": "2020-10-03T12:58:26.049Z",
     "dir_id": "b6f32dd442095bfe2c3639f240d7a0cf",

@@ -54,7 +54,7 @@ If you need to update translations, you'll need a Transifex API token at this st
 yarn start
 ```
 
-N.B.: the address of the development cozy-stack is http://cozy.tools:8080. Don't forget the protocol part when creating the connection in cozy-desktop for the first time or it won't find the server.
+N.B.: the address of the development cozy-stack is http://cozy.localhost:8080. Don't forget the protocol part when creating the connection in cozy-desktop for the first time or it won't find the server.
 
 ## Run tests
 

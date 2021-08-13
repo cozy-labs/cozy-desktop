@@ -32,10 +32,10 @@ describe('Sentry', function() {
   describe('toSentryContext', function() {
     it('properly parse all urls', function() {
       sentry
-        .toSentryContext('https://somedevcozy.cozy.tools:8080')
+        .toSentryContext('https://somedevcozy.cozy.localhost:8080')
         .should.deepEqual({
-          domain: 'cozy.tools',
-          instance: 'somedevcozy.cozy.tools',
+          domain: 'cozy.localhost',
+          instance: 'somedevcozy.cozy.localhost',
           environment: 'development'
         })
 

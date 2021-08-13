@@ -30,7 +30,7 @@ const {
 } = require('../../../core/remote/constants')
 
 // The URL of the Cozy instance used for tests
-const COZY_URL = process.env.COZY_URL || 'http://cozy.tools:8080'
+const COZY_URL = process.env.COZY_URL || 'http://cozy.localhost:8080'
 
 if (!process.env.COZY_STACK_TOKEN) {
   const domain = COZY_URL.replace('http://', '')

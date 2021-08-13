@@ -10,7 +10,7 @@ const proxy = require('../../gui/js/proxy')
 const cozyUrl =
   chooseCozyUrl(process.env.BUILD_JOB) ||
   process.env.COZY_URL ||
-  'http://cozy.tools:8080'
+  'http://cozy.localhost:8080'
 const passphrase = process.env.COZY_PASSPHRASE || 'cozy'
 const storage = new cozy.MemoryStorage()
 

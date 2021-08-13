@@ -19,7 +19,7 @@ class Stack {
 
   constructor(dir /*: string */) {
     this.dir = dir
-    this.instance = 'test.desktop.cozy.tools:8080'
+    this.instance = 'test.desktop.cozy.localhost:8080'
     this.child = null
     this.stopped = null
   }
