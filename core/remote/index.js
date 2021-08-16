@@ -447,6 +447,19 @@ class Remote /*:: implements Reader, Writer */ {
 
     return conflict
   }
+
+  isExcludedFromSync(doc /*: MetadataRemoteInfo */) /*: boolean */ {
+    const {
+      client: { clientID },
+      flags
+    } = this.config
+    return (
+      (flags.differentialSync || process.env.NODE_ENV === 'test') &&
+      doc.type === 'directory' &&
+      doc.not_synchronized_on != null &&
+      doc.not_synchronized_on.find(({ id }) => id === clientID) != null
+    )
+  }
 }
 
 /** Extract the remote parent path and leaf name from a local path */

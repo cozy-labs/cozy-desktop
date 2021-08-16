@@ -32,6 +32,10 @@ export type RemoteFileAttributes = {|
 export type RemoteDirAttributes = {|
   type: DIR,
   path: string,
+  not_synchronized_on?: Array<{
+    id: string,
+    type: string
+  }>
 |}
 
 export type RemoteBase = {|

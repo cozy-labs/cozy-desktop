@@ -18,7 +18,7 @@ const { LocalTestHelpers } = require('./local')
 const { RemoteTestHelpers } = require('./remote')
 
 /*::
-import type cozy from 'cozy-client-js'
+import type { Client as OldCozyClient } from 'cozy-client-js'
 import type { Config } from '../../../core/config'
 import type { Local } from '../../../core/local'
 import type { SavedMetadata } from '../../../core/metadata'
@@ -27,7 +27,8 @@ import type { Remote } from '../../../core/remote'
 
 export type TestHelpersOptions = {
   config: Config,
-  pouch: Pouch
+  pouch: Pouch,
+  cozy: ?OldCozyClient
 }
 */
 
@@ -44,7 +45,7 @@ class TestHelpers {
   _remote: Remote
   */
 
-  constructor({ config, pouch } /*: TestHelpersOptions */) {
+  constructor({ config, pouch, cozy } /*: TestHelpersOptions */) {
     const merge = new Merge(pouch)
     const ignore = new Ignore([]).addDefaultRules()
     const prep = new Prep(merge, ignore, config)
@@ -56,7 +57,10 @@ class TestHelpers {
       events,
       ignore
     })
-    const remoteHelpers = new RemoteTestHelpers({ config, prep, pouch, events })
+    const remoteHelpers = new RemoteTestHelpers(
+      { config, prep, pouch, events },
+      { cozy }
+    )
     const local = localHelpers.side
     const remote = remoteHelpers.side
     const sync = new Sync(pouch, local, remote, ignore, events)

@@ -59,7 +59,7 @@ const cozy = new OldCozyClient({
 
 // Build a new cozy-client instance from an old cozy-client-js instance
 const newClient = async (
-  oldClient /*: OldCozyClient */
+  oldClient /*: OldCozyClient */ = cozy
 ) /*: Promise<CozyClient>  */ => {
   if (oldClient._oauth) {
     return await CozyClient.fromOldOAuthClient(oldClient)
