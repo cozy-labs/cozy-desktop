@@ -14,6 +14,7 @@ const TestHelpers = require('../support/helpers')
 const { onPlatform } = require('../support/helpers/platform')
 
 const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../core/remote/constants')
+const { otherSide } = require('../../core/side')
 
 /*::
 import type { SavedMetadata } from '../../core/metadata'
@@ -29,6 +30,23 @@ const skipRemoteChanges = async ({ helpers, cozy }) => {
     limit: 10000
   })
   await helpers.pouch.setRemoteSeq(last_seq)
+}
+
+const moveOn = async (srcPath, dstPath, sideName, { helpers }) => {
+  if (sideName === 'local') {
+    await helpers.local.syncDir.move(srcPath, dstPath)
+    await helpers.local.scan()
+  } else {
+    const parent = await helpers.remote.side.findDirectoryByPath(
+      path.dirname(srcPath)
+    )
+    const remoteDoc = (await helpers.remote.side.remoteCozy.search({
+      dir_id: parent._id,
+      name: path.basename(srcPath)
+    }))[0]
+    await helpers.remote.move(remoteDoc, dstPath)
+    await helpers.remote.pullChanges()
+  }
 }
 
 describe('Move', () => {
@@ -546,6 +564,72 @@ describe('Move', () => {
       })
     })
   })
+
+  for (const side of ['remote']) {
+    describe.only(`file multiple times on the ${side} side`, () => {
+      beforeEach(async () => {
+        await helpers.local.syncDir.ensureDir('src')
+        await helpers.local.syncDir.outputFile(
+          'src/file',
+          'whatever file content'
+        )
+        await helpers.flushLocalAndSyncAll()
+        await helpers.pullAndSyncAll()
+      })
+
+      it('moves the file on the other side to the latest location', async () => {
+        await moveOn('src/file', 'src/file2', side, { helpers })
+        await moveOn('src/file2', 'src/file3', side, { helpers })
+        await moveOn('src/file3', 'src/file4', side, { helpers })
+
+        await helpers.syncAll()
+
+        should(await helpers.trees('metadata', otherSide(side))).deepEqual({
+          [otherSide(side)]: ['src/', 'src/file4'],
+          metadata: ['src/', 'src/file4']
+        })
+      })
+
+      context('with a parent move first', () => {
+        it('moves the file on the other side to the latest location', async () => {
+          // Parent move
+          await moveOn('src', 'dst', side, { helpers })
+
+          await moveOn('dst/file', 'dst/file2', side, { helpers })
+          await moveOn('dst/file2', 'dst/file3', side, { helpers })
+          await moveOn('dst/file3', 'dst/file4', side, { helpers })
+
+          await helpers.syncAll()
+
+          should(await helpers.trees('metadata', otherSide(side))).deepEqual({
+            [otherSide(side)]: ['dst/', 'dst/file4'],
+            metadata: ['dst/', 'dst/file4']
+          })
+        })
+      })
+
+      context('with a parent move last', () => {
+        it.only('moves the file on the other side to the latest location', async () => {
+          // Parent move
+          await moveOn('src', 'dst', side, { helpers })
+
+          await moveOn('dst/file', 'dst/file2', side, { helpers })
+          await moveOn('dst/file2', 'dst/file3', side, { helpers })
+          await moveOn('dst/file3', 'dst/file4', side, { helpers })
+
+          // Parent move
+          await moveOn('dst', 'final', side, { helpers })
+
+          await helpers.syncAll()
+
+          should(await helpers.trees('metadata', otherSide(side))).deepEqual({
+            [otherSide(side)]: ['final/', 'final/file4'],
+            metadata: ['final/', 'final/file4']
+          })
+        })
+      })
+    })
+  }
 
   describe('directory', () => {
     let dir, dst
