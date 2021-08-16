@@ -4,14 +4,14 @@ set -x
 
 # Retrieve test client ID
 client_id=$(cozy-stack instances client-oauth \
-  cozy.tools:8080 \
-  http://cozy.tools/ \
+  cozy.localhost:8080 \
+  http://cozy.localhost/ \
   test \
   github.com/cozy-labs/cozy-desktop)
 
 # Retrieve test token
 token=$(cozy-stack instances token-oauth \
-  cozy.tools:8080 \
+  cozy.localhost:8080 \
   "$client_id" \
   io.cozy.files io.cozy.settings)
 

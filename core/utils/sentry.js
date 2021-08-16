@@ -27,7 +27,7 @@ const { COZY_NO_SENTRY, DEBUG, TESTDEBUG } = process.env
 const SENTRY_REF = `ed6d0a175d504ead84851717b9bdb72e:324375dbe2ae4bbf8c212ae4eaf26289`
 const SENTRY_DSN = `https://${SENTRY_REF}@sentry.cozycloud.cc/91`
 const DOMAIN_TO_ENV = {
-  'cozy.tools': 'development',
+  'cozy.localhost': 'development',
   'cozy.works': 'development',
   'cozy.rocks': 'production',
   'mycozy.cloud': 'production'

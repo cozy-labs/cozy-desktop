@@ -53,10 +53,10 @@ suite =
                 \_ ->
                     correctAddress "http://camille-nimbus.com"
                         |> Expect.equal "http://camille-nimbus.com"
-            , test "cozy.tools" <|
+            , test "cozy.localhost" <|
                 \_ ->
-                    correctAddress "http://cozy.tools:8080"
-                        |> Expect.equal "http://cozy.tools:8080"
+                    correctAddress "http://cozy.localhost:8080"
+                        |> Expect.equal "http://cozy.localhost:8080"
 
             -- , test "localhost" <|
             --     \_ ->
