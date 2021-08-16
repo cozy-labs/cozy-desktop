@@ -70,15 +70,9 @@ class Merge {
     side /*: SideName */,
     doc /*: Metadata */
   ) /*: Promise<Metadata> */ {
-    const dst = metadata.createConflictingDoc(doc)
-    log.warn({ path: dst.path, oldpath: doc.path }, 'Resolving conflict')
-    try {
-      // $FlowFixMe
-      await this[side].moveAsync(dst, doc)
-    } catch (err) {
-      throw err
-    }
-    return dst
+    return side === 'local'
+      ? this.local.resolveConflict(doc)
+      : this.remote.resolveConflict(doc)
   }
 
   // Resolve Cozy Note conflict when its content is updated on the local

@@ -10,7 +10,6 @@ const fs = require('fs').promises
 const fse = require('fs-extra')
 const path = require('path')
 const stream = require('stream')
-const _ = require('lodash')
 
 const bluebird = require('bluebird')
 
@@ -32,7 +31,12 @@ import type { Config } from '../config'
 import type { Reader } from '../reader'
 import type { Ignore } from '../ignore'
 import type { AtomEventsDispatcher } from './atom/dispatch'
-import type { SavedMetadata, DocType } from '../metadata'
+import type {
+  DocType,
+  Metadata,
+  MetadataLocalInfo,
+  SavedMetadata
+} from '../metadata'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { Writer } from '../writer'
@@ -153,7 +157,9 @@ class Local /*:: implements Reader, Writer */ {
     }
   }
 
-  async updateMetadataAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
+  async updateMetadataAsync /*::<T: SavedMetadata|Metadata> */(
+    doc /*: T */
+  ) /*: Promise<void> */ {
     let filePath = this.abspath(doc.path)
 
     if (doc.docType === 'file') {
@@ -390,9 +396,9 @@ class Local /*:: implements Reader, Writer */ {
    *
    * TODO: atomic local destination check + move
    */
-  async moveAsync(
-    doc /*: SavedMetadata */,
-    old /*: SavedMetadata */
+  async moveAsync /*::<T: Metadata|SavedMetadata> */(
+    doc /*: T */,
+    old /*: T */
   ) /*: Promise<void> */ {
     log.info(
       { path: doc.path, oldpath: old.path },
@@ -449,17 +455,21 @@ class Local /*:: implements Reader, Writer */ {
     }
   }
 
-  async createBackupCopyAsync(
-    doc /*: SavedMetadata */
-  ) /*: Promise<SavedMetadata> */ {
-    const backupPath = `${doc.path}.bck`
-    await fse.copy(
-      path.join(this.syncPath, doc.path),
-      path.join(this.syncPath, backupPath)
+  // Resolve the conflict created by the changes stored in `newMetadata` by
+  // renaming its local version with a conflict suffix so `newMetadata` can be
+  // saved separately in PouchDB.
+  async resolveConflict /*::<T: Metadata|SavedMetadata> */(
+    newMetadata /*: T & { local: MetadataLocalInfo } */
+  ) /*: Promise<T> */ {
+    const conflict = metadata.createConflictingDoc(newMetadata)
+
+    log.warn(
+      { path: conflict.path, oldpath: newMetadata.path },
+      'Resolving local conflict'
     )
-    const copy = _.cloneDeep(doc)
-    copy.path = backupPath
-    return copy
+    await this.moveAsync(conflict, newMetadata)
+
+    return conflict
   }
 }
 

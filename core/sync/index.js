@@ -488,7 +488,7 @@ class Sync {
               // Solve 3.
               // We resolve the conflict on the remote Cozy to avoid local
               // issues like permission issues on Windows.
-              await this.remote.resolveRemoteConflict(change.doc)
+              await this.remote.resolveConflict(change.doc)
             }
             break
           case remoteErrors.DOCUMENT_IN_TRASH_CODE:

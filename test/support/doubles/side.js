@@ -17,7 +17,8 @@ const METHODS = [
   'assignNewRemote',
   'trashAsync',
   'renameConflictingDocAsync',
-  'diskUsage'
+  'diskUsage',
+  'resolveConflict'
 ]
 
 module.exports = function stubSide(name /*: SideName */) /*: Writer */ {

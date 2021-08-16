@@ -873,7 +873,9 @@ function buildFile(
   return doc
 }
 
-function createConflictingDoc(doc /*: Metadata */) /*: Metadata */ {
+function createConflictingDoc /*::<T: Metadata|SavedMetadata> */(
+  doc /*: T */
+) /*: T */ {
   const dst = _.cloneDeep(doc)
   dst.path = conflicts.generateConflictPath(doc.path)
 

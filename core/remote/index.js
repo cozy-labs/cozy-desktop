@@ -11,7 +11,6 @@ const path = require('path')
 const { isNote } = require('../utils/notes')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
-const conflicts = require('../utils/conflicts')
 const pathUtils = require('../utils/path')
 const metadata = require('../metadata')
 const { ROOT_DIR_ID, DIR_TYPE } = require('./constants')
@@ -26,7 +25,12 @@ import type EventEmitter from 'events'
 import type { SideName } from '../side'
 import type { Readable } from 'stream'
 import type { Config } from '../config'
-import type { SavedMetadata, MetadataRemoteInfo, MetadataRemoteDir } from '../metadata'
+import type {
+  Metadata,
+  MetadataRemoteInfo,
+  MetadataRemoteDir,
+  SavedMetadata
+} from '../metadata'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { RemoteDoc } from './document'
@@ -74,7 +78,7 @@ const ROOT_DIR /*: MetadataRemoteDir */ = {
 class Remote /*:: implements Reader, Writer */ {
   /*::
   name: SideName
-  other: Reader
+  other: Reader & Writer
   config: Config
   pouch: Pouch
   events: EventEmitter
@@ -276,9 +280,9 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async moveAsync(
-    newMetadata /*: SavedMetadata */,
-    oldMetadata /*: SavedMetadata */
+  async moveAsync /*::<T: Metadata|SavedMetadata> */(
+    newMetadata /*: T */,
+    oldMetadata /*: T */
   ) /*: Promise<void> */ {
     const remoteId = oldMetadata.remote._id
     const { path, overwrite } = newMetadata
@@ -362,7 +366,9 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async assignNewRemote(doc /*: SavedMetadata */) /*: Promise<void> */ {
+  async assignNewRemote /*::<T: Metadata|SavedMetadata> */(
+    doc /*: T */
+  ) /*: Promise<void> */ {
     log.info({ path: doc.path }, 'Assigning new remote...')
     const newRemoteDoc = await this.remoteCozy.find(doc.remote._id)
     metadata.updateRemote(doc, newRemoteDoc)
@@ -425,37 +431,21 @@ class Remote /*:: implements Reader, Writer */ {
     return dir.remote
   }
 
-  async resolveRemoteConflict(
-    newMetadata /*: SavedMetadata */
-  ) /*: Promise<void> */ {
-    // Find conflicting document on remote Cozy
-    const remoteDoc = await this.findDocByPath(newMetadata.path)
-    if (!remoteDoc) return
+  // Resolve the conflict created by the changes stored in `newMetadata` by
+  // renaming its remote version with a conflict suffix so `newMetadata` can be
+  // saved separately in PouchDB.
+  async resolveConflict /*::<T: Metadata|SavedMetadata> */(
+    newMetadata /*: T & { remote: MetadataRemoteInfo } */
+  ) /*: Promise<?T> */ {
+    const conflict = metadata.createConflictingDoc(newMetadata)
 
-    // Generate a new name with a conflict suffix for the remote document
-    const newName = path.basename(
-      conflicts.generateConflictPath(newMetadata.path)
+    log.warn(
+      { path: conflict.path, oldpath: newMetadata.path },
+      'Resolving remote conflict'
     )
-    log.info(
-      {
-        path: path.join(path.dirname(newMetadata.path), newName),
-        oldpath: newMetadata.path
-      },
-      'Resolving remote conflict...'
-    )
+    await this.moveAsync(conflict, newMetadata)
 
-    const attrs = {
-      name: newName,
-      updated_at: timestamp.maxDate(
-        new Date().toISOString(),
-        remoteDoc.updated_at
-      )
-    }
-    const opts = {
-      ifMatch: remoteDoc._rev
-    }
-
-    await this.remoteCozy.updateAttributesById(remoteDoc._id, attrs, opts)
+    return conflict
   }
 }
 
@@ -485,7 +475,9 @@ function newDocumentAttributes(
   }
 }
 
-function mostRecentUpdatedAt(doc /*: SavedMetadata */) /*: string */ {
+function mostRecentUpdatedAt /*::<T: Metadata|SavedMetadata> */(
+  doc /*: T */
+) /*: string */ {
   if (doc.remote && doc.remote.updated_at) {
     return timestamp.maxDate(doc.updated_at, doc.remote.updated_at)
   } else {
