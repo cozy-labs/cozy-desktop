@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.29.0-beta.2 - 2021-08-17
+
+Improvements for all users:
+
+- Error messages will now be properly localized and the document names included
+  in some of them should be properly displayed instead of their type.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.29.0-beta.1 - 2021-08-10
 
 Improvements for all users:
