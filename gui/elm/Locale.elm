@@ -79,7 +79,7 @@ helpers : Locale -> Helpers
 helpers locale =
     Helpers (translate locale)
         (capitalize locale)
-        (\chains string -> translate locale <| interpolate chains string)
+        (interpolate locale)
         (pluralize locale)
         (distance_of_time_in_words locale)
         (number_to_human_size locale)
@@ -99,7 +99,11 @@ translate locale key =
 
 capitalize : Locale -> Capitalize
 capitalize locale lowercase =
-    case String.uncons lowercase of
+    let
+        translated =
+            translate locale lowercase
+    in
+    case String.uncons translated of
         Just ( l, rest ) ->
             -- Char.toLocaleUpper does not allow passing in the locale so it
             -- will use the system default locale
@@ -130,7 +134,7 @@ pluralize locale count singular plural =
 placeholder : Regex
 placeholder =
     Maybe.withDefault Regex.never <|
-        Regex.fromString "\\{(\\d|[1-9]\\d+)\\}"
+        Regex.fromString "\\{([0-9]|[1-9][0-9]+)\\}"
 
 
 at : a -> Int -> List a -> a
@@ -140,9 +144,16 @@ at default index list =
         |> Maybe.withDefault default
 
 
-interpolate : List String -> String -> String
-interpolate replacements string =
-    Regex.replace placeholder (\{ number } -> at "" (number - 1) replacements) string
+interpolate : Locale -> Interpolate
+interpolate locale replacements string =
+    let
+        translatedReplacements =
+            List.map (translate locale) replacements
+
+        translated =
+            translate locale string
+    in
+    Regex.replace placeholder (\{ number } -> at "" (number - 1) translatedReplacements) translated
 
 
 distance_of_time_in_words : Locale -> DistanceOfTime
@@ -172,7 +183,7 @@ distance_of_time_in_words locale from_time to_time =
                     else
                         "Helpers {0} " ++ what ++ "s ago"
             in
-            interpolate [ String.fromInt count ] (translate locale key)
+            interpolate locale [ String.fromInt count ] key
     in
     if distance_in_months > 0 then
         transform distance_in_months "month"

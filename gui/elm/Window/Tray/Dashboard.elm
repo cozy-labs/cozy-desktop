@@ -146,16 +146,14 @@ renderFile helpers model file =
             Path.parent file.path
 
         filenameTitle =
-            Locale.interpolate [ file.filename ] <|
-                helpers.t "Dashboard Open file {0}"
+            helpers.interpolate [ file.filename ] "Dashboard Open file {0}"
 
         dirPathTitle =
             if Path.isRoot dirPath then
                 helpers.t "Dashboard Show in parent folder"
 
             else
-                Locale.interpolate [ Path.toString dirPath ] <|
-                    helpers.t "Dashboard Show in folder {0}"
+                helpers.interpolate [ Path.toString dirPath ] "Dashboard Show in folder {0}"
     in
     div
         [ class "file-line"

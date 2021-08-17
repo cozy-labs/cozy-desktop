@@ -210,7 +210,7 @@ viewByCode helpers action =
         ClientAction "FileTooLarge" { path } ->
             { title = "Error The file is too large"
             , content =
-                [ Locale.interpolate [ path ] "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB."
+                [ helpers.interpolate [ path ] "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB."
                 , "Error You need to remove it from your local synchronization folder or reduce its size."
                 ]
             , buttons =
@@ -224,7 +224,7 @@ viewByCode helpers action =
             in
             { title = "Error Document path incompatible with current OS"
             , content =
-                [ Locale.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System."
                 , "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary."
                 ]
             , buttons =
@@ -240,7 +240,7 @@ viewByCode helpers action =
             in
             { title = "Error Invalid document metadata"
             , content =
-                [ Locale.interpolate [ localDocType, path ] "Error The {0} `{1}`'s metadata cannot be accepted by your Cozy."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s metadata cannot be accepted by your Cozy."
                 , "Error This message persists if the local metadata of your document is corrupted. In this case try to move it out of the Cozy Drive folder and back again or contact support for help on the procedure."
                 ]
             , buttons =
@@ -255,7 +255,7 @@ viewByCode helpers action =
             in
             { title = "Error Invalid document name"
             , content =
-                [ Locale.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name contains characters forbidden by your Cozy."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name contains characters forbidden by your Cozy."
                 , "Error Try renaming it without using the following characters: / \\u{0000} \\n \\u{000D}."
                 ]
             , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ]
@@ -268,7 +268,7 @@ viewByCode helpers action =
             in
             { title = "Error Access denied temporarily"
             , content =
-                [ Locale.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be updated on your computer to apply the changes made on your Cozy."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be updated on your computer to apply the changes made on your Cozy."
                 , "Error Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights."
                 ]
             , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ]
@@ -281,7 +281,7 @@ viewByCode helpers action =
             in
             { title = "Error Conflict with remote version"
             , content =
-                [ Locale.interpolate [ localDocType, path ] "Error The {0} `{1}` has been simultaneously modified on your computer and your Cozy."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` has been simultaneously modified on your computer and your Cozy."
                 , "Error This message persists if Cozy is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
                 ]
             , buttons =
@@ -297,7 +297,7 @@ viewByCode helpers action =
             in
             { title = "Error Your Cozy's disk space is saturated"
             , content =
-                [ Locale.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be written to your Cozy's disk because its maximum storage capacity has been reached."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be written to your Cozy's disk because its maximum storage capacity has been reached."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files...), or increased its capacity."
                 ]
             , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ] -- Could show link to buy more disk space
@@ -310,7 +310,7 @@ viewByCode helpers action =
             in
             { title = "Error Your computer's disk space is insufficient"
             , content =
-                [ Locale.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be written to your computer disk because there is not enough space available."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be written to your computer disk because there is not enough space available."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files…)."
                 ]
             , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ]
@@ -323,7 +323,7 @@ viewByCode helpers action =
             in
             { title = "Error Document path with too many levels"
             , content =
-                [ Locale.interpolate [ localDocType, path ] "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy."
                 , "Error Try removing some parent levels or moving it to antoher folder."
                 ]
             , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ]
@@ -336,7 +336,7 @@ viewByCode helpers action =
             in
             { title = "Error Unhandled synchronization error"
             , content =
-                [ Locale.interpolate [ localDocType, path ] "Error We encountered an unhandled error while trying to synchronise the {0} `{1}`."
+                [ helpers.interpolate [ localDocType, path ] "Error We encountered an unhandled error while trying to synchronise the {0} `{1}`."
                 , "Error Please contact our support to get help."
                 ]
             , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ] -- Could show help button
