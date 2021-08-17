@@ -1,21 +1,29 @@
 port module Data.UserAction exposing
     ( EncodedUserAction
-    , Interaction(..)
+    , Msg(..)
     , UserAction(..)
     , decode
-    , details
     , encode
     , end
-    , getLink
-    , inProgress
-    , primaryInteraction
     , same
-    , secondaryInteraction
     , showDetails
     , skip
     , start
-    , title
+    , view
     )
+
+import Data.Path as Path exposing (Path)
+import Data.Platform as Platform exposing (Platform)
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
+import Locale exposing (Helpers)
+import Util.DecorationParser exposing (DecorationResult(..), findDecorations)
+
+
+type UserAction
+    = ClientAction String ClientActionInfo
+    | RemoteAction String RemoteActionInfo
 
 
 type UserActionStatus
@@ -24,27 +32,22 @@ type UserActionStatus
     | Done
 
 
-type UserAction
-    = ClientAction UserActionStatus ClientActionInfo
-    | RemoteAction UserActionStatus RemoteActionInfo
-
-
 type alias ClientActionInfo =
-    { seq : Int, code : String, docType : String, path : String }
+    { status : UserActionStatus, seq : Int, docType : String, path : String }
 
 
 type alias RemoteActionInfo =
-    { code : String, link : String }
+    { status : UserActionStatus, link : String }
 
 
 same : UserAction -> UserAction -> Bool
 same actionA actionB =
     case ( actionA, actionB ) of
-        ( ClientAction _ a, ClientAction _ b ) ->
-            a.seq == b.seq && a.code == b.code
+        ( ClientAction codeA a, ClientAction codeB b ) ->
+            a.seq == b.seq && codeA == codeB
 
-        ( RemoteAction _ a, RemoteAction _ b ) ->
-            a.code == b.code
+        ( RemoteAction codeA _, RemoteAction codeB _ ) ->
+            codeA == codeB
 
         _ ->
             False
@@ -109,36 +112,33 @@ decode { seq, status, code, doc, links } =
             decodeUserActionStatus status
     in
     case ( doc, links, seq ) of
-        ( Just { docType, path }, Just { self }, _ ) ->
-            Just (RemoteAction decodedStatus { code = code, link = self })
+        ( _, Just { self }, _ ) ->
+            Just (RemoteAction code { status = decodedStatus, link = self })
 
         ( Just { docType, path }, _, Just num ) ->
-            Just (ClientAction decodedStatus { seq = num, code = code, docType = docType, path = path })
-
-        ( _, Just { self }, _ ) ->
-            Just (RemoteAction decodedStatus { code = code, link = self })
+            Just (ClientAction code { status = decodedStatus, seq = num, docType = docType, path = path })
 
         _ ->
-            Maybe.Nothing
+            Nothing
 
 
 encode : UserAction -> EncodedUserAction
 encode action =
     case action of
-        ClientAction s a ->
+        ClientAction code a ->
             { seq = Just a.seq
-            , status = encodeUserActionStatus s
-            , code = a.code
+            , status = encodeUserActionStatus a.status
+            , code = code
             , doc = Just { docType = a.docType, path = a.path }
-            , links = Maybe.Nothing
+            , links = Nothing
             }
 
-        RemoteAction s a ->
-            { seq = Maybe.Nothing
-            , status = encodeUserActionStatus s
-            , code = a.code
+        RemoteAction code a ->
+            { seq = Nothing
+            , status = encodeUserActionStatus a.status
+            , code = code
             , links = Just { self = a.link }
-            , doc = Maybe.Nothing
+            , doc = Nothing
             }
 
 
@@ -172,217 +172,277 @@ encodeUserActionStatus status =
 -- View User Action from other modules
 
 
-getCode : UserAction -> String
-getCode action =
-    case action of
-        ClientAction _ { code } ->
-            code
-
-        RemoteAction _ { code } ->
-            code
-
-
-getLink : UserAction -> Maybe String
-getLink action =
-    case action of
-        RemoteAction _ { link } ->
-            Just link
-
-        ClientAction _ _ ->
-            Maybe.Nothing
-
-
-inProgress : UserAction -> Bool
-inProgress action =
-    case action of
-        RemoteAction status _ ->
-            status == InProgress
-
-        ClientAction status _ ->
-            status == InProgress
-
-
-title : UserAction -> String
-title action =
-    let
-        strings =
-            view (getCode action)
-    in
-    strings.title
-
-
-details : UserAction -> List ( String, List String )
-details action =
-    let
-        strings =
-            view (getCode action)
-
-        interpolations =
-            case action of
-                ClientAction _ { docType, path } ->
-                    [ "Helpers " ++ docType, path ]
-
-                RemoteAction _ _ ->
-                    []
-    in
-    List.map (\line -> ( line, interpolations )) strings.details
-
-
-primaryInteraction : UserAction -> Interaction
-primaryInteraction action =
-    let
-        strings =
-            view (getCode action)
-    in
-    strings.primaryInteraction
-
-
-secondaryInteraction : UserAction -> Interaction
-secondaryInteraction action =
-    let
-        strings =
-            view (getCode action)
-    in
-    strings.secondaryInteraction
-
-
-
--- Translation chains used in interface
-
-
-type Interaction
-    = Retry String
-    | Open String
-    | Ok
-    | GiveUp
-    | ShowDetails
-    | Nothing
+type Msg
+    = GiveUp UserAction
+    | Retry UserAction
+    | ShowDetails UserAction
+    | ShowInParent Path
 
 
 type alias UserActionView =
-    { title : String
-    , details : List String
-    , primaryInteraction : Interaction
-    , secondaryInteraction : Interaction
-    }
+    { title : String, content : List String, buttons : List (Html Msg) }
 
 
-view : String -> UserActionView
-view code =
-    case code of
-        "FileTooLarge" ->
+type ButtonType
+    = Primary
+    | Secondary
+    | PrimaryWithDanger
+    | SecondaryWithDanger
+
+
+view : Helpers -> Platform -> UserAction -> Html Msg
+view helpers platform action =
+    let
+        { title, content, buttons } =
+            viewByCode helpers action
+    in
+    div [ class "u-p-1 u-bg-paleGrey" ]
+        [ header [ class "u-title-h1" ] [ text (helpers.t title) ]
+        , p [ class "u-text" ] (actionContent helpers platform content)
+        , div [ class "u-flex u-flex-justify-end" ] buttons
+        ]
+
+
+viewByCode : Helpers -> UserAction -> UserActionView
+viewByCode helpers action =
+    case action of
+        ClientAction "FileTooLarge" { path } ->
             { title = "Error The file is too large"
-            , details =
-                [ "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB."
+            , content =
+                [ helpers.interpolate [ path ] "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB."
                 , "Error You need to remove it from your local synchronization folder or reduce its size."
                 ]
-            , primaryInteraction = GiveUp
-            , secondaryInteraction = Nothing
+            , buttons =
+                [ actionButton helpers (GiveUp action) "UserAction Give up" Primary ]
             }
 
-        "IncompatibleDoc" ->
+        ClientAction "IncompatibleDoc" { docType, path } ->
+            let
+                localDocType =
+                    "Helpers " ++ docType
+            in
             { title = "Error Document path incompatible with current OS"
-            , details =
-                [ "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System."
+            , content =
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System."
                 , "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary."
                 ]
-            , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = ShowDetails
+            , buttons =
+                [ actionButton helpers (ShowDetails action) "UserAction Show details" Secondary
+                , actionButton helpers (Retry action) "UserAction Retry" Primary
+                ]
             }
 
-        "InvalidMetadata" ->
+        ClientAction "InvalidMetadata" { docType, path } ->
+            let
+                localDocType =
+                    "Helpers " ++ docType
+            in
             { title = "Error Invalid document metadata"
-            , details =
-                [ "Error The {0} `{1}`'s metadata cannot be accepted by your Cozy."
+            , content =
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s metadata cannot be accepted by your Cozy."
                 , "Error This message persists if the local metadata of your document is corrupted. In this case try to move it out of the Cozy Drive folder and back again or contact support for help on the procedure."
                 ]
-            , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = Nothing
+            , buttons =
+                [ actionButton helpers (Retry action) "UserAction Retry" Primary
+                ]
             }
 
-        "InvalidName" ->
+        ClientAction "InvalidName" { docType, path } ->
+            let
+                localDocType =
+                    "Helpers " ++ docType
+            in
             { title = "Error Invalid document name"
-            , details =
-                [ "Error The {0} `{1}`'s name contains characters forbidden by your Cozy."
+            , content =
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name contains characters forbidden by your Cozy."
                 , "Error Try renaming it without using the following characters: / \\u{0000} \\n \\u{000D}."
                 ]
-            , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = Nothing
+            , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ]
             }
 
-        "MissingPermissions" ->
+        ClientAction "MissingPermissions" { docType, path } ->
+            let
+                localDocType =
+                    "Helpers " ++ docType
+            in
             { title = "Error Access denied temporarily"
-            , details =
-                [ "Error The {0} `{1}` could not be updated on your computer to apply the changes made on your Cozy."
+            , content =
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be updated on your computer to apply the changes made on your Cozy."
                 , "Error Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights."
                 ]
-            , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = Nothing
+            , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ]
             }
 
-        "NeedsRemoteMerge" ->
+        ClientAction "NeedsRemoteMerge" { docType, path } ->
+            let
+                localDocType =
+                    "Helpers " ++ docType
+            in
             { title = "Error Conflict with remote version"
-            , details =
-                [ "Error The {0} `{1}` has been simultaneously modified on your computer and your Cozy."
+            , content =
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` has been simultaneously modified on your computer and your Cozy."
                 , "Error This message persists if Cozy is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
                 ]
-            , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = GiveUp
+            , buttons =
+                [ actionButton helpers (GiveUp action) "UserAction Give up" SecondaryWithDanger
+                , actionButton helpers (Retry action) "UserAction Retry" Primary
+                ]
             }
 
-        "NoCozySpace" ->
+        ClientAction "NoCozySpace" { docType, path } ->
+            let
+                localDocType =
+                    "Helpers " ++ docType
+            in
             { title = "Error Your Cozy's disk space is saturated"
-            , details =
-                [ "Error The {0} `{1}` could not be written to your Cozy's disk because its maximum storage capacity has been reached."
+            , content =
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be written to your Cozy's disk because its maximum storage capacity has been reached."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files...), or increased its capacity."
                 ]
-            , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = Nothing
+            , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ] -- Could show link to buy more disk space
             }
 
-        "NoDiskSpace" ->
+        ClientAction "NoDiskSpace" { docType, path } ->
+            let
+                localDocType =
+                    "Helpers " ++ docType
+            in
             { title = "Error Your computer's disk space is insufficient"
-            , details =
-                [ "Error The {0} `{1}` could not be written to your computer disk because there is not enough space available."
+            , content =
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be written to your computer disk because there is not enough space available."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files…)."
                 ]
-            , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = Nothing
+            , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ]
             }
 
-        "PathTooDeep" ->
+        ClientAction "PathTooDeep" { docType, path } ->
+            let
+                localDocType =
+                    "Helpers " ++ docType
+            in
             { title = "Error Document path with too many levels"
-            , details =
-                [ "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy."
+            , content =
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy."
                 , "Error Try removing some parent levels or moving it to antoher folder."
                 ]
-            , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = Nothing
+            , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ]
             }
 
-        "UnknownRemoteError" ->
+        ClientAction "UnknownRemoteError" { docType, path } ->
+            let
+                localDocType =
+                    "Helpers " ++ docType
+            in
             { title = "Error Unhandled synchronization error"
-            , details =
-                [ "Error We encountered an unhandled error while trying to synchronise the {0} `{1}`."
+            , content =
+                [ helpers.interpolate [ localDocType, path ] "Error We encountered an unhandled error while trying to synchronise the {0} `{1}`."
                 , "Error Please contact our support to get help."
                 ]
-            , primaryInteraction = Retry "UserAction Retry"
-            , secondaryInteraction = Nothing
+            , buttons = [ actionButton helpers (Retry action) "UserAction Retry" Primary ] -- Could show help button
             }
 
-        "UserActionRequired" ->
+        RemoteAction "UserActionRequired" { link } ->
             { title = "CGUUpdated The ToS have been updated"
-            , details =
+            , content =
                 [ "CGUUpdated Your Cozy hosting provider informs you that it has updated its Terms of Service (ToS)."
                 , "CGUUpdated Their acceptance is required to continue using your Cozy."
                 ]
-            , primaryInteraction = Open "CGUUpdated Read the new ToS"
-            , secondaryInteraction = Ok
+            , buttons =
+                [ actionButton helpers (Retry action) "UserAction Ok" Secondary
+                , linkButton helpers link "CGUUpdated Read the new ToS" Primary
+                ]
             }
 
-        _ ->
-            { title = ""
-            , details = []
-            , primaryInteraction = Ok
-            , secondaryInteraction = Nothing
-            }
+        ClientAction _ _ ->
+            { title = "", content = [], buttons = [] }
+
+        RemoteAction _ _ ->
+            { title = "", content = [], buttons = [] }
+
+
+actionContent : Helpers -> Platform -> List String -> List (Html Msg)
+actionContent helpers platform details =
+    details
+        |> List.map helpers.capitalize
+        |> List.map (viewActionContentLine platform)
+        |> List.intersperse [ br [] [] ]
+        |> List.concat
+
+
+classList : List String -> List ( Maybe Bool, String ) -> String
+classList baseList optionalClasses =
+    let
+        appendActive =
+            \( isActive, class ) classes ->
+                if Maybe.withDefault False isActive then
+                    classes ++ [ class ]
+
+                else
+                    classes
+    in
+    List.foldr appendActive baseList optionalClasses
+        |> String.join " "
+
+
+buttonClass : ButtonType -> String
+buttonClass bType =
+    [ "c-btn" ]
+        ++ (case bType of
+                Primary ->
+                    []
+
+                Secondary ->
+                    [ "c-btn--ghost" ]
+
+                PrimaryWithDanger ->
+                    [ "c-btn--danger-outline" ]
+
+                SecondaryWithDanger ->
+                    [ "c-btn--danger-outline" ]
+           )
+        |> String.join " "
+
+
+actionButton : Helpers -> Msg -> String -> ButtonType -> Html Msg
+actionButton helpers msg label bType =
+    button
+        [ class (buttonClass bType)
+        , onClick msg
+        ]
+        [ span [] [ text (helpers.t label) ] ]
+
+
+linkButton : Helpers -> String -> String -> ButtonType -> Html Msg
+linkButton helpers link label bType =
+    a
+        [ class (buttonClass bType)
+        , href link
+        ]
+        [ span [] [ text (helpers.t label) ] ]
+
+
+viewActionContentLine : Platform -> String -> List (Html Msg)
+viewActionContentLine platform line =
+    let
+        toHTML =
+            \decoration ->
+                case decoration of
+                    Decorated path ->
+                        Path.fromString platform path
+                            |> decoratedName
+
+                    Normal str ->
+                        text str
+    in
+    findDecorations line
+        |> List.map toHTML
+
+
+decoratedName : Path -> Html Msg
+decoratedName path =
+    span
+        [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
+        , title (Path.toString path)
+        , onClick (ShowInParent path)
+        ]
+        [ text (Path.name path) ]
