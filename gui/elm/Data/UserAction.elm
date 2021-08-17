@@ -18,8 +18,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Locale exposing (Helpers)
-import Regex
-import Util.List as List
+import Util.DecorationParser exposing (DecorationResult(..), findDecorations)
 
 
 type UserAction
@@ -425,43 +424,25 @@ linkButton helpers link label bType =
 viewActionContentLine : Platform -> String -> List (Html Msg)
 viewActionContentLine platform line =
     let
-        decorated =
-            decoratedStrings line
-                |> List.map (Maybe.map (Path.fromString platform))
-                |> List.map decoratedName
+        toHTML =
+            \decoration ->
+                case decoration of
+                    Decorated path ->
+                        Path.fromString platform path
+                            |> decoratedName
 
-        rest =
-            Regex.split decorationRegex line
-                |> List.map text
+                    Normal str ->
+                        text str
     in
-    List.intersperseList decorated rest
+    findDecorations line
+        |> List.map toHTML
 
 
-decoratedStrings : String -> List (Maybe String)
-decoratedStrings line =
-    Regex.find decorationRegex line
-        |> List.map .submatches
-        |> List.map List.head
-        |> List.map (Maybe.withDefault Nothing)
-
-
-decorationRegex : Regex.Regex
-decorationRegex =
-    -- Find all groups of characters between backticks
-    Maybe.withDefault Regex.never <|
-        Regex.fromString "`(.+?)`"
-
-
-decoratedName : Maybe Path -> Html Msg
+decoratedName : Path -> Html Msg
 decoratedName path =
-    case path of
-        Just p ->
-            span
-                [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
-                , title (Path.toString p)
-                , onClick (ShowInParent p)
-                ]
-                [ text (Path.name p) ]
-
-        _ ->
-            text ""
+    span
+        [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
+        , title (Path.toString path)
+        , onClick (ShowInParent path)
+        ]
+        [ text (Path.name path) ]
