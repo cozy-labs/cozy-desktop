@@ -419,8 +419,7 @@ class RemoteCozy {
       data: []
     }
     while (resp && resp.next) {
-      const queryDef = client
-        .find(FILES_DOCTYPE)
+      const queryDef = Q(FILES_DOCTYPE)
         .where({
           dir_id: dir._id
         })
