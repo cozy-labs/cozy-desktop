@@ -62,12 +62,9 @@ function loop(
           continue
         }
         if (isFileWithContent(event) && !event.md5sum) {
-          log.debug(
-            { path: event.path, action: event.action },
-            'computing checksum'
-          )
           const absPath = path.join(syncPath, event.path)
           event.md5sum = await opts.checksumer.push(absPath)
+          log.debug({ path: event.path, event }, 'computed checksum')
         }
       } catch (err) {
         // Even if the file is no longer at the expected path, we want to
