@@ -1,5 +1,20 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.29.0 - 2021-08-18
+
+Improvements for all users:
+
+- Cozy Notes with photos will be exported as a tar archive instead of a simple
+  markdown file. Therefore, the client will now unpack the markdown file from
+  the archive when displaying a note in a degraded mode (i.e. when you're
+  offline or the actual note can't be found on the remote Cozy).
+- Error messages will now be properly localized and the document names included
+  in some of them should be properly displayed instead of their type.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.29.0-beta.2 - 2021-08-17
 
 Improvements for all users:
