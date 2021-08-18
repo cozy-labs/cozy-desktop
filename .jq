@@ -25,8 +25,8 @@ def cleanNote:
     | .err |= (. | redactNote(.doc))
     else . end
   | if isempty(.change | objects) | not then .
-    | .change |= (. | redactNote(.doc))
-    | .change |= (. | redactNote(.was))
+    | if isempty(.change.doc | objects) | not then .change.doc |= (. | redactNote(.doc)) else . end
+    | if isempty(.change.was | objects) | not then .change.was |= (. | redactNote(.was)) else . end
     else . end
 ;
 
