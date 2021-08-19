@@ -466,20 +466,22 @@ const defaultSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
   if (localChange.isChildDelete(a, b)) return bFirst
 
   // a is deleted what b added
-  if (localChange.delPath(a) === localChange.addPath(b)) return aFirst
+  if (localChange.samePath(localChange.delPath(a), localChange.addPath(b)))
+    return aFirst
   // b is deleting what a added
-  if (localChange.delPath(b) === localChange.addPath(a)) return bFirst
+  if (localChange.samePath(localChange.delPath(b), localChange.addPath(a)))
+    return bFirst
 
   // both adds at same path (seen with move + add)
   if (
     localChange.addPath(a) &&
-    localChange.addPath(a) === localChange.addPath(b)
+    localChange.samePath(localChange.addPath(a), localChange.addPath(b))
   )
     return aFirst
   // both deletes at same path (seen with delete + move)
   if (
     localChange.delPath(a) &&
-    localChange.delPath(a) === localChange.delPath(b)
+    localChange.samePath(localChange.delPath(a), localChange.delPath(b))
   )
     return bFirst
 

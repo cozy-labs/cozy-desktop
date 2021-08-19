@@ -40,6 +40,7 @@ module.exports = {
   addPath,
   delPath,
   updatePath,
+  samePath,
   childOf,
   lower,
   isChildDelete,
@@ -244,6 +245,9 @@ function delPath(a /*: LocalChange */) /*: ?string */ {
 }
 function updatePath(a /*: LocalChange */) /*: ?string */ {
   return isUpdate(a) ? a.path.normalize() : null
+}
+function samePath(p1 /*: ?string */, p2 /*: ?string */) /*: boolean */ {
+  return p1 != null && p2 != null && p1.normalize() === p2.normalize()
 }
 function childOf(p /*: ?string */, c /*: ?string */) /*: boolean */ {
   return (

@@ -832,6 +832,47 @@ onPlatform('darwin', () => {
       })
     })
 
+    describe('FileReplacement(x/x)', () => {
+      describe('unlink(x) + add(x)', () => {
+        it('is a deleted then added file', () => {
+          const path = 'whatever'
+          const old /*: Metadata */ = builders
+            .metafile()
+            .path(path)
+            .ino(1)
+            .build()
+          const stats = { ino: 532806 }
+          const events /*: LocalEvent[] */ = [
+            { type: 'unlink', path, old },
+            { type: 'add', path, stats, old: null }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          const changes = analysis(events, { pendingChanges })
+          should({ changes, pendingChanges }).deepEqual({
+            changes: [
+              {
+                sideName,
+                type: 'FileDeletion',
+                ino: old.ino,
+                path,
+                old
+              },
+              {
+                sideName,
+                type: 'FileAddition',
+                path,
+                ino: stats.ino,
+                stats,
+                md5sum: undefined // XXX: We're just not computing it
+              }
+            ],
+            pendingChanges: []
+          })
+        })
+      })
+    })
+
     describe('FileUpdate(é/à)', () => {
       const dirStats = { ino: 765 }
       const fileStats = { ino: 766 }
