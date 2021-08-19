@@ -1,5 +1,7 @@
 /* @flow */
 
+const { runOnHFS } = require('../../support/helpers/scenarios')
+
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
@@ -13,6 +15,7 @@ module.exports = ({
     { ino: 4, path: 'dst/file2', content: 'overwritten content' }
   ],
   actions: [
+    { type: 'wait', ms: runOnHFS() ? 1000 : 0 },
     { type: 'update_file', path: 'dst/file1', content: 'updated content' },
     { type: 'mv', src: 'src/file2', dst: 'dst/file2' },
     { type: 'wait', ms: 500 },
