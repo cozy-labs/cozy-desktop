@@ -94,14 +94,24 @@ describe('Test scenarios', function() {
           continue
         }
 
-        const breakpoints = injectChokidarBreakpoints(eventsFile)
+        if (scenario.useCaptures) {
+          const breakpoints = injectChokidarBreakpoints(eventsFile)
 
-        for (let flushAfter of breakpoints) {
-          it(localTestName + ' flushAfter=' + flushAfter, async function() {
-            await runLocalChokidar(
+          for (let flushAfter of breakpoints) {
+            it(localTestName + ' flushAfter=' + flushAfter, async function() {
+              await runLocalChokidarWithCaptures(
+                scenario,
+                _.cloneDeep(eventsFile),
+                flushAfter,
+                helpers
+              )
+            })
+          }
+        } else {
+          it(localTestName, async function() {
+            await runLocalChokidarWithoutCaptures(
               scenario,
               _.cloneDeep(eventsFile),
-              flushAfter,
               helpers
             )
           })
@@ -175,7 +185,7 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
       scenario,
       helpers.pouch,
       helpers.local.syncDir.abspath,
-      atomCapture
+      scenario.useCaptures ? atomCapture : undefined
     )
   }
 
@@ -215,7 +225,12 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
   })
 }
 
-async function runLocalChokidar(scenario, eventsFile, flushAfter, helpers) {
+async function runLocalChokidarWithCaptures(
+  scenario,
+  eventsFile,
+  flushAfter,
+  helpers
+) {
   if (scenario.init) {
     await init(
       scenario,
@@ -225,16 +240,16 @@ async function runLocalChokidar(scenario, eventsFile, flushAfter, helpers) {
     )
   }
 
-  const eventsBefore = eventsFile.events.slice(0, flushAfter)
-  const eventsAfter = eventsFile.events.slice(flushAfter)
-
   const inodeChanges = await runActions(
     scenario,
     helpers.local.syncDir.abspath,
     {
-      skipWait: scenario.useCaptures
+      skipWait: true
     }
   )
+
+  const eventsBefore = eventsFile.events.slice(0, flushAfter)
+  const eventsAfter = eventsFile.events.slice(flushAfter)
 
   if (eventsBefore.length) {
     for (const event of eventsBefore.reverse()) {
@@ -273,6 +288,36 @@ async function runLocalChokidar(scenario, eventsFile, flushAfter, helpers) {
     await helpers.syncAll()
   }
 
+  await helpers.pullAndSyncAll()
+
+  await verifyExpectations(scenario, helpers, {
+    includeLocalTrash: false,
+    includeRemoteTrash: true
+  })
+}
+
+async function runLocalChokidarWithoutCaptures(scenario, eventsFile, helpers) {
+  if (scenario.init) {
+    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath)
+  }
+
+  await helpers.local.side.watcher.start()
+
+  await runActions(scenario, helpers.local.syncDir.abspath)
+
+  // Wait for all local events to be flushed or a 10s time limit in case no
+  // events are fired.
+  await Promise.race([
+    new Promise(resolve => {
+      helpers.local.side.events.on('local-end', resolve)
+    }),
+    new Promise(resolve => {
+      setTimeout(resolve, 10000)
+    })
+  ])
+  await helpers.local.side.watcher.stop()
+
+  await helpers.syncAll()
   await helpers.pullAndSyncAll()
 
   await verifyExpectations(scenario, helpers, {

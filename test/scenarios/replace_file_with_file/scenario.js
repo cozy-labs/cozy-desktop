@@ -1,5 +1,7 @@
 /* @flow */
 
+const { runOnHFS } = require('../../support/helpers/scenarios')
+
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
@@ -7,8 +9,9 @@ module.exports = ({
   init: [{ ino: 1, path: 'file', content: 'initial content' }],
   actions: [
     { type: 'delete', path: 'file' },
+    { type: 'wait', ms: runOnHFS() ? 1000 : 0 },
     { type: 'create_file', path: 'file', content: 'new content' },
-    { type: 'wait', ms: 1500 }
+    { type: 'wait', ms: 1000 }
   ],
   expected: {
     tree: ['file'],

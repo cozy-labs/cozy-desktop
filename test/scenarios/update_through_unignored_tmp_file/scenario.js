@@ -1,5 +1,7 @@
 /* @flow */
 
+const { runOnHFS } = require('../../support/helpers/scenarios')
+
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
@@ -7,10 +9,13 @@ module.exports = ({
   useCaptures: false,
   init: [{ ino: 1, path: 'file.ods', content: 'initial content' }],
   actions: [
+    { type: 'wait', ms: runOnHFS() ? 1000 : 0 },
     { type: 'mv', src: 'file.ods', dst: 'other-file.ods' },
     { type: 'create_file', path: 'file.ods' },
+    { type: 'wait', ms: runOnHFS() ? 1000 : 0 },
     { type: 'update_file', path: 'file.ods', content: 'updated content #1' },
     { type: 'delete', path: 'other-file.ods' },
+    { type: 'wait', ms: runOnHFS() ? 1000 : 0 },
     { type: 'update_file', path: 'file.ods', content: 'updated content #2' },
     { type: 'wait', ms: 1000 }
   ],

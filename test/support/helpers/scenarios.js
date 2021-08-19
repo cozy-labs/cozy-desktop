@@ -90,6 +90,11 @@ module.exports.runWithStoppedClient = () => {
   return isTruthyVar(STOPPED_CLIENT)
 }
 
+module.exports.runOnHFS = () => {
+  const { COZY_DESKTOP_FS } = process.env
+  return COZY_DESKTOP_FS === 'HFS+'
+}
+
 // TODO: Refactor to function
 module.exports.scenarios = glob
   .sync(path.join(scenariosDir, '**/scenario.js*'), {})

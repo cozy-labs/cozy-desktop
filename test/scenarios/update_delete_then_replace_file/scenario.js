@@ -1,6 +1,9 @@
 /* @flow */
 
-const { runWithStoppedClient } = require('../../support/helpers/scenarios')
+const {
+  runOnHFS,
+  runWithStoppedClient
+} = require('../../support/helpers/scenarios')
 
 /*:: import type { Scenario } from '..' */
 
@@ -20,6 +23,7 @@ module.exports = ({
     { ino: 7, path: 'src/file2', content: 'moved content' }
   ],
   actions: [
+    { type: 'wait', ms: runOnHFS() ? 1000 : 0 },
     { type: 'update_file', path: 'src/file1', content: 'updated content' },
     { type: 'mv', src: 'src/file2', dst: 'final/file2' },
     { type: 'wait', ms: 500 },
