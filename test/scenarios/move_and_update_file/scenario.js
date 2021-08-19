@@ -12,8 +12,8 @@ module.exports = ({
     { ino: 3, path: 'src/file', content: 'initial content' }
   ],
   actions: [
-    { type: 'mv', src: 'src/file', dst: 'dst/file' },
     { type: 'wait', ms: runOnHFS() ? 1000 : 500 },
+    { type: 'mv', src: 'src/file', dst: 'dst/file' },
     { type: 'update_file', path: 'dst/file', content: 'updated content' },
     { type: 'wait', ms: 1000 }
   ],

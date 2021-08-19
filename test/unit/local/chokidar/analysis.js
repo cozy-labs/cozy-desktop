@@ -179,6 +179,7 @@ onPlatform('darwin', () => {
               ino: 1,
               stats,
               old,
+              md5sum: old.md5sum,
               wip: true
             }
           ])
@@ -397,11 +398,18 @@ onPlatform('darwin', () => {
             .metafile()
             .ino(1)
             .build()
-          const stats = { ino: 1 }
+          const addStats = {
+            ino: old.ino,
+            mtime: new Date(old.local.updated_at)
+          }
+          const changeStats = {
+            ino: 1,
+            mtime: new Date(addStats.mtime.getTime() + 1000)
+          }
           const events /*: LocalEvent[] */ = [
             { type: 'unlink', path: 'src', old },
-            { type: 'add', path: 'dst', stats, md5sum: old.md5sum },
-            { type: 'change', path: 'dst', stats, md5sum: 'yata' }
+            { type: 'add', path: 'dst', stats: addStats, md5sum: old.md5sum },
+            { type: 'change', path: 'dst', stats: changeStats, md5sum: 'yata' }
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
@@ -412,10 +420,119 @@ onPlatform('darwin', () => {
               path: 'dst',
               md5sum: 'yata',
               ino: 1,
-              stats,
+              stats: changeStats,
               old,
               update: {
                 type: 'change',
+                path: 'dst',
+                stats: changeStats,
+                md5sum: 'yata'
+              }
+            }
+          ])
+          should(pendingChanges).deepEqual([])
+        })
+      })
+
+      describe('unlink(src, ino=1) + add(dst, ino=1) + change(dst, ino=2)', () => {
+        it('does not include the change into the move', () => {
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
+          const addStats = {
+            ino: old.ino,
+            mtime: new Date(old.local.updated_at)
+          }
+          const changeStats = {
+            ino: 2,
+            mtime: new Date(addStats.mtime.getTime() + 1000)
+          }
+          const events /*: LocalEvent[] */ = [
+            { type: 'unlink', path: 'src', old },
+            { type: 'add', path: 'dst', stats: addStats, md5sum: old.md5sum },
+            { type: 'change', path: 'dst', stats: changeStats, md5sum: 'yata' }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'FileMove',
+              path: 'dst',
+              md5sum: old.md5sum,
+              ino: old.ino,
+              stats: addStats,
+              old
+            },
+            {
+              sideName,
+              type: 'FileUpdate',
+              path: 'dst',
+              md5sum: 'yata',
+              ino: changeStats.ino,
+              stats: changeStats
+            }
+          ])
+          should(pendingChanges).deepEqual([])
+        })
+      })
+
+      describe('unlink(src) + add(dst) with different md5sum but same update date', () => {
+        it('does not mark the move as an update', () => {
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
+          const stats = { ino: old.ino, mtime: new Date(old.local.updated_at) }
+          const events /*: LocalEvent[] */ = [
+            { type: 'unlink', path: 'src', old },
+            { type: 'add', path: 'dst', stats, md5sum: 'yata' }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'FileMove',
+              path: 'dst',
+              md5sum: old.md5sum,
+              ino: old.ino,
+              stats,
+              old
+            }
+          ])
+          should(pendingChanges).deepEqual([])
+        })
+      })
+
+      describe('unlink(src) + add(dst) with different md5sum and update date', () => {
+        it('marks the move as an update', () => {
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
+          const stats = {
+            ino: old.ino,
+            mtime: new Date(new Date(old.local.updated_at).getTime() + 1000)
+          }
+          const events /*: LocalEvent[] */ = [
+            { type: 'unlink', path: 'src', old },
+            { type: 'add', path: 'dst', stats, md5sum: 'yata' }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'FileMove',
+              path: 'dst',
+              md5sum: 'yata',
+              ino: old.ino,
+              stats,
+              old,
+              update: {
+                type: 'add',
                 path: 'dst',
                 stats,
                 md5sum: 'yata'
@@ -1159,31 +1276,34 @@ onPlatform('darwin', () => {
 
       describe('unlinkDir(src/) + addDir (dst/) + unlink(src/file) + add(dst/file, new md5sum)', () => {
         it('happened when client was stopped (unlink* events are made up)', () => {
-          const dirIno = 1
-          const fileIno = 2
           const srcDir /*: Metadata */ = builders
             .metadir()
             .path('src')
-            .ino(dirIno)
+            .ino(1)
             .build()
           const srcFile /*: Metadata */ = builders
             .metafile()
             .path(path.normalize('src/file'))
-            .ino(fileIno)
+            .ino(2)
             .data('Initial content')
             .build()
+          const dirStats = { ino: 1, mtime: new Date(srcDir.local.updated_at) }
+          const fileStats = {
+            ino: 2,
+            mtime: new Date(new Date(srcFile.local.updated_at).getTime() + 1000)
+          }
           const newMd5sum = builders
             .metafile()
             .data('New content')
             .build().md5sum
           const events /*: LocalEvent[] */ = [
             { type: 'unlinkDir', path: 'src', old: srcDir },
-            { type: 'addDir', path: 'dst', stats: { ino: dirIno } },
+            { type: 'addDir', path: 'dst', stats: dirStats },
             { type: 'unlink', path: path.normalize('src/file'), old: srcFile },
             {
               type: 'add',
               path: path.normalize('dst/file'),
-              stats: { ino: fileIno },
+              stats: fileStats,
               md5sum: newMd5sum
             }
           ]
@@ -1193,16 +1313,16 @@ onPlatform('darwin', () => {
               sideName,
               type: 'DirMove',
               path: 'dst',
-              ino: dirIno,
-              stats: { ino: dirIno },
+              ino: dirStats.ino,
+              stats: dirStats,
               old: srcDir
             },
             {
               sideName,
               type: 'FileUpdate',
               path: path.normalize('dst/file'),
-              ino: fileIno,
-              stats: { ino: fileIno },
+              ino: fileStats.ino,
+              stats: fileStats,
               md5sum: newMd5sum,
               old: _.defaults({ path: path.normalize('dst/file') }, srcFile),
               needRefetch: true

@@ -8,8 +8,8 @@ module.exports = ({
   useCaptures: false,
   init: [{ ino: 1, path: 'file', content: 'initial content' }],
   actions: [
-    { type: 'delete', path: 'file' },
     { type: 'wait', ms: runOnHFS() ? 1000 : 0 },
+    { type: 'delete', path: 'file' },
     { type: 'create_file', path: 'file', content: 'new content' },
     { type: 'wait', ms: 1000 }
   ],
