@@ -1,5 +1,6 @@
 /* @flow */
 
+const metadata = require('../metadata')
 const { IncompatibleDocError } = require('../incompatibilities/platform')
 const { HEARTBEAT: REMOTE_HEARTBEAT } = require('../remote/constants')
 const remoteErrors = require('../remote/errors')
@@ -184,6 +185,36 @@ const skip = async (
   }
 }
 
+const createConflict = async (
+  cause /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */,
+  sync /*: Sync */
+) => {
+  log.debug(cause, 'user requested conflict creation')
+
+  clearInterval(sync.retryInterval)
+
+  if (cause.change) {
+    const { change, err } = cause
+    try {
+      const conflict = await sync.local.resolveConflict(change.doc)
+
+      // Skip the change since it would result in the same conflict error.
+      await sync.skipChange(change, err)
+
+      if (metadata.isFolder(change.doc)) {
+        // Wait for our conflict to make it to PouchDB to avoid synchronizing its
+        // descendants and creating more conflicts.
+        await sync.waitForNewChangeOn(change.seq, conflict.path)
+      }
+    } catch (err) {
+      log.debug(
+        { path: change.doc.path, err, sentry: true },
+        'failed to create conflict on behalf of user'
+      )
+    }
+  }
+}
+
 /* This method wraps errors caught during a Sync.apply call.
  * Those errors were most probably raised from the Local or Remote side thus
  * making a SyncError type unnecessary.
@@ -226,5 +257,6 @@ module.exports = {
   retryDelay,
   retry,
   skip,
+  createConflict,
   wrapError
 }

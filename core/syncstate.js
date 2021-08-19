@@ -12,6 +12,7 @@ type UserActionStatus = 'Required'|'InProgress'
 export type UserActionCommand =
   | 'retry'
   | 'skip'
+  | 'create-conflict'
 export type UserAction = {
   seq: ?number,
   code: string,

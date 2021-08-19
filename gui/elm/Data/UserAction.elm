@@ -40,7 +40,8 @@ type alias RemoteActionInfo =
 
 
 type Command
-    = GiveUp
+    = CreateConflict
+    | GiveUp
     | Retry
     | ShowDetails
 
@@ -156,6 +157,9 @@ encodeAction action =
 encodeCommand : Command -> EncodedCommand
 encodeCommand cmd =
     case cmd of
+        CreateConflict ->
+            "create-conflict"
+
         GiveUp ->
             "skip"
 
@@ -223,6 +227,25 @@ view helpers platform action =
 viewByCode : Helpers -> UserAction -> UserActionView
 viewByCode helpers action =
     case action of
+        ClientAction "ConflictingName" { docType, path } ->
+            let
+                localDocType =
+                    "Helpers " ++ docType
+
+                localAction =
+                    helpers.interpolate [ localDocType ] "UserAction Rename {0}"
+            in
+            { title = "Error Conflict with existing document"
+            , content =
+                [ helpers.interpolate [ localDocType, path ] "Error The name of {0} `{1}` is conflicting with an existing document."
+                , helpers.interpolate [ localDocType ] "Error You need to rename this {0} to solve the conflict."
+                ]
+            , buttons =
+                [ actionButton helpers (SendCommand Retry action) "UserAction Retry" Secondary
+                , actionButton helpers (SendCommand CreateConflict action) localAction Primary
+                ]
+            }
+
         ClientAction "FileTooLarge" { path } ->
             { title = "Error The file is too large"
             , content =

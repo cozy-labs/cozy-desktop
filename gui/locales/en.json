@@ -117,6 +117,9 @@
   "Error The file is too large": "The file is too large",
   "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.": "The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.",
   "Error You need to remove it from your local synchronization folder or reduce its size.": "You need to remove it from your local synchronization folder or reduce its size.",
+  "Error Conflict with existing document": "Conflict with existing document",
+  "Error The name of {0} `{1}` is conflicting with an existing document.": "The name of {0} `{1}` is conflicting with an existing document.",
+  "Error You need to rename this {0} to solve the conflict.": "You need to rename this {0} to solve the conflict.",
 
   "Folder All done": "All done",
   "Folder Please choose an empty directory": "Please choose an empty directory.",
@@ -256,6 +259,7 @@
   "UserAction Give up": "Give up",
   "UserAction Retry": "Retry",
   "UserAction Read more": "Read more",
+  "UserAction Rename {0}": "Rename {0}",
 
   "Welcome Sign in to your Cozy": "Sign in to my Cozy",
   "Welcome Your own private cloud": "Welcome to Cozy Drive for Desktop !"
