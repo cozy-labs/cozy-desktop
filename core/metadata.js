@@ -136,7 +136,6 @@ export type Metadata = {
   trashed?: true,
   deleted?: true,
   errors?: number,
-  moveTo?: string, // Destination id
   overwrite?: SavedMetadata,
   childMove?: boolean,
   incompatibilities?: *,
@@ -383,7 +382,7 @@ function ensureValidPath(doc /*: {path: string} */) {
 
 function invariants /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
   // If the record is meant to be erased we don't care about invariants
-  if (doc._deleted && !doc.moveTo) return doc
+  if (doc._deleted) return doc
 
   let err
   if (!doc.sides) {
@@ -500,7 +499,6 @@ function isAtLeastUpToDate(sideName /*: SideName */, doc /*: Metadata */) {
 function removeActionHints(doc /*: Metadata */) {
   if (doc.sides) delete doc.sides
   if (doc.moveFrom) delete doc.moveFrom
-  if (doc.moveTo) delete doc.moveTo
 }
 
 function removeNoteMetadata(doc /*: Metadata */) {

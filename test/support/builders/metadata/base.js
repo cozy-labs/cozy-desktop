@@ -77,16 +77,11 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  moveTo(docpath /*: string */) /*: this */ {
-    this.doc.moveTo = path.normalize(docpath)
-    this.doc._deleted = true
-    return this
-  }
-
   moveFrom(was /*: Metadata */) /*: this */ {
-    if (!was.moveTo) throw new Error('Missing moveTo attribute on was')
-
-    this.doc = _.cloneDeep(_.omit(was, ['_id', '_rev', '_deleted', 'moveTo']))
+    this.doc = {
+      ..._.cloneDeep(was),
+      ...this.doc
+    }
     this.doc.moveFrom = was
 
     return this
@@ -174,7 +169,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   overwrite(existingDoc /*: SavedMetadata */) /*: this */ {
-    this.doc.overwrite = existingDoc
+    this.doc.overwrite = _.cloneDeep(existingDoc)
     return this
   }
 
@@ -309,13 +304,6 @@ module.exports = class BaseMetadataBuilder {
       this.noRemote()
     }
 
-    if (this.doc.overwrite && this.doc.moveFrom) {
-      // Emulate the _id reuse done when merging an overwriting move.
-      const { _id, _rev } = this.doc.overwrite
-      this.doc._id = _id
-      this.doc._rev = _rev
-    }
-
     return _.cloneDeep(this.doc)
   }
 
@@ -330,14 +318,15 @@ module.exports = class BaseMetadataBuilder {
       doc.sides.target = Math.max(doc.sides.local || 0, doc.sides.remote || 0)
     }
 
+    if (this.doc.overwrite) {
+      const { overwrite } = this.doc
+      await pouch.eraseDocument(overwrite)
+    }
     return await pouch.put(doc)
   }
 
   _consolidatePaths() /* void */ {
     metadata.ensureValidPath(this.doc)
-    if (this.doc.moveFrom) {
-      this.doc.moveFrom.moveTo = this.doc.path
-    }
   }
 
   _ensureLocal() /*: void */ {

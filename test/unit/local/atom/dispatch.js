@@ -607,7 +607,6 @@ describe('core/local/atom/dispatch.loop()', function() {
         const src = await builders
           .metafile()
           .path(filePath)
-          .moveTo(newFilePath)
           .ino(1)
           .upToDate()
           .create()
@@ -846,7 +845,6 @@ describe('core/local/atom/dispatch.loop()', function() {
         const src = await builders
           .metadir()
           .path(directoryPath)
-          .moveTo(newDirectoryPath)
           .ino(1)
           .upToDate()
           .create()

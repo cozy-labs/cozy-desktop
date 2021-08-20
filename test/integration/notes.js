@@ -91,6 +91,10 @@ describe('Update', () => {
           dir_id: note.dir_id
         })
         should(isNote(updatedRemote)).be.true()
+        await should(helpers.local.tree()).be.fulfilledWith([
+          'note-conflict-...',
+          'note.cozy-note'
+        ])
       })
 
       it('uploads the new content to the Cozy', async () => {
@@ -196,6 +200,11 @@ describe('Update', () => {
             dir_id: dst._id
           })
           should(isNote(updatedRemote)).be.true()
+          await should(helpers.local.tree()).be.fulfilledWith([
+            'dst/',
+            'dst/note-conflict-...',
+            'dst/note.cozy-note'
+          ])
         })
 
         it('uploads the new content to the Cozy at the target location', async () => {
@@ -244,6 +253,11 @@ describe('Update', () => {
             dir_id: dst._id
           })
           should(isNote(updatedRemote)).be.true()
+          await should(helpers.local.tree()).be.fulfilledWith([
+            'dst/',
+            'dst/note-conflict-...',
+            'dst/note.cozy-note'
+          ])
         })
 
         it('uploads the new content to the Cozy at the target location', async () => {
@@ -276,31 +290,82 @@ describe('Update', () => {
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
     })
-    beforeEach('change note into markdown file', async function() {
-      const doc = await this.pouch.bySyncedPath('note.cozy-note')
-      // remove everything that makes a note a Cozy Note
-      await this.pouch.put({ ...doc, metadata: {} })
-    })
 
     describe('on local filesystem', () => {
-      beforeEach('update local note', async () => {
-        await helpers.local.syncDir.outputFile(
-          'note.cozy-note',
-          'updated content'
-        )
-        await helpers.flushLocalAndSyncAll()
+      context('following a first update to the real note', () => {
+        let markdown
+        beforeEach('update local note', async () => {
+          await helpers.local.syncDir.outputFile(
+            'note.cozy-note',
+            'updated note content'
+          )
+          await helpers.flushLocalAndSyncAll()
+          await helpers.pullAndSyncAll()
+
+          // Get hold of the markdown file
+          const markdownDoc = await helpers.pouch.bySyncedPath('note.cozy-note')
+          markdown = await helpers.remote.byId(markdownDoc.remote._id)
+        })
+
+        beforeEach('update local markdown', async () => {
+          await helpers.local.syncDir.outputFile(
+            'note.cozy-note',
+            'updated markdown content'
+          )
+          await helpers.flushLocalAndSyncAll()
+        })
+
+        it('updates the remote file with the new content', async () => {
+          const updatedRemote =
+            (await helpers.remote.byIdMaybe(markdown._id)) || {}
+          should(updatedRemote).have.properties({
+            name: 'note.cozy-note',
+            dir_id: markdown.dir_id
+          })
+          should(await helpers.remote.readFile(markdown.path)).eql(
+            'updated markdown content'
+          )
+          should(isNote(updatedRemote)).be.false()
+          await should(helpers.local.tree()).be.fulfilledWith([
+            'note-conflict-...',
+            'note.cozy-note'
+          ])
+        })
       })
 
-      it('updates the remote file with the new content', async () => {
-        const updatedRemote = (await helpers.remote.byIdMaybe(note._id)) || {}
-        should(updatedRemote).have.properties({
-          name: note.name,
-          dir_id: note.dir_id
+      context('once the file has been synchronized', () => {
+        beforeEach('change note into markdown file', async function() {
+          const doc = await this.pouch.bySyncedPath('note.cozy-note')
+          // remove everything that makes a note a Cozy Note
+          await this.pouch.put({
+            ...doc,
+            remote: { ...doc.remote, metadata: {} },
+            metadata: {}
+          })
         })
-        should(await helpers.remote.readFile('note.cozy-note')).eql(
-          'updated content'
-        )
-        should(isNote(updatedRemote)).be.false()
+
+        beforeEach('update local markdown', async () => {
+          await helpers.local.syncDir.outputFile(
+            'note.cozy-note',
+            'updated content'
+          )
+          await helpers.flushLocalAndSyncAll()
+        })
+
+        it('updates the remote file with the new content', async () => {
+          const updatedRemote = (await helpers.remote.byIdMaybe(note._id)) || {}
+          should(updatedRemote).have.properties({
+            name: note.name,
+            dir_id: note.dir_id
+          })
+          should(await helpers.remote.readFile('note.cozy-note')).eql(
+            'updated content'
+          )
+          should(isNote(updatedRemote)).be.false()
+          await should(helpers.local.tree()).be.fulfilledWith([
+            'note.cozy-note'
+          ])
+        })
       })
     })
   })
@@ -331,7 +396,7 @@ describe('Update', () => {
       const dstPath = path.normalize('dst/note.cozy-note')
 
       describe('to a free target location', () => {
-        beforeEach('move and update local note', async () => {
+        beforeEach('move and update local markdown', async () => {
           await helpers.local.syncDir.move(srcPath, dstPath)
           await helpers.local.syncDir.outputFile(dstPath, 'updated content')
           await helpers.flushLocalAndSyncAll()
@@ -347,6 +412,10 @@ describe('Update', () => {
             'updated content'
           )
           should(isNote(updatedRemote)).be.false()
+          await should(helpers.local.tree()).be.fulfilledWith([
+            'dst/',
+            'dst/note.cozy-note'
+          ])
         })
       })
 
@@ -366,7 +435,7 @@ describe('Update', () => {
           await helpers.pullAndSyncAll()
           await helpers.flushLocalAndSyncAll()
         })
-        beforeEach('move and update local note', async () => {
+        beforeEach('move and update local markdown', async () => {
           await helpers.local.syncDir.move(srcPath, dstPath, {
             overwrite: true
           })
@@ -384,6 +453,10 @@ describe('Update', () => {
             'updated content'
           )
           should(isNote(updatedRemote)).be.false()
+          await should(helpers.local.tree()).be.fulfilledWith([
+            'dst/',
+            'dst/note.cozy-note'
+          ])
         })
 
         it('sends the overwritten note to the trash', async () => {

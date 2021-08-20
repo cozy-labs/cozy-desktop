@@ -86,10 +86,7 @@ describe('Move', () => {
 
       should(
         helpers.putDocs('path', '_deleted', 'trashed', 'moveFrom')
-      ).deepEqual([
-        { path: path.normalize('src/file'), _deleted: true },
-        { path: path.normalize('dst/file'), moveFrom: oldFile }
-      ])
+      ).deepEqual([{ path: path.normalize('dst/file'), moveFrom: oldFile }])
 
       await helpers.syncAll()
 
@@ -126,10 +123,9 @@ describe('Move', () => {
         oldFile
       )
 
-      should(helpers.putDocs('path', '_deleted', 'trashed')).deepEqual([
-        { path: path.normalize('src/file'), _deleted: true },
-        { path: path.normalize('dst/file') }
-      ])
+      should(
+        helpers.putDocs('path', '_deleted', 'trashed', 'moveFrom')
+      ).deepEqual([{ path: path.normalize('dst/file'), moveFrom: oldFile }])
 
       await helpers.syncAll()
 
@@ -175,12 +171,12 @@ describe('Move', () => {
           'overwrite.path'
         )
       ).deepEqual([
-        { path: path.normalize('src/file'), _deleted: true },
         {
           path: path.normalize('dst/file'),
           moveFrom: oldFile,
           overwrite: { path: path.normalize('dst/file') }
-        }
+        },
+        { path: path.normalize('dst/file'), _deleted: true } // XXX: This is actually called first
       ])
 
       await helpers.syncAll()
@@ -585,25 +581,9 @@ describe('Move', () => {
       should(
         helpers.putDocs('path', '_deleted', 'trashed', 'childMove')
       ).deepEqual([
-        { path: path.normalize('parent/src/dir'), _deleted: true },
         { path: path.normalize('parent/dst/dir') },
-        {
-          path: path.normalize('parent/src/dir/empty-subdir'),
-          _deleted: true,
-          childMove: true
-        },
         { path: path.normalize('parent/dst/dir/empty-subdir') },
-        {
-          path: path.normalize('parent/src/dir/subdir'),
-          _deleted: true,
-          childMove: true
-        },
         { path: path.normalize('parent/dst/dir/subdir') },
-        {
-          path: path.normalize('parent/src/dir/subdir/file'),
-          _deleted: true,
-          childMove: true
-        },
         { path: path.normalize('parent/dst/dir/subdir/file') }
       ])
 
@@ -741,29 +721,17 @@ describe('Move', () => {
           'overwrite.path'
         )
       ).deepEqual([
-        { path: path.normalize('parent/src/dir'), _deleted: true },
         {
           path: path.normalize('parent/dst/dir'),
           overwrite: { path: path.normalize('parent/dst/dir') }
         },
-        {
-          path: path.normalize('parent/src/dir/empty-subdir'),
-          _deleted: true,
-          childMove: true
-        },
         { path: path.normalize('parent/dst/dir/empty-subdir') },
-        {
-          path: path.normalize('parent/src/dir/subdir'),
-          _deleted: true,
-          childMove: true
-        },
         { path: path.normalize('parent/dst/dir/subdir') },
+        { path: path.normalize('parent/dst/dir/subdir/file') },
         {
-          path: path.normalize('parent/src/dir/subdir/file'),
-          _deleted: true,
-          childMove: true
-        },
-        { path: path.normalize('parent/dst/dir/subdir/file') }
+          path: path.normalize('parent/dst/dir'),
+          _deleted: true
+        }
       ])
 
       await helpers.syncAll()

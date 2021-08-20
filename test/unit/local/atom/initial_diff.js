@@ -743,7 +743,6 @@ describe('core/local/atom/initial_diff', () => {
       const wasDir = builders
         .metadir()
         .path('foo')
-        .moveTo('foo2')
         .ino(1)
         .upToDate()
         .build()
@@ -756,7 +755,6 @@ describe('core/local/atom/initial_diff', () => {
       const wasFile = builders
         .metafile()
         .path('fizz')
-        .moveTo('fizz2')
         .ino(2)
         .upToDate()
         .build()

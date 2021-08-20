@@ -54,6 +54,15 @@ describe('Conflict resolution', () => {
           .build()
       )
       should(await helpers.local.tree()).deepEqual(['foo-conflict-.../'])
+
+      await helpers.flushLocalAndSyncAll()
+      await helpers.pullAndSyncAll()
+
+      should(await helpers.local.tree()).deepEqual(['foo', 'foo-conflict-.../'])
+      should(await helpers.remote.treeWithoutTrash()).deepEqual([
+        'foo',
+        'foo-conflict-.../'
+      ])
     })
   })
 
