@@ -276,6 +276,20 @@ function toString(a /*: LocalChange */) /*: string */ {
   return '(' + a.type + ': ' + (a.old && a.old.path) + '-->' + a.path + ')'
 }
 
+function fileHasChanged(
+  old /*: ?Metadata */,
+  e /*: LocalFileAdded */
+) /*: boolean */ {
+  return (
+    old != null &&
+    old.local != null &&
+    e.md5sum != null &&
+    e.stats != null &&
+    e.md5sum !== old.md5sum &&
+    e.stats.mtime.toISOString() !== old.local.updated_at
+  )
+}
+
 function dirAddition(e /*: LocalDirAdded */) /*: LocalDirAddition */ {
   const change /*: LocalDirAddition */ = {
     sideName,
@@ -376,13 +390,15 @@ function fileMoveFromUnlinkAdd(
   if (_.get(unlinkChange, 'old.path').normalize() === e.path.normalize()) return
   const fileMove /*: Object */ = build('FileMove', e.path, {
     stats: e.stats,
-    md5sum: e.md5sum,
     old: unlinkChange.old,
     ino: unlinkChange.ino,
     wip: e.wip
   })
-  if (e.md5sum && e.md5sum !== (unlinkChange.old && unlinkChange.old.md5sum)) {
+  if (fileHasChanged(unlinkChange.old, e) || !unlinkChange.old) {
     fileMove.update = e
+    fileMove.md5sum = e.md5sum
+  } else {
+    fileMove.md5sum = unlinkChange.old.md5sum
   }
 
   log.debug(
@@ -804,10 +820,11 @@ function includeChangeEventIntoFileMove(
 
 function convertFileMoveToDeletion(samePathChange /*: ?LocalChange */) {
   const change /*: ?LocalFileMove */ = maybeMoveFile(samePathChange)
-  if (!change || change.md5sum) return
+  if (!change || !change.wip) return
   // $FlowFixMe
   change.type = 'FileDeletion'
   change.path = change.old.path
+  delete change.md5sum
   delete change.stats
   delete change.wip
 
