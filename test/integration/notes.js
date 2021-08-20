@@ -10,7 +10,7 @@ const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
-const { TRASH_DIR_ID } = require('../../core/remote/constants')
+const { NOTE_MIME_TYPE, TRASH_DIR_ID } = require('../../core/remote/constants')
 const { isNote } = require('../../core/utils/notes')
 const timestamp = require('../../core/utils/timestamp')
 
@@ -279,20 +279,19 @@ describe('Update', () => {
   })
 
   describe('Markdown file with Cozy Note mime type update', () => {
-    let note
-    beforeEach('create note', async () => {
-      note = await builders
-        .remoteNote()
-        .name('note.cozy-note')
-        .data('Initial content')
-        .createdAt(2018, 5, 15, 21, 1, 53)
-        .create()
-      await helpers.pullAndSyncAll()
-      await helpers.flushLocalAndSyncAll()
-    })
-
     describe('on local filesystem', () => {
-      context('following a first update to the real note', () => {
+      context('following a first local update on the real note', () => {
+        beforeEach('create note', async () => {
+          await builders
+            .remoteNote()
+            .name('note.cozy-note')
+            .data('Initial content')
+            .createdAt(2018, 5, 15, 21, 1, 53)
+            .create()
+          await helpers.pullAndSyncAll()
+          await helpers.flushLocalAndSyncAll()
+        })
+
         let markdown
         beforeEach('update local note', async () => {
           await helpers.local.syncDir.outputFile(
@@ -333,15 +332,17 @@ describe('Update', () => {
         })
       })
 
-      context('once the file has been synchronized', () => {
-        beforeEach('change note into markdown file', async function() {
-          const doc = await this.pouch.bySyncedPath('note.cozy-note')
-          // remove everything that makes a note a Cozy Note
-          await this.pouch.put({
-            ...doc,
-            remote: { ...doc.remote, metadata: {} },
-            metadata: {}
-          })
+      context('on synchronized markdown file', () => {
+        let markdown
+        beforeEach('create markdown file', async function() {
+          markdown = await builders
+            .remoteFile()
+            .name('note.cozy-note')
+            .contentType(NOTE_MIME_TYPE)
+            .data('Initial content')
+            .createdAt(2018, 5, 15, 21, 1, 53)
+            .create()
+          await helpers.pullAndSyncAll()
         })
 
         beforeEach('update local markdown', async () => {
@@ -353,10 +354,11 @@ describe('Update', () => {
         })
 
         it('updates the remote file with the new content', async () => {
-          const updatedRemote = (await helpers.remote.byIdMaybe(note._id)) || {}
+          const updatedRemote =
+            (await helpers.remote.byIdMaybe(markdown._id)) || {}
           should(updatedRemote).have.properties({
-            name: note.name,
-            dir_id: note.dir_id
+            name: markdown.name,
+            dir_id: markdown.dir_id
           })
           should(await helpers.remote.readFile('note.cozy-note')).eql(
             'updated content'
@@ -370,25 +372,21 @@ describe('Update', () => {
     })
   })
 
-  describe('Markdown file with Cozy Note mime type after move', () => {
-    let dst, note
-    beforeEach('create note', async () => {
+  describe('Markdown file with Cozy Note mime type move', () => {
+    let dst, markdown
+    beforeEach('create markdown file', async () => {
       dst = await builders
         .remoteDir()
         .name('dst')
         .create()
-      note = await builders
-        .remoteNote()
+      markdown = await builders
+        .remoteFile()
         .name('note.cozy-note')
+        .contentType(NOTE_MIME_TYPE)
         .data('Initial content')
         .createdAt(2018, 5, 15, 21, 1, 53)
         .create()
       await helpers.pullAndSyncAll()
-    })
-    beforeEach('change note into markdown file', async function() {
-      const doc = await this.pouch.bySyncedPath('note.cozy-note')
-      // remove everything that makes a note a Cozy Note
-      await this.pouch.put({ ...doc, metadata: {} })
     })
 
     describe('on local filesystem', () => {
@@ -403,9 +401,10 @@ describe('Update', () => {
         })
 
         it('moves and updates the remote file with the new content', async () => {
-          const updatedRemote = (await helpers.remote.byIdMaybe(note._id)) || {}
+          const updatedRemote =
+            (await helpers.remote.byIdMaybe(markdown._id)) || {}
           should(updatedRemote).have.properties({
-            name: note.name,
+            name: markdown.name,
             dir_id: dst._id
           })
           should(await helpers.remote.readFile('dst/note.cozy-note')).eql(
@@ -444,9 +443,10 @@ describe('Update', () => {
         })
 
         it('moves and updates the remote file with the new content', async () => {
-          const updatedRemote = (await helpers.remote.byIdMaybe(note._id)) || {}
+          const updatedRemote =
+            (await helpers.remote.byIdMaybe(markdown._id)) || {}
           should(updatedRemote).have.properties({
-            name: note.name,
+            name: markdown.name,
             dir_id: dst._id
           })
           should(await helpers.remote.readFile('dst/note.cozy-note')).eql(

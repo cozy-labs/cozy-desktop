@@ -14,7 +14,7 @@ export interface Writer {
   name: SideName;
   addFileAsync (doc: SavedMetadata): Promise<void>;
   addFolderAsync (doc: SavedMetadata): Promise<void>;
-  overwriteFileAsync (doc: SavedMetadata, old: ?SavedMetadata): Promise<void>;
+  overwriteFileAsync (doc: SavedMetadata): Promise<void>;
   updateFileMetadataAsync (doc: SavedMetadata): Promise<void>;
   updateFolderAsync (doc: SavedMetadata): Promise<void>;
   moveAsync (doc: SavedMetadata, from: SavedMetadata): Promise<void>;
