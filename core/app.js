@@ -96,16 +96,14 @@ class App {
 
   // Parse the URL
   parseCozyUrl(cozyUrl /*: string */) {
-    if (cozyUrl.indexOf(':') === -1) {
+    //fix issue when using no 443 or 80 port url.
+    if (cozyUrl.indexOf('://') === -1) {
       if (cozyUrl.indexOf('.') === -1) {
         cozyUrl += '.cozycloud.cc'
       }
       cozyUrl = `https://${cozyUrl}`
     }
-    //fix issue when using no 443 or 80 port url.
-    if (cozyUrl.indexOf('http') !== 0) {
-      cozyUrl = `https://${cozyUrl}`
-    }
+    
     return new url.URL(cozyUrl)
   }
 
