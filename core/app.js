@@ -102,6 +102,10 @@ class App {
       }
       cozyUrl = `https://${cozyUrl}`
     }
+    //fix issue when using no 443 or 80 port url.
+    if (cozyUrl.indexOf('http') !== 0) {
+      cozyUrl = `https://${cozyUrl}`
+    }
     return new url.URL(cozyUrl)
   }
 
