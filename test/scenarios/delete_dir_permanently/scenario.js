@@ -3,8 +3,7 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
-  disabled:
-    "Not sure why we don't handle this one... Maybe because the whole tree ends up at the root of the Cozy trash?",
+  side: 'remote',
   init: [
     { ino: 1, path: 'parent/' },
     { ino: 2, path: 'parent/dir/' },
@@ -16,13 +15,6 @@ module.exports = ({
   actions: [{ type: 'delete', path: 'parent/dir' }],
   expected: {
     tree: ['parent/', 'parent/other_dir/'],
-    trash: [
-      'file'
-      // TODO: Trash with ancestor dir:
-      // 'dir/',
-      // 'dir/empty-subdir/',
-      // 'dir/subdir/',
-      // 'dir/subdir/file'
-    ]
+    trash: ['dir/', 'dir/empty-subdir/', 'dir/subdir/', 'dir/subdir/file']
   }
 } /*: Scenario */)
