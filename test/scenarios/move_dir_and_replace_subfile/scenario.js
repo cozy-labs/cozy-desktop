@@ -1,5 +1,7 @@
 /* @flow */
 
+const { runWithStoppedClient } = require('../../support/helpers/scenarios')
+
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
@@ -18,11 +20,16 @@ module.exports = ({
   ],
   expected: {
     tree: ['dst/', 'dst/file'],
-    // the remote changes are fetched together and the trashing merged first so
-    // the file is not moved and thus we don't register an overwriting update of
+    // The remote changes are fetched together and the trashing merged first so
+    // file is not moved and thus we don't register an overwriting update of
     // file leading to the trashing being propagated.
     localTrash: ['file'],
-    remoteTrash: [],
+    // During an initial scan on macOS, the generated delete changes are
+    // prepended to the list of changes so file is seen as deleted, not moved,
+    // and thus we don't register an overwriting update of file leading to the
+    // trashing being propagated.
+    remoteTrash:
+      process.platform === 'darwin' && runWithStoppedClient() ? ['file'] : [],
     contents: {
       'dst/file': 'new content'
     }

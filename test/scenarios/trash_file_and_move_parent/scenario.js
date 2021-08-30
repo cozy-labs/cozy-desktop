@@ -1,14 +1,9 @@
 /* @flow */
 
-const { runWithStoppedClient } = require('../../support/helpers/scenarios')
-
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
   useCaptures: false,
-  disabled: runWithStoppedClient()
-    ? 'Does not work because the parent events are generated first during the intial scan'
-    : undefined,
   init: [
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'src/' },
