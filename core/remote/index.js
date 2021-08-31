@@ -7,7 +7,6 @@
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const path = require('path')
-const { posix, sep } = path
 
 const { isNote } = require('../utils/notes')
 const logger = require('../utils/logger')
@@ -148,17 +147,7 @@ class Remote /*:: implements Reader, Writer */ {
       )
       metadata.updateRemote(doc, dir)
     } catch (err) {
-      if (err.status !== 409) {
-        throw err
-      }
-
-      // TODO: stop linking docs like this. Throw the error and let the remote
-      // watcher do its job.
-      log.info({ path }, 'Folder already exists')
-      const remotePath = '/' + posix.join(...doc.path.split(sep))
-      const dir = await this.remoteCozy.findDirectoryByPath(remotePath)
-      metadata.updateRemote(doc, dir)
-      return this.updateFolderAsync(doc)
+      throw err
     }
   }
 
@@ -283,18 +272,7 @@ class Remote /*:: implements Reader, Writer */ {
       )
       metadata.updateRemote(doc, newRemoteDoc)
     } catch (err) {
-      if (err.status !== 404) {
-        throw err
-      }
-
-      log.warn({ path }, "Directory doesn't exist anymore. Recreating it...")
-      const [newParentPath, newName] = dirAndName(path)
-      const newParent = await this.findDirectoryByPath(newParentPath)
-
-      const newRemoteDoc = await this.remoteCozy.createDirectory(
-        newDocumentAttributes(newName, newParent._id, doc.updated_at)
-      )
-      metadata.updateRemote(doc, newRemoteDoc)
+      throw err
     }
   }
 

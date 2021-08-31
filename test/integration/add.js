@@ -343,22 +343,43 @@ describe('Add', () => {
             local: ['parent/', 'parent/dir/'],
             remote: ['parent/', 'parent/dir/']
           })
-          should(helpers.putDocs('path', 'remote', 'sides')).deepEqual([
+          should(
+            helpers.putDocs('path', 'local.path', 'remote', 'sides', 'errors')
+          ).deepEqual([
             // Adding children modifies the parent folder's metadata on the
             // filesystem triggering a call to Pouch.put with the local changes.
             {
               path: 'parent',
+              local: { path: 'parent' },
               remote: savedParent.remote,
               sides: { target: 2, local: 2, remote: 2 }
             },
             {
               path: path.normalize('parent/dir'),
+              local: { path: path.normalize('parent/dir') },
               sides: { target: 1, local: 1 }
+            },
+            // We encounter a conflict error since a remote doc with the same
+            // path already exists.
+            {
+              path: path.normalize('parent/dir'),
+              local: { path: path.normalize('parent/dir') },
+              sides: { target: 2, local: 2 },
+              errors: 1
+            },
+            // The conflict is solved once the remote watcher fetches the remote
+            // doc and links it to the local one during Merge.
+            {
+              path: path.normalize('parent/dir'),
+              local: { path: path.normalize('parent/dir') },
+              remote: updatedDir.remote,
+              sides: { target: 3, local: 2, remote: 3 }
             },
             {
               path: path.normalize('parent/dir'),
+              local: { path: path.normalize('parent/dir') },
               remote: updatedDir.remote,
-              sides: { target: 2, local: 2, remote: 2 }
+              sides: { target: 4, local: 4, remote: 4 }
             }
           ])
         })
