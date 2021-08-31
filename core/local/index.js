@@ -449,35 +449,6 @@ class Local /*:: implements Reader, Writer */ {
     }
   }
 
-  async deleteFolderAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
-    if (doc.docType !== 'folder')
-      throw new Error(`Not folder metadata: ${doc.path}`)
-    const fullpath = path.join(this.syncPath, doc.path)
-
-    try {
-      log.info({ path: doc.path }, 'Deleting empty folder...')
-      await fse.rmdir(fullpath)
-      return
-    } catch (err) {
-      if (err.code === 'ENOENT') {
-        // On Windows, using rmdir on a file will result in an ENOENT error
-        // instead of ENOTDIR.
-        // See https://nodejs.org/api/fs.html#fs_fs_rmdir_path_options_callback
-        if (process.platform !== 'win32') return
-        try {
-          if (!(await fse.stat(fullpath)).isFile()) return
-        } catch (err) {
-          // calling stat on an empty path will raise an ENOENT error
-          if (err.code === 'ENOENT') return
-        }
-        throw err
-      }
-      if (err.code !== 'ENOTEMPTY') throw err
-    }
-    log.warn({ path: doc.path }, 'Folder is not empty!')
-    await this.trashAsync(doc)
-  }
-
   async createBackupCopyAsync(
     doc /*: SavedMetadata */
   ) /*: Promise<SavedMetadata> */ {

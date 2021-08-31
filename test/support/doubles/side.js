@@ -16,7 +16,6 @@ const METHODS = [
   'moveAsync',
   'assignNewRemote',
   'trashAsync',
-  'deleteFolderAsync',
   'renameConflictingDocAsync',
   'diskUsage'
 ]
