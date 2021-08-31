@@ -98,7 +98,12 @@ async function deleteAll() {
   try {
     await Promise.all(remoteDocs.map(doc => cozy.files.trashById(doc._id)))
   } catch (err) {
-    if (err.status !== 404) throw err
+    if (
+      err.status !== 404 && // Document does not exist anymore
+      err.status !== 400 // Document is already in the trash
+    ) {
+      throw err
+    }
   }
 
   return cozy.files.clearTrash()
