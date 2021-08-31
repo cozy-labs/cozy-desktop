@@ -757,11 +757,7 @@ describe('Move', () => {
     })
 
     context('local to an ignored path', () => {
-      // XXX: We should try to trash the entire folder and keep its hierarchy
-      // but we're deleting the content first so the file is deleted before its
-      // parents which get completely erased from the Cozy since they're empty
-      // when we finally trash them.
-      it('trashes the folder content on the remote Cozy', async () => {
+      it('trashes the folder and its content on the remote Cozy', async () => {
         const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
         const doc = builders
           .metadir()
@@ -792,7 +788,10 @@ describe('Move', () => {
 
         should(await helpers.remote.tree()).deepEqual([
           '.cozy_trash/',
-          '.cozy_trash/file',
+          '.cozy_trash/dir/',
+          '.cozy_trash/dir/empty-subdir/',
+          '.cozy_trash/dir/subdir/',
+          '.cozy_trash/dir/subdir/file',
           'parent/',
           'parent/dst/',
           'parent/src/'
@@ -812,12 +811,7 @@ describe('Move', () => {
           helpers.resetPouchSpy()
         })
 
-        // XXX: We have the expected behavior of trashing the entire directory
-        // with its hierarchy because the `moveFrom` and `childMove` attributes
-        // of its children records are not deleted and thus Sync tries to apply
-        // child moves rather than deletions and child moves are not applied (we
-        // move their parent instead).
-        it('trashes the folder content on the remote Cozy', async () => {
+        it('trashes the folder and its content on the remote Cozy', async () => {
           const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
           const doc = builders
             .metadir(oldFolder)

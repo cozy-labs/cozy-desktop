@@ -365,7 +365,7 @@ class Merge {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
     const { path } = doc
 
-    if (!metadata.wasSynced(was) || was.deleted) {
+    if ((!metadata.wasSynced(was) && !was.moveFrom) || was.deleted) {
       move.convertToDestinationAddition(side, was, doc)
       return this.pouch.put(doc)
     } else if (was.sides && was.sides[side]) {

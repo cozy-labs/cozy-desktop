@@ -808,10 +808,9 @@ function hasBothSides(doc /*: Metadata */) /*: boolean %checks */ {
   return doc.sides && doc.sides.local != null && doc.sides.remote != null
 }
 
+// Alias for hasBothSides
 function wasSynced(doc /*: Metadata */) /*: boolean */ {
-  const comesFromSyncedDoc /*: boolean */ = doc.moveFrom != null
-
-  return hasBothSides(doc) || comesFromSyncedDoc
+  return hasBothSides(doc)
 }
 
 function buildDir(

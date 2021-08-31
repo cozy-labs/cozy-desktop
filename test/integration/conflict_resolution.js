@@ -68,7 +68,7 @@ describe('Conflict resolution', () => {
 
   describe('with unmerged local and remote changes', () => {
     beforeEach(async () => {
-      // Create file and synchronise it
+      // Create file and synchronize it
       await helpers.local.syncDir.outputFile(
         'concurrent-edited',
         'local-content'
@@ -283,8 +283,7 @@ describe('Conflict resolution', () => {
     beforeEach(async () => {
       await helpers.local.syncDir.outputFile('same-name', 'content1')
       await cozy.files.createDirectory({
-        name: 'same-name',
-        contentType: 'text/plain'
+        name: 'same-name'
       })
 
       await fullSyncStartingFrom('local')
@@ -444,6 +443,99 @@ describe('Conflict resolution', () => {
           '.cozy_trash/',
           'foo-conflict-...'
         ])
+      })
+    })
+  })
+
+  describe('local move of synced directory with new content to location with unmerged remote move of synced directory to same location', () => {
+    beforeEach(async () => {
+      // Create directories and sync it
+      await helpers.local.syncDir.ensureDir('dir1')
+      await helpers.local.syncDir.ensureDir('dir2')
+      await helpers.local.syncDir.outputFile('dir2/file2', 'file2 content')
+      await helpers.flushLocalAndSyncAll()
+
+      // Add content
+      await helpers.local.syncDir.outputFile('dir1/file1', 'file1 content')
+      await helpers.local.scan()
+
+      // Rename local directory
+      await helpers.local.syncDir.move('dir1', 'dst')
+      await helpers.local.scan()
+
+      // Update dir metadata to push dir move after file addition in changesfeed
+      await fse.utimes(
+        helpers.local.syncDir.abspath('dst'),
+        new Date(),
+        new Date()
+      )
+      await helpers.local.scan()
+
+      // Rename remote directory
+      const { remote: remoteDir2 } = await helpers.pouch.bySyncedPath('dir2')
+      await helpers.remote.move(remoteDir2, 'dst')
+    })
+
+    it('creates a conflict and keeps files in their own directories', async () => {
+      await helpers.syncAll()
+
+      await should(helpers.trees('local', 'remote')).be.fulfilledWith({
+        local: [
+          'dst-conflict-.../',
+          'dst-conflict-.../file2',
+          'dst/',
+          'dst/file1'
+        ],
+        remote: [
+          'dst-conflict-.../',
+          'dst-conflict-.../file2',
+          'dst/',
+          'dst/file1'
+        ]
+      })
+    })
+  })
+
+  describe.skip('local move of synced directory with new content to location with unmerged remote directory', () => {
+    // FIXME: Requires the creation of a conflict when merging the creation of a
+    // directory at the same path than an existing merged directory.
+    // This, in turn, probably requires (or would be facilitated by) the
+    // separation between creation and update of directories.
+    beforeEach(async () => {
+      // Create directory and sync it
+      await helpers.local.syncDir.ensureDir('src')
+      await helpers.flushLocalAndSyncAll()
+
+      // Add content
+      await helpers.local.syncDir.outputFile('src/file', 'local content')
+      await helpers.local.scan()
+
+      // Rename dir
+      await helpers.local.syncDir.move('src', 'dst')
+      await helpers.local.scan()
+
+      // Update dir metadata
+      await fse.utimes(
+        helpers.local.syncDir.abspath('dst'),
+        new Date(),
+        new Date()
+      )
+      await helpers.local.scan()
+
+      // Create remote directory with content
+      const remoteDst = await cozy.files.createDirectory({ name: 'dst' })
+      await cozy.files.create('remote content', {
+        name: 'foo',
+        dirID: remoteDst._id
+      })
+    })
+
+    it('creates a conflict and uploads the local file to the conflict directory', async () => {
+      await helpers.syncAll()
+
+      await should(helpers.trees('local', 'remote')).be.fulfilledWith({
+        local: ['dst-conflict-../', 'dst-conflict-.../file', 'dst/', 'dst/foo'],
+        remote: ['dst-conflict-../', 'dst-conflict-.../file', 'dst/', 'dst/foo']
       })
     })
   })

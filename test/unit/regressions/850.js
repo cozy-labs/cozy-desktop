@@ -1,10 +1,12 @@
 /* Fixes issue https://github.com/cozy-labs/cozy-desktop/issues/850 */
 /* eslint-env mocha */
+/* @flow */
 
 const fse = require('fs-extra')
 const path = require('path')
 const sinon = require('sinon')
 const EventEmitter = require('events')
+const { Promise } = require('bluebird')
 
 // import { TMP_DIR_NAME } from '../../../core/local/constants'
 const ChokidarEvent = require('../../../core/local/chokidar/event')
@@ -12,13 +14,14 @@ const Watcher = require('../../../core/local/chokidar/watcher')
 const { Merge } = require('../../../core/merge')
 const Prep = require('../../../core/prep')
 const { Ignore } = require('../../../core/ignore')
-const Sync = require('../../../core/sync')
+const { Sync } = require('../../../core/sync')
 const metadata = require('../../../core/metadata')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { onPlatform } = require('../../support/helpers/platform')
 const Builders = require('../../support/builders')
+const stubSide = require('../../support/doubles/side')
 
 onPlatform('darwin', () => {
   describe('issue 850', function() {
@@ -33,17 +36,12 @@ onPlatform('darwin', () => {
     })
     before('instanciate local watcher', function() {
       this.merge = new Merge(this.pouch)
-      this.local = {
-        start: sinon.stub().resolves(),
-        stop: sinon.stub().resolves()
-      }
-      this.remote = {
-        start: sinon.stub().returns({
-          started: Promise.resolve(),
-          running: new Promise(() => {})
-        }),
-        stop: sinon.stub().resolves()
-      }
+      this.local = stubSide('local')
+      this.remote = stubSide('remote')
+      this.remote.start = sinon.stub().returns({
+        started: Promise.resolve(),
+        running: new Promise(() => {})
+      })
       this.events = new EventEmitter()
       this.ignore = new Ignore([])
       this.sync = new Sync(
@@ -54,7 +52,7 @@ onPlatform('darwin', () => {
         this.events
       )
       // this.sync.sync = sinon.stub().rejects(new Error('stopped'))
-      this.prep = new Prep(this.merge, this.ignore)
+      this.prep = new Prep(this.merge, this.ignore, this.config)
       this.watcher = new Watcher(
         this.syncPath,
         this.prep,
@@ -116,14 +114,14 @@ onPlatform('darwin', () => {
           _id: 'fakeID',
           _rev: '1-fakeRev'
         }
-        return metadata.fromRemoteDoc({
-          type: 'file',
-          path: '/file',
-          updated_at: new Date(),
-          _id: 'fakeID',
-          _rev: '1-fakeRev',
-          size: '8'
-        })
+        return metadata.fromRemoteDoc(
+          builders
+            .remoteFile()
+            .inRootDir()
+            .name('file')
+            .size('8')
+            .build()
+        )
       }
 
       await this.sync.sync() // create file

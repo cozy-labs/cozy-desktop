@@ -3,6 +3,8 @@
 
 const path = require('path')
 const should = require('should')
+const fse = require('fs-extra')
+const sinon = require('sinon')
 
 const metadata = require('../../core/metadata')
 const configHelpers = require('../support/helpers/config')
@@ -208,7 +210,6 @@ describe('Add', () => {
 
     describe('on local file system', () => {
       it('creates the directory and its content on the remote Cozy', async () => {
-        log.debug('TEST START')
         const dir = await createDoc('local', 'dir', parent)
         const subdir = await createDoc('local', 'subdir', dir)
         await createDoc('local', 'empty-subdir', dir)
@@ -252,6 +253,75 @@ describe('Add', () => {
           'parent/dir/subdir/',
           'parent/dir/subdir/file'
         ])
+      })
+
+      context('and the directory is updated after its content is added', () => {
+        it('creates the directory and its content on the remote Cozy without errors', async () => {
+          // Create directory and its content
+          const dir = await createDoc('local', 'dir', parent)
+          const subdir = await createDoc('local', 'subdir', dir)
+          await createDoc('local', 'empty-subdir', dir)
+
+          await helpers.local.syncDir.outputFile(
+            path.join(subdir.attributes.path, 'file'),
+            'foo'
+          )
+          await helpers.local.scan()
+
+          // Update the directory's metadata
+          await fse.utimes(
+            helpers.local.syncDir.abspath(dir.attributes.path.slice(1)),
+            new Date(),
+            new Date()
+          )
+          await helpers.local.scan()
+
+          should(
+            helpers.putDocs('path', '_deleted', 'trashed', 'sides')
+          ).deepEqual([
+            // Adding children modifies the parent folder's metadata on the
+            // filesystem triggering a call to Pouch.put with the local changes.
+            { path: 'parent', sides: { target: 2, local: 2, remote: 2 } },
+            {
+              path: path.normalize('parent/dir'),
+              sides: { target: 1, local: 1 }
+            },
+            {
+              path: path.normalize('parent/dir/empty-subdir'),
+              sides: { target: 1, local: 1 }
+            },
+            {
+              path: path.normalize('parent/dir/subdir'),
+              sides: { target: 1, local: 1 }
+            },
+            {
+              path: path.normalize('parent/dir/subdir/file'),
+              sides: { target: 1, local: 1 }
+            },
+            {
+              path: path.normalize('parent/dir'),
+              sides: { target: 2, local: 2 }
+            }
+          ])
+
+          sinon.spy(helpers._sync, 'blockSyncFor')
+
+          try {
+            await helpers.syncAll()
+
+            should(await helpers.remote.treeWithoutTrash()).deepEqual([
+              'parent/',
+              'parent/dir/',
+              'parent/dir/empty-subdir/',
+              'parent/dir/subdir/',
+              'parent/dir/subdir/file'
+            ])
+
+            should(helpers._sync.blockSyncFor).not.have.been.called()
+          } finally {
+            helpers._sync.blockSyncFor.restore()
+          }
+        })
       })
 
       context('if directory already exists on the remote Cozy', () => {
