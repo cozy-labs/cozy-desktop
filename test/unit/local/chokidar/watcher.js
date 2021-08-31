@@ -149,6 +149,36 @@ onPlatform('darwin', () => {
         delete this.prep.putFolderAsync
       })
 
+      context(
+        'when processing the initial events of an empty sync directory',
+        () => {
+          it('calls the initial scan step', async function() {
+            sinon.spy(this.watcher.pouch, 'initialScanDocs')
+
+            try {
+              // Make sure we're in initial scan mode
+              this.watcher.initialScanParams = {
+                paths: [],
+                emptyDirRetryCount: 3,
+                resolve: Promise.resolve,
+                flushed: false
+              }
+
+              this.watcher.buffer.push({
+                type: 'addDir',
+                path: '' // XXX: events on the sync directory have an empty path
+              })
+              await this.watcher.buffer.flush()
+
+              // XXX: Called by initialScan.detectOfflineUnlinkEvents()
+              should(this.watcher.pouch.initialScanDocs).have.been.calledOnce()
+            } finally {
+              this.watcher.pouch.initialScanDocs.restore()
+            }
+          })
+        }
+      )
+
       context('while an initial scan is being processed', () => {
         const trigger = new EventEmitter()
         const SECOND_FLUSH_TRIGGER = 'second-flush'
