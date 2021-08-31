@@ -1522,7 +1522,7 @@ onPlatform('darwin', () => {
 
     describe('Sorting', () => {
       describe('using the initial scan sorter', () => {
-        it('sorts correctly move a to b + add b/child', () => {
+        it('sorts move(a to b) before add(b/child)', () => {
           const dirStats = { ino: 3 }
           const dir = builders
             .metadir()
@@ -1550,6 +1550,51 @@ onPlatform('darwin', () => {
               ['DirMove', 'dst/dir'],
               ['DirAddition', 'dst/dir/childDir'],
               ['DirAddition', 'src']
+            ])
+        })
+
+        it('sorts move(a to b) after delete(a/child)', () => {
+          const dirStats = { ino: 3 }
+          const dir = builders
+            .metadir()
+            .path('src/dir')
+            .ino(dirStats.ino)
+            .build()
+          const childDirStats = { ino: 4 }
+          const childDir = builders
+            .metadir()
+            .path('src/dir/childDir')
+            .ino(childDirStats.ino)
+            .build()
+          const childFileStats = { ino: 5 }
+          const childFile = builders
+            .metafile()
+            .path('src/dir/childFile')
+            .ino(childFileStats.ino)
+            .build()
+
+          const events /*: LocalEvent[] */ = [
+            { type: 'unlinkDir', path: childDir.path, old: childDir },
+            { type: 'unlink', path: childFile.path, old: childFile },
+            { type: 'unlinkDir', path: dir.path, old: dir },
+            { type: 'addDir', path: 'dst', stats: { ino: 1 } },
+            { type: 'addDir', path: 'src', stats: { ino: 2 } },
+            { type: 'addDir', path: 'dst/dir', stats: dirStats }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          const changes = analysis(events, {
+            pendingChanges,
+            initialScanParams: { flushed: false }
+          })
+          changes
+            .map(change => [change.type, change.path])
+            .should.deepEqual([
+              ['DirAddition', 'dst'],
+              ['DirAddition', 'src'],
+              ['FileDeletion', 'src/dir/childFile'],
+              ['DirDeletion', 'src/dir/childDir'],
+              ['DirMove', 'dst/dir']
             ])
         })
       })

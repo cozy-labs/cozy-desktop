@@ -404,6 +404,13 @@ const initialScanSorter = (a /*: LocalChange */, b /*: LocalChange */) => {
   if (localChange.isChildAdd(a, b)) return aFirst
   if (localChange.isChildAdd(b, a)) return bFirst
 
+  // XXX: isChildDelete will return true for child moves but we only want to
+  // apply this rule to child deletions.
+  if (!localChange.isChildMove(a, b) && localChange.isChildDelete(a, b))
+    return bFirst
+  if (!localChange.isChildMove(b, a) && localChange.isChildDelete(b, a))
+    return aFirst
+
   if (
     (a.type === 'FileDeletion' || a.type === 'DirDeletion') &&
     b.type !== 'FileDeletion' &&
