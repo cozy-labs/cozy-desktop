@@ -17,7 +17,6 @@ module.exports = ({
     { type: 'mv', src: 'parent/src/dir', dst: 'parent/dst1/dir' },
     { type: 'mv', src: 'parent/dst1/dir', dst: 'parent/dst2/dir' }
   ],
-  // FIXME: eventsBreakpoints: [0, 1, 5],
   expected: {
     tree: [
       'parent/',

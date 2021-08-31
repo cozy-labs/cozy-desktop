@@ -211,18 +211,17 @@ class LocalWatcher {
     this.events.emit('local-start')
 
     let events = rawEvents.filter(hasPath) // @TODO handle root dir events
-    if (events.length > 0) {
-      // We need to destructure `this` otherwise Flow won't detect that
-      // `this.initialScanParams` is not null even within the conditional block.
-      const { buffer, pouch, initialScanParams } = this
-      if (initialScanParams != null && !initialScanParams.flushed) {
-        events = await initialScan.step(events, {
-          initialScanParams,
-          buffer,
-          pouch
-        })
-      }
+    // We need to destructure `this` otherwise Flow won't detect that
+    // `this.initialScanParams` is not null even within the conditional block.
+    const { buffer, pouch, initialScanParams } = this
+    if (initialScanParams != null && !initialScanParams.flushed) {
+      events = await initialScan.step(events, {
+        initialScanParams,
+        buffer,
+        pouch
+      })
     }
+
     if (events.length === 0) {
       if (this.initialScanParams != null) this.initialScanParams.resolve()
       return

@@ -1,5 +1,8 @@
 [
   {
+    "breakpoints": [0, 3, 5]
+  },
+  {
     "type": "unlinkDir",
     "path": "src/A"
   },
