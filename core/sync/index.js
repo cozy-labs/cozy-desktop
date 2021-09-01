@@ -1030,7 +1030,7 @@ class Sync {
       const sourceSideName = otherSide(err.sideName)
       metadata.markSide(sourceSideName, doc, doc)
 
-      await this.pouch.db.put(doc)
+      await this.pouch.put(doc, { checkInvariants: false })
     } catch (err) {
       // If the doc can't be saved, it's because of a new revision.
       // So, we can skip this revision

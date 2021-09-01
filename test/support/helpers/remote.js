@@ -198,9 +198,10 @@ class RemoteTestHelpers {
     newPath /*: string */
   ) {
     const [newDirPath, newName] /*: [string, string] */ = dirAndName(newPath)
-    const newDir /*: RemoteDoc */ = await this.side.remoteCozy.findDirectoryByPath(
-      newDirPath
-    )
+    const newDir /*: RemoteDoc */ =
+      newDirPath === '.'
+        ? await this.side.remoteCozy.findDir(ROOT_DIR_ID)
+        : await this.side.remoteCozy.findDirectoryByPath(`/${newDirPath}`)
     const attrs = {
       name: newName,
       dir_id: newDir._id,
