@@ -321,6 +321,24 @@ class Merge {
         return
       }
 
+      if (side === 'local' && folder.local) {
+        if (
+          // Ignore local events when local metadata doesn't change or only the
+          // modification date changes.
+          // XXX: it would be preferable to store the new local date but we need
+          // to avoid merging folder changes triggered while adding content and
+          // merged after we've synchronized a local renaming (i.e. the change
+          // which was waiting to be dispatched is now obsolete and merging it
+          // would cause issues).
+          // Until we find a way to mark specific events as obsolete, our only
+          // recourse is to discard these modification date changes.
+          metadata.sameFolder(folder.local, doc.local)
+        ) {
+          log.debug({ path: doc.path, doc, folder }, 'Same local metadata')
+          return
+        }
+      }
+
       metadata.markSide(side, doc, folder)
       metadata.assignMaxDate(doc, folder)
 

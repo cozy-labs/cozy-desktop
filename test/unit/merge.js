@@ -1541,7 +1541,8 @@ describe('Merge', function() {
         .create()
       const doc = builders
         .metadir(old)
-        .whateverChange()
+        .tags('changed-tag')
+        .ino(123)
         .unmerged(this.side)
         .build()
 
@@ -1622,6 +1623,34 @@ describe('Merge', function() {
       })
     })
 
+    // XXX: it would be preferable to store the new local date but we need to
+    // avoid merging folder changes triggered while adding content and merged
+    // after we've synchronized a local renaming (i.e. the change which was
+    // waiting to be dispatched is now obsolete and merging it would cause
+    // issues).
+    // Until we find a way to mark specific events as obsolete, our only
+    // recourse is to discard these modification date changes.
+    it('does nothing when only the modification date has changed', async function() {
+      const mergedFolder = await builders
+        .metadir()
+        .upToDate()
+        .create()
+      const sameFolder = builders
+        .metadir(mergedFolder)
+        .updatedAt(new Date())
+        .unmerged('local')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.putFolderAsync('local', _.cloneDeep(sameFolder))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [],
+        resolvedConflicts: []
+      })
+    })
+
     it('resolves a conflict with an existing file', async function() {
       const existingLocalFile = await builders
         .metafile()
@@ -1642,35 +1671,6 @@ describe('Merge', function() {
         resolvedConflicts: [
           ['remote', _.pick(newRemoteDir, ['path', 'remote'])]
         ]
-      })
-    })
-
-    it('updates the local metadata only when it has changed', async function() {
-      const mergedFolder = await builders
-        .metadir()
-        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
-        .upToDate()
-        .create()
-      const sameFolder = builders
-        .metadir(mergedFolder)
-        .updatedAt(new Date())
-        .unmerged('local')
-        .build()
-
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.putFolderAsync('local', _.cloneDeep(sameFolder))
-      )
-
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              local: sameFolder.local
-            },
-            _.omit(mergedFolder, ['_rev'])
-          )
-        ],
-        resolvedConflicts: []
       })
     })
 

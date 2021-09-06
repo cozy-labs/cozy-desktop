@@ -121,6 +121,22 @@ describe('Add', () => {
             .startWith('file-conflict-')
         })
       })
+
+      it('does not merge a parent folder modification date change', async () => {
+        await createDoc('local', 'file')
+
+        await helpers.local.scan()
+
+        should(
+          helpers.putDocs('path', '_deleted', 'trashed', 'sides')
+        ).deepEqual([
+          // XXX: No `parent` change merged since only its modification changed
+          {
+            path: path.normalize('parent/file'),
+            sides: { target: 1, local: 1 }
+          }
+        ])
+      })
     })
 
     describe('remote', () => {
@@ -186,7 +202,7 @@ describe('Add', () => {
     })
   })
 
-  describe('dir', () => {
+  describe('folder', () => {
     const createDoc = async (side, name, parent) => {
       if (side === 'remote') {
         return await cozy.files.createDirectory({ name, dirID: parent._id })
@@ -223,9 +239,6 @@ describe('Add', () => {
         should(
           helpers.putDocs('path', '_deleted', 'trashed', 'sides')
         ).deepEqual([
-          // Adding children modifies the parent folder's metadata on the
-          // filesystem triggering a call to Pouch.put with the local changes.
-          { path: 'parent', sides: { target: 2, local: 2, remote: 2 } },
           {
             path: path.normalize('parent/dir'),
             sides: { target: 1, local: 1 }
@@ -255,6 +268,22 @@ describe('Add', () => {
         ])
       })
 
+      it('does not merge a parent folder modification date change', async () => {
+        await createDoc('local', 'dir', parent)
+
+        await helpers.local.scan()
+
+        should(
+          helpers.putDocs('path', '_deleted', 'trashed', 'sides')
+        ).deepEqual([
+          // XXX: No `parent` change merged since only its modification changed
+          {
+            path: path.normalize('parent/dir'),
+            sides: { target: 1, local: 1 }
+          }
+        ])
+      })
+
       context('and the directory is updated after its content is added', () => {
         it('creates the directory and its content on the remote Cozy without errors', async () => {
           // Create directory and its content
@@ -279,9 +308,6 @@ describe('Add', () => {
           should(
             helpers.putDocs('path', '_deleted', 'trashed', 'sides')
           ).deepEqual([
-            // Adding children modifies the parent folder's metadata on the
-            // filesystem triggering a call to Pouch.put with the local changes.
-            { path: 'parent', sides: { target: 2, local: 2, remote: 2 } },
             {
               path: path.normalize('parent/dir'),
               sides: { target: 1, local: 1 }
@@ -297,10 +323,6 @@ describe('Add', () => {
             {
               path: path.normalize('parent/dir/subdir/file'),
               sides: { target: 1, local: 1 }
-            },
-            {
-              path: path.normalize('parent/dir'),
-              sides: { target: 2, local: 2 }
             }
           ])
 
@@ -335,9 +357,6 @@ describe('Add', () => {
           const updatedDir = metadata.fromRemoteDoc(
             await helpers.remote.byId(remoteDir._id)
           )
-          const savedParent = metadata.fromRemoteDoc(
-            await helpers.remote.byId(parent._id)
-          )
 
           should(await helpers.trees()).deepEqual({
             local: ['parent/', 'parent/dir/'],
@@ -346,14 +365,6 @@ describe('Add', () => {
           should(
             helpers.putDocs('path', 'local.path', 'remote', 'sides', 'errors')
           ).deepEqual([
-            // Adding children modifies the parent folder's metadata on the
-            // filesystem triggering a call to Pouch.put with the local changes.
-            {
-              path: 'parent',
-              local: { path: 'parent' },
-              remote: savedParent.remote,
-              sides: { target: 2, local: 2, remote: 2 }
-            },
             {
               path: path.normalize('parent/dir'),
               local: { path: path.normalize('parent/dir') },
