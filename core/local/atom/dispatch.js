@@ -32,7 +32,7 @@ import type EventEmitter from 'events'
 import type { Config } from '../../config'
 import type Prep from '../../prep'
 import type { Pouch } from '../../pouch'
-import type { Metadata } from '../../metadata'
+import type { SavedMetadata } from '../../metadata'
 
 export type AtomEventsDispatcher = (AtomBatch) => Promise<AtomBatch>
 
@@ -179,7 +179,7 @@ actions = {
   },
 
   renamedfile: async (event, { pouch, prep }) => {
-    const was /*: ?Metadata */ = await pouch.byLocalPath(event.oldPath)
+    const was /*: ?SavedMetadata */ = await pouch.byLocalPath(event.oldPath)
     // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
       if (await docWasAlreadyMoved(event.oldPath, event.path, pouch)) {
@@ -211,7 +211,7 @@ actions = {
   },
 
   renameddirectory: async (event, { pouch, prep }) => {
-    const was /*: ?Metadata */ = await pouch.byLocalPath(event.oldPath)
+    const was /*: ?SavedMetadata */ = await pouch.byLocalPath(event.oldPath)
     // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
       if (await docWasAlreadyMoved(event.oldPath, event.path, pouch)) {
@@ -247,8 +247,8 @@ actions = {
   },
 
   deletedfile: async (event, { pouch, prep }) => {
-    const was /*: ?Metadata */ = await pouch.byLocalPath(event.path)
-    if (!was || was.deleted) {
+    const was /*: ?SavedMetadata */ = await pouch.byLocalPath(event.path)
+    if (docWasAlreadyDeleted(was, event)) {
       log.debug({ event }, 'Assuming file already removed')
       // The file was already marked as deleted in pouchdb
       // => we can ignore safely this event
@@ -259,8 +259,8 @@ actions = {
   },
 
   deleteddirectory: async (event, { pouch, prep }) => {
-    const was /*: ?Metadata */ = await pouch.byLocalPath(event.path)
-    if (!was || was.deleted) {
+    const was /*: ?SavedMetadata */ = await pouch.byLocalPath(event.path)
+    if (docWasAlreadyDeleted(was, event)) {
       log.debug({ event }, 'Assuming dir already removed')
       // The dir was already marked as deleted in pouchdb
       // => we can ignore safely this event
@@ -294,4 +294,32 @@ async function docWasAlreadyMoved(
     // Doc not found so it was not moved
     return false
   }
+}
+
+function docWasAlreadyDeleted(
+  doc /*: ?SavedMetadata */,
+  event /*: AtomEvent */
+) /*: boolean %checks */ {
+  return doc == null || doc.deleted || !sameIno(doc, event)
+}
+
+function sameIno(doc /*: SavedMetadata */, event /*: AtomEvent */) {
+  if (event.deletedIno == null) {
+    return true
+  } else {
+    const { overwrite } = doc
+
+    return (
+      docIno(doc) === event.deletedIno ||
+      // XXX: dangerous if the deleted event is the one fired for the
+      // overwritten doc and not the overwritting one…
+      (overwrite ? docIno(overwrite) === event.deletedIno : true)
+    )
+  }
+}
+
+function docIno(
+  doc /*: { fileid?: string, ino?: number } */
+) /*: ?string|number */ {
+  return doc.fileid || doc.ino
 }

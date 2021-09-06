@@ -354,9 +354,10 @@ async function runRemote(scenario, helpers) {
     await helpers.remote.ignorePreviousChanges()
   }
 
+  await helpers.local.side.watcher.start()
+
   await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
 
-  await helpers.local.side.watcher.start()
   await helpers.remote.pullChanges()
   // TODO: Don't sync when scenario doesn't have target FS/trash assertions?
   await helpers.syncAll()

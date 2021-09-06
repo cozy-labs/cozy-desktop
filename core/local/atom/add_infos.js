@@ -79,7 +79,15 @@ function loop(
             }
             // We save the deleted inode for use in other steps
             if (event.action === 'deleted' && doc) {
-              event.deletedIno = doc.local.fileid || doc.local.ino
+              // In case the deletion is part of an overwriting move,
+              // `doc` will be the record representing the overwriting doc and
+              // not the overwritten one.
+              // Thus we need to get the fileid or ino from the overwritten
+              // `local` metadata via the `overwrite` attribute of `doc`.
+              event.deletedIno =
+                doc.overwrite != null
+                  ? doc.overwrite.local.fileid || doc.overwrite.local.ino
+                  : doc.local.fileid || doc.local.ino
             }
           }
         }
