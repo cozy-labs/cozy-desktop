@@ -300,22 +300,30 @@ class Merge {
   // Create or update a folder
   async putFolderAsync(side /*: SideName */, doc /*: Metadata */) {
     log.debug({ path: doc.path }, 'putFolderAsync')
-    const { path } = doc
+
     const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
-    metadata.markSide(side, doc, folder)
-    if (folder && folder.docType === 'file') {
-      return this.resolveConflictAsync(side, doc)
-    }
-    metadata.assignMaxDate(doc, folder)
-    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
-      { side, doc },
-      folder
-    )
-    if (idConflict) {
-      log.warn({ idConflict }, IdConflict.description(idConflict))
-      await this.resolveConflictAsync(side, doc)
-      return
-    } else if (folder) {
+    if (!folder) {
+      metadata.markSide(side, doc, folder)
+      metadata.assignMaxDate(doc, folder)
+      return this.pouch.put(doc)
+    } else {
+      if (folder.docType === 'file') {
+        return this.resolveConflictAsync(side, doc)
+      }
+
+      const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
+        { side, doc },
+        folder
+      )
+      if (idConflict) {
+        log.warn({ idConflict }, IdConflict.description(idConflict))
+        await this.resolveConflictAsync(side, doc)
+        return
+      }
+
+      metadata.markSide(side, doc, folder)
+      metadata.assignMaxDate(doc, folder)
+
       doc._id = folder._id
       doc._rev = folder._rev
       if (doc.remote == null) {
@@ -337,7 +345,7 @@ class Merge {
       }
 
       if (!folder.deleted && metadata.sameFolder(folder, doc)) {
-        log.info({ path }, 'up to date')
+        log.info({ path: doc.path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
           metadata.updateLocal(folder, doc.local)
           const outdated = metadata.outOfDateSide(folder)
@@ -352,8 +360,6 @@ class Merge {
         return this.pouch.put(doc)
       }
     }
-
-    return this.pouch.put(doc)
   }
 
   // Rename or move a file
