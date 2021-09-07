@@ -53,7 +53,7 @@ type DispatchOptions = {
 */
 
 const SIDE = 'local'
-const LOCAL_END_NOTIFICATION_DELAY = 1000 // 1 second
+const LOCAL_END_NOTIFICATION_DELAY = 1500 // 1.5 seconds
 let actions
 
 module.exports = {
@@ -98,6 +98,7 @@ function step(opts /*: DispatchOptions */) {
     }
 
     dispatchState.localEndTimeout = setTimeout(() => {
+      log.debug('Done dispatching batch events')
       opts.events.emit('local-end')
     }, LOCAL_END_NOTIFICATION_DELAY)
 
