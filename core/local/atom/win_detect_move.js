@@ -229,9 +229,9 @@ function sendReadyBatches(
     if (waiting[0].deletedIno || waiting[0].event.action === 'created') {
       break
     }
+    clearTimeout(waiting[0].timeout)
     const item = waiting.shift()
-    clearTimeout(item.timeout)
-    output([item.event])
+    if (item) output([item.event])
   }
 }
 
@@ -268,7 +268,8 @@ async function winDetectMove(
       }
 
       const timeout = setTimeout(() => {
-        output([pendingItems.shift().event])
+        const pendingItem = pendingItems.shift()
+        if (pendingItem) output([pendingItem.event])
         sendReadyBatches(pendingItems, output)
       }, DELAY)
       pendingItems.push({ event, deletedIno, timeout })
