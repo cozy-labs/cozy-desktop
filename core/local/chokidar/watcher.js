@@ -223,6 +223,7 @@ class LocalWatcher {
     }
 
     if (events.length === 0) {
+      this.events.emit('local-end')
       if (this.initialScanParams != null) this.initialScanParams.resolve()
       return
     }
