@@ -229,9 +229,9 @@ function sendReadyBatches(
     if (waiting[0].deletedIno || waiting[0].event.action === 'created') {
       break
     }
+    clearTimeout(waiting[0].timeout)
     const item = waiting.shift()
-    clearTimeout(item.timeout)
-    output([item.event])
+    if (item) output([item.event])
   }
 }
 
@@ -258,8 +258,18 @@ async function winDetectMove(
 
       assignDebugInfos(event, found)
 
+      for (const pendingItem of pendingItems) {
+        if (areParentChildPaths(pendingItem.event.path, event.path)) {
+          // Refresh parent events timeouts as matching events for them will
+          // probably come after all their children's firt event.
+          // $FlowFixMe TimeoutID.refresh() is available since Node v10
+          pendingItem.timeout.refresh()
+        }
+      }
+
       const timeout = setTimeout(() => {
-        output([pendingItems.shift().event])
+        const pendingItem = pendingItems.shift()
+        if (pendingItem) output([pendingItem.event])
         sendReadyBatches(pendingItems, output)
       }, DELAY)
       pendingItems.push({ event, deletedIno, timeout })
