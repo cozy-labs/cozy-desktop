@@ -300,22 +300,48 @@ class Merge {
   // Create or update a folder
   async putFolderAsync(side /*: SideName */, doc /*: Metadata */) {
     log.debug({ path: doc.path }, 'putFolderAsync')
-    const { path } = doc
+
     const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
-    metadata.markSide(side, doc, folder)
-    if (folder && folder.docType === 'file') {
-      return this.resolveConflictAsync(side, doc)
-    }
-    metadata.assignMaxDate(doc, folder)
-    const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
-      { side, doc },
-      folder
-    )
-    if (idConflict) {
-      log.warn({ idConflict }, IdConflict.description(idConflict))
-      await this.resolveConflictAsync(side, doc)
-      return
-    } else if (folder) {
+    if (!folder) {
+      metadata.markSide(side, doc, folder)
+      metadata.assignMaxDate(doc, folder)
+      return this.pouch.put(doc)
+    } else {
+      if (folder.docType === 'file') {
+        return this.resolveConflictAsync(side, doc)
+      }
+
+      const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
+        { side, doc },
+        folder
+      )
+      if (idConflict) {
+        log.warn({ idConflict }, IdConflict.description(idConflict))
+        await this.resolveConflictAsync(side, doc)
+        return
+      }
+
+      if (side === 'local' && folder.local) {
+        if (
+          // Ignore local events when local metadata doesn't change or only the
+          // modification date changes.
+          // XXX: it would be preferable to store the new local date but we need
+          // to avoid merging folder changes triggered while adding content and
+          // merged after we've synchronized a local renaming (i.e. the change
+          // which was waiting to be dispatched is now obsolete and merging it
+          // would cause issues).
+          // Until we find a way to mark specific events as obsolete, our only
+          // recourse is to discard these modification date changes.
+          metadata.sameFolder(folder.local, doc.local)
+        ) {
+          log.debug({ path: doc.path, doc, folder }, 'Same local metadata')
+          return
+        }
+      }
+
+      metadata.markSide(side, doc, folder)
+      metadata.assignMaxDate(doc, folder)
+
       doc._id = folder._id
       doc._rev = folder._rev
       if (doc.remote == null) {
@@ -337,7 +363,7 @@ class Merge {
       }
 
       if (!folder.deleted && metadata.sameFolder(folder, doc)) {
-        log.info({ path }, 'up to date')
+        log.info({ path: doc.path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
           metadata.updateLocal(folder, doc.local)
           const outdated = metadata.outOfDateSide(folder)
@@ -352,8 +378,6 @@ class Merge {
         return this.pouch.put(doc)
       }
     }
-
-    return this.pouch.put(doc)
   }
 
   // Rename or move a file

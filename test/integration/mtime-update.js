@@ -115,14 +115,14 @@ describe('Update only mtime', () => {
 
   describe('of a folder', () => {
     context('when update is made on local filesystem', () => {
-      let oldUpdatedAt, created
+      let oldUpdatedAt
       beforeEach('create folder and update mtime', async function() {
         await helpers.remote.ignorePreviousChanges()
 
         oldUpdatedAt = new Date()
         oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-        created = await cozy.files.createDirectory({
+        await cozy.files.createDirectory({
           name: 'folder',
           dirID: ROOT_DIR_ID,
           createdAt: oldUpdatedAt.toISOString(),
@@ -132,7 +132,7 @@ describe('Update only mtime', () => {
         await helpers.flushLocalAndSyncAll()
       })
 
-      it('only updates the local document state in Pouch', async () => {
+      it('does nothing', async () => {
         helpers.spyPouch()
 
         const newUpdatedAt = new Date()
@@ -143,15 +143,43 @@ describe('Update only mtime', () => {
 
         should(
           helpers.putDocs('path', 'updated_at', 'local.updated_at')
-        ).deepEqual([
+        ).deepEqual([])
+      })
+    })
+
+    context('when update is made on remote Cozy', () => {
+      let oldUpdatedAt, dir
+      beforeEach('create folder and update mtime', async function() {
+        await helpers.remote.ignorePreviousChanges()
+
+        oldUpdatedAt = new Date()
+        oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
+
+        dir = await cozy.files.createDirectory({
+          name: 'folder',
+          dirID: ROOT_DIR_ID,
+          createdAt: oldUpdatedAt.toISOString(),
+          updatedAt: oldUpdatedAt.toISOString()
+        })
+        await helpers.pullAndSyncAll()
+        await helpers.flushLocalAndSyncAll()
+      })
+
+      it('updates the document in Pouch with the new remote rev and mtime', async () => {
+        helpers.spyPouch()
+
+        const newUpdatedAt = new Date()
+        newUpdatedAt.setDate(oldUpdatedAt.getDate() + 1)
+        await cozy.files.updateAttributesById(dir._id, {
+          updated_at: newUpdatedAt
+        })
+
+        await helpers.remote.pullChanges()
+
+        should(helpers.putDocs('path', 'updated_at')).deepEqual([
           {
-            path: 'folder',
-            updated_at: timestamp.roundedRemoteDate(
-              created.attributes.updated_at
-            ),
-            local: {
-              updated_at: platform.localUpdatedAt(newUpdatedAt)
-            }
+            path: dir.attributes.name,
+            updated_at: newUpdatedAt.toISOString()
           }
         ])
       })
