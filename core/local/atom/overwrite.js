@@ -13,13 +13,15 @@ const logger = require('../../utils/logger')
 import type { AtomEvent, AtomBatch } from './event'
 import type { Metadata } from '../../metadata'
 
+type PendingBatch = {
+  deletedEventsByPath: Map<string, AtomEvent>,
+  events: AtomBatch,
+  timeout?: TimeoutID
+}
+
 type OverwriteState = {
   deletedEventsByPath: Map<string, AtomEvent>,
-  pending: {
-    deletedEventsByPath: Map<string, AtomEvent>,
-    events: AtomBatch,
-    timeout?: TimeoutID
-  }
+  pendingBatches: PendingBatch[]
 }
 
 type OverwriteOptions = {
@@ -45,11 +47,7 @@ const initialState = () => ({
   [STEP_NAME]: {
     // eslint-disable-next-line
     deletedEventsByPath: new Map /*:: <string,AtomEvent> */ (),
-    pending: {
-      // eslint-disable-next-line
-      deletedEventsByPath: new Map /*:: <string,AtomEvent> */ (),
-      events: []
-    }
+    pendingBatches: []
   }
 })
 
@@ -59,11 +57,16 @@ const initialState = () => ({
  * - Detect overwriting move events in the next one.
  * - Possibly aggregate deleted events from the current (now pending) one.
  */
-const rotateState = (state, events) => {
-  state.pending = {
+const rotateState = (state, events, output) => {
+  const pending /*: Object */ = {
     deletedEventsByPath: state.deletedEventsByPath,
     events
   }
+  pending.timeout = setTimeout(() => {
+    output(state)
+  }, DELAY)
+  state.pendingBatches.push((pending /*: PendingBatch */))
+
   state.deletedEventsByPath = new Map()
 }
 
@@ -74,15 +77,25 @@ const indexDeletedEvent = (event, state) => {
   }
 }
 
+const findDeletedEvent = (path, state) => {
+  if (state.deletedEventsByPath.has(path)) {
+    return state.deletedEventsByPath.get(path)
+  } else {
+    for (const pending of state.pendingBatches) {
+      if (pending.deletedEventsByPath.has(path)) {
+        return pending.deletedEventsByPath.get(path)
+      }
+    }
+  }
+}
+
 /** Possibly change event action to 'ignored'.
  *
  * In case it is a deleted event related to an overwriting move.
  */
 const ignoreDeletedBeforeOverwritingMove = (event, state) => {
   const { path } = event
-  const pendingDeletedEvent =
-    state.deletedEventsByPath.get(path) ||
-    state.pending.deletedEventsByPath.get(path)
+  const pendingDeletedEvent = findDeletedEvent(path, state)
   if (pendingDeletedEvent) {
     const deletedClone = _.clone(pendingDeletedEvent)
     const renamedClone = _.clone(event)
@@ -108,9 +121,7 @@ const ignoreDeletedBeforeOverwritingMove = (event, state) => {
  */
 const ignoreDeletedBeforeOverwritingAdd = (event, state) => {
   const { path } = event
-  const pendingDeletedEvent =
-    state.deletedEventsByPath.get(path) ||
-    state.pending.deletedEventsByPath.get(path)
+  const pendingDeletedEvent = findDeletedEvent(path, state)
   if (pendingDeletedEvent) {
     const deletedClone = _.clone(pendingDeletedEvent)
     const createdClone = _.clone(event)
@@ -139,11 +150,9 @@ const step = async (batch /*: AtomBatch */, opts /*: OverwriteOptions */) => {
 }
 
 const _loop = async (channel, out, opts) => {
-  const output = pending => {
-    clearTimeout(pending.timeout)
-    out.push(pending.events)
-    pending.deletedEventsByPath = new Map()
-    pending.events = []
+  const output = state => {
+    const pending = state.pendingBatches.shift()
+    if (pending) out.push(pending.events)
   }
 
   // eslint-disable-next-line no-constant-condition
@@ -155,13 +164,7 @@ const _loop = async (channel, out, opts) => {
 
     await step(events, opts)
 
-    output(state.pending)
-    rotateState(state, events)
-
-    const { pending } = state
-    pending.timeout = setTimeout(() => {
-      output(pending)
-    }, DELAY)
+    rotateState(state, events, output)
   }
 }
 

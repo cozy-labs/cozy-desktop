@@ -122,6 +122,48 @@ describe('core/local/atom/overwrite', () => {
           }
         ])
       })
+
+      it(`ignores deleted ${kind} followed by any batch followed by created ${kind} with different ino`, async () => {
+        const deletedEvent = builders
+          .event()
+          .action('deleted')
+          .kind(kind)
+          .path(kind)
+          .build()
+        const anythingEvent = builders
+          .event()
+          .action('deleted')
+          .kind('directory')
+          .path('myOtherDir')
+          .build()
+        const createdEvent = builders
+          .event()
+          .action('created')
+          .kind(kind)
+          .path(kind)
+          .build()
+
+        // XXX: Be careful to have the third batch added within 500 ms of the
+        // first one or the match won't happen.
+        inputBatch([deletedEvent])
+        inputBatch([anythingEvent])
+        inputBatch([createdEvent])
+
+        should(await outputBatch()).deepEqual([
+          {
+            ...deletedEvent,
+            action: 'ignored',
+            [overwrite.STEP_NAME]: { deletedBeforeCreate: createdEvent }
+          }
+        ])
+        should(await outputBatch()).deepEqual([anythingEvent])
+        should(await outputBatch()).deepEqual([
+          {
+            ...createdEvent,
+            [overwrite.STEP_NAME]: { createOnDeletedPath: deletedEvent }
+          }
+        ])
+      })
     }
 
     describe('everything else', () => {
