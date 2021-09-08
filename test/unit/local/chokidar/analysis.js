@@ -990,6 +990,57 @@ onPlatform('darwin', () => {
       })
     })
 
+    describe('change(a) + change(a)', () => {
+      it('is 2 FileUpdate in the right order', () => {
+        const oldFile = {
+          path: 'a',
+          md5sum: '123',
+          size: 1,
+          ino: 1
+        }
+
+        const events /*: LocalEvent[] */ = [
+          {
+            type: 'change',
+            path: oldFile.path,
+            stats: { ino: 2, size: 2 },
+            md5sum: '789',
+            old: oldFile
+          },
+          {
+            type: 'change',
+            path: oldFile.path,
+            stats: { ino: 3, size: 3 },
+            md5sum: '789',
+            old: oldFile
+          }
+        ]
+        const pendingChanges /*: LocalChange[] */ = []
+
+        should(analysis(events, { pendingChanges })).deepEqual([
+          {
+            sideName,
+            type: 'FileUpdate',
+            path: oldFile.path,
+            stats: { ino: 2, size: 2 },
+            ino: 2,
+            md5sum: '789',
+            old: oldFile
+          },
+          {
+            sideName,
+            type: 'FileUpdate',
+            path: oldFile.path.normalize('NFD'),
+            stats: { ino: 3, size: 3 },
+            ino: 3,
+            md5sum: '789',
+            old: oldFile
+          }
+        ])
+        should(pendingChanges).deepEqual([])
+      })
+    })
+
     describe('FileUpdate(é/à)', () => {
       const dirStats = { ino: 765 }
       const fileStats = { ino: 766 }
