@@ -30,15 +30,8 @@ import type { SavedMetadata, MetadataLocalInfo, MetadataRemoteInfo } from '../me
 import type { SideName } from '../side'
 import type { Writer } from '../writer'
 import type { SyncError } from './errors'
-*/
+import type { UserActionCommand } from '../syncstate'
 
-const log = logger({
-  component: 'Sync'
-})
-
-const MAX_SYNC_ATTEMPTS = 3
-
-/*::
 export type PouchDBFeedData = {
   changes: {rev: string}[],
   doc: SavedMetadata,
@@ -53,6 +46,12 @@ export type SyncOperation =
   |}
 export type Change = PouchDBFeedData & { operation: SyncOperation };
 */
+
+const log = logger({
+  component: 'Sync'
+})
+
+const MAX_SYNC_ATTEMPTS = 3
 
 const isMarkedForDeletion = (doc /*: SavedMetadata */) => {
   // During a transition period, we'll need to consider both documents with the
@@ -434,9 +433,11 @@ class Sync {
           case remoteErrors.COZY_NOT_FOUND_CODE:
             this.fatal(err)
             break
+          case syncErrors.EXCLUDED_DIR_CODE:
           case syncErrors.INCOMPATIBLE_DOC_CODE:
           case syncErrors.MISSING_PERMISSIONS_CODE:
           case syncErrors.NO_DISK_SPACE_CODE:
+          case remoteErrors.CONFLICTING_NAME_CODE:
           case remoteErrors.FILE_TOO_LARGE_CODE:
           case remoteErrors.INVALID_FOLDER_MOVE_CODE:
           case remoteErrors.INVALID_METADATA_CODE:
@@ -453,44 +454,6 @@ class Sync {
             // See `default` case for other blocking errors for which we'll stop
             // retrying after 3 failed attempts.
             this.blockSyncFor({ err, change })
-            break
-          case remoteErrors.CONFLICTING_NAME_CODE:
-            /* When we fail to apply a change because of a name conflict on the
-             * remote Cozy, it means we either:
-             * 1. have another change to apply that will free the give name by
-             *    moving the document or renaming it
-             * 2. have not yet merged the remote change that took the name and
-             *    would have generated a conflict copy
-             * 3. have not merged the remote change that took the name and never
-             *    will because we abandoned that change in the past
-             *
-             * We can solve 1. by marking our local change with an increased
-             * error counter so it can be retried later, after we've applied the
-             * other changes that would free the conflicting name.
-             *
-             * We can solve 2. by blocking the Sync process until we've fetched
-             * and merged the new remote changes, thus generating a conflict
-             * copy at the Merge level.
-             *
-             * We can only solve 3. by detecting that we've tried the solutions
-             * to 1. and 2., still can't apply the given change and thus generate
-             * a remote conflict at the Sync level instead of doing it at the
-             * Merge level.
-             */
-
-            if (shouldAttemptRetry(change)) {
-              // Solve 1. & 2.
-              this.blockSyncFor({ err, change })
-            } else {
-              log.error(
-                { path, err, change },
-                'Document already exists on Cozy'
-              )
-              // Solve 3.
-              // We resolve the conflict on the remote Cozy to avoid local
-              // issues like permission issues on Windows.
-              await this.remote.resolveRemoteConflict(change.doc)
-            }
             break
           case remoteErrors.DOCUMENT_IN_TRASH_CODE:
             delete change.doc.moveFrom
@@ -593,6 +556,8 @@ class Sync {
     }
   }
 
+  // Wait until a change is emitted by PouchDB into its changesfeed (i.e. we've
+  // merged some change on a document).
   async waitForNewChanges(seq /*: number */) {
     log.trace({ seq }, 'Waiting for changes since seq')
     const opts = this.baseChangeOptions(seq)
@@ -675,6 +640,50 @@ class Sync {
     })
     stopMeasure()
     return p
+  }
+
+  // Wait for a change in PouchDB's changesfeed after the given sequence and
+  // with the expected synced path.
+  //
+  // We should be careful to not hold a lock while we wait for this change and
+  // that it will indeed be merged at some point or we will end up waiting
+  // forever.
+  async waitForNewChangeOn(seq /*: number */, expectedPath /*: string */) {
+    log.debug({ path: expectedPath }, 'Waiting for new change to be merged')
+
+    return new Promise((resolve, reject) => {
+      const opts = {
+        live: true,
+        limit: 1,
+        since: seq,
+        filter: '_view',
+        view: 'byPath',
+        return_docs: false,
+        include_docs: true
+      }
+      const feedObserver = this.pouch.db
+        .changes(opts)
+        .on('change', ({ doc }) => {
+          if (doc.path === expectedPath) {
+            log.debug({ path: expectedPath }, 'New change merged')
+            feedObserver.cancel()
+            resolve()
+          }
+        })
+        .on('error', err => {
+          feedObserver.cancel()
+          reject(err)
+        })
+
+      setTimeout(() => {
+        log.debug(
+          { path: expectedPath },
+          'No changes merged in 5 minutes. Moving on'
+        )
+        feedObserver.cancel()
+        resolve()
+      }, 5 * 60 * 1000)
+    })
   }
 
   // Apply a change to both local and remote
@@ -866,6 +875,15 @@ class Sync {
     doc /*: SavedMetadata */,
     from /*: SavedMetadata */
   ) /*: Promise<void> */ {
+    const oldParentPath = dirname(from.path)
+    const newParentPath = dirname(doc.path)
+    const parent = await this.pouch.bySyncedPath(newParentPath)
+    if (parent && parent.moveFrom && parent.moveFrom.path === oldParentPath) {
+      // If the parent move was not successfully synchronized, prevent the child
+      // move synchronization by throwning a SyncError.
+      throw new syncErrors.UnsyncedParentMoveError(parent)
+    }
+
     await side.assignNewRemote(doc)
     if (doc.docType === 'file') {
       this.events.emit('transfer-move', _.clone(doc), _.clone(from))
@@ -896,50 +914,6 @@ class Sync {
 
     this.lifecycle.blockFor(err.code)
 
-    const retryDelay = syncErrors.retryDelay(err)
-
-    const retry = async () => {
-      this.events.off('user-action-done', retry)
-      this.events.off('user-action-inprogress', waitBeforeRetry)
-      this.events.off('user-action-skipped', skip)
-
-      log.debug(cause, 'retrying after blocking error')
-
-      if (err.code === remoteErrors.UNREACHABLE_COZY_CODE) {
-        // We could simply fetch the remote changes but it could take time
-        // before we're done fetching them and we want to notify the GUI we're
-        // back online as soon as possible.
-        if (await this.remote.ping()) {
-          this.events.emit('online')
-        } else {
-          this.events.emit('offline')
-          // $FlowFixMe intervals have a refresh() method starting with Node v10
-          if (this.retryInterval) this.retryInterval.refresh()
-          // We're still offline so no need to try fetching changes or
-          // synchronizing.
-          return
-        }
-      }
-
-      clearInterval(this.retryInterval)
-
-      if (cause.change) {
-        // We increment the record's errors counter to keep track of the
-        // retries and above all, save any changes made to the record by
-        // `applyDoc()` and such (e.g. when applying a file move with update,
-        // if the update fails, we want to remove the `moveFrom` attribute to
-        // avoid re-applying the move which was already applied).
-        await this.updateErrors(cause.change, cause.err)
-      }
-
-      // Await to make sure we've fetched potential remote changes
-      if (this.remote.watcher && !this.remote.watcher.running) {
-        await this.remote.watcher.start()
-      }
-
-      this.lifecycle.unblockFor(err.code)
-    }
-
     const waitBeforeRetry = () => {
       // The user is currently doing the required action so we postpone the next
       // retry up to `retryDelay` to give the user enough time to complete the
@@ -947,22 +921,38 @@ class Sync {
       // $FlowFixMe intervals have a refresh() method starting with Node v10
       if (this.retryInterval) this.retryInterval.refresh()
     }
-
-    const skip = async () => {
-      this.events.off('user-action-done', retry)
+    const executeCommand = async (
+      { cmd } /*: { cmd: UserActionCommand } */
+    ) => {
       this.events.off('user-action-inprogress', waitBeforeRetry)
-      this.events.off('user-action-skipped', skip)
+      this.events.off('user-action-command', executeCommand)
 
-      log.debug(cause, 'user skipped required action')
+      // Remove the user action from the list and thus the UI
+      this.events.emit(
+        'user-action-done',
+        err,
+        cause.change && cause.change.seq
+      )
 
-      clearInterval(this.retryInterval)
-
-      if (cause.change) {
-        await this.skipChange(cause.change, cause.err)
-      }
-
-      if (!this.remote.watcher.running) {
-        await this.remote.watcher.start()
+      switch (cmd) {
+        case 'retry':
+          await syncErrors.retry(cause, this)
+          break
+        case 'skip':
+          await syncErrors.skip(cause, this)
+          break
+        case 'create-conflict':
+          await syncErrors.createConflict(cause, this)
+          break
+        case 'link-directories':
+          await syncErrors.linkDirectories(cause, this)
+          break
+        default:
+          log.error(
+            { path: cause.change && cause.change.doc.path, cmd, sentry: true },
+            'received invalid user action command'
+          )
+          await syncErrors.retry(cause, this)
       }
 
       this.lifecycle.unblockFor(err.code)
@@ -971,12 +961,14 @@ class Sync {
     // Clear any existing interval since we'll replace it
     clearInterval(this.retryInterval)
     // We'll automatically retry to sync the change after a delay
-    this.retryInterval = setInterval(retry, retryDelay)
+    const retryDelay = syncErrors.retryDelay(err)
+    this.retryInterval = setInterval(
+      executeCommand.bind(this, { cmd: 'retry' }),
+      retryDelay
+    )
 
-    //this.events.once('user-action-inprogress', retry)
-    this.events.once('user-action-done', retry)
     this.events.once('user-action-inprogress', waitBeforeRetry)
-    this.events.once('user-action-skipped', skip)
+    this.events.once('user-action-command', executeCommand)
 
     // In case the error comes from the RemoteWatcher and not a change
     // application, we stop the watcher to avoid more errors.
@@ -991,9 +983,11 @@ class Sync {
       this.events.emit('offline')
     } else if (err instanceof syncErrors.SyncError) {
       switch (err.code) {
+        case syncErrors.EXCLUDED_DIR_CODE:
         case syncErrors.INCOMPATIBLE_DOC_CODE:
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
+        case remoteErrors.CONFLICTING_NAME_CODE:
         case remoteErrors.FILE_TOO_LARGE_CODE:
         case remoteErrors.INVALID_METADATA_CODE:
         case remoteErrors.INVALID_NAME_CODE:

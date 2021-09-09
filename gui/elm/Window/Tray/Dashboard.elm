@@ -67,6 +67,7 @@ type Msg
     | ShowMore
     | Reset
     | GotUserActions (List UserAction)
+    | SendActionCommand UserAction.Command UserAction
     | UserActionSkipped UserAction
     | UserActionInProgress UserAction
     | UserActionDone UserAction
@@ -116,14 +117,17 @@ update msg model =
         GotUserActions actions ->
             ( { model | userActions = actions }, Cmd.none )
 
+        SendActionCommand cmd action ->
+            ( model, UserAction.sendCommand cmd action )
+
         UserActionSkipped action ->
-            ( model |> removeCurrentAction, UserAction.skip action )
+            ( model |> removeCurrentAction, Cmd.none )
 
         UserActionInProgress action ->
             ( model, UserAction.start action )
 
         UserActionDone action ->
-            ( model |> removeCurrentAction, UserAction.end action )
+            ( model |> removeCurrentAction, Cmd.none )
 
         UserActionDetails action ->
             ( model, UserAction.showDetails action )
@@ -200,14 +204,8 @@ viewActions helpers model =
                     UserAction.ShowInParent path ->
                         ShowInParent path
 
-                    UserAction.GiveUp action ->
-                        UserActionSkipped action
-
-                    UserAction.Retry action ->
-                        UserActionDone action
-
-                    UserAction.ShowDetails action ->
-                        UserActionDetails action
+                    UserAction.SendCommand cmd action ->
+                        SendActionCommand cmd action
     in
     case model.userActions of
         action :: _ ->

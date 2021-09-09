@@ -15,7 +15,7 @@ on:
 env:
   COZY_DESKTOP_DIR: "${{ github.workspace }}/cozy-desktop"
   COZY_STACK_STORAGE: "${{ github.workspace }}/storage"
-  COZY_URL: "http://localhost:8080"
+  COZY_URL: "http://cozy.localhost:8080"
   COZY_PASSPHRASE: "cozy"
   GO111MODULE: "on"
   NODE_ENV: "test"

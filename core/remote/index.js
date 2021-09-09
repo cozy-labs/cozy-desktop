@@ -11,12 +11,11 @@ const path = require('path')
 const { isNote } = require('../utils/notes')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
-const conflicts = require('../utils/conflicts')
 const pathUtils = require('../utils/path')
 const metadata = require('../metadata')
 const { ROOT_DIR_ID, DIR_TYPE } = require('./constants')
 const { RemoteCozy } = require('./cozy')
-const { DirectoryNotFound } = require('./errors')
+const { DirectoryNotFound, ExcludedDirError } = require('./errors')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
 const timestamp = require('../utils/timestamp')
@@ -26,7 +25,12 @@ import type EventEmitter from 'events'
 import type { SideName } from '../side'
 import type { Readable } from 'stream'
 import type { Config } from '../config'
-import type { SavedMetadata, MetadataRemoteInfo, MetadataRemoteDir } from '../metadata'
+import type {
+  Metadata,
+  MetadataRemoteInfo,
+  MetadataRemoteDir,
+  SavedMetadata
+} from '../metadata'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type { RemoteDoc } from './document'
@@ -74,7 +78,7 @@ const ROOT_DIR /*: MetadataRemoteDir */ = {
 class Remote /*:: implements Reader, Writer */ {
   /*::
   name: SideName
-  other: Reader
+  other: Reader & Writer
   config: Config
   pouch: Pouch
   events: EventEmitter
@@ -147,6 +151,20 @@ class Remote /*:: implements Reader, Writer */ {
       )
       metadata.updateRemote(doc, dir)
     } catch (err) {
+      if (err.status === 409) {
+        let remoteDoc
+        try {
+          remoteDoc = await this.findDocByPath(path)
+        } catch (e) {
+          log.warn(
+            { path, err: e, originalErr: err },
+            'could not fetch conflicting directory'
+          )
+        }
+        if (remoteDoc && this.isExcludedFromSync(remoteDoc)) {
+          throw new ExcludedDirError(path)
+        }
+      }
       throw err
     }
   }
@@ -276,9 +294,9 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async moveAsync(
-    newMetadata /*: SavedMetadata */,
-    oldMetadata /*: SavedMetadata */
+  async moveAsync /*::<T: Metadata|SavedMetadata> */(
+    newMetadata /*: T */,
+    oldMetadata /*: T */
   ) /*: Promise<void> */ {
     const remoteId = oldMetadata.remote._id
     const { path, overwrite } = newMetadata
@@ -309,12 +327,16 @@ class Remote /*:: implements Reader, Writer */ {
       await this.trashAsync(overwrite)
     }
 
-    const newRemoteDoc = await this.remoteCozy.updateAttributesById(
-      remoteId,
-      attrs,
-      opts
-    )
-    metadata.updateRemote(newMetadata, newRemoteDoc)
+    try {
+      const newRemoteDoc = await this.remoteCozy.updateAttributesById(
+        remoteId,
+        attrs,
+        opts
+      )
+      metadata.updateRemote(newMetadata, newRemoteDoc)
+    } catch (err) {
+      throw err
+    }
 
     if (overwrite && isOverwritingTarget) {
       try {
@@ -362,7 +384,9 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async assignNewRemote(doc /*: SavedMetadata */) /*: Promise<void> */ {
+  async assignNewRemote /*::<T: Metadata|SavedMetadata> */(
+    doc /*: T */
+  ) /*: Promise<void> */ {
     log.info({ path: doc.path }, 'Assigning new remote...')
     const newRemoteDoc = await this.remoteCozy.find(doc.remote._id)
     metadata.updateRemote(doc, newRemoteDoc)
@@ -418,44 +442,52 @@ class Remote /*:: implements Reader, Writer */ {
     // are changed but we'll need to review this when we start updating it only
     // after a move has been fully synchronzed.
     const dir = await this.pouch.bySyncedPath(pathUtils.remoteToLocal(path))
-    if (!dir || dir.docType !== 'folder' || !dir.remote) {
+    if (!dir || dir.deleted || !dir.remote || dir.docType !== 'folder') {
       throw new DirectoryNotFound(path, this.config.cozyUrl)
     }
 
     return dir.remote
   }
 
-  async resolveRemoteConflict(
-    newMetadata /*: SavedMetadata */
-  ) /*: Promise<void> */ {
-    // Find conflicting document on remote Cozy
-    const remoteDoc = await this.findDocByPath(newMetadata.path)
-    if (!remoteDoc) return
+  // Resolve the conflict created by the changes stored in `newMetadata` by
+  // renaming its remote version with a conflict suffix so `newMetadata` can be
+  // saved separately in PouchDB.
+  async resolveConflict /*::<T: Metadata|SavedMetadata> */(
+    newMetadata /*: T & { remote: MetadataRemoteInfo } */
+  ) /*: Promise<?T> */ {
+    const conflict = metadata.createConflictingDoc(newMetadata)
 
-    // Generate a new name with a conflict suffix for the remote document
-    const newName = path.basename(
-      conflicts.generateConflictPath(newMetadata.path)
+    log.warn(
+      { path: conflict.path, oldpath: newMetadata.path },
+      'Resolving remote conflict'
     )
-    log.info(
-      {
-        path: path.join(path.dirname(newMetadata.path), newName),
-        oldpath: newMetadata.path
-      },
-      'Resolving remote conflict...'
+    await this.moveAsync(conflict, newMetadata)
+
+    return conflict
+  }
+
+  isExcludedFromSync(doc /*: MetadataRemoteInfo */) /*: boolean */ {
+    const {
+      client: { clientID },
+      flags
+    } = this.config
+    return (
+      (flags.differentialSync || process.env.NODE_ENV === 'test') &&
+      doc.type === 'directory' &&
+      doc.not_synchronized_on != null &&
+      doc.not_synchronized_on.find(({ id }) => id === clientID) != null
     )
+  }
 
-    const attrs = {
-      name: newName,
-      updated_at: timestamp.maxDate(
-        new Date().toISOString(),
-        remoteDoc.updated_at
-      )
-    }
-    const opts = {
-      ifMatch: remoteDoc._rev
-    }
+  async includeInSync(doc /*: SavedMetadata */) /*: Promise<*> */ {
+    const { flags } = this.config
+    if (flags.differentialSync || process.env.NODE_ENV === 'test') {
+      const remoteDocs = await this.remoteCozy.search({ path: `/${doc.path}` })
+      const remoteDoc = remoteDocs[0]
+      if (!remoteDoc || remoteDoc.type !== 'directory') return
 
-    await this.remoteCozy.updateAttributesById(remoteDoc._id, attrs, opts)
+      await this.remoteCozy.includeInSync(remoteDoc)
+    }
   }
 }
 
@@ -485,7 +517,9 @@ function newDocumentAttributes(
   }
 }
 
-function mostRecentUpdatedAt(doc /*: SavedMetadata */) /*: string */ {
+function mostRecentUpdatedAt /*::<T: Metadata|SavedMetadata> */(
+  doc /*: T */
+) /*: string */ {
   if (doc.remote && doc.remote.updated_at) {
     return timestamp.maxDate(doc.updated_at, doc.remote.updated_at)
   } else {

@@ -117,6 +117,12 @@
   "Error The file is too large": "Le fichier est trop volumineux",
   "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.": "Le fichier `{0}` n'a pas pû être écrit sur le disque de votre Cozy car il dépasse la taille maximum autorisée par votre Cozy : 5 Gio.",
   "Error You need to remove it from your local synchronization folder or reduce its size.": "Déplacez le hors du dossier local de synchronisation ou réduisez sa taille.",
+  "Error Conflict with existing document": "Conflit avec un document exitant",
+  "Error The name of {0} `{1}` is conflicting with an existing document.": "Le nom du {0} `{1}` entre en conflit avec un document existant.",
+  "Error You need to rename this {0} to solve the conflict.": "Vous devez renommer ce {0} pour résoudre le conflit.",
+  "Error Conflict with excluded directory": "Conflit avec un dossier exclu",
+  "Error The remote directory `{0}` was excluded from the synchronization on this device.": "Le dossier distant `{0}` a été exclu de la synchronisation vers ce client.",
+  "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.": "Le dossier local avec le même chemin peut soit être lié avec le dossier distant qui sera re-synchronisé soit renommé pour résoudre ce conflit.",
 
   "Folder All done": "C’est bon",
   "Folder Please choose an empty directory": "Veuillez choisir un dossier vide.",
@@ -256,6 +262,8 @@
   "UserAction Give up": "Abandonner",
   "UserAction Retry": "Réessayer",
   "UserAction Read more": "En savoir plus",
+  "UserAction Rename {0}": "Renommer le {0}",
+  "UserAction Link directories": "Lier les dossiers",
 
   "Welcome Sign in to your Cozy": "Se connecter à mon Cozy",
   "Welcome Your own private cloud": "Bienvenue sur Cozy Drive pour ordinateur"

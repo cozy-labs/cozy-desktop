@@ -14,7 +14,7 @@ const {
 } = require('../../../core/remote/constants')
 
 /*::
-import type cozy from 'cozy-client-js'
+import type { Client as OldCozyClient } from 'cozy-client-js'
 import type { Pouch } from '../../../core/pouch'
 import type { RemoteOptions } from '../../../core/remote'
 import type { RemoteDoc } from '../../../core/remote/document'
@@ -26,15 +26,19 @@ class RemoteTestHelpers {
   side: Remote
   */
 
-  constructor(opts /*: RemoteOptions */) {
+  constructor(
+    opts /*: RemoteOptions */,
+    { cozy } /*: { cozy: ?OldCozyClient } */ = {}
+  ) {
     this.side = new Remote(opts)
-    this.side.remoteCozy.client = cozyHelpers.cozy
+    this.side.remoteCozy.client = cozy || cozyHelpers.cozy
     autoBind(this)
   }
 
-  get cozy() /*: cozy.Client */ {
+  get cozy() /*: OldCozyClient */ {
     return this.side.remoteCozy.client
   }
+
   get pouch() /*: Pouch */ {
     return this.side.pouch
   }

@@ -16,6 +16,7 @@ const cozyHelpers = require('../support/helpers/cozy')
 const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
 const Builders = require('../support/builders')
+const stubSide = require('../support/doubles/side')
 
 const win32 = (
   win32Data /*: Object */,
@@ -104,22 +105,26 @@ describe('Merge', function() {
   beforeEach('instanciate merge', function() {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
-    this.merge.local = {
-      moveAsync: sinon.stub().callsFake(doc => {
-        // XXX: We cannot stub `fs.rename` as it's directly imported by `Local`
-        // but we care about the `local` attribute being updated so we
-        // explicitely call `metadata.updateLocal()`.
-        metadata.updateLocal(doc)
+    this.merge.local = stubSide('local')
+    this.merge.local.resolveConflict = sinon.stub().callsFake(doc => {
+      const conflict = metadata.createConflictingDoc(doc)
+      // XXX: We cannot stub `fs.rename` as it's directly imported by `Local`
+      // but we care about the `local` attribute being updated so we
+      // explicitely call `metadata.updateLocal()`.
+      metadata.updateLocal(conflict)
+      return conflict
+    })
+    this.merge.remote = stubSide('remote')
+    this.merge.remote.resolveConflict = sinon.stub().callsFake(doc => {
+      const conflict = metadata.createConflictingDoc(doc)
+      // XXX: It would be cumbersome to stub the content of this method but we
+      // care about the `remote` attribute being updated so we explicitely
+      // call `metadata.updateRemote()`.
+      metadata.updateRemote(conflict, {
+        path: pathUtils.localToRemote(conflict.path)
       })
-    }
-    this.merge.remote = {
-      moveAsync: sinon.stub().callsFake(doc => {
-        // XXX: It would be cumbersome to stub the content of this method but we
-        // care about the `remote` attribute being updated so we explicitely
-        // call `metadata.updateRemote()`.
-        metadata.updateRemote(doc, { path: pathUtils.localToRemote(doc.path) })
-      })
-    }
+      return conflict
+    })
     builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)

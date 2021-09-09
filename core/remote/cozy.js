@@ -15,7 +15,8 @@ const {
   FILES_DOCTYPE,
   FILE_TYPE,
   DIR_TYPE,
-  MAX_FILE_SIZE
+  MAX_FILE_SIZE,
+  OAUTH_CLIENTS_DOCTYPE
 } = require('./constants')
 const { DirectoryNotFound } = require('./errors')
 const {
@@ -74,11 +75,13 @@ const log = logger({
  */
 class RemoteCozy {
   /*::
+  config: Config
   url: string
   client: OldCozyClient
   */
 
   constructor(config /*: Config */) {
+    this.config = config
     this.url = config.cozyUrl
     this.client = new OldCozyClient({
       cozyURL: this.url,
@@ -512,7 +515,7 @@ class RemoteCozy {
       data: {
         attributes: { flat_subdomains: flatSubdomains }
       }
-    } = await client.query(client.get('io.cozy.settings', 'capabilities'))
+    } = await client.query(Q('io.cozy.settings').getById('capabilities'))
     return { flatSubdomains }
   }
 
@@ -545,6 +548,16 @@ class RemoteCozy {
       data
     } = await files.addReferencedBy(doc, references)
     return { _rev, referencedBy: data }
+  }
+
+  async includeInSync(dir /*: MetadataRemoteDir */) /*: Promise<void> */ {
+    const client = await this.newClient()
+    const files = client.collection(FILES_DOCTYPE)
+    const {
+      client: { clientID }
+    } = this.config
+    const oauthClient = { _id: clientID, _type: OAUTH_CLIENTS_DOCTYPE }
+    await files.removeNotSynchronizedDirectories(oauthClient, [dir])
   }
 }
 

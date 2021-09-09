@@ -1290,7 +1290,7 @@ describe('remote.Remote', function() {
     })
   })
 
-  describe('resolveRemoteConflict', () => {
+  describe('resolveConflict', () => {
     let remoteFile, file
     beforeEach(async function() {
       remoteFile = await builders
@@ -1300,58 +1300,33 @@ describe('remote.Remote', function() {
       file = await builders
         .metafile()
         .fromRemote(remoteFile)
-        .sides({ local: 1 })
+        .upToDate()
         .create()
     })
 
-    it('does not fail if there are no remote documents with the given path', async function() {
+    it('fails if there are no remote documents with the given path', async function() {
       await this.remote.remoteCozy.destroyById(remoteFile._id)
 
-      await should(this.remote.resolveRemoteConflict(file)).be.fulfilled()
+      await should(this.remote.resolveConflict(file)).be.rejected()
     })
 
     it('renames the remote document with a conflict suffix', async function() {
-      await this.remote.resolveRemoteConflict(file)
+      await this.remote.resolveConflict(file)
       should(await this.remote.remoteCozy.find(remoteFile._id))
         .have.property('name')
         .match(CONFLICT_REGEXP)
     })
 
     it('fails with a 412 error if file changes on remote Cozy during the call', async function() {
-      // Stub findDocByPath which is called by resolveRemoteConflict so that it
-      // returns the remote document and fakes an update closely following it.
-      sinon.stub(this.remote, 'findDocByPath').callsFake(async () => {
-        await builders
-          .remoteFile(remoteFile)
-          .data('update')
-          .update()
-        return remoteFile
+      await builders
+        .remoteFile(remoteFile)
+        .data('update')
+        .update()
+
+      await should(this.remote.resolveConflict(file)).be.rejectedWith({
+        name: 'FetchError',
+        status: 412
       })
-
-      try {
-        await should(this.remote.resolveRemoteConflict(file)).be.rejectedWith({
-          name: 'FetchError',
-          status: 412
-        })
-      } finally {
-        this.remote.findDocByPath.restore()
-      }
-    })
-
-    it('uses the most recent modification date between now and the remote date', async function() {
-      // Make sure remote file has modification date more recent than `now`.
-      const oneHour = 3600 * 1000 // milliseconds
-      const moreRecentDate = new Date(Date.now() + oneHour).toISOString()
-      const updatedRemoteFile = await this.remote.remoteCozy.updateAttributesById(
-        remoteFile._id,
-        { updated_at: moreRecentDate }
-      )
-
-      await this.remote.resolveRemoteConflict(file)
-      should(await this.remote.remoteCozy.find(remoteFile._id)).have.property(
-        'updated_at',
-        updatedRemoteFile.updated_at
-      )
     })
   })
 })

@@ -243,7 +243,7 @@ describe('Update', () => {
           await helpers.flushLocalAndSyncAll()
         })
 
-        it('moves the original remote note then rename it with a conflict suffix', async () => {
+        it('moves the original remote note then renames it with a conflict suffix', async () => {
           const updatedRemote = await helpers.remote.byIdMaybe(note._id)
           should(updatedRemote)
             .have.property('name')
