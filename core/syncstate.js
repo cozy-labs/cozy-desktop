@@ -13,6 +13,7 @@ export type UserActionCommand =
   | 'retry'
   | 'skip'
   | 'create-conflict'
+  | 'link-directories'
 export type UserAction = {
   seq: ?number,
   code: string,

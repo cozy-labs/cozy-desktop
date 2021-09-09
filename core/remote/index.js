@@ -15,7 +15,7 @@ const pathUtils = require('../utils/path')
 const metadata = require('../metadata')
 const { ROOT_DIR_ID, DIR_TYPE } = require('./constants')
 const { RemoteCozy } = require('./cozy')
-const { DirectoryNotFound } = require('./errors')
+const { DirectoryNotFound, ExcludedDirError } = require('./errors')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
 const timestamp = require('../utils/timestamp')
@@ -151,6 +151,20 @@ class Remote /*:: implements Reader, Writer */ {
       )
       metadata.updateRemote(doc, dir)
     } catch (err) {
+      if (err.status === 409) {
+        let remoteDoc
+        try {
+          remoteDoc = await this.findDocByPath(path)
+        } catch (e) {
+          log.warn(
+            { path, err: e, originalErr: err },
+            'could not fetch conflicting directory'
+          )
+        }
+        if (remoteDoc && this.isExcludedFromSync(remoteDoc)) {
+          throw new ExcludedDirError(path)
+        }
+      }
       throw err
     }
   }
@@ -313,12 +327,16 @@ class Remote /*:: implements Reader, Writer */ {
       await this.trashAsync(overwrite)
     }
 
-    const newRemoteDoc = await this.remoteCozy.updateAttributesById(
-      remoteId,
-      attrs,
-      opts
-    )
-    metadata.updateRemote(newMetadata, newRemoteDoc)
+    try {
+      const newRemoteDoc = await this.remoteCozy.updateAttributesById(
+        remoteId,
+        attrs,
+        opts
+      )
+      metadata.updateRemote(newMetadata, newRemoteDoc)
+    } catch (err) {
+      throw err
+    }
 
     if (overwrite && isOverwritingTarget) {
       try {
@@ -424,7 +442,7 @@ class Remote /*:: implements Reader, Writer */ {
     // are changed but we'll need to review this when we start updating it only
     // after a move has been fully synchronzed.
     const dir = await this.pouch.bySyncedPath(pathUtils.remoteToLocal(path))
-    if (!dir || dir.docType !== 'folder' || !dir.remote) {
+    if (!dir || dir.deleted || !dir.remote || dir.docType !== 'folder') {
       throw new DirectoryNotFound(path, this.config.cozyUrl)
     }
 
@@ -459,6 +477,17 @@ class Remote /*:: implements Reader, Writer */ {
       doc.not_synchronized_on != null &&
       doc.not_synchronized_on.find(({ id }) => id === clientID) != null
     )
+  }
+
+  async includeInSync(doc /*: SavedMetadata */) /*: Promise<*> */ {
+    const { flags } = this.config
+    if (flags.differentialSync || process.env.NODE_ENV === 'test') {
+      const remoteDocs = await this.remoteCozy.search({ path: `/${doc.path}` })
+      const remoteDoc = remoteDocs[0]
+      if (!remoteDoc || remoteDoc.type !== 'directory') return
+
+      await this.remoteCozy.includeInSync(remoteDoc)
+    }
   }
 }
 

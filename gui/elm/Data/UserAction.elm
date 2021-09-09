@@ -42,6 +42,7 @@ type alias RemoteActionInfo =
 type Command
     = CreateConflict
     | GiveUp
+    | LinkDirectories
     | Retry
     | ShowDetails
 
@@ -163,6 +164,9 @@ encodeCommand cmd =
         GiveUp ->
             "skip"
 
+        LinkDirectories ->
+            "link-directories"
+
         Retry ->
             "retry"
 
@@ -243,6 +247,22 @@ viewByCode helpers action =
             , buttons =
                 [ actionButton helpers (SendCommand Retry action) "UserAction Retry" Secondary
                 , actionButton helpers (SendCommand CreateConflict action) localAction Primary
+                ]
+            }
+
+        ClientAction "ExcludedDir" { path } ->
+            let
+                localAction =
+                    helpers.interpolate [ "Helpers folder" ] "UserAction Rename {0}"
+            in
+            { title = "Error Conflict with excluded directory"
+            , content =
+                [ helpers.interpolate [ path ] "Error The remote directory `{0}` was excluded from the synchronization on this device."
+                , "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict."
+                ]
+            , buttons =
+                [ actionButton helpers (SendCommand CreateConflict action) localAction Secondary
+                , actionButton helpers (SendCommand LinkDirectories action) "UserAction Link directories" Primary
                 ]
             }
 
