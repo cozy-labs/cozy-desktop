@@ -114,9 +114,15 @@
   "Error Document path incompatible with current OS": "Documentlocatie incompatibel met huidig systeem",
   "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System.": "{0} `{1}`'s naam bevat niet-toegestane of voorbehouden tekens, of is te lang voor je besturingssysteem.",
   "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary.": "Wijzig de naam op je Cozy en verwijder de speciale tekens. Kie‘ indien nodig, ook een kortere naam.",
-  "Error The file is too large": "The file is too large",
-  "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.": "The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.",
-  "Error You need to remove it from your local synchronization folder or reduce its size.": "You need to remove it from your local synchronization folder or reduce its size.",
+  "Error The file is too large": "Het bestand is te groot",
+  "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.": "`{0}` kan niet worden weggeschreven naar Cozy omdat het bestand de maximaal toegestane grootte van 5 GiB overschrijdt.",
+  "Error You need to remove it from your local synchronization folder or reduce its size.": "Verwijder het uit je lokale synchronisatiemap of verklein de bestandsgrootte.",
+  "Error Conflict with existing document": "Conflict with existing document",
+  "Error The name of {0} `{1}` is conflicting with an existing document.": "The name of {0} `{1}` is conflicting with an existing document.",
+  "Error You need to rename this {0} to solve the conflict.": "You need to rename this {0} to solve the conflict.",
+  "Error Conflict with excluded directory": "Conflict with excluded directory",
+  "Error The remote directory `{0}` was excluded from the synchronization on this device.": "The remote directory `{0}` was excluded from the synchronization on this device.",
+  "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.": "The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.",
 
   "Folder All done": "Voltooid",
   "Folder Please choose an empty directory": "Kies een lege map.",
@@ -256,6 +262,8 @@
   "UserAction Give up": "Opgeven",
   "UserAction Retry": "Opnieuw proberen",
   "UserAction Read more": "Meer informatie",
+  "UserAction Rename {0}": "Rename {0}",
+  "UserAction Link directories": "Link directories",
 
   "Welcome Sign in to your Cozy": "Inloggen op mijn Cozy",
   "Welcome Your own private cloud": "Welkom bij Cozy Drive voor computers!"
