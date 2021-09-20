@@ -69,7 +69,7 @@ dropAppName address =
 
                 [ instance ] ->
                     -- This should never happen as we already append
-                    -- `.mycoz.cloud` to addresses without host
+                    -- `.mycozy.cloud` to addresses without host
                     ( address, "mycozy.cloud" )
 
                 instance :: rest ->
@@ -81,7 +81,6 @@ dropAppName address =
     else if
         String.endsWith "mycozy.cloud" topDomain
             || String.endsWith "mytoutatice.cloud" topDomain
-            || String.endsWith "testcloud.toutatice.fr" topDomain
     then
         case String.split "-" instanceName of
             instance :: _ ->

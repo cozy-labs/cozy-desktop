@@ -30,7 +30,7 @@ describe('App', function() {
       parsed.host.should.equal('example.org')
     })
 
-    it('parses zoe as https://zoe.cozycloud.cc', function() {
+    it('parses zoe as https://zoe.mycozy.cloud', function() {
       let parsed = App.prototype.parseCozyUrl('zoe')
       parsed.protocol.should.equal('https:')
       parsed.host.should.equal('zoe.mycozy.cloud')
