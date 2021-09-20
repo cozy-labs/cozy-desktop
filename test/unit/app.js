@@ -33,7 +33,7 @@ describe('App', function() {
     it('parses zoe as https://zoe.cozycloud.cc', function() {
       let parsed = App.prototype.parseCozyUrl('zoe')
       parsed.protocol.should.equal('https:')
-      parsed.host.should.equal('zoe.cozycloud.cc')
+      parsed.host.should.equal('zoe.mycozy.cloud')
     })
 
     it('parses http://localhost:9104', function() {
@@ -41,6 +41,15 @@ describe('App', function() {
       parsed.protocol.should.equal('http:')
       parsed.hostname.should.equal('localhost')
       parsed.port.should.equal('9104')
+    })
+
+    it('parses https://toto.cozy.claude.fr:8084', function() {
+      let parsed = App.prototype.parseCozyUrl(
+        'https://toto.cozy.claude.fr:8084'
+      )
+      parsed.protocol.should.equal('https:')
+      parsed.hostname.should.equal('toto.cozy.claude.fr')
+      parsed.port.should.equal('8084')
     })
   })
 

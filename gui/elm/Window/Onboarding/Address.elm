@@ -59,22 +59,42 @@ setError model message =
 
 dropAppName : String -> String
 dropAppName address =
-    if String.endsWith ".mycozy.cloud" address then
-        case String.split "-" address of
-            [] ->
-                ""
+    let
+        ( instanceName, topDomain ) =
+            case String.split "." address of
+                [] ->
+                    -- This can't happen because String.split always return a
+                    -- list with at least one element but is required by Elm.
+                    ( address, "mycozy.cloud" )
 
-            [ wholeaddress ] ->
-                wholeaddress
+                [ instance ] ->
+                    -- This should never happen as we already append
+                    -- `.mycoz.cloud` to addresses without host
+                    ( address, "mycozy.cloud" )
 
-            instanceName :: _ ->
-                instanceName ++ ".mycozy.cloud"
+                instance :: rest ->
+                    ( instance, String.join "." rest )
+    in
+    if String.isEmpty address then
+        ""
 
-    else if not (String.contains "." address) then
-        address ++ ".mycozy.cloud"
+    else if
+        String.endsWith "mycozy.cloud" topDomain
+            || String.endsWith "mytoutatice.cloud" topDomain
+            || String.endsWith "testcloud.toutatice.fr" topDomain
+    then
+        case String.split "-" instanceName of
+            instance :: _ ->
+                instance ++ "." ++ topDomain
+
+            _ ->
+                instanceName ++ "." ++ topDomain
 
     else
-        address
+        -- We can't really tell at this point if the given URL points to a Cozy
+        -- using nested domains or not so we can't really drop app names unless
+        -- we make a hard list of them.
+        instanceName ++ "." ++ topDomain
 
 
 correctAddress : String -> String
@@ -87,14 +107,6 @@ correctAddress address =
 
                 Nothing ->
                     Url.Url Url.Https address Nothing "" Nothing Nothing
-
-        -- Erl assumes "camillenimbus" is a path, not a host
-        handleInstanceShortName maybeHost =
-            if maybeHost == "" then
-                path
-
-            else
-                maybeHost
 
         prependProtocol =
             if protocol == Url.Http || port_ == Just 80 then
@@ -118,7 +130,6 @@ correctAddress address =
                     shortAddress ++ ":" ++ String.fromInt p
     in
     host
-        |> handleInstanceShortName
         |> dropAppName
         |> prependProtocol
         |> appendPort
