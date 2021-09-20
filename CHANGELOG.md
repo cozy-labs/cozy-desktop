@@ -1,5 +1,64 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.30.0 - 2021-09-20
+
+Improvements for all users:
+
+- All child moves (i.e. document moved because their parent directory was moved)
+  will now be notified to the GUI so the child documents paths can be updated in
+  the list of recently synchronized documents.
+- We've introduced a mechanism to detect dependencies between multiple changes
+  on the same side (i.e. the local filesystem or the remote Cozy) and
+  synchronize them in the right order. We've added a few dependencies that let
+  us solve situations that were known to fail (e.g. trashing directories as a
+  whole instead of trashing every element separately) and we will add more as
+  needed in the future.
+- As stated above, directories will now be trashed as a whole but we'll now also
+  keep empty directories in the trash instead of erasing them. It should be
+  easier for you to find deleted elements in the trash and restore entire
+  directories.
+- We've decided to stop linking a local and remote directories at the same
+  location during the synchronization as this could lead to issues (e.g. if one
+  of them was moved and the other created).
+  We'll handle this situation as a conflict instead.
+- When propagating documents to the remote Cozy, we should now always use the
+  correct parent directory which is not necessarily the remote folder with this
+  path.
+- The propagation of documents to the remote Cozy should now be slightly faster
+  as we make fewer requests to the remote Cozy (i.e. we don't look for the
+  parent directory on the remote Cozy anymore).
+- Name conflicts detected during the synchronization phase will now be notified
+  to you within the main window. Their resolution will only happen on your
+  behalf via the action button within the error message.
+- URLs entered during the client's Onboarding won't be considered as invalid if
+  they contain a port but not the http protocol and will be considered as https
+  URLs instead.
+
+Improvements for Windows users:
+
+- The detection of local overwriting moves should be more reliable. This also
+  improves the propagation of remote overwriting moves to the local filesystem.
+- The detection of local directory moves when they have a lot of content should
+  be more reliable. This also improves the propagation of remote directory moves
+  to the local filesystem.
+
+Improvements for macOS users:
+
+- We've fixed an issue in our local changes watcher that could lead to
+  synchronizing a file deletion when actually replacing it with another one on
+  the local filesystem.
+- We've fixed an issue in our local changes watcher that could lead to
+  synchronization errors due to invalid metadata when a file was moved then
+  modified in a short period of time or modified multiple times in a short
+  period of time, leaving you with a blocked synchronization until the file is
+  modified, moved or removed.
+- Deletions of children of moved directories while the client was stopped should
+  now be correctly detected and propagated to the remote Cozy.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.30.0-beta.1 - 2021-09-09
 
 Improvements for all users:
