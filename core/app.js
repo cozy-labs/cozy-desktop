@@ -96,9 +96,9 @@ class App {
 
   // Parse the URL
   parseCozyUrl(cozyUrl /*: string */) {
-    if (cozyUrl.indexOf(':') === -1) {
-      if (cozyUrl.indexOf('.') === -1) {
-        cozyUrl += '.cozycloud.cc'
+    if (!cozyUrl.includes('://')) {
+      if (!cozyUrl.includes('.')) {
+        cozyUrl += '.mycozy.cloud'
       }
       cozyUrl = `https://${cozyUrl}`
     }
