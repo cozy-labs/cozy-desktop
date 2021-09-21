@@ -222,6 +222,32 @@ class Pouch {
     return this.db.put({ _id, _rev, _deleted: true })
   }
 
+  // This method will completely erase an array of records from PouchDB while
+  // removing all their attributes.
+  // This method also does not care about invariants like `bulkDocs()` does.
+  async eraseDocuments(docs /*: Array<SavedMetadata> */) {
+    const docsToErase = []
+    docs.forEach(doc => {
+      const { path, _id, _rev } = _.clone(doc)
+      log.debug({ path, _id, _rev }, 'Erasing bulk record...')
+      docsToErase.push({ _id, _rev, _deleted: true })
+    })
+
+    const results = await this.db.bulkDocs(docsToErase)
+    for (let [idx, result] of results.entries()) {
+      if (result.error) {
+        const err = new PouchError(result)
+        const doc = docs[idx]
+        log.error(
+          { err, path: doc.path, doc, sentry: true },
+          'could not erase bulk record'
+        )
+        throw err
+      }
+    }
+    return results
+  }
+
   // WARNING: bulkDocs is not a transaction, some updates can be applied while
   // others do not.
   // Make sure lock is acquired before using it to avoid conflict.
