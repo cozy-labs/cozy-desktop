@@ -201,18 +201,40 @@ onPlatforms(['linux', 'win32'], () => {
           // This seems to happen more frequently on Windows.
           outputBatches.push(await producer.channel.pop())
         }
-        should(_.flatten(outputBatches)).deepEqual([
-          {
-            action: 'created',
-            kind: 'file',
-            path: filename
-          },
-          {
-            action: 'modified',
-            kind: 'file',
-            path: filename
-          }
-        ])
+        const possibleBatches = [
+          [
+            {
+              action: 'created',
+              kind: 'file',
+              path: filename
+            },
+            {
+              action: 'modified',
+              kind: 'file',
+              path: filename
+            }
+          ]
+        ]
+        if (process.platform === 'win32') {
+          possibleBatches.push([
+            {
+              action: 'created',
+              kind: 'file',
+              path: filename
+            },
+            {
+              action: 'modified',
+              kind: 'file',
+              path: filename
+            },
+            {
+              action: 'modified',
+              kind: 'file',
+              path: filename
+            }
+          ])
+        }
+        should(_.flatten(outputBatches)).be.oneOf(possibleBatches)
         await syncDir.rename(filename, newname)
         let renamedOutputBatch = await producer.channel.pop()
         if (
