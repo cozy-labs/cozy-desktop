@@ -216,6 +216,7 @@ class Sync {
   remote: Remote
   lifecycle: LifeCycle
   retryInterval: ?IntervalID
+  currentChangesToApply: Change[]
   */
 
   constructor(
@@ -233,6 +234,7 @@ class Sync {
     this.local.other = this.remote
     this.remote.other = this.local
     this.lifecycle = new LifeCycle(log)
+    this.currentChangesToApply = []
 
     // Used only when the synchronization of a change failed and blocks
     this.retryInterval = null
@@ -374,7 +376,7 @@ class Sync {
           break
         }
 
-        const changesToApply = new DependencyGraph(changes, {
+        this.currentChangesToApply = new DependencyGraph(changes, {
           compare: compareChanges
         }).toArray()
 
@@ -386,19 +388,21 @@ class Sync {
         //
         // We also reschedule all following changes to grossly keep the order in
         // which "independent" changes were made.
-        const reschedulingStart = changesToApply.findIndex(
+        const reschedulingStart = this.currentChangesToApply.findIndex(
           // Find decreasing sequence
           (change, index, changes) => {
             return index > 0 ? change.seq < changes[index - 1].seq : false
           }
         )
         if (reschedulingStart > 0) {
-          const changesToReschedule = changesToApply.splice(reschedulingStart)
+          const changesToReschedule = this.currentChangesToApply.splice(
+            reschedulingStart
+          )
           await rescheduleChanges(changesToReschedule, this)
         }
 
         // We can now apply all changes that were not rescheduled
-        for (const changeToApply of changesToApply) {
+        for (const changeToApply of this.currentChangesToApply) {
           // We need to set the value of `change` so it can be reused in the
           // `catch` block.
           change = changeToApply
@@ -1105,20 +1109,42 @@ class Sync {
 
       if (
         parent &&
-        isMarkedForDeletion(parent) &&
-        !metadata.isUpToDate(side.name, parent)
+        (isMarkedForDeletion(parent) && !metadata.isUpToDate(side.name, parent))
       ) {
         log.info(
           { path: doc.path },
-          `${doc.docType} will be trashed with its parent directory`
+          `${doc.docType} will be trashed within its parent directory`
         )
         return
       }
     }
 
-    log.info({ path: doc.path }, `${doc.docType} should be trashed by itself`)
+    if (metadata.isFolder(doc)) {
+      log.info({ path: doc.path }, 'folder will be trashed with its content')
+
+      // Erase child records as they will be trashed with their parent
+      const children = await this.pouch.byRecursivePath(doc.path)
+      await this.pouch.eraseDocuments(children)
+
+      for (const child of children) {
+        if (metadata.isFile(child)) {
+          this.events.emit('delete-file', _.clone(child))
+        }
+
+        // Remove potential child changes from the list of current changes to
+        // apply.
+        const maybeIndex = this.currentChangesToApply.findIndex(
+          change => change.doc._id === child._id
+        )
+        if (maybeIndex) this.currentChangesToApply.splice(maybeIndex, 1)
+      }
+    } else {
+      log.info({ path: doc.path }, 'file will be trashed by itself')
+    }
+
     await side.trashAsync(doc)
-    if (doc.docType === 'file') {
+
+    if (metadata.isFile(doc)) {
       this.events.emit('delete-file', _.clone(doc))
     }
   }

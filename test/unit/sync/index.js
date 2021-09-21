@@ -300,7 +300,7 @@ describe('Sync', function() {
     })
 
     it('trashes a locally deleted folder with content', async function() {
-      await builders
+      const deletedChild = await builders
         .metadata()
         .path('foo/bar')
         .trashed()
@@ -328,12 +328,13 @@ describe('Sync', function() {
         should(this.remote.trashAsync)
           .have.been.calledOnce()
           .and.calledWith(deletedParent)
+        should(await this.pouch.bySyncedPath(deletedChild.path)).be.undefined()
       } finally {
         this.sync.trashWithParentOrByItself.restore()
       }
     })
 
-    it('does not trash a locally deleted file if its parent is deleted', async function() {
+    it('skips trashing a locally deleted file if its parent is deleted', async function() {
       const deletedChild = await builders
         .metadata()
         .path('foo/bar')
@@ -360,6 +361,9 @@ describe('Sync', function() {
           this.remote
         )
         should(this.remote.trashAsync).not.have.been.called()
+        should(
+          await this.pouch.bySyncedPath(deletedChild.path)
+        ).have.properties(Object.keys(deletedChild))
       } finally {
         this.sync.trashWithParentOrByItself.restore()
       }
