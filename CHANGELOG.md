@@ -1,5 +1,27 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.30.1-beta.1 - 2021-09-21
+
+Improvements for all users:
+
+- We've optimized the initial listing of documents present on the remote Cozy to
+  limit the number of necessary network requests and the CPU and RAM usage. This
+  should also result in a quicker listing.
+
+Improvements for Windows and macOS users:
+
+- The improvement introduced in the latest version around the trashing of
+  complete folders (i.e. keeping their hierarchy in the Trash) would in turn
+  generate visible errors in the main window and pause the synchronization until
+  the remote trashing of all the documents in the folder would be fully
+  synchronized.
+  We're now making sure the trashing of a folder is swift and does not result in
+  unnecessary errors.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.30.0 - 2021-09-20
 
 Improvements for all users:
