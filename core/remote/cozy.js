@@ -593,7 +593,18 @@ async function fetchInitialChanges(
       limit: 1,
       descending: true
     })
-  const remoteDocs = await client.queryAll(Q(FILES_DOCTYPE))
+
+  let resp = await client.stackClient
+    .collection(FILES_DOCTYPE)
+    .all({ limit: 1000 })
+  let remoteDocs = resp.data
+
+  while (resp && resp.next) {
+    resp = await client.stackClient
+      .collection(FILES_DOCTYPE)
+      .all({ limit: 1000, bookmark: resp.bookmark })
+    remoteDocs = remoteDocs.concat(resp.data)
+  }
 
   return { last_seq, remoteDocs }
 }
