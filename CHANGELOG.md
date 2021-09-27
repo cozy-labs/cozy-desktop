@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.30.1-beta.2 - 2021-09-27
+
+Improvements for all users:
+
+- Default values will now be provided by the client for remote metadata when
+  they're not provided by cozy-stack.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.30.1-beta.1 - 2021-09-21
 
 Improvements for all users:
