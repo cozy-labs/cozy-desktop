@@ -15,6 +15,9 @@ const { onPlatform } = require('../support/helpers/platform')
 
 const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../core/remote/constants')
 
+const logger = require('../../core/utils/logger')
+const log = new logger({ component: 'TEST' })
+
 /*::
 import type { SavedMetadata } from '../../core/metadata'
 */
@@ -302,13 +305,7 @@ describe('Move', () => {
         await cozy.files.updateById(file._id, 'updated file content', {})
         await helpers.pullAndSyncAll()
         const was = await pouch.byRemoteId(file._id)
-        await helpers._remote.moveAsync(
-          {
-            ...was,
-            path: path.normalize('src/file2')
-          },
-          was
-        )
+        await helpers.remote.move(was.remote, path.normalize('src/file2'))
         await helpers.pullAndSyncAll()
 
         should(await helpers.docByPath('src/file2')).match({
@@ -351,13 +348,7 @@ describe('Move', () => {
           await cozy.files.updateById(file._id, 'updated file content', {})
           await helpers.remote.pullChanges()
           const was = await pouch.byRemoteId(file._id)
-          await helpers._remote.moveAsync(
-            {
-              ...was,
-              path: path.normalize('src/file2')
-            },
-            was
-          )
+          await helpers.remote.move(was.remote, path.normalize('src/file2'))
           await helpers.pullAndSyncAll()
 
           should(await helpers.docByPath('src/file2')).match({
@@ -635,13 +626,7 @@ describe('Move', () => {
 
     it('from remote client', async () => {
       const was = await pouch.byRemoteId(dir._id)
-      await helpers._remote.moveAsync(
-        {
-          ...was,
-          path: path.normalize('parent/dst/dir')
-        },
-        was
-      )
+      await helpers.remote.move(was.remote, path.normalize('parent/dst/dir'))
 
       await helpers.remote.pullChanges()
 
@@ -871,6 +856,7 @@ describe('Move', () => {
       })
 
       it('local', async () => {
+        log.info('TEST START')
         should(await helpers.local.tree()).deepEqual([
           'parent/',
           'parent/dst/',
@@ -908,13 +894,7 @@ describe('Move', () => {
           'parent/src/dir/subdir/file'
         ])
         const was = await pouch.byRemoteId(dir._id)
-        await helpers._remote.moveAsync(
-          {
-            ...was,
-            path: path.normalize('parent/src/dir2')
-          },
-          was
-        )
+        await helpers.remote.move(was.remote, path.normalize('parent/src/dir2'))
         await helpers.remote.pullChanges()
         await helpers.syncAll()
 
@@ -986,13 +966,7 @@ describe('Move', () => {
         await cozy.files.updateById(file._id, 'updated file content', {})
         await helpers.remote.pullChanges()
         const was = await pouch.byRemoteId(dir._id)
-        await helpers._remote.moveAsync(
-          {
-            ...was,
-            path: path.normalize('parent/src/dir2')
-          },
-          was
-        )
+        await helpers.remote.move(was.remote, path.normalize('parent/src/dir2'))
         await helpers.remote.pullChanges()
         await helpers.syncAll()
 
@@ -1074,13 +1048,7 @@ describe('Move', () => {
           'parent/src/dir/subdir/file'
         ])
         const was = await pouch.byRemoteId(dir._id)
-        await helpers._remote.moveAsync(
-          {
-            ...was,
-            path: path.normalize('parent/dst/dir')
-          },
-          was
-        )
+        await helpers.remote.move(was.remote, path.normalize('parent/dst/dir'))
         await helpers.pullAndSyncAll()
         should(await helpers.trees('metadata', 'remote')).deepEqual({
           remote: [

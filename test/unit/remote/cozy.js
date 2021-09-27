@@ -16,6 +16,7 @@ const {
   MAX_FILE_SIZE
 } = require('../../../core/remote/constants')
 const { RemoteCozy } = require('../../../core/remote/cozy')
+const { withDefaultValues } = require('../../../core/remote/document')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
 
 const configHelpers = require('../../support/helpers/config')
@@ -475,7 +476,9 @@ describe('RemoteCozy', function() {
       // `since` is not '0' so we don't try to run an initial fetch which is not
       // faked here.
       const { docs } = await remoteCozy.changes('')
-      should(docs.map(doc => ({ doc }))).eql(docsOnServer)
+      should(docs.map(doc => ({ doc }))).eql(
+        docsOnServer.map(({ doc }) => ({ doc: withDefaultValues(doc) }))
+      )
     })
   })
 
