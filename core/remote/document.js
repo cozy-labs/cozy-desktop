@@ -64,13 +64,13 @@ export type RemoteDeletion = {|
 export type JsonApiFileAttributes = {|
   type: FILE,
   class?: string, // file only
-  dir_id: string,
+  dir_id?: string,
   executable?: boolean,
   md5sum?: string,
   mime?: string,
-  name: string,
+  name?: string,
   size?: string, // file only
-  tags: string[],
+  tags?: string[],
   trashed?: true,
   created_at: string,
   updated_at: string,
@@ -81,10 +81,10 @@ export type JsonApiFileAttributes = {|
 
 export type JsonApiDirAttributes = {|
   type: DIR,
-  dir_id: string,
-  name: string,
+  dir_id?: string,
+  name?: string,
   path?: string, // folder only
-  tags: string[],
+  tags?: string[],
   trashed?: true,
   created_at: string,
   updated_at: string,
@@ -140,6 +140,7 @@ module.exports = {
   keepFiles,
   parentDirIds,
   inRemoteTrash,
+  withDefaultValues,
   remoteJsonToRemoteDoc,
   jsonApiToRemoteJsonDoc
 }
@@ -178,6 +179,31 @@ function inRemoteTrash(
   )
 }
 
+// The following attributes can be omitted by cozy-stack if not defined
+function withDefaultValues /*:: <T: JsonApiDirAttributes|JsonApiFileAttributes> */(
+  attributes /*: T */
+) /*: T */ {
+  if (attributes.type === DIR_TYPE) {
+    return {
+      ...attributes,
+      dir_id: attributes.dir_id || '',
+      name: attributes.name || '',
+      path: attributes.path || '',
+      tags: attributes.tags || []
+    }
+  } else {
+    return {
+      ...attributes,
+      class: attributes.class || 'application',
+      dir_id: attributes.dir_id || '',
+      md5sum: attributes.md5sum || '',
+      mime: attributes.mime || 'application/octet-stream',
+      name: attributes.name || '',
+      tags: attributes.tags || []
+    }
+  }
+}
+
 function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
   json /*: T */
 ) /*: RemoteDoc */ {
@@ -186,7 +212,7 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
       type: DIR_TYPE,
       _id: json._id,
       _rev: json._rev,
-      ...json.attributes
+      ...withDefaultValues(json.attributes)
     } /*: RemoteDir */)
 
     return remoteDir
@@ -195,7 +221,7 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
       type: FILE_TYPE,
       _id: json._id,
       _rev: json._rev,
-      ...json.attributes
+      ...withDefaultValues(json.attributes)
     } /*: RemoteFile */)
 
     return remoteFile
