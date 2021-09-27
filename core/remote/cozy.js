@@ -21,6 +21,7 @@ const {
 const { DirectoryNotFound } = require('./errors')
 const {
   dropSpecialDocs,
+  withDefaultValues,
   remoteJsonToRemoteDoc,
   jsonApiToRemoteJsonDoc,
   keepFiles,
@@ -392,9 +393,9 @@ class RemoteCozy {
       results.map(async result => {
         if (result.type === FILE_TYPE) {
           const parentDir /*: RemoteDir */ = await this.findDir(result.dir_id)
-          return this._withPath(result, parentDir)
+          return this._withPath(withDefaultValues(result), parentDir)
         }
-        return result
+        return withDefaultValues(result)
       })
     )
   }
@@ -575,7 +576,7 @@ async function fetchChangesFromFeed(
       limit: batchSize
     }
   )
-  remoteDocs = remoteDocs.concat(results.map(r => r.doc))
+  remoteDocs = remoteDocs.concat(results.map(r => withDefaultValues(r.doc)))
 
   if (pending === 0) {
     return { last_seq, remoteDocs }
@@ -603,7 +604,7 @@ async function fetchInitialChanges(
     resp = await client.stackClient
       .collection(FILES_DOCTYPE)
       .all({ limit: 1000, bookmark: resp.bookmark })
-    remoteDocs = remoteDocs.concat(resp.data)
+    remoteDocs = remoteDocs.concat(resp.data.map(withDefaultValues))
   }
 
   return { last_seq, remoteDocs }
