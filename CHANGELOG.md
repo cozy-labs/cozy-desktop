@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.30.1-beta.3 - 2021-10-04
+
+Improvements for all users:
+
+- We updated the localizations and fixed some GUI texts which were not correctly
+  localized.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.30.1-beta.2 - 2021-09-27
 
 Improvements for all users:
