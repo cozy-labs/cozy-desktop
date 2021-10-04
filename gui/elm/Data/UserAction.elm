@@ -408,7 +408,7 @@ viewByCode helpers action =
                 , "CGUUpdated Their acceptance is required to continue using your Cozy."
                 ]
             , buttons =
-                [ actionButton helpers (SendCommand Retry action) "UserAction Ok" Secondary
+                [ actionButton helpers (SendCommand Retry action) "UserAction OK" Secondary
                 , linkButton helpers link "CGUUpdated Read the new ToS" Primary
                 ]
             }

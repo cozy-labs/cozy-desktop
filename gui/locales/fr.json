@@ -258,12 +258,11 @@
   "Updater It may take a while": "Cela peut prendre quelques minutes, selon la vitesse de votre connexion.",
 
   "UserAction OK": "OK",
-  "UserAction Read": "Lire maintenant",
   "UserAction Give up": "Abandonner",
-  "UserAction Retry": "Réessayer",
-  "UserAction Read more": "En savoir plus",
-  "UserAction Rename {0}": "Renommer le {0}",
   "UserAction Link directories": "Lier les dossiers",
+  "UserAction Rename {0}": "Renommer le {0}",
+  "UserAction Retry": "Réessayer",
+  "UserAction Show details": "Détails",
 
   "Welcome Sign in to your Cozy": "Se connecter à mon Cozy",
   "Welcome Your own private cloud": "Bienvenue sur Cozy Drive pour ordinateur"

@@ -258,12 +258,11 @@
   "Updater It may take a while": "It may take a while, depending on your Internet connection speed.",
 
   "UserAction OK": "OK",
-  "UserAction Read": "Read now",
   "UserAction Give up": "Give up",
-  "UserAction Retry": "Retry",
-  "UserAction Read more": "Read more",
-  "UserAction Rename {0}": "Rename {0}",
   "UserAction Link directories": "Link directories",
+  "UserAction Rename {0}": "Rename {0}",
+  "UserAction Retry": "Retry",
+  "UserAction Show details": "Show details",
 
   "Welcome Sign in to your Cozy": "Zaloguj się do mojego Cozy",
   "Welcome Your own private cloud": "Witaj w Cozy Drive dla Twojego komputera!"
