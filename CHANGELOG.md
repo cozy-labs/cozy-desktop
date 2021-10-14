@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.31.0-beta.1 - 2021-10-14
+
+Improvements for all users:
+
+- We upgraded our Electron dependency to v12.2.1 which includes lots of CVE
+  patches, a patch for a certificate issue following the end of the
+  Let's Encrypt first root certificate validity and patches around certificates
+  validation which we hope should resolve the missing network problem some users
+  are experiencing.
+- We updated some of our status messages with the hope they will be easier to
+  understand.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.30.1 - 2021-10-05
 
 Improvements for all users:
