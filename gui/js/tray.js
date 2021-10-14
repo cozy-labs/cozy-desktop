@@ -110,7 +110,10 @@ const systrayInfo = (status, label) => {
     case 'user-action-required':
       return ['pause', label]
     case 'syncing':
-      return ['sync', translate('Tray Syncing') + (label ? ` ‟${label}“` : '…')]
+      return [
+        'sync',
+        translate('Tray Sync in progress') + (label ? ` ‟${label}“` : '…')
+      ]
     case 'up-to-date':
     case 'online':
       return ['idle', translate('Tray Your cozy is up to date')]

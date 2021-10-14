@@ -320,7 +320,9 @@ const updateState = (newState, data) => {
   } else if (newState === 'syncing' && filename) {
     tray.setStatus(newState, filename)
   } else {
-    tray.setStatus(newState, data)
+    // Should not happen as we only call updateState with `syncing` and
+    // `sync-state`.
+    tray.setStatus(newState)
   }
 
   if (newState === 'syncing' && filename) {

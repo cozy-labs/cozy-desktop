@@ -971,6 +971,8 @@ class Sync {
       retryDelay
     )
 
+    // FIXME: possible memory leak as it seems possible to add lots of listeners
+    // without removing them (maybe if we have multiple blocking changes?)
     this.events.once('user-action-inprogress', waitBeforeRetry)
     this.events.once('user-action-command', executeCommand)
 

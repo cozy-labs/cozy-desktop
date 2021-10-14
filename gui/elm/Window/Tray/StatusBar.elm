@@ -77,16 +77,16 @@ statusToString helpers status =
             helpers.t "Dashboard Synchronization suspended"
 
         Starting ->
-            helpers.t "Dashboard Analyze"
+            helpers.t "Dashboard Sync in progress (preparation)"
 
         Buffering ->
-            helpers.t "Dashboard Analyze"
+            helpers.t "Dashboard Sync in progress (preparation)"
 
         SquashPrepMerging ->
-            helpers.t "Dashboard Prepare"
+            helpers.t "Dashboard Sync in progress (preparation)"
 
         Syncing _ ->
-            helpers.t "Dashboard Syncing"
+            helpers.t "Dashboard Sync in progress (transfer)"
 
         Error _ ->
             helpers.t "Dashboard Error:"
