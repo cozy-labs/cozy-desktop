@@ -57,6 +57,10 @@ const _hashPassphrase = async (passphrase, salt, iterations) => {
 const login = async (cozyUrl, passphrase) => {
   const { csrf_token, salt, iterations } = await _getLoginInfo(cozyUrl)
   log.debug({ csrf_token }, 'Login...')
+  if (!csrf_token) {
+    log.debug('Already logged in. Skipping login')
+    return
+  }
   if (iterations > 0) {
     passphrase = await _hashPassphrase(passphrase, salt, iterations)
   }
