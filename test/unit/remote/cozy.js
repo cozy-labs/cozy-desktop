@@ -7,7 +7,8 @@ const should = require('should')
 const sinon = require('sinon')
 const electronFetch = require('electron-fetch')
 const { FetchError } = require('cozy-stack-client')
-const CozyClient = require('cozy-client-js').Client
+const OldCozyClient = require('cozy-client-js').Client
+const CozyClient = require('cozy-client').default
 
 const {
   ROOT_DIR_ID,
@@ -775,8 +776,16 @@ describe('RemoteCozy', function() {
       this.config.cozyUrl = cozyStackDouble.url()
       remoteCozy = new RemoteCozy(this.config)
       remoteCozy.client.oauth = true
+      remoteCozy.client._authstate = 3 // XXX: AuthOK
       remoteCozy.client._authcreds = Promise.resolve({
-        token: 'fake OAuth token'
+        // Fake OAuth tokens
+        token: {
+          tokenType: 'bearer',
+          accessToken: 'xxx',
+          refreshToken: 'xxx',
+          scope: 'io.cozy.doctypes',
+          toAuthHeader: () => 'xxx'
+        }
       })
     })
 
@@ -816,7 +825,7 @@ describe('RemoteCozy', function() {
 
   describe('#getDirectoryContent', () => {
     beforeEach(function() {
-      remoteCozy.client = new CozyClient({
+      remoteCozy.client = new OldCozyClient({
         cozyURL: this.config.cozyUrl,
         token: process.env.COZY_STACK_TOKEN
       })
@@ -879,6 +888,55 @@ describe('RemoteCozy', function() {
       await should(
         remoteCozy.getDirectoryContent(tree['dir/'], { client: stubbedClient })
       ).be.rejectedWith(/test error/)
+    })
+  })
+})
+
+describe('RemoteCozy.newClient', () => {
+  // XXX: Webapp token based clients are only used in tests but we should make
+  // sure tests won't fail because they can't build a valid CozyClient instance.
+  context('with a webapp token based cozy-client-js client', () => {
+    beforeEach('instanciate config', configHelpers.createConfig)
+    beforeEach('registerClient', configHelpers.registerClient)
+    afterEach('clean config directory', configHelpers.cleanConfig)
+
+    let webappCozy
+    beforeEach(function() {
+      webappCozy = new RemoteCozy(this.config)
+      webappCozy.client = cozyHelpers.cozy
+    })
+
+    it('returns a cozy-client CozyClient instance', async () => {
+      should(await webappCozy.newClient()).be.an.instanceOf(CozyClient)
+    })
+  })
+
+  context('with an OAuth based cozy-client-js client', () => {
+    beforeEach('instanciate config', configHelpers.createConfig)
+    beforeEach('register OAuth client', configHelpers.registerOAuthClient)
+    afterEach('clean config directory', configHelpers.cleanConfig)
+
+    let oauthCozy
+    beforeEach(async function() {
+      oauthCozy = new RemoteCozy(this.config)
+      oauthCozy.client = await cozyHelpers.oauthCozy(this.config)
+    })
+
+    it('returns a cozy-client CozyClient instance', async () => {
+      should(await oauthCozy.newClient()).be.an.instanceOf(CozyClient)
+    })
+
+    context('when the client was not authorized yet', () => {
+      it('handles OAuth cozy-client-js clients without credentials', async function() {
+        oauthCozy.client = new OldCozyClient({
+          cozyURL: this.config.cozyUrl,
+          oauth: {
+            clientParams: this.config.client,
+            storage: this.config
+          }
+        })
+        should(await oauthCozy.newClient()).be.an.instanceOf(CozyClient)
+      })
     })
   })
 })
