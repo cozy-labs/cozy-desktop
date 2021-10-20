@@ -202,7 +202,10 @@ class RemoteCozy {
 
       return await fn()
     } catch (err) {
-      if (/mojo result/.test(err.message)) {
+      if (
+        err.code === 'ERR_HTTP2_PROTOCOL_ERROR' ||
+        /mojo result/.test(err.message)
+      ) {
         const cozyErr = await domainError()
         if (cozyErr) {
           // Reject our domain function call
