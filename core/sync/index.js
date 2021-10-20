@@ -42,7 +42,7 @@ export type SyncOperation =
   {| type: 'SKIP'|'NULL' |} |
   {|
     type: 'ADD'|'EDIT'|'DEL'|'MOVE',
-    side: Writer
+    side: SideName
   |}
 export type Change = PouchDBFeedData & { operation: SyncOperation };
 */
@@ -101,14 +101,14 @@ const detectOperation = async (
     const from = (doc.moveFrom /*: SavedMetadata */)
 
     if (from.incompatibilities && outdatedSide.name === 'local') {
-      return { type: 'ADD', side: outdatedSide }
+      return { type: 'ADD', side: outdatedSide.name }
     } else {
-      return { type: 'MOVE', side: outdatedSide } // XXX: can be move with update but we don't care for now
+      return { type: 'MOVE', side: outdatedSide.name } // XXX: can be move with update but we don't care for now
     }
   } else if (isMarkedForDeletion(doc)) {
-    return { type: 'DEL', side: outdatedSide }
+    return { type: 'DEL', side: outdatedSide.name }
   } else if (!metadata.wasSynced(doc)) {
-    return { type: 'ADD', side: outdatedSide }
+    return { type: 'ADD', side: outdatedSide.name }
   } else {
     try {
       const old = oldFromDoc(doc, outdatedSide.name)
@@ -128,13 +128,13 @@ const detectOperation = async (
         } else {
           // We take as granted that doc and old have the same doc type (i.e.
           // file or folder).
-          return { type: 'EDIT', side: outdatedSide }
+          return { type: 'EDIT', side: outdatedSide.name }
         }
       } else {
-        return { type: 'ADD', side: outdatedSide }
+        return { type: 'ADD', side: outdatedSide.name }
       }
     } catch (err) {
-      return { type: 'EDIT', side: outdatedSide }
+      return { type: 'EDIT', side: outdatedSide.name }
     }
   }
 }
