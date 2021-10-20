@@ -3,7 +3,6 @@
 
 const should = require('should')
 const sinon = require('sinon')
-const OldCozyClient = require('cozy-client-js').Client
 const { Promise } = require('bluebird')
 
 const configHelpers = require('../support/helpers/config')
@@ -11,10 +10,7 @@ const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
 const Builders = require('../support/builders')
-const passphrase = require('../support/helpers/passphrase')
 
-const pkg = require('../../package.json')
-const automatedRegistration = require('../../dev/remote/automated_registration')
 const {
   FILES_DOCTYPE,
   OAUTH_CLIENTS_DOCTYPE
@@ -29,14 +25,7 @@ describe('Differential synchronization', () => {
   let helpers, builders, cozy, files
 
   before(configHelpers.createConfig)
-  before('register client', async function() {
-    const registration = automatedRegistration(
-      this.config.cozyUrl,
-      passphrase,
-      this.config
-    )
-    await registration.process(pkg)
-  })
+  before('register OAuth client', configHelpers.registerOAuthClient)
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
 
@@ -45,14 +34,7 @@ describe('Differential synchronization', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    this.cozy = cozy = new OldCozyClient({
-      cozyURL: this.config.cozyUrl,
-      oauth: {
-        clientParams: this.config.client,
-        storage: this.config
-      }
-    })
-    await this.cozy.authorize()
+    this.cozy = cozy = await cozyHelpers.oauthCozy(this.config)
 
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()

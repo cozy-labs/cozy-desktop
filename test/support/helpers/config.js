@@ -4,7 +4,10 @@ const path = require('path')
 
 const config = require('../../../core/config')
 
+const automatedRegistration = require('../../../dev/remote/automated_registration')
+const pkg = require('../../../package.json')
 const { COZY_URL } = require('./cozy')
+const PASSPHRASE = require('./passphrase')
 
 module.exports = {
   createConfig() {
@@ -29,6 +32,15 @@ module.exports = {
         accessToken: process.env.COZY_STACK_TOKEN
       }
     }
+  },
+
+  async registerOAuthClient() {
+    const registration = automatedRegistration(
+      this.config.cozyUrl,
+      PASSPHRASE,
+      this.config
+    )
+    await registration.process(pkg)
   },
 
   async cleanConfig() {
