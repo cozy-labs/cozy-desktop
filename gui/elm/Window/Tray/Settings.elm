@@ -11,11 +11,13 @@ module Window.Tray.Settings exposing
 
 import Data.DiskSpace exposing (DiskSpace)
 import Data.Status exposing (Status(..))
+import Data.SyncConfig as SyncConfig exposing (SyncConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Locale exposing (Helpers)
 import Ports
+import Url exposing (Url)
 import View.ProgressBar as ProgressBar
 
 
@@ -27,8 +29,7 @@ type alias Model =
     { version : String
     , newRelease : Maybe ( String, String )
     , autoLaunch : Bool
-    , address : String
-    , deviceName : String
+    , syncConfig : SyncConfig
     , disk : DiskSpace
     , busyUnlinking : Bool
     , busyQuitting : Bool
@@ -41,8 +42,7 @@ init version =
     { version = version
     , newRelease = Nothing
     , autoLaunch = True
-    , address = ""
-    , deviceName = ""
+    , syncConfig = SyncConfig.init
     , disk =
         { used = 0
         , quota = 0
@@ -58,11 +58,11 @@ init version =
 
 
 type Msg
-    = SetAutoLaunch Bool
+    = GotSyncConfig SyncConfig
+    | SetAutoLaunch Bool
     | AutoLaunchSet Bool
     | QuitAndInstall
     | NewRelease ( String, String )
-    | FillAddressAndDevice ( String, String )
     | UpdateDiskSpace DiskSpace
     | UnlinkCozy
     | CancelUnlink
@@ -77,6 +77,9 @@ update msg model =
     case
         msg
     of
+        GotSyncConfig syncConfig ->
+            ( { model | syncConfig = syncConfig }, Cmd.none )
+
         SetAutoLaunch autoLaunch ->
             ( { model | autoLaunch = autoLaunch }, Ports.autoLauncher autoLaunch )
 
@@ -88,9 +91,6 @@ update msg model =
 
         NewRelease ( notes, name ) ->
             ( { model | newRelease = Just ( notes, name ) }, Cmd.none )
-
-        FillAddressAndDevice ( address, deviceName ) ->
-            ( { model | address = address, deviceName = deviceName }, Cmd.none )
 
         UpdateDiskSpace disk ->
             ( { model | disk = disk }, Cmd.none )
@@ -181,11 +181,11 @@ view helpers status model =
         , h2 [] [ text (helpers.t "Account About") ]
         , p []
             [ strong [] [ text (helpers.t "Account Account" ++ " ") ]
-            , a [ href model.address ] [ text model.address ]
+            , cozyLink model
             ]
         , p []
             [ strong [] [ text (helpers.t "Account Device name" ++ " ") ]
-            , text model.deviceName
+            , text model.syncConfig.deviceName
             ]
         , p []
             [ strong [] [ text (helpers.t "Settings Version" ++ " ") ]
@@ -226,6 +226,18 @@ view helpers status model =
             ]
             [ span [] [ text (helpers.t "Account Unlink this Cozy") ] ]
         ]
+
+
+cozyLink : Model -> Html Msg
+cozyLink model =
+    let
+        { address } =
+            model.syncConfig
+
+        url =
+            Maybe.withDefault "" <| Maybe.map Url.toString address
+    in
+    a [ href url ] [ text url ]
 
 
 syncButton : Helpers -> Status -> Model -> Html Msg

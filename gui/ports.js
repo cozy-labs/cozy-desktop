@@ -80,9 +80,23 @@ elmectron.ports.chooseFolder.subscribe(() => {
   ipcRenderer.send('choose-folder')
 })
 
-ipcRenderer.on('synchronization', (event, url, deviceName) => {
-  elmectron.ports.synchonization.send([url, deviceName])
-})
+ipcRenderer.on(
+  'sync-config',
+  (event, address, deviceName, deviceId, capabilities, flags) => {
+    const partialSyncEnabled =
+      flags['settings.partial-desktop-sync.show-synced-folders-selection']
+    elmectron.ports.syncConfig.send({
+      address,
+      deviceName,
+      deviceId,
+      capabilities,
+      flags: {
+        partialSyncEnabled:
+          partialSyncEnabled != null ? partialSyncEnabled : false
+      }
+    })
+  }
+)
 elmectron.ports.startSync.subscribe(folder => {
   ipcRenderer.send('start-sync', folder)
 })
