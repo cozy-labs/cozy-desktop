@@ -314,7 +314,9 @@ class RemoteCozy {
         ? await fetchInitialChanges(since, client, batchSize)
         : await fetchChangesFromFeed(since, this.client, batchSize)
 
-    const docs = await this.completeRemoteDocs(dropSpecialDocs(remoteDocs))
+    const docs = (await this.completeRemoteDocs(
+      dropSpecialDocs(remoteDocs)
+    )).sort(byPath)
 
     return { last_seq, docs }
   }
@@ -609,7 +611,18 @@ async function fetchInitialChanges(
   } else {
     return fetchInitialChanges(last_seq, client, batchSize, remoteDocs)
   }
+}
 
+function byPath(docA, docB) {
+  if (!docA._deleted && !docB._deleted) {
+    if (docA.path < docB.path) return -1
+    if (docA.path > docB.path) return 1
+  } else if (docA._deleted && !docB._deleted) {
+    return -1
+  } else if (docB._deleted && !docA._deleted) {
+    return 1
+  }
+  return 0
 }
 
 module.exports = {

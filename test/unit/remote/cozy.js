@@ -432,6 +432,33 @@ describe('RemoteCozy', function() {
       })
     })
 
+    it('resolves with docs ordered by path asc', async function() {
+      const dirB = await builders
+        .remoteDir()
+        .inRootDir()
+        .name('dirB')
+        .create()
+      const fileB = await builders
+        .remoteFile()
+        .inRootDir()
+        .name('fileB')
+        .create()
+      const dirA = await builders
+        .remoteDir()
+        .inRootDir()
+        .name('dirA')
+        .create()
+      const fileA = await builders
+        .remoteFile()
+        .inDir(dirA)
+        .name('fileA')
+        .create()
+
+      const { docs } = await remoteCozy.changes()
+
+      should(docs).containDeepOrdered([dirA, fileA, dirB, fileB])
+    })
+
     it('does not swallow errors', function() {
       this.config.cozyUrl = cozyStackDouble.url()
       const remoteCozy = new RemoteCozy(this.config)
