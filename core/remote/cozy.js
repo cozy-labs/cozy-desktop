@@ -434,9 +434,9 @@ class RemoteCozy {
         .where({
           dir_id: dir._id
         })
-        .indexFields(['name'])
-        .sortBy([{ name: 'asc' }])
-        .limitBy(10000)
+        .indexFields(['dir_id', 'name'])
+        .sortBy([{ dir_id: 'asc' }, { name: 'asc' }])
+        .limitBy(3000)
         .offsetBookmark(resp.bookmark)
       resp = await client.query(queryDef)
       for (const j of resp.data) {
