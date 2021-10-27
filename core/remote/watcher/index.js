@@ -144,6 +144,7 @@ class RemoteWatcher {
   async watch() /*: Promise<?RemoteError> */ {
     const release = await this.pouch.lock(this)
     try {
+      this.events.emit('buffering-start')
       const seq = await this.pouch.getRemoteSeq()
       const { last_seq, docs } = await this.remoteCozy.changes(seq)
       this.events.emit('online')
@@ -154,6 +155,7 @@ class RemoteWatcher {
       }
 
       this.events.emit('remote-start')
+      this.events.emit('buffering-end')
       await this.pullMany(docs)
 
       let target = -1
@@ -169,6 +171,7 @@ class RemoteWatcher {
       return remoteErrors.wrapError(err)
     } finally {
       release()
+      this.events.emit('buffering-end')
       this.events.emit('remote-end')
     }
   }
