@@ -403,7 +403,7 @@ describe('RemoteCozy', function() {
     })
 
     context('when no seq given', function() {
-      it('resolves only with non deleted docs', async function() {
+      it('resolves only with non trashed, non deleted docs', async function() {
         const dir = await builders.remoteDir().create()
         const file = await builders
           .remoteFile()
@@ -414,6 +414,14 @@ describe('RemoteCozy', function() {
           .inDir(dir)
           .create()
         await builders.remoteErased(deletedFile).create()
+        const trashedFile = await builders
+          .remoteFile()
+          .inDir(dir)
+          .create()
+        await builders
+          .remoteFile(trashedFile)
+          .trashed()
+          .update()
 
         const { docs } = await remoteCozy.changes()
 
