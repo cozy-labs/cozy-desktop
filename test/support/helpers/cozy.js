@@ -7,6 +7,10 @@ require('../../../core/globals')
 const { app, session } = require('electron')
 const proxy = require('../../../gui/js/proxy')
 
+/*::
+import type { Config } from '../../../core/config'
+*/
+
 let originalNet
 const setupGlobalProxy = async () => {
   await app.whenReady()
@@ -57,6 +61,19 @@ const cozy = new OldCozyClient({
   token: process.env.COZY_STACK_TOKEN
 })
 
+const oauthCozy = async (config /*: Config */) /*: OldCozyClient */ => {
+  const client = new OldCozyClient({
+    cozyURL: config.cozyUrl,
+    oauth: {
+      clientParams: config.client,
+      storage: config
+    }
+  })
+  await client.authorize()
+
+  return client
+}
+
 // Build a new cozy-client instance from an old cozy-client-js instance
 const newClient = async (
   oldClient /*: OldCozyClient */ = cozy
@@ -71,6 +88,7 @@ const newClient = async (
 module.exports = {
   COZY_URL,
   cozy,
+  oauthCozy,
   newClient,
   deleteAll,
   setupGlobalProxy,

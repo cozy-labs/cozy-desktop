@@ -12,9 +12,7 @@ const pkg = require('../../package.json')
 const { version } = pkg
 const { FetchError } = require('../../core/remote/cozy')
 
-const automatedRegistration = require('../../dev/remote/automated_registration')
 const configHelpers = require('../support/helpers/config')
-const passphrase = require('../support/helpers/passphrase')
 
 describe('App', function() {
   describe('parseCozyUrl', function() {
@@ -85,14 +83,7 @@ describe('App', function() {
     }
 
     it('unregisters the client', async function() {
-      // For some reason, the test won't work using configHelpers because they
-      // don't perfectly fake the actual registration behavior.
-      const registration = automatedRegistration(
-        this.config.cozyUrl,
-        passphrase,
-        this.config
-      )
-      await registration.process(pkg)
+      await configHelpers.registerOAuthClient.call(this)
       const configDir = path.dirname(this.config.configPath)
       const basePath = path.dirname(configDir)
       const app = new App(basePath)

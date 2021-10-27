@@ -19,6 +19,27 @@ const log = logger({
 /*::
 export type WatcherType = 'atom' | 'chokidar'
 type FileConfig = Object
+type OAuthTokens = {
+  tokenType: string,
+  accessToken: string,
+  refreshToken: string,
+  scope: string,
+}
+type OAuthClient = {
+  clientID: string,
+  clientSecret: string,
+  registrationAccessToken: string,
+  redirectURI: string,
+  softwareID: string,
+  softwareVersion: string,
+  clientName: string,
+  clientKind: string,
+  clientURI: string,
+  logoURI: string,
+  policyURI: string,
+  notificationPlatform: string,
+  notificationDeviceToken: string,
+}
 */
 
 /* Stat dates on Windows were previously truncated to the second while we now
@@ -152,20 +173,52 @@ class Config {
     return !!(this.fileConfig.creds && this.cozyUrl)
   }
 
-  // Return the name of the registered client
-  get deviceName() /*: ?string */ {
-    return _.get(this.fileConfig, 'creds.client.clientName', '')
-  }
-
   // Return config related to the OAuth client
-  get client() /*: * */ {
+  get client() /*: OAuthClient */ {
     if (!this.fileConfig.creds) {
       throw new Error(`Device not configured`)
     }
     return this.fileConfig.creds.client
   }
 
-  get capabilities() /*: * */ {
+  // Set the remote configuration
+  set client(options /*: OAuthClient */) {
+    this.fileConfig.creds = { client: options }
+    this.persist()
+  }
+
+  get version() /*: ?string */ {
+    return _.get(this.fileConfig, 'creds.client.softwareVersion', '')
+  }
+
+  set version(newVersion /*: string */) /*: * */ {
+    _.set(this.fileConfig, 'creds.client.softwareVersion', newVersion)
+    this.persist()
+  }
+
+  get permissions() /*: string[] */ {
+    const scope = _.get(this.fileConfig, 'creds.token.scope', '')
+    return scope ? scope.split(' ') : []
+  }
+
+  // Return the id of the registered OAuth client
+  get deviceId() /*: ?string */ {
+    return _.get(this.fileConfig, 'creds.client.clientID', '')
+  }
+
+  // Return the name of the registered OAuth client
+  get deviceName() /*: ?string */ {
+    return _.get(this.fileConfig, 'creds.client.clientName', '')
+  }
+
+  get oauthTokens() /*: OAuthTokens */ {
+    if (!this.fileConfig.creds) {
+      throw new Error(`Device not configured`)
+    }
+    return this.fileConfig.creds.token
+  }
+
+  get capabilities() /*: { flatSubdomains?: boolean } */ {
     return _.get(this.fileConfig, 'instance.capabilities', {})
   }
 
@@ -201,26 +254,6 @@ class Config {
       )
     }
     _.set(this.fileConfig, `flags.${flag}`, isActive)
-    this.persist()
-  }
-
-  get version() /*: ?string */ {
-    return _.get(this.fileConfig, 'creds.client.softwareVersion', '')
-  }
-
-  set version(newVersion /*: string */) /*: * */ {
-    _.set(this.fileConfig, 'creds.client.softwareVersion', newVersion)
-    this.persist()
-  }
-
-  get permissions() /*: string[] */ {
-    const scope = _.get(this.fileConfig, 'creds.token.scope', '')
-    return scope ? scope.split(' ') : []
-  }
-
-  // Set the remote configuration
-  set client(options /*: * */) {
-    this.fileConfig.creds = { client: options }
     this.persist()
   }
 
