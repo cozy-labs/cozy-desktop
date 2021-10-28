@@ -224,10 +224,16 @@ describe('core/config', function() {
       })
 
       it('returns GUI configuration if any', function() {
-        const flagsConfig = { differentialSync: true }
+        const flagsConfig = {
+          'settings.partial-desktop-sync.show-synced-folders-selection': true
+        }
         this.config.fileConfig.flags = flagsConfig
         should(this.config.flags).deepEqual(flagsConfig)
-        should(this.config.flags.differentialSync).be.true()
+        should(
+          this.config.flags[
+            'settings.partial-desktop-sync.show-synced-folders-selection'
+          ]
+        ).be.true()
       })
     })
 

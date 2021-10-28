@@ -195,7 +195,12 @@ class RemoteWatcher {
   ) /*: Promise<void> */ {
     let changes = await this.analyse(docs, await this.olds(docs))
 
-    if (process.env.NODE_ENV === 'test' || this.config.flags.differentialSync) {
+    if (
+      process.env.NODE_ENV === 'test' ||
+      this.config.flags[
+        'settings.partial-desktop-sync.show-synced-folders-selection'
+      ]
+    ) {
       for (const change of changes) {
         if (
           change.type === 'DirAddition' &&
