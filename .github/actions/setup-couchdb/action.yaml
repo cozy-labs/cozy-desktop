@@ -17,8 +17,12 @@ runs:
       run: |
         curl -L https://github.com/boot2podman/machine/releases/download/v0.17/podman-machine.darwin-amd64 --output /usr/local/bin/podman-machine
         chmod +x /usr/local/bin/podman-machine
-        until podman-machine create --virtualbox-boot2podman-url https://github.com/boot2podman/boot2podman-fedora-iso/releases/download/af598af/boot2podman-fedora.iso box
+        until [[ $(podman-machine status box) == "Running" ]]
         do
+          podman-machine create \
+          --virtualbox-boot2podman-url https://github.com/boot2podman/boot2podman-fedora-iso/releases/download/af598af/boot2podman-fedora.iso \
+          --virtualbox-hostonly-cidr "192.168.56.1/24" \
+          box || true
           sleep 1
         done
 
