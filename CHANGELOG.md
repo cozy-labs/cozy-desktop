@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.31.0-beta.2 - 2021-11-04
+
+Improvements for all users:
+
+- We will now automatically refresh the app's OAuth client when it expires on
+  any request. This should prevent synchronization errors and avoid the need for
+  restarting the app in such cases.
+- We have improved the performance of the initial remote changes fetch which
+  could be slow enough on old Cozy to fail.
+- We've tweaked the app's status update to make it less likely to show an
+  "up-to-date" status while we're actually fetching changes from the Cozy.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.31.0-beta.1 - 2021-10-14
 
 Improvements for all users:
