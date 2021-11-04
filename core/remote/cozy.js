@@ -306,15 +306,17 @@ class RemoteCozy {
 
   async changes(
     since /*: string */ = '0',
-    batchSize /*: number */ = 10000
+    batchSize /*: number */ = 3000
   ) /*: Promise<{last_seq: string, docs: Array<MetadataRemoteInfo|RemoteDeletion>}> */ {
     const client = await this.newClient()
     const { last_seq, remoteDocs } =
       since === '0'
-        ? await fetchInitialChanges(client)
+        ? await fetchInitialChanges(since, client, batchSize)
         : await fetchChangesFromFeed(since, this.client, batchSize)
 
-    const docs = await this.completeRemoteDocs(dropSpecialDocs(remoteDocs))
+    const docs = (await this.completeRemoteDocs(
+      dropSpecialDocs(remoteDocs)
+    )).sort(byPath)
 
     return { last_seq, docs }
   }
@@ -432,9 +434,9 @@ class RemoteCozy {
         .where({
           dir_id: dir._id
         })
-        .indexFields(['name'])
-        .sortBy([{ name: 'asc' }])
-        .limitBy(10000)
+        .indexFields(['dir_id', 'name'])
+        .sortBy([{ dir_id: 'asc' }, { name: 'asc' }])
+        .limitBy(3000)
         .offsetBookmark(resp.bookmark)
       resp = await client.query(queryDef)
       for (const j of resp.data) {
@@ -591,28 +593,36 @@ async function fetchChangesFromFeed(
 }
 
 async function fetchInitialChanges(
-  client /*: CozyClient */
-) /*: Promise<ChangesFeedResponse> */ {
-  const { newLastSeq: last_seq } = await client.stackClient
+  since /*: string */,
+  client /*: CozyClient */,
+  batchSize /*: number */,
+  remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */ = []
+) {
+  const { newLastSeq: last_seq, pending, results } = await client
     .collection(FILES_DOCTYPE)
-    .fetchChanges({
-      limit: 1,
-      descending: true
-    })
+    .fetchChanges(
+      { since, includeDocs: true, limit: batchSize },
+      { includeFilePath: true, skipDeleted: true, skipTrashed: true }
+    )
+  remoteDocs = remoteDocs.concat(results.map(r => withDefaultValues(r.doc)))
 
-  let resp = await client.stackClient
-    .collection(FILES_DOCTYPE)
-    .all({ limit: 1000 })
-  let remoteDocs = resp.data
-
-  while (resp && resp.next) {
-    resp = await client.stackClient
-      .collection(FILES_DOCTYPE)
-      .all({ limit: 1000, bookmark: resp.bookmark })
-    remoteDocs = remoteDocs.concat(resp.data.map(withDefaultValues))
+  if (pending === 0) {
+    return { last_seq, remoteDocs }
+  } else {
+    return fetchInitialChanges(last_seq, client, batchSize, remoteDocs)
   }
+}
 
-  return { last_seq, remoteDocs }
+function byPath(docA, docB) {
+  if (!docA._deleted && !docB._deleted) {
+    if (docA.path < docB.path) return -1
+    if (docA.path > docB.path) return 1
+  } else if (docA._deleted && !docB._deleted) {
+    return -1
+  } else if (docB._deleted && !docA._deleted) {
+    return 1
+  }
+  return 0
 }
 
 module.exports = {

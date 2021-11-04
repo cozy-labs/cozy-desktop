@@ -403,7 +403,7 @@ describe('RemoteCozy', function() {
     })
 
     context('when no seq given', function() {
-      it('resolves only with non deleted docs', async function() {
+      it('resolves only with non trashed, non deleted docs', async function() {
         const dir = await builders.remoteDir().create()
         const file = await builders
           .remoteFile()
@@ -414,6 +414,14 @@ describe('RemoteCozy', function() {
           .inDir(dir)
           .create()
         await builders.remoteErased(deletedFile).create()
+        const trashedFile = await builders
+          .remoteFile()
+          .inDir(dir)
+          .create()
+        await builders
+          .remoteFile(trashedFile)
+          .trashed()
+          .update()
 
         const { docs } = await remoteCozy.changes()
 
@@ -422,6 +430,33 @@ describe('RemoteCozy', function() {
           .containDeep([dir._id, file._id])
           .and.have.length(2)
       })
+    })
+
+    it('resolves with docs ordered by path asc', async function() {
+      const dirB = await builders
+        .remoteDir()
+        .inRootDir()
+        .name('dirB')
+        .create()
+      const fileB = await builders
+        .remoteFile()
+        .inRootDir()
+        .name('fileB')
+        .create()
+      const dirA = await builders
+        .remoteDir()
+        .inRootDir()
+        .name('dirA')
+        .create()
+      const fileA = await builders
+        .remoteFile()
+        .inDir(dirA)
+        .name('fileA')
+        .create()
+
+      const { docs } = await remoteCozy.changes()
+
+      should(docs).containDeepOrdered([dirA, fileA, dirB, fileB])
     })
 
     it('does not swallow errors', function() {
