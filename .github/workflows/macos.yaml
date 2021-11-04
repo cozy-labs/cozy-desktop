@@ -183,8 +183,14 @@ jobs:
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
         run: |
-          hdiutil create -megabytes 100 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
-          hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
+          until hdiutil create -megabytes 100 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
+          do
+            sleep 1
+          done
+          until hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
+          do
+            sleep 1
+          done
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
       - name: Install dependencies
         if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
