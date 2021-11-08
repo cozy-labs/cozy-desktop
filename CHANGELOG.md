@@ -1,5 +1,28 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.31.0 - 2021-11-08
+
+Improvements for all users:
+
+- We upgraded our Electron dependency to v12.2.1 which includes lots of CVE
+  patches, a patch for a certificate issue following the end of the
+  Let's Encrypt first root certificate validity and patches around certificates
+  validation which we hope should resolve the missing network problem some users
+  are experiencing.
+- We updated some of our status messages with the hope they will be easier to
+  understand.
+- We will now automatically refresh the app's OAuth client when it expires on
+  any request. This should prevent synchronization errors and avoid the need for
+  restarting the app in such cases.
+- We have improved the performance of the initial remote changes fetch which
+  could be slow enough on old Cozy to fail.
+- We've tweaked the app's status update to make it less likely to show an
+  "up-to-date" status while we're actually fetching changes from the Cozy.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.31.0-beta.2 - 2021-11-04
 
 Improvements for all users:
