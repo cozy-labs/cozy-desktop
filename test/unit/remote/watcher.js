@@ -634,6 +634,50 @@ describe('RemoteWatcher', function() {
       should(apply).be.calledOnce()
       should(apply.args[0][0].doc).deepEqual(validMetadata(updatedDir))
     })
+
+    it('applies only changed content changes when already present in the feed', async function() {
+      const tree /*: RemoteTree */ = await builders.createRemoteTree([
+        'dir/',
+        'dir/subdir/',
+        'dir/subdir/file1',
+        'dir/subdir/file2'
+      ])
+      const dir = (tree['dir/'] /*: any */)
+      const updatedDir = await builders
+        .remoteDir((dir /*: MetadataRemoteDir */))
+        .update()
+      const file = (tree['dir/subdir/file1'] /*: any */)
+      const updatedFile = await builders
+        .remoteFile((file /*: MetadataRemoteFile */))
+        .update()
+      const newFile = await builders
+        .remoteFile()
+        .inDir(updatedDir)
+        .name('file3')
+        .create()
+
+      await this.watcher.pullMany([
+        updatedDir,
+        tree['dir/subdir/'],
+        tree['dir/subdir/file1'],
+        tree['dir/subdir/file2']
+      ])
+      should(apply.callCount).eql(6)
+      // From Feed
+      should(apply.args[0][0].doc).deepEqual(validMetadata(updatedDir))
+      should(apply.args[1][0].doc).deepEqual(validMetadata(tree['dir/subdir/']))
+      should(apply.args[2][0].doc).deepEqual(
+        validMetadata(tree['dir/subdir/file1'])
+      )
+      should(apply.args[3][0].doc).deepEqual(
+        validMetadata(tree['dir/subdir/file2'])
+      )
+      // From fetched content
+      // file3 was added so we can apply this change
+      should(apply.args[4][0].doc).deepEqual(validMetadata(newFile))
+      // XXX: no additional change for file2 since it's the same as in the Feed
+      should(apply.args[5][0].doc).deepEqual(validMetadata(updatedFile))
+    })
   })
 
   describe('analyse', () => {
