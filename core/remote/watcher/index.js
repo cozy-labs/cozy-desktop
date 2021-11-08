@@ -205,8 +205,10 @@ class RemoteWatcher {
             { path: change.doc.path },
             'Fetching content of unknwon folder...'
           )
-          const children = await this.remoteCozy.getDirectoryContent(
+          const children = (await this.remoteCozy.getDirectoryContent(
             change.doc.remote
+          )).filter(child =>
+            docs.every(doc => doc._id !== child._id || doc._rev !== child._rev)
           )
           const childChanges = await this.analyse(
             children,
