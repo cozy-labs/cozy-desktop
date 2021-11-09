@@ -8,6 +8,7 @@ const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
 const { FetchError } = require('cozy-stack-client')
 const { Q } = require('cozy-client')
+const cozyFlags = require('cozy-flags').default
 const path = require('path')
 const addSecretEventListener = require('secret-event-listener')
 
@@ -566,6 +567,21 @@ class RemoteCozy {
     } = this.config
     const oauthClient = { _id: clientID, _type: OAUTH_CLIENTS_DOCTYPE }
     await files.removeNotSynchronizedDirectories(oauthClient, [dir])
+  }
+
+  async flags() /*: Promise<Object> */ {
+    const client = await this.newClient()
+    // Fetch flags from the remote Cozy and store them in the local `cozyFlags`
+    // store.
+    await cozyFlags.initialize(client)
+
+    // Build a map of flags with their current value
+    const flags = {}
+    for (const flag of cozyFlags.list()) {
+      flags[flag] = cozyFlags(flag)
+    }
+
+    return flags
   }
 }
 
