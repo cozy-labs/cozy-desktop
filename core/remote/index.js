@@ -19,6 +19,7 @@ const { DirectoryNotFound, ExcludedDirError } = require('./errors')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
 const timestamp = require('../utils/timestamp')
+const flags = require('../utils/flags')
 
 /*::
 import type EventEmitter from 'events'
@@ -161,7 +162,7 @@ class Remote /*:: implements Reader, Writer */ {
             'could not fetch conflicting directory'
           )
         }
-        if (remoteDoc && this.isExcludedFromSync(remoteDoc)) {
+        if (remoteDoc && (await this.isExcludedFromSync(remoteDoc))) {
           throw new ExcludedDirError(path)
         }
       }
@@ -466,13 +467,17 @@ class Remote /*:: implements Reader, Writer */ {
     return conflict
   }
 
-  isExcludedFromSync(doc /*: MetadataRemoteInfo */) /*: boolean */ {
+  async isExcludedFromSync(
+    doc /*: MetadataRemoteInfo */
+  ) /*: Promise<boolean> */ {
     const {
-      client: { clientID },
-      flags
+      client: { clientID }
     } = this.config
     return (
-      (flags.differentialSync || process.env.NODE_ENV === 'test') &&
+      ((await flags(this.config))[
+        'settings.partial-desktop-sync.show-synced-folders-selection'
+      ] ||
+        process.env.NODE_ENV === 'test') &&
       doc.type === 'directory' &&
       doc.not_synchronized_on != null &&
       doc.not_synchronized_on.find(({ id }) => id === clientID) != null
@@ -480,8 +485,12 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async includeInSync(doc /*: SavedMetadata */) /*: Promise<*> */ {
-    const { flags } = this.config
-    if (flags.differentialSync || process.env.NODE_ENV === 'test') {
+    if (
+      (await flags(this.config))[
+        'settings.partial-desktop-sync.show-synced-folders-selection'
+      ] ||
+      process.env.NODE_ENV === 'test'
+    ) {
       const remoteDocs = await this.remoteCozy.search({ path: `/${doc.path}` })
       const remoteDoc = remoteDocs[0]
       if (!remoteDoc || remoteDoc.type !== 'directory') return
