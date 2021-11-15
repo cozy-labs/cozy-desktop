@@ -413,15 +413,6 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async usesFlatDomains() /*: Promise<boolean> */ {
-    let { flatSubdomains } = this.config.capabilities
-    if (flatSubdomains == null) {
-      ;({ flatSubdomains } = await this.remoteCozy.capabilities())
-      this.config.capabilities = { flatSubdomains }
-    }
-    return flatSubdomains
-  }
-
   async findDocByPath(fpath /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
     const [parentPath, name] = dirAndName(fpath)
     const { _id: dirID } = await this.findDirectoryByPath(parentPath)

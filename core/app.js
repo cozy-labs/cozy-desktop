@@ -157,8 +157,6 @@ class App {
     fse.ensureDirSync(syncPath)
     this.config.cozyUrl = cozyUrl
     this.config.syncPath = syncPath
-    // FIXME: fetch and save remote capabilities instead of caching them in the
-    // config the first time we fetch them.
     this.config.persist()
     log.info(
       'The remote Cozy has properly been configured ' +
