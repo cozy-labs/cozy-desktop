@@ -205,8 +205,10 @@
   "Settings Start Cozy Drive on system startup": "Cozy Drive automatisch opstarten",
   "Settings Startup": "Je Cozy wordt automatisch gesynchroniseerd met je computer",
   "Settings Sync": "Synchroniseren",
-  "Settings Synchronize manually": "Handmatig synchroniseren",
   "Settings Version": "Versie",
+  "Settings Synchronize manually": "Handmatig synchroniseren",
+  "Settings Configure": "Configure",
+  "Settings Selective synchronization": "Selective synchronization",
 
   "SyncDirEmpty Detail": "Om gegevensverlies te voorkomen, vindt er geen synchronisatie plaats. Als je synchronisatie wilt afdwingen, dan kun je je Cozy-map verwijderen.",
   "SyncDirEmpty Message": "Het lijkt erop dat je Cozy-map is geleegd. Bevinden de gegevens zich op een harde schijf die momenteel niet is aangekoppeld?",

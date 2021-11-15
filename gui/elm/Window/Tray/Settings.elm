@@ -18,6 +18,7 @@ import Html.Events exposing (..)
 import Locale exposing (Helpers)
 import Ports
 import Url exposing (Url)
+import Util.Conditional exposing (viewIf)
 import View.ProgressBar as ProgressBar
 
 
@@ -156,6 +157,10 @@ versionLine helpers model =
 
 view : Helpers -> Status -> Model -> Html Msg
 view helpers status model =
+    let
+        { partialSyncEnabled } =
+            model.syncConfig.flags
+    in
     section [ class "two-panes__content two-panes__content--settings" ]
         [ h2 [] [ text (helpers.t "Account Cozy disk space") ]
         , diskQuotaLine helpers model
@@ -178,6 +183,10 @@ view helpers status model =
             ]
         , h2 [] [ text (helpers.t "Settings Synchronize manually") ]
         , syncButton helpers status model
+        , viewIf partialSyncEnabled <|
+            h2 [] [ text (helpers.t "Settings Selective synchronization") ]
+        , viewIf partialSyncEnabled <|
+            selectiveSyncButton helpers model
         , h2 [] [ text (helpers.t "Account About") ]
         , p []
             [ strong [] [ text (helpers.t "Account Account" ++ " ") ]
@@ -256,3 +265,27 @@ syncButton helpers status model =
             attribute "disabled" "true"
         ]
         [ span [] [ text (helpers.t "Settings Sync") ] ]
+
+
+selectiveSyncButton : Helpers -> Model -> Html Msg
+selectiveSyncButton helpers model =
+    let
+        { deviceId } =
+            model.syncConfig
+
+        settingsUrl =
+            SyncConfig.buildAppUrl model.syncConfig "settings"
+
+        configurationUrl =
+            case settingsUrl of
+                Just url ->
+                    String.join "/" [ Url.toString url, "#/connectedDevices", deviceId ]
+
+                Nothing ->
+                    ""
+    in
+    a
+        [ class "btn"
+        , href configurationUrl
+        ]
+        [ span [] [ text (helpers.t "Settings Configure") ] ]

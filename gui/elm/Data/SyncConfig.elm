@@ -1,4 +1,4 @@
-port module Data.SyncConfig exposing (SyncConfig, gotSyncConfig, init)
+port module Data.SyncConfig exposing (SyncConfig, buildAppUrl, gotSyncConfig, init)
 
 import Url exposing (Url)
 
@@ -28,6 +28,47 @@ init =
         { partialSyncEnabled = False
         }
     }
+
+
+type alias AppSlug =
+    String
+
+
+buildAppUrl : SyncConfig -> AppSlug -> Maybe Url
+buildAppUrl { address, capabilities } slug =
+    let
+        cozyName =
+            case address of
+                Just url ->
+                    String.split "." url.host
+                        |> List.head
+                        |> Maybe.withDefault ""
+
+                _ ->
+                    ""
+
+        host =
+            case ( address, capabilities.flatSubdomains ) of
+                ( Just url, True ) ->
+                    String.replace cozyName (cozyName ++ "-" ++ slug) url.host
+
+                ( Just url, False ) ->
+                    String.join "." [ slug, url.host ]
+
+                ( _, _ ) ->
+                    ""
+    in
+    Maybe.map
+        (\url ->
+            { protocol = url.protocol
+            , host = host
+            , port_ = url.port_
+            , path = ""
+            , query = Nothing
+            , fragment = Nothing
+            }
+        )
+        address
 
 
 

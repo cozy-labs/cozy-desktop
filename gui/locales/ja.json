@@ -205,8 +205,10 @@
   "Settings Start Cozy Drive on system startup": "システム起動時に Cozy デスクトップを開始",
   "Settings Startup": "Cozy はお使いのコンピュータと自動的に同期されます",
   "Settings Sync": "同期",
-  "Settings Synchronize manually": "手動で同期",
   "Settings Version": "バージョン",
+  "Settings Synchronize manually": "手動で同期",
+  "Settings Configure": "Configure",
+  "Settings Selective synchronization": "Selective synchronization",
 
   "SyncDirEmpty Detail": "データの損失を避けるために、これは同期されません。 本当に同期をリセットしたい場合は、Cozy フォルダーを削除してください。",
   "SyncDirEmpty Message": "Cozy のフォルダが空になったようです。 現在接続されていないハードドライブ上にある可能性がありますか?",

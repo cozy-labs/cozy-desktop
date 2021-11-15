@@ -205,8 +205,10 @@
   "Settings Start Cozy Drive on system startup": "Cozy Drive mit dem System starten",
   "Settings Startup": "Ihre Cozy wird automatisch mit ihrem Computer synchronisiert.",
   "Settings Sync": "Synchronisieren",
-  "Settings Synchronize manually": "Manuell synchronisieren",
   "Settings Version": "Version",
+  "Settings Synchronize manually": "Manuell synchronisieren",
+  "Settings Configure": "Configure",
+  "Settings Selective synchronization": "Selective synchronization",
 
   "SyncDirEmpty Detail": "Um Datenverlust zu vermeiden, wird dies nicht synchronisiert. Wenn du die Synchronisation wirklich zurücksetzen möchtest, kannst du einfach den Cozy Ordner entfernen.",
   "SyncDirEmpty Message": "Es sieht so aus, als sei dein Cozy Ordner geleert worden. Vielleicht ist er auf einer Festplatte, die gerade nicht eingesteckt ist?",

@@ -205,8 +205,10 @@
   "Settings Start Cozy Drive on system startup": "Esegui Cozy Drive all'avvio del sistema",
   "Settings Startup": "Il tuo Cozy verrà sincronizzato automaticamente con il tuo computer",
   "Settings Sync": "Synchronize",
-  "Settings Synchronize manually": "Synchronize manually",
   "Settings Version": "Versione",
+  "Settings Synchronize manually": "Synchronize manually",
+  "Settings Configure": "Configure",
+  "Settings Selective synchronization": "Selective synchronization",
 
   "SyncDirEmpty Detail": "To avoid losing your data, this will not be synchronized. If you really want to reset the synchronization, you can just remove your Cozy folder.",
   "SyncDirEmpty Message": "Look like you Cozy folder got emptied. May be it is on a hard-drive which is not plugged at the moment?",
