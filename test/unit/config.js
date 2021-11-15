@@ -208,16 +208,6 @@ describe('core/config', function() {
       })
     })
 
-    describe('capabilities', function() {
-      it('accepts object with flatSubdomains key', function() {
-        this.config.capabilities = { flatSubdomains: false }
-        should(this.config.capabilities.flatSubdomains).be.false()
-
-        this.config.capabilities = { flatSubdomains: true }
-        should(this.config.capabilities.flatSubdomains).be.true()
-      })
-    })
-
     describe('flags', () => {
       it('returns an empty hash by default', function() {
         should(this.config.flags).deepEqual({})

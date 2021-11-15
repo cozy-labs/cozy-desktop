@@ -218,21 +218,6 @@ class Config {
     return this.fileConfig.creds.token
   }
 
-  get capabilities() /*: { flatSubdomains?: boolean } */ {
-    return _.get(this.fileConfig, 'instance.capabilities', {})
-  }
-
-  set capabilities({ flatSubdomains } /*: { flatSubdomains?: boolean } */) {
-    if (flatSubdomains != null) {
-      _.set(
-        this.fileConfig,
-        'instance.capabilities.flatSubdomains',
-        flatSubdomains
-      )
-      this.persist()
-    }
-  }
-
   // Flags are options that can be activated by the user via the config file.
   // They can be used to activate incomplete features for example.
   get flags() /*: { [string]: boolean } */ {
