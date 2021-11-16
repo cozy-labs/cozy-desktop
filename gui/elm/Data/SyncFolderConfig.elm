@@ -1,6 +1,7 @@
 module Data.SyncFolderConfig exposing
     ( SyncFolderConfig
     , isValid
+    , setError
     , valid
     )
 
@@ -26,3 +27,15 @@ isValid model =
 
         Just _ ->
             False
+
+
+setError : SyncFolderConfig -> String -> SyncFolderConfig
+setError folderConfig error =
+    { folderConfig
+        | error =
+            if error == "" then
+                Nothing
+
+            else
+                Just error
+    }

@@ -1,14 +1,13 @@
 module Window.Onboarding.Address exposing
-    ( Model
-    , Msg(..)
+    ( Msg(..)
     , correctAddress
     , dropAppName
-    , init
     , setError
     , update
     , view
     )
 
+import Data.AddressConfig as AddressConfig exposing (AddressConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -18,25 +17,7 @@ import Ports
 import String exposing (contains)
 import Url
 import Util.Keyboard as Keyboard
-
-
-
--- MODEL
-
-
-type alias Model =
-    { address : String
-    , error : String
-    , busy : Bool
-    }
-
-
-init : Model
-init =
-    { address = ""
-    , error = ""
-    , busy = False
-    }
+import Window.Onboarding.Context as Context exposing (Context)
 
 
 
@@ -50,9 +31,9 @@ type Msg
     | CorrectAddress
 
 
-setError : Model -> String -> ( Model, Cmd msg )
-setError model message =
-    ( { model | error = message, busy = False }
+setError : Context -> String -> ( Context, Cmd msg )
+setError context message =
+    ( Context.setAddressConfig context (AddressConfig.setError context.addressConfig message)
     , Ports.focus ".wizard__address"
     )
 
@@ -134,60 +115,77 @@ correctAddress address =
         |> appendPort
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
+update : Msg -> Context -> ( Context, Cmd msg )
+update msg context =
     case
         msg
     of
         FillAddress address ->
-            ( { model | address = address, error = "", busy = False }, Cmd.none )
+            ( Context.setAddressConfig context { address = address, error = "", busy = False }, Cmd.none )
 
         CorrectAddress ->
-            ( { model | address = correctAddress model.address }, Cmd.none )
+            let
+                addressConfig =
+                    context.addressConfig
+
+                newAddressConfig =
+                    { addressConfig
+                        | address = correctAddress addressConfig.address
+                    }
+            in
+            ( Context.setAddressConfig context newAddressConfig, Cmd.none )
 
         RegisterRemote ->
-            if model.address == "" then
-                setError model "Address You don't have filled the address!"
+            let
+                addressConfig =
+                    context.addressConfig
+            in
+            if addressConfig.address == "" then
+                setError context "Address You don't have filled the address!"
 
-            else if contains "@" model.address then
-                setError model "Address No email address"
+            else if contains "@" addressConfig.address then
+                setError context "Address No email address"
 
-            else if contains "mycosy.cloud" model.address then
-                setError model "Address Cozy not cosy"
+            else if contains "mycosy.cloud" addressConfig.address then
+                setError context "Address Cozy not cosy"
 
             else
-                ( { model | busy = True, address = correctAddress model.address }
-                , Ports.registerRemote (correctAddress model.address)
+                let
+                    newAddressConfig =
+                        { addressConfig | address = correctAddress addressConfig.address, busy = True }
+                in
+                ( Context.setAddressConfig context newAddressConfig
+                , Ports.registerRemote (correctAddress newAddressConfig.address)
                 )
 
         RegistrationError error ->
-            setError model error
+            setError context error
 
 
 
 -- VIEW
 
 
-view : Helpers -> Model -> Html Msg
-view helpers model =
+view : Helpers -> Context -> Html Msg
+view helpers context =
     div
         [ classList
             [ ( "step", True )
             , ( "step-address", True )
-            , ( "step-error", model.error /= "" )
+            , ( "step-error", context.addressConfig.error /= "" )
             ]
         ]
         [ div
             [ class "step-content" ]
             [ Icons.cozyBig
             , h1 [] [ text (helpers.t "Address Please introduce your cozy address") ]
-            , if model.error == "" then
+            , if context.addressConfig.error == "" then
                 p [ class "adress-helper" ]
                     [ text (helpers.t "Address This is the web address you use to sign in to your cozy.") ]
 
               else
                 p [ class "error-message" ]
-                    [ text (helpers.t model.error) ]
+                    [ text (helpers.t context.addressConfig.error) ]
             , div [ class "coz-form-group" ]
                 [ label [ class "coz-form-label" ]
                     [ text (helpers.t "Address Cozy address") ]
@@ -198,11 +196,11 @@ view helpers model =
                         [ placeholder "cloudy.mycozy.cloud"
                         , classList
                             [ ( "wizard__address", True )
-                            , ( "error", model.error /= "" )
+                            , ( "error", context.addressConfig.error /= "" )
                             ]
                         , type_ "text"
-                        , value model.address
-                        , disabled model.busy
+                        , value context.addressConfig.address
+                        , disabled context.addressConfig.busy
                         , onInput FillAddress
                         , Keyboard.onEnter RegisterRemote
                         , onBlur CorrectAddress
@@ -218,10 +216,10 @@ view helpers model =
             , a
                 [ class "btn"
                 , href "#"
-                , if model.address == "" then
+                , if context.addressConfig.address == "" then
                     attribute "disabled" "true"
 
-                  else if model.busy then
+                  else if context.addressConfig.busy then
                     attribute "aria-busy" "true"
 
                   else
