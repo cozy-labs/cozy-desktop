@@ -123,9 +123,19 @@
   "Error The remote directory `{0}` was excluded from the synchronization on this device.": "Le dossier distant `{0}` a été exclu de la synchronisation vers ce client.",
   "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.": "Le dossier local avec le même chemin peut soit être lié avec le dossier distant qui sera re-synchronisé soit renommé pour résoudre ce conflit.",
 
+  "Folder You're all set!": "Tout est prêt !",
+  "Folder You can now synchronize your Cozy with this computer.": "Vous pouvez maintenant synchroniser votre Cozy avec cet ordinateur.",
+  "Folder Selective synchronization": "Synchronisation sélective",
+  "Folder By default all the documents on your Cozy will be synchronized.": "Par défaut tous les documents de votre Cozy seront synchronisés.",
+  "Folder Location on the computer": "Emplacement sur l'ordinateur",
+  "Folder The documents selected on your Cozy will be synchronized on this computer in ": "Les documents sélectionnés dans votre Cozy seront synchronisés sur cet ordinateur dans ",
+  "Folder Modify": "Modifier",
+  "Folder You cannot synchronize your data directly in ": "Impossible de synchroniser directement vos données dans ",
+  "Folder Please choose another location": "Veuillez choisir un autre emplacement",
+  "Folder Start synchronization": "Lancer la synchronisation",
+
   "Folder All done": "C’est bon",
   "Folder Please choose an empty directory": "Veuillez choisir un dossier vide.",
-  "Folder Please choose another folder": "Veuillez choisir un autre répertoire",
   "Folder Select a location for your Cozy folder:": "Choisir un emplacement pour votre répertoire Cozy :",
   "Folder Use Cozy Drive": "Utiliser Cozy Drive",
   "Folder You cannot synchronize your whole system or personal folder": "Vous ne pouvez pas synchroniser tout votre système ou dossier personnel.",
@@ -192,6 +202,9 @@
   "Password Wrong cozy address?": "Mauvaise adresse Cozy ?",
   "Password You don't have filled the password!": "Vous n’avez pas rempli le mot de passe !",
   "Password Your password for the cozy address:": "Le mot de passe pour cette adresse Cozy :",
+
+  "Quotation Start": "« ",
+  "Quotation End": " »",
 
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "Dans le cas contraire, contactez nous sur contact@cozycloud.cc",
   "Revoked Reconnect": "Reconnecter",
