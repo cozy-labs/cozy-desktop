@@ -10,6 +10,7 @@ module Window.Tray exposing
 
 import Data.Platform exposing (Platform)
 import Data.Status as Status exposing (Status)
+import Data.SyncConfig as SyncConfig exposing (SyncConfig)
 import Data.SyncState as SyncState exposing (SyncState)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -59,7 +60,7 @@ init version platform =
 
 type Msg
     = GotSyncState SyncState
-    | SyncStart ( String, String )
+    | GotSyncConfig SyncConfig
     | GoToCozy
     | GoToFolder
     | GoToTab Page
@@ -96,10 +97,10 @@ update msg model =
             , Cmd.none
             )
 
-        SyncStart info ->
+        GotSyncConfig config ->
             let
                 ( settings, _ ) =
-                    Settings.update (Settings.FillAddressAndDevice info) model.settings
+                    Settings.update (Settings.GotSyncConfig config) model.settings
             in
             ( { model | page = DashboardPage, settings = settings }, Cmd.none )
 
@@ -148,7 +149,7 @@ update msg model =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Ports.synchonization SyncStart
+        [ SyncConfig.gotSyncConfig GotSyncConfig
         , Ports.gototab GoToStrTab
         , SyncState.gotNewState GotSyncState
 

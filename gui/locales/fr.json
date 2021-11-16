@@ -207,6 +207,8 @@
   "Settings Sync": "Synchroniser",
   "Settings Synchronize manually": "Synchroniser manuellement",
   "Settings Version": "Version",
+  "Settings Configure": "Configurer",
+  "Settings Selective synchronization": "Synchronisation sélective",
 
   "SyncDirEmpty Detail": "Afin d'éviter toute perte de données, ces changements ne seront pas synchronisés. Si vous souhaitez vraiment réinitialiser la synchronisation, vous pouvez simplement supprimer votre dossier Cozy.",
   "SyncDirEmpty Message": "Il semblerait que votre dossier Cozy ait été vidé. Peut-être se trouve-t-il sur un disque externe qui n'est pas connecté actuellement ?",

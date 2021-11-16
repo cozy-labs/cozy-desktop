@@ -31,7 +31,6 @@ port module Ports exposing
     , showHelp
     , showInParent
     , startSync
-    , synchonization
     , transfer
     , unlinkCozy
     , updateDownloading
@@ -114,9 +113,6 @@ port showHelp : () -> Cmd msg
 
 
 port startSync : String -> Cmd msg
-
-
-port synchonization : (( String, String ) -> msg) -> Sub msg
 
 
 port transfer : (EncodedFile -> msg) -> Sub msg
