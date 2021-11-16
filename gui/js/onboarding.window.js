@@ -39,15 +39,15 @@ module.exports = class OnboardingWM extends WindowManager {
     return '#onboarding'
   }
 
-  jumpToSyncPath() {
+  async jumpToSyncPath() {
     this.shouldJumpToSyncPath = true
     // TODO: cleanup state management, ensure elm side sends something
-    // through ports so we can trigger 'registration-done' without relying
-    // on timeouts.
-    this.send('registration-done')
+    // through ports so we can followup by sending the sync config without
+    // relying on timeouts.
+    await this.sendSyncConfig()
     this.win.webContents.once('dom-ready', () => {
-      setTimeout(() => {
-        this.send('registration-done')
+      setTimeout(async () => {
+        await this.sendSyncConfig()
         // XXX: Passing this as an event sender is a bit hacky...
         this.checkSyncPath(defaults.syncPath, this)
       }, 20)
@@ -94,15 +94,16 @@ module.exports = class OnboardingWM extends WindowManager {
     this.win.removeBrowserView(this.oauthView)
   }
 
-  create() {
-    return super
-      .create()
-      .then(() => {
-        if (this.shouldJumpToSyncPath) {
-          this.send('registration-done')
-        }
-      })
-      .catch(err => log.warn({ err }, 'could not create Onboarding window'))
+  async create() {
+    try {
+      await super.create()
+
+      if (this.shouldJumpToSyncPath) {
+        await this.jumpToSyncPath()
+      }
+    } catch (err) {
+      log.warn({ err }, 'could not create Onboarding window')
+    }
   }
 
   onOnboardingDone(handler) {
@@ -160,9 +161,9 @@ module.exports = class OnboardingWM extends WindowManager {
       reg => {
         syncSession.clearStorageData()
         this.win.webContents.once('dom-ready', () => {
-          setTimeout(() => {
-            event.sender.send('registration-done')
-            this.checkSyncPath(defaults.syncPath, event.sender)
+          setTimeout(async () => {
+            await this.sendSyncConfig()
+            this.checkSyncPath(defaults.syncPath, event.sender) // Why ???
           }, 20)
         })
         this.win.loadURL(reg.client.redirectURI)

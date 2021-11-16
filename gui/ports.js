@@ -60,9 +60,6 @@ ipcRenderer.on('registration-error', (event, err) => {
   err = errMessage(err)
   elmectron.ports.registrationError.send(err)
 })
-ipcRenderer.on('registration-done', () => {
-  elmectron.ports.registrationDone.send(true)
-})
 elmectron.ports.registerRemote.subscribe(url => {
   ipcRenderer.send('register-remote', {
     cozyUrl: url,

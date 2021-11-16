@@ -19,8 +19,6 @@ const {
 const migrations = require('../core/pouch/migrations')
 const config = require('../core/config')
 const winRegistry = require('../core/utils/win_registry')
-const capabilities = require('../core/utils/capabilities')
-const flags = require('../core/utils/flags')
 
 const autoLaunch = require('./js/autolaunch')
 const lastFiles = require('./js/lastfiles')
@@ -151,15 +149,7 @@ const showWindow = async bounds => {
     try {
       await trayWindow.show(bounds)
 
-      const { cozyUrl, deviceName, deviceId } = desktop.config
-      trayWindow.send(
-        'sync-config',
-        cozyUrl,
-        deviceName,
-        deviceId,
-        await capabilities(desktop.config),
-        await flags(desktop.config)
-      )
+      trayWindow.sendSyncConfig()
 
       const files = await lastFiles.list()
       for (const file of files) {

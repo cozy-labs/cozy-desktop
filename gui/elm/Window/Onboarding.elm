@@ -8,6 +8,7 @@ module Window.Onboarding exposing
     , view
     )
 
+import Data.SyncConfig as SyncConfig exposing (SyncConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Locale exposing (Helpers)
@@ -48,7 +49,7 @@ init folder platform =
 type Msg
     = WelcomeMsg Welcome.Msg
     | AddressMsg Address.Msg
-    | RegistrationDone
+    | RegistrationDone SyncConfig
     | FolderMsg Folder.Msg
 
 
@@ -71,8 +72,13 @@ update msg model =
             in
             ( { model | context = context }, Cmd.map AddressMsg cmd )
 
-        RegistrationDone ->
-            ( { model | page = FolderPage }, Cmd.none )
+        RegistrationDone syncConfig ->
+            ( { model
+                | page = FolderPage
+                , context = Context.setSyncConfig model.context syncConfig
+              }
+            , Cmd.none
+            )
 
         FolderMsg subMsg ->
             let
@@ -90,7 +96,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Ports.registrationError (AddressMsg << Address.RegistrationError)
-        , Ports.registrationDone (always RegistrationDone)
+        , SyncConfig.gotSyncConfig RegistrationDone
         , Ports.folderError (FolderMsg << Folder.SetError)
         , Ports.folder (FolderMsg << Folder.FillFolder)
         ]
