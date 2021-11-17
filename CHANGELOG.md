@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.32.0-beta.1 - 2021-11-17
+
+Improvements for all users:
+
+- Selective synchronization is available behind the
+  `settings.partial-desktop-sync.show-synced-folders-selection` flag.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.31.0 - 2021-11-08
 
 Improvements for all users:
