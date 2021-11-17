@@ -6,6 +6,8 @@
 const { BrowserWindow, ipcMain, shell } = require('electron')
 const _ = require('lodash')
 const path = require('path')
+const capabilities = require('../../core/utils/capabilities')
+const flags = require('../../core/utils/flags')
 
 const ELMSTARTUP = 400
 
@@ -87,6 +89,18 @@ module.exports = class WindowManager {
 
   send(...args) {
     this.win && this.win.webContents && this.win.webContents.send(...args)
+  }
+
+  async sendSyncConfig() {
+    const { cozyUrl, deviceName, deviceId } = this.desktop.config
+    this.send(
+      'sync-config',
+      cozyUrl,
+      deviceName,
+      deviceId,
+      await capabilities(this.desktop.config),
+      await flags(this.desktop.config)
+    )
   }
 
   hash() {

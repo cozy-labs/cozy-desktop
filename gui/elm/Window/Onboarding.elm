@@ -8,11 +8,13 @@ module Window.Onboarding exposing
     , view
     )
 
+import Data.SyncConfig as SyncConfig exposing (SyncConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Locale exposing (Helpers)
 import Ports
 import Window.Onboarding.Address as Address
+import Window.Onboarding.Context as Context exposing (Context)
 import Window.Onboarding.Folder as Folder
 import Window.Onboarding.Welcome as Welcome
 
@@ -29,18 +31,14 @@ type Page
 
 type alias Model =
     { page : Page
-    , platform : String
-    , address : Address.Model
-    , folder : Folder.Model
+    , context : Context
     }
 
 
 init : String -> String -> Model
 init folder platform =
     { page = WelcomePage
-    , platform = platform
-    , address = Address.init
-    , folder = Folder.init folder
+    , context = Context.init platform folder
     }
 
 
@@ -51,7 +49,7 @@ init folder platform =
 type Msg
     = WelcomeMsg Welcome.Msg
     | AddressMsg Address.Msg
-    | RegistrationDone
+    | RegistrationDone SyncConfig
     | FolderMsg Folder.Msg
 
 
@@ -69,20 +67,25 @@ update msg model =
 
         AddressMsg subMsg ->
             let
-                ( address, cmd ) =
-                    Address.update subMsg model.address
+                ( context, cmd ) =
+                    Address.update subMsg model.context
             in
-            ( { model | address = address }, Cmd.map AddressMsg cmd )
+            ( { model | context = context }, Cmd.map AddressMsg cmd )
 
-        RegistrationDone ->
-            ( { model | page = FolderPage }, Cmd.none )
+        RegistrationDone syncConfig ->
+            ( { model
+                | page = FolderPage
+                , context = Context.setSyncConfig model.context syncConfig
+              }
+            , Cmd.none
+            )
 
         FolderMsg subMsg ->
             let
-                ( folder, cmd ) =
-                    Folder.update subMsg model.folder
+                ( context, cmd ) =
+                    Folder.update subMsg model.context
             in
-            ( { model | folder = folder }, Cmd.map FolderMsg cmd )
+            ( { model | context = context }, cmd )
 
 
 
@@ -93,7 +96,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Ports.registrationError (AddressMsg << Address.RegistrationError)
-        , Ports.registrationDone (always RegistrationDone)
+        , SyncConfig.gotSyncConfig RegistrationDone
         , Ports.folderError (FolderMsg << Folder.SetError)
         , Ports.folder (FolderMsg << Folder.FillFolder)
         ]
@@ -113,7 +116,7 @@ view helpers model =
             , ( "on-step-folder", model.page == FolderPage )
             ]
         ]
-        [ Html.map WelcomeMsg (Welcome.view helpers model.platform)
-        , Html.map AddressMsg (Address.view helpers model.address)
-        , Html.map FolderMsg (Folder.view helpers model.folder)
+        [ Html.map WelcomeMsg (Welcome.view helpers model.context)
+        , Html.map AddressMsg (Address.view helpers model.context)
+        , Html.map FolderMsg (Folder.view helpers model.context)
         ]

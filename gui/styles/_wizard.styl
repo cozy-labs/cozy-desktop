@@ -1,3 +1,6 @@
+@require './node_modules/cozy-ui/stylus/settings/icons.styl'
+@require './node_modules/cozy-ui/stylus/settings/palette.styl'
+
 .wizard
   overflow hidden
   width 100vw
@@ -81,27 +84,56 @@ a.more-info
   color var(--slateGrey)
 
 
-.folder__selector
-  @extend $form-select select
-  width: 100%
-  font-size: 1.1em
-  line-height: 1em
-  margin 0
-  text-align left
-  text-decoration: none
+.folder__config-option__title
+  font-weight bold
+
+.folder__path
+  $iconSpace = 1.1rem
+
+  font-weight bold
+  font-style italic
+
+  padding-left $iconSpace
+
+  &:before
+    @extend $icon
+    display: inline-block
+    vertical-align: middle
+    -webkit-mask-image: embedurl('./node_modules/cozy-ui/assets/icons/ui/folder.svg')
+    -webkit-mask-position: center
+    -webkit-mask-size: cover
+    mask-image: embedurl('./node_modules/cozy-ui/assets/icons/ui/folder.svg')
+    mask-position: center
+    mask-size: cover
+
+    position absolute
+    width 1rem
+    height 1rem
+    margin-left - $iconSpace
+    content ''
+    background-color var(--slateGrey)
+
+    /.u-error &
+      background-color var(--errorColor)
 
 .step-address
   left 100vw
 
 .step-folder
   left 200vw
+  text-align left
+
   .svg-wrapper
     background-color: var(--emerald)
+    margin-bottom 0
+
+  h1
+    text-align center
+    margin-top 2rem
+
   &.step-error
     .folder-helper
       color var(--black)
-    .folder__selector
-      border-color: var(--pomegranate)
     .error-message
       margin .5em 0
 

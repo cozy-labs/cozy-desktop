@@ -24,7 +24,6 @@ port module Ports exposing
     , openFile
     , quitAndInstall
     , registerRemote
-    , registrationDone
     , registrationError
     , remove
     , sendMail
@@ -95,9 +94,6 @@ port quitAndInstall : () -> Cmd msg
 
 
 port registerRemote : String -> Cmd msg
-
-
-port registrationDone : (Bool -> msg) -> Sub msg
 
 
 port registrationError : (String -> msg) -> Sub msg

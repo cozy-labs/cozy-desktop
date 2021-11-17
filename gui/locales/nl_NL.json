@@ -123,9 +123,19 @@
   "Error The remote directory `{0}` was excluded from the synchronization on this device.": "De externe map `{0}` is uitgesloten van synchronisatie op dit apparaat.",
   "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.": "De lokale map op dezelfde locatie kan worden gekoppeld aan de externe map, welke opnieuw gesynchroniseerd wordt om dit probleem op te lossen.",
 
+  "Folder You're all set!": "Klaar is Kees!",
+  "Folder You can now synchronize your Cozy with this computer.": "Je kunt vanaf nu synchroniseren met deze computer.",
+  "Folder Selective synchronization": "Selectieve synchronisatie",
+  "Folder By default all the documents on your Cozy will be synchronized.": "Standaard worden alle documenten op je Cozy gesynchroniseerd.",
+  "Folder Location on the computer": "Computerlocatie",
+  "Folder The documents selected on your Cozy will be synchronized on this computer in ": "De geselecteerde documenten worden gesynchroniseerd naar",
+  "Folder Modify": "Aanpassen",
+  "Folder You cannot synchronize your data directly in ": "Je kunt geen gegevens synchroniseren naar",
+  "Folder Please choose another location": "Kies een andere locatie",
+  "Folder Start synchronization": "Synchronisatie starten",
+
   "Folder All done": "Voltooid",
   "Folder Please choose an empty directory": "Kies een lege map.",
-  "Folder Please choose another folder": "Kies een andere map",
   "Folder Select a location for your Cozy folder:": "Kies een locatie voor je Cozy-map:",
   "Folder Use Cozy Drive": "Cozy Drive gebruiken",
   "Folder You cannot synchronize your whole system or personal folder": "Je kunt niet je hele systeem of persoonlijke map synchroniseren.",
@@ -193,6 +203,9 @@
   "Password You don't have filled the password!": "Je hebt geen wachtwoord ingevoerd!",
   "Password Your password for the cozy address:": "Je wachtwoord voor het Cozy-adres:",
 
+  "Quotation Start": "“",
+  "Quotation End": "”",
+
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "Als dat niet zo is, neem dan contact met ons op via contact@cozycloud.cc",
   "Revoked Reconnect": "Opnieuw verbinden",
   "Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?": "Synchronisatie is niet beschikbaar. Heb je de machtiging voor deze computer ingetrokken?",
@@ -207,8 +220,8 @@
   "Settings Sync": "Synchroniseren",
   "Settings Version": "Versie",
   "Settings Synchronize manually": "Handmatig synchroniseren",
-  "Settings Configure": "Configure",
-  "Settings Selective synchronization": "Selective synchronization",
+  "Settings Configure": "Instellen",
+  "Settings Selective synchronization": "Selectieve synchronisatie",
 
   "SyncDirEmpty Detail": "Om gegevensverlies te voorkomen, is de synchronisatie gestopt. Als je synchronisatie wilt afdwingen, verwijder dan je Cozy-map.",
   "SyncDirEmpty Message": "Het lijkt erop dat je Cozy-map is geleegd. Bevindt deze zich op een harde schijf die momenteel niet is aangekoppeld?",

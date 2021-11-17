@@ -1,12 +1,11 @@
 module Window.Onboarding.Folder exposing
-    ( Model
-    , Msg(..)
-    , init
+    ( Msg(..)
     , isValid
     , update
     , view
     )
 
+import Data.SyncConfig as SyncConfig
 import Data.SyncFolderConfig as SyncFolderConfig exposing (SyncFolderConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -14,19 +13,13 @@ import Html.Events exposing (..)
 import Icons exposing (..)
 import Locale exposing (Helpers)
 import Ports
+import Url
+import Util.Conditional exposing (viewIf)
+import Window.Onboarding.Context as Context exposing (Context)
 
 
 
 -- MODEL
-
-
-type alias Model =
-    SyncFolderConfig
-
-
-init : String -> SyncFolderConfig
-init =
-    SyncFolderConfig.valid
 
 
 isValid : SyncFolderConfig -> Bool
@@ -40,93 +33,128 @@ isValid =
 
 type Msg
     = ChooseFolder
-    | FillFolder Model
+    | FillFolder SyncFolderConfig
     | SetError String
     | StartSync
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case
-        msg
-    of
-        ChooseFolder ->
-            ( model, Ports.chooseFolder () )
+update : Msg -> Context -> ( Context, Cmd msg )
+update msg context =
+    case msg of
+        FillFolder folderConfig ->
+            ( Context.setFolderConfig context folderConfig, Cmd.none )
 
-        FillFolder folder ->
-            ( folder, Cmd.none )
+        ChooseFolder ->
+            ( context, Ports.chooseFolder () )
 
         SetError error ->
-            ( { model
-                | error =
-                    if error == "" then
-                        Nothing
-
-                    else
-                        Just error
-              }
+            ( Context.setFolderConfig context
+                (SyncFolderConfig.setError context.folderConfig error)
             , Cmd.none
             )
 
         StartSync ->
-            ( model, Ports.startSync model.folder )
+            ( context, Ports.startSync context.folderConfig.folder )
 
 
 
 -- VIEW
 
 
-view : Helpers -> Model -> Html Msg
-view helpers model =
+view : Helpers -> Context -> Html Msg
+view helpers context =
+    let
+        { partialSyncEnabled } =
+            context.syncConfig.flags
+    in
     div
-        [ classList
-            [ ( "step", True )
-            , ( "step-folder", True )
-            , ( "step-error", not (isValid model) )
-            ]
-        ]
+        [ class "step step-folder" ]
         [ div
             [ class "step-content" ]
-            [ if isValid model then
-                Icons.bigTick
-
-              else
-                Icons.bigCross
+            [ Icons.bigTick
             , h1 []
                 [ text <|
-                    helpers.t <|
-                        if isValid model then
-                            "Folder All done"
-
-                        else
-                            "Folder Please choose another folder"
+                    helpers.t "Folder You're all set!"
                 ]
-            , p [ class "folder-helper" ]
+            , p [ class "u-mb-0" ]
                 [ text <|
-                    helpers.t "Folder Select a location for your Cozy folder:"
+                    helpers.t "Folder You can now synchronize your Cozy with this computer."
                 ]
-            , div [ class "coz-form-group" ]
-                [ a
-                    [ class "folder__selector"
-                    , href "#"
-                    , onClick ChooseFolder
+            , div [ class "u-mt-1" ]
+                [ ul [ class "u-mb-0 u-pl-1" ]
+                    [ viewIf partialSyncEnabled <|
+                        li []
+                            [ span [ class "folder__config-option__title" ]
+                                [ text <| helpers.t "Folder Selective synchronization" ]
+                            , text " - "
+                            , text <| helpers.t "Folder By default all the documents on your Cozy will be synchronized."
+                            , selectiveSyncLink helpers context
+                            ]
+                    , li [ class "u-mt-1" ]
+                        [ span [ class "folder__config-option__title" ]
+                            [ text <| helpers.t "Folder Location on the computer" ]
+                        , text " - "
+                        , text <| helpers.t "Folder The documents selected on your Cozy will be synchronized on this computer in "
+                        , span [ class "folder__path" ] [ text context.folderConfig.folder ]
+                        , text "."
+                        , a [ class "u-ml-half u-primaryColor", href "#", onClick ChooseFolder ]
+                            [ text <|
+                                helpers.t "Folder Modify"
+                            ]
+                        ]
                     ]
-                    [ text model.folder ]
-                , p [ class "error-message" ]
-                    [ text <| helpers.t <| Maybe.withDefault "" model.error ]
+                , if isValid context.folderConfig then
+                    text ""
+
+                  else
+                    p [ class "u-error u-mb-0 u-lh-tiny" ]
+                        [ text <|
+                            helpers.interpolate [ context.folderConfig.folder ]
+                                "Folder You cannot synchronize your data directly in "
+                        , span [ class "folder__path" ]
+                            [ text context.folderConfig.folder
+                            ]
+                        , br [] []
+                        , text <|
+                            helpers.t "Folder Please choose another location"
+                        ]
 
                 -- TODO: Link to the relevant FAQ section?
                 -- TODO: Include button to reset to default?
+                -- TODO: Show different error messages?
                 ]
             , a
-                [ class "btn"
+                [ class "btn u-mt-2"
                 , href "#"
-                , if isValid model then
+                , if isValid context.folderConfig then
                     onClick StartSync
 
                   else
                     attribute "disabled" "true"
                 ]
-                [ span [] [ text (helpers.t "Folder Use Cozy Drive") ] ]
+                [ span [] [ text (helpers.t "Folder Start synchronization") ] ]
             ]
+        ]
+
+
+selectiveSyncLink : Helpers -> Context -> Html Msg
+selectiveSyncLink helpers context =
+    let
+        { deviceId } =
+            context.syncConfig
+
+        settingsUrl =
+            SyncConfig.buildAppUrl context.syncConfig "settings"
+
+        configurationUrl =
+            case settingsUrl of
+                Just url ->
+                    String.join "/" [ Url.toString url, "#/connectedDevices", deviceId ]
+
+                Nothing ->
+                    ""
+    in
+    a [ class "u-ml-half u-primaryColor", href configurationUrl ]
+        [ text <|
+            helpers.t "Folder Modify"
         ]

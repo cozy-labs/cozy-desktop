@@ -8,6 +8,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Icons exposing (..)
 import Locale exposing (Helpers)
+import Window.Onboarding.Context as Context exposing (Context)
 
 
 
@@ -22,8 +23,8 @@ type Msg
 -- VIEW
 
 
-view : Helpers -> String -> Html Msg
-view helpers platform =
+view : Helpers -> Context -> Html Msg
+view helpers context =
     div
         [ classList
             [ ( "step", True )
@@ -41,7 +42,7 @@ view helpers platform =
                 ]
                 [ span [] [ text (helpers.t "Welcome Sign in to your Cozy") ] ]
             , a
-                [ href ("https://cozy.io/en/try-it/?from=desktop-" ++ platform)
+                [ href ("https://cozy.io/en/try-it/?from=desktop-" ++ context.platform)
                 , class "more-info"
                 ]
                 [ text (helpers.t "Address Don't have an account? Request one here") ]
