@@ -72,12 +72,13 @@ const shouldAttemptRetry = (change /*: PouchDBFeedData */) => {
 // Returns the given side metadata of the given PouchDB record.
 // It is meant to get the outdated side metadata of the record to compare it
 // against the new metadata and decide which actions to take.
-function oldFromDoc(
+const outdatedMetadata = (
   doc /*: SavedMetadata */,
   sideName /*: SideName */
-) /*: ?MetadataLocalInfo|?MetadataRemoteInfo */ {
-  return sideName === 'remote' ? doc.remote : doc.local
-}
+) /*: ?MetadataLocalInfo|?MetadataRemoteInfo */ =>
+  sideName === 'remote'
+    ? (doc.remote /*: MetadataRemoteInfo*/)
+    : (doc.local /*: MetadataLocalInfo*/)
 
 // Find out which operation should be propagated based on hints saved in the
 // changed PouchDB record.
@@ -111,18 +112,18 @@ const detectOperation = async (
     return { type: 'ADD', side: outdatedSide.name }
   } else {
     try {
-      const old = oldFromDoc(doc, outdatedSide.name)
-      if (old) {
+      const outdated = outdatedMetadata(doc, outdatedSide.name)
+      if (outdated) {
         if (
-          metadata.isFile(old) &&
+          metadata.isFile(outdated) &&
           metadata.isFile(doc) &&
-          metadata.sameFile(old, doc)
+          metadata.sameFile(outdated, doc)
         ) {
           return { type: 'NULL' }
         } else if (
-          metadata.isFolder(old) &&
+          metadata.isFolder(outdated) &&
           metadata.isFolder(doc) &&
-          metadata.sameFolder(old, doc)
+          metadata.sameFolder(outdated, doc)
         ) {
           return { type: 'NULL' }
         } else {
@@ -819,18 +820,18 @@ class Sync {
       await this.doAdd(side, doc)
     } else {
       log.debug({ path: doc.path }, `Applying else for ${doc.docType} change`)
-      const old = oldFromDoc(doc, side.name)
-      if (old) {
-        if (metadata.isFolder(old) && metadata.isFolder(doc)) {
-          if (metadata.sameFolder(old, doc)) {
+      const outdated = outdatedMetadata(doc, side.name)
+      if (outdated) {
+        if (metadata.isFolder(outdated) && metadata.isFolder(doc)) {
+          if (metadata.sameFolder(outdated, doc)) {
             log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
           } else {
             await side.updateFolderAsync(doc)
           }
-        } else if (metadata.isFile(old) && metadata.isFile(doc)) {
-          if (metadata.sameFile(old, doc)) {
+        } else if (metadata.isFile(outdated) && metadata.isFile(doc)) {
+          if (metadata.sameFile(outdated, doc)) {
             log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
-          } else if (metadata.sameBinary(old, doc)) {
+          } else if (metadata.sameBinary(outdated, doc)) {
             await side.updateFileMetadataAsync(doc)
           } else {
             await side.overwriteFileAsync(doc)

@@ -37,7 +37,7 @@ const pathUtils = require('../../core/utils/path')
 const timestamp = require('../../core/utils/timestamp')
 
 /*::
-import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../core/metadata'
+import type { Metadata, MetadataRemoteFile, MetadataRemoteDir, MetadataLocalInfo } from '../../core/metadata'
 import type { RemoteBase } from '../../core/remote/document'
 */
 
