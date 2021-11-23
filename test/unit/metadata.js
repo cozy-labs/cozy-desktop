@@ -7,6 +7,8 @@ const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
 
+const configHelpers = require('../support/helpers/config')
+const pouchHelpers = require('../support/helpers/pouch')
 const Builders = require('../support/builders')
 const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 
@@ -42,7 +44,15 @@ import type { RemoteBase } from '../../core/remote/document'
 const { platform } = process
 
 describe('metadata', function() {
-  const builders = new Builders()
+  let builders
+
+  before('instanciate config', configHelpers.createConfig)
+  beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+  beforeEach(function() {
+    builders = new Builders({ pouch: this.pouch })
+  })
+  afterEach('clean pouch', pouchHelpers.cleanDatabase)
+  after('clean config directory', configHelpers.cleanConfig)
 
   describe('.fromRemoteDoc()', () => {
     it('builds the metadata for a remote file', () => {
@@ -267,7 +277,7 @@ describe('metadata', function() {
   describe('detectIncompatibilities', () => {
     const syncPath = ';'
 
-    it('is null when all names in the path are compatible', () => {
+    it('is null when all names in the path are compatible', function() {
       const doc = builders
         .metafile()
         .path('foo/bar')
@@ -276,7 +286,7 @@ describe('metadata', function() {
     })
 
     onPlatform('win32', () => {
-      it('lists platform incompatibilities for all names in the path', () => {
+      it('lists platform incompatibilities for all names in the path', function() {
         const doc = builders
           .metafile()
           .path('f?o:o\\ba|r\\baz\\q"ux')
@@ -343,7 +353,7 @@ describe('metadata', function() {
       should(metadata.isUpToDate('local', doc)).be.false()
     })
 
-    it('is true when the given side equals the target in doc', () => {
+    it('is true when the given side equals the target in doc', function() {
       const doc = builders
         .metafile()
         .rev('2-0123456')
@@ -352,7 +362,7 @@ describe('metadata', function() {
       should(metadata.isUpToDate('local', doc)).be.true()
     })
 
-    it('is false when the given side is lower than the target in doc', () => {
+    it('is false when the given side is lower than the target in doc', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -361,7 +371,7 @@ describe('metadata', function() {
       should(metadata.isUpToDate('local', doc)).be.false()
     })
 
-    it('is true when the given side is the only one', () => {
+    it('is true when the given side is the only one', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -372,7 +382,7 @@ describe('metadata', function() {
 
     // XXX: We implemented the same workaround as in `isAtLeastUpToDate()`
     // although we haven't encountered the same issue yet but it is possible.
-    it('is true when the given side is the only one and lower than the target', () => {
+    it('is true when the given side is the only one and lower than the target', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -392,7 +402,7 @@ describe('metadata', function() {
       should(metadata.isAtLeastUpToDate('local', doc)).be.false()
     })
 
-    it('is true when the given side equals the target in doc', () => {
+    it('is true when the given side equals the target in doc', function() {
       const doc = builders
         .metafile()
         .rev('2-0123456')
@@ -401,7 +411,7 @@ describe('metadata', function() {
       should(metadata.isAtLeastUpToDate('local', doc)).be.true()
     })
 
-    it('is true when the given side is greater than the target in doc', () => {
+    it('is true when the given side is greater than the target in doc', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -410,7 +420,7 @@ describe('metadata', function() {
       should(metadata.isAtLeastUpToDate('local', doc)).be.true()
     })
 
-    it('is false when the given side is lower than the target in doc', () => {
+    it('is false when the given side is lower than the target in doc', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -419,7 +429,7 @@ describe('metadata', function() {
       should(metadata.isAtLeastUpToDate('local', doc)).be.false()
     })
 
-    it('is true when the given side is the only one', () => {
+    it('is true when the given side is the only one', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -431,7 +441,7 @@ describe('metadata', function() {
     // XXX: It is yet unknown how we end up in this situation but it seems like
     // it can happen when we have sync errors and maybe some side dissociation.
     // Until we figure out the root cause, we try to prevent its consequences.
-    it('is true when the given side is the only one and lower than the target', () => {
+    it('is true when the given side is the only one and lower than the target', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -442,7 +452,7 @@ describe('metadata', function() {
   })
 
   describe('assignMaxDate', () => {
-    it('assigns the previous timestamp to the doc when it is more recent than the current one to prevent updated_at < created_at errors on remote sync', () => {
+    it('assigns the previous timestamp to the doc when it is more recent than the current one to prevent updated_at < created_at errors on remote sync', function() {
       const was = builders.metafile().build()
       const doc = builders
         .metafile()
@@ -455,14 +465,14 @@ describe('metadata', function() {
       })
     })
 
-    it('does nothing when the doc has no previous version', () => {
+    it('does nothing when the doc has no previous version', function() {
       const doc = builders.metafile().build()
       should(() => {
         assignMaxDate(doc)
       }).not.change(doc)
     })
 
-    it('does nothing when both current and previous timestamps are the same', () => {
+    it('does nothing when both current and previous timestamps are the same', function() {
       const was = builders.metafile().build()
       const doc = builders
         .metafile()
@@ -473,7 +483,7 @@ describe('metadata', function() {
       }).not.change(doc)
     })
 
-    it('does nothing when the current timestamp is more recent than the previous one', () => {
+    it('does nothing when the current timestamp is more recent than the previous one', function() {
       const was = builders.metafile().build()
       const doc = builders
         .metafile()
@@ -484,7 +494,7 @@ describe('metadata', function() {
       }).not.change(doc)
     })
 
-    it('nevers changes the previous doc', () => {
+    it('nevers changes the previous doc', function() {
       const was = builders.metafile().build()
       const sameDateDoc = builders
         .metafile()
@@ -1078,8 +1088,7 @@ describe('metadata', function() {
 
   describe('invariants', () => {
     let doc
-    beforeEach(async () => {
-      const builders = new Builders({ pouch: this.pouch })
+    beforeEach(function() {
       doc = builders
         .metadata()
         .remoteId('badbeef')
@@ -1087,21 +1096,21 @@ describe('metadata', function() {
         .build()
     })
 
-    it('throws when trying to put bad doc (no sides)', async () => {
+    it('throws when trying to put bad doc (no sides)', () => {
       // $FlowFixMe sides is null on purpose
       should(() => invariants(Object.assign(doc, { sides: null }))).throw(
         /sides/
       )
     })
 
-    it('throws when trying to put bad doc (no remote)', async () => {
+    it('throws when trying to put bad doc (no remote)', () => {
       // $FlowFixMe remote is null on purpose
       should(() => invariants(Object.assign(doc, { remote: null }))).throw(
         /sides\.remote/
       )
     })
 
-    it('throws when trying to put bad doc (no md5sum)', async () => {
+    it('throws when trying to put bad doc (no md5sum)', function() {
       doc = builders
         .metafile()
         .remoteId('badbeef')
@@ -1132,7 +1141,6 @@ describe('metadata', function() {
   describe('markAsUpToDate', () => {
     let doc
     beforeEach(async () => {
-      const builders = new Builders({ pouch: this.pouch })
       doc = await builders
         .metadata()
         .notUpToDate()
@@ -1174,11 +1182,6 @@ describe('metadata', function() {
   })
 
   describe('outOfDateSide', () => {
-    let builders
-    beforeEach(() => {
-      builders = new Builders()
-    })
-
     it('returns nothing if sides are not set', () => {
       const doc1 = builders
         .metadata()
@@ -1217,12 +1220,16 @@ describe('metadata', function() {
     })
   })
 
-  describe('createConflictingDoc', () => {
+  describe('createConflictingDoc', function() {
     const filepath = 'parent/dir/file.txt'
-    const doc = builders
-      .metafile()
-      .path(filepath)
-      .build()
+
+    let doc
+    beforeEach(function() {
+      doc = builders
+        .metafile()
+        .path(filepath)
+        .build()
+    })
 
     it('returns a doc with a different path', () => {
       const newDoc = createConflictingDoc(doc)
@@ -1249,7 +1256,7 @@ describe('metadata', function() {
       isIgnored.restore()
     })
 
-    it('calls isIgnored with the document normalized path', () => {
+    it('calls isIgnored with the document normalized path', function() {
       metadata.shouldIgnore(
         builders
           .metadir()
@@ -1281,7 +1288,7 @@ describe('metadata', function() {
       ])
     })
 
-    it('returns false when document is a file', () => {
+    it('returns false when document is a file', function() {
       const doc = builders
         .metafile()
         .path('échange/nourriture')
@@ -1419,7 +1426,7 @@ describe('metadata', function() {
   })
 
   describe('updateLocal', () => {
-    it('adds the local attribute if it is missing', () => {
+    it('adds the local attribute if it is missing', function() {
       const doc = builders
         .metafile()
         .ino(1)
@@ -1437,7 +1444,7 @@ describe('metadata', function() {
       should(doc.local).have.properties(expectedAttributes)
     })
 
-    it('fetches the local attributes from the main doc', () => {
+    it('fetches the local attributes from the main doc', function() {
       const file1 = builders
         .metafile()
         .ino(1)
@@ -1501,7 +1508,7 @@ describe('metadata', function() {
       ])
     })
 
-    it('prefers the provided local attributes', () => {
+    it('prefers the provided local attributes', function() {
       const file = builders
         .metafile()
         .ino(1)
@@ -1538,7 +1545,7 @@ describe('metadata', function() {
   })
 
   describe('updateRemote', () => {
-    it('adds the remote attribute if it is missing', () => {
+    it('adds the remote attribute if it is missing', function() {
       const remoteFile = builders.remoteFile().build()
       const doc = builders
         .metafile()
@@ -1561,7 +1568,7 @@ describe('metadata', function() {
       ])
     })
 
-    it('keeps non-overwritten remote attributes', () => {
+    it('keeps non-overwritten remote attributes', function() {
       const file = builders
         .metafile()
         .path('parent/OLD')
