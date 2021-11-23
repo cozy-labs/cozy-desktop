@@ -607,7 +607,10 @@ const makeComparator = (name, interestingFields) => {
     const diff = difference.item || difference
     return _.isNil(diff.lhs) && _.isNil(diff.rhs)
   }
-  return (one, two) => {
+  return (
+    one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
+    two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
+  ) => {
     const diff = deepDiff(one, two, filter)
     if (two.path) {
       log.trace({ path: two.path, diff }, name)
@@ -621,7 +624,7 @@ const makeComparator = (name, interestingFields) => {
   }
 }
 
-const sameFolderComparator = makeComparator('sameFolder', [
+const sameFolder = makeComparator('sameFolder', [
   'path',
   'docType',
   'remote',
@@ -631,15 +634,7 @@ const sameFolderComparator = makeComparator('sameFolder', [
   'fileid'
 ])
 
-// Return true if the metadata of the two folders are the same
-function sameFolder(
-  one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
-  two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
-) {
-  return sameFolderComparator(one, two)
-}
-
-const sameFileComparator = makeComparator('sameFile', [
+const sameFile = makeComparator('sameFile', [
   'path',
   'docType',
   'md5sum',
@@ -653,7 +648,7 @@ const sameFileComparator = makeComparator('sameFile', [
   'executable'
 ])
 
-const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev', [
+const sameFileIgnoreRev = makeComparator('sameFileIgnoreRev', [
   'path',
   'docType',
   'md5sum',
@@ -666,25 +661,7 @@ const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev', [
   'executable'
 ])
 
-const sameLocalComparator = makeComparator('sameLocal', LOCAL_ATTRIBUTES)
-
-// Return true if the metadata of the two files are the same
-function sameFile(
-  one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
-  two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
-) {
-  return sameFileComparator(one, two)
-}
-
-// Return true if the metadata of the two files are the same,
-// ignoring revision
-function sameFileIgnoreRev(one /*: Metadata */, two /*: Metadata */) {
-  return sameFileIgnoreRevComparator(one, two)
-}
-
-function sameLocal(one /*: MetadataLocalInfo */, two /*: MetadataLocalInfo */) {
-  return sameLocalComparator(one, two)
-}
+const sameLocal = makeComparator('sameLocal', LOCAL_ATTRIBUTES)
 
 // Return true if the two files have the same binary content
 function sameBinary(
