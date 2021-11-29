@@ -15,6 +15,7 @@ const { inRemoteTrash } = require('../document')
 const squashMoves = require('./squashMoves')
 const normalizePaths = require('./normalizePaths')
 const logger = require('../../utils/logger')
+const flags = require('../../utils/flags')
 
 /*::
 import type { Config } from '../../config'
@@ -196,10 +197,10 @@ class RemoteWatcher {
     let changes = await this.analyse(docs, await this.olds(docs))
 
     if (
-      process.env.NODE_ENV === 'test' ||
-      this.config.flags[
+      (await flags(this.config))[
         'settings.partial-desktop-sync.show-synced-folders-selection'
-      ]
+      ] ||
+      process.env.NODE_ENV === 'test'
     ) {
       for (const change of changes) {
         if (
