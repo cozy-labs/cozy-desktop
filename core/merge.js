@@ -225,18 +225,24 @@ class Merge {
       if (metadata.sameFile(doc, file)) {
         log.info({ path: doc.path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
-          metadata.updateLocal(file, doc.local)
-          const outdated = metadata.outOfDateSide(file)
-          if (outdated) {
-            // In case a change was merged but not applied, we want to make sure
-            // Sync will compare the current record version with the correct
-            // "previous" version (i.e. the one before the actual change was
-            // merged and not the one before we merged the new local metadata).
-            // Therefore, we mark the changed side once more to account for the
-            // new record save.
-            metadata.markSide(otherSide(outdated), file, file)
+          if (!file.sides.local) {
+            // When the updated side is missing on the existing record, it means
+            // we're simply linking two equivalent existing folders so we can
+            // mark the record as up-to-date.
+            metadata.markAsUpToDate(doc)
+          } else {
+            const outdated = metadata.outOfDateSide(file)
+            if (outdated) {
+              // In case a change was merged but not applied, we want to make sure
+              // Sync will compare the current record version with the correct
+              // "previous" version (i.e. the one before the actual change was
+              // merged and not the one before we merged the new local metadata).
+              // Therefore, we mark the changed side once more to account for the
+              // new record save.
+              metadata.markSide(otherSide(outdated), doc, file)
+            }
           }
-          return this.pouch.put(file)
+          return this.pouch.put(doc)
         } else {
           return
         }
@@ -370,12 +376,24 @@ class Merge {
       if (metadata.sameFolder(folder, doc)) {
         log.info({ path: doc.path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
-          metadata.updateLocal(folder, doc.local)
-          const outdated = metadata.outOfDateSide(folder)
-          if (outdated) {
-            metadata.markSide(otherSide(outdated), folder, folder)
+          if (!folder.sides.local) {
+            // When the updated side is missing on the existing record, it means
+            // we're simply linking two equivalent existing folders so we can
+            // mark the record as up-to-date.
+            metadata.markAsUpToDate(doc)
+          } else {
+            const outdated = metadata.outOfDateSide(folder)
+            if (outdated) {
+              // In case a change was merged but not applied, we want to make sure
+              // Sync will compare the current record version with the correct
+              // "previous" version (i.e. the one before the actual change was
+              // merged and not the one before we merged the new local metadata).
+              // Therefore, we mark the changed side once more to account for the
+              // new record save.
+              metadata.markSide(otherSide(outdated), doc, folder)
+            }
           }
-          return this.pouch.put(folder)
+          return this.pouch.put(doc)
         } else {
           return null
         }

@@ -33,14 +33,14 @@ describe('Update only mtime', () => {
 
   describe('of a file', () => {
     context('when update is made on local filesystem', () => {
-      let oldUpdatedAt, created
+      let oldUpdatedAt
       beforeEach('create file and update mtime', async function() {
         await helpers.remote.ignorePreviousChanges()
 
         oldUpdatedAt = new Date()
         oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-        created = await cozy.files.create('basecontent', {
+        await cozy.files.create('basecontent', {
           name: 'file',
           updatedAt: oldUpdatedAt.toISOString()
         })
@@ -48,7 +48,7 @@ describe('Update only mtime', () => {
         await helpers.flushLocalAndSyncAll()
       })
 
-      it('only updates the local document state in Pouch', async () => {
+      it('updates the PouchDB record without marking changes', async () => {
         helpers.spyPouch()
 
         const newUpdatedAt = new Date()
@@ -62,9 +62,7 @@ describe('Update only mtime', () => {
         ).deepEqual([
           {
             path: 'file',
-            updated_at: timestamp.roundedRemoteDate(
-              created.attributes.updated_at
-            ),
+            updated_at: platform.localUpdatedAt(newUpdatedAt),
             local: {
               updated_at: platform.localUpdatedAt(newUpdatedAt)
             }
