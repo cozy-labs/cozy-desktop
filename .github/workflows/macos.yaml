@@ -23,7 +23,7 @@ env:
   COZY_DESKTOP_HEARTBEAT: "1000"
   DISPLAY: ":99.0"
   NODE_VERSION: "14.16.0"
-  GO_VERSION: "1.14"
+  GO_VERSION: "1.17"
   COUCHDB_VERSION: "2.3.1"
 
 jobs:
@@ -38,7 +38,7 @@ jobs:
 
   unit:
     needs: cancel
-    runs-on: macos-latest
+    runs-on: macos-10.15
     name: Unit tests
     strategy:
       matrix:
@@ -91,7 +91,7 @@ jobs:
 
   integration:
     needs: cancel
-    runs-on: macos-latest
+    runs-on: macos-10.15
     name: Integration tests
     strategy:
       matrix:
@@ -144,7 +144,7 @@ jobs:
 
   scenarios:
     needs: cancel
-    runs-on: macos-latest
+    runs-on: macos-10.15
     name: Scenarios
     strategy:
       matrix:
@@ -205,7 +205,7 @@ jobs:
 
   build:
     needs: cancel
-    runs-on: macos-latest
+    runs-on: macos-10.15
     name: Build packages
     steps:
       - uses: actions/checkout@v2
