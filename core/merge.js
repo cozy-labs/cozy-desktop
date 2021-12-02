@@ -333,30 +333,41 @@ class Merge {
         }
       }
 
-      metadata.markSide(side, doc, folder)
-      metadata.assignMaxDate(doc, folder)
+      if (folder.deleted) {
+        // If the existing record was marked for deletion, we only keep the
+        // PouchDB attributes that will allow us to overwrite it.
+        doc._id = folder._id
+        doc._rev = folder._rev
 
-      doc._id = folder._id
-      doc._rev = folder._rev
-      if (doc.remote == null) {
-        doc.remote = folder.remote
+        // Keep other side metadata if we're updating the deleted side of file
+        if (side === 'remote' && folder.remote && folder.remote.trashed) {
+          doc.local = folder.local
+          metadata.markSide(side, doc, folder)
+        } else if (
+          side === 'local' &&
+          (!folder.remote || !folder.remote.trashed)
+        ) {
+          doc.remote = folder.remote
+          metadata.markSide(side, doc, folder)
+        } else {
+          metadata.markSide(side, doc)
+        }
+
+        metadata.assignMaxDate(doc, folder)
+        return this.pouch.put(doc)
       }
-      if (doc.ino == null && folder.ino) {
-        doc.ino = folder.ino
-      }
-      if (doc.fileid == null) {
-        doc.fileid = folder.fileid
-      }
-      // If folder is updated on local filesystem, doc won't have metadata attribute
-      if (folder.metadata && doc.metadata == null) {
-        doc.metadata = folder.metadata
-      }
-      // If folder was updated on remote Cozy, doc won't have local attribute
-      if (folder.local && doc.local == null) {
-        doc.local = folder.local
+      // The updated file was not deleted on either side
+
+      // Otherwise we merge the relevant attributes
+      doc = {
+        ..._.cloneDeep(folder),
+        ...doc,
+        // Tags come from the remote document and will always be empty in a new
+        // local document.
+        tags: doc.tags.length === 0 ? folder.tags : doc.tags
       }
 
-      if (!folder.deleted && metadata.sameFolder(folder, doc)) {
+      if (metadata.sameFolder(folder, doc)) {
         log.info({ path: doc.path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
           metadata.updateLocal(folder, doc.local)
@@ -368,9 +379,11 @@ class Merge {
         } else {
           return null
         }
-      } else {
-        return this.pouch.put(doc)
       }
+
+      metadata.markSide(side, doc, folder)
+      metadata.assignMaxDate(doc, folder)
+      return this.pouch.put(doc)
     }
   }
 

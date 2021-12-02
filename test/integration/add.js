@@ -384,7 +384,8 @@ describe('Add', () => {
               path: path.normalize('parent/dir'),
               local: { path: path.normalize('parent/dir') },
               remote: updatedDir.remote,
-              sides: { target: 3, local: 2, remote: 3 }
+              sides: { target: 3, local: 2, remote: 3 },
+              errors: 1
             },
             {
               path: path.normalize('parent/dir'),
