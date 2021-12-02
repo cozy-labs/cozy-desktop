@@ -243,6 +243,28 @@ class Merge {
             }
           }
           return this.pouch.put(doc)
+        } else if (
+          side === 'remote' &&
+          !metadata.sameRemote(file.remote, doc.remote)
+        ) {
+          if (!file.sides.remote) {
+            // When the updated side is missing on the existing record, it means
+            // we're simply linking two equivalent existing folders so we can
+            // mark the record as up-to-date.
+            metadata.markAsUpToDate(doc)
+          } else {
+            const outdated = metadata.outOfDateSide(file)
+            if (outdated) {
+              // In case a change was merged but not applied, we want to make sure
+              // Sync will compare the current record version with the correct
+              // "previous" version (i.e. the one before the actual change was
+              // merged and not the one before we merged the new local metadata).
+              // Therefore, we mark the changed side once more to account for the
+              // new record save.
+              metadata.markSide(otherSide(outdated), doc, file)
+            }
+          }
+          return this.pouch.put(doc)
         } else {
           return
         }
@@ -394,8 +416,30 @@ class Merge {
             }
           }
           return this.pouch.put(doc)
+        } else if (
+          side === 'remote' &&
+          !metadata.sameRemote(folder.remote, doc.remote)
+        ) {
+          if (!folder.sides.remote) {
+            // When the updated side is missing on the existing record, it means
+            // we're simply linking two equivalent existing folders so we can
+            // mark the record as up-to-date.
+            metadata.markAsUpToDate(doc)
+          } else {
+            const outdated = metadata.outOfDateSide(folder)
+            if (outdated) {
+              // In case a change was merged but not applied, we want to make sure
+              // Sync will compare the current record version with the correct
+              // "previous" version (i.e. the one before the actual change was
+              // merged and not the one before we merged the new local metadata).
+              // Therefore, we mark the changed side once more to account for the
+              // new record save.
+              metadata.markSide(otherSide(outdated), doc, folder)
+            }
+          }
+          return this.pouch.put(doc)
         } else {
-          return null
+          return
         }
       }
 

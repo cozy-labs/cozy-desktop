@@ -663,6 +663,16 @@ const sameFileIgnoreRev = makeComparator('sameFileIgnoreRev', [
 
 const sameLocal = makeComparator('sameLocal', LOCAL_ATTRIBUTES)
 
+// Returns true if the two remote metadata objects are exactly the same.
+// We don't accept differences for remote metadata as it should only reflect
+// what's on the remote Cozy.
+const sameRemote = (
+  one /*: MetadataRemoteInfo */,
+  two /*: MetadataRemoteInfo */
+) => {
+  return !deepDiff(one, two)
+}
+
 // Return true if the two files have the same binary content
 function sameBinary(
   one /*: $ReadOnly<{ md5sum?: string }> */,
@@ -884,6 +894,7 @@ module.exports = {
   sameFile,
   sameFileIgnoreRev,
   sameLocal,
+  sameRemote,
   sameBinary,
   detectSingleSide,
   markSide,
