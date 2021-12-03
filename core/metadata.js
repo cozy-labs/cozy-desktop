@@ -597,7 +597,7 @@ const makeComparator = (
   { attributes } /*: { attributes?: Array<string> } */ = {}
 ) => {
   const interestingPaths = attributes && attributes.map(f => f.split('.'))
-  const filter = (path, key) => {
+  const prefilter = (path, key) => {
     const filtered =
       interestingPaths == null
         ? false
@@ -610,10 +610,33 @@ const makeComparator = (
           })
     return filtered
   }
-  const canBeIgnoredDiff = difference => {
-    const diff = difference.item || difference
-    return _.isNil(diff.lhs) && _.isNil(diff.rhs)
+  const normalize = (path, key, lhs, rhs) => {
+    if (_.isNil(lhs) && _.isNil(rhs)) {
+      return [null, null]
+    } else if (path.length === 0 && key === 'path') {
+      return [
+        String(lhs).startsWith('/') ? pathUtils.remoteToLocal(lhs) : lhs,
+        String(rhs).startsWith('/') ? pathUtils.remoteToLocal(rhs) : rhs
+      ]
+    } else if (path.length === 0 && key === 'tags') {
+      return [lhs || [], rhs || []]
+    } else if (key === 'type' || key === 'docType') {
+      return [
+        lhs === 'directory' ? 'folder' : lhs,
+        rhs === 'directory' ? 'folder' : rhs
+      ]
+    } else if (Boolean(lhs) === lhs || Boolean(rhs) === rhs) {
+      return [Boolean(lhs), Boolean(rhs)]
+    } else if (Number(lhs) === lhs || Number(rhs) === rhs) {
+      return [Number(lhs), Number(rhs)]
+    }
   }
+  const normalizeDoctype = doc =>
+    doc && {
+      ...doc,
+      type: doc.type || doc.docType,
+      docType: doc.docType || doc.type
+    }
   const logDiff = (two, diff) => {
     if (two.path) {
       log.trace({ path: two.path, diff }, name)
@@ -626,11 +649,13 @@ const makeComparator = (
     one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
     two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
   ) => {
-    const diff = deepDiff(one, two, filter)
+    const left = normalizeDoctype(one)
+    const right = normalizeDoctype(two)
+    const diff = deepDiff(left, right, { prefilter, normalize })
 
     logDiff(two, diff)
 
-    return !diff || _.every(diff, canBeIgnoredDiff)
+    return !diff
   }
 }
 

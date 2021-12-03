@@ -378,8 +378,8 @@ describe('Add', () => {
               sides: { target: 2, local: 2 },
               errors: 1
             },
-            // The conflict is solved once the remote watcher fetches the remote
-            // doc and links it to the local one during Merge.
+            // The remote watcher fetches the remote doc and links it to the
+            // local one during Merge.
             {
               path: path.normalize('parent/dir'),
               local: { path: path.normalize('parent/dir') },
@@ -387,6 +387,9 @@ describe('Add', () => {
               sides: { target: 3, local: 2, remote: 3 },
               errors: 1
             },
+            // Then the conflict is solved once the remote change is synced
+            // (nothing is done but the record is marked as up-to-date and the
+            // errors removed.
             {
               path: path.normalize('parent/dir'),
               local: { path: path.normalize('parent/dir') },
