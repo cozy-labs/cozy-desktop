@@ -456,7 +456,6 @@ class Merge {
     was /*: SavedMetadata */
   ) /*: Promise<*> */ {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
-    const { path } = doc
 
     if ((!metadata.wasSynced(was) && !was.moveFrom) || was.deleted) {
       move.convertToDestinationAddition(side, was, doc)
@@ -504,30 +503,6 @@ class Merge {
           }
 
           return this.pouch.put(doc)
-        }
-
-        if (metadata.sameFile(file, doc)) {
-          // FIXME: this code block seems unreachable. Removing it does not
-          // break any test.
-          // We should make sure that is correct and remove it.
-          // It seems like reaching this block would mean we have duplicate
-          // records in PouchDB.
-          log.info({ path }, 'up to date (move)')
-
-          // We erase the moved document as it's a duplicate of the existing one
-          // which we'll update if necessary.
-          await this.pouch.eraseDocument(was)
-
-          // If the moved document has changed locally but is the same in the
-          // main part, we update the local attribute of the kept `file`.
-          if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
-            metadata.updateLocal(file, doc.local)
-            const outdated = metadata.outOfDateSide(file)
-            if (outdated) {
-              metadata.markSide(otherSide(outdated), file, file)
-            }
-            return this.pouch.put(file)
-          }
         }
 
         const dst = await this.resolveConflictAsync(side, doc)
@@ -587,13 +562,6 @@ class Merge {
           await this.pouch.eraseDocument(folder)
         }
         return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
-      }
-
-      if (metadata.sameFolder(folder, doc)) {
-        log.info({ path }, 'up to date (move)')
-        // TODO: what about the content that was maybe moved ?
-        doc._deleted = true
-        return this.pouch.put(doc)
       }
 
       const dst = await this.resolveConflictAsync(side, doc)
