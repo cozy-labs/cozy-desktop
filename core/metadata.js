@@ -76,9 +76,21 @@ const LOCAL_ATTRIBUTES = [
   'class',
   'mime',
   'size',
-  // trashed
   'ino',
   'fileid',
+  'executable'
+]
+
+const REMOTE_ATTRIBUTES = [
+  'path',
+  'type',
+  'tags',
+  'trashed',
+  'md5sum',
+  'updated_at',
+  'class',
+  'mime',
+  'size',
   'executable'
 ]
 
@@ -659,39 +671,38 @@ const makeComparator = (
   }
 }
 
-const sameFolder = makeComparator('sameFolder', {
-  attributes: ['path', 'docType', 'remote', 'tags', 'trashed', 'ino', 'fileid']
+// Returns true if the two metadata objects share the same attributes relevant
+// both locally and remotely (e.g. ino, tags or checksum).
+// We don't compare `updated_at` attributes as we don't want to trigger a
+// synchronization when only this attribute has changed.
+//
+// XXX: `class` and `mime` aren't compared either as they were not in the
+// `sameFile` and `sameFolder` functions `equivalent` is replacing but we should
+// figure out why they were left out (maybe because we don't want to trigger a
+// synchronization for these changes as well).
+const equivalent = makeComparator('equivalent', {
+  attributes: _.without(
+    _.union(LOCAL_ATTRIBUTES, REMOTE_ATTRIBUTES),
+    'updated_at',
+    'class',
+    'mime'
+  )
 })
 
-const sameFile = makeComparator('sameFile', {
-  attributes: [
-    'path',
-    'docType',
-    'md5sum',
-    'remote._id',
-    'remote._rev',
-    'tags',
-    'size',
-    'trashed',
-    'ino',
-    'fileid',
-    'executable'
-  ]
+// Returns true if the two metadata objects share the same locally relevant
+// attributes (e.g. ino or checksum).
+// We don't compare `updated_at` attributes as we don't want to trigger a
+// synchronization when only this attribute has changed.
+const equivalentLocal = makeComparator('equivalentLocal', {
+  attributes: _.without(LOCAL_ATTRIBUTES, 'updated_at')
 })
 
-const sameFileIgnoreRev = makeComparator('sameFileIgnoreRev', {
-  attributes: [
-    'path',
-    'docType',
-    'md5sum',
-    'remote._id',
-    'tags',
-    'size',
-    'trashed',
-    'ino',
-    'fileid',
-    'executable'
-  ]
+// Returns true if the two metadata objects share the same remotely relevant
+// attributes (e.g. tags or checksum).
+// We don't compare `updated_at` attributes as we don't want to trigger a
+// synchronization when only this attribute has changed.
+const equivalentRemote = makeComparator('equivalentRemote', {
+  attributes: _.without(REMOTE_ATTRIBUTES, 'updated_at')
 })
 
 // Returns true if the two local metadata objects are exactly the same.
@@ -901,6 +912,7 @@ function updateRemote(
 
 module.exports = {
   LOCAL_ATTRIBUTES,
+  REMOTE_ATTRIBUTES,
   assignMaxDate,
   assignPlatformIncompatibilities,
   fromRemoteDoc,
@@ -927,12 +939,12 @@ module.exports = {
   samePath,
   areParentChildPaths,
   newChildPath,
-  sameFolder,
-  sameFile,
-  sameFileIgnoreRev,
   sameLocal,
   sameRemote,
   sameBinary,
+  equivalent,
+  equivalentLocal,
+  equivalentRemote,
   detectSingleSide,
   markSide,
   incSides,

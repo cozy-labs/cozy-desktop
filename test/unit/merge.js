@@ -846,7 +846,10 @@ describe('Merge', function() {
         .fromRemote(oldRemoteFile)
         .upToDate()
         .create()
-      const newRemoteFile = await builders.remoteFile(oldRemoteFile).build()
+      const newRemoteFile = await builders
+        .remoteFile(oldRemoteFile)
+        .tags('qux')
+        .build()
       const sameFile = builders
         .metafile()
         .fromRemote(newRemoteFile)
@@ -1716,14 +1719,14 @@ describe('Merge', function() {
               _id: mergedFolder._id,
               local: sameFolder.local
             },
-            _.omit(mergedFolder, ['_id', '_rev'])
+            _.omit(mergedFolder, ['_rev'])
           )
         ],
         resolvedConflicts: []
       })
     })
 
-    it('keeps an existing local metadata when it is not present in the new doc', async function() {
+    it('keeps existing local metadata when it is not present in the new doc', async function() {
       const oldRemoteDir = await builders
         .remoteDir()
         .updatedAt(2020, 5, 19, 11, 9, 0)
@@ -1733,15 +1736,19 @@ describe('Merge', function() {
         .fromRemote(oldRemoteDir)
         .upToDate()
         .create()
-      const newRemoteDir = await builders.remoteDir(oldRemoteDir).build()
-      const sameFolder = builders
+      const newRemoteDir = await builders
+        .remoteDir(oldRemoteDir)
+        .tags('qux')
+        .build()
+
+      const updatedFolder = builders
         .metadir()
         .fromRemote(newRemoteDir)
         .unmerged('remote')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.putFolderAsync('remote', _.cloneDeep(sameFolder))
+        this.merge.putFolderAsync('remote', _.cloneDeep(updatedFolder))
       )
 
       should(sideEffects).deepEqual({
@@ -1752,7 +1759,7 @@ describe('Merge', function() {
               sides: increasedSides(mergedFolder.sides, 'remote', 1),
               local: mergedFolder.local
             },
-            _.omit(sameFolder, ['_rev'])
+            _.omit(updatedFolder, ['_rev'])
           )
         ],
         resolvedConflicts: []

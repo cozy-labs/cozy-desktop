@@ -222,7 +222,7 @@ class Merge {
             : doc.executable
       }
 
-      if (metadata.sameFile(doc, file)) {
+      if (metadata.equivalent(doc, file)) {
         log.info({ path: doc.path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
           if (!file.sides.local) {
@@ -354,7 +354,7 @@ class Merge {
           // would cause issues).
           // Until we find a way to mark specific events as obsolete, our only
           // recourse is to discard these modification date changes.
-          metadata.sameFolder(folder.local, doc.local)
+          metadata.equivalentLocal(folder.local, doc.local)
         ) {
           log.debug({ path: doc.path, doc, folder }, 'Same local metadata')
           return
@@ -395,7 +395,7 @@ class Merge {
         tags: doc.tags.length === 0 ? folder.tags : doc.tags
       }
 
-      if (metadata.sameFolder(folder, doc)) {
+      if (metadata.equivalent(folder, doc)) {
         log.info({ path: doc.path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
           if (!folder.sides.local) {

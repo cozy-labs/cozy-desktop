@@ -115,15 +115,13 @@ const detectOperation = async (
       const outdated = outdatedMetadata(doc, outdatedSide.name)
       if (outdated) {
         if (
-          metadata.isFile(outdated) &&
-          metadata.isFile(doc) &&
-          metadata.sameFile(outdated, doc)
+          outdatedSide.name === 'local' &&
+          metadata.equivalentLocal(outdated, doc)
         ) {
           return { type: 'NULL' }
         } else if (
-          metadata.isFolder(outdated) &&
-          metadata.isFolder(doc) &&
-          metadata.sameFolder(outdated, doc)
+          outdatedSide.name === 'remote' &&
+          metadata.equivalentRemote(outdated, doc)
         ) {
           return { type: 'NULL' }
         } else {
@@ -822,16 +820,15 @@ class Sync {
       log.debug({ path: doc.path }, `Applying else for ${doc.docType} change`)
       const outdated = outdatedMetadata(doc, side.name)
       if (outdated) {
-        if (metadata.isFolder(outdated) && metadata.isFolder(doc)) {
-          if (metadata.sameFolder(outdated, doc)) {
-            log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
-          } else {
-            await side.updateFolderAsync(doc)
-          }
-        } else if (metadata.isFile(outdated) && metadata.isFile(doc)) {
-          if (metadata.sameFile(outdated, doc)) {
-            log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
-          } else if (metadata.sameBinary(outdated, doc)) {
+        if (
+          (side.name === 'local' && metadata.equivalentLocal(outdated, doc)) ||
+          (side.name === 'remote' && metadata.equivalentRemote(outdated, doc))
+        ) {
+          log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
+        } else if (metadata.isFolder(doc)) {
+          await side.updateFolderAsync(doc)
+        } else if (metadata.isFile(doc)) {
+          if (metadata.sameBinary(outdated, doc)) {
             await side.updateFileMetadataAsync(doc)
           } else {
             await side.overwriteFileAsync(doc)

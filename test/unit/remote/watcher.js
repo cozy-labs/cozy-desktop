@@ -810,7 +810,8 @@ describe('RemoteWatcher', function() {
 
               const newRemoteFile = builders
                 .remoteFile(oldRemoteFile)
-                .shortRev(2)
+                .data('new remote content')
+                .shortRev(metadata.extractRevNumber(oldFile.remote) + 1)
                 .build()
 
               const [fileChange] = await this.watcher.analyse(
@@ -853,12 +854,12 @@ describe('RemoteWatcher', function() {
               const newRemoteDir = builders
                 .remoteDir(oldRemoteDir)
                 .name('corrigés'.normalize('NFC'))
-                .shortRev(2)
+                .shortRev(metadata.extractRevNumber(oldDir.remote) + 1)
                 .build()
               const newRemoteFile = builders
                 .remoteFile(oldRemoteFile)
                 .inDir(newRemoteDir)
-                .shortRev(2)
+                .shortRev(metadata.extractRevNumber(oldFile.remote) + 1)
                 .build()
 
               const [dirChange, fileChange] = await this.watcher.analyse(
@@ -911,12 +912,12 @@ describe('RemoteWatcher', function() {
               const newRemoteDir = builders
                 .remoteDir(oldRemoteDir)
                 .name('corrigés'.normalize('NFC'))
-                .shortRev(2)
+                .shortRev(metadata.extractRevNumber(oldDir.remote) + 1)
                 .build()
               const newRemoteFile = builders
                 .remoteFile(oldRemoteFile)
                 .inDir(newRemoteDir)
-                .shortRev(2)
+                .shortRev(metadata.extractRevNumber(oldFile.remote) + 1)
                 .build()
 
               const [dirChange, fileChange] = await this.watcher.analyse(
@@ -1112,7 +1113,7 @@ describe('RemoteWatcher', function() {
               const newRemoteFile = builders
                 .remoteFile(oldRemoteFile)
                 .inDir(newRemoteDir)
-                .shortRev(2)
+                .shortRev(metadata.extractRevNumber(oldFile.remote) + 1)
                 .build()
 
               const [fileChange] = await this.watcher.analyse(
