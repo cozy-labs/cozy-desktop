@@ -652,7 +652,9 @@ class Merge {
       else delete dst.incompatibilities
 
       if (side === 'local' && dst.sides.local) {
-        // Update the local attribute of children existing in the local folder
+        // Update the `local` attribute of children existing in the local folder
+        // FIXME: `updateLocal` will override local attributes with remote ones
+        // when a remote update of `dst` has been merged but not synced yet.
         metadata.updateLocal(dst)
       } else if (side === 'remote' && dst.sides.remote) {
         // Update the remote attribute of children existing in the remote folder

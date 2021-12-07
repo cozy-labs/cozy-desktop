@@ -878,6 +878,10 @@ function shouldIgnore(
   })
 }
 
+// FIXME: `updateLocal` will override local attributes with remote ones
+// when a remote update of `doc` has been merged but not synced yet.
+// We could make sure we always pass a `newLocal` value and clone `doc.local`
+// instead of `doc` as the last defaults.
 function updateLocal(doc /*: Metadata */, newLocal /*: Object */ = {}) {
   const defaults = process.platform === 'win32' ? { executable: false } : {}
 
