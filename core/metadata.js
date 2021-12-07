@@ -614,20 +614,23 @@ const makeComparator = (
     const diff = difference.item || difference
     return _.isNil(diff.lhs) && _.isNil(diff.rhs)
   }
-  return (
-    one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
-    two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
-  ) => {
-    const diff = deepDiff(one, two, filter)
+  const logDiff = (two, diff) => {
     if (two.path) {
       log.trace({ path: two.path, diff }, name)
     } else {
       log.trace({ diff }, name)
     }
-    if (diff && !_.every(diff, canBeIgnoredDiff)) {
-      return false
-    }
-    return true
+  }
+
+  return (
+    one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
+    two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
+  ) => {
+    const diff = deepDiff(one, two, filter)
+
+    logDiff(two, diff)
+
+    return !diff || _.every(diff, canBeIgnoredDiff)
   }
 }
 
@@ -666,12 +669,21 @@ const sameFileIgnoreRev = makeComparator('sameFileIgnoreRev', {
   ]
 })
 
-const sameLocal = makeComparator('sameLocal', { attributes: LOCAL_ATTRIBUTES })
+// Returns true if the two local metadata objects are exactly the same.
+const sameLocal = (() => {
+  const comparator = makeComparator('sameLocal')
+
+  return (one /*: MetadataLocalInfo */, two /*: MetadataLocalInfo */) =>
+    comparator(one, two)
+})()
 
 // Returns true if the two remote metadata objects are exactly the same.
-// We don't accept differences for remote metadata as it should only reflect
-// what's on the remote Cozy.
-const sameRemote = makeComparator('sameRemote')
+const sameRemote = (() => {
+  const comparator = makeComparator('sameRemote')
+
+  return (one /*: MetadataRemoteInfo */, two /*: MetadataRemoteInfo */) =>
+    comparator(one, two)
+})()
 
 // Return true if the two files have the same binary content
 function sameBinary(
