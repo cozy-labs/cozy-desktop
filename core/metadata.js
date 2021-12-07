@@ -592,16 +592,23 @@ function newChildPath(
   return path.join(newParentPath, ...childParts.slice(parentParts.length))
 }
 
-const makeComparator = (name, interestingFields) => {
-  const interestingPaths = interestingFields.map(f => f.split('.'))
+const makeComparator = (
+  name /*: string */,
+  { attributes } /*: { attributes?: Array<string> } */ = {}
+) => {
+  const interestingPaths = attributes && attributes.map(f => f.split('.'))
   const filter = (path, key) => {
-    return !interestingPaths.some(interestingPath => {
-      return interestingPath.every((part, i) => {
-        if (i < path.length) return path[i] === part
-        if (i === path.length) return key === part
-        return true
-      })
-    })
+    const filtered =
+      interestingPaths == null
+        ? false
+        : !interestingPaths.some(interestingPath => {
+            return interestingPath.every((part, i) => {
+              if (i < path.length) return path[i] === part
+              if (i === path.length) return key === part
+              return true
+            })
+          })
+    return filtered
   }
   const canBeIgnoredDiff = difference => {
     const diff = difference.item || difference
@@ -624,54 +631,47 @@ const makeComparator = (name, interestingFields) => {
   }
 }
 
-const sameFolder = makeComparator('sameFolder', [
-  'path',
-  'docType',
-  'remote',
-  'tags',
-  'trashed',
-  'ino',
-  'fileid'
-])
+const sameFolder = makeComparator('sameFolder', {
+  attributes: ['path', 'docType', 'remote', 'tags', 'trashed', 'ino', 'fileid']
+})
 
-const sameFile = makeComparator('sameFile', [
-  'path',
-  'docType',
-  'md5sum',
-  'remote._id',
-  'remote._rev',
-  'tags',
-  'size',
-  'trashed',
-  'ino',
-  'fileid',
-  'executable'
-])
+const sameFile = makeComparator('sameFile', {
+  attributes: [
+    'path',
+    'docType',
+    'md5sum',
+    'remote._id',
+    'remote._rev',
+    'tags',
+    'size',
+    'trashed',
+    'ino',
+    'fileid',
+    'executable'
+  ]
+})
 
-const sameFileIgnoreRev = makeComparator('sameFileIgnoreRev', [
-  'path',
-  'docType',
-  'md5sum',
-  'remote._id',
-  'tags',
-  'size',
-  'trashed',
-  'ino',
-  'fileid',
-  'executable'
-])
+const sameFileIgnoreRev = makeComparator('sameFileIgnoreRev', {
+  attributes: [
+    'path',
+    'docType',
+    'md5sum',
+    'remote._id',
+    'tags',
+    'size',
+    'trashed',
+    'ino',
+    'fileid',
+    'executable'
+  ]
+})
 
-const sameLocal = makeComparator('sameLocal', LOCAL_ATTRIBUTES)
+const sameLocal = makeComparator('sameLocal', { attributes: LOCAL_ATTRIBUTES })
 
 // Returns true if the two remote metadata objects are exactly the same.
 // We don't accept differences for remote metadata as it should only reflect
 // what's on the remote Cozy.
-const sameRemote = (
-  one /*: MetadataRemoteInfo */,
-  two /*: MetadataRemoteInfo */
-) => {
-  return !deepDiff(one, two)
-}
+const sameRemote = makeComparator('sameRemote')
 
 // Return true if the two files have the same binary content
 function sameBinary(
