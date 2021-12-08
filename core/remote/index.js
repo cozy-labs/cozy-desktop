@@ -8,7 +8,6 @@ const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const path = require('path')
 
-const { isNote } = require('../utils/notes')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
 const pathUtils = require('../utils/path')
@@ -203,14 +202,6 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async overwriteFileAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
-    if (isNote(doc.remote)) {
-      log.warn(
-        { path: doc.path, doc },
-        'Local note updates should not be propagated'
-      )
-      return
-    }
-
     const { path } = doc
     log.info({ path }, 'Uploading new file version...')
 

@@ -63,12 +63,6 @@ describe('Update', () => {
           'note\n\nupdated content'
         )
       })
-
-      it('keeps the note metadata', async () => {
-        const updatedDoc = await helpers.pouch.byRemoteIdMaybe(note._id)
-        // FIXME: check for metadata update once the builder can do it
-        should(updatedDoc).have.property('metadata')
-      })
     })
 
     describe('on local filesystem', () => {
@@ -81,31 +75,10 @@ describe('Update', () => {
         await helpers.pullAndSyncAll()
       })
 
-      it('renames the original remote note with a conflict suffix', async () => {
-        const updatedRemote = (await helpers.remote.byIdMaybe(note._id)) || {}
-        should(updatedRemote)
-          .have.property('name')
-          .match(/-conflict-/)
-        should(updatedRemote).have.properties({
-          md5sum: note.md5sum,
-          dir_id: note.dir_id
-        })
-        should(isNote(updatedRemote)).be.true()
-        await should(helpers.local.tree()).be.fulfilledWith([
-          'note-conflict-...',
-          'note.cozy-note'
-        ])
-      })
-
       it('uploads the new content to the Cozy', async () => {
         should(await helpers.remote.readFile('note.cozy-note')).eql(
           'updated content'
         )
-      })
-
-      it('keeps the original note metadata', async () => {
-        const updatedDoc = await helpers.pouch.byRemoteIdMaybe(note._id)
-        should(updatedDoc).have.property('metadata')
       })
     })
   })
@@ -190,21 +163,13 @@ describe('Update', () => {
           await helpers.pullAndSyncAll()
         })
 
-        it('moves the original remote note then rename it with a conflict suffix', async () => {
+        it('moves the remote note to the destination folder', async () => {
           const updatedRemote = await helpers.remote.byIdMaybe(note._id)
-          should(updatedRemote)
-            .have.property('name')
-            .match(/-conflict-/)
           should(updatedRemote).have.properties({
-            md5sum: note.md5sum,
+            name: note.name,
             dir_id: dst._id
           })
           should(isNote(updatedRemote)).be.true()
-          await should(helpers.local.tree()).be.fulfilledWith([
-            'dst/',
-            'dst/note-conflict-...',
-            'dst/note.cozy-note'
-          ])
         })
 
         it('uploads the new content to the Cozy at the target location', async () => {
@@ -213,9 +178,11 @@ describe('Update', () => {
           )
         })
 
-        it('keeps the original note metadata', async () => {
+        it('updates the note metadata', async () => {
           const updatedDoc = await helpers.pouch.byRemoteIdMaybe(note._id)
-          should(updatedDoc).have.property('metadata')
+          should(updatedDoc)
+            .have.property('name')
+            .equal(note.name)
         })
       })
 
@@ -243,21 +210,16 @@ describe('Update', () => {
           await helpers.flushLocalAndSyncAll()
         })
 
-        it('moves the original remote note then renames it with a conflict suffix', async () => {
+        it('moves the remote note to the destination folder and overwrites the existing note', async () => {
           const updatedRemote = await helpers.remote.byIdMaybe(note._id)
-          should(updatedRemote)
-            .have.property('name')
-            .match(/-conflict-/)
           should(updatedRemote).have.properties({
-            md5sum: note.md5sum,
+            name: note.name,
             dir_id: dst._id
           })
+          should(updatedRemote)
+            .have.property('md5sum')
+            .not.equal(note.md5sum)
           should(isNote(updatedRemote)).be.true()
-          await should(helpers.local.tree()).be.fulfilledWith([
-            'dst/',
-            'dst/note-conflict-...',
-            'dst/note.cozy-note'
-          ])
         })
 
         it('uploads the new content to the Cozy at the target location', async () => {
