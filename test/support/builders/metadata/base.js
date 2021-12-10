@@ -31,18 +31,11 @@ import type RemoteBaseBuilder from '../remote/base'
 const SOME_MEANINGLESS_TIME_OFFSET = 2000 // 2 seconds
 
 const localIsUpToDate = (doc /*: Metadata */) /*: boolean %checks */ => {
-  return _.isEqual(doc.local, _.pick(doc, metadata.LOCAL_ATTRIBUTES))
+  return metadata.equivalentLocal(doc, doc.local)
 }
 
 const remoteIsUpToDate = (doc /*: Metadata */) /*: boolean %checks */ => {
-  // Update the checked attributes if needed
-  return (
-    // This `normalize` method is not the same as `path.normalize()`. It
-    // normalizes characters and not path separators and such.
-    doc.remote.path.normalize() ===
-      pathUtils.localToRemote(doc.path).normalize() &&
-    (doc.remote.type === 'file' ? doc.remote.md5sum === doc.md5sum : true)
-  )
+  return metadata.equivalentRemote(doc, doc.remote)
 }
 
 module.exports = class BaseMetadataBuilder {
@@ -372,6 +365,7 @@ module.exports = class BaseMetadataBuilder {
       .name(path.basename(this.doc.path))
       .createdAt(...timestamp.spread(this.doc.updated_at))
       .updatedAt(...timestamp.spread(this.doc.updated_at))
+      .tags(...this.doc.tags)
 
     if (this.doc.docType === 'file') {
       builder = builder

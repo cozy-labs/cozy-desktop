@@ -770,66 +770,69 @@ describe('Merge', function() {
       })
     })
 
-    it('updates the local metadata only when it has changed', async function() {
-      const mergedFile = await builders
-        .metafile()
-        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
-        .upToDate()
-        .create()
-      const sameFile = builders
-        .metafile(mergedFile)
-        .updatedAt(new Date())
-        .unmerged('local')
-        .build()
+    context('when content is the same as an existing file', () => {
+      it('updates the PouchDB record without marking changes from a local update', async function() {
+        const mergedFile = await builders
+          .metafile()
+          .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
+          .upToDate()
+          .create()
+        const sameFile = builders
+          .metafile(mergedFile)
+          .updatedAt(new Date())
+          .unmerged('local')
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.addFileAsync('local', _.cloneDeep(sameFile))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.addFileAsync('local', _.cloneDeep(sameFile))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              local: sameFile.local
-            },
-            _.omit(mergedFile, ['_rev'])
-          )
-        ],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                local: sameFile.local,
+                updated_at: sameFile.updated_at
+              },
+              _.omit(mergedFile, ['_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
-    })
 
-    it('sets the local metadata when it is missing', async function() {
-      const mergedFile = await builders
-        .metafile()
-        .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
-        .upToDate()
-        .create()
+      it('sets the local metadata when it is missing', async function() {
+        const mergedFile = await builders
+          .metafile()
+          .updatedAt(new Date(2020, 5, 19, 11, 9, 0))
+          .upToDate()
+          .create()
 
-      // Remove local attribute for the test
-      delete mergedFile.local
-      const { rev } = await this.pouch.db.put(mergedFile)
-      mergedFile._rev = rev
+        // Remove local attribute for the test
+        delete mergedFile.local
+        const { rev } = await this.pouch.db.put(mergedFile)
+        mergedFile._rev = rev
 
-      const sameFile = builders
-        .metafile(mergedFile)
-        .unmerged('local')
-        .build()
+        const sameFile = builders
+          .metafile(mergedFile)
+          .unmerged('local')
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.addFileAsync('local', _.cloneDeep(sameFile))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.addFileAsync('local', _.cloneDeep(sameFile))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              local: sameFile.local
-            },
-            _.omit(mergedFile, ['_rev'])
-          )
-        ],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                local: sameFile.local
+              },
+              _.omit(mergedFile, ['_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
@@ -843,7 +846,10 @@ describe('Merge', function() {
         .fromRemote(oldRemoteFile)
         .upToDate()
         .create()
-      const newRemoteFile = await builders.remoteFile(oldRemoteFile).build()
+      const newRemoteFile = await builders
+        .remoteFile(oldRemoteFile)
+        .tags('qux')
+        .build()
       const sameFile = builders
         .metafile()
         .fromRemote(newRemoteFile)
@@ -1055,57 +1061,60 @@ describe('Merge', function() {
       })
     })
 
-    it('updates the remote metadata when content is the same', async function() {
-      const doc = builders
-        .metafile(file)
-        .tags('bar', 'baz')
-        .unmerged('remote')
-        .build()
+    context('when content is the same', () => {
+      it('updates the PouchDB record without marking changes from a remote update', async function() {
+        const doc = builders
+          .metafile(file)
+          .tags('bar', 'baz')
+          .unmerged('remote')
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        // Tags are only coming from the Cozy so we should not expect any tags
-        // update coming from the local side.
-        this.merge.updateFileAsync('remote', _.cloneDeep(doc))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          // Tags are only coming from the Cozy so we should not expect any tags
+          // update coming from the local side.
+          this.merge.updateFileAsync('remote', _.cloneDeep(doc))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              sides: increasedSides(file.sides, 'remote', 1),
-              remote: doc.remote,
-              tags: ['bar', 'baz']
-            },
-            _.omit(file, ['_rev'])
-          )
-        ],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                sides: increasedSides(file.sides, 'remote', 1),
+                remote: doc.remote,
+                tags: ['bar', 'baz']
+              },
+              _.omit(file, ['_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
-    })
 
-    // XXX: Here we don't increase the sides as we don't want to propagate a
-    // simple change of modification date.
-    it('updates the local metadata when content is the same', async function() {
-      const doc = builders
-        .metafile(file)
-        .updatedAt(new Date())
-        .unmerged('local')
-        .build()
+      // XXX: Here we don't increase the sides as we don't want to propagate a
+      // simple change of modification date.
+      it('updates the PouchDB record without marking changes from a local update', async function() {
+        const doc = builders
+          .metafile(file)
+          .updatedAt(new Date())
+          .unmerged('local')
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.updateFileAsync('local', _.cloneDeep(doc))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.updateFileAsync('local', _.cloneDeep(doc))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaultsDeep(
-            {
-              local: { updated_at: doc.local.updated_at }
-            },
-            _.omit(file, ['_rev'])
-          )
-        ],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaultsDeep(
+              {
+                local: { updated_at: doc.local.updated_at },
+                updated_at: doc.updated_at
+              },
+              _.omit(file, ['_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
@@ -1423,38 +1432,41 @@ describe('Merge', function() {
       })
     })
 
-    it('does nothing when existing file is up to date', async function() {
-      const initial = await builders
-        .metafile()
-        .data('initial content')
-        .upToDate()
-        .create()
-      const updated = await builders
-        .metafile(initial)
-        .data('updated content')
-        .updatedAt(new Date(2020, 5, 12, 10, 15, 0))
-        .upToDate()
-        .create()
-      const sameUpdate = builders
-        .metafile(updated)
-        .updatedAt(new Date())
-        .unmerged(this.side)
-        .build()
+    context('when existing file is up-to-date', () => {
+      it('updates the PouchDB record without marking changes', async function() {
+        const initial = await builders
+          .metafile()
+          .data('initial content')
+          .upToDate()
+          .create()
+        const updated = await builders
+          .metafile(initial)
+          .data('updated content')
+          .updatedAt(new Date(2020, 5, 12, 10, 15, 0))
+          .upToDate()
+          .create()
+        const sameUpdate = builders
+          .metafile(updated)
+          .updatedAt(new Date())
+          .unmerged(this.side)
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.updateFileAsync(this.side, _.cloneDeep(sameUpdate))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.updateFileAsync(this.side, _.cloneDeep(sameUpdate))
+        )
 
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaults(
-            {
-              [this.side]: sameUpdate[this.side]
-            },
-            _.omit(updated, ['_rev'])
-          )
-        ],
-        resolvedConflicts: []
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                [this.side]: sameUpdate[this.side],
+                updated_at: sameUpdate.updated_at // XXX: only attribute changed
+              },
+              _.omit(updated, ['_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
@@ -1707,14 +1719,14 @@ describe('Merge', function() {
               _id: mergedFolder._id,
               local: sameFolder.local
             },
-            _.omit(mergedFolder, ['_id', '_rev'])
+            _.omit(mergedFolder, ['_rev'])
           )
         ],
         resolvedConflicts: []
       })
     })
 
-    it('keeps an existing local metadata when it is not present in the new doc', async function() {
+    it('keeps existing local metadata when it is not present in the new doc', async function() {
       const oldRemoteDir = await builders
         .remoteDir()
         .updatedAt(2020, 5, 19, 11, 9, 0)
@@ -1724,15 +1736,19 @@ describe('Merge', function() {
         .fromRemote(oldRemoteDir)
         .upToDate()
         .create()
-      const newRemoteDir = await builders.remoteDir(oldRemoteDir).build()
-      const sameFolder = builders
+      const newRemoteDir = await builders
+        .remoteDir(oldRemoteDir)
+        .tags('qux')
+        .build()
+
+      const updatedFolder = builders
         .metadir()
         .fromRemote(newRemoteDir)
         .unmerged('remote')
         .build()
 
       const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.putFolderAsync('remote', _.cloneDeep(sameFolder))
+        this.merge.putFolderAsync('remote', _.cloneDeep(updatedFolder))
       )
 
       should(sideEffects).deepEqual({
@@ -1743,7 +1759,7 @@ describe('Merge', function() {
               sides: increasedSides(mergedFolder.sides, 'remote', 1),
               local: mergedFolder.local
             },
-            _.omit(sameFolder, ['_rev'])
+            _.omit(updatedFolder, ['_rev'])
           )
         ],
         resolvedConflicts: []

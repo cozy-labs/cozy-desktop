@@ -629,7 +629,7 @@ describe('Sync', function() {
       should(this.remote.addFolderAsync).have.been.calledWith(doc)
     })
 
-    it('calls updateFolderAsync for an updated folder', async function() {
+    it('does not call updateFolderAsync for an updated folder', async function() {
       const initial = await builders
         .metadir()
         .path('foobar/baz')
@@ -641,7 +641,7 @@ describe('Sync', function() {
         .changedSide('remote')
         .create()
       await this.sync.applyDoc(doc, this.local, 'local')
-      should(this.local.updateFolderAsync).have.been.calledWith(doc)
+      should(this.local.updateFolderAsync).not.have.been.calledWith(doc)
     })
 
     it('calls moveAsync for a moved folder', async function() {

@@ -7,6 +7,8 @@ const path = require('path')
 const should = require('should')
 const sinon = require('sinon')
 
+const configHelpers = require('../support/helpers/config')
+const pouchHelpers = require('../support/helpers/pouch')
 const Builders = require('../support/builders')
 const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 
@@ -20,8 +22,9 @@ const {
   markAsUpToDate,
   detectIncompatibilities,
   sameBinary,
-  sameFile,
-  sameFolder,
+  equivalent,
+  equivalentLocal,
+  equivalentRemote,
   buildDir,
   buildFile,
   invariants,
@@ -35,14 +38,22 @@ const pathUtils = require('../../core/utils/path')
 const timestamp = require('../../core/utils/timestamp')
 
 /*::
-import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../core/metadata'
+import type { Metadata, MetadataRemoteFile, MetadataRemoteDir, MetadataLocalInfo } from '../../core/metadata'
 import type { RemoteBase } from '../../core/remote/document'
 */
 
 const { platform } = process
 
 describe('metadata', function() {
-  const builders = new Builders()
+  let builders
+
+  before('instanciate config', configHelpers.createConfig)
+  beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+  beforeEach(function() {
+    builders = new Builders({ pouch: this.pouch })
+  })
+  afterEach('clean pouch', pouchHelpers.cleanDatabase)
+  after('clean config directory', configHelpers.cleanConfig)
 
   describe('.fromRemoteDoc()', () => {
     it('builds the metadata for a remote file', () => {
@@ -267,7 +278,7 @@ describe('metadata', function() {
   describe('detectIncompatibilities', () => {
     const syncPath = ';'
 
-    it('is null when all names in the path are compatible', () => {
+    it('is null when all names in the path are compatible', function() {
       const doc = builders
         .metafile()
         .path('foo/bar')
@@ -276,7 +287,7 @@ describe('metadata', function() {
     })
 
     onPlatform('win32', () => {
-      it('lists platform incompatibilities for all names in the path', () => {
+      it('lists platform incompatibilities for all names in the path', function() {
         const doc = builders
           .metafile()
           .path('f?o:o\\ba|r\\baz\\q"ux')
@@ -343,7 +354,7 @@ describe('metadata', function() {
       should(metadata.isUpToDate('local', doc)).be.false()
     })
 
-    it('is true when the given side equals the target in doc', () => {
+    it('is true when the given side equals the target in doc', function() {
       const doc = builders
         .metafile()
         .rev('2-0123456')
@@ -352,7 +363,7 @@ describe('metadata', function() {
       should(metadata.isUpToDate('local', doc)).be.true()
     })
 
-    it('is false when the given side is lower than the target in doc', () => {
+    it('is false when the given side is lower than the target in doc', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -361,7 +372,7 @@ describe('metadata', function() {
       should(metadata.isUpToDate('local', doc)).be.false()
     })
 
-    it('is true when the given side is the only one', () => {
+    it('is true when the given side is the only one', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -372,7 +383,7 @@ describe('metadata', function() {
 
     // XXX: We implemented the same workaround as in `isAtLeastUpToDate()`
     // although we haven't encountered the same issue yet but it is possible.
-    it('is true when the given side is the only one and lower than the target', () => {
+    it('is true when the given side is the only one and lower than the target', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -392,7 +403,7 @@ describe('metadata', function() {
       should(metadata.isAtLeastUpToDate('local', doc)).be.false()
     })
 
-    it('is true when the given side equals the target in doc', () => {
+    it('is true when the given side equals the target in doc', function() {
       const doc = builders
         .metafile()
         .rev('2-0123456')
@@ -401,7 +412,7 @@ describe('metadata', function() {
       should(metadata.isAtLeastUpToDate('local', doc)).be.true()
     })
 
-    it('is true when the given side is greater than the target in doc', () => {
+    it('is true when the given side is greater than the target in doc', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -410,7 +421,7 @@ describe('metadata', function() {
       should(metadata.isAtLeastUpToDate('local', doc)).be.true()
     })
 
-    it('is false when the given side is lower than the target in doc', () => {
+    it('is false when the given side is lower than the target in doc', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -419,7 +430,7 @@ describe('metadata', function() {
       should(metadata.isAtLeastUpToDate('local', doc)).be.false()
     })
 
-    it('is true when the given side is the only one', () => {
+    it('is true when the given side is the only one', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -431,7 +442,7 @@ describe('metadata', function() {
     // XXX: It is yet unknown how we end up in this situation but it seems like
     // it can happen when we have sync errors and maybe some side dissociation.
     // Until we figure out the root cause, we try to prevent its consequences.
-    it('is true when the given side is the only one and lower than the target', () => {
+    it('is true when the given side is the only one and lower than the target', function() {
       const doc = builders
         .metafile()
         .rev('3-0123456')
@@ -442,7 +453,7 @@ describe('metadata', function() {
   })
 
   describe('assignMaxDate', () => {
-    it('assigns the previous timestamp to the doc when it is more recent than the current one to prevent updated_at < created_at errors on remote sync', () => {
+    it('assigns the previous timestamp to the doc when it is more recent than the current one to prevent updated_at < created_at errors on remote sync', function() {
       const was = builders.metafile().build()
       const doc = builders
         .metafile()
@@ -455,14 +466,14 @@ describe('metadata', function() {
       })
     })
 
-    it('does nothing when the doc has no previous version', () => {
+    it('does nothing when the doc has no previous version', function() {
       const doc = builders.metafile().build()
       should(() => {
         assignMaxDate(doc)
       }).not.change(doc)
     })
 
-    it('does nothing when both current and previous timestamps are the same', () => {
+    it('does nothing when both current and previous timestamps are the same', function() {
       const was = builders.metafile().build()
       const doc = builders
         .metafile()
@@ -473,7 +484,7 @@ describe('metadata', function() {
       }).not.change(doc)
     })
 
-    it('does nothing when the current timestamp is more recent than the previous one', () => {
+    it('does nothing when the current timestamp is more recent than the previous one', function() {
       const was = builders.metafile().build()
       const doc = builders
         .metafile()
@@ -484,7 +495,7 @@ describe('metadata', function() {
       }).not.change(doc)
     })
 
-    it('nevers changes the previous doc', () => {
+    it('nevers changes the previous doc', function() {
       const was = builders.metafile().build()
       const sameDateDoc = builders
         .metafile()
@@ -510,255 +521,100 @@ describe('metadata', function() {
     })
   })
 
-  describe('sameFolder', () => {
-    it('returns true if the folders are the same', function() {
-      const a = builders
-        .metadir()
-        .ino(234)
-        .path('foo/bar')
-        .tags('qux')
-        .updatedAt('2015-12-01T11:22:56.517Z')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-      const b = builders
-        .metadir()
-        .ino(234)
-        .path('FOO/BAR')
-        .tags('qux')
-        .updatedAt('2015-12-01T11:22:57.000Z')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-      const c = builders
-        .metadir()
-        .path('FOO/BAR')
-        .tags('qux', 'courge')
-        .updatedAt('2015-12-01T11:22:57.000Z')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-      const d = builders
-        .metadir()
-        .path('FOO/BAR')
-        .tags('qux', 'courge')
-        .updatedAt('2015-12-01T11:22:57.000Z')
-        .remoteId('123')
-        .remoteRev(8)
-        .upToDate()
-        .build()
-      const e = builders
-        .metadir()
-        .path('FOO/BAZ')
-        .tags('qux')
-        .updatedAt('2015-12-01T11:22:57.000Z')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-      const g = _.merge({}, a, { ino: a.ino + 2 })
-      should(sameFolder(a, a)).be.true()
-      should(sameFolder(a, b)).be.false()
-      should(sameFolder(a, c)).be.false()
-      should(sameFolder(a, d)).be.false()
-      should(sameFolder(a, e)).be.false()
-      should(sameFolder(a, g)).be.false()
-      should(sameFolder(b, c)).be.false()
-      should(sameFolder(b, d)).be.false()
-      should(sameFolder(b, e)).be.false()
-      should(sameFolder(c, d)).be.false()
-      should(sameFolder(c, e)).be.false()
-      should(sameFolder(d, e)).be.false()
-      should(sameFolder(a, _.merge({ _deleted: true }, a))).be.true()
-      should(
-        sameFolder(
-          b,
-          _.merge({}, b, {
-            _rev: 'whatever-other-rev',
-            errors: 3,
-            updated_at: '1900-01-01T11:22:56.517Z',
-            overwrite: b,
-            childMove: true,
-            sides: { local: 123, remote: 124 },
-            incompatibilities: [{ type: 'dirNameMaxBytes' }],
-            moveFrom: a
-          })
-        )
-      ).be.true()
-    })
-
-    it('does not fail when a property is absent on one side and undefined on the other', function() {
-      const a = builders
-        .metadir()
-        .path('foo/bar')
-        .ino(234)
-        .tags('qux')
-        .updatedAt('2015-12-01T11:22:56.517Z')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-
-      _.each(['path', 'docType', 'remote', 'tags', 'ino'], property => {
-        let b = _.clone(a)
-        b[property] = undefined
-        let c = _.clone(a)
-        c[property] = null
-        let d = _.clone(a)
-        delete d[property]
-
-        should(sameFolder(a, b)).be.false(
-          `undefined ${property} is same as ${a[property]}`
-        )
-        should(sameFolder(a, c)).be.false(
-          `null ${property} is same as ${a[property]}`
-        )
-        should(sameFolder(a, d)).be.false(
-          `absent ${property} is same as ${a[property]}`
-        )
-        should(sameFolder(b, c)).be.true(
-          `undefined ${property} is not same as null`
-        )
-        should(sameFolder(b, d)).be.true(
-          `undefined ${property} is not as absent`
-        )
-        should(sameFolder(c, d)).be.true(
-          `null ${property} is not same as absent`
-        )
+  describe('equivalent', () => {
+    describe('with folders', () => {
+      it('returns true if the folders are the same', function() {
+        const a = builders
+          .metadir()
+          .ino(234)
+          .path('foo/bar')
+          .tags('qux')
+          .updatedAt('2015-12-01T11:22:56.517Z')
+          .remoteId('123')
+          .remoteRev(4)
+          .upToDate()
+          .build()
+        const b = builders
+          .metadir()
+          .ino(234)
+          .path('FOO/BAR')
+          .tags('qux')
+          .updatedAt('2015-12-01T11:22:57.000Z')
+          .remoteId('123')
+          .remoteRev(4)
+          .upToDate()
+          .build()
+        const c = builders
+          .metadir()
+          .path('FOO/BAR')
+          .tags('qux', 'courge')
+          .updatedAt('2015-12-01T11:22:57.000Z')
+          .remoteId('123')
+          .remoteRev(4)
+          .upToDate()
+          .build()
+        const d = builders
+          .metadir()
+          .path('FOO/BAR')
+          .tags('qux', 'courge')
+          .updatedAt('2015-12-01T11:22:57.000Z')
+          .remoteId('123')
+          .remoteRev(8)
+          .upToDate()
+          .build()
+        const e = builders
+          .metadir()
+          .path('FOO/BAZ')
+          .tags('qux')
+          .updatedAt('2015-12-01T11:22:57.000Z')
+          .remoteId('123')
+          .remoteRev(4)
+          .upToDate()
+          .build()
+        const g = _.merge({}, a, { ino: a.ino + 2 })
+        should(equivalent(a, a)).be.true()
+        should(equivalent(a, b)).be.false()
+        should(equivalent(a, c)).be.false()
+        should(equivalent(a, d)).be.false()
+        should(equivalent(a, e)).be.false()
+        should(equivalent(a, g)).be.false()
+        should(equivalent(b, c)).be.false()
+        should(equivalent(b, d)).be.false()
+        should(equivalent(b, e)).be.false()
+        should(equivalent(c, d)).be.true()
+        should(equivalent(c, e)).be.false()
+        should(equivalent(d, e)).be.false()
+        should(equivalent(a, _.merge({ _deleted: true }, a))).be.true()
+        should(
+          equivalent(
+            b,
+            _.merge({}, b, {
+              _rev: 'whatever-other-rev',
+              errors: 3,
+              updated_at: '1900-01-01T11:22:56.517Z',
+              overwrite: b,
+              childMove: true,
+              sides: { local: 123, remote: 124 },
+              incompatibilities: [{ type: 'dirNameMaxBytes' }],
+              moveFrom: a
+            })
+          )
+        ).be.true()
       })
-    })
-  })
 
-  describe('sameFile', function() {
-    it('returns true if the files are the same', function() {
-      const a = builders
-        .metafile()
-        .path('foo/bar')
-        .ino(1)
-        .data('some data')
-        .tags('qux')
-        .updatedAt('2015-12-01T11:22:56.517Z')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-      const b = builders
-        .metafile()
-        .path('FOO/BAR')
-        .ino(1)
-        .data('some data')
-        .tags('qux')
-        .updatedAt('2015-12-01T11:22:56.517Z')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-      const c = builders
-        .metafile()
-        .path('FOO/BAR')
-        .data('other data')
-        .tags('qux')
-        .updatedAt('2015-12-01T11:22:56.517Z')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-      const d = builders
-        .metafile()
-        .path('FOO/BAR')
-        .data('some data')
-        .tags('qux')
-        .updatedAt('2015-12-01T11:22:56.517Z')
-        .remoteId('123')
-        .remoteRev(8)
-        .upToDate()
-        .build()
-      const e = builders
-        .metafile()
-        .path('FOO/BAZ')
-        .data('some data')
-        .tags('qux')
-        .updatedAt('2015-12-01T11:22:56.517Z')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-      const f = builders
-        .metafile()
-        .path('foo/bar')
-        .data('some data')
-        .size(12345)
-        .tags('qux')
-        .updatedAt('2015-12-01T11:22:56.517Z')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-      const g = builders
-        .metafile(a)
-        .ino(a.ino + 1)
-        .build()
-      const h = builders
-        .metafile(a)
-        .remoteId('321')
-        .build()
-      should(sameFile(a, a)).be.true()
-      should(sameFile(a, b)).be.false()
-      should(sameFile(a, c)).be.false()
-      should(sameFile(a, d)).be.false()
-      should(sameFile(a, e)).be.false()
-      should(sameFile(a, f)).be.false()
-      should(sameFile(a, g)).be.false()
-      should(sameFile(a, h)).be.false()
-      should(sameFile(b, c)).be.false()
-      should(sameFile(b, d)).be.false()
-      should(sameFile(b, e)).be.false()
-      should(sameFile(b, f)).be.false()
-      should(sameFile(c, d)).be.false()
-      should(sameFile(c, e)).be.false()
-      should(sameFile(c, f)).be.false()
-      should(sameFile(d, e)).be.false()
-      should(sameFile(d, f)).be.false()
-      should(sameFile(e, f)).be.false()
-      should(sameFile(a, _.merge({ _deleted: true }, a))).be.true()
-      should(
-        sameFile(
-          b,
-          _.merge({}, b, {
-            _rev: 'whatever-other-rev',
-            class: 'other-class',
-            errors: 3,
-            updated_at: '1900-01-01T11:22:56.517Z',
-            mime: 'other-class/other-type',
-            overwrite: b,
-            childMove: true,
-            sides: { target: 124, local: 123, remote: 124 },
-            incompatibilities: [{ type: 'nameMaxBytes' }],
-            moveFrom: a
-          })
-        )
-      ).be.true()
-    })
+      it('does not fail when a property is absent on one side and undefined on the other', function() {
+        const a = builders
+          .metadir()
+          .path('foo/bar')
+          .ino(234)
+          .tags('qux')
+          .updatedAt('2015-12-01T11:22:56.517Z')
+          .remoteId('123')
+          .remoteRev(4)
+          .upToDate()
+          .build()
 
-    it('does not fail when a property is absent on one side and undefined on the other', function() {
-      const a = builders
-        .metafile()
-        .path('foo/bar')
-        .ino(23452)
-        .data('some data')
-        .executable(false)
-        .tags('qux')
-        .remoteId('123')
-        .remoteRev(4)
-        .upToDate()
-        .build()
-
-      _.each(
-        ['path', 'docType', 'md5sum', 'remote', 'tags', 'size', 'ino'],
-        property => {
+        _.each(['path', 'docType', 'tags', 'ino'], property => {
           let b = _.clone(a)
           b[property] = undefined
           let c = _.clone(a)
@@ -766,26 +622,182 @@ describe('metadata', function() {
           let d = _.clone(a)
           delete d[property]
 
-          should(sameFile(a, b)).be.false(
+          should(equivalent(a, b)).be.false(
             `undefined ${property} is same as ${a[property]}`
           )
-          should(sameFile(a, c)).be.false(
+          should(equivalent(a, c)).be.false(
             `null ${property} is same as ${a[property]}`
           )
-          should(sameFile(a, d)).be.false(
+          should(equivalent(a, d)).be.false(
             `absent ${property} is same as ${a[property]}`
           )
-          should(sameFile(b, c)).be.true(
+          should(equivalent(b, c)).be.true(
             `undefined ${property} is not same as null`
           )
-          should(sameFile(b, d)).be.true(
+          should(equivalent(b, d)).be.true(
             `undefined ${property} is not as absent`
           )
-          should(sameFile(c, d)).be.true(
+          should(equivalent(c, d)).be.true(
             `null ${property} is not same as absent`
           )
-        }
-      )
+        })
+      })
+    })
+
+    describe('with files', () => {
+      it('returns true if the files are the same', function() {
+        const a = builders
+          .metafile()
+          .path('foo/bar')
+          .ino(1)
+          .data('some data')
+          .tags('qux')
+          .updatedAt('2015-12-01T11:22:56.517Z')
+          .remoteId('123')
+          .remoteRev(4)
+          .upToDate()
+          .build()
+        const b = builders
+          .metafile()
+          .path('FOO/BAR')
+          .ino(1)
+          .data('some data')
+          .tags('qux')
+          .updatedAt('2015-12-01T11:22:56.517Z')
+          .remoteId('123')
+          .remoteRev(4)
+          .upToDate()
+          .build()
+        const c = builders
+          .metafile()
+          .path('FOO/BAR')
+          .data('other data')
+          .tags('qux')
+          .updatedAt('2015-12-01T11:22:56.517Z')
+          .remoteId('123')
+          .remoteRev(4)
+          .upToDate()
+          .build()
+        const d = builders
+          .metafile()
+          .path('FOO/BAR')
+          .data('some data')
+          .tags('qux')
+          .updatedAt('2015-12-01T11:22:56.517Z')
+          .remoteId('123')
+          .remoteRev(8)
+          .upToDate()
+          .build()
+        const e = builders
+          .metafile()
+          .path('FOO/BAZ')
+          .data('some data')
+          .tags('qux')
+          .updatedAt('2015-12-01T11:22:56.517Z')
+          .remoteId('123')
+          .remoteRev(4)
+          .upToDate()
+          .build()
+        const f = builders
+          .metafile()
+          .path('foo/bar')
+          .data('some data')
+          .size(12345)
+          .tags('qux')
+          .updatedAt('2015-12-01T11:22:56.517Z')
+          .remoteId('123')
+          .remoteRev(4)
+          .upToDate()
+          .build()
+        const g = builders
+          .metafile(a)
+          .ino(a.ino + 1)
+          .build()
+        const h = builders
+          .metafile(a)
+          .remoteId('321')
+          .build()
+        should(equivalent(a, a)).be.true()
+        should(equivalent(a, b)).be.false()
+        should(equivalent(a, c)).be.false()
+        should(equivalent(a, d)).be.false()
+        should(equivalent(a, e)).be.false()
+        should(equivalent(a, f)).be.false()
+        should(equivalent(a, g)).be.false()
+        should(equivalent(a, h)).be.true()
+        should(equivalent(b, c)).be.false()
+        should(equivalent(b, d)).be.false()
+        should(equivalent(b, e)).be.false()
+        should(equivalent(b, f)).be.false()
+        should(equivalent(c, d)).be.false()
+        should(equivalent(c, e)).be.false()
+        should(equivalent(c, f)).be.false()
+        should(equivalent(d, e)).be.false()
+        should(equivalent(d, f)).be.false()
+        should(equivalent(e, f)).be.false()
+        should(equivalent(a, _.merge({ _deleted: true }, a))).be.true()
+        should(
+          equivalent(
+            b,
+            _.merge({}, b, {
+              _rev: 'whatever-other-rev',
+              class: 'other-class',
+              errors: 3,
+              updated_at: '1900-01-01T11:22:56.517Z',
+              mime: 'other-class/other-type',
+              overwrite: b,
+              childMove: true,
+              sides: { target: 124, local: 123, remote: 124 },
+              incompatibilities: [{ type: 'nameMaxBytes' }],
+              moveFrom: a
+            })
+          )
+        ).be.true()
+      })
+      it('does not fail when a property is absent on one side and undefined on the other', function() {
+        const a = builders
+          .metafile()
+          .path('foo/bar')
+          .ino(23452)
+          .data('some data')
+          .executable(false)
+          .tags('qux')
+          .remoteId('123')
+          .remoteRev(4)
+          .upToDate()
+          .build()
+
+        _.each(
+          ['path', 'docType', 'md5sum', 'tags', 'size', 'ino'],
+          property => {
+            let b = _.clone(a)
+            b[property] = undefined
+            let c = _.clone(a)
+            c[property] = null
+            let d = _.clone(a)
+            delete d[property]
+
+            should(equivalent(a, b)).be.false(
+              `undefined ${property} is same as ${a[property]}`
+            )
+            should(equivalent(a, c)).be.false(
+              `null ${property} is same as ${a[property]}`
+            )
+            should(equivalent(a, d)).be.false(
+              `absent ${property} is same as ${a[property]}`
+            )
+            should(equivalent(b, c)).be.true(
+              `undefined ${property} is not same as null`
+            )
+            should(equivalent(b, d)).be.true(
+              `undefined ${property} is not as absent`
+            )
+            should(equivalent(c, d)).be.true(
+              `null ${property} is not same as absent`
+            )
+          }
+        )
+      })
     })
   })
 
@@ -1078,8 +1090,7 @@ describe('metadata', function() {
 
   describe('invariants', () => {
     let doc
-    beforeEach(async () => {
-      const builders = new Builders({ pouch: this.pouch })
+    beforeEach(function() {
       doc = builders
         .metadata()
         .remoteId('badbeef')
@@ -1087,21 +1098,21 @@ describe('metadata', function() {
         .build()
     })
 
-    it('throws when trying to put bad doc (no sides)', async () => {
+    it('throws when trying to put bad doc (no sides)', () => {
       // $FlowFixMe sides is null on purpose
       should(() => invariants(Object.assign(doc, { sides: null }))).throw(
         /sides/
       )
     })
 
-    it('throws when trying to put bad doc (no remote)', async () => {
+    it('throws when trying to put bad doc (no remote)', () => {
       // $FlowFixMe remote is null on purpose
       should(() => invariants(Object.assign(doc, { remote: null }))).throw(
         /sides\.remote/
       )
     })
 
-    it('throws when trying to put bad doc (no md5sum)', async () => {
+    it('throws when trying to put bad doc (no md5sum)', function() {
       doc = builders
         .metafile()
         .remoteId('badbeef')
@@ -1132,7 +1143,6 @@ describe('metadata', function() {
   describe('markAsUpToDate', () => {
     let doc
     beforeEach(async () => {
-      const builders = new Builders({ pouch: this.pouch })
       doc = await builders
         .metadata()
         .notUpToDate()
@@ -1174,11 +1184,6 @@ describe('metadata', function() {
   })
 
   describe('outOfDateSide', () => {
-    let builders
-    beforeEach(() => {
-      builders = new Builders()
-    })
-
     it('returns nothing if sides are not set', () => {
       const doc1 = builders
         .metadata()
@@ -1217,12 +1222,16 @@ describe('metadata', function() {
     })
   })
 
-  describe('createConflictingDoc', () => {
+  describe('createConflictingDoc', function() {
     const filepath = 'parent/dir/file.txt'
-    const doc = builders
-      .metafile()
-      .path(filepath)
-      .build()
+
+    let doc
+    beforeEach(function() {
+      doc = builders
+        .metafile()
+        .path(filepath)
+        .build()
+    })
 
     it('returns a doc with a different path', () => {
       const newDoc = createConflictingDoc(doc)
@@ -1249,7 +1258,7 @@ describe('metadata', function() {
       isIgnored.restore()
     })
 
-    it('calls isIgnored with the document normalized path', () => {
+    it('calls isIgnored with the document normalized path', function() {
       metadata.shouldIgnore(
         builders
           .metadir()
@@ -1281,7 +1290,7 @@ describe('metadata', function() {
       ])
     })
 
-    it('returns false when document is a file', () => {
+    it('returns false when document is a file', function() {
       const doc = builders
         .metafile()
         .path('échange/nourriture')
@@ -1419,7 +1428,7 @@ describe('metadata', function() {
   })
 
   describe('updateLocal', () => {
-    it('adds the local attribute if it is missing', () => {
+    it('adds the local attribute if it is missing', function() {
       const doc = builders
         .metafile()
         .ino(1)
@@ -1437,7 +1446,7 @@ describe('metadata', function() {
       should(doc.local).have.properties(expectedAttributes)
     })
 
-    it('fetches the local attributes from the main doc', () => {
+    it('fetches the local attributes from the main doc', function() {
       const file1 = builders
         .metafile()
         .ino(1)
@@ -1501,7 +1510,7 @@ describe('metadata', function() {
       ])
     })
 
-    it('prefers the provided local attributes', () => {
+    it('prefers the provided local attributes', function() {
       const file = builders
         .metafile()
         .ino(1)
@@ -1538,7 +1547,7 @@ describe('metadata', function() {
   })
 
   describe('updateRemote', () => {
-    it('adds the remote attribute if it is missing', () => {
+    it('adds the remote attribute if it is missing', function() {
       const remoteFile = builders.remoteFile().build()
       const doc = builders
         .metafile()
@@ -1561,7 +1570,7 @@ describe('metadata', function() {
       ])
     })
 
-    it('keeps non-overwritten remote attributes', () => {
+    it('keeps non-overwritten remote attributes', function() {
       const file = builders
         .metafile()
         .path('parent/OLD')
@@ -1585,6 +1594,186 @@ describe('metadata', function() {
         created_at: file.remote.created_at,
         updated_at: file.remote.updated_at,
         cozyMetadata: file.remote.cozyMetadata
+      })
+    })
+  })
+
+  describe('comparators', function() {
+    let file, folder
+    beforeEach(async function() {
+      file = await builders
+        .metafile()
+        .ino(1)
+        .tags('qux')
+        .upToDate()
+        .create()
+      folder = await builders
+        .metadir()
+        .ino(1)
+        .tags('qux')
+        .upToDate()
+        .create()
+    })
+
+    context('when doc is up-to-date', function() {
+      it('equivalentLocal returns true when comparing doc to its local side', () => {
+        should(equivalentLocal(file, file.local)).be.true()
+        should(equivalentLocal(folder, folder.local)).be.true()
+      })
+
+      it('equivalentRemote returns true when comparing doc to its remote side', () => {
+        should(equivalentRemote(file, file.remote)).be.true()
+        should(equivalentRemote(folder, folder.remote)).be.true()
+      })
+    })
+
+    context('when local only attribute changed', function() {
+      beforeEach(async function() {
+        file = await builders
+          .metafile(file)
+          .ino(2)
+          .changedSide('local')
+          .create()
+        folder = await builders
+          .metadir(folder)
+          .ino(2)
+          .changedSide('local')
+          .create()
+      })
+
+      it('equivalentLocal returns true when comparing doc to its local side', () => {
+        should(equivalentLocal(file, file.local)).be.true()
+        should(equivalentLocal(folder, folder.local)).be.true()
+      })
+
+      it('equivalentRemote returns true when comparing doc to its remote side', () => {
+        should(equivalentRemote(file, file.remote)).be.true()
+        should(equivalentRemote(folder, folder.remote)).be.true()
+      })
+    })
+
+    context('when local attribute changed', function() {
+      beforeEach(async function() {
+        file = await builders
+          .metafile(file)
+          .path('newPath')
+          .changedSide('local')
+          .create()
+        folder = await builders
+          .metadir(folder)
+          .path('newPath')
+          .changedSide('local')
+          .create()
+      })
+
+      it('equivalentLocal returns true when comparing doc to its local side', () => {
+        should(equivalentLocal(file, file.local)).be.true()
+        should(equivalentLocal(folder, folder.local)).be.true()
+      })
+
+      it('equivalentRemote returns false when comparing doc to its remote side', () => {
+        should(equivalentRemote(file, file.remote)).be.false()
+        should(equivalentRemote(folder, folder.remote)).be.false()
+      })
+    })
+
+    context('when remote only attribute changed', function() {
+      beforeEach(async function() {
+        file = await builders
+          .metafile(file)
+          .tags('foo')
+          .changedSide('remote')
+          .create()
+        folder = await builders
+          .metadir(folder)
+          .tags('foo')
+          .changedSide('remote')
+          .create()
+      })
+
+      it('equivalentLocal returns true when comparing doc to its local side', () => {
+        should(equivalentLocal(file, file.local)).be.true()
+        should(equivalentLocal(folder, folder.local)).be.true()
+      })
+
+      it('equivalentRemote returns true when comparing doc to its remote side', () => {
+        should(equivalentRemote(file, file.remote)).be.true()
+        should(equivalentRemote(folder, folder.remote)).be.true()
+      })
+    })
+
+    context('when remote attribute changed', function() {
+      beforeEach(async function() {
+        file = await builders
+          .metafile(file)
+          .path('newPath')
+          .changedSide('remote')
+          .create()
+        folder = await builders
+          .metadir(folder)
+          .path('newPath')
+          .changedSide('remote')
+          .create()
+      })
+
+      it('equivalentLocal returns false when comparing doc to its local side', () => {
+        should(equivalentLocal(file, file.local)).be.false()
+        should(equivalentLocal(folder, folder.local)).be.false()
+      })
+
+      it('equivalentRemote returns true when comparing doc to its remote side', () => {
+        should(equivalentRemote(file, file.remote)).be.true()
+        should(equivalentRemote(folder, folder.remote)).be.true()
+      })
+    })
+
+    context('when local updated_at attribute changed', function() {
+      beforeEach(async function() {
+        file = await builders
+          .metafile(file)
+          .updatedAt(new Date())
+          .changedSide('local')
+          .create()
+        folder = await builders
+          .metadir(folder)
+          .updatedAt(new Date())
+          .changedSide('local')
+          .create()
+      })
+
+      it('equivalentLocal returns true when comparing doc to its local side', () => {
+        should(equivalentLocal(file, file.local)).be.true()
+        should(equivalentLocal(folder, folder.local)).be.true()
+      })
+
+      it('equivalentRemote returns true when comparing doc to its remote side', () => {
+        should(equivalentRemote(file, file.remote)).be.true()
+        should(equivalentRemote(folder, folder.remote)).be.true()
+      })
+    })
+
+    context('when remote updated_at attribute changed', function() {
+      beforeEach(async function() {
+        file = await builders
+          .metafile(file)
+          .updatedAt(new Date())
+          .changedSide('remote')
+          .create()
+        folder = await builders
+          .metadir(folder)
+          .updatedAt(new Date())
+          .changedSide('remote')
+          .create()
+      })
+
+      it('equivalentLocal returns true when comparing doc to its local side', () => {
+        should(equivalentLocal(file, file.local)).be.true()
+        should(equivalentLocal(folder, folder.local)).be.true()
+      })
+
+      it('equivalentRemote returns true when comparing doc to its remote side', () => {
+        should(equivalentRemote(file, file.remote)).be.true()
+        should(equivalentRemote(folder, folder.remote)).be.true()
       })
     })
   })

@@ -222,21 +222,49 @@ class Merge {
             : doc.executable
       }
 
-      if (metadata.sameFile(doc, file)) {
+      if (metadata.equivalent(doc, file)) {
         log.info({ path: doc.path }, 'up to date')
         if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
-          metadata.updateLocal(file, doc.local)
-          const outdated = metadata.outOfDateSide(file)
-          if (outdated) {
-            // In case a change was merged but not applied, we want to make sure
-            // Sync will compare the current record version with the correct
-            // "previous" version (i.e. the one before the actual change was
-            // merged and not the one before we merged the new local metadata).
-            // Therefore, we mark the changed side once more to account for the
-            // new record save.
-            metadata.markSide(otherSide(outdated), file, file)
+          if (!file.sides.local) {
+            // When the updated side is missing on the existing record, it means
+            // we're simply linking two equivalent existing folders so we can
+            // mark the record as up-to-date.
+            metadata.markAsUpToDate(doc)
+          } else {
+            const outdated = metadata.outOfDateSide(file)
+            if (outdated) {
+              // In case a change was merged but not applied, we want to make sure
+              // Sync will compare the current record version with the correct
+              // "previous" version (i.e. the one before the actual change was
+              // merged and not the one before we merged the new local metadata).
+              // Therefore, we mark the changed side once more to account for the
+              // new record save.
+              metadata.markSide(otherSide(outdated), doc, file)
+            }
           }
-          return this.pouch.put(file)
+          return this.pouch.put(doc)
+        } else if (
+          side === 'remote' &&
+          !metadata.sameRemote(file.remote, doc.remote)
+        ) {
+          if (!file.sides.remote) {
+            // When the updated side is missing on the existing record, it means
+            // we're simply linking two equivalent existing folders so we can
+            // mark the record as up-to-date.
+            metadata.markAsUpToDate(doc)
+          } else {
+            const outdated = metadata.outOfDateSide(file)
+            if (outdated) {
+              // In case a change was merged but not applied, we want to make sure
+              // Sync will compare the current record version with the correct
+              // "previous" version (i.e. the one before the actual change was
+              // merged and not the one before we merged the new local metadata).
+              // Therefore, we mark the changed side once more to account for the
+              // new record save.
+              metadata.markSide(otherSide(outdated), doc, file)
+            }
+          }
+          return this.pouch.put(doc)
         } else {
           return
         }
@@ -326,51 +354,98 @@ class Merge {
           // would cause issues).
           // Until we find a way to mark specific events as obsolete, our only
           // recourse is to discard these modification date changes.
-          metadata.sameFolder(folder.local, doc.local)
+          metadata.equivalentLocal(folder.local, doc.local)
         ) {
           log.debug({ path: doc.path, doc, folder }, 'Same local metadata')
           return
         }
       }
 
-      metadata.markSide(side, doc, folder)
-      metadata.assignMaxDate(doc, folder)
+      if (folder.deleted) {
+        // If the existing record was marked for deletion, we only keep the
+        // PouchDB attributes that will allow us to overwrite it.
+        doc._id = folder._id
+        doc._rev = folder._rev
 
-      doc._id = folder._id
-      doc._rev = folder._rev
-      if (doc.remote == null) {
-        doc.remote = folder.remote
-      }
-      if (doc.ino == null && folder.ino) {
-        doc.ino = folder.ino
-      }
-      if (doc.fileid == null) {
-        doc.fileid = folder.fileid
-      }
-      // If folder is updated on local filesystem, doc won't have metadata attribute
-      if (folder.metadata && doc.metadata == null) {
-        doc.metadata = folder.metadata
-      }
-      // If folder was updated on remote Cozy, doc won't have local attribute
-      if (folder.local && doc.local == null) {
-        doc.local = folder.local
-      }
-
-      if (!folder.deleted && metadata.sameFolder(folder, doc)) {
-        log.info({ path: doc.path }, 'up to date')
-        if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
-          metadata.updateLocal(folder, doc.local)
-          const outdated = metadata.outOfDateSide(folder)
-          if (outdated) {
-            metadata.markSide(otherSide(outdated), folder, folder)
-          }
-          return this.pouch.put(folder)
+        // Keep other side metadata if we're updating the deleted side of file
+        if (side === 'remote' && folder.remote && folder.remote.trashed) {
+          doc.local = folder.local
+          metadata.markSide(side, doc, folder)
+        } else if (
+          side === 'local' &&
+          (!folder.remote || !folder.remote.trashed)
+        ) {
+          doc.remote = folder.remote
+          metadata.markSide(side, doc, folder)
         } else {
-          return null
+          metadata.markSide(side, doc)
         }
-      } else {
+
+        metadata.assignMaxDate(doc, folder)
         return this.pouch.put(doc)
       }
+      // The updated file was not deleted on either side
+
+      // Otherwise we merge the relevant attributes
+      doc = {
+        ..._.cloneDeep(folder),
+        ...doc,
+        // Tags come from the remote document and will always be empty in a new
+        // local document.
+        tags: doc.tags.length === 0 ? folder.tags : doc.tags
+      }
+
+      if (metadata.equivalent(folder, doc)) {
+        log.info({ path: doc.path }, 'up to date')
+        if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
+          if (!folder.sides.local) {
+            // When the updated side is missing on the existing record, it means
+            // we're simply linking two equivalent existing folders so we can
+            // mark the record as up-to-date.
+            metadata.markAsUpToDate(doc)
+          } else {
+            const outdated = metadata.outOfDateSide(folder)
+            if (outdated) {
+              // In case a change was merged but not applied, we want to make sure
+              // Sync will compare the current record version with the correct
+              // "previous" version (i.e. the one before the actual change was
+              // merged and not the one before we merged the new local metadata).
+              // Therefore, we mark the changed side once more to account for the
+              // new record save.
+              metadata.markSide(otherSide(outdated), doc, folder)
+            }
+          }
+          return this.pouch.put(doc)
+        } else if (
+          side === 'remote' &&
+          !metadata.sameRemote(folder.remote, doc.remote)
+        ) {
+          if (!folder.sides.remote) {
+            // When the updated side is missing on the existing record, it means
+            // we're simply linking two equivalent existing folders so we can
+            // mark the record as up-to-date.
+            metadata.markAsUpToDate(doc)
+          } else {
+            const outdated = metadata.outOfDateSide(folder)
+            if (outdated) {
+              // In case a change was merged but not applied, we want to make sure
+              // Sync will compare the current record version with the correct
+              // "previous" version (i.e. the one before the actual change was
+              // merged and not the one before we merged the new local metadata).
+              // Therefore, we mark the changed side once more to account for the
+              // new record save.
+              metadata.markSide(otherSide(outdated), doc, folder)
+            }
+          }
+          return this.pouch.put(doc)
+        } else {
+          return
+        }
+      }
+
+      metadata.markSide(side, doc, folder)
+      metadata.assignMaxDate(doc, folder)
+      return this.pouch.put(doc)
     }
   }
 
@@ -381,7 +456,6 @@ class Merge {
     was /*: SavedMetadata */
   ) /*: Promise<*> */ {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
-    const { path } = doc
 
     if ((!metadata.wasSynced(was) && !was.moveFrom) || was.deleted) {
       move.convertToDestinationAddition(side, was, doc)
@@ -429,30 +503,6 @@ class Merge {
           }
 
           return this.pouch.put(doc)
-        }
-
-        if (metadata.sameFile(file, doc)) {
-          // FIXME: this code block seems unreachable. Removing it does not
-          // break any test.
-          // We should make sure that is correct and remove it.
-          // It seems like reaching this block would mean we have duplicate
-          // records in PouchDB.
-          log.info({ path }, 'up to date (move)')
-
-          // We erase the moved document as it's a duplicate of the existing one
-          // which we'll update if necessary.
-          await this.pouch.eraseDocument(was)
-
-          // If the moved document has changed locally but is the same in the
-          // main part, we update the local attribute of the kept `file`.
-          if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
-            metadata.updateLocal(file, doc.local)
-            const outdated = metadata.outOfDateSide(file)
-            if (outdated) {
-              metadata.markSide(otherSide(outdated), file, file)
-            }
-            return this.pouch.put(file)
-          }
         }
 
         const dst = await this.resolveConflictAsync(side, doc)
@@ -512,13 +562,6 @@ class Merge {
           await this.pouch.eraseDocument(folder)
         }
         return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
-      }
-
-      if (metadata.sameFolder(folder, doc)) {
-        log.info({ path }, 'up to date (move)')
-        // TODO: what about the content that was maybe moved ?
-        doc._deleted = true
-        return this.pouch.put(doc)
       }
 
       const dst = await this.resolveConflictAsync(side, doc)
@@ -609,7 +652,9 @@ class Merge {
       else delete dst.incompatibilities
 
       if (side === 'local' && dst.sides.local) {
-        // Update the local attribute of children existing in the local folder
+        // Update the `local` attribute of children existing in the local folder
+        // FIXME: `updateLocal` will override local attributes with remote ones
+        // when a remote update of `dst` has been merged but not synced yet.
         metadata.updateLocal(dst)
       } else if (side === 'remote' && dst.sides.remote) {
         // Update the remote attribute of children existing in the remote folder

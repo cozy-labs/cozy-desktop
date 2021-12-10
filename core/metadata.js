@@ -76,9 +76,21 @@ const LOCAL_ATTRIBUTES = [
   'class',
   'mime',
   'size',
-  // trashed
   'ino',
   'fileid',
+  'executable'
+]
+
+const REMOTE_ATTRIBUTES = [
+  'path',
+  'type',
+  'tags',
+  'trashed',
+  'md5sum',
+  'updated_at',
+  'class',
+  'mime',
+  'size',
   'executable'
 ]
 
@@ -151,55 +163,6 @@ export type Metadata = {
 
 export type SavedMetadata = PouchRecord & Metadata
 */
-
-module.exports = {
-  LOCAL_ATTRIBUTES,
-  assignMaxDate,
-  assignPlatformIncompatibilities,
-  fromRemoteDoc,
-  isFile,
-  isFolder,
-  kind,
-  id,
-  invalidPath,
-  invariants,
-  ensureValidPath,
-  detectIncompatibilities,
-  invalidChecksum,
-  ensureValidChecksum,
-  extractRevNumber,
-  isUpToDate,
-  isAtLeastUpToDate,
-  removeActionHints,
-  removeNoteMetadata,
-  dissociateRemote,
-  dissociateLocal,
-  markAsUnmerged,
-  markAsUnsyncable,
-  markAsUpToDate,
-  samePath,
-  areParentChildPaths,
-  newChildPath,
-  sameFolder,
-  sameFile,
-  sameFileIgnoreRev,
-  sameLocal,
-  sameBinary,
-  detectSingleSide,
-  markSide,
-  incSides,
-  side,
-  sideInfo,
-  target,
-  wasSynced,
-  buildDir,
-  buildFile,
-  outOfDateSide,
-  createConflictingDoc,
-  shouldIgnore,
-  updateLocal,
-  updateRemote
-}
 
 function id(fpath /*: string */) {
   // See [test/world/](https://github.com/cozy-labs/cozy-desktop/blob/master/test/world/)
@@ -641,99 +604,122 @@ function newChildPath(
   return path.join(newParentPath, ...childParts.slice(parentParts.length))
 }
 
-const makeComparator = (name, interestingFields) => {
-  const interestingPaths = interestingFields.map(f => f.split('.'))
-  const filter = (path, key) => {
-    return !interestingPaths.some(interestingPath => {
-      return interestingPath.every((part, i) => {
-        if (i < path.length) return path[i] === part
-        if (i === path.length) return key === part
-        return true
-      })
-    })
+const makeComparator = (
+  name /*: string */,
+  { attributes } /*: { attributes?: Array<string> } */ = {}
+) => {
+  const interestingPaths = attributes && attributes.map(f => f.split('.'))
+  const prefilter = (path, key) => {
+    const filtered =
+      interestingPaths == null
+        ? false
+        : !interestingPaths.some(interestingPath => {
+            return interestingPath.every((part, i) => {
+              if (i < path.length) return path[i] === part
+              if (i === path.length) return key === part
+              return true
+            })
+          })
+    return filtered
   }
-  const canBeIgnoredDiff = difference => {
-    const diff = difference.item || difference
-    return _.isNil(diff.lhs) && _.isNil(diff.rhs)
+  const normalize = (path, key, lhs, rhs) => {
+    if (_.isNil(lhs) && _.isNil(rhs)) {
+      return [null, null]
+    } else if (path.length === 0 && key === 'path') {
+      return [
+        String(lhs).startsWith('/') ? pathUtils.remoteToLocal(lhs) : lhs,
+        String(rhs).startsWith('/') ? pathUtils.remoteToLocal(rhs) : rhs
+      ]
+    } else if (path.length === 0 && key === 'tags') {
+      return [lhs || [], rhs || []]
+    } else if (key === 'type' || key === 'docType') {
+      return [
+        lhs === 'directory' ? 'folder' : lhs,
+        rhs === 'directory' ? 'folder' : rhs
+      ]
+    } else if (Boolean(lhs) === lhs || Boolean(rhs) === rhs) {
+      return [Boolean(lhs), Boolean(rhs)]
+    } else if (Number(lhs) === lhs || Number(rhs) === rhs) {
+      return [Number(lhs), Number(rhs)]
+    }
   }
-  return (one, two) => {
-    const diff = deepDiff(one, two, filter)
+  const normalizeDoctype = doc =>
+    doc && {
+      ...doc,
+      type: doc.type || doc.docType,
+      docType: doc.docType || doc.type
+    }
+  const logDiff = (two, diff) => {
     if (two.path) {
       log.trace({ path: two.path, diff }, name)
     } else {
       log.trace({ diff }, name)
     }
-    if (diff && !_.every(diff, canBeIgnoredDiff)) {
-      return false
-    }
-    return true
+  }
+
+  return (
+    one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
+    two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
+  ) => {
+    const left = normalizeDoctype(one)
+    const right = normalizeDoctype(two)
+    const diff = deepDiff(left, right, { prefilter, normalize })
+
+    logDiff(two, diff)
+
+    return !diff
   }
 }
 
-const sameFolderComparator = makeComparator('sameFolder', [
-  'path',
-  'docType',
-  'remote',
-  'tags',
-  'trashed',
-  'ino',
-  'fileid'
-])
+// Returns true if the two metadata objects share the same attributes relevant
+// both locally and remotely (e.g. ino, tags or checksum).
+// We don't compare `updated_at` attributes as we don't want to trigger a
+// synchronization when only this attribute has changed.
+//
+// XXX: `class` and `mime` aren't compared either as they were not in the
+// `sameFile` and `sameFolder` functions `equivalent` is replacing but we should
+// figure out why they were left out (maybe because we don't want to trigger a
+// synchronization for these changes as well).
+const equivalent = makeComparator('equivalent', {
+  attributes: _.without(
+    _.union(LOCAL_ATTRIBUTES, REMOTE_ATTRIBUTES),
+    'updated_at',
+    'class',
+    'mime'
+  )
+})
 
-// Return true if the metadata of the two folders are the same
-function sameFolder(
-  one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
-  two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
-) {
-  return sameFolderComparator(one, two)
-}
+// Returns true if the two metadata objects share the same locally relevant
+// attributes (e.g. ino or checksum).
+// We don't compare `updated_at` attributes as we don't want to trigger a
+// synchronization when only this attribute has changed.
+const equivalentLocal = makeComparator('equivalentLocal', {
+  attributes: _.without(LOCAL_ATTRIBUTES, 'updated_at')
+})
 
-const sameFileComparator = makeComparator('sameFile', [
-  'path',
-  'docType',
-  'md5sum',
-  'remote._id',
-  'remote._rev',
-  'tags',
-  'size',
-  'trashed',
-  'ino',
-  'fileid',
-  'executable'
-])
+// Returns true if the two metadata objects share the same remotely relevant
+// attributes (e.g. tags or checksum).
+// We don't compare `updated_at` attributes as we don't want to trigger a
+// synchronization when only this attribute has changed.
+const equivalentRemote = makeComparator('equivalentRemote', {
+  attributes: _.without(REMOTE_ATTRIBUTES, 'updated_at')
+})
 
-const sameFileIgnoreRevComparator = makeComparator('sameFileIgnoreRev', [
-  'path',
-  'docType',
-  'md5sum',
-  'remote._id',
-  'tags',
-  'size',
-  'trashed',
-  'ino',
-  'fileid',
-  'executable'
-])
+// Returns true if the two local metadata objects are exactly the same.
+const sameLocal = (() => {
+  const comparator = makeComparator('sameLocal')
 
-const sameLocalComparator = makeComparator('sameLocal', LOCAL_ATTRIBUTES)
+  return (one /*: MetadataLocalInfo */, two /*: MetadataLocalInfo */) =>
+    comparator(one, two)
+})()
 
-// Return true if the metadata of the two files are the same
-function sameFile(
-  one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
-  two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
-) {
-  return sameFileComparator(one, two)
-}
+// Returns true if the two remote metadata objects are exactly the same.
+const sameRemote = (() => {
+  const comparator = makeComparator('sameRemote')
 
-// Return true if the metadata of the two files are the same,
-// ignoring revision
-function sameFileIgnoreRev(one /*: Metadata */, two /*: Metadata */) {
-  return sameFileIgnoreRevComparator(one, two)
-}
-
-function sameLocal(one /*: MetadataLocalInfo */, two /*: MetadataLocalInfo */) {
-  return sameLocalComparator(one, two)
-}
+  return (one /*: MetadataRemoteInfo */, two /*: MetadataRemoteInfo */) =>
+    comparator(one, two)
+})()
 
 // Return true if the two files have the same binary content
 function sameBinary(
@@ -892,6 +878,10 @@ function shouldIgnore(
   })
 }
 
+// FIXME: `updateLocal` will override local attributes with remote ones
+// when a remote update of `doc` has been merged but not synced yet.
+// We could make sure we always pass a `newLocal` value and clone `doc.local`
+// instead of `doc` as the last defaults.
 function updateLocal(doc /*: Metadata */, newLocal /*: Object */ = {}) {
   const defaults = process.platform === 'win32' ? { executable: false } : {}
 
@@ -922,4 +912,55 @@ function updateRemote(
     _.cloneDeep(newRemote),
     _.cloneDeep(doc.remote)
   )
+}
+
+module.exports = {
+  LOCAL_ATTRIBUTES,
+  REMOTE_ATTRIBUTES,
+  assignMaxDate,
+  assignPlatformIncompatibilities,
+  fromRemoteDoc,
+  isFile,
+  isFolder,
+  kind,
+  id,
+  invalidPath,
+  invariants,
+  ensureValidPath,
+  detectIncompatibilities,
+  invalidChecksum,
+  ensureValidChecksum,
+  extractRevNumber,
+  isUpToDate,
+  isAtLeastUpToDate,
+  removeActionHints,
+  removeNoteMetadata,
+  dissociateRemote,
+  dissociateLocal,
+  markAsUnmerged,
+  markAsUnsyncable,
+  markAsUpToDate,
+  samePath,
+  areParentChildPaths,
+  newChildPath,
+  sameLocal,
+  sameRemote,
+  sameBinary,
+  equivalent,
+  equivalentLocal,
+  equivalentRemote,
+  detectSingleSide,
+  markSide,
+  incSides,
+  side,
+  sideInfo,
+  target,
+  wasSynced,
+  buildDir,
+  buildFile,
+  outOfDateSide,
+  createConflictingDoc,
+  shouldIgnore,
+  updateLocal,
+  updateRemote
 }
