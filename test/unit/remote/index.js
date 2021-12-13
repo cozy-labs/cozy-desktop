@@ -385,7 +385,7 @@ describe('remote.Remote', function() {
           .and.not.have.propertyByPath('remote')
       })
 
-      it('does not send any request if the file is a Cozy Note', async function() {
+      it('sends a request if the file is a Cozy Note', async function() {
         const created = await builders
           .remoteNote()
           .name('My Note.cozy-note')
@@ -399,16 +399,14 @@ describe('remote.Remote', function() {
           .create()
         const doc = await builders
           .metafile(old)
-          .overwrite(old)
           .data('bar')
-          .updatedAt(timestamp.build(2015, 12, 16, 16, 12, 1).toISOString())
+          .updatedAt(new Date())
           .changedSide('local')
-          .noRecord() // XXX: Prevent Pouch conflict from reusing `old`'s _id
           .create()
 
         this.remote.other = {
           createReadStreamAsync(localDoc) {
-            localDoc.should.equal(doc)
+            should(localDoc).deepEqual(doc)
             const stream = builders
               .stream()
               .push('bar')
@@ -424,10 +422,14 @@ describe('remote.Remote', function() {
           type: 'file',
           dir_id: created.dir_id,
           name: created.name,
-          md5sum: created.md5sum,
-          updated_at: created.updated_at
+          md5sum: doc.md5sum
         })
-        should(doc.remote._rev).equal(file._rev)
+        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+          doc.updated_at
+        )
+        should(metadata.extractRevNumber(file)).equal(
+          metadata.extractRevNumber(doc.remote) + 1
+        )
       })
 
       it('rejects if there is not enough space on the Cozy', async function() {

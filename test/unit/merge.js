@@ -1432,7 +1432,7 @@ describe('Merge', function() {
       })
     })
 
-    context('when existing file is up-to-date', () => {
+    context('when existing file is the same and up-to-date', () => {
       it('updates the PouchDB record without marking changes', async function() {
         const initial = await builders
           .metafile()
@@ -1470,56 +1470,42 @@ describe('Merge', function() {
       })
     })
 
-    it('creates a conflict when the file is a Cozy Note export', async function() {
-      const remoteNote = await builders
-        .remoteNote()
-        .name('my-note.cozy-note')
-        .data('initial content')
-        .create()
-      const synced = await builders
-        .metafile()
-        .fromRemote(remoteNote)
-        .upToDate()
-        .create()
-      const localUpdate = builders
-        .metafile(synced)
-        .data('local update')
-        .updatedAt(new Date())
-        .unmerged('local')
-        .build()
+    context('when the file is a Cozy Note export', () => {
+      it('does not create a conflict', async function() {
+        const remoteNote = await builders
+          .remoteNote()
+          .name('my-note.cozy-note')
+          .data('initial content')
+          .create()
+        const synced = await builders
+          .metafile()
+          .fromRemote(remoteNote)
+          .upToDate()
+          .create()
+        const localUpdate = builders
+          .metafile(synced)
+          .data('local update')
+          .updatedAt(new Date())
+          .unmerged('local')
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.updateFileAsync('local', _.cloneDeep(localUpdate))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.updateFileAsync('local', _.cloneDeep(localUpdate))
+        )
 
-      const { path: dstPath } = _.find(sideEffects.savedDocs, ({ path }) =>
-        path.match(/conflict/)
-      )
-      const remoteDstPath = pathUtils.localToRemote(dstPath)
-
-      should(sideEffects).deepEqual({
-        savedDocs: [
-          _.defaultsDeep(
-            {
-              path: dstPath,
-              sides: _.omit(synced.sides, ['local']),
-              remote: {
-                path: remoteDstPath
-              }
-            },
-            _.omit(synced, ['_rev', 'sides', 'local']) // XXX: omit sides as to not override value defined above
-          ),
-          _.defaults(
-            {
-              sides: { target: 1, local: 1 },
-              metadata: {}
-            },
-            localUpdate
-          )
-        ],
-        resolvedConflicts: [
-          ['remote', { path: synced.path, remote: synced.remote }]
-        ]
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                _id: synced._id,
+                sides: increasedSides(synced.sides, 'local', 1),
+                remote: synced.remote
+              },
+              localUpdate
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
   })

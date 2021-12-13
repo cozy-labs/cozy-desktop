@@ -12,7 +12,6 @@ const metadata = require('./metadata')
 const move = require('./move')
 const { otherSide } = require('./side')
 const logger = require('./utils/logger')
-const { isNote } = require('./utils/notes')
 
 /*::
 import type { IdConflictInfo } from './IdConflict'
@@ -270,44 +269,43 @@ class Merge {
         }
       }
 
-      if (!metadata.sameBinary(file, doc)) {
-        if (side === 'local' && isNote(file)) {
-          return this.resolveNoteConflict(doc, file)
-        } else if (!metadata.isAtLeastUpToDate(side, file)) {
-          if (side === 'local') {
-            // We have a merged but unsynced remote update so we create a conflict.
-            await this.resolveConflictAsync('local', file)
+      if (
+        !metadata.sameBinary(file, doc) &&
+        !metadata.isAtLeastUpToDate(side, file)
+      ) {
+        if (side === 'local') {
+          // We have a merged but unsynced remote update so we create a conflict.
+          await this.resolveConflictAsync('local', file)
 
-            if (file.local) {
-              // In this case we can dissociate the remote record from its local
-              // counterpart that was just renamed and will be merged later.
-              metadata.dissociateLocal(file)
-              // We make sure Sync will detect and propagate the remote update
-              metadata.markSide('remote', file, file)
-              return this.pouch.put(file)
-            } else {
-              // TODO: should we save the new metadata anyway to make sure we
-              // have up-to-date side infos?
-              return
-            }
+          if (file.local) {
+            // In this case we can dissociate the remote record from its local
+            // counterpart that was just renamed and will be merged later.
+            metadata.dissociateLocal(file)
+            // We make sure Sync will detect and propagate the remote update
+            metadata.markSide('remote', file, file)
+            return this.pouch.put(file)
           } else {
-            // We have a merged but unsynced local update so we create a conflict.
-            // We use `doc` and not `file` because the remote document has changed
-            // and its new revision is only available in `doc`.
-            await this.resolveConflictAsync('remote', doc)
+            // TODO: should we save the new metadata anyway to make sure we
+            // have up-to-date side infos?
+            return
+          }
+        } else {
+          // We have a merged but unsynced local update so we create a conflict.
+          // We use `doc` and not `file` because the remote document has changed
+          // and its new revision is only available in `doc`.
+          await this.resolveConflictAsync('remote', doc)
 
-            if (file.remote) {
-              // In this case we can dissociate the local record from its remote
-              // counterpart that was just renamed and will be fetched later.
-              metadata.dissociateRemote(file)
-              // We make sure Sync will detect and propagate the local update
-              metadata.markSide('local', file, file)
-              return this.pouch.put(file)
-            } else {
-              // TODO: should we save the new metadata anyway to make sure we
-              // have up-to-date side infos?
-              return
-            }
+          if (file.remote) {
+            // In this case we can dissociate the local record from its remote
+            // counterpart that was just renamed and will be fetched later.
+            metadata.dissociateRemote(file)
+            // We make sure Sync will detect and propagate the local update
+            metadata.markSide('local', file, file)
+            return this.pouch.put(file)
+          } else {
+            // TODO: should we save the new metadata anyway to make sure we
+            // have up-to-date side infos?
+            return
           }
         }
       }
@@ -498,20 +496,12 @@ class Merge {
             await this.pouch.eraseDocument(file)
           }
 
-          if (side === 'local' && isNote(was) && doc.md5sum !== was.md5sum) {
-            return this.resolveNoteConflict(doc, was)
-          }
-
           return this.pouch.put(doc)
         }
 
         const dst = await this.resolveConflictAsync(side, doc)
         return this.pouch.put(dst)
       } else {
-        if (side === 'local' && isNote(was) && doc.md5sum !== was.md5sum) {
-          return this.resolveNoteConflict(doc, was)
-        }
-
         return this.pouch.put(doc)
       }
     } else {
