@@ -82,11 +82,14 @@ ipcRenderer.on(
   (event, address, deviceName, deviceId, capabilities, flags) => {
     const partialSyncEnabled =
       flags['settings.partial-desktop-sync.show-synced-folders-selection']
+    const flatSubdomains = capabilities.flatSubdomains
     elmectron.ports.syncConfig.send({
       address,
       deviceName,
       deviceId,
-      capabilities,
+      capabilities: {
+        flatSubdomains: flatSubdomains != null ? flatSubdomains : true
+      },
       flags: {
         partialSyncEnabled:
           partialSyncEnabled != null ? partialSyncEnabled : false
