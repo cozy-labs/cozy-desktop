@@ -4443,11 +4443,17 @@ describe('Merge', function() {
 
     context('when no records are found in Pouch', () => {
       it('does nothing', async function() {
-        const was = builders.metafile().build()
+        const was = await builders
+          .metafile()
+          .upToDate()
+          .create()
         const doc = builders
           .metafile(was)
           .trashed()
           .build()
+
+        // Erase record from PouchDB
+        await this.pouch.eraseDocument(was)
 
         const sideEffects = await mergeSideEffects(this, () =>
           this.merge.trashFileAsync(
@@ -4950,11 +4956,17 @@ describe('Merge', function() {
 
     context('when no records are found in Pouch', () => {
       it('does nothing', async function() {
-        const was = builders.metadir().build()
+        const was = await builders
+          .metadir()
+          .upToDate()
+          .create()
         const doc = builders
           .metadir(was)
           .trashed()
           .build()
+
+        // Erase record from PouchDB
+        await this.pouch.eraseDocument(was)
 
         const sideEffects = await mergeSideEffects(this, () =>
           this.merge.trashFolderAsync(

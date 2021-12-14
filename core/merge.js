@@ -739,7 +739,7 @@ class Merge {
 
   async trashFileAsync(
     side /*: SideName */,
-    trashed /*: SavedMetadata|{path: string} */,
+    trashed /*: SavedMetadata */,
     doc /*: Metadata */
   ) /*: Promise<void> */ {
     const { path } = trashed
@@ -809,19 +809,12 @@ class Merge {
 
   async trashFolderAsync(
     side /*: SideName */,
-    trashed /*: SavedMetadata|{path: string} */,
+    trashed /*: SavedMetadata */,
     doc /*: Metadata */
   ) /*: Promise<*> */ {
     const { path } = trashed
     log.debug({ path }, 'trashFolderAsync')
-    let was /*: ?SavedMetadata */
-    // $FlowFixMe _id exists in SavedMetadata
-    if (trashed._id != null) {
-      was = await this.pouch.byIdMaybe(trashed._id)
-    } else {
-      was = await this.pouch.bySyncedPath(trashed.path)
-    }
-
+    const was /*: ?SavedMetadata */ = await this.pouch.byIdMaybe(trashed._id)
     if (!was) {
       log.debug({ path }, 'Nothing to trash')
       return

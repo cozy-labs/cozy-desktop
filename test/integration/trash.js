@@ -56,7 +56,10 @@ describe('Trash', () => {
 
     context('on the local filesystem', () => {
       it('trashes the file on the remote Cozy', async () => {
-        await prep.trashFileAsync('local', { path: 'parent/file' })
+        const doc = await helpers.pouch.bySyncedPath(
+          path.normalize('parent/file')
+        )
+        await prep.trashFileAsync('local', doc)
 
         should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
           { path: path.normalize('parent/file'), deleted: true }
@@ -285,9 +288,10 @@ describe('Trash', () => {
 
     context('on the local filesystem', () => {
       it('trashes the directory on the remote Cozy', async () => {
-        await prep.trashFolderAsync('local', {
-          path: path.normalize('parent/dir')
-        })
+        const doc = await helpers.pouch.bySyncedPath(
+          path.normalize('parent/dir')
+        )
+        await prep.trashFolderAsync('local', doc)
 
         should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
           { path: path.normalize('parent/dir'), deleted: true }

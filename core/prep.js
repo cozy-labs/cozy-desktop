@@ -178,7 +178,7 @@ class Prep {
   // TODO add comments + tests
   async trashFileAsync(
     side /*: SideName */,
-    was /*: SavedMetadata|{path: string} */,
+    was /*: SavedMetadata */,
     doc /*: ?Metadata */
   ) {
     log.debug({ path: doc && doc.path, oldpath: was.path }, 'trashFileAsync')
@@ -193,14 +193,13 @@ class Prep {
     doc.trashed = true
     doc.docType = 'file'
 
-    // TODO metadata.shouldIgnore
     return this.merge.trashFileAsync(side, was, doc)
   }
 
   // TODO add comments + tests
   async trashFolderAsync(
     side /*: SideName */,
-    was /*: SavedMetadata|{path: string} */,
+    was /*: SavedMetadata */,
     doc /*: ?Metadata */
   ) {
     log.debug({ path: doc && doc.path, oldpath: was.path }, 'trashFolderAsync')
@@ -215,7 +214,6 @@ class Prep {
     doc.trashed = true
     doc.docType = 'folder'
 
-    // TODO metadata.shouldIgnore
     return this.merge.trashFolderAsync(side, was, doc)
   }
 

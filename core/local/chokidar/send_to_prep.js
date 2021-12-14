@@ -91,12 +91,16 @@ const onAddDir = (
  * same checksum is added and, if not, we declare this file as deleted.
  */
 const onUnlinkFile = (
-  { path: filePath } /*: LocalFileDeletion */,
+  { path: filePath, old } /*: LocalFileDeletion */,
   prep /*: Prep */
 ) => {
   log.info({ path: filePath }, 'FileDeletion')
+  if (!old) {
+    log.debug({ path: filePath }, 'Assuming file already removed')
+    return
+  }
   return prep
-    .trashFileAsync(SIDE, { path: filePath })
+    .trashFileAsync(SIDE, old)
     .catch(err => log.warn({ err, path: filePath }))
 }
 
@@ -106,12 +110,16 @@ const onUnlinkFile = (
  * after chokidar event to declare the folder as deleted.
  */
 const onUnlinkDir = (
-  { path: folderPath } /*: LocalDirDeletion */,
+  { path: folderPath, old } /*: LocalDirDeletion */,
   prep /*: Prep */
 ) => {
   log.info({ path: folderPath }, 'DirDeletion')
+  if (!old) {
+    log.debug({ path: folderPath }, 'Assuming dir already removed')
+    return
+  }
   return prep
-    .trashFolderAsync(SIDE, { path: folderPath })
+    .trashFolderAsync(SIDE, old)
     .catch(err => log.warn({ err, path: folderPath }))
 }
 
@@ -144,9 +152,15 @@ const step = async (
       switch (c.type) {
         // TODO: Inline old LocalWatcher methods
         case 'DirDeletion':
+          if (!c.old) {
+            c.old = await pouch.bySyncedPath(c.path)
+          }
           await onUnlinkDir(c, prep)
           break
         case 'FileDeletion':
+          if (!c.old) {
+            c.old = await pouch.bySyncedPath(c.path)
+          }
           await onUnlinkFile(c, prep)
           break
         case 'DirAddition':
