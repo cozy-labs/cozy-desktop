@@ -11,7 +11,10 @@ const path = require('path')
 const os = require('os')
 
 const proxy = require('./js/proxy')
-const { COZY_CLIENT_REVOKED_MESSAGE } = require('../core/remote/errors')
+const {
+  COZY_CLIENT_REVOKED_CODE,
+  COZY_CLIENT_REVOKED_MESSAGE
+} = require('../core/remote/errors')
 const {
   SYNC_DIR_EMPTY_MESSAGE,
   SYNC_DIR_UNLINKED_MESSAGE
@@ -213,8 +216,8 @@ const showMigrationError = (err /*: Error */) => {
   }
 }
 
-const sendErrorToMainWindow = msg => {
-  if (msg.includes(COZY_CLIENT_REVOKED_MESSAGE)) {
+const sendErrorToMainWindow = ({ msg, code }) => {
+  if (code === COZY_CLIENT_REVOKED_CODE) {
     if (notificationsState.revokedAlertShown) return
     notificationsState.revokedAlertShown = true // prevent the alert from appearing twice
     const options = {
@@ -304,9 +307,16 @@ const updateState = (newState, data) => {
   if (newState === 'sync-state') {
     if (status === 'uptodate') tray.setStatus('online')
     else if (status === 'offline') tray.setStatus('offline')
-    else if (status === 'error' && errors && errors.length)
-      tray.setStatus('error', translate('Dashboard Synchronization impossible'))
-    else if (
+    else if (status === 'error' && errors && errors.length) {
+      if (errors[0].code === COZY_CLIENT_REVOKED_CODE) {
+        tray.setStatus('error', translate(COZY_CLIENT_REVOKED_MESSAGE))
+      } else {
+        tray.setStatus(
+          'error',
+          translate('Dashboard Synchronization impossible')
+        )
+      }
+    } else if (
       status === 'user-action-required' &&
       userActions &&
       userActions.length
@@ -343,9 +353,15 @@ const updateState = (newState, data) => {
     } else if (status === 'error' && errors && errors.length) {
       // TODO: get rid of sendErrorToMainWindow and move all error management to
       // main window?
-      sendErrorToMainWindow(
-        errors[0].message || translate('Dashboard Synchronization impossible')
-      )
+      if (errors[0].code !== null) {
+        sendErrorToMainWindow({ code: errors[0].code })
+      } else {
+        sendErrorToMainWindow({
+          msg:
+            errors[0].message ||
+            translate('Dashboard Synchronization impossible')
+        })
+      }
     }
   }
 }
@@ -409,7 +425,7 @@ const startSync = async () => {
     await removeFile(old)
   })
   desktop.events.on('syncdir-unlinked', () => {
-    sendErrorToMainWindow(SYNC_DIR_UNLINKED_MESSAGE)
+    sendErrorToMainWindow({ msg: SYNC_DIR_UNLINKED_MESSAGE })
   })
   desktop.events.on('delete-file', removeFile)
 
