@@ -570,18 +570,23 @@ class RemoteCozy {
   }
 
   async flags() /*: Promise<Object> */ {
-    const client = await this.newClient()
-    // Fetch flags from the remote Cozy and store them in the local `cozyFlags`
-    // store.
-    await cozyFlags.initialize(client)
+    try {
+      const client = await this.newClient()
+      // Fetch flags from the remote Cozy and store them in the local `cozyFlags`
+      // store.
+      await cozyFlags.initialize(client)
 
-    // Build a map of flags with their current value
-    const flags = {}
-    for (const flag of cozyFlags.list()) {
-      flags[flag] = cozyFlags(flag)
+      // Build a map of flags with their current value
+      const flags = {}
+      for (const flag of cozyFlags.list()) {
+        flags[flag] = cozyFlags(flag)
+      }
+
+      return flags
+    } catch (err) {
+      log.error({ err }, 'could not fetch remote flags')
+      return {}
     }
-
-    return flags
   }
 }
 
