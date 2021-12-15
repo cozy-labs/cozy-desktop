@@ -104,11 +104,11 @@ const setupDesktop = async () => {
     desktopIsKO(err)
 
     if (err instanceof config.InvalidConfigError) {
-      showInvalidConfigError()
+      await showInvalidConfigError()
     } else if (err instanceof migrations.MigrationFailedError) {
-      showMigrationError(err)
+      await showMigrationError(err)
     } else {
-      dialog.showMessageBoxSync(null, {
+      await dialog.showMessageBox(null, {
         type: 'error',
         message: err.message,
         buttons: [translate('AppMenu Close')]
@@ -167,7 +167,7 @@ const showWindow = async bounds => {
   }
 }
 
-const showInvalidConfigError = () => {
+const showInvalidConfigError = async () => {
   const options = {
     type: 'warning',
     title: translate('InvalidConfiguration Invalid configuration'),
@@ -180,8 +180,8 @@ const showInvalidConfigError = () => {
     buttons: [translate('Button Log out'), translate('Button Contact support')],
     defaultId: 0
   }
-  const userChoice = dialog.showMessageBoxSync(null, options)
-  if (userChoice === 0) {
+  const { response } = await dialog.showMessageBox(null, options)
+  if (response === 0) {
     desktop
       .removeConfig()
       .then(() => log.info('removed'))
@@ -194,7 +194,7 @@ const showInvalidConfigError = () => {
   }
 }
 
-const showMigrationError = (err /*: Error */) => {
+const showMigrationError = async (err /*: Error */) => {
   const errorDetails = [`${err.name}:`].concat(
     err.errors.map(pouchErr => pouchErr.toString())
   )
@@ -209,14 +209,14 @@ const showMigrationError = (err /*: Error */) => {
     buttons: [translate('Button Contact support')],
     defaultId: 0
   }
-  const userChoice = dialog.showMessageBoxSync(null, options)
-  if (userChoice === 0) {
+  const { response } = await dialog.showMessageBox(null, options)
+  if (response === 0) {
     helpWindow = new HelpWM(app, desktop)
     helpWindow.show()
   }
 }
 
-const sendErrorToMainWindow = ({ msg, code }) => {
+const sendErrorToMainWindow = async ({ msg, code }) => {
   if (code === COZY_CLIENT_REVOKED_CODE) {
     if (notificationsState.revokedAlertShown) return
     notificationsState.revokedAlertShown = true // prevent the alert from appearing twice
@@ -236,8 +236,8 @@ const sendErrorToMainWindow = ({ msg, code }) => {
       defaultId: 1
     }
     trayWindow.hide()
-    const userChoice = dialog.showMessageBoxSync(null, options)
-    if (userChoice === 0) {
+    const { response } = await dialog.showMessageBox(null, options)
+    if (response === 0) {
       desktop
         .stopSync()
         .then(() => desktop.removeConfig())
@@ -263,7 +263,7 @@ const sendErrorToMainWindow = ({ msg, code }) => {
       defaultId: 0
     }
     trayWindow.hide()
-    dialog.showMessageBoxSync(null, options)
+    await dialog.showMessageBox(null, options)
     desktop
       .stopSync()
       .then(() => desktop.pouch.db.destroy())
@@ -286,7 +286,7 @@ const sendErrorToMainWindow = ({ msg, code }) => {
       detail: translate('SyncDirEmpty Detail'),
       buttons: [translate('AppMenu Close')]
     }
-    dialog.showMessageBoxSync(null, options)
+    await dialog.showMessageBox(null, options)
     desktop
       .stopSync()
       .catch(err => log.error({ err, sentry: true }, 'failed stopping sync'))
@@ -301,7 +301,7 @@ const sendErrorToMainWindow = ({ msg, code }) => {
 
 const LAST_SYNC_UPDATE_DELAY = 1000 // milliseconds
 let lastSyncTimeout = null
-const updateState = (newState, data) => {
+const updateState = async (newState, data) => {
   const { status, filename, userActions, errors } = data || {}
 
   if (newState === 'sync-state') {
@@ -354,9 +354,9 @@ const updateState = (newState, data) => {
       // TODO: get rid of sendErrorToMainWindow and move all error management to
       // main window?
       if (errors[0].code !== null) {
-        sendErrorToMainWindow({ code: errors[0].code })
+        await sendErrorToMainWindow({ code: errors[0].code })
       } else {
-        sendErrorToMainWindow({
+        await sendErrorToMainWindow({
           msg:
             errors[0].message ||
             translate('Dashboard Synchronization impossible')
@@ -538,7 +538,7 @@ app.on('ready', async () => {
     desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
   } catch (err) {
     if (err.message.match(/GLIBCXX/)) {
-      dialog.showMessageBoxSync(null, {
+      await dialog.showMessageBox(null, {
         type: 'error',
         message: translate('Error Bad GLIBCXX version'),
         buttons: [translate('AppMenu Close')]
