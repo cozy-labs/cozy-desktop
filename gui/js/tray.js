@@ -8,6 +8,7 @@ const { translate } = require('./i18n')
 const path = require('path')
 
 let tray = null
+let lastIconName = null
 
 const imgs = path.resolve(__dirname, '..', 'images')
 const isMac = process.platform === 'darwin'
@@ -37,6 +38,8 @@ const setImage = iconName => {
     const pressedIcon = platformIcon(iconName, { pressed: true })
     tray.setPressedImage(pressedIcon)
   }
+
+  lastIconName = iconName
 }
 
 module.exports.init = (app, listener) => {
@@ -143,8 +146,8 @@ const systrayInfo = (status, label) => {
 }
 
 const setStatus = (module.exports.setStatus = (status, label) => {
-  const [icon, tooltip] = systrayInfo(status, label)
-
+  const [iconName, tooltip] = systrayInfo(status, label)
   tray.setToolTip(tooltip)
-  setImage(icon)
+
+  if (lastIconName !== iconName) setImage(iconName)
 })
