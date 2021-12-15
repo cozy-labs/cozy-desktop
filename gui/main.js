@@ -9,6 +9,7 @@ const pkg = require('../package.json')
 
 const path = require('path')
 const os = require('os')
+const async = require('async')
 
 const proxy = require('./js/proxy')
 const {
@@ -301,7 +302,7 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
 
 const LAST_SYNC_UPDATE_DELAY = 1000 // milliseconds
 let lastSyncTimeout = null
-const updateState = async (newState, data) => {
+const updateState = async ({ newState, data }) => {
   const { status, filename, userActions, errors } = data || {}
 
   if (newState === 'sync-state') {
@@ -365,6 +366,13 @@ const updateState = async (newState, data) => {
     }
   }
 }
+const updateStateQueue = Promise.promisifyAll(async.queue(updateState))
+
+const enqueueStateUpdate = (newState, data) => {
+  updateStateQueue.pushAsync({ newState, data }).catch(err => {
+    log.warn({ err }, 'Failed to update state')
+  })
+}
 
 const addFile = async info => {
   const file = {
@@ -374,7 +382,7 @@ const addFile = async info => {
     size: info.size || 0,
     updated: +new Date()
   }
-  updateState('syncing', file)
+  enqueueStateUpdate('syncing', file)
   await lastFiles.add(file)
   await lastFiles.persist()
 }
@@ -387,7 +395,7 @@ const removeFile = async info => {
     size: 0,
     updated: 0
   }
-  updateState('syncing')
+  enqueueStateUpdate('syncing')
   trayWindow.send('delete-file', file)
   await lastFiles.remove(file)
   await lastFiles.persist()
@@ -414,9 +422,9 @@ const sendDiskUsage = () => {
 }
 
 const startSync = async () => {
-  updateState('syncing')
+  enqueueStateUpdate('syncing')
   desktop.events.on('sync-state', state => {
-    updateState('sync-state', state)
+    enqueueStateUpdate('sync-state', state)
   })
   desktop.events.on('transfer-started', addFile)
   desktop.events.on('transfer-copy', addFile)
