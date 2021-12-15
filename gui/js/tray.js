@@ -3,11 +3,12 @@
  * @module gui/js/tray
  */
 
-const { Tray, Menu, MenuItem } = require('electron')
+const { Tray, Menu, MenuItem, nativeImage } = require('electron')
 const { translate } = require('./i18n')
 const path = require('path')
 
 let tray = null
+let lastIconName = null
 
 const imgs = path.resolve(__dirname, '..', 'images')
 const isMac = process.platform === 'darwin'
@@ -16,15 +17,35 @@ const isKde =
   process.env.XDG_CURRENT_DESKTOP &&
   process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
 
+const platformIcon = (iconName, { pressed = false } = {}) =>
+  nativeImage.createFromPath(
+    isMac
+      ? pressed
+        ? `${imgs}/tray-icon-osx/${iconName}Highlight.png`
+        : `${imgs}/tray-icon-osx/${iconName}Template.png`
+      : isWindows
+      ? `${imgs}/tray-icon-win/${iconName}.png`
+      : isKde
+      ? `${imgs}/tray-icon-linux-kde/${iconName}.png`
+      : `${imgs}/tray-icon-linux/${iconName}.png`
+  )
+
+const setImage = iconName => {
+  const icon = platformIcon(iconName)
+  tray.setImage(icon)
+
+  if (isMac) {
+    const pressedIcon = platformIcon(iconName, { pressed: true })
+    tray.setPressedImage(pressedIcon)
+  }
+
+  lastIconName = iconName
+}
+
 module.exports.init = (app, listener) => {
-  let icon = isMac
-    ? `${imgs}/tray-icon-osx/idleTemplate.png`
-    : isWindows
-    ? `${imgs}/tray-icon-win/idle.png`
-    : isKde
-    ? `${imgs}/tray-icon-linux-kde/idle.png`
-    : `${imgs}/tray-icon-linux/idle.png`
-  tray = new Tray(icon)
+  tray = new Tray(nativeImage.createEmpty())
+  setImage('idle')
+
   app.on('before-quit', () => tray.destroy())
 
   let cachedBounds = null
@@ -125,20 +146,8 @@ const systrayInfo = (status, label) => {
 }
 
 const setStatus = (module.exports.setStatus = (status, label) => {
-  const [icon, tooltip] = systrayInfo(status, label)
-
+  const [iconName, tooltip] = systrayInfo(status, label)
   tray.setToolTip(tooltip)
-  if (process.platform === 'darwin') {
-    tray.setImage(`${imgs}/tray-icon-osx/${icon}Template.png`)
-    tray.setPressedImage(`${imgs}/tray-icon-osx/${icon}Highlight.png`)
-  } else if (process.platform === 'win32') {
-    tray.setImage(`${imgs}/tray-icon-win/${icon}.png`)
-  } else if (
-    process.env.XDG_CURRENT_DESKTOP &&
-    process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
-  ) {
-    tray.setImage(`${imgs}/tray-icon-linux-kde/${icon}.png`)
-  } else {
-    tray.setImage(`${imgs}/tray-icon-linux/${icon}.png`)
-  }
+
+  if (lastIconName !== iconName) setImage(iconName)
 })
