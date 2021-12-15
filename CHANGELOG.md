@@ -1,5 +1,25 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.32.0-beta.2 - 2021-12-15
+
+Improvements for all users:
+
+- The selective synchronization flag is fetched from the remote Cozy for every
+  use case.
+- We fixed an issue in our synchronization process which could lead to
+  unnecessary metadata updates.
+- When the app's OAuth client is revoked on the remote Cozy, fetching the Cozy's
+  flags and capabilities won't result into an error anymore and the revocation
+  pop-up will displayed again instead of the generic "Synchronization
+  impossible" status.
+- GUI state updates will now be queued up to avoid having two close updates
+  overwrite each other and ending in a de-synchronized state between the app's
+  main Window and the systray.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.32.0-beta.1 - 2021-11-17
 
 Improvements for all users:
