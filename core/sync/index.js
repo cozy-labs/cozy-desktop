@@ -515,7 +515,7 @@ class Sync {
                   { path, err, change, sentry: true },
                   'Parent directory could not be found either on Cozy or PouchDB. Abandoning.'
                 )
-                this.skipChange(change, err)
+                await this.skipChange(change, err)
               } else if (parent.remote) {
                 // We're in a fishy situation where we have a folder whose synced
                 // path is the parent path of our document but its remote path is
@@ -525,7 +525,7 @@ class Sync {
                   { path, err, change, sentry: true },
                   'Parent directory is desynchronized. Abandoning.'
                 )
-                this.skipChange(change, err)
+                await this.skipChange(change, err)
               } else {
                 // Solve 3. or 4.
                 await this.remote.addFolderAsync(parent)
