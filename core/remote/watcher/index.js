@@ -15,7 +15,6 @@ const { inRemoteTrash } = require('../document')
 const squashMoves = require('./squashMoves')
 const normalizePaths = require('./normalizePaths')
 const logger = require('../../utils/logger')
-const flags = require('../../utils/flags')
 
 /*::
 import type { Config } from '../../config'
@@ -196,32 +195,25 @@ class RemoteWatcher {
   ) /*: Promise<void> */ {
     let changes = await this.analyse(docs, await this.olds(docs))
 
-    if (
-      (await flags(this.config))[
-        'settings.partial-desktop-sync.show-synced-folders-selection'
-      ] ||
-      process.env.NODE_ENV === 'test'
-    ) {
-      for (const change of changes) {
-        if (
-          change.type === 'DirAddition' &&
-          metadata.extractRevNumber(change.doc.remote) > 1
-        ) {
-          log.trace(
-            { path: change.doc.path },
-            'Fetching content of unknwon folder...'
-          )
-          const children = (await this.remoteCozy.getDirectoryContent(
-            change.doc.remote
-          )).filter(child =>
-            docs.every(doc => doc._id !== child._id || doc._rev !== child._rev)
-          )
-          const childChanges = await this.analyse(
-            children,
-            await this.olds(children)
-          )
-          changes = changes.concat(childChanges)
-        }
+    for (const change of changes) {
+      if (
+        change.type === 'DirAddition' &&
+        metadata.extractRevNumber(change.doc.remote) > 1
+      ) {
+        log.trace(
+          { path: change.doc.path },
+          'Fetching content of unknwon folder...'
+        )
+        const children = (await this.remoteCozy.getDirectoryContent(
+          change.doc.remote
+        )).filter(child =>
+          docs.every(doc => doc._id !== child._id || doc._rev !== child._rev)
+        )
+        const childChanges = await this.analyse(
+          children,
+          await this.olds(children)
+        )
+        changes = changes.concat(childChanges)
       }
     }
 

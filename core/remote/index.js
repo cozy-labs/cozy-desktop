@@ -18,7 +18,6 @@ const { DirectoryNotFound, ExcludedDirError } = require('./errors')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
 const timestamp = require('../utils/timestamp')
-const flags = require('../utils/flags')
 
 /*::
 import type EventEmitter from 'events'
@@ -456,10 +455,6 @@ class Remote /*:: implements Reader, Writer */ {
       client: { clientID }
     } = this.config
     return (
-      ((await flags(this.config))[
-        'settings.partial-desktop-sync.show-synced-folders-selection'
-      ] ||
-        process.env.NODE_ENV === 'test') &&
       doc.type === 'directory' &&
       doc.not_synchronized_on != null &&
       doc.not_synchronized_on.find(({ id }) => id === clientID) != null
@@ -467,18 +462,11 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async includeInSync(doc /*: SavedMetadata */) /*: Promise<*> */ {
-    if (
-      (await flags(this.config))[
-        'settings.partial-desktop-sync.show-synced-folders-selection'
-      ] ||
-      process.env.NODE_ENV === 'test'
-    ) {
-      const remoteDocs = await this.remoteCozy.search({ path: `/${doc.path}` })
-      const remoteDoc = remoteDocs[0]
-      if (!remoteDoc || remoteDoc.type !== 'directory') return
+    const remoteDocs = await this.remoteCozy.search({ path: `/${doc.path}` })
+    const remoteDoc = remoteDocs[0]
+    if (!remoteDoc || remoteDoc.type !== 'directory') return
 
-      await this.remoteCozy.includeInSync(remoteDoc)
-    }
+    await this.remoteCozy.includeInSync(remoteDoc)
   }
 }
 
