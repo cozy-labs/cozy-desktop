@@ -324,6 +324,26 @@ const migrations /*: Migration[] */ = [
         return doc
       })
     }
+  },
+  {
+    baseSchemaVersion: 12,
+    targetSchemaVersion: 13,
+    description: 'Merge trashed and deleted attributes into trashed',
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      // $FlowFixMe `deleted` has been removed from Metadata thus this migration
+      return docs.filter(doc => doc.deleted != null)
+    },
+    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      return docs.map(doc => {
+        // $FlowFixMe `deleted` has been removed from Metadata
+        if (doc.deleted) {
+          doc.trashed = true
+        }
+        // $FlowFixMe `deleted` has been removed from Metadata
+        delete doc.deleted
+        return doc
+      })
+    }
   }
 ]
 

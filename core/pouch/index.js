@@ -171,7 +171,7 @@ class Pouch {
       .filter(
         row =>
           !row.key.startsWith('_') && // Filter out design docs
-          !row.doc.deleted && // Filter out docs already marked for deletion
+          !row.doc.trashed && // Filter out docs already marked for deletion
           // Keep only docs that have existed locally
           row.doc.sides &&
           row.doc.sides.local &&

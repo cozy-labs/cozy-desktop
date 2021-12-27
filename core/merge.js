@@ -129,7 +129,7 @@ class Merge {
     const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
 
     if (file) {
-      if (file.deleted) {
+      if (file.trashed) {
         return this.updateFileAsync(side, doc)
       }
 
@@ -184,7 +184,7 @@ class Merge {
       }
       // Any local update call is an actual modification
 
-      if (file.deleted) {
+      if (file.trashed) {
         // If the existing record was marked for deletion, we only keep the
         // PouchDB attributes that will allow us to overwrite it.
         doc._id = file._id
@@ -359,7 +359,7 @@ class Merge {
         }
       }
 
-      if (folder.deleted) {
+      if (folder.trashed) {
         // If the existing record was marked for deletion, we only keep the
         // PouchDB attributes that will allow us to overwrite it.
         doc._id = folder._id
@@ -455,7 +455,7 @@ class Merge {
   ) /*: Promise<*> */ {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
 
-    if ((!metadata.wasSynced(was) && !was.moveFrom) || was.deleted) {
+    if ((!metadata.wasSynced(was) && !was.moveFrom) || was.trashed) {
       move.convertToDestinationAddition(side, was, doc)
       return this.pouch.put(doc)
     } else if (was.sides && was.sides[side]) {
@@ -470,7 +470,7 @@ class Merge {
 
       const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
       if (file) {
-        if (file.deleted) {
+        if (file.trashed) {
           doc.overwrite = file.overwrite || file
         }
 
@@ -526,7 +526,7 @@ class Merge {
 
     const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
     if (folder) {
-      if (folder.deleted) {
+      if (folder.trashed) {
         doc.overwrite = folder.overwrite || folder
       }
 
@@ -589,9 +589,9 @@ class Merge {
     for (let doc of docs) {
       // Don't move children marked for deletion as we can simply propagate the
       // deletion at their original path.
-      // Besides, as of today, `moveFrom` will have precedence over `deleted` in
+      // Besides, as of today, `moveFrom` will have precedence over `trashed` in
       // Sync and the deletion won't be propagated at all.
-      if (doc.deleted) continue
+      if (doc.trashed) continue
 
       // Update remote rev of documents which have been updated on the Cozy
       // after we've detected the move.
@@ -690,7 +690,7 @@ class Merge {
 
     delete was.errors
 
-    if (was.deleted) {
+    if (was.trashed) {
       if (metadata.isAtLeastUpToDate(side, was)) {
         // The document was already marked for deletion on the same side (e.g.
         // when trashing a folder on the remote Cozy, we'll trash its content
@@ -720,7 +720,7 @@ class Merge {
         delete was.overwrite
 
         if (overwrite) {
-          overwrite.deleted = true
+          overwrite.trashed = true
           metadata.markSide(side, overwrite, overwrite)
           delete overwrite._rev
 
@@ -729,7 +729,7 @@ class Merge {
       }
 
       metadata.markSide(side, was, was)
-      was.deleted = true
+      was.trashed = true
       try {
         return await this.pouch.put(was)
       } catch (err) {
@@ -890,7 +890,7 @@ class Merge {
     }
     if (file.sides && file.sides[side]) {
       metadata.markSide(side, file, file)
-      file.deleted = true
+      file.trashed = true
       delete file.errors
       return this.pouch.put(file)
     } else {
@@ -941,7 +941,7 @@ class Merge {
     })
     const toPreserve = new Set()
     for (let doc of docs) {
-      if (doc.deleted) continue
+      if (doc.trashed) continue
 
       if (
         toPreserve.has(doc.path) ||
@@ -953,20 +953,20 @@ class Merge {
             ancestorPath: folder.path,
             otherSide: otherSide(side)
           },
-          'Cannot be deleted with ancestor: document was modified on the other side.'
+          'Cannot be trashed with ancestor: document was modified on the other side.'
         )
         log.info({ path: doc.path }, 'Dissociating from remote...')
         metadata.dissociateRemote(doc)
         toPreserve.add(path.dirname(doc.path))
       } else {
         metadata.markSide(side, doc, doc)
-        doc.deleted = true
+        doc.trashed = true
         delete doc.errors
       }
     }
 
     metadata.markSide(side, folder, folder)
-    folder.deleted = true
+    folder.trashed = true
     delete folder.errors
     docs.push(folder)
 

@@ -61,8 +61,8 @@ describe('Trash', () => {
         )
         await prep.trashFileAsync('local', doc)
 
-        should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
-          { path: path.normalize('parent/file'), deleted: true }
+        should(helpers.putDocs('path', 'trashed')).deepEqual([
+          { path: path.normalize('parent/file'), trashed: true }
         ])
         await should(pouch.db.get(file._id)).be.rejectedWith({ status: 404 })
 
@@ -177,8 +177,8 @@ describe('Trash', () => {
 
         await helpers.remote.pullChanges()
 
-        should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
-          { path: path.normalize('parent/file'), deleted: true }
+        should(helpers.putDocs('path', 'trashed')).deepEqual([
+          { path: path.normalize('parent/file'), trashed: true }
         ])
         await should(pouch.db.get(file._id)).be.rejectedWith({ status: 404 })
 
@@ -293,12 +293,12 @@ describe('Trash', () => {
         )
         await prep.trashFolderAsync('local', doc)
 
-        should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
+        should(helpers.putDocs('path', 'trashed')).deepEqual([
           // Recursively trash parent/dir; children are trashed first
-          { path: path.normalize('parent/dir/subdir/file'), deleted: true },
-          { path: path.normalize('parent/dir/subdir'), deleted: true },
-          { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
-          { path: path.normalize('parent/dir'), deleted: true }
+          { path: path.normalize('parent/dir/subdir/file'), trashed: true },
+          { path: path.normalize('parent/dir/subdir'), trashed: true },
+          { path: path.normalize('parent/dir/empty-subdir'), trashed: true },
+          { path: path.normalize('parent/dir'), trashed: true }
         ])
 
         await helpers.syncAll()
@@ -319,12 +319,12 @@ describe('Trash', () => {
         await cozy.files.trashById(dir._id)
 
         await helpers.remote.pullChanges()
-        should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
+        should(helpers.putDocs('path', 'trashed')).deepEqual([
           // Recursively trash parent/dir; children are trashed first
-          { path: path.normalize('parent/dir/subdir/file'), deleted: true },
-          { path: path.normalize('parent/dir/subdir'), deleted: true },
-          { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
-          { path: path.normalize('parent/dir'), deleted: true }
+          { path: path.normalize('parent/dir/subdir/file'), trashed: true },
+          { path: path.normalize('parent/dir/subdir'), trashed: true },
+          { path: path.normalize('parent/dir/empty-subdir'), trashed: true },
+          { path: path.normalize('parent/dir'), trashed: true }
         ])
 
         await helpers.syncAll()

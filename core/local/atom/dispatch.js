@@ -248,7 +248,7 @@ actions = {
 
   deletedfile: async (event, { pouch, prep }) => {
     const was /*: ?Metadata */ = await pouch.byLocalPath(event.path)
-    if (!was || was.deleted) {
+    if (!was || was.trashed) {
       log.debug({ event }, 'Assuming file already removed')
       // The file was already marked as deleted in pouchdb
       // => we can ignore safely this event
@@ -260,7 +260,7 @@ actions = {
 
   deleteddirectory: async (event, { pouch, prep }) => {
     const was /*: ?Metadata */ = await pouch.byLocalPath(event.path)
-    if (!was || was.deleted) {
+    if (!was || was.trashed) {
       log.debug({ event }, 'Assuming dir already removed')
       // The dir was already marked as deleted in pouchdb
       // => we can ignore safely this event

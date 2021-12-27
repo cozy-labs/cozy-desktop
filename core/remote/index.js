@@ -182,7 +182,9 @@ class Remote /*:: implements Reader, Writer */ {
     } catch (err) {
       if (err.code === 'ENOENT') {
         log.warn({ path }, 'Local file does not exist anymore.')
-        doc.deleted = true // XXX: This prevents the doc to be saved with new revs
+        // FIXME: with this deletion marker, the record will be erased from
+        // PouchDB while the remote document will remain.
+        doc.trashed = true
         return doc
       }
       throw err
@@ -210,7 +212,9 @@ class Remote /*:: implements Reader, Writer */ {
     } catch (err) {
       if (err.code === 'ENOENT') {
         log.warn({ path }, 'Local file does not exist anymore.')
-        doc.deleted = true // XXX: This prevents the doc to be saved with new revs
+        // FIXME: with this deletion marker, the record will be erased from
+        // PouchDB while the remote document will remain.
+        doc.trashed = true
         return doc
       }
       throw err

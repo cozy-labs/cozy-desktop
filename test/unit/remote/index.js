@@ -173,7 +173,7 @@ describe('remote.Remote', function() {
       }
       await this.remote.addFileAsync(doc)
       should(doc)
-        .have.property('deleted')
+        .have.property('trashed')
         .and.not.have.property('remote')
     })
 
@@ -381,7 +381,7 @@ describe('remote.Remote', function() {
         await this.remote.overwriteFileAsync(doc)
 
         should(doc)
-          .have.property('deleted')
+          .have.property('trashed')
           .and.not.have.propertyByPath('remote')
       })
 

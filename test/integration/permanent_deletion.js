@@ -39,7 +39,7 @@ describe('Permanent deletion remote', () => {
     await helpers.remote.pullChanges()
 
     should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
-      { path: 'file', deleted: true }
+      { path: 'file', trashed: true }
     ])
 
     await helpers.syncAll()
