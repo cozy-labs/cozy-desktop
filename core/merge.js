@@ -690,16 +690,22 @@ class Merge {
 
     delete was.errors
 
-    if (
-      was.deleted &&
-      metadata.isAtLeastUpToDate(otherSide(side), was) &&
-      !metadata.isAtLeastUpToDate(side, was)
-    ) {
-      log.debug(
-        { path: was.path, doc: was },
-        'Erasing doc already marked for deletion'
-      )
-      return this.pouch.eraseDocument(was)
+    if (was.deleted) {
+      if (metadata.isAtLeastUpToDate(side, was)) {
+        // The document was already marked for deletion on the same side (e.g.
+        // when trashing a folder on the remote Cozy, we'll trash its content
+        // when merging the folder trashing itself and when merging the trashing
+        // of its children) so we can ignore this change.
+        // FIXME: we should at least save the updated side otherwise we'll end
+        // up with an out-of-date remote _rev.
+        return
+      } else if (metadata.isAtLeastUpToDate(otherSide(side), was)) {
+        log.debug(
+          { path: was.path, doc: was },
+          'Erasing doc already marked for deletion'
+        )
+        return this.pouch.eraseDocument(was)
+      }
     }
 
     if (was.sides && was.sides[side]) {
@@ -737,6 +743,8 @@ class Merge {
     return this.pouch.put(was)
   }
 
+  // FIXME: we should save the new remote side when merging a remote trashing or
+  // deletion.
   async trashFileAsync(
     side /*: SideName */,
     trashed /*: SavedMetadata */,
@@ -807,6 +815,16 @@ class Merge {
     return this.doTrash(side, was)
   }
 
+  // Send a folder to the Trash
+  //
+  // When a folder is marked as deleted in PouchDB, we also mark the files and
+  // folders inside it to ensure consistency.
+  // The watchers often detect the deletion of a nested folder after the
+  // deletion of its parent. In this case, the call to trashFolderAsync for the
+  // child is considered as successful, even if the folder is already marked for
+  // deletion.
+  // FIXME: we should save the new remote side when merging a remote trashing or
+  // deletion.
   async trashFolderAsync(
     side /*: SideName */,
     trashed /*: SavedMetadata */,
@@ -835,6 +853,9 @@ class Merge {
         child => !metadata.isUpToDate(side, child) && !child.deleted
       ) != null
     if (!hasOutOfDateChild) {
+      for (const child of children) {
+        await this.doTrash(side, child)
+      }
       await this.doTrash(side, was)
     }
   }

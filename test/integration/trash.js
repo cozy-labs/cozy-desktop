@@ -294,6 +294,10 @@ describe('Trash', () => {
         await prep.trashFolderAsync('local', doc)
 
         should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
+          // Recursively trash parent/dir; children are trashed first
+          { path: path.normalize('parent/dir/subdir/file'), deleted: true },
+          { path: path.normalize('parent/dir/subdir'), deleted: true },
+          { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
           { path: path.normalize('parent/dir'), deleted: true }
         ])
 
@@ -316,10 +320,11 @@ describe('Trash', () => {
 
         await helpers.remote.pullChanges()
         should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
-          { path: path.normalize('parent/dir'), deleted: true },
-          { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
+          // Recursively trash parent/dir; children are trashed first
+          { path: path.normalize('parent/dir/subdir/file'), deleted: true },
           { path: path.normalize('parent/dir/subdir'), deleted: true },
-          { path: path.normalize('parent/dir/subdir/file'), deleted: true }
+          { path: path.normalize('parent/dir/empty-subdir'), deleted: true },
+          { path: path.normalize('parent/dir'), deleted: true }
         ])
 
         await helpers.syncAll()

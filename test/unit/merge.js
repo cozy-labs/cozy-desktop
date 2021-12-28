@@ -4405,7 +4405,7 @@ describe('Merge', function() {
       })
 
       context('and the record was modified on the same side', () => {
-        it('keeps the deletion marker and updates sides info', async function() {
+        it('does nothing', async function() {
           const was = await builders
             .metafile()
             .deleted()
@@ -4425,16 +4425,7 @@ describe('Merge', function() {
           )
 
           should(sideEffects).deepEqual({
-            savedDocs: [
-              _.defaults(
-                {
-                  sides: increasedSides(was.sides, this.side, 1),
-                  [this.side]: doc[this.side],
-                  deleted: true
-                },
-                _.omit(was, ['_rev'])
-              )
-            ],
+            savedDocs: [],
             resolvedConflicts: []
           })
         })
@@ -4918,7 +4909,7 @@ describe('Merge', function() {
       })
 
       context('and the record was modified on the same side', () => {
-        it('keeps the deletion marker and updates sides info', async function() {
+        it('does nothing', async function() {
           const was = await builders
             .metadir()
             .deleted()
@@ -4938,16 +4929,7 @@ describe('Merge', function() {
           )
 
           should(sideEffects).deepEqual({
-            savedDocs: [
-              _.defaults(
-                {
-                  sides: increasedSides(was.sides, this.side, 1),
-                  [this.side]: doc[this.side],
-                  deleted: true
-                },
-                _.omit(was, ['_rev'])
-              )
-            ],
+            savedDocs: [],
             resolvedConflicts: []
           })
         })
