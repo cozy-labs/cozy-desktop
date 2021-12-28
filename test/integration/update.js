@@ -154,16 +154,16 @@ describe('Update file', () => {
     beforeEach(async () => {
       await helpers.remote.ignorePreviousChanges()
       await helpers.local.syncDir.outputFile(existingPath, 'existing content')
-      await helpers.flushLocalAndSyncAll()
-      await helpers.local.syncDir.remove(existingPath)
-      await helpers.local.syncDir.removeParentDir(existingPath)
-      await helpers.flushLocalAndSyncAll()
-
       await helpers.local.syncDir.outputFile(
         path.normalize('src/file'),
         'initial content'
       )
       await helpers.flushLocalAndSyncAll()
+
+      await helpers.local.syncDir.remove(existingPath)
+      await helpers.local.syncDir.removeParentDir(existingPath)
+      await helpers.flushLocalAndSyncAll()
+
       await helpers.local.syncDir.move('src', 'dst')
       await helpers.local.scan()
     })
