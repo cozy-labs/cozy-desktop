@@ -3934,39 +3934,6 @@ describe('Merge', function() {
     })
   })
 
-  describe('trashFolderAsync', () => {
-    it('does not trash a folder if the other side has added a new file in it', async function() {
-      const was = await builders
-        .metadir()
-        .path('trashed-folder')
-        .upToDate()
-        .create()
-      await builders
-        .metafile()
-        .path('trashed-folder/file')
-        .sides({ [otherSide(this.side)]: 1 })
-        .create()
-      const doc = await builders
-        .metadir(was)
-        .path(`.cozy_trash/${was.path}`)
-        .trashed()
-        .build()
-
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.trashFolderAsync(
-          this.side,
-          _.cloneDeep(was),
-          _.cloneDeep(doc)
-        )
-      )
-
-      should(sideEffects).deepEqual({
-        savedDocs: [],
-        resolvedConflicts: []
-      })
-    })
-  })
-
   describe('deleteFileAsync', () => {
     context('when a record is found in Pouch', () => {
       it('deletes a file', async function() {

@@ -848,16 +848,10 @@ class Merge {
     const children = await this.pouch.byRecursivePath(was.path, {
       descending: true
     })
-    const hasOutOfDateChild =
-      Array.from(children).find(
-        child => !metadata.isUpToDate(side, child) && !child.deleted
-      ) != null
-    if (!hasOutOfDateChild) {
-      for (const child of children) {
-        await this.doTrash(side, child)
-      }
-      await this.doTrash(side, was)
+    for (const child of children) {
+      await this.doTrash(side, child)
     }
+    await this.doTrash(side, was)
   }
 
   // Remove a file from PouchDB
