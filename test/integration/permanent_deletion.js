@@ -22,13 +22,13 @@ describe('Permanent deletion remote', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(function() {
+  beforeEach(async function() {
     helpers = TestHelpers.init(this)
-    helpers.local.setupTrash()
+    await helpers.local.setupTrash()
+    await helpers.remote.ignorePreviousChanges()
   })
 
   it('file', async () => {
-    await helpers.remote.ignorePreviousChanges()
     const file = await cozy.files.create('File content', { name: 'file' })
     await helpers.remote.pullChanges()
     await helpers.syncAll()
