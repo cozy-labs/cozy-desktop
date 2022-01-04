@@ -70,12 +70,16 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  moveFrom(was /*: Metadata */) /*: this */ {
+  moveFrom(
+    was /*: Metadata */,
+    { childMove = false } /*: { childMove?: boolean } */ = {}
+  ) /*: this */ {
     this.doc = {
       ..._.cloneDeep(was),
       ...this.doc
     }
     this.doc.moveFrom = was
+    if (childMove) this.doc.moveFrom.childMove = true
 
     return this
   }
