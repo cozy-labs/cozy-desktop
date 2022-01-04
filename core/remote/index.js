@@ -160,7 +160,7 @@ class Remote /*:: implements Reader, Writer */ {
             'could not fetch conflicting directory'
           )
         }
-        if (remoteDoc && (await this.isExcludedFromSync(remoteDoc))) {
+        if (remoteDoc && this.isExcludedFromSync(remoteDoc)) {
           throw new ExcludedDirError(path)
         }
       }
@@ -452,9 +452,7 @@ class Remote /*:: implements Reader, Writer */ {
     return conflict
   }
 
-  async isExcludedFromSync(
-    doc /*: MetadataRemoteInfo */
-  ) /*: Promise<boolean> */ {
+  isExcludedFromSync(doc /*: MetadataRemoteInfo */) /*: boolean */ {
     const {
       client: { clientID }
     } = this.config
