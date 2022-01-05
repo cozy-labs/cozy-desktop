@@ -72,7 +72,7 @@ port folderError : (String -> msg) -> Sub msg
 port gotocozy : Bool -> Cmd msg
 
 
-port gotofolder : () -> Cmd msg
+port gotofolder : Bool -> Cmd msg
 
 
 port gototab : (String -> msg) -> Sub msg
@@ -84,10 +84,10 @@ port mail : (Maybe String -> msg) -> Sub msg
 port newRelease : (( String, String ) -> msg) -> Sub msg
 
 
-port openFile : String -> Cmd msg
+port openFile : ( String, Bool ) -> Cmd msg
 
 
-port showInParent : String -> Cmd msg
+port showInParent : ( String, Bool ) -> Cmd msg
 
 
 port quitAndInstall : () -> Cmd msg

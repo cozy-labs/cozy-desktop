@@ -64,7 +64,7 @@ type Msg
     = GotSyncState SyncState
     | GotSyncConfig SyncConfig
     | GoToCozy ShowInWeb
-    | GoToFolder
+    | GoToFolder ShowInWeb
     | GoToTab Page
     | GoToStrTab String
     | DashboardMsg Dashboard.Msg
@@ -123,8 +123,8 @@ update msg model =
         GoToCozy showInWeb ->
             ( model, Ports.gotocozy showInWeb )
 
-        GoToFolder ->
-            ( model, Ports.gotofolder () )
+        GoToFolder showInWeb ->
+            ( model, Ports.gotofolder showInWeb )
 
         GoToTab tab ->
             let
@@ -215,7 +215,7 @@ viewBottomBar helpers =
     div [ class "bottom-bar" ]
         [ a
             [ href "#"
-            , onClick GoToFolder
+            , Mouse.onSpecialClick handleGoToFolder
             ]
             [ Icons.folder 48 False
             , text (helpers.t "Bar GoToFolder")
@@ -228,6 +228,15 @@ viewBottomBar helpers =
             , text (helpers.t "Bar GoToCozy")
             ]
         ]
+
+
+handleGoToFolder : Mouse.EventWithKeys -> Msg
+handleGoToFolder mouseEvent =
+    if mouseEvent.keys.ctrl || mouseEvent.keys.meta then
+        GoToFolder inWeb
+
+    else
+        GoToFolder onOS
 
 
 handleGoToCozy : Mouse.EventWithKeys -> Msg
