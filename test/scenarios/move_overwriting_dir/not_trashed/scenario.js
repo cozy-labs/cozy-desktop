@@ -62,7 +62,7 @@ module.exports = ({
             'dir/deletedFile',
             'dir/subdir/',
             'file', // XXX: content is trashed before on disk
-            'file (__cozy__: ...)' // XXX: content is trashed before on disk
+            'file (...)' // XXX: content is trashed before on disk
           ],
     contents: {
       'dst/dir/deletedFile': 'should be kept',

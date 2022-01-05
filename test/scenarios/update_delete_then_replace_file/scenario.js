@@ -40,7 +40,7 @@ module.exports = ({
     tree: ['dst/', 'final/', 'final/file2', 'src/', 'src/file1'],
     remoteTrash: [
       'file2', // src/file2
-      'file2 (__cozy__: ...)' // final/file2
+      'file2 (...)' // final/file2
     ],
     localTrash: [
       'file2' // src/file2
