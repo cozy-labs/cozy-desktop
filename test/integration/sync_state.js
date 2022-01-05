@@ -24,12 +24,12 @@ describe('Sync state', () => {
 
   let events, helpers
 
-  beforeEach(function() {
+  beforeEach(async function() {
     helpers = TestHelpers.init(this)
     events = helpers.events
     sinon.spy(events, 'emit')
-    // await helpers.local.setupTrash()
-    // await helpers.remote.ignorePreviousChanges()
+
+    await helpers.remote.ignorePreviousChanges()
   })
 
   it('1 sync error (missing remote file)', async () => {

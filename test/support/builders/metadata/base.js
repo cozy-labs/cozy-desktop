@@ -70,12 +70,16 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  moveFrom(was /*: Metadata */) /*: this */ {
+  moveFrom(
+    was /*: Metadata */,
+    { childMove = false } /*: { childMove?: boolean } */ = {}
+  ) /*: this */ {
     this.doc = {
       ..._.cloneDeep(was),
       ...this.doc
     }
     this.doc.moveFrom = was
+    if (childMove) this.doc.moveFrom.childMove = true
 
     return this
   }
@@ -168,11 +172,6 @@ module.exports = class BaseMetadataBuilder {
 
   trashed() /*: this */ {
     this.doc.trashed = true
-    return this
-  }
-
-  deleted() /*: this */ {
-    this.doc.deleted = true
     return this
   }
 
@@ -375,6 +374,10 @@ module.exports = class BaseMetadataBuilder {
         .contentType(this.doc.mime || '')
         .md5sum(this.doc.md5sum)
         .size(String(this.doc.size))
+    }
+
+    if (this.doc.trashed) {
+      builder = builder.trashed()
     }
 
     this.doc.remote = builder.build()

@@ -387,22 +387,10 @@ describe('RemoteCozy', function() {
   })
 
   describe('changes', function() {
-    it('resolves with changes since then given seq', async function() {
-      const { last_seq } = await remoteCozy.changes()
-
-      const dir = await builders.remoteDir().create()
-      const file = await builders
-        .remoteFile()
-        .inDir(dir)
-        .create()
-
-      const { docs } = await remoteCozy.changes(last_seq)
-      const ids = docs.map(doc => doc._id)
-
-      should(ids.sort()).eql([file._id, dir._id].sort())
-    })
-
     context('when no seq given', function() {
+      // XXX: This test might timeout if a lot of changes were made on the
+      // remote Cozy as we're doing an initial fetch here and thus cannot speed
+      // it up by ignoring the previous changes.
       it('resolves only with non trashed, non deleted docs', async function() {
         const dir = await builders.remoteDir().create()
         const file = await builders
@@ -432,7 +420,24 @@ describe('RemoteCozy', function() {
       })
     })
 
+    it('resolves with changes since the given seq', async function() {
+      const last_seq = await remoteCozy.fetchLastSeq()
+
+      const dir = await builders.remoteDir().create()
+      const file = await builders
+        .remoteFile()
+        .inDir(dir)
+        .create()
+
+      const { docs } = await remoteCozy.changes(last_seq)
+      const ids = docs.map(doc => doc._id)
+
+      should(ids.sort()).eql([file._id, dir._id].sort())
+    })
+
     it('resolves with docs ordered by path asc', async function() {
+      const last_seq = await remoteCozy.fetchLastSeq()
+
       const dirB = await builders
         .remoteDir()
         .inRootDir()
@@ -454,7 +459,7 @@ describe('RemoteCozy', function() {
         .name('fileA')
         .create()
 
-      const { docs } = await remoteCozy.changes()
+      const { docs } = await remoteCozy.changes(last_seq)
 
       should(docs).containDeepOrdered([dirA, fileA, dirB, fileB])
     })

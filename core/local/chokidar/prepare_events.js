@@ -60,7 +60,7 @@ const oldMetadata = async (
 ) /*: Promise<?Metadata> */ => {
   if (e.old) return e.old
   const old /*: ?Metadata */ = await pouch.bySyncedPath(e.path)
-  if (old && !old.deleted) return old
+  if (old && !old.trashed) return old
 }
 
 /**

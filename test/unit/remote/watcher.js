@@ -2455,7 +2455,7 @@ describe('RemoteWatcher', function() {
         const trashedFile = builders
           .metafile()
           .fromRemote(origFile)
-          .deleted()
+          .trashed()
           .build()
         const newFile = builders
           .remoteFile(origFile)
@@ -2484,7 +2484,7 @@ describe('RemoteWatcher', function() {
         const trashedFile = builders
           .metafile()
           .fromRemote(origFile)
-          .deleted()
+          .trashed()
           .changedSide('local')
           .build()
         const movedFile = builders

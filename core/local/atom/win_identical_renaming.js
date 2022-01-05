@@ -92,7 +92,7 @@ const fixIdenticalRenamed = async (event, { byLocalPath }) => {
   if (event.path === event.oldPath) {
     const doc /*: ?Metadata */ = await byLocalPath(event.path)
 
-    if (doc && !doc.deleted && doc.path !== event.oldPath) {
+    if (doc && !doc.trashed && doc.path !== event.oldPath) {
       _.set(event, [STEP_NAME, 'oldPathBeforeFix'], event.oldPath)
       event.oldPath = doc.path
     }

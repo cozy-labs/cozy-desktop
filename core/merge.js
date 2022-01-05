@@ -129,7 +129,7 @@ class Merge {
     const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
 
     if (file) {
-      if (file.deleted) {
+      if (file.trashed) {
         return this.updateFileAsync(side, doc)
       }
 
@@ -184,7 +184,7 @@ class Merge {
       }
       // Any local update call is an actual modification
 
-      if (file.deleted) {
+      if (file.trashed) {
         // If the existing record was marked for deletion, we only keep the
         // PouchDB attributes that will allow us to overwrite it.
         doc._id = file._id
@@ -359,7 +359,7 @@ class Merge {
         }
       }
 
-      if (folder.deleted) {
+      if (folder.trashed) {
         // If the existing record was marked for deletion, we only keep the
         // PouchDB attributes that will allow us to overwrite it.
         doc._id = folder._id
@@ -455,7 +455,7 @@ class Merge {
   ) /*: Promise<*> */ {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
 
-    if ((!metadata.wasSynced(was) && !was.moveFrom) || was.deleted) {
+    if ((!metadata.wasSynced(was) && !was.moveFrom) || was.trashed) {
       move.convertToDestinationAddition(side, was, doc)
       return this.pouch.put(doc)
     } else if (was.sides && was.sides[side]) {
@@ -470,7 +470,7 @@ class Merge {
 
       const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
       if (file) {
-        if (file.deleted) {
+        if (file.trashed) {
           doc.overwrite = file.overwrite || file
         }
 
@@ -526,7 +526,7 @@ class Merge {
 
     const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
     if (folder) {
-      if (folder.deleted) {
+      if (folder.trashed) {
         doc.overwrite = folder.overwrite || folder
       }
 
@@ -589,9 +589,9 @@ class Merge {
     for (let doc of docs) {
       // Don't move children marked for deletion as we can simply propagate the
       // deletion at their original path.
-      // Besides, as of today, `moveFrom` will have precedence over `deleted` in
+      // Besides, as of today, `moveFrom` will have precedence over `trashed` in
       // Sync and the deletion won't be propagated at all.
-      if (doc.deleted) continue
+      if (doc.trashed) continue
 
       // Update remote rev of documents which have been updated on the Cozy
       // after we've detected the move.
@@ -690,16 +690,22 @@ class Merge {
 
     delete was.errors
 
-    if (
-      was.deleted &&
-      metadata.isAtLeastUpToDate(otherSide(side), was) &&
-      !metadata.isAtLeastUpToDate(side, was)
-    ) {
-      log.debug(
-        { path: was.path, doc: was },
-        'Erasing doc already marked for deletion'
-      )
-      return this.pouch.eraseDocument(was)
+    if (was.trashed) {
+      if (metadata.isAtLeastUpToDate(side, was)) {
+        // The document was already marked for deletion on the same side (e.g.
+        // when trashing a folder on the remote Cozy, we'll trash its content
+        // when merging the folder trashing itself and when merging the trashing
+        // of its children) so we can ignore this change.
+        // FIXME: we should at least save the updated side otherwise we'll end
+        // up with an out-of-date remote _rev.
+        return
+      } else if (metadata.isAtLeastUpToDate(otherSide(side), was)) {
+        log.debug(
+          { path: was.path, doc: was },
+          'Erasing doc already marked for deletion'
+        )
+        return this.pouch.eraseDocument(was)
+      }
     }
 
     if (was.sides && was.sides[side]) {
@@ -714,7 +720,7 @@ class Merge {
         delete was.overwrite
 
         if (overwrite) {
-          overwrite.deleted = true
+          overwrite.trashed = true
           metadata.markSide(side, overwrite, overwrite)
           delete overwrite._rev
 
@@ -723,7 +729,7 @@ class Merge {
       }
 
       metadata.markSide(side, was, was)
-      was.deleted = true
+      was.trashed = true
       try {
         return await this.pouch.put(was)
       } catch (err) {
@@ -737,9 +743,11 @@ class Merge {
     return this.pouch.put(was)
   }
 
+  // FIXME: we should save the new remote side when merging a remote trashing or
+  // deletion.
   async trashFileAsync(
     side /*: SideName */,
-    trashed /*: SavedMetadata|{path: string} */,
+    trashed /*: SavedMetadata */,
     doc /*: Metadata */
   ) /*: Promise<void> */ {
     const { path } = trashed
@@ -807,21 +815,24 @@ class Merge {
     return this.doTrash(side, was)
   }
 
+  // Send a folder to the Trash
+  //
+  // When a folder is marked as deleted in PouchDB, we also mark the files and
+  // folders inside it to ensure consistency.
+  // The watchers often detect the deletion of a nested folder after the
+  // deletion of its parent. In this case, the call to trashFolderAsync for the
+  // child is considered as successful, even if the folder is already marked for
+  // deletion.
+  // FIXME: we should save the new remote side when merging a remote trashing or
+  // deletion.
   async trashFolderAsync(
     side /*: SideName */,
-    trashed /*: SavedMetadata|{path: string} */,
+    trashed /*: SavedMetadata */,
     doc /*: Metadata */
   ) /*: Promise<*> */ {
     const { path } = trashed
     log.debug({ path }, 'trashFolderAsync')
-    let was /*: ?SavedMetadata */
-    // $FlowFixMe _id exists in SavedMetadata
-    if (trashed._id != null) {
-      was = await this.pouch.byIdMaybe(trashed._id)
-    } else {
-      was = await this.pouch.bySyncedPath(trashed.path)
-    }
-
+    const was /*: ?SavedMetadata */ = await this.pouch.byIdMaybe(trashed._id)
     if (!was) {
       log.debug({ path }, 'Nothing to trash')
       return
@@ -837,13 +848,10 @@ class Merge {
     const children = await this.pouch.byRecursivePath(was.path, {
       descending: true
     })
-    const hasOutOfDateChild =
-      Array.from(children).find(
-        child => !metadata.isUpToDate(side, child) && !child.deleted
-      ) != null
-    if (!hasOutOfDateChild) {
-      await this.doTrash(side, was)
+    for (const child of children) {
+      await this.doTrash(side, child)
     }
+    await this.doTrash(side, was)
   }
 
   // Remove a file from PouchDB
@@ -876,7 +884,7 @@ class Merge {
     }
     if (file.sides && file.sides[side]) {
       metadata.markSide(side, file, file)
-      file.deleted = true
+      file.trashed = true
       delete file.errors
       return this.pouch.put(file)
     } else {
@@ -887,76 +895,125 @@ class Merge {
 
   // Remove a folder
   //
+  // This method is only called for complete remote deletions (i.e. the document
+  // was trashed and then completely removed from the Trash). This means we
+  // don't have to keep remote metadata in the PouchDB record as the remote
+  // document is unrecoverable.
+  // It also means we can fetch the document from PouchDB via its _id.
+  //
   // When a folder is removed in PouchDB, we also remove the files and folders
-  // inside it to ensure consistency. The watchers often detects the deletion
-  // of a nested folder after the deletion of its parent. In this case, the
-  // call to deleteFolder for the child is considered as successful, even if
-  // the folder is missing in pouchdb (error 404).
+  // inside it to ensure consistency. The remote watcher will sort the deletion
+  // of a folder before the deletion of its content.
   async deleteFolderAsync(side /*: SideName */, doc /*: SavedMetadata */) {
     log.debug({ path: doc.path }, 'deleteFolderAsync')
-    const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
+    const folder /*: ?SavedMetadata */ = await this.pouch.byIdMaybe(doc._id)
 
     if (!folder) {
-      log.debug({ path }, 'Nothing to delete')
+      log.debug({ path: doc.path }, 'Nothing to delete')
       return
     }
 
-    if (folder.moveFrom) {
-      // We don't want Sync to pick up this move hint and try to synchronize a
-      // move so we delete it.
-      delete folder.moveFrom
-    }
-
-    if (folder.sides && folder.sides[side]) {
-      return this.deleteFolderRecursivelyAsync(side, folder)
-    } else {
-      // It can happen after a conflict
-      return
-    }
-  }
-
-  // Remove a folder and every thing inside it
-  async deleteFolderRecursivelyAsync(
-    side /*: SideName */,
-    folder /*: SavedMetadata */
-  ) {
     // In the changes feed, nested subfolder must be deleted
     // before their parents, hence the reverse order.
-    const docs = await this.pouch.byRecursivePath(folder.path, {
+    const children = await this.pouch.byRecursivePath(folder.path, {
       descending: true
     })
-    const toPreserve = new Set()
-    for (let doc of docs) {
-      if (doc.deleted) continue
-
+    for (let child of children) {
       if (
-        toPreserve.has(doc.path) ||
-        (doc.sides && !metadata.isUpToDate(side, doc))
+        child.trashed &&
+        !metadata.isAtLeastUpToDate(otherSide(side), child)
       ) {
-        log.warn(
-          {
-            path: doc.path,
-            ancestorPath: folder.path,
-            otherSide: otherSide(side)
-          },
-          'Cannot be deleted with ancestor: document was modified on the other side.'
-        )
-        log.info({ path: doc.path }, 'Dissociating from remote...')
-        metadata.dissociateRemote(doc)
-        toPreserve.add(path.dirname(doc.path))
+        // No need to generate extra changes if the document was already marked
+        // for deletion on the remote side.
+        continue
+      }
+
+      const { moveFrom } = child
+
+      if (moveFrom && child.local) {
+        if (child.path.normalize() === child.local.path.normalize()) {
+          if (
+            folder.moveFrom &&
+            child.moveFrom.path.startsWith(folder.moveFrom.path + path.sep)
+          ) {
+            // The child was moved on the local side with the deleted folder thus
+            // we need to trash it on the local filesystem.
+            metadata.markSide(side, child, child)
+          } else {
+            // The child was moved on the local side into the deleted folder thus
+            // we need to trash it on the Cozy.
+            metadata.markSide(otherSide(side), child, child)
+            // XXX: the path displayed in logs will be the one after the child
+            // was moved (and became a child of folder) which can be a bit
+            // confusing but since we use the remote _id to apply actions on the
+            // remote Cozy we don't really care.
+          }
+        } else {
+          // The child was moved on the remote side into the deleted folder thus
+          // we need to trash its former location on the local filesystem.
+          // XXX: Since the Local module uses the main path instead of the local
+          // path, we have to "revert" the remote move by changing the main path
+          // back into its local value.
+          // TODO: use the local path in the Local module so we don't have to deal
+          // with such issues.
+          child.path = child.local.path
+
+          metadata.markSide(side, child, child)
+        }
+      } else if (child.sides && !child.sides[side]) {
+        metadata.markSide(otherSide(side), child, child)
       } else {
-        metadata.markSide(side, doc, doc)
-        doc.deleted = true
-        delete doc.errors
+        metadata.markSide(side, child, child)
+      }
+
+      child.trashed = true
+
+      // We don't want Sync to pick up other hints than the deletion and
+      // try to synchronize them.
+      delete child.moveFrom
+      delete child.overwrite
+      delete child.errors
+    }
+
+    const { moveFrom, overwrite } = folder
+
+    if (moveFrom && folder.local) {
+      if (folder.path.normalize() === folder.local.path.normalize()) {
+        if (overwrite) {
+          // TODO: Should we call deleteFolderAsync if overwrite is a folder to
+          // be sure we delete all its content as well?
+          overwrite.trashed = true
+          metadata.markSide(otherSide(side), overwrite, overwrite)
+
+          delete overwrite.moveFrom
+          delete overwrite.overwrite
+          delete overwrite.errors
+          delete overwrite._id
+          delete overwrite._rev
+
+          children.push(overwrite)
+        }
+      } else {
+        // The folder was moved on the remote side before being deleted so we
+        // need to trash its former location on the local filesystem.
+        // XXX: Since the Local module uses the main path instead of the local
+        // path, we have to "revert" the remote move by changing the main path
+        // back into its local value.
+        // TODO: use the local path in the Local module so we don't have to deal
+        // with such issues.
+        folder.path = folder.local.path
       }
     }
 
     metadata.markSide(side, folder, folder)
-    folder.deleted = true
+    folder.trashed = true
+    // We don't want Sync to pick up other hints than the deletion and try to
+    // synchronize them.
+    delete folder.moveFrom
+    delete folder.overwrite
     delete folder.errors
-    docs.push(folder)
 
-    return this.pouch.bulkDocs(docs)
+    return this.pouch.bulkDocs(children.concat(folder))
   }
 }
 

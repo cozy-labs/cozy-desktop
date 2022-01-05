@@ -322,6 +322,19 @@ class RemoteCozy {
     return { last_seq, docs }
   }
 
+  async fetchLastSeq() {
+    const client = await this.newClient()
+    const { last_seq } = await client
+      .collection(FILES_DOCTYPE)
+      .fetchChangesRaw({
+        since: '0',
+        descending: true,
+        limit: 1,
+        includeDocs: false
+      })
+    return last_seq
+  }
+
   async completeRemoteDocs(
     rawDocs /*: Array<RemoteDoc|RemoteDeletion> */
   ) /*: Promise<Array<MetadataRemoteInfo|RemoteDeletion>> */ {

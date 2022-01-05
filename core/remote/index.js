@@ -160,7 +160,7 @@ class Remote /*:: implements Reader, Writer */ {
             'could not fetch conflicting directory'
           )
         }
-        if (remoteDoc && (await this.isExcludedFromSync(remoteDoc))) {
+        if (remoteDoc && this.isExcludedFromSync(remoteDoc)) {
           throw new ExcludedDirError(path)
         }
       }
@@ -182,7 +182,9 @@ class Remote /*:: implements Reader, Writer */ {
     } catch (err) {
       if (err.code === 'ENOENT') {
         log.warn({ path }, 'Local file does not exist anymore.')
-        doc.deleted = true // XXX: This prevents the doc to be saved with new revs
+        // FIXME: with this deletion marker, the record will be erased from
+        // PouchDB while the remote document will remain.
+        doc.trashed = true
         return doc
       }
       throw err
@@ -210,7 +212,9 @@ class Remote /*:: implements Reader, Writer */ {
     } catch (err) {
       if (err.code === 'ENOENT') {
         log.warn({ path }, 'Local file does not exist anymore.')
-        doc.deleted = true // XXX: This prevents the doc to be saved with new revs
+        // FIXME: with this deletion marker, the record will be erased from
+        // PouchDB while the remote document will remain.
+        doc.trashed = true
         return doc
       }
       throw err
@@ -448,9 +452,7 @@ class Remote /*:: implements Reader, Writer */ {
     return conflict
   }
 
-  async isExcludedFromSync(
-    doc /*: MetadataRemoteInfo */
-  ) /*: Promise<boolean> */ {
+  isExcludedFromSync(doc /*: MetadataRemoteInfo */) /*: boolean */ {
     const {
       client: { clientID }
     } = this.config

@@ -4,11 +4,8 @@
  */
 
 const autoBind = require('auto-bind')
-const { clone } = require('lodash')
-const { join } = require('path')
 
 const metadata = require('./metadata')
-const { TRASH_DIR_NAME } = require('./remote/constants')
 const logger = require('./utils/logger')
 
 /*::
@@ -127,7 +124,7 @@ class Prep {
       return
     }
     if (side === 'local' && docIgnored) {
-      return this.merge.deleteFileAsync(side, was)
+      return this.merge.trashFileAsync(side, was, was)
     } else if (side === 'local' && wasIgnored) {
       return this.merge.addFileAsync(side, doc)
     } else {
@@ -167,7 +164,7 @@ class Prep {
       return
     }
     if (side === 'local' && docIgnored) {
-      return this.merge.deleteFolderAsync(side, was)
+      return this.merge.trashFolderAsync(side, was, was)
     } else if (side === 'local' && wasIgnored) {
       return this.merge.putFolderAsync(side, doc)
     } else {
@@ -178,45 +175,45 @@ class Prep {
   // TODO add comments + tests
   async trashFileAsync(
     side /*: SideName */,
-    was /*: SavedMetadata|{path: string} */,
+    was /*: SavedMetadata */,
     doc /*: ?Metadata */
   ) {
     log.debug({ path: doc && doc.path, oldpath: was.path }, 'trashFileAsync')
     metadata.ensureValidPath(was)
 
     if (!doc) {
-      doc = clone(was)
-      doc.path = join(TRASH_DIR_NAME, was.path)
+      // XXX: Local deletions don't generate new records as we don't have any
+      // information about deleted files and folders (while we have new metadata
+      // for remote documents that were trashed).
+      return this.merge.trashFileAsync(side, was, was)
+    } else {
+      metadata.ensureValidPath(doc)
+      doc.docType = 'file'
+
+      return this.merge.trashFileAsync(side, was, doc)
     }
-
-    metadata.ensureValidPath(doc)
-    doc.trashed = true
-    doc.docType = 'file'
-
-    // TODO metadata.shouldIgnore
-    return this.merge.trashFileAsync(side, was, doc)
   }
 
   // TODO add comments + tests
   async trashFolderAsync(
     side /*: SideName */,
-    was /*: SavedMetadata|{path: string} */,
+    was /*: SavedMetadata */,
     doc /*: ?Metadata */
   ) {
     log.debug({ path: doc && doc.path, oldpath: was.path }, 'trashFolderAsync')
     metadata.ensureValidPath(was)
 
     if (!doc) {
-      doc = clone(was)
-      doc.path = join(TRASH_DIR_NAME, was.path)
+      // XXX: Local deletions don't generate new records as we don't have any
+      // information about deleted files and folders (while we have new metadata
+      // for remote documents that were trashed).
+      return this.merge.trashFolderAsync(side, was, was)
+    } else {
+      metadata.ensureValidPath(doc)
+      doc.docType = 'folder'
+
+      return this.merge.trashFolderAsync(side, was, doc)
     }
-
-    metadata.ensureValidPath(doc)
-    doc.trashed = true
-    doc.docType = 'folder'
-
-    // TODO metadata.shouldIgnore
-    return this.merge.trashFolderAsync(side, was, doc)
   }
 
   // Expectations:

@@ -609,7 +609,7 @@ describe('Pouch', function() {
         await builders
           .metafile()
           .path('deleted')
-          .deleted()
+          .trashed()
           .changedSide('local')
           .create()
 

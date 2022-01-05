@@ -361,9 +361,9 @@ describe('Sync', function() {
           this.remote
         )
         should(this.remote.trashAsync).not.have.been.called()
-        should(
-          await this.pouch.bySyncedPath(deletedChild.path)
-        ).have.properties(Object.keys(deletedChild))
+        // XXX: the child change is erased after we've skipped it since it is
+        // marked as `deleted`.
+        should(await this.pouch.bySyncedPath(deletedChild.path)).be.undefined()
       } finally {
         this.sync.trashWithParentOrByItself.restore()
       }
@@ -599,7 +599,7 @@ describe('Sync', function() {
       const doc = await builders
         .metafile()
         .path('foo')
-        .deleted()
+        .trashed()
         .changedSide('remote')
         .create()
       await this.sync.applyDoc(doc, this.local, 'local')
@@ -610,7 +610,7 @@ describe('Sync', function() {
       const doc = await builders
         .metafile()
         .path('tmp/fooz')
-        .deleted()
+        .trashed()
         .sides({ local: 2 })
         .create()
       await this.sync.applyDoc(doc, this.remote, 'remote')
@@ -668,7 +668,7 @@ describe('Sync', function() {
       const doc = await builders
         .metadir()
         .path('baz')
-        .deleted()
+        .trashed()
         .changedSide('remote')
         .create()
       await this.sync.applyDoc(doc, this.local, 'local')
@@ -679,7 +679,7 @@ describe('Sync', function() {
       const doc = await builders
         .metadir()
         .path('tmp/foobaz')
-        .deleted()
+        .trashed()
         .sides({ local: 2 })
         .create()
       await this.sync.applyDoc(doc, this.remote, 'remote')

@@ -57,7 +57,7 @@ const isMarkedForDeletion = (doc /*: SavedMetadata */) => {
   // During a transition period, we'll need to consider both documents with the
   // deletion marker and documents which were deleted but not yet synced before
   // the application was updated and are thus completely _deleted from PouchDB.
-  return doc.trashed || doc.deleted || doc._deleted
+  return doc.trashed || doc._deleted
 }
 
 const shouldAttemptRetry = (change /*: PouchDBFeedData */) => {
@@ -471,7 +471,7 @@ class Sync {
             if (shouldAttemptRetry(change)) {
               this.blockSyncFor({ err, change })
             } else {
-              if (change.doc.deleted) {
+              if (isMarkedForDeletion(change.doc)) {
                 await this.skipChange(change, err)
               } else if (sideName === 'remote') {
                 delete change.doc.moveFrom
@@ -731,7 +731,7 @@ class Sync {
       // Clean up documents so that we don't mistakenly take action based on
       // previous changes and keep our Pouch documents as small as possible
       // and especially avoid deep nesting levels.
-      if (doc.deleted) {
+      if (doc.trashed) {
         await this.pouch.eraseDocument(doc)
         if (doc.docType === 'file') {
           this.events.emit('delete-file', _.clone(doc))
@@ -1115,6 +1115,9 @@ class Sync {
           { path: doc.path },
           `${doc.docType} will be trashed within its parent directory`
         )
+        // XXX: doc will be erased from PouchDB as it is marked as `deleted`.
+        // This means that, until the parent deletion is synchronized, our local
+        // PouchDB won't reflect the reality.
         return
       }
     }

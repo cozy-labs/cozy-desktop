@@ -44,7 +44,7 @@ class RemoteTestHelpers {
   }
 
   async ignorePreviousChanges() {
-    const { last_seq } = await this.side.remoteCozy.changes()
+    const last_seq = await this.side.remoteCozy.fetchLastSeq()
     await this.pouch.setRemoteSeq(last_seq)
   }
 
@@ -151,10 +151,14 @@ class RemoteTestHelpers {
     const ellipsizeDate = opts.ellipsize
       ? conflictHelpers.ellipsizeDate
       : _.identity
-    return relPaths
-      .sort()
-      .map(ellipsizeDate)
-      .map(p => p.replace(/\(__cozy__: \d+\)/, '(__cozy__: ...)'))
+    return (
+      relPaths
+        .sort()
+        // XXX: replace Desktop conflict dates with ...
+        .map(ellipsizeDate)
+        // XXX: replace random conflit suffix for trashed files with same name
+        .map(p => p.replace(/\(\d+\)/, '(...)'))
+    )
   }
 
   async treeWithoutTrash(

@@ -149,7 +149,6 @@ export type Metadata = {
   class?: string,
 
   trashed?: true,
-  deleted?: true,
   errors?: number,
   overwrite?: SavedMetadata,
   childMove?: boolean,

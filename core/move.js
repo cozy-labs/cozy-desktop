@@ -43,11 +43,9 @@ function move(
     }
   }
 
-  // TODO: Find out wether or not it would make sense to also delete the
-  // trashed property on the source, or explain why it doesn't.
-  delete dst.trashed
-
   dst.moveFrom = src
+  // TODO: remove `_id` and `_rev` from the exception list above and stop
+  // assigning them manually.
   dst._id = src._id
   dst._rev = src._rev
 

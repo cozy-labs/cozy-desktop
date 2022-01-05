@@ -65,7 +65,7 @@ onPlatform('darwin', () => {
         await builders
           .metadir()
           .path('.cozy_trash/folder5')
-          .deleted()
+          .trashed()
           .changedSide('remote')
           .create()
         // File still exists
@@ -103,7 +103,7 @@ onPlatform('darwin', () => {
         builders
           .metafile()
           .path('folder1/file5')
-          .deleted()
+          .trashed()
           .changedSide('local')
           .create()
         const initialScan = { paths: ['folder1', 'file1'].map(metadata.id) }

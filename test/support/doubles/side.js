@@ -29,5 +29,10 @@ module.exports = function stubSide(name /*: SideName */) /*: Writer */ {
   double.name = name
   double.watcher = {}
   double.watcher.running = new Promise(() => {})
+
+  if (name === 'remote') {
+    double.isExcludedFromSync = sinon.stub.returns()
+  }
+
   return double
 }
