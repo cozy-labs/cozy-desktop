@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.32.0-beta.3 - 2022-01-05
+
+Improvements for all users:
+
+- The core of the synchronization process can handle selective synchronization
+  without flags (only the configuration of the selective synchronization remains
+  hidden behind a flag).
+- Most remote folder deletion situations should be handled and the same goes for
+  remote folder exclusions as part of the selective synchronization.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.32.0-beta.2 - 2021-12-15
 
 Improvements for all users:
