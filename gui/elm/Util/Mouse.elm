@@ -60,3 +60,8 @@ onClickWithOptions { stopPropagation, preventDefault } htmlTag =
 onSpecialClick : (EventWithKeys -> msg) -> Html.Attribute msg
 onSpecialClick =
     onClickWithOptions { stopPropagation = False, preventDefault = True }
+
+
+onCapturingClick : (EventWithKeys -> msg) -> Html.Attribute msg
+onCapturingClick =
+    onClickWithOptions { stopPropagation = True, preventDefault = False }

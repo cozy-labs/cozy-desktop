@@ -176,17 +176,11 @@ renderFile helpers model file =
             , span
                 [ class "file-parent-folder"
                 , title dirPathTitle
-                , onCapturingClick (handleShowInParent file.path)
+                , Mouse.onCapturingClick (handleShowInParent file.path)
                 ]
                 [ text (Path.toString dirPath) ]
             ]
         ]
-
-
-onCapturingClick : (Mouse.Event -> Msg) -> Attribute Msg
-onCapturingClick =
-    { stopPropagation = True, preventDefault = False }
-        |> Mouse.onWithOptions "click"
 
 
 handleOpenPath : Path -> Mouse.EventWithKeys -> Msg
@@ -225,8 +219,8 @@ viewActions helpers model =
         msg =
             \actionMsg ->
                 case actionMsg of
-                    UserAction.ShowInParent path ->
-                        ShowInParent path onOS
+                    UserAction.ShowInParent path showInWeb ->
+                        ShowInParent path showInWeb
 
                     UserAction.SendCommand cmd action ->
                         SendActionCommand cmd action

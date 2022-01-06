@@ -1003,7 +1003,11 @@ class Sync {
           this.events.emit(
             'user-action-required',
             err,
-            cause.change && cause.change.seq
+            cause.change && cause.change.seq,
+            cause.change &&
+              cause.change.operation &&
+              cause.change.operation.side != null &&
+              cause.change.operation.side
           )
           break
         default:
