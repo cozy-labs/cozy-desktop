@@ -247,8 +247,8 @@ viewAlerts helpers model =
         msg =
             \alertMsg ->
                 case alertMsg of
-                    UserAlert.ShowInParent path ->
-                        ShowInParent path onOS
+                    UserAlert.ShowInParent path showInWeb ->
+                        ShowInParent path showInWeb
 
                     UserAlert.SendCommand cmd alert ->
                         SendActionCommand cmd alert

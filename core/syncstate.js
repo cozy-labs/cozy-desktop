@@ -8,6 +8,8 @@ const EventEmitter = require('events')
 const deepDiff = require('deep-diff').diff
 
 /*::
+import type { SideName } from './side'
+
 type UserActionStatus = 'Required'|'InProgress'
 export type UserActionCommand =
   | 'retry'
@@ -17,6 +19,7 @@ export type UserActionCommand =
 export type UserAlert = {
   seq: ?number,
   code: string,
+  side: ?SideName,
   doc?: {
     docType: string,
     path: string,
@@ -53,7 +56,11 @@ export type SyncError = {|
 |}
 */
 
-const makeAlert = (err /*: Object */, seq /*: ?number */) /*: UserAlert */ => {
+const makeAlert = (
+  err /*: Object */,
+  seq /*: ?number */,
+  side /*: ?SideName */
+) /*: UserAlert */ => {
   const { doc } = err
   const links = err.links || (err.originalErr && err.originalErr.links)
 
@@ -61,6 +68,7 @@ const makeAlert = (err /*: Object */, seq /*: ?number */) /*: UserAlert */ => {
     seq: err.seq || seq || null,
     status: 'Required',
     code: err.code,
+    side: side || null,
     doc: doc || null,
     links: links || null
   }
