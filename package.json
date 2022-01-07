@@ -89,7 +89,7 @@
     "babel-polyfill": "^6.26.0",
     "bluebird": "3.7.2",
     "btoa": "^1.1.2",
-    "bunyan": "^2.0.2",
+    "bunyan": "2.0.5",
     "chai": "^4.2.0",
     "chai-like": "^1.1.1",
     "chokidar": "^3.5.0",

@@ -1271,15 +1271,15 @@ builder-util@22.8.1:
     stat-mode "^1.0.0"
     temp-file "^3.3.7"
 
-bunyan@^2.0.2:
-  version "2.0.2"
-  resolved "https://registry.yarnpkg.com/bunyan/-/bunyan-2.0.2.tgz#8dbb0feb1a320b9255bc42ba2d4460ad6c045028"
-  integrity sha1-jbsP6xoyC5JVvEK6LURgrWwEUCg=
+bunyan@2.0.5:
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/bunyan/-/bunyan-2.0.5.tgz#9dd056755220dddd8b5bb9cf76f3d0d766e96e71"
+  integrity sha512-Jvl74TdxCN6rSP9W1I6+UOUtwslTDqsSFkDqZlFb/ilaSvQ+bZAnXT/GT97IZ5L+Vph0joPZPhxUyn6FLNmFAA==
   dependencies:
     exeunt "1.1.0"
   optionalDependencies:
     dtrace-provider "~0.8"
-    moment "^2.10.6"
+    moment "^2.19.3"
     mv "~2"
     safe-json-stringify "~1"
 
@@ -5532,10 +5532,10 @@ mocha@~6.2.0:
     yargs-parser "13.1.1"
     yargs-unparser "1.6.0"
 
-moment@^2.10.6:
-  version "2.24.0"
-  resolved "https://registry.yarnpkg.com/moment/-/moment-2.24.0.tgz#0d055d53f5052aa653c9f6eb68bb5d12bf5c2b5b"
-  integrity sha512-bV7f+6l2QigeBBZSM/6yTNq4P2fNpSWj/0e7jQcy87A8e7o2nAfP/34/2ky5Vw4B9S446EtIhodAzkFCcR4dQg==
+moment@^2.19.3:
+  version "2.29.1"
+  resolved "https://registry.yarnpkg.com/moment/-/moment-2.29.1.tgz#b2be769fa31940be9eeea6469c075e35006fa3d3"
+  integrity sha512-kHmoybcPV8Sqy59DwNDY3Jefr64lK/by/da0ViFcuA4DH0vQg5Q6Ze5VimxkfQNSC+Mls/Kx53s7TjP1RhFEDQ==
 
 ms@2.0.0:
   version "2.0.0"
