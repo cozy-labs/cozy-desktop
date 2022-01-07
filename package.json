@@ -90,7 +90,7 @@
     "bluebird": "3.7.2",
     "btoa": "^1.1.2",
     "bunyan": "2.0.5",
-    "chai": "^4.2.0",
+    "chai": "4.3.4",
     "chai-like": "^1.1.1",
     "chokidar": "^3.5.0",
     "cozy-client": "^27.1.0",
