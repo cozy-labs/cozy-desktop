@@ -124,6 +124,8 @@
     "yargs": "^11.0.0"
   },
   "devDependencies": {
+    "@babel/core": "7.16.7",
+    "babel-preset-cozy-app": "^2.0.1",
     "chai": "4.3.4",
     "chai-like": "1.1.1",
     "cheerio": "0.22.0",
