@@ -48,7 +48,7 @@
  */
 
 const { basename, dirname, resolve } = require('path')
-const { matcher, makeRe } = require('micromatch')
+const { matcher } = require('micromatch')
 const fs = require('fs')
 
 const logger = require('./utils/logger')
@@ -117,11 +117,9 @@ function buildPattern(line /*: string */) /*: IgnorePattern */ {
   line = line.replace(/^\\/, '') // Remove leading escaping char
   line = line.replace(/( |\t)*$/, '') // Remove trailing spaces
   // Ignore case for case insensitive file-systems
-  if (process.platform === 'darwin' || process.platform === 'win32') {
-    line = makeRe(line, { nocase: true })
-  }
-  let pattern = {
-    match: matcher(line, {}),
+  const nocase = process.platform === 'darwin' || process.platform === 'win32'
+  const pattern = {
+    match: matcher(line, { nocase }),
     basename: noslash, // The pattern can match only the basename
     folder, // The pattern will only match a folder
     negate // The pattern is negated
