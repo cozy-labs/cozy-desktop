@@ -1395,7 +1395,7 @@ caw@^2.0.1:
     tunnel-agent "^0.6.0"
     url-to-options "^1.0.1"
 
-chai-like@^1.1.1:
+chai-like@1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/chai-like/-/chai-like-1.1.1.tgz#8c558a414c34514e814d497c772547ceb7958f64"
   integrity sha512-VKa9z/SnhXhkT1zIjtPACFWSoWsqVoaz1Vg+ecrKo5DCKVlgL30F/pEyEvXPBOVwCgLZcWUleCM/C1okaKdTTA==
