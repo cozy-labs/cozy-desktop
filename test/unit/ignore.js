@@ -343,44 +343,31 @@ describe('Ignore', function() {
   })
 
   describe('OS specific rules', () => {
-    before(() => {
-      this.originalPlatform = Object.getOwnPropertyDescriptor(
-        process,
-        'platform'
-      )
+    onPlatform('linux', () => {
+      it('does not match files if case does not match', () => {
+        const ignore = new Ignore(['Foo'])
+        ignore
+          .isIgnored({ relativePath: 'foo', isFolder: false })
+          .should.be.false()
+      })
     })
 
-    after(() => {
-      Object.defineProperty(process, 'platform', this.originalPlatform)
-    })
-    it('does not match files if case does not match', () => {
-      Object.defineProperty(process, 'platform', {
-        value: 'linux'
+    onPlatform('darwin', () => {
+      it('match files even if case does not match on darwin', () => {
+        const ignore = new Ignore(['Foo'])
+        ignore
+          .isIgnored({ relativePath: 'foo', isFolder: false })
+          .should.be.true()
       })
-      const ignore = new Ignore(['Foo'])
-      ignore
-        .isIgnored({ relativePath: 'foo', isFolder: false })
-        .should.be.false()
     })
 
-    it('match files even if case does not match on darwin', () => {
-      Object.defineProperty(process, 'platform', {
-        value: 'darwin'
+    onPlatform('win32', () => {
+      it('match files even if case does not match on darwin', () => {
+        const ignore = new Ignore(['Foo'])
+        ignore
+          .isIgnored({ relativePath: 'foo', isFolder: false })
+          .should.be.true()
       })
-      const ignore = new Ignore(['Foo'])
-      ignore
-        .isIgnored({ relativePath: 'foo', isFolder: false })
-        .should.be.true()
-    })
-
-    it('match files even if case does not match on darwin', () => {
-      Object.defineProperty(process, 'platform', {
-        value: 'win32'
-      })
-      const ignore = new Ignore(['Foo'])
-      ignore
-        .isIgnored({ relativePath: 'foo', isFolder: false })
-        .should.be.true()
     })
   })
 
