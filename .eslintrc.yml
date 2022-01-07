@@ -4,6 +4,7 @@ extends:
   - plugin:node/recommended
 rules:
   node/shebang: off
+  no-param-reassign: off
 settings:
   node:
     allowModules:
