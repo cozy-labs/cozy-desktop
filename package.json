@@ -153,7 +153,7 @@
     "istanbul": "0.4.5",
     "istanbul-api": "3.0.0",
     "istanbul-lib-coverage": "3.2.0",
-    "istanbul-lib-hook": "^2.0.0",
+    "istanbul-lib-hook": "3.0.0",
     "jsdoc": "~3.5.0",
     "jsverify": "^0.8.4",
     "mocha-clean": "^1.0.0",
