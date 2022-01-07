@@ -144,7 +144,7 @@
     "elm-upgrade": "0.19.8",
     "env-cmd": "10.1.0",
     "eslint-config-cozy-app": "^1.1.12",
-    "eslint-plugin-node": "^8.0.1",
+    "eslint-plugin-node": "11.1.0",
     "eslint-plugin-promise": "^4.1.1",
     "faker": "^4.1.0",
     "flow-bin": "^0.98.0",
