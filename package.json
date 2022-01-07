@@ -150,7 +150,7 @@
     "flow-bin": "^0.98.0",
     "flow-typed": "^2.5.0",
     "glob": "^7.1.4",
-    "istanbul": "^0.4.5",
+    "istanbul": "0.4.5",
     "istanbul-api": "^2.0.0",
     "istanbul-lib-coverage": "^2.0.0",
     "istanbul-lib-hook": "^2.0.0",
