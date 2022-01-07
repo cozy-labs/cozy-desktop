@@ -90,8 +90,6 @@
     "bluebird": "3.7.2",
     "btoa": "^1.1.2",
     "bunyan": "2.0.5",
-    "chai": "4.3.4",
-    "chai-like": "^1.1.1",
     "chokidar": "^3.5.0",
     "cozy-client": "^27.1.0",
     "cozy-client-js": "^0.19.0",
@@ -126,6 +124,8 @@
     "yargs": "^11.0.0"
   },
   "devDependencies": {
+    "chai": "4.3.4",
+    "chai-like": "1.1.1",
     "cheerio": "0.22.0",
     "chokidar-cli": "^2.0.0",
     "commander": "^2.20.0",
