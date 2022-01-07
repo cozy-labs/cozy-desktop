@@ -6,6 +6,7 @@
 <PROJECT_ROOT>/node_modules/config-chain/test/broken.json
 <PROJECT_ROOT>/node_modules/elm-test/.*
 <PROJECT_ROOT>/node_modules/jsverify/.*
+<PROJECT_ROOT>/node_modules/resolve/.*
 
 [include]
 
