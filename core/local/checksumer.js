@@ -69,7 +69,7 @@ function init() /*: Checksumer */ {
   // Use a queue for checksums to avoid computing many checksums at the
   // same time. It's better for performance (hard disk are faster with
   // linear readings).
-  const queue = Promise.promisifyAll(async.queue(retryComputeChecksum))
+  const queue = async.queue(retryComputeChecksum)
 
   return {
     push(filePath /*: string */) /*: Promise<string> */ {

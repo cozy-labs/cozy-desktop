@@ -362,7 +362,7 @@ const updateState = async ({ newState, data }) => {
     }
   }
 }
-const updateStateQueue = Promise.promisifyAll(async.queue(updateState))
+const updateStateQueue = async.queue(updateState)
 
 const enqueueStateUpdate = (newState, data) => {
   updateStateQueue.pushAsync({ newState, data }).catch(err => {
