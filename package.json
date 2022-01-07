@@ -126,7 +126,7 @@
     "yargs": "^11.0.0"
   },
   "devDependencies": {
-    "cheerio": "^0.22.0",
+    "cheerio": "0.22.0",
     "chokidar-cli": "^2.0.0",
     "commander": "^2.20.0",
     "cozy-ui": "^35.38.0",
