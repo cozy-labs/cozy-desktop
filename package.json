@@ -16,7 +16,7 @@
     "url": "git://github.com/cozy-labs/cozy-desktop.git"
   },
   "engines": {
-    "node": ">=14.16.0"
+    "node": ">=14.17.6"
   },
   "keywords": [
     "Electron",
