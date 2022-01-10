@@ -139,9 +139,12 @@ const setup = async (
   }
 
   // $FlowFixMe
-  http.Agent.globalAgent = http.globalAgent = https.globalAgent = new ElectronProxyAgent(
-    syncSession
-  )
+  http.Agent.globalAgent =
+    // $FlowFixMe
+    http.globalAgent =
+    // $FlowFixMe
+    https.globalAgent =
+      new ElectronProxyAgent(syncSession)
 
   const parseRequestOptions = (options /* * */) => {
     if (typeof options === 'string') {
@@ -191,12 +194,12 @@ const setup = async (
 
   const originalHttpRequest = http.request
   // $FlowFixMe
-  http.request = function(options, cb) {
+  http.request = function (options, cb) {
     return originalHttpRequest.call(http, parseRequestOptions(options), cb)
   }
   const originalHttpsRequest = https.request
   // $FlowFixMe
-  https.request = function(options, cb) {
+  https.request = function (options, cb) {
     return originalHttpsRequest.call(https, parseRequestOptions(options), cb)
   }
 

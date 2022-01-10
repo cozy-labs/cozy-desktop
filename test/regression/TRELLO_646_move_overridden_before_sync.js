@@ -20,19 +20,19 @@ describe('TRELLO #646: Déplacement écrasé avant synchro (malgré la synchro p
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
-  beforeEach('set up synced dir', async function() {
+  beforeEach('set up synced dir', async function () {
     await fse.emptyDir(this.syncPath)
   })
 
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     helpers = TestHelpers.init(this)
     await helpers.local.setupTrash()
   })
 
-  it('is broken', async function() {
+  it('is broken', async function () {
     this.timeout(30000)
     const pouchTree = async () =>
       _.chain(await this.pouch.byRecursivePath(''))
@@ -45,7 +45,12 @@ describe('TRELLO #646: Déplacement écrasé avant synchro (malgré la synchro p
     const mtime = ctime
     await helpers.remote.ignorePreviousChanges()
     await init(
-      { init: [{ ino: 1, path: 'src/' }, { ino: 2, path: 'src/file' }] },
+      {
+        init: [
+          { ino: 1, path: 'src/' },
+          { ino: 2, path: 'src/file' }
+        ]
+      },
       this.pouch,
       helpers.local.syncDir.abspath,
       _.identity

@@ -70,6 +70,7 @@ const setupInitialState = (scenario /*: Scenario */) => {
         .then(() => fse.stat(abspath(relpath)))
         .then(stats => {
           mapInode[stats.ino] = ino
+          return
         })
     } else {
       debug('- >', relpath)
@@ -81,6 +82,7 @@ const setupInitialState = (scenario /*: Scenario */) => {
         .then(() => fse.stat(abspath(relpath)))
         .then(stats => {
           mapInode[stats.ino] = ino
+          return
         })
     }
   })
@@ -133,8 +135,8 @@ const runAndRecordChokidarEvents = scenario => {
   return new Promise((resolve, reject) => {
     const watcher = chokidar.watch('.', chokidarOptions)
     const cleanCallback = cb =>
-      function() {
-        watcher
+      function () {
+        return watcher
           .close()
           .then(cb.apply(null, arguments), cb.apply(null, arguments))
       }

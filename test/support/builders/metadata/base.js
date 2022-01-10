@@ -342,10 +342,10 @@ module.exports = class BaseMetadataBuilder {
     if (
       this.doc.remote != null &&
       (!this.doc.sides ||
-        (!this.doc.sides.local ||
-          (this.doc.sides.remote &&
-            (this.doc.sides.remote < this.doc.sides.local ||
-              remoteIsUpToDate(this.doc)))))
+        !this.doc.sides.local ||
+        (this.doc.sides.remote &&
+          (this.doc.sides.remote < this.doc.sides.local ||
+            remoteIsUpToDate(this.doc))))
     ) {
       return
     }

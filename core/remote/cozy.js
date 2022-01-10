@@ -315,9 +315,9 @@ class RemoteCozy {
         ? await fetchInitialChanges(since, client, batchSize)
         : await fetchChangesFromFeed(since, this.client, batchSize)
 
-    const docs = (await this.completeRemoteDocs(
-      dropSpecialDocs(remoteDocs)
-    )).sort(byPath)
+    const docs = (
+      await this.completeRemoteDocs(dropSpecialDocs(remoteDocs))
+    ).sort(byPath)
 
     return { last_seq, docs }
   }
@@ -632,7 +632,11 @@ async function fetchInitialChanges(
   batchSize /*: number */,
   remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */ = []
 ) {
-  const { newLastSeq: last_seq, pending, results } = await client
+  const {
+    newLastSeq: last_seq,
+    pending,
+    results
+  } = await client
     .collection(FILES_DOCTYPE)
     .fetchChanges(
       { since, includeDocs: true, limit: batchSize },

@@ -27,12 +27,12 @@ function computeChecksum(filePath /*: string */, callback /*: Callback */) {
   const stream = fs.createReadStream(filePath)
   const checksum = crypto.createHash('md5')
   checksum.setEncoding('base64')
-  stream.on('end', function() {
+  stream.on('end', function () {
     stopMeasure()
     checksum.end()
     callback(null, checksum.read())
   })
-  stream.on('error', function(err) {
+  stream.on('error', function (err) {
     stopMeasure()
     checksum.end()
     callback(err)

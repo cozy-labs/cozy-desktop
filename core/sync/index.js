@@ -394,9 +394,8 @@ class Sync {
           }
         )
         if (reschedulingStart > 0) {
-          const changesToReschedule = this.currentChangesToApply.splice(
-            reschedulingStart
-          )
+          const changesToReschedule =
+            this.currentChangesToApply.splice(reschedulingStart)
           await rescheduleChanges(changesToReschedule, this)
         }
 
@@ -621,10 +620,10 @@ class Sync {
             asyncOps.push(this.pouch.setLocalSeq(data.seq))
           } else {
             asyncOps.push(
-              new Promise(async res => {
-                data.operation = await detectOperation(data, this)
+              detectOperation(data, this).then(op => {
+                data.operation = op
                 changes.push(data)
-                res()
+                return
               })
             )
           }
@@ -1113,7 +1112,8 @@ class Sync {
 
       if (
         parent &&
-        (isMarkedForDeletion(parent) && !metadata.isUpToDate(side.name, parent))
+        isMarkedForDeletion(parent) &&
+        !metadata.isUpToDate(side.name, parent)
       ) {
         log.info(
           { path: doc.path },

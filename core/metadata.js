@@ -396,10 +396,8 @@ function detectIncompatibilities(
     path.join(syncPath, metadata.path),
     platform
   )
-  const incompatibilities /*: PlatformIncompatibility[] */ = detectPathIncompatibilities(
-    metadata.path,
-    metadata.docType
-  )
+  const incompatibilities /*: PlatformIncompatibility[] */ =
+    detectPathIncompatibilities(metadata.path, metadata.docType)
   if (pathLenghIncompatibility) {
     incompatibilities.unshift(pathLenghIncompatibility)
   }

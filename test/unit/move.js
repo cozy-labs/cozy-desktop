@@ -13,7 +13,7 @@ describe('move', () => {
   let builders
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('prepare builders', function() {
+  beforeEach('prepare builders', function () {
     builders = new Builders({ pouch: this.pouch })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
@@ -65,9 +65,7 @@ describe('move', () => {
 
       move.child('local', src, dst)
 
-      should(dst)
-        .have.propertyByPath('moveFrom', 'childMove')
-        .eql(true)
+      should(dst).have.propertyByPath('moveFrom', 'childMove').eql(true)
     })
   })
 
@@ -76,15 +74,8 @@ describe('move', () => {
     let src, dst
 
     beforeEach(async () => {
-      src = await builders
-        .metadata()
-        .path('src')
-        .upToDate()
-        .create()
-      dst = builders
-        .metadata(src)
-        .path('destination')
-        .build()
+      src = await builders.metadata().path('src').upToDate().create()
+      dst = builders.metadata(src).path('destination').build()
 
       move(side, src, dst)
       move.convertToDestinationAddition(side, src, dst)

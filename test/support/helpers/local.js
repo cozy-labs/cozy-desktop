@@ -79,11 +79,7 @@ class LocalTestHelpers {
 
   async sendToTrash(src /*: string */) /*: Promise<void> */ {
     const dst = path.join(this.trashPath, path.basename(src))
-    try {
-      await fse.rename(src, dst)
-    } catch (err) {
-      throw err
-    }
+    await fse.rename(src, dst)
   }
 
   async setupTrash() {

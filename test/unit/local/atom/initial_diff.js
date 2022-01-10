@@ -22,14 +22,14 @@ describe('core/local/atom/initial_diff', () => {
 
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('create builders', function() {
+  beforeEach('create builders', function () {
     builders = new Builders({ pouch: this.pouch })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('.initialState()', () => {
-    it('returns initial state referenced by initial diff step name', async function() {
+    it('returns initial state referenced by initial diff step name', async function () {
       const foo = await builders
         .metadir()
         .path('foo')
@@ -48,11 +48,7 @@ describe('core/local/atom/initial_diff', () => {
         .ino(3)
         .sides({ local: 1 })
         .create()
-      await builders
-        .metafile()
-        .path('baz')
-        .sides({ remote: 1 })
-        .create()
+      await builders.metafile().path('baz').sides({ remote: 1 }).create()
 
       const state = await initialDiff.initialState(this)
       should(state).have.property(initialDiff.STEP_NAME, {
@@ -70,22 +66,13 @@ describe('core/local/atom/initial_diff', () => {
   })
 
   describe('.clearState()', () => {
-    it('removes every item from all initialDiff state collections', function() {
-      const doc = builders
-        .metadata()
-        .path('foo')
-        .ino(1)
-        .upToDate()
-        .build()
+    it('removes every item from all initialDiff state collections', function () {
+      const doc = builders.metadata().path('foo').ino(1).upToDate().build()
       const waiting = [
         { batch: [], nbCandidates: 0, timeout: setTimeout(() => {}, 0) }
       ]
       const renamedEvents = [
-        builders
-          .event()
-          .path('foo')
-          .oldPath('bar')
-          .build()
+        builders.event().path('foo').oldPath('bar').build()
       ]
       const scannedPaths = new Set(['foo'])
       const byInode = new Map([[doc.fileid || doc.ino || '', doc]]) // Flow thinks doc.ino can be null
@@ -119,7 +106,7 @@ describe('core/local/atom/initial_diff', () => {
 
     const inputBatch = batch => channel.push(_.cloneDeep(batch))
 
-    beforeEach(function() {
+    beforeEach(function () {
       channel = new Channel()
       initialScanDone = builders
         .event()
@@ -129,13 +116,8 @@ describe('core/local/atom/initial_diff', () => {
         .build()
     })
 
-    it('forwards events untouched when initial scan is done', async function() {
-      await builders
-        .metadir()
-        .path('foo')
-        .ino(1)
-        .upToDate()
-        .create()
+    it('forwards events untouched when initial scan is done', async function () {
+      await builders.metadir().path('foo').ino(1).upToDate().create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
       initialDiff.clearState(state)
@@ -176,7 +158,7 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('clears the state after initial-scan-done is received', async function() {
+    it('clears the state after initial-scan-done is received', async function () {
       const state = await initialDiff.initialState({ pouch: this.pouch })
       const outChannel = initialDiff.loop(channel, {
         config: this.config,
@@ -195,32 +177,18 @@ describe('core/local/atom/initial_diff', () => {
       inputBatch([fooScan])
       await outChannel.pop()
 
-      should(state.initialDiff)
-        .have.property('initialScanDone')
-        .be.false()
+      should(state.initialDiff).have.property('initialScanDone').be.false()
 
       // Send initial-scan-done
       inputBatch([initialScanDone])
       await outChannel.pop()
 
-      should(state.initialDiff)
-        .have.property('initialScanDone')
-        .be.true()
+      should(state.initialDiff).have.property('initialScanDone').be.true()
     })
 
-    it('detects documents moved while client was stopped', async function() {
-      await builders
-        .metadir()
-        .path('foo')
-        .ino(1)
-        .upToDate()
-        .create()
-      await builders
-        .metafile()
-        .path('fizz')
-        .ino(2)
-        .upToDate()
-        .create()
+    it('detects documents moved while client was stopped', async function () {
+      await builders.metadir().path('foo').ino(1).upToDate().create()
+      await builders.metafile().path('fizz').ino(2).upToDate().create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
 
@@ -261,25 +229,10 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('detects documents moved while client is doing initial scan', async function() {
-      await builders
-        .metadir()
-        .path('foo')
-        .ino(1)
-        .upToDate()
-        .create()
-      await builders
-        .metafile()
-        .path('foo/baz')
-        .ino(2)
-        .upToDate()
-        .create()
-      await builders
-        .metadir()
-        .path('bar')
-        .ino(3)
-        .upToDate()
-        .create()
+    it('detects documents moved while client is doing initial scan', async function () {
+      await builders.metadir().path('foo').ino(1).upToDate().create()
+      await builders.metafile().path('foo/baz').ino(2).upToDate().create()
+      await builders.metadir().path('bar').ino(3).upToDate().create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
 
@@ -334,31 +287,11 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('detects documents replaced by another one of a different kind while client was stopped', async function() {
-      await builders
-        .metadir()
-        .path('foo')
-        .ino(1)
-        .upToDate()
-        .create()
-      await builders
-        .metafile()
-        .path('bar')
-        .ino(2)
-        .upToDate()
-        .create()
-      await builders
-        .metadir()
-        .path('fizz')
-        .ino(3)
-        .upToDate()
-        .create()
-      await builders
-        .metafile()
-        .path('buzz')
-        .ino(4)
-        .upToDate()
-        .create()
+    it('detects documents replaced by another one of a different kind while client was stopped', async function () {
+      await builders.metadir().path('foo').ino(1).upToDate().create()
+      await builders.metafile().path('bar').ino(2).upToDate().create()
+      await builders.metadir().path('fizz').ino(3).upToDate().create()
+      await builders.metafile().path('buzz').ino(4).upToDate().create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
 
@@ -401,19 +334,9 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('detects documents replaced by another one with a different ino while client was stopped', async function() {
-      await builders
-        .metadir()
-        .path('foo')
-        .ino(1)
-        .upToDate()
-        .create()
-      await builders
-        .metafile()
-        .path('bar')
-        .ino(2)
-        .upToDate()
-        .create()
+    it('detects documents replaced by another one with a different ino while client was stopped', async function () {
+      await builders.metadir().path('foo').ino(1).upToDate().create()
+      await builders.metafile().path('bar').ino(2).upToDate().create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
 
@@ -446,19 +369,9 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('detects documents replaced by another one of a different kind with the same ino while client was stopped', async function() {
-      await builders
-        .metadir()
-        .path('foo')
-        .ino(1)
-        .upToDate()
-        .create()
-      await builders
-        .metafile()
-        .path('bar')
-        .ino(2)
-        .upToDate()
-        .create()
+    it('detects documents replaced by another one of a different kind with the same ino while client was stopped', async function () {
+      await builders.metadir().path('foo').ino(1).upToDate().create()
+      await builders.metafile().path('bar').ino(2).upToDate().create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
 
@@ -491,7 +404,7 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('detects documents removed while client was stopped', async function() {
+    it('detects documents removed while client was stopped', async function () {
       const foo = await builders
         .metadir()
         .path('foo')
@@ -542,7 +455,7 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('reuses the checksum of untouched files', async function() {
+    it('reuses the checksum of untouched files', async function () {
       const stillEmptyFile = await builders
         .metafile()
         .path('stillEmptyFile')
@@ -593,7 +506,7 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('does not try to reuse the checksum of a directory', async function() {
+    it('does not try to reuse the checksum of a directory', async function () {
       const dir = await builders
         .metadir()
         .path('dir')
@@ -618,7 +531,7 @@ describe('core/local/atom/initial_diff', () => {
       should(events).deepEqual([dirScan, initialScanDone])
     })
 
-    it('does not reuse the checksum of modified files', async function() {
+    it('does not reuse the checksum of modified files', async function () {
       const updatedContent = await builders
         .metafile()
         .path('updatedContent')
@@ -646,14 +559,14 @@ describe('core/local/atom/initial_diff', () => {
     })
 
     context('when WINDOWS_DATE_MIGRATION_FLAG is active', () => {
-      before(function() {
+      before(function () {
         this.config.setFlag(WINDOWS_DATE_MIGRATION_FLAG, true)
       })
-      after(function() {
+      after(function () {
         this.config.setFlag(WINDOWS_DATE_MIGRATION_FLAG, false)
       })
 
-      it('reuses the checksum of untouched files with a same second modification date', async function() {
+      it('reuses the checksum of untouched files with a same second modification date', async function () {
         const emptyFileUpdateDate = new Date()
         const stillEmptyFile = await builders
           .metafile()
@@ -710,7 +623,7 @@ describe('core/local/atom/initial_diff', () => {
     })
 
     context('when WINDOWS_DATE_MIGRATION_FLAG is inactive', () => {
-      it('does not reuse the checksum of untouched files with a same second modification date', async function() {
+      it('does not reuse the checksum of untouched files with a same second modification date', async function () {
         const updatedContentUpdateDate = new Date()
         const updatedContent = await builders
           .metafile()
@@ -739,25 +652,15 @@ describe('core/local/atom/initial_diff', () => {
       })
     })
 
-    it('ignores events for unapplied moves', async function() {
-      const wasDir = builders
-        .metadir()
-        .path('foo')
-        .ino(1)
-        .upToDate()
-        .build()
+    it('ignores events for unapplied moves', async function () {
+      const wasDir = builders.metadir().path('foo').ino(1).upToDate().build()
       await builders
         .metadir()
         .moveFrom(wasDir)
         .path('foo2')
         .changedSide('remote')
         .create()
-      const wasFile = builders
-        .metafile()
-        .path('fizz')
-        .ino(2)
-        .upToDate()
-        .build()
+      const wasFile = builders.metafile().path('fizz').ino(2).upToDate().build()
       await builders
         .metafile()
         .moveFrom(wasFile)
@@ -802,25 +705,10 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('fixes renamed after parent renamed', async function() {
-      await builders
-        .metadir()
-        .path('parent')
-        .ino(1)
-        .upToDate()
-        .create()
-      await builders
-        .metadir()
-        .path('parent/foo')
-        .ino(2)
-        .upToDate()
-        .create()
-      await builders
-        .metadir()
-        .path('parent/foo/bar')
-        .ino(3)
-        .upToDate()
-        .create()
+    it('fixes renamed after parent renamed', async function () {
+      await builders.metadir().path('parent').ino(1).upToDate().create()
+      await builders.metadir().path('parent/foo').ino(2).upToDate().create()
+      await builders.metadir().path('parent/foo/bar').ino(3).upToDate().create()
 
       const state = await initialDiff.initialState({ pouch: this.pouch })
 
@@ -886,19 +774,9 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('fixes deleted after parent renamed', async function() {
-      await builders
-        .metadir()
-        .path('parent')
-        .ino(1)
-        .upToDate()
-        .create()
-      await builders
-        .metadir()
-        .path('parent/foo')
-        .ino(2)
-        .upToDate()
-        .create()
+    it('fixes deleted after parent renamed', async function () {
+      await builders.metadir().path('parent').ino(1).upToDate().create()
+      await builders.metadir().path('parent/foo').ino(2).upToDate().create()
       const missingDoc = await builders
         .metadir()
         .path('parent/foo/bar')
@@ -971,13 +849,8 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('does not swallow possible changes on move descendants', async function() {
-      await builders
-        .metadir()
-        .path('parent')
-        .ino(1)
-        .upToDate()
-        .create()
+    it('does not swallow possible changes on move descendants', async function () {
+      await builders.metadir().path('parent').ino(1).upToDate().create()
       await builders
         .metafile()
         .path('parent/foo')
@@ -1032,13 +905,8 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('does not delete replaced file after parent move', async function() {
-      await builders
-        .metadir()
-        .path('parent')
-        .ino(1)
-        .upToDate()
-        .create()
+    it('does not delete replaced file after parent move', async function () {
+      await builders.metadir().path('parent').ino(1).upToDate().create()
       await builders
         .metafile()
         .path('parent/foo')
@@ -1082,13 +950,8 @@ describe('core/local/atom/initial_diff', () => {
       ])
     })
 
-    it('does not delete unsynced remote additions', async function() {
-      await builders
-        .metadir()
-        .path('dir')
-        .ino(1)
-        .sides({ remote: 1 })
-        .create()
+    it('does not delete unsynced remote additions', async function () {
+      await builders.metadir().path('dir').ino(1).sides({ remote: 1 }).create()
       await builders
         .metafile()
         .path('file')

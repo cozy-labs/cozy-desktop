@@ -23,7 +23,7 @@ onPlatforms(['linux', 'win32'], () => {
     let producer
 
     beforeEach('instanciate config', configHelpers.createConfig)
-    beforeEach(function() {
+    beforeEach(function () {
       config = this.config
       syncDir = new ContextDir(config.syncPath)
       ignore = new Ignore([])
@@ -35,13 +35,13 @@ onPlatforms(['linux', 'win32'], () => {
       context('on readdir error on dir', () => {
         beforeEach(
           'create content with missing read permission',
-          async function() {
+          async function () {
             await syncDir.makeTree(['dirA/fileA', 'dirB/fileB', 'dirC/fileC'])
             await syncDir.chmod('dirB', 0o220)
           }
         )
 
-        it('should not reject', async function() {
+        it('should not reject', async function () {
           await should(producer.start()).be.fulfilled()
         })
       })

@@ -5,6 +5,7 @@ extends:
 rules:
   node/shebang: off
   no-param-reassign: off
+  spaced-comment: off
 settings:
   node:
     allowModules:

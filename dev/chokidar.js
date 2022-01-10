@@ -32,11 +32,12 @@ if (scenarioArg) {
     path.join(__dirname, '..', 'test', 'scenarios', match[1], 'scenario.js')
   )
 
-  local
+  return local
     .setupInitialState(scenario)
     .then(() => {
       // eslint-disable-next-line no-console
       console.log('Inodes :', local.mapInode)
+      return
     })
     .then(startChokidar)
 } else {
@@ -81,4 +82,5 @@ function startChokidar() {
 
   // eslint-disable-next-line no-console
   console.log(`Watching ${syncPath}`)
+  return
 }

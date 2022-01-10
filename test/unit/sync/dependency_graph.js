@@ -3,14 +3,13 @@ const should = require('should')
 const { DependencyGraph } = require('../../../core/sync/dependency_graph')
 
 // The dependencies are defined as a map of Path -> Path dependencies
-const dependencyBasedCompare = dependencies => (
-  { doc: { path: pathA } },
-  { doc: { path: pathB } }
-) => {
-  if (dependencies[pathA] && dependencies[pathA].includes(pathB)) return 1
-  if (dependencies[pathB] && dependencies[pathB].includes(pathA)) return -1
-  return 0
-}
+const dependencyBasedCompare =
+  dependencies =>
+  ({ doc: { path: pathA } }, { doc: { path: pathB } }) => {
+    if (dependencies[pathA] && dependencies[pathA].includes(pathB)) return 1
+    if (dependencies[pathB] && dependencies[pathB].includes(pathA)) return -1
+    return 0
+  }
 
 describe('DependencyGraph', () => {
   describe('toArray', () => {

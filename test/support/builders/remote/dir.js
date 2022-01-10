@@ -23,7 +23,9 @@ var dirNumber = 1
 //
 //     const dir: MetadataRemoteDir = await builders.remoteDir().inDir(...).create()
 //
-module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <MetadataRemoteDir> */ {
+module.exports = class RemoteDirBuilder extends (
+  RemoteBaseBuilder
+) /*:: <MetadataRemoteDir> */ {
   constructor(cozy /*: ?Cozy */, old /*: ?(RemoteDir|MetadataRemoteDir) */) {
     super(cozy, old)
 

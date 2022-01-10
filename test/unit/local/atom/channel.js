@@ -18,7 +18,7 @@ import type {
 
 const builders = new Builders()
 
-describe('core/local/atom/Channel', function() {
+describe('core/local/atom/Channel', function () {
   this.timeout(100)
 
   describe('Basics', () => {
@@ -179,15 +179,11 @@ describe('core/local/atom/Channel', function() {
       if (!outputChannel) {
         throw new Error(`Step pop cannot occur before asyncMap in scenario`)
       }
-      scenarioState.outputBatchesPromise = new Promise((resolve, reject) => {
-        outputBatchesPromise
-          .then(outputBatches =>
-            outputChannel
-              .pop()
-              .then(batch => resolve(outputBatches.concat([batch])))
-          )
-          .catch(reject)
-      })
+      scenarioState.outputBatchesPromise = outputBatchesPromise
+        .then(outputBatches =>
+          Promise.all([outputBatches, outputChannel.pop()])
+        )
+        .then(([outputBatches, batch]) => outputBatches.concat([batch]))
     }
 
     const scenarioStepFn = step => {

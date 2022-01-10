@@ -22,7 +22,7 @@ describe('Permanent deletion remote', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     helpers = TestHelpers.init(this)
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
