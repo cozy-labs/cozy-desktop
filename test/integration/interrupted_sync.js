@@ -23,7 +23,7 @@ describe('Sync gets interrupted, initialScan occurs', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
@@ -69,7 +69,7 @@ describe('Sync gets interrupted, initialScan occurs', () => {
   })
 
   describe('remote file update', () => {
-    it('does not override the remote file with the local version', async function() {
+    it('does not override the remote file with the local version', async function () {
       const path = 'file'
 
       await helpers.local.syncDir.outputFile(path, 'original content')
@@ -94,7 +94,7 @@ describe('Sync gets interrupted, initialScan occurs', () => {
   })
 
   describe('local file move outside dir then update then dir trashing', () => {
-    beforeEach('run actions', async function() {
+    beforeEach('run actions', async function () {
       const dirPath = 'dir/'
       const fileSrcPath = 'dir/file'
       const fileDstPath = 'file'
@@ -135,7 +135,7 @@ describe('Sync gets interrupted, initialScan occurs', () => {
       }
     })
 
-    it('moves the file and trashes the dir', async function() {
+    it('moves the file and trashes the dir', async function () {
       await should(helpers.trees('local', 'remote')).be.fulfilledWith({
         local: ['file'],
         remote: ['file']

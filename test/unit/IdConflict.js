@@ -11,7 +11,7 @@ const IdConflict = require('../../core/IdConflict')
 const builders = new Builders()
 const { platform } = process
 
-describe('IdConflict', function() {
+describe('IdConflict', function () {
   const side = 'remote' // whatever
 
   describe('.detect()', () => {
@@ -104,19 +104,13 @@ describe('IdConflict', function() {
     }
 
     beforeEach(() => {
-      existingDoc = builders
-        .metadata()
-        .path(existingPath)
-        .build()
+      existingDoc = builders.metadata().path(existingPath).build()
     })
 
     describe('when change is an addition', () => {
       const addition = path => ({
         side,
-        doc: builders
-          .metadata()
-          .path(path)
-          .build()
+        doc: builders.metadata().path(path).build()
       })
 
       describe('to the existing path', () => {
@@ -134,14 +128,8 @@ describe('IdConflict', function() {
 
     describe('when change is a move', () => {
       const move = ({ srcPath, dstPath }) => ({
-        doc: builders
-          .metadata()
-          .path(dstPath)
-          .build(),
-        was: builders
-          .metadata()
-          .path(srcPath)
-          .build()
+        doc: builders.metadata().path(dstPath).build(),
+        was: builders.metadata().path(srcPath).build()
       })
 
       describe('to a completely different path (should not happen)', () => {

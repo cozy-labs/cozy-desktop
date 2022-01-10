@@ -22,7 +22,7 @@ describe('Update only mtime', () => {
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
 
-  beforeEach(function() {
+  beforeEach(function () {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
   })
@@ -34,7 +34,7 @@ describe('Update only mtime', () => {
   describe('of a file', () => {
     context('when update is made on local filesystem', () => {
       let oldUpdatedAt
-      beforeEach('create file and update mtime', async function() {
+      beforeEach('create file and update mtime', async function () {
         await helpers.remote.ignorePreviousChanges()
 
         oldUpdatedAt = new Date()
@@ -73,7 +73,7 @@ describe('Update only mtime', () => {
 
     context('when update is made on remote Cozy', () => {
       let file, oldUpdatedAt
-      beforeEach('create file and update mtime', async function() {
+      beforeEach('create file and update mtime', async function () {
         await helpers.remote.ignorePreviousChanges()
 
         oldUpdatedAt = new Date()
@@ -114,7 +114,7 @@ describe('Update only mtime', () => {
   describe('of a folder', () => {
     context('when update is made on local filesystem', () => {
       let oldUpdatedAt
-      beforeEach('create folder and update mtime', async function() {
+      beforeEach('create folder and update mtime', async function () {
         await helpers.remote.ignorePreviousChanges()
 
         oldUpdatedAt = new Date()
@@ -147,7 +147,7 @@ describe('Update only mtime', () => {
 
     context('when update is made on remote Cozy', () => {
       let oldUpdatedAt, dir
-      beforeEach('create folder and update mtime', async function() {
+      beforeEach('create folder and update mtime', async function () {
         await helpers.remote.ignorePreviousChanges()
 
         oldUpdatedAt = new Date()

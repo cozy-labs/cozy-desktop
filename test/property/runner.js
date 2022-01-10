@@ -87,7 +87,7 @@ async function step(state /*: Object */, op /*: Object */) {
           const block = size > 65536 ? 65536 : size
           const content = await crypto.randomBytes(block)
           size -= block
-          setTimeout(async function() {
+          setTimeout(async function () {
             await state.dir.outputFile(op.path, content).catch(() => {})
           }, (i + 1) * 10)
         }
@@ -112,6 +112,9 @@ async function step(state /*: Object */, op /*: Object */) {
             } else {
               fs.chmodSync(abspath, 0o700)
             }
+            return
+          } else {
+            throw err
           }
         })
       } catch (err) {

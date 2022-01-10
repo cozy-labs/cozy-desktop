@@ -30,7 +30,7 @@ describe('Conflict resolution', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     helpers = TestHelpers.init(this)
     builders = new Builders(this)
 
@@ -48,10 +48,7 @@ describe('Conflict resolution', () => {
       await helpers.local.syncDir.ensureDir('foo')
       await helpers.prep.putFolderAsync(
         'local',
-        builders
-          .metadir()
-          .path('foo')
-          .build()
+        builders.metadir().path('foo').build()
       )
       should(await helpers.local.tree()).deepEqual(['foo-conflict-.../'])
 
@@ -175,9 +172,9 @@ describe('Conflict resolution', () => {
       })
 
       it('conflict correction local', async () => {
-        const conflictedPath = (await fse.readdir(
-          helpers.local.syncPath
-        )).filter(x => x.indexOf('-conflict-') !== -1)[0]
+        const conflictedPath = (
+          await fse.readdir(helpers.local.syncPath)
+        ).filter(x => x.indexOf('-conflict-') !== -1)[0]
 
         await helpers.local.syncDir.remove(conflictedPath)
         await helpers.local.syncDir.outputFile('concurrent-edited', 'content5')
@@ -190,9 +187,9 @@ describe('Conflict resolution', () => {
       })
 
       it('conflict correction remote', async () => {
-        const conflictedPath = (await fse.readdir(
-          helpers.local.syncPath
-        )).filter(x => x.indexOf('-conflict-') !== -1)[0]
+        const conflictedPath = (
+          await fse.readdir(helpers.local.syncPath)
+        ).filter(x => x.indexOf('-conflict-') !== -1)[0]
 
         const remoteBadFile = await cozy.files.statByPath('/' + conflictedPath)
         const remoteFile = await cozy.files.statByPath(`/concurrent-edited`)
@@ -411,10 +408,7 @@ describe('Conflict resolution', () => {
     beforeEach('set up conflict', async () => {
       await helpers.prep.putFolderAsync(
         'local',
-        builders
-          .metadir()
-          .path('foo')
-          .build()
+        builders.metadir().path('foo').build()
       )
       await cozy.files.create('whatever', { name: 'foo' })
     })

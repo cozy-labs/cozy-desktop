@@ -29,32 +29,33 @@ const step = async (
 ) /*: Promise<LocalChange[]> */ => {
   const normalizedPaths = []
 
-  return new Promise.mapSeries(changes, async (
-    c /*: LocalChange */
-  ) /*: Promise<LocalChange> */ => {
-    if (c.type !== 'Ignored') {
-      const parentPath = path.dirname(c.path)
-      const parent =
-        parentPath !== '.' ? await pouch.bySyncedPath(parentPath) : null
-      const normalized = normalizedPath(
-        c.path,
-        c.old ? c.old.path : undefined,
-        parent,
-        normalizedPaths
-      )
-      normalizedPaths.push(normalized)
-
-      if (c.path !== normalized) {
-        log.info(
-          { path: c.path, normalized },
-          'normalizing local path to match existing doc and parent norms'
+  return new Promise.mapSeries(
+    changes,
+    async (c /*: LocalChange */) /*: Promise<LocalChange> */ => {
+      if (c.type !== 'Ignored') {
+        const parentPath = path.dirname(c.path)
+        const parent =
+          parentPath !== '.' ? await pouch.bySyncedPath(parentPath) : null
+        const normalized = normalizedPath(
+          c.path,
+          c.old ? c.old.path : undefined,
+          parent,
+          normalizedPaths
         )
-        c.path = normalized
-      }
-    }
+        normalizedPaths.push(normalized)
 
-    return c
-  })
+        if (c.path !== normalized) {
+          log.info(
+            { path: c.path, normalized },
+            'normalizing local path to match existing doc and parent norms'
+          )
+          c.path = normalized
+        }
+      }
+
+      return c
+    }
+  )
 }
 
 const previouslyNormalizedPath = (

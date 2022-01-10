@@ -50,22 +50,18 @@ app
     // session cookie which would trigger a redirect from the login page.
     return syncSession.clearStorageData()
   })
-  .then(() =>
-    proxy
-      .setup(app, {}, session, '')
-      .then(() =>
-        automatedRegistration(cozyUrl, passphrase, storage).process(pkg)
-      )
-      .then(readAccessToken)
-      .then(generateTestEnv)
-      .then(() => {
-        // eslint-disable-next-line no-console
-        console.log('Remote bootstrap complete.')
-        process.exit(0) // eslint-disable-line no-process-exit
-      })
-      .catch(err => {
-        // eslint-disable-next-line no-console
-        console.error(err)
-        process.exit(1) // eslint-disable-line no-process-exit
-      })
-  )
+  .then(() => proxy.setup(app, {}, session, ''))
+  .then(() => automatedRegistration(cozyUrl, passphrase, storage).process(pkg))
+  .then(readAccessToken)
+  .then(generateTestEnv)
+  .then(() => {
+    // eslint-disable-next-line no-console
+    console.log('Remote bootstrap complete.')
+    process.exit(0) // eslint-disable-line no-process-exit
+    return
+  })
+  .catch(err => {
+    // eslint-disable-next-line no-console
+    console.error(err)
+    process.exit(1) // eslint-disable-line no-process-exit
+  })

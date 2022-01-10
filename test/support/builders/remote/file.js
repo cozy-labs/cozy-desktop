@@ -47,7 +47,9 @@ const baseData = `Content of remote file ${fileNumber}`
 //
 //     const file /*: MetadataRemoteFile */ = await builders.remoteFile().inDir(...).create()
 //
-module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <MetadataRemoteFile> */ {
+module.exports = class RemoteFileBuilder extends (
+  RemoteBaseBuilder
+) /*:: <MetadataRemoteFile> */ {
   /*::
   _data: string | stream.Readable | Buffer
   */

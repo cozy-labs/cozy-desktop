@@ -46,8 +46,12 @@ const defaultEval = repl.eval
 repl.eval = function customEval(cmd, context, filename, callback) {
   defaultEval(cmd, context, filename, (err, result) => {
     if (result instanceof Promise) {
-      // eslint-disable-next-line no-console
-      result.then(console.log).catch(console.error)
+      // eslint-disable-next-line promise/no-promise-in-callback
+      result
+        // eslint-disable-next-line no-console
+        .then(console.log)
+        // eslint-disable-next-line no-console
+        .catch(console.error)
       result = undefined
     }
     callback(err, result)

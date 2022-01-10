@@ -14,7 +14,7 @@ const cozyHelpers = require('../../support/helpers/cozy')
 
 const proxy = require('../../../gui/js/proxy')
 
-describe('gui/js/proxy', function() {
+describe('gui/js/proxy', function () {
   const emptyConfig = {
     'login-by-realm': undefined,
     'proxy-bypassrules': undefined,

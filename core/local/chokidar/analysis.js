@@ -219,9 +219,8 @@ function analyseEvent(
       )
     case 'unlink':
       {
-        const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(
-          sameInodeChange
-        )
+        const moveChange /*: ?LocalFileMove */ =
+          localChange.maybeMoveFile(sameInodeChange)
         if (moveChange && !moveChange.wip) {
           panic(
             { path: e.path, moveChange, event: e },
@@ -243,9 +242,8 @@ function analyseEvent(
       )
     case 'unlinkDir':
       {
-        const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(
-          sameInodeChange
-        )
+        const moveChange /*: ?LocalDirMove */ =
+          localChange.maybeMoveFolder(sameInodeChange)
         /* istanbul ignore next */
         if (moveChange && !moveChange.wip) {
           panic(
@@ -312,7 +310,9 @@ function squashMoves(changes /*: LocalChange[] */) {
       // inline of LocalChange.isChildMove
       if (
         a.type === 'DirMove' &&
-        (oldPathA && oldPathB && oldPathB.startsWith(oldPathA + path.sep))
+        oldPathA &&
+        oldPathB &&
+        oldPathB.startsWith(oldPathA + path.sep)
       ) {
         log.debug({ oldpath: b.old.path, path: b.path }, 'descendant move')
         if (pathB.substr(pathA.length) === oldPathB.substr(oldPathA.length)) {

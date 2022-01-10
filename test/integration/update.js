@@ -29,7 +29,7 @@ describe('Update file', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     builders = new Builders({ cozy: cozyHelpers.cozy })
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)

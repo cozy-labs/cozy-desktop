@@ -125,6 +125,14 @@ module.exports = class WindowManager {
     this.win && this.win.webContents && this.win.webContents.send(...args)
   }
 
+  on(event, handler) {
+    this.win && this.win.on(event, handler)
+  }
+
+  once(event, handler) {
+    this.win && this.win.once(event, handler)
+  }
+
   async sendSyncConfig() {
     const { cozyUrl, deviceName, deviceId } = this.desktop.config
     this.send(

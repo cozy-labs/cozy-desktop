@@ -21,11 +21,11 @@ import type { Metadata } from '../../../core/metadata'
 import type { RemoteDoc } from '../../../core/remote/document'
 */
 
-describe('Remote', function() {
+describe('Remote', function () {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)
-  before('instanciate remote', function() {
+  before('instanciate remote', function () {
     this.prep = sinon.createStubInstance(Prep)
     this.prep.config = this.config
     this.events = new EventEmitter()
@@ -34,18 +34,14 @@ describe('Remote', function() {
     this.remote.remoteCozy.client = cozyHelpers.cozy
   })
   beforeEach(cozyHelpers.deleteAll)
-  beforeEach('create the couchdb folder', async function() {
-    await builders
-      .remoteDir()
-      .name('couchdb-folder')
-      .inRootDir()
-      .create()
+  beforeEach('create the couchdb folder', async function () {
+    await builders.remoteDir().name('couchdb-folder').inRootDir().create()
   })
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('offline management', () => {
-    it('The remote can be started when offline ', async function() {
+    it('The remote can be started when offline ', async function () {
       sinon
         .stub(global, 'fetch')
         .rejects(new FetchError('net::ERR_INTERNET_DISCONNECTED'))

@@ -63,7 +63,7 @@ describe('timestamp', () => {
   })
 
   describe('almostSameDate', () => {
-    it('returns true if the date are nearly the same', function() {
+    it('returns true if the date are nearly the same', function () {
       let a = '2015-12-01T11:22:56.517Z'
       let b = '2015-12-01T11:22:56.000Z'
       let c = '2015-12-01T11:22:57.000Z'
@@ -92,7 +92,7 @@ describe('timestamp', () => {
       should(maxDate(d1, d1)).deepEqual(d1)
     })
 
-    it('increments the most recent date by 1 millisecond if it has more than 3 millisecond digits', function() {
+    it('increments the most recent date by 1 millisecond if it has more than 3 millisecond digits', function () {
       const d1 = '2015-12-31T23:59:59.999232345Z'
       const d2 = '2015-12-31T23:59:59.999Z'
 
@@ -108,24 +108,24 @@ describe('timestamp', () => {
   })
 
   describe('roundedRemoteDate', () => {
-    it('adds the milliseconds when they are missing', function() {
+    it('adds the milliseconds when they are missing', function () {
       const time = '2015-12-31T23:59:59Z'
       should(roundedRemoteDate(time)).equal('2015-12-31T23:59:59.000Z')
     })
 
-    it('pads the milliseconds with 0s if they have less than 3 digits', function() {
+    it('pads the milliseconds with 0s if they have less than 3 digits', function () {
       const a = '2015-12-31T23:59:59.5Z'
       const b = '2015-12-31T23:59:59.54Z'
       should(roundedRemoteDate(a)).equal('2015-12-31T23:59:59.500Z')
       should(roundedRemoteDate(b)).equal('2015-12-31T23:59:59.540Z')
     })
 
-    it('increments the time by 1 millisecond if they have more than 3 digits', function() {
+    it('increments the time by 1 millisecond if they have more than 3 digits', function () {
       const time = '2015-12-31T23:59:59.999232345Z'
       should(roundedRemoteDate(time)).equal('2016-01-01T00:00:00.000Z')
     })
 
-    it('handles dates with timezones other than UTC', function() {
+    it('handles dates with timezones other than UTC', function () {
       // All previous examples with a different timezone
       const a = '2020-04-05T19:50:06+02:00'
       const b = '2020-04-05T19:50:06.029+02:00'

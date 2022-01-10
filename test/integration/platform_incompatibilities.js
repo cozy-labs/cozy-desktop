@@ -37,7 +37,7 @@ describe('Platform incompatibilities', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     cozy = cozyHelpers.cozy
     builders = new Builders({ cozy })
     helpers = TestHelpers.init(this)
@@ -71,14 +71,8 @@ describe('Platform incompatibilities', () => {
     should(helpers._sync.blockSyncFor).not.have.been.called()
 
   it('add incompatible dir and file', async () => {
-    await builders
-      .remoteDir()
-      .name('di:r')
-      .create()
-    await builders
-      .remoteFile()
-      .name('fi:le')
-      .create()
+    await builders.remoteDir().name('di:r').create()
+    await builders.remoteFile().name('fi:le').create()
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -87,10 +81,7 @@ describe('Platform incompatibilities', () => {
   })
 
   it('add incompatible dir with two colons', async () => {
-    await builders
-      .remoteDir()
-      .name('d:i:r')
-      .create()
+    await builders.remoteDir().name('d:i:r').create()
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -362,9 +353,12 @@ describe('Platform incompatibilities', () => {
   })
 
   it('move remote dir with incompatible metadata & remote content', async () => {
-    const remoteDocs /*: { [string]: MetadataRemoteInfo } */ = await helpers.remote.createTree(
-      ['dir/', 'dir/sub:dir/', 'dir/sub:dir/file']
-    )
+    const remoteDocs /*: { [string]: MetadataRemoteInfo } */ =
+      await helpers.remote.createTree([
+        'dir/',
+        'dir/sub:dir/',
+        'dir/sub:dir/file'
+      ])
     await helpers.pullAndSyncAll()
 
     // Simulate remote move
@@ -379,10 +373,7 @@ describe('Platform incompatibilities', () => {
       .name('dir2')
       .updatedAt(...timestamp.spread(new Date()))
       .create()
-    const dir2 = builders
-      .metadir()
-      .fromRemote(newRemoteDoc)
-      .build()
+    const dir2 = builders.metadir().fromRemote(newRemoteDoc).build()
     await helpers.prep.moveFolderAsync('remote', dir2, dir)
     await helpers.syncAll()
 

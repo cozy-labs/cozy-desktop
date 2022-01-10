@@ -17,19 +17,19 @@ let helpers
 // Spies
 let prepCalls
 
-describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)', function() {
+describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)', function () {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
-  beforeEach('set up synced dir', async function() {
+  beforeEach('set up synced dir', async function () {
     await fse.emptyDir(this.syncPath)
   })
 
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     helpers = TestHelpers.init(this)
     prepCalls = []
 
@@ -63,7 +63,7 @@ describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)'
     }
   })
 
-  it('is fixed', async function() {
+  it('is fixed', async function () {
     await init(
       {
         init: [

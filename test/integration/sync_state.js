@@ -24,7 +24,7 @@ describe('Sync state', () => {
 
   let events, helpers
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     helpers = TestHelpers.init(this)
     events = helpers.events
     sinon.spy(events, 'emit')

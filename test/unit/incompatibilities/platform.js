@@ -3,10 +3,8 @@
 const should = require('should')
 
 const platformIncompatibilities = require('../../../core/incompatibilities/platform')
-const {
-  detectNameIncompatibilities,
-  detectPathLengthIncompatibility
-} = platformIncompatibilities
+const { detectNameIncompatibilities, detectPathLengthIncompatibility } =
+  platformIncompatibilities
 
 describe('core/incompatibilities/platform', () => {
   describe('detectNameIncompatibilities', () => {

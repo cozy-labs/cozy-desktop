@@ -447,14 +447,15 @@ async function migrationDBPath(
   originalDBInfo /*: PouchDBInfo */
 ) /*: Promise<string> */ {
   const date = new Date()
-  const dateString = `${date.getFullYear()}-${date.getMonth() +
-    1}-${date.getDate()}`
+  const dateString = `${date.getFullYear()}-${
+    date.getMonth() + 1
+  }-${date.getDate()}`
   const safeUUID = uuid().replace(/-/g, '')
   return `${originalDBInfo.db_name}-migration-${dateString}-${safeUUID}`
 }
 
 async function replicateDB(fromDB /*: PouchDB */, toDB /*: PouchDB */) {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     fromDB.replicate
       .to(toDB)
       .on('complete', async () => {

@@ -179,12 +179,15 @@ elmectron.ports.userActionCommand.subscribe(([cmd, action]) => {
   ipcRenderer.send('userActionCommand', cmd, action)
 })
 
-ipcRenderer.on('sync-state', (
-  event,
-  newState /*: { status: SyncStatus, remaining: number, userAlerts: UserAlert[], errors: SyncError[] } */
-) => {
-  elmectron.ports.syncState.send(newState)
-})
+ipcRenderer.on(
+  'sync-state',
+  (
+    event,
+    newState /*: { status: SyncStatus, remaining: number, userAlerts: UserAlert[], errors: SyncError[] } */
+  ) => {
+    elmectron.ports.syncState.send(newState)
+  }
+)
 
 ipcRenderer.on('transfer', (event, info) => {
   elmectron.ports.transfer.send(info)

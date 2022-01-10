@@ -47,7 +47,7 @@ describe('Move', () => {
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     helpers = TestHelpers.init(this)
     pouch = helpers.pouch
     prep = helpers.prep
@@ -562,10 +562,7 @@ describe('Move', () => {
 
     it('local', async () => {
       const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
-      const doc = builders
-        .metadir()
-        .path('parent/dst/dir')
-        .build()
+      const doc = builders.metadir().path('parent/dst/dir').build()
 
       await prep.moveFolderAsync('local', doc, oldFolder)
 
@@ -690,10 +687,7 @@ describe('Move', () => {
       helpers.resetPouchSpy()
 
       const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
-      const doc = builders
-        .metadir()
-        .path('parent/dst/dir')
-        .build()
+      const doc = builders.metadir().path('parent/dst/dir').build()
 
       await prep.moveFolderAsync('local', doc, oldFolder)
 

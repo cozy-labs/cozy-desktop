@@ -27,7 +27,7 @@ describe('Add', () => {
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()

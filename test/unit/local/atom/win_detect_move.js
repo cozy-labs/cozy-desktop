@@ -24,14 +24,14 @@ if (process.platform === 'win32') {
     afterEach('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
 
-    beforeEach(function() {
+    beforeEach(function () {
       builders = new Builders(this)
     })
 
     describe('.loop()', () => {
       let inputChannel, outputChannel
 
-      beforeEach(async function() {
+      beforeEach(async function () {
         this.state = await winDetectMove.initialState()
         inputChannel = new Channel()
         outputChannel = winDetectMove.loop(inputChannel, this)
@@ -88,7 +88,7 @@ if (process.platform === 'win32') {
                 .build()
             })
 
-            it(`is a replaced ${kind} (not aggregated)`, async function() {
+            it(`is a replaced ${kind} (not aggregated)`, async function () {
               inputBatch([deletedEvent, createdEvent])
               should(await outputBatch()).deepEqual([deletedEvent])
               should(await outputBatch()).deepEqual([createdEvent])
@@ -110,7 +110,7 @@ if (process.platform === 'win32') {
             })
 
             context('when doc has not been moved in PouchDB', () => {
-              it(`is a renamed ${kind} (aggregated)`, async function() {
+              it(`is a renamed ${kind} (aggregated)`, async function () {
                 inputBatch([deletedEvent, createdEvent])
                 should(await outputBatch()).deepEqual([
                   {
@@ -139,7 +139,7 @@ if (process.platform === 'win32') {
                   .create()
               })
 
-              it(`is a renamed ${kind} (aggregated)`, async function() {
+              it(`is a renamed ${kind} (aggregated)`, async function () {
                 inputBatch([deletedEvent, createdEvent])
                 should(await outputBatch()).deepEqual([
                   {
@@ -197,7 +197,7 @@ if (process.platform === 'win32') {
                       inputBatch([createdChildEvent])
                     })
 
-                    it(`is a renamed child ${childKind} (aggregated)`, async function() {
+                    it(`is a renamed child ${childKind} (aggregated)`, async function () {
                       const outputBatches = [
                         await outputBatch(),
                         await outputBatch()
@@ -260,7 +260,7 @@ if (process.platform === 'win32') {
                 .build()
             })
 
-            it(`is untouched`, async function() {
+            it(`is untouched`, async function () {
               inputBatch([deletedEvent, createdEvent])
               should(await outputBatch()).deepEqual([deletedEvent])
               should(await outputBatch()).deepEqual([createdEvent])
@@ -383,7 +383,7 @@ if (process.platform === 'win32') {
                 .build()
             })
 
-            it(`is a renamed ${kind} (aggregated)`, async function() {
+            it(`is a renamed ${kind} (aggregated)`, async function () {
               inputBatch([createdEvent, deletedEvent])
               should(await outputBatch()).deepEqual([
                 {
@@ -439,7 +439,7 @@ if (process.platform === 'win32') {
                       inputBatch([deletedChildEvent])
                     })
 
-                    it(`is a renamed child ${childKind} (aggregated)`, async function() {
+                    it(`is a renamed child ${childKind} (aggregated)`, async function () {
                       const outputBatches = await timesAsync(2, outputBatch)
                       should(outputBatches).deepEqual([
                         [
@@ -505,7 +505,7 @@ if (process.platform === 'win32') {
                 .build()
             })
 
-            it(`is an ignored ${kind} (aggregated)`, async function() {
+            it(`is an ignored ${kind} (aggregated)`, async function () {
               inputBatch([createdEvent, deletedEvent])
               should(await outputBatch()).deepEqual([
                 {
@@ -546,7 +546,7 @@ if (process.platform === 'win32') {
                 .build()
             })
 
-            it(`is a temporary ${kind} (not aggregated)`, async function() {
+            it(`is a temporary ${kind} (not aggregated)`, async function () {
               inputBatch([createdEvent, deletedEvent])
               should(await outputBatch()).deepEqual([createdEvent])
               should(await outputBatch()).deepEqual([
@@ -563,14 +563,10 @@ if (process.platform === 'win32') {
           let ignoredEvent
 
           beforeEach(async () => {
-            ignoredEvent = builders
-              .event()
-              .action('ignored')
-              .kind(kind)
-              .build()
+            ignoredEvent = builders.event().action('ignored').kind(kind).build()
           })
 
-          it('is untouched', async function() {
+          it('is untouched', async function () {
             inputBatch([ignoredEvent])
             should(await outputBatch()).deepEqual([ignoredEvent])
           })

@@ -28,7 +28,7 @@ describe('Identity conflict', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
 

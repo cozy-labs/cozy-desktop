@@ -62,7 +62,7 @@ describe('local/checksumer', () => {
         ).be.fulfilledWith('+HBGS7uN4XdB0blqLv5tFQ==')
       })
 
-      it.skip('fails on successive errors', async function() {
+      it.skip('fails on successive errors', async function () {
         this.timeout(60000)
         createReadStream.callsFake(() => {
           return busyStream()

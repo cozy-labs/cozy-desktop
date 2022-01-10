@@ -129,9 +129,7 @@ function buildPattern(line /*: string */) /*: IgnorePattern */ {
 
 /** Parse many lines and build the corresponding pattern array */
 function buildPatternArray(lines /*: string[] */) /*: IgnorePattern[] */ {
-  return Array.from(lines)
-    .filter(isNotBlankOrComment)
-    .map(buildPattern)
+  return Array.from(lines).filter(isNotBlankOrComment).map(buildPattern)
 }
 
 function isNotBlankOrComment(line /*: string */) /*: boolean */ {

@@ -24,17 +24,17 @@ const Builders = require('../../support/builders')
 const stubSide = require('../../support/doubles/side')
 
 onPlatform('darwin', () => {
-  describe('issue 850', function() {
+  describe('issue 850', function () {
     this.timeout(10000)
 
     let builders
 
     before('instanciate config', configHelpers.createConfig)
     before('instanciate pouch', pouchHelpers.createDatabase)
-    before('prepare builders', function() {
+    before('prepare builders', function () {
       builders = new Builders({ pouch: this.pouch })
     })
-    before('instanciate local watcher', function() {
+    before('instanciate local watcher', function () {
       this.merge = new Merge(this.pouch)
       this.local = stubSide('local')
       this.remote = stubSide('remote')
@@ -60,7 +60,7 @@ onPlatform('darwin', () => {
         this.events
       )
     })
-    after('stop watcher and clean path', async function() {
+    after('stop watcher and clean path', async function () {
       this.watcher.stop(true)
       this.watcher.checksumer.kill()
       await fse.emptyDir(this.syncPath)
@@ -68,20 +68,15 @@ onPlatform('darwin', () => {
     after('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
 
-    before('create dst dir', async function() {
+    before('create dst dir', async function () {
       const dirPath = path.join(this.syncPath, 'dst')
       await fse.mkdirp(dirPath)
       const stat = await fse.stat(dirPath)
-      await builders
-        .metadir()
-        .path(dirPath)
-        .ino(stat.ino)
-        .upToDate()
-        .create()
+      await builders.metadir().path(dirPath).ino(stat.ino).upToDate().create()
       await this.sync.sync()
     })
 
-    it('is fixed', async function() {
+    it('is fixed', async function () {
       let filePath = path.join(this.syncPath, 'file')
       let dstPath = path.join(this.syncPath, 'dst', 'file')
       await fse.outputFile(filePath, 'whatever')
@@ -115,12 +110,7 @@ onPlatform('darwin', () => {
           _rev: '1-fakeRev'
         }
         return metadata.fromRemoteDoc(
-          builders
-            .remoteFile()
-            .inRootDir()
-            .name('file')
-            .size('8')
-            .build()
+          builders.remoteFile().inRootDir().name('file').size('8').build()
         )
       }
 

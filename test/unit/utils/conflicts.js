@@ -22,16 +22,12 @@ describe('Conflicts.generateConflictPath()', () => {
 
     it('returns a path with a conflict suffix', () => {
       const conflictPath = generateConflictPath(filepath)
-      should(conflictPath)
-        .be.a.String()
-        .and.match(CONFLICT_REGEXP)
+      should(conflictPath).be.a.String().and.match(CONFLICT_REGEXP)
     })
 
     it('returns a path within the same parent', () => {
       const conflictPath = generateConflictPath(filepath)
-      should(conflictPath)
-        .be.a.String()
-        .and.startWith(ancestors)
+      should(conflictPath).be.a.String().and.startWith(ancestors)
 
       if (ancestors !== '')
         should(conflictPath).not.containEql(ancestors + ancestors)
@@ -39,9 +35,7 @@ describe('Conflicts.generateConflictPath()', () => {
 
     it('returns a path with the same extension', () => {
       const conflictPath = generateConflictPath(filepath)
-      should(conflictPath)
-        .be.a.String()
-        .and.endWith(ext)
+      should(conflictPath).be.a.String().and.endWith(ext)
     })
 
     it('returns a path with up to the first 180 characters of the original path', () => {
@@ -117,8 +111,7 @@ describe('Conflicts.generateConflictPath()', () => {
 
   context('with long file name', () => {
     runSharedExamples({
-      base:
-        'Lorem ipsum dolor sit amet consectetur adipiscing elit Nam a velit at dolor euismod tincidunt sit amet id ante Cras vehicula lectus purus In lobortis risus lectus vitae rhoncus quam porta nullam',
+      base: 'Lorem ipsum dolor sit amet consectetur adipiscing elit Nam a velit at dolor euismod tincidunt sit amet id ante Cras vehicula lectus purus In lobortis risus lectus vitae rhoncus quam porta nullam',
       ext: '.pdf'
     })
   })

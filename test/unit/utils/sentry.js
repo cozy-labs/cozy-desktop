@@ -28,9 +28,9 @@ class CozyClientFetchError extends Error {
   }
 }
 
-describe('Sentry', function() {
-  describe('toSentryContext', function() {
-    it('properly parse all urls', function() {
+describe('Sentry', function () {
+  describe('toSentryContext', function () {
+    it('properly parse all urls', function () {
       sentry
         .toSentryContext('https://somedevcozy.cozy.localhost:8080')
         .should.deepEqual({
@@ -53,7 +53,7 @@ describe('Sentry', function() {
     })
   })
 
-  describe('format', function() {
+  describe('format', function () {
     it('formats Node system errors', () => {
       try {
         fs.readFileSync(`${__filename}.missing-file`)
