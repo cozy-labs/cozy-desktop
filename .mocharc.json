@@ -1,0 +1,17 @@
+{
+  "color": true,
+  "slow": "150",
+  "timeout": "20000",
+  "reporter": "spec",
+  "require": [
+    "./core/globals",
+    "should",
+    "should-sinon",
+    "./test/support/assertions/change",
+    "./test/support/assertions/fileContents",
+    "./test/support/assertions/pending",
+    "./test/support/assertions/timestamp",
+    "./test/support/stacktraces"
+  ],
+  "recursive": true
+}
