@@ -2925,10 +2925,10 @@ cozy-flags@2.7.1:
   dependencies:
     microee "^0.0.6"
 
-cozy-flags@^2.8.0:
-  version "2.8.0"
-  resolved "https://registry.yarnpkg.com/cozy-flags/-/cozy-flags-2.8.0.tgz#1dfe47910811defa9af0cab97b53ba4b8a00095a"
-  integrity sha512-EVAb1jkBqIaXzz5IghCHvR/xatcT5tnQvhmBVEU2SDDftA+m5GdPZ4XjkjhVY2R34Rn3bAxQzhPTqwAL8fOOSQ==
+cozy-flags@^2.8.3:
+  version "2.8.3"
+  resolved "https://registry.yarnpkg.com/cozy-flags/-/cozy-flags-2.8.3.tgz#df6e75ed07bb5757f58a85e7469f00c791284324"
+  integrity sha512-0+EPr1RMEAlVZ6smWIItSZCu7b0/IkT2xG0UDe1xDcLBNMIm41aJVOZJnsK2SA4DTd7rEDMpk8iH+bSFTxxc8A==
   dependencies:
     microee "^0.0.6"
 
