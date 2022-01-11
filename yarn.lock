@@ -2696,7 +2696,7 @@ elm-test@^0.19.1:
     which "2.0.1"
     xmlbuilder "^13.0.2"
 
-elm-upgrade@^0.19.6:
+elm-upgrade@0.19.8:
   version "0.19.8"
   resolved "https://registry.yarnpkg.com/elm-upgrade/-/elm-upgrade-0.19.8.tgz#3594cb75005e5fab6dc7f347e867b074108db0cf"
   integrity sha512-SwNzV40wu9IEe35TWR9b7F8WctIRUkpl6F3lzF0AqmYnCcKjbzrxbW6G7DYfA9ICUYjuSLcyYJKm5c86oMiH8w==
