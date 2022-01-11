@@ -3551,10 +3551,10 @@ electron-positioner@^4.0.0:
   resolved "https://registry.yarnpkg.com/electron-positioner/-/electron-positioner-4.1.0.tgz#e158f8f6aabd6725a8a9b4f2279b9504bcbea1b0"
   integrity sha512-726DfbI9ZNoCg+Fcu6XLuTKTnzf+6nFqv7h+K/V6Ug7IbaPMI7s9S8URnGtWFCy5N5PL4HSzRFF2mXuinftDdg==
 
-electron-proxy-agent@^1.2.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/electron-proxy-agent/-/electron-proxy-agent-1.2.0.tgz#35bdbaf80d466cb7f71f20ddf0c11ad7b0aefdb9"
-  integrity sha512-bqCSo6V1/l511yn5SqbcHXUFA+TbsBmbur4yfJJhSO5WXcU1xbYWutAfGsIKEIKgtL1F0kZBQ7Ap9PdapJ4kuQ==
+electron-proxy-agent@1.2.1:
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/electron-proxy-agent/-/electron-proxy-agent-1.2.1.tgz#3aa09546b31ab638b963eb08fdaf4f30f2339a14"
+  integrity sha512-sxAmdPUngywVIhpxlvB/44fJtb6qUJzQS48Zl+2qU1fUlLUYp8nLwzfiCqrIJlAtxs4NcZnMsh+sA4Xr3YtMiw==
   dependencies:
     agent-base "2"
     debug "2"
