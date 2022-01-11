@@ -9,9 +9,9 @@ const { Readable } = require('stream')
 const { init } = require('../../../core/local/checksumer')
 
 describe('local/checksumer', () => {
-  let checksumer
-  let sandbox = sinon.sandbox.create()
+  const sandbox = sinon.createSandbox()
 
+  let checksumer
   beforeEach('init', () => {
     checksumer = init()
   })

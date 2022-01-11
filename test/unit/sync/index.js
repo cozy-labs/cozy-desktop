@@ -969,7 +969,7 @@ describe('Sync', function () {
         context('after Cozy is reachable again', () => {
           beforeEach(async function () {
             // Reset calls history
-            this.events.emit.reset()
+            this.events.emit.resetHistory()
 
             // Cozy is reachable
             this.remote.ping = sinon.stub().resolves(true)
@@ -992,7 +992,7 @@ describe('Sync', function () {
         context('while Cozy is still unreachable', () => {
           beforeEach(async function () {
             // Reset calls history
-            this.events.emit.reset()
+            this.events.emit.resetHistory()
 
             // Cozy is unreachable
             this.remote.ping = sinon.stub().resolves(false)
@@ -1078,7 +1078,7 @@ describe('Sync', function () {
       describe('retry', () => {
         beforeEach(async function () {
           // Reset calls history
-          this.events.emit.reset()
+          this.events.emit.resetHistory()
 
           // Force call to `retry`
           this.events.emit('user-action-done')
