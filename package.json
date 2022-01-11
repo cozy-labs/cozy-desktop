@@ -141,7 +141,7 @@
     "elm": "^0.19.1",
     "elm-format": "0.8.5",
     "elm-test": "^0.19.1",
-    "elm-upgrade": "^0.19.6",
+    "elm-upgrade": "0.19.8",
     "env-cmd": "^8.0.0",
     "eslint-config-cozy-app": "^1.1.12",
     "eslint-plugin-node": "^8.0.1",
