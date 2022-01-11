@@ -4,7 +4,7 @@ const program = require('commander')
 const local = require('./capture/local')
 const fse = require('fs-extra')
 const path = require('path')
-const opn = require('opn')
+const open = require('open')
 const scenarioHelpers = require('../test/support/helpers/scenarios')
 
 program
@@ -46,7 +46,7 @@ if (scenarioArg) {
 
 function startChokidar() {
   const syncPath = process.env.COZY_DESKTOP_DIR || local.syncPath
-  opn(syncPath)
+  open(syncPath)
 
   fse.ensureDirSync(syncPath)
 
