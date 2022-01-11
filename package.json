@@ -102,7 +102,7 @@
     "electron-proxy-agent": "^1.2.0",
     "electron-updater": "^4.1.2",
     "fs-extra": "10.0.0",
-    "isomorphic-fetch": "2.2.1",
+    "isomorphic-fetch": "3.0.0",
     "lnk": "^1.1.0",
     "lodash": "4.17.21",
     "micromatch": "4.0.4",
