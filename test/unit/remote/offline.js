@@ -54,7 +54,7 @@ describe('Remote', function () {
       )
 
       fetch.restore()
-      this.events.emit.reset()
+      this.events.emit.resetHistory()
 
       await this.remote.watcher.watch()
       should(this.events.emit).not.have.been.calledWith('RemoteWatcher:error')
