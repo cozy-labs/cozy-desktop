@@ -24,8 +24,8 @@ module.exports = {
 
 const { COZY_NO_SENTRY, DEBUG, TESTDEBUG } = process.env
 
-const SENTRY_REF = `ed6d0a175d504ead84851717b9bdb72e:324375dbe2ae4bbf8c212ae4eaf26289`
-const SENTRY_DSN = `https://${SENTRY_REF}@sentry.cozycloud.cc/91`
+const SENTRY_REF = `e937e35fcaa14c9a84ca5980ef8a852e`
+const SENTRY_DSN = `https://${SENTRY_REF}@errors.cozycloud.cc/4`
 const DOMAIN_TO_ENV = {
   'cozy.localhost': 'development',
   'cozy.works': 'development',
@@ -116,9 +116,7 @@ const handleBunyanMessage = msg => {
 
     Sentry.withScope(scope => {
       scope.setLevel(level)
-      for (const key in extra) {
-        scope.setExtra(key, extra[key])
-      }
+      scope.setExtras(extra)
 
       if (msg.err) {
         if (msg.err.reason) scope.setExtra('reason', msg.err.reason)
