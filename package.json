@@ -97,7 +97,7 @@
     "cozy-stack-client": "^24.0.0",
     "deep-diff": "^1.0.2",
     "dtrace-provider": "^0.8.8",
-    "electron-fetch": "^1.7.1",
+    "electron-fetch": "1.7.4",
     "electron-positioner": "^4.0.0",
     "electron-proxy-agent": "^1.2.0",
     "electron-updater": "^4.1.2",
