@@ -24,20 +24,34 @@ const config = (argv /*: Array<*> */ = process.argv) => {
   const config = yargs
     .env('COZY_DRIVE')
     .conflicts('proxy-script', 'proxy-rules')
-    .describe('proxy-script', 'The URL associated with the PAC file.')
-    .describe('proxy-rules', 'Rules indicating which proxies to use.')
-    .describe(
-      'proxy-bypassrules',
-      'Rules indicating which URLs should bypass the proxy settings. ' +
-        'See https://github.com/electron/electron/blob/master/docs/api/session.md#sessetproxyconfig-callback'
-    )
-    .default('proxy-ntlm-domains', '*')
-    .describe(
-      'proxy-ntlm-domains',
-      'A comma-separated list of servers for which integrated authentication is enabled. ' +
-        'Dynamically sets whether to always send credentials for HTTP NTLM or Negotiate authentication.'
-    )
-    .describe('login-by-realm', 'comma-separated list of realm:user:password')
+    .option('proxy-script', {
+      describe: 'The URL associated with the PAC file.',
+      type: 'string',
+      default: undefined
+    })
+    .option('proxy-rules', {
+      describe: 'Rules indicating which proxies to use.',
+      type: 'string',
+      default: undefined
+    })
+    .option('proxy-bypassrules', {
+      describe:
+        'Rules indicating which URLs should bypass the proxy settings. ' +
+        'See https://github.com/electron/electron/blob/master/docs/api/session.md#sessetproxyconfig-callback',
+      type: 'string',
+      default: undefined
+    })
+    .option('proxy-ntlm-domains', {
+      describe:
+        'A comma-separated list of servers for which integrated authentication is enabled. ' +
+        'Dynamically sets whether to always send credentials for HTTP NTLM or Negotiate authentication.',
+      default: '*'
+    })
+    .option('login-by-realm', {
+      describe: 'comma-separated list of realm:user:password',
+      type: 'string',
+      default: undefined
+    })
     .help('help')
     .parse(argv)
 
