@@ -4,7 +4,7 @@
  */
 
 const PouchDB = require('pouchdb')
-const uuid = require('uuid/v4')
+const uuid = require('uuid').v4
 const path = require('path')
 
 const { PouchError } = require('./error')
