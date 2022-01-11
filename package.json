@@ -143,7 +143,7 @@
     "elm-test": "^0.19.1",
     "elm-upgrade": "0.19.8",
     "env-cmd": "10.1.0",
-    "eslint-config-cozy-app": "^1.1.12",
+    "eslint-config-cozy-app": "1.6.0",
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-promise": "4.3.1",
     "faker": "5.5.3",
