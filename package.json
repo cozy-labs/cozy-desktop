@@ -149,7 +149,7 @@
     "faker": "5.5.3",
     "flow-bin": "^0.98.0",
     "flow-typed": "^2.5.0",
-    "glob": "^7.1.4",
+    "glob": "7.2.0",
     "istanbul": "0.4.5",
     "istanbul-api": "3.0.0",
     "istanbul-lib-coverage": "3.2.0",
