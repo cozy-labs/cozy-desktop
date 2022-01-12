@@ -202,6 +202,11 @@ module.exports.loadRemoteChangesFiles = (
   })
 }
 
+const toFsStats = (stats /*: Stats */) /*: fs.Stats */ => {
+  const anyStats /*: any */ = stats
+  return (anyStats /*: fs.Stats */)
+}
+
 const fixCapture = (
   capture /*: {| batches: AtomEvent[][] |} | {| events: ChokidarEvent[] |} */,
   inoMap /*: Map<number, number> */
@@ -228,8 +233,7 @@ const fixCapture = (
         if (!stats.fileid) {
           // Make sure `event.stats` is an instance of `fs.Stats` so
           // `stater.isDirectory()` returns the appropriate value.
-          // $FlowFixMe No `fileid` means `stats` is not a `WinStats` instance
-          event.stats = fsStatsFromObj(stats)
+          event.stats = fsStatsFromObj(toFsStats(stats))
         }
       })
     })
