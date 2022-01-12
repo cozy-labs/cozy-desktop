@@ -156,12 +156,13 @@ describe('core/pouch/migrations', function () {
         }))
     }
 
+    let migrationRunSpy
     beforeEach('spy on migration.run', () => {
-      sinon.spy(migration, 'run')
+      migrationRunSpy = sinon.spy(migration, 'run')
     })
 
     afterEach('remove spy', () => {
-      migration.run.restore()
+      migrationRunSpy.restore()
     })
 
     context(
@@ -231,12 +232,15 @@ describe('core/pouch/migrations', function () {
         })
 
         context('and no docs needed to be migrated', () => {
+          let migrationAffectedDocsStub
           beforeEach('mark all docs as unaffected', () => {
-            sinon.stub(migration, 'affectedDocs').callsFake(() => [])
+            migrationAffectedDocsStub = sinon
+              .stub(migration, 'affectedDocs')
+              .callsFake(() => [])
           })
 
           afterEach('remove stub', () => {
-            migration.affectedDocs.restore()
+            migrationAffectedDocsStub.restore()
           })
 
           it('does not save any docs', async function () {
@@ -261,7 +265,7 @@ describe('core/pouch/migrations', function () {
 
             await migrate(migration, this.pouch)
             should(migration.run).have.been.calledOnce()
-            should(migration.run.getCall(0).args).deepEqual([docs])
+            should(migrationRunSpy.firstCall.args).deepEqual([docs])
           })
 
           it('saves the migrated docs', async function () {
@@ -313,7 +317,7 @@ describe('core/pouch/migrations', function () {
             const isCorruptedDoc = index => index % 2 === 1
 
             beforeEach('stub migration.run() to return invalid docs', () => {
-              migration.run.restore()
+              migrationRunSpy.restore()
               sinon.stub(migration, 'run').callsFake(docs =>
                 docs.map((doc, index) => {
                   const newDoc = {

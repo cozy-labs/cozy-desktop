@@ -233,13 +233,13 @@ describe('RemoteWatcher', function () {
     })
 
     it('clears the watch timeout', async function () {
-      sinon.spy(global, 'clearTimeout')
+      const clearTimeoutSpy = sinon.spy(global, 'clearTimeout')
 
       const timeoutID = this.watcher.watchTimeout
       await this.watcher.resetTimeout()
       should(clearTimeout).have.been.calledWith(timeoutID)
 
-      clearTimeout.restore()
+      clearTimeoutSpy.restore()
     })
 
     context('when the watcher is running', () => {
@@ -496,7 +496,7 @@ describe('RemoteWatcher', function () {
 
       await this.watcher.pullMany(remoteDocs)
 
-      apply.callCount.should.equal(2)
+      should(apply).be.calledTwice()
       // Changes are sorted before applying (first one was given Metadata since
       // it is valid while the second one got the original RemoteDeletion since
       // it is ignored)
@@ -2342,10 +2342,8 @@ describe('RemoteWatcher', function () {
     })
 
     xit('calls deleteDoc & addDoc when trashed', async function () {
-      this.prep.deleteFolderAsync = sinon.stub()
-      this.prep.deleteFolderAsync.returnsPromise().resolves(null)
-      this.prep.addFolderAsync = sinon.stub()
-      this.prep.addFolderAsync.returnsPromise().resolves(null)
+      this.prep.deleteFolderAsync = sinon.stub().resolves(null)
+      this.prep.addFolderAsync = sinon.stub().resolves(null)
       const oldDir = builders.remoteDir().name('foo').build()
       const oldMeta /*: Metadata */ = await builders
         .metadir()
@@ -2355,8 +2353,8 @@ describe('RemoteWatcher', function () {
 
       this.watcher.identifyChange(newDir, null, [], [])
 
-      should(this.prep.deleteFolderAsync.called).be.true()
-      should(this.prep.addFolderAsync.called).be.true()
+      should(this.prep.deleteFolderAsync).be.called()
+      should(this.prep.addFolderAsync).be.called()
       const deleteArgs = this.prep.deleteFolderAsync.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
       delete oldMeta.updated_at
@@ -2368,10 +2366,8 @@ describe('RemoteWatcher', function () {
     })
 
     xit('calls deleteDoc & addDoc when restored', async function () {
-      this.prep.deleteFolder = sinon.stub()
-      this.prep.deleteFolder.returnsPromise().resolves(null)
-      this.prep.addFolderAsync = sinon.stub()
-      this.prep.addFolderAsync.returnsPromise().resolves(null)
+      this.prep.deleteFolder = sinon.stub().resolves(null)
+      this.prep.addFolderAsync = sinon.stub().resolves(null)
       const oldDir = builders.remoteDir().name('foo').trashed().build()
       const oldMeta /*: Metadata */ = await builders.metadir
         .fromRemote(oldDir)
@@ -2380,8 +2376,8 @@ describe('RemoteWatcher', function () {
 
       this.watcher.identifyChange(newDir, null, [], [])
 
-      should(this.prep.deleteFolder.called).be.true()
-      should(this.prep.addFolderAsync.called).be.true()
+      should(this.prep.deleteFolder).be.called()
+      should(this.prep.addFolderAsync).be.called()
       const deleteArgs = this.prep.deleteFolder.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
       delete oldMeta.updated_at

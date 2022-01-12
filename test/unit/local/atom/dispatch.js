@@ -2,7 +2,7 @@
 /* @flow */
 
 /*::
-import type { Stub, Call } from 'sinon'
+import type { SinonStub, SinonSpyCall } from 'sinon'
 
 type DispatchedCalls = {
   [string]: Array<Array<any>>
@@ -24,14 +24,14 @@ const Channel = require('../../../../core/local/atom/channel')
 const dispatch = require('../../../../core/local/atom/dispatch')
 const winDetectMove = require('../../../../core/local/atom/win_detect_move')
 
-function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
+function dispatchedCalls(obj /*: SinonStub */) /*: DispatchedCalls */ {
   const methods = Object.getOwnPropertyNames(obj).filter(
     m => typeof obj[m] === 'function'
   )
 
   const dispatchedCalls = {}
   for (const method of methods) {
-    const calls /*: Array<Call> */ = obj[method].getCalls()
+    const calls /*: Array<SinonSpyCall> */ = obj[method].getCalls()
 
     for (const call of calls) {
       if (!dispatchedCalls[method]) dispatchedCalls[method] = []
