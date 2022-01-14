@@ -100,9 +100,13 @@ function movedToIgnoredPath(event /*: AtomEvent */) /*: AtomEvent */ {
     ...event,
     action: 'deleted'
   }
+
   _.set(deletedEvent, [STEP_NAME, 'movedToIgnoredPath'], deletedEvent.path)
-  deletedEvent.path = deletedEvent.oldPath
-  delete deletedEvent.oldPath
+
+  if (deletedEvent.oldPath) {
+    deletedEvent.path = deletedEvent.oldPath
+    delete deletedEvent.oldPath
+  }
 
   return deletedEvent
 }
