@@ -10,7 +10,7 @@ const _ = require('lodash')
 const os = require('os')
 const path = require('path')
 const url = require('url')
-const uuid = require('uuid/v4')
+const uuid = require('uuid').v4
 const https = require('https')
 const { createGzip } = require('zlib')
 const semver = require('semver')
@@ -33,6 +33,7 @@ const { LOG_FILE, LOG_FILENAME } = logger
 const sentry = require('./utils/sentry')
 const { sendToTrash } = require('./utils/fs')
 const notes = require('./utils/notes')
+const web = require('./utils/web')
 
 /*::
 import type EventEmitter from 'events'
@@ -435,6 +436,10 @@ class App {
 
   findNote(filePath /*: string */) {
     return notes.findNote(filePath, this)
+  }
+
+  findDocument(filePath /*: string */) {
+    return web.findDocument(filePath, this)
   }
 }
 

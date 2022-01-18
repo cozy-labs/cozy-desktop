@@ -77,11 +77,8 @@ const step = async (
     .filter(e => e.type.startsWith('add'))
     .forEach(e => initialScanParams.paths.push(metadata.id(e.path)))
 
-  const {
-    offlineEvents,
-    unappliedMoves,
-    emptySyncDir
-  } = await detectOfflineUnlinkEvents(initialScanParams, pouch)
+  const { offlineEvents, unappliedMoves, emptySyncDir } =
+    await detectOfflineUnlinkEvents(initialScanParams, pouch)
   events = offlineEvents.concat(events)
 
   events = events.filter(e => {

@@ -44,13 +44,13 @@ const remoteSyncError = (msg, doc) =>
     doc
   })
 
-describe('Sync', function() {
+describe('Sync', function () {
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  beforeEach('instanciate sync', function() {
+  beforeEach('instanciate sync', function () {
     this.local = stubSide('local')
     this.remote = stubSide('remote')
     this.ignore = new Ignore(['ignored'])
@@ -65,17 +65,17 @@ describe('Sync', function() {
     )
   })
 
-  afterEach(async function() {
+  afterEach(async function () {
     await this.sync.stop()
   })
 
   let builders
-  beforeEach('prepare builders', function() {
+  beforeEach('prepare builders', function () {
     builders = new Builders(this)
   })
 
-  describe('start', function() {
-    beforeEach('instanciate sync', function() {
+  describe('start', function () {
+    beforeEach('instanciate sync', function () {
       this.local.start = sinon.stub().resolves()
       this.local.watcher.running = Promise.resolve()
       this.local.stop = sinon.stub().resolves()
@@ -89,7 +89,7 @@ describe('Sync', function() {
       sinon.spy(this.sync.events, 'emit')
     })
 
-    it('starts the metadata replication of both sides', async function() {
+    it('starts the metadata replication of both sides', async function () {
       this.sync.start()
       await this.sync.started()
       should(this.local.start).have.been.calledOnce()
@@ -98,59 +98,59 @@ describe('Sync', function() {
     })
 
     context('if local watcher fails to start', () => {
-      beforeEach(function() {
+      beforeEach(function () {
         this.local.start = sinon.stub().rejects(new Error('failed'))
       })
 
-      it('does not start replication', async function() {
+      it('does not start replication', async function () {
         await this.sync.start()
         should(this.sync.sync).not.have.been.called()
       })
 
-      it('does not start remote watcher', async function() {
+      it('does not start remote watcher', async function () {
         await this.sync.start()
         should(this.remote.start).not.have.been.called()
       })
 
-      it('stops local watcher', async function() {
+      it('stops local watcher', async function () {
         await this.sync.start()
         should(this.local.stop).have.been.calledOnce()
       })
 
-      it('emits a Sync:fatal event', async function() {
+      it('emits a Sync:fatal event', async function () {
         await this.sync.start()
         should(this.sync.events.emit).have.been.calledWith('Sync:fatal')
       })
     })
 
     context('if remote watcher fails to start', () => {
-      beforeEach(function() {
+      beforeEach(function () {
         this.remote.start = sinon.stub().callsFake(() => {
           this.remote.watcher.fatal(new Error('failed'))
         })
       })
 
-      it('does not start replication', async function() {
+      it('does not start replication', async function () {
         await this.sync.start()
         should(this.sync.sync).not.have.been.called()
       })
 
-      it('starts local watcher', async function() {
+      it('starts local watcher', async function () {
         await this.sync.start()
         should(this.local.start).have.been.calledOnce()
       })
 
-      it('stops local watcher', async function() {
+      it('stops local watcher', async function () {
         await this.sync.start()
         should(this.local.stop).have.been.calledOnce()
       })
 
-      it('stops remote watcher', async function() {
+      it('stops remote watcher', async function () {
         await this.sync.start()
         should(this.remote.stop).have.been.calledOnce()
       })
 
-      it('emits a Sync:fatal event', async function() {
+      it('emits a Sync:fatal event', async function () {
         await this.sync.start()
         should(this.sync.events.emit).have.been.calledWith('Sync:fatal')
       })
@@ -158,7 +158,7 @@ describe('Sync', function() {
 
     context('if local watcher rejects while running', () => {
       let rejectLocalWatcher
-      beforeEach(async function() {
+      beforeEach(async function () {
         this.local.watcher.running = new Promise((resolve, reject) => {
           rejectLocalWatcher = reject
         })
@@ -166,25 +166,25 @@ describe('Sync', function() {
         await this.sync.started()
       })
 
-      it('stops replication', async function() {
+      it('stops replication', async function () {
         rejectLocalWatcher(new Error('failed'))
         await this.sync.stopped()
         should(this.sync.stop).have.been.calledOnce()
       })
 
-      it('stops local watcher', async function() {
+      it('stops local watcher', async function () {
         rejectLocalWatcher(new Error('failed'))
         await this.sync.stopped()
         should(this.local.stop).have.been.calledOnce()
       })
 
-      it('stops remote watcher', async function() {
+      it('stops remote watcher', async function () {
         rejectLocalWatcher(new Error('failed'))
         await this.sync.stopped()
         should(this.remote.stop).have.been.calledOnce()
       })
 
-      it('emits a Sync:fatal event', async function() {
+      it('emits a Sync:fatal event', async function () {
         rejectLocalWatcher(new Error('failed'))
         await this.sync.stopped()
         should(this.sync.events.emit).have.been.calledWith('Sync:fatal')
@@ -194,18 +194,18 @@ describe('Sync', function() {
 
   // TODO: Test lock request/acquisition/release
 
-  describe('sync', function() {
-    beforeEach('stub lifecycle', function() {
+  describe('sync', function () {
+    beforeEach('stub lifecycle', function () {
       this.sync.events = new EventEmitter()
       this.sync.lifecycle.end('start')
     })
-    afterEach('restore lifecycle', function() {
+    afterEach('restore lifecycle', function () {
       this.sync.events.emit('stopped')
       delete this.sync.events
       this.sync.lifecycle.end('stop')
     })
 
-    it('waits for and applies available changes', async function() {
+    it('waits for and applies available changes', async function () {
       const apply = sinon.stub(this.sync, 'apply')
       apply.callsFake(change => this.pouch.setLocalSeq(change.seq))
 
@@ -228,8 +228,8 @@ describe('Sync', function() {
     })
   })
 
-  describe('apply', function() {
-    it('does nothing for an ignored document', async function() {
+  describe('apply', function () {
+    it('does nothing for an ignored document', async function () {
       const change = {
         seq: 121,
         doc: await builders
@@ -243,36 +243,27 @@ describe('Sync', function() {
       should(this.sync.applyDoc).have.not.been.called()
     })
 
-    it('does nothing for an up-to-date document', async function() {
+    it('does nothing for an up-to-date document', async function () {
       const change = {
         seq: 122,
-        doc: await builders
-          .metadir()
-          .path('foo')
-          .upToDate()
-          .create()
+        doc: await builders.metadir().path('foo').upToDate().create()
       }
       this.sync.applyDoc = sinon.spy()
       await this.sync.apply(change)
       should(this.sync.applyDoc).have.not.been.called()
     })
 
-    it('does nothing for an up-to-date _deleted document', async function() {
+    it('does nothing for an up-to-date _deleted document', async function () {
       const change = {
         seq: 122,
-        doc: await builders
-          .metadir()
-          .path('foo')
-          .erased()
-          .upToDate()
-          .create()
+        doc: await builders.metadir().path('foo').erased().upToDate().create()
       }
       this.sync.applyDoc = sinon.spy()
       await this.sync.apply(change)
       should(this.sync.applyDoc).have.not.been.called()
     })
 
-    it('trashes a locally deleted file', async function() {
+    it('trashes a locally deleted file', async function () {
       const change = {
         seq: 145,
         doc: await builders
@@ -299,7 +290,7 @@ describe('Sync', function() {
       }
     })
 
-    it('trashes a locally deleted folder with content', async function() {
+    it('trashes a locally deleted folder with content', async function () {
       const deletedChild = await builders
         .metadata()
         .path('foo/bar')
@@ -334,7 +325,7 @@ describe('Sync', function() {
       }
     })
 
-    it('skips trashing a locally deleted file if its parent is deleted', async function() {
+    it('skips trashing a locally deleted file if its parent is deleted', async function () {
       const deletedChild = await builders
         .metadata()
         .path('foo/bar')
@@ -369,7 +360,7 @@ describe('Sync', function() {
       }
     })
 
-    it('calls applyDoc for a modified file', async function() {
+    it('calls applyDoc for a modified file', async function () {
       const initial = await builders
         .metafile()
         .path('foo/bar')
@@ -400,7 +391,7 @@ describe('Sync', function() {
       should(await this.pouch.getLocalSeq()).equal(123)
     })
 
-    it('calls applyDoc for a modified folder', async function() {
+    it('calls applyDoc for a modified folder', async function () {
       const initial = await builders
         .metadir()
         .path('foo/baz')
@@ -428,7 +419,7 @@ describe('Sync', function() {
       should(await this.pouch.getLocalSeq()).equal(124)
     })
 
-    it('calls addFileAsync for an added file', async function() {
+    it('calls addFileAsync for an added file', async function () {
       const doc = await builders
         .metafile()
         .path('foo/bar')
@@ -439,7 +430,7 @@ describe('Sync', function() {
       should(this.remote.addFileAsync).have.been.calledWith(doc)
     })
 
-    it('calls overwriteFileAsync for an overwritten file', async function() {
+    it('calls overwriteFileAsync for an overwritten file', async function () {
       const initial = await builders
         .metafile()
         .path('overwrite/foo/bar')
@@ -465,7 +456,7 @@ describe('Sync', function() {
 
       let file, merged, change
 
-      beforeEach('set up merged local file update', async function() {
+      beforeEach('set up merged local file update', async function () {
         file = await builders
           .metafile()
           .upToDate()
@@ -482,17 +473,17 @@ describe('Sync', function() {
         change = { seq, doc: _.cloneDeep(merged) }
         sinon.stub(this.sync, 'getNextChanges').returns([change])
       })
-      afterEach(function() {
+      afterEach(function () {
         this.sync.getNextChanges.restore()
       })
 
       describe('when apply throws a NEEDS_REMOTE_MERGE_CODE error', () => {
-        beforeEach(function() {
+        beforeEach(function () {
           sinon.stub(this.sync, 'blockSyncFor').callsFake(() => {
             this.sync.lifecycle.end('stop')
           })
         })
-        beforeEach('simulate error', async function() {
+        beforeEach('simulate error', async function () {
           this.sync.lifecycle.end('start')
           sinon.stub(this.sync, 'apply').rejects(
             new syncErrors.SyncError({
@@ -510,15 +501,15 @@ describe('Sync', function() {
           await this.sync.syncBatch()
           this.sync.apply.restore()
         })
-        afterEach(function() {
+        afterEach(function () {
           this.sync.blockSyncFor.restore()
         })
 
-        it('removes moveFrom and overwrite attributes', async function() {
+        it('removes moveFrom and overwrite attributes', async function () {
           should(change.doc).not.have.properties(['moveFrom', 'overwrite'])
         })
 
-        it('blocks the synchronization so we can retry applying the change', async function() {
+        it('blocks the synchronization so we can retry applying the change', async function () {
           should(this.sync.blockSyncFor).have.been.calledOnce()
           should(this.sync.blockSyncFor).have.been.calledWithMatch({
             err: { code: remoteErrors.NEEDS_REMOTE_MERGE_CODE },
@@ -528,7 +519,7 @@ describe('Sync', function() {
       })
     })
 
-    it('calls updateFileMetadataAsync with previous revision for updated file metadata', async function() {
+    it('calls updateFileMetadataAsync with previous revision for updated file metadata', async function () {
       const doc = await builders
         .metafile()
         .path('udpate/foo/without-errors')
@@ -551,7 +542,7 @@ describe('Sync', function() {
       should(this.remote.updateFileMetadataAsync).have.been.calledWith(updated)
     })
 
-    it('calls moveAsync for a moved file', async function() {
+    it('calls moveAsync for a moved file', async function () {
       const was = await builders
         .metafile()
         .path('foo/bar')
@@ -571,7 +562,7 @@ describe('Sync', function() {
       should(this.remote.moveAsync).have.been.calledWith(doc, was)
     })
 
-    it('calls moveAsync and overwriteFileAsync for a moved-updated file', async function() {
+    it('calls moveAsync and overwriteFileAsync for a moved-updated file', async function () {
       const was = await builders
         .metafile()
         .path('foo/bar')
@@ -595,7 +586,7 @@ describe('Sync', function() {
       should(this.remote.overwriteFileAsync).have.been.calledWith(doc)
     })
 
-    it('calls trashAsync for a deleted synced file', async function() {
+    it('calls trashAsync for a deleted synced file', async function () {
       const doc = await builders
         .metafile()
         .path('foo')
@@ -606,7 +597,7 @@ describe('Sync', function() {
       should(this.local.trashAsync).have.been.calledWith(doc)
     })
 
-    it('does nothing for a deleted file that was not synced', async function() {
+    it('does nothing for a deleted file that was not synced', async function () {
       const doc = await builders
         .metafile()
         .path('tmp/fooz')
@@ -617,7 +608,7 @@ describe('Sync', function() {
       should(this.remote.trashAsync).not.have.been.called()
     })
 
-    it('calls addFolderAsync for an added folder', async function() {
+    it('calls addFolderAsync for an added folder', async function () {
       const doc = await builders
         .metadir()
         .path('foobar/bar')
@@ -629,7 +620,7 @@ describe('Sync', function() {
       should(this.remote.addFolderAsync).have.been.calledWith(doc)
     })
 
-    it('does not call updateFolderAsync for an updated folder', async function() {
+    it('does not call updateFolderAsync for an updated folder', async function () {
       const initial = await builders
         .metadir()
         .path('foobar/baz')
@@ -644,7 +635,7 @@ describe('Sync', function() {
       should(this.local.updateFolderAsync).not.have.been.calledWith(doc)
     })
 
-    it('calls moveAsync for a moved folder', async function() {
+    it('calls moveAsync for a moved folder', async function () {
       const was = await builders
         .metadir()
         .path('foobar/bar')
@@ -664,7 +655,7 @@ describe('Sync', function() {
       should(this.remote.moveAsync).have.been.calledWith(doc, was)
     })
 
-    it('calls trashAsync for a deleted synced folder', async function() {
+    it('calls trashAsync for a deleted synced folder', async function () {
       const doc = await builders
         .metadir()
         .path('baz')
@@ -675,7 +666,7 @@ describe('Sync', function() {
       should(this.local.trashAsync).have.been.calledWith(doc)
     })
 
-    it('does nothing for a deleted folder that was not added', async function() {
+    it('does nothing for a deleted folder that was not added', async function () {
       const doc = await builders
         .metadir()
         .path('tmp/foobaz')
@@ -687,8 +678,8 @@ describe('Sync', function() {
     })
   })
 
-  describe('updateErrors', function() {
-    it('retries on first local -> remote sync error', async function() {
+  describe('updateErrors', function () {
+    it('retries on first local -> remote sync error', async function () {
       const doc = await builders
         .metadata()
         .path('first/failure')
@@ -705,7 +696,7 @@ describe('Sync', function() {
       should(actual._rev).not.equal(doc._rev)
     })
 
-    it('retries on second remote -> local sync error', async function() {
+    it('retries on second remote -> local sync error', async function () {
       const doc = await builders
         .metadata()
         .path('second/failure')
@@ -725,7 +716,7 @@ describe('Sync', function() {
   })
 
   for (const syncSide of ['local', 'remote']) {
-    describe(`updateRevs at end of ${syncSide} Sync`, function() {
+    describe(`updateRevs at end of ${syncSide} Sync`, function () {
       const mergedSide = otherSide(syncSide)
 
       const updateRevs = ({ sync }, doc) =>
@@ -733,7 +724,7 @@ describe('Sync', function() {
 
       let doc, upToDate, syncedTarget, mergedTarget
 
-      beforeEach(async function() {
+      beforeEach(async function () {
         upToDate = await builders
           .metadata()
           .upToDate() // 2, 2
@@ -749,8 +740,8 @@ describe('Sync', function() {
           .create() // rev == 3
       })
 
-      context('without changes merged during Sync', function() {
-        it('marks doc as up-to-date', async function() {
+      context('without changes merged during Sync', function () {
+        it('marks doc as up-to-date', async function () {
           await updateRevs(this, _.cloneDeep(doc))
 
           const updated = await this.pouch.bySyncedPath(doc.path)
@@ -762,10 +753,10 @@ describe('Sync', function() {
       for (const extraChanges of [1, 2]) {
         context(
           `with ${extraChanges} ${mergedSide} changes merged during Sync`,
-          function() {
+          function () {
             let updated
 
-            beforeEach(async function() {
+            beforeEach(async function () {
               await builders
                 .metadata(doc)
                 .sides({
@@ -779,7 +770,7 @@ describe('Sync', function() {
               updated = await this.pouch.bySyncedPath(doc.path)
             })
 
-            it(`keeps ${syncSide} out-of-date information`, async function() {
+            it(`keeps ${syncSide} out-of-date information`, async function () {
               should(metadata.outOfDateSide(updated)).equal(syncSide)
             })
 
@@ -789,7 +780,7 @@ describe('Sync', function() {
               )
             })
 
-            it(`keeps the doc rev coherent with its ${mergedSide} side`, async function() {
+            it(`keeps the doc rev coherent with its ${mergedSide} side`, async function () {
               should(metadata.target(updated)).equal(
                 metadata.side(updated, mergedSide)
               )
@@ -800,8 +791,8 @@ describe('Sync', function() {
     })
   }
 
-  describe('selectSide', function() {
-    it('selects the local side if remote is up-to-date', function() {
+  describe('selectSide', function () {
+    it('selects the local side if remote is up-to-date', function () {
       const doc1 = builders
         .metafile()
         .path('selectSide/1')
@@ -817,7 +808,7 @@ describe('Sync', function() {
       should(this.sync.selectSide({ doc: doc2 })).eql(this.sync.local)
     })
 
-    it('selects the remote side if local is up-to-date', function() {
+    it('selects the remote side if local is up-to-date', function () {
       const doc1 = builders
         .metafile()
         .path('selectSide/3')
@@ -833,7 +824,7 @@ describe('Sync', function() {
       should(this.sync.selectSide({ doc: doc2 })).eql(this.sync.remote)
     })
 
-    it('returns an empty array if both sides are up-to-date', function() {
+    it('returns an empty array if both sides are up-to-date', function () {
       const doc = builders
         .metafile()
         .path('selectSide/5')
@@ -842,7 +833,7 @@ describe('Sync', function() {
       should(this.sync.selectSide({ doc })).be.null()
     })
 
-    it('returns an empty array if a local only doc is erased', function() {
+    it('returns an empty array if a local only doc is erased', function () {
       const doc = builders
         .metafile()
         .path('selectSide/5')
@@ -852,7 +843,7 @@ describe('Sync', function() {
       should(this.sync.selectSide({ doc })).be.null()
     })
 
-    it('returns an empty array if a remote only doc is erased', function() {
+    it('returns an empty array if a remote only doc is erased', function () {
       const doc = builders
         .metafile()
         .path('selectSide/5')
@@ -864,14 +855,14 @@ describe('Sync', function() {
   })
 
   describe('blockSyncFor', () => {
-    beforeEach(function() {
+    beforeEach(function () {
       sinon.spy(this.events, 'emit')
       this.remote.watcher = {
         start: sinon.stub().returns(),
         stop: sinon.stub().returns()
       }
     })
-    afterEach(function() {
+    afterEach(function () {
       delete this.remote.watcher
       this.events.emit.restore()
     })
@@ -881,17 +872,17 @@ describe('Sync', function() {
         new FetchError({ status: 500 }, 'UnreachableCozy test error'),
         'remote'
       )
-      beforeEach(function() {
+      beforeEach(function () {
         this.sync.blockSyncFor({
           err: unreachableSyncError
         })
       })
 
-      it('emits offline event', function() {
+      it('emits offline event', function () {
         should(this.events.emit).have.been.calledWith('offline')
       })
 
-      it('stops the remote watcher', function() {
+      it('stops the remote watcher', function () {
         should(this.remote.watcher.stop).have.been.called()
       })
 
@@ -902,7 +893,7 @@ describe('Sync', function() {
       // new interval without clearing the one created by the Sync error.
       // It this case we could have an endless Sync error retry loop. This test
       // checks that this does not occur.
-      it('does not allow multiple retry intervals', async function() {
+      it('does not allow multiple retry intervals', async function () {
         const unreachableRemoteError = remoteErrors.wrapError(
           new FetchError({ status: 500 }, 'Concurrent UnreachableCozy error')
         )
@@ -927,9 +918,9 @@ describe('Sync', function() {
 
       describe('retry', () => {
         context('after Cozy is reachable again', () => {
-          beforeEach(async function() {
+          beforeEach(async function () {
             // Reset calls history
-            this.events.emit.reset()
+            this.events.emit.resetHistory()
 
             // Cozy is reachable
             this.remote.ping = sinon.stub().resolves(true)
@@ -940,19 +931,19 @@ describe('Sync', function() {
             await Promise.delay(1000)
           })
 
-          it('emits online event', async function() {
+          it('emits online event', async function () {
             should(this.events.emit).have.been.calledWith('online')
           })
 
-          it('restarts the remote watcher', function() {
+          it('restarts the remote watcher', function () {
             should(this.remote.watcher.start).have.been.called()
           })
         })
 
         context('while Cozy is still unreachable', () => {
-          beforeEach(async function() {
+          beforeEach(async function () {
             // Reset calls history
-            this.events.emit.reset()
+            this.events.emit.resetHistory()
 
             // Cozy is unreachable
             this.remote.ping = sinon.stub().resolves(false)
@@ -963,11 +954,11 @@ describe('Sync', function() {
             await Promise.delay(1000)
           })
 
-          it('emits offline event', async function() {
+          it('emits offline event', async function () {
             should(this.events.emit).have.been.calledWith('offline')
           })
 
-          it('does not restart the remote watcher', function() {
+          it('does not restart the remote watcher', function () {
             should(this.remote.watcher.start).not.have.been.called()
           })
         })
@@ -981,7 +972,7 @@ describe('Sync', function() {
       const seq = 2
       beforeEach(
         'set up merged local overwriting file move with update',
-        async function() {
+        async function () {
           const overwritten = await builders
             .metafile()
             .path('dst')
@@ -1012,7 +1003,7 @@ describe('Sync', function() {
         }
       )
 
-      beforeEach(function() {
+      beforeEach(function () {
         this.sync.blockSyncFor({
           err: syncErrors.wrapError(
             remoteErrors.wrapError(
@@ -1029,9 +1020,9 @@ describe('Sync', function() {
       })
 
       describe('retry', () => {
-        beforeEach(async function() {
+        beforeEach(async function () {
           // Reset calls history
-          this.events.emit.reset()
+          this.events.emit.resetHistory()
 
           // Force call to `retry`
           this.events.emit('user-action-done')
@@ -1039,23 +1030,23 @@ describe('Sync', function() {
           await Promise.delay(1000)
         })
 
-        it('increases the record errors counter', async function() {
+        it('increases the record errors counter', async function () {
           const errors = merged.errors || 0
           const synced = await this.pouch.bySyncedPath(merged.path)
           should(synced.errors).equal(errors + 1)
         })
 
-        it('does not skip the change by saving seq', async function() {
+        it('does not skip the change by saving seq', async function () {
           should(await this.pouch.getLocalSeq()).equal(previousSeq)
         })
 
-        it('keeps the out-of-date side', async function() {
+        it('keeps the out-of-date side', async function () {
           const outOfDateSide = metadata.outOfDateSide(merged)
           const synced = await this.pouch.bySyncedPath(merged.path)
           should(metadata.outOfDateSide(synced)).equal(outOfDateSide)
         })
 
-        it('removes moveFrom and overwrite attributes', async function() {
+        it('removes moveFrom and overwrite attributes', async function () {
           // It actually only saves the record and the attributes need to be
           // removed before.
           // But this is the goal.
@@ -1093,17 +1084,13 @@ describe('Sync', function() {
     }
 
     context('when one of the changes has no side', () => {
-      it('returns 0', async function() {
+      it('returns 0', async function () {
         const docA = await builders
           .metafile()
           .path('dir/file')
           .upToDate()
           .create()
-        const docB = await builders
-          .metadir()
-          .path('dir')
-          .upToDate()
-          .create()
+        const docB = await builders.metadir().path('dir').upToDate().create()
         const docC = await builders
           .metadir()
           .path('dir/subdir')
@@ -1132,7 +1119,7 @@ describe('Sync', function() {
     })
 
     context('when passing the same change twice', () => {
-      it('returns 0', async function() {
+      it('returns 0', async function () {
         const add = await builders
           .metafile()
           .path('add')
@@ -1144,11 +1131,7 @@ describe('Sync', function() {
           .trashed()
           .changedSide('local')
           .create()
-        const src = await builders
-          .metafile()
-          .path('src')
-          .upToDate()
-          .create()
+        const src = await builders.metafile().path('src').upToDate().create()
         const move = await builders
           .metafile()
           .moveFrom(src)
@@ -1170,7 +1153,7 @@ describe('Sync', function() {
       'with a move outside a directory and the deletion of said directory',
       () => {
         let move, del
-        beforeEach(async function() {
+        beforeEach(async function () {
           const dir = await builders
             .metadir()
             .path('dir')
@@ -1207,7 +1190,7 @@ describe('Sync', function() {
       'with a move within a directory and the deletion of said directory',
       () => {
         let move, del
-        beforeEach(async function() {
+        beforeEach(async function () {
           const dir = await builders
             .metadir()
             .path('dir')
@@ -1241,7 +1224,7 @@ describe('Sync', function() {
       'with a move into a directory and the deletion of said directory',
       () => {
         let move, del
-        beforeEach(async function() {
+        beforeEach(async function () {
           const dir = await builders
             .metadir()
             .path('dir')
@@ -1273,12 +1256,8 @@ describe('Sync', function() {
 
     context('with a directory move and an addition into said directory', () => {
       let move, add
-      beforeEach(async function() {
-        const srcDir = await builders
-          .metadir()
-          .path('src')
-          .upToDate()
-          .create()
+      beforeEach(async function () {
+        const srcDir = await builders.metadir().path('src').upToDate().create()
         const dstDir = await builders
           .metadir()
           .moveFrom(srcDir)
@@ -1308,7 +1287,7 @@ describe('Sync', function() {
       'with a directory addition and an addition into said directory',
       () => {
         let addDir, addFile
-        beforeEach(async function() {
+        beforeEach(async function () {
           const dir = await builders
             .metadir()
             .path('dir')
@@ -1338,7 +1317,7 @@ describe('Sync', function() {
       'with a directory deletion and a deletion within said directory',
       () => {
         let delDir, delFile
-        beforeEach(async function() {
+        beforeEach(async function () {
           const dir = await builders
             .metadir()
             .path('dir')
@@ -1368,12 +1347,8 @@ describe('Sync', function() {
 
     context('with a directory move and the move of one of its children', () => {
       let moveDir, moveFile
-      beforeEach(async function() {
-        const srcDir = await builders
-          .metadir()
-          .path('src')
-          .upToDate()
-          .create()
+      beforeEach(async function () {
+        const srcDir = await builders.metadir().path('src').upToDate().create()
         const dstDir = await builders
           .metadir()
           .moveFrom(srcDir)
@@ -1412,7 +1387,7 @@ describe('Sync', function() {
         'with a directory addition and an addition into said directory',
         () => {
           let addDir, addFile
-          beforeEach(async function() {
+          beforeEach(async function () {
             const dir = await builders
               .metadir()
               .path('dir')

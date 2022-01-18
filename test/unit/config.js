@@ -8,37 +8,37 @@ const { COZY_URL } = require('../support/helpers/cozy')
 
 const config = require('../../core/config')
 
-describe('core/config', function() {
+describe('core/config', function () {
   describe('.Config', () => {
     beforeEach('instanciate config', configHelpers.createConfig)
     afterEach('clean config directory', configHelpers.cleanConfig)
 
-    describe('read', function() {
-      context('when a tmp config file exists', function() {
-        beforeEach('create tmp config file', function() {
+    describe('read', function () {
+      context('when a tmp config file exists', function () {
+        beforeEach('create tmp config file', function () {
           fse.ensureFileSync(this.config.tmpConfigPath)
         })
-        afterEach('remove tmp config file', function() {
+        afterEach('remove tmp config file', function () {
           if (fse.existsSync(this.config.tmpConfigPath)) {
             fse.unlinkSync(this.config.tmpConfigPath)
           }
         })
 
-        context('and it has a valid JSON content', function() {
+        context('and it has a valid JSON content', function () {
           const fileConfig = { url: 'https://cozy.test/' }
 
-          beforeEach('write valid content', function() {
+          beforeEach('write valid content', function () {
             fse.writeFileSync(
               this.config.tmpConfigPath,
               JSON.stringify(fileConfig, null, 2)
             )
           })
 
-          it('reads the tmp config', function() {
+          it('reads the tmp config', function () {
             should(this.config.read()).match(fileConfig)
           })
 
-          it('persists the tmp config file as the new config file', function() {
+          it('persists the tmp config file as the new config file', function () {
             this.config.read()
 
             const fileConfigPersisted = fse.readJSONSync(this.config.configPath)
@@ -46,13 +46,13 @@ describe('core/config', function() {
           })
         })
 
-        context('and it does not have a valid JSON content', function() {
-          beforeEach('write invalid content', function() {
+        context('and it does not have a valid JSON content', function () {
+          beforeEach('write invalid content', function () {
             fse.writeFileSync(this.config.tmpConfigPath, '\0')
             this.config.persist()
           })
 
-          it('reads the existing config', function() {
+          it('reads the existing config', function () {
             const fileConfig = this.config.read()
             should(fileConfig).be.an.Object()
             should(fileConfig.url).eql(COZY_URL)
@@ -60,28 +60,28 @@ describe('core/config', function() {
         })
       })
 
-      context('when no tmp config files exist', function() {
-        beforeEach('remove any tmp config file', function() {
+      context('when no tmp config files exist', function () {
+        beforeEach('remove any tmp config file', function () {
           if (fse.existsSync(this.config.tmpConfigPath)) {
             fse.unlinkSync(this.config.tmpConfigPath)
           }
           this.config.persist()
         })
 
-        it('reads the existing config', function() {
+        it('reads the existing config', function () {
           const fileConfig = this.config.read()
           should(fileConfig).be.an.Object()
           should(fileConfig.url).eql(COZY_URL)
         })
       })
 
-      context('when the read config is empty', function() {
-        beforeEach('empty local config', function() {
+      context('when the read config is empty', function () {
+        beforeEach('empty local config', function () {
           fse.ensureFileSync(this.config.configPath)
           fse.writeFileSync(this.config.configPath, '')
         })
 
-        it('creates a new empty one', function() {
+        it('creates a new empty one', function () {
           const fileConfig = this.config.read()
           should(fileConfig).be.an.Object()
           should(fileConfig).be.empty()
@@ -89,69 +89,69 @@ describe('core/config', function() {
       })
     })
 
-    describe('safeLoad', function() {
-      context('when the file content is valid JSON', function() {
+    describe('safeLoad', function () {
+      context('when the file content is valid JSON', function () {
         const fileConfig = { url: 'https://cozy.test/' }
 
-        beforeEach('write valid content', function() {
+        beforeEach('write valid content', function () {
           fse.writeFileSync(
             this.config.configPath,
             JSON.stringify(fileConfig, null, 2)
           )
         })
 
-        it('returns an object matching the file content', function() {
+        it('returns an object matching the file content', function () {
           const newFileConfig = config.loadOrDeleteFile(this.config.configPath)
           newFileConfig.should.be.an.Object()
           newFileConfig.url.should.eql(fileConfig.url)
         })
       })
 
-      context('when the file does not exist', function() {
-        beforeEach('remove config file', function() {
+      context('when the file does not exist', function () {
+        beforeEach('remove config file', function () {
           if (fse.existsSync(this.config.configPath)) {
             fse.unlinkSync(this.config.configPath)
           }
         })
 
-        it('throws an error', function() {
+        it('throws an error', function () {
           ;(() => {
             config.loadOrDeleteFile(this.config.configPath)
           }).should.throw()
         })
       })
 
-      context('when the file is empty', function() {
-        beforeEach('create empty file', function() {
+      context('when the file is empty', function () {
+        beforeEach('create empty file', function () {
           fse.writeFileSync(this.config.configPath, '')
         })
 
-        it('returns an empty object', function() {
+        it('returns an empty object', function () {
           should(config.loadOrDeleteFile(this.config.configPath)).deepEqual({})
         })
 
-        it('does not delete it', function() {
+        it('does not delete it', function () {
           config.loadOrDeleteFile(this.config.configPath)
           should(fse.existsSync(this.config.configPath)).be.true()
         })
       })
 
-      context('when the file content is not valid JSON', function() {
-        beforeEach('write invalid content', function() {
+      context('when the file content is not valid JSON', function () {
+        beforeEach('write invalid content', function () {
           fse.writeFileSync(this.config.configPath, '\0')
         })
 
-        it('does not throw any errors', function() {
+        it('does not throw any errors', function () {
           ;(() => {
             config.loadOrDeleteFile(this.config.configPath)
           }).should.not.throw()
         })
 
-        it('returns an empty object', function() {
+        it('returns an empty object', function () {
           should(config.loadOrDeleteFile(this.config.configPath)).deepEqual({})
         })
 
-        it('deletes the file', function() {
+        it('deletes the file', function () {
           fse.existsSync(this.config.configPath).should.be.true()
           config.loadOrDeleteFile(this.config.configPath)
           fse.existsSync(this.config.configPath).should.be.false()
@@ -159,8 +159,8 @@ describe('core/config', function() {
       })
     })
 
-    describe('persist', function() {
-      it('saves last changes made on the config', function() {
+    describe('persist', function () {
+      it('saves last changes made on the config', function () {
         const url = 'http://cozy.local:8080/'
         this.config.cozyUrl = url
         this.config.persist()
@@ -169,51 +169,51 @@ describe('core/config', function() {
       })
     })
 
-    describe('SyncPath', function() {
-      it('returns the set sync path', function() {
+    describe('SyncPath', function () {
+      it('returns the set sync path', function () {
         this.config.syncPath = '/path/to/sync/dir'
         should(this.config.syncPath).equal('/path/to/sync/dir')
       })
     })
 
-    describe('CozyUrl', function() {
-      it('returns the set Cozy URL', function() {
+    describe('CozyUrl', function () {
+      it('returns the set Cozy URL', function () {
         this.config.cozyUrl = 'https://cozy.example.com'
         should(this.config.cozyUrl).equal('https://cozy.example.com')
       })
     })
 
     describe('gui', () => {
-      it('returns an empty hash by default', function() {
+      it('returns an empty hash by default', function () {
         should(this.config.gui).deepEqual({})
       })
 
-      it('returns GUI configuration if any', function() {
+      it('returns GUI configuration if any', function () {
         const guiConfig = { foo: 'bar' }
         this.config.fileConfig.gui = guiConfig
         should(this.config.gui).deepEqual(guiConfig)
       })
     })
 
-    describe('Client', function() {
-      it('can set a client', function() {
+    describe('Client', function () {
+      it('can set a client', function () {
         this.config.client = { clientName: 'test' }
         should(this.config.isValid()).be.true()
         should(this.config.client.clientName).equal('test')
       })
 
-      it('has no client after a reset', function() {
+      it('has no client after a reset', function () {
         this.config.reset()
         should(this.config.isValid()).be.false()
       })
     })
 
     describe('flags', () => {
-      it('returns an empty hash by default', function() {
+      it('returns an empty hash by default', function () {
         should(this.config.flags).deepEqual({})
       })
 
-      it('returns GUI configuration if any', function() {
+      it('returns GUI configuration if any', function () {
         const flagsConfig = {
           'settings.partial-desktop-sync.show-synced-folders-selection': true
         }
@@ -227,13 +227,13 @@ describe('core/config', function() {
       })
     })
 
-    describe('#watcherType', function() {
-      it('returns valid watcher type from file config if any', function() {
+    describe('#watcherType', function () {
+      it('returns valid watcher type from file config if any', function () {
         this.config.fileConfig.watcherType = 'atom'
         should(this.config.watcherType).equal('atom')
       })
 
-      it('is the same as core/config.watcherType() otherwise', function() {
+      it('is the same as core/config.watcherType() otherwise', function () {
         should(this.config.watcherType).equal(config.watcherType())
       })
     })

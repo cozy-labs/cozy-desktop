@@ -33,7 +33,7 @@ describe('Differential synchronization', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     this.cozy = cozy = await cozyHelpers.oauthCozy(this.config)
 
     helpers = TestHelpers.init(this)
@@ -46,11 +46,8 @@ describe('Differential synchronization', () => {
   })
 
   let remoteDir, remoteFile
-  beforeEach(async function() {
-    remoteDir = await builders
-      .remoteDir()
-      .name('Photos')
-      .create()
+  beforeEach(async function () {
+    remoteDir = await builders.remoteDir().name('Photos').create()
     remoteFile = await builders
       .remoteFile()
       .inDir(remoteDir)
@@ -63,7 +60,7 @@ describe('Differential synchronization', () => {
 
   describe('when a folder is excluded from synchronization', () => {
     let excludedDir, oauthClient
-    beforeEach(async function() {
+    beforeEach(async function () {
       excludedDir = { _id: remoteDir._id, _type: FILES_DOCTYPE }
       oauthClient = {
         _id: this.config.client.clientID,
@@ -72,7 +69,7 @@ describe('Differential synchronization', () => {
     })
 
     context('and the folder was never synced', () => {
-      it('does not propagate it or its content to the local filesystem', async function() {
+      it('does not propagate it or its content to the local filesystem', async function () {
         await files.addNotSynchronizedDirectories(oauthClient, [excludedDir])
 
         await helpers.pullAndSyncAll()
@@ -85,11 +82,11 @@ describe('Differential synchronization', () => {
     })
 
     context('and the folder was previously synced', () => {
-      beforeEach(async function() {
+      beforeEach(async function () {
         await helpers.pullAndSyncAll()
       })
 
-      it('propagates its deletion to the local filesystem', async function() {
+      it('propagates its deletion to the local filesystem', async function () {
         should(await helpers.local.treeWithoutTrash()).deepEqual([
           path(remoteDir),
           path(remoteFile)
@@ -109,7 +106,7 @@ describe('Differential synchronization', () => {
 
   describe('when a folder is re-included into synchronization', () => {
     let excludedDir, oauthClient
-    beforeEach(async function() {
+    beforeEach(async function () {
       excludedDir = { _id: remoteDir._id, _type: FILES_DOCTYPE }
       oauthClient = {
         _id: this.config.client.clientID,
@@ -123,7 +120,7 @@ describe('Differential synchronization', () => {
       await helpers.pullAndSyncAll()
     })
 
-    it('propagates its addition and that of its content to the local filesystem', async function() {
+    it('propagates its addition and that of its content to the local filesystem', async function () {
       should(await helpers.local.treeWithoutTrash()).deepEqual([])
 
       await files.removeNotSynchronizedDirectories(oauthClient, [excludedDir])
@@ -142,7 +139,7 @@ describe('Differential synchronization', () => {
 
   describe('when a folder is created locally with the same path as an excluded folder', () => {
     let excludedDir, oauthClient
-    beforeEach(async function() {
+    beforeEach(async function () {
       excludedDir = { _id: remoteDir._id, _type: FILES_DOCTYPE }
       oauthClient = {
         _id: this.config.client.clientID,
@@ -151,7 +148,7 @@ describe('Differential synchronization', () => {
     })
 
     context('and the user chooses to create a conflict', () => {
-      beforeEach(function() {
+      beforeEach(function () {
         const originalBlockSyncFor = helpers._sync.blockSyncFor
         sinon.stub(helpers._sync, 'blockSyncFor')
 
@@ -166,12 +163,12 @@ describe('Differential synchronization', () => {
         })
         helpers._sync.blockSyncFor.callThrough()
       })
-      afterEach(async function() {
+      afterEach(async function () {
         helpers._sync.blockSyncFor.restore()
         await helpers.local.side.stop()
       })
 
-      it('renames the local folder with a conflict suffix before synchronizing it', async function() {
+      it('renames the local folder with a conflict suffix before synchronizing it', async function () {
         await files.addNotSynchronizedDirectories(oauthClient, [excludedDir])
 
         await helpers.pullAndSyncAll()
@@ -210,7 +207,7 @@ describe('Differential synchronization', () => {
     })
 
     context('and the user chooses to merge both folders', () => {
-      beforeEach(function() {
+      beforeEach(function () {
         const originalBlockSyncFor = helpers._sync.blockSyncFor
         sinon.stub(helpers._sync, 'blockSyncFor')
 
@@ -229,11 +226,11 @@ describe('Differential synchronization', () => {
         })
         helpers._sync.blockSyncFor.callThrough()
       })
-      afterEach(function() {
+      afterEach(function () {
         helpers._sync.blockSyncFor.restore()
       })
 
-      it('does not rename the local folder and re-includes the remote one', async function() {
+      it('does not rename the local folder and re-includes the remote one', async function () {
         await files.addNotSynchronizedDirectories(oauthClient, [excludedDir])
 
         await helpers.pullAndSyncAll()

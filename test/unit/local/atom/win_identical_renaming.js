@@ -25,14 +25,8 @@ if (process.platform === 'win32') {
       beforeEach(() => {
         builders = new Builders()
         const docs = {
-          DIR: builders
-            .metadir()
-            .path('dir')
-            .build(),
-          FILE: builders
-            .metafile()
-            .path('file')
-            .build()
+          DIR: builders.metadir().path('dir').build(),
+          FILE: builders.metafile().path('file').build()
         }
         inputChannel = new Channel()
         outputChannel = winIdenticalRenaming.loop(inputChannel, {
@@ -185,11 +179,7 @@ if (process.platform === 'win32') {
         ]
 
         const buildEvent = ({ action, kind, path, oldPath }) => {
-          let event = builders
-            .event()
-            .action(action)
-            .kind(kind)
-            .path(path)
+          let event = builders.event().action(action).kind(kind).path(path)
           if (oldPath) event.oldPath(oldPath)
           return event.build()
         }

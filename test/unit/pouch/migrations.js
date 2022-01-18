@@ -25,14 +25,14 @@ import type { Migration } from '../../../core/pouch/migrations'
 import type { SavedMetadata } from '../../../core/metadata'
 */
 
-describe('core/pouch/migrations', function() {
+describe('core/pouch/migrations', function () {
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
   let createdDocs
-  beforeEach('create folders and files', async function() {
+  beforeEach('create folders and files', async function () {
     createdDocs = [await pouchHelpers.createParentFolder(this.pouch)]
     for (let i of [1, 2, 3]) {
       createdDocs.push(
@@ -52,13 +52,13 @@ describe('core/pouch/migrations', function() {
 
   describe('currentSchemaVersion()', () => {
     context('without schema', () => {
-      beforeEach('remove schema', async function() {
+      beforeEach('remove schema', async function () {
         if (await this.pouch.byIdMaybe(SCHEMA_DOC_ID)) {
           await this.pouch.db.put({ _id: SCHEMA_DOC_ID, _deleted: true })
         }
       })
 
-      it('returns SCHEMA_INITIAL_VERSION', async function() {
+      it('returns SCHEMA_INITIAL_VERSION', async function () {
         await should(currentSchemaVersion(this.pouch.db)).be.fulfilledWith(
           SCHEMA_INITIAL_VERSION
         )
@@ -66,11 +66,11 @@ describe('core/pouch/migrations', function() {
     })
 
     context('with a schema missing its version', () => {
-      beforeEach('corrupt schema', async function() {
+      beforeEach('corrupt schema', async function () {
         await this.pouch.db.put({ _id: SCHEMA_DOC_ID, version: undefined })
       })
 
-      it('returns SCHEMA_INITIAL_VERSION', async function() {
+      it('returns SCHEMA_INITIAL_VERSION', async function () {
         await should(currentSchemaVersion(this.pouch.db)).be.fulfilledWith(
           SCHEMA_INITIAL_VERSION
         )
@@ -80,11 +80,11 @@ describe('core/pouch/migrations', function() {
     context('with a valid schema', () => {
       const version = 12
 
-      beforeEach('create schema', async function() {
+      beforeEach('create schema', async function () {
         await this.pouch.db.put({ _id: SCHEMA_DOC_ID, version })
       })
 
-      it('returns the version of the schema', async function() {
+      it('returns the version of the schema', async function () {
         await should(currentSchemaVersion(this.pouch.db)).be.fulfilledWith(
           version
         )
@@ -96,13 +96,13 @@ describe('core/pouch/migrations', function() {
     const version = 12
 
     context('without schema', () => {
-      beforeEach('remove schema', async function() {
+      beforeEach('remove schema', async function () {
         if (await this.pouch.byIdMaybe(SCHEMA_DOC_ID)) {
           await this.pouch.db.put({ _id: SCHEMA_DOC_ID, _deleted: true })
         }
       })
 
-      it('creates the schema with the given version', async function() {
+      it('creates the schema with the given version', async function () {
         await should(updateSchemaVersion(version, this.pouch.db)).be.fulfilled()
         await should(currentSchemaVersion(this.pouch.db)).be.fulfilledWith(
           version
@@ -111,11 +111,11 @@ describe('core/pouch/migrations', function() {
     })
 
     context('with a schema missing its version', () => {
-      beforeEach('corrupt schema', async function() {
+      beforeEach('corrupt schema', async function () {
         await this.pouch.db.put({ _id: SCHEMA_DOC_ID, version: undefined })
       })
 
-      it('creates the schema with the given version', async function() {
+      it('creates the schema with the given version', async function () {
         await should(updateSchemaVersion(version, this.pouch.db)).be.fulfilled()
         await should(currentSchemaVersion(this.pouch.db)).be.fulfilledWith(
           version
@@ -126,11 +126,11 @@ describe('core/pouch/migrations', function() {
     context('with a valid schema', () => {
       const version = 12
 
-      beforeEach('create schema', async function() {
+      beforeEach('create schema', async function () {
         await this.pouch.db.put({ _id: SCHEMA_DOC_ID, version })
       })
 
-      it('updates the version of the schema', async function() {
+      it('updates the version of the schema', async function () {
         const newVersion = version + 1
         await should(
           updateSchemaVersion(newVersion, this.pouch.db)
@@ -156,30 +156,31 @@ describe('core/pouch/migrations', function() {
         }))
     }
 
+    let migrationRunSpy
     beforeEach('spy on migration.run', () => {
-      sinon.spy(migration, 'run')
+      migrationRunSpy = sinon.spy(migration, 'run')
     })
 
     afterEach('remove spy', () => {
-      migration.run.restore()
+      migrationRunSpy.restore()
     })
 
     context(
       'when the current schema version is lower than the migration base schema version',
       () => {
-        beforeEach('set schema version', async function() {
+        beforeEach('set schema version', async function () {
           await this.pouch.db.put({
             _id: SCHEMA_DOC_ID,
             version: migration.baseSchemaVersion - 1
           })
         })
 
-        it('does not run the migration', async function() {
+        it('does not run the migration', async function () {
           await migrate(migration, this.pouch)
           should(migration.run).not.have.been.called()
         })
 
-        it('does not update the schema version', async function() {
+        it('does not update the schema version', async function () {
           const previousSchemaVersion = await currentSchemaVersion(
             this.pouch.db
           )
@@ -195,19 +196,19 @@ describe('core/pouch/migrations', function() {
     context(
       'when the current schema version is higher than the migration base schema version',
       () => {
-        beforeEach('set schema version', async function() {
+        beforeEach('set schema version', async function () {
           await this.pouch.db.put({
             _id: SCHEMA_DOC_ID,
             version: migration.baseSchemaVersion + 1
           })
         })
 
-        it('does not run the migration', async function() {
+        it('does not run the migration', async function () {
           await migrate(migration, this.pouch)
           should(migration.run).not.have.been.called()
         })
 
-        it('does not update the schema version', async function() {
+        it('does not update the schema version', async function () {
           const previousSchemaVersion = await currentSchemaVersion(
             this.pouch.db
           )
@@ -223,7 +224,7 @@ describe('core/pouch/migrations', function() {
     context(
       'when the current schema version equals the migration base schema version',
       () => {
-        beforeEach('set schema version', async function() {
+        beforeEach('set schema version', async function () {
           await this.pouch.db.put({
             _id: SCHEMA_DOC_ID,
             version: migration.baseSchemaVersion
@@ -231,15 +232,18 @@ describe('core/pouch/migrations', function() {
         })
 
         context('and no docs needed to be migrated', () => {
+          let migrationAffectedDocsStub
           beforeEach('mark all docs as unaffected', () => {
-            sinon.stub(migration, 'affectedDocs').callsFake(() => [])
+            migrationAffectedDocsStub = sinon
+              .stub(migration, 'affectedDocs')
+              .callsFake(() => [])
           })
 
           afterEach('remove stub', () => {
-            migration.affectedDocs.restore()
+            migrationAffectedDocsStub.restore()
           })
 
-          it('does not save any docs', async function() {
+          it('does not save any docs', async function () {
             await migrate(migration, this.pouch)
 
             const docs = await this.pouch.allDocs()
@@ -247,7 +251,7 @@ describe('core/pouch/migrations', function() {
             should(migratedDocs).be.empty()
           })
 
-          it('sets the schema version to the migration target schema version', async function() {
+          it('sets the schema version to the migration target schema version', async function () {
             await migrate(migration, this.pouch)
             await should(currentSchemaVersion(this.pouch.db)).be.fulfilledWith(
               migration.targetSchemaVersion
@@ -256,15 +260,15 @@ describe('core/pouch/migrations', function() {
         })
 
         context('and some docs needed to be migrated', () => {
-          it('runs the migration on all affected docs', async function() {
+          it('runs the migration on all affected docs', async function () {
             const docs = await this.pouch.allDocs()
 
             await migrate(migration, this.pouch)
             should(migration.run).have.been.calledOnce()
-            should(migration.run.getCall(0).args).deepEqual([docs])
+            should(migrationRunSpy.firstCall.args).deepEqual([docs])
           })
 
-          it('saves the migrated docs', async function() {
+          it('saves the migrated docs', async function () {
             await migrate(migration, this.pouch)
 
             const docs = await this.pouch.allDocs()
@@ -273,14 +277,14 @@ describe('core/pouch/migrations', function() {
           })
 
           context('and the docs were successfully saved', () => {
-            it('sets the schema version to the migration target schema version', async function() {
+            it('sets the schema version to the migration target schema version', async function () {
               await migrate(migration, this.pouch)
               await should(
                 currentSchemaVersion(this.pouch.db)
               ).be.fulfilledWith(migration.targetSchemaVersion)
             })
 
-            it('sets the localSeq to the last change seq', async function() {
+            it('sets the localSeq to the last change seq', async function () {
               const expected = await this.pouch.db.changes({ since: 0 })
               await migrate(migration, this.pouch)
               await should(this.pouch.getLocalSeq()).be.fulfilledWith(
@@ -288,14 +292,14 @@ describe('core/pouch/migrations', function() {
               )
             })
 
-            it('does not update the remoteSeq', async function() {
+            it('does not update the remoteSeq', async function () {
               const expected = await this.pouch.getRemoteSeq()
 
               await migrate(migration, this.pouch)
               await should(this.pouch.getRemoteSeq()).be.fulfilledWith(expected)
             })
 
-            it('does not prevent synchronizing merged changes', async function() {
+            it('does not prevent synchronizing merged changes', async function () {
               // We should have 7 unsynced docs, created in the main beforeEach
               const unsyncedDocIds = createdDocs.map(d => d._id)
 
@@ -313,7 +317,7 @@ describe('core/pouch/migrations', function() {
             const isCorruptedDoc = index => index % 2 === 1
 
             beforeEach('stub migration.run() to return invalid docs', () => {
-              migration.run.restore()
+              migrationRunSpy.restore()
               sinon.stub(migration, 'run').callsFake(docs =>
                 docs.map((doc, index) => {
                   const newDoc = {
@@ -331,14 +335,14 @@ describe('core/pouch/migrations', function() {
               )
             })
 
-            it('reverts all changes', async function() {
+            it('reverts all changes', async function () {
               const docs = await this.pouch.allDocs()
 
               await migrate(migration, this.pouch)
               await should(this.pouch.allDocs()).be.fulfilledWith(docs)
             })
 
-            it('does not update the schema version', async function() {
+            it('does not update the schema version', async function () {
               const previousSchemaVersion = await currentSchemaVersion(
                 this.pouch.db
               )
@@ -349,14 +353,14 @@ describe('core/pouch/migrations', function() {
               ).be.fulfilledWith(previousSchemaVersion)
             })
 
-            it('does not update the localSeq', async function() {
+            it('does not update the localSeq', async function () {
               const expected = await this.pouch.getLocalSeq()
 
               await migrate(migration, this.pouch)
               await should(this.pouch.getLocalSeq()).be.fulfilledWith(expected)
             })
 
-            it('does not update the remoteSeq', async function() {
+            it('does not update the remoteSeq', async function () {
               const expected = await this.pouch.getRemoteSeq()
 
               await migrate(migration, this.pouch)
@@ -370,7 +374,7 @@ describe('core/pouch/migrations', function() {
 
   describe('save()', () => {
     context('with no docs', () => {
-      it('returns a MigrationNoop result', async function() {
+      it('returns a MigrationNoop result', async function () {
         await should(save([], this.pouch.db)).be.fulfilledWith({
           type: 'MigrationNoop',
           errors: []
@@ -380,21 +384,21 @@ describe('core/pouch/migrations', function() {
 
     context('with only valid docs', () => {
       let docs
-      beforeEach('fetch and update docs', async function() {
+      beforeEach('fetch and update docs', async function () {
         docs = await this.pouch.allDocs()
         docs.forEach(d => {
           d.migrated = true
         })
       })
 
-      it('returns a MigrationComplete result', async function() {
+      it('returns a MigrationComplete result', async function () {
         await should(save(docs, this.pouch.db)).be.fulfilledWith({
           type: 'MigrationComplete',
           errors: []
         })
       })
 
-      it('saves the new version of all documents', async function() {
+      it('saves the new version of all documents', async function () {
         await save(docs, this.pouch.db)
 
         const savedDocs = await this.pouch.allDocs()
@@ -407,7 +411,7 @@ describe('core/pouch/migrations', function() {
       const isCorruptedDoc = index => index % 2 === 1
 
       let docs
-      beforeEach('fetch and update docs', async function() {
+      beforeEach('fetch and update docs', async function () {
         docs = await this.pouch.allDocs()
         docs.forEach((d, index) => {
           d.migrated = true
@@ -415,7 +419,7 @@ describe('core/pouch/migrations', function() {
         })
       })
 
-      it('returns a MigrationFailed result', async function() {
+      it('returns a MigrationFailed result', async function () {
         await should(save(docs, this.pouch.db)).be.fulfilledWith({
           type: 'MigrationFailed',
           errors: docs
@@ -431,7 +435,7 @@ describe('core/pouch/migrations', function() {
         })
       })
 
-      it('saves the new version of all valid documents', async function() {
+      it('saves the new version of all valid documents', async function () {
         await save(docs, this.pouch.db)
 
         const maybeMigratedDocs = await this.pouch.allDocs()
@@ -450,7 +454,7 @@ describe('core/pouch/migrations', function() {
     const migration = migrations[0]
 
     describe('affectedDocs()', () => {
-      it('returns an empty array when all docs have sides.target', async function() {
+      it('returns an empty array when all docs have sides.target', async function () {
         const docs = (await this.pouch.allDocs()).map(doc => {
           doc.sides.target = 2
           return doc
@@ -458,7 +462,7 @@ describe('core/pouch/migrations', function() {
         should(migration.affectedDocs(docs)).be.empty()
       })
 
-      it('returns only docs missing sides.target', async function() {
+      it('returns only docs missing sides.target', async function () {
         const docs = await this.pouch.allDocs()
         const incompleteDocs = docs.filter((doc, index) => index % 2 === 0)
         docs
@@ -472,7 +476,7 @@ describe('core/pouch/migrations', function() {
     })
 
     describe('run()', () => {
-      it('sets sides.target with the short rev extracted from _rev', async function() {
+      it('sets sides.target with the short rev extracted from _rev', async function () {
         const docs = await this.pouch.allDocs()
         const expected = docs.map(doc => ({
           ...doc,

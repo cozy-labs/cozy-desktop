@@ -387,21 +387,12 @@ describe('sorter()', () => {
         },
         {
           type: 'FileTrashing',
-          doc: builders
-            .metafile()
-            .path(deletedPath)
-            .build(),
-          was: builders
-            .metafile()
-            .path(createdPath)
-            .build()
+          doc: builders.metafile().path(deletedPath).build(),
+          was: builders.metafile().path(createdPath).build()
         },
         {
           type: 'FileAddition',
-          doc: builders
-            .metafile()
-            .path(createdPath)
-            .build()
+          doc: builders.metafile().path(createdPath).build()
         }
       ]
 
@@ -922,26 +913,17 @@ describe('sortByPath', () => {
     const one = {
       type: 'IgnoredChange',
       doc: { _id: 'whatever', _rev: '2-xxx', _deleted: true },
-      was: builders
-        .metafile()
-        .path('spreadsheet')
-        .build(),
+      was: builders.metafile().path('spreadsheet').build(),
       detail: 'Deleted document'
     }
     const two = {
-      doc: builders
-        .metafile()
-        .path('doc')
-        .build(),
+      doc: builders.metafile().path('doc').build(),
       type: 'FileAddition'
     }
     const three = {
       type: 'IgnoredChange',
       doc: { _id: 'whatever', _rev: '2-xxx', _deleted: true },
-      was: builders
-        .metadir()
-        .path('dir')
-        .build(),
+      was: builders.metadir().path('dir').build(),
       detail: 'Deleted document'
     }
 

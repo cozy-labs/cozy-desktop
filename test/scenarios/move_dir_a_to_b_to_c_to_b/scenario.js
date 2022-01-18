@@ -3,7 +3,10 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
-  init: [{ ino: 1, path: 'src/' }, { ino: 2, path: 'src/A/' }],
+  init: [
+    { ino: 1, path: 'src/' },
+    { ino: 2, path: 'src/A/' }
+  ],
   actions: [
     { type: 'mv', src: 'src/A', dst: 'src/B' },
     { type: 'wait', ms: 1500 },

@@ -17,7 +17,7 @@ onPlatform('darwin', () => {
     before('instanciate config', configHelpers.createConfig)
     before('instanciate pouch', pouchHelpers.createDatabase)
 
-    beforeEach('set up builders', function() {
+    beforeEach('set up builders', function () {
       builders = new Builders({ pouch: this.pouch })
     })
 
@@ -25,11 +25,8 @@ onPlatform('darwin', () => {
     after('clean config directory', configHelpers.cleanConfig)
 
     describe('#oldMetadata()', () => {
-      it('resolves with the metadata whose id matches the event path', async function() {
-        const old = await builders
-          .metadata()
-          .upToDate()
-          .create()
+      it('resolves with the metadata whose id matches the event path', async function () {
+        const old = await builders.metadata().upToDate().create()
         const resultByEventType = {}
         for (let type of ['add', 'addDir', 'change', 'unlink', 'unlinkDir']) {
           resultByEventType[type] = await prepareEvents.oldMetadata(
@@ -51,7 +48,7 @@ onPlatform('darwin', () => {
     })
 
     describe('#step()', () => {
-      it('does not compute checksum of untouched file', async function() {
+      it('does not compute checksum of untouched file', async function () {
         const untouched = await builders
           .metafile()
           .path('untouched')
@@ -93,7 +90,7 @@ onPlatform('darwin', () => {
         should(checksum).not.have.been.called()
       })
 
-      it('does not compute checksum after only a path normalization change', async function() {
+      it('does not compute checksum after only a path normalization change', async function () {
         const old = await builders
           .metafile()
           .path('énoncé'.normalize('NFC'))

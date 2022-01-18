@@ -141,8 +141,8 @@ class TestHelpers {
   }
 
   resetPouchSpy() {
-    this.pouch.put.reset()
-    this.pouch.bulkDocs.reset()
+    this.pouch.put.resetHistory()
+    this.pouch.bulkDocs.resetHistory()
   }
 
   // XXX: The order of calls is not respected here as we merge the calls of

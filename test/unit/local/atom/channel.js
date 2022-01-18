@@ -14,11 +14,12 @@ const Builders = require('../../../support/builders')
 import type {
   AtomBatch
 } from '../../../../core/local/atom/event'
+import type { SinonSpy } from 'sinon'
 */
 
 const builders = new Builders()
 
-describe('core/local/atom/Channel', function() {
+describe('core/local/atom/Channel', function () {
   this.timeout(100)
 
   describe('Basics', () => {
@@ -179,15 +180,11 @@ describe('core/local/atom/Channel', function() {
       if (!outputChannel) {
         throw new Error(`Step pop cannot occur before asyncMap in scenario`)
       }
-      scenarioState.outputBatchesPromise = new Promise((resolve, reject) => {
-        outputBatchesPromise
-          .then(outputBatches =>
-            outputChannel
-              .pop()
-              .then(batch => resolve(outputBatches.concat([batch])))
-          )
-          .catch(reject)
-      })
+      scenarioState.outputBatchesPromise = outputBatchesPromise
+        .then(outputBatches =>
+          Promise.all([outputBatches, outputChannel.pop()])
+        )
+        .then(([outputBatches, batch]) => outputBatches.concat([batch]))
     }
 
     const scenarioStepFn = step => {
@@ -212,10 +209,12 @@ describe('core/local/atom/Channel', function() {
      * Must be sync from #map() and async for #asyncMap().
      */
 
-    const transform = batch =>
+    const transform = (batch /*: AtomBatch */) /*: AtomBatch */ =>
       batch.map(event => _.defaults({ path: `mapped-${event.path}` }, event))
 
-    const asyncTransform = async batch => {
+    const asyncTransform = async (
+      batch /*: AtomBatch */
+    ) /*: Promise<AtomBatch> */ => {
       // According to manual testing, random 1-5ms delay easily breaks tests
       // in case Channel#asyncMap() doesn't properly await asyncTransform()
       // while keeping the test suite duration < 2x the time without delay.
@@ -245,7 +244,7 @@ describe('core/local/atom/Channel', function() {
       for (const scenario of scenarios) {
         describe(scenarioDescription(scenario), () => {
           let scenarioState /*:: ?: {
-            callback: (AtomBatch) => AtomBatch,
+            callback: SinonSpy,
             inputBatches: AtomBatch[],
             inputChannel: Channel,
             outputChannel?: Channel,
@@ -319,7 +318,7 @@ describe('core/local/atom/Channel', function() {
       for (const scenario of scenarios) {
         describe(scenarioDescription(scenario), () => {
           let scenarioState /*:: ?: {
-            callback: (AtomBatch) => Promise<AtomBatch>,
+            callback: SinonSpy,
             inputBatches: AtomBatch[],
             inputChannel: Channel,
             outputChannel?: Channel,

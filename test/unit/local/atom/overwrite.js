@@ -205,11 +205,7 @@ describe('core/local/atom/overwrite', () => {
         it(`forwards ${action} ${kind} (${
           oldPath ? oldPath + ' -> ' : ''
         }${path}) after .DELAY`, async () => {
-          let event = builders
-            .event()
-            .action(action)
-            .kind(kind)
-            .path(path)
+          let event = builders.event().action(action).kind(kind).path(path)
           if (oldPath) event.oldPath(oldPath)
           const batch = [event.build()]
 

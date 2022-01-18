@@ -16,7 +16,7 @@ describe('utils/mime', () => {
   it('returns the same type as the sytem mime for other docs', () => {
     const filePaths = ['DS100.jpg', 'Report.md', 'stats.xls']
     const mimes = filePaths.map(filePath => mime.lookup(filePath))
-    const sysMimes = filePaths.map(filePath => sysMime.lookup(filePath))
+    const sysMimes = filePaths.map(filePath => sysMime.getType(filePath))
     should(mimes).eql(sysMimes)
   })
 })

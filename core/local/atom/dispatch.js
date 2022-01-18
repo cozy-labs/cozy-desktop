@@ -120,10 +120,12 @@ async function dispatchEvent(
     try {
       await actions[event.action + event.kind](event, opts)
       try {
-        const target = (await opts.pouch.db.changes({
-          limit: 1,
-          descending: true
-        })).last_seq
+        const target = (
+          await opts.pouch.db.changes({
+            limit: 1,
+            descending: true
+          })
+        ).last_seq
         opts.events.emit('sync-target', target)
       } catch (err) {
         log.warn({ err })

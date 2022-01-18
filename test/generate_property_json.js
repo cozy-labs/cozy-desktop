@@ -174,7 +174,10 @@ function freq(choices) {
 function init(ops) {
   const n = faker.random.number(nbInitOps)
   for (let i = 0; i < n; i++) {
-    const op = freq([[1, createNewDir], [1, createNewFile]])
+    const op = freq([
+      [1, createNewDir],
+      [1, createNewFile]
+    ])
     ops.push(op)
   }
   ops.push({ op: 'mkdir', path: '../outside' })

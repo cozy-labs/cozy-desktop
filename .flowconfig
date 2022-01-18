@@ -2,10 +2,8 @@
 <PROJECT_ROOT>/build/.*
 <PROJECT_ROOT>/coverage/.*
 <PROJECT_ROOT>/tmp/.*
-<PROJECT_ROOT>/node_modules/ach/.*
-<PROJECT_ROOT>/node_modules/config-chain/test/broken.json
-<PROJECT_ROOT>/node_modules/elm-test/.*
-<PROJECT_ROOT>/node_modules/jsverify/.*
+<PROJECT_ROOT>/node_modules/resolve/.*
+<PROJECT_ROOT>/node_modules/yargs/.*
 
 [include]
 

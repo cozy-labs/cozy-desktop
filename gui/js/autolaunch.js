@@ -42,6 +42,7 @@ if (process.env.APPIMAGE) {
         // with the app's path.
         autoLauncher.enable()
       }
+      return
     })
     .catch(err =>
       log.warn({ err }, 'could not check autolaunch or replace old one')
@@ -51,13 +52,19 @@ if (process.env.APPIMAGE) {
 module.exports.isEnabled = () => autoLauncher.isEnabled()
 
 module.exports.setEnabled = enabled => {
-  autoLauncher.isEnabled().then(was => {
-    if (was !== enabled) {
-      if (enabled) {
-        autoLauncher.enable()
-      } else {
-        autoLauncher.disable()
+  autoLauncher
+    .isEnabled()
+    .then(was => {
+      if (was !== enabled) {
+        if (enabled) {
+          autoLauncher.enable()
+          return true
+        } else {
+          autoLauncher.disable()
+          return false
+        }
       }
-    }
-  })
+      return was
+    })
+    .catch(err => log.warn({ err }, 'could not set autolaunch'))
 }

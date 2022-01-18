@@ -39,7 +39,9 @@ const baseMetadata = {
 //
 //     const note /*: MetadataRemoteFile */ = await builders.remoteNote().inDir(...).create()
 //
-module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <MetadataRemoteFile> */ {
+module.exports = class RemoteNoteBuilder extends (
+  RemoteBaseBuilder
+) /*:: <MetadataRemoteFile> */ {
   /*::
   _title: string
   _content: string

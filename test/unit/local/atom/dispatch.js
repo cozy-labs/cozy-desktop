@@ -2,7 +2,7 @@
 /* @flow */
 
 /*::
-import type { Stub, Call } from 'sinon'
+import type { SinonStub, SinonSpyCall } from 'sinon'
 
 type DispatchedCalls = {
   [string]: Array<Array<any>>
@@ -24,14 +24,14 @@ const Channel = require('../../../../core/local/atom/channel')
 const dispatch = require('../../../../core/local/atom/dispatch')
 const winDetectMove = require('../../../../core/local/atom/win_detect_move')
 
-function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
+function dispatchedCalls(obj /*: SinonStub */) /*: DispatchedCalls */ {
   const methods = Object.getOwnPropertyNames(obj).filter(
     m => typeof obj[m] === 'function'
   )
 
   const dispatchedCalls = {}
   for (const method of methods) {
-    const calls /*: Array<Call> */ = obj[method].getCalls()
+    const calls /*: Array<SinonSpyCall> */ = obj[method].getCalls()
 
     for (const call of calls) {
       if (!dispatchedCalls[method]) dispatchedCalls[method] = []
@@ -50,7 +50,7 @@ function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
   return dispatchedCalls
 }
 
-describe('core/local/atom/dispatch.loop()', function() {
+describe('core/local/atom/dispatch.loop()', function () {
   let builders
   let channel
   let events
@@ -59,7 +59,7 @@ describe('core/local/atom/dispatch.loop()', function() {
 
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('populate pouch with documents', async function() {
+  beforeEach('populate pouch with documents', async function () {
     builders = new Builders({ pouch: this.pouch })
     channel = new Channel()
 
@@ -81,15 +81,10 @@ describe('core/local/atom/dispatch.loop()', function() {
 
   context('when channel contains an initial-scan-done event', () => {
     beforeEach(() => {
-      channel.push([
-        builders
-          .event()
-          .action('initial-scan-done')
-          .build()
-      ])
+      channel.push([builders.event().action('initial-scan-done').build()])
     })
 
-    it('emits an initial-scan-done event via the emitter', async function() {
+    it('emits an initial-scan-done event via the emitter', async function () {
       await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(events)).containDeep({
@@ -97,7 +92,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       })
     })
 
-    it('does not emit a sync-target event via the emitter', async function() {
+    it('does not emit a sync-target event via the emitter', async function () {
       await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(events)).not.containDeep({
@@ -105,7 +100,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       })
     })
 
-    it('does not call any Prep method', async function() {
+    it('does not call any Prep method', async function () {
       await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({})
@@ -114,21 +109,16 @@ describe('core/local/atom/dispatch.loop()', function() {
 
   context('when channel contains an ignored event', () => {
     beforeEach(() => {
-      channel.push([
-        builders
-          .event()
-          .action('ignored')
-          .build()
-      ])
+      channel.push([builders.event().action('ignored').build()])
     })
 
-    it('does not call any Prep method', async function() {
+    it('does not call any Prep method', async function () {
       await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(prep)).deepEqual({})
     })
 
-    it('does not emit a sync-target event via the emitter', async function() {
+    it('does not emit a sync-target event via the emitter', async function () {
       await dispatch.loop(channel, stepOptions).pop()
 
       should(dispatchedCalls(events)).not.containDeep({
@@ -141,36 +131,16 @@ describe('core/local/atom/dispatch.loop()', function() {
     let changeEvents
     beforeEach(() => {
       changeEvents = [
-        builders
-          .event()
-          .action('created')
-          .kind('file')
-          .build(),
-        builders
-          .event()
-          .action('created')
-          .kind('file')
-          .build(),
-        builders
-          .event()
-          .action('ignored')
-          .kind('file')
-          .build(), // No events for this one
-        builders
-          .event()
-          .action('created')
-          .kind('file')
-          .build(),
-        builders
-          .event()
-          .action('created')
-          .kind('file')
-          .build()
+        builders.event().action('created').kind('file').build(),
+        builders.event().action('created').kind('file').build(),
+        builders.event().action('ignored').kind('file').build(), // No events for this one
+        builders.event().action('created').kind('file').build(),
+        builders.event().action('created').kind('file').build()
       ]
       channel.push(changeEvents)
     })
 
-    it('emits sync-target events via the emitter', async function() {
+    it('emits sync-target events via the emitter', async function () {
       await dispatch.loop(channel, stepOptions).pop()
 
       // Make sure we emit exactly 4 sync-target events, one for each
@@ -198,7 +168,7 @@ describe('core/local/atom/dispatch.loop()', function() {
 
   context('when channel contains multiple batches', () => {
     context('processed in less than a second', () => {
-      it('emits a local-start event for each batch via the emitter', async function() {
+      it('emits a local-start event for each batch via the emitter', async function () {
         const outChannel = dispatch.loop(channel, stepOptions)
 
         channel.push([builders.event().build()])
@@ -211,7 +181,7 @@ describe('core/local/atom/dispatch.loop()', function() {
         })
       })
 
-      it('emits only one local-end event via the emitter', async function() {
+      it('emits only one local-end event via the emitter', async function () {
         const outChannel = dispatch.loop(channel, stepOptions)
 
         channel.push([builders.event().build()])
@@ -233,7 +203,7 @@ describe('core/local/atom/dispatch.loop()', function() {
     })
 
     context('processed in more than a second', () => {
-      it('emits a local-start event for each batch via the emitter', async function() {
+      it('emits a local-start event for each batch via the emitter', async function () {
         const outChannel = dispatch.loop(channel, stepOptions)
 
         channel.push([builders.event().build()])
@@ -250,7 +220,7 @@ describe('core/local/atom/dispatch.loop()', function() {
         })
       })
 
-      it('emits one local-end event for each batch via the emitter', async function() {
+      it('emits one local-end event for each batch via the emitter', async function () {
         const outChannel = dispatch.loop(channel, stepOptions)
 
         channel.push([builders.event().build()])
@@ -290,7 +260,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       ])
     })
 
-    it('triggers a call to addFileAsync with a file Metadata object', async function() {
+    it('triggers a call to addFileAsync with a file Metadata object', async function () {
       const doc = builders
         .metafile()
         .path(filePath)
@@ -336,7 +306,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       ])
     })
 
-    it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
+    it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
       const doc = builders
         .metadir()
         .path(directoryPath)
@@ -373,7 +343,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       ])
     })
 
-    it('triggers a call to addFileAsync with a file Metadata object', async function() {
+    it('triggers a call to addFileAsync with a file Metadata object', async function () {
       const doc = builders
         .metafile()
         .path(filePath)
@@ -419,7 +389,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       ])
     })
 
-    it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
+    it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
       const doc = builders
         .metadir()
         .path(directoryPath)
@@ -456,7 +426,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       ])
     })
 
-    it('triggers a call to updateFileAsync with a file Metadata object', async function() {
+    it('triggers a call to updateFileAsync with a file Metadata object', async function () {
       const doc = builders
         .metafile()
         .path(filePath)
@@ -502,7 +472,7 @@ describe('core/local/atom/dispatch.loop()', function() {
       ])
     })
 
-    it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
+    it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
       const doc = builders
         .metadir()
         .path(directoryPath)
@@ -555,7 +525,7 @@ describe('core/local/atom/dispatch.loop()', function() {
             .create()
         })
 
-        it('triggers a call to moveFileAsync with a file Metadata object', async function() {
+        it('triggers a call to moveFileAsync with a file Metadata object', async function () {
           const doc = builders
             .metafile()
             .path(newFilePath)
@@ -594,7 +564,7 @@ describe('core/local/atom/dispatch.loop()', function() {
             .create()
         })
 
-        it('does not call moveFileAsync', async function() {
+        it('does not call moveFileAsync', async function () {
           await dispatch.loop(channel, stepOptions).pop()
 
           should(dispatchedCalls(prep)).deepEqual({})
@@ -603,7 +573,7 @@ describe('core/local/atom/dispatch.loop()', function() {
     })
 
     context('for a propagated remote move', () => {
-      beforeEach('build records for moved doc', async function() {
+      beforeEach('build records for moved doc', async function () {
         const src = await builders
           .metafile()
           .path(filePath)
@@ -624,7 +594,7 @@ describe('core/local/atom/dispatch.loop()', function() {
         this.pouch.put(dst)
       })
 
-      it('does not trigger any call to prep', async function() {
+      it('does not trigger any call to prep', async function () {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})
@@ -678,7 +648,7 @@ describe('core/local/atom/dispatch.loop()', function() {
             .create()
         })
 
-        it('triggers a call to moveFileAsync with an overwriting file Metadata object', async function() {
+        it('triggers a call to moveFileAsync with an overwriting file Metadata object', async function () {
           const doc = builders
             .metafile()
             .path(newFilePath)
@@ -710,7 +680,7 @@ describe('core/local/atom/dispatch.loop()', function() {
     })
 
     context('without existing documents at the event oldPath', () => {
-      it('triggers a call to addFileAsync with a file Metadata object', async function() {
+      it('triggers a call to addFileAsync with a file Metadata object', async function () {
         const doc = builders
           .metafile()
           .path(newFilePath)
@@ -735,7 +705,7 @@ describe('core/local/atom/dispatch.loop()', function() {
         })
       })
 
-      it('removes the event oldPath', async function() {
+      it('removes the event oldPath', async function () {
         const batch = await dispatch.loop(channel, stepOptions).pop()
 
         should(batch).have.length(1)
@@ -778,7 +748,7 @@ describe('core/local/atom/dispatch.loop()', function() {
             .create()
         })
 
-        it('triggers a call to moveFolderAsync with a directory Metadata object', async function() {
+        it('triggers a call to moveFolderAsync with a directory Metadata object', async function () {
           const doc = builders
             .metadir()
             .path(newDirectoryPath)
@@ -806,7 +776,7 @@ describe('core/local/atom/dispatch.loop()', function() {
             .create()
         })
 
-        it('does not call moveFolderAsync', async function() {
+        it('does not call moveFolderAsync', async function () {
           await dispatch.loop(channel, stepOptions).pop()
 
           should(dispatchedCalls(prep)).deepEqual({})
@@ -815,7 +785,7 @@ describe('core/local/atom/dispatch.loop()', function() {
     })
 
     context('without existing documents at the event oldPath', () => {
-      it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
+      it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
         const doc = builders
           .metadir()
           .path(newDirectoryPath)
@@ -832,7 +802,7 @@ describe('core/local/atom/dispatch.loop()', function() {
         })
       })
 
-      it('removes the event oldPath', async function() {
+      it('removes the event oldPath', async function () {
         const batch = await dispatch.loop(channel, stepOptions).pop()
 
         should(batch).have.length(1)
@@ -841,7 +811,7 @@ describe('core/local/atom/dispatch.loop()', function() {
     })
 
     context('for a propagated remote move', () => {
-      beforeEach('build records for moved doc', async function() {
+      beforeEach('build records for moved doc', async function () {
         const src = await builders
           .metadir()
           .path(directoryPath)
@@ -862,7 +832,7 @@ describe('core/local/atom/dispatch.loop()', function() {
         this.pouch.put(dst)
       })
 
-      it('does not trigger any call to prep', async function() {
+      it('does not trigger any call to prep', async function () {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})
@@ -897,7 +867,7 @@ describe('core/local/atom/dispatch.loop()', function() {
           .create()
       })
 
-      it('triggers a call to trashFileAsync with the existing document', async function() {
+      it('triggers a call to trashFileAsync with the existing document', async function () {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
@@ -907,7 +877,7 @@ describe('core/local/atom/dispatch.loop()', function() {
     })
 
     context('without existing documents at the event path', () => {
-      it('ignores the event', async function() {
+      it('ignores the event', async function () {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})
@@ -942,7 +912,7 @@ describe('core/local/atom/dispatch.loop()', function() {
           .create()
       })
 
-      it('triggers a call to trashFolderAsync with the existing document', async function() {
+      it('triggers a call to trashFolderAsync with the existing document', async function () {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({
@@ -952,7 +922,7 @@ describe('core/local/atom/dispatch.loop()', function() {
     })
 
     context('without existing documents at the event path', () => {
-      it('ignores the event', async function() {
+      it('ignores the event', async function () {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})

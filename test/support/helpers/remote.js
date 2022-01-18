@@ -174,7 +174,7 @@ class RemoteTestHelpers {
     return _.chain(await this.tree())
       .map(p => _.nth(p.match(TRASH_REGEXP), 1))
       .compact()
-      .map(p => p.replace(/\(__cozy__: \d+\)/, '(__cozy__: ...)'))
+      .map(p => p.replace(/\(\d+\)/, '(...)'))
       .value()
   }
 

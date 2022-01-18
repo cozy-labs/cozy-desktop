@@ -6,7 +6,7 @@
 const autoBind = require('auto-bind')
 const os = require('os')
 const http = require('http')
-const opn = require('opn')
+const open = require('open')
 
 const CozyClient = require('cozy-client-js').Client
 
@@ -24,7 +24,7 @@ module.exports = class Registration {
           'Please visit the following url to authorize the application: ',
           url
         )
-        opn(url)
+        open(url)
       })
 
     autoBind(this)

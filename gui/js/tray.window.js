@@ -1,12 +1,14 @@
 const electron = require('electron')
 const { dialog, shell } = electron
 const { spawn } = require('child_process')
-const { join } = require('path')
+const path = require('path')
 
 const { openNote } = require('../utils/notes')
 const { openUrl } = require('../utils/urls')
+const { openInWeb } = require('../utils/web')
 const autoLaunch = require('./autolaunch')
 const DetailsWM = require('./details.window')
+const CozyWebWM = require('./cozy-web.window')
 const { translate } = require('./i18n')
 
 const log = require('../../core/app').logger({
@@ -177,35 +179,52 @@ module.exports = class TrayWM extends WindowManager {
 
   ipcEvents() {
     return {
-      'go-to-cozy': () => shell.openExternal(this.desktop.config.cozyUrl),
-      'go-to-folder': () =>
-        shell.openPath(this.desktop.config.syncPath).catch(err => {
-          log.error({ err, sentry: true }, 'Could not open sync folder')
-        }),
+      'go-to-cozy': (event, showInWeb) => {
+        if (showInWeb) {
+          shell.openExternal(this.desktop.config.cozyUrl)
+        } else {
+          let cozyWebWindow = new CozyWebWM(this.app, this.desktop)
+          cozyWebWindow.show()
+          cozyWebWindow.on('closed', () => {
+            cozyWebWindow = null
+          })
+        }
+      },
+      'go-to-folder': async (event, showInWeb) => {
+        this.openPath('', showInWeb)
+      },
+      'open-file': (event, path, showInWeb) => {
+        this.log.debug({ path, showInWeb }, 'open file')
+        this.openPath(path, showInWeb)
+      },
+      'show-in-parent': (event, path, showInWeb) => {
+        this.showInParent(path, showInWeb)
+      },
       'auto-launcher': (event, enabled) => autoLaunch.setEnabled(enabled),
       'close-app': () => {
         this.desktop.stopSync()
         this.app.quit()
       },
-      'open-file': (event, path) => this.openPath(path),
-      'show-in-parent': (event, path) => this.showInParent(path),
       'unlink-cozy': this.onUnlink,
       'manual-start-sync': () =>
         this.desktop.sync.forceSync().catch(err => {
           if (err) log.error({ err, sentry: true }, 'Could not run manual sync')
         }),
-      userActionDetails: (event, action) => {
+      userActionDetails: async (event, action) => {
         let detailsWindow = new DetailsWM(this.app, this.desktop)
-        detailsWindow.show().then(() => {
+        try {
           if (detailsWindow) {
-            detailsWindow.loadContent(action)
+            detailsWindow.on('closed', () => {
+              detailsWindow = null
+            })
+            await detailsWindow.show()
+            await detailsWindow.loadContent(action)
           } else {
             log.error('could not load user action details content')
           }
-        })
-        detailsWindow.on('closed', () => {
-          detailsWindow = null
-        })
+        } catch (err) {
+          log.error({ err }, 'could not load user action details content')
+        }
       },
       userActionInProgress: (event, action) => {
         this.desktop.events.emit('user-action-inprogress', action)
@@ -216,10 +235,10 @@ module.exports = class TrayWM extends WindowManager {
     }
   }
 
-  async openPath(pathToOpen) {
+  async openPath(pathToOpen, showInWeb = false) {
     const { desktop } = this
 
-    pathToOpen = join(desktop.config.syncPath, pathToOpen)
+    pathToOpen = path.join(desktop.config.syncPath, pathToOpen)
 
     // TODO: find better way to check whether it's a note or not without
     // requiring modules from main.
@@ -228,15 +247,32 @@ module.exports = class TrayWM extends WindowManager {
     } else if (process.platform === 'linux' && pathToOpen.endsWith('.url')) {
       // Linux Desktops generally don't provide any way to open those shortcuts.
       openUrl(pathToOpen)
+    } else if (showInWeb) {
+      openInWeb(pathToOpen, { desktop })
+    } else if (pathToOpen === '') {
+      shell.openPath(desktop.config.syncPath).catch(err => {
+        log.error({ err, sentry: true }, 'Could not open sync folder')
+      })
     } else {
-      shell.openPath(pathToOpen)
+      shell.openPath(pathToOpen).catch(err => {
+        log.error(
+          { err, path: pathToOpen, sentry: true },
+          'Could not open given path'
+        )
+      })
     }
   }
 
-  showInParent(pathToOpen) {
-    pathToOpen = join(this.desktop.config.syncPath, pathToOpen)
+  showInParent(pathToOpen, showInWeb = false) {
+    const { desktop } = this
 
-    shell.showItemInFolder(pathToOpen)
+    pathToOpen = path.join(desktop.config.syncPath, pathToOpen)
+
+    if (showInWeb) {
+      openInWeb(path.dirname(pathToOpen), { desktop })
+    } else {
+      shell.showItemInFolder(pathToOpen)
+    }
   }
 
   onUnlink() {

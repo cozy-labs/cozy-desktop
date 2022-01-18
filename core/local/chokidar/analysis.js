@@ -96,18 +96,35 @@ class LocalChangeMap {
     else return null
   }
 
-  whenFoundByPath /*:: <T> */(
+  whenFoundByPath(
     path /*: string */,
-    callback /*: (LocalChange) => T */
-  ) /*: ?T */ {
-    const change = this.changesByPath.get(path.normalize())
-    if (change) return callback(change)
+    callback /*: (LocalChange) => ?{ change: any, previousChange: any } */
+  ) /*: { change: ?LocalChange, previousChange: ?LocalChange } */ {
+    const samePathChange = this.changesByPath.get(path.normalize())
+    if (samePathChange) {
+      const { change, previousChange } = callback(samePathChange) || {}
+      return { change, previousChange }
+    } else {
+      return { change: null, previousChange: null }
+    }
   }
 
-  put(c /*: LocalChange */) {
-    this.changesByPath.set(c.path.normalize(), c)
-    if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
-    else this.changes.push(c)
+  put(c /*: LocalChange */, p /*: ?LocalChange */) {
+    if (p) {
+      // Replace p with c
+      this.changesByPath.set(p.path.normalize(), c)
+      if (typeof p.ino === 'number') {
+        this.changesByInode.set(p.ino, c)
+      } else {
+        const index = this.changes.indexOf(p)
+        this.changes.splice(index, 1, c)
+      }
+    } else {
+      // Add new c
+      this.changesByPath.set(c.path.normalize(), c)
+      if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
+      else this.changes.push(c)
+    }
   }
 
   flush() /*: LocalChange[] */ {
@@ -168,10 +185,15 @@ function analyseEvents(
         e.type = 'unlinkDir'
       }
 
-      const result = analyseEvent(e, changesFound)
-      if (result == null) continue // No change was found. Skip event.
-      if (result === true) continue // A previous change was transformed. Nothing more to do.
-      changesFound.put(result) // A new change was found
+      const { change, previousChange } = analyseEvent(e, changesFound)
+      if (!change) {
+        continue // No change was found. Skip event.
+      } else {
+        // Either:
+        // - A previous change was transformed and we replace it with the new one
+        // - A new change was found and we add it to the list
+        changesFound.put(change, previousChange)
+      }
     } catch (err) {
       const sentry = err.name === 'InvalidLocalMoveEvent'
       log.error({ err, path: e.path, sentry }, 'Invalid local move event')
@@ -189,19 +211,20 @@ function analyseEvents(
 function analyseEvent(
   e /*: LocalEvent */,
   previousChanges /*: LocalChangeMap */
-) /*: ?LocalChange|true */ {
+) /*: { change: ?LocalChange, previousChange: ?LocalChange } */ {
   const sameInodeChange = previousChanges.findByInode(getInode(e))
 
   switch (e.type) {
-    case 'add':
-      return (
+    case 'add': {
+      const { change, previousChange } =
         localChange.includeAddEventInFileMove(sameInodeChange, e) ||
         localChange.fileMoveFromUnlinkAdd(sameInodeChange, e) ||
         localChange.fileMoveIdenticalOffline(e) ||
         localChange.fileAddition(e)
-      )
-    case 'addDir':
-      return (
+      return { change, previousChange }
+    }
+    case 'addDir': {
+      const { change, previousChange } =
         localChange.dirMoveOverwriteOnMacAPFS(sameInodeChange, e) ||
         localChange.dirRenamingIdenticalLoopback(sameInodeChange, e) ||
         localChange.includeAddDirEventInDirMove(sameInodeChange, e) ||
@@ -209,19 +232,20 @@ function analyseEvent(
         localChange.dirRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
         localChange.dirMoveIdenticalOffline(e) ||
         localChange.dirAddition(e)
-      )
-    case 'change':
-      return (
+      return { change, previousChange }
+    }
+    case 'change': {
+      const { change, previousChange } =
         localChange.includeChangeEventIntoFileMove(sameInodeChange, e) ||
         localChange.fileMoveFromFileDeletionChange(sameInodeChange, e) ||
         localChange.fileMoveIdentical(sameInodeChange, e) ||
         localChange.fileUpdate(e)
-      )
-    case 'unlink':
+      return { change, previousChange }
+    }
+    case 'unlink': {
       {
-        const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(
-          sameInodeChange
-        )
+        const moveChange /*: ?LocalFileMove */ =
+          localChange.maybeMoveFile(sameInodeChange)
         if (moveChange && !moveChange.wip) {
           panic(
             { path: e.path, moveChange, event: e },
@@ -230,7 +254,7 @@ function analyseEvent(
           )
         }
       }
-      return (
+      const { change, previousChange } =
         localChange.fileMoveFromAddUnlink(sameInodeChange, e) ||
         localChange.fileDeletion(e) ||
         previousChanges.whenFoundByPath(
@@ -240,12 +264,12 @@ function analyseEvent(
             localChange.ignoreFileAdditionThenDeletion(samePathChange)
           // Otherwise, skip unlink event by multiple moves
         )
-      )
-    case 'unlinkDir':
+      return { change, previousChange }
+    }
+    case 'unlinkDir': {
       {
-        const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(
-          sameInodeChange
-        )
+        const moveChange /*: ?LocalDirMove */ =
+          localChange.maybeMoveFolder(sameInodeChange)
         /* istanbul ignore next */
         if (moveChange && !moveChange.wip) {
           panic(
@@ -255,7 +279,7 @@ function analyseEvent(
           )
         }
       }
-      return (
+      const { change, previousChange } =
         localChange.dirMoveFromAddUnlink(sameInodeChange, e) ||
         localChange.dirDeletion(e) ||
         previousChanges.whenFoundByPath(
@@ -264,7 +288,8 @@ function analyseEvent(
             localChange.ignoreDirAdditionThenDeletion(samePathChange) ||
             localChange.convertDirMoveToDeletion(samePathChange)
         )
-      )
+      return { change, previousChange }
+    }
     default:
       throw new TypeError(`Unknown event type: ${e.type}`)
   }
@@ -312,7 +337,9 @@ function squashMoves(changes /*: LocalChange[] */) {
       // inline of LocalChange.isChildMove
       if (
         a.type === 'DirMove' &&
-        (oldPathA && oldPathB && oldPathB.startsWith(oldPathA + path.sep))
+        oldPathA &&
+        oldPathB &&
+        oldPathB.startsWith(oldPathA + path.sep)
       ) {
         log.debug({ oldpath: b.old.path, path: b.path }, 'descendant move')
         if (pathB.substr(pathA.length) === oldPathB.substr(oldPathA.length)) {

@@ -4,7 +4,7 @@ const program = require('commander')
 const local = require('./capture/local')
 const fse = require('fs-extra')
 const path = require('path')
-const opn = require('opn')
+const open = require('open')
 const scenarioHelpers = require('../test/support/helpers/scenarios')
 
 program
@@ -32,11 +32,12 @@ if (scenarioArg) {
     path.join(__dirname, '..', 'test', 'scenarios', match[1], 'scenario.js')
   )
 
-  local
+  return local
     .setupInitialState(scenario)
     .then(() => {
       // eslint-disable-next-line no-console
       console.log('Inodes :', local.mapInode)
+      return
     })
     .then(startChokidar)
 } else {
@@ -45,7 +46,7 @@ if (scenarioArg) {
 
 function startChokidar() {
   const syncPath = process.env.COZY_DESKTOP_DIR || local.syncPath
-  opn(syncPath)
+  open(syncPath)
 
   fse.ensureDirSync(syncPath)
 
@@ -81,4 +82,5 @@ function startChokidar() {
 
   // eslint-disable-next-line no-console
   console.log(`Watching ${syncPath}`)
+  return
 }

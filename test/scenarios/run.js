@@ -33,17 +33,17 @@ const { platform } = process
 const logger = require('../../core/utils/logger')
 const log = new logger({ component: 'TEST' })
 
-describe('Test scenarios', function() {
+describe('Test scenarios', function () {
   let helpers
 
   beforeEach(configHelpers.createConfig)
   beforeEach(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
-  beforeEach('set up outside dir', async function() {
+  beforeEach('set up outside dir', async function () {
     await fse.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
   })
-  beforeEach(async function() {
+  beforeEach(async function () {
     helpers = TestHelpers.init(this)
 
     // TODO: helpers.setup()
@@ -51,7 +51,7 @@ describe('Test scenarios', function() {
     await helpers.remote.ignorePreviousChanges()
   })
 
-  afterEach(async function() {
+  afterEach(async function () {
     await helpers.stop()
   })
   afterEach(pouchHelpers.cleanDatabase)
@@ -78,7 +78,7 @@ describe('Test scenarios', function() {
           continue
         }
 
-        it(localTestName, async function() {
+        it(localTestName, async function () {
           await runLocalAtom(scenario, atomCapture, helpers)
         })
       }
@@ -98,7 +98,7 @@ describe('Test scenarios', function() {
           const breakpoints = injectChokidarBreakpoints(eventsFile)
 
           for (let flushAfter of breakpoints) {
-            it(localTestName + ' flushAfter=' + flushAfter, async function() {
+            it(localTestName + ' flushAfter=' + flushAfter, async function () {
               await runLocalChokidarWithCaptures(
                 scenario,
                 _.cloneDeep(eventsFile),
@@ -108,7 +108,7 @@ describe('Test scenarios', function() {
             })
           }
         } else {
-          it(localTestName, async function() {
+          it(localTestName, async function () {
             await runLocalChokidarWithoutCaptures(
               scenario,
               _.cloneDeep(eventsFile),
@@ -123,7 +123,7 @@ describe('Test scenarios', function() {
       if (stoppedTestSkipped) {
         it.skip(`${stoppedTestName} (${stoppedTestSkipped})`, () => {})
       } else {
-        it(stoppedTestName, async function() {
+        it(stoppedTestName, async function () {
           this.timeout(3 * 60 * 1000)
           await runLocalStopped(scenario, helpers)
         })
@@ -138,7 +138,7 @@ describe('Test scenarios', function() {
       continue
     }
 
-    it(remoteTestName, async function() {
+    it(remoteTestName, async function () {
       await runRemote(scenario, helpers)
     })
   }

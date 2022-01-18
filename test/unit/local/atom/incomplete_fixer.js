@@ -30,18 +30,18 @@ describe('core/local/atom/incomplete_fixer', () => {
 
   before('create config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('create helpers', function() {
+  beforeEach('create helpers', function () {
     syncDir = new ContextDir(this.syncPath)
     builders = new Builders({ pouch: this.pouch })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
-  afterEach('clean files', function() {
+  afterEach('clean files', function () {
     syncDir.clean()
   })
   after('cleanup config', configHelpers.cleanConfig)
 
   describe('.loop()', () => {
-    it('pushes the result of step() into the output Channel', async function() {
+    it('pushes the result of step() into the output Channel', async function () {
       const { config } = this
 
       const src = 'missing'
@@ -82,34 +82,14 @@ describe('core/local/atom/incomplete_fixer', () => {
 
   describe('.step()', () => {
     context('without any complete "renamed" event', () => {
-      it('drops incomplete events', async function() {
+      it('drops incomplete events', async function () {
         const { config } = this
 
         const inputBatch = [
-          builders
-            .event()
-            .incomplete()
-            .action('created')
-            .path('foo1')
-            .build(),
-          builders
-            .event()
-            .incomplete()
-            .action('modified')
-            .path('foo2')
-            .build(),
-          builders
-            .event()
-            .incomplete()
-            .action('deleted')
-            .path('foo3')
-            .build(),
-          builders
-            .event()
-            .incomplete()
-            .action('scan')
-            .path('foo4')
-            .build()
+          builders.event().incomplete().action('created').path('foo1').build(),
+          builders.event().incomplete().action('modified').path('foo2').build(),
+          builders.event().incomplete().action('deleted').path('foo3').build(),
+          builders.event().incomplete().action('scan').path('foo4').build()
         ]
         const incompletes = []
 
@@ -126,24 +106,15 @@ describe('core/local/atom/incomplete_fixer', () => {
     })
 
     context('with a complete "renamed" event', () => {
-      it('leaves complete events untouched', async function() {
+      it('leaves complete events untouched', async function () {
         const { config } = this
 
         const src = 'file'
         const dst = 'foo'
         await syncDir.ensureFile(dst)
         const inputBatch = [
-          builders
-            .event()
-            .action('created')
-            .path(src)
-            .build(),
-          builders
-            .event()
-            .action('renamed')
-            .oldPath(src)
-            .path(dst)
-            .build()
+          builders.event().action('created').path(src).build(),
+          builders.event().action('renamed').oldPath(src).path(dst).build()
         ]
         const incompletes = []
 
@@ -158,7 +129,7 @@ describe('core/local/atom/incomplete_fixer', () => {
         should(outputBatch).deepEqual(inputBatch)
       })
 
-      it('rebuilds the all incomplete events matching the "renamed" event old path', async function() {
+      it('rebuilds the all incomplete events matching the "renamed" event old path', async function () {
         const { config } = this
 
         await syncDir.makeTree([
@@ -265,7 +236,7 @@ describe('core/local/atom/incomplete_fixer', () => {
         ])
       })
 
-      it('drops incomplete ignored events matching the "renamed" event old path', async function() {
+      it('drops incomplete ignored events matching the "renamed" event old path', async function () {
         const { config } = this
 
         await syncDir.makeTree(['dst/', 'dst/file'])
@@ -294,7 +265,7 @@ describe('core/local/atom/incomplete_fixer', () => {
         should(outputBatch).deepEqual([renamedEvent])
       })
 
-      it('replaces the completing event if its path is the same as the rebuilt one', async function() {
+      it('replaces the completing event if its path is the same as the rebuilt one', async function () {
         const { config } = this
 
         const src = 'missing'
@@ -340,7 +311,7 @@ describe('core/local/atom/incomplete_fixer', () => {
     })
 
     describe('file renamed then deleted', () => {
-      it('is deleted at its original path', async function() {
+      it('is deleted at its original path', async function () {
         const { config } = this
 
         const src = 'src'
@@ -392,7 +363,7 @@ describe('core/local/atom/incomplete_fixer', () => {
     })
 
     describe('file renamed twice', () => {
-      it('is renamed once as a whole', async function() {
+      it('is renamed once as a whole', async function () {
         const { config } = this
 
         const src = 'src'
@@ -454,7 +425,7 @@ describe('core/local/atom/incomplete_fixer', () => {
     })
 
     describe('file renamed three times', () => {
-      it('is renamed once as a whole', async function() {
+      it('is renamed once as a whole', async function () {
         const { config } = this
 
         const src = 'src'
@@ -522,7 +493,7 @@ describe('core/local/atom/incomplete_fixer', () => {
     })
 
     describe('file renamed and then renamed back to its previous name', () => {
-      it('results in no events at all', async function() {
+      it('results in no events at all', async function () {
         const { config } = this
 
         const src = 'src'
@@ -563,7 +534,7 @@ describe('core/local/atom/incomplete_fixer', () => {
     })
 
     describe('file renamed to backup location and replaced by new file', () => {
-      it('is modified once and not deleted', async function() {
+      it('is modified once and not deleted', async function () {
         const { config } = this
 
         const src = 'src'
@@ -640,15 +611,11 @@ describe('core/local/atom/incomplete_fixer', () => {
       const src = 'src'
       const dst = 'dst'
 
-      beforeEach(async function() {
-        await builders
-          .metafile()
-          .path(src)
-          .sides({ local: 1 })
-          .create()
+      beforeEach(async function () {
+        await builders.metafile().path(src).sides({ local: 1 }).create()
       })
 
-      it('results in the renamed event', async function() {
+      it('results in the renamed event', async function () {
         const { config, pouch } = this
 
         await syncDir.ensureFile(dst)
@@ -689,15 +656,11 @@ describe('core/local/atom/incomplete_fixer', () => {
       const src = 'src'
       const dst = 'dst'
 
-      beforeEach(async function() {
-        await builders
-          .metafile()
-          .path(src)
-          .sides({ local: 1 })
-          .create()
+      beforeEach(async function () {
+        await builders.metafile().path(src).sides({ local: 1 }).create()
       })
 
-      it('results in the renamed event followed by the rebuilt modified event', async function() {
+      it('results in the renamed event followed by the rebuilt modified event', async function () {
         const { config, pouch } = this
 
         await syncDir.ensureFile(dst)
@@ -755,15 +718,11 @@ describe('core/local/atom/incomplete_fixer', () => {
       const dst1 = 'dst1'
       const dst2 = 'dst2'
 
-      beforeEach(async function() {
-        await builders
-          .metafile()
-          .path(src)
-          .sides({ local: 1 })
-          .create()
+      beforeEach(async function () {
+        await builders.metafile().path(src).sides({ local: 1 }).create()
       })
 
-      it('results in one renamed event followed by the rebuilt modified event', async function() {
+      it('results in one renamed event followed by the rebuilt modified event', async function () {
         const { config, pouch } = this
 
         await syncDir.ensureFile(dst2)

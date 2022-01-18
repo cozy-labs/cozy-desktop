@@ -145,23 +145,23 @@ class LocalWatcher {
         'unlink',
         'unlinkDir'
       ]) {
-        this.watcher.on(eventType, (
-          path /*: ?string */,
-          stats /*: ?fs.Stats */
-        ) => {
-          const isInitialScan =
-            this.initialScanParams && !this.initialScanParams.flushed
-          log.chokidar.debug({ path, stats, isInitialScan }, eventType)
-          const newEvent = chokidarEvent.build(eventType, path, stats)
-          if (newEvent.type !== eventType) {
-            log.info(
-              { eventType, event: newEvent },
-              'fixed wrong fsevents event type'
-            )
+        this.watcher.on(
+          eventType,
+          (path /*: ?string */, stats /*: ?fs.Stats */) => {
+            const isInitialScan =
+              this.initialScanParams && !this.initialScanParams.flushed
+            log.chokidar.debug({ path, stats, isInitialScan }, eventType)
+            const newEvent = chokidarEvent.build(eventType, path, stats)
+            if (newEvent.type !== eventType) {
+              log.info(
+                { eventType, event: newEvent },
+                'fixed wrong fsevents event type'
+              )
+            }
+            this.buffer.push(newEvent)
+            this.events.emit('buffering-start')
           }
-          this.buffer.push(newEvent)
-          this.events.emit('buffering-start')
-        })
+        )
       }
 
       // To detect which files&folders have been removed since the last run of

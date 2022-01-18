@@ -26,7 +26,7 @@ module.exports = class StreamBuilder {
   build() /*: stream.Readable */ {
     const builder = this
     return new stream.Readable({
-      read: function() {
+      read: function () {
         if (builder.err) {
           this.emit('error', builder.err)
         } else {

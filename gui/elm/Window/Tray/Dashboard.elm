@@ -21,6 +21,8 @@ import Json.Decode as Json
 import Locale exposing (Helpers)
 import Ports
 import Time
+import Util.Conditional exposing (ShowInWeb, inWeb, onOS)
+import Util.Mouse as Mouse
 
 
 
@@ -61,8 +63,8 @@ maxActivities =
 type Msg
     = Transfer EncodedFile
     | Remove EncodedFile
-    | OpenPath Path
-    | ShowInParent Path
+    | OpenPath Path ShowInWeb
+    | ShowInParent Path ShowInWeb
     | Tick Time.Posix
     | ShowMore
     | Reset
@@ -99,11 +101,11 @@ update msg model =
             in
             ( { model | files = files }, Cmd.none )
 
-        OpenPath path ->
-            ( model, Ports.openFile (Path.toString path) )
+        OpenPath path showInWeb ->
+            ( model, Ports.openFile ( Path.toString path, showInWeb ) )
 
-        ShowInParent path ->
-            ( model, Ports.showInParent (Path.toString path) )
+        ShowInParent path showInWeb ->
+            ( model, Ports.showInParent ( Path.toString path, showInWeb ) )
 
         Tick now ->
             ( { model | now = now }, Cmd.none )
@@ -162,7 +164,7 @@ renderFile helpers model file =
     div
         [ class "file-line"
         , title filenameTitle
-        , onClick (OpenPath file.path)
+        , Mouse.onSpecialClick (handleOpenPath file.path)
         ]
         [ div [ class ("file-type file-type-" ++ file.icon) ] []
         , span [ class "file-line-content file-name-wrapper" ]
@@ -174,13 +176,29 @@ renderFile helpers model file =
             , span
                 [ class "file-parent-folder"
                 , title dirPathTitle
-                , stopPropagationOn "click" <|
-                    Json.map (\msg -> ( msg, True )) <|
-                        Json.succeed (ShowInParent file.path)
+                , Mouse.onCapturingClick (handleShowInParent file.path)
                 ]
                 [ text (Path.toString dirPath) ]
             ]
         ]
+
+
+handleOpenPath : Path -> Mouse.EventWithKeys -> Msg
+handleOpenPath path mouseEvent =
+    if mouseEvent.keys.ctrl || mouseEvent.keys.meta then
+        OpenPath path inWeb
+
+    else
+        OpenPath path onOS
+
+
+handleShowInParent : Path -> Mouse.EventWithKeys -> Msg
+handleShowInParent path mouseEvent =
+    if mouseEvent.keys.ctrl || mouseEvent.keys.meta then
+        ShowInParent path inWeb
+
+    else
+        ShowInParent path onOS
 
 
 showMoreButton : Helpers -> Html Msg
@@ -201,8 +219,8 @@ viewActions helpers model =
         msg =
             \actionMsg ->
                 case actionMsg of
-                    UserAction.ShowInParent path ->
-                        ShowInParent path
+                    UserAction.ShowInParent path showInWeb ->
+                        ShowInParent path showInWeb
 
                     UserAction.SendCommand cmd action ->
                         SendActionCommand cmd action
