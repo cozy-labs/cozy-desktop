@@ -19,7 +19,7 @@ suite =
                         |> Expect.equal "camillenimbus.mycozy.cloud"
             , test "cozy-hosted https trailing path" <|
                 \_ ->
-                    correctAddress "https://camillenimbus.mycozy.cloud/"
+                    correctAddress "https://camillenimbus.mycozy.cloud/some-path"
                         |> Expect.equal "camillenimbus.mycozy.cloud"
             , test "cozy-hosted drive web app url" <|
                 \_ ->
@@ -57,6 +57,30 @@ suite =
                 \_ ->
                     correctAddress "http://cozy.localhost:8080"
                         |> Expect.equal "http://cozy.localhost:8080"
+            , test "cozy-hosted partner https" <|
+                \_ ->
+                    correctAddress "https://partner.com"
+                        |> Expect.equal "partner.com"
+            , test "cozy-hosted partner https with port" <|
+                \_ ->
+                    correctAddress "https://partner.com:666"
+                        |> Expect.equal "partner.com:666"
+            , test "cozy-hosted partner http" <|
+                \_ ->
+                    correctAddress "http://partner.com"
+                        |> Expect.equal "http://partner.com"
+            , test "cozy-hosted partner nested drive web app url" <|
+                \_ ->
+                    correctAddress "https://drive.user.partner.com/#/folder"
+                        |> Expect.equal "user.partner.com"
+            , test "cozy-hosted partner flat drive web app url" <|
+                \_ ->
+                    correctAddress "https://user-drive.partner.com/"
+                        |> Expect.equal "user.partner.com"
+            , test "cozy-hosted partner instance full name" <|
+                \_ ->
+                    correctAddress "user.partner.com"
+                        |> Expect.equal "user.partner.com"
 
             -- , test "localhost" <|
             --     \_ ->

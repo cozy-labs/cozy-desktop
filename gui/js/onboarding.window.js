@@ -54,7 +54,7 @@ module.exports = class OnboardingWM extends WindowManager {
     })
   }
 
-  openOAuthView(url) {
+  async openOAuthView(url) {
     try {
       // Open remote OAuth flow in separate view, without Node integration.
       // This avoids giving access to Node's API to remote code and allows
@@ -64,29 +64,39 @@ module.exports = class OnboardingWM extends WindowManager {
       this.oauthView = new BrowserView({
         webPreferences: { partition: SESSION_PARTITION_NAME }
       })
-      this.win.setBrowserView(this.oauthView)
 
       // We want the view to take the entire available space so we get the
       // current window's bounds.
+      const bounds = this.win.getContentBounds()
+
+      await this.oauthView.webContents.loadURL(url)
+
+      // Hide the message inviting to make sure the page URL is the expected
+      // Cozy URL until we figure out how to properly display it during the
+      // on-boarding.
+      await this.oauthView.webContents.insertCSS(
+        '.wrapper .wrapper-top .banner.caption { display: none; }'
+      )
+
+      this.win.setBrowserView(this.oauthView)
+
       // BrowserViews are positionned within their parent window so we need to
       // set the top left corner of the view to the origin.
-      const bounds = this.win.getContentBounds()
+      // XXX: in Electron v12.x, we can't set the bounds of a BrowserView until
+      // it's been attached to the parent BrowserWindow. However, this makes the
+      // display jitterish and we should change this behavior once we upgrade
+      // Electron to a version allowing us to set the bounds before attaching
+      // the view.
+      this.oauthView.setAutoResize({
+        width: true,
+        height: true,
+        horizontal: true,
+        vertical: true
+      })
       this.oauthView.setBounds({ ...bounds, x: 0, y: 0 })
-
-      this.oauthView.webContents.on(
-        'did-fail-load',
-        (event, errorCode, errorDescription, url, isMainFrame) => {
-          const err = new Error(errorDescription)
-          err.code = errorCode
-          this.log.error(
-            { err, url, isMainFrame, sentry: true },
-            'failed loading OAuth view'
-          )
-        }
-      )
-      this.oauthView.webContents.loadURL(url)
+      this.centerOnScreen(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT)
     } catch (err) {
-      log.error({ err, sentry: true }, 'failed loading OAuth view')
+      log.error({ err, url, sentry: true }, 'failed loading OAuth view')
     }
   }
 
@@ -110,26 +120,22 @@ module.exports = class OnboardingWM extends WindowManager {
     this.afterOnboarding = handler
   }
 
-  onRegisterRemote(event, arg) {
+  async onRegisterRemote(event, arg) {
     const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
 
     let desktop = this.desktop
     let cozyUrl
     try {
-      cozyUrl = desktop.checkCozyUrl(arg.cozyUrl)
+      cozyUrl = await desktop.checkCozyUrl(arg.cozyUrl)
     } catch (err) {
       return event.sender.send(
         'registration-error',
-        translate('Address Invalid address!')
+        translate('Address Invalid address')
       )
     }
     desktop.config.cozyUrl = cozyUrl
 
     const onRegistered = (client, url) => {
-      // TODO only centerOnScreen if needed to display the whole login screen
-      //      and if the user hasn't moved the window before
-      this.centerOnScreen(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT)
-
       let resolveP
       const promise = new Promise(resolve => {
         resolveP = resolve

@@ -14,6 +14,7 @@ const uuid = require('uuid/v4')
 const https = require('https')
 const { createGzip } = require('zlib')
 const semver = require('semver')
+const { rootCozyUrl } = require('cozy-client')
 
 require('./globals')
 const pkg = require('../package.json')
@@ -106,15 +107,10 @@ class App {
   }
 
   // Check that the cozyUrl is valid
-  checkCozyUrl(cozyUrl /*: string */) {
-    let parsed = this.parseCozyUrl(cozyUrl)
-    cozyUrl = url.format(parsed)
-    if (!['http:', 'https:'].includes(parsed.protocol) || !parsed.hostname) {
-      let err = new Error(`Your URL looks invalid: ${cozyUrl}`)
-      log.warn(err)
-      throw err
-    }
-    return cozyUrl
+  async checkCozyUrl(cozyUrl /*: string */) /*: Promise<string> */ {
+    const parsed = this.parseCozyUrl(cozyUrl)
+    const rootUrl = await rootCozyUrl(parsed)
+    return rootUrl.origin
   }
 
   // Returns an object including the syncPath only when valid, or with an error
