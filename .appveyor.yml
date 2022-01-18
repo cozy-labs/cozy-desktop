@@ -24,9 +24,12 @@ test_script:
   - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:unit --timeout $env:MOCHA_TIMEOUT }
   - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:integration --timeout $env:MOCHA_TIMEOUT }
   - ps: if ($env:BUILD_JOB -eq "scenarios_build") { yarn test:scenarios --timeout $env:MOCHA_TIMEOUT }
-  - ps: if ($env:BUILD_JOB -eq "scenarios_build") { yarn dist:all }
 
 on_failure:
   - node --version
   - npm --version
   - yarn --version
+
+on_finish:
+  - ps: if ($env:BUILD_JOB -eq "scenarios_build") { yarn dist:all }
+
