@@ -57,10 +57,19 @@ module.exports = class WindowManager {
     return true
   }
 
-  show() {
-    if (!this.win) return this.create()
+  async show() {
+    if (!this.win) await this.create()
     this.log.debug('show')
+
+    // devTools
+    if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
+      const devtools = new BrowserWindow()
+      this.win.webContents.setDevToolsWebContents(devtools.webContents)
+      this.win.webContents.openDevTools({ mode: 'detach' })
+    }
+
     this.win.show()
+
     return Promise.resolve(this.win)
   }
 
@@ -205,11 +214,6 @@ module.exports = class WindowManager {
     }).catch(err => log.error({ err, sentry: true }, 'failed showing window'))
 
     this.win.loadURL(`file://${opts.indexPath}${this.hash()}`)
-
-    // devTools
-    if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
-      this.win.webContents.openDevTools({ mode: 'detach' })
-    }
 
     return windowCreated
   }
