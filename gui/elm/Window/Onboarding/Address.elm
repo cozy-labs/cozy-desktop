@@ -28,7 +28,16 @@ type Msg
     = FillAddress String
     | RegisterRemote
     | RegistrationError String
-    | CorrectAddress
+
+
+coreAppNames : List String
+coreAppNames =
+    [ "drive", "photos", "banks", "settings", "home", "contacts", "mespapiers", "notes", "passwords", "store" ]
+
+
+containsCoreAppName : String -> Bool
+containsCoreAppName address =
+    List.any (\appName -> contains appName address) coreAppNames
 
 
 setError : Context -> String -> ( Context, Cmd msg )
@@ -41,40 +50,41 @@ setError context message =
 dropAppName : String -> String
 dropAppName address =
     let
-        ( instanceName, topDomain ) =
+        cleanInstanceName =
+            \name ->
+                List.foldl
+                    (\appName cleanName ->
+                        if cleanName == appName then
+                            ""
+
+                        else
+                            String.replace ("-" ++ appName) "" cleanName
+                    )
+                    name
+                    coreAppNames
+
+        cleanParts =
             case String.split "." address of
                 [] ->
                     -- This can't happen because String.split always return a
                     -- list with at least one element but is required by Elm.
-                    ( address, "mycozy.cloud" )
+                    [ address, "mycozy.cloud" ]
 
                 [ instance ] ->
                     -- This should never happen as we already append
                     -- `.mycozy.cloud` to addresses without host
-                    ( address, "mycozy.cloud" )
+                    [ address, "mycozy.cloud" ]
 
                 instance :: rest ->
-                    ( instance, String.join "." rest )
+                    cleanInstanceName instance :: rest
     in
     if String.isEmpty address then
         ""
 
-    else if
-        String.endsWith "mycozy.cloud" topDomain
-            || String.endsWith "mytoutatice.cloud" topDomain
-    then
-        case String.split "-" instanceName of
-            instance :: _ ->
-                instance ++ "." ++ topDomain
-
-            _ ->
-                instanceName ++ "." ++ topDomain
-
     else
-        -- We can't really tell at this point if the given URL points to a Cozy
-        -- using nested domains or not so we can't really drop app names unless
-        -- we make a hard list of them.
-        instanceName ++ "." ++ topDomain
+        cleanParts
+            |> List.filter (\part -> not (String.isEmpty part))
+            |> String.join "."
 
 
 correctAddress : String -> String
@@ -123,39 +133,26 @@ update msg context =
         FillAddress address ->
             ( Context.setAddressConfig context { address = address, error = "", busy = False }, Cmd.none )
 
-        CorrectAddress ->
-            let
-                addressConfig =
-                    context.addressConfig
-
-                newAddressConfig =
-                    { addressConfig
-                        | address = correctAddress addressConfig.address
-                    }
-            in
-            ( Context.setAddressConfig context newAddressConfig, Cmd.none )
-
         RegisterRemote ->
             let
                 addressConfig =
                     context.addressConfig
+
+                address =
+                    addressConfig.address
             in
-            if addressConfig.address == "" then
+            if address == "" then
                 setError context "Address You don't have filled the address!"
 
-            else if contains "@" addressConfig.address then
+            else if contains "@" address then
                 setError context "Address No email address"
 
-            else if contains "mycosy.cloud" addressConfig.address then
+            else if contains "mycosy.cloud" address then
                 setError context "Address Cozy not cosy"
 
             else
-                let
-                    newAddressConfig =
-                        { addressConfig | address = correctAddress addressConfig.address, busy = True }
-                in
-                ( Context.setAddressConfig context newAddressConfig
-                , Ports.registerRemote (correctAddress newAddressConfig.address)
+                ( Context.setAddressConfig context { addressConfig | busy = True }
+                , Ports.registerRemote addressConfig.address
                 )
 
         RegistrationError error ->
@@ -203,7 +200,6 @@ view helpers context =
                         , disabled context.addressConfig.busy
                         , onInput FillAddress
                         , Keyboard.onEnter RegisterRemote
-                        , onBlur CorrectAddress
                         ]
                         []
                     ]
