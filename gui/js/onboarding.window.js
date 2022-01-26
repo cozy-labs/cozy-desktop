@@ -20,7 +20,7 @@ module.exports = class OnboardingWM extends WindowManager {
   windowOptions() {
     return {
       title: 'ONBOARDING',
-      show: true,
+      show: false,
       center: true,
       width: ONBOARDING_SCREEN_WIDTH,
       height: ONBOARDING_SCREEN_HEIGHT

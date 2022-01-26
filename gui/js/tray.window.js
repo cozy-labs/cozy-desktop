@@ -117,8 +117,8 @@ module.exports = class TrayWM extends WindowManager {
 
   show(trayPos) {
     this.log.debug('show')
+    super.show()
     this.placeWithTray(DASHBOARD_SCREEN_WIDTH, DASHBOARD_SCREEN_HEIGHT, trayPos)
-    this.win.show()
     return Promise.resolve(this.win)
   }
 
