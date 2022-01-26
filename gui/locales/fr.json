@@ -44,13 +44,13 @@
   "AppMenu Window": "Fenêtre",
 
   "AppUpgrade App upgrade failed": "Échec de la mise à jour",
-  "AppUpgrade An error happened during the upgrade of Cozy Desktop. Please contact support at contact@cozycloud.cc.": "Une erreur est survenue pendant la mise à jour de Cozy Desktop. Merci de contacter le support sur contact@cozycloud.cc.",
+  "AppUpgrade An error happened during the upgrade of Cozy Desktop. Please contact support at contact@cozycloud.cc.": "Une erreur est survenue pendant la mise à jour de Cozy Desktop. Merci de contacter l'assistance sur contact@cozycloud.cc.",
 
   "Bar GoToCozy": "Ouvrir Cozy",
   "Bar GoToFolder": "Ouvrir le dossier",
 
   "Button Log out": "Se déconnecter",
-  "Button Contact support": "Contacter le support",
+  "Button Contact support": "Contacter l'assistance",
 
   "Cancel": "Annuler",
 
@@ -102,7 +102,7 @@
   "Error Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights.": "La synchronisation reprendra dès que vous aurez refermé le(s) fichier(s) ouvert(s) bloquant cette opération ou rétabli des droits d’accès suffisants.",
   "Error Invalid document metadata": "Métadonnées invalides",
   "Error The {0} `{1}`'s metadata cannot be accepted by your Cozy.": "Les métadonnées du {0} `{1}` ne peuvent être acceptées par votre Cozy.",
-  "Error This message persists if the local metadata of your document is corrupted. In this case try to move it out of the Cozy Drive folder and back again or contact support for help on the procedure.": "Ce message persiste si les métadonnées locales de votre document sont corrompues. Dans ce cas essayez de le déplacer hors du dossier de synchronisation local puis de le remettre ou contactez notre support pour obtenir de l'aider sur cette procédure.",
+  "Error This message persists if the local metadata of your document is corrupted. In this case try to move it out of the Cozy Drive folder and back again or contact support for help on the procedure.": "Ce message persiste si les métadonnées locales de votre document sont corrompues. Dans ce cas essayez de le déplacer hors du dossier de synchronisation local puis de le remettre ou contactez notre assistance pour obtenir de l'aider sur cette procédure.",
   "Error Invalid document name": "Nom invalide",
   "Error The {0} `{1}`'s name contains characters forbidden by your Cozy.": "Le nom du {0} `{1}` contient des caractères interdits par votre Cozy.",
   "Error Try renaming it without using the following characters: / \\u{0000} \\n \\u{000D}.": "Essayez de le renommer en excluant les caractères suivants : / \\u{0000} \\n \\u{000D}.",
@@ -110,8 +110,11 @@
   "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy.": "Le chemin du {0} `{1}` a trop de niveaux (i.e. dossiers parents) pour votre Cozy.",
   "Error Try removing some parent levels or moving it to antoher folder.": "Essayez de supprimer quelques niveaux ou déplacer le document vers un autre dossier.",
   "Error Unhandled synchronization error": "Erreur de synchronisation",
-  "Error We encountered an unhandled error while trying to synchronise the {0} `{1}`.": "Cozy Desktop a rencontré une erreur de synchronisation non prise en charge en essayant de synchroniser le {0} `{1}`.",
-  "Error Please contact our support to get help.": "Contactez notre support pour recevoir de l'aide.",
+  "Error Cozy Desktop encountered an unexpected error while trying to synchronise the {0} `{1}`.": "Cozy Desktop a rencontré une erreur inattendue en essayant de synchroniser le {0} `{1}`.",
+  "Error Your hosting provider is working on fixing the issue and the synchronization will automatically be retried periodically.": "L'hébergeur de votre Cozy doit être en train de corriger le problème et une nouvelle tentative de synchronisation sera effectuée automatiquement et périodiquement.",
+  "Error Maintenance in progress": "Maintenance en cours",
+  "Error The synchronization of your documents is momentarily paused.": "La synchronisation de vos documents est momentanément interrompue.",
+  "Error It will resume once the maintenance is over.": "Elle reprendra automatiquement à la fin de cette maintenance.",
   "Error Document path incompatible with current OS": "Chemin incompatible avec l'OS courant",
   "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System.": "Le nom du {0} `{1}` est reservé, contient des caractères interdits ou est trop long pour votre système d'exploitation.",
   "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary.": "Essayez de le renommer sur votre Cozy en n'utilisant pas de caractère spécial et en choisissant un nom plus court si besoin.",
@@ -143,7 +146,7 @@
   "Folder You cannot synchronize your whole system or personal folder": "Vous ne pouvez pas synchroniser tout votre système ou dossier personnel.",
 
   "Help [ The more you can say about the issue, the better: do you have many files? Are they big? Is your cozy up-to-date? ]": "[ Donnez nous un maximum de détails : avez-vous beaucoup de fichiers ? Sont-ils gros ? Votre cozy est-il à jour ? ]",
-  "Help An error occured while sending your email": "Une erreur est survenue pendant l'envoi de votre courriel. Veuillez contacter le support.",
+  "Help An error occured while sending your email": "Une erreur est survenue pendant l'envoi de votre courriel. Veuillez contacter l'assistance.",
   "Help Community Support": "Support par la communauté",
   "Help Documentation": "Documentation",
   "Help Email": "Email",
@@ -268,7 +271,7 @@
   "Updater Downloading": "Mise à jour de Cozy Drive",
   "Updater Error ENOSPC": "Votre disque est plein, la mise à jour ne peut pas être téléchargée.",
   "Updater Error EPERM": "Une erreur de permission empêche le téléchargement de la mise à jour.",
-  "Updater Error Other": "Une erreur inconnue empêche la mise à jour. Veuillez contacter le support.",
+  "Updater Error Other": "Une erreur inconnue empêche la mise à jour. Veuillez contacter l'assistance.",
   "Updater Error": "Erreur de mise à jour",
   "Updater Please wait": "Merci de patienter pendant le téléchargement.",
   "Updater It may take a while": "Cela peut prendre quelques minutes, selon la vitesse de votre connexion.",

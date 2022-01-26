@@ -878,7 +878,10 @@ describe('Sync', function() {
 
     context('when Cozy is unreachable', () => {
       const unreachableSyncError = syncErrors.wrapError(
-        new FetchError({ status: 500 }, 'UnreachableCozy test error'),
+        new FetchError(
+          { type: 'system', code: 'ENOTFOUND', errno: 'ENOTFOUND' },
+          'request to ... failed, reason: net::ERR_NAME_NOT_RESOLVED'
+        ),
         'remote'
       )
       beforeEach(function() {
@@ -904,7 +907,10 @@ describe('Sync', function() {
       // checks that this does not occur.
       it('does not allow multiple retry intervals', async function() {
         const unreachableRemoteError = remoteErrors.wrapError(
-          new FetchError({ status: 500 }, 'Concurrent UnreachableCozy error')
+          new FetchError(
+            { type: 'system', code: 'ENOTFOUND', errno: 'ENOTFOUND' },
+            'request to ... failed, reason: net::ERR_NAME_NOT_RESOLVED'
+          )
         )
         this.sync.blockSyncFor({
           err: unreachableRemoteError

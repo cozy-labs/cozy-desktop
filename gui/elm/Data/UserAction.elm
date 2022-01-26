@@ -50,6 +50,7 @@ type Command
 type Msg
     = SendCommand Command UserAction -- send specified command to client
     | ShowInParent Path -- open file explorer at parent's path
+    | ShowHelp
 
 
 same : UserAction -> UserAction -> Bool
@@ -388,6 +389,16 @@ viewByCode helpers action =
             , buttons = [ actionButton helpers (SendCommand Retry action) "UserAction Retry" Primary ]
             }
 
+        ClientAction "RemoteMaintenance" _ ->
+            { title = "Error Maintenance in progress"
+            , content =
+                [ "Error The synchronization of your documents is momentarily paused."
+                , "Error It will resume once the maintenance is over."
+                ]
+            , buttons =
+                [ actionButton helpers (SendCommand Retry action) "UserAction Retry" Primary ]
+            }
+
         ClientAction "UnknownRemoteError" { docType, path } ->
             let
                 localDocType =
@@ -395,10 +406,13 @@ viewByCode helpers action =
             in
             { title = "Error Unhandled synchronization error"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error We encountered an unhandled error while trying to synchronise the {0} `{1}`."
-                , "Error Please contact our support to get help."
+                [ helpers.interpolate [ localDocType, path ] "Error Cozy Desktop encountered an unexpected error while trying to synchronise the {0} `{1}`."
+                , "Error Your hosting provider is working on fixing the issue and the synchronization will automatically be retried periodically."
                 ]
-            , buttons = [ actionButton helpers (SendCommand Retry action) "UserAction Retry" Primary ] -- Could show help button
+            , buttons =
+                [ actionButton helpers ShowHelp "Button Contact support" Secondary
+                , actionButton helpers (SendCommand Retry action) "UserAction Retry" Primary
+                ]
             }
 
         RemoteAction "UserActionRequired" { link } ->

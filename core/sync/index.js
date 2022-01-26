@@ -448,6 +448,7 @@ class Sync {
           case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
           case remoteErrors.NO_COZY_SPACE_CODE:
           case remoteErrors.PATH_TOO_DEEP_CODE:
+          case remoteErrors.REMOTE_MAINTENANCE_ERROR_CODE:
           case remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE:
           case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
           case remoteErrors.UNREACHABLE_COZY_CODE:
@@ -998,6 +999,7 @@ class Sync {
         case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
         case remoteErrors.NO_COZY_SPACE_CODE:
         case remoteErrors.PATH_TOO_DEEP_CODE:
+        case remoteErrors.REMOTE_MAINTENANCE_ERROR_CODE:
         case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
         case remoteErrors.USER_ACTION_REQUIRED_CODE:
           this.events.emit(

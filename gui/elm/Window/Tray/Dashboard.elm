@@ -65,6 +65,7 @@ type Msg
     | ShowInParent Path
     | Tick Time.Posix
     | ShowMore
+    | ShowHelp
     | Reset
     | GotUserActions (List UserAction)
     | SendActionCommand UserAction.Command UserAction
@@ -110,6 +111,9 @@ update msg model =
 
         ShowMore ->
             ( { model | page = model.page + 1 }, Cmd.none )
+
+        ShowHelp ->
+            ( model, Ports.showHelp () )
 
         Reset ->
             ( { model | page = 1 }, Cmd.none )
@@ -206,6 +210,9 @@ viewActions helpers model =
 
                     UserAction.SendCommand cmd action ->
                         SendActionCommand cmd action
+
+                    UserAction.ShowHelp ->
+                        ShowHelp
     in
     case model.userActions of
         action :: _ ->
