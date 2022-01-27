@@ -8,19 +8,19 @@ port module Data.SyncState exposing
 
 import Data.Status as Status exposing (Status)
 import Data.SyncError as SyncError exposing (EncodedSyncError)
-import Data.UserAction as UserAction exposing (EncodedUserAction, UserAction)
+import Data.UserAlert as UserAlert exposing (EncodedUserAlert, UserAlert)
 
 
 type alias SyncState =
     { status : Status
-    , userActions : List UserAction
+    , userAlerts : List UserAlert
     }
 
 
 init : SyncState
 init =
     { status = Status.init
-    , userActions = []
+    , userAlerts = []
     }
 
 
@@ -39,18 +39,18 @@ gotNewState msg =
 type alias EncodedSyncState =
     { status : String
     , remaining : Int
-    , userActions : List EncodedUserAction
+    , userAlerts : List EncodedUserAlert
     , errors : List EncodedSyncError
     }
 
 
 decode : EncodedSyncState -> SyncState
-decode { status, remaining, userActions, errors } =
+decode { status, remaining, userAlerts, errors } =
     let
-        decodedActions =
+        decodedAlerts =
             List.foldr
                 (\a list ->
-                    case UserAction.decode a of
+                    case UserAlert.decode a of
                         Just d ->
                             d :: list
 
@@ -58,7 +58,7 @@ decode { status, remaining, userActions, errors } =
                             list
                 )
                 []
-                userActions
+                userAlerts
 
         latestError =
             List.reverse errors
@@ -67,5 +67,5 @@ decode { status, remaining, userActions, errors } =
                 |> Maybe.withDefault ""
     in
     { status = Status.fromString status remaining latestError
-    , userActions = decodedActions
+    , userAlerts = decodedAlerts
     }

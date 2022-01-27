@@ -276,12 +276,12 @@
   "Updater Please wait": "Merci de patienter pendant le téléchargement.",
   "Updater It may take a while": "Cela peut prendre quelques minutes, selon la vitesse de votre connexion.",
 
-  "UserAction OK": "OK",
-  "UserAction Give up": "Abandonner",
-  "UserAction Link directories": "Lier les dossiers",
-  "UserAction Rename {0}": "Renommer le {0}",
-  "UserAction Retry": "Réessayer",
-  "UserAction Show details": "Détails",
+  "UserAlert OK": "OK",
+  "UserAlert Give up": "Abandonner",
+  "UserAlert Link directories": "Lier les dossiers",
+  "UserAlert Rename {0}": "Renommer le {0}",
+  "UserAlert Retry": "Réessayer",
+  "UserAlert Show details": "Détails",
 
   "Welcome Sign in to your Cozy": "Se connecter à mon Cozy",
   "Welcome Your own private cloud": "Bienvenue sur Cozy Drive pour ordinateur"

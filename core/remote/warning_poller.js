@@ -82,7 +82,7 @@ class RemoteWarningPoller {
 
       for (const warning of warnings) {
         const err = RemoteError.fromWarning(warning)
-        this.events.emit('user-action-required', err)
+        this.events.emit('user-alert', err)
       }
     } catch (err) {
       log.warn({ err }, 'could not fetch remote warnings')

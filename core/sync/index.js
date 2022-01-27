@@ -1002,17 +1002,20 @@ class Sync {
         case remoteErrors.REMOTE_MAINTENANCE_ERROR_CODE:
         case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
         case remoteErrors.USER_ACTION_REQUIRED_CODE:
-          this.events.emit(
-            'user-action-required',
-            err,
-            cause.change && cause.change.seq
-          )
+          this.events.emit('user-alert', err, cause.change && cause.change.seq)
           break
         default:
         // Hide the error from the user as we should be able to solve it
       }
     } else {
-      // Hide the error from the user as we should be able to solve it
+      switch (err.code) {
+        case remoteErrors.REMOTE_MAINTENANCE_ERROR_CODE:
+        case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
+          this.events.emit('user-alert', err)
+          break
+        default:
+        // Hide the error from the user as we should be able to solve it
+      }
     }
   }
 

@@ -303,7 +303,7 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
 const LAST_SYNC_UPDATE_DELAY = 1000 // milliseconds
 let lastSyncTimeout = null
 const updateState = async ({ newState, data }) => {
-  const { status, filename, userActions, errors } = data || {}
+  const { status, filename, userAlerts, errors } = data || {}
 
   if (newState === 'sync-state') {
     if (status === 'uptodate') tray.setStatus('online')
@@ -317,13 +317,9 @@ const updateState = async ({ newState, data }) => {
           translate('Dashboard Synchronization impossible')
         )
       }
-    } else if (
-      status === 'user-action-required' &&
-      userActions &&
-      userActions.length
-    )
+    } else if (status === 'user-alert' && userAlerts && userAlerts.length)
       tray.setStatus(
-        'user-action-required',
+        'user-alert',
         translate('Dashboard Synchronization suspended')
       )
     else tray.setStatus('syncing')

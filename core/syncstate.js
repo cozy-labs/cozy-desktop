@@ -14,7 +14,7 @@ export type UserActionCommand =
   | 'skip'
   | 'create-conflict'
   | 'link-directories'
-export type UserAction = {
+export type UserAlert = {
   seq: ?number,
   code: string,
   doc?: {
@@ -34,7 +34,7 @@ type State = {
   syncing: boolean,
   localPrep: boolean,
   remotePrep: boolean,
-  userActions: UserAction[],
+  userAlerts: UserAlert[],
   errors: SyncError[]
 }
 
@@ -44,7 +44,7 @@ export type SyncStatus =
   | 'offline'
   | 'syncing'
   | 'uptodate'
-  | 'user-action-required'
+  | 'user-alert'
   | 'error'
 
 export type SyncError = {|
@@ -53,10 +53,7 @@ export type SyncError = {|
 |}
 */
 
-const makeAction = (
-  err /*: Object */,
-  seq /*: ?number */
-) /*: UserAction */ => {
+const makeAlert = (err /*: Object */, seq /*: ?number */) /*: UserAlert */ => {
   const { doc } = err
   const links = err.links || (err.originalErr && err.originalErr.links)
 
@@ -69,38 +66,38 @@ const makeAction = (
   }
 }
 
-const addAction = (
-  actions /*: UserAction[] */,
-  newAction /*: UserAction */
-) /*: UserAction[] */ => {
-  const existingAction = actions.find(action => action.code === newAction.code)
-  if (existingAction) {
-    existingAction.status = 'Required'
-    return actions
+const addAlert = (
+  alerts /*: UserAlert[] */,
+  newAlert /*: UserAlert */
+) /*: UserAlert[] */ => {
+  const existingAlert = alerts.find(alert => alert.code === newAlert.code)
+  if (existingAlert) {
+    existingAlert.status = 'Required'
+    return alerts
   } else {
-    return actions.concat(newAction)
+    return alerts.concat(newAlert)
   }
 }
 
-const updateAction = (
-  actions /*: UserAction[] */,
-  action /*: UserAction */,
+const updateAlert = (
+  alerts /*: UserAlert[] */,
+  alert /*: UserAlert */,
   status /*: UserActionStatus */
-) /*: UserAction[] */ => {
-  return actions.reduce((prev, curr) => {
-    if (curr.code === action.code) {
-      return prev.concat({ ...action, status })
+) /*: UserAlert[] */ => {
+  return alerts.reduce((prev, curr) => {
+    if (curr.code === alert.code) {
+      return prev.concat({ ...alert, status })
     } else {
       return prev.concat(curr)
     }
   }, [])
 }
 
-const removeAction = (
-  actions /*: UserAction[] */,
-  action /*: UserAction */
-) /*: UserAction[] */ => {
-  return actions.filter(a => a.code !== action.code)
+const removeAlert = (
+  alerts /*: UserAlert[] */,
+  alert /*: UserAlert */
+) /*: UserAlert[] */ => {
+  return alerts.filter(a => a.code !== alert.code)
 }
 
 const makeError = (err /*: Object */) /*: SyncError */ => {
@@ -141,7 +138,7 @@ module.exports = class SyncState extends EventEmitter {
       syncing: false,
       localPrep: false,
       remotePrep: false,
-      userActions: [],
+      userAlerts: [],
       errors: []
     }
 
@@ -156,15 +153,15 @@ module.exports = class SyncState extends EventEmitter {
       syncing,
       localPrep,
       remotePrep,
-      userActions,
+      userAlerts,
       errors
     } = this.state
 
     const status /*: SyncStatus */ =
       errors.length > 0
         ? 'error'
-        : userActions.length > 0
-        ? 'user-action-required'
+        : userAlerts.length > 0
+        ? 'user-alert'
         : offline
         ? 'offline'
         : syncing
@@ -175,7 +172,7 @@ module.exports = class SyncState extends EventEmitter {
         ? 'squashprepmerge'
         : 'uptodate'
 
-    super.emit('sync-state', { status, remaining, userActions, errors })
+    super.emit('sync-state', { status, remaining, userAlerts, errors })
   }
 
   update(newState /*: $Shape<State> */) {
@@ -197,23 +194,23 @@ module.exports = class SyncState extends EventEmitter {
         : // Otherwise the remaining number of changes is still the same
           state.remaining
 
-    const updatedUserActions = newState.userActions || state.userActions
-    const userActions =
+    const updatedUserAlerts = newState.userAlerts || state.userAlerts
+    const userAlerts =
       newState.syncCurrentSeq != null
-        ? updatedUserActions.reduce((actions, action) => {
-            if (action.seq && action.seq <= newState.syncCurrentSeq) {
-              return actions
+        ? updatedUserAlerts.reduce((alerts, alert) => {
+            if (alert.seq && alert.seq <= newState.syncCurrentSeq) {
+              return alerts
             } else {
-              return actions.concat(action)
+              return alerts.concat(alert)
             }
           }, [])
-        : updatedUserActions
+        : updatedUserAlerts
 
     newState = {
       ...state,
       ...newState,
       remaining,
-      userActions
+      userAlerts
     }
 
     const diff = deepDiff(state, newState)
@@ -273,23 +270,23 @@ module.exports = class SyncState extends EventEmitter {
       case 'Sync:fatal':
         this.update({ errors: addError(this.state.errors, makeError(...args)) })
         break
-      case 'user-action-required':
+      case 'user-alert':
         this.update({
-          userActions: addAction(this.state.userActions, makeAction(...args))
+          userAlerts: addAlert(this.state.userAlerts, makeAlert(...args))
         })
         break
       case 'user-action-inprogress':
         this.update({
-          userActions: updateAction(
-            this.state.userActions,
-            makeAction(args[0]),
+          userAlerts: updateAlert(
+            this.state.userAlerts,
+            makeAlert(args[0]),
             'InProgress'
           )
         })
         break
       case 'user-action-done':
         this.update({
-          userActions: removeAction(this.state.userActions, makeAction(...args))
+          userAlerts: removeAlert(this.state.userAlerts, makeAlert(...args))
         })
         break
     }

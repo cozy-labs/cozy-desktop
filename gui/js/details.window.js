@@ -13,7 +13,7 @@ const log = require('../../core/app').logger({
 })
 
 /*::
-import type { UserAction } from '../../core/syncstate'
+import type { UserAlert } from '../../core/syncstate'
 */
 
 module.exports = class DetailsWM extends WindowManager {
@@ -50,12 +50,12 @@ module.exports = class DetailsWM extends WindowManager {
     ])
   }
 
-  loadContent(action /*: UserAction */) {
-    log.info({ action }, 'loading user action details')
-    if (action.code === 'IncompatibleDoc') {
+  loadContent(alert /*: UserAlert */) {
+    log.info({ alert }, 'loading user alert details')
+    if (alert.code === 'IncompatibleDoc') {
       this.win.webContents.send('load-content', {
         translations: this.translations(),
-        action
+        alert
       })
     }
   }

@@ -86,7 +86,7 @@ update msg model =
                             ( model.settings, Cmd.none )
 
                 ( dashboard, cmd ) =
-                    Dashboard.update (Dashboard.GotUserActions syncState.userActions) model.dashboard
+                    Dashboard.update (Dashboard.GotUserAlerts syncState.userAlerts) model.dashboard
             in
             ( { model
                 | status = status

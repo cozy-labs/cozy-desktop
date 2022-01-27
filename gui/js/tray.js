@@ -128,7 +128,7 @@ const systrayInfo = (status, label) => {
   switch (status) {
     case 'error':
       return ['error', label]
-    case 'user-action-required':
+    case 'user-alert':
       return ['pause', label]
     case 'syncing':
       return [
