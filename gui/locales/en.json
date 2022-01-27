@@ -109,7 +109,7 @@
   "Error Document path with too many levels": "Document path with too many levels",
   "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy.": "The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy.",
   "Error Try removing some parent levels or moving it to antoher folder.": "Try removing some parent levels or moving it to antoher folder.",
-  "Error Unhandled synchronization error": "Unhandled synchronization error",
+  "Error Synchronization error": "Synchronization error",
   "Error Cozy Desktop encountered an unexpected error while trying to synchronise the {0} `{1}`.": "Cozy Desktop encountered an unexpected error while trying to synchronise the {0} `{1}`.",
   "Error Your hosting provider is working on fixing the issue and the synchronization will automatically be retried periodically.": "Your hosting provider is working on fixing the issue and the synchronization will automatically be retried periodically.",
   "Error Maintenance in progress": "Maintenance in progress",
@@ -127,6 +127,9 @@
   "Error Conflict with excluded directory": "Conflict with excluded directory",
   "Error The remote directory `{0}` was excluded from the synchronization on this device.": "The remote directory `{0}` was excluded from the synchronization on this device.",
   "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.": "The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.",
+  "Error Unexpected error": "Unexpected error",
+  "Error Cozy Desktop encountered an unexpected error while trying to reach your Cozy.": "Cozy Desktop encountered an unexpected error while trying to reach your Cozy.",
+  "Error Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed.": "Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed.",
 
   "Folder You're all set!": "You're all set!",
   "Folder You can now synchronize your Cozy with this computer.": "You can now synchronize your Cozy with this computer.",

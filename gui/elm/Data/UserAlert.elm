@@ -25,7 +25,8 @@ type alias UserAlertCode =
 
 
 type UserAlert
-    = RemoteWarning UserAlertCode RemoteWarningInfo
+    = RemoteError UserAlertCode
+    | RemoteWarning UserAlertCode RemoteWarningInfo
     | SynchronizationError UserAlertCode SynchronizationErrorInfo
 
 
@@ -137,7 +138,7 @@ decode { seq, status, code, doc, links } =
             Just (SynchronizationError code { status = decodedStatus, seq = num, docType = docType, path = path })
 
         _ ->
-            Nothing
+            Just (RemoteError code)
 
 
 encode : UserAlert -> EncodedUserAlert
@@ -148,6 +149,14 @@ encode alert =
             , status = encodeUserActionStatus a.status
             , code = code
             , doc = Just { docType = a.docType, path = a.path }
+            , links = Nothing
+            }
+
+        RemoteError code ->
+            { seq = Nothing
+            , status = encodeUserActionStatus Required -- really articial here
+            , code = code
+            , doc = Nothing
             , links = Nothing
             }
 
@@ -236,6 +245,31 @@ view helpers platform alert =
 viewByCode : Helpers -> UserAlert -> UserAlertView
 viewByCode helpers alert =
     case alert of
+        RemoteError "UnknownRemoteError" ->
+            { title = "Error Unexpected error"
+            , content =
+                [ "Error Cozy Desktop encountered an unexpected error while trying to reach your Cozy."
+                , "Error Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed."
+                ]
+            , buttons =
+                [ actionButton helpers ShowHelp "Button Contact support" Secondary
+                , actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary
+                ]
+            }
+
+        RemoteError "RemoteMaintenance" ->
+            { title = "Error Maintenance in progress"
+            , content =
+                [ "Error The synchronization of your documents is momentarily paused."
+                , "Error It will resume once the maintenance is over."
+                ]
+            , buttons =
+                [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ]
+            }
+
+        RemoteError _ ->
+            { title = "", content = [], buttons = [] }
+
         RemoteWarning "UserActionRequired" { link } ->
             { title = "CGUUpdated The ToS have been updated"
             , content =
@@ -423,7 +457,7 @@ viewByCode helpers alert =
                 localDocType =
                     "Helpers " ++ docType
             in
-            { title = "Error Unhandled synchronization error"
+            { title = "Error Synchronization error"
             , content =
                 [ helpers.interpolate [ localDocType, path ] "Error Cozy Desktop encountered an unexpected error while trying to synchronise the {0} `{1}`."
                 , "Error Your hosting provider is working on fixing the issue and the synchronization will automatically be retried periodically."
