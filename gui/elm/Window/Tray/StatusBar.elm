@@ -8,6 +8,7 @@ module Window.Tray.StatusBar exposing
 
 import Data.Platform exposing (Platform(..))
 import Data.Status exposing (Status(..))
+import Data.SyncError as SyncError
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Locale exposing (..)
@@ -97,10 +98,10 @@ viewMessage helpers status =
     case
         status
     of
-        Error message ->
+        Error error ->
             [ text (statusToString helpers status)
             , text " "
-            , em [] [ text (helpers.t message) ]
+            , em [] [ text (helpers.t (SyncError.message error)) ]
             ]
 
         _ ->
