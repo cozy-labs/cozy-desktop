@@ -201,7 +201,18 @@ class RemoteCozy {
         readBytes += chunk.length
       })
 
-      return await fn()
+      return await new Promise(async (resolve, reject) => {
+        data.on('error', err => {
+          reject(err)
+        })
+
+        try {
+          const result = await fn()
+          resolve(result)
+        } catch (err) {
+          reject(err)
+        }
+      })
     } catch (err) {
       if (
         err.code === 'ERR_HTTP2_PROTOCOL_ERROR' ||

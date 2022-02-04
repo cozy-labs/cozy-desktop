@@ -125,8 +125,15 @@ class Local /*:: implements Reader, Writer */ {
     const filePath = this.abspath(doc.path)
     return new Promise((resolve, reject) => {
       const contentStream = fse.createReadStream(filePath)
-      contentStream.on('open', () => resolve(contentStream))
-      contentStream.on('error', err => reject(err))
+      contentStream.on('error', reject)
+      contentStream.on('open', () => {
+        // Once the promise is resolved, it can't be rejected so we should not
+        // expect later stream errors to reject it and can thus remove the
+        // listener.
+        contentStream.off('error', reject)
+
+        resolve(contentStream)
+      })
     })
   }
 
