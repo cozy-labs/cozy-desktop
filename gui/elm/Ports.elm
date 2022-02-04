@@ -1,5 +1,5 @@
 {-
-   XXX: UserAction ports are defined in the Data.UserAction module.
+   XXX: UserAlert ports are defined in the Data.UserAlert module.
    We should progressively migrate to this pattern to simplify usage of ports
    and avoid circular dependencies.
 -}

@@ -27,6 +27,7 @@ const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
 const NEEDS_REMOTE_MERGE_CODE = 'NeedsRemoteMerge'
 const NO_COZY_SPACE_CODE = 'NoCozySpace'
 const PATH_TOO_DEEP_CODE = 'PathTooDeep'
+const REMOTE_MAINTENANCE_ERROR_CODE = 'RemoteMaintenance'
 const UNKNOWN_INVALID_DATA_ERROR_CODE = 'UnknownInvalidDataError'
 const UNKNOWN_REMOTE_ERROR_CODE = 'UnknownRemoteError'
 const UNREACHABLE_COZY_CODE = 'UnreachableCozy'
@@ -314,6 +315,13 @@ const wrapError = (
               'The data sent to the remote Cozy is invalid for some unhandled reason',
             err
           })
+        } else if (status >= 500 && status < 600) {
+          return new RemoteError({
+            code: UNKNOWN_REMOTE_ERROR_CODE,
+            message:
+              'The remote Cozy failed to process the request for an unknown reason',
+            err
+          })
         } else {
           // TODO: Merge with UnreachableError?!
           return new RemoteError({
@@ -392,6 +400,7 @@ module.exports = {
   NEEDS_REMOTE_MERGE_CODE,
   NO_COZY_SPACE_CODE,
   PATH_TOO_DEEP_CODE,
+  REMOTE_MAINTENANCE_ERROR_CODE,
   UNKNOWN_INVALID_DATA_ERROR_CODE,
   UNKNOWN_REMOTE_ERROR_CODE,
   UNREACHABLE_COZY_CODE,

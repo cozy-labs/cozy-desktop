@@ -32,7 +32,7 @@ fromString str remaining latestError =
         "uptodate" ->
             UpToDate
 
-        "user-action-required" ->
+        "user-alert" ->
             UserActionRequired
 
         "offline" ->

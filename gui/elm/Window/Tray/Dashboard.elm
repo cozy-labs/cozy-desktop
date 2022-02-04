@@ -13,7 +13,7 @@ module Window.Tray.Dashboard exposing
 import Data.File as File exposing (EncodedFile, File)
 import Data.Path as Path exposing (Path)
 import Data.Platform as Platform exposing (Platform)
-import Data.UserAction as UserAction exposing (UserAction)
+import Data.UserAlert as UserAlert exposing (UserAlert)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -32,7 +32,7 @@ type alias Model =
     , files : List File
     , page : Int
     , platform : Platform
-    , userActions : List UserAction
+    , userAlerts : List UserAlert
     }
 
 
@@ -42,7 +42,7 @@ init platform =
     , files = []
     , page = 1
     , platform = platform
-    , userActions = []
+    , userAlerts = []
     }
 
 
@@ -65,13 +65,14 @@ type Msg
     | ShowInParent Path
     | Tick Time.Posix
     | ShowMore
+    | ShowHelp
     | Reset
-    | GotUserActions (List UserAction)
-    | SendActionCommand UserAction.Command UserAction
-    | UserActionSkipped UserAction
-    | UserActionInProgress UserAction
-    | UserActionDone UserAction
-    | UserActionDetails UserAction
+    | GotUserAlerts (List UserAlert)
+    | SendActionCommand UserAlert.Command UserAlert
+    | UserAlertSkipped UserAlert
+    | UserAlertInProgress UserAlert
+    | UserAlertDone UserAlert
+    | UserAlertDetails UserAlert
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
@@ -111,26 +112,29 @@ update msg model =
         ShowMore ->
             ( { model | page = model.page + 1 }, Cmd.none )
 
+        ShowHelp ->
+            ( model, Ports.showHelp () )
+
         Reset ->
             ( { model | page = 1 }, Cmd.none )
 
-        GotUserActions actions ->
-            ( { model | userActions = actions }, Cmd.none )
+        GotUserAlerts alerts ->
+            ( { model | userAlerts = alerts }, Cmd.none )
 
-        SendActionCommand cmd action ->
-            ( model, UserAction.sendCommand cmd action )
+        SendActionCommand cmd alert ->
+            ( model, UserAlert.sendCommand cmd alert )
 
-        UserActionSkipped action ->
-            ( model |> removeCurrentAction, Cmd.none )
+        UserAlertSkipped alert ->
+            ( model |> removeCurrentAlert, Cmd.none )
 
-        UserActionInProgress action ->
-            ( model, UserAction.start action )
+        UserAlertInProgress alert ->
+            ( model, UserAlert.start alert )
 
-        UserActionDone action ->
-            ( model |> removeCurrentAction, Cmd.none )
+        UserAlertDone alert ->
+            ( model |> removeCurrentAlert, Cmd.none )
 
-        UserActionDetails action ->
-            ( model, UserAction.showDetails action )
+        UserAlertDetails alert ->
+            ( model, UserAlert.showDetails alert )
 
 
 
@@ -195,25 +199,28 @@ showMoreButton helpers =
         ]
 
 
-viewActions : Helpers -> Model -> Html Msg
-viewActions helpers model =
+viewAlerts : Helpers -> Model -> Html Msg
+viewAlerts helpers model =
     let
         msg =
-            \actionMsg ->
-                case actionMsg of
-                    UserAction.ShowInParent path ->
+            \alertMsg ->
+                case alertMsg of
+                    UserAlert.ShowInParent path ->
                         ShowInParent path
 
-                    UserAction.SendCommand cmd action ->
-                        SendActionCommand cmd action
+                    UserAlert.SendCommand cmd alert ->
+                        SendActionCommand cmd alert
+
+                    UserAlert.ShowHelp ->
+                        ShowHelp
     in
-    case model.userActions of
-        action :: _ ->
+    case model.userAlerts of
+        alert :: _ ->
             Html.map msg
-                (UserAction.view
+                (UserAlert.view
                     helpers
                     model.platform
-                    action
+                    alert
                 )
 
         _ ->
@@ -233,7 +240,7 @@ view helpers model =
             List.take nbFiles model.files
     in
     section [ class "two-panes__content two-panes__content--dashboard" ]
-        [ viewActions helpers model
+        [ viewAlerts helpers model
         , div [ class "recent-files" ]
             (List.map renderLine filesToRender
                 ++ (if List.length model.files > nbFiles then
@@ -250,15 +257,15 @@ view helpers model =
 --HELPERS
 
 
-removeCurrentAction : Model -> Model
-removeCurrentAction model =
+removeCurrentAlert : Model -> Model
+removeCurrentAlert model =
     { model
-        | userActions =
-            List.tail model.userActions
+        | userAlerts =
+            List.tail model.userAlerts
                 |> Maybe.withDefault []
     }
 
 
-currentUserAction : Model -> Maybe UserAction
-currentUserAction model =
-    List.head model.userActions
+currentUserAlert : Model -> Maybe UserAlert
+currentUserAlert model =
+    List.head model.userAlerts

@@ -194,13 +194,13 @@ module.exports = class TrayWM extends WindowManager {
         this.desktop.sync.forceSync().catch(err => {
           if (err) log.error({ err, sentry: true }, 'Could not run manual sync')
         }),
-      userActionDetails: (event, action) => {
+      userAlertDetails: (event, alert) => {
         let detailsWindow = new DetailsWM(this.app, this.desktop)
         detailsWindow.show().then(() => {
           if (detailsWindow) {
-            detailsWindow.loadContent(action)
+            detailsWindow.loadContent(alert)
           } else {
-            log.error('could not load user action details content')
+            log.error('could not load user alert details content')
           }
         })
         detailsWindow.on('closed', () => {

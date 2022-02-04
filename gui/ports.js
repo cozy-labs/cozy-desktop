@@ -7,7 +7,7 @@ const { ipcRenderer } = electron
 const remote = require('@electron/remote')
 
 /*::
-import type { SyncStatus, UserAction, SyncError } from '../core/syncstate'
+import type { SyncStatus, UserAlert, SyncError } from '../core/syncstate'
 */
 
 window.onerror = (message, url, line, column, err) => {
@@ -156,8 +156,8 @@ elmectron.ports.showInParent.subscribe(path => {
   ipcRenderer.send('show-in-parent', path)
 })
 
-elmectron.ports.userActionDetails.subscribe(action => {
-  ipcRenderer.send('userActionDetails', action)
+elmectron.ports.userAlertDetails.subscribe(action => {
+  ipcRenderer.send('userAlertDetails', action)
 })
 
 elmectron.ports.userActionInProgress.subscribe(action => {
@@ -170,7 +170,7 @@ elmectron.ports.userActionCommand.subscribe(([cmd, action]) => {
 
 ipcRenderer.on('sync-state', (
   event,
-  newState /*: { status: SyncStatus, remaining: number, userActions: UserAction[], errors: SyncError[] } */
+  newState /*: { status: SyncStatus, remaining: number, userAlerts: UserAlert[], errors: SyncError[] } */
 ) => {
   elmectron.ports.syncState.send(newState)
 })

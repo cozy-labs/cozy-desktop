@@ -67,7 +67,7 @@ describe('RemoteWarningPoller', () => {
       remoteCozy.warnings.resolves(warnings)
       await poller.poll()
       should(events.emit).have.been.calledOnce()
-      should(events.emit).have.been.calledWithMatch('user-action-required', {
+      should(events.emit).have.been.calledWithMatch('user-alert', {
         code: remoteErrors.USER_ACTION_REQUIRED_CODE,
         detail: warnings[0].detail
       })
@@ -114,7 +114,7 @@ describe('RemoteWarningPoller', () => {
 
       should(remoteCozy.warnings).have.been.calledTwice()
       should(events.emit).have.been.calledOnce()
-      should(events.emit).have.been.calledWithMatch('user-action-required', {
+      should(events.emit).have.been.calledWithMatch('user-alert', {
         code: remoteErrors.USER_ACTION_REQUIRED_CODE,
         detail: warnings[0].detail
       })

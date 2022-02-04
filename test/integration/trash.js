@@ -156,8 +156,8 @@ describe('Trash', () => {
           await helpers.local.scan()
 
           // We skip any required user action as a user would do
-          helpers.events.on('sync-state', ({ userActions }) => {
-            if (userActions.length) {
+          helpers.events.on('sync-state', ({ userAlerts }) => {
+            if (userAlerts.length) {
               helpers.events.emit('user-action-command', { cmd: 'skip' })
             }
           })

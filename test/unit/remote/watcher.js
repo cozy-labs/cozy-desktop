@@ -444,8 +444,9 @@ describe('RemoteWatcher', function() {
         err.status = 500 // Possibly temporary error
         await should(this.watcher.watch()).be.fulfilledWith(
           new remoteErrors.RemoteError({
-            code: remoteErrors.UNREACHABLE_COZY_CODE,
-            message: 'Cannot reach remote Cozy',
+            code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE,
+            message:
+              'The remote Cozy failed to process the request for an unknown reason',
             err
           })
         )
