@@ -9,12 +9,13 @@
 /*::
 import type { Metadata, SavedMetadata } from './metadata'
 import type { SideName } from './side'
+import type { ProgressCallback } from './utils/stream'
 
 export interface Writer {
   name: SideName;
-  addFileAsync (doc: SavedMetadata): Promise<void>;
+  addFileAsync (doc: SavedMetadata, onProgress: ?ProgressCallback): Promise<void>;
   addFolderAsync (doc: SavedMetadata): Promise<void>;
-  overwriteFileAsync (doc: SavedMetadata): Promise<void>;
+  overwriteFileAsync (doc: SavedMetadata, onProgress: ?ProgressCallback): Promise<void>;
   updateFileMetadataAsync (doc: SavedMetadata): Promise<void>;
   updateFolderAsync (doc: SavedMetadata): Promise<void>;
   moveAsync<T: Metadata|SavedMetadata> (doc: T, from: T): Promise<void>;

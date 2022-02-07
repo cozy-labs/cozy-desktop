@@ -18,11 +18,12 @@ const { DirectoryNotFound, ExcludedDirError } = require('./errors')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
 const timestamp = require('../utils/timestamp')
+const streamUtils = require('../utils/stream')
 
 /*::
 import type EventEmitter from 'events'
 import type { SideName } from '../side'
-import type { Readable } from 'stream'
+import type { ProgressCallback, ReadableWithSize } from '../utils/stream'
 import type { Config } from '../config'
 import type {
   Metadata,
@@ -132,8 +133,9 @@ class Remote /*:: implements Reader, Writer */ {
   /** Create a readable stream for the given doc */
   async createReadStreamAsync(
     doc /*: SavedMetadata */
-  ) /*: Promise<Readable> */ {
-    return this.remoteCozy.downloadBinary(doc.remote._id)
+  ) /*: Promise<ReadableWithSize> */ {
+    const stream = await this.remoteCozy.downloadBinary(doc.remote._id)
+    return streamUtils.withSize(stream, doc.size || 0)
   }
 
   /** Create a folder on the remote cozy instance */
@@ -168,7 +170,10 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async addFileAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
+  async addFileAsync(
+    doc /*: SavedMetadata */,
+    onProgress /*: ?ProgressCallback */
+  ) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Uploading new file...')
     const stopMeasure = measureTime('RemoteWriter#addFile')
@@ -190,7 +195,11 @@ class Remote /*:: implements Reader, Writer */ {
       throw err
     }
 
-    const created = await this.remoteCozy.createFile(stream, {
+    const source = onProgress
+      ? streamUtils.withProgress(stream, onProgress)
+      : stream
+
+    const created = await this.remoteCozy.createFile(source, {
       ...newDocumentAttributes(name, parent._id, doc.updated_at),
       checksum: doc.md5sum,
       executable: doc.executable || false,
@@ -202,7 +211,10 @@ class Remote /*:: implements Reader, Writer */ {
     stopMeasure()
   }
 
-  async overwriteFileAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
+  async overwriteFileAsync(
+    doc /*: SavedMetadata */,
+    onProgress /*: ?ProgressCallback */
+  ) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Uploading new file version...')
 
@@ -236,9 +248,13 @@ class Remote /*:: implements Reader, Writer */ {
         ifMatch: doc.remote._rev
       }
     )
+    const source = onProgress
+      ? streamUtils.withProgress(stream, onProgress)
+      : stream
+
     const updated = await this.remoteCozy.updateFileById(
       doc.remote._id,
-      stream,
+      source,
       options
     )
     metadata.updateRemote(doc, updated)

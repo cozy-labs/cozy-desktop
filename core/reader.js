@@ -8,10 +8,10 @@
  */
 
 /*::
-import type { Readable } from 'stream'
+import type { ReadableWithSize } from './utils/stream'
 import type { SavedMetadata } from './metadata'
 
 export interface Reader {
-  createReadStreamAsync (SavedMetadata): Promise<Readable>;
+  createReadStreamAsync (SavedMetadata): Promise<ReadableWithSize>;
 }
 */
