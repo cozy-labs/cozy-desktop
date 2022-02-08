@@ -270,7 +270,6 @@ class Local /*:: implements Reader, Writer */ {
                 { path: filePath },
                 `Recopy ${existingFilePath} -> ${filePath}`
               )
-              this.events.emit('transfer-copy', doc)
               fse.copy(existingFilePath, tmpFile, next)
             } else {
               this.other.createReadStreamAsync(doc).then(

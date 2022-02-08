@@ -484,7 +484,7 @@ class Sync {
               } else {
                 await this.pouch.eraseDocument(change.doc)
                 if (change.doc.docType === 'file') {
-                  this.events.emit('delete-file', _.clone(change.doc))
+                  this.events.emit('delete-file', change.doc)
                 }
               }
             }
@@ -707,7 +707,7 @@ class Sync {
       } else if (!metadata.wasSynced(doc) && isMarkedForDeletion(doc)) {
         await this.pouch.eraseDocument(doc)
         if (doc.docType === 'file') {
-          this.events.emit('delete-file', _.clone(doc))
+          this.events.emit('delete-file', doc)
         }
         return this.pouch.setLocalSeq(seq)
       }
@@ -735,7 +735,7 @@ class Sync {
       if (doc.trashed) {
         await this.pouch.eraseDocument(doc)
         if (doc.docType === 'file') {
-          this.events.emit('delete-file', _.clone(doc))
+          this.events.emit('delete-file', doc)
         }
       } else {
         delete doc.moveFrom
@@ -802,7 +802,7 @@ class Sync {
             !metadata.sameBinary(from.local, from.remote)))
       ) {
         try {
-          await side.overwriteFileAsync(doc) // move & update
+          await this.doOverwrite(side, doc) // move & update
         } catch (err) {
           // the move succeeded, delete moveFrom and overwriteto avoid
           // re-applying these actions.
@@ -832,8 +832,7 @@ class Sync {
           if (metadata.sameBinary(outdated, doc)) {
             await side.updateFileMetadataAsync(doc)
           } else {
-            await side.overwriteFileAsync(doc)
-            this.events.emit('transfer-started', _.clone(doc))
+            await this.doOverwrite(side, doc)
           }
         }
       } else {
@@ -855,10 +854,38 @@ class Sync {
     doc /*: SavedMetadata */
   ) /*: Promise<void> */ {
     if (metadata.isFile(doc)) {
-      await side.addFileAsync(doc)
-      this.events.emit('transfer-started', _.clone(doc))
+      this.events.emit('transfer-started', doc)
+      try {
+        await side.addFileAsync(doc, ({ transferred }) => {
+          // XXX: progress will never be emitted when we copy the content from
+          // an existing local file since we don't download anything.
+          this.events.emit('transfer-progress', doc, { transferred })
+        })
+        this.events.emit('transfer-done', doc)
+      } catch (err) {
+        this.events.emit('transfer-failed', doc)
+        throw err
+      }
     } else {
       await side.addFolderAsync(doc)
+    }
+  }
+
+  async doOverwrite(
+    side /*: Writer */,
+    doc /*: SavedMetadata */
+  ) /*: Promise<void> */ {
+    this.events.emit('transfer-started', doc)
+    try {
+      await side.overwriteFileAsync(doc, ({ transferred }) => {
+        // XXX: progress will never be emitted when we copy the content from
+        // an existing local file since we don't download anything.
+        this.events.emit('transfer-progress', doc, { transferred })
+      })
+      this.events.emit('transfer-done', doc)
+    } catch (err) {
+      this.events.emit('transfer-failed', doc)
+      throw err
     }
   }
 
@@ -1136,7 +1163,7 @@ class Sync {
 
       for (const child of children) {
         if (metadata.isFile(child)) {
-          this.events.emit('delete-file', _.clone(child))
+          this.events.emit('delete-file', child)
         }
 
         // Remove potential child changes from the list of current changes to
@@ -1153,7 +1180,7 @@ class Sync {
     await side.trashAsync(doc)
 
     if (metadata.isFile(doc)) {
-      this.events.emit('delete-file', _.clone(doc))
+      this.events.emit('delete-file', doc)
     }
   }
 }
