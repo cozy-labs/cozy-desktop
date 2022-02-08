@@ -13,8 +13,8 @@ module Window.Help exposing
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import I18n exposing (Helpers, Translate)
 import List
-import Locale exposing (Helpers, Translate)
 import Ports
 import String
 

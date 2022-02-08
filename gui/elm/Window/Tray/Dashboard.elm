@@ -17,8 +17,8 @@ import Data.UserAlert as UserAlert exposing (UserAlert)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import I18n exposing (Helpers)
 import Json.Decode as Json
-import Locale exposing (Helpers)
 import Ports
 import Time
 

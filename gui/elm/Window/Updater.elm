@@ -11,8 +11,8 @@ module Window.Updater exposing
 import Data.Progress exposing (Progress)
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import I18n exposing (Helpers)
 import Icons
-import Locale exposing (Helpers)
 import Ports
 import View.ProgressBar as ProgressBar
 

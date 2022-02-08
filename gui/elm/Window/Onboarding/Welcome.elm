@@ -6,8 +6,8 @@ module Window.Onboarding.Welcome exposing
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import I18n exposing (Helpers)
 import Icons exposing (..)
-import Locale exposing (Helpers)
 import Window.Onboarding.Context as Context exposing (Context)
 
 

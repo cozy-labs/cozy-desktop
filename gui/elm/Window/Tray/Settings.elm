@@ -15,7 +15,7 @@ import Data.SyncConfig as SyncConfig exposing (SyncConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Locale exposing (Helpers)
+import I18n exposing (Helpers)
 import Ports
 import Url exposing (Url)
 import Util.Conditional exposing (viewIf)

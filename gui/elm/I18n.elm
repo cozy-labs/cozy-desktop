@@ -1,4 +1,4 @@
-module Locale exposing
+module I18n exposing
     ( DistanceOfTime
     , Helpers
     , Locale

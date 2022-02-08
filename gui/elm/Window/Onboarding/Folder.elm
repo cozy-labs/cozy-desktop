@@ -10,8 +10,8 @@ import Data.SyncFolderConfig as SyncFolderConfig exposing (SyncFolderConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import I18n exposing (Helpers)
 import Icons exposing (..)
-import Locale exposing (Helpers)
 import Ports
 import Url
 import Util.Conditional exposing (viewIf)

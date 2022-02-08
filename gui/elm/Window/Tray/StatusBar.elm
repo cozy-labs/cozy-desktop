@@ -11,7 +11,7 @@ import Data.Status exposing (Status(..))
 import Data.SyncError as SyncError
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Locale exposing (..)
+import I18n exposing (..)
 
 
 
