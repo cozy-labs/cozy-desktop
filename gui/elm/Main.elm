@@ -86,7 +86,7 @@ init flags =
 currentLocale : Model -> Locale
 currentLocale model =
     Dict.get model.localeIdentifier model.locales
-        |> Maybe.withDefault Dict.empty
+        |> Maybe.withDefault I18n.defaultLocale
 
 
 
