@@ -504,7 +504,7 @@ buttonClass bType =
                     []
 
                 Secondary ->
-                    [ "c-btn--ghost" ]
+                    [ "c-btn--secondary" ]
 
                 PrimaryWithDanger ->
                     [ "c-btn--danger-outline" ]
