@@ -6,12 +6,16 @@ module I18n exposing
     , defaultLocale
     , distance_of_time_in_words
     , helpers
+    , human_readable_bytes
+    , human_readable_progress
     , interpolate
     , isSingular
     , pluralize
     , translate
     )
 
+import Data.Bytes as Bytes exposing (Bytes, Unit(..))
+import Data.Progress exposing (Progress)
 import Dict exposing (Dict)
 import FormatNumber
 import FormatNumber.Locales exposing (Decimals(..), base, frenchLocale, spanishLocale, usLocale)
@@ -48,6 +52,14 @@ type alias LocalizeNumber =
     Float -> String
 
 
+type alias HumanReadableBytes =
+    Bytes -> String
+
+
+type alias HumanReadableProgress =
+    Progress -> String
+
+
 type alias Helpers =
     { t : Translate
     , capitalize : Capitalize
@@ -55,6 +67,8 @@ type alias Helpers =
     , pluralize : Pluralize
     , distance_of_time_in_words : DistanceOfTime
     , localizeNumber : LocalizeNumber
+    , human_readable_bytes : HumanReadableBytes
+    , human_readable_progress : HumanReadableProgress
     }
 
 
@@ -103,6 +117,8 @@ helpers locale =
         (pluralize locale)
         (distance_of_time_in_words locale)
         (localizeNumber locale)
+        (human_readable_bytes locale)
+        (human_readable_progress locale)
 
 
 translate : Locale -> Translate
@@ -224,3 +240,38 @@ distance_of_time_in_words locale from_time to_time =
 localizeNumber : Locale -> LocalizeNumber
 localizeNumber { numbers } number =
     FormatNumber.format { numbers | decimals = Exact 1 } number
+
+
+human_readable_bytes : Locale -> HumanReadableBytes
+human_readable_bytes locale bytes =
+    let
+        unit =
+            Bytes.humanUnit bytes
+
+        size =
+            Bytes.toHuman bytes unit
+    in
+    case unit of
+        B ->
+            localizeNumber locale size ++ " " ++ translate locale "Helpers B"
+
+        KB ->
+            localizeNumber locale size ++ " " ++ translate locale "Helpers KB"
+
+        MB ->
+            localizeNumber locale size ++ " " ++ translate locale "Helpers MB"
+
+        GB ->
+            localizeNumber locale size ++ " " ++ translate locale "Helpers GB"
+
+
+human_readable_progress : Locale -> HumanReadableProgress
+human_readable_progress locale { transferred, total } =
+    let
+        unit =
+            Bytes.humanUnit total
+
+        humanTransferred =
+            Bytes.toHuman transferred unit
+    in
+    localizeNumber locale humanTransferred ++ "/" ++ human_readable_bytes locale total

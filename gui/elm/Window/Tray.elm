@@ -160,7 +160,7 @@ subscriptions model =
 
         -- Settings subscriptions
         , Ports.newRelease (SettingsMsg << Settings.NewRelease)
-        , Ports.diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
+        , Settings.gotDiskSpace (SettingsMsg << Settings.UpdateDiskSpace)
         , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
         , Ports.cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
         ]

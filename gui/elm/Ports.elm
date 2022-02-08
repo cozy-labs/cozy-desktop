@@ -11,7 +11,6 @@ port module Ports exposing
     , cancelUnlink
     , chooseFolder
     , closeApp
-    , diskSpace
     , focus
     , folder
     , folderError
@@ -32,13 +31,9 @@ port module Ports exposing
     , startSync
     , transfer
     , unlinkCozy
-    , updateDownloading
-    , updateError
     )
 
-import Data.DiskSpace exposing (DiskSpace)
 import Data.File exposing (EncodedFile)
-import Data.Progress exposing (Progress)
 import Data.SyncFolderConfig exposing (SyncFolderConfig)
 
 
@@ -55,9 +50,6 @@ port chooseFolder : () -> Cmd msg
 
 
 port closeApp : () -> Cmd msg
-
-
-port diskSpace : (DiskSpace -> msg) -> Sub msg
 
 
 port focus : String -> Cmd msg
@@ -115,12 +107,6 @@ port transfer : (EncodedFile -> msg) -> Sub msg
 
 
 port unlinkCozy : () -> Cmd msg
-
-
-port updateDownloading : (Maybe Progress -> msg) -> Sub msg
-
-
-port updateError : (String -> msg) -> Sub msg
 
 
 port manualStartSync : () -> Cmd msg

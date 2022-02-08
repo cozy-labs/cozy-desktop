@@ -1,14 +1,13 @@
-module Window.Updater exposing
+port module Window.Updater exposing
     ( Model
     , Msg(..)
-    , humanReadableDiskValue
     , init
     , subscriptions
     , update
     , view
     )
 
-import Data.Progress exposing (Progress)
+import Data.Progress as Progress exposing (EncodedProgress, Progress)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import I18n exposing (Helpers)
@@ -59,21 +58,22 @@ update msg model =
 -- SUBSCRIPTIONS
 
 
+port updateDownloading : (Maybe EncodedProgress -> msg) -> Sub msg
+
+
+port updateError : (String -> msg) -> Sub msg
+
+
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Ports.updateDownloading UpdateDownloading
-        , Ports.updateError UpdateError
+        [ updateDownloading (UpdateDownloading << Maybe.map Progress.decode)
+        , updateError UpdateError
         ]
 
 
 
 -- VIEW
-
-
-humanReadableDiskValue : Helpers -> Float -> String
-humanReadableDiskValue helpers v =
-    String.fromInt (round (v / 1000000)) ++ " M" ++ helpers.t "Account b"
 
 
 view : Helpers -> Model -> Html Msg
@@ -87,14 +87,10 @@ view helpers model =
 
             ( Nothing, Just progress ) ->
                 progressView helpers
-                    [ ProgressBar.view (progress.transferred / progress.total)
-                    , div [ class "progress-indicator" ]
-                        [ text
-                            (humanReadableDiskValue helpers progress.transferred
-                                ++ " / "
-                                ++ humanReadableDiskValue helpers progress.total
-                            )
-                        ]
+                    [ ProgressBar.view (Progress.ratio progress)
+                    , div
+                        [ class "progress-indicator" ]
+                        [ text (helpers.human_readable_progress progress) ]
                     ]
 
             ( Nothing, Nothing ) ->
