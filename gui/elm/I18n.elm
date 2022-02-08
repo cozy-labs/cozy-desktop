@@ -1,9 +1,6 @@
 module I18n exposing
-    ( DistanceOfTime
-    , Helpers
+    ( Helpers
     , Locale
-    , Pluralize
-    , Translate
     , decodeAll
     , decoder
     , defaultLocale
