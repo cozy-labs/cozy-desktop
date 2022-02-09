@@ -53,17 +53,18 @@ a.more-info
   font-size: 1.1em
   margin 1em 0 0 0
 
-  // TODO figure out why we need to add that for
-  // properly placed spinner
-  &[aria-busy=true] > span::after
-    content ''
-    position relative
-    top .4rem
-    left .5rem
+  &[aria-busy=true] > span
+    // We want a busy spinner vertically aligned with the text, not centered
+    align-items unset
 
-    @extend $icon-16
-    @extend $spin
-    background-color: var(--primaryContrastTextColor)
+    &::after
+      content ''
+      position relative
+      left .5rem
+
+      @extend $icon-16
+      @extend $spin
+      background-color: var(--primaryContrastTextColor)
 
 
 .step-address .coz-form-group

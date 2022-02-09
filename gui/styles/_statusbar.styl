@@ -18,23 +18,22 @@
     white-space: nowrap;
 
   .status_img
-    flex 0 0 3em
+    flex 0 0 4em
 
     img.status__icon
       @extend $icon-24
 
       display: block
-      margin-left: 25%
+      margin-left 1em
       padding: 0.2em
       vertical-align: middle
       border-radius: 1.5em
 
     .spin
-      @extend $icon-16
+      @extend $icon-24
       @extend $spin
       background-color: var(--primaryColor)
-      margin-left: 1em
-      margin-top: 1em
+      margin-left 1em
 
   &.blue
     .status__icon--uptodate
