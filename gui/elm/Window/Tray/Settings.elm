@@ -171,7 +171,7 @@ versionLine helpers model =
         Just ( name, changes ) ->
             span [ class "version-need-update" ]
                 [ text model.version
-                , a [ onClick QuitAndInstall, href "#", class "btn btn--action" ]
+                , a [ onClick QuitAndInstall, href "#", class "c-btn c-btn--secondary u-mt-1" ]
                     [ span [] [ text (helpers.t "Settings Install the new release and restart the application") ] ]
                 ]
 
@@ -225,52 +225,18 @@ view helpers status model =
             , versionLine helpers model
             ]
         , h2 [] [ text (helpers.t "Help Help") ]
-        , a
-            [ class "btn"
-            , href "#"
-            , onClick ShowHelp
-            ]
-            [ span [] [ text (helpers.t "Help Send us a message") ] ]
+        , showHelpButton helpers model
         , h2 [] [ text (helpers.t "Tray Quit application") ]
-        , a
-            [ class "btn btn--danger"
-            , href "#"
-            , if model.busyQuitting then
-                attribute "aria-busy" "true"
-
-              else
-                onClick CloseApp
+        , quitButton helpers model
             ]
-            [ span [] [ text (helpers.t "AppMenu Quit") ] ]
         , h2 [] [ text (helpers.t "Account Unlink Cozy") ]
         , p []
             [ text (helpers.t "Account It will unlink your account to this computer." ++ " ")
             , text (helpers.t "Account Your files won't be deleted." ++ " ")
-            , text (helpers.t "Account Are you sure to unlink this account?" ++ " ")
-            ]
-        , a
-            [ class "btn btn--danger"
-            , href "#"
-            , if model.busyUnlinking then
-                attribute "aria-busy" "true"
 
-              else
-                onClick UnlinkCozy
             ]
-            [ span [] [ text (helpers.t "Account Unlink this Cozy") ] ]
+        , unlinkButton helpers model
         ]
-
-
-cozyLink : Model -> Html Msg
-cozyLink model =
-    let
-        { address } =
-            model.syncConfig
-
-        url =
-            Maybe.withDefault "" <| Maybe.map Url.toString address
-    in
-    a [ href url ] [ text url ]
 
 
 syncButton : Helpers -> Status -> Model -> Html Msg
@@ -280,7 +246,7 @@ syncButton helpers status model =
             status == UpToDate && not model.manualSyncRequested
     in
     a
-        [ class "btn"
+        [ class "c-btn c-btn--secondary"
         , href "#"
         , if enabled then
             onClick Sync
@@ -309,7 +275,57 @@ selectiveSyncButton helpers model =
                     ""
     in
     a
-        [ class "btn"
+        [ class "c-btn"
         , href configurationUrl
         ]
         [ span [] [ text (helpers.t "Settings Configure") ] ]
+
+
+cozyLink : Model -> Html Msg
+cozyLink model =
+    let
+        { address } =
+            model.syncConfig
+
+        url =
+            Maybe.withDefault "" <| Maybe.map Url.toString address
+    in
+    a [ href url ] [ text url ]
+
+
+showHelpButton : Helpers -> Model -> Html Msg
+showHelpButton helpers model =
+    a
+        [ class "c-btn c-btn--secondary"
+        , href "#"
+        , onClick ShowHelp
+        ]
+        [ span [] [ text (helpers.t "Help Send us a message") ] ]
+
+
+quitButton : Helpers -> Model -> Html Msg
+quitButton helpers model =
+    a
+        [ class "c-btn c-btn--danger-outline"
+        , href "#"
+        , if model.busyQuitting then
+            attribute "aria-busy" "true"
+
+          else
+            onClick CloseApp
+        ]
+        [ span [] [ text (helpers.t "AppMenu Quit") ] ]
+
+
+unlinkButton : Helpers -> Model -> Html Msg
+unlinkButton helpers model =
+    a
+        [ class "c-btn c-btn--danger-outline"
+        , href "#"
+        , if model.busyUnlinking then
+            attribute "aria-busy" "true"
+
+          else
+            onClick UnlinkCozy
+        ]
+        [ span [] [ text (helpers.t "Account Unlink this Cozy") ] ]

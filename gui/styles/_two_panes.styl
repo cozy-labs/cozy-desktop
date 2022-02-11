@@ -298,29 +298,6 @@
     color var(--coolGrey)
     display inline-block
 
-  .btn--danger
-    @extend $button
-    @extend $button--danger-outline
-    @extend $button--center
-    width 100%
-
-    &:active, &:not([disabled]):not([aria-disabled=true]):hover, &:focus
-      border 1px solid #fdcbcb
-
-    // TODO figure out why we need to add that for
-    // properly placed spinner
-    &[aria-busy=true]
-      &:hover, &:active, &:focus
-        background-color: var(--white) !important
-        cursor: default
-
-      &::after
-          width 1em
-          height 1em
-          position   relative
-          top        .3em
-
-
   .toggle
     margin-left 1em
     display inline-block
@@ -329,17 +306,3 @@
 
 .two-panes__content--help
   padding 2em
-
-  .btn--msg
-    @extend $button
-    @extend $button--center
-
-    // TODO figure out why we need to add that for
-    // properly placed spinner
-    &[aria-busy=true]
-
-      &::after
-          width 1em
-          height 1em
-          position   relative
-          top        .3em

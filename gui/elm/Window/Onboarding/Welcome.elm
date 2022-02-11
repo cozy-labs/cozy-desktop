@@ -36,7 +36,7 @@ view helpers context =
             [ Icons.cozyBig
             , h1 [] [ text (helpers.t "Welcome Your own private cloud") ]
             , a
-                [ class "btn"
+                [ class "c-btn c-btn--full"
                 , href "#"
                 , onClick NextPage
                 ]

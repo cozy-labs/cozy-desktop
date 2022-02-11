@@ -1,0 +1,8 @@
+.c-btn[aria-busy=true] > span::after
+  content ''
+  position relative
+  left .5rem
+
+  @extend $icon-16
+  @extend $spin
+  background-color: var(--primaryContrastTextColor)
