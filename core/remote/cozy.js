@@ -16,6 +16,7 @@ const {
   FILES_DOCTYPE,
   FILE_TYPE,
   DIR_TYPE,
+  INITIAL_SEQ,
   MAX_FILE_SIZE,
   OAUTH_CLIENTS_DOCTYPE
 } = require('./constants')
@@ -317,20 +318,20 @@ class RemoteCozy {
   }
 
   async changes(
-    since /*: string */ = '0',
+    since /*: string */ = INITIAL_SEQ,
     batchSize /*: number */ = 3000
-  ) /*: Promise<{last_seq: string, docs: Array<MetadataRemoteInfo|RemoteDeletion>}> */ {
+  ) /*: Promise<{last_seq: string, docs: Array<MetadataRemoteInfo|RemoteDeletion>, isInitialFetch: boolean}> */ {
     const client = await this.newClient()
-    const { last_seq, remoteDocs } =
-      since === '0'
-        ? await fetchInitialChanges(since, client, batchSize)
-        : await fetchChangesFromFeed(since, this.client, batchSize)
+    const isInitialFetch = since === INITIAL_SEQ
+    const { last_seq, remoteDocs } = isInitialFetch
+      ? await fetchInitialChanges(since, client, batchSize)
+      : await fetchChangesFromFeed(since, this.client, batchSize)
 
     const docs = (await this.completeRemoteDocs(
       dropSpecialDocs(remoteDocs)
     )).sort(byPath)
 
-    return { last_seq, docs }
+    return { last_seq, docs, isInitialFetch }
   }
 
   async fetchLastSeq() {
@@ -338,7 +339,7 @@ class RemoteCozy {
     const { last_seq } = await client
       .collection(FILES_DOCTYPE)
       .fetchChangesRaw({
-        since: '0',
+        since: INITIAL_SEQ,
         descending: true,
         limit: 1,
         includeDocs: false
@@ -450,34 +451,65 @@ class RemoteCozy {
     client = client || (await this.newClient())
 
     let dirContent = []
-    let resp /*: { next: boolean, bookmark?: string, data: Object[] } */ = {
-      next: true,
-      data: []
+    let nextDirs = [dir]
+    while (nextDirs.length) {
+      const nestedContent = await this.getDirectoriesContent(nextDirs, {
+        client
+      })
+      dirContent = dirContent.concat(nestedContent.docs)
+      nextDirs = nestedContent.nextDirs
     }
-    while (resp && resp.next) {
-      const queryDef = Q(FILES_DOCTYPE)
-        .where({
-          dir_id: dir._id
-        })
-        .indexFields(['dir_id', 'name'])
-        .sortBy([{ dir_id: 'asc' }, { name: 'asc' }])
-        .limitBy(3000)
-        .offsetBookmark(resp.bookmark)
-      resp = await client.query(queryDef)
-      for (const j of resp.data) {
-        const remoteJson = jsonApiToRemoteJsonDoc(j)
-        if (remoteJson._deleted) continue
 
-        const remoteDoc = await this.toRemoteDoc(remoteJson, dir)
-        dirContent.push(remoteDoc)
-        if (remoteDoc.type === DIR_TYPE) {
-          // Fetch subdir content
-          dirContent.push(this.getDirectoryContent(remoteDoc, { client }))
-        }
-      }
+    return dirContent.sort((a, b) => {
+      if (a.path < b.path) return -1
+      if (a.path > b.path) return 1
+      return 0
+    })
+  }
+
+  async getDirectoriesContent(
+    dirs /*: $ReadOnlyArray<RemoteDir> */,
+    { client } /*: { client: CozyClient } */
+  ) /*: Promise<{ nextDirs: $ReadOnlyArray<MetadataRemoteDir>, docs: $ReadOnlyArray<MetadataRemoteInfo> }> */ {
+    const queryDef = Q(FILES_DOCTYPE)
+      .where({
+        dir_id: { $in: dirs.map(dir => dir._id) }
+      })
+      .indexFields(['dir_id', 'name'])
+      .sortBy([{ dir_id: 'asc' }, { name: 'asc' }])
+      .limitBy(3000)
+
+    const resp = await this.queryAll(queryDef, { client })
+
+    const nextDirs = []
+    const docs = []
+    for (const j of resp.data) {
+      const remoteJson = jsonApiToRemoteJsonDoc(j)
+      if (remoteJson._deleted) continue
+
+      const parentDir = dirs.find(
+        dir => dir._id === remoteJson.attributes.dir_id
+      )
+      const remoteDoc = await this.toRemoteDoc(remoteJson, parentDir)
+      docs.push(remoteDoc)
+
+      if (remoteDoc.type === DIR_TYPE) nextDirs.push(remoteDoc)
     }
-    // $FlowFixMe Array.prototype.flat is available in NodeJS v12
-    return (await Promise.all(dirContent)).flat()
+    return { nextDirs, docs }
+  }
+
+  async queryAll(queryDef /*: Q */, { client } /*: { client: CozyClient } */) {
+    const { data, next, bookmark } = await client.query(queryDef)
+
+    if (next) {
+      return {
+        data: data.concat(
+          await this.queryAll(queryDef.offsetBookmark(bookmark), { client })
+        )
+      }
+    } else {
+      return { data }
+    }
   }
 
   async isEmpty(id /*: string */) /*: Promise<boolean> */ {

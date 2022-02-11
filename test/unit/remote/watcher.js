@@ -21,7 +21,11 @@ const metadata = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
-const { FILE_TYPE, DIR_TYPE } = require('../../../core/remote/constants')
+const {
+  FILE_TYPE,
+  DIR_TYPE,
+  INITIAL_SEQ
+} = require('../../../core/remote/constants')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 const timestamp = require('../../../core/utils/timestamp')
 
@@ -380,7 +384,8 @@ describe('RemoteWatcher', function() {
     let changes
     beforeEach(function() {
       changes = {
-        last_seq: lastRemoteSeq,
+        isInitialFetch: false,
+        last_seq: String(Number(lastRemoteSeq) + 2), // XXX: Include the two changes returned
         docs: [builders.remoteFile().build(), builders.remoteDir().build()]
       }
     })
@@ -407,16 +412,82 @@ describe('RemoteWatcher', function() {
 
     it('pulls the changed files/dirs', async function() {
       await this.watcher.watch()
-      this.watcher.pullMany.should.be
-        .calledOnce()
-        .and.be.calledWithExactly(changes.docs)
+      should(this.watcher.pullMany)
+        .have.been.calledOnce()
+        .and.be.calledWithExactly(changes.docs, { isInitialFetch: false })
     })
 
     it('updates the last update sequence in local db', async function() {
       await this.watcher.watch()
-      this.pouch.setRemoteSeq.should.be
-        .calledOnce()
-        .and.be.calledWithExactly(lastRemoteSeq)
+      should(this.pouch.setRemoteSeq)
+        .have.been.calledOnce()
+        .and.be.calledWithExactly(changes.last_seq)
+    })
+
+    context('when a directory has been modified more than once', () => {
+      it('fetches the content of potentially re-included directories', async function() {
+        const remoteDocs = [
+          builders.remoteFile().build(),
+          builders
+            .remoteDir()
+            .shortRev(3) // XXX: this folder has already been modified twice on the Cozy
+            .build()
+        ]
+
+        // Restored in a "parent" afterEach
+        this.remoteCozy.changes.resolves({
+          isInitialFetch: false,
+          last_seq: String(Number(lastRemoteSeq) + remoteDocs.length),
+          docs: remoteDocs
+        })
+        // Restore the original pullMany function which is stubbed in beforeEach
+        this.watcher.pullMany.restore()
+        // Create a new stub (which calls the original method though) so the
+        // restore() call in afterEach succeeds.
+        sinon.stub(this.watcher, 'pullMany').callThrough()
+
+        const spy = sinon.spy(this.remoteCozy, 'getDirectoryContent')
+        try {
+          await this.watcher.watch()
+          should(spy)
+            .have.been.calledOnce()
+            .and.calledWith(remoteDocs[1])
+        } finally {
+          spy.restore()
+        }
+      })
+
+      context('when fetching changes for the first time', () => {
+        it('does not fetch the content of modified directories', async function() {
+          // Restored in a "parent" afterEach
+          this.pouch.getRemoteSeq.resolves(INITIAL_SEQ)
+          // Restored in a "parent" afterEach
+          this.remoteCozy.changes.resolves({
+            isInitialFetch: true,
+            last_seq: String(Number(INITIAL_SEQ) + 2),
+            docs: [
+              builders.remoteFile().build(),
+              builders
+                .remoteDir()
+                .shortRev(3) // XXX: this folder has already been modified twice on the Cozy
+                .build()
+            ]
+          })
+          // Restore the original pullMany function which is stubbed in beforeEach
+          this.watcher.pullMany.restore()
+          // Create a new stub (which calls the original method though) so the
+          // restore() call in afterEach succeeds.
+          sinon.stub(this.watcher, 'pullMany').callThrough()
+
+          const spy = sinon.spy(this.remoteCozy, 'getDirectoryContent')
+          try {
+            await this.watcher.watch()
+            should(this.remoteCozy.getDirectoryContent).have.not.been.called()
+          } finally {
+            spy.restore()
+          }
+        })
+      })
     })
 
     context('on error while fetching changes', () => {
@@ -503,7 +574,7 @@ describe('RemoteWatcher', function() {
     it('pulls many changed files/dirs given their ids', async function() {
       apply.resolves()
 
-      await this.watcher.pullMany(remoteDocs)
+      await this.watcher.pullMany(remoteDocs, { isInitialFetch: false })
 
       apply.callCount.should.equal(2)
       // Changes are sorted before applying (first one was given Metadata since
@@ -524,13 +595,15 @@ describe('RemoteWatcher', function() {
       })
 
       it('rejects with the first error', async function() {
-        await should(this.watcher.pullMany(remoteDocs)).be.rejectedWith(
-          new Error(remoteDocs[0])
-        )
+        await should(
+          this.watcher.pullMany(remoteDocs, { isInitialFetch: false })
+        ).be.rejectedWith(new Error(remoteDocs[0]))
       })
 
       it('still tries to pull other files/dirs', async function() {
-        await this.watcher.pullMany(remoteDocs).catch(() => {})
+        await this.watcher
+          .pullMany(remoteDocs, { isInitialFetch: false })
+          .catch(() => {})
         should(apply.args[0][0]).have.properties({
           type: 'FileAddition',
           doc: validMetadata(remoteDocs[0])
@@ -547,7 +620,9 @@ describe('RemoteWatcher', function() {
           builders.remoteErased().build(),
           builders.remoteFile().build()
         ]
-        await this.watcher.pullMany(remoteDocs).catch(() => {})
+        await this.watcher
+          .pullMany(remoteDocs, { isInitialFetch: false })
+          .catch(() => {})
         should(apply).have.callCount(5)
         should(apply.args[0][0]).have.properties({
           type: 'FileAddition',
@@ -568,14 +643,18 @@ describe('RemoteWatcher', function() {
       })
 
       it('releases the Pouch lock', async function() {
-        await this.watcher.pullMany(remoteDocs).catch(() => {})
+        await this.watcher
+          .pullMany(remoteDocs, { isInitialFetch: false })
+          .catch(() => {})
         const nextLockPromise = this.pouch.lock('nextLock')
         await should(nextLockPromise).be.fulfilled()
       })
 
       it('does not update the remote sequence', async function() {
         const remoteSeq = await this.pouch.getRemoteSeq()
-        await this.watcher.pullMany(remoteDocs).catch(() => {})
+        await this.watcher
+          .pullMany(remoteDocs, { isInitialFetch: false })
+          .catch(() => {})
         should(this.pouch.getRemoteSeq()).be.fulfilledWith(remoteSeq)
       })
     })
@@ -586,7 +665,7 @@ describe('RemoteWatcher', function() {
         .name('whatever')
         .build()
 
-      await this.watcher.pullMany([remoteDoc])
+      await this.watcher.pullMany([remoteDoc], { isInitialFetch: false })
 
       should(apply).be.calledOnce()
       should(apply.args[0][0].doc).deepEqual(validMetadata(remoteDoc))
@@ -599,7 +678,7 @@ describe('RemoteWatcher', function() {
         _deleted: true
       }
 
-      await this.watcher.pullMany([remoteDeletion])
+      await this.watcher.pullMany([remoteDeletion], { isInitialFetch: false })
 
       should(apply).be.calledOnce()
       should(apply.args[0][0].doc).deepEqual(remoteDeletion)
@@ -612,13 +691,18 @@ describe('RemoteWatcher', function() {
         'dir/subdir/file'
       ])
       const dir = (tree['dir/'] /*: any */)
-      const updatedDir = await builders
+      const dirUpdatedOnce = await builders
         .remoteDir((dir /*: MetadataRemoteDir */))
         .update()
+      // XXX: we update the directory twice to mimick a potential selective sync
+      // exclusion/re-inclusion.
+      const dirUpdatedTwice = await builders
+        .remoteDir((dirUpdatedOnce /*: MetadataRemoteDir */))
+        .update()
 
-      await this.watcher.pullMany([updatedDir])
+      await this.watcher.pullMany([dirUpdatedTwice], { isInitialFetch: false })
       should(apply).be.calledThrice()
-      should(apply.args[0][0].doc).deepEqual(validMetadata(updatedDir))
+      should(apply.args[0][0].doc).deepEqual(validMetadata(dirUpdatedTwice))
       should(apply.args[1][0].doc).deepEqual(validMetadata(tree['dir/subdir/']))
       should(apply.args[2][0].doc).deepEqual(
         validMetadata(tree['dir/subdir/file'])
@@ -631,7 +715,7 @@ describe('RemoteWatcher', function() {
         .remoteDir((dir /*: MetadataRemoteDir */))
         .update()
 
-      await this.watcher.pullMany([updatedDir])
+      await this.watcher.pullMany([updatedDir], { isInitialFetch: false })
       should(apply).be.calledOnce()
       should(apply.args[0][0].doc).deepEqual(validMetadata(updatedDir))
     })
@@ -644,8 +728,13 @@ describe('RemoteWatcher', function() {
         'dir/subdir/file2'
       ])
       const dir = (tree['dir/'] /*: any */)
-      const updatedDir = await builders
+      const dirUpdatedOnce = await builders
         .remoteDir((dir /*: MetadataRemoteDir */))
+        .update()
+      // XXX: we update the directory twice to mimick a potential selective sync
+      // exclusion/re-inclusion.
+      const dirUpdatedTwice = await builders
+        .remoteDir((dirUpdatedOnce /*: MetadataRemoteDir */))
         .update()
       const file = (tree['dir/subdir/file1'] /*: any */)
       const updatedFile = await builders
@@ -653,19 +742,22 @@ describe('RemoteWatcher', function() {
         .update()
       const newFile = await builders
         .remoteFile()
-        .inDir(updatedDir)
+        .inDir(dirUpdatedTwice)
         .name('file3')
         .create()
 
-      await this.watcher.pullMany([
-        updatedDir,
-        tree['dir/subdir/'],
-        tree['dir/subdir/file1'],
-        tree['dir/subdir/file2']
-      ])
+      await this.watcher.pullMany(
+        [
+          dirUpdatedTwice,
+          tree['dir/subdir/'],
+          tree['dir/subdir/file1'],
+          tree['dir/subdir/file2']
+        ],
+        { isInitialFetch: false }
+      )
       should(apply.callCount).eql(6)
       // From Feed
-      should(apply.args[0][0].doc).deepEqual(validMetadata(updatedDir))
+      should(apply.args[0][0].doc).deepEqual(validMetadata(dirUpdatedTwice))
       should(apply.args[1][0].doc).deepEqual(validMetadata(tree['dir/subdir/']))
       should(apply.args[2][0].doc).deepEqual(
         validMetadata(tree['dir/subdir/file1'])

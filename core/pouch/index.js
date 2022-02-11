@@ -21,6 +21,7 @@ const {
   migrate,
   migrationLog
 } = require('./migrations')
+const remoteConstants = require('../remote/constants')
 
 /*::
 import type { Config } from '../config'
@@ -621,7 +622,7 @@ class Pouch {
   async getRemoteSeq() /*: Promise<string> */ {
     const doc = await this.byIdMaybe('_local/remoteSeq')
     if (doc) return doc.seq
-    else return '0'
+    else return remoteConstants.INITIAL_SEQ
   }
 
   // Set last remote replication sequence

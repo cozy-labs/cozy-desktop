@@ -22,7 +22,13 @@ import type EventEmitter from 'events'
 import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
 import type { RemoteCozy } from '../cozy'
-import type { Metadata, MetadataRemoteInfo, SavedMetadata, RemoteRevisionsByID } from '../../metadata'
+import type {
+  Metadata,
+  MetadataRemoteInfo,
+  MetadataRemoteDir,
+  SavedMetadata,
+  RemoteRevisionsByID
+} from '../../metadata'
 import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from '../change'
 import type { RemoteDeletion } from '../document'
 import type { RemoteError } from '../errors'
@@ -41,6 +47,15 @@ const log = logger({
 })
 
 const sideName = 'remote'
+
+const folderMightHaveBeenExcluded = (
+  remoteDir /*: MetadataRemoteDir */
+) /*: boolean %checks */ => {
+  // A folder newly created has a rev number of 1.
+  // Once exluded, its rev number is at least 2.
+  // Once re-included, its rev number is at least 3.
+  return metadata.extractRevNumber(remoteDir) > 2
+}
 
 /** Get changes from the remote Cozy and prepare them for merge */
 class RemoteWatcher {
@@ -146,7 +161,9 @@ class RemoteWatcher {
     try {
       this.events.emit('buffering-start')
       const seq = await this.pouch.getRemoteSeq()
-      const { last_seq, docs } = await this.remoteCozy.changes(seq)
+      const { last_seq, docs, isInitialFetch } = await this.remoteCozy.changes(
+        seq
+      )
       this.events.emit('online')
 
       if (docs.length === 0) {
@@ -156,7 +173,7 @@ class RemoteWatcher {
 
       this.events.emit('remote-start')
       this.events.emit('buffering-end')
-      await this.pullMany(docs)
+      await this.pullMany(docs, { isInitialFetch })
 
       let target = -1
       target = (await this.pouch.db.changes({ limit: 1, descending: true }))
@@ -191,18 +208,20 @@ class RemoteWatcher {
    * FIXME: Misleading method name?
    */
   async pullMany(
-    docs /*: $ReadOnlyArray<MetadataRemoteInfo|RemoteDeletion> */
+    docs /*: $ReadOnlyArray<MetadataRemoteInfo|RemoteDeletion> */,
+    { isInitialFetch } /*: { isInitialFetch: boolean } */
   ) /*: Promise<void> */ {
     let changes = await this.analyse(docs, await this.olds(docs))
 
     for (const change of changes) {
       if (
+        !isInitialFetch &&
         change.type === 'DirAddition' &&
-        metadata.extractRevNumber(change.doc.remote) > 1
+        folderMightHaveBeenExcluded(change.doc.remote)
       ) {
         log.trace(
           { path: change.doc.path },
-          'Fetching content of unknwon folder...'
+          'Fetching content of unknown folder...'
         )
         const children = (await this.remoteCozy.getDirectoryContent(
           change.doc.remote
