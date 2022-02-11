@@ -7,7 +7,7 @@ port module Data.SyncState exposing
     )
 
 import Data.Status as Status exposing (Status)
-import Data.SyncError as SyncError exposing (EncodedSyncError)
+import Data.SyncError as SyncError exposing (EncodedSyncError, SyncError)
 import Data.UserAlert as UserAlert exposing (EncodedUserAlert, UserAlert)
 
 
@@ -61,10 +61,7 @@ decode { status, remaining, userAlerts, errors } =
                 userAlerts
 
         latestError =
-            List.reverse errors
-                |> List.head
-                |> Maybe.map SyncError.message
-                |> Maybe.withDefault ""
+            SyncError.decodeLatest errors
     in
     { status = Status.fromString status remaining latestError
     , userAlerts = decodedAlerts

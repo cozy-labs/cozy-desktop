@@ -101,7 +101,7 @@ const removeAlert = (
 }
 
 const makeError = (err /*: Object */) /*: SyncError */ => {
-  const { name, code } = err
+  const { name = '', code = '' } = err
 
   return {
     name,

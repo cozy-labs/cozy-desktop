@@ -11,8 +11,8 @@ import Data.AddressConfig as AddressConfig exposing (AddressConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import I18n exposing (Helpers)
 import Icons
-import Locale exposing (Helpers)
 import Ports
 import String exposing (contains)
 import Url

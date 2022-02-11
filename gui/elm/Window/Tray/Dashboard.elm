@@ -13,14 +13,17 @@ module Window.Tray.Dashboard exposing
 import Data.File as File exposing (EncodedFile, File)
 import Data.Path as Path exposing (Path)
 import Data.Platform as Platform exposing (Platform)
+import Data.Progress as Progress
 import Data.UserAlert as UserAlert exposing (UserAlert)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import I18n exposing (Helpers)
 import Json.Decode as Json
-import Locale exposing (Helpers)
 import Ports
 import Time
+import Util.Conditional exposing (viewIf)
+import View.ProgressBar as ProgressBar
 
 
 
@@ -162,6 +165,15 @@ renderFile helpers model file =
 
             else
                 helpers.interpolate [ Path.toString dirPath ] "Dashboard Show in folder {0}"
+
+        inProgress =
+            not (Progress.done file.progress)
+
+        progressRatio =
+            Progress.ratio file.progress
+
+        progress =
+            file.progress
     in
     div
         [ class "file-line"
@@ -173,17 +185,25 @@ renderFile helpers model file =
             [ span [ class "file-name-name" ] [ text basename ]
             , span [ class "file-name-ext" ] [ text extname ]
             ]
-        , span [ class "file-line-content file-extra" ]
-            [ span [ class "file-time-ago" ] [ text timeAgo ]
-            , span
-                [ class "file-parent-folder"
-                , title dirPathTitle
-                , stopPropagationOn "click" <|
-                    Json.map (\msg -> ( msg, True )) <|
-                        Json.succeed (ShowInParent file.path)
+        , viewIf (not inProgress) <|
+            span [ class "file-line-content file-extra" ]
+                [ span [ class "file-time-ago" ] [ text timeAgo ]
+                , span
+                    [ class "file-parent-folder"
+                    , title dirPathTitle
+                    , stopPropagationOn "click" <|
+                        Json.map (\msg -> ( msg, True )) <|
+                            Json.succeed (ShowInParent file.path)
+                    ]
+                    [ text (Path.toString dirPath) ]
                 ]
-                [ text (Path.toString dirPath) ]
-            ]
+        , viewIf inProgress <|
+            div [ class "file-progress" ]
+                [ ProgressBar.view progressRatio
+                , span [ class "file-size" ]
+                    [ text (helpers.human_readable_progress progress)
+                    ]
+                ]
         ]
 
 

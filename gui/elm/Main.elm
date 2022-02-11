@@ -16,8 +16,8 @@ import Data.Platform as Platform exposing (Platform)
 import Data.Window as Window exposing (Window)
 import Dict exposing (Dict)
 import Html exposing (..)
+import I18n exposing (Helpers, Locale)
 import Json.Decode as Json
-import Locale exposing (Helpers, Locale)
 import Window.Help as Help
 import Window.Onboarding as Onboarding
 import Window.Tray as Tray
@@ -70,7 +70,7 @@ init flags =
 
         model =
             { localeIdentifier = flags.locale
-            , locales = Locale.decodeAll flags.locales
+            , locales = I18n.decodeAll flags.locales
             , window = Window.fromHash flags.hash
 
             -- TODO: Attach submodels to windows
@@ -86,7 +86,7 @@ init flags =
 currentLocale : Model -> Locale
 currentLocale model =
     Dict.get model.localeIdentifier model.locales
-        |> Maybe.withDefault Dict.empty
+        |> Maybe.withDefault I18n.defaultLocale
 
 
 
@@ -170,7 +170,7 @@ view : Model -> Html Msg
 view model =
     let
         helpers =
-            Locale.helpers (currentLocale model)
+            I18n.helpers (currentLocale model)
     in
     case model.window of
         Window.Onboarding ->

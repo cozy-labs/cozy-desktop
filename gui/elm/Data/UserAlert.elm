@@ -16,7 +16,7 @@ import Data.Platform as Platform exposing (Platform)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Locale exposing (Helpers)
+import I18n exposing (Helpers)
 import Util.DecorationParser exposing (DecorationResult(..), findDecorations)
 
 
@@ -504,7 +504,7 @@ buttonClass bType =
                     []
 
                 Secondary ->
-                    [ "c-btn--ghost" ]
+                    [ "c-btn--secondary" ]
 
                 PrimaryWithDanger ->
                     [ "c-btn--danger-outline" ]

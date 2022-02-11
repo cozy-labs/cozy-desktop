@@ -1,29 +1,31 @@
-module Locale exposing
-    ( DistanceOfTime
-    , Helpers
+module I18n exposing
+    ( Helpers
     , Locale
-    , NumberToHumanSize
-    , Pluralize
-    , Translate
     , decodeAll
     , decoder
+    , defaultLocale
     , distance_of_time_in_words
     , helpers
+    , human_readable_bytes
+    , human_readable_progress
     , interpolate
     , isSingular
-    , number_to_human_size
     , pluralize
     , translate
     )
 
+import Data.Bytes as Bytes exposing (Bytes, Unit(..))
+import Data.Progress exposing (Progress)
 import Dict exposing (Dict)
+import FormatNumber
+import FormatNumber.Locales exposing (Decimals(..), base, frenchLocale, spanishLocale, usLocale)
 import Json.Decode as Json
 import Regex exposing (Regex)
 import Time
 
 
 type alias Locale =
-    Dict String String
+    { strings : Dict String String, numbers : FormatNumber.Locales.Locale }
 
 
 type alias Translate =
@@ -46,8 +48,16 @@ type alias DistanceOfTime =
     Time.Posix -> Time.Posix -> String
 
 
-type alias NumberToHumanSize =
-    Int -> String
+type alias LocalizeNumber =
+    Float -> String
+
+
+type alias HumanReadableBytes =
+    Bytes -> String
+
+
+type alias HumanReadableProgress =
+    Progress -> String
 
 
 type alias Helpers =
@@ -56,23 +66,47 @@ type alias Helpers =
     , interpolate : Interpolate
     , pluralize : Pluralize
     , distance_of_time_in_words : DistanceOfTime
-    , number_to_human_size : NumberToHumanSize
+    , localizeNumber : LocalizeNumber
+    , human_readable_bytes : HumanReadableBytes
+    , human_readable_progress : HumanReadableProgress
     }
 
 
-decoder : Json.Decoder Locale
-decoder =
-    Json.dict Json.string
+defaultLocale =
+    { strings = Dict.empty, numbers = base }
 
 
 decodeAll : Json.Value -> Dict String Locale
 decodeAll json =
-    case Json.decodeValue (Json.dict decoder) json of
+    case Json.decodeValue decoder json of
         Ok value ->
             value
 
         Err _ ->
             Dict.empty
+
+
+decoder : Json.Decoder (Dict String Locale)
+decoder =
+    Json.map (Dict.map stringsToLocale) (Json.dict stringsDecoder)
+
+
+stringsDecoder : Json.Decoder (Dict String String)
+stringsDecoder =
+    Json.dict Json.string
+
+
+stringsToLocale : String -> Dict String String -> Locale
+stringsToLocale locale strings =
+    case locale of
+        "fr" ->
+            Locale strings frenchLocale
+
+        "es" ->
+            Locale strings spanishLocale
+
+        _ ->
+            Locale strings usLocale
 
 
 helpers : Locale -> Helpers
@@ -82,13 +116,15 @@ helpers locale =
         (interpolate locale)
         (pluralize locale)
         (distance_of_time_in_words locale)
-        (number_to_human_size locale)
+        (localizeNumber locale)
+        (human_readable_bytes locale)
+        (human_readable_progress locale)
 
 
 translate : Locale -> Translate
-translate locale key =
+translate { strings } key =
     case
-        Dict.get key locale
+        Dict.get key strings
     of
         Nothing ->
             key
@@ -201,16 +237,41 @@ distance_of_time_in_words locale from_time to_time =
         translate locale "Helpers Just now"
 
 
-number_to_human_size : Locale -> NumberToHumanSize
-number_to_human_size locale size =
-    if size < 10 ^ 3 then
-        pluralize locale size "Helpers Byte" "Helpers Bytes"
+localizeNumber : Locale -> LocalizeNumber
+localizeNumber { numbers } number =
+    FormatNumber.format { numbers | decimals = Exact 1 } number
 
-    else if size < 10 ^ 6 then
-        String.fromFloat (toFloat (size // 10 ^ 2) / 10) ++ " " ++ translate locale "Helpers KB"
 
-    else if size < 10 ^ 9 then
-        String.fromFloat (toFloat (size // 10 ^ 5) / 10) ++ " " ++ translate locale "Helpers MB"
+human_readable_bytes : Locale -> HumanReadableBytes
+human_readable_bytes locale bytes =
+    let
+        unit =
+            Bytes.humanUnit bytes
 
-    else
-        String.fromFloat (toFloat (size // 10 ^ 9) / 10) ++ " " ++ translate locale "Helpers GB"
+        size =
+            Bytes.toHuman bytes unit
+    in
+    case unit of
+        B ->
+            localizeNumber locale size ++ " " ++ translate locale "Helpers B"
+
+        KB ->
+            localizeNumber locale size ++ " " ++ translate locale "Helpers KB"
+
+        MB ->
+            localizeNumber locale size ++ " " ++ translate locale "Helpers MB"
+
+        GB ->
+            localizeNumber locale size ++ " " ++ translate locale "Helpers GB"
+
+
+human_readable_progress : Locale -> HumanReadableProgress
+human_readable_progress locale { transferred, total } =
+    let
+        unit =
+            Bytes.humanUnit total
+
+        humanTransferred =
+            Bytes.toHuman transferred unit
+    in
+    localizeNumber locale humanTransferred ++ "/" ++ human_readable_bytes locale total

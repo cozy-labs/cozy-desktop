@@ -32,7 +32,7 @@ const UpdaterWM = require('./js/updater.window.js')
 const HelpWM = require('./js/help.window.js')
 const OnboardingWM = require('./js/onboarding.window.js')
 
-const { selectIcon } = require('./js/fileutils')
+const { fileInfo } = require('./js/fileutils')
 const { buildAppMenu } = require('./js/appmenu')
 const i18n = require('./js/i18n')
 const { translate } = i18n
@@ -157,7 +157,7 @@ const showWindow = async bounds => {
 
       const files = await lastFiles.list()
       for (const file of files) {
-        trayWindow.send('transfer', file)
+        trayWindow.send('transfer', { ...file, transferred: file.size })
       }
 
       const hasAutolaunch = await autoLaunch.isEnabled()
@@ -371,13 +371,7 @@ const enqueueStateUpdate = (newState, data) => {
 }
 
 const addFile = async info => {
-  const file = {
-    filename: path.basename(info.path),
-    path: info.path,
-    icon: selectIcon(info),
-    size: info.size || 0,
-    updated: +new Date()
-  }
+  const file = fileInfo(info)
   enqueueStateUpdate('syncing', file)
   await lastFiles.add(file)
   await lastFiles.persist()
@@ -389,7 +383,8 @@ const removeFile = async info => {
     path: info.path,
     icon: '',
     size: 0,
-    updated: 0
+    updated: 0,
+    transferred: 0
   }
   enqueueStateUpdate('syncing')
   trayWindow.send('delete-file', file)
@@ -422,11 +417,31 @@ const startSync = async () => {
   desktop.events.on('sync-state', state => {
     enqueueStateUpdate('sync-state', state)
   })
-  desktop.events.on('transfer-started', addFile)
-  desktop.events.on('transfer-copy', addFile)
-  desktop.events.on('transfer-move', async (info, old) => {
-    await addFile(info)
-    await removeFile(old)
+  desktop.events.on('transfer-started', doc => {
+    const info = fileInfo(doc, { transferred: 0 })
+    enqueueStateUpdate('syncing', info)
+  })
+  desktop.events.on('transfer-progress', (doc, { transferred }) => {
+    const info = fileInfo(doc, { transferred })
+    enqueueStateUpdate('syncing', info)
+  })
+  desktop.events.on('transfer-done', doc => {
+    const info = fileInfo(doc)
+    enqueueStateUpdate('syncing', info)
+    addFile(doc)
+  })
+  desktop.events.on('transfer-failed', doc => {
+    const info = fileInfo(doc)
+    // XXX: No state update as it will come from a `sync-state` event
+    // TODO: find a way to have the old file info take its old place in the list
+    // upon overwrite failures.
+    // For now, it will be sent back to the Elm app when the main window is
+    // displayed again.
+    trayWindow.send('delete-file', info)
+  })
+  desktop.events.on('transfer-move', async (dst, src) => {
+    await addFile(dst)
+    await removeFile(src)
   })
   desktop.events.on('syncdir-unlinked', () => {
     sendErrorToMainWindow({ msg: SYNC_DIR_UNLINKED_MESSAGE })

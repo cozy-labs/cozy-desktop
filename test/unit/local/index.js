@@ -495,7 +495,7 @@ describe('Local', function() {
       fse.writeFileSync(filePath, 'old content')
 
       try {
-        await this.local.overwriteFileAsync(doc, {})
+        await this.local.overwriteFileAsync(doc)
 
         const stats = await fse.stat(filePath)
         should(stats.isFile()).be.true()

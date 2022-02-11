@@ -1,21 +1,21 @@
-module Window.Tray.Settings exposing
+port module Window.Tray.Settings exposing
     ( Model
     , Msg(..)
     , diskQuotaLine
-    , humanReadableDiskValue
+    , gotDiskSpace
     , init
     , update
     , versionLine
     , view
     )
 
-import Data.DiskSpace exposing (DiskSpace)
+import Data.Bytes as Bytes exposing (Bytes)
 import Data.Status exposing (Status(..))
 import Data.SyncConfig as SyncConfig exposing (SyncConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
-import Locale exposing (Helpers)
+import I18n exposing (Helpers)
 import Ports
 import Url exposing (Url)
 import Util.Conditional exposing (viewIf)
@@ -38,6 +38,12 @@ type alias Model =
     }
 
 
+type alias DiskSpace =
+    { used : Bytes
+    , quota : Bytes
+    }
+
+
 init : String -> Model
 init version =
     { version = version
@@ -45,8 +51,8 @@ init version =
     , autoLaunch = True
     , syncConfig = SyncConfig.init
     , disk =
-        { used = 0
-        , quota = 0
+        { used = Bytes.fromInt 0
+        , quota = Bytes.fromInt 0
         }
     , busyUnlinking = False
     , busyQuitting = False
@@ -116,28 +122,46 @@ update msg model =
 
 
 
+-- SUBSCRIPTIONS
+
+
+port diskSpace : (EncodedDiskSpace -> msg) -> Sub msg
+
+
+gotDiskSpace : (DiskSpace -> msg) -> Sub msg
+gotDiskSpace msg =
+    diskSpace (msg << decode)
+
+
+decode : EncodedDiskSpace -> DiskSpace
+decode { used, quota } =
+    DiskSpace (Bytes.fromInt used) (Bytes.fromInt quota)
+
+
+type alias EncodedDiskSpace =
+    { used : Int
+    , quota : Int
+    }
+
+
+
 -- VIEW
-
-
-humanReadableDiskValue : Helpers -> Float -> String
-humanReadableDiskValue helpers v =
-    String.fromInt (round (v / 1000000)) ++ " M" ++ helpers.t "Account b"
 
 
 diskQuotaLine : Helpers -> Model -> Html Msg
 diskQuotaLine helpers model =
-    if model.disk.quota == 0 then
+    if Bytes.isZero model.disk.quota then
         div []
-            [ text (humanReadableDiskValue helpers model.disk.used ++ " / ∞") ]
+            [ text (helpers.human_readable_bytes model.disk.used ++ " / ∞") ]
 
     else
         div []
             [ text
-                (humanReadableDiskValue helpers model.disk.used
+                (helpers.human_readable_bytes model.disk.used
                     ++ " / "
-                    ++ humanReadableDiskValue helpers model.disk.quota
+                    ++ helpers.human_readable_bytes model.disk.quota
                 )
-            , ProgressBar.view (model.disk.used / model.disk.quota)
+            , ProgressBar.view (Bytes.toFloat model.disk.used / Bytes.toFloat model.disk.quota)
             ]
 
 

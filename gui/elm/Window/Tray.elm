@@ -15,8 +15,8 @@ import Data.SyncState as SyncState exposing (SyncState)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import I18n exposing (Helpers)
 import Icons
-import Locale exposing (Helpers)
 import Ports
 import Time
 import Window.Tray.Dashboard as Dashboard
@@ -160,7 +160,7 @@ subscriptions model =
 
         -- Settings subscriptions
         , Ports.newRelease (SettingsMsg << Settings.NewRelease)
-        , Ports.diskSpace (SettingsMsg << Settings.UpdateDiskSpace)
+        , Settings.gotDiskSpace (SettingsMsg << Settings.UpdateDiskSpace)
         , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
         , Ports.cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
         ]

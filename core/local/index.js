@@ -23,6 +23,7 @@ const syncDir = require('./sync_dir')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
 const sentry = require('../utils/sentry')
+const streamUtils = require('../utils/stream')
 
 /*::
 import type EventEmitter from 'events'
@@ -42,6 +43,7 @@ import type Prep from '../prep'
 import type { Writer } from '../writer'
 import type { Callback } from '../utils/func'
 import type { Watcher } from './watcher'
+import type { ProgressCallback, ReadableWithSize } from '../utils/stream'
 */
 
 const log = logger({
@@ -100,7 +102,7 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   /*::
-  addFileAsync: (SavedMetadata) => Promise<*>
+  addFileAsync: (SavedMetadata, ?ProgressCallback) => Promise<*>
   addFolderAsync: (SavedMetadata) => Promise<*>
   renameConflictingDocAsync: (doc: SavedMetadata, newPath: string) => Promise<void>
   */
@@ -121,12 +123,19 @@ class Local /*:: implements Reader, Writer */ {
   /** Create a readable stream for the given doc */
   async createReadStreamAsync(
     doc /*: SavedMetadata */
-  ) /*: Promise<stream.Readable> */ {
+  ) /*: Promise<ReadableWithSize> */ {
     const filePath = this.abspath(doc.path)
     return new Promise((resolve, reject) => {
       const contentStream = fse.createReadStream(filePath)
-      contentStream.on('open', () => resolve(contentStream))
-      contentStream.on('error', err => reject(err))
+      contentStream.on('error', reject)
+      contentStream.on('open', () => {
+        // Once the promise is resolved, it can't be rejected so we should not
+        // expect later stream errors to reject it and can thus remove the
+        // listener.
+        contentStream.off('error', reject)
+
+        resolve(streamUtils.withSize(contentStream, doc.size || 0))
+      })
     })
   }
 
@@ -226,7 +235,16 @@ class Local /*:: implements Reader, Writer */ {
    * file. The checksum will then be computed and added to the document, and
    * then pushed to CouchDB.
    */
-  addFile(doc /*: SavedMetadata */, callback /*: Callback */) /*: void */ {
+  addFile(
+    doc /*: SavedMetadata */,
+    onProgress /*: ?ProgressCallback */,
+    callback /*: Callback */
+  ) /*: void */ {
+    if (callback == null) {
+      callback = (onProgress /*: any */)
+      onProgress = undefined
+    }
+
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
     let filePath = this.abspath(doc.path)
     let parent = this.abspath(path.dirname(doc.path))
@@ -252,14 +270,17 @@ class Local /*:: implements Reader, Writer */ {
                 { path: filePath },
                 `Recopy ${existingFilePath} -> ${filePath}`
               )
-              this.events.emit('transfer-copy', doc)
               fse.copy(existingFilePath, tmpFile, next)
             } else {
               this.other.createReadStreamAsync(doc).then(
-                source => {
-                  stream.pipeline(source, fse.createWriteStream(tmpFile), err =>
-                    next(err)
-                  )
+                reader => {
+                  const source = onProgress
+                    ? streamUtils.withProgress(reader, onProgress)
+                    : reader
+
+                  const destination = fse.createWriteStream(tmpFile)
+
+                  stream.pipeline(source, destination, err => next(err))
                 },
                 err => {
                   next(err)
@@ -356,8 +377,11 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   /** Overwrite a file */
-  async overwriteFileAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
-    await this.addFileAsync(doc)
+  async overwriteFileAsync(
+    doc /*: SavedMetadata */,
+    onProgress /*: ?ProgressCallback */
+  ) /*: Promise<void> */ {
+    await this.addFileAsync(doc, onProgress)
   }
 
   /** Update the metadata of a file */

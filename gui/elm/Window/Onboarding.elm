@@ -11,7 +11,7 @@ module Window.Onboarding exposing
 import Data.SyncConfig as SyncConfig exposing (SyncConfig)
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Locale exposing (Helpers)
+import I18n exposing (Helpers)
 import Ports
 import Window.Onboarding.Address as Address
 import Window.Onboarding.Context as Context exposing (Context)

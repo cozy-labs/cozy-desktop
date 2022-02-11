@@ -94,8 +94,10 @@
     justify-content center
     width 100%
 
+  $fileLinePaddingRight = .5em
+
   .file-line
-    padding 1.1em .5em 1.1em 5em
+    padding 1.1em $fileLinePaddingRight 1.1em 5em
     font-weight: normal
     position: relative
     width 100%
@@ -192,6 +194,27 @@
       &:hover, &:active
         text-decoration: underline
 
+  .file-progress
+    display flex
+    justify-content space-between
+    align-items center
+    white-space nowrap
+
+    & > .progress
+      height rem(4px)
+
+    & .progress-inner
+      transition .3s
+
+    & > .file-size
+      min-width rem(94px)
+      margin-left rem(8px)
+      margin-right "calc(%s - %s)" % (rem(16px) $fileLinePaddingRight)
+      text-align right
+
+      /* Light/text/secondary */
+      color rgba(29, 33, 42, 0.48)
+
 
   .show-more-container
     text-align: center
@@ -249,15 +272,16 @@
 .progress
   width 100%
   height .5em
-  border 1px solid var(--coolGrey)
-  border-radius .1em
+  border-radius rem(100px)
   overflow hidden
-  background-color var(--paleGrey)
+
+  /* Light/action/ghost */
+  background-color rgba(29, 33, 42, 0.08)
 
   .progress-inner
     height 100%
-    background-color var(--scienceBlue)
-    transition: .3s
+    border-radius rem(100px)
+    background-color var(--primaryColor)
 
   &.indeterminate
     .progress-inner

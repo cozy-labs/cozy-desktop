@@ -6,8 +6,10 @@ module Data.File exposing
     , splitName
     )
 
+import Data.Bytes as Bytes
 import Data.Path as Path exposing (Path)
 import Data.Platform as Platform exposing (Platform)
+import Data.Progress exposing (Progress)
 import Time
 
 
@@ -19,8 +21,8 @@ type alias File =
     { filename : String
     , icon : String
     , path : Path
-    , size : Int
     , updated : Time.Posix
+    , progress : Progress
     }
 
 
@@ -55,13 +57,14 @@ type alias EncodedFile =
     , path : String
     , size : Int
     , updated : Int
+    , transferred : Int
     }
 
 
 decode : Platform -> EncodedFile -> File
 decode platform encoded =
     let
-        { filename, icon, path, size } =
+        { filename, icon, path, size, transferred } =
             encoded
 
         posixTime =
@@ -70,6 +73,6 @@ decode platform encoded =
     { filename = filename
     , icon = icon
     , path = Path.fromString platform path
-    , size = size
     , updated = posixTime
+    , progress = Progress (Bytes.fromInt size) (Bytes.fromInt transferred)
     }

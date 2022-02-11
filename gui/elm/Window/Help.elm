@@ -13,8 +13,8 @@ module Window.Help exposing
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
+import I18n exposing (Helpers)
 import List
-import Locale exposing (Helpers, Translate)
 import Ports
 import String
 
@@ -36,14 +36,14 @@ type alias Model =
     }
 
 
-bodyOrDefault : Translate -> Model -> String
-bodyOrDefault translate model =
+bodyOrDefault : Helpers -> Model -> String
+bodyOrDefault helpers model =
     case
         model.body
     of
         Nothing ->
             String.join "\n\n"
-                (List.map translate
+                (List.map helpers.t
                     [ "Help Hello Cozy,"
                     , "Help I like a lot what you do, but I have an issue:"
                     , "Help [ The more you can say about the issue, the better: do you have many files? Are they big? Is your cozy up-to-date? ]"
@@ -68,7 +68,7 @@ init =
 
 type Msg
     = FillBody String
-    | SendMail Translate
+    | SendMail Helpers
     | MailSent (Maybe String)
 
 
@@ -80,9 +80,9 @@ update msg model =
         FillBody body ->
             ( { model | body = Just body, status = Writing }, Cmd.none )
 
-        SendMail translate ->
+        SendMail helpers ->
             ( { model | status = Sending }
-            , Ports.sendMail (bodyOrDefault translate model)
+            , Ports.sendMail (bodyOrDefault helpers model)
             )
 
         MailSent Nothing ->
@@ -137,7 +137,7 @@ view helpers model =
                             , text (helpers.t "Help We will get back to you as soon as possible.")
                             , text (helpers.t "Help Multi Computer")
                             ]
-                , textarea [ onInput FillBody ] [ text (bodyOrDefault helpers.t model) ]
+                , textarea [ onInput FillBody ] [ text (bodyOrDefault helpers model) ]
                 , a
                     [ class "btn btn--msg"
                     , href "#"
@@ -145,7 +145,7 @@ view helpers model =
                         attribute "aria-busy" "true"
 
                       else
-                        onClick (SendMail helpers.t)
+                        onClick (SendMail helpers)
                     ]
                     [ span [] [ text (helpers.t "Help Send us a message") ] ]
                 ]

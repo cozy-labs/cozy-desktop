@@ -2,8 +2,9 @@
  *
  * @module gui/js/fileutils
  */
+const path = require('path')
 
-module.exports.selectIcon = info => {
+const selectIcon = info => {
   if (info.path.endsWith('url')) {
     return 'link'
   } else if (!info.mime) {
@@ -37,4 +38,23 @@ module.exports.selectIcon = info => {
   }
 
   return 'file'
+}
+
+const fileInfo = (
+  doc /*: SavedMetadata */,
+  { transferred } /*: { transferred: ?number } */ = {}
+) /*: FileInfo */ => {
+  return {
+    filename: path.basename(doc.path),
+    path: doc.path,
+    icon: selectIcon(doc),
+    size: Number(doc.size) || 0,
+    updated: +new Date(),
+    transferred: Number(transferred) || Number(doc.size)
+  }
+}
+
+module.exports = {
+  fileInfo,
+  selectIcon
 }

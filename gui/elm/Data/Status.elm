@@ -1,5 +1,7 @@
 module Data.Status exposing (Status(..), fromString, init)
 
+import Data.SyncError exposing (SyncError)
+
 
 type Status
     = Starting
@@ -9,7 +11,7 @@ type Status
     | Buffering
     | SquashPrepMerging
     | Syncing Int
-    | Error String
+    | Error SyncError
 
 
 init : Status
@@ -17,7 +19,7 @@ init =
     Starting
 
 
-fromString : String -> Int -> String -> Status
+fromString : String -> Int -> SyncError -> Status
 fromString str remaining latestError =
     case str of
         "syncing" ->
