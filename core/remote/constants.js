@@ -39,5 +39,8 @@ module.exports = {
 
   // Maximum file size allowed by Swift thus the remote Cozy.
   // See https://docs.openstack.org/kilo/config-reference/content/object-storage-constraints.html
-  MAX_FILE_SIZE: FIVE_GIGABYTES
+  MAX_FILE_SIZE: FIVE_GIGABYTES,
+
+  // Initial CouchDB sequence
+  INITIAL_SEQ: '0'
 }

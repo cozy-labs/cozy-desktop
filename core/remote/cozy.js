@@ -16,6 +16,7 @@ const {
   FILES_DOCTYPE,
   FILE_TYPE,
   DIR_TYPE,
+  INITIAL_SEQ,
   MAX_FILE_SIZE,
   OAUTH_CLIENTS_DOCTYPE
 } = require('./constants')
@@ -317,20 +318,20 @@ class RemoteCozy {
   }
 
   async changes(
-    since /*: string */ = '0',
+    since /*: string */ = INITIAL_SEQ,
     batchSize /*: number */ = 3000
-  ) /*: Promise<{last_seq: string, docs: Array<MetadataRemoteInfo|RemoteDeletion>}> */ {
+  ) /*: Promise<{last_seq: string, docs: Array<MetadataRemoteInfo|RemoteDeletion>, isInitialFetch: boolean}> */ {
     const client = await this.newClient()
-    const { last_seq, remoteDocs } =
-      since === '0'
-        ? await fetchInitialChanges(since, client, batchSize)
-        : await fetchChangesFromFeed(since, this.client, batchSize)
+    const isInitialFetch = since === INITIAL_SEQ
+    const { last_seq, remoteDocs } = isInitialFetch
+      ? await fetchInitialChanges(since, client, batchSize)
+      : await fetchChangesFromFeed(since, this.client, batchSize)
 
     const docs = (await this.completeRemoteDocs(
       dropSpecialDocs(remoteDocs)
     )).sort(byPath)
 
-    return { last_seq, docs }
+    return { last_seq, docs, isInitialFetch }
   }
 
   async fetchLastSeq() {
@@ -338,7 +339,7 @@ class RemoteCozy {
     const { last_seq } = await client
       .collection(FILES_DOCTYPE)
       .fetchChangesRaw({
-        since: '0',
+        since: INITIAL_SEQ,
         descending: true,
         limit: 1,
         includeDocs: false

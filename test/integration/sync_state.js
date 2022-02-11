@@ -34,7 +34,9 @@ describe('Sync state', () => {
 
   it('1 sync error (missing remote file)', async () => {
     const remoteFile = builders.remoteFile().build()
-    await helpers._remote.watcher.pullMany([remoteFile])
+    await helpers._remote.watcher.pullMany([remoteFile], {
+      isInitialFetch: true // XXX: avoid unnecessary remote requests
+    })
     await helpers.syncAll()
     should(events.emit.args).containDeepOrdered([
       ['sync-start'],
