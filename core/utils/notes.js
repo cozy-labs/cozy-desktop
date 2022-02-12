@@ -24,14 +24,15 @@ type CozyNoteErrorCode = 'CozyDocumentMissingError' | 'UnreachableError'
 const isNote = (
   doc /*: MetadataRemoteInfo | { mime?: string, metadata?: Object } */
 ) /*: boolean %checks */ => {
-  return (
+  const isNote =
     doc.mime === NOTE_MIME_TYPE &&
     doc.metadata != null &&
     doc.metadata.content != null &&
     doc.metadata.schema != null &&
     doc.metadata.title != null &&
     doc.metadata.version != null
-  )
+  console.log({ isNote, doc })
+  return isNote
 }
 
 class CozyNoteError extends Error {

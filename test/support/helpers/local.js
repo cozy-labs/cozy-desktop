@@ -145,6 +145,14 @@ class LocalTestHelpers {
           .sort()
   }
 
+  async start() {
+    await this.side.watcher.start()
+  }
+
+  async stop() {
+    await this.side.watcher.stop()
+  }
+
   async scan() {
     await this.side.watcher.start()
     await this.side.watcher.stop()

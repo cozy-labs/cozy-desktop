@@ -145,6 +145,7 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <Metadat
   async update() /*: Promise<MetadataRemoteFile> */ {
     this._updateMetadata()
     this._updateExport()
+    console.log({ noteContent: this._data })
 
     const cozy = this._ensureCozy()
 
@@ -154,6 +155,7 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <Metadat
     const remoteFile /*: RemoteFile */ = _.clone(
       remoteJsonToRemoteDoc(
         await cozy.files.updateById(this.remoteDoc._id, this._data, {
+          contentType: this.remoteDoc.mime,
           dirID: this.remoteDoc.dir_id,
           updatedAt: this.remoteDoc.updated_at,
           name: this.remoteDoc.name,

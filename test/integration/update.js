@@ -15,6 +15,7 @@ const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
+const { onPlatform } = require('../support/helpers/platform')
 
 const log = logger({ component: 'mocha' })
 
@@ -326,6 +327,79 @@ describe('Update file', () => {
         localTree: ['file'],
         remoteTree: ['.cozy_trash/', 'file'],
         remoteFileContent: m2
+      })
+    })
+  })
+
+  onPlatform('darwin', () => {
+    describe('multiple remote note updates with local buffering delay', () => {
+      it.only('does not generate a local conflict', async function() {
+        this.timeout(120000)
+        const filename = 'file.cozy-note'
+
+        const note = await builders
+          .remoteNote()
+          .name('file.cozy-note')
+          .data('initial content')
+          .create()
+        await helpers.pullAndSyncAll()
+        await helpers.flushLocalAndSyncAll()
+
+        console.log('starting watchers')
+        helpers._sync.start()
+        await helpers._sync.started()
+        //await helpers.local.start()
+        //await helpers.remote.start()
+
+        log.info('-------- First remote modification --------')
+        console.log({ time: new Date() }, 'merging 1st remote modification')
+        const firstUpdate = await builders
+          .remoteNote(note)
+          .data('first update')
+          .update()
+
+        log.info('-------- Local events buffering --------')
+        let fileList = []
+        for (let i = 0; i < 5000; i++) {
+          fileList.push(`whatever-${i}`)
+          helpers.local.syncDir.outputFile(`whatever-${i}`, 'local content')
+        }
+
+        // Wait for end of buffer timeout so local events are all flushed
+        // 2000 is the delay used for tests.
+        // See core/local/chokidar/watcher.js
+        await new Promise(resolve => {
+          helpers.local.side.events.once('prepare-end', async () => {
+            log.info('-------- Second remote modification --------')
+            console.log({ time: new Date() }, 'merging 2nd remote modification')
+            await builders
+              .remoteNote(firstUpdate)
+              .data('second update')
+              .update()
+            resolve()
+          })
+        })
+
+        await new Promise(resolve => {
+          let count = 0
+          helpers.local.side.events.on('local-end', async () => {
+            count++
+            if (count === 2) {
+              console.log({ time: new Date() }, 'stopping watchers')
+              //await helpers.local.stop()
+              //await helpers.remote.stop()
+              await helpers._sync.stop()
+              resolve()
+            }
+          })
+        })
+
+        await should(helpers.local.readFile(filename)).be.fulfilledWith(
+          'file\n\nsecond update'
+        )
+        await should(helpers.remote.readFile(filename)).be.fulfilledWith(
+          'file\n\nsecond update'
+        )
       })
     })
   })
