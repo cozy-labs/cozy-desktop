@@ -8,6 +8,7 @@ module Window.Tray exposing
     , view
     )
 
+import Data.Confirmation as Confirmation
 import Data.Platform exposing (Platform)
 import Data.Status as Status exposing (Status)
 import Data.SyncConfig as SyncConfig exposing (SyncConfig)
@@ -111,6 +112,22 @@ update msg model =
             in
             ( { model | dashboard = dashboard }, cmd )
 
+        SettingsMsg (Settings.GotReinitializationStatus "started") ->
+            let
+                ( settings, cmd ) =
+                    Settings.update (Settings.GotReinitializationStatus "started") model.settings
+
+                ( dashboard, _ ) =
+                    Dashboard.update Dashboard.Reset model.dashboard
+            in
+            ( { model
+                | page = DashboardPage
+                , dashboard = dashboard
+                , settings = settings
+              }
+            , Cmd.map SettingsMsg cmd
+            )
+
         SettingsMsg subMsg ->
             let
                 ( settings, cmd ) =
@@ -127,7 +144,7 @@ update msg model =
         GoToTab tab ->
             let
                 ( dashboard, cmd ) =
-                    Dashboard.update Dashboard.Reset model.dashboard
+                    Dashboard.update Dashboard.ShowFirstPage model.dashboard
             in
             ( { model | page = tab, dashboard = dashboard }, cmd )
 
@@ -163,6 +180,8 @@ subscriptions model =
         , Settings.gotDiskSpace (SettingsMsg << Settings.UpdateDiskSpace)
         , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
         , Ports.cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
+        , Confirmation.gotConfirmation (SettingsMsg << Settings.ReinitializationConfirmed)
+        , Ports.reinitialization (SettingsMsg << Settings.GotReinitializationStatus)
         ]
 
 

@@ -10,6 +10,7 @@ port module Window.Tray.Settings exposing
     )
 
 import Data.Bytes as Bytes exposing (Bytes)
+import Data.Confirmation as Confirmation exposing (ConfirmationID, askForConfirmation)
 import Data.Status exposing (Status(..))
 import Data.SyncConfig as SyncConfig exposing (SyncConfig)
 import Html exposing (..)
@@ -20,6 +21,11 @@ import Ports
 import Url exposing (Url)
 import Util.Conditional exposing (viewIf)
 import View.ProgressBar as ProgressBar
+
+
+reinitializationConfirmationId : ConfirmationID
+reinitializationConfirmationId =
+    Confirmation.newId "ReinitializationRequested"
 
 
 
@@ -35,6 +41,7 @@ type alias Model =
     , busyUnlinking : Bool
     , busyQuitting : Bool
     , manualSyncRequested : Bool
+    , reinitializationInProgress : Bool
     }
 
 
@@ -57,6 +64,7 @@ init version =
     , busyUnlinking = False
     , busyQuitting = False
     , manualSyncRequested = False
+    , reinitializationInProgress = False
     }
 
 
@@ -77,6 +85,9 @@ type Msg
     | CloseApp
     | Sync
     | EndManualSync
+    | ReinitializationRequested String
+    | ReinitializationConfirmed ( ConfirmationID, Bool )
+    | GotReinitializationStatus String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -119,6 +130,27 @@ update msg model =
 
         EndManualSync ->
             ( { model | manualSyncRequested = False }, Cmd.none )
+
+        ReinitializationRequested question ->
+            ( model, askForConfirmation reinitializationConfirmationId question )
+
+        ReinitializationConfirmed ( id, confirmed ) ->
+            if id == reinitializationConfirmationId && confirmed == True then
+                ( { model | reinitializationInProgress = True }, Ports.reinitializeSynchronization () )
+
+            else
+                ( model, Cmd.none )
+
+        GotReinitializationStatus status ->
+            case status of
+                "failed" ->
+                    ( { model | reinitializationInProgress = False }, Cmd.none )
+
+                "complete" ->
+                    ( { model | reinitializationInProgress = False }, Cmd.none )
+
+                _ ->
+                    ( model, Cmd.none )
 
 
 
@@ -205,8 +237,6 @@ view helpers status model =
                 ]
             , text (helpers.t "Settings Startup")
             ]
-        , h2 [] [ text (helpers.t "Settings Synchronize manually") ]
-        , syncButton helpers status model
         , viewIf partialSyncEnabled <|
             h2 [] [ text (helpers.t "Settings Selective synchronization") ]
         , viewIf partialSyncEnabled <|
@@ -228,12 +258,16 @@ view helpers status model =
         , showHelpButton helpers model
         , h2 [] [ text (helpers.t "Tray Quit application") ]
         , quitButton helpers model
+        , h2 [] [ text (helpers.t "Settings Reinitialize synchronization") ]
+        , p []
+            [ text (helpers.t "Settings The synchronization of the local Cozy folder with your personal Cozy Cloud will be entirely rebuilt." ++ " ")
+            , text (helpers.t "Settings Your files won't be deleted.")
             ]
+        , reinitializationButton helpers model
         , h2 [] [ text (helpers.t "Account Unlink Cozy") ]
         , p []
             [ text (helpers.t "Account It will unlink your account to this computer." ++ " ")
-            , text (helpers.t "Account Your files won't be deleted." ++ " ")
-
+            , text (helpers.t "Account Your files won't be deleted.")
             ]
         , unlinkButton helpers model
         ]
@@ -315,6 +349,39 @@ quitButton helpers model =
             onClick CloseApp
         ]
         [ span [] [ text (helpers.t "AppMenu Quit") ] ]
+
+
+reinitializationButton : Helpers -> Model -> Html Msg
+reinitializationButton helpers model =
+    a
+        [ class "c-btn c-btn--danger-outline"
+        , href "#"
+        , if model.reinitializationInProgress then
+            attribute "aria-busy" "true"
+
+          else
+            onClick
+                (ReinitializationRequested
+                    (helpers.t "Reinitialization Beware,"
+                        ++ "\n"
+                        ++ helpers.t
+                            "Reinitialization - if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;"
+                        ++ "\n"
+                        ++ helpers.t
+                            "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;"
+                        ++ "\n"
+                        ++ helpers.t
+                            "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;"
+                        ++ "\n"
+                        ++ helpers.t
+                            "Reinitialization - files already identical on both sides won't be impacted."
+                        ++ "\n\n"
+                        ++ helpers.t
+                            "Reinitialization Are you sure you want to reinitialize the synchronization?"
+                    )
+                )
+        ]
+        [ span [] [ text (helpers.t "Settings Reinitialize") ] ]
 
 
 unlinkButton : Helpers -> Model -> Html Msg

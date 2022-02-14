@@ -48,6 +48,10 @@ const errMessage = err => {
   }
 }
 
+elmectron.ports.confirm.subscribe(([id, msg]) => {
+  elmectron.ports.confirmations.send([id, window.confirm(msg)])
+})
+
 ipcRenderer.on('update-downloading', (event, progressObj) => {
   elmectron.ports.updateDownloading.send(progressObj)
 })
@@ -138,6 +142,13 @@ ipcRenderer.on('cancel-unlink', () => {
 })
 elmectron.ports.unlinkCozy.subscribe(() => {
   ipcRenderer.send('unlink-cozy')
+})
+
+elmectron.ports.reinitializeSynchronization.subscribe(() => {
+  ipcRenderer.send('reinitialize-synchronization')
+})
+ipcRenderer.on('reinitialization', (event, status) => {
+  elmectron.ports.reinitialization.send(status)
 })
 
 ipcRenderer.on('mail-sent', (event, err) => {

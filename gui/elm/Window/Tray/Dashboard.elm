@@ -70,6 +70,7 @@ type Msg
     | ShowMore
     | ShowHelp
     | Reset
+    | ShowFirstPage
     | GotUserAlerts (List UserAlert)
     | SendActionCommand UserAlert.Command UserAlert
     | UserAlertSkipped UserAlert
@@ -118,7 +119,7 @@ update msg model =
         ShowHelp ->
             ( model, Ports.showHelp () )
 
-        Reset ->
+        ShowFirstPage ->
             ( { model | page = 1 }, Cmd.none )
 
         GotUserAlerts alerts ->
@@ -138,6 +139,9 @@ update msg model =
 
         UserAlertDetails alert ->
             ( model, UserAlert.showDetails alert )
+
+        Reset ->
+            ( { model | page = 1, files = [], userAlerts = [] }, Cmd.none )
 
 
 

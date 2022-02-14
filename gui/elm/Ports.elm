@@ -24,6 +24,8 @@ port module Ports exposing
     , quitAndInstall
     , registerRemote
     , registrationError
+    , reinitialization
+    , reinitializeSynchronization
     , remove
     , sendMail
     , showHelp
@@ -107,6 +109,12 @@ port transfer : (EncodedFile -> msg) -> Sub msg
 
 
 port unlinkCozy : () -> Cmd msg
+
+
+port reinitializeSynchronization : () -> Cmd msg
+
+
+port reinitialization : (String -> msg) -> Sub msg
 
 
 port manualStartSync : () -> Cmd msg
