@@ -8,7 +8,7 @@ module Window.Tray exposing
     , view
     )
 
-import Data.Confirmation as Confirmation
+import Data.Confirmation as Confirmation exposing (ConfirmationID)
 import Data.Platform exposing (Platform)
 import Data.Status as Status exposing (Status)
 import Data.SyncConfig as SyncConfig exposing (SyncConfig)
@@ -62,6 +62,7 @@ init version platform =
 type Msg
     = GotSyncState SyncState
     | GotSyncConfig SyncConfig
+    | GotConfirmation ( ConfirmationID, Bool )
     | GoToCozy
     | GoToFolder
     | GoToTab Page
@@ -104,6 +105,13 @@ update msg model =
                     Settings.update (Settings.GotSyncConfig config) model.settings
             in
             ( { model | page = DashboardPage, settings = settings }, Cmd.none )
+
+        GotConfirmation ( id, confirmed ) ->
+            let
+                ( settings, cmd ) =
+                    Settings.update (Settings.ReinitializationConfirmed ( id, confirmed )) model.settings
+            in
+            ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
         DashboardMsg subMsg ->
             let
@@ -169,6 +177,7 @@ subscriptions model =
         [ SyncConfig.gotSyncConfig GotSyncConfig
         , Ports.gototab GoToStrTab
         , SyncState.gotNewState GotSyncState
+        , Confirmation.gotConfirmation GotConfirmation
 
         -- Dashboard subscriptions
         , Time.every 1000 (DashboardMsg << Dashboard.Tick)
@@ -180,7 +189,6 @@ subscriptions model =
         , Settings.gotDiskSpace (SettingsMsg << Settings.UpdateDiskSpace)
         , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
         , Ports.cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
-        , Confirmation.gotConfirmation (SettingsMsg << Settings.ReinitializationConfirmed)
         , Ports.reinitialization (SettingsMsg << Settings.GotReinitializationStatus)
         ]
 

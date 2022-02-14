@@ -19,6 +19,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import I18n exposing (Helpers)
+import Icons
 import Json.Decode as Json
 import Ports
 import Time
@@ -262,19 +263,36 @@ view helpers model =
 
         filesToRender =
             List.take nbFiles model.files
+
+        hasMoreFiles =
+            List.length model.files > nbFiles
     in
     section [ class "two-panes__content two-panes__content--dashboard" ]
         [ viewAlerts helpers model
-        , div [ class "recent-files" ]
-            (List.map renderLine filesToRender
-                ++ (if List.length model.files > nbFiles then
-                        [ showMoreButton helpers ]
+        , case filesToRender of
+            [] ->
+                viewEmptyFileList
 
-                    else
-                        []
-                   )
-            )
+            _ ->
+                viewRecentFileList helpers filesToRender renderLine hasMoreFiles
         ]
+
+
+viewEmptyFileList : Html Msg
+viewEmptyFileList =
+    div [ class "recent-files recent-files--empty" ]
+        [ Icons.logo
+        , h1 [] [ text "This list is empty" ]
+        , p [] [ text "Files recently synchronized will show up here" ]
+        ]
+
+
+viewRecentFileList : Helpers -> List File -> (File -> Html Msg) -> Bool -> Html Msg
+viewRecentFileList helpers files renderLine hasMoreFiles =
+    div [ class "recent-files" ]
+        (List.map renderLine files
+            ++ [ viewIf hasMoreFiles (showMoreButton helpers) ]
+        )
 
 
 
