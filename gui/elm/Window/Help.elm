@@ -139,7 +139,7 @@ view helpers model =
                             ]
                 , textarea [ onInput FillBody ] [ text (bodyOrDefault helpers model) ]
                 , a
-                    [ class "btn btn--msg"
+                    [ class "c-btn c-btn--full"
                     , href "#"
                     , if model.status == Sending then
                         attribute "aria-busy" "true"

@@ -1,0 +1,164 @@
+.recent-files
+  display flex
+  flex-direction column
+  justify-content center
+  width 100%
+
+.recent-files--empty
+  @extend $empty
+
+  svg
+    @extend $empty-img
+
+  h1
+    @extend $empty-title
+
+  p
+    @extend $empty-text
+
+    font-size rem(16)
+
+
+$fileLinePaddingRight = .5em
+
+.file-line
+  padding 1.1em $fileLinePaddingRight 1.1em 5em
+  font-weight: normal
+  position: relative
+  width 100%
+  box-sizing border-box
+  display: flex
+  flex-direction: column
+  border-bottom: 1px solid #d6d8da
+  cursor: pointer;
+
+  &:hover, &:active
+    background: var(--paleGrey)
+
+    .file-path
+      text-decoration: underline
+
+.file-type
+  content ''
+  position absolute
+  left 1em
+  top 0
+  bottom 0
+  margin auto 0
+  width 2rem
+  height 2rem
+  background-size cover
+  background-position center center
+
+  for mimetype in 'archive' 'audio' 'binary' 'code' 'contact' 'cozy-note' 'file' 'folder' 'image' 'link' 'pdf' 'presentation' 'spreadsheet' 'text' 'video'
+      &.file-type-{mimetype}
+          background-image url("./images/type-icons/icon-type-" + mimetype + ".svg")
+
+  &.file-type-link::before
+    content: ''
+    z-index: 1
+    position: absolute
+    height: 1.125rem
+    width: 1.125rem
+    top: 80%
+    right: 12%
+    transform: scale(1) translate(50%, -50%)
+    transform-origin: 100% 0%
+    background-color: var(--white)
+    border-radius: 12px
+    border: 1px solid var(--silver)
+
+  &.file-type-link::after
+    content: ''
+    z-index: 2
+    position: absolute
+    height: 1.125rem
+    width: 1.125rem
+    top: 80%
+    right: 12%
+    transform: scale(1) translate(50%, -50%)
+    transform-origin: 100% 0%
+
+    -webkit-mask-image: embedurl('./images/link.svg')
+    -webkit-mask-position: center
+    -webkit-mask-size: .625rem
+    -webkit-mask-repeat: no-repeat
+    mask-image: embedurl('./images/link.svg')
+    mask-position: center
+    mask-size: .625rem
+    mask-repeat: no-repeat
+    background-color: var(--slateGrey)
+
+.file-line-content
+  overflow hidden
+  text-overflow ellipsis
+  white-space nowrap
+  display inline-block
+
+.file-name-wrapper
+  font-size: 1rem
+  line-height: 1.3
+
+  .file-name-name
+    color var(--charcoalGrey)
+
+  .file-name-ext
+    color var(--coolGrey)
+
+.file-extra
+  font-size: .75rem
+  line-height: 1.3
+  color var(--coolGrey)
+
+  .file-time-ago::after
+    content ' · '
+
+  .file-parent-folder
+    cursor: pointer
+
+    &:hover, &:active
+      text-decoration: underline
+
+.file-progress
+  display flex
+  justify-content space-between
+  align-items center
+  white-space nowrap
+
+  & > .progress
+    height rem(4px)
+
+  & .progress-inner
+    transition .3s
+
+  & > .file-size
+    min-width rem(94px)
+    margin-left rem(8px)
+    margin-right "calc(%s - %s)" % (rem(16px) $fileLinePaddingRight)
+    text-align right
+
+    /* Light/text/secondary */
+    color rgba(29, 33, 42, 0.48)
+
+
+.show-more-container
+  text-align: center
+  padding 1.8em
+  .show-more-btn
+    border 1px solid #d6d8da
+    background-color transparent
+    text-transform   uppercase
+    text-decoration  none
+    cursor           pointer
+    font-family: Lato
+    color var(--charcoalGrey)
+    font-weight: bold;
+    padding: .8em 2em .8em 2em;
+    border: 1px solid #d6d8da;
+    border-radius: 2px
+
+    &:hover, &:active
+      background-color: var(--silver)
+      border 1px solid #d6d8da
+
+

@@ -81,8 +81,9 @@ const popoverBounds = (
 const WindowManager = require('./window_manager')
 
 module.exports = class TrayWM extends WindowManager {
-  constructor(...opts) {
-    super(...opts)
+  constructor(app, desktop, lastFiles) {
+    super(app, desktop)
+    this.lastFiles = lastFiles
     this.create()
   }
 
@@ -212,6 +213,27 @@ module.exports = class TrayWM extends WindowManager {
       },
       userActionCommand: (event, cmd, action) => {
         this.desktop.events.emit('user-action-command', { cmd, action })
+      },
+      'reinitialize-synchronization': event => {
+        log.info('Reinitializing synchronization...')
+        this.desktop
+          .stopSync()
+          .then(() => event.sender.send('reinitialization', 'started'))
+          .then(() => this.lastFiles.reset())
+          .then(() => this.lastFiles.persist())
+          .then(() => this.desktop.pouch.resetDatabase())
+          .then(() => {
+            this.desktop.startSync()
+            return this.desktop.sync.started()
+          })
+          .then(() => event.sender.send('reinitialization', 'complete'))
+          .catch(err => {
+            log.error(
+              { err, sentry: true },
+              'failed reinitializing synchronization'
+            )
+            event.sender.send('reinitialization', 'failed')
+          })
       }
     }
   }

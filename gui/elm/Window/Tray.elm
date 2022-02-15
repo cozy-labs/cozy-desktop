@@ -8,6 +8,7 @@ module Window.Tray exposing
     , view
     )
 
+import Data.Confirmation as Confirmation exposing (ConfirmationID)
 import Data.Platform exposing (Platform)
 import Data.Status as Status exposing (Status)
 import Data.SyncConfig as SyncConfig exposing (SyncConfig)
@@ -61,6 +62,7 @@ init version platform =
 type Msg
     = GotSyncState SyncState
     | GotSyncConfig SyncConfig
+    | GotConfirmation ( ConfirmationID, Bool )
     | GoToCozy
     | GoToFolder
     | GoToTab Page
@@ -104,12 +106,35 @@ update msg model =
             in
             ( { model | page = DashboardPage, settings = settings }, Cmd.none )
 
+        GotConfirmation ( id, confirmed ) ->
+            let
+                ( settings, cmd ) =
+                    Settings.update (Settings.ReinitializationConfirmed ( id, confirmed )) model.settings
+            in
+            ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
+
         DashboardMsg subMsg ->
             let
                 ( dashboard, cmd ) =
                     Dashboard.update subMsg model.dashboard
             in
             ( { model | dashboard = dashboard }, cmd )
+
+        SettingsMsg (Settings.GotReinitializationStatus "started") ->
+            let
+                ( settings, cmd ) =
+                    Settings.update (Settings.GotReinitializationStatus "started") model.settings
+
+                ( dashboard, _ ) =
+                    Dashboard.update Dashboard.Reset model.dashboard
+            in
+            ( { model
+                | page = DashboardPage
+                , dashboard = dashboard
+                , settings = settings
+              }
+            , Cmd.map SettingsMsg cmd
+            )
 
         SettingsMsg subMsg ->
             let
@@ -127,7 +152,7 @@ update msg model =
         GoToTab tab ->
             let
                 ( dashboard, cmd ) =
-                    Dashboard.update Dashboard.Reset model.dashboard
+                    Dashboard.update Dashboard.ShowFirstPage model.dashboard
             in
             ( { model | page = tab, dashboard = dashboard }, cmd )
 
@@ -152,6 +177,7 @@ subscriptions model =
         [ SyncConfig.gotSyncConfig GotSyncConfig
         , Ports.gototab GoToStrTab
         , SyncState.gotNewState GotSyncState
+        , Confirmation.gotConfirmation GotConfirmation
 
         -- Dashboard subscriptions
         , Time.every 1000 (DashboardMsg << Dashboard.Tick)
@@ -163,6 +189,7 @@ subscriptions model =
         , Settings.gotDiskSpace (SettingsMsg << Settings.UpdateDiskSpace)
         , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
         , Ports.cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
+        , Ports.reinitialization (SettingsMsg << Settings.GotReinitializationStatus)
         ]
 
 

@@ -593,7 +593,7 @@ app.on('ready', async () => {
     tray.init(app, toggleWindow)
     lastFiles.init(desktop)
     log.trace('Setting up tray WM...')
-    trayWindow = new TrayWM(app, desktop)
+    trayWindow = new TrayWM(app, desktop, lastFiles)
     log.trace('Setting up help WM...')
     helpWindow = new HelpWM(app, desktop)
     log.trace('Setting up onboarding WM...')

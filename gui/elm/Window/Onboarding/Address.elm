@@ -210,7 +210,7 @@ view helpers context =
                 , text (helpers.t "Address Example After")
                 ]
             , a
-                [ class "btn"
+                [ class "c-btn c-btn--full u-mt-1"
                 , href "#"
                 , if context.addressConfig.address == "" then
                     attribute "disabled" "true"

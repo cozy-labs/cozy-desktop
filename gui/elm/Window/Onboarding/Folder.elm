@@ -124,7 +124,7 @@ view helpers context =
                 -- TODO: Show different error messages?
                 ]
             , a
-                [ class "btn u-mt-2"
+                [ class "c-btn c-btn--full u-mt-2"
                 , href "#"
                 , if isValid context.folderConfig then
                     onClick StartSync
