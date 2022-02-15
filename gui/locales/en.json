@@ -126,7 +126,6 @@
   "Error Conflict with excluded directory": "Conflict with excluded directory",
   "Error The remote directory `{0}` was excluded from the synchronization on this device.": "The remote directory `{0}` was excluded from the synchronization on this device.",
   "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.": "The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.",
-  "Error Unexpected error": "Unexpected error",
   "Error Cozy Desktop encountered an unexpected error while trying to reach your Cozy.": "Cozy Desktop encountered an unexpected error while trying to reach your Cozy.",
   "Error Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed.": "Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed.",
 

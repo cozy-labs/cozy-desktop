@@ -3,7 +3,6 @@
 
   "Account About": "Informacje",
   "Account Account": "Konto",
-  "Account Are you sure to unlink this account?": "Czy na pewno chcesz odłączyć to konto?",
   "Account b": "b",
   "Account Cozy disk space": "Dostępne miejsce na Cozy",
   "Account Device name": "Urządzenie",
@@ -59,6 +58,8 @@
   "CGUUpdated Their acceptance is required to continue using your Cozy.": "Their acceptance is required to continue using your Cozy.",
   "CGUUpdated Read the new ToS": "Read the new ToS",
 
+  "Cozy client has been revoked": "Cozy client has been revoked",
+
   "Dashboard Dashboard": "Dashboard",
   "Dashboard Error:": "Błąd:",
   "Dashboard left PLURAL": "lewe",
@@ -107,9 +108,12 @@
   "Error Document path with too many levels": "Document path with too many levels",
   "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy.": "The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy.",
   "Error Try removing some parent levels or moving it to antoher folder.": "Try removing some parent levels or moving it to antoher folder.",
-  "Error Unhandled synchronization error": "Unhandled synchronization error",
-  "Error We encountered an unhandled error while trying to synchronise the {0} `{1}`.": "We encountered an unhandled error while trying to synchronise the {0} `{1}`.",
-  "Error Please contact our support to get help.": "Please contact our support to get help.",
+  "Error Synchronization error": "Synchronization error",
+  "Error Cozy Desktop encountered an unexpected error while trying to synchronise the {0} `{1}`.": "Cozy Desktop encountered an unexpected error while trying to synchronise the {0} `{1}`.",
+  "Error Your hosting provider is working on fixing the issue and the synchronization will automatically be retried periodically.": "Your hosting provider is working on fixing the issue and the synchronization will automatically be retried periodically.",
+  "Error Maintenance in progress": "Maintenance in progress",
+  "Error The synchronization of your documents is momentarily paused.": "The synchronization of your documents is momentarily paused.",
+  "Error It will resume once the maintenance is over.": "It will resume once the maintenance is over.",
   "Error Document path incompatible with current OS": "Document path incompatible with current OS",
   "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System.": "The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System.",
   "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary.": "Try renaming it on your Cozy without using special characters and choose a shorter name if necessary.",
@@ -122,6 +126,8 @@
   "Error Conflict with excluded directory": "Conflict with excluded directory",
   "Error The remote directory `{0}` was excluded from the synchronization on this device.": "The remote directory `{0}` was excluded from the synchronization on this device.",
   "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.": "The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.",
+  "Error Cozy Desktop encountered an unexpected error while trying to reach your Cozy.": "Cozy Desktop encountered an unexpected error while trying to reach your Cozy.",
+  "Error Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed.": "Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed.",
 
   "Folder You're all set!": "You're all set!",
   "Folder You can now synchronize your Cozy with this computer.": "You can now synchronize your Cozy with this computer.",
@@ -171,6 +177,7 @@
   "Helpers {0} month ago": "{0} mo ago",
   "Helpers {0} months ago": "{0} mos ago",
   "Helpers and": "and",
+  "Helpers B": "B",
   "Helpers Bytes": "Bajtów",
   "Helpers file": "file",
   "Helpers folder": "folder",
@@ -206,6 +213,13 @@
   "Quotation Start": "“",
   "Quotation End": "”",
 
+  "Reinitialization Beware,": "Beware,",
+  "Reinitialization - if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;": "- if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;",
+  "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;": "- if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;",
+  "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;": "- if some files are only present on your Cozy or your computer, they will be added to the other side;",
+  "Reinitialization - files already identical on both sides won't be impacted.": "- files already identical on both sides won't be impacted.",
+  "Reinitialization Are you sure you want to reinitialize the synchronization?": "Are you sure you want to reinitialize the synchronization?",
+
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "In case you didn't, contact us at contact@cozycloud.cc",
   "Revoked Reconnect": "Reconnect",
   "Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?": "Synchronization with your Cozy is unavailable, maybe you revoked this computer?",
@@ -221,6 +235,10 @@
   "Settings Version": "Wersja",
   "Settings Synchronize manually": "Synchronize manually",
   "Settings Configure": "Configure",
+  "Settings Reinitialize synchronization": "Reinitialize synchronization",
+  "Settings The synchronization of the local Cozy folder with your personal Cozy Cloud will be entirely rebuilt.": "The synchronization of the local Cozy folder with your personal Cozy Cloud will be entirely rebuilt.",
+  "Settings Your files won't be deleted.": "Your files won't be deleted.",
+  "Settings Reinitialize": "Reinitialize",
   "Settings Selective synchronization": "Selective synchronization",
 
   "SyncDirEmpty Detail": "To avoid losing your data, this will not be synchronized. If you really want to reset the synchronization, you can just remove your Cozy folder.",
@@ -271,12 +289,12 @@
   "Updater Please wait": "Please wait for the update to be downloaded.",
   "Updater It may take a while": "It may take a while, depending on your Internet connection speed.",
 
-  "UserAction OK": "OK",
-  "UserAction Give up": "Give up",
-  "UserAction Link directories": "Link directories",
-  "UserAction Rename {0}": "Rename {0}",
-  "UserAction Retry": "Retry",
-  "UserAction Show details": "Show details",
+  "UserAlert OK": "OK",
+  "UserAlert Give up": "Give up",
+  "UserAlert Link directories": "Link directories",
+  "UserAlert Rename {0}": "Rename {0}",
+  "UserAlert Retry": "Retry",
+  "UserAlert Show details": "Show details",
 
   "Welcome Sign in to your Cozy": "Zaloguj się do mojego Cozy",
   "Welcome Your own private cloud": "Witaj w Cozy Drive dla Twojego komputera!"
