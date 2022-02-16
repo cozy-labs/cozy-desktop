@@ -1,5 +1,29 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.33.0-beta.1 - 2022-02-16
+
+Improvements for all users:
+
+- The URL validation step of the on-boarding wizard is now able to detect your
+  Cozy root URL in more complex URLs (e.g. a photo album URL copied from your
+  Cozy Photos app in your browser).
+- When the server hosting your Cozy experiences issues, the Desktop client will
+  display a specific error message instead of telling you that no internet
+  connection is detected.
+- Files being transferred to or from your Cozy will now be displayed in the main
+  window's Recent tab with progress information.
+- We've made some optimizations to remote content fetching so the initial
+  synchronization and the retrieval of remote directories content require less
+  network requests and less memory.
+- You will now be able to completely reinitialize your Desktop client's
+  synchronization from the Settings tab without having to disconnect and then
+  reconnect your remote Cozy. Your selective synchronization configuration will
+  thus be kept.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.32.0 - 2022-01-18
 
 Improvements for all users:
