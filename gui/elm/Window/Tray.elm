@@ -20,6 +20,8 @@ import I18n exposing (Helpers)
 import Icons
 import Ports
 import Time
+import Util.Conditional exposing (ShowInWeb, inWeb, onOS)
+import Util.Mouse as Mouse
 import Window.Tray.Dashboard as Dashboard
 import Window.Tray.Settings as Settings
 import Window.Tray.StatusBar as StatusBar
@@ -63,8 +65,8 @@ type Msg
     = GotSyncState SyncState
     | GotSyncConfig SyncConfig
     | GotConfirmation ( ConfirmationID, Bool )
-    | GoToCozy
-    | GoToFolder
+    | GoToCozy ShowInWeb
+    | GoToFolder ShowInWeb
     | GoToTab Page
     | GoToStrTab String
     | DashboardMsg Dashboard.Msg
@@ -143,11 +145,11 @@ update msg model =
             in
             ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
-        GoToCozy ->
-            ( model, Ports.gotocozy () )
+        GoToCozy showInWeb ->
+            ( model, Ports.gotocozy showInWeb )
 
-        GoToFolder ->
-            ( model, Ports.gotofolder () )
+        GoToFolder showInWeb ->
+            ( model, Ports.gotofolder showInWeb )
 
         GoToTab tab ->
             let
@@ -240,16 +242,34 @@ viewBottomBar helpers =
     div [ class "bottom-bar" ]
         [ a
             [ href "#"
-            , onClick GoToFolder
+            , Mouse.onSpecialClick handleGoToFolder
             ]
             [ Icons.folder 48 False
             , text (helpers.t "Bar GoToFolder")
             ]
         , a
             [ href "#"
-            , onClick GoToCozy
+            , Mouse.onSpecialClick handleGoToCozy
             ]
             [ Icons.globe 48 False
             , text (helpers.t "Bar GoToCozy")
             ]
         ]
+
+
+handleGoToFolder : Mouse.EventWithKeys -> Msg
+handleGoToFolder mouseEvent =
+    if mouseEvent.keys.ctrl || mouseEvent.keys.meta then
+        GoToFolder inWeb
+
+    else
+        GoToFolder onOS
+
+
+handleGoToCozy : Mouse.EventWithKeys -> Msg
+handleGoToCozy mouseEvent =
+    if mouseEvent.keys.ctrl || mouseEvent.keys.meta then
+        GoToCozy onOS
+
+    else
+        GoToCozy inWeb

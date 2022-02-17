@@ -34,6 +34,7 @@ const { LOG_FILE, LOG_FILENAME } = logger
 const sentry = require('./utils/sentry')
 const { sendToTrash } = require('./utils/fs')
 const notes = require('./utils/notes')
+const web = require('./utils/web')
 
 /*::
 import type EventEmitter from 'events'
@@ -431,6 +432,10 @@ class App {
 
   findNote(filePath /*: string */) {
     return notes.findNote(filePath, this)
+  }
+
+  findDocument(filePath /*: string */) {
+    return web.findDocument(filePath, this)
   }
 }
 

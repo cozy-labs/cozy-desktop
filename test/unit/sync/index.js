@@ -23,6 +23,7 @@ const dbBuilders = require('../../support/builders/db')
 
 /*::
 import type { SavedMetadata } from '../../../core/metadata'
+import type { Change } from '../../../core/sync'
 */
 
 const localSyncError = (msg, doc) =>
@@ -230,13 +231,17 @@ describe('Sync', function() {
 
   describe('apply', function() {
     it('does nothing for an ignored document', async function() {
-      const change = {
+      const doc = await builders
+        .metadir()
+        .path('ignored')
+        .sides({ local: 1 })
+        .create()
+      const change /*: Change */ = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
         seq: 121,
-        doc: await builders
-          .metadir()
-          .path('ignored')
-          .sides({ local: 1 })
-          .create()
+        operation: { type: 'SKIP' }
       }
       this.sync.applyDoc = sinon.spy()
       await this.sync.apply(change)
@@ -244,13 +249,17 @@ describe('Sync', function() {
     })
 
     it('does nothing for an up-to-date document', async function() {
-      const change = {
+      const doc = await builders
+        .metadir()
+        .path('foo')
+        .upToDate()
+        .create()
+      const change /*: Change */ = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
         seq: 122,
-        doc: await builders
-          .metadir()
-          .path('foo')
-          .upToDate()
-          .create()
+        operation: { type: 'SKIP' }
       }
       this.sync.applyDoc = sinon.spy()
       await this.sync.apply(change)
@@ -258,14 +267,18 @@ describe('Sync', function() {
     })
 
     it('does nothing for an up-to-date _deleted document', async function() {
-      const change = {
+      const doc = await builders
+        .metadir()
+        .path('foo')
+        .erased()
+        .upToDate()
+        .create()
+      const change /*: Change */ = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
         seq: 122,
-        doc: await builders
-          .metadir()
-          .path('foo')
-          .erased()
-          .upToDate()
-          .create()
+        operation: { type: 'SKIP' }
       }
       this.sync.applyDoc = sinon.spy()
       await this.sync.apply(change)
@@ -273,14 +286,18 @@ describe('Sync', function() {
     })
 
     it('trashes a locally deleted file', async function() {
-      const change = {
+      const doc = await builders
+        .metafile()
+        .path('foo')
+        .trashed()
+        .changedSide('local')
+        .create()
+      const change /*: Change */ = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
         seq: 145,
-        doc: await builders
-          .metafile()
-          .path('foo')
-          .trashed()
-          .changedSide('local')
-          .create()
+        operation: { type: 'DEL', side: 'remote' }
       }
 
       this.remote.trashAsync = sinon.stub().resolves(true)
@@ -312,9 +329,12 @@ describe('Sync', function() {
         .trashed()
         .changedSide('local')
         .create()
-      const change = {
+      const change /*: Change */ = {
+        changes: [{ rev: deletedParent._rev }],
+        doc: deletedParent,
+        id: deletedParent._id,
         seq: 145,
-        doc: deletedParent
+        operation: { type: 'DEL', side: 'remote' }
       }
 
       this.remote.trashAsync = sinon.stub().resolves(true)
@@ -347,9 +367,12 @@ describe('Sync', function() {
         .trashed()
         .changedSide('local')
         .create()
-      const change = {
+      const change /*: Change */ = {
+        changes: [{ rev: deletedChild._rev }],
+        doc: deletedChild,
+        id: deletedChild._id,
         seq: 145,
-        doc: deletedChild
+        operation: { type: 'DEL', side: 'remote' }
       }
 
       this.remote.trashAsync = sinon.stub().resolves(true)
@@ -377,15 +400,19 @@ describe('Sync', function() {
         .upToDate()
         .create()
 
-      const change = {
+      const doc = await builders
+        .metafile(initial)
+        .overwrite(initial)
+        .data('updated content')
+        .changedSide('local')
+        .noRecord() // XXX: Prevent Pouch conflict from reusing `initial`'s _id
+        .create()
+      const change /*: Change */ = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
         seq: 123,
-        doc: await builders
-          .metafile(initial)
-          .overwrite(initial)
-          .data('updated content')
-          .changedSide('local')
-          .noRecord() // XXX: Prevent Pouch conflict from reusing `initial`'s _id
-          .create()
+        operation: { type: 'EDIT', side: 'remote' }
       }
       await this.sync.apply(change)
       should(await this.pouch.bySyncedPath(change.doc.path)).have.properties({
@@ -407,13 +434,17 @@ describe('Sync', function() {
         .upToDate()
         .create()
 
-      const change = {
+      const doc = await builders
+        .metadir(initial)
+        .tags('qux')
+        .changedSide('local')
+        .create()
+      const change /*: Change */ = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
         seq: 124,
-        doc: await builders
-          .metadir(initial)
-          .tags('qux')
-          .changedSide('local')
-          .create()
+        operation: { type: 'EDIT', side: 'remote' }
       }
       await this.sync.apply(change)
       should(await this.pouch.bySyncedPath(change.doc.path)).have.properties({
@@ -463,7 +494,7 @@ describe('Sync', function() {
       const seq = previousSeq + 1
       const sideName = 'local'
 
-      let file, merged, change
+      let file, merged, change /*: Change */
 
       beforeEach('set up merged local file update', async function() {
         file = await builders
@@ -479,7 +510,14 @@ describe('Sync', function() {
 
         await this.pouch.setLocalSeq(previousSeq)
 
-        change = { seq, doc: _.cloneDeep(merged) }
+        const doc = _.cloneDeep(merged)
+        change = {
+          changes: [{ rev: doc._rev }],
+          doc,
+          id: doc._id,
+          seq,
+          operation: { type: 'EDIT', side: 'remote' }
+        }
         sinon.stub(this.sync, 'getNextChanges').returns([change])
       })
       afterEach(function() {
@@ -981,7 +1019,7 @@ describe('Sync', function() {
     })
 
     context('when Sync failed to update file after moving it', () => {
-      let file, merged, change
+      let file, merged, change /*: Change */
 
       const previousSeq = 1
       const seq = 2
@@ -1014,7 +1052,14 @@ describe('Sync', function() {
           delete merged.moveFrom
           delete merged.overwrite
 
-          change = { seq, doc: _.cloneDeep(merged) }
+          const doc = _.cloneDeep(merged)
+          change = {
+            changes: [{ rev: doc._rev }],
+            doc,
+            id: doc._id,
+            seq,
+            operation: { type: 'MOVE', side: 'remote' }
+          }
         }
       )
 

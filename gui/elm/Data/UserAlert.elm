@@ -17,6 +17,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import I18n exposing (Helpers)
+import Util.Conditional exposing (ShowInWeb, inWeb, onOS)
 import Util.DecorationParser exposing (DecorationResult(..), findDecorations)
 
 
@@ -36,8 +37,13 @@ type UserActionStatus
     | Done
 
 
+type Side
+    = Local
+    | Remote
+
+
 type alias SynchronizationErrorInfo =
-    { status : UserActionStatus, seq : Int, docType : String, path : String }
+    { status : UserActionStatus, seq : Int, docType : String, path : String, side : Maybe Side }
 
 
 type alias RemoteWarningInfo =
@@ -54,7 +60,7 @@ type Command
 
 type Msg
     = SendCommand Command UserAlert -- send specified command to client
-    | ShowInParent Path -- open file explorer at parent's path
+    | ShowInParent Path ShowInWeb -- open file explorer or Cozy Drive Web at parent's path
     | ShowHelp
 
 
@@ -108,6 +114,7 @@ type alias EncodedUserAlert =
     { seq : Maybe Int
     , status : String
     , code : String
+    , side : Maybe String
     , doc :
         Maybe
             { docType : String
@@ -125,7 +132,7 @@ type alias EncodedCommand =
 
 
 decode : EncodedUserAlert -> Maybe UserAlert
-decode { seq, status, code, doc, links } =
+decode { seq, status, code, side, doc, links } =
     let
         decodedStatus =
             decodeUserActionStatus status
@@ -135,7 +142,15 @@ decode { seq, status, code, doc, links } =
             Just (RemoteWarning code { status = decodedStatus, link = self })
 
         ( Just { docType, path }, _, Just num ) ->
-            Just (SynchronizationError code { status = decodedStatus, seq = num, docType = docType, path = path })
+            Just
+                (SynchronizationError code
+                    { status = decodedStatus
+                    , seq = num
+                    , docType = docType
+                    , path = path
+                    , side = decodedSide side
+                    }
+                )
 
         _ ->
             Just (RemoteError code)
@@ -148,6 +163,7 @@ encode alert =
             { seq = Just a.seq
             , status = encodeUserActionStatus a.status
             , code = code
+            , side = encodedSide a.side
             , doc = Just { docType = a.docType, path = a.path }
             , links = Nothing
             }
@@ -156,6 +172,7 @@ encode alert =
             { seq = Nothing
             , status = encodeUserActionStatus Required -- really articial here
             , code = code
+            , side = Nothing
             , doc = Nothing
             , links = Nothing
             }
@@ -164,6 +181,7 @@ encode alert =
             { seq = Nothing
             , status = encodeUserActionStatus a.status
             , code = code
+            , side = Nothing
             , links = Just { self = a.link }
             , doc = Nothing
             }
@@ -214,6 +232,32 @@ encodeUserActionStatus status =
             "Done"
 
 
+decodedSide : Maybe String -> Maybe Side
+decodedSide side =
+    case side of
+        Just "local" ->
+            Just Local
+
+        Just "remote" ->
+            Just Remote
+
+        _ ->
+            Nothing
+
+
+encodedSide : Maybe Side -> Maybe String
+encodedSide side =
+    case side of
+        Just Local ->
+            Just "local"
+
+        Just Remote ->
+            Just "remote"
+
+        _ ->
+            Nothing
+
+
 
 -- View User Action from other modules
 
@@ -234,10 +278,18 @@ view helpers platform alert =
     let
         { title, content, buttons } =
             viewByCode helpers alert
+
+        side =
+            case alert of
+                SynchronizationError _ a ->
+                    a.side
+
+                _ ->
+                    Nothing
     in
     div [ class "u-p-1 u-bg-paleGrey" ]
         [ header [ class "u-title-h1" ] [ text (helpers.t title) ]
-        , p [ class "u-text" ] (alertContent helpers platform content)
+        , p [ class "u-text" ] (alertContent helpers platform content side)
         , div [ class "u-flex u-flex-justify-end" ] buttons
         ]
 
@@ -472,11 +524,11 @@ viewByCode helpers alert =
             { title = "", content = [], buttons = [] }
 
 
-alertContent : Helpers -> Platform -> List String -> List (Html Msg)
-alertContent helpers platform details =
+alertContent : Helpers -> Platform -> List String -> Maybe Side -> List (Html Msg)
+alertContent helpers platform details side =
     details
         |> List.map helpers.capitalize
-        |> List.map (viewAlertContentLine platform)
+        |> List.map (viewAlertContentLine platform side)
         |> List.intersperse [ br [] [] ]
         |> List.concat
 
@@ -533,15 +585,15 @@ linkButton helpers link label bType =
         [ span [] [ text (helpers.t label) ] ]
 
 
-viewAlertContentLine : Platform -> String -> List (Html Msg)
-viewAlertContentLine platform line =
+viewAlertContentLine : Platform -> Maybe Side -> String -> List (Html Msg)
+viewAlertContentLine platform side line =
     let
         toHTML =
             \decoration ->
                 case decoration of
                     Decorated path ->
                         Path.fromString platform path
-                            |> decoratedName
+                            |> decoratedName side
 
                     Normal str ->
                         text str
@@ -550,11 +602,22 @@ viewAlertContentLine platform line =
         |> List.map toHTML
 
 
-decoratedName : Path -> Html Msg
-decoratedName path =
+decoratedName : Maybe Side -> Path -> Html Msg
+decoratedName side path =
+    let
+        medium =
+            case side of
+                -- Open on the side opposite of the one on which the change is
+                -- being applied.
+                Just Local ->
+                    inWeb
+
+                _ ->
+                    onOS
+    in
     span
         [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
         , title (Path.toString path)
-        , onClick (ShowInParent path)
+        , onClick (ShowInParent path medium)
         ]
         [ text (Path.name path) ]

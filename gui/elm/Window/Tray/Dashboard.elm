@@ -23,7 +23,8 @@ import Icons
 import Json.Decode as Json
 import Ports
 import Time
-import Util.Conditional exposing (viewIf)
+import Util.Conditional exposing (ShowInWeb, inWeb, onOS, viewIf)
+import Util.Mouse as Mouse
 import View.ProgressBar as ProgressBar
 
 
@@ -65,8 +66,8 @@ maxActivities =
 type Msg
     = Transfer EncodedFile
     | Remove EncodedFile
-    | OpenPath Path
-    | ShowInParent Path
+    | OpenPath Path ShowInWeb
+    | ShowInParent Path ShowInWeb
     | Tick Time.Posix
     | ShowMore
     | ShowHelp
@@ -105,11 +106,11 @@ update msg model =
             in
             ( { model | files = files }, Cmd.none )
 
-        OpenPath path ->
-            ( model, Ports.openFile (Path.toString path) )
+        OpenPath path showInWeb ->
+            ( model, Ports.openFile ( Path.toString path, showInWeb ) )
 
-        ShowInParent path ->
-            ( model, Ports.showInParent (Path.toString path) )
+        ShowInParent path showInWeb ->
+            ( model, Ports.showInParent ( Path.toString path, showInWeb ) )
 
         Tick now ->
             ( { model | now = now }, Cmd.none )
@@ -183,7 +184,7 @@ renderFile helpers model file =
     div
         [ class "file-line"
         , title filenameTitle
-        , onClick (OpenPath file.path)
+        , Mouse.onSpecialClick (handleOpenPath file.path)
         ]
         [ div [ class ("file-type file-type-" ++ file.icon) ] []
         , span [ class "file-line-content file-name-wrapper" ]
@@ -196,9 +197,7 @@ renderFile helpers model file =
                 , span
                     [ class "file-parent-folder"
                     , title dirPathTitle
-                    , stopPropagationOn "click" <|
-                        Json.map (\msg -> ( msg, True )) <|
-                            Json.succeed (ShowInParent file.path)
+                    , Mouse.onCapturingClick (handleShowInParent file.path)
                     ]
                     [ text (Path.toString dirPath) ]
                 ]
@@ -210,6 +209,24 @@ renderFile helpers model file =
                     ]
                 ]
         ]
+
+
+handleOpenPath : Path -> Mouse.EventWithKeys -> Msg
+handleOpenPath path mouseEvent =
+    if mouseEvent.keys.ctrl || mouseEvent.keys.meta then
+        OpenPath path inWeb
+
+    else
+        OpenPath path onOS
+
+
+handleShowInParent : Path -> Mouse.EventWithKeys -> Msg
+handleShowInParent path mouseEvent =
+    if mouseEvent.keys.ctrl || mouseEvent.keys.meta then
+        ShowInParent path inWeb
+
+    else
+        ShowInParent path onOS
 
 
 showMoreButton : Helpers -> Html Msg
@@ -230,8 +247,8 @@ viewAlerts helpers model =
         msg =
             \alertMsg ->
                 case alertMsg of
-                    UserAlert.ShowInParent path ->
-                        ShowInParent path
+                    UserAlert.ShowInParent path showInWeb ->
+                        ShowInParent path showInWeb
 
                     UserAlert.SendCommand cmd alert ->
                         SendActionCommand cmd alert

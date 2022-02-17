@@ -115,11 +115,11 @@ ipcRenderer.on('new-release-available', (event, notes, name) => {
 elmectron.ports.quitAndInstall.subscribe(() => {
   ipcRenderer.send('quit-and-install')
 })
-elmectron.ports.gotocozy.subscribe(() => {
-  ipcRenderer.send('go-to-cozy')
+elmectron.ports.gotocozy.subscribe(showInWeb => {
+  ipcRenderer.send('go-to-cozy', showInWeb)
 })
-elmectron.ports.gotofolder.subscribe(() => {
-  ipcRenderer.send('go-to-folder')
+elmectron.ports.gotofolder.subscribe(showInWeb => {
+  ipcRenderer.send('go-to-folder', showInWeb)
 })
 
 elmectron.ports.closeApp.subscribe(() => {
@@ -159,12 +159,12 @@ elmectron.ports.sendMail.subscribe(body => {
   ipcRenderer.send('send-mail', body)
 })
 
-elmectron.ports.openFile.subscribe(path => {
-  ipcRenderer.send('open-file', path)
+elmectron.ports.openFile.subscribe(([path, showInWeb]) => {
+  ipcRenderer.send('open-file', path, showInWeb)
 })
 
-elmectron.ports.showInParent.subscribe(path => {
-  ipcRenderer.send('show-in-parent', path)
+elmectron.ports.showInParent.subscribe(([path, showInWeb]) => {
+  ipcRenderer.send('show-in-parent', path, showInWeb)
 })
 
 elmectron.ports.userAlertDetails.subscribe(action => {
