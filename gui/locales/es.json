@@ -76,6 +76,8 @@
   "Dashboard Open file {0}": "Abrir archivo {0}",
   "Dashboard Show in folder {0}": "Mostrar en la carpeta {0}",
   "Dashboard Show in parent folder": "Mostrar en la carpeta superior",
+  "Dashboard This list is empty": "This list is empty",
+  "Dashboard Files recently synchronized will show up here": "Files recently synchronized will show up here",
 
   "Error Bad GLIBCXX version": "Su sistema tiene una versión antigua del glibc. Necesita actualizar su distribución, vea https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.": "Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.",

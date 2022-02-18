@@ -288,19 +288,19 @@ view helpers model =
         [ viewAlerts helpers model
         , case filesToRender of
             [] ->
-                viewEmptyFileList
+                viewEmptyFileList helpers
 
             _ ->
                 viewRecentFileList helpers filesToRender renderLine hasMoreFiles
         ]
 
 
-viewEmptyFileList : Html Msg
-viewEmptyFileList =
+viewEmptyFileList : Helpers -> Html Msg
+viewEmptyFileList helpers =
     div [ class "recent-files recent-files--empty" ]
         [ Icons.logo
-        , h1 [] [ text "This list is empty" ]
-        , p [] [ text "Files recently synchronized will show up here" ]
+        , h1 [] [ text (helpers.t "Dashboard This list is empty") ]
+        , p [] [ text (helpers.t "Dashboard Files recently synchronized will show up here") ]
         ]
 
 

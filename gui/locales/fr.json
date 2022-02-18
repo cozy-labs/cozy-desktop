@@ -76,6 +76,8 @@
   "Dashboard Open file {0}": "Ouvrir le fichier {0}",
   "Dashboard Show in folder {0}": "Afficher dans le dossier {0}",
   "Dashboard Show in parent folder": "Afficher dans le dossier parent",
+  "Dashboard This list is empty": "Cette liste est vide",
+  "Dashboard Files recently synchronized will show up here": "Les fichiers récemment synchronisés seront affichés ici",
 
   "Error Bad GLIBCXX version": "Votre système a une ancienne version de la glibc. Vous devriez mettre à jour votre distribution pour utiliser Cozy Drive, cf https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.": "Vérifiez que la note existe toujours sur votre Cozy ou celui de son propriétaire. Cela peut aussi vouloir dire que la note n'est plus synchronisée.",
