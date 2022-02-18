@@ -1,5 +1,23 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.33.0-beta.2 - 2022-02-18
+
+Improvements for all users:
+
+- You can now open your Cozy within a Desktop window with a Ctrl-click
+  (Cmd-click on macOS) on the "Open Cozy" button in the main window. You will
+  have to enter your credentials the first time.
+- You can now open folders in your Cozy with a Ctrl-click (Cmd-click on macOS)
+  on folder paths in the Recent tab of the main window or the "Open folder"
+  button.
+- Paths displayed in synchronization error messages for changes coming from the
+  remote Cozy will now open in Cozy Drive Web since they might not exist on the
+  local filesystem and the solution probably resides in remote actions.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.33.0-beta.1 - 2022-02-16
 
 Improvements for all users:
