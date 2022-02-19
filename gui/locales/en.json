@@ -76,6 +76,8 @@
   "Dashboard Open file {0}": "Open file {0}",
   "Dashboard Show in folder {0}": "Show in folder {0}",
   "Dashboard Show in parent folder": "Show in parent folder",
+  "Dashboard This list is empty": "This list is empty",
+  "Dashboard Files recently synchronized will show up here": "Files recently synchronized will show up here",
 
   "Error Bad GLIBCXX version": "Your system has an old version of the glibc. You need to update your distribution, see https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.": "Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.",
@@ -126,7 +128,6 @@
   "Error Conflict with excluded directory": "Conflict with excluded directory",
   "Error The remote directory `{0}` was excluded from the synchronization on this device.": "The remote directory `{0}` was excluded from the synchronization on this device.",
   "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.": "The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.",
-  "Error Unexpected error": "Unexpected error",
   "Error Cozy Desktop encountered an unexpected error while trying to reach your Cozy.": "Cozy Desktop encountered an unexpected error while trying to reach your Cozy.",
   "Error Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed.": "Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed.",
 

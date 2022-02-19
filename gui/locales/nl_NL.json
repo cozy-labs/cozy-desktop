@@ -3,7 +3,6 @@
 
   "Account About": "Over",
   "Account Account": "Account",
-  "Account Are you sure to unlink this account?": "Weet je zeker dat je dit account wilt ontkoppelen?",
   "Account b": "b",
   "Account Cozy disk space": "Cozy-schijfruimte",
   "Account Device name": "Apparaat",
@@ -59,6 +58,8 @@
   "CGUUpdated Their acceptance is required to continue using your Cozy.": "Accepteer deze om gebruik te blijven maken van Cozy.",
   "CGUUpdated Read the new ToS": "Nieuwe voorwaarden bekijken",
 
+  "Cozy client has been revoked": "De toestemming van de Cozy-client is ingetrokken",
+
   "Dashboard Dashboard": "Overzichtspaneel",
   "Dashboard Error:": "Fout:",
   "Dashboard left PLURAL": "te gaan",
@@ -75,6 +76,8 @@
   "Dashboard Open file {0}": "Bestand openen {0}",
   "Dashboard Show in folder {0}": "Tonen in map {0}",
   "Dashboard Show in parent folder": "Tonen in bovenliggende map",
+  "Dashboard This list is empty": "This list is empty",
+  "Dashboard Files recently synchronized will show up here": "Files recently synchronized will show up here",
 
   "Error Bad GLIBCXX version": "Je systeem gebruikt een oude versie van glibc; je moet je distributie bijwerken. Bekijk hiervoor https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.": "Controleer of de notitie nog bestaat op je Cozy of die van de eigenaar. Het kan ook zijn dat je notitie opnieuw moet worden gesynchroniseerd.",
@@ -107,9 +110,12 @@
   "Error Document path with too many levels": "De documentlocatie bestaat uit teveel niveaus",
   "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy.": "{0} `{1}`'s locatie bestaat uit teveel niveaus (bovenliggende mappen).",
   "Error Try removing some parent levels or moving it to antoher folder.": "Verwijder niveaus of verplaats ze naar een andere map.",
-  "Error Unhandled synchronization error": "Onbehandelde synchronisatiefout",
-  "Error We encountered an unhandled error while trying to synchronise the {0} `{1}`.": "Er is een fout opgetreden tijdens het synchroniseren van {0} `{1}`.",
-  "Error Please contact our support to get help.": "Neem contact met ons op.",
+  "Error Synchronization error": "Synchronisatiefout",
+  "Error Cozy Desktop encountered an unexpected error while trying to synchronise the {0} `{1}`.": "Er is een onverwachte fout opgetreden tijdens het synchroniseren van {0} `{1}`.",
+  "Error Your hosting provider is working on fixing the issue and the synchronization will automatically be retried periodically.": "Je hostingprovider werkt aan een oplossing, waarna de synchronisatie automatisch zal worden hervat.",
+  "Error Maintenance in progress": "Onderhoudswerkzaamheden",
+  "Error The synchronization of your documents is momentarily paused.": "De synchronisatie van je documenten is tijdelijk onderbroken.",
+  "Error It will resume once the maintenance is over.": "De synchronisatie wordt hervat zodra de werkzaamheden zijn afgerond.",
   "Error Document path incompatible with current OS": "Documentlocatie incompatibel met huidig systeem",
   "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System.": "{0} `{1}`'s naam bevat niet-toegestane of voorbehouden tekens, of is te lang voor je besturingssysteem.",
   "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary.": "Wijzig de naam op je Cozy en verwijder de speciale tekens. Kie` indien nodig, ook een kortere naam.",
@@ -122,6 +128,8 @@
   "Error Conflict with excluded directory": "Conflict met uitgesloten map",
   "Error The remote directory `{0}` was excluded from the synchronization on this device.": "De externe map `{0}` is uitgesloten van synchronisatie op dit apparaat.",
   "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.": "De lokale map op dezelfde locatie kan worden gekoppeld aan de externe map, welke opnieuw gesynchroniseerd wordt om dit probleem op te lossen.",
+  "Error Cozy Desktop encountered an unexpected error while trying to reach your Cozy.": "Er is een onverwachte fout opgetreden tijdens het aanroepen van je Cozy.",
+  "Error Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed.": "Je hostingprovider werkt aan een oplossing, waarna de synchronisatie automatisch zal worden hervat.",
 
   "Folder You're all set!": "Klaar is Kees!",
   "Folder You can now synchronize your Cozy with this computer.": "Je kunt vanaf nu synchroniseren met deze computer.",
@@ -171,6 +179,7 @@
   "Helpers {0} month ago": "{0} maand geleden",
   "Helpers {0} months ago": "{0} maanden geleden",
   "Helpers and": "en",
+  "Helpers B": "B",
   "Helpers Bytes": "Bytes",
   "Helpers file": "bestand",
   "Helpers folder": "map",
@@ -206,6 +215,13 @@
   "Quotation Start": "“",
   "Quotation End": "”",
 
+  "Reinitialization Beware,": "Let op:",
+  "Reinitialization - if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;": "-Als documentverwijderingen niet zijn gesynchroniseerd, dan worden ze later automatisch teruggeplaatst;",
+  "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;": "-Als bestanden aan beide kanten aanwezig zijn, maar van inhoud verschillen, dan worden er ‘conflictversies’ gemaakt zodat je kunt kiezen welke je wilt bewaren;",
+  "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;": "-Als bestanden alleen aanwezig zijn op je Cozy of computer, dan worden ze automatisch gesynchroniseerd;",
+  "Reinitialization - files already identical on both sides won't be impacted.": "-Bestanden die aan beide kanten identiek zijn, worden genegeerd.",
+  "Reinitialization Are you sure you want to reinitialize the synchronization?": "Weet je zeker dat je overnieuw wilt beginnen met synchroniseren?",
+
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "Als dat niet zo is, neem dan contact met ons op via contact@cozycloud.cc",
   "Revoked Reconnect": "Opnieuw verbinden",
   "Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?": "Synchronisatie is niet beschikbaar. Heb je de machtiging voor deze computer ingetrokken?",
@@ -221,6 +237,10 @@
   "Settings Version": "Versie",
   "Settings Synchronize manually": "Handmatig synchroniseren",
   "Settings Configure": "Instellen",
+  "Settings Reinitialize synchronization": "Overnieuw beginnen",
+  "Settings The synchronization of the local Cozy folder with your personal Cozy Cloud will be entirely rebuilt.": "De synchronisatie tussen je lokale Cozy-map en Cozy-cloud wordt van vooraf aan opgebouwd.",
+  "Settings Your files won't be deleted.": "Je bestanden worden niet verwijderd.",
+  "Settings Reinitialize": "Overnieuw beginnen",
   "Settings Selective synchronization": "Selectieve synchronisatie",
 
   "SyncDirEmpty Detail": "Om gegevensverlies te voorkomen, is de synchronisatie gestopt. Als je synchronisatie wilt afdwingen, verwijder dan je Cozy-map.",
@@ -271,12 +291,12 @@
   "Updater Please wait": "Wacht tot de update is gedownload.",
   "Updater It may take a while": "Dit kan, afhankelijk van je internetsnelheid, even duren.",
 
-  "UserAction OK": "Oké",
-  "UserAction Give up": "Opgeven",
-  "UserAction Link directories": "Mappen koppelen",
-  "UserAction Rename {0}": "Naam van {0} wijzigen",
-  "UserAction Retry": "Opnieuw proberen",
-  "UserAction Show details": "Details tonen",
+  "UserAlert OK": "Oké",
+  "UserAlert Give up": "Opgeven",
+  "UserAlert Link directories": "Mappen koppelen",
+  "UserAlert Rename {0}": "Naam van {0} wijzigen",
+  "UserAlert Retry": "Opnieuw proberen",
+  "UserAlert Show details": "Details tonen",
 
   "Welcome Sign in to your Cozy": "Inloggen op mijn Cozy",
   "Welcome Your own private cloud": "Welkom bij Cozy Drive voor computers!"

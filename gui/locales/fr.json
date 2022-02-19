@@ -3,7 +3,6 @@
 
   "Account About": "À propos",
   "Account Account": "Compte",
-  "Account Are you sure to unlink this account?": "Êtes-vous sûr de vouloir déconnecter ce compte ?",
   "Account b": "o",
   "Account Cozy disk space": "Espace disque du Cozy",
   "Account Device name": "Appareil",
@@ -77,6 +76,8 @@
   "Dashboard Open file {0}": "Ouvrir le fichier {0}",
   "Dashboard Show in folder {0}": "Afficher dans le dossier {0}",
   "Dashboard Show in parent folder": "Afficher dans le dossier parent",
+  "Dashboard This list is empty": "Cette liste est vide",
+  "Dashboard Files recently synchronized will show up here": "Les fichiers récemment synchronisés seront affichés ici",
 
   "Error Bad GLIBCXX version": "Votre système a une ancienne version de la glibc. Vous devriez mettre à jour votre distribution pour utiliser Cozy Drive, cf https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.": "Vérifiez que la note existe toujours sur votre Cozy ou celui de son propriétaire. Cela peut aussi vouloir dire que la note n'est plus synchronisée.",
@@ -102,7 +103,7 @@
   "Error Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights.": "La synchronisation reprendra dès que vous aurez refermé le(s) fichier(s) ouvert(s) bloquant cette opération ou rétabli des droits d’accès suffisants.",
   "Error Invalid document metadata": "Métadonnées invalides",
   "Error The {0} `{1}`'s metadata cannot be accepted by your Cozy.": "Les métadonnées du {0} `{1}` ne peuvent être acceptées par votre Cozy.",
-  "Error This message persists if the local metadata of your document is corrupted. In this case try to move it out of the Cozy Drive folder and back again or contact support for help on the procedure.": "Ce message persiste si les métadonnées locales de votre document sont corrompues. Dans ce cas essayez de le déplacer hors du dossier de synchronisation local puis de le remettre ou contactez notre assistance pour obtenir de l'aider sur cette procédure.",
+  "Error This message persists if the local metadata of your document is corrupted. In this case try to move it out of the Cozy Drive folder and back again or contact support for help on the procedure.": "Ce message persiste si les métadonnées locales de votre document sont corrompues. Dans ce cas essayez de le déplacer hors du dossier de synchronisation local puis de le remettre ou contactez notre assistance pour obtenir de l'aide sur cette procédure.",
   "Error Invalid document name": "Nom invalide",
   "Error The {0} `{1}`'s name contains characters forbidden by your Cozy.": "Le nom du {0} `{1}` contient des caractères interdits par votre Cozy.",
   "Error Try renaming it without using the following characters: / \\u{0000} \\n \\u{000D}.": "Essayez de le renommer en excluant les caractères suivants : / \\u{0000} \\n \\u{000D}.",
@@ -127,7 +128,6 @@
   "Error Conflict with excluded directory": "Conflit avec un dossier exclu",
   "Error The remote directory `{0}` was excluded from the synchronization on this device.": "Le dossier distant `{0}` a été exclu de la synchronisation vers ce client.",
   "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict.": "Le dossier local avec le même chemin peut soit être lié avec le dossier distant qui sera re-synchronisé soit renommé pour résoudre ce conflit.",
-  "Error Unexpected error": "Erreur inattendue",
   "Error Cozy Desktop encountered an unexpected error while trying to reach your Cozy.": "Cozy Desktop a rencontré une erreur inattendue en tentant de joindre votre Cozy.",
   "Error Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed.": "L'hébergeur de votre Cozy doit être en train de corriger le problème et la synchronisation reprendra dès qu'il sera réglé.",
 
@@ -234,8 +234,8 @@
   "Settings Start Cozy Drive on system startup": "Lancement au démarrage",
   "Settings Startup": "Votre Cozy sera synchronisé avec votre ordinateur automatiquement",
   "Settings Sync": "Synchroniser",
-  "Settings Synchronize manually": "Synchroniser manuellement",
   "Settings Version": "Version",
+  "Settings Synchronize manually": "Synchroniser manuellement",
   "Settings Configure": "Configurer",
   "Settings Reinitialize synchronization": "Réinitialiser la synchronization",
   "Settings The synchronization of the local Cozy folder with your personal Cozy Cloud will be entirely rebuilt.": "La synchronisation du dossier Cozy de cet ordinateur avec votre Cloud personnel Cozy sera entièrement reconstruite.",
