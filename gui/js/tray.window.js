@@ -231,7 +231,21 @@ module.exports = class TrayWM extends WindowManager {
         this.desktop.stopSync()
         this.app.quit()
       },
-      'unlink-cozy': this.onUnlink,
+      'unlink-cozy': () => {
+        if (!this.desktop.config.isValid()) {
+          log.warn('Could not disconnect client. No valid config found!')
+          return
+        }
+        log.info('Diconnecting client...')
+        this.desktop
+          .stopSync()
+          .then(() => this.desktop.removeRemote())
+          .then(() => log.info('remote removed'))
+          .then(() => this.doRestart())
+          .catch(err =>
+            log.error({ err, sentry: true }, 'failed disconnecting client')
+          )
+      },
       'manual-start-sync': () =>
         this.desktop.sync.forceSync().catch(err => {
           if (err) log.error({ err, sentry: true }, 'Could not run manual sync')
@@ -317,35 +331,6 @@ module.exports = class TrayWM extends WindowManager {
     } else {
       shell.showItemInFolder(pathToOpen)
     }
-  }
-
-  onUnlink() {
-    if (!this.desktop.config.isValid()) {
-      log.warn('Could not unlink remote Cozy. No valid config found!')
-      return
-    }
-    const options = {
-      type: 'question',
-      title: translate('Unlink Title'),
-      message: translate('Unlink Message'),
-      detail: translate('Unlink Detail'),
-      buttons: [translate('Unlink Cancel'), translate('Unlink OK')],
-      cancelId: 0,
-      defaultId: 1
-    }
-    const response = dialog.showMessageBoxSync(this.win, options)
-    if (response === 0) {
-      this.send('cancel-unlink')
-      return
-    }
-    this.desktop
-      .stopSync()
-      .then(() => this.desktop.removeRemote())
-      .then(() => log.info('remote removed'))
-      .then(() => this.doRestart())
-      .catch(err =>
-        log.error({ err, sentry: true }, 'failed disconnecting client')
-      )
   }
 
   doRestart() {

@@ -8,7 +8,6 @@
 port module Ports exposing
     ( autoLauncher
     , autolaunch
-    , cancelUnlink
     , chooseFolder
     , closeApp
     , focus
@@ -43,9 +42,6 @@ port autoLauncher : Bool -> Cmd msg
 
 
 port autolaunch : (Bool -> msg) -> Sub msg
-
-
-port cancelUnlink : (Bool -> msg) -> Sub msg
 
 
 port chooseFolder : () -> Cmd msg

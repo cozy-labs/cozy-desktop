@@ -28,6 +28,11 @@ reinitializationConfirmationId =
     Confirmation.newId "ReinitializationRequested"
 
 
+unlinkCozyConfirmationId : ConfirmationID
+unlinkCozyConfirmationId =
+    Confirmation.newId "UnlinkCozyRequested"
+
+
 
 -- MODEL
 
@@ -79,14 +84,12 @@ type Msg
     | QuitAndInstall
     | NewRelease ( String, String )
     | UpdateDiskSpace DiskSpace
-    | UnlinkCozy
-    | CancelUnlink
     | ShowHelp
     | CloseApp
     | Sync
     | EndManualSync
-    | ReinitializationRequested Confirmation
-    | ReinitializationConfirmed ( ConfirmationID, Bool )
+    | ConfirmationRequested Confirmation
+    | GotConfirmation ( ConfirmationID, Bool )
     | GotReinitializationStatus String
 
 
@@ -113,12 +116,6 @@ update msg model =
         UpdateDiskSpace disk ->
             ( { model | disk = disk }, Cmd.none )
 
-        UnlinkCozy ->
-            ( { model | busyUnlinking = True }, Ports.unlinkCozy () )
-
-        CancelUnlink ->
-            ( { model | busyUnlinking = False }, Cmd.none )
-
         ShowHelp ->
             ( model, Ports.showHelp () )
 
@@ -131,12 +128,15 @@ update msg model =
         EndManualSync ->
             ( { model | manualSyncRequested = False }, Cmd.none )
 
-        ReinitializationRequested confirmation ->
+        ConfirmationRequested confirmation ->
             ( model, askForConfirmation confirmation )
 
-        ReinitializationConfirmed ( id, confirmed ) ->
+        GotConfirmation ( id, confirmed ) ->
             if id == reinitializationConfirmationId && confirmed == True then
                 ( { model | reinitializationInProgress = True }, Ports.reinitializeSynchronization () )
+
+            else if id == unlinkCozyConfirmationId && confirmed == True then
+                ( { model | busyUnlinking = True }, Ports.unlinkCozy () )
 
             else
                 ( model, Cmd.none )
@@ -382,13 +382,22 @@ reinitializationButton helpers model =
             attribute "aria-busy" "true"
 
           else
-            onClick (ReinitializationRequested confirmation)
+            onClick (ConfirmationRequested confirmation)
         ]
         [ span [] [ text (helpers.t "Settings Reinitialize") ] ]
 
 
 unlinkButton : Helpers -> Model -> Html Msg
 unlinkButton helpers model =
+    let
+        confirmation =
+            { id = unlinkCozyConfirmationId
+            , title = helpers.t "Unlink Title"
+            , message = helpers.t "Unlink Message"
+            , detail = helpers.t "Unlink Detail"
+            , mainAction = helpers.t "Unlink OK"
+            }
+    in
     a
         [ class "c-btn c-btn--danger-outline"
         , href "#"
@@ -396,6 +405,6 @@ unlinkButton helpers model =
             attribute "aria-busy" "true"
 
           else
-            onClick UnlinkCozy
+            onClick (ConfirmationRequested confirmation)
         ]
         [ span [] [ text (helpers.t "Account Unlink this Cozy") ] ]
