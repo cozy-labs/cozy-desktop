@@ -166,7 +166,12 @@ module.exports = class TrayWM extends WindowManager {
 
   onBlur() {
     setTimeout(() => {
-      if (!this.win.isFocused() && !this.win.isDevToolsFocused()) this.hide()
+      if (
+        !this.win.isFocused() &&
+        !this.win.isAlwaysOnTop() &&
+        !this.win.webContents.isDevToolsOpened()
+      )
+        this.hide()
     }, 400)
   }
 
@@ -184,16 +189,21 @@ module.exports = class TrayWM extends WindowManager {
   ipcEvents() {
     return {
       confirm: async (event, { id, title, message, detail, mainAction }) => {
-        const { response } = await dialog.showMessageBox(this.win, {
-          type: 'question',
-          title,
-          message,
-          detail,
-          buttons: [translate('Cancel'), mainAction],
-          cancelId: 0,
-          defaultId: 1
-        })
-        event.sender.send('confirmation', { id, confirmed: response === 1 })
+        this.win.setAlwaysOnTop(true, 'pop-up-menu')
+        try {
+          const { response } = await dialog.showMessageBox(this.win, {
+            type: 'question',
+            title,
+            message,
+            detail,
+            buttons: [translate('Cancel'), mainAction],
+            cancelId: 0,
+            defaultId: 1
+          })
+          event.sender.send('confirmation', { id, confirmed: response === 1 })
+        } finally {
+          this.win.setAlwaysOnTop(false)
+        }
       },
       'go-to-cozy': (event, showInWeb) => {
         if (showInWeb) {
