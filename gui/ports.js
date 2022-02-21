@@ -48,8 +48,11 @@ const errMessage = err => {
   }
 }
 
-elmectron.ports.confirm.subscribe(([id, msg]) => {
-  elmectron.ports.confirmations.send([id, window.confirm(msg)])
+elmectron.ports.confirm.subscribe(confirmation => {
+  ipcRenderer.send('confirm', confirmation)
+})
+ipcRenderer.on('confirmation', (event, { id, confirmed }) => {
+  elmectron.ports.confirmations.send([id, confirmed])
 })
 
 ipcRenderer.on('update-downloading', (event, progressObj) => {
@@ -137,9 +140,6 @@ ipcRenderer.on('go-to-tab', (event, tab) => {
   elmectron.ports.gototab.send(tab)
 })
 
-ipcRenderer.on('cancel-unlink', () => {
-  elmectron.ports.cancelUnlink.send(true)
-})
 elmectron.ports.unlinkCozy.subscribe(() => {
   ipcRenderer.send('unlink-cozy')
 })

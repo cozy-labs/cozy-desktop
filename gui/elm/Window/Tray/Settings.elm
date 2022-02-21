@@ -10,7 +10,7 @@ port module Window.Tray.Settings exposing
     )
 
 import Data.Bytes as Bytes exposing (Bytes)
-import Data.Confirmation as Confirmation exposing (ConfirmationID, askForConfirmation)
+import Data.Confirmation as Confirmation exposing (Confirmation, ConfirmationID, askForConfirmation)
 import Data.Status exposing (Status(..))
 import Data.SyncConfig as SyncConfig exposing (SyncConfig)
 import Html exposing (..)
@@ -26,6 +26,11 @@ import View.ProgressBar as ProgressBar
 reinitializationConfirmationId : ConfirmationID
 reinitializationConfirmationId =
     Confirmation.newId "ReinitializationRequested"
+
+
+unlinkCozyConfirmationId : ConfirmationID
+unlinkCozyConfirmationId =
+    Confirmation.newId "UnlinkCozyRequested"
 
 
 
@@ -79,14 +84,12 @@ type Msg
     | QuitAndInstall
     | NewRelease ( String, String )
     | UpdateDiskSpace DiskSpace
-    | UnlinkCozy
-    | CancelUnlink
     | ShowHelp
     | CloseApp
     | Sync
     | EndManualSync
-    | ReinitializationRequested String
-    | ReinitializationConfirmed ( ConfirmationID, Bool )
+    | ConfirmationRequested Confirmation
+    | GotConfirmation ( ConfirmationID, Bool )
     | GotReinitializationStatus String
 
 
@@ -113,12 +116,6 @@ update msg model =
         UpdateDiskSpace disk ->
             ( { model | disk = disk }, Cmd.none )
 
-        UnlinkCozy ->
-            ( { model | busyUnlinking = True }, Ports.unlinkCozy () )
-
-        CancelUnlink ->
-            ( { model | busyUnlinking = False }, Cmd.none )
-
         ShowHelp ->
             ( model, Ports.showHelp () )
 
@@ -131,12 +128,15 @@ update msg model =
         EndManualSync ->
             ( { model | manualSyncRequested = False }, Cmd.none )
 
-        ReinitializationRequested question ->
-            ( model, askForConfirmation reinitializationConfirmationId question )
+        ConfirmationRequested confirmation ->
+            ( model, askForConfirmation confirmation )
 
-        ReinitializationConfirmed ( id, confirmed ) ->
+        GotConfirmation ( id, confirmed ) ->
             if id == reinitializationConfirmationId && confirmed == True then
                 ( { model | reinitializationInProgress = True }, Ports.reinitializeSynchronization () )
+
+            else if id == unlinkCozyConfirmationId && confirmed == True then
+                ( { model | busyUnlinking = True }, Ports.unlinkCozy () )
 
             else
                 ( model, Cmd.none )
@@ -353,6 +353,28 @@ quitButton helpers model =
 
 reinitializationButton : Helpers -> Model -> Html Msg
 reinitializationButton helpers model =
+    let
+        confirmation =
+            { id = reinitializationConfirmationId
+            , title = helpers.t "Reinitialization"
+            , message = helpers.t "Reinitialization Are you sure you want to reinitialize the synchronization?"
+            , detail =
+                helpers.t "Reinitialization Beware,"
+                    ++ "\n"
+                    ++ helpers.t
+                        "Reinitialization - if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;"
+                    ++ "\n"
+                    ++ helpers.t
+                        "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;"
+                    ++ "\n"
+                    ++ helpers.t
+                        "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;"
+                    ++ "\n"
+                    ++ helpers.t
+                        "Reinitialization - files already identical on both sides won't be impacted."
+            , mainAction = helpers.t "Reinitialization Reinitialize"
+            }
+    in
     a
         [ class "c-btn c-btn--danger-outline"
         , href "#"
@@ -360,32 +382,22 @@ reinitializationButton helpers model =
             attribute "aria-busy" "true"
 
           else
-            onClick
-                (ReinitializationRequested
-                    (helpers.t "Reinitialization Beware,"
-                        ++ "\n"
-                        ++ helpers.t
-                            "Reinitialization - if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;"
-                        ++ "\n"
-                        ++ helpers.t
-                            "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;"
-                        ++ "\n"
-                        ++ helpers.t
-                            "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;"
-                        ++ "\n"
-                        ++ helpers.t
-                            "Reinitialization - files already identical on both sides won't be impacted."
-                        ++ "\n\n"
-                        ++ helpers.t
-                            "Reinitialization Are you sure you want to reinitialize the synchronization?"
-                    )
-                )
+            onClick (ConfirmationRequested confirmation)
         ]
         [ span [] [ text (helpers.t "Settings Reinitialize") ] ]
 
 
 unlinkButton : Helpers -> Model -> Html Msg
 unlinkButton helpers model =
+    let
+        confirmation =
+            { id = unlinkCozyConfirmationId
+            , title = helpers.t "Unlink Title"
+            , message = helpers.t "Unlink Message"
+            , detail = helpers.t "Unlink Detail"
+            , mainAction = helpers.t "Unlink OK"
+            }
+    in
     a
         [ class "c-btn c-btn--danger-outline"
         , href "#"
@@ -393,6 +405,6 @@ unlinkButton helpers model =
             attribute "aria-busy" "true"
 
           else
-            onClick UnlinkCozy
+            onClick (ConfirmationRequested confirmation)
         ]
         [ span [] [ text (helpers.t "Account Unlink this Cozy") ] ]

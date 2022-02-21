@@ -111,7 +111,7 @@ update msg model =
         GotConfirmation ( id, confirmed ) ->
             let
                 ( settings, cmd ) =
-                    Settings.update (Settings.ReinitializationConfirmed ( id, confirmed )) model.settings
+                    Settings.update (Settings.GotConfirmation ( id, confirmed )) model.settings
             in
             ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
@@ -190,7 +190,6 @@ subscriptions model =
         , Ports.newRelease (SettingsMsg << Settings.NewRelease)
         , Settings.gotDiskSpace (SettingsMsg << Settings.UpdateDiskSpace)
         , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
-        , Ports.cancelUnlink (always (SettingsMsg Settings.CancelUnlink))
         , Ports.reinitialization (SettingsMsg << Settings.GotReinitializationStatus)
         ]
 

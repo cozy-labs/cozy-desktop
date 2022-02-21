@@ -1,4 +1,4 @@
-port module Data.Confirmation exposing (ConfirmationID, askForConfirmation, gotConfirmation, newId)
+port module Data.Confirmation exposing (Confirmation, ConfirmationID, askForConfirmation, gotConfirmation, newId)
 
 -- Careful! To be sure to match requests with responses, you need to have the
 -- same ConfirmationID as the first tuple member in both functions.
@@ -14,8 +14,13 @@ type ConfirmationID
     = ConfirmationID String
 
 
-type alias EncodedConfirmationID =
-    String
+type alias Confirmation =
+    { id : ConfirmationID
+    , title : String
+    , message : String
+    , detail : String
+    , mainAction : String
+    }
 
 
 newId : String -> ConfirmationID
@@ -23,27 +28,50 @@ newId id =
     ConfirmationID id
 
 
-port confirm : ( EncodedConfirmationID, String ) -> Cmd msg
+
+-- Ports
 
 
-port confirmations : (( EncodedConfirmationID, Bool ) -> msg) -> Sub msg
+type alias EncodedConfirmation =
+    { id : String
+    , title : String
+    , message : String
+    , detail : String
+    , mainAction : String
+    }
 
 
-askForConfirmation : ConfirmationID -> String -> Cmd msg
-askForConfirmation id message =
-    confirm ( encode id, message )
+port confirm : EncodedConfirmation -> Cmd msg
+
+
+port confirmations : (( String, Bool ) -> msg) -> Sub msg
+
+
+askForConfirmation : Confirmation -> Cmd msg
+askForConfirmation confirmation =
+    confirm (encode confirmation)
 
 
 gotConfirmation : (( ConfirmationID, Bool ) -> msg) -> Sub msg
 gotConfirmation msg =
-    confirmations (msg << decode)
+    confirmations (msg << decodeId)
 
 
-encode : ConfirmationID -> EncodedConfirmationID
-encode (ConfirmationID id) =
+encode : Confirmation -> EncodedConfirmation
+encode { id, title, message, detail, mainAction } =
+    { id = encodeId id
+    , title = title
+    , message = message
+    , detail = detail
+    , mainAction = mainAction
+    }
+
+
+encodeId : ConfirmationID -> String
+encodeId (ConfirmationID id) =
     id
 
 
-decode : ( EncodedConfirmationID, Bool ) -> ( ConfirmationID, Bool )
-decode ( id, confirmed ) =
+decodeId : ( String, Bool ) -> ( ConfirmationID, Bool )
+decodeId ( id, confirmed ) =
     ( ConfirmationID id, confirmed )

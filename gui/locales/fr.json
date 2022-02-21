@@ -215,12 +215,14 @@
   "Quotation Start": "« ",
   "Quotation End": " »",
 
+  "Reinitialization": "Réinitialisation",
   "Reinitialization Beware,": "Attention,",
   "Reinitialization - if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;": "- si des suppressions de dossiers ou fichiers ont été réalisées sans pouvoir être synchronisées, ces documents réapparaitront si vous ne les supprimez pas préalablement aussi du côté opposé ;",
   "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;": "- si des fichiers existent des deux côtés mais diffèrent en version, alors des doublons (conflict) seront ajoutés pour vous permettre de choisir celui que vous souhaitez conserver ;",
   "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;": "- si des fichiers sont présents uniquement sur votre Cozy ou votre ordinateur ils seront recréés pour être identiques ;",
   "Reinitialization - files already identical on both sides won't be impacted.": "- les fichiers déjà identiques ne seront pas impactés.",
   "Reinitialization Are you sure you want to reinitialize the synchronization?": "Confirmez-vous vouloir réinitialiser la synchronisation ?",
+  "Reinitialization Reinitialize": "Réinitialiser",
 
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "Dans le cas contraire, contactez nous sur contact@cozycloud.cc",
   "Revoked Reconnect": "Reconnecter",
@@ -268,7 +270,6 @@
   "TwoPanes Recents": "Récents",
   "TwoPanes Settings": "Préférences",
 
-  "Unlink Cancel": "Annuler",
   "Unlink Detail": "Vos fichiers ne seront plus synchronisés avec votre Cozy.",
   "Unlink Message": "Confirmez-vous vouloir vous déconnecter de votre Cozy ?",
   "Unlink OK": "Se déconnecter",

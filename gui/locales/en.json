@@ -215,12 +215,14 @@
   "Quotation Start": "“",
   "Quotation End": "”",
 
+  "Reinitialization": "Reinitialization",
   "Reinitialization Beware,": "Beware,",
   "Reinitialization - if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;": "- if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;",
   "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;": "- if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;",
   "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;": "- if some files are only present on your Cozy or your computer, they will be added to the other side;",
   "Reinitialization - files already identical on both sides won't be impacted.": "- files already identical on both sides won't be impacted.",
   "Reinitialization Are you sure you want to reinitialize the synchronization?": "Are you sure you want to reinitialize the synchronization?",
+  "Reinitialization Reinitialize": "Reinitialize",
 
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "In case you didn't, contact us at contact@cozycloud.cc",
   "Revoked Reconnect": "Reconnect",
@@ -268,7 +270,6 @@
   "TwoPanes Recents": "Recents",
   "TwoPanes Settings": "Settings",
 
-  "Unlink Cancel": "Cancel",
   "Unlink Detail": "Your file will no longer be synchronized with your Cozy.",
   "Unlink Message": "Are you sure you want to unlink your Cozy?",
   "Unlink OK": "Log out",
