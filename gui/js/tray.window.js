@@ -183,6 +183,18 @@ module.exports = class TrayWM extends WindowManager {
 
   ipcEvents() {
     return {
+      confirm: async (event, { id, title, message, detail, mainAction }) => {
+        const { response } = await dialog.showMessageBox(this.win, {
+          type: 'question',
+          title,
+          message,
+          detail,
+          buttons: [translate('Cancel'), mainAction],
+          cancelId: 0,
+          defaultId: 1
+        })
+        event.sender.send('confirmation', { id, confirmed: response === 1 })
+      },
       'go-to-cozy': (event, showInWeb) => {
         if (showInWeb) {
           shell.openExternal(this.desktop.config.cozyUrl)

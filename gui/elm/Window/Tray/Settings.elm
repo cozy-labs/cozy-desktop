@@ -10,7 +10,7 @@ port module Window.Tray.Settings exposing
     )
 
 import Data.Bytes as Bytes exposing (Bytes)
-import Data.Confirmation as Confirmation exposing (ConfirmationID, askForConfirmation)
+import Data.Confirmation as Confirmation exposing (Confirmation, ConfirmationID, askForConfirmation)
 import Data.Status exposing (Status(..))
 import Data.SyncConfig as SyncConfig exposing (SyncConfig)
 import Html exposing (..)
@@ -85,7 +85,7 @@ type Msg
     | CloseApp
     | Sync
     | EndManualSync
-    | ReinitializationRequested String
+    | ReinitializationRequested Confirmation
     | ReinitializationConfirmed ( ConfirmationID, Bool )
     | GotReinitializationStatus String
 
@@ -131,8 +131,8 @@ update msg model =
         EndManualSync ->
             ( { model | manualSyncRequested = False }, Cmd.none )
 
-        ReinitializationRequested question ->
-            ( model, askForConfirmation reinitializationConfirmationId question )
+        ReinitializationRequested confirmation ->
+            ( model, askForConfirmation confirmation )
 
         ReinitializationConfirmed ( id, confirmed ) ->
             if id == reinitializationConfirmationId && confirmed == True then
@@ -353,6 +353,28 @@ quitButton helpers model =
 
 reinitializationButton : Helpers -> Model -> Html Msg
 reinitializationButton helpers model =
+    let
+        confirmation =
+            { id = reinitializationConfirmationId
+            , title = helpers.t "Reinitialization"
+            , message = helpers.t "Reinitialization Are you sure you want to reinitialize the synchronization?"
+            , detail =
+                helpers.t "Reinitialization Beware,"
+                    ++ "\n"
+                    ++ helpers.t
+                        "Reinitialization - if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;"
+                    ++ "\n"
+                    ++ helpers.t
+                        "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;"
+                    ++ "\n"
+                    ++ helpers.t
+                        "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;"
+                    ++ "\n"
+                    ++ helpers.t
+                        "Reinitialization - files already identical on both sides won't be impacted."
+            , mainAction = helpers.t "Reinitialization Reinitialize"
+            }
+    in
     a
         [ class "c-btn c-btn--danger-outline"
         , href "#"
@@ -360,26 +382,7 @@ reinitializationButton helpers model =
             attribute "aria-busy" "true"
 
           else
-            onClick
-                (ReinitializationRequested
-                    (helpers.t "Reinitialization Beware,"
-                        ++ "\n"
-                        ++ helpers.t
-                            "Reinitialization - if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;"
-                        ++ "\n"
-                        ++ helpers.t
-                            "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;"
-                        ++ "\n"
-                        ++ helpers.t
-                            "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;"
-                        ++ "\n"
-                        ++ helpers.t
-                            "Reinitialization - files already identical on both sides won't be impacted."
-                        ++ "\n\n"
-                        ++ helpers.t
-                            "Reinitialization Are you sure you want to reinitialize the synchronization?"
-                    )
-                )
+            onClick (ReinitializationRequested confirmation)
         ]
         [ span [] [ text (helpers.t "Settings Reinitialize") ] ]
 
