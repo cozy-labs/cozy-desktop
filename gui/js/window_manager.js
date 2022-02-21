@@ -63,14 +63,39 @@ module.exports = class WindowManager {
 
     // devTools
     if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
-      const devtools = new BrowserWindow()
-      this.win.webContents.setDevToolsWebContents(devtools.webContents)
-      this.win.webContents.openDevTools({ mode: 'detach' })
+      this.showDevTools()
     }
 
     this.win.show()
 
     return Promise.resolve(this.win)
+  }
+
+  showDevTools() {
+    if (!this.win || this.win.webContents.isDestroyed()) return
+
+    if (!this.devtools) {
+      this.devtools = new BrowserWindow({ show: false })
+      this.devtools.on('closed', () => {
+        this.win.webContents.closeDevTools()
+        this.devtools = null
+      })
+      this.win.webContents.setDevToolsWebContents(this.devtools.webContents)
+    }
+
+    this.win.on('hide', () => this.hideDevTools())
+    this.win.on('closed', () => this.hideDevTools())
+
+    this.win.webContents.openDevTools({ mode: 'detach' })
+    this.devtools.show()
+  }
+
+  hideDevTools() {
+    if (this.devtools) {
+      this.devtools.hide()
+
+      if (this.win) this.win.webContents.closeDevTools()
+    }
   }
 
   hide() {

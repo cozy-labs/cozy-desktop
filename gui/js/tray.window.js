@@ -112,7 +112,10 @@ module.exports = class TrayWM extends WindowManager {
 
   create() {
     let pReady = super.create()
-    if (!this.desktop.config.gui.visibleOnBlur) {
+    if (
+      process.env.WATCH !== 'true' &&
+      !this.desktop.config.gui.visibleOnBlur
+    ) {
       this.win.on('blur', this.onBlur.bind(this))
     }
     return pReady
