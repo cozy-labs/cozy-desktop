@@ -473,7 +473,8 @@ class RemoteCozy {
   ) /*: Promise<{ nextDirs: $ReadOnlyArray<MetadataRemoteDir>, docs: $ReadOnlyArray<MetadataRemoteInfo> }> */ {
     const queryDef = Q(FILES_DOCTYPE)
       .where({
-        dir_id: { $in: dirs.map(dir => dir._id) }
+        dir_id: { $in: dirs.map(dir => dir._id) },
+        name: { $gt: null }
       })
       .indexFields(['dir_id', 'name'])
       .sortBy([{ dir_id: 'asc' }, { name: 'asc' }])
@@ -491,9 +492,14 @@ class RemoteCozy {
         dir => dir._id === remoteJson.attributes.dir_id
       )
       const remoteDoc = await this.toRemoteDoc(remoteJson, parentDir)
-      docs.push(remoteDoc)
 
-      if (remoteDoc.type === DIR_TYPE) nextDirs.push(remoteDoc)
+      if (!this.isExcludedDirectory(remoteDoc)) {
+        docs.push(remoteDoc)
+
+        if (remoteDoc.type === DIR_TYPE) {
+          nextDirs.push(remoteDoc)
+        }
+      }
     }
     return { nextDirs, docs }
   }

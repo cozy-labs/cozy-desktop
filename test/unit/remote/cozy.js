@@ -14,7 +14,9 @@ const {
   ROOT_DIR_ID,
   TRASH_DIR_ID,
   TRASH_DIR_NAME,
-  MAX_FILE_SIZE
+  MAX_FILE_SIZE,
+  OAUTH_CLIENTS_DOCTYPE,
+  FILES_DOCTYPE
 } = require('../../../core/remote/constants')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const { withDefaultValues } = require('../../../core/remote/document')
@@ -900,6 +902,31 @@ describe('RemoteCozy', function() {
         tree['dir/subdir/subsubdir/'],
         tree['dir/subdir/subsubdir/last']
       ])
+    })
+
+    it('does not return exluded subdirectories', async () => {
+      const tree = await builders.createRemoteTree([
+        'dir/',
+        'dir/subdir/',
+        'dir/subdir/subsubdir/',
+        'dir/subdir/file',
+        'dir/other-subdir/'
+      ])
+
+      const oauthClient = {
+        _type: OAUTH_CLIENTS_DOCTYPE,
+        _id: remoteCozy.config.deviceId
+      }
+      const client = await remoteCozy.newClient()
+      const files = client.collection(FILES_DOCTYPE)
+      await files.addNotSynchronizedDirectories(oauthClient, [
+        tree['dir/subdir/subsubdir/'],
+        tree['dir/other-subdir/']
+      ])
+
+      await should(
+        remoteCozy.getDirectoryContent(tree['dir/'])
+      ).be.fulfilledWith([tree['dir/subdir/'], tree['dir/subdir/file']])
     })
 
     it('requests content level by level and not directory by directory', async () => {
