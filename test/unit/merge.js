@@ -125,7 +125,6 @@ describe('Merge', function() {
       })
       return conflict
     })
-    this.merge.remote.isExcludedFromSync = sinon.stub().returns(false)
     builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)

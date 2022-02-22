@@ -14,7 +14,9 @@ const {
   ROOT_DIR_ID,
   TRASH_DIR_ID,
   TRASH_DIR_NAME,
-  MAX_FILE_SIZE
+  MAX_FILE_SIZE,
+  OAUTH_CLIENTS_DOCTYPE,
+  FILES_DOCTYPE
 } = require('../../../core/remote/constants')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const { withDefaultValues } = require('../../../core/remote/document')
@@ -902,6 +904,31 @@ describe('RemoteCozy', function() {
       ])
     })
 
+    it('does not return exluded subdirectories', async () => {
+      const tree = await builders.createRemoteTree([
+        'dir/',
+        'dir/subdir/',
+        'dir/subdir/subsubdir/',
+        'dir/subdir/file',
+        'dir/other-subdir/'
+      ])
+
+      const oauthClient = {
+        _type: OAUTH_CLIENTS_DOCTYPE,
+        _id: remoteCozy.config.deviceId
+      }
+      const client = await remoteCozy.newClient()
+      const files = client.collection(FILES_DOCTYPE)
+      await files.addNotSynchronizedDirectories(oauthClient, [
+        tree['dir/subdir/subsubdir/'],
+        tree['dir/other-subdir/']
+      ])
+
+      await should(
+        remoteCozy.getDirectoryContent(tree['dir/'])
+      ).be.fulfilledWith([tree['dir/subdir/'], tree['dir/subdir/file']])
+    })
+
     it('requests content level by level and not directory by directory', async () => {
       const tree = await builders.createRemoteTree([
         'dir/',
@@ -963,6 +990,26 @@ describe('RemoteCozy', function() {
       await should(
         remoteCozy.getDirectoryContent(tree['dir/'], { client: stubbedClient })
       ).be.rejectedWith(/test error/)
+    })
+  })
+
+  describe('#isExcludedDirectory', () => {
+    it('returns false for files', () => {
+      const file = builders.remoteFile().build()
+      should(remoteCozy.isExcludedDirectory(file)).be.false()
+    })
+
+    it('returns false for a directory that is not excluded from the client sync', () => {
+      const dir = builders.remoteDir().build()
+      should(remoteCozy.isExcludedDirectory(dir)).be.false()
+    })
+
+    it('returns true for a directory excluded from the client sync', () => {
+      const dir = builders
+        .remoteDir()
+        .excludedFrom(['fakeId1', remoteCozy.config.deviceId, 'fakeId2'])
+        .build()
+      should(remoteCozy.isExcludedDirectory(dir)).be.true()
     })
   })
 })

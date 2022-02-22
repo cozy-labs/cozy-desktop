@@ -162,7 +162,7 @@ class Remote /*:: implements Reader, Writer */ {
             'could not fetch conflicting directory'
           )
         }
-        if (remoteDoc && this.isExcludedFromSync(remoteDoc)) {
+        if (remoteDoc && this.remoteCozy.isExcludedDirectory(remoteDoc)) {
           throw new ExcludedDirError(path)
         }
       }
@@ -466,17 +466,6 @@ class Remote /*:: implements Reader, Writer */ {
     await this.moveAsync(conflict, newMetadata)
 
     return conflict
-  }
-
-  isExcludedFromSync(doc /*: MetadataRemoteInfo */) /*: boolean */ {
-    const {
-      client: { clientID }
-    } = this.config
-    return (
-      doc.type === 'directory' &&
-      doc.not_synchronized_on != null &&
-      doc.not_synchronized_on.find(({ id }) => id === clientID) != null
-    )
   }
 
   async includeInSync(doc /*: SavedMetadata */) /*: Promise<*> */ {
