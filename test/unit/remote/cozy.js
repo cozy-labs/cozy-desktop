@@ -965,6 +965,26 @@ describe('RemoteCozy', function() {
       ).be.rejectedWith(/test error/)
     })
   })
+
+  describe('#isExcludedDirectory', () => {
+    it('returns false for files', () => {
+      const file = builders.remoteFile().build()
+      should(remoteCozy.isExcludedDirectory(file)).be.false()
+    })
+
+    it('returns false for a directory that is not excluded from the client sync', () => {
+      const dir = builders.remoteDir().build()
+      should(remoteCozy.isExcludedDirectory(dir)).be.false()
+    })
+
+    it('returns true for a directory excluded from the client sync', () => {
+      const dir = builders
+        .remoteDir()
+        .excludedFrom(['fakeId1', remoteCozy.config.deviceId, 'fakeId2'])
+        .build()
+      should(remoteCozy.isExcludedDirectory(dir)).be.true()
+    })
+  })
 })
 
 describe('RemoteCozy.newClient', () => {

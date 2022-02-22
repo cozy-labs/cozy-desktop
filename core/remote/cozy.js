@@ -512,6 +512,17 @@ class RemoteCozy {
     }
   }
 
+  isExcludedDirectory(doc /*: RemoteDoc */) /*: boolean */ {
+    const {
+      client: { clientID }
+    } = this.config
+    return (
+      doc.type === 'directory' &&
+      doc.not_synchronized_on != null &&
+      doc.not_synchronized_on.find(({ id }) => id === clientID) != null
+    )
+  }
+
   async isEmpty(id /*: string */) /*: Promise<boolean> */ {
     const dir = await this.client.files.statById(id)
     if (dir.attributes.type !== 'directory') {
