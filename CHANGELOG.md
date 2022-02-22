@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.33.0-beta.3 - 2022-02-22
+
+Improvements for all users:
+
+- Localizations strings have been updated and the new empty Recent tab
+  placeholder has been localized.
+- Confirmation dialogs for reinitializing the synchronization and unlinking the
+  remote Cozy are more homogeneous and will prevent the main window from closing
+  until the requested action is confirmed or canceled.
+- Sub-directories excluded from a Desktop client's synchronization and their
+  content won't be fetched anymore when their parent directory is re-included.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.33.0-beta.2 - 2022-02-18
 
 Improvements for all users:
