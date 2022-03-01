@@ -1,6 +1,5 @@
 /* @flow */
 
-const path = require('path')
 const { Promise } = require('bluebird')
 
 const { normalizedPath } = require('../../local/chokidar/normalize_paths')
@@ -41,23 +40,24 @@ const normalizePaths = async (
       const old /*: ?SavedMetadata */ =
         c.type === 'FileMove' || c.type === 'DirMove'
           ? c.was
-          : await pouch.bySyncedPath(c.doc.path)
-      const parentPath = path.dirname(c.doc.path)
-      const parent /*: ?SavedMetadata */ =
-        parentPath !== '.' ? await pouch.bySyncedPath(parentPath) : undefined
-      c.doc.path = normalizedPath(
+          : await pouch.byRemoteIdMaybe(c.doc.remote._id)
+      const parent /*: ?SavedMetadata */ = c.doc.remote.dir_id
+        ? await pouch.byRemoteIdMaybe(c.doc.remote.dir_id)
+        : undefined
+      const normalized = normalizedPath(
         c.doc.path,
         old ? old.path : undefined,
         parent,
         normalizedPaths
       )
-      normalizedPaths.push(c.doc.path)
+      normalizedPaths.push(normalized)
 
-      if (c.doc.path !== normalizedPath) {
+      if (c.doc.path !== normalized) {
         log.info(
-          { path: c.doc.path, normalizedPath },
-          'normalizing local path to match existing doc and parent norms'
+          { path: normalized, oldpath: c.doc.path },
+          'normalizing path to match existing doc and parent norms'
         )
+        c.doc.path = normalized
       }
     }
 

@@ -15,6 +15,8 @@ module.exports = {
   onMacOSAtMost,
   onPlatforms,
   onPlatform,
+  onAPFS,
+  onHFS,
   localUpdatedAt
 }
 
@@ -70,6 +72,22 @@ function onPlatforms(
 
 function onPlatform(platform /*: string */, spec /*: Function */) {
   onPlatforms([platform], spec)
+}
+
+function onAPFS(spec /*: Function */) {
+  const isNotHFSTest = process.env.COZY_DESKTOP_FS !== 'HFS+'
+
+  const describeOrSkip = isNotHFSTest ? describe : describe.skip
+
+  describeOrSkip('on APFS filesystem', spec)
+}
+
+function onHFS(spec /*: Function */) {
+  const isNotAPFS = process.env.COZY_DESKTOP_FS !== 'APFS'
+
+  const describeOrSkip = isNotAPFS ? describe : describe.skip
+
+  describeOrSkip('on HFS+ filesystem', spec)
 }
 
 function localUpdatedAt(date /*: string|Date */) /*: string */ {
