@@ -53,7 +53,7 @@ def clean:
 #     yarn jq warn_strict path/to/logs*
 #
 def error_level: 50;
-def is_error: .level >= error_level;
+def is_error: .level >= error_level or .err != null;
 def error: select(is_error) | clean;
 def warn_level: 40;
 def is_warn: .level >= warn_level;
@@ -69,26 +69,27 @@ def debug: select(is_debug) | clean;
 
 # Components:
 def component(pattern): select(.component | test(pattern));
-def App: component("^App$");
-def Chokidar: component("^Chokidar|chokidar$");
-def Fs: component("^Fs|FS$");
-def LocalAnalysis: component("^LocalAnalysis|local/analysis$");
-def LocalChange: component("^LocalChange|local/change$");
-def LocalWatcher: component("^LocalWatcher$");
-def LocalWriter: component("^LocalWriter$");
-def Merge: component("^Merge$");
-def Metadata: component("^Metadata$");
-def Perfs: component("^Perfs|PerfReports$");
-def Pouch: component("^Pouch$");
-def Prep: component("^Prep$");
-def RemoteCozy: component("^RemoteCozy$");
-def RemoteUserActionRequired: component("^RemoteUserActionRequired|remote/user_action_required$");
-def RemoteWarningPoller: component("^RemoteWarningPoller$");
-def RemoteWatcher: component("^RemoteWatcher$");
-def RemoteWriter: component("^RemoteWriter$");
-def Sync: component("^Sync$");
+def App: component("^App");
+def Chokidar: component("^Chokidar|chokidar");
+def Atom: component("^Atom|atom");
+def Fs: component("^Fs|FS");
+def LocalAnalysis: component("^LocalAnalysis|local/analysis");
+def LocalChange: component("^LocalChange|local/change");
+def LocalWatcher: component("^LocalWatcher");
+def LocalWriter: component("^LocalWriter");
+def Merge: component("^Merge");
+def Metadata: component("^Metadata");
+def Perfs: component("^Perfs|PerfReports");
+def Pouch: component("^Pouch");
+def Prep: component("^Prep");
+def RemoteCozy: component("^RemoteCozy");
+def RemoteUserActionRequired: component("^RemoteUserActionRequired|remote/user_action_required");
+def RemoteWarningPoller: component("^RemoteWarningPoller");
+def RemoteWatcher: component("^RemoteWatcher");
+def RemoteWriter: component("^RemoteWriter");
+def Sync: component("^Sync");
 
-def Local: select(.component | test("^local|chokidar"; "i"));
+def Local: select(.component | test("^local|chokidar|atom"; "i"));
 def Remote: select(.component | test("^remote"; "i"));
 
 # Exclude "up-to-date" messages
