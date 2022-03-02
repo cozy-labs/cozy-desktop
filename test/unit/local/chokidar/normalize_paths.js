@@ -33,15 +33,16 @@ onPlatform('darwin', () => {
       const filename = 'Réussite'.normalize('NFD')
 
       context('when parent is saved with NFC encoded path in Pouch', () => {
+        let dir
         beforeEach(async function() {
-          await builders
+          dir = await builders
             .metadir()
             .path(dirPath.normalize('NFC'))
             .upToDate()
             .create()
         })
 
-        it('normalizes only parent part of file path with NFC', async function() {
+        it('reuses the existing parent path', async function() {
           const changes = [
             {
               type: 'FileAddition',
@@ -51,7 +52,7 @@ onPlatform('darwin', () => {
           ]
           const [change] = await normalizePaths.step(changes, stepOptions(this))
           should(change).have.properties({
-            path: path.join(dirPath.normalize('NFC'), filename.normalize('NFD'))
+            path: path.join(dir.path, filename)
           })
         })
       })
@@ -65,7 +66,7 @@ onPlatform('darwin', () => {
             .create()
         })
 
-        it('does not normalize parent part of file path with NFC', async function() {
+        it('does not normalize the new path', async function() {
           const changes = [
             {
               type: 'FileAddition',
@@ -75,10 +76,45 @@ onPlatform('darwin', () => {
           ]
           const [change] = await normalizePaths.step(changes, stepOptions(this))
           should(change).have.properties({
-            path: path.join(dirPath.normalize('NFD'), filename.normalize('NFD'))
+            path: path.join(dirPath, filename)
           })
         })
       })
+
+      context(
+        'when parent is saved with neither NFD nor NFC encoded path in Pouch',
+        () => {
+          const dirFirst = 'Énoncés'
+          const dirSecond = 'et corrigés'
+          const dirPath = (dirFirst + dirSecond).normalize('NFD')
+
+          let dir
+          beforeEach(async function() {
+            dir = await builders
+              .metadir()
+              .path(dirFirst.normalize('NFD') + dirSecond.normalize('NFC'))
+              .upToDate()
+              .create()
+          })
+
+          it('reuses the existing parent path', async function() {
+            const changes = [
+              {
+                type: 'FileAddition',
+                path: path.join(dirPath, filename),
+                stats: { ino: 1 }
+              }
+            ]
+            const [change] = await normalizePaths.step(
+              changes,
+              stepOptions(this)
+            )
+            should(change).have.properties({
+              path: path.join(dir.path, filename)
+            })
+          })
+        }
+      )
     })
 
     describe('changed file in dir on filesystem normalizing with NFD', () => {
@@ -106,7 +142,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes file path with NFC', async function() {
+          it('reuses the existing file path', async function() {
             const changes = [
               {
                 type: 'FileUpdate',
@@ -130,10 +166,10 @@ onPlatform('darwin', () => {
             }
             should(resultByChangeType).deepEqual({
               FileUpdate: {
-                path: file.path.normalize('NFC')
+                path: file.path
               },
               FileDeletion: {
-                path: file.path.normalize('NFC')
+                path: file.path
               }
             })
           })
@@ -150,7 +186,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes only parent part of file path with NFC', async function() {
+          it('reuses the existing file path', async function() {
             const changes = [
               {
                 type: 'FileUpdate',
@@ -174,16 +210,10 @@ onPlatform('darwin', () => {
             }
             should(resultByChangeType).deepEqual({
               FileUpdate: {
-                path: path.join(
-                  dirPath.normalize('NFC'),
-                  filename.normalize('NFD')
-                )
+                path: file.path
               },
               FileDeletion: {
-                path: path.join(
-                  dirPath.normalize('NFC'),
-                  filename.normalize('NFD')
-                )
+                path: file.path
               }
             })
           })
@@ -211,7 +241,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes only file name with NFC', async function() {
+          it('reuses the existing file path', async function() {
             const changes = [
               {
                 type: 'FileUpdate',
@@ -235,16 +265,10 @@ onPlatform('darwin', () => {
             }
             should(resultByChangeType).deepEqual({
               FileUpdate: {
-                path: path.join(
-                  dirPath.normalize('NFD'),
-                  filename.normalize('NFC')
-                )
+                path: file.path
               },
               FileDeletion: {
-                path: path.join(
-                  dirPath.normalize('NFD'),
-                  filename.normalize('NFC')
-                )
+                path: file.path
               }
             })
           })
@@ -261,7 +285,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('does not normalize file path with NFC', async function() {
+          it('reuses the existing file path', async function() {
             const changes = [
               {
                 type: 'FileUpdate',
@@ -285,15 +309,121 @@ onPlatform('darwin', () => {
             }
             should(resultByChangeType).deepEqual({
               FileUpdate: {
-                path: file.path.normalize('NFD')
+                path: file.path
               },
               FileDeletion: {
-                path: file.path.normalize('NFD')
+                path: file.path
               }
             })
           })
         })
       })
+
+      context(
+        'when parent is saved with neither NFD nor NFC encoded path in Pouch',
+        () => {
+          const dirFirst = 'Énoncés'
+          const dirSecond = 'et corrigés'
+          const dirPath = (dirFirst + dirSecond).normalize('NFD')
+
+          let dir
+          beforeEach(async function() {
+            dir = await builders
+              .metadir()
+              .path(dirFirst.normalize('NFD') + dirSecond.normalize('NFC'))
+              .upToDate()
+              .create()
+          })
+
+          context('when file is saved with NFC encoded name in Pouch', () => {
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(path.join(dir.path, filename.normalize('NFC')))
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('reuses the existing file path', async function() {
+              const changes = [
+                {
+                  type: 'FileUpdate',
+                  path: path.join(dirPath, filename),
+                  stats: { ino: 1 },
+                  old: { path: file.path }
+                },
+                {
+                  type: 'FileDeletion',
+                  path: path.join(dirPath, filename),
+                  old: { path: file.path }
+                }
+              ]
+              const resultByChangeType = {}
+              for (const change of changes) {
+                const [{ path }] = await normalizePaths.step(
+                  [change],
+                  stepOptions(this)
+                )
+                resultByChangeType[change.type] = { path }
+              }
+              should(resultByChangeType).deepEqual({
+                FileUpdate: {
+                  path: file.path
+                },
+                FileDeletion: {
+                  path: file.path
+                }
+              })
+            })
+          })
+
+          context('when file is saved with NFD encoded name in Pouch', () => {
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(path.join(dir.path, filename.normalize('NFD')))
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('reuses the existing file path', async function() {
+              const changes = [
+                {
+                  type: 'FileUpdate',
+                  path: path.join(dirPath, filename),
+                  stats: { ino: 1 },
+                  old: { path: file.path }
+                },
+                {
+                  type: 'FileDeletion',
+                  path: path.join(dirPath, filename),
+                  old: { path: file.path }
+                }
+              ]
+              const resultByChangeType = {}
+              for (const change of changes) {
+                const [{ path }] = await normalizePaths.step(
+                  [change],
+                  stepOptions(this)
+                )
+                resultByChangeType[change.type] = { path }
+              }
+              should(resultByChangeType).deepEqual({
+                FileUpdate: {
+                  path: file.path
+                },
+                FileDeletion: {
+                  path: file.path
+                }
+              })
+            })
+          })
+        }
+      )
     })
 
     describe('renamed dir with child on filesystem normalizing with NFD', () => {
@@ -322,7 +452,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes new dir and file paths with NFC', async function() {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -346,10 +476,10 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFC')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(dstDirPath, filename).normalize('NFC')
+              path: path.join(dstDirPath, path.basename(file.path))
             })
           })
         })
@@ -365,7 +495,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes only parent part of file path with NFC', async function() {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -389,13 +519,10 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFC')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(
-                dstDirPath.normalize('NFC'),
-                filename.normalize('NFD')
-              )
+              path: path.join(dstDirPath, path.basename(file.path))
             })
           })
         })
@@ -422,7 +549,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes file name with NFC', async function() {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -446,13 +573,10 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFD')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(
-                dstDirPath.normalize('NFD'),
-                filename.normalize('NFC')
-              )
+              path: path.join(dstDirPath, path.basename(file.path))
             })
           })
         })
@@ -468,7 +592,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('does not normalize new dir or file paths with NFC', async function() {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -492,17 +616,118 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFD')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(
-                dstDirPath.normalize('NFD'),
-                filename.normalize('NFD')
-              )
+              path: path.join(dstDirPath, path.basename(file.path))
             })
           })
         })
       })
+
+      context(
+        'when parent is saved with neither NFD nor NFC encoded path in Pouch',
+        () => {
+          const dirPath =
+            'Énoncés'.normalize('NFD') + 'et corrigés'.normalize('NFC')
+          const dstDirPath = 'Énoncés / corrigés'.normalize('NFD')
+
+          let dir
+          beforeEach(async function() {
+            dir = await builders
+              .metadir()
+              .path(dirPath)
+              .upToDate()
+              .create()
+          })
+
+          context('when file is saved with NFC encoded name in Pouch', () => {
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(path.join(dir.path, filename.normalize('NFC')))
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('reuses the existing file name', async function() {
+              const changes = [
+                {
+                  type: 'DirMove',
+                  path: dstDirPath,
+                  stats: { ino: 1 },
+                  old: {
+                    path: dir.path
+                  }
+                },
+                {
+                  type: 'FileMove',
+                  path: path.join(dstDirPath, filename),
+                  stats: { ino: 2 },
+                  old: {
+                    path: file.path
+                  }
+                }
+              ]
+              const [dirMove, fileMove] = await normalizePaths.step(
+                changes,
+                stepOptions(this)
+              )
+              should(dirMove).have.properties({
+                path: dstDirPath
+              })
+              should(fileMove).have.properties({
+                path: path.join(dstDirPath, path.basename(file.path))
+              })
+            })
+          })
+
+          context('when file is saved with NFD encoded name in Pouch', () => {
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(path.join(dir.path, filename.normalize('NFD')))
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('reuses the existing file name', async function() {
+              const changes = [
+                {
+                  type: 'DirMove',
+                  path: dstDirPath,
+                  stats: { ino: 1 },
+                  old: {
+                    path: dir.path
+                  }
+                },
+                {
+                  type: 'FileMove',
+                  path: path.join(dstDirPath, filename),
+                  stats: { ino: 2 },
+                  old: {
+                    path: file.path
+                  }
+                }
+              ]
+              const [dirMove, fileMove] = await normalizePaths.step(
+                changes,
+                stepOptions(this)
+              )
+              should(dirMove).have.properties({
+                path: dstDirPath
+              })
+              should(fileMove).have.properties({
+                path: path.join(dstDirPath, path.basename(file.path))
+              })
+            })
+          })
+        }
+      )
     })
 
     describe('renamed file in dir on filesystem normalizing with NFD', () => {
@@ -531,7 +756,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes new file path with NFC', async function() {
+          it('reuses the existing parent path', async function() {
             const changes = [
               {
                 type: 'FileMove',
@@ -547,7 +772,7 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(fileMove).have.properties({
-              path: path.join(dirPath, dstFilename).normalize('NFC')
+              path: path.join(dir.path, dstFilename)
             })
           })
         })
@@ -563,7 +788,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes only parent part of file path with NFC', async function() {
+          it('reuses the existing parent path', async function() {
             const changes = [
               {
                 type: 'FileMove',
@@ -579,10 +804,7 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(fileMove).have.properties({
-              path: path.join(
-                dirPath.normalize('NFC'),
-                dstFilename.normalize('NFD')
-              )
+              path: path.join(dir.path, dstFilename.normalize('NFD'))
             })
           })
         })
@@ -609,7 +831,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes file name with NFC', async function() {
+          it('reuses the existing parent path', async function() {
             const changes = [
               {
                 type: 'FileMove',
@@ -625,10 +847,7 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(fileMove).have.properties({
-              path: path.join(
-                dirPath.normalize('NFD'),
-                dstFilename.normalize('NFC')
-              )
+              path: path.join(dir.path, dstFilename)
             })
           })
         })
@@ -644,7 +863,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('does not normalize new dir or file paths with NFC', async function() {
+          it('does not normalize the new paths', async function() {
             const changes = [
               {
                 type: 'FileMove',
@@ -660,14 +879,93 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(fileMove).have.properties({
-              path: path.join(
-                dirPath.normalize('NFD'),
-                dstFilename.normalize('NFD')
-              )
+              path: path.join(dirPath, dstFilename)
             })
           })
         })
       })
+
+      context(
+        'when parent is saved with neither NFD nor NFC encoded path in Pouch',
+        () => {
+          const dirFirst = 'Énoncés'
+          const dirSecond = ' et corrigés'
+          const dirPath = (dirFirst + dirSecond).normalize('NFD')
+
+          let dir
+          beforeEach(async function() {
+            dir = await builders
+              .metadir()
+              .path(dirFirst.normalize('NFD') + dirSecond.normalize('NFC'))
+              .upToDate()
+              .create()
+          })
+
+          context('when file is saved with NFC encoded name in Pouch', () => {
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(path.join(dir.path, srcFilename.normalize('NFC')))
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('reuses the existing parent path', async function() {
+              const changes = [
+                {
+                  type: 'FileMove',
+                  path: path.join(dirPath, dstFilename),
+                  stats: { ino: 2 },
+                  old: {
+                    path: file.path
+                  }
+                }
+              ]
+              const [fileMove] = await normalizePaths.step(
+                changes,
+                stepOptions(this)
+              )
+              should(fileMove).have.properties({
+                path: path.join(dir.path, dstFilename)
+              })
+            })
+          })
+
+          context('when file is saved with NFD encoded name in Pouch', () => {
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(path.join(dir.path, srcFilename.normalize('NFD')))
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('reuses the existing parent path', async function() {
+              const changes = [
+                {
+                  type: 'FileMove',
+                  path: path.join(dirPath, dstFilename),
+                  stats: { ino: 2 },
+                  old: {
+                    path: file.path
+                  }
+                }
+              ]
+              const [fileMove] = await normalizePaths.step(
+                changes,
+                stepOptions(this)
+              )
+              should(fileMove).have.properties({
+                path: path.join(dir.path, dstFilename)
+              })
+            })
+          })
+        }
+      )
     })
 
     describe('renamed file in renamed dir on filesystem normalizing with NFD', () => {
@@ -697,7 +995,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes new dir and file paths with NFC', async function() {
+          it('does not normalize the new paths', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -721,10 +1019,10 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFC')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(dstDirPath, dstFilename).normalize('NFC')
+              path: path.join(dstDirPath, dstFilename)
             })
           })
         })
@@ -740,7 +1038,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes only parent part of file path with NFC', async function() {
+          it('does not normalize the new paths', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -764,13 +1062,10 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFC')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(
-                dstDirPath.normalize('NFC'),
-                dstFilename.normalize('NFD')
-              )
+              path: path.join(dstDirPath, dstFilename)
             })
           })
         })
@@ -797,7 +1092,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('normalizes file name with NFC', async function() {
+          it('does not normalize the new paths', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -821,13 +1116,10 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFD')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(
-                dstDirPath.normalize('NFD'),
-                dstFilename.normalize('NFC')
-              )
+              path: path.join(dstDirPath, dstFilename)
             })
           })
         })
@@ -843,7 +1135,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('does not normalize new dir or file paths with NFC', async function() {
+          it('does not normalize the new paths', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -867,24 +1159,174 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFD')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(
-                dstDirPath.normalize('NFD'),
-                dstFilename.normalize('NFD')
-              )
+              path: path.join(dstDirPath, dstFilename)
             })
           })
         })
       })
+
+      context(
+        'when parent is saved with neither NFD nor NFC encoded path in Pouch',
+        () => {
+          const srcDirPath =
+            'Énoncés'.normalize('NFD') + 'et corrigés'.normalize('NFC')
+          const dstDirPath = 'Énoncés / corrigés'.normalize('NFD')
+
+          let dir
+          beforeEach(async function() {
+            dir = await builders
+              .metadir()
+              .path(srcDirPath)
+              .upToDate()
+              .create()
+          })
+
+          context('when file is saved with NFC encoded name in Pouch', () => {
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(path.join(dir.path, srcFilename.normalize('NFC')))
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('does not normalize the new paths', async function() {
+              const changes = [
+                {
+                  type: 'DirMove',
+                  path: dstDirPath,
+                  stats: { ino: 1 },
+                  old: {
+                    path: dir.path
+                  }
+                },
+                {
+                  type: 'FileMove',
+                  path: path.join(dstDirPath, dstFilename),
+                  stats: { ino: 2 },
+                  old: {
+                    path: file.path
+                  }
+                }
+              ]
+              const [dirMove, fileMove] = await normalizePaths.step(
+                changes,
+                stepOptions(this)
+              )
+              should(dirMove).have.properties({
+                path: dstDirPath
+              })
+              should(fileMove).have.properties({
+                path: path.join(dstDirPath, dstFilename)
+              })
+            })
+          })
+
+          context('when file is saved with NFD encoded name in Pouch', () => {
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(path.join(dir.path, srcFilename.normalize('NFD')))
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('does not normalize the new paths', async function() {
+              const changes = [
+                {
+                  type: 'DirMove',
+                  path: dstDirPath,
+                  stats: { ino: 1 },
+                  old: {
+                    path: dir.path
+                  }
+                },
+                {
+                  type: 'FileMove',
+                  path: path.join(dstDirPath, dstFilename),
+                  stats: { ino: 2 },
+                  old: {
+                    path: file.path
+                  }
+                }
+              ]
+              const [dirMove, fileMove] = await normalizePaths.step(
+                changes,
+                stepOptions(this)
+              )
+              should(dirMove).have.properties({
+                path: dstDirPath
+              })
+              should(fileMove).have.properties({
+                path: path.join(dstDirPath, dstFilename)
+              })
+            })
+          })
+
+          context(
+            'when file is saved with neither NFD nor NFC encoded name in Pouch',
+            () => {
+              const srcFilename =
+                'Réussite'.normalize('NFD') + ' phénoménale'.normalize('NFC')
+              const dstFilename = 'Échec inconséquent'.normalize('NFD')
+
+              let file
+              beforeEach(async function() {
+                file = await builders
+                  .metafile()
+                  .path(srcFilename)
+                  .data('initial content')
+                  .upToDate()
+                  .create()
+              })
+
+              it('does not normalize the new paths', async function() {
+                const changes = [
+                  {
+                    type: 'DirMove',
+                    path: dstDirPath,
+                    stats: { ino: 1 },
+                    old: {
+                      path: dir.path
+                    }
+                  },
+                  {
+                    type: 'FileMove',
+                    path: path.join(dstDirPath, dstFilename),
+                    stats: { ino: 2 },
+                    old: {
+                      path: file.path
+                    }
+                  }
+                ]
+                const [dirMove, fileMove] = await normalizePaths.step(
+                  changes,
+                  stepOptions(this)
+                )
+                should(dirMove).have.properties({
+                  path: dstDirPath
+                })
+                should(fileMove).have.properties({
+                  path: path.join(dstDirPath, dstFilename)
+                })
+              })
+            }
+          )
+        }
+      )
     })
 
     describe('moved file to renamed dir on filesystem normalizing with NFD', () => {
       const srcDirPath = 'énoncés'.normalize('NFD')
       const dstDirPath = 'corrigés'.normalize('NFD')
-      const srcFilename = 'Réussite'.normalize('NFD')
-      const dstFilename = 'Échec'.normalize('NFD')
+      const filename = 'Réussite'.normalize('NFD')
 
       context('when parent is saved with NFC encoded path in Pouch', () => {
         let dir
@@ -901,13 +1343,13 @@ onPlatform('darwin', () => {
           beforeEach(async function() {
             file = await builders
               .metafile()
-              .path(srcFilename.normalize('NFC'))
+              .path(filename.normalize('NFC'))
               .data('initial content')
               .upToDate()
               .create()
           })
 
-          it('normalizes new dir and file paths with NFC', async function() {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -919,7 +1361,7 @@ onPlatform('darwin', () => {
               },
               {
                 type: 'FileMove',
-                path: path.join(dstDirPath, dstFilename),
+                path: path.join(dstDirPath, filename),
                 stats: { ino: 2 },
                 old: {
                   path: file.path
@@ -931,10 +1373,10 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFC')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(dstDirPath, dstFilename).normalize('NFC')
+              path: path.join(dstDirPath, path.basename(file.path))
             })
           })
         })
@@ -944,13 +1386,13 @@ onPlatform('darwin', () => {
           beforeEach(async function() {
             file = await builders
               .metafile()
-              .path(srcFilename.normalize('NFD'))
+              .path(filename.normalize('NFD'))
               .data('initial content')
               .upToDate()
               .create()
           })
 
-          it('normalizes only parent part of file path with NFC', async function() {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -962,7 +1404,7 @@ onPlatform('darwin', () => {
               },
               {
                 type: 'FileMove',
-                path: path.join(dstDirPath, dstFilename),
+                path: path.join(dstDirPath, filename),
                 stats: { ino: 2 },
                 old: {
                   path: file.path
@@ -974,16 +1416,66 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFC')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(
-                dstDirPath.normalize('NFC'),
-                dstFilename.normalize('NFD')
-              )
+              path: path.join(dstDirPath, path.basename(file.path))
             })
           })
         })
+
+        context(
+          'when file is saved with neither NFD nor NFC encoded name in Pouch',
+          () => {
+            const filenameFirst = 'Réussite'
+            const filenameSecond = ' phénoménale'
+            const filename = (filenameFirst + filenameSecond).normalize('NFD')
+
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(
+                  filenameFirst.normalize('NFD') +
+                    filenameSecond.normalize('NFC')
+                )
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('reuses the existing file name', async function() {
+              const changes = [
+                {
+                  type: 'DirMove',
+                  path: dstDirPath,
+                  stats: { ino: 1 },
+                  old: {
+                    path: dir.path
+                  }
+                },
+                {
+                  type: 'FileMove',
+                  path: path.join(dstDirPath, filename),
+                  stats: { ino: 2 },
+                  old: {
+                    path: file.path
+                  }
+                }
+              ]
+              const [dirMove, fileMove] = await normalizePaths.step(
+                changes,
+                stepOptions(this)
+              )
+              should(dirMove).have.properties({
+                path: dstDirPath
+              })
+              should(fileMove).have.properties({
+                path: path.join(dstDirPath, path.basename(file.path))
+              })
+            })
+          }
+        )
       })
 
       context('when parent is saved with NFD encoded path in Pouch', () => {
@@ -1001,13 +1493,13 @@ onPlatform('darwin', () => {
           beforeEach(async function() {
             file = await builders
               .metafile()
-              .path(srcFilename.normalize('NFC'))
+              .path(filename.normalize('NFC'))
               .data('initial content')
               .upToDate()
               .create()
           })
 
-          it('normalizes file name with NFC', async function() {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -1019,7 +1511,7 @@ onPlatform('darwin', () => {
               },
               {
                 type: 'FileMove',
-                path: path.join(dstDirPath, dstFilename),
+                path: path.join(dstDirPath, filename),
                 stats: { ino: 2 },
                 old: {
                   path: file.path
@@ -1031,13 +1523,10 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFD')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(
-                dstDirPath.normalize('NFD'),
-                dstFilename.normalize('NFC')
-              )
+              path: path.join(dstDirPath, path.basename(file.path))
             })
           })
         })
@@ -1047,13 +1536,13 @@ onPlatform('darwin', () => {
           beforeEach(async function() {
             file = await builders
               .metafile()
-              .path(srcFilename.normalize('NFD'))
+              .path(filename.normalize('NFD'))
               .data('initial content')
               .upToDate()
               .create()
           })
 
-          it('does not normalize new dir or file paths with NFC', async function() {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -1065,7 +1554,7 @@ onPlatform('darwin', () => {
               },
               {
                 type: 'FileMove',
-                path: path.join(dstDirPath, dstFilename),
+                path: path.join(dstDirPath, filename),
                 stats: { ino: 2 },
                 old: {
                   path: file.path
@@ -1077,17 +1566,223 @@ onPlatform('darwin', () => {
               stepOptions(this)
             )
             should(dirMove).have.properties({
-              path: dstDirPath.normalize('NFD')
+              path: dstDirPath
             })
             should(fileMove).have.properties({
-              path: path.join(
-                dstDirPath.normalize('NFD'),
-                dstFilename.normalize('NFD')
-              )
+              path: path.join(dstDirPath, path.basename(file.path))
             })
           })
         })
+
+        context(
+          'when file is saved with neither NFD nor NFC encoded name in Pouch',
+          () => {
+            const filenameFirst = 'Réussite'
+            const filenameSecond = ' phénoménale'
+            const filename = (filenameFirst + filenameSecond).normalize('NFD')
+
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(
+                  filenameFirst.normalize('NFD') +
+                    filenameSecond.normalize('NFC')
+                )
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('reuses the existing file name', async function() {
+              const changes = [
+                {
+                  type: 'DirMove',
+                  path: dstDirPath,
+                  stats: { ino: 1 },
+                  old: {
+                    path: dir.path
+                  }
+                },
+                {
+                  type: 'FileMove',
+                  path: path.join(dstDirPath, filename),
+                  stats: { ino: 2 },
+                  old: {
+                    path: file.path
+                  }
+                }
+              ]
+              const [dirMove, fileMove] = await normalizePaths.step(
+                changes,
+                stepOptions(this)
+              )
+              should(dirMove).have.properties({
+                path: dstDirPath
+              })
+              should(fileMove).have.properties({
+                path: path.join(dstDirPath, path.basename(file.path))
+              })
+            })
+          }
+        )
       })
+
+      context(
+        'when parent is saved with neither NFD nor NFC encoded path in Pouch',
+        () => {
+          const dirPath =
+            'Énoncés'.normalize('NFD') + 'et corrigés'.normalize('NFC')
+          const dstDirPath =
+            'Énoncés'.normalize('NFD') + '/ corrigés'.normalize('NFC')
+
+          let dir
+          beforeEach(async function() {
+            dir = await builders
+              .metadir()
+              .path(dirPath)
+              .upToDate()
+              .create()
+          })
+
+          context('when file is saved with NFC encoded name in Pouch', () => {
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(filename.normalize('NFC'))
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('reuses the existing file name', async function() {
+              const changes = [
+                {
+                  type: 'DirMove',
+                  path: dstDirPath,
+                  stats: { ino: 1 },
+                  old: {
+                    path: dir.path
+                  }
+                },
+                {
+                  type: 'FileMove',
+                  path: path.join(dstDirPath, filename),
+                  stats: { ino: 2 },
+                  old: {
+                    path: file.path
+                  }
+                }
+              ]
+              const [dirMove, fileMove] = await normalizePaths.step(
+                changes,
+                stepOptions(this)
+              )
+              should(dirMove).have.properties({
+                path: dstDirPath
+              })
+              should(fileMove).have.properties({
+                path: path.join(dstDirPath, path.basename(file.path))
+              })
+            })
+          })
+
+          context('when file is saved with NFD encoded name in Pouch', () => {
+            let file
+            beforeEach(async function() {
+              file = await builders
+                .metafile()
+                .path(filename.normalize('NFD'))
+                .data('initial content')
+                .upToDate()
+                .create()
+            })
+
+            it('reuses the existing file name', async function() {
+              const changes = [
+                {
+                  type: 'DirMove',
+                  path: dstDirPath,
+                  stats: { ino: 1 },
+                  old: {
+                    path: dir.path
+                  }
+                },
+                {
+                  type: 'FileMove',
+                  path: path.join(dstDirPath, filename),
+                  stats: { ino: 2 },
+                  old: {
+                    path: file.path
+                  }
+                }
+              ]
+              const [dirMove, fileMove] = await normalizePaths.step(
+                changes,
+                stepOptions(this)
+              )
+              should(dirMove).have.properties({
+                path: dstDirPath
+              })
+              should(fileMove).have.properties({
+                path: path.join(dstDirPath, path.basename(file.path))
+              })
+            })
+          })
+
+          context(
+            'when file is saved with neither NFD nor NFC encoded name in Pouch',
+            () => {
+              const srcFilename =
+                'Réussite'.normalize('NFD') + ' phénoménale'.normalize('NFC')
+              const dstFilename =
+                'Échec'.normalize('NFD') + ' inconséquent'.normalize('NFC')
+
+              let file
+              beforeEach(async function() {
+                file = await builders
+                  .metafile()
+                  .path(srcFilename)
+                  .data('initial content')
+                  .upToDate()
+                  .create()
+              })
+
+              it('does not normalize the new paths', async function() {
+                const changes = [
+                  {
+                    type: 'DirMove',
+                    path: dstDirPath,
+                    stats: { ino: 1 },
+                    old: {
+                      path: dir.path
+                    }
+                  },
+                  {
+                    type: 'FileMove',
+                    path: path.join(dstDirPath, dstFilename),
+                    stats: { ino: 2 },
+                    old: {
+                      path: file.path
+                    }
+                  }
+                ]
+                const [dirMove, fileMove] = await normalizePaths.step(
+                  changes,
+                  stepOptions(this)
+                )
+                should(dirMove).have.properties({
+                  path: dstDirPath
+                })
+                should(fileMove).have.properties({
+                  path: path.join(dstDirPath, dstFilename)
+                })
+              })
+            }
+          )
+        }
+      )
     })
   })
 })

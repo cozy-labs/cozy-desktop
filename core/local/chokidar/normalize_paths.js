@@ -36,19 +36,20 @@ const step = async (
       const parentPath = path.dirname(c.path)
       const parent =
         parentPath !== '.' ? await pouch.bySyncedPath(parentPath) : null
-      c.path = normalizedPath(
+      const normalized = normalizedPath(
         c.path,
         c.old ? c.old.path : undefined,
         parent,
         normalizedPaths
       )
-      normalizedPaths.push(c.path)
+      normalizedPaths.push(normalized)
 
-      if (c.path !== normalizedPath) {
+      if (c.path !== normalized) {
         log.info(
-          { path: c.path, normalizedPath },
+          { path: c.path, normalized },
           'normalizing local path to match existing doc and parent norms'
         )
+        c.path = normalized
       }
     }
 
@@ -62,8 +63,6 @@ const previouslyNormalizedPath = (
 ) /*: ?string */ =>
   normalizedPaths.find(p => p.normalize() === docPath.normalize())
 
-const isNFD = string => string === string.normalize('NFD')
-
 const normalizedPath = (
   newPath /*: string */,
   oldPath /*: ?string */,
@@ -74,16 +73,20 @@ const normalizedPath = (
   const name = path.basename(newPath)
   const parentPath = path.dirname(newPath)
 
-  const normalizedParentPath = parent
-    ? parent.path
-    : parentPath != '.'
-    ? previouslyNormalizedPath(parentPath, normalizedPaths) || parentPath
-    : ''
+  const normalizedParentPath =
+    parentPath === '.'
+      ? ''
+      : !parent
+      ? previouslyNormalizedPath(parentPath, normalizedPaths) || parentPath
+      : parent.path.normalize() === parentPath.normalize()
+      ? parent.path
+      : parentPath
   const oldName = oldPath && path.basename(oldPath)
-  const normalizedName = oldName
-    ? isNFD(oldName)
-      ? name.normalize('NFD')
-      : name.normalize('NFC')
+
+  const normalizedName = !oldName
+    ? name
+    : oldName.normalize() === name.normalize()
+    ? oldName
     : name
 
   return path.join(normalizedParentPath, normalizedName)

@@ -7,7 +7,12 @@ const config = require('../../core/config')
 
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
-const { onPlatform, onPlatforms } = require('../support/helpers/platform')
+const {
+  onPlatform,
+  onPlatforms,
+  onAPFS,
+  onHFS
+} = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
 
@@ -430,6 +435,169 @@ describe('Identity conflict', () => {
           nfdLocalOnly
         )
       })
+    })
+
+    describe('synchronization of new remote file', () => {
+      describe('whose name contains NFC characters', () => {
+        const filename = 'Dôme'.normalize('NFC')
+
+        onAPFS(() => {
+          it('keeps the remote name everywhere and does not create a conflict', async () => {
+            await cozy.files.create('whatever', { name: filename })
+            await helpers.pullAndSyncAll()
+            await helpers.flushLocalAndSyncAll()
+            should(
+              await helpers.trees('local', 'metadata', 'remote')
+            ).deepEqual({
+              local: [filename],
+              metadata: [filename],
+              remote: [filename]
+            })
+          })
+        })
+
+        onHFS(() => {
+          it('keeps the remote name in PouchDB and does not create a conflict', async () => {
+            await cozy.files.create('whatever', { name: filename })
+            await helpers.pullAndSyncAll()
+            await helpers.flushLocalAndSyncAll()
+            should(
+              await helpers.trees('local', 'metadata', 'remote')
+            ).deepEqual({
+              local: [filename.normalize('NFD')],
+              metadata: [filename],
+              remote: [filename]
+            })
+          })
+        })
+      })
+
+      describe('whose name contains NFD characters', () => {
+        const filename = 'Dôme'.normalize('NFD')
+
+        onAPFS(() => {
+          it('keeps the remote name everywhere and does not create a conflict', async () => {
+            await cozy.files.create('whatever', { name: filename })
+            await helpers.pullAndSyncAll()
+            await helpers.flushLocalAndSyncAll()
+            should(
+              await helpers.trees('local', 'metadata', 'remote')
+            ).deepEqual({
+              local: [filename],
+              metadata: [filename],
+              remote: [filename]
+            })
+          })
+        })
+
+        onHFS(() => {
+          it('keeps the remote name in PouchDB and does not create a conflict', async () => {
+            await cozy.files.create('whatever', { name: filename })
+            await helpers.pullAndSyncAll()
+            await helpers.flushLocalAndSyncAll()
+            should(
+              await helpers.trees('local', 'metadata', 'remote')
+            ).deepEqual({
+              local: [filename.normalize('NFD')],
+              metadata: [filename],
+              remote: [filename]
+            })
+          })
+        })
+      })
+
+      describe('whose name contains both NFC and NFD characters', () => {
+        const filename = 'Dôme'.normalize('NFD') + ' éclipse'.normalize('NFC')
+
+        onAPFS(() => {
+          it('keeps the remote name everywhere and does not create a conflict', async () => {
+            await cozy.files.create('whatever', { name: filename })
+            await helpers.pullAndSyncAll()
+            await helpers.flushLocalAndSyncAll()
+            should(
+              await helpers.trees('local', 'metadata', 'remote')
+            ).deepEqual({
+              local: [filename],
+              metadata: [filename],
+              remote: [filename]
+            })
+          })
+        })
+
+        onHFS(() => {
+          it('keeps the remote name in PouchDB and does not create a conflict', async () => {
+            await cozy.files.create('whatever', { name: filename })
+            await helpers.pullAndSyncAll()
+            await helpers.flushLocalAndSyncAll()
+            should(
+              await helpers.trees('local', 'metadata', 'remote')
+            ).deepEqual({
+              local: [filename.normalize('NFD')],
+              metadata: [filename],
+              remote: [filename]
+            })
+          })
+        })
+      })
+
+      context(
+        'when another document with a different encoding already exists',
+        () => {
+          const originalFilename =
+            'Dôme'.normalize('NFD') + ' éclipse'.normalize('NFC')
+          const newFilename = originalFilename.normalize('NFC')
+
+          onAPFS(() => {
+            it('renames the second one remotely to resolve the conflict on next polling', async () => {
+              await cozy.files.create('whatever', { name: originalFilename })
+              await helpers.pullAndSyncAll()
+              await helpers.flushLocalAndSyncAll()
+              should(
+                await helpers.trees('local', 'metadata', 'remote')
+              ).deepEqual({
+                local: [originalFilename],
+                metadata: [originalFilename],
+                remote: [originalFilename]
+              })
+
+              await cozy.files.create('whatever', { name: newFilename })
+              await helpers.pullAndSyncAll()
+              should(
+                await helpers.trees('local', 'metadata', 'remote')
+              ).deepEqual({
+                local: [originalFilename],
+                metadata: [originalFilename],
+                remote: [originalFilename, newFilename + '-conflict-...']
+              })
+            })
+          })
+
+          onHFS(() => {
+            it('renames the second one remotely to resolve the conflict on next polling', async () => {
+              await cozy.files.create('whatever', { name: originalFilename })
+              await helpers.pullAndSyncAll()
+              await helpers.flushLocalAndSyncAll()
+              should(
+                await helpers.trees('local', 'metadata', 'remote')
+              ).deepEqual({
+                local: [originalFilename.normalize('NFD')],
+                metadata: [originalFilename],
+                remote: [originalFilename]
+              })
+
+              await cozy.files.create('whatever', { name: newFilename })
+              await helpers.pullAndSyncAll()
+              should(
+                await helpers.trees('local', 'metadata', 'remote')
+              ).deepEqual({
+                local: [originalFilename.normalize('NFD')],
+                metadata: [originalFilename],
+                remote: [originalFilename, newFilename + '-conflict-...']
+              })
+            })
+          })
+        }
+      )
     })
   })
 })
