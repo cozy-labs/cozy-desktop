@@ -1,5 +1,17 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.33.0-beta.4 - 2022-03-02
+
+Improvements for macOS users:
+
+- You should not see conflicts created anymore when a remote document whose name
+  contains multiple utf-8 characters encoded with NFC and NFD norms is
+  downloaded and saved on your local filesystem.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.33.0-beta.3 - 2022-02-22
 
 Improvements for all users:
