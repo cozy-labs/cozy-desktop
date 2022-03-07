@@ -506,11 +506,19 @@ function newDocumentAttributes(
 function mostRecentUpdatedAt /*::<T: Metadata|SavedMetadata> */(
   doc /*: T */
 ) /*: string */ {
-  if (doc.remote && doc.remote.updated_at) {
-    return timestamp.maxDate(doc.updated_at, doc.remote.updated_at)
-  } else {
-    return doc.updated_at
+  let date = doc.updated_at
+
+  const remoteCreationDate = doc.remote && doc.remote.created_at
+  if (remoteCreationDate) {
+    date = timestamp.maxDate(date, remoteCreationDate)
   }
+
+  const remoteModificationDate = doc.remote && doc.remote.updated_at
+  if (remoteModificationDate) {
+    date = timestamp.maxDate(date, remoteModificationDate)
+  }
+
+  return date
 }
 
 module.exports = {
