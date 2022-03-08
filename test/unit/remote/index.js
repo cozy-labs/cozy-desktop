@@ -896,6 +896,57 @@ describe('remote.Remote', function() {
       }
     )
 
+    context(
+      'when the remote created_at value is more recent than updated_at',
+      () => {
+        // It can happen when trying to move an image that was never modified
+        // after being uploaded to the remote Cozy and which has an EXIF date more
+        // recent than its filesystem modification date.
+        let remoteFile, file
+        beforeEach(async () => {
+          remoteFile = await builders
+            .remoteFile()
+            .inRootDir()
+            .name('cat.jpg')
+            .data('maow')
+            .createdAt(2018, 1, 2, 7, 31, 30, 564)
+            .updatedAt(2018, 1, 2, 6, 31, 30, 564) // 1 hour before the creation date
+            .create()
+          // We create the local doc from the remote one but in reality this
+          // would be the opposite. Our data builders give us this opportunity.
+          file = await builders
+            .metafile()
+            .fromRemote(remoteFile)
+            .updatedAt(timestamp.roundedRemoteDate(remoteFile.updated_at))
+            .upToDate()
+            .create()
+        })
+
+        it('moves the file on the Cozy', async function() {
+          const doc = builders
+            .metafile(file) // XXX: Necessary to replace the default updated_at
+            .moveFrom(file)
+            .path('My Cat.jpg')
+            .changedSide('local')
+            .build()
+
+          await this.remote.moveAsync(doc, file)
+
+          const movedFile = await cozy.files.statById(doc.remote._id)
+          should(movedFile).have.properties({
+            _id: file.remote._id,
+            _rev: doc.remote._rev
+          })
+          should(movedFile.attributes).have.property('name', 'My Cat.jpg')
+          // The `remote` attribute of the PouchDB record is updated
+          should(doc.remote).have.property(
+            'updated_at',
+            timestamp.roundedRemoteDate(movedFile.attributes.created_at)
+          )
+        })
+      }
+    )
+
     context('when overwriting an existing file', function() {
       const existingRefs = [{ _id: 'blah', _type: 'io.cozy.photos.albums' }]
 
