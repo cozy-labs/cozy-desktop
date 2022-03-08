@@ -57,6 +57,17 @@ const folderMightHaveBeenExcluded = (
   return metadata.extractRevNumber(remoteDir) > 2
 }
 
+const needsContentFetching = (
+  remoteDoc /*: MetadataRemoteInfo|RemoteDeletion */,
+  { isRecursiveFetch = false } /*: { isRecursiveFetch: boolean } */ = {}
+) /*: boolean %checks */ => {
+  return (
+    !remoteDoc._deleted &&
+    remoteDoc.type === 'directory' &&
+    (folderMightHaveBeenExcluded(remoteDoc) || isRecursiveFetch)
+  )
+}
+
 /** Get changes from the remote Cozy and prepare them for merge */
 class RemoteWatcher {
   /*::
@@ -160,6 +171,7 @@ class RemoteWatcher {
     const release = await this.pouch.lock(this)
     try {
       this.events.emit('buffering-start')
+
       const seq = await this.pouch.getRemoteSeq()
       const { last_seq, docs, isInitialFetch } = await this.remoteCozy.changes(
         seq
@@ -168,12 +180,19 @@ class RemoteWatcher {
 
       if (docs.length === 0) {
         log.debug('No remote changes for now')
+        await this.fetchReincludedContent()
         return
       }
 
       this.events.emit('remote-start')
       this.events.emit('buffering-end')
-      await this.processRemoteChanges(docs, { isInitialFetch })
+
+      if (isInitialFetch) {
+        await this.processRemoteChanges(docs, { isInitialFetch })
+      } else {
+        await this.processRemoteChanges(docs)
+        await this.fetchReincludedContent()
+      }
 
       let target = -1
       target = (await this.pouch.db.changes({ limit: 1, descending: true }))
@@ -193,6 +212,24 @@ class RemoteWatcher {
     }
   }
 
+  async fetchReincludedContent() {
+    let dirs = await this.pouch.needingContentFetching()
+
+    while (dirs.length) {
+      for (const dir of dirs) {
+        log.trace({ path: dir.path }, 'Fetching content of unknown folder...')
+        const children = await this.remoteCozy.getDirectoryContent(dir.remote)
+
+        await this.processRemoteChanges(children, { isRecursiveFetch: true })
+
+        dir.needsContentFetching = false
+        await this.pouch.put(dir)
+      }
+
+      dirs = await this.pouch.needingContentFetching()
+    }
+  }
+
   async olds(
     remoteDocs /*: $ReadOnlyArray<MetadataRemoteInfo|RemoteDeletion> */
   ) /*: Promise<SavedMetadata[]> */ {
@@ -207,32 +244,15 @@ class RemoteWatcher {
    */
   async processRemoteChanges(
     docs /*: $ReadOnlyArray<MetadataRemoteInfo|RemoteDeletion> */,
-    { isInitialFetch } /*: { isInitialFetch: boolean } */
+    {
+      isInitialFetch = false,
+      isRecursiveFetch = false
+    } /*: { isInitialFetch?: boolean, isRecursiveFetch?: boolean } */ = {}
   ) /*: Promise<void> */ {
-    let changes = await this.analyse(docs, await this.olds(docs))
-
-    for (const change of changes) {
-      if (
-        !isInitialFetch &&
-        change.type === 'DirAddition' &&
-        folderMightHaveBeenExcluded(change.doc.remote)
-      ) {
-        log.trace(
-          { path: change.doc.path },
-          'Fetching content of unknown folder...'
-        )
-        const children = (await this.remoteCozy.getDirectoryContent(
-          change.doc.remote
-        )).filter(child =>
-          docs.every(doc => doc._id !== child._id || doc._rev !== child._rev)
-        )
-        const childChanges = await this.analyse(
-          children,
-          await this.olds(children)
-        )
-        changes = changes.concat(childChanges)
-      }
-    }
+    let changes = await this.analyse(docs, await this.olds(docs), {
+      isInitialFetch,
+      isRecursiveFetch
+    })
 
     log.trace('Apply changes...')
     const errors = await this.applyAll(changes)
@@ -243,10 +263,17 @@ class RemoteWatcher {
 
   async analyse(
     remoteDocs /*: $ReadOnlyArray<MetadataRemoteInfo|RemoteDeletion> */,
-    olds /*: SavedMetadata[] */
+    olds /*: SavedMetadata[] */,
+    {
+      isInitialFetch = false,
+      isRecursiveFetch = false
+    } /*: { isInitialFetch?: boolean, isRecursiveFetch?: boolean } */ = {}
   ) /*: Promise<RemoteChange[]> */ {
     log.trace('Contextualize and analyse changesfeed results...')
-    const changes = this.identifyAll(remoteDocs, olds)
+    const changes = this.identifyAll(remoteDocs, olds, {
+      isInitialFetch,
+      isRecursiveFetch
+    })
     log.trace('Done with analysis.')
 
     remoteChange.sortByPath(changes)
@@ -266,7 +293,11 @@ class RemoteWatcher {
 
   identifyAll(
     remoteDocs /*: $ReadOnlyArray<MetadataRemoteInfo|RemoteDeletion> */,
-    olds /*: SavedMetadata[] */
+    olds /*: SavedMetadata[] */,
+    {
+      isInitialFetch = false,
+      isRecursiveFetch = false
+    } /*: { isInitialFetch?: boolean, isRecursiveFetch?: boolean } */ = {}
   ) {
     const changes /*: Array<RemoteChange> */ = []
     const originalMoves = []
@@ -274,7 +305,12 @@ class RemoteWatcher {
     const oldsByRemoteId = _.keyBy(olds, 'remote._id')
     for (const remoteDoc of remoteDocs) {
       const was /*: ?SavedMetadata */ = oldsByRemoteId[remoteDoc._id]
-      changes.push(this.identifyChange(remoteDoc, was, changes, originalMoves))
+      changes.push(
+        this.identifyChange(remoteDoc, was, changes, originalMoves, {
+          isInitialFetch,
+          isRecursiveFetch
+        })
+      )
     }
 
     return changes
@@ -284,7 +320,11 @@ class RemoteWatcher {
     remoteDoc /*: MetadataRemoteInfo|RemoteDeletion */,
     was /*: ?SavedMetadata */,
     previousChanges /*: Array<RemoteChange> */,
-    originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
+    originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */,
+    {
+      isInitialFetch = false,
+      isRecursiveFetch = false
+    } /*: { isInitialFetch?: boolean, isRecursiveFetch?: boolean } */ = {}
   ) /*: RemoteChange */ {
     const oldpath /*: ?string */ = was ? was.path : undefined
     log.debug(
@@ -332,7 +372,8 @@ class RemoteWatcher {
           remoteDoc,
           was,
           previousChanges,
-          originalMoves
+          originalMoves,
+          { isInitialFetch, isRecursiveFetch }
         )
       }
     }
@@ -352,7 +393,11 @@ class RemoteWatcher {
     remoteDoc /*: MetadataRemoteInfo */,
     was /*: ?SavedMetadata */,
     previousChanges /*: Array<RemoteChange> */,
-    originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
+    originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */,
+    {
+      isInitialFetch = false,
+      isRecursiveFetch = false
+    } /*: { isInitialFetch?: boolean, isRecursiveFetch?: boolean } */ = {}
   ) /*: RemoteChange */ {
     const doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
     try {
@@ -424,6 +469,12 @@ class RemoteWatcher {
     }
 
     if (!was || inRemoteTrash(was.remote)) {
+      if (!isInitialFetch) {
+        doc.needsContentFetching = needsContentFetching(doc.remote, {
+          isRecursiveFetch
+        })
+      }
+
       return remoteChange.added(doc)
     } else if (metadata.samePath(was, doc)) {
       if (

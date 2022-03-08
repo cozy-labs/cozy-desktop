@@ -444,64 +444,37 @@ class RemoteCozy {
     return results[0]
   }
 
+  // XXX: This only fetches the direct children of a directory, not children of
+  // sub-directories.
   async getDirectoryContent(
     dir /*: RemoteDir */,
     { client } /*: { client: ?CozyClient } */ = {}
   ) /*: Promise<$ReadOnlyArray<MetadataRemoteInfo>> */ {
     client = client || (await this.newClient())
 
-    let dirContent = []
-    let nextDirs = [dir]
-    while (nextDirs.length) {
-      const nestedContent = await this.getDirectoriesContent(nextDirs, {
-        client
-      })
-      dirContent = dirContent.concat(nestedContent.docs)
-      nextDirs = nestedContent.nextDirs
-    }
-
-    return dirContent.sort((a, b) => {
-      if (a.path < b.path) return -1
-      if (a.path > b.path) return 1
-      return 0
-    })
-  }
-
-  async getDirectoriesContent(
-    dirs /*: $ReadOnlyArray<RemoteDir> */,
-    { client } /*: { client: CozyClient } */
-  ) /*: Promise<{ nextDirs: $ReadOnlyArray<MetadataRemoteDir>, docs: $ReadOnlyArray<MetadataRemoteInfo> }> */ {
     const queryDef = Q(FILES_DOCTYPE)
       .where({
-        dir_id: { $in: dirs.map(dir => dir._id) },
+        dir_id: dir._id,
         name: { $gt: null }
       })
       .indexFields(['dir_id', 'name'])
       .sortBy([{ dir_id: 'asc' }, { name: 'asc' }])
       .limitBy(3000)
 
-    const resp = await this.queryAll(queryDef, { client })
+    const { data } = await this.queryAll(queryDef, { client })
 
-    const nextDirs = []
-    const docs = []
-    for (const j of resp.data) {
+    const remoteDocs = []
+    for (const j of data) {
       const remoteJson = jsonApiToRemoteJsonDoc(j)
       if (remoteJson._deleted) continue
 
-      const parentDir = dirs.find(
-        dir => dir._id === remoteJson.attributes.dir_id
-      )
-      const remoteDoc = await this.toRemoteDoc(remoteJson, parentDir)
+      const remoteDoc = await this.toRemoteDoc(remoteJson, dir)
 
       if (!this.isExcludedDirectory(remoteDoc)) {
-        docs.push(remoteDoc)
-
-        if (remoteDoc.type === DIR_TYPE) {
-          nextDirs.push(remoteDoc)
-        }
+        remoteDocs.push(remoteDoc)
       }
     }
-    return { nextDirs, docs }
+    return remoteDocs
   }
 
   async queryAll(queryDef /*: Q */, { client } /*: { client: CozyClient } */) {

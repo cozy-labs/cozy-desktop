@@ -873,7 +873,7 @@ describe('RemoteCozy', function() {
       })
     })
 
-    it('returns the whole directory content, including the content of subdirectories', async () => {
+    it('returns the direct children of the directory', async () => {
       const tree = await builders.createRemoteTree([
         'dir/',
         'dir/subdir/',
@@ -894,13 +894,7 @@ describe('RemoteCozy', function() {
       ).be.fulfilledWith([
         tree['dir/file'],
         tree['dir/other-subdir/'],
-        tree['dir/other-subdir/next-level/'],
-        tree['dir/other-subdir/next-level/last-level/'],
-        tree['dir/other-subdir/next-level/last-level/content'],
-        tree['dir/subdir/'],
-        tree['dir/subdir/file'],
-        tree['dir/subdir/subsubdir/'],
-        tree['dir/subdir/subsubdir/last']
+        tree['dir/subdir/']
       ])
     })
 
@@ -920,40 +914,12 @@ describe('RemoteCozy', function() {
       const client = await remoteCozy.newClient()
       const files = client.collection(FILES_DOCTYPE)
       await files.addNotSynchronizedDirectories(oauthClient, [
-        tree['dir/subdir/subsubdir/'],
-        tree['dir/other-subdir/']
+        tree['dir/subdir/']
       ])
 
       await should(
         remoteCozy.getDirectoryContent(tree['dir/'])
-      ).be.fulfilledWith([tree['dir/subdir/'], tree['dir/subdir/file']])
-    })
-
-    it('requests content level by level and not directory by directory', async () => {
-      const tree = await builders.createRemoteTree([
-        'dir/',
-        'dir/file',
-        'dir/subdir/',
-        'dir/subdir/file',
-        'dir/subdir/subsubdir/',
-        'dir/subdir/subsubdir/last',
-        'dir/other-subdir/',
-        'dir/other-subdir/next-level/',
-        'dir/other-subdir/next-level/last-level/',
-        'dir/other-subdir/next-level/last-level/content',
-        'other-dir/',
-        'other-dir/content'
-      ])
-
-      const client = await remoteCozy.newClient()
-      const querySpy = sinon.spy(client, 'query')
-      try {
-        await remoteCozy.getDirectoryContent(tree['dir/'], { client })
-
-        should(querySpy).have.callCount(4)
-      } finally {
-        querySpy.restore()
-      }
+      ).be.fulfilledWith([tree['dir/other-subdir/']])
     })
 
     it('does not fail on an empty directory', async () => {
@@ -962,34 +928,6 @@ describe('RemoteCozy', function() {
         .name('dir')
         .create()
       await should(remoteCozy.getDirectoryContent(dir)).be.fulfilledWith([])
-    })
-
-    it('fails on a sub-directory content request failure', async () => {
-      const tree = await builders.createRemoteTree([
-        'dir/',
-        'dir/subdir/',
-        'dir/subdir/subsubdir/',
-        'dir/subdir/file',
-        'dir/file',
-        'dir/subdir/subsubdir/last',
-        'hello.txt',
-        'other-dir/',
-        'other-dir/content'
-      ])
-
-      const stubbedClient = await remoteCozy.newClient()
-      const originalQuery = stubbedClient.query.bind(stubbedClient)
-      sinon.stub(stubbedClient, 'query').callsFake(async queryDef => {
-        if (queryDef.selector.dir_id.$in.includes(tree['dir/subdir/']._id)) {
-          throw new Error('test error')
-        } else {
-          return originalQuery(queryDef)
-        }
-      })
-
-      await should(
-        remoteCozy.getDirectoryContent(tree['dir/'], { client: stubbedClient })
-      ).be.rejectedWith(/test error/)
     })
   })
 

@@ -56,7 +56,8 @@ module.exports = class BaseMetadataBuilder {
         docType: 'folder', // To make flow happy (overridden by subclasses)
         path: 'foo',
         tags: [],
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        needsContentFetching: false
       }
     }
     this.buildLocal = true

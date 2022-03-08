@@ -414,7 +414,7 @@ describe('RemoteWatcher', function() {
       await this.watcher.watch()
       should(this.watcher.processRemoteChanges)
         .have.been.calledOnce()
-        .and.be.calledWithExactly(changes.docs, { isInitialFetch: false })
+        .and.be.calledWithExactly(changes.docs)
     })
 
     it('updates the last update sequence in local db', async function() {
@@ -424,8 +424,72 @@ describe('RemoteWatcher', function() {
         .and.be.calledWithExactly(changes.last_seq)
     })
 
-    context('when a directory has been modified more than once', () => {
-      it('fetches the content of potentially re-included directories', async function() {
+    context('on error while fetching changes', () => {
+      const randomMessage = faker.random.words
+      let err
+
+      beforeEach(function() {
+        const response = {}
+        // FetchError objects defined in `cozy-stack-client` have the same
+        // signature as FetchError objects defined in `cozy-client-js`.
+        err = new FetchError(response, randomMessage())
+        this.remoteCozy.changes.rejects(err)
+      })
+
+      it('resolves with a higher-level error', async function() {
+        err.status = 400 // Revoked
+        await should(this.watcher.watch()).be.fulfilledWith(
+          new remoteErrors.RemoteError({
+            code: remoteErrors.COZY_CLIENT_REVOKED_CODE,
+            message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
+            err
+          })
+        )
+
+        err.status = 500 // Possibly temporary error
+        await should(this.watcher.watch()).be.fulfilledWith(
+          new remoteErrors.RemoteError({
+            code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE,
+            message:
+              'The remote Cozy failed to process the request for an unknown reason',
+            err
+          })
+        )
+      })
+    })
+
+    context('on Pouch reserved ids error', () => {
+      const reservedIdsError = {
+        err: {
+          name: 'bad_request',
+          status: 400,
+          message: 'Only reserved document ids may start with underscore.'
+        }
+      }
+
+      beforeEach(function() {
+        this.watcher.processRemoteChanges.throws(reservedIdsError)
+      })
+
+      it('does not return client revoked error', async function() {
+        should(await this.watcher.watch()).match({
+          code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
+        })
+      })
+    })
+
+    context('when a fetched directory has been modified more than once', () => {
+      beforeEach(function() {
+        this.prep.putFolderAsync.callsFake(async (side, doc) => {
+          metadata.markSide(side, doc, doc)
+          await this.pouch.put(doc)
+        })
+      })
+      afterEach(function() {
+        this.prep.putFolderAsync.restore()
+      })
+
+      it('it fetches its content as a potentially re-included directory', async function() {
         const remoteDocs = [
           builders.remoteFile().build(),
           builders
@@ -486,60 +550,6 @@ describe('RemoteWatcher', function() {
           } finally {
             spy.restore()
           }
-        })
-      })
-    })
-
-    context('on error while fetching changes', () => {
-      const randomMessage = faker.random.words
-      let err
-
-      beforeEach(function() {
-        const response = {}
-        // FetchError objects defined in `cozy-stack-client` have the same
-        // signature as FetchError objects defined in `cozy-client-js`.
-        err = new FetchError(response, randomMessage())
-        this.remoteCozy.changes.rejects(err)
-      })
-
-      it('resolves with a higher-level error', async function() {
-        err.status = 400 // Revoked
-        await should(this.watcher.watch()).be.fulfilledWith(
-          new remoteErrors.RemoteError({
-            code: remoteErrors.COZY_CLIENT_REVOKED_CODE,
-            message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
-            err
-          })
-        )
-
-        err.status = 500 // Possibly temporary error
-        await should(this.watcher.watch()).be.fulfilledWith(
-          new remoteErrors.RemoteError({
-            code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE,
-            message:
-              'The remote Cozy failed to process the request for an unknown reason',
-            err
-          })
-        )
-      })
-    })
-
-    context('on Pouch reserved ids error', () => {
-      const reservedIdsError = {
-        err: {
-          name: 'bad_request',
-          status: 400,
-          message: 'Only reserved document ids may start with underscore.'
-        }
-      }
-
-      beforeEach(function() {
-        this.watcher.processRemoteChanges.throws(reservedIdsError)
-      })
-
-      it('does not return client revoked error', async function() {
-        should(await this.watcher.watch()).match({
-          code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
         })
       })
     })
@@ -690,98 +700,6 @@ describe('RemoteWatcher', function() {
 
       should(apply).be.calledOnce()
       should(apply.args[0][0].doc).deepEqual(remoteDeletion)
-    })
-
-    it('fetches the content of old directories added to the feed', async function() {
-      const tree /*: RemoteTree */ = await builders.createRemoteTree([
-        'dir/',
-        'dir/subdir/',
-        'dir/subdir/file'
-      ])
-      const dir = (tree['dir/'] /*: any */)
-      const dirUpdatedOnce = await builders
-        .remoteDir((dir /*: MetadataRemoteDir */))
-        .update()
-      // XXX: we update the directory twice to mimick a potential selective sync
-      // exclusion/re-inclusion.
-      const dirUpdatedTwice = await builders
-        .remoteDir((dirUpdatedOnce /*: MetadataRemoteDir */))
-        .update()
-
-      await this.watcher.processRemoteChanges([dirUpdatedTwice], {
-        isInitialFetch: false
-      })
-      should(apply).be.calledThrice()
-      should(apply.args[0][0].doc).deepEqual(validMetadata(dirUpdatedTwice))
-      should(apply.args[1][0].doc).deepEqual(validMetadata(tree['dir/subdir/']))
-      should(apply.args[2][0].doc).deepEqual(
-        validMetadata(tree['dir/subdir/file'])
-      )
-    })
-
-    it('does not fetch the content of known directories present in the feed', async function() {
-      const dir = (remoteTree['my-folder/'] /*: any */)
-      const updatedDir = await builders
-        .remoteDir((dir /*: MetadataRemoteDir */))
-        .update()
-
-      await this.watcher.processRemoteChanges([updatedDir], {
-        isInitialFetch: false
-      })
-      should(apply).be.calledOnce()
-      should(apply.args[0][0].doc).deepEqual(validMetadata(updatedDir))
-    })
-
-    it('applies only changed content changes when already present in the feed', async function() {
-      const tree /*: RemoteTree */ = await builders.createRemoteTree([
-        'dir/',
-        'dir/subdir/',
-        'dir/subdir/file1',
-        'dir/subdir/file2'
-      ])
-      const dir = (tree['dir/'] /*: any */)
-      const dirUpdatedOnce = await builders
-        .remoteDir((dir /*: MetadataRemoteDir */))
-        .update()
-      // XXX: we update the directory twice to mimick a potential selective sync
-      // exclusion/re-inclusion.
-      const dirUpdatedTwice = await builders
-        .remoteDir((dirUpdatedOnce /*: MetadataRemoteDir */))
-        .update()
-      const file = (tree['dir/subdir/file1'] /*: any */)
-      const updatedFile = await builders
-        .remoteFile((file /*: MetadataRemoteFile */))
-        .update()
-      const newFile = await builders
-        .remoteFile()
-        .inDir(dirUpdatedTwice)
-        .name('file3')
-        .create()
-
-      await this.watcher.processRemoteChanges(
-        [
-          dirUpdatedTwice,
-          tree['dir/subdir/'],
-          tree['dir/subdir/file1'],
-          tree['dir/subdir/file2']
-        ],
-        { isInitialFetch: false }
-      )
-      should(apply.callCount).eql(6)
-      // From Feed
-      should(apply.args[0][0].doc).deepEqual(validMetadata(dirUpdatedTwice))
-      should(apply.args[1][0].doc).deepEqual(validMetadata(tree['dir/subdir/']))
-      should(apply.args[2][0].doc).deepEqual(
-        validMetadata(tree['dir/subdir/file1'])
-      )
-      should(apply.args[3][0].doc).deepEqual(
-        validMetadata(tree['dir/subdir/file2'])
-      )
-      // From fetched content
-      // file3 was added so we can apply this change
-      should(apply.args[4][0].doc).deepEqual(validMetadata(newFile))
-      // XXX: no additional change for file2 since it's the same as in the Feed
-      should(apply.args[5][0].doc).deepEqual(validMetadata(updatedFile))
     })
   })
 
@@ -2430,8 +2348,8 @@ describe('RemoteWatcher', function() {
     xit('calls deleteDoc & addDoc when trashed', async function() {
       this.prep.deleteFolderAsync = sinon.stub()
       this.prep.deleteFolderAsync.returnsPromise().resolves(null)
-      this.prep.addFolderAsync = sinon.stub()
-      this.prep.addFolderAsync.returnsPromise().resolves(null)
+      this.prep.putFolderAsync = sinon.stub()
+      this.prep.putFolderAsync.returnsPromise().resolves(null)
       const oldDir = builders
         .remoteDir()
         .name('foo')
@@ -2448,13 +2366,13 @@ describe('RemoteWatcher', function() {
       this.watcher.identifyChange(newDir, null, [], [])
 
       should(this.prep.deleteFolderAsync.called).be.true()
-      should(this.prep.addFolderAsync.called).be.true()
+      should(this.prep.putFolderAsync.called).be.true()
       const deleteArgs = this.prep.deleteFolderAsync.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
       delete oldMeta.updated_at
       should(deleteArgs[0]).equal('remote')
       should(deleteArgs[1]).have.properties(oldMeta)
-      const addArgs = this.prep.addFolderAsync.args[0]
+      const addArgs = this.prep.putFolderAsync.args[0]
       should(addArgs[0]).equal('remote')
       should(addArgs[1]).have.properties(metadata.fromRemoteDoc(newDir))
     })
@@ -2462,8 +2380,8 @@ describe('RemoteWatcher', function() {
     xit('calls deleteDoc & addDoc when restored', async function() {
       this.prep.deleteFolder = sinon.stub()
       this.prep.deleteFolder.returnsPromise().resolves(null)
-      this.prep.addFolderAsync = sinon.stub()
-      this.prep.addFolderAsync.returnsPromise().resolves(null)
+      this.prep.putFolderAsync = sinon.stub()
+      this.prep.putFolderAsync.returnsPromise().resolves(null)
       const oldDir = builders
         .remoteDir()
         .name('foo')
@@ -2480,13 +2398,13 @@ describe('RemoteWatcher', function() {
       this.watcher.identifyChange(newDir, null, [], [])
 
       should(this.prep.deleteFolder.called).be.true()
-      should(this.prep.addFolderAsync.called).be.true()
+      should(this.prep.putFolderAsync.called).be.true()
       const deleteArgs = this.prep.deleteFolder.args[0]
       // FIXME: Make sure oldMeta timestamps are formatted as expected by PouchDB
       delete oldMeta.updated_at
       should(deleteArgs[0]).equal('remote')
       should(deleteArgs[1]).have.properties(oldMeta)
-      const addArgs = this.prep.addFolderAsync.args[0]
+      const addArgs = this.prep.putFolderAsync.args[0]
       should(addArgs[0]).equal('remote')
       should(addArgs[1]).have.properties(metadata.fromRemoteDoc(newDir))
     })
