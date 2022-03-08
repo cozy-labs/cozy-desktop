@@ -56,7 +56,7 @@ jobs:
             ${{ github.workspace }}/node_modules
             ~/.cache/electron
             ~/.cache/electron-builder
-          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
         uses: actions/setup-node@v2-beta
         with:
@@ -109,7 +109,7 @@ jobs:
             ${{ github.workspace }}/node_modules
             ~/.cache/electron
             ~/.cache/electron-builder
-          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
         uses: actions/setup-node@v2-beta
         with:
@@ -163,7 +163,7 @@ jobs:
             ${{ github.workspace }}/node_modules
             ~/.cache/electron
             ~/.cache/electron-builder
-          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
         uses: actions/setup-node@v2-beta
         with:
@@ -219,7 +219,7 @@ jobs:
             ${{ github.workspace }}/node_modules
             ~/.cache/electron
             ~/.cache/electron-builder
-          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('**/yarn.lock') }}
+          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
         uses: actions/setup-node@v2-beta
         with:
