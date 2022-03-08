@@ -173,7 +173,7 @@ class RemoteWatcher {
 
       this.events.emit('remote-start')
       this.events.emit('buffering-end')
-      await this.pullMany(docs, { isInitialFetch })
+      await this.processRemoteChanges(docs, { isInitialFetch })
 
       let target = -1
       target = (await this.pouch.db.changes({ limit: 1, descending: true }))
@@ -203,11 +203,9 @@ class RemoteWatcher {
     return await this.pouch.allByRemoteIds(remoteIds)
   }
 
-  /** Pull multiple changed or deleted docs
-   *
-   * FIXME: Misleading method name?
+  /** Process multiple changed or deleted docs
    */
-  async pullMany(
+  async processRemoteChanges(
     docs /*: $ReadOnlyArray<MetadataRemoteInfo|RemoteDeletion> */,
     { isInitialFetch } /*: { isInitialFetch: boolean } */
   ) /*: Promise<void> */ {
@@ -240,7 +238,7 @@ class RemoteWatcher {
     const errors = await this.applyAll(changes)
     if (errors.length) throw errors[0].err
 
-    log.trace('Done with pull.')
+    log.trace('Done with changes processing.')
   }
 
   async analyse(

@@ -33,18 +33,32 @@ describe('Sync state', () => {
   })
 
   it('1 sync error (missing remote file)', async () => {
+    // XXX: Get current PouchDB sequence (it's not 0 since we have design docs)
+    const seq = await new Promise((resolve, reject) => {
+      helpers.pouch.db
+        .changes({
+          limit: 1,
+          descending: true,
+          since: 0,
+          return_docs: false,
+          live: false
+        })
+        .on('change', ({ seq }) => resolve(seq))
+        .on('error', err => reject(err))
+    })
+
     const remoteFile = builders.remoteFile().build()
-    await helpers._remote.watcher.pullMany([remoteFile], {
+    await helpers._remote.watcher.processRemoteChanges([remoteFile], {
       isInitialFetch: true // XXX: avoid unnecessary remote requests
     })
     await helpers.syncAll()
+
     should(events.emit.args).containDeepOrdered([
       ['sync-start'],
-      // XXX: update seq includes design docs creation so it does not start at 1
-      ['sync-current', 5], // Attempt and fail to download file
-      ['sync-current', 6], // Retry 1
-      ['sync-current', 7], // Retry 2
-      ['sync-current', 8], // Retry 3
+      ['sync-current', seq + 1], // Attempt and fail to download file
+      ['sync-current', seq + 2], // Retry 1
+      ['sync-current', seq + 3], // Retry 2
+      ['sync-current', seq + 4], // Retry 3
       ['delete-file'], // Abandon change and delete PouchDB record
       ['sync-end']
     ])

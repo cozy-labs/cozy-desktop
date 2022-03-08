@@ -393,26 +393,26 @@ describe('RemoteWatcher', function() {
     beforeEach(function() {
       sinon.stub(this.pouch, 'getRemoteSeq')
       sinon.stub(this.pouch, 'setRemoteSeq')
-      sinon.stub(this.watcher, 'pullMany')
+      sinon.stub(this.watcher, 'processRemoteChanges')
       sinon.stub(this.remoteCozy, 'changes')
       sinon.spy(this.events, 'emit')
 
       this.pouch.getRemoteSeq.resolves(lastLocalSeq)
-      this.watcher.pullMany.resolves([])
+      this.watcher.processRemoteChanges.resolves([])
       this.remoteCozy.changes.resolves(changes)
     })
 
     afterEach(function() {
       this.events.emit.restore()
       this.remoteCozy.changes.restore()
-      this.watcher.pullMany.restore()
+      this.watcher.processRemoteChanges.restore()
       this.pouch.setRemoteSeq.restore()
       this.pouch.getRemoteSeq.restore()
     })
 
     it('pulls the changed files/dirs', async function() {
       await this.watcher.watch()
-      should(this.watcher.pullMany)
+      should(this.watcher.processRemoteChanges)
         .have.been.calledOnce()
         .and.be.calledWithExactly(changes.docs, { isInitialFetch: false })
     })
@@ -440,11 +440,11 @@ describe('RemoteWatcher', function() {
           last_seq: String(Number(lastRemoteSeq) + remoteDocs.length),
           docs: remoteDocs
         })
-        // Restore the original pullMany function which is stubbed in beforeEach
-        this.watcher.pullMany.restore()
+        // Restore the original processRemoteChanges function which is stubbed in beforeEach
+        this.watcher.processRemoteChanges.restore()
         // Create a new stub (which calls the original method though) so the
         // restore() call in afterEach succeeds.
-        sinon.stub(this.watcher, 'pullMany').callThrough()
+        sinon.stub(this.watcher, 'processRemoteChanges').callThrough()
 
         const spy = sinon.spy(this.remoteCozy, 'getDirectoryContent')
         try {
@@ -473,11 +473,11 @@ describe('RemoteWatcher', function() {
                 .build()
             ]
           })
-          // Restore the original pullMany function which is stubbed in beforeEach
-          this.watcher.pullMany.restore()
+          // Restore the original processRemoteChanges function which is stubbed in beforeEach
+          this.watcher.processRemoteChanges.restore()
           // Create a new stub (which calls the original method though) so the
           // restore() call in afterEach succeeds.
-          sinon.stub(this.watcher, 'pullMany').callThrough()
+          sinon.stub(this.watcher, 'processRemoteChanges').callThrough()
 
           const spy = sinon.spy(this.remoteCozy, 'getDirectoryContent')
           try {
@@ -534,7 +534,7 @@ describe('RemoteWatcher', function() {
       }
 
       beforeEach(function() {
-        this.watcher.pullMany.throws(reservedIdsError)
+        this.watcher.processRemoteChanges.throws(reservedIdsError)
       })
 
       it('does not return client revoked error', async function() {
@@ -553,7 +553,7 @@ describe('RemoteWatcher', function() {
     return doc
   }
 
-  describe('pullMany', function() {
+  describe('processRemoteChanges', function() {
     let apply
     let findMaybe
     let remoteDocs
@@ -574,7 +574,9 @@ describe('RemoteWatcher', function() {
     it('pulls many changed files/dirs given their ids', async function() {
       apply.resolves()
 
-      await this.watcher.pullMany(remoteDocs, { isInitialFetch: false })
+      await this.watcher.processRemoteChanges(remoteDocs, {
+        isInitialFetch: false
+      })
 
       apply.callCount.should.equal(2)
       // Changes are sorted before applying (first one was given Metadata since
@@ -596,13 +598,15 @@ describe('RemoteWatcher', function() {
 
       it('rejects with the first error', async function() {
         await should(
-          this.watcher.pullMany(remoteDocs, { isInitialFetch: false })
+          this.watcher.processRemoteChanges(remoteDocs, {
+            isInitialFetch: false
+          })
         ).be.rejectedWith(new Error(remoteDocs[0]))
       })
 
       it('still tries to pull other files/dirs', async function() {
         await this.watcher
-          .pullMany(remoteDocs, { isInitialFetch: false })
+          .processRemoteChanges(remoteDocs, { isInitialFetch: false })
           .catch(() => {})
         should(apply.args[0][0]).have.properties({
           type: 'FileAddition',
@@ -621,7 +625,7 @@ describe('RemoteWatcher', function() {
           builders.remoteFile().build()
         ]
         await this.watcher
-          .pullMany(remoteDocs, { isInitialFetch: false })
+          .processRemoteChanges(remoteDocs, { isInitialFetch: false })
           .catch(() => {})
         should(apply).have.callCount(5)
         should(apply.args[0][0]).have.properties({
@@ -644,7 +648,7 @@ describe('RemoteWatcher', function() {
 
       it('releases the Pouch lock', async function() {
         await this.watcher
-          .pullMany(remoteDocs, { isInitialFetch: false })
+          .processRemoteChanges(remoteDocs, { isInitialFetch: false })
           .catch(() => {})
         const nextLockPromise = this.pouch.lock('nextLock')
         await should(nextLockPromise).be.fulfilled()
@@ -653,7 +657,7 @@ describe('RemoteWatcher', function() {
       it('does not update the remote sequence', async function() {
         const remoteSeq = await this.pouch.getRemoteSeq()
         await this.watcher
-          .pullMany(remoteDocs, { isInitialFetch: false })
+          .processRemoteChanges(remoteDocs, { isInitialFetch: false })
           .catch(() => {})
         should(this.pouch.getRemoteSeq()).be.fulfilledWith(remoteSeq)
       })
@@ -665,7 +669,9 @@ describe('RemoteWatcher', function() {
         .name('whatever')
         .build()
 
-      await this.watcher.pullMany([remoteDoc], { isInitialFetch: false })
+      await this.watcher.processRemoteChanges([remoteDoc], {
+        isInitialFetch: false
+      })
 
       should(apply).be.calledOnce()
       should(apply.args[0][0].doc).deepEqual(validMetadata(remoteDoc))
@@ -678,7 +684,9 @@ describe('RemoteWatcher', function() {
         _deleted: true
       }
 
-      await this.watcher.pullMany([remoteDeletion], { isInitialFetch: false })
+      await this.watcher.processRemoteChanges([remoteDeletion], {
+        isInitialFetch: false
+      })
 
       should(apply).be.calledOnce()
       should(apply.args[0][0].doc).deepEqual(remoteDeletion)
@@ -700,7 +708,9 @@ describe('RemoteWatcher', function() {
         .remoteDir((dirUpdatedOnce /*: MetadataRemoteDir */))
         .update()
 
-      await this.watcher.pullMany([dirUpdatedTwice], { isInitialFetch: false })
+      await this.watcher.processRemoteChanges([dirUpdatedTwice], {
+        isInitialFetch: false
+      })
       should(apply).be.calledThrice()
       should(apply.args[0][0].doc).deepEqual(validMetadata(dirUpdatedTwice))
       should(apply.args[1][0].doc).deepEqual(validMetadata(tree['dir/subdir/']))
@@ -715,7 +725,9 @@ describe('RemoteWatcher', function() {
         .remoteDir((dir /*: MetadataRemoteDir */))
         .update()
 
-      await this.watcher.pullMany([updatedDir], { isInitialFetch: false })
+      await this.watcher.processRemoteChanges([updatedDir], {
+        isInitialFetch: false
+      })
       should(apply).be.calledOnce()
       should(apply.args[0][0].doc).deepEqual(validMetadata(updatedDir))
     })
@@ -746,7 +758,7 @@ describe('RemoteWatcher', function() {
         .name('file3')
         .create()
 
-      await this.watcher.pullMany(
+      await this.watcher.processRemoteChanges(
         [
           dirUpdatedTwice,
           tree['dir/subdir/'],
