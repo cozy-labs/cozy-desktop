@@ -36,8 +36,6 @@ import type {
   CouchDBDeletion,
   CouchDBDoc,
   RemoteJsonDoc,
-  RemoteJsonFile,
-  RemoteJsonDir,
   RemoteFile,
   RemoteDir,
 } from './document'
@@ -247,7 +245,7 @@ class RemoteCozy {
                  executable: boolean|} */
   ) /*: Promise<MetadataRemoteInfo> */ {
     return this._withDomainErrors(data, options, async () => {
-      const file /* RemoteJsonFile*/ = await this.client.files.create(data, {
+      const file = await this.client.files.create(data, {
         ...options,
         noSanitize: true
       })
@@ -261,12 +259,10 @@ class RemoteCozy {
                  createdAt: string,
                  updatedAt: string|} */
   ) /*: Promise<MetadataRemoteInfo> */ {
-    const folder /*: RemoteJsonDir */ = await this.client.files.createDirectory(
-      {
-        ...options,
-        noSanitize: true
-      }
-    )
+    const folder = await this.client.files.createDirectory({
+      ...options,
+      noSanitize: true
+    })
     return this.toRemoteDoc(folder)
   }
 
@@ -281,14 +277,10 @@ class RemoteCozy {
                  ifMatch: string|} */
   ) /*: Promise<MetadataRemoteInfo> */ {
     return this._withDomainErrors(data, options, async () => {
-      const updated /*: RemoteJsonFile */ = await this.client.files.updateById(
-        id,
-        data,
-        {
-          ...options,
-          noSanitize: true
-        }
-      )
+      const updated = await this.client.files.updateById(id, data, {
+        ...options,
+        noSanitize: true
+      })
       return this.toRemoteDoc(updated)
     })
   }

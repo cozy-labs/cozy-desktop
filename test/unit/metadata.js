@@ -75,7 +75,8 @@ describe('metadata', function () {
         cozyMetadata: {
           createdOn: 'alice.mycozy.cloud'
         },
-        trashed: false
+        trashed: false,
+        relations: () => []
       }
       const doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
 
@@ -120,7 +121,8 @@ describe('metadata', function () {
         tags: ['foo'],
         type: 'directory',
         created_at: '2017-09-07T07:06:05Z',
-        updated_at: '2017-09-08T07:06:05Z'
+        updated_at: '2017-09-08T07:06:05Z',
+        relations: () => []
       }
 
       const doc = metadata.fromRemoteDoc(remoteDoc)

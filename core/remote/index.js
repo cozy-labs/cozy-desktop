@@ -61,7 +61,8 @@ const ROOT_DIR /*: MetadataRemoteDir */ = {
   created_at: '',
   updated_at: '',
   type: DIR_TYPE,
-  path: '/'
+  path: '/',
+  relations: () => []
 }
 
 /** `Remote` is the class that interfaces cozy-desktop with the remote Cozy.

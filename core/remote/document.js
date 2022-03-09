@@ -20,6 +20,10 @@ import type {
   DIR_TYPE as DIR
 } from './constants'
 
+// ('contents') => Array<JsonApiRef>
+// ('referenced_by') => Array<JsonApiRef>
+type RemoteRelations = any => Array<any>
+
 export type RemoteFileAttributes = {|
   type: FILE,
   class: string,
@@ -50,6 +54,7 @@ export type RemoteBase = {|
   cozyMetadata?: Object,
   metadata?: Object,
   restore_path?: string,
+  relations: RemoteRelations
 |}
 export type RemoteFile = {| ...RemoteBase, ...RemoteFileAttributes |}
 export type RemoteDir = {| ...RemoteBase, ...RemoteDirAttributes |}
@@ -129,25 +134,24 @@ export type JsonApiDirAttributes = {|
 |}
 
 // Old cozy-client-js responses type
-export type RemoteJsonFile = {|
+export type RemoteJsonDoc = {|
   _id: string,
   _rev: string,
   _type: string,
-  attributes: JsonApiFileAttributes,
+  attributes: JsonApiFileAttributes|JsonApiDirAttributes,
+  relations: RemoteRelations
 |}
-export type RemoteJsonDir = {|
-  _id: string,
-  _rev: string,
-  _type: string,
-  attributes: JsonApiDirAttributes,
-|}
-export type RemoteJsonDoc = RemoteJsonFile|RemoteJsonDir
 
 // New cozy-client responses types
 type JsonApiRef = {
   id: string,
   type: string,
 }
+
+type JsonApiRelationShips = {|
+  contents?: { data?: JsonApiRef[] },
+  referenced_by?: { data?: JsonApiRef | JsonApiRef[] },
+|}
 
 type JsonApiDeletion = {|
   id: string,
@@ -164,7 +168,7 @@ type JsonApiDoc =
     },
     links: Object,
     attributes: JsonApiFileAttributes|JsonApiDirAttributes,
-    relationships: { [string]: { data?: JsonApiRef | JsonApiRef[] } }
+    relationships: JsonApiRelationShips
   |}
   | JsonApiDeletion
 */
@@ -236,25 +240,25 @@ function withDefaultValues /*:: <T: JsonApiDirAttributes|JsonApiFileAttributes> 
   }
 }
 
-function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
-  json /*: T */
-) /*: RemoteDoc */ {
+function remoteJsonToRemoteDoc(json /*: RemoteJsonDoc */) /*: RemoteDoc */ {
   if (json.attributes.type === DIR_TYPE) {
-    const remoteDir = ({
+    const remoteDir = {
       type: DIR_TYPE,
       _id: json._id,
       _rev: json._rev,
-      ...withDefaultValues(json.attributes)
-    } /*: RemoteDir */)
+      ...withDefaultValues(json.attributes),
+      relations: json.relations
+    }
 
     return remoteDir
   } else {
-    const remoteFile = ({
+    const remoteFile = {
       type: FILE_TYPE,
       _id: json._id,
       _rev: json._rev,
-      ...withDefaultValues(json.attributes)
-    } /*: RemoteFile */)
+      ...withDefaultValues(json.attributes),
+      relations: json.relations
+    }
 
     return remoteFile
   }
@@ -275,17 +279,19 @@ function jsonApiToRemoteJsonDoc(
     throw new Error('Missing meta.rev attribute in JsonAPI resource.')
   }
 
-  return json.attributes.type === DIR_TYPE
-    ? ({
-        _id: json.id,
-        _type: json.type,
-        _rev: json.meta && json.meta.rev,
-        attributes: json.attributes
-      } /*: RemoteJsonDir */)
-    : ({
-        _id: json.id,
-        _type: json.type,
-        _rev: json.meta && json.meta.rev,
-        attributes: json.attributes
-      } /*: RemoteJsonFile */)
+  const { id, type, meta, attributes, relationships } = json
+  return {
+    _id: id,
+    _type: type,
+    _rev: (meta && meta.rev) || '',
+    attributes,
+    relations: relation => {
+      const { contents, referenced_by } = relationships
+      return relation === 'contents' && contents && contents.data
+        ? contents.data
+        : relation === 'referenced_by' && referenced_by && referenced_by.data
+        ? Array(referenced_by.data)
+        : []
+    }
+  }
 }
