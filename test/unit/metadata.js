@@ -98,7 +98,8 @@ describe('metadata', function() {
         executable: false,
         cozyMetadata: {
           createdOn: 'alice.mycozy.cloud'
-        }
+        },
+        needsContentFetching: false
       })
 
       remoteDoc.executable = true
@@ -135,7 +136,8 @@ describe('metadata', function() {
           created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
           updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at)
         },
-        tags: ['foo']
+        tags: ['foo'],
+        needsContentFetching: false
       })
     })
   })

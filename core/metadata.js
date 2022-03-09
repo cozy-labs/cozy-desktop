@@ -157,7 +157,8 @@ export type Metadata = {
   fileid?: string,
   moveFrom?: SavedMetadata,
   cozyMetadata?: Object,
-  metadata?: Object
+  metadata?: Object,
+  needsContentFetching: boolean
 }
 
 export type SavedMetadata = PouchRecord & Metadata
@@ -244,7 +245,8 @@ function fromRemoteDir(remoteDir /*: MetadataRemoteDir */) /*: Metadata */ {
     docType: localDocType(remoteDir.type),
     path: pathUtils.remoteToLocal(remoteDir.path),
     created_at: timestamp.roundedRemoteDate(remoteDir.created_at),
-    updated_at: timestamp.roundedRemoteDate(remoteDir.updated_at)
+    updated_at: timestamp.roundedRemoteDate(remoteDir.updated_at),
+    needsContentFetching: false
   }
 
   const fields = Object.getOwnPropertyNames(remoteDir).filter(
@@ -276,7 +278,8 @@ function fromRemoteFile(remoteFile /*: MetadataRemoteFile */) /*: Metadata */ {
     size: parseInt(remoteFile.size, 10),
     executable: !!remoteFile.executable,
     created_at: timestamp.roundedRemoteDate(remoteFile.created_at),
-    updated_at: timestamp.roundedRemoteDate(remoteFile.updated_at)
+    updated_at: timestamp.roundedRemoteDate(remoteFile.updated_at),
+    needsContentFetching: false
   }
 
   const fields = Object.getOwnPropertyNames(remoteFile).filter(
@@ -808,7 +811,8 @@ function buildDir(
     docType: 'folder',
     updated_at: stats.mtime.toISOString(),
     ino: stats.ino,
-    tags: []
+    tags: [],
+    needsContentFetching: false
   }
   // FIXME: we should probably not set remote at this point
   if (remote) {
@@ -845,7 +849,8 @@ function buildFile(
     class: className,
     size,
     executable,
-    tags: []
+    tags: [],
+    needsContentFetching: false
   }
   // FIXME: we should probably not set remote at this point
   if (remote) {

@@ -420,6 +420,10 @@ class Pouch {
     return results.rows.map(row => row.doc)
   }
 
+  async needingContentFetching() /*: Promise<SavedMetadata[]> */ {
+    return await this.getAll('needsContentFetching')
+  }
+
   /* Views */
 
   // Create all required views in the database
@@ -430,7 +434,8 @@ class Pouch {
           this.addByPathView,
           this.addByLocalPathView,
           this.addByChecksumView,
-          this.addByRemoteIdView
+          this.addByRemoteIdView,
+          this.addNeedsContentFetchingView
         ],
         err => {
           if (err) reject(err)
@@ -534,6 +539,16 @@ class Pouch {
       }
     }.toString()
     await this.createDesignDoc('byRemoteId', query)
+  }
+
+  async addNeedsContentFetchingView() {
+    const query = function(doc) {
+      if (doc.needsContentFetching && !doc.trashed) {
+        // $FlowFixMe
+        return emit(doc._id) // eslint-disable-line no-undef
+      }
+    }.toString()
+    await this.createDesignDoc('needsContentFetching', query)
   }
 
   // Create or update given design doc

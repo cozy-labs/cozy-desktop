@@ -179,7 +179,9 @@ class RemoteTestHelpers {
   }
 
   async simulateChanges(docs /*: * */) {
-    await this.side.watcher.pullMany(docs, { isInitialFetch: false })
+    await this.side.watcher.processRemoteChanges(docs, {
+      isInitialFetch: false
+    })
   }
 
   async readFile(path /*: string */) {
