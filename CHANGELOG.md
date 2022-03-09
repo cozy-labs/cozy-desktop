@@ -1,5 +1,20 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.33.0-beta.5 - 2022-03-09
+
+Improvements for all users:
+
+- Old files with a creation date seemingly more recent than their last
+  modification date can now be moved or renamed. Their last modification date
+  will be updated in the process to match the most recent date available.
+- Re-included directories that need their content to be fetched manually will be
+  marked as such until their content is actually retrieved so we can resume the
+  operation in case Cozy Desktop is stopped in the middle.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.33.0-beta.4 - 2022-03-02
 
 Improvements for macOS users:
