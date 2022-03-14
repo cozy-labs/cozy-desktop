@@ -1,5 +1,52 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.33.0 - 2022-03-15
+
+Improvements for all users:
+
+- The URL validation step of the on-boarding wizard is now able to detect your
+  Cozy root URL in more complex URLs (e.g. a photo album URL copied from your
+  Cozy Photos app in your browser).
+- When the server hosting your Cozy experiences issues, the Desktop client will
+  display a specific error message instead of telling you that no internet
+  connection is detected.
+- Files being transferred to or from your Cozy will now be displayed in the main
+  window's Recent tab with progress information.
+- You will now be able to completely reinitialize your Desktop client's
+  synchronization from the Settings tab without having to disconnect and then
+  reconnect your remote Cozy. Your selective synchronization configuration will
+  thus be kept.
+- You can now open your Cozy within a Desktop window with a Ctrl-click
+  (Cmd-click on macOS) on the "Open Cozy" button in the main window. You will
+  have to enter your credentials the first time.
+- You can now open folders in your Cozy with a Ctrl-click (Cmd-click on macOS)
+  on folder paths in the Recent tab of the main window or the "Open folder"
+  button.
+- Paths displayed in synchronization error messages for changes coming from the
+  remote Cozy will now open in Cozy Drive Web since they might not exist on the
+  local filesystem and the solution probably resides in remote actions.
+- Confirmation dialogs for reinitializing the synchronization and unlinking the
+  remote Cozy are more homogeneous and will prevent the main window from closing
+  until the requested action is confirmed or canceled.
+- Sub-directories excluded from a Desktop client's synchronization and their
+  content won't be fetched anymore when their parent directory is re-included.
+- Old files with a creation date seemingly more recent than their last
+  modification date can now be moved or renamed. Their last modification date
+  will be updated in the process to match the most recent date available.
+- Re-included directories that need their content to be fetched manually will be
+  marked as such until their content is actually retrieved so we can resume the
+  operation in case Cozy Desktop is stopped in the middle.
+
+Improvements for macOS users:
+
+- You should not see conflicts created anymore when a remote document whose name
+  contains multiple utf-8 characters encoded with NFC and NFD norms is
+  downloaded and saved on your local filesystem.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.33.0-beta.5 - 2022-03-09
 
 Improvements for all users:
