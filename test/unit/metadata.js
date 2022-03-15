@@ -74,7 +74,8 @@ describe('metadata', function () {
         updated_at: '2017-09-08T07:06:05Z',
         cozyMetadata: {
           createdOn: 'alice.mycozy.cloud'
-        }
+        },
+        trashed: false
       }
       const doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
 

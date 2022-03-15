@@ -4,7 +4,7 @@
  * @flow
  */
 
-const { uniq } = require('lodash')
+const posixPath = require('path').posix
 
 const {
   FILE_TYPE,
@@ -27,6 +27,7 @@ export type RemoteFileAttributes = {|
   md5sum: string,
   mime: string,
   size: string,
+  trashed: boolean,
 |}
 
 export type RemoteDirAttributes = {|
@@ -44,7 +45,6 @@ export type RemoteBase = {|
   dir_id: string,
   name: string,
   tags: string[],
-  trashed?: true,
   created_at: string,
   updated_at: string,
   cozyMetadata?: Object,
@@ -55,7 +55,43 @@ export type RemoteFile = {| ...RemoteBase, ...RemoteFileAttributes |}
 export type RemoteDir = {| ...RemoteBase, ...RemoteDirAttributes |}
 export type RemoteDoc = RemoteFile|RemoteDir
 
-export type RemoteDeletion = {|
+export type CouchDBChange = {|
+  id: string,
+  seq: string,
+  doc: CouchDBDoc|CouchDBDeletion,
+  changes: $ReadOnlyArray<{| rev: string |}>
+|}
+type CommonCouchDBAttributes = {|
+  _id: string,
+  _rev: string,
+  cozyMetadata: Object,
+  created_at: string,
+  dir_id: string,
+  metadata?: Object,
+  name: string,
+  path: string,
+  restore_path?: string,
+  updated_at: string,
+  tags: string[],
+|}
+export type CouchDBDoc = {|
+  ...CommonCouchDBAttributes,
+  type: FILE,
+  class: string,
+  executable?: boolean,
+  md5sum: string,
+  mime: string,
+  size: string,
+  trashed: boolean,
+|} | {|
+  ...CommonCouchDBAttributes,
+  type: DIR,
+  not_synchronized_on?: Array<{
+    id: string,
+    type: string
+  }>,
+|}
+export type CouchDBDeletion = {|
   _id: string,
   _rev: string,
   _deleted: true
@@ -71,7 +107,7 @@ export type JsonApiFileAttributes = {|
   name?: string,
   size?: string, // file only
   tags?: string[],
-  trashed?: true,
+  trashed: boolean,
   created_at: string,
   updated_at: string,
   cozyMetadata?: Object,
@@ -85,7 +121,6 @@ export type JsonApiDirAttributes = {|
   name?: string,
   path?: string, // folder only
   tags?: string[],
-  trashed?: true,
   created_at: string,
   updated_at: string,
   cozyMetadata?: Object,
@@ -137,46 +172,43 @@ type JsonApiDoc =
 module.exports = {
   specialId,
   dropSpecialDocs,
-  keepFiles,
-  parentDirIds,
   inRemoteTrash,
+  trashedDoc,
   withDefaultValues,
   remoteJsonToRemoteDoc,
   jsonApiToRemoteJsonDoc
 }
 
-function specialId(id /*: string */) {
+function isFile(
+  doc /*: { type: DIR } | { type: FILE } */
+) /*: boolean %checks */ {
+  return doc.type === FILE_TYPE
+}
+
+function specialId(id /*: string */) /*: boolean %checks */ {
   return id === ROOT_DIR_ID || id === TRASH_DIR_ID || id.startsWith('_design/')
 }
 
-function dropSpecialDocs(
-  docs /*: Array<RemoteDoc|RemoteDeletion> */
-) /*: Array<RemoteDoc|RemoteDeletion> */ {
+function dropSpecialDocs /*::<T: $ReadOnlyArray<{ _id: string }>>*/(
+  docs /*: T */
+) /*: T */ {
   return docs.filter(doc => !specialId(doc._id))
 }
 
-function isFile(doc /*: RemoteDoc|RemoteDeletion */) /*: boolean %checks */ {
-  return doc._deleted ? false : doc.type === FILE_TYPE
-}
-
-function keepFiles(
-  docs /*: Array<RemoteDoc|RemoteDeletion> */
-) /*: RemoteDoc[] */ {
-  // $FlowFixMe filter() removes the RemoteDeletion items
-  return docs.filter(isFile)
-}
-
-function parentDirIds(docs /*: RemoteDoc[] */) {
-  return uniq(docs.map(doc => doc && doc.dir_id))
-}
-
 function inRemoteTrash(
-  doc /*: { trashed?: true, type: FILE, path: string } | { trashed?: true, type: DIR, path: string } */
+  doc /*: { type: FILE, trashed: boolean } | { type: DIR, path: string } */
 ) /*: boolean %checks */ {
-  return (
-    !!doc.trashed ||
-    (doc.path != null && doc.path.startsWith(`/${TRASH_DIR_NAME}/`))
-  )
+  return isFile(doc) ? doc.trashed : doc.path.startsWith(`/${TRASH_DIR_NAME}/`)
+}
+
+function trashedDoc /*::<T: { type: FILE, trashed: boolean } | { type: DIR, path: string } > */(
+  doc /*: T */
+) /*: T */ {
+  return inRemoteTrash(doc)
+    ? doc
+    : isFile(doc)
+    ? { ...doc, trashed: true }
+    : { ...doc, path: posixPath.join('/', TRASH_DIR_NAME, doc.path) }
 }
 
 // The following attributes can be omitted by cozy-stack if not defined
@@ -230,13 +262,13 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
 
 function jsonApiToRemoteJsonDoc(
   json /*: JsonApiDoc */
-) /*: RemoteJsonDoc|RemoteDeletion */ {
+) /*: RemoteJsonDoc|CouchDBDeletion */ {
   if (json._deleted) {
     return ({
       _id: json.id,
       _rev: json.rev,
       _deleted: true
-    } /*: RemoteDeletion */)
+    } /*: CouchDBDeletion */)
   }
 
   if (!json.meta || !json.meta.rev) {

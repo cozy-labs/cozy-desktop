@@ -67,7 +67,6 @@ module.exports = class RemoteBaseBuilder /*:: <T: MetadataRemoteInfo> */ {
   }
 
   trashed() /*: this */ {
-    this.remoteDoc.trashed = true
     this.remoteDoc.restore_path = posix.dirname(this.remoteDoc.path)
     return this.inDir({
       _id: TRASH_DIR_ID,
@@ -76,7 +75,6 @@ module.exports = class RemoteBaseBuilder /*:: <T: MetadataRemoteInfo> */ {
   }
 
   restored() /*: this */ {
-    if (this.remoteDoc.trashed) delete this.remoteDoc.trashed
     if (this.remoteDoc.restore_path) delete this.remoteDoc.restore_path
     return this.inRootDir()
   }

@@ -8,7 +8,10 @@ const RemoteBaseBuilder = require('./base')
 const ChecksumBuilder = require('../checksum')
 const cozyHelpers = require('../../helpers/cozy')
 
-const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
+const {
+  inRemoteTrash,
+  remoteJsonToRemoteDoc
+} = require('../../../../core/remote/document')
 const { FILES_DOCTYPE } = require('../../../../core/remote/constants')
 
 /*::
@@ -116,6 +119,16 @@ module.exports = class RemoteFileBuilder extends (
     return this
   }
 
+  trashed() /*: this */ {
+    this.remoteDoc.trashed = true
+    return super.trashed()
+  }
+
+  restored() /*: this */ {
+    this.remoteDoc.trashed = false
+    return super.restored()
+  }
+
   async create() /*: Promise<MetadataRemoteFile> */ {
     const cozy = this._ensureCozy()
 
@@ -156,7 +169,7 @@ module.exports = class RemoteFileBuilder extends (
 
     const parentDir = await cozy.files.statById(this.remoteDoc.dir_id)
 
-    const json = this.remoteDoc.trashed
+    const json = inRemoteTrash(this.remoteDoc)
       ? await cozy.files.trashById(this.remoteDoc._id, { dontRetry: true })
       : this._data
       ? await cozy.files.updateById(this.remoteDoc._id, this._data, {
