@@ -30,7 +30,8 @@ const buildChange = (sideName, doc, was) => {
       sideName,
       type: 'DirMove',
       doc,
-      was
+      was,
+      descendantMoves: []
     }
   }
 }
@@ -98,7 +99,11 @@ const buildDescendantChange = (
     type: 'DescendantChange',
     doc: _.clone(child.doc),
     was: _.clone(child.was),
-    ancestorPath: parent.doc.path
+    ancestor: parent,
+    descendantMoves:
+      child.type === 'DirMove' || child.type === 'DescendantChange'
+        ? child.descendantMoves
+        : []
   }
   if (child.type === 'FileMove') descendantChange.update = _.clone(child.update)
 
@@ -126,7 +131,8 @@ const buildMoveInsideMove = (
       type: 'DirMove',
       doc: _.clone(child.doc),
       was: correctedSrc,
-      needRefetch: true
+      needRefetch: true,
+      descendantMoves: child.descendantMoves
     }
   }
 }
@@ -213,7 +219,6 @@ const squashMoves = (
   const change = buildChange(sideName, doc, was)
   encounteredMoves.push(_.cloneDeep(change))
 
-  // TODO: ignore descendants
   for (const previousChange of previousChanges) {
     if (
       previousChange.type === 'FileTrashing' &&

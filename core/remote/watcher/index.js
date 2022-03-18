@@ -530,9 +530,10 @@ class RemoteWatcher {
         case 'DescendantChange':
           log.debug(
             { path, remoteId: change.doc.remote._id },
-            `${_.get(change, 'doc.docType')} was moved as descendant of ${
-              change.ancestorPath
-            }`
+            `${_.get(change, 'doc.docType')} was moved as descendant of ${_.get(
+              change,
+              'ancestor.doc.path'
+            )}`
           )
           break
         case 'IgnoredChange':
@@ -600,8 +601,7 @@ class RemoteWatcher {
               change.was.childMove = false
             }
             const newRemoteRevs /*: RemoteRevisionsByID */ = {}
-            const descendants = change.descendantMoves || []
-            for (let descendant of descendants) {
+            for (const descendant of change.descendantMoves) {
               if (descendant.doc.remote) {
                 newRemoteRevs[descendant.doc.remote._id] =
                   descendant.doc.remote._rev
@@ -613,7 +613,7 @@ class RemoteWatcher {
               change.was,
               newRemoteRevs
             )
-            for (let descendant of descendants) {
+            for (const descendant of change.descendantMoves) {
               if (descendant.update) {
                 await this.prep.updateFileAsync(sideName, descendant.doc)
               }
