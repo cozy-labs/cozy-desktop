@@ -1572,36 +1572,43 @@ describe('RemoteWatcher', function() {
             old
           )
 
+        const movedSubsubdir = {
+          type: 'DescendantChange',
+          oldPath: path.normalize('src/parent/child'),
+          path: path.normalize('dst/parent/child'),
+          ancestorPath: path.normalize('dst/parent'),
+          descendantMoves: []
+        }
+        const movedSubdir = {
+          type: 'DescendantChange',
+          oldPath: path.normalize('src/parent'),
+          path: path.normalize('dst/parent'),
+          ancestorPath: 'dst',
+          descendantMoves: []
+        }
+        const movedDir = {
+          type: 'DirMove',
+          oldPath: 'src',
+          path: 'dst',
+          ancestorPath: undefined,
+          descendantMoves: [movedSubdir, movedSubsubdir]
+        }
+
+        const mapChange = change => ({
+          type: change.type,
+          oldPath: change.was.path,
+          path: change.doc.path,
+          ancestorPath: change.ancestor && change.ancestor.doc.path,
+          descendantMoves: change.descendantMoves.map(mapChange)
+        })
         const shouldBeExpected = result => {
           result.should.have.length(3)
           result
-            .map(x => ({
-              type: x.type,
-              oldPath: x.was.path,
-              path: x.doc.path,
-              ancestorPath: x.ancestorPath
-            }))
-            .sort((a, b) => a.path - b.path)
-            .should.deepEqual([
-              {
-                type: 'DirMove',
-                oldPath: 'src',
-                path: 'dst',
-                ancestorPath: undefined
-              },
-              {
-                type: 'DescendantChange',
-                oldPath: path.normalize('src/parent'),
-                path: path.normalize('dst/parent'),
-                ancestorPath: 'dst'
-              },
-              {
-                type: 'DescendantChange',
-                oldPath: path.normalize('src/parent/child'),
-                path: path.normalize('dst/parent/child'),
-                ancestorPath: path.normalize('dst/parent')
-              }
-            ])
+            .map(mapChange)
+            .sort(({ path: pathA }, { path: pathB }) => {
+              return pathA < pathB ? -1 : pathA > pathB ? 1 : 0
+            })
+            .should.deepEqual([movedDir, movedSubdir, movedSubsubdir])
         }
 
         shouldBeExpected(
