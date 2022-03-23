@@ -107,11 +107,7 @@ async function getDirectoryContent(context) {
       } = j
       if (_deleted) continue
 
-      const parentPath = path
-        .dirname(dirPath)
-        .split('/')
-        .slice(1)
-        .join('.')
+      const parentPath = path.dirname(dirPath).split('/').slice(1).join('.')
       const key = parentPath === '' ? dir.name : `${dir.name}.${parentPath}`
       const parent = _.get(dirContent, key)
       if (!parent) continue
@@ -132,10 +128,11 @@ async function showTree(context) {
   console.log(treeify.asTree(tree))
 }
 
-app.whenReady().then(async () => {
-  const { COZY_DESKTOP_DIR } = process.env
+app
+  .whenReady()
+  .then(async () => {
+    const { COZY_DESKTOP_DIR } = process.env
 
-  try {
     const config = new Config(path.resolve(COZY_DESKTOP_DIR, '.cozy-desktop'))
     const oldClient = new OldCozyClient({
       cozyURL: config.cozyUrl,
@@ -151,21 +148,18 @@ app.whenReady().then(async () => {
     const { list, add, remove } = args()
     if (list || (add.length === 0 && remove.length === 0)) {
       await showTree(context)
-      app.exit(0)
+      return
     } else {
-      changeDirExclusions(context, { add, remove })
-        .then(() => {
-          // eslint-disable-next-line no-console
-          console.log('Exclusions changed.')
-          app.exit(0) // eslint-disable-line no-process-exit
-        })
-        .catch(err => {
-          // eslint-disable-next-line no-console
-          console.error(err)
-          app.exit(1) // eslint-disable-line no-process-exit
-        })
+      await changeDirExclusions(context, { add, remove })
+      // eslint-disable-next-line no-console
+      console.log('Exclusions changed.')
+      return
     }
-  } catch (err) {
+  })
+  .then(() => {
+    return app.exit(0) // eslint-disable-line no-process-exit
+  })
+  .catch(err => {
     if (err.message === 'Device not configured') {
       // eslint-disable-next-line no-console
       console.log('\nYou need to register a dev client first.\n')
@@ -174,5 +168,4 @@ app.whenReady().then(async () => {
       console.error(err)
     }
     app.exit(1)
-  }
-})
+  })

@@ -18,10 +18,10 @@ describe('core/local/atom/add_infos.loop()', () => {
 
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('instanciate builders', async function() {
+  beforeEach('instanciate builders', async function () {
     builders = new Builders({ pouch: this.pouch })
   })
-  beforeEach('create step opts', async function() {
+  beforeEach('create step opts', async function () {
     this.config.syncPath = path.dirname(__dirname)
     opts = this
     filepath = path.basename(__filename)
@@ -40,9 +40,7 @@ describe('core/local/atom/add_infos.loop()', () => {
     channel.push(batch)
     const enhancedChannel = addInfos.loop(channel, opts)
     const enhancedBatch = await enhancedChannel.pop()
-    should(enhancedBatch)
-      .be.an.Array()
-      .and.have.length(batch.length)
+    should(enhancedBatch).be.an.Array().and.have.length(batch.length)
   })
 
   it('adds specific infos for specific events', async () => {
@@ -81,11 +79,8 @@ describe('core/local/atom/add_infos.loop()', () => {
     const channel = new Channel()
     channel.push(batch)
     const enhancedChannel = addInfos.loop(channel, opts)
-    const [
-      deletedEvent,
-      ignoredEvent,
-      ...otherEvents
-    ] = await enhancedChannel.pop()
+    const [deletedEvent, ignoredEvent, ...otherEvents] =
+      await enhancedChannel.pop()
     should(deletedEvent).eql({
       action: batch[0].action,
       kind: 'directory',
@@ -105,19 +100,9 @@ describe('core/local/atom/add_infos.loop()', () => {
   context('when deleted event kind is unknown', () => {
     context('and document exists in Pouch', () => {
       let file, dir
-      beforeEach('populate Pouch with documents', async function() {
-        file = await builders
-          .metafile()
-          .path('file')
-          .ino(1)
-          .upToDate()
-          .create()
-        dir = await builders
-          .metadir()
-          .path('dir')
-          .ino(2)
-          .upToDate()
-          .create()
+      beforeEach('populate Pouch with documents', async function () {
+        file = await builders.metafile().path('file').ino(1).upToDate().create()
+        dir = await builders.metadir().path('dir').ino(2).upToDate().create()
       })
 
       it('looks up existing document doctype from Pouch', async () => {
@@ -196,24 +181,14 @@ describe('core/local/atom/add_infos.loop()', () => {
     'when deleted document has different remote & synced path in Pouch',
     () => {
       let file, dir
-      beforeEach('populate Pouch with documents', async function() {
-        file = await builders
-          .metafile()
-          .path('file')
-          .ino(1)
-          .upToDate()
-          .create()
+      beforeEach('populate Pouch with documents', async function () {
+        file = await builders.metafile().path('file').ino(1).upToDate().create()
         await builders
           .metafile(file)
           .path('other-file')
           .changedSide('remote')
           .create()
-        dir = await builders
-          .metadir()
-          .path('dir')
-          .ino(2)
-          .upToDate()
-          .create()
+        dir = await builders.metadir().path('dir').ino(2).upToDate().create()
         await builders
           .metadir(dir)
           .path('other-dir')

@@ -293,16 +293,12 @@ class Remote /*:: implements Reader, Writer */ {
       ifMatch: doc.remote._rev
     }
 
-    try {
-      const newRemoteDoc = await this.remoteCozy.updateAttributesById(
-        doc.remote._id,
-        attrs,
-        opts
-      )
-      metadata.updateRemote(doc, newRemoteDoc)
-    } catch (err) {
-      throw err
-    }
+    const newRemoteDoc = await this.remoteCozy.updateAttributesById(
+      doc.remote._id,
+      attrs,
+      opts
+    )
+    metadata.updateRemote(doc, newRemoteDoc)
   }
 
   async moveAsync /*::<T: Metadata|SavedMetadata> */(
@@ -338,16 +334,12 @@ class Remote /*:: implements Reader, Writer */ {
       await this.trashAsync(overwrite)
     }
 
-    try {
-      const newRemoteDoc = await this.remoteCozy.updateAttributesById(
-        remoteId,
-        attrs,
-        opts
-      )
-      metadata.updateRemote(newMetadata, newRemoteDoc)
-    } catch (err) {
-      throw err
-    }
+    const newRemoteDoc = await this.remoteCozy.updateAttributesById(
+      remoteId,
+      attrs,
+      opts
+    )
+    metadata.updateRemote(newMetadata, newRemoteDoc)
 
     if (overwrite && isOverwritingTarget) {
       try {
@@ -479,10 +471,7 @@ class Remote /*:: implements Reader, Writer */ {
 
 /** Extract the remote parent path and leaf name from a local path */
 function dirAndName(localPath /*: string */) /*: [string, string] */ {
-  const dir = path
-    .dirname(localPath)
-    .split(path.sep)
-    .join('/')
+  const dir = path.dirname(localPath).split(path.sep).join('/')
   const name = path.basename(localPath)
   return [dir, name]
 }

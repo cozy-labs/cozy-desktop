@@ -14,12 +14,12 @@ const pouchHelpers = require('../support/helpers/pouch')
 const Builders = require('../support/builders')
 const stubSide = require('../support/doubles/side')
 
-describe('Merge Helpers', function() {
+describe('Merge Helpers', function () {
   let builders
 
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('instanciate merge', function() {
+  beforeEach('instanciate merge', function () {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
     this.merge.putFolderAsync = sinon.stub()
@@ -37,28 +37,22 @@ describe('Merge Helpers', function() {
       return conflict.local
     })
   })
-  beforeEach('prepare builders', function() {
+  beforeEach('prepare builders', function () {
     builders = new Builders(this)
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  describe('resolveConflict', function() {
-    it('does not change the original doc path', async function() {
-      const doc = builders
-        .metadir()
-        .path('foo/bar')
-        .build()
+  describe('resolveConflict', function () {
+    it('does not change the original doc path', async function () {
+      const doc = builders.metadir().path('foo/bar').build()
       await this.merge.resolveConflictAsync(this.side, doc)
       should(this.merge.local.resolveConflict).have.been.called()
       should(doc.path).eql(path.normalize('foo/bar'))
     })
 
-    it('appends -conflict- and the date to the path', async function() {
-      const doc = builders
-        .metadir()
-        .path('foo/bar')
-        .build()
+    it('appends -conflict- and the date to the path', async function () {
+      const doc = builders.metadir().path('foo/bar').build()
       const dstDoc = await this.merge.resolveConflictAsync(this.side, doc)
       should(this.merge.local.resolveConflict).have.been.called()
       should(dstDoc.path)
@@ -66,11 +60,8 @@ describe('Merge Helpers', function() {
         .and.match(conflicts.CONFLICT_REGEXP)
     })
 
-    it('preserves the extension', async function() {
-      const doc = builders
-        .metafile()
-        .path('foo/bar.jpg')
-        .build()
+    it('preserves the extension', async function () {
+      const doc = builders.metafile().path('foo/bar.jpg').build()
       const dstDoc = await this.merge.resolveConflictAsync(this.side, doc)
       should(this.merge.local.resolveConflict).have.been.called()
       should(dstDoc.path)
@@ -79,7 +70,7 @@ describe('Merge Helpers', function() {
         .and.endWith('.jpg')
     })
 
-    it('do not chain conflicts', async function() {
+    it('do not chain conflicts', async function () {
       const doc = builders
         .metafile()
         .path('foo/baz-conflict-2018-11-08T01_02_03.004Z.jpg')

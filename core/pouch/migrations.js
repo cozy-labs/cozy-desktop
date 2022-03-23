@@ -4,7 +4,7 @@
  */
 
 const PouchDB = require('pouchdb')
-const uuid = require('uuid/v4')
+const uuid = require('uuid').v4
 const path = require('path')
 
 const { PouchError } = require('./error')
@@ -447,14 +447,15 @@ async function migrationDBPath(
   originalDBInfo /*: PouchDBInfo */
 ) /*: Promise<string> */ {
   const date = new Date()
-  const dateString = `${date.getFullYear()}-${date.getMonth() +
-    1}-${date.getDate()}`
+  const dateString = `${date.getFullYear()}-${
+    date.getMonth() + 1
+  }-${date.getDate()}`
   const safeUUID = uuid().replace(/-/g, '')
   return `${originalDBInfo.db_name}-migration-${dateString}-${safeUUID}`
 }
 
 async function replicateDB(fromDB /*: PouchDB */, toDB /*: PouchDB */) {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     fromDB.replicate
       .to(toDB)
       .on('complete', async () => {

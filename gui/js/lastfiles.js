@@ -20,7 +20,7 @@ const writeJSON = (data, callback) => {
 }
 
 const init = desktop => {
-  persistQueue = Promise.promisifyAll(async.queue(writeJSON))
+  persistQueue = async.queue(writeJSON)
   lastFilesPath = path.join(desktop.basePath, 'last-files')
   lastFiles = new Promise(resolve => {
     fs.readFile(lastFilesPath, 'utf-8', (err, data) => {

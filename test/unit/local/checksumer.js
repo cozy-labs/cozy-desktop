@@ -9,9 +9,9 @@ const { Readable } = require('stream')
 const { init } = require('../../../core/local/checksumer')
 
 describe('local/checksumer', () => {
-  let checksumer
-  let sandbox = sinon.sandbox.create()
+  const sandbox = sinon.createSandbox()
 
+  let checksumer
   beforeEach('init', () => {
     checksumer = init()
   })
@@ -62,7 +62,7 @@ describe('local/checksumer', () => {
         ).be.fulfilledWith('+HBGS7uN4XdB0blqLv5tFQ==')
       })
 
-      it.skip('fails on successive errors', async function() {
+      it.skip('fails on successive errors', async function () {
         this.timeout(60000)
         createReadStream.callsFake(() => {
           return busyStream()

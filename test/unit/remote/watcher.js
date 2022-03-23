@@ -59,22 +59,14 @@ const saveTree = async (remoteTree, builders) => {
   for (const key in remoteTree) {
     const remoteDoc = remoteTree[key]
     if (remoteDoc.type === 'folder') {
-      await builders
-        .metadir()
-        .fromRemote(remoteDoc)
-        .upToDate()
-        .create()
+      await builders.metadir().fromRemote(remoteDoc).upToDate().create()
     } else {
-      await builders
-        .metafile()
-        .fromRemote(remoteDoc)
-        .upToDate()
-        .create()
+      await builders.metafile().fromRemote(remoteDoc).upToDate().create()
     }
   }
 }
 
-describe('RemoteWatcher', function() {
+describe('RemoteWatcher', function () {
   let builders, remoteTree /*: Object */
 
   before('instanciate config', configHelpers.createConfig)
@@ -92,7 +84,7 @@ describe('RemoteWatcher', function() {
     this.watcher = new RemoteWatcher(this)
     builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
-  beforeEach(async function() {
+  beforeEach(async function () {
     remoteTree = await builders.createRemoteTree([
       'my-folder/',
       'my-folder/folder-1/',
@@ -104,7 +96,7 @@ describe('RemoteWatcher', function() {
     ])
     await saveTree(remoteTree, builders)
   })
-  afterEach(function() {
+  afterEach(function () {
     this.watcher.stop()
   })
   afterEach(function removeEventListeners() {
@@ -114,7 +106,7 @@ describe('RemoteWatcher', function() {
   afterEach(cozyHelpers.deleteAll)
   after(configHelpers.cleanConfig)
 
-  describe('start', function() {
+  describe('start', function () {
     const fatalError = new remoteErrors.RemoteError({
       code: remoteErrors.COZY_CLIENT_REVOKED_CODE,
       message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
@@ -122,18 +114,18 @@ describe('RemoteWatcher', function() {
     })
     const nonFatalError = new Error('from watch')
 
-    beforeEach(function() {
+    beforeEach(function () {
       sinon.stub(this.watcher, 'watch')
       sinon.spy(this.events, 'emit')
 
       this.watcher.watch.resolves()
     })
-    afterEach(function() {
+    afterEach(function () {
       this.watcher.watch.restore()
       this.events.emit.restore()
     })
 
-    it('starts the watch timeout loop', async function() {
+    it('starts the watch timeout loop', async function () {
       sinon.spy(this.watcher, 'resetTimeout')
 
       await this.watcher.start()
@@ -144,7 +136,7 @@ describe('RemoteWatcher', function() {
       this.watcher.resetTimeout.restore()
     })
 
-    it('can be called multiple times without resetting the timeout', async function() {
+    it('can be called multiple times without resetting the timeout', async function () {
       await this.watcher.start()
       const timeoutID = this.watcher.watchTimeout.ref()
       await this.watcher.start()
@@ -152,7 +144,7 @@ describe('RemoteWatcher', function() {
       should(this.watcher.watchTimeout.ref()).eql(timeoutID)
     })
 
-    it('emits a RemoteWatcher:fatal event on fatal error during first watch()', async function() {
+    it('emits a RemoteWatcher:fatal event on fatal error during first watch()', async function () {
       this.watcher.watch.resolves(fatalError)
 
       await this.watcher.start()
@@ -162,7 +154,7 @@ describe('RemoteWatcher', function() {
       )
     })
 
-    it('emits a RemoteWatcher:fatal event on fatal error during second watch()', async function() {
+    it('emits a RemoteWatcher:fatal event on fatal error during second watch()', async function () {
       this.watcher.watch
         .onFirstCall()
         .resolves()
@@ -177,7 +169,7 @@ describe('RemoteWatcher', function() {
       )
     })
 
-    it('emits a RemoteWatcher:error event on non-fatal error during first watch()', async function() {
+    it('emits a RemoteWatcher:error event on non-fatal error during first watch()', async function () {
       this.watcher.watch.resolves(nonFatalError)
 
       await this.watcher.start()
@@ -187,7 +179,7 @@ describe('RemoteWatcher', function() {
       )
     })
 
-    it('emits a RemoteWatcher:error event on non-fatal error during second watch()', async function() {
+    it('emits a RemoteWatcher:error event on non-fatal error during second watch()', async function () {
       this.watcher.watch
         .onFirstCall()
         .resolves()
@@ -203,23 +195,23 @@ describe('RemoteWatcher', function() {
     })
   })
 
-  describe('stop', function() {
-    beforeEach(function() {
+  describe('stop', function () {
+    beforeEach(function () {
       sinon.stub(this.watcher, 'watch').resolves()
     })
 
-    afterEach(function() {
+    afterEach(function () {
       this.watcher.watch.restore()
     })
 
-    it('ensures watch is not called anymore', async function() {
+    it('ensures watch is not called anymore', async function () {
       await this.watcher.start()
       this.watcher.stop()
       should(this.watcher.running).be.false()
       should(this.watcher.watchTimeout._destroyed).be.true()
     })
 
-    it('can be called multiple times', async function() {
+    it('can be called multiple times', async function () {
       await this.watcher.start()
       this.watcher.stop()
       this.watcher.stop()
@@ -228,8 +220,8 @@ describe('RemoteWatcher', function() {
     })
   })
 
-  describe('resetTimeout', function() {
-    beforeEach(async function() {
+  describe('resetTimeout', function () {
+    beforeEach(async function () {
       sinon.stub(this.watcher, 'watch')
       sinon.spy(this.events, 'emit')
 
@@ -238,13 +230,13 @@ describe('RemoteWatcher', function() {
       this.watcher.watch.resetHistory()
     })
 
-    afterEach(function() {
+    afterEach(function () {
       this.events.emit.restore()
       this.watcher.watch.restore()
       this.watcher.stop()
     })
 
-    it('clears the watch timeout', async function() {
+    it('clears the watch timeout', async function () {
       sinon.spy(global, 'clearTimeout')
 
       const timeoutID = this.watcher.watchTimeout
@@ -255,12 +247,12 @@ describe('RemoteWatcher', function() {
     })
 
     context('when the watcher is running', () => {
-      it('calls watch()', async function() {
+      it('calls watch()', async function () {
         await this.watcher.resetTimeout()
         should(this.watcher.watch).have.been.calledOnce()
       })
 
-      it('schedules another watch timeout', async function() {
+      it('schedules another watch timeout', async function () {
         const timeoutID = this.watcher.watchTimeout
         await this.watcher.resetTimeout()
         should(this.watcher.watchTimeout._destroyed).be.false()
@@ -268,13 +260,13 @@ describe('RemoteWatcher', function() {
       })
 
       context('but is stopped while watch() was being executed', () => {
-        beforeEach(function() {
+        beforeEach(function () {
           this.watcher.watch.callsFake(async () => {
             this.watcher.running = false
           })
         })
 
-        it('does not schedule another watch timeout', async function() {
+        it('does not schedule another watch timeout', async function () {
           await this.watcher.resetTimeout()
           should(this.watcher.watch).have.been.calledOnce()
           should(this.watcher.watchTimeout._destroyed).be.true()
@@ -283,11 +275,11 @@ describe('RemoteWatcher', function() {
     })
 
     context('when the watcher is stopped', () => {
-      beforeEach(function() {
+      beforeEach(function () {
         this.watcher.running = false
       })
 
-      it('does not call watch()', async function() {
+      it('does not call watch()', async function () {
         await this.watcher.resetTimeout()
         should(this.watcher.watch).not.have.been.called()
       })
@@ -298,7 +290,7 @@ describe('RemoteWatcher', function() {
       let err
 
       context('when next #watch() has no chance to work anymore', () => {
-        beforeEach(function() {
+        beforeEach(function () {
           err = new remoteErrors.RemoteError({
             code: remoteErrors.COZY_CLIENT_REVOKED_CODE,
             message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
@@ -307,13 +299,13 @@ describe('RemoteWatcher', function() {
           this.watcher.watch.resolves(err)
         })
 
-        it('stops the watcher', async function() {
+        it('stops the watcher', async function () {
           await this.watcher.resetTimeout()
           should(this.watcher.running).be.false()
         })
 
         context('during a scheduled run', () => {
-          it('emits a RemoteWatcher:fatal event', async function() {
+          it('emits a RemoteWatcher:fatal event', async function () {
             await this.watcher.resetTimeout()
             await should(this.events.emit).have.been.calledWith(
               'RemoteWatcher:fatal',
@@ -323,13 +315,13 @@ describe('RemoteWatcher', function() {
         })
 
         context('during a manual run', () => {
-          it('returns the error', async function() {
+          it('returns the error', async function () {
             await should(
               this.watcher.resetTimeout({ manualRun: true })
             ).be.fulfilledWith(err)
           })
 
-          it('does not emit any event', async function() {
+          it('does not emit any event', async function () {
             await this.watcher.resetTimeout({ manualRun: true })
             await should(this.events.emit).not.have.been.called()
           })
@@ -337,7 +329,7 @@ describe('RemoteWatcher', function() {
       })
 
       context('when next #watch() could work', () => {
-        beforeEach(function() {
+        beforeEach(function () {
           err = new remoteErrors.RemoteError({
             code: remoteErrors.UNREACHABLE_COZY_CODE,
             message: 'Cannot reach remote Cozy',
@@ -346,13 +338,13 @@ describe('RemoteWatcher', function() {
           this.watcher.watch.resolves(err)
         })
 
-        it('does not stop the watcher', async function() {
+        it('does not stop the watcher', async function () {
           await this.watcher.resetTimeout()
           should(this.watcher.running).be.true()
         })
 
         context('during a scheduled run', () => {
-          it('emits a RemoteWatcher:error event', async function() {
+          it('emits a RemoteWatcher:error event', async function () {
             await this.watcher.resetTimeout()
             await should(this.events.emit).have.been.calledWith(
               'RemoteWatcher:error',
@@ -362,13 +354,13 @@ describe('RemoteWatcher', function() {
         })
 
         context('during a manual run', () => {
-          it('returns the error', async function() {
+          it('returns the error', async function () {
             await should(
               this.watcher.resetTimeout({ manualRun: true })
             ).be.fulfilledWith(err)
           })
 
-          it('does not emit any event', async function() {
+          it('does not emit any event', async function () {
             await this.watcher.resetTimeout({ manualRun: true })
             await should(this.events.emit).not.have.been.called()
           })
@@ -377,12 +369,12 @@ describe('RemoteWatcher', function() {
     })
   })
 
-  describe('watch', function() {
+  describe('watch', function () {
     const lastLocalSeq = '123'
     const lastRemoteSeq = lastLocalSeq + '456'
 
     let changes
-    beforeEach(function() {
+    beforeEach(function () {
       changes = {
         isInitialFetch: false,
         last_seq: String(Number(lastRemoteSeq) + 2), // XXX: Include the two changes returned
@@ -390,7 +382,7 @@ describe('RemoteWatcher', function() {
       }
     })
 
-    beforeEach(function() {
+    beforeEach(function () {
       sinon.stub(this.pouch, 'getRemoteSeq')
       sinon.stub(this.pouch, 'setRemoteSeq')
       sinon.stub(this.watcher, 'processRemoteChanges')
@@ -402,7 +394,7 @@ describe('RemoteWatcher', function() {
       this.remoteCozy.changes.resolves(changes)
     })
 
-    afterEach(function() {
+    afterEach(function () {
       this.events.emit.restore()
       this.remoteCozy.changes.restore()
       this.watcher.processRemoteChanges.restore()
@@ -410,14 +402,14 @@ describe('RemoteWatcher', function() {
       this.pouch.getRemoteSeq.restore()
     })
 
-    it('pulls the changed files/dirs', async function() {
+    it('pulls the changed files/dirs', async function () {
       await this.watcher.watch()
       should(this.watcher.processRemoteChanges)
         .have.been.calledOnce()
         .and.be.calledWithExactly(changes.docs)
     })
 
-    it('updates the last update sequence in local db', async function() {
+    it('updates the last update sequence in local db', async function () {
       await this.watcher.watch()
       should(this.pouch.setRemoteSeq)
         .have.been.calledOnce()
@@ -428,7 +420,7 @@ describe('RemoteWatcher', function() {
       const randomMessage = faker.random.words
       let err
 
-      beforeEach(function() {
+      beforeEach(function () {
         const response = {}
         // FetchError objects defined in `cozy-stack-client` have the same
         // signature as FetchError objects defined in `cozy-client-js`.
@@ -436,7 +428,7 @@ describe('RemoteWatcher', function() {
         this.remoteCozy.changes.rejects(err)
       })
 
-      it('resolves with a higher-level error', async function() {
+      it('resolves with a higher-level error', async function () {
         err.status = 400 // Revoked
         await should(this.watcher.watch()).be.fulfilledWith(
           new remoteErrors.RemoteError({
@@ -467,11 +459,11 @@ describe('RemoteWatcher', function() {
         }
       }
 
-      beforeEach(function() {
+      beforeEach(function () {
         this.watcher.processRemoteChanges.throws(reservedIdsError)
       })
 
-      it('does not return client revoked error', async function() {
+      it('does not return client revoked error', async function () {
         should(await this.watcher.watch()).match({
           code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
         })
@@ -479,17 +471,17 @@ describe('RemoteWatcher', function() {
     })
 
     context('when a fetched directory has been modified more than once', () => {
-      beforeEach(function() {
+      beforeEach(function () {
         this.prep.putFolderAsync.callsFake(async (side, doc) => {
           metadata.markSide(side, doc, doc)
           await this.pouch.put(doc)
         })
       })
-      afterEach(function() {
+      afterEach(function () {
         this.prep.putFolderAsync.restore()
       })
 
-      it('it fetches its content as a potentially re-included directory', async function() {
+      it('it fetches its content as a potentially re-included directory', async function () {
         const remoteDocs = [
           builders.remoteFile().build(),
           builders
@@ -513,16 +505,14 @@ describe('RemoteWatcher', function() {
         const spy = sinon.spy(this.remoteCozy, 'getDirectoryContent')
         try {
           await this.watcher.watch()
-          should(spy)
-            .have.been.calledOnce()
-            .and.calledWith(remoteDocs[1])
+          should(spy).have.been.calledOnce().and.calledWith(remoteDocs[1])
         } finally {
           spy.restore()
         }
       })
 
       context('when fetching changes for the first time', () => {
-        it('does not fetch the content of modified directories', async function() {
+        it('does not fetch the content of modified directories', async function () {
           // Restored in a "parent" afterEach
           this.pouch.getRemoteSeq.resolves(INITIAL_SEQ)
           // Restored in a "parent" afterEach
@@ -563,11 +553,11 @@ describe('RemoteWatcher', function() {
     return doc
   }
 
-  describe('processRemoteChanges', function() {
+  describe('processRemoteChanges', function () {
     let apply
     let findMaybe
     let remoteDocs
-    beforeEach(function() {
+    beforeEach(function () {
       apply = sinon.stub(this.watcher, 'apply')
       findMaybe = sinon.stub(this.remoteCozy, 'findMaybe')
       remoteDocs = [
@@ -576,12 +566,12 @@ describe('RemoteWatcher', function() {
       ]
     })
 
-    afterEach(function() {
+    afterEach(function () {
       apply.restore()
       findMaybe.restore()
     })
 
-    it('pulls many changed files/dirs given their ids', async function() {
+    it('pulls many changed files/dirs given their ids', async function () {
       apply.resolves()
 
       await this.watcher.processRemoteChanges(remoteDocs, {
@@ -596,17 +586,19 @@ describe('RemoteWatcher', function() {
       should(apply.args[1][0].doc).deepEqual(remoteDocs[1])
     })
 
-    context('when apply() returns an error for some file/dir', function() {
-      beforeEach(function() {
-        apply.callsFake(async (
-          change /*: RemoteChange */
-        ) /*: Promise<?{ change: RemoteChange, err: Error }> */ => {
-          if (change.type === 'FileAddition')
-            return { change, err: new Error(change.doc) }
-        })
+    context('when apply() returns an error for some file/dir', function () {
+      beforeEach(function () {
+        apply.callsFake(
+          async (
+            change /*: RemoteChange */
+          ) /*: Promise<?{ change: RemoteChange, err: Error }> */ => {
+            if (change.type === 'FileAddition')
+              return { change, err: new Error(change.doc) }
+          }
+        )
       })
 
-      it('rejects with the first error', async function() {
+      it('rejects with the first error', async function () {
         await should(
           this.watcher.processRemoteChanges(remoteDocs, {
             isInitialFetch: false
@@ -614,7 +606,7 @@ describe('RemoteWatcher', function() {
         ).be.rejectedWith(new Error(remoteDocs[0]))
       })
 
-      it('still tries to pull other files/dirs', async function() {
+      it('still tries to pull other files/dirs', async function () {
         await this.watcher
           .processRemoteChanges(remoteDocs, { isInitialFetch: false })
           .catch(() => {})
@@ -628,7 +620,7 @@ describe('RemoteWatcher', function() {
         })
       })
 
-      it('retries failed changes application until none can be applied', async function() {
+      it('retries failed changes application until none can be applied', async function () {
         const remoteDocs = [
           builders.remoteFile().build(),
           builders.remoteErased().build(),
@@ -656,7 +648,7 @@ describe('RemoteWatcher', function() {
         })
       })
 
-      it('releases the Pouch lock', async function() {
+      it('releases the Pouch lock', async function () {
         await this.watcher
           .processRemoteChanges(remoteDocs, { isInitialFetch: false })
           .catch(() => {})
@@ -664,7 +656,7 @@ describe('RemoteWatcher', function() {
         await should(nextLockPromise).be.fulfilled()
       })
 
-      it('does not update the remote sequence', async function() {
+      it('does not update the remote sequence', async function () {
         const remoteSeq = await this.pouch.getRemoteSeq()
         await this.watcher
           .processRemoteChanges(remoteDocs, { isInitialFetch: false })
@@ -673,11 +665,8 @@ describe('RemoteWatcher', function() {
       })
     })
 
-    it('applies the changes when the document still exists on remote', async function() {
-      const remoteDoc = builders
-        .remoteFile()
-        .name('whatever')
-        .build()
+    it('applies the changes when the document still exists on remote', async function () {
+      const remoteDoc = builders.remoteFile().name('whatever').build()
 
       await this.watcher.processRemoteChanges([remoteDoc], {
         isInitialFetch: false
@@ -687,7 +676,7 @@ describe('RemoteWatcher', function() {
       should(apply.args[0][0].doc).deepEqual(validMetadata(remoteDoc))
     })
 
-    it('tries to apply a deletion otherwise', async function() {
+    it('tries to apply a deletion otherwise', async function () {
       const remoteDeletion /*: RemoteDeletion */ = {
         _id: 'missing',
         _rev: 'whatever',
@@ -705,11 +694,8 @@ describe('RemoteWatcher', function() {
 
   describe('analyse', () => {
     describe('case-only renaming', () => {
-      it('is identified as a move', async function() {
-        const oldRemote = builders
-          .remoteFile()
-          .name('foo')
-          .build()
+      it('is identified as a move', async function () {
+        const oldRemote = builders.remoteFile().name('foo').build()
         const oldDoc = metadata.fromRemoteDoc(oldRemote)
         metadata.ensureValidPath(oldDoc)
         const newRemote = _.defaults(
@@ -724,19 +710,15 @@ describe('RemoteWatcher', function() {
         const changes = await this.watcher.analyse([newRemote], [oldDoc])
 
         should(changes.map(c => c.type)).deepEqual(['FileMove'])
-        should(changes[0])
-          .have.propertyByPath('doc', 'path')
-          .eql('FOO')
-        should(changes[0])
-          .have.propertyByPath('was', 'path')
-          .eql('foo')
+        should(changes[0]).have.propertyByPath('doc', 'path').eql('FOO')
+        should(changes[0]).have.propertyByPath('was', 'path').eql('foo')
       })
     })
 
     onPlatform('darwin', () => {
       describe('file update', () => {
         context('at root with normalization change', () => {
-          it('is not identified as a move', async function() {
+          it('is not identified as a move', async function () {
             const oldRemote = builders
               .remoteFile()
               .name('énoncé'.normalize('NFC'))
@@ -761,7 +743,7 @@ describe('RemoteWatcher', function() {
         })
 
         context('in accented folder with normalization change', () => {
-          it('is not identified as a move', async function() {
+          it('is not identified as a move', async function () {
             const oldRemoteDir = builders
               .remoteDir()
               .name('énoncés'.normalize('NFD'))
@@ -808,7 +790,7 @@ describe('RemoteWatcher', function() {
         context(
           'in accented folder with different local/remote normalizations',
           () => {
-            it('is not identified as a move', async function() {
+            it('is not identified as a move', async function () {
               const oldRemoteDir = builders
                 .remoteDir()
                 .name('énoncés'.normalize('NFC'))
@@ -851,7 +833,7 @@ describe('RemoteWatcher', function() {
         context(
           'in renamed accented folder with different local/remote normalizations',
           () => {
-            it('is identified as a descendant change within current parent path', async function() {
+            it('is identified as a descendant change within current parent path', async function () {
               const oldRemoteDir = builders
                 .remoteDir()
                 .name('énoncés'.normalize('NFC'))
@@ -911,7 +893,7 @@ describe('RemoteWatcher', function() {
         context(
           'in accented folder with different local/remote normalizations',
           () => {
-            it('is identified as an addition with old parent normalization', async function() {
+            it('is identified as an addition with old parent normalization', async function () {
               const oldRemoteDir = builders
                 .remoteDir()
                 .name('énoncés'.normalize('NFC'))
@@ -946,7 +928,7 @@ describe('RemoteWatcher', function() {
         context(
           'in created folder in accented folder with different local/remote normalizations',
           () => {
-            it('is identified as an addition with old ancestor normalization', async function() {
+            it('is identified as an addition with old ancestor normalization', async function () {
               const remoteParentDir = builders
                 .remoteDir()
                 .name('énoncés'.normalize('NFC'))
@@ -989,7 +971,7 @@ describe('RemoteWatcher', function() {
             context(
               'with the folder creation ordered after the file creation',
               () => {
-                it('is identified as an addition with old ancestor normalization', async function() {
+                it('is identified as an addition with old ancestor normalization', async function () {
                   const remoteParentDir = builders
                     .remoteDir()
                     .name('énoncés'.normalize('NFC'))
@@ -1042,7 +1024,7 @@ describe('RemoteWatcher', function() {
         context(
           'with different local/remote normalizations to accented folder with different local/remote normalizations',
           () => {
-            it('is identified as move with old normalization and new parent normalization', async function() {
+            it('is identified as move with old normalization and new parent normalization', async function () {
               const oldRemoteDir = builders
                 .remoteDir()
                 .name('énoncés'.normalize('NFC'))
@@ -1150,7 +1132,7 @@ describe('RemoteWatcher', function() {
           return props
         })
 
-      it('is detected when moved source is first', async function() {
+      it('is detected when moved source is first', async function () {
         const remoteDocs = [srcFileMoved, dstFileTrashed]
         const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
@@ -1167,7 +1149,7 @@ describe('RemoteWatcher', function() {
         ])
       })
 
-      it('is detected when trashed destination is first', async function() {
+      it('is detected when trashed destination is first', async function () {
         const remoteDocs = [dstFileTrashed, srcFileMoved]
         const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
@@ -1240,7 +1222,7 @@ describe('RemoteWatcher', function() {
 
       describe('when moved source is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', async function() {
+          it('sorts the trashing before the move to prevent id confusion', async function () {
             const remoteDocs = [srcFileMoved, dstFileTrashed]
             const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -1259,7 +1241,7 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the move before the trashing', async function() {
+          it('sorts the move before the trashing', async function () {
             const remoteDocs = [srcFileMoved, dstFileTrashed]
             const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -1280,7 +1262,7 @@ describe('RemoteWatcher', function() {
 
       describe('when trashed destination is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', async function() {
+          it('sorts the trashing before the move to prevent id confusion', async function () {
             const remoteDocs = [dstFileTrashed, srcFileMoved]
             const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -1299,7 +1281,7 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the move before the trashing', async function() {
+          it('sorts the move before the trashing', async function () {
             const remoteDocs = [dstFileTrashed, srcFileMoved]
             const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -1372,7 +1354,7 @@ describe('RemoteWatcher', function() {
           return props
         })
 
-      it('is detected when moved source is first', async function() {
+      it('is detected when moved source is first', async function () {
         const remoteDocs = [srcMoved, dstTrashed]
         const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
@@ -1389,7 +1371,7 @@ describe('RemoteWatcher', function() {
         ])
       })
 
-      it('is detected when trashed destination is first', async function() {
+      it('is detected when trashed destination is first', async function () {
         const remoteDocs = [dstTrashed, srcMoved]
         const changes = await this.watcher.analyse(remoteDocs, olds)
         should(relevantChangesProps(changes)).deepEqual([
@@ -1462,7 +1444,7 @@ describe('RemoteWatcher', function() {
 
       describe('when moved source is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', async function() {
+          it('sorts the trashing before the move to prevent id confusion', async function () {
             const remoteDocs = [srcMoved, dstTrashed]
             const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -1481,7 +1463,7 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the trashing before the move ', async function() {
+          it('sorts the trashing before the move ', async function () {
             const remoteDocs = [srcMoved, dstTrashed]
             const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -1502,7 +1484,7 @@ describe('RemoteWatcher', function() {
 
       describe('when trashed destination is first', () => {
         onPlatforms(['win32', 'darwin'], () => {
-          it('sorts the trashing before the move to prevent id confusion', async function() {
+          it('sorts the trashing before the move to prevent id confusion', async function () {
             const remoteDocs = [dstTrashed, srcMoved]
             const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -1521,7 +1503,7 @@ describe('RemoteWatcher', function() {
         })
 
         onPlatform('linux', () => {
-          it('sorts the trashing before the move', async function() {
+          it('sorts the trashing before the move', async function () {
             const remoteDocs = [dstTrashed, srcMoved]
             const changes = await this.watcher.analyse(remoteDocs, olds)
             should(relevantChangesProps(changes)).deepEqual([
@@ -1542,11 +1524,8 @@ describe('RemoteWatcher', function() {
     })
 
     describe('descendantMoves', () => {
-      it('handles correctly descendantMoves', async function() {
-        const remoteDir1 = builders
-          .remoteDir()
-          .name('src')
-          .build()
+      it('handles correctly descendantMoves', async function () {
+        const remoteDir1 = builders.remoteDir().name('src').build()
         const remoteDir2 = builders
           .remoteDir()
           .name('parent')
@@ -1641,7 +1620,7 @@ describe('RemoteWatcher', function() {
   })
 
   describe('identifyAll', () => {
-    it('identifies all descendant moves', function() {
+    it('identifies all descendant moves', function () {
       const remotePaths = [
         ['parent/', 1],
         ['parent/src/', 1],
@@ -1761,7 +1740,7 @@ describe('RemoteWatcher', function() {
       ])
     })
 
-    it('identifies move from inside move', function() {
+    it('identifies move from inside move', function () {
       const remotePaths = [
         ['parent/', 1],
         ['parent/src/', 1],
@@ -1944,7 +1923,7 @@ describe('RemoteWatcher', function() {
         ]
       })
 
-      it('sorts correctly order1', function() {
+      it('sorts correctly order1', function () {
         const order1 = [
           remoteDocsByPath['parent/dst/dir2/'],
           remoteDocsByPath['parent/dst/'],
@@ -1983,7 +1962,7 @@ describe('RemoteWatcher', function() {
         ])
       })
 
-      it('sorts correctly order2', function() {
+      it('sorts correctly order2', function () {
         const order2 = [
           remoteDocsByPath['parent/dst/dir2/subdir/'],
           remoteDocsByPath['parent/dst/'],
@@ -2024,12 +2003,9 @@ describe('RemoteWatcher', function() {
     })
   })
 
-  describe('identifyChange', function() {
-    it('does not fail when the path is missing', function() {
-      const remoteDoc = builders
-        .remoteFile()
-        .name('whatever')
-        .build()
+  describe('identifyChange', function () {
+    it('does not fail when the path is missing', function () {
+      const remoteDoc = builders.remoteFile().name('whatever').build()
       remoteDoc.path = ''
 
       const change /*: RemoteInvalidChange */ = this.watcher.identifyChange(
@@ -2046,11 +2022,8 @@ describe('RemoteWatcher', function() {
     // TODO: file without checksum
 
     onPlatform('win32', () => {
-      it('detects path/platform incompatibilities if any', async function() {
-        const remoteDir = builders
-          .remoteDir()
-          .name('f:oo')
-          .build()
+      it('detects path/platform incompatibilities if any', async function () {
+        const remoteDir = builders.remoteDir().name('f:oo').build()
         const remoteDoc = builders
           .remoteFile()
           .inDir(remoteDir)
@@ -2086,7 +2059,7 @@ describe('RemoteWatcher', function() {
         ])
       })
 
-      it('does not detect any when file/dir is in the trash', async function() {
+      it('does not detect any when file/dir is in the trash', async function () {
         const remoteDoc = builders
           .remoteFile()
           .name('f:oo/b<a>r')
@@ -2104,11 +2077,8 @@ describe('RemoteWatcher', function() {
     })
 
     onPlatform('darwin', () => {
-      it('does not mistakenly assume a new file is incompatible', async function() {
-        const remoteDir = builders
-          .remoteDir()
-          .name('f:oo')
-          .build()
+      it('does not mistakenly assume a new file is incompatible', async function () {
+        const remoteDir = builders.remoteDir().name('f:oo').build()
         const remoteDoc = builders
           .remoteFile()
           .inDir(remoteDir)
@@ -2126,7 +2096,7 @@ describe('RemoteWatcher', function() {
       })
     })
 
-    it('calls addDoc for a new doc', async function() {
+    it('calls addDoc for a new doc', async function () {
       this.prep.addFileAsync = sinon.stub()
       this.prep.addFileAsync.resolves(null)
       const remoteDoc = builders
@@ -2154,7 +2124,7 @@ describe('RemoteWatcher', function() {
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls updateDoc when tags are updated', async function() {
+    it('calls updateDoc when tags are updated', async function () {
       this.prep.updateFileAsync = sinon.stub()
       this.prep.updateFileAsync.resolves(null)
       const remoteDoc = builders
@@ -2185,7 +2155,7 @@ describe('RemoteWatcher', function() {
       })
     })
 
-    it('calls updateDoc when content is overwritten', async function() {
+    it('calls updateDoc when content is overwritten', async function () {
       this.prep.updateFileAsync = sinon.stub().resolves(null)
 
       const remoteDoc = builders
@@ -2217,7 +2187,7 @@ describe('RemoteWatcher', function() {
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls moveFile when file is renamed', async function() {
+    it('calls moveFile when file is renamed', async function () {
       this.prep.moveFileAsync = sinon.stub()
       this.prep.moveFileAsync.resolves(null)
       const remoteDoc = builders
@@ -2250,13 +2220,10 @@ describe('RemoteWatcher', function() {
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('calls moveFile when file is moved', async function() {
+    it('calls moveFile when file is moved', async function () {
       this.prep.moveFileAsync = sinon.stub()
       this.prep.moveFileAsync.resolves(null)
-      const remoteDir = builders
-        .remoteDir()
-        .name('other-folder')
-        .build()
+      const remoteDir = builders.remoteDir().name('other-folder').build()
       const remoteDoc = builders
         .remoteFile(remoteTree['my-folder/file-2'])
         .inDir(remoteDir)
@@ -2288,7 +2255,7 @@ describe('RemoteWatcher', function() {
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
 
-    it('detects when file was both moved and updated', async function() {
+    it('detects when file was both moved and updated', async function () {
       const file = await builders
         .remoteFile()
         .name('meow.txt')
@@ -2312,20 +2279,12 @@ describe('RemoteWatcher', function() {
         type: 'FileMove',
         update: true
       })
-      should(change)
-        .have.propertyByPath('was', 'path')
-        .eql(was.path)
-      should(change)
-        .have.propertyByPath('doc', 'path')
-        .eql(file.name)
+      should(change).have.propertyByPath('was', 'path').eql(was.path)
+      should(change).have.propertyByPath('doc', 'path').eql(file.name)
     })
 
-    it('is invalid when local or remote file is corrupt', async function() {
-      const remoteDoc = builders
-        .remoteFile()
-        .size('123')
-        .shortRev(1)
-        .build()
+    it('is invalid when local or remote file is corrupt', async function () {
+      const remoteDoc = builders.remoteFile().size('123').shortRev(1).build()
       const was /*: Metadata */ = builders
         .metafile()
         .fromRemote(remoteDoc)
@@ -2345,23 +2304,17 @@ describe('RemoteWatcher', function() {
       should(change.error).match(/corrupt/)
     })
 
-    xit('calls deleteDoc & addDoc when trashed', async function() {
+    xit('calls deleteDoc & addDoc when trashed', async function () {
       this.prep.deleteFolderAsync = sinon.stub()
       this.prep.deleteFolderAsync.returnsPromise().resolves(null)
       this.prep.putFolderAsync = sinon.stub()
       this.prep.putFolderAsync.returnsPromise().resolves(null)
-      const oldDir = builders
-        .remoteDir()
-        .name('foo')
-        .build()
+      const oldDir = builders.remoteDir().name('foo').build()
       const oldMeta /*: Metadata */ = await builders
         .metadir()
         .fromRemote(oldDir)
         .create()
-      const newDir = builders
-        .remoteDir(oldDir)
-        .trashed()
-        .build()
+      const newDir = builders.remoteDir(oldDir).trashed().build()
 
       this.watcher.identifyChange(newDir, null, [], [])
 
@@ -2377,23 +2330,16 @@ describe('RemoteWatcher', function() {
       should(addArgs[1]).have.properties(metadata.fromRemoteDoc(newDir))
     })
 
-    xit('calls deleteDoc & addDoc when restored', async function() {
+    xit('calls deleteDoc & addDoc when restored', async function () {
       this.prep.deleteFolder = sinon.stub()
       this.prep.deleteFolder.returnsPromise().resolves(null)
       this.prep.putFolderAsync = sinon.stub()
       this.prep.putFolderAsync.returnsPromise().resolves(null)
-      const oldDir = builders
-        .remoteDir()
-        .name('foo')
-        .trashed()
-        .build()
+      const oldDir = builders.remoteDir().name('foo').trashed().build()
       const oldMeta /*: Metadata */ = await builders.metadir
         .fromRemote(oldDir)
         .create()
-      const newDir = builders
-        .remoteDir(oldDir)
-        .restored()
-        .build()
+      const newDir = builders.remoteDir(oldDir).restored().build()
 
       this.watcher.identifyChange(newDir, null, [], [])
 
@@ -2410,7 +2356,7 @@ describe('RemoteWatcher', function() {
     })
 
     describe('restored file before trashing was synced', () => {
-      it('returns a FileAddition', function() {
+      it('returns a FileAddition', function () {
         const origFile = builders
           .remoteFile()
           .name('foo')
@@ -2441,21 +2387,15 @@ describe('RemoteWatcher', function() {
     })
 
     describe('file moved while deleted on local filesystem', () => {
-      it('returns a FileMove', function() {
-        const origFile = builders
-          .remoteFile()
-          .name('foo')
-          .build()
+      it('returns a FileMove', function () {
+        const origFile = builders.remoteFile().name('foo').build()
         const trashedFile = builders
           .metafile()
           .fromRemote(origFile)
           .trashed()
           .changedSide('local')
           .build()
-        const movedFile = builders
-          .remoteFile(origFile)
-          .name('bar')
-          .build()
+        const movedFile = builders.remoteFile(origFile).name('bar').build()
 
         const doc = metadata.fromRemoteDoc(movedFile)
 
@@ -2506,7 +2446,7 @@ describe('RemoteWatcher', function() {
             should(metadata.extractRevNumber(was.remote)).equal(2)
           })
 
-          it('assumes the file is up-to-date since remote rev number is lower', async function() {
+          it('assumes the file is up-to-date since remote rev number is lower', async function () {
             const change = this.watcher.identifyChange(remoteDoc, was, [], [])
             should(change.type).equal('UpToDate')
           })

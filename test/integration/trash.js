@@ -30,7 +30,7 @@ describe('Trash', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
     pouch = helpers.pouch
@@ -352,7 +352,7 @@ describe('Restore', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function() {
+  beforeEach(async function () {
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
 

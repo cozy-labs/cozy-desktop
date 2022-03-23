@@ -13,7 +13,7 @@ const Channel = require('../../../../core/local/atom/channel')
 describe('core/local/atom/add_checksum.loop()', () => {
   let config, dirpath, filepath
   before(configHelpers.createConfig)
-  before(function() {
+  before(function () {
     config = this.config
     config.syncPath = path.dirname(__dirname)
 
@@ -36,9 +36,7 @@ describe('core/local/atom/add_checksum.loop()', () => {
       config
     })
     const enhancedBatch = await enhancedChannel.pop()
-    should(enhancedBatch)
-      .be.an.Array()
-      .and.length(batch.length)
+    should(enhancedBatch).be.an.Array().and.length(batch.length)
     should.exist(enhancedBatch[0].md5sum)
   })
 
@@ -57,9 +55,7 @@ describe('core/local/atom/add_checksum.loop()', () => {
       config
     })
     const enhancedBatch = await enhancedChannel.pop()
-    should(enhancedBatch)
-      .be.an.Array()
-      .and.length(batch.length)
+    should(enhancedBatch).be.an.Array().and.length(batch.length)
     should.not.exist(enhancedBatch[0].md5sum)
   })
 
@@ -79,9 +75,7 @@ describe('core/local/atom/add_checksum.loop()', () => {
       config
     })
     const enhancedBatch = await enhancedChannel.pop()
-    should(enhancedBatch)
-      .be.an.Array()
-      .and.length(batch.length)
+    should(enhancedBatch).be.an.Array().and.length(batch.length)
     should(enhancedBatch[0]).have.property('md5sum', 'checksum')
   })
 

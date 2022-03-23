@@ -383,9 +383,8 @@ function fileMoveFromUnlinkAdd(
   sameInodeChange /*: ?LocalChange */,
   e /*: LocalFileAdded */
 ) /*: * */ {
-  const unlinkChange /*: ?LocalFileDeletion */ = maybeDeleteFile(
-    sameInodeChange
-  )
+  const unlinkChange /*: ?LocalFileDeletion */ =
+    maybeDeleteFile(sameInodeChange)
   if (!unlinkChange) return
   if (_.get(unlinkChange, 'old.path').normalize() === e.path.normalize()) return
   const fileMove /*: Object */ = build('FileMove', e.path, {
@@ -418,9 +417,8 @@ function dirMoveFromUnlinkAdd(
   sameInodeChange /*: ?LocalChange */,
   e /*: LocalDirAdded */
 ) /*: * */ {
-  const unlinkChange /*: ?LocalDirDeletion */ = maybeDeleteFolder(
-    sameInodeChange
-  )
+  const unlinkChange /*: ?LocalDirDeletion */ =
+    maybeDeleteFolder(sameInodeChange)
   if (!unlinkChange) return
   if (_.get(unlinkChange, 'old.path').normalize() === e.path.normalize()) return
   const dirMove /*: Object */ = build('DirMove', e.path, {
@@ -474,9 +472,8 @@ function fileMoveFromFileDeletionChange(
   sameInodeChange /*: ?LocalChange */,
   e /*: LocalFileUpdated */
 ) {
-  const fileDeletion /*: ?LocalFileDeletion */ = maybeDeleteFile(
-    sameInodeChange
-  )
+  const fileDeletion /*: ?LocalFileDeletion */ =
+    maybeDeleteFile(sameInodeChange)
   if (!fileDeletion) return
   // There was an unlink on the same file, this is most probably a move and replace
   const src = fileDeletion.old
@@ -854,9 +851,8 @@ function convertDirMoveToDeletion(samePathChange /*: ?LocalChange */) {
 }
 
 function ignoreDirAdditionThenDeletion(samePathChange /*: ?LocalChange */) {
-  const addChangeSamePath /*: ?LocalDirAddition */ = maybePutFolder(
-    samePathChange
-  )
+  const addChangeSamePath /*: ?LocalDirAddition */ =
+    maybePutFolder(samePathChange)
   if (addChangeSamePath && addChangeSamePath.wip) {
     // $FlowFixMe
     addChangeSamePath.type = 'Ignored'
@@ -871,9 +867,8 @@ function ignoreDirAdditionThenDeletion(samePathChange /*: ?LocalChange */) {
 }
 
 function ignoreFileAdditionThenDeletion(samePathChange /*: ?LocalChange */) {
-  const addChangeSamePath /*: ?LocalFileAddition */ = maybeAddFile(
-    samePathChange
-  )
+  const addChangeSamePath /*: ?LocalFileAddition */ =
+    maybeAddFile(samePathChange)
   if (addChangeSamePath && addChangeSamePath.wip) {
     // $FlowFixMe
     addChangeSamePath.type = 'Ignored'

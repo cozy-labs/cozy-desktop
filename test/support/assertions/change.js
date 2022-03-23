@@ -4,7 +4,7 @@ const should = require('should')
 function changeAssertion(strict) {
   const assertionName = strict ? 'changeOnly' : 'change'
 
-  const assertion = function(actual, props) {
+  const assertion = function (actual, props) {
     if (props) {
       if (this.negate) {
         throw new Error(

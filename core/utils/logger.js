@@ -49,7 +49,7 @@ if (process.env.TESTDEBUG) {
     type: 'raw',
     level: process.env.TESTDEBUG,
     stream: {
-      write: function(msg) {
+      write: function (msg) {
         // eslint-disable-next-line no-console
         console.log(
           msg.component,

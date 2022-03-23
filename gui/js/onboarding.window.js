@@ -163,7 +163,7 @@ module.exports = class OnboardingWM extends WindowManager {
       this.openOAuthView(url)
       return promise
     }
-    desktop.registerRemote(cozyUrl, arg.location, onRegistered).then(
+    return desktop.registerRemote(cozyUrl, arg.location, onRegistered).then(
       reg => {
         syncSession.clearStorageData()
         this.win.webContents.once('dom-ready', () => {
@@ -177,6 +177,7 @@ module.exports = class OnboardingWM extends WindowManager {
         if (!process.env.DEBUG) {
           autoLaunch.setEnabled(true)
         }
+        return
       },
       err => {
         log.warn({ err, cozyUrl }, 'failed registering device with remote Cozy')
@@ -193,6 +194,7 @@ module.exports = class OnboardingWM extends WindowManager {
             translate('Address No cozy instance at this address!')
           )
         }
+        throw err
       }
     )
   }

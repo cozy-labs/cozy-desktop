@@ -41,8 +41,4 @@ module.exports = class MarkdownViewerWindow extends WindowManager {
       filename
     })
   }
-
-  on(event, handler) {
-    this.win.on(event, handler)
-  }
 }

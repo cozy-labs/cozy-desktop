@@ -146,26 +146,15 @@ class Local /*:: implements Reader, Writer */ {
   /* Helpers */
 
   /**
-   * Return a function that will update last modification date
-   * and does a chmod +x if the file is executable
+   * Update last modification date and do a chmod +x if the file is executable.
    *
    * Note: UNIX has 3 timestamps for a file/folder:
    * - atime for last access
    * - ctime for change (metadata or content)
    * - utime for update (content only)
-   * This function updates utime and ctime according to the last
-   * modification date.
+   * This function updates utime and ctime according to the last modification
+   * date.
    */
-  metadataUpdater(doc /*: SavedMetadata */) {
-    return (callback /*: Callback */) => {
-      this.updateMetadataAsync(doc)
-        .then(() => {
-          callback()
-        })
-        .catch(callback)
-    }
-  }
-
   async updateMetadataAsync /*::<T: SavedMetadata|Metadata> */(
     doc /*: T */
   ) /*: Promise<void> */ {
@@ -262,93 +251,112 @@ class Local /*:: implements Reader, Writer */ {
           }
         },
 
-        (existingFilePath, next) => {
-          fse.ensureDir(this.tmpPath, () => {
-            hideOnWindows(this.tmpPath)
-            if (existingFilePath) {
-              log.info(
-                { path: filePath },
-                `Recopy ${existingFilePath} -> ${filePath}`
-              )
-              fse.copy(existingFilePath, tmpFile, next)
-            } else {
-              this.other.createReadStreamAsync(doc).then(
-                reader => {
+        async existingFilePath => {
+          return new Promise((resolve, reject) => {
+            fse.ensureDir(this.tmpPath, async () => {
+              hideOnWindows(this.tmpPath)
+              if (existingFilePath) {
+                log.info(
+                  { path: filePath },
+                  `Recopy ${existingFilePath} -> ${filePath}`
+                )
+                this.events.emit('transfer-copy', doc)
+                fse.copy(existingFilePath, tmpFile, err => {
+                  if (err) {
+                    reject(err)
+                  } else {
+                    resolve()
+                  }
+                })
+              } else {
+                try {
+                  const reader = await this.other.createReadStreamAsync(doc)
                   const source = onProgress
                     ? streamUtils.withProgress(reader, onProgress)
                     : reader
 
                   const destination = fse.createWriteStream(tmpFile)
 
-                  stream.pipeline(source, destination, err => next(err))
-                },
-                err => {
-                  next(err)
+                  stream.pipeline(source, destination, err => {
+                    if (err) {
+                      reject(err)
+                    } else {
+                      resolve()
+                    }
+                  })
+                } catch (err) {
+                  reject(err)
                 }
-              )
-            }
+              }
+            })
           })
         },
 
-        next => {
+        async () => {
           if (doc.md5sum != null) {
-            // TODO: Share checksumer instead of chaining properties
-            this.watcher.checksumer
-              .push(tmpFile)
-              .asCallback(function(err, md5sum) {
-                if (err) {
-                  next(err)
-                } else if (md5sum === doc.md5sum) {
-                  next()
-                } else {
-                  next(new Error('Invalid checksum'))
-                }
-              })
-          } else {
-            next()
+            const md5sum = await this.watcher.checksumer.push(tmpFile)
+
+            if (md5sum !== doc.md5sum) {
+              throw new Error('Invalid checksum')
+            }
           }
         },
 
-        next => {
+        async () => {
           // After downloading a file, check that the size is correct too
           // (more protection against stack corruption)
-          stater.withStats(tmpFile, (err, stats) => {
-            if (err) {
-              next(err)
-            } else if (!doc.size || doc.size === stats.size) {
-              stater.assignInoAndFileId(doc, stats)
-              next()
-            } else {
-              next(sentry.flag(new Error('Invalid size')))
-            }
+          return new Promise((resolve, reject) => {
+            stater.withStats(tmpFile, (err, stats) => {
+              if (err) {
+                reject(err)
+              } else if (!doc.size || doc.size === stats.size) {
+                stater.assignInoAndFileId(doc, stats)
+                resolve()
+              } else {
+                reject(sentry.flag(new Error('Invalid size')))
+              }
+            })
           })
         },
 
-        next =>
-          fse.ensureDir(parent, () =>
-            fse.rename(tmpFile, filePath, err => {
-              if (
-                err != null &&
-                err.code === 'EPERM' &&
-                doc.mime === NOTE_MIME_TYPE
-              ) {
-                // Old Cozy Note with read-only permissions.
-                // We need to remove the old version before we can write the
-                // new one.
-                fse.move(tmpFile, filePath, { overwrite: true }, next)
-              } else {
-                next(err)
-              }
+        async () => {
+          return new Promise((resolve, reject) => {
+            fse.ensureDir(parent, () => {
+              fse.rename(tmpFile, filePath, err => {
+                if (
+                  err != null &&
+                  err.code === 'EPERM' &&
+                  doc.mime === NOTE_MIME_TYPE
+                ) {
+                  // Old Cozy Note with read-only permissions.
+                  // We need to remove the old version before we can write the
+                  // new one.
+                  fse.move(tmpFile, filePath, { overwrite: true }, err => {
+                    if (err) {
+                      reject(err)
+                    } else {
+                      resolve()
+                    }
+                  })
+                } else if (err) {
+                  reject(err)
+                } else {
+                  resolve()
+                }
+              })
             })
-          ),
+          })
+        },
 
-        this.metadataUpdater(doc),
-        next => {
+        async () => {
+          await this.updateMetadataAsync(doc)
+        },
+
+        async () => {
           metadata.updateLocal(doc)
-          next()
         }
       ],
-      function(err) {
+      function (err) {
         stopMeasure()
         if (err) {
           log.warn({ path: doc.path, err, doc }, 'addFile failed')
@@ -366,7 +374,7 @@ class Local /*:: implements Reader, Writer */ {
       [
         cb => fse.ensureDir(folderPath, cb),
         this.inodeSetter(doc),
-        this.metadataUpdater(doc),
+        async () => this.updateMetadataAsync(doc),
         cb => {
           metadata.updateLocal(doc)
           cb()
@@ -387,12 +395,7 @@ class Local /*:: implements Reader, Writer */ {
   /** Update the metadata of a file */
   async updateFileMetadataAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     log.info({ path: doc.path }, 'Updating file metadata...')
-    await new Promise((resolve, reject) => {
-      this.metadataUpdater(doc)(err => {
-        if (err) reject(err)
-        else resolve()
-      })
-    })
+    await this.updateMetadataAsync(doc)
     metadata.updateLocal(doc)
   }
 

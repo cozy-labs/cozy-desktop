@@ -16,6 +16,7 @@ const log = Desktop.logger({
 
 /*::
 import { App } from '../../core/app'
+import { WindowManager } from '../js/window_manager'
 */
 
 const openMarkdownViewer = async (
@@ -24,24 +25,26 @@ const openMarkdownViewer = async (
   banner /*: ?{ level: string, title: string, details: string } */ = null,
   { desktop } /*: { desktop: App } */
 ) /*: Promise<void> */ => {
-  return new Promise((resolve, reject) => {
-    let viewerWindow = new MarkdownViewerWindow(app, desktop)
+  let viewerWindow /*: WindowManager */
+  try {
+    viewerWindow = new MarkdownViewerWindow(app, desktop)
+
     if (viewerWindow) {
-      viewerWindow.show().then(() => {
-        if (viewerWindow) {
-          viewerWindow.loadContent(filename, content, banner)
-        } else {
-          reject(new Error('could not load Markdown viewer content'))
-        }
+      const closed = new Promise(resolve => {
+        viewerWindow.once('closed', () => {
+          resolve()
+        })
       })
-      viewerWindow.on('closed', () => {
-        viewerWindow = null
-        resolve()
-      })
+
+      await viewerWindow.show()
+      viewerWindow.loadContent(filename, content, banner)
+      await closed
     } else {
-      reject(new Error('could not open Markdown viewer window'))
+      throw new Error('could not load Markdown viewer content')
     }
-  })
+  } finally {
+    if (viewerWindow) viewerWindow = null
+  }
 }
 
 const showGenericError = (filePath, err) => {

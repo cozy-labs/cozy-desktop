@@ -30,7 +30,7 @@ const ROOT_DIR = {
   path: '/'
 }
 
-const createInitialTree = async function(
+const createInitialTree = async function (
   scenario /*: * */,
   cozy /*: * */,
   pouch /*: Pouch */

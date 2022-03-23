@@ -268,9 +268,7 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
     desktop
       .stopSync()
       .then(() => desktop.pouch.db.destroy())
-      .then(() => {
-        desktop.config.syncPath = undefined
-      })
+      .then(() => (desktop.config.syncPath = undefined))
       .then(() => desktop.config.persist())
       .then(() => log.info('removed'))
       .then(() => trayWindow.doRestart())
@@ -362,7 +360,7 @@ const updateState = async ({ newState, data }) => {
     }
   }
 }
-const updateStateQueue = Promise.promisifyAll(async.queue(updateState))
+const updateStateQueue = async.queue(updateState)
 
 const enqueueStateUpdate = (newState, data) => {
   updateStateQueue.pushAsync({ newState, data }).catch(err => {
@@ -407,6 +405,7 @@ const sendDiskUsage = () => {
           quota: +(res.attributes.quota || 0)
         }
         trayWindow.send('disk-space', space)
+        return space
       })
       .catch(err => log.warn({ err }, 'could not get remote disk usage'))
   }
@@ -601,7 +600,8 @@ app.on('ready', async () => {
     onboardingWindow.onOnboardingDone(async () => {
       await setupDesktop()
       onboardingWindow.hide()
-      trayWindow.show().then(() => startSync())
+      await trayWindow.show()
+      await startSync()
     })
     if (app.isPackaged) {
       log.trace('Setting up updater WM...')

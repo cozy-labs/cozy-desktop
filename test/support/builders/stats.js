@@ -86,11 +86,7 @@ class DefaultStatsBuilder {
  * hexadecimal string.
  */
 const fileIdFromNumber = (n /*: number */) =>
-  '0x' +
-  n
-    .toString(16)
-    .toUpperCase()
-    .padStart(16, '0')
+  '0x' + n.toString(16).toUpperCase().padStart(16, '0')
 
 /** Build a @gyselroth/windows-fsstat object */
 class WinStatsBuilder {

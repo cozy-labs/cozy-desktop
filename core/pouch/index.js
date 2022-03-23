@@ -137,25 +137,20 @@ class Pouch {
    * management and block the app with a "Synchronization impossible" status.
    */
   async _allDocs(options /*: ?{ include_docs: boolean } */) {
-    return new Promise(async (resolve, reject) => {
-      const uncaughtExceptionHandler = async err => {
-        log.error(
-          { err, options, sentry: true },
-          'uncaughtException in _allDocs. PouchDB db might be corrupt.'
-        )
-        reject(err)
-      }
-      process.once('uncaughtException', uncaughtExceptionHandler)
+    const uncaughtExceptionHandler = err => {
+      log.error(
+        { err, options, sentry: true },
+        'uncaughtException in _allDocs. PouchDB db might be corrupt.'
+      )
+      throw err
+    }
+    process.once('uncaughtException', uncaughtExceptionHandler)
 
-      try {
-        const results = await this.db.allDocs(options)
-        resolve(results)
-      } catch (err) {
-        reject(err)
-      } finally {
-        process.off('uncaughtException', uncaughtExceptionHandler)
-      }
-    })
+    try {
+      return await this.db.allDocs(options)
+    } finally {
+      process.off('uncaughtException', uncaughtExceptionHandler)
+    }
   }
 
   async allDocs() /*: Promise<SavedMetadata[]> */ {
@@ -519,7 +514,7 @@ class Pouch {
   async addByChecksumView() {
     /* !pragma no-coverage-next */
     /* istanbul ignore next */
-    const query = function(doc) {
+    const query = function (doc) {
       if ('md5sum' in doc) {
         // $FlowFixMe
         return emit(doc.md5sum) // eslint-disable-line no-undef
@@ -532,7 +527,7 @@ class Pouch {
   async addByRemoteIdView() {
     /* !pragma no-coverage-next */
     /* istanbul ignore next */
-    const query = function(doc) {
+    const query = function (doc) {
       if ('remote' in doc) {
         // $FlowFixMe
         return emit(doc.remote._id) // eslint-disable-line no-undef
@@ -542,7 +537,7 @@ class Pouch {
   }
 
   async addNeedsContentFetchingView() {
-    const query = function(doc) {
+    const query = function (doc) {
       if (doc.needsContentFetching && !doc.trashed) {
         // $FlowFixMe
         return emit(doc._id) // eslint-disable-line no-undef

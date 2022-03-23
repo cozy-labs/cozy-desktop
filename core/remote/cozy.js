@@ -202,17 +202,14 @@ class RemoteCozy {
         readBytes += chunk.length
       })
 
-      return await new Promise(async (resolve, reject) => {
+      return await new Promise((resolve, reject) => {
         data.on('error', err => {
           reject(err)
         })
 
-        try {
-          const result = await fn()
-          resolve(result)
-        } catch (err) {
-          reject(err)
-        }
+        fn()
+          .then(result => resolve(result))
+          .catch(err => reject(err))
       })
     } catch (err) {
       if (
@@ -327,9 +324,9 @@ class RemoteCozy {
       ? await fetchInitialChanges(since, client, batchSize)
       : await fetchChangesFromFeed(since, this.client, batchSize)
 
-    const docs = (await this.completeRemoteDocs(
-      dropSpecialDocs(remoteDocs)
-    )).sort(byPath)
+    const docs = (
+      await this.completeRemoteDocs(dropSpecialDocs(remoteDocs))
+    ).sort(byPath)
 
     return { last_seq, docs, isInitialFetch }
   }
@@ -665,7 +662,11 @@ async function fetchInitialChanges(
   batchSize /*: number */,
   remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */ = []
 ) {
-  const { newLastSeq: last_seq, pending, results } = await client
+  const {
+    newLastSeq: last_seq,
+    pending,
+    results
+  } = await client
     .collection(FILES_DOCTYPE)
     .fetchChanges(
       { since, includeDocs: true, limit: batchSize },
