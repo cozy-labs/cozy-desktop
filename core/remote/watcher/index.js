@@ -49,7 +49,7 @@ const log = logger({
 const sideName = 'remote'
 
 const folderMightHaveBeenExcluded = (
-  remoteDir /*: CouchDBDoc */
+  remoteDir /*: MetadataRemoteInfo */
 ) /*: boolean %checks */ => {
   // A folder newly created has a rev number of 1.
   // Once exluded, its rev number is at least 2.
@@ -58,7 +58,7 @@ const folderMightHaveBeenExcluded = (
 }
 
 const needsContentFetching = (
-  remoteDoc /*: CouchDBDoc */,
+  remoteDoc /*: MetadataRemoteInfo */,
   { isRecursiveFetch = false } /*: { isRecursiveFetch: boolean } */ = {}
 ) /*: boolean %checks */ => {
   return (

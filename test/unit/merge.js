@@ -121,6 +121,7 @@ describe('Merge', function () {
       // care about the `remote` attribute being updated so we explicitely
       // call `metadata.updateRemote()`.
       metadata.updateRemote(conflict, {
+        ...conflict.remote,
         path: pathUtils.localToRemote(conflict.path)
       })
       return conflict

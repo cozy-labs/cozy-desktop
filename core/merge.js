@@ -648,7 +648,7 @@ class Merge {
         metadata.updateLocal(dst)
       } else if (side === 'remote' && dst.sides.remote) {
         // Update the remote attribute of children existing in the remote folder
-        metadata.updateRemote(dst, { path: dst.path })
+        metadata.updateRemote(dst, { ...dst.remote, path: dst.path })
       }
 
       bulk.push(dst)

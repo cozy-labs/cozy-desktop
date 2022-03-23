@@ -79,7 +79,7 @@ type CommonCouchDBAttributes = {|
   updated_at: string,
   tags: string[],
 |}
-export type CouchDBDoc = {|
+export type CouchDBFile = {|
   ...CommonCouchDBAttributes,
   type: FILE,
   class: string,
@@ -88,7 +88,8 @@ export type CouchDBDoc = {|
   mime: string,
   size: string,
   trashed: boolean,
-|} | {|
+|}
+export type CouchDBDir = {|
   ...CommonCouchDBAttributes,
   type: DIR,
   not_synchronized_on?: Array<{
@@ -96,6 +97,7 @@ export type CouchDBDoc = {|
     type: string
   }>,
 |}
+export type CouchDBDoc = CouchDBFile | CouchDBDir
 export type CouchDBDeletion = {|
   _id: string,
   _rev: string,

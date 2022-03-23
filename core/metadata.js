@@ -56,7 +56,9 @@ const { SIDE_NAMES, otherSide } = require('./side')
 import type { PlatformIncompatibility } from './incompatibilities/platform'
 import type {
   CouchDBDeletion,
+  CouchDBDir,
   CouchDBDoc,
+  CouchDBFile,
   RemoteBase,
   RemoteDir,
   RemoteFile,
@@ -248,7 +250,9 @@ function fromRemoteDoc(
   return doc
 }
 
-function fromRemoteDir(remoteDir /*: MetadataRemoteDir */) /*: Metadata */ {
+function fromRemoteDir(
+  remoteDir /*: CouchDBDir|MetadataRemoteDir */
+) /*: Metadata */ {
   const doc /*: Object */ = {
     docType: localDocType(remoteDir.type),
     path: pathUtils.remoteToLocal(remoteDir.path),
@@ -279,7 +283,9 @@ function fromRemoteDir(remoteDir /*: MetadataRemoteDir */) /*: Metadata */ {
   return doc
 }
 
-function fromRemoteFile(remoteFile /*: MetadataRemoteFile */) /*: Metadata */ {
+function fromRemoteFile(
+  remoteFile /*: CouchDBFile|MetadataRemoteFile */
+) /*: Metadata */ {
   const doc /*: Object */ = {
     docType: localDocType(remoteFile.type),
     path: pathUtils.remoteToLocal(remoteFile.path),
@@ -901,9 +907,9 @@ function updateLocal(doc /*: Metadata */, newLocal /*: Object */ = {}) {
   )
 }
 
-function updateRemote(
+function updateRemote /*::<T: CouchDBDoc|MetadataRemoteInfo> */(
   doc /*: Metadata */,
-  newRemote /*: {| path: string |}|MetadataRemoteInfo */
+  newRemote /*: T */
 ) {
   doc.remote = _.defaultsDeep(
     {

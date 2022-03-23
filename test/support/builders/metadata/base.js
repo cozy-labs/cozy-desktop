@@ -352,13 +352,20 @@ module.exports = class BaseMetadataBuilder {
     }
 
     if (this._remoteBuilder == null) {
-      if (this.doc.docType === 'file') {
-        // $FlowFixMe We assume this.doc.remote is a remoteFile
-        this._remoteBuilder = new RemoteFileBuilder(null, this.doc.remote)
-      } else {
-        // $FlowFixMe We assume this.doc.remote is a remoteDir
-        this._remoteBuilder = new RemoteDirBuilder(null, this.doc.remote)
-      }
+      this._remoteBuilder =
+        this.doc.docType === 'file'
+          ? new RemoteFileBuilder(
+              null,
+              this.doc.remote && this.doc.remote.type === 'file'
+                ? this.doc.remote
+                : null
+            )
+          : new RemoteDirBuilder(
+              null,
+              this.doc.remote && this.doc.remote.type === 'directory'
+                ? this.doc.remote
+                : null
+            )
     }
 
     let builder = this._remoteBuilder

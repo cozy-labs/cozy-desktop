@@ -33,7 +33,10 @@ const {
 } = metadata
 const { Ignore } = require('../../core/ignore')
 const stater = require('../../core/local/stater')
-const { NOTE_MIME_TYPE } = require('../../core/remote/constants')
+const {
+  DIR_TYPE: REMOTE_DIR_TYPE,
+  NOTE_MIME_TYPE
+} = require('../../core/remote/constants')
 const pathUtils = require('../../core/utils/path')
 const timestamp = require('../../core/utils/timestamp')
 
@@ -1377,9 +1380,18 @@ describe('metadata', function () {
         .unmerged('remote')
         .build()
 
-      metadata.updateRemote(file, {
-        path: '/parent/NEW'
-      })
+      // XXX: these blocks are necessary for Flow to infer the resulting types
+      if (file.remote.type === REMOTE_DIR_TYPE) {
+        metadata.updateRemote(file, {
+          ...file.remote,
+          path: '/parent/NEW'
+        })
+      } else {
+        metadata.updateRemote(file, {
+          ...file.remote,
+          path: '/parent/NEW'
+        })
+      }
 
       should(file.remote).have.properties({
         type: file.remote.type,
