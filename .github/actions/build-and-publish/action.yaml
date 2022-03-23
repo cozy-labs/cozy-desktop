@@ -33,6 +33,7 @@ runs:
           # Install build dependencies:
           # - `libopenjp2-tools` for the basic build
           # - the others for cross-compiling 32 bit apps on a 64 bit machine
+          sudo apt update
           sudo apt install --no-install-recommends -y libopenjp2-tools gcc-multilib g++-multilib
         fi
         yarn dist:all
