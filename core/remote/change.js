@@ -65,7 +65,7 @@ export type RemoteDirMove = {
   doc: Metadata,
   was: SavedMetadata,
   needRefetch?: true,
-  descendantMoves?: RemoteDescendantChange[]
+  descendantMoves: RemoteDescendantChange[]
 }
 export type RemoteDirRestoration = {
   sideName: 'remote',
@@ -109,8 +109,8 @@ export type RemoteDescendantChange = {
   type: 'DescendantChange',
   doc: Metadata,
   was: SavedMetadata,
-  ancestorPath: string,
-  descendantMoves?: RemoteDescendantChange[],
+  ancestor: RemoteDirMove|RemoteDescendantChange,
+  descendantMoves: RemoteDescendantChange[],
   update?: boolean
 }
 
@@ -320,9 +320,12 @@ function includeDescendant(
   parent /*: RemoteDirMove|RemoteDescendantChange */,
   e /*: RemoteDescendantChange */
 ) {
-  parent.descendantMoves = parent.descendantMoves || []
-  parent.descendantMoves.push(e, ...(e.descendantMoves || []))
-  delete e.descendantMoves
+  if (isDescendant(parent) && parent.ancestor) {
+    includeDescendant(parent.ancestor, e)
+  } else {
+    parent.descendantMoves.push(e, ...e.descendantMoves)
+  }
+  e.descendantMoves = []
 }
 
 const createdPath = (a /*: RemoteChange */) /*: ?string */ =>
