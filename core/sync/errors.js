@@ -254,7 +254,9 @@ const linkDirectories = async (
   if (cause.change) {
     const { change, err } = cause
     try {
-      await sync.remote.includeInSync(change.doc)
+      if (change.doc.docType === 'folder') {
+        await sync.remote.includeInSync(change.doc)
+      }
 
       // Skip the local change to avoid a conflict with the re-included
       // remote dir.

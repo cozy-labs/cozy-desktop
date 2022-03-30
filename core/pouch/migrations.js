@@ -126,17 +126,19 @@ const migrations /*: Migration[] */ = [
     },
     run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.map(doc => {
-        // $FlowFixMe path was not present when this migration was created
-        doc.local = {
-          md5sum: doc.md5sum,
-          class: doc.class,
-          docType: 'file',
-          executable: doc.executable,
-          updated_at: doc.updated_at,
-          mime: doc.mime,
-          size: doc.size,
-          ino: doc.ino,
-          fileid: doc.fileid
+        if (doc.docType === 'file') {
+          // $FlowFixMe path was not present when this migration was created
+          doc.local = {
+            md5sum: doc.md5sum,
+            class: doc.class,
+            docType: 'file',
+            executable: doc.executable,
+            updated_at: doc.updated_at,
+            mime: doc.mime,
+            size: doc.size,
+            ino: doc.ino,
+            fileid: doc.fileid
+          }
         }
         return doc
       })
@@ -209,9 +211,15 @@ const migrations /*: Migration[] */ = [
     },
     run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.map(doc => {
-        doc.executable = false
-        if (doc.local && doc.local.executable == null) {
-          doc.local.executable = false
+        if (doc.docType === 'file') {
+          doc.executable = false
+          if (
+            doc.local &&
+            doc.local.docType === 'file' &&
+            doc.local.executable == null
+          ) {
+            doc.local.executable = false
+          }
         }
         return doc
       })

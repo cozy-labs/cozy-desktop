@@ -4087,7 +4087,7 @@ describe('Merge', function () {
               .changedSide(otherSide(this.side))
               .create()
             const movedFile = await builders
-              .metadir()
+              .metafile()
               .moveFrom(file, { childMove: true })
               .path('dir/subdir/file')
               .changedSide(otherSide(this.side))

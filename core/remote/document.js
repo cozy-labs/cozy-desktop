@@ -14,58 +14,38 @@ const {
   TRASH_DIR_NAME
 } = require('./constants')
 
+/* Possible representations of the same io.cozy.file :
+ *
+ * - CouchDB representation :
+ *    basic data, always returned
+ *
+ * - Changes feed representation :
+ *    CouchDB doc
+ *    + extra attributes like `path` for files
+ *
+ * - cozy-client-js representation :
+ *    somewhat JsonApi but not quite with CouchDB doc in `attributes` attribute
+ *    + `relations` function attribute
+ *
+ * - cozy-client representation :
+ *    Full JsonApi representation with CouchDB doc in `attributes`
+ *
+ * - reconciled remote doc representation ? :
+ *    RemoteDoc and/or MetadataRemoteInfo
+ */
+
 /*::
 import type {
   FILE_TYPE as FILE,
   DIR_TYPE as DIR
 } from './constants'
 
-// ('contents') => Array<JsonApiRef>
-// ('referenced_by') => Array<JsonApiRef>
-type RemoteRelations = any => Array<any>
+//
+// --- CouchDB representations
+//
+// Basic data always returned by requests to the Cozy.
+//
 
-export type RemoteFileAttributes = {|
-  type: FILE,
-  class: string,
-  executable?: boolean,
-  md5sum: string,
-  mime: string,
-  size: string,
-  trashed: boolean,
-|}
-
-export type RemoteDirAttributes = {|
-  type: DIR,
-  path: string,
-  not_synchronized_on?: Array<{
-    id: string,
-    type: string
-  }>
-|}
-
-export type RemoteBase = {|
-  _id: string,
-  _rev: string,
-  dir_id: string,
-  name: string,
-  tags: string[],
-  created_at: string,
-  updated_at: string,
-  cozyMetadata?: Object,
-  metadata?: Object,
-  restore_path?: string,
-  relations: RemoteRelations
-|}
-export type RemoteFile = {| ...RemoteBase, ...RemoteFileAttributes |}
-export type RemoteDir = {| ...RemoteBase, ...RemoteDirAttributes |}
-export type RemoteDoc = RemoteFile|RemoteDir
-
-export type CouchDBChange = {|
-  id: string,
-  seq: string,
-  doc: CouchDBDoc|CouchDBDeletion,
-  changes: $ReadOnlyArray<{| rev: string |}>
-|}
 type CommonCouchDBAttributes = {|
   _id: string,
   _rev: string,
@@ -74,13 +54,12 @@ type CommonCouchDBAttributes = {|
   dir_id: string,
   metadata?: Object,
   name: string,
-  path: string,
   restore_path?: string,
   updated_at: string,
   tags: string[],
 |}
-export type CouchDBFile = {|
-  ...CommonCouchDBAttributes,
+
+type CouchDBFileAttributes = {|
   type: FILE,
   class: string,
   executable?: boolean,
@@ -89,71 +68,131 @@ export type CouchDBFile = {|
   size: string,
   trashed: boolean,
 |}
-export type CouchDBDir = {|
+export type CouchDBFile = {|
   ...CommonCouchDBAttributes,
+  ...CouchDBFileAttributes
+|}
+
+type CouchDBDirAttributes = {|
   type: DIR,
+  path: string,
   not_synchronized_on?: Array<{
     id: string,
     type: string
   }>,
 |}
+export type CouchDBDir = {|
+  ...CommonCouchDBAttributes,
+  ...CouchDBDirAttributes
+|}
+
 export type CouchDBDoc = CouchDBFile | CouchDBDir
+
 export type CouchDBDeletion = {|
   _id: string,
   _rev: string,
   _deleted: true
 |}
 
-export type JsonApiFileAttributes = {|
-  type: FILE,
-  class?: string, // file only
-  dir_id?: string,
-  executable?: boolean,
-  md5sum?: string,
-  mime?: string,
-  name?: string,
-  size?: string, // file only
-  tags?: string[],
-  trashed: boolean,
-  created_at: string,
-  updated_at: string,
-  cozyMetadata?: Object,
-  metadata?: Object,
-  restore_path?: string,
+
+//
+// --- Changes feed representations
+//
+// CouchDB document representation with some transformations done by
+// `cozy-stack` like adding a `path` attribute to files.
+//
+
+export type ChangesFeedFile = {|
+  ...CouchDBFile,
+  path: string
 |}
 
-export type JsonApiDirAttributes = {|
-  type: DIR,
-  dir_id?: string,
-  name?: string,
-  path?: string, // folder only
-  tags?: string[],
-  created_at: string,
-  updated_at: string,
-  cozyMetadata?: Object,
-  metadata?: Object,
-  restore_path?: string,
+export type ChangesFeedDir = CouchDBDir
+
+export type ChangesFeedChange = {|
+  id: string,
+  seq: string,
+  doc: ChangesFeedFile|ChangesFeedDir|CouchDBDeletion,
+  changes: $ReadOnlyArray<{| rev: string |}>
 |}
 
-// Old cozy-client-js responses type
-export type RemoteJsonDoc = {|
+
+//
+// --- cozy-client-js representations (somewhat JsonApi)
+//
+// JsonApi like representation created by `cozy-client-js`. It wraps the CouchDB
+// document representation in the `attributes` attribute and adds a `relations`
+// function attribute which returns hydrated relationships of the given type.
+//
+
+// ('contents') => Array<JsonApiRef>
+// ('referenced_by') => Array<JsonApiRef>
+export type RemoteRelations = any => Array<any>
+
+export type OldJsonFile = {|
   _id: string,
   _rev: string,
   _type: string,
-  attributes: JsonApiFileAttributes|JsonApiDirAttributes,
+  attributes: CouchDBFile,
   relations: RemoteRelations
 |}
 
-// New cozy-client responses types
-type JsonApiRef = {
+export type OldJsonDir = {|
+  _id: string,
+  _rev: string,
+  _type: string,
+  attributes: CouchDBDir,
+  relations: RemoteRelations
+|}
+
+export type OldJsonDoc = OldJsonFile | OldJsonDir
+
+
+//
+// --- cozy-client representations (full JsonApi)
+//
+// Full JsonApi representation returned by `cozy-client` on most requests with
+// the CouchDB document representation in the `attributes` attribute and extra
+// attributes like `links`, `meta` and `relationships`.
+//
+
+type JsonApiRef = {|
   id: string,
   type: string,
-}
+|}
 
 type JsonApiRelationShips = {|
   contents?: { data?: JsonApiRef[] },
   referenced_by?: { data?: JsonApiRef | JsonApiRef[] },
 |}
+
+type CommonJsonApiAttributes = {|
+  id: string,
+  type: string,
+  meta?: {
+    rev?: string
+  },
+  links: Object,
+|}
+
+type JsonApiFile = {|
+  ...CommonJsonApiAttributes,
+  attributes: CouchDBFile,
+  relationships: {|
+    referenced_by?: { data?: JsonApiRef | JsonApiRef[] },
+  |}
+|}
+
+type JsonApiDir = {|
+  ...CommonJsonApiAttributes,
+  attributes: CouchDBDir,
+  relationships: {|
+    contents?: { data?: JsonApiRef[] },
+    referenced_by?: { data?: JsonApiRef | JsonApiRef[] },
+  |}
+|}
+
+type JsonApiDoc = JsonApiFile | JsonApiDir
 
 type JsonApiDeletion = {|
   id: string,
@@ -161,18 +200,36 @@ type JsonApiDeletion = {|
   _deleted: true
 |}
 
-type JsonApiDoc =
-  {|
-    id: string,
-    type: string,
-    meta?: {
-      rev?: string
-    },
-    links: Object,
-    attributes: JsonApiFileAttributes|JsonApiDirAttributes,
-    relationships: JsonApiRelationShips
-  |}
-  | JsonApiDeletion
+
+//
+// --- Reconciled remote representation (FIXME: is it necessary?)
+//
+
+type CommonRemoteAttributes = {|
+  _id: string,
+  _rev: string,
+  cozyMetadata?: Object,
+  created_at: string,
+  dir_id: string,
+  metadata?: Object,
+  name: string,
+  path: string,
+  relations: RemoteRelations,
+  restore_path?: string,
+  tags: string[],
+  updated_at: string,
+|}
+
+export type RemoteFile = {|
+  ...CommonRemoteAttributes,
+  ...CouchDBFile
+|}
+
+export type RemoteDir = {|
+  ...CommonRemoteAttributes,
+  ...CouchDBDir
+|}
+
 */
 
 module.exports = {
@@ -181,8 +238,12 @@ module.exports = {
   inRemoteTrash,
   trashedDoc,
   withDefaultValues,
-  remoteJsonToRemoteDoc,
-  jsonApiToRemoteJsonDoc
+  oldJsonToRemoteDir,
+  oldJsonToRemoteFile,
+  withPath,
+  jsonApiDeletionToCouchDBDeletion,
+  jsonApiDirToOldJsonDir,
+  jsonApiFileToOldJsonFile
 }
 
 function isFile(
@@ -218,7 +279,7 @@ function trashedDoc /*::<T: { type: FILE, trashed: boolean } | { type: DIR, path
 }
 
 // The following attributes can be omitted by cozy-stack if not defined
-function withDefaultValues /*:: <T: JsonApiDirAttributes|JsonApiFileAttributes> */(
+function withDefaultValues /*:: <T: CouchDBFile|CouchDBDir> */(
   attributes /*: T */
 ) /*: T */ {
   if (attributes.type === DIR_TYPE) {
@@ -242,41 +303,54 @@ function withDefaultValues /*:: <T: JsonApiDirAttributes|JsonApiFileAttributes> 
   }
 }
 
-function remoteJsonToRemoteDoc(json /*: RemoteJsonDoc */) /*: RemoteDoc */ {
-  if (json.attributes.type === DIR_TYPE) {
-    const remoteDir = {
-      type: DIR_TYPE,
-      _id: json._id,
-      _rev: json._rev,
-      ...withDefaultValues(json.attributes),
-      relations: json.relations
-    }
+function oldJsonToRemoteDir(json /*: OldJsonDir */) /*: RemoteDir */ {
+  return {
+    type: DIR_TYPE,
+    _id: json._id,
+    _rev: json._rev,
+    ...withDefaultValues(json.attributes),
+    relations: json.relations
+  }
+}
 
-    return remoteDir
-  } else {
-    const remoteFile = {
+function oldJsonToRemoteFile(
+  json /*: OldJsonFile */,
+  parentDir /*: RemoteDir */
+) /*: RemoteFile */ {
+  return withPath(
+    {
       type: FILE_TYPE,
       _id: json._id,
       _rev: json._rev,
       ...withDefaultValues(json.attributes),
       relations: json.relations
-    }
+    },
+    parentDir
+  )
+}
 
-    return remoteFile
+/** Set the path of a remote file doc. */
+function withPath(
+  doc /*: $Diff<RemoteFile, { path: string }> */,
+  parentDir /*: RemoteDir */
+) /*: RemoteFile */ {
+  return {
+    ...doc,
+    path: posixPath.join(parentDir.path, doc.name)
   }
 }
 
-function jsonApiToRemoteJsonDoc(
-  json /*: JsonApiDoc */
-) /*: RemoteJsonDoc|CouchDBDeletion */ {
-  if (json._deleted) {
-    return ({
-      _id: json.id,
-      _rev: json.rev,
-      _deleted: true
-    } /*: CouchDBDeletion */)
+function jsonApiDeletionToCouchDBDeletion(
+  json /*: JsonApiDeletion */
+) /*: CouchDBDeletion */ {
+  return {
+    _id: json.id,
+    _rev: json.rev,
+    _deleted: true
   }
+}
 
+function jsonApiDirToOldJsonDir(json /*: JsonApiDir */) /*: OldJsonDir */ {
   if (!json.meta || !json.meta.rev) {
     throw new Error('Missing meta.rev attribute in JsonAPI resource.')
   }
@@ -292,6 +366,26 @@ function jsonApiToRemoteJsonDoc(
       return relation === 'contents' && contents && contents.data
         ? contents.data
         : relation === 'referenced_by' && referenced_by && referenced_by.data
+        ? Array(referenced_by.data)
+        : []
+    }
+  }
+}
+
+function jsonApiFileToOldJsonFile(json /*: JsonApiFile */) /*: OldJsonFile */ {
+  if (!json.meta || !json.meta.rev) {
+    throw new Error('Missing meta.rev attribute in JsonAPI resource.')
+  }
+
+  const { id, type, meta, attributes, relationships } = json
+  return {
+    _id: id,
+    _type: type,
+    _rev: (meta && meta.rev) || '',
+    attributes,
+    relations: relation => {
+      const { referenced_by } = relationships
+      return relation === 'referenced_by' && referenced_by && referenced_by.data
         ? Array(referenced_by.data)
         : []
     }

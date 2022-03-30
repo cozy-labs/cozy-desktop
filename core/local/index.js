@@ -34,8 +34,11 @@ import type { Ignore } from '../ignore'
 import type { AtomEventsDispatcher } from './atom/dispatch'
 import type {
   DocType,
+  DirMetadata,
+  FileMetadata,
   Metadata,
   MetadataLocalInfo,
+  Saved,
   SavedMetadata
 } from '../metadata'
 import type { Pouch } from '../pouch'
@@ -102,8 +105,8 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   /*::
-  addFileAsync: (SavedMetadata, ?ProgressCallback) => Promise<*>
-  addFolderAsync: (SavedMetadata) => Promise<*>
+  addFileAsync: (Saved<FileMetadata>, ?ProgressCallback) => Promise<*>
+  addFolderAsync: (Saved<DirMetadata>) => Promise<*>
   renameConflictingDocAsync: (doc: SavedMetadata, newPath: string) => Promise<void>
   */
 
@@ -122,7 +125,7 @@ class Local /*:: implements Reader, Writer */ {
 
   /** Create a readable stream for the given doc */
   async createReadStreamAsync(
-    doc /*: SavedMetadata */
+    doc /*: Saved<FileMetadata> */
   ) /*: Promise<ReadableWithSize> */ {
     const filePath = this.abspath(doc.path)
     return new Promise((resolve, reject) => {
@@ -225,7 +228,7 @@ class Local /*:: implements Reader, Writer */ {
    * then pushed to CouchDB.
    */
   addFile(
-    doc /*: SavedMetadata */,
+    doc /*: Saved<FileMetadata> */,
     onProgress /*: ?ProgressCallback */,
     callback /*: Callback */
   ) /*: void */ {
@@ -367,7 +370,10 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   /** Create a new folder */
-  addFolder(doc /*: SavedMetadata */, callback /*: Callback */) /*: void */ {
+  addFolder(
+    doc /*: Saved<DirMetadata> */,
+    callback /*: Callback */
+  ) /*: void */ {
     let folderPath = path.join(this.syncPath, doc.path)
     log.info({ path: doc.path }, 'Put folder')
     async.series(
@@ -386,21 +392,23 @@ class Local /*:: implements Reader, Writer */ {
 
   /** Overwrite a file */
   async overwriteFileAsync(
-    doc /*: SavedMetadata */,
+    doc /*: Saved<FileMetadata> */,
     onProgress /*: ?ProgressCallback */
   ) /*: Promise<void> */ {
     await this.addFileAsync(doc, onProgress)
   }
 
   /** Update the metadata of a file */
-  async updateFileMetadataAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
+  async updateFileMetadataAsync(
+    doc /*: Saved<FileMetadata> */
+  ) /*: Promise<void> */ {
     log.info({ path: doc.path }, 'Updating file metadata...')
     await this.updateMetadataAsync(doc)
     metadata.updateLocal(doc)
   }
 
   /** Update a folder */
-  async updateFolderAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
+  async updateFolderAsync(doc /*: Saved<DirMetadata> */) /*: Promise<void> */ {
     await this.addFolderAsync(doc)
   }
 
@@ -486,7 +494,7 @@ class Local /*:: implements Reader, Writer */ {
   // renaming its local version with a conflict suffix so `newMetadata` can be
   // saved separately in PouchDB.
   async resolveConflict /*::<T: Metadata|SavedMetadata> */(
-    newMetadata /*: T & { local: MetadataLocalInfo } */
+    newMetadata /*: T */
   ) /*: Promise<T> */ {
     const conflict = metadata.createConflictingDoc(newMetadata)
 

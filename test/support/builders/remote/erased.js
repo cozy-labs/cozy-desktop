@@ -3,15 +3,14 @@
 const _ = require('lodash')
 
 const { ROOT_DIR_ID } = require('../../../../core/remote/constants')
-const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
 const metadata = require('../../../../core/metadata')
 
 const dbBuilders = require('../db')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
+import type { MetadataRemoteDir, MetadataRemoteFile } from '../../../../core/metadata'
 import type { RemoteFile, RemoteDir, CouchDBDeletion } from '../../../../core/remote/document'
-import type { MetadataRemoteFile, MetadataRemoteDir } from '../../../../core/metadata'
 */
 
 // Build a CouchDBDeletion representing a remote Cozy document that was
@@ -27,12 +26,12 @@ import type { MetadataRemoteFile, MetadataRemoteDir } from '../../../../core/met
 module.exports = class RemoteErasedBuilder {
   /*::
   cozy: ?Cozy
-  remoteDoc: ?RemoteFile|MetadataRemoteFile|RemoteDir|MetadataRemoteDir
+  remoteDoc: ?RemoteFile|RemoteDir
   */
 
   constructor(
     cozy /*: ?Cozy */,
-    old /*: ?(RemoteFile|MetadataRemoteFile|RemoteDir|MetadataRemoteDir) */
+    old /*: ?(MetadataRemoteDir|MetadataRemoteFile|RemoteDir|RemoteFile) */
   ) {
     this.cozy = cozy
     if (old) {
@@ -81,13 +80,11 @@ module.exports = class RemoteErasedBuilder {
       }
     } else {
       const { _id, _rev } = _.clone(
-        remoteJsonToRemoteDoc(
-          await cozy.files.createDirectory({
-            name: '',
-            dirID: ROOT_DIR_ID,
-            noSanitize: true
-          })
-        )
+        await cozy.files.createDirectory({
+          name: '',
+          dirID: ROOT_DIR_ID,
+          noSanitize: true
+        })
       )
       await cozy.files.destroyById(_id)
       return {

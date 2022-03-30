@@ -25,15 +25,10 @@ import type EventEmitter from 'events'
 import type { SideName } from '../side'
 import type { ProgressCallback, ReadableWithSize } from '../utils/stream'
 import type { Config } from '../config'
-import type {
-  Metadata,
-  MetadataRemoteInfo,
-  MetadataRemoteDir,
-  SavedMetadata
-} from '../metadata'
+import type { DirMetadata, FileMetadata, Metadata, Saved, SavedMetadata } from '../metadata'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
-import type { RemoteDoc } from './document'
+import type { RemoteDir, RemoteFile } from './document'
 import type { Reader } from '../reader'
 import type { Writer } from '../writer'
 
@@ -52,7 +47,7 @@ const log = logger({
 // A simplified version of the remote Root directory which will be used when
 // looking for the parent directory's _id of documents at the root of the Cozy.
 // The only information we care about are its _id, type and path.
-const ROOT_DIR /*: MetadataRemoteDir */ = {
+const ROOT_DIR /*: RemoteDir */ = {
   _id: ROOT_DIR_ID,
   _rev: '1',
   dir_id: '',
@@ -62,6 +57,7 @@ const ROOT_DIR /*: MetadataRemoteDir */ = {
   updated_at: '',
   type: DIR_TYPE,
   path: '/',
+  cozyMetadata: {},
   relations: () => []
 }
 
@@ -133,19 +129,21 @@ class Remote /*:: implements Reader, Writer */ {
 
   /** Create a readable stream for the given doc */
   async createReadStreamAsync(
-    doc /*: SavedMetadata */
+    doc /*: Saved<FileMetadata> */
   ) /*: Promise<ReadableWithSize> */ {
     const stream = await this.remoteCozy.downloadBinary(doc.remote._id)
     return streamUtils.withSize(stream, doc.size || 0)
   }
 
   /** Create a folder on the remote cozy instance */
-  async addFolderAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
+  async addFolderAsync(doc /*: Saved<DirMetadata> */) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Creating folder...')
 
     const [parentPath, name] = dirAndName(doc.path)
-    const parent /*: RemoteDoc */ = await this.findDirectoryByPath(parentPath)
+    const parent /*: RemoteDir|RemoteFile */ = await this.findDirectoryByPath(
+      parentPath
+    )
 
     try {
       const dir = await this.remoteCozy.createDirectory(
@@ -172,7 +170,7 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async addFileAsync(
-    doc /*: SavedMetadata */,
+    doc /*: Saved<FileMetadata> */,
     onProgress /*: ?ProgressCallback */
   ) /*: Promise<void> */ {
     const { path } = doc
@@ -213,7 +211,7 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async overwriteFileAsync(
-    doc /*: SavedMetadata */,
+    doc /*: Saved<FileMetadata> */,
     onProgress /*: ?ProgressCallback */
   ) /*: Promise<void> */ {
     const { path } = doc
@@ -261,7 +259,9 @@ class Remote /*:: implements Reader, Writer */ {
     metadata.updateRemote(doc, updated)
   }
 
-  async updateFileMetadataAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
+  async updateFileMetadataAsync(
+    doc /*: Saved<FileMetadata> */
+  ) /*: Promise<void> */ {
     const { path } = doc
     log.info({ path }, 'Updating file metadata...')
 
@@ -280,7 +280,7 @@ class Remote /*:: implements Reader, Writer */ {
     metadata.updateRemote(doc, updated)
   }
 
-  async updateFolderAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
+  async updateFolderAsync(doc /*: Saved<DirMetadata> */) /*: Promise<void> */ {
     const { path } = doc
     if (!doc.remote) {
       return this.addFolderAsync(doc)
@@ -318,7 +318,7 @@ class Remote /*:: implements Reader, Writer */ {
     )
 
     const [newParentPath, newName] /*: [string, string] */ = dirAndName(path)
-    const newParent /*: MetadataRemoteDir */ = await this.findDirectoryByPath(
+    const newParent /*: RemoteDir */ = await this.findDirectoryByPath(
       newParentPath
     )
 
@@ -400,7 +400,7 @@ class Remote /*:: implements Reader, Writer */ {
     return this.remoteCozy.diskUsage()
   }
 
-  async hasEnoughSpace(doc /*: SavedMetadata */) /*: Promise<boolean> */ {
+  async hasEnoughSpace(doc /*: Saved<FileMetadata> */) /*: Promise<boolean> */ {
     const { size = 0 } = doc
     return this.remoteCozy.hasEnoughSpace(size)
   }
@@ -416,7 +416,9 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
-  async findDocByPath(fpath /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
+  async findDocByPath(
+    fpath /*: string */
+  ) /*: Promise<?RemoteDir|RemoteFile> */ {
     const [parentPath, name] = dirAndName(fpath)
     const { _id: dirID } = await this.findDirectoryByPath(parentPath)
 
@@ -424,9 +426,7 @@ class Remote /*:: implements Reader, Writer */ {
     if (results.length > 0) return results[0]
   }
 
-  async findDirectoryByPath(
-    path /*: string */
-  ) /*: Promise<MetadataRemoteDir> */ {
+  async findDirectoryByPath(path /*: string */) /*: Promise<RemoteDir> */ {
     if (path === '.') return ROOT_DIR
 
     // XXX: We use the synced path instead of the remote path here as the goal
@@ -448,7 +448,7 @@ class Remote /*:: implements Reader, Writer */ {
   // renaming its remote version with a conflict suffix so `newMetadata` can be
   // saved separately in PouchDB.
   async resolveConflict /*::<T: Metadata|SavedMetadata> */(
-    newMetadata /*: T & { remote: MetadataRemoteInfo } */
+    newMetadata /*: T  */
   ) /*: Promise<?T> */ {
     const conflict = metadata.createConflictingDoc(newMetadata)
 
@@ -461,7 +461,7 @@ class Remote /*:: implements Reader, Writer */ {
     return conflict
   }
 
-  async includeInSync(doc /*: SavedMetadata */) /*: Promise<*> */ {
+  async includeInSync(doc /*: Saved<DirMetadata> */) /*: Promise<*> */ {
     const remoteDocs = await this.remoteCozy.search({ path: `/${doc.path}` })
     const remoteDoc = remoteDocs[0]
     if (!remoteDoc || remoteDoc.type !== 'directory') return

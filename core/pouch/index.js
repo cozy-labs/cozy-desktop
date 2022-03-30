@@ -25,11 +25,11 @@ const remoteConstants = require('../remote/constants')
 
 /*::
 import type { Config } from '../config'
-import type { Metadata, SavedMetadata } from '../metadata'
+import type { Metadata, Saved, SavedMetadata } from '../metadata'
 import type { Callback } from '../utils/func'
 import type { Migration } from './migrations'
 
-export type PouchRecord = { _id: string, _rev: string, _deleted?: true }
+export type PouchRecord = {| _id: string, _rev: string, _deleted?: true |}
 */
 
 const log = logger({
@@ -181,7 +181,7 @@ class Pouch {
   async put /*:: <T: Metadata|SavedMetadata> */(
     doc /*: T */,
     { checkInvariants = true } /*: { checkInvariants: boolean } */ = {}
-  ) /*: Promise<SavedMetadata> */ {
+  ) /*: Promise<Saved<T>> */ {
     if (checkInvariants) metadata.invariants(doc)
     log.debug(
       { path: doc.path, _deleted: doc._deleted, doc },

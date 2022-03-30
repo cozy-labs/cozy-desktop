@@ -9,9 +9,9 @@
 
 /*::
 import type { ReadableWithSize } from './utils/stream'
-import type { SavedMetadata } from './metadata'
+import type { FileMetadata, Saved } from './metadata'
 
 export interface Reader {
-  createReadStreamAsync (SavedMetadata): Promise<ReadableWithSize>;
+  createReadStreamAsync (Saved<FileMetadata>): Promise<ReadableWithSize>;
 }
 */

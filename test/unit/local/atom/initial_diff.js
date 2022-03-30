@@ -653,14 +653,24 @@ describe('core/local/atom/initial_diff', () => {
     })
 
     it('ignores events for unapplied moves', async function () {
-      const wasDir = builders.metadir().path('foo').ino(1).upToDate().build()
+      const wasDir = await builders
+        .metadir()
+        .path('foo')
+        .ino(1)
+        .upToDate()
+        .create()
       await builders
         .metadir()
         .moveFrom(wasDir)
         .path('foo2')
         .changedSide('remote')
         .create()
-      const wasFile = builders.metafile().path('fizz').ino(2).upToDate().build()
+      const wasFile = await builders
+        .metafile()
+        .path('fizz')
+        .ino(2)
+        .upToDate()
+        .create()
       await builders
         .metafile()
         .moveFrom(wasFile)

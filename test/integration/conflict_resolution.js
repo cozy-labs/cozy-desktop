@@ -377,13 +377,12 @@ describe('Conflict resolution', () => {
       await helpers.local.syncDir.ensureDir(nfdName)
       const stats = await helpers.local.syncDir.stat(nfdName)
       const remoteDir = await helpers.remote.createDirectory(nfdName)
-      const doc = await builders
+      await builders
         .metadir()
         .fromRemote(remoteDir)
         .stats(stats)
         .upToDate()
         .create()
-      await helpers.prep.putFolderAsync('local', doc)
 
       await fullSyncStartingFrom('local')
 

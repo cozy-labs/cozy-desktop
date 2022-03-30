@@ -16,10 +16,6 @@ const cozyHelpers = require('../../support/helpers/cozy')
 const Builders = require('../../support/builders')
 
 const builders = new Builders({ cozy: cozyHelpers.cozy })
-/*::
-import type { Metadata } from '../../../core/metadata'
-import type { RemoteDoc } from '../../../core/remote/document'
-*/
 
 describe('Remote', function () {
   before('instanciate config', configHelpers.createConfig)

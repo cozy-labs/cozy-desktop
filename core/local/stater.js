@@ -14,7 +14,7 @@ if (process.platform === 'win32') {
 }
 
 /*::
-import type { Metadata, MetadataLocalInfo } from '../metadata'
+import type { Metadata, MetadataLocalInfo, SavedMetadata } from '../metadata'
 import type { Callback } from '../utils/func'
 
 export type WinStats = {|
@@ -92,7 +92,7 @@ module.exports = {
   },
 
   assignInoAndFileId(
-    doc /*: Metadata|MetadataLocalInfo */,
+    doc /*: Metadata|MetadataLocalInfo|SavedMetadata */,
     stats /*: Stats */
   ) {
     doc.ino = stats.ino

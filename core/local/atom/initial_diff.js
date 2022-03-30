@@ -197,7 +197,9 @@ async function initialDiff(
           }
         } else if (foundUntouchedFile(event, was, truncateWindowsDates)) {
           _.set(event, [STEP_NAME, 'md5sumReusedFrom'], was.local.path)
-          event.md5sum = was.local.md5sum
+          // $FlowFixMe foundUntouchedFile already makes sure local has a md5sum
+          const { md5sum } = was.local
+          event.md5sum = md5sum
         }
       }
 

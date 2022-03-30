@@ -17,10 +17,12 @@ const logger = require('./utils/logger')
 import type { IdConflictInfo } from './IdConflict'
 import type { Local } from './local'
 import type {
+  DirMetadata,
+  FileMetadata,
   Metadata,
-  MetadataRemoteInfo,
-  SavedMetadata,
   RemoteRevisionsByID,
+  Saved,
+  SavedMetadata,
 } from './metadata'
 import type { Pouch } from './pouch'
 import type { Remote } from './remote'
@@ -65,66 +67,20 @@ class Merge {
 
   // Resolve a conflict by renaming a file/folder
   // A suffix composed of -conflict- and the date is added to the path.
-  async resolveConflictAsync(
+  async resolveConflictAsync /*::<T: Metadata|SavedMetadata> */(
     side /*: SideName */,
-    doc /*: Metadata */
-  ) /*: Promise<Metadata> */ {
+    doc /*: T */
+  ) /*: Promise<T> */ {
     return side === 'local'
       ? this.local.resolveConflict(doc)
       : this.remote.resolveConflict(doc)
-  }
-
-  // Resolve Cozy Note conflict when its content is updated on the local
-  // filesystem and would therefore break the actual Note.
-  // We always rename the remote document since this method should only be
-  // called in case of a local update and the local file could still be open in
-  // the user's editor and renaming it could create issues (e.g. the editor does
-  // not detect the renaming and we'd create a new conflict each time the open
-  // file would be saved).
-  async resolveNoteConflict(
-    doc /*: Metadata */,
-    noteToRename /*: SavedMetadata */
-  ) {
-    // We have to pass the `noteToRename` record to generate the conflict as
-    // `doc` represents a modified document, with different checksum, size and
-    // modification date and we'll save the resulting record as the new
-    // `noteToRename`.
-
-    if (doc.overwrite) {
-      // If the local change on the note was overwriting another document (i.e.
-      // another note, given the name), we need to handle the remote trashing of
-      // the overwritten document when renaming the remote note with a conflict
-      // suffix as overwrites are done only when renaming or moving a document.
-      noteToRename.overwrite = doc.overwrite
-      // The local document, which won't be a note, is note overwriting anything
-      // anymore.
-      delete doc.overwrite
-    }
-
-    // We use the new local path to resolve the conflict in case the note was
-    // not only renamed but also moved (i.e. otherwise the conflict resolution
-    // will happen in the current remote note's directory and it won't be
-    // moved).
-    noteToRename.path = doc.path
-
-    const renamed = await this.resolveConflictAsync('remote', noteToRename)
-    // XXX: shall we move this to resolveConflictAsync?
-    metadata.dissociateLocal(renamed)
-    await this.pouch.put(renamed)
-
-    // We now transform `doc` to represents the creation of a local markdown
-    // file at the destination location.
-    metadata.markAsUnmerged(doc, 'local')
-    metadata.markSide('local', doc)
-    metadata.removeNoteMetadata(doc)
-    return this.addFileAsync('local', doc)
   }
 
   /* Actions */
 
   // Add a file, if it doesn't already exist,
   // and create the tree structure if needed
-  async addFileAsync(side /*: SideName */, doc /*: Metadata */) {
+  async addFileAsync(side /*: SideName */, doc /*: FileMetadata */) {
     log.debug({ path: doc.path }, 'addFileAsync')
     const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
 
@@ -157,7 +113,7 @@ class Merge {
   }
 
   // Update a file, when its metadata or its content has changed
-  async updateFileAsync(side /*: SideName */, doc /*: Metadata */) {
+  async updateFileAsync(side /*: SideName */, doc /*: FileMetadata */) {
     log.debug({ path: doc.path }, 'updateFileAsync')
 
     const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
@@ -318,7 +274,7 @@ class Merge {
   }
 
   // Create or update a folder
-  async putFolderAsync(side /*: SideName */, doc /*: Metadata */) {
+  async putFolderAsync(side /*: SideName */, doc /*: DirMetadata */) {
     log.debug({ path: doc.path }, 'putFolderAsync')
 
     const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
@@ -450,7 +406,7 @@ class Merge {
   // Rename or move a file
   async moveFileAsync(
     side /*: SideName */,
-    doc /*: Metadata */,
+    doc /*: FileMetadata */,
     was /*: SavedMetadata */
   ) /*: Promise<*> */ {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
@@ -459,6 +415,14 @@ class Merge {
       move.convertToDestinationAddition(side, was, doc)
       return this.pouch.put(doc)
     } else if (was.sides && was.sides[side]) {
+      if (was.docType !== 'file') {
+        log.error(
+          { doc, was, sentry: true },
+          'Mismatch on doctype for moveFileAsync'
+        )
+        return
+      }
+
       metadata.assignMaxDate(doc, was)
       move(side, was, doc)
 
@@ -516,11 +480,24 @@ class Merge {
   // as well).
   async moveFolderAsync(
     side /*: SideName */,
-    doc /*: Metadata */,
+    doc /*: DirMetadata */,
     was /*: SavedMetadata */,
     newRemoteRevs /*: ?RemoteRevisionsByID */
   ) {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFolderAsync')
+
+    if ((!metadata.wasSynced(was) && !was.moveFrom) || was.trashed) {
+      move.convertToDestinationAddition(side, was, doc)
+      return this.pouch.put(doc)
+    }
+
+    if (was.docType !== 'folder') {
+      log.error(
+        { doc, was, sentry: true },
+        'Mismatch on doctype for moveFolderAsync'
+      )
+      return
+    }
 
     metadata.assignMaxDate(doc, was)
 
@@ -564,8 +541,8 @@ class Merge {
   // Move a folder and all the things inside it
   async moveFolderRecursivelyAsync(
     side /*: SideName */,
-    folder /*: Metadata  */,
-    was /*: SavedMetadata */,
+    folder /*: DirMetadata  */,
+    was /*: Saved<DirMetadata> */,
     newRemoteRevs /*: ?RemoteRevisionsByID */
   ) {
     log.debug(
@@ -748,12 +725,11 @@ class Merge {
   async trashFileAsync(
     side /*: SideName */,
     trashed /*: SavedMetadata */,
-    doc /*: Metadata */
+    doc /*: FileMetadata|SavedMetadata */
   ) /*: Promise<void> */ {
     const { path } = trashed
     log.debug({ path }, 'trashFileAsync')
     let was /*: ?SavedMetadata */
-    // $FlowFixMe _id exists in SavedMetadata
     if (trashed._id != null) {
       was = await this.pouch.byIdMaybe(trashed._id)
     } else {
@@ -828,7 +804,7 @@ class Merge {
   async trashFolderAsync(
     side /*: SideName */,
     trashed /*: SavedMetadata */,
-    doc /*: Metadata */
+    doc /*: DirMetadata|SavedMetadata */
   ) /*: Promise<*> */ {
     const { path } = trashed
     log.debug({ path }, 'trashFolderAsync')

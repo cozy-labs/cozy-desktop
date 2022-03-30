@@ -14,6 +14,10 @@ const TestHelpers = require('../support/helpers')
 
 const { platform } = process
 
+/*::
+import type { FileMetadata, Saved } from '../../core/metadata'
+*/
+
 describe('Executable handling', () => {
   let cozy, helpers, syncDir
 
@@ -36,13 +40,16 @@ describe('Executable handling', () => {
 
   const executableStatus = async relpath => {
     const mode = await syncDir.octalMode(relpath)
-    const doc = await helpers.docByPath(relpath)
+    const doc /*: Saved<FileMetadata> */ = (await helpers.docByPath(
+      relpath
+    ) /*: any */)
     const remote = await cozy.files.statByPath(`/${relpath}`)
 
     return {
       local: mode,
       pouch: {
-        local: doc.local && doc.local.executable,
+        local:
+          doc.local && doc.local.docType === 'file' && doc.local.executable,
         remote:
           doc.remote && doc.remote.type === 'file' && doc.remote.executable,
         synced: doc.executable

@@ -12,12 +12,18 @@ const remoteChange = require('../change')
 const sideName = 'remote'
 
 /*::
-import type { Metadata, SavedMetadata } from '../../metadata'
-import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from '../change'
+import type { Metadata, Saved, SavedMetadata } from '../../metadata'
+import type {
+  RemoteChange,
+  RemoteFileMove,
+  RemoteDirMove,
+  RemoteDescendantDirMove,
+  RemoteDescendantFileMove
+} from '../change'
 */
 
 const buildChange = (sideName, doc, was) => {
-  if (doc.docType === 'file') {
+  if (doc.docType === 'file' && was.docType === 'file') {
     return {
       sideName,
       type: 'FileMove',
@@ -25,7 +31,7 @@ const buildChange = (sideName, doc, was) => {
       doc,
       was
     }
-  } else {
+  } else if (doc.docType === 'folder' && was.docType === 'folder') {
     return {
       sideName,
       type: 'DirMove',
@@ -39,16 +45,16 @@ const buildChange = (sideName, doc, was) => {
 const findParentMoves = (
   change /*: RemoteChange */,
   previousChanges /*: RemoteChange[] */,
-  encounteredMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
+  encounteredMoves /*: Array<RemoteDirMove|RemoteDescendantDirMove> */
 ) => {
-  const parentMove /*: ?RemoteDirMove|RemoteDescendantChange */ =
+  const parentMove /*: ?RemoteDirMove|RemoteDescendantDirMove */ =
     encounteredMoves.find(move => remoteChange.isChildMove(move, change))
-  let squashedParentMove /*: ?RemoteDirMove|RemoteDescendantChange */
+  let squashedParentMove /*: ?RemoteDirMove|RemoteDescendantDirMove */
   if (parentMove) {
     for (const previousChange of previousChanges) {
       if (
         (previousChange.type === 'DirMove' ||
-          previousChange.type === 'DescendantChange') &&
+          previousChange.type === 'DescendantDirMove') &&
         metadata.id(previousChange.doc.path) ===
           metadata.id(parentMove.doc.path)
       ) {
@@ -60,7 +66,7 @@ const findParentMoves = (
     for (const previousChange of previousChanges) {
       if (
         (previousChange.type === 'DirMove' ||
-          previousChange.type === 'DescendantChange') &&
+          previousChange.type === 'DescendantDirMove') &&
         remoteChange.isChildMove(previousChange, change)
       )
         squashedParentMove = previousChange
@@ -72,8 +78,8 @@ const findParentMoves = (
 }
 
 const findChildrenMoves = (
-  change /*: RemoteDirMove|RemoteDescendantChange */,
-  originalChange /*: ?RemoteDirMove|RemoteDescendantChange */,
+  change /*: RemoteDirMove|RemoteDescendantDirMove */,
+  originalChange /*: ?RemoteDirMove|RemoteDescendantDirMove */,
   previousChanges /*: RemoteChange[] */
 ) /*: Array<RemoteFileMove|RemoteDirMove> */ => {
   const childrenMoves = []
@@ -91,28 +97,33 @@ const findChildrenMoves = (
 }
 
 const buildDescendantChange = (
-  child /*: RemoteFileMove|RemoteDirMove|RemoteDescendantChange */,
-  parent /*: RemoteDirMove|RemoteDescendantChange */
-) /*: RemoteDescendantChange */ => {
-  const descendantChange /*: RemoteDescendantChange */ = {
-    sideName,
-    type: 'DescendantChange',
-    doc: _.clone(child.doc),
-    was: _.clone(child.was),
-    ancestor: parent,
-    descendantMoves:
-      child.type === 'DirMove' || child.type === 'DescendantChange'
-        ? child.descendantMoves
-        : []
+  child /*: RemoteDirMove|RemoteDescendantDirMove|RemoteDescendantFileMove|RemoteFileMove */,
+  parent /*: RemoteDirMove|RemoteDescendantDirMove */
+) /*: RemoteDescendantDirMove|RemoteDescendantFileMove */ => {
+  if (child.type === 'DirMove' || child.type === 'DescendantDirMove') {
+    return {
+      sideName,
+      type: 'DescendantDirMove',
+      doc: _.clone(child.doc),
+      was: _.clone(child.was),
+      ancestor: parent,
+      descendantMoves: child.descendantMoves
+    }
+  } else {
+    return {
+      sideName,
+      type: 'DescendantFileMove',
+      doc: _.clone(child.doc),
+      was: _.clone(child.was),
+      ancestor: parent,
+      update: _.clone(child.update)
+    }
   }
-  if (child.type === 'FileMove') descendantChange.update = _.clone(child.update)
-
-  return descendantChange
 }
 
 const buildMoveInsideMove = (
   child /*: RemoteFileMove|RemoteDirMove */,
-  parent /*: RemoteDirMove|RemoteDescendantChange */
+  parent /*: RemoteDirMove|RemoteDescendantDirMove */
 ) /*: RemoteFileMove|RemoteDirMove */ => {
   const correctedSrc /*: SavedMetadata */ = _.clone(child.was)
   correctedSrc.path = path.join(parent.doc.path, path.basename(child.was.path))
@@ -138,9 +149,9 @@ const buildMoveInsideMove = (
 }
 
 const squashedWithParent = (
-  change,
+  change /*: RemoteDirMove|RemoteFileMove */,
   previousChanges /*: RemoteChange[] */,
-  encounteredMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
+  encounteredMoves /*: Array<RemoteDirMove|RemoteDescendantDirMove> */
 ) => {
   const { parentMove, squashedParentMove } = findParentMoves(
     change,
@@ -153,10 +164,14 @@ const squashedWithParent = (
     if (remoteChange.isOnlyChildMove(parentMove, change)) {
       const descendantChange = buildDescendantChange(change, squashedParentMove)
       remoteChange.includeDescendant(squashedParentMove, descendantChange)
-      encounteredMoves.push(_.cloneDeep(descendantChange))
+      if (descendantChange.type === 'DescendantDirMove') {
+        encounteredMoves.push(_.cloneDeep(descendantChange))
+      }
       return descendantChange
     } else {
-      encounteredMoves.push(_.cloneDeep(change))
+      if (change.type === 'DirMove') {
+        encounteredMoves.push(_.cloneDeep(change))
+      }
       return buildMoveInsideMove(change, squashedParentMove)
     }
   }
@@ -166,10 +181,14 @@ const squashedWithParent = (
     if (remoteChange.isOnlyChildMove(parentMove, change)) {
       const descendantChange = buildDescendantChange(change, parentMove)
       remoteChange.includeDescendant(parentMove, descendantChange)
-      encounteredMoves.push(_.cloneDeep(descendantChange))
+      if (descendantChange.type === 'DescendantDirMove') {
+        encounteredMoves.push(_.cloneDeep(descendantChange))
+      }
       return descendantChange
     } else {
-      encounteredMoves.push(_.cloneDeep(change))
+      if (change.type === 'DirMove') {
+        encounteredMoves.push(_.cloneDeep(change))
+      }
       return buildMoveInsideMove(change, parentMove)
     }
   }
@@ -179,9 +198,9 @@ const squashedWithParent = (
 }
 
 const squashChildren = (
-  change /*: RemoteDirMove|RemoteDescendantChange */,
+  change /*: RemoteDirMove|RemoteDescendantDirMove */,
   previousChanges /*: RemoteChange[] */,
-  encounteredMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
+  encounteredMoves /*: Array<RemoteDirMove|RemoteDescendantDirMove> */
 ) => {
   const originalChange = encounteredMoves.find(
     move => metadata.id(move.doc.path) === metadata.id(change.doc.path)
@@ -205,7 +224,7 @@ const squashChildren = (
     } else {
       remoteChange.applyMoveInsideMove(change, childMove)
     }
-    if (childMove.doc.docType === 'Folder')
+    if (childMove.type === 'DirMove' || childMove.type === 'DescendantDirMove')
       encounteredMoves.push(_.cloneDeep(childMove))
   }
 }
@@ -214,10 +233,17 @@ const squashMoves = (
   doc /*: Metadata */,
   was /*: SavedMetadata */,
   previousChanges /*: RemoteChange[] */,
-  encounteredMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
-) /*: RemoteDirMove|RemoteFileMove|RemoteDescendantChange */ => {
-  const change = buildChange(sideName, doc, was)
-  encounteredMoves.push(_.cloneDeep(change))
+  encounteredMoves /*: Array<RemoteDirMove|RemoteDescendantDirMove> */
+) /*: RemoteDirMove|RemoteFileMove|RemoteDescendantDirMove|RemoteDescendantFileMove */ => {
+  // $FlowFixMe we have already preocessed changes with mismatching doc and was
+  const change /*: RemoteDirMove|RemoteFileMove */ = buildChange(
+    sideName,
+    doc,
+    was
+  )
+  if (change.type === 'DirMove') {
+    encounteredMoves.push(_.cloneDeep(change))
+  }
 
   for (const previousChange of previousChanges) {
     if (
@@ -255,7 +281,7 @@ const squashMoves = (
 
   if (
     squashedChange.type === 'DirMove' ||
-    squashedChange.type === 'DescendantChange'
+    squashedChange.type === 'DescendantDirMove'
   ) {
     squashChildren(squashedChange, previousChanges, encounteredMoves)
   }

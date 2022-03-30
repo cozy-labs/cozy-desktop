@@ -40,12 +40,12 @@ if (process.platform === 'win32') {
       const inputBatch = events => inputChannel.push(_.cloneDeep(events))
       const outputBatch = () => outputChannel.pop()
 
-      const metadataBuilderByKind = (kind, old) => {
+      const metadataBuilderByKind = kind => {
         switch (kind) {
           case 'file':
-            return builders.metafile(old)
+            return builders.metafile
           case 'directory':
-            return builders.metadir(old)
+            return builders.metadir
           default:
             throw new Error(
               `Cannot find metadata builder for ${JSON.stringify(kind)}`
@@ -54,13 +54,18 @@ if (process.platform === 'win32') {
       }
 
       for (const kind of ['file', 'directory']) {
+        let builder
+        before(() => {
+          builder = metadataBuilderByKind(kind)
+        })
+
         describe(`deleted ${kind} (matching doc)`, () => {
           const srcIno = 1
           const srcPath = 'src'
           let srcDoc, deletedEvent
 
           beforeEach(async () => {
-            srcDoc = await metadataBuilderByKind(kind)
+            srcDoc = await builder()
               .path(srcPath)
               .ino(srcIno)
               .upToDate()
@@ -129,10 +134,8 @@ if (process.platform === 'win32') {
 
             context('when doc has been moved in PouchDB', () => {
               beforeEach(async () => {
-                const deletedSrc = await metadataBuilderByKind(kind, srcDoc)
-                  .upToDate()
-                  .create()
-                await metadataBuilderByKind(kind)
+                const deletedSrc = await builder(srcDoc).upToDate().create()
+                await builder()
                   .moveFrom(deletedSrc)
                   .path(dstPath)
                   .upToDate()
@@ -369,7 +372,7 @@ if (process.platform === 'win32') {
             let deletedEvent
 
             beforeEach(async () => {
-              await metadataBuilderByKind(kind)
+              await builder()
                 .path(deletedPath)
                 .ino(createdIno)
                 .upToDate()
@@ -405,10 +408,11 @@ if (process.platform === 'win32') {
                   const childIno = createdIno + 2
                   const childName = `sub${childKind}`
                   const childTmpPath = path.join(createdPath, childName)
-                  let deletedChildEvent
+                  let childBuilder, deletedChildEvent
 
                   beforeEach(async () => {
-                    await metadataBuilderByKind(childKind)
+                    childBuilder = metadataBuilderByKind(childKind)
+                    await childBuilder()
                       .path(path.join(deletedPath, childName))
                       .ino(childIno)
                       .upToDate()
@@ -491,7 +495,7 @@ if (process.platform === 'win32') {
             let deletedEvent
 
             beforeEach(async () => {
-              await metadataBuilderByKind(kind)
+              await builder()
                 .path(createdPath)
                 .ino(createdIno)
                 .upToDate()

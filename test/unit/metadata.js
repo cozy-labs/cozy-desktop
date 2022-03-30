@@ -41,8 +41,8 @@ const pathUtils = require('../../core/utils/path')
 const timestamp = require('../../core/utils/timestamp')
 
 /*::
-import type { Metadata, MetadataRemoteFile, MetadataRemoteDir, MetadataLocalInfo } from '../../core/metadata'
-import type { RemoteBase } from '../../core/remote/document'
+import type { DirMetadata, FileMetadata, Metadata } from '../../core/metadata'
+import type { RemoteDir, RemoteFile } from '../../core/remote/document'
 */
 
 const { platform } = process
@@ -60,7 +60,7 @@ describe('metadata', function () {
 
   describe('.fromRemoteDoc()', () => {
     it('builds the metadata for a remote file', () => {
-      const remoteDoc /*: MetadataRemoteFile */ = {
+      const remoteDoc /*: RemoteFile */ = {
         _id: '12',
         _rev: '34',
         class: 'document',
@@ -81,7 +81,7 @@ describe('metadata', function () {
         trashed: false,
         relations: () => []
       }
-      const doc /*: Metadata */ = metadata.fromRemoteDoc(remoteDoc)
+      const doc = metadata.fromRemoteDoc(remoteDoc)
 
       should(doc).deepEqual({
         md5sum: 'N7UdGUp1E+RbVvZSTy1R8g==',
@@ -115,7 +115,7 @@ describe('metadata', function () {
     })
 
     it('builds the metadata for a remote dir', () => {
-      const remoteDoc /*: MetadataRemoteDir */ = {
+      const remoteDoc /*: RemoteDir */ = {
         _id: '12',
         _rev: '34',
         dir_id: '56',
@@ -125,6 +125,9 @@ describe('metadata', function () {
         type: 'directory',
         created_at: '2017-09-07T07:06:05Z',
         updated_at: '2017-09-08T07:06:05Z',
+        cozyMetadata: {
+          createdOn: 'alice.mycozy.cloud'
+        },
         relations: () => []
       }
 
@@ -194,6 +197,7 @@ describe('metadata', function () {
     })
 
     it('returns false if the checksum is missing for a folder', function () {
+      // $FlowFixMe wrong type passed on purpose
       should(invalidChecksum(builders.metadir().build())).be.false()
     })
 
@@ -779,12 +783,13 @@ describe('metadata', function () {
   })
 
   describe('incSides', () => {
-    const sidesAfterInc = (doc /*: Metadata */) => {
+    const sidesAfterInc = (doc /*: DirMetadata|FileMetadata */) => {
       metadata.incSides(doc)
       return doc.sides
     }
 
     it('increments existing sides by 1 in-place', () => {
+      // $FlowFixMe empty object passed on purpose
       should(sidesAfterInc({})).deepEqual(undefined)
       should(sidesAfterInc(builders.metadata().sides({}).build())).deepEqual({
         target: 0
@@ -856,7 +861,7 @@ describe('metadata', function () {
       should(doc).have.property('updated_at')
       should(doc).have.property('executable', false)
 
-      const remote = builders.remoteFile().build()
+      const remote = metadata.serializableRemote(builders.remoteFile().build())
       should(
         buildFile('chat-mignon.jpg', stats, md5sum, remote).remote
       ).deepEqual(remote)
@@ -880,7 +885,7 @@ describe('metadata', function () {
       should(doc).have.property('updated_at')
       should(doc).have.property('executable', false)
 
-      const remote = builders.remoteFile().build()
+      const remote = metadata.serializableRemote(builders.remoteFile().build())
       should(
         buildFile('chat-mignon.jpg', stats, md5sum, remote).remote
       ).deepEqual(remote)
@@ -911,7 +916,7 @@ describe('metadata', function () {
       })
       should(doc).have.property('updated_at')
 
-      const remote = builders.remoteDir().build()
+      const remote = metadata.serializableRemote(builders.remoteDir().build())
       should(buildDir('fixtures', stats, remote).remote).deepEqual(remote)
     })
 
@@ -935,7 +940,7 @@ describe('metadata', function () {
     it('accepts remote info', () => {
       const path = 'whatever'
       const ctime = new Date()
-      const remote = builders.remoteDir().build()
+      const remote = metadata.serializableRemote(builders.remoteDir().build())
       const doc = buildDir(
         path,
         builders.stats().ctime(ctime).mtime(ctime).ino(123).build(),
@@ -948,43 +953,42 @@ describe('metadata', function () {
   describe('invariants', () => {
     let doc
     beforeEach(function () {
-      doc = builders.metadata().remoteId('badbeef').upToDate().build()
+      doc = builders.metafile().remoteId('badbeef').upToDate().build()
     })
 
     it('throws when trying to put bad doc (no sides)', () => {
       // $FlowFixMe sides is null on purpose
-      should(() => invariants(Object.assign(doc, { sides: null }))).throw(
-        /sides/
-      )
+      should(() => invariants({ ...doc, sides: null })).throw(/sides/)
     })
 
     it('throws when trying to put bad doc (no remote)', () => {
       // $FlowFixMe remote is null on purpose
-      should(() => invariants(Object.assign(doc, { remote: null }))).throw(
-        /sides\.remote/
-      )
+      should(() => invariants({ ...doc, remote: null })).throw(/sides\.remote/)
     })
 
     it('throws when trying to put bad doc (no md5sum)', function () {
       doc = builders.metafile().remoteId('badbeef').upToDate().build()
       // $FlowFixMe md5sum is null on purpose
-      should(() => invariants(Object.assign(doc, { md5sum: null }))).throw(
-        /checksum/
-      )
+      should(() => invariants({ ...doc, md5sum: null })).throw(/checksum/)
     })
 
     it('does not throw when trying to put bad doc when deleted and up-to-date', async () => {
+      const doc = await builders
+        .metafile()
+        .remoteId('badbeef')
+        .upToDate()
+        .create()
+
       should(() =>
-        invariants(
-          Object.assign(doc, {
-            _deleted: true,
-            sides: { target: 0, local: 0, remote: 0 },
-            // $FlowFixMe remote is null on purpose
-            remote: null,
-            // $FlowFixMe md5sum is null on purpose
-            md5sum: null
-          })
-        )
+        invariants({
+          ...doc,
+          _deleted: true,
+          sides: { target: 0, local: 0, remote: 0 },
+          // $FlowFixMe remote is null on purpose
+          remote: null,
+          // $FlowFixMe md5sum is null on purpose
+          md5sum: null
+        })
       ).not.throw()
     })
   })

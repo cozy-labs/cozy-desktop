@@ -22,7 +22,6 @@ const pouchHelpers = require('../../support/helpers/pouch')
 
 /*::
 import type { Migration } from '../../../core/pouch/migrations'
-import type { SavedMetadata } from '../../../core/metadata'
 */
 
 describe('core/pouch/migrations', function () {

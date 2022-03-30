@@ -26,8 +26,17 @@ import type { Ignore } from '../ignore'
 import type { Local } from '../local'
 import type { Pouch } from '../pouch'
 import type { Remote } from '../remote'
+import type { RemoteDir, RemoteFile } from '../remote/document'
 import type { RemoteError } from '../remote/errors'
-import type { SavedMetadata, MetadataLocalInfo, MetadataRemoteInfo } from '../metadata'
+import type {
+  DirMetadata,
+  FileMetadata,
+  MetadataLocalInfo,
+  MetadataRemoteDir,
+  MetadataRemoteFile,
+  Saved,
+  SavedMetadata
+} from '../metadata'
 import type { SideName } from '../side'
 import type { Writer } from '../writer'
 import type { SyncError } from './errors'
@@ -76,9 +85,9 @@ const shouldAttemptRetry = (change /*: PouchDBFeedData */) => {
 const outdatedMetadata = (
   doc /*: SavedMetadata */,
   sideName /*: SideName */
-) /*: ?MetadataLocalInfo|?MetadataRemoteInfo */ =>
+) /*: ?(MetadataLocalInfo|MetadataRemoteDir|MetadataRemoteFile) */ =>
   sideName === 'remote'
-    ? (doc.remote /*: MetadataRemoteInfo*/)
+    ? (doc.remote /*: MetadataRemoteDir|MetadataRemoteFile*/)
     : (doc.local /*: MetadataLocalInfo*/)
 
 // Find out which operation should be propagated based on hints saved in the
@@ -826,14 +835,12 @@ class Sync {
           (side.name === 'remote' && metadata.equivalentRemote(outdated, doc))
         ) {
           log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
-        } else if (metadata.isFolder(doc)) {
+        } else if (doc.docType === 'folder') {
           await side.updateFolderAsync(doc)
-        } else if (metadata.isFile(doc)) {
-          if (metadata.sameBinary(outdated, doc)) {
-            await side.updateFileMetadataAsync(doc)
-          } else {
-            await this.doOverwrite(side, doc)
-          }
+        } else if (metadata.sameBinary(outdated, doc)) {
+          await side.updateFileMetadataAsync(doc)
+        } else {
+          await this.doOverwrite(side, doc)
         }
       } else {
         // If we don't have an opposite side (i.e. old), then it's a creation
@@ -853,7 +860,7 @@ class Sync {
     side /*: Writer */,
     doc /*: SavedMetadata */
   ) /*: Promise<void> */ {
-    if (metadata.isFile(doc)) {
+    if (doc.docType === 'file') {
       this.events.emit('transfer-started', doc)
       try {
         await side.addFileAsync(doc, ({ transferred }) => {
@@ -873,7 +880,7 @@ class Sync {
 
   async doOverwrite(
     side /*: Writer */,
-    doc /*: SavedMetadata */
+    doc /*: Saved<FileMetadata> */
   ) /*: Promise<void> */ {
     this.events.emit('transfer-started', doc)
     try {
@@ -1112,9 +1119,7 @@ class Sync {
       // a thumbnail before apply has finished. In that case, we try to
       // reconciliate the documents.
       if (err && err.status === 409) {
-        const unsynced /*: SavedMetadata */ = await this.pouch.bySyncedPath(
-          doc.path
-        )
+        const unsynced = await this.pouch.bySyncedPath(doc.path)
         const other = otherSide(side)
         await this.pouch.put({
           ...unsynced,

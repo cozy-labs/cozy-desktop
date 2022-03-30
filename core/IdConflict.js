@@ -19,19 +19,19 @@ const _ = require('lodash')
 const metadata = require('./metadata')
 
 /*::
-import type { Metadata } from './metadata'
+import type { Metadata, SavedMetadata } from './metadata'
 import type { SideName } from './side'
 
 type Change = {
   side: SideName,
   doc: Metadata,
-  was?: Metadata
+  was?: SavedMetadata
 }
 // TODO: Pass Change objects to Merge methods too.
 
 export opaque type IdConflictInfo = {
   change: Change,
-  existingDoc: Metadata,
+  existingDoc: Metadata|SavedMetadata,
   platform: string
 }
 */
@@ -64,7 +64,7 @@ function description(
  */
 function detect(
   change /*: Change */,
-  existingDoc /*: ?Metadata */
+  existingDoc /*: ?Metadata|SavedMetadata */
 ) /*: ?IdConflictInfo */ {
   if (existingDoc && existsBetween(change, existingDoc)) {
     return {
@@ -77,7 +77,7 @@ function detect(
 
 function detectOnId(
   { doc, was } /*: $Diff<Change, {side: SideName}> */,
-  existingDoc /*: Metadata */
+  existingDoc /*: Metadata|SavedMetadata */
 ) /*: boolean */ {
   return (
     metadata.id(doc.path) === metadata.id(existingDoc.path) &&
@@ -88,7 +88,7 @@ function detectOnId(
 
 function detectOnRemote(
   { doc } /*: $Diff<Change, {side: SideName}> */,
-  existingDoc /*: Metadata */
+  existingDoc /*: Metadata|SavedMetadata */
 ) /*: boolean */ {
   return _.get(doc, 'remote._id') !== _.get(existingDoc, 'remote._id')
 }
@@ -99,7 +99,7 @@ function detectOnRemote(
  */
 function existsBetween(
   change /*: $Diff<Change, {side: SideName}> */,
-  existingDoc /*: Metadata */
+  existingDoc /*: Metadata|SavedMetadata */
 ) /*: boolean */ {
   return detectOnId(change, existingDoc) && detectOnRemote(change, existingDoc)
 }

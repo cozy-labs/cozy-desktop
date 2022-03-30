@@ -41,16 +41,15 @@ import type {
   RemoteInvalidChange
 } from '../../../core/remote/change'
 import type {
-  RemoteDoc,
   CouchDBDeletion,
   RemoteFile,
   RemoteDir
 } from '../../../core/remote/document'
 import type {
+  DirMetadata,
+  FileMetadata,
   Metadata,
-  MetadataRemoteInfo,
-  MetadataRemoteFile,
-  MetadataRemoteDir
+  Saved
 } from '../../../core/metadata'
 import type { RemoteTree } from '../../support/builders'
 */
@@ -546,7 +545,7 @@ describe('RemoteWatcher', function () {
   })
 
   const validMetadata = (
-    remoteDoc /*: MetadataRemoteInfo */
+    remoteDoc /*: RemoteDir|RemoteFile */
   ) /*: Metadata */ => {
     const doc = metadata.fromRemoteDoc(remoteDoc)
     ensureValidPath(doc)
@@ -1921,7 +1920,7 @@ describe('RemoteWatcher', function () {
             .remoteRev(1)
             .build(),
           builders
-            .metadir()
+            .metafile()
             .fromRemote(remoteDocsByPath['parent/dst/dir2/subdir/file2'])
             .path(path.normalize('parent/src/dir/subdir/file'))
             .upToDate()
@@ -2268,7 +2267,7 @@ describe('RemoteWatcher', function () {
         .name('meow.txt')
         .data('meow')
         .build()
-      const was /*: Metadata */ = metadata.fromRemoteDoc(file)
+      const was = metadata.fromRemoteDoc(file)
       metadata.ensureValidPath(was)
       file._rev = '2'
       file.name = 'woof.txt'
@@ -2292,7 +2291,7 @@ describe('RemoteWatcher', function () {
 
     it('is invalid when local or remote file is corrupt', async function () {
       const remoteDoc = builders.remoteFile().size('123').shortRev(1).build()
-      const was /*: Metadata */ = builders
+      const was /*: FileMetadata */ = builders
         .metafile()
         .fromRemote(remoteDoc)
         .size(456)
@@ -2317,7 +2316,7 @@ describe('RemoteWatcher', function () {
       this.prep.putFolderAsync = sinon.stub()
       this.prep.putFolderAsync.returnsPromise().resolves(null)
       const oldDir = builders.remoteDir().name('foo').build()
-      const oldMeta /*: Metadata */ = await builders
+      const oldMeta /*: Saved<DirMetadata> */ = await builders
         .metadir()
         .fromRemote(oldDir)
         .create()
@@ -2343,7 +2342,7 @@ describe('RemoteWatcher', function () {
       this.prep.putFolderAsync = sinon.stub()
       this.prep.putFolderAsync.returnsPromise().resolves(null)
       const oldDir = builders.remoteDir().name('foo').trashed().build()
-      const oldMeta /*: Metadata */ = await builders.metadir
+      const oldMeta /*: DirMetadata */ = await builders.metadir
         .fromRemote(oldDir)
         .create()
       const newDir = builders.remoteDir(oldDir).restored().build()

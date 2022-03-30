@@ -9,6 +9,11 @@ const cozyHelpers = require('./cozy')
 
 const { Remote, dirAndName } = require('../../../core/remote')
 const {
+  oldJsonToRemoteDir,
+  oldJsonToRemoteFile
+} = require('../../../core/remote/document')
+const {
+  DIR_TYPE,
   ROOT_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
@@ -17,8 +22,8 @@ const {
 import type { Client as OldCozyClient } from 'cozy-client-js'
 import type { Pouch } from '../../../core/pouch'
 import type { RemoteOptions } from '../../../core/remote'
-import type { RemoteDoc } from '../../../core/remote/document'
-import type { Metadata, MetadataRemoteInfo } from '../../../core/metadata'
+import type { RemoteDir, RemoteFile } from '../../../core/remote/document'
+import type { Metadata } from '../../../core/metadata'
 */
 
 class RemoteTestHelpers {
@@ -55,46 +60,39 @@ class RemoteTestHelpers {
   async createDirectory(
     name /*: string */,
     dirID /*: string */ = ROOT_DIR_ID
-  ) /*: Promise<MetadataRemoteInfo> */ {
-    return this.cozy.files
-      .createDirectory({
-        name,
-        dirID,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
-      .then(this.side.remoteCozy.toRemoteDoc)
+  ) /*: Promise<RemoteDir|RemoteFile> */ {
+    const json = this.cozy.files.createDirectory({
+      name,
+      dirID,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    })
+    return oldJsonToRemoteDir(json)
   }
 
   async createFile(
     name /*: string */,
     dirID /*: string */ = ROOT_DIR_ID,
     content /*: string */ = 'whatever'
-  ) /*: Promise<MetadataRemoteInfo> */ {
-    return this.cozy.files
-      .create(content, {
-        name,
-        dirID,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
-      .then(this.side.remoteCozy.toRemoteDoc)
+  ) /*: Promise<RemoteDir|RemoteFile> */ {
+    const parentDir = await this.side.remoteCozy.findDir(dirID)
+    const json = await this.cozy.files.create(content, {
+      name,
+      dirID,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    })
+    return oldJsonToRemoteFile(json, parentDir)
   }
 
   async createTree(
     paths /*: Array<string> */
-  ) /*: Promise<{ [string]: MetadataRemoteInfo}> */ {
+  ) /*: Promise<{ [string]: RemoteDir|RemoteFile}> */ {
     const remoteDocsByPath = {}
     for (const p of paths) {
       const name = path.posix.basename(p)
       const parentPath = path.posix.dirname(p)
-      const dirID = (
-        remoteDocsByPath[parentPath + '/'] ||
-        (await this.cozy.files
-          .statByPath('/' + parentPath + '/')
-          .then(this.side.remoteCozy.toRemoteDoc)) ||
-        {}
-      )._id
+      const dirID = remoteDocsByPath[parentPath + '/']._id
       if (p.endsWith('/')) {
         remoteDocsByPath[p] = await this.createDirectory(name, dirID)
       } else {
@@ -190,12 +188,18 @@ class RemoteTestHelpers {
     return resp.text()
   }
 
-  async byId(id /*: string */) /*: Promise<MetadataRemoteInfo> */ {
-    const remoteDoc = await this.cozy.files.statById(id)
-    return await this.side.remoteCozy.toRemoteDoc(remoteDoc)
+  async byId(id /*: string */) /*: Promise<RemoteDir|RemoteFile> */ {
+    const json = await this.cozy.files.statById(id)
+
+    if (json.attributes.type === DIR_TYPE) {
+      return oldJsonToRemoteDir(json)
+    } else {
+      const parentDir = await this.cozy.files.statById(json.attributes.dir_id)
+      return oldJsonToRemoteFile(json, parentDir)
+    }
   }
 
-  async byIdMaybe(id /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
+  async byIdMaybe(id /*: string */) /*: Promise<?RemoteDir|RemoteFile> */ {
     try {
       return await this.byId(id)
     } catch (err) {
@@ -204,11 +208,11 @@ class RemoteTestHelpers {
   }
 
   async move(
-    { _id, updated_at } /*: MetadataRemoteInfo|RemoteDoc */,
+    { _id, updated_at } /*: RemoteDir|RemoteFile */,
     newPath /*: string */
   ) {
     const [newDirPath, newName] /*: [string, string] */ = dirAndName(newPath)
-    const newDir /*: RemoteDoc */ =
+    const newDir /*: RemoteDir|RemoteFile */ =
       newDirPath === '.'
         ? await this.side.remoteCozy.findDir(ROOT_DIR_ID)
         : await this.side.remoteCozy.findDirectoryByPath(`/${newDirPath}`)

@@ -15,15 +15,16 @@ const statsBuilder = require('../stats')
 /*::
 import type fs from 'fs-extra'
 import type {
+  DirMetadata,
+  DocType,
+  FileMetadata,
   Metadata,
-  MetadataRemoteInfo,
-  MetadataRemoteFile,
-  MetadataRemoteDir,
   MetadataSidesInfo,
+  Saved,
   SavedMetadata,
 } from '../../../../core/metadata'
-import type { Pouch } from '../../../../core/pouch'
-import type { RemoteDoc } from '../../../../core/remote/document'
+import type { Pouch, PouchRecord } from '../../../../core/pouch'
+import type { RemoteDir, RemoteFile } from '../../../../core/remote/document'
 import type { SideName } from '../../../../core/side'
 import type RemoteBaseBuilder from '../remote/base'
 */
@@ -38,22 +39,23 @@ const remoteIsUpToDate = (doc /*: Metadata */) /*: boolean %checks */ => {
   return metadata.equivalentRemote(doc, doc.remote)
 }
 
-module.exports = class BaseMetadataBuilder {
+module.exports = class BaseMetadataBuilder /*::<T: Metadata> */ {
   /*::
   pouch: ?Pouch
-  doc: $Shape<Metadata>
+  doc: T
   buildLocal: boolean
   buildRemote: boolean
   _remoteBuilder: ?*
   */
 
-  constructor(pouch /*: ?Pouch */, old /*: ?Metadata */) {
+  constructor(pouch /*: ?Pouch */, old /*: ?T|Saved<T> */) {
     this.pouch = pouch
     if (old) {
       this.doc = _.cloneDeep(old)
     } else {
+      // $FlowFixMe missing attributes are added later
       this.doc = {
-        docType: 'folder', // To make flow happy (overridden by subclasses)
+        docType: 'folder', // Overriden by sub-builders
         path: 'foo',
         tags: [],
         updated_at: new Date().toISOString(),
@@ -64,15 +66,16 @@ module.exports = class BaseMetadataBuilder {
     this.buildRemote = true
   }
 
-  fromRemote(remoteDoc /*: MetadataRemoteInfo */) /*: this */ {
+  fromRemote(remoteDoc /*: RemoteDir|RemoteFile */) /*: this */ {
     this.buildRemote = true
-    this.doc = metadata.fromRemoteDoc(remoteDoc)
+    const fromRemote /*: any */ = metadata.fromRemoteDoc(remoteDoc)
+    this.doc = (fromRemote /*: T */)
     this._consolidatePaths()
     return this
   }
 
   moveFrom(
-    was /*: Metadata */,
+    was /*: SavedMetadata */,
     { childMove = false } /*: { childMove?: boolean } */ = {}
   ) /*: this */ {
     this.doc = {
@@ -127,7 +130,7 @@ module.exports = class BaseMetadataBuilder {
   }
 
   rev(rev /*: string */) /*: this */ {
-    this.doc._rev = rev
+    if (this.doc._rev) this.doc._rev = rev
     return this
   }
 
@@ -166,7 +169,9 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  overwrite(existingDoc /*: SavedMetadata */) /*: this */ {
+  overwrite(
+    existingDoc /*: Saved<DirMetadata>|Saved<FileMetadata> */
+  ) /*: this */ {
     this.doc.overwrite = _.cloneDeep(existingDoc)
     return this
   }
@@ -186,14 +191,18 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  newerThan(doc /*: Metadata */) /*: this */ {
+  newerThan(
+    doc /*: Metadata|Saved<DirMetadata>|Saved<FileMetadata> */
+  ) /*: this */ {
     this.doc.updated_at = new Date(
       new Date(doc.updated_at).getTime() + SOME_MEANINGLESS_TIME_OFFSET
     ).toISOString()
     return this
   }
 
-  olderThan(doc /*: Metadata */) /*: this */ {
+  olderThan(
+    doc /*: Metadata|Saved<DirMetadata>|Saved<FileMetadata> */
+  ) /*: this */ {
     this.doc.updated_at = new Date(
       new Date(doc.updated_at).getTime() - SOME_MEANINGLESS_TIME_OFFSET
     ).toISOString()
@@ -277,7 +286,7 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
-  build() /*: Metadata */ {
+  build() /*: T */ {
     // Don't detect incompatibilities according to syncPath for test data, to
     // prevent environment related failures.
     metadata.assignPlatformIncompatibilities(this.doc, '')
@@ -295,24 +304,6 @@ module.exports = class BaseMetadataBuilder {
     }
 
     return _.cloneDeep(this.doc)
-  }
-
-  async create() /*: Promise<SavedMetadata> */ {
-    const { pouch } = this
-    if (pouch == null) {
-      throw new Error('Cannot create dir metadata without Pouch')
-    }
-
-    const doc = this.build()
-    if (doc.sides) {
-      doc.sides.target = Math.max(doc.sides.local || 0, doc.sides.remote || 0)
-    }
-
-    if (this.doc.overwrite) {
-      const { overwrite } = this.doc
-      await pouch.eraseDocument(overwrite)
-    }
-    return await pouch.put(doc)
   }
 
   _consolidatePaths() /* void */ {
@@ -334,61 +325,14 @@ module.exports = class BaseMetadataBuilder {
     metadata.updateLocal(this.doc)
   }
 
-  // XXX: This method will create a remote object with the correct schema but
-  // its attributes won't necessarily match those of the created Metadata
-  // object, especially those of files.
-  // The proper way to create those two objects is to firt generate a remote
-  // object and then use the `fromRemote()` method.
-  _ensureRemote() /*: void */ {
-    if (
+  _shouldUpdateRemote() /*: boolean */ {
+    return !(
       this.doc.remote != null &&
       (!this.doc.sides ||
         !this.doc.sides.local ||
         (this.doc.sides.remote &&
           (this.doc.sides.remote < this.doc.sides.local ||
             remoteIsUpToDate(this.doc))))
-    ) {
-      return
-    }
-
-    if (this._remoteBuilder == null) {
-      this._remoteBuilder =
-        this.doc.docType === 'file'
-          ? new RemoteFileBuilder(
-              null,
-              this.doc.remote && this.doc.remote.type === 'file'
-                ? this.doc.remote
-                : null
-            )
-          : new RemoteDirBuilder(
-              null,
-              this.doc.remote && this.doc.remote.type === 'directory'
-                ? this.doc.remote
-                : null
-            )
-    }
-
-    let builder = this._remoteBuilder
-      .name(path.basename(this.doc.path))
-      .createdAt(...timestamp.spread(this.doc.updated_at))
-      .updatedAt(...timestamp.spread(this.doc.updated_at))
-      .tags(...this.doc.tags)
-
-    if (this.doc.docType === 'file') {
-      builder = builder
-        // $FlowFixMe those methods exist in RemoteFileBuilder
-        .data(this._data)
-        .executable(this.doc.executable)
-        .contentType(this.doc.mime || '')
-        .md5sum(this.doc.md5sum)
-        .size(String(this.doc.size))
-    }
-
-    if (this.doc.trashed) {
-      builder = builder.trashed()
-    }
-
-    this.doc.remote = builder.build()
-    this.doc.remote.path = pathUtils.localToRemote(this.doc.path)
+    )
   }
 }

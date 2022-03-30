@@ -22,7 +22,7 @@ const Builders = require('../../support/builders')
 const dbBuilders = require('../../support/builders/db')
 
 /*::
-import type { SavedMetadata } from '../../../core/metadata'
+import type { DirMetadata, FileMetadata, Saved } from '../../../core/metadata'
 import type { Change } from '../../../core/sync'
 */
 
@@ -1115,7 +1115,7 @@ describe('Sync', function () {
 
   describe('compareChanges', () => {
     const makeChange = (
-      doc /*: SavedMetadata */,
+      doc /*: Saved<DirMetadata>|Saved<FileMetadata> */,
       opType,
       { local, remote }
     ) => {

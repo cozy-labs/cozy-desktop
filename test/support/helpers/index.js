@@ -21,7 +21,7 @@ const { RemoteTestHelpers } = require('./remote')
 import type { Client as OldCozyClient } from 'cozy-client-js'
 import type { Config } from '../../../core/config'
 import type { Local } from '../../../core/local'
-import type { SavedMetadata } from '../../../core/metadata'
+import type { Metadata, Saved } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Remote } from '../../../core/remote'
 
@@ -221,7 +221,9 @@ class TestHelpers {
       .value()
   }
 
-  async docByPath(relpath /*: string */) /*: Promise<SavedMetadata> */ {
+  async docByPath /*::<T: Metadata> */(
+    relpath /*: string */
+  ) /*: Promise<Saved<T>> */ {
     const syncedPath = path.normalize(relpath)
     const doc = await this.pouch.bySyncedPath(syncedPath)
     if (doc) return doc

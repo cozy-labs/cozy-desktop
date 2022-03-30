@@ -13,7 +13,7 @@ const _ = require('lodash')
 const metadata = require('./metadata')
 
 /*::
-import type { Metadata, SavedMetadata } from './metadata'
+import type { Metadata, Saved, SavedMetadata } from './metadata'
 import type { SideName } from './side'
 */
 
@@ -23,20 +23,20 @@ move.convertToDestinationAddition = convertToDestinationAddition
 
 // Modify the given src/dst docs so they can be merged then moved accordingly
 // during sync.
-function move(
+function move /*::<T: Metadata> */(
   side /*: SideName */,
-  src /*: SavedMetadata */,
-  dst /*: Metadata */
+  src /*: Saved<T> */,
+  dst /*: T */
 ) {
   // Copy all fields from `src` that are not Sync action hints or PouchDB
   // attributes to `dst` if they're not already defined.
   const pouchdbReserved = ['_id', '_rev', '_deleted']
   const actionHints = ['moveFrom', 'overwrite', 'incompatibilities']
-  const fields = Object.getOwnPropertyNames(src).filter(
-    f => !pouchdbReserved.concat(actionHints).includes(f)
-  )
-  for (const field of fields) {
-    if (Array.isArray(src[field]) && Array.isArray(dst[field])) {
+
+  for (const field in src) {
+    if (pouchdbReserved.includes(field) || actionHints.includes(field)) {
+      continue
+    } else if (Array.isArray(src[field]) && Array.isArray(dst[field])) {
       dst[field] = _.uniq(_.cloneDeep(src[field]).concat(dst[field]))
     } else if (dst[field] == null) {
       dst[field] = _.cloneDeep(src[field])

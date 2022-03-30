@@ -1,7 +1,6 @@
 /* @flow */
 
 const fs = require('fs')
-const { posix } = require('path')
 const _ = require('lodash')
 
 const RemoteBaseBuilder = require('./base')
@@ -10,15 +9,15 @@ const cozyHelpers = require('../../helpers/cozy')
 
 const {
   inRemoteTrash,
-  remoteJsonToRemoteDoc
+  oldJsonToRemoteFile
 } = require('../../../../core/remote/document')
 const { FILES_DOCTYPE } = require('../../../../core/remote/constants')
 
 /*::
 import type stream from 'stream'
 import type { Cozy } from 'cozy-client-js'
-import type { RemoteFile } from '../../../../core/remote/document'
 import type { MetadataRemoteFile } from '../../../../core/metadata'
+import type { OldJsonFile, RemoteFile } from '../../../../core/remote/document'
 */
 
 // Used to generate readable unique filenames
@@ -26,7 +25,7 @@ var fileNumber = 1
 
 const addReferencedBy = async (
   cozy /*: * */,
-  remoteDoc /*: RemoteFile */,
+  remoteDoc /*: OldJsonFile */,
   refs /*: Array<{ _id: string, _type: string }> */
 ) => {
   const client = await cozyHelpers.newClient(cozy)
@@ -41,23 +40,23 @@ const addReferencedBy = async (
 
 const baseData = `Content of remote file ${fileNumber}`
 
-// Build a MetadataRemoteFile representing a remote Cozy file:
+// Build a RemoteFile representing a remote Cozy file:
 //
-//     const file /*: MetadataRemoteFile */ = builders.remoteFile().inDir(...).build()
+//     const file /*: RemoteFile */ = builders.remoteFile().inDir(...).build()
 //
 // To actually create the corresponding file on the Cozy, use the async
 // #create() method instead:
 //
-//     const file /*: MetadataRemoteFile */ = await builders.remoteFile().inDir(...).create()
+//     const file /*: RemoteFile */ = await builders.remoteFile().inDir(...).create()
 //
 module.exports = class RemoteFileBuilder extends (
   RemoteBaseBuilder
-) /*:: <MetadataRemoteFile> */ {
+) /*:: <RemoteFile> */ {
   /*::
   _data: string | stream.Readable | Buffer
   */
 
-  constructor(cozy /*: ?Cozy */, old /*: ?(RemoteFile|MetadataRemoteFile) */) {
+  constructor(cozy /*: ?Cozy */, old /*: ?(MetadataRemoteFile|RemoteFile) */) {
     super(cozy, old)
 
     if (!old) {
@@ -129,42 +128,34 @@ module.exports = class RemoteFileBuilder extends (
     return super.restored()
   }
 
-  async create() /*: Promise<MetadataRemoteFile> */ {
+  async create() /*: Promise<RemoteFile> */ {
     const cozy = this._ensureCozy()
 
-    const remoteFile /*: RemoteFile */ = _.clone(
-      remoteJsonToRemoteDoc(
-        await cozy.files.create(this._data, {
-          contentType: this.remoteDoc.mime,
-          dirID: this.remoteDoc.dir_id,
-          executable: this.remoteDoc.executable,
-          createdAt: this.remoteDoc.created_at,
-          updatedAt: this.remoteDoc.updated_at || this.remoteDoc.created_at,
-          name: this.remoteDoc.name,
-          noSanitize: true
-        })
-      )
-    )
+    const parentDir = await cozy.files.statById(this.remoteDoc.dir_id)
+
+    const json = await cozy.files.create(this._data, {
+      contentType: this.remoteDoc.mime,
+      dirID: this.remoteDoc.dir_id,
+      executable: this.remoteDoc.executable,
+      createdAt: this.remoteDoc.created_at,
+      updatedAt: this.remoteDoc.updated_at || this.remoteDoc.created_at,
+      name: this.remoteDoc.name,
+      noSanitize: true
+    })
 
     if (this.remoteDoc.referenced_by && this.remoteDoc.referenced_by.length) {
       const { _rev } = await addReferencedBy(
         cozy,
-        remoteFile,
+        json,
         this.remoteDoc.referenced_by
       )
-      remoteFile._rev = _rev
+      json._rev = _rev
     }
 
-    const parentDir = await cozy.files.statById(remoteFile.dir_id)
-    const doc /*: MetadataRemoteFile */ = {
-      ...remoteFile,
-      path: posix.join(parentDir.attributes.path, remoteFile.name)
-    }
-
-    return doc
+    return _.clone(oldJsonToRemoteFile(json, parentDir))
   }
 
-  async update() /*: Promise<MetadataRemoteFile> */ {
+  async update() /*: Promise<RemoteFile> */ {
     const cozy = this._ensureCozy()
 
     const parentDir = await cozy.files.statById(this.remoteDoc.dir_id)
@@ -187,12 +178,7 @@ module.exports = class RemoteFileBuilder extends (
           updated_at: this.remoteDoc.updated_at,
           noSanitize: true
         })
-    const remoteFile /*: RemoteFile */ = _.clone(remoteJsonToRemoteDoc(json))
-    const doc /*: MetadataRemoteFile */ = {
-      ...remoteFile,
-      path: posix.join(parentDir.attributes.path, this.remoteDoc.name)
-    }
 
-    return doc
+    return _.clone(oldJsonToRemoteFile(json, parentDir))
   }
 }

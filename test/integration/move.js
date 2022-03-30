@@ -19,7 +19,7 @@ const logger = require('../../core/utils/logger')
 const log = new logger({ component: 'TEST' })
 
 /*::
-import type { SavedMetadata } from '../../core/metadata'
+import type { FileMetadata, SavedMetadata } from '../../core/metadata'
 */
 
 const builders = new Builders()
@@ -1511,12 +1511,10 @@ describe('Move', () => {
           const doc = await helpers.docByPath(
             path.join(parent.attributes.name, file.attributes.name)
           )
-          await helpers.pouch.put(
-            ({
-              ...doc,
-              path: doc.path.normalize('NFD')
-            } /*: SavedMetadata */)
-          )
+          await helpers.pouch.put({
+            ...doc,
+            path: doc.path.normalize('NFD')
+          })
         })
 
         it('does not trash the file', async () => {

@@ -10,7 +10,7 @@ const ChecksumBuilder = require('./checksum')
 
 /*::
 import type { Stats } from 'fs'
-import type { Metadata } from '../../../core/metadata'
+import type { DirMetadata, FileMetadata, Metadata, Saved } from '../../../core/metadata'
 import type { AtomEvent, EventAction, EventKind } from '../../../core/local/atom/event'
 import type { StatsBuilder } from './stats'
 */
@@ -21,7 +21,9 @@ function randomPick /*:: <T> */(elements /*: Array<T> */) /*: T */ {
   return elements[i]
 }
 
-function kind(doc /*: Metadata */) /*: EventKind */ {
+function kind(
+  doc /*: Metadata|Saved<DirMetadata>|Saved<FileMetadata> */
+) /*: EventKind */ {
   return doc.docType === 'folder' ? 'directory' : doc.docType
 }
 
@@ -54,7 +56,9 @@ module.exports = class AtomEventBuilder {
     return this._statsBuilder
   }
 
-  fromDoc(doc /*: Metadata */) /*: this */ {
+  fromDoc(
+    doc /*: Metadata|Saved<DirMetadata>|Saved<FileMetadata> */
+  ) /*: this */ {
     const updatedAt = new Date(doc.updated_at)
 
     let builder = this.kind(kind(doc))

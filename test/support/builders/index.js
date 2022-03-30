@@ -22,14 +22,14 @@ const ChecksumBuilder = require('./checksum')
 /*::
 import type { Readable } from 'stream'
 import type { Cozy } from 'cozy-client-js'
-import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../../core/metadata'
+import type { DirMetadata, FileMetadata, Saved } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Warning } from '../../../core/remote/cozy'
-import type { RemoteDoc, RemoteFile, RemoteDir } from '../../../core/remote/document'
+import type { RemoteFile, RemoteDir } from '../../../core/remote/document'
 import type { AtomEvent } from '../../../core/local/atom/event'
 import type { StatsBuilder } from './stats'
 
-export type RemoteTree = { [string]: MetadataRemoteFile|MetadataRemoteDir }
+export type RemoteTree = { [string]: RemoteFile|RemoteDir }
 */
 
 // Test data builders facade.
@@ -49,37 +49,37 @@ module.exports = class Builders {
     this.pouch = pouch
   }
 
-  metadata(old /*: ?Metadata */) /*: DirMetadataBuilder|FileMetadataBuilder */ {
+  metadata(
+    old /*: ?DirMetadata|Saved<DirMetadata> */
+  ) /*: DirMetadataBuilder */ {
     return this.metadir(old)
   }
 
-  metadir(old /*: ?Metadata */) /*: DirMetadataBuilder */ {
+  metadir(
+    old /*: ?DirMetadata|Saved<DirMetadata> */
+  ) /*: DirMetadataBuilder */ {
     return new DirMetadataBuilder(this.pouch, old)
   }
 
-  metafile(old /*: ?Metadata */) /*: FileMetadataBuilder */ {
+  metafile(
+    old /*: ?FileMetadata|Saved<FileMetadata> */
+  ) /*: FileMetadataBuilder */ {
     return new FileMetadataBuilder(this.pouch, old)
   }
 
-  remoteDir(old /*: ?RemoteDir|MetadataRemoteDir */) /*: RemoteDirBuilder */ {
+  remoteDir(old /*: ?RemoteDir */) /*: RemoteDirBuilder */ {
     return new RemoteDirBuilder(this.cozy, old)
   }
 
-  remoteFile(
-    old /*: ?RemoteFile|MetadataRemoteFile */
-  ) /*: RemoteFileBuilder */ {
+  remoteFile(old /*: ?RemoteFile */) /*: RemoteFileBuilder */ {
     return new RemoteFileBuilder(this.cozy, old)
   }
 
-  remoteNote(
-    old /*: ?RemoteFile|MetadataRemoteFile */
-  ) /*: RemoteNoteBuilder */ {
+  remoteNote(old /*: ?RemoteFile */) /*: RemoteNoteBuilder */ {
     return new RemoteNoteBuilder(this.cozy, old)
   }
 
-  remoteErased(
-    old /*: ?RemoteFile|MetadataRemoteFile|RemoteDir|MetadataRemoteDir */
-  ) /*: RemoteErasedBuilder */ {
+  remoteErased(old /*: ?RemoteFile|RemoteDir */) /*: RemoteErasedBuilder */ {
     return new RemoteErasedBuilder(this.cozy, old)
   }
 

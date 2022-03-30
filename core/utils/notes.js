@@ -16,13 +16,14 @@ const log = logger({
 import { Config } from '../config'
 import { Pouch } from '../pouch'
 import { Remote } from '../remote'
-import type { Metadata, MetadataRemoteInfo } from '../metadata'
+import type { RemoteDir, RemoteFile } from '../remote/document'
+import type { Metadata } from '../metadata'
 
 type CozyNoteErrorCode = 'CozyDocumentMissingError' | 'UnreachableError'
 */
 
 const isNote = (
-  doc /*: MetadataRemoteInfo | { mime?: string, metadata?: Object } */
+  doc /*: RemoteDir|RemoteFile | { mime?: string, metadata?: Object } */
 ) /*: boolean %checks */ => {
   return (
     doc.mime === NOTE_MIME_TYPE &&
@@ -84,7 +85,7 @@ const localDoc = async (
 const remoteDoc = async (
   localDoc /*: Metadata */,
   { config, remote } /*: { config: Config, remote: Remote } */
-) /*: Promise<MetadataRemoteInfo> */ => {
+) /*: Promise<RemoteDir|RemoteFile> */ => {
   try {
     return await remote.remoteCozy.find(localDoc.remote._id)
   } catch (err) {

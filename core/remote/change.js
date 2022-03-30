@@ -5,8 +5,7 @@
  */
 
 /*::
-import type { RemoteDoc, CouchDBDeletion } from './document'
-import type { Metadata, SavedMetadata } from '../metadata'
+import type { DirMetadata, FileMetadata, Metadata, Saved, SavedMetadata } from '../metadata'
 */
 
 const path = require('path')
@@ -17,7 +16,7 @@ const metadata = require('../metadata')
 export type RemoteFileAddition = {
   sideName: 'remote',
   type: 'FileAddition',
-  doc: Metadata
+  doc: FileMetadata
 }
 export type RemoteFileDeletion = {
   sideName: 'remote',
@@ -27,7 +26,7 @@ export type RemoteFileDeletion = {
 export type RemoteFileMove = {
   sideName: 'remote',
   type: 'FileMove',
-  doc: Metadata,
+  doc: FileMetadata,
   was: SavedMetadata,
   needRefetch?: true,
   update?: boolean
@@ -35,24 +34,24 @@ export type RemoteFileMove = {
 export type RemoteFileRestoration = {
   sideName: 'remote',
   type: 'FileRestoration',
-  doc: Metadata,
-  was: Metadata
+  doc: FileMetadata,
+  was: FileMetadata
 }
 export type RemoteFileTrashing = {
   sideName: 'remote',
   type: 'FileTrashing',
-  doc: Metadata,
+  doc: FileMetadata,
   was: SavedMetadata
 }
 export type RemoteFileUpdate = {
   sideName: 'remote',
   type: 'FileUpdate',
-  doc: Metadata
+  doc: FileMetadata
 }
 export type RemoteDirAddition = {
   sideName: 'remote',
   type: 'DirAddition',
-  doc: Metadata
+  doc: DirMetadata
 }
 export type RemoteDirDeletion = {
   sideName: 'remote',
@@ -62,27 +61,27 @@ export type RemoteDirDeletion = {
 export type RemoteDirMove = {
   sideName: 'remote',
   type: 'DirMove',
-  doc: Metadata,
+  doc: DirMetadata,
   was: SavedMetadata,
   needRefetch?: true,
-  descendantMoves: RemoteDescendantChange[]
+  descendantMoves: Array<RemoteDescendantDirMove|RemoteDescendantFileMove>
 }
 export type RemoteDirRestoration = {
   sideName: 'remote',
   type: 'DirRestoration',
-  doc: Metadata,
-  was: Metadata
+  doc: DirMetadata,
+  was: DirMetadata
 }
 export type RemoteDirTrashing = {
   sideName: 'remote',
   type: 'DirTrashing',
-  doc: Metadata,
+  doc: DirMetadata,
   was: SavedMetadata
 }
 export type RemoteDirUpdate = {
   sideName: 'remote',
   type: 'DirUpdate',
-  doc: Metadata
+  doc: DirMetadata
 }
 export type RemoteIgnoredChange = {
   sideName: 'remote',
@@ -94,7 +93,7 @@ export type RemoteIgnoredChange = {
 export type RemoteInvalidChange = {
   sideName: 'remote',
   type: 'InvalidChange',
-  doc: *,
+  doc: Metadata,
   was?: SavedMetadata,
   error: Error
 }
@@ -104,15 +103,22 @@ export type RemoteUpToDate = {
   doc: Metadata,
   was: SavedMetadata
 }
-export type RemoteDescendantChange = {
+export type RemoteDescendantDirMove = {|
   sideName: 'remote',
-  type: 'DescendantChange',
-  doc: Metadata,
-  was: SavedMetadata,
-  ancestor: RemoteDirMove|RemoteDescendantChange,
-  descendantMoves: RemoteDescendantChange[],
-  update?: boolean
-}
+  type: 'DescendantDirMove',
+  doc: DirMetadata,
+  was: Saved<DirMetadata>,
+  ancestor: RemoteDirMove|RemoteDescendantDirMove,
+  descendantMoves: Array<RemoteDescendantDirMove|RemoteDescendantFileMove>,
+|}
+export type RemoteDescendantFileMove = {|
+  sideName: 'remote',
+  type: 'DescendantFileMove',
+  doc: FileMetadata,
+  was: Saved<FileMetadata>,
+  ancestor: RemoteDirMove|RemoteDescendantDirMove,
+  update: boolean
+|}
 
 export type RemoteChange =
   | RemoteDirAddition
@@ -128,7 +134,8 @@ export type RemoteChange =
   | RemoteFileTrashing
   | RemoteFileUpdate
   | RemoteIgnoredChange
-  | RemoteDescendantChange
+  | RemoteDescendantDirMove
+  | RemoteDescendantFileMove
   | RemoteInvalidChange
   | RemoteUpToDate
 */
@@ -155,7 +162,7 @@ const sideName = 'remote'
 function added(
   doc /*: Metadata */
 ) /*: RemoteFileAddition | RemoteDirAddition */ {
-  if (metadata.isFile(doc)) {
+  if (doc.docType === 'file') {
     return {
       sideName,
       type: 'FileAddition',
@@ -174,7 +181,7 @@ function trashed(
   doc /*: Metadata */,
   was /*: SavedMetadata */
 ) /*: RemoteFileTrashing | RemoteDirTrashing */ {
-  if (metadata.isFile(doc)) {
+  if (doc.docType === 'file') {
     return {
       sideName,
       type: 'FileTrashing',
@@ -219,7 +226,7 @@ function upToDate(
 function updated(
   doc /*: Metadata */
 ) /*: RemoteFileUpdate | RemoteDirUpdate */ {
-  if (metadata.isFile(doc)) {
+  if (doc.docType === 'file') {
     return {
       sideName,
       type: 'FileUpdate',
@@ -286,8 +293,8 @@ function isOnlyChildMove(
 }
 
 function applyMoveInsideMove(
-  parentMove /*: RemoteDirMove|RemoteDescendantChange */,
-  childMove /*: RemoteDirMove | RemoteFileMove */
+  parentMove /*: RemoteDirMove|RemoteDescendantDirMove */,
+  childMove /*: RemoteDirMove|RemoteFileMove */
 ) {
   childMove.needRefetch = true
   childMove.was.path = metadata.newChildPath(
@@ -302,13 +309,13 @@ const isDelete = (a /*: RemoteChange */) /*: boolean %checks */ =>
 const isAdd = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirAddition' || a.type === 'FileAddition'
 const isDescendant = (a /*: RemoteChange */) /*: boolean %checks */ =>
-  a.type === 'DescendantChange'
+  a.type === 'DescendantDirMove' || a.type === 'DescendantFileMove'
 const isMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
   isFileMove(a) || isFolderMove(a)
 const isFileMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
-  a.type === 'FileMove' || (isDescendant(a) && a.doc.docType === 'File')
+  a.type === 'FileMove' || a.type === 'DescendantFileMove'
 const isFolderMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
-  a.type === 'DirMove' || (isDescendant(a) && a.doc.docType === 'Folder')
+  a.type === 'DirMove' || a.type === 'DescendantDirMove'
 const isTrash = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirTrashing' || a.type === 'FileTrashing'
 const isRestore = (a /*: RemoteChange */) /*: boolean %checks */ =>
@@ -317,15 +324,17 @@ const isIgnore = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'IgnoredChange'
 
 function includeDescendant(
-  parent /*: RemoteDirMove|RemoteDescendantChange */,
-  e /*: RemoteDescendantChange */
+  parent /*: RemoteDirMove|RemoteDescendantDirMove */,
+  e /*: RemoteDescendantDirMove|RemoteDescendantFileMove */
 ) {
-  if (isDescendant(parent) && parent.ancestor) {
+  if (parent.type === 'DescendantDirMove') {
     includeDescendant(parent.ancestor, e)
-  } else {
+  } else if (e.type === 'DescendantDirMove') {
     parent.descendantMoves.push(e, ...e.descendantMoves)
+    e.descendantMoves = []
+  } else {
+    parent.descendantMoves.push(e)
   }
-  e.descendantMoves = []
 }
 
 const createdPath = (a /*: RemoteChange */) /*: ?string */ =>

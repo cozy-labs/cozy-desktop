@@ -277,11 +277,12 @@ function toString(a /*: LocalChange */) /*: string */ {
 }
 
 function fileHasChanged(
-  old /*: ?Metadata */,
+  old /*: ?SavedMetadata */,
   e /*: LocalFileAdded */
 ) /*: boolean */ {
   return (
     old != null &&
+    old.docType === 'file' &&
     old.local != null &&
     e.md5sum != null &&
     e.stats != null &&
@@ -396,7 +397,7 @@ function fileMoveFromUnlinkAdd(
   if (fileHasChanged(unlinkChange.old, e) || !unlinkChange.old) {
     fileMove.update = e
     fileMove.md5sum = e.md5sum
-  } else {
+  } else if (unlinkChange.old.docType === 'file') {
     fileMove.md5sum = unlinkChange.old.md5sum
   }
 

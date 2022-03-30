@@ -80,10 +80,13 @@ describe('Pouch', function () {
           description: 'Test migration 1',
           affectedDocs: docs => docs,
           run: docs =>
-            docs.map(doc => ({
-              ...doc,
-              migration1: true
-            }))
+            docs.map(doc =>
+              // $FlowFixMe migration1 is added for the test purposes
+              ({
+                ...doc,
+                migration1: true
+              })
+            )
         },
         {
           baseSchemaVersion: currentSchemaVersion + 1,
@@ -91,10 +94,13 @@ describe('Pouch', function () {
           description: 'Test migration 2',
           affectedDocs: docs => docs,
           run: docs =>
-            docs.map(doc => ({
-              ...doc,
-              migration2: true
-            }))
+            docs.map(doc =>
+              // $FlowFixMe migration2 is added for the test purposes
+              ({
+                ...doc,
+                migration2: true
+              })
+            )
         },
         {
           baseSchemaVersion: currentSchemaVersion + 2,
@@ -102,10 +108,13 @@ describe('Pouch', function () {
           description: 'Test migration 3',
           affectedDocs: docs => docs,
           run: docs =>
-            docs.map(doc => ({
-              ...doc,
-              migration3: true
-            }))
+            docs.map(doc =>
+              // $FlowFixMe migration3 is added for the test purposes
+              ({
+                ...doc,
+                migration3: true
+              })
+            )
         }
       ]
     })

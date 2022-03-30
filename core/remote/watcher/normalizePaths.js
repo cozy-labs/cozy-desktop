@@ -35,7 +35,8 @@ const normalizePaths = async (
         c.type === 'DirUpdate' ||
         c.type === 'FileMove' ||
         c.type === 'DirMove' ||
-        c.type === 'DescendantChange'
+        c.type === 'DescendantDirMove' ||
+        c.type === 'DescendantFileMove'
       ) {
         const old /*: ?SavedMetadata */ =
           c.type === 'FileMove' || c.type === 'DirMove'

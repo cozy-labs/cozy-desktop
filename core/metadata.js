@@ -52,29 +52,131 @@ const {
 } = require('./remote/constants')
 const { SIDE_NAMES, otherSide } = require('./side')
 
+const log = logger({
+  component: 'Metadata'
+})
+
+const { platform } = process
+
 /*::
 import type { PlatformIncompatibility } from './incompatibilities/platform'
 import type {
+  ChangesFeedDir,
+  ChangesFeedFile,
   CouchDBDeletion,
   CouchDBDir,
   CouchDBDoc,
   CouchDBFile,
-  RemoteBase,
+  OldJsonDir,
+  OldJsonFile,
   RemoteDir,
   RemoteFile,
+  RemoteRelations
 } from './remote/document'
 import type { Stats } from './local/stater'
 import type { Ignore } from './ignore'
 import type { SideName } from './side'
 import type { EventKind } from './local/atom/event'
 import type { PouchRecord } from './pouch'
+
+export type DocType =
+  | "file"
+  | "folder";
+
+type MetadataLocalDir = {|
+  docType: 'folder',
+  fileid?: string,
+  ino: number,
+  path: string,
+  updated_at: string,
+|}
+type MetadataLocalFile = {|
+  class: string,
+  docType: 'file',
+  executable: boolean,
+  fileid?: string,
+  ino: number,
+  path: string,
+  md5sum: string,
+  mime: string,
+  size: number,
+  updated_at: string,
+|}
+export type MetadataLocalInfo = MetadataLocalDir | MetadataLocalFile
+
+type RemoteID = string
+type RemoteRev = string
+export type RemoteRevisionsByID = { [RemoteID] : RemoteRev}
+
+export type MetadataSidesInfo = {
+  target: number,
+  remote?: number,
+  local?: number
+}
+
+export type MetadataRemoteDir = $Diff<RemoteDir, { relations: RemoteRelations }>
+
+export type MetadataRemoteFile = $Diff<RemoteFile, { relations: RemoteRelations }>
+
+// The files/dirs metadata, as stored in PouchDB
+type CommonMetadataAttributes = {|
+  // Can be set during moves for example
+  _id?: string,
+  // Make Flow happy
+  _rev?: string,
+  _deleted?: true,
+
+  path: string,
+  updated_at: string,
+  local: MetadataLocalDir|MetadataLocalFile,
+  remote: MetadataRemoteDir|MetadataRemoteFile,
+  tags: string[],
+  sides: MetadataSidesInfo,
+|}
+
+export type DirMetadata = {|
+  ...CommonMetadataAttributes,
+  docType: 'folder',
+  trashed?: boolean,
+  errors?: number,
+  overwrite?: Saved<DirMetadata>|Saved<FileMetadata>,
+  childMove?: boolean,
+  incompatibilities?: *,
+  ino?: number,
+  fileid?: string,
+  moveFrom?: SavedMetadata,
+  cozyMetadata?: Object,
+  metadata?: Object,
+  needsContentFetching: boolean
+|}
+
+export type FileMetadata = {|
+  ...CommonMetadataAttributes,
+  docType: 'file',
+  executable: boolean,
+  md5sum?: string,
+  size?: number,
+  mime?: string,
+  class?: string,
+  trashed?: boolean,
+  errors?: number,
+  overwrite?: Saved<DirMetadata>|Saved<FileMetadata>,
+  childMove?: boolean,
+  incompatibilities?: *,
+  ino?: number,
+  fileid?: string,
+  moveFrom?: SavedMetadata,
+  cozyMetadata?: Object,
+  metadata?: Object,
+  needsContentFetching: boolean
+|}
+
+export type Metadata = DirMetadata | FileMetadata
+
+export type Saved<T: Metadata> = {| ...PouchRecord, ...T |}
+
+export type SavedMetadata = Saved<DirMetadata> | Saved<FileMetadata>
 */
-
-const log = logger({
-  component: 'Metadata'
-})
-
-const { platform } = process
 
 const LOCAL_ATTRIBUTES = [
   'path',
@@ -101,76 +203,6 @@ const REMOTE_ATTRIBUTES = [
   'size',
   'executable'
 ]
-
-/*::
-export type DocType =
-  | "file"
-  | "folder";
-
-export type MetadataLocalInfo = {
-  class?: string,
-  docType: DocType,
-  executable: boolean,
-  fileid?: string,
-  ino?: number,
-  path: string,
-  md5sum?: string,
-  mime?: string,
-  size?: number,
-  updated_at?: string,
-}
-
-export type MetadataRemoteFile = {| ...RemoteFile, path: string |}
-export type MetadataRemoteDir = RemoteDir
-export type MetadataRemoteInfo = MetadataRemoteFile|MetadataRemoteDir
-
-type RemoteID = string
-type RemoteRev = string
-export type RemoteRevisionsByID = { [RemoteID] : RemoteRev}
-
-export type MetadataSidesInfo = {
-  target: number,
-  remote?: number,
-  local?: number
-}
-
-// The files/dirs metadata, as stored in PouchDB
-export type Metadata = {
-  // Those attributes should not be included in this type
-  _id?: string,
-  _rev?: string,
-  _deleted?: true,
-
-  docType: DocType,
-  path: string,
-  updated_at: string,
-  local: MetadataLocalInfo,
-  remote: MetadataRemoteInfo,
-  tags: string[],
-  sides: MetadataSidesInfo,
-
-  // File attributes
-  executable: boolean,
-  md5sum?: string,
-  size?: number,
-  mime?: string,
-  class?: string,
-
-  trashed?: true,
-  errors?: number,
-  overwrite?: SavedMetadata,
-  childMove?: boolean,
-  incompatibilities?: *,
-  ino?: number,
-  fileid?: string,
-  moveFrom?: SavedMetadata,
-  cozyMetadata?: Object,
-  metadata?: Object,
-  needsContentFetching: boolean
-}
-
-export type SavedMetadata = PouchRecord & Metadata
-*/
 
 function id(fpath /*: string */) {
   // See [test/world/](https://github.com/cozy-labs/cozy-desktop/blob/master/test/world/)
@@ -234,112 +266,90 @@ function localDocType(remoteDocType /*: string */) /*: string */ {
   }
 }
 
+// Removes unserializable attributes from remote documents
+function serializableRemote(
+  remoteDoc /*: ChangesFeedDir|ChangesFeedFile|RemoteDir|RemoteFile */
+) /*: MetadataRemoteDir|MetadataRemoteFile */ {
+  if (remoteDoc.relations) {
+    // eslint-disable-next-line no-unused-vars
+    const { relations, ...serializableDoc } = remoteDoc
+
+    if (serializableDoc.type === REMOTE_FILE_TYPE) {
+      return serializableDoc
+    } else {
+      return serializableDoc
+    }
+  } else {
+    return remoteDoc
+  }
+}
 // Transform a remote document into metadata, as stored in Pouch.
 // Please note the path is not normalized yet!
 // Normalization is done as a side effect of metadata.invalidPath() :/
 function fromRemoteDoc(
-  remoteDoc /*: CouchDBDoc|MetadataRemoteInfo */
+  remoteDoc /*: ChangesFeedDir|ChangesFeedFile|RemoteDir|RemoteFile */
 ) /*: Metadata */ {
+  const serializableDoc /*: MetadataRemoteDir|MetadataRemoteFile */ =
+    serializableRemote(remoteDoc)
   const doc =
-    remoteDoc.type === REMOTE_FILE_TYPE
-      ? fromRemoteFile(remoteDoc)
-      : fromRemoteDir(remoteDoc)
-
-  updateRemote(doc, remoteDoc)
+    serializableDoc.type === REMOTE_FILE_TYPE
+      ? fromRemoteFile(serializableDoc)
+      : fromRemoteDir(serializableDoc)
 
   return doc
 }
 
-function fromRemoteDir(
-  remoteDir /*: CouchDBDir|MetadataRemoteDir */
-) /*: Metadata */ {
-  const doc /*: Object */ = {
-    docType: localDocType(remoteDir.type),
+function fromRemoteDir(remoteDir /*: MetadataRemoteDir */) /*: DirMetadata */ {
+  return {
+    cozyMetadata: remoteDir.cozyMetadata,
+    docType: 'folder',
+    local: {},
+    metadata: remoteDir.metadata,
+    needsContentFetching: false,
     path: pathUtils.remoteToLocal(remoteDir.path),
-    created_at: timestamp.roundedRemoteDate(remoteDir.created_at),
-    updated_at: timestamp.roundedRemoteDate(remoteDir.updated_at),
-    needsContentFetching: false
+    remote: remoteDir,
+    sides: {},
+    tags: remoteDir.tags,
+    updated_at: timestamp.roundedRemoteDate(remoteDir.updated_at)
   }
-
-  const fields = Object.getOwnPropertyNames(remoteDir).filter(
-    field =>
-      // Filter out fields already used above
-      ![
-        '_id',
-        '_rev',
-        '_type',
-        'path',
-        'type',
-        'created_at',
-        'updated_at'
-      ].includes(field)
-  )
-  for (const field of fields) {
-    if (remoteDir[field]) {
-      doc[field] = _.cloneDeep(remoteDir[field])
-    }
-  }
-
-  return doc
 }
 
 function fromRemoteFile(
-  remoteFile /*: CouchDBFile|MetadataRemoteFile */
-) /*: Metadata */ {
-  const doc /*: Object */ = {
-    docType: localDocType(remoteFile.type),
-    path: pathUtils.remoteToLocal(remoteFile.path),
-    size: parseInt(remoteFile.size, 10),
+  remoteFile /*: MetadataRemoteFile */
+) /*: FileMetadata */ {
+  return {
+    class: remoteFile.class,
+    cozyMetadata: remoteFile.cozyMetadata,
+    docType: 'file',
     executable: !!remoteFile.executable,
-    created_at: timestamp.roundedRemoteDate(remoteFile.created_at),
-    updated_at: timestamp.roundedRemoteDate(remoteFile.updated_at),
-    needsContentFetching: false
+    local: {},
+    md5sum: remoteFile.md5sum,
+    metadata: remoteFile.metadata,
+    mime: remoteFile.mime,
+    needsContentFetching: false,
+    path: pathUtils.remoteToLocal(remoteFile.path),
+    remote: remoteFile,
+    sides: {},
+    size: parseInt(remoteFile.size, 10),
+    tags: remoteFile.tags,
+    trashed: !!remoteFile.trashed,
+    updated_at: timestamp.roundedRemoteDate(remoteFile.updated_at)
   }
-
-  const fields = Object.getOwnPropertyNames(remoteFile).filter(
-    field =>
-      // Filter out fields already used above
-      ![
-        '_id',
-        '_rev',
-        '_type',
-        'path',
-        'type',
-        'created_at',
-        'updated_at',
-        'size'
-      ].includes(field)
-  )
-  for (const field of fields) {
-    if (remoteFile[field]) {
-      doc[field] = _.cloneDeep(remoteFile[field])
-    }
-  }
-
-  return doc
 }
 
 function isFile(
-  doc /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
+  doc /*: Metadata|MetadataLocalInfo|SavedMetadata */
 ) /*: boolean %checks */ {
-  return doc.docType != null
-    ? doc.docType === 'file'
-    : doc.type !== null
-    ? doc.type === REMOTE_FILE_TYPE
-    : false
+  return doc.docType === 'file'
 }
 
 function isFolder(
-  doc /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
+  doc /*: Metadata|MetadataLocalInfo|SavedMetadata */
 ) /*: boolean %checks */ {
-  return doc.docType != null
-    ? doc.docType === 'folder'
-    : doc.type !== null
-    ? doc.type === REMOTE_DIR_TYPE
-    : false
+  return doc.docType === 'folder'
 }
 
-function kind(doc /*: Metadata */) /*: EventKind */ {
+function kind(doc /*: Metadata|SavedMetadata */) /*: EventKind */ {
   return doc.docType == null
     ? 'file'
     : doc.docType === 'folder'
@@ -374,7 +384,9 @@ function ensureValidPath(doc /*: {path: string} */) {
   }
 }
 
-function invariants /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
+function invariants /*::<T: DirMetadata|FileMetadata|Saved<DirMetadata>|Saved<FileMetadata>> */(
+  doc /*: T */
+) {
   // If the record is meant to be erased we don't care about invariants
   if (doc._deleted) return doc
 
@@ -406,7 +418,7 @@ export type Incompatibility = { ...PlatformIncompatibility, docType: string }
  * @see module:core/incompatibilities/platform
  */
 function detectIncompatibilities(
-  metadata /*: Metadata */,
+  metadata /*: Metadata|SavedMetadata */,
   syncPath /*: string */
 ) /*: Array<Incompatibility> */ {
   const pathLenghIncompatibility = detectPathLengthIncompatibility(
@@ -430,7 +442,7 @@ function detectIncompatibilities(
 }
 
 function assignPlatformIncompatibilities(
-  doc /*: Metadata */,
+  doc /*: Metadata|SavedMetadata */,
   syncPath /*: string */
 ) /*: void */ {
   const incompatibilities = detectIncompatibilities(doc, syncPath)
@@ -441,7 +453,7 @@ function assignPlatformIncompatibilities(
 // If the checksum is missing, it is invalid.
 // MD5 has 16 bytes.
 // Base64 encoding must include padding.
-function invalidChecksum(doc /*: Metadata */) {
+function invalidChecksum(doc /*: FileMetadata */) {
   if (doc.md5sum == null) return doc.docType === 'file'
 
   const buffer = Buffer.from(doc.md5sum, 'base64')
@@ -449,7 +461,7 @@ function invalidChecksum(doc /*: Metadata */) {
   return buffer.byteLength !== 16 || buffer.toString('base64') !== doc.md5sum
 }
 
-function ensureValidChecksum(doc /*: Metadata */) {
+function ensureValidChecksum(doc /*: FileMetadata */) {
   if (invalidChecksum(doc)) {
     log.warn({ path: doc.path, doc }, 'Invalid checksum')
     throw new Error('Invalid checksum')
@@ -468,7 +480,10 @@ function extractRevNumber(doc /*: { _rev: string } */) {
 
 // See isAtLeastUpToDate for why we have different checks when we have both
 // sides and when we don't.
-function isUpToDate(sideName /*: SideName */, doc /*: Metadata */) {
+function isUpToDate(
+  sideName /*: SideName */,
+  doc /*: Metadata|SavedMetadata */
+) {
   return hasBothSides(doc)
     ? side(doc, sideName) === target(doc)
     : side(doc, sideName) > 0
@@ -482,18 +497,21 @@ function isUpToDate(sideName /*: SideName */, doc /*: Metadata */) {
 //
 // FIXME: find out how we end up in this situation, fix it and remove this
 // mitigation.
-function isAtLeastUpToDate(sideName /*: SideName */, doc /*: Metadata */) {
+function isAtLeastUpToDate(
+  sideName /*: SideName */,
+  doc /*: Metadata|SavedMetadata */
+) {
   return hasBothSides(doc)
     ? side(doc, sideName) >= target(doc)
     : side(doc, sideName) > 0
 }
 
-function removeActionHints(doc /*: Metadata */) {
+function removeActionHints(doc /*: Metadata|SavedMetadata */) {
   if (doc.sides) delete doc.sides
   if (doc.moveFrom) delete doc.moveFrom
 }
 
-function removeNoteMetadata(doc /*: Metadata */) {
+function removeNoteMetadata(doc /*: Metadata|SavedMetadata */) {
   if (doc.metadata) {
     if (doc.metadata.content) delete doc.metadata.content
     if (doc.metadata.schema) delete doc.metadata.schema
@@ -502,17 +520,17 @@ function removeNoteMetadata(doc /*: Metadata */) {
   }
 }
 
-function dissociateRemote(doc /*: Metadata */) {
+function dissociateRemote(doc /*: Metadata|SavedMetadata */) {
   if (doc.sides && doc.sides.remote) delete doc.sides.remote
   if (doc.remote) delete doc.remote
 }
 
-function dissociateLocal(doc /*: Metadata */) {
+function dissociateLocal(doc /*: Metadata|SavedMetadata */) {
   if (doc.sides && doc.sides.local) delete doc.sides.local
   if (doc.local) delete doc.local
 }
 
-function markAsUnsyncable(doc /*: SavedMetadata */) {
+function markAsUnsyncable(doc /*: Saved<DirMetadata>|Saved<FileMetadata> */) {
   removeActionHints(doc)
   // Cannot be done in removeActionHints as markAsUnmerged uses it as well and
   // overwrite can be an attribute added before calling Merge (i.e. it can exist
@@ -539,7 +557,7 @@ function markAsUnmerged(
   }
 }
 
-function markAsUpToDate /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
+function markAsUpToDate /*::<T: Metadata|SavedMetadata> */(doc /*: T */) {
   const newTarget = target(doc) + 1
   doc.sides = {
     target: newTarget,
@@ -550,7 +568,7 @@ function markAsUpToDate /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
   return newTarget
 }
 
-function outOfDateSide /*:: <T: Metadata|SavedMetadata> */(
+function outOfDateSide /*::<T: Metadata|SavedMetadata> */(
   doc /*: T */
 ) /*: ?SideName */ {
   const localRev = _.get(doc, 'sides.local', 0)
@@ -565,7 +583,10 @@ function outOfDateSide /*:: <T: Metadata|SavedMetadata> */(
 }
 
 // Ensure new timestamp is never older than the previous one
-function assignMaxDate(doc /*: Metadata */, was /*: ?Metadata */) {
+function assignMaxDate(
+  doc /*: Metadata|SavedMetadata */,
+  was /*: ?Metadata|SavedMetadata */
+) {
   if (was == null) return
   const wasUpdatedAt = new Date(was.updated_at)
   const docUpdatedAt = new Date(doc.updated_at)
@@ -672,8 +693,8 @@ const makeComparator = (
   }
 
   return (
-    one /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */,
-    two /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
+    one /*: DirMetadata|FileMetadata|MetadataLocalInfo|MetadataRemoteDir|MetadataRemoteFile|Saved<DirMetadata>|Saved<FileMetadata> */,
+    two /*: DirMetadata|FileMetadata|MetadataLocalInfo|MetadataRemoteDir|MetadataRemoteFile|Saved<DirMetadata>|Saved<FileMetadata> */
   ) => {
     const left = normalizeDoctype(one)
     const right = normalizeDoctype(two)
@@ -731,8 +752,10 @@ const sameLocal = (() => {
 const sameRemote = (() => {
   const comparator = makeComparator('sameRemote')
 
-  return (one /*: MetadataRemoteInfo */, two /*: MetadataRemoteInfo */) =>
-    comparator(one, two)
+  return (
+    one /*: MetadataRemoteDir|MetadataRemoteFile */,
+    two /*: MetadataRemoteDir|MetadataRemoteFile */
+  ) => comparator(one, two)
 })()
 
 // Return true if the two files have the same binary content
@@ -750,11 +773,11 @@ function sameBinary(
 // revision from the previous state, increment it by one to have the next
 // revision and associate this number to the side that makes the
 // modification.
-function markSide(
+function markSide /*::<T: Metadata|SavedMetadata> */(
   side /*: string */,
-  doc /*: Metadata */,
-  prev /*: ?Metadata */
-) /*: Metadata */ {
+  doc /*: T */,
+  prev /*: ?Metadata|SavedMetadata */
+) /*: T */ {
   const prevSides = prev && prev.sides
   const prevTarget = target(prev)
 
@@ -766,7 +789,7 @@ function markSide(
   return doc
 }
 
-function incSides(doc /*: Metadata */) /*: void */ {
+function incSides(doc /*: Metadata|SavedMetadata */) /*: void */ {
   const prevTarget = target(doc)
   const local = side(doc, 'local')
   const remote = side(doc, 'remote')
@@ -778,23 +801,23 @@ function incSides(doc /*: Metadata */) /*: void */ {
   }
 }
 
-function target(doc /*: ?$ReadOnly<Metadata> */) /*: number */ {
+function target(doc /*: ?$ReadOnly<Metadata|SavedMetadata> */) /*: number */ {
   return (doc && doc.sides && doc.sides.target) || 0
 }
 
 function side(
-  doc /*: $ReadOnly<Metadata> */,
+  doc /*: $ReadOnly<Metadata|SavedMetadata> */,
   sideName /*: SideName */
 ) /*: number */ {
   return (doc.sides || {})[sideName] || 0
 }
 
-function sideInfo(sideName /*: SideName */, doc /*: Metadata */) {
+function sideInfo(sideName /*: SideName */, doc /*: Metadata|SavedMetadata */) {
   if (sideName === 'local') return doc.local
   else return doc.remote
 }
 
-function detectSingleSide(doc /*: Metadata */) /*: ?SideName */ {
+function detectSingleSide(doc /*: Metadata|SavedMetadata */) /*: ?SideName */ {
   if (doc.sides) {
     for (const sideName of SIDE_NAMES) {
       if (doc.sides[sideName] && !doc.sides[otherSide(sideName)]) {
@@ -804,21 +827,23 @@ function detectSingleSide(doc /*: Metadata */) /*: ?SideName */ {
   }
 }
 
-function hasBothSides(doc /*: Metadata */) /*: boolean %checks */ {
+function hasBothSides(
+  doc /*: Metadata|SavedMetadata */
+) /*: boolean %checks */ {
   return doc.sides && doc.sides.local != null && doc.sides.remote != null
 }
 
 // Alias for hasBothSides
-function wasSynced(doc /*: Metadata */) /*: boolean */ {
+function wasSynced(doc /*: Metadata|SavedMetadata */) /*: boolean */ {
   return hasBothSides(doc)
 }
 
 function buildDir(
   fpath /*: string */,
   stats /*: Stats */,
-  remote /*: ?MetadataRemoteInfo */
-) /*: Metadata */ {
-  const doc /*: $Shape<Metadata> */ = {
+  remote /*: ?MetadataRemoteDir|MetadataRemoteFile */
+) /*: DirMetadata */ {
+  const doc /*: Object */ = {
     path: fpath,
     docType: 'folder',
     updated_at: stats.mtime.toISOString(),
@@ -843,15 +868,15 @@ function buildFile(
   filePath /*: string */,
   stats /*: Stats */,
   md5sum /*: string */,
-  remote /*: ?MetadataRemoteInfo */
-) /*: Metadata */ {
+  remote /*: ?MetadataRemoteDir|MetadataRemoteFile */
+) /*: FileMetadata */ {
   const mimeType = mime.lookup(filePath)
   const className = mimeType.split('/')[0]
   const { mtime, ino, size } = stats
   const updated_at = mtime.toISOString()
   const executable = stats.mode ? (+stats.mode & EXECUTABLE_MASK) !== 0 : false
 
-  const doc /*: $Shape<Metadata> */ = {
+  const doc /*: Object */ = {
     path: filePath,
     docType: 'file',
     md5sum,
@@ -885,7 +910,7 @@ function createConflictingDoc /*::<T: Metadata|SavedMetadata> */(
 }
 
 function shouldIgnore(
-  doc /*: Metadata */,
+  doc /*: Metadata|SavedMetadata */,
   ignoreRules /*: Ignore */
 ) /*: boolean */ {
   return ignoreRules.isIgnored({
@@ -898,7 +923,10 @@ function shouldIgnore(
 // when a remote update of `doc` has been merged but not synced yet.
 // We could make sure we always pass a `newLocal` value and clone `doc.local`
 // instead of `doc` as the last defaults.
-function updateLocal(doc /*: Metadata */, newLocal /*: Object */ = {}) {
+function updateLocal(
+  doc /*: Metadata|SavedMetadata */,
+  newLocal /*: Object */ = {}
+) {
   const defaults = process.platform === 'win32' ? { executable: false } : {}
 
   doc.local = _.pick(
@@ -907,26 +935,28 @@ function updateLocal(doc /*: Metadata */, newLocal /*: Object */ = {}) {
   )
 }
 
-function updateRemote /*::<T: CouchDBDoc|MetadataRemoteInfo> */(
-  doc /*: Metadata */,
+function updateRemote /*::<T: MetadataRemoteDir|MetadataRemoteFile|RemoteDir|RemoteFile> */(
+  doc /*: Metadata|SavedMetadata */,
   newRemote /*: T */
 ) {
-  doc.remote = _.defaultsDeep(
-    {
-      path: pathUtils.localToRemote(newRemote.path) // Works also if newRmote.path is formated as a remote path
-    },
-    newRemote.created_at != null
-      ? {
-          created_at: timestamp.roundedRemoteDate(newRemote.created_at)
-        }
-      : {},
-    newRemote.updated_at != null
-      ? {
-          updated_at: timestamp.roundedRemoteDate(newRemote.updated_at)
-        }
-      : {},
-    _.cloneDeep(newRemote),
-    _.cloneDeep(doc.remote)
+  doc.remote = serializableRemote(
+    _.defaultsDeep(
+      {
+        path: pathUtils.localToRemote(newRemote.path) // Works also if newRmote.path is formated as a remote path
+      },
+      newRemote.created_at != null
+        ? {
+            created_at: timestamp.roundedRemoteDate(newRemote.created_at)
+          }
+        : {},
+      newRemote.updated_at != null
+        ? {
+            updated_at: timestamp.roundedRemoteDate(newRemote.updated_at)
+          }
+        : {},
+      _.cloneDeep(newRemote),
+      _.cloneDeep(doc.remote)
+    )
   )
 }
 
@@ -976,6 +1006,7 @@ module.exports = {
   buildFile,
   outOfDateSide,
   createConflictingDoc,
+  serializableRemote,
   shouldIgnore,
   updateLocal,
   updateRemote

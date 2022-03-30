@@ -12,10 +12,10 @@ const should = require('should')
 const metadata = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
 const remote = require('../../../core/remote')
+const { oldJsonToRemoteDir } = require('../../../core/remote/document')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
 const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../../core/remote/constants')
 const { FetchError } = require('../../../core/remote/cozy')
-const { remoteJsonToRemoteDoc } = require('../../../core/remote/document')
 const timestamp = require('../../../core/utils/timestamp')
 const { CONFLICT_REGEXP } = require('../../../core/utils/conflicts')
 
@@ -25,8 +25,8 @@ const { cozy, deleteAll } = require('../../support/helpers/cozy')
 const Builders = require('../../support/builders')
 
 /*::
-import type { Metadata, SavedMetadata } from '../../../core/metadata'
-import type { RemoteDoc, RemoteJsonDoc } from '../../../core/remote/document'
+import type { DirMetadata, FileMetadata, Saved } from '../../../core/metadata'
+import type { OldJsonDoc, RemoteDir, RemoteFile } from '../../../core/remote/document'
 */
 const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
 
@@ -157,7 +157,7 @@ describe('remote.Remote', function () {
     })
 
     it('does not throw if the file does not exists locally anymore', async function () {
-      const doc /*: Metadata */ = builders
+      const doc /*: FileMetadata */ = builders
         .metafile()
         .path('foo')
         .sides({ local: 1 })
@@ -172,7 +172,7 @@ describe('remote.Remote', function () {
     })
 
     it('rejects with a DirectoryNotFound error if its parent is missing on the Cozy', async function () {
-      const doc /*: Metadata */ = builders
+      const doc /*: FileMetadata */ = builders
         .metafile()
         .path('dir/foo')
         .sides({ local: 1 })
@@ -264,7 +264,7 @@ describe('remote.Remote', function () {
     })
 
     it('throws an error if the parent folder is missing', async function () {
-      const doc /*: Metadata */ = builders
+      const doc /*: DirMetadata */ = builders
         .metadir()
         .path(path.join('foo', 'bar', 'qux'))
         .build()
@@ -353,7 +353,7 @@ describe('remote.Remote', function () {
       })
 
       it('does not throw if the file does not exists locally anymore', async function () {
-        const doc /*: Metadata */ = builders
+        const doc /*: FileMetadata */ = builders
           .metafile()
           .path('foo')
           .changedSide('local')
@@ -648,9 +648,7 @@ describe('remote.Remote', function () {
 
       await this.remote.updateFolderAsync(doc)
 
-      const folder /*: RemoteJsonDoc */ = await cozy.files.statById(
-        doc.remote._id
-      )
+      const folder /*: OldJsonDoc */ = await cozy.files.statById(doc.remote._id)
       should(folder.attributes).have.properties({
         path: '/created',
         type: 'directory',
@@ -708,9 +706,9 @@ describe('remote.Remote', function () {
 
   describe('moveAsync', () => {
     context('with a file', () => {
-      let old /*: Metadata */
-      let doc /*: Metadata */
-      let newDir /*: RemoteDoc */
+      let old /*: Saved<FileMetadata> */
+      let doc /*: FileMetadata */
+      let newDir /*: RemoteDir|RemoteFile */
 
       beforeEach(async () => {
         newDir = await builders
@@ -724,11 +722,11 @@ describe('remote.Remote', function () {
           .name('cat6.jpg')
           .data('meow')
           .create()
-        old = builders
+        old = await builders
           .metafile()
           .fromRemote(remoteDoc)
           .changedSide('local')
-          .build()
+          .create()
         doc = builders
           .metafile()
           .moveFrom(old)
@@ -822,7 +820,10 @@ describe('remote.Remote', function () {
         })
 
         it('moves the file on the Cozy', async function () {
-          const old = builders.metafile(file).changedSide('local').build()
+          const old = await builders
+            .metafile(file)
+            .changedSide('local')
+            .create()
           const doc = builders
             .metafile()
             .moveFrom(old)
@@ -901,10 +902,10 @@ describe('remote.Remote', function () {
       const existingRefs = [{ _id: 'blah', _type: 'io.cozy.photos.albums' }]
 
       let existingRemote
-      let existing /*: SavedMetadata */
-      let old /*:SavedMetadata */
-      let doc /*: Metadata */
-      let newDir /*: RemoteDoc */
+      let existing /*: Saved<FileMetadata> */
+      let old /*:Saved<FileMetadata> */
+      let doc /*: FileMetadata */
+      let newDir /*: RemoteDir|RemoteFile */
 
       beforeEach(async () => {
         newDir = await builders
@@ -1220,7 +1221,7 @@ describe('remote.Remote', function () {
 
     it('returns the remote root directory for path .', async function () {
       // $FlowFixMe Root is a directory
-      const root /*: RemoteDir */ = remoteJsonToRemoteDoc(
+      const root /*: RemoteDir */ = oldJsonToRemoteDir(
         // XXX: We call the cozy-client-js method directly to increase the
         // likelyhood that the remote document is unaltered.
         await this.remote.remoteCozy.client.files.statById(ROOT_DIR_ID)

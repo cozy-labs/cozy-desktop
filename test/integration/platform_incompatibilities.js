@@ -16,8 +16,7 @@ const pouchHelpers = require('../support/helpers/pouch')
 const TestHelpers = require('../support/helpers')
 
 /*::
-import type { RemoteDir } from '../../core/remote/document'
-import type { MetadataRemoteInfo, MetadataRemoteDir } from '../../core/metadata'
+import type { RemoteDir, RemoteFile } from '../../core/remote/document'
 */
 
 describe('Platform incompatibilities', () => {
@@ -353,7 +352,7 @@ describe('Platform incompatibilities', () => {
   })
 
   it('move remote dir with incompatible metadata & remote content', async () => {
-    const remoteDocs /*: { [string]: MetadataRemoteInfo } */ =
+    const remoteDocs /*: { [string]: RemoteDir|RemoteFile } */ =
       await helpers.remote.createTree([
         'dir/',
         'dir/sub:dir/',
