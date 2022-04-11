@@ -17,8 +17,15 @@ const {
 /*::
 import type {
   FILE_TYPE as FILE,
-  DIR_TYPE as DIR
+  DIR_TYPE as DIR,
+  VERSIONS_DOCTYPE,
 } from './constants'
+
+// ('contents') => Array<JsonApiRef>
+// ('file') => ?JsonApiRef
+// ('old_versions') => Array<JsonApiFileVersion>
+// ('referenced_by') => Array<JsonApiRef>
+export type RemoteRelations = any => any
 
 export type RemoteFileAttributes = {|
   type: FILE,
@@ -50,10 +57,25 @@ export type RemoteBase = {|
   cozyMetadata?: Object,
   metadata?: Object,
   restore_path?: string,
+  relations: RemoteRelations
 |}
 export type RemoteFile = {| ...RemoteBase, ...RemoteFileAttributes |}
+export type FullRemoteFile = {| ...RemoteFile, path: string |}
 export type RemoteDir = {| ...RemoteBase, ...RemoteDirAttributes |}
 export type RemoteDoc = RemoteFile|RemoteDir
+
+export type RemoteFileVersion = {|
+  _id: string,
+  _rev: string,
+  _type: VERSIONS_DOCTYPE,
+  cozyMetadata: Object,
+  md5sum: string,
+  metadata?: Object,
+  relationships: JsonApiRelationShips,
+  size: string,
+  tags: string[],
+  updated_at: string,
+|}
 
 export type CouchDBChange = {|
   id: string,
@@ -74,7 +96,15 @@ type CommonCouchDBAttributes = {|
   updated_at: string,
   tags: string[],
 |}
-export type CouchDBDoc = {|
+export type CouchDBDir = {|
+  ...CommonCouchDBAttributes,
+  type: DIR,
+  not_synchronized_on?: Array<{
+    id: string,
+    type: string
+  }>,
+|}
+export type CouchDBFile = {|
   ...CommonCouchDBAttributes,
   type: FILE,
   class: string,
@@ -83,14 +113,8 @@ export type CouchDBDoc = {|
   mime: string,
   size: string,
   trashed: boolean,
-|} | {|
-  ...CommonCouchDBAttributes,
-  type: DIR,
-  not_synchronized_on?: Array<{
-    id: string,
-    type: string
-  }>,
 |}
+export type CouchDBDoc = CouchDBDir | CouchDBFile
 export type CouchDBDeletion = {|
   _id: string,
   _rev: string,
@@ -134,12 +158,16 @@ export type RemoteJsonFile = {|
   _rev: string,
   _type: string,
   attributes: JsonApiFileAttributes,
+  relations?: RemoteRelations,
+  relationships: JsonApiRelationShips,
 |}
 export type RemoteJsonDir = {|
   _id: string,
   _rev: string,
   _type: string,
   attributes: JsonApiDirAttributes,
+  relations?: RemoteRelations,
+  relationships: JsonApiRelationShips,
 |}
 export type RemoteJsonDoc = RemoteJsonFile|RemoteJsonDir
 
@@ -148,6 +176,31 @@ type JsonApiRef = {
   id: string,
   type: string,
 }
+
+type JsonApiFileVersionAttributes = {|
+  md5sum: string,
+  size: string,
+  tags: string[],
+  updated_at: string,
+|}
+
+export type JsonApiFileVersion = {|
+  _id: string,
+  _rev: string,
+  _type: VERSIONS_DOCTYPE,
+  attributes: JsonApiFileVersionAttributes,
+  cozyMetadata: Object,
+  metadata?: Object,
+  relationships: JsonApiRelationShips,
+|}
+
+type JsonApiRelationShips = {|
+  contents?: { data?: JsonApiRef[] },
+  file?: { data: JsonApiRef },
+  old_versions?: { data?: JsonApiFileVersion[] },
+  referenced_by?: { data?: JsonApiRef | JsonApiRef[] },
+|}
+
 
 type JsonApiDeletion = {|
   id: string,
@@ -164,7 +217,7 @@ type JsonApiDoc =
     },
     links: Object,
     attributes: JsonApiFileAttributes|JsonApiDirAttributes,
-    relationships: { [string]: { data?: JsonApiRef | JsonApiRef[] } }
+    relationships: JsonApiRelationShips
   |}
   | JsonApiDeletion
 */
@@ -236,6 +289,27 @@ function withDefaultValues /*:: <T: JsonApiDirAttributes|JsonApiFileAttributes> 
   }
 }
 
+// It appears the `relations` attribute is not always added to remote documents
+// by `cozy-client-js` so we use a function always returning an empty array in
+// this case.
+// Also, when a remote file has never been modified, its `old_versions` relation
+// will return `undefined` instead of an empty Array so we'll default the
+// returned value to an empty Array instead.
+function withDefaultRelations /*::<T: ?RemoteRelations> */(
+  relations /*: T */
+) /*: { relations: RemoteRelations } */ {
+  if (relations != null) {
+    const originalRelations = relations
+    return {
+      relations: relation => originalRelations(relation) || []
+    }
+  } else {
+    return {
+      relations: () => []
+    }
+  }
+}
+
 function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
   json /*: T */
 ) /*: RemoteDoc */ {
@@ -244,7 +318,8 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
       type: DIR_TYPE,
       _id: json._id,
       _rev: json._rev,
-      ...withDefaultValues(json.attributes)
+      ...withDefaultValues(json.attributes),
+      ...withDefaultRelations(json.relations)
     } /*: RemoteDir */)
 
     return remoteDir
@@ -253,7 +328,8 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
       type: FILE_TYPE,
       _id: json._id,
       _rev: json._rev,
-      ...withDefaultValues(json.attributes)
+      ...withDefaultValues(json.attributes),
+      ...withDefaultRelations(json.relations)
     } /*: RemoteFile */)
 
     return remoteFile
@@ -269,23 +345,25 @@ function jsonApiToRemoteJsonDoc(
       _rev: json.rev,
       _deleted: true
     } /*: CouchDBDeletion */)
-  }
-
-  if (!json.meta || !json.meta.rev) {
+  } else if (!json.meta || !json.meta.rev) {
     throw new Error('Missing meta.rev attribute in JsonAPI resource.')
-  }
+  } else {
+    const { attributes, id, type, relationships } = json
 
-  return json.attributes.type === DIR_TYPE
-    ? ({
-        _id: json.id,
-        _type: json.type,
-        _rev: json.meta && json.meta.rev,
-        attributes: json.attributes
-      } /*: RemoteJsonDir */)
-    : ({
-        _id: json.id,
-        _type: json.type,
-        _rev: json.meta && json.meta.rev,
-        attributes: json.attributes
-      } /*: RemoteJsonFile */)
+    return attributes.type === DIR_TYPE
+      ? ({
+          _id: id,
+          _type: type,
+          _rev: json.meta.rev,
+          attributes,
+          relationships
+        } /*: RemoteJsonDir */)
+      : ({
+          _id: id,
+          _type: type,
+          _rev: json.meta.rev,
+          attributes,
+          relationships
+        } /*: RemoteJsonFile */)
+  }
 }

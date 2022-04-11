@@ -21,6 +21,7 @@ const {
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const { withDefaultValues } = require('../../../core/remote/document')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
+const metadata = require('../../../core/metadata')
 
 const configHelpers = require('../../support/helpers/config')
 const cozyHelpers = require('../../support/helpers/cozy')
@@ -410,7 +411,9 @@ describe('RemoteCozy', function () {
 
       const { docs } = await remoteCozy.changes(last_seq)
 
-      should(docs).containDeepOrdered([dirA, fileA, dirB, fileB])
+      should(docs).containDeepOrdered(
+        [dirA, fileA, dirB, fileB].map(metadata.serializableRemote)
+      )
     })
 
     it('does not swallow errors', function () {
@@ -599,10 +602,10 @@ describe('RemoteCozy', function () {
       const subdir = await builders.remoteDir().inDir(dir).create()
 
       const foundDir = await remoteCozy.findDirectoryByPath(dir.path)
-      should(foundDir).have.properties(dir)
+      should(foundDir).have.properties(metadata.serializableRemote(dir))
 
       const foundSubdir = await remoteCozy.findDirectoryByPath(subdir.path)
-      should(foundSubdir).have.properties(subdir)
+      should(foundSubdir).have.properties(metadata.serializableRemote(subdir))
     })
 
     it('rejects when the directory does not exist remotely', async function () {
@@ -824,13 +827,13 @@ describe('RemoteCozy', function () {
         'other-dir/',
         'other-dir/content'
       ])
-      await should(
-        remoteCozy.getDirectoryContent(tree['dir/'])
-      ).be.fulfilledWith([
-        tree['dir/file'],
-        tree['dir/other-subdir/'],
-        tree['dir/subdir/']
-      ])
+
+      const dirContent = await remoteCozy.getDirectoryContent(tree['dir/'])
+      should(dirContent.map(metadata.serializableRemote)).deepEqual(
+        [tree['dir/file'], tree['dir/other-subdir/'], tree['dir/subdir/']].map(
+          metadata.serializableRemote
+        )
+      )
     })
 
     it('does not return exluded subdirectories', async () => {
@@ -852,9 +855,10 @@ describe('RemoteCozy', function () {
         tree['dir/subdir/']
       ])
 
-      await should(
-        remoteCozy.getDirectoryContent(tree['dir/'])
-      ).be.fulfilledWith([tree['dir/other-subdir/']])
+      const dirContent = await remoteCozy.getDirectoryContent(tree['dir/'])
+      should(dirContent.map(metadata.serializableRemote)).deepEqual([
+        metadata.serializableRemote(tree['dir/other-subdir/'])
+      ])
     })
 
     it('does not fail on an empty directory', async () => {

@@ -16,25 +16,24 @@ const {
 /*::
 import type { Cozy } from 'cozy-client-js'
 import type { RemoteDir } from '../../../../core/remote/document'
-import type { MetadataRemoteDir } from '../../../../core/metadata'
 */
 
 // Used to generate readable unique dirnames
 var dirNumber = 1
 
-// Build a MetadataRemoteDir representing a remote Cozy directory:
+// Build a RemoteDir representing a remote Cozy directory:
 //
-//     const dir: MetadataRemoteDir = builders.remoteDir().inDir(...).build()
+//     const dir: RemoteDir = builders.remoteDir().inDir(...).build()
 //
 // To actually create the corresponding directory on the Cozy, use the async
 // #create() method instead:
 //
-//     const dir: MetadataRemoteDir = await builders.remoteDir().inDir(...).create()
+//     const dir: RemoteDir = await builders.remoteDir().inDir(...).create()
 //
 module.exports = class RemoteDirBuilder extends (
   RemoteBaseBuilder
-) /*:: <MetadataRemoteDir> */ {
-  constructor(cozy /*: ?Cozy */, old /*: ?(RemoteDir|MetadataRemoteDir) */) {
+) /*:: <RemoteDir> */ {
+  constructor(cozy /*: ?Cozy */, old /*: ?RemoteDir */) {
     super(cozy, old)
 
     if (!old) {
@@ -67,7 +66,7 @@ module.exports = class RemoteDirBuilder extends (
     })(cozy)
   }
 
-  async create() /*: Promise<MetadataRemoteDir> */ {
+  async create() /*: Promise<RemoteDir> */ {
     const cozy = this._ensureCozy()
 
     const json = await cozy.files.createDirectory({
@@ -97,7 +96,7 @@ module.exports = class RemoteDirBuilder extends (
     return _.clone(remoteJsonToRemoteDoc(json))
   }
 
-  async update() /*: Promise<MetadataRemoteDir> */ {
+  async update() /*: Promise<RemoteDir> */ {
     const cozy = this._ensureCozy()
 
     const json = inRemoteTrash(this.remoteDoc)

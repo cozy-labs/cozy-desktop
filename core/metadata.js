@@ -56,10 +56,13 @@ const { SIDE_NAMES, otherSide } = require('./side')
 import type { PlatformIncompatibility } from './incompatibilities/platform'
 import type {
   CouchDBDeletion,
+  CouchDBDir,
   CouchDBDoc,
+  FullRemoteFile,
   RemoteBase,
   RemoteDir,
   RemoteFile,
+  RemoteRelations,
 } from './remote/document'
 import type { Stats } from './local/stater'
 import type { Ignore } from './ignore'
@@ -118,8 +121,10 @@ export type MetadataLocalInfo = {
   updated_at?: string,
 }
 
-export type MetadataRemoteFile = {| ...RemoteFile, path: string |}
-export type MetadataRemoteDir = RemoteDir
+type Serializable<T> =  $Diff<T, { relations: ?RemoteRelations }>
+
+export type MetadataRemoteFile = Serializable<FullRemoteFile>
+export type MetadataRemoteDir = Serializable<RemoteDir>
 export type MetadataRemoteInfo = MetadataRemoteFile|MetadataRemoteDir
 
 type RemoteID = string
@@ -236,14 +241,15 @@ function localDocType(remoteDocType /*: string */) /*: string */ {
 // Please note the path is not normalized yet!
 // Normalization is done as a side effect of metadata.invalidPath() :/
 function fromRemoteDoc(
-  remoteDoc /*: CouchDBDoc|MetadataRemoteInfo */
+  remoteDoc /*: CouchDBDoc|RemoteDir|FullRemoteFile */
 ) /*: Metadata */ {
+  const serializable = serializableRemote(remoteDoc)
   const doc =
-    remoteDoc.type === REMOTE_FILE_TYPE
-      ? fromRemoteFile(remoteDoc)
-      : fromRemoteDir(remoteDoc)
+    serializable.type === REMOTE_FILE_TYPE
+      ? fromRemoteFile(serializable)
+      : fromRemoteDir(serializable)
 
-  updateRemote(doc, remoteDoc)
+  updateRemote(doc, serializable)
 
   return doc
 }
@@ -888,6 +894,21 @@ function shouldIgnore(
   })
 }
 
+function serializableRemote /*::<T: CouchDBDoc|FullRemoteFile|RemoteDir> */(
+  remoteDoc /*: T */
+) /*: Serializable<T> */ {
+  if (remoteDoc.relations) {
+    const {
+      // eslint-disable-next-line no-unused-vars
+      relations,
+      ...serializable
+    } = remoteDoc
+    return serializable
+  } else {
+    return remoteDoc
+  }
+}
+
 // FIXME: `updateLocal` will override local attributes with remote ones
 // when a remote update of `doc` has been merged but not synced yet.
 // We could make sure we always pass a `newLocal` value and clone `doc.local`
@@ -903,7 +924,7 @@ function updateLocal(doc /*: Metadata */, newLocal /*: Object */ = {}) {
 
 function updateRemote(
   doc /*: Metadata */,
-  newRemote /*: {| path: string |}|MetadataRemoteInfo */
+  newRemote /*: {| path: string |}|CouchDBDoc|FullRemoteFile|RemoteDir */
 ) {
   doc.remote = _.defaultsDeep(
     {
@@ -971,6 +992,7 @@ module.exports = {
   outOfDateSide,
   createConflictingDoc,
   shouldIgnore,
+  serializableRemote,
   updateLocal,
   updateRemote
 }

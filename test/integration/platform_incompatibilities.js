@@ -353,12 +353,11 @@ describe('Platform incompatibilities', () => {
   })
 
   it('move remote dir with incompatible metadata & remote content', async () => {
-    const remoteDocs /*: { [string]: MetadataRemoteInfo } */ =
-      await helpers.remote.createTree([
-        'dir/',
-        'dir/sub:dir/',
-        'dir/sub:dir/file'
-      ])
+    const remoteDocs = await helpers.remote.createTree([
+      'dir/',
+      'dir/sub:dir/',
+      'dir/sub:dir/file'
+    ])
     await helpers.pullAndSyncAll()
 
     // Simulate remote move

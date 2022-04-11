@@ -17,8 +17,7 @@ const { FILES_DOCTYPE } = require('../../../../core/remote/constants')
 /*::
 import type stream from 'stream'
 import type { Cozy } from 'cozy-client-js'
-import type { RemoteFile } from '../../../../core/remote/document'
-import type { MetadataRemoteFile } from '../../../../core/metadata'
+import type { FullRemoteFile, RemoteFile } from '../../../../core/remote/document'
 */
 
 // Used to generate readable unique filenames
@@ -41,23 +40,23 @@ const addReferencedBy = async (
 
 const baseData = `Content of remote file ${fileNumber}`
 
-// Build a MetadataRemoteFile representing a remote Cozy file:
+// Build a FullRemoteFile representing a remote Cozy file:
 //
-//     const file /*: MetadataRemoteFile */ = builders.remoteFile().inDir(...).build()
+//     const file /*: FullRemoteFile */ = builders.remoteFile().inDir(...).build()
 //
 // To actually create the corresponding file on the Cozy, use the async
 // #create() method instead:
 //
-//     const file /*: MetadataRemoteFile */ = await builders.remoteFile().inDir(...).create()
+//     const file /*: FullRemoteFile */ = await builders.remoteFile().inDir(...).create()
 //
 module.exports = class RemoteFileBuilder extends (
   RemoteBaseBuilder
-) /*:: <MetadataRemoteFile> */ {
+) /*:: <FullRemoteFile> */ {
   /*::
   _data: string | stream.Readable | Buffer
   */
 
-  constructor(cozy /*: ?Cozy */, old /*: ?(RemoteFile|MetadataRemoteFile) */) {
+  constructor(cozy /*: ?Cozy */, old /*: ?FullRemoteFile */) {
     super(cozy, old)
 
     if (!old) {
@@ -129,7 +128,7 @@ module.exports = class RemoteFileBuilder extends (
     return super.restored()
   }
 
-  async create() /*: Promise<MetadataRemoteFile> */ {
+  async create() /*: Promise<FullRemoteFile> */ {
     const cozy = this._ensureCozy()
 
     const remoteFile /*: RemoteFile */ = _.clone(
@@ -156,7 +155,7 @@ module.exports = class RemoteFileBuilder extends (
     }
 
     const parentDir = await cozy.files.statById(remoteFile.dir_id)
-    const doc /*: MetadataRemoteFile */ = {
+    const doc /*: FullRemoteFile */ = {
       ...remoteFile,
       path: posix.join(parentDir.attributes.path, remoteFile.name)
     }
@@ -164,7 +163,7 @@ module.exports = class RemoteFileBuilder extends (
     return doc
   }
 
-  async update() /*: Promise<MetadataRemoteFile> */ {
+  async update() /*: Promise<FullRemoteFile> */ {
     const cozy = this._ensureCozy()
 
     const parentDir = await cozy.files.statById(this.remoteDoc.dir_id)
@@ -188,7 +187,7 @@ module.exports = class RemoteFileBuilder extends (
           noSanitize: true
         })
     const remoteFile /*: RemoteFile */ = _.clone(remoteJsonToRemoteDoc(json))
-    const doc /*: MetadataRemoteFile */ = {
+    const doc /*: FullRemoteFile */ = {
       ...remoteFile,
       path: posix.join(parentDir.attributes.path, this.remoteDoc.name)
     }

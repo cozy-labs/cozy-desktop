@@ -1191,7 +1191,7 @@ describe('remote.Remote', function () {
 
     it('returns the directory metadata saved in PouchDB', async function () {
       await should(this.remote.findDirectoryByPath('dir')).be.fulfilledWith(
-        dir.remote
+        metadata.serializableRemote(dir.remote)
       )
       should(dir.remote).have.properties({
         _id: oldRemoteDir._id,

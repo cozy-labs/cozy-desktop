@@ -43,7 +43,7 @@ import type {
 import type {
   RemoteDoc,
   CouchDBDeletion,
-  RemoteFile,
+  FullRemoteFile,
   RemoteDir
 } from '../../../core/remote/document'
 import type {
@@ -52,7 +52,7 @@ import type {
   MetadataRemoteFile,
   MetadataRemoteDir
 } from '../../../core/metadata'
-import type { RemoteTree } from '../../support/builders'
+import type { RemoteTree } from '../../support/helpers/remote'
 */
 
 const saveTree = async (remoteTree, builders) => {
@@ -546,7 +546,7 @@ describe('RemoteWatcher', function () {
   })
 
   const validMetadata = (
-    remoteDoc /*: MetadataRemoteInfo */
+    remoteDoc /*: FullRemoteFile|RemoteDir */
   ) /*: Metadata */ => {
     const doc = metadata.fromRemoteDoc(remoteDoc)
     ensureValidPath(doc)
@@ -2120,13 +2120,15 @@ describe('RemoteWatcher', function () {
         []
       )
 
+      const serializable = metadata.serializableRemote(remoteDoc)
+
       should(change.type).equal('FileAddition')
       should(change.doc).have.properties({
         path: path.join('my-folder', 'file-5'),
         docType: 'file',
-        md5sum: remoteDoc.md5sum,
-        tags: remoteDoc.tags,
-        remote: remoteDoc
+        md5sum: serializable.md5sum,
+        tags: serializable.tags,
+        remote: serializable
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
     })
@@ -2148,16 +2150,18 @@ describe('RemoteWatcher', function () {
         []
       )
 
+      const serializable = metadata.serializableRemote(remoteDoc)
+
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
         path: path.join('my-folder', 'file-1'),
         docType: 'file',
-        md5sum: remoteDoc.md5sum,
-        tags: remoteDoc.tags,
+        md5sum: serializable.md5sum,
+        tags: serializable.tags,
         remote: {
-          ...remoteDoc,
-          created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
-          updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at)
+          ...serializable,
+          created_at: timestamp.roundedRemoteDate(serializable.created_at),
+          updated_at: timestamp.roundedRemoteDate(serializable.updated_at)
         }
       })
     })
@@ -2179,16 +2183,18 @@ describe('RemoteWatcher', function () {
         []
       )
 
+      const serializable = metadata.serializableRemote(remoteDoc)
+
       should(change.type).equal('FileUpdate')
       should(change.doc).have.properties({
         path: path.join('my-folder', 'file-1'),
         docType: 'file',
-        md5sum: remoteDoc.md5sum,
-        tags: remoteDoc.tags,
+        md5sum: serializable.md5sum,
+        tags: serializable.tags,
         remote: {
-          ...remoteDoc,
-          created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
-          updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at)
+          ...serializable,
+          created_at: timestamp.roundedRemoteDate(serializable.created_at),
+          updated_at: timestamp.roundedRemoteDate(serializable.updated_at)
         }
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
@@ -2211,17 +2217,19 @@ describe('RemoteWatcher', function () {
         []
       )
 
+      const serializable = metadata.serializableRemote(remoteDoc)
+
       should(change).have.property('update', false)
       should(change.type).equal('FileMove')
       should(change.doc).have.properties({
         path: path.join('my-folder', 'file-2-bis'),
         docType: 'file',
-        md5sum: remoteDoc.md5sum,
-        tags: remoteDoc.tags,
+        md5sum: serializable.md5sum,
+        tags: serializable.tags,
         remote: {
-          ...remoteDoc,
-          created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
-          updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at)
+          ...serializable,
+          created_at: timestamp.roundedRemoteDate(serializable.created_at),
+          updated_at: timestamp.roundedRemoteDate(serializable.updated_at)
         }
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])
@@ -2246,17 +2254,19 @@ describe('RemoteWatcher', function () {
         []
       )
 
+      const serializable = metadata.serializableRemote(remoteDoc)
+
       should(change).have.property('update', false)
       should(change.type).equal('FileMove')
       should(change.doc).have.properties({
         path: path.join('other-folder', 'file-2-ter'),
         docType: 'file',
-        md5sum: remoteDoc.md5sum,
-        tags: remoteDoc.tags,
+        md5sum: serializable.md5sum,
+        tags: serializable.tags,
         remote: {
-          ...remoteDoc,
-          created_at: timestamp.roundedRemoteDate(remoteDoc.created_at),
-          updated_at: timestamp.roundedRemoteDate(remoteDoc.updated_at)
+          ...serializable,
+          created_at: timestamp.roundedRemoteDate(serializable.created_at),
+          updated_at: timestamp.roundedRemoteDate(serializable.updated_at)
         }
       })
       should(change.doc).not.have.properties(['_rev', 'path', 'name'])

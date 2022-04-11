@@ -17,8 +17,10 @@ const {
 import type { Client as OldCozyClient } from 'cozy-client-js'
 import type { Pouch } from '../../../core/pouch'
 import type { RemoteOptions } from '../../../core/remote'
-import type { RemoteDoc } from '../../../core/remote/document'
+import type { FullRemoteFile, RemoteDir, RemoteDoc } from '../../../core/remote/document'
 import type { Metadata, MetadataRemoteInfo } from '../../../core/metadata'
+
+export type RemoteTree = { [string]: FullRemoteFile|RemoteDir }
 */
 
 class RemoteTestHelpers {
@@ -55,7 +57,7 @@ class RemoteTestHelpers {
   async createDirectory(
     name /*: string */,
     dirID /*: string */ = ROOT_DIR_ID
-  ) /*: Promise<MetadataRemoteInfo> */ {
+  ) /*: Promise<RemoteDir> */ {
     return this.cozy.files
       .createDirectory({
         name,
@@ -70,7 +72,7 @@ class RemoteTestHelpers {
     name /*: string */,
     dirID /*: string */ = ROOT_DIR_ID,
     content /*: string */ = 'whatever'
-  ) /*: Promise<MetadataRemoteInfo> */ {
+  ) /*: Promise<FullRemoteFile> */ {
     return this.cozy.files
       .create(content, {
         name,
@@ -81,9 +83,7 @@ class RemoteTestHelpers {
       .then(this.side.remoteCozy.toRemoteDoc)
   }
 
-  async createTree(
-    paths /*: Array<string> */
-  ) /*: Promise<{ [string]: MetadataRemoteInfo}> */ {
+  async createTree(paths /*: Array<string> */) /*: Promise<RemoteTree> */ {
     const remoteDocsByPath = {}
     for (const p of paths) {
       const name = path.posix.basename(p)
@@ -190,12 +190,14 @@ class RemoteTestHelpers {
     return resp.text()
   }
 
-  async byId(id /*: string */) /*: Promise<MetadataRemoteInfo> */ {
+  async byId(id /*: string */) /*: Promise<FullRemoteFile|RemoteDir> */ {
     const remoteDoc = await this.cozy.files.statById(id)
     return await this.side.remoteCozy.toRemoteDoc(remoteDoc)
   }
 
-  async byIdMaybe(id /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
+  async byIdMaybe(
+    id /*: string */
+  ) /*: Promise<?(FullRemoteFile|RemoteDir)> */ {
     try {
       return await this.byId(id)
     } catch (err) {
@@ -204,11 +206,11 @@ class RemoteTestHelpers {
   }
 
   async move(
-    { _id, updated_at } /*: MetadataRemoteInfo|RemoteDoc */,
+    { _id, updated_at } /*: MetadataRemoteInfo|FullRemoteFile|RemoteDir */,
     newPath /*: string */
   ) {
     const [newDirPath, newName] /*: [string, string] */ = dirAndName(newPath)
-    const newDir /*: RemoteDoc */ =
+    const newDir /*: RemoteDir */ =
       newDirPath === '.'
         ? await this.side.remoteCozy.findDir(ROOT_DIR_ID)
         : await this.side.remoteCozy.findDirectoryByPath(`/${newDirPath}`)

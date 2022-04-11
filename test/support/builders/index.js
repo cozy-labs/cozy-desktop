@@ -25,11 +25,10 @@ import type { Cozy } from 'cozy-client-js'
 import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Warning } from '../../../core/remote/cozy'
-import type { RemoteDoc, RemoteFile, RemoteDir } from '../../../core/remote/document'
+import type { FullRemoteFile, RemoteDir } from '../../../core/remote/document'
 import type { AtomEvent } from '../../../core/local/atom/event'
 import type { StatsBuilder } from './stats'
-
-export type RemoteTree = { [string]: MetadataRemoteFile|MetadataRemoteDir }
+import type { RemoteTree } from '../helpers/remote'
 */
 
 // Test data builders facade.
@@ -61,24 +60,20 @@ module.exports = class Builders {
     return new FileMetadataBuilder(this.pouch, old)
   }
 
-  remoteDir(old /*: ?RemoteDir|MetadataRemoteDir */) /*: RemoteDirBuilder */ {
+  remoteDir(old /*: ?RemoteDir */) /*: RemoteDirBuilder */ {
     return new RemoteDirBuilder(this.cozy, old)
   }
 
-  remoteFile(
-    old /*: ?RemoteFile|MetadataRemoteFile */
-  ) /*: RemoteFileBuilder */ {
+  remoteFile(old /*: ?FullRemoteFile */) /*: RemoteFileBuilder */ {
     return new RemoteFileBuilder(this.cozy, old)
   }
 
-  remoteNote(
-    old /*: ?RemoteFile|MetadataRemoteFile */
-  ) /*: RemoteNoteBuilder */ {
+  remoteNote(old /*: ?FullRemoteFile */) /*: RemoteNoteBuilder */ {
     return new RemoteNoteBuilder(this.cozy, old)
   }
 
   remoteErased(
-    old /*: ?RemoteFile|MetadataRemoteFile|RemoteDir|MetadataRemoteDir */
+    old /*: ?FullRemoteFile|RemoteDir */
   ) /*: RemoteErasedBuilder */ {
     return new RemoteErasedBuilder(this.cozy, old)
   }

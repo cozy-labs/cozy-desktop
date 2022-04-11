@@ -10,8 +10,7 @@ const dbBuilders = require('../db')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
-import type { RemoteFile, RemoteDir, CouchDBDeletion } from '../../../../core/remote/document'
-import type { MetadataRemoteFile, MetadataRemoteDir } from '../../../../core/metadata'
+import type { FullRemoteFile, RemoteDir, CouchDBDeletion } from '../../../../core/remote/document'
 */
 
 // Build a CouchDBDeletion representing a remote Cozy document that was
@@ -27,13 +26,10 @@ import type { MetadataRemoteFile, MetadataRemoteDir } from '../../../../core/met
 module.exports = class RemoteErasedBuilder {
   /*::
   cozy: ?Cozy
-  remoteDoc: ?RemoteFile|MetadataRemoteFile|RemoteDir|MetadataRemoteDir
+  remoteDoc: ?(FullRemoteFile|RemoteDir)
   */
 
-  constructor(
-    cozy /*: ?Cozy */,
-    old /*: ?(RemoteFile|MetadataRemoteFile|RemoteDir|MetadataRemoteDir) */
-  ) {
+  constructor(cozy /*: ?Cozy */, old /*: ?(FullRemoteFile|RemoteDir) */) {
     this.cozy = cozy
     if (old) {
       this.remoteDoc = {

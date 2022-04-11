@@ -16,19 +16,18 @@ const dbBuilders = require('../db')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
-import type { RemoteDoc } from '../../../../core/remote/document'
-import type { MetadataRemoteInfo } from '../../../../core/metadata'
+import type { FullRemoteFile, RemoteDir, RemoteDoc } from '../../../../core/remote/document'
 
 type Ref = { _id: string, _type: string }
 */
 
-module.exports = class RemoteBaseBuilder /*:: <T: MetadataRemoteInfo> */ {
+module.exports = class RemoteBaseBuilder /*:: <T: FullRemoteFile|RemoteDir> */ {
   /*::
   cozy: ?Cozy
   remoteDoc: T & { referenced_by: Ref[] }
   */
 
-  constructor(cozy /*: ?Cozy */, old /*: ?(RemoteDoc|T) */) {
+  constructor(cozy /*: ?Cozy */, old /*: ?T */) {
     this.cozy = cozy
     if (old) {
       this.remoteDoc = _.cloneDeep(old)
