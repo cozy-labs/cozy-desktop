@@ -25,9 +25,7 @@ const {
   dropSpecialDocs,
   withDefaultValues,
   remoteJsonToRemoteDoc,
-  jsonApiToRemoteJsonDoc,
-  keepFiles,
-  parentDirIds
+  jsonApiToRemoteJsonDoc
 } = require('./document')
 const logger = require('../utils/logger')
 
@@ -35,15 +33,19 @@ const logger = require('../utils/logger')
 import type { Config } from '../config'
 import type { Readable } from 'stream'
 import type {
+  CouchDBDeletion,
+  CouchDBDoc,
   RemoteJsonDoc,
   RemoteJsonFile,
   RemoteJsonDir,
-  RemoteDoc,
   RemoteFile,
   RemoteDir,
-  RemoteDeletion,
 } from './document'
-import type { MetadataRemoteInfo, MetadataRemoteFile, MetadataRemoteDir } from '../metadata'
+import type {
+  MetadataRemoteInfo,
+  MetadataRemoteFile,
+  MetadataRemoteDir
+} from '../metadata'
 
 export type Warning = {
   status: number,
@@ -59,10 +61,11 @@ export type Reference = {
   type: string
 }
 
-type ChangesFeedResponse = {|
+type ChangesFeedResponse = Promise<{
   last_seq: string,
-  remoteDocs: Array<RemoteDoc|RemoteDeletion>
-|}
+  docs: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion>,
+  isInitialFetch: boolean
+}>
 */
 
 const log = logger({
@@ -81,6 +84,7 @@ class RemoteCozy {
   config: Config
   url: string
   client: OldCozyClient
+  newClient: () => Promise<CozyClient>
   */
 
   constructor(config /*: Config */) {
@@ -93,18 +97,23 @@ class RemoteCozy {
         storage: config
       }
     })
+    this.newClient = (() => {
+      let client = null
+      return async () => {
+        if (!client) {
+          if (this.client._oauth) {
+            // Make sure we have an authorized client to build a new client from.
+            await this.client.authorize()
+            client = await CozyClient.fromOldOAuthClient(this.client)
+          } else {
+            client = await CozyClient.fromOldClient(this.client)
+          }
+        }
+        return client
+      }
+    })()
 
     autoBind(this)
-  }
-
-  async newClient() /*: Promise<CozyClient>  */ {
-    if (this.client._oauth) {
-      // Make sure we have an authorized client to build a new client from.
-      await this.client.authorize()
-      return await CozyClient.fromOldOAuthClient(this.client)
-    } else {
-      return await CozyClient.fromOldClient(this.client)
-    }
   }
 
   createJob(workerType /*: string */, args /*: any */) /*: Promise<*> */ {
@@ -236,7 +245,7 @@ class RemoteCozy {
                  createdAt: string,
                  updatedAt: string,
                  executable: boolean|} */
-  ) /*: Promise<MetadataRemoteFile> */ {
+  ) /*: Promise<MetadataRemoteInfo> */ {
     return this._withDomainErrors(data, options, async () => {
       const file /* RemoteJsonFile*/ = await this.client.files.create(data, {
         ...options,
@@ -251,7 +260,7 @@ class RemoteCozy {
                  dirID?: string,
                  createdAt: string,
                  updatedAt: string|} */
-  ) /*: Promise<MetadataRemoteDir> */ {
+  ) /*: Promise<MetadataRemoteInfo> */ {
     const folder /*: RemoteJsonDir */ = await this.client.files.createDirectory(
       {
         ...options,
@@ -270,7 +279,7 @@ class RemoteCozy {
                  updatedAt: string,
                  executable: boolean,
                  ifMatch: string|} */
-  ) /*: Promise<MetadataRemoteFile> */ {
+  ) /*: Promise<MetadataRemoteInfo> */ {
     return this._withDomainErrors(data, options, async () => {
       const updated /*: RemoteJsonFile */ = await this.client.files.updateById(
         id,
@@ -317,16 +326,14 @@ class RemoteCozy {
   async changes(
     since /*: string */ = INITIAL_SEQ,
     batchSize /*: number */ = 3000
-  ) /*: Promise<{last_seq: string, docs: Array<MetadataRemoteInfo|RemoteDeletion>, isInitialFetch: boolean}> */ {
+  ) /*: ChangesFeedResponse */ {
     const client = await this.newClient()
     const isInitialFetch = since === INITIAL_SEQ
     const { last_seq, remoteDocs } = isInitialFetch
       ? await fetchInitialChanges(since, client, batchSize)
-      : await fetchChangesFromFeed(since, this.client, batchSize)
+      : await fetchChangesFromFeed(since, client, batchSize)
 
-    const docs = (
-      await this.completeRemoteDocs(dropSpecialDocs(remoteDocs))
-    ).sort(byPath)
+    const docs = sortByPath(dropSpecialDocs(remoteDocs))
 
     return { last_seq, docs, isInitialFetch }
   }
@@ -342,40 +349,6 @@ class RemoteCozy {
         includeDocs: false
       })
     return last_seq
-  }
-
-  async completeRemoteDocs(
-    rawDocs /*: Array<RemoteDoc|RemoteDeletion> */
-  ) /*: Promise<Array<MetadataRemoteInfo|RemoteDeletion>> */ {
-    // The final docs with their paths (except for deletions)
-    const remoteDocs /*: Array<MetadataRemoteInfo|RemoteDeletion> */ = []
-
-    // The parent dirs for each file, indexed by id
-    const fileParentsById = await this.client.data.findMany(
-      FILES_DOCTYPE,
-      parentDirIds(keepFiles(rawDocs))
-    )
-
-    for (const rawDoc of rawDocs) {
-      if (rawDoc._deleted) {
-        remoteDocs.push(rawDoc)
-      } else if (rawDoc.type === FILE_TYPE) {
-        const parent = fileParentsById[rawDoc.dir_id]
-        if (parent.error || parent.doc == null || parent.doc.path == null) {
-          log.error(
-            { err: parent.error, rawDoc, parent, sentry: true },
-            'Could not compute doc path from parent'
-          )
-          continue
-        } else {
-          remoteDocs.push(this._withPath(rawDoc, parent.doc))
-        }
-      } else {
-        remoteDocs.push(rawDoc)
-      }
-    }
-
-    return remoteDocs
   }
 
   async find(id /*: string */) /*: Promise<MetadataRemoteInfo> */ {
@@ -488,7 +461,7 @@ class RemoteCozy {
     }
   }
 
-  isExcludedDirectory(doc /*: RemoteDoc */) /*: boolean */ {
+  isExcludedDirectory(doc /*: MetadataRemoteInfo */) /*: boolean */ {
     const {
       client: { clientID }
     } = this.config
@@ -515,16 +488,16 @@ class RemoteCozy {
     return resp.body
   }
 
-  async toRemoteDoc(
+  async toRemoteDoc /*::<T: MetadataRemoteInfo> */(
     doc /*: RemoteJsonDoc */,
     parentDir /*: ?RemoteDir */
-  ) /*: Promise<*> */ {
+  ) /*: Promise<MetadataRemoteInfo> */ {
     const remoteDoc = remoteJsonToRemoteDoc(doc)
     if (remoteDoc.type === FILE_TYPE) {
       parentDir = parentDir || (await this.findDir(remoteDoc.dir_id))
-      return this._withPath(remoteDoc, parentDir)
+      return (this._withPath(remoteDoc, parentDir) /*: MetadataRemoteFile */)
     }
-    return remoteDoc
+    return (remoteDoc /*: MetadataRemoteDir */)
   }
 
   /** Set the path of a remote file doc. */
@@ -635,19 +608,23 @@ class RemoteCozy {
 
 async function fetchChangesFromFeed(
   since /*: string */,
-  client /*: OldCozyClient */,
+  client /*: CozyClient */,
   batchSize /*: number */,
-  remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */ = []
-) /*: Promise<ChangesFeedResponse> */ {
-  const { last_seq, pending, results } = await client.data.changesFeed(
-    FILES_DOCTYPE,
-    {
-      since,
-      include_docs: true,
-      limit: batchSize
-    }
+  remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> */ = []
+) /*: Promise<{ last_seq: string, remoteDocs: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> }> */ {
+  const {
+    newLastSeq: last_seq,
+    pending,
+    results
+  } = await client
+    .collection(FILES_DOCTYPE)
+    .fetchChanges(
+      { since, includeDocs: true, limit: batchSize },
+      { includeFilePath: true }
+    )
+  remoteDocs = remoteDocs.concat(
+    results.map(r => (r.doc._deleted ? r.doc : withDefaultValues(r.doc)))
   )
-  remoteDocs = remoteDocs.concat(results.map(r => withDefaultValues(r.doc)))
 
   if (pending === 0) {
     return { last_seq, remoteDocs }
@@ -660,8 +637,8 @@ async function fetchInitialChanges(
   since /*: string */,
   client /*: CozyClient */,
   batchSize /*: number */,
-  remoteDocs /*: Array<RemoteDoc|RemoteDeletion> */ = []
-) {
+  remoteDocs /*: CouchDBDoc[] */ = []
+) /*: Promise<{ last_seq: string, remoteDocs: CouchDBDoc[] }> */ {
   const {
     newLastSeq: last_seq,
     pending,
@@ -681,7 +658,19 @@ async function fetchInitialChanges(
   }
 }
 
-function byPath(docA, docB) {
+function sortByPath /*::<T: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion>> */(
+  docs /*: T */
+) /*: T */ {
+  // XXX: We copy the array because `Array.sort()` mutates it and we're supposed
+  // to deal with read-only arrays (because it's an array of union type values
+  // and Flow will complain if a value can change type).
+  return [...docs].sort(byPath)
+}
+
+function byPath(
+  docA /*: CouchDBDoc|CouchDBDeletion */,
+  docB /*: CouchDBDoc|CouchDBDeletion */
+) {
   if (!docA._deleted && !docB._deleted) {
     if (docA.path < docB.path) return -1
     if (docA.path > docB.path) return 1

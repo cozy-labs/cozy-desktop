@@ -54,7 +54,13 @@ const { SIDE_NAMES, otherSide } = require('./side')
 
 /*::
 import type { PlatformIncompatibility } from './incompatibilities/platform'
-import type { RemoteBase, RemoteFile, RemoteDir, RemoteDeletion } from './remote/document'
+import type {
+  CouchDBDeletion,
+  CouchDBDoc,
+  RemoteBase,
+  RemoteDir,
+  RemoteFile,
+} from './remote/document'
 import type { Stats } from './local/stater'
 import type { Ignore } from './ignore'
 import type { SideName } from './side'
@@ -229,7 +235,9 @@ function localDocType(remoteDocType /*: string */) /*: string */ {
 // Transform a remote document into metadata, as stored in Pouch.
 // Please note the path is not normalized yet!
 // Normalization is done as a side effect of metadata.invalidPath() :/
-function fromRemoteDoc(remoteDoc /*: MetadataRemoteInfo */) /*: Metadata */ {
+function fromRemoteDoc(
+  remoteDoc /*: CouchDBDoc|MetadataRemoteInfo */
+) /*: Metadata */ {
   const doc =
     remoteDoc.type === REMOTE_FILE_TYPE
       ? fromRemoteFile(remoteDoc)

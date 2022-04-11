@@ -426,7 +426,7 @@ describe('RemoteCozy', function () {
     })
 
     it('makes several calls to get changesfeed aka pagination', async () => {
-      const fakeChangesFeed = sinon.stub(remoteCozy.client.data, 'changesFeed')
+      const client = await remoteCozy.newClient()
       const docsOnServer = [
         {
           doc: {
@@ -449,26 +449,48 @@ describe('RemoteCozy', function () {
           }
         }
       ]
-      fakeChangesFeed
+      const fakeFetchChanges = sinon
+        .stub()
         .onFirstCall()
         .resolves({
-          last_seq: 'abc',
+          newLastSeq: 'abc',
           pending: 1,
           results: docsOnServer.slice(0, 3)
         })
         .onSecondCall()
         .resolves({
-          last_seq: 'd',
+          newLastSeq: 'd',
           pending: 0,
           results: docsOnServer.slice(3)
         })
 
+      const fakeCollection = sinon.stub(client, 'collection')
+      fakeCollection.withArgs(FILES_DOCTYPE).returns({
+        fetchChanges: fakeFetchChanges
+      })
+
       // `since` is not '0' so we don't try to run an initial fetch which is not
       // faked here.
-      const { docs } = await remoteCozy.changes('')
-      should(docs.map(doc => ({ doc }))).eql(
-        docsOnServer.map(({ doc }) => ({ doc: withDefaultValues(doc) }))
-      )
+      try {
+        const { docs } = await remoteCozy.changes('')
+        should(docs.map(doc => ({ doc }))).eql(
+          docsOnServer.map(({ doc }) => ({ doc: withDefaultValues(doc) }))
+        )
+      } finally {
+        fakeCollection.restore()
+      }
+    })
+
+    it('returns documents with a path attribute', async function () {
+      const last_seq = await remoteCozy.fetchLastSeq()
+
+      await builders.remoteDir().inRootDir().name('dir').create()
+      await builders.remoteFile().inRootDir().name('file').create()
+
+      const { docs } = await remoteCozy.changes(last_seq)
+
+      should(docs).have.length(2)
+      should(docs).matchEach(doc => should(doc).have.property('path'))
     })
   })
 

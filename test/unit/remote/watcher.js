@@ -42,7 +42,7 @@ import type {
 } from '../../../core/remote/change'
 import type {
   RemoteDoc,
-  RemoteDeletion,
+  CouchDBDeletion,
   RemoteFile,
   RemoteDir
 } from '../../../core/remote/document'
@@ -580,7 +580,7 @@ describe('RemoteWatcher', function () {
 
       apply.callCount.should.equal(2)
       // Changes are sorted before applying (first one was given Metadata since
-      // it is valid while the second one got the original RemoteDeletion since
+      // it is valid while the second one got the original CouchDBDeletion since
       // it is ignored)
       should(apply.args[0][0].doc).deepEqual(validMetadata(remoteDocs[0]))
       should(apply.args[1][0].doc).deepEqual(remoteDocs[1])
@@ -677,7 +677,7 @@ describe('RemoteWatcher', function () {
     })
 
     it('tries to apply a deletion otherwise', async function () {
-      const remoteDeletion /*: RemoteDeletion */ = {
+      const remoteDeletion /*: CouchDBDeletion */ = {
         _id: 'missing',
         _rev: 'whatever',
         _deleted: true

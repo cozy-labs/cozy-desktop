@@ -4,7 +4,10 @@ const _ = require('lodash')
 const CozyClient = require('cozy-client').default
 
 const RemoteBaseBuilder = require('./base')
-const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
+const {
+  inRemoteTrash,
+  remoteJsonToRemoteDoc
+} = require('../../../../core/remote/document')
 const {
   FILES_DOCTYPE,
   OAUTH_CLIENTS_DOCTYPE
@@ -97,7 +100,7 @@ module.exports = class RemoteDirBuilder extends (
   async update() /*: Promise<MetadataRemoteDir> */ {
     const cozy = this._ensureCozy()
 
-    const json = this.remoteDoc.trashed
+    const json = inRemoteTrash(this.remoteDoc)
       ? await cozy.files.trashById(this.remoteDoc._id, { dontRetry: true })
       : await cozy.files.updateAttributesById(this.remoteDoc._id, {
           dir_id: this.remoteDoc.dir_id,

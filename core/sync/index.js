@@ -11,6 +11,7 @@ const _ = require('lodash')
 
 const { IncompatibleDocError } = require('../incompatibilities/platform')
 const metadata = require('../metadata')
+const remoteDocument = require('../remote/document')
 const remoteErrors = require('../remote/errors')
 const { otherSide } = require('../side')
 const logger = require('../utils/logger')
@@ -463,7 +464,7 @@ class Sync {
             delete change.doc.overwrite
 
             // Go ahead and mark remote document as trashed
-            change.doc.remote.trashed = true
+            change.doc.remote = remoteDocument.trashedDoc(change.doc.remote)
 
             await this.updateRevs(change.doc, sideName)
             break

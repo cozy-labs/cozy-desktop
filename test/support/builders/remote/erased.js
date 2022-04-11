@@ -10,19 +10,19 @@ const dbBuilders = require('../db')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
-import type { RemoteFile, RemoteDir, RemoteDeletion } from '../../../../core/remote/document'
+import type { RemoteFile, RemoteDir, CouchDBDeletion } from '../../../../core/remote/document'
 import type { MetadataRemoteFile, MetadataRemoteDir } from '../../../../core/metadata'
 */
 
-// Build a RemoteDeletion representing a remote Cozy document that was
+// Build a CouchDBDeletion representing a remote Cozy document that was
 // completely deleted:
 //
-//     const doc: RemoteDeletion = builders.remoteErased().build()
+//     const doc: CouchDBDeletion = builders.remoteErased().build()
 //
 // To actually create and erased the corresponding document on the Cozy, use the
 // async #create() method instead:
 //
-//     const doc: RemoteDeletion = await builders.remoteErased().create()
+//     const doc: CouchDBDeletion = await builders.remoteErased().create()
 //
 module.exports = class RemoteErasedBuilder {
   /*::
@@ -51,7 +51,7 @@ module.exports = class RemoteErasedBuilder {
     }
   }
 
-  build() /*: RemoteDeletion */ {
+  build() /*: CouchDBDeletion */ {
     if (this.remoteDoc) {
       return {
         _id: this.remoteDoc._id,
@@ -67,7 +67,7 @@ module.exports = class RemoteErasedBuilder {
     }
   }
 
-  async create() /*: Promise<RemoteDeletion> */ {
+  async create() /*: Promise<CouchDBDeletion> */ {
     const cozy = this._ensureCozy()
 
     if (this.remoteDoc) {

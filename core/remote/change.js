@@ -5,7 +5,7 @@
  */
 
 /*::
-import type { RemoteDoc, RemoteDeletion } from './document'
+import type { RemoteDoc, CouchDBDeletion } from './document'
 import type { Metadata, SavedMetadata } from '../metadata'
 */
 
