@@ -1293,6 +1293,51 @@ describe('remote.Remote', function () {
       })
     })
   })
+
+  describe('fileContentWasVersioned', () => {
+    it('returns false if the given remote file has no old versions', async function () {
+      const file = await builders.remoteFile().data('original').create()
+      const { md5sum, size } = file
+
+      await should(
+        this.remote.fileContentWasVersioned(
+          { md5sum, size: Number(size) },
+          file
+        )
+      ).be.fulfilledWith(false)
+    })
+
+    it('returns true if the given remote file has an old version with the given content', async function () {
+      const original = await builders.remoteFile().data('original').create()
+      const modified = await builders
+        .remoteFile(original)
+        .data('modified')
+        .update()
+      const { md5sum, size } = original
+
+      await should(
+        this.remote.fileContentWasVersioned(
+          { md5sum, size: Number(size) },
+          modified
+        )
+      ).be.fulfilledWith(true)
+    })
+
+    it('returns false if the given remote file has no old versions with the given content', async function () {
+      const original = await builders.remoteFile().data('original').create()
+      const modified = await builders
+        .remoteFile(original)
+        .data('modified')
+        .update()
+
+      await should(
+        this.remote.fileContentWasVersioned(
+          { md5sum: builders.checksum('anything').build(), size: 8 },
+          modified
+        )
+      ).be.fulfilledWith(false)
+    })
+  })
 })
 
 describe('remote', function () {

@@ -27,13 +27,14 @@ import type { ProgressCallback, ReadableWithSize } from '../utils/stream'
 import type { Config } from '../config'
 import type {
   Metadata,
-  MetadataRemoteInfo,
   MetadataRemoteDir,
+  MetadataRemoteFile,
+  MetadataRemoteInfo,
   SavedMetadata
 } from '../metadata'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
-import type { RemoteDoc } from './document'
+import type { RemoteDoc, RemoteFileVersion } from './document'
 import type { Reader } from '../reader'
 import type { Writer } from '../writer'
 
@@ -466,6 +467,19 @@ class Remote /*:: implements Reader, Writer */ {
     if (!remoteDoc || remoteDoc.type !== 'directory') return
 
     await this.remoteCozy.includeInSync(remoteDoc)
+  }
+
+  // XXX: Careful: the current version of a remote file is not part of the old
+  // versions so if the given content is the same as the current remote file
+  // content, this method will return `false`.
+  async fileContentWasVersioned(
+    { md5sum, size } /*: { md5sum: string, size: number } */,
+    remoteDoc /*: MetadataRemoteFile */
+  ) /*: Promise<boolean> */ {
+    const oldVersions = await this.remoteCozy.fetchOldFileVersions(remoteDoc)
+    return oldVersions.some(
+      version => version.md5sum === md5sum && Number(version.size) === size
+    )
   }
 }
 
