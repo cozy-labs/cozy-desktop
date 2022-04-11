@@ -229,7 +229,8 @@ module.exports = {
   trashedDoc,
   withDefaultValues,
   remoteJsonToRemoteDoc,
-  jsonApiToRemoteJsonDoc
+  jsonApiToRemoteJsonDoc,
+  jsonFileVersionToRemoteFileVersion
 }
 
 function isFile(
@@ -265,25 +266,34 @@ function trashedDoc /*::<T: { type: FILE, trashed: boolean } | { type: DIR, path
 }
 
 // The following attributes can be omitted by cozy-stack if not defined
-function withDefaultValues /*:: <T: JsonApiDirAttributes|JsonApiFileAttributes> */(
+function withDefaultValues /*:: <T: JsonApiDirAttributes|JsonApiFileAttributes|JsonApiFileVersionAttributes> */(
   attributes /*: T */
 ) /*: T */ {
-  if (attributes.type === DIR_TYPE) {
-    return {
-      ...attributes,
-      dir_id: attributes.dir_id || '',
-      name: attributes.name || '',
-      path: attributes.path || '',
-      tags: attributes.tags || []
+  if (attributes.type) {
+    if (attributes.type === DIR_TYPE) {
+      return {
+        ...attributes,
+        dir_id: attributes.dir_id || '',
+        name: attributes.name || '',
+        path: attributes.path || '',
+        tags: attributes.tags || []
+      }
+    } else {
+      return {
+        ...attributes,
+        class: attributes.class || 'application',
+        dir_id: attributes.dir_id || '',
+        md5sum: attributes.md5sum || '',
+        mime: attributes.mime || 'application/octet-stream',
+        name: attributes.name || '',
+        tags: attributes.tags || []
+      }
     }
   } else {
     return {
       ...attributes,
-      class: attributes.class || 'application',
-      dir_id: attributes.dir_id || '',
       md5sum: attributes.md5sum || '',
-      mime: attributes.mime || 'application/octet-stream',
-      name: attributes.name || '',
+      size: attributes.size || '0',
       tags: attributes.tags || []
     }
   }
@@ -365,5 +375,19 @@ function jsonApiToRemoteJsonDoc(
           attributes,
           relationships
         } /*: RemoteJsonFile */)
+  }
+}
+
+function jsonFileVersionToRemoteFileVersion(
+  version /*: JsonApiFileVersion */
+) /*: RemoteFileVersion */ {
+  return {
+    _id: version._id,
+    _rev: version._rev,
+    _type: version._type,
+    cozyMetadata: version.cozyMetadata,
+    metadata: version.metadata,
+    relationships: version.relationships,
+    ...withDefaultValues(version.attributes)
   }
 }

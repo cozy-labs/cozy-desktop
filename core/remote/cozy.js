@@ -25,9 +25,11 @@ const {
   dropSpecialDocs,
   withDefaultValues,
   remoteJsonToRemoteDoc,
-  jsonApiToRemoteJsonDoc
+  jsonApiToRemoteJsonDoc,
+  jsonFileVersionToRemoteFileVersion
 } = require('./document')
 const logger = require('../utils/logger')
+const { sortBy } = require('../utils/array')
 
 /*::
 import type { Config } from '../config'
@@ -35,15 +37,18 @@ import type { Readable } from 'stream'
 import type {
   CouchDBDeletion,
   CouchDBDoc,
+  CouchDBFile,
   FullRemoteFile,
   RemoteJsonDoc,
   RemoteJsonFile,
   RemoteJsonDir,
   RemoteFile,
+  RemoteFileVersion,
   RemoteDir,
 } from './document'
 import type {
-  MetadataRemoteDir
+  MetadataRemoteDir,
+  MetadataRemoteFile
 } from '../metadata'
 
 export type Warning = {
@@ -603,6 +608,26 @@ class RemoteCozy {
     } catch (err) {
       log.error({ err }, 'could not fetch remote flags')
       return {}
+    }
+  }
+
+  async fetchOldFileVersions(
+    file /*: MetadataRemoteFile */
+  ) /*: Promise<RemoteFileVersion[]> */ {
+    const remoteDoc = await this.find(file._id)
+    if (remoteDoc.type === FILE_TYPE) {
+      // XXX: `remoteDoc` is fetched with `cozy-client-js` which populates the
+      // `relations` attribute with a function returning hydrated relationships
+      // (i.e. relationships, by name, whose attributes are found in the
+      // `included` JSON API response attribute.
+      // If `remoteDoc` was fetched with `cozy-client`, we would have to do the
+      // mapping ourselves.
+      return remoteDoc
+        .relations('old_versions')
+        .map(jsonFileVersionToRemoteFileVersion)
+        .sort(sortBy({ updated_at: 'desc' }, { numeric: true }))
+    } else {
+      return []
     }
   }
 }

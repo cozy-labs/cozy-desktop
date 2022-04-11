@@ -16,7 +16,8 @@ const {
   TRASH_DIR_NAME,
   MAX_FILE_SIZE,
   OAUTH_CLIENTS_DOCTYPE,
-  FILES_DOCTYPE
+  FILES_DOCTYPE,
+  VERSIONS_DOCTYPE
 } = require('../../../core/remote/constants')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const { withDefaultValues } = require('../../../core/remote/document')
@@ -884,6 +885,42 @@ describe('RemoteCozy', function () {
         .excludedFrom(['fakeId1', remoteCozy.config.deviceId, 'fakeId2'])
         .build()
       should(remoteCozy.isExcludedDirectory(dir)).be.true()
+    })
+  })
+
+  describe('#fetchOldFileVersions', () => {
+    it('returns an empty array when there are no old versions', async () => {
+      const file = await builders.remoteFile().create()
+      await should(remoteCozy.fetchOldFileVersions(file)).be.fulfilledWith([])
+    })
+
+    it('returns an empty array for directories', async () => {
+      const dir = await builders.remoteDir().create()
+      await should(remoteCozy.fetchOldFileVersions(dir)).be.fulfilledWith([])
+    })
+
+    it('returns a list of the old versions of the given remote file', async () => {
+      const original = await builders.remoteFile().data('original').create()
+      const modified = await builders
+        .remoteFile(original)
+        .data('modified')
+        .update()
+
+      const versions = await remoteCozy.fetchOldFileVersions(modified)
+      should(versions).have.length(1)
+      should(versions[0]).have.properties({
+        _type: VERSIONS_DOCTYPE,
+        md5sum: original.md5sum,
+        size: original.size
+      })
+      should(versions[0].relationships).have.properties({
+        file: {
+          data: {
+            _id: modified._id,
+            _type: FILES_DOCTYPE
+          }
+        }
+      })
     })
   })
 })
