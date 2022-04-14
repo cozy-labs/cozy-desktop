@@ -73,7 +73,9 @@ jobs:
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
       - name: Install dependencies
         if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
-        run: yarn install:all
+        run: yarn install
+      - name: Rebuild native plugins
+        run: yarn install:electron
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
       - name: Build elm
@@ -125,7 +127,9 @@ jobs:
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
       - name: Install dependencies
         if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
-        run: yarn install:all
+        run: yarn install
+      - name: Rebuild native plugins
+        run: yarn install:electron
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
       - name: Integration tests
@@ -173,7 +177,9 @@ jobs:
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
       - name: Install dependencies
         if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
-        run: yarn install:all
+        run: yarn install
+      - name: Rebuild native plugins
+        run: yarn install:electron
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
       - name: Scenarios
