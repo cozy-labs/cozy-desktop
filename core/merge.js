@@ -74,52 +74,6 @@ class Merge {
       : this.remote.resolveConflict(doc)
   }
 
-  // Resolve Cozy Note conflict when its content is updated on the local
-  // filesystem and would therefore break the actual Note.
-  // We always rename the remote document since this method should only be
-  // called in case of a local update and the local file could still be open in
-  // the user's editor and renaming it could create issues (e.g. the editor does
-  // not detect the renaming and we'd create a new conflict each time the open
-  // file would be saved).
-  async resolveNoteConflict(
-    doc /*: Metadata */,
-    noteToRename /*: SavedMetadata */
-  ) {
-    // We have to pass the `noteToRename` record to generate the conflict as
-    // `doc` represents a modified document, with different checksum, size and
-    // modification date and we'll save the resulting record as the new
-    // `noteToRename`.
-
-    if (doc.overwrite) {
-      // If the local change on the note was overwriting another document (i.e.
-      // another note, given the name), we need to handle the remote trashing of
-      // the overwritten document when renaming the remote note with a conflict
-      // suffix as overwrites are done only when renaming or moving a document.
-      noteToRename.overwrite = doc.overwrite
-      // The local document, which won't be a note, is note overwriting anything
-      // anymore.
-      delete doc.overwrite
-    }
-
-    // We use the new local path to resolve the conflict in case the note was
-    // not only renamed but also moved (i.e. otherwise the conflict resolution
-    // will happen in the current remote note's directory and it won't be
-    // moved).
-    noteToRename.path = doc.path
-
-    const renamed = await this.resolveConflictAsync('remote', noteToRename)
-    // XXX: shall we move this to resolveConflictAsync?
-    metadata.dissociateLocal(renamed)
-    await this.pouch.put(renamed)
-
-    // We now transform `doc` to represents the creation of a local markdown
-    // file at the destination location.
-    metadata.markAsUnmerged(doc, 'local')
-    metadata.markSide('local', doc)
-    metadata.removeNoteMetadata(doc)
-    return this.addFileAsync('local', doc)
-  }
-
   /* Actions */
 
   // Add a file, if it doesn't already exist,

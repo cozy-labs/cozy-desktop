@@ -16,11 +16,13 @@ const {
   TRASH_DIR_NAME,
   MAX_FILE_SIZE,
   OAUTH_CLIENTS_DOCTYPE,
-  FILES_DOCTYPE
+  FILES_DOCTYPE,
+  VERSIONS_DOCTYPE
 } = require('../../../core/remote/constants')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const { withDefaultValues } = require('../../../core/remote/document')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
+const metadata = require('../../../core/metadata')
 
 const configHelpers = require('../../support/helpers/config')
 const cozyHelpers = require('../../support/helpers/cozy')
@@ -410,7 +412,9 @@ describe('RemoteCozy', function () {
 
       const { docs } = await remoteCozy.changes(last_seq)
 
-      should(docs).containDeepOrdered([dirA, fileA, dirB, fileB])
+      should(docs).containDeepOrdered(
+        [dirA, fileA, dirB, fileB].map(metadata.serializableRemote)
+      )
     })
 
     it('does not swallow errors', function () {
@@ -599,10 +603,10 @@ describe('RemoteCozy', function () {
       const subdir = await builders.remoteDir().inDir(dir).create()
 
       const foundDir = await remoteCozy.findDirectoryByPath(dir.path)
-      should(foundDir).have.properties(dir)
+      should(foundDir).have.properties(metadata.serializableRemote(dir))
 
       const foundSubdir = await remoteCozy.findDirectoryByPath(subdir.path)
-      should(foundSubdir).have.properties(subdir)
+      should(foundSubdir).have.properties(metadata.serializableRemote(subdir))
     })
 
     it('rejects when the directory does not exist remotely', async function () {
@@ -824,13 +828,13 @@ describe('RemoteCozy', function () {
         'other-dir/',
         'other-dir/content'
       ])
-      await should(
-        remoteCozy.getDirectoryContent(tree['dir/'])
-      ).be.fulfilledWith([
-        tree['dir/file'],
-        tree['dir/other-subdir/'],
-        tree['dir/subdir/']
-      ])
+
+      const dirContent = await remoteCozy.getDirectoryContent(tree['dir/'])
+      should(dirContent.map(metadata.serializableRemote)).deepEqual(
+        [tree['dir/file'], tree['dir/other-subdir/'], tree['dir/subdir/']].map(
+          metadata.serializableRemote
+        )
+      )
     })
 
     it('does not return exluded subdirectories', async () => {
@@ -852,9 +856,10 @@ describe('RemoteCozy', function () {
         tree['dir/subdir/']
       ])
 
-      await should(
-        remoteCozy.getDirectoryContent(tree['dir/'])
-      ).be.fulfilledWith([tree['dir/other-subdir/']])
+      const dirContent = await remoteCozy.getDirectoryContent(tree['dir/'])
+      should(dirContent.map(metadata.serializableRemote)).deepEqual([
+        metadata.serializableRemote(tree['dir/other-subdir/'])
+      ])
     })
 
     it('does not fail on an empty directory', async () => {
@@ -880,6 +885,42 @@ describe('RemoteCozy', function () {
         .excludedFrom(['fakeId1', remoteCozy.config.deviceId, 'fakeId2'])
         .build()
       should(remoteCozy.isExcludedDirectory(dir)).be.true()
+    })
+  })
+
+  describe('#fetchOldFileVersions', () => {
+    it('returns an empty array when there are no old versions', async () => {
+      const file = await builders.remoteFile().create()
+      await should(remoteCozy.fetchOldFileVersions(file)).be.fulfilledWith([])
+    })
+
+    it('returns an empty array for directories', async () => {
+      const dir = await builders.remoteDir().create()
+      await should(remoteCozy.fetchOldFileVersions(dir)).be.fulfilledWith([])
+    })
+
+    it('returns a list of the old versions of the given remote file', async () => {
+      const original = await builders.remoteFile().data('original').create()
+      const modified = await builders
+        .remoteFile(original)
+        .data('modified')
+        .update()
+
+      const versions = await remoteCozy.fetchOldFileVersions(modified)
+      should(versions).have.length(1)
+      should(versions[0]).have.properties({
+        _type: VERSIONS_DOCTYPE,
+        md5sum: original.md5sum,
+        size: original.size
+      })
+      should(versions[0].relationships).have.properties({
+        file: {
+          data: {
+            _id: modified._id,
+            _type: FILES_DOCTYPE
+          }
+        }
+      })
     })
   })
 })

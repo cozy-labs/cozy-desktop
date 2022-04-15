@@ -8,6 +8,7 @@
 export type FILE_TYPE = 'file'
 export type DIR_TYPE = 'directory'
 export type FILES_DOCTYPE = 'io.cozy.files'
+export type VERSIONS_DOCTYPE = 'io.cozy.files.versions'
 */
 
 const DEFAULT_HEARTBEAT = 1000 * 60 // 1 minute
@@ -17,6 +18,7 @@ module.exports = {
   // Doctypes
   FILES_DOCTYPE: 'io.cozy.files',
   OAUTH_CLIENTS_DOCTYPE: 'io.cozy.oauth.clients',
+  VERSIONS_DOCTYPE: 'io.cozy.files.versions',
 
   // Files document type
   DIR_TYPE: 'directory',

@@ -17,6 +17,7 @@ import { Config } from '../config'
 import { Pouch } from '../pouch'
 import { Remote } from '../remote'
 import type { Metadata, MetadataRemoteInfo } from '../metadata'
+import type { FullRemoteFile, RemoteDir } from '../remote/document'
 
 type CozyNoteErrorCode = 'CozyDocumentMissingError' | 'UnreachableError'
 */
@@ -84,7 +85,7 @@ const localDoc = async (
 const remoteDoc = async (
   localDoc /*: Metadata */,
   { config, remote } /*: { config: Config, remote: Remote } */
-) /*: Promise<MetadataRemoteInfo> */ => {
+) /*: Promise<FullRemoteFile|RemoteDir> */ => {
   try {
     return await remote.remoteCozy.find(localDoc.remote._id)
   } catch (err) {

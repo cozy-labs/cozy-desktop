@@ -30,7 +30,7 @@ import type {
   RemoteRevisionsByID
 } from '../../metadata'
 import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from '../change'
-import type { CouchDBDeletion, CouchDBDoc } from '../document'
+import type { CouchDBDeletion, CouchDBDoc, FullRemoteFile, RemoteDir } from '../document'
 import type { RemoteError } from '../errors'
 
 export type RemoteWatcherOptions = {
@@ -230,7 +230,7 @@ class RemoteWatcher {
   }
 
   async olds(
-    remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> */
+    remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir> */
   ) /*: Promise<SavedMetadata[]> */ {
     const remoteIds = remoteDocs.reduce(
       (ids, doc) => ids.add(doc._id),
@@ -242,7 +242,7 @@ class RemoteWatcher {
   /** Process multiple changed or deleted docs
    */
   async processRemoteChanges(
-    docs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> */,
+    docs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir> */,
     {
       isInitialFetch = false,
       isRecursiveFetch = false
@@ -261,7 +261,7 @@ class RemoteWatcher {
   }
 
   async analyse(
-    remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> */,
+    remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir> */,
     olds /*: SavedMetadata[] */,
     {
       isInitialFetch = false,
@@ -291,7 +291,7 @@ class RemoteWatcher {
   }
 
   identifyAll(
-    remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> */,
+    remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir> */,
     olds /*: SavedMetadata[] */,
     {
       isInitialFetch = false,
@@ -316,7 +316,7 @@ class RemoteWatcher {
   }
 
   identifyChange(
-    remoteDoc /*: CouchDBDoc|CouchDBDeletion */,
+    remoteDoc /*: CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir */,
     was /*: ?SavedMetadata */,
     previousChanges /*: Array<RemoteChange> */,
     originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */,
@@ -389,7 +389,7 @@ class RemoteWatcher {
    * the trash just after, it looks like it appeared directly on the trash.
    */
   identifyExistingDocChange(
-    remoteDoc /*: CouchDBDoc */,
+    remoteDoc /*: CouchDBDoc|FullRemoteFile|RemoteDir */,
     was /*: ?SavedMetadata */,
     previousChanges /*: Array<RemoteChange> */,
     originalMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */,

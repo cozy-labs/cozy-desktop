@@ -853,7 +853,12 @@ describe('metadata', function () {
 
       const remote = builders.remoteFile().build()
       should(
-        buildFile('chat-mignon.jpg', stats, md5sum, remote).remote
+        buildFile(
+          'chat-mignon.jpg',
+          stats,
+          md5sum,
+          metadata.serializableRemote(remote)
+        ).remote
       ).deepEqual(remote)
     })
 
@@ -877,7 +882,12 @@ describe('metadata', function () {
 
       const remote = builders.remoteFile().build()
       should(
-        buildFile('chat-mignon.jpg', stats, md5sum, remote).remote
+        buildFile(
+          'chat-mignon.jpg',
+          stats,
+          md5sum,
+          metadata.serializableRemote(remote)
+        ).remote
       ).deepEqual(remote)
     })
 
@@ -907,7 +917,9 @@ describe('metadata', function () {
       should(doc).have.property('updated_at')
 
       const remote = builders.remoteDir().build()
-      should(buildDir('fixtures', stats, remote).remote).deepEqual(remote)
+      should(
+        buildDir('fixtures', stats, metadata.serializableRemote(remote)).remote
+      ).deepEqual(remote)
     })
 
     it('sets #updated_at with mtime', () => {
@@ -934,7 +946,7 @@ describe('metadata', function () {
       const doc = buildDir(
         path,
         builders.stats().ctime(ctime).mtime(ctime).ino(123).build(),
-        remote
+        metadata.serializableRemote(remote)
       )
       should(doc.remote).deepEqual(remote)
     })

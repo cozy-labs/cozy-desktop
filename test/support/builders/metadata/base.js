@@ -16,16 +16,12 @@ const statsBuilder = require('../stats')
 import type fs from 'fs-extra'
 import type {
   Metadata,
-  MetadataRemoteInfo,
-  MetadataRemoteFile,
-  MetadataRemoteDir,
   MetadataSidesInfo,
   SavedMetadata,
 } from '../../../../core/metadata'
 import type { Pouch } from '../../../../core/pouch'
-import type { RemoteDoc } from '../../../../core/remote/document'
+import type { FullRemoteFile, RemoteDir } from '../../../../core/remote/document'
 import type { SideName } from '../../../../core/side'
-import type RemoteBaseBuilder from '../remote/base'
 */
 
 const SOME_MEANINGLESS_TIME_OFFSET = 2000 // 2 seconds
@@ -64,7 +60,7 @@ module.exports = class BaseMetadataBuilder {
     this.buildRemote = true
   }
 
-  fromRemote(remoteDoc /*: MetadataRemoteInfo */) /*: this */ {
+  fromRemote(remoteDoc /*: FullRemoteFile|RemoteDir */) /*: this */ {
     this.buildRemote = true
     this.doc = metadata.fromRemoteDoc(remoteDoc)
     this._consolidatePaths()
@@ -381,7 +377,7 @@ module.exports = class BaseMetadataBuilder {
       builder = builder.trashed()
     }
 
-    this.doc.remote = builder.build()
+    this.doc.remote = metadata.serializableRemote(builder.build())
     this.doc.remote.path = pathUtils.localToRemote(this.doc.path)
   }
 }
