@@ -89,7 +89,7 @@ async function mergeSideEffects(
 }
 
 function increasedSides(sides, sideName, count) {
-  const increasedSide = sides[sideName] + count
+  const increasedSide = (sides[sideName] || 0) + count
   return {
     ...sides,
     target: increasedSide,
@@ -125,6 +125,7 @@ describe('Merge', function () {
       })
       return conflict
     })
+    this.merge.remote.fileContentWasVersioned = sinon.stub().returns(false)
     builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
@@ -1283,7 +1284,7 @@ describe('Merge', function () {
       ).be.rejectedWith(/conflict/)
     })
 
-    it('resolves a conflict between a new remote update and a previous local version', async function () {
+    it('resolves a conflict between a new remote update and a previous local update', async function () {
       const initial = await builders
         .metafile()
         .sides({ local: 1 })
@@ -1388,6 +1389,104 @@ describe('Merge', function () {
         resolvedConflicts: [
           ['local', { path: newLocalUpdate.path, remote: remoteUpdate.remote }]
         ]
+      })
+    })
+
+    it('overwrites a versioned unsynced local version with a remote update', async function () {
+      const local = await builders
+        .metafile()
+        .path('file')
+        .data('local content')
+        .updatedAt(new Date())
+        .sides({ local: 1 })
+        .create()
+      const remote = await builders
+        .metafile(local)
+        .path('file')
+        .data('remote content')
+        .updatedAt(new Date())
+        .unmerged('remote')
+        .build()
+
+      // Fake local content versioning
+      this.merge.remote.fileContentWasVersioned = sinon
+        .stub()
+        .callsFake(({ md5sum, size }, remoteFile) => {
+          return (
+            md5sum === local.md5sum &&
+            size === local.size &&
+            remoteFile._id === remote.remote._id
+          )
+        })
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync('remote', _.cloneDeep(remote))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              _id: local._id,
+              local: local.local,
+              // XXX: We increase the remote side by 2 since it did not exist
+              // before the update.
+              sides: increasedSides(local.sides, 'remote', 2)
+            },
+            _.omit(remote, ['_rev'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
+    it('cancels an already versioned local update with a previous remote update', async function () {
+      const synced = await builders
+        .metafile()
+        .path('file')
+        .data('synced content')
+        .updatedAt(new Date())
+        .upToDate()
+        .create()
+      const remote = await builders
+        .metafile(synced)
+        .data('remote update')
+        .updatedAt(new Date())
+        .changedSide('remote')
+        .create()
+      const local = await builders
+        .metafile(synced)
+        .data('local update')
+        .updatedAt(new Date())
+        .unmerged('local')
+        .build()
+
+      // Fake local content versioning
+      this.merge.remote.fileContentWasVersioned = sinon
+        .stub()
+        .callsFake(({ md5sum, size }, remoteFile) => {
+          return (
+            md5sum === local.md5sum &&
+            size === local.size &&
+            remoteFile._id === remote.remote._id
+          )
+        })
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync('local', _.cloneDeep(local))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaults(
+            {
+              local: local.local,
+              sides: increasedSides(remote.sides, 'remote', 1)
+            },
+            _.omit(remote, ['_rev'])
+          )
+        ],
+        resolvedConflicts: []
       })
     })
 
@@ -2000,7 +2099,7 @@ describe('Merge', function () {
         })
       })
 
-      context('and we have unapplied modifications on the other side', () => {
+      context('and we have unapplied modifications on the remote side', () => {
         beforeEach(async function () {
           existing = await builders
             .metafile(existing)
@@ -2009,47 +2108,221 @@ describe('Merge', function () {
             .create()
         })
 
-        it('resolves a conflict', async function () {
-          const was = await builders
-            .metafile()
-            .path('SRC_FILE')
-            .upToDate()
-            .create()
-          const doc = builders
-            .metafile(was)
-            .path(existing.path)
-            .unmerged('local')
-            .build()
+        context(
+          'and these modifications were already versioned for the moved file',
+          () => {
+            it('overwrites the modified version with the locally moved file', async function () {
+              const was = await builders
+                .metafile()
+                .path('SRC_FILE')
+                .upToDate()
+                .create()
+              const doc = builders
+                .metafile(was)
+                .path(existing.path)
+                .unmerged('local')
+                .build()
 
-          const sideEffects = await mergeSideEffects(this, () =>
-            this.merge.moveFileAsync(
-              'local',
-              _.cloneDeep(doc),
-              _.cloneDeep(was)
-            )
-          )
+              // Fake local content versioning
+              this.merge.remote.fileContentWasVersioned = sinon
+                .stub()
+                .callsFake(({ md5sum, size }, remoteFile) => {
+                  return (
+                    md5sum === existing.md5sum &&
+                    size === existing.size &&
+                    remoteFile._id === was.remote._id
+                  )
+                })
 
-          const { path: dstPath } = _.find(sideEffects.savedDocs, ({ path }) =>
-            path.match(/conflict/)
-          )
-
-          should(sideEffects).deepEqual({
-            savedDocs: [
-              _.defaultsDeep(
-                {
-                  path: dstPath,
-                  sides: increasedSides(was.sides, 'local', 1),
-                  moveFrom: was,
-                  local: { path: dstPath },
-                  remote: was.remote,
-                  _id: was._id
-                },
-                doc
+              const sideEffects = await mergeSideEffects(this, () =>
+                this.merge.moveFileAsync(
+                  'local',
+                  _.cloneDeep(doc),
+                  _.cloneDeep(was)
+                )
               )
-            ],
-            resolvedConflicts: [
-              ['local', { path: doc.path, remote: was.remote }]
-            ]
+
+              should(sideEffects).deepEqual({
+                savedDocs: [
+                  {
+                    _deleted: true,
+                    _id: existing._id
+                  },
+                  _.defaultsDeep(
+                    {
+                      sides: increasedSides(was.sides, 'local', 1),
+                      moveFrom: was,
+                      overwrite: existing,
+                      remote: was.remote,
+                      _id: was._id
+                    },
+                    doc
+                  )
+                ],
+                resolvedConflicts: []
+              })
+            })
+          }
+        )
+
+        context('and these modifications were not versioned', () => {
+          it('resolves a conflict', async function () {
+            const was = await builders
+              .metafile()
+              .path('SRC_FILE')
+              .upToDate()
+              .create()
+            const doc = builders
+              .metafile(was)
+              .path(existing.path)
+              .unmerged('local')
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.moveFileAsync(
+                'local',
+                _.cloneDeep(doc),
+                _.cloneDeep(was)
+              )
+            )
+
+            const { path: dstPath } = _.find(
+              sideEffects.savedDocs,
+              ({ path }) => path.match(/conflict/)
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [
+                _.defaultsDeep(
+                  {
+                    path: dstPath,
+                    sides: increasedSides(was.sides, 'local', 1),
+                    moveFrom: was,
+                    local: { path: dstPath },
+                    remote: was.remote,
+                    _id: was._id
+                  },
+                  doc
+                )
+              ],
+              resolvedConflicts: [
+                ['local', { path: doc.path, remote: was.remote }]
+              ]
+            })
+          })
+        })
+      })
+
+      context('and we have unapplied modifications on the local side', () => {
+        beforeEach(async function () {
+          existing = await builders
+            .metafile(existing)
+            .data('new content')
+            .changedSide('local')
+            .create()
+        })
+
+        context(
+          'and these modifications were already versioned for the moved file',
+          () => {
+            it('overwrites the modified version with the remotely moved file', async function () {
+              const was = await builders
+                .metafile()
+                .path('SRC_FILE')
+                .upToDate()
+                .create()
+              const doc = builders
+                .metafile(was)
+                .path(existing.path)
+                .unmerged('remote')
+                .build()
+
+              // Fake local content versioning
+              this.merge.remote.fileContentWasVersioned = sinon
+                .stub()
+                .callsFake(({ md5sum, size }, remoteFile) => {
+                  return (
+                    md5sum === existing.md5sum &&
+                    size === existing.size &&
+                    remoteFile._id === was.remote._id
+                  )
+                })
+
+              const sideEffects = await mergeSideEffects(this, () =>
+                this.merge.moveFileAsync(
+                  'remote',
+                  _.cloneDeep(doc),
+                  _.cloneDeep(was)
+                )
+              )
+
+              should(sideEffects).deepEqual({
+                savedDocs: [
+                  {
+                    _deleted: true,
+                    _id: existing._id
+                  },
+                  _.defaultsDeep(
+                    {
+                      sides: increasedSides(was.sides, 'remote', 1),
+                      moveFrom: was,
+                      overwrite: existing,
+                      local: was.local,
+                      _id: was._id
+                    },
+                    doc
+                  )
+                ],
+                resolvedConflicts: []
+              })
+            })
+          }
+        )
+
+        context('and these modifications were not versioned', () => {
+          it('resolves a conflict', async function () {
+            const was = await builders
+              .metafile()
+              .path('SRC_FILE')
+              .upToDate()
+              .create()
+            const doc = builders
+              .metafile(was)
+              .path(existing.path)
+              .unmerged('remote')
+              .build()
+
+            const sideEffects = await mergeSideEffects(this, () =>
+              this.merge.moveFileAsync(
+                'remote',
+                _.cloneDeep(doc),
+                _.cloneDeep(was)
+              )
+            )
+
+            const { path: dstPath } = _.find(
+              sideEffects.savedDocs,
+              ({ path }) => path.match(/conflict/)
+            )
+
+            should(sideEffects).deepEqual({
+              savedDocs: [
+                _.defaultsDeep(
+                  {
+                    path: dstPath,
+                    sides: increasedSides(was.sides, 'remote', 1),
+                    moveFrom: was,
+                    remote: { path: pathUtils.localToRemote(dstPath) },
+                    local: was.local,
+                    _id: was._id
+                  },
+                  doc
+                )
+              ],
+              resolvedConflicts: [
+                ['remote', { path: doc.path, remote: doc.remote }]
+              ]
+            })
           })
         })
       })

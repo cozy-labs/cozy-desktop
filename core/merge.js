@@ -12,6 +12,7 @@ const metadata = require('./metadata')
 const move = require('./move')
 const { otherSide } = require('./side')
 const logger = require('./utils/logger')
+const { FILE_TYPE: REMOTE_FILE_TYPE } = require('./remote/constants')
 
 /*::
 import type { IdConflictInfo } from './IdConflict'
@@ -93,8 +94,7 @@ class Merge {
       )
       if (idConflict) {
         log.warn({ idConflict }, IdConflict.description(idConflict))
-        await this.resolveConflictAsync(side, doc)
-        return
+        return this.resolveConflictAsync(side, doc)
       }
 
       if (file.docType === 'folder') {
@@ -229,6 +229,22 @@ class Merge {
       ) {
         if (side === 'local') {
           // We have a merged but unsynced remote update so we create a conflict.
+          //await this.resolveConflictAsync('local', doc, file)
+          if (file.remote && file.remote.type === REMOTE_FILE_TYPE) {
+            const { md5sum, size } = doc
+            const localWasVersioned = await this.remote.fileContentWasVersioned(
+              { md5sum, size },
+              file.remote
+            )
+            if (localWasVersioned) {
+              // We make sure Sync will overwrite the local update with the remote
+              // content.
+              metadata.markSide('remote', file, file)
+              file.local = doc.local
+              return this.pouch.put(file)
+            }
+          }
+
           await this.resolveConflictAsync('local', file)
 
           if (file.local) {
@@ -247,6 +263,26 @@ class Merge {
           // We have a merged but unsynced local update so we create a conflict.
           // We use `doc` and not `file` because the remote document has changed
           // and its new revision is only available in `doc`.
+          //await this.resolveConflictAsync('remote', doc, file)
+          if (
+            file.md5sum &&
+            file.size &&
+            doc.remote &&
+            doc.remote.type === REMOTE_FILE_TYPE
+          ) {
+            const { md5sum, size } = file
+            const localWasVersioned = await this.remote.fileContentWasVersioned(
+              { md5sum, size },
+              doc.remote
+            )
+            if (localWasVersioned) {
+              // We make sure Sync will overwrite the local update with the remote
+              // content.
+              metadata.markSide('remote', doc, file)
+              return this.pouch.put(doc)
+            }
+          }
+
           await this.resolveConflictAsync('remote', doc)
 
           if (file.remote) {
@@ -291,8 +327,7 @@ class Merge {
       )
       if (idConflict) {
         log.warn({ idConflict }, IdConflict.description(idConflict))
-        await this.resolveConflictAsync(side, doc)
-        return
+        return this.resolveConflictAsync(side, doc)
       }
 
       if (side === 'local' && folder.local) {
@@ -434,8 +469,7 @@ class Merge {
         )
         if (idConflict) {
           log.warn({ idConflict }, IdConflict.description(idConflict))
-          await this.resolveConflictAsync(side, doc)
-          return
+          return this.resolveConflictAsync(side, doc)
         }
 
         if (doc.overwrite || metadata.isAtLeastUpToDate(side, file)) {
@@ -451,6 +485,25 @@ class Merge {
           }
 
           return this.pouch.put(doc)
+        }
+
+        if (
+          doc.path === file.path &&
+          file.md5sum &&
+          file.size &&
+          doc.remote &&
+          doc.remote.type === REMOTE_FILE_TYPE
+        ) {
+          const { md5sum, size } = file
+          const localWasVersioned = await this.remote.fileContentWasVersioned(
+            { md5sum, size },
+            doc.remote
+          )
+          if (localWasVersioned) {
+            doc.overwrite = file.overwrite || file
+            await this.pouch.eraseDocument(file)
+            return this.pouch.put(doc)
+          }
         }
 
         const dst = await this.resolveConflictAsync(side, doc)
@@ -490,8 +543,7 @@ class Merge {
       )
       if (idConflict) {
         log.warn({ idConflict }, IdConflict.description(idConflict))
-        await this.resolveConflictAsync(side, doc)
-        return
+        return this.resolveConflictAsync(side, doc)
       }
 
       if (doc.overwrite || metadata.isAtLeastUpToDate(side, folder)) {
@@ -508,6 +560,7 @@ class Merge {
         return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
       }
 
+      //const dst = await this.resolveConflictAsync(side, doc)
       const dst = await this.resolveConflictAsync(side, doc)
       return this.moveFolderRecursivelyAsync(side, dst, was, newRemoteRevs)
     } else {
