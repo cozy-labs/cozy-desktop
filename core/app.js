@@ -20,7 +20,7 @@ require('./globals')
 const pkg = require('../package.json')
 const config = require('./config')
 const { Pouch } = require('./pouch')
-const { migrations } = require('./pouch/migrations')
+const { migrations, runMigrations } = require('./migrations')
 const Ignore = require('./ignore')
 const { Merge } = require('./merge')
 const Prep = require('./prep')
@@ -393,7 +393,7 @@ class App {
     this.instanciate()
 
     await this.pouch.addAllViews()
-    await this.pouch.runMigrations(migrations)
+    await runMigrations(migrations, this.pouch)
 
     if (wasUpdated && this.remote) {
       try {

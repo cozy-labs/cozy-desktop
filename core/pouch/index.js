@@ -15,19 +15,12 @@ const path = require('path')
 const metadata = require('../metadata')
 const logger = require('../utils/logger')
 const { PouchError } = require('./error')
-const {
-  MIGRATION_RESULT_FAILED,
-  MigrationFailedError,
-  migrate,
-  migrationLog
-} = require('./migrations')
 const remoteConstants = require('../remote/constants')
 
 /*::
 import type { Config } from '../config'
 import type { Metadata, SavedMetadata } from '../metadata'
 import type { Callback } from '../utils/func'
-import type { Migration } from './migrations'
 
 export type PouchRecord = { _id: string, _rev: string, _deleted?: true }
 */
@@ -100,30 +93,6 @@ class Pouch {
         _resolve()
       }
     })
-  }
-
-  async runMigrations(migrations /*: Migration[] */) {
-    log.info('Running migrations...')
-    for (const migration of migrations) {
-      // First attempt
-      const result = await migrate(migration, this)
-      log.info(migrationLog(migration, result))
-
-      if (result.type === MIGRATION_RESULT_FAILED) {
-        // Retry in case of failure
-        const result = await migrate(migration, this)
-
-        if (result.type === MIGRATION_RESULT_FAILED) {
-          // Error in case of second failure
-          const err = new MigrationFailedError(migration, result.errors)
-          log.fatal({ err, sentry: true }, migrationLog(migration, result))
-          throw err
-        } else {
-          log.info(migrationLog(migration, result))
-        }
-      }
-    }
-    log.info('Migrations done.')
   }
 
   /* Mini ODM */

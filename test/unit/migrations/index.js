@@ -7,25 +7,29 @@ const path = require('path')
 
 const { PouchError } = require('../../../core/pouch/error')
 const {
-  SCHEMA_DOC_ID,
-  SCHEMA_INITIAL_VERSION,
-  migrations,
+  MigrationFailedError,
   currentSchemaVersion,
-  updateSchemaVersion,
   migrate,
-  save
-} = require('../../../core/pouch/migrations')
+  migrations,
+  runMigrations,
+  save,
+  updateSchemaVersion
+} = require('../../../core/migrations')
+const {
+  SCHEMA_DOC_ID,
+  SCHEMA_INITIAL_VERSION
+} = require('../../../core/migrations/constants')
 const metadata = require('../../../core/metadata')
 
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 
 /*::
-import type { Migration } from '../../../core/pouch/migrations'
+import type { Migration } from '../../../core/migrations/migrations'
 import type { SavedMetadata } from '../../../core/metadata'
 */
 
-describe('core/pouch/migrations', function () {
+describe('core/migrations', function () {
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
@@ -48,6 +52,121 @@ describe('core/pouch/migrations', function () {
         )
       )
     }
+  })
+
+  describe('runMigrations', () => {
+    let currentVersion /* number */
+    let availableMigrations /*: Migration[] */
+    beforeEach('create migrations', async function () {
+      currentVersion = await currentSchemaVersion(this.pouch.db)
+      availableMigrations = [
+        {
+          baseSchemaVersion: currentVersion,
+          targetSchemaVersion: currentVersion + 1,
+          description: 'Test migration 1',
+          affectedDocs: docs => docs,
+          run: docs =>
+            docs.map(doc => ({
+              ...doc,
+              migration1: true
+            }))
+        },
+        {
+          baseSchemaVersion: currentVersion + 1,
+          targetSchemaVersion: currentVersion + 2,
+          description: 'Test migration 2',
+          affectedDocs: docs => docs,
+          run: docs =>
+            docs.map(doc => ({
+              ...doc,
+              migration2: true
+            }))
+        },
+        {
+          baseSchemaVersion: currentVersion + 2,
+          targetSchemaVersion: currentVersion + 3,
+          description: 'Test migration 3',
+          affectedDocs: docs => docs,
+          run: docs =>
+            docs.map(doc => ({
+              ...doc,
+              migration3: true
+            }))
+        }
+      ]
+    })
+
+    it('runs all given migrations', async function () {
+      await runMigrations(availableMigrations, this.pouch)
+
+      const docs = await this.pouch.byRecursivePath('')
+      should(docs).matchEach(doc => {
+        should(doc.migration1).be.true()
+        should(doc.migration2).be.true()
+        should(doc.migration3).be.true()
+      })
+    })
+
+    it('retries failed migrations', async function () {
+      let calls = 0
+      const migrationFailingOnce = {
+        baseSchemaVersion: availableMigrations[1].baseSchemaVersion,
+        targetSchemaVersion: availableMigrations[1].targetSchemaVersion,
+        description: 'Test migration 2',
+        affectedDocs: docs => docs,
+        run: docs => {
+          const migratedDocs = docs.map(doc => ({
+            ...doc,
+            migration2: true,
+            _rev: calls === 0 ? doc._rev.replace(/\d/, '9') : doc._rev
+          }))
+          calls++
+          return migratedDocs
+        }
+      }
+      sinon.spy(migrationFailingOnce, 'run')
+      availableMigrations.splice(1, 1, migrationFailingOnce)
+
+      await runMigrations(availableMigrations, this.pouch)
+
+      should(migrationFailingOnce.run).have.been.calledTwice()
+      const docs = await this.pouch.byRecursivePath('')
+      should(docs).matchEach(doc => {
+        should(doc.migration1).be.true()
+        should(doc.migration2).be.true()
+        should(doc.migration3).be.true()
+      })
+    })
+
+    it('throws a MigrationFailedError in case both attempts failed', async function () {
+      const migrationFailing = {
+        baseSchemaVersion: availableMigrations[1].baseSchemaVersion,
+        targetSchemaVersion: availableMigrations[1].targetSchemaVersion,
+        description: 'Test migration 2',
+        affectedDocs: docs => docs,
+        run: docs =>
+          docs.map(doc => ({
+            ...doc,
+            migration2: true,
+            _rev: doc._rev.replace(/\d/, '9')
+          }))
+      }
+      availableMigrations.splice(1, 1, migrationFailing)
+
+      try {
+        await runMigrations(availableMigrations, this.pouch)
+        should.fail()
+      } catch (err) {
+        should(err).be.instanceof(MigrationFailedError)
+        should(err).have.property('message', migrationFailing.description)
+      }
+      const docs = await this.pouch.byRecursivePath('')
+      should(docs).matchEach(doc => {
+        should(doc.migration1).be.true()
+        should(doc.migration2).be.undefined()
+        should(doc.migration3).be.undefined()
+      })
+    })
   })
 
   describe('currentSchemaVersion()', () => {
