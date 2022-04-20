@@ -339,5 +339,69 @@ module.exports = ([
         })
       )
     }
+  },
+  {
+    baseSchemaVersion: 13,
+    targetSchemaVersion: 14,
+    description: 'Refetch remote revision of all directories',
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      // $FlowFixMe `deleted` has been removed from Metadata thus this migration
+      return docs.filter(doc => doc.docType === 'folder' && doc.remote != null)
+    },
+    run: (
+      docs /*: SavedMetadata[] */,
+      { remote } /*: InjectedDependencies */
+    ) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.all(
+        docs.map(async doc => {
+          const remoteDir = await remote.remoteCozy.findDir(doc.remote._id)
+
+          if (remoteDir != null) {
+            if (
+              remoteDir._rev !== doc.remote._rev &&
+              metadata.equivalentRemote(
+                metadata.serializableRemote(remoteDir),
+                doc.remote
+              )
+            ) {
+              doc.remote._rev = remoteDir._rev
+            }
+
+            const { moveFrom } = doc
+            if (
+              moveFrom != null &&
+              moveFrom.remote != null &&
+              remoteDir._rev !== moveFrom.remote._rev &&
+              metadata.equivalentRemote(
+                metadata.serializableRemote(remoteDir),
+                moveFrom.remote
+              )
+            ) {
+              moveFrom.remote._rev = remoteDir._rev
+            }
+          }
+
+          const { overwrite } = doc
+          if (overwrite != null && overwrite.remote != null) {
+            const remoteOverwritten = await remote.remoteCozy.findDir(
+              overwrite.remote._id
+            )
+
+            if (
+              remoteOverwritten != null &&
+              remoteOverwritten._rev !== overwrite.remote._rev &&
+              metadata.equivalentRemote(
+                metadata.serializableRemote(remoteOverwritten),
+                overwrite.remote
+              )
+            ) {
+              overwrite.remote._rev = remoteOverwritten._rev
+            }
+          }
+
+          return doc
+        })
+      )
+    }
   }
 ] /*: Migration[] */)
