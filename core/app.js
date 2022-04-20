@@ -393,7 +393,7 @@ class App {
     this.instanciate()
 
     await this.pouch.addAllViews()
-    await runMigrations(migrations, this.pouch)
+    await runMigrations(migrations, this)
 
     if (wasUpdated && this.remote) {
       try {

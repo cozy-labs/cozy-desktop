@@ -66,10 +66,12 @@ describe('core/migrations', function () {
           description: 'Test migration 1',
           affectedDocs: docs => docs,
           run: docs =>
-            docs.map(doc => ({
-              ...doc,
-              migration1: true
-            }))
+            Promise.resolve(
+              docs.map(doc => ({
+                ...doc,
+                migration1: true
+              }))
+            )
         },
         {
           baseSchemaVersion: currentVersion + 1,
@@ -77,10 +79,12 @@ describe('core/migrations', function () {
           description: 'Test migration 2',
           affectedDocs: docs => docs,
           run: docs =>
-            docs.map(doc => ({
-              ...doc,
-              migration2: true
-            }))
+            Promise.resolve(
+              docs.map(doc => ({
+                ...doc,
+                migration2: true
+              }))
+            )
         },
         {
           baseSchemaVersion: currentVersion + 2,
@@ -88,16 +92,18 @@ describe('core/migrations', function () {
           description: 'Test migration 3',
           affectedDocs: docs => docs,
           run: docs =>
-            docs.map(doc => ({
-              ...doc,
-              migration3: true
-            }))
+            Promise.resolve(
+              docs.map(doc => ({
+                ...doc,
+                migration3: true
+              }))
+            )
         }
       ]
     })
 
     it('runs all given migrations', async function () {
-      await runMigrations(availableMigrations, this.pouch)
+      await runMigrations(availableMigrations, this)
 
       const docs = await this.pouch.byRecursivePath('')
       should(docs).matchEach(doc => {
@@ -121,13 +127,13 @@ describe('core/migrations', function () {
             _rev: calls === 0 ? doc._rev.replace(/\d/, '9') : doc._rev
           }))
           calls++
-          return migratedDocs
+          return Promise.resolve(migratedDocs)
         }
       }
       sinon.spy(migrationFailingOnce, 'run')
       availableMigrations.splice(1, 1, migrationFailingOnce)
 
-      await runMigrations(availableMigrations, this.pouch)
+      await runMigrations(availableMigrations, this)
 
       should(migrationFailingOnce.run).have.been.calledTwice()
       const docs = await this.pouch.byRecursivePath('')
@@ -145,16 +151,18 @@ describe('core/migrations', function () {
         description: 'Test migration 2',
         affectedDocs: docs => docs,
         run: docs =>
-          docs.map(doc => ({
-            ...doc,
-            migration2: true,
-            _rev: doc._rev.replace(/\d/, '9')
-          }))
+          Promise.resolve(
+            docs.map(doc => ({
+              ...doc,
+              migration2: true,
+              _rev: doc._rev.replace(/\d/, '9')
+            }))
+          )
       }
       availableMigrations.splice(1, 1, migrationFailing)
 
       try {
-        await runMigrations(availableMigrations, this.pouch)
+        await runMigrations(availableMigrations, this)
         should.fail()
       } catch (err) {
         should(err).be.instanceof(MigrationFailedError)
@@ -294,7 +302,7 @@ describe('core/migrations', function () {
         })
 
         it('does not run the migration', async function () {
-          await migrate(migration, this.pouch)
+          await migrate(migration, this)
           should(migration.run).not.have.been.called()
         })
 
@@ -303,7 +311,7 @@ describe('core/migrations', function () {
             this.pouch.db
           )
 
-          await migrate(migration, this.pouch)
+          await migrate(migration, this)
           await should(currentSchemaVersion(this.pouch.db)).be.fulfilledWith(
             previousSchemaVersion
           )
@@ -322,7 +330,7 @@ describe('core/migrations', function () {
         })
 
         it('does not run the migration', async function () {
-          await migrate(migration, this.pouch)
+          await migrate(migration, this)
           should(migration.run).not.have.been.called()
         })
 
@@ -331,7 +339,7 @@ describe('core/migrations', function () {
             this.pouch.db
           )
 
-          await migrate(migration, this.pouch)
+          await migrate(migration, this)
           await should(currentSchemaVersion(this.pouch.db)).be.fulfilledWith(
             previousSchemaVersion
           )
@@ -359,7 +367,7 @@ describe('core/migrations', function () {
           })
 
           it('does not save any docs', async function () {
-            await migrate(migration, this.pouch)
+            await migrate(migration, this)
 
             const docs = await this.pouch.allDocs()
             const migratedDocs = docs.filter(d => d.migrated)
@@ -367,7 +375,7 @@ describe('core/migrations', function () {
           })
 
           it('sets the schema version to the migration target schema version', async function () {
-            await migrate(migration, this.pouch)
+            await migrate(migration, this)
             await should(currentSchemaVersion(this.pouch.db)).be.fulfilledWith(
               migration.targetSchemaVersion
             )
@@ -378,13 +386,16 @@ describe('core/migrations', function () {
           it('runs the migration on all affected docs', async function () {
             const docs = await this.pouch.allDocs()
 
-            await migrate(migration, this.pouch)
+            await migrate(migration, { pouch: this.pouch, remote: this.remote })
             should(migration.run).have.been.calledOnce()
-            should(migration.run.getCall(0).args).deepEqual([docs])
+            should(migration.run.getCall(0).args).deepEqual([
+              docs,
+              { pouch: this.pouch, remote: this.remote }
+            ])
           })
 
           it('saves the migrated docs', async function () {
-            await migrate(migration, this.pouch)
+            await migrate(migration, this)
 
             const docs = await this.pouch.allDocs()
             const migratedDocs = docs.filter(d => d.migrated)
@@ -393,7 +404,7 @@ describe('core/migrations', function () {
 
           context('and the docs were successfully saved', () => {
             it('sets the schema version to the migration target schema version', async function () {
-              await migrate(migration, this.pouch)
+              await migrate(migration, this)
               await should(
                 currentSchemaVersion(this.pouch.db)
               ).be.fulfilledWith(migration.targetSchemaVersion)
@@ -401,7 +412,7 @@ describe('core/migrations', function () {
 
             it('sets the localSeq to the last change seq', async function () {
               const expected = await this.pouch.db.changes({ since: 0 })
-              await migrate(migration, this.pouch)
+              await migrate(migration, this)
               await should(this.pouch.getLocalSeq()).be.fulfilledWith(
                 expected.last_seq
               )
@@ -410,7 +421,7 @@ describe('core/migrations', function () {
             it('does not update the remoteSeq', async function () {
               const expected = await this.pouch.getRemoteSeq()
 
-              await migrate(migration, this.pouch)
+              await migrate(migration, this)
               await should(this.pouch.getRemoteSeq()).be.fulfilledWith(expected)
             })
 
@@ -421,7 +432,7 @@ describe('core/migrations', function () {
               await should(this.pouch.unsyncedDocIds()).be.fulfilledWith(
                 unsyncedDocIds
               )
-              await migrate(migration, this.pouch)
+              await migrate(migration, this)
               await should(this.pouch.unsyncedDocIds()).be.fulfilledWith(
                 unsyncedDocIds
               )
@@ -453,7 +464,7 @@ describe('core/migrations', function () {
             it('reverts all changes', async function () {
               const docs = await this.pouch.allDocs()
 
-              await migrate(migration, this.pouch)
+              await migrate(migration, this)
               await should(this.pouch.allDocs()).be.fulfilledWith(docs)
             })
 
@@ -462,7 +473,7 @@ describe('core/migrations', function () {
                 this.pouch.db
               )
 
-              await migrate(migration, this.pouch)
+              await migrate(migration, this)
               await should(
                 currentSchemaVersion(this.pouch.db)
               ).be.fulfilledWith(previousSchemaVersion)
@@ -471,14 +482,14 @@ describe('core/migrations', function () {
             it('does not update the localSeq', async function () {
               const expected = await this.pouch.getLocalSeq()
 
-              await migrate(migration, this.pouch)
+              await migrate(migration, this)
               await should(this.pouch.getLocalSeq()).be.fulfilledWith(expected)
             })
 
             it('does not update the remoteSeq', async function () {
               const expected = await this.pouch.getRemoteSeq()
 
-              await migrate(migration, this.pouch)
+              await migrate(migration, this)
               await should(this.pouch.getRemoteSeq()).be.fulfilledWith(expected)
             })
           })
@@ -601,7 +612,7 @@ describe('core/migrations', function () {
           }
         }))
 
-        should(migration.run(docs)).deepEqual(expected)
+        await should(migration.run(docs, this)).be.fulfilledWith(expected)
       })
     })
   })

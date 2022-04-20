@@ -8,6 +8,11 @@ import type { Pouch } from '../pouch'
 import type { Remote } from '../remote'
 
 export type SchemaVersion = number
+
+export type InjectedDependencies = {
+  pouch: Pouch,
+  remote: Remote,
+}
 */
 
 const SCHEMA_DOC_ID = '_local/schema'

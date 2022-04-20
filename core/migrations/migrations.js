@@ -11,13 +11,14 @@ const { SCHEMA_INITIAL_VERSION } = require('./constants')
 /*::
 import type { SavedMetadata } from '../metadata'
 import type { SchemaVersion } from './constants'
+import type { InjectedDependencies } from './constants'
 
 export type Migration = {
   baseSchemaVersion: SchemaVersion,
   targetSchemaVersion: SchemaVersion,
   description: string,
   affectedDocs: (SavedMetadata[]) => SavedMetadata[],
-  run: (SavedMetadata[]) => SavedMetadata[]
+  run: (SavedMetadata[], InjectedDependencies) => Promise<SavedMetadata[]>
 }
 */
 
@@ -29,12 +30,14 @@ module.exports = ([
     affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(doc => doc.sides == null || doc.sides.target == null)
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        doc.sides = doc.sides || {}
-        doc.sides.target = metadata.extractRevNumber(doc)
-        return doc
-      })
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          doc.sides = doc.sides || {}
+          doc.sides.target = metadata.extractRevNumber(doc)
+          return doc
+        })
+      )
     }
   },
   {
@@ -50,11 +53,13 @@ module.exports = ([
           doc.sides.target === doc.sides.remote
       )
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        if (doc.overwrite) delete doc.overwrite
-        return doc
-      })
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          if (doc.overwrite) delete doc.overwrite
+          return doc
+        })
+      )
     }
   },
   {
@@ -72,15 +77,17 @@ module.exports = ([
           doc.sides.remote
       )
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        if (doc.sides && doc.sides.local && doc.sides.remote) {
-          doc.sides.target =
-            Math.max(doc.sides.target, doc.sides.local, doc.sides.remote) + 1
-          doc.sides.remote = doc.sides.target
-        }
-        return doc
-      })
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          if (doc.sides && doc.sides.local && doc.sides.remote) {
+            doc.sides.target =
+              Math.max(doc.sides.target, doc.sides.local, doc.sides.remote) + 1
+            doc.sides.remote = doc.sides.target
+          }
+          return doc
+        })
+      )
     }
   },
   {
@@ -90,22 +97,24 @@ module.exports = ([
     affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(doc => doc.docType === 'file')
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        // $FlowFixMe path was not present when this migration was created
-        doc.local = {
-          md5sum: doc.md5sum,
-          class: doc.class,
-          docType: 'file',
-          executable: doc.executable,
-          updated_at: doc.updated_at,
-          mime: doc.mime,
-          size: doc.size,
-          ino: doc.ino,
-          fileid: doc.fileid
-        }
-        return doc
-      })
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          // $FlowFixMe path was not present when this migration was created
+          doc.local = {
+            md5sum: doc.md5sum,
+            class: doc.class,
+            docType: 'file',
+            executable: doc.executable,
+            updated_at: doc.updated_at,
+            mime: doc.mime,
+            size: doc.size,
+            ino: doc.ino,
+            fileid: doc.fileid
+          }
+          return doc
+        })
+      )
     }
   },
   {
@@ -121,11 +130,13 @@ module.exports = ([
           doc.sides.target === doc.sides.remote
       )
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        if (doc.moveFrom) delete doc.moveFrom
-        return doc
-      })
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          if (doc.moveFrom) delete doc.moveFrom
+          return doc
+        })
+      )
     }
   },
   {
@@ -135,17 +146,19 @@ module.exports = ([
     affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(doc => doc.docType === 'folders')
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        // $FlowFixMe path was not present when this migration was created
-        doc.local = {
-          docType: 'folder',
-          updated_at: doc.updated_at,
-          ino: doc.ino,
-          fileid: doc.fileid
-        }
-        return doc
-      })
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          // $FlowFixMe path was not present when this migration was created
+          doc.local = {
+            docType: 'folder',
+            updated_at: doc.updated_at,
+            ino: doc.ino,
+            fileid: doc.fileid
+          }
+          return doc
+        })
+      )
     }
   },
   {
@@ -155,13 +168,15 @@ module.exports = ([
     affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(doc => doc.local != null || doc.remote != null)
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        if (doc.local) doc.local.path = doc.path
-        if (doc.remote)
-          doc.remote.path = '/' + path.posix.join(...doc.path.split(path.sep))
-        return doc
-      })
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          if (doc.local) doc.local.path = doc.path
+          if (doc.remote)
+            doc.remote.path = '/' + path.posix.join(...doc.path.split(path.sep))
+          return doc
+        })
+      )
     }
   },
   {
@@ -173,14 +188,16 @@ module.exports = ([
         doc => doc.docType === 'file' && doc.executable == null
       )
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        doc.executable = false
-        if (doc.local && doc.local.executable == null) {
-          doc.local.executable = false
-        }
-        return doc
-      })
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          doc.executable = false
+          if (doc.local && doc.local.executable == null) {
+            doc.local.executable = false
+          }
+          return doc
+        })
+      )
     }
   },
   {
@@ -190,11 +207,13 @@ module.exports = ([
     affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
       return docs.filter(doc => doc.docType != null && !doc.tags)
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        doc.tags = []
-        return doc
-      })
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          doc.tags = []
+          return doc
+        })
+      )
     }
   },
   {
@@ -208,24 +227,26 @@ module.exports = ([
           ((doc.sides.local && !doc.local) || (doc.sides.remote && !doc.remote))
       )
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        if (doc.sides.local && !doc.local) {
-          // Remove local side when no local attribute exists
-          delete doc.sides.local
-        }
-        if (doc.sides.remote && !doc.remote) {
-          // Remove remote side when no remote attribute exists
-          delete doc.sides.remote
-        }
-        if (!doc.sides.local && !doc.sides.remote) {
-          // Erase record is no sides are remaining
-          doc._deleted = true
-        }
-        // Remove errors, in case this would result in a new Sync attempt
-        delete doc.errors
-        return doc
-      })
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          if (doc.sides.local && !doc.local) {
+            // Remove local side when no local attribute exists
+            delete doc.sides.local
+          }
+          if (doc.sides.remote && !doc.remote) {
+            // Remove remote side when no remote attribute exists
+            delete doc.sides.remote
+          }
+          if (!doc.sides.local && !doc.sides.remote) {
+            // Erase record is no sides are remaining
+            doc._deleted = true
+          }
+          // Remove errors, in case this would result in a new Sync attempt
+          delete doc.errors
+          return doc
+        })
+      )
     }
   },
   {
@@ -239,17 +260,21 @@ module.exports = ([
           doc.incompatibilities.find(issue => issue.type == null) != null
       )
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        if (doc.incompatibilities) {
-          const issue = doc.incompatibilities.find(issue => issue.type == null)
-          if (issue) {
-            // $FlowFixMe `type` is not set so it can't be another value
-            issue.type = 'pathMaxBytes'
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          if (doc.incompatibilities) {
+            const issue = doc.incompatibilities.find(
+              issue => issue.type == null
+            )
+            if (issue) {
+              // $FlowFixMe `type` is not set so it can't be another value
+              issue.type = 'pathMaxBytes'
+            }
           }
-        }
-        return doc
-      })
+          return doc
+        })
+      )
     }
   },
   {
@@ -268,27 +293,29 @@ module.exports = ([
           ) != null
       )
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        if (doc.incompatibilities) {
-          if (doc.incompatibilities.length === 1) {
-            // Sync expects `incompatibilities` to be missing when there aren't
-            // any so if we're about to delete the last one, we remove the
-            // attribute altogether.
-            delete doc.incompatibilities
-          } else {
-            const { incompatibilities } = doc
-            const index = incompatibilities.findIndex(
-              issue =>
-                issue.platform === 'win32' &&
-                issue.type === 'pathMaxBytes' &&
-                issue.pathBytes < 32766
-            )
-            incompatibilities.splice(index, 1)
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          if (doc.incompatibilities) {
+            if (doc.incompatibilities.length === 1) {
+              // Sync expects `incompatibilities` to be missing when there aren't
+              // any so if we're about to delete the last one, we remove the
+              // attribute altogether.
+              delete doc.incompatibilities
+            } else {
+              const { incompatibilities } = doc
+              const index = incompatibilities.findIndex(
+                issue =>
+                  issue.platform === 'win32' &&
+                  issue.type === 'pathMaxBytes' &&
+                  issue.pathBytes < 32766
+              )
+              incompatibilities.splice(index, 1)
+            }
           }
-        }
-        return doc
-      })
+          return doc
+        })
+      )
     }
   },
   {
@@ -299,16 +326,18 @@ module.exports = ([
       // $FlowFixMe `deleted` has been removed from Metadata thus this migration
       return docs.filter(doc => doc.deleted != null)
     },
-    run: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
-      return docs.map(doc => {
-        // $FlowFixMe `deleted` has been removed from Metadata
-        if (doc.deleted) {
-          doc.trashed = true
-        }
-        // $FlowFixMe `deleted` has been removed from Metadata
-        delete doc.deleted
-        return doc
-      })
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          // $FlowFixMe `deleted` has been removed from Metadata
+          if (doc.deleted) {
+            doc.trashed = true
+          }
+          // $FlowFixMe `deleted` has been removed from Metadata
+          delete doc.deleted
+          return doc
+        })
+      )
     }
   }
 ] /*: Migration[] */)
