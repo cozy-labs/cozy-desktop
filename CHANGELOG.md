@@ -1,5 +1,29 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.34.0-beta.1 - 2022-04-20
+
+Improvements for all users:
+
+- We fixed a bug affecting sub-directories of sub-directories of directories
+  moved on the remote Cozy. These could not be updated from the local filesystem
+  anymore, triggering Invalid Metadata errors when the client would try to
+  synchronize the local modifications (e.g. a move).
+  All directories that were affected will be fixed by a data migration upon
+  restart of the client.
+- Fetching new remote changes will now be faster as we've removed some network
+  calls that are not necessary anymore.
+- The client should create fewer conflicts on files as we've improved the
+  decision logic when dealing with conflicting local and remote changes. If the
+  local content can be found in one of its old versions stored on the remote
+  Cozy then the client will overwrite it with the remote content instead of
+  creating a conflict.
+  If that decision was not the one the user expected then the overwritten
+  content can still be retrieved from the remote Cozy via the file's versions.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.33.0 - 2022-03-15
 
 Improvements for all users:
