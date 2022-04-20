@@ -20,7 +20,7 @@ const {
   SYNC_DIR_EMPTY_MESSAGE,
   SYNC_DIR_UNLINKED_MESSAGE
 } = require('../core/local/errors')
-const migrations = require('../core/pouch/migrations')
+const { MigrationFailedError } = require('../core/migrations/migrations')
 const config = require('../core/config')
 const winRegistry = require('../core/utils/win_registry')
 
@@ -106,7 +106,7 @@ const setupDesktop = async () => {
 
     if (err instanceof config.InvalidConfigError) {
       await showInvalidConfigError()
-    } else if (err instanceof migrations.MigrationFailedError) {
+    } else if (err instanceof MigrationFailedError) {
       await showMigrationError(err)
     } else {
       await dialog.showMessageBox(null, {

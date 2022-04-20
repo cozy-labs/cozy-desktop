@@ -10,15 +10,10 @@ const { REV_CONFLICT } = require('pouchdb')
 
 const metadata = require('../../../core/metadata')
 const { sortByPath } = require('../../../core/pouch')
-const migrations = require('../../../core/pouch/migrations')
 
 const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
-
-/*::
-import type { Migration } from '../../../core/pouch/migrations'
-*/
 
 describe('Pouch', function () {
   before('instanciate config', configHelpers.createConfig)
@@ -63,123 +58,6 @@ describe('Pouch', function () {
       await should(promiseLock3).be.fulfilled()
       const releaseLock3 = promiseLock2.value()
       releaseLock3()
-    })
-  })
-
-  describe('runMigrations', () => {
-    let currentSchemaVersion /* number */
-    let availableMigrations /*: Migration[] */
-    beforeEach('create migrations', async function () {
-      currentSchemaVersion = await migrations.currentSchemaVersion(
-        this.pouch.db
-      )
-      availableMigrations = [
-        {
-          baseSchemaVersion: currentSchemaVersion,
-          targetSchemaVersion: currentSchemaVersion + 1,
-          description: 'Test migration 1',
-          affectedDocs: docs => docs,
-          run: docs =>
-            docs.map(doc => ({
-              ...doc,
-              migration1: true
-            }))
-        },
-        {
-          baseSchemaVersion: currentSchemaVersion + 1,
-          targetSchemaVersion: currentSchemaVersion + 2,
-          description: 'Test migration 2',
-          affectedDocs: docs => docs,
-          run: docs =>
-            docs.map(doc => ({
-              ...doc,
-              migration2: true
-            }))
-        },
-        {
-          baseSchemaVersion: currentSchemaVersion + 2,
-          targetSchemaVersion: currentSchemaVersion + 3,
-          description: 'Test migration 3',
-          affectedDocs: docs => docs,
-          run: docs =>
-            docs.map(doc => ({
-              ...doc,
-              migration3: true
-            }))
-        }
-      ]
-    })
-
-    it('runs all given migrations', async function () {
-      await this.pouch.runMigrations(availableMigrations)
-
-      const docs = await this.pouch.byRecursivePath('')
-      should(docs).matchEach(doc => {
-        should(doc.migration1).be.true()
-        should(doc.migration2).be.true()
-        should(doc.migration3).be.true()
-      })
-    })
-
-    it('retries failed migrations', async function () {
-      let calls = 0
-      const migrationFailingOnce = {
-        baseSchemaVersion: availableMigrations[1].baseSchemaVersion,
-        targetSchemaVersion: availableMigrations[1].targetSchemaVersion,
-        description: 'Test migration 2',
-        affectedDocs: docs => docs,
-        run: docs => {
-          const migratedDocs = docs.map(doc => ({
-            ...doc,
-            migration2: true,
-            _rev: calls === 0 ? doc._rev.replace(/\d/, '9') : doc._rev
-          }))
-          calls++
-          return migratedDocs
-        }
-      }
-      sinon.spy(migrationFailingOnce, 'run')
-      availableMigrations.splice(1, 1, migrationFailingOnce)
-
-      await this.pouch.runMigrations(availableMigrations)
-
-      should(migrationFailingOnce.run).have.been.calledTwice()
-      const docs = await this.pouch.byRecursivePath('')
-      should(docs).matchEach(doc => {
-        should(doc.migration1).be.true()
-        should(doc.migration2).be.true()
-        should(doc.migration3).be.true()
-      })
-    })
-
-    it('throws a MigrationFailedError in case both attempts failed', async function () {
-      const migrationFailing = {
-        baseSchemaVersion: availableMigrations[1].baseSchemaVersion,
-        targetSchemaVersion: availableMigrations[1].targetSchemaVersion,
-        description: 'Test migration 2',
-        affectedDocs: docs => docs,
-        run: docs =>
-          docs.map(doc => ({
-            ...doc,
-            migration2: true,
-            _rev: doc._rev.replace(/\d/, '9')
-          }))
-      }
-      availableMigrations.splice(1, 1, migrationFailing)
-
-      try {
-        await this.pouch.runMigrations(availableMigrations)
-        should.fail()
-      } catch (err) {
-        should(err).be.instanceof(migrations.MigrationFailedError)
-        should(err).have.property('message', migrationFailing.description)
-      }
-      const docs = await this.pouch.byRecursivePath('')
-      should(docs).matchEach(doc => {
-        should(doc.migration1).be.true()
-        should(doc.migration2).be.undefined()
-        should(doc.migration3).be.undefined()
-      })
     })
   })
 
