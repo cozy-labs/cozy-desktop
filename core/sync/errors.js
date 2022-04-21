@@ -295,10 +295,10 @@ const wrapError = (
     return new SyncError({ sideName, err, code: INCOMPATIBLE_DOC_CODE, doc })
   } else if (err instanceof remoteErrors.ExcludedDirError) {
     return new SyncError({ sideName, err, code: EXCLUDED_DIR_CODE, doc })
-  } else if (sideName === 'remote' || err.name === 'FetchError') {
+  } else if (remoteErrors.isNetworkError(err)) {
     // FetchErrors can be raised from the LocalWriter when failing to download a
-    // file for example. In this case the sideName will be "local" but the error
-    // name will still be "FetchError".
+    // file for example. In this case the error name won't be "FetchError" but
+    // its message will still contain `net::`.
     // If err is a RemoteError, its code will be reused.
     return new SyncError({
       sideName,
