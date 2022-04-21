@@ -169,6 +169,11 @@ class RemoteWatcher {
   async watch() /*: Promise<?RemoteError> */ {
     const release = await this.pouch.lock(this)
     try {
+      if (!this.running) {
+        log.debug('Watcher stopped: skipping remote watch')
+        return
+      }
+
       this.events.emit('buffering-start')
 
       const seq = await this.pouch.getRemoteSeq()

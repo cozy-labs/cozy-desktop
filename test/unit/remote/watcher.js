@@ -390,6 +390,7 @@ describe('RemoteWatcher', function () {
       sinon.spy(this.events, 'emit')
 
       this.pouch.getRemoteSeq.resolves(lastLocalSeq)
+      this.watcher.running = true
       this.watcher.processRemoteChanges.resolves([])
       this.remoteCozy.changes.resolves(changes)
     })
@@ -398,6 +399,7 @@ describe('RemoteWatcher', function () {
       this.events.emit.restore()
       this.remoteCozy.changes.restore()
       this.watcher.processRemoteChanges.restore()
+      this.watcher.running = false
       this.pouch.setRemoteSeq.restore()
       this.pouch.getRemoteSeq.restore()
     })
@@ -541,6 +543,34 @@ describe('RemoteWatcher', function () {
             spy.restore()
           }
         })
+      })
+    })
+
+    context('when watcher is not running', () => {
+      beforeEach(function () {
+        this.watcher.running = false
+      })
+
+      afterEach(function () {
+        this.watcher.running = true
+      })
+
+      it('returns without fetching changes', async function () {
+        await this.watcher.watch()
+
+        should(this.remoteCozy.changes).not.have.been.called()
+      })
+
+      it('still tries to get hold of the PouchDB lock', async function () {
+        sinon.spy(this.pouch, 'lock')
+
+        try {
+          await this.watcher.watch()
+
+          should(this.pouch.lock).have.been.calledOnce()
+        } finally {
+          this.pouch.lock.restore()
+        }
       })
     })
   })
