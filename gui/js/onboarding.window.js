@@ -1,5 +1,5 @@
 const { addFileManagerShortcut } = require('./shortcut')
-const { dialog, session, BrowserView } = require('electron')
+const { dialog, session, BrowserView, shell } = require('electron')
 const autoLaunch = require('./autolaunch')
 const defaults = require('./defaults')
 const { translate } = require('./i18n')
@@ -95,6 +95,13 @@ module.exports = class OnboardingWM extends WindowManager {
       })
       this.oauthView.setBounds({ ...bounds, x: 0, y: 0 })
       this.centerOnScreen(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT)
+
+      this.oauthView.webContents.on('will-navigate', (event, url) => {
+        if (url.endsWith('.pdf')) {
+          event.preventDefault()
+          shell.openExternal(url)
+        }
+      })
     } catch (err) {
       log.error({ err, url, sentry: true }, 'failed loading OAuth view')
     }
