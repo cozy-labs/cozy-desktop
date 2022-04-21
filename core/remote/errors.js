@@ -386,6 +386,15 @@ function isNetworkError(err /*: Error */) {
   )
 }
 
+function isRetryableNetworkError(err /*: Error */) {
+  return (
+    typeof err.message === 'string' &&
+    err.message.includes('net::') &&
+    !err.message.includes('net::ERR_INTERNET_DISCONNECTED') &&
+    !err.message.includes('net::ERR_PROXY_CONNECTION_FAILED')
+  )
+}
+
 module.exports = {
   CozyDocumentMissingError,
   DirectoryNotFound,
@@ -413,5 +422,6 @@ module.exports = {
   UNREACHABLE_COZY_CODE,
   USER_ACTION_REQUIRED_CODE,
   isNetworkError,
+  isRetryableNetworkError,
   wrapError
 }

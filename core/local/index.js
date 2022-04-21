@@ -15,6 +15,7 @@ const bluebird = require('bluebird')
 
 const { TMP_DIR_NAME } = require('./constants')
 const { NOTE_MIME_TYPE } = require('../remote/constants')
+const { isRetryableNetworkError } = require('../remote/errors')
 const stater = require('./stater')
 const metadata = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
@@ -251,46 +252,49 @@ class Local /*:: implements Reader, Writer */ {
           }
         },
 
-        async existingFilePath => {
-          return new Promise((resolve, reject) => {
-            fse.ensureDir(this.tmpPath, async () => {
-              hideOnWindows(this.tmpPath)
-              if (existingFilePath) {
-                log.info(
-                  { path: filePath },
-                  `Recopy ${existingFilePath} -> ${filePath}`
-                )
-                this.events.emit('transfer-copy', doc)
-                fse.copy(existingFilePath, tmpFile, err => {
-                  if (err) {
-                    reject(err)
-                  } else {
-                    resolve()
-                  }
-                })
-              } else {
-                try {
-                  const reader = await this.other.createReadStreamAsync(doc)
-                  const source = onProgress
-                    ? streamUtils.withProgress(reader, onProgress)
-                    : reader
-
-                  const destination = fse.createWriteStream(tmpFile)
-
-                  stream.pipeline(source, destination, err => {
+        async.retryable(
+          { times: 5, interval: 2000, errorFilter: isRetryableNetworkError },
+          async existingFilePath => {
+            return new Promise((resolve, reject) => {
+              fse.ensureDir(this.tmpPath, async () => {
+                hideOnWindows(this.tmpPath)
+                if (existingFilePath) {
+                  log.info(
+                    { path: filePath },
+                    `Recopy ${existingFilePath} -> ${filePath}`
+                  )
+                  this.events.emit('transfer-copy', doc)
+                  fse.copy(existingFilePath, tmpFile, err => {
                     if (err) {
                       reject(err)
                     } else {
                       resolve()
                     }
                   })
-                } catch (err) {
-                  reject(err)
+                } else {
+                  try {
+                    const reader = await this.other.createReadStreamAsync(doc)
+                    const source = onProgress
+                      ? streamUtils.withProgress(reader, onProgress)
+                      : reader
+
+                    const destination = fse.createWriteStream(tmpFile)
+
+                    stream.pipeline(source, destination, err => {
+                      if (err) {
+                        reject(err)
+                      } else {
+                        resolve()
+                      }
+                    })
+                  } catch (err) {
+                    reject(err)
+                  }
                 }
-              }
+              })
             })
-          })
-        },
+          }
+        ),
 
         async () => {
           if (doc.md5sum != null) {
