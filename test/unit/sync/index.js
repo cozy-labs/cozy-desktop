@@ -910,6 +910,40 @@ describe('Sync', function () {
       this.events.emit.restore()
     })
 
+    context('when Sync is already blocked for a reason', () => {
+      const unknownSyncError = syncErrors.wrapError(
+        new Error('what is going on?'),
+        'local'
+      )
+      const unreachableSyncError = syncErrors.wrapError(
+        new FetchError(
+          { type: 'system', code: 'ENOTFOUND', errno: 'ENOTFOUND' },
+          'request to ... failed, reason: net::ERR_NAME_NOT_RESOLVED'
+        ),
+        'remote'
+      )
+      beforeEach(function () {
+        this.sync.blockSyncFor({
+          err: unknownSyncError
+        })
+        should(this.sync.lifecycle.blockedFor).equal(
+          syncErrors.UNKNOWN_SYNC_ERROR_CODE
+        )
+      })
+
+      it('replaces the old reason with the new one', async function () {
+        this.sync.blockSyncFor({
+          err: unreachableSyncError
+        })
+        should(this.sync.lifecycle.blockedFor).equal(
+          remoteErrors.UNREACHABLE_COZY_CODE
+        )
+
+        this.sync.lifecycle.unblockFor(remoteErrors.UNREACHABLE_COZY_CODE)
+        should(this.sync.lifecycle.blockedFor).be.null()
+      })
+    })
+
     context('when Cozy is unreachable', () => {
       const unreachableSyncError = syncErrors.wrapError(
         new FetchError(
