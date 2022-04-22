@@ -51,7 +51,9 @@ class RemoteTestHelpers {
   }
 
   async pullChanges() {
+    this.side.watcher.running = true
     await this.side.watcher.watch()
+    this.side.watcher.running = false
   }
 
   async createDirectory(

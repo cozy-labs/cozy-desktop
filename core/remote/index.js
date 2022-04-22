@@ -7,6 +7,7 @@
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const path = require('path')
+const async = require('async')
 
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
@@ -14,7 +15,11 @@ const pathUtils = require('../utils/path')
 const metadata = require('../metadata')
 const { ROOT_DIR_ID, DIR_TYPE } = require('./constants')
 const { RemoteCozy } = require('./cozy')
-const { DirectoryNotFound, ExcludedDirError } = require('./errors')
+const {
+  DirectoryNotFound,
+  ExcludedDirError,
+  isRetryableNetworkError
+} = require('./errors')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
 const timestamp = require('../utils/timestamp')
@@ -182,32 +187,37 @@ class Remote /*:: implements Reader, Writer */ {
     const [parentPath, name] = dirAndName(path)
     const parent = await this.findDirectoryByPath(parentPath)
 
-    let stream
-    try {
-      stream = await this.other.createReadStreamAsync(doc)
-    } catch (err) {
-      if (err.code === 'ENOENT') {
-        log.warn({ path }, 'Local file does not exist anymore.')
-        // FIXME: with this deletion marker, the record will be erased from
-        // PouchDB while the remote document will remain.
-        doc.trashed = true
-        return doc
+    await async.retry(
+      { times: 5, interval: 2000, errorFilter: isRetryableNetworkError },
+      async () => {
+        let stream
+        try {
+          stream = await this.other.createReadStreamAsync(doc)
+        } catch (err) {
+          if (err.code === 'ENOENT') {
+            log.warn({ path }, 'Local file does not exist anymore.')
+            // FIXME: with this deletion marker, the record will be erased from
+            // PouchDB while the remote document will remain.
+            doc.trashed = true
+            return doc
+          }
+          throw err
+        }
+
+        const source = onProgress
+          ? streamUtils.withProgress(stream, onProgress)
+          : stream
+
+        const created = await this.remoteCozy.createFile(source, {
+          ...newDocumentAttributes(name, parent._id, doc.updated_at),
+          checksum: doc.md5sum,
+          executable: doc.executable || false,
+          contentLength: doc.size,
+          contentType: doc.mime
+        })
+        metadata.updateRemote(doc, created)
       }
-      throw err
-    }
-
-    const source = onProgress
-      ? streamUtils.withProgress(stream, onProgress)
-      : stream
-
-    const created = await this.remoteCozy.createFile(source, {
-      ...newDocumentAttributes(name, parent._id, doc.updated_at),
-      checksum: doc.md5sum,
-      executable: doc.executable || false,
-      contentLength: doc.size,
-      contentType: doc.mime
-    })
-    metadata.updateRemote(doc, created)
+    )
 
     stopMeasure()
   }
@@ -219,46 +229,51 @@ class Remote /*:: implements Reader, Writer */ {
     const { path } = doc
     log.info({ path }, 'Uploading new file version...')
 
-    let stream
-    try {
-      stream = await this.other.createReadStreamAsync(doc)
-    } catch (err) {
-      if (err.code === 'ENOENT') {
-        log.warn({ path }, 'Local file does not exist anymore.')
-        // FIXME: with this deletion marker, the record will be erased from
-        // PouchDB while the remote document will remain.
-        doc.trashed = true
-        return doc
-      }
-      throw err
-    }
+    await async.retry(
+      { times: 5, interval: 2000, errorFilter: isRetryableNetworkError },
+      async () => {
+        let stream
+        try {
+          stream = await this.other.createReadStreamAsync(doc)
+        } catch (err) {
+          if (err.code === 'ENOENT') {
+            log.warn({ path }, 'Local file does not exist anymore.')
+            // FIXME: with this deletion marker, the record will be erased from
+            // PouchDB while the remote document will remain.
+            doc.trashed = true
+            return doc
+          }
+          throw err
+        }
 
-    // Object.assign gives us the opportunity to enforce required options with
-    // Flow while they're only optional in the Metadata type. For example,
-    // `md5sum` and `mime` are optional in Metadata because they only apply to
-    // files. But we're sure we have files at this point and that they do have
-    // those attributes.
-    const options = Object.assign(
-      {},
-      {
-        checksum: doc.md5sum,
-        executable: doc.executable || false,
-        contentLength: doc.size,
-        contentType: doc.mime,
-        updatedAt: mostRecentUpdatedAt(doc),
-        ifMatch: doc.remote._rev
+        // Object.assign gives us the opportunity to enforce required options with
+        // Flow while they're only optional in the Metadata type. For example,
+        // `md5sum` and `mime` are optional in Metadata because they only apply to
+        // files. But we're sure we have files at this point and that they do have
+        // those attributes.
+        const options = Object.assign(
+          {},
+          {
+            checksum: doc.md5sum,
+            executable: doc.executable || false,
+            contentLength: doc.size,
+            contentType: doc.mime,
+            updatedAt: mostRecentUpdatedAt(doc),
+            ifMatch: doc.remote._rev
+          }
+        )
+        const source = onProgress
+          ? streamUtils.withProgress(stream, onProgress)
+          : stream
+
+        const updated = await this.remoteCozy.updateFileById(
+          doc.remote._id,
+          source,
+          options
+        )
+        metadata.updateRemote(doc, updated)
       }
     )
-    const source = onProgress
-      ? streamUtils.withProgress(stream, onProgress)
-      : stream
-
-    const updated = await this.remoteCozy.updateFileById(
-      doc.remote._id,
-      source,
-      options
-    )
-    metadata.updateRemote(doc, updated)
   }
 
   async updateFileMetadataAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {

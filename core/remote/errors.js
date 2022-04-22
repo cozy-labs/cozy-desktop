@@ -188,7 +188,7 @@ const wrapError = (
   err /*: FetchError |  Error */,
   doc /*: ?SavedMetadata */
 ) /*: RemoteError */ => {
-  if (err.name === 'FetchError') {
+  if (isNetworkError(err)) {
     // $FlowFixMe FetchErrors missing status will fallback to the default case
     const { status } = err
 
@@ -379,6 +379,22 @@ function detail(err /*: FetchError */) /*: ?string */ {
   return detail
 }
 
+function isNetworkError(err /*: Error */) {
+  return (
+    err.name === 'FetchError' ||
+    (typeof err.message === 'string' && err.message.includes('net::'))
+  )
+}
+
+function isRetryableNetworkError(err /*: Error */) {
+  return (
+    typeof err.message === 'string' &&
+    err.message.includes('net::') &&
+    !err.message.includes('net::ERR_INTERNET_DISCONNECTED') &&
+    !err.message.includes('net::ERR_PROXY_CONNECTION_FAILED')
+  )
+}
+
 module.exports = {
   CozyDocumentMissingError,
   DirectoryNotFound,
@@ -405,5 +421,7 @@ module.exports = {
   UNKNOWN_REMOTE_ERROR_CODE,
   UNREACHABLE_COZY_CODE,
   USER_ACTION_REQUIRED_CODE,
+  isNetworkError,
+  isRetryableNetworkError,
   wrapError
 }
