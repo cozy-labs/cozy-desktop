@@ -1,5 +1,22 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.34.0-beta.2 - 2022-04-22
+
+Improvements for all users:
+
+- During the client's on-boarding process, clicking on the ToS link (or any link
+  pointing to a URL ending with `.pdf`) will open the pointed URL within the
+  external browser rather than the on-boarding window.
+- Network errors during the synchronization of a change should not result in a
+  blocked synchronization anymore.
+- Network errors during a file transfer either from or to the remote Cozy will
+  now be handled properly, restarting the transfer until too many errors are
+  encountered and the global error handling mechanism takes over.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.34.0-beta.1 - 2022-04-20
 
 Improvements for all users:
