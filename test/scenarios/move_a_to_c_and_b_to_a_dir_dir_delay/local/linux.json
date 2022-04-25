@@ -1,0 +1,114 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "a"
+  },
+  {
+    "type": "addDir",
+    "path": "c",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 2,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 1,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647027889.393,
+      "mtimeMs": 1650647027885.393,
+      "ctimeMs": 1650647027889.393,
+      "birthtimeMs": 1650647027885.393,
+      "atime": "2022-04-22T17:03:47.889Z",
+      "mtime": "2022-04-22T17:03:47.885Z",
+      "ctime": "2022-04-22T17:03:47.889Z",
+      "birthtime": "2022-04-22T17:03:47.885Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "a/file-a"
+  },
+  {
+    "type": "add",
+    "path": "c/file-a",
+    "stats": {
+      "dev": 64771,
+      "mode": 33204,
+      "nlink": 1,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 2,
+      "size": 3,
+      "blocks": 8,
+      "atimeMs": 1650647027885.393,
+      "mtimeMs": 1650647027885.393,
+      "ctimeMs": 1650647027885.393,
+      "birthtimeMs": 1650647027885.393,
+      "atime": "2022-04-22T17:03:47.885Z",
+      "mtime": "2022-04-22T17:03:47.885Z",
+      "ctime": "2022-04-22T17:03:47.885Z",
+      "birthtime": "2022-04-22T17:03:47.885Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "b"
+  },
+  {
+    "type": "addDir",
+    "path": "a",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 2,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 3,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647029391.4126,
+      "mtimeMs": 1650647027886.393,
+      "ctimeMs": 1650647029391.4126,
+      "birthtimeMs": 1650647027886.393,
+      "atime": "2022-04-22T17:03:49.391Z",
+      "mtime": "2022-04-22T17:03:47.886Z",
+      "ctime": "2022-04-22T17:03:49.391Z",
+      "birthtime": "2022-04-22T17:03:47.886Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "b/file-b"
+  },
+  {
+    "type": "add",
+    "path": "a/file-b",
+    "stats": {
+      "dev": 64771,
+      "mode": 33204,
+      "nlink": 1,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 4,
+      "size": 3,
+      "blocks": 8,
+      "atimeMs": 1650647027886.393,
+      "mtimeMs": 1650647027886.393,
+      "ctimeMs": 1650647027886.393,
+      "birthtimeMs": 1650647027886.393,
+      "atime": "2022-04-22T17:03:47.886Z",
+      "mtime": "2022-04-22T17:03:47.886Z",
+      "ctime": "2022-04-22T17:03:47.886Z",
+      "birthtime": "2022-04-22T17:03:47.886Z"
+    }
+  }
+]

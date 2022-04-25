@@ -68,7 +68,7 @@ describe('Test scenarios', function () {
     } else if (!runWithStoppedClient()) {
       for (let atomCapture of loadAtomCaptures(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/atom/${atomCapture.name}`
-        if (config.watcherType() !== 'atom') {
+        if (platform === 'linux' || config.watcherType() !== 'atom') {
           it.skip(localTestName, () => {})
           continue
         }
@@ -85,7 +85,7 @@ describe('Test scenarios', function () {
 
       for (let eventsFile of loadFSEventFiles(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
-        if (config.watcherType() !== 'chokidar') {
+        if (platform !== 'linux' && config.watcherType() !== 'chokidar') {
           it.skip(localTestName, () => {})
           continue
         }
@@ -166,6 +166,8 @@ function shouldSkipRemote(scenario) {
 }
 
 function injectChokidarBreakpoints(eventsFile) {
+  if (!runWithBreakpoints()) return [0]
+
   let breakpoints = []
   if (eventsFile.events[0] && eventsFile.events[0].breakpoints) {
     breakpoints = eventsFile.events[0].breakpoints
@@ -174,8 +176,6 @@ function injectChokidarBreakpoints(eventsFile) {
     // break between each events
     for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
   }
-
-  if (!runWithBreakpoints()) breakpoints = [0]
   return breakpoints
 }
 

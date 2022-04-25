@@ -82,7 +82,7 @@ const isTruthyVar = envVar => {
 
 module.exports.runWithBreakpoints = () => {
   const { NO_BREAKPOINTS } = process.env
-  return !isTruthyVar(NO_BREAKPOINTS)
+  return !isTruthyVar(NO_BREAKPOINTS) && process.platform !== 'linux'
 }
 
 module.exports.runWithStoppedClient = () => {
@@ -132,6 +132,8 @@ module.exports.loadFSEventFiles = (
   const disabledEventsFile = name => {
     if (process.platform === 'win32' && name.indexOf('win32') === -1) {
       return 'darwin/linux test'
+    } else if (process.platform === 'linux' && name.indexOf('linux') === -1) {
+      return 'darwin/win32 test'
     } else if (
       process.env.COZY_DESKTOP_FS === 'APFS' &&
       name.indexOf('hfs+') !== -1

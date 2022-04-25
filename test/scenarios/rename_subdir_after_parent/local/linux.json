@@ -1,0 +1,170 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "parent/subdir/subsubdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent"
+  },
+  {
+    "type": "addDir",
+    "path": "parent-2",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 3,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 1,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647439695.6892,
+      "mtimeMs": 1650647439692.6892,
+      "ctimeMs": 1650647439695.6892,
+      "birthtimeMs": 1650647439692.6892,
+      "atime": "2022-04-22T17:10:39.696Z",
+      "mtime": "2022-04-22T17:10:39.693Z",
+      "ctime": "2022-04-22T17:10:39.696Z",
+      "birthtime": "2022-04-22T17:10:39.693Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "parent-2/subdir",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 3,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 2,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647439694.6892,
+      "mtimeMs": 1650647439693.6892,
+      "ctimeMs": 1650647439693.6892,
+      "birthtimeMs": 1650647439692.6892,
+      "atime": "2022-04-22T17:10:39.695Z",
+      "mtime": "2022-04-22T17:10:39.694Z",
+      "ctime": "2022-04-22T17:10:39.694Z",
+      "birthtime": "2022-04-22T17:10:39.693Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "parent-2/subdir/subsubdir",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 2,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 3,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647439694.6892,
+      "mtimeMs": 1650647439693.6892,
+      "ctimeMs": 1650647439693.6892,
+      "birthtimeMs": 1650647439693.6892,
+      "atime": "2022-04-22T17:10:39.695Z",
+      "mtime": "2022-04-22T17:10:39.694Z",
+      "ctime": "2022-04-22T17:10:39.694Z",
+      "birthtime": "2022-04-22T17:10:39.694Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent-2/subdir/subsubdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent-2/subdir"
+  },
+  {
+    "type": "addDir",
+    "path": "parent-2/subdir-2",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 3,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 2,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647441196.7085,
+      "mtimeMs": 1650647439693.6892,
+      "ctimeMs": 1650647441195.7085,
+      "birthtimeMs": 1650647439692.6892,
+      "atime": "2022-04-22T17:10:41.197Z",
+      "mtime": "2022-04-22T17:10:39.694Z",
+      "ctime": "2022-04-22T17:10:41.196Z",
+      "birthtime": "2022-04-22T17:10:39.693Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "parent-2/subdir-2/subsubdir",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 2,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 3,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647439694.6892,
+      "mtimeMs": 1650647439693.6892,
+      "ctimeMs": 1650647439693.6892,
+      "birthtimeMs": 1650647439693.6892,
+      "atime": "2022-04-22T17:10:39.695Z",
+      "mtime": "2022-04-22T17:10:39.694Z",
+      "ctime": "2022-04-22T17:10:39.694Z",
+      "birthtime": "2022-04-22T17:10:39.694Z"
+    }
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent-2/subdir-2/subsubdir"
+  },
+  {
+    "type": "addDir",
+    "path": "parent-2/subdir-2/subsubdir-2",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 2,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 3,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647442696.7278,
+      "mtimeMs": 1650647439693.6892,
+      "ctimeMs": 1650647442696.7278,
+      "birthtimeMs": 1650647439693.6892,
+      "atime": "2022-04-22T17:10:42.697Z",
+      "mtime": "2022-04-22T17:10:39.694Z",
+      "ctime": "2022-04-22T17:10:42.697Z",
+      "birthtime": "2022-04-22T17:10:39.694Z"
+    }
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "type": "unlink",
+    "path": "src/file"
+  },
+  {
+    "type": "change",
+    "path": "dst/file",
+    "stats": {
+      "dev": 64771,
+      "mode": 33204,
+      "nlink": 1,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 4,
+      "size": 19,
+      "blocks": 8,
+      "atimeMs": 1650647354168.5894,
+      "mtimeMs": 1650647354168.5894,
+      "ctimeMs": 1650647354171.5894,
+      "birthtimeMs": 1650647354168.5894,
+      "atime": "2022-04-22T17:09:14.169Z",
+      "mtime": "2022-04-22T17:09:14.169Z",
+      "ctime": "2022-04-22T17:09:14.172Z",
+      "birthtime": "2022-04-22T17:09:14.169Z"
+    }
+  }
+]

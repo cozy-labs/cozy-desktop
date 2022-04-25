@@ -23,7 +23,7 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 
 const checksumer = require('./../checksumer')
-const Producer = require('./producer')
+const Producer = require('./chokidar_producer')
 const addInfos = require('./add_infos')
 const filterIgnored = require('./filter_ignored')
 const fireLocatStartEvent = require('./fire_local_start_event')
@@ -46,7 +46,7 @@ import type EventEmitter from 'events'
 import type { Ignore } from '../../ignore'
 import type { Checksumer } from '../checksumer'
 import type { AtomEventsDispatcher } from './dispatch'
-import type { Scanner } from './producer'
+import type { Scanner } from './chokidar_producer'
 
 type AtomWatcherOptions = {
   config: Config,
@@ -74,7 +74,7 @@ const steps = _.compact([
   filterIgnored,
   fireLocatStartEvent,
   only('win32', winIdenticalRenaming),
-  only('win32', winDetectMove),
+  winDetectMove, //only('win32', winDetectMove),
   scanFolder,
   awaitWriteFinish,
   initialDiff,
@@ -163,7 +163,7 @@ class AtomWatcher {
   async stop() /*: Promise<*> */ {
     log.debug('stopping...')
 
-    this.producer.stop()
+    await this.producer.stop()
 
     if (this._runningResolve) {
       this._runningResolve()

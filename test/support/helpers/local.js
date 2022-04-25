@@ -158,7 +158,15 @@ class LocalTestHelpers {
 
   async simulateEvents(events /*: ChokidarEvent[] */) {
     // $FlowFixMe
-    return this.side.watcher.onFlush(events)
+    return this.side.watcher.onFlush != null
+      ? this.side.watcher.onFlush(events)
+      : this.side.watcher.producer.channel.push(
+          events.map(({ type, path, stats }) =>
+            this.side.watcher.producer.buildEvent(type, path, stats, {
+              initialScanDone: true
+            })
+          )
+        )
   }
 
   startSimulation() {

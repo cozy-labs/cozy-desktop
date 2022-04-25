@@ -1,0 +1,98 @@
+[
+  {
+    "type": "addDir",
+    "path": "dst/dir",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 4,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 2,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647169197.2104,
+      "mtimeMs": 1650647169195.2104,
+      "ctimeMs": 1650647169197.2104,
+      "birthtimeMs": 1650647169195.2104,
+      "atime": "2022-04-22T17:06:09.197Z",
+      "mtime": "2022-04-22T17:06:09.195Z",
+      "ctime": "2022-04-22T17:06:09.197Z",
+      "birthtime": "2022-04-22T17:06:09.195Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dst/dir/empty-subdir",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 2,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 3,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647169197.2104,
+      "mtimeMs": 1650647169195.2104,
+      "ctimeMs": 1650647169195.2104,
+      "birthtimeMs": 1650647169195.2104,
+      "atime": "2022-04-22T17:06:09.197Z",
+      "mtime": "2022-04-22T17:06:09.195Z",
+      "ctime": "2022-04-22T17:06:09.195Z",
+      "birthtime": "2022-04-22T17:06:09.195Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "dst/dir/subdir",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 2,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 4,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647169197.2104,
+      "mtimeMs": 1650647169196.2104,
+      "ctimeMs": 1650647169196.2104,
+      "birthtimeMs": 1650647169195.2104,
+      "atime": "2022-04-22T17:06:09.197Z",
+      "mtime": "2022-04-22T17:06:09.196Z",
+      "ctime": "2022-04-22T17:06:09.196Z",
+      "birthtime": "2022-04-22T17:06:09.195Z"
+    }
+  },
+  {
+    "type": "add",
+    "path": "dst/dir/subdir/file",
+    "stats": {
+      "dev": 64771,
+      "mode": 33204,
+      "nlink": 1,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 5,
+      "size": 8,
+      "blocks": 8,
+      "atimeMs": 1650647169196.2104,
+      "mtimeMs": 1650647169196.2104,
+      "ctimeMs": 1650647169196.2104,
+      "birthtimeMs": 1650647169196.2104,
+      "atime": "2022-04-22T17:06:09.196Z",
+      "mtime": "2022-04-22T17:06:09.196Z",
+      "ctime": "2022-04-22T17:06:09.196Z",
+      "birthtime": "2022-04-22T17:06:09.196Z"
+    }
+  }
+]

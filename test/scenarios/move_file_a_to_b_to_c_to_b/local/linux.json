@@ -1,0 +1,86 @@
+[
+  {
+    "type": "unlink",
+    "path": "src/A"
+  },
+  {
+    "type": "add",
+    "path": "src/B",
+    "stats": {
+      "dev": 64771,
+      "mode": 33204,
+      "nlink": 1,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 2,
+      "size": 3,
+      "blocks": 8,
+      "atimeMs": 1650647238434.1008,
+      "mtimeMs": 1650647238434.1008,
+      "ctimeMs": 1650647238436.1008,
+      "birthtimeMs": 1650647238434.1008,
+      "atime": "2022-04-22T17:07:18.434Z",
+      "mtime": "2022-04-22T17:07:18.434Z",
+      "ctime": "2022-04-22T17:07:18.436Z",
+      "birthtime": "2022-04-22T17:07:18.434Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "src/B"
+  },
+  {
+    "type": "add",
+    "path": "src/C",
+    "stats": {
+      "dev": 64771,
+      "mode": 33204,
+      "nlink": 1,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 2,
+      "size": 3,
+      "blocks": 8,
+      "atimeMs": 1650647238434.1008,
+      "mtimeMs": 1650647238434.1008,
+      "ctimeMs": 1650647239938.1204,
+      "birthtimeMs": 1650647238434.1008,
+      "atime": "2022-04-22T17:07:18.434Z",
+      "mtime": "2022-04-22T17:07:18.434Z",
+      "ctime": "2022-04-22T17:07:19.938Z",
+      "birthtime": "2022-04-22T17:07:18.434Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "src/C"
+  },
+  {
+    "type": "add",
+    "path": "src/B",
+    "stats": {
+      "dev": 64771,
+      "mode": 33204,
+      "nlink": 1,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 2,
+      "size": 3,
+      "blocks": 8,
+      "atimeMs": 1650647238434.1008,
+      "mtimeMs": 1650647238434.1008,
+      "ctimeMs": 1650647241440.1396,
+      "birthtimeMs": 1650647238434.1008,
+      "atime": "2022-04-22T17:07:18.434Z",
+      "mtime": "2022-04-22T17:07:18.434Z",
+      "ctime": "2022-04-22T17:07:21.440Z",
+      "birthtime": "2022-04-22T17:07:18.434Z"
+    }
+  }
+]

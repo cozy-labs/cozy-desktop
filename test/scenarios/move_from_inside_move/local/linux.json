@@ -1,0 +1,114 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir/empty-subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir/subdir"
+  },
+  {
+    "type": "unlinkDir",
+    "path": "parent/src/dir"
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst/dir",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 3,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 5,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647329871.2769,
+      "mtimeMs": 1650647329872.2769,
+      "ctimeMs": 1650647329872.2769,
+      "birthtimeMs": 1650647329866.2769,
+      "atime": "2022-04-22T17:08:49.871Z",
+      "mtime": "2022-04-22T17:08:49.872Z",
+      "ctime": "2022-04-22T17:08:49.872Z",
+      "birthtime": "2022-04-22T17:08:49.866Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst2/subdir",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 2,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 7,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647329872.2769,
+      "mtimeMs": 1650647329867.2769,
+      "ctimeMs": 1650647329872.2769,
+      "birthtimeMs": 1650647329867.2769,
+      "atime": "2022-04-22T17:08:49.872Z",
+      "mtime": "2022-04-22T17:08:49.867Z",
+      "ctime": "2022-04-22T17:08:49.872Z",
+      "birthtime": "2022-04-22T17:08:49.867Z"
+    }
+  },
+  {
+    "type": "addDir",
+    "path": "parent/dst/dir/empty-subdir",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 2,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 6,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647329867.2769,
+      "mtimeMs": 1650647329866.2769,
+      "ctimeMs": 1650647329866.2769,
+      "birthtimeMs": 1650647329866.2769,
+      "atime": "2022-04-22T17:08:49.867Z",
+      "mtime": "2022-04-22T17:08:49.866Z",
+      "ctime": "2022-04-22T17:08:49.866Z",
+      "birthtime": "2022-04-22T17:08:49.866Z"
+    }
+  },
+  {
+    "type": "unlink",
+    "path": "parent/src/dir/subdir/file"
+  },
+  {
+    "type": "add",
+    "path": "parent/dst2/subdir/file",
+    "stats": {
+      "dev": 64771,
+      "mode": 33204,
+      "nlink": 1,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 8,
+      "size": 3,
+      "blocks": 8,
+      "atimeMs": 1650647329867.2769,
+      "mtimeMs": 1650647329867.2769,
+      "ctimeMs": 1650647329867.2769,
+      "birthtimeMs": 1650647329867.2769,
+      "atime": "2022-04-22T17:08:49.867Z",
+      "mtime": "2022-04-22T17:08:49.867Z",
+      "ctime": "2022-04-22T17:08:49.867Z",
+      "birthtime": "2022-04-22T17:08:49.867Z"
+    }
+  }
+]

@@ -207,7 +207,9 @@ const runAndRecordAtomEvents = async scenario => {
 }
 
 const runAndRecordFSEvents =
-  watcherType() === 'atom' ? runAndRecordAtomEvents : runAndRecordChokidarEvents
+  watcherType() === 'atom' && process.platform !== 'linux'
+    ? runAndRecordAtomEvents
+    : runAndRecordChokidarEvents
 
 const captureScenario = (scenario /*: Scenario & {path: string} */) => {
   if (

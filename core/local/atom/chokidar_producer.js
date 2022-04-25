@@ -7,7 +7,7 @@ const autoBind = require('auto-bind')
 const fse = require('fs-extra') // Used for await
 const path = require('path')
 const Promise = require('bluebird')
-const watcher = require('@atom/watcher')
+const chokidar = require('chokidar')
 
 const Channel = require('./channel')
 const { INITIAL_SCAN_DONE } = require('./event')
@@ -18,13 +18,14 @@ const logger = require('../../utils/logger')
 import type { Config } from '../../config'
 import type { Ignore } from '../../ignore'
 import type { AtomEvent } from './event'
+import type { Stats } from '../stater'
 import type EventEmitter from 'events'
 
 export type Scanner = (string, ?{ readdir?: *, stater?: * }) => Promise<void>
 */
 
 const log = logger({
-  component: 'atom/Producer'
+  component: 'atom/ChokidarProducer'
 })
 
 const isIgnored = ({ path, kind }, ignore) =>
@@ -97,24 +98,63 @@ class Producer {
    * the recursive option.
    */
   async start() {
+    let initialScanDone = false
+
     this.events.emit('buffering-start')
-    this.watcher = await watcher.watchPath(
-      this.syncPath,
-      { recursive: true },
-      this.process
-    )
+    this.watcher = chokidar.watch('.', {
+      // Let paths in events be relative to this base path
+      cwd: this.syncPath,
+      // Ignore our own .system-tmp-cozy-drive directory
+      ignored: /(^|[\/\\])\.system-tmp-cozy-drive/, // eslint-disable-line no-useless-escape
+      // Don't follow symlinks
+      followSymlinks: false,
+      // The stats object is used in methods below
+      alwaysStat: true,
+      // Watching on Windows seems to lock dirs with subdirs, preventing them
+      // from being renamed/moved/deleted.
+      usePolling: process.platform === 'win32',
+      // Filter out artifacts from editors with atomic writes
+      atomic: true,
+      // Poll newly created files to detect when the write is finished
+      awaitWriteFinish: {
+        pollInterval: 200,
+        stabilityThreshold: 1000
+      },
+      // With node 0.10 on linux, only polling is available
+      interval: 1000,
+      binaryInterval: 2000
+    })
+
+    if (!this.watcher) return
+
+    const { watcher } = this
+    await new Promise((resolve, reject) => {
+      for (let eventType of [
+        'add',
+        'addDir',
+        'change',
+        'unlink',
+        'unlinkDir'
+      ]) {
+        watcher.on(eventType, (path /*: ?string */, stats /*: ?Stats */) => {
+          const event = this.buildEvent(eventType, path, stats, {
+            initialScanDone
+          })
+          if (event) this.channel.push([event])
+        })
+      }
+
+      watcher.on('ready', resolve).on('error', reject)
+    })
     log.info(`Now watching ${this.syncPath}`)
-    if (process.platform === 'linux') {
-      // TODO to be checked, but we might need to give some time to
-      // atom/watcher to finish putting its inotify watches on sub-directories.
-      await Promise.delay(1000)
-    }
-    await this.scan('.')
+
+    initialScanDone = true
     log.trace('Scan done')
+
     // The initial scan can miss some files or directories that have been
     // moved. Wait a bit to ensure that the corresponding renamed events have
     // been emited.
-    await Promise.delay(1000)
+    //await Promise.delay(1000)
     this.channel.push([INITIAL_SCAN_DONE])
     this.events.emit('buffering-end')
   }
@@ -167,6 +207,36 @@ class Producer {
     }
   }
 
+  buildEvent(
+    eventType /*: string */,
+    path /*: ?string */,
+    stats /*: ?Stats */,
+    { initialScanDone } /*: { initialScanDone: boolean } */
+  ) /*: ?AtomEvent */ {
+    if (path == null) return
+
+    const action = ['add', 'addDir'].includes(eventType)
+      ? initialScanDone
+        ? 'created'
+        : 'scan'
+      : ['unlink', 'unlinkDir'].includes(eventType)
+      ? 'deleted'
+      : eventType === 'change'
+      ? 'modified'
+      : 'ignored'
+    const kind =
+      stats != null && defaultStater.isDirectory(stats) ? 'directory' : 'file'
+
+    const event /*: $Shape<AtomEvent> */ = {
+      action,
+      kind,
+      path
+    }
+    if (stats) event.stats = stats
+
+    return event
+  }
+
   process(batch /*: Array<*> */) {
     log.trace({ batch }, 'process')
     // Atom/watcher emits events with an absolute path, but it's more
@@ -180,10 +250,10 @@ class Producer {
     this.channel.push(batch)
   }
 
-  stop() {
+  async stop() {
     log.trace('Stop')
     if (this.watcher) {
-      this.watcher.dispose()
+      await this.watcher.close()
       this.watcher = null
     }
   }

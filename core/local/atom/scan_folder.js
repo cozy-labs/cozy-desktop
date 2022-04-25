@@ -19,7 +19,7 @@ const log = logger({
 
 /*::
 import type Channel from './channel'
-import type { Scanner } from './producer'
+import type { Scanner } from './chokidar_producer'
 */
 
 module.exports = {

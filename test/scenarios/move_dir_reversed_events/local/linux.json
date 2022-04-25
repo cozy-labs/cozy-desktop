@@ -1,0 +1,30 @@
+[
+  {
+    "type": "unlinkDir",
+    "path": "src/dir"
+  },
+  {
+    "type": "addDir",
+    "path": "dst/dir",
+    "stats": {
+      "dev": 64771,
+      "mode": 16893,
+      "nlink": 2,
+      "uid": 1000,
+      "gid": 1000,
+      "rdev": 0,
+      "blksize": 4096,
+      "ino": 3,
+      "size": 4096,
+      "blocks": 8,
+      "atimeMs": 1650647195847.5532,
+      "mtimeMs": 1650647195845.5532,
+      "ctimeMs": 1650647195847.5532,
+      "birthtimeMs": 1650647195845.5532,
+      "atime": "2022-04-22T17:06:35.848Z",
+      "mtime": "2022-04-22T17:06:35.846Z",
+      "ctime": "2022-04-22T17:06:35.848Z",
+      "birthtime": "2022-04-22T17:06:35.846Z"
+    }
+  }
+]
