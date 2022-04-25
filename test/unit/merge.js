@@ -2377,73 +2377,165 @@ describe('Merge', function () {
       })
     })
 
-    it('replaces a local move with an addition for a local-only file', async function () {
-      const was = await builders
-        .metafile()
-        .path('FOO/OLD')
-        .data('content')
-        .tags('courge', 'quux')
-        .sides({ local: 1 })
-        .create()
-      const doc = builders
-        .metafile(was)
-        .path('FOO/NEW')
-        .unmerged('local')
-        .build()
+    context('for a local-only file', () => {
+      it('converts the move into a local addition', async function () {
+        const was = await builders
+          .metafile()
+          .path('FOO/OLD')
+          .data('content')
+          .tags('courge', 'quux')
+          .sides({ local: 1 })
+          .create()
+        const doc = builders
+          .metafile(was)
+          .path('FOO/NEW')
+          .unmerged('local')
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFileAsync('local', _.cloneDeep(doc), _.cloneDeep(was))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFileAsync('local', _.cloneDeep(doc), _.cloneDeep(was))
+        )
 
-      const fileAddition = _.defaults(
-        {
-          sides: { target: 1, local: 1 },
-          _id: was._id
-        },
-        doc
-      )
-      should(sideEffects).deepEqual({
-        savedDocs: [fileAddition],
-        resolvedConflicts: []
+        const fileAddition = _.defaults(
+          {
+            sides: { target: 1, local: 1 },
+            _id: was._id
+          },
+          doc
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [fileAddition],
+          resolvedConflicts: []
+        })
+      })
+
+      it('converts an overwriting move into a local update', async function () {
+        const existing = await builders
+          .metafile()
+          .path('FOO/NEW')
+          .data('overwritten')
+          .upToDate()
+          .create()
+        const was = await builders
+          .metafile()
+          .path('FOO/OLD')
+          .data('content')
+          .tags('courge', 'quux')
+          .sides({ local: 1 })
+          .create()
+        const doc = builders
+          .metafile(was)
+          .path(existing.path)
+          .unmerged('local')
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFileAsync('local', _.cloneDeep(doc), _.cloneDeep(was))
+        )
+
+        const fileUpdate = _.defaults(
+          {
+            _id: existing._id,
+            sides: increasedSides(existing.sides, 'local', 1),
+            remote: existing.remote
+          },
+          doc
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            {
+              _id: was._id,
+              _deleted: true
+            },
+            fileUpdate
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
-    it('replaces a remote move with an addition for a remote-only file', async function () {
-      const oldRemoteFile = builders
-        .remoteFile()
-        .inRootDir()
-        .name('OLD')
-        .data('content')
-        .build()
-      const was = await builders
-        .metafile()
-        .fromRemote(oldRemoteFile)
-        .sides({ remote: 1 })
-        .create()
-      const newRemoteFile = builders
-        .remoteFile(oldRemoteFile)
-        .name('NEW')
-        .build()
-      const doc = builders
-        .metafile()
-        .fromRemote(newRemoteFile)
-        .unmerged('remote')
-        .build()
+    context('for a remote-only file', () => {
+      it('converts the move into a remote addition ', async function () {
+        const oldRemoteFile = builders
+          .remoteFile()
+          .inRootDir()
+          .name('OLD')
+          .data('content')
+          .build()
+        const was = await builders
+          .metafile()
+          .fromRemote(oldRemoteFile)
+          .sides({ remote: 1 })
+          .create()
+        const newRemoteFile = builders
+          .remoteFile(oldRemoteFile)
+          .name('NEW')
+          .build()
+        const doc = builders
+          .metafile()
+          .fromRemote(newRemoteFile)
+          .unmerged('remote')
+          .build()
 
-      const sideEffects = await mergeSideEffects(this, () =>
-        this.merge.moveFileAsync('remote', _.cloneDeep(doc), _.cloneDeep(was))
-      )
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFileAsync('remote', _.cloneDeep(doc), _.cloneDeep(was))
+        )
 
-      const fileAddition = _.defaults(
-        {
-          sides: { target: 1, remote: 1 },
-          _id: was._id
-        },
-        doc
-      )
-      should(sideEffects).deepEqual({
-        savedDocs: [fileAddition],
-        resolvedConflicts: []
+        const fileAddition = _.defaults(
+          {
+            sides: { target: 1, remote: 1 },
+            _id: was._id
+          },
+          doc
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [fileAddition],
+          resolvedConflicts: []
+        })
+      })
+
+      it('converts an overwriting move into a remote update', async function () {
+        const existing = await builders
+          .metafile()
+          .path('FOO/NEW')
+          .data('overwritten')
+          .upToDate()
+          .create()
+        const was = await builders
+          .metafile()
+          .path('FOO/OLD')
+          .data('content')
+          .tags('courge', 'quux')
+          .sides({ remote: 1 })
+          .create()
+        const doc = builders
+          .metafile(was)
+          .path(existing.path)
+          .unmerged('remote')
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFileAsync('remote', _.cloneDeep(doc), _.cloneDeep(was))
+        )
+
+        const fileUpdate = _.defaults(
+          {
+            _id: existing._id,
+            sides: increasedSides(existing.sides, 'remote', 1),
+            local: existing.local
+          },
+          doc
+        )
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            {
+              _id: was._id,
+              _deleted: true
+            },
+            fileUpdate
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 

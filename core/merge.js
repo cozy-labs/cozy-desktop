@@ -444,18 +444,34 @@ class Merge {
   ) /*: Promise<*> */ {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
 
+    // If file is moved on Windows, it will never be executable so we keep the
+    // existing value.
+    if (side === 'local' && process.platform === 'win32') {
+      doc.executable = was.executable
+    }
+
     if ((!metadata.wasSynced(was) && !was.moveFrom) || was.trashed) {
+      // The file was moved on the local filesystem but does not exist on the
+      // remote Cozy so we cannot synchronize a move.
+      // We convert the local move into a creation at the move destination path
+      // instead.
       move.convertToDestinationAddition(side, was, doc)
-      return this.pouch.put(doc)
+
+      const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
+      if (file) {
+        // The move overwrote an existing local document. To avoid having 2
+        // documents with the same path in PouchDB, we erase the moved
+        // document's source record and merge its new metadata as an update of
+        // the overwritten document.
+        await this.pouch.eraseDocument(was)
+        metadata.markAsUnmerged(doc, side)
+        return this.updateFileAsync(side, doc)
+      } else {
+        return this.addFileAsync(side, doc)
+      }
     } else if (was.sides && was.sides[side]) {
       metadata.assignMaxDate(doc, was)
       move(side, was, doc)
-
-      // If file is moved on Windows, it will never be executable so we keep the
-      // existing value.
-      if (side === 'local' && process.platform === 'win32') {
-        doc.executable = was.executable
-      }
 
       const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
       if (file) {
