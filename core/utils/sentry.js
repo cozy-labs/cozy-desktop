@@ -105,7 +105,6 @@ const handleBunyanMessage = msg => {
   // Send messages explicitly marked for sentry and all TypeError instances
   if (msg.sentry || (msg.err && msg.err.name === 'TypeError')) {
     const extra = _.omit(msg, [
-      'err',
       'tags',
       'v',
       'hostname',

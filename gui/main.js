@@ -20,7 +20,7 @@ const {
   SYNC_DIR_EMPTY_MESSAGE,
   SYNC_DIR_UNLINKED_MESSAGE
 } = require('../core/local/errors')
-const { MigrationFailedError } = require('../core/migrations/migrations')
+const { MigrationFailedError } = require('../core/migrations')
 const config = require('../core/config')
 const winRegistry = require('../core/utils/win_registry')
 
