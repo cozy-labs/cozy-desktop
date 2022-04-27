@@ -4,6 +4,7 @@
  */
 
 const path = require('path')
+const { Promise } = require('bluebird')
 
 const metadata = require('../metadata')
 const { SCHEMA_INITIAL_VERSION } = require('./constants')
@@ -352,8 +353,9 @@ module.exports = ([
       docs /*: SavedMetadata[] */,
       { remote } /*: InjectedDependencies */
     ) /*: Promise<SavedMetadata[]> */ => {
-      return Promise.all(
-        docs.map(async doc => {
+      return Promise.map(
+        docs,
+        async doc => {
           const remoteDir = await remote.remoteCozy.findDir(doc.remote._id)
 
           if (remoteDir != null) {
@@ -400,7 +402,10 @@ module.exports = ([
           }
 
           return doc
-        })
+        },
+        // XXX: Avoid exhausting network resources by limiting the number of
+        // concurrent requests.
+        { concurrency: 10 }
       )
     }
   }
