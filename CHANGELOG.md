@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.34.1 - 2022-04-27
+
+Improvements for all users:
+
+- We fixed an issue with a data migration shipped with the previous release. It
+  affected clients connected to Cozies with a large number of directories.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.34.0 - 2022-04-27
 
 Improvements for all users:
