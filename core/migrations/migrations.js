@@ -356,7 +356,7 @@ module.exports = ([
       return Promise.map(
         docs,
         async doc => {
-          const remoteDir = await remote.remoteCozy.findDir(doc.remote._id)
+          const remoteDir = await remote.remoteCozy.findDirMaybe(doc.remote._id)
 
           if (remoteDir != null) {
             if (
@@ -385,7 +385,7 @@ module.exports = ([
 
           const { overwrite } = doc
           if (overwrite != null && overwrite.remote != null) {
-            const remoteOverwritten = await remote.remoteCozy.findDir(
+            const remoteOverwritten = await remote.remoteCozy.findDirMaybe(
               overwrite.remote._id
             )
 

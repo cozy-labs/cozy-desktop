@@ -502,9 +502,7 @@ describe('RemoteCozy', function () {
     it('fetches a remote directory matching the given id', async function () {
       const remoteDir = await builders.remoteDir().create()
 
-      const foundDir = await remoteCozy.find(remoteDir._id)
-
-      foundDir.should.be.deepEqual(remoteDir)
+      await should(remoteCozy.find(remoteDir._id)).be.fulfilledWith(remoteDir)
     })
 
     it('fetches a remote root file including its path', async function () {
@@ -514,9 +512,9 @@ describe('RemoteCozy', function () {
         .name('foo')
         .create()
 
-      const foundFile = await remoteCozy.find(remoteFile._id)
-
-      foundFile.should.deepEqual(_.defaults({ path: '/foo' }, remoteFile))
+      await should(remoteCozy.find(remoteFile._id)).be.fulfilledWith(
+        _.defaults({ path: '/foo' }, remoteFile)
+      )
     })
 
     it('fetches a remote non-root file including its path', async function () {
@@ -531,9 +529,15 @@ describe('RemoteCozy', function () {
         .inDir(remoteDir)
         .create()
 
-      const foundFile = await remoteCozy.find(remoteFile._id)
+      await should(remoteCozy.find(remoteFile._id)).be.fulfilledWith(
+        _.defaults({ path: '/foo/bar' }, remoteFile)
+      )
+    })
 
-      foundFile.should.deepEqual(_.defaults({ path: '/foo/bar' }, remoteFile))
+    it('throws an error when directory is not found', async function () {
+      await should(remoteCozy.find('missing')).be.rejectedWith({
+        status: 404
+      })
     })
   })
 
@@ -541,15 +545,59 @@ describe('RemoteCozy', function () {
     it('does the same as find() when file or directory exists', async function () {
       const remoteDir = await builders.remoteDir().create()
 
-      const foundDir = await remoteCozy.findMaybe(remoteDir._id)
-
-      foundDir.should.deepEqual(remoteDir)
+      await should(remoteCozy.findMaybe(remoteDir._id)).be.fulfilledWith(
+        remoteDir
+      )
     })
 
     it('returns null when file or directory is not found', async function () {
-      const found = await remoteCozy.findMaybe('missing')
+      await should(remoteCozy.findMaybe('missing')).be.fulfilledWith(null)
+    })
+  })
 
-      should.not.exist(found)
+  describe('findDir', function () {
+    it('fetches a remote directory matching the given id', async function () {
+      const remoteDir = await builders.remoteDir().create()
+
+      await should(remoteCozy.findDir(remoteDir._id)).be.fulfilledWith(
+        remoteDir
+      )
+    })
+
+    it('throws an error if a remote file matches the given id', async function () {
+      const remoteFile = await builders.remoteFile().create()
+
+      await should(remoteCozy.findDir(remoteFile._id)).be.rejectedWith(
+        /Unexpected file/
+      )
+    })
+
+    it('throws an error when directory is not found', async function () {
+      await should(remoteCozy.findDir('missing')).be.rejectedWith({
+        status: 404
+      })
+    })
+  })
+
+  describe('findDirMaybe', function () {
+    it('does the same as findDir() when directory exists', async function () {
+      const remoteDir = await builders.remoteDir().create()
+
+      await should(remoteCozy.findDirMaybe(remoteDir._id)).be.fulfilledWith(
+        remoteDir
+      )
+    })
+
+    it('does the same as findDir() when file exists', async function () {
+      const remoteFile = await builders.remoteFile().create()
+
+      await should(remoteCozy.findDirMaybe(remoteFile._id)).be.rejectedWith(
+        /Unexpected file/
+      )
+    })
+
+    it('returns null when directory is not found', async function () {
+      await should(remoteCozy.findDirMaybe('missing')).be.fulfilledWith(null)
     })
   })
 

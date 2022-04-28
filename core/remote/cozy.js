@@ -359,6 +359,17 @@ class RemoteCozy {
     return this.toRemoteDoc(await this.client.files.statById(id))
   }
 
+  async findMaybe(
+    id /*: string */
+  ) /*: Promise<?(FullRemoteFile|RemoteDir)> */ {
+    try {
+      return await this.find(id)
+    } catch (err) {
+      if (err.status === 404) return null
+      else throw err
+    }
+  }
+
   async findDir(id /*: string */) /*: Promise<RemoteDir> */ {
     const remoteDir = await this.client.files.statById(id)
     const doc = await this.toRemoteDoc(remoteDir)
@@ -368,13 +379,12 @@ class RemoteCozy {
     return doc
   }
 
-  async findMaybe(
-    id /*: string */
-  ) /*: Promise<?(FullRemoteFile|RemoteDir)> */ {
+  async findDirMaybe(id /*: string */) /*: Promise<?RemoteDir> */ {
     try {
-      return await this.find(id)
+      return await this.findDir(id)
     } catch (err) {
-      return null
+      if (err.status === 404) return null
+      else throw err
     }
   }
 
