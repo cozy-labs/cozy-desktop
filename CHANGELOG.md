@@ -1,5 +1,17 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.34.2 - 2022-04-28
+
+Improvements for all users:
+
+- We fixed another issue with the latest data migration. It affected users who
+  had deleted directories which were still known to the local PouchDB database.
+  Missing directories will now be handled appropriately.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.34.1 - 2022-04-27
 
 Improvements for all users:
