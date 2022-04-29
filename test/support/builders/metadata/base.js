@@ -338,11 +338,8 @@ module.exports = class BaseMetadataBuilder {
   _ensureRemote() /*: void */ {
     if (
       this.doc.remote != null &&
-      (!this.doc.sides ||
-        !this.doc.sides.local ||
-        (this.doc.sides.remote &&
-          (this.doc.sides.remote < this.doc.sides.local ||
-            remoteIsUpToDate(this.doc))))
+      (remoteIsUpToDate(this.doc) ||
+        _.get(this.doc, 'sides.remote') < _.get(this.doc, 'sides.local'))
     ) {
       return
     }
