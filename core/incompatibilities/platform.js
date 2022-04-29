@@ -28,7 +28,7 @@ export type ReservedCharsIncompatibility = {|
   type: 'reservedChars',
   name: string,
   platform: string,
-  reservedChars?: Set<SingleCharString>
+  reservedChars?: SingleCharString[]
 |}
 export type ReservedNameIncompatibility = {|
   type: 'reservedName',
@@ -241,7 +241,11 @@ const detectNameIncompatibilities = (
       type: 'reservedChars',
       name,
       platform,
-      reservedChars: new Set(reservedChars)
+      // XXX: We build a Set to make sure each reserved character is present
+      // only once but transform it back into an Array as Sets are not
+      // serializable (i.e. they're transformed into an empty Object when saved
+      // into PouchDB).
+      reservedChars: Array.from(new Set(reservedChars))
     })
   }
 

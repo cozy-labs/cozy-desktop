@@ -19,7 +19,7 @@ describe('core/incompatibilities/platform', () => {
         {
           type: 'reservedChars',
           name,
-          reservedChars: new Set(reservedChars),
+          reservedChars,
           platform
         }
       ])
@@ -52,7 +52,7 @@ describe('core/incompatibilities/platform', () => {
               {
                 type: 'reservedChars',
                 name,
-                reservedChars: new Set(char),
+                reservedChars: [char],
                 platform
               }
             ]
@@ -104,7 +104,7 @@ describe('core/incompatibilities/platform', () => {
               {
                 type: 'reservedChars',
                 name,
-                reservedChars: new Set(char),
+                reservedChars: [char],
                 platform
               }
             ]
@@ -164,7 +164,7 @@ describe('core/incompatibilities/platform', () => {
               {
                 type: 'reservedChars',
                 name,
-                reservedChars: new Set(char),
+                reservedChars: [char],
                 platform
               }
             ]

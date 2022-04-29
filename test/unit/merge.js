@@ -2923,6 +2923,7 @@ describe('Merge', function () {
               const doc = builders
                 .metadir(was)
                 .path(existing.path)
+                .updatedAt(new Date())
                 .unmerged('local')
                 .build()
 
@@ -2934,15 +2935,15 @@ describe('Merge', function () {
                 )
               )
 
-              const overwrittenFolder = {
+              const deletedSourceFolder = {
                 _deleted: true,
-                _id: existing._id
+                _id: was._id
               }
-              const folderAddition = _.defaults(
+              const overwrittenFolder = _.defaults(
                 {
-                  sides: { target: 1, local: 1 },
-                  overwrite: existing,
-                  _id: was._id
+                  _id: existing._id,
+                  sides: increasedSides(existing.sides, 'local', 1),
+                  remote: existing.remote
                 },
                 _.omit(doc, ['_rev'])
               )
@@ -2960,7 +2961,11 @@ describe('Merge', function () {
                 _.omit(child, ['_rev'])
               )
               should(sideEffects).deepEqual({
-                savedDocs: [overwrittenFolder, folderAddition, childAddition],
+                savedDocs: [
+                  deletedSourceFolder,
+                  overwrittenFolder,
+                  childAddition
+                ],
                 resolvedConflicts: []
               })
             })
@@ -3146,6 +3151,63 @@ describe('Merge', function () {
           })
         })
 
+        context(
+          'and platform incompatibilities of the folder are solved',
+          () => {
+            it('updates the incompatibilities of its children', async function () {
+              const was = await builders
+                .metadir()
+                .incompatible()
+                .sides({ remote: 1 })
+                .create()
+              const child = await builders
+                .metafile()
+                .path(path.join(was.path, 'file'))
+                .sides({ remote: 1 })
+                .create()
+              const doc = builders
+                .metadir(was)
+                .path('fixed')
+                .unmerged('remote')
+                .build()
+
+              const sideEffects = await mergeSideEffects(this, () =>
+                this.merge.moveFolderAsync(
+                  'remote',
+                  _.cloneDeep(doc),
+                  _.cloneDeep(was)
+                )
+              )
+
+              should(sideEffects).deepEqual({
+                savedDocs: [
+                  _.defaults(
+                    {
+                      _id: was._id,
+                      sides: { target: 1, remote: 1 }
+                    },
+                    _.omit(doc, ['_rev', 'incompatibilities'])
+                  ),
+                  _.defaultsDeep(
+                    {
+                      sides: { target: 1, remote: 1 },
+                      path: child.path.replace(was.path, doc.path),
+                      remote: {
+                        path: child.remote.path.replace(
+                          was.remote.path,
+                          doc.remote.path
+                        )
+                      }
+                    },
+                    _.omit(child, ['_rev', 'incompatibilities'])
+                  )
+                ],
+                resolvedConflicts: []
+              })
+            })
+          }
+        )
+
         context('and the destination exists', () => {
           let existing
           context('and it is up-to-date', () => {
@@ -3176,11 +3238,20 @@ describe('Merge', function () {
                 )
               )
 
-              const folderAddition = _.defaults(
+              const deletedSourceFolder = {
+                _deleted: true,
+                _id: was._id
+              }
+              const overwrittenFolder = _.defaults(
                 {
-                  sides: { target: 1, remote: 1 },
-                  overwrite: existing,
-                  _id: was._id
+                  _id: existing._id,
+                  // XXX: sides are not updated and so no changes will be
+                  // propagated to the local filesystem because the overwriting
+                  // dir is equivalent to the overwritten one. If a remote
+                  // attribute like `tags` were different, we would see a sides
+                  // change here.
+                  sides: existing.sides,
+                  local: existing.local
                 },
                 doc
               )
@@ -3199,11 +3270,8 @@ describe('Merge', function () {
               )
               should(sideEffects).deepEqual({
                 savedDocs: [
-                  {
-                    _deleted: true,
-                    _id: existing._id
-                  },
-                  folderAddition,
+                  deletedSourceFolder,
+                  overwrittenFolder,
                   childAddition
                 ],
                 resolvedConflicts: []
@@ -3742,6 +3810,60 @@ describe('Merge', function () {
           )
         ],
         resolvedConflicts: []
+      })
+    })
+
+    context('when platform incompatibilities of the folder are solved', () => {
+      it('updates the incompatibilities of its children', async function () {
+        const was = await builders
+          .metadir()
+          .incompatible()
+          .sides({ remote: 1 })
+          .create()
+        const child = await builders
+          .metafile()
+          .path(path.join(was.path, 'file'))
+          .sides({ remote: 1 })
+          .create()
+        const doc = builders
+          .metadir(was)
+          .path('fixed')
+          .unmerged('remote')
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.moveFolderRecursivelyAsync(
+            'remote',
+            _.cloneDeep(doc),
+            _.cloneDeep(was)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaults(
+              {
+                _id: was._id,
+                sides: increasedSides(was.sides, 'remote', 1),
+                moveFrom: was
+              },
+              _.omit(doc, ['_rev', 'incompatibilities'])
+            ),
+            _.defaultsDeep(
+              {
+                path: child.path.replace(was.path, doc.path),
+                remote: {
+                  path: child.remote.path.replace(
+                    was.remote.path,
+                    doc.remote.path
+                  )
+                }
+              },
+              _.omit(child, ['_rev', 'incompatibilities'])
+            )
+          ],
+          resolvedConflicts: []
+        })
       })
     })
 
@@ -4596,10 +4718,9 @@ describe('Merge', function () {
           .trashed()
           .changedSide(otherSide(this.side))
           .create()
-        const doc = builders.metadir(was).build()
 
         const sideEffects = await mergeSideEffects(this, () =>
-          this.merge.deleteFolderAsync(this.side, _.cloneDeep(doc))
+          this.merge.deleteFolderAsync(this.side, _.cloneDeep(was))
         )
 
         should(sideEffects).deepEqual({
@@ -4609,7 +4730,6 @@ describe('Merge', function () {
                 // We increase the side by 2 since the other side was increased
                 // when `was` was marked for deletion
                 sides: increasedSides(was.sides, this.side, 2),
-                [this.side]: doc[this.side],
                 trashed: true
               },
               _.omit(was, ['_rev'])

@@ -266,7 +266,7 @@ describe('metadata', function () {
             name: 'q"ux',
             path: 'f?o:o\\ba|r\\baz\\q"ux',
             docType: 'file',
-            reservedChars: new Set('"'),
+            reservedChars: ['"'],
             platform
           },
           {
@@ -274,7 +274,7 @@ describe('metadata', function () {
             name: 'ba|r',
             path: 'f?o:o\\ba|r',
             docType: 'folder',
-            reservedChars: new Set('|'),
+            reservedChars: ['|'],
             platform
           },
           {
@@ -282,7 +282,7 @@ describe('metadata', function () {
             name: 'f?o:o',
             path: 'f?o:o',
             docType: 'folder',
-            reservedChars: new Set('?:'),
+            reservedChars: ['?', ':'],
             platform
           }
         ])
