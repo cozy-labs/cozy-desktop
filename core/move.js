@@ -11,6 +11,7 @@
 const _ = require('lodash')
 
 const metadata = require('./metadata')
+const pathUtils = require('./utils/path')
 
 /*::
 import type { Metadata, SavedMetadata } from './metadata'
@@ -66,7 +67,8 @@ function child(
 function convertToDestinationAddition(
   side /*: SideName */,
   src /*: SavedMetadata */,
-  dst /*: Metadata */
+  dst /*: Metadata */,
+  { updateSide } /*: { updateSide: boolean } */
 ) {
   metadata.removeActionHints(src)
 
@@ -75,4 +77,15 @@ function convertToDestinationAddition(
   dst._id = src._id
   dst._rev = src._rev
   metadata.markSide(side, dst)
+
+  // Update side path
+  if (updateSide && dst[side] != null) {
+    if (side === 'local') {
+      metadata.updateLocal(dst, { ...dst.local, path: dst.path })
+    } else {
+      metadata.updateRemote(dst, {
+        path: pathUtils.localToRemote(dst.path)
+      })
+    }
+  }
 }

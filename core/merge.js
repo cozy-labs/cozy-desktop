@@ -455,7 +455,7 @@ class Merge {
       // remote Cozy so we cannot synchronize a move.
       // We convert the local move into a creation at the move destination path
       // instead.
-      move.convertToDestinationAddition(side, was, doc)
+      move.convertToDestinationAddition(side, was, doc, { updateSide: true })
 
       const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
       if (file) {
@@ -600,7 +600,9 @@ class Merge {
 
     const singleSide = metadata.detectSingleSide(was)
     if (singleSide) {
-      move.convertToDestinationAddition(singleSide, was, folder)
+      move.convertToDestinationAddition(singleSide, was, folder, {
+        updateSide: true
+      })
     } else {
       move(side, was, folder)
     }
@@ -646,7 +648,17 @@ class Merge {
 
       const singleSide = metadata.detectSingleSide(src)
       if (singleSide) {
-        move.convertToDestinationAddition(singleSide, src, dst)
+        // XXX: We should update the side's path only if the child exists on the
+        // same side as the moved folder. Otherwise, the document is still at
+        // its old path on `singleSide` and the metadata should reflect this
+        // even though we have to update its main path to make sure future
+        // requests will find it (since we're moving its parent on `side`).
+        // Local watchers are supposed to look for local `path` and the remote
+        // watcher cares about _ids) so not updating the opposite side should
+        // not create issues.
+        move.convertToDestinationAddition(singleSide, src, dst, {
+          updateSide: side === singleSide
+        })
       } else {
         move.child(side, src, dst)
       }
