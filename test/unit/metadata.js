@@ -20,6 +20,7 @@ const {
   invalidPath,
   markSide,
   markAsUpToDate,
+  assignPlatformIncompatibilities,
   detectIncompatibilities,
   sameBinary,
   equivalent,
@@ -221,6 +222,30 @@ describe('metadata', function () {
 
     it('returns false if the checksum is OK', function () {
       should(invalidChecksum(builders.metafile().data('').build())).be.false()
+    })
+  })
+
+  describe('assignPlatformIncompatibilities', () => {
+    const syncPath = ';'
+
+    it('adds incompatibilities to given doc if any', () => {
+      const incompatible = builders.metafile().incompatible().build()
+      const doc = builders.metafile().path('foo/bar').build()
+
+      doc.path = incompatible.path
+      assignPlatformIncompatibilities(doc, syncPath)
+
+      should(doc).have.property('incompatibilities').and.not.be.empty()
+    })
+
+    it('removes incompatibilities from given doc if none', () => {
+      const incompatible = builders.metafile().incompatible().build()
+      const doc = builders.metafile().path('foo/bar').build()
+
+      incompatible.path = doc.path
+      assignPlatformIncompatibilities(incompatible, syncPath)
+
+      should(incompatible).not.have.property('incompatibilities')
     })
   })
 

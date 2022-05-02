@@ -435,6 +435,7 @@ function assignPlatformIncompatibilities(
 ) /*: void */ {
   const incompatibilities = detectIncompatibilities(doc, syncPath)
   if (incompatibilities.length > 0) doc.incompatibilities = incompatibilities
+  else if (doc.incompatibilities) delete doc.incompatibilities
 }
 
 // Return true if the checksum is invalid
