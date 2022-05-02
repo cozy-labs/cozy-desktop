@@ -130,12 +130,10 @@ module.exports = class BaseMetadataBuilder {
   incompatible() /*: this */ {
     const { platform } = process
 
-    if (platform === 'win32' || platform === 'darwin') {
-      // Colon is currently considered forbidden on both platforms by the app
-      // (although it probably shouldn't on macOS).
+    if (platform === 'win32') {
       return this.path('in:compatible')
     } else {
-      throw new Error(`Cannot build incompatible doc on ${platform}`)
+      return this.path(Array(256).fill('a').join(''))
     }
   }
 
@@ -338,11 +336,8 @@ module.exports = class BaseMetadataBuilder {
   _ensureRemote() /*: void */ {
     if (
       this.doc.remote != null &&
-      (!this.doc.sides ||
-        !this.doc.sides.local ||
-        (this.doc.sides.remote &&
-          (this.doc.sides.remote < this.doc.sides.local ||
-            remoteIsUpToDate(this.doc))))
+      (remoteIsUpToDate(this.doc) ||
+        _.get(this.doc, 'sides.remote') < _.get(this.doc, 'sides.local'))
     ) {
       return
     }

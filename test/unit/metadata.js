@@ -20,6 +20,7 @@ const {
   invalidPath,
   markSide,
   markAsUpToDate,
+  assignPlatformIncompatibilities,
   detectIncompatibilities,
   sameBinary,
   equivalent,
@@ -224,6 +225,30 @@ describe('metadata', function () {
     })
   })
 
+  describe('assignPlatformIncompatibilities', () => {
+    const syncPath = ';'
+
+    it('adds incompatibilities to given doc if any', () => {
+      const incompatible = builders.metafile().incompatible().build()
+      const doc = builders.metafile().path('foo/bar').build()
+
+      doc.path = incompatible.path
+      assignPlatformIncompatibilities(doc, syncPath)
+
+      should(doc).have.property('incompatibilities').and.not.be.empty()
+    })
+
+    it('removes incompatibilities from given doc if none', () => {
+      const incompatible = builders.metafile().incompatible().build()
+      const doc = builders.metafile().path('foo/bar').build()
+
+      incompatible.path = doc.path
+      assignPlatformIncompatibilities(incompatible, syncPath)
+
+      should(incompatible).not.have.property('incompatibilities')
+    })
+  })
+
   describe('detectIncompatibilities', () => {
     const syncPath = ';'
 
@@ -241,7 +266,7 @@ describe('metadata', function () {
             name: 'q"ux',
             path: 'f?o:o\\ba|r\\baz\\q"ux',
             docType: 'file',
-            reservedChars: new Set('"'),
+            reservedChars: ['"'],
             platform
           },
           {
@@ -249,7 +274,7 @@ describe('metadata', function () {
             name: 'ba|r',
             path: 'f?o:o\\ba|r',
             docType: 'folder',
-            reservedChars: new Set('|'),
+            reservedChars: ['|'],
             platform
           },
           {
@@ -257,7 +282,7 @@ describe('metadata', function () {
             name: 'f?o:o',
             path: 'f?o:o',
             docType: 'folder',
-            reservedChars: new Set('?:'),
+            reservedChars: ['?', ':'],
             platform
           }
         ])

@@ -444,18 +444,34 @@ class Merge {
   ) /*: Promise<*> */ {
     log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
 
+    // If file is moved on Windows, it will never be executable so we keep the
+    // existing value.
+    if (side === 'local' && process.platform === 'win32') {
+      doc.executable = was.executable
+    }
+
     if ((!metadata.wasSynced(was) && !was.moveFrom) || was.trashed) {
-      move.convertToDestinationAddition(side, was, doc)
-      return this.pouch.put(doc)
+      // The file was moved on the local filesystem but does not exist on the
+      // remote Cozy so we cannot synchronize a move.
+      // We convert the local move into a creation at the move destination path
+      // instead.
+      move.convertToDestinationAddition(side, was, doc, { updateSide: true })
+
+      const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
+      if (file) {
+        // The move overwrote an existing local document. To avoid having 2
+        // documents with the same path in PouchDB, we erase the moved
+        // document's source record and merge its new metadata as an update of
+        // the overwritten document.
+        await this.pouch.eraseDocument(was)
+        metadata.markAsUnmerged(doc, side)
+        return this.updateFileAsync(side, doc)
+      } else {
+        return this.addFileAsync(side, doc)
+      }
     } else if (was.sides && was.sides[side]) {
       metadata.assignMaxDate(doc, was)
       move(side, was, doc)
-
-      // If file is moved on Windows, it will never be executable so we keep the
-      // existing value.
-      if (side === 'local' && process.platform === 'win32') {
-        doc.executable = was.executable
-      }
 
       const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
       if (file) {
@@ -531,40 +547,127 @@ class Merge {
 
     metadata.assignMaxDate(doc, was)
 
-    const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
-    if (folder) {
-      if (folder.trashed) {
-        doc.overwrite = folder.overwrite || folder
-      }
+    if (!metadata.wasSynced(was) || was.trashed) {
+      // The folder was moved on the local filesystem but does not exist on the
+      // remote Cozy so we cannot synchronize a move.
+      // We convert the local move into a creation at the move destination path
+      // instead.
+      move.convertToDestinationAddition(side, was, doc, { updateSide: true })
 
-      const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
-        { side, doc, was },
-        folder
+      const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(
+        doc.path
       )
-      if (idConflict) {
-        log.warn({ idConflict }, IdConflict.description(idConflict))
-        return this.resolveConflictAsync(side, doc)
-      }
+      if (folder) {
+        // The move overwrote an existing local document. To avoid having 2
+        // documents with the same path in PouchDB, the moved document's source
+        // record was erased in `moveFolderAsync()` and we'll merge its new
+        // metadata as an update of the overwritten document.
 
-      if (doc.overwrite || metadata.isAtLeastUpToDate(side, folder)) {
-        // On macOS and Windows, two documents can share the same id with a
-        // different path.
-        // This means we'll see moves with both `folder` and `doc` sharing the
-        // same id when changing the folder name's case or encoding and in this
-        // situation we're not actually doing an overwriting move so we
-        // shouldn't reuse the existing `folder`'s rev nor overwrite it.
-        if (folder.path === doc.path) {
-          doc.overwrite = folder.overwrite || folder
-          await this.pouch.eraseDocument(folder)
+        if (metadata.isAtLeastUpToDate(side, folder)) {
+          await this.pouch.eraseDocument(was)
+          metadata.markAsUnmerged(doc, side)
+          await this.putFolderRecursivelyAsync(side, doc, was)
+        } else {
+          const dst = await this.resolveConflictAsync(side, doc)
+          await this.putFolderRecursivelyAsync(side, dst, was)
         }
+      } else {
+        await this.putFolderRecursivelyAsync(side, doc, was)
+      }
+    } else {
+      const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(
+        doc.path
+      )
+      if (folder) {
+        if (folder.trashed) {
+          doc.overwrite = folder.overwrite || folder
+        }
+
+        const idConflict /*: ?IdConflictInfo */ = IdConflict.detect(
+          { side, doc, was },
+          folder
+        )
+        if (idConflict) {
+          log.warn({ idConflict }, IdConflict.description(idConflict))
+          return this.resolveConflictAsync(side, doc)
+        }
+
+        if (doc.overwrite || metadata.isAtLeastUpToDate(side, folder)) {
+          // On macOS and Windows, two documents can share the same id with a
+          // different path.
+          // This means we'll see moves with both `folder` and `doc` sharing the
+          // same id when changing the folder name's case or encoding and in this
+          // situation we're not actually doing an overwriting move so we
+          // shouldn't reuse the existing `folder`'s rev nor overwrite it.
+          if (folder.path === doc.path) {
+            doc.overwrite = folder.overwrite || folder
+            // XXX: Erasing the overwritten children's records is done in
+            // `moveFolderRecursivelyAsync()`.
+            await this.pouch.eraseDocument(folder)
+          }
+          return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
+        }
+
+        const dst = await this.resolveConflictAsync(side, doc)
+        return this.moveFolderRecursivelyAsync(side, dst, was, newRemoteRevs)
+      } else {
         return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
       }
+    }
+  }
 
-      //const dst = await this.resolveConflictAsync(side, doc)
-      const dst = await this.resolveConflictAsync(side, doc)
-      return this.moveFolderRecursivelyAsync(side, dst, was, newRemoteRevs)
-    } else {
-      return this.moveFolderRecursivelyAsync(side, doc, was, newRemoteRevs)
+  async putFolderRecursivelyAsync(
+    side /*: SideName */,
+    folder /*: Metadata  */,
+    was /*: SavedMetadata */
+  ) {
+    await this.putFolderAsync(side, folder)
+
+    const children = await this.pouch.byRecursivePath(was.path)
+    const dstChildren = await this.pouch.byRecursivePath(folder.path)
+    const makeDestinationPath = doc =>
+      metadata.newChildPath(doc.path, was.path, folder.path)
+
+    for (const child of children) {
+      const dstPath = makeDestinationPath(child)
+      const movedChild = { ...child, path: dstPath }
+
+      this.updateChildIncompatibilities(movedChild)
+
+      if (!metadata.wasSynced(child) || child.trashed) {
+        // The folder was moved on the local filesystem but does not exist on the
+        // remote Cozy so we cannot synchronize a move.
+        // We convert the local move into a creation at the move destination path
+        // instead.
+        move.convertToDestinationAddition(side, child, movedChild, {
+          updateSide: true
+        })
+
+        const overwrittenChild = dstChildren.find(
+          dst => metadata.id(dst.path) === metadata.id(movedChild.path)
+        )
+        if (overwrittenChild) {
+          // The move overwrote an existing local document. To avoid having 2
+          // documents with the same path in PouchDB, the moved document's source
+          // record was erased in `moveFolderAsync()` and we'll merge its new
+          // metadata as an update of the overwritten document.
+          await this.pouch.eraseDocument(child)
+          metadata.markAsUnmerged(movedChild, side)
+          if (movedChild.docType === 'file') {
+            await this.updateFileAsync(side, movedChild)
+          } else {
+            await this.putFolderAsync(side, movedChild)
+          }
+        } else {
+          if (movedChild.docType === 'file') {
+            await this.updateFileAsync(side, movedChild)
+          } else {
+            await this.putFolderAsync(side, movedChild)
+          }
+        }
+      } else {
+        await this.moveFileAsync(side, child, movedChild)
+      }
     }
   }
 
@@ -581,18 +684,13 @@ class Merge {
     )
     const docs = await this.pouch.byRecursivePath(was.path)
     const dstChildren = await this.pouch.byRecursivePath(folder.path)
-
-    const singleSide = metadata.detectSingleSide(was)
-    if (singleSide) {
-      move.convertToDestinationAddition(singleSide, was, folder)
-    } else {
-      move(side, was, folder)
-    }
-    let bulk = [folder]
-
     const makeDestinationPath = doc =>
       metadata.newChildPath(doc.path, was.path, folder.path)
 
+    move(side, was, folder)
+
+    // XXX: Store all changes to be merged in bulk at the end of the method call
+    let bulk = [folder]
     for (let doc of docs) {
       // Don't move children marked for deletion as we can simply propagate the
       // deletion at their original path.
@@ -630,23 +728,22 @@ class Merge {
 
       const singleSide = metadata.detectSingleSide(src)
       if (singleSide) {
-        move.convertToDestinationAddition(singleSide, src, dst)
+        // XXX: We should update the side's path only if the child exists on the
+        // same side as the moved folder. Otherwise, the document is still at
+        // its old path on `singleSide` and the metadata should reflect this
+        // even though we have to update its main path to make sure future
+        // requests will find it (since we're moving its parent on `side`).
+        // Local watchers are supposed to look for local `path` and the remote
+        // watcher cares about _ids) so not updating the opposite side should
+        // not create issues.
+        move.convertToDestinationAddition(singleSide, src, dst, {
+          updateSide: side === singleSide
+        })
       } else {
         move.child(side, src, dst)
       }
 
-      // TODO: make sure that detecting an incompatibility on a child's
-      // destination path actually blocks the synchronization of the parent
-      // directory.
-      //
-      // FIXME: Find a cleaner way to pass the syncPath to the Merge
-      const incompatibilities = metadata.detectIncompatibilities(
-        dst,
-        this.pouch.config.syncPath
-      )
-      if (incompatibilities.length > 0)
-        dst.incompatibilities = incompatibilities
-      else delete dst.incompatibilities
+      this.updateChildIncompatibilities(dst)
 
       if (side === 'local' && dst.sides.local) {
         // Update the `local` attribute of children existing in the local folder
@@ -1021,6 +1118,21 @@ class Merge {
     delete folder.errors
 
     return this.pouch.bulkDocs(children.concat(folder))
+  }
+
+  updateChildIncompatibilities(child /*: SavedMetadata */) {
+    // TODO: make sure that detecting an incompatibility on a child's
+    // destination path actually blocks the synchronization of the parent
+    // directory.
+    //
+    // FIXME: Find a cleaner way to pass the syncPath to the Merge
+    const incompatibilities = metadata.detectIncompatibilities(
+      child,
+      this.pouch.config.syncPath
+    )
+    if (incompatibilities.length > 0)
+      child.incompatibilities = incompatibilities
+    else delete child.incompatibilities
   }
 }
 

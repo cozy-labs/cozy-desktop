@@ -2082,7 +2082,7 @@ describe('RemoteWatcher', function () {
             name: 'b<a>r',
             path: 'f:oo\\b<a>r',
             docType: 'file',
-            reservedChars: new Set('<>'),
+            reservedChars: ['<', '>'],
             platform
           },
           {
@@ -2090,7 +2090,7 @@ describe('RemoteWatcher', function () {
             name: 'f:oo',
             path: 'f:oo',
             docType: 'folder',
-            reservedChars: new Set(':'),
+            reservedChars: [':'],
             platform
           }
         ])

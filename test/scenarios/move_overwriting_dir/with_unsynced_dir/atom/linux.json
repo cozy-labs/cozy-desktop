@@ -1,0 +1,60 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "overwriting"
+    }
+  ],
+  [],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "overwriting/overwritten"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "overwriting/overwritten"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "overwriting/file"
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "overwriting/file"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dir/overwritten"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dir"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "path": "dir",
+      "oldPath": "overwriting"
+    }
+  ]
+]
