@@ -2,6 +2,7 @@
 
 // Initialize `remote` module so that renderer processes can use it.
 require('@electron/remote/main').initialize()
+const { app, Menu, Notification, ipcMain, dialog } = require('electron')
 
 const Desktop = require('../core/app.js')
 const { openNote } = require('./utils/notes')
@@ -24,19 +25,19 @@ const { MigrationFailedError } = require('../core/migrations')
 const config = require('../core/config')
 const winRegistry = require('../core/utils/win_registry')
 
-const autoLaunch = require('./js/autolaunch')
-const lastFiles = require('./js/lastfiles')
 const tray = require('./js/tray')
 const TrayWM = require('./js/tray.window.js')
 const UpdaterWM = require('./js/updater.window.js')
 const HelpWM = require('./js/help.window.js')
 const OnboardingWM = require('./js/onboarding.window.js')
 
+const autoLaunch = require('./js/autolaunch')
+const lastFiles = require('./js/lastfiles')
 const { fileInfo } = require('./js/fileutils')
 const { buildAppMenu } = require('./js/appmenu')
 const i18n = require('./js/i18n')
 const { translate } = i18n
-const { app, Menu, Notification, ipcMain, dialog } = require('electron')
+const { exit, restart } = require('./js/actions')
 
 const DAILY = 3600 * 24 * 1000
 
@@ -115,7 +116,7 @@ const setupDesktop = async () => {
         buttons: [translate('AppMenu Close')]
       })
     }
-    app.quit()
+    await exit(0)
     return
   }
 }
@@ -243,12 +244,12 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
         .stopSync()
         .then(() => desktop.removeConfig())
         .then(() => log.info('removed'))
-        .then(() => trayWindow.doRestart())
+        .then(() => restart())
         .catch(err =>
           log.error({ err, sentry: true }, 'failed disconnecting client')
         )
     } else {
-      app.quit()
+      await exit(0)
     }
     return // no notification
   } else if (msg === SYNC_DIR_UNLINKED_MESSAGE) {
@@ -270,8 +271,8 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
       .then(() => desktop.pouch.db.destroy())
       .then(() => (desktop.config.syncPath = undefined))
       .then(() => desktop.config.persist())
-      .then(() => log.info('removed'))
-      .then(() => trayWindow.doRestart())
+      .then(() => log.info('Sync dir reset'))
+      .then(() => restart())
       .catch(err =>
         log.error({ err, sentry: true }, 'failed disconnecting client')
       )
@@ -527,7 +528,7 @@ app.on('open-file', async (event, filePath) => {
   if (await Promise.all(openedNotes)) {
     if (noSync) {
       log.info('all notes are closed. Quitting app')
-      app.quit()
+      await exit(0)
     }
     return
   }
@@ -561,7 +562,7 @@ app.on('ready', async () => {
         message: translate('Error Bad GLIBCXX version'),
         buttons: [translate('AppMenu Close')]
       })
-      app.quit()
+      await exit(0)
       return
     } else throw err
   }
@@ -582,7 +583,7 @@ app.on('ready', async () => {
         filePath.endsWith('.cozy-note') &&
         (await openNote(filePath, { desktop }))
       ) {
-        app.quit()
+        await exit(0)
         return
       }
     }
