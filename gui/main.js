@@ -89,6 +89,8 @@ const toggleWindow = bounds => {
 
 const setupDesktop = async () => {
   try {
+    // TODO: allow setting desktop up without running migrations (when opening
+    // a cozy-note)?
     await desktop.setup()
     desktopIsReady()
 
@@ -218,6 +220,8 @@ const showMigrationError = async (err /*: Error */) => {
   }
 }
 
+// TODO: only send to main window errors that can be displayed within the
+// Recent tab and create pop-up methods for the others?
 const sendErrorToMainWindow = async ({ msg, code }) => {
   if (code === COZY_CLIENT_REVOKED_CODE) {
     if (notificationsState.revokedAlertShown) return
@@ -264,7 +268,7 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
       cancelId: 0,
       defaultId: 0
     }
-    trayWindow.hide()
+    if (trayWindow) trayWindow.hide()
     await dialog.showMessageBox(null, options)
     desktop
       .stopSync()
@@ -347,8 +351,8 @@ const updateState = async ({ newState, data }) => {
         }
       }, LAST_SYNC_UPDATE_DELAY)
     } else if (status === 'error' && errors && errors.length) {
-      // TODO: get rid of sendErrorToMainWindow and move all error management to
-      // main window?
+      // TODO: only send to main window errors that can be displayed within the
+      // Recent tab and create pop-up methods for the others?
       if (errors[0].code !== null) {
         await sendErrorToMainWindow({ code: errors[0].code })
       } else {
@@ -567,25 +571,30 @@ app.on('ready', async () => {
     } else throw err
   }
 
+  const { argv } = process
+
   // We need a valid config to start the App and open the requested note.
   // We assume users won't have notes they want to open without a connected
   // client.
-  if (desktop.config.syncPath) {
+  if (argv && argv.length > 2) {
+    if (!desktop.config.syncPath) {
+      await exit(0)
+      return
+    }
+
+    // TODO: don't run migrations here?
     await setupDesktop()
 
-    const { argv } = process
-    if (argv && argv.length > 2) {
-      const filePath = argv[argv.length - 1]
-      log.info({ filePath, argv }, 'main instance invoked with arguments')
+    const filePath = argv[argv.length - 1]
+    log.info({ filePath, argv }, 'main instance invoked with arguments')
 
-      // If we found a note to open, stop here. Otherwise, start sync app.
-      if (
-        filePath.endsWith('.cozy-note') &&
-        (await openNote(filePath, { desktop }))
-      ) {
-        await exit(0)
-        return
-      }
+    // If we found a note to open, stop here. Otherwise, start sync app.
+    if (
+      filePath.endsWith('.cozy-note') &&
+      (await openNote(filePath, { desktop }))
+    ) {
+      await exit(0)
+      return
     }
   }
 
@@ -604,6 +613,18 @@ app.on('ready', async () => {
       await trayWindow.show()
       await startSync()
     })
+
+    // Os X wants all application to have a menu
+    Menu.setApplicationMenu(buildAppMenu(app))
+
+    // On OS X it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    app.on('activate', showWindow)
+
+    if (desktop.config.syncPath) {
+      await setupDesktop()
+    }
+
     if (app.isPackaged) {
       log.trace('Setting up updater WM...')
       updaterWindow = new UpdaterWM(app, desktop)
@@ -618,13 +639,6 @@ app.on('ready', async () => {
     } else {
       startApp()
     }
-
-    // Os X wants all application to have a menu
-    Menu.setApplicationMenu(buildAppMenu(app))
-
-    // On OS X it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    app.on('activate', showWindow)
   }
 })
 
