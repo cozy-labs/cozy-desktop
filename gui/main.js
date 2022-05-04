@@ -110,7 +110,15 @@ const setupDesktop = async () => {
     if (err instanceof config.InvalidConfigError) {
       await showInvalidConfigError()
     } else if (err instanceof MigrationFailedError) {
-      await showMigrationError(err)
+      const revokedCozyError = err.errors.find(
+        err =>
+          err.reason && err.reason.error === 'the client must be registered'
+      )
+      if (revokedCozyError) {
+        return showRevokedCozyError()
+      } else {
+        await showMigrationError(err)
+      }
     } else {
       await dialog.showMessageBox(null, {
         type: 'error',
@@ -219,41 +227,50 @@ const showMigrationError = async (err /*: Error */) => {
   }
 }
 
+const showRevokedCozyError = async () => {
+  // prevent the alert from appearing twice
+  if (notificationsState.revokedAlertShown) return
+  notificationsState.revokedAlertShown = true
+
+  if (trayWindow) trayWindow.hide()
+  if (tray.wasInitiated())
+    tray.setStatus('error', translate(COZY_CLIENT_REVOKED_MESSAGE))
+
+  const options = {
+    type: 'warning',
+    title: pkg.productName,
+    message: translate(
+      'Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?'
+    ),
+    detail: translate(
+      "Revoked In case you didn't, contact us at contact@cozycloud.cc"
+    ),
+    buttons: [
+      translate('Revoked Reconnect'),
+      translate('Revoked Try again later')
+    ],
+    defaultId: 1
+  }
+
+  const { response } = await dialog.showMessageBox(null, options)
+  if (response === 0) {
+    try {
+      await desktop.stopSync()
+      await desktop.removeConfig()
+      await restart()
+    } catch (err) {
+      log.error({ err, sentry: true }, 'failed disconnecting client')
+    }
+  } else {
+    await exit(0)
+  }
+}
+
 // TODO: only send to main window errors that can be displayed within the
 // Recent tab and create pop-up methods for the others?
 const sendErrorToMainWindow = async ({ msg, code }) => {
   if (code === COZY_CLIENT_REVOKED_CODE) {
-    if (notificationsState.revokedAlertShown) return
-    notificationsState.revokedAlertShown = true // prevent the alert from appearing twice
-    const options = {
-      type: 'warning',
-      title: pkg.productName,
-      message: translate(
-        'Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?'
-      ),
-      detail: translate(
-        "Revoked In case you didn't, contact us at contact@cozycloud.cc"
-      ),
-      buttons: [
-        translate('Revoked Reconnect'),
-        translate('Revoked Try again later')
-      ],
-      defaultId: 1
-    }
-    trayWindow.hide()
-    const { response } = await dialog.showMessageBox(null, options)
-    if (response === 0) {
-      desktop
-        .stopSync()
-        .then(() => desktop.removeConfig())
-        .then(() => restart())
-        .catch(err =>
-          log.error({ err, sentry: true }, 'failed disconnecting client')
-        )
-    } else {
-      await exit(0)
-    }
-    return // no notification
+    return showRevokedCozyError()
   } else if (msg === SYNC_DIR_UNLINKED_MESSAGE) {
     if (notificationsState.syncDirUnlinkedShown) return
     notificationsState.syncDirUnlinkedShown = true // prevent the alert from appearing twice

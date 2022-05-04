@@ -115,7 +115,7 @@ async function migrate(
           break
       }
     } catch (err) {
-      result = { type: MIGRATION_RESULT_FAILED, errors: [err.toString()] }
+      result = { type: MIGRATION_RESULT_FAILED, errors: [err] }
     } finally {
       migrationDB.destroy()
     }

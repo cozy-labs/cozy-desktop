@@ -42,45 +42,6 @@ const setImage = iconName => {
   lastIconName = iconName
 }
 
-module.exports.init = (app, listener) => {
-  tray = new Tray(nativeImage.createEmpty())
-  setImage('idle')
-
-  app.on('before-quit', () => tray.destroy())
-
-  let cachedBounds = null
-  const clicked = (e, bounds) => {
-    cachedBounds = bounds && bounds.y !== 0 ? bounds : cachedBounds
-    listener(tray.getBounds ? tray.getBounds() : cachedBounds)
-  }
-
-  // On Linux systems without libappindicator-gtk3 or other systems, clicks on
-  // the systray icon trigger events that can be caught to display the app
-  // window for example.
-  tray.on('click', clicked)
-  tray.on('right-click', clicked)
-  tray.on('double-click', clicked)
-  tray.setToolTip('loading')
-
-  if (!isMac) {
-    // When click events are not triggered, we need to display a context menu so
-    // users can open the app's window.
-    const cm = Menu.buildFromTemplate([
-      { label: translate('Tray Quit application'), click: app.quit }
-    ])
-    cm.insert(
-      0,
-      new MenuItem({
-        label: translate('Tray Show application'),
-        click: clicked
-      })
-    )
-    cm.insert(1, new MenuItem({ type: 'separator' }))
-    tray.setContextMenu(cm)
-  }
-  setStatus('idle')
-}
-
 // old tray menu
 /*
 const goToTab = (tab) => {
@@ -145,9 +106,58 @@ const systrayInfo = (status, label) => {
   }
 }
 
-const setStatus = (module.exports.setStatus = (status, label) => {
+const setStatus = (status, label) => {
   const [iconName, tooltip] = systrayInfo(status, label)
   tray.setToolTip(tooltip)
 
   if (lastIconName !== iconName) setImage(iconName)
-})
+}
+
+const init = (app, listener) => {
+  tray = new Tray(nativeImage.createEmpty())
+  setImage('idle')
+
+  app.on('before-quit', () => tray.destroy())
+
+  let cachedBounds = null
+  const clicked = (e, bounds) => {
+    cachedBounds = bounds && bounds.y !== 0 ? bounds : cachedBounds
+    listener(tray.getBounds ? tray.getBounds() : cachedBounds)
+  }
+
+  // On Linux systems without libappindicator-gtk3 or other systems, clicks on
+  // the systray icon trigger events that can be caught to display the app
+  // window for example.
+  tray.on('click', clicked)
+  tray.on('right-click', clicked)
+  tray.on('double-click', clicked)
+  tray.setToolTip('loading')
+
+  if (!isMac) {
+    // When click events are not triggered, we need to display a context menu so
+    // users can open the app's window.
+    const cm = Menu.buildFromTemplate([
+      { label: translate('Tray Quit application'), click: app.quit }
+    ])
+    cm.insert(
+      0,
+      new MenuItem({
+        label: translate('Tray Show application'),
+        click: clicked
+      })
+    )
+    cm.insert(1, new MenuItem({ type: 'separator' }))
+    tray.setContextMenu(cm)
+  }
+  setStatus('idle')
+}
+
+const wasInitiated = () => {
+  return tray != null
+}
+
+module.exports = {
+  init,
+  setStatus,
+  wasInitiated
+}
