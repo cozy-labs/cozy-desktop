@@ -120,8 +120,8 @@
   "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System.": "The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System.",
   "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary.": "Try renaming it on your Cozy without using special characters and choose a shorter name if necessary.",
   "Error The file is too large": "The file is too large",
-  "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.": "The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.",
-  "Error You need to remove it from your local synchronization folder or reduce its size.": "You need to remove it from your local synchronization folder or reduce its size.",
+  "Error The file `{0}` could not be synchronized on your Cozy because its size exceeds the maximum allowed of 5 GiB.": "The file `{0}` could not be synchronized on your Cozy because its size exceeds the maximum allowed of 5 GiB.",
+  "Error It will therefore not be synchronized. To stop being notified, you can click on the button below.": "It will therefore not be synchronized. To stop being notified, you can click on the button below.",
   "Error Conflict with existing document": "Conflict with existing document",
   "Error The name of {0} `{1}` is conflicting with an existing document.": "The name of {0} `{1}` is conflicting with an existing document.",
   "Error You need to rename this {0} to solve the conflict.": "You need to rename this {0} to solve the conflict.",
@@ -215,12 +215,14 @@
   "Quotation Start": "“",
   "Quotation End": "”",
 
+  "Reinitialization": "Reinitialization",
   "Reinitialization Beware,": "Beware,",
   "Reinitialization - if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;": "- if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;",
   "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;": "- if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;",
   "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;": "- if some files are only present on your Cozy or your computer, they will be added to the other side;",
   "Reinitialization - files already identical on both sides won't be impacted.": "- files already identical on both sides won't be impacted.",
   "Reinitialization Are you sure you want to reinitialize the synchronization?": "Are you sure you want to reinitialize the synchronization?",
+  "Reinitialization Reinitialize": "Reinitialize",
 
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "In case you didn't, contact us at contact@cozycloud.cc",
   "Revoked Reconnect": "Reconnect",
@@ -268,7 +270,6 @@
   "TwoPanes Recents": "Recenti",
   "TwoPanes Settings": "Impostazioni",
 
-  "Unlink Cancel": "Annulla",
   "Unlink Detail": "I tuoi file non saranno più sincronizzati con il tuo Cozy.",
   "Unlink Message": "Sei sicuro di voler scollegare il tuo Cozy?",
   "Unlink OK": "Esci",
@@ -297,6 +298,7 @@
   "UserAlert Rename {0}": "Rename {0}",
   "UserAlert Retry": "Retry",
   "UserAlert Show details": "Show details",
+  "UserAlert Got it": "Got it",
 
   "Welcome Sign in to your Cozy": "Entra nel mio Cozy",
   "Welcome Your own private cloud": "Benvenuto su Cozy Driver per Desktop !"

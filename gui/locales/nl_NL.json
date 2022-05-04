@@ -76,8 +76,8 @@
   "Dashboard Open file {0}": "Bestand openen {0}",
   "Dashboard Show in folder {0}": "Tonen in map {0}",
   "Dashboard Show in parent folder": "Tonen in bovenliggende map",
-  "Dashboard This list is empty": "This list is empty",
-  "Dashboard Files recently synchronized will show up here": "Files recently synchronized will show up here",
+  "Dashboard This list is empty": "Deze lijst is blanco",
+  "Dashboard Files recently synchronized will show up here": "Recent gesynchroniseerde bestanden worden hier getoond",
 
   "Error Bad GLIBCXX version": "Je systeem gebruikt een oude versie van glibc; je moet je distributie bijwerken. Bekijk hiervoor https://cozy-labs.github.io/cozy-desktop/doc/usage/linux.html#supported-distributions",
   "Error Check that the note still exists either on your Cozy or its owner's. This could also mean that the note is out of sync.": "Controleer of de notitie nog bestaat op je Cozy of die van de eigenaar. Het kan ook zijn dat je notitie opnieuw moet worden gesynchroniseerd.",
@@ -120,8 +120,8 @@
   "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System.": "{0} `{1}`'s naam bevat niet-toegestane of voorbehouden tekens, of is te lang voor je besturingssysteem.",
   "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary.": "Wijzig de naam op je Cozy en verwijder de speciale tekens. Kie` indien nodig, ook een kortere naam.",
   "Error The file is too large": "Het bestand is te groot",
-  "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.": "`{0}` kan niet worden weggeschreven naar Cozy omdat het bestand de maximaal toegestane grootte van 5 GiB overschrijdt.",
-  "Error You need to remove it from your local synchronization folder or reduce its size.": "Verwijder het uit je lokale synchronisatiemap of verklein de bestandsgrootte.",
+  "Error The file `{0}` could not be synchronized on your Cozy because its size exceeds the maximum allowed of 5 GiB.": "The file `{0}` could not be synchronized on your Cozy because its size exceeds the maximum allowed of 5 GiB.",
+  "Error It will therefore not be synchronized. To stop being notified, you can click on the button below.": "It will therefore not be synchronized. To stop being notified, you can click on the button below.",
   "Error Conflict with existing document": "Conflict met bestaand document",
   "Error The name of {0} `{1}` is conflicting with an existing document.": "De naam van {0}, `{1}`, botst met die van een bestaand document.",
   "Error You need to rename this {0} to solve the conflict.": "Wijzig de naam van {0} om dit probleem op te lossen.",
@@ -215,12 +215,14 @@
   "Quotation Start": "“",
   "Quotation End": "”",
 
+  "Reinitialization": "Reinitialization",
   "Reinitialization Beware,": "Let op:",
   "Reinitialization - if some document deletions were not synchronized, these documents will re-appear if you don't delete them beforehand on the other side;": "-Als documentverwijderingen niet zijn gesynchroniseerd, dan worden ze later automatisch teruggeplaatst;",
   "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;": "-Als bestanden aan beide kanten aanwezig zijn, maar van inhoud verschillen, dan worden er ‘conflictversies’ gemaakt zodat je kunt kiezen welke je wilt bewaren;",
   "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;": "-Als bestanden alleen aanwezig zijn op je Cozy of computer, dan worden ze automatisch gesynchroniseerd;",
   "Reinitialization - files already identical on both sides won't be impacted.": "-Bestanden die aan beide kanten identiek zijn, worden genegeerd.",
   "Reinitialization Are you sure you want to reinitialize the synchronization?": "Weet je zeker dat je overnieuw wilt beginnen met synchroniseren?",
+  "Reinitialization Reinitialize": "Reinitialize",
 
   "Revoked In case you didn't, contact us at contact@cozycloud.cc": "Als dat niet zo is, neem dan contact met ons op via contact@cozycloud.cc",
   "Revoked Reconnect": "Opnieuw verbinden",
@@ -268,7 +270,6 @@
   "TwoPanes Recents": "Recent",
   "TwoPanes Settings": "Instellingen",
 
-  "Unlink Cancel": "Annuleren",
   "Unlink Detail": "Je bestanden worden niet langer gesynchroniseerd met je Cozy.",
   "Unlink Message": "Weet je zeker dat je je Cozy wilt ontkoppelen?",
   "Unlink OK": "Uitloggen",
@@ -297,6 +298,7 @@
   "UserAlert Rename {0}": "Naam van {0} wijzigen",
   "UserAlert Retry": "Opnieuw proberen",
   "UserAlert Show details": "Details tonen",
+  "UserAlert Got it": "Got it",
 
   "Welcome Sign in to your Cozy": "Inloggen op mijn Cozy",
   "Welcome Your own private cloud": "Welkom bij Cozy Drive voor computers!"

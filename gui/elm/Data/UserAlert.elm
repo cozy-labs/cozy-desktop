@@ -375,11 +375,11 @@ viewByCode helpers alert =
         SynchronizationError "FileTooLarge" { path } ->
             { title = "Error The file is too large"
             , content =
-                [ helpers.interpolate [ path ] "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB."
-                , "Error You need to remove it from your local synchronization folder or reduce its size."
+                [ helpers.interpolate [ path ] "Error The file `{0}` could not be synchronized on your Cozy because its size exceeds the maximum allowed of 5 GiB."
+                , "Error It will therefore not be synchronized. To stop being notified, you can click on the button below."
                 ]
             , buttons =
-                [ actionButton helpers (SendCommand GiveUp alert) "UserAlert Give up" Primary ]
+                [ actionButton helpers (SendCommand GiveUp alert) "UserAlert Got it" Primary ]
             }
 
         SynchronizationError "IncompatibleDoc" { docType, path } ->
