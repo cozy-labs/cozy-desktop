@@ -2,6 +2,7 @@
 
 // Initialize `remote` module so that renderer processes can use it.
 require('@electron/remote/main').initialize()
+const { app, Menu, Notification, ipcMain, dialog } = require('electron')
 
 const Desktop = require('../core/app.js')
 const { openNote } = require('./utils/notes')
@@ -24,19 +25,19 @@ const { MigrationFailedError } = require('../core/migrations')
 const config = require('../core/config')
 const winRegistry = require('../core/utils/win_registry')
 
-const autoLaunch = require('./js/autolaunch')
-const lastFiles = require('./js/lastfiles')
 const tray = require('./js/tray')
 const TrayWM = require('./js/tray.window.js')
 const UpdaterWM = require('./js/updater.window.js')
 const HelpWM = require('./js/help.window.js')
 const OnboardingWM = require('./js/onboarding.window.js')
 
+const autoLaunch = require('./js/autolaunch')
+const lastFiles = require('./js/lastfiles')
 const { fileInfo } = require('./js/fileutils')
 const { buildAppMenu } = require('./js/appmenu')
 const i18n = require('./js/i18n')
 const { translate } = i18n
-const { app, Menu, Notification, ipcMain, dialog } = require('electron')
+const { exit, restart } = require('./js/actions')
 
 const DAILY = 3600 * 24 * 1000
 
@@ -88,6 +89,8 @@ const toggleWindow = bounds => {
 
 const setupDesktop = async () => {
   try {
+    // TODO: allow setting desktop up without running migrations (when opening
+    // a cozy-note)?
     await desktop.setup()
     desktopIsReady()
 
@@ -107,7 +110,15 @@ const setupDesktop = async () => {
     if (err instanceof config.InvalidConfigError) {
       await showInvalidConfigError()
     } else if (err instanceof MigrationFailedError) {
-      await showMigrationError(err)
+      const revokedCozyError = err.errors.find(
+        err =>
+          err.reason && err.reason.error === 'the client must be registered'
+      )
+      if (revokedCozyError) {
+        return showRevokedCozyError()
+      } else {
+        await showMigrationError(err)
+      }
     } else {
       await dialog.showMessageBox(null, {
         type: 'error',
@@ -115,7 +126,7 @@ const setupDesktop = async () => {
         buttons: [translate('AppMenu Close')]
       })
     }
-    app.quit()
+    await exit(0)
     return
   }
 }
@@ -185,7 +196,6 @@ const showInvalidConfigError = async () => {
   if (response === 0) {
     desktop
       .removeConfig()
-      .then(() => log.info('removed'))
       .catch(err =>
         log.error({ err, sentry: true }, 'failed disconnecting client')
       )
@@ -217,40 +227,50 @@ const showMigrationError = async (err /*: Error */) => {
   }
 }
 
+const showRevokedCozyError = async () => {
+  // prevent the alert from appearing twice
+  if (notificationsState.revokedAlertShown) return
+  notificationsState.revokedAlertShown = true
+
+  if (trayWindow) trayWindow.hide()
+  if (tray.wasInitiated())
+    tray.setStatus('error', translate(COZY_CLIENT_REVOKED_MESSAGE))
+
+  const options = {
+    type: 'warning',
+    title: pkg.productName,
+    message: translate(
+      'Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?'
+    ),
+    detail: translate(
+      "Revoked In case you didn't, contact us at contact@cozycloud.cc"
+    ),
+    buttons: [
+      translate('Revoked Reconnect'),
+      translate('Revoked Try again later')
+    ],
+    defaultId: 1
+  }
+
+  const { response } = await dialog.showMessageBox(null, options)
+  if (response === 0) {
+    try {
+      await desktop.stopSync()
+      await desktop.removeConfig()
+      await restart()
+    } catch (err) {
+      log.error({ err, sentry: true }, 'failed disconnecting client')
+    }
+  } else {
+    await exit(0)
+  }
+}
+
+// TODO: only send to main window errors that can be displayed within the
+// Recent tab and create pop-up methods for the others?
 const sendErrorToMainWindow = async ({ msg, code }) => {
   if (code === COZY_CLIENT_REVOKED_CODE) {
-    if (notificationsState.revokedAlertShown) return
-    notificationsState.revokedAlertShown = true // prevent the alert from appearing twice
-    const options = {
-      type: 'warning',
-      title: pkg.productName,
-      message: translate(
-        'Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?'
-      ),
-      detail: translate(
-        "Revoked In case you didn't, contact us at contact@cozycloud.cc"
-      ),
-      buttons: [
-        translate('Revoked Reconnect'),
-        translate('Revoked Try again later')
-      ],
-      defaultId: 1
-    }
-    trayWindow.hide()
-    const { response } = await dialog.showMessageBox(null, options)
-    if (response === 0) {
-      desktop
-        .stopSync()
-        .then(() => desktop.removeConfig())
-        .then(() => log.info('removed'))
-        .then(() => trayWindow.doRestart())
-        .catch(err =>
-          log.error({ err, sentry: true }, 'failed disconnecting client')
-        )
-    } else {
-      app.quit()
-    }
-    return // no notification
+    return showRevokedCozyError()
   } else if (msg === SYNC_DIR_UNLINKED_MESSAGE) {
     if (notificationsState.syncDirUnlinkedShown) return
     notificationsState.syncDirUnlinkedShown = true // prevent the alert from appearing twice
@@ -263,15 +283,15 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
       cancelId: 0,
       defaultId: 0
     }
-    trayWindow.hide()
+    if (trayWindow) trayWindow.hide()
     await dialog.showMessageBox(null, options)
     desktop
       .stopSync()
       .then(() => desktop.pouch.db.destroy())
       .then(() => (desktop.config.syncPath = undefined))
       .then(() => desktop.config.persist())
-      .then(() => log.info('removed'))
-      .then(() => trayWindow.doRestart())
+      .then(() => log.info('Sync dir reset'))
+      .then(() => restart())
       .catch(err =>
         log.error({ err, sentry: true }, 'failed disconnecting client')
       )
@@ -346,8 +366,8 @@ const updateState = async ({ newState, data }) => {
         }
       }, LAST_SYNC_UPDATE_DELAY)
     } else if (status === 'error' && errors && errors.length) {
-      // TODO: get rid of sendErrorToMainWindow and move all error management to
-      // main window?
+      // TODO: only send to main window errors that can be displayed within the
+      // Recent tab and create pop-up methods for the others?
       if (errors[0].code !== null) {
         await sendErrorToMainWindow({ code: errors[0].code })
       } else {
@@ -527,7 +547,7 @@ app.on('open-file', async (event, filePath) => {
   if (await Promise.all(openedNotes)) {
     if (noSync) {
       log.info('all notes are closed. Quitting app')
-      app.quit()
+      await exit(0)
     }
     return
   }
@@ -561,30 +581,35 @@ app.on('ready', async () => {
         message: translate('Error Bad GLIBCXX version'),
         buttons: [translate('AppMenu Close')]
       })
-      app.quit()
+      await exit(0)
       return
     } else throw err
   }
 
+  const { argv } = process
+
   // We need a valid config to start the App and open the requested note.
   // We assume users won't have notes they want to open without a connected
   // client.
-  if (desktop.config.syncPath) {
+  if (argv && argv.length > 2) {
+    if (!desktop.config.syncPath) {
+      await exit(0)
+      return
+    }
+
+    // TODO: don't run migrations here?
     await setupDesktop()
 
-    const { argv } = process
-    if (argv && argv.length > 2) {
-      const filePath = argv[argv.length - 1]
-      log.info({ filePath, argv }, 'main instance invoked with arguments')
+    const filePath = argv[argv.length - 1]
+    log.info({ filePath, argv }, 'main instance invoked with arguments')
 
-      // If we found a note to open, stop here. Otherwise, start sync app.
-      if (
-        filePath.endsWith('.cozy-note') &&
-        (await openNote(filePath, { desktop }))
-      ) {
-        app.quit()
-        return
-      }
+    // If we found a note to open, stop here. Otherwise, start sync app.
+    if (
+      filePath.endsWith('.cozy-note') &&
+      (await openNote(filePath, { desktop }))
+    ) {
+      await exit(0)
+      return
     }
   }
 
@@ -603,6 +628,18 @@ app.on('ready', async () => {
       await trayWindow.show()
       await startSync()
     })
+
+    // Os X wants all application to have a menu
+    Menu.setApplicationMenu(buildAppMenu(app))
+
+    // On OS X it's common to re-create a window in the app when the
+    // dock icon is clicked and there are no other windows open.
+    app.on('activate', showWindow)
+
+    if (desktop.config.syncPath) {
+      await setupDesktop()
+    }
+
     if (app.isPackaged) {
       log.trace('Setting up updater WM...')
       updaterWindow = new UpdaterWM(app, desktop)
@@ -617,13 +654,6 @@ app.on('ready', async () => {
     } else {
       startApp()
     }
-
-    // Os X wants all application to have a menu
-    Menu.setApplicationMenu(buildAppMenu(app))
-
-    // On OS X it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    app.on('activate', showWindow)
   }
 })
 

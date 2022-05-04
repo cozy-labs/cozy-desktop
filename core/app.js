@@ -226,11 +226,13 @@ class App {
   }
 
   async removeConfig() {
+    log.info('Removing config...')
     await this.pouch.db.destroy()
     for (const name of await fse.readdir(this.basePath)) {
       if (name.startsWith(LOG_FILENAME)) continue
       await fse.remove(path.join(this.basePath, name))
     }
+    log.info('Config removed')
   }
 
   async uploadFileToSupport(

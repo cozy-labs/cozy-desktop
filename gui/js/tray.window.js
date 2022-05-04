@@ -1,6 +1,5 @@
 const electron = require('electron')
 const { dialog, shell } = electron
-const { spawn } = require('child_process')
 const path = require('path')
 
 const { openNote } = require('../utils/notes')
@@ -10,6 +9,7 @@ const autoLaunch = require('./autolaunch')
 const DetailsWM = require('./details.window')
 const CozyWebWM = require('./cozy-web.window')
 const { translate } = require('./i18n')
+const { restart } = require('./actions')
 
 const log = require('../../core/app').logger({
   component: 'GUI'
@@ -241,7 +241,7 @@ module.exports = class TrayWM extends WindowManager {
           .stopSync()
           .then(() => this.desktop.removeRemote())
           .then(() => log.info('remote removed'))
-          .then(() => this.doRestart())
+          .then(() => restart())
           .catch(err =>
             log.error({ err, sentry: true }, 'failed disconnecting client')
           )
@@ -333,22 +333,6 @@ module.exports = class TrayWM extends WindowManager {
       openInWeb(path.dirname(pathToOpen), { desktop })
     } else {
       shell.showItemInFolder(pathToOpen)
-    }
-  }
-
-  doRestart() {
-    if (process.env.APPIMAGE) {
-      setTimeout(() => {
-        log.info('Exiting old client...')
-        this.app.exit(0)
-      }, 50)
-      const args = process.argv.slice(1).filter(a => a !== '--isHidden')
-      log.info({ args, cmd: process.argv[0] }, 'Starting new client...')
-      spawn(process.argv[0], args, { detached: true })
-    } else {
-      this.app.relaunch()
-      log.info('Exiting old client...')
-      this.app.exit(0)
     }
   }
 }
