@@ -188,7 +188,6 @@ const showInvalidConfigError = async () => {
   if (response === 0) {
     desktop
       .removeConfig()
-      .then(() => log.info('removed'))
       .catch(err =>
         log.error({ err, sentry: true }, 'failed disconnecting client')
       )
@@ -247,7 +246,6 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
       desktop
         .stopSync()
         .then(() => desktop.removeConfig())
-        .then(() => log.info('removed'))
         .then(() => restart())
         .catch(err =>
           log.error({ err, sentry: true }, 'failed disconnecting client')
