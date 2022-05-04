@@ -23,10 +23,14 @@ const log = require('../../core/app').logger({
  * available or unavailable update answer anyway.
  */
 const UPDATE_CHECK_TIMEOUT = 10000
-
 const UPDATE_RETRY_DELAY = 1000
+const UPDATE_RETRIES = 5
 
 module.exports = class UpdaterWM extends WindowManager {
+  /*::
+  retriesLeft: number
+  */
+
   windowOptions() {
     return {
       title: 'UPDATER',
@@ -83,9 +87,13 @@ module.exports = class UpdaterWM extends WindowManager {
         return
       } else if (err.code === 'ENOENT') {
         this.skipUpdate('assuming development environment')
-      } else {
+      } else if (this.retriesLeft > 0) {
+        this.retriesLeft--
         await Promise.delay(UPDATE_RETRY_DELAY)
         await autoUpdater.checkForUpdates()
+      } else {
+        this.retriesLeft = UPDATE_RETRIES
+        this.skipUpdate(err.message)
       }
     })
     autoUpdater.on('download-progress', progressObj => {
@@ -106,6 +114,8 @@ module.exports = class UpdaterWM extends WindowManager {
     })
 
     super(...opts)
+
+    this.retriesLeft = UPDATE_RETRIES
   }
 
   clearTimeoutIfAny() {
