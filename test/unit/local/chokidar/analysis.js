@@ -599,8 +599,35 @@ onPlatform('darwin', () => {
         })
       })
 
-      describe('unwatched add(A, ino, old={a, ino})', () => {
+      describe('add(a, ino) + add(A, ino)', () => {
         it('is a case/normalization only change', () => {
+          const old /*: Metadata */ = builders
+            .metafile()
+            .path('foo')
+            .ino(1)
+            .build()
+          const stats = { ino: 1 }
+          const events /*: LocalEvent[] */ = [
+            { type: 'add', path: 'foo', stats, old },
+            { type: 'add', path: 'FOO', stats, old }
+          ]
+          const pendingChanges = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'FileMove',
+              path: 'FOO',
+              ino: 1,
+              stats,
+              old
+            }
+          ])
+        })
+      })
+
+      describe('add(A, ino, old={a, ino})', () => {
+        it('is an unwatched case/normalization only change', () => {
           const ino = 123
           const stats = { ino }
           const md5sum = 'badbeef'

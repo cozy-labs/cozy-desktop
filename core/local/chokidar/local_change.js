@@ -54,6 +54,7 @@ module.exports = {
   fileMoveFromUnlinkAdd,
   fileMoveFromFileDeletionChange,
   fileMoveIdentical,
+  fileRenamingCaseOnlyFromAddAdd,
   fileMoveIdenticalOffline,
   dirMoveFromUnlinkAdd,
   fileMoveFromAddUnlink,
@@ -565,6 +566,40 @@ function fileMoveIdentical(
       wip: fileMove.wip
     },
     'add + change = FileMove (same id)'
+  )
+
+  return fileMove
+}
+
+function fileRenamingCaseOnlyFromAddAdd(
+  sameInodeChange /*: ?LocalChange */,
+  e /*: LocalFileAdded */
+) /*: * */ {
+  const addChange /*: ?LocalFileAddition */ = maybeAddFile(sameInodeChange)
+  if (
+    !addChange ||
+    metadata.id(addChange.path) !== metadata.id(e.path) ||
+    addChange.path.normalize() === e.path.normalize()
+  ) {
+    return
+  }
+
+  const fileMove /*: Object */ = build('FileMove', e.path, {
+    stats: addChange.stats,
+    old: addChange.old,
+    ino: addChange.ino,
+    md5sum: e.md5sum,
+    wip: e.wip
+  })
+
+  log.debug(
+    {
+      oldpath: fileMove.old && fileMove.old.path,
+      path: fileMove.path,
+      ino: fileMove.ino,
+      wip: fileMove.wip
+    },
+    'add + add = FileMove (same id)'
   )
 
   return fileMove

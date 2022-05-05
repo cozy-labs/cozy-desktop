@@ -197,6 +197,7 @@ function analyseEvent(
       return (
         localChange.includeAddEventInFileMove(sameInodeChange, e) ||
         localChange.fileMoveFromUnlinkAdd(sameInodeChange, e) ||
+        localChange.fileRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
         localChange.fileMoveIdenticalOffline(e) ||
         localChange.fileAddition(e)
       )
