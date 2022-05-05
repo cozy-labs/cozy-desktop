@@ -58,6 +58,116 @@ onPlatform('darwin', () => {
           })
         })
       })
+
+      describe('add(a, ino) + add(A, ino) + unlink(A, ino)', () => {
+        it('ignores the unmerged temporary file whose case was changed', () => {
+          const stats = { ino: 1 }
+          const md5sum = 'xxx'
+          const events /*: LocalEvent[] */ = [
+            { type: 'add', path: 'foo', stats, md5sum },
+            { type: 'add', path: 'FOO', stats, md5sum },
+            { type: 'unlink', path: 'FOO' }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          const changes = analysis(events, { pendingChanges })
+          should({ changes, pendingChanges }).deepEqual({
+            changes: [
+              {
+                sideName,
+                type: 'Ignored',
+                path: 'FOO',
+                stats,
+                ino: stats.ino,
+                old: undefined
+              }
+            ],
+            pendingChanges: []
+          })
+        })
+      })
+
+      describe('add(a, ino) + add(A, ino, wip) + unlink(A, ino)', () => {
+        it('ignores the unmerged temporary file whose case was changed', () => {
+          const stats = { ino: 1 }
+          const md5sum = 'xxx'
+          const events /*: LocalEvent[] */ = [
+            { type: 'add', path: 'foo', stats, md5sum },
+            { type: 'add', path: 'FOO', stats, wip: true },
+            { type: 'unlink', path: 'FOO' }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          const changes = analysis(events, { pendingChanges })
+          should({ changes, pendingChanges }).deepEqual({
+            changes: [
+              {
+                sideName,
+                type: 'Ignored',
+                path: 'FOO',
+                stats,
+                ino: stats.ino,
+                old: undefined
+              }
+            ],
+            pendingChanges: []
+          })
+        })
+      })
+
+      describe('addDir(a, ino) + addDir(A, ino) + unlinkDir(A, ino)', () => {
+        it('ignores the unmerged temporary file whose case was changed', () => {
+          const stats = { ino: 1 }
+          const events /*: LocalEvent[] */ = [
+            { type: 'addDir', path: 'foo', stats },
+            { type: 'addDir', path: 'FOO', stats },
+            { type: 'unlinkDir', path: 'FOO' }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          const changes = analysis(events, { pendingChanges })
+          should({ changes, pendingChanges }).deepEqual({
+            changes: [
+              {
+                sideName,
+                type: 'Ignored',
+                path: 'FOO',
+                stats,
+                ino: stats.ino,
+                old: undefined
+              }
+            ],
+            pendingChanges: []
+          })
+        })
+      })
+
+      describe('addDir(a, ino) + addDir(A, ino, wip) + unlinkDir(A, ino)', () => {
+        it('ignores the unmerged temporary file whose case was changed', () => {
+          const stats = { ino: 1 }
+          const events /*: LocalEvent[] */ = [
+            { type: 'addDir', path: 'foo', stats },
+            { type: 'addDir', path: 'FOO', stats, wip: true },
+            { type: 'unlinkDir', path: 'FOO' }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          const changes = analysis(events, { pendingChanges })
+          should({ changes, pendingChanges }).deepEqual({
+            changes: [
+              {
+                sideName,
+                type: 'Ignored',
+                path: 'FOO',
+                stats,
+                ino: stats.ino,
+                old: undefined
+              }
+            ],
+            pendingChanges: []
+          })
+        })
+      })
     })
 
     describe('DirAddition(x)', () => {

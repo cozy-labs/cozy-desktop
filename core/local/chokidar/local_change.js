@@ -65,6 +65,8 @@ module.exports = {
   dirMoveIdenticalOffline,
   ignoreDirAdditionThenDeletion,
   ignoreFileAdditionThenDeletion,
+  ignoreUnmergedDirMoveThenDeletion,
+  ignoreUnmergedFileMoveThenDeletion,
   includeAddEventInFileMove,
   includeAddDirEventInDirMove,
   includeChangeEventIntoFileMove,
@@ -863,37 +865,39 @@ function includeChangeEventIntoFileMove(
 
 function convertFileMoveToDeletion(samePathChange /*: ?LocalChange */) {
   const change /*: ?LocalFileMove */ = maybeMoveFile(samePathChange)
-  if (!change || !change.wip) return
-  // $FlowFixMe
-  change.type = 'FileDeletion'
-  change.path = change.old.path
-  delete change.md5sum
-  delete change.stats
-  delete change.wip
+  if (change && change.wip && change.old) {
+    // $FlowFixMe
+    change.type = 'FileDeletion'
+    change.path = change.old.path
+    delete change.md5sum
+    delete change.stats
+    delete change.wip
 
-  log.debug(
-    { path: change.path, ino: change.ino },
-    'FileMove + unlink = FileDeletion'
-  )
+    log.debug(
+      { path: change.path, ino: change.ino },
+      'FileMove + unlink = FileDeletion'
+    )
 
-  return true
+    return true
+  }
 }
 
 function convertDirMoveToDeletion(samePathChange /*: ?LocalChange */) {
   const change /*: ?LocalDirMove */ = maybeMoveFolder(samePathChange)
-  if (!change || !change.wip) return
-  // $FlowFixMe
-  change.type = 'DirDeletion'
-  change.path = change.old.path
-  delete change.stats
-  delete change.wip
+  if (change && change.wip && change.old) {
+    // $FlowFixMe
+    change.type = 'DirDeletion'
+    change.path = change.old.path
+    delete change.stats
+    delete change.wip
 
-  log.debug(
-    { path: change.path, ino: change.ino },
-    'DirMove + unlinkDir = DirDeletion'
-  )
+    log.debug(
+      { path: change.path, ino: change.ino },
+      'DirMove + unlinkDir = DirDeletion'
+    )
 
-  return true
+    return true
+  }
 }
 
 function ignoreDirAdditionThenDeletion(samePathChange /*: ?LocalChange */) {
@@ -924,6 +928,42 @@ function ignoreFileAdditionThenDeletion(samePathChange /*: ?LocalChange */) {
     log.debug(
       { path: addChangeSamePath.path, ino: addChangeSamePath.ino },
       'File was added then deleted. Ignoring add.'
+    )
+
+    return true
+  }
+}
+
+function ignoreUnmergedDirMoveThenDeletion(samePathChange /*: ?LocalChange */) {
+  const moveChangeSamePath /*: ?LocalDirMove */ =
+    maybeMoveFolder(samePathChange)
+  if (moveChangeSamePath && !moveChangeSamePath.old) {
+    // $FlowFixMe
+    moveChangeSamePath.type = 'Ignored'
+    delete moveChangeSamePath.wip
+
+    log.debug(
+      { path: moveChangeSamePath.path, ino: moveChangeSamePath.ino },
+      'Folder was added then moved then deleted. Ignoring.'
+    )
+
+    return true
+  }
+}
+
+function ignoreUnmergedFileMoveThenDeletion(
+  samePathChange /*: ?LocalChange */
+) {
+  const moveChangeSamePath /*: ?LocalFileMove */ = maybeMoveFile(samePathChange)
+  if (moveChangeSamePath && !moveChangeSamePath.old) {
+    // $FlowFixMe
+    moveChangeSamePath.type = 'Ignored'
+    delete moveChangeSamePath.wip
+    delete moveChangeSamePath.md5sum
+
+    log.debug(
+      { path: moveChangeSamePath.path, ino: moveChangeSamePath.ino },
+      'File was added then moved then deleted. Ignoring.'
     )
 
     return true
