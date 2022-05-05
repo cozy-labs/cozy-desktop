@@ -239,7 +239,7 @@ function addPath(a /*: LocalChange */) /*: ?string */ {
 function delPath(a /*: LocalChange */) /*: ?string */ {
   return isDelete(a)
     ? a.path.normalize()
-    : isMove(a)
+    : isMove(a) && a.old
     ? a.old.path.normalize()
     : null
 }
@@ -386,7 +386,11 @@ function fileMoveFromUnlinkAdd(
   const unlinkChange /*: ?LocalFileDeletion */ =
     maybeDeleteFile(sameInodeChange)
   if (!unlinkChange) return
-  if (_.get(unlinkChange, 'old.path').normalize() === e.path.normalize()) return
+  if (
+    unlinkChange.old &&
+    unlinkChange.old.path.normalize() === e.path.normalize()
+  )
+    return
   const fileMove /*: Object */ = build('FileMove', e.path, {
     stats: e.stats,
     old: unlinkChange.old,
@@ -420,7 +424,11 @@ function dirMoveFromUnlinkAdd(
   const unlinkChange /*: ?LocalDirDeletion */ =
     maybeDeleteFolder(sameInodeChange)
   if (!unlinkChange) return
-  if (_.get(unlinkChange, 'old.path').normalize() === e.path.normalize()) return
+  if (
+    unlinkChange.old &&
+    unlinkChange.old.path.normalize() === e.path.normalize()
+  )
+    return
   const dirMove /*: Object */ = build('DirMove', e.path, {
     stats: e.stats,
     old: unlinkChange.old,
@@ -736,7 +744,10 @@ function dirRenamingIdenticalLoopback(
 ) {
   const moveChange /*: ?LocalDirMove */ = maybeMoveFolder(sameInodeChange)
   if (!moveChange) return
-  if (moveChange.old.path.normalize() === e.path.normalize()) {
+  if (
+    moveChange.old &&
+    moveChange.old.path.normalize() === e.path.normalize()
+  ) {
     // $FlowFixMe
     moveChange.type = 'Ignored'
 
