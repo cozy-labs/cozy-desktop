@@ -120,8 +120,8 @@
   "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System.": "Le nom du {0} `{1}` est reservé, contient des caractères interdits ou est trop long pour votre système d'exploitation.",
   "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary.": "Essayez de le renommer sur votre Cozy en n'utilisant pas de caractère spécial et en choisissant un nom plus court si besoin.",
   "Error The file is too large": "Le fichier est trop volumineux",
-  "Error The file `{0}` could not be written to your Cozy's disk because it is larger than the maximum file size allowed by your Cozy: 5 GiB.": "Le fichier `{0}` n'a pas pû être écrit sur le disque de votre Cozy car il dépasse la taille maximum autorisée par votre Cozy : 5 Gio.",
-  "Error You need to remove it from your local synchronization folder or reduce its size.": "Déplacez le hors du dossier local de synchronisation ou réduisez sa taille.",
+  "Error The file `{0}` could not be synchronized on your Cozy because its size exceeds the maximum allowed of 5 GiB.": "Le fichier `{0}` n'a pas pu être synchronisé sur votre Cozy car sa taille dépasse le maximum autorisé de 5 Gio.",
+  "Error It will therefore not be synchronized. To stop being notified, you can click on the button below.": "Il ne sera donc pas synchronisé. Pour ne plus être prévenu, vous pouvez cliquer sur le bouton ci-dessous.",
   "Error Conflict with existing document": "Conflit avec un document existant",
   "Error The name of {0} `{1}` is conflicting with an existing document.": "Le nom du {0} `{1}` entre en conflit avec un document existant.",
   "Error You need to rename this {0} to solve the conflict.": "Vous devez renommer ce {0} pour résoudre le conflit.",
@@ -298,6 +298,7 @@
   "UserAlert Rename {0}": "Renommer le {0}",
   "UserAlert Retry": "Réessayer",
   "UserAlert Show details": "Détails",
+  "UserAlert Got it": "J'ai compris",
 
   "Welcome Sign in to your Cozy": "Se connecter à mon Cozy",
   "Welcome Your own private cloud": "Bienvenue sur Cozy Drive pour ordinateur"
