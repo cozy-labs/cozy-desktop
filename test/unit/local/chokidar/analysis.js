@@ -685,6 +685,53 @@ onPlatform('darwin', () => {
           ])
         })
       })
+
+      describe('add(a, ino) + add(A, ino)', () => {
+        it('is not confused with a case/normalization change', () => {
+          const stats = { ino: 1 }
+          const md5sum = 'xxx'
+          const events /*: LocalEvent[] */ = [
+            { type: 'add', path: 'foo', stats, md5sum },
+            { type: 'add', path: 'FOO', stats, md5sum }
+          ]
+          const pendingChanges = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'FileAddition',
+              path: 'FOO',
+              ino: 1,
+              stats,
+              md5sum
+            }
+          ])
+        })
+      })
+
+      describe('add(a, ino) + add(A, ino) + change(a, ino)', () => {
+        it('is not confused with a case/normalization change', () => {
+          const stats = { ino: 1 }
+          const md5sum = 'xxx'
+          const events /*: LocalEvent[] */ = [
+            { type: 'add', path: 'foo', stats, md5sum },
+            { type: 'add', path: 'FOO', stats, md5sum },
+            { type: 'change', path: 'foo', stats, md5sum }
+          ]
+          const pendingChanges = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'FileAddition',
+              path: 'FOO',
+              ino: 1,
+              stats,
+              md5sum
+            }
+          ])
+        })
+      })
     })
 
     describe('DirMove(src => dst)', () => {
@@ -1394,6 +1441,27 @@ onPlatform('darwin', () => {
               ino,
               stats,
               old
+            }
+          ])
+        })
+      })
+
+      describe('addDir(a, ino) + addDir(A, ino)', () => {
+        it('is not confused with a case/normalization change', () => {
+          const stats = { ino: 1 }
+          const events /*: LocalEvent[] */ = [
+            { type: 'addDir', path: 'foo', stats },
+            { type: 'addDir', path: 'FOO', stats }
+          ]
+          const pendingChanges = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'DirAddition',
+              path: 'FOO',
+              ino: 1,
+              stats
             }
           ])
         })
