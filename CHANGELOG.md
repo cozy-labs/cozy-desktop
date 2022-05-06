@@ -1,5 +1,37 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.35.0-beta.1 - 2022-05-06
+
+Improvements for all users:
+
+- We fixed a few issues that were preventing the correct processing of movements
+  and renamings of documents that have never been synchronized and sometimes not
+  even been saved in our local database.
+  These should now be handled as creations at their new path and overwritten
+  documents trashed on the other side.
+- We've fixed yet another issue with data migrations making requests to the
+  remote Cozy when the Desktop's Oauth client has been revoked on the Cozy.
+  You will now be be informed of the issue and given the opportunity to
+  reconnect your client.
+- To prevent blocking the Desktop client to start and synchronize when an app
+  update is available but downloading it consistently fail, we've decided to
+  stop retrying the download after 5 failures. The client will still try to
+  download the update again 24 hours later.
+- We've updated the error message displayed when we fail to send a file to the
+  remote Cozy because it's size is either larger than the available space or the
+  maximum allowed. It should be easier to understand and the available action
+  less scary.
+
+Improvements for Windows users:
+
+- The local database software could experience issues when trying to delete
+  temporary databases or the main database when disconnecting the client.
+  An update of said software should now handle them appropriately.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.34.2 - 2022-04-28
 
 Improvements for all users:
