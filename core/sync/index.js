@@ -182,10 +182,14 @@ const compareChanges = (
     if (opA.type === 'ADD' && opB.type === 'MOVE') {
       // Handle child addtion after parent move
       if (docA.path.startsWith(docB.path + sep)) return 1
+      // Handle move to dir after dir addition
+      if (docB.path.startsWith(docA.path + sep)) return -1
     }
     if (opB.type === 'ADD' && opA.type === 'MOVE') {
       // Handle child addtion after parent move
       if (docB.path.startsWith(docA.path + sep)) return -1
+      // Handle move to dir after dir addition
+      if (docA.path.startsWith(docB.path + sep)) return 1
     }
   }
 

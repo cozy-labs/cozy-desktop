@@ -1403,6 +1403,39 @@ describe('Sync', function () {
       }
     )
 
+    context('with a directory addition and a move into said directory', () => {
+      let addDir, moveFile
+      beforeEach(async function () {
+        const dir = await builders
+          .metadir()
+          .path('dir')
+          .sides({ remote: 1 })
+          .create()
+        const srcFile = await builders
+          .metafile()
+          .path('file')
+          .upToDate()
+          .create()
+        const dstFile = await builders
+          .metafile()
+          .moveFrom(srcFile)
+          .path('dir/file')
+          .changedSide('remote')
+          .create()
+
+        addDir = makeChange(dir, 'ADD', this)
+        moveFile = makeChange(dstFile, 'MOVE', this)
+      })
+
+      it('returns -1 if addDir is passed as first argument', () => {
+        should(compareChanges(addDir, moveFile)).eql(-1)
+      })
+
+      it('returns 1 if addDir is passed as second argument', () => {
+        should(compareChanges(moveFile, addDir)).eql(1)
+      })
+    })
+
     context(
       'with a directory deletion and a deletion within said directory',
       () => {
