@@ -238,15 +238,14 @@ function analyseEvent(
           e.path,
           samePathChange =>
             localChange.convertFileMoveToDeletion(samePathChange) ||
-            localChange.ignoreFileAdditionThenDeletion(samePathChange)
-          // Otherwise, skip unlink event by multiple moves
+            localChange.ignoreFileAdditionThenDeletion(samePathChange) ||
+            localChange.ignoreUnmergedFileMoveThenDeletion(samePathChange)
         )
       )
     case 'unlinkDir':
       {
         const moveChange /*: ?LocalDirMove */ =
           localChange.maybeMoveFolder(sameInodeChange)
-        /* istanbul ignore next */
         if (moveChange && !moveChange.wip) {
           panic(
             { path: e.path, moveChange, event: e },
@@ -261,8 +260,9 @@ function analyseEvent(
         previousChanges.whenFoundByPath(
           e.path,
           samePathChange =>
+            localChange.convertDirMoveToDeletion(samePathChange) ||
             localChange.ignoreDirAdditionThenDeletion(samePathChange) ||
-            localChange.convertDirMoveToDeletion(samePathChange)
+            localChange.ignoreUnmergedDirMoveThenDeletion(samePathChange)
         )
       )
     default:
