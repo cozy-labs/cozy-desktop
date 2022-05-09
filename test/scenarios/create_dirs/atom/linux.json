@@ -3,43 +3,14 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "foo"
-    }
-  ],
-  [
+      "path": "foo",
+      "ino": 20685715
+    },
     {
       "action": "created",
       "kind": "directory",
-      "path": "foo/bar"
-    }
-  ],
-  [
-    {
-      "action": "scan",
       "path": "foo/bar",
-      "kind": "directory",
-      "stats": {
-        "dev": 64771,
-        "mode": 16893,
-        "nlink": 2,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 19791992,
-        "size": 4096,
-        "blocks": 8,
-        "atimeMs": 1589191922342.5212,
-        "mtimeMs": 1589191922341.5212,
-        "ctimeMs": 1589191922341.5212,
-        "birthtimeMs": 1589191922341.5212,
-        "atime": "2020-05-11T10:12:02.343Z",
-        "mtime": "2020-05-11T10:12:02.342Z",
-        "ctime": "2020-05-11T10:12:02.342Z",
-        "birthtime": "2020-05-11T10:12:02.342Z"
-      }
+      "ino": 20693896
     }
-  ],
-  [],
-  []
+  ]
 ]

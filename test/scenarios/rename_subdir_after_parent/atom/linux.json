@@ -3,24 +3,27 @@
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "parent",
       "path": "parent-2",
-      "oldPath": "parent"
+      "ino": 20685715
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "parent-2/subdir",
       "path": "parent-2/subdir-2",
-      "oldPath": "parent-2/subdir"
+      "ino": 20693896
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "parent-2/subdir-2/subsubdir",
       "path": "parent-2/subdir-2/subsubdir-2",
-      "oldPath": "parent-2/subdir-2/subsubdir"
+      "ino": 20693905
     }
   ]
 ]

@@ -109,13 +109,15 @@ async function initialState(
   }
 }
 
-function clearState(state /*: InitialDiffState */) {
+function clearState(state /*: InitialDiffState */, out /*: Channel */) {
   const {
     [STEP_NAME]: { waiting, scannedPaths, byInode }
   } = state
 
-  for (const item of waiting) {
-    clearTimeout(item.timeout)
+  while (waiting.length > 0) {
+    const w = waiting.shift()
+    clearTimeout(w.timeout)
+    out.push(w.batch)
   }
 
   state[STEP_NAME].waiting = []
@@ -244,7 +246,7 @@ async function initialDiff(
             }
           }
         }
-        clearState(state)
+        clearState(state, out)
       }
       batch.push(event)
     }

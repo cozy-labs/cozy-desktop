@@ -63,6 +63,10 @@ function loop(
 
           if (event.stats) {
             // created, modified, renamed, scan
+            event.ino =
+              typeof event.stats.fileid == 'string'
+                ? event.stats.fileid
+                : event.stats.ino
             event.kind = stater.kind(event.stats)
           } else if (needsPouchRecord(event)) {
             // Even if the doc is deleted, we probably have a better chance to

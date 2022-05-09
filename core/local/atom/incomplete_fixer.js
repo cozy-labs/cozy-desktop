@@ -220,7 +220,18 @@ function step(
 
     // Let's see if we can match an incomplete event with a renamed or deleted event
     for (const event of events) {
+      if (
+        state.incompletes.length === 0 ||
+        !['renamed', 'deleted', 'created'].includes(event.action)
+      ) {
+        if (!event.incomplete) {
+          batch.add(event)
+        }
+        continue
+      }
+
       const now = Date.now()
+      const incompletes = new Set()
       for (let i = 0; i < state.incompletes.length; i++) {
         const item = state.incompletes[i]
 
@@ -232,22 +243,8 @@ function step(
           )
           state.incompletes.splice(i, 1)
           i--
+          continue
         }
-      }
-
-      if (
-        state.incompletes.length === 0 ||
-        !['renamed', 'deleted', 'created'].includes(event.action)
-      ) {
-        if (!event.incomplete) {
-          batch.add(event)
-        }
-        continue
-      }
-
-      const incompletes = new Set()
-      for (let i = 0; i < state.incompletes.length; i++) {
-        const item = state.incompletes[i]
 
         try {
           const completion = await detectCompletion(item.event, event, opts)

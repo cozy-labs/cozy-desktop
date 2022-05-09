@@ -26,7 +26,7 @@ const log = logger({
  * TODO: tweak the value (the initial value was chosen because it looks like a
  * good value, it is not something that was computed).
  */
-const DELAY = 1000
+const DELAY = 100
 
 /*::
 import type { AtomEvent, AtomBatch } from './event'
@@ -60,6 +60,11 @@ module.exports = {
 
 const areParentChildPaths = (p /*: string */, c /*: string */) /*: boolean */ =>
   `${c}${path.sep}`.startsWith(`${p}${path.sep}`)
+
+const isCreate = (event /* AtomEvent */) =>
+  event.action === 'created' ||
+  event.action === 'scan' ||
+  event.action === 'modified' // XXX: can happen when overwriting and using ParcelProducer
 
 async function initialState() /* Promise<WinDetectMoveState> */ {
   return {
@@ -161,7 +166,7 @@ async function assignDebugInfos(event, found) {
 }
 
 function eventHasIno(event, ino) {
-  return event.stats && ino === (event.stats.fileid || event.stats.ino)
+  return event.ino && ino === event.ino
 }
 
 /*
@@ -180,7 +185,8 @@ function eventHasIno(event, ino) {
  * In any case, they should not be aggregated.
  */
 function indexOfMatchingEvent(event, pendingItems, deletedIno) {
-  if (event.action === 'created' && !event.incomplete) {
+  if (isCreate(event) && event.ino) {
+    //console.log('looking for matching deleted', { event })
     for (let i = 0; i < pendingItems.length; i++) {
       const { deletedIno, event: pendingEvent } = pendingItems[i]
       if (
@@ -188,18 +194,21 @@ function indexOfMatchingEvent(event, pendingItems, deletedIno) {
         eventHasIno(event, deletedIno) &&
         event.path !== pendingEvent.path
       ) {
+        //console.log('match found', { i, match: pendingItems[i] })
         return i
       }
     }
   } else if (event.action === 'deleted') {
+    //console.log('looking for matching created', { event })
     for (let i = 0; i < pendingItems.length; i++) {
       const { event: createdEvent } = pendingItems[i]
       if (
-        createdEvent.action === 'created' &&
-        !createdEvent.incomplete &&
+        isCreate(createdEvent) &&
+        createdEvent.ino &&
         deletedIno &&
         eventHasIno(createdEvent, deletedIno)
       ) {
+        //console.log('match found', { i, match: pendingItems[i] })
         return i
       }
     }
@@ -226,7 +235,7 @@ function sendReadyBatches(
   output /*: (AtomBatch) => void */
 ) {
   while (waiting.length > 0) {
-    if (waiting[0].deletedIno || waiting[0].event.action === 'created') {
+    if (waiting[0].deletedIno || isCreate(waiting[0].event)) {
       break
     }
     clearTimeout(waiting[0].timeout)
@@ -277,7 +286,7 @@ async function winDetectMove(
       // Then, see if a created event matches a deleted event
       const pendingIndex = indexOfMatchingEvent(event, pendingItems, deletedIno)
       if (pendingIndex !== -1) {
-        if (event.action === 'created') {
+        if (isCreate(event)) {
           const pendingDeleted = pendingItems[pendingIndex]
 
           clearTimeout(pendingDeleted.timeout)
@@ -318,6 +327,7 @@ function loop(
 ) /*: Channel */ {
   const out = new Channel()
   const output = batch => {
+    log.debug({ batch }, 'sending ready batch')
     out.push(batch)
   }
   winDetectMove(channel, output, opts).catch(err => {

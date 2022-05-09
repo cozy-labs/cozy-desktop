@@ -1,17 +1,10 @@
 [
   [
     {
-      "action": "deleted",
-      "kind": "file",
-      "path": "foo"
-    }
-  ],
-  [
-    {
-      "action": "created",
+      "action": "modified",
       "kind": "directory",
-      "path": "foo"
+      "path": "foo",
+      "ino": 20685715
     }
-  ],
-  []
+  ]
 ]

@@ -24,6 +24,7 @@ export type AtomEvent = {
   action: EventAction,
   kind: EventKind,
   path: string,
+  ino?: number|string,
   oldPath?: string,
   _id?: string,
   stats?: Stats,

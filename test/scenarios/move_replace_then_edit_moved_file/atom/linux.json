@@ -3,34 +3,25 @@
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "src/file",
       "path": "dst/file",
-      "oldPath": "src/file"
+      "ino": 20639473
     }
   ],
   [
     {
       "action": "created",
       "kind": "file",
-      "path": "src/file"
-    },
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "src/file"
+      "path": "src/file",
+      "ino": 20639476
     }
   ],
   [
     {
       "action": "modified",
       "kind": "file",
-      "path": "dst/file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst/file"
+      "path": "dst/file",
+      "ino": 20639473
     }
   ]
 ]

@@ -2,17 +2,19 @@
   [
     {
       "action": "renamed",
-      "kind": "directory",
+      "kind": "file",
+      "oldPath": "a",
       "path": "c",
-      "oldPath": "a"
+      "ino": 19663088
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "b",
       "path": "a",
-      "oldPath": "b"
+      "ino": 19666152
     }
   ]
 ]

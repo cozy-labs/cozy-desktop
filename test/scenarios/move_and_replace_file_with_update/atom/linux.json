@@ -3,42 +3,30 @@
     {
       "action": "modified",
       "kind": "file",
-      "path": "dst/file1"
+      "path": "dst/file1",
+      "ino": 20639476
     },
     {
-      "action": "modified",
+      "action": "renamed",
       "kind": "file",
-      "path": "dst/file1"
+      "oldPath": "src/file2",
+      "path": "dst/file2",
+      "ino": 20639477
     }
   ],
   [
     {
-      "action": "renamed",
+      "action": "modified",
       "kind": "file",
       "path": "dst/file2",
-      "oldPath": "src/file2"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst/file2"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst/file2"
-    }
-  ],
-  [
+      "ino": 20639477
+    },
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "src/file1",
       "path": "dst/file1",
-      "oldPath": "src/file1"
+      "ino": 20639473
     }
   ]
 ]

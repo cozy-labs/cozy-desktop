@@ -4,23 +4,17 @@
       "action": "deleted",
       "kind": "directory",
       "path": "parent/dir/empty-subdir"
-    }
-  ],
-  [
+    },
     {
       "action": "deleted",
       "kind": "file",
       "path": "parent/dir/subdir/file"
-    }
-  ],
-  [
+    },
     {
       "action": "deleted",
       "kind": "directory",
       "path": "parent/dir/subdir"
-    }
-  ],
-  [
+    },
     {
       "action": "deleted",
       "kind": "directory",

@@ -3,10 +3,10 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "dir"
+      "path": "dir",
+      "ino": 20685715
     }
   ],
-  [],
   [
     {
       "action": "deleted",

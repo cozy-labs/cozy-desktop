@@ -1,34 +1,29 @@
 [
   [
     {
-      "action": "deleted",
+      "action": "renamed",
       "kind": "file",
-      "path": "src/A"
-    },
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "src/B"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "directory",
-      "path": "src/B"
-    },
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "src/C"
+      "oldPath": "src/A",
+      "path": "src/B",
+      "ino": 20639473
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "src/B",
+      "path": "src/C",
+      "ino": 20639473
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "src/C",
       "path": "src/B",
-      "oldPath": "src/C"
+      "ino": 20639473
     }
   ]
 ]

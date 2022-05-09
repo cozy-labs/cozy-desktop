@@ -162,9 +162,12 @@ class LocalTestHelpers {
       ? this.side.watcher.onFlush(events)
       : this.side.watcher.producer.channel.push(
           events.map(({ type, path, stats }) =>
-            this.side.watcher.producer.buildEvent(type, path, stats, {
-              initialScanDone: true
-            })
+            this.side.watcher.producer.buildEvent(
+              { type, path },
+              {
+                initialScanDone: true
+              }
+            )
           )
         )
   }
@@ -223,8 +226,11 @@ class LocalTestHelpers {
   async simulateAtomStart() {
     const watcher = this._ensureAtomWatcher()
     await atomWatcher.stepsInitialState(watcher.state, watcher)
-    await watcher.producer.scan('.')
-    watcher.producer.channel.push([INITIAL_SCAN_DONE])
+    //await watcher.producer.scan('.')
+    await watcher.producer.start()
+    //watcher.producer.channel.push([INITIAL_SCAN_DONE])
+    //await Promise.delay(1000)
+    await watcher.producer.stop()
   }
 
   _ensureAtomWatcher() /*: atomWatcher.AtomWatcher */ {

@@ -15,8 +15,11 @@ const sinon = require('sinon')
 const { Config, watcherType } = require('../../core/config')
 const { Ignore } = require('../../core/ignore')
 const { AtomWatcher } = require('../../core/local/atom/watcher')
+const { INITIAL_SCAN_DONE } = require('../../core/local/atom/event')
 const { Pouch } = require('../../core/pouch')
 const Prep = require('../../core/prep')
+const ParcelProducer = require('../../core/local/atom/parcel_producer')
+
 const fixturesHelpers = require('../../test/support/helpers/scenarios')
 
 /*::
@@ -26,13 +29,13 @@ import type { Scenario } from '../../test/scenarios'
 const cliDir = path.resolve(path.join(__dirname, '..', '..'))
 const syncDir = process.env.COZY_DESKTOP_DIR || cliDir
 const config = new Config(path.join(syncDir, 'tmp', '.cozy-desktop'))
-const syncPath = (config.syncPath = path.join(
+const syncPath = (config.syncPath = path.resolve(
   syncDir,
   'tmp',
   'local_watcher',
   'synced_dir'
 ))
-const outsidePath = path.join(syncDir, 'tmp', 'local_watcher', 'outside')
+const outsidePath = path.resolve(syncDir, 'tmp', 'local_watcher', 'outside')
 
 const abspath = relpath => path.join(syncPath, relpath.replace(/\//g, path.sep))
 
@@ -176,6 +179,50 @@ const runAndRecordChokidarEvents = scenario => {
   })
 }
 
+const runAndRecordParcelEvemts = async scenario => {
+  const producer = new ParcelProducer({
+    config,
+    ignore: new Ignore([]),
+    events: new EventEmitter()
+  })
+  const fakePush = sinon.stub(producer.channel, 'push')
+
+  const capturedBatches = []
+  try {
+    // Complete producer start after processing the initial-scan-done event
+    fakePush.withArgs([INITIAL_SCAN_DONE]).callsFake(() => {
+      //console.log('received initial scan done event')
+      producer.events.emit('initial-scan-done')
+    })
+    await producer.start()
+
+    // $FlowFixMe we override push on purpose
+    fakePush.callsFake(batch => {
+      batch.forEach(event => {
+        if (event.stats != null && mapInode[event.stats.ino]) {
+          event.stats.ino = mapInode[event.stats.ino]
+        }
+      })
+      capturedBatches.push(batch)
+    })
+
+    //console.log('will run actions')
+
+    await fixturesHelpers.runActions(scenario, abspath, {
+      saveInodeChanges: false
+    })
+    debug('actions run')
+    //console.log('actions run')
+    await Promise.delay(1000)
+    //console.log('should be able to write batches')
+    return saveFSEventsToFile(scenario, capturedBatches, 'atom')
+    //console.log('done writing batches')
+  } finally {
+    await producer.stop()
+    fakePush.restore()
+  }
+}
+
 const runAndRecordAtomEvents = async scenario => {
   const prep = sinon.createStubInstance(Prep)
   const pouch = sinon.createStubInstance(Pouch)
@@ -207,8 +254,10 @@ const runAndRecordAtomEvents = async scenario => {
 }
 
 const runAndRecordFSEvents =
-  watcherType() === 'atom' && process.platform !== 'linux'
-    ? runAndRecordAtomEvents
+  watcherType() === 'atom'
+    ? process.platform === 'linux'
+      ? runAndRecordParcelEvemts
+      : runAndRecordAtomEvents
     : runAndRecordChokidarEvents
 
 const captureScenario = (scenario /*: Scenario & {path: string} */) => {
@@ -224,6 +273,7 @@ const captureScenario = (scenario /*: Scenario & {path: string} */) => {
     .then(() => fse.emptyDir(outsidePath))
     .then(() => setupInitialState(scenario))
     .then(() => runAndRecordFSEvents(scenario))
+    .then(() => fse.remove(config.snapshotPath))
 }
 
 module.exports = {

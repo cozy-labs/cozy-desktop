@@ -10,6 +10,7 @@ const glob = require('glob')
 const _ = require('lodash')
 const path = require('path')
 const fs = require('fs')
+const sinon = require('sinon')
 
 const stater = require('../../../core/local/stater')
 
@@ -21,7 +22,7 @@ import type { Scenario, ScenarioInit, FSAction } from '../../scenarios'
 import type { Metadata } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Stats } from '../../../core/local/stater'
-import type { AtomEvent } from '../../../core/local/atom/event'
+import type { AtomEvent, EventKind } from '../../../core/local/atom/event'
 import type { ChokidarEvent } from '../../../core/local/chokidar/event'
 import type { ContextDir } from './context_dir'
 */
@@ -215,7 +216,10 @@ const fixCapture = (
 
       const ino = inoMap.get(event.stats.ino)
       if (ino) event.stats.ino = ino
-      event.stats = fsStatsFromObj(event.stats)
+      event.stats = fsStatsFromObj(
+        event.stats,
+        event.type.endsWith('Dir') ? 'directory' : 'file'
+      )
     })
   } else if (capture.batches) {
     // Atom capture
@@ -231,31 +235,35 @@ const fixCapture = (
           // Make sure `event.stats` is an instance of `fs.Stats` so
           // `stater.isDirectory()` returns the appropriate value.
           // $FlowFixMe No `fileid` means `stats` is not a `WinStats` instance
-          event.stats = fsStatsFromObj(stats)
+          event.stats = fsStatsFromObj(stats, event.kind)
         }
       })
     })
   }
 }
 
-const fsStatsFromObj = ({
-  dev,
-  mode,
-  nlink,
-  uid,
-  gid,
-  rdev,
-  blksize,
-  ino,
-  size,
-  blocks,
-  atimeMs,
-  mtimeMs,
-  ctimeMs,
-  birthtimeMs
-}) => {
+const fsStatsFromObj = (module.exports.fsStatsFromObj = (
+  // $FlowFixMe these are fs.Stats attributes that we won't fill ourselves
+  {
+    dev,
+    mode,
+    nlink,
+    uid,
+    gid,
+    rdev,
+    blksize,
+    ino,
+    size,
+    blocks,
+    atimeMs,
+    mtimeMs,
+    ctimeMs,
+    birthtimeMs
+  },
+  kind /*: EventKind */
+) => {
   // $FlowFixMe `fs.Stats` constructor does accept arguments
-  return new fs.Stats(
+  const stats = new fs.Stats(
     dev,
     mode,
     nlink,
@@ -271,7 +279,12 @@ const fsStatsFromObj = ({
     ctimeMs,
     birthtimeMs
   )
-}
+  if (kind === 'directory') {
+    sinon.stub(stats, 'isDirectory').returns(true)
+    if (process.platform === 'win32') stats.directory = true
+  }
+  return stats
+})
 
 const merge = async (srcPath, dstPath) => {
   let srcStats, dstStats

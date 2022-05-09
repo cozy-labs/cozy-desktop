@@ -9,6 +9,7 @@ const chai = require('chai')
 const chaiLike = require('chai-like')
 chai.use(chaiLike)
 chai.Should()
+const sinon = require('sinon')
 
 const config = require('../../core/config')
 
@@ -20,7 +21,8 @@ const {
   runActions,
   scenarios,
   runWithBreakpoints,
-  runWithStoppedClient
+  runWithStoppedClient,
+  fsStatsFromObj
 } = require('../support/helpers/scenarios')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -68,7 +70,7 @@ describe('Test scenarios', function () {
     } else if (!runWithStoppedClient()) {
       for (let atomCapture of loadAtomCaptures(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/atom/${atomCapture.name}`
-        if (platform === 'linux' || config.watcherType() !== 'atom') {
+        if (config.watcherType() !== 'atom') {
           it.skip(localTestName, () => {})
           continue
         }
@@ -85,7 +87,7 @@ describe('Test scenarios', function () {
 
       for (let eventsFile of loadFSEventFiles(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/local/${eventsFile.name}`
-        if (platform !== 'linux' && config.watcherType() !== 'chokidar') {
+        if (config.watcherType() !== 'chokidar') {
           it.skip(localTestName, () => {})
           continue
         }
@@ -188,6 +190,10 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
       scenario.useCaptures ? atomCapture : undefined
     )
   }
+  //if (helpers.local.side.watcher.producer.writeSnapshot) {
+  //  //console.log('writing snapshot')
+  //  await helpers.local.side.watcher.producer.writeSnapshot()
+  //}
 
   if (scenario.useCaptures) {
     log.info('simulating atom start')
@@ -196,23 +202,48 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
     await helpers.local.side.watcher.start()
   }
 
-  await runActions(scenario, helpers.local.syncDir.abspath, {
-    skipWait: scenario.useCaptures
-  })
+  const inodeChanges = await runActions(
+    scenario,
+    helpers.local.syncDir.abspath,
+    {
+      skipWait: scenario.useCaptures
+    }
+  )
 
   if (scenario.useCaptures) {
+    for (const batch of atomCapture.batches) {
+      for (const event of batch) {
+        for (const change of inodeChanges) {
+          if (
+            change.ino &&
+            event.stats &&
+            event.stats.ino &&
+            event.path === change.path
+          ) {
+            event.stats.ino = change.ino
+            break
+          }
+        }
+        if (event.stats) {
+          event.stats = fsStatsFromObj(event.stats, event.kind)
+        }
+      }
+    }
     await helpers.local.simulateAtomEvents(atomCapture.batches)
-  } else {
-    // Wait for all local events to be flushed or a 10s time limit in case no
-    // events are fired.
-    await Promise.race([
-      new Promise(resolve => {
-        helpers.local.side.events.on('local-end', resolve)
-      }),
-      new Promise(resolve => {
-        setTimeout(resolve, 10000)
-      })
-    ])
+  }
+
+  // Wait for all local events to be flushed or a 10s time limit in case no
+  // events are fired.
+  await Promise.race([
+    new Promise(resolve => {
+      helpers.local.side.events.on('local-end', resolve)
+    }),
+    new Promise(resolve => {
+      setTimeout(resolve, 10000)
+    })
+  ])
+
+  if (!scenario.useCaptures) {
     await helpers.local.side.watcher.stop()
   }
 
@@ -332,13 +363,22 @@ async function runLocalStopped(scenario, helpers) {
   // TODO: Find why we need this to prevent random failures and fix it.
   await Promise.delay(500)
   if (scenario.init) {
+    //console.log('init start')
     await init(scenario, helpers.pouch, helpers.local.syncDir.abspath)
+    //console.log('init done')
   }
+  //if (helpers.local.side.watcher.producer.writeSnapshot) {
+  //  //console.log('writing snapshot')
+  //  await helpers.local.side.watcher.producer.writeSnapshot()
+  //}
 
+  //console.log('actions start')
   await runActions(scenario, helpers.local.syncDir.abspath, {
     skipWait: true
   })
+  //console.log('actions done')
 
+  //console.log('scan start')
   await helpers.local.scan()
   await helpers.syncAll()
 

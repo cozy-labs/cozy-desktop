@@ -3,36 +3,22 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "overwriting"
-    }
-  ],
-  [],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "overwriting/overwritten"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "overwriting/overwritten"
+      "path": "overwriting",
+      "ino": 20693896
     }
   ],
   [
     {
       "action": "created",
       "kind": "file",
-      "path": "overwriting/file"
-    }
-  ],
-  [
+      "path": "overwriting/overwritten",
+      "ino": 20639476
+    },
     {
-      "action": "modified",
+      "action": "created",
       "kind": "file",
-      "path": "overwriting/file"
+      "path": "overwriting/file",
+      "ino": 20639477
     }
   ],
   [
@@ -40,21 +26,18 @@
       "action": "deleted",
       "kind": "file",
       "path": "dir/overwritten"
-    }
-  ],
-  [
+    },
     {
       "action": "deleted",
       "kind": "directory",
       "path": "dir"
-    }
-  ],
-  [
+    },
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "overwriting",
       "path": "dir",
-      "oldPath": "overwriting"
+      "ino": 20693896
     }
   ]
 ]

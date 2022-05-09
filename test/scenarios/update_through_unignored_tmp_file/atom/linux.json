@@ -1,59 +1,15 @@
 [
   [
     {
-      "action": "renamed",
-      "kind": "file",
-      "path": "other-file.ods",
-      "oldPath": "file.ods"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "file.ods"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file.ods"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file.ods"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file.ods"
-    }
-  ],
-  [
-    {
       "action": "deleted",
       "kind": "file",
       "path": "other-file.ods"
-    }
-  ],
-  [
+    },
     {
-      "action": "modified",
+      "action": "created",
       "kind": "file",
-      "path": "file.ods"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file.ods"
+      "path": "file.ods",
+      "ino": 19666152
     }
   ]
 ]

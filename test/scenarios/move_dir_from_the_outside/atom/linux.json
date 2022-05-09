@@ -3,87 +3,8 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "dst/dir"
-    }
-  ],
-  [
-    {
-      "action": "scan",
-      "path": "dst/dir/empty-subdir",
-      "kind": "directory",
-      "stats": {
-        "dev": 64771,
-        "mode": 16893,
-        "nlink": 2,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 3,
-        "size": 4096,
-        "blocks": 8,
-        "atimeMs": 1588861670705.9817,
-        "mtimeMs": 1588861668181.9517,
-        "ctimeMs": 1588861668181.9517,
-        "birthtimeMs": 1588861668181.9517,
-        "atime": "2020-05-07T14:27:50.706Z",
-        "mtime": "2020-05-07T14:27:48.182Z",
-        "ctime": "2020-05-07T14:27:48.182Z",
-        "birthtime": "2020-05-07T14:27:48.182Z"
-      }
-    },
-    {
-      "action": "scan",
-      "path": "dst/dir/subdir",
-      "kind": "directory",
-      "stats": {
-        "dev": 64771,
-        "mode": 16893,
-        "nlink": 2,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 4,
-        "size": 4096,
-        "blocks": 8,
-        "atimeMs": 1588861670705.9817,
-        "mtimeMs": 1588861668184.9517,
-        "ctimeMs": 1588861668184.9517,
-        "birthtimeMs": 1588861668183.9517,
-        "atime": "2020-05-07T14:27:50.706Z",
-        "mtime": "2020-05-07T14:27:48.185Z",
-        "ctime": "2020-05-07T14:27:48.185Z",
-        "birthtime": "2020-05-07T14:27:48.184Z"
-      }
-    }
-  ],
-  [],
-  [
-    {
-      "action": "scan",
-      "path": "dst/dir/subdir/file",
-      "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 5,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1588861668184.9517,
-        "mtimeMs": 1588861668184.9517,
-        "ctimeMs": 1588861668184.9517,
-        "birthtimeMs": 1588861668184.9517,
-        "atime": "2020-05-07T14:27:48.185Z",
-        "mtime": "2020-05-07T14:27:48.185Z",
-        "ctime": "2020-05-07T14:27:48.185Z",
-        "birthtime": "2020-05-07T14:27:48.185Z"
-      }
+      "path": "dst/dir",
+      "ino": 20693896
     }
   ]
 ]

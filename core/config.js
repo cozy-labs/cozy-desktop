@@ -78,6 +78,7 @@ class Config {
   /*::
   configPath: string
   dbPath: string
+  snapshotPath: string
   fileConfig: FileConfig
   */
 
@@ -87,6 +88,8 @@ class Config {
     fse.ensureFileSync(this.configPath)
     this.dbPath = path.join(basePath, 'db')
     fse.ensureDirSync(this.dbPath)
+    this.snapshotPath = path.join(basePath, 'snapshot.txt')
+    fse.ensureFileSync(this.snapshotPath)
     hideOnWindows(basePath)
 
     this.fileConfig = this.read()

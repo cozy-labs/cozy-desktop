@@ -3,20 +3,17 @@
     {
       "action": "created",
       "kind": "file",
-      "path": "overwriting"
-    },
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "overwriting"
+      "path": "overwriting",
+      "ino": 19666152
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "overwriting",
       "path": "file",
-      "oldPath": "overwriting"
+      "ino": 19666152
     }
   ]
 ]

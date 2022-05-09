@@ -3,386 +3,62 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "JOHN"
-    }
-  ],
-  [
+      "path": "JOHN",
+      "ino": 20685715
+    },
     {
       "action": "created",
       "kind": "directory",
-      "path": "JOHN/exact-same-subdir"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "JOHN/exact-same-subdir/a.txt"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "JOHN/exact-same-subdir/a.txt"
-    }
-  ],
-  [
-    {
-      "action": "scan",
       "path": "JOHN/exact-same-subdir",
-      "kind": "directory",
-      "stats": {
-        "dev": 64771,
-        "mode": 16893,
-        "nlink": 2,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 278530,
-        "size": 4096,
-        "blocks": 8,
-        "atimeMs": 1605190351315.819,
-        "mtimeMs": 1605190351326.819,
-        "ctimeMs": 1605190351326.819,
-        "birthtimeMs": 1605190351315.819,
-        "atime": "2020-11-12T14:12:31.316Z",
-        "mtime": "2020-11-12T14:12:31.327Z",
-        "ctime": "2020-11-12T14:12:31.327Z",
-        "birthtime": "2020-11-12T14:12:31.316Z"
-      }
-    }
-  ],
-  [
+      "ino": 20693896
+    },
     {
       "action": "created",
       "kind": "file",
-      "path": "JOHN/exact-same-subdir/b.txt"
-    },
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "JOHN/exact-same-subdir/b.txt"
-    }
-  ],
-  [
-    {
-      "action": "scan",
       "path": "JOHN/exact-same-subdir/a.txt",
-      "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 272278,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1605190351326.819,
-        "mtimeMs": 1605190351329.8193,
-        "ctimeMs": 1605190351329.8193,
-        "birthtimeMs": 1605190351326.819,
-        "atime": "2020-11-12T14:12:31.327Z",
-        "mtime": "2020-11-12T14:12:31.330Z",
-        "ctime": "2020-11-12T14:12:31.330Z",
-        "birthtime": "2020-11-12T14:12:31.327Z"
-      }
+      "ino": 20639473
     },
     {
-      "action": "scan",
+      "action": "created",
+      "kind": "file",
       "path": "JOHN/exact-same-subdir/b.txt",
-      "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 274855,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1605190351337.8193,
-        "mtimeMs": 1605190351341.8193,
-        "ctimeMs": 1605190351341.8193,
-        "birthtimeMs": 1605190351337.8193,
-        "atime": "2020-11-12T14:12:31.338Z",
-        "mtime": "2020-11-12T14:12:31.342Z",
-        "ctime": "2020-11-12T14:12:31.342Z",
-        "birthtime": "2020-11-12T14:12:31.338Z"
-      }
-    }
-  ],
-  [
-    {
-      "action": "scan",
-      "path": "JOHN/exact-same-subdir/a.txt",
-      "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 272278,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1605190351326.819,
-        "mtimeMs": 1605190351329.8193,
-        "ctimeMs": 1605190351329.8193,
-        "birthtimeMs": 1605190351326.819,
-        "atime": "2020-11-12T14:12:31.327Z",
-        "mtime": "2020-11-12T14:12:31.330Z",
-        "ctime": "2020-11-12T14:12:31.330Z",
-        "birthtime": "2020-11-12T14:12:31.327Z"
-      }
+      "ino": 20639476
     },
     {
-      "action": "scan",
-      "path": "JOHN/exact-same-subdir/b.txt",
-      "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 274855,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1605190351337.8193,
-        "mtimeMs": 1605190351341.8193,
-        "ctimeMs": 1605190351341.8193,
-        "birthtimeMs": 1605190351337.8193,
-        "atime": "2020-11-12T14:12:31.338Z",
-        "mtime": "2020-11-12T14:12:31.342Z",
-        "ctime": "2020-11-12T14:12:31.342Z",
-        "birthtime": "2020-11-12T14:12:31.338Z"
-      }
-    }
-  ],
-  [
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN/other-subdir-JOHN-1",
+      "ino": 20693905
+    },
     {
       "action": "created",
       "kind": "directory",
-      "path": "JOHN/other-subdir-JOHN-1"
-    }
-  ],
-  [
+      "path": "john",
+      "ino": 20693906
+    },
     {
       "action": "created",
       "kind": "directory",
-      "path": "john"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "john/exact-same-subdir"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "john/exact-same-subdir/a.txt"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "john/exact-same-subdir/a.txt"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "john/exact-same-subdir/b.txt"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "john/exact-same-subdir/b.txt"
-    }
-  ],
-  [],
-  [
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "john/other-subdir-john-2"
-    }
-  ],
-  [
-    {
-      "action": "scan",
       "path": "john/exact-same-subdir",
-      "kind": "directory",
-      "stats": {
-        "dev": 64771,
-        "mode": 16893,
-        "nlink": 2,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 278533,
-        "size": 4096,
-        "blocks": 8,
-        "atimeMs": 1605190351347.8193,
-        "mtimeMs": 1605190351355.8196,
-        "ctimeMs": 1605190351355.8196,
-        "birthtimeMs": 1605190351347.8193,
-        "atime": "2020-11-12T14:12:31.348Z",
-        "mtime": "2020-11-12T14:12:31.356Z",
-        "ctime": "2020-11-12T14:12:31.356Z",
-        "birthtime": "2020-11-12T14:12:31.348Z"
-      }
+      "ino": 20693907
     },
     {
-      "action": "scan",
+      "action": "created",
+      "kind": "file",
+      "path": "john/exact-same-subdir/a.txt",
+      "ino": 20639477
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "john/exact-same-subdir/b.txt",
+      "ino": 20639478
+    },
+    {
+      "action": "created",
+      "kind": "directory",
       "path": "john/other-subdir-john-2",
-      "kind": "directory",
-      "stats": {
-        "dev": 64771,
-        "mode": 16893,
-        "nlink": 2,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 278534,
-        "size": 4096,
-        "blocks": 8,
-        "atimeMs": 1605190351356.8196,
-        "mtimeMs": 1605190351356.8196,
-        "ctimeMs": 1605190351356.8196,
-        "birthtimeMs": 1605190351356.8196,
-        "atime": "2020-11-12T14:12:31.357Z",
-        "mtime": "2020-11-12T14:12:31.357Z",
-        "ctime": "2020-11-12T14:12:31.357Z",
-        "birthtime": "2020-11-12T14:12:31.357Z"
-      }
+      "ino": 20702095
     }
-  ],
-  [
-    {
-      "action": "scan",
-      "path": "john/exact-same-subdir/a.txt",
-      "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 274856,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1605190351352.8196,
-        "mtimeMs": 1605190351353.8196,
-        "ctimeMs": 1605190351353.8196,
-        "birthtimeMs": 1605190351352.8196,
-        "atime": "2020-11-12T14:12:31.353Z",
-        "mtime": "2020-11-12T14:12:31.354Z",
-        "ctime": "2020-11-12T14:12:31.354Z",
-        "birthtime": "2020-11-12T14:12:31.353Z"
-      }
-    },
-    {
-      "action": "scan",
-      "path": "john/exact-same-subdir/b.txt",
-      "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 274857,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1605190351355.8196,
-        "mtimeMs": 1605190351355.8196,
-        "ctimeMs": 1605190351355.8196,
-        "birthtimeMs": 1605190351355.8196,
-        "atime": "2020-11-12T14:12:31.356Z",
-        "mtime": "2020-11-12T14:12:31.356Z",
-        "ctime": "2020-11-12T14:12:31.356Z",
-        "birthtime": "2020-11-12T14:12:31.356Z"
-      }
-    }
-  ],
-  [
-    {
-      "action": "scan",
-      "path": "john/exact-same-subdir/a.txt",
-      "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 274856,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1605190351352.8196,
-        "mtimeMs": 1605190351353.8196,
-        "ctimeMs": 1605190351353.8196,
-        "birthtimeMs": 1605190351352.8196,
-        "atime": "2020-11-12T14:12:31.353Z",
-        "mtime": "2020-11-12T14:12:31.354Z",
-        "ctime": "2020-11-12T14:12:31.354Z",
-        "birthtime": "2020-11-12T14:12:31.353Z"
-      }
-    },
-    {
-      "action": "scan",
-      "path": "john/exact-same-subdir/b.txt",
-      "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 274857,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1605190351355.8196,
-        "mtimeMs": 1605190351355.8196,
-        "ctimeMs": 1605190351355.8196,
-        "birthtimeMs": 1605190351355.8196,
-        "atime": "2020-11-12T14:12:31.356Z",
-        "mtime": "2020-11-12T14:12:31.356Z",
-        "ctime": "2020-11-12T14:12:31.356Z",
-        "birthtime": "2020-11-12T14:12:31.356Z"
-      }
-    }
-  ],
-  [],
-  []
+  ]
 ]

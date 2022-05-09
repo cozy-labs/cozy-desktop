@@ -3,16 +3,18 @@
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "src/dir1",
       "path": "dst/dir1",
-      "oldPath": "src/dir1"
+      "ino": 20693896
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "src/dir12",
       "path": "dst/dir12",
-      "oldPath": "src/dir12"
+      "ino": 20693905
     }
   ]
 ]

@@ -8,11 +8,13 @@
  */
 
 const _ = require('lodash')
+const path = require('path')
 
 const winDetectMove = require('./win_detect_move')
 const { buildDir, buildFile } = require('../../metadata')
 const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../config')
 const logger = require('../../utils/logger')
+const parcel = require('@parcel/watcher')
 
 const STEP_NAME = 'dispatch'
 const component = `atom/${STEP_NAME}`
@@ -88,6 +90,7 @@ function step(opts /*: DispatchOptions */) {
     for (const event of batch) {
       try {
         await dispatchEvent(event, opts)
+        // break
       } catch (err) {
         log.warn({ err, event }, 'could not dispatch local event')
       } finally {
@@ -100,8 +103,58 @@ function step(opts /*: DispatchOptions */) {
     dispatchState.localEndTimeout = setTimeout(() => {
       opts.events.emit('local-end')
     }, LOCAL_END_NOTIFICATION_DELAY)
+    // throw new Error('prevent merging next events')
 
     return batch
+  }
+}
+
+async function updateSnapshot(
+  syncPath /*: string */,
+  snapshotPath /*: string */,
+  event /*: AtomEvent */
+) {
+  //console.log('updateSnapshot', { event })
+  switch (event.action) {
+    case 'created':
+    case 'scan':
+      await parcel.updateSnapshot(syncPath, snapshotPath, {
+        path: path.join(syncPath, event.path),
+        mtime: event.stats.mtime,
+        isDir: event.kind === 'directory',
+        eventType: 'create'
+      })
+      break
+    case 'modified':
+      await parcel.updateSnapshot(syncPath, snapshotPath, {
+        path: path.join(syncPath, event.path),
+        mtime: event.stats.mtime,
+        isDir: event.kind === 'directory',
+        eventType: 'update'
+      })
+      break
+    case 'deleted':
+      await parcel.updateSnapshot(syncPath, snapshotPath, {
+        path: path.join(syncPath, event.path),
+        mtime: 0,
+        isDir: false,
+        eventType: 'delete'
+      })
+      break
+    case 'renamed':
+      await parcel.updateSnapshot(syncPath, snapshotPath, {
+        path: path.join(syncPath, event.path),
+        mtime: 0,
+        isDir: false,
+        eventType: 'delete'
+      })
+      await parcel.updateSnapshot(syncPath, snapshotPath, {
+        path: path.join(syncPath, event.oldPath),
+        mtime: event.stats.mtime,
+        isDir: event.kind === 'directory',
+        eventType: 'create'
+      })
+      break
   }
 }
 
@@ -119,6 +172,11 @@ async function dispatchEvent(
     const release = await opts.pouch.lock(component)
     try {
       await actions[event.action + event.kind](event, opts)
+      //await updateSnapshot(
+      //  opts.config.syncPath,
+      //  opts.config.snapshotPath,
+      //  event
+      //)
       try {
         const target = (
           await opts.pouch.db.changes({

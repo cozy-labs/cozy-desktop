@@ -10,8 +10,9 @@
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "src/subdir",
       "path": "dst/subdir",
-      "oldPath": "src/subdir"
+      "ino": 20693905
     }
   ]
 ]

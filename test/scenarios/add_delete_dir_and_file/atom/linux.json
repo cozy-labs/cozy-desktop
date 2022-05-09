@@ -3,32 +3,22 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "dir"
-    }
-  ],
-  [
+      "path": "dir",
+      "ino": 20685715
+    },
     {
       "action": "created",
       "kind": "file",
-      "path": "file"
+      "path": "file",
+      "ino": 19666152
     }
   ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file"
-    }
-  ],
-  [],
   [
     {
       "action": "deleted",
       "kind": "directory",
       "path": "dir"
-    }
-  ],
-  [
+    },
     {
       "action": "deleted",
       "kind": "file",

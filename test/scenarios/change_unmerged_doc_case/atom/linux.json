@@ -3,144 +3,77 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "dir"
-    }
-  ],
-  [
+      "path": "dir",
+      "ino": 20685715
+    },
     {
       "action": "created",
       "kind": "file",
-      "path": "dir/child"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dir/child"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "dir/renamed-child"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dir/renamed-child"
-    }
-  ],
-  [
-    {
-      "action": "scan",
       "path": "dir/child",
-      "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 19696201,
-        "size": 13,
-        "blocks": 8,
-        "atimeMs": 1651758781313.2844,
-        "mtimeMs": 1651758781314.2844,
-        "ctimeMs": 1651758781314.2844,
-        "birthtimeMs": 1651758781313.2844,
-        "atime": "2022-05-05T13:53:01.313Z",
-        "mtime": "2022-05-05T13:53:01.314Z",
-        "ctime": "2022-05-05T13:53:01.314Z",
-        "birthtime": "2022-05-05T13:53:01.313Z"
-      }
-    }
-  ],
-  [
+      "ino": 20639473
+    },
     {
       "action": "created",
       "kind": "file",
-      "path": "dir/moved-child"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dir/moved-child"
-    }
-  ],
-  [
+      "path": "dir/renamed-child",
+      "ino": 20639476
+    },
     {
       "action": "created",
       "kind": "file",
-      "path": "file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file"
-    }
-  ],
-  [
+      "path": "dir/moved-child",
+      "ino": 20639477
+    },
     {
       "action": "created",
       "kind": "file",
-      "path": "moved-file"
-    }
-  ],
-  [
+      "path": "file",
+      "ino": 19663088
+    },
     {
-      "action": "modified",
+      "action": "created",
       "kind": "file",
-      "path": "moved-file"
+      "path": "moved-file",
+      "ino": 19666152
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "dir",
       "path": "Dir",
-      "oldPath": "dir"
+      "ino": 20685715
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "Dir/renamed-child",
       "path": "Dir/Renamed-Child",
-      "oldPath": "Dir/renamed-child"
-    }
-  ],
-  [
+      "ino": 20639476
+    },
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "Dir/moved-child",
       "path": "Moved-child",
-      "oldPath": "Dir/moved-child"
-    }
-  ],
-  [
+      "ino": 20639477
+    },
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "file",
       "path": "File",
-      "oldPath": "file"
-    }
-  ],
-  [
+      "ino": 19663088
+    },
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "moved-file",
       "path": "Dir/moved-file",
-      "oldPath": "moved-file"
+      "ino": 19666152
     }
   ]
 ]

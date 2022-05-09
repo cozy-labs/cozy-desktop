@@ -3,123 +3,26 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "FOO"
-    }
-  ],
-  [
+      "path": "FOO",
+      "ino": 20685715
+    },
     {
       "action": "created",
       "kind": "directory",
-      "path": "FOO/subdir"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "FOO/subdir/file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "FOO/subdir/file"
-    }
-  ],
-  [
-    {
-      "action": "scan",
       "path": "FOO/subdir",
-      "kind": "directory",
-      "stats": {
-        "dev": 64771,
-        "mode": 16893,
-        "nlink": 2,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 19791975,
-        "size": 4096,
-        "blocks": 8,
-        "atimeMs": 1588861594784.0808,
-        "mtimeMs": 1588861594785.0808,
-        "ctimeMs": 1588861594785.0808,
-        "birthtimeMs": 1588861594784.0808,
-        "atime": "2020-05-07T14:26:34.784Z",
-        "mtime": "2020-05-07T14:26:34.785Z",
-        "ctime": "2020-05-07T14:26:34.785Z",
-        "birthtime": "2020-05-07T14:26:34.784Z"
-      }
-    }
-  ],
-  [
+      "ino": 20693896
+    },
     {
       "action": "created",
       "kind": "file",
-      "path": "foo"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "foo"
-    }
-  ],
-  [
-    {
-      "action": "scan",
       "path": "FOO/subdir/file",
-      "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 19791976,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1588861594785.0808,
-        "mtimeMs": 1588861594785.0808,
-        "ctimeMs": 1588861594785.0808,
-        "birthtimeMs": 1588861594785.0808,
-        "atime": "2020-05-07T14:26:34.785Z",
-        "mtime": "2020-05-07T14:26:34.785Z",
-        "ctime": "2020-05-07T14:26:34.785Z",
-        "birthtime": "2020-05-07T14:26:34.785Z"
-      }
-    }
-  ],
-  [
+      "ino": 20639473
+    },
     {
-      "action": "scan",
-      "path": "FOO/subdir/file",
+      "action": "created",
       "kind": "file",
-      "stats": {
-        "dev": 64771,
-        "mode": 33204,
-        "nlink": 1,
-        "uid": 1000,
-        "gid": 1000,
-        "rdev": 0,
-        "blksize": 4096,
-        "ino": 19791976,
-        "size": 8,
-        "blocks": 8,
-        "atimeMs": 1588861594785.0808,
-        "mtimeMs": 1588861594785.0808,
-        "ctimeMs": 1588861594785.0808,
-        "birthtimeMs": 1588861594785.0808,
-        "atime": "2020-05-07T14:26:34.785Z",
-        "mtime": "2020-05-07T14:26:34.785Z",
-        "ctime": "2020-05-07T14:26:34.785Z",
-        "birthtime": "2020-05-07T14:26:34.785Z"
-      }
+      "path": "foo",
+      "ino": 19663088
     }
   ]
 ]

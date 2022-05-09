@@ -3,8 +3,9 @@
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "src/file",
       "path": "dst/file",
-      "oldPath": "src/file"
+      "ino": 20639473
     }
   ]
 ]

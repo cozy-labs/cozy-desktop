@@ -3,22 +3,17 @@
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "src",
       "path": "dst",
-      "oldPath": "src"
+      "ino": 20685715
     }
   ],
   [
     {
       "action": "modified",
       "kind": "file",
-      "path": "dst/file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst/file"
+      "path": "dst/file",
+      "ino": 20639473
     }
   ]
 ]
