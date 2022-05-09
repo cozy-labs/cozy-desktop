@@ -63,6 +63,7 @@ module.exports = function analysis(
   } /*: { pendingChanges: LocalChange[], initialScanParams: ?InitialScanParams } */
 ) /*: LocalChange[] */ {
   const changes /*: LocalChange[] */ = analyseEvents(events, pendingChanges)
+  fixUnsyncedMoves(changes)
   sortBeforeSquash(changes)
   squashMoves(changes)
   sortChanges(changes, initialScanParams != null)
@@ -197,6 +198,7 @@ function analyseEvent(
       return (
         localChange.includeAddEventInFileMove(sameInodeChange, e) ||
         localChange.fileMoveFromUnlinkAdd(sameInodeChange, e) ||
+        localChange.fileRenamingCaseOnlyFromAddAdd(sameInodeChange, e) ||
         localChange.fileMoveIdenticalOffline(e) ||
         localChange.fileAddition(e)
       )
@@ -266,6 +268,30 @@ function analyseEvent(
     default:
       throw new TypeError(`Unknown event type: ${e.type}`)
   }
+}
+
+function fixUnsyncedMoves(changes /*: LocalChange[] */) {
+  log.trace('Transform unsynced moves into additions...')
+  changes.forEach(change => {
+    if (change.type === 'FileMove' && !change.old) {
+      // $FlowFixMe deliberate type change
+      change.type = 'FileAddition'
+      delete change.old
+      if (change.update) delete change.update
+      log.debug(
+        { path: change.path, ino: change.ino, wip: change.wip },
+        'changed FileMove without old into FileAddition'
+      )
+    } else if (change.type === 'DirMove' && !change.old) {
+      // $FlowFixMe deliberate type change
+      change.type = 'DirAddition'
+      delete change.old
+      log.debug(
+        { path: change.path, ino: change.ino, wip: change.wip },
+        'changed DirMove without old into DirAddition'
+      )
+    }
+  })
 }
 
 /** First sort to make moves squashing easier.

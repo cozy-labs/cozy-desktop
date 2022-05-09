@@ -54,6 +54,7 @@ module.exports = {
   fileMoveFromUnlinkAdd,
   fileMoveFromFileDeletionChange,
   fileMoveIdentical,
+  fileRenamingCaseOnlyFromAddAdd,
   fileMoveIdenticalOffline,
   dirMoveFromUnlinkAdd,
   fileMoveFromAddUnlink,
@@ -239,7 +240,7 @@ function addPath(a /*: LocalChange */) /*: ?string */ {
 function delPath(a /*: LocalChange */) /*: ?string */ {
   return isDelete(a)
     ? a.path.normalize()
-    : isMove(a)
+    : isMove(a) && a.old
     ? a.old.path.normalize()
     : null
 }
@@ -386,7 +387,11 @@ function fileMoveFromUnlinkAdd(
   const unlinkChange /*: ?LocalFileDeletion */ =
     maybeDeleteFile(sameInodeChange)
   if (!unlinkChange) return
-  if (_.get(unlinkChange, 'old.path').normalize() === e.path.normalize()) return
+  if (
+    unlinkChange.old &&
+    unlinkChange.old.path.normalize() === e.path.normalize()
+  )
+    return
   const fileMove /*: Object */ = build('FileMove', e.path, {
     stats: e.stats,
     old: unlinkChange.old,
@@ -420,7 +425,11 @@ function dirMoveFromUnlinkAdd(
   const unlinkChange /*: ?LocalDirDeletion */ =
     maybeDeleteFolder(sameInodeChange)
   if (!unlinkChange) return
-  if (_.get(unlinkChange, 'old.path').normalize() === e.path.normalize()) return
+  if (
+    unlinkChange.old &&
+    unlinkChange.old.path.normalize() === e.path.normalize()
+  )
+    return
   const dirMove /*: Object */ = build('DirMove', e.path, {
     stats: e.stats,
     old: unlinkChange.old,
@@ -557,6 +566,40 @@ function fileMoveIdentical(
       wip: fileMove.wip
     },
     'add + change = FileMove (same id)'
+  )
+
+  return fileMove
+}
+
+function fileRenamingCaseOnlyFromAddAdd(
+  sameInodeChange /*: ?LocalChange */,
+  e /*: LocalFileAdded */
+) /*: * */ {
+  const addChange /*: ?LocalFileAddition */ = maybeAddFile(sameInodeChange)
+  if (
+    !addChange ||
+    metadata.id(addChange.path) !== metadata.id(e.path) ||
+    addChange.path.normalize() === e.path.normalize()
+  ) {
+    return
+  }
+
+  const fileMove /*: Object */ = build('FileMove', e.path, {
+    stats: addChange.stats,
+    old: addChange.old,
+    ino: addChange.ino,
+    md5sum: e.md5sum,
+    wip: e.wip
+  })
+
+  log.debug(
+    {
+      oldpath: fileMove.old && fileMove.old.path,
+      path: fileMove.path,
+      ino: fileMove.ino,
+      wip: fileMove.wip
+    },
+    'add + add = FileMove (same id)'
   )
 
   return fileMove
@@ -736,7 +779,10 @@ function dirRenamingIdenticalLoopback(
 ) {
   const moveChange /*: ?LocalDirMove */ = maybeMoveFolder(sameInodeChange)
   if (!moveChange) return
-  if (moveChange.old.path.normalize() === e.path.normalize()) {
+  if (
+    moveChange.old &&
+    moveChange.old.path.normalize() === e.path.normalize()
+  ) {
     // $FlowFixMe
     moveChange.type = 'Ignored'
 

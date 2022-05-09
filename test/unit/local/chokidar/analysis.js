@@ -599,8 +599,35 @@ onPlatform('darwin', () => {
         })
       })
 
-      describe('unwatched add(A, ino, old={a, ino})', () => {
+      describe('add(a, ino) + add(A, ino)', () => {
         it('is a case/normalization only change', () => {
+          const old /*: Metadata */ = builders
+            .metafile()
+            .path('foo')
+            .ino(1)
+            .build()
+          const stats = { ino: 1 }
+          const events /*: LocalEvent[] */ = [
+            { type: 'add', path: 'foo', stats, old },
+            { type: 'add', path: 'FOO', stats, old }
+          ]
+          const pendingChanges = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'FileMove',
+              path: 'FOO',
+              ino: 1,
+              stats,
+              old
+            }
+          ])
+        })
+      })
+
+      describe('add(A, ino, old={a, ino})', () => {
+        it('is an unwatched case/normalization only change', () => {
           const ino = 123
           const stats = { ino }
           const md5sum = 'badbeef'
@@ -654,6 +681,53 @@ onPlatform('darwin', () => {
               md5sum,
               stats,
               old
+            }
+          ])
+        })
+      })
+
+      describe('add(a, ino) + add(A, ino)', () => {
+        it('is not confused with a case/normalization change', () => {
+          const stats = { ino: 1 }
+          const md5sum = 'xxx'
+          const events /*: LocalEvent[] */ = [
+            { type: 'add', path: 'foo', stats, md5sum },
+            { type: 'add', path: 'FOO', stats, md5sum }
+          ]
+          const pendingChanges = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'FileAddition',
+              path: 'FOO',
+              ino: 1,
+              stats,
+              md5sum
+            }
+          ])
+        })
+      })
+
+      describe('add(a, ino) + add(A, ino) + change(a, ino)', () => {
+        it('is not confused with a case/normalization change', () => {
+          const stats = { ino: 1 }
+          const md5sum = 'xxx'
+          const events /*: LocalEvent[] */ = [
+            { type: 'add', path: 'foo', stats, md5sum },
+            { type: 'add', path: 'FOO', stats, md5sum },
+            { type: 'change', path: 'foo', stats, md5sum }
+          ]
+          const pendingChanges = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'FileAddition',
+              path: 'FOO',
+              ino: 1,
+              stats,
+              md5sum
             }
           ])
         })
@@ -1367,6 +1441,27 @@ onPlatform('darwin', () => {
               ino,
               stats,
               old
+            }
+          ])
+        })
+      })
+
+      describe('addDir(a, ino) + addDir(A, ino)', () => {
+        it('is not confused with a case/normalization change', () => {
+          const stats = { ino: 1 }
+          const events /*: LocalEvent[] */ = [
+            { type: 'addDir', path: 'foo', stats },
+            { type: 'addDir', path: 'FOO', stats }
+          ]
+          const pendingChanges = []
+
+          should(analysis(events, { pendingChanges })).deepEqual([
+            {
+              sideName,
+              type: 'DirAddition',
+              path: 'FOO',
+              ino: 1,
+              stats
             }
           ])
         })

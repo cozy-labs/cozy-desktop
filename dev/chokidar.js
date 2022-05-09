@@ -9,7 +9,7 @@ const scenarioHelpers = require('../test/support/helpers/scenarios')
 
 program
   .description('Prepare FS for capture')
-  .arguments('scenario')
+  .arguments('[scenario]')
   .parse(process.argv)
 
 const scenarioArg = program.args[0]
