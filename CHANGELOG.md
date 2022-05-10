@@ -1,5 +1,29 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.35.0-beta.2 - 2022-05-10
+
+Improvements for all users:
+
+- We've made changes to the dependency algorithm that decides which changes need
+  to be synchronized first in order for all changes to be synchronized correctly
+  (and without retry). When documents are moved to a freshly created directory,
+  we should always synchronize the creation of said directory before moving the
+  documents into it.
+  This would work with retries before but this was a waste of time and
+  resources.
+
+Improvements for macOS users:
+
+- We fixed a few issues that were preventing the correct processing of movements
+  with case changes of documents that have never been been saved in our local
+  database.
+  These should now be handled as creations at their new path and overwritten
+  documents trashed on the other side.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.35.0-beta.1 - 2022-05-06
 
 Improvements for all users:
