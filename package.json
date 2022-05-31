@@ -80,7 +80,7 @@
   },
   "dependencies": {
     "@babel/runtime": "7.16.7",
-    "@electron/remote": "^1.0.4",
+    "@electron/remote": "2.0.8",
     "@parcel/watcher": "https://github.com/taratatach/parcel-watcher.git#v3.0.0",
     "@sentry/electron": "2.5.4",
     "async": "3.2.3",
