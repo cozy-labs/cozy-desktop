@@ -3,57 +3,35 @@
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "a",
       "path": "b",
-      "oldPath": "a"
+      "ino": "0x0068000000000617"
     }
   ],
   [
     {
       "action": "created",
       "kind": "directory",
-      "path": "a"
-    }
-  ],
-  [
+      "path": "a",
+      "ino": "0x00130000000ADD4F"
+    },
     {
       "action": "created",
       "kind": "file",
-      "path": "a\\file.txt"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "a\\file.txt"
-    }
-  ],
-  [
+      "path": "a\\file.txt",
+      "ino": "0x000A0000000ADDFB"
+    },
     {
       "action": "created",
       "kind": "directory",
-      "path": "a\\subdir"
-    }
-  ],
-  [
+      "path": "a\\subdir",
+      "ino": "0x00060000000ADE3D"
+    },
     {
       "action": "created",
       "kind": "file",
-      "path": "a\\subdir\\child.txt"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "a\\subdir\\child.txt"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "a\\subdir\\child.txt"
+      "path": "a\\subdir\\child.txt",
+      "ino": "0x00090000000ADE50"
     }
   ]
 ]

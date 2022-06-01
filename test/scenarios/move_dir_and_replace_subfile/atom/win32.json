@@ -3,51 +3,18 @@
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "src",
       "path": "dst",
-      "oldPath": "src"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "dst\\file.tmp"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\file.tmp"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\file.tmp"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "file",
-      "path": "dst\\file"
+      "ino": "0x006A000000000617"
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "dst\\file.tmp",
       "path": "dst\\file",
-      "oldPath": "dst\\file.tmp"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\file"
+      "ino": "0x00170000000049D4"
     }
   ]
 ]

@@ -3,14 +3,14 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "foo"
-    }
-  ],
-  [
+      "path": "foo",
+      "ino": "0x005D000000000617"
+    },
     {
       "action": "created",
       "kind": "directory",
-      "path": "foo\\bar"
+      "path": "foo\\bar",
+      "ino": "0x001900000000096E"
     }
   ]
 ]

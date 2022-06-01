@@ -3,16 +3,18 @@
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "a",
       "path": "c",
-      "oldPath": "a"
+      "ino": "0x0062000000000617"
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "directory",
+      "oldPath": "b",
       "path": "a",
-      "oldPath": "b"
+      "ino": "0x0040000000000AFF"
     }
   ]
 ]

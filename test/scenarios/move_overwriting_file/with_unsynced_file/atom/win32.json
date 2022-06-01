@@ -1,0 +1,25 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "overwriting",
+      "ino": "0x00140000000ADE67"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "file",
+      "deletedIno": "0x0081000000000617"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "overwriting",
+      "path": "file",
+      "ino": "0x00140000000ADE67"
+    }
+  ]
+]

@@ -1,50 +1,16 @@
 [
   [
     {
-      "action": "renamed",
+      "action": "deleted",
       "kind": "file",
       "path": "file.ods.osl-tmp",
-      "oldPath": "file.ods"
+      "deletedIno": "0x00190000000ADE67"
     },
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file.ods.osl-tmp"
-    }
-  ],
-  [
     {
       "action": "created",
       "kind": "file",
-      "path": "file.ods"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file.ods"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file.ods"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file.ods"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "file",
-      "path": "file.ods.osl-tmp"
+      "path": "file.ods",
+      "ino": "0x00140000000ADE80"
     }
   ]
 ]

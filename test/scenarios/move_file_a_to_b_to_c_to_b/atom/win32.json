@@ -3,45 +3,27 @@
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "src\\A",
       "path": "src\\B",
-      "oldPath": "src\\A"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "src\\B"
+      "ino": "0x002E00000000096E"
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "src\\B",
       "path": "src\\C",
-      "oldPath": "src\\B"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "src\\C"
+      "ino": "0x002E00000000096E"
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "src\\C",
       "path": "src\\B",
-      "oldPath": "src\\C"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "src\\B"
+      "ino": "0x002E00000000096E"
     }
   ]
 ]

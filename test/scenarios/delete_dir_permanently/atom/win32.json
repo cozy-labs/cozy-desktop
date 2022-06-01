@@ -4,25 +4,25 @@
       "action": "deleted",
       "kind": "directory",
       "path": "parent\\dir\\empty-subdir",
-      "deletedIno": "0x00130000000ADE92"
+      "deletedIno": "0x003F000000000AFF"
     },
     {
       "action": "deleted",
       "kind": "file",
       "path": "parent\\dir\\subdir\\file",
-      "deletedIno": "0x000A0000000ADEA1"
+      "deletedIno": "0x00130000000049D4"
     },
     {
       "action": "deleted",
       "kind": "directory",
       "path": "parent\\dir\\subdir",
-      "deletedIno": "0x00100000000ADE93"
+      "deletedIno": "0x002600000000205F"
     },
     {
       "action": "deleted",
       "kind": "directory",
       "path": "parent\\dir",
-      "deletedIno": "0x00180000000ADE80"
+      "deletedIno": "0x001A00000000096E"
     }
   ]
 ]

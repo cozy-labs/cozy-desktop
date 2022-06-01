@@ -3,36 +3,28 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "dir"
-    }
-  ],
-  [
+      "path": "dir",
+      "ino": "0x0053000000000617"
+    },
     {
       "action": "created",
       "kind": "file",
-      "path": "file"
+      "path": "file",
+      "ino": "0x003B000000000AFF"
     }
   ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file"
-    }
-  ],
-  [],
   [
     {
       "action": "deleted",
       "kind": "directory",
-      "path": "dir"
-    }
-  ],
-  [
+      "path": "dir",
+      "deletedIno": "0x0053000000000617"
+    },
     {
       "action": "deleted",
       "kind": "file",
-      "path": "file"
+      "path": "file",
+      "deletedIno": "0x003B000000000AFF"
     }
   ]
 ]

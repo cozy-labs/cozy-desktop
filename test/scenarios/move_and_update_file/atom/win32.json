@@ -1,44 +1,11 @@
 [
   [
     {
-      "action": "deleted",
+      "action": "renamed",
       "kind": "file",
-      "path": "src\\file"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "dst\\file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\file"
+      "oldPath": "src\\file",
+      "path": "dst\\file",
+      "ino": "0x00150000000049D4"
     }
   ]
 ]

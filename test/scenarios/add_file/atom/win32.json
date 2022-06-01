@@ -3,21 +3,8 @@
     {
       "action": "created",
       "kind": "file",
-      "path": "file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "file"
+      "path": "file",
+      "ino": "0x0054000000000617"
     }
   ]
 ]

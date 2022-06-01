@@ -1,28 +1,11 @@
 [
   [
     {
-      "action": "deleted",
+      "action": "renamed",
       "kind": "directory",
-      "path": "parent\\src\\dir"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "parent\\dst1\\dir"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "directory",
-      "path": "parent\\dst1\\dir"
-    },
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "parent\\dst2\\dir"
+      "oldPath": "parent\\src\\dir",
+      "path": "parent\\dst2\\dir",
+      "ino": "0x00060000000ADE59"
     }
   ]
 ]

@@ -1,28 +1,18 @@
 [
   [
     {
-      "action": "deleted",
+      "action": "renamed",
       "kind": "directory",
-      "path": "parent\\src\\dir"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "parent\\dst\\dir"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "directory",
-      "path": "parent\\dst\\dir\\subdir"
+      "oldPath": "parent\\src\\dir",
+      "path": "parent\\dst\\dir",
+      "ino": "0x000C0000000ADE77"
     },
     {
-      "action": "created",
+      "action": "renamed",
       "kind": "directory",
-      "path": "parent\\dst2\\subdir"
+      "oldPath": "parent\\dst\\dir\\subdir",
+      "path": "parent\\dst2\\subdir",
+      "ino": "0x000D0000000ADE80"
     }
   ]
 ]

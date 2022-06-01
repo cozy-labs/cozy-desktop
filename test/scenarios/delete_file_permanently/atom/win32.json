@@ -3,7 +3,8 @@
     {
       "action": "deleted",
       "kind": "file",
-      "path": "foo"
+      "path": "foo",
+      "deletedIno": "0x005F000000000617"
     }
   ]
 ]

@@ -3,15 +3,16 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "dir"
+      "path": "dir",
+      "ino": "0x0055000000000617"
     }
   ],
-  [],
   [
     {
       "action": "deleted",
       "kind": "directory",
-      "path": "dir"
+      "path": "dir",
+      "deletedIno": "0x0055000000000617"
     }
   ]
 ]

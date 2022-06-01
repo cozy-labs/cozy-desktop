@@ -1,44 +1,20 @@
 [
   [
     {
-      "action": "deleted",
+      "action": "renamed",
       "kind": "file",
-      "path": "src\\file"
+      "oldPath": "src\\file",
+      "path": "dst1\\file",
+      "ino": "0x000B0000000ADE74"
     }
   ],
   [
     {
-      "action": "created",
+      "action": "renamed",
       "kind": "file",
-      "path": "dst1\\file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst1\\file"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "file",
-      "path": "dst1\\file"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "dst2\\file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst2\\file"
+      "oldPath": "dst1\\file",
+      "path": "dst2\\file",
+      "ino": "0x000B0000000ADE74"
     }
   ]
 ]

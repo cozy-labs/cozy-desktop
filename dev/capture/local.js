@@ -19,6 +19,7 @@ const { INITIAL_SCAN_DONE } = require('../../core/local/atom/event')
 const { Pouch } = require('../../core/pouch')
 const Prep = require('../../core/prep')
 const ParcelProducer = require('../../core/local/atom/parcel_producer')
+const stater = require('../../core/local/stater')
 
 const fixturesHelpers = require('../../test/support/helpers/scenarios')
 
@@ -196,7 +197,6 @@ const runAndRecordParcelEvemts = async scenario => {
     })
     await producer.start()
 
-    // $FlowFixMe we override push on purpose
     fakePush.callsFake(batch => {
       batch.forEach(event => {
         if (event.stats != null && mapInode[event.stats.ino]) {
@@ -216,7 +216,6 @@ const runAndRecordParcelEvemts = async scenario => {
     await Promise.delay(1000)
     //console.log('should be able to write batches')
     return saveFSEventsToFile(scenario, capturedBatches, 'atom')
-    //console.log('done writing batches')
   } finally {
     await producer.stop()
     fakePush.restore()
@@ -255,9 +254,7 @@ const runAndRecordAtomEvents = async scenario => {
 
 const runAndRecordFSEvents =
   watcherType() === 'atom'
-    ? process.platform === 'linux'
-      ? runAndRecordParcelEvemts
-      : runAndRecordAtomEvents
+    ? runAndRecordParcelEvemts
     : runAndRecordChokidarEvents
 
 const captureScenario = (scenario /*: Scenario & {path: string} */) => {
@@ -273,7 +270,10 @@ const captureScenario = (scenario /*: Scenario & {path: string} */) => {
     .then(() => fse.emptyDir(outsidePath))
     .then(() => setupInitialState(scenario))
     .then(() => runAndRecordFSEvents(scenario))
-    .then(() => fse.remove(config.snapshotPath))
+    .then((capturePath) => {
+      fse.remove(config.snapshotPath)
+      return capturePath
+    })
 }
 
 module.exports = {

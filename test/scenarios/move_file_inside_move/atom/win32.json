@@ -3,40 +3,23 @@
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "parent\\src\\dir\\subdir\\file",
       "path": "parent\\src\\dir\\subdir\\filerenamed",
-      "oldPath": "parent\\src\\dir\\subdir\\file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "parent\\src\\dir\\subdir\\filerenamed"
+      "ino": "0x00080000000ADE78"
     },
     {
-      "action": "deleted",
+      "action": "renamed",
       "kind": "directory",
-      "path": "parent\\src\\dir"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "parent\\dst\\dir"
+      "oldPath": "parent\\src\\dir",
+      "path": "parent\\dst\\dir",
+      "ino": "0x00080000000ADE73"
     },
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "parent\\dst\\dir\\subdir\\file2",
       "path": "parent\\dst\\dir\\subdir\\filerenamed2",
-      "oldPath": "parent\\dst\\dir\\subdir\\file2"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "parent\\dst\\dir\\subdir\\filerenamed2"
+      "ino": "0x000A0000000ADE80"
     }
   ]
 ]

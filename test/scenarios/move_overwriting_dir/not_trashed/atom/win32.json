@@ -3,125 +3,67 @@
     {
       "action": "deleted",
       "kind": "file",
-      "path": "src\\dir\\deletedFile"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "file",
-      "path": "dst\\dir\\file"
+      "path": "src\\dir\\deletedFile",
+      "deletedIno": "0x00080000000ADE9B"
     },
     {
       "action": "deleted",
       "kind": "file",
-      "path": "src\\dir\\file"
+      "path": "dst\\dir\\file",
+      "deletedIno": "0x000D0000000ADE77"
     },
     {
-      "action": "created",
+      "action": "renamed",
       "kind": "file",
-      "path": "dst\\dir\\file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\dir\\file"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "file",
-      "path": "src\\dir\\file2"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "file",
-      "path": "dst\\dir\\file2"
+      "oldPath": "src\\dir\\file",
+      "path": "dst\\dir\\file",
+      "ino": "0x00080000000ADE9C"
     },
     {
-      "action": "modified",
+      "action": "renamed",
       "kind": "file",
-      "path": "dst\\dir\\file2"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "file",
-      "path": "dst\\dir\\subdir\\file"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "file",
-      "path": "src\\dir\\subdir\\file"
+      "oldPath": "src\\dir\\file2",
+      "path": "dst\\dir\\file2",
+      "ino": "0x00090000000ADE9F"
     },
     {
-      "action": "created",
-      "kind": "file",
-      "path": "dst\\dir\\subdir\\file"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "dst\\dir\\subdir\\file"
-    }
-  ],
-  [
-    {
       "action": "deleted",
       "kind": "file",
-      "path": "src\\dir\\subdir\\file6"
-    }
-  ],
-  [
+      "path": "dst\\dir\\subdir\\file",
+      "deletedIno": "0x000E0000000ADE80"
+    },
     {
-      "action": "created",
+      "action": "renamed",
       "kind": "file",
-      "path": "dst\\dir\\subdir\\file6"
-    }
-  ],
-  [
+      "oldPath": "src\\dir\\subdir\\file",
+      "path": "dst\\dir\\subdir\\file",
+      "ino": "0x00090000000ADE9D"
+    },
     {
-      "action": "modified",
+      "action": "renamed",
       "kind": "file",
-      "path": "dst\\dir\\subdir\\file6"
-    }
-  ],
-  [
+      "oldPath": "src\\dir\\subdir\\file6",
+      "path": "dst\\dir\\subdir\\file6",
+      "ino": "0x00080000000ADE9E"
+    },
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "src\\dir\\subdir\\subsub",
+      "path": "dst\\dir\\subdir\\subsub",
+      "ino": "0x00090000000ADEA1"
+    },
     {
       "action": "deleted",
       "kind": "directory",
-      "path": "src\\dir\\subdir\\subsub"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "dst\\dir\\subdir\\subsub"
-    }
-  ],
-  [
+      "path": "src\\dir\\subdir",
+      "deletedIno": "0x00090000000ADE98"
+    },
     {
       "action": "deleted",
       "kind": "directory",
-      "path": "src\\dir\\subdir"
-    }
-  ],
-  [
-    {
-      "action": "deleted",
-      "kind": "directory",
-      "path": "src\\dir"
+      "path": "src\\dir",
+      "deletedIno": "0x000B0000000ADE95"
     }
   ]
 ]

@@ -26,6 +26,7 @@ export type ParcelEvent = {
   path: string,
   oldPath?: string,
   ino: string,
+  fileId?: string,
   type: 'create'|'update'|'delete'|'rename',
   kind: 'directory'|'file'
 }
@@ -238,13 +239,13 @@ class Producer {
     //      : 'file'
     //    : event.kind
     const kind = event.kind
-    const ino = event.ino && Number(event.ino)
+    const ino = event.fileId ? event.fileId : event.ino && Number(event.ino)
     //console.log({ kind, path: relativePath, ino })
 
     if (isIgnored({ path: relativePath, kind }, this.ignore)) {
       return { action: 'ignored', kind, path: relativePath, ino }
     } else if (event.type === 'delete') {
-      return { action: 'deleted', kind, path: relativePath }
+      return { action: 'deleted', kind, path: relativePath, deletedIno: ino }
     } else if (event.type === 'update') {
       return { action: 'modified', kind, path: relativePath, ino }
     } else if (event.type === 'rename') {
@@ -269,7 +270,7 @@ class Producer {
     events /*: ParcelEvent[] */,
     { fromScan = false } /*: { fromScan: boolean } */ = {}
   ) {
-    //console.log({ events })
+    //console.log({ events }, 'process events')
     const batch = await Promise.all(
       events.map(event => this.buildEvent(event, { fromScan }))
     ).filter(event => event != null)

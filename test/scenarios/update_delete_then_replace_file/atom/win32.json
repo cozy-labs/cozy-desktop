@@ -1,0 +1,66 @@
+[
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "src\\file1",
+      "ino": "0x00090000000ADEA4"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "final\\file2",
+      "deletedIno": "0x00120000000ADE93"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "src\\file2",
+      "path": "final\\file2",
+      "ino": "0x00080000000ADEA5"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src\\file1",
+      "deletedIno": "0x00090000000ADEA4"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "final\\file2",
+      "deletedIno": "0x00080000000ADEA5"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "src\\file1",
+      "ino": "0x00130000000ADE93"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "final\\file2",
+      "ino": "0x000A0000000ADEA4"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "final\\file2",
+      "deletedIno": "0x000A0000000ADEA4"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "dst\\file2",
+      "path": "final\\file2",
+      "ino": "0x00250000000ADE67"
+    }
+  ]
+]

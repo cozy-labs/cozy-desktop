@@ -3,21 +3,15 @@
     {
       "action": "created",
       "kind": "directory",
-      "path": "dir2"
-    }
-  ],
-  [
+      "path": "dir2",
+      "ino": "0x002800000000096E"
+    },
     {
-      "action": "deleted",
+      "action": "renamed",
       "kind": "directory",
-      "path": "dir1"
-    }
-  ],
-  [
-    {
-      "action": "created",
-      "kind": "directory",
-      "path": "dir2\\dir1"
+      "oldPath": "dir1",
+      "path": "dir2\\dir1",
+      "ino": "0x006D000000000617"
     }
   ]
 ]

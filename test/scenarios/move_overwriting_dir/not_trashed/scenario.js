@@ -46,23 +46,23 @@ module.exports = ({
     ],
     trash:
       // Since we're merging here, the destination directories are kept while
-      // the source ones are trashed on macOS and Linux.
+      // the source ones are trashed.
       // On Windows the source directories are moved after the destination
       // directories are trashed so retain the full hierarchy in the trash.
       process.platform === 'win32'
         ? [
             'dir/',
             'dir/deletedFile',
-            'dir/file',
             'dir/subdir/',
-            'dir/subdir/file'
+            'file', // XXX: overwritten dir/file
+            'file (...)' // XXX: overwritten dir/subdir/file
           ]
         : [
             'dir/',
             'dir/deletedFile',
             'dir/subdir/',
-            'file', // XXX: content is trashed before on disk
-            'file (...)' // XXX: content is trashed before on disk
+            'file', // XXX: content is trashed before on disk or is it the overwritten dir/file?
+            'file (...)' // XXX: content is trashed before on disk or is it the overwritten dir/subdir/file?
           ],
     contents: {
       'dst/dir/deletedFile': 'should be kept',

@@ -3,30 +3,18 @@
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "a",
       "path": "c",
-      "oldPath": "a"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "c"
+      "ino": "0x0079000000000617"
     }
   ],
   [
     {
       "action": "renamed",
       "kind": "file",
+      "oldPath": "b",
       "path": "a",
-      "oldPath": "b"
-    }
-  ],
-  [
-    {
-      "action": "modified",
-      "kind": "file",
-      "path": "a"
+      "ino": "0x003400000000096E"
     }
   ]
 ]
