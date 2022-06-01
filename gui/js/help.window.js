@@ -1,4 +1,6 @@
 const WindowManager = require('./window_manager')
+const { enable: enableRemoteModule } = require('@electron/remote/main')
+
 const HELP_SCREEN_WIDTH = 768
 const HELP_SCREEN_HEIGHT = 570
 
@@ -13,6 +15,12 @@ module.exports = class HelpWM extends WindowManager {
       width: HELP_SCREEN_WIDTH,
       height: HELP_SCREEN_HEIGHT
     }
+  }
+
+  create() {
+    super.create()
+
+    enableRemoteModule(this.win.webContents)
   }
 
   hash() {

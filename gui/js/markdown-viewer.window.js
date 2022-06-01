@@ -1,4 +1,5 @@
 const path = require('path')
+const { enable: enableRemoteModule } = require('@electron/remote/main')
 
 const { buildTranslations } = require('./i18n')
 const WindowManager = require('./window_manager')
@@ -18,6 +19,12 @@ module.exports = class MarkdownViewerWindow extends WindowManager {
       height: VIEWER_SCREEN_HEIGHT,
       indexPath: path.resolve(__dirname, '..', 'markdown-viewer.html')
     }
+  }
+
+  create() {
+    super.create()
+
+    enableRemoteModule(this.win.webContents)
   }
 
   ipcEvents() {

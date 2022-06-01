@@ -4,6 +4,7 @@ const autoLaunch = require('./autolaunch')
 const defaults = require('./defaults')
 const { translate } = require('./i18n')
 const { SESSION_PARTITION_NAME } = require('./proxy')
+const { enable: enableRemoteModule } = require('@electron/remote/main')
 
 const log = require('../../core/app').logger({
   component: 'GUI'
@@ -114,6 +115,8 @@ module.exports = class OnboardingWM extends WindowManager {
   async create() {
     try {
       await super.create()
+
+      enableRemoteModule(this.win.webContents)
 
       if (this.shouldJumpToSyncPath) {
         await this.jumpToSyncPath()
