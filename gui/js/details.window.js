@@ -1,6 +1,7 @@
 /* @flow */
 
 const path = require('path')
+const { enable: enableRemoteModule } = require('@electron/remote/main')
 
 const { buildTranslations } = require('./i18n')
 const WindowManager = require('./window_manager')
@@ -24,6 +25,12 @@ module.exports = class DetailsWM extends WindowManager {
       height: SCREEN_HEIGHT,
       indexPath: path.resolve(__dirname, '..', 'details.html')
     }
+  }
+
+  create() {
+    super.create()
+
+    enableRemoteModule(this.win.webContents)
   }
 
   hash() {

@@ -1,6 +1,7 @@
 const electron = require('electron')
 const { dialog, shell } = electron
 const path = require('path')
+const { enable: enableRemoteModule } = require('@electron/remote/main')
 
 const { openNote } = require('../utils/notes')
 const { openUrl } = require('../utils/urls')
@@ -112,6 +113,9 @@ module.exports = class TrayWM extends WindowManager {
 
   create() {
     let pReady = super.create()
+
+    enableRemoteModule(this.win.webContents)
+
     if (
       process.env.WATCH !== 'true' &&
       !this.desktop.config.gui.visibleOnBlur

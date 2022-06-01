@@ -4,6 +4,7 @@ const { autoUpdater } = require('electron-updater')
 const { translate } = require('./i18n')
 const { dialog } = require('electron')
 const path = require('path')
+const { enable: enableRemoteModule } = require('@electron/remote/main')
 
 const log = require('../../core/app').logger({
   component: 'GUI:autoupdater'
@@ -37,6 +38,12 @@ module.exports = class UpdaterWM extends WindowManager {
       width: 500,
       height: 400
     }
+  }
+
+  create() {
+    super.create()
+
+    enableRemoteModule(this.win.webContents)
   }
 
   humanError(err) {
