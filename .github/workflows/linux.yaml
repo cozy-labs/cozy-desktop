@@ -71,8 +71,9 @@ jobs:
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
@@ -125,8 +126,9 @@ jobs:
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
@@ -175,8 +177,9 @@ jobs:
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
@@ -209,8 +212,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           check-latest: true
+      - name: Setup local env
+        run: |
+          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
         run: yarn install:all
       - name: Build assets
         run: yarn build

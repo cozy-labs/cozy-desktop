@@ -79,8 +79,9 @@ jobs:
           hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
         run: yarn install:all
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
@@ -132,8 +133,9 @@ jobs:
           hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
         run: yarn install:all
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
@@ -192,8 +194,9 @@ jobs:
             sleep 1
           done
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
         run: yarn install:all
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
@@ -225,8 +228,11 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           check-latest: true
+      - name: Setup local env
+        run: |
+          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ ! steps.cache-node-modules.outputs.cache-hit }}
+        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
         run: yarn install:all
       - name: Build assets
         run: yarn build
