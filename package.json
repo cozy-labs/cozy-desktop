@@ -79,7 +79,6 @@
     "watch:js": "chokidar 'gui/js/**/*.js' gui/main.js gui/ports.js -c 'eslint {path}'"
   },
   "dependencies": {
-    "@atom/watcher": "https://github.com/taratatach/watcher.git",
     "@babel/runtime": "7.16.7",
     "@electron/remote": "^1.0.4",
     "@parcel/watcher": "https://github.com/taratatach/parcel-watcher.git#v3.0.0",
