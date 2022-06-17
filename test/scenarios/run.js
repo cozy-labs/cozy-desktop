@@ -20,7 +20,8 @@ const {
   runActions,
   scenarios,
   runWithBreakpoints,
-  runWithStoppedClient
+  runWithStoppedClient,
+  fsStatsFromObj
 } = require('../support/helpers/scenarios')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -209,11 +210,33 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
     await helpers.local.side.watcher.start()
   }
 
-  await runActions(scenario, helpers.local.syncDir.abspath, {
-    skipWait: scenario.useCaptures
-  })
+  const inodeChanges = await runActions(
+    scenario,
+    helpers.local.syncDir.abspath,
+    {
+      skipWait: scenario.useCaptures
+    }
+  )
 
   if (scenario.useCaptures) {
+    for (const batch of atomCapture.batches) {
+      for (const event of batch) {
+        for (const change of inodeChanges) {
+          if (
+            change.ino &&
+            event.stats &&
+            event.stats.ino &&
+            event.path === change.path
+          ) {
+            event.stats.ino = change.ino
+            break
+          }
+        }
+        if (event.stats) {
+          event.stats = fsStatsFromObj(event.stats, event.kind)
+        }
+      }
+    }
     await helpers.local.simulateAtomEvents(atomCapture.batches)
   } else {
     // Wait for all local events to be flushed or a 10s time limit in case no
