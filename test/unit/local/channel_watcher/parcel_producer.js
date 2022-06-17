@@ -5,7 +5,7 @@ const _ = require('lodash')
 const should = require('should')
 const path = require('path')
 
-const Producer = require('../../../../core/local/channel_watcher/producer')
+const Producer = require('../../../../core/local/channel_watcher/parcel_producer')
 const { Ignore } = require('../../../../core/ignore')
 const stater = require('../../../../core/local/stater')
 const EventEmitter = require('events')
@@ -43,6 +43,7 @@ onPlatforms(['linux', 'win32'], () => {
 
         it('should not reject', async function () {
           await should(producer.start()).be.fulfilled()
+          await producer.stop()
         })
       })
     })
@@ -72,26 +73,6 @@ onPlatforms(['linux', 'win32'], () => {
           should(outputBatch.map(e => e.path)).deepEqual([notIgnoredFile])
         })
       })
-
-      context('on readdir / stat race condition', () => {
-        const missingFileName = 'i-am-missing'
-        const readdir = async () => [missingFileName]
-
-        it('produces incomplete scan event on ENOENT', async () => {
-          const { channel } = producer
-
-          await producer.scan('', { readdir, stater })
-
-          should(await channel.pop()).deepEqual([
-            {
-              action: 'scan',
-              path: missingFileName,
-              kind: 'unknown',
-              incomplete: true
-            }
-          ])
-        })
-      })
     })
 
     describe('API of the producer', () => {
@@ -103,15 +84,19 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       it('should change absolute path to relative with process', async () => {
+        // XXX: Don't replace `created` events with `scan` events
+        producer.initialScanDone = true
+
         const dirname = 'foobar'
         const batch = [
           {
             action: 'created',
             kind: 'directory',
+            ino: 1,
             path: syncDir.abspath(dirname)
           }
         ]
-        producer.process(batch.map(evt => Object.assign({}, evt)))
+        producer.processEvents(_.cloneDeep(batch))
         should(await producer.channel.pop()).eql(
           batch.map(evt => Object.assign({}, evt, { path: dirname }))
         )
@@ -121,22 +106,8 @@ onPlatforms(['linux', 'win32'], () => {
         await syncDir.ensureDir('foo/bar/baz')
         await producer.start()
 
-        const batches = [
-          {
-            batch: await producer.channel.pop(),
-            path: path.normalize('foo')
-          },
-          {
-            batch: await producer.channel.pop(),
-            path: path.normalize('foo/bar')
-          },
-          {
-            batch: await producer.channel.pop(),
-            path: path.normalize('foo/bar/baz')
-          }
-        ]
-
-        batches.forEach(({ batch, path: originalPath }) => {
+        try {
+          const batch = await producer.channel.pop()
           should(
             batch.map(({ action, kind, path }) => ({
               action,
@@ -147,10 +118,22 @@ onPlatforms(['linux', 'win32'], () => {
             {
               action: 'scan',
               kind: 'directory',
-              path: originalPath
+              path: 'foo'
+            },
+            {
+              action: 'scan',
+              kind: 'directory',
+              path: path.normalize('foo/bar')
+            },
+            {
+              action: 'scan',
+              kind: 'directory',
+              path: path.normalize('foo/bar/baz')
             }
           ])
-        })
+        } finally {
+          await producer.stop()
+        }
       })
     })
 
@@ -159,33 +142,43 @@ onPlatforms(['linux', 'win32'], () => {
         await producer.start()
         await producer.channel.pop()
       })
+      afterEach(async () => {
+        await producer.stop()
+      })
 
       it('detect events on folder in temp dir', async () => {
         const dirname = 'foobaz'
         const newname = 'foobarbaz'
+
         await syncDir.ensureDir(dirname)
+        const { ino, fileid } = await stater.stat(syncDir.abspath(dirname))
         should(await producer.channel.pop()).eql([
           {
             action: 'created',
             kind: 'directory',
-            path: dirname
+            path: dirname,
+            ino: fileid || ino
           }
         ])
+
         await syncDir.rename(dirname, newname)
         should(await producer.channel.pop()).eql([
           {
             action: 'renamed',
             kind: 'directory',
             oldPath: dirname,
-            path: newname
+            path: newname,
+            ino: fileid || ino
           }
         ])
+
         await syncDir.rmdir(newname)
         should(await producer.channel.pop()).eql([
           {
             action: 'deleted',
             kind: 'directory',
-            path: newname
+            path: newname,
+            deletedIno: fileid || ino
           }
         ])
       })
@@ -194,80 +187,36 @@ onPlatforms(['linux', 'win32'], () => {
         const filename = 'barbaz'
         const newname = 'barfoobaz'
         const content = 'Hello, Cozy Drive for Desktop'
+
         await syncDir.outputFile(filename, content)
-        const outputBatches = [await producer.channel.pop()]
-        if (outputBatches[0].length === 1) {
-          // The modified event ended up in a separate batch.
-          // This seems to happen more frequently on Windows.
-          outputBatches.push(await producer.channel.pop())
-        }
-        const possibleBatches = [
-          [
-            {
-              action: 'created',
-              kind: 'file',
-              path: filename
-            },
-            {
-              action: 'modified',
-              kind: 'file',
-              path: filename
-            }
-          ]
-        ]
-        if (process.platform === 'win32') {
-          possibleBatches.push([
-            {
-              action: 'created',
-              kind: 'file',
-              path: filename
-            },
-            {
-              action: 'modified',
-              kind: 'file',
-              path: filename
-            },
-            {
-              action: 'modified',
-              kind: 'file',
-              path: filename
-            }
-          ])
-        }
-        should(_.flatten(outputBatches)).be.oneOf(possibleBatches)
+        const { ino, fileid } = await stater.stat(syncDir.abspath(filename))
+        should(await producer.channel.pop()).eql([
+          {
+            action: 'created',
+            kind: 'file',
+            path: filename,
+            ino: fileid || ino
+          }
+        ])
+
         await syncDir.rename(filename, newname)
-        let renamedOutputBatch = await producer.channel.pop()
-        if (
-          renamedOutputBatch.length === 1 &&
-          renamedOutputBatch[0].action === 'modified'
-        ) {
-          // A modified event on the old path may occur before the renamed one.
-          // This seems to happen sometimes on Windows.
-          should(renamedOutputBatch).deepEqual([
-            {
-              action: 'modified',
-              kind: 'file',
-              path: 'barbaz'
-            }
-          ])
-          // Let's replace it with the next batch so we can look for the
-          // renamed event:
-          renamedOutputBatch = await producer.channel.pop()
-        }
-        should(renamedOutputBatch).eql([
+        should(await producer.channel.pop()).eql([
           {
             action: 'renamed',
             kind: 'file',
             oldPath: 'barbaz',
-            path: 'barfoobaz'
+            path: 'barfoobaz',
+            ino: fileid || ino
           }
         ])
+
         await syncDir.unlink(newname)
         should(await producer.channel.pop()).eql([
           {
             action: 'deleted',
             kind: 'file',
-            path: newname
+            path: newname,
+            deletedIno: fileid || ino
           }
         ])
       })

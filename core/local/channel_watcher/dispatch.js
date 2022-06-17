@@ -9,7 +9,6 @@
 
 const _ = require('lodash')
 
-const winDetectMove = require('./win_detect_move')
 const { buildDir, buildFile } = require('../../metadata')
 const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../config')
 const logger = require('../../utils/logger')
@@ -27,7 +26,6 @@ import type {
   ChannelEvent,
   ChannelBatch
 } from './event'
-import type { WinDetectMoveState } from './win_detect_move'
 import type EventEmitter from 'events'
 import type { Config } from '../../config'
 import type Prep from '../../prep'
@@ -47,7 +45,7 @@ type DispatchOptions = {
   events: EventEmitter,
   prep: Prep,
   pouch: Pouch,
-  state: DispatchState & WinDetectMoveState,
+  state: DispatchState,
   onChannelEvents?: ChannelEventsDispatcher
 }
 */
@@ -90,10 +88,6 @@ function step(opts /*: DispatchOptions */) {
         await dispatchEvent(event, opts)
       } catch (err) {
         log.warn({ err, event }, 'could not dispatch local event')
-      } finally {
-        if (process.platform === 'win32') {
-          winDetectMove.forget(event, opts.state)
-        }
       }
     }
 

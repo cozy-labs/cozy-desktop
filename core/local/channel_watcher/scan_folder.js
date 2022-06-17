@@ -1,7 +1,7 @@
 /** This step makes sure added directories are effectively scanned.
  *
  * When a directory that was not in the synchronized dir is moved to it,
- * atom/Watcher emits a single event for the added directory. In this step,
+ * @parcel/watcher emits a single event for the added directory. In this step,
  * when this happens, we scan the directory to see if it contains files and
  * sub-directories.
  *
@@ -19,7 +19,7 @@ const log = logger({
 
 /*::
 import type Channel from './channel'
-import type { Scanner } from './producer'
+import type { Scanner } from './parcel_producer'
 */
 
 module.exports = {
