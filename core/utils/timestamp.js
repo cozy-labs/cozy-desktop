@@ -12,6 +12,7 @@ module.exports = {
   build,
   spread,
   current,
+  after,
   fromDate,
   sameDate,
   almostSameDate,
@@ -31,7 +32,7 @@ function build(
   return new Date(Date.UTC(year, month - 1, day, hour, minute, second))
 }
 
-function spread(date /*: string|Date|Timestamp */) /*: number[] */ {
+function spread(date /*: string|number|Date|Timestamp */) /*: number[] */ {
   const timestamp = new Date(date)
   const year = timestamp.getUTCFullYear()
   const month = timestamp.getUTCMonth() + 1 // Months start with 0 in javascript
@@ -48,7 +49,11 @@ function current() /*: Timestamp */ {
   return fromDate(new Date())
 }
 
-function fromDate(date /*: string|Date|Timestamp */) /*: Timestamp */ {
+function after(date /*: string|number|Date|Timestamp */) /*: Timestamp */ {
+  return fromDate(new Date(date).getTime() + 1000)
+}
+
+function fromDate(date /*: string|number|Date|Timestamp */) /*: Timestamp */ {
   let timestamp /*: Date */ = new Date(date)
   timestamp.setMilliseconds(0)
   return timestamp
