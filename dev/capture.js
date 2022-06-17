@@ -39,8 +39,8 @@ const scenarios = args => {
 }
 
 const sides = []
-if (program.local || !program.remote) sides.push(local)
-if (program.remote || !program.local) sides.push(remote)
+if (program.opts().local || !program.opts().remote) sides.push(local)
+if (program.opts().remote || !program.opts().local) sides.push(remote)
 
 const captureScenariosEvents = async (scenarios, sides) => {
   try {
