@@ -182,17 +182,23 @@ function shouldSkipRemote(scenario) {
 }
 
 function injectChokidarBreakpoints(eventsFile) {
-  let breakpoints = []
-  if (eventsFile.events[0] && eventsFile.events[0].breakpoints) {
-    breakpoints = eventsFile.events[0].breakpoints
+  const { breakpoints = [] } = eventsFile.events[0] || {}
+
+  if (breakpoints.length) {
+    // Keep only actual events
     eventsFile.events = eventsFile.events.slice(1)
-  } else {
-    // break between each events
-    for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
   }
 
-  if (!runWithBreakpoints()) breakpoints = [0]
-  return breakpoints
+  if (!runWithBreakpoints()) {
+    // Flush only after all events were notified
+    return [0]
+  } else if (breakpoints.length) {
+    // Flush after each requested breakpoint (i.e. specific numbers of events)
+    return breakpoints
+  } else {
+    // Flush after each event
+    return Object.keys(eventsFile.events)
+  }
 }
 
 async function runLocalAtom(scenario, atomCapture, helpers) {
