@@ -1,0 +1,64 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN",
+      "ino": 20685715
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN/exact-same-subdir",
+      "ino": 20693896
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "JOHN/exact-same-subdir/a.txt",
+      "ino": 20639473
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "JOHN/exact-same-subdir/b.txt",
+      "ino": 20639476
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN/other-subdir-JOHN-1",
+      "ino": 20693905
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "john",
+      "ino": 20693906
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "john/exact-same-subdir",
+      "ino": 20693907
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "john/exact-same-subdir/a.txt",
+      "ino": 20639477
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "john/exact-same-subdir/b.txt",
+      "ino": 20639478
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "john/other-subdir-john-2",
+      "ino": 20702095
+    }
+  ]
+]

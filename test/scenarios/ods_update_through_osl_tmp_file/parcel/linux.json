@@ -1,0 +1,15 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "file.ods.osl-tmp"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file.ods",
+      "ino": 19666152
+    }
+  ]
+]

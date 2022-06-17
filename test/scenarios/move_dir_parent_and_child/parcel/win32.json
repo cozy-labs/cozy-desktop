@@ -1,0 +1,25 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "parent\\src",
+      "path": "parent\\dst",
+      "ino": "0x002900000000096E"
+    },
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "parent\\dst\\dir",
+      "path": "parent\\dst\\dir2",
+      "ino": "0x00190000000049D4"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "parent\\dst\\dir2\\subdir\\file",
+      "path": "parent\\dst\\dir2\\subdir\\file2",
+      "ino": "0x00070000000ADE3D"
+    }
+  ]
+]

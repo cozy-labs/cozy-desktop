@@ -3,7 +3,8 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
-  side: 'remote',
+  //side: 'remote',
+  useCaptures: false,
   init: [
     { ino: 1, path: 'parent/' },
     { ino: 2, path: 'parent/dir/' },

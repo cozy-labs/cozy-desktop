@@ -3,6 +3,7 @@
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
+  useCaptures: false,
   disabled: {
     stopped: 'Does not work with ChannelWatcher yet.'
   },

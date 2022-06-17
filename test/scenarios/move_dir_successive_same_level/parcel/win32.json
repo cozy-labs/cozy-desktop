@@ -1,0 +1,11 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "parent\\src\\dir",
+      "path": "parent\\dst2\\dir",
+      "ino": "0x00060000000ADE59"
+    }
+  ]
+]

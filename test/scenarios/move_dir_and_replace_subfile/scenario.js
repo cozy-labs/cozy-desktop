@@ -13,7 +13,7 @@ module.exports = ({
   actions: [
     { type: 'mv', src: 'src', dst: 'dst' },
     { type: 'wait', ms: 1500 },
-    { type: 'create_file', path: 'dst/file.tmp', content: 'new content' },
+    { type: 'create_file', path: 'dst/file.tmp', content: 'new content' }, // XXX: event is changed into renamed here ?! This would explain why dst/file is added before the previous one is deleted
     { type: 'trash', path: 'dst/file' },
     { type: 'mv', src: 'dst/file.tmp', dst: 'dst/file' },
     { type: 'wait', ms: 1000 }

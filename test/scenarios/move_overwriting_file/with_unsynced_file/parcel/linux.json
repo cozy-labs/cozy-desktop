@@ -1,0 +1,19 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "overwriting",
+      "ino": 19666152
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "overwriting",
+      "path": "file",
+      "ino": 19666152
+    }
+  ]
+]

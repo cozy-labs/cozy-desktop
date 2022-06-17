@@ -1,0 +1,29 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "src\\A",
+      "path": "src\\B",
+      "ino": "0x002400000000096E"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "src\\B",
+      "path": "src\\C",
+      "ino": "0x002400000000096E"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "src\\C",
+      "path": "src\\B",
+      "ino": "0x002400000000096E"
+    }
+  ]
+]

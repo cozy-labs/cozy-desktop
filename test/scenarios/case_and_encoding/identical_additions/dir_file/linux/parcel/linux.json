@@ -1,0 +1,28 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "FOO",
+      "ino": 20685715
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "FOO/subdir",
+      "ino": 20693896
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "FOO/subdir/file",
+      "ino": 20639473
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "foo",
+      "ino": 19663088
+    }
+  ]
+]

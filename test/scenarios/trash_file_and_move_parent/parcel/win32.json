@@ -1,0 +1,19 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "src\\subdir\\file",
+      "deletedIno": "0x00110000000ADE93"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "src\\subdir",
+      "path": "dst\\subdir",
+      "ino": "0x00150000000ADE92"
+    }
+  ]
+]

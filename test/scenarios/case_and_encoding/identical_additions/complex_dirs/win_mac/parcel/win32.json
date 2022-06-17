@@ -1,0 +1,40 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN",
+      "ino": "0x0059000000000617"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN\\exact-same-subdir",
+      "ino": "0x00100000000049D4"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\a.txt",
+      "ino": "0x00110000000ADD4F"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "JOHN\\exact-same-subdir\\b.txt",
+      "ino": "0x00080000000ADDFB"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN\\other-subdir-JOHN-1",
+      "ino": "0x00070000000ADE50"
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "JOHN\\other-subdir-john-2",
+      "ino": "0x00060000000ADE52"
+    }
+  ]
+]

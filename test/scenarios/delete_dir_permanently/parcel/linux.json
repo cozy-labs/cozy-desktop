@@ -1,0 +1,20 @@
+[
+  [
+    {
+      "action": "deleted",
+      "path": "parent/dir"
+    },
+    {
+      "action": "deleted",
+      "path": "parent/dir/empty-subdir"
+    },
+    {
+      "action": "deleted",
+      "path": "parent/dir/subdir"
+    },
+    {
+      "action": "deleted",
+      "path": "parent/dir/subdir/file"
+    }
+  ]
+]

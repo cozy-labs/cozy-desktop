@@ -1,0 +1,10 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dst/dir",
+      "ino": 20693896
+    }
+  ]
+]

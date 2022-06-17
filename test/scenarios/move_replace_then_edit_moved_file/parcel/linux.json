@@ -1,0 +1,27 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "src/file",
+      "path": "dst/file",
+      "ino": 20639473
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "src/file",
+      "ino": 20639476
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/file",
+      "ino": 20639473
+    }
+  ]
+]

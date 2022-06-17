@@ -1,0 +1,41 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/file3"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/subdir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/dir/subdir/file5"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dst/dir/subdir"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dst/dir"
+    },
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "src/dir",
+      "path": "dst/dir",
+      "ino": 20693907
+    }
+  ]
+]

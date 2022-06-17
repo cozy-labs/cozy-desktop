@@ -1,0 +1,11 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "parent/src/dir",
+      "path": "parent/dst/dir",
+      "ino": 20693906
+    }
+  ]
+]

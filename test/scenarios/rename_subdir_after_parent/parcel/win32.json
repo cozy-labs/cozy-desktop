@@ -1,0 +1,29 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "parent",
+      "path": "parent-2",
+      "ino": "0x001C0000000ADE67"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "parent-2\\subdir",
+      "path": "parent-2\\subdir-2",
+      "ino": "0x00170000000ADE80"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "parent-2\\subdir-2\\subsubdir",
+      "path": "parent-2\\subdir-2\\subsubdir-2",
+      "ino": "0x00120000000ADE92"
+    }
+  ]
+]

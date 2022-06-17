@@ -162,11 +162,11 @@ module.exports.loadFSEventFiles = (
   })
 }
 
-module.exports.loadAtomCaptures = (
+module.exports.loadParcelCaptures = (
   scenario /*: Scenario & { path: string } */
 ) => {
   const eventFiles = glob.sync(
-    path.join(path.dirname(scenario.path), 'atom', '*.json*')
+    path.join(path.dirname(scenario.path), 'parcel', '*.json*')
   )
   const disabledEventsFile = name => {
     if (process.platform === 'win32' && name.indexOf('win32') === -1) {
@@ -174,7 +174,7 @@ module.exports.loadAtomCaptures = (
     } else if (process.platform === 'linux' && name.indexOf('win32') >= 0) {
       return 'win32 test'
     } else {
-      return disabledScenarioTest(scenario, `atom/${name}`)
+      return disabledScenarioTest(scenario, `parcel/${name}`)
     }
   }
   return eventFiles.map(f => {

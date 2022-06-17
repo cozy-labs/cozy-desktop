@@ -1,0 +1,10 @@
+[
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "foo",
+      "ino": "0x001E0000000ADE67"
+    }
+  ]
+]

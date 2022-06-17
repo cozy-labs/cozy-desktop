@@ -1,0 +1,23 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "src/subdir",
+      "path": "dst/subdir",
+      "ino": 20693905
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst/subdir/file"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dst/subdir"
+    }
+  ]
+]

@@ -1,0 +1,16 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "file.ods.osl-tmp",
+      "deletedIno": "0x00190000000ADE67"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file.ods",
+      "ino": "0x00140000000ADE80"
+    }
+  ]
+]
