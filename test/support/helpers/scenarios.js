@@ -275,9 +275,19 @@ const merge = async (srcPath, dstPath) => {
   let srcStats, dstStats
   try {
     srcStats = await fse.stat(srcPath)
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      throw err
+    }
+    debug('stat', err)
+  }
+
+  try {
     dstStats = await fse.stat(dstPath)
   } catch (err) {
-    debug('stat', err)
+    if (err.code !== 'ENOENT') {
+      debug('stat', err)
+    }
   }
 
   if (!dstStats || dstStats.isFile()) {
@@ -290,10 +300,12 @@ const merge = async (srcPath, dstPath) => {
       await merge(path.join(srcPath, entry), path.join(dstPath, entry))
     }
   }
-  try {
-    await fse.rmdir(srcPath)
-  } catch (err) {
-    debug('rmdir', err)
+  if (srcStats && srcStats.isDirectory()) {
+    try {
+      await fse.rmdir(srcPath, { recursive: true })
+    } catch (err) {
+      debug('rmdir', err)
+    }
   }
 }
 
@@ -369,6 +381,7 @@ module.exports.init = async (
         if (trashed) {
           remoteDocsToTrash.push(remoteDir)
         } else if (stats) {
+          debug(`- create dir metadata: ${relpath}`)
           // We should always have stats if doc is not trashed
           const doc = builders
             .metadir()
@@ -378,7 +391,6 @@ module.exports.init = async (
           stater.assignInoAndFileId(doc, stats)
           stater.assignInoAndFileId(doc.local, stats)
 
-          debug(`- create dir metadata: ${doc.path}`)
           await pouch.put(doc)
         }
       } else {
@@ -399,6 +411,7 @@ module.exports.init = async (
         if (trashed) {
           remoteDocsToTrash.push(remoteFile)
         } else if (stats) {
+          debug(`- create file metadata: ${relpath}`)
           // We should always have stats if doc is not trashed
           const doc = builders
             .metafile()
@@ -408,7 +421,6 @@ module.exports.init = async (
           stater.assignInoAndFileId(doc, stats)
           stater.assignInoAndFileId(doc.local, stats)
 
-          debug(`- create file metadata: ${doc.path}`)
           await pouch.put(doc)
         }
       } // if relpath ...

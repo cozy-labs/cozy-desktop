@@ -67,7 +67,7 @@
     "test:integration": "yarn mocha test/integration",
     "test:performance": "yarn mocha test/performance",
     "test:property": "env NO_ELECTRON=true BLUEBIRD_WARNINGS=0 mocha --exit test/property",
-    "test:scenarios": "yarn mocha test/scenarios/run.js",
+    "test:scenarios": "yarn mocha --reporter=list test/scenarios/run.js",
     "test:setup": "yarn docker:exec /cozy-desktop/test/setup.sh",
     "test:unit": "yarn mocha test/unit/",
     "test:unit:coverage": "yarn mocha:coverage test/unit/",

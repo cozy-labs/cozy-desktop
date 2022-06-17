@@ -33,7 +33,7 @@ const { platform } = process
 const logger = require('../../core/utils/logger')
 const log = new logger({ component: 'TEST' })
 
-describe('Test scenarios', function () {
+describe('Scenario', function () {
   let helpers
 
   beforeEach(configHelpers.createConfig)
@@ -78,8 +78,24 @@ describe('Test scenarios', function () {
           continue
         }
 
-        it(localTestName, async function () {
-          await runLocalAtom(scenario, atomCapture, helpers)
+        describe(localTestName, () => {
+          if (scenario.init) {
+            // Run the init phase outside the test itself to prevent timeouts on
+            // long inits.
+            // XXX: beforeEach is used to have access to async/await and helpers
+            beforeEach(async () => {
+              await init(
+                scenario,
+                helpers.pouch,
+                helpers.local.syncDir.abspath,
+                scenario.useCaptures ? atomCapture : undefined
+              )
+            })
+          }
+
+          it('', async function () {
+            await runLocalAtom(scenario, atomCapture, helpers)
+          })
         })
       }
 
@@ -180,15 +196,6 @@ function injectChokidarBreakpoints(eventsFile) {
 }
 
 async function runLocalAtom(scenario, atomCapture, helpers) {
-  if (scenario.init) {
-    await init(
-      scenario,
-      helpers.pouch,
-      helpers.local.syncDir.abspath,
-      scenario.useCaptures ? atomCapture : undefined
-    )
-  }
-
   if (scenario.useCaptures) {
     log.info('simulating atom start')
     await helpers.local.simulateAtomStart()

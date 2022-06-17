@@ -1,7 +1,6 @@
 /* @flow */
 
 const fs = require('fs')
-const { posix } = require('path')
 const _ = require('lodash')
 
 const RemoteBaseBuilder = require('./base')
@@ -154,10 +153,9 @@ module.exports = class RemoteFileBuilder extends (
       remoteFile._rev = _rev
     }
 
-    const parentDir = await cozy.files.statById(remoteFile.dir_id)
     const doc /*: FullRemoteFile */ = {
       ...remoteFile,
-      path: posix.join(parentDir.attributes.path, remoteFile.name)
+      path: this.remoteDoc.path
     }
 
     return doc
@@ -165,8 +163,6 @@ module.exports = class RemoteFileBuilder extends (
 
   async update() /*: Promise<FullRemoteFile> */ {
     const cozy = this._ensureCozy()
-
-    const parentDir = await cozy.files.statById(this.remoteDoc.dir_id)
 
     const json = inRemoteTrash(this.remoteDoc)
       ? await cozy.files.trashById(this.remoteDoc._id, { dontRetry: true })
@@ -189,7 +185,7 @@ module.exports = class RemoteFileBuilder extends (
     const remoteFile /*: RemoteFile */ = _.clone(remoteJsonToRemoteDoc(json))
     const doc /*: FullRemoteFile */ = {
       ...remoteFile,
-      path: posix.join(parentDir.attributes.path, this.remoteDoc.name)
+      path: this.remoteDoc.path
     }
 
     return doc
