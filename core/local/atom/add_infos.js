@@ -54,6 +54,11 @@ function loop(
         // TODO display an error in the UI
         continue
       }
+      if (event.kind === 'magic') {
+        // Event signaling end of test scenario's simulation
+        batch.push(event)
+        continue
+      }
       try {
         if (event.action !== 'initial-scan-done') {
           if (needsStats(event)) {
