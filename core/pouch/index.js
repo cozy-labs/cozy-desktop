@@ -153,7 +153,7 @@ class Pouch {
   ) /*: Promise<SavedMetadata> */ {
     if (checkInvariants) metadata.invariants(doc)
     log.debug(
-      { path: doc.path, _deleted: doc._deleted, doc },
+      { path: doc.path, _id: doc._id, _deleted: doc._deleted, doc },
       'Saving metadata...'
     )
     if (!doc._id) {
@@ -173,7 +173,7 @@ class Pouch {
   }
 
   remove(doc /*: SavedMetadata */) /*: Promise<SavedMetadata> */ {
-    log.debug({ path, doc }, 'Removing record')
+    log.debug({ path: doc.path, _id: doc._id, doc }, 'Removing record')
     return this.put(_.defaults({ _deleted: true }, doc))
   }
 
@@ -219,10 +219,10 @@ class Pouch {
   async bulkDocs /*:: <T: Metadata|SavedMetadata> */(docs /*: Array<T> */) {
     for (const doc of docs) {
       metadata.invariants(doc)
-      const { path } = doc
+      const { path, _id } = doc
       const { local, remote } = doc.sides || {}
       log.debug(
-        { path, local, remote, _deleted: doc._deleted, doc },
+        { path, _id, local, remote, _deleted: doc._deleted, doc },
         'Saving bulk metadata...'
       )
     }
@@ -563,7 +563,7 @@ class Pouch {
       return await this.db.get(id, { rev })
     } catch (err) {
       log.debug(
-        { path: doc.path, rev, doc },
+        { path: doc.path, _id: doc._id, rev, doc },
         'could fetch fetch previous revision'
       )
       throw err

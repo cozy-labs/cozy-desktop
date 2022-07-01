@@ -54,6 +54,7 @@ if (process.env.TESTDEBUG) {
         console.log(
           msg.component,
           msg.path || '',
+          msg._id || '',
           msg.msg,
           _.omit(msg, [
             'component',

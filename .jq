@@ -41,7 +41,8 @@ def clean:
   del(.local) |
   del(.remote) |
   cleanNote |
-  {time,component,msg,path}+(del(.time)|del(.component)|del(.msg)|del(.path));
+  {time,component,msg,_id,path}+(del(.time)|del(.component)|del(.msg)|del(.path)|del(._id)) |
+  del(.. | nulls);
 
 # Filter by log level:
 #
@@ -254,10 +255,10 @@ def doc:
 #    yarn -s jq -c 'select(...)|short' path/to/logs*
 #
 def short:
-  {time,component,msg,path,oldpath,event}
+  {time,component,msg,_id,path,oldpath,event}
     | if (.event | not) then del(.event) else . end
     | if (.event | type == "object") then del(.event) + (.event|{path, oldpath: .oldPath, action}) else . end
-    | if .oldpath then . else del(.oldpath) end
+    | del(.. | nulls)
     ;
 
 # FIXME: Find a way to make aggregation work, e.g.:
