@@ -1,0 +1,32 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "overwritten",
+      "deletedIno": "0x001200000008B499"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "overwriting-1",
+      "path": "overwritten",
+      "ino": "0x0009000000089C82"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "overwritten",
+      "deletedIno": "0x0009000000089C82"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "overwriting-2",
+      "path": "overwritten",
+      "ino": "0x001100000008B498"
+    }
+  ]
+]
