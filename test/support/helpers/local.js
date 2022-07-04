@@ -25,13 +25,11 @@ import type { ChokidarEvent } from '../../../core/local/chokidar/event'
 import type { AtomBatch } from '../../../core/local/atom/event'
 */
 
-const simulationCompleteBatch = [
-  {
-    action: 'test-simulation-complete',
-    kind: 'magic',
-    path: ''
-  }
-]
+const simulationCompleteEvent = {
+  action: 'test-simulation-complete',
+  kind: 'magic',
+  path: ''
+}
 
 class LocalTestHelpers {
   /*::
@@ -169,7 +167,7 @@ class LocalTestHelpers {
 
   isSimulationEnd(batch /*: AtomBatch */) {
     const { _resolveSimulation } = this
-    return _resolveSimulation && _.isEqual(batch, simulationCompleteBatch)
+    return _resolveSimulation && _.includes(batch, simulationCompleteEvent)
   }
 
   stopSimulation() {
@@ -179,22 +177,23 @@ class LocalTestHelpers {
   }
 
   dispatchAtomEvents(batch /*: AtomBatch */) {
+    const watcher = this._ensureAtomWatcher()
+    const stepOptions = Object.assign(
+      ({
+        config: watcher.config,
+        checksumer: watcher.checksumer,
+        scan: watcher.producer.scan,
+        state: watcher.state
+      } /*: Object */),
+      this.side
+    )
+    const dispatched = dispatch.step(stepOptions)(batch)
+
     if (this.isSimulationEnd(batch)) {
       this.stopSimulation()
-      return []
-    } else {
-      const watcher = this._ensureAtomWatcher()
-      const stepOptions = Object.assign(
-        ({
-          config: watcher.config,
-          checksumer: watcher.checksumer,
-          scan: watcher.producer.scan,
-          state: watcher.state
-        } /*: Object */),
-        this.side
-      )
-      return dispatch.step(stepOptions)(batch)
     }
+
+    return dispatched
   }
 
   /** Usage:
@@ -205,7 +204,7 @@ class LocalTestHelpers {
    */
   async simulateAtomEvents(batches /*: AtomBatch[] */) {
     const watcher = this._ensureAtomWatcher()
-    for (const batch of batches.concat([simulationCompleteBatch])) {
+    for (const batch of batches.concat([[simulationCompleteEvent]])) {
       // $FlowFixMe
       watcher.producer.channel.push(batch)
     }
@@ -215,8 +214,12 @@ class LocalTestHelpers {
   async simulateAtomStart() {
     const watcher = this._ensureAtomWatcher()
     await atomWatcher.stepsInitialState(watcher.state, watcher)
+    const scanDone = new Promise(resolve => {
+      watcher.events.on('initial-scan-done', resolve)
+    })
     await watcher.producer.scan('.')
     watcher.producer.channel.push([INITIAL_SCAN_DONE])
+    await scanDone
   }
 
   _ensureAtomWatcher() /*: atomWatcher.AtomWatcher */ {

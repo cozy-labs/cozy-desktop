@@ -10,6 +10,7 @@ const glob = require('glob')
 const _ = require('lodash')
 const path = require('path')
 const fs = require('fs')
+const sinon = require('sinon')
 
 const stater = require('../../../core/local/stater')
 
@@ -21,7 +22,7 @@ import type { Scenario, ScenarioInit, FSAction } from '../../scenarios'
 import type { Metadata } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Stats } from '../../../core/local/stater'
-import type { AtomEvent } from '../../../core/local/atom/event'
+import type { AtomEvent, EventKind } from '../../../core/local/atom/event'
 import type { ChokidarEvent } from '../../../core/local/chokidar/event'
 import type { ContextDir } from './context_dir'
 */
@@ -132,6 +133,8 @@ module.exports.loadFSEventFiles = (
   const disabledEventsFile = name => {
     if (process.platform === 'win32' && name.indexOf('win32') === -1) {
       return 'darwin/linux test'
+    } else if (process.platform === 'linux' && name.indexOf('linux') === -1) {
+      return 'darwin/win32 test'
     } else if (
       process.env.COZY_DESKTOP_FS === 'APFS' &&
       name.indexOf('hfs+') !== -1
@@ -209,11 +212,19 @@ const fixCapture = (
   if (capture.events) {
     // Chokidar capture
     capture.events.forEach((event /*: ChokidarEvent */) => {
-      if (event.type === 'unlink' || event.type === 'unlinkDir') return
+      if (
+        event.type === 'unlink' ||
+        event.type === 'unlinkDir' ||
+        event.stats == null
+      )
+        return
 
       const ino = inoMap.get(event.stats.ino)
       if (ino) event.stats.ino = ino
-      event.stats = fsStatsFromObj(event.stats)
+      event.stats = fsStatsFromObj(
+        event.stats,
+        event.type.endsWith('Dir') ? 'directory' : 'file'
+      )
     })
   } else if (capture.batches) {
     // Atom capture
@@ -229,31 +240,35 @@ const fixCapture = (
           // Make sure `event.stats` is an instance of `fs.Stats` so
           // `stater.isDirectory()` returns the appropriate value.
           // $FlowFixMe No `fileid` means `stats` is not a `WinStats` instance
-          event.stats = fsStatsFromObj(stats)
+          event.stats = fsStatsFromObj(stats, event.kind)
         }
       })
     })
   }
 }
 
-const fsStatsFromObj = ({
-  dev,
-  mode,
-  nlink,
-  uid,
-  gid,
-  rdev,
-  blksize,
-  ino,
-  size,
-  blocks,
-  atimeMs,
-  mtimeMs,
-  ctimeMs,
-  birthtimeMs
-}) => {
+const fsStatsFromObj = (module.exports.fsStatsFromObj = (
+  // $FlowFixMe these are fs.Stats attributes that we won't fill ourselves
+  {
+    dev,
+    mode,
+    nlink,
+    uid,
+    gid,
+    rdev,
+    blksize,
+    ino,
+    size,
+    blocks,
+    atimeMs,
+    mtimeMs,
+    ctimeMs,
+    birthtimeMs
+  },
+  kind /*: EventKind */
+) => {
   // $FlowFixMe `fs.Stats` constructor does accept arguments
-  return new fs.Stats(
+  const stats = new fs.Stats(
     dev,
     mode,
     nlink,
@@ -269,15 +284,30 @@ const fsStatsFromObj = ({
     ctimeMs,
     birthtimeMs
   )
-}
+  if (kind === 'directory') {
+    sinon.stub(stats, 'isDirectory').returns(true)
+    if (process.platform === 'win32') stats.directory = true
+  }
+  return stats
+})
 
 const merge = async (srcPath, dstPath) => {
   let srcStats, dstStats
   try {
     srcStats = await fse.stat(srcPath)
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      throw err
+    }
+    debug('stat', err)
+  }
+
+  try {
     dstStats = await fse.stat(dstPath)
   } catch (err) {
-    debug('stat', err)
+    if (err.code !== 'ENOENT') {
+      debug('stat', err)
+    }
   }
 
   if (!dstStats || dstStats.isFile()) {
@@ -290,10 +320,12 @@ const merge = async (srcPath, dstPath) => {
       await merge(path.join(srcPath, entry), path.join(dstPath, entry))
     }
   }
-  try {
-    await fse.rmdir(srcPath)
-  } catch (err) {
-    debug('rmdir', err)
+  if (srcStats && srcStats.isDirectory()) {
+    try {
+      await fse.rmdir(srcPath, { recursive: true })
+    } catch (err) {
+      debug('rmdir', err)
+    }
   }
 }
 
@@ -369,6 +401,7 @@ module.exports.init = async (
         if (trashed) {
           remoteDocsToTrash.push(remoteDir)
         } else if (stats) {
+          debug(`- create dir metadata: ${relpath}`)
           // We should always have stats if doc is not trashed
           const doc = builders
             .metadir()
@@ -378,7 +411,6 @@ module.exports.init = async (
           stater.assignInoAndFileId(doc, stats)
           stater.assignInoAndFileId(doc.local, stats)
 
-          debug(`- create dir metadata: ${doc.path}`)
           await pouch.put(doc)
         }
       } else {
@@ -399,6 +431,7 @@ module.exports.init = async (
         if (trashed) {
           remoteDocsToTrash.push(remoteFile)
         } else if (stats) {
+          debug(`- create file metadata: ${relpath}`)
           // We should always have stats if doc is not trashed
           const doc = builders
             .metafile()
@@ -408,7 +441,6 @@ module.exports.init = async (
           stater.assignInoAndFileId(doc, stats)
           stater.assignInoAndFileId(doc.local, stats)
 
-          debug(`- create file metadata: ${doc.path}`)
           await pouch.put(doc)
         }
       } // if relpath ...

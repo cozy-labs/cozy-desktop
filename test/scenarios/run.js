@@ -20,7 +20,8 @@ const {
   runActions,
   scenarios,
   runWithBreakpoints,
-  runWithStoppedClient
+  runWithStoppedClient,
+  fsStatsFromObj
 } = require('../support/helpers/scenarios')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -33,7 +34,7 @@ const { platform } = process
 const logger = require('../../core/utils/logger')
 const log = new logger({ component: 'TEST' })
 
-describe('Test scenarios', function () {
+describe('Scenario', function () {
   let helpers
 
   beforeEach(configHelpers.createConfig)
@@ -78,8 +79,24 @@ describe('Test scenarios', function () {
           continue
         }
 
-        it(localTestName, async function () {
-          await runLocalAtom(scenario, atomCapture, helpers)
+        describe(localTestName, () => {
+          if (scenario.init) {
+            // Run the init phase outside the test itself to prevent timeouts on
+            // long inits.
+            // XXX: beforeEach is used to have access to async/await and helpers
+            beforeEach(async () => {
+              await init(
+                scenario,
+                helpers.pouch,
+                helpers.local.syncDir.abspath,
+                scenario.useCaptures ? atomCapture : undefined
+              )
+            })
+          }
+
+          it('', async function () {
+            await runLocalAtom(scenario, atomCapture, helpers)
+          })
         })
       }
 
@@ -166,29 +183,26 @@ function shouldSkipRemote(scenario) {
 }
 
 function injectChokidarBreakpoints(eventsFile) {
-  let breakpoints = []
-  if (eventsFile.events[0] && eventsFile.events[0].breakpoints) {
-    breakpoints = eventsFile.events[0].breakpoints
+  const { breakpoints = [] } = eventsFile.events[0] || {}
+
+  if (breakpoints.length) {
+    // Keep only actual events
     eventsFile.events = eventsFile.events.slice(1)
-  } else {
-    // break between each events
-    for (let i = 0; i < eventsFile.events.length; i++) breakpoints.push(i)
   }
 
-  if (!runWithBreakpoints()) breakpoints = [0]
-  return breakpoints
+  if (!runWithBreakpoints()) {
+    // Flush only after all events were notified
+    return [0]
+  } else if (breakpoints.length) {
+    // Flush after each requested breakpoint (i.e. specific numbers of events)
+    return breakpoints
+  } else {
+    // Flush after each event
+    return Object.keys(eventsFile.events)
+  }
 }
 
 async function runLocalAtom(scenario, atomCapture, helpers) {
-  if (scenario.init) {
-    await init(
-      scenario,
-      helpers.pouch,
-      helpers.local.syncDir.abspath,
-      scenario.useCaptures ? atomCapture : undefined
-    )
-  }
-
   if (scenario.useCaptures) {
     log.info('simulating atom start')
     await helpers.local.simulateAtomStart()
@@ -196,23 +210,48 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
     await helpers.local.side.watcher.start()
   }
 
-  await runActions(scenario, helpers.local.syncDir.abspath, {
-    skipWait: scenario.useCaptures
-  })
+  const inodeChanges = await runActions(
+    scenario,
+    helpers.local.syncDir.abspath,
+    {
+      skipWait: scenario.useCaptures
+    }
+  )
 
   if (scenario.useCaptures) {
+    for (const batch of atomCapture.batches) {
+      for (const event of batch) {
+        for (const change of inodeChanges) {
+          if (
+            change.ino &&
+            event.stats &&
+            event.stats.ino &&
+            event.path === change.path
+          ) {
+            event.stats.ino = change.ino
+            break
+          }
+        }
+        if (event.stats) {
+          event.stats = fsStatsFromObj(event.stats, event.kind)
+        }
+      }
+    }
     await helpers.local.simulateAtomEvents(atomCapture.batches)
-  } else {
-    // Wait for all local events to be flushed or a 10s time limit in case no
-    // events are fired.
-    await Promise.race([
-      new Promise(resolve => {
-        helpers.local.side.events.on('local-end', resolve)
-      }),
-      new Promise(resolve => {
-        setTimeout(resolve, 10000)
-      })
-    ])
+  }
+
+  // Wait for all local events to be flushed or a 10s time limit in case no
+  // events are fired.
+  await Promise.race([
+    new Promise(resolve => {
+      helpers.local.side.events.on('local-end', resolve)
+    }),
+    new Promise(resolve => {
+      setTimeout(resolve, 10000)
+    })
+  ])
+
+  if (!scenario.useCaptures) {
     await helpers.local.side.watcher.stop()
   }
 

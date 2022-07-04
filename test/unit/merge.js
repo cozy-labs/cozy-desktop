@@ -10,6 +10,7 @@ const { Merge } = require('../../core/merge')
 const metadata = require('../../core/metadata')
 const { otherSide } = require('../../core/side')
 const pathUtils = require('../../core/utils/path')
+const timestamp = require('../../core/utils/timestamp')
 
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -1543,7 +1544,7 @@ describe('Merge', function () {
         const localUpdate = builders
           .metafile(synced)
           .data('local update')
-          .updatedAt(new Date())
+          .updatedAt(timestamp.after(synced.updated_at))
           .unmerged('local')
           .build()
 
