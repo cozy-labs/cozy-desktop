@@ -15,7 +15,7 @@ const RemoteFileBuilder = require('./remote/file')
 const RemoteNoteBuilder = require('./remote/note')
 const RemoteErasedBuilder = require('./remote/erased')
 const StreamBuilder = require('./stream')
-const AtomEventBuilder = require('./atom_event')
+const ChannelEventBuilder = require('./channel_event')
 const { DefaultStatsBuilder, WinStatsBuilder } = require('./stats')
 const ChecksumBuilder = require('./checksum')
 
@@ -26,7 +26,7 @@ import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../../c
 import type { Pouch } from '../../../core/pouch'
 import type { Warning } from '../../../core/remote/cozy'
 import type { FullRemoteFile, RemoteDir } from '../../../core/remote/document'
-import type { AtomEvent } from '../../../core/local/atom/event'
+import type { ChannelEvent } from '../../../core/local/channel_watcher/event'
 import type { StatsBuilder } from './stats'
 import type { RemoteTree } from '../helpers/remote'
 */
@@ -175,11 +175,11 @@ module.exports = class Builders {
     return new ChecksumBuilder(data)
   }
 
-  event(old /*: ?AtomEvent */) /*: AtomEventBuilder */ {
-    return new AtomEventBuilder(old)
+  event(old /*: ?ChannelEvent */) /*: ChannelEventBuilder */ {
+    return new ChannelEventBuilder(old)
   }
 
-  nonEmptyBatch(batchNumber /*: number */ = 1) /*: AtomEvent[] */ {
+  nonEmptyBatch(batchNumber /*: number */ = 1) /*: ChannelEvent[] */ {
     return [
       this.event()
         .action('created')

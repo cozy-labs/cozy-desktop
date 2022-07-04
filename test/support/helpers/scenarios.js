@@ -22,7 +22,7 @@ import type { Scenario, ScenarioInit, FSAction } from '../../scenarios'
 import type { Metadata } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Stats } from '../../../core/local/stater'
-import type { AtomEvent, EventKind } from '../../../core/local/atom/event'
+import type { ChannelEvent, EventKind } from '../../../core/local/channel_watcher/event'
 import type { ChokidarEvent } from '../../../core/local/chokidar/event'
 import type { ContextDir } from './context_dir'
 */
@@ -206,7 +206,7 @@ module.exports.loadRemoteChangesFiles = (
 }
 
 const fixCapture = (
-  capture /*: {| batches: AtomEvent[][] |} | {| events: ChokidarEvent[] |} */,
+  capture /*: {| batches: ChannelEvent[][] |} | {| events: ChokidarEvent[] |} */,
   inoMap /*: Map<number, number> */
 ) => {
   if (capture.events) {
@@ -227,7 +227,7 @@ const fixCapture = (
       )
     })
   } else if (capture.batches) {
-    // Atom capture
+    // Channel watcher capture
     capture.batches.forEach(batch => {
       batch.forEach(event => {
         const { stats } = event
@@ -346,7 +346,7 @@ module.exports.init = async (
   scenario /*: { init: ScenarioInit } */,
   pouch /*: Pouch */,
   abspath /*: (string) => string */,
-  localCapture /*: ?({| batches: AtomEvent[][] |} | {| events: ChokidarEvent[] |}) */
+  localCapture /*: ?({| batches: ChannelEvent[][] |} | {| events: ChokidarEvent[] |}) */
 ) => {
   debug('[init]')
   const builders = new Builders({ cozy, pouch })

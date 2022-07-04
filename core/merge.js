@@ -880,8 +880,9 @@ class Merge {
       if (was.moveFrom) {
         // The file was moved and we don't want to delete it as we think users
         // delete "paths". This is made possible because:
-        // - we use the `local` path to fetch the PouchDB record in the Atom
-        //   dispatch step (FIXME: use `byLocalPath` in Chokidar watcher)
+        // - we use the `local` path to fetch the PouchDB record in the
+        //   ChannelWatcher dispatch step (FIXME: use `byLocalPath` in Chokidar
+        //   watcher)
         // - we use the `remote` _id to fetch the PouchDB record in the remote
         //   watcher
         // We'll dissociate the moved side from the trashed one so it can be

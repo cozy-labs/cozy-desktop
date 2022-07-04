@@ -229,8 +229,8 @@ describe('core/config', function () {
 
     describe('#watcherType', function () {
       it('returns valid watcher type from file config if any', function () {
-        this.config.fileConfig.watcherType = 'atom'
-        should(this.config.watcherType).equal('atom')
+        this.config.fileConfig.watcherType = 'channel'
+        should(this.config.watcherType).equal('channel')
       })
 
       it('is the same as core/config.watcherType() otherwise', function () {
@@ -243,7 +243,7 @@ describe('core/config', function () {
     const { platform } = process
 
     describe('when valid in file config', () => {
-      const fileConfig = { watcherType: 'atom' }
+      const fileConfig = { watcherType: 'channel' }
 
       it('is the file config value', () => {
         should(config.watcherType(fileConfig)).equal(fileConfig.watcherType)
@@ -301,7 +301,7 @@ describe('core/config', function () {
     })
 
     describe('when COZY_FS_WATCHER is valid', () => {
-      for (const COZY_FS_WATCHER of ['atom', 'chokidar']) {
+      for (const COZY_FS_WATCHER of ['channel', 'chokidar']) {
         it(`returns COZY_FS_WATCHER when set to ${JSON.stringify(
           COZY_FS_WATCHER
         )}`, () => {
@@ -331,7 +331,7 @@ describe('core/config', function () {
     })
 
     it('is chokidar on Windows', () => {
-      should(config.platformDefaultWatcherType('win32')).equal('atom')
+      should(config.platformDefaultWatcherType('win32')).equal('channel')
     })
 
     it('is chokidar on macOS', () => {
@@ -339,7 +339,7 @@ describe('core/config', function () {
     })
 
     it('is chokidar on Linux', () => {
-      should(config.platformDefaultWatcherType('linux')).equal('atom')
+      should(config.platformDefaultWatcherType('linux')).equal('channel')
     })
   })
 })

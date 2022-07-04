@@ -1,4 +1,4 @@
-/** Capture local atom or chokidar events to be replayed in test scenarios.
+/** Capture local events to be replayed in test scenarios.
  *
  * @module dev/capture/local
  * @flow
@@ -14,7 +14,7 @@ const sinon = require('sinon')
 
 const { Config, watcherType } = require('../../core/config')
 const { Ignore } = require('../../core/ignore')
-const { AtomWatcher } = require('../../core/local/atom/watcher')
+const { ChannelWatcher } = require('../../core/local/channel_watcher')
 const { Pouch } = require('../../core/pouch')
 const Prep = require('../../core/prep')
 const fixturesHelpers = require('../../test/support/helpers/scenarios')
@@ -176,13 +176,13 @@ const runAndRecordChokidarEvents = scenario => {
   })
 }
 
-const runAndRecordAtomEvents = async scenario => {
+const runAndRecordChannelEvents = async scenario => {
   const prep = sinon.createStubInstance(Prep)
   const pouch = sinon.createStubInstance(Pouch)
   const events = new EventEmitter()
   const ignore = new Ignore([])
   const capturedBatches = []
-  const watcher = new AtomWatcher({ config, prep, pouch, events, ignore })
+  const watcher = new ChannelWatcher({ config, prep, pouch, events, ignore })
 
   pouch.initialScanDocs = sinon.stub().callsFake(() => [])
 
@@ -200,14 +200,16 @@ const runAndRecordAtomEvents = async scenario => {
       saveInodeChanges: false
     })
     await Promise.delay(1000)
-    return saveFSEventsToFile(scenario, capturedBatches, 'atom')
+    return saveFSEventsToFile(scenario, capturedBatches, 'channel')
   } finally {
     await watcher.stop()
   }
 }
 
 const runAndRecordFSEvents =
-  watcherType() === 'atom' ? runAndRecordAtomEvents : runAndRecordChokidarEvents
+  watcherType() === 'channel'
+    ? runAndRecordChannelEvents
+    : runAndRecordChokidarEvents
 
 const captureScenario = (scenario /*: Scenario & {path: string} */) => {
   if (

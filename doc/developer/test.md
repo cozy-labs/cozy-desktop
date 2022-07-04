@@ -173,7 +173,7 @@ $ ./test/generate_property_json.js local_watcher | jq . > test/property/local_wa
 And then, you can run it with:
 
 ```sh
-$ COZY_FS_WATCHER=atom yarn test:property --grep generated
+$ COZY_FS_WATCHER=channel yarn test:property --grep generated
 ```
 
 If you want to run several tests for finding new bugs, there is also the

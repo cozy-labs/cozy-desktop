@@ -2,7 +2,7 @@
  *
  * There are currently 2 implementations:
  *
- * - {@link module:core/local/atom/watcher|atom}
+ * - {@link module:core/local/channel_watcher/watcher|channel}
  * - {@link module:core/local/chokidar/watcher|chokidar}
  *
  * @module core/local/watcher
@@ -10,12 +10,12 @@
  * @flow
  */
 
-const { AtomWatcher } = require('./atom/watcher')
+const { ChannelWatcher } = require('./channel_watcher')
 const ChokidarWatcher = require('./chokidar/watcher')
 
 /*::
 import type { Config } from '../config'
-import type { AtomEventsDispatcher } from './atom/dispatch'
+import type { ChannelEventsDispatcher } from './channel_watcher/dispatch'
 import type { Pouch } from '../pouch'
 import type Prep from '../prep'
 import type EventEmitter from 'events'
@@ -34,7 +34,7 @@ export type LocalWatcherOptions = {
   config: Config,
   events: EventEmitter,
   ignore: Ignore,
-  onAtomEvents?: AtomEventsDispatcher,
+  onChannelEvents?: ChannelEventsDispatcher,
   pouch: Pouch,
   prep: Prep
 }
@@ -47,19 +47,19 @@ function build(
     pouch,
     events,
     ignore,
-    onAtomEvents
+    onChannelEvents
   } /*: LocalWatcherOptions */
 ) /*: Watcher */ {
   const { syncPath, watcherType } = config
 
-  if (watcherType === 'atom') {
-    return new AtomWatcher({
+  if (watcherType === 'channel') {
+    return new ChannelWatcher({
       config,
       prep,
       pouch,
       events,
       ignore,
-      onAtomEvents
+      onChannelEvents
     })
   } else {
     return new ChokidarWatcher(syncPath, prep, pouch, events)

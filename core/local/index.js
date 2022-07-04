@@ -32,7 +32,7 @@ import type { SideName } from '../side'
 import type { Config } from '../config'
 import type { Reader } from '../reader'
 import type { Ignore } from '../ignore'
-import type { AtomEventsDispatcher } from './atom/dispatch'
+import type { ChannelEventsDispatcher } from './channel_watcher/dispatch'
 import type {
   DocType,
   Metadata,
@@ -54,7 +54,7 @@ const log = logger({
 /*::
 export type LocalOptions = {
   config: Config,
-  onAtomEvents?: AtomEventsDispatcher,
+  onChannelEvents?: ChannelEventsDispatcher,
   prep: Prep,
   pouch: Pouch,
   events: EventEmitter,

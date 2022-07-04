@@ -112,7 +112,7 @@ describe('Identity conflict', () => {
       })
 
       onPlatforms(['win32', 'darwin'], () => {
-        if (config.watcherType() === 'atom') {
+        if (config.watcherType() === 'channel') {
           it.skip('is not supported yet')
           return
         }
@@ -188,7 +188,7 @@ describe('Identity conflict', () => {
       })
 
       onPlatforms(['win32', 'darwin'], () => {
-        if (config.watcherType() === 'atom') {
+        if (config.watcherType() === 'channel') {
           it.skip('is not supported yet')
           return
         }
@@ -294,7 +294,7 @@ describe('Identity conflict', () => {
       })
 
       onPlatforms(['win32', 'darwin'], () => {
-        if (config.watcherType() === 'atom') {
+        if (config.watcherType() === 'channel') {
           it.skip('is not supported yet')
           return
         }
@@ -370,7 +370,7 @@ describe('Identity conflict', () => {
       })
 
       onPlatforms(['win32', 'darwin'], () => {
-        if (config.watcherType() === 'atom') {
+        if (config.watcherType() === 'channel') {
           it.skip('is not supported yet')
           return
         }
