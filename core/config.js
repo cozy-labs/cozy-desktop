@@ -17,7 +17,7 @@ const log = logger({
 })
 
 /*::
-export type WatcherType = 'atom' | 'chokidar'
+export type WatcherType = 'channel' | 'chokidar'
 type FileConfig = Object
 type OAuthTokens = {
   tokenType: string,
@@ -326,11 +326,11 @@ function platformDefaultWatcherType(
   if (platform === 'darwin') {
     return 'chokidar'
   }
-  return 'atom'
+  return 'channel'
 }
 
 function validateWatcherType(watcherType /*: ?string */) /*: ?WatcherType */ {
-  if (watcherType === 'atom' || watcherType === 'chokidar') {
+  if (watcherType === 'channel' || watcherType === 'chokidar') {
     return watcherType
   } else {
     if (watcherType) log.warn({ watcherType }, 'Invalid watcher type')

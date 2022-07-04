@@ -69,7 +69,7 @@ describe('Scenario', function () {
     } else if (!runWithStoppedClient()) {
       for (let atomCapture of loadAtomCaptures(scenario)) {
         const localTestName = `test/scenarios/${scenario.name}/atom/${atomCapture.name}`
-        if (config.watcherType() !== 'atom') {
+        if (config.watcherType() !== 'channel') {
           it.skip(localTestName, () => {})
           continue
         }
@@ -95,7 +95,7 @@ describe('Scenario', function () {
           }
 
           it('', async function () {
-            await runLocalAtom(scenario, atomCapture, helpers)
+            await runLocalChannel(scenario, atomCapture, helpers)
           })
         })
       }
@@ -202,10 +202,10 @@ function injectChokidarBreakpoints(eventsFile) {
   }
 }
 
-async function runLocalAtom(scenario, atomCapture, helpers) {
+async function runLocalChannel(scenario, channelCapture, helpers) {
   if (scenario.useCaptures) {
-    log.info('simulating atom start')
-    await helpers.local.simulateAtomStart()
+    log.info('simulating channel watcher start')
+    await helpers.local.simulateChannelWatcherStart()
   } else {
     await helpers.local.side.watcher.start()
   }
@@ -219,7 +219,7 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
   )
 
   if (scenario.useCaptures) {
-    for (const batch of atomCapture.batches) {
+    for (const batch of channelCapture.batches) {
       for (const event of batch) {
         for (const change of inodeChanges) {
           if (
@@ -237,7 +237,7 @@ async function runLocalAtom(scenario, atomCapture, helpers) {
         }
       }
     }
-    await helpers.local.simulateAtomEvents(atomCapture.batches)
+    await helpers.local.simulateChannelEvents(channelCapture.batches)
   }
 
   // Wait for all local events to be flushed or a 10s time limit in case no

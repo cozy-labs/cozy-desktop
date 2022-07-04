@@ -11,10 +11,12 @@ const conflictHelpers = require('./conflict')
 const { ContextDir } = require('./context_dir')
 
 const { Local } = require('../../../core/local')
-const atomWatcher = require('../../../core/local/atom/watcher')
+const channelWatcher = require('../../../core/local/channel_watcher')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
-const dispatch = require('../../../core/local/atom/dispatch')
-const { INITIAL_SCAN_DONE } = require('../../../core/local/atom/event')
+const dispatch = require('../../../core/local/channel_watcher/dispatch')
+const {
+  INITIAL_SCAN_DONE
+} = require('../../../core/local/channel_watcher/event')
 
 const rimrafAsync = Promise.promisify(rimraf)
 
@@ -22,7 +24,7 @@ const rimrafAsync = Promise.promisify(rimraf)
 import type { Ignore } from '../../../core/ignore'
 import type { LocalOptions } from '../../../core/local'
 import type { ChokidarEvent } from '../../../core/local/chokidar/event'
-import type { AtomBatch } from '../../../core/local/atom/event'
+import type { ChannelBatch } from '../../../core/local/channel_watcher/event'
 */
 
 const simulationCompleteEvent = {
@@ -43,7 +45,7 @@ class LocalTestHelpers {
   constructor(opts /*: $Shape<LocalOptions> */) {
     const localOptions /*: LocalOptions */ = Object.assign(
       ({
-        onAtomEvents: this.dispatchAtomEvents.bind(this),
+        onChannelEvents: this.dispatchChannelEvents.bind(this),
         sendToTrash: this.sendToTrash.bind(this)
       } /*: Object */),
       opts
@@ -165,7 +167,7 @@ class LocalTestHelpers {
     })
   }
 
-  isSimulationEnd(batch /*: AtomBatch */) {
+  isSimulationEnd(batch /*: ChannelBatch */) {
     const { _resolveSimulation } = this
     return _resolveSimulation && _.includes(batch, simulationCompleteEvent)
   }
@@ -176,8 +178,8 @@ class LocalTestHelpers {
     delete this._resolveSimulation
   }
 
-  dispatchAtomEvents(batch /*: AtomBatch */) {
-    const watcher = this._ensureAtomWatcher()
+  dispatchChannelEvents(batch /*: ChannelBatch */) {
+    const watcher = this._ensureChannelWatcher()
     const stepOptions = Object.assign(
       ({
         config: watcher.config,
@@ -198,12 +200,12 @@ class LocalTestHelpers {
 
   /** Usage:
    *
-   * - `#simulateAtomStart()`
+   * - `#simulateChannelWatcherStart()`
    * - Fill in the test Pouch / sync dir
-   * - `#simulateAtomEvents()`
+   * - `#simulateChannelEvents()`
    */
-  async simulateAtomEvents(batches /*: AtomBatch[] */) {
-    const watcher = this._ensureAtomWatcher()
+  async simulateChannelEvents(batches /*: ChannelBatch[] */) {
+    const watcher = this._ensureChannelWatcher()
     for (const batch of batches.concat([[simulationCompleteEvent]])) {
       // $FlowFixMe
       watcher.producer.channel.push(batch)
@@ -211,9 +213,9 @@ class LocalTestHelpers {
     await this.startSimulation()
   }
 
-  async simulateAtomStart() {
-    const watcher = this._ensureAtomWatcher()
-    await atomWatcher.stepsInitialState(watcher.state, watcher)
+  async simulateChannelWatcherStart() {
+    const watcher = this._ensureChannelWatcher()
+    await channelWatcher.stepsInitialState(watcher.state, watcher)
     const scanDone = new Promise(resolve => {
       watcher.events.on('initial-scan-done', resolve)
     })
@@ -222,12 +224,14 @@ class LocalTestHelpers {
     await scanDone
   }
 
-  _ensureAtomWatcher() /*: atomWatcher.AtomWatcher */ {
+  _ensureChannelWatcher() /*: channelWatcher.ChannelWatcher */ {
     const { watcher } = this.side
-    if (watcher instanceof atomWatcher.AtomWatcher) {
+    if (watcher instanceof channelWatcher.ChannelWatcher) {
       return watcher
     } else {
-      throw new Error('Can only use AtomWatcher test helpers with AtomWatcher')
+      throw new Error(
+        'Can only use ChannelWatcher test helpers with ChannelWatcher'
+      )
     }
   }
 

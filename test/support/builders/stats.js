@@ -8,7 +8,7 @@ const _ = require('lodash')
 
 /*::
 import type { Stats, WinStats } from '../../../core/local/stater'
-import type { EventKind } from '../../../core/local/atom/event'
+import type { EventKind } from '../../../core/local/channel_watcher/event'
 
 export interface StatsBuilder {
   ino (number): StatsBuilder,

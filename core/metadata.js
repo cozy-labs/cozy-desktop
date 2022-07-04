@@ -67,7 +67,7 @@ import type {
 import type { Stats } from './local/stater'
 import type { Ignore } from './ignore'
 import type { SideName } from './side'
-import type { EventKind } from './local/atom/event'
+import type { EventKind } from './local/channel_watcher/event'
 import type { PouchRecord } from './pouch'
 */
 
