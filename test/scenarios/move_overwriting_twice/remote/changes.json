@@ -1,0 +1,59 @@
+[
+  {
+    "_deleted": true,
+    "_id": "773553810021087aabff8f2eb1089a5f",
+    "_rev": "2-8c8b9c6b8caa957958140a34a1766de3"
+  },
+  {
+    "_deleted": true,
+    "_id": "bd0757440f29e45d480ba07970197bac",
+    "_rev": "3-04f00d0ecb781fc67ba9fa071aa3f321"
+  },
+  {
+    "_id": "521cdc2000aa738cddf374aa1cfb4cba",
+    "_rev": "2-cc1b5ebee9ae9d85d9c59a42b18dc62d",
+    "class": "files",
+    "cozyMetadata": {
+      "createdAt": "2022-07-01T09:31:42.93852646Z",
+      "createdByApp": "cozy-desktop",
+      "createdByAppVersion": "3.35.0",
+      "createdOn": "https://testdesktopappveyor.mycozy.cloud/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2022-07-01T09:31:47.480729818Z",
+      "updatedByApps": [
+        {
+          "date": "2022-07-01T09:31:47.480729818Z",
+          "instance": "https://testdesktopappveyor.mycozy.cloud/",
+          "slug": "cozy-desktop",
+          "version": "3.35.0"
+        }
+      ],
+      "uploadedAt": "2022-07-01T09:31:42.93852646Z",
+      "uploadedBy": {
+        "oauthClient": {
+          "id": "70c897fb2e43d8b1ea6f2bb03ef52238",
+          "kind": "desktop",
+          "name": "Cozy Drive (DESKTOP-THIF5FF)-2"
+        },
+        "slug": "cozy-desktop",
+        "version": "3.35.0"
+      },
+      "uploadedOn": "https://testdesktopappveyor.mycozy.cloud/"
+    },
+    "created_at": "2022-07-01T09:31:41Z",
+    "dir_id": "io.cozy.files.root-dir",
+    "encrypted": false,
+    "executable": false,
+    "internal_vfs_id": "LnileldNHaoHAdQe",
+    "md5sum": "FnpHyumKQgxgpi5TAkSDCQ==",
+    "mime": "application/octet-stream",
+    "name": "overwritten",
+    "path": "/overwritten",
+    "size": "19",
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2022-07-01T09:31:41Z",
+    "tags": []
+  }
+]

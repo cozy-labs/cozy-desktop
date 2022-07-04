@@ -1,18 +1,13 @@
 /* @flow */
 
-const {
-  runOnHFS,
-  runWithStoppedClient
-} = require('../../support/helpers/scenarios')
+const { runOnHFS } = require('../../support/helpers/scenarios')
 
 /*:: import type { Scenario } from '..' */
 
 module.exports = ({
   useCaptures: false,
   disabled:
-    process.platform === 'linux' && runWithStoppedClient()
-      ? 'Does not work because inodes are reused and the initial diff misinterprets some changes as moves'
-      : undefined,
+    'Not possible until we can propagate multiple overwrites on the same path (e.g. make `overwrite` an array) or decide not to keep overwritten references anymore',
   init: [
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'dst/file2', content: 'final content' },
