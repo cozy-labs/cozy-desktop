@@ -299,20 +299,31 @@ const merge = async (srcPath, dstPath) => {
     if (err.code === 'ENOENT') {
       throw err
     }
-    debug('stat', err)
+    debug('stat', { srcPath }, err)
   }
 
   try {
     dstStats = await fse.stat(dstPath)
   } catch (err) {
     if (err.code !== 'ENOENT') {
-      debug('stat', err)
+      debug('stat', { dstPath }, err)
     }
   }
 
-  if (!dstStats || dstStats.isFile()) {
+  if (!dstStats) {
+    debug('no dst stats', { srcPath, dstPath })
+    await fse.rename(srcPath, dstPath)
+  } else if (dstStats.isFile()) {
+    debug('dst is file', { srcPath, dstPath })
+    // XXX: On Windows, `fse.rename()` does not generate the same events in all
+    // situations (especially on the CI) when there's already a file at the
+    // destination path.
+    // Thus, to make sure we have the same events everywhere, we force the file
+    // deletion before requesting the move.
+    await fse.unlink(dstPath)
     await fse.rename(srcPath, dstPath)
   } else if (srcStats && srcStats.isFile()) {
+    debug('file is replacing dir', { srcPath, dstPath })
     await fse.rmdir(dstPath, { recursive: true })
     await fse.rename(srcPath, dstPath)
   } else {
@@ -324,7 +335,7 @@ const merge = async (srcPath, dstPath) => {
     try {
       await fse.rmdir(srcPath, { recursive: true })
     } catch (err) {
-      debug('rmdir', err)
+      debug('rmdir', { path: srcPath }, err)
     }
   }
 }
