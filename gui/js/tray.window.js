@@ -302,9 +302,10 @@ module.exports = class TrayWM extends WindowManager {
         event /*: ElectronEvent */,
         alert /*: UserAlert */
       ) => {
-        let detailsWindow = new DetailsWM(this.app, this.desktop)
         try {
+          let detailsWindow = new DetailsWM(this.app, this.desktop)
           if (detailsWindow) {
+            detailsWindow.create()
             detailsWindow.on('closed', () => {
               detailsWindow = null
             })
@@ -314,7 +315,7 @@ module.exports = class TrayWM extends WindowManager {
             log.error('could not load user alert details content')
           }
         } catch (err) {
-          log.error({ err }, 'could not load user action details content')
+          log.error({ err }, 'could not load user alert details content')
         }
       },
       userActionInProgress: (
