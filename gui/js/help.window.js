@@ -1,5 +1,11 @@
+/* @flow */
+
 const WindowManager = require('./window_manager')
 const { enable: enableRemoteModule } = require('@electron/remote/main')
+
+/*::
+import type { Event as ElectronEvent } from 'electron'
+*/
 
 const HELP_SCREEN_WIDTH = 768
 const HELP_SCREEN_HEIGHT = 570
@@ -30,7 +36,7 @@ module.exports = class HelpWM extends WindowManager {
   ipcEvents() {
     let that = this
     return {
-      'send-mail': (event, body) => {
+      'send-mail': (event /*: ElectronEvent */, body /*: string */) => {
         that.desktop
           .sendMailToSupport(body)
           .then(() => {
