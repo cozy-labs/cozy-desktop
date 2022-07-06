@@ -6,8 +6,8 @@ const { enable: enableRemoteModule } = require('@electron/remote/main')
 const { buildTranslations } = require('./i18n')
 const WindowManager = require('./window_manager')
 
-const SCREEN_WIDTH = 700
-const SCREEN_HEIGHT = 710
+const SCREEN_WIDTH = 750
+const SCREEN_HEIGHT = 800
 
 const log = require('../../core/app').logger({
   component: 'GUI'
@@ -23,6 +23,10 @@ module.exports = class DetailsWM extends WindowManager {
       title: 'Details',
       width: SCREEN_WIDTH,
       height: SCREEN_HEIGHT,
+      useContentSize: true,
+      resizable: false,
+      maximizable: false,
+      fullscreenable: false,
       indexPath: path.resolve(__dirname, '..', 'details.html')
     }
   }
