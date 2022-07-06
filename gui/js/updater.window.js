@@ -1,3 +1,5 @@
+/* @flow */
+
 const Promise = require('bluebird')
 const WindowManager = require('./window_manager')
 const { autoUpdater } = require('electron-updater')
@@ -5,6 +7,11 @@ const { translate } = require('./i18n')
 const { dialog } = require('electron')
 const path = require('path')
 const { enable: enableRemoteModule } = require('@electron/remote/main')
+
+/*::
+import type { App as ElectronApp } from 'electron'
+import type { App as CoreApp } from '../../core/app'
+*/
 
 const log = require('../../core/app').logger({
   component: 'GUI:autoupdater'
@@ -46,7 +53,7 @@ module.exports = class UpdaterWM extends WindowManager {
     enableRemoteModule(this.win.webContents)
   }
 
-  humanError(err) {
+  humanError(err /*: ErrnoError */) {
     switch (err.code) {
       case 'EPERM':
         return translate('Updater Error EPERM')
@@ -57,7 +64,9 @@ module.exports = class UpdaterWM extends WindowManager {
     }
   }
 
-  constructor(...opts) {
+  constructor(...opts /*: { app: ElectronApp, desktop: CoreApp } */) {
+    super(...opts)
+
     autoUpdater.logger = log
     autoUpdater.autoDownload = false
     autoUpdater.on('update-available', info => {
@@ -120,8 +129,6 @@ module.exports = class UpdaterWM extends WindowManager {
       )
     })
 
-    super(...opts)
-
     this.retriesLeft = UPDATE_RETRIES
   }
 
@@ -132,7 +139,7 @@ module.exports = class UpdaterWM extends WindowManager {
     }
   }
 
-  onUpToDate(handler) {
+  onUpToDate(handler /*: any */) {
     this.afterUpToDate = () => {
       this.clearTimeoutIfAny()
       handler()
@@ -154,7 +161,7 @@ module.exports = class UpdaterWM extends WindowManager {
     }
   }
 
-  skipUpdate(reason) {
+  skipUpdate(reason /*: string */) {
     log.info({ sentry: true }, `Not updating: ${reason}`)
     this.skipped = true
 

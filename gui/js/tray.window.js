@@ -1,3 +1,5 @@
+/* @flow */
+
 const electron = require('electron')
 const { dialog, shell } = electron
 const path = require('path')
@@ -11,6 +13,19 @@ const DetailsWM = require('./details.window')
 const CozyWebWM = require('./cozy-web.window')
 const { translate } = require('./i18n')
 const { restart } = require('./actions')
+
+/*::
+import type { App as ElectronApp, Event as ElectronEvent } from 'electron'
+import type { App as CoreApp } from '../../core/app'
+import type { UserActionCommand, UserAlert } from '../../core/syncstate'
+
+type Bounds = {
+  width: number,
+  height: number,
+  x: number,
+  y: number,
+}
+*/
 
 const log = require('../../core/app').logger({
   component: 'GUI'
@@ -30,7 +45,7 @@ const popoverBounds = (
   const actualWidth = Math.min(wantedWidth, Math.floor(0.9 * workArea.width))
   const actualHeight = Math.min(wantedHeight, Math.floor(0.9 * workArea.height))
 
-  const newBounds = { width: actualWidth, height: actualHeight }
+  const newBounds = { width: actualWidth, height: actualHeight, x: 0, y: 0 }
 
   if (platform === 'darwin') {
     // on MacOS, try to center the popup below the tray icon
@@ -84,7 +99,11 @@ const popoverBounds = (
 const WindowManager = require('./window_manager')
 
 module.exports = class TrayWM extends WindowManager {
-  constructor(app, desktop, lastFiles) {
+  constructor(
+    app /*: ElectronApp */,
+    desktop /*: CoreApp */,
+    lastFiles /*: Object */
+  ) {
     super(app, desktop)
     this.lastFiles = lastFiles
     this.create()
@@ -125,7 +144,7 @@ module.exports = class TrayWM extends WindowManager {
     return pReady
   }
 
-  show(trayPos) {
+  show(trayPos /*: Bounds */) {
     this.log.debug('show')
     super.show()
     this.placeWithTray(DASHBOARD_SCREEN_WIDTH, DASHBOARD_SCREEN_HEIGHT, trayPos)
@@ -136,7 +155,11 @@ module.exports = class TrayWM extends WindowManager {
     return '#tray'
   }
 
-  placeWithTray(wantedWidth, wantedHeight, trayposition) {
+  placeWithTray(
+    wantedWidth /*: number */,
+    wantedHeight /*: number */,
+    trayposition /*: Bounds */
+  ) {
     const bounds = this.win.getBounds()
     // TODO : be smarter about which display to use ?
     const displayObject = electron.screen.getDisplayMatching(bounds)
@@ -152,7 +175,7 @@ module.exports = class TrayWM extends WindowManager {
     }
 
     try {
-      popover.newBounds = popoverBounds(
+      const newBounds = popoverBounds(
         wantedWidth,
         wantedHeight,
         trayposition,
@@ -160,8 +183,8 @@ module.exports = class TrayWM extends WindowManager {
         display,
         process.platform
       )
-      this.win.setBounds(popover.newBounds)
-      log.trace({ popover }, 'placeWithTray ok')
+      this.win.setBounds(newBounds)
+      log.trace({ popover, newBounds }, 'placeWithTray ok')
     } catch (err) {
       log.warn({ err, popover }, 'Fail to placeWithTray')
       this.centerOnScreen(wantedWidth, wantedHeight)
@@ -192,7 +215,16 @@ module.exports = class TrayWM extends WindowManager {
 
   ipcEvents() {
     return {
-      confirm: async (event, { id, title, message, detail, mainAction }) => {
+      confirm: async (
+        event /*: ElectronEvent */,
+        {
+          id,
+          title,
+          message,
+          detail,
+          mainAction
+        } /*: { id: string, title: string, message: string, detail: string, mainAction: string } */
+      ) => {
         this.win.setAlwaysOnTop(true, 'pop-up-menu')
         try {
           const { response } = await dialog.showMessageBox(this.win, {
@@ -209,7 +241,7 @@ module.exports = class TrayWM extends WindowManager {
           this.win.setAlwaysOnTop(false)
         }
       },
-      'go-to-cozy': (event, showInWeb) => {
+      'go-to-cozy': (event /*: ElectronEvent */, showInWeb /*: boolean */) => {
         if (showInWeb) {
           shell.openExternal(this.desktop.config.cozyUrl)
         } else {
@@ -220,17 +252,29 @@ module.exports = class TrayWM extends WindowManager {
           })
         }
       },
-      'go-to-folder': async (event, showInWeb) => {
+      'go-to-folder': async (
+        event /*: ElectronEvent */,
+        showInWeb /*: boolean */
+      ) => {
         this.openPath('', showInWeb)
       },
-      'open-file': (event, path, showInWeb) => {
+      'open-file': (
+        event /*: ElectronEvent */,
+        path /*: string */,
+        showInWeb /*: boolean */
+      ) => {
         this.log.debug({ path, showInWeb }, 'open file')
         this.openPath(path, showInWeb)
       },
-      'show-in-parent': (event, path, showInWeb) => {
+      'show-in-parent': (
+        event /*: ElectronEvent */,
+        path /*: string */,
+        showInWeb /*: boolean */
+      ) => {
         this.showInParent(path, showInWeb)
       },
-      'auto-launcher': (event, enabled) => autoLaunch.setEnabled(enabled),
+      'auto-launcher': (event /*: ElectronEvent */, enabled /*: boolean */) =>
+        autoLaunch.setEnabled(enabled),
       'close-app': () => {
         this.desktop.stopSync()
         this.app.quit()
@@ -254,7 +298,10 @@ module.exports = class TrayWM extends WindowManager {
         this.desktop.sync.forceSync().catch(err => {
           if (err) log.error({ err, sentry: true }, 'Could not run manual sync')
         }),
-      userAlertDetails: async (event, alert) => {
+      userAlertDetails: async (
+        event /*: ElectronEvent */,
+        alert /*: UserAlert */
+      ) => {
         let detailsWindow = new DetailsWM(this.app, this.desktop)
         try {
           if (detailsWindow) {
@@ -270,13 +317,20 @@ module.exports = class TrayWM extends WindowManager {
           log.error({ err }, 'could not load user action details content')
         }
       },
-      userActionInProgress: (event, action) => {
+      userActionInProgress: (
+        event /*: ElectronEvent */,
+        action /*: UserAlert */
+      ) => {
         this.desktop.events.emit('user-action-inprogress', action)
       },
-      userActionCommand: (event, cmd, action) => {
+      userActionCommand: (
+        event /*: ElectronEvent */,
+        cmd /*: UserActionCommand */,
+        action /*: UserAlert */
+      ) => {
         this.desktop.events.emit('user-action-command', { cmd, action })
       },
-      'reinitialize-synchronization': event => {
+      'reinitialize-synchronization': (event /*: ElectronEvent */) => {
         log.info('Reinitializing synchronization...')
         this.desktop
           .stopSync()
@@ -300,7 +354,7 @@ module.exports = class TrayWM extends WindowManager {
     }
   }
 
-  async openPath(pathToOpen, showInWeb = false) {
+  async openPath(pathToOpen /*: string */, showInWeb /*: boolean */ = false) {
     const { desktop } = this
 
     pathToOpen = path.join(desktop.config.syncPath, pathToOpen)
@@ -328,7 +382,7 @@ module.exports = class TrayWM extends WindowManager {
     }
   }
 
-  showInParent(pathToOpen, showInWeb = false) {
+  showInParent(pathToOpen /*: string */, showInWeb /*: boolean */ = false) {
     const { desktop } = this
 
     pathToOpen = path.join(desktop.config.syncPath, pathToOpen)

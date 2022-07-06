@@ -11,6 +11,14 @@ const flags = require('../../core/utils/flags')
 
 const ELMSTARTUP = 400
 
+/*::
+export type WindowBanner = {
+  level: string,
+  title: string,
+  details: string
+}
+*/
+
 const log = require('../../core/app').logger({
   component: 'windows'
 })

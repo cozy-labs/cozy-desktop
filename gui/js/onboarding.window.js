@@ -1,3 +1,5 @@
+/* @flow */
+
 const { addFileManagerShortcut } = require('./shortcut')
 const { dialog, session, BrowserView, shell } = require('electron')
 const autoLaunch = require('./autolaunch')
@@ -5,6 +7,10 @@ const defaults = require('./defaults')
 const { translate } = require('./i18n')
 const { SESSION_PARTITION_NAME } = require('./proxy')
 const { enable: enableRemoteModule } = require('@electron/remote/main')
+
+/*::
+import type { Event as ElectronEvent } from 'electron'
+*/
 
 const log = require('../../core/app').logger({
   component: 'GUI'
@@ -55,7 +61,7 @@ module.exports = class OnboardingWM extends WindowManager {
     })
   }
 
-  async openOAuthView(url) {
+  async openOAuthView(url /*: string */) {
     try {
       // Open remote OAuth flow in separate view, without Node integration.
       // This avoids giving access to Node's API to remote code and allows
@@ -126,11 +132,14 @@ module.exports = class OnboardingWM extends WindowManager {
     }
   }
 
-  onOnboardingDone(handler) {
+  onOnboardingDone(handler /*: any */) {
     this.afterOnboarding = handler
   }
 
-  async onRegisterRemote(event, arg) {
+  async onRegisterRemote(
+    event /*: ElectronEvent */,
+    arg /*: { cozyUrl: string, location: string } */
+  ) {
     const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
 
     let desktop = this.desktop
@@ -209,7 +218,7 @@ module.exports = class OnboardingWM extends WindowManager {
     )
   }
 
-  onChooseFolder(event) {
+  onChooseFolder(event /*: ElectronEvent */) {
     // FIXME: The modal may appear on background, either every time (e.g. Ubuntu)
     // or only the second time (e.g. Fedora)
     let folders = dialog.showOpenDialogSync({
@@ -220,7 +229,7 @@ module.exports = class OnboardingWM extends WindowManager {
     }
   }
 
-  checkSyncPath(syncPath, eventSender) {
+  checkSyncPath(syncPath /*: string */, eventSender /*: WindowManager */) {
     const result = this.desktop.checkSyncPath(syncPath)
     eventSender.send('folder-chosen', {
       folder: result.syncPath,
@@ -229,7 +238,7 @@ module.exports = class OnboardingWM extends WindowManager {
     return result
   }
 
-  onStartSync(event, syncPath) {
+  onStartSync(event /*: ElectronEvent */, syncPath /*: string */) {
     const { error } = this.checkSyncPath(syncPath, event.sender)
     if (error) {
       log.warn({ err: error })

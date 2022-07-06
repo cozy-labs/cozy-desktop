@@ -16,13 +16,13 @@ const log = Desktop.logger({
 
 /*::
 import { App } from '../../core/app'
-import { WindowManager } from '../js/window_manager'
+import { WindowBanner, WindowManager } from '../js/window_manager'
 */
 
 const openMarkdownViewer = async (
   filename /*: string */,
   content /*: string */,
-  banner /*: ?{ level: string, title: string, details: string } */ = null,
+  banner /*: ?WindowBanner */ = null,
   { desktop } /*: { desktop: App } */
 ) /*: Promise<void> */ => {
   let viewerWindow /*: WindowManager */

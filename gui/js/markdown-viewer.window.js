@@ -1,8 +1,14 @@
+/* @flow */
+
 const path = require('path')
 const { enable: enableRemoteModule } = require('@electron/remote/main')
 
 const { buildTranslations } = require('./i18n')
 const WindowManager = require('./window_manager')
+
+/*::
+import type { WindowBanner } from './window_manager'
+*/
 
 const VIEWER_SCREEN_WIDTH = 768
 const VIEWER_SCREEN_HEIGHT = 570
@@ -39,7 +45,11 @@ module.exports = class MarkdownViewerWindow extends WindowManager {
     return buildTranslations(['MarkdownViewer Why do I see this?'])
   }
 
-  loadContent(filename, content, banner = null) {
+  loadContent(
+    filename /*: string */,
+    content /*: string */,
+    banner /*: ?WindowBanner */ = null
+  ) {
     log.info({ content, banner }, 'loading note content')
     this.win.webContents.send('load-content', {
       translations: this.translations(),
