@@ -1,6 +1,7 @@
 // TODO: add a scenario with actions in reverse order
 
 module.exports = {
+  useCaptures: false,
   init: [
     { ino: 1, path: 'parent/' },
     { ino: 3, path: 'parent/dst/' },

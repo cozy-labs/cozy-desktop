@@ -1,0 +1,18 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file",
+      "ino": "0x0056000000000617"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "file",
+      "deletedIno": "0x0056000000000617"
+    }
+  ]
+]

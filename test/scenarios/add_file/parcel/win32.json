@@ -1,0 +1,10 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file",
+      "ino": "0x0054000000000617"
+    }
+  ]
+]

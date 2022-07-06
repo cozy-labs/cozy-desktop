@@ -1,0 +1,17 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst\\file",
+      "deletedIno": "0x00120000000ADE67"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "src\\file",
+      "path": "dst\\file",
+      "ino": "0x00100000000ADE77"
+    }
+  ]
+]

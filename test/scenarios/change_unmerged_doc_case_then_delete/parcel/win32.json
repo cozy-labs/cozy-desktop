@@ -1,0 +1,117 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dir",
+      "ino": "0x005A000000000617"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dir\\child",
+      "ino": "0x00110000000049D4"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dir\\renamed-child",
+      "ino": "0x00120000000ADD4F"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dir\\moved-child",
+      "ino": "0x00090000000ADDFB"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file",
+      "ino": "0x00080000000ADE50"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "moved-file",
+      "ino": "0x00070000000ADE52"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "dir",
+      "path": "Dir",
+      "ino": "0x005A000000000617"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "Dir\\renamed-child",
+      "path": "Dir\\Renamed-Child",
+      "ino": "0x00120000000ADD4F"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "Dir\\moved-child",
+      "path": "Moved-child",
+      "ino": "0x00090000000ADDFB"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "file",
+      "path": "File",
+      "ino": "0x00080000000ADE50"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "moved-file",
+      "path": "Dir\\moved-file",
+      "ino": "0x00070000000ADE52"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "Dir\\moved-file",
+      "deletedIno": "0x00070000000ADE52"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "Dir\\Renamed-Child",
+      "deletedIno": "0x00120000000ADD4F"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "Dir\\child",
+      "deletedIno": "0x00110000000049D4"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "Dir",
+      "deletedIno": "0x005A000000000617"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "File",
+      "deletedIno": "0x00080000000ADE50"
+    },
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "Moved-child",
+      "deletedIno": "0x00090000000ADDFB"
+    }
+  ]
+]

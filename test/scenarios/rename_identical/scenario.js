@@ -6,7 +6,7 @@ module.exports = ({
   // FIXME: fails on darwin because cozy-stack uses case-insensitive APFS
   platforms: ['win32'],
   disabled: {
-    'atom/win32-modified': 'We do not handle it yet.',
+    'parcel/win32-modified': 'We do not handle it yet.',
     'local/darwin-wtf':
       'One addDir event is missing, not sure why, possibly a capture issue...'
   },

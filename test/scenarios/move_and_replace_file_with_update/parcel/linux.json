@@ -1,0 +1,32 @@
+[
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/file1",
+      "ino": 20639476
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "src/file2",
+      "path": "dst/file2",
+      "ino": 20639477
+    }
+  ],
+  [
+    {
+      "action": "modified",
+      "kind": "file",
+      "path": "dst/file2",
+      "ino": 20639477
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "src/file1",
+      "path": "dst/file1",
+      "ino": 20639473
+    }
+  ]
+]

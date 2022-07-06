@@ -1,0 +1,26 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file1.tmp",
+      "ino": 19666152
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "file1.tmp",
+      "path": "file1",
+      "ino": 19666152
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "file2",
+      "path": "file2.tmp",
+      "ino": 19663088
+    }
+  ]
+]

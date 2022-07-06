@@ -1,0 +1,10 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "foo",
+      "deletedIno": "0x005F000000000617"
+    }
+  ]
+]

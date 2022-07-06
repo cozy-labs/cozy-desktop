@@ -1,0 +1,37 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "a",
+      "path": "b",
+      "ino": 20685715
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "a",
+      "ino": 20693905
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "a/file.txt",
+      "ino": 20639477
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "a/subdir",
+      "ino": 20693906
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "a/subdir/child.txt",
+      "ino": 20639478
+    }
+  ]
+]

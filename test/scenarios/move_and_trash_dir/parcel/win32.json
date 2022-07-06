@@ -1,0 +1,25 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "src\\subdir",
+      "path": "dst\\subdir",
+      "ino": "0x0042000000000AFF"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dst\\subdir\\file",
+      "deletedIno": "0x002900000000205F"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dst\\subdir",
+      "deletedIno": "0x0042000000000AFF"
+    }
+  ]
+]

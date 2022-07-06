@@ -1,0 +1,43 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "overwriting",
+      "ino": 20693896
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "overwriting/overwritten",
+      "ino": 20639476
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "overwriting/file",
+      "ino": 20639477
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dir/overwritten"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dir"
+    },
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "overwriting",
+      "path": "dir",
+      "ino": 20693896
+    }
+  ]
+]

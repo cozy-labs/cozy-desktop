@@ -1,0 +1,29 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "src\\A",
+      "path": "src\\B",
+      "ino": "0x002E00000000096E"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "src\\B",
+      "path": "src\\C",
+      "ino": "0x002E00000000096E"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "src\\C",
+      "path": "src\\B",
+      "ino": "0x002E00000000096E"
+    }
+  ]
+]

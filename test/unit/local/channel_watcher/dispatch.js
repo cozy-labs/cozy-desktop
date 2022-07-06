@@ -22,7 +22,6 @@ const SyncState = require('../../../../core/syncstate')
 const Prep = require('../../../../core/prep')
 const Channel = require('../../../../core/local/channel_watcher/channel')
 const dispatch = require('../../../../core/local/channel_watcher/dispatch')
-const winDetectMove = require('../../../../core/local/channel_watcher/win_detect_move')
 
 function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
   const methods = Object.getOwnPropertyNames(obj).filter(
@@ -70,10 +69,7 @@ describe('core/local/channel_watcher/dispatch.loop()', function () {
       events,
       prep,
       pouch: this.pouch,
-      state: {
-        ...(await dispatch.initialState()),
-        ...(await winDetectMove.initialState())
-      }
+      state: await dispatch.initialState()
     }
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)

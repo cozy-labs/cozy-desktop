@@ -1,0 +1,79 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dir",
+      "ino": "0x005B000000000617"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dir\\child",
+      "ino": "0x001700000000096E"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dir\\renamed-child",
+      "ino": "0x003D000000000AFF"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "dir\\moved-child",
+      "ino": "0x002400000000205F"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file",
+      "ino": "0x00120000000049D4"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "moved-file",
+      "ino": "0x0022000000005412"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "dir",
+      "path": "Dir",
+      "ino": "0x005B000000000617"
+    }
+  ],
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "Dir\\renamed-child",
+      "path": "Dir\\Renamed-Child",
+      "ino": "0x003D000000000AFF"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "Dir\\moved-child",
+      "path": "Moved-child",
+      "ino": "0x002400000000205F"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "file",
+      "path": "File",
+      "ino": "0x00120000000049D4"
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "moved-file",
+      "path": "Dir\\moved-file",
+      "ino": "0x0022000000005412"
+    }
+  ]
+]

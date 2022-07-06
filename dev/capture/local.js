@@ -8,15 +8,14 @@ const Promise = require('bluebird')
 const chokidar = require('chokidar')
 const EventEmitter = require('events')
 const fse = require('fs-extra')
-const _ = require('lodash')
 const path = require('path')
 const sinon = require('sinon')
 
 const { Config, watcherType } = require('../../core/config')
 const { Ignore } = require('../../core/ignore')
-const { ChannelWatcher } = require('../../core/local/channel_watcher')
-const { Pouch } = require('../../core/pouch')
-const Prep = require('../../core/prep')
+const { INITIAL_SCAN_DONE } = require('../../core/local/channel_watcher/event')
+const ParcelProducer = require('../../core/local/channel_watcher/parcel_producer')
+
 const fixturesHelpers = require('../../test/support/helpers/scenarios')
 
 /*::
@@ -26,13 +25,13 @@ import type { Scenario } from '../../test/scenarios'
 const cliDir = path.resolve(path.join(__dirname, '..', '..'))
 const syncDir = process.env.COZY_DESKTOP_DIR || cliDir
 const config = new Config(path.join(syncDir, 'tmp', '.cozy-desktop'))
-const syncPath = (config.syncPath = path.join(
+const syncPath = (config.syncPath = path.resolve(
   syncDir,
   'tmp',
   'local_watcher',
   'synced_dir'
 ))
-const outsidePath = path.join(syncDir, 'tmp', 'local_watcher', 'outside')
+const outsidePath = path.resolve(syncDir, 'tmp', 'local_watcher', 'outside')
 
 const abspath = relpath => path.join(syncPath, relpath.replace(/\//g, path.sep))
 
@@ -176,39 +175,44 @@ const runAndRecordChokidarEvents = scenario => {
   })
 }
 
-const runAndRecordChannelEvents = async scenario => {
-  const prep = sinon.createStubInstance(Prep)
-  const pouch = sinon.createStubInstance(Pouch)
-  const events = new EventEmitter()
-  const ignore = new Ignore([])
+const runAndRecordParcelEvents = async scenario => {
+  const producer = new ParcelProducer({
+    config,
+    ignore: new Ignore([]),
+    events: new EventEmitter()
+  })
+  const fakePush = sinon.stub(producer.channel, 'push')
+
   const capturedBatches = []
-  const watcher = new ChannelWatcher({ config, prep, pouch, events, ignore })
-
-  pouch.initialScanDocs = sinon.stub().callsFake(() => [])
-
   try {
-    await watcher.start()
-    const { channel } = watcher.producer
-    const actualPush = channel.push
-    // $FlowFixMe
-    channel.push = batch => {
+    // Complete producer start after processing the initial-scan-done event
+    const scanDone = new Promise(resolve => {
+      fakePush.withArgs([INITIAL_SCAN_DONE]).callsFake(() => {
+        resolve()
+      })
+    })
+    await producer.start()
+
+    fakePush.callsFake(batch => {
       batch.forEach(replaceFSEventIno)
-      capturedBatches.push(_.cloneDeep(batch))
-      actualPush.call(channel, batch)
-    }
+      capturedBatches.push(batch)
+    })
+
     await fixturesHelpers.runActions(scenario, abspath, {
       saveInodeChanges: false
     })
+    await scanDone
     await Promise.delay(1000)
     return saveFSEventsToFile(scenario, capturedBatches, 'channel')
   } finally {
-    await watcher.stop()
+    await producer.stop()
+    fakePush.restore()
   }
 }
 
 const runAndRecordFSEvents =
   watcherType() === 'channel'
-    ? runAndRecordChannelEvents
+    ? runAndRecordParcelEvents
     : runAndRecordChokidarEvents
 
 const captureScenario = (scenario /*: Scenario & {path: string} */) => {

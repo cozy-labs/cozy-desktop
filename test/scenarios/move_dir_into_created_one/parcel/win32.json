@@ -1,0 +1,17 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "dir2",
+      "ino": "0x002800000000096E"
+    },
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "dir1",
+      "path": "dir2\\dir1",
+      "ino": "0x006D000000000617"
+    }
+  ]
+]

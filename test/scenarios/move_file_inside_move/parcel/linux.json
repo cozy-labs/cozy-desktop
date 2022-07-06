@@ -1,0 +1,25 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "parent/src/dir/subdir/file",
+      "path": "parent/src/dir/subdir/filerenamed",
+      "ino": 20639473
+    },
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "parent/src/dir",
+      "path": "parent/dst/dir",
+      "ino": 20693906
+    },
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "parent/dst/dir/subdir/file2",
+      "path": "parent/dst/dir/subdir/filerenamed2",
+      "ino": 20639476
+    }
+  ]
+]

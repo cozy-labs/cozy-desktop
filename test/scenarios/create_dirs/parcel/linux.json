@@ -1,0 +1,16 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "foo",
+      "ino": 20685715
+    },
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "foo/bar",
+      "ino": 20693896
+    }
+  ]
+]

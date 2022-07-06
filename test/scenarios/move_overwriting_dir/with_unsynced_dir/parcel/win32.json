@@ -1,0 +1,45 @@
+[
+  [
+    {
+      "action": "created",
+      "kind": "directory",
+      "path": "overwriting",
+      "ino": "0x00110000000ADE67"
+    }
+  ],
+  [
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "overwriting\\overwritten",
+      "ino": "0x000F0000000ADE74"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "overwriting\\file",
+      "ino": "0x000F0000000ADE77"
+    }
+  ],
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "dir\\overwritten",
+      "deletedIno": "0x003800000000096E"
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dir",
+      "deletedIno": "0x007D000000000617"
+    },
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "overwriting",
+      "path": "dir",
+      "ino": "0x00110000000ADE67"
+    }
+  ]
+]

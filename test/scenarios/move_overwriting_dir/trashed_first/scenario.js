@@ -5,6 +5,7 @@ const { runWithStoppedClient } = require('../../../support/helpers/scenarios')
 /*:: import type { Scenario } from '../..' */
 
 module.exports = ({
+  useCaptures: false,
   init: [
     { ino: 1, path: 'dst/' },
     { ino: 2, path: 'dst/dir/' },

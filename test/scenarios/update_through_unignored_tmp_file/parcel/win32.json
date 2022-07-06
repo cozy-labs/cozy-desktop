@@ -1,0 +1,16 @@
+[
+  [
+    {
+      "action": "deleted",
+      "kind": "file",
+      "path": "other-file.ods",
+      "deletedIno": "0x0049000000000AFF"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "file.ods",
+      "ino": "0x00260000000ADE67"
+    }
+  ]
+]

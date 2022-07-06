@@ -1,0 +1,17 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "a",
+      "path": "b",
+      "ino": "0x0061000000000617"
+    },
+    {
+      "action": "created",
+      "kind": "file",
+      "path": "a",
+      "ino": "0x001C00000000096E"
+    }
+  ]
+]

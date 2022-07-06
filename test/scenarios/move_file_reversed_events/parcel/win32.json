@@ -1,0 +1,11 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "src\\file",
+      "path": "dst\\file",
+      "ino": "0x000A0000000ADE67"
+    }
+  ]
+]

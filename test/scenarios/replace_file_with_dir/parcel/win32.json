@@ -1,0 +1,10 @@
+[
+  [
+    {
+      "action": "modified",
+      "kind": "directory",
+      "path": "foo",
+      "ino": "0x00200000000ADE67"
+    }
+  ]
+]

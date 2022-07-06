@@ -1,0 +1,11 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "directory",
+      "oldPath": "src\\dir",
+      "path": "dst\\dir",
+      "ino": "0x001A0000000049D4"
+    }
+  ]
+]

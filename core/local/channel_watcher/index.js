@@ -1,6 +1,6 @@
 /**
  * This is the {@link module:core/local/watcher|local watcher} implementation
- * based on the {@link https://github.com/atom/watcher|@atom/watcher} library.
+ * based on the {@link https://github.com/parcel-bundler/watcher|@parcel/watcher} library.
  *
  * The watcher is built as a chain of steps. Each step can be seen as an actor
  * that communicates with the next one via a Channel. The first step is called
@@ -23,11 +23,10 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 
 const checksumer = require('./../checksumer')
-const Producer = require('./producer')
+const Producer = require('./parcel_producer')
 const addInfos = require('./add_infos')
 const filterIgnored = require('./filter_ignored')
 const fireLocatStartEvent = require('./fire_local_start_event')
-const winDetectMove = require('./win_detect_move')
 const winIdenticalRenaming = require('./win_identical_renaming')
 const scanFolder = require('./scan_folder')
 const awaitWriteFinish = require('./await_write_finish')
@@ -46,7 +45,7 @@ import type EventEmitter from 'events'
 import type { Ignore } from '../../ignore'
 import type { Checksumer } from '../checksumer'
 import type { ChannelEventsDispatcher } from './dispatch'
-import type { Scanner } from './producer'
+import type { Scanner } from './parcel_producer'
 
 type ChannelWatcherOptions = {
   config: Config,
@@ -74,7 +73,6 @@ const steps = _.compact([
   filterIgnored,
   fireLocatStartEvent,
   only('win32', winIdenticalRenaming),
-  only('win32', winDetectMove),
   scanFolder,
   awaitWriteFinish,
   initialDiff,
@@ -163,7 +161,7 @@ class ChannelWatcher {
   async stop() /*: Promise<*> */ {
     log.debug('stopping...')
 
-    this.producer.stop()
+    await this.producer.stop()
 
     if (this._runningResolve) {
       this._runningResolve()

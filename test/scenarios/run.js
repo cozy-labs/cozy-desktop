@@ -16,7 +16,7 @@ const {
   disabledScenarioTest,
   init,
   loadFSEventFiles,
-  loadAtomCaptures,
+  loadParcelCaptures,
   runActions,
   scenarios,
   runWithBreakpoints,
@@ -67,15 +67,15 @@ describe('Scenario', function () {
     if (scenario.side === 'remote') {
       it.skip(`test/scenarios/${scenario.name}/local/  (skip remote only test)`, () => {})
     } else if (!runWithStoppedClient()) {
-      for (let atomCapture of loadAtomCaptures(scenario)) {
-        const localTestName = `test/scenarios/${scenario.name}/atom/${atomCapture.name}`
+      for (let parcelCapture of loadParcelCaptures(scenario)) {
+        const localTestName = `test/scenarios/${scenario.name}/parcel/${parcelCapture.name}`
         if (config.watcherType() !== 'channel') {
           it.skip(localTestName, () => {})
           continue
         }
 
-        if (atomCapture.disabled) {
-          it.skip(`${localTestName}  (${atomCapture.disabled})`, () => {})
+        if (parcelCapture.disabled) {
+          it.skip(`${localTestName}  (${parcelCapture.disabled})`, () => {})
           continue
         }
 
@@ -89,13 +89,13 @@ describe('Scenario', function () {
                 scenario,
                 helpers.pouch,
                 helpers.local.syncDir.abspath,
-                scenario.useCaptures ? atomCapture : undefined
+                scenario.useCaptures ? parcelCapture : undefined
               )
             })
           }
 
           it('', async function () {
-            await runLocalChannel(scenario, atomCapture, helpers)
+            await runLocalChannel(scenario, parcelCapture, helpers)
           })
         })
       }
