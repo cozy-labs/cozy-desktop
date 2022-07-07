@@ -31,7 +31,6 @@ const SyncState = require('./syncstate')
 const Registration = require('./remote/registration')
 const logger = require('./utils/logger')
 const { LOG_FILE, LOG_FILENAME } = logger
-const sentry = require('./utils/sentry')
 const { sendToTrash } = require('./utils/fs')
 const notes = require('./utils/notes')
 const web = require('./utils/web')
@@ -355,8 +354,6 @@ class App {
   async setup() {
     const clientInfo = this.clientInfo()
     log.info(clientInfo, 'user config')
-
-    sentry.setup(clientInfo)
 
     if (!this.config.isValid()) {
       throw new config.InvalidConfigError()

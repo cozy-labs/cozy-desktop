@@ -2,9 +2,17 @@
 
 // Initialize `remote` module so that renderer processes can use it.
 require('@electron/remote/main').initialize()
-const { app, Menu, Notification, ipcMain, dialog } = require('electron')
+const {
+  app,
+  Menu,
+  Notification,
+  ipcMain,
+  dialog,
+  session
+} = require('electron')
 
 const Desktop = require('../core/app.js')
+const sentry = require('../core/utils/sentry')
 const { openNote } = require('./utils/notes')
 const pkg = require('../package.json')
 
@@ -57,7 +65,9 @@ if (!mainInstance && !process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
   app.exit()
 }
 
-let desktop
+let desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
+sentry.setup(desktop.clientInfo())
+
 let diskTimeout = null
 let onboardingWindow = null
 let helpWindow = null
@@ -565,26 +575,11 @@ app.on('ready', async () => {
     app.dock.hide()
   }
 
-  const { session } = require('electron')
-
   const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
   let userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
   await proxy.setup(app, proxy.config(), session, userAgent)
   log.info('Loading CLI...')
   i18n.init(app)
-  try {
-    desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
-  } catch (err) {
-    if (err.message.match(/GLIBCXX/)) {
-      await dialog.showMessageBox(null, {
-        type: 'error',
-        message: translate('Error Bad GLIBCXX version'),
-        buttons: [translate('AppMenu Close')]
-      })
-      await exit(0)
-      return
-    } else throw err
-  }
 
   const { argv } = process
 
