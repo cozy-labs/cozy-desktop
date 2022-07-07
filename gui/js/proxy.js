@@ -10,7 +10,8 @@ const http = require('http')
 const https = require('https')
 const yargs = require('yargs')
 
-const log = require('../../core/app').logger({
+const logger = require('../../core/utils/logger')
+const log = logger({
   component: 'GUI:proxy'
 })
 

@@ -2,18 +2,33 @@
  *
  * @module core/utils/sentry
  * @flow
+ *
+ * Setup our Sentry integration to send errors and crash reports to our Sentry
+ * server.
+ *
+ * Follow these steps to upload Electron debug symbols after each version
+ * upgrade:
+ *
+ * 1. `sentry-wizard --skip-connect -u <server url> --integration electron
+ * 2. Follow the steps (auth tokens can be generated here: https://<server url>/settings/account/api/auth-tokens/)
+ * 3. `node sentry-symbols.js`
  */
 
+const { session } = require('electron')
 const Sentry = require('@sentry/electron')
+const {
+  ExtraErrorData: ExtraErrorDataIntegration
+} = require('@sentry/integrations')
 const bunyan = require('bunyan')
 const url = require('url')
+const _ = require('lodash')
 
+const { SESSION_PARTITION_NAME } = require('../../gui/js/proxy')
 const logger = require('./logger')
+
 const log = logger({
   component: 'Sentry'
 })
-
-const _ = require('lodash')
 
 module.exports = {
   setup,
@@ -57,7 +72,27 @@ function setup(clientInfos /*: ClientInfo */) {
     Sentry.init({
       dsn: SENTRY_DSN,
       release: appVersion,
-      environment
+      environment,
+      // Inject preload script into all used sessions
+      getSessions: () => [
+        session.defaultSession,
+        session.fromPartition(SESSION_PARTITION_NAME)
+      ],
+      // Adding the ElectronMinidump integration like this
+      // ensures that it is the first integrations to be initialized.
+      integrations: defaultIntegrations => {
+        return [
+          // Uploads minidumps via Crashpad/Breakpad built in uploader with
+          // partial context when reporting native crash.
+          new Sentry.Integrations.ElectronMinidump(),
+          // Extract all non-native attributes up to <depth> from Error objects
+          // and attach them to events as extra data.
+          // If the error object has a .toJSON() method, it will be run to
+          // extract the additional data.
+          new ExtraErrorDataIntegration({ depth: 10 }),
+          ...defaultIntegrations
+        ]
+      }
     })
     Sentry.configureScope(scope => {
       scope.setUser({ username: instance })
@@ -115,10 +150,9 @@ const handleBunyanMessage = msg => {
 
     Sentry.withScope(scope => {
       scope.setLevel(level)
-      scope.setExtras(extra)
+      scope.setContext('msgDetails', extra)
 
       if (msg.err) {
-        if (msg.err.reason) scope.setExtra('reason', msg.err.reason)
         Sentry.captureException(format(msg.err))
       } else {
         Sentry.captureMessage(msg.msg)
