@@ -35,13 +35,15 @@ fileAssociations:
   description: Cozy Note markdown export
   mimeType: 'text/vnd.cozy.note+markdown'
   role: Viewer
+
 mac:
   hardenedRuntime: true
   entitlements: './build/entitlements.mac.inherit.plist'
   category: public.app-category.productivity
   target:
-  - dmg
-  - zip
+      - target: dmg
+        arch:
+            - x64
 dmg:
   contents:
     - x: 110
@@ -50,15 +52,22 @@ dmg:
       y: 150
       type: link
       path: '/Applications'
+
 win:
   target:
-  - nsis
+      - target: nsis
+        arch:
+            - x64
+            - ia32
   # Comment out the following line if the Digicert server starts failing.
   # Electron-Builder will then swtich back to the default Comodoca server.
   rfc3161TimeStampServer: 'http://timestamp.digicert.com/'
+
 linux:
   target:
-  - AppImage
+      - target: AppImage
+        arch:
+            - x64
   category: Network;FileTransfer;
   desktop:
     StartupNotify: 'true'
@@ -70,6 +79,7 @@ linux:
     services. Your freedom to chose is why you can trust us.
 appImage:
   artifactName: 'Cozy-Drive-${version}-${arch}.${ext}'
+
 extraResources:
   - from: 'build/launcher-script.sh'
     to: 'launcher-script.sh'

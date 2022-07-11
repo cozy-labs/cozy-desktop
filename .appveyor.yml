@@ -31,5 +31,5 @@ on_failure:
   - yarn --version
 
 on_finish:
-  - ps: if ($env:BUILD_JOB -eq "scenarios_build") { yarn dist:all }
+  - ps: if ($env:BUILD_JOB -eq "scenarios_build") { yarn dist }
 
