@@ -31,5 +31,9 @@ on_failure:
   - yarn --version
 
 on_finish:
-  - ps: if ($env:BUILD_JOB -eq "scenarios_build") { yarn dist }
-
+  - ps: |
+      if ($env:BUILD_JOB -eq "scenarios_build") {
+        yarn dist
+        Push-AppveyorArtifact dist\latest.yml
+        Resolve-Path -Path "dist\Cozy[ -]Drive[ -]Setup[ -]*.exe" -Relative | % { Push-AppveyorArtifact $_ }
+      }

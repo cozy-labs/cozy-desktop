@@ -244,3 +244,13 @@ jobs:
           mac-cert-password: "${{ secrets.mac_cert_password }}"
           apple-id: "${{ secrets.apple_id }}"
           apple-id-password: "${{ secrets.apple_id_password }}"
+      - name: Save artifacts
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v3
+        with:
+            name: Binaries
+            path: |
+                ${{ github.workspace }}/dist/latest-mac.yml
+                ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*.dmg
+            retention-days: 5
+
