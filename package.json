@@ -142,7 +142,7 @@
     "electron-builder": "^22.8.1",
     "electron-download": "^4.1.1",
     "electron-mocha": "11.0.2",
-    "electron-notarize": "^0.1.1",
+    "electron-notarize": "^1.2.1",
     "elm": "^0.19.1",
     "elm-format": "0.8.5",
     "elm-test": "^0.19.1",
