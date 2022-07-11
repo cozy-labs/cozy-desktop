@@ -42,7 +42,6 @@
     "dev:elm": "yarn watch:css & yarn watch:elm & python2 -m SimpleHTTPServer 8000",
     "dev:exclusions": "env-cmd -f .env.dev electron ./dev/remote/change-dir-exclusions.js",
     "dist": "electron-builder build",
-    "dist:all": "yarn dist --x64 --ia32",
     "docker:exec": "docker exec -it cozy-desktop-stack",
     "elm:upgrade": "cd gui && yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
     "jq": "cross-env HOME=. nice -n 19 jq",
