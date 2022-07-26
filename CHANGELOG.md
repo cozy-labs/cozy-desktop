@@ -1,5 +1,36 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.36.0 - 2022-07-26
+
+Improvements for all users:
+
+- The Electron framework was upgraded to v19.0.0. This major version fixes a lot
+  of security errors as well as other smaller errors like crashes.
+- We fixed the invalid path error details window which would not show up
+  anymore. We took the opportunity to improve its display and have the whole
+  content fit in the window without scrollbars.
+
+Improvements for Windows and Linux users:
+
+- We replaced our filesystem changes surveillance library to use @parcel/watcher
+  as @atom/watcher is not maintained anymore and was preventing us from
+  upgrading Electron.
+  Although the behavior of Cozy Desktop should remain mostly untouched, it
+  should be easier to follow document movements on Windows and faster to scan
+  folders, especially during an app start.
+
+Improvements for Linux users:
+
+- The Electron upgrade should resolve issues some users can experience with
+  recent Ubuntu versions and their derivatives. Cozy Desktop should start
+  without issues.
+- Electron does not support 32-bit Linux binaries anymore so we stopped building
+  binaries for this architecture as well.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.36.0-beta.1 - 2022-07-07
 
 Improvements for all users:
