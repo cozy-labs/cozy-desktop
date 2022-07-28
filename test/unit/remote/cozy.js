@@ -914,6 +914,33 @@ describe('RemoteCozy', function () {
       const dir = await builders.remoteDir().name('dir').create()
       await should(remoteCozy.getDirectoryContent(dir)).be.fulfilledWith([])
     })
+
+    it('does not fail when there are multiple result pages', async () => {
+      const tree = await builders.createRemoteTree([
+        'dir/',
+        'dir/subdir/',
+        'dir/subdir/subsubdir/',
+        'dir/subdir/file',
+        'dir/file',
+        'dir/other-subdir/',
+        'dir/other-subdir/next-level/',
+        'dir/other-subdir/next-level/last-level/',
+        'dir/other-subdir/next-level/last-level/content',
+        'dir/subdir/subsubdir/last',
+        'hello.txt',
+        'other-dir/',
+        'other-dir/content'
+      ])
+
+      const dirContent = await remoteCozy.getDirectoryContent(tree['dir/'], {
+        batchSize: 1
+      })
+      should(dirContent.map(metadata.serializableRemote)).deepEqual(
+        [tree['dir/file'], tree['dir/other-subdir/'], tree['dir/subdir/']].map(
+          metadata.serializableRemote
+        )
+      )
+    })
   })
 
   describe('#isExcludedDirectory', () => {
