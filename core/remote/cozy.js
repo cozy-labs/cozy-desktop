@@ -434,7 +434,10 @@ class RemoteCozy {
   // sub-directories.
   async getDirectoryContent(
     dir /*: RemoteDir */,
-    { client } /*: { client: ?CozyClient } */ = {}
+    {
+      client,
+      batchSize = 3000
+    } /*: { client?: CozyClient, batchSize?: number } */ = {}
   ) /*: Promise<$ReadOnlyArray<FullRemoteFile|RemoteDir>> */ {
     client = client || (await this.newClient())
 
@@ -445,9 +448,9 @@ class RemoteCozy {
       })
       .indexFields(['dir_id', 'name'])
       .sortBy([{ dir_id: 'asc' }, { name: 'asc' }])
-      .limitBy(3000)
+      .limitBy(batchSize)
 
-    const { data } = await this.queryAll(queryDef, { client })
+    const data = await client.queryAll(queryDef)
 
     const remoteDocs = []
     for (const j of data) {
@@ -461,20 +464,6 @@ class RemoteCozy {
       }
     }
     return remoteDocs
-  }
-
-  async queryAll(queryDef /*: Q */, { client } /*: { client: CozyClient } */) {
-    const { data, next, bookmark } = await client.query(queryDef)
-
-    if (next) {
-      return {
-        data: data.concat(
-          await this.queryAll(queryDef.offsetBookmark(bookmark), { client })
-        )
-      }
-    } else {
-      return { data }
-    }
   }
 
   isExcludedDirectory(doc /*: FullRemoteFile|RemoteDir */) /*: boolean */ {
