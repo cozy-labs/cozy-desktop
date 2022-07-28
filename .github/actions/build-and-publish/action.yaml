@@ -36,4 +36,4 @@ runs:
           sudo apt update
           sudo apt install --no-install-recommends -y libopenjp2-tools gcc-multilib g++-multilib
         fi
-        yarn dist --x64
+        yarn dist

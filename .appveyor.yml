@@ -12,7 +12,9 @@ environment:
 
 install:
   - ps: Install-Product node 14.17.6 x64
-  - cmd: appveyor-retry yarn install:all
+  - cmd: appveyor-retry yarn install --verbose
+  - cmd: appveyor-retry node node_modules/electron/install.js
+  - cmd: appveyor-retry yarn install:electron
   - cmd: appveyor-retry yarn bootstrap:remote
 
 build: off
@@ -31,5 +33,9 @@ on_failure:
   - yarn --version
 
 on_finish:
-  - ps: if ($env:BUILD_JOB -eq "scenarios_build") { yarn dist:all }
-
+  - ps: |
+      if ($env:BUILD_JOB -eq "scenarios_build") {
+        yarn dist
+        Push-AppveyorArtifact dist\latest.yml
+        Resolve-Path -Path "dist\Cozy[ -]Drive[ -]Setup[ -]*.exe" -Relative | % { Push-AppveyorArtifact $_ }
+      }
