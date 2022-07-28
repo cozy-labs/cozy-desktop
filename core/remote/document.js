@@ -356,7 +356,10 @@ function jsonApiToRemoteJsonDoc(
       _deleted: true
     } /*: CouchDBDeletion */)
   } else if (!json.meta || !json.meta.rev) {
-    throw new Error('Missing meta.rev attribute in JsonAPI resource.')
+    const error = new Error('Missing meta.rev attribute in JsonAPI resource.')
+    // $FlowFixMe we add the `data` attribute on purpose
+    error.data = { json }
+    throw error
   } else {
     const { attributes, id, type, relationships } = json
 
