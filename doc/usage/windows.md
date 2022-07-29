@@ -2,12 +2,17 @@
 
 ## Supported versions
 
-| Windows version | supported | comment |
-| --- | --- | --- |
-| Windows 10 (64 bits) | yes | actively tested |
-| Windows 10 (32 bits) | | 32 bits achritecture is not supported anymore |
-| Windows 8.1 | | should work |
-| Windows 8 | | has security flaws, please upgrade to 8.1 |
-| Windows 7 | | should work |
-| Windows Vista | no | |
-| Windows XP | no | |
+We only support the latest 2 versions of Windows although the app could work on older versions. The table below can be outdated.
+
+| Windows version       | supported | comment             |
+| ---                   | ---       | ---                 |
+| Windows 11 (64 bits)  | yes       | should work         |
+| Windows 10 (64 bits)  | yes       | actively tested     |
+| ---                   | ---       | ---                 |
+| Windows 10 (32 bits)  | no        |                     |
+| ---                   | ---       | ---                 |
+| Windows 8.1           | no        | end of life reached |
+| Windows 8             | no        | end of life reached |
+| Windows 7             | no        | end of life reached |
+| Windows Vista         | no        | end of life reached |
+| Windows XP            | no        | end of life reached |
