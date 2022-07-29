@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.36.1-beta.1 - 2022-07-29
+
+Improvements for all users:
+
+- Thanks to https://github.com/ArchangeGabriel, we should now unpack all of our
+  binary dependencies before the application is run, saving some startup time
+  and avoiding anti-viruses alerts.
+- We fixed a bug in the process that fetches a directory's content when it is
+  re-included in the synchronization that was preventing it from completing.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.36.0 - 2022-07-26
 
 Improvements for all users:
