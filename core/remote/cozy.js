@@ -18,7 +18,8 @@ const {
   DIR_TYPE,
   INITIAL_SEQ,
   MAX_FILE_SIZE,
-  OAUTH_CLIENTS_DOCTYPE
+  OAUTH_CLIENTS_DOCTYPE,
+  SETTINGS_DOCTYPE
 } = require('./constants')
 const { DirectoryNotFound } = require('./errors')
 const {
@@ -450,7 +451,7 @@ class RemoteCozy {
       .sortBy([{ dir_id: 'asc' }, { name: 'asc' }])
       .limitBy(batchSize)
 
-    const data = await client.queryAll(queryDef)
+    const data = await client.findAll(queryDef)
 
     const remoteDocs = []
     for (const j of data) {
@@ -541,11 +542,12 @@ class RemoteCozy {
 
   async capabilities() /*: Promise<{ flatSubdomains: boolean }> */ {
     const client = await this.newClient()
+    const settings = client.collection(SETTINGS_DOCTYPE)
     const {
       data: {
         attributes: { flat_subdomains: flatSubdomains }
       }
-    } = await client.query(Q('io.cozy.settings').getById('capabilities'))
+    } = await settings.get('capabilities')
     return { flatSubdomains }
   }
 
