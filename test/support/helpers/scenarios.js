@@ -324,7 +324,7 @@ const merge = async (srcPath, dstPath) => {
     await fse.rename(srcPath, dstPath)
   } else if (srcStats && srcStats.isFile()) {
     debug('file is replacing dir', { srcPath, dstPath })
-    await fse.rmdir(dstPath, { recursive: true })
+    await fse.rm(dstPath, { recursive: true })
     await fse.rename(srcPath, dstPath)
   } else {
     for (const entry of await fse.readdir(srcPath)) {
@@ -333,7 +333,7 @@ const merge = async (srcPath, dstPath) => {
   }
   if (srcStats && srcStats.isDirectory()) {
     try {
-      await fse.rmdir(srcPath, { recursive: true })
+      await fse.rm(srcPath, { recursive: true })
     } catch (err) {
       debug('rmdir', { path: srcPath }, err)
     }

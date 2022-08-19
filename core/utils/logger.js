@@ -90,7 +90,8 @@ function errSerializer(err) {
       'errors',
       'doc',
       'incompatibilities',
-      'change'
+      'change',
+      'data'
     ])
   )
 

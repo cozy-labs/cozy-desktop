@@ -155,7 +155,7 @@ class ContextDir {
   }
 
   async rmdir(target /*: string | {path: string} */) {
-    await fse.rmdirSync(this.abspath(target))
+    await fse.rm(this.abspath(target), { recursive: true })
   }
 
   async readFile(

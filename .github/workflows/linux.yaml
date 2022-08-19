@@ -224,3 +224,13 @@ jobs:
         uses: ./.github/actions/build-and-publish
         with:
           gh-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Save artifacts
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/upload-artifact@v3
+        with:
+            name: Binaries
+            path: |
+                ${{ github.workspace }}/dist/latest-linux.yml
+                ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*.AppImage
+            retention-days: 5
+
