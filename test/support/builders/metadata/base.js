@@ -373,6 +373,15 @@ module.exports = class BaseMetadataBuilder {
     }
 
     this.doc.remote = metadata.serializableRemote(builder.build())
-    this.doc.remote.path = pathUtils.localToRemote(this.doc.path)
+
+    if (!this.doc.trashed) {
+      // when trashed, a document's path will start with the trash dir name
+      // instead of its old parent's path so we don't want to change the path in
+      // this case.
+      // FIXME: A better way to deal with this would be to use the remote
+      // builder's `inDir()` method but we don't necessarily have the directory
+      // 's _id on hand.
+      this.doc.remote.path = pathUtils.localToRemote(this.doc.path)
+    }
   }
 }

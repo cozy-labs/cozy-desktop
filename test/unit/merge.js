@@ -4746,11 +4746,11 @@ describe('Merge', function () {
     context('when record is found in Pouch', () => {
       it('marks it for deletion and updates sides info', async function () {
         const was = await builders.metafile().upToDate().create()
-        const doc = builders.metafile(was).build()
+        const doc = builders.metafile(was).trashed().unmerged('remote').build()
 
         const sideEffects = await mergeSideEffects(this, () =>
           this.merge.trashFileAsync(
-            this.side,
+            'remote',
             _.cloneDeep(was),
             _.cloneDeep(doc)
           )
@@ -4760,7 +4760,8 @@ describe('Merge', function () {
           savedDocs: [
             _.defaults(
               {
-                sides: increasedSides(was.sides, this.side, 1),
+                remote: doc.remote,
+                sides: increasedSides(was.sides, 'remote', 1),
                 trashed: true
               },
               _.omit(was, ['_rev'])
@@ -5107,27 +5108,23 @@ describe('Merge', function () {
         // its `trashed` attribute.
         // We need to find a solution for this (e.g. restore the file before
         // moving it to its destination).
-        it('updates the record remote revs so it can be restored', async function () {
-          const initialRemote = await builders
-            .remoteFile()
-            .name('initial')
-            .build()
-          const initial = await builders
+        it('updates the record remote metadata so it can be restored', async function () {
+          const src = await builders
             .metafile()
-            .fromRemote(initialRemote)
+            .path('initial')
             .upToDate()
             .create()
-          const src = await builders.metafile(initial).create()
           const was = await builders
             .metafile()
             .moveFrom(src)
+            .path('moved')
             .changedSide('local')
             .create()
-          const trashedRemote = await builders
-            .remoteFile(initialRemote)
+          const doc = builders
+            .metafile(src)
             .trashed()
+            .unmerged('remote')
             .build()
-          const doc = builders.metafile().fromRemote(trashedRemote).build()
 
           const sideEffects = await mergeSideEffects(this, () =>
             this.merge.trashFileAsync(
@@ -5141,8 +5138,8 @@ describe('Merge', function () {
             savedDocs: [
               _.defaultsDeep(
                 {
-                  remote: { _rev: trashedRemote._rev },
-                  moveFrom: { remote: { _rev: trashedRemote._rev } }
+                  remote: doc.remote,
+                  moveFrom: { remote: doc.remote }
                 },
                 _.omit(was, ['_rev'])
               )
