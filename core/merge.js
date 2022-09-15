@@ -788,7 +788,8 @@ class Merge {
 
   async doTrash(
     side /*: SideName */,
-    was /*: SavedMetadata */
+    was /*: SavedMetadata */,
+    doc /*: Metadata */
   ) /*: Promise<void> */ {
     log.debug({ path: was.path, side, was }, 'doTrash')
 
@@ -833,6 +834,12 @@ class Merge {
       }
 
       metadata.markSide(side, was, was)
+      // Save the updated side metadata. We only save the remote metadata for
+      // now as we don't have updated local metadata when a document is trashed
+      // on the local filesystem.
+      if (side === 'remote') {
+        was.remote = doc.remote
+      }
       was.trashed = true
       try {
         return await this.pouch.put(was)
@@ -843,6 +850,14 @@ class Merge {
       }
     }
 
+    // FIXME: we should not mark was as trashed if it wasn't linked to the
+    // trashed document (i.e. was.sides[side] does not exist).
+    // We shouldn't event reach this point so let's log a Sentry error when it
+    // happens.
+    log.warn(
+      { path: was.path, side, was, doc, sentry: true },
+      'marking document for deletion while not linked to the trashed one'
+    )
     was.trashed = true
     return this.pouch.put(was)
   }
@@ -888,13 +903,13 @@ class Merge {
         // We'll dissociate the moved side from the trashed one so it can be
         // sent again by Sync.
         if (side === 'remote') {
-          // FIXME: We keep the moveFrom and remote rev so we can undo the
+          // FIXME: We keep the moveFrom and remote metadata so we can undo the
           // remote trashing. But, this will lead the client to move a `trashed`
           // document outside the remote Trash which should never happen.
           // In this situation we should restore the remote document first and
           // then move it to its final destination.
-          was.remote._rev = doc.remote._rev
-          was.moveFrom.remote._rev = doc.remote._rev
+          was.remote = doc.remote
+          was.moveFrom.remote = doc.remote
         } else {
           // We remove the hint that the file should be moved since it has
           // actually been deleted locally and should be recreated instead.
@@ -917,7 +932,7 @@ class Merge {
       }
     }
 
-    return this.doTrash(side, was)
+    return this.doTrash(side, was, doc)
   }
 
   // Send a folder to the Trash
@@ -954,9 +969,9 @@ class Merge {
       descending: true
     })
     for (const child of children) {
-      await this.doTrash(side, child)
+      await this.doTrash(side, child, child)
     }
-    await this.doTrash(side, was)
+    await this.doTrash(side, was, doc)
   }
 
   // Remove a file from PouchDB
