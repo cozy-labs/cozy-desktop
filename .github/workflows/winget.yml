@@ -14,14 +14,14 @@ jobs:
         id: get-version
 
       - if: github.event_name == 'released'
-        uses: vedantmgoyal2009/winget-releaser@latest
+        uses: vedantmgoyal2009/winget-releaser@v1
         with:
           identifier: CozyCloud.CozyDrive
           version: ${{ steps.get-version.outputs.version }}
           token: ${{ secrets.WINGET_TOKEN }}
 
       - if: github.event_name == 'prereleased'
-        uses: vedantmgoyal2009/winget-releaser@latest
+        uses: vedantmgoyal2009/winget-releaser@v1
         with:
           identifier: CozyCloud.CozyDrive.Beta
           version: ${{ steps.get-version.outputs.version }}
