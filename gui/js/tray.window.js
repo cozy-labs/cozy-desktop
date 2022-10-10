@@ -363,23 +363,25 @@ module.exports = class TrayWM extends WindowManager {
     // TODO: find better way to check whether it's a note or not without
     // requiring modules from main.
     if (pathToOpen.endsWith('.cozy-note')) {
-      openNote(pathToOpen, { desktop })
+      await openNote(pathToOpen, { desktop })
     } else if (process.platform === 'linux' && pathToOpen.endsWith('.url')) {
       // Linux Desktops generally don't provide any way to open those shortcuts.
-      openUrl(pathToOpen)
+      await openUrl(pathToOpen)
     } else if (showInWeb) {
-      openInWeb(pathToOpen, { desktop })
+      await openInWeb(pathToOpen, { desktop })
     } else if (pathToOpen === '') {
-      shell.openPath(desktop.config.syncPath).catch(err => {
+      const err = await shell.openPath(desktop.config.syncPath)
+      if (err !== '') {
         log.error({ err, sentry: true }, 'Could not open sync folder')
-      })
+      }
     } else {
-      shell.openPath(pathToOpen).catch(err => {
+      const err = await shell.openPath(pathToOpen)
+      if (err !== '') {
         log.error(
           { err, path: pathToOpen, sentry: true },
           'Could not open given path'
         )
-      })
+      }
     }
   }
 
