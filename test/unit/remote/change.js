@@ -35,6 +35,30 @@ describe('sorter()', () => {
     })
   })
 
+  describe('with two moves', () => {
+    it('sorts child move out of parent before parent move', () => {
+      const parentMove = {
+        type: 'DirMove',
+        doc: builders.metadir().path('moved').build(),
+        was: builders.metadir().path('dir').build()
+      }
+      const childMove = {
+        type: 'FileMove',
+        doc: builders.metafile().path('file').build(),
+        was: builders.metafile().path('dir/file').build()
+      }
+
+      should(remoteChange.sort([parentMove, childMove])).deepEqual([
+        childMove,
+        parentMove
+      ])
+      should(remoteChange.sort([childMove, parentMove])).deepEqual([
+        childMove,
+        parentMove
+      ])
+    })
+  })
+
   describe('with replacing move', () => {
     it('sorts move of replaced before move of replacing', () => {
       const moveReplacing = {
@@ -433,6 +457,101 @@ describe('sorter()', () => {
           emptySubsubdirMoveB
         ])
       })
+    })
+  })
+
+  describe('with deletion of parent', () => {
+    context('when file is trashed within parent', () => {
+      it('sorts parent deletion before child deletion', () => {
+        const dirTrashing = {
+          type: 'DirTrashing',
+          doc: builders.metadir().path('.cozy_trash/dir').build(),
+          was: builders.metadir().path('dir').build()
+        }
+        const fileTrashing = {
+          type: 'FileTrashing',
+          doc: builders.metafile().path('.cozy_trash/dir/file').build(),
+          was: builders.metafile().path('dir/file').build()
+        }
+        should(remoteChange.sort([dirTrashing, fileTrashing])).deepEqual([
+          dirTrashing,
+          fileTrashing
+        ])
+        should(remoteChange.sort([fileTrashing, dirTrashing])).deepEqual([
+          dirTrashing,
+          fileTrashing
+        ])
+      })
+    })
+
+    context('when file is trashed outside parent', () => {
+      it('sorts parent deletion before child deletion', () => {
+        const dirTrashing = {
+          type: 'DirTrashing',
+          doc: builders.metadir().path('.cozy_trash/dir').build(),
+          was: builders.metadir().path('dir').build()
+        }
+        const fileTrashing = {
+          type: 'FileTrashing',
+          doc: builders.metafile().path('.cozy_trash/file').build(),
+          was: builders.metafile().path('dir/file').build()
+        }
+        should(remoteChange.sort([dirTrashing, fileTrashing])).deepEqual([
+          dirTrashing,
+          fileTrashing
+        ])
+        should(remoteChange.sort([fileTrashing, dirTrashing])).deepEqual([
+          dirTrashing,
+          fileTrashing
+        ])
+      })
+    })
+
+    context('when file was moved into parent', () => {
+      // FIXME: this is not ideal as the child will be trashed outside of the
+      // parent.
+      // It would be best to sync the child move before its parent deletion.
+      it('sorts parent deletion before child deletion', () => {
+        const dirTrashing = {
+          type: 'DirTrashing',
+          doc: builders.metadir().path('.cozy_trash/dir').build(),
+          was: builders.metadir().path('dir').build()
+        }
+        const fileTrashing = {
+          type: 'FileTrashing',
+          doc: builders.metafile().path('.cozy_trash/dir/file').build(),
+          was: builders.metafile().path('dir/file').build()
+        }
+        should(remoteChange.sort([dirTrashing, fileTrashing])).deepEqual([
+          dirTrashing,
+          fileTrashing
+        ])
+        should(remoteChange.sort([fileTrashing, dirTrashing])).deepEqual([
+          dirTrashing,
+          fileTrashing
+        ])
+      })
+    })
+
+    it('sorts child move out of parent before parent deletion', () => {
+      const dirTrashing = {
+        type: 'DirTrashing',
+        doc: builders.metadir().path('.cozy_trash/dir').build(),
+        was: builders.metadir().path('dir').build()
+      }
+      const fileMove = {
+        type: 'FileMove',
+        doc: builders.metafile().path('file').build(),
+        was: builders.metafile().path('dir/file').build()
+      }
+      should(remoteChange.sort([dirTrashing, fileMove])).deepEqual([
+        fileMove,
+        dirTrashing
+      ])
+      should(remoteChange.sort([fileMove, dirTrashing])).deepEqual([
+        fileMove,
+        dirTrashing
+      ])
     })
   })
 })

@@ -1,0 +1,72 @@
+[
+  {
+    "_id": "3283bd912c724cb28f185dc27d05516a",
+    "_rev": "2-1cb42eec6e9f81a68f8528627d8a4b9d",
+    "cozyMetadata": {
+      "createdAt": "2022-10-10T13:20:59.172240901+02:00",
+      "createdByApp": "cozy-desktop",
+      "createdOn": "http://cozy.localhost:8080/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2022-10-10T13:20:59.364513016+02:00",
+      "updatedByApps": [
+        {
+          "date": "2022-10-10T13:20:59.364513016+02:00",
+          "instance": "http://cozy.localhost:8080/",
+          "slug": "cozy-desktop"
+        }
+      ]
+    },
+    "created_at": "2022-10-10T11:20:59Z",
+    "dir_id": "io.cozy.files.trash-dir",
+    "name": "dir",
+    "path": "/.cozy_trash/dir",
+    "restore_path": "/",
+    "type": "directory",
+    "updated_at": "2022-10-10T11:20:59Z",
+    "tags": []
+  },
+  {
+    "_id": "3283bd912c724cb28f185dc27d055fd0",
+    "_rev": "2-082c0a9bacb2b92cb8df0316ba8005f1",
+    "class": "files",
+    "cozyMetadata": {
+      "createdAt": "2022-10-10T13:20:59.198873105+02:00",
+      "createdByApp": "cozy-desktop",
+      "createdOn": "http://cozy.localhost:8080/",
+      "doctypeVersion": "1",
+      "metadataVersion": 1,
+      "updatedAt": "2022-10-10T13:20:59.320520707+02:00",
+      "updatedByApps": [
+        {
+          "date": "2022-10-10T13:20:59.320520707+02:00",
+          "instance": "http://cozy.localhost:8080/",
+          "slug": "cozy-desktop"
+        }
+      ],
+      "uploadedAt": "2022-10-10T13:20:59.198873105+02:00",
+      "uploadedBy": {
+        "oauthClient": {
+          "id": "3283bd912c724cb28f185dc27d054227",
+          "kind": "",
+          "name": "test-2"
+        },
+        "slug": "cozy-desktop"
+      },
+      "uploadedOn": "http://cozy.localhost:8080/"
+    },
+    "created_at": "2022-10-10T11:20:59Z",
+    "dir_id": "io.cozy.files.root-dir",
+    "encrypted": false,
+    "executable": false,
+    "md5sum": "AIxZJsqGECPB0qNmU/2I4g==",
+    "mime": "application/octet-stream",
+    "name": "file",
+    "path": "/file",
+    "size": "8",
+    "trashed": false,
+    "type": "file",
+    "updated_at": "2022-10-10T11:20:59Z",
+    "tags": []
+  }
+]

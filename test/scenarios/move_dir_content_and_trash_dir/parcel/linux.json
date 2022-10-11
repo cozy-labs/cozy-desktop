@@ -1,0 +1,17 @@
+[
+  [
+    {
+      "action": "renamed",
+      "kind": "file",
+      "oldPath": "dir/file",
+      "path": "file",
+      "ino": 19843525
+    },
+    {
+      "action": "deleted",
+      "kind": "directory",
+      "path": "dir",
+      "deletedIno": 19915746
+    }
+  ]
+]

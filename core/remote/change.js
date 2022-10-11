@@ -359,6 +359,8 @@ const sortForDelete = (del, b, delFirst) => {
 
     return 0
   }
+  if (isMove(b) && areParentChild(deletedPath(del), deletedPath(b)))
+    return -delFirst
 
   return delFirst
 }
