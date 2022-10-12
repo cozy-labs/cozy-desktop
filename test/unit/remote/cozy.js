@@ -11,6 +11,7 @@ const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
 
 const {
+  DIR_TYPE,
   ROOT_DIR_ID,
   TRASH_DIR_ID,
   TRASH_DIR_NAME,
@@ -262,7 +263,7 @@ describe('RemoteCozy', function () {
             updatedAt: new Date().toISOString()
           })
         ).have.properties({
-          type: 'directory',
+          type: DIR_TYPE,
           name: ' foo '
         })
       })

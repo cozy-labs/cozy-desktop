@@ -15,6 +15,7 @@
  * @flow
  */
 
+const { FILE } = require('../../metadata')
 const stater = require('../stater')
 
 /*::
@@ -96,7 +97,7 @@ function eventType(type /*: string */, stats /*: ?fs.Stats */) /*: string */ {
 function pretendUnlinkFromMetadata(
   doc /*: SavedMetadata */
 ) /*: ChokidarUnlink|ChokidarUnlinkDir */ {
-  const type = doc.docType === 'file' ? 'unlink' : 'unlinkDir'
+  const type = doc.docType === FILE ? 'unlink' : 'unlinkDir'
   const path = doc.path
   // $FlowFixMe
   return { type, path, old: doc }

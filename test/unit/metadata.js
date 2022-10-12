@@ -34,7 +34,7 @@ const {
 } = metadata
 const { Ignore } = require('../../core/ignore')
 const stater = require('../../core/local/stater')
-const { NOTE_MIME_TYPE } = require('../../core/remote/constants')
+const { DIR_TYPE, NOTE_MIME_TYPE } = require('../../core/remote/constants')
 const pathUtils = require('../../core/utils/path')
 const timestamp = require('../../core/utils/timestamp')
 
@@ -119,7 +119,7 @@ describe('metadata', function () {
         name: 'bar',
         path: '/foo/bar',
         tags: ['foo'],
-        type: 'directory',
+        type: DIR_TYPE,
         created_at: '2017-09-07T07:06:05Z',
         updated_at: '2017-09-08T07:06:05Z'
       }
@@ -127,7 +127,7 @@ describe('metadata', function () {
       const doc = metadata.fromRemoteDoc(remoteDoc)
 
       should(doc).deepEqual({
-        docType: 'folder',
+        docType: metadata.FOLDER,
         created_at: '2017-09-07T07:06:05.000Z',
         updated_at: '2017-09-08T07:06:05.000Z',
         path: pathUtils.remoteToLocal('foo/bar'),
@@ -273,7 +273,7 @@ describe('metadata', function () {
             type: 'reservedChars',
             name: 'ba|r',
             path: 'f?o:o\\ba|r',
-            docType: 'folder',
+            docType: metadata.FOLDER,
             reservedChars: ['|'],
             platform
           },
@@ -281,7 +281,7 @@ describe('metadata', function () {
             type: 'reservedChars',
             name: 'f?o:o',
             path: 'f?o:o',
-            docType: 'folder',
+            docType: metadata.FOLDER,
             reservedChars: ['?', ':'],
             platform
           }
@@ -935,7 +935,7 @@ describe('metadata', function () {
       const doc = buildDir('fixtures', stats)
       should(doc).have.properties({
         path: 'fixtures',
-        docType: 'folder',
+        docType: metadata.FOLDER,
         ino: stats.ino,
         tags: []
       })
@@ -1331,7 +1331,7 @@ describe('metadata', function () {
       metadata.updateLocal(dir)
 
       should(dir.local).have.properties({
-        docType: 'folder',
+        docType: metadata.FOLDER,
         ino: 2,
         updated_at: '2020-11-14T03:30:23.293Z'
       })

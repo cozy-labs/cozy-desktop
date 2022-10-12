@@ -9,6 +9,7 @@ const cozyHelpers = require('./cozy')
 
 const { Remote, dirAndName } = require('../../../core/remote')
 const {
+  DIR_TYPE,
   ROOT_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
@@ -141,7 +142,7 @@ class RemoteTestHelpers {
         const remotePath = path.posix.join(dirPath, name)
         let relPath = remotePath.slice(1)
 
-        if (type === 'directory') {
+        if (type === DIR_TYPE) {
           relPath += '/'
           pathsToScan.push(remotePath)
         }

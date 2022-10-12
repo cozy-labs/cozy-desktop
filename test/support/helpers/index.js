@@ -11,6 +11,7 @@ const { Merge } = require('../../../core/merge')
 const Prep = require('../../../core/prep')
 const { Sync } = require('../../../core/sync')
 const SyncState = require('../../../core/syncstate')
+const { FOLDER } = require('../../../core/metadata')
 
 const conflictHelpers = require('./conflict')
 const { posixifyPath } = require('./context_dir')
@@ -203,7 +204,7 @@ class TestHelpers {
     return _.chain(await this.pouch.byRecursivePath(''))
       .map(
         ({ docType, path }) =>
-          posixifyPath(path) + (docType === 'folder' ? '/' : '')
+          posixifyPath(path) + (docType === FOLDER ? '/' : '')
       )
       .sort()
       .value()
@@ -214,7 +215,7 @@ class TestHelpers {
       .filter(doc => doc.incompatibilities)
       .map(
         ({ docType, path }) =>
-          posixifyPath(path) + (docType === 'folder' ? '/' : '')
+          posixifyPath(path) + (docType === FOLDER ? '/' : '')
       )
       .uniq()
       .sort()

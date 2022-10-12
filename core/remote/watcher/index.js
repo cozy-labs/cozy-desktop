@@ -9,7 +9,7 @@ const _ = require('lodash')
 
 const metadata = require('../../metadata')
 const remoteChange = require('../change')
-const { HEARTBEAT } = require('../constants')
+const { FILE_TYPE, DIR_TYPE, HEARTBEAT } = require('../constants')
 const remoteErrors = require('../errors')
 const { inRemoteTrash } = require('../document')
 const squashMoves = require('./squashMoves')
@@ -62,7 +62,7 @@ const needsContentFetching = (
   { isRecursiveFetch = false } /*: { isRecursiveFetch: boolean } */ = {}
 ) /*: boolean %checks */ => {
   return (
-    remoteDoc.type === 'directory' &&
+    remoteDoc.type === DIR_TYPE &&
     (folderMightHaveBeenExcluded(remoteDoc) || isRecursiveFetch)
   )
 }
@@ -352,7 +352,7 @@ class RemoteWatcher {
       }
       return remoteChange.deleted(was)
     } else {
-      if (remoteDoc.type !== 'directory' && remoteDoc.type !== 'file') {
+      if (remoteDoc.type !== DIR_TYPE && remoteDoc.type !== FILE_TYPE) {
         return {
           sideName,
           type: 'InvalidChange',
@@ -362,7 +362,7 @@ class RemoteWatcher {
           )
         }
       } else if (
-        remoteDoc.type === 'file' &&
+        remoteDoc.type === FILE_TYPE &&
         (remoteDoc.md5sum == null || remoteDoc.md5sum === '')
       ) {
         return {
@@ -416,7 +416,7 @@ class RemoteWatcher {
     }
     const { docType, path } = doc
 
-    if (doc.docType !== 'file' && doc.docType !== 'folder') {
+    if (doc.docType !== metadata.FILE && doc.docType !== metadata.FOLDER) {
       return {
         sideName,
         type: 'InvalidChange',
@@ -482,7 +482,7 @@ class RemoteWatcher {
       return remoteChange.added(doc)
     } else if (metadata.samePath(was, doc)) {
       if (
-        doc.docType === 'file' &&
+        doc.docType === metadata.FILE &&
         doc.md5sum === was.md5sum &&
         doc.size !== was.size
       ) {

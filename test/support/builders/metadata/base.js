@@ -49,7 +49,7 @@ module.exports = class BaseMetadataBuilder {
       this.doc = _.cloneDeep(old)
     } else {
       this.doc = {
-        docType: 'folder', // To make flow happy (overridden by subclasses)
+        docType: metadata.FOLDER, // To make flow happy (overridden by subclasses)
         path: 'foo',
         tags: [],
         updated_at: new Date().toISOString(),

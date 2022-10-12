@@ -161,7 +161,7 @@ class Local /*:: implements Reader, Writer */ {
   ) /*: Promise<void> */ {
     let filePath = this.abspath(doc.path)
 
-    if (doc.docType === 'file') {
+    if (doc.docType === metadata.FILE) {
       // TODO: Honor existing read/write permissions
       await fse.chmod(filePath, doc.executable ? 0o755 : 0o644)
     }

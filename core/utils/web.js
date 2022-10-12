@@ -3,6 +3,7 @@
 const path = require('path')
 const { generateWebLink } = require('cozy-client')
 
+const { DIR_TYPE } = require('../remote/constants')
 const capabilities = require('./capabilities')
 const logger = require('./logger')
 
@@ -36,7 +37,7 @@ async function findDocument(
 
   if (doc) {
     const hash = doc.remote
-      ? doc.remote.type === 'directory'
+      ? doc.remote.type === DIR_TYPE
         ? `folder/${doc.remote._id}`
         : `folder/${doc.remote.dir_id}/file/${doc.remote._id}`
       : ''

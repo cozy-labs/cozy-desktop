@@ -7,6 +7,7 @@ const sinon = require('sinon')
 const should = require('should')
 const EventEmitter = require('events')
 
+const { FOLDER } = require('../../../../core/metadata')
 const { TMP_DIR_NAME } = require('../../../../core/local/constants')
 const Watcher = require('../../../../core/local/chokidar/watcher')
 
@@ -291,7 +292,7 @@ onPlatform('darwin', () => {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'aba',
-              docType: 'folder'
+              docType: FOLDER
             })
             doc.should.have.properties(['updated_at', 'ino'])
             return
@@ -309,7 +310,7 @@ onPlatform('darwin', () => {
               side.should.equal('local')
               doc.should.have.properties({
                 path: path.normalize('abb/abc'),
-                docType: 'folder'
+                docType: FOLDER
               })
               doc.should.have.properties(['updated_at'])
               return
@@ -479,7 +480,7 @@ onPlatform('darwin', () => {
                 side.should.equal('local')
                 doc.should.have.properties({
                   path: 'agb',
-                  docType: 'folder'
+                  docType: FOLDER
                 })
                 setTimeout(() => {
                   this.prep.addFileAsync.called.should.be.false()

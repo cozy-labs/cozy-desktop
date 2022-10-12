@@ -1,3 +1,4 @@
+const { FOLDER } = require('../../../core/metadata')
 const { Pouch } = require('../../../core/pouch')
 
 module.exports = {
@@ -17,7 +18,7 @@ module.exports = {
     const updated_at = new Date().toISOString()
     const doc = {
       path: 'my-folder',
-      docType: 'folder',
+      docType: FOLDER,
       updated_at,
       tags: [],
       local: {
@@ -40,7 +41,7 @@ module.exports = {
     const updated_at = new Date().toISOString()
     const doc = {
       path: folderPath,
-      docType: 'folder',
+      docType: FOLDER,
       updated_at,
       tags: [],
       local: {
