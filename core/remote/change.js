@@ -306,9 +306,9 @@ const isDescendant = (a /*: RemoteChange */) /*: boolean %checks */ =>
 const isMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
   isFileMove(a) || isFolderMove(a)
 const isFileMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
-  a.type === 'FileMove' || (isDescendant(a) && a.doc.docType === 'File')
+  a.type === 'FileMove' || (isDescendant(a) && a.doc.docType === metadata.FILE)
 const isFolderMove = (a /*: RemoteChange */) /*: boolean %checks */ =>
-  a.type === 'DirMove' || (isDescendant(a) && a.doc.docType === 'Folder')
+  a.type === 'DirMove' || (isDescendant(a) && a.doc.docType === metadata.FOLDER)
 const isTrash = (a /*: RemoteChange */) /*: boolean %checks */ =>
   a.type === 'DirTrashing' || a.type === 'FileTrashing'
 const isRestore = (a /*: RemoteChange */) /*: boolean %checks */ =>
@@ -329,21 +329,15 @@ function includeDescendant(
 }
 
 const createdPath = (a /*: RemoteChange */) /*: ?string */ =>
-  isAdd(a) || isMove(a) || isDescendant(a) || isRestore(a) ? a.doc.path : null
+  isAdd(a) || isMove(a) || isRestore(a) ? a.doc.path : null
 const createdId = (a /*: RemoteChange */) /*: ?string */ =>
-  isAdd(a) || isMove(a) || isDescendant(a) || isRestore(a)
-    ? metadata.id(a.doc.path)
-    : null
+  isAdd(a) || isMove(a) || isRestore(a) ? metadata.id(a.doc.path) : null
 const deletedPath = (a /*: RemoteChange */) /*: ?string */ =>
-  isDelete(a)
-    ? a.doc.path
-    : isMove(a) || isDescendant(a) || isTrash(a)
-    ? a.was.path
-    : null
+  isDelete(a) ? a.doc.path : isMove(a) || isTrash(a) ? a.was.path : null
 const deletedId = (a /*: RemoteChange */) /*: ?string */ =>
   isDelete(a)
     ? metadata.id(a.doc.path)
-    : isMove(a) || isDescendant(a) || isTrash(a)
+    : isMove(a) || isTrash(a)
     ? metadata.id(a.was.path)
     : null
 const ignoredPath = (a /*: RemoteChange */) /*: ?string */ =>
@@ -383,7 +377,7 @@ const sortForDescendant = (desc, b, descFirst) => {
 }
 
 const sortForMove = (move, b, moveFirst) => {
-  if (isMove(b) || isDescendant(b)) {
+  if (isMove(b)) {
     if (isDescendant(move) && isDescendant(b)) {
       if (areParentChild(deletedPath(move), deletedPath(b))) return moveFirst
       if (areParentChild(deletedPath(b), deletedPath(move))) return -moveFirst
@@ -453,8 +447,8 @@ const sortChanges = (a, b) => {
   if (isDelete(a) || isTrash(a)) return sortForDelete(a, b, aFirst)
   if (isDelete(b) || isTrash(b)) return sortForDelete(b, a, bFirst)
 
-  if (isMove(a) || isDescendant(a)) return sortForMove(a, b, aFirst)
-  if (isMove(b) || isDescendant(b)) return sortForMove(b, a, bFirst)
+  if (isMove(a)) return sortForMove(a, b, aFirst)
+  if (isMove(b)) return sortForMove(b, a, bFirst)
 
   if (isRestore(a) || isAdd(a)) return sortForAdd(a, b, aFirst)
   if (isRestore(b) || isAdd(b)) return sortForAdd(b, a, bFirst)

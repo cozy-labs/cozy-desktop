@@ -77,6 +77,9 @@ const log = logger({
 
 const { platform } = process
 
+const FILE = 'file'
+const FOLDER = 'folder'
+
 const LOCAL_ATTRIBUTES = [
   'path',
   'docType',
@@ -947,6 +950,8 @@ function updateRemote(
 }
 
 module.exports = {
+  FILE,
+  FOLDER,
   LOCAL_ATTRIBUTES,
   REMOTE_ATTRIBUTES,
   assignMaxDate,
