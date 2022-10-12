@@ -13,7 +13,11 @@ const metadata = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
 const remote = require('../../../core/remote')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
-const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../../core/remote/constants')
+const {
+  DIR_TYPE,
+  ROOT_DIR_ID,
+  TRASH_DIR_ID
+} = require('../../../core/remote/constants')
 const { FetchError } = require('../../../core/remote/cozy')
 const { remoteJsonToRemoteDoc } = require('../../../core/remote/document')
 const timestamp = require('../../../core/utils/timestamp')
@@ -239,7 +243,7 @@ describe('remote.Remote', function () {
       should(folder.attributes).have.properties({
         path: '/folder-1',
         name: 'folder-1',
-        type: 'directory'
+        type: DIR_TYPE
       })
       should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
         doc.updated_at
@@ -653,7 +657,7 @@ describe('remote.Remote', function () {
       )
       should(folder.attributes).have.properties({
         path: '/created',
-        type: 'directory',
+        type: DIR_TYPE,
         dir_id: ROOT_DIR_ID,
         updated_at: doc.updated_at
       })
@@ -783,7 +787,7 @@ describe('remote.Remote', function () {
         should(folder.attributes).have.properties({
           dir_id: couchdbFolder._id,
           name: 'folder-5',
-          type: 'directory'
+          type: DIR_TYPE
         })
         should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
           doc.updated_at

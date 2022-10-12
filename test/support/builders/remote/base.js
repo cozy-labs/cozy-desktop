@@ -4,6 +4,7 @@ const _ = require('lodash')
 const { posix } = require('path')
 
 const {
+  DIR_TYPE,
   FILES_DOCTYPE,
   ROOT_DIR_ID,
   TRASH_DIR_ID,
@@ -39,7 +40,7 @@ module.exports = class RemoteBaseBuilder /*:: <T: FullRemoteFile|RemoteDir> */ {
         _id: dbBuilders.id(),
         _rev: dbBuilders.rev(1),
         _type: FILES_DOCTYPE,
-        type: 'directory',
+        type: DIR_TYPE,
         dir_id: ROOT_DIR_ID,
         name,
         path: posix.join(posix.sep, name),

@@ -8,6 +8,7 @@ const path = require('path')
 const metadata = require('../../core/metadata')
 const timestamp = require('../../core/utils/timestamp')
 const { INCOMPATIBLE_DOC_CODE } = require('../../core/sync/errors')
+const { DIR_TYPE } = require('../../core/remote/constants')
 
 const Builders = require('../support/builders')
 const configHelpers = require('../support/helpers/config')
@@ -362,7 +363,7 @@ describe('Platform incompatibilities', () => {
 
     // Simulate remote move
     helpers._sync.blockSyncFor.resetHistory()
-    if (remoteDocs['dir/'].type !== 'directory') {
+    if (remoteDocs['dir/'].type !== DIR_TYPE) {
       throw new Error('Unexpected remote file with dir/ path')
     }
     const remoteDoc = remoteDocs['dir/']

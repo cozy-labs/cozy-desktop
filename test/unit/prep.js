@@ -3,6 +3,7 @@
 const sinon = require('sinon')
 const should = require('should')
 
+const { FOLDER } = require('../../core/metadata')
 const { Ignore } = require('../../core/ignore')
 const Prep = require('../../core/prep')
 
@@ -139,7 +140,7 @@ describe('Prep', function () {
         let doc = { path: 'foo/folder-missing-fields' }
         await this.prep.putFolderAsync(this.side, doc)
         this.merge.putFolderAsync.calledWith(this.side, doc).should.be.true()
-        doc.docType.should.equal('folder')
+        doc.docType.should.equal(FOLDER)
         // FIXME: should.exist(doc.updated_at)
       })
 
@@ -262,11 +263,11 @@ describe('Prep', function () {
       it('expects a revision for was', async function () {
         let doc = {
           path: 'foo/bar',
-          docType: 'folder'
+          docType: FOLDER
         }
         let was = {
           path: 'foo/baz',
-          docType: 'folder'
+          docType: FOLDER
         }
         await should(
           this.prep.moveFolderAsync(this.side, doc, was)
@@ -278,11 +279,11 @@ describe('Prep', function () {
 
         let doc = {
           path: 'foo/bar',
-          docType: 'folder'
+          docType: FOLDER
         }
         let was = {
           path: 'foo/bar',
-          docType: 'folder'
+          docType: FOLDER
         }
         this.prep.moveFolderAsync(this.side, doc, was)
         should(this.prep.putFolderAsync).have.been.calledWith(this.side, doc)
@@ -296,7 +297,7 @@ describe('Prep', function () {
         let was = {
           _rev: '456',
           path: 'FOOBAR/OLD-MISSING-FIELDS',
-          docType: 'folder',
+          docType: FOLDER,
           updated_at: new Date(),
           tags: ['courge', 'quux']
         }
@@ -304,7 +305,7 @@ describe('Prep', function () {
         this.merge.moveFolderAsync
           .calledWith(this.side, doc, was)
           .should.be.true()
-        doc.docType.should.equal('folder')
+        doc.docType.should.equal(FOLDER)
         // FIXME: should.exist(doc.updated_at)
       })
     })
@@ -345,7 +346,7 @@ describe('Prep', function () {
         let doc = { path: 'kill/folder' }
         await this.prep.deleteFolderAsync(this.side, doc)
         this.merge.deleteFolderAsync.calledWith(this.side, doc).should.be.true()
-        doc.docType.should.equal('folder')
+        doc.docType.should.equal(FOLDER)
       })
 
       it('does nothing for ignored paths on local', async function () {

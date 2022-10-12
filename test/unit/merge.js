@@ -3001,7 +3001,7 @@ describe('Merge', function () {
                 const { path: dstPath } = _.find(
                   sideEffects.savedDocs,
                   ({ path, docType }) =>
-                    docType === 'folder' && path.match(/conflict/)
+                    docType === metadata.FOLDER && path.match(/conflict/)
                 )
 
                 const folderAddition = _.defaultsDeep(
@@ -3313,7 +3313,7 @@ describe('Merge', function () {
                 const { path: dstPath } = _.find(
                   sideEffects.savedDocs,
                   ({ path, docType }) =>
-                    docType === 'folder' && path.match(/conflict/)
+                    docType === metadata.FOLDER && path.match(/conflict/)
                 )
                 const remoteDstPath = pathUtils.localToRemote(dstPath)
 

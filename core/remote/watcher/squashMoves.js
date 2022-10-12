@@ -17,7 +17,7 @@ import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChang
 */
 
 const buildChange = (sideName, doc, was) => {
-  if (doc.docType === 'file') {
+  if (doc.docType === metadata.FILE) {
     return {
       sideName,
       type: 'FileMove',

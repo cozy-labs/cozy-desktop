@@ -445,7 +445,7 @@ describe('Sync', function () {
       await this.sync.apply(change)
       should(await this.pouch.bySyncedPath(change.doc.path)).have.properties({
         path: initial.path,
-        docType: 'folder',
+        docType: metadata.FOLDER,
         sides: {
           target: 4,
           local: 4,

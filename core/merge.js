@@ -97,7 +97,7 @@ class Merge {
         return this.resolveConflictAsync(side, doc)
       }
 
-      if (file.docType === 'folder') {
+      if (file.docType === metadata.FOLDER) {
         return this.resolveConflictAsync(side, doc)
       }
 
@@ -120,7 +120,7 @@ class Merge {
       metadata.assignMaxDate(doc)
       return this.pouch.put(doc)
     } else {
-      if (file.docType === 'folder') {
+      if (file.docType === metadata.FOLDER) {
         throw new Error("Can't resolve this conflict!")
       }
 
@@ -317,7 +317,7 @@ class Merge {
       metadata.assignMaxDate(doc, folder)
       return this.pouch.put(doc)
     } else {
-      if (folder.docType === 'file') {
+      if (folder.docType === metadata.FILE) {
         return this.resolveConflictAsync(side, doc)
       }
 
@@ -653,13 +653,13 @@ class Merge {
           // metadata as an update of the overwritten document.
           await this.pouch.eraseDocument(child)
           metadata.markAsUnmerged(movedChild, side)
-          if (movedChild.docType === 'file') {
+          if (movedChild.docType === metadata.FILE) {
             await this.updateFileAsync(side, movedChild)
           } else {
             await this.putFolderAsync(side, movedChild)
           }
         } else {
-          if (movedChild.docType === 'file') {
+          if (movedChild.docType === metadata.FILE) {
             await this.updateFileAsync(side, movedChild)
           } else {
             await this.putFolderAsync(side, movedChild)
@@ -882,7 +882,7 @@ class Merge {
     if (!was) {
       log.debug({ path }, 'Nothing to trash')
       return
-    } else if (doc.docType !== was.docType || was.docType !== 'file') {
+    } else if (doc.docType !== was.docType || was.docType !== metadata.FILE) {
       log.error(
         { doc, was, sentry: true },
         'Mismatch on doctype for trashFileAsync'
