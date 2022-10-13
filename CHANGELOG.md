@@ -1,5 +1,28 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.36.1-beta.2 - 2022-10-13
+
+Improvements for all users:
+
+- We made sure to properly save the metadata of documents trashed on the remote
+  Cozy so Cozy Desktop won't try to fetch that change again and potential local
+  modifications made on the document can be synchronized with the remote Cozy.
+- Documents moved out of a remote directory subsequently trashed or completed
+  erased should now be moved out their local parent before it is trashed on the
+  local filesystem. This ensures Cozy Desktop will be able to synchronize both
+  changes.
+
+Improvements for macOS users:
+
+- The previous beta release broke the auto-update feature on macOS as we stopped
+  packaging Cozy Desktop in a format that we thought unused. We brought back
+  this packaging so users running a previous beta version should be able to
+  update once again.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.36.1-beta.1 - 2022-07-29
 
 Improvements for all users:
