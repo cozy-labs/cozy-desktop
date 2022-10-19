@@ -1,5 +1,26 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.36.1 - 2022-10-19
+
+Improvements for all users:
+
+- Thanks to https://github.com/ArchangeGabriel, we should now unpack all of our
+  binary dependencies before the application is run, saving some startup time
+  and avoiding anti-viruses alerts.
+- We fixed a bug in the process that fetches a directory's content when it is
+  re-included in the synchronization that was preventing it from completing.
+- We made sure to properly save the metadata of documents trashed on the remote
+  Cozy so Cozy Desktop won't try to fetch that change again and potential local
+  modifications made on the document can be synchronized with the remote Cozy.
+- Documents moved out of a remote directory subsequently trashed or completed
+  erased should now be moved out their local parent before it is trashed on the
+  local filesystem. This ensures Cozy Desktop will be able to synchronize both
+  changes.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.36.1-beta.2 - 2022-10-13
 
 Improvements for all users:
