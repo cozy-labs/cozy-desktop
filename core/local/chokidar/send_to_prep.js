@@ -44,33 +44,30 @@ const onAddFile = (
   { path: filePath, stats, md5sum } /*: LocalFileAddition */,
   prep /*: Prep */
 ) => {
-  const logError = err => log.warn({ err, path: filePath })
   const doc = metadata.buildFile(filePath, stats, md5sum)
   log.info({ path: filePath }, 'FileAddition')
-  return prep.addFileAsync(SIDE, doc).catch(logError)
+  return prep.addFileAsync(SIDE, doc)
 }
 
 const onMoveFile = async (
   { path: filePath, stats, md5sum, old, overwrite } /*: LocalFileMove */,
   prep /*: Prep */
 ) => {
-  const logError = err => log.warn({ err, path: filePath })
   const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
   if (overwrite) doc.overwrite = overwrite
   log.info({ path: filePath, oldpath: old.path }, 'FileMove')
-  return prep.moveFileAsync(SIDE, doc, old).catch(logError)
+  return prep.moveFileAsync(SIDE, doc, old)
 }
 
 const onMoveFolder = (
   { path: folderPath, stats, old, overwrite } /*: LocalDirMove */,
   prep /*: Prep */
 ) => {
-  const logError = err => log.warn({ err, path: folderPath })
   const doc = metadata.buildDir(folderPath, stats, old.remote)
   // $FlowFixMe we set doc.overwrite to true, it will be replaced by metadata in merge
   if (overwrite) doc.overwrite = overwrite
   log.info({ path: folderPath, oldpath: old.path }, 'DirMove')
-  return prep.moveFolderAsync(SIDE, doc, old).catch(logError)
+  return prep.moveFolderAsync(SIDE, doc, old)
 }
 
 /** New directory detected */
@@ -80,9 +77,7 @@ const onAddDir = (
 ) => {
   const doc = metadata.buildDir(folderPath, stats)
   log.info({ path: folderPath }, 'DirAddition')
-  return prep
-    .putFolderAsync(SIDE, doc)
-    .catch(err => log.warn({ err, path: folderPath }))
+  return prep.putFolderAsync(SIDE, doc)
 }
 
 /** File deletion detected
@@ -99,9 +94,7 @@ const onUnlinkFile = (
     log.debug({ path: filePath }, 'Assuming file already removed')
     return
   }
-  return prep
-    .trashFileAsync(SIDE, old)
-    .catch(err => log.warn({ err, path: filePath }))
+  return prep.trashFileAsync(SIDE, old)
 }
 
 /** Folder deletion detected
@@ -118,9 +111,7 @@ const onUnlinkDir = (
     log.debug({ path: folderPath }, 'Assuming dir already removed')
     return
   }
-  return prep
-    .trashFolderAsync(SIDE, old)
-    .catch(err => log.warn({ err, path: folderPath }))
+  return prep.trashFolderAsync(SIDE, old)
 }
 
 /** File update detected */

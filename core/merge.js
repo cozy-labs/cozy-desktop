@@ -442,7 +442,23 @@ class Merge {
     doc /*: Metadata */,
     was /*: SavedMetadata */
   ) /*: Promise<*> */ {
-    log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
+    const oldpath = was.path
+
+    was = await this.pouch.byIdMaybe(was._id)
+    if (!was) {
+      log.debug(
+        { path: oldpath },
+        'moved file missing from PouchDB. Adding at destination'
+      )
+      return this.addFileAsync(side, doc)
+    } else if (was.path !== oldpath) {
+      log.debug({ path: was.path, oldpath }, 'moved file original path changed')
+    }
+
+    log.debug(
+      { path: doc.path, oldpath: was ? was.path : oldpath },
+      'moveFileAsync'
+    )
 
     // If file is moved on Windows, it will never be executable so we keep the
     // existing value.
@@ -543,7 +559,26 @@ class Merge {
     was /*: SavedMetadata */,
     newRemoteRevs /*: ?RemoteRevisionsByID */
   ) {
-    log.debug({ path: doc.path, oldpath: was.path }, 'moveFolderAsync')
+    const oldpath = was.path
+
+    was = await this.pouch.byIdMaybe(was._id)
+    if (!was) {
+      log.debug(
+        { path: oldpath },
+        'moved folder missing from PouchDB. Adding at destination'
+      )
+      return this.putFolderAsync(side, doc)
+    } else if (was.path !== oldpath) {
+      log.debug(
+        { path: was.path, oldpath },
+        'moved folder original path changed'
+      )
+    }
+
+    log.debug(
+      { path: doc.path, oldpath: was ? was.path : oldpath },
+      'moveFolderAsync'
+    )
 
     metadata.assignMaxDate(doc, was)
 
