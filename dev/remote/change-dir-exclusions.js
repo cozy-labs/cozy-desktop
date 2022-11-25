@@ -136,6 +136,7 @@ app
 
     const config = new Config(path.resolve(COZY_DESKTOP_DIR, '.cozy-desktop'))
     const oldClient = new OldCozyClient({
+      version: 3,
       cozyURL: config.cozyUrl,
       oauth: {
         clientParams: config.client,

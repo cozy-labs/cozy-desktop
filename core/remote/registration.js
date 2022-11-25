@@ -87,6 +87,7 @@ module.exports = class Registration {
     const params = this.clientParams(pkg, redirectURI, deviceName)
     onRegistered = onRegistered || this.onRegistered
     const cozy = new CozyClient({
+      version: 3,
       cozyURL: this.url,
       oauth: {
         storage: this.config,

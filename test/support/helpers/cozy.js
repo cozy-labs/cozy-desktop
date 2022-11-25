@@ -57,6 +57,7 @@ if (!process.env.COZY_STACK_TOKEN) {
 
 // A cozy-client-js instance
 const cozy = new OldCozyClient({
+  version: 3,
   cozyURL: COZY_URL,
   token: process.env.COZY_STACK_TOKEN
 })
