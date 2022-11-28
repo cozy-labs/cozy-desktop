@@ -25,6 +25,14 @@ env:
   NODE_VERSION: "14.17.6"
   GO_VERSION: "1.17"
   COUCHDB_VERSION: "2.3.1"
+  OS_USERNAME: "${{ secrets.SWIFT_OS_USERNAME }}"
+  OS_PASSWORD: "${{ secrets.SWIFT_OS_PASSWORD }}"
+  OS_PROJECT_NAME: "${{ secrets.SWIFT_OS_PROJECT_NAME }}"
+  OS_REGION_NAME: "GRA"
+  OS_USER_DOMAIN_NAME: "Default"
+  OS_PROJECT_DOMAIN_NAME: "Default"
+  OS_AUTH_URL: "https://auth.cloud.ovh.net/v3"
+  OS_IDENTITY_API_VERSION: "3"
 
 jobs:
   cancel:
@@ -36,8 +44,18 @@ jobs:
         with:
           access_token: ${{ github.token }}
 
-  unit:
+  cleanup:
     needs: cancel
+    name: 'Cleanup Swift'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - run: |
+          pip install python-swiftclient python-keystoneclient
+          swift delete -a
+
+  unit:
+    needs: cleanup
     runs-on: macos-12
     name: Unit tests
     strategy:
@@ -91,7 +109,7 @@ jobs:
         run: yarn test:unit --forbid-only
 
   integration:
-    needs: cancel
+    needs: cleanup
     runs-on: macos-12
     name: Integration tests
     strategy:
@@ -145,7 +163,7 @@ jobs:
         run: yarn test:integration --forbid-only
 
   scenarios:
-    needs: cancel
+    needs: cleanup
     runs-on: macos-12
     name: Scenarios
     strategy:
