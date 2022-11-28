@@ -38,7 +38,7 @@ jobs:
 
   unit:
     needs: cancel
-    runs-on: macos-10.15
+    runs-on: macos-12
     name: Unit tests
     strategy:
       matrix:
@@ -92,7 +92,7 @@ jobs:
 
   integration:
     needs: cancel
-    runs-on: macos-10.15
+    runs-on: macos-12
     name: Integration tests
     strategy:
       matrix:
@@ -146,7 +146,7 @@ jobs:
 
   scenarios:
     needs: cancel
-    runs-on: macos-10.15
+    runs-on: macos-12
     name: Scenarios
     strategy:
       matrix:
@@ -208,7 +208,7 @@ jobs:
 
   build:
     needs: cancel
-    runs-on: macos-10.15
+    runs-on: macos-12
     name: Build packages
     steps:
       - uses: actions/checkout@v2
