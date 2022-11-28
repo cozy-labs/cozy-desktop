@@ -95,6 +95,7 @@ class RemoteCozy {
     this.config = config
     this.url = config.cozyUrl
     this.client = new OldCozyClient({
+      version: 3,
       cozyURL: this.url,
       oauth: {
         clientParams: config.client,
