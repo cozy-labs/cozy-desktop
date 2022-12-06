@@ -56,7 +56,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
         uses: actions/setup-go@v3
         with:
@@ -116,7 +115,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
         uses: actions/setup-go@v3
         with:
@@ -172,7 +170,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
         uses: actions/setup-go@v3
         with:
@@ -226,7 +223,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup local env
         run: |
           echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV

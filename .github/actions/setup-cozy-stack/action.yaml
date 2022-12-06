@@ -14,10 +14,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Download cozy-stack
-      shell: bash
-      run: go install github.com/cozy/cozy-stack@latest
-
     - name: Set env variables
       shell: bash
       run: |
@@ -35,6 +31,35 @@ runs:
         if [[ -z $COZY_PASSPHRASE ]]; then
           echo "COZY_PASSPHRASE=${{ inputs.cozy-passphrase }}" >> $GITHUB_ENV
         fi
+        if [[ -z $GOPATH ]]; then
+          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+        fi
+
+    - name: Download cozy-stack's go.sum
+      shell: bash
+      run: |
+          echo "Downloading cozy-stack's go.sum..."
+          curl \
+            -H 'Authorization: Bearer ${{ github.token }}' \
+            -H 'Accept: application/vnd.github.v3.raw' \
+            -L 'https://api.github.com/repos/cozy/cozy-stack/contents/go.sum' \
+            -O
+          echo "GOPATH: $GOPATH"
+
+    - name: Cache Go dependencies
+      id: cache-go-deps
+      uses: actions/cache@v3
+      env:
+        cache-name: cache-go-deps
+      with:
+        path: |
+          ${{ env.GOPATH }}
+        key: ${{ runner.os }}-v${{ env.GO_VERSION }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
+
+    - name: Download cozy-stack
+      if: ${{ steps.cache-go-deps.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: go install github.com/cozy/cozy-stack@latest
 
     - name: Create cozy-stack storage
       shell: bash
@@ -68,3 +93,4 @@ runs:
         echo "Getting OAuth token for tests..."
         COZY_STACK_TOKEN=$(cozy-stack instances token-oauth "$COZY_DOMAIN" "$COZY_CLIENT_ID" io.cozy.files io.cozy.settings)
         echo "COZY_STACK_TOKEN=$COZY_STACK_TOKEN" >> $GITHUB_ENV
+

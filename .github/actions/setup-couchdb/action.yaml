@@ -22,15 +22,65 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Setup podman-machine
+    - name: Set env variables
       shell: bash
       run: |
-        curl -L https://github.com/boot2podman/machine/releases/download/v0.17/podman-machine.darwin-amd64 --output /usr/local/bin/podman-machine
-        chmod +x /usr/local/bin/podman-machine
+        if [[ -z $PODMAN_MACHINE_PATH ]]; then
+          echo "PODMAN_MACHINE_PATH=/usr/local/bin/podman-machine" >> $GITHUB_ENV
+        fi
+        if [[ -z $BOOT2PODMAN_IMAGE_PATH ]]; then
+          echo "BOOT2PODMAN_IMAGE_PATH=${{ github.workspace }}/boot2podman-fedora.iso" >> $GITHUB_ENV
+        fi
+
+    - name: Cache podman machine
+      id: cache-podman-machine
+      uses: actions/cache@v3
+      env:
+        cache-name: cache-podman-machine
+      with:
+        path: |
+          ${{ env.PODMAN_MACHINE_PATH }}
+        key: ${{ runner.os }}-${{ env.cache-name }}
+
+    - name: Download podman-machine
+      if: ${{ steps.cache-podman-machine.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: |
+        until curl -L https://github.com/boot2podman/machine/releases/download/v0.17/podman-machine.darwin-amd64 --output $PODMAN_MACHINE_PATH
+        do
+          echo "Waiting for the podman-machine executable..."
+          sleep 1
+          curl -L https://github.com/boot2podman/machine/releases/download/v0.17/podman-machine.darwin-amd64 --output /usr/local/bin/podman-machine
+        done
+        chmod +x $PODMAN_MACHINE_PATH
+
+    - name: Cache boot2podman image
+      id: cache-boot2podman-image
+      uses: actions/cache@v3
+      env:
+        cache-name: cache-boot2podman-image
+      with:
+        path: |
+          ${{ env.BOOT2PODMAN_IMAGE_PATH }}
+        key: ${{ runner.os }}-${{ env.cache-name }}
+
+    - name: Download boot2podman image
+      if: ${{ steps.cache-boot2podman-image.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: |
+        until curl -L https://github.com/boot2podman/boot2podman-fedora-iso/releases/download/af598af/boot2podman-fedora.iso --output $BOOT2PODMAN_IMAGE_PATH
+        do
+          echo "Waiting for the boot2podman image..."
+          sleep 1
+        done
+
+    - name: Start podman machine
+      shell: bash
+      run: |
         until [[ $(podman-machine status box) == "Running" ]]
         do
           podman-machine create \
-          --virtualbox-boot2podman-url https://github.com/boot2podman/boot2podman-fedora-iso/releases/download/af598af/boot2podman-fedora.iso \
+          --virtualbox-boot2podman-url  "file://$BOOT2PODMAN_IMAGE_PATH" \
           --virtualbox-hostonly-cidr "192.168.56.1/24" \
           box || true
           sleep 1
