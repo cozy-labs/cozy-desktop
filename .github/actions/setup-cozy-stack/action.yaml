@@ -2,6 +2,9 @@ name: Setup cozy-stack
 author: Erwan Guyader
 description: Downloads cozy-stack, starts it and create a test instance.
 inputs:
+  couchdb-url:
+    description: 'The fully qualified URL to make requests to CouchDB'
+    required: true
   cozy-stack-storage:
     description: 'The folder location where the remote cozy-stack files will be stored'
     required: false
@@ -18,6 +21,8 @@ runs:
     - name: Set env variables
       shell: bash
       run: |
+        echo "COZY_COUCHDB_URL=${{ inputs.couchdb-url }}" >> $GITHUB_ENV
+
         if [[ -z $COZY_STACK_STORAGE ]]; then
           echo "COZY_STACK_STORAGE=${{ inputs.cozy-stack-storage }}" >> $GITHUB_ENV
         fi

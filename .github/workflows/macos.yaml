@@ -24,7 +24,9 @@ env:
   DISPLAY: ":99.0"
   NODE_VERSION: "14.17.6"
   GO_VERSION: "1.19"
-  COUCHDB_VERSION: "2.3.1"
+  COUCHDB_VERSION: "3.2.2"
+  COUCHDB_USER: "admin"
+  COUCHDB_PASSWORD: "password"
   OS_USERNAME: "${{ secrets.SWIFT_OS_USERNAME }}"
   OS_PASSWORD: "${{ secrets.SWIFT_OS_PASSWORD }}"
   OS_PROJECT_NAME: "${{ secrets.SWIFT_OS_PROJECT_NAME }}"
@@ -83,11 +85,16 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
+        id: setup-couchdb
         uses: ./.github/actions/setup-couchdb
         with:
           couchdb-version: ${{ env.COUCHDB_VERSION }}
+          couchdb-user: ${{ env.COUCHDB_USER }}
+          couchdb-password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -137,11 +144,16 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
+        id: setup-couchdb
         uses: ./.github/actions/setup-couchdb
         with:
           couchdb-version: ${{ env.COUCHDB_VERSION }}
+          couchdb-user: ${{ env.COUCHDB_USER }}
+          couchdb-password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -192,11 +204,16 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
+        id: setup-couchdb
         uses: ./.github/actions/setup-couchdb
         with:
           couchdb-version: ${{ env.COUCHDB_VERSION }}
+          couchdb-user: ${{ env.COUCHDB_USER }}
+          couchdb-password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}

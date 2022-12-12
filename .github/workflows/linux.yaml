@@ -23,7 +23,9 @@ env:
   DISPLAY: ":99.0"
   NODE_VERSION: "14.17.6"
   GO_VERSION: "1.19"
-  COUCHDB_VERSION: "2.3.1"
+  COUCHDB_VERSION: "3.2.2"
+  COUCHDB_USER: "admin"
+  COUCHDB_PASSWORD: "password"
 
 jobs:
   cancel:
@@ -60,11 +62,16 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
-        uses: 'cobot/couchdb-action@11e2c9f532a0eee2516ff80d92990d8081f2792c' # v4
+        id: setup-couchdb
+        uses: 'taratatach/couchdb-action@v4.6-dev'
         with:
           couchdb version: ${{ env.COUCHDB_VERSION }}
+          couchdb user: ${{ env.COUCHDB_USER }}
+          couchdb password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"
@@ -115,11 +122,16 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
-        uses: 'cobot/couchdb-action@11e2c9f532a0eee2516ff80d92990d8081f2792c' # v4
+        id: setup-couchdb
+        uses: 'taratatach/couchdb-action@v4.6-dev'
         with:
           couchdb version: ${{ env.COUCHDB_VERSION }}
+          couchdb user: ${{ env.COUCHDB_USER }}
+          couchdb password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"
@@ -166,11 +178,16 @@ jobs:
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
-        uses: 'cobot/couchdb-action@11e2c9f532a0eee2516ff80d92990d8081f2792c' # v4
+        id: setup-couchdb
+        uses: 'taratatach/couchdb-action@v4.6-dev'
         with:
           couchdb version: ${{ env.COUCHDB_VERSION }}
+          couchdb user: ${{ env.COUCHDB_USER }}
+          couchdb password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"

@@ -9,6 +9,16 @@ inputs:
     description: 'The port on which to expose the internal CouchDB port'
     required: false
     default: 5984
+  couchdb-user:
+    description: 'Username of the admin user'
+    required: true
+  couchdb-password:
+    description: 'Password of the admin user'
+    required: true
+outputs:
+  couchdb-url:
+    description: 'The base URL to make requests to CouchDB'
+    value: ${{ steps.setup-couchdb.outputs.couchdb-url }}
 runs:
   using: composite
   steps:
@@ -27,9 +37,22 @@ runs:
         done
 
     - name: Setup CouchDB
+      id: setup-couchdb
       shell: bash
       run: |
         podman-machine ssh box -L ${{ inputs.couchdb-port }}:localhost:5984 -N &
-        podman-machine ssh box -- sudo podman run -d -p 5984:5984 --name couch apache/couchdb:${{ inputs.couchdb-version }}
+
+        echo "Starting CouchDB..."
+        podman-machine ssh box \
+          -- sudo podman run -d \
+          -p 5984:5984 \
+          -e "COUCHDB_USER=${{ inputs.couchdb-user }}" \
+          -e "COUCHDB_PASSWORD=${{ inputs.couchdb-password }}" \
+          --name couch \
+          apache/couchdb:${{ inputs.couchdb-version }}
+
+        echo "Waiting for CouchDB server to be ready..."
         sleep 5
-        curl -X PUT http://localhost:${{ inputs.couchdb-port }}/{_users,_replicator,_global_changes}
+
+        COUCHDB_URL="http://${{ inputs.couchdb-user }}:${{ inputs.couchdb-password }}@localhost:${{ inputs.couchdb-port }}/"
+        echo "couchdb-url=$(echo $COUCHDB_URL)" >> $GITHUB_OUTPUT
