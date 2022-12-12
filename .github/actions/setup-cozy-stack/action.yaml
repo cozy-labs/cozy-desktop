@@ -13,7 +13,7 @@ runs:
   steps:
     - name: Download cozy-stack
       shell: bash
-      run: go get github.com/cozy/cozy-stack
+      run: go install github.com/cozy/cozy-stack@latest
 
     - name: Set env variables
       shell: bash
