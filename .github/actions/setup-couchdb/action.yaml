@@ -42,6 +42,14 @@ runs:
       run: |
         podman-machine ssh box -L ${{ inputs.couchdb-port }}:localhost:5984 -N &
 
+        echo "Downloading CouchDB docker image..."
+        _=$(podman-machine ssh box -- sudo podman pull apache/couchdb:${{ inputs.couchdb-version }}) # assign result to var to avoid exiting if the command errors out
+        until [[ $? -eq 0 ]]
+        do
+          echo "Retrying CouchDB docker image download..."
+          _=$(podman-machine ssh box -- sudo podman pull apache/couchdb:${{ inputs.couchdb-version }})
+        done
+
         echo "Starting CouchDB..."
         podman-machine ssh box \
           -- sudo podman run -d \
