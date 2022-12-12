@@ -103,7 +103,7 @@ jobs:
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
           echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ (steps.cache-node-modules.outputs.cache-hit != 'true') || env.BUST_CACHE }}
         run: yarn install:all
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
@@ -161,7 +161,7 @@ jobs:
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
           echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ (steps.cache-node-modules.outputs.cache-hit != 'true') || env.BUST_CACHE }}
         run: yarn install:all
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
@@ -226,7 +226,7 @@ jobs:
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
           echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ (steps.cache-node-modules.outputs.cache-hit != 'true') || env.BUST_CACHE }}
         run: yarn install:all
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
@@ -261,7 +261,7 @@ jobs:
         run: |
           echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ (steps.cache-node-modules.outputs.cache-hit != 'true') || env.BUST_CACHE }}
         run: yarn install:all
       - name: Build assets
         run: yarn build
