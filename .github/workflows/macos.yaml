@@ -23,8 +23,10 @@ env:
   COZY_DESKTOP_HEARTBEAT: "1000"
   DISPLAY: ":99.0"
   NODE_VERSION: "14.17.6"
-  GO_VERSION: "1.17"
-  COUCHDB_VERSION: "2.3.1"
+  GO_VERSION: "1.19"
+  COUCHDB_VERSION: "3.2.2"
+  COUCHDB_USER: "admin"
+  COUCHDB_PASSWORD: "password"
   OS_USERNAME: "${{ secrets.SWIFT_OS_USERNAME }}"
   OS_PASSWORD: "${{ secrets.SWIFT_OS_PASSWORD }}"
   OS_PROJECT_NAME: "${{ secrets.SWIFT_OS_PROJECT_NAME }}"
@@ -77,17 +79,21 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
+        id: setup-couchdb
         uses: ./.github/actions/setup-couchdb
         with:
           couchdb-version: ${{ env.COUCHDB_VERSION }}
+          couchdb-user: ${{ env.COUCHDB_USER }}
+          couchdb-password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -95,9 +101,8 @@ jobs:
           hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
@@ -131,17 +136,21 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
+        id: setup-couchdb
         uses: ./.github/actions/setup-couchdb
         with:
           couchdb-version: ${{ env.COUCHDB_VERSION }}
+          couchdb-user: ${{ env.COUCHDB_USER }}
+          couchdb-password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -149,9 +158,8 @@ jobs:
           hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
@@ -186,17 +194,21 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
+        id: setup-couchdb
         uses: ./.github/actions/setup-couchdb
         with:
           couchdb-version: ${{ env.COUCHDB_VERSION }}
+          couchdb-user: ${{ env.COUCHDB_USER }}
+          couchdb-password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -210,9 +222,8 @@ jobs:
             sleep 1
           done
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
       - name: Start Xvfb
         run: sudo Xvfb :99 -ac -screen 0 1024x768x8 &
@@ -243,12 +254,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
-      - name: Setup local env
-        run: |
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
       - name: Build assets
         run: yarn build

@@ -22,8 +22,10 @@ env:
   COZY_DESKTOP_HEARTBEAT: "1000"
   DISPLAY: ":99.0"
   NODE_VERSION: "14.17.6"
-  GO_VERSION: "1.17"
-  COUCHDB_VERSION: "2.3.1"
+  GO_VERSION: "1.19"
+  COUCHDB_VERSION: "3.2.2"
+  COUCHDB_USER: "admin"
+  COUCHDB_PASSWORD: "password"
 
 jobs:
   cancel:
@@ -54,24 +56,27 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
-        uses: 'cobot/couchdb-action@11e2c9f532a0eee2516ff80d92990d8081f2792c' # v4
+        id: setup-couchdb
+        uses: 'taratatach/couchdb-action@v4.6-dev'
         with:
           couchdb version: ${{ env.COUCHDB_VERSION }}
+          couchdb user: ${{ env.COUCHDB_USER }}
+          couchdb password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
@@ -109,24 +114,27 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
-        uses: 'cobot/couchdb-action@11e2c9f532a0eee2516ff80d92990d8081f2792c' # v4
+        id: setup-couchdb
+        uses: 'taratatach/couchdb-action@v4.6-dev'
         with:
           couchdb version: ${{ env.COUCHDB_VERSION }}
+          couchdb user: ${{ env.COUCHDB_USER }}
+          couchdb password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
@@ -160,24 +168,27 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
-        uses: 'cobot/couchdb-action@11e2c9f532a0eee2516ff80d92990d8081f2792c' # v4
+        id: setup-couchdb
+        uses: 'taratatach/couchdb-action@v4.6-dev'
         with:
           couchdb version: ${{ env.COUCHDB_VERSION }}
+          couchdb user: ${{ env.COUCHDB_USER }}
+          couchdb password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
@@ -209,12 +220,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
-      - name: Setup local env
-        run: |
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
       - name: Build assets
         run: yarn build
