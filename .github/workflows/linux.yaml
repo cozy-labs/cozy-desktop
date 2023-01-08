@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - uses: styfle/cancel-workflow-action@5df4e62aed82ea1f787d2a02ab3dbfcaa49ffdd1
+      - uses: styfle/cancel-workflow-action@0a685c7f22ba15c76eed36a8a2f208afe3fdede4
 
   unit:
     needs: cancel
