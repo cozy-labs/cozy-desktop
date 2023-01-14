@@ -9,11 +9,12 @@ const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
+const { FOLDER } = require('../../../../core/metadata')
 const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../../../core/config')
 const Channel = require('../../../../core/local/channel_watcher/channel')
 const initialDiff = require('../../../../core/local/channel_watcher/initial_diff')
 
-const kind = doc => (doc.docType === 'folder' ? 'directory' : 'file')
+const kind = doc => (doc.docType === FOLDER ? 'directory' : 'file')
 
 const sameSecondDate = date => new Date(new Date(date).setMilliseconds(0))
 

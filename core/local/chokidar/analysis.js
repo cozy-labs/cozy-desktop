@@ -151,7 +151,7 @@ function analyseEvents(
     if (process.env.DEBUG) log.trace({ currentEvent: e, path: e.path })
     try {
       // chokidar make mistakes
-      if (e.type === 'unlinkDir' && e.old && e.old.docType === 'file') {
+      if (e.type === 'unlinkDir' && e.old && e.old.docType === metadata.FILE) {
         log.warn(
           { event: e, old: e.old, path: e.path },
           'chokidar miscategorized event (was file, event unlinkDir)'
@@ -160,7 +160,7 @@ function analyseEvents(
         e.type = 'unlink'
       }
 
-      if (e.type === 'unlink' && e.old && e.old.docType === 'folder') {
+      if (e.type === 'unlink' && e.old && e.old.docType === metadata.FOLDER) {
         log.warn(
           { event: e, old: e.old, path: e.path },
           'chokidar miscategorized event (was folder, event unlink)'

@@ -41,6 +41,9 @@ mac:
   entitlements: './build/entitlements.mac.inherit.plist'
   category: public.app-category.productivity
   target:
+      - target: zip # this is required for the update to work (see https://github.com/electron-userland/electron-builder/issues/2199)
+        arch:
+            - x64
       - target: dmg
         arch:
             - x64
@@ -79,6 +82,7 @@ linux:
     services. Your freedom to chose is why you can trust us.
 appImage:
   artifactName: 'Cozy-Drive-${version}-${arch}.${ext}'
+  executableArgs: [" "] # do not use --no-sandbox by default (see build/launcher-script.sh for details on when it should be used)
 
 extraResources:
   - from: 'build/launcher-script.sh'

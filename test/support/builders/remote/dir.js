@@ -9,6 +9,7 @@ const {
   remoteJsonToRemoteDoc
 } = require('../../../../core/remote/document')
 const {
+  DIR_TYPE,
   FILES_DOCTYPE,
   OAUTH_CLIENTS_DOCTYPE
 } = require('../../../../core/remote/constants')
@@ -39,7 +40,7 @@ module.exports = class RemoteDirBuilder extends (
     if (!old) {
       this.name(`directory-${dirNumber++}`)
     }
-    this.remoteDoc.type = 'directory'
+    this.remoteDoc.type = DIR_TYPE
   }
 
   excludedFrom(clientIds /*: string[] */) /*: this */ {

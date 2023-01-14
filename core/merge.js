@@ -97,7 +97,7 @@ class Merge {
         return this.resolveConflictAsync(side, doc)
       }
 
-      if (file.docType === 'folder') {
+      if (file.docType === metadata.FOLDER) {
         return this.resolveConflictAsync(side, doc)
       }
 
@@ -120,7 +120,7 @@ class Merge {
       metadata.assignMaxDate(doc)
       return this.pouch.put(doc)
     } else {
-      if (file.docType === 'folder') {
+      if (file.docType === metadata.FOLDER) {
         throw new Error("Can't resolve this conflict!")
       }
 
@@ -317,7 +317,7 @@ class Merge {
       metadata.assignMaxDate(doc, folder)
       return this.pouch.put(doc)
     } else {
-      if (folder.docType === 'file') {
+      if (folder.docType === metadata.FILE) {
         return this.resolveConflictAsync(side, doc)
       }
 
@@ -442,7 +442,23 @@ class Merge {
     doc /*: Metadata */,
     was /*: SavedMetadata */
   ) /*: Promise<*> */ {
-    log.debug({ path: doc.path, oldpath: was.path }, 'moveFileAsync')
+    const oldpath = was.path
+
+    was = await this.pouch.byIdMaybe(was._id)
+    if (!was) {
+      log.debug(
+        { path: oldpath },
+        'moved file missing from PouchDB. Adding at destination'
+      )
+      return this.addFileAsync(side, doc)
+    } else if (was.path !== oldpath) {
+      log.debug({ path: was.path, oldpath }, 'moved file original path changed')
+    }
+
+    log.debug(
+      { path: doc.path, oldpath: was ? was.path : oldpath },
+      'moveFileAsync'
+    )
 
     // If file is moved on Windows, it will never be executable so we keep the
     // existing value.
@@ -543,7 +559,26 @@ class Merge {
     was /*: SavedMetadata */,
     newRemoteRevs /*: ?RemoteRevisionsByID */
   ) {
-    log.debug({ path: doc.path, oldpath: was.path }, 'moveFolderAsync')
+    const oldpath = was.path
+
+    was = await this.pouch.byIdMaybe(was._id)
+    if (!was) {
+      log.debug(
+        { path: oldpath },
+        'moved folder missing from PouchDB. Adding at destination'
+      )
+      return this.putFolderAsync(side, doc)
+    } else if (was.path !== oldpath) {
+      log.debug(
+        { path: was.path, oldpath },
+        'moved folder original path changed'
+      )
+    }
+
+    log.debug(
+      { path: doc.path, oldpath: was ? was.path : oldpath },
+      'moveFolderAsync'
+    )
 
     metadata.assignMaxDate(doc, was)
 
@@ -653,13 +688,13 @@ class Merge {
           // metadata as an update of the overwritten document.
           await this.pouch.eraseDocument(child)
           metadata.markAsUnmerged(movedChild, side)
-          if (movedChild.docType === 'file') {
+          if (movedChild.docType === metadata.FILE) {
             await this.updateFileAsync(side, movedChild)
           } else {
             await this.putFolderAsync(side, movedChild)
           }
         } else {
-          if (movedChild.docType === 'file') {
+          if (movedChild.docType === metadata.FILE) {
             await this.updateFileAsync(side, movedChild)
           } else {
             await this.putFolderAsync(side, movedChild)
@@ -788,7 +823,8 @@ class Merge {
 
   async doTrash(
     side /*: SideName */,
-    was /*: SavedMetadata */
+    was /*: SavedMetadata */,
+    doc /*: Metadata */
   ) /*: Promise<void> */ {
     log.debug({ path: was.path, side, was }, 'doTrash')
 
@@ -833,6 +869,12 @@ class Merge {
       }
 
       metadata.markSide(side, was, was)
+      // Save the updated side metadata. We only save the remote metadata for
+      // now as we don't have updated local metadata when a document is trashed
+      // on the local filesystem.
+      if (side === 'remote') {
+        was.remote = doc.remote
+      }
       was.trashed = true
       try {
         return await this.pouch.put(was)
@@ -843,6 +885,14 @@ class Merge {
       }
     }
 
+    // FIXME: we should not mark was as trashed if it wasn't linked to the
+    // trashed document (i.e. was.sides[side] does not exist).
+    // We shouldn't event reach this point so let's log a Sentry error when it
+    // happens.
+    log.warn(
+      { path: was.path, side, was, doc, sentry: true },
+      'marking document for deletion while not linked to the trashed one'
+    )
     was.trashed = true
     return this.pouch.put(was)
   }
@@ -867,7 +917,7 @@ class Merge {
     if (!was) {
       log.debug({ path }, 'Nothing to trash')
       return
-    } else if (doc.docType !== was.docType || was.docType !== 'file') {
+    } else if (doc.docType !== was.docType || was.docType !== metadata.FILE) {
       log.error(
         { doc, was, sentry: true },
         'Mismatch on doctype for trashFileAsync'
@@ -888,13 +938,13 @@ class Merge {
         // We'll dissociate the moved side from the trashed one so it can be
         // sent again by Sync.
         if (side === 'remote') {
-          // FIXME: We keep the moveFrom and remote rev so we can undo the
+          // FIXME: We keep the moveFrom and remote metadata so we can undo the
           // remote trashing. But, this will lead the client to move a `trashed`
           // document outside the remote Trash which should never happen.
           // In this situation we should restore the remote document first and
           // then move it to its final destination.
-          was.remote._rev = doc.remote._rev
-          was.moveFrom.remote._rev = doc.remote._rev
+          was.remote = doc.remote
+          was.moveFrom.remote = doc.remote
         } else {
           // We remove the hint that the file should be moved since it has
           // actually been deleted locally and should be recreated instead.
@@ -917,7 +967,7 @@ class Merge {
       }
     }
 
-    return this.doTrash(side, was)
+    return this.doTrash(side, was, doc)
   }
 
   // Send a folder to the Trash
@@ -954,9 +1004,9 @@ class Merge {
       descending: true
     })
     for (const child of children) {
-      await this.doTrash(side, child)
+      await this.doTrash(side, child, child)
     }
-    await this.doTrash(side, was)
+    await this.doTrash(side, was, doc)
   }
 
   // Remove a file from PouchDB

@@ -56,7 +56,7 @@ class Prep {
     metadata.ensureValidPath(doc)
     metadata.ensureValidChecksum(doc)
 
-    doc.docType = 'file'
+    doc.docType = metadata.FILE
     if (side === 'local' && metadata.shouldIgnore(doc, this.ignore)) {
       return
     }
@@ -71,7 +71,7 @@ class Prep {
     metadata.ensureValidPath(doc)
     metadata.ensureValidChecksum(doc)
 
-    doc.docType = 'file'
+    doc.docType = metadata.FILE
     if (side === 'local' && metadata.shouldIgnore(doc, this.ignore)) {
       return
     }
@@ -84,7 +84,7 @@ class Prep {
     log.debug({ path: doc.path }, 'putFolderAsync')
     metadata.ensureValidPath(doc)
 
-    doc.docType = 'folder'
+    doc.docType = metadata.FOLDER
     if (side === 'local' && metadata.shouldIgnore(doc, this.ignore)) {
       return
     }
@@ -117,7 +117,7 @@ class Prep {
       throw new Error(msg)
     }
 
-    doc.docType = 'file'
+    doc.docType = metadata.FILE
     let docIgnored = metadata.shouldIgnore(doc, this.ignore)
     let wasIgnored = metadata.shouldIgnore(was, this.ignore)
     if (side === 'local' && docIgnored && wasIgnored) {
@@ -157,7 +157,7 @@ class Prep {
       throw new Error(msg)
     }
 
-    doc.docType = 'folder'
+    doc.docType = metadata.FOLDER
     let docIgnored = metadata.shouldIgnore(doc, this.ignore)
     let wasIgnored = metadata.shouldIgnore(was, this.ignore)
     if (side === 'local' && docIgnored && wasIgnored) {
@@ -188,7 +188,7 @@ class Prep {
       return this.merge.trashFileAsync(side, was, was)
     } else {
       metadata.ensureValidPath(doc)
-      doc.docType = 'file'
+      doc.docType = metadata.FILE
 
       return this.merge.trashFileAsync(side, was, doc)
     }
@@ -210,7 +210,7 @@ class Prep {
       return this.merge.trashFolderAsync(side, was, was)
     } else {
       metadata.ensureValidPath(doc)
-      doc.docType = 'folder'
+      doc.docType = metadata.FOLDER
 
       return this.merge.trashFolderAsync(side, was, doc)
     }
@@ -222,7 +222,7 @@ class Prep {
     log.debug({ path: doc.path }, 'deleteFileAsync')
     metadata.ensureValidPath(doc)
 
-    doc.docType = 'file'
+    doc.docType = metadata.FILE
     if (side === 'local' && metadata.shouldIgnore(doc, this.ignore)) {
       return
     }
@@ -235,7 +235,7 @@ class Prep {
     log.debug({ path: doc.path }, 'deleteFolderAsync')
     metadata.ensureValidPath(doc)
 
-    doc.docType = 'folder'
+    doc.docType = metadata.FOLDER
     if (side === 'local' && metadata.shouldIgnore(doc, this.ignore)) {
       return
     }

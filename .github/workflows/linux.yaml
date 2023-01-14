@@ -22,8 +22,10 @@ env:
   COZY_DESKTOP_HEARTBEAT: "1000"
   DISPLAY: ":99.0"
   NODE_VERSION: "14.17.6"
-  GO_VERSION: "1.17"
-  COUCHDB_VERSION: "2.3.1"
+  GO_VERSION: "1.19"
+  COUCHDB_VERSION: "3.2.2"
+  COUCHDB_USER: "admin"
+  COUCHDB_PASSWORD: "password"
 
 jobs:
   cancel:
@@ -31,19 +33,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
-      - uses: styfle/cancel-workflow-action@a7eadb6f3809d6ae84fa62ee7bd8538e289cb9a4
-        with:
-          access_token: ${{ github.token }}
+      - uses: styfle/cancel-workflow-action@5df4e62aed82ea1f787d2a02ab3dbfcaa49ffdd1
 
   unit:
     needs: cancel
     runs-on: ubuntu-latest
     name: Lint & Unit tests
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-node-modules
         with:
@@ -53,27 +53,30 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
-        uses: actions/setup-node@v2-beta
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
-        uses: 'cobot/couchdb-action@11e2c9f532a0eee2516ff80d92990d8081f2792c' # v4
+        id: setup-couchdb
+        uses: 'taratatach/couchdb-action@v4.6-dev'
         with:
           couchdb version: ${{ env.COUCHDB_VERSION }}
+          couchdb user: ${{ env.COUCHDB_USER }}
+          couchdb password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
@@ -95,10 +98,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Integration tests
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-node-modules
         with:
@@ -108,27 +111,30 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
-        uses: actions/setup-node@v2-beta
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
-        uses: 'cobot/couchdb-action@11e2c9f532a0eee2516ff80d92990d8081f2792c' # v4
+        id: setup-couchdb
+        uses: 'taratatach/couchdb-action@v4.6-dev'
         with:
           couchdb version: ${{ env.COUCHDB_VERSION }}
+          couchdb user: ${{ env.COUCHDB_USER }}
+          couchdb password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
@@ -146,10 +152,10 @@ jobs:
         stopped_client: ['', 'STOPPED']
       fail-fast: false
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-node-modules
         with:
@@ -159,27 +165,30 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
-        uses: actions/setup-node@v2-beta
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
       - name: Setup golang
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup CouchDB
-        uses: 'cobot/couchdb-action@11e2c9f532a0eee2516ff80d92990d8081f2792c' # v4
+        id: setup-couchdb
+        uses: 'taratatach/couchdb-action@v4.6-dev'
         with:
           couchdb version: ${{ env.COUCHDB_VERSION }}
+          couchdb user: ${{ env.COUCHDB_USER }}
+          couchdb password: ${{ env.COUCHDB_PASSWORD }}
       - name: Setup cozy-stack
         uses: ./.github/actions/setup-cozy-stack
+        with:
+          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup local env
         run: |
           mkdir -p "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install
       - name: Rebuild native plugins
         run: yarn install:electron
@@ -195,10 +204,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Build packages
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Cache node modules
         id: cache-node-modules
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         env:
           cache-name: cache-node-modules
         with:
@@ -208,15 +217,11 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
-        uses: actions/setup-node@v2-beta
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          check-latest: true
-      - name: Setup local env
-        run: |
-          echo "BUST_CACHE=${{ secrets.BUST_CACHE }}" >> $GITHUB_ENV
       - name: Install dependencies
-        if: ${{ (! steps.cache-node-modules.outputs.cache-hit) || env.BUST_CACHE }}
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
       - name: Build assets
         run: yarn build

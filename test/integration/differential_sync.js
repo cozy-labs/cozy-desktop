@@ -12,12 +12,13 @@ const TestHelpers = require('../support/helpers')
 const Builders = require('../support/builders')
 
 const {
+  DIR_TYPE,
   FILES_DOCTYPE,
   OAUTH_CLIENTS_DOCTYPE
 } = require('../../core/remote/constants')
 
 const path = remoteDoc =>
-  remoteDoc.type === 'directory'
+  remoteDoc.type === DIR_TYPE
     ? `${remoteDoc.path.slice(1)}/`
     : remoteDoc.path.slice(1)
 

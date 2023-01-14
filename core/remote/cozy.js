@@ -95,6 +95,7 @@ class RemoteCozy {
     this.config = config
     this.url = config.cozyUrl
     this.client = new OldCozyClient({
+      version: 3,
       cozyURL: this.url,
       oauth: {
         clientParams: config.client,
@@ -423,7 +424,7 @@ class RemoteCozy {
 
   async findDirectoryByPath(path /*: string */) /*: Promise<RemoteDir> */ {
     const results = await this.search({ path })
-    if (results.length === 0 || results[0].type !== 'directory') {
+    if (results.length === 0 || results[0].type !== DIR_TYPE) {
       throw new DirectoryNotFound(path, this.url)
     }
 
@@ -471,7 +472,7 @@ class RemoteCozy {
       client: { clientID }
     } = this.config
     return (
-      doc.type === 'directory' &&
+      doc.type === DIR_TYPE &&
       doc.not_synchronized_on != null &&
       doc.not_synchronized_on.find(({ id }) => id === clientID) != null
     )
@@ -479,7 +480,7 @@ class RemoteCozy {
 
   async isEmpty(id /*: string */) /*: Promise<boolean> */ {
     const dir = await this.client.files.statById(id)
-    if (dir.attributes.type !== 'directory') {
+    if (dir.attributes.type !== DIR_TYPE) {
       throw new Error(
         `Cannot check emptiness of directory ${id}: ` +
           `wrong type: ${dir.attributes.type}`

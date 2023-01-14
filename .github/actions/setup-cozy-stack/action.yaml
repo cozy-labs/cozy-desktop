@@ -2,6 +2,9 @@ name: Setup cozy-stack
 author: Erwan Guyader
 description: Downloads cozy-stack, starts it and create a test instance.
 inputs:
+  couchdb-url:
+    description: 'The fully qualified URL to make requests to CouchDB'
+    required: true
   cozy-stack-storage:
     description: 'The folder location where the remote cozy-stack files will be stored'
     required: false
@@ -11,13 +14,11 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Download cozy-stack
-      shell: bash
-      run: go get github.com/cozy/cozy-stack
-
     - name: Set env variables
       shell: bash
       run: |
+        echo "COZY_COUCHDB_URL=${{ inputs.couchdb-url }}" >> $GITHUB_ENV
+
         if [[ -z $COZY_STACK_STORAGE ]]; then
           echo "COZY_STACK_STORAGE=${{ inputs.cozy-stack-storage }}" >> $GITHUB_ENV
         fi
@@ -30,30 +31,66 @@ runs:
         if [[ -z $COZY_PASSPHRASE ]]; then
           echo "COZY_PASSPHRASE=${{ inputs.cozy-passphrase }}" >> $GITHUB_ENV
         fi
+        if [[ -z $GOPATH ]]; then
+          echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
+        fi
+
+    - name: Download cozy-stack's go.sum
+      shell: bash
+      run: |
+          echo "Downloading cozy-stack's go.sum..."
+          curl \
+            -H 'Authorization: Bearer ${{ github.token }}' \
+            -H 'Accept: application/vnd.github.v3.raw' \
+            -L 'https://api.github.com/repos/cozy/cozy-stack/contents/go.sum' \
+            -O
+          echo "GOPATH: $GOPATH"
+
+    - name: Cache Go dependencies
+      id: cache-go-deps
+      uses: actions/cache@v3
+      env:
+        cache-name: cache-go-deps
+      with:
+        path: |
+          ${{ env.GOPATH }}
+        key: ${{ runner.os }}-v${{ env.GO_VERSION }}-${{ env.cache-name }}-${{ hashFiles('go.sum') }}
+
+    - name: Download cozy-stack
+      if: ${{ steps.cache-go-deps.outputs.cache-hit != 'true' }}
+      shell: bash
+      run: go install github.com/cozy/cozy-stack@latest
 
     - name: Create cozy-stack storage
       shell: bash
       run: |
-        mkdir -p $COZY_STACK_STORAGE
-
-        if [ "${{ runner.os }}" == "macOS" ]; then
-          brew install --cask osxfuse
-          curl -L https://github.com/osxfuse/sshfs/releases/download/osxfuse-sshfs-2.5.0/sshfs-2.5.0.pkg --output sshfs-2.5.0.pkg
-          sudo installer -pkg ./sshfs-2.5.0.pkg -target /
-          podman-machine ssh box -- mkdir /home/tc/storage
-          podman-machine mount box:/home/tc/storage $COZY_STACK_STORAGE
+        if [ "${{ runner.os }}" != "macOS" ]; then
+          echo "Creating cozy-stack storage folder $COZY_STACK_STORAGE..."
+          mkdir -p $COZY_STACK_STORAGE
         fi
 
     - name: Create a local instance and an OAuth client
       shell: bash
       run: |
-        cozy-stack serve --fs-url "file://$COZY_STACK_STORAGE" --log-level warning >cozy-stack.log 2>&1 &
-        until cozy-stack instances add --dev --passphrase "$COZY_PASSPHRASE" "$COZY_DOMAIN"
+        echo "Starting cozy-stack..."
+        if [ "${{ runner.os }}" == "macOS" ]; then
+          cozy-stack serve --fs-url "swift+https://auth.cloud.ovh.net/v3?AuthURL=https%3A%2F%2Fauth.cloud.ovh.net%2Fv3&UserName=$OS_USERNAME&Password=$OS_PASSWORD&ProjectName=$OS_PROJECT_NAME&Region=GRA&UserDomainName=Default&Timeout={{ .Env.GOSWIFT_TIMEOUT }}" --log-level warning >cozy-stack.log 2>&1 &
+        else
+          cozy-stack serve --fs-url "file://$COZY_STACK_STORAGE" --log-level warning >cozy-stack.log 2>&1 &
+        fi
+
+        echo "Creating instance..."
+        until cozy-stack instances add --passphrase "$COZY_PASSPHRASE" "$COZY_DOMAIN"
         do
+          echo "Waiting for cozy-stack to be running..."
           sleep 1
         done
+
+        echo "Creating OAuth client for tests..."
         COZY_CLIENT_ID=$(cozy-stack instances client-oauth "$COZY_DOMAIN" http://localhost/ test github.com/cozy-labs/cozy-desktop)
-        COZY_STACK_TOKEN=$(cozy-stack instances token-oauth "$COZY_DOMAIN" "$COZY_CLIENT_ID" io.cozy.files io.cozy.settings)
-        # Variables are not directly available in next steps; we need to write them into a special file
         echo "COZY_CLIENT_ID=$COZY_CLIENT_ID" >> $GITHUB_ENV
+
+        echo "Getting OAuth token for tests..."
+        COZY_STACK_TOKEN=$(cozy-stack instances token-oauth "$COZY_DOMAIN" "$COZY_CLIENT_ID" io.cozy.files io.cozy.settings)
         echo "COZY_STACK_TOKEN=$COZY_STACK_TOKEN" >> $GITHUB_ENV
+

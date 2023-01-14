@@ -58,7 +58,7 @@ import type { RemoteTree } from '../../support/helpers/remote'
 const saveTree = async (remoteTree, builders) => {
   for (const key in remoteTree) {
     const remoteDoc = remoteTree[key]
-    if (remoteDoc.type === 'folder') {
+    if (remoteDoc.type === DIR_TYPE) {
       await builders.metadir().fromRemote(remoteDoc).upToDate().create()
     } else {
       await builders.metafile().fromRemote(remoteDoc).upToDate().create()
@@ -77,6 +77,7 @@ describe('RemoteWatcher', function () {
     this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
     this.remoteCozy.client = new CozyClient({
+      version: 3,
       cozyURL: this.config.cozyUrl,
       token: process.env.COZY_STACK_TOKEN
     })
@@ -2089,7 +2090,7 @@ describe('RemoteWatcher', function () {
             type: 'reservedChars',
             name: 'f:oo',
             path: 'f:oo',
-            docType: 'folder',
+            docType: metadata.FOLDER,
             reservedChars: [':'],
             platform
           }

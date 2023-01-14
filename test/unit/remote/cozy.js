@@ -11,6 +11,7 @@ const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
 
 const {
+  DIR_TYPE,
   ROOT_DIR_ID,
   TRASH_DIR_ID,
   TRASH_DIR_NAME,
@@ -262,7 +263,7 @@ describe('RemoteCozy', function () {
             updatedAt: new Date().toISOString()
           })
         ).have.properties({
-          type: 'directory',
+          type: DIR_TYPE,
           name: ' foo '
         })
       })
@@ -855,6 +856,7 @@ describe('RemoteCozy', function () {
   describe('#getDirectoryContent', () => {
     beforeEach(function () {
       remoteCozy.client = new OldCozyClient({
+        version: 3,
         cozyURL: this.config.cozyUrl,
         token: process.env.COZY_STACK_TOKEN
       })
@@ -1037,6 +1039,7 @@ describe('RemoteCozy.newClient', () => {
     context('when the client was not authorized yet', () => {
       it('handles OAuth cozy-client-js clients without credentials', async function () {
         oauthCozy.client = new OldCozyClient({
+          version: 3,
           cozyURL: this.config.cozyUrl,
           oauth: {
             clientParams: this.config.client,

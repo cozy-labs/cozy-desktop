@@ -13,6 +13,7 @@ const { IncompatibleDocError } = require('../incompatibilities/platform')
 const metadata = require('../metadata')
 const remoteDocument = require('../remote/document')
 const remoteErrors = require('../remote/errors')
+const remoteConstants = require('../remote/constants')
 const { otherSide } = require('../side')
 const logger = require('../utils/logger')
 const measureTime = require('../utils/perfs')
@@ -487,7 +488,7 @@ class Sync {
                 await this.updateRevs(change.doc, 'remote')
               } else {
                 await this.pouch.eraseDocument(change.doc)
-                if (change.doc.docType === 'file') {
+                if (change.doc.docType === metadata.FILE) {
                   this.events.emit('delete-file', change.doc)
                 }
               }
@@ -710,7 +711,7 @@ class Sync {
         return this.pouch.setLocalSeq(seq)
       } else if (!metadata.wasSynced(doc) && isMarkedForDeletion(doc)) {
         await this.pouch.eraseDocument(doc)
-        if (doc.docType === 'file') {
+        if (doc.docType === metadata.FILE) {
           this.events.emit('delete-file', doc)
         }
         return this.pouch.setLocalSeq(seq)
@@ -738,7 +739,7 @@ class Sync {
       // and especially avoid deep nesting levels.
       if (doc.trashed) {
         await this.pouch.eraseDocument(doc)
-        if (doc.docType === 'file') {
+        if (doc.docType === metadata.FILE) {
           this.events.emit('delete-file', doc)
         }
       } else {
@@ -777,7 +778,10 @@ class Sync {
         )
       }
       throw new IncompatibleDocError({ doc })
-    } else if (doc.docType !== 'file' && doc.docType !== 'folder') {
+    } else if (
+      doc.docType !== metadata.FILE &&
+      doc.docType !== metadata.FOLDER
+    ) {
       throw new Error(`Unknown docType: ${doc.docType}`)
     } else if (!metadata.wasSynced(doc) && isMarkedForDeletion(doc)) {
       // do nothing
@@ -799,10 +803,10 @@ class Sync {
         await this.doMove(side, doc, from)
       }
       if (
-        doc.docType === 'file' &&
+        doc.docType === metadata.FILE &&
         (!metadata.sameBinary(from, doc) ||
-          (from.local.docType === 'file' &&
-            from.remote.type === 'file' &&
+          (from.local.docType === metadata.FILE &&
+            from.remote.type === remoteConstants.FILE_TYPE &&
             !metadata.sameBinary(from.local, from.remote)))
       ) {
         try {
@@ -899,7 +903,7 @@ class Sync {
     from /*: SavedMetadata */
   ) /*: Promise<void> */ {
     await side.moveAsync(doc, from)
-    if (doc.docType === 'file') {
+    if (doc.docType === metadata.FILE) {
       this.events.emit('transfer-move', _.clone(doc), _.clone(from))
     }
   }
@@ -919,7 +923,7 @@ class Sync {
     }
 
     await side.assignNewRemote(doc)
-    if (doc.docType === 'file') {
+    if (doc.docType === metadata.FILE) {
       this.events.emit('transfer-move', _.clone(doc), _.clone(from))
     }
   }

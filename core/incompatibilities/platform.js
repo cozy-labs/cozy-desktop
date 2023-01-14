@@ -229,7 +229,7 @@ const detectDirNameLengthIncompatibility = (
  */
 const detectNameIncompatibilities = (
   name /*: string */,
-  type /*: string */,
+  type /*: 'file'|'folder' */,
   platform /*: string */
 ) /*: NameIncompatibility[] */ => {
   const restrictions = restrictionsByPlatform(platform)
@@ -287,7 +287,7 @@ const detectNameIncompatibilities = (
  */
 const detectPathIncompatibilities = (
   path /*: string */,
-  type /*: string */
+  type /*: 'file'|'folder' */
 ) /*: Array<PlatformIncompatibility> */ => {
   const platform = process.platform
   const ancestorNames = path.split(sep)

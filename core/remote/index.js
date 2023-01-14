@@ -452,7 +452,7 @@ class Remote /*:: implements Reader, Writer */ {
     // are changed but we'll need to review this when we start updating it only
     // after a move has been fully synchronzed.
     const dir = await this.pouch.bySyncedPath(pathUtils.remoteToLocal(path))
-    if (!dir || dir.deleted || !dir.remote || dir.docType !== 'folder') {
+    if (!dir || dir.deleted || !dir.remote || dir.docType !== metadata.FOLDER) {
       throw new DirectoryNotFound(path, this.config.cozyUrl)
     }
 
@@ -479,7 +479,7 @@ class Remote /*:: implements Reader, Writer */ {
   async includeInSync(doc /*: SavedMetadata */) /*: Promise<*> */ {
     const remoteDocs = await this.remoteCozy.search({ path: `/${doc.path}` })
     const remoteDoc = remoteDocs[0]
-    if (!remoteDoc || remoteDoc.type !== 'directory') return
+    if (!remoteDoc || remoteDoc.type !== DIR_TYPE) return
 
     await this.remoteCozy.includeInSync(remoteDoc)
   }

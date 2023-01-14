@@ -3,6 +3,7 @@
 const _ = require('lodash')
 const path = require('path')
 
+const { FILE, FOLDER } = require('../../../core/metadata')
 const events = require('../../../core/local/channel_watcher/event')
 
 const statsBuilder = require('./stats')
@@ -22,7 +23,7 @@ function randomPick /*:: <T> */(elements /*: Array<T> */) /*: T */ {
 }
 
 function kind(doc /*: Metadata */) /*: EventKind */ {
-  return doc.docType === 'folder' ? 'directory' : doc.docType
+  return doc.docType === FOLDER ? 'directory' : FILE
 }
 
 const defaultPath = 'foo'

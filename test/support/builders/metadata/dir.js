@@ -1,5 +1,7 @@
 // @flow
 
+const { FOLDER } = require('../../../../core/metadata')
+
 const BaseMetadataBuilder = require('./base')
 
 /*::
@@ -10,6 +12,6 @@ import type { Pouch } from '../../../../core/pouch'
 module.exports = class DirMetadataBuilder extends BaseMetadataBuilder {
   constructor(pouch /*: ?Pouch */, old /*: ?Metadata */) {
     super(pouch, old)
-    this.doc.docType = 'folder'
+    this.doc.docType = FOLDER
   }
 }

@@ -189,12 +189,12 @@ describe('Pouch', function () {
     describe('byIdMaybe', () => {
       it('resolves with a doc matching the given _id if any', async function () {
         const existing = await this.pouch.db.post({
-          docType: 'folder',
+          docType: metadata.FOLDER,
           path: 'my-folder'
         })
         const doc = await this.pouch.byIdMaybe(existing.id)
         should(doc).have.properties({
-          docType: 'folder',
+          docType: metadata.FOLDER,
           path: 'my-folder'
         })
       })
@@ -260,7 +260,7 @@ describe('Pouch', function () {
         docs.length.should.be.equal(1)
         docs[0].should.have.properties({
           path: 'my-folder',
-          docType: 'folder',
+          docType: metadata.FOLDER,
           tags: []
         })
       })
@@ -283,7 +283,7 @@ describe('Pouch', function () {
           })
           docs[i + 2].should.have.properties({
             path: path.join('my-folder', `folder-${i}`),
-            docType: 'folder',
+            docType: metadata.FOLDER,
             tags: []
           })
         }
@@ -294,7 +294,7 @@ describe('Pouch', function () {
         docs.length.should.be.equal(7)
         docs[0].should.have.properties({
           path: 'my-folder',
-          docType: 'folder',
+          docType: metadata.FOLDER,
           tags: []
         })
         for (let i = 1; i <= 3; i++) {
@@ -305,7 +305,7 @@ describe('Pouch', function () {
           })
           docs[i + 3].should.have.properties({
             path: path.join('my-folder', `folder-${i}`),
-            docType: 'folder',
+            docType: metadata.FOLDER,
             tags: []
           })
         }
@@ -552,7 +552,7 @@ describe('Pouch', function () {
     describe('removeDesignDoc', () => {
       it('removes given view', async function () {
         let query = `function (doc) {
-          if (doc.docType === 'folder') {
+          if (doc.docType === '${metadata.FOLDER}') {
             emit(doc._id);
           }
         }`

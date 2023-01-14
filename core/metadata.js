@@ -77,6 +77,9 @@ const log = logger({
 
 const { platform } = process
 
+const FILE = 'file'
+const FOLDER = 'folder'
+
 const LOCAL_ATTRIBUTES = [
   'path',
   'docType',
@@ -229,9 +232,9 @@ function idNTFS(fpath /*: string */) {
 function localDocType(remoteDocType /*: string */) /*: string */ {
   switch (remoteDocType) {
     case REMOTE_FILE_TYPE:
-      return 'file'
+      return FILE
     case REMOTE_DIR_TYPE:
-      return 'folder'
+      return FOLDER
     default:
       throw new Error(`Unexpected Cozy Files type: ${remoteDocType}`)
   }
@@ -323,7 +326,7 @@ function isFile(
   doc /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
 ) /*: boolean %checks */ {
   return doc.docType != null
-    ? doc.docType === 'file'
+    ? doc.docType === FILE
     : doc.type !== null
     ? doc.type === REMOTE_FILE_TYPE
     : false
@@ -333,18 +336,14 @@ function isFolder(
   doc /*: Metadata|MetadataLocalInfo|MetadataRemoteInfo */
 ) /*: boolean %checks */ {
   return doc.docType != null
-    ? doc.docType === 'folder'
+    ? doc.docType === FOLDER
     : doc.type !== null
     ? doc.type === REMOTE_DIR_TYPE
     : false
 }
 
 function kind(doc /*: Metadata */) /*: EventKind */ {
-  return doc.docType == null
-    ? 'file'
-    : doc.docType === 'folder'
-    ? 'directory'
-    : doc.docType
+  return doc.docType === FOLDER ? 'directory' : FILE
 }
 
 // Return true if the document has not a valid path
@@ -385,7 +384,7 @@ function invariants /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
     err = new Error(`Metadata has 'sides.remote' but no remote`)
   } else if (doc.sides.local && !doc.local) {
     err = new Error(`Metadata has 'sides.local' but no local`)
-  } else if (doc.docType === 'file' && doc.md5sum == null) {
+  } else if (doc.docType === FILE && doc.md5sum == null) {
     err = new Error(`File metadata has no checksum`)
   }
 
@@ -422,7 +421,7 @@ function detectIncompatibilities(
   return incompatibilities.map(issue =>
     _.merge(
       {
-        docType: issue.path === metadata.path ? metadata.docType : 'folder'
+        docType: issue.path === metadata.path ? metadata.docType : FOLDER
       },
       issue
     )
@@ -443,7 +442,7 @@ function assignPlatformIncompatibilities(
 // MD5 has 16 bytes.
 // Base64 encoding must include padding.
 function invalidChecksum(doc /*: Metadata */) {
-  if (doc.md5sum == null) return doc.docType === 'file'
+  if (doc.md5sum == null) return doc.docType === FILE
 
   const buffer = Buffer.from(doc.md5sum, 'base64')
 
@@ -649,8 +648,8 @@ const makeComparator = (
       return [lhs || [], rhs || []]
     } else if (key === 'type' || key === 'docType') {
       return [
-        lhs === 'directory' ? 'folder' : lhs,
-        rhs === 'directory' ? 'folder' : rhs
+        lhs === REMOTE_DIR_TYPE ? FOLDER : lhs,
+        rhs === REMOTE_DIR_TYPE ? FOLDER : rhs
       ]
     } else if (Boolean(lhs) === lhs || Boolean(rhs) === rhs) {
       return [Boolean(lhs), Boolean(rhs)]
@@ -821,7 +820,7 @@ function buildDir(
 ) /*: Metadata */ {
   const doc /*: $Shape<Metadata> */ = {
     path: fpath,
-    docType: 'folder',
+    docType: FOLDER,
     updated_at: stats.mtime.toISOString(),
     ino: stats.ino,
     tags: [],
@@ -854,7 +853,7 @@ function buildFile(
 
   const doc /*: $Shape<Metadata> */ = {
     path: filePath,
-    docType: 'file',
+    docType: FILE,
     md5sum,
     ino,
     updated_at,
@@ -891,7 +890,7 @@ function shouldIgnore(
 ) /*: boolean */ {
   return ignoreRules.isIgnored({
     relativePath: id(doc.path),
-    isFolder: doc.docType === 'folder'
+    isFolder: doc.docType === FOLDER
   })
 }
 
@@ -947,6 +946,8 @@ function updateRemote(
 }
 
 module.exports = {
+  FILE,
+  FOLDER,
   LOCAL_ATTRIBUTES,
   REMOTE_ATTRIBUTES,
   assignMaxDate,

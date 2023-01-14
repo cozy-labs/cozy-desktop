@@ -9,6 +9,7 @@ const _ = require('lodash')
 
 const { Config } = require('../../core/config')
 const {
+  DIR_TYPE,
   FILES_DOCTYPE,
   OAUTH_CLIENTS_DOCTYPE,
   ROOT_DIR_ID,
@@ -85,7 +86,7 @@ async function getDirectoryContent(context) {
   while (resp && resp.next) {
     const queryDef = Q(FILES_DOCTYPE)
       .where({
-        type: 'directory',
+        type: DIR_TYPE,
         name: {
           $ne: ''
         },
@@ -135,6 +136,7 @@ app
 
     const config = new Config(path.resolve(COZY_DESKTOP_DIR, '.cozy-desktop'))
     const oldClient = new OldCozyClient({
+      version: 3,
       cozyURL: config.cozyUrl,
       oauth: {
         clientParams: config.client,
