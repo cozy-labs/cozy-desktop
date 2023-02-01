@@ -77,8 +77,15 @@ describe('Sync', function () {
 
   describe('start', function () {
     beforeEach('instanciate sync', function () {
+      const events = new EventEmitter()
+
       this.local.start = sinon.stub().resolves()
-      this.local.watcher.running = Promise.resolve()
+      this.local.watcher.onFatal = sinon.stub().callsFake(listener => {
+        events.on('local:fatal', listener)
+      })
+      this.local.watcher.fatal = sinon.stub().callsFake(err => {
+        events.emit('local:fatal', err)
+      })
       this.local.stop = sinon.stub().resolves()
       this.remote.start = sinon.stub().resolves()
       this.remote.watcher.running = true
@@ -158,35 +165,31 @@ describe('Sync', function () {
     })
 
     context('if local watcher rejects while running', () => {
-      let rejectLocalWatcher
       beforeEach(async function () {
-        this.local.watcher.running = new Promise((resolve, reject) => {
-          rejectLocalWatcher = reject
-        })
         this.sync.start()
         await this.sync.started()
       })
 
       it('stops replication', async function () {
-        rejectLocalWatcher(new Error('failed'))
+        this.local.watcher.fatal(new Error('failed'))
         await this.sync.stopped()
         should(this.sync.stop).have.been.calledOnce()
       })
 
       it('stops local watcher', async function () {
-        rejectLocalWatcher(new Error('failed'))
+        this.local.watcher.fatal(new Error('failed'))
         await this.sync.stopped()
         should(this.local.stop).have.been.calledOnce()
       })
 
       it('stops remote watcher', async function () {
-        rejectLocalWatcher(new Error('failed'))
+        this.local.watcher.fatal(new Error('failed'))
         await this.sync.stopped()
         should(this.remote.stop).have.been.calledOnce()
       })
 
       it('emits a Sync:fatal event', async function () {
-        rejectLocalWatcher(new Error('failed'))
+        this.local.watcher.fatal(new Error('failed'))
         await this.sync.stopped()
         should(this.sync.events.emit).have.been.calledWith('Sync:fatal')
       })

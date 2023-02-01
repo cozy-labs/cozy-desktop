@@ -263,30 +263,26 @@ class Sync {
       return
     }
 
-    // Errors emitted while the remote watcher is starting (e.g. revoked OAuth
-    // client) will not be thrown and thus not handled if this listener is not
-    // attached before starting the watcher.
-    // This results in the Sync starting without a remote watcher.
+    // Errors emitted while the watchers are starting (e.g. revoked OAuth
+    // client) will not be thrown and thus not handled if these listeners are
+    // not attached before starting the watchers.
+    // This results in the Sync starting without both watchers.
+    this.remote.watcher.onError(err => {
+      this.blockSyncFor({ err })
+    })
     this.remote.watcher.onFatal(err => {
       this.fatal(err)
     })
-    this.remote.watcher.onError(err => {
-      this.blockSyncFor({ err })
+    this.local.watcher.onFatal(err => {
+      this.fatal(err)
     })
 
     try {
       await this.local.start()
       await this.remote.start()
     } catch (err) {
-      // The start phase needs to be ended before calling fatal() or we won't be
-      // able to stop Sync.
-      this.lifecycle.end('start')
       return this.fatal(err)
     }
-
-    this.local.watcher.running.catch(err => {
-      this.fatal(err)
-    })
 
     this.lifecycle.end('start')
 
@@ -345,6 +341,14 @@ class Sync {
 
   fatal(err /*: Error */) {
     log.error({ err, sentry: true }, `Sync fatal: ${err.message}`)
+
+    if (this.lifecycle.willStart()) {
+      // The start phase needs to be ended before calling stop() or we won't be
+      // able to stop Sync as it waits for Sync to be fully started but this
+      // might never happen since we got a fatal error.
+      this.lifecycle.end('start')
+    }
+
     this.events.emit('Sync:fatal', err)
     return this.stop()
   }

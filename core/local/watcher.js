@@ -25,9 +25,10 @@ import type { Checksumer } from './checksumer'
 
 export interface Watcher {
   checksumer: Checksumer,
-  running: Promise<*>,
   start (): Promise<*>,
   stop (force: ?bool): Promise<*>,
+  onFatal (listener: Error => any): void,
+  fatal (err: Error): void,
 }
 
 export type LocalWatcherOptions = {
