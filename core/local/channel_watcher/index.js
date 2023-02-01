@@ -112,9 +112,6 @@ class ChannelWatcher {
   checksumer: Checksumer
   producer: Producer
   state: Object
-  running: Promise<void>
-  _runningResolve: ?Function
-  _runningReject: ?Function
   */
 
   constructor(opts /*: ChannelWatcherOptions */) {
@@ -149,24 +146,22 @@ class ChannelWatcher {
     })
     await this.producer.start()
     await scanDone
-
-    this.running = new Promise((resolve, reject) => {
-      this._runningResolve = resolve
-      // XXX: This rejecter is never used. How can the watcher fail? How to
-      // catch those errors and feed them to this rejecter?
-      this._runningReject = reject
-    })
   }
 
   async stop() /*: Promise<*> */ {
     log.debug('stopping...')
 
     await this.producer.stop()
+  }
 
-    if (this._runningResolve) {
-      this._runningResolve()
-      this._runningResolve = null
-    }
+  onFatal(listener /*: Error => any */) /*: void */ {
+    this.events.on('LocalWatcher:fatal', listener)
+  }
+
+  fatal(err /*: Error */) /*: void */ {
+    log.error({ err, sentry: true }, `Local watcher fatal: ${err.message}`)
+    this.events.emit('LocalWatcher:fatal', err)
+    this.stop()
   }
 }
 

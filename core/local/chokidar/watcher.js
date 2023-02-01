@@ -73,9 +73,6 @@ class LocalWatcher {
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarEvent>
   pendingChanges: LocalChange[]
-  running: Promise<void>
-  _runningResolve: ?Function
-  _runningReject: ?Function
   */
 
   constructor(
@@ -101,7 +98,7 @@ class LocalWatcher {
         await this.onFlush(rawEvents)
       } catch (err) {
         log.error({ err, sentry: true }, 'fatal chokidar watcher error')
-        this._runningReject && this._runningReject(err)
+        this.fatal(err)
       }
     })
   }
@@ -189,15 +186,12 @@ class LocalWatcher {
           } else {
             log.error({ err, sentry: true }, 'could not start chokidar watcher')
           }
+          this.fatal(err)
         })
 
       log.info(`Now watching ${this.syncPath}`)
     })
 
-    this.running = new Promise((resolve, reject) => {
-      this._runningResolve = resolve
-      this._runningReject = reject
-    })
     return started
   }
 
@@ -278,10 +272,6 @@ class LocalWatcher {
       await this.watcher.close()
       this.watcher = null
     }
-    if (this._runningResolve) {
-      this._runningResolve()
-      this._runningResolve = null
-    }
     this.buffer.switchMode('idle')
     if (force) return Promise.resolve()
     // Give some time for awaitWriteFinish events to be managed
@@ -294,6 +284,16 @@ class LocalWatcher {
   async checksum(filePath /*: string */) /*: Promise<string> */ {
     const absPath = path.join(this.syncPath, filePath)
     return this.checksumer.push(absPath)
+  }
+
+  onFatal(listener /*: Error => any */) /*: void */ {
+    this.events.on('LocalWatcher:fatal', listener)
+  }
+
+  fatal(err /*: Error */) /*: void */ {
+    log.error({ err, sentry: true }, `Local watcher fatal: ${err.message}`)
+    this.events.emit('LocalWatcher:fatal', err)
+    this.stop()
   }
 }
 
