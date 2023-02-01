@@ -2,6 +2,7 @@
 /* @flow */
 
 const should = require('should')
+const sinon = require('sinon')
 const _ = require('lodash')
 
 const { onPlatforms } = require('../../../support/helpers/platform')
@@ -18,19 +19,22 @@ onPlatforms(['linux', 'win32'], () => {
   describe('core/local/channel_watcher/filter_ignored.loop()', () => {
     const builders = new Builders()
 
-    let ignore
     let channel
+    let opts
 
     beforeEach(() => {
       channel = new Channel()
 
       const patterns = ['*.bck', 'tmp/', 'folder/']
-      ignore = new Ignore(patterns)
+      opts = {
+        ignore: new Ignore(patterns),
+        fatal: sinon.spy()
+      }
     })
 
     context('without any batches of events', () => {
       it('does not throw any errors', () => {
-        should(() => filterIgnored.loop(channel, { ignore })).not.throw()
+        should(() => filterIgnored.loop(channel, opts)).not.throw()
       })
     })
 
@@ -111,7 +115,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       it('keeps only the relevant events in order', async () => {
-        const filteredChannel = filterIgnored.loop(channel, { ignore })
+        const filteredChannel = filterIgnored.loop(channel, opts)
 
         const renamedToCreatedEvent = {
           ...ignoredRenamedSrcEvent,
@@ -155,7 +159,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       it('returns a channel with only the relevant events in order', async () => {
-        const filteredChannel = filterIgnored.loop(channel, { ignore })
+        const filteredChannel = filterIgnored.loop(channel, opts)
 
         const renamedToCreatedEvent = {
           ...ignoredRenamedSrcEvent,
@@ -206,7 +210,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       it('filters out folder events only', async () => {
-        const filteredChannel = filterIgnored.loop(channel, { ignore })
+        const filteredChannel = filterIgnored.loop(channel, opts)
 
         const relevantEvents = await filteredChannel.pop()
         should(relevantEvents).deepEqual([fileScanEvent])

@@ -158,13 +158,13 @@ describe('core/local/channel_watcher/Channel', function () {
      */
 
     const map = scenarioState => {
-      const { inputChannel, callback } = scenarioState
-      scenarioState.outputChannel = inputChannel.map(callback)
+      const { inputChannel, callback, notifyErr } = scenarioState
+      scenarioState.outputChannel = inputChannel.map(callback, notifyErr)
     }
 
     const asyncMap = scenarioState => {
-      const { inputChannel, callback } = scenarioState
-      scenarioState.outputChannel = inputChannel.asyncMap(callback)
+      const { inputChannel, callback, notifyErr } = scenarioState
+      scenarioState.outputChannel = inputChannel.asyncMap(callback, notifyErr)
     }
 
     const push = ({ inputChannel, inputBatches }) => {
@@ -245,7 +245,8 @@ describe('core/local/channel_watcher/Channel', function () {
             inputBatches: ChannelBatch[],
             inputChannel: Channel,
             outputChannel?: Channel,
-            outputBatchesPromise: Promise<ChannelBatch[]>
+            outputBatchesPromise: Promise<ChannelBatch[]>,
+            notifyErr: Error => any
           } */
 
           beforeEach('init scenarioState', () => {
@@ -253,7 +254,8 @@ describe('core/local/channel_watcher/Channel', function () {
               callback: sinon.spy(transform),
               inputBatches: [],
               inputChannel: new Channel(),
-              outputBatchesPromise: Promise.resolve([])
+              outputBatchesPromise: Promise.resolve([]),
+              notifyErr: sinon.spy()
             }
           })
 
@@ -319,7 +321,8 @@ describe('core/local/channel_watcher/Channel', function () {
             inputBatches: ChannelBatch[],
             inputChannel: Channel,
             outputChannel?: Channel,
-            outputBatchesPromise: Promise<ChannelBatch[]>
+            outputBatchesPromise: Promise<ChannelBatch[]>,
+            notifyErr: Error => any
           } */
 
           beforeEach('init scenarioState', () => {
@@ -327,7 +330,8 @@ describe('core/local/channel_watcher/Channel', function () {
               callback: sinon.spy(asyncTransform),
               inputBatches: [],
               inputChannel: new Channel(),
-              outputBatchesPromise: Promise.resolve([])
+              outputBatchesPromise: Promise.resolve([]),
+              notifyErr: sinon.spy()
             }
           })
 

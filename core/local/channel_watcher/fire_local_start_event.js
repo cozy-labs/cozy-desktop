@@ -26,10 +26,10 @@ module.exports = {
  */
 function loop(
   channel /*: Channel */,
-  opts /*: { events: EventEmitter } */
+  opts /*: { events: EventEmitter, fatal: Error => any } */
 ) /*: Channel */ {
   return channel.map(events => {
     opts.events.emit('local-start')
     return events
-  })
+  }, opts.fatal)
 }

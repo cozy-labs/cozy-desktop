@@ -32,7 +32,7 @@ module.exports = {
 
 function loop(
   channel /*: Channel */,
-  opts /*: { ignore: Ignore } */
+  opts /*: { ignore: Ignore, fatal: Error => any } */
 ) /*: Channel */ {
   const isIgnored = (path /*: string */, kind /*: EventKind */) =>
     opts.ignore.isIgnored({
@@ -54,7 +54,7 @@ function loop(
     }
 
     return batch
-  })
+  }, opts.fatal)
 }
 
 function notIgnoredEvent(

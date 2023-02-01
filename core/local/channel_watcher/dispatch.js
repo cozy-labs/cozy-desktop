@@ -46,7 +46,8 @@ type DispatchOptions = {
   prep: Prep,
   pouch: Pouch,
   state: DispatchState,
-  onChannelEvents?: ChannelEventsDispatcher
+  onChannelEvents?: ChannelEventsDispatcher,
+  fatal: Error => any
 }
 */
 
@@ -73,7 +74,7 @@ function loop(
   channel /*: Channel */,
   opts /*: DispatchOptions */
 ) /*: Channel */ {
-  return channel.asyncMap(opts.onChannelEvents || step(opts))
+  return channel.asyncMap(opts.onChannelEvents || step(opts), opts.fatal)
 }
 
 function step(opts /*: DispatchOptions */) {

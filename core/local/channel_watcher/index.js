@@ -55,6 +55,13 @@ type ChannelWatcherOptions = {
   events: EventEmitter,
   ignore: Ignore
 }
+
+export type ChannelWatcherStepOptions = ChannelWatcherOptions & {
+  checksumer: Checksumer,
+  scan: Scanner,
+  state: Object,
+  fatal: Error => any
+}
 */
 
 const log = logger({
@@ -68,7 +75,7 @@ const log = logger({
 const only = (platform, step) => platform === process.platform && step
 
 /** The steps for the current platform. */
-const steps = _.compact([
+const STEPS = _.compact([
   addInfos,
   filterIgnored,
   fireLocatStartEvent,
@@ -96,7 +103,7 @@ const stepsInitialState = (
   opts /*: * */
 ) /*: Promise<Object> */ =>
   Promise.reduce(
-    steps,
+    STEPS,
     async (prevState, step) =>
       step.initialState
         ? _.assign(prevState, await step.initialState(opts))
@@ -122,16 +129,18 @@ class ChannelWatcher {
     this.producer = producer(opts)
     this.state = {}
 
-    const stepOptions = Object.assign(
-      ({
+    const stepOptions /* ChannelWatcherStepOptions */ = Object.assign(
+      {},
+      {
         checksumer: this.checksumer,
         scan: this.producer.scan,
-        state: this.state
-      } /*: Object */),
+        state: this.state,
+        fatal: this.fatal
+      },
       opts
     )
     // Here, we build the chain of steps.
-    steps.reduce(
+    STEPS.reduce(
       (chan, step) => step.loop(chan, stepOptions),
       this.producer.channel
     )
