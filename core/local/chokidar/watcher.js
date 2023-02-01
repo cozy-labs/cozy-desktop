@@ -52,9 +52,11 @@ log.chokidar = log.child({
   component: 'Chokidar'
 })
 
-function hasPath(event /*: ChokidarEvent */) /*: boolean %checks */ {
-  return event.path !== ''
-}
+const hasPath = (event /*: ChokidarEvent */) /*: boolean %checks */ =>
+  event.path !== ''
+
+const isRescanFlag = (flags /*: number */) /*: boolean %checks */ =>
+  (flags & 0x00000001) === 1
 
 /**
  * This file contains the filesystem watcher that will trigger operations when
@@ -173,9 +175,18 @@ class LocalWatcher {
 
       this.watcher
         .on('ready', () => this.buffer.switchMode('timeout'))
-        .on('raw', (event, path, details) =>
+        .on('raw', async (event, path, details) => {
           log.chokidar.debug({ event, path, details }, 'raw')
-        )
+
+          if (isRescanFlag(details.flags)) {
+            try {
+              await this.stop()
+              await this.start()
+            } catch (err) {
+              this.fatal(err)
+            }
+          }
+        })
         .on('error', err => {
           if (err.message === 'watch ENOSPC') {
             log.error(
