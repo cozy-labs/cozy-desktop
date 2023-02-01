@@ -47,7 +47,8 @@ type IncompleteItem = {
 type IncompleteFixerOptions = {
   config: Config,
   checksumer: Checksumer,
-  pouch: Pouch
+  pouch: Pouch,
+  fatal: Error => any,
 }
 
 type Completion =
@@ -200,7 +201,7 @@ function loop(
   opts /*: IncompleteFixerOptions */
 ) /*: Channel */ {
   const incompletes = []
-  return channel.asyncMap(step({ incompletes }, opts))
+  return channel.asyncMap(step({ incompletes }, opts), opts.fatal)
 }
 
 function step(

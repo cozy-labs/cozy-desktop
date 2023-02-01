@@ -2,6 +2,7 @@
 /* @flow */
 
 const should = require('should')
+const sinon = require('sinon')
 const path = require('path')
 
 const configHelpers = require('../../../support/helpers/config')
@@ -11,14 +12,15 @@ const addChecksum = require('../../../../core/local/channel_watcher/add_checksum
 const Channel = require('../../../../core/local/channel_watcher/channel')
 
 describe('core/local/channel_watcher/add_checksum.loop()', () => {
-  let config, dirpath, filepath
+  let dirpath, filepath, opts
   before(configHelpers.createConfig)
   before(function () {
-    config = this.config
-    config.syncPath = path.dirname(__dirname)
-
     dirpath = path.basename(__dirname)
     filepath = path.join(dirpath, path.basename(__filename))
+
+    const config = this.config
+    config.syncPath = path.dirname(__dirname)
+    opts = { config, checksumer: checksumer.init(), fatal: sinon.spy() }
   })
 
   it('should add checksum within a file event', async () => {
@@ -31,10 +33,7 @@ describe('core/local/channel_watcher/add_checksum.loop()', () => {
     ]
     const channel = new Channel()
     channel.push(batch)
-    const enhancedChannel = addChecksum.loop(channel, {
-      checksumer: checksumer.init(),
-      config
-    })
+    const enhancedChannel = addChecksum.loop(channel, opts)
     const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch).be.an.Array().and.length(batch.length)
     should.exist(enhancedBatch[0].md5sum)
@@ -50,10 +49,7 @@ describe('core/local/channel_watcher/add_checksum.loop()', () => {
     ]
     const channel = new Channel()
     channel.push(batch)
-    const enhancedChannel = addChecksum.loop(channel, {
-      checksumer: checksumer.init(),
-      config
-    })
+    const enhancedChannel = addChecksum.loop(channel, opts)
     const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch).be.an.Array().and.length(batch.length)
     should.not.exist(enhancedBatch[0].md5sum)
@@ -70,10 +66,7 @@ describe('core/local/channel_watcher/add_checksum.loop()', () => {
     ]
     const channel = new Channel()
     channel.push(batch)
-    const enhancedChannel = addChecksum.loop(channel, {
-      checksumer: checksumer.init(),
-      config
-    })
+    const enhancedChannel = addChecksum.loop(channel, opts)
     const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch).be.an.Array().and.length(batch.length)
     should(enhancedBatch[0]).have.property('md5sum', 'checksum')
@@ -114,10 +107,7 @@ describe('core/local/channel_watcher/add_checksum.loop()', () => {
       renamedEvent,
       ignoredEvent
     ])
-    const enhancedChannel = addChecksum.loop(channel, {
-      checksumer: checksumer.init(),
-      config
-    })
+    const enhancedChannel = addChecksum.loop(channel, opts)
     const enhancedBatch = await enhancedChannel.pop()
     should(enhancedBatch).deepEqual([
       {

@@ -27,12 +27,16 @@ const completionChanges = events => events.map(completedEvent)
 describe('core/local/channel_watcher/incomplete_fixer', () => {
   let syncDir
   let builders
+  let opts
 
   before('create config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('create helpers', function () {
     syncDir = new ContextDir(this.syncPath)
     builders = new Builders({ pouch: this.pouch })
+
+    const { config, pouch } = this
+    opts = { config, checksumer, pouch, fatal: sinon.spy() }
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   afterEach('clean files', function () {
@@ -42,8 +46,6 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
 
   describe('.loop()', () => {
     it('pushes the result of step() into the output Channel', async function () {
-      const { config } = this
-
       const src = 'missing'
       const dst = path.basename(__filename)
       await syncDir.ensureFile(dst)
@@ -62,11 +64,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
         .path(dst)
         .build()
       const inputChannel = new Channel()
-      const outputChannel = incompleteFixer.loop(inputChannel, {
-        config,
-        checksumer,
-        pouch: this.pouch
-      })
+      const outputChannel = incompleteFixer.loop(inputChannel, opts)
 
       inputChannel.push([createdEvent])
       inputChannel.push([renamedEvent])
@@ -74,7 +72,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
       should(await outputChannel.pop()).deepEqual(
         await incompleteFixer.step(
           { incompletes: [{ event: createdEvent, timestamp: Date.now() }] },
-          { config, checksumer, pouch: this.pouch }
+          opts
         )([renamedEvent])
       )
     })
@@ -83,8 +81,6 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
   describe('.step()', () => {
     context('without any complete "renamed" event', () => {
       it('drops incomplete events', async function () {
-        const { config } = this
-
         const inputBatch = [
           builders.event().incomplete().action('created').path('foo1').build(),
           builders.event().incomplete().action('modified').path('foo2').build(),
@@ -95,11 +91,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
 
         const outputBatch = await incompleteFixer.step(
           { incompletes },
-          {
-            config,
-            checksumer,
-            pouch: this.pouch
-          }
+          opts
         )(inputBatch)
         should(outputBatch).be.empty()
       })
@@ -107,8 +99,6 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
 
     context('with a complete "renamed" event', () => {
       it('leaves complete events untouched', async function () {
-        const { config } = this
-
         const src = 'file'
         const dst = 'foo'
         await syncDir.ensureFile(dst)
@@ -120,11 +110,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
 
         const outputBatch = await incompleteFixer.step(
           { incompletes },
-          {
-            config,
-            checksumer,
-            pouch: this.pouch
-          }
+          opts
         )(inputBatch)
         should(outputBatch).deepEqual(inputBatch)
       })
@@ -191,11 +177,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
         for (const inputBatch of [incompleteEvents, [renamedEvent]]) {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
-            {
-              config,
-              checksumer,
-              pouch: this.pouch
-            }
+            opts
           )(inputBatch)
           outputBatches.push(completionChanges(outputBatch))
         }
@@ -237,8 +219,6 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
       })
 
       it('drops incomplete ignored events matching the "renamed" event old path', async function () {
-        const { config } = this
-
         await syncDir.makeTree(['dst/', 'dst/file'])
         const ignoredEvent = builders
           .event()
@@ -256,11 +236,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
 
         const outputBatch = await incompleteFixer.step(
           { incompletes },
-          {
-            config,
-            checksumer,
-            pouch: this.pouch
-          }
+          opts
         )([ignoredEvent, renamedEvent])
         should(outputBatch).deepEqual([renamedEvent])
       })
@@ -290,11 +266,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
 
         const outputBatch = await incompleteFixer.step(
           { incompletes },
-          {
-            config,
-            checksumer,
-            pouch: this.pouch
-          }
+          opts
         )(inputBatch)
         should(completionChanges(outputBatch)).deepEqual([
           {
@@ -312,8 +284,6 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
 
     describe('file renamed then deleted', () => {
       it('is deleted at its original path', async function () {
-        const { config } = this
-
         const src = 'src'
         const dst = 'dst'
         const renamedEvent = builders
@@ -336,11 +306,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
         for (const inputBatch of [[renamedEvent], [deletedEvent]]) {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
-            {
-              config,
-              checksumer,
-              pouch: this.pouch
-            }
+            opts
           )(inputBatch)
           outputBatches.push(outputBatch)
         }
@@ -395,11 +361,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
         for (const inputBatch of [[firstRenamedEvent], [secondRenamedEvent]]) {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
-            {
-              config,
-              checksumer,
-              pouch: this.pouch
-            }
+            opts
           )(inputBatch)
           outputBatches.push(outputBatch)
         }
@@ -466,11 +428,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
         ]) {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
-            {
-              config,
-              checksumer,
-              pouch: this.pouch
-            }
+            opts
           )(inputBatch)
           outputBatches.push(completionChanges(outputBatch))
         }
@@ -494,8 +452,6 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
 
     describe('file renamed and then renamed back to its previous name', () => {
       it('results in no events at all', async function () {
-        const { config } = this
-
         const src = 'src'
         const dst = 'dst'
         await syncDir.ensureFile(src)
@@ -520,11 +476,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
         for (const inputBatch of [[firstRenamedEvent], [secondRenamedEvent]]) {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
-            {
-              config,
-              checksumer,
-              pouch: this.pouch
-            }
+            opts
           )(inputBatch)
           outputBatches.push(outputBatch)
         }
@@ -535,8 +487,6 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
 
     describe('file renamed to backup location and replaced by new file', () => {
       it('is modified once and not deleted', async function () {
-        const { config } = this
-
         const src = 'src'
         const tmp = 'src.tmp'
         await syncDir.ensureFile(src)
@@ -572,11 +522,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
         ]) {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
-            {
-              config,
-              checksumer,
-              pouch: this.pouch
-            }
+            opts
           )(inputBatch)
           outputBatches.push(outputBatch)
         }
@@ -616,8 +562,6 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
       })
 
       it('results in the renamed event', async function () {
-        const { config, pouch } = this
-
         await syncDir.ensureFile(dst)
         const createdEvent = builders
           .event()
@@ -639,11 +583,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
         for (const inputBatch of [[createdEvent], [renamedEvent]]) {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
-            {
-              config,
-              checksumer,
-              pouch
-            }
+            opts
           )(inputBatch)
           outputBatches.push(outputBatch)
         }
@@ -661,7 +601,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
       })
 
       it('results in the renamed event followed by the rebuilt modified event', async function () {
-        const { config, pouch } = this
+        const { config } = this
 
         await syncDir.ensureFile(dst)
         const modifiedEvent = builders
@@ -684,11 +624,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
         for (const inputBatch of [[modifiedEvent], [renamedEvent]]) {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
-            {
-              config,
-              checksumer,
-              pouch
-            }
+            opts
           )(inputBatch)
           outputBatches.push(outputBatch)
         }
@@ -723,7 +659,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
       })
 
       it('results in one renamed event followed by the rebuilt modified event', async function () {
-        const { config, pouch } = this
+        const { config } = this
 
         await syncDir.ensureFile(dst2)
         const modifiedEvent = builders
@@ -758,11 +694,7 @@ describe('core/local/channel_watcher/incomplete_fixer', () => {
         ]) {
           const outputBatch = await incompleteFixer.step(
             { incompletes },
-            {
-              config,
-              checksumer,
-              pouch
-            }
+            opts
           )(inputBatch)
           outputBatches.push(outputBatch)
         }
