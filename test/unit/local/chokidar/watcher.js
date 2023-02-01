@@ -10,6 +10,7 @@ const EventEmitter = require('events')
 const { FOLDER } = require('../../../../core/metadata')
 const { TMP_DIR_NAME } = require('../../../../core/local/constants')
 const Watcher = require('../../../../core/local/chokidar/watcher')
+const chokidarEvent = require('../../../../core/local/chokidar/event')
 
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
@@ -17,7 +18,7 @@ const { ContextDir } = require('../../../support/helpers/context_dir')
 const { onPlatform } = require('../../../support/helpers/platform')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
-onPlatform('darwin', () => {
+onPlatform('linux', () => {
   describe('ChokidarWatcher Tests', function () {
     let builders
 
@@ -506,6 +507,63 @@ onPlatform('darwin', () => {
             }, 1800)
           })
         })
+      })
+    })
+
+    describe('when a rescan request event is fired', function () {
+      it('drops buffered events', async function () {
+        await this.watcher.start()
+
+        const filePath = path.join(this.syncPath, 'added')
+        const stats = builders.stats().kind('file').build()
+        this.watcher.watcher.emit('add', filePath, stats)
+
+        should(this.watcher.buffer.events).deepEqual([
+          chokidarEvent.build('add', filePath, stats)
+        ])
+
+        this.watcher.watcher.emit('raw', 'unknown', this.syncPath, {
+          path: this.syncPath,
+          flags: 5,
+          event: 'unknown',
+          changes: {
+            inode: false,
+            finder: false,
+            access: false,
+            xattrs: false
+          }
+        })
+
+        should(this.watcher.buffer.events).be.empty()
+      })
+
+      it('restarts the watcher', async function () {
+        await this.watcher.start()
+
+        sinon.spy(this.watcher, 'stop')
+        sinon.spy(this.watcher, 'start')
+
+        try {
+          this.watcher.watcher.emit('raw', 'unknown', this.syncPath, {
+            path: this.syncPath,
+            flags: 5,
+            event: 'unknown',
+            changes: {
+              inode: false,
+              finder: false,
+              access: false,
+              xattrs: false
+            }
+          })
+          // Give some time to the watcher to restart
+          await Promise.delay(2000)
+
+          should(this.watcher.stop).have.been.calledOnce()
+          should(this.watcher.start).have.been.calledOnce()
+        } finally {
+          this.watcher.stop.restore()
+          this.watcher.start.restore()
+        }
       })
     })
   })
