@@ -255,9 +255,15 @@ class LocalWatcher {
     }
   }
 
-  async stop(force /*: ?bool */) {
+  async stop(force /*: ?bool */ = false) {
     log.debug('Stopping watcher...')
-    if (this.watcher) {
+
+    if (!this.watcher) return
+
+    if (force) {
+      // Drop buffered events
+      this.buffer.clear()
+    } else {
       // XXX manually fire events for added file, because chokidar will cancel
       // them if they are still in the awaitWriteFinish period
       for (let relpath in this.watcher._pendingWrites) {
@@ -269,15 +275,20 @@ class LocalWatcher {
           log.warn({ err }, 'Could not fire remaining add events')
         }
       }
-      await this.watcher.close()
-      this.watcher = null
     }
+
+    // Stop underlying Chokidar watcher
+    await this.watcher.close()
+    this.watcher = null
+    // Stop accepting new events
     this.buffer.switchMode('idle')
-    if (force) return Promise.resolve()
-    // Give some time for awaitWriteFinish events to be managed
-    return new Promise(resolve => {
-      setTimeout(resolve, 1000)
-    })
+
+    if (!force) {
+      // Give some time for awaitWriteFinish events to be managed
+      return new Promise(resolve => {
+        setTimeout(resolve, 1000)
+      })
+    }
   }
 
   /* Helpers */

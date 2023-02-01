@@ -84,6 +84,11 @@ class EventBuffer /*:: <EventType> */ {
     this.flush()
     this.mode = mode
   }
+
+  clear() /*: void */ {
+    this.events = []
+    this.clearTimeout()
+  }
 }
 
 module.exports = EventBuffer
