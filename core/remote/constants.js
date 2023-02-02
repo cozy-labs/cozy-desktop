@@ -36,6 +36,8 @@ module.exports = {
   // Remote watcher changes fetch interval
   HEARTBEAT: parseInt(process.env.COZY_DESKTOP_HEARTBEAT) || DEFAULT_HEARTBEAT,
 
+  REMOTE_WATCHER_FATAL_EVENT: 'RemoteWatcher:fatal',
+
   // ToS updated warning code
   TOS_UPDATED_WARNING_CODE: 'tos-updated',
 

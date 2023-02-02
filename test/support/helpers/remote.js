@@ -13,6 +13,7 @@ const {
   ROOT_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
+const remoteErrors = require('../../../core/remote/errors')
 
 /*::
 import type { Client as OldCozyClient } from 'cozy-client-js'
@@ -53,7 +54,20 @@ class RemoteTestHelpers {
 
   async pullChanges() {
     this.side.watcher.running = true
-    await this.side.watcher.watch()
+    try {
+      await this.side.watcher.watch()
+    } catch (err) {
+      switch (err.code) {
+        case remoteErrors.COZY_CLIENT_REVOKED_CODE:
+        case remoteErrors.MISSING_PERMISSIONS_CODE:
+        case remoteErrors.COZY_NOT_FOUND_CODE: {
+          this.side.watcher.fatal(err)
+          break
+        }
+        default:
+          this.side.watcher.error(err)
+      }
+    }
     this.side.watcher.running = false
   }
 

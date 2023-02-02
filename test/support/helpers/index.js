@@ -84,9 +84,9 @@ class TestHelpers {
   }
 
   async syncAll() {
-    this._sync.lifecycle.end('start')
+    this._sync.lifecycle.currentState = 'done-start'
     await this._sync.sync({ manualRun: true })
-    this._sync.lifecycle.end('stop')
+    this._sync.lifecycle.currentState = 'done-stop'
   }
 
   async pullAndSyncAll() {

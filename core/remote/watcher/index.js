@@ -9,7 +9,12 @@ const _ = require('lodash')
 
 const metadata = require('../../metadata')
 const remoteChange = require('../change')
-const { FILE_TYPE, DIR_TYPE, HEARTBEAT } = require('../constants')
+const {
+  FILE_TYPE,
+  DIR_TYPE,
+  HEARTBEAT,
+  REMOTE_WATCHER_FATAL_EVENT
+} = require('../constants')
 const remoteErrors = require('../errors')
 const { inRemoteTrash } = require('../document')
 const squashMoves = require('./squashMoves')
@@ -77,10 +82,12 @@ class RemoteWatcher {
   events: EventEmitter
   running: boolean
   watchTimeout: TimeoutID
+  heartbeat: number
   */
 
   constructor(
-    { config, pouch, prep, remoteCozy, events } /*: RemoteWatcherOptions */
+    { config, pouch, prep, remoteCozy, events } /*: RemoteWatcherOptions */,
+    heartbeat /*: number */ = HEARTBEAT
   ) {
     this.config = config
     this.pouch = pouch
@@ -88,6 +95,7 @@ class RemoteWatcher {
     this.remoteCozy = remoteCozy
     this.events = events
     this.running = false
+    this.heartbeat = heartbeat
 
     autoBind(this)
   }
@@ -96,6 +104,7 @@ class RemoteWatcher {
     if (!this.running) {
       log.debug('Starting watcher')
       this.running = true
+
       await this.resetTimeout()
     }
   }
@@ -118,32 +127,29 @@ class RemoteWatcher {
   }
 
   onFatal(listener /*: Error => any */) {
-    this.events.on('RemoteWatcher:fatal', listener)
+    this.events.on(REMOTE_WATCHER_FATAL_EVENT, listener)
   }
 
   fatal(err /*: Error */) {
     log.error({ err, sentry: true }, `Remote watcher fatal: ${err.message}`)
-    this.events.emit('RemoteWatcher:fatal', err)
+    this.events.emit(REMOTE_WATCHER_FATAL_EVENT, err)
+    this.events.removeAllListeners(REMOTE_WATCHER_FATAL_EVENT)
     this.stop()
   }
 
   async resetTimeout({
     manualRun = false
   } /*: { manualRun: boolean } */ = {}) /*: Promise<?RemoteError> */ {
+    clearTimeout(this.watchTimeout)
+
+    if (!this.running) {
+      log.debug('Watcher stopped: skipping remote watch')
+      return
+    }
+
     try {
-      clearTimeout(this.watchTimeout)
-
-      if (!this.running) {
-        log.debug('Watcher stopped: skipping remote watch')
-        return
-      }
-
-      const err = await this.watch()
-
-      if (this.running) {
-        this.watchTimeout = setTimeout(this.resetTimeout, HEARTBEAT)
-      }
-
+      await this.watch()
+    } catch (err) {
       if (manualRun) {
         return err
       } else if (err) {
@@ -151,22 +157,27 @@ class RemoteWatcher {
           case remoteErrors.COZY_CLIENT_REVOKED_CODE:
           case remoteErrors.MISSING_PERMISSIONS_CODE:
           case remoteErrors.COZY_NOT_FOUND_CODE:
-            this.fatal(err)
-            break
+            throw err
           default:
             this.error(err)
         }
       }
-    } catch (err) {
-      if (manualRun) {
-        return err
-      } else {
-        this.fatal(err)
-      }
+    }
+
+    // TODO: move this to a separate orchestrator (along with local watchers and
+    // sync orchestration) as this is really hard to test.
+    if (this.running) {
+      this.watchTimeout = setTimeout(async () => {
+        try {
+          await this.resetTimeout()
+        } catch (err) {
+          this.fatal(err)
+        }
+      }, this.heartbeat)
     }
   }
 
-  async watch() /*: Promise<?RemoteError> */ {
+  async watch() /*: Promise<void> */ {
     const release = await this.pouch.lock(this)
     try {
       if (!this.running) {
@@ -208,7 +219,7 @@ class RemoteWatcher {
     } catch (err) {
       // TODO: Maybe wrap remote errors more closely to remote calls to avoid
       // wrapping other kinds of errors? PouchDB errors for example.
-      return remoteErrors.wrapError(err)
+      throw remoteErrors.wrapError(err)
     } finally {
       release()
       this.events.emit('buffering-end')
@@ -640,6 +651,4 @@ class RemoteWatcher {
   }
 }
 
-module.exports = {
-  RemoteWatcher
-}
+module.exports = { RemoteWatcher }

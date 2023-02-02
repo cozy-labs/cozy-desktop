@@ -77,13 +77,25 @@ describe('Sync', function () {
 
   describe('start', function () {
     beforeEach('instanciate sync', function () {
+      const events = new EventEmitter()
+
       this.local.start = sinon.stub().resolves()
-      this.local.watcher.running = Promise.resolve()
+      this.local.watcher.onFatal = sinon.stub().callsFake(listener => {
+        events.on('local:fatal', listener)
+      })
+      this.local.watcher.fatal = sinon.stub().callsFake(err => {
+        events.emit('local:fatal', err)
+      })
       this.local.stop = sinon.stub().resolves()
       this.remote.start = sinon.stub().resolves()
       this.remote.watcher.running = true
       this.remote.watcher.onError = sinon.stub().returns()
-      this.remote.watcher.onFatal = sinon.stub().returns()
+      this.remote.watcher.onFatal = sinon.stub().callsFake(listener => {
+        events.on('remote:fatal', listener)
+      })
+      this.remote.watcher.fatal = sinon.stub().callsFake(err => {
+        events.emit('remote:fatal', err)
+      })
       this.remote.stop = sinon.stub().resolves()
       this.sync.sync = sinon.stub().resolves()
       sinon.spy(this.sync, 'stop')
@@ -126,9 +138,7 @@ describe('Sync', function () {
 
     context('if remote watcher fails to start', () => {
       beforeEach(function () {
-        this.remote.start = sinon.stub().callsFake(() => {
-          this.remote.watcher.fatal(new Error('failed'))
-        })
+        this.remote.start = sinon.stub().rejects(new Error('failed'))
       })
 
       it('does not start replication', async function () {
@@ -158,35 +168,31 @@ describe('Sync', function () {
     })
 
     context('if local watcher rejects while running', () => {
-      let rejectLocalWatcher
       beforeEach(async function () {
-        this.local.watcher.running = new Promise((resolve, reject) => {
-          rejectLocalWatcher = reject
-        })
         this.sync.start()
         await this.sync.started()
       })
 
       it('stops replication', async function () {
-        rejectLocalWatcher(new Error('failed'))
+        this.local.watcher.fatal(new Error('failed'))
         await this.sync.stopped()
         should(this.sync.stop).have.been.calledOnce()
       })
 
       it('stops local watcher', async function () {
-        rejectLocalWatcher(new Error('failed'))
+        this.local.watcher.fatal(new Error('failed'))
         await this.sync.stopped()
         should(this.local.stop).have.been.calledOnce()
       })
 
       it('stops remote watcher', async function () {
-        rejectLocalWatcher(new Error('failed'))
+        this.local.watcher.fatal(new Error('failed'))
         await this.sync.stopped()
         should(this.remote.stop).have.been.calledOnce()
       })
 
       it('emits a Sync:fatal event', async function () {
-        rejectLocalWatcher(new Error('failed'))
+        this.local.watcher.fatal(new Error('failed'))
         await this.sync.stopped()
         should(this.sync.events.emit).have.been.calledWith('Sync:fatal')
       })
@@ -198,12 +204,12 @@ describe('Sync', function () {
   describe('sync', function () {
     beforeEach('stub lifecycle', function () {
       this.sync.events = new EventEmitter()
-      this.sync.lifecycle.end('start')
+      this.sync.lifecycle.currentState = 'done-start'
     })
     afterEach('restore lifecycle', function () {
       this.sync.events.emit('stopped')
       delete this.sync.events
-      this.sync.lifecycle.end('stop')
+      this.sync.lifecycle.currentState = 'done-stop'
     })
 
     it('waits for and applies available changes', async function () {
@@ -523,11 +529,11 @@ describe('Sync', function () {
       describe('when apply throws a NEEDS_REMOTE_MERGE_CODE error', () => {
         beforeEach(function () {
           sinon.stub(this.sync, 'blockSyncFor').callsFake(() => {
-            this.sync.lifecycle.end('stop')
+            this.sync.lifecycle.currentState = 'done-stop'
           })
         })
         beforeEach('simulate error', async function () {
-          this.sync.lifecycle.end('start')
+          this.sync.lifecycle.currentState = 'done-start'
           sinon.stub(this.sync, 'apply').rejects(
             new syncErrors.SyncError({
               code: remoteErrors.NEEDS_REMOTE_MERGE_CODE,

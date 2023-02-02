@@ -64,10 +64,10 @@ class LifeCycle extends EventEmitter {
   end(endState /*: 'start' | 'stop' */) {
     switch (endState) {
       case 'start':
-        this.transitionTo('done-start')
+        if (this.currentState === 'will-start') this.transitionTo('done-start')
         break
       case 'stop':
-        this.transitionTo('done-stop')
+        if (this.currentState === 'will-stop') this.transitionTo('done-stop')
         break
     }
   }

@@ -37,6 +37,8 @@ const overwrite = require('./overwrite')
 const dispatch = require('./dispatch')
 const logger = require('../../utils/logger')
 
+const { LOCAL_WATCHER_FATAL_EVENT } = require('../constants')
+
 /*::
 import type { Config } from '../../config'
 import type { Pouch } from '../../pouch'
@@ -164,12 +166,13 @@ class ChannelWatcher {
   }
 
   onFatal(listener /*: Error => any */) /*: void */ {
-    this.events.on('LocalWatcher:fatal', listener)
+    this.events.on(LOCAL_WATCHER_FATAL_EVENT, listener)
   }
 
   fatal(err /*: Error */) /*: void */ {
     log.error({ err, sentry: true }, `Local watcher fatal: ${err.message}`)
-    this.events.emit('LocalWatcher:fatal', err)
+    this.events.emit(LOCAL_WATCHER_FATAL_EVENT, err)
+    this.events.removeAllListeners(LOCAL_WATCHER_FATAL_EVENT)
     this.stop()
   }
 }
