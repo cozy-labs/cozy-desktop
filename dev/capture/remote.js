@@ -173,18 +173,25 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
       case 'mv':
         debug('- mv', action.src, action.dst)
         {
-          const newParent = await cozy.files.statByPath(
-            `/${path.posix.dirname(action.dst)}`
-          )
-          const remoteDoc = await cozy.files.statByPath(`/${action.src}`)
           if (action.merge)
             throw new Error('Move.merge not implemented on remote')
+          let opts = {}
           try {
-            return await cozy.files.updateAttributesById(remoteDoc._id, {
-              dir_id: newParent._id,
-              // path: '/' + action.dst,
-              name: path.posix.basename(action.dst)
-            })
+            if (
+              path.posix.dirname(action.src) != path.posix.dirname(action.dst)
+            ) {
+              const newParent = await cozy.files.statByPath(
+                `/${path.posix.dirname(action.dst)}`
+              )
+              opts.dir_id = newParent._id
+            }
+            if (
+              path.posix.basename(action.src) != path.posix.basename(action.dst)
+            ) {
+              opts.name = path.posix.basename(action.dst)
+            }
+            const remoteDoc = await cozy.files.statByPath(`/${action.src}`)
+            return await cozy.files.updateAttributesById(remoteDoc._id, opts)
           } catch (err) {
             if (err.status === 409) {
               // Remove conflicting doc
@@ -194,11 +201,8 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
               await cozy.files.destroyById(remoteOverwriten._id)
 
               // Retry move
-              return cozy.files.updateAttributesById(remoteDoc._id, {
-                dir_id: newParent._id,
-                // path: '/' + action.dst,
-                name: path.posix.basename(action.dst)
-              })
+              const remoteDoc = await cozy.files.statByPath(`/${action.src}`)
+              return await cozy.files.updateAttributesById(remoteDoc._id, opts)
             } else {
               throw err
             }

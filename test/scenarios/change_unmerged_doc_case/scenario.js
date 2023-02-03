@@ -4,6 +4,10 @@
 
 module.exports = ({
   useCaptures: false,
+  disabled: {
+    'local/darwin':
+      'cannot work as fsevents fires an add event for Dir/renamed-child last and we end up considrering this is yet another move. We need to figure out a way to get these events in order'
+  },
   init: [],
   actions: [
     { type: 'mkdir', path: 'dir' },
