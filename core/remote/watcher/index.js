@@ -9,7 +9,12 @@ const _ = require('lodash')
 
 const metadata = require('../../metadata')
 const remoteChange = require('../change')
-const { FILE_TYPE, DIR_TYPE, HEARTBEAT } = require('../constants')
+const {
+  FILE_TYPE,
+  DIR_TYPE,
+  HEARTBEAT,
+  REMOTE_WATCHER_FATAL_EVENT
+} = require('../constants')
 const remoteErrors = require('../errors')
 const { inRemoteTrash } = require('../document')
 const squashMoves = require('./squashMoves')
@@ -118,12 +123,13 @@ class RemoteWatcher {
   }
 
   onFatal(listener /*: Error => any */) {
-    this.events.on('RemoteWatcher:fatal', listener)
+    this.events.on(REMOTE_WATCHER_FATAL_EVENT, listener)
   }
 
   fatal(err /*: Error */) {
     log.error({ err, sentry: true }, `Remote watcher fatal: ${err.message}`)
-    this.events.emit('RemoteWatcher:fatal', err)
+    this.events.emit(REMOTE_WATCHER_FATAL_EVENT, err)
+    this.events.removeAllListeners(REMOTE_WATCHER_FATAL_EVENT)
     this.stop()
   }
 

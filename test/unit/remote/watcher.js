@@ -24,7 +24,8 @@ const remoteErrors = require('../../../core/remote/errors')
 const {
   FILE_TYPE,
   DIR_TYPE,
-  INITIAL_SEQ
+  INITIAL_SEQ,
+  REMOTE_WATCHER_FATAL_EVENT
 } = require('../../../core/remote/constants')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 const timestamp = require('../../../core/utils/timestamp')
@@ -145,17 +146,17 @@ describe('RemoteWatcher', function () {
       should(this.watcher.watchTimeout.ref()).eql(timeoutID)
     })
 
-    it('emits a RemoteWatcher:fatal event on fatal error during first watch()', async function () {
+    it('emits a REMOTE_WATCHER_FATAL_EVENT event on fatal error during first watch()', async function () {
       this.watcher.watch.resolves(fatalError)
 
       await this.watcher.start()
       should(this.events.emit).have.been.calledWith(
-        'RemoteWatcher:fatal',
+        REMOTE_WATCHER_FATAL_EVENT,
         fatalError
       )
     })
 
-    it('emits a RemoteWatcher:fatal event on fatal error during second watch()', async function () {
+    it('emits a REMOTE_WATCHER_FATAL_EVENT event on fatal error during second watch()', async function () {
       this.watcher.watch
         .onFirstCall()
         .resolves()
@@ -165,7 +166,7 @@ describe('RemoteWatcher', function () {
       await this.watcher.start()
       await this.watcher.resetTimeout()
       should(this.events.emit).have.been.calledWith(
-        'RemoteWatcher:fatal',
+        REMOTE_WATCHER_FATAL_EVENT,
         fatalError
       )
     })
@@ -306,10 +307,10 @@ describe('RemoteWatcher', function () {
         })
 
         context('during a scheduled run', () => {
-          it('emits a RemoteWatcher:fatal event', async function () {
+          it('emits a REMOTE_WATCHER_FATAL_EVENT event', async function () {
             await this.watcher.resetTimeout()
             await should(this.events.emit).have.been.calledWith(
-              'RemoteWatcher:fatal',
+              REMOTE_WATCHER_FATAL_EVENT,
               err
             )
           })
