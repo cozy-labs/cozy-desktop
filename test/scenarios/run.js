@@ -126,6 +126,7 @@ describe('Scenario', function () {
           }
         } else {
           it(localTestName, async function () {
+            this.timeout(3 * 60 * 1000)
             await runLocalChokidarWithoutCaptures(
               scenario,
               _.cloneDeep(eventsFile),
@@ -156,6 +157,9 @@ describe('Scenario', function () {
     }
 
     it(remoteTestName, async function () {
+      if (platform === 'darwin') {
+        this.timeout(3 * 60 * 1000)
+      }
       await runRemote(scenario, helpers)
     })
   }

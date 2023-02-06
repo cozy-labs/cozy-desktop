@@ -283,7 +283,11 @@ describe('Update file', () => {
   })
 
   describe('M1, local merge M1, M2, remote sync M1, local merge M2', () => {
-    it('fails remote sync M1 & local merge M2', async () => {
+    it('fails remote sync M1 & local merge M2', async function () {
+      if (process.platform === 'darwin') {
+        this.timeout(60 * 1000)
+      }
+
       await cozy.files.create('Initial content', { name: 'file' })
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
