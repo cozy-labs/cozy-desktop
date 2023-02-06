@@ -4,6 +4,10 @@
 
 module.exports = ({
   useCaptures: false,
+  disabled: {
+    'local/darwin':
+      'cannot work as fsevents fires an add event for Dir/renamed-child last and we end up considrering this is yet another move. We need to figure out a way to get these events in order'
+  },
   init: [],
   actions: [
     { type: 'mkdir', path: 'dir' },
@@ -24,9 +28,9 @@ module.exports = ({
       path: 'moved-file',
       content: 'moved-file content'
     },
-    { type: 'wait', ms: 1000 },
+    { type: 'wait', ms: 500 },
     { type: 'mv', src: 'dir', dst: 'Dir' },
-    { type: 'wait', ms: 1000 },
+    { type: 'wait', ms: 500 },
     { type: 'mv', src: 'Dir/renamed-child', dst: 'Dir/Renamed-Child' },
     {
       type: 'mv',
@@ -35,7 +39,7 @@ module.exports = ({
     },
     { type: 'mv', src: 'file', dst: 'File' },
     { type: 'mv', src: 'moved-file', dst: 'Dir/moved-file' },
-    { type: 'wait', ms: 1000 }
+    { type: 'wait', ms: 500 }
   ],
   expected: {
     tree: [

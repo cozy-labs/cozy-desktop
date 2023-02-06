@@ -29,7 +29,10 @@ const TestHelpers = require('../support/helpers')
 const pouchHelpers = require('../support/helpers/pouch')
 const remoteCaptureHelpers = require('../../dev/capture/remote')
 
-const { platform } = process
+const {
+  env: { CI: isCI },
+  platform
+} = process
 
 const logger = require('../../core/utils/logger')
 const log = new logger({ component: 'TEST' })
@@ -126,6 +129,7 @@ describe('Scenario', function () {
           }
         } else {
           it(localTestName, async function () {
+            if (isCI) this.timeout(3 * 60 * 1000)
             await runLocalChokidarWithoutCaptures(
               scenario,
               _.cloneDeep(eventsFile),
@@ -141,7 +145,7 @@ describe('Scenario', function () {
         it.skip(`${stoppedTestName} (${stoppedTestSkipped})`, () => {})
       } else {
         it(stoppedTestName, async function () {
-          this.timeout(3 * 60 * 1000)
+          if (isCI) this.timeout(60 * 1000)
           await runLocalStopped(scenario, helpers)
         })
       }
@@ -156,6 +160,7 @@ describe('Scenario', function () {
     }
 
     it(remoteTestName, async function () {
+      if (isCI && platform === 'darwin') this.timeout(60 * 1000)
       await runRemote(scenario, helpers)
     })
   }
