@@ -1,8 +1,8 @@
 [main]
 host = https://www.transifex.com
 
-[cozy-desktop.enjson]
+[o:cozy:p:cozy-desktop:r:enjson]
 file_filter = gui/locales/<lang>.json
 source_file = gui/locales/en.json
 source_lang = en
-type = KEYVALUEJSON
+type        = KEYVALUEJSON
