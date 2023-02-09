@@ -103,8 +103,11 @@ class LifeCycle extends EventEmitter {
 
   async ready() /*: Promise<void> */ {
     return new Promise(resolve => {
-      if (this.blockedFor == null) resolve()
-      else this.once('ready', resolve)
+      this.once('ready', resolve)
+      if (this.blockedFor == null) {
+        resolve()
+        this.off('ready', resolve)
+      }
     })
   }
 }
