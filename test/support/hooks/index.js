@@ -10,3 +10,8 @@
  */
 
 require('./logging')
+
+const suppressWarnings = require('../../support/suppress-experimental-warnings')
+// Without this, calls to fetch() will print a warning in the console and builds
+// will fail on AppVeyor.
+suppressWarnings.fetch()
