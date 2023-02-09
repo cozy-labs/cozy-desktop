@@ -138,7 +138,7 @@
     "debug-menu": "^0.6.1",
     "del": "^6.0.0",
     "devtron": "^1.4.0",
-    "electron": "21.4.1",
+    "electron": "22.2.0",
     "electron-builder": "^23.6.0",
     "electron-download": "^4.1.1",
     "electron-mocha": "11.0.2",
