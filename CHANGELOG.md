@@ -1,5 +1,25 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.37.0-beta.1 - 2023-02-10
+
+Improvements for all users:
+
+- The Electron framework was upgraded to v23.0.0. This major version fixes a lot
+  of security errors as well as other smaller errors like crashes.
+
+Improvements for macOS users:
+
+- Local renamings of files being uploaded will now be correctly synchronized on
+  the remote Cozy without the need of a client restart.
+- Desktop will now restart its local watcher when the local filesystem notifies
+  that the local synchronization directory should be rescanned because some
+  changes could not be transmitted to the application.
+  This should prevent the few cases of trashing of all synchronized content.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.36.1 - 2022-10-19
 
 Improvements for all users:
