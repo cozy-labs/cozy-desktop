@@ -28,7 +28,7 @@ module.exports = {
 
 function loop(
   channel /*: Channel */,
-  opts /*: { scan: Scanner } */
+  opts /*: { scan: Scanner, fatal: Error => any } */
 ) /*: Channel */ {
   return channel.asyncMap(async batch => {
     for (const event of batch) {
@@ -42,5 +42,5 @@ function loop(
       }
     }
     return batch
-  })
+  }, opts.fatal)
 }

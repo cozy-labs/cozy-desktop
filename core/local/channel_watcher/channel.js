@@ -48,36 +48,52 @@ class Channel {
 
   async doMap(
     fn /*: (ChannelBatch) => ChannelBatch */,
-    channel /*: Channel */
+    channel /*: Channel */,
+    notifyErr /*: Error => any */
   ) /*: Promise<void> */ {
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const batch = fn(await this.pop())
-      channel.push(batch)
+      try {
+        const batch = fn(await this.pop())
+        channel.push(batch)
+      } catch (err) {
+        notifyErr(err)
+      }
     }
   }
 
-  map(fn /*: (ChannelBatch) => ChannelBatch */) /*: Channel */ {
+  map(
+    fn /*: (ChannelBatch) => ChannelBatch */,
+    notifyErr /*: Error => any */
+  ) /*: Channel */ {
     const channel = new Channel()
-    this.doMap(fn, channel)
+    this.doMap(fn, channel, notifyErr)
     return channel
   }
 
   async doAsyncMap(
     fn /*: (ChannelBatch) => Promise<ChannelBatch> */,
-    channel /*: Channel */
+    channel /*: Channel */,
+    notifyErr /*: Error => any */
   ) /*: Promise<void> */ {
     // eslint-disable-next-line no-constant-condition
     while (true) {
-      const batch = await this.pop()
-      const after = await fn(batch)
-      channel.push(after)
+      try {
+        const batch = await this.pop()
+        const after = await fn(batch)
+        channel.push(after)
+      } catch (err) {
+        notifyErr(err)
+      }
     }
   }
 
-  asyncMap(fn /*: (ChannelBatch) => Promise<ChannelBatch> */) /*: Channel */ {
+  asyncMap(
+    fn /*: (ChannelBatch) => Promise<ChannelBatch> */,
+    notifyErr /*: Error => any */
+  ) /*: Channel */ {
     const channel = new Channel()
-    this.doAsyncMap(fn, channel)
+    this.doAsyncMap(fn, channel, notifyErr)
     return channel
   }
 }

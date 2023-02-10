@@ -69,7 +69,8 @@ describe('core/local/channel_watcher/dispatch.loop()', function () {
       events,
       prep,
       pouch: this.pouch,
-      state: await dispatch.initialState()
+      state: await dispatch.initialState(),
+      fatal: sinon.spy()
     }
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)

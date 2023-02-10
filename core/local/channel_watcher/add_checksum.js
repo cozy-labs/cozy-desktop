@@ -51,7 +51,7 @@ module.exports = {
  */
 function loop(
   channel /*: Channel */,
-  opts /*: { config: Config , checksumer: Checksumer } */
+  opts /*: { config: Config , checksumer: Checksumer, fatal: Error => any } */
 ) /*: Channel */ {
   const syncPath = opts.config.syncPath
 
@@ -75,7 +75,7 @@ function loop(
       }
     }
     return events
-  })
+  }, opts.fatal)
 }
 
 /** Return true when file is supposed to exist according to event data.

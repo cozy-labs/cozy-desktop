@@ -64,10 +64,10 @@ class LifeCycle extends EventEmitter {
   end(endState /*: 'start' | 'stop' */) {
     switch (endState) {
       case 'start':
-        this.transitionTo('done-start')
+        if (this.currentState === 'will-start') this.transitionTo('done-start')
         break
       case 'stop':
-        this.transitionTo('done-stop')
+        if (this.currentState === 'will-stop') this.transitionTo('done-stop')
         break
     }
   }
@@ -103,8 +103,11 @@ class LifeCycle extends EventEmitter {
 
   async ready() /*: Promise<void> */ {
     return new Promise(resolve => {
-      if (this.blockedFor == null) resolve()
-      else this.once('ready', resolve)
+      this.once('ready', resolve)
+      if (this.blockedFor == null) {
+        resolve()
+        this.off('ready', resolve)
+      }
     })
   }
 }

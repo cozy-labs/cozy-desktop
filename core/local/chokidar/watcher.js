@@ -33,6 +33,8 @@ const stater = require('../stater')
 const syncDir = require('../sync_dir')
 const logger = require('../../utils/logger')
 
+const { LOCAL_WATCHER_FATAL_EVENT } = require('../constants')
+
 /*::
 import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
@@ -52,9 +54,12 @@ log.chokidar = log.child({
   component: 'Chokidar'
 })
 
-function hasPath(event /*: ChokidarEvent */) /*: boolean %checks */ {
-  return event.path !== ''
-}
+const hasPath = (event /*: ChokidarEvent */) /*: boolean %checks */ =>
+  event.path !== ''
+
+// See https://developer.apple.com/documentation/coreservices/1455361-fseventstreameventflags/kfseventstreameventflagmustscansubdirs
+const isRescanFlag = (flags /*: number */) /*: boolean %checks */ =>
+  (flags & 0x00000001) === 1
 
 /**
  * This file contains the filesystem watcher that will trigger operations when
@@ -73,9 +78,6 @@ class LocalWatcher {
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarEvent>
   pendingChanges: LocalChange[]
-  running: Promise<void>
-  _runningResolve: ?Function
-  _runningReject: ?Function
   */
 
   constructor(
@@ -101,7 +103,7 @@ class LocalWatcher {
         await this.onFlush(rawEvents)
       } catch (err) {
         log.error({ err, sentry: true }, 'fatal chokidar watcher error')
-        this._runningReject && this._runningReject(err)
+        this.fatal(err)
       }
     })
   }
@@ -176,9 +178,18 @@ class LocalWatcher {
 
       this.watcher
         .on('ready', () => this.buffer.switchMode('timeout'))
-        .on('raw', (event, path, details) =>
+        .on('raw', async (event, path, details) => {
           log.chokidar.debug({ event, path, details }, 'raw')
-        )
+
+          if (isRescanFlag(details.flags)) {
+            try {
+              await this.stop(true)
+              await this.start()
+            } catch (err) {
+              this.fatal(err)
+            }
+          }
+        })
         .on('error', err => {
           if (err.message === 'watch ENOSPC') {
             log.error(
@@ -189,15 +200,12 @@ class LocalWatcher {
           } else {
             log.error({ err, sentry: true }, 'could not start chokidar watcher')
           }
+          this.fatal(err)
         })
 
       log.info(`Now watching ${this.syncPath}`)
     })
 
-    this.running = new Promise((resolve, reject) => {
-      this._runningResolve = resolve
-      this._runningReject = reject
-    })
     return started
   }
 
@@ -261,9 +269,15 @@ class LocalWatcher {
     }
   }
 
-  async stop(force /*: ?bool */) {
+  async stop(force /*: ?bool */ = false) {
     log.debug('Stopping watcher...')
-    if (this.watcher) {
+
+    if (!this.watcher) return
+
+    if (force) {
+      // Drop buffered events
+      this.buffer.clear()
+    } else {
       // XXX manually fire events for added file, because chokidar will cancel
       // them if they are still in the awaitWriteFinish period
       for (let relpath in this.watcher._pendingWrites) {
@@ -275,25 +289,37 @@ class LocalWatcher {
           log.warn({ err }, 'Could not fire remaining add events')
         }
       }
-      await this.watcher.close()
-      this.watcher = null
     }
-    if (this._runningResolve) {
-      this._runningResolve()
-      this._runningResolve = null
-    }
+
+    // Stop underlying Chokidar watcher
+    await this.watcher.close()
+    this.watcher = null
+    // Stop accepting new events
     this.buffer.switchMode('idle')
-    if (force) return Promise.resolve()
-    // Give some time for awaitWriteFinish events to be managed
-    return new Promise(resolve => {
-      setTimeout(resolve, 1000)
-    })
+
+    if (!force) {
+      // Give some time for awaitWriteFinish events to be managed
+      return new Promise(resolve => {
+        setTimeout(resolve, 1000)
+      })
+    }
   }
 
   /* Helpers */
   async checksum(filePath /*: string */) /*: Promise<string> */ {
     const absPath = path.join(this.syncPath, filePath)
     return this.checksumer.push(absPath)
+  }
+
+  onFatal(listener /*: Error => any */) /*: void */ {
+    this.events.on(LOCAL_WATCHER_FATAL_EVENT, listener)
+  }
+
+  fatal(err /*: Error */) /*: void */ {
+    log.error({ err, sentry: true }, `Local watcher fatal: ${err.message}`)
+    this.events.emit(LOCAL_WATCHER_FATAL_EVENT, err)
+    this.events.removeAllListeners(LOCAL_WATCHER_FATAL_EVENT)
+    this.stop()
   }
 }
 

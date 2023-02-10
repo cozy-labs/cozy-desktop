@@ -42,7 +42,7 @@ module.exports = {
  */
 function loop(
   channel /*: Channel */,
-  opts /*: { config: Config, pouch: Pouch } */
+  opts /*: { config: Config, pouch: Pouch, fatal: Error => any } */
 ) /*: Channel */ {
   const syncPath = opts.config.syncPath
 
@@ -95,7 +95,7 @@ function loop(
       batch.push(event)
     }
     return batch
-  })
+  }, opts.fatal)
 }
 
 function needsStats(event /*: ChannelEvent */) /*: boolean %checks */ {
