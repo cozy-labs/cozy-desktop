@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.38.0-beta.2 - 2023-03-13
+
+Improvements for all users:
+
+- We've activated the partial synchronization feature by default. It can still
+  be disabled by setting the
+  `settings.partial-desktop-sync.show-synced-folders-selection` flag to `false`
+  either in the client's config or on the Cozy itself.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.38.0-beta.1 - 2023-03-13
 
 Improvements for linux users:
