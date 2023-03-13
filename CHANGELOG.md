@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.38.0-beta.1 - 2023-03-13
+
+Improvements for linux users:
+
+- We reverted our build machine Ubuntu version back to v20.04 as newer versions
+  make our native addons such as the Linux local watcher incompatible with some
+  current LTS versions of popular distributions like Ubuntu and Debian.
+  This change does not have short term drawbacks.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.37.0 - 2023-03-09
 
 Improvements for all users:
