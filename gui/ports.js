@@ -99,7 +99,7 @@ ipcRenderer.on(
       },
       flags: {
         partialSyncEnabled:
-          partialSyncEnabled != null ? partialSyncEnabled : false
+          partialSyncEnabled != null ? partialSyncEnabled : true
       }
     })
   }
