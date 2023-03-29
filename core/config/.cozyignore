@@ -24,12 +24,18 @@
 # https://cgit.freedesktop.org/libreoffice/core/tree/sal/osl/unx/file_misc.cxx?h=libreoffice-6-2-4#n819
 *.osl-tmp
 
+# Microsoft Office
+~$*
+
+# Vim
+*.sw[px]
+
+# Google Chrome
+*.crdownload
+
 # Linux
 .fuse_hidden*
 .Trash-*
-
-# Microsoft Office
-~$*
 
 # OSX
 .DS_Store
@@ -41,9 +47,6 @@
 .VolumeIcon.icns
 Icon
 Icon\r
-
-# Vim
-*.sw[px]
 
 # Windows
 System Volume Information/
