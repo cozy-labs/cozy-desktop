@@ -5,10 +5,13 @@ const Promise = require('bluebird')
 const _ = require('lodash')
 const should = require('should')
 const path = require('path')
+const sinon = require('sinon')
 
 const logger = require('../../core/utils/logger')
 const metadata = require('../../core/metadata')
 const { byPathKey } = require('../../core/pouch')
+const { MAX_SYNC_RETRIES } = require('../../core/sync')
+const syncErrors = require('../../core/sync/errors')
 
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
@@ -329,6 +332,97 @@ describe('Update file', () => {
         remoteTree: ['.cozy_trash/', 'file'],
         remoteFileContent: m2
       })
+    })
+  })
+
+  describe('local update, 3 sync failures, local update, 1 sync failure', () => {
+    it('makes a new sync attempt', async () => {
+      const doOverwriteStub = sinon.stub(helpers._sync, 'doOverwrite')
+
+      try {
+        const initialContent = 'Initial content'
+        const file = await builders
+          .remoteFile()
+          .name('file')
+          .data(initialContent)
+          .createdAt(2018, 5, 15, 21, 1, 53)
+          .create()
+        await helpers.pullAndSyncAll()
+        await helpers.flushLocalAndSyncAll()
+
+        log.info('Updating local content')
+        const doc = await pouch.byRemoteIdMaybe(file._id)
+        const updatedContent = 'updated content'
+        await helpers.local.syncDir.outputFile('file', updatedContent)
+        await prep.updateFileAsync(
+          'local',
+          _.defaultsDeep(
+            {
+              local: {
+                updated_at: new Date().toISOString(),
+                md5sum: builders.checksum(updatedContent).build(),
+                size: updatedContent.length
+              },
+              updated_at: new Date().toISOString(),
+              md5sum: builders.checksum(updatedContent).build(),
+              size: updatedContent.length
+            },
+            doc
+          )
+        )
+
+        log.info('Trying sync with errors')
+
+        const failingAttempts = 1 + MAX_SYNC_RETRIES // XXX: first attempt + all failing retries
+        for (let i = 0; i < failingAttempts; i++) {
+          doOverwriteStub.onCall(i).throws(syncErrors.UNKNOWN_SYNC_ERROR_CODE)
+        }
+
+        // Does nothing since we reached the maximum number of attempts
+        await helpers.syncAll()
+        await should(helpers.remote.readFile('file')).be.resolvedWith(
+          initialContent
+        )
+
+        log.info('Updating local content agin')
+        const inError = await pouch.byRemoteIdMaybe(file._id)
+        const finalContent = 'final content'
+        await helpers.local.syncDir.outputFile('file', finalContent)
+        await prep.updateFileAsync(
+          'local',
+          _.defaultsDeep(
+            {
+              local: {
+                updated_at: new Date().toISOString(),
+                md5sum: builders.checksum(finalContent).build(),
+                size: finalContent.length
+              },
+              updated_at: new Date().toISOString(),
+              md5sum: builders.checksum(finalContent).build(),
+              size: finalContent.length
+            },
+            inError
+          )
+        )
+
+        log.info('Trying sync with only 1 error')
+
+        doOverwriteStub.resetBehavior()
+        doOverwriteStub.resetHistory()
+        doOverwriteStub.onCall(0).throws(syncErrors.UNKNOWN_SYNC_ERROR_CODE)
+        doOverwriteStub.callThrough()
+
+        // Attempts sync as errors should have been cleared
+        await helpers.syncAll()
+        await should(helpers.remote.readFile('file')).be.resolvedWith(
+          finalContent
+        )
+        should(await pouch.byRemoteIdMaybe(file._id)).not.have.property(
+          'errors'
+        )
+      } finally {
+        doOverwriteStub.restore()
+      }
     })
   })
 })
