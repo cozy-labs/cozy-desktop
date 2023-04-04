@@ -201,12 +201,12 @@ describe('Sync', function () {
   describe('sync', function () {
     beforeEach('stub lifecycle', function () {
       this.sync.events = new EventEmitter()
-      this.sync.lifecycle.currentState = 'done-start'
+      this.sync.lifecycle.transitionTo('done-start')
     })
     afterEach('restore lifecycle', function () {
       this.sync.events.emit('stopped')
       delete this.sync.events
-      this.sync.lifecycle.currentState = 'done-stop'
+      this.sync.lifecycle.transitionTo('done-stop')
     })
 
     it('waits for and applies available changes', async function () {
@@ -526,11 +526,11 @@ describe('Sync', function () {
       describe('when apply throws a NEEDS_REMOTE_MERGE_CODE error', () => {
         beforeEach(function () {
           sinon.stub(this.sync, 'blockSyncFor').callsFake(() => {
-            this.sync.lifecycle.currentState = 'done-stop'
+            this.sync.lifecycle.transitionTo('done-stop')
           })
         })
         beforeEach('simulate error', async function () {
-          this.sync.lifecycle.currentState = 'done-start'
+          this.sync.lifecycle.transitionTo('done-start')
           sinon.stub(this.sync, 'apply').rejects(
             new syncErrors.SyncError({
               code: remoteErrors.NEEDS_REMOTE_MERGE_CODE,
