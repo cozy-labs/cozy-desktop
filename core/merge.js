@@ -62,6 +62,18 @@ class Merge {
     autoBind(this)
   }
 
+  async save(doc /*: Metadata */) {
+    delete doc.errors
+    return this.pouch.put(doc)
+  }
+
+  async saveAll(docs /*: Metadata[] */) {
+    docs.forEach(doc => {
+      delete doc.errors
+    })
+    return this.pouch.bulkDocs(docs)
+  }
+
   /* Helpers */
 
   // Resolve a conflict by renaming a file/folder
@@ -107,7 +119,7 @@ class Merge {
     metadata.markSide(side, doc)
     metadata.assignMaxDate(doc)
 
-    return this.pouch.put(doc)
+    return this.save(doc)
   }
 
   // Update a file, when its metadata or its content has changed
@@ -118,7 +130,7 @@ class Merge {
     if (!file) {
       metadata.markSide(side, doc)
       metadata.assignMaxDate(doc)
-      return this.pouch.put(doc)
+      return this.save(doc)
     } else {
       if (file.docType === metadata.FOLDER) {
         throw new Error("Can't resolve this conflict!")
@@ -156,7 +168,7 @@ class Merge {
         }
 
         metadata.assignMaxDate(doc, file)
-        return this.pouch.put(doc)
+        return this.save(doc)
       }
       // The updated file was not deleted on either side
 
@@ -195,7 +207,7 @@ class Merge {
               metadata.markSide(otherSide(outdated), doc, file)
             }
           }
-          return this.pouch.put(doc)
+          return this.save(doc)
         } else if (
           side === 'remote' &&
           !metadata.sameRemote(file.remote, doc.remote)
@@ -217,7 +229,7 @@ class Merge {
               metadata.markSide(otherSide(outdated), doc, file)
             }
           }
-          return this.pouch.put(doc)
+          return this.save(doc)
         } else {
           return
         }
@@ -241,7 +253,7 @@ class Merge {
               // content.
               metadata.markSide('remote', file, file)
               file.local = doc.local
-              return this.pouch.put(file)
+              return this.save(file)
             }
           }
 
@@ -253,7 +265,7 @@ class Merge {
             metadata.dissociateLocal(file)
             // We make sure Sync will detect and propagate the remote update
             metadata.markSide('remote', file, file)
-            return this.pouch.put(file)
+            return this.save(file)
           } else {
             // TODO: should we save the new metadata anyway to make sure we
             // have up-to-date side infos?
@@ -279,7 +291,7 @@ class Merge {
               // We make sure Sync will overwrite the local update with the remote
               // content.
               metadata.markSide('remote', doc, file)
-              return this.pouch.put(doc)
+              return this.save(doc)
             }
           }
 
@@ -291,7 +303,7 @@ class Merge {
             metadata.dissociateRemote(file)
             // We make sure Sync will detect and propagate the local update
             metadata.markSide('local', file, file)
-            return this.pouch.put(file)
+            return this.save(file)
           } else {
             // TODO: should we save the new metadata anyway to make sure we
             // have up-to-date side infos?
@@ -303,7 +315,7 @@ class Merge {
 
       metadata.markSide(side, doc, file)
       metadata.assignMaxDate(doc, file)
-      return this.pouch.put(doc)
+      return this.save(doc)
     }
   }
 
@@ -315,7 +327,7 @@ class Merge {
     if (!folder) {
       metadata.markSide(side, doc, folder)
       metadata.assignMaxDate(doc, folder)
-      return this.pouch.put(doc)
+      return this.save(doc)
     } else {
       if (folder.docType === metadata.FILE) {
         return this.resolveConflictAsync(side, doc)
@@ -369,7 +381,7 @@ class Merge {
         }
 
         metadata.assignMaxDate(doc, folder)
-        return this.pouch.put(doc)
+        return this.save(doc)
       }
       // The updated file was not deleted on either side
 
@@ -402,7 +414,7 @@ class Merge {
               metadata.markSide(otherSide(outdated), doc, folder)
             }
           }
-          return this.pouch.put(doc)
+          return this.save(doc)
         } else if (
           side === 'remote' &&
           !metadata.sameRemote(folder.remote, doc.remote)
@@ -424,7 +436,7 @@ class Merge {
               metadata.markSide(otherSide(outdated), doc, folder)
             }
           }
-          return this.pouch.put(doc)
+          return this.save(doc)
         } else {
           return
         }
@@ -432,7 +444,7 @@ class Merge {
 
       metadata.markSide(side, doc, folder)
       metadata.assignMaxDate(doc, folder)
-      return this.pouch.put(doc)
+      return this.save(doc)
     }
   }
 
@@ -516,7 +528,7 @@ class Merge {
             await this.pouch.eraseDocument(file)
           }
 
-          return this.pouch.put(doc)
+          return this.save(doc)
         }
 
         if (
@@ -534,14 +546,14 @@ class Merge {
           if (localWasVersioned) {
             doc.overwrite = file.overwrite || file
             await this.pouch.eraseDocument(file)
-            return this.pouch.put(doc)
+            return this.save(doc)
           }
         }
 
         const dst = await this.resolveConflictAsync(side, doc)
-        return this.pouch.put(dst)
+        return this.save(dst)
       } else {
-        return this.pouch.put(doc)
+        return this.save(doc)
       }
     } else {
       // It can happen after a conflict
@@ -818,7 +830,8 @@ class Merge {
         }
       }
     }
-    return this.pouch.bulkDocs(bulk)
+
+    return this.saveAll(bulk)
   }
 
   async doTrash(
@@ -827,8 +840,6 @@ class Merge {
     doc /*: Metadata */
   ) /*: Promise<void> */ {
     log.debug({ path: was.path, side, was }, 'doTrash')
-
-    delete was.errors
 
     if (was.trashed) {
       if (metadata.isAtLeastUpToDate(side, was)) {
@@ -864,7 +875,7 @@ class Merge {
           metadata.markSide(side, overwrite, overwrite)
           delete overwrite._rev
 
-          await this.pouch.put(overwrite)
+          await this.save(overwrite)
         }
       }
 
@@ -877,7 +888,7 @@ class Merge {
       }
       was.trashed = true
       try {
-        return await this.pouch.put(was)
+        return await this.save(was)
       } catch (err) {
         log.warn({ path: was.path, err })
         // Do we really want to save a trashed was in this situation? It will
@@ -894,7 +905,7 @@ class Merge {
       'marking document for deletion while not linked to the trashed one'
     )
     was.trashed = true
-    return this.pouch.put(was)
+    return this.save(was)
   }
 
   // FIXME: we should save the new remote side when merging a remote trashing or
@@ -953,7 +964,7 @@ class Merge {
           // can re-create it.
           metadata.dissociateLocal(was)
         }
-        return this.pouch.put(was)
+        return this.save(was)
       }
 
       if (!metadata.sameBinary(was.local, was.remote)) {
@@ -963,7 +974,7 @@ class Merge {
         // to be able to apply the content update as a file addition.
         if (side === 'remote') metadata.dissociateRemote(was)
         else metadata.dissociateLocal(was)
-        return this.pouch.put(was)
+        return this.save(was)
       }
     }
 
@@ -1034,14 +1045,13 @@ class Merge {
         // Cozy and cannot be restored from the trash so we dissociate our
         // record from its previous remote version to force its re-upload.
         metadata.dissociateRemote(file)
-        return this.pouch.put(file)
+        return this.save(file)
       }
     }
     if (file.sides && file.sides[side]) {
       metadata.markSide(side, file, file)
       file.trashed = true
-      delete file.errors
-      return this.pouch.put(file)
+      return this.save(file)
     } else {
       // It can happen after a conflict
       return
@@ -1127,7 +1137,6 @@ class Merge {
       // try to synchronize them.
       delete child.moveFrom
       delete child.overwrite
-      delete child.errors
     }
 
     const { moveFrom, overwrite } = folder
@@ -1142,7 +1151,6 @@ class Merge {
 
           delete overwrite.moveFrom
           delete overwrite.overwrite
-          delete overwrite.errors
           delete overwrite._id
           delete overwrite._rev
 
@@ -1166,9 +1174,8 @@ class Merge {
     // synchronize them.
     delete folder.moveFrom
     delete folder.overwrite
-    delete folder.errors
 
-    return this.pouch.bulkDocs(children.concat(folder))
+    return this.saveAll(children.concat(folder))
   }
 
   updateChildIncompatibilities(child /*: SavedMetadata */) {

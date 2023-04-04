@@ -1135,6 +1135,40 @@ describe('Merge', function () {
       })
     })
 
+    it('removes an existing errors counter', async function () {
+      const inError = await builders
+        .metafile(file)
+        .errors(2)
+        .sides({ local: 3, remote: 2 })
+        .create()
+      const doc = builders
+        .metafile(inError)
+        .tags('dummy')
+        .updatedAt(new Date())
+        .unmerged('remote')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.updateFileAsync('remote', _.cloneDeep(doc))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaultsDeep(
+            {
+              _id: inError._id,
+              // We increase the side by 2 since we're merging on the other side
+              // of the latest change.
+              sides: increasedSides(inError.sides, 'remote', 2),
+              local: inError.local
+            },
+            _.omit(doc, ['_rev', 'errors'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
     it('keeps an existing local metadata for a remote update', async function () {
       const doc = builders
         .metafile(file)
@@ -1726,6 +1760,40 @@ describe('Merge', function () {
       })
     })
 
+    it('removes an existing errors counter', async function () {
+      const inError = await builders
+        .metadir()
+        .errors(2)
+        .sides({ local: 3, remote: 2 })
+        .create()
+      const doc = builders
+        .metadir(inError)
+        .updatedAt(new Date())
+        .tags('dummy')
+        .unmerged('remote')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.putFolderAsync('remote', _.cloneDeep(doc))
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaultsDeep(
+            {
+              _id: inError._id,
+              // We increase the side by 2 since we're merging on the other side
+              // of the latest change.
+              sides: increasedSides(inError.sides, 'remote', 2),
+              local: inError.local
+            },
+            _.omit(doc, ['_rev', 'errors'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
     it('sets the local metadata when it is missing', async function () {
       const mergedFolder = await builders
         .metadir()
@@ -1955,6 +2023,46 @@ describe('Merge', function () {
           ],
           resolvedConflicts: []
         })
+      })
+    })
+
+    it('removes an existing errors counter', async function () {
+      const inError = await builders
+        .metafile()
+        .path('src')
+        .errors(2)
+        .sides({ local: 3, remote: 2 })
+        .create()
+      const doc = builders
+        .metafile(inError)
+        .path('dst')
+        .updatedAt(new Date())
+        .unmerged('remote')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.moveFileAsync(
+          'remote',
+          _.cloneDeep(doc),
+          _.cloneDeep(inError)
+        )
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaultsDeep(
+            {
+              _id: inError._id,
+              // We increase the side by 2 since we're merging on the other side
+              // of the latest change.
+              sides: increasedSides(inError.sides, 'remote', 2),
+              moveFrom: inError,
+              local: inError.local
+            },
+            _.omit(doc, ['_rev', 'errors'])
+          )
+        ],
+        resolvedConflicts: []
       })
     })
 
@@ -3539,6 +3647,74 @@ describe('Merge', function () {
       })
     })
 
+    it('removes existing errors counters', async function () {
+      const inError = await builders
+        .metadir()
+        .path('src')
+        .errors(2)
+        .sides({ local: 3, remote: 2 })
+        .create()
+      const inErrorChild = await builders
+        .metafile()
+        .path('src/child')
+        .errors(2)
+        .sides({ local: 3, remote: 2 })
+        .create()
+      const doc = builders
+        .metadir(inError)
+        .path('dst')
+        .updatedAt(new Date())
+        .unmerged('remote')
+        .build()
+
+      const sideEffects = await mergeSideEffects(this, () =>
+        this.merge.moveFolderAsync(
+          'remote',
+          _.cloneDeep(doc),
+          _.cloneDeep(inError)
+        )
+      )
+
+      const movedPath = oldDoc => oldDoc.path.replace(inError.path, doc.path)
+
+      const movedChild = _.defaults(
+        {
+          childMove: true
+        },
+        inErrorChild
+      )
+
+      should(sideEffects).deepEqual({
+        savedDocs: [
+          _.defaultsDeep(
+            {
+              _id: inError._id,
+              // We increase the side by 2 since we're merging on the other side
+              // of the latest change.
+              sides: increasedSides(inError.sides, 'remote', 2),
+              moveFrom: inError,
+              local: inError.local
+            },
+            _.omit(doc, ['_rev', 'errors'])
+          ),
+          _.defaultsDeep(
+            {
+              _id: inErrorChild._id,
+              path: movedPath(inErrorChild),
+              // We increase the side by 2 since we're merging on the other side
+              // of the latest change.
+              sides: increasedSides(inErrorChild.sides, 'remote', 2),
+              moveFrom: movedChild,
+              local: movedChild.local,
+              remote: { path: pathUtils.localToRemote(movedPath(inErrorChild)) }
+            },
+            _.omit(inErrorChild, ['_rev', 'errors'])
+          )
+        ],
+        resolvedConflicts: []
+      })
+    })
+
     onPlatforms(['win32', 'darwin'], () => {
       it('does not identify an identical renaming as a conflict', async function () {
         const apple = await builders.metadir().path('apple').upToDate().create()
@@ -4319,6 +4495,33 @@ describe('Merge', function () {
           resolvedConflicts: []
         })
       })
+
+      it('removes an existing errors counter', async function () {
+        const inError = await builders
+          .metafile()
+          .errors(2)
+          .sides({ local: 3, remote: 2 })
+          .create()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.deleteFileAsync('remote', _.cloneDeep(inError))
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaultsDeep(
+              {
+                // We increase the side by 2 since we're merging on the other side
+                // of the latest change.
+                sides: increasedSides(inError.sides, 'remote', 2),
+                trashed: true
+              },
+              _.omit(inError, ['_rev', 'errors'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
     })
 
     context('when a record marked for deletion is found in Pouch', () => {
@@ -4447,6 +4650,49 @@ describe('Merge', function () {
                   trashed: true
                 },
                 _.omit(doc, ['_rev'])
+              )
+            ],
+            resolvedConflicts: []
+          })
+        })
+
+        it('removes existing errors counters', async function () {
+          const inError = await builders
+            .metadir()
+            .path('dir')
+            .errors(2)
+            .sides({ local: 3, remote: 2 })
+            .create()
+          const inErrorChild = await builders
+            .metafile()
+            .path('dir/child')
+            .errors(2)
+            .sides({ local: 3, remote: 2 })
+            .create()
+
+          const sideEffects = await mergeSideEffects(this, () =>
+            this.merge.deleteFolderAsync('remote', _.cloneDeep(inError))
+          )
+
+          should(sideEffects).deepEqual({
+            savedDocs: [
+              _.defaultsDeep(
+                {
+                  // We increase the side by 2 since we're merging on the other side
+                  // of the latest change.
+                  sides: increasedSides(inErrorChild.sides, 'remote', 2),
+                  trashed: true
+                },
+                _.omit(inErrorChild, ['_rev', 'errors'])
+              ),
+              _.defaultsDeep(
+                {
+                  // We increase the side by 2 since we're merging on the other side
+                  // of the latest change.
+                  sides: increasedSides(inError.sides, 'remote', 2),
+                  trashed: true
+                },
+                _.omit(inError, ['_rev', 'errors'])
               )
             ],
             resolvedConflicts: []
@@ -4765,6 +5011,44 @@ describe('Merge', function () {
                 trashed: true
               },
               _.omit(was, ['_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+
+      it('removes an existing errors counter', async function () {
+        const inError = await builders
+          .metafile()
+          .errors(2)
+          .sides({ local: 3, remote: 2 })
+          .create()
+        const doc = builders
+          .metafile(inError)
+          .trashed()
+          .updatedAt(new Date())
+          .unmerged('remote')
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFileAsync(
+            'remote',
+            _.cloneDeep(inError),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaultsDeep(
+              {
+                // We increase the side by 2 since we're merging on the other side
+                // of the latest change.
+                sides: increasedSides(inError.sides, 'remote', 2),
+                remote: doc.remote,
+                trashed: true
+              },
+              _.omit(inError, ['_rev', 'errors'])
             )
           ],
           resolvedConflicts: []
@@ -5173,6 +5457,61 @@ describe('Merge', function () {
                 trashed: true
               },
               _.omit(was, ['_rev'])
+            )
+          ],
+          resolvedConflicts: []
+        })
+      })
+
+      it('removes existing errors counters', async function () {
+        const inError = await builders
+          .metadir()
+          .path('dir')
+          .errors(2)
+          .sides({ local: 3, remote: 2 })
+          .create()
+        const inErrorChild = await builders
+          .metafile()
+          .path('dir/child')
+          .errors(2)
+          .sides({ local: 3, remote: 2 })
+          .create()
+        const doc = builders
+          .metadir(inError)
+          .trashed()
+          .updatedAt(new Date())
+          .unmerged('remote')
+          .build()
+
+        const sideEffects = await mergeSideEffects(this, () =>
+          this.merge.trashFolderAsync(
+            'remote',
+            _.cloneDeep(inError),
+            _.cloneDeep(doc)
+          )
+        )
+
+        should(sideEffects).deepEqual({
+          savedDocs: [
+            _.defaultsDeep(
+              {
+                // We increase the side by 2 since we're merging on the other side
+                // of the latest change.
+                sides: increasedSides(inErrorChild.sides, 'remote', 2),
+                remote: inErrorChild.remote,
+                trashed: true
+              },
+              _.omit(inErrorChild, ['_rev', 'errors'])
+            ),
+            _.defaultsDeep(
+              {
+                // We increase the side by 2 since we're merging on the other side
+                // of the latest change.
+                sides: increasedSides(inError.sides, 'remote', 2),
+                remote: doc.remote,
+                trashed: true
+              },
+              _.omit(inError, ['_rev', 'errors'])
             )
           ],
           resolvedConflicts: []

@@ -53,7 +53,7 @@ const log = logger({
   component: 'Sync'
 })
 
-const MAX_SYNC_ATTEMPTS = 3
+const MAX_SYNC_RETRIES = 3
 
 const isMarkedForDeletion = (doc /*: SavedMetadata */) => {
   // During a transition period, we'll need to consider both documents with the
@@ -63,11 +63,11 @@ const isMarkedForDeletion = (doc /*: SavedMetadata */) => {
 }
 
 const shouldAttemptRetry = (change /*: PouchDBFeedData */) => {
-  // Don't try more than MAX_SYNC_ATTEMPTS for the same operation unless we're
+  // Don't retry more than MAX_SYNC_RETRIES for the same operation unless we're
   // running a test during which we don't want to wait for a retry.
   return (
     !process.env.SYNC_SHOULD_NOT_RETRY &&
-    (!change.doc.errors || change.doc.errors < MAX_SYNC_ATTEMPTS)
+    (!change.doc.errors || change.doc.errors < MAX_SYNC_RETRIES)
   )
 }
 
@@ -816,7 +816,7 @@ class Sync {
         try {
           await this.doOverwrite(side, doc) // move & update
         } catch (err) {
-          // the move succeeded, delete moveFrom and overwriteto avoid
+          // the move succeeded, delete moveFrom and overwrite to avoid
           // re-applying these actions.
           delete doc.moveFrom
           delete doc.overwrite
@@ -1206,6 +1206,7 @@ class Sync {
 }
 
 module.exports = {
+  MAX_SYNC_RETRIES,
   compareChanges,
   Sync
 }
