@@ -5,9 +5,11 @@
  */
 
 const fs = require('fs')
+const os = require('os')
 const fse = require('fs-extra')
 const _ = require('lodash')
 const path = require('path')
+const envPaths = require('./utils/xdg');
 
 const { hideOnWindows } = require('./utils/fs')
 const logger = require('./utils/logger')
@@ -83,13 +85,64 @@ class Config {
 
   // Create config file if it doesn't exist.
   constructor(basePath /*: string */) {
-    this.configPath = path.join(basePath, 'config.json')
+    this.configPath = this._findConfigFile()
+    this.dbPath = this._findDBFile()
+
     fse.ensureFileSync(this.configPath)
-    this.dbPath = path.join(basePath, 'db')
-    fse.ensureDirSync(this.dbPath)
-    hideOnWindows(basePath)
+    fse.ensureFileSync(this.dbPath)
 
     this.fileConfig = this.read()
+  }
+
+  _findConfigFile() /*: string */ {
+    const xdgPaths = envPaths('cozy-desktop')
+
+
+    // All the possible directories where the config file can be in
+    // priority order
+    const paths = [
+      process.env.COZY_DESKTOP_DIR, // The user specified folder
+      path.join(os.homedir(), '.cozy-desktop'), // The legacy folder
+      xdgPaths.config // The XDG spec case
+    ]
+
+    for (const p of paths) {
+      if (fse.existsSync(p)) {
+    log.info(`${p} seems to exists`)
+        return path.join(p, 'config.json')
+      }
+    }
+
+    // No config dir exist, we need to create one following the XDG spec 
+    // if no folder is specified by the user.
+    const configDir = process.env.COZY_DESKTOP_DIR || xdgPaths.config
+    hideOnWindows(configDir)
+
+    return path.Join(configDir, 'config.json')
+  }
+
+  _findDBFile() /*: string */ {
+    const xdgPaths = envPaths('cozy-desktop')
+
+    // All the possible directories where the config file can be in
+    // priority order
+    const paths = [
+      process.env.COZY_DESKTOP_DIR, // The user specified folder
+      path.join(os.homedir(), '.cozy-desktop'), // The legacy folder
+      xdgPaths.data,
+    ]
+
+    for (const p of paths) {
+      if (fse.existsSync(p)) {
+        return path.join(p, 'db')
+      }
+    }
+
+    // No config dir exist, we need to create one and we follow the XDG spec.
+    const configDir = process.env.COZY_DESKTOP_DIR || xdgPaths.data
+    hideOnWindows(dbDir)
+
+    return path.Join(dbDir, 'db')
   }
 
   // Read the configuration from disk
