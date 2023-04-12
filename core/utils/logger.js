@@ -4,6 +4,7 @@
  * @flow weak
  */
 
+const envPaths = require('./xdg.js');
 const bunyan = require('bunyan')
 const fse = require('fs-extra')
 const os = require('os')
@@ -14,14 +15,16 @@ const _ = require('lodash')
 export type Logger = bunyan.Logger
 */
 
-const LOG_DIR = path.join(
-  process.env.COZY_DESKTOP_DIR || os.homedir(),
-  '.cozy-desktop'
-)
+
+const paths = envPaths('cozy-desktop')
+
+const LOG_DIR = process.env.COZY_DESKTOP_DIR || paths.log
+fse.ensureDirSync(LOG_DIR)
+
+
 const LOG_FILENAME = 'logs.txt'
 const LOG_FILE = path.join(LOG_DIR, LOG_FILENAME)
 
-fse.ensureDirSync(LOG_DIR)
 
 const defaultLogger = bunyan.createLogger({
   name: 'Cozy Desktop',
