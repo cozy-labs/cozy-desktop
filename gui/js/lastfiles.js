@@ -4,8 +4,11 @@
  */
 
 const fs = require('fs')
-const path = require('path')
+const os = require('os')
 const async = require('async')
+const envPaths = require('../../core/utils/xdg');
+const path = require('path')
+const fse = require('fs-extra')
 
 let lastFilesPath = ''
 let lastFiles = Promise.resolve([])
@@ -21,7 +24,9 @@ const writeJSON = (data, callback) => {
 
 const init = desktop => {
   persistQueue = async.queue(writeJSON)
-  lastFilesPath = path.join(desktop.basePath, 'last-files')
+
+
+  lastFilesPath = findLastFilesPath()
   lastFiles = new Promise(resolve => {
     fs.readFile(lastFilesPath, 'utf-8', (err, data) => {
       if (!err && data) {
@@ -37,6 +42,32 @@ const init = desktop => {
       }
     })
   })
+}
+
+const findLastFilesPath = () => {
+    const xdgPaths = envPaths('cozy-desktop')
+
+  // All the possible directories where the config file can be in
+  // priority order
+  const paths = [
+    process.env.COZY_DESKTOP_DIR, // The user specified folder
+    path.join(os.homedir(), '.cozy-desktop'), // The legacy folder
+    xdgPaths.data, // The XDG spec case
+  ]
+
+  for (const p of paths) {
+    if (fse.existsSync(p)) {
+      return path.join(p, 'last-files')
+    }
+  }
+
+  // No config dir exist, we need to create one following the XDG spec 
+  // if no folder is specified by the user.
+  const dataDir = process.env.COZY_DESKTOP_DIR || xdgPaths.log
+  fse.ensureFileSync(dataDir)
+  hideOnWindows(dataDir)
+
+  return path.Join(dataDir, 'last-files')
 }
 
 const persist = async () => {
