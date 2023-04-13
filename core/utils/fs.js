@@ -38,6 +38,18 @@ function validName(name /*: string */) {
   return name.replace(ILLEGAL_CHARACTERS_REGEXP, REPLACEMENT_CHARACTER)
 }
 
+class MissingFileError extends Error {
+  constructor(path) {
+    super()
+
+    this.errno = -2
+    this.code = 'ENOENT'
+    this.syscall = 'lstat'
+    this.path = path
+    this.message = `ENOENT: no such file or directory, lstat '${path}'`
+  }
+}
+
 async function sendToTrash(fullpath /*: string */) {
   try {
     await shell.trashItem(fullpath)
@@ -45,16 +57,13 @@ async function sendToTrash(fullpath /*: string */) {
     if (await fse.exists(fullpath)) {
       throw err
     } else {
-      const error = new Error()
-      error.code = 'ENOENT'
-      error.path = fullpath
-      error.message = `${error.code}: No such file or directory, sendToTrash '${error.path}'`
-      throw error
+      throw new MissingFileError(fullpath)
     }
   }
 }
 
 module.exports = {
+  MissingFileError,
   hideOnWindows,
   sendToTrash,
   validName
