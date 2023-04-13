@@ -9,13 +9,13 @@ const should = require('should')
 
 const { Local } = require('../../../core/local')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
-const { sendToTrash } = require('../../../core/utils/fs')
 
 const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const { ContextDir } = require('../../support/helpers/context_dir')
 const { WINDOWS_DEFAULT_MODE } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
+const { createTrashMock } = require('../../support/doubles/fs')
 
 const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
 
@@ -28,14 +28,16 @@ const streamer = (doc, content, err) => ({
 })
 
 describe('Local', function () {
-  let builders, syncDir
+  let builders, syncDir, trashMock
 
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
   before('instanciate local', function () {
+    trashMock = createTrashMock()
+
     this.prep = {}
     this.events = { emit: () => {} }
-    this.local = new Local({ ...this, sendToTrash })
+    this.local = new Local({ ...this, sendToTrash: trashMock.sendToTrash })
 
     builders = new Builders({ pouch: this.pouch })
     syncDir = new ContextDir(this.syncPath)
@@ -713,6 +715,28 @@ describe('Local', function () {
         await this.pouch.db.remove(doc)
         await should(this.local.trashAsync(doc)).be.fulfilled()
         await should(fse.exists(filePath)).be.fulfilledWith(false)
+      })
+    })
+
+    context('when the document cannot be sent to the trash', () => {
+      it('permanently deletes it', async function () {
+        trashMock.withFailingTrash()
+
+        try {
+          const doc = await builders
+            .metafile()
+            .path('FILE-TO-DELETE')
+            .upToDate()
+            .create()
+          const filePath = syncDir.abspath(doc.path)
+          fse.ensureFileSync(filePath)
+
+          await this.pouch.db.remove(doc)
+          await should(this.local.trashAsync(doc)).be.fulfilled()
+          await should(fse.exists(filePath)).be.fulfilledWith(false)
+        } finally {
+          trashMock.reset()
+        }
       })
     })
   })
