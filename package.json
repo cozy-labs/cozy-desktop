@@ -89,11 +89,13 @@
     "babel-polyfill": "^6.26.0",
     "bluebird": "3.7.2",
     "btoa": "^1.1.2",
+    "bufferutil": "^4.0.7",
     "bunyan": "2.0.5",
     "chokidar": "^3.5.0",
     "cozy-client": "^38.2.0",
     "cozy-client-js": "^0.20.0",
     "cozy-flags": "^3.0.1",
+    "cozy-realtime": "^4.5.0",
     "cozy-stack-client": "^38.0.2",
     "deep-diff": "^1.0.2",
     "dtrace-provider": "^0.8.8",
@@ -121,7 +123,9 @@
     "secret-event-listener": "1.0.0",
     "semver": "7.3.5",
     "tar": "6.1.11",
+    "utf-8-validate": "^6.0.3",
     "uuid": "8.3.2",
+    "ws": "^8.13.0",
     "yargs": "17.3.1"
   },
   "devDependencies": {
