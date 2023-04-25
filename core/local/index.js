@@ -476,12 +476,22 @@ class Local /*:: implements Reader, Writer */ {
           `Cannot trash locally deleted ${doc.docType}.`
         )
         return
-      } else {
-        log.error(
-          { path: doc.path, err, sentry: true },
-          'Could not trash local document'
-        )
       }
+
+      log.error(
+        { path: doc.path, err, sentry: true },
+        'Could not trash local document'
+      )
+    }
+
+    log.info({ path: doc.path }, 'Permanently deleting...')
+    try {
+      await fse.remove(fullpath)
+    } catch (err) {
+      log.error(
+        { path: fullpath, err, sentry: true },
+        'Could not permanently delete document'
+      )
       throw err
     }
   }
