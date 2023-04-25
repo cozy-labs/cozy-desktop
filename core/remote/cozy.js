@@ -88,7 +88,7 @@ class RemoteCozy {
   config: Config
   url: string
   client: OldCozyClient
-  newClient: () => Promise<CozyClient>
+  newClient: ?CozyClient
   */
 
   constructor(config /*: Config */) {
@@ -102,23 +102,24 @@ class RemoteCozy {
         storage: config
       }
     })
-    this.newClient = (() => {
-      let client = null
-      return async () => {
-        if (!client) {
-          if (this.client._oauth) {
-            // Make sure we have an authorized client to build a new client from.
-            await this.client.authorize()
-            client = await CozyClient.fromOldOAuthClient(this.client)
-          } else {
-            client = await CozyClient.fromOldClient(this.client)
-          }
-        }
-        return client
-      }
-    })()
 
     autoBind(this)
+  }
+
+  async getClient() /*: Promise<CozyClient> */ {
+    if (this.newClient != null) {
+      return this.newClient
+    }
+
+    if (this.client._oauth) {
+      // Make sure we have an authorized client to build a new client from.
+      await this.client.authorize()
+      this.newClient = await CozyClient.fromOldOAuthClient(this.client)
+    } else {
+      this.newClient = await CozyClient.fromOldClient(this.client)
+    }
+
+    return this.newClient
   }
 
   createJob(workerType /*: string */, args /*: any */) /*: Promise<*> */ {
@@ -332,7 +333,7 @@ class RemoteCozy {
     since /*: string */ = INITIAL_SEQ,
     batchSize /*: number */ = 3000
   ) /*: ChangesFeedResponse */ {
-    const client = await this.newClient()
+    const client = await this.getClient()
     const isInitialFetch = since === INITIAL_SEQ
     const { last_seq, remoteDocs } = isInitialFetch
       ? await fetchInitialChanges(since, client, batchSize)
@@ -344,7 +345,7 @@ class RemoteCozy {
   }
 
   async fetchLastSeq() {
-    const client = await this.newClient()
+    const client = await this.getClient()
     const { last_seq } = await client
       .collection(FILES_DOCTYPE)
       .fetchChangesRaw({
@@ -435,12 +436,9 @@ class RemoteCozy {
   // sub-directories.
   async getDirectoryContent(
     dir /*: RemoteDir */,
-    {
-      client,
-      batchSize = 3000
-    } /*: { client?: CozyClient, batchSize?: number } */ = {}
+    { batchSize = 3000 } /*: { batchSize?: number } */ = {}
   ) /*: Promise<$ReadOnlyArray<FullRemoteFile|RemoteDir>> */ {
-    client = client || (await this.newClient())
+    const client = await this.getClient()
 
     const queryDef = Q(FILES_DOCTYPE)
       .where({
@@ -541,7 +539,7 @@ class RemoteCozy {
   }
 
   async capabilities() /*: Promise<{ flatSubdomains: boolean }> */ {
-    const client = await this.newClient()
+    const client = await this.getClient()
     const {
       data: {
         attributes: { flat_subdomains: flatSubdomains }
@@ -553,7 +551,7 @@ class RemoteCozy {
   }
 
   async getReferencedBy(id /*: string */) /*: Promise<Reference[]> */ {
-    const client = await this.newClient()
+    const client = await this.getClient()
     const files = client.collection(FILES_DOCTYPE)
     const { data } = await files.get(id)
     return (
@@ -569,7 +567,7 @@ class RemoteCozy {
     _id /*: string */,
     referencedBy /*: Reference[] */
   ) /*: Promise<{_rev: string, referencedBy: Reference[] }> */ {
-    const client = await this.newClient()
+    const client = await this.getClient()
     const files = client.collection(FILES_DOCTYPE)
     const doc = { _id, _type: FILES_DOCTYPE }
     const references = referencedBy.map(ref => ({
@@ -584,7 +582,7 @@ class RemoteCozy {
   }
 
   async includeInSync(dir /*: RemoteDir */) /*: Promise<void> */ {
-    const client = await this.newClient()
+    const client = await this.getClient()
     const files = client.collection(FILES_DOCTYPE)
     const {
       client: { clientID }
@@ -595,7 +593,7 @@ class RemoteCozy {
 
   async flags() /*: Promise<Object> */ {
     try {
-      const client = await this.newClient()
+      const client = await this.getClient()
       // Fetch flags from the remote Cozy and store them in the local `cozyFlags`
       // store.
       await cozyFlags.initialize(client)
