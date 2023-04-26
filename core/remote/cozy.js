@@ -3,14 +3,17 @@
  * @flow
  */
 
+const http = require('http')
 const autoBind = require('auto-bind')
 const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
 const { FetchError } = require('cozy-stack-client')
 const { Q } = require('cozy-client')
 const cozyFlags = require('cozy-flags').default
+const { RealtimePlugin } = require('cozy-realtime')
 const path = require('path')
 const addSecretEventListener = require('secret-event-listener')
+const { WebSocket } = require('ws')
 
 const {
   FILES_DOCTYPE,
@@ -32,8 +35,10 @@ const logger = require('../utils/logger')
 const { sortBy } = require('../utils/array')
 
 /*::
-import type { Config } from '../config'
+import type { CozyRealtime } from 'cozy-realtime'
 import type { Readable } from 'stream'
+
+import type { Config } from '../config'
 import type {
   CouchDBDeletion,
   CouchDBDoc,
@@ -118,6 +123,14 @@ class RemoteCozy {
     } else {
       this.newClient = await CozyClient.fromOldClient(this.client)
     }
+
+    // XXX: If using `RemoteCozy` behind a proxy, `http.globalAgent` needs to be
+    // configured first by calling `network.setup()`.
+    this.newClient.registerPlugin(RealtimePlugin, {
+      createWebSocket: (url, doctype) => {
+        return new WebSocket(url, doctype, { agent: http.globalAgent })
+      }
+    })
 
     return this.newClient
   }
@@ -629,6 +642,11 @@ class RemoteCozy {
     } else {
       return []
     }
+  }
+
+  async realtime() /*: Promise<CozyRealtime> */ {
+    const client = await this.getClient()
+    return client.plugins.realtime.realtime
   }
 }
 
