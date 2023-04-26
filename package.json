@@ -93,7 +93,7 @@
     "chokidar": "^3.5.0",
     "cozy-client": "^38.2.0",
     "cozy-client-js": "^0.20.0",
-    "cozy-flags": "^2.8.3",
+    "cozy-flags": "^3.0.1",
     "cozy-stack-client": "^38.0.2",
     "deep-diff": "^1.0.2",
     "dtrace-provider": "^0.8.8",

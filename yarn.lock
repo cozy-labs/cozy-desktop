@@ -3079,10 +3079,10 @@ cozy-client@^38.2.0:
     sift "^6.0.0"
     url-search-params-polyfill "^8.0.0"
 
-cozy-flags@^2.8.3:
-  version "2.8.3"
-  resolved "https://registry.yarnpkg.com/cozy-flags/-/cozy-flags-2.8.3.tgz#df6e75ed07bb5757f58a85e7469f00c791284324"
-  integrity sha512-0+EPr1RMEAlVZ6smWIItSZCu7b0/IkT2xG0UDe1xDcLBNMIm41aJVOZJnsK2SA4DTd7rEDMpk8iH+bSFTxxc8A==
+cozy-flags@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/cozy-flags/-/cozy-flags-3.0.1.tgz#ffb0f3e57f6e3d631f8fa420e866f0eacddd222a"
+  integrity sha512-+uvrrzchRxg2+M0a9uoCEJCLDLwe1DdmTgXlu56zFagqMQGCxgLSHLL7MrP/8cjt9LjgzVdqO4Mg+mDtAIqc/g==
   dependencies:
     microee "^0.0.6"
 
