@@ -1,5 +1,7 @@
 'use strict'
 
+require('../core/globals')
+
 // Initialize `remote` module so that renderer processes can use it.
 require('@electron/remote/main').initialize()
 const {

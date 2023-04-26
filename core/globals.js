@@ -4,6 +4,8 @@
  * @flow
  */
 
+require('../core/utils/modules_stubs').initialize()
+
 require('isomorphic-fetch')
 
 // We are using bluebird instead of native promises:

@@ -3,7 +3,6 @@
  * @module core/app
  * @flow
  */
-
 const autoBind = require('auto-bind')
 const fse = require('fs-extra')
 const _ = require('lodash')
@@ -16,7 +15,6 @@ const { createGzip } = require('zlib')
 const semver = require('semver')
 const { rootCozyUrl } = require('cozy-client')
 
-require('./globals')
 const pkg = require('../package.json')
 const config = require('./config')
 const { Pouch } = require('./pouch')
