@@ -546,7 +546,9 @@ class RemoteCozy {
       data: {
         attributes: { flat_subdomains: flatSubdomains }
       }
-    } = await client.query(Q('io.cozy.settings').getById('capabilities'))
+    } = await client.query(
+      Q('io.cozy.settings').getById('io.cozy.settings.capabilities')
+    )
     return { flatSubdomains }
   }
 
