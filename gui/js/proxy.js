@@ -5,6 +5,7 @@
  */
 
 const ElectronProxyAgent = require('electron-proxy-agent')
+const dns = require('dns')
 const url = require('url')
 const http = require('http')
 const https = require('https')
@@ -53,6 +54,12 @@ const config = (argv /*: Array<*> */ = process.argv) => {
       type: 'string',
       default: undefined
     })
+    .option('resolve-ipv4-first', {
+      describe:
+        'Prioritize IPv4 results from the DNS resolver over IPv6 results',
+      type: 'boolean',
+      default: true
+    })
     .help('help')
     .parse(argv)
 
@@ -83,6 +90,11 @@ const setup = async (
 
   if (config['proxy-ntlm-domains']) {
     syncSession.allowNTLMCredentialsForDomains(config['proxy-ntlm-domains'])
+  }
+
+  if (config['resolve-ipv4-first']) {
+    // $FlowFixMe this method exists in Node but is not defined in Flow...
+    dns.setDefaultResultOrder('ipv4first')
   }
 
   syncSession.setCertificateVerifyProc((request, callback) => {

@@ -14,7 +14,12 @@ import type { Config } from '../../../core/config'
 let originalNet
 const setupGlobalProxy = async () => {
   await app.whenReady()
-  originalNet = await proxy.setup(app, {}, session, '')
+  originalNet = await proxy.setup(
+    app,
+    { 'resolve-ipv4-first': true },
+    session,
+    ''
+  )
 }
 const resetGlobalProxy = async () => {
   if (originalNet && (await originalNet)) {
