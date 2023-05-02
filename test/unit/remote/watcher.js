@@ -9,6 +9,8 @@ const sinon = require('sinon')
 const should = require('should')
 const CozyClient = require('cozy-client-js').Client
 const { FetchError } = require('cozy-stack-client')
+const async = require('async')
+const { Promise } = require('bluebird')
 
 const configHelpers = require('../../support/helpers/config')
 const { posixifyPath } = require('../../support/helpers/context_dir')
@@ -18,6 +20,7 @@ const cozyHelpers = require('../../support/helpers/cozy')
 const Builders = require('../../support/builders')
 
 const metadata = require('../../../core/metadata')
+const { ensureValidPath } = metadata
 const Prep = require('../../../core/prep')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
@@ -29,12 +32,6 @@ const {
 } = require('../../../core/remote/constants')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 const timestamp = require('../../../core/utils/timestamp')
-
-const { ensureValidPath } = metadata
-
-const isFile = (remoteFile) /*: boolean %checks */ =>
-  remoteFile.type === FILE_TYPE
-const isDir = (remoteDir) /*: boolean %checks */ => remoteDir.type === DIR_TYPE
 
 /*::
 import type {
@@ -55,6 +52,10 @@ import type {
 } from '../../../core/metadata'
 import type { RemoteTree } from '../../support/helpers/remote'
 */
+
+const isFile = (remoteFile) /*: boolean %checks */ =>
+  remoteFile.type === FILE_TYPE
+const isDir = (remoteDir) /*: boolean %checks */ => remoteDir.type === DIR_TYPE
 
 const saveTree = async (remoteTree, builders) => {
   for (const key in remoteTree) {
@@ -87,25 +88,35 @@ describe('RemoteWatcher', function () {
     builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
   beforeEach(async function () {
-    remoteTree = await builders.createRemoteTree([
-      'my-folder/',
-      'my-folder/folder-1/',
-      'my-folder/folder-2/',
-      'my-folder/folder-3/',
-      'my-folder/file-1',
-      'my-folder/file-2',
-      'my-folder/file-3'
-    ])
-    await saveTree(remoteTree, builders)
+    await async.retry({ times: 2 }, async () => {
+      try {
+        remoteTree = await builders.createRemoteTree([
+          'my-folder/',
+          'my-folder/folder-1/',
+          'my-folder/folder-2/',
+          'my-folder/folder-3/',
+          'my-folder/file-1',
+          'my-folder/file-2',
+          'my-folder/file-3'
+        ])
+        await saveTree(remoteTree, builders)
+      } catch (err) {
+        await cozyHelpers.deleteAll()
+      }
+    })
   })
-  afterEach(function () {
-    this.watcher.stop()
+  afterEach(async function () {
+    await this.watcher.stop()
   })
   afterEach(function removeEventListeners() {
     this.events.removeAllListeners()
   })
-  afterEach(pouchHelpers.cleanDatabase)
-  afterEach(cozyHelpers.deleteAll)
+  afterEach(async function () {
+    await pouchHelpers.cleanDatabase()
+  })
+  afterEach(async function () {
+    await cozyHelpers.deleteAll()
+  })
   after(configHelpers.cleanConfig)
 
   describe('start', function () {
@@ -117,37 +128,36 @@ describe('RemoteWatcher', function () {
     const nonFatalError = new Error('from watch')
 
     beforeEach(function () {
-      sinon.stub(this.watcher, 'watch')
+      sinon.stub(this.watcher, 'watch').resolves()
+      sinon.stub(this.watcher, 'startClock').returns() // XXX: avoid starting a loop in tests
       sinon.spy(this.events, 'emit')
-
-      this.watcher.watch.resolves()
     })
     afterEach(function () {
       this.watcher.watch.restore()
       this.events.emit.restore()
     })
 
-    it('starts the watch timeout loop', async function () {
-      sinon.spy(this.watcher, 'resetTimeout')
+    it('starts the watch loop', async function () {
+      this.watcher.startClock.restore()
 
       await this.watcher.start()
-      should(this.watcher.resetTimeout).have.been.calledOnce()
+      should(this.watcher.watch).have.been.calledOnce()
       should(this.watcher.running).be.true()
-      should(this.watcher.watchTimeout._destroyed).be.false()
-
-      this.watcher.resetTimeout.restore()
+      should(this.watcher.watchInterval._destroyed).be.false()
     })
 
-    it('can be called multiple times without resetting the timeout', async function () {
+    it('can be called multiple times without resetting the clock', async function () {
+      this.watcher.startClock.restore()
+
       await this.watcher.start()
-      const timeoutID = this.watcher.watchTimeout.ref()
+      const intervalID = this.watcher.watchInterval.ref()
       await this.watcher.start()
       should(this.watcher.running).be.true()
-      should(this.watcher.watchTimeout.ref()).eql(timeoutID)
+      should(this.watcher.watchInterval.ref()).eql(intervalID)
     })
 
     it('emits a REMOTE_WATCHER_FATAL_EVENT event on fatal error during first watch()', async function () {
-      this.watcher.watch.resolves(fatalError)
+      this.watcher.watch.rejects(fatalError)
 
       await this.watcher.start()
       should(this.events.emit).have.been.calledWith(
@@ -161,10 +171,10 @@ describe('RemoteWatcher', function () {
         .onFirstCall()
         .resolves()
         .onSecondCall()
-        .resolves(fatalError)
+        .rejects(fatalError)
 
       await this.watcher.start()
-      await this.watcher.resetTimeout()
+      await this.watcher.requestRun() // XXX: fake next clock tick
       should(this.events.emit).have.been.calledWith(
         REMOTE_WATCHER_FATAL_EVENT,
         fatalError
@@ -172,7 +182,7 @@ describe('RemoteWatcher', function () {
     })
 
     it('emits a RemoteWatcher:error event on non-fatal error during first watch()', async function () {
-      this.watcher.watch.resolves(nonFatalError)
+      this.watcher.watch.rejects(nonFatalError)
 
       await this.watcher.start()
       should(this.events.emit).have.been.calledWith(
@@ -186,10 +196,10 @@ describe('RemoteWatcher', function () {
         .onFirstCall()
         .resolves()
         .onSecondCall()
-        .resolves(nonFatalError)
+        .rejects(nonFatalError)
 
       await this.watcher.start()
-      await this.watcher.resetTimeout()
+      await this.watcher.requestRun() // XXX: fake next clock tick
       should(this.events.emit).have.been.calledWith(
         'RemoteWatcher:error',
         nonFatalError
@@ -208,21 +218,21 @@ describe('RemoteWatcher', function () {
 
     it('ensures watch is not called anymore', async function () {
       await this.watcher.start()
-      this.watcher.stop()
+      await this.watcher.stop()
       should(this.watcher.running).be.false()
-      should(this.watcher.watchTimeout._destroyed).be.true()
+      should(this.watcher.watchInterval._destroyed).be.true()
     })
 
     it('can be called multiple times', async function () {
       await this.watcher.start()
-      this.watcher.stop()
-      this.watcher.stop()
+      await this.watcher.stop()
+      await this.watcher.stop()
       should(this.watcher.running).be.false()
-      should(this.watcher.watchTimeout._destroyed).be.true()
+      should(this.watcher.watchInterval._destroyed).be.true()
     })
   })
 
-  describe('resetTimeout', function () {
+  describe('requestRun', function () {
     beforeEach(async function () {
       sinon.stub(this.watcher, 'watch')
       sinon.spy(this.events, 'emit')
@@ -232,50 +242,32 @@ describe('RemoteWatcher', function () {
       this.watcher.watch.resetHistory()
     })
 
-    afterEach(function () {
+    afterEach(async function () {
       this.events.emit.restore()
       this.watcher.watch.restore()
-      this.watcher.stop()
+      await this.watcher.stop()
     })
 
-    it('clears the watch timeout', async function () {
-      const clearTimeoutSpy = sinon.spy(global, 'clearTimeout')
-
-      try {
-        const timeoutID = this.watcher.watchTimeout
-        await this.watcher.resetTimeout()
-        should(clearTimeoutSpy).have.been.calledWith(timeoutID)
-      } finally {
-        clearTimeoutSpy.restore()
-      }
-    })
-
-    context('when the watcher is running', () => {
-      it('calls watch()', async function () {
-        await this.watcher.resetTimeout()
-        should(this.watcher.watch).have.been.calledOnce()
+    it('clears enqueued watch runs', async function () {
+      // XXX: make sure queued requests are not done before we get the chance to
+      // add the other ones.
+      this.watcher.watch.callsFake(async () => {
+        await Promise.delay(5000)
       })
 
-      it('schedules another watch timeout', async function () {
-        const timeoutID = this.watcher.watchTimeout
-        await this.watcher.resetTimeout()
-        should(this.watcher.watchTimeout._destroyed).be.false()
-        should(this.watcher.watchTimeout.ref()).not.eql(timeoutID)
-      })
+      // We start with an empty queue
+      should(this.watcher.queue.length()).equal(0)
 
-      context('but is stopped while watch() was being executed', () => {
-        beforeEach(function () {
-          this.watcher.watch.callsFake(async () => {
-            this.watcher.running = false
-          })
-        })
+      // Adding a bunch of run requests
+      this.watcher.requestRun()
+      this.watcher.requestRun()
+      this.watcher.requestRun()
+      this.watcher.requestRun()
+      this.watcher.requestRun()
+      this.watcher.requestRun()
 
-        it('does not schedule another watch timeout', async function () {
-          await this.watcher.resetTimeout()
-          should(this.watcher.watch).have.been.calledOnce()
-          should(this.watcher.watchTimeout._destroyed).be.true()
-        })
-      })
+      // We only keep one request in the queue
+      should(this.watcher.queue.length()).equal(1)
     })
 
     context('when the watcher is stopped', () => {
@@ -284,7 +276,7 @@ describe('RemoteWatcher', function () {
       })
 
       it('does not call watch()', async function () {
-        await this.watcher.resetTimeout()
+        await this.watcher.requestRun()
         should(this.watcher.watch).not.have.been.called()
       })
     })
@@ -300,16 +292,16 @@ describe('RemoteWatcher', function () {
             message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
             err: new FetchError({ status: 400 }, randomMessage())
           })
-          this.watcher.watch.resolves(err)
+          this.watcher.watch.rejects(err)
         })
 
         it('stops the watcher', async function () {
-          await this.watcher.resetTimeout()
+          await this.watcher.requestRun()
           should(this.watcher.running).be.false()
         })
 
         it('emits a REMOTE_WATCHER_FATAL_EVENT event', async function () {
-          await this.watcher.resetTimeout()
+          await this.watcher.requestRun()
           await should(this.events.emit).have.been.calledWith(
             REMOTE_WATCHER_FATAL_EVENT,
             err
@@ -324,16 +316,16 @@ describe('RemoteWatcher', function () {
             message: 'Cannot reach remote Cozy',
             err: new FetchError({ status: 500 }, randomMessage())
           })
-          this.watcher.watch.resolves(err)
+          this.watcher.watch.rejects(err)
         })
 
         it('does not stop the watcher', async function () {
-          await this.watcher.resetTimeout()
+          await this.watcher.requestRun()
           should(this.watcher.running).be.true()
         })
 
         it('emits a RemoteWatcher:error event', async function () {
-          await this.watcher.resetTimeout()
+          await this.watcher.requestRun()
           await should(this.events.emit).have.been.calledWith(
             'RemoteWatcher:error',
             err
@@ -406,7 +398,7 @@ describe('RemoteWatcher', function () {
 
       it('resolves with a higher-level error', async function () {
         err.status = 400 // Revoked
-        await should(this.watcher.watch()).be.fulfilledWith(
+        await should(this.watcher.watch()).be.rejectedWith(
           new remoteErrors.RemoteError({
             code: remoteErrors.COZY_CLIENT_REVOKED_CODE,
             message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
@@ -415,7 +407,7 @@ describe('RemoteWatcher', function () {
         )
 
         err.status = 500 // Possibly temporary error
-        await should(this.watcher.watch()).be.fulfilledWith(
+        await should(this.watcher.watch()).be.rejectedWith(
           new remoteErrors.RemoteError({
             code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE,
             message:
@@ -440,7 +432,7 @@ describe('RemoteWatcher', function () {
       })
 
       it('does not return client revoked error', async function () {
-        should(await this.watcher.watch()).match({
+        await should(this.watcher.watch()).be.rejectedWith({
           code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
         })
       })

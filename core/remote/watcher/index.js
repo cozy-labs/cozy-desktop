@@ -6,6 +6,7 @@
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const _ = require('lodash')
+const async = require('async')
 
 const metadata = require('../../metadata')
 const remoteChange = require('../change')
@@ -37,6 +38,7 @@ import type {
 import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from '../change'
 import type { CouchDBDeletion, CouchDBDoc, FullRemoteFile, RemoteDir } from '../document'
 import type { RemoteError } from '../errors'
+import type { QueueObject } from 'async'
 
 export type RemoteWatcherOptions = {
   +config: Config,
@@ -81,7 +83,8 @@ class RemoteWatcher {
   remoteCozy: RemoteCozy
   events: EventEmitter
   running: boolean
-  watchTimeout: TimeoutID
+  watchInterval: IntervalID
+  queue: QueueObject
   */
 
   constructor(
@@ -93,6 +96,7 @@ class RemoteWatcher {
     this.remoteCozy = remoteCozy
     this.events = events
     this.running = false
+    this.startQueue()
 
     autoBind(this)
   }
@@ -101,14 +105,16 @@ class RemoteWatcher {
     if (!this.running) {
       log.debug('Starting watcher')
       this.running = true
-      await this.resetTimeout()
+      this.startClock()
+      await this.requestRun()
     }
   }
 
-  stop() {
+  async stop() {
     if (this.running) {
       log.debug('Stopping watcher')
-      clearTimeout(this.watchTimeout)
+      this.stopClock()
+      await this.stopQueue()
       this.running = false
     }
   }
@@ -126,41 +132,56 @@ class RemoteWatcher {
     this.events.on(REMOTE_WATCHER_FATAL_EVENT, listener)
   }
 
-  fatal(err /*: Error */) {
+  async fatal(err /*: Error */) {
     log.error({ err, sentry: true }, `Remote watcher fatal: ${err.message}`)
     this.events.emit(REMOTE_WATCHER_FATAL_EVENT, err)
     this.events.removeAllListeners(REMOTE_WATCHER_FATAL_EVENT)
-    this.stop()
+    await this.stop()
   }
 
-  async resetTimeout() /*: Promise<?RemoteError> */ {
-    try {
-      clearTimeout(this.watchTimeout)
+  startQueue() {
+    this.queue = async.queue(async () => {
+      await this.watch()
+    })
+  }
 
-      if (!this.running) {
-        log.debug('Watcher stopped: skipping remote watch')
-        return
-      }
+  async stopQueue() {
+    await this.queue.kill()
+  }
 
-      const err = await this.watch()
-
-      if (this.running) {
-        this.watchTimeout = setTimeout(this.resetTimeout, HEARTBEAT)
-      }
-
-      if (err) {
-        switch (err.code) {
-          case remoteErrors.COZY_CLIENT_REVOKED_CODE:
-          case remoteErrors.MISSING_PERMISSIONS_CODE:
-          case remoteErrors.COZY_NOT_FOUND_CODE:
-            this.fatal(err)
-            break
-          default:
-            this.error(err)
+  startClock() {
+    if (this.watchInterval == null) {
+      this.watchInterval = setInterval(() => {
+        if (this.queue.empty) {
+          this.requestRun()
         }
-      }
+      }, HEARTBEAT)
+    }
+  }
+
+  stopClock() {
+    clearInterval(this.watchInterval)
+  }
+
+  async requestRun() {
+    if (!this.running) {
+      log.debug('Watcher stopped: skipping remote watcher run request')
+      return
+    }
+
+    try {
+      this.queue.remove(() => true)
+      return await this.queue.pushAsync()
     } catch (err) {
-      this.fatal(err)
+      switch (err.code) {
+        case remoteErrors.COZY_CLIENT_REVOKED_CODE:
+        case remoteErrors.MISSING_PERMISSIONS_CODE:
+        case remoteErrors.COZY_NOT_FOUND_CODE:
+          await this.fatal(err)
+          break
+        default:
+          this.error(err)
+      }
     }
   }
 
@@ -206,7 +227,7 @@ class RemoteWatcher {
     } catch (err) {
       // TODO: Maybe wrap remote errors more closely to remote calls to avoid
       // wrapping other kinds of errors? PouchDB errors for example.
-      return remoteErrors.wrapError(err)
+      throw remoteErrors.wrapError(err)
     } finally {
       release()
       this.events.emit('buffering-end')
