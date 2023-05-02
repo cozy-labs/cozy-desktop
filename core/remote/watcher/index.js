@@ -133,9 +133,7 @@ class RemoteWatcher {
     this.stop()
   }
 
-  async resetTimeout({
-    manualRun = false
-  } /*: { manualRun: boolean } */ = {}) /*: Promise<?RemoteError> */ {
+  async resetTimeout() /*: Promise<?RemoteError> */ {
     try {
       clearTimeout(this.watchTimeout)
 
@@ -150,9 +148,7 @@ class RemoteWatcher {
         this.watchTimeout = setTimeout(this.resetTimeout, HEARTBEAT)
       }
 
-      if (manualRun) {
-        return err
-      } else if (err) {
+      if (err) {
         switch (err.code) {
           case remoteErrors.COZY_CLIENT_REVOKED_CODE:
           case remoteErrors.MISSING_PERMISSIONS_CODE:
@@ -164,11 +160,7 @@ class RemoteWatcher {
         }
       }
     } catch (err) {
-      if (manualRun) {
-        return err
-      } else {
-        this.fatal(err)
-      }
+      this.fatal(err)
     }
   }
 

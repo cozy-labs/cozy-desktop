@@ -308,27 +308,12 @@ describe('RemoteWatcher', function () {
           should(this.watcher.running).be.false()
         })
 
-        context('during a scheduled run', () => {
-          it('emits a REMOTE_WATCHER_FATAL_EVENT event', async function () {
-            await this.watcher.resetTimeout()
-            await should(this.events.emit).have.been.calledWith(
-              REMOTE_WATCHER_FATAL_EVENT,
-              err
-            )
-          })
-        })
-
-        context('during a manual run', () => {
-          it('returns the error', async function () {
-            await should(
-              this.watcher.resetTimeout({ manualRun: true })
-            ).be.fulfilledWith(err)
-          })
-
-          it('does not emit any event', async function () {
-            await this.watcher.resetTimeout({ manualRun: true })
-            await should(this.events.emit).not.have.been.called()
-          })
+        it('emits a REMOTE_WATCHER_FATAL_EVENT event', async function () {
+          await this.watcher.resetTimeout()
+          await should(this.events.emit).have.been.calledWith(
+            REMOTE_WATCHER_FATAL_EVENT,
+            err
+          )
         })
       })
 
@@ -347,27 +332,12 @@ describe('RemoteWatcher', function () {
           should(this.watcher.running).be.true()
         })
 
-        context('during a scheduled run', () => {
-          it('emits a RemoteWatcher:error event', async function () {
-            await this.watcher.resetTimeout()
-            await should(this.events.emit).have.been.calledWith(
-              'RemoteWatcher:error',
-              err
-            )
-          })
-        })
-
-        context('during a manual run', () => {
-          it('returns the error', async function () {
-            await should(
-              this.watcher.resetTimeout({ manualRun: true })
-            ).be.fulfilledWith(err)
-          })
-
-          it('does not emit any event', async function () {
-            await this.watcher.resetTimeout({ manualRun: true })
-            await should(this.events.emit).not.have.been.called()
-          })
+        it('emits a RemoteWatcher:error event', async function () {
+          await this.watcher.resetTimeout()
+          await should(this.events.emit).have.been.calledWith(
+            'RemoteWatcher:error',
+            err
+          )
         })
       })
     })
