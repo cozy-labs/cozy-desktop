@@ -11,6 +11,7 @@ const Channel = require('../../../../core/local/channel_watcher/channel')
 const Builders = require('../../../support/builders')
 
 /*::
+import type { SinonSpy } from 'sinon'
 import type {
   ChannelBatch
 } from '../../../../core/local/channel_watcher/event'
@@ -241,7 +242,7 @@ describe('core/local/channel_watcher/Channel', function () {
       for (const scenario of scenarios) {
         describe(scenarioDescription(scenario), () => {
           let scenarioState /*:: ?: {
-            callback: (ChannelBatch) => ChannelBatch,
+            callback: SinonSpy<(ChannelBatch) => ChannelBatch>,
             inputBatches: ChannelBatch[],
             inputChannel: Channel,
             outputChannel?: Channel,
@@ -317,7 +318,7 @@ describe('core/local/channel_watcher/Channel', function () {
       for (const scenario of scenarios) {
         describe(scenarioDescription(scenario), () => {
           let scenarioState /*:: ?: {
-            callback: (ChannelBatch) => Promise<ChannelBatch>,
+            callback: SinonSpy<(ChannelBatch) => Promise<ChannelBatch>>,
             inputBatches: ChannelBatch[],
             inputChannel: Channel,
             outputChannel?: Channel,

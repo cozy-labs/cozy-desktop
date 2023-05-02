@@ -239,13 +239,15 @@ describe('RemoteWatcher', function () {
     })
 
     it('clears the watch timeout', async function () {
-      sinon.spy(global, 'clearTimeout')
+      const clearTimeoutSpy = sinon.spy(global, 'clearTimeout')
 
-      const timeoutID = this.watcher.watchTimeout
-      await this.watcher.resetTimeout()
-      should(clearTimeout).have.been.calledWith(timeoutID)
-
-      clearTimeout.restore()
+      try {
+        const timeoutID = this.watcher.watchTimeout
+        await this.watcher.resetTimeout()
+        should(clearTimeoutSpy).have.been.calledWith(timeoutID)
+      } finally {
+        clearTimeoutSpy.restore()
+      }
     })
 
     context('when the watcher is running', () => {

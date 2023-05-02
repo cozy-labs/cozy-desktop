@@ -42,7 +42,7 @@ describe('Remote', function () {
 
   describe('offline management', () => {
     it('The remote can be started when offline ', async function () {
-      sinon
+      const fetchStub = sinon
         .stub(global, 'fetch')
         .rejects(new FetchError('net::ERR_INTERNET_DISCONNECTED'))
       sinon.spy(this.events, 'emit')
@@ -53,7 +53,7 @@ describe('Remote', function () {
         { code: remoteErrors.UNREACHABLE_COZY_CODE }
       )
 
-      fetch.restore()
+      fetchStub.restore()
       this.events.emit.resetHistory()
 
       await this.remote.watcher.watch()
