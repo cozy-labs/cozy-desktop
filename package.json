@@ -152,7 +152,7 @@
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-promise": "6.0.0",
     "faker": "5.5.3",
-    "flow-bin": "^0.100.0",
+    "flow-bin": "^0.108.0",
     "flow-typed": "3.6.1",
     "glob": "7.2.0",
     "istanbul": "0.4.5",
