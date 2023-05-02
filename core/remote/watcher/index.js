@@ -21,6 +21,7 @@ const { inRemoteTrash } = require('../document')
 const squashMoves = require('./squashMoves')
 const normalizePaths = require('./normalizePaths')
 const logger = require('../../utils/logger')
+const { RealtimeManager } = require('./realtime_manager')
 
 /*::
 import type { Config } from '../../config'
@@ -85,6 +86,7 @@ class RemoteWatcher {
   running: boolean
   watchInterval: IntervalID
   queue: QueueObject
+  realtimeManager: RealtimeManager
   */
 
   constructor(
@@ -96,6 +98,10 @@ class RemoteWatcher {
     this.remoteCozy = remoteCozy
     this.events = events
     this.running = false
+    this.realtimeManager = new RealtimeManager(
+      remoteCozy,
+      this.requestRun.bind(this)
+    )
     this.startQueue()
 
     autoBind(this)
@@ -106,6 +112,12 @@ class RemoteWatcher {
       log.debug('Starting watcher')
       this.running = true
       this.startClock()
+      try {
+        this.realtimeManager.start()
+      } catch (err) {
+        log.error({ err }, 'Could not start realtime subscriptions')
+        throw remoteErrors.wrapError(err)
+      }
       await this.requestRun()
     }
   }
@@ -113,6 +125,11 @@ class RemoteWatcher {
   async stop() {
     if (this.running) {
       log.debug('Stopping watcher')
+      try {
+        await this.realtimeManager.stop()
+      } catch (err) {
+        log.error({ err }, 'Could not stop realtime subscriptions')
+      }
       this.stopClock()
       await this.stopQueue()
       this.running = false
