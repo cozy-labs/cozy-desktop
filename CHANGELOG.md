@@ -1,5 +1,33 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.38.0-beta.3 - 2023-05-04
+
+Improvements for all users:
+
+- Google Chrome's temporary download files will now be ignored by the local
+  changes watcher.
+  This will prevent synchronization attempts while the file is being downloaded
+  as they will most probably fail and are useless since the temporary file will
+  be removed in the end.
+- We'll now try to synchronize documents that were modified even after multiple
+  previous failed attempts as the new changes might fix the previous issues.
+
+Improvements for Windows users:
+
+- Documents trashed or erased on the remote Cozy will now be erased on the local
+  filesystem when they cannot be trashed (because the Trash is configured to be
+  skipped or because the synchronized directory is located on a network disk
+  without any Trash).
+  This will prevent de-synchronization between the local filesystem and the
+  remote Cozy and thus prevent future errors.
+- We'll now wait for the full synchronization stop before closing the
+  application on users' request.
+  This will prevent data corruption and should prevent crashes on Windows.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.38.0-beta.2 - 2023-03-13
 
 Improvements for all users:
