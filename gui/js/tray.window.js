@@ -275,9 +275,13 @@ module.exports = class TrayWM extends WindowManager {
       },
       'auto-launcher': (event /*: ElectronEvent */, enabled /*: boolean */) =>
         autoLaunch.setEnabled(enabled),
-      'close-app': () => {
-        this.desktop.stopSync()
-        this.app.quit()
+      'close-app': async () => {
+        try {
+          await this.desktop.stopSync()
+          await this.app.quit()
+        } catch (err) {
+          log.error({ err, sentry: true }, 'error while quitting client')
+        }
       },
       'unlink-cozy': () => {
         if (!this.desktop.config.isValid()) {
