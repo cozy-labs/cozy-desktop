@@ -1,5 +1,41 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.38.0 - 2023-05-09
+
+Improvements for all users:
+
+- We've activated the partial synchronization feature by default. It can still
+  be disabled by setting the
+  `settings.partial-desktop-sync.show-synced-folders-selection` flag to `false`
+  either in the client's config or on the Cozy itself.
+- Google Chrome's temporary download files will now be ignored by the local
+  changes watcher.
+  This will prevent synchronization attempts while the file is being downloaded
+  as they will most probably fail and are useless since the temporary file will
+  be removed in the end.
+- We'll now try to synchronize documents that were modified even after multiple
+  previous failed attempts as the new changes might fix the previous issues.
+
+Improvements for Windows users:
+
+- Documents trashed or erased on the remote Cozy will now be erased on the local
+  filesystem when they cannot be trashed (because the Trash is configured to be
+  skipped or because the synchronized directory is located on a network disk
+  without any Trash).
+  This will prevent de-synchronization between the local filesystem and the
+  remote Cozy and thus prevent future errors.
+
+Improvements for linux users:
+
+- We reverted our build machine Ubuntu version back to v20.04 as newer versions
+  make our native addons such as the Linux local watcher incompatible with some
+  current LTS versions of popular distributions like Ubuntu and Debian.
+  This change does not have short term drawbacks.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.38.0-beta.3 - 2023-05-04
 
 Improvements for all users:
