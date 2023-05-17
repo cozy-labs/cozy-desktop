@@ -4,15 +4,14 @@
  * @flow
  */
 
-const ElectronProxyAgent = require('electron-proxy-agent')
 const dns = require('dns')
-const url = require('url')
 const http = require('http')
 const https = require('https')
 const yargs = require('yargs')
 const electronFetch = require('electron-fetch').default
 
 const logger = require('../../../core/utils/logger')
+const { ProxyAgent, getProxyForUrl } = require('./agent')
 
 /*::
 import { App, Session } from 'electron'
@@ -145,7 +144,10 @@ const setupProxy = async (
     })
   }
 
-  const agent = new ElectronProxyAgent(session)
+  const agent = new ProxyAgent({
+    getProxyForUrl: getProxyForUrl(session),
+    keepAlive: true
+  })
   // $FlowFixMe
   http.globalAgent = https.globalAgent = agent
 
@@ -185,17 +187,11 @@ const requestOptions = (
   userAgent /*: string */,
   options /*: { agent?: http.Agent, headers?: { [key: string]: mixed }, hostname?: string } */ = {}
 ) => {
-  const { agent = http.globalAgent, headers = {}, hostname } = options
+  const { agent = http.globalAgent, headers = {} } = options
 
   // XXX: electronFetch does not use the session's User-Agent so we have to
   // pass it explicitely in the request's options.
   headers['User-Agent'] = userAgent
-
-  // ElectronProxyAgent removes the `host` header and uses `hostname` instead.
-  // However, we need this header so we set it back before sending the
-  // request.
-  // See https://github.com/felicienfrancois/node-electron-proxy-agent/blob/f6757f10c50c8dfcd5dc4ad9943aaf55e3788e0c/index.js#L93
-  if (hostname) headers['host'] = hostname
 
   return {
     ...options,
