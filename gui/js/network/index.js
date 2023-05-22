@@ -1,6 +1,6 @@
-/** Proxy management.
+/** Network configuration.
  *
- * @module gui/js/proxy
+ * @module gui/js/network
  * @flow
  */
 
@@ -10,20 +10,31 @@ const url = require('url')
 const http = require('http')
 const https = require('https')
 const yargs = require('yargs')
+const electronFetch = require('electron-fetch').default
 
-const logger = require('../../core/utils/logger')
-const log = logger({
-  component: 'GUI:proxy'
-})
+const logger = require('../../../core/utils/logger')
 
 /*::
 import { App, Session } from 'electron'
+
+type NetworkConfig = {
+  'proxy-script': ?string,
+  'proxy-rules': ?string,
+  'proxy-bypassrules': ?string,
+  'proxy-ntlm-domains': string,
+  'login-by-realm': ?string,
+  'resolve-ipv4-first': boolean
+}
 */
+
+const log = logger({
+  component: 'GUI:network'
+})
 
 const SESSION_PARTITION_NAME = 'persist:sync'
 
-const config = (argv /*: Array<*> */ = process.argv) => {
-  const config = yargs
+const networkConfig = (argv /*: Array<*> */ = process.argv) => {
+  const networkConfig = yargs
     .env('COZY_DRIVE')
     .conflicts('proxy-script', 'proxy-rules')
     .option('proxy-script', {
@@ -63,39 +74,21 @@ const config = (argv /*: Array<*> */ = process.argv) => {
     .help('help')
     .parse(argv)
 
-  log.debug({ config }, 'argv')
-  return config
+  log.debug({ networkConfig }, 'argv')
+  return networkConfig
 }
 
 const formatCertificate = certif =>
   `Certificate(${certif.issuerName} ${certif.subjectName})`
 
-const setup = async (
-  app /*: App */,
-  config /*: Object */,
+const getSession = (
   session /*: Session */,
   userAgent /*: string */
-) => {
+) /*: Session */ => {
   const syncSession = session.fromPartition(SESSION_PARTITION_NAME, {
     cache: false
   })
-
-  const loginByRealm = {}
-  if (config['login-by-realm']) {
-    config['login-by-realm'].split(',').forEach(lbr => {
-      const [realm, username, ...password] = lbr.split(':')
-      loginByRealm[realm] = [username, password.join(':')]
-    })
-  }
-
-  if (config['proxy-ntlm-domains']) {
-    syncSession.allowNTLMCredentialsForDomains(config['proxy-ntlm-domains'])
-  }
-
-  if (config['resolve-ipv4-first']) {
-    // $FlowFixMe this method exists in Node but is not defined in Flow...
-    dns.setDefaultResultOrder('ipv4first')
-  }
+  syncSession.setUserAgent(userAgent)
 
   syncSession.setCertificateVerifyProc((request, callback) => {
     const { hostname, certificate, verificationResult, errorCode } = request
@@ -124,26 +117,39 @@ const setup = async (
     }
   )
 
-  app.on(
-    'select-client-certificate',
-    (event, webContents, url, list, callback) => {
-      log.debug({ url }, 'select-client-certificate')
-      callback()
-    }
-  )
+  return syncSession
+}
 
-  app.on(
-    'certificate-error',
-    (event, webContents, url, error, certificate, callback) => {
-      log.warn(
-        { url, error, certificate: formatCertificate(certificate) },
-        'App Certificate Error'
-      )
-      callback(false)
-    }
-  )
+const setupProxy = async (
+  electronApp /*: App */,
+  networkConfig /*: Object */,
+  session /*: Session */
+) => {
+  const loginByRealm = {}
+  if (networkConfig['login-by-realm']) {
+    networkConfig['login-by-realm'].split(',').forEach(lbr => {
+      const [realm, username, ...password] = lbr.split(':')
+      loginByRealm[realm] = [username, password.join(':')]
+    })
+  }
 
-  app.on('login', (event, webContents, request, authInfo, callback) => {
+  if (networkConfig['proxy-ntlm-domains']) {
+    session.allowNTLMCredentialsForDomains(networkConfig['proxy-ntlm-domains'])
+  }
+
+  if (networkConfig['proxy-script'] || networkConfig['proxy-rules']) {
+    await session.setProxy({
+      pacScript: networkConfig['proxy-script'],
+      proxyRules: networkConfig['proxy-rules'],
+      proxyBypassRules: networkConfig['proxy-bypassrules']
+    })
+  }
+
+  const agent = new ElectronProxyAgent(session)
+  // $FlowFixMe
+  http.globalAgent = https.globalAgent = agent
+
+  electronApp.on('login', (event, webContents, request, authInfo, callback) => {
     log.debug({ request: request.method + ' ' + request.url }, 'Login event')
     const auth = loginByRealm[authInfo.realm]
     if (auth) {
@@ -154,88 +160,94 @@ const setup = async (
     }
   })
 
-  // XXX even if we swicth from electron-fetch, keep the custom user-agent
-  const originalFetch = global.fetch
-  const electronFetch = require('electron-fetch').default
-  global.fetch = (url, opts = {}) => {
-    opts.session = syncSession
-    opts.headers = opts.headers || {}
-    opts.headers['User-Agent'] = userAgent
-    opts.useSessionCookies = true // Send cookies stored in Electron's Session
-    return electronFetch(url, opts)
+  // Debug certificate errors
+  electronApp.on(
+    'select-client-certificate',
+    (event, webContents, url, list, callback) => {
+      log.debug({ url }, 'select-client-certificate')
+      callback()
+    }
+  )
+
+  electronApp.on(
+    'certificate-error',
+    (event, webContents, url, error, certificate, callback) => {
+      log.error(
+        { url, error, certificate: formatCertificate(certificate) },
+        'App Certificate Error'
+      )
+      callback(false)
+    }
+  )
+}
+
+const requestOptions = (
+  userAgent /*: string */,
+  options /*: { agent?: http.Agent, headers?: { [key: string]: mixed }, hostname?: string } */ = {}
+) => {
+  const { agent = http.globalAgent, headers = {}, hostname } = options
+
+  // XXX: electronFetch does not use the session's User-Agent so we have to
+  // pass it explicitely in the request's options.
+  headers['User-Agent'] = userAgent
+
+  // ElectronProxyAgent removes the `host` header and uses `hostname` instead.
+  // However, we need this header so we set it back before sending the
+  // request.
+  // See https://github.com/felicienfrancois/node-electron-proxy-agent/blob/f6757f10c50c8dfcd5dc4ad9943aaf55e3788e0c/index.js#L93
+  if (hostname) headers['host'] = hostname
+
+  return {
+    ...options,
+    agent,
+    headers
+  }
+}
+
+const setup = async (
+  electronApp /*: App */,
+  networkConfig /*: Object */,
+  session /*: Session */,
+  userAgent /*: string */
+) => {
+  if (networkConfig['resolve-ipv4-first']) {
+    // $FlowFixMe this method exists in Node but is not defined in Flow...
+    dns.setDefaultResultOrder('ipv4first')
   }
 
-  // $FlowFixMe
-  http.Agent.globalAgent =
-    // $FlowFixMe
-    http.globalAgent =
-    // $FlowFixMe
-    https.globalAgent =
-      new ElectronProxyAgent(syncSession)
+  const syncSession = getSession(session, userAgent)
 
-  const parseRequestOptions = (options /* * */) => {
-    if (typeof options === 'string') {
-      const {
-        hash,
-        host,
-        hostname,
-        href,
-        origin,
-        password,
-        pathname,
-        port,
-        protocol,
-        search,
-        searchParams,
-        username
-      } = new url.URL(options)
-      options = {
-        agent: http.globalAgent,
-        hash,
-        headers: {},
-        host,
-        hostname,
-        href,
-        origin,
-        password,
-        pathname,
-        port,
-        protocol,
-        search,
-        searchParams,
-        username
-      }
-    } else {
-      options = Object.assign({}, options)
-    }
-    options.agent = options.agent || http.globalAgent
-    options.headers = options.headers || {}
-    // ElectronProxyAgent removes the `host` header and uses `hostname` instead.
-    // However, we need this header so we set it back before sending the
-    // request.
-    // See https://github.com/felicienfrancois/node-electron-proxy-agent/blob/f6757f10c50c8dfcd5dc4ad9943aaf55e3788e0c/index.js#L93
-    if (options.hostname) options.headers.host = options.hostname
-    options.headers['User-Agent'] = userAgent
-    return options
+  await setupProxy(electronApp, networkConfig, syncSession)
+
+  const originalFetch = global.fetch
+  global.fetch = (url, opts = {}) => {
+    return electronFetch(
+      url,
+      requestOptions(userAgent, {
+        ...opts,
+        session: syncSession,
+        useSessionCookies: true
+      })
+    )
   }
 
   const originalHttpRequest = http.request
   // $FlowFixMe
-  http.request = function (options, cb) {
-    return originalHttpRequest.call(http, parseRequestOptions(options), cb)
+  http.request = (options = {}, callback) => {
+    return originalHttpRequest.call(
+      http,
+      requestOptions(userAgent, options),
+      callback
+    )
   }
   const originalHttpsRequest = https.request
   // $FlowFixMe
-  https.request = function (options, cb) {
-    return originalHttpsRequest.call(https, parseRequestOptions(options), cb)
-  }
-
-  if (config['proxy-script'] || config['proxy-rules']) {
-    await syncSession.setProxy({
-      pacScript: config['proxy-script'],
-      proxyRules: config['proxy-rules'],
-      proxyBypassRules: config['proxy-bypassrules']
-    })
+  https.request = (options = {}, callback) => {
+    return originalHttpsRequest.call(
+      https,
+      requestOptions(userAgent, options),
+      callback
+    )
   }
 
   return {
@@ -246,7 +258,7 @@ const setup = async (
 }
 
 const reset = async (
-  app /*: App */,
+  electronApp /*: App */,
   session /*: Session */,
   {
     originalFetch,
@@ -256,11 +268,7 @@ const reset = async (
 ) => {
   global.fetch = originalFetch
   // $FlowFixMe
-  http.Agent.globalAgent = http.globalAgent = new http.Agent()
-  // $FlowFixMe
   http.request = originalHttpRequest
-  // $FlowFixMe
-  https.Agent.globalAgent = https.globalAgent = new https.Agent()
   // $FlowFixMe
   https.request = originalHttpsRequest
 
@@ -269,8 +277,13 @@ const reset = async (
     'certificate-error',
     'login'
   ]) {
-    app.removeAllListeners(event)
+    electronApp.removeAllListeners(event)
   }
+
+  // $FlowFixMe
+  http.globalAgent = new http.Agent()
+  // $FlowFixMe
+  https.globalAgent = new https.Agent()
 
   const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
   syncSession.setCertificateVerifyProc(null)
@@ -280,7 +293,7 @@ const reset = async (
 
 module.exports = {
   SESSION_PARTITION_NAME,
-  config,
+  config: networkConfig,
   setup,
   reset
 }

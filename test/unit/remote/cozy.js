@@ -122,7 +122,7 @@ describe('RemoteCozy', function () {
     context('when the request fails with a mysterious Chromium error', () => {
       const stubFetch = () => {
         // This cannot be declared outside `stubFetch()` as it would not have
-        // gone through the proxy setup yet and calls would fail.
+        // gone through the network setup yet and calls would fail.
         const originalFetch = global.fetch
 
         sinon.stub(global, 'fetch')

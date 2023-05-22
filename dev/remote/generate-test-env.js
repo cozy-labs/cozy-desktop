@@ -5,7 +5,7 @@ const { app, session } = require('electron')
 
 const pkg = require('../../package.json')
 const automatedRegistration = require('./automated_registration')
-const proxy = require('../../gui/js/proxy')
+const network = require('../../gui/js/network')
 
 const cozyUrl =
   chooseCozyUrl(process.env.BUILD_JOB) ||
@@ -43,14 +43,14 @@ NODE_ENV=test
 app
   .whenReady()
   .then(() => {
-    const syncSession = session.fromPartition(proxy.SESSION_PARTITION_NAME, {
+    const syncSession = session.fromPartition(network.SESSION_PARTITION_NAME, {
       cache: false
     })
     // Prevent login errors in case we run bootstrap twice by removing the
     // session cookie which would trigger a redirect from the login page.
     return syncSession.clearStorageData()
   })
-  .then(() => proxy.setup(app, {}, session, ''))
+  .then(() => network.setup(app, {}, session, ''))
   .then(() => automatedRegistration(cozyUrl, passphrase, storage).process(pkg))
   .then(readAccessToken)
   .then(generateTestEnv)

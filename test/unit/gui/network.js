@@ -12,9 +12,9 @@ const { URL } = require('url')
 
 const cozyHelpers = require('../../support/helpers/cozy')
 
-const proxy = require('../../../gui/js/proxy')
+const network = require('../../../gui/js/network')
 
-describe('gui/js/proxy', function () {
+describe('gui/js/network', function () {
   const emptyConfig = {
     'login-by-realm': undefined,
     'proxy-bypassrules': undefined,
@@ -23,27 +23,27 @@ describe('gui/js/proxy', function () {
     'proxy-script': undefined
   }
 
-  before('reset global proxy', async () => {
-    // We'll play with the proxy in these tests so we disable the global test
-    // proxy in the meantime.
-    await cozyHelpers.resetGlobalProxy()
+  before('reset network config', async () => {
+    // We'll play with the proxy in these tests so we disable the global network
+    // config in the meantime.
+    await cozyHelpers.resetNetwork()
   })
-  after('setup global proxy again', async () => {
-    // Other test files will benefit from it so we setup the gloabal test proxy
-    // again.
-    await cozyHelpers.setupGlobalProxy()
+  after('setup network config', async () => {
+    // Other test files will benefit from it so we setup the gloabal network
+    // config again.
+    await cozyHelpers.setupNetwork()
   })
 
   describe('.config()', () => {
     let config
 
     it('is equivalent to .config(process.argv)', () => {
-      should(proxy.config()).deepEqual(proxy.config(process.argv))
+      should(network.config()).deepEqual(network.config(process.argv))
     })
 
     describe('with no command-line option', () => {
       beforeEach(() => {
-        config = proxy.config([])
+        config = network.config([])
       })
 
       it('is empty', () => {
@@ -100,10 +100,11 @@ describe('gui/js/proxy', function () {
     })
 
     const proxySetupHook = config => async () => {
-      proxySideEffects = await proxy.setup(app, config, session, userAgent)
+      // TODO: use network.setupProxy() instead
+      proxySideEffects = await network.setup(app, config, session, userAgent)
     }
     const revertProxySideEffects = async () => {
-      await proxy.reset(app, session, proxySideEffects)
+      await network.reset(app, session, proxySideEffects)
     }
 
     afterEach(revertProxySideEffects)

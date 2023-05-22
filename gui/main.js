@@ -22,7 +22,7 @@ const path = require('path')
 const os = require('os')
 const async = require('async')
 
-const proxy = require('./js/proxy')
+const network = require('./js/network')
 const {
   COZY_CLIENT_REVOKED_CODE,
   COZY_CLIENT_REVOKED_MESSAGE
@@ -579,7 +579,7 @@ app.on('ready', async () => {
 
   const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
   let userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
-  await proxy.setup(app, proxy.config(), session, userAgent)
+  await network.setup(app, network.config(), session, userAgent)
   log.info('Loading CLI...')
   i18n.init(app)
 
