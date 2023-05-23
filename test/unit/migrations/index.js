@@ -276,19 +276,19 @@ describe('core/migrations', function () {
       description: 'Test migration',
       affectedDocs: docs => docs,
       run: docs =>
-        // $FlowFixMe the type of doc does not change here…
         docs.map(d => ({
           ...d,
           migrated: true
         }))
     }
 
+    let migrationRunSpy
     beforeEach('spy on migration.run', () => {
-      sinon.spy(migration, 'run')
+      migrationRunSpy = sinon.spy(migration, 'run')
     })
 
     afterEach('remove spy', () => {
-      migration.run.restore()
+      migrationRunSpy.restore()
     })
 
     context(
@@ -358,12 +358,15 @@ describe('core/migrations', function () {
         })
 
         context('and no docs needed to be migrated', () => {
+          let migrationAffectedDocs
           beforeEach('mark all docs as unaffected', () => {
-            sinon.stub(migration, 'affectedDocs').callsFake(() => [])
+            migrationAffectedDocs = sinon
+              .stub(migration, 'affectedDocs')
+              .callsFake(() => [])
           })
 
           afterEach('remove stub', () => {
-            migration.affectedDocs.restore()
+            migrationAffectedDocs.restore()
           })
 
           it('does not save any docs', async function () {
@@ -388,7 +391,7 @@ describe('core/migrations', function () {
 
             await migrate(migration, { pouch: this.pouch, remote: this.remote })
             should(migration.run).have.been.calledOnce()
-            should(migration.run.getCall(0).args).deepEqual([
+            should(migrationRunSpy.getCall(0).args).deepEqual([
               docs,
               { pouch: this.pouch, remote: this.remote }
             ])
@@ -443,7 +446,7 @@ describe('core/migrations', function () {
             const isCorruptedDoc = index => index % 2 === 1
 
             beforeEach('stub migration.run() to return invalid docs', () => {
-              migration.run.restore()
+              migrationRunSpy.restore()
               sinon.stub(migration, 'run').callsFake(docs =>
                 docs.map((doc, index) => {
                   const newDoc = {

@@ -248,8 +248,10 @@ const fixCapture = (
 }
 
 const fsStatsFromObj = (module.exports.fsStatsFromObj = (
-  // $FlowFixMe these are fs.Stats attributes that we won't fill ourselves
-  {
+  statsObj /*: Object */,
+  kind /*: EventKind */
+) => {
+  const {
     dev,
     mode,
     nlink,
@@ -264,9 +266,8 @@ const fsStatsFromObj = (module.exports.fsStatsFromObj = (
     mtimeMs,
     ctimeMs,
     birthtimeMs
-  },
-  kind /*: EventKind */
-) => {
+  } = statsObj
+
   // $FlowFixMe `fs.Stats` constructor does accept arguments
   const stats = new fs.Stats(
     dev,
