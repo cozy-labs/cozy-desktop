@@ -5,6 +5,7 @@ const { IncompatibleDocError } = require('../incompatibilities/platform')
 const { HEARTBEAT: REMOTE_HEARTBEAT } = require('../remote/constants')
 const remoteErrors = require('../remote/errors')
 const logger = require('../utils/logger')
+const { SECONDS, MINUTES } = require('../utils/time')
 
 /*::
 import type { SavedMetadata } from '../metadata'
@@ -19,9 +20,6 @@ import type { Sync, Change } from '.'
 const log = logger({
   component: 'Sync:errors'
 })
-
-const SECONDS = 1000
-const MINUTES = 60 * SECONDS
 
 const EXCLUDED_DIR_CODE = 'ExcludedDir'
 const INCOMPATIBLE_DOC_CODE = 'IncompatibleDoc'

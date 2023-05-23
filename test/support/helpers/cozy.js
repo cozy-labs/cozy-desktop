@@ -3,31 +3,31 @@
 
 require('../../../core/globals')
 
-// Setup proxy so that all test requests will go through `electron-fetch`
+// Setup network so that all test requests will go through `electron-fetch`
 const { app, session } = require('electron')
-const proxy = require('../../../gui/js/proxy')
+const network = require('../../../gui/js/network')
 
 /*::
 import type { Config } from '../../../core/config'
 */
 
 let originalNet
-const setupGlobalProxy = async () => {
+const setupNetwork = async () => {
   await app.whenReady()
-  originalNet = await proxy.setup(
+  originalNet = await network.setup(
     app,
     { 'resolve-ipv4-first': true },
     session,
     ''
   )
 }
-const resetGlobalProxy = async () => {
+const resetNetwork = async () => {
   if (originalNet && (await originalNet)) {
-    await proxy.reset(app, session, originalNet)
+    await network.reset(app, session, originalNet)
     originalNet = null
   }
 }
-setupGlobalProxy()
+setupNetwork()
 
 const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
@@ -97,8 +97,8 @@ module.exports = {
   oauthCozy,
   newClient,
   deleteAll,
-  setupGlobalProxy,
-  resetGlobalProxy
+  setupNetwork,
+  resetNetwork
 }
 
 // List files and directories in the root directory

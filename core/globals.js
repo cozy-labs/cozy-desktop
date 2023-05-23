@@ -4,7 +4,12 @@
  * @flow
  */
 
+require('../core/utils/modules_stubs').initialize()
+
 require('isomorphic-fetch')
+
+const WebSocket = require('ws')
+global.WebSocket = WebSocket
 
 // We are using bluebird instead of native promises:
 // - they are easier to debug with long stack traces

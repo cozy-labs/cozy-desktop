@@ -53,7 +53,7 @@ class RemoteTestHelpers {
 
   async pullChanges() {
     this.side.watcher.running = true
-    await this.side.watcher.watch()
+    await this.side.watcher.requestRun()
     this.side.watcher.running = false
   }
 

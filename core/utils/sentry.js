@@ -23,7 +23,7 @@ const bunyan = require('bunyan')
 const url = require('url')
 const _ = require('lodash')
 
-const { SESSION_PARTITION_NAME } = require('../../gui/js/proxy')
+const { SESSION_PARTITION_NAME } = require('../../gui/js/network')
 const logger = require('./logger')
 
 const log = logger({

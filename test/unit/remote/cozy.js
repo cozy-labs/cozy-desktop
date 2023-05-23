@@ -122,7 +122,7 @@ describe('RemoteCozy', function () {
     context('when the request fails with a mysterious Chromium error', () => {
       const stubFetch = () => {
         // This cannot be declared outside `stubFetch()` as it would not have
-        // gone through the proxy setup yet and calls would fail.
+        // gone through the network setup yet and calls would fail.
         const originalFetch = global.fetch
 
         sinon.stub(global, 'fetch')
@@ -431,7 +431,7 @@ describe('RemoteCozy', function () {
     })
 
     it('makes several calls to get changesfeed aka pagination', async () => {
-      const client = await remoteCozy.newClient()
+      const client = await remoteCozy.getClient()
       const docsOnServer = [
         {
           doc: {
@@ -900,7 +900,7 @@ describe('RemoteCozy', function () {
         _type: OAUTH_CLIENTS_DOCTYPE,
         _id: remoteCozy.config.deviceId
       }
-      const client = await remoteCozy.newClient()
+      const client = await remoteCozy.getClient()
       const files = client.collection(FILES_DOCTYPE)
       await files.addNotSynchronizedDirectories(oauthClient, [
         tree['dir/subdir/']
@@ -1002,7 +1002,7 @@ describe('RemoteCozy', function () {
   })
 })
 
-describe('RemoteCozy.newClient', () => {
+describe('RemoteCozy.getClient', () => {
   // XXX: Webapp token based clients are only used in tests but we should make
   // sure tests won't fail because they can't build a valid CozyClient instance.
   context('with a webapp token based cozy-client-js client', () => {
@@ -1017,7 +1017,7 @@ describe('RemoteCozy.newClient', () => {
     })
 
     it('returns a cozy-client CozyClient instance', async () => {
-      should(await webappCozy.newClient()).be.an.instanceOf(CozyClient)
+      should(await webappCozy.getClient()).be.an.instanceOf(CozyClient)
     })
   })
 
@@ -1033,7 +1033,7 @@ describe('RemoteCozy.newClient', () => {
     })
 
     it('returns a cozy-client CozyClient instance', async () => {
-      should(await oauthCozy.newClient()).be.an.instanceOf(CozyClient)
+      should(await oauthCozy.getClient()).be.an.instanceOf(CozyClient)
     })
 
     context('when the client was not authorized yet', () => {
@@ -1046,7 +1046,7 @@ describe('RemoteCozy.newClient', () => {
             storage: this.config
           }
         })
-        should(await oauthCozy.newClient()).be.an.instanceOf(CozyClient)
+        should(await oauthCozy.getClient()).be.an.instanceOf(CozyClient)
       })
     })
   })

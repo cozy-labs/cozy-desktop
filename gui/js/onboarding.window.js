@@ -5,7 +5,7 @@ const { dialog, session, BrowserView, shell } = require('electron')
 const autoLaunch = require('./autolaunch')
 const defaults = require('./defaults')
 const { translate } = require('./i18n')
-const { SESSION_PARTITION_NAME } = require('./proxy')
+const { SESSION_PARTITION_NAME } = require('./network')
 const { enable: enableRemoteModule } = require('@electron/remote/main')
 
 /*::
