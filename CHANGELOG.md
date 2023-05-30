@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.39.0-beta.1 - 2023-05-30
+
+Improvements for all users:
+
+- We will now fetch the latest changes from your Cozy as soon as they've been
+  made (with some delay in case many changes were made).
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.38.0 - 2023-05-09
 
 Improvements for all users:
