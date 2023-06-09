@@ -98,10 +98,7 @@ class RemoteWatcher {
     this.remoteCozy = remoteCozy
     this.events = events
     this.running = false
-    this.realtimeManager = new RealtimeManager(
-      remoteCozy,
-      this.requestRun.bind(this)
-    )
+    this.realtimeManager = new RealtimeManager()
     this.startQueue()
 
     autoBind(this)
@@ -112,12 +109,12 @@ class RemoteWatcher {
       log.debug('Starting watcher')
       this.running = true
       this.startClock()
-      try {
-        this.realtimeManager.start()
-      } catch (err) {
-        log.error({ err }, 'Could not start realtime subscriptions')
-        throw remoteErrors.wrapError(err)
-      }
+      const client = await this.remoteCozy.getClient()
+      this.realtimeManager.setup({
+        client,
+        eventHandler: this.requestRun.bind(this)
+      })
+      await this.realtimeManager.start()
       await this.requestRun()
     }
   }
@@ -125,11 +122,7 @@ class RemoteWatcher {
   async stop() {
     if (this.running) {
       log.debug('Stopping watcher')
-      try {
-        await this.realtimeManager.stop()
-      } catch (err) {
-        log.error({ err }, 'Could not stop realtime subscriptions')
-      }
+      this.realtimeManager.stop()
       this.stopClock()
       await this.stopQueue()
       this.running = false
