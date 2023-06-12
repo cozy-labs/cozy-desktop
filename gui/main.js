@@ -13,6 +13,10 @@ const {
   session
 } = require('electron')
 
+if (process.env.INSECURE_SSL) {
+  app.commandLine.appendSwitch('ignore-certificate-errors')
+}
+
 const Desktop = require('../core/app.js')
 const sentry = require('../core/utils/sentry')
 const { openNote } = require('./utils/notes')
@@ -570,6 +574,25 @@ app.on('open-file', async (event, filePath) => {
 })
 
 app.on('ready', async () => {
+  if (app.commandLine.hasSwitch('ignore-certificate-errors')) {
+    const options = {
+      type: 'warning',
+      title: 'Enable insecure SSL mode?',
+      message: 'Are you sure you want to enable insecure SSL?',
+      detail: `This mode will skip SSL certificate verification and allow Man-In-the-Middle attacks!\nThis mode is meant for debugging purposes only.\n\nEnable at your own risks if you know what you're doing.`,
+      buttons: ['Cancel', 'Enable insecure SSL'],
+      defaultId: 0
+    }
+    const response = dialog.showMessageBoxSync(null, options)
+    if (response === 1) {
+      // eslint-disable-next-line no-console
+      console.warn('!!! INSECURE SSL ENABLED !!!')
+      log.warn('!!! INSECURE SSL ENABLED !!!')
+    } else {
+      exit(0)
+    }
+  }
+
   // Once configured and running in the tray, the app doesn't need to be visible
   // anymore in macOS dock (and cmd+tab), even when the tray popover is visible,
   // until another window shows up.

@@ -9,6 +9,7 @@ const http = require('http')
 const https = require('https')
 const yargs = require('yargs')
 const electronFetch = require('electron-fetch').default
+const { app } = require('electron')
 
 const logger = require('../../../core/utils/logger')
 const { ProxyAgent, getProxyForUrl } = require('./agent')
@@ -119,6 +120,12 @@ const getSession = (
   return syncSession
 }
 
+/* Can be tested using `mitmproxy` in the following way:
+ *
+ * Start the proxy with `mitmproxy -k -p 8888`
+ *
+ * Start the app with `INSECURE_SSL=1` and the `--proxy-rules="localhost:8888"` argument.
+ */
 const setupProxy = async (
   electronApp /*: App */,
   networkConfig /*: Object */,
@@ -146,7 +153,12 @@ const setupProxy = async (
 
   const agent = new ProxyAgent({
     getProxyForUrl: getProxyForUrl(session),
-    keepAlive: true
+    keepAlive: true,
+    ...(app.commandLine.hasSwitch('ignore-certificate-errors')
+      ? {
+          rejectUnauthorized: false // XXX: Danger! For debugging purposes only
+        }
+      : {}) // XXX: we need the key not to be present for our unit tests to pass
   })
   // $FlowFixMe
   http.globalAgent = https.globalAgent = agent
