@@ -3,11 +3,9 @@
  * @flow
  */
 
-const http = require('http')
 const _ = require('lodash')
 const autoBind = require('auto-bind')
 const { RealtimePlugin } = require('cozy-realtime')
-const { WebSocket } = require('ws')
 
 const logger = require('../../utils/logger')
 const { MILLISECONDS, SECONDS } = require('../../utils/time')
@@ -68,11 +66,6 @@ class RealtimeManager {
 
     try {
       client.registerPlugin(RealtimePlugin, {
-        createWebSocket: (url, doctype) => {
-          // XXX: If using `RemoteCozy` behind a proxy, `http.globalAgent` needs
-          // to be configured first by calling `network.setup()`.
-          return new WebSocket(url, doctype, { agent: http.globalAgent })
-        },
         logger: logger({ component: 'RemoteWatcher:CozyRealtime' })
       })
 

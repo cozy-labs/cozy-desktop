@@ -161,7 +161,7 @@ const setupProxy = async (
       : {}) // XXX: we need the key not to be present for our unit tests to pass
   })
   // $FlowFixMe
-  http.globalAgent = https.globalAgent = agent
+  http.Agent.globalAgent = http.globalAgent = https.globalAgent = agent
 
   electronApp.on('login', (event, webContents, request, authInfo, callback) => {
     log.debug({ request: request.method + ' ' + request.url }, 'Login event')
@@ -281,6 +281,11 @@ const reset = async (
   // $FlowFixMe
   https.request = originalHttpsRequest
 
+  // $FlowFixMe
+  http.Agent.globalAgent = http.globalAgent = new http.Agent({})
+  // $FlowFixMe
+  https.globalAgent = new https.Agent({})
+
   for (const event of [
     'select-client-certificate',
     'certificate-error',
@@ -288,11 +293,6 @@ const reset = async (
   ]) {
     electronApp.removeAllListeners(event)
   }
-
-  // $FlowFixMe
-  http.globalAgent = new http.Agent()
-  // $FlowFixMe
-  https.globalAgent = new https.Agent()
 
   const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
   syncSession.setCertificateVerifyProc(null)
