@@ -259,6 +259,7 @@ const setup = async (
   }
 
   return {
+    argv: networkConfig['_'],
     originalFetch,
     originalHttpRequest,
     originalHttpsRequest

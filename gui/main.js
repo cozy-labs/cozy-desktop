@@ -602,11 +602,14 @@ app.on('ready', async () => {
 
   const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
   let userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
-  await network.setup(app, network.config(), session, userAgent)
+  const { argv } = await network.setup(
+    app,
+    network.config(),
+    session,
+    userAgent
+  )
   log.info('Loading CLI...')
   i18n.init(app)
-
-  const { argv } = process
 
   // We need a valid config to start the App and open the requested note.
   // We assume users won't have notes they want to open without a connected
