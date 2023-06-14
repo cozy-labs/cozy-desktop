@@ -3,17 +3,14 @@
  * @flow
  */
 
-const http = require('http')
 const autoBind = require('auto-bind')
 const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
 const { FetchError } = require('cozy-stack-client')
 const { Q } = require('cozy-client')
 const cozyFlags = require('cozy-flags').default
-const { RealtimePlugin } = require('cozy-realtime')
 const path = require('path')
 const addSecretEventListener = require('secret-event-listener')
-const { WebSocket } = require('ws')
 
 const {
   FILES_DOCTYPE,
@@ -111,6 +108,8 @@ class RemoteCozy {
     autoBind(this)
   }
 
+  // FIXME: setup can be done multiple times if getClient() is called multiple times concurrently.
+  // Use lock?! Separate setup from getter ?!
   async getClient() /*: Promise<CozyClient> */ {
     if (this.newClient != null) {
       return this.newClient
@@ -123,14 +122,6 @@ class RemoteCozy {
     } else {
       this.newClient = await CozyClient.fromOldClient(this.client)
     }
-
-    // XXX: If using `RemoteCozy` behind a proxy, `http.globalAgent` needs to be
-    // configured first by calling `network.setup()`.
-    this.newClient.registerPlugin(RealtimePlugin, {
-      createWebSocket: (url, doctype) => {
-        return new WebSocket(url, doctype, { agent: http.globalAgent })
-      }
-    })
 
     return this.newClient
   }
@@ -642,11 +633,6 @@ class RemoteCozy {
     } else {
       return []
     }
-  }
-
-  async realtime() /*: Promise<CozyRealtime> */ {
-    const client = await this.getClient()
-    return client.plugins.realtime.realtime
   }
 }
 

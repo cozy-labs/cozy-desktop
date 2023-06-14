@@ -37,7 +37,7 @@ module.exports = {
   toSentryContext
 }
 
-const { COZY_NO_SENTRY, DEBUG, TESTDEBUG } = process.env
+const { CI, COZY_NO_SENTRY, DEBUG } = process.env
 
 const SENTRY_REF = `e937e35fcaa14c9a84ca5980ef8a852e`
 const SENTRY_DSN = `https://${SENTRY_REF}@errors.cozycloud.cc/4`
@@ -65,7 +65,20 @@ import type { ClientInfo } from '../app'
 */
 
 function setup(clientInfos /*: ClientInfo */) {
-  if (DEBUG || TESTDEBUG || COZY_NO_SENTRY || isSentryConfigured) return
+  if (CI || COZY_NO_SENTRY || isSentryConfigured) {
+    log.info(
+      { COZY_NO_SENTRY, isSentryConfigured },
+      'skipping Sentry configuration'
+    )
+    if (DEBUG) {
+      // eslint-disable-next-line no-console
+      console.log(
+        { COZY_NO_SENTRY, isSentryConfigured },
+        'skipping Sentry configuration'
+      )
+    }
+    return
+  }
   try {
     const { appVersion, cozyUrl } = clientInfos
     const { domain, instance, environment } = toSentryContext(cozyUrl)

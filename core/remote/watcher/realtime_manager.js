@@ -3,8 +3,11 @@
  * @flow
  */
 
+const http = require('http')
 const _ = require('lodash')
 const autoBind = require('auto-bind')
+const { RealtimePlugin } = require('cozy-realtime')
+const { WebSocket } = require('ws')
 
 const logger = require('../../utils/logger')
 const { MILLISECONDS, SECONDS } = require('../../utils/time')
@@ -12,6 +15,7 @@ const { FILES_DOCTYPE } = require('../constants')
 const remoteErrors = require('../errors')
 
 /*::
+import type { CozyClient } from 'cozy-client'
 import type { CozyRealtime } from 'cozy-realtime'
 
 import type { RemoteCozy } from '../cozy'
@@ -33,62 +37,104 @@ const log = logger({
 
 class RealtimeManager {
   /*::
-  remoteCozy: RemoteCozy
+  realtime: CozyRealtime
   eventHandler: (any) => any
   reconnectTimeout: ?TimeoutID
   options: RealtimeManagerOptions
   realtimeLogsAdded: boolean
   */
 
-  constructor(
-    remoteCozy /*: RemoteCozy */,
-    eventHandler /*: (any) => any */,
-    {
-      events: {
-        debounceTime = 200 * MILLISECONDS,
-        maxWaitTime = 5 * SECONDS
-      } = {},
-      reconnectionDelay = 10 * SECONDS
-    } /*: RealtimeManagerOptions */ = {}
-  ) {
-    this.remoteCozy = remoteCozy
+  constructor({
+    events: {
+      debounceTime = 200 * MILLISECONDS,
+      maxWaitTime = 5 * SECONDS
+    } = {},
+    reconnectionDelay = 10 * SECONDS
+  } /*: RealtimeManagerOptions */ = {}) {
     this.options = { events: { debounceTime, maxWaitTime }, reconnectionDelay }
-    this.setEventHandler(eventHandler)
-
-    this.reconnectTimeout = null
-    this.realtimeLogsAdded = false
 
     autoBind(this)
   }
 
-  async start() {
-    log.debug('Subscribing to realtime events...')
+  setup(
+    {
+      client,
+      eventHandler
+    } /*: { client: CozyClient, eventHandler: (any) => any } */
+  ) {
+    if (this.realtime != null) {
+      return
+    }
+
     try {
-      const realtime = await this.remoteCozy.realtime()
+      client.registerPlugin(RealtimePlugin, {
+        createWebSocket: (url, doctype) => {
+          // XXX: If using `RemoteCozy` behind a proxy, `http.globalAgent` needs
+          // to be configured first by calling `network.setup()`.
+          return new WebSocket(url, doctype, { agent: http.globalAgent })
+        },
+        logger: logger({ component: 'RemoteWatcher:CozyRealtime' })
+      })
 
-      if (this.shouldAddRealtimeLogs()) this.addRealtimeLogs(realtime)
+      this.realtime = client.plugins.realtime.realtime
+      // Add logs to `disconnected` event as `cozy-realtime` doesn't log anything
+      // when emitting this event.
+      this.realtime.on('disconnected', () =>
+        log.debug('realtime websocket disconnected')
+      )
+      this.realtime.on('error', this.onError)
 
-      await Promise.all([
-        realtime.subscribe('created', FILES_DOCTYPE, this.onCreated),
-        realtime.subscribe('updated', FILES_DOCTYPE, this.onUpdated),
-        realtime.subscribe('deleted', FILES_DOCTYPE, this.onDeleted)
-      ])
-      log.debug('Subscribed to realtime events')
+      this.setEventHandler(eventHandler)
+    } catch (err) {
+      log.error({ err, sentry: true }, 'failed to setup RealtimeManager')
+    }
+  }
+
+  async start() {
+    log.debug('Starting realtime manager...')
+
+    if (this.realtime == null) {
+      log.warn(
+        'could not start RealtimeManager without realtime. Have you called setup?'
+      )
+      return
+    }
+
+    log.debug('Subscribing to realtime events...')
+    this.realtime.subscribe('created', FILES_DOCTYPE, this.onCreated)
+    this.realtime.subscribe('updated', FILES_DOCTYPE, this.onUpdated)
+    this.realtime.subscribe('deleted', FILES_DOCTYPE, this.onDeleted)
+    log.debug('Subscribed to realtime events')
+
+    try {
+      await this.realtime.waitForSocketReady()
     } catch (err) {
       this.onError(err)
+
+      const delay = this.options.reconnectionDelay
+      log.debug(`Will retry starting realtime in ${delay} ms`)
+      this.reconnectTimeout = setTimeout(this.start, delay)
+
+      return
     }
+
+    log.debug('Realtime manager started')
   }
 
   async stop() {
     clearTimeout(this.reconnectTimeout)
 
+    if (this.realtime == null) {
+      log.warn(
+        'could not stop RealtimeManager without realtime. Have you called setup?'
+      )
+      return
+    }
+
     log.debug('Unsubscribing from realtime events...')
-    const realtime = await this.remoteCozy.realtime()
-    await Promise.all([
-      realtime.unsubscribe('created', FILES_DOCTYPE, this.onCreated),
-      realtime.unsubscribe('updated', FILES_DOCTYPE, this.onUpdated),
-      realtime.unsubscribe('deleted', FILES_DOCTYPE, this.onDeleted)
-    ])
+    this.realtime.unsubscribe('created', FILES_DOCTYPE, this.onCreated)
+    this.realtime.unsubscribe('updated', FILES_DOCTYPE, this.onUpdated)
+    this.realtime.unsubscribe('deleted', FILES_DOCTYPE, this.onDeleted)
     log.debug('Unsubscribed from realtime events')
   }
 
@@ -118,40 +164,10 @@ class RealtimeManager {
   }
 
   onError(err /*: Error */) {
-    const wrapped = remoteErrors.wrapError(err)
-    log.error({ err: wrapped }, 'error')
-
-    switch (wrapped.code) {
-      case remoteErrors.UNREACHABLE_COZY_CODE:
-      case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
-      case remoteErrors.REMOTE_MAINTENANCE_ERROR_CODE:
-      case remoteErrors.USER_ACTION_REQUIRED_CODE:
-        this.reconnectTimeout = setTimeout(
-          this.start,
-          this.options.reconnectionDelay
-        )
-        break
-      default:
-        throw wrapped
+    if (err) {
+      const wrapped = remoteErrors.wrapError(err)
+      log.error({ err: wrapped }, 'error')
     }
-  }
-
-  shouldAddRealtimeLogs() {
-    return !this.realtimeLogsAdded
-  }
-
-  addRealtimeLogs(cozyRealtime /*: CozyRealtime */) {
-    cozyRealtime.on('ready', () => log.debug('realtime websocket ready'))
-    cozyRealtime.on('start', () => log.debug('realtime websocket started'))
-    cozyRealtime.on('disconnected', () =>
-      log.debug('realtime websocket disconnected')
-    )
-    cozyRealtime.on('close', () => log.debug('realtime websocket closed'))
-    cozyRealtime.on('error', err =>
-      log.debug({ err }, 'realtime websocket error')
-    )
-
-    this.realtimeLogsAdded = true
   }
 }
 
