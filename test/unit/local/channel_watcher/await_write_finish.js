@@ -21,7 +21,7 @@ async function heuristicIsEmpty(channel) {
   return (
     (expected.length === 1 &&
       Object.keys(expected[0]).reduce(
-        (acc, prop) =>
+        (acc /*: boolean */, prop /*: string */) =>
           acc && expected[0][prop] === lastEventToCheckEmptyness[prop],
         true
       )) ||

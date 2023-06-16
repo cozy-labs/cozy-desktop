@@ -267,7 +267,10 @@ class RemoteWatcher {
     remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir> */
   ) /*: Promise<SavedMetadata[]> */ {
     const remoteIds = remoteDocs.reduce(
-      (ids, doc) => ids.add(doc._id),
+      (
+        ids /*: Set<string> */,
+        doc /*: CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir */
+      ) => ids.add(doc._id),
       new Set()
     )
     return await this.pouch.allByRemoteIds(remoteIds)

@@ -488,7 +488,11 @@ const startSync = async () => {
 }
 
 const dumbhash = k =>
-  k.split('').reduce((a, c) => ((a << 5) - a + c.charCodeAt(0)) | 0)
+  k
+    .split('')
+    .reduce(
+      (a /*: number */, c /*: string */) => ((a << 5) - a + c.charCodeAt(0)) | 0
+    )
 
 /* This event is emitted inside the primary instance and is guaranteed to be
  * emitted after the `ready` event of `app` gets emitted.

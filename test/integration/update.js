@@ -63,7 +63,10 @@ describe('Update file', () => {
       const contents = {
         local: await Promise.reduce(
           trees.local,
-          async (localContents, path) => {
+          async (
+            localContents /*: { [string]: string } */,
+            path /*: string */
+          ) => {
             localContents[path] = await helpers.local.syncDir.readFile(path)
             return localContents
           },
@@ -71,7 +74,10 @@ describe('Update file', () => {
         ),
         remote: await Promise.reduce(
           trees.remote,
-          async (remoteContents, path) => {
+          async (
+            remoteContents /*: { [string]: string } */,
+            path /*: string */
+          ) => {
             remoteContents[path] = await helpers.remote.readFile(path)
             return remoteContents
           },
@@ -117,7 +123,10 @@ describe('Update file', () => {
       const contents = {
         local: await Promise.reduce(
           trees.local,
-          async (localContents, path) => {
+          async (
+            localContents /*: { [string]: string } */,
+            path /*: string */
+          ) => {
             if (path.endsWith('/')) return localContents
             localContents[path] = await helpers.local.syncDir.readFile(path)
             return localContents
@@ -126,7 +135,10 @@ describe('Update file', () => {
         ),
         remote: await Promise.reduce(
           trees.remote,
-          async (remoteContents, path) => {
+          async (
+            remoteContents /*: { [string]: string } */,
+            path /*: string */
+          ) => {
             if (path.endsWith('/')) return remoteContents
             remoteContents[path] = await helpers.remote.readFile(path)
             return remoteContents
@@ -186,7 +198,10 @@ describe('Update file', () => {
       const contents = {
         local: await Promise.reduce(
           trees.local,
-          async (localContents, path) => {
+          async (
+            localContents /*: { [string]: string } */,
+            path /*: string */
+          ) => {
             if (path.endsWith('/')) return localContents
             if (path.includes('/Trash/')) return localContents
             localContents[path] = await helpers.local.syncDir.readFile(path)
@@ -196,7 +211,10 @@ describe('Update file', () => {
         ),
         remote: await Promise.reduce(
           trees.remote,
-          async (remoteContents, path) => {
+          async (
+            remoteContents /*: { [string]: string } */,
+            path /*: string */
+          ) => {
             if (path.endsWith('/')) return remoteContents
             remoteContents[path] = await helpers.remote.readFile(path)
             return remoteContents

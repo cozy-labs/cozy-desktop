@@ -300,7 +300,12 @@ const detectPathIncompatibilities = (
   ).map(nameIncompatibility => _.merge({ path }, nameIncompatibility))
 
   const recursivePathIncompatibilities = ancestorNames.reduceRight(
-    (previousIncompatibilities, name, index, pathComponents) => {
+    (
+      previousIncompatibilities /*: Array<PlatformIncompatibility> */,
+      name /*: string */,
+      index /*: number */,
+      pathComponents /*: string[] */
+    ) => {
       const path = pathComponents.slice(0, index + 1).join(sep)
       const nameIncompatibilities = detectNameIncompatibilities(
         name,

@@ -92,7 +92,7 @@ const updateAlert = (
   alert /*: UserAlert */,
   status /*: UserActionStatus */
 ) /*: UserAlert[] */ => {
-  return alerts.reduce((prev, curr) => {
+  return alerts.reduce((prev /*: UserAlert[] */, curr /*: UserAlert */) => {
     if (curr.code === alert.code) {
       return prev.concat({ ...alert, status })
     } else {
@@ -205,13 +205,16 @@ module.exports = class SyncState extends EventEmitter {
     const updatedUserAlerts = newState.userAlerts || state.userAlerts
     const userAlerts =
       newState.syncCurrentSeq != null
-        ? updatedUserAlerts.reduce((alerts, alert) => {
-            if (alert.seq && alert.seq <= newState.syncCurrentSeq) {
-              return alerts
-            } else {
-              return alerts.concat(alert)
-            }
-          }, [])
+        ? updatedUserAlerts.reduce(
+            (alerts /*: UserAlert[] */, alert /*: UserAlert */) => {
+              if (alert.seq && alert.seq <= newState.syncCurrentSeq) {
+                return alerts
+              } else {
+                return alerts.concat(alert)
+              }
+            },
+            []
+          )
         : updatedUserAlerts
 
     newState = {
@@ -276,7 +279,9 @@ module.exports = class SyncState extends EventEmitter {
         }
         break
       case 'Sync:fatal':
-        this.update({ errors: addError(this.state.errors, makeError(...args)) })
+        this.update({
+          errors: addError(this.state.errors, makeError(...args))
+        })
         break
       case 'user-alert':
         this.update({

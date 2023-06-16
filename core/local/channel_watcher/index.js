@@ -44,6 +44,7 @@ import type { Config } from '../../config'
 import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
 import type EventEmitter from 'events'
+import type Channel from './channel'
 import type { Ignore } from '../../ignore'
 import type { Checksumer } from '../checksumer'
 import type { ChannelEventsDispatcher } from './dispatch'
@@ -106,7 +107,10 @@ const stepsInitialState = (
 ) /*: Promise<Object> */ =>
   Promise.reduce(
     STEPS,
-    async (prevState, step) =>
+    async (
+      prevState /*: Object */,
+      step /*: { initialState?: (Object) => Object } */
+    ) =>
       step.initialState
         ? _.assign(prevState, await step.initialState(opts))
         : prevState,
@@ -143,7 +147,10 @@ class ChannelWatcher {
     )
     // Here, we build the chain of steps.
     STEPS.reduce(
-      (chan, step) => step.loop(chan, stepOptions),
+      (
+        chan /*: Channel */,
+        step /*: { loop: (Channel, ChannelWatcherStepOptions) => Channel } */
+      ) => step.loop(chan, stepOptions),
       this.producer.channel
     )
   }
