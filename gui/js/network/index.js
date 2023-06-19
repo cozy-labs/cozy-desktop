@@ -153,6 +153,7 @@ const setupProxy = async (
 
   const agentOptions = {
     getProxyForUrl: getProxyForUrl(session),
+    headers: { 'User-Agent': session.getUserAgent() },
     keepAlive: true
   }
 
@@ -207,22 +208,6 @@ const setupProxy = async (
   )
 }
 
-const requestOptions = (
-  userAgent /*: string */,
-  options /*: { agent?: http.Agent, headers?: { [key: string]: mixed }, hostname?: string } */ = {}
-) => {
-  const { headers = {} } = options
-
-  // XXX: electronFetch does not use the session's User-Agent so we have to
-  // pass it explicitely in the request's options.
-  headers['User-Agent'] = userAgent
-
-  return {
-    ...options,
-    headers
-  }
-}
-
 const setup = async (
   electronApp /*: App */,
   networkConfig /*: Object */,
@@ -240,57 +225,26 @@ const setup = async (
 
   const originalFetch = global.fetch
   global.fetch = (url, opts = {}) => {
-    return electronFetch(
-      url,
-      requestOptions(userAgent, {
-        ...opts,
-        session: syncSession,
-        useSessionCookies: true
-      })
-    )
-  }
-
-  const originalHttpRequest = http.request
-  // $FlowFixMe
-  http.request = (options = {}, callback) => {
-    return originalHttpRequest.call(
-      http,
-      requestOptions(userAgent, options),
-      callback
-    )
-  }
-  const originalHttpsRequest = https.request
-  // $FlowFixMe
-  https.request = (options = {}, callback) => {
-    return originalHttpsRequest.call(
-      https,
-      requestOptions(userAgent, options),
-      callback
-    )
+    return electronFetch(url, {
+      ...opts,
+      headers: { ...opts.headers, 'User-Agent': userAgent }, // XXX: electron-fetch does not use the session's user-agent
+      session: syncSession,
+      useSessionCookies: true
+    })
   }
 
   return {
     argv: networkConfig['_'],
-    originalFetch,
-    originalHttpRequest,
-    originalHttpsRequest
+    originalFetch
   }
 }
 
 const reset = async (
   electronApp /*: App */,
   session /*: Session */,
-  {
-    originalFetch,
-    originalHttpRequest,
-    originalHttpsRequest
-  } /*: { originalFetch: Function, originalHttpRequest: Function, originalHttpsRequest: Function } */
+  { originalFetch } /*: { originalFetch: Function } */
 ) => {
   global.fetch = originalFetch
-  // $FlowFixMe
-  http.request = originalHttpRequest
-  // $FlowFixMe
-  https.request = originalHttpsRequest
 
   // $FlowFixMe
   http.Agent.globalAgent = http.globalAgent = new http.Agent({})

@@ -15,6 +15,7 @@ const { PacProxyAgent } = require('pac-proxy-agent')
 const { HttpProxyAgent } = require('http-proxy-agent')
 const { HttpsProxyAgent } = require('https-proxy-agent')
 const { SocksProxyAgent } = require('socks-proxy-agent')
+const _ = require('lodash')
 
 const logger = require('../../../core/utils/logger')
 const log = logger({
@@ -37,7 +38,8 @@ const PROTOCOLS = [
 ]
 
 /*::
-type GetProxyForUrlCallback = (url: string) => Promise<string>;
+type GetProxyForUrlCallback = (url: string) => Promise<string>
+type OutgoingHttpHeaders = Object
 
 import type { Session } from 'electron'
 import type { PacProxyAgentOptions } from 'pac-proxy-agent'
@@ -73,9 +75,15 @@ type CustomProxyAgentOptions = {
   // This will most likely be used with `https:` to make sure secure requests
   // don't fail when wrapped by Sentry.
   protocol?: string,
+
+  headers?: OutgoingHttpHeaders | (() => OutgoingHttpHeaders),
 }
 
 type AgentConnectOpts = ProxyAgentOptions & CustomProxyAgentOptions
+
+interface ProxyAgentClientRequest extends http.ClientRequest {
+  _header?: string | null,
+}
 */
 
 /**
@@ -109,26 +117,42 @@ function isValidProtocol(v /*: string */) /*: boolean %checks */ {
  */
 class ProxyAgent extends Agent {
   /*::
-	// Cache for `Agent` instances.
-	cache: LRUCache<string, Agent>
+  // Cache for `Agent` instances.
+  cache: LRUCache<string, Agent>
 
-	connectOpts: AgentConnectOpts
-	httpAgent: http.Agent
-	httpsAgent: http.Agent
-	getProxyForUrl: GetProxyForUrlCallback
-	*/
+  connectOpts: AgentConnectOpts
+  httpAgent: http.Agent
+  httpsAgent: http.Agent
+  getProxyForUrl: GetProxyForUrlCallback
+  proxyHeaders: OutgoingHttpHeaders | (() => OutgoingHttpHeaders)
+  */
 
   constructor(opts /*:: ?: AgentConnectOpts */ = {}) {
     super(opts)
     log.debug({ opts }, 'Creating new ProxyAgent instance')
     this.cache = new LRUCache({ max: 20 })
-    this.connectOpts = opts
+    this.proxyHeaders = opts && opts.headers ? opts.headers : {}
+    this.connectOpts = _.omit(opts, 'headers')
 
     const { httpAgent, httpsAgent, getProxyForUrl, protocol } = opts
     this.httpAgent = httpAgent || new http.Agent(opts)
     this.httpsAgent = httpsAgent || new https.Agent(opts)
     this.getProxyForUrl = getProxyForUrl || (async () => '')
     this.protocol = protocol
+  }
+
+  addRequest(req /*: ProxyAgentClientRequest */, opts /*: AgentConnectOpts */) {
+    req._header = null
+
+    const headers = { ...this.proxyHeaders }
+    for (const name of Object.keys(headers)) {
+      const value = headers[name]
+      if (value) {
+        req.setHeader(name, value)
+      }
+    }
+
+    super.addRequest(req, opts)
   }
 
   async connect(
