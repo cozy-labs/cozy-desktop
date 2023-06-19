@@ -40,31 +40,42 @@ const PROTOCOLS = [
 type GetProxyForUrlCallback = (url: string) => Promise<string>;
 
 import type { Session } from 'electron'
-import type { AgentConnectOpts } from 'agent-base'
 import type { PacProxyAgentOptions } from 'pac-proxy-agent'
 import type { HttpProxyAgentOptions } from 'http-proxy-agent'
 import type { HttpsProxyAgentOptions } from 'https-proxy-agent'
 import type { SocksProxyAgentOptions } from 'socks-proxy-agent'
 
-export type ProxyAgentOptions = HttpProxyAgentOptions<''> &
+// Options type from the `proxy-agent` package.
+type ProxyAgentOptions = HttpProxyAgentOptions<''> &
   HttpsProxyAgentOptions<''> &
   SocksProxyAgentOptions &
   PacProxyAgentOptions<''> & {
     // Default `http.Agent` instance to use when no proxy is
     // configured for a request. Defaults to a new `http.Agent()`
     // instance with the proxy agent options passed in.
-    httpAgent?: http.Agent;
+    httpAgent?: http.Agent,
 
     // Default `http.Agent` instance to use when no proxy is
     // configured for a request. Defaults to a new `https.Agent()`
     // instance with the proxy agent options passed in.
-    httpsAgent?: http.Agent;
+    httpsAgent?: http.Agent,
 
     // A callback for dynamic provision of proxy for url.
     // Defaults to standard proxy environment variables,
     // see https://www.npmjs.com/package/proxy-from-env for details
-    getProxyForUrl?: GetProxyForUrlCallback;
+    getProxyForUrl?: GetProxyForUrlCallback,
   };
+
+// ProxyAgent options for our own needs.
+type CustomProxyAgentOptions = {
+  // Protocol to use for requests when it is not defined in the
+  // request's options and we somehow fallback to the `ProxyAgent` protocol.
+  // This will most likely be used with `https:` to make sure secure requests
+  // don't fail when wrapped by Sentry.
+  protocol?: string,
+}
+
+type AgentConnectOpts = ProxyAgentOptions & CustomProxyAgentOptions
 */
 
 /**
@@ -101,22 +112,23 @@ class ProxyAgent extends Agent {
 	// Cache for `Agent` instances.
 	cache: LRUCache<string, Agent>
 
-	connectOpts: ?ProxyAgentOptions;
-	httpAgent: http.Agent;
-	httpsAgent: http.Agent;
-	getProxyForUrl: GetProxyForUrlCallback;
+	connectOpts: AgentConnectOpts
+	httpAgent: http.Agent
+	httpsAgent: http.Agent
+	getProxyForUrl: GetProxyForUrlCallback
 	*/
 
-  constructor(opts /*:: ?: ProxyAgentOptions */ = {}) {
+  constructor(opts /*:: ?: AgentConnectOpts */ = {}) {
     super(opts)
     log.debug({ opts }, 'Creating new ProxyAgent instance')
     this.cache = new LRUCache({ max: 20 })
     this.connectOpts = opts
 
-    const { httpAgent, httpsAgent, getProxyForUrl } = opts
+    const { httpAgent, httpsAgent, getProxyForUrl, protocol } = opts
     this.httpAgent = httpAgent || new http.Agent(opts)
     this.httpsAgent = httpsAgent || new https.Agent(opts)
     this.getProxyForUrl = getProxyForUrl || (async () => '')
+    this.protocol = protocol
   }
 
   async connect(

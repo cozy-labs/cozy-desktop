@@ -151,9 +151,21 @@ const setupProxy = async (
     })
   }
 
-  const agent = new ProxyAgent({
+  const agentOptions = {
     getProxyForUrl: getProxyForUrl(session),
-    keepAlive: true,
+    keepAlive: true
+  }
+
+  const httpAgent = new ProxyAgent({
+    ...agentOptions,
+    protocol: 'http:'
+  })
+  // $FlowFixMe
+  http.Agent.globalAgent = http.globalAgent = httpAgent
+
+  const httpsAgent = new ProxyAgent({
+    ...agentOptions,
+    protocol: 'https:',
     ...(app.commandLine.hasSwitch('ignore-certificate-errors')
       ? {
           rejectUnauthorized: false // XXX: Danger! For debugging purposes only
@@ -161,7 +173,7 @@ const setupProxy = async (
       : {}) // XXX: we need the key not to be present for our unit tests to pass
   })
   // $FlowFixMe
-  http.Agent.globalAgent = http.globalAgent = https.globalAgent = agent
+  https.globalAgent = httpsAgent
 
   electronApp.on('login', (event, webContents, request, authInfo, callback) => {
     log.debug({ request: request.method + ' ' + request.url }, 'Login event')
@@ -199,7 +211,7 @@ const requestOptions = (
   userAgent /*: string */,
   options /*: { agent?: http.Agent, headers?: { [key: string]: mixed }, hostname?: string } */ = {}
 ) => {
-  const { agent = http.globalAgent, headers = {} } = options
+  const { headers = {} } = options
 
   // XXX: electronFetch does not use the session's User-Agent so we have to
   // pass it explicitely in the request's options.
@@ -207,7 +219,6 @@ const requestOptions = (
 
   return {
     ...options,
-    agent,
     headers
   }
 }

@@ -3,6 +3,8 @@
  * @flow
  */
 
+const http = require('http')
+const https = require('https')
 const _ = require('lodash')
 const autoBind = require('auto-bind')
 const { RealtimePlugin } = require('cozy-realtime')
@@ -66,6 +68,10 @@ class RealtimeManager {
 
     try {
       client.registerPlugin(RealtimePlugin, {
+        createWebSocket: (url, doctype) =>
+          new global.WebSocket(url, doctype, {
+            agent: url.startsWith('wss:') ? https.globalAgent : http.globalAgent
+          }),
         logger: logger({ component: 'RemoteWatcher:CozyRealtime' })
       })
 
