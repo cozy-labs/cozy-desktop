@@ -1,5 +1,17 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.39.0-beta.3 - 2023-06-20
+
+Improvements for all users:
+
+- We fixed our network configuration as it was preventing the realtime manager,
+  responsible for fetching changes from your Cozy as soon as they've bee made,
+  to create a connection with the Cozy.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.39.0-beta.2 - 2023-06-14
 
 Improvements for all users:
