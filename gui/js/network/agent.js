@@ -15,6 +15,7 @@ const { PacProxyAgent } = require('pac-proxy-agent')
 const { HttpProxyAgent } = require('http-proxy-agent')
 const { HttpsProxyAgent } = require('https-proxy-agent')
 const { SocksProxyAgent } = require('socks-proxy-agent')
+const _ = require('lodash')
 
 const logger = require('../../../core/utils/logger')
 const log = logger({
@@ -37,34 +38,52 @@ const PROTOCOLS = [
 ]
 
 /*::
-type GetProxyForUrlCallback = (url: string) => Promise<string>;
+type GetProxyForUrlCallback = (url: string) => Promise<string>
+type OutgoingHttpHeaders = Object
 
 import type { Session } from 'electron'
-import type { AgentConnectOpts } from 'agent-base'
 import type { PacProxyAgentOptions } from 'pac-proxy-agent'
 import type { HttpProxyAgentOptions } from 'http-proxy-agent'
 import type { HttpsProxyAgentOptions } from 'https-proxy-agent'
 import type { SocksProxyAgentOptions } from 'socks-proxy-agent'
 
-export type ProxyAgentOptions = HttpProxyAgentOptions<''> &
+// Options type from the `proxy-agent` package.
+type ProxyAgentOptions = HttpProxyAgentOptions<''> &
   HttpsProxyAgentOptions<''> &
   SocksProxyAgentOptions &
   PacProxyAgentOptions<''> & {
     // Default `http.Agent` instance to use when no proxy is
     // configured for a request. Defaults to a new `http.Agent()`
     // instance with the proxy agent options passed in.
-    httpAgent?: http.Agent;
+    httpAgent?: http.Agent,
 
     // Default `http.Agent` instance to use when no proxy is
     // configured for a request. Defaults to a new `https.Agent()`
     // instance with the proxy agent options passed in.
-    httpsAgent?: http.Agent;
+    httpsAgent?: http.Agent,
 
     // A callback for dynamic provision of proxy for url.
     // Defaults to standard proxy environment variables,
     // see https://www.npmjs.com/package/proxy-from-env for details
-    getProxyForUrl?: GetProxyForUrlCallback;
+    getProxyForUrl?: GetProxyForUrlCallback,
   };
+
+// ProxyAgent options for our own needs.
+type CustomProxyAgentOptions = {
+  // Protocol to use for requests when it is not defined in the
+  // request's options and we somehow fallback to the `ProxyAgent` protocol.
+  // This will most likely be used with `https:` to make sure secure requests
+  // don't fail when wrapped by Sentry.
+  protocol?: string,
+
+  headers?: OutgoingHttpHeaders | (() => OutgoingHttpHeaders),
+}
+
+type AgentConnectOpts = ProxyAgentOptions & CustomProxyAgentOptions
+
+interface ProxyAgentClientRequest extends http.ClientRequest {
+  _header?: string | null,
+}
 */
 
 /**
@@ -98,25 +117,42 @@ function isValidProtocol(v /*: string */) /*: boolean %checks */ {
  */
 class ProxyAgent extends Agent {
   /*::
-	// Cache for `Agent` instances.
-	cache: LRUCache<string, Agent>
+  // Cache for `Agent` instances.
+  cache: LRUCache<string, Agent>
 
-	connectOpts: ?ProxyAgentOptions;
-	httpAgent: http.Agent;
-	httpsAgent: http.Agent;
-	getProxyForUrl: GetProxyForUrlCallback;
-	*/
+  connectOpts: AgentConnectOpts
+  httpAgent: http.Agent
+  httpsAgent: http.Agent
+  getProxyForUrl: GetProxyForUrlCallback
+  proxyHeaders: OutgoingHttpHeaders | (() => OutgoingHttpHeaders)
+  */
 
-  constructor(opts /*:: ?: ProxyAgentOptions */ = {}) {
+  constructor(opts /*:: ?: AgentConnectOpts */ = {}) {
     super(opts)
     log.debug({ opts }, 'Creating new ProxyAgent instance')
     this.cache = new LRUCache({ max: 20 })
-    this.connectOpts = opts
+    this.proxyHeaders = opts && opts.headers ? opts.headers : {}
+    this.connectOpts = _.omit(opts, 'headers')
 
-    const { httpAgent, httpsAgent, getProxyForUrl } = opts
+    const { httpAgent, httpsAgent, getProxyForUrl, protocol } = opts
     this.httpAgent = httpAgent || new http.Agent(opts)
     this.httpsAgent = httpsAgent || new https.Agent(opts)
     this.getProxyForUrl = getProxyForUrl || (async () => '')
+    this.protocol = protocol
+  }
+
+  addRequest(req /*: ProxyAgentClientRequest */, opts /*: AgentConnectOpts */) {
+    req._header = null
+
+    const headers = { ...this.proxyHeaders }
+    for (const name of Object.keys(headers)) {
+      const value = headers[name]
+      if (value) {
+        req.setHeader(name, value)
+      }
+    }
+
+    super.addRequest(req, opts)
   }
 
   async connect(
@@ -124,7 +160,14 @@ class ProxyAgent extends Agent {
     opts /*: AgentConnectOpts */
   ) /*: Promise<http.Agent> */ {
     const { secureEndpoint } = opts
-    const protocol = secureEndpoint ? 'https:' : 'http:'
+    const isWebSocket = req.getHeader('upgrade') === 'websocket'
+    const protocol = secureEndpoint
+      ? isWebSocket
+        ? 'wss:'
+        : 'https:'
+      : isWebSocket
+      ? 'ws:'
+      : 'http:'
     const host = req.getHeader('host')
     // $FlowFixMe `http.ClientRequest` does have a `path` attribute
     const url = new URL(req.path, `${protocol}//${host}`).href
@@ -147,7 +190,7 @@ class ProxyAgent extends Agent {
       if (!isValidProtocol(proxyProto)) {
         throw new Error(`Unsupported protocol for proxy URL: ${proxy}`)
       }
-      const ctor = proxies[proxyProto][secureEndpoint ? 1 : 0]
+      const ctor = proxies[proxyProto][secureEndpoint || isWebSocket ? 1 : 0]
       // @ts-expect-error meh…
       agent = new ctor(proxy, this.connectOpts)
       this.cache.set(cacheKey, agent)
