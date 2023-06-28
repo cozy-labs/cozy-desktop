@@ -24,6 +24,9 @@
 # https://cgit.freedesktop.org/libreoffice/core/tree/sal/osl/unx/file_misc.cxx?h=libreoffice-6-2-4#n819
 *.osl-tmp
 
+# OpenOffice
+*.lck
+
 # Microsoft Office
 ~$*
 
