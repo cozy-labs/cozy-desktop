@@ -27,7 +27,7 @@ describe('Platform incompatibilities', () => {
     return
   }
 
-  let builders, cozy, helpers
+  let builders, client, helpers
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -39,8 +39,8 @@ describe('Platform incompatibilities', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    cozy = cozyHelpers.cozy
-    builders = new Builders({ cozy })
+    client = await cozyHelpers.newClient(cozyHelpers.cozy)
+    builders = new Builders({ client })
     helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
@@ -133,8 +133,8 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesByPath('/d:ir', { name: 'di:r' })
-    await cozy.files.updateAttributesByPath('/f:ile', { name: 'fi:le' })
+    await helpers.remote.updateAttributesByPath('/d:ir', { name: 'di:r' })
+    await helpers.remote.updateAttributesByPath('/f:ile', { name: 'fi:le' })
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -147,8 +147,8 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.trashById(remoteDocs['d:ir/']._id)
-    await cozy.files.trashById(remoteDocs['f:ile']._id)
+    await helpers.remote.trashById(remoteDocs['d:ir/']._id)
+    await helpers.remote.trashById(remoteDocs['f:ile']._id)
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -157,8 +157,8 @@ describe('Platform incompatibilities', () => {
     shouldNotHaveBlocked()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.restoreById(remoteDocs['d:ir/']._id)
-    await cozy.files.restoreById(remoteDocs['f:ile']._id)
+    await helpers.remote.restoreById(remoteDocs['d:ir/']._id)
+    await helpers.remote.restoreById(remoteDocs['f:ile']._id)
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -171,10 +171,10 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.trashById(remoteDocs['d:ir/']._id)
-    await cozy.files.trashById(remoteDocs['f:ile']._id)
-    await cozy.files.destroyById(remoteDocs['d:ir/']._id)
-    await cozy.files.destroyById(remoteDocs['f:ile']._id)
+    await helpers.remote.trashById(remoteDocs['d:ir/']._id)
+    await helpers.remote.trashById(remoteDocs['f:ile']._id)
+    await helpers.remote.destroyById(remoteDocs['d:ir/']._id)
+    await helpers.remote.destroyById(remoteDocs['f:ile']._id)
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -199,7 +199,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(
+    await helpers.remote.updateAttributesById(
       remoteDocs['d:ir/sub:dir/f:ile']._id,
       { name: 'file' }
     )
@@ -214,7 +214,7 @@ describe('Platform incompatibilities', () => {
     shouldHaveBlockedFor('d:ir/sub:dir/file')
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['d:ir/']._id, {
+    await helpers.remote.updateAttributesById(remoteDocs['d:ir/']._id, {
       name: 'dir'
     })
     await helpers.pullAndSyncAll()
@@ -231,7 +231,7 @@ describe('Platform incompatibilities', () => {
     ])
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['d:ir/sub:dir/']._id, {
+    await helpers.remote.updateAttributesById(remoteDocs['d:ir/sub:dir/']._id, {
       name: 'subdir'
     })
     await helpers.pullAndSyncAll()
@@ -254,7 +254,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+    await helpers.remote.updateAttributesById(remoteDocs['dir/']._id, {
       name: 'dir:'
     })
     await helpers.pullAndSyncAll()
@@ -280,7 +280,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+    await helpers.remote.updateAttributesById(remoteDocs['dir/']._id, {
       name: 'dir:'
     })
     await helpers.pullAndSyncAll()
@@ -298,7 +298,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/file']._id, {
+    await helpers.remote.updateAttributesById(remoteDocs['dir/file']._id, {
       name: 'fi:le'
     })
     await helpers.pullAndSyncAll()
@@ -316,7 +316,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+    await helpers.remote.updateAttributesById(remoteDocs['dir/']._id, {
       name: 'dir2'
     })
     await helpers.pullAndSyncAll()
@@ -407,7 +407,7 @@ describe('Platform incompatibilities', () => {
     should(await helpers.incompatibleTree()).be.empty()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+    await helpers.remote.updateAttributesById(remoteDocs['dir/']._id, {
       name: 'd:ir'
     })
     await helpers.pullAndSyncAll()
@@ -416,7 +416,7 @@ describe('Platform incompatibilities', () => {
     shouldHaveBlockedFor(['d:ir', 'd:ir/file'])
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+    await helpers.remote.updateAttributesById(remoteDocs['dir/']._id, {
       name: 'dir'
     })
     await helpers.pullAndSyncAll()

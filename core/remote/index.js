@@ -142,8 +142,8 @@ class Remote /*:: implements Reader, Writer */ {
     return this.remoteCozy.update()
   }
 
-  updateLastSync() {
-    return this.remoteCozy.updateLastSync()
+  updateLastSynced() {
+    return this.remoteCozy.updateLastSynced()
   }
 
   /** Create a readable stream for the given doc */
@@ -265,11 +265,12 @@ class Remote /*:: implements Reader, Writer */ {
         const options = Object.assign(
           {},
           {
+            name: doc.remote.name,
             checksum: doc.md5sum,
             executable: doc.executable || false,
             contentLength: doc.size,
             contentType: doc.mime,
-            updatedAt: mostRecentUpdatedAt(doc),
+            lastModifiedDate: mostRecentUpdatedAt(doc),
             ifMatch: doc.remote._rev
           }
         )
@@ -282,6 +283,7 @@ class Remote /*:: implements Reader, Writer */ {
           source,
           options
         )
+
         metadata.updateRemote(doc, updated)
       }
     )
@@ -443,9 +445,9 @@ class Remote /*:: implements Reader, Writer */ {
 
   async findDocByPath(fpath /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
     const [parentPath, name] = dirAndName(fpath)
-    const { _id: dirID } = await this.findDirectoryByPath(parentPath)
+    const { _id: dirId } = await this.findDirectoryByPath(parentPath)
 
-    const results = await this.remoteCozy.search({ dir_id: dirID, name })
+    const results = await this.remoteCozy.search({ dir_id: dirId, name })
     if (results.length > 0) return results[0]
   }
 
@@ -520,17 +522,13 @@ function dirAndName(localPath /*: string */) /*: [string, string] */ {
 
 function newDocumentAttributes(
   name /*: string */,
-  dirID /*: string */,
-  updatedAt /*: string */
+  dirId /*: string */,
+  lastModifiedDate /*: string */
 ) {
   return {
     name,
-    dirID,
-    // We force the creation date otherwise the stack will set it with the
-    // current date and could possibly update the modification date to be
-    // greater.
-    createdAt: updatedAt,
-    updatedAt
+    dirId,
+    lastModifiedDate
   }
 }
 

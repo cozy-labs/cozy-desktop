@@ -13,8 +13,9 @@ const glob = require('glob')
 const _ = require('lodash')
 const sinon = require('sinon')
 
-const { cozy } = require('./cozy')
+const cozyHelpers = require('./cozy')
 const stater = require('../../../core/local/stater')
+const { FILES_DOCTYPE } = require('../../../core/remote/constants')
 const Builders = require('../builders')
 
 /*::
@@ -350,7 +351,11 @@ module.exports.init = async (
   localCapture /*: ?({| batches: ChannelEvent[][] |} | {| events: ChokidarEvent[] |}) */
 ) => {
   debug('[init]')
-  const builders = new Builders({ cozy, pouch })
+  const client = await cozyHelpers.newClient(cozyHelpers.cozy)
+  const builders = new Builders({
+    client,
+    pouch
+  })
   const remoteDocsToTrash = []
   const inoMap = new Map()
 
@@ -385,7 +390,9 @@ module.exports.init = async (
 
       const remoteParentPath = path.posix.join('/', path.posix.dirname(relpath))
       debug(`- retrieve remote parent: ${remoteParentPath}`)
-      const remoteParent = await cozy.files.statByPath(remoteParentPath)
+      const { data: remoteParent } = await client
+        .collection(FILES_DOCTYPE)
+        .statByPath(remoteParentPath)
       if (!remoteParent) {
         debug(`Could not retrieve remote parent: ${remoteParentPath}`)
         return
@@ -466,7 +473,7 @@ module.exports.init = async (
   for (const remoteDoc of remoteDocsToTrash) {
     debug(`- trashing remote ${remoteDoc.type}: ${remoteDoc.path}`)
     try {
-      await cozy.files.trashById(remoteDoc._id)
+      await client.collection(FILES_DOCTYPE).destroy(remoteDoc)
     } catch (err) {
       if (err.status === 400) continue
       throw err

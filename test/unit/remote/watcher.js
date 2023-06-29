@@ -11,7 +11,6 @@ const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
 
-const CozyClient = require('cozy-client-js').Client
 const { FetchError } = require('cozy-stack-client')
 
 const metadata = require('../../../core/metadata')
@@ -86,20 +85,20 @@ describe('RemoteWatcher', function() {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(function instanciateRemoteWatcher() {
+  beforeEach(async function instanciateRemoteWatcher() {
     clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'setInterval'] })
 
     this.prep = sinon.createStubInstance(Prep)
     this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
-    this.remoteCozy.client = new CozyClient({
-      version: 3,
-      cozyURL: this.config.cozyUrl,
-      token: process.env.COZY_STACK_TOKEN
-    })
+    this.remoteCozy.client = cozyHelpers.cozy
     this.events = new EventEmitter()
     this.watcher = new RemoteWatcher(this)
-    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
+
+    builders = new Builders({
+      client: await this.remoteCozy.getClient(),
+      pouch: this.pouch
+    })
   })
   beforeEach(async function() {
     await async.retry({ times: 2 }, async () => {

@@ -22,7 +22,7 @@ const path = remoteDoc =>
     : remoteDoc.path.slice(1)
 
 describe('Differential synchronization', () => {
-  let helpers, builders, cozy, files
+  let helpers, builders, files
 
   before(configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerOAuthClient)
@@ -34,15 +34,17 @@ describe('Differential synchronization', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    this.cozy = cozy = await cozyHelpers.oauthCozy(this.config)
+    const cozy = await cozyHelpers.oauthCozy(this.config)
 
-    helpers = TestHelpers.init(this)
+    helpers = TestHelpers.init({ ...this, cozy })
     helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
 
     helpers.spyPouch()
 
-    builders = new Builders({ cozy })
+    const client = await helpers.remote.getClient()
+    builders = new Builders({ client })
+    files = client.collection(FILES_DOCTYPE)
   })
   afterEach(async function() {
     await helpers.stop()
@@ -60,8 +62,6 @@ describe('Differential synchronization', () => {
       .name('IMG_001.jpg')
       .data('image')
       .create()
-
-    files = (await cozyHelpers.newClient(cozy)).collection(FILES_DOCTYPE)
   })
 
   describe('when a folder is excluded from synchronization', () => {

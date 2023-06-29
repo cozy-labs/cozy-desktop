@@ -10,6 +10,7 @@ const sinon = require('sinon')
 
 const metadata = require('../../core/metadata')
 const { byPathKey } = require('../../core/pouch')
+const { FILES_DOCTYPE } = require('../../core/remote/constants')
 const { MAX_SYNC_RETRIES } = require('../../core/sync')
 const syncErrors = require('../../core/sync/errors')
 const { logger } = require('../../core/utils/logger')
@@ -22,7 +23,7 @@ const pouchHelpers = require('../support/helpers/pouch')
 const log = logger({ component: 'mocha' })
 
 describe('Update file', () => {
-  let builders, cozy, helpers, pouch, prep
+  let builders, client, helpers, pouch, prep
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -33,8 +34,8 @@ describe('Update file', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    builders = new Builders({ cozy: cozyHelpers.cozy })
-    cozy = cozyHelpers.cozy
+    client = await cozyHelpers.newClient(cozyHelpers.cozy)
+    builders = new Builders({ client })
     helpers = TestHelpers.init(this)
     pouch = helpers.pouch
     prep = helpers.prep
@@ -310,7 +311,9 @@ describe('Update file', () => {
     it('fails remote sync M1 & local merge M2', async function() {
       if (process.env.CI) this.timeout(60 * 1000)
 
-      await cozy.files.create('Initial content', { name: 'file' })
+      await client
+        .collection(FILES_DOCTYPE)
+        .createFile('Initial content', { name: 'file' })
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
 
