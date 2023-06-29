@@ -85,9 +85,11 @@ const newClient = async (
   oldClient /*: OldCozyClient */ = cozy
 ) /*: Promise<CozyClient>  */ => {
   if (oldClient._oauth) {
-    return await CozyClient.fromOldOAuthClient(oldClient)
+    return await CozyClient.fromOldOAuthClient(oldClient, {
+      throwFetchErrors: true
+    })
   } else {
-    return await CozyClient.fromOldClient(oldClient)
+    return await CozyClient.fromOldClient(oldClient, { throwFetchErrors: true })
   }
 }
 
