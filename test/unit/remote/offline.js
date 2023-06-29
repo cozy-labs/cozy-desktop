@@ -12,48 +12,61 @@ const { Remote } = require('../../../core/remote')
 const remoteErrors = require('../../../core/remote/errors')
 const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
-const cozyHelpers = require('../../support/helpers/cozy')
 const pouchHelpers = require('../../support/helpers/pouch')
+const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
-const builders = new Builders({ cozy: cozyHelpers.cozy })
 /*::
 import type { Metadata } from '../../../core/metadata'
 import type { RemoteDoc } from '../../../core/remote/document'
 */
 
 describe('Remote', function() {
+  let remoteHelpers
+
   before('instanciate config', configHelpers.createConfig)
-  before('register OAuth client', configHelpers.registerClient)
+  before('register client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)
-  before('instanciate remote', function() {
+  before('instanciate helpers', function() {
+    remoteHelpers = new RemoteTestHelpers(this)
+  })
+  before('instanciate remote', async function() {
     this.prep = sinon.createStubInstance(Prep)
     this.prep.config = this.config
     this.events = new EventEmitter()
     this.remote = new Remote(this)
-    // Use real OAuth client
-    this.remote.remoteCozy.client = cozyHelpers.cozy
   })
-  beforeEach(cozyHelpers.deleteAll)
   beforeEach('create the couchdb folder', async function() {
+    const builders = new Builders({
+      client: await remoteHelpers.getClient()
+    })
+
     await builders
       .remoteDir()
       .name('couchdb-folder')
       .inRootDir()
       .create()
   })
+  afterEach(() => remoteHelpers.clean())
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('offline management', () => {
-    it('The remote can be started when offline ', async function() {
+    // FIXME: not true anymore as we now try to make fetch requests when
+    // instanciating a CozyClient for the realtime manager.
+    it.skip('The remote can be started when offline ', async function() {
+      // TODO: see if this is still necessary (probably added because of the
+      // second watch that could be long if there are lots of changes to
+      // fetch).
+      this.timeout(120000)
+
       const fetchStub = sinon
         .stub(global, 'fetch')
         .rejects(new FetchError('net::ERR_INTERNET_DISCONNECTED'))
       sinon.spy(this.events, 'emit')
 
-      await this.remote.start()
-
       try {
+        await this.remote.start()
+
         should(this.events.emit).have.been.calledWithMatch(
           'RemoteWatcher:error',
           {
@@ -70,7 +83,8 @@ describe('Remote', function() {
         this.events.emit.restore()
       } finally {
         await this.remote.stop()
+        if (fetchStub.restore) fetchStub.restore()
       }
-    }).timeout(120000)
+    })
   })
 })

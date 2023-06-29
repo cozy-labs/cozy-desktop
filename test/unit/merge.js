@@ -15,9 +15,9 @@ const timestamp = require('../../core/utils/timestamp')
 const Builders = require('../support/builders')
 const stubSide = require('../support/doubles/side')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
+const { RemoteTestHelpers } = require('../support/helpers/remote')
 
 const win32 = (
   win32Data /*: Object */,
@@ -106,11 +106,15 @@ function trashedSide(side, sideName) {
 }
 
 describe('Merge', function() {
-  let builders
+  let builders, remoteHelpers
 
   before('instanciate config', configHelpers.createConfig)
+  before('register client', configHelpers.registerClient)
+  before('instanciate remote helpers', function() {
+    remoteHelpers = new RemoteTestHelpers(this)
+  })
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('instanciate merge', function() {
+  beforeEach('instanciate merge', async function() {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
     this.merge.local = stubSide('local')
@@ -134,10 +138,13 @@ describe('Merge', function() {
       return conflict
     })
     this.merge.remote.fileContentWasVersioned = sinon.stub().returns(false)
-    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
+    builders = new Builders({
+      client: await remoteHelpers.getClient(),
+      pouch: this.pouch
+    })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
-  afterEach('clean remote', cozyHelpers.deleteAll)
+  afterEach('clean remote', () => remoteHelpers.clean())
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('addFile', function() {

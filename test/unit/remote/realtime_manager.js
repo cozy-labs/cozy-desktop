@@ -28,7 +28,7 @@ const setup = async () => {
 
 describe('RealtimeManager', function() {
   before('instanciate config', configHelpers.createConfig)
-  before('register OAuth client', configHelpers.registerClient)
+  before('register client', configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
 
   describe('start', () => {
