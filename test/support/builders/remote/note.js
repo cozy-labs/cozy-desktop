@@ -2,20 +2,17 @@
 
 const { posix } = require('path')
 
-const _ = require('lodash')
-
 const RemoteBaseBuilder = require('./base')
 const {
   FILES_DOCTYPE,
   NOTE_MIME_TYPE
 } = require('../../../../core/remote/constants')
-const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
-const cozyHelpers = require('../../helpers/cozy')
+const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
 const ChecksumBuilder = require('../checksum')
 
 /*::
 import type stream from 'stream'
-import type { Cozy } from 'cozy-client'
+import type { CozyClient } from 'cozy-client'
 import type { FullRemoteFile, RemoteFile } from '../../../../core/remote/document'
 */
 
@@ -45,8 +42,8 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <FullRem
   _data: string
   */
 
-  constructor(cozy /*: Cozy */, old /*: ?FullRemoteFile */) {
-    super(cozy, old)
+  constructor(client /*: CozyClient */, old /*: ?FullRemoteFile */) {
+    super(client, old)
 
     if (!old) {
       this.name(`remote-note-${fileNumber}`)
@@ -116,21 +113,25 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <FullRem
     this._updateMetadata()
     this._updateExport()
 
-    const client = await cozyHelpers.newClient(this._ensureCozy())
+    const client = await this._ensureClient()
     const files = client.collection(FILES_DOCTYPE)
 
-    const { data } = await files.createFile(this._data, {
-      name: this.remoteDoc.name,
-      dirId: this.remoteDoc.dir_id,
-      executable: this.remoteDoc.executable,
-      metadata: this.remoteDoc.metadata,
-      contentType: this.remoteDoc.mime,
-      createdAt: this.remoteDoc.created_at,
-      updatedAt: this.remoteDoc.updated_at || this.remoteDoc.created_at,
-      noSanitize: true
-    })
-    const remoteFile /*: RemoteFile */ = _.clone(remoteJsonToRemoteDoc(data))
-    remoteFile._rev = data.meta.rev
+    const { data: file } = await files.createFile(
+      this._data,
+      {
+        name: this.remoteDoc.name,
+        dirId: this.remoteDoc.dir_id,
+        executable: this.remoteDoc.executable,
+        metadata: this.remoteDoc.metadata,
+        contentType: this.remoteDoc.mime,
+        lastModifiedDate: this.remoteDoc.updated_at || this.remoteDoc.created_at
+      },
+      {
+        sanitizeName: false
+      }
+    )
+    const remoteFile /*: RemoteFile */ = jsonApiToRemoteDoc(file)
+    remoteFile._rev = file.meta.rev
 
     const { data: parentDir } = await files.statById(remoteFile.dir_id)
     const doc /*: FullRemoteFile */ = {
@@ -145,23 +146,25 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <FullRem
     this._updateMetadata()
     this._updateExport()
 
-    const cozy = this._ensureCozy()
+    const client = await this._ensureClient()
+    const files = client.collection(FILES_DOCTYPE)
 
-    // FIXME: use new cozy-client updateFile() method once we can pass something
-    // else than HTML5 File objects as data.
     // FIXME: update note metadata
-    const remoteFile /*: RemoteFile */ = _.clone(
-      remoteJsonToRemoteDoc(
-        await cozy.files.updateById(this.remoteDoc._id, this._data, {
-          dirID: this.remoteDoc.dir_id,
-          updatedAt: this.remoteDoc.updated_at,
-          name: this.remoteDoc.name,
-          noSanitize: true
-        })
-      )
+    const { data: file } = await files.updateFile(
+      this._data,
+      {
+        fileId: this.remoteDoc._id,
+        name: this.remoteDoc.name,
+        dirId: this.remoteDoc.dir_id,
+        lastModifiedDate: this.remoteDoc.updated_at
+      },
+      {
+        sanitizeName: false
+      }
     )
+    const remoteFile /*: RemoteFile */ = jsonApiToRemoteDoc(file)
 
-    const parentDir = await cozy.files.statById(remoteFile.dir_id)
+    const { data: parentDir } = await files.statById(remoteFile.dir_id)
     const doc /*: FullRemoteFile */ = {
       ...remoteFile,
       path: posix.join(parentDir.attributes.path, remoteFile.name)
