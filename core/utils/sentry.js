@@ -24,6 +24,7 @@ const url = require('url')
 const _ = require('lodash')
 
 const { SESSION_PARTITION_NAME } = require('../../gui/js/network')
+const { HOURS } = require('./time')
 const logger = require('./logger')
 
 const log = logger({
@@ -63,6 +64,8 @@ let isSentryConfigured = false
 /*::
 import type { ClientInfo } from '../app'
 */
+
+let ErrorsAlreadySent /* Map<string,Date> */
 
 function setup(clientInfos /*: ClientInfo */) {
   if (CI || COZY_NO_SENTRY || isSentryConfigured) {
@@ -105,6 +108,20 @@ function setup(clientInfos /*: ClientInfo */) {
           new ExtraErrorDataIntegration({ depth: 10 }),
           ...defaultIntegrations
         ]
+      },
+      beforeSend: (event, hint) => {
+        const error = hint.originalException
+        const message = error && error.message ? error.message : event.message
+
+        const alreadySentThisDay =
+          Number(ErrorsAlreadySent.get(message)) > Date.now() - 24 * HOURS
+
+        // Update the last send date for this message
+        ErrorsAlreadySent.set(message, Date.now())
+
+        // Drop events if a similar message has already been sent if the past
+        // 24 hours (i.e. avoid spamming our Sentry server).
+        return alreadySentThisDay ? null : event
       }
     })
     Sentry.configureScope(scope => {
@@ -126,8 +143,18 @@ function setup(clientInfos /*: ClientInfo */) {
         }
       }
     })
+    ErrorsAlreadySent = new Map()
     isSentryConfigured = true
     log.info('Sentry configured !')
+
+    // Cleanup errors journal to prevent an ever growing Map
+    setInterval(() => {
+      for (const [msg, sentAt] of ErrorsAlreadySent.entries()) {
+        if (sentAt < Date.now() - 24 * HOURS) {
+          ErrorsAlreadySent.delete(msg)
+        }
+      }
+    }, 1 * HOURS)
   } catch (err) {
     // eslint-disable-next-line no-console
     console.log('FAIL TO SETUP', err)
