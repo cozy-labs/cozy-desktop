@@ -27,37 +27,39 @@ nightly builds for Debian and Ubuntu are already being tested internally).
 
 ## Supported distributions
 
-The current AppImage needs a relatively recent version of `GLIBCXX >= 3.4.21`.
+A few things to know:
+- The current AppImage needs a relatively recent versions of :
+  - `GLIBC >= 2.32`
+  - `GLIBCXX >= 3.4.21`
+- The application should work with most desktop manager but is actively tested on Gnome 3
+- The systray icon might only show up on some desktop managers if you use a third-party software like the TopIcons-Plus Gnome extension or libappindicator; it is up to you to install the third-party software if needed
 
-| Distribution                              | supported | `GLIBCXX` | comment               |
-| ----------------------------------------- | --------- | --------- | --------------------- |
-| **Archlinux (Gnome 3)**                   | **yes**   | 3.4.24    | WORK with topicons    |
-| **Archlinux (Cinnamon)**                  | **yes**   | 3.4.24    | WORK                  |
-| **Archlinux (KDE PLASMA)**                | **yes**   | 3.4.24    | WORK                  |
-| **Archlinux (Deepin)**                    | **yes**   | 3.4.24    | WORK                  |
-| Debian 9 (Stretch)                        | ?         | 3.4.22    | **should work**       |
-| **Debian 10 (Buster)**                    | yes       | 3.14.0    | with TopIcons-Plus    |
-| Fedora 30                                 | **yes**   | 3.4.24    | with TopIcons-Plus    |
-| **Fedora 31**                             | **yes**   | 3.4.27    | with TopIcons-Plus    |
-| Linux Mint 17.1 LTS (Rebecca)             | no        |           |                       |
-| Linux Mint 17.3                           | no        | 3.4.19    |                       |
-| **Linux Mint 18.3 (Sylvia)**              | **yes**   | 3.4.2     |                       |
-| **Linux Mint 18.3 (Sylvia) XFCE Edition** | **yes**   |           |                       |
-| **Mageia 6 KDE Edition**                  | **yes**   |           |                       |
-| **openSUSE Leap 15.0**                    | **yes**   | 3.4.24    |                       |
-| openSUSE Tumbleweed                       | **yes**   | 3.4.25    |                       |
-| Ubuntu 14.04 (Trusty Tahr)                | no        | 3.4.19    |                       |
-| **Ubuntu 16.04 (Xenial Xerus)**           | **yes**   | 3.4.21    | some issues on Unity  |
-| **Ubuntu 17.10 (Artful Aardvark)**        | **yes**   | 3.4.24    | GNOME 3               |
-| **Ubuntu 19.10 (Eoan Ermine)**            | **yes**   | 3.4.28    |                       |
-| [Add your distribution][Edit] (see below) | ...       | ...       |                       |
+We only support the latest version of each distribution although the app could work on older versions. The table below can be outdated.
+
+| Distribution                              | supported | comment                                                       |
+| ---                                       | ---       | ---                                                           |
+| Fedora 38                                 | yes       |                                                               |
+| Debian 12 (Bookworm)                      | yes       |                                                               |
+| Ubuntu 23.04 (Lunar Lobster)              | yes       |                                                               |
+| Linux Mint 21.2 (Victoria)                | yes       |                                                               |
+| Archlinux                                 | yes       | if up-to-date                                                 |
+| Add your distribution (see below)         | ...       |                                                               |
+| ---                                       | ---       | ---                                                           |
+| Fedora 37                                 | no        | should work                                                   |
+| Debian 11 (Bullseye)                      | no        | should work                                                   |
+| Ubuntu 22.10 (Kinetic Kudu)               | no        | should work                                                   |
+| Ubuntu 22.04 (Jammy Jellyfish)            | no        | should work after installing FUSE (`sudo apt install libfuse2`) |
+| Linux Mint 21.1 (Vera)                    | no        | should work                                                   |
+| Mageia 8                                  | no        | should work                                                   |
+| openSUSE Leap 15.4                        | no        | should work                                                   |
 
 **Before** requesting for your distribution to be added to the list, please:
 
 - Include the exact name and version of your distribution
-- Retrieve your *GLIBCXX*  version by running the following command in a
+- Retrieve your *GLIBC* and *GLIBCXX*  versions by running the following commands in a
   terminal:
-  `strings $(locate -b '\libstdc++.so.6') | grep '^GLIBCXX_[0-9.]*$' | sort -V | tail -n 1`
+  - `strings $(locate -b '\libstdc++.so.6') | grep '^GLIBCXX_[0-9.]*$' | sort -V | tail -n 1`
+  - `strings $(locate -b '\libstdc++.so.6') | grep '^GLIBC_[0-9.]*$' | sort -V | tail -n 1`
   (and include the output in your request)
 - Install the app, run it and make sure it actually works
 
@@ -145,7 +147,8 @@ effects so you need to do a right-click on the icon then select the
 > From 3.26 onwards, GNOME removed the systray which is the only interface for
 > *Cozy Drive*. It should be replaced in the future by `libcloudprovider`, which
 > we will implement when it spreads. In the meantime, you need to install an
-> extension such as [TopIcons][TopIcons] or [TopIcons Plus][TopIconsPlus].
+> extension providing support for appindicator. You can find and install one
+> from https://extensions.gnome.org/ by searching for `appindicator`.
 
 > **Note for i3wm Users**
 >

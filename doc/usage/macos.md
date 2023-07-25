@@ -2,18 +2,26 @@
 
 ## Supported versions
 
-| macOS version | supported | comment |
-| --- | --- | --- |
-| 10.15 "Catalina" | yes | actively tested |
-| 10.14 "Mojave" | yes | should work |
-| 10.13 "High Sierra" | | should work |
-| 10.12 "Sierra" | | should work |
-| 10.11 "El Capitan" | | should work |
-| 10.10 "Yosemite" | | should work |
-| 10.9 "Mavericks" | no | |
-| 10.8 "Mountain Lion" | no | |
-| 10.7 "Lion" | no | |
-| 10.6 "Snow Leopard" | no | |
+We only support the latest 2 versions of macOS although the app could work on older versions. The table below can be outdated.
+
+**We do not support M1 and M2 processors natively yet but Cozy Desktop should work fine with the emulation.**
+
+| macOS version         | supported | comment             |
+| ---                   | ---       | ---                 |
+| 13 "Ventura"          | yes       |                     |
+| 12 "Monterey"         | yes       |                     |
+| ---                   | ---       | ---                 |
+| 11 "Big Sur"          | no        | should work         |
+| 10.15 "Catalina"      | no        | end of life reached |
+| 10.14 "Mojave"        | no        | end of life reached |
+| 10.13 "High Sierra"   | no        | end of life reached |
+| 10.12 "Sierra"        | no        | end of life reached |
+| 10.11 "El Capitan"    | no        | end of life reached |
+| 10.10 "Yosemite"      | no        | end of life reached |
+| 10.9 "Mavericks"      | no        | end of life reached |
+| 10.8 "Mountain Lion"  | no        | end of life reached |
+| 10.7 "Lion"           | no        | end of life reached |
+| 10.6 "Snow Leopard"   | no        | end of life reached |
 
 ## Slash (`/`) vs colon (`:`) on macOS
 
