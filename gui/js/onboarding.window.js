@@ -115,7 +115,9 @@ module.exports = class OnboardingWM extends WindowManager {
   }
 
   closeOAuthView() {
-    this.win.removeBrowserView(this.oauthView)
+    if (this.oauthView) {
+      this.win.removeBrowserView(this.oauthView)
+    }
   }
 
   async create() {
