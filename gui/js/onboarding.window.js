@@ -103,6 +103,27 @@ module.exports = class OnboardingWM extends WindowManager {
       this.oauthView.setBounds({ ...bounds, x: 0, y: 0 })
       this.centerOnScreen(LOGIN_SCREEN_WIDTH, LOGIN_SCREEN_HEIGHT)
 
+      if (this.devtools) {
+        // Switch devtools to current view
+        this.oauthView.webContents.setDevToolsWebContents(
+          this.devtools.webContents
+        )
+        this.oauthView.webContents.openDevTools({ mode: 'detach' })
+      }
+
+      this.oauthView.webContents.setWindowOpenHandler(
+        ({ url, disposition }) => {
+          switch (disposition) {
+            case 'foreground-tab':
+            case 'background-tab':
+            case 'new-window':
+              shell.openExternal(url)
+              return { action: 'deny' }
+            default:
+              return { action: 'allow' }
+          }
+        }
+      )
       this.oauthView.webContents.on('will-navigate', (event, url) => {
         if (url.endsWith('.pdf')) {
           event.preventDefault()
@@ -115,6 +136,10 @@ module.exports = class OnboardingWM extends WindowManager {
   }
 
   closeOAuthView() {
+    if (this.devtools) {
+      this.win.webContents.openDevTools()
+    }
+
     if (this.oauthView) {
       this.win.removeBrowserView(this.oauthView)
     }
