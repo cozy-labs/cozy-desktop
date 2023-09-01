@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.39.0-beta.4 - 2023-09-01
+
+Improvements for all users:
+
+- OpenOffice lock files won't be synchronized anymore.
+- The onboarding window will now honor `_blank` link targets during the
+  onboarding process by opening the targeted URL in a default browser tab
+  rather than a new Cozy Desktop window.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.39.0-beta.3 - 2023-06-20
 
 Improvements for all users:
