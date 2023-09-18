@@ -32,7 +32,6 @@ const logger = require('../utils/logger')
 const { sortBy } = require('../utils/array')
 
 /*::
-import type { CozyRealtime } from 'cozy-realtime'
 import type { Readable } from 'stream'
 
 import type { Config } from '../config'
