@@ -263,6 +263,8 @@ class Sync {
       return
     }
 
+    this.events.once('power-suspend', this.suspend)
+
     // Errors emitted while the watchers are starting (e.g. revoked OAuth
     // client) will not be thrown and thus not handled if these listeners are
     // not attached before starting the watchers.
@@ -306,12 +308,42 @@ class Sync {
     await this.start()
   }
 
+  suspend() {
+    log.info('suspending synchronization')
+
+    this.events.once('power-resume', this.resume)
+
+    try {
+      this.lifecycle.begin('stop')
+    } catch (err) {
+      return
+    }
+    if (this.changes) {
+      this.changes.cancel()
+      this.changes = null
+    }
+
+    this.local.stop()
+    this.remote.stop()
+    clearInterval(this.retryInterval)
+    this.lifecycle.unblockFor('all')
+    this.lifecycle.end('stop')
+  }
+
+  async resume() {
+    log.info('resuming synchronization')
+    await this.start()
+  }
+
   // Stop the synchronization
   async stop() /*: Promise<void> */ {
     // In case an interval timer was started, we clear it to make sure it won't
     // trigger actions after Sync was stopped.
     // This is especially useful in tests.
     clearInterval(this.retryInterval)
+
+    this.events.off('power-resume', this.resume)
+    this.events.off('power-suspend', this.suspend)
 
     if (this.lifecycle.willStart()) {
       await this.lifecycle.started()
