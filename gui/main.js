@@ -10,6 +10,7 @@ const {
   Notification,
   ipcMain,
   dialog,
+  powerMonitor,
   session
 } = require('electron')
 
@@ -109,6 +110,15 @@ const setupDesktop = async () => {
     // a cozy-note)?
     await desktop.setup()
     desktopIsReady()
+
+    powerMonitor.on('suspend', () => {
+      log.info('power suspended')
+      desktop.events.emit('power-suspend')
+    })
+    powerMonitor.on('resume', () => {
+      log.info('power resumed')
+      desktop.events.emit('power-resume')
+    })
 
     // We do it here since Sentry's setup happens in `desktop.setup()`
     if (process.platform === 'win32') {

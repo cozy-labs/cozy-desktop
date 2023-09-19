@@ -161,6 +161,7 @@ class RemoteWatcher {
 
   startClock() {
     if (this.watchInterval == null) {
+      log.info('starting watch clock')
       this.watchInterval = setInterval(() => {
         if (this.queue.empty) {
           this.requestRun()
@@ -170,6 +171,7 @@ class RemoteWatcher {
   }
 
   stopClock() {
+    log.info('stopping watch clock')
     clearInterval(this.watchInterval)
   }
 
@@ -180,6 +182,7 @@ class RemoteWatcher {
     }
 
     try {
+      log.info('requesting watch run')
       this.queue.remove(() => true)
       return await this.queue.pushAsync()
     } catch (err) {
