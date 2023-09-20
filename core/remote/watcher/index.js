@@ -98,7 +98,11 @@ class RemoteWatcher {
     this.remoteCozy = remoteCozy
     this.events = events
     this.running = false
-    this.realtimeManager = new RealtimeManager()
+
+    if (config.flags['desktop.realtime.enabled']) {
+      this.realtimeManager = new RealtimeManager()
+    }
+
     this.startQueue()
 
     autoBind(this)
@@ -109,12 +113,16 @@ class RemoteWatcher {
       log.debug('Starting watcher')
       this.running = true
       this.startClock()
-      const client = await this.remoteCozy.getClient()
-      this.realtimeManager.setup({
-        client,
-        eventHandler: this.requestRun.bind(this)
-      })
-      await this.realtimeManager.start()
+
+      if (this.realtimeManager) {
+        const client = await this.remoteCozy.getClient()
+        this.realtimeManager.setup({
+          client,
+          eventHandler: this.requestRun.bind(this)
+        })
+        await this.realtimeManager.start()
+      }
+
       await this.requestRun()
     }
   }
@@ -122,7 +130,11 @@ class RemoteWatcher {
   async stop() {
     if (this.running) {
       log.debug('Stopping watcher')
-      this.realtimeManager.stop()
+
+      if (this.realtimeManager) {
+        this.realtimeManager.stop()
+      }
+
       this.stopClock()
       await this.stopQueue()
       this.running = false
