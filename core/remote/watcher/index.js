@@ -84,7 +84,7 @@ class RemoteWatcher {
   remoteCozy: RemoteCozy
   events: EventEmitter
   running: boolean
-  watchInterval: IntervalID
+  watchInterval: ?IntervalID
   queue: QueueObject
   realtimeManager: RealtimeManager
   */
@@ -173,6 +173,7 @@ class RemoteWatcher {
   stopClock() {
     log.info('stopping watch clock')
     clearInterval(this.watchInterval)
+    this.watchInterval = null
   }
 
   async requestRun() {

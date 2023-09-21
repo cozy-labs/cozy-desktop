@@ -220,7 +220,7 @@ describe('RemoteWatcher', function () {
       await this.watcher.start()
       await this.watcher.stop()
       should(this.watcher.running).be.false()
-      should(this.watcher.watchInterval._destroyed).be.true()
+      should(this.watcher.watchInterval).be.null()
     })
 
     it('can be called multiple times', async function () {
@@ -228,7 +228,7 @@ describe('RemoteWatcher', function () {
       await this.watcher.stop()
       await this.watcher.stop()
       should(this.watcher.running).be.false()
-      should(this.watcher.watchInterval._destroyed).be.true()
+      should(this.watcher.watchInterval).be.null()
     })
   })
 

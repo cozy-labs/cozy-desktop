@@ -326,6 +326,7 @@ class Sync {
     this.local.stop()
     this.remote.stop()
     clearInterval(this.retryInterval)
+    this.retryInterval = null
     this.lifecycle.unblockFor('all')
     this.lifecycle.end('stop')
   }
@@ -363,6 +364,7 @@ class Sync {
 
     await Promise.all([this.local.stop(), this.remote.stop()])
     clearInterval(this.retryInterval)
+    this.retryInterval = null
     this.lifecycle.unblockFor('all')
     this.lifecycle.end('stop')
   }
