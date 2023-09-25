@@ -394,7 +394,10 @@ class Sync {
 
     if (!manualRun) {
       const change = await this.waitForNewChanges(seq)
-      if (change == null) return
+      if (change == null) {
+        log.info({ seq }, 'no changes to sync')
+        return
+      }
     }
     this.events.emit('sync-start')
     try {
@@ -406,13 +409,17 @@ class Sync {
 
   // sync
   async syncBatch() /*: Promise<void> */ {
+    log.info('requesting changes synchronization')
     let change /*: Change */ = {}
     while (!this.lifecycle.willStop()) {
+      log.info('waiting to sync changes')
       await this.lifecycle.ready()
+      log.info('ready to sync changes')
 
       const release = await this.pouch.lock(this)
       try {
         const seq = await this.pouch.getLocalSeq()
+        log.info({ seq }, 'fetching changes to sync')
         const changes = await this.getNextChanges(seq)
         if (changes.length === 0) {
           log.debug('No more metadata changes for now')
@@ -614,6 +621,7 @@ class Sync {
       this.changes = this.pouch.db
         .changes(opts)
         .on('change', data => {
+          log.info({ data }, 'found changes to sync')
           this.lifecycle.off('will-stop', resolve)
           if (this.changes) {
             this.changes.cancel()
@@ -622,6 +630,7 @@ class Sync {
           }
         })
         .on('error', err => {
+          log.info({ err }, 'error while waiting for changes to sync')
           this.lifecycle.off('will-stop', resolve)
           if (this.changes) {
             this.changes.cancel()
@@ -650,11 +659,14 @@ class Sync {
       this.changes = this.pouch.db
         .changes(opts)
         .on('change', async data => {
+          const doc = data ? data.doc : null
+          log.info({ data, doc }, 'received change to sync')
           this.lifecycle.off('will-stop', noChanges)
           if (
             changes.length === 0 &&
             metadata.shouldIgnore(data.doc, this.ignore)
           ) {
+            log.info({ doc }, 'ignoring change')
             asyncOps.push(this.pouch.setLocalSeq(data.seq))
           } else if (
             changes.length === 0 &&
@@ -664,6 +676,7 @@ class Sync {
             log.info({ path: data.doc.path }, 'up to date')
             asyncOps.push(this.pouch.setLocalSeq(data.seq))
           } else {
+            log.info({ doc }, 'keeping change')
             asyncOps.push(
               detectOperation(data, this).then(op => {
                 data.operation = op
@@ -674,10 +687,12 @@ class Sync {
           }
         })
         .on('error', err => {
+          log.info({ err }, 'error while fetching changes to sync')
           this.lifecycle.off('will-stop', noChanges)
           reject(err)
         })
         .on('complete', async data => {
+          log.info({ data }, 'done fetching changes to sync')
           this.lifecycle.off('will-stop', noChanges)
           if (data.results == null || data.results.length === 0) {
             await Promise.all(asyncOps)

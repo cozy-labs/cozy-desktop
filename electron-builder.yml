@@ -21,7 +21,7 @@ files:
 - gui/markdown-viewer.html
 - gui/markdown-viewer.js
 - node_modules/cozy-ui/dist/*.css
-forceCodeSigning: true
+forceCodeSigning: false
 afterPack: './build/afterPackHook.js'
 afterSign: './build/afterSignHook.js'
 asarUnpack:
@@ -65,6 +65,7 @@ win:
   # Comment out the following line if the Digicert server starts failing.
   # Electron-Builder will then swtich back to the default Comodoca server.
   rfc3161TimeStampServer: 'http://timestamp.digicert.com/'
+  signAndEditExecutable: false
 
 linux:
   target:
