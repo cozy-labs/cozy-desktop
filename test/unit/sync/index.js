@@ -90,7 +90,12 @@ describe('Sync', function () {
       this.remote.start = sinon.stub().resolves()
       this.remote.watcher.running = true
       this.remote.watcher.onError = sinon.stub().returns()
-      this.remote.watcher.onFatal = sinon.stub().returns()
+      this.remote.watcher.onFatal = sinon.stub().callsFake(listener => {
+        events.on('remote:fatal', listener)
+      })
+      this.remote.watcher.fatal = sinon.stub().callsFake(err => {
+        events.emit('remote:fatal', err)
+      })
       this.remote.stop = sinon.stub().resolves()
       this.sync.sync = sinon.stub().resolves()
       sinon.spy(this.sync, 'stop')
@@ -131,16 +136,11 @@ describe('Sync', function () {
       })
     })
 
-    context('if remote watcher fails to start', () => {
+    context('if remote watcher throws fatal error during start', () => {
       beforeEach(function () {
         this.remote.start = sinon.stub().callsFake(() => {
           this.remote.watcher.fatal(new Error('failed'))
         })
-      })
-
-      it('does not start replication', async function () {
-        await this.sync.start()
-        should(this.sync.sync).not.have.been.called()
       })
 
       it('starts local watcher', async function () {
@@ -161,6 +161,11 @@ describe('Sync', function () {
       it('emits a Sync:fatal event', async function () {
         await this.sync.start()
         should(this.sync.events.emit).have.been.calledWith('Sync:fatal')
+      })
+
+      it('stops replication', async function () {
+        await this.sync.start()
+        should(this.sync.stop).have.been.called()
       })
     })
 
@@ -199,13 +204,14 @@ describe('Sync', function () {
   // TODO: Test lock request/acquisition/release
 
   describe('sync', function () {
+    let eventsStub
     beforeEach('stub lifecycle', function () {
-      this.sync.events = new EventEmitter()
+      eventsStub = sinon.stub(this.sync, 'events').returns(new EventEmitter())
       this.sync.lifecycle.transitionTo('done-start')
     })
     afterEach('restore lifecycle', function () {
       this.sync.events.emit('stopped')
-      delete this.sync.events
+      eventsStub.restore()
       this.sync.lifecycle.transitionTo('done-stop')
     })
 
