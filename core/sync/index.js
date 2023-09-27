@@ -318,10 +318,6 @@ class Sync {
     } catch (err) {
       return
     }
-    if (this.changes) {
-      this.changes.cancel()
-      this.changes = null
-    }
 
     this.local.stop()
     this.remote.stop()
@@ -356,10 +352,6 @@ class Sync {
       this.lifecycle.begin('stop')
     } catch (err) {
       return
-    }
-    if (this.changes) {
-      this.changes.cancel()
-      this.changes = null
     }
 
     await Promise.all([this.local.stop(), this.remote.stop()])
@@ -617,26 +609,31 @@ class Sync {
     const opts = this.baseChangeOptions(seq)
     opts.live = true
     return new Promise((resolve, reject) => {
-      this.lifecycle.once('will-stop', resolve)
-      this.changes = this.pouch.db
+      let feedObserver
+      const done = (data, err) => {
+        if (feedObserver) {
+          feedObserver.cancel()
+        }
+
+        if (err) {
+          reject(err)
+        } else if (data) {
+          resolve(data)
+        }
+      }
+      this.lifecycle.once('will-stop', done)
+
+      feedObserver = this.pouch.db
         .changes(opts)
         .on('change', data => {
           log.info({ data }, 'found changes to sync')
-          this.lifecycle.off('will-stop', resolve)
-          if (this.changes) {
-            this.changes.cancel()
-            this.changes = null
-            resolve(data)
-          }
+          this.lifecycle.off('will-stop', done)
+          done(data)
         })
         .on('error', err => {
           log.info({ err }, 'error while waiting for changes to sync')
-          this.lifecycle.off('will-stop', resolve)
-          if (this.changes) {
-            this.changes.cancel()
-            this.changes = null
-            reject(err)
-          }
+          this.lifecycle.off('will-stop', done)
+          done(null, err)
         })
     })
   }
@@ -649,19 +646,29 @@ class Sync {
       limit: null
     }
     const p = new Promise((resolve, reject) => {
+      let feedObserver
+      const done = (data = [], err) => {
+        if (feedObserver) {
+          feedObserver.cancel()
+        }
+
+        if (err) {
+          reject(err)
+        } else if (data) {
+          resolve(data)
+        }
+      }
+      this.lifecycle.once('will-stop', done)
+
       const changes = []
       const asyncOps = []
-      const noChanges = () => {
-        resolve([])
-      }
 
-      this.lifecycle.once('will-stop', noChanges)
-      this.changes = this.pouch.db
+      feedObserver = this.pouch.db
         .changes(opts)
         .on('change', async data => {
           const doc = data ? data.doc : null
           log.info({ data, doc }, 'received change to sync')
-          this.lifecycle.off('will-stop', noChanges)
+          this.lifecycle.off('will-stop', done)
           if (
             changes.length === 0 &&
             metadata.shouldIgnore(data.doc, this.ignore)
@@ -688,15 +695,15 @@ class Sync {
         })
         .on('error', err => {
           log.info({ err }, 'error while fetching changes to sync')
-          this.lifecycle.off('will-stop', noChanges)
-          reject(err)
+          this.lifecycle.off('will-stop', done)
+          done(null, err)
         })
         .on('complete', async data => {
           log.info({ data }, 'done fetching changes to sync')
-          this.lifecycle.off('will-stop', noChanges)
+          this.lifecycle.off('will-stop', done)
           if (data.results == null || data.results.length === 0) {
             await Promise.all(asyncOps)
-            resolve(changes)
+            done(changes)
           }
         })
     })
@@ -723,27 +730,48 @@ class Sync {
         return_docs: false,
         include_docs: true
       }
-      const feedObserver = this.pouch.db
+
+      let changesTimeout
+
+      let feedObserver
+      const done = err => {
+        if (feedObserver) {
+          feedObserver.cancel()
+        }
+
+        if (changesTimeout) {
+          clearTimeout(changesTimeout)
+        }
+
+        if (err) {
+          reject(err)
+        } else {
+          resolve()
+        }
+      }
+      this.lifecycle.once('will-stop', done)
+
+      feedObserver = this.pouch.db
         .changes(opts)
         .on('change', ({ doc }) => {
           if (doc.path === expectedPath) {
             log.debug({ path: expectedPath }, 'New change merged')
-            feedObserver.cancel()
-            resolve()
+            this.lifecycle.off('will-stop', done)
+            done()
           }
         })
         .on('error', err => {
-          feedObserver.cancel()
-          reject(err)
+          this.lifecycle.off('will-stop', done)
+          done(err)
         })
 
-      setTimeout(() => {
+      changesTimeout = setTimeout(() => {
         log.debug(
           { path: expectedPath },
           'No changes merged in 5 minutes. Moving on'
         )
-        feedObserver.cancel()
-        resolve()
+        this.lifecycle.off('will-stop', done)
+        done()
       }, 5 * 60 * 1000)
     })
   }
