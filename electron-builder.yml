@@ -64,7 +64,10 @@ win:
             - ia32
   # Comment out the following line if the Digicert server starts failing.
   # Electron-Builder will then swtich back to the default Comodoca server.
-  rfc3161TimeStampServer: 'http://timestamp.digicert.com/'
+  rfc3161TimeStampServer: 'http://timestamp.digicert.com'
+  sign: 'build/windows/customSign.js'
+  signDlls: true
+  signingHashAlgorithms: ['sha256']
 
 linux:
   target:

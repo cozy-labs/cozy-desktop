@@ -29,6 +29,9 @@ test_script:
   - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:integration --timeout $env:MOCHA_TIMEOUT }
   - ps: if ($env:BUILD_JOB -eq "scenarios") { yarn test:scenarios --timeout $env:MOCHA_TIMEOUT }
 
+before_build:
+  - ps: if ($env:BUILD_JOB -eq "build") { pwsh -NoProfile -ExecutionPolicy Unrestricted -Command .\build\windows\setup-keylocker.ps1 }
+
 build_script:
   - ps: if ($env:BUILD_JOB -eq "build") { yarn dist }
 
