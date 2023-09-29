@@ -15,7 +15,7 @@ const passphrase = process.env.COZY_PASSPHRASE || 'cozy'
 const storage = new cozy.MemoryStorage()
 
 function chooseCozyUrl(buildJob) {
-  return buildJob === 'scenarios_build'
+  return buildJob === 'scenarios'
     ? process.env.COZY_URL_2
     : process.env.COZY_URL_1
 }
