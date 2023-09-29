@@ -1,4 +1,4 @@
-image: Visual Studio 2017
+image: Visual Studio 2022
 platform: x64
 
 clone_depth: 10
@@ -8,34 +8,38 @@ environment:
   NO_BREAKPOINTS: "1"
   matrix:
       - BUILD_JOB: "short_tests"
-      - BUILD_JOB: "scenarios_build"
+      - BUILD_JOB: "scenarios"
+      - BUILD_JOB: "build"
+
+cache:
+  - node_modules -> yarn.lock
 
 install:
   - ps: Update-NodeJsInstallation 18.12.1 x64
-  - cmd: appveyor-retry yarn install --verbose
+  - cmd: appveyor-retry yarn install
   - cmd: appveyor-retry node node_modules/electron/install.js
   - cmd: appveyor-retry yarn install:electron
-  - cmd: appveyor-retry yarn bootstrap:remote
-
-build: off
+  - ps: yarn build:css; yarn build:elm
 
 test_script:
-  - ps: yarn build:css; yarn build:elm
+  - ps: if ($env:BUILD_JOB -ne "build") { yarn bootstrap:remote }
   - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:elm }
   - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:world --timeout $env:MOCHA_TIMEOUT }
   - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:unit --timeout $env:MOCHA_TIMEOUT }
   - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:integration --timeout $env:MOCHA_TIMEOUT }
-  - ps: if ($env:BUILD_JOB -eq "scenarios_build") { yarn test:scenarios --timeout $env:MOCHA_TIMEOUT }
+  - ps: if ($env:BUILD_JOB -eq "scenarios") { yarn test:scenarios --timeout $env:MOCHA_TIMEOUT }
+
+before_build:
+  - ps: if ($env:BUILD_JOB -eq "build") { pwsh -NoProfile -ExecutionPolicy Unrestricted -Command .\build\windows\setup-keylocker.ps1 }
+
+build_script:
+  - ps: if ($env:BUILD_JOB -eq "build") { yarn dist }
+
+artifacts:
+  - path: "dist\\latest.yml"
+  - path: "dist\\Cozy*Drive*Setup*.exe*"
 
 on_failure:
   - node --version
   - npm --version
   - yarn --version
-
-on_finish:
-  - ps: |
-      if ($env:BUILD_JOB -eq "scenarios_build") {
-        yarn dist
-        Push-AppveyorArtifact dist\latest.yml
-        Resolve-Path -Path "dist\Cozy[ -]Drive[ -]Setup[ -]*.exe" -Relative | % { Push-AppveyorArtifact $_ }
-      }
