@@ -1,0 +1,23 @@
+name: Setup cozy-stack
+author: Erwan Guyader
+description: Setup dnsmasq for .localhost domains on macOS
+runs:
+  using: composite
+  steps:
+    - name: Install dnsmasq
+      shell: bash
+      run: brew install dnsmasq
+
+    - name: Add address entry to point .localhost to 127.0.0.1
+      shell: bash
+      run: echo "address=/.localhost/127.0.0.1" >> "$(brew --prefix)"/etc/dnsmasq.conf
+
+    - name: Start dnsmasq
+      shell: bash
+      run: sudo brew services start dnsmasq
+
+    - name: Create resolver configuration
+      shell: bash
+      run: |
+        sudo mkdir -p /etc/resolver
+        echo "nameserver 127.0.0.1" | sudo tee /etc/resolver/localhost

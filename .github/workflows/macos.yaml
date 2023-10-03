@@ -94,6 +94,8 @@ jobs:
         uses: ./.github/actions/setup-cozy-stack
         with:
           couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
+      - name: Setup DNS resolution for .localhost
+        uses: ./.github/actions/setup-dnsmasq
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -151,6 +153,8 @@ jobs:
         uses: ./.github/actions/setup-cozy-stack
         with:
           couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
+      - name: Setup DNS resolution for .localhost
+        uses: ./.github/actions/setup-dnsmasq
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -209,6 +213,8 @@ jobs:
         uses: ./.github/actions/setup-cozy-stack
         with:
           couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
+      - name: Setup DNS resolution for .localhost
+        uses: ./.github/actions/setup-dnsmasq
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
