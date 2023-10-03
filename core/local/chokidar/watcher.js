@@ -177,7 +177,7 @@ class LocalWatcher {
       }
 
       this.watcher
-        .on('ready', () => this.buffer.switchMode('timeout'))
+        .on('ready', () => this.buffer.flush())
         .on('raw', async (event, path, details) => {
           log.chokidar.debug({ event, path, details }, 'raw')
 
@@ -210,9 +210,11 @@ class LocalWatcher {
   }
 
   // TODO: Start checksuming as soon as an add/change event is buffered
-  // TODO: Put flushed event batches in a queue
   async onFlush(rawEvents /*: ChokidarEvent[] */) {
     log.debug(`Flushed ${rawEvents.length} events`)
+
+    // Keep buffering all events while `rawEvents` are processed.
+    this.buffer.switchMode('idle')
 
     this.events.emit('buffering-end')
     syncDir.ensureExistsSync(this)
@@ -233,6 +235,7 @@ class LocalWatcher {
     if (events.length === 0) {
       this.events.emit('local-end')
       if (this.initialScanParams != null) this.initialScanParams.resolve()
+      this.buffer.switchMode('timeout')
       return
     }
 
@@ -267,6 +270,8 @@ class LocalWatcher {
       this.initialScanParams.resolve()
       this.initialScanParams = null
     }
+
+    this.buffer.switchMode('timeout')
   }
 
   async stop(force /*: ?bool */ = false) {
@@ -275,7 +280,7 @@ class LocalWatcher {
     if (!this.watcher) return
 
     if (force) {
-      // Drop buffered events
+      this.buffer.switchMode('idle')
       this.buffer.clear()
     } else {
       // XXX manually fire events for added file, because chokidar will cancel
@@ -289,20 +294,17 @@ class LocalWatcher {
           log.warn({ err }, 'Could not fire remaining add events')
         }
       }
+
+      // Trigger buffered events processing
+      this.buffer.flush()
+
+      // Give some time for awaitWriteFinish events to be managed
+      await Promise.delay(1000)
     }
 
     // Stop underlying Chokidar watcher
     await this.watcher.close()
     this.watcher = null
-    // Stop accepting new events
-    this.buffer.switchMode('idle')
-
-    if (!force) {
-      // Give some time for awaitWriteFinish events to be managed
-      return new Promise(resolve => {
-        setTimeout(resolve, 1000)
-      })
-    }
   }
 
   /* Helpers */

@@ -49,25 +49,29 @@ class EventBuffer /*:: <EventType> */ {
 
   push(event /*: EventType */) /*: void */ {
     this.events.push(event)
-    this.shiftTimeout()
+    this.resetTimeout()
   }
 
   unflush(events /*: Array<EventType> */) /*: void */ {
     this.events = events.concat(this.events)
-    this.shiftTimeout()
+    this.resetTimeout()
   }
 
-  shiftTimeout() /*: void */ {
-    if (this.mode === 'timeout') {
-      this.clearTimeout()
+  setTimeout() /*: void */ {
+    if (this.mode === 'timeout' && this.timeout == null) {
       this.timeout = setTimeout(this.flush, this.timeoutInMs)
     }
   }
 
   clearTimeout() /*: void */ {
-    if (this.timeout != null) {
-      clearTimeout(this.timeout)
-      delete this.timeout
+    clearTimeout(this.timeout)
+    delete this.timeout
+  }
+
+  resetTimeout() /*: void */ {
+    if (this.mode === 'timeout') {
+      this.clearTimeout()
+      this.setTimeout()
     }
   }
 
@@ -81,8 +85,11 @@ class EventBuffer /*:: <EventType> */ {
   }
 
   switchMode(mode /*: EventBufferMode */) /*: void */ {
-    this.flush()
     this.mode = mode
+    this.clearTimeout()
+    if (this.events.length > 0) {
+      this.setTimeout()
+    }
   }
 
   clear() /*: void */ {

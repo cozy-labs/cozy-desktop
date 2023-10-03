@@ -18,6 +18,7 @@ const { ContextDir } = require('../../../support/helpers/context_dir')
 const { onPlatform } = require('../../../support/helpers/platform')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
+// TODO: run on darwin platform instead?
 onPlatform('linux', () => {
   describe('ChokidarWatcher Tests', function () {
     let builders
@@ -27,8 +28,12 @@ onPlatform('linux', () => {
     beforeEach('instanciate local watcher', function () {
       builders = new Builders({ pouch: this.pouch })
       this.prep = {}
-      const events = { emit: sinon.stub() }
-      this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, events)
+      this.watcher = new Watcher(
+        this.syncPath,
+        this.prep,
+        this.pouch,
+        sinon.createStubInstance(EventEmitter)
+      )
     })
     afterEach('stop watcher and clean path', function (done) {
       this.watcher.stop(true)
@@ -151,6 +156,29 @@ onPlatform('linux', () => {
         delete this.prep.putFolderAsync
       })
 
+      it('switches buffer mode to idle then back to timeout', async function () {
+        const bufferSpy = sinon.spy(this.watcher.buffer, 'switchMode')
+
+        try {
+          // Not an initial scan flush
+          this.watcher.initialScanParams = null
+
+          this.watcher.buffer.push({
+            type: 'addDir',
+            path: __dirname,
+            stats: builders.stats().build()
+          })
+          await this.watcher.buffer.flush()
+
+          should(bufferSpy).have.been.calledTwice()
+          should(bufferSpy.firstCall.calledWith('idle')).be.true()
+          should(bufferSpy.secondCall.calledWith('timeout')).be.true()
+          should(this.watcher.buffer.mode).equal('timeout')
+        } finally {
+          bufferSpy.restore()
+        }
+      })
+
       context(
         'when processing the initial events of an empty sync directory',
         () => {
@@ -178,9 +206,38 @@ onPlatform('linux', () => {
               this.watcher.pouch.initialScanDocs.restore()
             }
           })
+
+          it('switches buffer mode to idle then back to timeout', async function () {
+            const bufferSpy = sinon.spy(this.watcher.buffer, 'switchMode')
+
+            try {
+              // Make sure we're in initial scan mode
+              this.watcher.initialScanParams = {
+                paths: [],
+                emptyDirRetryCount: 3,
+                resolve: Promise.resolve,
+                flushed: false
+              }
+
+              this.watcher.buffer.push({
+                type: 'addDir',
+                path: '' // XXX: events on the sync directory have an empty path
+              })
+              await this.watcher.buffer.flush()
+
+              should(bufferSpy).have.been.calledTwice()
+              should(bufferSpy.firstCall.calledWith('idle')).be.true()
+              should(bufferSpy.secondCall.calledWith('timeout')).be.true()
+              should(this.watcher.buffer.mode).equal('timeout')
+            } finally {
+              bufferSpy.restore()
+            }
+          })
         }
       )
 
+      // TODO: refactor to test that buffer is not flushed while another batch
+      // is being processed.
       context('while an initial scan is being processed', () => {
         const trigger = new EventEmitter()
         const SECOND_FLUSH_TRIGGER = 'second-flush'
@@ -237,11 +294,6 @@ onPlatform('linux', () => {
     })
 
     describe('onAddFile', () => {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
       it('detects when a file is created', function () {
         return this.watcher.start().then(() => {
           this.prep.addFileAsync = function (side, doc) {
@@ -282,11 +334,6 @@ onPlatform('linux', () => {
     })
 
     describe('onAddDir', function () {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
       it('detects when a folder is created', function () {
         return this.watcher.start().then(() => {
           this.prep.putFolderAsync = function (side, doc) {
@@ -326,12 +373,7 @@ onPlatform('linux', () => {
     })
 
     describe('onUnlinkFile', () => {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
-      it.skip('detects when a file is deleted', function () {
+      it('detects when a file is deleted', function () {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.
@@ -353,12 +395,7 @@ onPlatform('linux', () => {
     })
 
     describe('onUnlinkDir', () => {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
-      it.skip('detects when a folder is deleted', function () {
+      it('detects when a folder is deleted', function () {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.
@@ -405,10 +442,7 @@ onPlatform('linux', () => {
       }))
 
     describe('when a file is moved', function () {
-      beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-      afterEach('clean pouch', pouchHelpers.cleanDatabase)
-
-      it.skip('deletes the source and adds the destination', function () {
+      it('deletes the source and adds the destination', function () {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.

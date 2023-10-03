@@ -30,6 +30,88 @@ onPlatform('darwin', () => {
     const event1 = { path: 'path/1' }
     const event2 = { path: 'path/2' }
 
+    describe('switchMode', () => {
+      context('with buffered events', () => {
+        beforeEach(() => {
+          buffer.push(event1)
+          buffer.push(event2)
+        })
+
+        context('from idle to timeout', () => {
+          beforeEach(() => {
+            buffer.mode = 'idle'
+          })
+
+          it('sets timeout', () => {
+            buffer.switchMode('timeout')
+            should(buffer).have.property('timeout')
+          })
+        })
+
+        context('from timeout to idle', () => {
+          beforeEach(() => {
+            buffer.mode = 'timeout'
+            buffer.setTimeout()
+          })
+
+          it('clears existing timeout', () => {
+            clock.tick(TIMEOUT_IN_MS - 1)
+            buffer.switchMode('idle')
+            clock.tick(1)
+            should(flushed).not.have.been.called()
+          })
+
+          it('does not set new timeout', () => {
+            buffer.switchMode('idle')
+            should(buffer).not.have.property('timeout')
+          })
+        })
+
+        context('from timeout to timeout', () => {
+          beforeEach(() => {
+            buffer.mode = 'timeout'
+            buffer.setTimeout()
+          })
+
+          it('clears existing timeout', () => {
+            clock.tick(TIMEOUT_IN_MS - 1)
+            buffer.switchMode('timeout')
+            clock.tick(1)
+            should(flushed).not.have.been.called()
+          })
+
+          it('sets new timeout', () => {
+            buffer.switchMode('timeout')
+            should(buffer).have.property('timeout')
+          })
+        })
+      })
+
+      context('without buffered events', () => {
+        context('from idle to timeout', () => {
+          beforeEach(() => {
+            buffer.mode = 'idle'
+          })
+
+          it('does not set timeout', () => {
+            buffer.switchMode('timeout')
+            should(buffer).not.have.property('timeout')
+          })
+        })
+
+        context('from timeout to timeout', () => {
+          beforeEach(() => {
+            buffer.mode = 'timeout'
+          })
+
+          it('does not set timeout', () => {
+            buffer.switchMode('timeout')
+            should(buffer).not.have.property('timeout')
+          })
+        })
+      })
+    })
+
     context('in idle mode (default)', () => {
       beforeEach(() => {
         clock.tick(TIMEOUT_IN_MS)
@@ -51,45 +133,11 @@ onPlatform('darwin', () => {
         buffer.flush()
         should(flushed).have.been.calledWith([event1, event2])
       })
-
-      it('can be switched to timeout mode', () => {
-        buffer.switchMode('timeout')
-        should(flushed).have.been.calledWith([event1, event2])
-      })
     })
 
     context('in timeout mode', () => {
       beforeEach(() => {
         buffer.switchMode('timeout')
-      })
-
-      it('can be switched back to idle mode, canceling timeout if any', () => {
-        buffer.push(event1)
-        buffer.switchMode('idle')
-        clock.tick(TIMEOUT_IN_MS)
-        should(flushed).have.been.calledWith([event1])
-      })
-
-      it('does not flush without events', () => {
-        clock.tick(TIMEOUT_IN_MS)
-        should(flushed).not.have.been.called()
-      })
-
-      context('when last event occured less than TIMEOUT_IN_MS ago', () => {
-        beforeEach(() => {
-          buffer.push(event1)
-          clock.tick(TIMEOUT_IN_MS - 1)
-          buffer.push(event2)
-          clock.tick(TIMEOUT_IN_MS - 1)
-        })
-
-        it('does not flush', () => {
-          should(flushed).not.have.been.called()
-        })
-
-        it('stores new events', () => {
-          should(buffer.events).deepEqual([event1, event2])
-        })
       })
 
       context(
