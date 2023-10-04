@@ -9,7 +9,16 @@ module.exports = {
 
   async cleanDatabase() {
     if (this.pouch && this.pouch.db) {
-      await this.pouch.db.destroy()
+      let retry = 0
+      do {
+        try {
+          await this.pouch.db.destroy()
+          break
+        } catch (err) {
+          retry++
+          await Promise.delay(500 * 2 ** retry)
+        }
+      } while (retry < 3)
     }
     this.pouch = null
   },
