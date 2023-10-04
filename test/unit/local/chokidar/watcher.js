@@ -18,8 +18,7 @@ const { ContextDir } = require('../../../support/helpers/context_dir')
 const { onPlatform } = require('../../../support/helpers/platform')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
-// TODO: run on darwin platform instead?
-onPlatform('linux', () => {
+onPlatform('darwin', () => {
   describe('ChokidarWatcher Tests', function () {
     let builders
 
@@ -121,6 +120,78 @@ onPlatform('linux', () => {
         this.prep.putFolder.called.should.be.false()
         this.prep.addFile.called.should.be.false()
         this.prep.updateFile.called.should.be.false()
+      })
+    })
+
+    describe('stop', () => {
+      context('when initial scan events have not been flushed yet', () => {
+        beforeEach(async function () {
+          await builders.metafile().path('no-event').upToDate().create()
+
+          this.watcher.initialScanParams = {
+            paths: [],
+            emptyDirRetryCount: 3,
+            resolve: Promise.resolve,
+            flushed: false,
+            done: false
+          }
+          // XXX: fake presence of Chokidar watcher
+          this.watcher.watcher = { close: sinon.stub().resolves() }
+        })
+
+        it('clears the buffer and does not flush any event', async function () {
+          const onFlushSpy = sinon.spy(this.watcher, 'onFlush')
+          try {
+            this.watcher.buffer.push({
+              type: 'addDir',
+              path: __dirname,
+              stats: builders.stats().build()
+            })
+            should(this.watcher.buffer.events).have.length(1)
+
+            await this.watcher.stop()
+
+            should(this.watcher.buffer.events).be.empty()
+            should(onFlushSpy).not.have.been.called()
+          } finally {
+            onFlushSpy.restore()
+          }
+        })
+      })
+
+      context('when intial scan events have already been flushed', () => {
+        beforeEach(async function () {
+          await builders.metafile().path('no-event').upToDate().create()
+
+          this.watcher.initialScanParams = {
+            paths: [],
+            emptyDirRetryCount: 3,
+            resolve: Promise.resolve,
+            flushed: true,
+            done: false
+          }
+          // XXX: fake presence of Chokidar watcher
+          this.watcher.watcher = { close: sinon.stub().resolves() }
+        })
+
+        it('tries to flush buffered events before stopping', async function () {
+          const onFlushSpy = sinon.spy(this.watcher, 'onFlush')
+          try {
+            this.watcher.buffer.push({
+              type: 'addDir',
+              path: __dirname,
+              stats: builders.stats().build()
+            })
+            should(this.watcher.buffer.events).have.length(1)
+
+            await this.watcher.stop()
+
+            should(this.watcher.buffer.events).be.empty()
+            should(onFlushSpy).have.been.calledOnce()
+          } finally {
+            onFlushSpy.restore()
+          }
+        })
       })
     })
 

@@ -269,7 +269,7 @@ class LocalWatcher {
 
     if (!this.watcher) return
 
-    if (force) {
+    if (force || !this.initialScanParams.flushed) {
       // Drop buffered events
       this.buffer.clear()
     } else {
@@ -289,7 +289,7 @@ class LocalWatcher {
     // Stop underlying Chokidar watcher
     await this.watcher.close()
     this.watcher = null
-    // Stop accepting new events
+    // Flush buffer and stop flushes loop
     this.buffer.switchMode('idle')
 
     if (!force) {
