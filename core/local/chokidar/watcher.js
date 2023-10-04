@@ -73,7 +73,7 @@ class LocalWatcher {
   prep: Prep
   pouch: Pouch
   events: EventEmitter
-  initialScanParams: ?InitialScanParams
+  initialScanParams: InitialScanParams
   checksumer: Checksumer
   watcher: any // chokidar
   buffer: LocalEventBuffer<ChokidarEvent>
@@ -92,6 +92,16 @@ class LocalWatcher {
     this.events = events
     this.checksumer = checksumer.init()
     this.pendingChanges = []
+
+    // To detect which files&folders have been removed since the last run of
+    // cozy-desktop, we keep all the paths seen by chokidar during its
+    // initial scan in @paths to compare them with pouchdb database.
+    this.initialScanParams = {
+      paths: [],
+      emptyDirRetryCount: 3,
+      flushed: false,
+      done: false
+    }
 
     // XXX: this.onFlush must be bound before being passed to LocalEventBuffer
     autoBind(this)
@@ -114,6 +124,8 @@ class LocalWatcher {
    */
   start() {
     log.debug('Starting...')
+
+    this.resetInitialScanParams()
 
     this.watcher = chokidar.watch('.', {
       // Let paths in events be relative to this base path
@@ -140,6 +152,8 @@ class LocalWatcher {
     })
 
     const started = new Promise(resolve => {
+      this.initialScanParams.resolve = resolve
+
       for (let eventType of [
         'add',
         'addDir',
@@ -150,8 +164,7 @@ class LocalWatcher {
         this.watcher.on(
           eventType,
           (path /*: ?string */, stats /*: ?fs.Stats */) => {
-            const isInitialScan =
-              this.initialScanParams && !this.initialScanParams.flushed
+            const isInitialScan = !this.initialScanParams.flushed
             log.chokidar.debug({ path, stats, isInitialScan }, eventType)
             const newEvent = chokidarEvent.build(eventType, path, stats)
             if (newEvent.type !== eventType) {
@@ -164,16 +177,6 @@ class LocalWatcher {
             this.events.emit('buffering-start')
           }
         )
-      }
-
-      // To detect which files&folders have been removed since the last run of
-      // cozy-desktop, we keep all the paths seen by chokidar during its
-      // initial scan in @paths to compare them with pouchdb database.
-      this.initialScanParams = {
-        paths: [],
-        emptyDirRetryCount: 3,
-        resolve,
-        flushed: false
       }
 
       this.watcher
@@ -219,20 +222,14 @@ class LocalWatcher {
     this.events.emit('local-start')
 
     let events = rawEvents.filter(hasPath) // @TODO handle root dir events
-    // We need to destructure `this` otherwise Flow won't detect that
-    // `this.initialScanParams` is not null even within the conditional block.
-    const { buffer, pouch, initialScanParams } = this
-    if (initialScanParams != null && !initialScanParams.flushed) {
-      events = await initialScan.step(events, {
-        initialScanParams,
-        buffer,
-        pouch
-      })
+
+    if (!this.initialScanParams.flushed) {
+      events = await initialScan.step(events, this)
     }
 
     if (events.length === 0) {
       this.events.emit('local-end')
-      if (this.initialScanParams != null) this.initialScanParams.resolve()
+      this.endInitialScan()
       return
     }
 
@@ -263,10 +260,8 @@ class LocalWatcher {
       release()
       this.events.emit('local-end')
     }
-    if (this.initialScanParams != null) {
-      this.initialScanParams.resolve()
-      this.initialScanParams = null
-    }
+
+    this.endInitialScan()
   }
 
   async stop(force /*: ?bool */ = false) {
@@ -302,6 +297,22 @@ class LocalWatcher {
       return new Promise(resolve => {
         setTimeout(resolve, 1000)
       })
+    }
+  }
+
+  resetInitialScanParams() {
+    this.initialScanParams = {
+      paths: [],
+      emptyDirRetryCount: 3,
+      flushed: false,
+      done: false
+    }
+  }
+
+  endInitialScan() {
+    if (this.initialScanParams.resolve) {
+      this.initialScanParams.done = true
+      this.initialScanParams.resolve()
     }
   }
 

@@ -18,6 +18,7 @@ const { ContextDir } = require('../../../support/helpers/context_dir')
 const { onPlatform } = require('../../../support/helpers/platform')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
+// TODO: run on darwin platform instead?
 onPlatform('linux', () => {
   describe('ChokidarWatcher Tests', function () {
     let builders
@@ -27,8 +28,12 @@ onPlatform('linux', () => {
     beforeEach('instanciate local watcher', function () {
       builders = new Builders({ pouch: this.pouch })
       this.prep = {}
-      const events = { emit: sinon.stub() }
-      this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, events)
+      this.watcher = new Watcher(
+        this.syncPath,
+        this.prep,
+        this.pouch,
+        sinon.createStubInstance(EventEmitter)
+      )
     })
     afterEach('stop watcher and clean path', function (done) {
       this.watcher.stop(true)
@@ -163,7 +168,8 @@ onPlatform('linux', () => {
                 paths: [],
                 emptyDirRetryCount: 3,
                 resolve: Promise.resolve,
-                flushed: false
+                flushed: false,
+                done: false
               }
 
               this.watcher.buffer.push({
@@ -181,6 +187,8 @@ onPlatform('linux', () => {
         }
       )
 
+      // TODO: refactor to test that buffer is not flushed while another batch
+      // is being processed.
       context('while an initial scan is being processed', () => {
         const trigger = new EventEmitter()
         const SECOND_FLUSH_TRIGGER = 'second-flush'
@@ -190,7 +198,8 @@ onPlatform('linux', () => {
             paths: [],
             emptyDirRetryCount: 3,
             resolve: Promise.resolve,
-            flushed: false
+            flushed: false,
+            done: false
           }
           // Switch events buffer to manual flushing
           this.watcher.buffer.switchMode('idle')
@@ -237,11 +246,6 @@ onPlatform('linux', () => {
     })
 
     describe('onAddFile', () => {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
       it('detects when a file is created', function () {
         return this.watcher.start().then(() => {
           this.prep.addFileAsync = function (side, doc) {
@@ -282,11 +286,6 @@ onPlatform('linux', () => {
     })
 
     describe('onAddDir', function () {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
       it('detects when a folder is created', function () {
         return this.watcher.start().then(() => {
           this.prep.putFolderAsync = function (side, doc) {
@@ -326,12 +325,7 @@ onPlatform('linux', () => {
     })
 
     describe('onUnlinkFile', () => {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
-      it.skip('detects when a file is deleted', function () {
+      it('detects when a file is deleted', function () {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.
@@ -353,12 +347,7 @@ onPlatform('linux', () => {
     })
 
     describe('onUnlinkDir', () => {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
-      it.skip('detects when a folder is deleted', function () {
+      it('detects when a folder is deleted', function () {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.
@@ -405,10 +394,7 @@ onPlatform('linux', () => {
       }))
 
     describe('when a file is moved', function () {
-      beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-      afterEach('clean pouch', pouchHelpers.cleanDatabase)
-
-      it.skip('deletes the source and adds the destination', function () {
+      it('deletes the source and adds the destination', function () {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.

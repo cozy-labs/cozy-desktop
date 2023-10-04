@@ -282,6 +282,8 @@ async function runLocalChokidarWithCaptures(
       helpers.local.syncDir.abspath,
       eventsFile
     )
+    // XXX: Run initial scan
+    await helpers.local.scan()
   }
 
   const inodeChanges = await runActions(
