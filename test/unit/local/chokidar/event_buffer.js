@@ -14,7 +14,7 @@ onPlatform('darwin', () => {
 
     beforeEach(() => {
       clock = sinon.useFakeTimers()
-      flushed = sinon.spy()
+      flushed = sinon.stub().resolves()
       buffer = new LocalEventBuffer(TIMEOUT_IN_MS, flushed)
     })
 
@@ -29,6 +29,35 @@ onPlatform('darwin', () => {
 
     const event1 = { path: 'path/1' }
     const event2 = { path: 'path/2' }
+
+    it('does not flush if locked', () => {
+      buffer.push(event1)
+      buffer.lock()
+      buffer.flush()
+
+      should(flushed).not.have.been.called()
+    })
+
+    it('flushes if unlocked', () => {
+      buffer.push(event1)
+      buffer.lock()
+      buffer.unlock()
+      buffer.flush()
+
+      should(flushed).have.been.calledOnce()
+      should(flushed).have.been.calledWith([event1])
+    })
+
+    it('does not flush if processing previous events', () => {
+      buffer.push(event1)
+      buffer.flush()
+      buffer.push(event2)
+      buffer.flush()
+
+      should(flushed).have.been.calledOnce()
+      should(flushed).have.been.calledWith([event1])
+      should(buffer.events).deepEqual([event2])
+    })
 
     context('in idle mode (default)', () => {
       beforeEach(() => {
@@ -109,6 +138,9 @@ onPlatform('darwin', () => {
             buffer.push(event3)
             should(flushed).have.been.calledWith([event1, event2])
 
+            // XXX: force unlock as if `flushed` had completed
+            buffer.unlock()
+
             clock.tick(TIMEOUT_IN_MS + 1)
             buffer.push(event4)
             should(flushed).have.been.calledWith([event3])
@@ -118,6 +150,9 @@ onPlatform('darwin', () => {
             clock.tick(TIMEOUT_IN_MS)
             buffer.push(event3)
             should(buffer.events).deepEqual([event3])
+
+            // XXX: force unlock as if `flushed` had completed
+            buffer.unlock()
 
             clock.tick(TIMEOUT_IN_MS + 1)
             buffer.push(event4)
