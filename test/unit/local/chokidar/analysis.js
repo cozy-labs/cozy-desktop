@@ -26,7 +26,8 @@ onPlatform('darwin', () => {
           const events /*: LocalEvent[] */ = []
           const pendingChanges /*: LocalChange[] */ = []
           const result /*: LocalChange[] */ = analysis(events, {
-            pendingChanges
+            pendingChanges,
+            initialScanParams: { done: true }
           })
           should(result).have.length(0)
         })
@@ -43,7 +44,10 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          const changes = analysis(events, { pendingChanges })
+          const changes = analysis(events, {
+            pendingChanges,
+            initialScanParams: { done: true }
+          })
           should({ changes, pendingChanges }).deepEqual({
             changes: [
               {
@@ -70,7 +74,10 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          const changes = analysis(events, { pendingChanges })
+          const changes = analysis(events, {
+            pendingChanges,
+            initialScanParams: { done: true }
+          })
           should({ changes, pendingChanges }).deepEqual({
             changes: [
               {
@@ -98,7 +105,10 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          const changes = analysis(events, { pendingChanges })
+          const changes = analysis(events, {
+            pendingChanges,
+            initialScanParams: { done: true }
+          })
           should({ changes, pendingChanges }).deepEqual({
             changes: [
               {
@@ -125,7 +135,10 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          const changes = analysis(events, { pendingChanges })
+          const changes = analysis(events, {
+            pendingChanges,
+            initialScanParams: { done: true }
+          })
           should({ changes, pendingChanges }).deepEqual({
             changes: [
               {
@@ -152,7 +165,10 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          const changes = analysis(events, { pendingChanges })
+          const changes = analysis(events, {
+            pendingChanges,
+            initialScanParams: { done: true }
+          })
           should({ changes, pendingChanges }).deepEqual({
             changes: [
               {
@@ -179,7 +195,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirAddition',
@@ -209,7 +230,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirAddition',
@@ -242,7 +268,10 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          const changes = analysis(events, { pendingChanges })
+          const changes = analysis(events, {
+            pendingChanges,
+            initialScanParams: { done: true }
+          })
 
           should({ changes, pendingChanges }).deepEqual({
             changes: [
@@ -280,7 +309,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([])
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([])
           should(pendingChanges).deepEqual([
             {
               sideName,
@@ -297,7 +331,12 @@ onPlatform('darwin', () => {
           const nextEvents /*: LocalEvent[] */ = [
             { type: 'unlink', path: 'dst1' }
           ]
-          should(analysis(nextEvents, { pendingChanges })).deepEqual([
+          should(
+            analysis(nextEvents, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileDeletion',
@@ -323,7 +362,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileMove',
@@ -348,7 +392,12 @@ onPlatform('darwin', () => {
             { type: 'add', path: 'dst', stats, md5sum }
           ]
           const pendingChanges /*: LocalChange[] */ = []
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileMove',
@@ -374,7 +423,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileMove',
@@ -390,7 +444,12 @@ onPlatform('darwin', () => {
           const nextEvents /*: LocalEvent[] */ = [
             { type: 'unlink', path: 'dst1' }
           ]
-          should(analysis(nextEvents, { pendingChanges })).deepEqual([])
+          should(
+            analysis(nextEvents, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([])
           should(pendingChanges).deepEqual([])
         })
       })
@@ -407,7 +466,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([])
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([])
           should(pendingChanges).deepEqual([
             {
               sideName,
@@ -436,7 +500,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileMove',
@@ -470,7 +539,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileMove',
@@ -505,7 +579,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileMove',
@@ -544,7 +623,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileMove',
@@ -577,7 +661,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileMove',
@@ -605,7 +694,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileMove',
@@ -643,7 +737,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               update: {
@@ -686,7 +785,10 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          const changes = analysis(events, { pendingChanges })
+          const changes = analysis(events, {
+            pendingChanges,
+            initialScanParams: { done: true }
+          })
 
           should({ changes, pendingChanges }).deepEqual({
             changes: [
@@ -723,7 +825,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileMove',
@@ -747,7 +854,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileMove',
@@ -782,7 +894,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileAddition',
@@ -806,7 +923,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileAddition',
@@ -830,7 +952,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileAddition',
@@ -855,7 +982,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirMove',
@@ -879,7 +1011,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirMove',
@@ -905,7 +1042,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirMove',
@@ -931,7 +1073,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([])
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([])
           should(pendingChanges).deepEqual([
             {
               sideName,
@@ -964,7 +1111,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirMove',
@@ -994,7 +1146,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirMove',
@@ -1017,7 +1174,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirMove',
@@ -1075,7 +1237,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirMove',
@@ -1106,7 +1273,10 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          const changes = analysis(events, { pendingChanges })
+          const changes = analysis(events, {
+            pendingChanges,
+            initialScanParams: { done: true }
+          })
           should({ changes, pendingChanges }).deepEqual({
             changes: [
               {
@@ -1158,7 +1328,12 @@ onPlatform('darwin', () => {
         ]
         const pendingChanges /*: LocalChange[] */ = []
 
-        should(analysis(events, { pendingChanges })).deepEqual([
+        should(
+          analysis(events, {
+            pendingChanges,
+            initialScanParams: { done: true }
+          })
+        ).deepEqual([
           {
             sideName,
             type: 'FileUpdate',
@@ -1207,7 +1382,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'FileUpdate',
@@ -1442,7 +1622,12 @@ onPlatform('darwin', () => {
             }
           ]
           const pendingChanges = []
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirMove',
@@ -1500,7 +1685,12 @@ onPlatform('darwin', () => {
             }
           ]
           const pendingChanges = []
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirMove',
@@ -1543,7 +1733,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirAddition',
@@ -1565,7 +1760,12 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirAddition',
@@ -1595,7 +1795,7 @@ onPlatform('darwin', () => {
 
         const changes = analysis(events, {
           pendingChanges,
-          initialScanParams: undefined
+          initialScanParams: { done: true }
         })
         changes
           .map(change => [
@@ -1630,7 +1830,7 @@ onPlatform('darwin', () => {
 
         const changes = analysis(events, {
           pendingChanges,
-          initialScanParams: undefined
+          initialScanParams: { done: true }
         })
         changes
           .map(change => [
@@ -1662,7 +1862,7 @@ onPlatform('darwin', () => {
 
         const changes = analysis(events, {
           pendingChanges,
-          initialScanParams: undefined
+          initialScanParams: { done: true }
         })
         changes
           .map(change => [
@@ -1697,7 +1897,7 @@ onPlatform('darwin', () => {
 
         const changes = analysis(events, {
           pendingChanges,
-          initialScanParams: undefined
+          initialScanParams: { done: true }
         })
         changes
           .map(change => [
@@ -1822,7 +2022,10 @@ onPlatform('darwin', () => {
           ]
           const pendingChanges /*: LocalChange[] */ = []
 
-          const changes = analysis(events, { pendingChanges })
+          const changes = analysis(events, {
+            pendingChanges,
+            initialScanParams: { done: false }
+          })
           changes
             .map(change => change.type)
             .should.deepEqual(['DirMove', 'FileAddition', 'FileDeletion'])
@@ -1882,7 +2085,12 @@ onPlatform('darwin', () => {
           ].map(normalizer)
           const pendingChanges /*: LocalChange[] */ = []
 
-          should(analysis(events, { pendingChanges })).deepEqual([
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: false }
+            })
+          ).deepEqual([
             {
               sideName,
               type: 'DirMove',

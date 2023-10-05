@@ -27,6 +27,7 @@ type FlushCallback<EventType> = (EventType[]) => any
  */
 class EventBuffer /*:: <EventType> */ {
   /*::
+  locked: boolean
   events: EventType[]
   mode: EventBufferMode
   timeoutInMs: number
@@ -38,6 +39,7 @@ class EventBuffer /*:: <EventType> */ {
     timeoutInMs /*: number */,
     flushed /*: FlushCallback<EventType> */
   ) {
+    this.locked = false
     this.events = []
     this.mode = 'idle'
     this.timeoutInMs = timeoutInMs
@@ -45,6 +47,18 @@ class EventBuffer /*:: <EventType> */ {
     this.flushed = flushed
 
     autoBind(this)
+  }
+
+  lock() {
+    if (this.locked) {
+      throw new Error('lock unavailable')
+    }
+
+    this.locked = true
+  }
+
+  unlock() {
+    this.locked = false
   }
 
   push(event /*: EventType */) /*: void */ {
@@ -72,11 +86,22 @@ class EventBuffer /*:: <EventType> */ {
   }
 
   async flush() {
-    this.clearTimeout()
-    if (this.events.length > 0) {
-      const flushedEvents = this.events
-      this.events = []
-      return this.flushed(flushedEvents)
+    try {
+      this.lock()
+    } catch (err) {
+      this.shiftTimeout()
+      return
+    }
+
+    try {
+      this.clearTimeout()
+      if (this.events.length > 0) {
+        const flushedEvents = this.events
+        this.events = []
+        await this.flushed(flushedEvents)
+      }
+    } finally {
+      this.unlock()
     }
   }
 

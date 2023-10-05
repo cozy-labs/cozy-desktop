@@ -39,7 +39,7 @@ import type { Pouch } from '../../pouch'
 
 type PrepareEventsOpts = {
   +checksum: (string) => Promise<string>,
-  initialScanParams: ?InitialScanParams,
+  initialScanParams: InitialScanParams,
   pouch: Pouch,
   syncPath: string
 }

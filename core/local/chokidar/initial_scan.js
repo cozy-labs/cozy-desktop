@@ -25,7 +25,8 @@ export type InitialScanParams = {
   paths: string[],
   emptyDirRetryCount: number,
   flushed: boolean,
-  resolve: () => void
+  done: boolean,
+  resolve?: () => void
 }
 
 export type InitialScanOpts = {
@@ -68,9 +69,10 @@ const step = async (
   rawEvents /*: ChokidarEvent[] */,
   { buffer, initialScanParams, pouch } /*: InitialScanOpts */
 ) /*: Promise<Array<ChokidarEvent>> */ => {
-  // We mark the initial scan as flushed as soon as possible to avoid
-  // concurrent initial scan processings from later flushes.
+  // We mark the initial scan as flushed as soon as possible so latter events
+  // are not marked as part of the initial scan.
   initialScanParams.flushed = true
+
   let events = rawEvents
 
   events

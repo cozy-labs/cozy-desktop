@@ -60,13 +60,13 @@ module.exports = function analysis(
   {
     pendingChanges,
     initialScanParams
-  } /*: { pendingChanges: LocalChange[], initialScanParams: ?InitialScanParams } */
+  } /*: { pendingChanges: LocalChange[], initialScanParams: InitialScanParams } */
 ) /*: LocalChange[] */ {
   const changes /*: LocalChange[] */ = analyseEvents(events, pendingChanges)
   fixUnsyncedMoves(changes)
   sortBeforeSquash(changes)
   squashMoves(changes)
-  sortChanges(changes, initialScanParams != null)
+  sortChanges(changes, !initialScanParams.done)
   return separatePendingChanges(changes, pendingChanges)
 }
 

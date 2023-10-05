@@ -18,7 +18,7 @@ const { ContextDir } = require('../../../support/helpers/context_dir')
 const { onPlatform } = require('../../../support/helpers/platform')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
-onPlatform('linux', () => {
+onPlatform('darwin', () => {
   describe('ChokidarWatcher Tests', function () {
     let builders
 
@@ -27,8 +27,12 @@ onPlatform('linux', () => {
     beforeEach('instanciate local watcher', function () {
       builders = new Builders({ pouch: this.pouch })
       this.prep = {}
-      const events = { emit: sinon.stub() }
-      this.watcher = new Watcher(this.syncPath, this.prep, this.pouch, events)
+      this.watcher = new Watcher(
+        this.syncPath,
+        this.prep,
+        this.pouch,
+        sinon.createStubInstance(EventEmitter)
+      )
     })
     afterEach('stop watcher and clean path', function (done) {
       this.watcher.stop(true)
@@ -119,6 +123,78 @@ onPlatform('linux', () => {
       })
     })
 
+    describe('stop', () => {
+      context('when initial scan events have not been flushed yet', () => {
+        beforeEach(async function () {
+          await builders.metafile().path('no-event').upToDate().create()
+
+          this.watcher.initialScanParams = {
+            paths: [],
+            emptyDirRetryCount: 3,
+            resolve: Promise.resolve,
+            flushed: false,
+            done: false
+          }
+          // XXX: fake presence of Chokidar watcher
+          this.watcher.watcher = { close: sinon.stub().resolves() }
+        })
+
+        it('clears the buffer and does not flush any event', async function () {
+          const onFlushSpy = sinon.spy(this.watcher, 'onFlush')
+          try {
+            this.watcher.buffer.push({
+              type: 'addDir',
+              path: __dirname,
+              stats: builders.stats().build()
+            })
+            should(this.watcher.buffer.events).have.length(1)
+
+            await this.watcher.stop()
+
+            should(this.watcher.buffer.events).be.empty()
+            should(onFlushSpy).not.have.been.called()
+          } finally {
+            onFlushSpy.restore()
+          }
+        })
+      })
+
+      context('when intial scan events have already been flushed', () => {
+        beforeEach(async function () {
+          await builders.metafile().path('no-event').upToDate().create()
+
+          this.watcher.initialScanParams = {
+            paths: [],
+            emptyDirRetryCount: 3,
+            resolve: Promise.resolve,
+            flushed: true,
+            done: false
+          }
+          // XXX: fake presence of Chokidar watcher
+          this.watcher.watcher = { close: sinon.stub().resolves() }
+        })
+
+        it('tries to flush buffered events before stopping', async function () {
+          const onFlushSpy = sinon.spy(this.watcher, 'onFlush')
+          try {
+            this.watcher.buffer.push({
+              type: 'addDir',
+              path: __dirname,
+              stats: builders.stats().build()
+            })
+            should(this.watcher.buffer.events).have.length(1)
+
+            await this.watcher.stop()
+
+            should(this.watcher.buffer.events).be.empty()
+            should(onFlushSpy).have.been.calledOnce()
+          } finally {
+            onFlushSpy.restore()
+          }
+        })
+      })
+    })
+
     describe('checksum', () => {
       const relpath = 'foo.txt'
       let abspath
@@ -163,7 +239,8 @@ onPlatform('linux', () => {
                 paths: [],
                 emptyDirRetryCount: 3,
                 resolve: Promise.resolve,
-                flushed: false
+                flushed: false,
+                done: false
               }
 
               this.watcher.buffer.push({
@@ -181,6 +258,8 @@ onPlatform('linux', () => {
         }
       )
 
+      // TODO: refactor to test that buffer is not flushed while another batch
+      // is being processed.
       context('while an initial scan is being processed', () => {
         const trigger = new EventEmitter()
         const SECOND_FLUSH_TRIGGER = 'second-flush'
@@ -190,7 +269,8 @@ onPlatform('linux', () => {
             paths: [],
             emptyDirRetryCount: 3,
             resolve: Promise.resolve,
-            flushed: false
+            flushed: false,
+            done: false
           }
           // Switch events buffer to manual flushing
           this.watcher.buffer.switchMode('idle')
@@ -237,11 +317,6 @@ onPlatform('linux', () => {
     })
 
     describe('onAddFile', () => {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
       it('detects when a file is created', function () {
         return this.watcher.start().then(() => {
           this.prep.addFileAsync = function (side, doc) {
@@ -282,11 +357,6 @@ onPlatform('linux', () => {
     })
 
     describe('onAddDir', function () {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
       it('detects when a folder is created', function () {
         return this.watcher.start().then(() => {
           this.prep.putFolderAsync = function (side, doc) {
@@ -326,12 +396,7 @@ onPlatform('linux', () => {
     })
 
     describe('onUnlinkFile', () => {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
-      it.skip('detects when a file is deleted', function () {
+      it('detects when a file is deleted', function () {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.
@@ -353,12 +418,7 @@ onPlatform('linux', () => {
     })
 
     describe('onUnlinkDir', () => {
-      if (process.env.APPVEYOR) {
-        it('is unstable on AppVeyor')
-        return
-      }
-
-      it.skip('detects when a folder is deleted', function () {
+      it('detects when a folder is deleted', function () {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.
@@ -405,10 +465,7 @@ onPlatform('linux', () => {
       }))
 
     describe('when a file is moved', function () {
-      beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-      afterEach('clean pouch', pouchHelpers.cleanDatabase)
-
-      it.skip('deletes the source and adds the destination', function () {
+      it('deletes the source and adds the destination', function () {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.
