@@ -1,5 +1,33 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.39.0-beta.5 - 2023-10-05
+
+Improvements for all users:
+
+- Cozy Desktop will now stop its processes when power is suspended and restart
+  them when power is resumed. This should speed up suspension and prevent
+  unwanted wake ups in some situations but, mostly it will ensure that
+  processes are fully functional when power is resumed (we could lose the
+  remote watcher leading to missed remote changes).
+- The realtime remote changes detection feature is now hidden behind a flag so
+  we can do more tests in live conditions before releasing it to everybody.
+- We fixed an issue in the detection of changes to synchronize (i.e. after
+  they've been detected either on the local filesystem or the remote Cozy)
+  which could lead to the synchronization process hanging until the application
+  is restarted.
+
+Improvements for macOS users:
+
+- We've made improvements to the local changes watcher to make sure that
+  detected changes batches are not processed concurrently as this could lead to
+  unexpected behavior. These also ensure that stopping the application while
+  the initial local synchronization directory is being scanned will not lead to
+  documents being sent to the trash without reason.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.39.0-beta.4 - 2023-09-01
 
 Improvements for all users:
