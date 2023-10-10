@@ -14,6 +14,7 @@ const {
   FILE_TYPE,
   DIR_TYPE,
   HEARTBEAT,
+  REMOTE_WATCHER_ERROR_EVENT,
   REMOTE_WATCHER_FATAL_EVENT
 } = require('../constants')
 const remoteErrors = require('../errors')
@@ -142,12 +143,12 @@ class RemoteWatcher {
   }
 
   onError(listener /*: (RemoteError) => any */) {
-    this.events.on('RemoteWatcher:error', listener)
+    this.events.on(REMOTE_WATCHER_ERROR_EVENT, listener)
   }
 
   error(err /*: RemoteError */) {
     log.warn({ err }, `Remote watcher error: ${err.message}`)
-    this.events.emit('RemoteWatcher:error', err)
+    this.events.emit(REMOTE_WATCHER_ERROR_EVENT, err)
   }
 
   onFatal(listener /*: Error => any */) {

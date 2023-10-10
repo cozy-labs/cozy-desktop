@@ -28,6 +28,7 @@ const {
   FILE_TYPE,
   DIR_TYPE,
   INITIAL_SEQ,
+  REMOTE_WATCHER_ERROR_EVENT,
   REMOTE_WATCHER_FATAL_EVENT
 } = require('../../../core/remote/constants')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
@@ -181,17 +182,17 @@ describe('RemoteWatcher', function () {
       )
     })
 
-    it('emits a RemoteWatcher:error event on non-fatal error during first watch()', async function () {
+    it('emits a REMOTE_WATCHER_ERROR_EVENT event on non-fatal error during first watch()', async function () {
       this.watcher.watch.rejects(nonFatalError)
 
       await this.watcher.start()
       should(this.events.emit).have.been.calledWith(
-        'RemoteWatcher:error',
+        REMOTE_WATCHER_ERROR_EVENT,
         nonFatalError
       )
     })
 
-    it('emits a RemoteWatcher:error event on non-fatal error during second watch()', async function () {
+    it('emits a REMOTE_WATCHER_ERROR_EVENT event on non-fatal error during second watch()', async function () {
       this.watcher.watch
         .onFirstCall()
         .resolves()
@@ -201,7 +202,7 @@ describe('RemoteWatcher', function () {
       await this.watcher.start()
       await this.watcher.requestRun() // XXX: fake next clock tick
       should(this.events.emit).have.been.calledWith(
-        'RemoteWatcher:error',
+        REMOTE_WATCHER_ERROR_EVENT,
         nonFatalError
       )
     })
@@ -324,10 +325,10 @@ describe('RemoteWatcher', function () {
           should(this.watcher.running).be.true()
         })
 
-        it('emits a RemoteWatcher:error event', async function () {
+        it('emits a REMOTE_WATCHER_ERROR_EVENT event', async function () {
           await this.watcher.requestRun()
           await should(this.events.emit).have.been.calledWith(
-            'RemoteWatcher:error',
+            REMOTE_WATCHER_ERROR_EVENT,
             err
           )
         })
