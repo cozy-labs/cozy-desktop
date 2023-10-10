@@ -176,7 +176,9 @@ class RemoteWatcher {
     if (this.watchInterval == null) {
       log.info('starting watch clock')
       this.watchInterval = setInterval(() => {
-        if (this.queue.empty) {
+        if (this.queue.idle()) {
+          // Enqueue a scheduled run only if there weren't any running on
+          // enqueued run.
           this.requestRun()
         }
       }, HEARTBEAT)

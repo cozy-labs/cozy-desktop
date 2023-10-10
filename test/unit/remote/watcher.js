@@ -255,6 +255,31 @@ describe('RemoteWatcher', function () {
     })
   })
 
+  describe('watch loop', function () {
+    it('requests run at REMOTE_HEARTBEAT interval only if the queue is idle', async function () {
+      this.watcher.watch = sinon.stub().callsFake(async () => {
+        await Promise.delay(REMOTE_HEARTBEAT + 1)
+      })
+      const requestRunSpy = sinon.spy(this.watcher, 'requestRun')
+
+      try {
+        this.watcher.running = true
+        this.watcher.startClock()
+
+        await clock.tickAsync(REMOTE_HEARTBEAT)
+        should(this.watcher.requestRun).have.been.calledOnce()
+
+        await clock.tickAsync(REMOTE_HEARTBEAT)
+        should(this.watcher.requestRun).have.been.calledOnce()
+
+        await clock.tickAsync(REMOTE_HEARTBEAT)
+        should(this.watcher.requestRun).have.been.calledTwice()
+      } finally {
+        requestRunSpy.restore()
+      }
+    })
+  })
+
   describe('requestRun', function () {
     beforeEach(async function () {
       sinon.stub(this.watcher, 'watch')
