@@ -297,25 +297,33 @@ describe('RemoteWatcher', function () {
     })
 
     it('clears enqueued watch runs', async function () {
-      // XXX: make sure queued requests are not done before we get the chance to
-      // add the other ones.
-      this.watcher.watch.callsFake(async () => {
-        await Promise.delay(5000)
-      })
+      this.watcher.watch.resolves()
 
       // We start with an empty queue
       should(this.watcher.queue.length()).equal(0)
 
       // Adding a bunch of run requests
-      this.watcher.requestRun()
-      this.watcher.requestRun()
-      this.watcher.requestRun()
-      this.watcher.requestRun()
-      this.watcher.requestRun()
-      this.watcher.requestRun()
+      const runs = [this.watcher.requestRun()]
+      // Wait for the first task execution to start
+      await new Promise(resolve => process.nextTick(resolve))
+      runs.push(
+        this.watcher.requestRun(),
+        this.watcher.requestRun(),
+        this.watcher.requestRun(),
+        this.watcher.requestRun()
+      )
 
       // We only keep one request in the queue
       should(this.watcher.queue.length()).equal(1)
+
+      // Wait until all tasks have been executed
+      await this.watcher.queue.drain()
+
+      // Make sure all run requests are fulfilled
+      await Promise.all(runs)
+
+      // And we only called watch twice
+      should(this.watcher.watch).have.been.calledTwice()
     })
 
     context('when the watcher is stopped', () => {

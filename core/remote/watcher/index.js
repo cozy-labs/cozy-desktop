@@ -87,6 +87,7 @@ class RemoteWatcher {
   running: boolean
   watchInterval: ?IntervalID
   queue: QueueObject
+  nextRun: Promise
   realtimeManager: RealtimeManager
   */
 
@@ -99,6 +100,7 @@ class RemoteWatcher {
     this.remoteCozy = remoteCozy
     this.events = events
     this.running = false
+    this.nextRun = Promise.resolve()
 
     if (config.flags['desktop.realtime.enabled']) {
       this.realtimeManager = new RealtimeManager()
@@ -199,8 +201,21 @@ class RemoteWatcher {
 
     try {
       log.info('requesting watch run')
-      this.queue.remove(() => true)
-      return await this.queue.pushAsync()
+
+      if (this.queue.idle()) {
+        // If there aren't any requests running, enqueue one and wait until
+        // it's completed.
+        await this.queue.pushAsync()
+      } else if (this.queue.length() === 0) {
+        // If there is a request running but none enqueued, enqueue one, mark
+        // it as the next request to run and wait until it's completed.
+        this.nextRun = this.queue.pushAsync()
+        await this.nextRun
+      } else {
+        // If the queue is full (i.e. one running request + one enqueued
+        // request), wait until the next request has completed.
+        await this.nextRun
+      }
     } catch (err) {
       switch (err.code) {
         case remoteErrors.COZY_CLIENT_REVOKED_CODE:
