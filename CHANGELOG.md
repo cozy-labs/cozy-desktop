@@ -1,5 +1,17 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.39.0-beta.6 - 2023-10-12
+
+Improvements for all users:
+
+- We fixed a regression introduced in the remote watcher that could lead to a
+  stuck synchronization process after an error such as failing to create a
+  conflict on the remote Cozy.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.39.0-beta.5 - 2023-10-05
 
 Improvements for all users:
