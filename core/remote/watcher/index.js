@@ -14,6 +14,7 @@ const {
   FILE_TYPE,
   DIR_TYPE,
   HEARTBEAT,
+  REMOTE_WATCHER_ERROR_EVENT,
   REMOTE_WATCHER_FATAL_EVENT
 } = require('../constants')
 const remoteErrors = require('../errors')
@@ -86,6 +87,7 @@ class RemoteWatcher {
   running: boolean
   watchInterval: ?IntervalID
   queue: QueueObject
+  nextRun: Promise
   realtimeManager: RealtimeManager
   */
 
@@ -98,6 +100,7 @@ class RemoteWatcher {
     this.remoteCozy = remoteCozy
     this.events = events
     this.running = false
+    this.nextRun = Promise.resolve()
 
     if (config.flags['desktop.realtime.enabled']) {
       this.realtimeManager = new RealtimeManager()
@@ -142,12 +145,12 @@ class RemoteWatcher {
   }
 
   onError(listener /*: (RemoteError) => any */) {
-    this.events.on('RemoteWatcher:error', listener)
+    this.events.on(REMOTE_WATCHER_ERROR_EVENT, listener)
   }
 
   error(err /*: RemoteError */) {
     log.warn({ err }, `Remote watcher error: ${err.message}`)
-    this.events.emit('RemoteWatcher:error', err)
+    this.events.emit(REMOTE_WATCHER_ERROR_EVENT, err)
   }
 
   onFatal(listener /*: Error => any */) {
@@ -175,7 +178,9 @@ class RemoteWatcher {
     if (this.watchInterval == null) {
       log.info('starting watch clock')
       this.watchInterval = setInterval(() => {
-        if (this.queue.empty) {
+        if (this.queue.idle()) {
+          // Enqueue a scheduled run only if there weren't any running on
+          // enqueued run.
           this.requestRun()
         }
       }, HEARTBEAT)
@@ -196,8 +201,21 @@ class RemoteWatcher {
 
     try {
       log.info('requesting watch run')
-      this.queue.remove(() => true)
-      return await this.queue.pushAsync()
+
+      if (this.queue.idle()) {
+        // If there aren't any requests running, enqueue one and wait until
+        // it's completed.
+        await this.queue.pushAsync()
+      } else if (this.queue.length() === 0) {
+        // If there is a request running but none enqueued, enqueue one, mark
+        // it as the next request to run and wait until it's completed.
+        this.nextRun = this.queue.pushAsync()
+        await this.nextRun
+      } else {
+        // If the queue is full (i.e. one running request + one enqueued
+        // request), wait until the next request has completed.
+        await this.nextRun
+      }
     } catch (err) {
       switch (err.code) {
         case remoteErrors.COZY_CLIENT_REVOKED_CODE:

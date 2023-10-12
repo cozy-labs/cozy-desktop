@@ -27,7 +27,9 @@ const remoteErrors = require('../../../core/remote/errors')
 const {
   FILE_TYPE,
   DIR_TYPE,
+  HEARTBEAT: REMOTE_HEARTBEAT,
   INITIAL_SEQ,
+  REMOTE_WATCHER_ERROR_EVENT,
   REMOTE_WATCHER_FATAL_EVENT
 } = require('../../../core/remote/constants')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
@@ -69,12 +71,15 @@ const saveTree = async (remoteTree, builders) => {
 }
 
 describe('RemoteWatcher', function () {
-  let builders, remoteTree /*: Object */
+  let builders, clock
+  let remoteTree /*: Object */
 
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(function instanciateRemoteWatcher() {
+    clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'setInterval'] })
+
     this.prep = sinon.createStubInstance(Prep)
     this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
@@ -111,6 +116,9 @@ describe('RemoteWatcher', function () {
   afterEach(function removeEventListeners() {
     this.events.removeAllListeners()
   })
+  afterEach(function restoreTimers() {
+    clock.restore()
+  })
   afterEach(async function () {
     await pouchHelpers.cleanDatabase()
   })
@@ -129,7 +137,6 @@ describe('RemoteWatcher', function () {
 
     beforeEach(function () {
       sinon.stub(this.watcher, 'watch').resolves()
-      sinon.stub(this.watcher, 'startClock').returns() // XXX: avoid starting a loop in tests
       sinon.spy(this.events, 'emit')
     })
     afterEach(function () {
@@ -138,17 +145,19 @@ describe('RemoteWatcher', function () {
     })
 
     it('starts the watch loop', async function () {
-      this.watcher.startClock.restore()
-
-      await this.watcher.start()
-      should(this.watcher.watch).have.been.calledOnce()
-      should(this.watcher.running).be.true()
-      should(this.watcher.watchInterval._destroyed).be.false()
+      const requestRunSpy = sinon.spy(this.watcher, 'requestRun')
+      try {
+        await this.watcher.start()
+        should(requestRunSpy).have.been.calledOnce()
+        should(this.watcher.running).be.true()
+        await clock.tickAsync(REMOTE_HEARTBEAT)
+        should(requestRunSpy).have.been.calledTwice()
+      } finally {
+        requestRunSpy.restore()
+      }
     })
 
     it('can be called multiple times without resetting the clock', async function () {
-      this.watcher.startClock.restore()
-
       await this.watcher.start()
       const intervalID = this.watcher.watchInterval.ref()
       await this.watcher.start()
@@ -174,24 +183,31 @@ describe('RemoteWatcher', function () {
         .rejects(fatalError)
 
       await this.watcher.start()
-      await this.watcher.requestRun() // XXX: fake next clock tick
-      should(this.events.emit).have.been.calledWith(
-        REMOTE_WATCHER_FATAL_EVENT,
-        fatalError
-      )
+
+      const done = new Promise(resolve => {
+        this.events.once(REMOTE_WATCHER_FATAL_EVENT, () => {
+          should(this.events.emit).have.been.calledWith(
+            REMOTE_WATCHER_FATAL_EVENT,
+            fatalError
+          )
+          resolve()
+        })
+      })
+      await clock.tickAsync(REMOTE_HEARTBEAT)
+      await done
     })
 
-    it('emits a RemoteWatcher:error event on non-fatal error during first watch()', async function () {
+    it('emits a REMOTE_WATCHER_ERROR_EVENT event on non-fatal error during first watch()', async function () {
       this.watcher.watch.rejects(nonFatalError)
 
       await this.watcher.start()
       should(this.events.emit).have.been.calledWith(
-        'RemoteWatcher:error',
+        REMOTE_WATCHER_ERROR_EVENT,
         nonFatalError
       )
     })
 
-    it('emits a RemoteWatcher:error event on non-fatal error during second watch()', async function () {
+    it('emits a REMOTE_WATCHER_ERROR_EVENT event on non-fatal error during second watch()', async function () {
       this.watcher.watch
         .onFirstCall()
         .resolves()
@@ -199,11 +215,18 @@ describe('RemoteWatcher', function () {
         .rejects(nonFatalError)
 
       await this.watcher.start()
-      await this.watcher.requestRun() // XXX: fake next clock tick
-      should(this.events.emit).have.been.calledWith(
-        'RemoteWatcher:error',
-        nonFatalError
-      )
+
+      const done = new Promise(resolve => {
+        this.events.once(REMOTE_WATCHER_ERROR_EVENT, () => {
+          should(this.events.emit).have.been.calledWith(
+            REMOTE_WATCHER_ERROR_EVENT,
+            nonFatalError
+          )
+          resolve()
+        })
+      })
+      await clock.tickAsync(REMOTE_HEARTBEAT)
+      await done
     })
   })
 
@@ -232,6 +255,31 @@ describe('RemoteWatcher', function () {
     })
   })
 
+  describe('watch loop', function () {
+    it('requests run at REMOTE_HEARTBEAT interval only if the queue is idle', async function () {
+      this.watcher.watch = sinon.stub().callsFake(async () => {
+        await Promise.delay(REMOTE_HEARTBEAT + 1)
+      })
+      const requestRunSpy = sinon.spy(this.watcher, 'requestRun')
+
+      try {
+        this.watcher.running = true
+        this.watcher.startClock()
+
+        await clock.tickAsync(REMOTE_HEARTBEAT)
+        should(this.watcher.requestRun).have.been.calledOnce()
+
+        await clock.tickAsync(REMOTE_HEARTBEAT)
+        should(this.watcher.requestRun).have.been.calledOnce()
+
+        await clock.tickAsync(REMOTE_HEARTBEAT)
+        should(this.watcher.requestRun).have.been.calledTwice()
+      } finally {
+        requestRunSpy.restore()
+      }
+    })
+  })
+
   describe('requestRun', function () {
     beforeEach(async function () {
       sinon.stub(this.watcher, 'watch')
@@ -249,25 +297,33 @@ describe('RemoteWatcher', function () {
     })
 
     it('clears enqueued watch runs', async function () {
-      // XXX: make sure queued requests are not done before we get the chance to
-      // add the other ones.
-      this.watcher.watch.callsFake(async () => {
-        await Promise.delay(5000)
-      })
+      this.watcher.watch.resolves()
 
       // We start with an empty queue
       should(this.watcher.queue.length()).equal(0)
 
       // Adding a bunch of run requests
-      this.watcher.requestRun()
-      this.watcher.requestRun()
-      this.watcher.requestRun()
-      this.watcher.requestRun()
-      this.watcher.requestRun()
-      this.watcher.requestRun()
+      const runs = [this.watcher.requestRun()]
+      // Wait for the first task execution to start
+      await new Promise(resolve => process.nextTick(resolve))
+      runs.push(
+        this.watcher.requestRun(),
+        this.watcher.requestRun(),
+        this.watcher.requestRun(),
+        this.watcher.requestRun()
+      )
 
       // We only keep one request in the queue
       should(this.watcher.queue.length()).equal(1)
+
+      // Wait until all tasks have been executed
+      await this.watcher.queue.drain()
+
+      // Make sure all run requests are fulfilled
+      await Promise.all(runs)
+
+      // And we only called watch twice
+      should(this.watcher.watch).have.been.calledTwice()
     })
 
     context('when the watcher is stopped', () => {
@@ -324,10 +380,10 @@ describe('RemoteWatcher', function () {
           should(this.watcher.running).be.true()
         })
 
-        it('emits a RemoteWatcher:error event', async function () {
+        it('emits a REMOTE_WATCHER_ERROR_EVENT event', async function () {
           await this.watcher.requestRun()
           await should(this.events.emit).have.been.calledWith(
-            'RemoteWatcher:error',
+            REMOTE_WATCHER_ERROR_EVENT,
             err
           )
         })
