@@ -1,5 +1,42 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.39.0 - 2023-10-18
+
+Improvements for all users:
+
+- We will now fetch the latest changes from your Cozy as soon as they've been
+  made (with some delay in case many changes were made).
+  This feature is hidden behind a flag so we can do more tests in live
+  conditions before releasing it to everybody.
+- We fixed our network configuration as it was preventing the realtime manager,
+  responsible for fetching changes from your Cozy as soon as they've bee made,
+  to create a connection with the Cozy.
+- OpenOffice lock files won't be synchronized anymore.
+- The onboarding window will now honor `_blank` link targets during the
+  onboarding process by opening the targeted URL in a default browser tab
+  rather than a new Cozy Desktop window.
+- Cozy Desktop will now stop its processes when power is suspended and restart
+  them when power is resumed. This should speed up suspension and prevent
+  unwanted wake ups in some situations but, mostly it will ensure that
+  processes are fully functional when power is resumed (we could lose the
+  remote watcher leading to missed remote changes).
+- We fixed an issue in the detection of changes to synchronize (i.e. after
+  they've been detected either on the local filesystem or the remote Cozy)
+  which could lead to the synchronization process hanging until the application
+  is restarted.
+
+Improvements for macOS users:
+
+- We've made improvements to the local changes watcher to make sure that
+  detected changes batches are not processed concurrently as this could lead to
+  unexpected behavior. These also ensure that stopping the application while
+  the initial local synchronization directory is being scanned will not lead to
+  documents being sent to the trash without reason.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.39.0-beta.6 - 2023-10-12
 
 Improvements for all users:
