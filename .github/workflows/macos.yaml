@@ -273,6 +273,7 @@ jobs:
           mac-cert-password: "${{ secrets.mac_cert_password }}"
           apple-id: "${{ secrets.apple_id }}"
           apple-id-password: "${{ secrets.apple_id_password }}"
+          apple-team-id: "${{ secrets.apple_team_id }}"
       - name: Save artifacts
         if: ${{ github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v3
@@ -283,4 +284,3 @@ jobs:
                 ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*.dmg
                 ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*-mac.zip
             retention-days: 5
-

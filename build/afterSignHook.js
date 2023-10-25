@@ -3,7 +3,7 @@
 const fs = require('fs')
 const path = require('path')
 // eslint-disable-next-line node/no-unpublished-require
-const electron_notarize = require('electron-notarize')
+const electron_notarize = require('@electron/notarize')
 
 module.exports = async function (params) {
   // Only notarize the app on Mac OS only.
@@ -28,10 +28,10 @@ module.exports = async function (params) {
   console.log(`Notarizing ${appId} found at ${appPath}`)
 
   await electron_notarize.notarize({
-    appBundleId: appId,
     appPath: appPath,
     appleId: process.env.APPLE_ID,
-    appleIdPassword: process.env.APPLE_ID_PASSWORD
+    appleIdPassword: process.env.APPLE_ID_PASSWORD,
+    teamId: process.env.APPLE_TEAM_ID
   })
 
   // eslint-disable-next-line no-console
