@@ -17,6 +17,9 @@ inputs:
   apple-id-password:
     description: 'The Apple notarization account password.'
     required: false
+  apple-team-id:
+    description: 'Id of the team the Apple notarization account if part of.'
+    required: false
 runs:
   using: composite
   steps:
@@ -28,6 +31,7 @@ runs:
         CSC_KEY_PASSWORD: "${{ inputs.mac-cert-password }}"
         APPLE_ID: "${{ inputs.apple-id }}"
         APPLE_ID_PASSWORD: "${{ inputs.apple-id-password }}"
+        APPLE_TEAM_ID: "${{ inputs.apple-team-id }}"
       run: |
         if [ "${{ runner.os }}" == "Linux" ]; then
           # Install build dependencies:
