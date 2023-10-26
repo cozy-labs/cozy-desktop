@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.40.0-beta.1 - 2023-10-26
+
+Improvements for all users:
+
+- We anticipate changes in the way the remote Cozy will inform Cozy Desktop
+  that its OAuth token has expired and should be refreshed.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.39.0 - 2023-10-18
 
 Improvements for all users:
