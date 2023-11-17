@@ -129,11 +129,11 @@ Implementation details:
    `./test/support/coverage.js`.
 2. `./test/support/coverage.js` uses [istanbul][3] to instrument the code in a
    way compatible with [electron-mocha][4].
-2. `babel-plugin-istanbul` inserts instrumentation code when compiling from
+3. `babel-plugin-istanbul` inserts instrumentation code when compiling from
    EcmaScript to JavaScript
-3. The mocha tests are run and generate an lcov-style report (including
+4. The mocha tests are run and generate an lcov-style report (including
    HTML output)
-4. Finally, when run on the CI, we [tell Travis](../.travis.yml) to upload the report to the
+5. Finally, when run on the CI, we [tell Travis](../.travis.yml) to upload the report to the
    [Codecov][5] service.
 
 

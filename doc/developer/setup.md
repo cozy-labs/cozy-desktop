@@ -58,7 +58,7 @@ N.B.: the address of the development cozy-stack is http://cozy.localhost:8080. D
 
 ## Run tests
 
-See [./test.md](./test.md).
+See [test](./test.md).
 
 ## Develop Elm
 
