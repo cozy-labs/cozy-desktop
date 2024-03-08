@@ -3865,10 +3865,10 @@ electron-window@^0.8.0:
   dependencies:
     is-electron-renderer "^2.0.0"
 
-electron@26.6.10:
-  version "26.6.10"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-26.6.10.tgz#01ca7610bd662033ed3ceb70804cbf940c7e6756"
-  integrity sha512-pV2SD0RXzAiNRb/2yZrsVmVkBOMrf+DVsPulIgRjlL0+My9BL5spFuhHVMQO9yHl9tFpWtuRpQv0ofM/i9P8xg==
+electron@27.3.5:
+  version "27.3.5"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-27.3.5.tgz#dc9e96ed206eb8b929a9dd8e1a42a4feebeea3b7"
+  integrity sha512-w4HsKR85UboP7Pu4QnFyuEokQI/H2bYCC/ZZzLJxHq3tqX93O2GUgwu6jAk8YpxmW8Nl7FiHlwoquDXB3Wtoxw==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^18.11.18"
