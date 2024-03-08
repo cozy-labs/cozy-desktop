@@ -3845,10 +3845,10 @@ electron-window@^0.8.0:
   dependencies:
     is-electron-renderer "^2.0.0"
 
-electron@27.3.5:
-  version "27.3.5"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-27.3.5.tgz#dc9e96ed206eb8b929a9dd8e1a42a4feebeea3b7"
-  integrity sha512-w4HsKR85UboP7Pu4QnFyuEokQI/H2bYCC/ZZzLJxHq3tqX93O2GUgwu6jAk8YpxmW8Nl7FiHlwoquDXB3Wtoxw==
+electron@28.2.9:
+  version "28.2.9"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-28.2.9.tgz#7c94a4901b1cb40993906f060a14a108039ac817"
+  integrity sha512-6b6G6jq4ypKxdCRNjULmqWEott4GJe2kaAykLonaTaeFqoFFHbzOu4k6pAzurseFhv452aUob9DAH6eI7UlOUw==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^18.11.18"
