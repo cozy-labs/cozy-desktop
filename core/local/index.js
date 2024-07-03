@@ -21,7 +21,7 @@ const metadata = require('../metadata')
 const { hideOnWindows } = require('../utils/fs')
 const watcher = require('./watcher')
 const syncDir = require('./sync_dir')
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 const measureTime = require('../utils/perfs')
 const sentry = require('../utils/sentry')
 const streamUtils = require('../utils/stream')
@@ -240,7 +240,7 @@ class Local /*:: implements Reader, Writer */ {
     let parent = this.abspath(path.dirname(doc.path))
     const stopMeasure = measureTime('LocalWriter#addFile')
 
-    log.info({ path: doc.path }, 'Put file')
+    log.info('Put file', { path: doc.path })
 
     async.waterfall(
       [
@@ -259,10 +259,9 @@ class Local /*:: implements Reader, Writer */ {
               fse.ensureDir(this.tmpPath, async () => {
                 hideOnWindows(this.tmpPath)
                 if (existingFilePath) {
-                  log.info(
-                    { path: filePath },
-                    `Recopy ${existingFilePath} -> ${filePath}`
-                  )
+                  log.info(`Recopy ${existingFilePath} -> ${filePath}`, {
+                    path: filePath
+                  })
                   this.events.emit('transfer-copy', doc)
                   fse.copy(existingFilePath, tmpFile, err => {
                     if (err) {
@@ -363,7 +362,7 @@ class Local /*:: implements Reader, Writer */ {
       function (err) {
         stopMeasure()
         if (err) {
-          log.warn({ path: doc.path, err, doc }, 'addFile failed')
+          log.warn('addFile failed', { path: doc.path, err, doc })
         }
         fse.unlink(tmpFile, () => callback(err))
       }
@@ -373,7 +372,7 @@ class Local /*:: implements Reader, Writer */ {
   /** Create a new folder */
   addFolder(doc /*: SavedMetadata */, callback /*: Callback */) /*: void */ {
     let folderPath = path.join(this.syncPath, doc.path)
-    log.info({ path: doc.path }, 'Put folder')
+    log.info('Put folder', { path: doc.path })
     async.series(
       [
         cb => fse.ensureDir(folderPath, cb),
@@ -398,7 +397,7 @@ class Local /*:: implements Reader, Writer */ {
 
   /** Update the metadata of a file */
   async updateFileMetadataAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
-    log.info({ path: doc.path }, 'Updating file metadata...')
+    log.info('Updating file metadata...', { path: doc.path })
     await this.updateMetadataAsync(doc)
     metadata.updateLocal(doc)
   }
@@ -409,7 +408,7 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   async assignNewRemote(doc /*: SavedMetadata */) /*: Promise<void> */ {
-    log.info({ path: doc.path }, 'Local assignNewRemote = updateLocal')
+    log.info('Local assignNewRemote = updateLocal', { path: doc.path })
     metadata.updateLocal(doc)
   }
 
@@ -432,8 +431,8 @@ class Local /*:: implements Reader, Writer */ {
     old /*: T */
   ) /*: Promise<void> */ {
     log.info(
-      { path: doc.path, oldpath: old.path },
-      `Moving ${old.docType}${doc.overwrite ? ' (with overwrite)' : ''}`
+      `Moving ${old.docType}${doc.overwrite ? ' (with overwrite)' : ''}`,
+      { path: doc.path, oldpath: old.path }
     )
 
     if (
@@ -465,33 +464,34 @@ class Local /*:: implements Reader, Writer */ {
   }
 
   async trashAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
-    log.info({ path: doc.path }, 'Moving to the OS trash...')
+    log.info('Moving to the OS trash...', { path: doc.path })
     const fullpath = path.join(this.syncPath, doc.path)
     try {
       await this.sendToTrash(fullpath)
     } catch (err) {
       if (err.code === 'ENOENT') {
-        log.warn(
-          { path: doc.path },
-          `Cannot trash locally deleted ${doc.docType}.`
-        )
+        log.warn(`Cannot trash locally deleted ${doc.docType}.`, {
+          path: doc.path
+        })
         return
       }
 
-      log.error(
-        { path: doc.path, err, sentry: true },
-        'Could not trash local document'
-      )
+      log.error('Could not trash local document', {
+        path: doc.path,
+        err,
+        sentry: true
+      })
     }
 
-    log.info({ path: doc.path }, 'Permanently deleting...')
+    log.info('Permanently deleting...', { path: doc.path })
     try {
       await fse.remove(fullpath)
     } catch (err) {
-      log.error(
-        { path: fullpath, err, sentry: true },
-        'Could not permanently delete document'
-      )
+      log.error('Could not permanently delete document', {
+        path: fullpath,
+        err,
+        sentry: true
+      })
       throw err
     }
   }
@@ -504,10 +504,10 @@ class Local /*:: implements Reader, Writer */ {
   ) /*: Promise<T> */ {
     const conflict = metadata.createConflictingDoc(newMetadata)
 
-    log.warn(
-      { path: conflict.path, oldpath: newMetadata.path },
-      'Resolving local conflict'
-    )
+    log.warn('Resolving local conflict', {
+      path: conflict.path,
+      oldpath: newMetadata.path
+    })
     await this.moveAsync(conflict, newMetadata)
 
     return conflict

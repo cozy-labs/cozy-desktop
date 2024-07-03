@@ -21,7 +21,7 @@ const remoteErrors = require('../errors')
 const { inRemoteTrash } = require('../document')
 const squashMoves = require('./squashMoves')
 const normalizePaths = require('./normalizePaths')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 const { RealtimeManager } = require('./realtime_manager')
 
 /*::
@@ -149,7 +149,7 @@ class RemoteWatcher {
   }
 
   error(err /*: RemoteError */) {
-    log.warn({ err }, `Remote watcher error: ${err.message}`)
+    log.warn(`Remote watcher error: ${err.message}`, { err })
     this.events.emit(REMOTE_WATCHER_ERROR_EVENT, err)
   }
 
@@ -158,7 +158,7 @@ class RemoteWatcher {
   }
 
   async fatal(err /*: Error */) {
-    log.error({ err, sentry: true }, `Remote watcher fatal: ${err.message}`)
+    log.error(`Remote watcher fatal: ${err.message}`, { err, sentry: true })
     this.events.emit(REMOTE_WATCHER_FATAL_EVENT, err)
     this.events.removeAllListeners(REMOTE_WATCHER_FATAL_EVENT)
     await this.stop()
@@ -284,7 +284,7 @@ class RemoteWatcher {
 
     while (dirs.length) {
       for (const dir of dirs) {
-        log.trace({ path: dir.path }, 'Fetching content of unknown folder...')
+        log.trace('Fetching content of unknown folder...', { path: dir.path })
         const children = await this.remoteCozy.getDirectoryContent(dir.remote)
 
         await this.processRemoteChanges(children, { isRecursiveFetch: true })
@@ -397,15 +397,12 @@ class RemoteWatcher {
     } /*: { isInitialFetch?: boolean, isRecursiveFetch?: boolean } */ = {}
   ) /*: RemoteChange */ {
     const oldpath /*: ?string */ = was ? was.path : undefined
-    log.debug(
-      {
-        path: remoteDoc.path || oldpath,
-        oldpath,
-        remoteDoc,
-        was
-      },
-      'change received'
-    )
+    log.debug('change received', {
+      path: remoteDoc.path || oldpath,
+      oldpath,
+      remoteDoc,
+      was
+    })
 
     if (remoteDoc._deleted) {
       if (was == null) {
@@ -599,56 +596,56 @@ class RemoteWatcher {
           throw change.error
         case 'DescendantChange':
           log.debug(
-            { path, remoteId: change.doc.remote._id },
             `${_.get(change, 'doc.docType')} was moved as descendant of ${_.get(
               change,
               'ancestor.doc.path'
-            )}`
+            )}`,
+            { path, remoteId: change.doc.remote._id }
           )
           break
         case 'IgnoredChange':
-          log.debug(
-            { path, remoteId: change.doc.remote && change.doc.remote._id },
-            change.detail
-          )
+          log.debug(change.detail, {
+            path,
+            remoteId: change.doc.remote && change.doc.remote._id
+          })
           break
         case 'FileTrashing':
-          log.info({ path }, 'file was trashed remotely')
+          log.info('file was trashed remotely', { path })
           await this.prep.trashFileAsync(sideName, change.was, change.doc)
           break
         case 'DirTrashing':
-          log.info({ path }, 'folder was trashed remotely')
+          log.info('folder was trashed remotely', { path })
           await this.prep.trashFolderAsync(sideName, change.was, change.doc)
           break
         case 'FileDeletion':
-          log.info({ path }, 'file was deleted permanently')
+          log.info('file was deleted permanently', { path })
           await this.prep.deleteFileAsync(sideName, change.doc)
           break
         case 'DirDeletion':
-          log.info({ path }, 'folder was deleted permanently')
+          log.info('folder was deleted permanently', { path })
           await this.prep.deleteFolderAsync(sideName, change.doc)
           break
         case 'FileAddition':
-          log.info({ path }, 'file was added remotely')
+          log.info('file was added remotely', { path })
           await this.prep.addFileAsync(sideName, change.doc)
           break
         case 'DirAddition':
-          log.info({ path }, 'folder was added remotely')
+          log.info('folder was added remotely', { path })
           await this.prep.putFolderAsync(sideName, change.doc)
           break
         case 'FileUpdate':
-          log.info({ path }, 'file was updated remotely')
+          log.info('file was updated remotely', { path })
           await this.prep.updateFileAsync(sideName, change.doc)
           break
         case 'DirUpdate':
-          log.info({ path }, 'folder was updated remotely')
+          log.info('folder was updated remotely', { path })
           await this.prep.putFolderAsync(sideName, change.doc)
           break
         case 'FileMove':
-          log.info(
-            { path, oldpath: change.was.path },
-            'file was moved or renamed remotely'
-          )
+          log.info('file was moved or renamed remotely', {
+            path,
+            oldpath: change.was.path
+          })
           if (change.needRefetch) {
             change.was = await this.pouch.byRemoteIdMaybe(change.was.remote._id)
             change.was.childMove = false
@@ -660,10 +657,10 @@ class RemoteWatcher {
           break
         case 'DirMove':
           {
-            log.info(
-              { path, oldpath: change.was.path },
-              'folder was moved or renamed remotely'
-            )
+            log.info('folder was moved or renamed remotely', {
+              path,
+              oldpath: change.was.path
+            })
             if (change.needRefetch) {
               change.was = await this.pouch.byRemoteIdMaybe(
                 change.was.remote._id
@@ -691,16 +688,17 @@ class RemoteWatcher {
           }
           break
         case 'UpToDate':
-          log.info({ path }, `${docType} is up-to-date`)
+          log.info(`${docType} is up-to-date`, { path })
           break
         default:
           throw new Error(`Unexpected change type: ${change.type}`)
       } // switch
     } catch (err) {
-      log.debug(
-        { err, path: change.doc.path, change },
-        'could not apply change'
-      )
+      log.debug('could not apply change', {
+        err,
+        path: change.doc.path,
+        change
+      })
       return { err, change }
     }
   }

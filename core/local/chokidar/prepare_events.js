@@ -28,7 +28,7 @@ const Promise = require('bluebird')
 const fse = require('fs-extra')
 const path = require('path')
 
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 /*::
 import type { ChokidarEvent } from './event'
@@ -94,26 +94,25 @@ const step = async (
           new Date(e2.old.local.updated_at).getTime() ===
             e2.stats.mtime.getTime()
         ) {
-          log.trace(
-            { path: e.path },
-            'Do not compute checksum : mtime & path are unchanged'
-          )
+          log.trace('Do not compute checksum : mtime & path are unchanged', {
+            path: e.path
+          })
           e2.md5sum = e2.old.local.md5sum
         } else {
           try {
             e2.md5sum = await checksum(e.path)
-            log.trace({ path: e.path, md5sum: e2.md5sum }, 'Checksum complete')
+            log.trace('Checksum complete', { path: e.path, md5sum: e2.md5sum })
           } catch (err) {
             // FIXME: err.code === EISDIR => keep the event? (e.g. rm foo && mkdir foo)
             // Chokidar reports a change event when a file is replaced by a directory
             if (err.code.match(/ENOENT/)) {
-              log.debug(
-                { path: e.path, ino: e.stats.ino },
-                'Checksum failed: file does not exist anymore'
-              )
+              log.debug('Checksum failed: file does not exist anymore', {
+                path: e.path,
+                ino: e.stats.ino
+              })
               e2.wip = true
             } else {
-              log.error({ path: e.path, err, sentry: true }, 'Checksum failed')
+              log.error('Checksum failed', { path: e.path, err, sentry: true })
               return null
             }
           }
@@ -122,10 +121,10 @@ const step = async (
 
       if (e.type === 'addDir') {
         if (!(await fse.exists(abspath))) {
-          log.debug(
-            { path: e.path, ino: e.stats.ino },
-            'Dir does not exist anymore'
-          )
+          log.debug('Dir does not exist anymore', {
+            path: e.path,
+            ino: e.stats.ino
+          })
           e2.wip = true
         }
       }

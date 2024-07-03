@@ -8,7 +8,7 @@ const cheerio = require('cheerio')
 const crypto = require('crypto')
 const url = require('url')
 const Registration = require('../../core/remote/registration')
-const logger = require('../../core/utils/logger')
+const { logger } = require('../../core/utils/logger')
 
 const log = logger({
   component: 'remote/automated_registration'
@@ -56,7 +56,7 @@ const _hashPassphrase = async (passphrase, salt, iterations) => {
  */
 const login = async (cozyUrl, passphrase) => {
   const { csrf_token, salt, iterations } = await _getLoginInfo(cozyUrl)
-  log.debug({ csrf_token }, 'Login...')
+  log.debug('Login...', { csrf_token })
   if (!csrf_token) {
     log.debug('Already logged in. Skipping login')
     return

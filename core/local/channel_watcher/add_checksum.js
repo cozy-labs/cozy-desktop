@@ -17,7 +17,7 @@
 const _ = require('lodash')
 const path = require('path')
 
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 const STEP_NAME = 'addChecksum'
 
@@ -64,14 +64,14 @@ function loop(
         if (isFileWithContent(event) && !event.md5sum) {
           const absPath = path.join(syncPath, event.path)
           event.md5sum = await opts.checksumer.push(absPath)
-          log.debug({ path: event.path, event }, 'computed checksum')
+          log.debug('computed checksum', { path: event.path, event })
         }
       } catch (err) {
         // Even if the file is no longer at the expected path, we want to
         // keep the event. Maybe it was one if its parents directory that was
         // moved, and then we can refine the event later (in incompleteFixer).
         _.set(event, ['incomplete', STEP_NAME], err.message)
-        log.debug({ err, event }, 'Cannot compute checksum')
+        log.debug('Cannot compute checksum', { err, event })
       }
     }
     return events

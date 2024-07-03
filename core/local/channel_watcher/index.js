@@ -35,7 +35,7 @@ const addChecksum = require('./add_checksum')
 const incompleteFixer = require('./incomplete_fixer')
 const overwrite = require('./overwrite')
 const dispatch = require('./dispatch')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 const { LOCAL_WATCHER_FATAL_EVENT } = require('../constants')
 
@@ -177,7 +177,7 @@ class ChannelWatcher {
   }
 
   fatal(err /*: Error */) /*: void */ {
-    log.error({ err, sentry: true }, `Local watcher fatal: ${err.message}`)
+    log.error(`Local watcher fatal: ${err.message}`, { err, sentry: true })
     this.events.emit(LOCAL_WATCHER_FATAL_EVENT, err)
     this.events.removeAllListeners(LOCAL_WATCHER_FATAL_EVENT)
     this.stop()

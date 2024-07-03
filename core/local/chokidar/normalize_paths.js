@@ -7,7 +7,7 @@
 const Promise = require('bluebird')
 const path = require('path')
 
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 const log = logger({
   component: 'chokidar/normalize_paths'
@@ -46,8 +46,8 @@ const step = async (
 
         if (c.path !== normalized) {
           log.info(
-            { path: c.path, normalized },
-            'normalizing local path to match existing doc and parent norms'
+            'normalizing local path to match existing doc and parent norms',
+            { path: c.path, normalized }
           )
           c.path = normalized
         }

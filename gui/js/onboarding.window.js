@@ -131,7 +131,7 @@ module.exports = class OnboardingWM extends WindowManager {
         }
       })
     } catch (err) {
-      log.error({ err, url, sentry: true }, 'failed loading OAuth view')
+      log.error('failed loading OAuth view', { err, url, sentry: true })
     }
   }
 
@@ -155,7 +155,7 @@ module.exports = class OnboardingWM extends WindowManager {
         await this.jumpToSyncPath()
       }
     } catch (err) {
-      log.warn({ err }, 'could not create Onboarding window')
+      log.warn('could not create Onboarding window', { err })
     }
   }
 
@@ -226,7 +226,7 @@ module.exports = class OnboardingWM extends WindowManager {
         return
       },
       err => {
-        log.warn({ err, cozyUrl }, 'failed registering device with remote Cozy')
+        log.warn('failed registering device with remote Cozy', { err, cozyUrl })
         if (err.code && err.code.match(/PROXY/)) {
           syncSession.resolveProxy(cozyUrl, p => {
             event.sender.send(
@@ -281,11 +281,11 @@ module.exports = class OnboardingWM extends WindowManager {
       try {
         addFileManagerShortcut(desktop.config)
       } catch (err) {
-        log.warn({ err }, 'failed adding shortcuts in file manager')
+        log.warn('failed adding shortcuts in file manager', { err })
       }
       this.afterOnboarding()
     } catch (err) {
-      log.warn({ err }, 'failed starting sync')
+      log.warn('failed starting sync', { err })
       event.sender.send('folder-error', translate('Error Invalid path'))
     }
   }

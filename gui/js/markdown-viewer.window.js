@@ -50,7 +50,7 @@ module.exports = class MarkdownViewerWindow extends WindowManager {
     content /*: string */,
     banner /*: ?WindowBanner */ = null
   ) {
-    log.info({ content, banner }, 'loading note content')
+    log.info('loading note content', { content, banner })
     this.win.webContents.send('load-content', {
       translations: this.translations(),
       banner,

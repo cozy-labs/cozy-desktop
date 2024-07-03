@@ -3,7 +3,7 @@
 const { Promise } = require('bluebird')
 
 const { normalizedPath } = require('../../local/chokidar/normalize_paths')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 const log = logger({
   component: 'RemoteWatcher/normalize_paths'
@@ -53,10 +53,10 @@ const normalizePaths = async (
         normalizedPaths.push(normalized)
 
         if (c.doc.path !== normalized) {
-          log.info(
-            { path: normalized, oldpath: c.doc.path },
-            'normalizing path to match existing doc and parent norms'
-          )
+          log.info('normalizing path to match existing doc and parent norms', {
+            path: normalized,
+            oldpath: c.doc.path
+          })
           c.doc.path = normalized
         }
       }

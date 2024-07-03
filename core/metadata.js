@@ -37,7 +37,7 @@ const mime = require('./utils/mime')
 const deepDiff = require('deep-diff').diff
 const path = require('path')
 
-const logger = require('./utils/logger')
+const { logger } = require('./utils/logger')
 const timestamp = require('./utils/timestamp')
 const pathUtils = require('./utils/path')
 const conflicts = require('./utils/conflicts')
@@ -367,10 +367,9 @@ function invalidPath(doc /*: {path: string} */) {
 // Same as invalidPath, except it throws an exception when path is invalid.
 function ensureValidPath(doc /*: {path: string} */) {
   if (invalidPath(doc)) {
-    log.warn(
-      { path: doc.path },
-      `Invalid path: ${JSON.stringify(doc, null, 2)}`
-    )
+    log.warn(`Invalid path: ${JSON.stringify(doc, null, 2)}`, {
+      path: doc.path
+    })
     throw new Error('Invalid path')
   }
 }
@@ -391,7 +390,7 @@ function invariants /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
   }
 
   if (err) {
-    log.error({ err, path: doc.path, sentry: true }, err.message)
+    log.error(err.message, { err, path: doc.path, sentry: true })
     throw err
   }
 
@@ -453,7 +452,7 @@ function invalidChecksum(doc /*: Metadata */) {
 
 function ensureValidChecksum(doc /*: Metadata */) {
   if (invalidChecksum(doc)) {
-    log.warn({ path: doc.path, doc }, 'Invalid checksum')
+    log.warn('Invalid checksum', { path: doc.path, doc })
     throw new Error('Invalid checksum')
   }
 }
@@ -684,9 +683,9 @@ const makeComparator = (
     }
   const logDiff = (two, diff) => {
     if (two.path) {
-      log.trace({ path: two.path, diff }, name)
+      log.trace(name, { path: two.path, diff })
     } else {
-      log.trace({ diff }, name)
+      log.trace(name, { diff })
     }
   }
 

@@ -34,7 +34,7 @@ const {
   platform
 } = process
 
-const logger = require('../../core/utils/logger')
+const { logger } = require('../../core/utils/logger')
 const log = new logger({ component: 'TEST' })
 
 describe('Scenario', function () {

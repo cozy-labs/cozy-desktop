@@ -53,12 +53,12 @@ describe('Sentry', function () {
     })
   })
 
-  describe('format', function () {
+  describe('formatError', function () {
     it('formats Node system errors', () => {
       try {
         fs.readFileSync(`${__filename}.missing-file`)
       } catch (err) {
-        const result = sentry.format(err)
+        const result = sentry.formatError(err)
         should(result).be.an.instanceof(Error)
         should(result).have.properties({
           type: 'Error',
@@ -72,7 +72,7 @@ describe('Sentry', function () {
     it('formats system FetchError', () => {
       const err = new FetchError('reason', 'system', { code: 'ECONNREFUSED' })
 
-      const result = sentry.format(err)
+      const result = sentry.formatError(err)
       should(result).be.an.instanceof(Error)
       should(result).have.properties({
         type: 'FetchError',
@@ -86,7 +86,7 @@ describe('Sentry', function () {
         'request-timeout'
       )
 
-      const result = sentry.format(err)
+      const result = sentry.formatError(err)
       should(result).be.an.instanceof(Error)
       should(result).have.properties({
         type: 'FetchError',
@@ -101,7 +101,7 @@ describe('Sentry', function () {
         { code: 'PROXY_AUTH_FAILED' }
       )
 
-      const result = sentry.format(err)
+      const result = sentry.formatError(err)
       should(result).be.an.instanceof(Error)
       should(result).have.properties({
         type: 'FetchError',
@@ -126,7 +126,7 @@ describe('Sentry', function () {
       const reason = await response.json()
       const err = new CozyClientFetchError(response, reason)
 
-      const result = sentry.format(err)
+      const result = sentry.formatError(err)
       should(result).be.an.instanceof(Error)
       should(result).have.properties({
         type: 'FetchError',
@@ -142,7 +142,7 @@ describe('Sentry', function () {
       const reason = await response.text()
       const err = new CozyClientFetchError(response, reason)
 
-      const result = sentry.format(err)
+      const result = sentry.formatError(err)
       should(result).be.an.instanceof(Error)
       should(result).have.properties({
         type: 'FetchError',

@@ -4,7 +4,7 @@
  */
 
 const { RemoteCozy } = require('../remote/cozy')
-const logger = require('./logger')
+const { logger } = require('./logger')
 /*::
 import type { Config } from '../config'
 */
@@ -23,10 +23,9 @@ const capabilities = async (config /*: Config */) => {
       Object.assign(store, remoteCapabilities)
     }
   } catch (err) {
-    log.error(
-      { err },
-      'could not fetch remote capabilities; returning local cache'
-    )
+    log.error('could not fetch remote capabilities; returning local cache', {
+      err
+    })
   }
   return store
 }

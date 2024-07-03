@@ -5,7 +5,7 @@
  */
 
 const metadata = require('../../metadata')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 /*::
 import type fse from 'fs-extra'
@@ -45,7 +45,7 @@ const onAddFile = (
   prep /*: Prep */
 ) => {
   const doc = metadata.buildFile(filePath, stats, md5sum)
-  log.info({ path: filePath }, 'FileAddition')
+  log.info('FileAddition', { path: filePath })
   return prep.addFileAsync(SIDE, doc)
 }
 
@@ -55,7 +55,7 @@ const onMoveFile = async (
 ) => {
   const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
   if (overwrite) doc.overwrite = overwrite
-  log.info({ path: filePath, oldpath: old.path }, 'FileMove')
+  log.info('FileMove', { path: filePath, oldpath: old.path })
   return prep.moveFileAsync(SIDE, doc, old)
 }
 
@@ -66,7 +66,7 @@ const onMoveFolder = (
   const doc = metadata.buildDir(folderPath, stats, old.remote)
   // $FlowFixMe we set doc.overwrite to true, it will be replaced by metadata in merge
   if (overwrite) doc.overwrite = overwrite
-  log.info({ path: folderPath, oldpath: old.path }, 'DirMove')
+  log.info('DirMove', { path: folderPath, oldpath: old.path })
   return prep.moveFolderAsync(SIDE, doc, old)
 }
 
@@ -76,7 +76,7 @@ const onAddDir = (
   prep /*: Prep */
 ) => {
   const doc = metadata.buildDir(folderPath, stats)
-  log.info({ path: folderPath }, 'DirAddition')
+  log.info('DirAddition', { path: folderPath })
   return prep.putFolderAsync(SIDE, doc)
 }
 
@@ -89,9 +89,9 @@ const onUnlinkFile = (
   { path: filePath, old } /*: LocalFileDeletion */,
   prep /*: Prep */
 ) => {
-  log.info({ path: filePath }, 'FileDeletion')
+  log.info('FileDeletion', { path: filePath })
   if (!old) {
-    log.debug({ path: filePath }, 'Assuming file already removed')
+    log.debug('Assuming file already removed', { path: filePath })
     return
   }
   return prep.trashFileAsync(SIDE, old)
@@ -106,9 +106,9 @@ const onUnlinkDir = (
   { path: folderPath, old } /*: LocalDirDeletion */,
   prep /*: Prep */
 ) => {
-  log.info({ path: folderPath }, 'DirDeletion')
+  log.info('DirDeletion', { path: folderPath })
   if (!old) {
-    log.debug({ path: folderPath }, 'Assuming dir already removed')
+    log.debug('Assuming dir already removed', { path: folderPath })
     return
   }
   return prep.trashFolderAsync(SIDE, old)
@@ -123,7 +123,7 @@ const onChange = (
   } /*: LocalFileUpdate|LocalFileAdded|LocalFileUpdated */,
   prep /*: Prep */
 ) => {
-  log.info({ path: filePath }, 'FileUpdate')
+  log.info('FileUpdate', { path: filePath })
   const doc = metadata.buildFile(filePath, stats, md5sum)
   return prep.updateFileAsync(SIDE, doc)
 }

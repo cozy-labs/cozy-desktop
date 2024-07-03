@@ -10,7 +10,7 @@ const _ = require('lodash')
 const path = require('path')
 
 const { hideOnWindows } = require('./utils/fs')
-const logger = require('./utils/logger')
+const { logger } = require('./utils/logger')
 
 const log = logger({
   component: 'Config'
@@ -288,7 +288,7 @@ function loadOrDeleteFile(configPath /*: string */) /*: FileConfig */ {
     return JSON.parse(content)
   } catch (e) {
     if (e instanceof SyntaxError) {
-      log.error({ err: e }, `Could not read config file at ${configPath}`)
+      log.error(`Could not read config file at ${configPath}`, { err: e })
       fse.unlinkSync(configPath)
       return {}
     } else {
@@ -333,7 +333,7 @@ function validateWatcherType(watcherType /*: ?string */) /*: ?WatcherType */ {
   if (watcherType === 'channel' || watcherType === 'chokidar') {
     return watcherType
   } else {
-    if (watcherType) log.warn({ watcherType }, 'Invalid watcher type')
+    if (watcherType) log.warn('Invalid watcher type', { watcherType })
     return null
   }
 }

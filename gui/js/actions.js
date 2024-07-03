@@ -2,7 +2,7 @@ const { spawn } = require('child_process')
 const { app } = require('electron')
 const { Promise } = require('bluebird')
 
-const logger = require('../../core/utils/logger')
+const { logger } = require('../../core/utils/logger')
 
 const log = logger({
   component: 'GUI:actions'
@@ -24,7 +24,7 @@ async function restart() {
         resolve()
       })
       const args = process.argv.slice(1).filter(a => a !== '--isHidden')
-      log.info({ args, cmd: process.argv[0] }, 'Starting new client...')
+      log.info('Starting new client...', { args, cmd: process.argv[0] })
       spawn(process.argv[0], args, { detached: true })
     })
   } else {

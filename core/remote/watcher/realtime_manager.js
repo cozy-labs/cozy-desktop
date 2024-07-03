@@ -9,7 +9,7 @@ const _ = require('lodash')
 const autoBind = require('auto-bind')
 const { RealtimePlugin } = require('cozy-realtime')
 
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 const { MILLISECONDS, SECONDS } = require('../../utils/time')
 const { FILES_DOCTYPE } = require('../constants')
 const remoteErrors = require('../errors')
@@ -85,7 +85,7 @@ class RealtimeManager {
 
       this.setEventHandler(eventHandler)
     } catch (err) {
-      log.error({ err, sentry: true }, 'failed to setup RealtimeManager')
+      log.error('failed to setup RealtimeManager', { err, sentry: true })
     }
   }
 
@@ -158,14 +158,14 @@ class RealtimeManager {
   }
 
   onEvent(event /*: RealtimeEvent */, doc /*: CouchDBDoc */) {
-    log.debug({ path: doc.path, event }, 'received event')
+    log.debug('received event', { path: doc.path, event })
     return this.eventHandler()
   }
 
   onError(err /*: Error */) {
     if (err) {
       const wrapped = remoteErrors.wrapError(err)
-      log.error({ err: wrapped }, 'error')
+      log.error('error', { err: wrapped })
     }
   }
 }

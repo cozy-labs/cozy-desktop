@@ -63,7 +63,7 @@ const log = Desktop.logger({
   component: 'GUI'
 })
 process.on('uncaughtException', err =>
-  log.error({ err, sentry: true }, 'uncaught exception')
+  log.error('uncaught exception', { err, sentry: true })
 )
 
 const mainInstance = app.requestSingleInstanceLock()
@@ -124,12 +124,12 @@ const setupDesktop = async () => {
     if (process.platform === 'win32') {
       winRegistry.removeOldUninstallKey().catch(err => {
         if (err instanceof winRegistry.RegeditError) {
-          log.warn({ err }, 'Failed to remove uninstall registry key')
+          log.warn('Failed to remove uninstall registry key', { err })
         }
       })
     }
   } catch (err) {
-    log.fatal({ err, sentry: true }, 'Could not setup app')
+    log.fatal('Could not setup app', { err, sentry: true })
 
     desktopIsKO(err)
 
@@ -200,7 +200,7 @@ const showWindow = async bounds => {
       const hasAutolaunch = await autoLaunch.isEnabled()
       trayWindow.send('auto-launch', hasAutolaunch)
     } catch (err) {
-      log.warn({ err }, 'could not show tray window or recent files')
+      log.warn('could not show tray window or recent files', { err })
     }
   }
 }
@@ -223,7 +223,7 @@ const showInvalidConfigError = async () => {
     desktop
       .removeConfig()
       .catch(err =>
-        log.error({ err, sentry: true }, 'failed disconnecting client')
+        log.error('failed disconnecting client', { err, sentry: true })
       )
   } else {
     helpWindow = new HelpWM(app, desktop)
@@ -285,7 +285,7 @@ const showRevokedCozyError = async () => {
       await desktop.removeConfig()
       await restart()
     } catch (err) {
-      log.error({ err, sentry: true }, 'failed disconnecting client')
+      log.error('failed disconnecting client', { err, sentry: true })
     }
   } else {
     await exit(0)
@@ -319,7 +319,7 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
       .then(() => log.info('Sync dir reset'))
       .then(() => restart())
       .catch(err =>
-        log.error({ err, sentry: true }, 'failed disconnecting client')
+        log.error('failed disconnecting client', { err, sentry: true })
       )
     return // no notification
   } else if (msg === SYNC_DIR_EMPTY_MESSAGE) {
@@ -334,7 +334,7 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
     await dialog.showMessageBox(null, options)
     desktop
       .stopSync()
-      .catch(err => log.error({ err, sentry: true }, 'failed stopping sync'))
+      .catch(err => log.error('failed stopping sync', { err, sentry: true }))
     return // no notification
   }
 
@@ -388,7 +388,7 @@ const updateState = async ({ newState, data }) => {
           await desktop.remote.updateLastSync()
           log.debug('last sync updated')
         } catch (err) {
-          log.warn({ err }, 'could not update last sync date')
+          log.warn('could not update last sync date', { err })
         }
       }, LAST_SYNC_UPDATE_DELAY)
     } else if (status === 'error' && errors && errors.length) {
@@ -410,7 +410,7 @@ const updateStateQueue = async.queue(updateState)
 
 const enqueueStateUpdate = (newState, data) => {
   updateStateQueue.pushAsync({ newState, data }).catch(err => {
-    log.warn({ err }, 'Failed to update state')
+    log.warn('Failed to update state', { err })
   })
 }
 
@@ -453,7 +453,7 @@ const sendDiskUsage = () => {
         trayWindow.send('disk-space', space)
         return space
       })
-      .catch(err => log.warn({ err }, 'could not get remote disk usage'))
+      .catch(err => log.warn('could not get remote disk usage', { err }))
   }
 }
 
@@ -522,7 +522,7 @@ app.on('second-instance', async (event, argv) => {
 
   if (argv && argv.length > 2) {
     const filePath = argv[argv.length - 1]
-    log.info({ filePath }, 'second instance invoked with arguments')
+    log.info('second instance invoked with arguments', { filePath })
 
     // If we found a note to open, stop here. Otherwise, show main window.
     if (
@@ -564,7 +564,7 @@ app.on('open-file', async (event, filePath) => {
   const noSync = openedNotes.length === 0 && !app.isReady()
   if (noSync) preventSyncStart()
 
-  log.info({ filePath }, 'open-file invoked')
+  log.info('open-file invoked', { filePath })
   event.preventDefault()
 
   try {
@@ -638,7 +638,7 @@ app.on('ready', async () => {
     await setupDesktop()
 
     const filePath = argv[argv.length - 1]
-    log.info({ filePath, argv }, 'main instance invoked with arguments')
+    log.info('main instance invoked with arguments', { filePath, argv })
 
     // If we found a note to open, stop here. Otherwise, start sync app.
     if (

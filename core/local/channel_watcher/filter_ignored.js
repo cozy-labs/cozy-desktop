@@ -11,7 +11,7 @@
 
 const _ = require('lodash')
 
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 /*::
 import type Channel from './channel'
@@ -49,7 +49,7 @@ function loop(
       if (eventToKeep) {
         batch.push(eventToKeep)
       } else {
-        log.debug({ event }, 'Ignored via .cozyignore')
+        log.debug('Ignored via .cozyignore', { event })
       }
     }
 

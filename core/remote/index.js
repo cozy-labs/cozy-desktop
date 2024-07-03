@@ -9,7 +9,7 @@ const Promise = require('bluebird')
 const path = require('path')
 const async = require('async')
 
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 const measureTime = require('../utils/perfs')
 const pathUtils = require('../utils/path')
 const metadata = require('../metadata')
@@ -147,7 +147,7 @@ class Remote /*:: implements Reader, Writer */ {
   /** Create a folder on the remote cozy instance */
   async addFolderAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     const { path } = doc
-    log.info({ path }, 'Creating folder...')
+    log.info('Creating folder...', { path })
 
     const [parentPath, name] = dirAndName(doc.path)
     const parent /*: RemoteDoc */ = await this.findDirectoryByPath(parentPath)
@@ -163,10 +163,11 @@ class Remote /*:: implements Reader, Writer */ {
         try {
           remoteDoc = await this.findDocByPath(path)
         } catch (e) {
-          log.warn(
-            { path, err: e, originalErr: err },
-            'could not fetch conflicting directory'
-          )
+          log.warn('could not fetch conflicting directory', {
+            path,
+            err: e,
+            originalErr: err
+          })
         }
         if (remoteDoc && this.remoteCozy.isExcludedDirectory(remoteDoc)) {
           throw new ExcludedDirError(path)
@@ -181,7 +182,7 @@ class Remote /*:: implements Reader, Writer */ {
     onProgress /*: ?ProgressCallback */
   ) /*: Promise<void> */ {
     const { path } = doc
-    log.info({ path }, 'Uploading new file...')
+    log.info('Uploading new file...', { path })
     const stopMeasure = measureTime('RemoteWriter#addFile')
 
     const [parentPath, name] = dirAndName(path)
@@ -195,7 +196,7 @@ class Remote /*:: implements Reader, Writer */ {
           stream = await this.other.createReadStreamAsync(doc)
         } catch (err) {
           if (err.code === 'ENOENT') {
-            log.warn({ path }, 'Local file does not exist anymore.')
+            log.warn('Local file does not exist anymore.', { path })
             // FIXME: with this deletion marker, the record will be erased from
             // PouchDB while the remote document will remain.
             doc.trashed = true
@@ -227,7 +228,7 @@ class Remote /*:: implements Reader, Writer */ {
     onProgress /*: ?ProgressCallback */
   ) /*: Promise<void> */ {
     const { path } = doc
-    log.info({ path }, 'Uploading new file version...')
+    log.info('Uploading new file version...', { path })
 
     await async.retry(
       { times: 5, interval: 2000, errorFilter: isRetryableNetworkError },
@@ -237,7 +238,7 @@ class Remote /*:: implements Reader, Writer */ {
           stream = await this.other.createReadStreamAsync(doc)
         } catch (err) {
           if (err.code === 'ENOENT') {
-            log.warn({ path }, 'Local file does not exist anymore.')
+            log.warn('Local file does not exist anymore.', { path })
             // FIXME: with this deletion marker, the record will be erased from
             // PouchDB while the remote document will remain.
             doc.trashed = true
@@ -278,7 +279,7 @@ class Remote /*:: implements Reader, Writer */ {
 
   async updateFileMetadataAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     const { path } = doc
-    log.info({ path }, 'Updating file metadata...')
+    log.info('Updating file metadata...', { path })
 
     const attrs = {
       executable: doc.executable || false,
@@ -300,7 +301,7 @@ class Remote /*:: implements Reader, Writer */ {
     if (!doc.remote) {
       return this.addFolderAsync(doc)
     }
-    log.info({ path }, 'Updating metadata...')
+    log.info('Updating metadata...', { path })
 
     const attrs = {
       updated_at: mostRecentUpdatedAt(doc)
@@ -326,10 +327,10 @@ class Remote /*:: implements Reader, Writer */ {
     const isOverwritingTarget =
       overwrite && overwrite.remote && overwrite.remote._id !== remoteId
     log.info(
-      { path, oldpath: oldMetadata.path },
       `Moving ${oldMetadata.docType}${
         isOverwritingTarget ? ' (with overwrite)' : ''
-      }`
+      }`,
+      { path, oldpath: oldMetadata.path }
     )
 
     const [newParentPath, newName] /*: [string, string] */ = dirAndName(path)
@@ -366,10 +367,9 @@ class Remote /*:: implements Reader, Writer */ {
         await this.assignNewRemote(newMetadata)
       } catch (err) {
         if (err.status === 404) {
-          log.warn(
-            { path },
-            `Cannot fetch references of missing ${overwrite.docType}.`
-          )
+          log.warn(`Cannot fetch references of missing ${overwrite.docType}.`, {
+            path
+          })
           return
         }
         throw err
@@ -379,7 +379,7 @@ class Remote /*:: implements Reader, Writer */ {
 
   async trashAsync(doc /*: SavedMetadata */) /*: Promise<void> */ {
     const { path } = doc
-    log.info({ path }, 'Moving to the trash...')
+    log.info('Moving to the trash...', { path })
 
     try {
       const newRemoteDoc = await this.remoteCozy.trashById(doc.remote._id, {
@@ -388,7 +388,7 @@ class Remote /*:: implements Reader, Writer */ {
       metadata.updateRemote(doc, newRemoteDoc)
     } catch (err) {
       if (err.status === 404) {
-        log.warn({ path }, `Cannot trash remotely deleted ${doc.docType}.`)
+        log.warn(`Cannot trash remotely deleted ${doc.docType}.`, { path })
         return
       } else if (
         err.status === 400 &&
@@ -396,7 +396,7 @@ class Remote /*:: implements Reader, Writer */ {
         err.reason.errors &&
         /already in the trash/.test(err.reason.errors[0].detail)
       ) {
-        log.warn({ path }, `Not trashing already trashed ${doc.docType}.`)
+        log.warn(`Not trashing already trashed ${doc.docType}.`, { path })
         return
       }
       throw err
@@ -406,7 +406,7 @@ class Remote /*:: implements Reader, Writer */ {
   async assignNewRemote /*::<T: Metadata|SavedMetadata> */(
     doc /*: T */
   ) /*: Promise<void> */ {
-    log.info({ path: doc.path }, 'Assigning new remote...')
+    log.info('Assigning new remote...', { path: doc.path })
     const newRemoteDoc = await this.remoteCozy.find(doc.remote._id)
     metadata.updateRemote(doc, newRemoteDoc)
   }
@@ -426,7 +426,7 @@ class Remote /*:: implements Reader, Writer */ {
       await this.diskUsage()
       return true
     } catch (err) {
-      log.debug({ err }, 'Could not reach remote Cozy')
+      log.debug('Could not reach remote Cozy', { err })
       return false
     }
   }
@@ -467,10 +467,10 @@ class Remote /*:: implements Reader, Writer */ {
   ) /*: Promise<?T> */ {
     const conflict = metadata.createConflictingDoc(newMetadata)
 
-    log.warn(
-      { path: conflict.path, oldpath: newMetadata.path },
-      'Resolving remote conflict'
-    )
+    log.warn('Resolving remote conflict', {
+      path: conflict.path,
+      oldpath: newMetadata.path
+    })
     await this.moveAsync(conflict, newMetadata)
 
     return conflict

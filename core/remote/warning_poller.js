@@ -6,7 +6,7 @@
 
 const { RemoteError } = require('./errors')
 const delay = require('../utils/delay')
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 
 /*::
 import type EventEmitter from 'events'
@@ -85,7 +85,7 @@ class RemoteWarningPoller {
         this.events.emit('user-alert', err)
       }
     } catch (err) {
-      log.warn({ err }, 'could not fetch remote warnings')
+      log.warn('could not fetch remote warnings', { err })
     } finally {
       this.polling = null
       this.scheduleNext(shiftTicks(this.ticks))
@@ -107,7 +107,7 @@ class RemoteWarningPoller {
     this.timeout = setTimeout(() => {
       this.poll()
     }, ticks.next)
-    log.debug({ ticks }, `Next polling in ${ticks.next} milliseconds`)
+    log.debug(`Next polling in ${ticks.next} milliseconds`, { ticks })
   }
 
   switchMode(mode /*: Mode */) {
