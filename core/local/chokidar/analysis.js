@@ -70,11 +70,6 @@ module.exports = function analysis(
   return separatePendingChanges(changes, pendingChanges)
 }
 
-const panic = (context, description) => {
-  log.error(_.merge({ sentry: true }, context), description)
-  throw new Error(description)
-}
-
 class LocalChangeMap {
   /*::
   changes: LocalChange[]
@@ -219,18 +214,10 @@ function analyseEvent(
         localChange.fileMoveIdentical(sameInodeChange, e) ||
         localChange.fileUpdate(e)
       )
-    case 'unlink':
-      {
-        const moveChange /*: ?LocalFileMove */ =
-          localChange.maybeMoveFile(sameInodeChange)
-        if (moveChange && !moveChange.wip) {
-          panic(
-            { path: e.path, moveChange, event: e },
-            'We should not have both move and unlink changes since ' +
-              'checksumless adds and inode-less unlink events are dropped'
-          )
-        }
-      }
+    case 'unlink': {
+      const moveChange /*: ?LocalFileMove */ =
+        localChange.maybeMoveFile(sameInodeChange)
+      if (moveChange && !moveChange.wip) delete e.old
       return (
         localChange.fileMoveFromAddUnlink(sameInodeChange, e) ||
         localChange.fileDeletion(e) ||
@@ -242,18 +229,11 @@ function analyseEvent(
             localChange.ignoreUnmergedFileMoveThenDeletion(samePathChange)
         )
       )
-    case 'unlinkDir':
-      {
-        const moveChange /*: ?LocalDirMove */ =
-          localChange.maybeMoveFolder(sameInodeChange)
-        if (moveChange && !moveChange.wip) {
-          panic(
-            { path: e.path, moveChange, event: e },
-            'We should not have both move and unlinkDir changes since ' +
-              'non-existing addDir and inode-less unlinkDir events are dropped'
-          )
-        }
-      }
+    }
+    case 'unlinkDir': {
+      const moveChange /*: ?LocalDirMove */ =
+        localChange.maybeMoveFolder(sameInodeChange)
+      if (moveChange && !moveChange.wip) delete e.old
       return (
         localChange.dirMoveFromAddUnlink(sameInodeChange, e) ||
         localChange.dirDeletion(e) ||
@@ -265,6 +245,7 @@ function analyseEvent(
             localChange.ignoreUnmergedDirMoveThenDeletion(samePathChange)
         )
       )
+    }
     default:
       throw new TypeError(`Unknown event type: ${e.type}`)
   }

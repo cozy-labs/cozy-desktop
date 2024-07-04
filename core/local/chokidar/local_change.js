@@ -884,7 +884,7 @@ function convertFileMoveToDeletion(samePathChange /*: ?LocalChange */) {
 
 function convertDirMoveToDeletion(samePathChange /*: ?LocalChange */) {
   const change /*: ?LocalDirMove */ = maybeMoveFolder(samePathChange)
-  if (change && change.wip && change.old) {
+  if (change && change.old) {
     // $FlowFixMe
     change.type = 'DirDeletion'
     change.path = change.old.path
