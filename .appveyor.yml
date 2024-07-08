@@ -16,6 +16,7 @@ cache:
 
 install:
   - ps: Update-NodeJsInstallation 18.12.1 x64
+  - cmd: appveyor-retry pip install setuptools
   - cmd: appveyor-retry yarn install
   - cmd: appveyor-retry node node_modules/electron/install.js
   - cmd: appveyor-retry yarn install:electron

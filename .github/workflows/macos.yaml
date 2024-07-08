@@ -83,6 +83,8 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Setup python
+        run: pip install setuptools
       - name: Setup CouchDB
         id: setup-couchdb
         uses: ./.github/actions/setup-couchdb
@@ -142,6 +144,8 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Setup python
+        run: pip install setuptools
       - name: Setup CouchDB
         id: setup-couchdb
         uses: ./.github/actions/setup-couchdb
@@ -202,6 +206,8 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Setup python
+        run: pip install setuptools
       - name: Setup CouchDB
         id: setup-couchdb
         uses: ./.github/actions/setup-couchdb
@@ -260,6 +266,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: Setup python
+        run: pip install setuptools
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
