@@ -44,18 +44,20 @@ jobs:
     steps:
       - uses: styfle/cancel-workflow-action@5df4e62aed82ea1f787d2a02ab3dbfcaa49ffdd1
 
-  cleanup:
-    needs: cancel
-    name: 'Cleanup Swift'
+  docker_cache_key:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
     steps:
-      - run: |
-          pip install python-swiftclient python-keystoneclient
-          swift delete -a
+      - id: cozy-app-dev
+        run: |
+          version=$(curl -Ls --fail -q "https://hub.docker.com/v2/repositories/cozy/cozy-app-dev/tags/?page_size=1000" | \
+              jq '.results | .[] | .name' -r | \
+              head -n 2 | tail -1)
+          echo "key=docker-${{ runner.os }}-${{ hashFiles('docker-compose.yml') }}-$(echo $version)" >> $GITHUB_OUTPUT
+    outputs:
+      key: ${{ steps.cozy-app-dev.outputs.key }}
 
   unit:
-    needs: cleanup
+    needs: docker_cache_key
     runs-on: macos-12
     name: Unit tests
     strategy:
@@ -75,6 +77,19 @@ jobs:
             ~/.cache/electron
             ~/.cache/electron-builder
           key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
+      - name: Setup Docker
+        uses: douglascamata/setup-docker-macos-action@v1-alpha
+      - name: Install Bash for docker-cache
+        id: install-bash
+        run: |
+          brew install bash
+          echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
+      - name: Cache Docker images.
+        uses: ScribeMD/docker-cache@0.5.0
+        with:
+          key: ${{ needs.docker_cache_key.outputs.key }}
+      - name: Setup cozy-stack
+        run: docker-compose up -d
       - name: Setup node
         uses: actions/setup-node@v3
         with:
@@ -85,17 +100,6 @@ jobs:
           go-version: ${{ env.GO_VERSION }}
       - name: Setup python
         run: pip install setuptools
-      - name: Setup CouchDB
-        id: setup-couchdb
-        uses: ./.github/actions/setup-couchdb
-        with:
-          couchdb-version: ${{ env.COUCHDB_VERSION }}
-          couchdb-user: ${{ env.COUCHDB_USER }}
-          couchdb-password: ${{ env.COUCHDB_PASSWORD }}
-      - name: Setup cozy-stack
-        uses: ./.github/actions/setup-cozy-stack
-        with:
-          couchdb-url: ${{ steps.setup-couchdb.outputs.couchdb-url }}
       - name: Setup DNS resolution for .localhost
         uses: ./.github/actions/setup-dnsmasq
       - name: Setup local env
@@ -108,6 +112,13 @@ jobs:
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
+      - name: Setup test config
+        run: |
+          until docker exec cozy-desktop-stack /cozy-desktop/test/setup.sh
+          do
+            echo "Waiting for cozy-stack to be running..."
+            sleep 30
+          done
       - name: Unit tests
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
