@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -x
+set -ex
 
 # Retrieve test client ID
 client_id=$(cozy-stack instances client-oauth \
