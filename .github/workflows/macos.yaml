@@ -85,9 +85,10 @@ jobs:
           brew install bash
           echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
       - name: Cache Docker images.
-        uses: ScribeMD/docker-cache@0.5.0
+        uses: cozy-labs/docker-cache@0.7.0
         with:
           key: ${{ needs.docker_cache_key.outputs.key }}
+          bash: ${{ steps.install-bash.outputs.bash-path }}
       - name: Setup cozy-stack
         run: docker-compose up -d
       - name: Setup node
