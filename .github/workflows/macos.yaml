@@ -89,8 +89,6 @@ jobs:
         with:
           key: ${{ needs.docker_cache_key.outputs.key }}
           bash: ${{ steps.install-bash.outputs.bash-path }}
-      - name: Setup cozy-stack
-        run: docker-compose up -d
       - name: Setup node
         uses: actions/setup-node@v3
         with:
@@ -103,6 +101,9 @@ jobs:
         run: pip install setuptools
       - name: Setup DNS resolution for .localhost
         uses: ./.github/actions/setup-dnsmasq
+      - name: Install dependencies
+        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+        run: yarn install:all
       - name: Setup local env
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
@@ -110,9 +111,8 @@ jobs:
           hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-      - name: Install dependencies
-        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
-        run: yarn install:all
+      - name: Setup cozy-stack
+        run: docker-compose up -d
       - name: Setup test config
         run: |
           until docker exec cozy-desktop-stack /cozy-desktop/test/setup.sh
