@@ -73,7 +73,8 @@ module.exports = class BaseMetadataBuilder {
   ) /*: this */ {
     this.doc = {
       ..._.cloneDeep(was),
-      ...this.doc
+      ...this.doc,
+      updated_at: was.updated_at || this.doc.updated_at
     }
     this.doc.moveFrom = was
     if (childMove) this.doc.moveFrom.childMove = true
