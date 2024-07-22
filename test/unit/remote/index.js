@@ -728,15 +728,12 @@ describe('remote.Remote', function () {
           .name('cat6.jpg')
           .data('meow')
           .create()
-        old = builders
-          .metafile()
-          .fromRemote(remoteDoc)
-          .changedSide('local')
-          .build()
+        old = builders.metafile().fromRemote(remoteDoc).upToDate().build()
         doc = builders
           .metafile()
           .moveFrom(old)
           .path('moved-to/cat7.jpg')
+          .changedSide('local')
           .build()
       })
 
