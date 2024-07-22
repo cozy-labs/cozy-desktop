@@ -712,35 +712,27 @@ describe('remote.Remote', function () {
 
   describe('moveAsync', () => {
     context('with a file', () => {
-      let old /*: Metadata */
-      let doc /*: Metadata */
-      let newDir /*: RemoteDoc */
-
-      beforeEach(async () => {
-        newDir = await builders
+      it('moves the file', async function () {
+        const dstDir = await builders
           .remoteDir()
           .name('moved-to')
           .inRootDir()
           .create()
-        await builders.metadir().fromRemote(newDir).upToDate().create()
+        await builders.metadir().fromRemote(dstDir).upToDate().create()
+
         const remoteDoc = await builders
           .remoteFile()
           .name('cat6.jpg')
           .data('meow')
           .create()
-        old = builders
-          .metafile()
-          .fromRemote(remoteDoc)
-          .changedSide('local')
-          .build()
-        doc = builders
+        const old = builders.metafile().fromRemote(remoteDoc).upToDate().build()
+        const doc = builders
           .metafile()
           .moveFrom(old)
           .path('moved-to/cat7.jpg')
+          .changedSide('local')
           .build()
-      })
 
-      it('moves the file', async function () {
         await this.remote.moveAsync(doc, old)
 
         const file = await cozy.files.statById(doc.remote._id)
@@ -749,7 +741,7 @@ describe('remote.Remote', function () {
           _rev: doc.remote._rev
         })
         should(file.attributes).have.properties({
-          dir_id: newDir._id,
+          dir_id: dstDir._id,
           name: 'cat7.jpg',
           type: 'file',
           size: '4'
@@ -762,7 +754,7 @@ describe('remote.Remote', function () {
 
     context('with a folder', function () {
       it('moves the folder in the Cozy', async function () {
-        const created = await builders
+        const remoteDoc = await builders
           .remoteDir()
           .name('folder-4')
           .inDir(couchdbFolder)
@@ -771,15 +763,15 @@ describe('remote.Remote', function () {
           .create()
         const old = await builders
           .metadir()
-          .fromRemote(created)
-          .changedSide('local')
-          .create()
+          .fromRemote(remoteDoc)
+          .upToDate()
+          .build()
         const doc = await builders
           .metadir()
           .moveFrom(old)
           .path('couchdb-folder/folder-5')
-          .updatedAt('2018-07-31T05:37:43.770Z')
-          .create()
+          .changedSide('local')
+          .build()
 
         await this.remote.moveAsync(doc, old)
 
