@@ -60,6 +60,8 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Setup python
+        run: pip install setuptools
       - name: Setup CouchDB
         id: setup-couchdb
         uses: 'taratatach/couchdb-action@v4.6-dev'
@@ -118,6 +120,8 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Setup python
+        run: pip install setuptools
       - name: Setup CouchDB
         id: setup-couchdb
         uses: 'taratatach/couchdb-action@v4.6-dev'
@@ -172,6 +176,8 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: ${{ env.GO_VERSION }}
+      - name: Setup python
+        run: pip install setuptools
       - name: Setup CouchDB
         id: setup-couchdb
         uses: 'taratatach/couchdb-action@v4.6-dev'
@@ -220,6 +226,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: Setup python
+        run: pip install setuptools
       - name: Install dependencies
         if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
         run: yarn install:all
@@ -238,4 +246,3 @@ jobs:
                 ${{ github.workspace }}/dist/latest-linux.yml
                 ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*.AppImage
             retention-days: 5
-
