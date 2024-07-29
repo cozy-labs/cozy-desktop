@@ -99,7 +99,6 @@
     "cozy-realtime": "^4.6.0",
     "cozy-stack-client": "^38.0.2",
     "deep-diff": "^1.0.2",
-    "dtrace-provider": "^0.8.8",
     "electron-fetch": "1.7.4",
     "electron-positioner": "^4.0.0",
     "electron-updater": "^4.1.2",
@@ -184,7 +183,6 @@
     "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#2.0.0"
   },
   "resolutions": {
-    "dtrace-provider": "0.8.8",
     "node-abi": "3.5.0"
   }
 }
