@@ -126,7 +126,7 @@ onPlatform('darwin', () => {
       })
 
       describe('addDir(a, ino) + addDir(A, ino) + unlinkDir(A, ino)', () => {
-        it('ignores the unmerged temporary file whose case was changed', () => {
+        it('ignores the unmerged temporary dir whose case was changed', () => {
           const stats = { ino: 1 }
           const events /*: LocalEvent[] */ = [
             { type: 'addDir', path: 'foo', stats },
@@ -156,7 +156,7 @@ onPlatform('darwin', () => {
       })
 
       describe('addDir(a, ino) + addDir(A, ino, wip) + unlinkDir(A, ino)', () => {
-        it('ignores the unmerged temporary file whose case was changed', () => {
+        it('ignores the unmerged temporary dir whose case was changed', () => {
           const stats = { ino: 1 }
           const events /*: LocalEvent[] */ = [
             { type: 'addDir', path: 'foo', stats },
@@ -553,6 +553,71 @@ onPlatform('darwin', () => {
               md5sum,
               stats,
               old
+            }
+          ])
+          should(pendingChanges).deepEqual([])
+        })
+      })
+    })
+
+    describe('FileMove(replaced => first) + FileMove(second => replaced) + FileMove(replaced => dst)', () => {
+      describe('unlink(replaced) + add(first) + unlink(second) + wip add(replaced) + unlink(replaced) + add(dst)', () => {
+        it('follows the second move of second', () => {
+          const first /*: Metadata */ = builders
+            .metafile()
+            .path('replaced')
+            .ino(1)
+            .build()
+          const firstStats = { ino: 1 }
+          const second /*: Metadata */ = builders
+            .metafile()
+            .path('second')
+            .ino(2)
+            .build()
+          const secondStats = { ino: 2 }
+          const events /*: LocalEvent[] */ = [
+            { type: 'unlink', path: 'replaced', old: first },
+            {
+              type: 'add',
+              path: 'first',
+              stats: firstStats,
+              md5sum: first.md5sum
+            },
+            { type: 'unlink', path: 'second', old: second },
+            { type: 'add', path: 'replaced', stats: secondStats, wip: true },
+            { type: 'unlink', path: 'replaced', old: first }, // XXX: old should be second but it's not been saved in pouch yet
+            {
+              type: 'add',
+              path: 'dst',
+              stats: secondStats,
+              md5sum: second.md5sum
+            }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
+            {
+              sideName,
+              type: 'FileMove',
+              path: 'dst',
+              ino: 2,
+              md5sum: second.md5sum,
+              stats: secondStats,
+              old: second
+            },
+            {
+              sideName,
+              type: 'FileMove',
+              path: 'first',
+              ino: 1,
+              md5sum: first.md5sum,
+              stats: firstStats,
+              old: first
             }
           ])
           should(pendingChanges).deepEqual([])
@@ -1250,6 +1315,63 @@ onPlatform('darwin', () => {
               ino: dirStats.ino,
               stats: dirStats,
               old: oldDir
+            }
+          ])
+          should(pendingChanges).deepEqual([])
+        })
+      })
+    })
+
+    describe('DirMove(replaced => first) + DirMove(second => replaced) + DirMove(replaced => dst)', () => {
+      describe('unlinkDir(replaced) + addDir(first) + unlinkDir(second) + wip addDir(replaced) + unlinkDir(replaced) + addDir(dst)', () => {
+        it('follows the second move of second', () => {
+          const first /*: Metadata */ = builders
+            .metadir()
+            .path('replaced')
+            .ino(1)
+            .build()
+          const firstStats = { ino: 1 }
+          const second /*: Metadata */ = builders
+            .metadir()
+            .path('second')
+            .ino(2)
+            .build()
+          const secondStats = { ino: 2 }
+          const events /*: LocalEvent[] */ = [
+            { type: 'unlinkDir', path: 'replaced', old: first },
+            { type: 'addDir', path: 'first', stats: firstStats },
+            { type: 'unlinkDir', path: 'second', old: second },
+            { type: 'addDir', path: 'replaced', stats: secondStats, wip: true },
+            { type: 'unlinkDir', path: 'replaced', old: first }, // XXX: old should be second but it's not been saved in pouch yet
+            {
+              type: 'addDir',
+              path: 'dst',
+              stats: secondStats
+            }
+          ]
+          const pendingChanges /*: LocalChange[] */ = []
+
+          should(
+            analysis(events, {
+              pendingChanges,
+              initialScanParams: { done: true }
+            })
+          ).deepEqual([
+            {
+              sideName,
+              type: 'DirMove',
+              path: 'dst',
+              ino: 2,
+              stats: secondStats,
+              old: second
+            },
+            {
+              sideName,
+              type: 'DirMove',
+              path: 'first',
+              ino: 1,
+              stats: firstStats,
+              old: first
             }
           ])
           should(pendingChanges).deepEqual([])

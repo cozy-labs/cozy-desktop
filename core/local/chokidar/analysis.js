@@ -70,11 +70,6 @@ module.exports = function analysis(
   return separatePendingChanges(changes, pendingChanges)
 }
 
-const panic = (context, description) => {
-  log.error(_.merge({ sentry: true }, context), description)
-  throw new Error(description)
-}
-
 class LocalChangeMap {
   /*::
   changes: LocalChange[]
@@ -105,7 +100,15 @@ class LocalChangeMap {
     if (change) return callback(change)
   }
 
-  put(c /*: LocalChange */) {
+  put(c /*: LocalChange */, updated /*: ?boolean */) {
+    if (updated) {
+      for (const [k, v] of this.changesByPath) {
+        if (v == c) {
+          this.changesByPath.delete(k)
+          break
+        }
+      }
+    }
     this.changesByPath.set(c.path.normalize(), c)
     if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
     else this.changes.push(c)
@@ -171,8 +174,10 @@ function analyseEvents(
 
       const result = analyseEvent(e, changesFound)
       if (result == null) continue // No change was found. Skip event.
-      if (result === true) continue // A previous change was transformed. Nothing more to do.
-      changesFound.put(result) // A new change was found
+
+      // A new change was found or updated
+      const [change, updated] = result
+      changesFound.put(change, updated)
     } catch (err) {
       const sentry = err.name === 'InvalidLocalMoveEvent'
       log.error({ err, path: e.path, sentry }, 'Invalid local move event')
@@ -190,7 +195,7 @@ function analyseEvents(
 function analyseEvent(
   e /*: LocalEvent */,
   previousChanges /*: LocalChangeMap */
-) /*: ?LocalChange|true */ {
+) /*: ?[LocalChange, boolean] */ {
   const sameInodeChange = previousChanges.findByInode(getInode(e))
 
   switch (e.type) {
@@ -219,18 +224,10 @@ function analyseEvent(
         localChange.fileMoveIdentical(sameInodeChange, e) ||
         localChange.fileUpdate(e)
       )
-    case 'unlink':
-      {
-        const moveChange /*: ?LocalFileMove */ =
-          localChange.maybeMoveFile(sameInodeChange)
-        if (moveChange && !moveChange.wip) {
-          panic(
-            { path: e.path, moveChange, event: e },
-            'We should not have both move and unlink changes since ' +
-              'checksumless adds and inode-less unlink events are dropped'
-          )
-        }
-      }
+    case 'unlink': {
+      const moveChange /*: ?LocalFileMove */ =
+        localChange.maybeMoveFile(sameInodeChange)
+      if (moveChange && !moveChange.wip) delete e.old
       return (
         localChange.fileMoveFromAddUnlink(sameInodeChange, e) ||
         localChange.fileDeletion(e) ||
@@ -242,18 +239,11 @@ function analyseEvent(
             localChange.ignoreUnmergedFileMoveThenDeletion(samePathChange)
         )
       )
-    case 'unlinkDir':
-      {
-        const moveChange /*: ?LocalDirMove */ =
-          localChange.maybeMoveFolder(sameInodeChange)
-        if (moveChange && !moveChange.wip) {
-          panic(
-            { path: e.path, moveChange, event: e },
-            'We should not have both move and unlinkDir changes since ' +
-              'non-existing addDir and inode-less unlinkDir events are dropped'
-          )
-        }
-      }
+    }
+    case 'unlinkDir': {
+      const moveChange /*: ?LocalDirMove */ =
+        localChange.maybeMoveFolder(sameInodeChange)
+      if (moveChange && !moveChange.wip) delete e.old
       return (
         localChange.dirMoveFromAddUnlink(sameInodeChange, e) ||
         localChange.dirDeletion(e) ||
@@ -265,6 +255,7 @@ function analyseEvent(
             localChange.ignoreUnmergedDirMoveThenDeletion(samePathChange)
         )
       )
+    }
     default:
       throw new TypeError(`Unknown event type: ${e.type}`)
   }

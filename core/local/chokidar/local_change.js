@@ -293,7 +293,7 @@ function fileHasChanged(
   )
 }
 
-function dirAddition(e /*: LocalDirAdded */) /*: LocalDirAddition */ {
+function dirAddition(e /*: LocalDirAdded */) {
   const change /*: LocalDirAddition */ = {
     sideName,
     type: 'DirAddition',
@@ -309,10 +309,10 @@ function dirAddition(e /*: LocalDirAdded */) /*: LocalDirAddition */ {
     'addDir = DirAddition'
   )
 
-  return change
+  return [change, false]
 }
 
-function dirDeletion(e /*: LocalDirUnlinked */) /*: ?LocalDirDeletion */ {
+function dirDeletion(e /*: LocalDirUnlinked */) {
   if (!getInode(e)) return
   const change /*: LocalDirDeletion */ = {
     sideName,
@@ -324,10 +324,10 @@ function dirDeletion(e /*: LocalDirUnlinked */) /*: ?LocalDirDeletion */ {
 
   log.debug({ path: change.path, ino: change.ino }, 'unlinkDir = DirDeletion')
 
-  return change
+  return [change, false]
 }
 
-function fileAddition(e /*: LocalFileAdded */) /*: LocalFileAddition */ {
+function fileAddition(e /*: LocalFileAdded */) {
   const change /*: LocalFileAddition */ = {
     sideName,
     type: 'FileAddition',
@@ -344,10 +344,10 @@ function fileAddition(e /*: LocalFileAdded */) /*: LocalFileAddition */ {
     'add = FileAddition'
   )
 
-  return change
+  return [change, false]
 }
 
-function fileDeletion(e /*: LocalFileUnlinked */) /*: ?LocalFileDeletion */ {
+function fileDeletion(e /*: LocalFileUnlinked */) {
   if (!getInode(e)) return
   const change /*: LocalFileDeletion */ = {
     sideName,
@@ -359,10 +359,10 @@ function fileDeletion(e /*: LocalFileUnlinked */) /*: ?LocalFileDeletion */ {
 
   log.debug({ path: change.path, ino: change.ino }, 'unlink = FileDeletion')
 
-  return change
+  return [change, false]
 }
 
-function fileUpdate(e /*: LocalFileUpdated */) /*: LocalFileUpdate */ {
+function fileUpdate(e /*: LocalFileUpdated */) {
   const change /*: LocalFileUpdate */ = {
     sideName,
     type: 'FileUpdate',
@@ -379,7 +379,7 @@ function fileUpdate(e /*: LocalFileUpdated */) /*: LocalFileUpdate */ {
     'change = FileUpdate'
   )
 
-  return change
+  return [change, false]
 }
 
 function fileMoveFromUnlinkAdd(
@@ -417,7 +417,7 @@ function fileMoveFromUnlinkAdd(
     `unlink + add = FileMove${fileMove.update ? '(update)' : ''}`
   )
 
-  return fileMove
+  return [fileMove, false]
 }
 
 function dirMoveFromUnlinkAdd(
@@ -449,13 +449,13 @@ function dirMoveFromUnlinkAdd(
     `unlinkDir + addDir  = DirMove`
   )
 
-  return dirMove
+  return [dirMove, true]
 }
 
 function fileMoveFromAddUnlink(
   sameInodeChange /*: ?LocalChange */,
   e /*: LocalFileUnlinked */
-) /*: * */ {
+) {
   const addChange /*: ?LocalFileAddition */ = maybeAddFile(sameInodeChange)
   if (!addChange) return
   const fileMove /*: Object */ = build('FileMove', addChange.path, {
@@ -476,7 +476,7 @@ function fileMoveFromAddUnlink(
     `add  + unlink = FileMove`
   )
 
-  return fileMove
+  return [fileMove, false]
 }
 
 function fileMoveFromFileDeletionChange(
@@ -510,13 +510,13 @@ function fileMoveFromFileDeletionChange(
     'unlink(src) + change(dst -> newDst) = FileMove.overwrite(src, newDst)'
   )
 
-  return fileMove
+  return [fileMove, false]
 }
 
 function dirMoveFromAddUnlink(
   sameInodeChange /*: ?LocalChange */,
   e /*: LocalDirUnlinked */
-) /*: * */ {
+) {
   const addChange /*: ?LocalDirAddition */ = maybePutFolder(sameInodeChange)
   if (!addChange) return
 
@@ -537,13 +537,13 @@ function dirMoveFromAddUnlink(
     'addDir + unlinkDir = DirMove'
   )
 
-  return dirMove
+  return [dirMove, false]
 }
 
 function fileMoveIdentical(
   sameInodeChange /*: ?LocalChange */,
   e /*: LocalFileUpdated */
-) /*: * */ {
+) {
   const addChange /*: ?LocalFileAddition */ = maybeAddFile(sameInodeChange)
   if (
     !addChange ||
@@ -570,7 +570,7 @@ function fileMoveIdentical(
     'add + change = FileMove (same id)'
   )
 
-  return fileMove
+  return [fileMove, false]
 }
 
 function fileRenamingCaseOnlyFromAddAdd(
@@ -604,12 +604,10 @@ function fileRenamingCaseOnlyFromAddAdd(
     'add + add = FileMove (same id)'
   )
 
-  return fileMove
+  return [fileMove, false]
 }
 
-function fileMoveIdenticalOffline(
-  dstEvent /*: LocalFileAdded */
-) /*: ?LocalFileMove */ {
+function fileMoveIdenticalOffline(dstEvent /*: LocalFileAdded */) {
   const srcDoc = dstEvent.old
   if (
     !srcDoc ||
@@ -636,7 +634,7 @@ function fileMoveIdenticalOffline(
     'add = FileMove (same id, offline)'
   )
 
-  return fileMove
+  return [fileMove, false]
 }
 
 function dirRenamingCaseOnlyFromAddAdd(
@@ -669,12 +667,10 @@ function dirRenamingCaseOnlyFromAddAdd(
     'addDir + addDir = DirMove (same id)'
   )
 
-  return dirMove
+  return [dirMove, true]
 }
 
-function dirMoveIdenticalOffline(
-  dstEvent /*: LocalDirAdded */
-) /*: ?LocalDirMove */ {
+function dirMoveIdenticalOffline(dstEvent /*: LocalDirAdded */) {
   const srcDoc = dstEvent.old
   if (
     !srcDoc ||
@@ -700,7 +696,7 @@ function dirMoveIdenticalOffline(
     'addDir = DirMove (same id, offline)'
   )
 
-  return dirMove
+  return [dirMove, false]
 }
 
 /*::
@@ -742,7 +738,7 @@ function includeAddEventInFileMove(
     'FileMove + add = FileMove'
   )
 
-  return true
+  return [moveChange, true]
 }
 
 /**
@@ -771,7 +767,7 @@ function dirMoveOverwriteOnMacAPFS(
       'DirMove(a, b) + addDir(b) = DirMove.overwrite(a, b) [chokidar bug]'
     )
 
-    return true
+    return [moveChange, true]
   }
 }
 
@@ -797,7 +793,7 @@ function dirRenamingIdenticalLoopback(
       `DirMove(a, b) + addDir(a) = Ignored(b, a) (identical renaming loopback)`
     )
 
-    return true
+    return [moveChange, true]
   }
 }
 
@@ -826,7 +822,7 @@ function includeAddDirEventInDirMove(
     },
     'DirMove + addDir = DirMove'
   )
-  return true
+  return [moveChange, true]
 }
 
 function includeChangeEventIntoFileMove(
@@ -860,7 +856,7 @@ function includeChangeEventIntoFileMove(
     'FileMove + change'
   )
 
-  return true
+  return [moveChange, true]
 }
 
 function convertFileMoveToDeletion(samePathChange /*: ?LocalChange */) {
@@ -878,13 +874,13 @@ function convertFileMoveToDeletion(samePathChange /*: ?LocalChange */) {
       'FileMove + unlink = FileDeletion'
     )
 
-    return true
+    return [change, true]
   }
 }
 
 function convertDirMoveToDeletion(samePathChange /*: ?LocalChange */) {
   const change /*: ?LocalDirMove */ = maybeMoveFolder(samePathChange)
-  if (change && change.wip && change.old) {
+  if (change && change.old) {
     // $FlowFixMe
     change.type = 'DirDeletion'
     change.path = change.old.path
@@ -896,7 +892,7 @@ function convertDirMoveToDeletion(samePathChange /*: ?LocalChange */) {
       'DirMove + unlinkDir = DirDeletion'
     )
 
-    return true
+    return [change, true]
   }
 }
 
@@ -912,7 +908,7 @@ function ignoreDirAdditionThenDeletion(samePathChange /*: ?LocalChange */) {
       'Folder was added then deleted. Ignoring add.'
     )
 
-    return true
+    return [addChangeSamePath, true]
   }
 }
 
@@ -930,7 +926,7 @@ function ignoreFileAdditionThenDeletion(samePathChange /*: ?LocalChange */) {
       'File was added then deleted. Ignoring add.'
     )
 
-    return true
+    return [addChangeSamePath, true]
   }
 }
 
@@ -947,7 +943,7 @@ function ignoreUnmergedDirMoveThenDeletion(samePathChange /*: ?LocalChange */) {
       'Folder was added then moved then deleted. Ignoring.'
     )
 
-    return true
+    return [moveChangeSamePath, true]
   }
 }
 
@@ -966,6 +962,6 @@ function ignoreUnmergedFileMoveThenDeletion(
       'File was added then moved then deleted. Ignoring.'
     )
 
-    return true
+    return [moveChangeSamePath, true]
   }
 }
