@@ -131,7 +131,9 @@ const authorize = async authorizeUrl => {
   if (redirectUrl) {
     return redirectUrl
   } else {
-    throw new Error(`Authorization failed (code ${res.status}):\n  ${body}`)
+    throw new Error(
+      `Authorization failed (code ${res.status}):\n  ${JSON.stringify(body)}`
+    )
   }
 }
 
