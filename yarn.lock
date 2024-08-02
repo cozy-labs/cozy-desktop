@@ -1414,12 +1414,12 @@
   dependencies:
     "@octokit/openapi-types" "^11.2.0"
 
-"@parcel/watcher@https://github.com/taratatach/parcel-watcher.git#v3.0.0":
+"@parcel/watcher@https://github.com/taratatach/parcel-watcher.git#cozy-desktop":
   version "3.0.0"
-  resolved "https://github.com/taratatach/parcel-watcher.git#66a397d39fca5842ab9a33c937157c23eac7e3ac"
+  resolved "https://github.com/taratatach/parcel-watcher.git#7b600ed12118f73787a99d889af2aefe5afb1e2b"
   dependencies:
     node-addon-api "^3.2.1"
-    node-gyp-build "^4.3.0"
+    node-gyp-build "^4.8.1"
 
 "@pkgjs/parseargs@^0.11.0":
   version "0.11.0"
@@ -6922,6 +6922,11 @@ node-gyp-build@^4.3.0:
   version "4.4.0"
   resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.4.0.tgz#42e99687ce87ddeaf3a10b99dc06abc11021f3f4"
   integrity sha512-amJnQCcgtRVw9SvoebO3BKGESClrfXGCUTX9hSn1OuGQTQBOZmVd0Z0OlecpuRksKvbsUqALE8jls/ErClAPuQ==
+
+node-gyp-build@^4.8.1:
+  version "4.8.2"
+  resolved "https://registry.yarnpkg.com/node-gyp-build/-/node-gyp-build-4.8.2.tgz#4f802b71c1ab2ca16af830e6c1ea7dd1ad9496fa"
+  integrity sha512-IRUxE4BVsHWXkV/SFOut4qTlagw2aM8T5/vnTsmrHJvVoKueJHRc/JaFND7QDDc61kLYUJ6qlZM3sqTSyx2dTw==
 
 node-gyp-build@~4.1.0:
   version "4.1.1"
