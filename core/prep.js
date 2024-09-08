@@ -124,7 +124,7 @@ class Prep {
       return
     }
     if (side === 'local' && docIgnored) {
-      return this.merge.trashFileAsync(side, was, was)
+      return this.trashFileAsync(side, was)
     } else if (side === 'local' && wasIgnored) {
       return this.merge.addFileAsync(side, doc)
     } else {
@@ -164,7 +164,7 @@ class Prep {
       return
     }
     if (side === 'local' && docIgnored) {
-      return this.merge.trashFolderAsync(side, was, was)
+      return this.trashFolderAsync(side, was)
     } else if (side === 'local' && wasIgnored) {
       return this.merge.putFolderAsync(side, doc)
     } else {
