@@ -444,17 +444,53 @@ describe('Prep', function () {
       )
     })
 
-    it('calls Merge with the trashed record when none is passed', async function () {
-      const was = {
-        path: 'file-to-be-trashed',
-        md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
-      }
+    context('locally with no trashed doc', () => {
+      context('and no local side', () => {
+        it('calls Merge with the existing record and a copy marked as trashed', async function () {
+          const was = {
+            path: 'file-to-be-trashed',
+            md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
+          }
 
-      await this.prep.trashFileAsync(this.side, was)
+          await this.prep.trashFileAsync(this.side, was)
 
-      should(this.merge.trashFileAsync)
-        .be.calledOnce()
-        .and.be.calledWith(this.side, was, was)
+          should(this.merge.trashFileAsync)
+            .be.calledOnce()
+            .and.be.calledWith(this.side, was, {
+              ...was,
+              trashed: true
+            })
+        })
+      })
+
+      context('but a local side', () => {
+        it('calls Merge with the existing record and a copy marked as trashed', async function () {
+          const was = {
+            path: 'file-to-be-trashed',
+            md5sum: 'rcg7GeeTSRscbqD9i0bNnw==',
+            local: {
+              path: 'file-to-be-trashed',
+              md5sum: 'rcg7GeeTSRscbqD9i0bNnw=='
+            }
+          }
+
+          await this.prep.trashFileAsync(this.side, was)
+
+          should(this.merge.trashFileAsync)
+            .be.calledOnce()
+            .and.be.calledWith(
+              this.side,
+              was,
+              _.defaultsDeep(
+                {
+                  trashed: true,
+                  local: { trashed: true }
+                },
+                _.cloneDeep(was)
+              )
+            )
+        })
+      })
     })
 
     // FIXME
@@ -477,14 +513,46 @@ describe('Prep', function () {
       )
     })
 
-    it('calls Merge with the trashed record when none is passed', async function () {
-      const was = { path: 'folder-to-be-trashed' }
+    context('locally with no trashed doc', () => {
+      context('and no local side', () => {
+        it('calls Merge with the existing record and a copy marked as trashed', async function () {
+          const was = { path: 'folder-to-be-trashed' }
 
-      await this.prep.trashFolderAsync(this.side, was)
+          await this.prep.trashFolderAsync(this.side, was)
 
-      should(this.merge.trashFolderAsync)
-        .be.calledOnce()
-        .and.be.calledWith(this.side, was, was)
+          should(this.merge.trashFolderAsync)
+            .be.calledOnce()
+            .and.be.calledWith(this.side, was, {
+              ...was,
+              trashed: true
+            })
+        })
+      })
+
+      context('but a local side', () => {
+        it('calls Merge with the existing record and a copy marked as trashed', async function () {
+          const was = {
+            path: 'folder-to-be-trashed',
+            local: { path: 'folder-to-be-trashed' }
+          }
+
+          await this.prep.trashFolderAsync(this.side, was)
+
+          should(this.merge.trashFolderAsync)
+            .be.calledOnce()
+            .and.be.calledWith(
+              this.side,
+              was,
+              _.defaultsDeep(
+                {
+                  trashed: true,
+                  local: { trashed: true }
+                },
+                _.cloneDeep(was)
+              )
+            )
+        })
+      })
     })
 
     // FIXME

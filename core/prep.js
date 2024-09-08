@@ -4,6 +4,7 @@
  */
 
 const autoBind = require('auto-bind')
+const _ = require('lodash')
 
 const metadata = require('./metadata')
 const logger = require('./utils/logger')
@@ -185,7 +186,13 @@ class Prep {
       // XXX: Local deletions don't generate new records as we don't have any
       // information about deleted files and folders (while we have new metadata
       // for remote documents that were trashed).
-      return this.merge.trashFileAsync(side, was, was)
+      //
+      // To make sure we always have a complete record update, we generate a
+      // fake modified record based on the existing one.
+      const doc = _.cloneDeep(was)
+      metadata.markAsTrashed(doc, side)
+
+      return this.merge.trashFileAsync(side, was, doc)
     } else {
       metadata.ensureValidPath(doc)
       doc.docType = metadata.FILE
@@ -207,7 +214,13 @@ class Prep {
       // XXX: Local deletions don't generate new records as we don't have any
       // information about deleted files and folders (while we have new metadata
       // for remote documents that were trashed).
-      return this.merge.trashFolderAsync(side, was, was)
+      //
+      // To make sure we always have a complete record update, we generate a
+      // fake modified record based on the existing one.
+      const doc = _.cloneDeep(was)
+      metadata.markAsTrashed(doc, side)
+
+      return this.merge.trashFolderAsync(side, was, doc)
     } else {
       metadata.ensureValidPath(doc)
       doc.docType = metadata.FOLDER
