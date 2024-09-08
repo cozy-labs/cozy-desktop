@@ -815,7 +815,7 @@ describe('Merge', function () {
     it('keeps an existing local metadata when it is not present in the new doc', async function () {
       const oldRemoteFile = await builders
         .remoteFile()
-        .updatedAt(2020, 5, 19, 11, 9, 0)
+        .updatedAt(2020, 5, 19, 11, 9, 0, 0)
         .build()
       const mergedFile = await builders
         .metafile()
@@ -1832,7 +1832,7 @@ describe('Merge', function () {
     it('keeps existing local metadata when it is not present in the new doc', async function () {
       const oldRemoteDir = await builders
         .remoteDir()
-        .updatedAt(2020, 5, 19, 11, 9, 0)
+        .updatedAt(2020, 5, 19, 11, 9, 0, 0)
         .build()
       const mergedFolder = await builders
         .metadir()

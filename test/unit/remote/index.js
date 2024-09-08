@@ -232,7 +232,7 @@ describe('remote.Remote', function () {
         .metadir()
         .path('folder-1')
         .sides({ local: 1 })
-        .updatedAt(timestamp.build(2017, 2, 14, 15, 3, 27))
+        .updatedAt(timestamp.build(2017, 2, 14, 15, 3, 27, 0))
         .build()
 
       await this.remote.addFolderAsync(doc)
@@ -254,8 +254,8 @@ describe('remote.Remote', function () {
       const remoteDir = await builders
         .remoteDir()
         .inRootDir()
-        .createdAt(2017, 2, 14, 15, 3, 27)
-        .updatedAt(2017, 2, 14, 15, 3, 27)
+        .createdAt(2017, 2, 14, 15, 3, 27, 0)
+        .updatedAt(2017, 2, 14, 15, 3, 27, 0)
         .create()
       const doc = builders
         .metadir()
@@ -286,7 +286,7 @@ describe('remote.Remote', function () {
         const created = await builders
           .remoteFile()
           .data('foo')
-          .createdAt(2015, 11, 16, 16, 12, 1)
+          .createdAt(2015, 11, 16, 16, 12, 1, 0)
           .create()
         const old = await builders
           .metafile()
@@ -298,7 +298,7 @@ describe('remote.Remote', function () {
           .overwrite(old)
           .data('bar')
           .changedSide('local')
-          .updatedAt(timestamp.build(2015, 12, 16, 16, 12, 1).toISOString())
+          .updatedAt(timestamp.build(2015, 12, 16, 16, 12, 1, 0).toISOString())
           .noRecord() // XXX: Prevent Pouch conflict from reusing `old`'s _id
           .create()
 
@@ -379,7 +379,7 @@ describe('remote.Remote', function () {
           .remoteNote()
           .name('My Note.cozy-note')
           .data('foo')
-          .createdAt(2015, 11, 16, 16, 12, 1)
+          .createdAt(2015, 11, 16, 16, 12, 1, 0)
           .create()
         const old = await builders
           .metafile()
@@ -428,7 +428,7 @@ describe('remote.Remote', function () {
         const created = await builders
           .remoteFile()
           .data('foo')
-          .createdAt(2015, 11, 16, 16, 12, 1)
+          .createdAt(2015, 11, 16, 16, 12, 1, 0)
           .create()
         const old = await builders
           .metafile()
@@ -440,7 +440,7 @@ describe('remote.Remote', function () {
           .overwrite(old)
           .data('bar')
           .changedSide('local')
-          .updatedAt(timestamp.build(2015, 12, 16, 16, 12, 1).toISOString())
+          .updatedAt(timestamp.build(2015, 12, 16, 16, 12, 1, 0).toISOString())
           .noRecord() // XXX: Prevent Pouch conflict from reusing `old`'s _id
           .create()
 
@@ -466,7 +466,7 @@ describe('remote.Remote', function () {
         const created = await builders
           .remoteFile()
           .data('foo')
-          .createdAt(2015, 11, 16, 16, 12, 1)
+          .createdAt(2015, 11, 16, 16, 12, 1, 0)
           .create()
         const old = await builders
           .metafile()
@@ -480,7 +480,7 @@ describe('remote.Remote', function () {
           .overwrite(old)
           .data('bar')
           .changedSide('local')
-          .updatedAt(timestamp.build(2015, 10, 16, 16, 12, 1).toISOString())
+          .updatedAt(timestamp.build(2015, 10, 16, 16, 12, 1, 0).toISOString())
           .noRecord() // XXX: Prevent Pouch conflict from reusing `old`'s _id
           .create()
 
@@ -506,7 +506,7 @@ describe('remote.Remote', function () {
           .overwrite(doc1)
           .data('baz')
           .changedSide('local')
-          .updatedAt(timestamp.build(2016, 10, 16, 16, 12, 1).toISOString())
+          .updatedAt(timestamp.build(2016, 10, 16, 16, 12, 1, 0).toISOString())
           .noRecord() // XXX: Prevent Pouch conflict from reusing `doc1`'s _id
           .create()
 
@@ -533,7 +533,7 @@ describe('remote.Remote', function () {
           .overwrite(doc2)
           .data('boom')
           .changedSide('local')
-          .updatedAt(timestamp.build(2017, 10, 16, 16, 12, 1).toISOString())
+          .updatedAt(timestamp.build(2017, 10, 16, 16, 12, 1, 0).toISOString())
           .noRecord() // XXX: Prevent Pouch conflict from reusing `doc2`'s _id
           .create()
         doc3 = {
@@ -611,7 +611,7 @@ describe('remote.Remote', function () {
         .name('file-7')
         .inDir(dir)
         .data('foo')
-        .createdAt(2015, 11, 16, 16, 13, 1)
+        .createdAt(2015, 11, 16, 16, 13, 1, 0)
         .create()
 
       const doc = builders
@@ -640,8 +640,8 @@ describe('remote.Remote', function () {
         .remoteDir()
         .inRootDir()
         .name('created')
-        .createdAt(2017, 11, 15, 8, 12, 9)
-        .updatedAt(2017, 11, 15, 8, 12, 9)
+        .createdAt(2017, 11, 15, 8, 12, 9, 0)
+        .updatedAt(2017, 11, 15, 8, 12, 9, 0)
         .create()
       const doc = builders
         .metadir()
@@ -672,7 +672,7 @@ describe('remote.Remote', function () {
         .remoteDir()
         .name('deleted-dir')
         .inRootDir()
-        .createdAt(2016, 1, 2, 3, 4, 5)
+        .createdAt(2016, 1, 2, 3, 4, 5, 0)
         .create()
       await cozy.files.destroyById(deletedDir._id)
       const doc = builders
@@ -690,8 +690,8 @@ describe('remote.Remote', function () {
       const remoteDir = await builders
         .remoteDir()
         .name('foo')
-        .createdAt(2015, 2, 2, 2, 2, 2)
-        .updatedAt(2015, 2, 2, 2, 2, 2)
+        .createdAt(2015, 2, 2, 2, 2, 2, 0)
+        .updatedAt(2015, 2, 2, 2, 2, 2, 0)
         .create()
       const was = await builders
         .metadir()

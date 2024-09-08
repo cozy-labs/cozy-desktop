@@ -27,9 +27,12 @@ function build(
   day /*: number */,
   hour /*: number */,
   minute /*: number */,
-  second /*: number */
+  second /*: number */,
+  millisecond /*: number */
 ) /*: Timestamp */ {
-  return new Date(Date.UTC(year, month - 1, day, hour, minute, second))
+  return new Date(
+    Date.UTC(year, month - 1, day, hour, minute, second, millisecond)
+  )
 }
 
 function spread(date /*: string|number|Date|Timestamp */) /*: number[] */ {
