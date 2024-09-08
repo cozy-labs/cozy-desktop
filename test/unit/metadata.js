@@ -1271,15 +1271,20 @@ describe('metadata', function () {
   describe('updateLocal', () => {
     it('adds the local attribute if it is missing', function () {
       const doc = builders.metafile().ino(1).unmerged('local').noLocal().build()
-      const expectedAttributes =
-        process.platform === 'win32'
-          ? metadata.LOCAL_ATTRIBUTES
-          : _.without(metadata.LOCAL_ATTRIBUTES, 'fileid')
+      const expectedAttributes = _.without(
+        metadata.LOCAL_ATTRIBUTES,
+        'trashed',
+        process.platform !== 'win32' ? 'fileid' : null
+      )
 
       metadata.updateLocal(doc)
 
       should(doc).have.property('local')
       should(doc.local).have.properties(expectedAttributes)
+
+      doc.trashed = true
+      metadata.updateLocal(doc)
+      should(doc.local).have.property('trashed')
     })
 
     it('fetches the local attributes from the main doc', function () {

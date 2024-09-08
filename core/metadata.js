@@ -90,7 +90,8 @@ const LOCAL_ATTRIBUTES = [
   'size',
   'ino',
   'fileid',
-  'executable'
+  'executable',
+  'trashed'
 ]
 
 const REMOTE_ATTRIBUTES = [
@@ -122,6 +123,7 @@ export type MetadataLocalInfo = {
   mime?: string,
   size?: number,
   updated_at?: string,
+  trashed?: true,
 }
 
 type Serializable<T> =  $Diff<T, { relations: ?RemoteRelations }>

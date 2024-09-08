@@ -2533,7 +2533,8 @@ describe('Merge', function () {
           .sides({ local: 1 })
           .create()
         const doc = builders
-          .metafile(was)
+          .metafile()
+          .moveFrom(was)
           .path(existing.path)
           .unmerged('local')
           .build()
