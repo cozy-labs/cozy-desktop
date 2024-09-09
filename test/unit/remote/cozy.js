@@ -681,7 +681,7 @@ describe('RemoteCozy', function () {
     it('resolves with a RemoteDoc representing the newly trashed item', async function () {
       const orig = await builders
         .remoteFile()
-        .createdAt(2017, 1, 1, 1, 1, 1)
+        .createdAt(2017, 1, 1, 1, 1, 1, 0)
         .create()
 
       const trashed = await remoteCozy.trashById(orig._id)

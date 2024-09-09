@@ -18,7 +18,7 @@ const {
 describe('timestamp', () => {
   describe('build', () => {
     it('builds an UTC Date, with month starting from 1 and second-only precision', () => {
-      const result = build(2016, 11, 22, 9, 54, 37)
+      const result = build(2016, 11, 22, 9, 54, 37, 0)
       should(result).be.sameTimestamp(new Date('2016-11-22T09:54:37.000Z'))
       should(result.getMilliseconds()).equal(0)
     })
@@ -41,24 +41,27 @@ describe('timestamp', () => {
       const date = new Date('2016-11-22T09:54:37.123Z')
       const result = fromDate(date)
 
-      should(result).be.timestamp(2016, 11, 22, 9, 54, 37)
+      should(result).be.timestamp(2016, 11, 22, 9, 54, 37, 0)
     })
   })
 
   describe('sameDate', () => {
     it('is true when timestamps have same value', () => {
-      should.ok(
-        sameDate(build(2016, 11, 22, 9, 54, 37), build(2016, 11, 22, 9, 54, 37))
-      )
+      should(
+        sameDate(
+          build(2016, 11, 22, 9, 54, 37, 133),
+          build(2016, 11, 22, 9, 54, 37, 133)
+        )
+      ).be.true()
     })
 
     it('is false otherwise', () => {
-      should.ok(
-        !sameDate(
-          build(2016, 11, 22, 9, 54, 37),
-          build(2016, 11, 22, 9, 54, 38)
+      should(
+        sameDate(
+          build(2016, 11, 22, 9, 54, 37, 133),
+          build(2016, 11, 22, 9, 54, 38, 133)
         )
-      )
+      ).not.be.true()
     })
   })
 
@@ -102,7 +105,7 @@ describe('timestamp', () => {
 
   describe('stringify', () => {
     it('returns a golang-compatible RFC3339 representation', () => {
-      const t = build(2017, 2, 16, 8, 59, 18)
+      const t = build(2017, 2, 16, 8, 59, 18, 23)
       should(stringify(t)).equal('2017-02-16T08:59:18Z')
     })
   })

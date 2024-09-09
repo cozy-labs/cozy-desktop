@@ -64,10 +64,10 @@ describe('Trash', () => {
         should(helpers.putDocs('path', 'trashed')).deepEqual([
           { path: path.normalize('parent/file'), trashed: true }
         ])
-        await should(pouch.db.get(file._id)).be.rejectedWith({ status: 404 })
 
         await helpers.syncAll()
 
+        await should(pouch.db.get(doc._id)).be.rejectedWith({ status: 404 })
         should(await helpers.remote.tree()).deepEqual([
           '.cozy_trash/',
           '.cozy_trash/file',
@@ -167,6 +167,47 @@ describe('Trash', () => {
             local: ['parent/'],
             remote: ['parent/', 'parent/file']
           })
+        })
+      })
+
+      // XXX: This situation should not exist but it actually does so, until we
+      // find its root cause, we'll try to deal with the consequences:
+      // 1. Initial scan starts
+      // 2. `initial-scan-done` event emitted
+      // 3. `scan` event emitted for the file
+      // 4. Initial diff ends before the file event is processed and emits a
+      //    `deleted` event for the file
+      //
+      // → we end up merging first a `deleted` event and then a `scan` event
+      //   for the file with the same stats
+      //
+      context('because it was found too late during the initial scan', () => {
+        it('does not trash the file on the remote Cozy', async () => {
+          const doc = await helpers.pouch.bySyncedPath(
+            path.normalize('parent/file')
+          )
+
+          // XXX: Fake `deleted` event emitted by the initial diff
+          await prep.trashFileAsync('local', doc)
+          should(helpers.putDocs('path', 'trashed')).deepEqual([
+            { path: path.normalize('parent/file'), trashed: true }
+          ])
+          helpers.resetPouchSpy()
+
+          // XXX: actually run the scan so we emit a `scan` event for the file
+          await helpers.local.scan()
+          should(helpers.putDocs('path', 'trashed')).deepEqual([
+            { path: path.normalize('parent/file') }
+          ])
+          helpers.resetPouchSpy()
+
+          await helpers.syncAll()
+          await should(pouch.db.get(doc._id)).be.fulfilled()
+          should(await helpers.remote.tree()).deepEqual([
+            '.cozy_trash/',
+            'parent/',
+            'parent/file'
+          ])
         })
       })
     })

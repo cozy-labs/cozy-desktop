@@ -90,7 +90,8 @@ const LOCAL_ATTRIBUTES = [
   'size',
   'ino',
   'fileid',
-  'executable'
+  'executable',
+  'trashed'
 ]
 
 const REMOTE_ATTRIBUTES = [
@@ -122,6 +123,7 @@ export type MetadataLocalInfo = {
   mime?: string,
   size?: number,
   updated_at?: string,
+  trashed?: true,
 }
 
 type Serializable<T> =  $Diff<T, { relations: ?RemoteRelations }>
@@ -510,6 +512,23 @@ function dissociateRemote(doc /*: Metadata */) {
 function dissociateLocal(doc /*: Metadata */) {
   if (doc.sides && doc.sides.local) delete doc.sides.local
   if (doc.local) delete doc.local
+}
+
+function markAsTrashed(doc /*: Metadata */, sideName /*: SideName */) {
+  if (sideName === 'remote') {
+    if (doc.remote && doc.remote.type === REMOTE_DIR_TYPE) {
+      // FIXME: Remote directories have no `trashed` attribute so we know
+      // they're trashed when their path is within the remote trashbin. We
+      // should find a way to reconstruct that path or stop relying on this
+      // function altogether.
+    } else {
+      doc.remote.trashed = true
+    }
+  } else if (doc.local) {
+    doc.local.trashed = true
+  }
+
+  doc.trashed = true
 }
 
 function markAsUnsyncable(doc /*: SavedMetadata */) {
@@ -970,6 +989,7 @@ module.exports = {
   removeNoteMetadata,
   dissociateRemote,
   dissociateLocal,
+  markAsTrashed,
   markAsUnmerged,
   markAsUnsyncable,
   markAsUpToDate,

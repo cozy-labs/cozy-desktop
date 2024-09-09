@@ -871,8 +871,8 @@ class Merge {
         delete was.overwrite
 
         if (overwrite) {
-          overwrite.trashed = true
           metadata.markSide(side, overwrite, overwrite)
+          metadata.markAsTrashed(overwrite, side)
           delete overwrite._rev
 
           await this.save(overwrite)
@@ -880,13 +880,13 @@ class Merge {
       }
 
       metadata.markSide(side, was, was)
-      // Save the updated side metadata. We only save the remote metadata for
-      // now as we don't have updated local metadata when a document is trashed
-      // on the local filesystem.
       if (side === 'remote') {
         was.remote = doc.remote
+      } else {
+        was.local = doc.local
       }
-      was.trashed = true
+      metadata.markAsTrashed(was, side)
+
       try {
         return await this.save(was)
       } catch (err) {
@@ -904,7 +904,7 @@ class Merge {
       { path: was.path, side, was, doc, sentry: true },
       'marking document for deletion while not linked to the trashed one'
     )
-    was.trashed = true
+    metadata.markAsTrashed(was, side)
     return this.save(was)
   }
 
