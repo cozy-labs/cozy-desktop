@@ -2,6 +2,12 @@
 'use strict'
 
 exports.default = async function (configuration) {
+  if (process.env.SKIP_CODE_SIGNING === 'True') {
+    // eslint-disable-next-line no-console
+    console.log('Skipping code signing')
+    return
+  }
+
   const { execSync } = require('child_process')
 
   const whoami = 'customSign.js'
