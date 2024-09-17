@@ -59,7 +59,7 @@ jobs:
 
   unit:
     needs: [cancel, docker_cache_key]
-    runs-on: macos-12
+    runs-on: macos-13
     name: Unit tests
     strategy:
       matrix:
@@ -128,7 +128,7 @@ jobs:
 
   integration:
     needs: [cancel, docker_cache_key]
-    runs-on: macos-12
+    runs-on: macos-13
     name: Integration tests
     strategy:
       matrix:
@@ -197,7 +197,7 @@ jobs:
 
   scenarios:
     needs: [cancel, docker_cache_key]
-    runs-on: macos-12
+    runs-on: macos-13
     name: Scenarios
     strategy:
       matrix:
@@ -274,7 +274,7 @@ jobs:
 
   build:
     needs: cancel
-    runs-on: macos-12
+    runs-on: macos-13
     name: Build packages
     steps:
       - uses: actions/checkout@v3
