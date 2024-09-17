@@ -50,6 +50,7 @@ jobs:
     steps:
       - id: cozy-app-dev
         run: |
+          echo "Start Docker cache step"
           version=$(curl -Ls --fail -q "https://hub.docker.com/v2/repositories/cozy/cozy-app-dev/tags/?page_size=1000" | \
               jq '.results | .[] | .name' -r | \
               head -n 2 | tail -1)
