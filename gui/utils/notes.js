@@ -48,10 +48,12 @@ const openMarkdownViewer = async (
 }
 
 const showGenericError = (filePath, err) => {
-  log.error(
-    { err, path: filePath, filePath, sentry: true },
-    'Could not display markdown content of note'
-  )
+  log.error('Could not display markdown content of note', {
+    err,
+    path: filePath,
+    filePath,
+    sentry: true
+  })
 
   dialog.showMessageBoxSync(null, {
     type: 'error',
@@ -69,10 +71,12 @@ const openNote = async (
     const { noteUrl } = await desktop.findNote(filePath)
     shell.openExternal(noteUrl)
   } catch (err) {
-    log.error(
-      { err, path: filePath, filePath, sentry: true },
-      'Could not find or open remote Note'
-    )
+    log.error('Could not find or open remote Note', {
+      err,
+      path: filePath,
+      filePath,
+      sentry: true
+    })
 
     if (err.content) {
       try {

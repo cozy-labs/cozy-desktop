@@ -19,13 +19,23 @@ const Sentry = require('@sentry/electron')
 const {
   ExtraErrorData: ExtraErrorDataIntegration
 } = require('@sentry/integrations')
-const bunyan = require('bunyan')
 const url = require('url')
 const _ = require('lodash')
+const winston = require('winston')
+const { combine, json } = winston.format
 
 const { SESSION_PARTITION_NAME } = require('../../gui/js/network')
 const { HOURS } = require('./time')
-const logger = require('./logger')
+const {
+  FATAL_LVL,
+  ERROR_LVL,
+  WARN_LVL,
+  INFO_LVL,
+  DEBUG_LVL,
+  defaultFormatter,
+  defaultLogger,
+  logger
+} = require('./logger')
 
 const log = logger({
   component: 'Sentry'
@@ -34,7 +44,7 @@ const log = logger({
 module.exports = {
   setup,
   flag,
-  format,
+  formatError,
   toSentryContext
 }
 
@@ -69,10 +79,10 @@ let ErrorsAlreadySent /* Map<string,Date> */
 
 function setup(clientInfos /*: ClientInfo */) {
   if (CI || COZY_NO_SENTRY || isSentryConfigured) {
-    log.info(
-      { COZY_NO_SENTRY, isSentryConfigured },
-      'skipping Sentry configuration'
-    )
+    log.info('skipping Sentry configuration', {
+      COZY_NO_SENTRY,
+      isSentryConfigured
+    })
     if (DEBUG) {
       // eslint-disable-next-line no-console
       console.log(
@@ -130,19 +140,11 @@ function setup(clientInfos /*: ClientInfo */) {
       scope.setTag('instance', instance)
       scope.setTag('server_name', clientInfos.deviceName)
     })
-    logger.defaultLogger.addStream({
-      type: 'raw',
-      stream: {
-        write: msg => {
-          try {
-            handleBunyanMessage(msg)
-          } catch (err) {
-            // eslint-disable-next-line no-console
-            console.log('Error in handleBunyanMessage', err)
-          }
-        }
-      }
-    })
+    defaultLogger.add(
+      new SentryTransport({
+        format: combine(defaultFormatter, json())
+      })
+    )
     ErrorsAlreadySent = new Map()
     isSentryConfigured = true
     log.info('Sentry configured !')
@@ -158,62 +160,60 @@ function setup(clientInfos /*: ClientInfo */) {
   } catch (err) {
     // eslint-disable-next-line no-console
     console.log('FAIL TO SETUP', err)
-    log.error(
-      { err },
-      'Could not load Sentry, errors will not be sent to Sentry'
-    )
+    log.error('Could not load Sentry, errors will not be sent to Sentry', {
+      err
+    })
   }
 }
 
-const handleBunyanMessage = msg => {
-  const level =
-    msg.level >= bunyan.FATAL
-      ? 'fatal'
-      : msg.level >= bunyan.ERROR
-      ? 'error'
-      : msg.level >= bunyan.WARNING
-      ? 'warning'
-      : 'info'
+class SentryTransport extends winston.Transport {
+  constructor(opts) {
+    super(opts)
+  }
 
-  if (!isSentryConfigured) return
+  log(info, callback) {
+    const { component, level, msg, sentry, time, ...meta } = info
+    const { err } = meta
+    const cleanMeta = _.omit(meta, ['tags', 'hostname'])
+    const sentryLevel =
+      level >= FATAL_LVL
+        ? 'fatal'
+        : level >= ERROR_LVL
+        ? 'error'
+        : level >= WARN_LVL
+        ? 'warning'
+        : level >= DEBUG_LVL
+        ? 'debug'
+        : level >= INFO_LVL
+        ? 'log'
+        : 'trace'
 
-  // Send messages explicitly marked for sentry and all TypeError instances
-  if (msg.sentry || (msg.err && msg.err.name === 'TypeError')) {
-    const extra = _.omit(msg, [
-      'tags',
-      'v',
-      'hostname',
-      'sentry',
-      'pid',
-      'level'
-    ])
+    // Send messages explicitly marked for sentry and all TypeError instances
+    if (sentry || (err && err.name === 'TypeError')) {
+      const extra = { component, msg, time, ...cleanMeta }
 
-    Sentry.withScope(scope => {
-      scope.setLevel(level)
-      scope.setContext('msgDetails', extra)
+      Sentry.withScope(scope => {
+        scope.setLevel(sentryLevel)
+        scope.setContext('msgDetails', extra)
+        scope.setFingerprint([component, err.name, err.message])
 
-      if (msg.err) {
-        Sentry.captureException(format(msg.err))
-      } else {
-        Sentry.captureMessage(msg.msg)
-      }
-    })
-  } else {
-    // keep it as breadcrumb
-    Sentry.addBreadcrumb({
-      message: msg.msg,
-      category: msg.component,
-      data: _.omit(msg, [
-        'component',
-        'pid',
-        'name',
-        'hostname',
-        'level',
-        'v',
-        'msg'
-      ]),
-      level
-    })
+        if (err) {
+          Sentry.captureException(formatError(err))
+        } else {
+          Sentry.captureMessage(msg)
+        }
+      })
+    } else {
+      // keep it as breadcrumb
+      Sentry.addBreadcrumb({
+        message: msg,
+        category: component,
+        data: { time, ...cleanMeta },
+        level: sentryLevel
+      })
+    }
+
+    callback()
   }
 }
 
@@ -235,7 +235,7 @@ function flag(err /*: Object */) {
  * - @see {@link https://github.com/arantes555/electron-fetch/blob/master/ERROR-HANDLING.md|electron-fetch}
  * - @see {@link https://nodejs.org/api/errors.html|Node.js}
  */
-function format(err /*: Object */) {
+function formatError(err /*: Object */) {
   switch (err.name) {
     case 'FetchError':
       if (err.reason) return cozyErrObjectToError(bunyanErrObjectToError(err))

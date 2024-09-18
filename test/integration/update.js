@@ -7,7 +7,7 @@ const should = require('should')
 const path = require('path')
 const sinon = require('sinon')
 
-const logger = require('../../core/utils/logger')
+const { logger } = require('../../core/utils/logger')
 const metadata = require('../../core/metadata')
 const { byPathKey } = require('../../core/pouch')
 const { MAX_SYNC_RETRIES } = require('../../core/sync')

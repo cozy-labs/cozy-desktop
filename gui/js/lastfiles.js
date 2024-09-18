@@ -28,11 +28,11 @@ const init = desktop => {
         try {
           resolve(JSON.parse(data))
         } catch (err) {
-          log.warn({ err }, 'Failed loading last files')
+          log.warn('Failed loading last files', { err })
           resolve([])
         }
       } else {
-        log.warn({ err }, 'Failed loading last files')
+        log.warn('Failed loading last files', { err })
         resolve([])
       }
     })
@@ -43,7 +43,7 @@ const persist = async () => {
   const data = JSON.stringify(await lastFiles)
   if (persistQueue) {
     persistQueue.pushAsync(data).catch(err => {
-      log.warn({ err }, 'Failed to persist last files')
+      log.warn('Failed to persist last files', { err })
     })
   }
 }

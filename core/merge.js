@@ -11,7 +11,7 @@ const IdConflict = require('./IdConflict')
 const metadata = require('./metadata')
 const move = require('./move')
 const { otherSide } = require('./side')
-const logger = require('./utils/logger')
+const { logger } = require('./utils/logger')
 const { FILE_TYPE: REMOTE_FILE_TYPE } = require('./remote/constants')
 
 /*::
@@ -92,7 +92,7 @@ class Merge {
   // Add a file, if it doesn't already exist,
   // and create the tree structure if needed
   async addFileAsync(side /*: SideName */, doc /*: Metadata */) {
-    log.debug({ path: doc.path }, 'addFileAsync')
+    log.debug('addFileAsync', { path: doc.path })
     const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
 
     if (file) {
@@ -105,7 +105,7 @@ class Merge {
         file
       )
       if (idConflict) {
-        log.warn({ idConflict }, IdConflict.description(idConflict))
+        log.warn(IdConflict.description(idConflict), { idConflict })
         return this.resolveConflictAsync(side, doc)
       }
 
@@ -124,7 +124,7 @@ class Merge {
 
   // Update a file, when its metadata or its content has changed
   async updateFileAsync(side /*: SideName */, doc /*: Metadata */) {
-    log.debug({ path: doc.path }, 'updateFileAsync')
+    log.debug('updateFileAsync', { path: doc.path })
 
     const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
     if (!file) {
@@ -144,7 +144,7 @@ class Merge {
           (!metadata.sameBinary(file.local, doc.local) &&
             file.local.updated_at === doc.local.updated_at)
         ) {
-          log.debug({ path: doc.path, doc, file }, 'Same local metadata')
+          log.debug('Same local metadata', { path: doc.path, doc, file })
           return
         }
       }
@@ -188,7 +188,7 @@ class Merge {
       }
 
       if (metadata.equivalent(doc, file)) {
-        log.info({ path: doc.path }, 'up to date')
+        log.info('up to date', { path: doc.path })
         if (side === 'local' && !metadata.sameLocal(file.local, doc.local)) {
           if (!file.sides.local) {
             // When the updated side is missing on the existing record, it means
@@ -321,7 +321,7 @@ class Merge {
 
   // Create or update a folder
   async putFolderAsync(side /*: SideName */, doc /*: Metadata */) {
-    log.debug({ path: doc.path }, 'putFolderAsync')
+    log.debug('putFolderAsync', { path: doc.path })
 
     const folder /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
     if (!folder) {
@@ -338,7 +338,7 @@ class Merge {
         folder
       )
       if (idConflict) {
-        log.warn({ idConflict }, IdConflict.description(idConflict))
+        log.warn(IdConflict.description(idConflict), { idConflict })
         return this.resolveConflictAsync(side, doc)
       }
 
@@ -355,7 +355,7 @@ class Merge {
           // recourse is to discard these modification date changes.
           metadata.equivalentLocal(folder.local, doc.local)
         ) {
-          log.debug({ path: doc.path, doc, folder }, 'Same local metadata')
+          log.debug('Same local metadata', { path: doc.path, doc, folder })
           return
         }
       }
@@ -395,7 +395,7 @@ class Merge {
       }
 
       if (metadata.equivalent(folder, doc)) {
-        log.info({ path: doc.path }, 'up to date')
+        log.info('up to date', { path: doc.path })
         if (side === 'local' && !metadata.sameLocal(folder.local, doc.local)) {
           if (!folder.sides.local) {
             // When the updated side is missing on the existing record, it means
@@ -458,19 +458,18 @@ class Merge {
 
     was = await this.pouch.byIdMaybe(was._id)
     if (!was) {
-      log.debug(
-        { path: oldpath },
-        'moved file missing from PouchDB. Adding at destination'
-      )
+      log.debug('moved file missing from PouchDB. Adding at destination', {
+        path: oldpath
+      })
       return this.addFileAsync(side, doc)
     } else if (was.path !== oldpath) {
-      log.debug({ path: was.path, oldpath }, 'moved file original path changed')
+      log.debug('moved file original path changed', { path: was.path, oldpath })
     }
 
-    log.debug(
-      { path: doc.path, oldpath: was ? was.path : oldpath },
-      'moveFileAsync'
-    )
+    log.debug('moveFileAsync', {
+      path: doc.path,
+      oldpath: was ? was.path : oldpath
+    })
 
     // If file is moved on Windows, it will never be executable so we keep the
     // existing value.
@@ -512,7 +511,7 @@ class Merge {
           file
         )
         if (idConflict) {
-          log.warn({ idConflict }, IdConflict.description(idConflict))
+          log.warn(IdConflict.description(idConflict), { idConflict })
           return this.resolveConflictAsync(side, doc)
         }
 
@@ -575,22 +574,21 @@ class Merge {
 
     was = await this.pouch.byIdMaybe(was._id)
     if (!was) {
-      log.debug(
-        { path: oldpath },
-        'moved folder missing from PouchDB. Adding at destination'
-      )
+      log.debug('moved folder missing from PouchDB. Adding at destination', {
+        path: oldpath
+      })
       return this.putFolderAsync(side, doc)
     } else if (was.path !== oldpath) {
-      log.debug(
-        { path: was.path, oldpath },
-        'moved folder original path changed'
-      )
+      log.debug('moved folder original path changed', {
+        path: was.path,
+        oldpath
+      })
     }
 
-    log.debug(
-      { path: doc.path, oldpath: was ? was.path : oldpath },
-      'moveFolderAsync'
-    )
+    log.debug('moveFolderAsync', {
+      path: doc.path,
+      oldpath: was ? was.path : oldpath
+    })
 
     metadata.assignMaxDate(doc, was)
 
@@ -635,7 +633,7 @@ class Merge {
           folder
         )
         if (idConflict) {
-          log.warn({ idConflict }, IdConflict.description(idConflict))
+          log.warn(IdConflict.description(idConflict), { idConflict })
           return this.resolveConflictAsync(side, doc)
         }
 
@@ -725,10 +723,10 @@ class Merge {
     was /*: SavedMetadata */,
     newRemoteRevs /*: ?RemoteRevisionsByID */
   ) {
-    log.debug(
-      { path: folder.path, oldpath: was.path },
-      'moveFolderRecursivelyAsync'
-    )
+    log.debug('moveFolderRecursivelyAsync', {
+      path: folder.path,
+      oldpath: was.path
+    })
     const docs = await this.pouch.byRecursivePath(was.path)
     const dstChildren = await this.pouch.byRecursivePath(folder.path)
     const makeDestinationPath = doc =>
@@ -839,7 +837,7 @@ class Merge {
     was /*: SavedMetadata */,
     doc /*: Metadata */
   ) /*: Promise<void> */ {
-    log.debug({ path: was.path, side, was }, 'doTrash')
+    log.debug('doTrash', { path: was.path, side, was })
 
     if (was.trashed) {
       if (metadata.isAtLeastUpToDate(side, was)) {
@@ -851,10 +849,10 @@ class Merge {
         // up with an out-of-date remote _rev.
         return
       } else if (metadata.isAtLeastUpToDate(otherSide(side), was)) {
-        log.debug(
-          { path: was.path, doc: was },
-          'Erasing doc already marked for deletion'
-        )
+        log.debug('Erasing doc already marked for deletion', {
+          path: was.path,
+          doc: was
+        })
         return this.pouch.eraseDocument(was)
       }
     }
@@ -863,10 +861,10 @@ class Merge {
       if (was.moveFrom) {
         const { overwrite } = was
         // We need to trash the source of the move instead of the destination
-        log.debug(
-          { path: was.path, oldPath: was.moveFrom.path },
-          'Trashing source of move instead of destination'
-        )
+        log.debug('Trashing source of move instead of destination', {
+          path: was.path,
+          oldPath: was.moveFrom.path
+        })
         delete was.moveFrom
         delete was.overwrite
 
@@ -901,8 +899,8 @@ class Merge {
     // We shouldn't event reach this point so let's log a Sentry error when it
     // happens.
     log.warn(
-      { path: was.path, side, was, doc, sentry: true },
-      'marking document for deletion while not linked to the trashed one'
+      'marking document for deletion while not linked to the trashed one',
+      { path: was.path, side, was, doc, sentry: true }
     )
     metadata.markAsTrashed(was, side)
     return this.save(was)
@@ -916,7 +914,7 @@ class Merge {
     doc /*: Metadata */
   ) /*: Promise<void> */ {
     const { path } = trashed
-    log.debug({ path }, 'trashFileAsync')
+    log.debug('trashFileAsync', { path })
     let was /*: ?SavedMetadata */
     // $FlowFixMe _id exists in SavedMetadata
     if (trashed._id != null) {
@@ -926,13 +924,14 @@ class Merge {
     }
 
     if (!was) {
-      log.debug({ path }, 'Nothing to trash')
+      log.debug('Nothing to trash', { path })
       return
     } else if (doc.docType !== was.docType || was.docType !== metadata.FILE) {
-      log.error(
-        { doc, was, sentry: true },
-        'Mismatch on doctype for trashFileAsync'
-      )
+      log.error('Mismatch on doctype for trashFileAsync', {
+        doc,
+        was,
+        sentry: true
+      })
       return
     }
 
@@ -997,16 +996,17 @@ class Merge {
     doc /*: Metadata */
   ) /*: Promise<*> */ {
     const { path } = trashed
-    log.debug({ path }, 'trashFolderAsync')
+    log.debug('trashFolderAsync', { path })
     const was /*: ?SavedMetadata */ = await this.pouch.byIdMaybe(trashed._id)
     if (!was) {
-      log.debug({ path }, 'Nothing to trash')
+      log.debug('Nothing to trash', { path })
       return
     } else if (doc.docType !== was.docType) {
-      log.error(
-        { doc, was, sentry: true },
-        'Mismatch on doctype for trashFolderAsync'
-      )
+      log.error('Mismatch on doctype for trashFolderAsync', {
+        doc,
+        was,
+        sentry: true
+      })
       return
     }
 
@@ -1026,11 +1026,11 @@ class Merge {
   // of the files inside it, deleteFile can be called for a file that has
   // already been removed. This is not considered as an error.
   async deleteFileAsync(side /*: SideName */, doc /*: SavedMetadata */) {
-    log.debug({ path: doc.path }, 'deleteFileAsync')
+    log.debug('deleteFileAsync', { path: doc.path })
     const file /*: ?SavedMetadata */ = await this.pouch.bySyncedPath(doc.path)
 
     if (!file) {
-      log.debug({ path }, 'Nothing to delete')
+      log.debug('Nothing to delete', { path })
       return
     }
 
@@ -1070,11 +1070,11 @@ class Merge {
   // inside it to ensure consistency. The remote watcher will sort the deletion
   // of a folder before the deletion of its content.
   async deleteFolderAsync(side /*: SideName */, doc /*: SavedMetadata */) {
-    log.debug({ path: doc.path }, 'deleteFolderAsync')
+    log.debug('deleteFolderAsync', { path: doc.path })
     const folder /*: ?SavedMetadata */ = await this.pouch.byIdMaybe(doc._id)
 
     if (!folder) {
-      log.debug({ path: doc.path }, 'Nothing to delete')
+      log.debug('Nothing to delete', { path: doc.path })
       return
     }
 

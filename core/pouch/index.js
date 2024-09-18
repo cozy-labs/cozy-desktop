@@ -13,7 +13,7 @@ const { isEqual } = _
 const path = require('path')
 
 const metadata = require('../metadata')
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 const { PouchError } = require('./error')
 const remoteConstants = require('../remote/constants')
 
@@ -76,7 +76,7 @@ class Pouch {
   lock(component /*: * */) /*: Promise<Function> */ {
     const id = this.nextLockId++
     if (typeof component !== 'string') component = component.constructor.name
-    log.trace({ component, lock: { id, state: 'requested' } }, 'lock requested')
+    log.trace('lock requested', { component, lock: { id, state: 'requested' } })
     const pCurrent = this._lock.promise
     let _resolve
     const pReleased = new Promise(resolve => {
@@ -84,12 +84,12 @@ class Pouch {
     })
     this._lock = { id, promise: pCurrent.then(() => pReleased) }
     return pCurrent.then(() => {
-      log.trace({ component, lock: { id, state: 'acquired' } }, 'lock acquired')
+      log.trace('lock acquired', { component, lock: { id, state: 'acquired' } })
       return () => {
-        log.trace(
-          { component, lock: { id, state: 'released' } },
-          'lock released'
-        )
+        log.trace('lock released', {
+          component,
+          lock: { id, state: 'released' }
+        })
         _resolve()
       }
     })
@@ -107,10 +107,11 @@ class Pouch {
    */
   async _allDocs(options /*: ?{ include_docs: boolean } */) {
     const uncaughtExceptionHandler = err => {
-      log.error(
-        { err, options, sentry: true },
-        'uncaughtException in _allDocs. PouchDB db might be corrupt.'
-      )
+      log.error('uncaughtException in _allDocs. PouchDB db might be corrupt.', {
+        err,
+        options,
+        sentry: true
+      })
       throw err
     }
     process.once('uncaughtException', uncaughtExceptionHandler)
@@ -152,10 +153,12 @@ class Pouch {
     { checkInvariants = true } /*: { checkInvariants: boolean } */ = {}
   ) /*: Promise<SavedMetadata> */ {
     if (checkInvariants) metadata.invariants(doc)
-    log.debug(
-      { path: doc.path, _id: doc._id, _deleted: doc._deleted, doc },
-      'Saving metadata...'
-    )
+    log.debug('Saving metadata...', {
+      path: doc.path,
+      _id: doc._id,
+      _deleted: doc._deleted,
+      doc
+    })
     if (!doc._id) {
       const { id: _id, rev: _rev } = await this.db.post(doc)
       return {
@@ -173,7 +176,7 @@ class Pouch {
   }
 
   remove(doc /*: SavedMetadata */) /*: Promise<SavedMetadata> */ {
-    log.debug({ path: doc.path, _id: doc._id, doc }, 'Removing record')
+    log.debug('Removing record', { path: doc.path, _id: doc._id, doc })
     return this.put(_.defaults({ _deleted: true }, doc))
   }
 
@@ -183,7 +186,7 @@ class Pouch {
   // result in an attempt to take action.
   // This method also does not care about invariants like `remove()` does.
   eraseDocument({ _id, _rev, path } /*: SavedMetadata */) {
-    log.debug({ path, _id, _rev }, 'Erasing record')
+    log.debug('Erasing record', { path, _id, _rev })
     return this.db.put({ _id, _rev, _deleted: true })
   }
 
@@ -194,7 +197,7 @@ class Pouch {
     const docsToErase = []
     docs.forEach(doc => {
       const { path, _id, _rev } = _.clone(doc)
-      log.debug({ path, _id, _rev }, 'Erasing bulk record...')
+      log.debug('Erasing bulk record...', { path, _id, _rev })
       docsToErase.push({ _id, _rev, _deleted: true })
     })
 
@@ -203,10 +206,12 @@ class Pouch {
       if (result.error) {
         const err = new PouchError(result)
         const doc = docs[idx]
-        log.error(
-          { err, path: doc.path, doc, sentry: true },
-          'could not erase bulk record'
-        )
+        log.error('could not erase bulk record', {
+          err,
+          path: doc.path,
+          doc,
+          sentry: true
+        })
         throw err
       }
     }
@@ -221,20 +226,26 @@ class Pouch {
       metadata.invariants(doc)
       const { path, _id } = doc
       const { local, remote } = doc.sides || {}
-      log.debug(
-        { path, _id, local, remote, _deleted: doc._deleted, doc },
-        'Saving bulk metadata...'
-      )
+      log.debug('Saving bulk metadata...', {
+        path,
+        _id,
+        local,
+        remote,
+        _deleted: doc._deleted,
+        doc
+      })
     }
     const results = await this.db.bulkDocs(docs)
     for (let [idx, result] of results.entries()) {
       if (result.error) {
         const err = new PouchError(result)
         const doc = docs[idx]
-        log.error(
-          { err, path: doc.path, doc, sentry: true },
-          'could not save bulk metadata'
-        )
+        log.error('could not save bulk metadata', {
+          err,
+          path: doc.path,
+          doc,
+          sentry: true
+        })
         throw err
       }
     }
@@ -250,7 +261,7 @@ class Pouch {
       const { rows } = await this.db.query(query, params)
       return rows.filter(row => row.doc != null).map(row => row.doc)
     } catch (err) {
-      log.error({ err }, `could not run ${query} query`)
+      log.error(`could not run ${query} query`, { err })
       return []
     }
   }
@@ -562,10 +573,12 @@ class Pouch {
     try {
       return await this.db.get(id, { rev })
     } catch (err) {
-      log.debug(
-        { path: doc.path, _id: doc._id, rev, doc },
-        'could fetch fetch previous revision'
-      )
+      log.debug('could fetch fetch previous revision', {
+        path: doc.path,
+        _id: doc._id,
+        rev,
+        doc
+      })
       throw err
     }
   }

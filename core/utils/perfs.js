@@ -4,7 +4,7 @@
  * @flow
  */
 
-const logger = require('./logger')
+const { logger } = require('./logger')
 const log = logger({
   component: 'Perfs'
 })
@@ -33,10 +33,9 @@ function measureTime(key /*: string */) /*: () => void */ {
 function print() {
   for (let key of Object.keys(store)) {
     const { time, nb } = store[key]
-    log.trace(
-      { function: key },
-      key + ' ' + nb + ' * ' + time + ' = ' + nb * time
-    )
+    log.trace(key + ' ' + nb + ' * ' + time + ' = ' + nb * time, {
+      function: key
+    })
   }
 }
 

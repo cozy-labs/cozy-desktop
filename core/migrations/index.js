@@ -6,7 +6,7 @@
 const PouchDB = require('pouchdb')
 const uuid = require('uuid').v4
 
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 const { PouchError } = require('../pouch/error')
 const migrations = require('./migrations')
 const {
@@ -65,7 +65,7 @@ async function runMigrations(
       if (result.type === MIGRATION_RESULT_FAILED) {
         // Error in case of second failure
         const err = new MigrationFailedError(migration, result.errors)
-        log.fatal({ err, sentry: true }, migrationLog(migration, result))
+        log.fatal(migrationLog(migration, result), { err, sentry: true })
         throw err
       } else {
         log.info(migrationLog(migration, result))

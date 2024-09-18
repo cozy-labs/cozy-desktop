@@ -33,7 +33,7 @@ const _ = require('lodash')
 
 const { getInode } = require('./local_event')
 const localChange = require('./local_change')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 const measureTime = require('../../utils/perfs')
 const metadata = require('../../metadata')
 
@@ -138,10 +138,9 @@ function analyseEvents(
   const changesFound = new LocalChangeMap()
 
   if (pendingChanges.length > 0) {
-    log.warn(
-      { changes: pendingChanges },
-      `Prepend ${pendingChanges.length} pending change(s)`
-    )
+    log.warn(`Prepend ${pendingChanges.length} pending change(s)`, {
+      changes: pendingChanges
+    })
     for (const a of pendingChanges) {
       changesFound.put(a)
     }
@@ -155,19 +154,21 @@ function analyseEvents(
     try {
       // chokidar make mistakes
       if (e.type === 'unlinkDir' && e.old && e.old.docType === metadata.FILE) {
-        log.warn(
-          { event: e, old: e.old, path: e.path },
-          'chokidar miscategorized event (was file, event unlinkDir)'
-        )
+        log.warn('chokidar miscategorized event (was file, event unlinkDir)', {
+          event: e,
+          old: e.old,
+          path: e.path
+        })
         // $FlowFixMe
         e.type = 'unlink'
       }
 
       if (e.type === 'unlink' && e.old && e.old.docType === metadata.FOLDER) {
-        log.warn(
-          { event: e, old: e.old, path: e.path },
-          'chokidar miscategorized event (was folder, event unlink)'
-        )
+        log.warn('chokidar miscategorized event (was folder, event unlink)', {
+          event: e,
+          old: e.old,
+          path: e.path
+        })
         // $FlowFixMe
         e.type = 'unlinkDir'
       }
@@ -180,7 +181,7 @@ function analyseEvents(
       changesFound.put(change, updated)
     } catch (err) {
       const sentry = err.name === 'InvalidLocalMoveEvent'
-      log.error({ err, path: e.path, sentry }, 'Invalid local move event')
+      log.error('Invalid local move event', { err, path: e.path, sentry })
       throw err
     }
   }
@@ -269,18 +270,20 @@ function fixUnsyncedMoves(changes /*: LocalChange[] */) {
       change.type = 'FileAddition'
       delete change.old
       if (change.update) delete change.update
-      log.debug(
-        { path: change.path, ino: change.ino, wip: change.wip },
-        'changed FileMove without old into FileAddition'
-      )
+      log.debug('changed FileMove without old into FileAddition', {
+        path: change.path,
+        ino: change.ino,
+        wip: change.wip
+      })
     } else if (change.type === 'DirMove' && !change.old) {
       // $FlowFixMe deliberate type change
       change.type = 'DirAddition'
       delete change.old
-      log.debug(
-        { path: change.path, ino: change.ino, wip: change.wip },
-        'changed DirMove without old into DirAddition'
-      )
+      log.debug('changed DirMove without old into DirAddition', {
+        path: change.path,
+        ino: change.ino,
+        wip: change.wip
+      })
     }
   })
 }
@@ -331,12 +334,12 @@ function squashMoves(changes /*: LocalChange[] */) {
         oldPathB &&
         oldPathB.startsWith(oldPathA + path.sep)
       ) {
-        log.debug({ oldpath: b.old.path, path: b.path }, 'descendant move')
+        log.debug('descendant move', { oldpath: b.old.path, path: b.path })
         if (pathB.substr(pathA.length) === oldPathB.substr(oldPathA.length)) {
-          log.debug(
-            { oldpath: b.old.path, path: b.path },
-            'ignoring explicit child move'
-          )
+          log.debug('ignoring explicit child move', {
+            oldpath: b.old.path,
+            path: b.path
+          })
           changes.splice(j--, 1)
           if (b.type === 'FileMove' && b.update) {
             changes.push({
@@ -351,7 +354,7 @@ function squashMoves(changes /*: LocalChange[] */) {
             })
           }
         } else {
-          log.debug({ oldpath: b.old.path, path: b.path }, 'move inside move')
+          log.debug('move inside move', { oldpath: b.old.path, path: b.path })
           b.old.path = metadata.newChildPath(b.old.path, a.old.path, a.path)
           b.needRefetch = true
         }
@@ -385,20 +388,17 @@ function separatePendingChanges(
     const change = changes[i]
     if (change.wip) {
       if (change.type === 'DirMove' || change.type === 'FileMove') {
-        log.debug(
-          {
-            change: change.type,
-            oldpath: change.old.path,
-            path: change.path,
-            ino: change.ino
-          },
-          'incomplete change'
-        )
+        log.debug('incomplete change', {
+          change: change.type,
+          oldpath: change.old.path,
+          path: change.path,
+          ino: change.ino
+        })
       } else {
-        log.debug(
-          { change: change.type, path: change.path },
-          'incomplete change'
-        )
+        log.debug('incomplete change', {
+          change: change.type,
+          path: change.path
+        })
       }
       pendingChanges.push(changes[i])
     } else {

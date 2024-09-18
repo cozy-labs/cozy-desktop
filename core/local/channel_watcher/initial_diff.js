@@ -14,7 +14,7 @@ const path = require('path')
 
 const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../config')
 const { kind } = require('../../metadata')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 const Channel = require('./channel')
 
 /*::
@@ -288,10 +288,10 @@ function debounce(waiting /*: WaitingItem[] */, events /*: ChannelEvent[] */) {
         for (let k = 0; k < w.batch.length; k++) {
           const e = w.batch[k]
           if (e.action === 'renamed' && e.path === event.path) {
-            log.debug(
-              { renamedEvent: e, scanEvent: event },
-              `Ignore overlapping ${event.kind} ${event.action}`
-            )
+            log.debug(`Ignore overlapping ${event.kind} ${event.action}`, {
+              renamedEvent: e,
+              scanEvent: event
+            })
             events.splice(i, 1)
             w.nbCandidates--
             break

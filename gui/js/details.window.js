@@ -62,7 +62,7 @@ module.exports = class DetailsWM extends WindowManager {
   }
 
   loadContent(alert /*: UserAlert */) {
-    log.info({ alert }, 'loading user alert details')
+    log.info('loading user alert details', { alert })
     if (alert.code === 'IncompatibleDoc') {
       this.win.webContents.send('load-content', {
         translations: this.translations(),

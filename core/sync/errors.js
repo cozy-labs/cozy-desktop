@@ -4,7 +4,7 @@ const metadata = require('../metadata')
 const { IncompatibleDocError } = require('../incompatibilities/platform')
 const { HEARTBEAT: REMOTE_HEARTBEAT } = require('../remote/constants')
 const remoteErrors = require('../remote/errors')
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 const { SECONDS, MINUTES } = require('../utils/time')
 
 /*::
@@ -230,10 +230,11 @@ const createConflict = async (
         await sync.waitForNewChangeOn(change.seq, conflict.path)
       }
     } catch (err) {
-      log.debug(
-        { path: change.doc.path, err, sentry: true },
-        'failed to create conflict on behalf of user'
-      )
+      log.debug('failed to create conflict on behalf of user', {
+        path: change.doc.path,
+        err,
+        sentry: true
+      })
     }
   }
 }
@@ -243,8 +244,8 @@ const linkDirectories = async (
   sync /*: Sync */
 ) => {
   log.debug(
-    cause,
-    'user requested directories linking (and re-inclusion in differential sync)'
+    'user requested directories linking (and re-inclusion in differential sync)',
+    cause
   )
 
   clearInterval(sync.retryInterval)
@@ -258,10 +259,11 @@ const linkDirectories = async (
       // remote dir.
       await sync.skipChange(change, err)
     } catch (err) {
-      log.debug(
-        { path: change.doc.path, err, sentry: true },
-        'failed to re-include folder in sync on behalf of user'
-      )
+      log.debug('failed to re-include folder in sync on behalf of user', {
+        path: change.doc.path,
+        err,
+        sentry: true
+      })
     }
   }
 }

@@ -12,7 +12,7 @@ const _ = require('lodash')
 const path = require('path')
 
 const { kind } = require('../../metadata')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 const stater = require('../stater')
 
 const STEP_NAME = 'addInfos'
@@ -50,7 +50,7 @@ function loop(
     const batch = []
     for (const event of events) {
       if (event.kind === 'symlink') {
-        log.warn({ event }, 'Symlinks are not supported')
+        log.warn('Symlinks are not supported', { event })
         // TODO display an error in the UI
         continue
       }
@@ -62,7 +62,7 @@ function loop(
       try {
         if (event.action !== 'initial-scan-done') {
           if (needsStats(event)) {
-            log.debug({ path: event.path, action: event.action }, 'stat')
+            log.debug('stat', { path: event.path, action: event.action })
             event.stats = await stater.stat(path.join(syncPath, event.path))
           }
 
@@ -89,7 +89,7 @@ function loop(
           }
         }
       } catch (err) {
-        log.debug({ err, event }, 'Cannot get infos')
+        log.debug('Cannot get infos', { err, event })
         _.set(event, ['incomplete', STEP_NAME], err.message)
       }
       batch.push(event)

@@ -71,7 +71,7 @@ module.exports = class UpdaterWM extends WindowManager {
     autoUpdater.autoDownload = false
     autoUpdater.on('update-available', info => {
       this.clearTimeoutIfAny()
-      log.info({ update: info, skipped: this.skipped }, 'Update available')
+      log.info('Update available', { update: info, skipped: this.skipped })
       // Make sure UI doesn't show up after timeout
       if (!this.skipped) {
         const shouldUpdate =
@@ -95,7 +95,7 @@ module.exports = class UpdaterWM extends WindowManager {
       }
     })
     autoUpdater.on('update-not-available', info => {
-      log.info({ update: info }, 'No update available')
+      log.info('No update available', { update: info })
       this.afterUpToDate()
     })
     autoUpdater.on('error', async err => {
@@ -113,11 +113,11 @@ module.exports = class UpdaterWM extends WindowManager {
       }
     })
     autoUpdater.on('download-progress', progressObj => {
-      log.trace({ progress: progressObj }, 'Downloading...')
+      log.trace('Downloading...', { progress: progressObj })
       this.send('update-downloading', progressObj)
     })
     autoUpdater.on('update-downloaded', info => {
-      log.info({ update: info }, 'Update downloaded. Exit and install...')
+      log.info('Update downloaded. Exit and install...', { update: info })
       setImmediate(() =>
         this.desktop
           .stopSync()
@@ -162,7 +162,7 @@ module.exports = class UpdaterWM extends WindowManager {
   }
 
   skipUpdate(reason /*: string */) {
-    log.info({ sentry: true }, `Not updating: ${reason}`)
+    log.info(`Not updating: ${reason}`, { sentry: true })
     this.skipped = true
 
     // Disable handler & warn on future calls

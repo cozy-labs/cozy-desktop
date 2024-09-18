@@ -91,7 +91,6 @@
     "bluebird": "3.7.2",
     "btoa": "^1.1.2",
     "bufferutil": "^4.0.7",
-    "bunyan": "2.0.5",
     "chokidar": "^3.5.0",
     "cozy-client": "^38.2.0",
     "cozy-client-js": "^0.21.0",
@@ -99,7 +98,6 @@
     "cozy-realtime": "^4.6.0",
     "cozy-stack-client": "^38.0.2",
     "deep-diff": "^1.0.2",
-    "dtrace-provider": "^0.8.8",
     "electron-fetch": "1.7.4",
     "electron-positioner": "^4.0.0",
     "electron-updater": "^4.1.2",
@@ -130,6 +128,8 @@
     "tar": "6.1.11",
     "utf-8-validate": "^6.0.3",
     "uuid": "8.3.2",
+    "winston": "^3.14.2",
+    "winston-daily-rotate-file": "^5.0.0",
     "ws": "^8.13.0",
     "yargs": "17.3.1"
   },
@@ -184,7 +184,6 @@
     "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#1.0.0"
   },
   "resolutions": {
-    "dtrace-provider": "0.8.8",
     "nan": "2.17.0",
     "node-abi": "3.5.0",
     "node-gyp": "9.3.1"

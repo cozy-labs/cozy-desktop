@@ -1,22 +1,23 @@
 /* eslint-env mocha */
 /* @flow */
+const winston = require('winston')
 
-const logger = require('../../../core/utils/logger')
+const { defaultLogger, logger } = require('../../../core/utils/logger')
 
-const { defaultLogger } = logger
 const log = logger({ component: 'mocha' })
 
 const errors = []
 
-defaultLogger.addStream({
-  type: 'raw',
-  level: 'error',
-  stream: {
-    write: function (msg) {
-      errors.push(msg.err || msg)
+defaultLogger.add(
+  new winston.Transport({
+    level: 'error',
+    log: ({ err, message }, callback) => {
+      errors.push(err || message)
+
+      callback()
     }
-  }
-})
+  })
+)
 
 beforeEach(function () {
   errors.length = 0

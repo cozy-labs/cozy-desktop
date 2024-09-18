@@ -23,10 +23,12 @@ const openInWeb = async (
     const { driveWebUrl } = await desktop.findDocument(filePath)
     shell.openExternal(driveWebUrl)
   } catch (err) {
-    log.error(
-      { err, path: filePath, filePath, sentry: true },
-      'Could not find or open remote document'
-    )
+    log.error('Could not find or open remote document', {
+      err,
+      path: filePath,
+      filePath,
+      sentry: true
+    })
     return false
   }
   return true

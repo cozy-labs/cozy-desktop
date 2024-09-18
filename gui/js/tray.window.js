@@ -184,9 +184,9 @@ module.exports = class TrayWM extends WindowManager {
         process.platform
       )
       this.win.setBounds(newBounds)
-      log.trace({ popover, newBounds }, 'placeWithTray ok')
+      log.trace('placeWithTray ok', { popover, newBounds })
     } catch (err) {
-      log.warn({ err, popover }, 'Fail to placeWithTray')
+      log.warn('Fail to placeWithTray', { err, popover })
       this.centerOnScreen(wantedWidth, wantedHeight)
     }
   }
@@ -263,7 +263,7 @@ module.exports = class TrayWM extends WindowManager {
         path /*: string */,
         showInWeb /*: boolean */
       ) => {
-        this.log.debug({ path, showInWeb }, 'open file')
+        this.log.debug('open file', { path, showInWeb })
         this.openPath(path, showInWeb)
       },
       'show-in-parent': (
@@ -291,12 +291,12 @@ module.exports = class TrayWM extends WindowManager {
           .then(() => log.info('remote removed'))
           .then(() => restart())
           .catch(err =>
-            log.error({ err, sentry: true }, 'failed disconnecting client')
+            log.error('failed disconnecting client', { err, sentry: true })
           )
       },
       'manual-start-sync': () =>
         this.desktop.sync.forceSync().catch(err => {
-          if (err) log.error({ err, sentry: true }, 'Could not run manual sync')
+          if (err) log.error('Could not run manual sync', { err, sentry: true })
         }),
       userAlertDetails: async (
         event /*: ElectronEvent */,
@@ -315,7 +315,7 @@ module.exports = class TrayWM extends WindowManager {
             log.error('could not load user alert details content')
           }
         } catch (err) {
-          log.error({ err }, 'could not load user alert details content')
+          log.error('could not load user alert details content', { err })
         }
       },
       userActionInProgress: (
@@ -345,10 +345,10 @@ module.exports = class TrayWM extends WindowManager {
           })
           .then(() => event.sender.send('reinitialization', 'complete'))
           .catch(err => {
-            log.error(
-              { err, sentry: true },
-              'failed reinitializing synchronization'
-            )
+            log.error('failed reinitializing synchronization', {
+              err,
+              sentry: true
+            })
             event.sender.send('reinitialization', 'failed')
           })
       }
@@ -372,15 +372,16 @@ module.exports = class TrayWM extends WindowManager {
     } else if (pathToOpen === '') {
       const err = await shell.openPath(desktop.config.syncPath)
       if (err !== '') {
-        log.error({ err, sentry: true }, 'Could not open sync folder')
+        log.error('Could not open sync folder', { err, sentry: true })
       }
     } else {
       const err = await shell.openPath(pathToOpen)
       if (err !== '') {
-        log.error(
-          { err, path: pathToOpen, sentry: true },
-          'Could not open given path'
-        )
+        log.error('Could not open given path', {
+          err,
+          path: pathToOpen,
+          sentry: true
+        })
       }
     }
   }

@@ -31,7 +31,7 @@ const prepareEvents = require('./prepare_events')
 const sendToPrep = require('./send_to_prep')
 const stater = require('../stater')
 const syncDir = require('../sync_dir')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 const { LOCAL_WATCHER_FATAL_EVENT } = require('../constants')
 
@@ -112,7 +112,7 @@ class LocalWatcher {
       try {
         await this.onFlush(rawEvents)
       } catch (err) {
-        log.error({ err, sentry: true }, 'fatal chokidar watcher error')
+        log.error('fatal chokidar watcher error', { err, sentry: true })
         this.fatal(err)
       }
     })
@@ -165,13 +165,13 @@ class LocalWatcher {
           eventType,
           (path /*: ?string */, stats /*: ?fs.Stats */) => {
             const isInitialScan = !this.initialScanParams.flushed
-            log.chokidar.debug({ path, stats, isInitialScan }, eventType)
+            log.chokidar.debug(eventType, { path, stats, isInitialScan })
             const newEvent = chokidarEvent.build(eventType, path, stats)
             if (newEvent.type !== eventType) {
-              log.info(
-                { eventType, event: newEvent },
-                'fixed wrong fsevents event type'
-              )
+              log.info('fixed wrong fsevents event type', {
+                eventType,
+                event: newEvent
+              })
             }
             this.buffer.push(newEvent)
             this.events.emit('buffering-start')
@@ -182,7 +182,7 @@ class LocalWatcher {
       this.watcher
         .on('ready', () => this.buffer.switchMode('timeout'))
         .on('raw', async (event, path, details) => {
-          log.chokidar.debug({ event, path, details }, 'raw')
+          log.chokidar.debug('raw', { event, path, details })
 
           if (isRescanFlag(details.flags)) {
             try {
@@ -196,12 +196,12 @@ class LocalWatcher {
         .on('error', err => {
           if (err.message === 'watch ENOSPC') {
             log.error(
-              { err, sentry: true },
               'Sorry, the kernel is out of inotify watches! ' +
-                'See doc/usage/inotify.md for how to solve this issue.'
+                'See doc/usage/inotify.md for how to solve this issue.',
+              { err, sentry: true }
             )
           } else {
-            log.error({ err, sentry: true }, 'could not start chokidar watcher')
+            log.error('could not start chokidar watcher', { err, sentry: true })
           }
           this.fatal(err)
         })
@@ -281,7 +281,7 @@ class LocalWatcher {
           const curStat = await stater.stat(fullpath)
           this.watcher.emit('add', relpath, curStat)
         } catch (err) {
-          log.warn({ err }, 'Could not fire remaining add events')
+          log.warn('Could not fire remaining add events', { err })
         }
       }
     }
@@ -327,7 +327,7 @@ class LocalWatcher {
   }
 
   fatal(err /*: Error */) /*: void */ {
-    log.error({ err, sentry: true }, `Local watcher fatal: ${err.message}`)
+    log.error(`Local watcher fatal: ${err.message}`, { err, sentry: true })
     this.events.emit(LOCAL_WATCHER_FATAL_EVENT, err)
     this.events.removeAllListeners(LOCAL_WATCHER_FATAL_EVENT)
     this.stop()

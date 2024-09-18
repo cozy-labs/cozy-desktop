@@ -15,7 +15,7 @@ const { onPlatform } = require('../support/helpers/platform')
 
 const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../core/remote/constants')
 
-const logger = require('../../core/utils/logger')
+const { logger } = require('../../core/utils/logger')
 const log = new logger({ component: 'TEST' })
 
 /*::

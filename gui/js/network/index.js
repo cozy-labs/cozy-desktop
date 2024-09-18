@@ -11,7 +11,7 @@ const yargs = require('yargs')
 const electronFetch = require('electron-fetch').default
 const { app } = require('electron')
 
-const logger = require('../../../core/utils/logger')
+const { logger } = require('../../../core/utils/logger')
 const { ProxyAgent, getProxyForUrl } = require('./agent')
 
 /*::
@@ -74,7 +74,7 @@ const networkConfig = (argv /*: Array<*> */ = process.argv) => {
     .help('help')
     .parse(argv)
 
-  log.debug({ networkConfig }, 'argv')
+  log.debug('argv', { networkConfig })
   return networkConfig
 }
 
@@ -93,15 +93,12 @@ const getSession = (
   syncSession.setCertificateVerifyProc((request, callback) => {
     const { hostname, certificate, verificationResult, errorCode } = request
     if (verificationResult < 0) {
-      log.warn(
-        {
-          hostname,
-          certificate: formatCertificate(certificate),
-          verificationResult,
-          errorCode
-        },
-        'Certificate Verification Error'
-      )
+      log.warn('Certificate Verification Error', {
+        hostname,
+        certificate: formatCertificate(certificate),
+        verificationResult,
+        errorCode
+      })
     }
     callback(-3) // use chrome validation
   })
@@ -177,7 +174,7 @@ const setupProxy = async (
   https.globalAgent = httpsAgent
 
   electronApp.on('login', (event, webContents, request, authInfo, callback) => {
-    log.debug({ request: request.method + ' ' + request.url }, 'Login event')
+    log.debug('Login event', { request: request.method + ' ' + request.url })
     const auth = loginByRealm[authInfo.realm]
     if (auth) {
       event.preventDefault()
@@ -191,7 +188,7 @@ const setupProxy = async (
   electronApp.on(
     'select-client-certificate',
     (event, webContents, url, list, callback) => {
-      log.debug({ url }, 'select-client-certificate')
+      log.debug('select-client-certificate', { url })
       callback()
     }
   )
@@ -199,10 +196,11 @@ const setupProxy = async (
   electronApp.on(
     'certificate-error',
     (event, webContents, url, error, certificate, callback) => {
-      log.error(
-        { url, error, certificate: formatCertificate(certificate) },
-        'App Certificate Error'
-      )
+      log.error('App Certificate Error', {
+        url,
+        error,
+        certificate: formatCertificate(certificate)
+      })
       callback(false)
     }
   )

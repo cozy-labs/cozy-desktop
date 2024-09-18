@@ -7,7 +7,7 @@ const { default: CozyClient, models } = require('cozy-client')
 
 const { NOTE_MIME_TYPE } = require('../remote/constants')
 
-const logger = require('./logger')
+const { logger } = require('./logger')
 const log = logger({
   component: 'Notes'
 })
@@ -137,7 +137,7 @@ const findNote = async (
 
   try {
     const note = await localDoc(filePath, { config, pouch })
-    log.info({ note }, 'note object')
+    log.info('note object', { note })
 
     const client = await getCozyClient({ remote })
     if (!client) {
@@ -150,7 +150,7 @@ const findNote = async (
     }
 
     const noteUrl = await models.note.fetchURL(client, { id: note.remote._id })
-    log.info({ noteUrl }, 'computed url')
+    log.info('computed url', { noteUrl })
     return { noteUrl }
   } catch (err) {
     const filename = path.basename(filePath)
@@ -158,10 +158,10 @@ const findNote = async (
     try {
       content = await parseArchive(filePath)
     } catch (parseErr) {
-      log.warn(
-        { err: parseErr, path: filePath },
-        'could not parse given Cozy Note archive'
-      )
+      log.warn('could not parse given Cozy Note archive', {
+        err: parseErr,
+        path: filePath
+      })
       if (parseErr === 'TAR_ENTRY_INVALID' || parseErr === 'TAR_BAD_ARCHIVE') {
         content = await fse.readFile(filePath, 'utf8')
       } else {
@@ -171,7 +171,7 @@ const findNote = async (
 
     if (err.name === 'FetchError') {
       if (err.status === 403 || err.status === 404) {
-        log.warn({ err, path: filePath }, 'could not find remote Note')
+        log.warn('could not find remote Note', { err, path: filePath })
         throw new CozyNoteError({
           code: 'CozyDocumentMissingError',
           cozyURL: config.cozyUrl,
@@ -179,7 +179,7 @@ const findNote = async (
           content
         })
       } else {
-        log.warn({ err, path: filePath }, 'could not reach remote Cozy')
+        log.warn('could not reach remote Cozy', { err, path: filePath })
         throw new CozyNoteError({
           code: 'UnreachableError',
           cozyURL: config.cozyUrl,
@@ -188,7 +188,7 @@ const findNote = async (
         })
       }
     } else {
-      log.error({ err, path: filePath, sentry: true }, 'could not open note')
+      log.error('could not open note', { err, path: filePath, sentry: true })
       err.doc = { name: filename }
       err.content = content
       throw err

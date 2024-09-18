@@ -5,7 +5,7 @@ const { generateWebLink } = require('cozy-client')
 
 const { DIR_TYPE } = require('../remote/constants')
 const capabilities = require('./capabilities')
-const logger = require('./logger')
+const { logger } = require('./logger')
 
 const log = new logger({
   component: 'Web'
@@ -41,7 +41,7 @@ async function findDocument(
         ? `folder/${doc.remote._id}`
         : `folder/${doc.remote.dir_id}/file/${doc.remote._id}`
       : ''
-    log.debug({ path: filePath, doc, hash }, 'findDocument')
+    log.debug('findDocument', { path: filePath, doc, hash })
 
     return {
       driveWebUrl: generateWebLink({
@@ -54,7 +54,7 @@ async function findDocument(
       })
     }
   } else {
-    log.debug({ path: filePath, doc }, 'findDocument')
+    log.debug('findDocument', { path: filePath, doc })
 
     return {
       driveWebUrl: generateWebLink({

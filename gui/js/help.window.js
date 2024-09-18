@@ -44,7 +44,7 @@ module.exports = class HelpWM extends WindowManager {
             return
           })
           .catch(err => {
-            log.error({ err, sentry: true }, 'failed sending mail to support')
+            log.error('failed sending mail to support', { err, sentry: true })
             if (event.sender) {
               event.sender.send('mail-sent', {
                 message: 'Help An error occured while sending your email'

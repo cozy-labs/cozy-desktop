@@ -15,7 +15,7 @@ const remoteDocument = require('../remote/document')
 const remoteErrors = require('../remote/errors')
 const remoteConstants = require('../remote/constants')
 const { otherSide } = require('../side')
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 const measureTime = require('../utils/perfs')
 const { LifeCycle } = require('../utils/lifecycle')
 const syncErrors = require('./errors')
@@ -366,7 +366,7 @@ class Sync {
   }
 
   fatal(err /*: Error */) {
-    log.error({ err, sentry: true }, `Sync fatal: ${err.message}`)
+    log.error(`Sync fatal: ${err.message}`, { err, sentry: true })
 
     if (this.lifecycle.willStart()) {
       // The start phase needs to be ended before calling stop() or we won't be
@@ -460,12 +460,14 @@ class Sync {
             remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
           ].includes(err.code)
         ) {
-          log.error(
-            { err, change, path, sentry: true },
-            `Sync error: ${err.message}`
-          )
+          log.error(`Sync error: ${err.message}`, {
+            err,
+            change,
+            path,
+            sentry: true
+          })
         } else {
-          log.warn({ err, change, path }, `Sync error: ${err.message}`)
+          log.warn(`Sync error: ${err.message}`, { err, change, path })
         }
         switch (err.code) {
           case remoteErrors.COZY_NOT_FOUND_CODE:
@@ -538,18 +540,19 @@ class Sync {
               // Solve 1. & 2.
               this.blockSyncFor({ err, change })
             } else {
-              log.error(
-                { path, err, change },
-                'Parent directory is missing on Cozy'
-              )
+              log.error('Parent directory is missing on Cozy', {
+                path,
+                err,
+                change
+              })
               const parent = await this.pouch.bySyncedPath(dirname(path))
               if (!parent) {
                 // Solve 3.
                 // This is a weird situation where we don't have a parent in
                 // PouchDB. This should never be the case though.
                 log.error(
-                  { path, err, change, sentry: true },
-                  'Parent directory could not be found either on Cozy or PouchDB. Abandoning.'
+                  'Parent directory could not be found either on Cozy or PouchDB. Abandoning.',
+                  { path, err, change, sentry: true }
                 )
                 await this.skipChange(change, err)
               } else if (parent.remote) {
@@ -557,10 +560,12 @@ class Sync {
                 // path is the parent path of our document but its remote path is
                 // not and the synchronization did not change this.
                 // The database is corrupted and should be cleaned up.
-                log.error(
-                  { path, err, change, sentry: true },
-                  'Parent directory is desynchronized. Abandoning.'
-                )
+                log.error('Parent directory is desynchronized. Abandoning.', {
+                  path,
+                  err,
+                  change,
+                  sentry: true
+                })
                 await this.skipChange(change, err)
               } else {
                 // Solve 3. or 4.
@@ -598,7 +603,7 @@ class Sync {
   // Wait until a change is emitted by PouchDB into its changesfeed (i.e. we've
   // merged some change on a document).
   async waitForNewChanges(seq /*: number */) {
-    log.trace({ seq }, 'Waiting for changes since seq')
+    log.trace('Waiting for changes since seq', { seq })
     const opts = this.baseChangeOptions(seq)
     opts.live = true
     return new Promise((resolve, reject) => {
@@ -665,7 +670,7 @@ class Sync {
             metadata.isUpToDate('local', doc) &&
             metadata.isUpToDate('remote', doc)
           ) {
-            log.info({ path: doc.path }, 'up to date')
+            log.info('up to date', { path: doc.path })
             asyncOps.push(this.pouch.setLocalSeq(seq))
           } else {
             asyncOps.push(
@@ -698,7 +703,7 @@ class Sync {
   // that it will indeed be merged at some point or we will end up waiting
   // forever.
   async waitForNewChangeOn(seq /*: number */, expectedPath /*: string */) {
-    log.debug({ path: expectedPath }, 'Waiting for new change to be merged')
+    log.debug('Waiting for new change to be merged', { path: expectedPath })
 
     return new Promise((resolve, reject) => {
       const opts = {
@@ -737,17 +742,16 @@ class Sync {
         .changes(opts)
         .on('change', ({ doc }) => {
           if (doc.path === expectedPath) {
-            log.debug({ path: expectedPath }, 'New change merged')
+            log.debug('New change merged', { path: expectedPath })
             done()
           }
         })
         .on('error', done)
 
       changesTimeout = setTimeout(() => {
-        log.debug(
-          { path: expectedPath },
-          'No changes merged in 5 minutes. Moving on'
-        )
+        log.debug('No changes merged in 5 minutes. Moving on', {
+          path: expectedPath
+        })
         done()
       }, 5 * 60 * 1000)
     })
@@ -763,7 +767,7 @@ class Sync {
 
       let { doc, seq } = change
       const { path } = doc
-      log.debug({ path, seq, doc }, `Applying change ${seq}...`)
+      log.debug(`Applying change ${seq}...`, { path, seq, doc })
 
       if (metadata.shouldIgnore(doc, this.ignore)) {
         return this.pouch.setLocalSeq(seq)
@@ -777,7 +781,7 @@ class Sync {
 
       const side = this.selectSide(change)
       if (!side) {
-        log.info({ path }, 'up to date')
+        log.info('up to date', { path })
         return this.pouch.setLocalSeq(seq)
       }
 
@@ -790,7 +794,7 @@ class Sync {
       }
 
       await this.pouch.setLocalSeq(seq)
-      log.trace({ path, seq }, `Applied change on ${side.name} side`)
+      log.trace(`Applied change on ${side.name} side`, { path, seq })
 
       // Clean up documents so that we don't mistakenly take action based on
       // previous changes and keep our Pouch documents as small as possible
@@ -821,19 +825,19 @@ class Sync {
         // Move compatible -> incompatible
         if (!was.childMove) {
           log.warn(
+            `Not syncing ${side.name} ${doc.docType} since new remote one is incompatible`,
             {
               path: doc.path,
               oldpath: was.path,
               incompatibilities: doc.incompatibilities
-            },
-            `Not syncing ${side.name} ${doc.docType} since new remote one is incompatible`
+            }
           )
         }
       } else {
-        log.warn(
-          { path: doc.path, incompatibilities: doc.incompatibilities },
-          `Not syncing incompatible ${doc.docType}`
-        )
+        log.warn(`Not syncing incompatible ${doc.docType}`, {
+          path: doc.path,
+          incompatibilities: doc.incompatibilities
+        })
       }
       throw new IncompatibleDocError({ doc })
     } else if (
@@ -845,10 +849,9 @@ class Sync {
       // do nothing
     } else if (doc.moveFrom != null) {
       const from = (doc.moveFrom /*: SavedMetadata */)
-      log.debug(
-        { path: doc.path },
-        `Applying ${doc.docType} change with moveFrom`
-      )
+      log.debug(`Applying ${doc.docType} change with moveFrom`, {
+        path: doc.path
+      })
 
       if (from.incompatibilities && side.name === 'local') {
         await this.doAdd(side, doc)
@@ -878,20 +881,20 @@ class Sync {
         }
       }
     } else if (isMarkedForDeletion(doc)) {
-      log.debug({ path: doc.path }, `Applying ${doc.docType} deletion`)
+      log.debug(`Applying ${doc.docType} deletion`, { path: doc.path })
       await this.trashWithParentOrByItself(doc, side)
     } else if (!metadata.wasSynced(doc)) {
-      log.debug({ path: doc.path }, `Applying ${doc.docType} addition`)
+      log.debug(`Applying ${doc.docType} addition`, { path: doc.path })
       await this.doAdd(side, doc)
     } else {
-      log.debug({ path: doc.path }, `Applying else for ${doc.docType} change`)
+      log.debug(`Applying else for ${doc.docType} change`, { path: doc.path })
       const outdated = outdatedMetadata(doc, side.name)
       if (outdated) {
         if (
           (side.name === 'local' && metadata.equivalentLocal(outdated, doc)) ||
           (side.name === 'remote' && metadata.equivalentRemote(outdated, doc))
         ) {
-          log.debug({ path: doc.path }, 'Ignoring timestamp-only change')
+          log.debug('Ignoring timestamp-only change', { path: doc.path })
         } else if (metadata.isFolder(doc)) {
           await side.updateFolderAsync(doc)
         } else if (metadata.isFile(doc)) {
@@ -906,10 +909,10 @@ class Sync {
         // and it should have been dealt with by another conditionnal block.
         // This means we should never run this code block but we'll add it just
         // in case.
-        log.debug(
-          { path: doc.path, sentry: true },
-          `Applying unexpected ${doc.docType} addition`
-        )
+        log.debug(`Applying unexpected ${doc.docType} addition`, {
+          path: doc.path,
+          sentry: true
+        })
         await this.doAdd(side, doc)
       }
     }
@@ -1044,10 +1047,11 @@ class Sync {
           await syncErrors.linkDirectories(cause, this)
           break
         default:
-          log.error(
-            { path: cause.change && cause.change.doc.path, cmd, sentry: true },
-            'received invalid user action command'
-          )
+          log.error('received invalid user action command', {
+            path: cause.change && cause.change.doc.path,
+            cmd,
+            sentry: true
+          })
           await syncErrors.retry(cause, this)
       }
 
@@ -1139,9 +1143,9 @@ class Sync {
       // So, we can skip this revision
       if (err.status === 409) {
         const was = await this.pouch.byIdMaybe(doc._id)
-        log.info({ err, doc, was }, `Ignored ${change.seq}`)
+        log.info(`Ignored ${change.seq}`, { err, doc, was })
       } else {
-        log.info({ err }, `Ignored ${change.seq}`)
+        log.info(`Ignored ${change.seq}`, { err })
       }
       await this.pouch.setLocalSeq(change.seq)
     }
@@ -1153,15 +1157,12 @@ class Sync {
   ) /*: Promise<void> */ {
     const { doc } = change
     const { errors = 0 } = doc
-    log.error(
-      {
-        err,
-        path: doc.path,
-        oldpath: _.get(doc, 'moveFrom.path'),
-        sentry: true
-      },
-      `Failed to sync ${errors + 1} times. Giving up.`
-    )
+    log.error(`Failed to sync ${errors + 1} times. Giving up.`, {
+      err,
+      path: doc.path,
+      oldpath: _.get(doc, 'moveFrom.path'),
+      sentry: true
+    })
     await this.pouch.setLocalSeq(change.seq)
   }
 
@@ -1191,10 +1192,11 @@ class Sync {
           }
         })
       } else {
-        log.error(
-          { path: doc.path, err, sentry: true },
-          'Race condition on updateRevs'
-        )
+        log.error('Race condition on updateRevs', {
+          path: doc.path,
+          err,
+          sentry: true
+        })
       }
     }
   }
@@ -1217,10 +1219,9 @@ class Sync {
         isMarkedForDeletion(parent) &&
         !metadata.isUpToDate(side.name, parent)
       ) {
-        log.info(
-          { path: doc.path },
-          `${doc.docType} will be trashed within its parent directory`
-        )
+        log.info(`${doc.docType} will be trashed within its parent directory`, {
+          path: doc.path
+        })
         // XXX: doc will be erased from PouchDB as it is marked as `deleted`.
         // This means that, until the parent deletion is synchronized, our local
         // PouchDB won't reflect the reality.
@@ -1229,7 +1230,7 @@ class Sync {
     }
 
     if (metadata.isFolder(doc)) {
-      log.info({ path: doc.path }, 'folder will be trashed with its content')
+      log.info('folder will be trashed with its content', { path: doc.path })
 
       // Erase child records as they will be trashed with their parent
       const children = await this.pouch.byRecursivePath(doc.path)
@@ -1248,7 +1249,7 @@ class Sync {
         if (maybeIndex) this.currentChangesToApply.splice(maybeIndex, 1)
       }
     } else {
-      log.info({ path: doc.path }, 'file will be trashed by itself')
+      log.info('file will be trashed by itself', { path: doc.path })
     }
 
     await side.trashAsync(doc)

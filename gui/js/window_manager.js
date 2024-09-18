@@ -46,7 +46,7 @@ module.exports = class WindowManager {
         _.get(event, 'sender.browserWindowOptions.title') ===
         this.windowOptions().title
       ) {
-        this.log.error({ err, sentry: true }, err.message)
+        this.log.error(err.message, { err, sentry: true })
       }
     })
   }
@@ -162,7 +162,7 @@ module.exports = class WindowManager {
       this.win.setSize(wantedWidth, wantedHeight, true)
       this.win.center()
     } catch (err) {
-      log.warn({ err, wantedWidth, wantedHeight }, 'Failed to centerOnScreen')
+      log.warn('Failed to centerOnScreen', { err, wantedWidth, wantedHeight })
     }
   }
 
@@ -252,7 +252,7 @@ module.exports = class WindowManager {
           }, ELMSTARTUP)
         })
       }
-    }).catch(err => log.error({ err, sentry: true }, 'failed showing window'))
+    }).catch(err => log.error('failed showing window', { err, sentry: true }))
 
     this.win.loadURL(`file://${opts.indexPath}${this.hash()}`)
 

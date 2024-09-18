@@ -28,7 +28,7 @@ const {
   jsonApiToRemoteJsonDoc,
   jsonFileVersionToRemoteFileVersion
 } = require('./document')
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 const { sortBy } = require('../utils/array')
 
 /*::
@@ -523,14 +523,13 @@ class RemoteCozy {
     const warningsPath = '/settings/warnings'
     try {
       const response = await this.client.fetchJSON('GET', warningsPath)
-      log.warn(
-        { response },
-        'Unexpected warnings response. Assuming no warnings.'
-      )
+      log.warn('Unexpected warnings response. Assuming no warnings.', {
+        response
+      })
       return []
     } catch (err) {
       const { message, status } = err
-      log.debug({ status }, warningsPath)
+      log.debug(warningsPath, { status })
       switch (status) {
         case 402:
           return JSON.parse(message).errors
@@ -610,7 +609,7 @@ class RemoteCozy {
 
       return flags
     } catch (err) {
-      log.error({ err }, 'could not fetch remote flags')
+      log.error('could not fetch remote flags', { err })
       return {}
     }
   }

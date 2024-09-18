@@ -11,7 +11,7 @@
 const _ = require('lodash')
 
 const Channel = require('./channel')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 const STEP_NAME = 'awaitWriteFinish'
 
@@ -121,8 +121,8 @@ function aggregateEvents(oldEvent, recentEvent) {
     if (oldEvent.action === 'created') {
       // It's just a temporary file that we can ignore
       log.debug(
-        { createdEvent: oldEvent, deletedEvent: recentEvent },
-        `Ignore ${oldEvent.kind} ${oldEvent.action} then ${recentEvent.action}`
+        `Ignore ${oldEvent.kind} ${oldEvent.action} then ${recentEvent.action}`,
+        { createdEvent: oldEvent, deletedEvent: recentEvent }
       )
 
       return
@@ -217,10 +217,10 @@ function debounce(waiting /*: WaitingItem[] */, events /*: ChannelEvent[] */) {
             if (event.action === 'deleted') {
               if (e.action === 'created') {
                 // It's just a temporary file that we can ignore
-                log.debug(
-                  { createdEvent: e, deletedEvent: event },
-                  `Ignore ${e.kind} ${e.action} then ${event.action}`
-                )
+                log.debug(`Ignore ${e.kind} ${e.action} then ${event.action}`, {
+                  createdEvent: e,
+                  deletedEvent: event
+                })
                 events.splice(i, 1)
                 i--
               } else if (e.action === 'renamed') {

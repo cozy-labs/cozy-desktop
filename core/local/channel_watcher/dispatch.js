@@ -11,7 +11,7 @@ const _ = require('lodash')
 
 const { buildDir, buildFile } = require('../../metadata')
 const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../config')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 const STEP_NAME = 'dispatch'
 const component = `ChannelWatcher/${STEP_NAME}`
@@ -88,7 +88,7 @@ function step(opts /*: DispatchOptions */) {
       try {
         await dispatchEvent(event, opts)
       } catch (err) {
-        log.warn({ err, event }, 'could not dispatch local event')
+        log.warn('could not dispatch local event', { err, event })
       }
     }
 
@@ -104,7 +104,7 @@ async function dispatchEvent(
   event /*: ChannelEvent */,
   opts /*: DispatchOptions */
 ) {
-  log.trace({ event }, 'dispatch')
+  log.trace('dispatch', { event })
   if (event.action === 'initial-scan-done') {
     actions.initialScanDone(opts)
   } else if (event.action === 'ignored') {
@@ -143,7 +143,7 @@ actions = {
   },
 
   ignored: event => {
-    log.debug({ event }, 'Ignored')
+    log.debug('Ignored', { event })
   },
 
   scanfile: (event, opts) => actions.createdfile(event, opts, 'File found'),
@@ -152,25 +152,25 @@ actions = {
     actions.createddirectory(event, opts, 'Dir found'),
 
   createdfile: async (event, { prep }, description = 'File added') => {
-    log.info({ event }, description)
+    log.info(description, { event })
     const doc = buildFile(event.path, event.stats, event.md5sum)
     await prep.addFileAsync(SIDE, doc)
   },
 
   createddirectory: async (event, { prep }, description = 'Dir added') => {
-    log.info({ event }, description)
+    log.info(description, { event })
     const doc = buildDir(event.path, event.stats)
     await prep.putFolderAsync(SIDE, doc)
   },
 
   modifiedfile: async (event, { prep }) => {
-    log.info({ event }, 'File modified')
+    log.info('File modified', { event })
     const doc = buildFile(event.path, event.stats, event.md5sum)
     await prep.updateFileAsync(SIDE, doc)
   },
 
   modifieddirectory: async (event, { prep }) => {
-    log.info({ event }, 'Dir modified')
+    log.info('Dir modified', { event })
     const doc = buildDir(event.path, event.stats)
     await prep.putFolderAsync(SIDE, doc)
   },
@@ -180,7 +180,7 @@ actions = {
     // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
       if (await docWasAlreadyMoved(event.oldPath, event.path, pouch)) {
-        log.debug({ event }, 'Assuming file already moved')
+        log.debug('Assuming file already moved', { event })
         return
       }
 
@@ -193,10 +193,10 @@ actions = {
       return actions.createdfile(event, { prep }, 'File moved, assuming added')
     } else if (was.ino !== event.stats.ino) {
       _.set(event, [STEP_NAME, 'moveSrcReplacement'], _.clone(was))
-      log.warn({ event }, 'File move source has been replaced in Pouch')
+      log.warn('File move source has been replaced in Pouch', { event })
       return
     }
-    log.info({ event }, 'File moved')
+    log.info('File moved', { event })
 
     const doc = buildFile(event.path, event.stats, event.md5sum)
     if (event.overwrite) {
@@ -212,7 +212,7 @@ actions = {
     // If was is marked for deletion, we'll transform it into a move.
     if (!was) {
       if (await docWasAlreadyMoved(event.oldPath, event.path, pouch)) {
-        log.debug({ event }, 'Assuming dir already moved')
+        log.debug('Assuming dir already moved', { event })
         return
       }
 
@@ -229,10 +229,10 @@ actions = {
       )
     } else if (was.ino !== event.stats.ino) {
       _.set(event, [STEP_NAME, 'moveSrcReplacement'], _.clone(was))
-      log.warn({ event }, 'Dir move source has been replaced in Pouch')
+      log.warn('Dir move source has been replaced in Pouch', { event })
       return
     }
-    log.info({ event }, 'Dir moved')
+    log.info('Dir moved', { event })
 
     const doc = buildDir(event.path, event.stats)
     if (event.overwrite) {
@@ -246,24 +246,24 @@ actions = {
   deletedfile: async (event, { pouch, prep }) => {
     const was /*: ?Metadata */ = await pouch.byLocalPath(event.path)
     if (!was || was.trashed) {
-      log.debug({ event }, 'Assuming file already removed')
+      log.debug('Assuming file already removed', { event })
       // The file was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
     }
-    log.info({ event }, 'File removed')
+    log.info('File removed', { event })
     await prep.trashFileAsync(SIDE, was)
   },
 
   deleteddirectory: async (event, { pouch, prep }) => {
     const was /*: ?Metadata */ = await pouch.byLocalPath(event.path)
     if (!was || was.trashed) {
-      log.debug({ event }, 'Assuming dir already removed')
+      log.debug('Assuming dir already removed', { event })
       // The dir was already marked as deleted in pouchdb
       // => we can ignore safely this event
       return
     }
-    log.info({ event }, 'Dir removed')
+    log.info('Dir removed', { event })
     await prep.trashFolderAsync(SIDE, was)
   }
 }

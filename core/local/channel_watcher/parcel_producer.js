@@ -10,7 +10,7 @@ const parcel = require('@parcel/watcher')
 
 const Channel = require('./channel')
 const { INITIAL_SCAN_DONE } = require('./event')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 /*::
 import type { Config } from '../../config'
@@ -176,7 +176,7 @@ class Producer {
     ).filter(event => event != null && event.action !== 'ignored')
 
     if (batch.length > 0) {
-      log.trace({ batch }, 'process')
+      log.trace('process', { batch })
       this.channel.push(batch)
     }
   }

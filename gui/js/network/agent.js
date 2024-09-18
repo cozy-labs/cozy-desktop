@@ -17,7 +17,7 @@ const { HttpsProxyAgent } = require('https-proxy-agent')
 const { SocksProxyAgent } = require('socks-proxy-agent')
 const _ = require('lodash')
 
-const logger = require('../../../core/utils/logger')
+const { logger } = require('../../../core/utils/logger')
 const log = logger({
   component: 'ProxyAgent'
 })
@@ -129,7 +129,7 @@ class ProxyAgent extends Agent {
 
   constructor(opts /*:: ?: AgentConnectOpts */ = {}) {
     super(opts)
-    log.debug({ opts }, 'Creating new ProxyAgent instance')
+    log.debug('Creating new ProxyAgent instance', { opts })
     this.cache = new LRUCache({ max: 20 })
     this.proxyHeaders = opts && opts.headers ? opts.headers : {}
     this.connectOpts = _.omit(opts, 'headers')
@@ -214,7 +214,7 @@ class ProxyAgent extends Agent {
 // It is meant to be used with `ProxyAgent`.
 const getProxyForUrl =
   (session /*: Session */) => async (reqUrl /*: string */) => {
-    log.info({ reqUrl }, 'getProxyForUrl')
+    log.info('getProxyForUrl', { reqUrl })
     const proxy = await session.resolveProxy(reqUrl)
     if (!proxy) {
       return ''
@@ -236,7 +236,7 @@ const getProxyForUrl =
     } else if (['SOCKS', 'SOCKS5', 'HTTPS'].includes(type)) {
       return `${type.toLowerCase()}://${addr}`
     } else {
-      log.error({ type, reqUrl }, 'Unknown proxy type')
+      log.error('Unknown proxy type', { type, reqUrl })
       return ''
     }
   }

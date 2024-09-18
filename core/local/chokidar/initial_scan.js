@@ -5,7 +5,7 @@
  */
 
 const chokidarEvent = require('./event')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 const metadata = require('../../metadata')
 const { SYNC_DIR_EMPTY_MESSAGE } = require('../errors')
 
@@ -57,7 +57,7 @@ const detectOfflineUnlinkEvents = async (
       // unapplied move
       unappliedMoves.push(metadata.id(doc.moveFrom.path))
     } else {
-      log.debug({ path: doc.path }, 'pretend unlink or unlinkDir')
+      log.debug('pretend unlink or unlinkDir', { path: doc.path })
       events.unshift(chokidarEvent.pretendUnlinkFromMetadata(doc))
     }
   }
@@ -97,7 +97,7 @@ const step = async (
     return []
   }
 
-  log.debug({ initialEvents: events }, 'Done with initial scan')
+  log.debug('Done with initial scan', { initialEvents: events })
   return events
 }
 

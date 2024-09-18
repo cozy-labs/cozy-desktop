@@ -9,7 +9,7 @@
  * @flow
  */
 
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 const STEP_NAME = 'scanFolder'
 
@@ -37,7 +37,7 @@ function loop(
       }
       if (event.action === 'created' && event.kind === 'directory') {
         opts.scan(event.path).catch(err => {
-          log.warn({ err, event }, 'Error on folder scan')
+          log.warn('Error on folder scan', { err, event })
         })
       }
     }

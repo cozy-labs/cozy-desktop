@@ -27,8 +27,7 @@ const { Remote } = require('./remote')
 const { Sync } = require('./sync')
 const SyncState = require('./syncstate')
 const Registration = require('./remote/registration')
-const logger = require('./utils/logger')
-const { LOG_FILE, LOG_FILENAME } = logger
+const { logger, LOG_BASENAME } = require('./utils/logger')
 const { sendToTrash } = require('./utils/fs')
 const notes = require('./utils/notes')
 const web = require('./utils/web')
@@ -79,7 +78,7 @@ class App {
 
   // basePath is the directory where the config and pouch are saved
   constructor(basePath /*: string */) {
-    log.info(this.clientInfo(), 'constructor')
+    log.info('constructor', this.clientInfo())
     this.lang = 'fr'
     if (basePath == null) {
       basePath = os.homedir()
@@ -177,20 +176,19 @@ class App {
     } catch (err) {
       let parsed /*: Object */ = this.parseCozyUrl(cozyUrl)
       if (err === 'Bad credentials') {
-        log.warn(
-          { err },
-          'The Cozy passphrase used for registration is incorrect'
-        )
+        log.warn('The Cozy passphrase used for registration is incorrect', {
+          err
+        })
       } else if (err.code === 'ENOTFOUND') {
         log.warn(
-          { err },
-          `The DNS resolution for ${parsed.hostname} failed while registering the device.`
+          `The DNS resolution for ${parsed.hostname} failed while registering the device.`,
+          { err }
         )
       } else {
-        log.error(
-          { err, sentry: true },
-          'An error occured while registering the device.'
-        )
+        log.error('An error occured while registering the device.', {
+          err,
+          sentry: true
+        })
         if (parsed.protocol === 'http:') {
           log.warn('Did you try with an httpS URL?')
         }
@@ -214,10 +212,10 @@ class App {
       log.info('Current device properly removed from remote cozy.')
       return null
     } catch (err) {
-      log.error(
-        { err, sentry: true },
-        'An error occured while unregistering the device.'
-      )
+      log.error('An error occured while unregistering the device.', {
+        err,
+        sentry: true
+      })
       return err
     }
   }
@@ -226,7 +224,7 @@ class App {
     log.info('Removing config...')
     await this.pouch.db.destroy()
     for (const name of await fse.readdir(this.basePath)) {
-      if (name.startsWith(LOG_FILENAME)) continue
+      if (name.startsWith(LOG_BASENAME)) continue
       await fse.remove(path.join(this.basePath, name))
     }
     log.info('Config removed')
@@ -266,34 +264,57 @@ class App {
     })
   }
 
+  async listLogFiles() {
+    let logFiles = []
+    for (const name of await fse.readdir(this.basePath)) {
+      if (name.startsWith(LOG_BASENAME)) {
+        logFiles.push(path.join(this.basePath, name))
+      }
+    }
+    return logFiles
+  }
+
   // Send an issue by mail to the support
   async sendMailToSupport(content /*: string */) {
     const incidentID = uuid()
-    const zipper = createGzip({
-      // TODO tweak this values, low resources for now.
-      memLevel: 7,
-      level: 3
-    })
-    const logs = fse.createReadStream(LOG_FILE)
 
-    let pouchdbTree /*: ?Metadata[] */
-    try {
-      pouchdbTree = await this.pouch.localTree()
-    } catch (err) {
-      log.error({ err, sentry: true }, 'FAILED TO FETCH LOCAL TREE')
+    const sendLogs = async () => {
+      const logFiles = await this.listLogFiles()
+
+      if (logFiles.length === 0) {
+        return
+      } else {
+        const zipper = createGzip({
+          // TODO tweak this values, low resources for now.
+          memLevel: 7,
+          level: 3
+        })
+        const logs = fse.createReadStream(logFiles[logFiles.length - 1])
+
+        return this.uploadFileToSupport(
+          incidentID,
+          'logs.gz',
+          logs.pipe(zipper)
+        )
+      }
     }
 
-    const logsSent = Promise.all([
-      this.uploadFileToSupport(incidentID, 'logs.gz', logs.pipe(zipper)),
-      pouchdbTree
-        ? this.uploadFileToSupport(
-            incidentID,
-            'pouchdtree.json',
-            JSON.stringify(pouchdbTree)
-          )
-        : Promise.resolve()
-    ]).catch(err => {
-      log.error({ err, sentry: true }, 'FAILED TO SEND LOGS')
+    const sendPouchDBTree = async () => {
+      const pouchdbTree = await this.pouch.localTree()
+
+      if (!pouchdbTree) {
+        return
+      } else {
+        return this.uploadFileToSupport(
+          incidentID,
+          'pouchdtree.json',
+          JSON.stringify(pouchdbTree)
+        )
+      }
+    }
+
+    const logsSent = Promise.all([sendLogs(), sendPouchDBTree()]).catch(err => {
+      log.error('FAILED TO SEND LOGS', { err, sentry: true })
     })
 
     content =
@@ -351,7 +372,7 @@ class App {
 
   async setup() {
     const clientInfo = this.clientInfo()
-    log.info(clientInfo, 'user config')
+    log.info('user config', clientInfo)
 
     if (!this.config.isValid()) {
       throw new config.InvalidConfigError()
@@ -362,10 +383,11 @@ class App {
       try {
         this.config.version = clientInfo.appVersion
       } catch (err) {
-        log.error(
-          { err, clientInfo, sentry: true },
-          'could not update config version after app update'
-        )
+        log.error('could not update config version after app update', {
+          err,
+          clientInfo,
+          sentry: true
+        })
         wasUpdated = false
       }
 
@@ -380,10 +402,10 @@ class App {
           this.config.setFlag(config.WINDOWS_DATE_MIGRATION_FLAG, true)
         }
       } catch (err) {
-        log.error(
-          { err, sentry: true },
-          `could not set ${config.WINDOWS_DATE_MIGRATION_FLAG} flag`
-        )
+        log.error(`could not set ${config.WINDOWS_DATE_MIGRATION_FLAG} flag`, {
+          err,
+          sentry: true
+        })
       }
     }
 
@@ -396,10 +418,11 @@ class App {
       try {
         this.remote.update()
       } catch (err) {
-        log.error(
-          { err, config: this.config, sentry: true },
-          'could not update OAuth client after app update'
-        )
+        log.error('could not update OAuth client after app update', {
+          err,
+          config: this.config,
+          sentry: true
+        })
       }
     }
   }

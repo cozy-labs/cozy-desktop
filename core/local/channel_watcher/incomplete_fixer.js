@@ -16,7 +16,7 @@
 const path = require('path')
 
 const stater = require('../stater')
-const logger = require('../../utils/logger')
+const { logger } = require('../../utils/logger')
 
 const STEP_NAME = 'incompleteFixer'
 
@@ -214,7 +214,7 @@ function step(
     // Filter incomplete events
     for (const event of events) {
       if (event.incomplete && event.action !== 'ignored') {
-        log.debug({ path: event.path, action: event.action }, 'incomplete')
+        log.debug('incomplete', { path: event.path, action: event.action })
         state.incompletes.push({ event, timestamp: Date.now() })
       }
     }
@@ -227,10 +227,10 @@ function step(
 
         // Remove the expired incomplete events
         if (item.timestamp + DELAY < now) {
-          log.debug(
-            { path: item.event.path, event: item.event },
-            'Dropping expired incomplete event'
-          )
+          log.debug('Dropping expired incomplete event', {
+            path: item.event.path,
+            event: item.event
+          })
           state.incompletes.splice(i, 1)
           i--
         }
@@ -264,7 +264,7 @@ function step(
           }
 
           const { rebuilt } = completion
-          log.debug({ path: event.path, rebuilt }, 'rebuilt event')
+          log.debug('rebuilt event', { path: event.path, rebuilt })
 
           // If the incomplete event is for a document that was previously saved
           // (e.g. a temporary document now renamed), we'll want to make sure the old
@@ -307,10 +307,11 @@ function step(
             state.incompletes.splice(i, 1)
           }
         } catch (err) {
-          log.warn(
-            { err, event, item },
-            'Error while rebuilding incomplete event'
-          )
+          log.warn('Error while rebuilding incomplete event', {
+            err,
+            event,
+            item
+          })
           // If we have an error, there is probably not much that we can do
         }
       }

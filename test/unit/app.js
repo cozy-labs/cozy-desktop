@@ -7,7 +7,7 @@ const should = require('should')
 const sinon = require('sinon')
 
 const { App } = require('../../core/app')
-const { LOG_FILENAME } = require('../../core/utils/logger')
+const { LOG_BASENAME } = require('../../core/utils/logger')
 const pkg = require('../../package.json')
 const { version } = pkg
 const { FetchError } = require('../../core/remote/cozy')
@@ -115,7 +115,10 @@ describe('App', function () {
       app.instanciate()
 
       // Make sure current & rotated logs exist
-      const logFilenames = [LOG_FILENAME, LOG_FILENAME + '.1']
+      const logFilenames = [
+        `${LOG_BASENAME}.2024-09-16.gz`,
+        `${LOG_BASENAME}.2024-09-17`
+      ]
       for (const filename of logFilenames) {
         await fse.ensureFile(path.join(configDir, filename))
       }

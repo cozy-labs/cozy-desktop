@@ -51,7 +51,7 @@ const { basename, dirname, resolve } = require('path')
 const { matcher } = require('micromatch')
 const fs = require('fs')
 
-const logger = require('./utils/logger')
+const { logger } = require('./utils/logger')
 
 const log = logger({
   component: 'Ignore'
@@ -73,12 +73,11 @@ function loadSync(rulesFilePath /*: string */) /*: Ignore */ {
     ignored = readLinesSync(rulesFilePath)
   } catch (err) {
     if (err.code === 'ENOENT') {
-      log.info(
-        { rulesFilePath },
-        'Skip loading of non-existent ignore rules file'
-      )
+      log.info('Skip loading of non-existent ignore rules file', {
+        rulesFilePath
+      })
     } else {
-      log.warn({ rulesFilePath, err }, 'Failed loading ignore rules file')
+      log.warn('Failed loading ignore rules file', { rulesFilePath, err })
     }
     ignored = []
   }
