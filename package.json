@@ -79,7 +79,7 @@
   },
   "dependencies": {
     "@babel/runtime": "7.16.7",
-    "@electron/remote": "2.0.8",
+    "@electron/remote": "2.1.2",
     "@parcel/watcher": "https://github.com/taratatach/parcel-watcher.git#cozy-desktop",
     "@sentry/electron": "3.0.7",
     "@sentry/integrations": "7.5.1",
