@@ -26,7 +26,7 @@ exports.default = async function (configuration) {
 
   try {
     const signCommand = `.\\build\\windows\\sign.ps1`
-    const keyPairAlias = `"${process.env.KEYPAIR_ALIAS}"`
+    const keyPairAlias = `"${process.env.SM_KEYPAIR_ALIAS}"`
     const sign = [
       `pwsh`,
       `-NoProfile`,
