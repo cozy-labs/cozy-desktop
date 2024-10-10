@@ -2,7 +2,7 @@
 'use strict'
 
 exports.default = async function (configuration) {
-  if (process.env.SKIP_CODE_SIGNING === 'True') {
+  if (process.env.SIGN_CODE !== 'True') {
     // eslint-disable-next-line no-console
     console.log('Skipping code signing')
     return
