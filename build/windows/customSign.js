@@ -2,7 +2,7 @@
 'use strict'
 
 exports.default = async function (configuration) {
-  if (process.env.SKIP_CODE_SIGNING === 'True') {
+  if (process.env.SIGN_CODE !== 'True') {
     // eslint-disable-next-line no-console
     console.log('Skipping code signing')
     return
@@ -26,7 +26,7 @@ exports.default = async function (configuration) {
 
   try {
     const signCommand = `.\\build\\windows\\sign.ps1`
-    const keyPairAlias = `"${process.env.KEYPAIR_ALIAS}"`
+    const keyPairAlias = `"${process.env.SM_KEYPAIR_ALIAS}"`
     const sign = [
       `pwsh`,
       `-NoProfile`,

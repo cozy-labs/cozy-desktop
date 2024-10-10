@@ -8,6 +8,8 @@ on:
   push:
     branches:
       - master
+    tags:
+      - '**'
   pull_request:
     paths-ignore:
       - '.github/workflows/macos.yaml'
