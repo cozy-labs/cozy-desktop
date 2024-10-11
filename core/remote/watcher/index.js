@@ -101,10 +101,7 @@ class RemoteWatcher {
     this.events = events
     this.running = false
     this.nextRun = Promise.resolve()
-
-    if (config.flags['desktop.realtime.enabled']) {
-      this.realtimeManager = new RealtimeManager()
-    }
+    this.realtimeManager = new RealtimeManager()
 
     this.startQueue()
 
