@@ -141,7 +141,7 @@ const defaultTransport = new DailyRotateFile({
   level: 'info',
   dirname: LOG_DIR,
   filename: LOG_BASENAME,
-  datePattern: 'YYYY-MM-DD-HH-mm', // XXX: rotate every day
+  datePattern: 'YYYY-MM-DD', // XXX: rotate every day
   maxFiles: 7,
   zippedArchive: true, // XXX: gzip archived log files
   format: combine(defaultFormatter, json())
