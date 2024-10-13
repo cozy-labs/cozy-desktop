@@ -1,5 +1,15 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.40.0-beta.3 - 2024-10-11
+
+Improvements for all users:
+
+- Log files will only rotate every day instead of every minute.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.40.0-beta.2 - 2024-10-11
 
 Improvements for all users:
