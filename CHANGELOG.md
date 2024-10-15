@@ -1,5 +1,30 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.40.0 - 2024-10-15
+
+Improvements for all users:
+
+- We anticipate changes in the way the remote Cozy will inform Cozy Desktop
+  that its OAuth token has expired and should be refreshed.
+- Desktop will now track local deletions in a way that permits cancelling the
+  deletion if the document is brought back before the deletion could be applied
+  on the remote Cozy.
+- We've activated the realtime retrieval of changes from your Cozy that was
+  hidden behind a flag.
+  You should now see great improvements in the synchronization of remote
+  changes, especially small ones.
+- Log files will only rotate every day instead of every minute.
+
+Improvements for macOS users:
+
+- Some close movements of the same document could be interpreted as a deletion.
+  This is now fixed and Desktop will synchronize a movement from the source
+  path of the first movement to the destination path of the last one.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.40.0-beta.3 - 2024-10-11
 
 Improvements for all users:
