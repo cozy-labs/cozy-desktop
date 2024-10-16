@@ -100,18 +100,26 @@ class LocalChangeMap {
     if (change) return callback(change)
   }
 
-  put(c /*: LocalChange */, updated /*: ?boolean */) {
-    if (updated) {
-      for (const [k, v] of this.changesByPath) {
-        if (v == c) {
-          this.changesByPath.delete(k)
-          break
-        }
+  put(c /*: LocalChange */, toReplace /*: ?LocalChange */) {
+    if (toReplace) {
+      this.changesByPath.delete(toReplace.path.normalize())
+      this.changesByPath.set(c.path.normalize(), c)
+
+      if (typeof toReplace.ino === 'number') {
+        this.changesByInode.set(toReplace.ino, c)
+      } else {
+        const index = this.changes.indexOf(toReplace)
+        this.changes.splice(index, 1, c)
+      }
+    } else {
+      this.changesByPath.set(c.path.normalize(), c)
+
+      if (typeof c.ino === 'number') {
+        this.changesByInode.set(c.ino, c)
+      } else {
+        this.changes.push(c)
       }
     }
-    this.changesByPath.set(c.path.normalize(), c)
-    if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
-    else this.changes.push(c)
   }
 
   flush() /*: LocalChange[] */ {
@@ -176,9 +184,9 @@ function analyseEvents(
       const result = analyseEvent(e, changesFound)
       if (result == null) continue // No change was found. Skip event.
 
-      // A new change was found or updated
-      const [change, updated] = result
-      changesFound.put(change, updated)
+      // A new change was found or one that should be replaced
+      const [change, toReplace] = result
+      changesFound.put(change, toReplace)
     } catch (err) {
       const sentry = err.name === 'InvalidLocalMoveEvent'
       log.error('Invalid local move event', { err, path: e.path, sentry })
@@ -196,7 +204,7 @@ function analyseEvents(
 function analyseEvent(
   e /*: LocalEvent */,
   previousChanges /*: LocalChangeMap */
-) /*: ?[LocalChange, boolean] */ {
+) /*: ?[LocalChange, ?LocalChange] */ {
   const sameInodeChange = previousChanges.findByInode(getInode(e))
 
   switch (e.type) {
