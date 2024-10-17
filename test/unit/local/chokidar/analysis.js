@@ -53,9 +53,7 @@ onPlatform('darwin', () => {
               {
                 sideName,
                 type: 'Ignored',
-                path,
-                ino,
-                stats
+                path
               }
             ],
             pendingChanges: []
@@ -83,10 +81,7 @@ onPlatform('darwin', () => {
               {
                 sideName,
                 type: 'Ignored',
-                path: 'FOO',
-                stats,
-                ino: stats.ino,
-                old: undefined
+                path: 'FOO'
               }
             ],
             pendingChanges: []
@@ -114,10 +109,7 @@ onPlatform('darwin', () => {
               {
                 sideName,
                 type: 'Ignored',
-                path: 'FOO',
-                stats,
-                ino: stats.ino,
-                old: undefined
+                path: 'FOO'
               }
             ],
             pendingChanges: []
@@ -144,10 +136,7 @@ onPlatform('darwin', () => {
               {
                 sideName,
                 type: 'Ignored',
-                path: 'FOO',
-                stats,
-                ino: stats.ino,
-                old: undefined
+                path: 'FOO'
               }
             ],
             pendingChanges: []
@@ -174,10 +163,7 @@ onPlatform('darwin', () => {
               {
                 sideName,
                 type: 'Ignored',
-                path: 'FOO',
-                stats,
-                ino: stats.ino,
-                old: undefined
+                path: 'FOO'
               }
             ],
             pendingChanges: []
@@ -477,7 +463,6 @@ onPlatform('darwin', () => {
               sideName,
               type: 'FileMove',
               path: 'dst2',
-              md5sum: undefined,
               ino: 1,
               wip: true,
               stats,
