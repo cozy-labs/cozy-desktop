@@ -109,25 +109,32 @@ module.exports = class TrayWM extends WindowManager {
     this.create()
   }
 
+  popoverMode() {
+    // Enabled by default, unless explicitly disabled in config file.
+    return this.desktop.config.gui.popoverMode != false
+  }
+
   windowOptions() {
+    const popoverMode = this.popoverMode()
+
     return {
       title: 'TRAY',
       windowPosition:
         process.platform === 'win32' ? 'trayBottomCenter' : 'trayCenter',
-      frame: false,
+      frame: !popoverMode,
       show: false,
-      skipTaskbar: true,
+      skipTaskbar: popoverMode,
       // transparent: true,
       width: DASHBOARD_SCREEN_WIDTH,
       height: DASHBOARD_SCREEN_HEIGHT,
-      resizable: false,
-      movable: false,
-      maximizable: false
+      resizable: !popoverMode,
+      movable: !popoverMode,
+      maximizable: !popoverMode
     }
   }
 
   makesAppVisible() {
-    return false
+    return !this.popoverMode()
   }
 
   create() {
@@ -137,10 +144,17 @@ module.exports = class TrayWM extends WindowManager {
 
     if (
       process.env.WATCH !== 'true' &&
+      this.popoverMode() &&
+      // Keep support for the old visibleOnBlur option:
       !this.desktop.config.gui.visibleOnBlur
     ) {
       this.win.on('blur', this.onBlur.bind(this))
     }
+
+    if (!this.popoverMode()) {
+      this.win.on('close', this.onClose.bind(this))
+    }
+
     return pReady
   }
 
@@ -160,6 +174,10 @@ module.exports = class TrayWM extends WindowManager {
     wantedHeight /*: number */,
     trayposition /*: Bounds */
   ) {
+    // Don't change the window position or size when popover mode is disabled.
+    // The `windowOptions` method already sets the right size on first display.
+    if (!this.popoverMode()) return
+
     const bounds = this.win.getBounds()
     // TODO : be smarter about which display to use ?
     const displayObject = electron.screen.getDisplayMatching(bounds)
@@ -200,6 +218,15 @@ module.exports = class TrayWM extends WindowManager {
       )
         this.hide()
     }, 400)
+  }
+
+  // In case the popover mode is disabled & the user clicks on the close
+  // button, the Window is hidden instead of closing, same as the popover
+  // behavior, unless the app is actually exiting as requested by the user.
+  onClose(event) {
+    if (electron.app.quitting) return
+    event.preventDefault()
+    this.hide()
   }
 
   hide() {

@@ -150,11 +150,15 @@ effects so you need to do a right-click on the icon then select the
 > extension providing support for appindicator. You can find and install one
 > from https://extensions.gnome.org/ by searching for `appindicator`.
 
-> **Note for i3wm Users**
+> **Disabling the "popover" mode**
 >
-> You can set `"gui": {"visibleOnBlur": true}` in your
-> `~/.cozy-desktop/config.json` so the popover doesn't hide when focusing
-> another window.
+> By default, the window behaves like a system tray / popover menu that appears
+> below the Cozy icon / app indicator, same as Windows & macOS. But it doesn't
+> work so well with recent GNOME versions or with tiling Window managers.
+>
+> You can set `"gui": {"popoverMode": false}` in your
+> `~/.cozy-desktop/config.json` to force the window to behave like a normal one
+> (that is movable, resizable & has a close button).
 
 ## Uninstall
 
