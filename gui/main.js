@@ -700,6 +700,11 @@ app.on('window-all-closed', () => {
   log.debug('All windows closed. Keep running in tray...')
 })
 
+app.on('before-quit', () => {
+  // Indicate the tray window that it should not prevent closing.
+  app.quitting = true
+})
+
 ipcMain.on('show-help', () => {
   helpWindow.show()
 })
