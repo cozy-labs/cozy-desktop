@@ -154,7 +154,8 @@ effects so you need to do a right-click on the icon then select the
 >
 > By default, the window behaves like a system tray / popover menu that appears
 > below the Cozy icon / app indicator, same as Windows & macOS. But it doesn't
-> work so well with recent GNOME versions or with tiling Window managers.
+> work so well with the GNOME appindicator extension (see above) or with tiling
+> window managers.
 >
 > You can set `"gui": {"popoverMode": false}` in your
 > `~/.cozy-desktop/config.json` to force the window to behave like a normal one
