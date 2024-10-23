@@ -72,7 +72,7 @@ module.exports = function analysis(
 
 class LocalChangeMap {
   /*::
-  changes: LocalChange[]
+  changes: Set<LocalChange>
   changesByInode: Map<number, LocalChange>
   changesByPath: Map<string, LocalChange>
   */
@@ -82,7 +82,7 @@ class LocalChangeMap {
   }
 
   _clear() {
-    this.changes = []
+    this.changes = new Set()
     this.changesByInode = new Map()
     this.changesByPath = new Map()
   }
@@ -100,25 +100,33 @@ class LocalChangeMap {
     if (change) return callback(change)
   }
 
-  put(c /*: LocalChange */, updated /*: ?boolean */) {
-    if (updated) {
-      for (const [k, v] of this.changesByPath) {
-        if (v == c) {
-          this.changesByPath.delete(k)
-          break
-        }
+  put(c /*: LocalChange */, toReplace /*: ?LocalChange */) {
+    if (toReplace) {
+      this.changesByPath.delete(toReplace.path.normalize())
+      this.changesByPath.set(c.path.normalize(), c)
+
+      if (typeof toReplace.ino === 'number') {
+        this.changesByInode.set(toReplace.ino, c)
+      } else {
+        this.changes.delete(toReplace)
+        this.changes.add(c)
+      }
+    } else {
+      this.changesByPath.set(c.path.normalize(), c)
+
+      if (typeof c.ino === 'number') {
+        this.changesByInode.set(c.ino, c)
+      } else {
+        this.changes.add(c)
       }
     }
-    this.changesByPath.set(c.path.normalize(), c)
-    if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
-    else this.changes.push(c)
   }
 
   flush() /*: LocalChange[] */ {
     const changes = this.changes
-    for (let a of this.changesByInode.values()) changes.push(a)
+    for (let a of this.changesByInode.values()) changes.add(a)
     this._clear()
-    return changes
+    return Array.from(changes)
   }
 }
 
@@ -149,7 +157,7 @@ function analyseEvents(
 
   log.trace('Analyze events...')
 
-  for (let e /*: LocalEvent */ of events) {
+  for (const e /*: LocalEvent */ of events) {
     if (process.env.DEBUG) log.trace({ currentEvent: e, path: e.path })
     try {
       // chokidar make mistakes
@@ -176,9 +184,9 @@ function analyseEvents(
       const result = analyseEvent(e, changesFound)
       if (result == null) continue // No change was found. Skip event.
 
-      // A new change was found or updated
-      const [change, updated] = result
-      changesFound.put(change, updated)
+      // A new change was found or one that should be replaced
+      const [change, toReplace] = result
+      changesFound.put(change, toReplace)
     } catch (err) {
       const sentry = err.name === 'InvalidLocalMoveEvent'
       log.error('Invalid local move event', { err, path: e.path, sentry })
@@ -196,7 +204,7 @@ function analyseEvents(
 function analyseEvent(
   e /*: LocalEvent */,
   previousChanges /*: LocalChangeMap */
-) /*: ?[LocalChange, boolean] */ {
+) /*: ?[LocalChange, ?LocalChange] */ {
   const sameInodeChange = previousChanges.findByInode(getInode(e))
 
   switch (e.type) {

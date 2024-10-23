@@ -37,6 +37,7 @@ env:
   OS_PROJECT_DOMAIN_NAME: "Default"
   OS_AUTH_URL: "https://auth.cloud.ovh.net/v3"
   OS_IDENTITY_API_VERSION: "3"
+      #APPLE_APP_SPECIFIC_PASSWORD: "${{ secrets.APPLE_ID_PASSWORD }}"
 
 jobs:
   cancel:
