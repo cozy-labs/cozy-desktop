@@ -17,6 +17,7 @@ const path = require('path')
 
 const stater = require('../stater')
 const { logger } = require('../../utils/logger')
+const { measureTime } = require('../../utils/perfs')
 
 const STEP_NAME = 'incompleteFixer'
 
@@ -209,6 +210,8 @@ function step(
   opts /*: IncompleteFixerOptions */
 ) {
   return async (events /*: ChannelBatch */) /*: Promise<ChannelBatch> */ => {
+    const stopMeasure = measureTime('LocalWatcher#incompleteFixerStep')
+
     const batch = new Set()
 
     // Filter incomplete events
@@ -320,6 +323,7 @@ function step(
       state.incompletes.push(...incompletes)
     }
 
+    stopMeasure()
     return Array.from(batch)
   }
 }

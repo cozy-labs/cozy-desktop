@@ -15,6 +15,7 @@ const _ = require('lodash')
 const Channel = require('./channel')
 const { logger } = require('../../utils/logger')
 const metadata = require('../../metadata')
+const { measureTime } = require('../../utils/perfs')
 
 /*::
 import type { ChannelEvent, ChannelBatch } from './event'
@@ -144,6 +145,8 @@ const _loop = async (channel, out, opts) => {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const events = await channel.pop()
+    const stopMeasure = measureTime('LocalWatcher#winIdenticalRenamingStep')
+
     const {
       state: { [STEP_NAME]: state }
     } = opts
@@ -163,6 +166,8 @@ const _loop = async (channel, out, opts) => {
     pending.timeout = setTimeout(() => {
       output(pending)
     }, DELAY)
+
+    stopMeasure()
   }
 }
 

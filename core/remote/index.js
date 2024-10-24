@@ -10,7 +10,7 @@ const path = require('path')
 const async = require('async')
 
 const { logger } = require('../utils/logger')
-const measureTime = require('../utils/perfs')
+const { measureTime } = require('../utils/perfs')
 const pathUtils = require('../utils/path')
 const metadata = require('../metadata')
 const { ROOT_DIR_ID, DIR_TYPE } = require('./constants')

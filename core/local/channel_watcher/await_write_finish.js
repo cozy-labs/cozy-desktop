@@ -12,6 +12,7 @@ const _ = require('lodash')
 
 const Channel = require('./channel')
 const { logger } = require('../../utils/logger')
+const { measureTime } = require('../../utils/perfs')
 
 const STEP_NAME = 'awaitWriteFinish'
 
@@ -245,17 +246,21 @@ async function awaitWriteFinish(channel /*: Channel */, out /*: Channel */) {
 
   // eslint-disable-next-line no-constant-condition
   while (true) {
-    const events = aggregateBatch(await channel.pop())
-    let nbCandidates = countFileWriteEvents(events)
-    debounce(waiting, events)
+    const events = await channel.pop()
+    const stopMeasure = measureTime('LocalWatcher#awaitWriteFinishStep')
+
+    const aggregatedEvents = aggregateBatch(events)
+    let nbCandidates = countFileWriteEvents(aggregatedEvents)
+    debounce(waiting, aggregatedEvents)
 
     // Push the new batch of events in the queue
     const timeout = setTimeout(() => {
       out.push(waiting.shift().events)
       sendReadyBatches(waiting, out)
     }, DELAY)
-    waiting.push({ events, nbCandidates, timeout })
+    waiting.push({ events: aggregatedEvents, nbCandidates, timeout })
 
+    stopMeasure()
     // Look if some batches can be sent without waiting
     sendReadyBatches(waiting, out)
   }

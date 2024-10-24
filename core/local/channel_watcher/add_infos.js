@@ -13,6 +13,7 @@ const path = require('path')
 
 const { kind } = require('../../metadata')
 const { logger } = require('../../utils/logger')
+const { measureTime } = require('../../utils/perfs')
 const stater = require('../stater')
 
 const STEP_NAME = 'addInfos'
@@ -47,6 +48,8 @@ function loop(
   const syncPath = opts.config.syncPath
 
   return channel.asyncMap(async events => {
+    const stopMeasure = measureTime('LocalWatcher#addInfosStep')
+
     const batch = []
     for (const event of events) {
       if (event.kind === 'symlink') {
@@ -94,6 +97,8 @@ function loop(
       }
       batch.push(event)
     }
+
+    stopMeasure()
     return batch
   }, opts.fatal)
 }

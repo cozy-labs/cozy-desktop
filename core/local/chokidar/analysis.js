@@ -34,7 +34,7 @@ const _ = require('lodash')
 const { getInode } = require('./local_event')
 const localChange = require('./local_change')
 const { logger } = require('../../utils/logger')
-const measureTime = require('../../utils/perfs')
+const { measureTime } = require('../../utils/perfs')
 const metadata = require('../../metadata')
 
 /*::
@@ -101,6 +101,10 @@ class LocalChangeMap {
   }
 
   put(c /*: LocalChange */, updated /*: ?boolean */) {
+    const stopMeasure = measureTime(
+      `LocalWatcher::LocalChangeMap#put(${updated ? 'updated' : 'new'})`
+    )
+
     if (updated) {
       for (const [k, v] of this.changesByPath) {
         if (v == c) {
@@ -112,12 +116,16 @@ class LocalChangeMap {
     this.changesByPath.set(c.path.normalize(), c)
     if (typeof c.ino === 'number') this.changesByInode.set(c.ino, c)
     else this.changes.push(c)
+
+    stopMeasure()
   }
 
   flush() /*: LocalChange[] */ {
+    const stopMeasure = measureTime(`LocalWatcher::LocalChangeMap#flush`)
     const changes = this.changes
     for (let a of this.changesByInode.values()) changes.push(a)
     this._clear()
+    stopMeasure()
     return changes
   }
 }
@@ -264,6 +272,7 @@ function analyseEvent(
 
 function fixUnsyncedMoves(changes /*: LocalChange[] */) {
   log.trace('Transform unsynced moves into additions...')
+  const stopMeasure = measureTime('LocalWatcher#fixUnsyncedMoves')
   changes.forEach(change => {
     if (change.type === 'FileMove' && !change.old) {
       // $FlowFixMe deliberate type change
@@ -286,6 +295,7 @@ function fixUnsyncedMoves(changes /*: LocalChange[] */) {
       })
     }
   })
+  stopMeasure()
 }
 
 /** First sort to make moves squashing easier.
@@ -383,6 +393,7 @@ function separatePendingChanges(
   pendingChanges /*: LocalChange[] */
 ) /*: LocalChange[] */ {
   log.trace('Reserve changes in progress for next flush...')
+  const stopMeasure = measureTime('LocalWatcher#separatePendingChanges')
 
   for (let i = 0; i < changes.length; i++) {
     const change = changes[i]
@@ -404,10 +415,12 @@ function separatePendingChanges(
     } else {
       log.debug(`Identified ${changes.length} change(s).`)
       log.debug(`${pendingChanges.length} of them are still pending.`)
+      stopMeasure()
       return changes.slice(i)
     }
   }
   // All actions are WIP
+  stopMeasure()
   return []
 }
 

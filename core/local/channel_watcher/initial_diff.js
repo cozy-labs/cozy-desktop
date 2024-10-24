@@ -15,6 +15,7 @@ const path = require('path')
 const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../config')
 const { kind } = require('../../metadata')
 const { logger } = require('../../utils/logger')
+const { measureTime } = require('../../utils/perfs')
 const Channel = require('./channel')
 
 /*::
@@ -82,6 +83,8 @@ function loop(
 async function initialState(
   opts /*: { pouch: Pouch } */
 ) /*: Promise<InitialDiffState> */ {
+  const stopMeasure = measureTime('LocalWatcher#initialDiffInitialState')
+
   const waiting /*: WaitingItem[] */ = []
   const renamedEvents /*: ChannelEvent[] */ = []
   const scannedPaths /*: Set<string> */ = new Set()
@@ -98,6 +101,7 @@ async function initialState(
     }
   }
 
+  stopMeasure()
   return {
     [STEP_NAME]: {
       waiting,
@@ -151,6 +155,8 @@ async function initialDiff(
       out.push(events)
       continue
     }
+
+    const stopMeasure = measureTime('LocalWatcher#initialDiffStep')
 
     let nbCandidates = 0
 
@@ -247,6 +253,8 @@ async function initialDiff(
         clearState(state)
       }
       batch.push(event)
+
+      stopMeasure()
     }
 
     // Push the new batch of events in the queue

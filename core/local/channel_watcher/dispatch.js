@@ -12,6 +12,7 @@ const _ = require('lodash')
 const { buildDir, buildFile } = require('../../metadata')
 const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../config')
 const { logger } = require('../../utils/logger')
+const { measureTime } = require('../../utils/perfs')
 
 const STEP_NAME = 'dispatch'
 const component = `ChannelWatcher/${STEP_NAME}`
@@ -79,6 +80,8 @@ function loop(
 
 function step(opts /*: DispatchOptions */) {
   return async (batch /*: ChannelBatch */) => {
+    const stopMeasure = measureTime('LocalWatcher#dispatchStep')
+
     const { [STEP_NAME]: dispatchState } = opts.state
 
     clearTimeout(dispatchState.localEndTimeout)
@@ -96,6 +99,7 @@ function step(opts /*: DispatchOptions */) {
       opts.events.emit('local-end')
     }, LOCAL_END_NOTIFICATION_DELAY)
 
+    stopMeasure()
     return batch
   }
 }

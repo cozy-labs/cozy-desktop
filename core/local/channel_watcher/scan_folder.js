@@ -10,6 +10,7 @@
  */
 
 const { logger } = require('../../utils/logger')
+const { measureTime } = require('../../utils/perfs')
 
 const STEP_NAME = 'scanFolder'
 
@@ -31,6 +32,8 @@ function loop(
   opts /*: { scan: Scanner, fatal: Error => any } */
 ) /*: Channel */ {
   return channel.asyncMap(async batch => {
+    const stopMeasure = measureTime('LocalWatcher#scanFolderStep')
+
     for (const event of batch) {
       if (event.incomplete) {
         continue
@@ -41,6 +44,8 @@ function loop(
         })
       }
     }
+
+    stopMeasure()
     return batch
   }, opts.fatal)
 }

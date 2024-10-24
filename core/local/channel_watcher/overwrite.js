@@ -8,6 +8,7 @@ const _ = require('lodash')
 
 const Channel = require('./channel')
 const { logger } = require('../../utils/logger')
+const { measureTime } = require('../../utils/perfs')
 
 /*::
 import type { ChannelEvent, ChannelBatch } from './event'
@@ -161,6 +162,8 @@ const _loop = async (channel, out, opts) => {
   // eslint-disable-next-line no-constant-condition
   while (true) {
     const events = await channel.pop()
+    const stopMeasure = measureTime('LocalWatcher#overwriteStep')
+
     const {
       state: { [STEP_NAME]: state }
     } = opts
@@ -168,6 +171,7 @@ const _loop = async (channel, out, opts) => {
     await step(events, opts)
 
     rotateState(state, events, output)
+    stopMeasure()
   }
 }
 

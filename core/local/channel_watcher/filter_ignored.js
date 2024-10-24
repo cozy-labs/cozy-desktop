@@ -12,6 +12,7 @@
 const _ = require('lodash')
 
 const { logger } = require('../../utils/logger')
+const { measureTime } = require('../../utils/perfs')
 
 /*::
 import type Channel from './channel'
@@ -41,6 +42,8 @@ function loop(
     })
 
   return channel.map(events => {
+    const stopMeasure = measureTime('LocalWatcher#filterIgnoredStep')
+
     const batch = []
 
     for (const event of events) {
@@ -53,6 +56,7 @@ function loop(
       }
     }
 
+    stopMeasure()
     return batch
   }, opts.fatal)
 }

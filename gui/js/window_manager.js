@@ -149,7 +149,7 @@ module.exports = class WindowManager {
       deviceName,
       deviceId,
       await capabilities(this.desktop.config),
-      await flags(this.desktop.config)
+      await flags.all(this.desktop.config)
     )
   }
 

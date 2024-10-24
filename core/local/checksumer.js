@@ -9,7 +9,7 @@ const async = require('async')
 const crypto = require('crypto')
 const fs = require('fs')
 
-const measureTime = require('../utils/perfs')
+const { measureTime } = require('../utils/perfs')
 
 /*::
 import type { Callback } from '../utils/func'

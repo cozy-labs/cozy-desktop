@@ -5,6 +5,7 @@
 const electron = require('electron')
 const { ipcRenderer } = electron
 const remote = require('@electron/remote')
+const { SHOW_SYNCED_FOLDERS_FLAG } = require('../core/utils/flags')
 
 /*::
 import type { SyncStatus, UserAlert, SyncError } from '../core/syncstate'
@@ -87,8 +88,7 @@ elmectron.ports.chooseFolder.subscribe(() => {
 ipcRenderer.on(
   'sync-config',
   (event, address, deviceName, deviceId, capabilities, flags) => {
-    const partialSyncEnabled =
-      flags['settings.partial-desktop-sync.show-synced-folders-selection']
+    const partialSyncEnabled = flags[SHOW_SYNCED_FOLDERS_FLAG]
     const flatSubdomains = capabilities.flatSubdomains
     elmectron.ports.syncConfig.send({
       address,
