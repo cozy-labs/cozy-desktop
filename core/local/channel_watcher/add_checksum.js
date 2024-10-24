@@ -18,6 +18,7 @@ const _ = require('lodash')
 const path = require('path')
 
 const { logger } = require('../../utils/logger')
+const { measureTime } = require('../../utils/perfs')
 
 const STEP_NAME = 'addChecksum'
 
@@ -56,6 +57,8 @@ function loop(
   const syncPath = opts.config.syncPath
 
   return channel.asyncMap(async events => {
+    const stopMeasure = measureTime('LocalWatcher#addChecksumStep')
+
     for (const event of events) {
       try {
         if (event.incomplete) {
@@ -74,6 +77,8 @@ function loop(
         log.debug('Cannot compute checksum', { err, event })
       }
     }
+
+    stopMeasure()
     return events
   }, opts.fatal)
 }

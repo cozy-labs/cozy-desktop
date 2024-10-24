@@ -11,6 +11,7 @@ const parcel = require('@parcel/watcher')
 const Channel = require('./channel')
 const { INITIAL_SCAN_DONE } = require('./event')
 const { logger } = require('../../utils/logger')
+const { measureTime } = require('../../utils/perfs')
 
 /*::
 import type { Config } from '../../config'
@@ -120,10 +121,13 @@ class Producer {
   }
 
   async scan(relPath /*: string */) {
+    const stopParcelScanMeasure = measureTime('Parcel#scan')
     const scanEvents = await parcel.scan(
       path.join(this.config.syncPath, relPath),
       { backend }
     )
+    stopParcelScanMeasure()
+
     await this.processEvents(scanEvents, { fromScan: true })
   }
 
