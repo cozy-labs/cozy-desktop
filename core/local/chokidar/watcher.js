@@ -32,6 +32,7 @@ const sendToPrep = require('./send_to_prep')
 const stater = require('../stater')
 const syncDir = require('../sync_dir')
 const { logger } = require('../../utils/logger')
+const { measureTime } = require('../../utils/perfs')
 
 const { LOCAL_WATCHER_FATAL_EVENT } = require('../constants')
 
@@ -127,6 +128,9 @@ class LocalWatcher {
 
     this.resetInitialScanParams()
 
+    const stopChokidarScanMeasure = measureTime('LocalWatcher#chokidarScan')
+    const stopInitialScanMeasure = measureTime('LocalWatcher#initialScan')
+
     this.watcher = chokidar.watch('.', {
       // Let paths in events be relative to this base path
       cwd: this.syncPath,
@@ -152,7 +156,10 @@ class LocalWatcher {
     })
 
     const started = new Promise(resolve => {
-      this.initialScanParams.resolve = resolve
+      this.initialScanParams.resolve = () => {
+        stopInitialScanMeasure()
+        resolve()
+      }
 
       for (let eventType of [
         'add',
@@ -180,7 +187,10 @@ class LocalWatcher {
       }
 
       this.watcher
-        .on('ready', () => this.buffer.switchMode('timeout'))
+        .on('ready', () => {
+          stopChokidarScanMeasure()
+          this.buffer.switchMode('timeout')
+        })
         .on('raw', async (event, path, details) => {
           log.chokidar.debug('raw', { event, path, details })
 
@@ -234,25 +244,33 @@ class LocalWatcher {
     }
 
     log.trace('Prepare events...')
+    const stopPrepareEventsMeasure = measureTime('LocalWatcher#prepareEvents')
     const preparedEvents /*: LocalEvent[] */ = await prepareEvents.step(
       events,
       this
     )
+    stopPrepareEventsMeasure()
     log.trace('Done with events preparation.')
 
+    const stopAnalysisMeasure = measureTime('LocalWatcher#analysis')
     const changes /*: LocalChange[] */ = analysis(preparedEvents, this)
+    stopAnalysisMeasure()
 
+    const stopNormalizePathsMeasure = measureTime('LocalWatcher#normalizePaths')
     const normalizedChanges /*: LocalChange[] */ = await normalizePaths.step(
       changes,
       this
     )
+    stopNormalizePathsMeasure()
 
     // TODO: Don't even acquire lock changes list is empty
     // FIXME: Shouldn't we acquire the lock before preparing the events?
     const release = await this.pouch.lock(this)
     let target = -1
     try {
+      const stopPrepAndMergeMeasure = measureTime('LocalWatcher#sendToPrep')
       await sendToPrep.step(normalizedChanges, this)
+      stopPrepAndMergeMeasure()
       target = (await this.pouch.db.changes({ limit: 1, descending: true }))
         .last_seq
     } finally {
