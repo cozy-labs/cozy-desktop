@@ -431,6 +431,8 @@ class App {
     const measurePerfFlag = allFlags[flags.MEASURE_PERF_FLAG]
 
     process.env.MEASURE_PERF = process.env.MEASURE_PERF || measurePerfFlag
+
+    if (measurePerfFlag) process.env.PRINT_PERF_MEASURES = '1'
   }
 
   clientInfo() /*: ClientInfo */ {

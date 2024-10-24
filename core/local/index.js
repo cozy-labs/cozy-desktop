@@ -22,7 +22,7 @@ const { hideOnWindows } = require('../utils/fs')
 const watcher = require('./watcher')
 const syncDir = require('./sync_dir')
 const { logger } = require('../utils/logger')
-const measureTime = require('../utils/perfs')
+const { measureTime } = require('../utils/perfs')
 const sentry = require('../utils/sentry')
 const streamUtils = require('../utils/stream')
 
