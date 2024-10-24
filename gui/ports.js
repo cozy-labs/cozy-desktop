@@ -5,7 +5,6 @@
 const electron = require('electron')
 const { ipcRenderer } = electron
 const remote = require('@electron/remote')
-const { SHOW_SYNCED_FOLDERS_FLAG } = require('../core/utils/flags')
 
 /*::
 import type { SyncStatus, UserAlert, SyncError } from '../core/syncstate'
@@ -17,6 +16,7 @@ window.onerror = (message, url, line, column, err) => {
 
 const pkg = remote.require('../package.json')
 const defaults = remote.require('./js/defaults')
+const { SHOW_SYNCED_FOLDERS_FLAG } = remote.require('../core/utils/flags')
 
 const container = document.getElementById('container')
 
