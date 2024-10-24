@@ -264,14 +264,14 @@ class App {
     })
   }
 
-  async listLogFiles() {
+  async listLogFiles() /*: Promise<Array<string>> */ {
     let logFiles = []
     for (const name of await fse.readdir(this.basePath)) {
       if (name.startsWith(LOG_BASENAME)) {
         logFiles.push(path.join(this.basePath, name))
       }
     }
-    return logFiles
+    return logFiles.sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
   }
 
   // Send an issue by mail to the support
