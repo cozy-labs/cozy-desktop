@@ -40,8 +40,9 @@ const WARN_LVL = 40
 const INFO_LVL = 30
 const DEBUG_LVL = 20
 const TRACE_LVL = 10
-const levelToInt = winston.format(({ level, ...meta }) => {
-  const int =
+
+const levelToInt = (level /*: string */) => {
+  return (
     {
       fatal: FATAL_LVL,
       error: ERROR_LVL,
@@ -50,8 +51,21 @@ const levelToInt = winston.format(({ level, ...meta }) => {
       debug: DEBUG_LVL,
       trace: TRACE_LVL
     }[level] || 70
-  return { level: int, ...meta }
-})
+  )
+}
+
+// const levelToInt = winston.format(({ level, ...meta }) => {
+//   const int =
+//     {
+//       fatal: FATAL_LVL,
+//       error: ERROR_LVL,
+//       warn: WARN_LVL,
+//       info: INFO_LVL,
+//       debug: DEBUG_LVL,
+//       trace: TRACE_LVL
+//     }[level] || 70
+//   return { level: int, ...meta }
+// })
 
 // Replace `message` with `msg` for backwards compatibility with our jq filters.
 const messageToMsg = winston.format(({ message, ...meta }) => ({
@@ -125,17 +139,36 @@ const error = winston.format(({ err, ...meta }) => ({
   ...meta
 }))
 
-const defaultFormatter = combine(
-  objectMsgToMeta(),
-  splat(),
-  hostname(),
-  pid(),
-  timestamp({ alias: 'time' }),
-  dropTimestamp(),
-  error(),
-  messageToMsg(),
-  levelToInt()
-)
+const defaultFormatter = winston.format(info => {
+  const { level, message, ...meta } = info
+
+  meta.level = levelToInt(level)
+  meta.hostname = os.hostname()
+  meta.pid = process.pid
+  meta.time = new Date().toISOString()
+
+  if (meta.err != null) {
+    meta.err = errSerializer(meta.err)
+  }
+
+  if (typeof message !== 'string') {
+    return { msg: '', ...meta, ...message }
+  } else {
+    return { msg: message, ...meta }
+  }
+})
+
+// const defaultFormatter = combine(
+//   objectMsgToMeta(),
+//   splat(),
+//   hostname(),
+//   pid(),
+//   timestamp({ alias: 'time' }),
+//   dropTimestamp(),
+//   error(),
+//   messageToMsg(),
+//   levelToInt()
+// )
 
 const defaultTransport = new DailyRotateFile({
   level: 'trace',
@@ -144,7 +177,7 @@ const defaultTransport = new DailyRotateFile({
   datePattern: 'YYYY-MM-DD', // XXX: rotate every day
   maxFiles: 7,
   zippedArchive: true, // XXX: gzip archived log files
-  format: combine(defaultFormatter, json())
+  format: combine(defaultFormatter(), json())
 })
 
 const defaultLogger = winston.createLogger({
@@ -172,7 +205,7 @@ if (process.env.DEBUG) {
   defaultLogger.add(
     new winston.transports.File({
       filename,
-      format: combine(defaultFormatter, json())
+      format: combine(defaultFormatter(), json())
     })
   )
 }
