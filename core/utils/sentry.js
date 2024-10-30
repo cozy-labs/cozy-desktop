@@ -195,9 +195,9 @@ class SentryTransport extends winston.Transport {
       Sentry.withScope(scope => {
         scope.setLevel(sentryLevel)
         scope.setContext('msgDetails', extra)
-        scope.setFingerprint([component, err.name, err.message])
 
         if (err) {
+          scope.setFingerprint([component, err.name, err.message])
           Sentry.captureException(formatError(err))
         } else {
           Sentry.captureMessage(msg)
