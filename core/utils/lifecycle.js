@@ -6,7 +6,7 @@
 const EventEmitter = require('events')
 
 /*::
-import type { Logger } from './logger'
+// import type { Logger } from './logger'
 
 type State = 'done-stop' | 'will-start' | 'done-start' | 'will-stop'
 */
@@ -15,10 +15,12 @@ class LifeCycle extends EventEmitter {
   /*::
   currentState: State
   blockedFor: ?string
-  log: Logger
+  // log: Logger
+  log: any
   */
 
-  constructor(logger /*: Logger */) {
+  // constructor(logger /*: Logger */) {
+  constructor(logger /*: any */) {
     super()
     this.currentState = 'done-stop'
     this.blockedFor = null

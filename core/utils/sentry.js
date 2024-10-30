@@ -20,20 +20,20 @@ const {
   ExtraErrorData: ExtraErrorDataIntegration
 } = require('@sentry/integrations')
 const url = require('url')
-const _ = require('lodash')
-const winston = require('winston')
-const { combine, json } = winston.format
+// const _ = require('lodash')
+// const winston = require('winston')
+// const { combine, json } = winston.format
 
 const { SESSION_PARTITION_NAME } = require('../../gui/js/network')
 const { HOURS } = require('./time')
 const {
-  FATAL_LVL,
-  ERROR_LVL,
-  WARN_LVL,
-  INFO_LVL,
-  DEBUG_LVL,
-  defaultFormatter,
-  defaultLogger,
+  // FATAL_LVL,
+  // ERROR_LVL,
+  // WARN_LVL,
+  // INFO_LVL,
+  // DEBUG_LVL,
+  // defaultFormatter,
+  // defaultLogger,
   logger
 } = require('./logger')
 
@@ -140,11 +140,11 @@ function setup(clientInfos /*: ClientInfo */) {
       scope.setTag('instance', instance)
       scope.setTag('server_name', clientInfos.deviceName)
     })
-    defaultLogger.add(
-      new SentryTransport({
-        format: combine(defaultFormatter, json())
-      })
-    )
+    // defaultLogger.add(
+    //   new SentryTransport({
+    //     format: combine(defaultFormatter, json())
+    //   })
+    // )
     ErrorsAlreadySent = new Map()
     isSentryConfigured = true
     log.info('Sentry configured !')
@@ -166,56 +166,56 @@ function setup(clientInfos /*: ClientInfo */) {
   }
 }
 
-class SentryTransport extends winston.Transport {
-  constructor(opts) {
-    super(opts)
-  }
+// class SentryTransport extends winston.Transport {
+//   constructor(opts) {
+//     super(opts)
+//   }
 
-  log(info, callback) {
-    const { component, level, msg, sentry, time, ...meta } = info
-    const { err } = meta
-    const cleanMeta = _.omit(meta, ['tags', 'hostname'])
-    const sentryLevel =
-      level >= FATAL_LVL
-        ? 'fatal'
-        : level >= ERROR_LVL
-        ? 'error'
-        : level >= WARN_LVL
-        ? 'warning'
-        : level >= DEBUG_LVL
-        ? 'debug'
-        : level >= INFO_LVL
-        ? 'log'
-        : 'trace'
+//   log(info, callback) {
+//     const { component, level, msg, sentry, time, ...meta } = info
+//     const { err } = meta
+//     const cleanMeta = _.omit(meta, ['tags', 'hostname'])
+//     const sentryLevel =
+//       level >= FATAL_LVL
+//         ? 'fatal'
+//         : level >= ERROR_LVL
+//         ? 'error'
+//         : level >= WARN_LVL
+//         ? 'warning'
+//         : level >= DEBUG_LVL
+//         ? 'debug'
+//         : level >= INFO_LVL
+//         ? 'log'
+//         : 'trace'
 
-    // Send messages explicitly marked for sentry and all TypeError instances
-    if (sentry || (err && err.name === 'TypeError')) {
-      const extra = { component, msg, time, ...cleanMeta }
+//     // Send messages explicitly marked for sentry and all TypeError instances
+//     if (sentry || (err && err.name === 'TypeError')) {
+//       const extra = { component, msg, time, ...cleanMeta }
 
-      Sentry.withScope(scope => {
-        scope.setLevel(sentryLevel)
-        scope.setContext('msgDetails', extra)
-        scope.setFingerprint([component, err.name, err.message])
+//       Sentry.withScope(scope => {
+//         scope.setLevel(sentryLevel)
+//         scope.setContext('msgDetails', extra)
+//         scope.setFingerprint([component, err.name, err.message])
 
-        if (err) {
-          Sentry.captureException(formatError(err))
-        } else {
-          Sentry.captureMessage(msg)
-        }
-      })
-    } else {
-      // keep it as breadcrumb
-      Sentry.addBreadcrumb({
-        message: msg,
-        category: component,
-        data: { time, ...cleanMeta },
-        level: sentryLevel
-      })
-    }
+//         if (err) {
+//           Sentry.captureException(formatError(err))
+//         } else {
+//           Sentry.captureMessage(msg)
+//         }
+//       })
+//     } else {
+//       // keep it as breadcrumb
+//       Sentry.addBreadcrumb({
+//         message: msg,
+//         category: component,
+//         data: { time, ...cleanMeta },
+//         level: sentryLevel
+//       })
+//     }
 
-    callback()
-  }
-}
+//     callback()
+//   }
+// }
 
 // TODO: make Flow happy with extended error type
 function flag(err /*: Object */) {
