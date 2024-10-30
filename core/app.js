@@ -27,7 +27,7 @@ const { Remote } = require('./remote')
 const { Sync } = require('./sync')
 const SyncState = require('./syncstate')
 const Registration = require('./remote/registration')
-const { logger, LOG_BASENAME } = require('./utils/logger')
+const { defaultTransport, logger, LOG_BASENAME } = require('./utils/logger')
 const { sendToTrash } = require('./utils/fs')
 const notes = require('./utils/notes')
 const web = require('./utils/web')
@@ -428,11 +428,13 @@ class App {
     }
 
     const allFlags = await flags.all(this.config)
+
     const measurePerfFlag = allFlags[flags.MEASURE_PERF_FLAG]
-
     process.env.MEASURE_PERF = process.env.MEASURE_PERF || measurePerfFlag
-
     if (measurePerfFlag) process.env.PRINT_PERF_MEASURES = '1'
+
+    const debugFlag = allFlags[flags.DEBUG_FLAG]
+    if (debugFlag) defaultTransport.level = 'trace'
   }
 
   clientInfo() /*: ClientInfo */ {

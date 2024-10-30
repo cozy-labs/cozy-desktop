@@ -9,7 +9,8 @@ const { RemoteCozy } = require('../remote/cozy')
 import type { Config } from '../config'
 */
 
-const MEASURE_PERF_FLAG = 'desktop.measure-perf'
+const DEBUG_FLAG = 'desktop.debug.enabled'
+const MEASURE_PERF_FLAG = 'desktop.measure-perf.enabled'
 const SHOW_SYNCED_FOLDERS_FLAG =
   'settings.partial-desktop-sync.show-synced-folders-selection'
 
@@ -25,6 +26,7 @@ const all = async (config /*: Config */) => {
 }
 
 module.exports = {
+  DEBUG_FLAG,
   MEASURE_PERF_FLAG,
   SHOW_SYNCED_FOLDERS_FLAG,
   all
