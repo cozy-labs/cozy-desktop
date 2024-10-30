@@ -67,7 +67,7 @@ module.exports = class WindowManager {
 
   async show() {
     if (!this.win) await this.create()
-    this.log.debug('show')
+    this.log.trace('show')
 
     // devTools
     if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
@@ -108,7 +108,7 @@ module.exports = class WindowManager {
 
   hide() {
     if (this.win) {
-      this.log.debug('hide')
+      this.log.trace('hide')
       this.win.close()
     }
     this.win = null
@@ -124,7 +124,7 @@ module.exports = class WindowManager {
 
   reload() {
     if (this.win) {
-      this.log.debug('reload')
+      this.log.trace('reload')
       this.win.reload()
     }
   }
@@ -167,7 +167,7 @@ module.exports = class WindowManager {
   }
 
   create() {
-    this.log.debug('create')
+    this.log.trace('create')
     const opts = {
       indexPath: path.resolve(__dirname, '..', 'index.html'),
       ...this.windowOptions()
@@ -188,10 +188,10 @@ module.exports = class WindowManager {
       ...opts
     })
     this.win.on('unresponsive', () => {
-      this.log.warn('Web page becomes unresponsive')
+      this.log.warn('Web page is unresponsive')
     })
     this.win.on('responsive', () => {
-      this.log.warn('Web page becomes responsive again')
+      this.log.warn('Web page is responsive again')
     })
     this.win.webContents.on(
       'did-fail-load',

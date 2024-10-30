@@ -75,7 +75,7 @@ function loop(
 ) /*: Channel */ {
   const out = new Channel()
   initialDiff(channel, out, opts).catch(err => {
-    log.warn({ err })
+    log.error({ err })
   })
   return out
 }

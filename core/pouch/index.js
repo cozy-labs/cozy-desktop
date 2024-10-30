@@ -53,7 +53,7 @@ class Pouch {
     this._lock = { id: this.nextLockId++, promise: Promise.resolve(null) }
     this.db = new PouchDB(this.config.dbPath)
     this.db.setMaxListeners(100)
-    this.db.on('error', err => log.warn(err))
+    this.db.on('error', err => log.error(err))
     this.updater = async.queue(async task => {
       const taskDoc = await this.byIdMaybe(task._id)
       if (taskDoc) return this.db.put({ ...task, _rev: taskDoc._rev })
@@ -69,7 +69,7 @@ class Pouch {
     await fse.ensureDir(this.config.dbPath)
     this.db = new PouchDB(this.config.dbPath)
     this.db.setMaxListeners(100)
-    this.db.on('error', err => log.warn(err))
+    this.db.on('error', err => log.error(err))
     return this.addAllViews()
   }
 
@@ -153,7 +153,7 @@ class Pouch {
     { checkInvariants = true } /*: { checkInvariants: boolean } */ = {}
   ) /*: Promise<SavedMetadata> */ {
     if (checkInvariants) metadata.invariants(doc)
-    log.debug('Saving metadata...', {
+    log.info('Saving metadata...', {
       path: doc.path,
       _id: doc._id,
       _deleted: doc._deleted,
@@ -176,7 +176,7 @@ class Pouch {
   }
 
   remove(doc /*: SavedMetadata */) /*: Promise<SavedMetadata> */ {
-    log.debug('Removing record', { path: doc.path, _id: doc._id, doc })
+    log.info('Removing record', { path: doc.path, _id: doc._id, doc })
     return this.put(_.defaults({ _deleted: true }, doc))
   }
 
@@ -186,7 +186,7 @@ class Pouch {
   // result in an attempt to take action.
   // This method also does not care about invariants like `remove()` does.
   eraseDocument({ _id, _rev, path } /*: SavedMetadata */) {
-    log.debug('Erasing record', { path, _id, _rev })
+    log.info('Erasing record', { path, _id, _rev })
     return this.db.put({ _id, _rev, _deleted: true })
   }
 
@@ -197,7 +197,7 @@ class Pouch {
     const docsToErase = []
     docs.forEach(doc => {
       const { path, _id, _rev } = _.clone(doc)
-      log.debug('Erasing bulk record...', { path, _id, _rev })
+      log.info('Erasing bulk record...', { path, _id, _rev })
       docsToErase.push({ _id, _rev, _deleted: true })
     })
 
@@ -226,7 +226,7 @@ class Pouch {
       metadata.invariants(doc)
       const { path, _id } = doc
       const { local, remote } = doc.sides || {}
-      log.debug('Saving bulk metadata...', {
+      log.info('Saving bulk metadata...', {
         path,
         _id,
         local,
@@ -541,7 +541,7 @@ class Pouch {
       return
     } else {
       await this.db.put(doc)
-      log.debug(`Design document created: ${name}`)
+      log.trace(`Design document created: ${name}`)
     }
   }
 
@@ -573,7 +573,7 @@ class Pouch {
     try {
       return await this.db.get(id, { rev })
     } catch (err) {
-      log.debug('could fetch fetch previous revision', {
+      log.error('could not fetch previous revision', {
         path: doc.path,
         _id: doc._id,
         rev,

@@ -99,6 +99,8 @@ class Producer {
    *   events for its content in that case).
    */
   async start() {
+    log.info('Starting producer...')
+
     this.watcher = await parcel.subscribe(
       this.config.syncPath,
       async (err, events) => {
@@ -115,7 +117,7 @@ class Producer {
 
     this.channel.push([INITIAL_SCAN_DONE])
     this.initialScanDone = true
-    log.trace('Scan done')
+    log.info('Folder scan done')
 
     this.events.emit('buffering-end')
   }
@@ -186,7 +188,8 @@ class Producer {
   }
 
   async stop() {
-    log.trace('Stop')
+    log.info('Stopping producer...')
+
     if (this.watcher) {
       await this.watcher.unsubscribe()
       // XXX: unsubscribe() resolves before it was actually finished

@@ -45,7 +45,7 @@ if (process.env.APPIMAGE) {
       return
     })
     .catch(err =>
-      log.warn('could not check autolaunch or replace old one', { err })
+      log.error('could not check autolaunch or replace old one', { err })
     )
 }
 
@@ -66,5 +66,5 @@ module.exports.setEnabled = enabled => {
       }
       return was
     })
-    .catch(err => log.warn('could not set autolaunch', { err }))
+    .catch(err => log.error('could not set autolaunch', { err }))
 }

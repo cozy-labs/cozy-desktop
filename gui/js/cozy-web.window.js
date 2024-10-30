@@ -29,7 +29,7 @@ module.exports = class CozyWebWM extends WindowManager {
   }
 
   create() {
-    this.log.debug('create')
+    this.log.trace('create')
     const opts = {
       ...this.windowOptions(),
       autoHideMenuBar: true,
@@ -47,10 +47,10 @@ module.exports = class CozyWebWM extends WindowManager {
       this.win = null
     })
     this.win.on('unresponsive', () => {
-      this.log.warn('Web page becomes unresponsive')
+      this.log.warn('Web page is unresponsive')
     })
     this.win.on('responsive', () => {
-      this.log.warn('Web page becomes responsive again')
+      this.log.warn('Web page is responsive again')
     })
     this.centerOnScreen(opts.width, opts.height)
 

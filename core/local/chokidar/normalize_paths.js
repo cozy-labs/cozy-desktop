@@ -45,7 +45,7 @@ const step = async (
         normalizedPaths.push(normalized)
 
         if (c.path !== normalized) {
-          log.info(
+          log.debug(
             'normalizing local path to match existing doc and parent norms',
             { path: c.path, normalized }
           )

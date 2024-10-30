@@ -204,7 +204,7 @@ const rescheduleChanges = async (
   changes /*: Change[] */,
   { pouch } /*: Sync */
 ) /*: Promise<void> */ => {
-  log.info('rescheduling changes with low sequence numbers')
+  log.debug('rescheduling changes with low sequence numbers')
   await pouch.bulkDocs(changes.map(c => c.doc))
 }
 
@@ -366,7 +366,7 @@ class Sync {
   }
 
   fatal(err /*: Error */) {
-    log.error(`Sync fatal: ${err.message}`, { err, sentry: true })
+    log.fatal(`Sync fatal: ${err.message}`, { err, sentry: true })
 
     if (this.lifecycle.willStart()) {
       // The start phase needs to be ended before calling stop() or we won't be
@@ -407,7 +407,7 @@ class Sync {
         const seq = await this.pouch.getLocalSeq()
         const changes = await this.getNextChanges(seq)
         if (changes.length === 0) {
-          log.debug('No more metadata changes for now')
+          log.info('No more metadata changes for now')
           break
         }
 
@@ -767,21 +767,24 @@ class Sync {
 
       let { doc, seq } = change
       const { path } = doc
-      log.debug(`Applying change ${seq}...`, { path, seq, doc })
+      const side = this.selectSide(change)
 
       if (metadata.shouldIgnore(doc, this.ignore)) {
         return this.pouch.setLocalSeq(seq)
-      } else if (!metadata.wasSynced(doc) && isMarkedForDeletion(doc)) {
+      }
+
+      log.info(`Applying change ${seq}...`, { path, seq, doc })
+
+      if (!side) {
+        log.info('up to date', { path })
+        return this.pouch.setLocalSeq(seq)
+      }
+
+      if (!metadata.wasSynced(doc) && isMarkedForDeletion(doc)) {
         await this.pouch.eraseDocument(doc)
         if (doc.docType === metadata.FILE) {
           this.events.emit('delete-file', doc)
         }
-        return this.pouch.setLocalSeq(seq)
-      }
-
-      const side = this.selectSide(change)
-      if (!side) {
-        log.info('up to date', { path })
         return this.pouch.setLocalSeq(seq)
       }
 
@@ -1007,7 +1010,7 @@ class Sync {
     cause
     /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */
   ) {
-    log.debug(cause, 'blocking sync for error')
+    log.info(cause, 'blocking sync for error')
 
     const { err } = cause
 
@@ -1157,7 +1160,7 @@ class Sync {
   ) /*: Promise<void> */ {
     const { doc } = change
     const { errors = 0 } = doc
-    log.error(`Failed to sync ${errors + 1} times. Giving up.`, {
+    log.warn(`Failed to sync ${errors + 1} times. Giving up.`, {
       err,
       path: doc.path,
       oldpath: _.get(doc, 'moveFrom.path'),

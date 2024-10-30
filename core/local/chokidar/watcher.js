@@ -124,7 +124,7 @@ class LocalWatcher {
    * @see https://github.com/paulmillr/chokidar
    */
   start() {
-    log.debug('Starting...')
+    log.info('Starting watcher...')
 
     this.resetInitialScanParams()
 
@@ -175,7 +175,7 @@ class LocalWatcher {
             log.chokidar.debug(eventType, { path, stats, isInitialScan })
             const newEvent = chokidarEvent.build(eventType, path, stats)
             if (newEvent.type !== eventType) {
-              log.info('fixed wrong fsevents event type', {
+              log.debug('fixed wrong fsevents event type', {
                 eventType,
                 event: newEvent
               })
@@ -189,10 +189,11 @@ class LocalWatcher {
       this.watcher
         .on('ready', () => {
           stopChokidarScanMeasure()
+          log.info('Folder scan done')
           this.buffer.switchMode('timeout')
         })
         .on('raw', async (event, path, details) => {
-          log.chokidar.debug('raw', { event, path, details })
+          log.chokidar.trace('raw', { event, path, details })
 
           if (isRescanFlag(details.flags)) {
             try {
@@ -225,7 +226,7 @@ class LocalWatcher {
   // TODO: Start checksuming as soon as an add/change event is buffered
   // TODO: Put flushed event batches in a queue
   async onFlush(rawEvents /*: ChokidarEvent[] */) {
-    log.debug(`Flushed ${rawEvents.length} events`)
+    log.info(`Flushed ${rawEvents.length} events`)
 
     this.events.emit('buffering-end')
     syncDir.ensureExistsSync(this)
@@ -283,7 +284,7 @@ class LocalWatcher {
   }
 
   async stop(force /*: ?bool */ = false) {
-    log.debug('Stopping watcher...')
+    log.info('Stopping watcher...')
 
     if (!this.watcher) return
 
@@ -345,7 +346,7 @@ class LocalWatcher {
   }
 
   fatal(err /*: Error */) /*: void */ {
-    log.error(`Local watcher fatal: ${err.message}`, { err, sentry: true })
+    log.fatal(`Local watcher fatal: ${err.message}`, { err, sentry: true })
     this.events.emit(LOCAL_WATCHER_FATAL_EVENT, err)
     this.events.removeAllListeners(LOCAL_WATCHER_FATAL_EVENT)
     this.stop()

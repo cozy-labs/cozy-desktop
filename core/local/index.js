@@ -504,7 +504,7 @@ class Local /*:: implements Reader, Writer */ {
   ) /*: Promise<T> */ {
     const conflict = metadata.createConflictingDoc(newMetadata)
 
-    log.warn('Resolving local conflict', {
+    log.info('Resolving local conflict', {
       path: conflict.path,
       oldpath: newMetadata.path
     })

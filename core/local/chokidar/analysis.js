@@ -146,7 +146,7 @@ function analyseEvents(
   const changesFound = new LocalChangeMap()
 
   if (pendingChanges.length > 0) {
-    log.warn(`Prepend ${pendingChanges.length} pending change(s)`, {
+    log.debug(`Prepend ${pendingChanges.length} pending change(s)`, {
       changes: pendingChanges
     })
     for (const a of pendingChanges) {

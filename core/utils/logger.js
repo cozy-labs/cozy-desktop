@@ -138,7 +138,7 @@ const defaultFormatter = combine(
 )
 
 const defaultTransport = new DailyRotateFile({
-  level: 'trace',
+  level: 'info',
   dirname: LOG_DIR,
   filename: LOG_BASENAME,
   datePattern: 'YYYY-MM-DD', // XXX: rotate every day

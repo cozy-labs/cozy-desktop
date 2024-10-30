@@ -91,7 +91,7 @@ function step(opts /*: DispatchOptions */) {
       try {
         await dispatchEvent(event, opts)
       } catch (err) {
-        log.warn('could not dispatch local event', { err, event })
+        log.error('could not dispatch local event', { err, event })
       }
     }
 
@@ -127,7 +127,7 @@ async function dispatchEvent(
         ).last_seq
         opts.events.emit('sync-target', target)
       } catch (err) {
-        log.warn({ err })
+        log.error({ err })
         /* ignore err */
       }
     } finally {
@@ -156,25 +156,25 @@ actions = {
     actions.createddirectory(event, opts, 'Dir found'),
 
   createdfile: async (event, { prep }, description = 'File added') => {
-    log.info(description, { event })
+    log.debug(description, { event })
     const doc = buildFile(event.path, event.stats, event.md5sum)
     await prep.addFileAsync(SIDE, doc)
   },
 
   createddirectory: async (event, { prep }, description = 'Dir added') => {
-    log.info(description, { event })
+    log.debug(description, { event })
     const doc = buildDir(event.path, event.stats)
     await prep.putFolderAsync(SIDE, doc)
   },
 
   modifiedfile: async (event, { prep }) => {
-    log.info('File modified', { event })
+    log.debug('File modified', { event })
     const doc = buildFile(event.path, event.stats, event.md5sum)
     await prep.updateFileAsync(SIDE, doc)
   },
 
   modifieddirectory: async (event, { prep }) => {
-    log.info('Dir modified', { event })
+    log.debug('Dir modified', { event })
     const doc = buildDir(event.path, event.stats)
     await prep.putFolderAsync(SIDE, doc)
   },
@@ -200,7 +200,7 @@ actions = {
       log.warn('File move source has been replaced in Pouch', { event })
       return
     }
-    log.info('File moved', { event })
+    log.debug('File moved', { event })
 
     const doc = buildFile(event.path, event.stats, event.md5sum)
     if (event.overwrite) {
@@ -236,7 +236,7 @@ actions = {
       log.warn('Dir move source has been replaced in Pouch', { event })
       return
     }
-    log.info('Dir moved', { event })
+    log.debug('Dir moved', { event })
 
     const doc = buildDir(event.path, event.stats)
     if (event.overwrite) {
@@ -255,7 +255,7 @@ actions = {
       // => we can ignore safely this event
       return
     }
-    log.info('File removed', { event })
+    log.debug('File removed', { event })
     await prep.trashFileAsync(SIDE, was)
   },
 
@@ -267,7 +267,7 @@ actions = {
       // => we can ignore safely this event
       return
     }
-    log.info('Dir removed', { event })
+    log.debug('Dir removed', { event })
     await prep.trashFolderAsync(SIDE, was)
   }
 }

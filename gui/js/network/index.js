@@ -74,7 +74,7 @@ const networkConfig = (argv /*: Array<*> */ = process.argv) => {
     .help('help')
     .parse(argv)
 
-  log.debug('argv', { networkConfig })
+  log.info('argv', { networkConfig })
   return networkConfig
 }
 
@@ -93,7 +93,7 @@ const getSession = (
   syncSession.setCertificateVerifyProc((request, callback) => {
     const { hostname, certificate, verificationResult, errorCode } = request
     if (verificationResult < 0) {
-      log.warn('Certificate Verification Error', {
+      log.error('Certificate Verification Error', {
         hostname,
         certificate: formatCertificate(certificate),
         verificationResult,

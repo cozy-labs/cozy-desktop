@@ -53,7 +53,7 @@ const normalizePaths = async (
         normalizedPaths.push(normalized)
 
         if (c.doc.path !== normalized) {
-          log.info('normalizing path to match existing doc and parent norms', {
+          log.trace('normalizing path to match existing doc and parent norms', {
             path: normalized,
             oldpath: c.doc.path
           })

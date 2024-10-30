@@ -155,7 +155,7 @@ module.exports = class OnboardingWM extends WindowManager {
         await this.jumpToSyncPath()
       }
     } catch (err) {
-      log.warn('could not create Onboarding window', { err })
+      log.error('could not create Onboarding window', { err })
     }
   }
 
@@ -226,7 +226,10 @@ module.exports = class OnboardingWM extends WindowManager {
         return
       },
       err => {
-        log.warn('failed registering device with remote Cozy', { err, cozyUrl })
+        log.error('failed registering device with remote Cozy', {
+          err,
+          cozyUrl
+        })
         if (err.code && err.code.match(/PROXY/)) {
           syncSession.resolveProxy(cozyUrl, p => {
             event.sender.send(
@@ -268,12 +271,12 @@ module.exports = class OnboardingWM extends WindowManager {
   onStartSync(event /*: ElectronEvent */, syncPath /*: string */) {
     const { error } = this.checkSyncPath(syncPath, event.sender)
     if (error) {
-      log.warn({ err: error })
+      log.error({ err: error })
       return
     }
     let desktop = this.desktop
     if (!desktop.config.isValid()) {
-      log.warn('Cannot start desktop client. No valid config found!')
+      log.error('Cannot start desktop client. No valid config found!')
       return
     }
     try {
@@ -281,11 +284,11 @@ module.exports = class OnboardingWM extends WindowManager {
       try {
         addFileManagerShortcut(desktop.config)
       } catch (err) {
-        log.warn('failed adding shortcuts in file manager', { err })
+        log.error('failed adding shortcuts in file manager', { err })
       }
       this.afterOnboarding()
     } catch (err) {
-      log.warn('failed starting sync', { err })
+      log.error('failed starting sync', { err })
       event.sender.send('folder-error', translate('Error Invalid path'))
     }
   }

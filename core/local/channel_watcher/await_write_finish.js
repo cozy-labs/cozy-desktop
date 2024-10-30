@@ -270,7 +270,7 @@ async function awaitWriteFinish(channel /*: Channel */, out /*: Channel */) {
 function loop(channel /*: Channel */, opts /*: {} */) /*: Channel */ {
   const out = new Channel()
   awaitWriteFinish(channel, out).catch(err => {
-    log.warn({ err })
+    log.error({ err })
   })
   return out
 }

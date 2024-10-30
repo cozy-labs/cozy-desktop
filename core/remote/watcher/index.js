@@ -110,7 +110,7 @@ class RemoteWatcher {
 
   async start() {
     if (!this.running) {
-      log.debug('Starting watcher')
+      log.info('Starting watcher')
       this.running = true
       this.startClock()
 
@@ -129,7 +129,7 @@ class RemoteWatcher {
 
   async stop() {
     if (this.running) {
-      log.debug('Stopping watcher')
+      log.info('Stopping watcher')
 
       if (this.realtimeManager) {
         this.realtimeManager.stop()
@@ -146,7 +146,7 @@ class RemoteWatcher {
   }
 
   error(err /*: RemoteError */) {
-    log.warn(`Remote watcher error: ${err.message}`, { err })
+    log.error(`Remote watcher error: ${err.message}`, { err })
     this.events.emit(REMOTE_WATCHER_ERROR_EVENT, err)
   }
 
@@ -155,7 +155,7 @@ class RemoteWatcher {
   }
 
   async fatal(err /*: Error */) {
-    log.error(`Remote watcher fatal: ${err.message}`, { err, sentry: true })
+    log.fatal(`Remote watcher fatal: ${err.message}`, { err, sentry: true })
     this.events.emit(REMOTE_WATCHER_FATAL_EVENT, err)
     this.events.removeAllListeners(REMOTE_WATCHER_FATAL_EVENT)
     await this.stop()
@@ -173,7 +173,7 @@ class RemoteWatcher {
 
   startClock() {
     if (this.watchInterval == null) {
-      log.info('starting watch clock')
+      log.debug('starting watch clock')
       this.watchInterval = setInterval(() => {
         if (this.queue.idle()) {
           // Enqueue a scheduled run only if there weren't any running on
@@ -185,7 +185,7 @@ class RemoteWatcher {
   }
 
   stopClock() {
-    log.info('stopping watch clock')
+    log.debug('stopping watch clock')
     clearInterval(this.watchInterval)
     this.watchInterval = null
   }
@@ -197,7 +197,7 @@ class RemoteWatcher {
     }
 
     try {
-      log.info('requesting watch run')
+      log.debug('requesting watch run')
 
       if (this.queue.idle()) {
         // If there aren't any requests running, enqueue one and wait until
@@ -230,7 +230,7 @@ class RemoteWatcher {
     const release = await this.pouch.lock(this)
     try {
       if (!this.running) {
-        log.debug('Watcher stopped: skipping remote watch')
+        log.info('Watcher stopped: skipping remote watch')
         return
       }
 
@@ -243,7 +243,7 @@ class RemoteWatcher {
       this.events.emit('online')
 
       if (docs.length === 0) {
-        log.debug('No remote changes for now')
+        log.info('No remote changes for now')
         await this.fetchReincludedContent()
         return
       }
@@ -264,7 +264,7 @@ class RemoteWatcher {
       this.events.emit('sync-target', target)
 
       await this.pouch.setRemoteSeq(last_seq)
-      log.debug('No more remote changes for now')
+      log.info('No more remote changes for now')
     } catch (err) {
       // TODO: Maybe wrap remote errors more closely to remote calls to avoid
       // wrapping other kinds of errors? PouchDB errors for example.
@@ -281,7 +281,7 @@ class RemoteWatcher {
 
     while (dirs.length) {
       for (const dir of dirs) {
-        log.trace('Fetching content of unknown folder...', { path: dir.path })
+        log.info('Fetching content of unknown folder...', { path: dir.path })
         const children = await this.remoteCozy.getDirectoryContent(dir.remote)
 
         await this.processRemoteChanges(children, { isRecursiveFetch: true })
@@ -394,7 +394,7 @@ class RemoteWatcher {
     } /*: { isInitialFetch?: boolean, isRecursiveFetch?: boolean } */ = {}
   ) /*: RemoteChange */ {
     const oldpath /*: ?string */ = was ? was.path : undefined
-    log.debug('change received', {
+    log.info('change received', {
       path: remoteDoc.path || oldpath,
       oldpath,
       remoteDoc,
@@ -498,7 +498,7 @@ class RemoteWatcher {
       metadata.assignPlatformIncompatibilities(doc, this.config.syncPath)
       const { incompatibilities } = doc
       if (incompatibilities) {
-        log.debug({ path, oldpath: was && was.path, incompatibilities })
+        log.info({ path, oldpath: was && was.path, incompatibilities })
       }
     } else {
       if (!was) {
@@ -607,39 +607,39 @@ class RemoteWatcher {
           })
           break
         case 'FileTrashing':
-          log.info('file was trashed remotely', { path })
+          log.debug('file was trashed remotely', { path })
           await this.prep.trashFileAsync(sideName, change.was, change.doc)
           break
         case 'DirTrashing':
-          log.info('folder was trashed remotely', { path })
+          log.debug('folder was trashed remotely', { path })
           await this.prep.trashFolderAsync(sideName, change.was, change.doc)
           break
         case 'FileDeletion':
-          log.info('file was deleted permanently', { path })
+          log.debug('file was deleted permanently', { path })
           await this.prep.deleteFileAsync(sideName, change.doc)
           break
         case 'DirDeletion':
-          log.info('folder was deleted permanently', { path })
+          log.debug('folder was deleted permanently', { path })
           await this.prep.deleteFolderAsync(sideName, change.doc)
           break
         case 'FileAddition':
-          log.info('file was added remotely', { path })
+          log.debug('file was added remotely', { path })
           await this.prep.addFileAsync(sideName, change.doc)
           break
         case 'DirAddition':
-          log.info('folder was added remotely', { path })
+          log.debug('folder was added remotely', { path })
           await this.prep.putFolderAsync(sideName, change.doc)
           break
         case 'FileUpdate':
-          log.info('file was updated remotely', { path })
+          log.debug('file was updated remotely', { path })
           await this.prep.updateFileAsync(sideName, change.doc)
           break
         case 'DirUpdate':
-          log.info('folder was updated remotely', { path })
+          log.debug('folder was updated remotely', { path })
           await this.prep.putFolderAsync(sideName, change.doc)
           break
         case 'FileMove':
-          log.info('file was moved or renamed remotely', {
+          log.debug('file was moved or renamed remotely', {
             path,
             oldpath: change.was.path
           })
@@ -654,7 +654,7 @@ class RemoteWatcher {
           break
         case 'DirMove':
           {
-            log.info('folder was moved or renamed remotely', {
+            log.debug('folder was moved or renamed remotely', {
               path,
               oldpath: change.was.path
             })
@@ -685,13 +685,13 @@ class RemoteWatcher {
           }
           break
         case 'UpToDate':
-          log.info(`${docType} is up-to-date`, { path })
+          log.debug(`${docType} is up-to-date`, { path })
           break
         default:
           throw new Error(`Unexpected change type: ${change.type}`)
       } // switch
     } catch (err) {
-      log.debug('could not apply change', {
+      log.error('could not apply change', {
         err,
         path: change.doc.path,
         change

@@ -301,7 +301,7 @@ class Remote /*:: implements Reader, Writer */ {
     if (!doc.remote) {
       return this.addFolderAsync(doc)
     }
-    log.info('Updating metadata...', { path })
+    log.info('Updating folder metadata...', { path })
 
     const attrs = {
       updated_at: mostRecentUpdatedAt(doc)
@@ -426,7 +426,7 @@ class Remote /*:: implements Reader, Writer */ {
       await this.diskUsage()
       return true
     } catch (err) {
-      log.debug('Could not reach remote Cozy', { err })
+      log.warn('Could not reach remote Cozy', { err })
       return false
     }
   }
@@ -467,7 +467,7 @@ class Remote /*:: implements Reader, Writer */ {
   ) /*: Promise<?T> */ {
     const conflict = metadata.createConflictingDoc(newMetadata)
 
-    log.warn('Resolving remote conflict', {
+    log.info('Resolving remote conflict', {
       path: conflict.path,
       oldpath: newMetadata.path
     })

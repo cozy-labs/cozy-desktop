@@ -67,7 +67,7 @@ class RemoteWarningPoller {
 
   async poll() {
     if (this.polling) {
-      log.warn('Skipping polling (already in progress)')
+      log.debug('Skipping polling (already in progress)')
       this.scheduleNext(this.ticks)
       return
     }
@@ -77,7 +77,7 @@ class RemoteWarningPoller {
       this.polling = this.remoteCozy.warnings()
       const warnings /*: Warning[] */ = await this.polling
 
-      log.info(`${warnings.length} warnings`)
+      log.debug(`${warnings.length} warnings`)
       if (warnings.length > 0) log.trace({ warnings })
 
       for (const warning of warnings) {
