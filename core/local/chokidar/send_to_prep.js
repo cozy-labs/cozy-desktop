@@ -45,7 +45,7 @@ const onAddFile = (
   prep /*: Prep */
 ) => {
   const doc = metadata.buildFile(filePath, stats, md5sum)
-  log.info('FileAddition', { path: filePath })
+  log.debug('FileAddition', { path: filePath })
   return prep.addFileAsync(SIDE, doc)
 }
 
@@ -55,7 +55,7 @@ const onMoveFile = async (
 ) => {
   const doc = metadata.buildFile(filePath, stats, md5sum, old.remote)
   if (overwrite) doc.overwrite = overwrite
-  log.info('FileMove', { path: filePath, oldpath: old.path })
+  log.debug('FileMove', { path: filePath, oldpath: old.path })
   return prep.moveFileAsync(SIDE, doc, old)
 }
 
@@ -66,7 +66,7 @@ const onMoveFolder = (
   const doc = metadata.buildDir(folderPath, stats, old.remote)
   // $FlowFixMe we set doc.overwrite to true, it will be replaced by metadata in merge
   if (overwrite) doc.overwrite = overwrite
-  log.info('DirMove', { path: folderPath, oldpath: old.path })
+  log.debug('DirMove', { path: folderPath, oldpath: old.path })
   return prep.moveFolderAsync(SIDE, doc, old)
 }
 
@@ -76,7 +76,7 @@ const onAddDir = (
   prep /*: Prep */
 ) => {
   const doc = metadata.buildDir(folderPath, stats)
-  log.info('DirAddition', { path: folderPath })
+  log.debug('DirAddition', { path: folderPath })
   return prep.putFolderAsync(SIDE, doc)
 }
 
@@ -89,7 +89,7 @@ const onUnlinkFile = (
   { path: filePath, old } /*: LocalFileDeletion */,
   prep /*: Prep */
 ) => {
-  log.info('FileDeletion', { path: filePath })
+  log.debug('FileDeletion', { path: filePath })
   if (!old) {
     log.debug('Assuming file already removed', { path: filePath })
     return
@@ -106,7 +106,7 @@ const onUnlinkDir = (
   { path: folderPath, old } /*: LocalDirDeletion */,
   prep /*: Prep */
 ) => {
-  log.info('DirDeletion', { path: folderPath })
+  log.debug('DirDeletion', { path: folderPath })
   if (!old) {
     log.debug('Assuming dir already removed', { path: folderPath })
     return
@@ -123,7 +123,7 @@ const onChange = (
   } /*: LocalFileUpdate|LocalFileAdded|LocalFileUpdated */,
   prep /*: Prep */
 ) => {
-  log.info('FileUpdate', { path: filePath })
+  log.debug('FileUpdate', { path: filePath })
   const doc = metadata.buildFile(filePath, stats, md5sum)
   return prep.updateFileAsync(SIDE, doc)
 }

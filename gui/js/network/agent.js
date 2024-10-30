@@ -129,7 +129,7 @@ class ProxyAgent extends Agent {
 
   constructor(opts /*:: ?: AgentConnectOpts */ = {}) {
     super(opts)
-    log.debug('Creating new ProxyAgent instance', { opts })
+    log.info('Creating new ProxyAgent instance', { opts })
     this.cache = new LRUCache({ max: 20 })
     this.proxyHeaders = opts && opts.headers ? opts.headers : {}
     this.connectOpts = _.omit(opts, 'headers')
@@ -178,8 +178,8 @@ class ProxyAgent extends Agent {
       return secureEndpoint ? this.httpsAgent : this.httpAgent
     }
 
-    log.debug('Request URL: %o', url)
-    log.debug('Proxy URL: %o', proxy)
+    log.trace('Request URL: %o', url)
+    log.trace('Proxy URL: %o', proxy)
 
     // attempt to get a cached `http.Agent` instance first
     const cacheKey = `${protocol}+${proxy}`
@@ -195,7 +195,7 @@ class ProxyAgent extends Agent {
       agent = new ctor(proxy, this.connectOpts)
       this.cache.set(cacheKey, agent)
     } else {
-      log.debug('Cache hit for proxy URL: %o', proxy)
+      log.trace('Cache hit for proxy URL: %o', proxy)
     }
 
     return agent
@@ -214,7 +214,7 @@ class ProxyAgent extends Agent {
 // It is meant to be used with `ProxyAgent`.
 const getProxyForUrl =
   (session /*: Session */) => async (reqUrl /*: string */) => {
-    log.info('getProxyForUrl', { reqUrl })
+    log.debug('getProxyForUrl', { reqUrl })
     const proxy = await session.resolveProxy(reqUrl)
     if (!proxy) {
       return ''

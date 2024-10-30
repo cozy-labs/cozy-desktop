@@ -156,7 +156,7 @@ class ChannelWatcher {
   }
 
   async start() {
-    log.debug('starting...')
+    log.info('Starting watcher...')
 
     await stepsInitialState(this.state, this)
     const scanDone = new Promise(resolve => {
@@ -167,7 +167,7 @@ class ChannelWatcher {
   }
 
   async stop() /*: Promise<*> */ {
-    log.debug('stopping...')
+    log.info('Stopping watcher...')
 
     await this.producer.stop()
   }
@@ -177,7 +177,7 @@ class ChannelWatcher {
   }
 
   fatal(err /*: Error */) /*: void */ {
-    log.error(`Local watcher fatal: ${err.message}`, { err, sentry: true })
+    log.fatal(`Local watcher fatal: ${err.message}`, { err, sentry: true })
     this.events.emit(LOCAL_WATCHER_FATAL_EVENT, err)
     this.events.removeAllListeners(LOCAL_WATCHER_FATAL_EVENT)
     this.stop()

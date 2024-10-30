@@ -138,7 +138,7 @@ const defaultFormatter = combine(
 )
 
 const defaultTransport = new DailyRotateFile({
-  level: 'trace',
+  level: process.env.DEBUG ? 'trace' : 'info',
   dirname: LOG_DIR,
   filename: LOG_BASENAME,
   datePattern: 'YYYY-MM-DD', // XXX: rotate every day
@@ -217,6 +217,7 @@ module.exports = {
   LOG_BASENAME,
   defaultFormatter,
   defaultLogger,
+  defaultTransport,
   dropTimestamp,
   logger,
   messageToMsg

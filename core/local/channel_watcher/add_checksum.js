@@ -67,14 +67,21 @@ function loop(
         if (isFileWithContent(event) && !event.md5sum) {
           const absPath = path.join(syncPath, event.path)
           event.md5sum = await opts.checksumer.push(absPath)
-          log.debug('computed checksum', { path: event.path, event })
+          log.trace('Checksum complete', { path: event.path, event })
         }
       } catch (err) {
         // Even if the file is no longer at the expected path, we want to
         // keep the event. Maybe it was one if its parents directory that was
         // moved, and then we can refine the event later (in incompleteFixer).
         _.set(event, ['incomplete', STEP_NAME], err.message)
-        log.debug('Cannot compute checksum', { err, event })
+        if (err.code.match(/ENOENT/)) {
+          log.debug('Checksum failed: file does not exist anymore', {
+            path: event.path,
+            event
+          })
+        } else {
+          log.error('Cannot compute checksum', { err, event, sentry: true })
+        }
       }
     }
 

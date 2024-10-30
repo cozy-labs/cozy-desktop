@@ -92,7 +92,7 @@ function loop(
           }
         }
       } catch (err) {
-        log.debug('Cannot get infos', { err, event })
+        log.error('Cannot get infos', { err, event })
         _.set(event, ['incomplete', STEP_NAME], err.message)
       }
       batch.push(event)

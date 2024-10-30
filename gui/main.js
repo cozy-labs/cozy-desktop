@@ -200,7 +200,7 @@ const showWindow = async bounds => {
       const hasAutolaunch = await autoLaunch.isEnabled()
       trayWindow.send('auto-launch', hasAutolaunch)
     } catch (err) {
-      log.warn('could not show tray window or recent files', { err })
+      log.error('could not show tray window or recent files', { err })
     }
   }
 }
@@ -697,7 +697,7 @@ app.on('ready', async () => {
 // Don't quit the app when all windows are closed, keep the tray icon
 // See http://electron.atom.io/docs/api/app/#event-window-all-closed
 app.on('window-all-closed', () => {
-  log.debug('All windows closed. Keep running in tray...')
+  log.trace('All windows closed. Keep running in tray...')
 })
 
 ipcMain.on('show-help', () => {

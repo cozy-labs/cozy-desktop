@@ -79,7 +79,7 @@ class RealtimeManager {
       // Add logs to `disconnected` event as `cozy-realtime` doesn't log anything
       // when emitting this event.
       this.realtime.on('disconnected', () =>
-        log.debug('realtime websocket disconnected')
+        log.info('realtime websocket disconnected')
       )
       this.realtime.on('error', this.onError)
 
@@ -90,7 +90,7 @@ class RealtimeManager {
   }
 
   async start() {
-    log.debug('Starting realtime manager...')
+    log.info('Starting realtime manager...')
 
     if (this.realtime == null) {
       log.warn(
@@ -111,7 +111,7 @@ class RealtimeManager {
       this.onError(err)
 
       const delay = this.options.reconnectionDelay
-      log.debug(`Will retry starting realtime in ${delay} ms`)
+      log.trace(`Will retry starting realtime in ${delay} ms`)
       this.reconnectTimeout = setTimeout(this.start, delay)
 
       return
@@ -121,6 +121,8 @@ class RealtimeManager {
   }
 
   async stop() {
+    log.info('Stopping realtime manager...')
+
     clearTimeout(this.reconnectTimeout)
 
     if (this.realtime == null) {

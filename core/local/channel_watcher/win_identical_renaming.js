@@ -178,7 +178,7 @@ const loop = (
   const out = new Channel()
 
   _loop(channel, out, opts).catch(err => {
-    log.warn({ err })
+    log.error({ err })
   })
 
   return out

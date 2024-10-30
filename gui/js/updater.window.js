@@ -113,7 +113,7 @@ module.exports = class UpdaterWM extends WindowManager {
       }
     })
     autoUpdater.on('download-progress', progressObj => {
-      log.trace('Downloading...', { progress: progressObj })
+      log.info('Downloading...', { progress: progressObj })
       this.send('update-downloading', progressObj)
     })
     autoUpdater.on('update-downloaded', info => {
