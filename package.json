@@ -16,7 +16,7 @@
     "url": "git://github.com/cozy-labs/cozy-desktop.git"
   },
   "engines": {
-    "node": ">=14.17.6"
+    "node": ">=18.0.0"
   },
   "keywords": [
     "Electron",
@@ -79,8 +79,8 @@
   },
   "dependencies": {
     "@babel/runtime": "7.16.7",
-    "@electron/remote": "2.0.8",
-    "@parcel/watcher": "https://github.com/taratatach/parcel-watcher.git#v3.0.0",
+    "@electron/remote": "2.1.2",
+    "@parcel/watcher": "https://github.com/taratatach/parcel-watcher.git#cozy-desktop",
     "@sentry/electron": "3.0.7",
     "@sentry/integrations": "7.5.1",
     "agent-base": "7.1.0",
@@ -148,10 +148,10 @@
     "debug-menu": "^0.6.1",
     "del": "^6.0.0",
     "devtron": "^1.4.0",
-    "electron": "23.0.0",
+    "electron": "^31",
     "electron-builder": "^24",
     "electron-download": "^4.1.1",
-    "electron-mocha": "11.0.2",
+    "electron-mocha": "^13.0.0",
     "elm": "^0.19.1",
     "elm-format": "0.8.5",
     "elm-test": "^0.19.1",
@@ -181,11 +181,9 @@
     "treeify": "^1.1.0"
   },
   "optionalDependencies": {
-    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#1.0.0"
+    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#2.0.0"
   },
   "resolutions": {
-    "nan": "2.17.0",
-    "node-abi": "3.5.0",
-    "node-gyp": "9.3.1"
+    "node-abi": "3.5.0"
   }
 }
