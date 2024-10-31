@@ -190,6 +190,7 @@ class LocalWatcher {
         .on('ready', () => {
           stopChokidarScanMeasure()
           log.info('Folder scan done')
+          this.buffer.flush()
           this.buffer.switchMode('timeout')
         })
         .on('raw', async (event, path, details) => {
@@ -221,6 +222,68 @@ class LocalWatcher {
     })
 
     return started
+  }
+
+  async resume() {
+    log.info('Resuming watcher...')
+
+    if (this.watcher && this.watcher.getWatched().length === 0) {
+      this.watcher.add('.')
+    }
+
+    // Flush previously buffered events
+    this.buffer.flush()
+    // Restart flushes loop
+    this.buffer.switchMode('timeout')
+  }
+
+  async suspend() {
+    log.info('Suspending watcher...')
+
+    // Stop flushes loop but keep buffered events
+    this.buffer.switchMode('idle')
+
+    // Stop underlying Chokidar watcher
+    if (this.watcher) {
+      this.watcher.unwatch('.')
+    }
+  }
+
+  async stop(force /*: ?bool */ = false) {
+    log.info('Stopping watcher...')
+
+    if (!this.watcher) return
+
+    if (force || !this.initialScanParams.flushed) {
+      // Drop buffered events
+      this.buffer.clear()
+    } else {
+      // XXX manually fire events for added file, because chokidar will cancel
+      // them if they are still in the awaitWriteFinish period
+      for (let relpath in this.watcher._pendingWrites) {
+        try {
+          const fullpath = path.join(this.watcher.options.cwd, relpath)
+          const curStat = await stater.stat(fullpath)
+          this.watcher.emit('add', relpath, curStat)
+        } catch (err) {
+          log.warn('Could not fire remaining add events', { err })
+        }
+      }
+    }
+
+    // Stop underlying Chokidar watcher
+    await this.watcher.close()
+    this.watcher = null
+    // Flush buffer and stop flushes loop
+    this.buffer.flush()
+    this.buffer.switchMode('idle')
+
+    if (!force) {
+      // Give some time for awaitWriteFinish events to be managed
+      return new Promise(resolve => {
+        setTimeout(resolve, 1000)
+      })
+    }
   }
 
   // TODO: Start checksuming as soon as an add/change event is buffered
@@ -281,42 +344,6 @@ class LocalWatcher {
     }
 
     this.endInitialScan()
-  }
-
-  async stop(force /*: ?bool */ = false) {
-    log.info('Stopping watcher...')
-
-    if (!this.watcher) return
-
-    if (force || !this.initialScanParams.flushed) {
-      // Drop buffered events
-      this.buffer.clear()
-    } else {
-      // XXX manually fire events for added file, because chokidar will cancel
-      // them if they are still in the awaitWriteFinish period
-      for (let relpath in this.watcher._pendingWrites) {
-        try {
-          const fullpath = path.join(this.watcher.options.cwd, relpath)
-          const curStat = await stater.stat(fullpath)
-          this.watcher.emit('add', relpath, curStat)
-        } catch (err) {
-          log.warn('Could not fire remaining add events', { err })
-        }
-      }
-    }
-
-    // Stop underlying Chokidar watcher
-    await this.watcher.close()
-    this.watcher = null
-    // Flush buffer and stop flushes loop
-    this.buffer.switchMode('idle')
-
-    if (!force) {
-      // Give some time for awaitWriteFinish events to be managed
-      return new Promise(resolve => {
-        setTimeout(resolve, 1000)
-      })
-    }
   }
 
   resetInitialScanParams() {

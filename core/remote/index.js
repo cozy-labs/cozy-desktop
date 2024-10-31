@@ -117,6 +117,15 @@ class Remote /*:: implements Reader, Writer */ {
     return this.warningsPoller.start()
   }
 
+  async resume() {
+    await this.watcher.resume()
+    return this.warningsPoller.start()
+  }
+
+  async suspend() {
+    await Promise.all([this.watcher.suspend(), this.warningsPoller.stop()])
+  }
+
   async stop() {
     await Promise.all([this.watcher.stop(), this.warningsPoller.stop()])
   }

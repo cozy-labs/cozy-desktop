@@ -110,7 +110,8 @@ class RemoteWatcher {
 
   async start() {
     if (!this.running) {
-      log.info('Starting watcher')
+      log.info('Starting watcher...')
+
       this.running = true
       this.startClock()
 
@@ -127,9 +128,21 @@ class RemoteWatcher {
     }
   }
 
+  resume() {
+    log.info('Resuming watcher...')
+
+    return this.start()
+  }
+
+  suspend() {
+    log.info('Suspending watcher...')
+
+    return this.stop()
+  }
+
   async stop() {
     if (this.running) {
-      log.info('Stopping watcher')
+      log.info('Stopping watcher...')
 
       if (this.realtimeManager) {
         this.realtimeManager.stop()

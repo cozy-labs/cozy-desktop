@@ -298,14 +298,21 @@ class Sync {
     }
   }
 
-  async started() {
-    await this.lifecycle.started()
-  }
+  async resume() {
+    log.info('resuming synchronization')
 
-  // Manually force a full synchronization
-  async forceSync() {
-    await this.stop()
-    await this.start()
+    try {
+      this.lifecycle.begin('start')
+    } catch (err) {
+      return
+    }
+
+    this.events.once('power-suspend', this.suspend)
+
+    this.lifecycle.unblockFor('all')
+    this.local.resume()
+    this.remote.resume()
+    this.lifecycle.end('start')
   }
 
   suspend() {
@@ -319,17 +326,12 @@ class Sync {
       return
     }
 
-    this.local.stop()
-    this.remote.stop()
+    this.local.suspend()
+    this.remote.suspend()
     clearInterval(this.retryInterval)
     this.retryInterval = null
     this.lifecycle.unblockFor('all')
     this.lifecycle.end('stop')
-  }
-
-  async resume() {
-    log.info('resuming synchronization')
-    await this.start()
   }
 
   // Stop the synchronization
@@ -361,8 +363,18 @@ class Sync {
     this.lifecycle.end('stop')
   }
 
+  async started() {
+    await this.lifecycle.started()
+  }
+
   async stopped() {
     await this.lifecycle.stopped()
+  }
+
+  // Manually force a full synchronization
+  async forceSync() {
+    await this.stop()
+    await this.start()
   }
 
   fatal(err /*: Error */) {
