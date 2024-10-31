@@ -33,7 +33,7 @@ const {
   INFO_LVL,
   DEBUG_LVL,
   defaultFormatter,
-  defaultLogger,
+  baseLogger,
   logger
 } = require('./logger')
 
@@ -140,7 +140,7 @@ function setup(clientInfos /*: ClientInfo */) {
       scope.setTag('instance', instance)
       scope.setTag('server_name', clientInfos.deviceName)
     })
-    defaultLogger.add(
+    baseLogger.add(
       new SentryTransport({
         format: combine(defaultFormatter, json())
       })

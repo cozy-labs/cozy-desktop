@@ -2,13 +2,13 @@
 /* @flow */
 const winston = require('winston')
 
-const { defaultLogger, logger } = require('../../../core/utils/logger')
+const { baseLogger, logger } = require('../../../core/utils/logger')
 
 const log = logger({ component: 'mocha' })
 
 const errors = []
 
-defaultLogger.add(
+baseLogger.add(
   new winston.Transport({
     level: 'error',
     log: ({ err, message }, callback) => {
