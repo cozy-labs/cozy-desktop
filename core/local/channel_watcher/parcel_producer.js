@@ -101,15 +101,7 @@ class Producer {
   async start() {
     log.info('Starting producer...')
 
-    this.watcher = await parcel.subscribe(
-      this.config.syncPath,
-      async (err, events) => {
-        // FIXME: use async queue to run processEvents calls in order
-        await this.processEvents(events)
-      },
-      { backend }
-    )
-    if (!this.watcher) throw new Error('Could not start @parcel/watcher')
+    await this.subscribe()
 
     this.events.emit('buffering-start')
 
@@ -120,6 +112,47 @@ class Producer {
     log.info('Folder scan done')
 
     this.events.emit('buffering-end')
+  }
+
+  async resume() {
+    log.info('Resuming producer...')
+
+    await this.subscribe()
+  }
+
+  async suspend() {
+    log.info('Suspending producer...')
+
+    await this.unsubscribe()
+  }
+
+  async stop() {
+    log.info('Stopping producer...')
+
+    await this.unsubscribe()
+  }
+
+  async subscribe() {
+    if (!this.watcher) {
+      this.watcher = await parcel.subscribe(
+        this.config.syncPath,
+        async (err, events) => {
+          // FIXME: use async queue to run processEvents calls in order
+          await this.processEvents(events)
+        },
+        { backend }
+      )
+    }
+    if (!this.watcher) throw new Error('Could not start @parcel/watcher')
+  }
+
+  async unsubscribe() {
+    if (this.watcher) {
+      await this.watcher.unsubscribe()
+      // XXX: unsubscribe() resolves before it was actually finished
+      await Promise.delay(1000)
+      this.watcher = null
+    }
   }
 
   async scan(relPath /*: string */) {
@@ -184,17 +217,6 @@ class Producer {
     if (batch.length > 0) {
       log.trace('process', { batch })
       this.channel.push(batch)
-    }
-  }
-
-  async stop() {
-    log.info('Stopping producer...')
-
-    if (this.watcher) {
-      await this.watcher.unsubscribe()
-      // XXX: unsubscribe() resolves before it was actually finished
-      await Promise.delay(1000)
-      this.watcher = null
     }
   }
 }
