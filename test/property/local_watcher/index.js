@@ -8,9 +8,10 @@ const fse = require('fs-extra')
 const glob = require('glob')
 const path = require('path')
 const Promise = require('bluebird')
+const winston = require('winston')
 
 const { id } = require('../../../core/metadata')
-const { defaultLogger } = require('../../../core/utils/logger')
+const { baseLogger } = require('../../../core/utils/logger')
 
 const { ContextDir } = require('../../support/helpers/context_dir')
 const TmpDir = require('../../support/helpers/TmpDir')
@@ -32,12 +33,13 @@ describe('Local watcher', function () {
 
       let state /*: Object */ = { name: scenario, conflicts: [] }
       state.dir = new ContextDir(await TmpDir.emptyForTestFile(scenario))
-      defaultLogger.streams.length = 0
-      defaultLogger.addStream({
-        type: 'file',
-        path: state.dir.root + '.log',
-        level: 'debug'
-      })
+      baseLogger.clear()
+      baseLogger.add(
+        new winston.transports.File({
+          filename: state.dir.root + '.log',
+          level: 'debug'
+        })
+      )
       await run(state, ops)
 
       // Wait that the dust settles

@@ -138,7 +138,6 @@ const defaultFormatter = combine(
 )
 
 const defaultTransport = new DailyRotateFile({
-  level: process.env.DEBUG ? 'trace' : 'info',
   dirname: LOG_DIR,
   filename: LOG_BASENAME,
   datePattern: 'YYYY-MM-DD', // XXX: rotate every day
@@ -147,7 +146,7 @@ const defaultTransport = new DailyRotateFile({
   format: combine(defaultFormatter, json())
 })
 
-const defaultLogger = winston.createLogger({
+const baseLogger = winston.createLogger({
   levels: {
     fatal: 0,
     error: 1,
@@ -156,10 +155,10 @@ const defaultLogger = winston.createLogger({
     debug: 4,
     trace: 5
   },
-  level: 'trace',
+  level: process.env.DEBUG ? 'trace' : 'info',
   transports: [defaultTransport]
 })
-defaultLogger.on('error', err => {
+baseLogger.on('error', err => {
   // eslint-disable-next-line no-console
   console.log('failed to log', { err })
 })
@@ -169,7 +168,7 @@ if (process.env.DEBUG) {
   // XXX: Clear log file from previous logs to simplify analysis
   fse.outputFileSync(filename, '')
 
-  defaultLogger.add(
+  baseLogger.add(
     new winston.transports.File({
       filename,
       format: combine(defaultFormatter, json())
@@ -178,7 +177,7 @@ if (process.env.DEBUG) {
 }
 
 if (process.env.TESTDEBUG) {
-  defaultLogger.add(
+  baseLogger.add(
     new winston.transports.Console({
       handleExceptions: true,
       format: combine(
@@ -203,7 +202,7 @@ if (process.env.TESTDEBUG) {
 }
 
 function logger(options) {
-  return defaultLogger.child(options)
+  return baseLogger.child(options)
 }
 
 module.exports = {
@@ -216,7 +215,7 @@ module.exports = {
   LOG_DIR,
   LOG_BASENAME,
   defaultFormatter,
-  defaultLogger,
+  baseLogger,
   defaultTransport,
   dropTimestamp,
   logger,
