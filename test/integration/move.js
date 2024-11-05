@@ -55,6 +55,9 @@ describe('Move', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   afterEach(() => helpers.local.clean())
   afterEach(pouchHelpers.cleanDatabase)

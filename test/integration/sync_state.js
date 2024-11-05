@@ -31,6 +31,9 @@ describe('Sync state', () => {
 
     await helpers.remote.ignorePreviousChanges()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   it('1 sync error (missing remote file)', async () => {
     // XXX: Get current PouchDB sequence (it's not 0 since we have design docs)

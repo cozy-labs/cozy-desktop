@@ -39,6 +39,9 @@ describe('Trash', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   describe('file', () => {
     let parent, file

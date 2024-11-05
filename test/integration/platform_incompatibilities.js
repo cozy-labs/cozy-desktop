@@ -54,6 +54,9 @@ describe('Platform incompatibilities', () => {
         helpers._sync.lifecycle.unblockFor(err.code)
       })
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   const shouldHaveBlockedFor = dpath =>
     Array.isArray(dpath)

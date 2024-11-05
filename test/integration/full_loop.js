@@ -32,6 +32,9 @@ describe('Full watch/merge/sync/repeat loop', () => {
 
     helpers.spyPouch()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   it('remote -> local add file', async () => {
     await helpers._local.watcher.start()

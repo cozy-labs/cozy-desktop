@@ -26,6 +26,9 @@ describe('Update only mtime', () => {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   afterEach(() => helpers.local.clean())
   afterEach(pouchHelpers.cleanDatabase)
