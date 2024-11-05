@@ -43,6 +43,9 @@ describe('Update file', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   describe('local offline change with unsynced previous local change', () => {
     beforeEach(async () => {

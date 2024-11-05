@@ -33,6 +33,9 @@ describe('Update', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   describe('Cozy Note', () => {
     let note
