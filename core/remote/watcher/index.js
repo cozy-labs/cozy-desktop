@@ -394,7 +394,7 @@ class RemoteWatcher {
     } /*: { isInitialFetch?: boolean, isRecursiveFetch?: boolean } */ = {}
   ) /*: RemoteChange */ {
     const oldpath /*: ?string */ = was ? was.path : undefined
-    log.info('change received', {
+    log.debug('change received', {
       path: remoteDoc.path || oldpath,
       oldpath,
       remoteDoc,
