@@ -1,5 +1,16 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.41.0-beta.2 - 2024-11-06
+
+Improvements for all users:
+
+- We decreased yet again the number of logging calls writting to disk to avoid
+  performance issues in case many changes are made on the remote Cozy.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.41.0-beta.2 - 2024-10-31
 
 Improvements for all users:
