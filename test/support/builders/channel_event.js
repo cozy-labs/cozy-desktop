@@ -7,6 +7,9 @@ const _ = require('lodash')
 const ChecksumBuilder = require('./checksum')
 const statsBuilder = require('./stats')
 const events = require('../../../core/local/channel_watcher/event')
+const {
+  INITIAL_SCAN_DONE
+} = require('../../../core/local/channel_watcher/event')
 const { FILE, FOLDER } = require('../../../core/metadata')
 
 /*::
@@ -67,7 +70,7 @@ module.exports = class ChannelEventBuilder {
   }
 
   build() /*: ChannelEvent */ {
-    if (this._statsBuilder) {
+    if (this._event.action !== INITIAL_SCAN_DONE.action && this._statsBuilder) {
       this._event.stats = this._statsBuilder.build()
     }
     return this._event
