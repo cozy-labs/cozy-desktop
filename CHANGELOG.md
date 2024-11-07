@@ -1,6 +1,25 @@
 # Cozy Drive for Desktop: Changelog
 
-## 3.41.0-beta.2 - 2024-11-06
+## 3.41.0 - 2024-11-07
+
+Improvements for all users:
+
+- The previous release introduced a performance regression due to some internal
+  changes (i.e. the library used to store logs locally to help us debug your
+  issues).
+  We decreased the number of elements logged to mitigate this situation.
+- The previous release introduced a second regression that prevented us from
+  receiving the appropriate log file in some cases when you contact us via the
+  application for support.
+  We fixed this issue and we should now receive the most recent file again.
+- The Electron framework was upgraded to v31.6.0. This brings a lot of security
+  patches as well as other smaller fixes.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+## 3.41.0-beta.3 - 2024-11-06
 
 Improvements for all users:
 
