@@ -391,7 +391,7 @@ const updateState = async ({ newState, data }) => {
     } else if (status === 'error' && errors && errors.length) {
       // TODO: only send to main window errors that can be displayed within the
       // Recent tab and create pop-up methods for the others?
-      if (errors[0].code !== null) {
+      if (errors[0].code && errors[0].code !== '') {
         await sendErrorToMainWindow({ code: errors[0].code })
       } else {
         await sendErrorToMainWindow({
