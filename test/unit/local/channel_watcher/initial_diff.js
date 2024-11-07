@@ -5,10 +5,12 @@ const path = require('path')
 
 const _ = require('lodash')
 const should = require('should')
+const sinon = require('sinon')
 
 const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../../../core/config')
 const Channel = require('../../../../core/local/channel_watcher/channel')
 const initialDiff = require('../../../../core/local/channel_watcher/initial_diff')
+const { SYNC_DIR_EMPTY_MESSAGE } = require('../../../../core/local/errors')
 const { FOLDER } = require('../../../../core/metadata')
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
@@ -168,7 +170,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([fooRenamed, fooCreated, fooBuzzCreated, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([
@@ -184,7 +193,10 @@ onPlatforms(['linux', 'win32'], () => {
         const outChannel = initialDiff.loop(channel, {
           config: this.config,
           pouch: this.pouch,
-          state
+          state,
+          fatal: () => {
+            throw new Error('Unexpected call to fatal')
+          }
         })
 
         // Send normal event
@@ -244,7 +256,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([barScan, buzzScan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([
@@ -320,7 +339,10 @@ onPlatforms(['linux', 'win32'], () => {
         channel = initialDiff.loop(channel, {
           config: this.config,
           pouch: this.pouch,
-          state
+          state,
+          fatal: () => {
+            throw new Error('Unexpected call to fatal')
+          }
         })
         const events = [].concat(await channel.pop(), await channel.pop())
 
@@ -384,7 +406,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([fooScan, buzzScan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([
@@ -439,7 +468,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([fooScan, barScan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([
@@ -484,7 +520,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([fooScan, barScan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([
@@ -509,16 +552,37 @@ onPlatforms(['linux', 'win32'], () => {
           .ino(2)
           .upToDate()
           .create()
+        await builders
+          .metafile()
+          .path('baz')
+          .ino(3)
+          .upToDate()
+          .create()
 
         const state = await initialDiff.initialState({ pouch: this.pouch })
 
-        inputBatch([initialScanDone])
+        const bazScan = builders
+          .event()
+          .action('scan')
+          .kind('file')
+          .path('baz')
+          .ino(3)
+          .build()
+        inputBatch([bazScan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([
+          bazScan,
           {
             action: 'deleted',
             initialDiff: {
@@ -545,6 +609,47 @@ onPlatforms(['linux', 'win32'], () => {
           },
           initialScanDone
         ])
+      })
+
+      it('emits a fatal error when all documents were removed while client was stopped', async function() {
+        await builders
+          .metadir()
+          .path('foo')
+          .ino(1)
+          .upToDate()
+          .create()
+        await builders
+          .metafile()
+          .path('bar')
+          .ino(2)
+          .upToDate()
+          .create()
+
+        const state = await initialDiff.initialState({ pouch: this.pouch })
+
+        inputBatch([initialScanDone])
+
+        const fatalSub = sinon.stub()
+
+        // XXX: pop() will never return in this case as we don't push events in
+        // the channel so we can't await it directly or the test will timeout.
+        await new Promise(resolve => {
+          initialDiff
+            .loop(channel, {
+              config: this.config,
+              pouch: this.pouch,
+              state,
+              fatal: err => {
+                fatalSub(err)
+                resolve()
+              }
+            })
+            .pop()
+        })
+
+        should(fatalSub)
+          .have.been.calledOnce()
+          .and.calledWithMatch(err => err.message === SYNC_DIR_EMPTY_MESSAGE)
       })
 
       it('reuses the checksum of untouched files', async function() {
@@ -580,7 +685,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([stillEmptyFileScan, sameContentFileScan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([
@@ -617,7 +729,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([dirScan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([dirScan, initialScanDone])
@@ -644,7 +763,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([updatedContentScan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([updatedContentScan, initialScanDone])
@@ -695,7 +821,14 @@ onPlatforms(['linux', 'win32'], () => {
           inputBatch([stillEmptyFileScan, sameContentFileScan, initialScanDone])
 
           const events = await initialDiff
-            .loop(channel, { config: this.config, pouch: this.pouch, state })
+            .loop(channel, {
+              config: this.config,
+              pouch: this.pouch,
+              state,
+              fatal: () => {
+                throw new Error('Unexpected call to fatal')
+              }
+            })
             .pop()
 
           should(events).deepEqual([
@@ -737,7 +870,14 @@ onPlatforms(['linux', 'win32'], () => {
           inputBatch([updatedContentScan, initialScanDone])
 
           const events = await initialDiff
-            .loop(channel, { config: this.config, pouch: this.pouch, state })
+            .loop(channel, {
+              config: this.config,
+              pouch: this.pouch,
+              state,
+              fatal: () => {
+                throw new Error('Unexpected call to fatal')
+              }
+            })
             .pop()
 
           should(events).deepEqual([updatedContentScan, initialScanDone])
@@ -789,7 +929,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([fooScan, fizzScan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([
@@ -853,7 +1000,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([parent2Scan, foo2Scan, bar2Scan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([
@@ -930,7 +1084,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([parent2Scan, foo2Scan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         const deletedPath = path.normalize('parent-2/foo-2/bar')
@@ -1011,7 +1172,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([parent2Scan, fooScan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([
@@ -1072,7 +1240,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([parent2Scan, fooScan, initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([
@@ -1107,7 +1282,14 @@ onPlatforms(['linux', 'win32'], () => {
         inputBatch([initialScanDone])
 
         const events = await initialDiff
-          .loop(channel, { config: this.config, pouch: this.pouch, state })
+          .loop(channel, {
+            config: this.config,
+            pouch: this.pouch,
+            state,
+            fatal: () => {
+              throw new Error('Unexpected call to fatal')
+            }
+          })
           .pop()
 
         should(events).deepEqual([initialScanDone])

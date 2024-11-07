@@ -18,6 +18,8 @@ const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../config')
 const { kind } = require('../../metadata')
 const { logger } = require('../../utils/logger')
 const { measureTime } = require('../../utils/perfs')
+const { SYNC_DIR_EMPTY_MESSAGE } = require('../errors')
+const { INITIAL_SCAN_DONE } = require('./event')
 
 /*::
 import type { Config } from '../../config'
@@ -72,7 +74,7 @@ module.exports = {
 
 function loop(
   channel /*: Channel */,
-  opts /*: { config: Config, state: InitialDiffState } */
+  opts /*: { config: Config, fatal: Error => any, state: InitialDiffState } */
 ) /*: Channel */ {
   const out = new Channel()
   initialDiff(channel, out, opts).catch(err => {
@@ -133,7 +135,11 @@ function clearState(state /*: InitialDiffState */) {
 async function initialDiff(
   channel /*: Channel */,
   out /*: Channel */,
-  { config, state } /*: { config: Config, state: InitialDiffState } */
+  {
+    config,
+    fatal,
+    state
+  } /*: { config: Config, fatal: Error => any, state: InitialDiffState } */
 ) /*: Promise<void> */ {
   // eslint-disable-next-line no-constant-condition
   while (true) {
@@ -227,7 +233,15 @@ async function initialDiff(
         renamedEvents.push(event)
       }
 
-      if (event.action === 'initial-scan-done') {
+      if (event.action === INITIAL_SCAN_DONE.action) {
+        if (byInode.size !== 0 && scannedPaths.size === 0) {
+          // We assume the user did not empty their local sync folder
+          // intentionnaly and prevent synchronizing the deletion of all their
+          // synchronized documents.
+          fatal(new Error(SYNC_DIR_EMPTY_MESSAGE))
+          return
+        }
+
         // Emit deleted events for all the remaining files/dirs
         for (const [, doc] of byInode) {
           if (doc.local) {

@@ -246,7 +246,7 @@
   "Settings Selective synchronization": "Selective synchronization",
 
   "SyncDirEmpty Detail": "To avoid losing your data, this will not be synchronized. If you really want to reset the synchronization, you can just remove your Cozy folder.",
-  "SyncDirEmpty Message": "Look like you Cozy folder got emptied. May be it is on a hard-drive which is not plugged at the moment?",
+  "SyncDirEmpty Message": "Looks like your Cozy folder got emptied. Maybe it is on an external drive which is not plugged at the moment?",
   "SyncDirEmpty Title": "Your Cozy folder is empty",
 
   "SyncDirUnlinked Choose Folder": "Choose a folder",
