@@ -255,9 +255,11 @@ def doc:
 #    yarn -s jq -c 'select(...)|short' path/to/logs*
 #
 def short:
-  {time,component,msg,_id,path,oldpath,event}
+  {time,component,msg,_id,path,oldpath,event,err}
     | if (.event | not) then del(.event) else . end
     | if (.event | type == "object") then del(.event) + (.event|{path, oldpath: .oldPath, action}) else . end
+    | if (.err | not) then del(.err) else . end
+    | if (.err | type == "object") then del(.err) + {err:.err.message} else . end
     | del(.. | nulls)
     ;
 
