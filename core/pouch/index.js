@@ -222,6 +222,24 @@ class Pouch {
   // others do not.
   // Make sure lock is acquired before using it to avoid conflict.
   async bulkDocs /*:: <T: Metadata|SavedMetadata> */(docs /*: Array<T> */) {
+    const batchSize = 1000
+    if (docs.length > batchSize) {
+      let results /*: Array<Object> */ = []
+      for (let i = 0; i < docs.length / batchSize; i++) {
+        const batch = docs.slice(i * batchSize, (i + 1) * batchSize)
+        const batchResults = await this._bulkDocs(batch)
+        results = results.concat(batchResults)
+      }
+      return results
+    } else {
+      return this._bulkDocs(docs)
+    }
+  }
+
+  // WARNING: _bulkDocs is not a transaction, some updates can be applied while
+  // others do not.
+  // Make sure lock is acquired before using it to avoid conflict.
+  async _bulkDocs /*:: <T: Metadata|SavedMetadata> */(docs /*: Array<T> */) {
     for (const doc of docs) {
       metadata.invariants(doc)
       const { path, _id } = doc
