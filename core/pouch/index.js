@@ -240,18 +240,10 @@ class Pouch {
   // others do not.
   // Make sure lock is acquired before using it to avoid conflict.
   async _bulkDocs /*:: <T: Metadata|SavedMetadata> */(docs /*: Array<T> */) {
+    log.info('Saving bulk metadata...', { docs })
+
     for (const doc of docs) {
       metadata.invariants(doc)
-      const { path, _id } = doc
-      const { local, remote } = doc.sides || {}
-      log.info('Saving bulk metadata...', {
-        path,
-        _id,
-        local,
-        remote,
-        _deleted: doc._deleted,
-        doc
-      })
     }
     const results = await this.db.bulkDocs(docs)
     for (let [idx, result] of results.entries()) {
