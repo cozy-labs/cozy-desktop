@@ -48,18 +48,23 @@ describe('Remote', function () {
       sinon.spy(this.events, 'emit')
 
       await this.remote.start()
-      should(this.events.emit).have.been.calledWithMatch(
-        'RemoteWatcher:error',
-        { code: remoteErrors.UNREACHABLE_COZY_CODE }
-      )
 
-      fetchStub.restore()
-      this.events.emit.resetHistory()
+      try {
+        should(this.events.emit).have.been.calledWithMatch(
+          'RemoteWatcher:error',
+          { code: remoteErrors.UNREACHABLE_COZY_CODE }
+        )
 
-      await this.remote.watcher.watch()
-      should(this.events.emit).not.have.been.calledWith('RemoteWatcher:error')
+        fetchStub.restore()
+        this.events.emit.resetHistory()
 
-      this.events.emit.restore()
+        await this.remote.watcher.watch()
+        should(this.events.emit).not.have.been.calledWith('RemoteWatcher:error')
+
+        this.events.emit.restore()
+      } finally {
+        await this.remote.stop()
+      }
     }).timeout(120000)
   })
 })

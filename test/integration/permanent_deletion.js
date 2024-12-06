@@ -27,6 +27,9 @@ describe('Permanent deletion remote', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   it('file', async () => {
     const file = await cozy.files.create('File content', { name: 'file' })
