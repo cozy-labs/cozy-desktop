@@ -1010,7 +1010,7 @@ class Sync {
     cause
     /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */
   ) {
-    log.info(cause, 'blocking sync for error')
+    log.info('blocking sync for error', cause)
 
     const { err } = cause
 

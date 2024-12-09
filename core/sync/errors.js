@@ -155,7 +155,7 @@ const retry = async (
   cause /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */,
   sync /*: Sync */
 ) => {
-  log.debug(cause, 'retrying after blocking error')
+  log.debug('retrying after blocking error', cause)
 
   const { err } = cause
   if (err.code === remoteErrors.UNREACHABLE_COZY_CODE) {
@@ -195,7 +195,7 @@ const skip = async (
   cause /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */,
   sync /*: Sync */
 ) => {
-  log.debug(cause, 'user skipped required action')
+  log.debug('user skipped required action', cause)
 
   clearInterval(sync.retryInterval)
 
@@ -212,7 +212,7 @@ const createConflict = async (
   cause /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */,
   sync /*: Sync */
 ) => {
-  log.debug(cause, 'user requested conflict creation')
+  log.debug('user requested conflict creation', cause)
 
   clearInterval(sync.retryInterval)
 
