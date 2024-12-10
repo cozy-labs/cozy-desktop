@@ -145,12 +145,24 @@ def issues: clean | select(is_issue);
 def path(pattern):
   clean | select(
     (
-      try (.path // (.doc | .path) // (.change | .doc | .path) // (.idConflict | .newDoc | .path) // (.event | .path)),
-      try (.oldpath // (.was | .path) // (.idConflict | .existingDoc | .path) // (.event | .oldPath)),
+      try (
+        .path //
+        (.doc | .path) //
+        (.idConflict | .newDoc | .path) //
+        (.event | .path) //
+        (.docs | arrays | .[].path) //
+        (.batch | arrays | .[].path)
+      ),
+      try (
+        .oldpath //
+        (.was | .path) //
+        (.idConflict | .existingDoc | .path) //
+        (.event | .oldPath)
+      ),
       ""
     )
-      | strings
-      | test(pattern)
+    | strings
+    | test(pattern)
   );
 
 def shortPath:
