@@ -29,6 +29,8 @@ const log = logger({
   component: 'Pouch'
 })
 
+const POUCHDB_BATCH_SIZE = 1000
+
 // Pouchdb is used to store all the metadata about files and folders.
 // These metadata can come from the local filesystem or the remote cozy instance.
 //
@@ -193,15 +195,23 @@ class Pouch {
   // This method will completely erase an array of records from PouchDB while
   // removing all their attributes.
   // This method also does not care about invariants like `bulkDocs()` does.
-  async eraseDocuments(docs /*: Array<SavedMetadata> */) {
-    const docsToErase = []
-    docs.forEach(doc => {
-      const { path, _id, _rev } = _.clone(doc)
-      log.info('Erasing bulk record...', { path, _id, _rev })
-      docsToErase.push({ _id, _rev, _deleted: true })
-    })
+  async eraseDocuments(
+    docs /*: $ReadOnlyArray<SavedMetadata> */
+  ) /*: Promise<Array<PouchRecord>> */ {
+    let results = []
+    for (const batch of createBatches(docs, POUCHDB_BATCH_SIZE)) {
+      const batchResults = await this._eraseDocuments(
+        batch.map(({ _id, _rev }) => ({ _id, _rev, _deleted: true }))
+      )
+      results = results.concat(batchResults)
+    }
+    return results
+  }
 
-    const results = await this.db.bulkDocs(docsToErase)
+  async _eraseDocuments(docs /*: $ReadOnlyArray<PouchRecord> */) {
+    log.info('Erasing bulk records...', { docs })
+
+    const results = await this.db.bulkDocs(docs)
     for (let [idx, result] of results.entries()) {
       if (result.error) {
         const err = new PouchError(result)
@@ -221,19 +231,26 @@ class Pouch {
   // WARNING: bulkDocs is not a transaction, some updates can be applied while
   // others do not.
   // Make sure lock is acquired before using it to avoid conflict.
-  async bulkDocs /*:: <T: Metadata|SavedMetadata> */(docs /*: Array<T> */) {
+  async bulkDocs(
+    docs /*: $ReadOnlyArray<Metadata|SavedMetadata> */
+  ) /*: Promise<Array<SavedMetadata>> */ {
+    let results = []
+    for (const batch of createBatches(docs, POUCHDB_BATCH_SIZE)) {
+      const batchResults = await this._bulkDocs(batch)
+      results = results.concat(batchResults)
+    }
+
+    return results
+  }
+
+  // WARNING: _bulkDocs is not a transaction, some updates can be applied while
+  // others do not.
+  // Make sure lock is acquired before using it to avoid conflict.
+  async _bulkDocs(docs /*: $ReadOnlyArray<Metadata|SavedMetadata> */) {
+    log.info('Saving bulk metadata...', { docs })
+
     for (const doc of docs) {
       metadata.invariants(doc)
-      const { path, _id } = doc
-      const { local, remote } = doc.sides || {}
-      log.info('Saving bulk metadata...', {
-        path,
-        _id,
-        local,
-        remote,
-        _deleted: doc._deleted,
-        doc
-      })
     }
     const results = await this.db.bulkDocs(docs)
     for (let [idx, result] of results.entries()) {
@@ -680,4 +697,18 @@ const sortByPath = (docA /*: SavedMetadata */, docB /*: SavedMetadata */) => {
   return 0
 }
 
-module.exports = { Pouch, byPathKey, sortByPath }
+const createBatches = /*::<T: Metadata|SavedMetadata> */ (
+  docs /*: $ReadOnlyArray<T> */,
+  batchSize /*: number */
+) /*: Array<Array<T>> */ => {
+  if (batchSize <= 0) return [[...docs]]
+
+  let batches /*: Array<Array<T>> */ = []
+  for (let i = 0; i < docs.length / batchSize; i++) {
+    const batch = docs.slice(i * batchSize, (i + 1) * batchSize)
+    batches.push(batch)
+  }
+  return batches
+}
+
+module.exports = { Pouch, byPathKey, sortByPath, createBatches }

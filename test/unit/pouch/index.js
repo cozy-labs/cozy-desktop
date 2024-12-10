@@ -9,7 +9,7 @@ const _ = require('lodash')
 const { REV_CONFLICT } = require('pouchdb')
 
 const metadata = require('../../../core/metadata')
-const { sortByPath } = require('../../../core/pouch')
+const { sortByPath, createBatches } = require('../../../core/pouch')
 
 const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
@@ -724,5 +724,53 @@ describe('Pouch', function () {
       ).map(({ _rev, ...rest }) => ({ shortRev: shortRev(_rev), ...rest }))
       should(touchedDocs).deepEqual(expected)
     })
+  })
+})
+
+describe('createBatches', () => {
+  it('creates batches of at most the given size from the given documents', () => {
+    const builders = new Builders()
+
+    const docs = [
+      builders.metafile().build(),
+      builders.metafile().build(),
+      builders.metafile().build(),
+      builders.metafile().build(),
+      builders.metafile().build()
+    ]
+
+    should(createBatches(docs, 1)).deepEqual([
+      [docs[0]],
+      [docs[1]],
+      [docs[2]],
+      [docs[3]],
+      [docs[4]]
+    ])
+
+    should(createBatches(docs, 2)).deepEqual([
+      [docs[0], docs[1]],
+      [docs[2], docs[3]],
+      [docs[4]]
+    ])
+
+    should(createBatches(docs, 3)).deepEqual([
+      [docs[0], docs[1], docs[2]],
+      [docs[3], docs[4]]
+    ])
+
+    should(createBatches(docs, 5)).deepEqual([
+      [docs[0], docs[1], docs[2], docs[3], docs[4]]
+    ])
+
+    should(createBatches(docs, 6)).deepEqual([
+      [docs[0], docs[1], docs[2], docs[3], docs[4]]
+    ])
+
+    should(createBatches(docs, 0)).deepEqual([
+      [docs[0], docs[1], docs[2], docs[3], docs[4]]
+    ])
+    should(createBatches(docs, -1)).deepEqual([
+      [docs[0], docs[1], docs[2], docs[3], docs[4]]
+    ])
   })
 })
