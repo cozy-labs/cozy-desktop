@@ -33,6 +33,9 @@ describe('Sync gets interrupted, initialScan occurs', () => {
 
     helpers.spyPouch()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   it('move Folder', async () => {
     const docs = await helpers.remote.createTree(['/a/', '/b/'])

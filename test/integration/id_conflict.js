@@ -35,6 +35,9 @@ describe('Identity conflict', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   describe('between two dirs', () => {
     describe('both remote', () => {
