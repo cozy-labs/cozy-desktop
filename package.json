@@ -159,6 +159,7 @@
     "env-cmd": "10.1.0",
     "eslint": "^8.0.0",
     "eslint-config-cozy-app": "^6.0.0",
+    "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-node": "11.1.0",
     "eslint-plugin-promise": "6.0.0",
     "faker": "5.5.3",
