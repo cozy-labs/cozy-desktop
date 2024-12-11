@@ -16,7 +16,7 @@
 
 const url = require('url')
 
-const Sentry = require('@sentry/electron')
+const Sentry = require('@sentry/electron/main')
 const {
   ExtraErrorData: ExtraErrorDataIntegration
 } = require('@sentry/integrations')
@@ -109,9 +109,6 @@ function setup(clientInfos /*: ClientInfo */) {
       // ensures that it is the first integrations to be initialized.
       integrations: defaultIntegrations => {
         return [
-          // Uploads minidumps via Crashpad/Breakpad built in uploader with
-          // partial context when reporting native crash.
-          new Sentry.Integrations.ElectronMinidump(),
           // Extract all non-native attributes up to <depth> from Error objects
           // and attach them to events as extra data.
           // If the error object has a .toJSON() method, it will be run to
@@ -133,13 +130,14 @@ function setup(clientInfos /*: ClientInfo */) {
         // Drop events if a similar message has already been sent if the past
         // 24 hours (i.e. avoid spamming our Sentry server).
         return alreadySentThisDay ? null : event
+      },
+      initialScope: scope => {
+        scope.setUser({ username: instance })
+        scope.setTag('domain', domain)
+        scope.setTag('instance', instance)
+        scope.setTag('server_name', clientInfos.deviceName)
+        return scope
       }
-    })
-    Sentry.configureScope(scope => {
-      scope.setUser({ username: instance })
-      scope.setTag('domain', domain)
-      scope.setTag('instance', instance)
-      scope.setTag('server_name', clientInfos.deviceName)
     })
     baseLogger.add(
       new SentryTransport({
