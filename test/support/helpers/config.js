@@ -1,13 +1,13 @@
-const fse = require('fs-extra')
-const del = require('del')
 const path = require('path')
 
-const config = require('../../../core/config')
+const del = require('del')
+const fse = require('fs-extra')
 
-const automatedRegistration = require('../../../dev/remote/automated_registration')
-const pkg = require('../../../package.json')
 const { COZY_URL } = require('./cozy')
 const PASSPHRASE = require('./passphrase')
+const config = require('../../../core/config')
+const automatedRegistration = require('../../../dev/remote/automated_registration')
+const pkg = require('../../../package.json')
 
 module.exports = {
   createConfig() {

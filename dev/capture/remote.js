@@ -4,19 +4,19 @@
  * @flow
  */
 
+const path = require('path')
+
 const Promise = require('bluebird')
 const fse = require('fs-extra')
-const path = require('path')
 const _ = require('lodash')
 
 const { Pouch } = require('../../core/pouch')
-const { RemoteCozy } = require('../../core/remote/cozy')
 const { ROOT_DIR_ID } = require('../../core/remote/constants')
+const { RemoteCozy } = require('../../core/remote/cozy')
 const timestamp = require('../../core/utils/timestamp')
-
+const Builders = require('../../test/support/builders')
 const configHelpers = require('../../test/support/helpers/config')
 const cozyHelpers = require('../../test/support/helpers/cozy')
-const Builders = require('../../test/support/builders')
 
 /*::
 import type { MetadataRemoteInfo } from '../../core/metadata'
@@ -32,7 +32,7 @@ const ROOT_DIR = {
   path: '/'
 }
 
-const createInitialTree = async function (
+const createInitialTree = async function(
   scenario /*: * */,
   cozy /*: * */,
   pouch /*: Pouch */

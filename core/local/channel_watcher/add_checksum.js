@@ -14,8 +14,9 @@
  * @flow
  */
 
-const _ = require('lodash')
 const path = require('path')
+
+const _ = require('lodash')
 
 const { logger } = require('../../utils/logger')
 const { measureTime } = require('../../utils/perfs')

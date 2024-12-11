@@ -5,9 +5,10 @@
  */
 
 const fs = require('fs')
+const path = require('path')
+
 const fse = require('fs-extra')
 const _ = require('lodash')
-const path = require('path')
 
 const { hideOnWindows } = require('./utils/fs')
 const { logger } = require('./utils/logger')

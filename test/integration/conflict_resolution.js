@@ -1,20 +1,18 @@
 /* @flow */
 /* eslint-env mocha */
 
+const { FetchError } = require('electron-fetch')
+const fse = require('fs-extra')
+const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
 
-const fse = require('fs-extra')
-const _ = require('lodash')
-const { FetchError } = require('electron-fetch')
-
 const metadata = require('../../core/metadata')
-
 const Builders = require('../support/builders')
+const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const TestHelpers = require('../support/helpers')
 
 const cozy = cozyHelpers.cozy
 
@@ -30,14 +28,14 @@ describe('Conflict resolution', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     helpers = TestHelpers.init(this)
     builders = new Builders(this)
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
 
@@ -51,7 +49,10 @@ describe('Conflict resolution', () => {
       await helpers.local.syncDir.ensureDir('foo')
       await helpers.prep.putFolderAsync(
         'local',
-        builders.metadir().path('foo').build()
+        builders
+          .metadir()
+          .path('foo')
+          .build()
       )
       should(await helpers.local.tree()).deepEqual(['foo-conflict-.../'])
 
@@ -411,7 +412,10 @@ describe('Conflict resolution', () => {
     beforeEach('set up conflict', async () => {
       await helpers.prep.putFolderAsync(
         'local',
-        builders.metadir().path('foo').build()
+        builders
+          .metadir()
+          .path('foo')
+          .build()
       )
       await cozy.files.create('whatever', { name: 'foo' })
     })

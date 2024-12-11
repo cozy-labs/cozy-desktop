@@ -9,8 +9,8 @@
 
 const _ = require('lodash')
 
-const { buildDir, buildFile } = require('../../metadata')
 const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../config')
+const { buildDir, buildFile } = require('../../metadata')
 const { logger } = require('../../utils/logger')
 const { measureTime } = require('../../utils/perfs')
 

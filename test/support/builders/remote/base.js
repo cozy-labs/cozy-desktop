@@ -1,8 +1,10 @@
 /* @flow */
 
-const _ = require('lodash')
 const { posix } = require('path')
 
+const _ = require('lodash')
+
+const metadata = require('../../../../core/metadata')
 const {
   DIR_TYPE,
   FILES_DOCTYPE,
@@ -10,9 +12,7 @@ const {
   TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../../core/remote/constants')
-const metadata = require('../../../../core/metadata')
 const timestamp = require('../../../../core/utils/timestamp')
-
 const dbBuilders = require('../db')
 
 /*::

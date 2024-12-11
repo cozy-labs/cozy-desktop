@@ -4,18 +4,18 @@
  * @flow
  */
 
+const EventEmitter = require('events')
+const path = require('path')
+
 const Promise = require('bluebird')
 const chokidar = require('chokidar')
-const EventEmitter = require('events')
 const fse = require('fs-extra')
-const path = require('path')
 const sinon = require('sinon')
 
 const { Config, watcherType } = require('../../core/config')
 const { Ignore } = require('../../core/ignore')
 const { INITIAL_SCAN_DONE } = require('../../core/local/channel_watcher/event')
 const ParcelProducer = require('../../core/local/channel_watcher/parcel_producer')
-
 const fixturesHelpers = require('../../test/support/helpers/scenarios')
 
 /*::
@@ -134,7 +134,7 @@ const runAndRecordChokidarEvents = scenario => {
   return new Promise((resolve, reject) => {
     const watcher = chokidar.watch('.', chokidarOptions)
     const cleanCallback = cb =>
-      function () {
+      function() {
         return watcher
           .close()
           .then(cb.apply(null, arguments), cb.apply(null, arguments))

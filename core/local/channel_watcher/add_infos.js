@@ -8,8 +8,9 @@
  * @flow
  */
 
-const _ = require('lodash')
 const path = require('path')
+
+const _ = require('lodash')
 
 const { kind } = require('../../metadata')
 const { logger } = require('../../utils/logger')

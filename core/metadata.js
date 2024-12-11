@@ -31,16 +31,11 @@
  * @flow
  */
 
-const _ = require('lodash')
-const { clone } = _
-const mime = require('./utils/mime')
-const deepDiff = require('deep-diff').diff
 const path = require('path')
 
-const { logger } = require('./utils/logger')
-const timestamp = require('./utils/timestamp')
-const pathUtils = require('./utils/path')
-const conflicts = require('./utils/conflicts')
+const deepDiff = require('deep-diff').diff
+const _ = require('lodash')
+const { clone } = _
 
 const {
   detectPathIncompatibilities,
@@ -51,6 +46,11 @@ const {
   FILE_TYPE: REMOTE_FILE_TYPE
 } = require('./remote/constants')
 const { SIDE_NAMES, otherSide } = require('./side')
+const conflicts = require('./utils/conflicts')
+const { logger } = require('./utils/logger')
+const mime = require('./utils/mime')
+const pathUtils = require('./utils/path')
+const timestamp = require('./utils/timestamp')
 
 /*::
 import type { PlatformIncompatibility } from './incompatibilities/platform'
@@ -413,8 +413,10 @@ function detectIncompatibilities(
     path.join(syncPath, metadata.path),
     platform
   )
-  const incompatibilities /*: PlatformIncompatibility[] */ =
-    detectPathIncompatibilities(metadata.path, metadata.docType)
+  const incompatibilities /*: PlatformIncompatibility[] */ = detectPathIncompatibilities(
+    metadata.path,
+    metadata.docType
+  )
   if (pathLenghIncompatibility) {
     incompatibilities.unshift(pathLenghIncompatibility)
   }

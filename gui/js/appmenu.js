@@ -4,6 +4,7 @@
  */
 
 const { Menu } = require('electron')
+
 const { translate } = require('./i18n')
 
 // FIXME: killme

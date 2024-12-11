@@ -8,11 +8,13 @@
  * @module test/support/coverage
  */
 
-const glob = require('glob')
 const path = require('path')
+
 const fse = require('fs-extra')
+const glob = require('glob')
 const { hookRequire } = require('istanbul-lib-hook')
-const { createInstrumenter } = require('istanbul-lib-instrument') // eslint-disable-line node/no-extraneous-require
+// eslint-disable-next-line import/no-extraneous-dependencies, node/no-extraneous-require
+const { createInstrumenter } = require('istanbul-lib-instrument')
 
 const cov = (global.__coverage__ = {})
 

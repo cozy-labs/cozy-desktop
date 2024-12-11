@@ -47,9 +47,10 @@
  * @flow
  */
 
-const { basename, dirname, resolve } = require('path')
-const { matcher } = require('micromatch')
 const fs = require('fs')
+const { basename, dirname, resolve } = require('path')
+
+const { matcher } = require('micromatch')
 
 const { logger } = require('./utils/logger')
 
@@ -128,7 +129,9 @@ function buildPattern(line /*: string */) /*: IgnorePattern */ {
 
 /** Parse many lines and build the corresponding pattern array */
 function buildPatternArray(lines /*: string[] */) /*: IgnorePattern[] */ {
-  return Array.from(lines).filter(isNotBlankOrComment).map(buildPattern)
+  return Array.from(lines)
+    .filter(isNotBlankOrComment)
+    .map(buildPattern)
 }
 
 function isNotBlankOrComment(line /*: string */) /*: boolean */ {

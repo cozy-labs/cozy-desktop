@@ -4,7 +4,7 @@
 const should = require('should')
 
 const config = require('../../core/config')
-
+const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const {
@@ -14,7 +14,6 @@ const {
   onHFS
 } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
-const TestHelpers = require('../support/helpers')
 
 describe('Identity conflict', () => {
   let cozy, helpers
@@ -28,14 +27,14 @@ describe('Identity conflict', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
 

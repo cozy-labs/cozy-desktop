@@ -29,13 +29,14 @@
  */
 
 const path = require('path')
+
 const _ = require('lodash')
 
-const { getInode } = require('./local_event')
 const localChange = require('./local_change')
+const { getInode } = require('./local_event')
+const metadata = require('../../metadata')
 const { logger } = require('../../utils/logger')
 const { measureTime } = require('../../utils/perfs')
-const metadata = require('../../metadata')
 
 /*::
 import type { LocalEvent } from './local_event'
@@ -234,8 +235,9 @@ function analyseEvent(
         localChange.fileUpdate(e)
       )
     case 'unlink': {
-      const moveChange /*: ?LocalFileMove */ =
-        localChange.maybeMoveFile(sameInodeChange)
+      const moveChange /*: ?LocalFileMove */ = localChange.maybeMoveFile(
+        sameInodeChange
+      )
       if (moveChange && !moveChange.wip) delete e.old
       return (
         localChange.fileMoveFromAddUnlink(sameInodeChange, e) ||
@@ -250,8 +252,9 @@ function analyseEvent(
       )
     }
     case 'unlinkDir': {
-      const moveChange /*: ?LocalDirMove */ =
-        localChange.maybeMoveFolder(sameInodeChange)
+      const moveChange /*: ?LocalDirMove */ = localChange.maybeMoveFolder(
+        sameInodeChange
+      )
       if (moveChange && !moveChange.wip) delete e.old
       return (
         localChange.dirMoveFromAddUnlink(sameInodeChange, e) ||

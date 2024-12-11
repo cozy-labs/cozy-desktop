@@ -3,16 +3,17 @@
  * @flow
  */
 
+const path = require('path')
+
 const autoBind = require('auto-bind')
 const _ = require('lodash')
-const path = require('path')
 
 const IdConflict = require('./IdConflict')
 const metadata = require('./metadata')
 const move = require('./move')
+const { FILE_TYPE: REMOTE_FILE_TYPE } = require('./remote/constants')
 const { otherSide } = require('./side')
 const { logger } = require('./utils/logger')
-const { FILE_TYPE: REMOTE_FILE_TYPE } = require('./remote/constants')
 
 /*::
 import type { IdConflictInfo } from './IdConflict'

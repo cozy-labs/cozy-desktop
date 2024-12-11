@@ -1,5 +1,6 @@
-const mime = require('mime')
 const path = require('path')
+
+const mime = require('mime')
 
 const { NOTE_MIME_TYPE } = require('../remote/constants')
 

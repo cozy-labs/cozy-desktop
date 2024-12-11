@@ -1,20 +1,20 @@
 /* eslint-env mocha */
 
-const { app, session } = require('electron')
-const faker = require('faker')
 const fs = require('fs')
 const http = require('http')
 const https = require('https')
 const path = require('path')
 const process = require('process')
-const should = require('should')
 const { URL } = require('url')
 
-const cozyHelpers = require('../../support/helpers/cozy')
+const { app, session } = require('electron')
+const faker = require('faker')
+const should = require('should')
 
 const network = require('../../../gui/js/network')
+const cozyHelpers = require('../../support/helpers/cozy')
 
-describe('gui/js/network', function () {
+describe('gui/js/network', function() {
   const emptyConfig = {
     'login-by-realm': undefined,
     'proxy-bypassrules': undefined,

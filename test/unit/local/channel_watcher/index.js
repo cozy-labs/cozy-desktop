@@ -9,11 +9,10 @@ const {
   stepsInitialState
 } = require('../../../../core/local/channel_watcher')
 const initialDiff = require('../../../../core/local/channel_watcher/initial_diff')
-
 const configHelpers = require('../../../support/helpers/config')
-const pouchHelpers = require('../../../support/helpers/pouch')
 const TestHelpers = require('../../../support/helpers/index')
 const { onPlatforms } = require('../../../support/helpers/platform')
+const pouchHelpers = require('../../../support/helpers/pouch')
 
 onPlatforms(['linux', 'win32'], () => {
   describe('core/local/channel_watcher/watcher', () => {
@@ -24,7 +23,7 @@ onPlatforms(['linux', 'win32'], () => {
     after('clean config directory', configHelpers.cleanConfig)
 
     describe('.stepsInitialState()', () => {
-      it('includes initial diff state key', async function () {
+      it('includes initial diff state key', async function() {
         const state = {}
         const initialState = await stepsInitialState(state, this)
         should(state).have.property(initialDiff.STEP_NAME)
@@ -34,12 +33,12 @@ onPlatforms(['linux', 'win32'], () => {
 
     describe('start', () => {
       let helpers
-      beforeEach('init helpers', async function () {
+      beforeEach('init helpers', async function() {
         helpers = TestHelpers.init(this)
       })
 
       context('when producer.start() rejects', () => {
-        it('should reject with the same error', async function () {
+        it('should reject with the same error', async function() {
           const watcher = new ChannelWatcher({
             ...helpers,
             config: this.config,

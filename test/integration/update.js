@@ -1,18 +1,18 @@
 /* @flow */
 /* eslint-env mocha */
 
+const path = require('path')
+
 const Promise = require('bluebird')
 const _ = require('lodash')
 const should = require('should')
-const path = require('path')
 const sinon = require('sinon')
 
-const { logger } = require('../../core/utils/logger')
 const metadata = require('../../core/metadata')
 const { byPathKey } = require('../../core/pouch')
 const { MAX_SYNC_RETRIES } = require('../../core/sync')
 const syncErrors = require('../../core/sync/errors')
-
+const { logger } = require('../../core/utils/logger')
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
@@ -32,7 +32,7 @@ describe('Update file', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     builders = new Builders({ cozy: cozyHelpers.cozy })
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
@@ -43,7 +43,7 @@ describe('Update file', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
 
@@ -307,7 +307,7 @@ describe('Update file', () => {
   })
 
   describe('M1, local merge M1, M2, remote sync M1, local merge M2', () => {
-    it('fails remote sync M1 & local merge M2', async function () {
+    it('fails remote sync M1 & local merge M2', async function() {
       if (process.env.CI) this.timeout(60 * 1000)
 
       await cozy.files.create('Initial content', { name: 'file' })

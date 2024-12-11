@@ -2,10 +2,9 @@
 
 const _ = require('lodash')
 
+const metadata = require('../../../../core/metadata')
 const { ROOT_DIR_ID } = require('../../../../core/remote/constants')
 const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
-const metadata = require('../../../../core/metadata')
-
 const dbBuilders = require('../db')
 
 /*::

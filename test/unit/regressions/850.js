@@ -2,39 +2,39 @@
 /* eslint-env mocha */
 /* @flow */
 
-const fse = require('fs-extra')
-const path = require('path')
-const sinon = require('sinon')
 const EventEmitter = require('events')
+const path = require('path')
+
 const { Promise } = require('bluebird')
+const fse = require('fs-extra')
+const sinon = require('sinon')
 
 // import { TMP_DIR_NAME } from '../../../core/local/constants'
+const { Ignore } = require('../../../core/ignore')
 const ChokidarEvent = require('../../../core/local/chokidar/event')
 const Watcher = require('../../../core/local/chokidar/watcher')
 const { Merge } = require('../../../core/merge')
-const Prep = require('../../../core/prep')
-const { Ignore } = require('../../../core/ignore')
-const { Sync } = require('../../../core/sync')
 const metadata = require('../../../core/metadata')
-
-const configHelpers = require('../../support/helpers/config')
-const pouchHelpers = require('../../support/helpers/pouch')
-const { onPlatform } = require('../../support/helpers/platform')
+const Prep = require('../../../core/prep')
+const { Sync } = require('../../../core/sync')
 const Builders = require('../../support/builders')
 const stubSide = require('../../support/doubles/side')
+const configHelpers = require('../../support/helpers/config')
+const { onPlatform } = require('../../support/helpers/platform')
+const pouchHelpers = require('../../support/helpers/pouch')
 
 onPlatform('darwin', () => {
-  describe('issue 850', function () {
+  describe('issue 850', function() {
     this.timeout(10000)
 
     let builders
 
     before('instanciate config', configHelpers.createConfig)
     before('instanciate pouch', pouchHelpers.createDatabase)
-    before('prepare builders', function () {
+    before('prepare builders', function() {
       builders = new Builders({ pouch: this.pouch })
     })
-    before('instanciate local watcher', function () {
+    before('instanciate local watcher', function() {
       this.merge = new Merge(this.pouch)
       this.local = stubSide('local')
       this.remote = stubSide('remote')
@@ -60,7 +60,7 @@ onPlatform('darwin', () => {
         this.events
       )
     })
-    after('stop watcher and clean path', async function () {
+    after('stop watcher and clean path', async function() {
       this.watcher.stop(true)
       this.watcher.checksumer.kill()
       await fse.emptyDir(this.syncPath)
@@ -68,15 +68,20 @@ onPlatform('darwin', () => {
     after('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
 
-    before('create dst dir', async function () {
+    before('create dst dir', async function() {
       const dirPath = path.join(this.syncPath, 'dst')
       await fse.mkdirp(dirPath)
       const stat = await fse.stat(dirPath)
-      await builders.metadir().path(dirPath).ino(stat.ino).upToDate().create()
+      await builders
+        .metadir()
+        .path(dirPath)
+        .ino(stat.ino)
+        .upToDate()
+        .create()
       await this.sync.sync()
     })
 
-    it('is fixed', async function () {
+    it('is fixed', async function() {
       let filePath = path.join(this.syncPath, 'file')
       let dstPath = path.join(this.syncPath, 'dst', 'file')
       await fse.outputFile(filePath, 'whatever')
@@ -110,7 +115,12 @@ onPlatform('darwin', () => {
           _rev: '1-fakeRev'
         }
         return metadata.fromRemoteDoc(
-          builders.remoteFile().inRootDir().name('file').size('8').build()
+          builders
+            .remoteFile()
+            .inRootDir()
+            .name('file')
+            .size('8')
+            .build()
         )
       }
 

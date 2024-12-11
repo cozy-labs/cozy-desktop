@@ -1,7 +1,11 @@
 /* @flow */
 
-const WindowManager = require('./window_manager')
 const { enable: enableRemoteModule } = require('@electron/remote/main')
+
+const WindowManager = require('./window_manager')
+const log = require('../../core/app').logger({
+  component: 'GUI'
+})
 
 /*::
 import type { Event as ElectronEvent } from 'electron'
@@ -9,10 +13,6 @@ import type { Event as ElectronEvent } from 'electron'
 
 const HELP_SCREEN_WIDTH = 768
 const HELP_SCREEN_HEIGHT = 570
-
-const log = require('../../core/app').logger({
-  component: 'GUI'
-})
 
 module.exports = class HelpWM extends WindowManager {
   windowOptions() {

@@ -3,8 +3,8 @@
  * @flow
  */
 
-const { RemoteCozy } = require('../remote/cozy')
 const { logger } = require('./logger')
+const { RemoteCozy } = require('../remote/cozy')
 /*::
 import type { Config } from '../config'
 */

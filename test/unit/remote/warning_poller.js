@@ -4,6 +4,7 @@
 const should = require('should')
 const sinon = require('sinon')
 
+const remoteErrors = require('../../../core/remote/errors')
 const {
   DEFAULT_TICKS,
   MODE,
@@ -12,8 +13,6 @@ const {
   shiftTicks,
   ticks
 } = require('../../../core/remote/warning_poller')
-const remoteErrors = require('../../../core/remote/errors')
-
 const Builders = require('../../support/builders')
 
 /*::

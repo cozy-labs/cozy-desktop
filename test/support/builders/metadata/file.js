@@ -1,8 +1,7 @@
 /* @flow */
 
-const mime = require('../../../../core/utils/mime')
-
 const BaseMetadataBuilder = require('./base')
+const mime = require('../../../../core/utils/mime')
 const ChecksumBuilder = require('../checksum')
 
 /*::

@@ -6,6 +6,7 @@ rules:
   node/shebang: off
   no-param-reassign: off
   spaced-comment: off
+  jest/no-disabled-tests: off
 settings:
   node:
     allowModules:

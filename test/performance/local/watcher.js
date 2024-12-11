@@ -1,15 +1,15 @@
 /* eslint-env mocha */
 /* @flow */
 
-const Promise = require('bluebird')
-const fse = require('fs-extra')
 const path = require('path')
 
-const Watcher = require('../../../core/local/chokidar/watcher')
+const Promise = require('bluebird')
+const fse = require('fs-extra')
 
+const Watcher = require('../../../core/local/chokidar/watcher')
+const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
-const Builders = require('../../support/builders')
 
 class SpyPrep {
   /*::
@@ -45,7 +45,12 @@ let abspath
 
 const createDoc = async (builders, dir, relpath /*: string */, ino) => {
   if (dir) {
-    await builders.metadir().path(relpath).ino(ino).upToDate().create()
+    await builders
+      .metadir()
+      .path(relpath)
+      .ino(ino)
+      .upToDate()
+      .create()
   } else {
     await builders
       .metafile()
@@ -69,30 +74,30 @@ describe('LocalWatcher charge', () => {
   let watcher, prep, builders
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
-  before('prepare builders', function () {
+  before('prepare builders', function() {
     builders = new Builders({ pouch: this.pouch })
   })
-  before('create outside dir', async function () {
+  before('create outside dir', async function() {
     await fse.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
   })
-  before('instanciate local watcher', async function () {
+  before('instanciate local watcher', async function() {
     prep = new SpyPrep()
     const events = { emit: () => {} }
     // $FlowFixMe
     watcher = new Watcher(this.syncPath, prep, this.pouch, events)
   })
 
-  before('cleanup test directory', async function () {
+  before('cleanup test directory', async function() {
     await fse.emptyDir(this.syncPath)
   })
 
-  before(function () {
+  before(function() {
     abspath = relpath =>
       path.join(this.syncPath, relpath.replace(/\//g, path.sep))
   })
 
   let events
-  before('prepare FS', async function () {
+  before('prepare FS', async function() {
     this.timeout(10 * 60 * 1000)
     const now = new Date()
     events = new Array(N)
@@ -119,9 +124,9 @@ describe('LocalWatcher charge', () => {
   after('destroy pouch', pouchHelpers.cleanDatabase)
   after('clean config', configHelpers.cleanConfig)
 
-  describe(`with ${N} events`, function () {
+  describe(`with ${N} events`, function() {
     this.timeout(5 * 60 * 1000)
-    it('takes less than 5min and does not crash', async function () {
+    it('takes less than 5min and does not crash', async function() {
       this.timeout(5 * 60 * 1000)
       await watcher.onFlush(events)
       // TODO: Make benchmark more realistic with real actions, e.g. big moves.

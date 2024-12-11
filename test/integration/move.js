@@ -1,21 +1,21 @@
 /* @flow */
 /* eslint-env mocha */
 
-const _ = require('lodash')
 const path = require('path')
+
+const _ = require('lodash')
 const should = require('should')
 
+const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../core/remote/constants')
+const { logger } = require('../../core/utils/logger')
 const Builders = require('../support/builders')
 const dbBuilders = require('../support/builders/db')
+const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
-const pouchHelpers = require('../support/helpers/pouch')
-const TestHelpers = require('../support/helpers')
 const { onPlatform } = require('../support/helpers/platform')
+const pouchHelpers = require('../support/helpers/pouch')
 
-const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../core/remote/constants')
-
-const { logger } = require('../../core/utils/logger')
 const log = new logger({ component: 'TEST' })
 
 /*::
@@ -47,7 +47,7 @@ describe('Move', () => {
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     helpers = TestHelpers.init(this)
     pouch = helpers.pouch
     prep = helpers.prep
@@ -55,7 +55,7 @@ describe('Move', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
 
@@ -565,7 +565,10 @@ describe('Move', () => {
 
     it('local', async () => {
       const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
-      const doc = builders.metadir().path('parent/dst/dir').build()
+      const doc = builders
+        .metadir()
+        .path('parent/dst/dir')
+        .build()
 
       await prep.moveFolderAsync('local', doc, oldFolder)
 
@@ -690,7 +693,10 @@ describe('Move', () => {
       helpers.resetPouchSpy()
 
       const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
-      const doc = builders.metadir().path('parent/dst/dir').build()
+      const doc = builders
+        .metadir()
+        .path('parent/dst/dir')
+        .build()
 
       await prep.moveFolderAsync('local', doc, oldFolder)
 

@@ -12,8 +12,8 @@
 const originalEmit = process.emit
 
 module.exports = {
-  fetch: function () {
-    process.emit = function (name, data) {
+  fetch: function() {
+    process.emit = function(name, data) {
       if (
         name === 'warning' &&
         typeof data === 'object' &&

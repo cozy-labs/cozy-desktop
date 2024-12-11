@@ -1,5 +1,5 @@
-const sinon = require('sinon')
 const fse = require('fs-extra')
+const sinon = require('sinon')
 
 const { MissingFileError } = require('../../../core/utils/fs')
 

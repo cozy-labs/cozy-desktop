@@ -2,6 +2,7 @@
 /* eslint-env mocha */
 
 const path = require('path')
+
 const should = require('should')
 
 const { localToRemote, remoteToLocal } = require('../../../core/utils/path')

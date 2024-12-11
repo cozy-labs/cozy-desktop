@@ -7,15 +7,15 @@
 require('../core/utils/modules_stubs').initialize()
 
 require('isomorphic-fetch')
-
+const Promise = require('bluebird')
 const WebSocket = require('ws')
+
 global.WebSocket = WebSocket
 
 // We are using bluebird instead of native promises:
 // - they are easier to debug with long stack traces
 // - they have some nice helpers like Promise.delay, map, race, etc.
 // - to help transition from callbacks with asCallback and promisifyAll
-const Promise = require('bluebird')
 global.Promise = Promise
 Promise.longStackTraces()
 

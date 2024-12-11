@@ -6,18 +6,17 @@
 
 const path = require('path')
 
-const { ROOT_DIR_ID } = require('../../../core/remote/constants')
-
+const ChannelEventBuilder = require('./channel_event')
+const ChecksumBuilder = require('./checksum')
 const DirMetadataBuilder = require('./metadata/dir')
 const FileMetadataBuilder = require('./metadata/file')
 const RemoteDirBuilder = require('./remote/dir')
+const RemoteErasedBuilder = require('./remote/erased')
 const RemoteFileBuilder = require('./remote/file')
 const RemoteNoteBuilder = require('./remote/note')
-const RemoteErasedBuilder = require('./remote/erased')
-const StreamBuilder = require('./stream')
-const ChannelEventBuilder = require('./channel_event')
 const { DefaultStatsBuilder, WinStatsBuilder } = require('./stats')
-const ChecksumBuilder = require('./checksum')
+const StreamBuilder = require('./stream')
+const { ROOT_DIR_ID } = require('../../../core/remote/constants')
 
 /*::
 import type { Readable } from 'stream'

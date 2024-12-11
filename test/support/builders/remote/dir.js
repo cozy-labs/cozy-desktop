@@ -1,18 +1,19 @@
 /* @flow */
 
 const _ = require('lodash')
+
 const CozyClient = require('cozy-client').default
 
 const RemoteBaseBuilder = require('./base')
-const {
-  inRemoteTrash,
-  remoteJsonToRemoteDoc
-} = require('../../../../core/remote/document')
 const {
   DIR_TYPE,
   FILES_DOCTYPE,
   OAUTH_CLIENTS_DOCTYPE
 } = require('../../../../core/remote/constants')
+const {
+  inRemoteTrash,
+  remoteJsonToRemoteDoc
+} = require('../../../../core/remote/document')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
@@ -31,9 +32,7 @@ var dirNumber = 1
 //
 //     const dir: RemoteDir = await builders.remoteDir().inDir(...).create()
 //
-module.exports = class RemoteDirBuilder extends (
-  RemoteBaseBuilder
-) /*:: <RemoteDir> */ {
+module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <RemoteDir> */ {
   constructor(cozy /*: ?Cozy */, old /*: ?RemoteDir */) {
     super(cozy, old)
 

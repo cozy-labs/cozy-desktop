@@ -1,11 +1,11 @@
 /* eslint-env mocha */
 
-const _ = require('lodash')
-const should = require('should')
 const path = require('path')
 
-const analysis = require('../../../../core/local/chokidar/analysis')
+const _ = require('lodash')
+const should = require('should')
 
+const analysis = require('../../../../core/local/chokidar/analysis')
 const Builders = require('../../../support/builders')
 const { onPlatform } = require('../../../support/helpers/platform')
 
@@ -16,7 +16,7 @@ import type { Metadata } from '../../../../core/metadata'
 */
 
 onPlatform('darwin', () => {
-  describe('core/local/chokidar/analysis', function () {
+  describe('core/local/chokidar/analysis', function() {
     const sideName = 'local'
     const builders = new Builders()
 
@@ -353,7 +353,10 @@ onPlatform('darwin', () => {
     describe('FileMove(src => dst)', () => {
       describe('unlink(src) + add(dst)', () => {
         it('is the most common case', () => {
-          const old /*: Metadata */ = builders.metafile().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
           const stats = { ino: 1 }
           const { md5sum } = old
           const events /*: LocalEvent[] */ = [
@@ -384,7 +387,10 @@ onPlatform('darwin', () => {
 
       describe('unlinkDir(src) + add(dst)', () => {
         it('is a chokidar bug', () => {
-          const old /*: Metadata */ = builders.metafile().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
           const stats = { ino: 1 }
           const { md5sum } = old
           const events /*: LocalEvent[] */ = [
@@ -413,7 +419,10 @@ onPlatform('darwin', () => {
 
       describe('add(tmp) + unlink(src) + add(dst) + flush + unlink(tmp)', () => {
         it('is already complete on first flush', () => {
-          const old /*: Metadata */ = builders.metafile().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
           const stats = { ino: 1 }
           const { md5sum } = old
           const events /*: LocalEvent[] */ = [
@@ -456,7 +465,10 @@ onPlatform('darwin', () => {
 
       describe('unlink(src) + add(tmp) + dropped unlink(tmp) + wip add(dst)', () => {
         it('is incomplete', () => {
-          const old /*: Metadata */ = builders.metafile().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
           const stats = { ino: 1 }
           const events /*: LocalEvent[] */ = [
             { type: 'unlink', path: 'src', old },
@@ -489,7 +501,10 @@ onPlatform('darwin', () => {
 
       describe('unlink(src) + wip add(tmp) + add(dst)', () => {
         it('is complete', () => {
-          const old /*: Metadata */ = builders.metafile().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
           const stats = { ino: 1 }
           const { md5sum } = old
           const events /*: LocalEvent[] */ = [
@@ -628,7 +643,10 @@ onPlatform('darwin', () => {
     describe('FileMove.update(src => dst)', () => {
       describe('unlink(src) + add(dst) + change(dst)', () => {
         it('happens when there is sufficient delay betwen move & change', () => {
-          const old /*: Metadata */ = builders.metafile().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
           const addStats = {
             ino: old.ino,
             mtime: new Date(old.local.updated_at)
@@ -672,7 +690,10 @@ onPlatform('darwin', () => {
 
       describe('unlink(src, ino=1) + add(dst, ino=1) + change(dst, ino=2)', () => {
         it('does not include the change into the move', () => {
-          const old /*: Metadata */ = builders.metafile().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
           const addStats = {
             ino: old.ino,
             mtime: new Date(old.local.updated_at)
@@ -718,7 +739,10 @@ onPlatform('darwin', () => {
 
       describe('unlink(src) + add(dst) with different md5sum but same update date', () => {
         it('does not mark the move as an update', () => {
-          const old /*: Metadata */ = builders.metafile().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
           const stats = { ino: old.ino, mtime: new Date(old.local.updated_at) }
           const events /*: LocalEvent[] */ = [
             { type: 'unlink', path: 'src', old },
@@ -748,7 +772,10 @@ onPlatform('darwin', () => {
 
       describe('unlink(src) + add(dst) with different md5sum and update date', () => {
         it('marks the move as an update', () => {
-          const old /*: Metadata */ = builders.metafile().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metafile()
+            .ino(1)
+            .build()
           const stats = {
             ino: old.ino,
             mtime: new Date(new Date(old.local.updated_at).getTime() + 1000)
@@ -832,7 +859,11 @@ onPlatform('darwin', () => {
         it('is a FileUpdate(a) not to be confused with', () => {
           const partiallyAddedPath = 'partially-added-file'
           const changedPath = 'changed-file'
-          const old = builders.metafile().path(changedPath).ino(111).build()
+          const old = builders
+            .metafile()
+            .path(changedPath)
+            .ino(111)
+            .build()
           const ino = 222
           const md5sum = 'changedSum'
           const events /*: LocalEvent[] */ = [
@@ -1039,7 +1070,10 @@ onPlatform('darwin', () => {
     describe('DirMove(src => dst)', () => {
       describe('unlinkDir(src) + addDir(dst)', () => {
         it('is the most common case', () => {
-          const old /*: Metadata */ = builders.metadir().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metadir()
+            .ino(1)
+            .build()
           const stats = { ino: 1 }
           const events /*: LocalEvent[] */ = [
             { type: 'unlinkDir', path: 'src', old },
@@ -1068,7 +1102,10 @@ onPlatform('darwin', () => {
 
       describe('addDir(dst) + unlinkDir(src)', () => {
         it('may happen with this reversed order on some platforms', () => {
-          const old /*: Metadata */ = builders.metadir().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metadir()
+            .ino(1)
+            .build()
           const stats = { ino: 1 }
           const events /*: LocalEvent[] */ = [
             { type: 'addDir', path: 'dst', stats },
@@ -1097,7 +1134,10 @@ onPlatform('darwin', () => {
 
       describe('unlinkDir(src) + wip addDir(tmp) + addDir(dst)', () => {
         it('ignores the intermediate move', () => {
-          const old /*: Metadata */ = builders.metadir().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metadir()
+            .ino(1)
+            .build()
           const stats = { ino: 1 }
           const events /*: LocalEvent[] */ = [
             { type: 'unlinkDir', path: 'src', old },
@@ -1128,7 +1168,10 @@ onPlatform('darwin', () => {
 
       describe('unlinkDir(src) + addDir(tmp) + wip addDir(dst)', () => {
         it('is incomplete, waiting for an upcoming unlinkDir(tmp)', () => {
-          const old /*: Metadata */ = builders.metadir().ino(1).build()
+          const old /*: Metadata */ = builders
+            .metadir()
+            .ino(1)
+            .build()
           const stats = { ino: 1 }
           const events /*: LocalEvent[] */ = [
             { type: 'unlinkDir', path: 'src', old },
@@ -1903,9 +1946,17 @@ onPlatform('darwin', () => {
     describe('Move squashing', () => {
       it('move into moved folder', () => {
         const dirStats = { ino: 1 }
-        const dir = builders.metadir().path('src/dir').ino(dirStats.ino).build()
+        const dir = builders
+          .metadir()
+          .path('src/dir')
+          .ino(dirStats.ino)
+          .build()
         const fileStats = { ino: 2 }
-        const file = builders.metafile().path('file').ino(fileStats.ino).build()
+        const file = builders
+          .metafile()
+          .path('file')
+          .ino(fileStats.ino)
+          .build()
 
         const events /*: LocalEvent[] */ = [
           { type: 'unlinkDir', path: dir.path, old: dir },
@@ -1934,7 +1985,11 @@ onPlatform('darwin', () => {
 
       it('child move', () => {
         const dirStats = { ino: 1 }
-        const dir = builders.metadir().path('src/dir').ino(dirStats.ino).build()
+        const dir = builders
+          .metadir()
+          .path('src/dir')
+          .ino(dirStats.ino)
+          .build()
         const fileStats = { ino: 2 }
         const file = builders
           .metafile()
@@ -1966,7 +2021,11 @@ onPlatform('darwin', () => {
 
       it('child moved out of moved folder', () => {
         const dirStats = { ino: 1 }
-        const dir = builders.metadir().path('src/dir').ino(dirStats.ino).build()
+        const dir = builders
+          .metadir()
+          .path('src/dir')
+          .ino(dirStats.ino)
+          .build()
         const fileStats = { ino: 2 }
         const file = builders
           .metafile()
@@ -2001,7 +2060,11 @@ onPlatform('darwin', () => {
 
       it('child moved within moved dir', () => {
         const dirStats = { ino: 1 }
-        const dir = builders.metadir().path('src/dir').ino(dirStats.ino).build()
+        const dir = builders
+          .metadir()
+          .path('src/dir')
+          .ino(dirStats.ino)
+          .build()
         const fileStats = { ino: 2 }
         const file = builders
           .metafile()
@@ -2166,13 +2229,25 @@ onPlatform('darwin', () => {
           const otherFileStats = { ino: 4 }
           const otherDirStats = { ino: 5 }
           const dirMetadata /*: Metadata */ = normalizer(
-            builders.metadir().path('src').ino(dirStats.ino).build()
+            builders
+              .metadir()
+              .path('src')
+              .ino(dirStats.ino)
+              .build()
           )
           const subdirMetadata /*: Metadata */ = normalizer(
-            builders.metadir().path('src/subdir').ino(subdirStats.ino).build()
+            builders
+              .metadir()
+              .path('src/subdir')
+              .ino(subdirStats.ino)
+              .build()
           )
           const fileMetadata /*: Metadata */ = normalizer(
-            builders.metafile().path('src/file').ino(fileStats.ino).build()
+            builders
+              .metafile()
+              .path('src/file')
+              .ino(fileStats.ino)
+              .build()
           )
           const otherFileMetadata /*: Metadata */ = normalizer(
             builders

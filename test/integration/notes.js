@@ -1,18 +1,18 @@
 /* @flow */
 /* eslint-env mocha */
 
-const should = require('should')
 const path = require('path')
 
+const should = require('should')
+
+const { TRASH_DIR_ID } = require('../../core/remote/constants')
+const { isNote } = require('../../core/utils/notes')
+const timestamp = require('../../core/utils/timestamp')
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-
-const { TRASH_DIR_ID } = require('../../core/remote/constants')
-const { isNote } = require('../../core/utils/notes')
-const timestamp = require('../../core/utils/timestamp')
 
 describe('Update', () => {
   let builders, helpers
@@ -25,7 +25,7 @@ describe('Update', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
     helpers = TestHelpers.init(this)
 
@@ -33,7 +33,7 @@ describe('Update', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
 
@@ -89,7 +89,10 @@ describe('Update', () => {
   describe('Cozy Note move', () => {
     let note
     beforeEach('create note', async () => {
-      await builders.remoteDir().name('dst').create()
+      await builders
+        .remoteDir()
+        .name('dst')
+        .create()
       note = await builders
         .remoteNote()
         .name('note.cozy-note')
@@ -138,7 +141,10 @@ describe('Update', () => {
   describe('Cozy Note move with update', () => {
     let dst, note
     beforeEach('create note', async () => {
-      dst = await builders.remoteDir().name('dst').create()
+      dst = await builders
+        .remoteDir()
+        .name('dst')
+        .create()
       note = await builders
         .remoteNote()
         .name('note.cozy-note')
@@ -177,7 +183,9 @@ describe('Update', () => {
 
         it('updates the note metadata', async () => {
           const updatedDoc = await helpers.pouch.byRemoteIdMaybe(note._id)
-          should(updatedDoc).have.property('name').equal(note.name)
+          should(updatedDoc)
+            .have.property('name')
+            .equal(note.name)
         })
       })
 
@@ -211,7 +219,9 @@ describe('Update', () => {
             name: note.name,
             dir_id: dst._id
           })
-          should(updatedRemote).have.property('md5sum').not.equal(note.md5sum)
+          should(updatedRemote)
+            .have.property('md5sum')
+            .not.equal(note.md5sum)
           should(isNote(updatedRemote)).be.true()
         })
 

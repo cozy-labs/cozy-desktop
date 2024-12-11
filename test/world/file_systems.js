@@ -3,14 +3,14 @@
 
 const should = require('should')
 
-const { ContextDir } = require('../support/helpers/context_dir')
 const macOSRelease = require('../support/helpers/MacOSRelease')
+const TmpDir = require('../support/helpers/TmpDir')
+const { ContextDir } = require('../support/helpers/context_dir')
 const {
   onMacOSAtLeast,
   onMacOSAtMost,
   onPlatforms
 } = require('../support/helpers/platform')
-const TmpDir = require('../support/helpers/TmpDir')
 
 describe('File systems', () => {
   let dir

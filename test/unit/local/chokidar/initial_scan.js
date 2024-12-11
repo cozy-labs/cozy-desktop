@@ -6,11 +6,10 @@ const {
   detectOfflineUnlinkEvents
 } = require('../../../../core/local/chokidar/initial_scan')
 const metadata = require('../../../../core/metadata')
-
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
-const pouchHelpers = require('../../../support/helpers/pouch')
 const { onPlatform } = require('../../../support/helpers/platform')
+const pouchHelpers = require('../../../support/helpers/pouch')
 
 const { platform } = process
 
@@ -21,17 +20,21 @@ onPlatform('darwin', () => {
     before('instanciate config', configHelpers.createConfig)
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
 
-    beforeEach('set up builders', function () {
+    beforeEach('set up builders', function() {
       builders = new Builders({ pouch: this.pouch })
     })
 
     afterEach('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
 
-    describe('.detectOfflineUnlinkEvents()', function () {
-      it('detects deleted files and folders', async function () {
+    describe('.detectOfflineUnlinkEvents()', function() {
+      it('detects deleted files and folders', async function() {
         // Folder still exists
-        await builders.metadir().path('folder1').upToDate().create()
+        await builders
+          .metadir()
+          .path('folder1')
+          .upToDate()
+          .create()
         // Folder does not exist anymore
         const folder2 = await builders
           .metadir()
@@ -65,7 +68,11 @@ onPlatform('darwin', () => {
           .changedSide('remote')
           .create()
         // File still exists
-        builders.metafile().path('file1').upToDate().create()
+        builders
+          .metafile()
+          .path('file1')
+          .upToDate()
+          .create()
         // File does not exist anymore
         const file2 = await builders
           .metafile()
@@ -114,8 +121,11 @@ onPlatform('darwin', () => {
       })
 
       if (platform === 'win32') {
-        it('ignores incompatible docs', async function () {
-          await builders.metafile().incompatible().create()
+        it('ignores incompatible docs', async function() {
+          await builders
+            .metafile()
+            .incompatible()
+            .create()
           const initialScan = { ids: [] }
 
           const { offlineEvents } = await detectOfflineUnlinkEvents(
@@ -127,8 +137,13 @@ onPlatform('darwin', () => {
       }
     })
 
-    it('does not detect unsynced remote additions as deleted docs', async function () {
-      await builders.metadir().path('dir').ino(1).sides({ remote: 1 }).create()
+    it('does not detect unsynced remote additions as deleted docs', async function() {
+      await builders
+        .metadir()
+        .path('dir')
+        .ino(1)
+        .sides({ remote: 1 })
+        .create()
       await builders
         .metafile()
         .path('file')

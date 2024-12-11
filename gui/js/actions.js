@@ -1,6 +1,7 @@
 const { spawn } = require('child_process')
-const { app } = require('electron')
+
 const { Promise } = require('bluebird')
+const { app } = require('electron')
 
 const { logger } = require('../../core/utils/logger')
 

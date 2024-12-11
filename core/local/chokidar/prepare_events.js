@@ -24,9 +24,10 @@
  *
  */
 
+const path = require('path')
+
 const Promise = require('bluebird')
 const fse = require('fs-extra')
-const path = require('path')
 
 const { logger } = require('../../utils/logger')
 

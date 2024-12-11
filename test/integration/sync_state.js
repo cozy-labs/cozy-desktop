@@ -5,10 +5,10 @@ const should = require('should')
 const sinon = require('sinon')
 
 const Builders = require('../support/builders')
+const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const TestHelpers = require('../support/helpers')
 
 const builders = new Builders()
 
@@ -24,14 +24,14 @@ describe('Sync state', () => {
 
   let events, helpers
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     helpers = TestHelpers.init(this)
     events = helpers.events
     sinon.spy(events, 'emit')
 
     await helpers.remote.ignorePreviousChanges()
   })
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
 

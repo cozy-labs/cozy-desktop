@@ -1,10 +1,12 @@
 #!/usr/bin/env node
+const path = require('path')
+
 const chokidar = require('chokidar')
 const program = require('commander')
-const local = require('./capture/local')
 const fse = require('fs-extra')
-const path = require('path')
 const open = require('open')
+
+const local = require('./capture/local')
 const scenarioHelpers = require('../test/support/helpers/scenarios')
 
 program

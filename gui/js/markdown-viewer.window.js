@@ -1,10 +1,14 @@
 /* @flow */
 
 const path = require('path')
+
 const { enable: enableRemoteModule } = require('@electron/remote/main')
 
 const { buildTranslations } = require('./i18n')
 const WindowManager = require('./window_manager')
+const log = require('../../core/app').logger({
+  component: 'GUI/MarkdownViewer'
+})
 
 /*::
 import type { WindowBanner } from './window_manager'
@@ -12,10 +16,6 @@ import type { WindowBanner } from './window_manager'
 
 const VIEWER_SCREEN_WIDTH = 768
 const VIEWER_SCREEN_HEIGHT = 570
-
-const log = require('../../core/app').logger({
-  component: 'GUI/MarkdownViewer'
-})
 
 module.exports = class MarkdownViewerWindow extends WindowManager {
   windowOptions() {

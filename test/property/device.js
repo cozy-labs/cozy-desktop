@@ -1,8 +1,9 @@
 /* @flow */
 
-const fse = require('fs-extra')
-const path = require('path')
 const { spawn } = require('child_process')
+const path = require('path')
+
+const fse = require('fs-extra')
 const { clone } = require('lodash')
 
 /*::

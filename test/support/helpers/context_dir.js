@@ -1,15 +1,16 @@
 /* @flow */
 
+const path = require('path')
+
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const fse = require('fs-extra')
 const _ = require('lodash')
-const path = require('path')
 const rimraf = require('rimraf')
 
 const checksumer = require('../../../core/local/checksumer')
-const stater = require('../../../core/local/stater')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
+const stater = require('../../../core/local/stater')
 
 Promise.promisifyAll(checksumer)
 const rimrafAsync = Promise.promisify(rimraf)

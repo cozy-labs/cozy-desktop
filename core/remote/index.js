@@ -4,14 +4,12 @@
  * @flow
  */
 
+const path = require('path')
+
+const async = require('async')
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
-const path = require('path')
-const async = require('async')
 
-const { logger } = require('../utils/logger')
-const { measureTime } = require('../utils/perfs')
-const pathUtils = require('../utils/path')
 const metadata = require('../metadata')
 const { ROOT_DIR_ID, DIR_TYPE } = require('./constants')
 const { RemoteCozy } = require('./cozy')
@@ -22,8 +20,11 @@ const {
 } = require('./errors')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
-const timestamp = require('../utils/timestamp')
+const { logger } = require('../utils/logger')
+const pathUtils = require('../utils/path')
+const { measureTime } = require('../utils/perfs')
 const streamUtils = require('../utils/stream')
+const timestamp = require('../utils/timestamp')
 
 /*::
 import type EventEmitter from 'events'
@@ -500,7 +501,10 @@ class Remote /*:: implements Reader, Writer */ {
 
 /** Extract the remote parent path and leaf name from a local path */
 function dirAndName(localPath /*: string */) /*: [string, string] */ {
-  const dir = path.dirname(localPath).split(path.sep).join('/')
+  const dir = path
+    .dirname(localPath)
+    .split(path.sep)
+    .join('/')
   const name = path.basename(localPath)
   return [dir, name]
 }

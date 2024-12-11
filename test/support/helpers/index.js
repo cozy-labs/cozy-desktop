@@ -1,22 +1,22 @@
 /* @flow */
 
-const autoBind = require('auto-bind')
 const path = require('path')
+
+const autoBind = require('auto-bind')
 const _ = require('lodash')
 const { defaults, pick } = _
 const sinon = require('sinon')
-
-const { Ignore } = require('../../../core/ignore')
-const { Merge } = require('../../../core/merge')
-const Prep = require('../../../core/prep')
-const { Sync } = require('../../../core/sync')
-const SyncState = require('../../../core/syncstate')
-const { FOLDER } = require('../../../core/metadata')
 
 const conflictHelpers = require('./conflict')
 const { posixifyPath } = require('./context_dir')
 const { LocalTestHelpers } = require('./local')
 const { RemoteTestHelpers } = require('./remote')
+const { Ignore } = require('../../../core/ignore')
+const { Merge } = require('../../../core/merge')
+const { FOLDER } = require('../../../core/metadata')
+const Prep = require('../../../core/prep')
+const { Sync } = require('../../../core/sync')
+const SyncState = require('../../../core/syncstate')
 
 /*::
 import type { Client as OldCozyClient } from 'cozy-client-js'

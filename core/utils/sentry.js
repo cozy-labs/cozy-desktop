@@ -14,18 +14,17 @@
  * 3. `node sentry-symbols.js`
  */
 
-const { session } = require('electron')
+const url = require('url')
+
 const Sentry = require('@sentry/electron')
 const {
   ExtraErrorData: ExtraErrorDataIntegration
 } = require('@sentry/integrations')
-const url = require('url')
+const { session } = require('electron')
 const _ = require('lodash')
 const winston = require('winston')
 const { combine, json } = winston.format
 
-const { SESSION_PARTITION_NAME } = require('../../gui/js/network')
-const { HOURS } = require('./time')
 const {
   FATAL_LVL,
   ERROR_LVL,
@@ -36,6 +35,8 @@ const {
   baseLogger,
   logger
 } = require('./logger')
+const { HOURS } = require('./time')
+const { SESSION_PARTITION_NAME } = require('../../gui/js/network')
 
 const log = logger({
   component: 'Sentry'

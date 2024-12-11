@@ -1,18 +1,23 @@
 /* @flow */
 
+const path = require('path')
+
+const { enable: enableRemoteModule } = require('@electron/remote/main')
 const electron = require('electron')
 const { dialog, shell } = electron
-const path = require('path')
-const { enable: enableRemoteModule } = require('@electron/remote/main')
 
+const { restart } = require('./actions')
+const autoLaunch = require('./autolaunch')
+const CozyWebWM = require('./cozy-web.window')
+const DetailsWM = require('./details.window')
+const { translate } = require('./i18n')
+const WindowManager = require('./window_manager')
+const log = require('../../core/app').logger({
+  component: 'GUI'
+})
 const { openNote } = require('../utils/notes')
 const { openUrl } = require('../utils/urls')
 const { openInWeb } = require('../utils/web')
-const autoLaunch = require('./autolaunch')
-const DetailsWM = require('./details.window')
-const CozyWebWM = require('./cozy-web.window')
-const { translate } = require('./i18n')
-const { restart } = require('./actions')
 
 /*::
 import type { App as ElectronApp, Event as ElectronEvent } from 'electron'
@@ -26,10 +31,6 @@ type Bounds = {
   y: number,
 }
 */
-
-const log = require('../../core/app').logger({
-  component: 'GUI'
-})
 
 const DASHBOARD_SCREEN_WIDTH = 440
 const DASHBOARD_SCREEN_HEIGHT = 830
@@ -95,8 +96,6 @@ const popoverBounds = (
 
   return newBounds
 }
-
-const WindowManager = require('./window_manager')
 
 module.exports = class TrayWM extends WindowManager {
   constructor(

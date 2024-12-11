@@ -9,14 +9,15 @@
  * @flow
  */
 
-const _ = require('lodash')
 const path = require('path')
 
+const _ = require('lodash')
+
+const Channel = require('./channel')
 const { WINDOWS_DATE_MIGRATION_FLAG } = require('../../config')
 const { kind } = require('../../metadata')
 const { logger } = require('../../utils/logger')
 const { measureTime } = require('../../utils/perfs')
-const Channel = require('./channel')
 
 /*::
 import type { Config } from '../../config'

@@ -1,17 +1,23 @@
 /* eslint-env mocha */
 /* @flow */
 
-const Promise = require('bluebird')
-const fse = require('fs-extra')
-const _ = require('lodash')
 const path = require('path')
+
+const Promise = require('bluebird')
 const chai = require('chai')
 const chaiLike = require('chai-like')
+const fse = require('fs-extra')
+const _ = require('lodash')
 chai.use(chaiLike)
 chai.Should()
 
 const config = require('../../core/config')
-
+const { logger } = require('../../core/utils/logger')
+const remoteCaptureHelpers = require('../../dev/capture/remote')
+const TestHelpers = require('../support/helpers')
+const configHelpers = require('../support/helpers/config')
+const cozyHelpers = require('../support/helpers/cozy')
+const pouchHelpers = require('../support/helpers/pouch')
 const {
   disabledScenarioTest,
   init,
@@ -23,31 +29,25 @@ const {
   runWithStoppedClient,
   fsStatsFromObj
 } = require('../support/helpers/scenarios')
-const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
-const TestHelpers = require('../support/helpers')
-const pouchHelpers = require('../support/helpers/pouch')
-const remoteCaptureHelpers = require('../../dev/capture/remote')
 
 const {
   env: { CI: isCI },
   platform
 } = process
 
-const { logger } = require('../../core/utils/logger')
 const log = new logger({ component: 'TEST' })
 
-describe('Scenario', function () {
+describe('Scenario', function() {
   let helpers
 
   beforeEach(configHelpers.createConfig)
   beforeEach(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
-  beforeEach('set up outside dir', async function () {
+  beforeEach('set up outside dir', async function() {
     await fse.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
   })
-  beforeEach(async function () {
+  beforeEach(async function() {
     helpers = TestHelpers.init(this)
 
     // TODO: helpers.setup()
@@ -55,7 +55,7 @@ describe('Scenario', function () {
     await helpers.remote.ignorePreviousChanges()
   })
 
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
   afterEach(pouchHelpers.cleanDatabase)
@@ -97,7 +97,7 @@ describe('Scenario', function () {
             })
           }
 
-          it('', async function () {
+          it('', async function() {
             await runLocalChannel(scenario, parcelCapture, helpers)
           })
         })
@@ -118,7 +118,7 @@ describe('Scenario', function () {
           const breakpoints = injectChokidarBreakpoints(eventsFile)
 
           for (let flushAfter of breakpoints) {
-            it(localTestName + ' flushAfter=' + flushAfter, async function () {
+            it(localTestName + ' flushAfter=' + flushAfter, async function() {
               await runLocalChokidarWithCaptures(
                 scenario,
                 _.cloneDeep(eventsFile),
@@ -128,7 +128,7 @@ describe('Scenario', function () {
             })
           }
         } else {
-          it(localTestName, async function () {
+          it(localTestName, async function() {
             if (isCI) this.timeout(3 * 60 * 1000)
             await runLocalChokidarWithoutCaptures(
               scenario,
@@ -144,7 +144,7 @@ describe('Scenario', function () {
       if (stoppedTestSkipped) {
         it.skip(`${stoppedTestName} (${stoppedTestSkipped})`, () => {})
       } else {
-        it(stoppedTestName, async function () {
+        it(stoppedTestName, async function() {
           if (isCI) this.timeout(60 * 1000)
           await runLocalStopped(scenario, helpers)
         })
@@ -159,7 +159,7 @@ describe('Scenario', function () {
       continue
     }
 
-    it(remoteTestName, async function () {
+    it(remoteTestName, async function() {
       if (isCI && platform === 'darwin') this.timeout(60 * 1000)
       await runRemote(scenario, helpers)
     })

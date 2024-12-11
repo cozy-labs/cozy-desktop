@@ -19,7 +19,7 @@ baseLogger.add(
   })
 )
 
-beforeEach(function () {
+beforeEach(function() {
   errors.length = 0
   // FIXME: this.currentTest is undefined on AppVeyor, not sure why
   if (process.env.APPVEYOR == null) {
@@ -27,7 +27,7 @@ beforeEach(function () {
   }
 })
 
-afterEach(function () {
+afterEach(function() {
   for (const err of errors) {
     // eslint-disable-next-line no-console
     console.log(err)

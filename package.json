@@ -16,7 +16,7 @@
     "url": "git://github.com/cozy-labs/cozy-desktop.git"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=18.18.0"
   },
   "keywords": [
     "Electron",
@@ -135,6 +135,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.16.7",
+    "@babel/eslint-parser": "^7.25.9",
     "@electron/notarize": "^2.1.0",
     "@sentry/cli": "^2.3.0",
     "babel-preset-cozy-app": "^2.0.1",
@@ -157,8 +158,13 @@
     "elm-test": "^0.19.1",
     "elm-upgrade": "0.19.8",
     "env-cmd": "10.1.0",
-    "eslint-config-cozy-app": "^4.0.0",
+    "eslint": "^8.0.0",
+    "eslint-config-cozy-app": "^6.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jest": "^28.9.0",
     "eslint-plugin-node": "11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-promise": "6.0.0",
     "faker": "5.5.3",
     "flow-bin": "^0.108.0",

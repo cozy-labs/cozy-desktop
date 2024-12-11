@@ -3,14 +3,16 @@
  * @flow
  */
 
-const autoBind = require('auto-bind')
-const OldCozyClient = require('cozy-client-js').Client
-const CozyClient = require('cozy-client').default
-const { FetchError } = require('cozy-stack-client')
-const { Q } = require('cozy-client')
-const cozyFlags = require('cozy-flags').default
 const path = require('path')
+
+const autoBind = require('auto-bind')
 const addSecretEventListener = require('secret-event-listener')
+
+const CozyClient = require('cozy-client').default
+const { Q } = require('cozy-client')
+const OldCozyClient = require('cozy-client-js').Client
+const cozyFlags = require('cozy-flags').default
+const { FetchError } = require('cozy-stack-client')
 
 const {
   FILES_DOCTYPE,
@@ -20,7 +22,6 @@ const {
   MAX_FILE_SIZE,
   OAUTH_CLIENTS_DOCTYPE
 } = require('./constants')
-const { DirectoryNotFound } = require('./errors')
 const {
   dropSpecialDocs,
   withDefaultValues,
@@ -28,8 +29,9 @@ const {
   jsonApiToRemoteJsonDoc,
   jsonFileVersionToRemoteFileVersion
 } = require('./document')
-const { logger } = require('../utils/logger')
+const { DirectoryNotFound } = require('./errors')
 const { sortBy } = require('../utils/array')
+const { logger } = require('../utils/logger')
 
 /*::
 import type { CozyRealtime } from 'cozy-realtime'
@@ -641,11 +643,7 @@ async function fetchChangesFromFeed(
   batchSize /*: number */,
   remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> */ = []
 ) /*: Promise<{ last_seq: string, remoteDocs: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> }> */ {
-  const {
-    newLastSeq: last_seq,
-    pending,
-    results
-  } = await client
+  const { newLastSeq: last_seq, pending, results } = await client
     .collection(FILES_DOCTYPE)
     .fetchChanges(
       { since, includeDocs: true, limit: batchSize },
@@ -668,11 +666,7 @@ async function fetchInitialChanges(
   batchSize /*: number */,
   remoteDocs /*: CouchDBDoc[] */ = []
 ) /*: Promise<{ last_seq: string, remoteDocs: CouchDBDoc[] }> */ {
-  const {
-    newLastSeq: last_seq,
-    pending,
-    results
-  } = await client
+  const { newLastSeq: last_seq, pending, results } = await client
     .collection(FILES_DOCTYPE)
     .fetchChanges(
       { since, includeDocs: true, limit: batchSize },

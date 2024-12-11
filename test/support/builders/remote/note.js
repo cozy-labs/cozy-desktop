@@ -1,17 +1,17 @@
 /* @flow */
 
 const { posix } = require('path')
+
 const _ = require('lodash')
 
 const RemoteBaseBuilder = require('./base')
-const ChecksumBuilder = require('../checksum')
-const cozyHelpers = require('../../helpers/cozy')
-
-const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
 const {
   FILES_DOCTYPE,
   NOTE_MIME_TYPE
 } = require('../../../../core/remote/constants')
+const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
+const cozyHelpers = require('../../helpers/cozy')
+const ChecksumBuilder = require('../checksum')
 
 /*::
 import type stream from 'stream'
@@ -38,9 +38,7 @@ const baseMetadata = {
 //
 //     const note /*: FullRemoteFile */ = await builders.remoteNote().inDir(...).create()
 //
-module.exports = class RemoteNoteBuilder extends (
-  RemoteBaseBuilder
-) /*:: <FullRemoteFile> */ {
+module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <FullRemoteFile> */ {
   /*::
   _title: string
   _content: string

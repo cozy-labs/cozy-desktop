@@ -1,20 +1,20 @@
 /* @flow */
 /* eslint-env mocha */
 
-const should = require('should')
-const sinon = require('sinon')
 const path = require('path')
 
-const metadata = require('../../core/metadata')
-const timestamp = require('../../core/utils/timestamp')
-const { INCOMPATIBLE_DOC_CODE } = require('../../core/sync/errors')
-const { DIR_TYPE } = require('../../core/remote/constants')
+const should = require('should')
+const sinon = require('sinon')
 
+const metadata = require('../../core/metadata')
+const { DIR_TYPE } = require('../../core/remote/constants')
+const { INCOMPATIBLE_DOC_CODE } = require('../../core/sync/errors')
+const timestamp = require('../../core/utils/timestamp')
 const Builders = require('../support/builders')
+const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const TestHelpers = require('../support/helpers')
 
 /*::
 import type { RemoteDir } from '../../core/remote/document'
@@ -38,7 +38,7 @@ describe('Platform incompatibilities', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     cozy = cozyHelpers.cozy
     builders = new Builders({ cozy })
     helpers = TestHelpers.init(this)
@@ -54,7 +54,7 @@ describe('Platform incompatibilities', () => {
         helpers._sync.lifecycle.unblockFor(err.code)
       })
   })
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
 
@@ -75,8 +75,14 @@ describe('Platform incompatibilities', () => {
     should(helpers._sync.blockSyncFor).not.have.been.called()
 
   it('add incompatible dir and file', async () => {
-    await builders.remoteDir().name('di:r').create()
-    await builders.remoteFile().name('fi:le').create()
+    await builders
+      .remoteDir()
+      .name('di:r')
+      .create()
+    await builders
+      .remoteFile()
+      .name('fi:le')
+      .create()
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -85,7 +91,10 @@ describe('Platform incompatibilities', () => {
   })
 
   it('add incompatible dir with two colons', async () => {
-    await builders.remoteDir().name('d:i:r').create()
+    await builders
+      .remoteDir()
+      .name('d:i:r')
+      .create()
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -376,7 +385,10 @@ describe('Platform incompatibilities', () => {
       .name('dir2')
       .updatedAt(...timestamp.spread(new Date()))
       .create()
-    const dir2 = builders.metadir().fromRemote(newRemoteDoc).build()
+    const dir2 = builders
+      .metadir()
+      .fromRemote(newRemoteDoc)
+      .build()
     await helpers.prep.moveFolderAsync('remote', dir2, dir)
     await helpers.syncAll()
 

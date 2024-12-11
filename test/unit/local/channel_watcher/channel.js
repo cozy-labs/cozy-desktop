@@ -7,7 +7,6 @@ const should = require('should')
 const sinon = require('sinon')
 
 const Channel = require('../../../../core/local/channel_watcher/channel')
-
 const Builders = require('../../../support/builders')
 const { onPlatforms } = require('../../../support/helpers/platform')
 
@@ -21,7 +20,7 @@ import type {
 const builders = new Builders()
 
 onPlatforms(['linux', 'win32'], () => {
-  describe('core/local/channel_watcher/Channel', function () {
+  describe('core/local/channel_watcher/Channel', function() {
     this.timeout(100)
 
     describe('Basics', () => {

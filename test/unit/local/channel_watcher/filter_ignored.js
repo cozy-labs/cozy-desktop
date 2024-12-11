@@ -1,19 +1,18 @@
 /* eslint-env mocha */
 /* @flow */
 
+const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
-const _ = require('lodash')
-
-const { onPlatforms } = require('../../../support/helpers/platform')
-const Builders = require('../../../support/builders')
 
 const { Ignore } = require('../../../../core/ignore')
+const Channel = require('../../../../core/local/channel_watcher/channel')
 const {
   INITIAL_SCAN_DONE
 } = require('../../../../core/local/channel_watcher/event')
-const Channel = require('../../../../core/local/channel_watcher/channel')
 const filterIgnored = require('../../../../core/local/channel_watcher/filter_ignored')
+const Builders = require('../../../support/builders')
+const { onPlatforms } = require('../../../support/helpers/platform')
 
 onPlatforms(['linux', 'win32'], () => {
   describe('core/local/channel_watcher/filter_ignored.loop()', () => {

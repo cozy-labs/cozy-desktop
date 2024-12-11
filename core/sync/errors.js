@@ -1,7 +1,7 @@
 /* @flow */
 
-const metadata = require('../metadata')
 const { IncompatibleDocError } = require('../incompatibilities/platform')
+const metadata = require('../metadata')
 const { HEARTBEAT: REMOTE_HEARTBEAT } = require('../remote/constants')
 const remoteErrors = require('../remote/errors')
 const { logger } = require('../utils/logger')

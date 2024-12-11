@@ -1,38 +1,42 @@
 /* eslint-env mocha */
 /* @flow */
 
+const path = require('path')
+
 const Promise = require('bluebird')
 const fse = require('fs-extra')
-const path = require('path')
-const sinon = require('sinon')
 const should = require('should')
+const sinon = require('sinon')
 
 const { Local } = require('../../../core/local')
 const { TMP_DIR_NAME } = require('../../../core/local/constants')
-
 const Builders = require('../../support/builders')
+const { createTrashMock } = require('../../support/doubles/fs')
 const configHelpers = require('../../support/helpers/config')
 const { ContextDir } = require('../../support/helpers/context_dir')
 const { WINDOWS_DEFAULT_MODE } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
-const { createTrashMock } = require('../../support/doubles/fs')
 
 const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
 
 const streamer = (doc, content, err) => ({
   createReadStreamAsync(docToStream) {
     docToStream.should.equal(doc)
-    const stream = new Builders().stream().push(content).error(err).build()
+    const stream = new Builders()
+      .stream()
+      .push(content)
+      .error(err)
+      .build()
     return Promise.resolve(stream)
   }
 })
 
-describe('Local', function () {
+describe('Local', function() {
   let builders, syncDir, trashMock
 
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
-  before('instanciate local', function () {
+  before('instanciate local', function() {
     trashMock = createTrashMock()
 
     this.prep = {}
@@ -45,30 +49,30 @@ describe('Local', function () {
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
-  describe('constructor', function () {
-    it('has a base path', function () {
+  describe('constructor', function() {
+    it('has a base path', function() {
       this.local.syncPath.should.equal(this.syncPath)
     })
 
-    it('has a tmp path', function () {
+    it('has a tmp path', function() {
       let tmpPath = syncDir.abspath(TMP_DIR_NAME)
       this.local.tmpPath.should.equal(tmpPath)
     })
 
-    it('has a side name', function () {
+    it('has a side name', function() {
       should(this.local.name).eql('local')
     })
   })
 
-  describe('createReadStream', function () {
-    it('throws an error if no file for this document', async function () {
+  describe('createReadStream', function() {
+    it('throws an error if no file for this document', async function() {
       let doc = { path: 'no-such-file' }
       await should(this.local.createReadStreamAsync(doc)).be.rejectedWith(
         /ENOENT/
       )
     })
 
-    it('creates a readable stream for the document', async function () {
+    it('creates a readable stream for the document', async function() {
       const image = await fse.readFile(CHAT_MIGNON_MOD_PATH)
 
       const src = CHAT_MIGNON_MOD_PATH
@@ -89,7 +93,7 @@ describe('Local', function () {
   })
 
   describe('updateMetadataAsync', () => {
-    it('chmod -x for a non-executable file', async function () {
+    it('chmod -x for a non-executable file', async function() {
       const doc = {
         docType: 'file',
         path: 'non-exec-file'
@@ -103,7 +107,7 @@ describe('Local', function () {
       )
     })
 
-    it('chmod +x for an executable file', async function () {
+    it('chmod +x for an executable file', async function() {
       let date = new Date('2015-11-09T05:06:07Z')
       let filePath = syncDir.abspath('exec-file')
       fse.ensureFileSync(filePath)
@@ -123,7 +127,7 @@ describe('Local', function () {
       }
     })
 
-    it('updates mtime for a file', async function () {
+    it('updates mtime for a file', async function() {
       let date = new Date('2015-10-09T05:06:07Z')
       let filePath = syncDir.abspath('utimes-file')
       fse.ensureFileSync(filePath)
@@ -137,7 +141,7 @@ describe('Local', function () {
       should(+mtime).equal(+date)
     })
 
-    it('updates mtime for a directory', async function () {
+    it('updates mtime for a directory', async function() {
       let date = new Date('2015-10-09T05:06:07Z')
       let folderPath = syncDir.abspath('utimes-folder')
       fse.ensureDirSync(folderPath)
@@ -159,7 +163,7 @@ describe('Local', function () {
       fullPath = doc => syncDir.abspath(doc.path)
     })
 
-    it('sets ino for a file', function (done) {
+    it('sets ino for a file', function(done) {
       const doc /*: { path: string, ino?: number } */ = {
         path: 'file-needs-ino'
       }
@@ -172,7 +176,7 @@ describe('Local', function () {
       })
     })
 
-    it('sets ino for a directory', function (done) {
+    it('sets ino for a directory', function(done) {
       const doc /*: { path: string, ino?: number } */ = {
         path: 'dir-needs-ino'
       }
@@ -187,7 +191,7 @@ describe('Local', function () {
   })
 
   describe('fileExistsLocally', () => {
-    it('checks file existence as a binary in the db and on disk', async function () {
+    it('checks file existence as a binary in the db and on disk', async function() {
       const filePath = path.resolve(this.syncPath, 'folder', 'testfile')
       await should(this.local.fileExistsLocally('deadcafe')).be.fulfilledWith(
         false
@@ -210,15 +214,15 @@ describe('Local', function () {
     })
   })
 
-  describe('addFile', function () {
-    beforeEach(function () {
+  describe('addFile', function() {
+    beforeEach(function() {
       sinon.spy(this.events, 'emit')
     })
-    afterEach(function () {
+    afterEach(function() {
       this.events.emit.restore()
     })
 
-    it('creates the file by downloading it', async function () {
+    it('creates the file by downloading it', async function() {
       const content = 'foobar'
       const doc = builders
         .metafile()
@@ -244,7 +248,7 @@ describe('Local', function () {
       }
     })
 
-    it('creates the file from another file with same checksum', async function () {
+    it('creates the file from another file with same checksum', async function() {
       sinon.spy(this.local, 'fileExistsLocally')
 
       const content = 'foo bar baz'
@@ -281,7 +285,7 @@ describe('Local', function () {
       }
     })
 
-    it('can create a file in the root', async function () {
+    it('can create a file in the root', async function() {
       const content = 'foobaz'
       const doc = builders
         .metafile()
@@ -306,7 +310,7 @@ describe('Local', function () {
       }
     })
 
-    it('aborts when the download is incorrect', async function () {
+    it('aborts when the download is incorrect', async function() {
       const content = 'foo'
       const invalidContent = 'bar'
       const doc = builders
@@ -328,7 +332,7 @@ describe('Local', function () {
       }
     })
 
-    it('adds write permission to existing read-only Cozy Note', async function () {
+    it('adds write permission to existing read-only Cozy Note', async function() {
       const doc = {
         docType: 'file',
         mime: 'text/vnd.cozy.note+markdown',
@@ -361,29 +365,29 @@ describe('Local', function () {
       let doc
 
       beforeEach('set up doc', () => {
-        doc = builders.metafile().data(corruptData).build()
+        doc = builders
+          .metafile()
+          .data(corruptData)
+          .build()
         doc.size = validData.length
       })
 
-      beforeEach(
-        'stub #createReadStreamAsync() on the other side',
-        function () {
-          this.local.other = streamer(doc, corruptData)
-        }
-      )
+      beforeEach('stub #createReadStreamAsync() on the other side', function() {
+        this.local.other = streamer(doc, corruptData)
+      })
 
       afterEach(
         'restore #createReadStreamAsync() on the other side',
-        function () {
+        function() {
           this.local.other = null
         }
       )
 
-      it('rejects', async function () {
+      it('rejects', async function() {
         await should(this.local.addFileAsync(doc)).be.rejectedWith(message)
       })
 
-      const addFileRejection = async function () {
+      const addFileRejection = async function() {
         await this.local.addFileAsync(doc).catch(() => {})
       }
 
@@ -392,7 +396,7 @@ describe('Local', function () {
         afterEach(() => syncDir.unlink(doc))
         beforeEach(addFileRejection)
 
-        it('is not overridden to prevent valid data loss', async function () {
+        it('is not overridden to prevent valid data loss', async function() {
           await should(syncDir.readFile(doc)).be.fulfilledWith(validData)
         })
       })
@@ -400,7 +404,7 @@ describe('Local', function () {
       describe('missing local file', () => {
         beforeEach(addFileRejection)
 
-        it('is not downloaded to prevent confusion', async function () {
+        it('is not downloaded to prevent confusion', async function() {
           await should(syncDir.exists(doc)).be.fulfilledWith(false)
         })
       })
@@ -412,31 +416,31 @@ describe('Local', function () {
       let doc
 
       beforeEach('set up doc', () => {
-        doc = builders.metafile().data(data).build()
+        doc = builders
+          .metafile()
+          .data(data)
+          .build()
       })
 
-      beforeEach(
-        'stub #createReadStreamAsync() on the other side',
-        function () {
-          this.local.other = streamer(doc, data, new Error(message))
-        }
-      )
+      beforeEach('stub #createReadStreamAsync() on the other side', function() {
+        this.local.other = streamer(doc, data, new Error(message))
+      })
 
       afterEach(
         'restore #createReadStreamAsync() on the other side',
-        function () {
+        function() {
           this.local.other = null
         }
       )
 
-      it('rejects', async function () {
+      it('rejects', async function() {
         await should(this.local.addFileAsync(doc)).be.rejectedWith(message)
       })
     })
   })
 
-  describe('addFolder', function () {
-    it('creates the folder', async function () {
+  describe('addFolder', function() {
+    it('creates the folder', async function() {
       const doc = builders
         .metadir()
         .path('parent/folder-to-create')
@@ -452,7 +456,7 @@ describe('Local', function () {
       should(doc.ino).be.a.Number()
     })
 
-    it('updates mtime if the folder already exists', async function () {
+    it('updates mtime if the folder already exists', async function() {
       const doc = builders
         .metadir()
         .path('parent/folder-to-create')
@@ -470,7 +474,7 @@ describe('Local', function () {
   })
 
   describe('overwriteFile', () => {
-    it('writes the new content of a file', async function () {
+    it('writes the new content of a file', async function() {
       const newContent = 'Hello world'
       const doc = builders
         .metafile()
@@ -499,7 +503,7 @@ describe('Local', function () {
   })
 
   describe('updateFileMetadata', () => {
-    it('updates metadata', async function () {
+    it('updates metadata', async function() {
       const doc = builders
         .metafile()
         .path('file-to-update')
@@ -514,8 +518,11 @@ describe('Local', function () {
   })
 
   describe('updateFolder', () => {
-    it('calls addFolder', async function () {
-      const doc = builders.metadir().path('a-folder-to-update').build()
+    it('calls addFolder', async function() {
+      const doc = builders
+        .metadir()
+        .path('a-folder-to-update')
+        .build()
       sinon.stub(this.local, 'addFolderAsync').resolves()
       await this.local.updateFolderAsync(doc)
       should(this.local.addFolderAsync).be.calledWith(doc)
@@ -523,12 +530,15 @@ describe('Local', function () {
     })
   })
 
-  describe('move', function () {
-    context('with file', function () {
+  describe('move', function() {
+    context('with file', function() {
       let dstFile, srcFile
 
       beforeEach(async () => {
-        srcFile = builders.metafile().path('src/file').build()
+        srcFile = builders
+          .metafile()
+          .path('src/file')
+          .build()
         dstFile = builders
           .metafile()
           .path('dst/file')
@@ -538,7 +548,7 @@ describe('Local', function () {
         await fse.emptyDir(syncDir.root)
       })
 
-      it('moves the file and updates its mtime', async function () {
+      it('moves the file and updates its mtime', async function() {
         await syncDir.outputFile(srcFile, 'foobar')
         await syncDir.ensureParentDir(dstFile)
 
@@ -551,7 +561,7 @@ describe('Local', function () {
         should(await syncDir.readFile(dstFile)).equal('foobar')
       })
 
-      it('throws ENOENT on missing source', async function () {
+      it('throws ENOENT on missing source', async function() {
         await syncDir.emptyDir(path.dirname(srcFile.path))
         await syncDir.emptyDir(path.dirname(dstFile.path))
 
@@ -562,7 +572,7 @@ describe('Local', function () {
         should(await syncDir.tree()).deepEqual(['dst/', 'src/'])
       })
 
-      it('throws ENOENT on missing destination parent', async function () {
+      it('throws ENOENT on missing destination parent', async function() {
         await syncDir.outputFile(srcFile, 'foobar')
         await syncDir.removeParentDir(dstFile)
 
@@ -573,7 +583,7 @@ describe('Local', function () {
         should(await syncDir.tree()).deepEqual(['src/', 'src/file'])
       })
 
-      it('throws a custom Error on existing destination', async function () {
+      it('throws a custom Error on existing destination', async function() {
         await syncDir.outputFile(srcFile, 'src/file content')
         await syncDir.outputFile(dstFile, 'dst/file content')
 
@@ -589,7 +599,7 @@ describe('Local', function () {
         ])
       })
 
-      it('throws a custom Error on existing destination (and missing source)', async function () {
+      it('throws a custom Error on existing destination (and missing source)', async function() {
         await syncDir.ensureParentDir(srcFile)
         await syncDir.outputFile(dstFile, 'dst/file content')
 
@@ -601,17 +611,24 @@ describe('Local', function () {
       })
     })
 
-    context('with folder', function () {
+    context('with folder', function() {
       let dstDir, srcDir
 
       beforeEach(async () => {
-        srcDir = builders.metadir().path('src/dir').build()
-        dstDir = builders.metadir().path('dst/dir').olderThan(srcDir).build()
+        srcDir = builders
+          .metadir()
+          .path('src/dir')
+          .build()
+        dstDir = builders
+          .metadir()
+          .path('dst/dir')
+          .olderThan(srcDir)
+          .build()
 
         await fse.emptyDir(syncDir.root)
       })
 
-      it('moves the folder and updates its mtime', async function () {
+      it('moves the folder and updates its mtime', async function() {
         await syncDir.ensureDir(srcDir)
         await syncDir.ensureParentDir(dstDir)
 
@@ -623,7 +640,7 @@ describe('Local', function () {
         )
       })
 
-      it('throws ENOENT on missing source', async function () {
+      it('throws ENOENT on missing source', async function() {
         await syncDir.ensureParentDir(srcDir)
         await syncDir.ensureParentDir(dstDir)
 
@@ -634,7 +651,7 @@ describe('Local', function () {
         should(await syncDir.tree()).deepEqual(['dst/', 'src/'])
       })
 
-      it('throws ENOENT on missing destination parent', async function () {
+      it('throws ENOENT on missing destination parent', async function() {
         await syncDir.ensureDir(srcDir)
 
         await should(this.local.moveAsync(dstDir, srcDir)).be.rejectedWith({
@@ -644,7 +661,7 @@ describe('Local', function () {
         should(await syncDir.tree()).deepEqual(['src/', 'src/dir/'])
       })
 
-      it('throws a custom Error on existing destination', async function () {
+      it('throws a custom Error on existing destination', async function() {
         await syncDir.ensureDir(srcDir)
         await syncDir.ensureDir(dstDir)
 
@@ -660,7 +677,7 @@ describe('Local', function () {
         ])
       })
 
-      it('throws a custom Error on existing destination (and missing source)', async function () {
+      it('throws a custom Error on existing destination (and missing source)', async function() {
         await syncDir.ensureParentDir(srcDir)
         await syncDir.ensureDir(dstDir)
 
@@ -674,7 +691,7 @@ describe('Local', function () {
   })
 
   describe('trash', () => {
-    it('deletes a file from the local filesystem', async function () {
+    it('deletes a file from the local filesystem', async function() {
       const doc = await builders
         .metafile()
         .path('FILE-TO-DELETE')
@@ -688,7 +705,7 @@ describe('Local', function () {
       await should(fse.exists(filePath)).be.fulfilledWith(false)
     })
 
-    it('deletes a folder from the local filesystem', async function () {
+    it('deletes a folder from the local filesystem', async function() {
       const doc = await builders
         .metadir()
         .path('FOLDER-TO-DELETE')
@@ -703,7 +720,7 @@ describe('Local', function () {
     })
 
     context('when the document is missing on the filesystem', () => {
-      it('does not throw', async function () {
+      it('does not throw', async function() {
         const doc = await builders
           .metafile()
           .path('FILE-TO-DELETE')
@@ -719,7 +736,7 @@ describe('Local', function () {
     })
 
     context('when the document cannot be sent to the trash', () => {
-      it('permanently deletes it', async function () {
+      it('permanently deletes it', async function() {
         trashMock.withFailingTrash()
 
         try {

@@ -1,17 +1,17 @@
 /* @flow */
 
 const fs = require('fs')
+
 const _ = require('lodash')
 
 const RemoteBaseBuilder = require('./base')
-const ChecksumBuilder = require('../checksum')
-const cozyHelpers = require('../../helpers/cozy')
-
+const { FILES_DOCTYPE } = require('../../../../core/remote/constants')
 const {
   inRemoteTrash,
   remoteJsonToRemoteDoc
 } = require('../../../../core/remote/document')
-const { FILES_DOCTYPE } = require('../../../../core/remote/constants')
+const cozyHelpers = require('../../helpers/cozy')
+const ChecksumBuilder = require('../checksum')
 
 /*::
 import type stream from 'stream'
@@ -48,9 +48,7 @@ const baseData = `Content of remote file ${fileNumber}`
 //
 //     const file /*: FullRemoteFile */ = await builders.remoteFile().inDir(...).create()
 //
-module.exports = class RemoteFileBuilder extends (
-  RemoteBaseBuilder
-) /*:: <FullRemoteFile> */ {
+module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <FullRemoteFile> */ {
   /*::
   _data: string | stream.Readable | Buffer
   */

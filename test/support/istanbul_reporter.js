@@ -2,8 +2,7 @@
 
 const istanbulAPI = require('istanbul-api')
 const libCoverage = require('istanbul-lib-coverage')
-
-// eslint-disable-next-line node/no-extraneous-require
+// eslint-disable-next-line import/no-extraneous-dependencies, node/no-extraneous-require
 const SpecReporter = require('mocha').reporters.spec
 const applySpecReporter = runner => new SpecReporter(runner)
 

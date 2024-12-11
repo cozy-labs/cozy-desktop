@@ -5,8 +5,10 @@
 
 const http = require('http')
 const https = require('https')
-const _ = require('lodash')
+
 const autoBind = require('auto-bind')
+const _ = require('lodash')
+
 const { RealtimePlugin } = require('cozy-realtime')
 
 const { logger } = require('../../utils/logger')

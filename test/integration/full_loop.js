@@ -3,10 +3,10 @@
 
 const should = require('should')
 
+const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const TestHelpers = require('../support/helpers')
 
 const cozy = cozyHelpers.cozy
 
@@ -22,7 +22,7 @@ describe('Full watch/merge/sync/repeat loop', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
@@ -32,7 +32,7 @@ describe('Full watch/merge/sync/repeat loop', () => {
 
     helpers.spyPouch()
   })
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
 

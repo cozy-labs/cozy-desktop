@@ -5,7 +5,6 @@ require('../../../core/globals')
 
 // Setup network so that all test requests will go through `electron-fetch`
 const { app, session } = require('electron')
-const network = require('../../../gui/js/network')
 
 /*::
 import type { Config } from '../../../core/config'
@@ -29,14 +28,15 @@ const resetNetwork = async () => {
 }
 setupNetwork()
 
-const OldCozyClient = require('cozy-client-js').Client
 const CozyClient = require('cozy-client').default
+const OldCozyClient = require('cozy-client-js').Client
 
 const {
   FILES_DOCTYPE,
   ROOT_DIR_ID,
   TRASH_DIR_ID
 } = require('../../../core/remote/constants')
+const network = require('../../../gui/js/network')
 
 // The URL of the Cozy instance used for tests
 const COZY_URL = process.env.COZY_URL || 'http://cozy.localhost:8080'

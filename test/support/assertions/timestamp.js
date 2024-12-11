@@ -2,8 +2,8 @@ const should = require('should')
 
 const timestamp = require('../../../core/utils/timestamp')
 
-should.use(function (should, Assertion) {
-  Assertion.add('sameTimestamp', function (expected, message) {
+should.use(function(should, Assertion) {
+  Assertion.add('sameTimestamp', function(expected, message) {
     this.params = {
       operator: 'be the same timestamp as',
       expected,
@@ -13,7 +13,7 @@ should.use(function (should, Assertion) {
     this.obj.getTime().should.equal(expected.getTime())
   })
 
-  Assertion.add('timestamp', function (...args) {
+  Assertion.add('timestamp', function(...args) {
     const expected = timestamp.build(...args)
 
     this.params = {

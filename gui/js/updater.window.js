@@ -1,21 +1,22 @@
 /* @flow */
 
-const Promise = require('bluebird')
-const WindowManager = require('./window_manager')
-const { autoUpdater } = require('electron-updater')
-const { translate } = require('./i18n')
-const { dialog } = require('electron')
 const path = require('path')
+
 const { enable: enableRemoteModule } = require('@electron/remote/main')
+const Promise = require('bluebird')
+const { dialog } = require('electron')
+const { autoUpdater } = require('electron-updater')
+
+const { translate } = require('./i18n')
+const WindowManager = require('./window_manager')
+const log = require('../../core/app').logger({
+  component: 'GUI:autoupdater'
+})
 
 /*::
 import type { App as ElectronApp } from 'electron'
 import type { App as CoreApp } from '../../core/app'
 */
-
-const log = require('../../core/app').logger({
-  component: 'GUI:autoupdater'
-})
 
 /** The delay starting from the update info request after which it is skipped.
  *

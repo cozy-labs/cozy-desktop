@@ -9,13 +9,14 @@
 
 const http = require('http')
 const https = require('https')
-const { LRUCache } = require('lru-cache')
+
 const { Agent } = require('agent-base')
-const { PacProxyAgent } = require('pac-proxy-agent')
 const { HttpProxyAgent } = require('http-proxy-agent')
 const { HttpsProxyAgent } = require('https-proxy-agent')
-const { SocksProxyAgent } = require('socks-proxy-agent')
 const _ = require('lodash')
+const { LRUCache } = require('lru-cache')
+const { PacProxyAgent } = require('pac-proxy-agent')
+const { SocksProxyAgent } = require('socks-proxy-agent')
 
 const { logger } = require('../../../core/utils/logger')
 const log = logger({
@@ -212,34 +213,35 @@ class ProxyAgent extends Agent {
 // getProxyForUrl uses the given Electron Session to resolve the proxy to use
 // for the given requested URL and returns its URL.
 // It is meant to be used with `ProxyAgent`.
-const getProxyForUrl =
-  (session /*: Session */) => async (reqUrl /*: string */) => {
-    log.debug('getProxyForUrl', { reqUrl })
-    const proxy = await session.resolveProxy(reqUrl)
-    if (!proxy) {
-      return ''
-    }
-
-    const proxies = String(proxy)
-      .trim()
-      .split(/\s*;\s*/g)
-      .filter(Boolean)
-
-    // XXX: right now, only the first proxy specified will be used
-    const first = proxies[0]
-    const [type, addr] = first.split(/\s+/)
-
-    if ('DIRECT' == type) {
-      return ''
-    } else if ('PROXY' == type) {
-      return `http://${addr}`
-    } else if (['SOCKS', 'SOCKS5', 'HTTPS'].includes(type)) {
-      return `${type.toLowerCase()}://${addr}`
-    } else {
-      log.error('Unknown proxy type', { type, reqUrl })
-      return ''
-    }
+const getProxyForUrl = (session /*: Session */) => async (
+  reqUrl /*: string */
+) => {
+  log.debug('getProxyForUrl', { reqUrl })
+  const proxy = await session.resolveProxy(reqUrl)
+  if (!proxy) {
+    return ''
   }
+
+  const proxies = String(proxy)
+    .trim()
+    .split(/\s*;\s*/g)
+    .filter(Boolean)
+
+  // XXX: right now, only the first proxy specified will be used
+  const first = proxies[0]
+  const [type, addr] = first.split(/\s+/)
+
+  if ('DIRECT' == type) {
+    return ''
+  } else if ('PROXY' == type) {
+    return `http://${addr}`
+  } else if (['SOCKS', 'SOCKS5', 'HTTPS'].includes(type)) {
+    return `${type.toLowerCase()}://${addr}`
+  } else {
+    log.error('Unknown proxy type', { type, reqUrl })
+    return ''
+  }
+}
 
 module.exports = {
   ProxyAgent,

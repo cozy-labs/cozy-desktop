@@ -13,8 +13,8 @@
 const _ = require('lodash')
 
 const Channel = require('./channel')
-const { logger } = require('../../utils/logger')
 const metadata = require('../../metadata')
+const { logger } = require('../../utils/logger')
 const { measureTime } = require('../../utils/perfs')
 
 /*::
