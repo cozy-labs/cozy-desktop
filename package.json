@@ -82,7 +82,7 @@
     "@electron/remote": "2.1.2",
     "@parcel/watcher": "https://github.com/taratatach/parcel-watcher.git#cozy-desktop",
     "@sentry/electron": "3.0.7",
-    "@sentry/integrations": "7.5.1",
+    "@sentry/integrations": "^7.114.0",
     "agent-base": "7.1.0",
     "async": "3.2.3",
     "auto-bind": "4.0.0",
