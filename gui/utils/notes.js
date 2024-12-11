@@ -6,8 +6,8 @@
 const { app, dialog, shell } = require('electron')
 
 const Desktop = require('../../core/app.js')
-const MarkdownViewerWindow = require('../js/markdown-viewer.window.js')
 const i18n = require('../js/i18n')
+const MarkdownViewerWindow = require('../js/markdown-viewer.window.js')
 const { translate } = i18n
 
 const log = Desktop.logger({

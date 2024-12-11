@@ -1,17 +1,17 @@
 /* eslint-env mocha */
 
-const fs = require('fs')
-const fse = require('fs-extra')
-const path = require('path')
-const sinon = require('sinon')
-const should = require('should')
 const EventEmitter = require('events')
+const fs = require('fs')
+const path = require('path')
 
-const { FOLDER } = require('../../../../core/metadata')
-const { TMP_DIR_NAME } = require('../../../../core/local/constants')
-const Watcher = require('../../../../core/local/chokidar/watcher')
+const fse = require('fs-extra')
+const should = require('should')
+const sinon = require('sinon')
+
 const chokidarEvent = require('../../../../core/local/chokidar/event')
-
+const Watcher = require('../../../../core/local/chokidar/watcher')
+const { TMP_DIR_NAME } = require('../../../../core/local/constants')
+const { FOLDER } = require('../../../../core/metadata')
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
 const { ContextDir } = require('../../../support/helpers/context_dir')
@@ -19,12 +19,12 @@ const { onPlatform } = require('../../../support/helpers/platform')
 const pouchHelpers = require('../../../support/helpers/pouch')
 
 onPlatform('darwin', () => {
-  describe('ChokidarWatcher Tests', function () {
+  describe('ChokidarWatcher Tests', function() {
     let builders
 
     before('instanciate config', configHelpers.createConfig)
     before('instanciate pouch', pouchHelpers.createDatabase)
-    beforeEach('instanciate local watcher', function () {
+    beforeEach('instanciate local watcher', function() {
       builders = new Builders({ pouch: this.pouch })
       this.prep = {}
       this.watcher = new Watcher(
@@ -34,7 +34,7 @@ onPlatform('darwin', () => {
         sinon.createStubInstance(EventEmitter)
       )
     })
-    afterEach('stop watcher and clean path', function (done) {
+    afterEach('stop watcher and clean path', function(done) {
       this.watcher.stop(true)
       this.watcher.checksumer.kill()
       fse.emptyDir(this.syncPath, done)
@@ -42,12 +42,12 @@ onPlatform('darwin', () => {
     after('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
 
-    describe('start', function () {
-      it('calls the callback when initial scan is done', function () {
+    describe('start', function() {
+      it('calls the callback when initial scan is done', function() {
         this.watcher.start()
       })
 
-      it('calls addFile/putFolder for files that are aleady here', async function () {
+      it('calls addFile/putFolder for files that are aleady here', async function() {
         fse.ensureDirSync(path.join(this.syncPath, 'aa'))
         fse.ensureFileSync(path.join(this.syncPath, 'aa/ab'))
         this.prep.putFolderAsync = sinon.stub().resolves()
@@ -63,7 +63,7 @@ onPlatform('darwin', () => {
         )
       })
 
-      it('only recomputes checksums of changed files', async function () {
+      it('only recomputes checksums of changed files', async function() {
         const unchangedFilename = 'unchanged-file.txt'
         const changedFilename = 'changed-file.txt'
         const unchangedPath = path.join(this.syncPath, unchangedFilename)
@@ -110,7 +110,7 @@ onPlatform('darwin', () => {
         }
       })
 
-      it('ignores the temporary directory', async function () {
+      it('ignores the temporary directory', async function() {
         fse.ensureDirSync(path.join(this.syncPath, TMP_DIR_NAME))
         fse.ensureFileSync(path.join(this.syncPath, TMP_DIR_NAME, 'ac'))
         this.prep.putFolder = sinon.spy()
@@ -125,8 +125,12 @@ onPlatform('darwin', () => {
 
     describe('stop', () => {
       context('when initial scan events have not been flushed yet', () => {
-        beforeEach(async function () {
-          await builders.metafile().path('no-event').upToDate().create()
+        beforeEach(async function() {
+          await builders
+            .metafile()
+            .path('no-event')
+            .upToDate()
+            .create()
 
           this.watcher.initialScanParams = {
             paths: [],
@@ -139,7 +143,7 @@ onPlatform('darwin', () => {
           this.watcher.watcher = { close: sinon.stub().resolves() }
         })
 
-        it('clears the buffer and does not flush any event', async function () {
+        it('clears the buffer and does not flush any event', async function() {
           const onFlushSpy = sinon.spy(this.watcher, 'onFlush')
           try {
             this.watcher.buffer.push({
@@ -160,8 +164,12 @@ onPlatform('darwin', () => {
       })
 
       context('when intial scan events have already been flushed', () => {
-        beforeEach(async function () {
-          await builders.metafile().path('no-event').upToDate().create()
+        beforeEach(async function() {
+          await builders
+            .metafile()
+            .path('no-event')
+            .upToDate()
+            .create()
 
           this.watcher.initialScanParams = {
             paths: [],
@@ -174,7 +182,7 @@ onPlatform('darwin', () => {
           this.watcher.watcher = { close: sinon.stub().resolves() }
         })
 
-        it('tries to flush buffered events before stopping', async function () {
+        it('tries to flush buffered events before stopping', async function() {
           const onFlushSpy = sinon.spy(this.watcher, 'onFlush')
           try {
             this.watcher.buffer.push({
@@ -199,18 +207,18 @@ onPlatform('darwin', () => {
       const relpath = 'foo.txt'
       let abspath
 
-      beforeEach(function () {
+      beforeEach(function() {
         abspath = path.join(this.syncPath, relpath)
       })
 
-      it('resolves with the md5sum for the given relative path', async function () {
+      it('resolves with the md5sum for the given relative path', async function() {
         await fse.outputFile(abspath, 'foo')
         await should(this.watcher.checksum(relpath)).be.fulfilledWith(
           'rL0Y20zC+Fzt72VPzMSk2A=='
         ) // foo
       })
 
-      it('does not swallow errors', async function () {
+      it('does not swallow errors', async function() {
         await should(this.watcher.checksum(relpath)).be.rejectedWith({
           code: 'ENOENT'
         })
@@ -218,11 +226,11 @@ onPlatform('darwin', () => {
     })
 
     describe('onFlush', () => {
-      beforeEach(function () {
+      beforeEach(function() {
         this.prep.addFileAsync = sinon.stub().resolves()
         this.prep.putFolderAsync = sinon.stub().resolves()
       })
-      afterEach(function () {
+      afterEach(function() {
         delete this.prep.addFileAsync
         delete this.prep.putFolderAsync
       })
@@ -230,7 +238,7 @@ onPlatform('darwin', () => {
       context(
         'when processing the initial events of an empty sync directory',
         () => {
-          it('calls the initial scan step', async function () {
+          it('calls the initial scan step', async function() {
             sinon.spy(this.watcher.pouch, 'initialScanDocs')
 
             try {
@@ -263,7 +271,7 @@ onPlatform('darwin', () => {
       context('while an initial scan is being processed', () => {
         const trigger = new EventEmitter()
         const SECOND_FLUSH_TRIGGER = 'second-flush'
-        beforeEach(function () {
+        beforeEach(function() {
           // Make sure we're in initial scan mode
           this.watcher.initialScanParams = {
             paths: [],
@@ -295,11 +303,11 @@ onPlatform('darwin', () => {
           })
           this.watcher.buffer.flush()
         })
-        afterEach(function () {
+        afterEach(function() {
           this.watcher.pouch.initialScanDocs.restore()
         })
 
-        it('does not trigger a new initial scan', async function () {
+        it('does not trigger a new initial scan', async function() {
           this.watcher.buffer.push({
             type: 'add',
             path: __filename,
@@ -317,9 +325,9 @@ onPlatform('darwin', () => {
     })
 
     describe('onAddFile', () => {
-      it('detects when a file is created', function () {
+      it('detects when a file is created', function() {
         return this.watcher.start().then(() => {
-          this.prep.addFileAsync = function (side, doc) {
+          this.prep.addFileAsync = function(side, doc) {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'aaa.jpg',
@@ -336,7 +344,7 @@ onPlatform('darwin', () => {
         })
       })
 
-      it('does not skip checksum computation when an identity conflict could occur during initial scan', async function () {
+      it('does not skip checksum computation when an identity conflict could occur during initial scan', async function() {
         const syncDir = new ContextDir(this.syncPath)
         const existing = await builders
           .metafile()
@@ -356,10 +364,10 @@ onPlatform('darwin', () => {
       })
     })
 
-    describe('onAddDir', function () {
-      it('detects when a folder is created', function () {
+    describe('onAddDir', function() {
+      it('detects when a folder is created', function() {
         return this.watcher.start().then(() => {
-          this.prep.putFolderAsync = function (side, doc) {
+          this.prep.putFolderAsync = function(side, doc) {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'aba',
@@ -373,11 +381,11 @@ onPlatform('darwin', () => {
         })
       })
 
-      it('detects when a sub-folder is created', function () {
+      it('detects when a sub-folder is created', function() {
         return this.watcher.start().then(() => {
           this.prep.putFolderAsync = () => {
             // For abb folder
-            this.prep.putFolderAsync = function (side, doc) {
+            this.prep.putFolderAsync = function(side, doc) {
               side.should.equal('local')
               doc.should.have.properties({
                 path: path.normalize('abb/abc'),
@@ -396,14 +404,14 @@ onPlatform('darwin', () => {
     })
 
     describe('onUnlinkFile', () => {
-      it('detects when a file is deleted', function () {
+      it('detects when a file is deleted', function() {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.
         fse.ensureFileSync(path.join(this.syncPath, 'aca'))
         this.prep.addFileAsync = () => {
           // For aca file
-          this.prep.trashFileAsync = function (side, doc) {
+          this.prep.trashFileAsync = function(side, doc) {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'aca'
@@ -418,14 +426,14 @@ onPlatform('darwin', () => {
     })
 
     describe('onUnlinkDir', () => {
-      it('detects when a folder is deleted', function () {
+      it('detects when a folder is deleted', function() {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.
         fse.mkdirSync(path.join(this.syncPath, 'ada'))
         this.prep.putFolderAsync = () => {
           // For ada folder
-          this.prep.trashFolderAsync = function (side, doc) {
+          this.prep.trashFolderAsync = function(side, doc) {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'ada'
@@ -440,12 +448,12 @@ onPlatform('darwin', () => {
     })
 
     describe('onChange', () =>
-      it('detects when a file is changed', function () {
+      it('detects when a file is changed', function() {
         let src = path.join(__dirname, '../../../fixtures/chat-mignon.jpg')
         let dst = path.join(this.syncPath, 'aea.jpg')
         fse.copySync(src, dst)
         this.prep.addFileAsync = () => {
-          this.prep.updateFileAsync = function (side, doc) {
+          this.prep.updateFileAsync = function(side, doc) {
             side.should.equal('local')
             doc.should.have.properties({
               path: 'aea.jpg',
@@ -464,8 +472,8 @@ onPlatform('darwin', () => {
         this.watcher.start()
       }))
 
-    describe('when a file is moved', function () {
-      it('deletes the source and adds the destination', function () {
+    describe('when a file is moved', function() {
+      it('deletes the source and adds the destination', function() {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.
@@ -508,11 +516,11 @@ onPlatform('darwin', () => {
       })
     })
 
-    describe('when a directory is moved', function () {
+    describe('when a directory is moved', function() {
       beforeEach('instanciate pouch', pouchHelpers.createDatabase)
       afterEach('clean pouch', pouchHelpers.cleanDatabase)
 
-      it.skip('deletes the source and adds the destination', function () {
+      it.skip('deletes the source and adds the destination', function() {
         // This test does not create the file in pouchdb.
         // the watcher will not find a inode number for the unlink
         // and therefore discard it.
@@ -567,12 +575,15 @@ onPlatform('darwin', () => {
       })
     })
 
-    describe('when a rescan request event is fired', function () {
-      it('drops buffered events', async function () {
+    describe('when a rescan request event is fired', function() {
+      it('drops buffered events', async function() {
         await this.watcher.start()
 
         const filePath = path.join(this.syncPath, 'added')
-        const stats = builders.stats().kind('file').build()
+        const stats = builders
+          .stats()
+          .kind('file')
+          .build()
         this.watcher.watcher.emit('add', filePath, stats)
 
         should(this.watcher.buffer.events).deepEqual([
@@ -594,7 +605,7 @@ onPlatform('darwin', () => {
         should(this.watcher.buffer.events).be.empty()
       })
 
-      it('restarts the watcher', async function () {
+      it('restarts the watcher', async function() {
         await this.watcher.start()
 
         sinon.spy(this.watcher, 'stop')

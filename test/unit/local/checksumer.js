@@ -2,9 +2,10 @@
 /* @flow */
 
 const fs = require('fs')
+const { Readable } = require('stream')
+
 const should = require('should')
 const sinon = require('sinon')
-const { Readable } = require('stream')
 
 const { init } = require('../../../core/local/checksumer')
 
@@ -62,7 +63,7 @@ describe('local/checksumer', () => {
         ).be.fulfilledWith('+HBGS7uN4XdB0blqLv5tFQ==')
       })
 
-      it.skip('fails on successive errors', async function () {
+      it.skip('fails on successive errors', async function() {
         this.timeout(60000)
         createReadStream.callsFake(() => {
           return busyStream()

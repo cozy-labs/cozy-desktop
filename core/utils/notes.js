@@ -1,13 +1,15 @@
 /* @flow */
 
-const fse = require('fs-extra')
 const path = require('path')
+
+const fse = require('fs-extra')
 const tar = require('tar')
+
 const { default: CozyClient, models } = require('cozy-client')
 
+const { logger } = require('./logger')
 const { NOTE_MIME_TYPE } = require('../remote/constants')
 
-const { logger } = require('./logger')
 const log = logger({
   component: 'Notes'
 })

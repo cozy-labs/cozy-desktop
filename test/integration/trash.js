@@ -2,12 +2,13 @@
 /* eslint-env mocha */
 
 const path = require('path')
+
 const should = require('should')
 
+const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const TestHelpers = require('../support/helpers')
 
 const skipRemoteChange = async ({ helpers, cozy }) => {
   const since = await helpers.pouch.getRemoteSeq()
@@ -30,7 +31,7 @@ describe('Trash', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
     pouch = helpers.pouch
@@ -39,7 +40,7 @@ describe('Trash', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
 
@@ -396,7 +397,7 @@ describe('Restore', () => {
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
 

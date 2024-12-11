@@ -3,9 +3,10 @@
  * @module core/remote/registration
  */
 
-const autoBind = require('auto-bind')
-const os = require('os')
 const http = require('http')
+const os = require('os')
+
+const autoBind = require('auto-bind')
 const open = require('open')
 
 const CozyClient = require('cozy-client-js').Client

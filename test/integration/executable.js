@@ -3,6 +3,7 @@
 
 const should = require('should')
 
+const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const {
@@ -10,7 +11,6 @@ const {
   onPlatforms
 } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
-const TestHelpers = require('../support/helpers')
 
 const { platform } = process
 
@@ -25,7 +25,7 @@ describe('Executable handling', () => {
   afterEach(pouchHelpers.cleanDatabase)
   afterEach(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
     syncDir = helpers.local.syncDir
@@ -33,7 +33,7 @@ describe('Executable handling', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
 

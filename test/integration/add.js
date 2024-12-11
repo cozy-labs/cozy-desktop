@@ -2,19 +2,20 @@
 /* eslint-env mocha */
 
 const path = require('path')
-const should = require('should')
+
 const fse = require('fs-extra')
+const should = require('should')
 const sinon = require('sinon')
 
 const metadata = require('../../core/metadata')
+const { logger } = require('../../core/utils/logger')
+const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-const TestHelpers = require('../support/helpers')
 
 const cozy = cozyHelpers.cozy
 
-const { logger } = require('../../core/utils/logger')
 const log = new logger({
   component: 'TEST'
 })
@@ -27,7 +28,7 @@ describe('Add', () => {
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
@@ -38,7 +39,7 @@ describe('Add', () => {
 
     helpers.spyPouch()
   })
-  afterEach(async function () {
+  afterEach(async function() {
     await helpers.stop()
   })
 

@@ -1,8 +1,7 @@
 // @flow
 
-const { FOLDER } = require('../../../../core/metadata')
-
 const BaseMetadataBuilder = require('./base')
+const { FOLDER } = require('../../../../core/metadata')
 
 /*::
 import type { Metadata } from '../../../../core/metadata'

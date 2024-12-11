@@ -1,7 +1,7 @@
 /* @flow */
 
-const { Readable } = require('stream')
 const crypto = require('crypto')
+const { Readable } = require('stream')
 
 module.exports = class ChecksumBuilder {
   /*::
@@ -19,7 +19,11 @@ module.exports = class ChecksumBuilder {
         'build() can only be called with String data as we will not await a Stream reading'
       )
     } else {
-      return crypto.createHash('md5').update(data).digest().toString('base64')
+      return crypto
+        .createHash('md5')
+        .update(data)
+        .digest()
+        .toString('base64')
     }
   }
 
@@ -30,11 +34,11 @@ module.exports = class ChecksumBuilder {
       checksum.setEncoding('base64')
 
       return new Promise((resolve, reject) => {
-        stream.on('end', function () {
+        stream.on('end', function() {
           checksum.end()
           resolve(String(checksum.read()))
         })
-        stream.on('error', function (err) {
+        stream.on('error', function(err) {
           checksum.end()
           reject(err)
         })

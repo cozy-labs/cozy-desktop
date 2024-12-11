@@ -1,22 +1,22 @@
 /* @flow */
 
+const path = require('path')
+
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const fse = require('fs-extra')
 const _ = require('lodash')
-const path = require('path')
 const rimraf = require('rimraf')
 
 const conflictHelpers = require('./conflict')
 const { ContextDir } = require('./context_dir')
-
 const { Local } = require('../../../core/local')
 const channelWatcher = require('../../../core/local/channel_watcher')
-const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const dispatch = require('../../../core/local/channel_watcher/dispatch')
 const {
   INITIAL_SCAN_DONE
 } = require('../../../core/local/channel_watcher/event')
+const { TMP_DIR_NAME } = require('../../../core/local/constants')
 
 const rimrafAsync = Promise.promisify(rimraf)
 

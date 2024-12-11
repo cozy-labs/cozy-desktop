@@ -1,13 +1,13 @@
 /* @flow */
 
-const _ = require('lodash')
 const path = require('path')
 
-const { FILE, FOLDER } = require('../../../core/metadata')
-const events = require('../../../core/local/channel_watcher/event')
+const _ = require('lodash')
 
-const statsBuilder = require('./stats')
 const ChecksumBuilder = require('./checksum')
+const statsBuilder = require('./stats')
+const events = require('../../../core/local/channel_watcher/event')
+const { FILE, FOLDER } = require('../../../core/metadata')
 
 /*::
 import type { Stats } from 'fs'

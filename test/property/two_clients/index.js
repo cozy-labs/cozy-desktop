@@ -1,28 +1,27 @@
 /* @flow */
 /* eslint-env mocha */
 
-const should = require('should')
+const path = require('path')
 
+const Promise = require('bluebird')
 const fse = require('fs-extra')
 const glob = require('glob')
-const path = require('path')
-const Promise = require('bluebird')
+const should = require('should')
 
-const { ContextDir } = require('../../support/helpers/context_dir')
 const TmpDir = require('../../support/helpers/TmpDir')
-
+const { ContextDir } = require('../../support/helpers/context_dir')
+const { setupDevice } = require('../device')
 const { run } = require('../runner')
 const { setupStack } = require('../stack')
-const { setupDevice } = require('../device')
 
-describe('Two clients', function () {
+describe('Two clients', function() {
   this.timeout(600000)
   this.slow(60000)
 
   const scenarios = glob.sync(path.join(__dirname, '*.json'))
   scenarios.forEach(scenario => {
     scenario = path.normalize(scenario)
-    it(`works fine for ${path.basename(scenario)}`, async function () {
+    it(`works fine for ${path.basename(scenario)}`, async function() {
       const data = await fse.readJson(scenario)
       if (data.pending) {
         return this.skip(data.pending.msg || 'pending')

@@ -14,7 +14,7 @@ import type { ContextDir } from '../helpers/context_dir'
 //       file1: 'content 1',
 //       file2: 'content 2'
 //     })
-should.Assertion.prototype.fileContents = async function (
+should.Assertion.prototype.fileContents = async function(
   expected /*: { [path: string]: string } */
 ) {
   const dir /*: ContextDir */ = this.obj

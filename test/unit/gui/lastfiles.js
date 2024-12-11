@@ -1,8 +1,9 @@
 /* @flow */
 /* eslint-env mocha */
 
-const should = require('should')
 const path = require('path')
+
+const should = require('should')
 
 const lastfiles = require('../../../gui/js/lastfiles')
 

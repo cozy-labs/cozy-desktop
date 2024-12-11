@@ -6,7 +6,6 @@ const should = require('should')
 
 const Channel = require('../../../../core/local/channel_watcher/channel')
 const overwrite = require('../../../../core/local/channel_watcher/overwrite')
-
 const Builders = require('../../../support/builders')
 const { onPlatforms } = require('../../../support/helpers/platform')
 
@@ -207,7 +206,11 @@ onPlatforms(['linux', 'win32'], () => {
           it(`forwards ${action} ${kind} (${
             oldPath ? oldPath + ' -> ' : ''
           }${path}) after .DELAY`, async () => {
-            let event = builders.event().action(action).kind(kind).path(path)
+            let event = builders
+              .event()
+              .action(action)
+              .kind(kind)
+              .path(path)
             if (oldPath) event.oldPath(oldPath)
             const batch = [event.build()]
 

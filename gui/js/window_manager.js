@@ -3,9 +3,14 @@
  * @module gui/js/window_manager
  */
 
+const path = require('path')
+
 const { BrowserWindow, ipcMain, shell } = require('electron')
 const _ = require('lodash')
-const path = require('path')
+
+const log = require('../../core/app').logger({
+  component: 'windows'
+})
 const capabilities = require('../../core/utils/capabilities')
 const flags = require('../../core/utils/flags')
 
@@ -18,10 +23,6 @@ export type WindowBanner = {
   details: string
 }
 */
-
-const log = require('../../core/app').logger({
-  component: 'windows'
-})
 
 module.exports = class WindowManager {
   constructor(app, desktop) {

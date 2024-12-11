@@ -1,12 +1,12 @@
 /* @flow */
 
+const path = require('path')
+
 const autoBind = require('auto-bind')
 const _ = require('lodash')
-const path = require('path')
 
 const conflictHelpers = require('./conflict')
 const cozyHelpers = require('./cozy')
-
 const { Remote, dirAndName } = require('../../../core/remote')
 const {
   DIR_TYPE,

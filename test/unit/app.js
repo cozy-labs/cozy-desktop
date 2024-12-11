@@ -1,47 +1,47 @@
 /* eslint-env mocha */
 
-const fse = require('fs-extra')
 const os = require('os')
 const path = require('path')
+
+const fse = require('fs-extra')
 const should = require('should')
 const sinon = require('sinon')
 
 const { App } = require('../../core/app')
+const { FetchError } = require('../../core/remote/cozy')
 const { LOG_BASENAME } = require('../../core/utils/logger')
 const pkg = require('../../package.json')
 const { version } = pkg
-const { FetchError } = require('../../core/remote/cozy')
-
 const configHelpers = require('../support/helpers/config')
 
-describe('App', function () {
-  describe('parseCozyUrl', function () {
-    it('parses https://example.com/', function () {
+describe('App', function() {
+  describe('parseCozyUrl', function() {
+    it('parses https://example.com/', function() {
       let parsed = App.prototype.parseCozyUrl('https://example.com')
       parsed.protocol.should.equal('https:')
       parsed.host.should.equal('example.com')
     })
 
-    it('parses example.org as https://example.org', function () {
+    it('parses example.org as https://example.org', function() {
       let parsed = App.prototype.parseCozyUrl('example.org')
       parsed.protocol.should.equal('https:')
       parsed.host.should.equal('example.org')
     })
 
-    it('parses zoe as https://zoe.mycozy.cloud', function () {
+    it('parses zoe as https://zoe.mycozy.cloud', function() {
       let parsed = App.prototype.parseCozyUrl('zoe')
       parsed.protocol.should.equal('https:')
       parsed.host.should.equal('zoe.mycozy.cloud')
     })
 
-    it('parses http://localhost:9104', function () {
+    it('parses http://localhost:9104', function() {
       let parsed = App.prototype.parseCozyUrl('http://localhost:9104')
       parsed.protocol.should.equal('http:')
       parsed.hostname.should.equal('localhost')
       parsed.port.should.equal('9104')
     })
 
-    it('parses https://toto.cozy.claude.fr:8084', function () {
+    it('parses https://toto.cozy.claude.fr:8084', function() {
       let parsed = App.prototype.parseCozyUrl(
         'https://toto.cozy.claude.fr:8084'
       )
@@ -54,7 +54,7 @@ describe('App', function () {
   describe('removeRemote', () => {
     beforeEach(configHelpers.createConfig)
 
-    it('removes the config even if the Cozy is unreachable', async function () {
+    it('removes the config even if the Cozy is unreachable', async function() {
       // We have to call this helper here and not in a beforeEach otherwise the
       // next test will actually delete the test OAuth client on the Cozy and
       // other tests will subsequently fail.
@@ -82,7 +82,7 @@ describe('App', function () {
       return
     }
 
-    it('unregisters the client', async function () {
+    it('unregisters the client', async function() {
       await configHelpers.registerOAuthClient.call(this)
       const configDir = path.dirname(this.config.configPath)
       const basePath = path.dirname(configDir)
@@ -105,7 +105,7 @@ describe('App', function () {
     beforeEach(configHelpers.createConfig)
     beforeEach(configHelpers.registerClient)
 
-    it('removes everything but the logs from the config dir', async function () {
+    it('removes everything but the logs from the config dir', async function() {
       const configDir = path.dirname(this.config.configPath)
       const basePath = path.dirname(configDir)
       const app = new App(basePath)
@@ -196,7 +196,7 @@ describe('App', function () {
 
   describe('stopSync', () => {
     let app
-    beforeEach('create app', function () {
+    beforeEach('create app', function() {
       configHelpers.createConfig.call(this)
       configHelpers.registerClient.call(this)
       this.config.persist() // the config helper does not persist it
@@ -204,7 +204,7 @@ describe('App', function () {
     })
 
     context('when we have an instanciated Sync', () => {
-      beforeEach('instanciate app', function () {
+      beforeEach('instanciate app', function() {
         app.instanciate()
       })
 
@@ -241,7 +241,7 @@ describe('App', function () {
       })
     })
 
-    it('works when app is configured', function () {
+    it('works when app is configured', function() {
       configHelpers.createConfig.call(this)
       configHelpers.registerClient.call(this)
       this.config.persist() // the config helper does not persist it
@@ -262,7 +262,7 @@ describe('App', function () {
   })
 
   describe('sendMailToSupport', () => {
-    it('sends email even without the local PouchDB tree', async function () {
+    it('sends email even without the local PouchDB tree', async function() {
       configHelpers.createConfig.call(this)
       configHelpers.registerClient.call(this)
       this.config.persist() // the config helper does not persist it

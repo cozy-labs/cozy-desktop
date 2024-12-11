@@ -1,28 +1,28 @@
 /* eslint-env mocha */
 /* @flow */
 
-const Promise = require('bluebird')
 const path = require('path')
-const should = require('should')
-const sinon = require('sinon')
+
+const Promise = require('bluebird')
 const _ = require('lodash')
 const { REV_CONFLICT } = require('pouchdb')
+const should = require('should')
+const sinon = require('sinon')
 
 const metadata = require('../../../core/metadata')
 const { sortByPath, createBatches } = require('../../../core/pouch')
-
 const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 
-describe('Pouch', function () {
+describe('Pouch', function() {
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
   let createdDocs
-  beforeEach('create folders and files', async function () {
+  beforeEach('create folders and files', async function() {
     createdDocs = [await pouchHelpers.createParentFolder(this.pouch)]
     for (let i of [1, 2, 3]) {
       createdDocs.push(
@@ -41,7 +41,7 @@ describe('Pouch', function () {
   })
 
   describe('lock', () => {
-    it('ensures nobody else accesses Pouch until released', async function () {
+    it('ensures nobody else accesses Pouch until released', async function() {
       const promiseLock1 = this.pouch.lock('lock1')
       await should(promiseLock1).be.fulfilled()
       const releaseLock1 = promiseLock1.value()
@@ -61,18 +61,22 @@ describe('Pouch', function () {
     })
   })
 
-  describe('ODM', function () {
+  describe('ODM', function() {
     describe('put', () => {
       let doc, old
 
-      beforeEach(async function () {
+      beforeEach(async function() {
         const builders = new Builders({ pouch: this.pouch })
 
-        old = await builders.metafile().path('doc').upToDate().create()
+        old = await builders
+          .metafile()
+          .path('doc')
+          .upToDate()
+          .create()
         doc = _.cloneDeep(old)
       })
 
-      it('does not update doc without sides', async function () {
+      it('does not update doc without sides', async function() {
         _.unset(doc, 'sides')
 
         await should(this.pouch.put(doc)).be.rejected()
@@ -80,11 +84,11 @@ describe('Pouch', function () {
       })
 
       context('when doc is not deleted', () => {
-        beforeEach(function () {
+        beforeEach(function() {
           doc._deleted = false
         })
 
-        it('does not update doc with a remote side and no remote', async function () {
+        it('does not update doc with a remote side and no remote', async function() {
           _.assign(doc, { remote: undefined, sides: { remote: 1 } })
 
           await should(this.pouch.put(doc)).be.rejected()
@@ -93,12 +97,12 @@ describe('Pouch', function () {
       })
 
       context('when doc is not up to date', () => {
-        beforeEach(function () {
+        beforeEach(function() {
           doc.sides.local = 1
           doc.sides.remote = 2
         })
 
-        it('does not update doc with a remote side and no remote', async function () {
+        it('does not update doc with a remote side and no remote', async function() {
           _.assign(doc, { remote: undefined })
 
           await should(this.pouch.put(doc)).be.rejected()
@@ -110,14 +114,18 @@ describe('Pouch', function () {
     describe('remove', () => {
       let doc, old
 
-      beforeEach(async function () {
+      beforeEach(async function() {
         const builders = new Builders({ pouch: this.pouch })
 
-        old = await builders.metafile().path('doc').upToDate().create()
+        old = await builders
+          .metafile()
+          .path('doc')
+          .upToDate()
+          .create()
         doc = _.clone(old)
       })
 
-      it('updates the _deleted attribute of the doc', async function () {
+      it('updates the _deleted attribute of the doc', async function() {
         await (() => {
           this.pouch.remove(doc)
         }).should.not.throw()
@@ -133,26 +141,40 @@ describe('Pouch', function () {
     describe('bulkDocs', () => {
       let builders, doc1, doc2, old1, old2
 
-      beforeEach(async function () {
+      beforeEach(async function() {
         builders = new Builders({ pouch: this.pouch })
 
-        old1 = await builders.metafile().path('doc1').upToDate().create()
-        old2 = await builders.metafile().path('doc2').upToDate().create()
+        old1 = await builders
+          .metafile()
+          .path('doc1')
+          .upToDate()
+          .create()
+        old2 = await builders
+          .metafile()
+          .path('doc2')
+          .upToDate()
+          .create()
 
         doc1 = _.clone(old1)
         doc2 = _.clone(old2)
       })
 
-      it('adds missing ids', async function () {
+      it('adds missing ids', async function() {
         await should(
           this.pouch.bulkDocs([
-            builders.metafile().upToDate().build(),
-            builders.metadir().upToDate().build()
+            builders
+              .metafile()
+              .upToDate()
+              .build(),
+            builders
+              .metadir()
+              .upToDate()
+              .build()
           ])
         ).be.fulfilled()
       })
 
-      it(`does not save two docs swallowing error on first one`, async function () {
+      it(`does not save two docs swallowing error on first one`, async function() {
         doc1._rev = '2-badbeef'
         await should(this.pouch.bulkDocs([doc1, doc2])).be.rejectedWith({
           status: 409
@@ -161,7 +183,7 @@ describe('Pouch', function () {
         should((await this.pouch.db.get(doc2._id))._rev).not.equal(old2._rev)
       })
 
-      it(`does not save two docs swallowing error on second one`, async function () {
+      it(`does not save two docs swallowing error on second one`, async function() {
         doc2._rev = '2-badbeef'
         await should(this.pouch.bulkDocs([doc1, doc2])).be.rejectedWith({
           status: 409
@@ -172,7 +194,7 @@ describe('Pouch', function () {
     })
 
     describe('getAll', () => {
-      it('returns all the documents matching the query', async function () {
+      it('returns all the documents matching the query', async function() {
         const params = {
           startkey: [metadata.id('my-folder') + path.sep, ''],
           endkey: [metadata.id('my-folder') + path.sep, '\ufff0'],
@@ -187,7 +209,7 @@ describe('Pouch', function () {
     })
 
     describe('byIdMaybe', () => {
-      it('resolves with a doc matching the given _id if any', async function () {
+      it('resolves with a doc matching the given _id if any', async function() {
         const existing = await this.pouch.db.post({
           docType: metadata.FOLDER,
           path: 'my-folder'
@@ -199,12 +221,12 @@ describe('Pouch', function () {
         })
       })
 
-      it('resolves with nothing otherwise', async function () {
+      it('resolves with nothing otherwise', async function() {
         const doc = await this.pouch.byIdMaybe('not-found')
         should(doc).be.undefined()
       })
 
-      it('does not swallow non-404 errors', async function () {
+      it('does not swallow non-404 errors', async function() {
         const get = sinon.stub(this.pouch.db, 'get').rejects(REV_CONFLICT)
         try {
           await should(
@@ -217,20 +239,20 @@ describe('Pouch', function () {
     })
 
     describe('bySyncedPath', () => {
-      it('resolves with the doc whose path attribute matches the given path', async function () {
+      it('resolves with the doc whose path attribute matches the given path', async function() {
         for (const doc of createdDocs) {
           await should(this.pouch.bySyncedPath(doc.path)).be.fulfilledWith(doc)
         }
       })
 
-      it('resolves with nothing otherwise', async function () {
+      it('resolves with nothing otherwise', async function() {
         const doc = await this.pouch.bySyncedPath('not-found')
         should(doc).be.undefined()
       })
     })
 
     describe('byChecksum', () => {
-      it('gets all the files with this checksum', async function () {
+      it('gets all the files with this checksum', async function() {
         const filePath = path.join('my-folder', 'file-1')
         const checksum = `111111111111111111111111111111111111111${filePath}`
         const docs = await this.pouch.byChecksum(checksum)
@@ -240,8 +262,8 @@ describe('Pouch', function () {
       })
     })
 
-    describe('byPath', function () {
-      it('gets all the files and folders in this path', async function () {
+    describe('byPath', function() {
+      it('gets all the files and folders in this path', async function() {
         const docs = await this.pouch.byPath(metadata.id('my-folder'))
         should(docs).have.length(6)
         should(docs).containDeep(
@@ -249,7 +271,7 @@ describe('Pouch', function () {
         )
       })
 
-      it('gets only files and folders in the first level', async function () {
+      it('gets only files and folders in the first level', async function() {
         createdDocs.push(
           await pouchHelpers.createFile(
             this.pouch,
@@ -265,14 +287,14 @@ describe('Pouch', function () {
         })
       })
 
-      it('ignores design documents', async function () {
+      it('ignores design documents', async function() {
         const docs = await this.pouch.byPath('_design')
         docs.length.should.be.equal(0)
       })
     })
 
-    describe('byRecurivePath', function () {
-      it('gets the files and folders in this path recursively', async function () {
+    describe('byRecurivePath', function() {
+      it('gets the files and folders in this path recursively', async function() {
         const docs = await this.pouch.byRecursivePath('my-folder')
         docs.length.should.be.equal(6)
         for (let i = 1; i <= 3; i++) {
@@ -289,7 +311,7 @@ describe('Pouch', function () {
         }
       })
 
-      it('gets the files and folders from root', async function () {
+      it('gets the files and folders from root', async function() {
         const docs = await this.pouch.byRecursivePath('')
         docs.length.should.be.equal(7)
         docs[0].should.have.properties({
@@ -312,7 +334,7 @@ describe('Pouch', function () {
       })
 
       context('in descending mode', () => {
-        it('sorts the results in descending path order', async function () {
+        it('sorts the results in descending path order', async function() {
           const docs = await this.pouch.byRecursivePath('', {
             descending: true
           })
@@ -327,7 +349,7 @@ describe('Pouch', function () {
         })
       })
 
-      it('does not return the content of other folders starting with the same path', async function () {
+      it('does not return the content of other folders starting with the same path', async function() {
         // create my-folder/folder-11
         const similarFolderPath = path.join('my-folder', 'folder-1 other')
         await pouchHelpers.createFolder(this.pouch, similarFolderPath)
@@ -346,8 +368,8 @@ describe('Pouch', function () {
       })
     })
 
-    describe('byRemoteId', function () {
-      it('gets all the file with this remote id', async function () {
+    describe('byRemoteId', function() {
+      it('gets all the file with this remote id', async function() {
         const filePath = path.join('my-folder', 'file-1')
         const id = `1234567890-${filePath}`
         const doc = await this.pouch.byRemoteId(id)
@@ -356,7 +378,7 @@ describe('Pouch', function () {
         should.exist(doc.docType)
       })
 
-      it('returns a 404 error if no file matches', async function () {
+      it('returns a 404 error if no file matches', async function() {
         let id = 'abcdef'
         await should(this.pouch.byRemoteId(id)).be.rejectedWith({
           status: 404
@@ -364,8 +386,8 @@ describe('Pouch', function () {
       })
     })
 
-    describe('byRemoteIdMaybe', function () {
-      it('does the same as byRemoteId() when document exists', async function () {
+    describe('byRemoteIdMaybe', function() {
+      it('does the same as byRemoteId() when document exists', async function() {
         const filePath = path.join('my-folder', 'file-1')
         const id = `1234567890-${filePath}`
         const doc = await this.pouch.byRemoteIdMaybe(id)
@@ -374,13 +396,13 @@ describe('Pouch', function () {
         should.exist(doc.docType)
       })
 
-      it('returns null when document does not exist', async function () {
+      it('returns null when document does not exist', async function() {
         let id = 'abcdef'
         const doc = await this.pouch.byRemoteIdMaybe(id)
         should.equal(null, doc)
       })
 
-      it('returns any non-404 error', async function () {
+      it('returns any non-404 error', async function() {
         const otherError = new Error('not a 404')
         sinon.stub(this.pouch, 'byRemoteId').throws(otherError)
 
@@ -393,7 +415,7 @@ describe('Pouch', function () {
     describe('#allByRemoteIds()', () => {
       let dir, file
 
-      beforeEach(async function () {
+      beforeEach(async function() {
         const builders = new Builders({ pouch: this.pouch })
         dir = await builders
           .metadir()
@@ -407,14 +429,14 @@ describe('Pouch', function () {
           .create()
       })
 
-      it('resolves with docs matching the given remoteIds, in the same order', async function () {
+      it('resolves with docs matching the given remoteIds, in the same order', async function() {
         const expectedDocs = [file, dir]
         const remoteIds = expectedDocs.map(doc => doc.remote._id)
         const docs = await this.pouch.allByRemoteIds(remoteIds)
         should(docs).deepEqual(expectedDocs)
       })
 
-      it('resolves with matching docs except missing ones', async function () {
+      it('resolves with matching docs except missing ones', async function() {
         const docs = await this.pouch.allByRemoteIds([
           dir.remote._id,
           'missing',
@@ -423,23 +445,23 @@ describe('Pouch', function () {
         should(docs).deepEqual([dir, file])
       })
 
-      it('resolves to an empty Array when given a single missing remote id', async function () {
+      it('resolves to an empty Array when given a single missing remote id', async function() {
         const docs = await this.pouch.allByRemoteIds(['missing'])
         should(docs).deepEqual([])
       })
 
-      it('resolves to an empty Array when given an empty Array', async function () {
+      it('resolves to an empty Array when given an empty Array', async function() {
         const docs = await this.pouch.allByRemoteIds([])
         should(docs).deepEqual([])
       })
 
-      it('does not care about duplicate ids & docs', async function () {
+      it('does not care about duplicate ids & docs', async function() {
         const id = dir.remote._id
         const docs = await this.pouch.allByRemoteIds([id, id])
         should(docs).deepEqual([dir, dir])
       })
 
-      it('can take a Set of remoteIds instead of an Array', async function () {
+      it('can take a Set of remoteIds instead of an Array', async function() {
         const expectedDocs = [dir, file]
         const remoteIds = new Set(expectedDocs.map(doc => doc.remote._id))
         const docs = await this.pouch.allByRemoteIds(remoteIds)
@@ -448,9 +470,13 @@ describe('Pouch', function () {
     })
 
     describe('initialScanDocs', () => {
-      it('returns only existing docs with local side and metadata', async function () {
+      it('returns only existing docs with local side and metadata', async function() {
         const builders = new Builders({ pouch: this.pouch })
-        const dir = await builders.metadir().path('dir').upToDate().create()
+        const dir = await builders
+          .metadir()
+          .path('dir')
+          .upToDate()
+          .create()
         const file = await builders
           .metafile()
           .path('file')
@@ -487,15 +513,15 @@ describe('Pouch', function () {
     })
   })
 
-  describe('Views', function () {
-    describe('createDesignDoc', function () {
+  describe('Views', function() {
+    describe('createDesignDoc', function() {
       const query = `function (doc) {
         if (doc.docType === 'file') {
           emit(doc._id)
         }
       }`
 
-      it('creates a new design doc', async function () {
+      it('creates a new design doc', async function() {
         await this.pouch.createDesignDoc('file', query)
         const docs = await this.pouch.getAll('file')
         should(docs).have.length(3)
@@ -504,7 +530,7 @@ describe('Pouch', function () {
         }
       })
 
-      it('does not update the same design doc', async function () {
+      it('does not update the same design doc', async function() {
         await this.pouch.createDesignDoc('file', query)
         const was = await this.pouch.db.get('_design/file')
         await this.pouch.createDesignDoc('file', query)
@@ -513,7 +539,7 @@ describe('Pouch', function () {
         designDoc._rev.should.equal(was._rev)
       })
 
-      it('updates the design doc if the query change', async function () {
+      it('updates the design doc if the query change', async function() {
         await this.pouch.createDesignDoc('file', query)
         const was = await this.pouch.db.get('_design/file')
         let newQuery = query.replace('file', 'File')
@@ -526,7 +552,7 @@ describe('Pouch', function () {
     })
 
     describe('addByPathView', () => {
-      it('creates the byPath view', async function () {
+      it('creates the byPath view', async function() {
         await this.pouch.addByPathView()
         const doc = await this.pouch.db.get('_design/byPath')
         should.exist(doc)
@@ -534,7 +560,7 @@ describe('Pouch', function () {
     })
 
     describe('addByChecksumView', () => {
-      it('creates the byChecksum view', async function () {
+      it('creates the byChecksum view', async function() {
         await this.pouch.addByChecksumView()
         const doc = await this.pouch.db.get('_design/byChecksum')
         should.exist(doc)
@@ -542,7 +568,7 @@ describe('Pouch', function () {
     })
 
     describe('addByRemoteIdView', () => {
-      it('creates the byRemoteId view', async function () {
+      it('creates the byRemoteId view', async function() {
         await this.pouch.addByRemoteIdView()
         const doc = await this.pouch.db.get('_design/byRemoteId')
         should.exist(doc)
@@ -550,7 +576,7 @@ describe('Pouch', function () {
     })
 
     describe('removeDesignDoc', () => {
-      it('removes given view', async function () {
+      it('removes given view', async function() {
         let query = `function (doc) {
           if (doc.docType === '${metadata.FOLDER}') {
             emit(doc._id);
@@ -566,9 +592,9 @@ describe('Pouch', function () {
     })
   })
 
-  describe('Helpers', function () {
+  describe('Helpers', function() {
     describe('getPreviousRev', () => {
-      it('retrieves previous document informations', async function () {
+      it('retrieves previous document informations', async function() {
         const dirPath = path.join('my-folder', 'folder-1')
         const doc = await this.pouch.bySyncedPath(dirPath)
 
@@ -602,17 +628,17 @@ describe('Pouch', function () {
 
     describe('localTree', () => {
       let builders
-      beforeEach(async function () {
+      beforeEach(async function() {
         builders = new Builders({ pouch: this.pouch })
       })
 
-      it('returns the local paths of all saved documents', async function () {
+      it('returns the local paths of all saved documents', async function() {
         await should(this.pouch.localTree()).be.fulfilledWith(
           createdDocs.map(d => d.local.path).sort()
         )
       })
 
-      it('does not return the paths of remote only documents', async function () {
+      it('does not return the paths of remote only documents', async function() {
         await builders
           .metafile()
           .path('my-folder/remote-file')
@@ -624,7 +650,7 @@ describe('Pouch', function () {
         )
       })
 
-      it('resturns the paths of local only documents', async function () {
+      it('resturns the paths of local only documents', async function() {
         const localFile = await builders
           .metafile()
           .path('my-folder/local-file')
@@ -641,15 +667,15 @@ describe('Pouch', function () {
     })
   })
 
-  describe('Sequence numbers', function () {
+  describe('Sequence numbers', function() {
     describe('getLocalSeq', () => {
-      it('gets 0 when the local seq number is not initialized', async function () {
+      it('gets 0 when the local seq number is not initialized', async function() {
         await should(this.pouch.getLocalSeq()).be.fulfilledWith(0)
       })
     })
 
     describe('setLocalSeq', () => {
-      it('saves the local sequence number', async function () {
+      it('saves the local sequence number', async function() {
         await this.pouch.setLocalSeq(21)
         await should(this.pouch.getLocalSeq()).be.fulfilledWith(21)
         await this.pouch.setLocalSeq(22)
@@ -658,20 +684,20 @@ describe('Pouch', function () {
     })
 
     describe('getRemoteSeq', () => {
-      it('gets 0 when the remote seq number is not initialized', async function () {
+      it('gets 0 when the remote seq number is not initialized', async function() {
         await should(this.pouch.getRemoteSeq()).be.fulfilledWith('0')
       })
     })
 
-    describe('setRemoteSeq', function () {
-      it('saves the remote sequence number', async function () {
+    describe('setRemoteSeq', function() {
+      it('saves the remote sequence number', async function() {
         await this.pouch.setRemoteSeq('31')
         await should(this.pouch.getRemoteSeq()).be.fulfilledWith('31')
         await this.pouch.setRemoteSeq('32')
         await should(this.pouch.getRemoteSeq()).be.fulfilledWith('32')
       })
 
-      it('can be called multiple times in parallel', async function () {
+      it('can be called multiple times in parallel', async function() {
         await Promise.map(
           _.range(1, 101),
           seq => this.pouch.setRemoteSeq(String(seq)),
@@ -681,32 +707,32 @@ describe('Pouch', function () {
     })
   })
 
-  describe('unsyncedDocIds', function () {
-    it('returns the list of changed docs since the current local sequence', async function () {
+  describe('unsyncedDocIds', function() {
+    it('returns the list of changed docs since the current local sequence', async function() {
       const changedDocIds = createdDocs.map(d => d._id)
 
       await should(this.pouch.unsyncedDocIds()).be.fulfilledWith(changedDocIds)
     })
 
-    it('can be called multiple times in a row', async function () {
+    it('can be called multiple times in a row', async function() {
       const unsyncedDocIds = await this.pouch.unsyncedDocIds()
 
       await should(this.pouch.unsyncedDocIds()).be.fulfilledWith(unsyncedDocIds)
     })
   })
 
-  describe('touchDocs', function () {
-    it('does nothing when no document ids are given', async function () {
+  describe('touchDocs', function() {
+    it('does nothing when no document ids are given', async function() {
       await should(this.pouch.touchDocs([])).be.fulfilledWith([])
     })
 
-    it('does nothing when no documents exist with the given ids', async function () {
+    it('does nothing when no documents exist with the given ids', async function() {
       await should(
         this.pouch.touchDocs(['inexistant-doc-id'])
       ).be.fulfilledWith([])
     })
 
-    it('updates the _rev value of all existing documents with the given ids', async function () {
+    it('updates the _rev value of all existing documents with the given ids', async function() {
       const touchResult = await this.pouch.touchDocs(
         createdDocs.map(d => d._id)
       )

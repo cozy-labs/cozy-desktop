@@ -4,9 +4,11 @@
  * @flow
  */
 
-const cheerio = require('cheerio')
 const crypto = require('crypto')
 const url = require('url')
+
+const cheerio = require('cheerio')
+
 const Registration = require('../../core/remote/registration')
 const { logger } = require('../../core/utils/logger')
 

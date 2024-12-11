@@ -1,17 +1,17 @@
 /* @flow */
 
 const path = require('path')
+
 const { enable: enableRemoteModule } = require('@electron/remote/main')
 
 const { buildTranslations } = require('./i18n')
 const WindowManager = require('./window_manager')
-
-const SCREEN_WIDTH = 750
-const SCREEN_HEIGHT = 800
-
 const log = require('../../core/app').logger({
   component: 'GUI'
 })
+
+const SCREEN_WIDTH = 750
+const SCREEN_HEIGHT = 800
 
 /*::
 import type { UserAlert } from '../../core/syncstate'

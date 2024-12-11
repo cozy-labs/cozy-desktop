@@ -4,8 +4,9 @@
  * @flow
  */
 
-const Promise = require('bluebird')
 const path = require('path')
+
+const Promise = require('bluebird')
 
 const { logger } = require('../../utils/logger')
 
@@ -29,33 +30,32 @@ const step = async (
 ) /*: Promise<LocalChange[]> */ => {
   const normalizedPaths = []
 
-  return new Promise.mapSeries(
-    changes,
-    async (c /*: LocalChange */) /*: Promise<LocalChange> */ => {
-      if (c.type !== 'Ignored') {
-        const parentPath = path.dirname(c.path)
-        const parent =
-          parentPath !== '.' ? await pouch.bySyncedPath(parentPath) : null
-        const normalized = normalizedPath(
-          c.path,
-          c.old ? c.old.path : undefined,
-          parent,
-          normalizedPaths
+  return new Promise.mapSeries(changes, async (
+    c /*: LocalChange */
+  ) /*: Promise<LocalChange> */ => {
+    if (c.type !== 'Ignored') {
+      const parentPath = path.dirname(c.path)
+      const parent =
+        parentPath !== '.' ? await pouch.bySyncedPath(parentPath) : null
+      const normalized = normalizedPath(
+        c.path,
+        c.old ? c.old.path : undefined,
+        parent,
+        normalizedPaths
+      )
+      normalizedPaths.push(normalized)
+
+      if (c.path !== normalized) {
+        log.debug(
+          'normalizing local path to match existing doc and parent norms',
+          { path: c.path, normalized }
         )
-        normalizedPaths.push(normalized)
-
-        if (c.path !== normalized) {
-          log.debug(
-            'normalizing local path to match existing doc and parent norms',
-            { path: c.path, normalized }
-          )
-          c.path = normalized
-        }
+        c.path = normalized
       }
-
-      return c
     }
-  )
+
+    return c
+  })
 }
 
 const previouslyNormalizedPath = (

@@ -6,9 +6,6 @@
 const PouchDB = require('pouchdb')
 const uuid = require('uuid').v4
 
-const { logger } = require('../utils/logger')
-const { PouchError } = require('../pouch/error')
-const migrations = require('./migrations')
 const {
   INITIAL_SCHEMA,
   MIGRATION_RESULT_COMPLETE,
@@ -17,6 +14,9 @@ const {
   SCHEMA_DOC_ID,
   SCHEMA_INITIAL_VERSION
 } = require('./constants')
+const migrations = require('./migrations')
+const { PouchError } = require('../pouch/error')
+const { logger } = require('../utils/logger')
 
 /*::
 import type { SavedMetadata } from '../metadata'
@@ -175,9 +175,8 @@ async function migrationDBPath(
   originalDBInfo /*: PouchDBInfo */
 ) /*: Promise<string> */ {
   const date = new Date()
-  const dateString = `${date.getFullYear()}-${
-    date.getMonth() + 1
-  }-${date.getDate()}`
+  const dateString = `${date.getFullYear()}-${date.getMonth() +
+    1}-${date.getDate()}`
   const safeUUID = uuid().replace(/-/g, '')
   return `${originalDBInfo.db_name}-migration-${dateString}-${safeUUID}`
 }

@@ -1,11 +1,12 @@
 require('../../core/globals')
-const cozy = require('cozy-client-js')
-const fse = require('fs-extra')
 const { app, session } = require('electron')
+const fse = require('fs-extra')
 
-const pkg = require('../../package.json')
+const cozy = require('cozy-client-js')
+
 const automatedRegistration = require('./automated_registration')
 const network = require('../../gui/js/network')
+const pkg = require('../../package.json')
 
 const cozyUrl =
   chooseCozyUrl(process.env.BUILD_JOB) ||

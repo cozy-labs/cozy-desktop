@@ -3,10 +3,11 @@
  * @flow
  */
 
-const autoBind = require('auto-bind')
 const path = require('path')
-const Promise = require('bluebird')
+
 const parcel = require('@parcel/watcher')
+const autoBind = require('auto-bind')
+const Promise = require('bluebird')
 
 const Channel = require('./channel')
 const { INITIAL_SCAN_DONE } = require('./event')

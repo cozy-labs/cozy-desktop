@@ -23,13 +23,13 @@ const init = appRef => {
 }
 
 const buildTranslations = keys =>
-  keys.reduce(
-    (translations /*: { [string]: string } */, string /*: string */) => {
-      translations[string] = translate(string)
-      return translations
-    },
-    {}
-  )
+  keys.reduce((
+    translations /*: { [string]: string } */,
+    string /*: string */
+  ) => {
+    translations[string] = translate(string)
+    return translations
+  }, {})
 
 const translate = key =>
   app.translations[key] || key.substr(key.indexOf(' ') + 1) // Key without prefix

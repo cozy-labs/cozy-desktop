@@ -4,23 +4,23 @@
  * @flow
  */
 
-const async = require('async')
-const autoBind = require('auto-bind')
 const fs = require('fs').promises
-const fse = require('fs-extra')
 const path = require('path')
 const stream = require('stream')
 
+const async = require('async')
+const autoBind = require('auto-bind')
 const bluebird = require('bluebird')
+const fse = require('fs-extra')
 
 const { TMP_DIR_NAME } = require('./constants')
-const { NOTE_MIME_TYPE } = require('../remote/constants')
-const { isRetryableNetworkError } = require('../remote/errors')
 const stater = require('./stater')
 const metadata = require('../metadata')
-const { hideOnWindows } = require('../utils/fs')
-const watcher = require('./watcher')
 const syncDir = require('./sync_dir')
+const watcher = require('./watcher')
+const { NOTE_MIME_TYPE } = require('../remote/constants')
+const { isRetryableNetworkError } = require('../remote/errors')
+const { hideOnWindows } = require('../utils/fs')
 const { logger } = require('../utils/logger')
 const { measureTime } = require('../utils/perfs')
 const sentry = require('../utils/sentry')
@@ -359,7 +359,7 @@ class Local /*:: implements Reader, Writer */ {
           metadata.updateLocal(doc)
         }
       ],
-      function (err) {
+      function(err) {
         stopMeasure()
         if (err) {
           log.warn('addFile failed', { path: doc.path, err, doc })

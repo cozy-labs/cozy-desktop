@@ -1,13 +1,14 @@
 /* @flow */
 /* eslint-env mocha */
 
-const fse = require('fs-extra')
 const path = require('path')
+
+const fse = require('fs-extra')
 const should = require('should')
 
 const MacOSRelease = require('../support/helpers/MacOSRelease')
 
-should.Assertion.add('hex', function (expectedPretty) {
+should.Assertion.add('hex', function(expectedPretty) {
   const expected = expectedPretty.trim().split(/\s+/)
   const actual = Buffer.from(this.obj)
     .toString('hex')

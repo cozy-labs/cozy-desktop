@@ -1,14 +1,14 @@
 /* @flow */
 /* eslint-env mocha */
 
-const Promise = require('bluebird')
 const childProcess = require('child_process')
-const fse = require('fs-extra')
 const path = require('path')
+
+const Promise = require('bluebird')
+const fse = require('fs-extra')
 const should = require('should')
 
 const { hideOnWindows, sendToTrash } = require('../../../core/utils/fs')
-
 const configHelpers = require('../../support/helpers/config')
 
 Promise.promisifyAll(childProcess)
@@ -22,7 +22,7 @@ describe('utils/fs', () => {
     const dirName = '.dir-to-hide'
     let parentPath, dirPath, missingPath
 
-    before(async function () {
+    before(async function() {
       parentPath = this.syncPath
       dirPath = path.join(parentPath, dirName)
       missingPath = path.join(parentPath, 'missing')
@@ -49,7 +49,7 @@ describe('utils/fs', () => {
   })
 
   describe('sendToTrash', () => {
-    it('removes the given file from the sync directory', async function () {
+    it('removes the given file from the sync directory', async function() {
       const fullpath = p => path.join(this.syncPath, p)
       await fse.ensureDir(fullpath('dir'))
       await fse.ensureFile(fullpath('dir/file'))
@@ -59,7 +59,7 @@ describe('utils/fs', () => {
       await should(fse.exists(fullpath('dir/file'))).be.fulfilledWith(false)
     })
 
-    it('removes the given directory and its content from the sync directory', async function () {
+    it('removes the given directory and its content from the sync directory', async function() {
       const fullpath = p => path.join(this.syncPath, p)
       await fse.ensureDir(fullpath('dir'))
       await fse.ensureFile(fullpath('dir/file'))
@@ -69,7 +69,7 @@ describe('utils/fs', () => {
       await should(fse.exists(fullpath('dir/file'))).be.fulfilledWith(false)
     })
 
-    it('throws an error with code ENOENT when the document is missing', async function () {
+    it('throws an error with code ENOENT when the document is missing', async function() {
       const fullpath = p => path.join(this.syncPath, p)
       try {
         await fse.remove(fullpath('doc'))

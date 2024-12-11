@@ -1,27 +1,26 @@
 /* @flow */
 
-const { addFileManagerShortcut } = require('./shortcut')
+const { enable: enableRemoteModule } = require('@electron/remote/main')
 const { dialog, session, BrowserView, shell } = require('electron')
+
 const autoLaunch = require('./autolaunch')
 const defaults = require('./defaults')
 const { translate } = require('./i18n')
 const { SESSION_PARTITION_NAME } = require('./network')
-const { enable: enableRemoteModule } = require('@electron/remote/main')
+const { addFileManagerShortcut } = require('./shortcut')
+const WindowManager = require('./window_manager')
+const log = require('../../core/app').logger({
+  component: 'GUI'
+})
 
 /*::
 import type { Event as ElectronEvent } from 'electron'
 */
 
-const log = require('../../core/app').logger({
-  component: 'GUI'
-})
-
 const ONBOARDING_SCREEN_WIDTH = 768
 const ONBOARDING_SCREEN_HEIGHT = 570
 const LOGIN_SCREEN_WIDTH = ONBOARDING_SCREEN_WIDTH
 const LOGIN_SCREEN_HEIGHT = 740
-
-const WindowManager = require('./window_manager')
 
 module.exports = class OnboardingWM extends WindowManager {
   windowOptions() {

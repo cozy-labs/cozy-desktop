@@ -1,7 +1,8 @@
 /* @flow */
 
-const fse = require('fs-extra')
 const path = require('path')
+
+const fse = require('fs-extra')
 
 const rootDir = path.resolve(__dirname, '../..')
 

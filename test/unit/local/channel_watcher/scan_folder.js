@@ -4,9 +4,8 @@
 const should = require('should')
 const sinon = require('sinon')
 
-const scanFolder = require('../../../../core/local/channel_watcher/scan_folder')
 const Channel = require('../../../../core/local/channel_watcher/channel')
-
+const scanFolder = require('../../../../core/local/channel_watcher/scan_folder')
 const { onPlatforms } = require('../../../support/helpers/platform')
 
 const setup = batch => {

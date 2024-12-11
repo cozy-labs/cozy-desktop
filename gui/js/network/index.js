@@ -7,12 +7,13 @@
 const dns = require('dns')
 const http = require('http')
 const https = require('https')
-const yargs = require('yargs')
-const electronFetch = require('electron-fetch').default
-const { app } = require('electron')
 
-const { logger } = require('../../../core/utils/logger')
+const { app } = require('electron')
+const electronFetch = require('electron-fetch').default
+const yargs = require('yargs')
+
 const { ProxyAgent, getProxyForUrl } = require('./agent')
+const { logger } = require('../../../core/utils/logger')
 
 /*::
 import { App, Session } from 'electron'

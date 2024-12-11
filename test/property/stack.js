@@ -1,9 +1,10 @@
 /* @flow */
 
-const fs = require('fs')
-const fse = require('fs-extra')
 const { spawn, spawnSync } = require('child_process')
+const fs = require('fs')
+
 const Promise = require('bluebird')
+const fse = require('fs-extra')
 
 /*::
 import type { ChildProcess } from 'child_process'

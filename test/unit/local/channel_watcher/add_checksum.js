@@ -1,22 +1,22 @@
 /* eslint-env mocha */
 /* @flow */
 
-const should = require('should')
-const sinon = require('sinon')
 const path = require('path')
 
-const configHelpers = require('../../../support/helpers/config')
-const { onPlatforms } = require('../../../support/helpers/platform')
+const should = require('should')
+const sinon = require('sinon')
 
-const checksumer = require('../../../../core/local/checksumer')
 const addChecksum = require('../../../../core/local/channel_watcher/add_checksum')
 const Channel = require('../../../../core/local/channel_watcher/channel')
+const checksumer = require('../../../../core/local/checksumer')
+const configHelpers = require('../../../support/helpers/config')
+const { onPlatforms } = require('../../../support/helpers/platform')
 
 onPlatforms(['linux', 'win32'], () => {
   describe('core/local/channel_watcher/add_checksum.loop()', () => {
     let dirpath, filepath, opts
     before(configHelpers.createConfig)
-    before(function () {
+    before(function() {
       dirpath = path.basename(__dirname)
       filepath = path.join(dirpath, path.basename(__filename))
 
@@ -37,7 +37,9 @@ onPlatforms(['linux', 'win32'], () => {
       channel.push(batch)
       const enhancedChannel = addChecksum.loop(channel, opts)
       const enhancedBatch = await enhancedChannel.pop()
-      should(enhancedBatch).be.an.Array().and.length(batch.length)
+      should(enhancedBatch)
+        .be.an.Array()
+        .and.length(batch.length)
       should.exist(enhancedBatch[0].md5sum)
     })
 
@@ -53,7 +55,9 @@ onPlatforms(['linux', 'win32'], () => {
       channel.push(batch)
       const enhancedChannel = addChecksum.loop(channel, opts)
       const enhancedBatch = await enhancedChannel.pop()
-      should(enhancedBatch).be.an.Array().and.length(batch.length)
+      should(enhancedBatch)
+        .be.an.Array()
+        .and.length(batch.length)
       should.not.exist(enhancedBatch[0].md5sum)
     })
 
@@ -70,7 +74,9 @@ onPlatforms(['linux', 'win32'], () => {
       channel.push(batch)
       const enhancedChannel = addChecksum.loop(channel, opts)
       const enhancedBatch = await enhancedChannel.pop()
-      should(enhancedBatch).be.an.Array().and.length(batch.length)
+      should(enhancedBatch)
+        .be.an.Array()
+        .and.length(batch.length)
       should(enhancedBatch[0]).have.property('md5sum', 'checksum')
     })
 

@@ -3,23 +3,23 @@
  * @flow
  */
 
+const { dirname, sep } = require('path')
+
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
-
-const { dirname, sep } = require('path')
 const _ = require('lodash')
 
 const { IncompatibleDocError } = require('../incompatibilities/platform')
 const metadata = require('../metadata')
+const { DependencyGraph } = require('./dependency_graph')
+const syncErrors = require('./errors')
+const remoteConstants = require('../remote/constants')
 const remoteDocument = require('../remote/document')
 const remoteErrors = require('../remote/errors')
-const remoteConstants = require('../remote/constants')
 const { otherSide } = require('../side')
+const { LifeCycle } = require('../utils/lifecycle')
 const { logger } = require('../utils/logger')
 const { measureTime } = require('../utils/perfs')
-const { LifeCycle } = require('../utils/lifecycle')
-const syncErrors = require('./errors')
-const { DependencyGraph } = require('./dependency_graph')
 
 /*::
 import type EventEmitter from 'events'
@@ -430,8 +430,9 @@ class Sync {
           }
         )
         if (reschedulingStart > 0) {
-          const changesToReschedule =
-            this.currentChangesToApply.splice(reschedulingStart)
+          const changesToReschedule = this.currentChangesToApply.splice(
+            reschedulingStart
+          )
           await rescheduleChanges(changesToReschedule, this)
         }
 

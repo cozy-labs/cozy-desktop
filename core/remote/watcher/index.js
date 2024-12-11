@@ -3,12 +3,13 @@
  * @flow
  */
 
+const async = require('async')
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const _ = require('lodash')
-const async = require('async')
 
 const metadata = require('../../metadata')
+const { logger } = require('../../utils/logger')
 const remoteChange = require('../change')
 const {
   FILE_TYPE,
@@ -17,12 +18,11 @@ const {
   REMOTE_WATCHER_ERROR_EVENT,
   REMOTE_WATCHER_FATAL_EVENT
 } = require('../constants')
-const remoteErrors = require('../errors')
 const { inRemoteTrash } = require('../document')
-const squashMoves = require('./squashMoves')
+const remoteErrors = require('../errors')
 const normalizePaths = require('./normalizePaths')
-const { logger } = require('../../utils/logger')
 const { RealtimeManager } = require('./realtime_manager')
+const squashMoves = require('./squashMoves')
 
 /*::
 import type { Config } from '../../config'

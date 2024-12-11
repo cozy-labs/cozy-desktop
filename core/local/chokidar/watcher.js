@@ -16,10 +16,11 @@
  * @flow
  */
 
+const path = require('path')
+
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
 const chokidar = require('chokidar')
-const path = require('path')
 
 const analysis = require('./analysis')
 const checksumer = require('../checksumer')
@@ -29,12 +30,11 @@ const initialScan = require('./initial_scan')
 const normalizePaths = require('./normalize_paths')
 const prepareEvents = require('./prepare_events')
 const sendToPrep = require('./send_to_prep')
-const stater = require('../stater')
-const syncDir = require('../sync_dir')
 const { logger } = require('../../utils/logger')
 const { measureTime } = require('../../utils/perfs')
-
 const { LOCAL_WATCHER_FATAL_EVENT } = require('../constants')
+const stater = require('../stater')
+const syncDir = require('../sync_dir')
 
 /*::
 import type { Pouch } from '../../pouch'
@@ -168,22 +168,22 @@ class LocalWatcher {
         'unlink',
         'unlinkDir'
       ]) {
-        this.watcher.on(
-          eventType,
-          (path /*: ?string */, stats /*: ?fs.Stats */) => {
-            const isInitialScan = !this.initialScanParams.flushed
-            log.chokidar.debug(eventType, { path, stats, isInitialScan })
-            const newEvent = chokidarEvent.build(eventType, path, stats)
-            if (newEvent.type !== eventType) {
-              log.debug('fixed wrong fsevents event type', {
-                eventType,
-                event: newEvent
-              })
-            }
-            this.buffer.push(newEvent)
-            this.events.emit('buffering-start')
+        this.watcher.on(eventType, (
+          path /*: ?string */,
+          stats /*: ?fs.Stats */
+        ) => {
+          const isInitialScan = !this.initialScanParams.flushed
+          log.chokidar.debug(eventType, { path, stats, isInitialScan })
+          const newEvent = chokidarEvent.build(eventType, path, stats)
+          if (newEvent.type !== eventType) {
+            log.debug('fixed wrong fsevents event type', {
+              eventType,
+              event: newEvent
+            })
           }
-        )
+          this.buffer.push(newEvent)
+          this.events.emit('buffering-start')
+        })
       }
 
       this.watcher

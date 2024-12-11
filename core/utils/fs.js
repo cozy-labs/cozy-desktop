@@ -2,8 +2,9 @@
  * @module core/utils/fs
  */
 
-const Promise = require('bluebird')
 const childProcess = require('child_process')
+
+const Promise = require('bluebird')
 const { shell } = require('electron')
 const fse = require('fs-extra')
 

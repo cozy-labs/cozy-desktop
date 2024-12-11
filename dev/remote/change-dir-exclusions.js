@@ -1,11 +1,13 @@
 require('../../core/globals')
-const { app } = require('electron')
-const yargs = require('yargs')
-const treeify = require('treeify')
 const path = require('path')
-const OldCozyClient = require('cozy-client-js').Client
-const { default: CozyClient, Q } = require('cozy-client')
+
+const { app } = require('electron')
 const _ = require('lodash')
+const treeify = require('treeify')
+const yargs = require('yargs')
+
+const { default: CozyClient, Q } = require('cozy-client')
+const OldCozyClient = require('cozy-client-js').Client
 
 const { Config } = require('../../core/config')
 const {
@@ -108,7 +110,11 @@ async function getDirectoryContent(context) {
       } = j
       if (_deleted) continue
 
-      const parentPath = path.dirname(dirPath).split('/').slice(1).join('.')
+      const parentPath = path
+        .dirname(dirPath)
+        .split('/')
+        .slice(1)
+        .join('.')
       const key = parentPath === '' ? dir.name : `${dir.name}.${parentPath}`
       const parent = _.get(dirContent, key)
       if (!parent) continue

@@ -9,20 +9,19 @@ type DispatchedCalls = {
 }
 */
 
+const { Promise } = require('bluebird')
+const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
-const _ = require('lodash')
-const { Promise } = require('bluebird')
 
-const Builders = require('../../../support/builders')
-const configHelpers = require('../../../support/helpers/config')
-const pouchHelpers = require('../../../support/helpers/pouch')
-const { onPlatforms } = require('../../../support/helpers/platform')
-
-const SyncState = require('../../../../core/syncstate')
-const Prep = require('../../../../core/prep')
 const Channel = require('../../../../core/local/channel_watcher/channel')
 const dispatch = require('../../../../core/local/channel_watcher/dispatch')
+const Prep = require('../../../../core/prep')
+const SyncState = require('../../../../core/syncstate')
+const Builders = require('../../../support/builders')
+const configHelpers = require('../../../support/helpers/config')
+const { onPlatforms } = require('../../../support/helpers/platform')
+const pouchHelpers = require('../../../support/helpers/pouch')
 
 function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
   const methods = Object.getOwnPropertyNames(obj).filter(
@@ -51,7 +50,7 @@ function dispatchedCalls(obj /*: Stub */) /*: DispatchedCalls */ {
 }
 
 onPlatforms(['linux', 'win32'], () => {
-  describe('core/local/channel_watcher/dispatch.loop()', function () {
+  describe('core/local/channel_watcher/dispatch.loop()', function() {
     let builders
     let channel
     let events
@@ -60,7 +59,7 @@ onPlatforms(['linux', 'win32'], () => {
 
     before('instanciate config', configHelpers.createConfig)
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-    beforeEach('populate pouch with documents', async function () {
+    beforeEach('populate pouch with documents', async function() {
       builders = new Builders({ pouch: this.pouch })
       channel = new Channel()
 
@@ -80,10 +79,15 @@ onPlatforms(['linux', 'win32'], () => {
 
     context('when channel contains an initial-scan-done event', () => {
       beforeEach(() => {
-        channel.push([builders.event().action('initial-scan-done').build()])
+        channel.push([
+          builders
+            .event()
+            .action('initial-scan-done')
+            .build()
+        ])
       })
 
-      it('emits an initial-scan-done event via the emitter', async function () {
+      it('emits an initial-scan-done event via the emitter', async function() {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(events)).containDeep({
@@ -91,7 +95,7 @@ onPlatforms(['linux', 'win32'], () => {
         })
       })
 
-      it('does not emit a sync-target event via the emitter', async function () {
+      it('does not emit a sync-target event via the emitter', async function() {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(events)).not.containDeep({
@@ -99,7 +103,7 @@ onPlatforms(['linux', 'win32'], () => {
         })
       })
 
-      it('does not call any Prep method', async function () {
+      it('does not call any Prep method', async function() {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})
@@ -108,16 +112,21 @@ onPlatforms(['linux', 'win32'], () => {
 
     context('when channel contains an ignored event', () => {
       beforeEach(() => {
-        channel.push([builders.event().action('ignored').build()])
+        channel.push([
+          builders
+            .event()
+            .action('ignored')
+            .build()
+        ])
       })
 
-      it('does not call any Prep method', async function () {
+      it('does not call any Prep method', async function() {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(prep)).deepEqual({})
       })
 
-      it('does not emit a sync-target event via the emitter', async function () {
+      it('does not emit a sync-target event via the emitter', async function() {
         await dispatch.loop(channel, stepOptions).pop()
 
         should(dispatchedCalls(events)).not.containDeep({
@@ -130,16 +139,36 @@ onPlatforms(['linux', 'win32'], () => {
       let changeEvents
       beforeEach(() => {
         changeEvents = [
-          builders.event().action('created').kind('file').build(),
-          builders.event().action('created').kind('file').build(),
-          builders.event().action('ignored').kind('file').build(), // No events for this one
-          builders.event().action('created').kind('file').build(),
-          builders.event().action('created').kind('file').build()
+          builders
+            .event()
+            .action('created')
+            .kind('file')
+            .build(),
+          builders
+            .event()
+            .action('created')
+            .kind('file')
+            .build(),
+          builders
+            .event()
+            .action('ignored')
+            .kind('file')
+            .build(), // No events for this one
+          builders
+            .event()
+            .action('created')
+            .kind('file')
+            .build(),
+          builders
+            .event()
+            .action('created')
+            .kind('file')
+            .build()
         ]
         channel.push(changeEvents)
       })
 
-      it('emits sync-target events via the emitter', async function () {
+      it('emits sync-target events via the emitter', async function() {
         await dispatch.loop(channel, stepOptions).pop()
 
         // Make sure we emit exactly 4 sync-target events, one for each
@@ -167,7 +196,7 @@ onPlatforms(['linux', 'win32'], () => {
 
     context('when channel contains multiple batches', () => {
       context('processed in less than a second', () => {
-        it('emits a local-start event for each batch via the emitter', async function () {
+        it('emits a local-start event for each batch via the emitter', async function() {
           const outChannel = dispatch.loop(channel, stepOptions)
 
           channel.push([builders.event().build()])
@@ -180,7 +209,7 @@ onPlatforms(['linux', 'win32'], () => {
           })
         })
 
-        it('emits only one local-end event via the emitter', async function () {
+        it('emits only one local-end event via the emitter', async function() {
           const outChannel = dispatch.loop(channel, stepOptions)
 
           channel.push([builders.event().build()])
@@ -202,7 +231,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       context('processed in more than a second', () => {
-        it('emits a local-start event for each batch via the emitter', async function () {
+        it('emits a local-start event for each batch via the emitter', async function() {
           const outChannel = dispatch.loop(channel, stepOptions)
 
           channel.push([builders.event().build()])
@@ -219,7 +248,7 @@ onPlatforms(['linux', 'win32'], () => {
           })
         })
 
-        it('emits one local-end event for each batch via the emitter', async function () {
+        it('emits one local-end event for each batch via the emitter', async function() {
           const outChannel = dispatch.loop(channel, stepOptions)
 
           channel.push([builders.event().build()])
@@ -259,7 +288,7 @@ onPlatforms(['linux', 'win32'], () => {
         ])
       })
 
-      it('triggers a call to addFileAsync with a file Metadata object', async function () {
+      it('triggers a call to addFileAsync with a file Metadata object', async function() {
         const doc = builders
           .metafile()
           .path(filePath)
@@ -305,7 +334,7 @@ onPlatforms(['linux', 'win32'], () => {
         ])
       })
 
-      it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
+      it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
         const doc = builders
           .metadir()
           .path(directoryPath)
@@ -342,7 +371,7 @@ onPlatforms(['linux', 'win32'], () => {
         ])
       })
 
-      it('triggers a call to addFileAsync with a file Metadata object', async function () {
+      it('triggers a call to addFileAsync with a file Metadata object', async function() {
         const doc = builders
           .metafile()
           .path(filePath)
@@ -388,7 +417,7 @@ onPlatforms(['linux', 'win32'], () => {
         ])
       })
 
-      it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
+      it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
         const doc = builders
           .metadir()
           .path(directoryPath)
@@ -425,7 +454,7 @@ onPlatforms(['linux', 'win32'], () => {
         ])
       })
 
-      it('triggers a call to updateFileAsync with a file Metadata object', async function () {
+      it('triggers a call to updateFileAsync with a file Metadata object', async function() {
         const doc = builders
           .metafile()
           .path(filePath)
@@ -471,7 +500,7 @@ onPlatforms(['linux', 'win32'], () => {
         ])
       })
 
-      it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
+      it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
         const doc = builders
           .metadir()
           .path(directoryPath)
@@ -524,7 +553,7 @@ onPlatforms(['linux', 'win32'], () => {
               .create()
           })
 
-          it('triggers a call to moveFileAsync with a file Metadata object', async function () {
+          it('triggers a call to moveFileAsync with a file Metadata object', async function() {
             const doc = builders
               .metafile()
               .path(newFilePath)
@@ -563,7 +592,7 @@ onPlatforms(['linux', 'win32'], () => {
               .create()
           })
 
-          it('does not call moveFileAsync', async function () {
+          it('does not call moveFileAsync', async function() {
             await dispatch.loop(channel, stepOptions).pop()
 
             should(dispatchedCalls(prep)).deepEqual({})
@@ -572,7 +601,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       context('for a propagated remote move', () => {
-        beforeEach('build records for moved doc', async function () {
+        beforeEach('build records for moved doc', async function() {
           const src = await builders
             .metafile()
             .path(filePath)
@@ -593,7 +622,7 @@ onPlatforms(['linux', 'win32'], () => {
           this.pouch.put(dst)
         })
 
-        it('does not trigger any call to prep', async function () {
+        it('does not trigger any call to prep', async function() {
           await dispatch.loop(channel, stepOptions).pop()
 
           should(dispatchedCalls(prep)).deepEqual({})
@@ -649,7 +678,7 @@ onPlatforms(['linux', 'win32'], () => {
                 .create()
             })
 
-            it('triggers a call to moveFileAsync with an overwriting file Metadata object', async function () {
+            it('triggers a call to moveFileAsync with an overwriting file Metadata object', async function() {
               const doc = builders
                 .metafile()
                 .path(newFilePath)
@@ -682,7 +711,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       context('without existing documents at the event oldPath', () => {
-        it('triggers a call to addFileAsync with a file Metadata object', async function () {
+        it('triggers a call to addFileAsync with a file Metadata object', async function() {
           const doc = builders
             .metafile()
             .path(newFilePath)
@@ -707,7 +736,7 @@ onPlatforms(['linux', 'win32'], () => {
           })
         })
 
-        it('removes the event oldPath', async function () {
+        it('removes the event oldPath', async function() {
           const batch = await dispatch.loop(channel, stepOptions).pop()
 
           should(batch).have.length(1)
@@ -750,7 +779,7 @@ onPlatforms(['linux', 'win32'], () => {
               .create()
           })
 
-          it('triggers a call to moveFolderAsync with a directory Metadata object', async function () {
+          it('triggers a call to moveFolderAsync with a directory Metadata object', async function() {
             const doc = builders
               .metadir()
               .path(newDirectoryPath)
@@ -778,7 +807,7 @@ onPlatforms(['linux', 'win32'], () => {
               .create()
           })
 
-          it('does not call moveFolderAsync', async function () {
+          it('does not call moveFolderAsync', async function() {
             await dispatch.loop(channel, stepOptions).pop()
 
             should(dispatchedCalls(prep)).deepEqual({})
@@ -787,7 +816,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       context('without existing documents at the event oldPath', () => {
-        it('triggers a call to putFolderAsync with a directory Metadata object', async function () {
+        it('triggers a call to putFolderAsync with a directory Metadata object', async function() {
           const doc = builders
             .metadir()
             .path(newDirectoryPath)
@@ -804,7 +833,7 @@ onPlatforms(['linux', 'win32'], () => {
           })
         })
 
-        it('removes the event oldPath', async function () {
+        it('removes the event oldPath', async function() {
           const batch = await dispatch.loop(channel, stepOptions).pop()
 
           should(batch).have.length(1)
@@ -813,7 +842,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       context('for a propagated remote move', () => {
-        beforeEach('build records for moved doc', async function () {
+        beforeEach('build records for moved doc', async function() {
           const src = await builders
             .metadir()
             .path(directoryPath)
@@ -834,7 +863,7 @@ onPlatforms(['linux', 'win32'], () => {
           this.pouch.put(dst)
         })
 
-        it('does not trigger any call to prep', async function () {
+        it('does not trigger any call to prep', async function() {
           await dispatch.loop(channel, stepOptions).pop()
 
           should(dispatchedCalls(prep)).deepEqual({})
@@ -869,7 +898,7 @@ onPlatforms(['linux', 'win32'], () => {
             .create()
         })
 
-        it('triggers a call to trashFileAsync with the existing document', async function () {
+        it('triggers a call to trashFileAsync with the existing document', async function() {
           await dispatch.loop(channel, stepOptions).pop()
 
           should(dispatchedCalls(prep)).deepEqual({
@@ -879,7 +908,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       context('without existing documents at the event path', () => {
-        it('ignores the event', async function () {
+        it('ignores the event', async function() {
           await dispatch.loop(channel, stepOptions).pop()
 
           should(dispatchedCalls(prep)).deepEqual({})
@@ -914,7 +943,7 @@ onPlatforms(['linux', 'win32'], () => {
             .create()
         })
 
-        it('triggers a call to trashFolderAsync with the existing document', async function () {
+        it('triggers a call to trashFolderAsync with the existing document', async function() {
           await dispatch.loop(channel, stepOptions).pop()
 
           should(dispatchedCalls(prep)).deepEqual({
@@ -924,7 +953,7 @@ onPlatforms(['linux', 'win32'], () => {
       })
 
       context('without existing documents at the event path', () => {
-        it('ignores the event', async function () {
+        it('ignores the event', async function() {
           await dispatch.loop(channel, stepOptions).pop()
 
           should(dispatchedCalls(prep)).deepEqual({})

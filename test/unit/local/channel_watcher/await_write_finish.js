@@ -4,11 +4,10 @@
 const _ = require('lodash')
 const should = require('should')
 
-const { onPlatforms } = require('../../../support/helpers/platform')
-
 const awaitWriteFinish = require('../../../../core/local/channel_watcher/await_write_finish')
 const Channel = require('../../../../core/local/channel_watcher/channel')
 const Builders = require('../../../support/builders')
+const { onPlatforms } = require('../../../support/helpers/platform')
 
 const lastEventToCheckEmptyness = {
   action: 'initial-scan-done',

@@ -6,11 +6,12 @@
  * @flow
  */
 
-const _ = require('lodash')
 const path = require('path')
 
-const metadata = require('../../metadata')
+const _ = require('lodash')
+
 const { getInode } = require('./local_event')
+const metadata = require('../../metadata')
 const { logger } = require('../../utils/logger')
 
 /*::
@@ -389,8 +390,9 @@ function fileMoveFromUnlinkAdd(
   sameInodeChange /*: ?LocalChange */,
   e /*: LocalFileAdded */
 ) /*: * */ {
-  const unlinkChange /*: ?LocalFileDeletion */ =
-    maybeDeleteFile(sameInodeChange)
+  const unlinkChange /*: ?LocalFileDeletion */ = maybeDeleteFile(
+    sameInodeChange
+  )
   if (!unlinkChange) return
   if (
     unlinkChange.old &&
@@ -424,8 +426,9 @@ function dirMoveFromUnlinkAdd(
   sameInodeChange /*: ?LocalChange */,
   e /*: LocalDirAdded */
 ) /*: * */ {
-  const unlinkChange /*: ?LocalDirDeletion */ =
-    maybeDeleteFolder(sameInodeChange)
+  const unlinkChange /*: ?LocalDirDeletion */ = maybeDeleteFolder(
+    sameInodeChange
+  )
   if (!unlinkChange) return
   if (
     unlinkChange.old &&
@@ -477,8 +480,9 @@ function fileMoveFromFileDeletionChange(
   sameInodeChange /*: ?LocalChange */,
   e /*: LocalFileUpdated */
 ) {
-  const fileDeletion /*: ?LocalFileDeletion */ =
-    maybeDeleteFile(sameInodeChange)
+  const fileDeletion /*: ?LocalFileDeletion */ = maybeDeleteFile(
+    sameInodeChange
+  )
   if (!fileDeletion) return
   // There was an unlink on the same file, this is most probably a move and replace
   const src = fileDeletion.old
@@ -864,8 +868,9 @@ function convertDirMoveToDeletion(samePathChange /*: ?LocalChange */) {
 }
 
 function ignoreDirAdditionThenDeletion(samePathChange /*: ?LocalChange */) {
-  const addChangeSamePath /*: ?LocalDirAddition */ =
-    maybePutFolder(samePathChange)
+  const addChangeSamePath /*: ?LocalDirAddition */ = maybePutFolder(
+    samePathChange
+  )
   if (addChangeSamePath && addChangeSamePath.wip) {
     // $FlowFixMe
     addChangeSamePath.type = 'Ignored'
@@ -880,8 +885,9 @@ function ignoreDirAdditionThenDeletion(samePathChange /*: ?LocalChange */) {
 }
 
 function ignoreFileAdditionThenDeletion(samePathChange /*: ?LocalChange */) {
-  const addChangeSamePath /*: ?LocalFileAddition */ =
-    maybeAddFile(samePathChange)
+  const addChangeSamePath /*: ?LocalFileAddition */ = maybeAddFile(
+    samePathChange
+  )
   if (addChangeSamePath && addChangeSamePath.wip) {
     // $FlowFixMe
     addChangeSamePath.type = 'Ignored'
@@ -898,8 +904,9 @@ function ignoreFileAdditionThenDeletion(samePathChange /*: ?LocalChange */) {
 }
 
 function ignoreUnmergedDirMoveThenDeletion(samePathChange /*: ?LocalChange */) {
-  const moveChangeSamePath /*: ?LocalDirMove */ =
-    maybeMoveFolder(samePathChange)
+  const moveChangeSamePath /*: ?LocalDirMove */ = maybeMoveFolder(
+    samePathChange
+  )
   if (moveChangeSamePath && !moveChangeSamePath.old) {
     // $FlowFixMe
     moveChangeSamePath.type = 'Ignored'

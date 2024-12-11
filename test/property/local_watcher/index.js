@@ -1,31 +1,29 @@
 /* @flow */
 /* eslint-env mocha */
 
-const should = require('should')
-
 const fs = require('fs')
+const path = require('path')
+
+const Promise = require('bluebird')
 const fse = require('fs-extra')
 const glob = require('glob')
-const path = require('path')
-const Promise = require('bluebird')
+const should = require('should')
 const winston = require('winston')
 
 const { id } = require('../../../core/metadata')
 const { baseLogger } = require('../../../core/utils/logger')
-
-const { ContextDir } = require('../../support/helpers/context_dir')
 const TmpDir = require('../../support/helpers/TmpDir')
-
+const { ContextDir } = require('../../support/helpers/context_dir')
 const { run } = require('../runner')
 
-describe('Local watcher', function () {
+describe('Local watcher', function() {
   this.timeout(240000)
   this.slow(30000)
 
   const scenarios = glob.sync(path.join(__dirname, '*.json'))
   scenarios.forEach(scenario => {
     scenario = path.normalize(scenario)
-    it(`works fine for ${path.basename(scenario)}`, async function () {
+    it(`works fine for ${path.basename(scenario)}`, async function() {
       const ops = await fse.readJson(scenario)
       if (ops.length > 0 && ops[0].op === 'pending') {
         return this.skip(ops[0].msg || 'pending')

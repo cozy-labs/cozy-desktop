@@ -1,10 +1,11 @@
 /* eslint-env mocha */
 
-const should = require('should')
 const fs = require('fs')
 
-const sentry = require('../../../core/utils/sentry')
 const { FetchError } = require('electron-fetch')
+const should = require('should')
+
+const sentry = require('../../../core/utils/sentry')
 
 // This class is a copy of the `cozy-client-js` package's `FetchError` as it is
 // not exported and could therefore not be imported.
@@ -28,9 +29,9 @@ class CozyClientFetchError extends Error {
   }
 }
 
-describe('Sentry', function () {
-  describe('toSentryContext', function () {
-    it('properly parse all urls', function () {
+describe('Sentry', function() {
+  describe('toSentryContext', function() {
+    it('properly parse all urls', function() {
       sentry
         .toSentryContext('https://somedevcozy.cozy.localhost:8080')
         .should.deepEqual({
@@ -53,7 +54,7 @@ describe('Sentry', function () {
     })
   })
 
-  describe('formatError', function () {
+  describe('formatError', function() {
     it('formats Node system errors', () => {
       try {
         fs.readFileSync(`${__filename}.missing-file`)

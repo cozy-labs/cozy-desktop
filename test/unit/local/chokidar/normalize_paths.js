@@ -1,14 +1,14 @@
 /* eslint-env mocha */
 
-const should = require('should')
 const path = require('path')
 
-const normalizePaths = require('../../../../core/local/chokidar/normalize_paths')
+const should = require('should')
 
+const normalizePaths = require('../../../../core/local/chokidar/normalize_paths')
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
-const pouchHelpers = require('../../../support/helpers/pouch')
 const { onPlatform } = require('../../../support/helpers/platform')
+const pouchHelpers = require('../../../support/helpers/pouch')
 
 const stepOptions = self => ({
   pouch: self.pouch
@@ -21,7 +21,7 @@ onPlatform('darwin', () => {
     before('instanciate config', configHelpers.createConfig)
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
 
-    beforeEach('set up builders', function () {
+    beforeEach('set up builders', function() {
       builders = new Builders({ pouch: this.pouch })
     })
 
@@ -34,7 +34,7 @@ onPlatform('darwin', () => {
 
       context('when parent is saved with NFC encoded path in Pouch', () => {
         let dir
-        beforeEach(async function () {
+        beforeEach(async function() {
           dir = await builders
             .metadir()
             .path(dirPath.normalize('NFC'))
@@ -42,7 +42,7 @@ onPlatform('darwin', () => {
             .create()
         })
 
-        it('reuses the existing parent path', async function () {
+        it('reuses the existing parent path', async function() {
           const changes = [
             {
               type: 'FileAddition',
@@ -58,7 +58,7 @@ onPlatform('darwin', () => {
       })
 
       context('when parent is saved with NFD encoded path in Pouch', () => {
-        beforeEach(async function () {
+        beforeEach(async function() {
           await builders
             .metadir()
             .path(dirPath.normalize('NFD'))
@@ -66,7 +66,7 @@ onPlatform('darwin', () => {
             .create()
         })
 
-        it('does not normalize the new path', async function () {
+        it('does not normalize the new path', async function() {
           const changes = [
             {
               type: 'FileAddition',
@@ -89,7 +89,7 @@ onPlatform('darwin', () => {
           const dirPath = (dirFirst + dirSecond).normalize('NFD')
 
           let dir
-          beforeEach(async function () {
+          beforeEach(async function() {
             dir = await builders
               .metadir()
               .path(dirFirst.normalize('NFD') + dirSecond.normalize('NFC'))
@@ -97,7 +97,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing parent path', async function () {
+          it('reuses the existing parent path', async function() {
             const changes = [
               {
                 type: 'FileAddition',
@@ -123,7 +123,7 @@ onPlatform('darwin', () => {
 
       context('when parent is saved with NFC encoded path in Pouch', () => {
         let dir
-        beforeEach(async function () {
+        beforeEach(async function() {
           dir = await builders
             .metadir()
             .path(dirPath.normalize('NFC'))
@@ -133,7 +133,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFC encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFC')))
@@ -142,7 +142,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file path', async function () {
+          it('reuses the existing file path', async function() {
             const changes = [
               {
                 type: 'FileUpdate',
@@ -177,7 +177,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFD encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFD')))
@@ -186,7 +186,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file path', async function () {
+          it('reuses the existing file path', async function() {
             const changes = [
               {
                 type: 'FileUpdate',
@@ -222,7 +222,7 @@ onPlatform('darwin', () => {
 
       context('when parent is saved with NFD encoded path in Pouch', () => {
         let dir
-        beforeEach(async function () {
+        beforeEach(async function() {
           dir = await builders
             .metadir()
             .path(dirPath.normalize('NFD'))
@@ -232,7 +232,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFC encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFC')))
@@ -241,7 +241,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file path', async function () {
+          it('reuses the existing file path', async function() {
             const changes = [
               {
                 type: 'FileUpdate',
@@ -276,7 +276,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFD encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFD')))
@@ -285,7 +285,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file path', async function () {
+          it('reuses the existing file path', async function() {
             const changes = [
               {
                 type: 'FileUpdate',
@@ -327,7 +327,7 @@ onPlatform('darwin', () => {
           const dirPath = (dirFirst + dirSecond).normalize('NFD')
 
           let dir
-          beforeEach(async function () {
+          beforeEach(async function() {
             dir = await builders
               .metadir()
               .path(dirFirst.normalize('NFD') + dirSecond.normalize('NFC'))
@@ -337,7 +337,7 @@ onPlatform('darwin', () => {
 
           context('when file is saved with NFC encoded name in Pouch', () => {
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(path.join(dir.path, filename.normalize('NFC')))
@@ -346,7 +346,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('reuses the existing file path', async function () {
+            it('reuses the existing file path', async function() {
               const changes = [
                 {
                   type: 'FileUpdate',
@@ -381,7 +381,7 @@ onPlatform('darwin', () => {
 
           context('when file is saved with NFD encoded name in Pouch', () => {
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(path.join(dir.path, filename.normalize('NFD')))
@@ -390,7 +390,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('reuses the existing file path', async function () {
+            it('reuses the existing file path', async function() {
               const changes = [
                 {
                   type: 'FileUpdate',
@@ -433,7 +433,7 @@ onPlatform('darwin', () => {
 
       context('when parent is saved with NFC encoded path in Pouch', () => {
         let dir
-        beforeEach(async function () {
+        beforeEach(async function() {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFC'))
@@ -443,7 +443,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFC encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFC')))
@@ -452,7 +452,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file name', async function () {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -486,7 +486,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFD encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFD')))
@@ -495,7 +495,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file name', async function () {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -530,7 +530,7 @@ onPlatform('darwin', () => {
 
       context('when parent is saved with NFD encoded path in Pouch', () => {
         let dir
-        beforeEach(async function () {
+        beforeEach(async function() {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFD'))
@@ -540,7 +540,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFC encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFC')))
@@ -549,7 +549,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file name', async function () {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -583,7 +583,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFD encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, filename.normalize('NFD')))
@@ -592,7 +592,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file name', async function () {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -633,13 +633,17 @@ onPlatform('darwin', () => {
           const dstDirPath = 'Énoncés / corrigés'.normalize('NFD')
 
           let dir
-          beforeEach(async function () {
-            dir = await builders.metadir().path(dirPath).upToDate().create()
+          beforeEach(async function() {
+            dir = await builders
+              .metadir()
+              .path(dirPath)
+              .upToDate()
+              .create()
           })
 
           context('when file is saved with NFC encoded name in Pouch', () => {
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(path.join(dir.path, filename.normalize('NFC')))
@@ -648,7 +652,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('reuses the existing file name', async function () {
+            it('reuses the existing file name', async function() {
               const changes = [
                 {
                   type: 'DirMove',
@@ -682,7 +686,7 @@ onPlatform('darwin', () => {
 
           context('when file is saved with NFD encoded name in Pouch', () => {
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(path.join(dir.path, filename.normalize('NFD')))
@@ -691,7 +695,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('reuses the existing file name', async function () {
+            it('reuses the existing file name', async function() {
               const changes = [
                 {
                   type: 'DirMove',
@@ -733,7 +737,7 @@ onPlatform('darwin', () => {
 
       context('when parent is saved with NFC encoded path in Pouch', () => {
         let dir
-        beforeEach(async function () {
+        beforeEach(async function() {
           dir = await builders
             .metadir()
             .path(dirPath.normalize('NFC'))
@@ -743,7 +747,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFC encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFC')))
@@ -752,7 +756,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing parent path', async function () {
+          it('reuses the existing parent path', async function() {
             const changes = [
               {
                 type: 'FileMove',
@@ -775,7 +779,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFD encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFD')))
@@ -784,7 +788,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing parent path', async function () {
+          it('reuses the existing parent path', async function() {
             const changes = [
               {
                 type: 'FileMove',
@@ -808,7 +812,7 @@ onPlatform('darwin', () => {
 
       context('when parent is saved with NFD encoded path in Pouch', () => {
         let dir
-        beforeEach(async function () {
+        beforeEach(async function() {
           dir = await builders
             .metadir()
             .path(dirPath.normalize('NFD'))
@@ -818,7 +822,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFC encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFC')))
@@ -827,7 +831,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing parent path', async function () {
+          it('reuses the existing parent path', async function() {
             const changes = [
               {
                 type: 'FileMove',
@@ -850,7 +854,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFD encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFD')))
@@ -859,7 +863,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('does not normalize the new paths', async function () {
+          it('does not normalize the new paths', async function() {
             const changes = [
               {
                 type: 'FileMove',
@@ -889,7 +893,7 @@ onPlatform('darwin', () => {
           const dirPath = (dirFirst + dirSecond).normalize('NFD')
 
           let dir
-          beforeEach(async function () {
+          beforeEach(async function() {
             dir = await builders
               .metadir()
               .path(dirFirst.normalize('NFD') + dirSecond.normalize('NFC'))
@@ -899,7 +903,7 @@ onPlatform('darwin', () => {
 
           context('when file is saved with NFC encoded name in Pouch', () => {
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(path.join(dir.path, srcFilename.normalize('NFC')))
@@ -908,7 +912,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('reuses the existing parent path', async function () {
+            it('reuses the existing parent path', async function() {
               const changes = [
                 {
                   type: 'FileMove',
@@ -931,7 +935,7 @@ onPlatform('darwin', () => {
 
           context('when file is saved with NFD encoded name in Pouch', () => {
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(path.join(dir.path, srcFilename.normalize('NFD')))
@@ -940,7 +944,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('reuses the existing parent path', async function () {
+            it('reuses the existing parent path', async function() {
               const changes = [
                 {
                   type: 'FileMove',
@@ -972,7 +976,7 @@ onPlatform('darwin', () => {
 
       context('when parent is saved with NFC encoded path in Pouch', () => {
         let dir
-        beforeEach(async function () {
+        beforeEach(async function() {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFC'))
@@ -982,7 +986,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFC encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFC')))
@@ -991,7 +995,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('does not normalize the new paths', async function () {
+          it('does not normalize the new paths', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -1025,7 +1029,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFD encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFD')))
@@ -1034,7 +1038,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('does not normalize the new paths', async function () {
+          it('does not normalize the new paths', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -1069,7 +1073,7 @@ onPlatform('darwin', () => {
 
       context('when parent is saved with NFD encoded path in Pouch', () => {
         let dir
-        beforeEach(async function () {
+        beforeEach(async function() {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFD'))
@@ -1079,7 +1083,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFC encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFC')))
@@ -1088,7 +1092,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('does not normalize the new paths', async function () {
+          it('does not normalize the new paths', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -1122,7 +1126,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFD encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(path.join(dir.path, srcFilename.normalize('NFD')))
@@ -1131,7 +1135,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('does not normalize the new paths', async function () {
+          it('does not normalize the new paths', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -1172,13 +1176,17 @@ onPlatform('darwin', () => {
           const dstDirPath = 'Énoncés / corrigés'.normalize('NFD')
 
           let dir
-          beforeEach(async function () {
-            dir = await builders.metadir().path(srcDirPath).upToDate().create()
+          beforeEach(async function() {
+            dir = await builders
+              .metadir()
+              .path(srcDirPath)
+              .upToDate()
+              .create()
           })
 
           context('when file is saved with NFC encoded name in Pouch', () => {
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(path.join(dir.path, srcFilename.normalize('NFC')))
@@ -1187,7 +1195,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('does not normalize the new paths', async function () {
+            it('does not normalize the new paths', async function() {
               const changes = [
                 {
                   type: 'DirMove',
@@ -1221,7 +1229,7 @@ onPlatform('darwin', () => {
 
           context('when file is saved with NFD encoded name in Pouch', () => {
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(path.join(dir.path, srcFilename.normalize('NFD')))
@@ -1230,7 +1238,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('does not normalize the new paths', async function () {
+            it('does not normalize the new paths', async function() {
               const changes = [
                 {
                   type: 'DirMove',
@@ -1270,7 +1278,7 @@ onPlatform('darwin', () => {
               const dstFilename = 'Échec inconséquent'.normalize('NFD')
 
               let file
-              beforeEach(async function () {
+              beforeEach(async function() {
                 file = await builders
                   .metafile()
                   .path(srcFilename)
@@ -1279,7 +1287,7 @@ onPlatform('darwin', () => {
                   .create()
               })
 
-              it('does not normalize the new paths', async function () {
+              it('does not normalize the new paths', async function() {
                 const changes = [
                   {
                     type: 'DirMove',
@@ -1322,7 +1330,7 @@ onPlatform('darwin', () => {
 
       context('when parent is saved with NFC encoded path in Pouch', () => {
         let dir
-        beforeEach(async function () {
+        beforeEach(async function() {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFC'))
@@ -1332,7 +1340,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFC encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(filename.normalize('NFC'))
@@ -1341,7 +1349,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file name', async function () {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -1375,7 +1383,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFD encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(filename.normalize('NFD'))
@@ -1384,7 +1392,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file name', async function () {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -1424,7 +1432,7 @@ onPlatform('darwin', () => {
             const filename = (filenameFirst + filenameSecond).normalize('NFD')
 
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(
@@ -1436,7 +1444,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('reuses the existing file name', async function () {
+            it('reuses the existing file name', async function() {
               const changes = [
                 {
                   type: 'DirMove',
@@ -1472,7 +1480,7 @@ onPlatform('darwin', () => {
 
       context('when parent is saved with NFD encoded path in Pouch', () => {
         let dir
-        beforeEach(async function () {
+        beforeEach(async function() {
           dir = await builders
             .metadir()
             .path(srcDirPath.normalize('NFD'))
@@ -1482,7 +1490,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFC encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(filename.normalize('NFC'))
@@ -1491,7 +1499,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file name', async function () {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -1525,7 +1533,7 @@ onPlatform('darwin', () => {
 
         context('when file is saved with NFD encoded name in Pouch', () => {
           let file
-          beforeEach(async function () {
+          beforeEach(async function() {
             file = await builders
               .metafile()
               .path(filename.normalize('NFD'))
@@ -1534,7 +1542,7 @@ onPlatform('darwin', () => {
               .create()
           })
 
-          it('reuses the existing file name', async function () {
+          it('reuses the existing file name', async function() {
             const changes = [
               {
                 type: 'DirMove',
@@ -1574,7 +1582,7 @@ onPlatform('darwin', () => {
             const filename = (filenameFirst + filenameSecond).normalize('NFD')
 
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(
@@ -1586,7 +1594,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('reuses the existing file name', async function () {
+            it('reuses the existing file name', async function() {
               const changes = [
                 {
                   type: 'DirMove',
@@ -1629,13 +1637,17 @@ onPlatform('darwin', () => {
             'Énoncés'.normalize('NFD') + '/ corrigés'.normalize('NFC')
 
           let dir
-          beforeEach(async function () {
-            dir = await builders.metadir().path(dirPath).upToDate().create()
+          beforeEach(async function() {
+            dir = await builders
+              .metadir()
+              .path(dirPath)
+              .upToDate()
+              .create()
           })
 
           context('when file is saved with NFC encoded name in Pouch', () => {
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(filename.normalize('NFC'))
@@ -1644,7 +1656,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('reuses the existing file name', async function () {
+            it('reuses the existing file name', async function() {
               const changes = [
                 {
                   type: 'DirMove',
@@ -1678,7 +1690,7 @@ onPlatform('darwin', () => {
 
           context('when file is saved with NFD encoded name in Pouch', () => {
             let file
-            beforeEach(async function () {
+            beforeEach(async function() {
               file = await builders
                 .metafile()
                 .path(filename.normalize('NFD'))
@@ -1687,7 +1699,7 @@ onPlatform('darwin', () => {
                 .create()
             })
 
-            it('reuses the existing file name', async function () {
+            it('reuses the existing file name', async function() {
               const changes = [
                 {
                   type: 'DirMove',
@@ -1728,7 +1740,7 @@ onPlatform('darwin', () => {
                 'Échec'.normalize('NFD') + ' inconséquent'.normalize('NFC')
 
               let file
-              beforeEach(async function () {
+              beforeEach(async function() {
                 file = await builders
                   .metafile()
                   .path(srcFilename)
@@ -1737,7 +1749,7 @@ onPlatform('darwin', () => {
                   .create()
               })
 
-              it('does not normalize the new paths', async function () {
+              it('does not normalize the new paths', async function() {
                 const changes = [
                   {
                     type: 'DirMove',

@@ -3,8 +3,9 @@
  * @flow
  */
 
-const _ = require('lodash')
 const path = require('path')
+
+const _ = require('lodash')
 
 const metadata = require('../../metadata')
 const remoteChange = require('../change')
@@ -41,8 +42,9 @@ const findParentMoves = (
   previousChanges /*: RemoteChange[] */,
   encounteredMoves /*: Array<RemoteDirMove|RemoteDescendantChange> */
 ) => {
-  const parentMove /*: ?RemoteDirMove|RemoteDescendantChange */ =
-    encounteredMoves.find(move => remoteChange.isChildMove(move, change))
+  const parentMove /*: ?RemoteDirMove|RemoteDescendantChange */ = encounteredMoves.find(
+    move => remoteChange.isChildMove(move, change)
+  )
   let squashedParentMove /*: ?RemoteDirMove|RemoteDescendantChange */
   if (parentMove) {
     for (const previousChange of previousChanges) {

@@ -4,9 +4,10 @@
  * @flow weak
  */
 
-const fse = require('fs-extra')
 const os = require('os')
 const path = require('path')
+
+const fse = require('fs-extra')
 const _ = require('lodash')
 const winston = require('winston')
 const DailyRotateFile = require('winston-daily-rotate-file')

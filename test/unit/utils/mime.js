@@ -4,9 +4,8 @@
 const sysMime = require('mime')
 const should = require('should')
 
-const mime = require('../../../core/utils/mime')
-
 const { NOTE_MIME_TYPE } = require('../../../core/remote/constants')
+const mime = require('../../../core/utils/mime')
 
 describe('utils/mime', () => {
   it('detects the Cozy Notes mime type', () => {

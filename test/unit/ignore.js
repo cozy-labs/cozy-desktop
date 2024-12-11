@@ -2,16 +2,16 @@
 
 const fs = require('fs')
 const path = require('path')
+
 const should = require('should')
 const sinon = require('sinon')
 
 const { Ignore, loadSync } = require('../../core/ignore')
 const metadata = require('../../core/metadata')
-
-const { onPlatform } = require('../support/helpers/platform')
 const TmpDir = require('../support/helpers/TmpDir')
+const { onPlatform } = require('../support/helpers/platform')
 
-describe('Ignore', function () {
+describe('Ignore', function() {
   describe('.loadSync()', () => {
     let tmpDir
 
@@ -34,7 +34,7 @@ describe('Ignore', function () {
   })
 
   describe('Removal of unnecessary lines', () => {
-    it('remove blank lines or comments', function () {
+    it('remove blank lines or comments', function() {
       const ignore = new Ignore([
         'foo',
         '', // removed
@@ -47,26 +47,26 @@ describe('Ignore', function () {
   })
 
   describe('Ignored patterns', () => {
-    it("don't ignore file name not matching to the pattern", function () {
+    it("don't ignore file name not matching to the pattern", function() {
       const ignore = new Ignore(['foo'])
       ignore
         .isIgnored({ relativePath: 'bar', isFolder: false })
         .should.be.false()
     })
 
-    it('ignore file name matching to the pattern', function () {
+    it('ignore file name matching to the pattern', function() {
       const ignore = new Ignore(['foo'])
       ignore
         .isIgnored({ relativePath: 'foo', isFolder: false })
         .should.be.true()
     })
 
-    it('ignore folder name matching to the pattern', function () {
+    it('ignore folder name matching to the pattern', function() {
       const ignore = new Ignore(['foo'])
       ignore.isIgnored({ relativePath: 'foo', isFolder: true }).should.be.true()
     })
 
-    it("don't ignore file name when the pattern match folders", function () {
+    it("don't ignore file name when the pattern match folders", function() {
       const ignore = new Ignore(['foo/'])
       ignore
         .isIgnored({ relativePath: 'foo', isFolder: false })
@@ -76,14 +76,14 @@ describe('Ignore', function () {
   })
 
   describe('Patterns operators', () => {
-    it('match to the glob with *', function () {
+    it('match to the glob with *', function() {
       const ignore = new Ignore(['*.txt'])
       ignore
         .isIgnored({ relativePath: 'foo.txt', isFolder: false })
         .should.be.true()
     })
 
-    it('match to the glob with ?', function () {
+    it('match to the glob with ?', function() {
       const ignore = new Ignore(['ba?'])
       ignore
         .isIgnored({ relativePath: 'bar', isFolder: false })
@@ -99,7 +99,7 @@ describe('Ignore', function () {
         .should.be.false()
     })
 
-    it('match braces {p1,p2}', function () {
+    it('match braces {p1,p2}', function() {
       const ignore = new Ignore(['{bar,baz}.txt'])
       ignore
         .isIgnored({ relativePath: 'bar.txt', isFolder: false })
@@ -112,7 +112,7 @@ describe('Ignore', function () {
         .should.be.false()
     })
 
-    it('match to the glob with range [a-c]', function () {
+    it('match to the glob with range [a-c]', function() {
       const ignore = new Ignore(['foo[a-c]'])
       ignore
         .isIgnored({ relativePath: 'fooa', isFolder: false })
@@ -130,7 +130,7 @@ describe('Ignore', function () {
   })
 
   describe('Path patterns', () => {
-    it('ignore files in subdirectory', function () {
+    it('ignore files in subdirectory', function() {
       new Ignore(['foo'])
         .isIgnored({ relativePath: 'bar/foo', isFolder: false })
         .should.be.true()
@@ -139,7 +139,7 @@ describe('Ignore', function () {
         .should.be.false()
     })
 
-    it('ignore files in a ignored directory', function () {
+    it('ignore files in a ignored directory', function() {
       new Ignore(['foo'])
         .isIgnored({ relativePath: 'foo/bar', isFolder: false })
         .should.be.true()
@@ -148,14 +148,14 @@ describe('Ignore', function () {
         .should.be.true()
     })
 
-    it('ignore folders in a ignored directory', function () {
+    it('ignore folders in a ignored directory', function() {
       const ignore = new Ignore(['foo'])
       ignore
         .isIgnored({ relativePath: 'foo/bar', isFolder: true })
         .should.be.true()
     })
 
-    it('match leading slash pattern', function () {
+    it('match leading slash pattern', function() {
       const ignore = new Ignore(['/foo'])
       ignore.isIgnored({ relativePath: 'foo', isFolder: true }).should.be.true()
       ignore
@@ -163,21 +163,21 @@ describe('Ignore', function () {
         .should.be.false()
     })
 
-    it('match nested file with leading **', function () {
+    it('match nested file with leading **', function() {
       const ignore = new Ignore(['**/baz'])
       ignore
         .isIgnored({ relativePath: 'foo/bar/baz', isFolder: false })
         .should.be.true()
     })
 
-    it('match nested files with trailing **', function () {
+    it('match nested files with trailing **', function() {
       const ignore = new Ignore(['foo/**'])
       ignore
         .isIgnored({ relativePath: 'foo/bar/baz', isFolder: false })
         .should.be.true()
     })
 
-    it('match nested files with middle **', function () {
+    it('match nested files with middle **', function() {
       const ignore = new Ignore(['a/**/b'])
       ignore
         .isIgnored({ relativePath: 'a/foo/bar/b', isFolder: false })
@@ -187,7 +187,7 @@ describe('Ignore', function () {
         .should.be.true()
     })
 
-    it("doen't match misnested file with middle **", function () {
+    it("doen't match misnested file with middle **", function() {
       const ignore = new Ignore(['a/**/b'])
       ignore
         .isIgnored({ relativePath: 'foo/a/b', isFolder: false })
@@ -196,14 +196,14 @@ describe('Ignore', function () {
   })
 
   describe('Escaping', () => {
-    it('escapes the comment character', function () {
+    it('escapes the comment character', function() {
       const ignore = new Ignore(['\\#foo'])
       ignore
         .isIgnored({ relativePath: '#foo', isFolder: false })
         .should.be.true()
     })
 
-    it('escapes the negation character', function () {
+    it('escapes the negation character', function() {
       const ignore = new Ignore(['\\!foo'])
       ignore
         .isIgnored({ relativePath: '!foo', isFolder: false })
@@ -219,7 +219,7 @@ describe('Ignore', function () {
         .should.be.false()
     })
 
-    it('can negate a previous rule', function () {
+    it('can negate a previous rule', function() {
       const ignore = new Ignore(['*.foo', '!bar.foo'])
       ignore
         .isIgnored({ relativePath: 'bar.foo', isFolder: false })
@@ -229,7 +229,7 @@ describe('Ignore', function () {
         .should.be.true()
     })
 
-    it('can negate a more complex previous rules organization', function () {
+    it('can negate a more complex previous rules organization', function() {
       const ignore = new Ignore(['/*', '!/foo', '/foo/*', '!/foo/bar'])
       ignore
         .isIgnored({ relativePath: 'foo/bar', isFolder: false })
@@ -244,7 +244,7 @@ describe('Ignore', function () {
   })
 
   describe('Default rules', () => {
-    it('has some defaults rules for dropbox', function () {
+    it('has some defaults rules for dropbox', function() {
       const ignore = new Ignore([])
       ignore.addDefaultRules()
       ignore
@@ -252,7 +252,7 @@ describe('Ignore', function () {
         .should.be.true()
     })
 
-    it('has some defaults rules for editors', function () {
+    it('has some defaults rules for editors', function() {
       const ignore = new Ignore([])
       ignore.addDefaultRules()
       ignore
@@ -260,7 +260,7 @@ describe('Ignore', function () {
         .should.be.true()
     })
 
-    it('has some defaults rules for OSes', function () {
+    it('has some defaults rules for OSes', function() {
       const ignore = new Ignore([])
       ignore.addDefaultRules()
       ignore
@@ -268,7 +268,7 @@ describe('Ignore', function () {
         .should.be.true()
     })
 
-    it('does ignore Icon', function () {
+    it('does ignore Icon', function() {
       const ignore = new Ignore([])
       ignore.addDefaultRules()
       ignore
@@ -276,7 +276,7 @@ describe('Ignore', function () {
         .should.be.true()
     })
 
-    it('does ignore any hidden file or directory', function () {
+    it('does ignore any hidden file or directory', function() {
       const ignore = new Ignore([])
       ignore.addDefaultRules()
       ignore
@@ -284,7 +284,7 @@ describe('Ignore', function () {
         .should.be.true()
     })
 
-    it('ignores Microsoft Office temporary files', function () {
+    it('ignores Microsoft Office temporary files', function() {
       const ignore = new Ignore([])
       ignore.addDefaultRules()
       ignore

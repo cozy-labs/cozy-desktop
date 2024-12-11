@@ -1,17 +1,16 @@
 /* @flow */
 /* eslint-env mocha */
 
-const sinon = require('sinon')
 const should = require('should')
-
-const configHelpers = require('../../support/helpers/config')
-const cozyHelpers = require('../../support/helpers/cozy')
-const pouchHelpers = require('../../support/helpers/pouch')
+const sinon = require('sinon')
 
 const { FILES_DOCTYPE } = require('../../../core/remote/constants')
 const {
   RealtimeManager
 } = require('../../../core/remote/watcher/realtime_manager')
+const configHelpers = require('../../support/helpers/config')
+const cozyHelpers = require('../../support/helpers/cozy')
+const pouchHelpers = require('../../support/helpers/pouch')
 
 const setup = async () => {
   const client = await cozyHelpers.newClient()
@@ -27,13 +26,13 @@ const setup = async () => {
   }
 }
 
-describe('RealtimeManager', function () {
+describe('RealtimeManager', function() {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
 
   describe('start', () => {
-    it('subscribes to all io.cozy.files realtime events', async function () {
+    it('subscribes to all io.cozy.files realtime events', async function() {
       const { teardown, realtime, realtimeManager } = await setup()
 
       const subscribeSpy = sinon.spy(realtime, 'subscribe')
@@ -64,7 +63,7 @@ describe('RealtimeManager', function () {
   })
 
   describe('stop', () => {
-    it('removes all subscriptions', async function () {
+    it('removes all subscriptions', async function() {
       const { teardown, realtime, realtimeManager } = await setup()
 
       const unsubscribeSpy = sinon.spy(realtime, 'unsubscribe')
@@ -95,7 +94,7 @@ describe('RealtimeManager', function () {
   })
 
   describe('onCreated', () => {
-    it('calls event handler for a created realtime event', async function () {
+    it('calls event handler for a created realtime event', async function() {
       const { teardown, eventHandler, realtimeManager } = await setup()
 
       try {
@@ -110,7 +109,7 @@ describe('RealtimeManager', function () {
   })
 
   describe('onUpdated', () => {
-    it('calls event handler for an updated realtime event', async function () {
+    it('calls event handler for an updated realtime event', async function() {
       const { teardown, eventHandler, realtimeManager } = await setup()
 
       try {
@@ -125,7 +124,7 @@ describe('RealtimeManager', function () {
   })
 
   describe('onDeleted', () => {
-    it('calls event handler for a deleted realtime event', async function () {
+    it('calls event handler for a deleted realtime event', async function() {
       const { teardown, eventHandler, realtimeManager } = await setup()
 
       try {

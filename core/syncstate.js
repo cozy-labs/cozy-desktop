@@ -3,8 +3,9 @@
  * @flow
  */
 
-const autoBind = require('auto-bind')
 const EventEmitter = require('events')
+
+const autoBind = require('auto-bind')
 const deepDiff = require('deep-diff').diff
 
 /*::
@@ -205,16 +206,16 @@ module.exports = class SyncState extends EventEmitter {
     const updatedUserAlerts = newState.userAlerts || state.userAlerts
     const userAlerts =
       newState.syncCurrentSeq != null
-        ? updatedUserAlerts.reduce(
-            (alerts /*: UserAlert[] */, alert /*: UserAlert */) => {
-              if (alert.seq && alert.seq <= newState.syncCurrentSeq) {
-                return alerts
-              } else {
-                return alerts.concat(alert)
-              }
-            },
-            []
-          )
+        ? updatedUserAlerts.reduce((
+            alerts /*: UserAlert[] */,
+            alert /*: UserAlert */
+          ) => {
+            if (alert.seq && alert.seq <= newState.syncCurrentSeq) {
+              return alerts
+            } else {
+              return alerts.concat(alert)
+            }
+          }, [])
         : updatedUserAlerts
 
     newState = {

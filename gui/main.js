@@ -4,6 +4,10 @@ require('../core/globals')
 
 // Initialize `remote` module so that renderer processes can use it.
 require('@electron/remote/main').initialize()
+const os = require('os')
+const path = require('path')
+
+const async = require('async')
 const {
   app,
   Menu,
@@ -19,40 +23,33 @@ if (process.env.INSECURE_SSL) {
 }
 
 const Desktop = require('../core/app.js')
-const sentry = require('../core/utils/sentry')
+const { exit, restart } = require('./js/actions')
+const { buildAppMenu } = require('./js/appmenu')
+const autoLaunch = require('./js/autolaunch')
+const { fileInfo } = require('./js/fileutils')
+const HelpWM = require('./js/help.window.js')
+const i18n = require('./js/i18n')
+const lastFiles = require('./js/lastfiles')
+const OnboardingWM = require('./js/onboarding.window.js')
+const tray = require('./js/tray')
+const TrayWM = require('./js/tray.window.js')
+const UpdaterWM = require('./js/updater.window.js')
 const { openNote } = require('./utils/notes')
-const pkg = require('../package.json')
-
-const path = require('path')
-const os = require('os')
-const async = require('async')
-
-const network = require('./js/network')
-const {
-  COZY_CLIENT_REVOKED_CODE,
-  COZY_CLIENT_REVOKED_MESSAGE
-} = require('../core/remote/errors')
+const config = require('../core/config')
 const {
   SYNC_DIR_EMPTY_MESSAGE,
   SYNC_DIR_UNLINKED_MESSAGE
 } = require('../core/local/errors')
+const sentry = require('../core/utils/sentry')
+const pkg = require('../package.json')
+const network = require('./js/network')
 const { MigrationFailedError } = require('../core/migrations')
-const config = require('../core/config')
+const {
+  COZY_CLIENT_REVOKED_CODE,
+  COZY_CLIENT_REVOKED_MESSAGE
+} = require('../core/remote/errors')
 const winRegistry = require('../core/utils/win_registry')
-
-const tray = require('./js/tray')
-const TrayWM = require('./js/tray.window.js')
-const UpdaterWM = require('./js/updater.window.js')
-const HelpWM = require('./js/help.window.js')
-const OnboardingWM = require('./js/onboarding.window.js')
-
-const autoLaunch = require('./js/autolaunch')
-const lastFiles = require('./js/lastfiles')
-const { fileInfo } = require('./js/fileutils')
-const { buildAppMenu } = require('./js/appmenu')
-const i18n = require('./js/i18n')
 const { translate } = i18n
-const { exit, restart } = require('./js/actions')
 
 const DAILY = 3600 * 24 * 1000
 

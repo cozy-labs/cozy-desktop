@@ -3,10 +3,11 @@
  * @module gui/js/shortcut
  */
 
-const lnk = require('lnk')
+const childProcess = require('child_process')
 const os = require('os')
 const path = require('path')
-const childProcess = require('child_process')
+
+const lnk = require('lnk')
 
 const log = require('../../core/app').logger({
   component: 'GUI'

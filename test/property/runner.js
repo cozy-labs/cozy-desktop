@@ -2,18 +2,19 @@
 /* eslint no-fallthrough: ["error", { "commentPattern": "break omitted" }] */
 
 const crypto = require('crypto')
-const fs = require('fs')
-const fse = require('fs-extra')
 const EventEmitter = require('events')
+const fs = require('fs')
+
 const Promise = require('bluebird')
+const fse = require('fs-extra')
+const PouchDB = require('pouchdb')
 
 const { Ignore } = require('../../core/ignore')
+const Watcher = require('../../core/local/watcher')
 const { Merge } = require('../../core/merge')
 const { Pouch } = require('../../core/pouch')
 const Prep = require('../../core/prep')
-const Watcher = require('../../core/local/watcher')
 
-const PouchDB = require('pouchdb')
 PouchDB.plugin(require('pouchdb-adapter-memory'))
 
 let winfs
@@ -87,7 +88,7 @@ async function step(state /*: Object */, op /*: Object */) {
           const block = size > 65536 ? 65536 : size
           const content = await crypto.randomBytes(block)
           size -= block
-          setTimeout(async function () {
+          setTimeout(async function() {
             await state.dir.outputFile(op.path, content).catch(() => {})
           }, (i + 1) * 10)
         }

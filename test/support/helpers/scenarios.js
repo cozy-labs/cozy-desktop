@@ -4,17 +4,17 @@
  * @flow
  */
 
+const fs = require('fs')
+const path = require('path')
+
 const Promise = require('bluebird')
 const fse = require('fs-extra')
 const glob = require('glob')
 const _ = require('lodash')
-const path = require('path')
-const fs = require('fs')
 const sinon = require('sinon')
 
-const stater = require('../../../core/local/stater')
-
 const { cozy } = require('./cozy')
+const stater = require('../../../core/local/stater')
 const Builders = require('../builders')
 
 /*::

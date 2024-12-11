@@ -6,12 +6,11 @@ const _ = require('lodash')
 const should = require('should')
 
 const metadata = require('../../core/metadata')
-
-const { runActions, init } = require('../support/helpers/scenarios')
+const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
-const TestHelpers = require('../support/helpers')
 const pouchHelpers = require('../support/helpers/pouch')
+const { runActions, init } = require('../support/helpers/scenarios')
 
 describe('TRELLO #646: Déplacement écrasé avant synchro (malgré la synchro par lot, https://trello.com/c/Co05qttn)', () => {
   let helpers
@@ -20,19 +19,19 @@ describe('TRELLO #646: Déplacement écrasé avant synchro (malgré la synchro p
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(cozyHelpers.deleteAll)
-  beforeEach('set up synced dir', async function () {
+  beforeEach('set up synced dir', async function() {
     await fse.emptyDir(this.syncPath)
   })
 
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
-  beforeEach(async function () {
+  beforeEach(async function() {
     helpers = TestHelpers.init(this)
     await helpers.local.setupTrash()
   })
 
-  it('is broken', async function () {
+  it('is broken', async function() {
     this.timeout(30000)
     const pouchTree = async () =>
       _.chain(await this.pouch.byRecursivePath(''))

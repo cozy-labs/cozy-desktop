@@ -1,11 +1,12 @@
 /* @flow */
 
 const path = require('path')
+
 const { generateWebLink } = require('cozy-client')
 
-const { DIR_TYPE } = require('../remote/constants')
 const capabilities = require('./capabilities')
 const { logger } = require('./logger')
+const { DIR_TYPE } = require('../remote/constants')
 
 const log = new logger({
   component: 'Web'

@@ -3,19 +3,20 @@
  * @flow
  */
 
+const path = require('path')
+
+const async = require('async')
 const autoBind = require('auto-bind')
 const Promise = require('bluebird')
-const PouchDB = require('pouchdb')
-const async = require('async')
 const fse = require('fs-extra')
 const _ = require('lodash')
 const { isEqual } = _
-const path = require('path')
+const PouchDB = require('pouchdb')
 
 const metadata = require('../metadata')
-const { logger } = require('../utils/logger')
 const { PouchError } = require('./error')
 const remoteConstants = require('../remote/constants')
+const { logger } = require('../utils/logger')
 
 /*::
 import type { Config } from '../config'
@@ -511,7 +512,7 @@ class Pouch {
   async addByChecksumView() {
     /* !pragma no-coverage-next */
     /* istanbul ignore next */
-    const query = function (doc) {
+    const query = function(doc) {
       if ('md5sum' in doc) {
         // $FlowFixMe
         return emit(doc.md5sum) // eslint-disable-line no-undef
@@ -524,7 +525,7 @@ class Pouch {
   async addByRemoteIdView() {
     /* !pragma no-coverage-next */
     /* istanbul ignore next */
-    const query = function (doc) {
+    const query = function(doc) {
       if ('remote' in doc) {
         // $FlowFixMe
         return emit(doc.remote._id) // eslint-disable-line no-undef
@@ -534,7 +535,7 @@ class Pouch {
   }
 
   async addNeedsContentFetchingView() {
-    const query = function (doc) {
+    const query = function(doc) {
       if (doc.needsContentFetching && !doc.trashed) {
         // $FlowFixMe
         return emit(doc._id) // eslint-disable-line no-undef

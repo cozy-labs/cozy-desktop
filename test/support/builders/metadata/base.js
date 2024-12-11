@@ -1,15 +1,15 @@
 /* @flow */
 
-const _ = require('lodash')
 const path = require('path')
 
-const metadata = require('../../../../core/metadata')
-const timestamp = require('../../../../core/utils/timestamp')
-const pathUtils = require('../../../../core/utils/path')
+const _ = require('lodash')
 
-const RemoteFileBuilder = require('../remote/file')
-const RemoteDirBuilder = require('../remote/dir')
+const metadata = require('../../../../core/metadata')
+const pathUtils = require('../../../../core/utils/path')
+const timestamp = require('../../../../core/utils/timestamp')
 const dbBuilders = require('../db')
+const RemoteDirBuilder = require('../remote/dir')
+const RemoteFileBuilder = require('../remote/file')
 const statsBuilder = require('../stats')
 
 /*::
@@ -134,7 +134,11 @@ module.exports = class BaseMetadataBuilder {
     if (platform === 'win32') {
       return this.path('in:compatible')
     } else {
-      return this.path(Array(256).fill('a').join(''))
+      return this.path(
+        Array(256)
+          .fill('a')
+          .join('')
+      )
     }
   }
 

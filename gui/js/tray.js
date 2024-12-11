@@ -3,10 +3,12 @@
  * @module gui/js/tray
  */
 
-const { Tray, Menu, MenuItem, nativeImage } = require('electron')
-const { translate } = require('./i18n')
 const path = require('path')
+
+const { Tray, Menu, MenuItem, nativeImage } = require('electron')
 const _ = require('lodash')
+
+const { translate } = require('./i18n')
 
 let tray = null
 let lastStatus = ''

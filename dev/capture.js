@@ -4,8 +4,9 @@
  * @flow
  */
 
-const program = require('commander')
 const path = require('path')
+
+const program = require('commander')
 const { app } = require('electron')
 
 const local = require('./capture/local')

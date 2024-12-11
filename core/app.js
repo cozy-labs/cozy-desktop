@@ -3,35 +3,37 @@
  * @module core/app
  * @flow
  */
-const autoBind = require('auto-bind')
-const fse = require('fs-extra')
-const _ = require('lodash')
+const https = require('https')
 const os = require('os')
 const path = require('path')
 const url = require('url')
-const uuid = require('uuid').v4
-const https = require('https')
 const { createGzip } = require('zlib')
+
+const autoBind = require('auto-bind')
+const fse = require('fs-extra')
+const _ = require('lodash')
 const semver = require('semver')
+const uuid = require('uuid').v4
+
 const { rootCozyUrl } = require('cozy-client')
 
 const pkg = require('../package.json')
 const config = require('./config')
-const { Pouch } = require('./pouch')
-const { migrations, runMigrations } = require('./migrations')
 const Ignore = require('./ignore')
-const { Merge } = require('./merge')
-const Prep = require('./prep')
 const { Local } = require('./local')
+const { Merge } = require('./merge')
+const { migrations, runMigrations } = require('./migrations')
+const { Pouch } = require('./pouch')
+const Prep = require('./prep')
 const { Remote } = require('./remote')
+const Registration = require('./remote/registration')
 const { Sync } = require('./sync')
 const SyncState = require('./syncstate')
-const Registration = require('./remote/registration')
-const { baseLogger, logger, LOG_BASENAME } = require('./utils/logger')
+const flags = require('./utils/flags')
 const { sendToTrash } = require('./utils/fs')
+const { baseLogger, logger, LOG_BASENAME } = require('./utils/logger')
 const notes = require('./utils/notes')
 const web = require('./utils/web')
-const flags = require('./utils/flags')
 
 /*::
 import type EventEmitter from 'events'

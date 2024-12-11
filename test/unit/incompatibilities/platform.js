@@ -3,8 +3,10 @@
 const should = require('should')
 
 const platformIncompatibilities = require('../../../core/incompatibilities/platform')
-const { detectNameIncompatibilities, detectPathLengthIncompatibility } =
-  platformIncompatibilities
+const {
+  detectNameIncompatibilities,
+  detectPathLengthIncompatibility
+} = platformIncompatibilities
 
 describe('core/incompatibilities/platform', () => {
   describe('detectNameIncompatibilities', () => {
@@ -150,9 +152,11 @@ describe('core/incompatibilities/platform', () => {
       it('is incompatible when dir name is longer than win.dirNameMaxBytes', () => {
         const name = 'x'.repeat(dirNameMaxBytes + 1)
 
-        should(detectNameIncompatibilities(name, 'folder', platform)).deepEqual(
-          [{ type: 'dirNameMaxBytes', name, dirNameMaxBytes, platform }]
-        )
+        should(
+          detectNameIncompatibilities(name, 'folder', platform)
+        ).deepEqual([
+          { type: 'dirNameMaxBytes', name, dirNameMaxBytes, platform }
+        ])
       })
 
       it('is incompatible when name contains any of win.reservedChars', () => {
