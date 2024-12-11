@@ -135,6 +135,7 @@
   },
   "devDependencies": {
     "@babel/core": "7.16.7",
+    "@babel/eslint-parser": "^7.25.9",
     "@electron/notarize": "^2.1.0",
     "@sentry/cli": "^2.3.0",
     "babel-preset-cozy-app": "^2.0.1",
