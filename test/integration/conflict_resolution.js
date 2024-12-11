@@ -37,6 +37,9 @@ describe('Conflict resolution', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   describe('local', () => {
     beforeEach('create and merge conflicting remote file', async () => {

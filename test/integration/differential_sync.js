@@ -45,6 +45,9 @@ describe('Differential synchronization', () => {
 
     builders = new Builders({ cozy })
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   let remoteDir, remoteFile
   beforeEach(async function () {

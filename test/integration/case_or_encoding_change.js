@@ -27,6 +27,9 @@ describe('Case or encoding change', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   describe('directory', () => {
     let dir, dir2

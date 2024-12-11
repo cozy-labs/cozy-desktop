@@ -117,7 +117,17 @@ async function dispatchEvent(
     // Lock to prevent Merge/Sync conflicts
     const release = await opts.pouch.lock(component)
     try {
-      await actions[event.action + event.kind](event, opts)
+      switch (event.action) {
+        case 'scan':
+        case 'created':
+        case 'modified':
+        case 'renamed':
+        case 'deleted':
+          await actions[event.action + event.kind](event, opts)
+          break
+        default:
+          log.warn('could not dispatch event with invalid action', { event })
+      }
       try {
         const target = (
           await opts.pouch.db.changes({

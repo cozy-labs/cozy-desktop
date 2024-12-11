@@ -22,7 +22,8 @@ const setup = async () => {
   return {
     eventHandler,
     realtime: realtimeManager.realtime,
-    realtimeManager
+    realtimeManager,
+    teardown: client.logout
   }
 }
 
@@ -33,7 +34,7 @@ describe('RealtimeManager', function () {
 
   describe('start', () => {
     it('subscribes to all io.cozy.files realtime events', async function () {
-      const { realtime, realtimeManager } = await setup()
+      const { teardown, realtime, realtimeManager } = await setup()
 
       const subscribeSpy = sinon.spy(realtime, 'subscribe')
 
@@ -57,13 +58,14 @@ describe('RealtimeManager', function () {
         )
       } finally {
         subscribeSpy.restore()
+        await teardown()
       }
     })
   })
 
   describe('stop', () => {
     it('removes all subscriptions', async function () {
-      const { realtime, realtimeManager } = await setup()
+      const { teardown, realtime, realtimeManager } = await setup()
 
       const unsubscribeSpy = sinon.spy(realtime, 'unsubscribe')
 
@@ -87,40 +89,53 @@ describe('RealtimeManager', function () {
         )
       } finally {
         unsubscribeSpy.restore()
+        await teardown()
       }
     })
   })
 
   describe('onCreated', () => {
     it('calls event handler for a created realtime event', async function () {
-      const { eventHandler, realtimeManager } = await setup()
+      const { teardown, eventHandler, realtimeManager } = await setup()
 
-      // $FlowFixMe we don't care about the type of doc passed here
-      realtimeManager.onCreated({})
+      try {
+        // $FlowFixMe we don't care about the type of doc passed here
+        realtimeManager.onCreated({})
 
-      should(eventHandler).have.been.calledOnce()
+        should(eventHandler).have.been.calledOnce()
+      } finally {
+        await teardown()
+      }
     })
   })
 
   describe('onUpdated', () => {
     it('calls event handler for an updated realtime event', async function () {
-      const { eventHandler, realtimeManager } = await setup()
+      const { teardown, eventHandler, realtimeManager } = await setup()
 
-      // $FlowFixMe we don't care about the type of doc passed here
-      realtimeManager.onUpdated({})
+      try {
+        // $FlowFixMe we don't care about the type of doc passed here
+        realtimeManager.onUpdated({})
 
-      should(eventHandler).have.been.calledOnce()
+        should(eventHandler).have.been.calledOnce()
+      } finally {
+        await teardown()
+      }
     })
   })
 
   describe('onDeleted', () => {
     it('calls event handler for a deleted realtime event', async function () {
-      const { eventHandler, realtimeManager } = await setup()
+      const { teardown, eventHandler, realtimeManager } = await setup()
 
-      // $FlowFixMe we don't care about the type of doc passed here
-      realtimeManager.onDeleted({})
+      try {
+        // $FlowFixMe we don't care about the type of doc passed here
+        realtimeManager.onDeleted({})
 
-      should(eventHandler).have.been.calledOnce()
+        should(eventHandler).have.been.calledOnce()
+      } finally {
+        await teardown()
+      }
     })
   })
 })

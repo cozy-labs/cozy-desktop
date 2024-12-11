@@ -33,6 +33,9 @@ describe('Executable handling', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+  afterEach(async function () {
+    await helpers.stop()
+  })
 
   const executableStatus = async relpath => {
     const mode = await syncDir.octalMode(relpath)
