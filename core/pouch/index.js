@@ -98,6 +98,16 @@ class Pouch {
     })
   }
 
+  async compact() {
+    log.info('compacting db...')
+
+    try {
+      await this.db.compact()
+    } catch (err) {
+      log.error('failed to compact db', { err, sentry: true })
+    }
+  }
+
   /* Mini ODM */
 
   /* Catch uncaught exceptions raised by PouchDB when calling `allDocs`.

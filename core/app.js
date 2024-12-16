@@ -416,6 +416,7 @@ class App {
 
     await this.pouch.addAllViews()
     await runMigrations(migrations, this)
+    await this.pouch.compact()
 
     if (wasUpdated && this.remote) {
       try {
