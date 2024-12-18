@@ -1,5 +1,20 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.42.0-beta.1 - 2024-12-18
+
+Improvements for all users:
+
+- Desktop won't run a full scan of the local synchronization directory when the
+  computer wakes from sleep anymore.
+  This will reduce pressure on your computer's resources and improve
+  synchronization resume speed.
+- We improved the way we save numerous changes in Desktop's local database to
+  avoid crashes when there are too many of them.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.41.0 - 2024-11-07
 
 Improvements for all users:
