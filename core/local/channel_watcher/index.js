@@ -165,6 +165,18 @@ class ChannelWatcher {
     await scanDone
   }
 
+  resume() {
+    log.info('Resuming watcher...')
+
+    return this.producer.resume()
+  }
+
+  suspend() {
+    log.info('Suspending watcher...')
+
+    return this.producer.suspend()
+  }
+
   async stop() /*: Promise<*> */ {
     log.info('Stopping watcher...')
 

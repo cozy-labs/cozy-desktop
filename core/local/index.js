@@ -115,6 +115,17 @@ class Local /*:: implements Reader, Writer */ {
     return this.watcher.start()
   }
 
+  resume() {
+    syncDir.ensureExistsSync(this)
+    this.syncDirCheckInterval = syncDir.startIntervalCheck(this)
+    return this.watcher.resume()
+  }
+
+  suspend() {
+    clearInterval(this.syncDirCheckInterval)
+    return this.watcher.suspend()
+  }
+
   /** Stop watching the file system */
   stop() {
     clearInterval(this.syncDirCheckInterval)

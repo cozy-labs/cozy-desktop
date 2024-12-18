@@ -83,7 +83,7 @@ onPlatform('darwin', () => {
 
       it('can be switched to timeout mode', () => {
         buffer.switchMode('timeout')
-        should(flushed).have.been.calledWith([event1, event2])
+        should(flushed).not.have.been.called()
       })
     })
 
@@ -96,7 +96,7 @@ onPlatform('darwin', () => {
         buffer.push(event1)
         buffer.switchMode('idle')
         clock.tick(TIMEOUT_IN_MS)
-        should(flushed).have.been.calledWith([event1])
+        should(flushed).not.have.been.called()
       })
 
       it('does not flush without events', () => {

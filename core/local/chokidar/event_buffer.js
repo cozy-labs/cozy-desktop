@@ -106,7 +106,7 @@ class EventBuffer /*:: <EventType> */ {
   }
 
   switchMode(mode /*: EventBufferMode */) /*: void */ {
-    this.flush()
+    this.clearTimeout()
     this.mode = mode
   }
 
