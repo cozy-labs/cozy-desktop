@@ -539,7 +539,7 @@ app.on('second-instance', async (event, argv) => {
  * has been fulfilled either by displaying it in the browser or displaying the
  * markdown viewer and closing the window.
  */
-const openedNotes = []
+let openedNotes = []
 
 /* macOS only.
  *
@@ -558,8 +558,10 @@ app.on('open-file', async (event, filePath) => {
   // `ready`. This means the app is not ready at this time.
   // Since we just want to open a note, not start the Sync, we'll want to quit
   // the app when all opened notes will be closed.
-  const noSync = openedNotes.length === 0 && !app.isReady()
-  if (noSync) preventSyncStart()
+  const noSync = !app.isReady()
+  if (noSync) {
+    preventSyncStart()
+  }
 
   log.info('open-file invoked', { filePath })
   event.preventDefault()
@@ -575,6 +577,8 @@ app.on('open-file', async (event, filePath) => {
     if (noSync) {
       log.info('all notes are closed. Quitting app')
       await exit(0)
+    } else {
+      openedNotes = []
     }
     return
   }
@@ -622,31 +626,6 @@ app.on('ready', async () => {
   log.info('Loading CLI...')
   i18n.init(app)
 
-  // We need a valid config to start the App and open the requested note.
-  // We assume users won't have notes they want to open without a connected
-  // client.
-  if (argv && argv.length > 2) {
-    if (!desktop.config.syncPath) {
-      await exit(0)
-      return
-    }
-
-    // TODO: don't run migrations here?
-    await setupDesktop()
-
-    const filePath = argv[argv.length - 1]
-    log.info('main instance invoked with arguments', { filePath, argv })
-
-    // If we found a note to open, stop here. Otherwise, start sync app.
-    if (
-      filePath.endsWith('.cozy-note') &&
-      (await openNote(filePath, { desktop }))
-    ) {
-      await exit(0)
-      return
-    }
-  }
-
   if (shouldStartSync) {
     tray.init(app, toggleWindow)
     lastFiles.init(desktop)
@@ -687,6 +666,31 @@ app.on('ready', async () => {
       }, DAILY)
     } else {
       startApp()
+    }
+  } else {
+    // We need a valid config to start the App and open the requested note.
+    // We assume users won't have notes they want to open without a connected
+    // client.
+    if (!desktop.config.syncPath) {
+      await exit(0)
+      return
+    }
+
+    // TODO: don't run migrations here?
+    await setupDesktop()
+
+    if (process.platform !== 'darwin' && argv && argv.length > 2) {
+      const filePath = argv[argv.length - 1]
+      log.info('main instance invoked with arguments', { filePath, argv })
+
+      // If we found a note to open, stop here. Otherwise, start sync app.
+      if (
+        filePath.endsWith('.cozy-note') &&
+        (await openNote(filePath, { desktop }))
+      ) {
+        await exit(0)
+        return
+      }
     }
   }
 })
