@@ -313,6 +313,15 @@ class Sync {
     this.local.resume()
     this.remote.resume()
     this.lifecycle.end('start')
+
+    try {
+      while (!this.lifecycle.willStop()) {
+        await this.lifecycle.ready()
+        await this.sync()
+      }
+    } catch (err) {
+      await this.fatal(err)
+    }
   }
 
   suspend() {
