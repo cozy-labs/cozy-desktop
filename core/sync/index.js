@@ -288,14 +288,7 @@ class Sync {
 
     this.lifecycle.end('start')
 
-    try {
-      while (!this.lifecycle.willStop()) {
-        await this.lifecycle.ready()
-        await this.sync()
-      }
-    } catch (err) {
-      await this.fatal(err)
-    }
+    await this.runSyncLoop()
   }
 
   async resume() {
@@ -314,14 +307,7 @@ class Sync {
     this.remote.resume()
     this.lifecycle.end('start')
 
-    try {
-      while (!this.lifecycle.willStop()) {
-        await this.lifecycle.ready()
-        await this.sync()
-      }
-    } catch (err) {
-      await this.fatal(err)
-    }
+    await this.runSyncLoop()
   }
 
   suspend() {
@@ -400,15 +386,23 @@ class Sync {
     return this.stop()
   }
 
-  async sync({
-    manualRun = false
-  } /*: { manualRun?: boolean } */ = {}) /*: Promise<*> */ {
-    let seq = await this.pouch.getLocalSeq()
+  async runSyncLoop() {
+    try {
+      while (!this.lifecycle.willStop()) {
+        await this.lifecycle.ready()
 
-    if (!manualRun) {
-      const change = await this.waitForNewChanges(seq)
-      if (change == null) return
+        const seq = await this.pouch.getLocalSeq()
+        const change = await this.waitForChangeAfter(seq)
+        if (change == null) continue
+
+        await this.sync()
+      }
+    } catch (err) {
+      await this.fatal(err)
     }
+  }
+
+  async sync() /*: Promise<*> */ {
     this.events.emit('sync-start')
     try {
       await this.syncBatch()
@@ -624,7 +618,7 @@ class Sync {
 
   // Wait until a change is emitted by PouchDB into its changesfeed (i.e. we've
   // merged some change on a document).
-  async waitForNewChanges(seq /*: number */) {
+  async waitForChangeAfter(seq /*: number */) {
     log.trace('Waiting for changes since seq', { seq })
     const opts = this.baseChangeOptions(seq)
     opts.live = true
