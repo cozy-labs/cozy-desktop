@@ -522,11 +522,12 @@ app.on('second-instance', async (event, argv) => {
     log.info('second instance invoked with arguments', { filePath })
 
     // If we found a note to open, stop here. Otherwise, show main window.
-    if (
-      filePath.endsWith('.cozy-note') &&
-      (await openNote(filePath, { desktop }))
-    )
+    if (filePath.endsWith('.cozy-note')) {
+      await openNote(filePath, { desktop })
       return
+    } else {
+      log.warn('file path argument does not have valid Cozy note extension')
+    }
   }
 
   // Make sure the main window exists before trying to show it
@@ -633,19 +634,18 @@ app.on('ready', async () => {
     // We need a valid config to start the App and open the requested note.
     // We assume users won't have notes they want to open without a connected
     // client.
-    if (!desktop.config.syncPath) {
-      await exit(0)
-      return
+    if (desktop.config.syncPath) {
+      if (filePath.endsWith('.cozy-note')) {
+        await openNote(filePath, { desktop })
+      } else {
+        log.warn('file path argument does not have valid Cozy note extension')
+      }
+    } else {
+      log.warn('no valid config')
     }
 
-    // If we found a note to open, stop here. Otherwise, start sync app.
-    if (
-      filePath.endsWith('.cozy-note') &&
-      (await openNote(filePath, { desktop }))
-    ) {
-      await exit(0)
-      return
-    }
+    await exit(0)
+    return
   }
 
   if (shouldStartSync) {
