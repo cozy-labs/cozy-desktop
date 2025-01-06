@@ -98,7 +98,7 @@ describe('Sync', function() {
         events.emit('remote:fatal', err)
       })
       this.remote.stop = sinon.stub().resolves()
-      this.sync.sync = sinon.stub().resolves()
+      this.sync.runSyncLoop = sinon.stub().resolves()
       sinon.spy(this.sync, 'stop')
       sinon.spy(this.sync.events, 'emit')
     })
@@ -108,7 +108,7 @@ describe('Sync', function() {
       await this.sync.started()
       should(this.local.start).have.been.calledOnce()
       should(this.remote.start).have.been.calledOnce()
-      should(this.sync.sync).have.been.called()
+      should(this.sync.runSyncLoop).have.been.called()
     })
 
     context('if local watcher fails to start', () => {
@@ -118,7 +118,7 @@ describe('Sync', function() {
 
       it('does not start replication', async function() {
         await this.sync.start()
-        should(this.sync.sync).not.have.been.called()
+        should(this.sync.runSyncLoop).not.have.been.called()
       })
 
       it('does not start remote watcher', async function() {

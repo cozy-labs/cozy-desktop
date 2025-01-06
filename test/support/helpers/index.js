@@ -85,7 +85,7 @@ class TestHelpers {
 
   async syncAll() {
     this._sync.lifecycle.transitionTo('done-start')
-    await this._sync.sync({ manualRun: true })
+    await this._sync.sync()
     // Wait until all potentially blocking changes have been handled
     await this._sync.lifecycle.ready()
     this._sync.lifecycle.transitionTo('done-stop')
