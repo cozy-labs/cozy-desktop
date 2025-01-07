@@ -1,5 +1,25 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.42.0-beta.2 - 2025-01-07
+
+Improvements for all users:
+
+- We fixed a regression introduced in the previous beta that broke the
+  synchronization after the computer would wake from sleep.
+  The process is now properly restarted once the watchers have resumed.
+
+Improvements for macOS users:
+
+- Opening a Cozy Note from its local file while Cozy Desktop was not running
+  would not work anymore and event prevent it from starting until its process
+  was killed in a system monitor.
+  Notes can now be opened again and Cozy Desktop will properly exit after that
+  if it was not running when the file was opened.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.42.0-beta.1 - 2024-12-18
 
 Improvements for all users:
