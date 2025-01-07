@@ -47,7 +47,7 @@ const openMarkdownViewer = async (
   }
 }
 
-const showGenericError = (filePath, err) => {
+const showGenericError = async (filePath, err) => {
   log.error('Could not display markdown content of note', {
     err,
     path: filePath,
@@ -55,10 +55,10 @@ const showGenericError = (filePath, err) => {
     sentry: true
   })
 
-  dialog.showMessageBoxSync(null, {
+  await dialog.showMessageBox(null, {
     type: 'error',
     message: translate('Error Unexpected error'),
-    details: `${err.name}: ${err.message}`,
+    detail: `${err.name}: ${err.message}`,
     buttons: [translate('AppMenu Close')]
   })
 }
@@ -119,11 +119,11 @@ const openNote = async (
         )
         return true
       } catch (err) {
-        showGenericError(filePath, err)
+        await showGenericError(filePath, err)
         return false
       }
     } else {
-      showGenericError(filePath, err)
+      await showGenericError(filePath, err)
       return false
     }
   }
