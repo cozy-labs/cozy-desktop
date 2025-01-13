@@ -517,13 +517,15 @@ function dissociateLocal(doc /*: Metadata */) {
 
 function markAsTrashed(doc /*: Metadata */, sideName /*: SideName */) {
   if (sideName === 'remote') {
-    if (doc.remote && doc.remote.type === REMOTE_DIR_TYPE) {
-      // FIXME: Remote directories have no `trashed` attribute so we know
-      // they're trashed when their path is within the remote trashbin. We
-      // should find a way to reconstruct that path or stop relying on this
-      // function altogether.
-    } else {
-      doc.remote.trashed = true
+    if (doc.remote) {
+      if (doc.remote.type === REMOTE_DIR_TYPE) {
+        // FIXME: Remote directories have no `trashed` attribute so we know
+        // they're trashed when their path is within the remote trashbin. We
+        // should find a way to reconstruct that path or stop relying on this
+        // function altogether.
+      } else {
+        doc.remote.trashed = true
+      }
     }
   } else if (doc.local) {
     doc.local.trashed = true
