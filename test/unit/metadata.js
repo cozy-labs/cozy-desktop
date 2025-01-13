@@ -17,6 +17,7 @@ const {
   invalidChecksum,
   invalidPath,
   markSide,
+  markAsTrashed,
   markAsUpToDate,
   assignPlatformIncompatibilities,
   detectIncompatibilities,
@@ -31,6 +32,7 @@ const {
   createConflictingDoc
 } = metadata
 const { DIR_TYPE, NOTE_MIME_TYPE } = require('../../core/remote/constants')
+const { otherSide } = require('../../core/side')
 const pathUtils = require('../../core/utils/path')
 const timestamp = require('../../core/utils/timestamp')
 const Builders = require('../support/builders')
@@ -39,7 +41,7 @@ const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
 
 /*::
-import type { Metadata, MetadataRemoteFile, MetadataRemoteDir, MetadataLocalInfo } from '../../core/metadata'
+import type { Metadata, MetadataRemoteFile, MetadataRemoteDir, MetadataLocalInfo, MetadataRemoteInfo } from '../../core/metadata'
 import type { RemoteBase } from '../../core/remote/document'
 */
 
@@ -1237,6 +1239,69 @@ describe('metadata', function() {
 
       should(doc.errors).be.undefined()
     })
+  })
+
+  describe('markAsTrashed', () => {
+    let doc
+
+    for (const sideName of ['local', 'remote']) {
+      context(`on the ${sideName} side`, () => {
+        context('with a synchronized file', () => {
+          beforeEach(() => {
+            doc = builders
+              .metafile()
+              .upToDate()
+              .build()
+
+            markAsTrashed(doc, sideName)
+          })
+
+          it('marks the document as trashed', () => {
+            should(doc.trashed).be.true()
+          })
+
+          it(`marks the ${sideName} side as trashed`, () => {
+            // $FlowFixMe we know both sides are present
+            should(doc[sideName].trashed).be.true()
+          })
+        })
+
+        context(`with a ${sideName}-only file`, () => {
+          beforeEach(() => {
+            doc = builders
+              .metafile()
+              .unmerged(sideName) // XXX: we use unmerged to have only one side but markAsTrashed will usually be called on merged documents
+              .build()
+
+            markAsTrashed(doc, sideName)
+          })
+
+          it('marks the document as trashed', () => {
+            should(doc.trashed).be.true()
+          })
+
+          it(`marks the ${sideName} side as trashed`, () => {
+            // $FlowFixMe we know both sides are present
+            should(doc[sideName].trashed).be.true()
+          })
+        })
+
+        context(`with a ${otherSide(sideName)}-only file`, () => {
+          beforeEach(() => {
+            doc = builders
+              .metafile()
+              .unmerged(otherSide(sideName)) // XXX: we use unmerged to have only one side but markAsTrashed will usually be called on merged documents
+              .build()
+
+            markAsTrashed(doc, sideName)
+          })
+
+          it('marks the document as trashed', () => {
+            should(doc.trashed).be.true()
+          })
+        })
+      })
+    }
   })
 
   describe('outOfDateSide', () => {

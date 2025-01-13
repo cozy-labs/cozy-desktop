@@ -5,6 +5,7 @@ const path = require('path')
 
 const should = require('should')
 
+const pathUtils = require('../../core/utils/path')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
@@ -380,6 +381,35 @@ describe('Trash', () => {
           '/Trash/dir/subdir/file',
           'parent/'
         ])
+      })
+
+      context('with unsynced local-only content', () => {
+        beforeEach(async () => {
+          await helpers.local.syncDir.outputFile(
+            `${pathUtils.remoteToLocal(dir.attributes.path)}/local-child-file`,
+            'content'
+          )
+          await helpers.local.scan()
+
+          helpers.resetPouchSpy()
+        })
+
+        it('trashes the directory and its content on the local filesystem', async () => {
+          await cozy.files.trashById(dir._id)
+
+          await helpers.remote.pullChanges()
+          should(helpers.putDocs('path', 'trashed')).deepEqual([
+            // Recursively trash parent/dir; children are trashed first
+            { path: path.normalize('parent/dir/subdir/file'), trashed: true },
+            { path: path.normalize('parent/dir/subdir'), trashed: true },
+            {
+              path: path.normalize('parent/dir/local-child-file'),
+              trashed: true
+            },
+            { path: path.normalize('parent/dir/empty-subdir'), trashed: true },
+            { path: path.normalize('parent/dir'), trashed: true }
+          ])
+        })
       })
     })
   })
