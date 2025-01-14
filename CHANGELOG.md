@@ -1,5 +1,30 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.42.0-beta.3 - 2025-01-14
+
+Improvements for all users:
+
+- The v3.41.0 release introduced a regression that prevents the synchronization
+  when a synchronized directory was deleted on the remote Cozy while some
+  documents were added locally to the directory and not synchronized yet.
+  We fixed the regression and the local directory will now be deleted as
+  expected, including its local-only content.
+
+Improvements for macOS users:
+
+- We added native builds for Apple silicon processors!
+  You'll find them in future Github releases by looking for `arm64` in the
+  binary name. We'll soon add the possibility to download them directly from
+  our website.
+- We fixed a regression introduced in the first beta that broke the
+  synchronization of local changes after the computer would wake from sleep.
+  Local changes are now properly observed and synchronized again once the local
+  watcher has resumed.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.42.0-beta.2 - 2025-01-07
 
 Improvements for all users:
