@@ -227,10 +227,6 @@ class LocalWatcher {
   async resume() {
     log.info('Resuming watcher...')
 
-    if (this.watcher && this.watcher.getWatched().length === 0) {
-      this.watcher.add('.')
-    }
-
     // Flush previously buffered events
     this.buffer.flush()
     // Restart flushes loop
@@ -242,11 +238,6 @@ class LocalWatcher {
 
     // Stop flushes loop but keep buffered events
     this.buffer.switchMode('idle')
-
-    // Stop underlying Chokidar watcher
-    if (this.watcher) {
-      this.watcher.unwatch('.')
-    }
   }
 
   async stop(force /*: ?bool */ = false) {
