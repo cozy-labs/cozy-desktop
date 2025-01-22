@@ -1,5 +1,37 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.42.0 - 2025-01-22
+
+Improvements for all users:
+
+- Desktop won't run a full scan of the local synchronization directory when the
+  computer wakes from sleep anymore.
+  This will reduce pressure on your computer's resources and improve
+  synchronization resume speed.
+- We improved the way we save numerous changes in Desktop's local database to
+  avoid crashes when there are too many of them.
+- The v3.41.0 release introduced a regression that prevents the synchronization
+  when a synchronized directory was deleted on the remote Cozy while some
+  documents were added locally to the directory and not synchronized yet.
+  We fixed the regression and the local directory will now be deleted as
+  expected, including its local-only content.
+
+Improvements for macOS users:
+
+- Opening a Cozy Note from its local file while Cozy Desktop was not running
+  would not work anymore and event prevent it from starting until its process
+  was killed in a system monitor.
+  Notes can now be opened again and Cozy Desktop will properly exit after that
+  if it was not running when the file was opened.
+- We added native builds for Apple silicon processors!
+  You'll find them in future Github releases by looking for `arm64` in the
+  binary name. We'll soon add the possibility to download them directly from
+  our website.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.42.0-beta.3 - 2025-01-14
 
 Improvements for all users:
