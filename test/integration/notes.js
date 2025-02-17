@@ -26,7 +26,10 @@ describe('Update', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
+    builders = new Builders({
+      client: await cozyHelpers.newClient(cozyHelpers.cozy),
+      pouch: this.pouch
+    })
     helpers = TestHelpers.init(this)
 
     await helpers.local.clean()

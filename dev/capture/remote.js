@@ -11,7 +11,7 @@ const fse = require('fs-extra')
 const _ = require('lodash')
 
 const { Pouch } = require('../../core/pouch')
-const { ROOT_DIR_ID } = require('../../core/remote/constants')
+const { FILES_DOCTYPE, ROOT_DIR_ID } = require('../../core/remote/constants')
 const { RemoteCozy } = require('../../core/remote/cozy')
 const timestamp = require('../../core/utils/timestamp')
 const Builders = require('../../test/support/builders')
@@ -19,6 +19,7 @@ const configHelpers = require('../../test/support/helpers/config')
 const cozyHelpers = require('../../test/support/helpers/cozy')
 
 /*::
+import type { CozyClient as OldCozyClient } from 'cozy-client-js'
 import type { MetadataRemoteInfo } from '../../core/metadata'
 import type { FullRemoteFile, RemoteDir } from '../../core/remote/document'
 import type { RemoteTree } from '../../test/support/helpers/remote'
@@ -34,12 +35,13 @@ const ROOT_DIR = {
 
 const createInitialTree = async function(
   scenario /*: * */,
-  cozy /*: * */,
+  cozy /*: OldCozyClient */,
   pouch /*: Pouch */
 ) {
   if (!scenario.init) return
 
-  const builders = new Builders({ cozy, pouch })
+  const client = await cozyHelpers.newClient(cozy)
+  const builders = new Builders({ client, pouch })
   const remoteDocs /*: RemoteTree */ = {}
   const remoteDocsToTrash /*: Array<FullRemoteFile|RemoteDir> */ = []
 
@@ -100,7 +102,7 @@ const createInitialTree = async function(
   for (const remoteDoc of remoteDocsToTrash) {
     debug(`- trashing remote ${remoteDoc.type}: ${remoteDoc.path}`)
     try {
-      await cozy.files.trashById(remoteDoc._id)
+      await client.collection(FILES_DOCTYPE).destroy(remoteDoc)
     } catch (err) {
       if (err.status === 400) continue
       throw err
@@ -108,7 +110,7 @@ const createInitialTree = async function(
   }
 }
 
-const runActions = (scenario /*: * */, cozy /*: * */) => {
+const runActions = (scenario /*: * */, cozy /*: OldCozyClient */) => {
   debug('[actions]')
   return Promise.each(scenario.actions, async action => {
     const now = new Date().toISOString()

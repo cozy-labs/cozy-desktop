@@ -15,7 +15,6 @@ const configHelpers = require('../../support/helpers/config')
 const cozyHelpers = require('../../support/helpers/cozy')
 const pouchHelpers = require('../../support/helpers/pouch')
 
-const builders = new Builders({ cozy: cozyHelpers.cozy })
 /*::
 import type { Metadata } from '../../../core/metadata'
 import type { RemoteDoc } from '../../../core/remote/document'
@@ -25,7 +24,7 @@ describe('Remote', function() {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)
-  before('instanciate remote', function() {
+  before('instanciate remote', async function() {
     this.prep = sinon.createStubInstance(Prep)
     this.prep.config = this.config
     this.events = new EventEmitter()
@@ -35,6 +34,10 @@ describe('Remote', function() {
   })
   beforeEach(cozyHelpers.deleteAll)
   beforeEach('create the couchdb folder', async function() {
+    const builders = new Builders({
+      client: await this.remote.remoteCozy.getClient()
+    })
+
     await builders
       .remoteDir()
       .name('couchdb-folder')

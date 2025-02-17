@@ -15,13 +15,13 @@ const { FetchError } = require('cozy-stack-client')
 const metadata = require('../../../core/metadata')
 const {
   DIR_TYPE,
+  FILE_TYPE,
   ROOT_DIR_ID,
   TRASH_DIR_ID,
   TRASH_DIR_NAME,
   MAX_FILE_SIZE,
   OAUTH_CLIENTS_DOCTYPE,
-  FILES_DOCTYPE,
-  VERSIONS_DOCTYPE
+  FILES_DOCTYPE
 } = require('../../../core/remote/constants')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const { withDefaultValues } = require('../../../core/remote/document')
@@ -30,10 +30,9 @@ const Builders = require('../../support/builders')
 const CozyStackDouble = require('../../support/doubles/cozy_stack')
 const configHelpers = require('../../support/helpers/config')
 const cozyHelpers = require('../../support/helpers/cozy')
-const { COZY_URL, cozy, deleteAll } = require('../../support/helpers/cozy')
+const { COZY_URL } = require('../../support/helpers/cozy')
 
 const cozyStackDouble = new CozyStackDouble()
-const builders = new Builders({ cozy })
 
 // This error with a mysterious reason is returned when the request is aborted
 // with an error message by the remote server while Chromium has sent all data.
@@ -47,52 +46,67 @@ const CHROMIUM_ERROR = new electronFetch.FetchError(
 )
 
 describe('RemoteCozy', function() {
+  let builders
+
   before(() => cozyStackDouble.start())
-  beforeEach(deleteAll)
+  beforeEach(cozyHelpers.deleteAll)
+  beforeEach('prepare builders', async function() {
+    builders = new Builders({
+      client: await cozyHelpers.newClient(cozyHelpers.cozy),
+      pouch: this.pouch
+    })
+  })
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   after('clean config directory', configHelpers.cleanConfig)
   after(() => cozyStackDouble.stop())
   afterEach(() => cozyStackDouble.clearStub())
 
-  let remoteCozy
+  let remoteCozy, fetchJSONStub
 
-  beforeEach(function() {
+  beforeEach(async function() {
     this.config.cozyUrl = COZY_URL
     remoteCozy = new RemoteCozy(this.config)
     // Use real OAuth client
     remoteCozy.client = cozyHelpers.cozy
+    remoteCozy.newClient = await cozyHelpers.newClient(cozyHelpers.cozy)
+
+    fetchJSONStub = sinon
+      .stub(remoteCozy.newClient.stackClient, 'fetchJSON')
+      .callThrough()
+  })
+
+  afterEach(() => {
+    fetchJSONStub.restore()
   })
 
   describe('hasEnoughSpace', () => {
+    let fakeDiskUsage
+
+    beforeEach(() => {
+      fakeDiskUsage = fetchJSONStub.withArgs('GET', '/settings/disk-usage')
+    })
+
     it('returns true if the Cozy does not have a quota', async () => {
-      const fakeSettings = sinon
-        .stub(remoteCozy.client.settings, 'diskUsage')
-        .resolves({ attributes: { used: 843 } })
+      fakeDiskUsage.resolves({ data: { attributes: { used: 843 } } })
 
       await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(true)
-
-      fakeSettings.restore()
     })
 
     it('returns true if the remaining quota is greater than the given file size', async () => {
-      const fakeSettings = sinon
-        .stub(remoteCozy.client.settings, 'diskUsage')
-        .resolves({ attributes: { quota: 5000, used: 4800 } })
+      fakeDiskUsage.resolves({
+        data: { attributes: { quota: 5000, used: 4800 } }
+      })
 
       await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(true)
-
-      fakeSettings.restore()
     })
 
     it('returns false if the remaining quota is smaller than the given file size', async () => {
-      const fakeSettings = sinon
-        .stub(remoteCozy.client.settings, 'diskUsage')
-        .resolves({ attributes: { quota: 5000, used: 4801 } })
+      fakeDiskUsage.resolves({
+        data: { attributes: { quota: 5000, used: 4801 } }
+      })
 
       await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(false)
-
-      fakeSettings.restore()
     })
   })
 
@@ -108,7 +122,7 @@ describe('RemoteCozy', function() {
         should(
           await remoteCozy.createFile(data, {
             name: ' foo ',
-            dirID: ROOT_DIR_ID,
+            dirId: ROOT_DIR_ID,
             contentType: 'text/plain',
             contentLength: 0,
             checksum,
@@ -153,7 +167,7 @@ describe('RemoteCozy', function() {
         await should(
           remoteCozy.createFile(builders.stream().build(), {
             name: 'foo',
-            dirID: ROOT_DIR_ID,
+            dirId: ROOT_DIR_ID,
             contentType: 'text/plain',
             contentLength: 300,
             checksum: 'md5sum',
@@ -177,7 +191,7 @@ describe('RemoteCozy', function() {
               .build(),
             {
               name: 'foo',
-              dirID: ROOT_DIR_ID,
+              dirId: ROOT_DIR_ID,
               contentType: 'text/plain',
               contentLength: data.length - 1,
               checksum,
@@ -202,7 +216,7 @@ describe('RemoteCozy', function() {
               .build(),
             {
               name: 'foo',
-              dirID: ROOT_DIR_ID,
+              dirId: ROOT_DIR_ID,
               contentType: 'text/plain',
               contentLength: data.length + 1,
               checksum,
@@ -215,15 +229,15 @@ describe('RemoteCozy', function() {
       })
 
       it('rejects with a 413 FetchError if the file is larger than the available quota', async () => {
-        const fakeSettings = sinon
-          .stub(remoteCozy.client.settings, 'diskUsage')
-          .resolves({ attributes: { quota: 5000, used: 4800 } })
+        fetchJSONStub
+          .withArgs('GET', '/settings/disk-usage')
+          .resolves({ data: { attributes: { quota: 5000, used: 4800 } } })
 
         stubFetch()
         await should(
           remoteCozy.createFile(builders.stream().build(), {
             name: 'foo',
-            dirID: ROOT_DIR_ID,
+            dirId: ROOT_DIR_ID,
             contentType: 'text/plain',
             contentLength: 300,
             checksum: 'md5sum',
@@ -232,8 +246,6 @@ describe('RemoteCozy', function() {
             updatedAt: new Date().toISOString()
           })
         ).be.rejectedWith(FetchError, { status: 413 })
-
-        fakeSettings.restore()
       })
 
       it('rejects with a 413 FetchError if the file is larger than the max file size', async () => {
@@ -241,7 +253,7 @@ describe('RemoteCozy', function() {
         await should(
           remoteCozy.createFile(builders.stream().build(), {
             name: 'foo',
-            dirID: ROOT_DIR_ID,
+            dirId: ROOT_DIR_ID,
             contentType: 'text/plain',
             contentLength: MAX_FILE_SIZE + 1,
             checksum: 'md5sum',
@@ -264,7 +276,7 @@ describe('RemoteCozy', function() {
               .build(),
             {
               name: 'foo',
-              dirID: ROOT_DIR_ID,
+              dirId: ROOT_DIR_ID,
               contentType: 'text/plain',
               contentLength: data.length,
               checksum: 'md5sum', // Force a request failure with a bad checksum
@@ -284,7 +296,7 @@ describe('RemoteCozy', function() {
         should(
           await remoteCozy.createDirectory({
             name: ' foo ',
-            dirID: ROOT_DIR_ID,
+            dirId: ROOT_DIR_ID,
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString()
           })
@@ -314,6 +326,7 @@ describe('RemoteCozy', function() {
 
         should(
           await remoteCozy.updateFileById(remoteFile._id, data, {
+            name: remoteFile.name,
             contentType: 'text/plain',
             contentLength: 0,
             checksum,
@@ -339,21 +352,17 @@ describe('RemoteCozy', function() {
           .data('initial content')
           .create()
 
-        sinon
-          .stub(remoteCozy.client.files, 'updateById')
-          .rejects(CHROMIUM_ERROR)
-      })
-      afterEach(() => {
-        remoteCozy.client.files.updateById.restore()
+        fetchJSONStub.rejects(CHROMIUM_ERROR)
       })
 
       it('returns a 413 FetchError if the file is larger than the available quota', async () => {
-        const fakeSettings = sinon
-          .stub(remoteCozy.client.settings, 'diskUsage')
-          .resolves({ attributes: { quota: 5000, used: 4800 } })
+        fetchJSONStub
+          .withArgs('GET', '/settings/disk-usage')
+          .resolves({ data: { attributes: { quota: 5000, used: 4800 } } })
 
         await should(
           remoteCozy.updateFileById(remoteFile._id, builders.stream().build(), {
+            name: remoteFile.name,
             contentType: 'text/plain',
             contentLength: 300,
             checksum: 'md5sum',
@@ -363,8 +372,6 @@ describe('RemoteCozy', function() {
             ifMatch: remoteFile._rev
           })
         ).be.rejectedWith(FetchError, { status: 413 })
-
-        fakeSettings.restore()
       })
     })
   })
@@ -815,7 +822,9 @@ describe('RemoteCozy', function() {
 
     it('rejects when given a file id', async function() {
       const file = await builders.remoteFile().create()
-      await should(remoteCozy.isEmpty(file._id)).be.rejectedWith(/wrong type/)
+      await should(remoteCozy.isEmpty(file._id)).be.rejectedWith(
+        /Unexpected file/
+      )
     })
 
     it('rejects when no document matches the id', async function() {
@@ -845,22 +854,11 @@ describe('RemoteCozy', function() {
   })
 
   describe('#warnings()', () => {
-    beforeEach(function() {
-      this.config.cozyUrl = cozyStackDouble.url()
-      remoteCozy = new RemoteCozy(this.config)
-    })
+    let fakeWarnings
 
-    const stubWarningsResponse = (status /*: number */, data) => {
-      cozyStackDouble.stub((req, res) => {
-        // A strict equality check would prevent us from adding query-string
-        // parameters to the request.
-        if (req.url.includes('/status/')) res.end('{}')
-        else {
-          res.writeHead(status)
-          res.end(JSON.stringify(data))
-        }
-      })
-    }
+    beforeEach(() => {
+      fakeWarnings = fetchJSONStub.withArgs('GET', '/settings/warnings')
+    })
 
     it('is an array of warnings if any', async () => {
       // https://docs.cozy.io/en/cozy-stack/user-action-required/#response
@@ -875,74 +873,56 @@ describe('RemoteCozy', function() {
           }
         }
       ]
-      stubWarningsResponse(402, { errors: warnings })
+      fakeWarnings.rejects(
+        new FetchError({ status: 402 }, { errors: warnings })
+      )
       should(await remoteCozy.warnings()).deepEqual(warnings)
     })
 
     it('is an empty array on 404 (means either no warnings or API not available)', async () => {
-      stubWarningsResponse(404)
+      fakeWarnings.rejects(new FetchError({ status: 404 }, {}))
       should(await remoteCozy.warnings()).deepEqual([])
     })
 
     it('assumes no warnings on unexpected 200 response', async () => {
-      stubWarningsResponse(200, { whatever: 'whatever' })
+      fakeWarnings.resolves({ whatever: 'whatever' })
       should(await remoteCozy.warnings()).deepEqual([])
     })
 
     for (let status of [401, 500]) {
       it(`does not swallow errors ${status}`, async () => {
-        stubWarningsResponse(status)
+        fakeWarnings.rejects({ status }, 'whatever reason')
         await should(remoteCozy.warnings()).be.rejectedWith({ status })
       })
     }
   })
 
   describe('#capabilities', () => {
-    beforeEach(async function() {
-      this.config.cozyUrl = cozyStackDouble.url()
-      remoteCozy = new RemoteCozy(this.config)
-      remoteCozy.client.oauth = true
-      remoteCozy.client._authstate = 3 // XXX: AuthOK
-      remoteCozy.client._authcreds = Promise.resolve({
-        // Fake OAuth tokens
-        token: {
-          tokenType: 'bearer',
-          accessToken: 'xxx',
-          refreshToken: 'xxx',
-          scope: 'io.cozy.doctypes',
-          toAuthHeader: () => 'xxx'
-        }
-      })
+    let fakeSettings
+
+    beforeEach(() => {
+      fakeSettings = fetchJSONStub.withArgs('GET', '/settings/capabilities')
     })
 
-    const stubCapabilitiesResponse = ({ flat_subdomains }) => {
-      cozyStackDouble.stub((req, res) => {
-        if (req.url.match('/settings/capabilities')) {
-          res.setHeader('Content-Type', 'application/json')
-          res.writeHead(200)
-          res.end(
-            JSON.stringify({
-              data: {
-                type: 'io.cozy.settings',
-                id: 'io.cozy.settings.capabilities',
-                attributes: { flat_subdomains }
-              }
-            })
-          )
-        } else {
-          res.writeHead(404)
-          res.end()
+    it('returns an object with a flatSubdomains boolean attribute', async () => {
+      fakeSettings.resolves({
+        data: {
+          type: 'io.cozy.settings',
+          id: 'io.cozy.settings.capabilities',
+          attributes: { flat_subdomains: true }
         }
       })
-    }
-
-    it('returns an object with a flatSubdomains boolean attribute', async () => {
-      stubCapabilitiesResponse({ flat_subdomains: true })
       should(await remoteCozy.capabilities()).deepEqual({
         flatSubdomains: true
       })
 
-      stubCapabilitiesResponse({ flat_subdomains: false })
+      fakeSettings.resolves({
+        data: {
+          type: 'io.cozy.settings',
+          id: 'io.cozy.settings.capabilities',
+          attributes: { flat_subdomains: false }
+        }
+      })
       should(await remoteCozy.capabilities()).deepEqual({
         flatSubdomains: false
       })
@@ -1088,7 +1068,8 @@ describe('RemoteCozy', function() {
       const versions = await remoteCozy.fetchOldFileVersions(modified)
       should(versions).have.length(1)
       should(versions[0]).have.properties({
-        _type: VERSIONS_DOCTYPE,
+        _type: FILES_DOCTYPE,
+        type: FILE_TYPE,
         md5sum: original.md5sum,
         size: original.size
       })

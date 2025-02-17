@@ -110,7 +110,7 @@ describe('Merge', function() {
 
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('instanciate merge', function() {
+  beforeEach('instanciate merge', async function() {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
     this.merge.local = stubSide('local')
@@ -134,7 +134,10 @@ describe('Merge', function() {
       return conflict
     })
     this.merge.remote.fileContentWasVersioned = sinon.stub().returns(false)
-    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
+    builders = new Builders({
+      client: await cozyHelpers.newClient(cozyHelpers.cozy),
+      pouch: this.pouch
+    })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   afterEach('clean remote', cozyHelpers.deleteAll)

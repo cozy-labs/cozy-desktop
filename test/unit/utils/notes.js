@@ -67,13 +67,16 @@ describe('utils/notes', () => {
     before('instanciate config', configHelpers.createConfig)
     before('register cozy client', configHelpers.registerClient)
     beforeEach('clean remote cozy', cozyHelpers.deleteAll)
+    beforeEach('get new cozy-client instance', async function() {
+      this.client = await cozyHelpers.newClient(cozy)
+    })
     after('clean config directory', configHelpers.cleanConfig)
 
     it('fetches the remote io.cozy.files document associated with the given local doc', async function() {
       const docPath = 'Some interesting stuff.cozy-note'
 
       const remoteHelpers = new RemoteTestHelpers(this)
-      const builders = new Builders({ cozy })
+      const builders = new Builders({ client: this.client })
       const remote = await builders
         .remoteFile()
         .name(docPath)
@@ -93,7 +96,7 @@ describe('utils/notes', () => {
       const docPath = 'Some interesting stuff.cozy-note'
 
       const remoteHelpers = new RemoteTestHelpers(this)
-      const builders = new Builders({ cozy })
+      const builders = new Builders({ client: this.client })
       const doc = await builders
         .metafile()
         .path(docPath)
@@ -110,7 +113,7 @@ describe('utils/notes', () => {
       const docPath = 'Some interesting stuff.cozy-note'
 
       const remoteHelpers = new RemoteTestHelpers(this)
-      const builders = new Builders({ cozy })
+      const builders = new Builders({ client: this.client })
       await builders
         .remoteFile()
         .name(docPath)
@@ -131,6 +134,9 @@ describe('utils/notes', () => {
     before('instanciate config', configHelpers.createConfig)
     before('register cozy client', configHelpers.registerClient)
     beforeEach('clean remote cozy', cozyHelpers.deleteAll)
+    beforeEach('get new cozy-client instance', async function() {
+      this.client = await cozyHelpers.newClient(cozy)
+    })
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
     afterEach('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
@@ -150,7 +156,7 @@ describe('utils/notes', () => {
 
       const localHelpers = new LocalTestHelpers(this)
       await localHelpers.syncDir.outputFile(docPath, 'Note content')
-      const builders = new Builders({ cozy })
+      const builders = new Builders({ client: this.client })
       await builders
         .metafile()
         .path(docPath)
