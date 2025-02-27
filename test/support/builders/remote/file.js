@@ -2,20 +2,17 @@
 
 const fs = require('fs')
 
-const _ = require('lodash')
-
 const RemoteBaseBuilder = require('./base')
 const { FILES_DOCTYPE } = require('../../../../core/remote/constants')
 const {
   inRemoteTrash,
-  remoteJsonToRemoteDoc
+  jsonApiToRemoteDoc
 } = require('../../../../core/remote/document')
-const cozyHelpers = require('../../helpers/cozy')
 const ChecksumBuilder = require('../checksum')
 
 /*::
 import type stream from 'stream'
-import type { Cozy } from 'cozy-client-js'
+import type { CozyClient } from 'cozy-client'
 import type { FullRemoteFile, RemoteFile } from '../../../../core/remote/document'
 */
 
@@ -23,11 +20,10 @@ import type { FullRemoteFile, RemoteFile } from '../../../../core/remote/documen
 var fileNumber = 1
 
 const addReferencedBy = async (
-  cozy /*: * */,
+  client /*: CozyClient */,
   remoteDoc /*: RemoteFile */,
   refs /*: Array<{ _id: string, _type: string }> */
 ) => {
-  const client = await cozyHelpers.newClient(cozy)
   const files = client.collection(FILES_DOCTYPE)
   const doc = { _id: remoteDoc._id, _type: FILES_DOCTYPE }
   const {
@@ -53,8 +49,8 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <FullRem
   _data: string | stream.Readable | Buffer
   */
 
-  constructor(cozy /*: ?Cozy */, old /*: ?FullRemoteFile */) {
-    super(cozy, old)
+  constructor(client /*: CozyClient */, old /*: ?FullRemoteFile */) {
+    super(client, old)
 
     if (!old) {
       this.name(`remote-file-${fileNumber}`)
@@ -126,25 +122,27 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <FullRem
   }
 
   async create() /*: Promise<FullRemoteFile> */ {
-    const cozy = this._ensureCozy()
+    const client = this._ensureClient()
 
-    const remoteFile /*: RemoteFile */ = _.clone(
-      remoteJsonToRemoteDoc(
-        await cozy.files.create(this._data, {
-          contentType: this.remoteDoc.mime,
-          dirID: this.remoteDoc.dir_id,
-          executable: this.remoteDoc.executable,
-          createdAt: this.remoteDoc.created_at,
-          updatedAt: this.remoteDoc.updated_at || this.remoteDoc.created_at,
-          name: this.remoteDoc.name,
-          noSanitize: true
-        })
-      )
+    const { data: file } = await client.collection(FILES_DOCTYPE).createFile(
+      this._data,
+      {
+        contentType: this.remoteDoc.mime,
+        dirId: this.remoteDoc.dir_id,
+        executable: this.remoteDoc.executable,
+        lastModifiedDate:
+          this.remoteDoc.updated_at || this.remoteDoc.created_at,
+        name: this.remoteDoc.name
+      },
+      {
+        sanitizeName: false
+      }
     )
+    const remoteFile /*: RemoteFile */ = jsonApiToRemoteDoc(file)
 
     if (this.remoteDoc.referenced_by && this.remoteDoc.referenced_by.length) {
       const { _rev } = await addReferencedBy(
-        cozy,
+        client,
         remoteFile,
         this.remoteDoc.referenced_by
       )
@@ -160,27 +158,40 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <FullRem
   }
 
   async update() /*: Promise<FullRemoteFile> */ {
-    const cozy = this._ensureCozy()
+    const client = this._ensureClient()
+    const files = client.collection(FILES_DOCTYPE)
 
-    const json = inRemoteTrash(this.remoteDoc)
-      ? await cozy.files.trashById(this.remoteDoc._id, { dontRetry: true })
+    const { data: file } = inRemoteTrash(this.remoteDoc)
+      ? await files.destroy(this.remoteDoc)
       : this._data
-      ? await cozy.files.updateById(this.remoteDoc._id, this._data, {
-          contentType: this.remoteDoc.mime,
-          contentLength: this.remoteDoc.size,
-          checksum: this.remoteDoc.md5sum,
-          executable: this.remoteDoc.executable,
-          updatedAt: this.remoteDoc.updated_at,
-          noSanitize: true
-        })
-      : await cozy.files.updateAttributesById(this.remoteDoc._id, {
-          dir_id: this.remoteDoc.dir_id,
-          name: this.remoteDoc.name,
-          executable: this.remoteDoc.executable,
-          updated_at: this.remoteDoc.updated_at,
-          noSanitize: true
-        })
-    const remoteFile /*: RemoteFile */ = _.clone(remoteJsonToRemoteDoc(json))
+      ? await files.updateFile(
+          this._data,
+          {
+            fileId: this.remoteDoc._id,
+            name: this.remoteDoc.name,
+            contentType: this.remoteDoc.mime,
+            contentLength: this.remoteDoc.size,
+            checksum: this.remoteDoc.md5sum,
+            executable: this.remoteDoc.executable,
+            lastModifiedDate: this.remoteDoc.updated_at
+          },
+          {
+            sanitizeName: false
+          }
+        )
+      : await files.updateAttributes(
+          this.remoteDoc._id,
+          {
+            dir_id: this.remoteDoc.dir_id,
+            name: this.remoteDoc.name,
+            executable: this.remoteDoc.executable,
+            updated_at: this.remoteDoc.updated_at
+          },
+          {
+            sanitizeName: false
+          }
+        )
+    const remoteFile /*: RemoteFile */ = jsonApiToRemoteDoc(file)
     const doc /*: FullRemoteFile */ = {
       ...remoteFile,
       path: this.remoteDoc.path

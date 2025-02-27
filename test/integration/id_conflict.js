@@ -4,9 +4,9 @@
 const should = require('should')
 
 const config = require('../../core/config')
+const { ROOT_DIR_ID } = require('../../core/remote/constants')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const {
   onPlatform,
   onPlatforms,
@@ -16,19 +16,17 @@ const {
 const pouchHelpers = require('../support/helpers/pouch')
 
 describe('Identity conflict', () => {
-  let cozy, helpers
+  let helpers
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
@@ -41,10 +39,10 @@ describe('Identity conflict', () => {
   describe('between two dirs', () => {
     describe('both remote', () => {
       beforeEach(async () => {
-        await cozy.files.createDirectoryByPath('/alfred')
+        await helpers.remote.createDirectory('alfred', ROOT_DIR_ID)
         await helpers.pullAndSyncAll()
 
-        await cozy.files.createDirectoryByPath('/Alfred')
+        await helpers.remote.createDirectory('Alfred', ROOT_DIR_ID)
         await helpers.pullAndSyncAll()
       })
 
@@ -76,7 +74,7 @@ describe('Identity conflict', () => {
       beforeEach(async () => {
         await helpers.local.syncDir.ensureDir('alfred')
         await helpers.local.scan()
-        await cozy.files.createDirectoryByPath('/Alfred')
+        await helpers.remote.createDirectory('Alfred', ROOT_DIR_ID)
         await helpers.pullAndSyncAll()
       })
 
@@ -106,7 +104,7 @@ describe('Identity conflict', () => {
 
     describe('unsynced remote + local', () => {
       beforeEach(async () => {
-        await cozy.files.createDirectoryByPath('/alfred')
+        await helpers.remote.createDirectory('alfred', ROOT_DIR_ID)
         await helpers.remote.pullChanges()
         await helpers.local.syncDir.ensureDir('Alfred')
         await helpers.local.scan()
@@ -144,11 +142,11 @@ describe('Identity conflict', () => {
 
     describe('synced + moved remote', () => {
       beforeEach(async () => {
-        await cozy.files.createDirectory({ name: 'alfred' })
-        await cozy.files.createDirectory({ name: 'john' })
+        await helpers.remote.createDirectory('alfred')
+        const john = await helpers.remote.createDirectory('john')
         await helpers.pullAndSyncAll()
 
-        await cozy.files.updateAttributesByPath('/john', { name: 'Alfred' })
+        await helpers.remote.updateAttributesById(john._id, { name: 'Alfred' })
         await helpers.pullAndSyncAll()
       })
 
@@ -178,10 +176,10 @@ describe('Identity conflict', () => {
 
     describe('unsynced remote + moved local', () => {
       beforeEach(async () => {
-        await cozy.files.createDirectory({ name: 'john' })
+        await helpers.remote.createDirectory('john')
         await helpers.pullAndSyncAll()
 
-        await cozy.files.createDirectory({ name: 'alfred' })
+        await helpers.remote.createDirectory('alfred')
         await helpers.remote.pullChanges()
 
         await helpers.local.syncDir.rename('john/', 'Alfred/')
@@ -223,10 +221,10 @@ describe('Identity conflict', () => {
   describe('between two files', () => {
     describe('both remote', () => {
       beforeEach(async () => {
-        await cozy.files.create('alfred content', { name: 'alfred' })
+        await helpers.remote.createFile('alfred', ROOT_DIR_ID, 'alfred content')
         await helpers.pullAndSyncAll()
 
-        await cozy.files.create('Alfred content', { name: 'Alfred' })
+        await helpers.remote.createFile('Alfred', ROOT_DIR_ID, 'Alfred content')
         await helpers.pullAndSyncAll()
       })
 
@@ -258,7 +256,7 @@ describe('Identity conflict', () => {
       beforeEach(async () => {
         await helpers.local.syncDir.outputFile('alfred', 'alfred content')
         await helpers.local.scan()
-        await cozy.files.create('Alfred content', { name: 'Alfred' })
+        await helpers.remote.createFile('Alfred', ROOT_DIR_ID, 'Alfred content')
         await helpers.pullAndSyncAll()
       })
 
@@ -288,7 +286,7 @@ describe('Identity conflict', () => {
 
     describe('unsynced remote + local', () => {
       beforeEach(async () => {
-        await cozy.files.create('alfred content', { name: 'alfred' })
+        await helpers.remote.createFile('alfred', ROOT_DIR_ID, 'alfred content')
         await helpers.remote.pullChanges()
         await helpers.local.syncDir.outputFile('Alfred', 'Alfred content')
         await helpers.local.scan()
@@ -326,11 +324,15 @@ describe('Identity conflict', () => {
 
     describe('synced + moved remote', () => {
       beforeEach(async () => {
-        await cozy.files.create('alfred content', { name: 'alfred' })
-        await cozy.files.create('john content', { name: 'john' })
+        await helpers.remote.createFile('alfred', ROOT_DIR_ID, 'alfred content')
+        const john = await helpers.remote.createFile(
+          'john',
+          ROOT_DIR_ID,
+          'john content'
+        )
         await helpers.pullAndSyncAll()
 
-        await cozy.files.updateAttributesByPath('/john', { name: 'Alfred' })
+        await helpers.remote.updateAttributesById(john._id, { name: 'Alfred' })
         await helpers.pullAndSyncAll()
       })
 
@@ -360,10 +362,10 @@ describe('Identity conflict', () => {
 
     describe('unsynced remote + moved local', () => {
       beforeEach(async () => {
-        await cozy.files.create('john content', { name: 'john' })
+        await helpers.remote.createFile('john', ROOT_DIR_ID, 'john content')
         await helpers.pullAndSyncAll()
 
-        await cozy.files.create('alfred content', { name: 'alfred' })
+        await helpers.remote.createFile('alfred', ROOT_DIR_ID, 'alfred content')
         await helpers.remote.pullChanges()
 
         await helpers.local.syncDir.rename('john', 'Alfred')
@@ -411,8 +413,8 @@ describe('Identity conflict', () => {
         const nfdFile = 'file_e\u0301'
 
         // Remote NFC file/dir was synchronized...
-        await cozy.files.createDirectory({ name: nfcDir })
-        await cozy.files.create('whatever', { name: nfcFile })
+        await helpers.remote.createDirectory(nfcDir)
+        await helpers.remote.createFile(nfcFile, ROOT_DIR_ID, 'whatever')
         await helpers.pullAndSyncAll()
         // ...and normalized to NFD by HFS+ (simulated here)
         await helpers.local.syncDir.rename(nfcDir, nfdDir)
@@ -445,7 +447,7 @@ describe('Identity conflict', () => {
 
         onAPFS(() => {
           it('keeps the remote name everywhere and does not create a conflict', async () => {
-            await cozy.files.create('whatever', { name: filename })
+            await helpers.remote.createFile(filename, ROOT_DIR_ID, 'whatever')
             await helpers.pullAndSyncAll()
             await helpers.flushLocalAndSyncAll()
             should(
@@ -460,7 +462,7 @@ describe('Identity conflict', () => {
 
         onHFS(() => {
           it('keeps the remote name in PouchDB and does not create a conflict', async () => {
-            await cozy.files.create('whatever', { name: filename })
+            await helpers.remote.createFile(filename, ROOT_DIR_ID, 'whatever')
             await helpers.pullAndSyncAll()
             await helpers.flushLocalAndSyncAll()
             should(
@@ -479,7 +481,7 @@ describe('Identity conflict', () => {
 
         onAPFS(() => {
           it('keeps the remote name everywhere and does not create a conflict', async () => {
-            await cozy.files.create('whatever', { name: filename })
+            await helpers.remote.createFile(filename, ROOT_DIR_ID, 'whatever')
             await helpers.pullAndSyncAll()
             await helpers.flushLocalAndSyncAll()
             should(
@@ -494,7 +496,7 @@ describe('Identity conflict', () => {
 
         onHFS(() => {
           it('keeps the remote name in PouchDB and does not create a conflict', async () => {
-            await cozy.files.create('whatever', { name: filename })
+            await helpers.remote.createFile(filename, ROOT_DIR_ID, 'whatever')
             await helpers.pullAndSyncAll()
             await helpers.flushLocalAndSyncAll()
             should(
@@ -513,7 +515,7 @@ describe('Identity conflict', () => {
 
         onAPFS(() => {
           it('keeps the remote name everywhere and does not create a conflict', async () => {
-            await cozy.files.create('whatever', { name: filename })
+            await helpers.remote.createFile(filename, ROOT_DIR_ID, 'whatever')
             await helpers.pullAndSyncAll()
             await helpers.flushLocalAndSyncAll()
             should(
@@ -528,7 +530,7 @@ describe('Identity conflict', () => {
 
         onHFS(() => {
           it('keeps the remote name in PouchDB and does not create a conflict', async () => {
-            await cozy.files.create('whatever', { name: filename })
+            await helpers.remote.createFile(filename, ROOT_DIR_ID, 'whatever')
             await helpers.pullAndSyncAll()
             await helpers.flushLocalAndSyncAll()
             should(
@@ -551,7 +553,11 @@ describe('Identity conflict', () => {
 
           onAPFS(() => {
             it('renames the second one remotely to resolve the conflict on next polling', async () => {
-              await cozy.files.create('whatever', { name: originalFilename })
+              await helpers.remote.createFile(
+                originalFilename,
+                ROOT_DIR_ID,
+                'whatever'
+              )
               await helpers.pullAndSyncAll()
               await helpers.flushLocalAndSyncAll()
               should(
@@ -562,7 +568,11 @@ describe('Identity conflict', () => {
                 remote: [originalFilename]
               })
 
-              await cozy.files.create('whatever', { name: newFilename })
+              await helpers.remote.createFile(
+                newFilename,
+                ROOT_DIR_ID,
+                'whatever'
+              )
               await helpers.pullAndSyncAll()
               should(
                 await helpers.trees('local', 'metadata', 'remote')
@@ -576,7 +586,11 @@ describe('Identity conflict', () => {
 
           onHFS(() => {
             it('renames the second one remotely to resolve the conflict on next polling', async () => {
-              await cozy.files.create('whatever', { name: originalFilename })
+              await helpers.remote.createFile(
+                originalFilename,
+                ROOT_DIR_ID,
+                'whatever'
+              )
               await helpers.pullAndSyncAll()
               await helpers.flushLocalAndSyncAll()
               should(
@@ -587,7 +601,11 @@ describe('Identity conflict', () => {
                 remote: [originalFilename]
               })
 
-              await cozy.files.create('whatever', { name: newFilename })
+              await helpers.remote.createFile(
+                newFilename,
+                ROOT_DIR_ID,
+                'whatever'
+              )
               await helpers.pullAndSyncAll()
               should(
                 await helpers.trees('local', 'metadata', 'remote')

@@ -7,7 +7,6 @@ const sinon = require('sinon')
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
 const builders = new Builders()
@@ -16,9 +15,8 @@ describe('Sync state', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
-  // afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 

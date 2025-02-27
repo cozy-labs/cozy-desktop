@@ -18,14 +18,15 @@ const {
 import type {
   FILE_TYPE as FILE,
   DIR_TYPE as DIR,
+  FILES_DOCTYPE,
   VERSIONS_DOCTYPE,
 } from './constants'
 
-// ('contents') => Array<JsonApiRef>
-// ('file') => ?JsonApiRef
-// ('old_versions') => Array<JsonApiFileVersion>
-// ('referenced_by') => Array<JsonApiRef>
-export type RemoteRelations = any => any
+// (('contents') => Array<JsonApiRef>)
+// (('file') => ?JsonApiRef)
+// (('old_versions') => Array<JsonApiFileVersion>)
+// (('referenced_by') => Array<JsonApiRef>)
+export type RemoteRelations = string => any
 
 export type RemoteFileAttributes = {|
   type: FILE,
@@ -67,7 +68,8 @@ export type RemoteDoc = RemoteFile|RemoteDir
 export type RemoteFileVersion = {|
   _id: string,
   _rev: string,
-  _type: VERSIONS_DOCTYPE,
+  _type: FILES_DOCTYPE,
+  type: FILE,
   cozyMetadata: Object,
   md5sum: string,
   metadata?: Object,
@@ -172,10 +174,10 @@ export type RemoteJsonDir = {|
 export type RemoteJsonDoc = RemoteJsonFile|RemoteJsonDir
 
 // New cozy-client responses types
-type JsonApiRef = {
+type JsonApiRef = {|
   id: string,
   type: string,
-}
+|}
 
 type JsonApiFileVersionAttributes = {|
   md5sum: string,
@@ -187,7 +189,8 @@ type JsonApiFileVersionAttributes = {|
 export type JsonApiFileVersion = {|
   _id: string,
   _rev: string,
-  _type: VERSIONS_DOCTYPE,
+  _type: FILES_DOCTYPE,
+  type: VERSIONS_DOCTYPE,
   attributes: JsonApiFileVersionAttributes,
   cozyMetadata: Object,
   metadata?: Object,
@@ -208,18 +211,27 @@ type JsonApiDeletion = {|
   _deleted: true
 |}
 
-type JsonApiDoc =
-  {|
-    id: string,
-    type: string,
-    meta?: {
-      rev?: string
-    },
-    links: Object,
-    attributes: JsonApiFileAttributes|JsonApiDirAttributes,
-    relationships: JsonApiRelationShips
-  |}
-  | JsonApiDeletion
+export type JsonApiFile = {|
+  id: string,
+  type: string,
+  meta?: {
+    rev?: string
+  },
+  links: Object,
+  attributes: JsonApiFileAttributes,
+  relationships: JsonApiRelationShips
+|}
+export type JsonApiDir = {|
+  id: string,
+  type: string,
+  meta?: {
+    rev?: string
+  },
+  links: Object,
+  attributes: JsonApiDirAttributes,
+  relationships: JsonApiRelationShips
+|}
+export type JsonApiDoc = JsonApiFile | JsonApiDir
 */
 
 module.exports = {
@@ -228,8 +240,10 @@ module.exports = {
   inRemoteTrash,
   trashedDoc,
   withDefaultValues,
-  remoteJsonToRemoteDoc,
-  jsonApiToRemoteJsonDoc,
+  remoteJsonToRemoteDoc, // FIXME: replace usage in tests and remove
+  isDeletedDoc,
+  jsonApiToRemoteJsonDoc, // FIXME: remove
+  jsonApiToRemoteDoc,
   jsonFileVersionToRemoteFileVersion
 }
 
@@ -305,17 +319,19 @@ function withDefaultValues /*:: <T: JsonApiDirAttributes|JsonApiFileAttributes|J
 // Also, when a remote file has never been modified, its `old_versions` relation
 // will return `undefined` instead of an empty Array so we'll default the
 // returned value to an empty Array instead.
-function withDefaultRelations /*::<T: ?RemoteRelations> */(
-  relations /*: T */
+function withDefaultRelations(
+  relations /*: ?RemoteRelations */,
+  relationships /*: JsonApiRelationShips */
 ) /*: { relations: RemoteRelations } */ {
   if (relations != null) {
-    const originalRelations = relations
-    return {
-      relations: relation => originalRelations(relation) || []
-    }
+    return { relations }
   } else {
     return {
-      relations: () => []
+      relations: relation => {
+        if (relationships[relation] != null) {
+          return relationships[relation].data
+        }
+      }
     }
   }
 }
@@ -329,7 +345,7 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
       _id: json._id,
       _rev: json._rev,
       ...withDefaultValues(json.attributes),
-      ...withDefaultRelations(json.relations)
+      ...withDefaultRelations(json.relations, json.relationships)
     } /*: RemoteDir */)
 
     return remoteDir
@@ -339,7 +355,7 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
       _id: json._id,
       _rev: json._rev,
       ...withDefaultValues(json.attributes),
-      ...withDefaultRelations(json.relations)
+      ...withDefaultRelations(json.relations, json.relationships)
     } /*: RemoteFile */)
 
     return remoteFile
@@ -347,7 +363,7 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
 }
 
 function jsonApiToRemoteJsonDoc(
-  json /*: JsonApiDoc */
+  json /*: JsonApiDoc|JsonApiDeletion */
 ) /*: RemoteJsonDoc|CouchDBDeletion */ {
   if (json._deleted) {
     return ({
@@ -381,6 +397,55 @@ function jsonApiToRemoteJsonDoc(
   }
 }
 
+function isDeletedDoc(
+  json /*: JsonApiDoc|JsonApiDeletion */
+) /*: boolean %checks */ {
+  return json._deleted != null && json._deleted
+}
+
+/*::
+declare function jsonApiToRemoteDoc(json: JsonApiFile): RemoteFile
+declare function jsonApiToRemoteDoc(json: JsonApiDir): RemoteDir
+declare function jsonApiToRemoteDoc(json: JsonApiDeletion): CouchDBDeletion
+*/
+function jsonApiToRemoteDoc(json) {
+  if (json._deleted) {
+    return ({
+      _id: json.id,
+      _rev: json.rev,
+      _deleted: true
+    } /*: CouchDBDeletion */)
+  } else if (!json.meta || !json.meta.rev) {
+    const error = new Error('Missing meta.rev attribute in JsonAPI resource.')
+    // $FlowFixMe we add the `data` attribute on purpose
+    error.data = { json }
+    throw error
+  } else {
+    const { attributes, id, type, relationships } = json
+
+    return attributes.type === DIR_TYPE
+      ? remoteJsonToRemoteDoc(
+          ({
+            _id: id,
+            _type: type,
+            _rev: json.meta.rev,
+            attributes,
+            relationships
+          } /*: RemoteJsonDir */)
+        )
+      : remoteJsonToRemoteDoc(
+          ({
+            _id: id,
+            _type: type,
+            _rev: json.meta.rev,
+            attributes,
+            relationships
+          } /*: RemoteJsonFile */)
+        )
+  }
+}
+
+// TODO: see if we can transform the version into a proper RemoteFile
 function jsonFileVersionToRemoteFileVersion(
   version /*: JsonApiFileVersion */
 ) /*: RemoteFileVersion */ {
@@ -388,6 +453,7 @@ function jsonFileVersionToRemoteFileVersion(
     _id: version._id,
     _rev: version._rev,
     _type: version._type,
+    type: FILE_TYPE,
     cozyMetadata: version.cozyMetadata,
     metadata: version.metadata,
     relationships: version.relationships,
