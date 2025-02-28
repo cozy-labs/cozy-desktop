@@ -29,7 +29,7 @@ import type { Remote } from '../../../core/remote'
 export type TestHelpersOptions = {
   config: Config,
   pouch: Pouch,
-  cozy: ?OldCozyClient
+  cozy?: OldCozyClient
 }
 */
 
@@ -76,6 +76,10 @@ class TestHelpers {
     this.remote = remoteHelpers
 
     autoBind(this)
+  }
+
+  async clean() {
+    return Promise.all([this.local.clean(), this.remote.clean()])
   }
 
   async stop() {
@@ -236,5 +240,6 @@ const init /*: (TestHelpersOptions) => TestHelpers */ = opts =>
   new TestHelpers(opts)
 
 module.exports = {
+  TestHelpers,
   init
 }

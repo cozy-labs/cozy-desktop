@@ -84,6 +84,7 @@ const LOCAL_ATTRIBUTES = [
   'path',
   'docType',
   'md5sum',
+  // FIXME: add 'created_at',
   'updated_at',
   'class',
   'mime',
@@ -100,6 +101,7 @@ const REMOTE_ATTRIBUTES = [
   'tags',
   'trashed',
   'md5sum',
+  // FIXME: add 'created_at',
   'updated_at',
   'class',
   'mime',
@@ -122,6 +124,7 @@ export type MetadataLocalInfo = {
   md5sum?: string,
   mime?: string,
   size?: number,
+  // FIXME: add 'created_at?',
   updated_at?: string,
   trashed?: true,
 }
@@ -151,6 +154,7 @@ export type Metadata = {
 
   docType: DocType,
   path: string,
+  // FIXME: add 'created_at?',
   updated_at: string,
   local: MetadataLocalInfo,
   remote: MetadataRemoteInfo,

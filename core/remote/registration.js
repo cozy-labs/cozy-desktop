@@ -9,7 +9,7 @@ const os = require('os')
 const autoBind = require('auto-bind')
 const open = require('open')
 
-const CozyClient = require('cozy-client-js').Client
+const OldCozyClient = require('cozy-client-js').Client
 
 const PORT_NUMBER = 3344
 
@@ -87,7 +87,7 @@ module.exports = class Registration {
   process(pkg, redirectURI, onRegistered, deviceName) {
     const params = this.clientParams(pkg, redirectURI, deviceName)
     onRegistered = onRegistered || this.onRegistered
-    const cozy = new CozyClient({
+    const cozy = new OldCozyClient({
       version: 3,
       cozyURL: this.url,
       oauth: {
@@ -97,5 +97,16 @@ module.exports = class Registration {
       }
     })
     return cozy.authorize()
+
+    // TODO: use new CozyClient instantiation
+    // const cozy = new CozyClient({
+    //   oauth: params,
+    //   scope: [
+    //     // TODO: Implement existing config update in case we change permissions
+    //     'io.cozy.files',
+    //     'io.cozy.settings:GET:io.cozy.settings.disk-usage',
+    //     'io.cozy.jobs:POST:sendmail:worker'
+    //   ]
+    // })
   }
 }

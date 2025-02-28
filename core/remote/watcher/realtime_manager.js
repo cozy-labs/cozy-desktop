@@ -78,8 +78,9 @@ class RealtimeManager {
       })
 
       this.realtime = client.plugins.realtime.realtime
-      // Add logs to `disconnected` event as `cozy-realtime` doesn't log anything
-      // when emitting this event.
+      // Add logs to `disconnected` and `ready` events as `cozy-realtime`
+      // doesn't log anything when emitting these events.
+      this.realtime.on('ready', () => log.debug('realtime websocket ready'))
       this.realtime.on('disconnected', () =>
         log.info('realtime websocket disconnected')
       )
