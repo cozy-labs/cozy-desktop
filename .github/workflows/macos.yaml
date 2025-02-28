@@ -313,7 +313,7 @@ jobs:
           apple-team-id: "${{ secrets.apple_team_id }}"
       - name: Save artifacts
         if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
             name: Binaries
             path: |
@@ -321,3 +321,4 @@ jobs:
                 ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*.dmg
                 ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*-mac.zip
             retention-days: 5
+            compression-level: 0
