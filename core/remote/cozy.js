@@ -96,7 +96,7 @@ class RemoteCozy {
   config: Config
   url: string
   client: OldCozyClient
-  newClient: ?CozyClient
+  newClient: CozyClient
 
   toRemoteDoc:
     & ((doc: JsonApiFile, parentDir: ?RemoteDir) => Promise<FullRemoteFile>)
@@ -113,6 +113,13 @@ class RemoteCozy {
         clientParams: config.client,
         storage: config
       }
+    })
+    this.newClient = new CozyClient({
+      uri: this.url,
+      oauth: config.client,
+      token: config.oauthTokens,
+      scope: config.oauthTokens.scope,
+      throwFetchErrors: true
     })
 
     autoBind(this)

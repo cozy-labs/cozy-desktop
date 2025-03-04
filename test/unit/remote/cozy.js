@@ -67,9 +67,6 @@ describe('RemoteCozy', function() {
   beforeEach(async function() {
     this.config.cozyUrl = COZY_URL
     remoteCozy = new RemoteCozy(this.config)
-    // Use real OAuth client
-    remoteCozy.client = remoteHelpers.cozy
-    remoteCozy.newClient = await remoteHelpers.getClient()
 
     fetchJSONStub = sinon
       .stub(remoteCozy.newClient.stackClient, 'fetchJSON')
@@ -477,16 +474,22 @@ describe('RemoteCozy', function() {
       )
     })
 
-    it('does not swallow errors', function() {
-      this.config.cozyUrl = cozyStackDouble.url()
-      const remoteCozy = new RemoteCozy(this.config)
+    it('does not swallow errors', async function() {
+      const origCozyUrl = this.config.cozyUrl
 
-      cozyStackDouble.stub((req, res) => {
-        res.writeHead(500, { 'Content-Type': 'text/plain' })
-        res.end('whatever')
-      })
+      try {
+        this.config.cozyUrl = cozyStackDouble.url()
+        const remoteCozy = new RemoteCozy(this.config)
 
-      return should(remoteCozy.changes()).be.rejected()
+        cozyStackDouble.stub((req, res) => {
+          res.writeHead(500, { 'Content-Type': 'text/plain' })
+          res.end('whatever')
+        })
+
+        await should(remoteCozy.changes()).be.rejected()
+      } finally {
+        this.config.cozyUrl = origCozyUrl
+      }
     })
 
     it('makes several calls to get changesfeed aka pagination', async () => {

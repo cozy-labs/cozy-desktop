@@ -67,6 +67,12 @@ const cozy = new OldCozyClient({
   token: process.env.COZY_STACK_TOKEN
 })
 
+const client = new CozyClient({
+  uri: COZY_URL,
+  token: process.env.COZY_STACK_TOKEN,
+  throwFetchErrors: true
+})
+
 const oauthCozy = async (config /*: Config */) /*: OldCozyClient */ => {
   const client = new OldCozyClient({
     cozyURL: config.cozyUrl,
@@ -95,6 +101,7 @@ const newClient = async (
 
 module.exports = {
   COZY_URL,
+  client,
   cozy,
   oauthCozy,
   newClient,
