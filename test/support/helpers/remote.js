@@ -79,6 +79,7 @@ class RemoteTestHelpers {
         _id: { $ne: TRASH_DIR_ID }
       })
       .select(['_id', 'dir_id', '_deleted'])
+      .indexFields(['_id', 'dir_id', '_deleted'])
     const data = await client.queryAll(queryDef)
 
     try {
