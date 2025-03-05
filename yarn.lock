@@ -3689,16 +3689,16 @@ cozy-client-js@^0.21.0:
     pouchdb-browser "7.0.0"
     pouchdb-find "7.0.0"
 
-cozy-client@^38.2.0:
-  version "38.4.0"
-  resolved "https://registry.yarnpkg.com/cozy-client/-/cozy-client-38.4.0.tgz#99e88f11a73ccf68ddcdb69c9f8c490a98be91d2"
-  integrity sha512-w+xrY8l3EySRfsxDCh98+WQ4AhRtMYnLY2r+O4z388O8Z4t03fO06mc8myOJWfP7cNKSiV82mrtpmVNNmKOCuw==
+cozy-client@^57.2.0:
+  version "57.2.0"
+  resolved "https://registry.yarnpkg.com/cozy-client/-/cozy-client-57.2.0.tgz#cb75e52fb9aa775842ae64cdd00d1f6ba3b537ba"
+  integrity sha512-AYZBV6/G6MSMz/mlQmqlFjDRHWRP143oFlSOwLa6+p8N3pZpyX5+GPLkRJ9LUwBuOVsnbIoK8MrJzCKa48Sfxw==
   dependencies:
     "@cozy/minilog" "1.0.0"
     "@types/jest" "^26.0.20"
     "@types/lodash" "^4.14.170"
     btoa "^1.2.1"
-    cozy-stack-client "^38.0.2"
+    cozy-stack-client "^57.2.0"
     date-fns "2.29.3"
     json-stable-stringify "^1.0.1"
     lodash "^4.17.13"
@@ -3741,10 +3741,10 @@ cozy-realtime@^4.6.0:
     "@cozy/minilog" "^1.0.0"
     cozy-device-helper "^2.7.0"
 
-cozy-stack-client@^38.0.2:
-  version "38.0.2"
-  resolved "https://registry.yarnpkg.com/cozy-stack-client/-/cozy-stack-client-38.0.2.tgz#d6534510b11e15a4f353b075348a130d7e4af184"
-  integrity sha512-GOOsyfugChHA+fiyr/6h6ARoUFYn/dVV3t2VWFfzQr/jpiXpOCaPr+jW+9D1HAfi2RTZJ6S7Zt8GXguEU/dthg==
+cozy-stack-client@^57.2.0:
+  version "57.2.0"
+  resolved "https://registry.yarnpkg.com/cozy-stack-client/-/cozy-stack-client-57.2.0.tgz#837176d73561aa1983f6b2c0a9b0cbe1eb0a0d14"
+  integrity sha512-k68fuNdfLXsskdgA0pd04Bk+CDUCqICCm5IZHJZiIEJkovvA6IqI/jU8vyNI7fNrCuRQasCjwatIRoT7Qq9O6g==
   dependencies:
     detect-node "^2.0.4"
     mime "^2.4.0"
