@@ -120,9 +120,13 @@ class RemoteCozy {
     if (this.client._oauth) {
       // Make sure we have an authorized client to build a new client from.
       await this.client.authorize()
-      this.newClient = await CozyClient.fromOldOAuthClient(this.client)
+      this.newClient = await CozyClient.fromOldOAuthClient(this.client, {
+        throwFetchErrors: true
+      })
     } else {
-      this.newClient = await CozyClient.fromOldClient(this.client)
+      this.newClient = await CozyClient.fromOldClient(this.client, {
+        throwFetchErrors: true
+      })
     }
 
     return this.newClient
