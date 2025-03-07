@@ -493,6 +493,11 @@ class Merge {
         // the overwritten document.
         await this.pouch.eraseDocument(was)
         metadata.markAsUnmerged(doc, side)
+        // XXX: this call to updateFileAsync will ignore the file modification
+        // and thus not save it in PouchDB if this is a local move and it
+        // happens that `doc` and `file` have the exact same modification date.
+        // Although this should be very rare in production, this has happened
+        // in tests.
         return this.updateFileAsync(side, doc)
       } else {
         return this.addFileAsync(side, doc)
