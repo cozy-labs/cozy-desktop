@@ -152,7 +152,7 @@
     "electron": "^31",
     "electron-builder": "^24",
     "electron-download": "^4.1.1",
-    "electron-mocha": "^13.0.0",
+    "electron-mocha": "^13.1.0",
     "elm": "^0.19.1-6",
     "elm-format": "0.8.5",
     "elm-test": "^0.19.1-revision15",
