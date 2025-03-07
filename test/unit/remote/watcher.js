@@ -10,8 +10,6 @@ const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
 
-const { FetchError } = require('cozy-stack-client')
-
 const metadata = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
 const {
@@ -22,7 +20,7 @@ const {
   REMOTE_WATCHER_ERROR_EVENT,
   REMOTE_WATCHER_FATAL_EVENT
 } = require('../../../core/remote/constants')
-const { RemoteCozy } = require('../../../core/remote/cozy')
+const { FetchError, RemoteCozy } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 const timestamp = require('../../../core/utils/timestamp')
@@ -104,7 +102,7 @@ describe('RemoteWatcher', function() {
     this.watcher = new RemoteWatcher(this)
 
     builders = new Builders({
-      client: await this.remoteCozy.getClient(),
+      client: this.remoteCozy.client,
       pouch: this.pouch
     })
   })

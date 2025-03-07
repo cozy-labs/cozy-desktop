@@ -9,13 +9,13 @@ const {
   RealtimeManager
 } = require('../../../core/remote/watcher/realtime_manager')
 const configHelpers = require('../../support/helpers/config')
-const cozyHelpers = require('../../support/helpers/cozy')
+const { client } = require('../../support/helpers/cozy')
 const pouchHelpers = require('../../support/helpers/pouch')
 
 const setup = async () => {
-  const client = await cozyHelpers.newClient()
   const eventHandler = sinon.stub()
   const realtimeManager = new RealtimeManager()
+
   realtimeManager.setup({ client, eventHandler })
 
   return {

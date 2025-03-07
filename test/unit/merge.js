@@ -139,7 +139,7 @@ describe('Merge', function() {
     })
     this.merge.remote.fileContentWasVersioned = sinon.stub().returns(false)
     builders = new Builders({
-      client: await remoteHelpers.getClient(),
+      client: remoteHelpers.client,
       pouch: this.pouch
     })
   })

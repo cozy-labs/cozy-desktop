@@ -116,9 +116,8 @@ class RemoteWatcher {
       this.startClock()
 
       if (this.realtimeManager) {
-        const client = await this.remoteCozy.getClient()
         this.realtimeManager.setup({
-          client,
+          client: this.remoteCozy.client,
           eventHandler: this.requestRun.bind(this)
         })
         await this.realtimeManager.start()

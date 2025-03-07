@@ -18,29 +18,10 @@ const log = logger({
 })
 
 /*::
+import type { OAuthClient, OAuthTokens } from './remote/client'
+
 export type WatcherType = 'channel' | 'chokidar'
 type FileConfig = Object
-type OAuthTokens = {
-  tokenType: string,
-  accessToken: string,
-  refreshToken: string,
-  scope: string,
-}
-type OAuthClient = {
-  clientID: string,
-  clientSecret: string,
-  registrationAccessToken: string,
-  redirectURI: string,
-  softwareID: string,
-  softwareVersion: string,
-  clientName: string,
-  clientKind: string,
-  clientURI: string,
-  logoURI: string,
-  policyURI: string,
-  notificationPlatform: string,
-  notificationDeviceToken: string,
-}
 */
 
 /* Stat dates on Windows were previously truncated to the second while we now
@@ -184,7 +165,8 @@ class Config {
 
   // Set the remote configuration
   set client(options /*: OAuthClient */) {
-    this.fileConfig.creds = { client: options }
+    const creds = this.fileConfig.creds
+    this.fileConfig.creds = _.merge(creds, { client: options })
     this.persist()
   }
 
@@ -198,8 +180,18 @@ class Config {
   }
 
   get permissions() /*: string[] */ {
-    const scope = _.get(this.fileConfig, 'creds.token.scope', '')
-    return scope ? scope.split(' ') : []
+    const { token, scope } = _.get(this.fileConfig, 'creds', {})
+    return scope
+      ? scope
+      : token && token.scope // XXX: legacy scope storage
+      ? token.scope.split(' ')
+      : []
+  }
+
+  set permissions(scope /*: string */) {
+    const creds = this.fileConfig.creds
+    this.fileConfig.creds = _.merge(creds, { scope })
+    this.persist()
   }
 
   // Return the id of the registered OAuth client
@@ -217,6 +209,16 @@ class Config {
       throw new Error(`Device not configured`)
     }
     return this.fileConfig.creds.token
+  }
+
+  set oauthTokens(token /*: OAuthTokens */) {
+    const creds = this.fileConfig.creds
+    this.fileConfig.creds = _.merge(creds, { token })
+    this.persist()
+  }
+
+  onTokenRefresh(newToken /*: OAuthTokens */) {
+    this.oauthTokens = newToken
   }
 
   // Flags are options that can be activated by the user via the config file.
@@ -247,30 +249,9 @@ class Config {
     return watcherType(this.fileConfig)
   }
 
-  // Implement the Storage interface for cozy-client-js oauth
-
-  save(key /*: string */, value /*: * */) {
-    this.fileConfig[key] = value
-    if (key === 'creds') {
-      // Persist the access token after it has been refreshed
-      this.persist()
-    }
-    return Promise.resolve(value)
-  }
-
-  load(key /*: string */) /*: Promise<*> */ {
-    return Promise.resolve(this.fileConfig[key])
-  }
-
-  delete(key /*: string */) /*: Promise<*> */ {
-    const deleted = delete this.fileConfig[key]
-    return Promise.resolve(deleted)
-  }
-
-  clear() /*: Promise<void> */ {
-    delete this.fileConfig.creds
-    delete this.fileConfig.state
-    return Promise.resolve()
+  clear() {
+    this.fileConfig = {}
+    this.persist()
   }
 }
 

@@ -134,17 +134,9 @@ const findNote = async (
     const note = await localDoc(filePath, { config, pouch })
     log.info('note object', { note })
 
-    const client = await remote.remoteCozy.getClient()
-    if (!client) {
-      throw new CozyNoteError({
-        code: 'UnreachableError',
-        cozyURL: config.cozyUrl,
-        doc: { name: path.basename(filePath) },
-        content: '' // We'll add it later
-      })
-    }
-
-    const noteUrl = await models.note.fetchURL(client, { id: note.remote._id })
+    const noteUrl = await models.note.fetchURL(remote.remoteCozy.client, {
+      id: note.remote._id
+    })
     log.info('computed url', { noteUrl })
     return { noteUrl }
   } catch (err) {

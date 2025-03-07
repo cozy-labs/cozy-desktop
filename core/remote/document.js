@@ -1,4 +1,4 @@
-/** The remote Cozy metadata, as returned by cozy-client-js.
+/** The remote Cozy metadata, as returned by cozy-client.
  *
  * @module core/remote/document
  * @flow

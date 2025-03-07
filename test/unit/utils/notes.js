@@ -67,7 +67,7 @@ describe('utils/notes', () => {
     before('register cozy client', configHelpers.registerClient)
     before('instanciate helpers', async function() {
       remoteHelpers = new RemoteTestHelpers(this)
-      builders = new Builders({ client: await remoteHelpers.getClient() })
+      builders = new Builders({ client: remoteHelpers.client })
     })
     afterEach('clean remote cozy', () => remoteHelpers.clean())
     after('clean config directory', configHelpers.cleanConfig)
@@ -131,7 +131,7 @@ describe('utils/notes', () => {
     before('register cozy client', configHelpers.registerClient)
     before('instanciate helpers', async function() {
       remoteHelpers = new RemoteTestHelpers(this)
-      builders = new Builders({ client: await remoteHelpers.getClient() })
+      builders = new Builders({ client: remoteHelpers.client })
     })
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
     afterEach('clean remote cozy', () => remoteHelpers.clean())

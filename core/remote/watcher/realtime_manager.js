@@ -69,15 +69,19 @@ class RealtimeManager {
     }
 
     try {
-      client.registerPlugin(RealtimePlugin, {
-        createWebSocket: (url, doctype) =>
-          new global.WebSocket(url, doctype, {
-            agent: url.startsWith('wss:') ? https.globalAgent : http.globalAgent
-          }),
-        logger: logger({ component: 'RemoteWatcher:CozyRealtime' })
-      })
+      if (client.plugins[RealtimePlugin.pluginName] == null) {
+        client.registerPlugin(RealtimePlugin, {
+          createWebSocket: (url, doctype) =>
+            new global.WebSocket(url, doctype, {
+              agent: url.startsWith('wss:')
+                ? https.globalAgent
+                : http.globalAgent
+            }),
+          logger: logger({ component: 'RemoteWatcher:CozyRealtime' })
+        })
+      }
 
-      this.realtime = client.plugins.realtime.realtime
+      this.realtime = client.plugins[RealtimePlugin.pluginName].realtime
       // Add logs to `disconnected` and `ready` events as `cozy-realtime`
       // doesn't log anything when emitting these events.
       this.realtime.on('ready', () => log.debug('realtime websocket ready'))

@@ -9,7 +9,6 @@ const { Q } = require('cozy-client')
 
 const Builders = require('../builders')
 const conflictHelpers = require('./conflict')
-const cozyHelpers = require('./cozy')
 const { Remote, dirAndName } = require('../../../core/remote')
 const {
   DIR_TYPE,
@@ -20,7 +19,6 @@ const {
 } = require('../../../core/remote/constants')
 
 /*::
-import type { Client as OldCozyClient } from 'cozy-client-js'
 import type { CozyClient } from 'cozy-client'
 import type { Pouch } from '../../../core/pouch'
 import type { RemoteOptions } from '../../../core/remote'
@@ -40,29 +38,20 @@ class RemoteTestHelpers {
   rootDir: ?RemoteDir
   */
 
-  constructor(
-    opts /*: RemoteOptions */,
-    { cozy } /*: { cozy: ?OldCozyClient } */ = {}
-  ) {
+  constructor(opts /*: RemoteOptions */) {
     this.side = new Remote(opts)
-    this.side.remoteCozy.client = cozy || cozyHelpers.cozy
 
     autoBind(this)
   }
 
-  get cozy() /*: OldCozyClient */ {
+  get client() {
     return this.side.remoteCozy.client
-  }
-
-  async getClient() /*: CozyClient */ {
-    return this.side.remoteCozy.getClient()
   }
 
   async getBuilders() /*: Promise<Builders> */ {
     if (this.builders != null) return this.builders
 
-    const client = await this.side.remoteCozy.getClient()
-    this.builders = new Builders({ client })
+    this.builders = new Builders({ client: this.client })
     return this.builders
   }
 
@@ -71,8 +60,6 @@ class RemoteTestHelpers {
   }
 
   async clean() {
-    const client = await this.getClient()
-
     const queryDef = Q(FILES_DOCTYPE)
       .where({
         dir_id: { $in: [ROOT_DIR_ID, TRASH_DIR_ID] },
@@ -80,14 +67,16 @@ class RemoteTestHelpers {
       })
       .select(['_id', 'dir_id', '_deleted'])
       .indexFields(['_id', 'dir_id', '_deleted'])
-    const data = await client.queryAll(queryDef)
+    const data = await this.client.queryAll(queryDef)
 
     try {
       await Promise.all(
         data.map(j => {
           if (j._deleted) return Promise.resolve()
 
-          return client.collection(FILES_DOCTYPE).deleteFilePermanently(j._id)
+          return this.client
+            .collection(FILES_DOCTYPE)
+            .deleteFilePermanently(j._id)
         })
       )
     } catch (err) {
@@ -109,8 +98,7 @@ class RemoteTestHelpers {
   async getRootDir() {
     if (this.rootDir) return this.rootDir
 
-    const client = await this.getClient()
-    const { data: rootDir } = await client
+    const { data: rootDir } = await this.client
       .collection(FILES_DOCTYPE)
       .statById(ROOT_DIR_ID)
     this.rootDir = this.side.remoteCozy.toRemoteDoc(rootDir)
@@ -243,8 +231,7 @@ class RemoteTestHelpers {
 
       let dir, content
       try {
-        const client = await this.getClient()
-        const { data, included } = await client
+        const { data, included } = await this.client
           .collection(FILES_DOCTYPE)
           .statByPath(dirPath)
         dir = await this.side.remoteCozy.toRemoteDoc(data)
@@ -309,9 +296,8 @@ class RemoteTestHelpers {
 
   async readFile(remotePath /*: string */) {
     if (!remotePath.startsWith('/')) remotePath = '/' + remotePath
-    const client = await this.getClient()
     const file = await this.findByPath(remotePath)
-    const resp = await client
+    const resp = await this.client
       .collection(FILES_DOCTYPE)
       .fetchFileContentById(file._id)
     return resp.text()
@@ -328,8 +314,7 @@ class RemoteTestHelpers {
   }
 
   async findByPath(remotePath /*: string */) {
-    const client = await this.getClient()
-    const { data } = await client
+    const { data } = await this.client
       .collection(FILES_DOCTYPE)
       .statByPath(remotePath)
     return this.side.remoteCozy.toRemoteDoc(data)
@@ -359,8 +344,7 @@ class RemoteTestHelpers {
                executable?: boolean,
                updated_at?: string|} */
   ) {
-    const client = await this.getClient()
-    const { data: updated } = await client
+    const { data: updated } = await this.client
       .collection(FILES_DOCTYPE)
       .updateAttributes(id, attrs, { sanitizeName: false })
     return this.side.remoteCozy.toRemoteDoc(updated)
@@ -387,39 +371,37 @@ class RemoteTestHelpers {
                  executable?: boolean,
                  lastModifiedDate?: string|} */
   ) /*: Promise<FullRemoteFile> */ {
-    const client = await this.getClient()
-    const { data: updated } = await client.collection(FILES_DOCTYPE).updateFile(
-      content,
-      {
-        ...options,
-        fileId: id
-      },
-      {
-        sanitizeName: false
-      }
-    )
+    const { data: updated } = await this.client
+      .collection(FILES_DOCTYPE)
+      .updateFile(
+        content,
+        {
+          ...options,
+          fileId: id
+        },
+        {
+          sanitizeName: false
+        }
+      )
     return this.side.remoteCozy.toRemoteDoc(updated)
   }
 
   async trashById(_id /*: string */) {
-    const client = await this.getClient()
-    const { data: trashed } = await client
+    const { data: trashed } = await this.client
       .collection(FILES_DOCTYPE)
       .destroy({ _id })
     return this.side.remoteCozy.toRemoteDoc(trashed)
   }
 
   async restoreById(id /*: string */) {
-    const client = await this.getClient()
-    const { data: restored } = await client
+    const { data: restored } = await this.client
       .collection(FILES_DOCTYPE)
       .restore(id)
     return this.side.remoteCozy.toRemoteDoc(restored)
   }
 
   async destroyById(_id /*: string */) {
-    const client = await this.getClient()
-    await client.collection(FILES_DOCTYPE).deleteFilePermanently(_id)
+    await this.client.collection(FILES_DOCTYPE).deleteFilePermanently(_id)
   }
 
   async downloadById(_id /*: string */) {

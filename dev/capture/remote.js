@@ -18,7 +18,6 @@ const TestHelpers = require('../../test/support/helpers')
 const configHelpers = require('../../test/support/helpers/config')
 
 /*::
-import type { CozyClient as OldCozyClient } from 'cozy-client-js'
 import type { Config } from '../../core/config'
 import type { MetadataRemoteInfo } from '../../core/metadata'
 import type { FullRemoteFile, RemoteDir } from '../../core/remote/document'
@@ -259,7 +258,7 @@ const captureScenario = async (scenario /*: * */) => {
   const pouch = await setupPouch(config)
   const helpers = TestHelpers.init({ config, pouch })
   const builders = new Builders({
-    client: await helpers.remote.getClient(),
+    client: helpers.remote.client,
     pouch
   })
 

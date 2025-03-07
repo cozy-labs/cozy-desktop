@@ -347,7 +347,7 @@ module.exports.init = async (
 ) => {
   debug('[init]')
   const builders = new Builders({
-    client: await helpers.remote.getClient(),
+    client: helpers.remote.client,
     pouch: helpers.pouch
   })
   const remoteDocsToTrash = []

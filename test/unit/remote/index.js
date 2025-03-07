@@ -44,7 +44,7 @@ describe('remote.Remote', function() {
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('prepare builders', async function() {
     builders = new Builders({
-      client: await remoteHelpers.getClient(),
+      client: remoteHelpers.client,
       pouch: this.pouch
     })
   })
