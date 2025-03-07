@@ -2661,6 +2661,7 @@ describe('Merge', function() {
           .data('content')
           .tags('courge', 'quux')
           .sides({ local: 1 })
+          .updatedAt(existing.updated_at + 1) // XXX: make sure the replacing file has a different (and more recent) modification date than the existing file
           .create()
         const doc = builders
           .metafile()
