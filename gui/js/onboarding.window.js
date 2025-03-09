@@ -180,7 +180,7 @@ module.exports = class OnboardingWM extends WindowManager {
     }
     desktop.config.cozyUrl = cozyUrl
 
-    const onRegistered = (client, url) => {
+    const onRegistered = url => {
       let resolveP
       const promise = new Promise(resolve => {
         resolveP = resolve
@@ -209,7 +209,7 @@ module.exports = class OnboardingWM extends WindowManager {
       return promise
     }
     return desktop.registerRemote(cozyUrl, arg.location, onRegistered).then(
-      reg => {
+      redirectURI => {
         syncSession.clearStorageData()
         this.win.webContents.once('dom-ready', () => {
           setTimeout(async () => {
@@ -217,7 +217,7 @@ module.exports = class OnboardingWM extends WindowManager {
             this.checkSyncPath(defaults.syncPath, event.sender) // Why ???
           }, 20)
         })
-        this.win.loadURL(reg.client.redirectURI)
+        this.win.loadURL(redirectURI)
         this.closeOAuthView()
         if (!process.env.DEBUG) {
           autoLaunch.setEnabled(true)

@@ -5,45 +5,83 @@ const path = require('path')
 const autoBind = require('auto-bind')
 const _ = require('lodash')
 
+const { Q } = require('cozy-client')
+
+const Builders = require('../builders')
 const conflictHelpers = require('./conflict')
-const cozyHelpers = require('./cozy')
 const { Remote, dirAndName } = require('../../../core/remote')
 const {
   DIR_TYPE,
+  FILES_DOCTYPE,
   ROOT_DIR_ID,
+  TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
 
 /*::
-import type { Client as OldCozyClient } from 'cozy-client-js'
+import type { CozyClient } from 'cozy-client'
 import type { Pouch } from '../../../core/pouch'
 import type { RemoteOptions } from '../../../core/remote'
 import type { FullRemoteFile, RemoteDir, RemoteDoc } from '../../../core/remote/document'
 import type { Metadata, MetadataRemoteInfo } from '../../../core/metadata'
 
-export type RemoteTree = { [string]: FullRemoteFile|RemoteDir }
+export type RemoteTree = {
+  dirs: { [string]: RemoteDir },
+  files: { [string]: FullRemoteFile },
+}
 */
 
 class RemoteTestHelpers {
   /*::
   side: Remote
+  builders: ?Builders
+  rootDir: ?RemoteDir
   */
 
-  constructor(
-    opts /*: RemoteOptions */,
-    { cozy } /*: { cozy: ?OldCozyClient } */ = {}
-  ) {
+  constructor(opts /*: RemoteOptions */) {
     this.side = new Remote(opts)
-    this.side.remoteCozy.client = cozy || cozyHelpers.cozy
+
     autoBind(this)
   }
 
-  get cozy() /*: OldCozyClient */ {
+  get client() {
     return this.side.remoteCozy.client
+  }
+
+  async getBuilders() /*: Promise<Builders> */ {
+    if (this.builders != null) return this.builders
+
+    this.builders = new Builders({ client: this.client })
+    return this.builders
   }
 
   get pouch() /*: Pouch */ {
     return this.side.pouch
+  }
+
+  async clean() {
+    const queryDef = Q(FILES_DOCTYPE)
+      .where({
+        dir_id: { $in: [ROOT_DIR_ID, TRASH_DIR_ID] },
+        _id: { $ne: TRASH_DIR_ID }
+      })
+      .select(['_id', 'dir_id', '_deleted'])
+      .indexFields(['_id', 'dir_id', '_deleted'])
+    const data = await this.client.queryAll(queryDef)
+
+    try {
+      await Promise.all(
+        data.map(j => {
+          if (j._deleted) return Promise.resolve()
+
+          return this.client
+            .collection(FILES_DOCTYPE)
+            .deleteFilePermanently(j._id)
+        })
+      )
+    } catch (err) {
+      if (err.status !== 404) throw err
+    }
   }
 
   async ignorePreviousChanges() {
@@ -57,59 +95,125 @@ class RemoteTestHelpers {
     this.side.watcher.running = false
   }
 
+  async getRootDir() {
+    if (this.rootDir) return this.rootDir
+
+    const { data: rootDir } = await this.client
+      .collection(FILES_DOCTYPE)
+      .statById(ROOT_DIR_ID)
+    this.rootDir = this.side.remoteCozy.toRemoteDoc(rootDir)
+
+    return this.rootDir
+  }
+
   async createDirectory(
     name /*: string */,
-    dirID /*: string */ = ROOT_DIR_ID
+    dirId /*: string */ = ROOT_DIR_ID,
+    attrs /*: ?{|lastModifiedDate?: string|} */
   ) /*: Promise<RemoteDir> */ {
-    return this.cozy.files
-      .createDirectory({
-        name,
-        dirID,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
-      .then(this.side.remoteCozy.toRemoteDoc)
+    const options = {
+      name,
+      dirId,
+      lastModifiedDate: new Date().toISOString(),
+      ...attrs
+    }
+
+    return this.side.remoteCozy.createDirectory(options)
+  }
+
+  async createDirectoryByPath(
+    fullpath /*: string */,
+    attrs /*: ?{|lastModifiedDate?: string|} */
+  ) /*: Promise<RemoteDir> */ {
+    if (fullpath === '/') return this.getRootDir()
+
+    const dirname = path.basename(fullpath)
+    const ancestorPaths = path.dirname(fullpath).split(path.posix.sep)
+
+    let ancestor = await this.getRootDir()
+    for (const dirname of ancestorPaths) {
+      if (dirname === '') continue
+
+      try {
+        ancestor = await this.findByPath(
+          path.posix.join(ancestor.path, dirname)
+        )
+      } catch (err) {
+        if (err.status === 404) {
+          ancestor = await this.createDirectory(dirname, ancestor._id)
+        } else {
+          throw err
+        }
+      }
+    }
+
+    return this.createDirectory(dirname, ancestor._id, attrs)
   }
 
   async createFile(
     name /*: string */,
-    dirID /*: string */ = ROOT_DIR_ID,
-    content /*: string */ = 'whatever'
+    dirId /*: string */ = ROOT_DIR_ID,
+    content /*: string */ = 'whatever',
+    attrs /*: ?{|name?: string,
+               contentType?: string,
+               executable?: boolean,
+               lastModifiedDate?: string|} */
   ) /*: Promise<FullRemoteFile> */ {
-    return this.cozy.files
-      .create(content, {
-        name,
-        dirID,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
-      .then(this.side.remoteCozy.toRemoteDoc)
+    const builders = await this.getBuilders()
+
+    const options = {
+      name,
+      dirId,
+      contentType: 'application/octet-stream',
+      contentLength: content.length,
+      checksum: builders.checksum(content).build(),
+      lastModifiedDate: new Date().toISOString(),
+      executable: false,
+      ...attrs
+    }
+
+    return this.side.remoteCozy.createFile(
+      builders
+        .stream()
+        .push(content)
+        .build(),
+      options
+    )
+  }
+
+  async createFileByPath(
+    fullpath /*: string */,
+    content /*: string */ = 'whatever',
+    attrs /*: ?{|name?: string,
+               contentType?: string,
+               executable?: boolean,
+               lastModifiedDate?: string|} */
+  ) /*: Promise<FullRemoteFile> */ {
+    const filename = path.basename(fullpath)
+    const parentPath = path.dirname(fullpath)
+    const parent = await this.createDirectoryByPath(parentPath)
+    return this.createFile(filename, parent._id, content, attrs)
   }
 
   async createTree(paths /*: Array<string> */) /*: Promise<RemoteTree> */ {
-    const remoteDocsByPath = {}
+    const dirs = {}
+    const files = {}
     for (const p of paths) {
       const name = path.posix.basename(p)
       const parentPath = path.posix.dirname(p)
       const dirID = (
-        remoteDocsByPath[parentPath + '/'] ||
-        (await this.cozy.files
-          .statByPath('/' + parentPath + '/')
-          .then(this.side.remoteCozy.toRemoteDoc)) ||
+        dirs[parentPath + '/'] ||
+        (await this.findByPath('/' + parentPath + '/')) ||
         {}
       )._id
       if (p.endsWith('/')) {
-        remoteDocsByPath[p] = await this.createDirectory(name, dirID)
+        dirs[p] = await this.createDirectory(name, dirID)
       } else {
-        remoteDocsByPath[p] = await this.createFile(
-          name,
-          dirID,
-          `Content of file ${p}`
-        )
+        files[p] = await this.createFile(name, dirID, `Content of file ${p}`)
       }
     }
 
-    return remoteDocsByPath
+    return { dirs, files }
   }
 
   // TODO: Extract reusable #scan() method from tree*()
@@ -125,20 +229,23 @@ class RemoteTestHelpers {
       const dirPath = pathsToScan.shift()
       if (dirPath == null) break
 
-      let dir
+      let dir, content
       try {
-        dir = await this.cozy.files.statByPath(dirPath)
+        const { data, included } = await this.client
+          .collection(FILES_DOCTYPE)
+          .statByPath(dirPath)
+        dir = await this.side.remoteCozy.toRemoteDoc(data)
+        content = included
       } catch (err) {
         if (err.status !== 404) throw err
         dir = {
           // $FlowFixMe
-          relations: () => [
-            { attributes: { name: '<BROKEN>', type: '<BROKEN>' } }
-          ]
+          relations: () => [{ id: '<BROKEN>', type: '<BROKEN>' }]
         }
+        content = [{ '<BROKEN>': { name: '<BROKEN>' } }]
       }
-      for (const content of dir.relations('contents')) {
-        const { name, type } = content.attributes
+      for (const { id } of dir.relations('contents')) {
+        const { name, type } = _.find(content, ({ _id }) => _id === id)
         const remotePath = path.posix.join(dirPath, name)
         let relPath = remotePath.slice(1)
 
@@ -187,25 +294,30 @@ class RemoteTestHelpers {
     })
   }
 
-  async readFile(path /*: string */) {
-    if (!path.startsWith('/')) path = '/' + path
-    const resp = await this.cozy.files.downloadByPath(path)
+  async readFile(remotePath /*: string */) {
+    if (!remotePath.startsWith('/')) remotePath = '/' + remotePath
+    const file = await this.findByPath(remotePath)
+    const resp = await this.client
+      .collection(FILES_DOCTYPE)
+      .fetchFileContentById(file._id)
     return resp.text()
   }
 
   async byId(id /*: string */) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    const remoteDoc = await this.cozy.files.statById(id)
-    return await this.side.remoteCozy.toRemoteDoc(remoteDoc)
+    return this.side.remoteCozy.find(id)
   }
 
   async byIdMaybe(
     id /*: string */
   ) /*: Promise<?(FullRemoteFile|RemoteDir)> */ {
-    try {
-      return await this.byId(id)
-    } catch (err) {
-      return null
-    }
+    return this.side.remoteCozy.findMaybe(id)
+  }
+
+  async findByPath(remotePath /*: string */) {
+    const { data } = await this.client
+      .collection(FILES_DOCTYPE)
+      .statByPath(remotePath)
+    return this.side.remoteCozy.toRemoteDoc(data)
   }
 
   async move(
@@ -214,7 +326,7 @@ class RemoteTestHelpers {
   ) {
     const [newDirPath, newName] /*: [string, string] */ = dirAndName(newPath)
     const newDir /*: RemoteDir */ =
-      newDirPath === '.'
+      newDirPath === '/' || newDirPath === '.'
         ? await this.side.remoteCozy.findDir(ROOT_DIR_ID)
         : await this.side.remoteCozy.findDirectoryByPath(`/${newDirPath}`)
     const attrs = {
@@ -223,6 +335,84 @@ class RemoteTestHelpers {
       updated_at
     }
     await this.side.remoteCozy.updateAttributesById(_id, attrs, { ifMatch: '' })
+  }
+
+  async updateAttributesById(
+    id /*: string */,
+    attrs /*: {|name?: string,
+               dir_id?: string,
+               executable?: boolean,
+               updated_at?: string|} */
+  ) {
+    const { data: updated } = await this.client
+      .collection(FILES_DOCTYPE)
+      .updateAttributes(id, attrs, { sanitizeName: false })
+    return this.side.remoteCozy.toRemoteDoc(updated)
+  }
+
+  async updateAttributesByPath(
+    remotePath /*: string */,
+    attrs /*: {|name?: string,
+               dir_id?: string,
+               executable?: boolean,
+               updated_at?: string|} */
+  ) {
+    const { _id } = await this.findByPath(remotePath)
+    return this.updateAttributesById(_id, attrs)
+  }
+
+  async updateFileById(
+    id /*: string */,
+    content /*: string */,
+    options /*: {|name: string,
+                 contentType?: string,
+                 contentLength?: number,
+                 checksum?: string,
+                 executable?: boolean,
+                 lastModifiedDate?: string|} */
+  ) /*: Promise<FullRemoteFile> */ {
+    const { data: updated } = await this.client
+      .collection(FILES_DOCTYPE)
+      .updateFile(
+        content,
+        {
+          ...options,
+          fileId: id
+        },
+        {
+          sanitizeName: false
+        }
+      )
+    return this.side.remoteCozy.toRemoteDoc(updated)
+  }
+
+  async trashById(_id /*: string */) {
+    const { data: trashed } = await this.client
+      .collection(FILES_DOCTYPE)
+      .destroy({ _id })
+    return this.side.remoteCozy.toRemoteDoc(trashed)
+  }
+
+  async restoreById(id /*: string */) {
+    const { data: restored } = await this.client
+      .collection(FILES_DOCTYPE)
+      .restore(id)
+    return this.side.remoteCozy.toRemoteDoc(restored)
+  }
+
+  async destroyById(_id /*: string */) {
+    await this.client.collection(FILES_DOCTYPE).deleteFilePermanently(_id)
+  }
+
+  async downloadById(_id /*: string */) {
+    // $FlowFixMe stream.Readable does implement $AsyncIterable
+    const stream = await this.side.remoteCozy.downloadBinary(_id)
+
+    let content = ''
+    for await (const chunk of stream) {
+      content += chunk
+    }
+    return content
   }
 }
 

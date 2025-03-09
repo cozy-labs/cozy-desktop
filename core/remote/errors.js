@@ -9,7 +9,7 @@ const { FILE_TYPE, MAX_FILE_SIZE } = require('./constants')
 import type { SavedMetadata } from '../metadata'
 import type { Warning } from './cozy'
 
-import type { FetchError } from 'cozy-stack-client'
+import type { FetchError } from './cozy'
 export type { FetchError }
 */
 

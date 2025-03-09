@@ -138,7 +138,7 @@ class App {
   }
 
   // Return a promise for registering a device on the remote cozy
-  registerRemote(
+  async registerRemote(
     cozyUrl /*: string */,
     redirectURI /*: ?string */,
     onRegistered /*: ?Function */,
@@ -158,45 +158,6 @@ class App {
       'The remote Cozy has properly been configured ' +
         'to work with current device.'
     )
-  }
-
-  // Register current device to remote Cozy and then save related informations
-  // to the config file (used by CLI, not GUI)
-  async addRemote(
-    cozyUrl /*: string */,
-    syncPath /*: string */,
-    deviceName /*: string */
-  ) {
-    try {
-      const registered = await this.registerRemote(
-        cozyUrl,
-        null,
-        null,
-        deviceName
-      )
-      log.info(`Device ${registered.deviceName} has been added to ${cozyUrl}`)
-      this.saveConfig(cozyUrl, syncPath)
-    } catch (err) {
-      let parsed /*: Object */ = this.parseCozyUrl(cozyUrl)
-      if (err === 'Bad credentials') {
-        log.warn('The Cozy passphrase used for registration is incorrect', {
-          err
-        })
-      } else if (err.code === 'ENOTFOUND') {
-        log.warn(
-          `The DNS resolution for ${parsed.hostname} failed while registering the device.`,
-          { err }
-        )
-      } else {
-        log.error('An error occured while registering the device.', {
-          err,
-          sentry: true
-        })
-        if (parsed.protocol === 'http:') {
-          log.warn('Did you try with an httpS URL?')
-        }
-      }
-    }
   }
 
   // Unregister current device from remote Cozy and then remove remote from

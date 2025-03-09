@@ -2,8 +2,6 @@ require('../../core/globals')
 const { app, session } = require('electron')
 const fse = require('fs-extra')
 
-const cozy = require('cozy-client-js')
-
 const automatedRegistration = require('./automated_registration')
 const network = require('../../gui/js/network')
 const pkg = require('../../package.json')
@@ -13,7 +11,7 @@ const cozyUrl =
   process.env.COZY_URL ||
   'http://cozy.localhost:8080'
 const passphrase = process.env.COZY_PASSPHRASE || 'cozy'
-const storage = new cozy.MemoryStorage()
+const storage = {}
 
 function chooseCozyUrl(buildJob) {
   return buildJob === 'scenarios'
@@ -24,7 +22,7 @@ function chooseCozyUrl(buildJob) {
 function readAccessToken() {
   // eslint-disable-next-line no-console
   console.log('Read access token...')
-  return storage.load('creds').then(creds => creds.token.accessToken)
+  return storage.oauthTokens.accessToken
 }
 
 function generateTestEnv(accessToken) {

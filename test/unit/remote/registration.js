@@ -1,5 +1,7 @@
 /* eslint-env mocha */
 
+const os = require('os')
+
 const should = require('should')
 
 const Registration = require('../../../core/remote/registration')
@@ -13,30 +15,26 @@ describe('Registration', function() {
     this.registration = new Registration(this.config.cozyUrl, this.config)
   })
 
-  it('generates a unique device name', function() {
-    const params = this.registration.clientParams({})
-    should(params.clientName).not.be.empty()
-    const otherName = this.registration.clientParams({}).clientName
-    should(params.clientName).should.not.equal(otherName)
-  })
+  describe('oauthClient', function() {
+    it('generates a device name based on the hostname', function() {
+      const { clientName } = this.registration.oauthClient({})
+      should(clientName).match(/Cozy Drive/)
+      should(clientName.includes(os.hostname())).be.true()
+    })
 
-  it('configures correctly the OAuth client', function() {
-    const pkg = {
-      homepage: 'https//github.com/cozy-labs/cozy-desktop',
-      logo: 'https://cozy.io/cozy-desktop.logo',
-      repository: 'git://github.com/cozy-labs/cozy-desktop.git'
-    }
-    const params = this.registration.clientParams(pkg)
-    should(params.redirectURI).equal('http://localhost:3344/callback')
-    should(params.softwareID).equal('github.com/cozy-labs/cozy-desktop')
-    should(params.softwareVersion).equal('unknown')
-    should(params.clientKind).equal('desktop')
-    should(params.clientURI).equal(pkg.homepage)
-    should(params.logoURI).equal(pkg.logo)
-    should(params.scopes).eql([
-      'io.cozy.files',
-      'io.cozy.settings:GET:io.cozy.settings.disk-usage',
-      'io.cozy.jobs:POST:sendmail:worker'
-    ])
+    it('configures correctly the OAuth client', function() {
+      const pkg = {
+        homepage: 'https//github.com/cozy-labs/cozy-desktop',
+        logo: 'https://cozy.io/cozy-desktop.logo',
+        repository: 'git://github.com/cozy-labs/cozy-desktop.git'
+      }
+      const params = this.registration.oauthClient(pkg)
+      should(params.redirectURI).equal('http://localhost:3344/callback')
+      should(params.softwareID).equal('github.com/cozy-labs/cozy-desktop')
+      should(params.softwareVersion).equal('unknown')
+      should(params.clientKind).equal('desktop')
+      should(params.clientURI).equal(pkg.homepage)
+      should(params.logoURI).equal(pkg.logo)
+    })
   })
 })
