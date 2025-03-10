@@ -108,7 +108,7 @@ class Pouch {
    * At least we're raising an error that will be caught by our errors
    * management and block the app with a "Synchronization impossible" status.
    */
-  async _allDocs(options /*: ?{ include_docs: boolean } */) {
+  async _allDocs(options /*: ?{ include_docs: boolean } */ = {}) {
     const uncaughtExceptionHandler = err => {
       log.error('uncaughtException in _allDocs. PouchDB db might be corrupt.', {
         err,
@@ -526,7 +526,7 @@ class Pouch {
     /* !pragma no-coverage-next */
     /* istanbul ignore next */
     const query = function(doc) {
-      if ('remote' in doc) {
+      if (doc && doc.remote) {
         // $FlowFixMe
         return emit(doc.remote._id) // eslint-disable-line no-undef
       }

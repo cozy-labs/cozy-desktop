@@ -382,7 +382,7 @@ const updateState = async ({ newState, data }) => {
     if (status === 'uptodate') {
       lastSyncTimeout = setTimeout(async () => {
         try {
-          await desktop.remote.updateLastSync()
+          await desktop.remote.updateLastSynced()
           log.debug('last sync updated')
         } catch (err) {
           log.warn('could not update last sync date', { err })
