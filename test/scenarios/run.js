@@ -81,7 +81,7 @@ describe('Scenario', function() {
           continue
         }
 
-        describe(localTestName, () => {
+        describe('', () => {
           if (scenario.init) {
             // Run the init phase outside the test itself to prevent timeouts on
             // long inits.
@@ -95,7 +95,7 @@ describe('Scenario', function() {
             })
           }
 
-          it('', async function() {
+          it(localTestName, async function() {
             await runLocalChannel(scenario, parcelCapture, helpers)
           })
         })
