@@ -30,7 +30,8 @@ const Builders = require('../../support/builders')
 const CozyStackDouble = require('../../support/doubles/cozy_stack')
 const configHelpers = require('../../support/helpers/config')
 const cozyHelpers = require('../../support/helpers/cozy')
-const { COZY_URL, cozy, deleteAll } = require('../../support/helpers/cozy')
+const { COZY_URL, cozy } = require('../../support/helpers/cozy')
+const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
 const cozyStackDouble = new CozyStackDouble()
 const builders = new Builders({ cozy })
@@ -47,13 +48,18 @@ const CHROMIUM_ERROR = new electronFetch.FetchError(
 )
 
 describe('RemoteCozy', function() {
+  let remoteHelpers
+
   before(() => cozyStackDouble.start())
-  beforeEach(deleteAll)
   before('instanciate config', configHelpers.createConfig)
-  before('register OAuth client', configHelpers.registerClient)
+  before('register client', configHelpers.registerClient)
+  beforeEach('prepare helpers', async function() {
+    remoteHelpers = new RemoteTestHelpers(this)
+  })
+  afterEach(() => remoteHelpers.clean())
+  afterEach(() => cozyStackDouble.clearStub())
   after('clean config directory', configHelpers.cleanConfig)
   after(() => cozyStackDouble.stop())
-  afterEach(() => cozyStackDouble.clearStub())
 
   let remoteCozy
 

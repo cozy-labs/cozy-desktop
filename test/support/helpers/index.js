@@ -29,7 +29,7 @@ import type { Remote } from '../../../core/remote'
 export type TestHelpersOptions = {
   config: Config,
   pouch: Pouch,
-  cozy: ?OldCozyClient
+  cozy?: OldCozyClient
 }
 */
 

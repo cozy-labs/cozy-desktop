@@ -56,6 +56,7 @@ describe('Scenario', function() {
   })
 
   afterEach(async function() {
+    await helpers.clean()
     await helpers.stop()
   })
   afterEach(pouchHelpers.cleanDatabase)

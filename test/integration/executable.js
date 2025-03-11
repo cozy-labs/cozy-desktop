@@ -20,8 +20,8 @@ describe('Executable handling', () => {
   beforeEach(configHelpers.createConfig)
   beforeEach(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   afterEach(configHelpers.cleanConfig)
 

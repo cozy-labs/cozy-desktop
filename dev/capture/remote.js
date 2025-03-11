@@ -15,6 +15,7 @@ const { ROOT_DIR_ID } = require('../../core/remote/constants')
 const { RemoteCozy } = require('../../core/remote/cozy')
 const timestamp = require('../../core/utils/timestamp')
 const Builders = require('../../test/support/builders')
+const TestHelpers = require('../../test/support/helpers')
 const configHelpers = require('../../test/support/helpers/config')
 const cozyHelpers = require('../../test/support/helpers/cozy')
 
@@ -249,8 +250,9 @@ const captureScenario = async (scenario /*: * */) => {
   // Setup
   const config = setupConfig()
   const pouch = await setupPouch(config)
-  await cozyHelpers.deleteAll()
   await createInitialTree(scenario, cozyHelpers.cozy, pouch)
+  const helpers = TestHelpers.init({ config, pouch })
+  await helpers.clean()
   const remoteCozy = new RemoteCozy(config)
   const { last_seq } = await remoteCozy.changes()
 

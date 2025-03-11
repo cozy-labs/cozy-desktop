@@ -27,6 +27,7 @@ const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const { cozy, deleteAll } = require('../../support/helpers/cozy')
 const pouchHelpers = require('../../support/helpers/pouch')
+const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
 /*::
 import type { Metadata, SavedMetadata } from '../../../core/metadata'
@@ -35,12 +36,13 @@ import type { RemoteDoc, RemoteJsonDoc } from '../../../core/remote/document'
 const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
 
 describe('remote.Remote', function() {
-  let builders, couchdbFolder
+  let builders, couchdbFolder, remoteHelpers
 
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('prepare builders', function() {
+  beforeEach('prepare helpers', function() {
+    remoteHelpers = new RemoteTestHelpers(this)
     builders = new Builders({ cozy, pouch: this.pouch })
   })
   beforeEach('instanciate remote', function() {
@@ -66,6 +68,7 @@ describe('remote.Remote', function() {
       .create()
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
+  afterEach('clean remote cozy', () => remoteHelpers.clean())
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('constructor', () => {

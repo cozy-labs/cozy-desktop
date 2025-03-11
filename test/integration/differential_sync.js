@@ -27,9 +27,8 @@ describe('Differential synchronization', () => {
   before(configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerOAuthClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 

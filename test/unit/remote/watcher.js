@@ -35,6 +35,7 @@ const cozyHelpers = require('../../support/helpers/cozy')
 const { onPlatform, onPlatforms } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { ensureValidPath } = metadata
+const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
 /*::
 import type {
@@ -80,11 +81,14 @@ const saveTree = async (remoteTree, builders) => {
 }
 
 describe('RemoteWatcher', function() {
-  let builders, clock
+  let builders, clock, remoteHelpers
   let remoteTree /*: Object */
 
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
+  before('instanciate helpers', function() {
+    remoteHelpers = new RemoteTestHelpers(this)
+  })
   beforeEach(pouchHelpers.createDatabase)
   beforeEach(function instanciateRemoteWatcher() {
     clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'setInterval'] })
@@ -131,9 +135,7 @@ describe('RemoteWatcher', function() {
   afterEach(async function() {
     await pouchHelpers.cleanDatabase()
   })
-  afterEach(async function() {
-    await cozyHelpers.deleteAll()
-  })
+  afterEach(() => remoteHelpers.clean())
   after(configHelpers.cleanConfig)
 
   describe('start', function() {

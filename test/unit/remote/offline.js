@@ -14,6 +14,7 @@ const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const cozyHelpers = require('../../support/helpers/cozy')
 const pouchHelpers = require('../../support/helpers/pouch')
+const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
 const builders = new Builders({ cozy: cozyHelpers.cozy })
 /*::
@@ -22,9 +23,14 @@ import type { RemoteDoc } from '../../../core/remote/document'
 */
 
 describe('Remote', function() {
+  let remoteHelpers
+
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   before('instanciate pouch', pouchHelpers.createDatabase)
+  beforeEach('prepare helpers', function() {
+    remoteHelpers = new RemoteTestHelpers(this)
+  })
   before('instanciate remote', function() {
     this.prep = sinon.createStubInstance(Prep)
     this.prep.config = this.config
@@ -33,7 +39,6 @@ describe('Remote', function() {
     // Use real OAuth client
     this.remote.remoteCozy.client = cozyHelpers.cozy
   })
-  beforeEach(cozyHelpers.deleteAll)
   beforeEach('create the couchdb folder', async function() {
     await builders
       .remoteDir()
@@ -41,6 +46,7 @@ describe('Remote', function() {
       .inRootDir()
       .create()
   })
+  afterEach(() => remoteHelpers.clean())
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 

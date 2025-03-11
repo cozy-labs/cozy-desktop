@@ -64,15 +64,19 @@ describe('utils/notes', () => {
   })
 
   describe('remoteDoc', () => {
+    let remoteHelpers
+
     before('instanciate config', configHelpers.createConfig)
     before('register cozy client', configHelpers.registerClient)
-    beforeEach('clean remote cozy', cozyHelpers.deleteAll)
+    before('instanciate helpers', async function() {
+      remoteHelpers = new RemoteTestHelpers(this)
+    })
+    afterEach('clean remote cozy', () => remoteHelpers.clean())
     after('clean config directory', configHelpers.cleanConfig)
 
     it('fetches the remote io.cozy.files document associated with the given local doc', async function() {
       const docPath = 'Some interesting stuff.cozy-note'
 
-      const remoteHelpers = new RemoteTestHelpers(this)
       const builders = new Builders({ cozy })
       const remote = await builders
         .remoteFile()
@@ -92,7 +96,6 @@ describe('utils/notes', () => {
     it('throws a CozyNoteError with code CozyDocumentMissingError if no remote doc exist for the given local doc', async function() {
       const docPath = 'Some interesting stuff.cozy-note'
 
-      const remoteHelpers = new RemoteTestHelpers(this)
       const builders = new Builders({ cozy })
       const doc = await builders
         .metafile()
@@ -109,7 +112,6 @@ describe('utils/notes', () => {
     it('throws a CozyNoteError with code CozyDocumentMissingError if the local doc is not associated with a remote doc', async function() {
       const docPath = 'Some interesting stuff.cozy-note'
 
-      const remoteHelpers = new RemoteTestHelpers(this)
       const builders = new Builders({ cozy })
       await builders
         .remoteFile()
@@ -128,10 +130,15 @@ describe('utils/notes', () => {
   })
 
   describe('findNote', () => {
+    let remoteHelpers
+
     before('instanciate config', configHelpers.createConfig)
     before('register cozy client', configHelpers.registerClient)
-    beforeEach('clean remote cozy', cozyHelpers.deleteAll)
+    before('instanciate helpers', async function() {
+      remoteHelpers = new RemoteTestHelpers(this)
+    })
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+    afterEach('clean remote cozy', () => remoteHelpers.clean())
     afterEach('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
 

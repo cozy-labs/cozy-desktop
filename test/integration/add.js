@@ -43,7 +43,7 @@ describe('Add', () => {
     await helpers.stop()
   })
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
