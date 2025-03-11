@@ -5,17 +5,22 @@ const path = require('path')
 const autoBind = require('auto-bind')
 const _ = require('lodash')
 
+const { Q } = require('cozy-client')
+
 const conflictHelpers = require('./conflict')
 const cozyHelpers = require('./cozy')
 const { Remote, dirAndName } = require('../../../core/remote')
 const {
   DIR_TYPE,
+  FILES_DOCTYPE,
   ROOT_DIR_ID,
+  TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
 
 /*::
 import type { Client as OldCozyClient } from 'cozy-client-js'
+import type { CozyClient } from 'cozy-client'
 import type { Pouch } from '../../../core/pouch'
 import type { RemoteOptions } from '../../../core/remote'
 import type { FullRemoteFile, RemoteDir, RemoteDoc } from '../../../core/remote/document'
@@ -42,8 +47,37 @@ class RemoteTestHelpers {
     return this.side.remoteCozy.client
   }
 
+  async getClient() /*: CozyClient */ {
+    return this.side.remoteCozy.getClient()
+  }
+
   get pouch() /*: Pouch */ {
     return this.side.pouch
+  }
+
+  async clean() {
+    const client = await this.getClient()
+
+    const queryDef = Q(FILES_DOCTYPE)
+      .where({
+        dir_id: { $in: [ROOT_DIR_ID, TRASH_DIR_ID] },
+        _id: { $ne: TRASH_DIR_ID }
+      })
+      .select(['_id', 'dir_id', '_deleted'])
+      .indexFields(['_id', 'dir_id', '_deleted'])
+    const data = await client.queryAll(queryDef)
+
+    try {
+      await Promise.all(
+        data.map(j => {
+          if (j._deleted) return Promise.resolve()
+
+          return client.collection(FILES_DOCTYPE).deleteFilePermanently(j._id)
+        })
+      )
+    } catch (err) {
+      if (err.status !== 404) throw err
+    }
   }
 
   async ignorePreviousChanges() {
