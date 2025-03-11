@@ -78,6 +78,10 @@ class TestHelpers {
     autoBind(this)
   }
 
+  async clean() {
+    return Promise.all([this.local.clean(), this.remote.clean()])
+  }
+
   async stop() {
     await this._remote.stop()
     await this._local.stop()
