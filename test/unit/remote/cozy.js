@@ -898,51 +898,31 @@ describe('RemoteCozy', function() {
   })
 
   describe('#capabilities', () => {
-    beforeEach(async function() {
-      this.config.cozyUrl = cozyStackDouble.url()
-      remoteCozy = new RemoteCozy(this.config)
-      remoteCozy.client.oauth = true
-      remoteCozy.client._authstate = 3 // XXX: AuthOK
-      remoteCozy.client._authcreds = Promise.resolve({
-        // Fake OAuth tokens
-        token: {
-          tokenType: 'bearer',
-          accessToken: 'xxx',
-          refreshToken: 'xxx',
-          scope: 'io.cozy.doctypes',
-          toAuthHeader: () => 'xxx'
-        }
-      })
+    let fakeSettings
+
+    beforeEach(() => {
+      fakeSettings = fetchJSONStub.withArgs('GET', '/settings/capabilities')
     })
 
-    const stubCapabilitiesResponse = ({ flat_subdomains }) => {
-      cozyStackDouble.stub((req, res) => {
-        if (req.url.match('/settings/capabilities')) {
-          res.setHeader('Content-Type', 'application/json')
-          res.writeHead(200)
-          res.end(
-            JSON.stringify({
-              data: {
-                type: 'io.cozy.settings',
-                id: 'io.cozy.settings.capabilities',
-                attributes: { flat_subdomains }
-              }
-            })
-          )
-        } else {
-          res.writeHead(404)
-          res.end()
+    it('returns an object with a flatSubdomains boolean attribute', async () => {
+      fakeSettings.resolves({
+        data: {
+          type: 'io.cozy.settings',
+          id: 'io.cozy.settings.capabilities',
+          attributes: { flat_subdomains: true }
         }
       })
-    }
-
-    it('returns an object with a flatSubdomains boolean attribute', async () => {
-      stubCapabilitiesResponse({ flat_subdomains: true })
       should(await remoteCozy.capabilities()).deepEqual({
         flatSubdomains: true
       })
 
-      stubCapabilitiesResponse({ flat_subdomains: false })
+      fakeSettings.resolves({
+        data: {
+          type: 'io.cozy.settings',
+          id: 'io.cozy.settings.capabilities',
+          attributes: { flat_subdomains: false }
+        }
+      })
       should(await remoteCozy.capabilities()).deepEqual({
         flatSubdomains: false
       })
