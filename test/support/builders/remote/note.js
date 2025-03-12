@@ -8,12 +8,11 @@ const {
   NOTE_MIME_TYPE
 } = require('../../../../core/remote/constants')
 const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
-const cozyHelpers = require('../../helpers/cozy')
 const ChecksumBuilder = require('../checksum')
 
 /*::
 import type stream from 'stream'
-import type { Cozy } from 'cozy-client'
+import type { CozyClient } from 'cozy-client'
 import type { FullRemoteFile, RemoteFile } from '../../../../core/remote/document'
 */
 
@@ -43,8 +42,8 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <FullRem
   _data: string
   */
 
-  constructor(cozy /*: Cozy */, old /*: ?FullRemoteFile */) {
-    super(cozy, old)
+  constructor(client /*: CozyClient */, old /*: ?FullRemoteFile */) {
+    super(client, old)
 
     if (!old) {
       this.name(`remote-note-${fileNumber}`)
@@ -114,7 +113,7 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <FullRem
     this._updateMetadata()
     this._updateExport()
 
-    const client = await cozyHelpers.newClient(this._ensureCozy())
+    const client = await this._ensureClient()
     const files = client.collection(FILES_DOCTYPE)
 
     const { data: file } = await files.createFile(
@@ -147,7 +146,7 @@ module.exports = class RemoteNoteBuilder extends RemoteBaseBuilder /*:: <FullRem
     this._updateMetadata()
     this._updateExport()
 
-    const client = await cozyHelpers.newClient(this._ensureCozy())
+    const client = await this._ensureClient()
     const files = client.collection(FILES_DOCTYPE)
 
     // FIXME: update note metadata

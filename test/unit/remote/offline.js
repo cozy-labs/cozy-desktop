@@ -16,7 +16,6 @@ const cozyHelpers = require('../../support/helpers/cozy')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
-const builders = new Builders({ cozy: cozyHelpers.cozy })
 /*::
 import type { Metadata } from '../../../core/metadata'
 import type { RemoteDoc } from '../../../core/remote/document'
@@ -40,6 +39,10 @@ describe('Remote', function() {
     this.remote.remoteCozy.client = cozyHelpers.cozy
   })
   beforeEach('create the couchdb folder', async function() {
+    const builders = new Builders({
+      client: await remoteHelpers.getClient()
+    })
+
     await builders
       .remoteDir()
       .name('couchdb-folder')

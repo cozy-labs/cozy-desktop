@@ -8,11 +8,10 @@ const {
   ROOT_DIR_ID
 } = require('../../../../core/remote/constants')
 const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
-const cozyHelpers = require('../../helpers/cozy')
 const dbBuilders = require('../db')
 
 /*::
-import type { Cozy } from 'cozy-client-js'
+import type { CozyClient } from 'cozy-client'
 import type { FullRemoteFile, RemoteDir, CouchDBDeletion } from '../../../../core/remote/document'
 */
 
@@ -28,12 +27,16 @@ import type { FullRemoteFile, RemoteDir, CouchDBDeletion } from '../../../../cor
 //
 module.exports = class RemoteErasedBuilder {
   /*::
-  cozy: ?Cozy
+  client: CozyClient
   remoteDoc: ?(FullRemoteFile|RemoteDir)
   */
 
-  constructor(cozy /*: ?Cozy */, old /*: ?(FullRemoteFile|RemoteDir) */) {
-    this.cozy = cozy
+  constructor(
+    client /*: CozyClient */,
+    old /*: ?(FullRemoteFile|RemoteDir) */
+  ) {
+    this.client = client
+
     if (old) {
       this.remoteDoc = {
         ..._.cloneDeep(old),
@@ -42,9 +45,9 @@ module.exports = class RemoteErasedBuilder {
     }
   }
 
-  _ensureCozy() /*: Cozy */ {
-    if (this.cozy) {
-      return this.cozy
+  _ensureClient() /*: CozyClient */ {
+    if (this.client) {
+      return this.client
     } else {
       throw new Error('Cannot create remote files/dirs without a Cozy client.')
     }
@@ -67,7 +70,7 @@ module.exports = class RemoteErasedBuilder {
   }
 
   async create() /*: Promise<CouchDBDeletion> */ {
-    const client = await cozyHelpers.newClient(this._ensureCozy())
+    const client = this._ensureClient()
 
     if (!this.remoteDoc) {
       const { data: directory } = await client

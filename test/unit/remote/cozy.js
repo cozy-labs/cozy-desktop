@@ -30,11 +30,10 @@ const Builders = require('../../support/builders')
 const CozyStackDouble = require('../../support/doubles/cozy_stack')
 const configHelpers = require('../../support/helpers/config')
 const cozyHelpers = require('../../support/helpers/cozy')
-const { COZY_URL, cozy } = require('../../support/helpers/cozy')
+const { COZY_URL } = require('../../support/helpers/cozy')
 const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
 const cozyStackDouble = new CozyStackDouble()
-const builders = new Builders({ cozy })
 
 // This error with a mysterious reason is returned when the request is aborted
 // with an error message by the remote server while Chromium has sent all data.
@@ -48,13 +47,17 @@ const CHROMIUM_ERROR = new electronFetch.FetchError(
 )
 
 describe('RemoteCozy', function() {
-  let remoteHelpers
+  let remoteHelpers, builders
 
   before(() => cozyStackDouble.start())
   before('instanciate config', configHelpers.createConfig)
   before('register client', configHelpers.registerClient)
   beforeEach('prepare helpers', async function() {
     remoteHelpers = new RemoteTestHelpers(this)
+    builders = new Builders({
+      client: await remoteHelpers.getClient(),
+      pouch: this.pouch
+    })
   })
   afterEach(() => remoteHelpers.clean())
   afterEach(() => cozyStackDouble.clearStub())

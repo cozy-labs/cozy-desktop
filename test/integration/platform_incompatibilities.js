@@ -39,8 +39,8 @@ describe('Platform incompatibilities', () => {
 
   beforeEach(async function() {
     cozy = cozyHelpers.cozy
-    builders = new Builders({ cozy })
     helpers = TestHelpers.init(this)
+    builders = new Builders({ client: await helpers.remote.getClient() })
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
