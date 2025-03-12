@@ -276,7 +276,7 @@ class RemoteCozy {
         ...options,
         noSanitize: true
       })
-      return this.toRemoteDoc(file)
+      return this.toRemoteDoc(remoteJsonToRemoteDoc(file))
     })
   }
 
@@ -292,7 +292,7 @@ class RemoteCozy {
         noSanitize: true
       }
     )
-    return this.toRemoteDoc(folder)
+    return this.toRemoteDoc(remoteJsonToRemoteDoc(folder))
   }
 
   async updateFileById(
@@ -314,7 +314,7 @@ class RemoteCozy {
           noSanitize: true
         }
       )
-      return this.toRemoteDoc(updated)
+      return this.toRemoteDoc(remoteJsonToRemoteDoc(updated))
     })
   }
 
@@ -330,7 +330,7 @@ class RemoteCozy {
       ...options,
       noSanitize: true
     })
-    return this.toRemoteDoc(updated)
+    return this.toRemoteDoc(remoteJsonToRemoteDoc(updated))
   }
 
   async trashById(
@@ -338,7 +338,7 @@ class RemoteCozy {
     options /*: {|ifMatch: string|} */
   ) /*: Promise<FullRemoteFile|RemoteDir> */ {
     const trashed = await this.client.files.trashById(id, options)
-    return this.toRemoteDoc(trashed)
+    return this.toRemoteDoc(remoteJsonToRemoteDoc(trashed))
   }
 
   destroyById(
@@ -377,7 +377,9 @@ class RemoteCozy {
   }
 
   async find(id /*: string */) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    return this.toRemoteDoc(await this.client.files.statById(id))
+    return this.toRemoteDoc(
+      remoteJsonToRemoteDoc(await this.client.files.statById(id))
+    )
   }
 
   async findMaybe(
@@ -393,7 +395,7 @@ class RemoteCozy {
 
   async findDir(id /*: string */) /*: Promise<RemoteDir> */ {
     const remoteDir = await this.client.files.statById(id)
-    const doc = await this.toRemoteDoc(remoteDir)
+    const doc = await this.toRemoteDoc(remoteJsonToRemoteDoc(remoteDir))
     if (doc.type !== DIR_TYPE) {
       throw new Error(`Unexpected file with remote _id ${id}`)
     }
@@ -475,7 +477,10 @@ class RemoteCozy {
       const remoteJson = jsonApiToRemoteJsonDoc(j)
       if (remoteJson._deleted) continue
 
-      const remoteDoc = await this.toRemoteDoc(remoteJson, dir)
+      const remoteDoc = await this.toRemoteDoc(
+        remoteJsonToRemoteDoc(remoteJson),
+        dir
+      )
 
       if (!this.isExcludedDirectory(remoteDoc)) {
         remoteDocs.push(remoteDoc)
@@ -511,11 +516,10 @@ class RemoteCozy {
     return resp.body
   }
 
-  async toRemoteDoc /*::<T: FullRemoteFile|RemoteDir> */(
-    doc /*: RemoteJsonDoc */,
+  async toRemoteDoc(
+    remoteDoc /*: RemoteFile|RemoteDir */,
     parentDir /*: ?RemoteDir */
   ) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    const remoteDoc = remoteJsonToRemoteDoc(doc)
     if (remoteDoc.type === FILE_TYPE) {
       parentDir = parentDir || (await this.findDir(remoteDoc.dir_id))
       return (this._withPath(remoteDoc, parentDir) /*: FullRemoteFile */)

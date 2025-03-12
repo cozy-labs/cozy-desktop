@@ -26,7 +26,7 @@ import type {
 // ('file') => ?JsonApiRef
 // ('old_versions') => Array<JsonApiFileVersion>
 // ('referenced_by') => Array<JsonApiRef>
-export type RemoteRelations = any => any
+export type RemoteRelations = string => any
 
 export type RemoteFileAttributes = {|
   type: FILE,
@@ -211,18 +211,27 @@ type JsonApiDeletion = {|
   _deleted: true
 |}
 
-type JsonApiDoc =
-  {|
-    id: string,
-    type: string,
-    meta?: {
-      rev?: string
-    },
-    links: Object,
-    attributes: JsonApiFileAttributes|JsonApiDirAttributes,
-    relationships: JsonApiRelationShips
-  |}
-  | JsonApiDeletion
+export type JsonApiFile = {|
+  id: string,
+  type: string,
+  meta?: {
+    rev?: string
+  },
+  links: Object,
+  attributes: JsonApiFileAttributes,
+  relationships: JsonApiRelationShips
+|}
+export type JsonApiDir = {|
+  id: string,
+  type: string,
+  meta?: {
+    rev?: string
+  },
+  links: Object,
+  attributes: JsonApiDirAttributes,
+  relationships: JsonApiRelationShips
+|}
+export type JsonApiDoc = JsonApiFile | JsonApiDir
 */
 
 module.exports = {
@@ -233,6 +242,7 @@ module.exports = {
   withDefaultValues,
   remoteJsonToRemoteDoc,
   jsonApiToRemoteJsonDoc,
+  jsonApiToRemoteDoc,
   jsonFileVersionToRemoteFileVersion
 }
 
@@ -308,18 +318,17 @@ function withDefaultValues /*:: <T: JsonApiDirAttributes|JsonApiFileAttributes|J
 // Also, when a remote file has never been modified, its `old_versions` relation
 // will return `undefined` instead of an empty Array so we'll default the
 // returned value to an empty Array instead.
-function withDefaultRelations /*::<T: ?RemoteRelations> */(
-  relations /*: T */
+function withDefaultRelations(
+  relations /*: ?RemoteRelations */,
+  relationships /*: JsonApiRelationShips */
 ) /*: { relations: RemoteRelations } */ {
-  if (relations != null) {
-    const originalRelations = relations
-    return {
-      relations: relation => originalRelations(relation) || []
-    }
-  } else {
-    return {
-      relations: () => []
-    }
+  return {
+    relations: relation =>
+      (relations != null
+        ? relations(relation)
+        : relationships[relation] != null
+        ? relationships[relation].data
+        : []) || []
   }
 }
 
@@ -332,7 +341,7 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
       _id: json._id,
       _rev: json._rev,
       ...withDefaultValues(json.attributes),
-      ...withDefaultRelations(json.relations)
+      ...withDefaultRelations(json.relations, json.relationships)
     } /*: RemoteDir */)
 
     return remoteDir
@@ -342,7 +351,7 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
       _id: json._id,
       _rev: json._rev,
       ...withDefaultValues(json.attributes),
-      ...withDefaultRelations(json.relations)
+      ...withDefaultRelations(json.relations, json.relationships)
     } /*: RemoteFile */)
 
     return remoteFile
@@ -350,7 +359,7 @@ function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
 }
 
 function jsonApiToRemoteJsonDoc(
-  json /*: JsonApiDoc */
+  json /*: JsonApiDoc|JsonApiDeletion */
 ) /*: RemoteJsonDoc|CouchDBDeletion */ {
   if (json._deleted) {
     return ({
@@ -381,6 +390,48 @@ function jsonApiToRemoteJsonDoc(
           attributes,
           relationships
         } /*: RemoteJsonFile */)
+  }
+}
+
+/*::
+declare function jsonApiToRemoteDoc(json: JsonApiFile): RemoteFile
+declare function jsonApiToRemoteDoc(json: JsonApiDir): RemoteDir
+declare function jsonApiToRemoteDoc(json: JsonApiDeletion): CouchDBDeletion
+*/
+function jsonApiToRemoteDoc(json) {
+  if (json._deleted) {
+    return ({
+      _id: json.id,
+      _rev: json.rev,
+      _deleted: true
+    } /*: CouchDBDeletion */)
+  } else if (!json.meta || !json.meta.rev) {
+    const error = new Error('Missing meta.rev attribute in JsonAPI resource.')
+    // $FlowFixMe we add the `data` attribute on purpose
+    error.data = { json }
+    throw error
+  } else {
+    const { attributes, id, type, relationships } = json
+
+    return attributes.type === DIR_TYPE
+      ? remoteJsonToRemoteDoc(
+          ({
+            _id: id,
+            _type: type,
+            _rev: json.meta.rev,
+            attributes,
+            relationships
+          } /*: RemoteJsonDir */)
+        )
+      : remoteJsonToRemoteDoc(
+          ({
+            _id: id,
+            _type: type,
+            _rev: json.meta.rev,
+            attributes,
+            relationships
+          } /*: RemoteJsonFile */)
+        )
   }
 }
 
