@@ -532,16 +532,18 @@ class RemoteCozy {
   }
 
   async warnings() /*: Promise<Warning[]> */ {
-    const warningsPath = '/settings/warnings'
+    const client = await this.getClient()
     try {
-      const response = await this.client.fetchJSON('GET', warningsPath)
+      const response = await client
+        .collection(SETTINGS_DOCTYPE)
+        .get(`${SETTINGS_DOCTYPE}.warnings`)
       log.warn('Unexpected warnings response. Assuming no warnings.', {
         response
       })
       return []
     } catch (err) {
       const { message, status } = err
-      log.debug(warningsPath, { status })
+      log.debug('remote warnings', { status })
       switch (status) {
         case 402:
           return JSON.parse(message).errors
