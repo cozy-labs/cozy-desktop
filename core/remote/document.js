@@ -18,6 +18,7 @@ const {
 import type {
   FILE_TYPE as FILE,
   DIR_TYPE as DIR,
+  FILES_DOCTYPE,
   VERSIONS_DOCTYPE,
 } from './constants'
 
@@ -67,7 +68,8 @@ export type RemoteDoc = RemoteFile|RemoteDir
 export type RemoteFileVersion = {|
   _id: string,
   _rev: string,
-  _type: VERSIONS_DOCTYPE,
+  _type: FILES_DOCTYPE,
+  type: FILE,
   cozyMetadata: Object,
   md5sum: string,
   metadata?: Object,
@@ -187,7 +189,8 @@ type JsonApiFileVersionAttributes = {|
 export type JsonApiFileVersion = {|
   _id: string,
   _rev: string,
-  _type: VERSIONS_DOCTYPE,
+  _type: FILES_DOCTYPE,
+  type: VERSIONS_DOCTYPE,
   attributes: JsonApiFileVersionAttributes,
   cozyMetadata: Object,
   metadata?: Object,
@@ -381,6 +384,7 @@ function jsonApiToRemoteJsonDoc(
   }
 }
 
+// TODO: see if we can transform the version into a proper RemoteFile
 function jsonFileVersionToRemoteFileVersion(
   version /*: JsonApiFileVersion */
 ) /*: RemoteFileVersion */ {
@@ -388,6 +392,7 @@ function jsonFileVersionToRemoteFileVersion(
     _id: version._id,
     _rev: version._rev,
     _type: version._type,
+    type: FILE_TYPE,
     cozyMetadata: version.cozyMetadata,
     metadata: version.metadata,
     relationships: version.relationships,
