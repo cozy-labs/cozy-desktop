@@ -188,7 +188,7 @@ class Config {
     this.persist()
   }
 
-  get version() /*: ?string */ {
+  get version() /*: string */ {
     return _.get(this.fileConfig, 'creds.client.softwareVersion', '')
   }
 
@@ -203,12 +203,12 @@ class Config {
   }
 
   // Return the id of the registered OAuth client
-  get deviceId() /*: ?string */ {
+  get deviceId() /*: string */ {
     return _.get(this.fileConfig, 'creds.client.clientID', '')
   }
 
   // Return the name of the registered OAuth client
-  get deviceName() /*: ?string */ {
+  get deviceName() /*: string */ {
     return _.get(this.fileConfig, 'creds.client.clientName', '')
   }
 
