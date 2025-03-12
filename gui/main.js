@@ -442,10 +442,10 @@ const sendDiskUsage = () => {
     diskTimeout = setTimeout(sendDiskUsage, 10 * 60 * 1000) // every 10 minutes
     desktop
       .diskUsage()
-      .then(res => {
+      .then(({ used, quota }) => {
         const space = {
-          used: +res.attributes.used,
-          quota: +(res.attributes.quota || 0)
+          used: +used,
+          quota: +(quota || 0)
         }
         trayWindow.send('disk-space', space)
         return space

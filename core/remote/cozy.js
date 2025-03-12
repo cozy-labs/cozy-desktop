@@ -20,7 +20,8 @@ const {
   DIR_TYPE,
   INITIAL_SEQ,
   MAX_FILE_SIZE,
-  OAUTH_CLIENTS_DOCTYPE
+  OAUTH_CLIENTS_DOCTYPE,
+  SETTINGS_DOCTYPE
 } = require('./constants')
 const {
   dropSpecialDocs,
@@ -144,14 +145,19 @@ class RemoteCozy {
     return this.client.auth.updateClient()
   }
 
-  diskUsage() /* Promise<*> */ {
-    return this.client.settings.diskUsage()
+  async diskUsage() /* Promise<{ quota: number, used: number }> */ {
+    const client = await this.getClient()
+    const {
+      data: { attributes }
+    } = await client
+      .collection(SETTINGS_DOCTYPE)
+      .get(`${SETTINGS_DOCTYPE}.disk-usage`)
+    return attributes
   }
 
-  hasEnoughSpace(size /*: number */) /*: Promise<boolean> */ {
-    return this.diskUsage().then(
-      ({ attributes: { used, quota } }) => !quota || +quota - +used >= size
-    )
+  async hasEnoughSpace(size /*: number */) /*: Promise<boolean> */ {
+    const { used, quota } = await this.diskUsage()
+    return !quota || +quota - +used >= size
   }
 
   updateLastSync() /*: Promise<void> */ {
