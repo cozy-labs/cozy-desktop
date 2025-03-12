@@ -61,44 +61,51 @@ describe('RemoteCozy', function() {
   after('clean config directory', configHelpers.cleanConfig)
   after(() => cozyStackDouble.stop())
 
-  let remoteCozy
+  let remoteCozy, fetchJSONStub
 
-  beforeEach(function() {
+  beforeEach(async function() {
     this.config.cozyUrl = COZY_URL
     remoteCozy = new RemoteCozy(this.config)
     // Use real OAuth client
     remoteCozy.client = cozyHelpers.cozy
+    remoteCozy.newClient = await remoteHelpers.getClient()
+
+    fetchJSONStub = sinon
+      .stub(remoteCozy.newClient.stackClient, 'fetchJSON')
+      .callThrough()
+  })
+
+  afterEach(() => {
+    fetchJSONStub.restore()
   })
 
   describe('hasEnoughSpace', () => {
+    let fakeDiskUsage
+
+    beforeEach(() => {
+      fakeDiskUsage = fetchJSONStub.withArgs('GET', '/settings/disk-usage')
+    })
+
     it('returns true if the Cozy does not have a quota', async () => {
-      const fakeSettings = sinon
-        .stub(remoteCozy.client.settings, 'diskUsage')
-        .resolves({ attributes: { used: 843 } })
+      fakeDiskUsage.resolves({ data: { attributes: { used: 843 } } })
 
       await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(true)
-
-      fakeSettings.restore()
     })
 
     it('returns true if the remaining quota is greater than the given file size', async () => {
-      const fakeSettings = sinon
-        .stub(remoteCozy.client.settings, 'diskUsage')
-        .resolves({ attributes: { quota: 5000, used: 4800 } })
+      fakeDiskUsage.resolves({
+        data: { attributes: { quota: 5000, used: 4800 } }
+      })
 
       await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(true)
-
-      fakeSettings.restore()
     })
 
     it('returns false if the remaining quota is smaller than the given file size', async () => {
-      const fakeSettings = sinon
-        .stub(remoteCozy.client.settings, 'diskUsage')
-        .resolves({ attributes: { quota: 5000, used: 4801 } })
+      fakeDiskUsage.resolves({
+        data: { attributes: { quota: 5000, used: 4801 } }
+      })
 
       await should(remoteCozy.hasEnoughSpace(200)).be.fulfilledWith(false)
-
-      fakeSettings.restore()
     })
   })
 
@@ -221,9 +228,9 @@ describe('RemoteCozy', function() {
       })
 
       it('rejects with a 413 FetchError if the file is larger than the available quota', async () => {
-        const fakeSettings = sinon
-          .stub(remoteCozy.client.settings, 'diskUsage')
-          .resolves({ attributes: { quota: 5000, used: 4800 } })
+        fetchJSONStub
+          .withArgs('GET', '/settings/disk-usage')
+          .resolves({ data: { attributes: { quota: 5000, used: 4800 } } })
 
         stubFetch()
         await should(
@@ -238,8 +245,6 @@ describe('RemoteCozy', function() {
             updatedAt: new Date().toISOString()
           })
         ).be.rejectedWith(FetchError, { status: 413 })
-
-        fakeSettings.restore()
       })
 
       it('rejects with a 413 FetchError if the file is larger than the max file size', async () => {
@@ -354,9 +359,9 @@ describe('RemoteCozy', function() {
       })
 
       it('returns a 413 FetchError if the file is larger than the available quota', async () => {
-        const fakeSettings = sinon
-          .stub(remoteCozy.client.settings, 'diskUsage')
-          .resolves({ attributes: { quota: 5000, used: 4800 } })
+        fetchJSONStub
+          .withArgs('GET', '/settings/disk-usage')
+          .resolves({ data: { attributes: { quota: 5000, used: 4800 } } })
 
         await should(
           remoteCozy.updateFileById(remoteFile._id, builders.stream().build(), {
@@ -369,8 +374,6 @@ describe('RemoteCozy', function() {
             ifMatch: remoteFile._rev
           })
         ).be.rejectedWith(FetchError, { status: 413 })
-
-        fakeSettings.restore()
       })
     })
   })

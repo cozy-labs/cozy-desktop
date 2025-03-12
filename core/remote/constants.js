@@ -18,6 +18,7 @@ module.exports = {
   // Doctypes
   FILES_DOCTYPE: 'io.cozy.files',
   OAUTH_CLIENTS_DOCTYPE: 'io.cozy.oauth.clients',
+  SETTINGS_DOCTYPE: 'io.cozy.settings',
   VERSIONS_DOCTYPE: 'io.cozy.files.versions',
 
   // Files document type
