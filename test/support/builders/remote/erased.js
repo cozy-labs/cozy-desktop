@@ -3,8 +3,12 @@
 const _ = require('lodash')
 
 const metadata = require('../../../../core/metadata')
-const { ROOT_DIR_ID } = require('../../../../core/remote/constants')
-const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
+const {
+  FILES_DOCTYPE,
+  ROOT_DIR_ID
+} = require('../../../../core/remote/constants')
+const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
+const cozyHelpers = require('../../helpers/cozy')
 const dbBuilders = require('../db')
 
 /*::
@@ -63,34 +67,28 @@ module.exports = class RemoteErasedBuilder {
   }
 
   async create() /*: Promise<CouchDBDeletion> */ {
-    const cozy = this._ensureCozy()
+    const client = await cozyHelpers.newClient(this._ensureCozy())
 
-    if (this.remoteDoc) {
-      const { _id, _rev } = this.remoteDoc
-      await cozy.files.destroyById(_id)
-      return {
-        _id,
-        // Build a fake revision as destroyById does not return the deleted doc
-        _rev: dbBuilders.rev(metadata.extractRevNumber({ _rev }) + 1),
-        _deleted: true
-      }
-    } else {
-      const { _id, _rev } = _.clone(
-        remoteJsonToRemoteDoc(
-          await cozy.files.createDirectory({
+    if (!this.remoteDoc) {
+      const { data: directory } = await client
+        .collection(FILES_DOCTYPE)
+        .createDirectory(
+          {
             name: '',
-            dirID: ROOT_DIR_ID,
-            noSanitize: true
-          })
+            dirId: ROOT_DIR_ID
+          },
+          {
+            sanitizeName: false
+          }
         )
-      )
-      await cozy.files.destroyById(_id)
-      return {
-        _id,
-        // Build a fake revision as destroyById does not return the deleted doc
-        _rev: dbBuilders.rev(metadata.extractRevNumber({ _rev }) + 1),
-        _deleted: true
-      }
+
+      this.remoteDoc = jsonApiToRemoteDoc(directory)
     }
+
+    const {
+      data: { _id, _rev, _deleted }
+    } = await client.collection(FILES_DOCTYPE).destroy(this.remoteDoc)
+
+    return { _id, _rev, _deleted }
   }
 }
