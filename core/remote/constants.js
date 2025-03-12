@@ -17,6 +17,7 @@ const FIVE_GIGABYTES = 5368709122 // bytes
 module.exports = {
   // Doctypes
   FILES_DOCTYPE: 'io.cozy.files',
+  JOBS_DOCTYPE: 'io.cozy.jobs',
   OAUTH_CLIENTS_DOCTYPE: 'io.cozy.oauth.clients',
   SETTINGS_DOCTYPE: 'io.cozy.settings',
   VERSIONS_DOCTYPE: 'io.cozy.files.versions',
