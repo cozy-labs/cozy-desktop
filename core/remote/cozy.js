@@ -19,6 +19,7 @@ const {
   FILE_TYPE,
   DIR_TYPE,
   INITIAL_SEQ,
+  JOBS_DOCTYPE,
   MAX_FILE_SIZE,
   OAUTH_CLIENTS_DOCTYPE,
   SETTINGS_DOCTYPE
@@ -133,8 +134,9 @@ class RemoteCozy {
     return this.newClient
   }
 
-  createJob(workerType /*: string */, args /*: any */) /*: Promise<*> */ {
-    return this.client.jobs.create(workerType, args)
+  async createJob(workerType /*: string */, args /*: any */) /*: Promise<*> */ {
+    const client = await this.getClient()
+    return client.collection(JOBS_DOCTYPE).create(workerType, args)
   }
 
   unregister() /*: Promise<void> */ {
