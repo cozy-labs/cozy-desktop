@@ -160,8 +160,9 @@ class RemoteCozy {
     return !quota || +quota - +used >= size
   }
 
-  updateLastSync() /*: Promise<void> */ {
-    return this.client.settings.updateLastSync()
+  async updateLastSynced() /*: Promise<void> */ {
+    const client = await this.getClient()
+    return client.collection(SETTINGS_DOCTYPE).updateLastSynced()
   }
 
   // Catches cryptic errors thrown during requests made to the remote Cozy by
