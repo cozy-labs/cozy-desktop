@@ -509,7 +509,10 @@ class RemoteCozy {
   }
 
   async downloadBinary(id /*: string */) /*: Promise<Readable> */ {
-    const resp = await this.client.files.downloadById(id)
+    const client = await this.getClient()
+
+    const resp = await client.collection(FILES_DOCTYPE).fetchFileContentById(id)
+
     return resp.body
   }
 
