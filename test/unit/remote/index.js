@@ -41,9 +41,12 @@ describe('remote.Remote', function() {
   before('instanciate config', configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerClient)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('prepare helpers', function() {
+  beforeEach('prepare helpers', async function() {
     remoteHelpers = new RemoteTestHelpers(this)
-    builders = new Builders({ cozy, pouch: this.pouch })
+    builders = new Builders({
+      client: await remoteHelpers.getClient(),
+      pouch: this.pouch
+    })
   })
   beforeEach('instanciate remote', function() {
     this.prep = sinon.createStubInstance(Prep)

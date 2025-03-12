@@ -9,12 +9,9 @@ const should = require('should')
 const { findNote, localDoc, remoteDoc } = require('../../../core/utils/notes')
 const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
-const cozyHelpers = require('../../support/helpers/cozy')
 const { LocalTestHelpers } = require('../../support/helpers/local')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { RemoteTestHelpers } = require('../../support/helpers/remote')
-
-const cozy = cozyHelpers.cozy
 
 describe('utils/notes', () => {
   describe('localDoc', () => {
@@ -64,12 +61,13 @@ describe('utils/notes', () => {
   })
 
   describe('remoteDoc', () => {
-    let remoteHelpers
+    let builders, remoteHelpers
 
     before('instanciate config', configHelpers.createConfig)
     before('register cozy client', configHelpers.registerClient)
     before('instanciate helpers', async function() {
       remoteHelpers = new RemoteTestHelpers(this)
+      builders = new Builders({ client: await remoteHelpers.getClient() })
     })
     afterEach('clean remote cozy', () => remoteHelpers.clean())
     after('clean config directory', configHelpers.cleanConfig)
@@ -77,7 +75,6 @@ describe('utils/notes', () => {
     it('fetches the remote io.cozy.files document associated with the given local doc', async function() {
       const docPath = 'Some interesting stuff.cozy-note'
 
-      const builders = new Builders({ cozy })
       const remote = await builders
         .remoteFile()
         .name(docPath)
@@ -96,7 +93,6 @@ describe('utils/notes', () => {
     it('throws a CozyNoteError with code CozyDocumentMissingError if no remote doc exist for the given local doc', async function() {
       const docPath = 'Some interesting stuff.cozy-note'
 
-      const builders = new Builders({ cozy })
       const doc = await builders
         .metafile()
         .path(docPath)
@@ -112,7 +108,6 @@ describe('utils/notes', () => {
     it('throws a CozyNoteError with code CozyDocumentMissingError if the local doc is not associated with a remote doc', async function() {
       const docPath = 'Some interesting stuff.cozy-note'
 
-      const builders = new Builders({ cozy })
       await builders
         .remoteFile()
         .name(docPath)
@@ -130,12 +125,13 @@ describe('utils/notes', () => {
   })
 
   describe('findNote', () => {
-    let remoteHelpers
+    let builders, remoteHelpers
 
     before('instanciate config', configHelpers.createConfig)
     before('register cozy client', configHelpers.registerClient)
     before('instanciate helpers', async function() {
       remoteHelpers = new RemoteTestHelpers(this)
+      builders = new Builders({ client: await remoteHelpers.getClient() })
     })
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
     afterEach('clean remote cozy', () => remoteHelpers.clean())
@@ -157,7 +153,6 @@ describe('utils/notes', () => {
 
       const localHelpers = new LocalTestHelpers(this)
       await localHelpers.syncDir.outputFile(docPath, 'Note content')
-      const builders = new Builders({ cozy })
       await builders
         .metafile()
         .path(docPath)

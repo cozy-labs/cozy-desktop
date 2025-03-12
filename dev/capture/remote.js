@@ -36,11 +36,10 @@ const ROOT_DIR = {
 const createInitialTree = async function(
   scenario /*: * */,
   cozy /*: * */,
-  pouch /*: Pouch */
+  builders /*: Builders */
 ) {
   if (!scenario.init) return
 
-  const builders = new Builders({ cozy, pouch })
   const remoteDocs /*: RemoteTree */ = {}
   const remoteDocsToTrash /*: Array<FullRemoteFile|RemoteDir> */ = []
 
@@ -250,9 +249,15 @@ const captureScenario = async (scenario /*: * */) => {
   // Setup
   const config = setupConfig()
   const pouch = await setupPouch(config)
-  await createInitialTree(scenario, cozyHelpers.cozy, pouch)
   const helpers = TestHelpers.init({ config, pouch })
+  const builders = new Builders({
+    client: await helpers.remote.getClient(),
+    pouch
+  })
+
   await helpers.clean()
+  await createInitialTree(scenario, cozyHelpers.cozy, builders)
+
   const remoteCozy = new RemoteCozy(config)
   const { last_seq } = await remoteCozy.changes()
 

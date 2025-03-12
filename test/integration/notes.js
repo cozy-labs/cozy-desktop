@@ -11,7 +11,6 @@ const timestamp = require('../../core/utils/timestamp')
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
 describe('Update', () => {
@@ -26,8 +25,11 @@ describe('Update', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
     helpers = TestHelpers.init(this)
+    builders = new Builders({
+      client: await helpers.remote.getClient(),
+      pouch: this.pouch
+    })
 
     await helpers.local.clean()
     await helpers.local.setupTrash()

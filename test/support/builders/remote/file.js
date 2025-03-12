@@ -8,12 +8,10 @@ const {
   inRemoteTrash,
   jsonApiToRemoteDoc
 } = require('../../../../core/remote/document')
-const cozyHelpers = require('../../helpers/cozy')
 const ChecksumBuilder = require('../checksum')
 
 /*::
 import type stream from 'stream'
-import type { Cozy } from 'cozy-client-js'
 import type { CozyClient } from 'cozy-client'
 import type { FullRemoteFile, RemoteFile } from '../../../../core/remote/document'
 */
@@ -51,8 +49,8 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <FullRem
   _data: string | stream.Readable | Buffer
   */
 
-  constructor(cozy /*: ?Cozy */, old /*: ?FullRemoteFile */) {
-    super(cozy, old)
+  constructor(client /*: CozyClient */, old /*: ?FullRemoteFile */) {
+    super(client, old)
 
     if (!old) {
       this.name(`remote-file-${fileNumber}`)
@@ -124,8 +122,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <FullRem
   }
 
   async create() /*: Promise<FullRemoteFile> */ {
-    const cozy = this._ensureCozy()
-    const client = await cozyHelpers.newClient(cozy)
+    const client = this._ensureClient()
 
     const { data: file } = await client.collection(FILES_DOCTYPE).createFile(
       this._data,
@@ -161,8 +158,7 @@ module.exports = class RemoteFileBuilder extends RemoteBaseBuilder /*:: <FullRem
   }
 
   async update() /*: Promise<FullRemoteFile> */ {
-    const cozy = this._ensureCozy()
-    const client = await cozyHelpers.newClient(cozy)
+    const client = this._ensureClient()
     const files = client.collection(FILES_DOCTYPE)
 
     const { data: file } = inRemoteTrash(this.remoteDoc)

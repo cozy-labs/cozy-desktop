@@ -33,9 +33,9 @@ describe('Update file', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    builders = new Builders({ cozy: cozyHelpers.cozy })
     cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
+    builders = new Builders({ client: await helpers.remote.getClient() })
     pouch = helpers.pouch
     prep = helpers.prep
 

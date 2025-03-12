@@ -12,10 +12,9 @@ const {
   inRemoteTrash,
   jsonApiToRemoteDoc
 } = require('../../../../core/remote/document')
-const cozyHelpers = require('../../helpers/cozy')
 
 /*::
-import type { Cozy } from 'cozy-client-js'
+import type { CozyClient } from 'cozy-client'
 import type { RemoteDir } from '../../../../core/remote/document'
 */
 
@@ -32,8 +31,8 @@ var dirNumber = 1
 //     const dir: RemoteDir = await builders.remoteDir().inDir(...).create()
 //
 module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <RemoteDir> */ {
-  constructor(cozy /*: ?Cozy */, old /*: ?RemoteDir */) {
-    super(cozy, old)
+  constructor(client /*: CozyClient */, old /*: ?RemoteDir */) {
+    super(client, old)
 
     if (!old) {
       this.name(`directory-${dirNumber++}`)
@@ -50,8 +49,7 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <RemoteDi
   }
 
   async create() /*: Promise<RemoteDir> */ {
-    const cozy = this._ensureCozy()
-    const client = await cozyHelpers.newClient(cozy)
+    const client = this._ensureClient()
     const files = client.collection(FILES_DOCTYPE)
 
     const { data: directory } = await files.createDirectory(
@@ -81,8 +79,7 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <RemoteDi
   }
 
   async update() /*: Promise<RemoteDir> */ {
-    const cozy = this._ensureCozy()
-    const client = await cozyHelpers.newClient(cozy)
+    const client = this._ensureClient()
     const files = client.collection(FILES_DOCTYPE)
 
     const { data: directory } = inRemoteTrash(this.remoteDoc)

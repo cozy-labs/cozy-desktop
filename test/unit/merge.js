@@ -15,7 +15,6 @@ const timestamp = require('../../core/utils/timestamp')
 const Builders = require('../support/builders')
 const stubSide = require('../support/doubles/side')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const { onPlatform, onPlatforms } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
 const { RemoteTestHelpers } = require('../support/helpers/remote')
@@ -112,7 +111,7 @@ describe('Merge', function() {
   before('instanciate config', configHelpers.createConfig)
   before('register client', configHelpers.registerClient)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('instanciate merge', function() {
+  beforeEach('instanciate merge', async function() {
     this.side = 'local'
     this.merge = new Merge(this.pouch)
     this.merge.local = stubSide('local')
@@ -137,7 +136,10 @@ describe('Merge', function() {
     })
     this.merge.remote.fileContentWasVersioned = sinon.stub().returns(false)
     remoteHelpers = new RemoteTestHelpers(this)
-    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
+    builders = new Builders({
+      client: await remoteHelpers.getClient(),
+      pouch: this.pouch
+    })
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   afterEach('clean remote', () => remoteHelpers.clean())

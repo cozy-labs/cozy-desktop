@@ -20,7 +20,7 @@ const { ROOT_DIR_ID } = require('../../../core/remote/constants')
 
 /*::
 import type { Readable } from 'stream'
-import type { Cozy } from 'cozy-client-js'
+import type { CozyClient } from 'cozy-client'
 import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Warning } from '../../../core/remote/cozy'
@@ -38,12 +38,15 @@ import type { RemoteTree } from '../helpers/remote'
 //
 module.exports = class Builders {
   /*::
-  cozy: ?Cozy
+  client: ?CozyClient
   pouch: ?Pouch
   */
 
-  constructor({ cozy, pouch } /*: {cozy?: Cozy, pouch?: Pouch} */ = {}) {
-    this.cozy = cozy
+  constructor({
+    client,
+    pouch
+  } /*: {|client?: CozyClient, pouch?: Pouch|} */ = {}) {
+    this.client = client
     this.pouch = pouch
   }
 
@@ -60,21 +63,21 @@ module.exports = class Builders {
   }
 
   remoteDir(old /*: ?RemoteDir */) /*: RemoteDirBuilder */ {
-    return new RemoteDirBuilder(this.cozy, old)
+    return new RemoteDirBuilder(this.client, old)
   }
 
   remoteFile(old /*: ?FullRemoteFile */) /*: RemoteFileBuilder */ {
-    return new RemoteFileBuilder(this.cozy, old)
+    return new RemoteFileBuilder(this.client, old)
   }
 
   remoteNote(old /*: ?FullRemoteFile */) /*: RemoteNoteBuilder */ {
-    return new RemoteNoteBuilder(this.cozy, old)
+    return new RemoteNoteBuilder(this.client, old)
   }
 
   remoteErased(
     old /*: ?FullRemoteFile|RemoteDir */
   ) /*: RemoteErasedBuilder */ {
-    return new RemoteErasedBuilder(this.cozy, old)
+    return new RemoteErasedBuilder(this.client, old)
   }
 
   buildRemoteTree(

@@ -90,7 +90,7 @@ describe('RemoteWatcher', function() {
     remoteHelpers = new RemoteTestHelpers(this)
   })
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(function instanciateRemoteWatcher() {
+  beforeEach(async function instanciateRemoteWatcher() {
     clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'setInterval'] })
 
     this.prep = sinon.createStubInstance(Prep)
@@ -103,7 +103,11 @@ describe('RemoteWatcher', function() {
     })
     this.events = new EventEmitter()
     this.watcher = new RemoteWatcher(this)
-    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
+
+    builders = new Builders({
+      client: await this.remoteCozy.getClient(),
+      pouch: this.pouch
+    })
   })
   beforeEach(async function() {
     await async.retry({ times: 2 }, async () => {
