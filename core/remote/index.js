@@ -142,8 +142,8 @@ class Remote /*:: implements Reader, Writer */ {
     return this.remoteCozy.update()
   }
 
-  updateLastSync() {
-    return this.remoteCozy.updateLastSync()
+  updateLastSynced() {
+    return this.remoteCozy.updateLastSynced()
   }
 
   /** Create a readable stream for the given doc */
