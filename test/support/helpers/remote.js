@@ -17,6 +17,7 @@ const {
   TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
+const { remoteJsonToRemoteDoc } = require('../../../core/remote/document')
 
 /*::
 import type { Client as OldCozyClient } from 'cozy-client-js'
@@ -102,6 +103,7 @@ class RemoteTestHelpers {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       })
+      .then(remoteJsonToRemoteDoc)
       .then(this.side.remoteCozy.toRemoteDoc)
   }
 
@@ -117,6 +119,7 @@ class RemoteTestHelpers {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       })
+      .then(remoteJsonToRemoteDoc)
       .then(this.side.remoteCozy.toRemoteDoc)
   }
 
@@ -129,6 +132,7 @@ class RemoteTestHelpers {
         remoteDocsByPath[parentPath + '/'] ||
         (await this.cozy.files
           .statByPath('/' + parentPath + '/')
+          .then(remoteJsonToRemoteDoc)
           .then(this.side.remoteCozy.toRemoteDoc)) ||
         {}
       )._id
@@ -228,8 +232,7 @@ class RemoteTestHelpers {
   }
 
   async byId(id /*: string */) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    const remoteDoc = await this.cozy.files.statById(id)
-    return await this.side.remoteCozy.toRemoteDoc(remoteDoc)
+    return this.side.remoteCozy.find(id)
   }
 
   async byIdMaybe(
