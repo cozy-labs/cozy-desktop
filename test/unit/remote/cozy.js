@@ -15,13 +15,13 @@ const { FetchError } = require('cozy-stack-client')
 const metadata = require('../../../core/metadata')
 const {
   DIR_TYPE,
+  FILE_TYPE,
   ROOT_DIR_ID,
   TRASH_DIR_ID,
   TRASH_DIR_NAME,
   MAX_FILE_SIZE,
   OAUTH_CLIENTS_DOCTYPE,
-  FILES_DOCTYPE,
-  VERSIONS_DOCTYPE
+  FILES_DOCTYPE
 } = require('../../../core/remote/constants')
 const { RemoteCozy } = require('../../../core/remote/cozy')
 const { withDefaultValues } = require('../../../core/remote/document')
@@ -1071,7 +1071,8 @@ describe('RemoteCozy', function() {
       const versions = await remoteCozy.fetchOldFileVersions(modified)
       should(versions).have.length(1)
       should(versions[0]).have.properties({
-        _type: VERSIONS_DOCTYPE,
+        _type: FILES_DOCTYPE,
+        type: FILE_TYPE,
         md5sum: original.md5sum,
         size: original.size
       })

@@ -22,7 +22,8 @@ const {
   JOBS_DOCTYPE,
   MAX_FILE_SIZE,
   OAUTH_CLIENTS_DOCTYPE,
-  SETTINGS_DOCTYPE
+  SETTINGS_DOCTYPE,
+  VERSIONS_DOCTYPE
 } = require('./constants')
 const {
   dropSpecialDocs,
@@ -636,18 +637,19 @@ class RemoteCozy {
   }
 
   async fetchOldFileVersions(
-    file /*: MetadataRemoteFile */
+    file /*: MetadataRemoteFile|FullRemoteFile */
   ) /*: Promise<RemoteFileVersion[]> */ {
-    const remoteDoc = await this.find(file._id)
-    if (remoteDoc.type === FILE_TYPE) {
-      // XXX: `remoteDoc` is fetched with `cozy-client-js` which populates the
-      // `relations` attribute with a function returning hydrated relationships
-      // (i.e. relationships, by name, whose attributes are found in the
-      // `included` JSON API response attribute.
-      // If `remoteDoc` was fetched with `cozy-client`, we would have to do the
-      // mapping ourselves.
-      return remoteDoc
-        .relations('old_versions')
+    const client = await this.getClient()
+
+    const { data: remoteDoc, included } = await client
+      .collection(FILES_DOCTYPE)
+      .statById(file._id)
+
+    if (remoteDoc.type === FILE_TYPE && Array.isArray(included)) {
+      const oldVersions = included.filter(
+        ({ type }) => type === VERSIONS_DOCTYPE
+      )
+      return oldVersions
         .map(jsonFileVersionToRemoteFileVersion)
         .sort(sortBy({ updated_at: 'desc' }, { numeric: true }))
     } else {
