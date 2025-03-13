@@ -48,7 +48,7 @@ describe('Trash', () => {
     let parent, file
 
     beforeEach(async () => {
-      parent = await cozy.files.createDirectory({ name: 'parent' })
+      parent = await helpers.remote.createDirectory('parent')
       file = await cozy.files.create('File content...', {
         name: 'file',
         dirID: parent._id
@@ -85,7 +85,7 @@ describe('Trash', () => {
           await helpers.local.scan()
           await cozy.files.updateAttributesById(file._id, {
             name: 'file',
-            dir_id: parent.attributes.dir_id
+            dir_id: parent.dir_id
           })
           await helpers.remote.pullChanges()
           await helpers.syncAll()
@@ -105,7 +105,7 @@ describe('Trash', () => {
         it('does not trash the file on the remote Cozy and re-downloads it', async () => {
           await cozy.files.updateAttributesById(file._id, {
             name: 'file',
-            dir_id: parent.attributes.dir_id
+            dir_id: parent.dir_id
           })
           await helpers.remote.pullChanges()
           await helpers.local.syncDir.remove('parent/file')
@@ -316,12 +316,11 @@ describe('Trash', () => {
     let parent, dir, subdir
 
     beforeEach(async () => {
-      parent = await cozy.files.createDirectory({ name: 'parent' })
-      dir = await cozy.files.createDirectory({ name: 'dir', dirID: parent._id })
-      await cozy.files.createDirectory({ name: 'empty-subdir', dirID: dir._id })
-      subdir = await cozy.files.createDirectory({
-        name: 'subdir',
-        dirID: dir._id
+      parent = await helpers.remote.createDirectory('parent')
+      dir = await helpers.remote.createDirectory('dir', { dirId: parent._id })
+      await helpers.remote.createDirectory('empty-subdir', { dirId: dir._id })
+      subdir = await helpers.remote.createDirectory('subdir', {
+        dirId: dir._id
       })
       await cozy.files.create('foo', { name: 'file', dirID: subdir._id })
 
@@ -385,7 +384,7 @@ describe('Trash', () => {
       context('with unsynced local-only content', () => {
         beforeEach(async () => {
           await helpers.local.syncDir.outputFile(
-            `${pathUtils.remoteToLocal(dir.attributes.path)}/local-child-file`,
+            `${pathUtils.remoteToLocal(dir.path)}/local-child-file`,
             'content'
           )
           await helpers.local.scan()
@@ -437,7 +436,7 @@ describe('Restore', () => {
     let parent, file
 
     beforeEach(async () => {
-      parent = await cozy.files.createDirectory({ name: 'parent' })
+      parent = await helpers.remote.createDirectory('parent')
       file = await cozy.files.create('File content...', {
         name: 'file',
         dirID: parent._id

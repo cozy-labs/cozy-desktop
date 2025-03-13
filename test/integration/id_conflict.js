@@ -40,10 +40,10 @@ describe('Identity conflict', () => {
   describe('between two dirs', () => {
     describe('both remote', () => {
       beforeEach(async () => {
-        await cozy.files.createDirectoryByPath('/alfred')
+        await helpers.remote.createDirectoryByPath('/alfred')
         await helpers.pullAndSyncAll()
 
-        await cozy.files.createDirectoryByPath('/Alfred')
+        await helpers.remote.createDirectoryByPath('/Alfred')
         await helpers.pullAndSyncAll()
       })
 
@@ -75,7 +75,7 @@ describe('Identity conflict', () => {
       beforeEach(async () => {
         await helpers.local.syncDir.ensureDir('alfred')
         await helpers.local.scan()
-        await cozy.files.createDirectoryByPath('/Alfred')
+        await helpers.remote.createDirectoryByPath('/Alfred')
         await helpers.pullAndSyncAll()
       })
 
@@ -105,7 +105,7 @@ describe('Identity conflict', () => {
 
     describe('unsynced remote + local', () => {
       beforeEach(async () => {
-        await cozy.files.createDirectoryByPath('/alfred')
+        await helpers.remote.createDirectoryByPath('/alfred')
         await helpers.remote.pullChanges()
         await helpers.local.syncDir.ensureDir('Alfred')
         await helpers.local.scan()
@@ -143,11 +143,11 @@ describe('Identity conflict', () => {
 
     describe('synced + moved remote', () => {
       beforeEach(async () => {
-        await cozy.files.createDirectory({ name: 'alfred' })
-        await cozy.files.createDirectory({ name: 'john' })
+        await helpers.remote.createDirectoryByPath('/alfred')
+        const john = await helpers.remote.createDirectoryByPath('/john')
         await helpers.pullAndSyncAll()
 
-        await cozy.files.updateAttributesByPath('/john', { name: 'Alfred' })
+        await helpers.remote.move(john, '/Alfred')
         await helpers.pullAndSyncAll()
       })
 
@@ -177,10 +177,10 @@ describe('Identity conflict', () => {
 
     describe('unsynced remote + moved local', () => {
       beforeEach(async () => {
-        await cozy.files.createDirectory({ name: 'john' })
+        await helpers.remote.createDirectory('john')
         await helpers.pullAndSyncAll()
 
-        await cozy.files.createDirectory({ name: 'alfred' })
+        await helpers.remote.createDirectory('alfred')
         await helpers.remote.pullChanges()
 
         await helpers.local.syncDir.rename('john/', 'Alfred/')
@@ -410,7 +410,7 @@ describe('Identity conflict', () => {
         const nfdFile = 'file_e\u0301'
 
         // Remote NFC file/dir was synchronized...
-        await cozy.files.createDirectory({ name: nfcDir })
+        await helpers.remote.createDirectory(nfcDir)
         await cozy.files.create('whatever', { name: nfcFile })
         await helpers.pullAndSyncAll()
         // ...and normalized to NFD by HFS+ (simulated here)

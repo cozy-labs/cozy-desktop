@@ -3,7 +3,6 @@
 
 const should = require('should')
 
-const { ROOT_DIR_ID } = require('../../core/remote/constants')
 const timestamp = require('../../core/utils/timestamp')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
@@ -122,11 +121,8 @@ describe('Update only mtime', () => {
         oldUpdatedAt = new Date()
         oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-        await cozy.files.createDirectory({
-          name: 'folder',
-          dirID: ROOT_DIR_ID,
-          createdAt: oldUpdatedAt.toISOString(),
-          updatedAt: oldUpdatedAt.toISOString()
+        await helpers.remote.createDirectory('folder', {
+          lastModifiedDate: oldUpdatedAt.toISOString()
         })
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
@@ -155,11 +151,8 @@ describe('Update only mtime', () => {
         oldUpdatedAt = new Date()
         oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-        dir = await cozy.files.createDirectory({
-          name: 'folder',
-          dirID: ROOT_DIR_ID,
-          createdAt: oldUpdatedAt.toISOString(),
-          updatedAt: oldUpdatedAt.toISOString()
+        dir = await helpers.remote.createDirectory('folder', {
+          lastModifiedDate: oldUpdatedAt.toISOString()
         })
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
@@ -178,7 +171,7 @@ describe('Update only mtime', () => {
 
         should(helpers.putDocs('path', 'updated_at')).deepEqual([
           {
-            path: dir.attributes.name,
+            path: dir.name,
             updated_at: newUpdatedAt.toISOString()
           }
         ])
