@@ -428,16 +428,18 @@ describe('Conflict resolution', () => {
     })
 
     describe('retry', () => {
-      beforeEach('simulate stack failure', () => {
-        sinon.stub(cozy.files, 'updateAttributesById').throws(new FetchError())
-      })
-
       it('success', async () => {
+        // Simulate stack failure
+        sinon
+          .stub(helpers.remote.side.remoteCozy, 'updateAttributesById')
+          .throws(new FetchError())
+
         await helpers.remote.pullChanges()
         should(await helpers.remote.tree()).deepEqual(['.cozy_trash/', 'foo'])
 
         // Stack is back, retry...
-        cozy.files.updateAttributesById.restore()
+        helpers.remote.side.remoteCozy.updateAttributesById.restore()
+
         await helpers.remote.pullChanges()
         should(await helpers.remote.tree()).deepEqual([
           '.cozy_trash/',

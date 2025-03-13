@@ -328,11 +328,11 @@ class RemoteCozy {
                updated_at: string|} */,
     options /*: {|ifMatch: string|} */
   ) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    const updated = await this.client.files.updateAttributesById(id, attrs, {
-      ...options,
-      noSanitize: true
-    })
-    return this.toRemoteDoc(remoteJsonToRemoteDoc(updated))
+    const client = await this.getClient()
+    const { data: updated } = await client
+      .collection(FILES_DOCTYPE)
+      .updateAttributes(id, attrs, { ...options, sanitizeName: false })
+    return this.toRemoteDoc(jsonApiToRemoteDoc(updated))
   }
 
   async trashById(

@@ -392,10 +392,14 @@ describe('RemoteCozy', function() {
           .create()
 
         should(
-          await remoteCozy.updateAttributesById(remoteFile._id, {
-            name: 'bar ',
-            updatedAt: new Date().toISOString()
-          })
+          await remoteCozy.updateAttributesById(
+            remoteFile._id,
+            {
+              name: 'bar ',
+              updated_at: new Date().toISOString()
+            },
+            { ifMatch: remoteFile._rev }
+          )
         ).have.properties({
           type: 'file',
           name: 'bar '
