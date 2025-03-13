@@ -370,10 +370,11 @@ class Remote /*:: implements Reader, Writer */ {
 
     if (overwrite && isOverwritingTarget) {
       try {
-        const referencedBy = await this.remoteCozy.getReferencedBy(
-          overwrite.remote._id
+        const remoteDoc = await this.remoteCozy.find(overwrite.remote._id)
+        await this.remoteCozy.addReferencedBy(
+          remoteId,
+          remoteDoc.relations('referenced_by')
         )
-        await this.remoteCozy.addReferencedBy(remoteId, referencedBy)
         await this.assignNewRemote(newMetadata)
       } catch (err) {
         if (err.status === 404) {
