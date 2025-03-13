@@ -524,10 +524,10 @@ describe('remote.Remote', function() {
 
         await this.remote.overwriteFileAsync(doc1)
 
-        const update1 = await cozy.files.statById(doc1.remote._id)
-        should(
-          timestamp.roundedRemoteDate(update1.attributes.updated_at)
-        ).equal(timestamp.roundedRemoteDate(created.updated_at))
+        const update1 = await remoteHelpers.byId(doc1.remote._id)
+        should(timestamp.roundedRemoteDate(update1.updated_at)).equal(
+          timestamp.roundedRemoteDate(created.updated_at)
+        )
         should(doc1.remote._rev).equal(update1._rev)
 
         // Request with remote modification date older than local one
@@ -553,10 +553,10 @@ describe('remote.Remote', function() {
 
         await this.remote.overwriteFileAsync(doc2)
 
-        const update2 = await cozy.files.statById(doc2.remote._id)
-        should(
-          timestamp.roundedRemoteDate(update2.attributes.updated_at)
-        ).equal(doc2.local.updated_at)
+        const update2 = await remoteHelpers.byId(doc2.remote._id)
+        should(timestamp.roundedRemoteDate(update2.updated_at)).equal(
+          doc2.local.updated_at
+        )
         should(doc2.remote._rev).equal(update2._rev)
 
         // Request without remote modification date. Old PouchDB records might
@@ -569,15 +569,8 @@ describe('remote.Remote', function() {
           .updatedAt(timestamp.build(2017, 10, 16, 16, 12, 1, 0).toISOString())
           .noRecord() // XXX: Prevent Pouch conflict from reusing `doc2`'s _id
           .create()
-        doc3 = {
-          ...doc3,
-          remote: {
-            path: doc3.remote.path,
-            _id: doc3.remote._id,
-            _rev: doc3.remote._rev
-          }
-        }
-        // Fake old PouchDB record
+
+        delete doc3.remote.updated_at
         const { rev } = await this.pouch.put(doc3)
         doc3._rev = rev
 
@@ -594,10 +587,10 @@ describe('remote.Remote', function() {
 
         await this.remote.overwriteFileAsync(doc3)
 
-        const update3 = await cozy.files.statById(doc3.remote._id)
-        should(
-          timestamp.roundedRemoteDate(update3.attributes.updated_at)
-        ).equal(doc3.local.updated_at)
+        const update3 = await remoteHelpers.byId(doc3.remote._id)
+        should(timestamp.roundedRemoteDate(update3.updated_at)).equal(
+          doc3.local.updated_at
+        )
         should(doc3.remote._rev).equal(update3._rev)
       })
     })

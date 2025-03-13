@@ -328,12 +328,13 @@ describe('RemoteCozy', function() {
 
         should(
           await remoteCozy.updateFileById(remoteFile._id, data, {
+            name: remoteFile.name,
             contentType: 'text/plain',
             contentLength: 0,
             checksum,
             executable: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            lastModifiedDate: new Date().toISOString(),
+            ifMatch: remoteFile._rev
           })
         ).have.properties({
           type: 'file',
@@ -353,12 +354,10 @@ describe('RemoteCozy', function() {
           .data('initial content')
           .create()
 
-        sinon
-          .stub(remoteCozy.client.files, 'updateById')
-          .rejects(CHROMIUM_ERROR)
+        fetchJSONStub.rejects(CHROMIUM_ERROR)
       })
       afterEach(() => {
-        remoteCozy.client.files.updateById.restore()
+        fetchJSONStub.restore()
       })
 
       it('returns a 413 FetchError if the file is larger than the available quota', async () => {
@@ -368,12 +367,12 @@ describe('RemoteCozy', function() {
 
         await should(
           remoteCozy.updateFileById(remoteFile._id, builders.stream().build(), {
+            name: remoteFile.name,
             contentType: 'text/plain',
             contentLength: 300,
             checksum: 'md5sum',
             executable: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            lastModifiedDate: new Date().toISOString(),
             ifMatch: remoteFile._rev
           })
         ).be.rejectedWith(FetchError, { status: 413 })
