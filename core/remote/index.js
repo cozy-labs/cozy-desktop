@@ -164,7 +164,7 @@ class Remote /*:: implements Reader, Writer */ {
 
     try {
       const dir = await this.remoteCozy.createDirectory(
-        newDocumentAttributes(name, parent._id, doc.updated_at)
+        newDirectoryAttributes(name, parent._id, doc.updated_at)
       )
       metadata.updateRemote(doc, dir)
     } catch (err) {
@@ -220,7 +220,7 @@ class Remote /*:: implements Reader, Writer */ {
           : stream
 
         const created = await this.remoteCozy.createFile(source, {
-          ...newDocumentAttributes(name, parent._id, doc.updated_at),
+          ...newFileAttributes(name, parent._id, doc.updated_at),
           checksum: doc.md5sum,
           executable: doc.executable || false,
           contentLength: doc.size,
@@ -521,7 +521,7 @@ function dirAndName(localPath /*: string */) /*: [string, string] */ {
   return [dir, name]
 }
 
-function newDocumentAttributes(
+function newFileAttributes(
   name /*: string */,
   dirID /*: string */,
   updatedAt /*: string */
@@ -534,6 +534,18 @@ function newDocumentAttributes(
     // greater.
     createdAt: updatedAt,
     updatedAt
+  }
+}
+
+function newDirectoryAttributes(
+  name /*: string */,
+  dirId /*: string */,
+  lastModifiedDate /*: string */
+) {
+  return {
+    name,
+    dirId,
+    lastModifiedDate
   }
 }
 

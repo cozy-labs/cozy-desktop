@@ -288,17 +288,16 @@ class RemoteCozy {
 
   async createDirectory(
     options /*: {|name: string,
-                 dirID?: string,
-                 createdAt: string,
-                 updatedAt: string|} */
-  ) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    const folder /*: RemoteJsonDir */ = await this.client.files.createDirectory(
-      {
-        ...options,
-        noSanitize: true
-      }
-    )
-    return this.toRemoteDoc(remoteJsonToRemoteDoc(folder))
+                 dirId?: string,
+                 lastModifiedDate: string|} */
+  ) /*: Promise<RemoteDir> */ {
+    const client = await this.getClient()
+    const { data: folder } = await client
+      .collection(FILES_DOCTYPE)
+      .createDirectory(options, {
+        sanitizeName: false
+      })
+    return this.toRemoteDoc(jsonApiToRemoteDoc(folder))
   }
 
   async updateFileById(
