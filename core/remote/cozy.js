@@ -336,18 +336,17 @@ class RemoteCozy {
   }
 
   async trashById(
-    id /*: string */,
+    _id /*: string */,
     options /*: {|ifMatch: string|} */
   ) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    const trashed = await this.client.files.trashById(id, options)
-    return this.toRemoteDoc(remoteJsonToRemoteDoc(trashed))
-  }
-
-  destroyById(
-    id /*: string */,
-    options /*: {|ifMatch: string|} */
-  ) /*: Promise<void> */ {
-    return this.client.files.destroyById(id, options)
+    const client = await this.getClient()
+    // TODO: include relationships or referenced_by to first argument so
+    // cozy-client can make sure they're removed.
+    // Make sure we don't need them though.
+    const { data: trashed } = await client
+      .collection(FILES_DOCTYPE)
+      .destroy({ _id }, options)
+    return this.toRemoteDoc(jsonApiToRemoteDoc(trashed))
   }
 
   async changes(
