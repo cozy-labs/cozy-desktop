@@ -33,7 +33,7 @@ describe('Add', () => {
     helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
 
-    parent = await cozy.files.createDirectory({ name: 'parent' })
+    parent = await helpers.remote.createDirectory('parent')
     await helpers.pullAndSyncAll()
     await helpers.local.scan()
 
@@ -56,7 +56,7 @@ describe('Add', () => {
         })
       } else {
         return await helpers.local.syncDir.outputFile(
-          path.join(parent.attributes.path.slice(1), filename),
+          path.join(parent.path.slice(1), filename),
           'foo'
         )
       }
@@ -209,13 +209,13 @@ describe('Add', () => {
   describe('folder', () => {
     const createDoc = async (side, name, parent) => {
       if (side === 'remote') {
-        return await cozy.files.createDirectory({ name, dirID: parent._id })
+        return await helpers.remote.createDirectory(name, { dirId: parent._id })
       } else {
-        const dirPath = path.join(parent.attributes.path.slice(1), name)
+        const dirPath = path.join(parent.path.slice(1), name)
         await helpers.local.syncDir.ensureDir(dirPath)
         return {
           _id: metadata.id(dirPath),
-          attributes: { path: `/${dirPath}` },
+          path: `/${dirPath}`,
           _rev: '1'
         }
       }
@@ -235,7 +235,7 @@ describe('Add', () => {
         await createDoc('local', 'empty-subdir', dir)
 
         await helpers.local.syncDir.outputFile(
-          path.join(subdir.attributes.path, 'file'),
+          path.join(subdir.path, 'file'),
           'foo'
         )
         await helpers.local.scan()
@@ -296,14 +296,14 @@ describe('Add', () => {
           await createDoc('local', 'empty-subdir', dir)
 
           await helpers.local.syncDir.outputFile(
-            path.join(subdir.attributes.path, 'file'),
+            path.join(subdir.path, 'file'),
             'foo'
           )
           await helpers.local.scan()
 
           // Update the directory's metadata
           await fse.utimes(
-            helpers.local.syncDir.abspath(dir.attributes.path.slice(1)),
+            helpers.local.syncDir.abspath(dir.path.slice(1)),
             new Date(),
             new Date()
           )

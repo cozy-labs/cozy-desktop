@@ -115,9 +115,8 @@ const runActions = (scenario /*: * */, helpers /*: Helpers */) => {
     switch (action.type) {
       case 'mkdir':
         debug('- mkdir', action.path)
-        return cozy.files.createDirectoryByPath(`/${action.path}`, {
-          createdAt: now,
-          updatedAt: now
+        return helpers.remote.createDirectoryByPath(`/${action.path}`, {
+          lastModifiedDate: now
         })
 
       case 'create_file':
