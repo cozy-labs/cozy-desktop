@@ -40,7 +40,7 @@ describe('Executable handling', () => {
   const executableStatus = async relpath => {
     const mode = await syncDir.octalMode(relpath)
     const doc = await helpers.docByPath(relpath)
-    const remote = await cozy.files.statByPath(`/${relpath}`)
+    const remote = await helpers.remote.byPath(`/${relpath}`)
 
     return {
       local: mode,
@@ -50,7 +50,7 @@ describe('Executable handling', () => {
           doc.remote && doc.remote.type === 'file' && doc.remote.executable,
         synced: doc.executable
       },
-      remote: remote.attributes.executable
+      remote: remote.type === 'file' && remote.executable
     }
   }
 

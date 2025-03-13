@@ -77,7 +77,7 @@ describe('Conflict resolution', () => {
       await helpers.syncAll()
 
       // Update file remotely
-      const remoteFile = await cozy.files.statByPath('/concurrent-edited')
+      const remoteFile = await helpers.remote.byPath('/concurrent-edited')
       await helpers.pouch.byRemoteIdMaybe(remoteFile._id)
       await cozy.files.updateById(remoteFile._id, 'remote-content', {
         contentType: 'text/plain'
@@ -139,7 +139,7 @@ describe('Conflict resolution', () => {
         'concurrent-edited',
         localUpdateContent
       )
-      remoteFile = await cozy.files.statByPath(`/concurrent-edited`)
+      remoteFile = await helpers.remote.byPath(`/concurrent-edited`)
       pouchFile = await helpers.pouch.byRemoteIdMaybe(remoteFile._id)
       await cozy.files.updateById(remoteFile._id, remoteUpdateContent, {
         contentType: 'text/plain',
@@ -194,8 +194,8 @@ describe('Conflict resolution', () => {
           await fse.readdir(helpers.local.syncPath)
         ).filter(x => x.indexOf('-conflict-') !== -1)[0]
 
-        const remoteBadFile = await cozy.files.statByPath('/' + conflictedPath)
-        const remoteFile = await cozy.files.statByPath(`/concurrent-edited`)
+        const remoteBadFile = await helpers.remote.byPath('/' + conflictedPath)
+        const remoteFile = await helpers.remote.byPath(`/concurrent-edited`)
         await cozy.files.trashById(remoteBadFile._id)
         await cozy.files.updateById(remoteFile._id, `content6`, {
           contentType: 'text/plain'
@@ -325,7 +325,7 @@ describe('Conflict resolution', () => {
       await helpers.local.scan()
       await helpers.syncAll()
       // FIXME: Initial tree helper?
-      const remoteFile = await cozy.files.statByPath(`/src`)
+      const remoteFile = await helpers.remote.byPath('/src')
       await cozy.files.updateAttributesById(remoteFile._id, { name: 'dst' })
       await helpers.local.syncDir.outputFile('dst', 'local dst content')
 
@@ -361,7 +361,7 @@ describe('Conflict resolution', () => {
       await helpers.local.scan()
       await helpers.syncAll()
       // FIXME: Initial tree helper?
-      const remoteDir = await cozy.files.statByPath(`/src`)
+      const remoteDir = await helpers.remote.byPath('/src')
       await cozy.files.updateAttributesById(remoteDir._id, { name: 'dst' })
       await helpers.local.syncDir.ensureDir('dst')
 

@@ -621,7 +621,7 @@ describe('Move', () => {
         'parent/src/'
       ])
 
-      const subdir = await cozy.files.statByPath('/parent/dst/dir/subdir')
+      const subdir = await helpers.remote.byPath('/parent/dst/dir/subdir')
       should(await helpers.pouch.byRemoteId(subdir._id))
         .have.propertyByPath('remote', '_rev')
         .eql(subdir._rev)
