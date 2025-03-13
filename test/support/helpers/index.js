@@ -240,5 +240,6 @@ const init /*: (TestHelpersOptions) => TestHelpers */ = opts =>
   new TestHelpers(opts)
 
 module.exports = {
+  TestHelpers,
   init
 }

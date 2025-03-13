@@ -11,7 +11,6 @@ const fse = require('fs-extra')
 const _ = require('lodash')
 
 const { Pouch } = require('../../core/pouch')
-const { ROOT_DIR_ID } = require('../../core/remote/constants')
 const { RemoteCozy } = require('../../core/remote/cozy')
 const timestamp = require('../../core/utils/timestamp')
 const Builders = require('../../test/support/builders')
@@ -23,23 +22,20 @@ const cozyHelpers = require('../../test/support/helpers/cozy')
 import type { MetadataRemoteInfo } from '../../core/metadata'
 import type { FullRemoteFile, RemoteDir } from '../../core/remote/document'
 import type { RemoteTree } from '../../test/support/helpers/remote'
+import type { TestHelpers as Helpers } from '../../test/support/helpers'
 */
 
 // eslint-disable-next-line no-console,no-unused-vars
 const debug = process.env.TESTDEBUG != null ? console.log : (...args) => {}
 
-const ROOT_DIR = {
-  _id: ROOT_DIR_ID,
-  path: '/'
-}
-
 const createInitialTree = async function(
   scenario /*: * */,
-  cozy /*: * */,
+  helpers /*: Helpers */,
   builders /*: Builders */
 ) {
   if (!scenario.init) return
 
+  const { cozy } = helpers.remote
   const remoteDocs /*: RemoteTree */ = {}
   const remoteDocsToTrash /*: Array<FullRemoteFile|RemoteDir> */ = []
 
@@ -47,7 +43,9 @@ const createInitialTree = async function(
   for (const initDoc of scenario.init) {
     const remotePath = '/' + _.trimEnd(initDoc.path, '/')
     const remoteName = path.posix.basename(remotePath)
-    const remoteParent = remoteDocs[path.posix.dirname(remotePath)] || ROOT_DIR
+    const remoteParent =
+      remoteDocs[path.posix.dirname(remotePath)] ||
+      (await helpers.remote.getRootDir())
     const updatedAt = new Date()
 
     if (initDoc.path.endsWith('/')) {
@@ -256,7 +254,7 @@ const captureScenario = async (scenario /*: * */) => {
   })
 
   await helpers.clean()
-  await createInitialTree(scenario, cozyHelpers.cozy, builders)
+  await createInitialTree(scenario, helpers, builders)
 
   const remoteCozy = new RemoteCozy(config)
   const { last_seq } = await remoteCozy.changes()
