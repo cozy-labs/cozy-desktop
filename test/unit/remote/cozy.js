@@ -298,9 +298,8 @@ describe('RemoteCozy', function() {
         should(
           await remoteCozy.createDirectory({
             name: ' foo ',
-            dirID: ROOT_DIR_ID,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            dirId: ROOT_DIR_ID,
+            lastModifiedDate: new Date().toISOString()
           })
         ).have.properties({
           type: DIR_TYPE,
