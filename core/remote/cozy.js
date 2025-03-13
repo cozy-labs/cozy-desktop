@@ -574,19 +574,6 @@ class RemoteCozy {
     return { flatSubdomains }
   }
 
-  async getReferencedBy(id /*: string */) /*: Promise<Reference[]> */ {
-    const client = await this.getClient()
-    const files = client.collection(FILES_DOCTYPE)
-    const { data } = await files.get(id)
-    return (
-      (data &&
-        data.relationships &&
-        data.relationships.referenced_by &&
-        data.relationships.referenced_by.data) ||
-      []
-    )
-  }
-
   async addReferencedBy(
     _id /*: string */,
     referencedBy /*: Reference[] */
