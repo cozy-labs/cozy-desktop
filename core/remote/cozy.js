@@ -498,13 +498,7 @@ class RemoteCozy {
   }
 
   async isEmpty(id /*: string */) /*: Promise<boolean> */ {
-    const dir = await this.client.files.statById(id)
-    if (dir.attributes.type !== DIR_TYPE) {
-      throw new Error(
-        `Cannot check emptiness of directory ${id}: ` +
-          `wrong type: ${dir.attributes.type}`
-      )
-    }
+    const dir = await this.findDir(id)
     return dir.relations('contents').length === 0
   }
 
