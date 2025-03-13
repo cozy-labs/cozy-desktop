@@ -29,6 +29,7 @@ const {
   dropSpecialDocs,
   withDefaultValues,
   remoteJsonToRemoteDoc,
+  jsonApiToRemoteDoc,
   jsonApiToRemoteJsonDoc,
   jsonFileVersionToRemoteFileVersion
 } = require('./document')
@@ -378,9 +379,9 @@ class RemoteCozy {
   }
 
   async find(id /*: string */) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    return this.toRemoteDoc(
-      remoteJsonToRemoteDoc(await this.client.files.statById(id))
-    )
+    const client = await this.getClient()
+    const { data: doc } = await client.collection(FILES_DOCTYPE).statById(id)
+    return this.toRemoteDoc(jsonApiToRemoteDoc(doc))
   }
 
   async findMaybe(
@@ -395,8 +396,7 @@ class RemoteCozy {
   }
 
   async findDir(id /*: string */) /*: Promise<RemoteDir> */ {
-    const remoteDir = await this.client.files.statById(id)
-    const doc = await this.toRemoteDoc(remoteJsonToRemoteDoc(remoteDir))
+    const doc = await this.find(id)
     if (doc.type !== DIR_TYPE) {
       throw new Error(`Unexpected file with remote _id ${id}`)
     }
