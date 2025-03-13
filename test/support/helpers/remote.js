@@ -33,6 +33,7 @@ export type RemoteTree = { [string]: FullRemoteFile|RemoteDir }
 class RemoteTestHelpers {
   /*::
   side: Remote
+  rootDir: ?RemoteDir
   */
 
   constructor(
@@ -90,6 +91,14 @@ class RemoteTestHelpers {
     this.side.watcher.running = true
     await this.side.watcher.requestRun()
     this.side.watcher.running = false
+  }
+
+  async getRootDir() {
+    if (this.rootDir) return this.rootDir
+
+    this.rootDir = await this.side.remoteCozy.findDir(ROOT_DIR_ID)
+
+    return this.rootDir
   }
 
   async createDirectory(

@@ -19,7 +19,6 @@ const {
   TRASH_DIR_ID
 } = require('../../../core/remote/constants')
 const { FetchError } = require('../../../core/remote/cozy')
-const { remoteJsonToRemoteDoc } = require('../../../core/remote/document')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
 const { CONFLICT_REGEXP } = require('../../../core/utils/conflicts')
 const timestamp = require('../../../core/utils/timestamp')
@@ -1290,12 +1289,7 @@ describe('remote.Remote', function() {
     })
 
     it('returns the remote root directory for path .', async function() {
-      // $FlowFixMe Root is a directory
-      const root /*: RemoteDir */ = remoteJsonToRemoteDoc(
-        // XXX: We call the cozy-client-js method directly to increase the
-        // likelyhood that the remote document is unaltered.
-        await this.remote.remoteCozy.client.files.statById(ROOT_DIR_ID)
-      )
+      const root = await remoteHelpers.getRootDir()
 
       should(await this.remote.findDirectoryByPath('.')).have.properties({
         _id: root._id,
