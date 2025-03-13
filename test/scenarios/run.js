@@ -91,8 +91,7 @@ describe('Scenario', function() {
             beforeEach(async () => {
               await init(
                 scenario,
-                helpers.pouch,
-                helpers.local.syncDir.abspath,
+                helpers,
                 scenario.useCaptures ? parcelCapture : undefined
               )
             })
@@ -277,12 +276,7 @@ async function runLocalChokidarWithCaptures(
   helpers
 ) {
   if (scenario.init) {
-    await init(
-      scenario,
-      helpers.pouch,
-      helpers.local.syncDir.abspath,
-      eventsFile
-    )
+    await init(scenario, helpers, eventsFile)
     // XXX: Run initial scan
     await helpers.local.scan()
   }
@@ -345,7 +339,7 @@ async function runLocalChokidarWithCaptures(
 
 async function runLocalChokidarWithoutCaptures(scenario, eventsFile, helpers) {
   if (scenario.init) {
-    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath)
+    await init(scenario, helpers)
   }
 
   await helpers.local.side.watcher.start()
@@ -379,7 +373,7 @@ async function runLocalStopped(scenario, helpers) {
   // TODO: Find why we need this to prevent random failures and fix it.
   await Promise.delay(500)
   if (scenario.init) {
-    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath)
+    await init(scenario, helpers)
   }
 
   await runActions(scenario, helpers.local.syncDir.abspath, {
@@ -397,11 +391,11 @@ async function runLocalStopped(scenario, helpers) {
 
 async function runRemote(scenario, helpers) {
   if (scenario.init) {
-    await init(scenario, helpers.pouch, helpers.local.syncDir.abspath)
+    await init(scenario, helpers)
     await helpers.remote.ignorePreviousChanges()
   }
 
-  await remoteCaptureHelpers.runActions(scenario, cozyHelpers.cozy)
+  await remoteCaptureHelpers.runActions(scenario, helpers)
 
   await helpers.local.side.watcher.start()
   await helpers.remote.pullChanges()

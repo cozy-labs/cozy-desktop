@@ -451,13 +451,19 @@ class RemoteCozy {
     )
   }
 
+  async findByPath(
+    path /*: string */
+  ) /*: Promise<FullRemoteFile|RemoteDir> */ {
+    const client = await this.getClient()
+    const { data } = await client.collection(FILES_DOCTYPE).statByPath(path)
+    return this.toRemoteDoc(jsonApiToRemoteDoc(data))
+  }
+
   async findMaybeByPath(
     path /*: string */
   ) /*: Promise<?FullRemoteFile|RemoteDir> */ {
-    const client = await this.getClient()
     try {
-      const { data } = await client.collection(FILES_DOCTYPE).statByPath(path)
-      return this.toRemoteDoc(jsonApiToRemoteDoc(data))
+      return await this.findByPath(path)
     } catch (err) {
       if (err.status === 404) return null
       else throw err
@@ -466,11 +472,9 @@ class RemoteCozy {
 
   // TODO: remove as it is used only by `RemoteTestHelpers`
   async findDirectoryByPath(path /*: string */) /*: Promise<RemoteDir> */ {
-    const client = await this.getClient()
     try {
-      const { data } = await client.collection(FILES_DOCTYPE).statByPath(path)
+      const remoteDoc = await this.findByPath(path)
 
-      const remoteDoc = await this.toRemoteDoc(jsonApiToRemoteDoc(data))
       if (remoteDoc.type === DIR_TYPE) return remoteDoc
 
       throw new DirectoryNotFound(path, this.url)

@@ -85,8 +85,7 @@ describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)'
           { ino: 9, path: 'facture-boulanger.pdf' }
         ]
       },
-      this.pouch,
-      helpers.local.syncDir.abspath,
+      helpers,
       _.identity
     )
     await runActions(
