@@ -445,9 +445,9 @@ class Remote /*:: implements Reader, Writer */ {
 
   async findDocByPath(fpath /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
     const [parentPath, name] = dirAndName(fpath)
-    const { _id: dirID } = await this.findDirectoryByPath(parentPath)
+    const { _id: dir_id } = await this.findDirectoryByPath(parentPath)
 
-    const results = await this.remoteCozy.search({ dir_id: dirID, name })
+    const results = await this.remoteCozy.search({ dir_id, name })
     if (results.length > 0) return results[0]
   }
 

@@ -139,10 +139,7 @@ class RemoteTestHelpers {
       const parentPath = path.posix.dirname(p)
       const dirID = (
         remoteDocsByPath[parentPath + '/'] ||
-        (await this.cozy.files
-          .statByPath('/' + parentPath + '/')
-          .then(remoteJsonToRemoteDoc)
-          .then(this.side.remoteCozy.toRemoteDoc)) ||
+        (await this.byPath('/' + parentPath + '/')) ||
         {}
       )._id
       if (p.endsWith('/')) {
@@ -247,11 +244,13 @@ class RemoteTestHelpers {
   async byIdMaybe(
     id /*: string */
   ) /*: Promise<?(FullRemoteFile|RemoteDir)> */ {
-    try {
-      return await this.byId(id)
-    } catch (err) {
-      return null
-    }
+    return this.side.remoteCozy.findMaybe(id)
+  }
+
+  async byPath(
+    remotePath /*: string */
+  ) /*: Promise<FullRemoteFile|RemoteDir> */ {
+    return this.side.remoteCozy.findByPath(remotePath)
   }
 
   async move(

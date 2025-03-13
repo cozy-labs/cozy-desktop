@@ -50,8 +50,7 @@ describe('TRELLO #646: Déplacement écrasé avant synchro (malgré la synchro p
           { ino: 2, path: 'src/file' }
         ]
       },
-      this.pouch,
-      helpers.local.syncDir.abspath,
+      helpers,
       _.identity
     )
 
