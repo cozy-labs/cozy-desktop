@@ -488,8 +488,9 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async includeInSync(doc /*: SavedMetadata */) /*: Promise<*> */ {
-    const remoteDocs = await this.remoteCozy.search({ path: `/${doc.path}` })
-    const remoteDoc = remoteDocs[0]
+    const remoteDoc = await this.remoteCozy.findMaybeByPath(
+      pathUtils.localToRemote(doc.path)
+    )
     if (!remoteDoc || remoteDoc.type !== DIR_TYPE) return
 
     await this.remoteCozy.includeInSync(remoteDoc)
