@@ -440,13 +440,22 @@ class RemoteCozy {
     )
   }
 
+  // TODO: remove as it is used only by `RemoteTestHelpers`
   async findDirectoryByPath(path /*: string */) /*: Promise<RemoteDir> */ {
-    const results = await this.search({ path })
-    if (results.length === 0 || results[0].type !== DIR_TYPE) {
-      throw new DirectoryNotFound(path, this.url)
-    }
+    const client = await this.getClient()
+    try {
+      const { data } = await client.collection(FILES_DOCTYPE).statByPath(path)
 
-    return results[0]
+      const remoteDoc = await this.toRemoteDoc(jsonApiToRemoteDoc(data))
+      if (remoteDoc.type === DIR_TYPE) return remoteDoc
+
+      throw new DirectoryNotFound(path, this.url)
+    } catch (err) {
+      if (err.status === 404) {
+        throw new DirectoryNotFound(path, this.url)
+      }
+      throw err
+    }
   }
 
   // XXX: This only fetches the direct children of a directory, not children of
