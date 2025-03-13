@@ -1364,7 +1364,7 @@ describe('remote.Remote', function() {
     })
 
     it('fails if there are no remote documents with the given path', async function() {
-      await this.remote.remoteCozy.destroyById(remoteFile._id)
+      await this.remote.remoteCozy.trashById(remoteFile._id)
 
       await should(this.remote.resolveConflict(file)).be.rejected()
     })
