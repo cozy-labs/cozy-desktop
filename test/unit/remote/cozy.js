@@ -827,7 +827,9 @@ describe('RemoteCozy', function() {
 
     it('rejects when given a file id', async function() {
       const file = await builders.remoteFile().create()
-      await should(remoteCozy.isEmpty(file._id)).be.rejectedWith(/wrong type/)
+      await should(remoteCozy.isEmpty(file._id)).be.rejectedWith(
+        /Unexpected file/
+      )
     })
 
     it('rejects when no document matches the id', async function() {
