@@ -265,11 +265,12 @@ class Remote /*:: implements Reader, Writer */ {
         const options = Object.assign(
           {},
           {
+            name: doc.remote.name,
             checksum: doc.md5sum,
             executable: doc.executable || false,
             contentLength: doc.size,
             contentType: doc.mime,
-            updatedAt: mostRecentUpdatedAt(doc),
+            lastModifiedDate: mostRecentUpdatedAt(doc),
             ifMatch: doc.remote._rev
           }
         )

@@ -97,6 +97,10 @@ class RemoteCozy {
   url: string
   client: OldCozyClient
   newClient: ?CozyClient
+
+  toRemoteDoc:
+    & ((doc: RemoteFile, parentDir: ?RemoteDir) => Promise<FullRemoteFile>)
+    & ((doc: RemoteDir, parentDir: ?RemoteDir) => Promise<RemoteDir>)
   */
 
   constructor(config /*: Config */) {
@@ -300,23 +304,29 @@ class RemoteCozy {
   async updateFileById(
     id /*: string */,
     data /*: Readable */,
-    options /*: {|contentType: string,
+    options /*: {|name: string,
+                 contentType: string,
                  contentLength: number,
                  checksum: string,
-                 updatedAt: string,
+                 lastModifiedDate: string,
                  executable: boolean,
                  ifMatch: string|} */
-  ) /*: Promise<FullRemoteFile|RemoteDir> */ {
+  ) /*: Promise<FullRemoteFile> */ {
+    const client = await this.getClient()
     return this._withDomainErrors(data, options, async () => {
-      const updated /*: RemoteJsonFile */ = await this.client.files.updateById(
-        id,
-        data,
-        {
-          ...options,
-          noSanitize: true
-        }
-      )
-      return this.toRemoteDoc(remoteJsonToRemoteDoc(updated))
+      const { data: updated } = await client
+        .collection(FILES_DOCTYPE)
+        .updateFile(
+          data,
+          {
+            ...options,
+            fileId: id
+          },
+          {
+            sanitizeName: false
+          }
+        )
+      return this.toRemoteDoc(jsonApiToRemoteDoc(updated))
     })
   }
 
