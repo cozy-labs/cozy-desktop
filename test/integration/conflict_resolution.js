@@ -282,9 +282,7 @@ describe('Conflict resolution', () => {
   describe('merging local file then remote dir', () => {
     beforeEach(async () => {
       await helpers.local.syncDir.outputFile('same-name', 'content1')
-      await cozy.files.createDirectory({
-        name: 'same-name'
-      })
+      await helpers.remote.createDirectory('same-name')
 
       await fullSyncStartingFrom('local')
     })
@@ -525,7 +523,7 @@ describe('Conflict resolution', () => {
       await helpers.local.scan()
 
       // Create remote directory with content
-      const remoteDst = await cozy.files.createDirectory({ name: 'dst' })
+      const remoteDst = await helpers.remote.createDirectory('dst')
       await cozy.files.create('remote content', {
         name: 'foo',
         dirID: remoteDst._id

@@ -36,8 +36,8 @@ describe('Case or encoding change', () => {
     beforeEach(async () => {
       // This will fail with a 409 conflict error when cozy-stack runs directly
       // on macOS & HFS+ because a file with an equivalent name already exists.
-      dir = await cozy.files.createDirectory({ name: 'e\u0301' }) // 'é'
-      dir2 = await cozy.files.createDirectory({ name: 'foo' })
+      dir = await helpers.remote.createDirectory('e\u0301') // 'é'
+      dir2 = await helpers.remote.createDirectory('foo')
       await helpers.remote.pullChanges()
       await helpers.syncAll()
       helpers.spyPouch()

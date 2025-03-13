@@ -103,17 +103,46 @@ class RemoteTestHelpers {
 
   async createDirectory(
     name /*: string */,
-    dirID /*: string */ = ROOT_DIR_ID
+    attrs /*: ?{|dirId?: string,
+                lastModifiedDate?: string|} */
   ) /*: Promise<RemoteDir> */ {
-    return this.cozy.files
-      .createDirectory({
-        name,
-        dirID,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
-      .then(remoteJsonToRemoteDoc)
-      .then(this.side.remoteCozy.toRemoteDoc)
+    const options = {
+      name,
+      dirId: ROOT_DIR_ID,
+      lastModifiedDate: new Date().toISOString(),
+      ...attrs
+    }
+
+    return this.side.remoteCozy.createDirectory(options)
+  }
+
+  async createDirectoryByPath(
+    fullpath /*: string */,
+    attrs /*: ?{|lastModifiedDate?: string|} */
+  ) /*: Promise<RemoteDir> */ {
+    if (fullpath === '/') return this.getRootDir()
+
+    const dirname = path.basename(fullpath)
+    const ancestorPaths = path.dirname(fullpath).split(path.posix.sep)
+
+    let ancestor = await this.getRootDir()
+    for (const dirname of ancestorPaths) {
+      if (dirname === '') continue
+
+      try {
+        ancestor = await this.byPath(path.posix.join(ancestor.path, dirname))
+      } catch (err) {
+        if (err.status === 404) {
+          ancestor = await this.createDirectory(dirname, {
+            dirId: ancestor._id
+          })
+        } else {
+          throw err
+        }
+      }
+    }
+
+    return this.createDirectory(dirname, { ...attrs, dirId: ancestor._id })
   }
 
   async createFile(
@@ -137,17 +166,17 @@ class RemoteTestHelpers {
     for (const p of paths) {
       const name = path.posix.basename(p)
       const parentPath = path.posix.dirname(p)
-      const dirID = (
+      const dirId = (
         remoteDocsByPath[parentPath + '/'] ||
         (await this.byPath('/' + parentPath + '/')) ||
         {}
       )._id
       if (p.endsWith('/')) {
-        remoteDocsByPath[p] = await this.createDirectory(name, dirID)
+        remoteDocsByPath[p] = await this.createDirectory(name, { dirId })
       } else {
         remoteDocsByPath[p] = await this.createFile(
           name,
-          dirID,
+          dirId,
           `Content of file ${p}`
         )
       }

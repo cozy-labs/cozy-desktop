@@ -67,8 +67,8 @@ describe('Move', () => {
     let file, src, dst
 
     beforeEach(async () => {
-      dst = await cozy.files.createDirectory({ name: 'dst' })
-      src = await cozy.files.createDirectory({ name: 'src' })
+      dst = await helpers.remote.createDirectory('dst')
+      src = await helpers.remote.createDirectory('src')
       file = await cozy.files.create('foo', { name: 'file', dirID: src._id })
 
       await helpers.pullAndSyncAll()
@@ -541,20 +541,15 @@ describe('Move', () => {
     let dir, dst
 
     beforeEach(async () => {
-      const parent = await cozy.files.createDirectory({ name: 'parent' })
-      const src = await cozy.files.createDirectory({
-        name: 'src',
-        dirID: parent._id
+      const parent = await helpers.remote.createDirectory('parent')
+      const src = await helpers.remote.createDirectory('src', {
+        dirId: parent._id
       })
-      dst = await cozy.files.createDirectory({ name: 'dst', dirID: parent._id })
-      dir = await cozy.files.createDirectory({ name: 'dir', dirID: src._id })
-      await cozy.files.createDirectory({
-        name: 'empty-subdir',
-        dirID: dir._id
-      })
-      const subdir = await cozy.files.createDirectory({
-        name: 'subdir',
-        dirID: dir._id
+      dst = await helpers.remote.createDirectory('dst', { dirId: parent._id })
+      dir = await helpers.remote.createDirectory('dir', { dirId: src._id })
+      await helpers.remote.createDirectory('empty-subdir', { dirId: dir._id })
+      const subdir = await helpers.remote.createDirectory('subdir', {
+        dirId: dir._id
       })
       await cozy.files.create('foo', { name: 'file', dirID: subdir._id })
 
@@ -677,9 +672,8 @@ describe('Move', () => {
     })
 
     it('local overwriting other directory', async () => {
-      const existing = await cozy.files.createDirectory({
-        name: 'dir',
-        dirID: dst._id
+      const existing = await helpers.remote.createDirectory('dir', {
+        dirId: dst._id
       })
       // The file deletion would be merged by another event but even without
       // that event, we'll delete it remotely.
@@ -1162,10 +1156,7 @@ describe('Move', () => {
     let dir
 
     beforeEach(async () => {
-      dir = await cozy.files.createDirectory({
-        name: 'dir',
-        dirID: ROOT_DIR_ID
-      })
+      dir = await helpers.remote.createDirectory('dir')
       await cozy.files.create('File content...', {
         name: 'file',
         dirID: dir._id
@@ -1183,10 +1174,7 @@ describe('Move', () => {
       let existing, overwritten
 
       beforeEach(async () => {
-        existing = await cozy.files.createDirectory({
-          name: 'renamed',
-          dirID: ROOT_DIR_ID
-        })
+        existing = await helpers.remote.createDirectory('renamed')
         overwritten = await cozy.files.create('Overwritten content...', {
           name: 'file',
           dirID: existing._id
@@ -1472,9 +1460,7 @@ describe('Move', () => {
       context('with a case change in file name', () => {
         let file
         beforeEach('create normalized file', async () => {
-          const parent = await cozy.files.createDirectory({
-            name: 'Sujets'
-          })
+          const parent = await helpers.remote.createDirectory('Sujets')
           file = await cozy.files.create('initial content', {
             name: 'ds-1.pdf',
             dirID: parent._id
@@ -1506,9 +1492,7 @@ describe('Move', () => {
       context('with a normalization difference in parent path', () => {
         let file
         beforeEach('create normalized file', async () => {
-          const parent = await cozy.files.createDirectory({
-            name: 'énoncés'
-          })
+          const parent = await helpers.remote.createDirectory('énoncés')
           file = await cozy.files.create('initial content', {
             name: 'sujet.pdf',
             dirID: parent._id
@@ -1518,7 +1502,7 @@ describe('Move', () => {
 
           // Fake local re-normalization from NFC to NFD
           const doc = await helpers.docByPath(
-            path.join(parent.attributes.name, file.attributes.name)
+            path.join(parent.name, file.attributes.name)
           )
           await helpers.pouch.put(
             ({
