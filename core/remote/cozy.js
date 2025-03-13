@@ -421,16 +421,17 @@ class RemoteCozy {
     return data.length !== 0
   }
 
+  // TODO: See if results are properly formatted and completed (e.g. should we
+  // also call `withDefaultRelations`?).
+  // The best options would probably be to call `toRemoteDoc` or get rid of
+  // `search` entirely.
   async search(
     selector /*: Object */
   ) /*: Promise<(FullRemoteFile|RemoteDir)[]> */ {
-    const index = await this.client.data.defineIndex(
-      FILES_DOCTYPE,
-      Object.keys(selector)
-    )
-    const results = await this.client.data.query(index, { selector })
+    const client = await this.getClient()
+    const { data } = await client.query(Q(FILES_DOCTYPE).where(selector))
     return Promise.all(
-      results.map(async result => {
+      data.map(async result => {
         if (result.type === FILE_TYPE) {
           const parentDir /*: RemoteDir */ = await this.findDir(result.dir_id)
           return this._withPath(withDefaultValues(result), parentDir)
