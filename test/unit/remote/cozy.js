@@ -124,13 +124,12 @@ describe('RemoteCozy', function() {
         should(
           await remoteCozy.createFile(data, {
             name: ' foo ',
-            dirID: ROOT_DIR_ID,
+            dirId: ROOT_DIR_ID,
             contentType: 'text/plain',
             contentLength: 0,
             checksum,
             executable: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            lastModifiedDate: new Date().toISOString()
           })
         ).have.properties({
           type: 'file',
@@ -169,13 +168,12 @@ describe('RemoteCozy', function() {
         await should(
           remoteCozy.createFile(builders.stream().build(), {
             name: 'foo',
-            dirID: ROOT_DIR_ID,
+            dirId: ROOT_DIR_ID,
             contentType: 'text/plain',
             contentLength: 300,
             checksum: 'md5sum',
             executable: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            lastModifiedDate: new Date().toISOString()
           })
         ).be.rejectedWith(FetchError, { status: 409 })
       })
@@ -193,13 +191,12 @@ describe('RemoteCozy', function() {
               .build(),
             {
               name: 'foo',
-              dirID: ROOT_DIR_ID,
+              dirId: ROOT_DIR_ID,
               contentType: 'text/plain',
               contentLength: data.length - 1,
               checksum,
               executable: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
+              lastModifiedDate: new Date().toISOString()
             }
           )
         ).be.rejectedWith(FetchError, { status: 412 })
@@ -218,13 +215,12 @@ describe('RemoteCozy', function() {
               .build(),
             {
               name: 'foo',
-              dirID: ROOT_DIR_ID,
+              dirId: ROOT_DIR_ID,
               contentType: 'text/plain',
               contentLength: data.length + 1,
               checksum,
               executable: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
+              lastModifiedDate: new Date().toISOString()
             }
           )
         ).be.rejectedWith(FetchError, { status: 412 })
@@ -239,13 +235,12 @@ describe('RemoteCozy', function() {
         await should(
           remoteCozy.createFile(builders.stream().build(), {
             name: 'foo',
-            dirID: ROOT_DIR_ID,
+            dirId: ROOT_DIR_ID,
             contentType: 'text/plain',
             contentLength: 300,
             checksum: 'md5sum',
             executable: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            lastModifiedDate: new Date().toISOString()
           })
         ).be.rejectedWith(FetchError, { status: 413 })
       })
@@ -255,13 +250,12 @@ describe('RemoteCozy', function() {
         await should(
           remoteCozy.createFile(builders.stream().build(), {
             name: 'foo',
-            dirID: ROOT_DIR_ID,
+            dirId: ROOT_DIR_ID,
             contentType: 'text/plain',
             contentLength: MAX_FILE_SIZE + 1,
             checksum: 'md5sum',
             executable: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            lastModifiedDate: new Date().toISOString()
           })
         ).be.rejectedWith(FetchError, { status: 413 })
       })
@@ -278,13 +272,12 @@ describe('RemoteCozy', function() {
               .build(),
             {
               name: 'foo',
-              dirID: ROOT_DIR_ID,
+              dirId: ROOT_DIR_ID,
               contentType: 'text/plain',
               contentLength: data.length,
               checksum: 'md5sum', // Force a request failure with a bad checksum
               executable: false,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString()
+              lastModifiedDate: new Date().toISOString()
             }
           )
         ).be.rejectedWith(CHROMIUM_ERROR)

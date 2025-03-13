@@ -200,7 +200,7 @@ class RemoteCozy {
 
     const domainError = async () => {
       try {
-        const { name, dirID: dir_id, contentLength } = options
+        const { name, dirId: dir_id, contentLength } = options
 
         if (name && dir_id && (await this.isNameTaken({ name, dir_id }))) {
           return new FetchError({ status: 409 }, 'Conflict: name already taken')
@@ -269,20 +269,21 @@ class RemoteCozy {
   async createFile(
     data /*: Readable */,
     options /*: {|name: string,
-                 dirID: string,
+                 dirId: string,
                  contentType: string,
                  contentLength: number,
                  checksum: string,
-                 createdAt: string,
-                 updatedAt: string,
+                 lastModifiedDate: string,
                  executable: boolean|} */
-  ) /*: Promise<FullRemoteFile|RemoteDir> */ {
+  ) /*: Promise<FullRemoteFile> */ {
+    const client = await this.getClient()
     return this._withDomainErrors(data, options, async () => {
-      const file /* RemoteJsonFile*/ = await this.client.files.create(data, {
-        ...options,
-        noSanitize: true
-      })
-      return this.toRemoteDoc(remoteJsonToRemoteDoc(file))
+      const { data: file } = await client
+        .collection(FILES_DOCTYPE)
+        .createFile(data, options, {
+          sanitizeName: false
+        })
+      return this.toRemoteDoc(jsonApiToRemoteDoc(file))
     })
   }
 
