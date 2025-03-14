@@ -37,13 +37,13 @@ describe('Sync gets interrupted, initialScan occurs', () => {
   })
 
   it('move Folder', async () => {
-    const docs = await helpers.remote.createTree(['/a/', '/b/'])
+    const { dirs } = await helpers.remote.createTree(['/a/', '/b/'])
 
     await helpers.remote.pullChanges()
     await helpers.syncAll()
 
-    await cozy.files.updateAttributesById(docs['/b/']._id, {
-      dir_id: docs['/a/']._id
+    await cozy.files.updateAttributesById(dirs['/b/']._id, {
+      dir_id: dirs['/a/']._id
     })
 
     await helpers.remote.pullChanges() // Merge
