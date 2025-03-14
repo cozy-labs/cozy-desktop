@@ -82,7 +82,7 @@ describe('Trash', () => {
         it('does not trash the file on the remote Cozy and re-downloads it', async () => {
           await helpers.local.syncDir.remove('parent/file')
           await helpers.local.scan()
-          await cozy.files.updateAttributesById(file._id, {
+          await helpers.remote.updateAttributesById(file._id, {
             name: 'file',
             dir_id: parent.dir_id
           })
@@ -102,7 +102,7 @@ describe('Trash', () => {
       // stopped.
       context('after the file was moved on the remote Cozy', () => {
         it('does not trash the file on the remote Cozy and re-downloads it', async () => {
-          await cozy.files.updateAttributesById(file._id, {
+          await helpers.remote.updateAttributesById(file._id, {
             name: 'file',
             dir_id: parent.dir_id
           })

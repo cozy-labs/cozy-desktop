@@ -161,8 +161,8 @@ describe('Update only mtime', () => {
 
         const newUpdatedAt = new Date()
         newUpdatedAt.setDate(oldUpdatedAt.getDate() + 1)
-        await cozy.files.updateAttributesById(dir._id, {
-          updated_at: newUpdatedAt
+        await helpers.remote.updateAttributesById(dir._id, {
+          updated_at: newUpdatedAt.toISOString()
         })
 
         await helpers.remote.pullChanges()

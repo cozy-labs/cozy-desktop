@@ -132,8 +132,8 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesByPath('/d:ir', { name: 'di:r' })
-    await cozy.files.updateAttributesByPath('/f:ile', { name: 'fi:le' })
+    await helpers.remote.updateAttributesByPath('/d:ir', { name: 'di:r' })
+    await helpers.remote.updateAttributesByPath('/f:ile', { name: 'fi:le' })
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -198,7 +198,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(files['d:ir/sub:dir/f:ile']._id, {
+    await helpers.remote.updateAttributesById(files['d:ir/sub:dir/f:ile']._id, {
       name: 'file'
     })
     await helpers.pullAndSyncAll()
@@ -212,7 +212,7 @@ describe('Platform incompatibilities', () => {
     shouldHaveBlockedFor('d:ir/sub:dir/file')
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(dirs['d:ir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['d:ir/']._id, {
       name: 'dir'
     })
     await helpers.pullAndSyncAll()
@@ -229,7 +229,7 @@ describe('Platform incompatibilities', () => {
     ])
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(dirs['d:ir/sub:dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['d:ir/sub:dir/']._id, {
       name: 'subdir'
     })
     await helpers.pullAndSyncAll()
@@ -252,7 +252,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(dirs['dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir:'
     })
     await helpers.pullAndSyncAll()
@@ -278,7 +278,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(dirs['dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir:'
     })
     await helpers.pullAndSyncAll()
@@ -296,7 +296,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(files['dir/file']._id, {
+    await helpers.remote.updateAttributesById(files['dir/file']._id, {
       name: 'fi:le'
     })
     await helpers.pullAndSyncAll()
@@ -314,7 +314,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(dirs['dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir2'
     })
     await helpers.pullAndSyncAll()
@@ -405,7 +405,7 @@ describe('Platform incompatibilities', () => {
     should(await helpers.incompatibleTree()).be.empty()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(dirs['dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'd:ir'
     })
     await helpers.pullAndSyncAll()
@@ -414,7 +414,7 @@ describe('Platform incompatibilities', () => {
     shouldHaveBlockedFor(['d:ir', 'd:ir/file'])
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(dirs['dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir'
     })
     await helpers.pullAndSyncAll()

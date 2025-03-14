@@ -315,7 +315,7 @@ describe('Conflict resolution', () => {
       await helpers.syncAll()
       // FIXME: Initial tree helper?
       const remoteFile = await helpers.remote.byPath('/src')
-      await cozy.files.updateAttributesById(remoteFile._id, { name: 'dst' })
+      await helpers.remote.move(remoteFile, '/dst')
       await helpers.local.syncDir.outputFile('dst', 'local dst content')
 
       await fullSyncStartingFrom('local')
@@ -351,7 +351,7 @@ describe('Conflict resolution', () => {
       await helpers.syncAll()
       // FIXME: Initial tree helper?
       const remoteDir = await helpers.remote.byPath('/src')
-      await cozy.files.updateAttributesById(remoteDir._id, { name: 'dst' })
+      await helpers.remote.move(remoteDir, '/dst')
       await helpers.local.syncDir.ensureDir('dst')
 
       await fullSyncStartingFrom('local')

@@ -587,7 +587,7 @@ describe('Move', () => {
     })
 
     it('from remote cozy', async () => {
-      await cozy.files.updateAttributesById(dir._id, { dir_id: dst._id })
+      await helpers.remote.updateAttributesById(dir._id, { dir_id: dst._id })
       await helpers.remote.pullChanges()
 
       /* FIXME: Nondeterministic
@@ -1380,7 +1380,7 @@ describe('Move', () => {
           'src/dir/',
           'src/dir/file'
         ])
-        await helpers.remote.cozy.files.updateAttributesById(
+        await helpers.remote.updateAttributesById(
           unsyncedDirs['src/dir/']._id,
           { dir_id: syncedDirs['dst/']._id }
         )
@@ -1406,7 +1406,7 @@ describe('Move', () => {
           'src/dir/',
           'src/dir/file'
         ])
-        await helpers.remote.cozy.files.updateAttributesById(
+        await helpers.remote.updateAttributesById(
           unsyncedDirs['src/dir/']._id,
           { dir_id: syncedDirs['dst/']._id }
         )
@@ -1429,11 +1429,11 @@ describe('Move', () => {
           'src/dir/file'
         ])
         const movedDirId = unsyncedDirs['src/dir/']._id
-        await helpers.remote.cozy.files.updateAttributesById(movedDirId, {
+        await helpers.remote.updateAttributesById(movedDirId, {
           dir_id: syncedDirs['dst/']._id
         })
         await helpers.remote.pullChanges()
-        await helpers.remote.cozy.files.updateAttributesById(movedDirId, {
+        await helpers.remote.updateAttributesById(movedDirId, {
           name: 'final'
         })
         await helpers.remote.pullChanges()
@@ -1463,7 +1463,7 @@ describe('Move', () => {
         })
 
         it('does not trash the file', async () => {
-          await cozy.files.updateAttributesById(file._id, {
+          await helpers.remote.updateAttributesById(file._id, {
             name: 'DS-1.pdf'
           })
           await helpers.remote.pullChanges()
@@ -1505,7 +1505,7 @@ describe('Move', () => {
         })
 
         it('does not trash the file', async () => {
-          await cozy.files.updateAttributesById(file._id, {
+          await helpers.remote.updateAttributesById(file._id, {
             name: 'DS-1.pdf'
           })
           await helpers.remote.pullChanges()

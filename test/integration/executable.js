@@ -5,7 +5,6 @@ const should = require('should')
 
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const {
   WINDOWS_DEFAULT_MODE,
   onPlatforms
@@ -15,7 +14,7 @@ const pouchHelpers = require('../support/helpers/pouch')
 const { platform } = process
 
 describe('Executable handling', () => {
-  let cozy, helpers, syncDir
+  let helpers, syncDir
 
   beforeEach(configHelpers.createConfig)
   beforeEach(configHelpers.registerClient)
@@ -26,7 +25,6 @@ describe('Executable handling', () => {
   afterEach(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
     syncDir = helpers.local.syncDir
 
@@ -105,7 +103,7 @@ describe('Executable handling', () => {
   describe('adding a remote executable file', () => {
     it('is executable everywhere, except on Windows', async () => {
       await helpers.remote.createFileByPath('/file', 'whatever content')
-      await cozy.files.updateAttributesByPath('/file', { executable: true })
+      await helpers.remote.updateAttributesByPath('/file', { executable: true })
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
 
@@ -169,7 +167,9 @@ describe('Executable handling', () => {
 
     describe('making it executable remotely', () => {
       it('is executable everywhere, forcing 755 locally, except on Windows', async () => {
-        await cozy.files.updateAttributesByPath('/file', { executable: true })
+        await helpers.remote.updateAttributesByPath('/file', {
+          executable: true
+        })
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
 
@@ -190,7 +190,7 @@ describe('Executable handling', () => {
   context('with a synced executable file', () => {
     beforeEach(async () => {
       await helpers.remote.createFileByPath('/file', 'whatever content')
-      await cozy.files.updateAttributesByPath('/file', { executable: true })
+      await helpers.remote.updateAttributesByPath('/file', { executable: true })
       await helpers.pullAndSyncAll()
     })
 
@@ -216,7 +216,9 @@ describe('Executable handling', () => {
 
     describe('making it non-executable remotely', () => {
       it('is non-executable everywhere', async () => {
-        await cozy.files.updateAttributesByPath('/file', { executable: false })
+        await helpers.remote.updateAttributesByPath('/file', {
+          executable: false
+        })
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
 
@@ -253,7 +255,7 @@ describe('Executable handling', () => {
 
     describe('moving it remotely', () => {
       it('is executable everywhere, except on Windows', async () => {
-        await cozy.files.updateAttributesByPath('/file', { name: 'moved' })
+        await helpers.remote.updateAttributesByPath('/file', { name: 'moved' })
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
 

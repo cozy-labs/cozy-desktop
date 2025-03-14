@@ -353,6 +353,31 @@ class RemoteTestHelpers {
     }
     await this.side.remoteCozy.updateAttributesById(_id, attrs, { ifMatch: '' })
   }
+
+  async updateAttributesById(
+    id /*: string */,
+    attrs /*: {|name?: string,
+               dir_id?: string,
+               executable?: boolean,
+               updated_at?: string|} */
+  ) {
+    const client = await this.getClient()
+    const { data: updated } = await client
+      .collection(FILES_DOCTYPE)
+      .updateAttributes(id, attrs, { sanitizeName: false })
+    return this.side.remoteCozy.toRemoteDoc(updated)
+  }
+
+  async updateAttributesByPath(
+    remotePath /*: string */,
+    attrs /*: {|name?: string,
+               dir_id?: string,
+               executable?: boolean,
+               updated_at?: string|} */
+  ) {
+    const { _id } = await this.byPath(remotePath)
+    return this.updateAttributesById(_id, attrs)
+  }
 }
 
 module.exports = {
