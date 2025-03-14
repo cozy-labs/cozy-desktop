@@ -10,7 +10,6 @@ const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
 
-const CozyClient = require('cozy-client-js').Client
 const { FetchError } = require('cozy-stack-client')
 
 const metadata = require('../../../core/metadata')
@@ -90,7 +89,7 @@ describe('RemoteWatcher', function() {
   let dirs, files
 
   before('instanciate config', configHelpers.createConfig)
-  before('register OAuth client', configHelpers.registerClient)
+  before('register client', configHelpers.registerClient)
   before('instanciate helpers', function() {
     remoteHelpers = new RemoteTestHelpers(this)
   })
@@ -101,11 +100,6 @@ describe('RemoteWatcher', function() {
     this.prep = sinon.createStubInstance(Prep)
     this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
-    this.remoteCozy.client = new CozyClient({
-      version: 3,
-      cozyURL: this.config.cozyUrl,
-      token: process.env.COZY_STACK_TOKEN
-    })
     this.events = new EventEmitter()
     this.watcher = new RemoteWatcher(this)
 

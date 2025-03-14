@@ -28,7 +28,6 @@ const { DirectoryNotFound } = require('../../../core/remote/errors')
 const Builders = require('../../support/builders')
 const CozyStackDouble = require('../../support/doubles/cozy_stack')
 const configHelpers = require('../../support/helpers/config')
-const cozyHelpers = require('../../support/helpers/cozy')
 const { COZY_URL } = require('../../support/helpers/cozy')
 const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
@@ -69,7 +68,7 @@ describe('RemoteCozy', function() {
     this.config.cozyUrl = COZY_URL
     remoteCozy = new RemoteCozy(this.config)
     // Use real OAuth client
-    remoteCozy.client = cozyHelpers.cozy
+    remoteCozy.client = remoteHelpers.cozy
     remoteCozy.newClient = await remoteHelpers.getClient()
 
     fetchJSONStub = sinon
@@ -933,14 +932,6 @@ describe('RemoteCozy', function() {
   })
 
   describe('#getDirectoryContent', () => {
-    beforeEach(function() {
-      remoteCozy.client = new OldCozyClient({
-        version: 3,
-        cozyURL: this.config.cozyUrl,
-        token: process.env.COZY_STACK_TOKEN
-      })
-    })
-
     it('returns the direct children of the directory', async () => {
       const { dirs, files } = await builders.createRemoteTree([
         'dir/',
@@ -1099,7 +1090,6 @@ describe('RemoteCozy.getClient', () => {
     let webappCozy
     beforeEach(function() {
       webappCozy = new RemoteCozy(this.config)
-      webappCozy.client = cozyHelpers.cozy
     })
 
     it('returns a cozy-client CozyClient instance', async () => {
@@ -1115,7 +1105,6 @@ describe('RemoteCozy.getClient', () => {
     let oauthCozy
     beforeEach(async function() {
       oauthCozy = new RemoteCozy(this.config)
-      oauthCozy.client = await cozyHelpers.oauthCozy(this.config)
     })
 
     it('returns a cozy-client CozyClient instance', async () => {
