@@ -5,7 +5,7 @@ const path = require('path')
 const fse = require('fs-extra')
 const tar = require('tar')
 
-const { default: CozyClient, models } = require('cozy-client')
+const { models } = require('cozy-client')
 
 const { logger } = require('./logger')
 const { NOTE_MIME_TYPE } = require('../remote/constants')
@@ -103,13 +103,6 @@ const remoteDoc = async (
   }
 }
 
-const getCozyClient = async (
-  { remote } /*: { remote: Remote } */
-) /*: CozyClient */ => {
-  await remote.remoteCozy.client.authorize()
-  return await CozyClient.fromOldOAuthClient(remote.remoteCozy.client)
-}
-
 const parseArchive = async archivePath => {
   return new Promise((resolve, reject) => {
     const markdown = []
@@ -141,7 +134,7 @@ const findNote = async (
     const note = await localDoc(filePath, { config, pouch })
     log.info('note object', { note })
 
-    const client = await getCozyClient({ remote })
+    const client = await remote.remoteCozy.getClient()
     if (!client) {
       throw new CozyNoteError({
         code: 'UnreachableError',

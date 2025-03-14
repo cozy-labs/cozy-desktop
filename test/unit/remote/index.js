@@ -24,7 +24,6 @@ const { CONFLICT_REGEXP } = require('../../../core/utils/conflicts')
 const timestamp = require('../../../core/utils/timestamp')
 const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
-const { cozy } = require('../../support/helpers/cozy')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
@@ -38,7 +37,7 @@ describe('remote.Remote', function() {
   let builders, couchdbFolder, remoteHelpers
 
   before('instanciate config', configHelpers.createConfig)
-  before('register OAuth client', configHelpers.registerClient)
+  before('register client', configHelpers.registerClient)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('prepare helpers', async function() {
     remoteHelpers = new RemoteTestHelpers(this)
@@ -51,10 +50,6 @@ describe('remote.Remote', function() {
     this.prep = sinon.createStubInstance(Prep)
     this.events = new EventEmitter()
     this.remote = new remote.Remote(this)
-    // TODO: find out why the client built by `new Remote()` doesn't behave
-    // correctly (i.e. its auth isn't totally set and we can end up getting
-    // errors from `cozy-client-js` because it's missing a `client_secret`).
-    this.remote.remoteCozy.client = cozy
   })
   beforeEach('create the couchdb folder', async function() {
     couchdbFolder = await builders
