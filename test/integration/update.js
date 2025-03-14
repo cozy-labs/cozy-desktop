@@ -16,13 +16,12 @@ const { logger } = require('../../core/utils/logger')
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
 const log = logger({ component: 'mocha' })
 
 describe('Update file', () => {
-  let builders, cozy, helpers, pouch, prep
+  let builders, helpers, pouch, prep
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -33,7 +32,6 @@ describe('Update file', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
     builders = new Builders({ client: await helpers.remote.getClient() })
     pouch = helpers.pouch
@@ -310,7 +308,7 @@ describe('Update file', () => {
     it('fails remote sync M1 & local merge M2', async function() {
       if (process.env.CI) this.timeout(60 * 1000)
 
-      await cozy.files.create('Initial content', { name: 'file' })
+      await helpers.remote.createFile('file', 'Initial content')
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
 

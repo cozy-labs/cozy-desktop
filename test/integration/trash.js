@@ -49,9 +49,8 @@ describe('Trash', () => {
 
     beforeEach(async () => {
       parent = await helpers.remote.createDirectory('parent')
-      file = await cozy.files.create('File content...', {
-        name: 'file',
-        dirID: parent._id
+      file = await helpers.remote.createFile('file', 'File content...', {
+        dirId: parent._id
       })
       await helpers.remote.pullChanges()
       await helpers.syncAll()
@@ -322,7 +321,7 @@ describe('Trash', () => {
       subdir = await helpers.remote.createDirectory('subdir', {
         dirId: dir._id
       })
-      await cozy.files.create('foo', { name: 'file', dirID: subdir._id })
+      await helpers.remote.createFile('file', 'foo', { dirId: subdir._id })
 
       await helpers.remote.pullChanges()
       await helpers.syncAll()
@@ -437,9 +436,8 @@ describe('Restore', () => {
 
     beforeEach(async () => {
       parent = await helpers.remote.createDirectory('parent')
-      file = await cozy.files.create('File content...', {
-        name: 'file',
-        dirID: parent._id
+      file = await helpers.remote.createFile('file', 'File content...', {
+        dirId: parent._id
       })
       await helpers.remote.pullChanges()
       await helpers.syncAll()
