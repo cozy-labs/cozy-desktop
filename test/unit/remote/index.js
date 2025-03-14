@@ -133,8 +133,8 @@ describe('remote.Remote', function() {
 
       should(doc).have.propertyByPath('remote', '_id')
 
-      const file = await cozy.files.statById(doc.remote._id)
-      should(file.attributes).have.properties({
+      const file = await remoteHelpers.byId(doc.remote._id)
+      should(file).have.properties({
         dir_id: 'io.cozy.files.root-dir',
         executable: true,
         mime: 'image/jpg',
@@ -142,9 +142,7 @@ describe('remote.Remote', function() {
         size: '36901',
         type: 'file'
       })
-      should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
-        doc.updated_at
-      )
+      should(timestamp.roundedRemoteDate(file.updated_at)).equal(doc.updated_at)
     })
 
     it('fails if the md5sum does not match the content', async function() {
@@ -250,13 +248,13 @@ describe('remote.Remote', function() {
 
       should(doc).have.propertyByPath('remote', '_id')
 
-      const folder = await cozy.files.statById(doc.remote._id)
-      should(folder.attributes).have.properties({
+      const folder = await remoteHelpers.byId(doc.remote._id)
+      should(folder).have.properties({
         path: '/folder-1',
         name: 'folder-1',
         type: DIR_TYPE
       })
-      should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
+      should(timestamp.roundedRemoteDate(folder.updated_at)).equal(
         doc.updated_at
       )
     })
@@ -326,14 +324,14 @@ describe('remote.Remote', function() {
 
         await this.remote.overwriteFileAsync(doc)
 
-        const file = await cozy.files.statById(doc.remote._id)
-        should(file.attributes).have.properties({
+        const file = await remoteHelpers.byId(doc.remote._id)
+        should(file).have.properties({
           type: 'file',
           dir_id: created.dir_id,
           name: created.name,
           md5sum: 'N7UdGUp1E+RbVvZSTy1R8g=='
         })
-        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+        should(timestamp.roundedRemoteDate(file.updated_at)).equal(
           doc.updated_at
         )
         should(doc.remote._rev).equal(file._rev)
@@ -370,8 +368,8 @@ describe('remote.Remote', function() {
           status: 412
         })
 
-        const file = await cozy.files.statById(doc.remote._id)
-        should(file.attributes).have.properties({
+        const file = await remoteHelpers.byId(doc.remote._id)
+        should(file).have.properties({
           md5sum: old.md5sum
         })
       })
@@ -426,14 +424,14 @@ describe('remote.Remote', function() {
 
         await this.remote.overwriteFileAsync(_.cloneDeep(doc))
 
-        const file = await cozy.files.statById(doc.remote._id)
-        should(file.attributes).have.properties({
+        const file = await remoteHelpers.byId(doc.remote._id)
+        should(file).have.properties({
           type: 'file',
           dir_id: created.dir_id,
           name: created.name,
           md5sum: doc.md5sum
         })
-        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+        should(timestamp.roundedRemoteDate(file.updated_at)).equal(
           doc.updated_at
         )
         should(metadata.extractRevNumber(file)).equal(
@@ -613,10 +611,9 @@ describe('remote.Remote', function() {
       should(doc)
         .have.propertyByPath('remote', '_rev')
         .not.eql(oldRemote._rev)
-      const newRemote = await cozy.files.statById(oldRemote._id)
-      should(newRemote)
-        .have.propertyByPath('attributes', 'executable')
-        .eql(true)
+      should(await remoteHelpers.byId(oldRemote._id))
+        .have.property('executable')
+        .be.true()
     })
 
     it('makes the remote file non-executable when the local one is not anymore', async function() {
@@ -636,10 +633,9 @@ describe('remote.Remote', function() {
       should(doc)
         .have.propertyByPath('remote', '_rev')
         .not.eql(oldRemote._rev)
-      const newRemote = await cozy.files.statById(oldRemote._id)
-      should(newRemote)
-        .have.propertyByPath('attributes', 'executable')
-        .eql(false)
+      should(await remoteHelpers.byId(oldRemote._id))
+        .have.property('executable')
+        .be.false()
     })
 
     it('updates the last modification date of the remote file', async function() {
@@ -664,8 +660,8 @@ describe('remote.Remote', function() {
 
       await this.remote.updateFileMetadataAsync(doc)
 
-      const file = await cozy.files.statById(doc.remote._id)
-      should(file.attributes).have.properties({
+      const file = await remoteHelpers.byId(doc.remote._id)
+      should(file).have.properties({
         type: 'file',
         dir_id: dir._id,
         name: 'file-7',
@@ -693,8 +689,8 @@ describe('remote.Remote', function() {
 
       await this.remote.updateFolderAsync(doc)
 
-      const folder = await cozy.files.statById(doc.remote._id)
-      should(folder.attributes).have.properties({
+      const folder = await remoteHelpers.byId(doc.remote._id)
+      should(folder).have.properties({
         path: '/created',
         type: DIR_TYPE,
         dir_id: ROOT_DIR_ID,
@@ -782,18 +778,16 @@ describe('remote.Remote', function() {
 
         await this.remote.moveAsync(doc, old)
 
-        const file = await cozy.files.statById(doc.remote._id)
+        const file = await remoteHelpers.byId(doc.remote._id)
         should(file).have.properties({
           _id: old.remote._id,
-          _rev: doc.remote._rev
-        })
-        should(file.attributes).have.properties({
+          _rev: doc.remote._rev,
           dir_id: dstDir._id,
           name: 'cat7.jpg',
           type: 'file',
           size: '4'
         })
-        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+        should(timestamp.roundedRemoteDate(file.updated_at)).equal(
           doc.updated_at
         )
       })
@@ -822,13 +816,13 @@ describe('remote.Remote', function() {
 
         await this.remote.moveAsync(doc, old)
 
-        const folder = await cozy.files.statById(doc.remote._id)
-        should(folder.attributes).have.properties({
+        const folder = await remoteHelpers.byId(doc.remote._id)
+        should(folder).have.properties({
           dir_id: couchdbFolder._id,
           name: 'folder-5',
           type: DIR_TYPE
         })
-        should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
+        should(timestamp.roundedRemoteDate(folder.updated_at)).equal(
           doc.updated_at
         )
       })
@@ -877,16 +871,16 @@ describe('remote.Remote', function() {
 
           await this.remote.moveAsync(doc, old)
 
-          const movedFile = await cozy.files.statById(doc.remote._id)
+          const movedFile = await remoteHelpers.byId(doc.remote._id)
           should(movedFile).have.properties({
             _id: old.remote._id,
-            _rev: doc.remote._rev
+            _rev: doc.remote._rev,
+            name: 'My Cat.jpg'
           })
-          should(movedFile.attributes).have.property('name', 'My Cat.jpg')
           // The `remote` attribute of the PouchDB record is updated
           should(doc.remote).have.property(
             'updated_at',
-            timestamp.roundedRemoteDate(movedFile.attributes.updated_at)
+            timestamp.roundedRemoteDate(movedFile.updated_at)
           )
         })
       }
@@ -928,16 +922,16 @@ describe('remote.Remote', function() {
 
           await this.remote.moveAsync(doc, file)
 
-          const movedFile = await cozy.files.statById(doc.remote._id)
+          const movedFile = await remoteHelpers.byId(doc.remote._id)
           should(movedFile).have.properties({
             _id: file.remote._id,
-            _rev: doc.remote._rev
+            _rev: doc.remote._rev,
+            name: 'My Cat.jpg'
           })
-          should(movedFile.attributes).have.property('name', 'My Cat.jpg')
           // The `remote` attribute of the PouchDB record is updated
           should(doc.remote).have.property(
             'updated_at',
-            timestamp.roundedRemoteDate(movedFile.attributes.created_at)
+            timestamp.roundedRemoteDate(movedFile.created_at)
           )
         })
       }
@@ -1010,18 +1004,16 @@ describe('remote.Remote', function() {
 
         should(doc.remote._id).equal(old.remote._id)
         should(doc.remote._rev).not.equal(old.remote._rev)
-        const file = await cozy.files.statById(doc.remote._id)
+        const file = await remoteHelpers.byId(doc.remote._id)
         should(file).have.properties({
           _id: old.remote._id,
-          _rev: doc.remote._rev
-        })
-        should(file.attributes).have.properties({
+          _rev: doc.remote._rev,
           dir_id: newDir._id,
           name: 'cat7.jpg',
           type: 'file',
           size: '4'
         })
-        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+        should(timestamp.roundedRemoteDate(file.updated_at)).equal(
           doc.updated_at
         )
       })
@@ -1031,8 +1023,8 @@ describe('remote.Remote', function() {
 
         await this.remote.moveAsync(doc, old)
 
-        should(await cozy.files.statById(existing.remote._id))
-          .have.propertyByPath('attributes', 'trashed')
+        should(await remoteHelpers.byId(existing.remote._id))
+          .have.property('trashed')
           .be.true()
       })
 
@@ -1041,9 +1033,10 @@ describe('remote.Remote', function() {
 
         await this.remote.moveAsync(doc, old)
 
-        should(await cozy.files.statById(doc.remote._id))
-          .have.propertyByPath('relationships', 'referenced_by', 'data')
-          .eql(existingRefs.map(ref => ({ id: ref._id, type: ref._type })))
+        const remoteDoc = await remoteHelpers.byId(doc.remote._id)
+        should(remoteDoc.relations('referenced_by')).eql(
+          existingRefs.map(ref => ({ id: ref._id, type: ref._type }))
+        )
       })
 
       it('updates the remote attribute', async function() {
@@ -1051,7 +1044,7 @@ describe('remote.Remote', function() {
 
         await this.remote.moveAsync(doc, old)
 
-        const udpatedFile = await this.remote.remoteCozy.find(doc.remote._id)
+        const udpatedFile = await remoteHelpers.byId(doc.remote._id)
 
         should(doc.remote).deepEqual({
           ...udpatedFile,
@@ -1074,12 +1067,10 @@ describe('remote.Remote', function() {
           await this.remote.moveAsync(doc, old)
 
           should(doc.remote._id).equal(old.remote._id)
-          const file = await cozy.files.statById(doc.remote._id)
+          const file = await remoteHelpers.byId(doc.remote._id)
           should(file).have.properties({
             _id: old.remote._id,
-            _rev: doc.remote._rev
-          })
-          should(file.attributes).have.properties({
+            _rev: doc.remote._rev,
             dir_id: newDir._id,
             name: 'cat7.jpg'
           })
@@ -1090,9 +1081,10 @@ describe('remote.Remote', function() {
 
           await this.remote.moveAsync(doc, old)
 
-          should(await cozy.files.statById(doc.remote._id))
-            .have.propertyByPath('relationships', 'referenced_by', 'data')
-            .eql(existingRefs.map(ref => ({ id: ref._id, type: ref._type })))
+          const remoteDoc = await remoteHelpers.byId(doc.remote._id)
+          should(remoteDoc.relations('referenced_by')).eql(
+            existingRefs.map(ref => ({ id: ref._id, type: ref._type }))
+          )
         })
       })
 
@@ -1107,12 +1099,10 @@ describe('remote.Remote', function() {
           await this.remote.moveAsync(doc, old)
 
           should(doc.remote._id).equal(old.remote._id)
-          const file = await cozy.files.statById(doc.remote._id)
+          const file = await remoteHelpers.byId(doc.remote._id)
           should(file).have.properties({
             _id: old.remote._id,
-            _rev: doc.remote._rev
-          })
-          should(file.attributes).have.properties({
+            _rev: doc.remote._rev,
             dir_id: newDir._id,
             name: 'cat7.jpg'
           })
@@ -1123,9 +1113,8 @@ describe('remote.Remote', function() {
 
           await this.remote.moveAsync(doc, old)
 
-          should(await cozy.files.statById(doc.remote._id))
-            .have.propertyByPath('relationships', 'referenced_by', 'data')
-            .be.null()
+          const remoteDoc = await remoteHelpers.byId(doc.remote._id)
+          should(remoteDoc.relations('referenced_by')).be.empty()
         })
       })
     })
@@ -1142,9 +1131,8 @@ describe('remote.Remote', function() {
 
       await this.remote.trashAsync(doc)
 
-      const trashed = await cozy.files.statById(doc.remote._id)
-      should(trashed)
-        .have.propertyByPath('attributes', 'dir_id')
+      should(await remoteHelpers.byId(doc.remote._id))
+        .have.property('dir_id')
         .eql(TRASH_DIR_ID)
     })
 
@@ -1158,7 +1146,7 @@ describe('remote.Remote', function() {
 
       await this.remote.trashAsync(doc)
 
-      await should(cozy.files.statById(doc.remote._id)).be.rejectedWith({
+      await should(remoteHelpers.byId(doc.remote._id)).be.rejectedWith({
         status: 404
       })
     })
@@ -1196,7 +1184,7 @@ describe('remote.Remote', function() {
         name: 'dst-dir'
       })
 
-      const movedFile = await this.remote.remoteCozy.find(remoteFile._id)
+      const movedFile = await remoteHelpers.byId(remoteFile._id)
       await this.remote.assignNewRemote(file)
       should(file.remote).deepEqual({
         ...movedFile,
@@ -1204,7 +1192,7 @@ describe('remote.Remote', function() {
         updated_at: timestamp.roundedRemoteDate(movedFile.updated_at)
       })
 
-      const movedDir = await this.remote.remoteCozy.find(remoteDir._id)
+      const movedDir = await remoteHelpers.byId(remoteDir._id)
       await this.remote.assignNewRemote(dir)
       should(dir.remote).deepEqual({
         ...movedDir,
@@ -1356,7 +1344,7 @@ describe('remote.Remote', function() {
 
     it('renames the remote document with a conflict suffix', async function() {
       await this.remote.resolveConflict(file)
-      should(await this.remote.remoteCozy.find(remoteFile._id))
+      should(await remoteHelpers.byId(remoteFile._id))
         .have.property('name')
         .match(CONFLICT_REGEXP)
     })
