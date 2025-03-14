@@ -16,7 +16,6 @@ const { logger } = require('../../core/utils/logger')
 const remoteCaptureHelpers = require('../../dev/capture/remote')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const {
   disabledScenarioTest,
@@ -43,7 +42,6 @@ describe('Scenario', function() {
   beforeEach(configHelpers.createConfig)
   beforeEach(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
   beforeEach('set up outside dir', async function() {
     await fse.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))
   })

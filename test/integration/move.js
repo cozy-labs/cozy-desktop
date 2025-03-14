@@ -12,7 +12,6 @@ const Builders = require('../support/builders')
 const dbBuilders = require('../support/builders/db')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const { onPlatform } = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
 
@@ -35,7 +34,6 @@ describe('Move', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
