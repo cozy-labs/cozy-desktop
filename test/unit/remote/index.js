@@ -42,7 +42,7 @@ describe('remote.Remote', function() {
   beforeEach('prepare helpers', async function() {
     remoteHelpers = new RemoteTestHelpers(this)
     builders = new Builders({
-      client: await remoteHelpers.getClient(),
+      client: remoteHelpers.client,
       pouch: this.pouch
     })
   })

@@ -255,7 +255,7 @@ const captureScenario = async (scenario /*: * */) => {
   const pouch = await setupPouch(config)
   const helpers = TestHelpers.init({ config, pouch })
   const builders = new Builders({
-    client: await helpers.remote.getClient(),
+    client: helpers.remote.client,
     pouch
   })
 

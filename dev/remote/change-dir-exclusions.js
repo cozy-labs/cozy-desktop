@@ -7,7 +7,6 @@ const treeify = require('treeify')
 const yargs = require('yargs')
 
 const { default: CozyClient, Q } = require('cozy-client')
-const OldCozyClient = require('cozy-client-js').Client
 
 const { Config } = require('../../core/config')
 const {
@@ -141,16 +140,13 @@ app
     const { COZY_DESKTOP_DIR } = process.env
 
     const config = new Config(path.resolve(COZY_DESKTOP_DIR, '.cozy-desktop'))
-    const oldClient = new OldCozyClient({
-      version: 3,
-      cozyURL: config.cozyUrl,
-      oauth: {
-        clientParams: config.client,
-        storage: config
-      }
+    const client = new CozyClient({
+      uri: config.cozyUrl,
+      oauth: config.client,
+      token: config.oauthTokens,
+      scope: config.oauthTokens.scope,
+      throwFetchErrors: true
     })
-    await oldClient.authorize()
-    const client = await CozyClient.fromOldOAuthClient(oldClient)
     const context = { client, config }
 
     const { list, add, remove } = args()
