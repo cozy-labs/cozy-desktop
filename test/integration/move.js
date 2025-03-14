@@ -1357,16 +1357,18 @@ describe('Move', () => {
   })
 
   describe('unsynced remote directory with content', () => {
-    let syncedRemoteDocs, unsyncedRemoteDocs
+    let syncedDirs, unsyncedDirs
     beforeEach(async () => {
-      syncedRemoteDocs = await helpers.remote.createTree(['src/', 'dst/'])
+      const syncedRemoteDocs = await helpers.remote.createTree(['src/', 'dst/'])
+      syncedDirs = syncedRemoteDocs.dirs
       await helpers.remote.pullChanges()
       await helpers.syncAll()
 
-      unsyncedRemoteDocs = await helpers.remote.createTree([
+      const unsyncedRemoteDocs = await helpers.remote.createTree([
         'src/dir/',
         'src/dir/file'
       ])
+      unsyncedDirs = unsyncedRemoteDocs.dirs
       await helpers.remote.pullChanges()
     })
 
@@ -1379,8 +1381,8 @@ describe('Move', () => {
           'src/dir/file'
         ])
         await helpers.remote.cozy.files.updateAttributesById(
-          unsyncedRemoteDocs['src/dir/']._id,
-          { dir_id: syncedRemoteDocs['dst/']._id }
+          unsyncedDirs['src/dir/']._id,
+          { dir_id: syncedDirs['dst/']._id }
         )
         // Sync will fail since file was already moved.
         await helpers.syncAll()
@@ -1405,8 +1407,8 @@ describe('Move', () => {
           'src/dir/file'
         ])
         await helpers.remote.cozy.files.updateAttributesById(
-          unsyncedRemoteDocs['src/dir/']._id,
-          { dir_id: syncedRemoteDocs['dst/']._id }
+          unsyncedDirs['src/dir/']._id,
+          { dir_id: syncedDirs['dst/']._id }
         )
         await helpers.remote.pullChanges()
         await helpers.syncAll()
@@ -1426,9 +1428,9 @@ describe('Move', () => {
           'src/dir/',
           'src/dir/file'
         ])
-        const movedDirId = unsyncedRemoteDocs['src/dir/']._id
+        const movedDirId = unsyncedDirs['src/dir/']._id
         await helpers.remote.cozy.files.updateAttributesById(movedDirId, {
-          dir_id: syncedRemoteDocs['dst/']._id
+          dir_id: syncedDirs['dst/']._id
         })
         await helpers.remote.pullChanges()
         await helpers.remote.cozy.files.updateAttributesById(movedDirId, {

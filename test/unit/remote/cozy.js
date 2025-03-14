@@ -939,7 +939,7 @@ describe('RemoteCozy', function() {
     })
 
     it('returns the direct children of the directory', async () => {
-      const tree = await builders.createRemoteTree([
+      const { dirs, files } = await builders.createRemoteTree([
         'dir/',
         'dir/subdir/',
         'dir/subdir/subsubdir/',
@@ -955,16 +955,16 @@ describe('RemoteCozy', function() {
         'other-dir/content'
       ])
 
-      const dirContent = await remoteCozy.getDirectoryContent(tree['dir/'])
+      const dirContent = await remoteCozy.getDirectoryContent(dirs['dir/'])
       should(dirContent.map(metadata.serializableRemote)).deepEqual(
-        [tree['dir/file'], tree['dir/other-subdir/'], tree['dir/subdir/']].map(
+        [files['dir/file'], dirs['dir/other-subdir/'], dirs['dir/subdir/']].map(
           metadata.serializableRemote
         )
       )
     })
 
     it('does not return exluded subdirectories', async () => {
-      const tree = await builders.createRemoteTree([
+      const { dirs } = await builders.createRemoteTree([
         'dir/',
         'dir/subdir/',
         'dir/subdir/subsubdir/',
@@ -977,14 +977,13 @@ describe('RemoteCozy', function() {
         _id: remoteCozy.config.deviceId
       }
       const client = await remoteCozy.getClient()
-      const files = client.collection(FILES_DOCTYPE)
-      await files.addNotSynchronizedDirectories(oauthClient, [
-        tree['dir/subdir/']
-      ])
+      await client
+        .collection(FILES_DOCTYPE)
+        .addNotSynchronizedDirectories(oauthClient, [dirs['dir/subdir/']])
 
-      const dirContent = await remoteCozy.getDirectoryContent(tree['dir/'])
+      const dirContent = await remoteCozy.getDirectoryContent(dirs['dir/'])
       should(dirContent.map(metadata.serializableRemote)).deepEqual([
-        metadata.serializableRemote(tree['dir/other-subdir/'])
+        metadata.serializableRemote(dirs['dir/other-subdir/'])
       ])
     })
 
@@ -997,7 +996,7 @@ describe('RemoteCozy', function() {
     })
 
     it('does not fail when there are multiple result pages', async () => {
-      const tree = await builders.createRemoteTree([
+      const { dirs, files } = await builders.createRemoteTree([
         'dir/',
         'dir/subdir/',
         'dir/subdir/subsubdir/',
@@ -1013,11 +1012,11 @@ describe('RemoteCozy', function() {
         'other-dir/content'
       ])
 
-      const dirContent = await remoteCozy.getDirectoryContent(tree['dir/'], {
+      const dirContent = await remoteCozy.getDirectoryContent(dirs['dir/'], {
         batchSize: 1
       })
       should(dirContent.map(metadata.serializableRemote)).deepEqual(
-        [tree['dir/file'], tree['dir/other-subdir/'], tree['dir/subdir/']].map(
+        [files['dir/file'], dirs['dir/other-subdir/'], dirs['dir/subdir/']].map(
           metadata.serializableRemote
         )
       )

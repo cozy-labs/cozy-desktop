@@ -463,16 +463,17 @@ describe('Restore', () => {
   })
 
   describe('folder', () => {
-    let remoteDocs
+    let dirs
 
     beforeEach(async () => {
-      remoteDocs = await helpers.remote.createTree([
+      const remoteDocs = await helpers.remote.createTree([
         'parent/',
         'parent/dir/',
         'parent/dir/empty-subdir/',
         'parent/dir/subdir/',
         'parent/dir/subdir/file'
       ])
+      dirs = remoteDocs.dirs
 
       await helpers.remote.pullChanges()
       await helpers.syncAll()
@@ -480,10 +481,10 @@ describe('Restore', () => {
 
     context('before trash is applied on local file system', () => {
       it('does not create conflicts', async () => {
-        await cozy.files.trashById(remoteDocs['parent/dir/']._id)
+        await cozy.files.trashById(dirs['parent/dir/']._id)
         await helpers.remote.pullChanges()
 
-        await cozy.files.restoreById(remoteDocs['parent/dir/']._id)
+        await cozy.files.restoreById(dirs['parent/dir/']._id)
         await helpers.remote.pullChanges()
         await helpers.syncAll()
 
