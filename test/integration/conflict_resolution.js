@@ -11,10 +11,7 @@ const metadata = require('../../core/metadata')
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-
-const cozy = cozyHelpers.cozy
 
 describe('Conflict resolution', () => {
   let helpers, builders
@@ -199,7 +196,7 @@ describe('Conflict resolution', () => {
 
         const remoteBadFile = await helpers.remote.byPath('/' + conflictedPath)
         const remoteFile = await helpers.remote.byPath(`/concurrent-edited`)
-        await cozy.files.trashById(remoteBadFile._id)
+        await helpers.remote.trashById(remoteBadFile._id)
         await helpers.remote.updateFileById(remoteFile._id, `content6`, {
           name: remoteFile.name,
           contentType: 'text/plain'

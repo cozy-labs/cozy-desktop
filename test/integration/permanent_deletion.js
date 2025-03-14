@@ -5,10 +5,7 @@ const should = require('should')
 
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-
-const cozy = cozyHelpers.cozy
 
 describe('Permanent deletion remote', () => {
   let helpers
@@ -36,8 +33,8 @@ describe('Permanent deletion remote', () => {
     await helpers.syncAll()
     helpers.spyPouch()
 
-    await cozy.files.trashById(file._id)
-    await cozy.files.destroyById(file._id)
+    await helpers.remote.trashById(file._id)
+    await helpers.remote.destroyById(file._id)
     await helpers.remote.pullChanges()
 
     should(helpers.putDocs('path', 'deleted', 'trashed')).deepEqual([
