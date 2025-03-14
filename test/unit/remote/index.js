@@ -30,7 +30,7 @@ const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
 /*::
 import type { Metadata, SavedMetadata } from '../../../core/metadata'
-import type { RemoteDoc, RemoteJsonDoc } from '../../../core/remote/document'
+import type { RemoteDoc } from '../../../core/remote/document'
 */
 const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
 
@@ -693,9 +693,7 @@ describe('remote.Remote', function() {
 
       await this.remote.updateFolderAsync(doc)
 
-      const folder /*: RemoteJsonDoc */ = await cozy.files.statById(
-        doc.remote._id
-      )
+      const folder = await cozy.files.statById(doc.remote._id)
       should(folder.attributes).have.properties({
         path: '/created',
         type: DIR_TYPE,
