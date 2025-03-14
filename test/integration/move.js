@@ -6,7 +6,7 @@ const path = require('path')
 const _ = require('lodash')
 const should = require('should')
 
-const { ROOT_DIR_ID, TRASH_DIR_ID } = require('../../core/remote/constants')
+const { TRASH_DIR_ID } = require('../../core/remote/constants')
 const { logger } = require('../../core/utils/logger')
 const Builders = require('../support/builders')
 const dbBuilders = require('../support/builders/db')
@@ -69,7 +69,7 @@ describe('Move', () => {
     beforeEach(async () => {
       dst = await helpers.remote.createDirectory('dst')
       src = await helpers.remote.createDirectory('src')
-      file = await cozy.files.create('foo', { name: 'file', dirID: src._id })
+      file = await helpers.remote.createFile('file', 'foo', { dirId: src._id })
 
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
@@ -139,9 +139,8 @@ describe('Move', () => {
     })
 
     it('local overwriting other file', async () => {
-      const existing = await cozy.files.create('foo', {
-        name: 'file',
-        dirID: dst._id
+      const existing = await helpers.remote.createFile('file', 'foo', {
+        dirId: dst._id
       })
       await helpers.remote.pullChanges()
       await helpers.syncAll()
@@ -372,14 +371,11 @@ describe('Move', () => {
     let file
 
     beforeEach(async () => {
-      file = await cozy.files.create('File content...', {
-        name: 'file',
-        dirID: ROOT_DIR_ID
-      })
+      file = await helpers.remote.createFileByPath('/file', 'File content...')
       await helpers.pullAndSyncAll()
     })
 
-    const moveFile = async () => {
+    const moveFileLocally = async () => {
       await helpers.local.syncDir.move('file', 'renamed')
       await helpers.local.scan()
     }
@@ -388,10 +384,10 @@ describe('Move', () => {
       let existing
 
       beforeEach(async () => {
-        existing = await cozy.files.create('Overwritten content...', {
-          name: 'renamed',
-          dirID: ROOT_DIR_ID
-        })
+        existing = await helpers.remote.createFileByPath(
+          '/renamed',
+          'Overwritten content...'
+        )
         await helpers.pullAndSyncAll()
       })
 
@@ -410,7 +406,7 @@ describe('Move', () => {
         // We should be retrying a few times and then finally skip the change to
         // avoid looping over it.
         it('ends up moving the file', async () => {
-          await moveFile()
+          await moveFileLocally()
           await helpers.syncAll()
 
           should(await helpers.trees()).deepEqual({
@@ -441,7 +437,7 @@ describe('Move', () => {
         // We should be retrying a few times and then finally skip the change to
         // avoid looping over it.
         it('ends up replacing the overwritten file', async () => {
-          await moveFile()
+          await moveFileLocally()
           await helpers.syncAll()
 
           should(await helpers.trees()).deepEqual({
@@ -477,7 +473,7 @@ describe('Move', () => {
       // We should be retrying a few times and then finally skip the change to
       // avoid looping over it.
       it('ends up re-uploading the file at the destination', async () => {
-        await moveFile()
+        await moveFileLocally()
         await helpers.syncAll()
 
         should(await helpers.trees()).deepEqual({
@@ -551,7 +547,7 @@ describe('Move', () => {
       const subdir = await helpers.remote.createDirectory('subdir', {
         dirId: dir._id
       })
-      await cozy.files.create('foo', { name: 'file', dirID: subdir._id })
+      await helpers.remote.createFile('file', 'foo', { dirId: subdir._id })
 
       await helpers.remote.pullChanges()
       await helpers.syncAll()
@@ -677,10 +673,7 @@ describe('Move', () => {
       })
       // The file deletion would be merged by another event but even without
       // that event, we'll delete it remotely.
-      await cozy.files.create('foo', {
-        name: 'file',
-        dirID: existing._id
-      })
+      await helpers.remote.createFile('file', 'foo', { dirId: existing._id })
       await helpers.remote.pullChanges()
       await helpers.syncAll()
       // We don't want the calls made above to show up in our expectations
@@ -840,9 +833,8 @@ describe('Move', () => {
     describe('with synced file update', () => {
       let file
       beforeEach(async () => {
-        file = await cozy.files.create('initial file content', {
-          name: 'file',
-          dirID: dir._id
+        file = await helpers.remote.createFile('file', 'initial file content', {
+          dirId: dir._id
         })
         await helpers.remote.pullChanges()
         await helpers.syncAll()
@@ -910,9 +902,8 @@ describe('Move', () => {
     describe('with unsynced child file update on the same side', () => {
       let file
       beforeEach(async () => {
-        file = await cozy.files.create('initial file content', {
-          name: 'file',
-          dirID: dir._id
+        file = await helpers.remote.createFile('file', 'initial file content', {
+          dirId: dir._id
         })
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
@@ -989,9 +980,8 @@ describe('Move', () => {
     describe.skip('with unsynced child file update on the other side', () => {
       let file
       beforeEach(async () => {
-        file = await cozy.files.create('initial file content', {
-          name: 'file',
-          dirID: dir._id
+        file = await helpers.remote.createFile('file', 'initial file content', {
+          dirId: dir._id
         })
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
@@ -1157,9 +1147,8 @@ describe('Move', () => {
 
     beforeEach(async () => {
       dir = await helpers.remote.createDirectory('dir')
-      await cozy.files.create('File content...', {
-        name: 'file',
-        dirID: dir._id
+      await helpers.remote.createFile('file', 'File content...', {
+        dirId: dir._id
       })
       await helpers.pullAndSyncAll()
     })
@@ -1175,10 +1164,11 @@ describe('Move', () => {
 
       beforeEach(async () => {
         existing = await helpers.remote.createDirectory('renamed')
-        overwritten = await cozy.files.create('Overwritten content...', {
-          name: 'file',
-          dirID: existing._id
-        })
+        overwritten = await helpers.remote.createFile(
+          'file',
+          'Overwritten content...',
+          { dirId: existing._id }
+        )
         await helpers.pullAndSyncAll()
       })
 
@@ -1461,10 +1451,11 @@ describe('Move', () => {
         let file
         beforeEach('create normalized file', async () => {
           const parent = await helpers.remote.createDirectory('Sujets')
-          file = await cozy.files.create('initial content', {
-            name: 'ds-1.pdf',
-            dirID: parent._id
-          })
+          file = await helpers.remote.createFile(
+            'ds-1.pdf',
+            'initial content',
+            { dirId: parent._id }
+          )
           await helpers.pullAndSyncAll()
           await helpers.flushLocalAndSyncAll()
         })
@@ -1493,17 +1484,16 @@ describe('Move', () => {
         let file
         beforeEach('create normalized file', async () => {
           const parent = await helpers.remote.createDirectory('énoncés')
-          file = await cozy.files.create('initial content', {
-            name: 'sujet.pdf',
-            dirID: parent._id
-          })
+          file = await helpers.remote.createFile(
+            'sujet.pdf',
+            'initial content',
+            { dirId: parent._id }
+          )
           await helpers.pullAndSyncAll()
           await helpers.flushLocalAndSyncAll()
 
           // Fake local re-normalization from NFC to NFD
-          const doc = await helpers.docByPath(
-            path.join(parent.name, file.attributes.name)
-          )
+          const doc = await helpers.docByPath(path.join(parent.name, file.name))
           await helpers.pouch.put(
             ({
               ...doc,

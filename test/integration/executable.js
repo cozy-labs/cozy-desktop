@@ -104,7 +104,7 @@ describe('Executable handling', () => {
 
   describe('adding a remote executable file', () => {
     it('is executable everywhere, except on Windows', async () => {
-      await cozy.files.create('whatever content', { name: 'file' })
+      await helpers.remote.createFileByPath('/file', 'whatever content')
       await cozy.files.updateAttributesByPath('/file', { executable: true })
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
@@ -124,7 +124,7 @@ describe('Executable handling', () => {
 
   describe('adding a remote non-executable file', () => {
     it('is not executable anywhere', async () => {
-      await cozy.files.create('whatever content', { name: 'file' })
+      await helpers.remote.createFile('file', 'whatever content')
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
 
@@ -189,7 +189,7 @@ describe('Executable handling', () => {
 
   context('with a synced executable file', () => {
     beforeEach(async () => {
-      await cozy.files.create('whatever content', { name: 'file' })
+      await helpers.remote.createFileByPath('/file', 'whatever content')
       await cozy.files.updateAttributesByPath('/file', { executable: true })
       await helpers.pullAndSyncAll()
     })

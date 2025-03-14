@@ -40,7 +40,7 @@ describe('Conflict resolution', () => {
 
   describe('local', () => {
     beforeEach('create and merge conflicting remote file', async () => {
-      await cozy.files.create('whatever', { name: 'foo' })
+      await helpers.remote.createFile('foo', 'whatever')
       await helpers.remote.pullChanges()
     })
 
@@ -251,10 +251,7 @@ describe('Conflict resolution', () => {
     context('when the content differs', () => {
       it('renames one of them', async () => {
         await helpers.local.syncDir.outputFile('same-name', 'content1')
-        await cozy.files.create('content2', {
-          name: 'same-name',
-          contentType: 'text/plain'
-        })
+        await helpers.remote.createFile('same-name', 'content2')
 
         await fullSyncStartingFrom('local')
 
@@ -267,10 +264,7 @@ describe('Conflict resolution', () => {
     context('when the content is the same', () => {
       it('links the two within the same PouchDB record', async () => {
         await helpers.local.syncDir.outputFile('same-name', 'same content')
-        await cozy.files.create('same content', {
-          name: 'same-name',
-          contentType: 'text/plain'
-        })
+        await helpers.remote.createFile('same-name', 'same content')
 
         await fullSyncStartingFrom('local')
 
@@ -304,10 +298,7 @@ describe('Conflict resolution', () => {
   describe('merging local dir then remote file', () => {
     it('renames the remote file', async () => {
       await helpers.local.syncDir.ensureDir('same-name')
-      await cozy.files.create('content2', {
-        name: 'same-name',
-        contentType: 'text/plain'
-      })
+      await helpers.remote.createFile('same-name', 'content2')
 
       await fullSyncStartingFrom('local')
 
@@ -342,7 +333,7 @@ describe('Conflict resolution', () => {
       await helpers.syncAll()
       await helpers.pullAndSyncAll()
       // FIXME: Initial tree helper?
-      await cozy.files.create('remote dst content', { name: 'dst' })
+      await helpers.remote.createFile('dst', 'remote dst content')
       await helpers.local.syncDir.move('src', 'dst')
 
       await fullSyncStartingFrom('local')
@@ -414,7 +405,7 @@ describe('Conflict resolution', () => {
           .path('foo')
           .build()
       )
-      await cozy.files.create('whatever', { name: 'foo' })
+      await helpers.remote.createFile('foo', 'whatever')
     })
 
     it('success', async () => {
@@ -524,9 +515,8 @@ describe('Conflict resolution', () => {
 
       // Create remote directory with content
       const remoteDst = await helpers.remote.createDirectory('dst')
-      await cozy.files.create('remote content', {
-        name: 'foo',
-        dirID: remoteDst._id
+      await helpers.remote.createFile('foo', 'remote content', {
+        dirId: remoteDst._id
       })
     })
 
