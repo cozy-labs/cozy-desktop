@@ -6,7 +6,6 @@ const should = require('should')
 const timestamp = require('../../core/utils/timestamp')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const platform = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
 
@@ -16,7 +15,6 @@ describe('Update only mtime', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
   beforeEach(function() {
     helpers = TestHelpers.init(this)
