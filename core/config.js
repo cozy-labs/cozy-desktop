@@ -249,30 +249,9 @@ class Config {
     return watcherType(this.fileConfig)
   }
 
-  // Implement the Storage interface for cozy-client-js oauth
-
-  save(key /*: string */, value /*: * */) {
-    this.fileConfig[key] = value
-    if (key === 'creds') {
-      // Persist the access token after it has been refreshed
-      this.persist()
-    }
-    return Promise.resolve(value)
-  }
-
-  load(key /*: string */) /*: Promise<*> */ {
-    return Promise.resolve(this.fileConfig[key])
-  }
-
-  delete(key /*: string */) /*: Promise<*> */ {
-    const deleted = delete this.fileConfig[key]
-    return Promise.resolve(deleted)
-  }
-
-  clear() /*: Promise<void> */ {
+  clear() {
     delete this.fileConfig.creds
     delete this.fileConfig.state
-    return Promise.resolve()
   }
 }
 
