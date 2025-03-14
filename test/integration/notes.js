@@ -8,7 +8,6 @@ const should = require('should')
 const { TRASH_DIR_ID } = require('../../core/remote/constants')
 const { isNote } = require('../../core/utils/notes')
 const timestamp = require('../../core/utils/timestamp')
-const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -26,10 +25,7 @@ describe('Update', () => {
 
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
-    builders = new Builders({
-      client: helpers.remote.client,
-      pouch: this.pouch
-    })
+    builders = helpers.remote.builders
 
     await helpers.local.clean()
     await helpers.local.setupTrash()

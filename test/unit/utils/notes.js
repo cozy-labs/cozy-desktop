@@ -17,6 +17,7 @@ describe('utils/notes', () => {
   describe('localDoc', () => {
     before('instanciate config', configHelpers.createConfig)
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+
     afterEach('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
 
@@ -65,10 +66,11 @@ describe('utils/notes', () => {
 
     before('instanciate config', configHelpers.createConfig)
     before('register cozy client', configHelpers.registerClient)
-    before('instanciate helpers', async function() {
+    beforeEach('instanciate helpers', async function() {
       remoteHelpers = new RemoteTestHelpers(this)
-      builders = new Builders({ client: remoteHelpers.client })
+      builders = remoteHelpers.builders
     })
+
     afterEach('clean remote cozy', () => remoteHelpers.clean())
     after('clean config directory', configHelpers.cleanConfig)
 
@@ -129,11 +131,12 @@ describe('utils/notes', () => {
 
     before('instanciate config', configHelpers.createConfig)
     before('register cozy client', configHelpers.registerClient)
-    before('instanciate helpers', async function() {
-      remoteHelpers = new RemoteTestHelpers(this)
-      builders = new Builders({ client: remoteHelpers.client })
-    })
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
+    beforeEach('instanciate helpers', async function() {
+      remoteHelpers = new RemoteTestHelpers(this)
+      builders = remoteHelpers.builders
+    })
+
     afterEach('clean remote cozy', () => remoteHelpers.clean())
     afterEach('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)

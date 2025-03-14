@@ -12,7 +12,6 @@ const metadata = require('../../core/metadata')
 const { otherSide } = require('../../core/side')
 const pathUtils = require('../../core/utils/path')
 const timestamp = require('../../core/utils/timestamp')
-const Builders = require('../support/builders')
 const stubSide = require('../support/doubles/side')
 const configHelpers = require('../support/helpers/config')
 const { onPlatform, onPlatforms } = require('../support/helpers/platform')
@@ -136,11 +135,9 @@ describe('Merge', function() {
     })
     this.merge.remote.fileContentWasVersioned = sinon.stub().returns(false)
     remoteHelpers = new RemoteTestHelpers(this)
-    builders = new Builders({
-      client: remoteHelpers.client,
-      pouch: this.pouch
-    })
+    builders = remoteHelpers.builders
   })
+
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
   afterEach('clean remote', () => remoteHelpers.clean())
   after('clean config directory', configHelpers.cleanConfig)

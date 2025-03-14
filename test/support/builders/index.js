@@ -45,7 +45,7 @@ module.exports = class Builders {
   constructor({
     client,
     pouch
-  } /*: {|client?: CozyClient, pouch?: Pouch|} */ = {}) {
+  } /*: { +client?: CozyClient, +pouch?: Pouch } */ = {}) {
     this.client = client
     this.pouch = pouch
   }

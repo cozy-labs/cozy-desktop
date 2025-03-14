@@ -34,8 +34,8 @@ export type RemoteTree = {
 class RemoteTestHelpers {
   /*::
   side: Remote
-  builders: ?Builders
   rootDir: ?RemoteDir
+  _builders: ?Builders
   */
 
   constructor(opts /*: RemoteOptions */) {
@@ -48,16 +48,16 @@ class RemoteTestHelpers {
     return this.side.remoteCozy.client
   }
 
-  async getBuilders() /*: Promise<Builders> */ {
-    if (this.builders != null) return this.builders
-
-    this.builders = new Builders({ client: this.client, pouch: this.pouch })
-
-    return this.builders
-  }
-
   get pouch() /*: Pouch */ {
     return this.side.pouch
+  }
+
+  get builders() /*: Builders */ {
+    if (this._builders != null) return this._builders
+
+    this._builders = new Builders(this)
+
+    return this._builders
   }
 
   async clean() {
@@ -156,21 +156,19 @@ class RemoteTestHelpers {
                 executable?: boolean,
                 lastModifiedDate?: string|} */
   ) /*: Promise<FullRemoteFile> */ {
-    const builders = await this.getBuilders()
-
     const options = {
       name,
       dirId: ROOT_DIR_ID,
       contentType: 'application/octet-stream',
       contentLength: content.length,
-      checksum: builders.checksum(content).build(),
+      checksum: this.builders.checksum(content).build(),
       lastModifiedDate: new Date().toISOString(),
       executable: false,
       ...attrs
     }
 
     return this.side.remoteCozy.createFile(
-      builders
+      this.builders
         .stream()
         .push(content)
         .build(),

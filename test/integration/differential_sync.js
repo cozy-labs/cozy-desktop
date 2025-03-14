@@ -10,7 +10,6 @@ const {
   FILES_DOCTYPE,
   OAUTH_CLIENTS_DOCTYPE
 } = require('../../core/remote/constants')
-const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -38,9 +37,8 @@ describe('Differential synchronization', () => {
 
     helpers.spyPouch()
 
-    const { client } = helpers.remote
-    builders = new Builders({ client })
-    files = client.collection(FILES_DOCTYPE)
+    builders = helpers.remote.builders
+    files = helpers.remote.client.collection(FILES_DOCTYPE)
   })
   afterEach(async function() {
     await helpers.stop()

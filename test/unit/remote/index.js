@@ -22,7 +22,6 @@ const { FetchError } = require('../../../core/remote/cozy')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
 const { CONFLICT_REGEXP } = require('../../../core/utils/conflicts')
 const timestamp = require('../../../core/utils/timestamp')
-const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { RemoteTestHelpers } = require('../../support/helpers/remote')
@@ -41,10 +40,7 @@ describe('remote.Remote', function() {
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
   beforeEach('prepare helpers', async function() {
     remoteHelpers = new RemoteTestHelpers(this)
-    builders = new Builders({
-      client: remoteHelpers.client,
-      pouch: this.pouch
-    })
+    builders = remoteHelpers.builders
   })
   beforeEach('instanciate remote', function() {
     this.prep = sinon.createStubInstance(Prep)

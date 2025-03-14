@@ -13,7 +13,6 @@ const { byPathKey } = require('../../core/pouch')
 const { MAX_SYNC_RETRIES } = require('../../core/sync')
 const syncErrors = require('../../core/sync/errors')
 const { logger } = require('../../core/utils/logger')
-const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -33,7 +32,7 @@ describe('Update file', () => {
 
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
-    builders = new Builders({ client: helpers.remote.client })
+    builders = helpers.remote.builders
     pouch = helpers.pouch
     prep = helpers.prep
 

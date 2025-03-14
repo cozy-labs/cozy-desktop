@@ -10,7 +10,6 @@ const sinon = require('sinon')
 const Prep = require('../../../core/prep')
 const { Remote } = require('../../../core/remote')
 const remoteErrors = require('../../../core/remote/errors')
-const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { RemoteTestHelpers } = require('../../support/helpers/remote')
@@ -36,11 +35,7 @@ describe('Remote', function() {
     this.remote = new Remote(this)
   })
   beforeEach('create the couchdb folder', async function() {
-    const builders = new Builders({
-      client: remoteHelpers.client
-    })
-
-    await builders
+    await remoteHelpers.builders
       .remoteDir()
       .name('couchdb-folder')
       .inRootDir()

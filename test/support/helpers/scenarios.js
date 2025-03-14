@@ -14,7 +14,6 @@ const _ = require('lodash')
 const sinon = require('sinon')
 
 const stater = require('../../../core/local/stater')
-const Builders = require('../builders')
 
 /*::
 import type { Scenario, ScenarioInit, FSAction } from '../../scenarios'
@@ -346,10 +345,7 @@ module.exports.init = async (
   localCapture /*: ?({| batches: ChannelEvent[][] |} | {| events: ChokidarEvent[] |}) */
 ) => {
   debug('[init]')
-  const builders = new Builders({
-    client: helpers.remote.client,
-    pouch: helpers.pouch
-  })
+  const { builders } = helpers.remote
   const remoteDocsToTrash = []
   const inoMap = new Map()
 

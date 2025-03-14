@@ -21,7 +21,6 @@ const {
 } = require('../../../core/remote/constants')
 const { FetchError, RemoteCozy } = require('../../../core/remote/cozy')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
-const Builders = require('../../support/builders')
 const CozyStackDouble = require('../../support/doubles/cozy_stack')
 const configHelpers = require('../../support/helpers/config')
 const { COZY_URL } = require('../../support/helpers/cozy')
@@ -48,11 +47,9 @@ describe('RemoteCozy', function() {
   before('register client', configHelpers.registerClient)
   beforeEach('prepare helpers', async function() {
     remoteHelpers = new RemoteTestHelpers(this)
-    builders = new Builders({
-      client: remoteHelpers.client,
-      pouch: this.pouch
-    })
+    builders = remoteHelpers.builders
   })
+
   afterEach(() => remoteHelpers.clean())
   afterEach(() => cozyStackDouble.clearStub())
   after('clean config directory', configHelpers.cleanConfig)
