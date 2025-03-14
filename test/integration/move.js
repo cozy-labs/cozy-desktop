@@ -23,16 +23,6 @@ import type { SavedMetadata } from '../../core/metadata'
 */
 
 const builders = new Builders()
-const cozy = cozyHelpers.cozy
-
-const skipRemoteChanges = async ({ helpers, cozy }) => {
-  const since = await helpers.pouch.getRemoteSeq()
-  const { last_seq } = await cozy.data.changesFeed('io.cozy.files', {
-    since,
-    limit: 10000
-  })
-  await helpers.pouch.setRemoteSeq(last_seq)
-}
 
 describe('Move', () => {
   if (process.env.APPVEYOR) {
@@ -406,7 +396,7 @@ describe('Move', () => {
           // Destroy existing file on Cozy
           await helpers.remote.destroyById(existing._id)
           // Fake missing the remote change by skipping its sequence
-          skipRemoteChanges({ helpers, cozy })
+          await helpers.remote.ignorePreviousChanges()
         })
 
         // We should be retrying a few times and then finally skip the change to
@@ -437,7 +427,7 @@ describe('Move', () => {
           // Destroy moved file on Cozy
           await helpers.remote.destroyById(file._id)
           // Fake missing the remote change by skipping its sequence
-          skipRemoteChanges({ helpers, cozy })
+          await helpers.remote.ignorePreviousChanges()
         })
 
         // We should be retrying a few times and then finally skip the change to
@@ -473,7 +463,7 @@ describe('Move', () => {
         // Destroy moved file on Cozy
         await helpers.remote.destroyById(file._id)
         // Fake missing the remote change by skipping its sequence
-        skipRemoteChanges({ helpers, cozy })
+        await helpers.remote.ignorePreviousChanges()
       })
 
       // We should be retrying a few times and then finally skip the change to
@@ -1195,7 +1185,7 @@ describe('Move', () => {
             // Destroy existing directory on Cozy
             await helpers.remote.destroyById(existing._id)
             // Fake missing the remote changes by skipping its sequence
-            skipRemoteChanges({ helpers, cozy })
+            await helpers.remote.ignorePreviousChanges()
           })
 
           // We should be retrying a few times and then finally skip the change to
@@ -1227,7 +1217,7 @@ describe('Move', () => {
           // Destroy moved directory on Cozy
           await helpers.remote.destroyById(dir._id)
           // Fake missing the remote changes by skipping its sequence
-          skipRemoteChanges({ helpers, cozy })
+          await helpers.remote.ignorePreviousChanges()
         })
 
         // We should be retrying a few times and then finally skip the change to
@@ -1269,7 +1259,7 @@ describe('Move', () => {
         // Destroy moved directory on Cozy
         await helpers.remote.destroyById(dir._id)
         // Fake missing the remote changes by skipping its sequence
-        skipRemoteChanges({ helpers, cozy })
+        await helpers.remote.ignorePreviousChanges()
       })
 
       // We should be retrying a few times and then finally skip the change to
