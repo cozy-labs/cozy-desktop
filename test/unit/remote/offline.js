@@ -37,7 +37,7 @@ describe('Remote', function() {
   })
   beforeEach('create the couchdb folder', async function() {
     const builders = new Builders({
-      client: await remoteHelpers.getClient()
+      client: remoteHelpers.client
     })
 
     await builders

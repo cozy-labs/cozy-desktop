@@ -27,7 +27,7 @@ describe('Update', () => {
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
     builders = new Builders({
-      client: await helpers.remote.getClient(),
+      client: helpers.remote.client,
       pouch: this.pouch
     })
 
