@@ -8,20 +8,10 @@ const should = require('should')
 const pathUtils = require('../../core/utils/path')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
-const skipRemoteChange = async ({ helpers, cozy }) => {
-  const since = await helpers.pouch.getRemoteSeq()
-  const { last_seq } = await cozy.data.changesFeed('io.cozy.files', {
-    since,
-    limit: 10000
-  })
-  await helpers.pouch.setRemoteSeq(last_seq)
-}
-
 describe('Trash', () => {
-  let cozy, helpers, pouch, prep
+  let helpers, pouch, prep
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -32,7 +22,6 @@ describe('Trash', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
     pouch = helpers.pouch
     prep = helpers.prep
@@ -129,7 +118,7 @@ describe('Trash', () => {
           // Destroy file on Cozy
           await helpers.remote.destroyById(file._id)
           // Fake missing the remote change by skipping its sequence
-          skipRemoteChange({ helpers, cozy })
+          await helpers.remote.ignorePreviousChanges()
 
           await helpers.local.syncDir.remove('parent/file')
           await helpers.local.scan()
@@ -155,7 +144,7 @@ describe('Trash', () => {
             name: file.name
           })
           // Fake missing the remote change by skipping its sequence
-          skipRemoteChange({ helpers, cozy })
+          await helpers.remote.ignorePreviousChanges()
 
           await helpers.local.syncDir.remove('parent/file')
           await helpers.local.scan()
