@@ -304,7 +304,9 @@ describe('Move', () => {
       })
 
       it('remote', async () => {
-        await cozy.files.updateById(file._id, 'updated file content', {})
+        await helpers.remote.updateFileById(file._id, 'updated file content', {
+          name: file.name
+        })
         await helpers.pullAndSyncAll()
         const was = await pouch.byRemoteId(file._id)
         await helpers.remote.move(was.remote, path.normalize('src/file2'))
@@ -347,7 +349,11 @@ describe('Move', () => {
 
       context('remote', () => {
         it('moves and updates the file on the local filesystem', async () => {
-          await cozy.files.updateById(file._id, 'updated file content', {})
+          await helpers.remote.updateFileById(
+            file._id,
+            'updated file content',
+            { name: file.name }
+          )
           await helpers.remote.pullChanges()
           const was = await pouch.byRemoteId(file._id)
           await helpers.remote.move(was.remote, path.normalize('src/file2'))
@@ -839,7 +845,9 @@ describe('Move', () => {
         await helpers.remote.pullChanges()
         await helpers.syncAll()
 
-        await cozy.files.updateById(file._id, 'updated file content', {})
+        await helpers.remote.updateFileById(file._id, 'updated file content', {
+          name: file.name
+        })
         await helpers.remote.pullChanges()
         await helpers.syncAll()
       })
@@ -951,7 +959,9 @@ describe('Move', () => {
           'parent/src/dir/subdir/',
           'parent/src/dir/subdir/file'
         ])
-        await cozy.files.updateById(file._id, 'updated file content', {})
+        await helpers.remote.updateFileById(file._id, 'updated file content', {
+          name: file.name
+        })
         await helpers.remote.pullChanges()
         const was = await pouch.byRemoteId(dir._id)
         await helpers.remote.move(was.remote, path.normalize('parent/src/dir2'))
@@ -998,7 +1008,9 @@ describe('Move', () => {
           'parent/src/dir/subdir/',
           'parent/src/dir/subdir/file'
         ])
-        await cozy.files.updateById(file._id, 'updated file content', {})
+        await helpers.remote.updateFileById(file._id, 'updated file content', {
+          name: file.name
+        })
         await helpers.remote.pullChanges()
         await helpers.local.syncDir.rename('parent/src/dir/', 'dir2')
         await helpers.local.scan()
@@ -1467,7 +1479,9 @@ describe('Move', () => {
             name: 'DS-1.pdf'
           })
           await helpers.remote.pullChanges()
-          await cozy.files.updateById(file._id, 'updated content', {})
+          await helpers.remote.updateFileById(file._id, 'updated content', {
+            name: file.name
+          })
           await helpers.pullAndSyncAll()
 
           should(await helpers.docByPath('Sujets/DS-1.pdf')).match({
@@ -1509,7 +1523,9 @@ describe('Move', () => {
             name: 'DS-1.pdf'
           })
           await helpers.remote.pullChanges()
-          await cozy.files.updateById(file._id, 'updated content', {})
+          await helpers.remote.updateFileById(file._id, 'updated content', {
+            name: file.name
+          })
           await helpers.pullAndSyncAll()
 
           should(await helpers.docByPath('énoncés/DS-1.pdf')).match({

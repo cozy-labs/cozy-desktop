@@ -151,7 +151,9 @@ describe('Trash', () => {
         // trying forever.
         it('can be skipped manually', async () => {
           // Destroy file on Cozy
-          await cozy.files.updateById(file._id, 'remote update')
+          await helpers.remote.updateFileById(file._id, 'remote update', {
+            name: file.name
+          })
           // Fake missing the remote change by skipping its sequence
           skipRemoteChange({ helpers, cozy })
 

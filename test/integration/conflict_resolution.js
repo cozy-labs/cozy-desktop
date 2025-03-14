@@ -79,7 +79,9 @@ describe('Conflict resolution', () => {
       // Update file remotely
       const remoteFile = await helpers.remote.byPath('/concurrent-edited')
       await helpers.pouch.byRemoteIdMaybe(remoteFile._id)
-      await cozy.files.updateById(remoteFile._id, 'remote-content', {
+
+      await helpers.remote.updateFileById(remoteFile._id, 'remote-content', {
+        name: remoteFile.name,
         contentType: 'text/plain'
       })
     })
@@ -141,7 +143,8 @@ describe('Conflict resolution', () => {
       )
       remoteFile = await helpers.remote.byPath(`/concurrent-edited`)
       pouchFile = await helpers.pouch.byRemoteIdMaybe(remoteFile._id)
-      await cozy.files.updateById(remoteFile._id, remoteUpdateContent, {
+      await helpers.remote.updateFileById(remoteFile._id, remoteUpdateContent, {
+        name: remoteFile.name,
         contentType: 'text/plain',
         contentLength: remoteUpdateContent.length
       })
@@ -197,7 +200,8 @@ describe('Conflict resolution', () => {
         const remoteBadFile = await helpers.remote.byPath('/' + conflictedPath)
         const remoteFile = await helpers.remote.byPath(`/concurrent-edited`)
         await cozy.files.trashById(remoteBadFile._id)
-        await cozy.files.updateById(remoteFile._id, `content6`, {
+        await helpers.remote.updateFileById(remoteFile._id, `content6`, {
+          name: remoteFile.name,
           contentType: 'text/plain'
         })
 

@@ -378,6 +378,30 @@ class RemoteTestHelpers {
     const { _id } = await this.byPath(remotePath)
     return this.updateAttributesById(_id, attrs)
   }
+
+  async updateFileById(
+    id /*: string */,
+    content /*: string */,
+    options /*: {|name: string,
+                 contentType?: string,
+                 contentLength?: number,
+                 checksum?: string,
+                 executable?: boolean,
+                 lastModifiedDate?: string|} */
+  ) /*: Promise<FullRemoteFile> */ {
+    const client = await this.getClient()
+    const { data: updated } = await client.collection(FILES_DOCTYPE).updateFile(
+      content,
+      {
+        ...options,
+        fileId: id
+      },
+      {
+        sanitizeName: false
+      }
+    )
+    return this.side.remoteCozy.toRemoteDoc(updated)
+  }
 }
 
 module.exports = {

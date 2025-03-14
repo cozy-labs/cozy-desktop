@@ -10,8 +10,6 @@ const cozyHelpers = require('../support/helpers/cozy')
 const platform = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
 
-const cozy = cozyHelpers.cozy
-
 describe('Update only mtime', () => {
   let helpers
 
@@ -90,20 +88,22 @@ describe('Update only mtime', () => {
         helpers.spyPouch()
 
         // update only the file mtime
-        await cozy.files.updateById(file._id, 'changedcontent', {
-          contentType: 'text/plain'
+        await helpers.remote.updateFileById(file._id, 'changedcontent', {
+          name: file.name
         })
-        const newFile = await cozy.files.updateById(file._id, 'basecontent', {
-          contentType: 'text/plain'
-        })
+        const updatedFile = await helpers.remote.updateFileById(
+          file._id,
+          'basecontent',
+          {
+            name: file.name
+          }
+        )
 
         await helpers.remote.pullChanges()
         should(helpers.putDocs('path', 'updated_at')).deepEqual([
           {
             path: file.name,
-            updated_at: timestamp.roundedRemoteDate(
-              newFile.attributes.updated_at
-            )
+            updated_at: timestamp.roundedRemoteDate(updatedFile.updated_at)
           }
         ])
       })
