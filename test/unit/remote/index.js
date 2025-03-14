@@ -1192,7 +1192,7 @@ describe('remote.Remote', function() {
         .upToDate()
         .build()
 
-      await this.remote.remoteCozy.updateAttributesById(remoteSrc._id, {
+      await remoteHelpers.updateAttributesById(remoteSrc._id, {
         name: 'dst-dir'
       })
 
