@@ -89,8 +89,9 @@ describe('Sync gets interrupted, initialScan occurs', () => {
       await helpers.pullAndSyncAll()
 
       // Contents are kept untouched
-      const resp = await helpers.remote.cozy.files.downloadById(doc.remote._id)
-      should(await resp.text()).eql('remote content')
+      should(await helpers.remote.downloadById(doc.remote._id)).eql(
+        'remote content'
+      )
       should(await helpers.local.readFile('file')).eql('remote content')
     })
   })
