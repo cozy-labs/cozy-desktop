@@ -29,7 +29,6 @@ const resetNetwork = async () => {
 setupNetwork()
 
 const CozyClient = require('cozy-client').default
-const OldCozyClient = require('cozy-client-js').Client
 
 const network = require('../../../gui/js/network')
 
@@ -55,44 +54,15 @@ if (!process.env.COZY_STACK_TOKEN) {
   throw new Error('No COZY_STACK_TOKEN')
 }
 
-// A cozy-client-js instance
-const cozy = new OldCozyClient({
-  version: 3,
-  cozyURL: COZY_URL,
-  token: process.env.COZY_STACK_TOKEN
+const client = new CozyClient({
+  uri: COZY_URL,
+  token: process.env.COZY_STACK_TOKEN,
+  throwFetchErrors: true
 })
-
-const oauthCozy = async (config /*: Config */) /*: OldCozyClient */ => {
-  const client = new OldCozyClient({
-    cozyURL: config.cozyUrl,
-    oauth: {
-      clientParams: config.client,
-      storage: config
-    }
-  })
-  await client.authorize()
-
-  return client
-}
-
-// Build a new cozy-client instance from an old cozy-client-js instance
-const newClient = async (
-  oldClient /*: OldCozyClient */ = cozy
-) /*: Promise<CozyClient>  */ => {
-  if (oldClient._oauth) {
-    return await CozyClient.fromOldOAuthClient(oldClient, {
-      throwFetchErrors: true
-    })
-  } else {
-    return await CozyClient.fromOldClient(oldClient, { throwFetchErrors: true })
-  }
-}
 
 module.exports = {
   COZY_URL,
-  cozy,
-  oauthCozy,
-  newClient,
+  client,
   setupNetwork,
   resetNetwork
 }

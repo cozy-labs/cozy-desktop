@@ -9,7 +9,7 @@ const os = require('os')
 const autoBind = require('auto-bind')
 const open = require('open')
 
-const CozyClient = require('cozy-client-js').Client
+const OldCozyClient = require('cozy-client-js').Client
 
 const PORT_NUMBER = 3344
 
@@ -87,7 +87,7 @@ module.exports = class Registration {
   process(pkg, redirectURI, onRegistered, deviceName) {
     const params = this.clientParams(pkg, redirectURI, deviceName)
     onRegistered = onRegistered || this.onRegistered
-    const cozy = new CozyClient({
+    const cozy = new OldCozyClient({
       version: 3,
       cozyURL: this.url,
       oauth: {

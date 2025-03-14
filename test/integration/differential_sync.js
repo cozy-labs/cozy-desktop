@@ -13,7 +13,6 @@ const {
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
 const path = remoteDoc =>
@@ -33,15 +32,13 @@ describe('Differential synchronization', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    this.cozy = await cozyHelpers.oauthCozy(this.config)
-
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
 
     helpers.spyPouch()
 
-    const client = await helpers.remote.getClient()
+    const { client } = helpers.remote
     builders = new Builders({ client })
     files = client.collection(FILES_DOCTYPE)
   })

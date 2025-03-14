@@ -33,7 +33,7 @@ describe('Update file', () => {
 
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
-    builders = new Builders({ client: await helpers.remote.getClient() })
+    builders = new Builders({ client: helpers.remote.client })
     pouch = helpers.pouch
     prep = helpers.prep
 
