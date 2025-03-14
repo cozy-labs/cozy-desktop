@@ -50,9 +50,8 @@ describe('Add', () => {
   describe('file', () => {
     const createDoc = async (side, filename, content = 'foo') => {
       if (side === 'remote') {
-        return await cozy.files.create(content, {
-          name: filename,
-          dirID: parent._id
+        return await helpers.remote.createFile(filename, content, {
+          dirId: parent._id
         })
       } else {
         return await helpers.local.syncDir.outputFile(
@@ -400,7 +399,7 @@ describe('Add', () => {
         const dir = await createDoc('remote', 'dir', parent)
         const subdir = await createDoc('remote', 'subdir', dir)
         await createDoc('remote', 'empty-subdir', dir)
-        await cozy.files.create('foo', { name: 'file', dirID: subdir._id })
+        await helpers.remote.createFile('file', 'foo', { dirId: subdir._id })
         await helpers.remote.pullChanges()
 
         should(

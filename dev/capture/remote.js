@@ -125,13 +125,15 @@ const runActions = (scenario /*: * */, helpers /*: Helpers */) => {
           const parentDir = await helpers.remote.byPath(
             `/${path.posix.dirname(action.path)}`
           )
-          return cozy.files.create(action.content || 'whatever', {
-            name: path.posix.basename(action.path),
-            dirID: parentDir._id,
-            contentType: 'text/plain',
-            createdAt: now,
-            updatedAt: now
-          })
+          return helpers.remote.createFile(
+            path.posix.basename(action.path),
+            action.content || 'whatever',
+            {
+              dirId: parentDir._id,
+              contentType: 'text/plain',
+              lastModifiedDate: now
+            }
+          )
         }
 
       case 'update_file':

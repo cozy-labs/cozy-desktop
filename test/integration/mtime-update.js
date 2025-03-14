@@ -41,9 +41,8 @@ describe('Update only mtime', () => {
         oldUpdatedAt = new Date()
         oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-        await cozy.files.create('basecontent', {
-          name: 'file',
-          updatedAt: oldUpdatedAt.toISOString()
+        await helpers.remote.createFile('file', 'basecontent', {
+          lastModifiedDate: oldUpdatedAt.toISOString()
         })
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
@@ -80,9 +79,8 @@ describe('Update only mtime', () => {
         oldUpdatedAt = new Date()
         oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-        file = await cozy.files.create('basecontent', {
-          name: 'file',
-          updatedAt: oldUpdatedAt.toISOString()
+        file = await helpers.remote.createFile('file', 'basecontent', {
+          lastModifiedDate: oldUpdatedAt.toISOString()
         })
         await helpers.remote.pullChanges()
         await helpers.syncAll()
@@ -102,7 +100,7 @@ describe('Update only mtime', () => {
         await helpers.remote.pullChanges()
         should(helpers.putDocs('path', 'updated_at')).deepEqual([
           {
-            path: file.attributes.name,
+            path: file.name,
             updated_at: timestamp.roundedRemoteDate(
               newFile.attributes.updated_at
             )

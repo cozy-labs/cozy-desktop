@@ -7,6 +7,7 @@ const _ = require('lodash')
 
 const { Q } = require('cozy-client')
 
+const Builders = require('../builders')
 const conflictHelpers = require('./conflict')
 const cozyHelpers = require('./cozy')
 const { Remote, dirAndName } = require('../../../core/remote')
@@ -17,7 +18,6 @@ const {
   TRASH_DIR_ID,
   TRASH_DIR_NAME
 } = require('../../../core/remote/constants')
-const { remoteJsonToRemoteDoc } = require('../../../core/remote/document')
 
 /*::
 import type { Client as OldCozyClient } from 'cozy-client-js'
@@ -33,6 +33,7 @@ export type RemoteTree = { [string]: FullRemoteFile|RemoteDir }
 class RemoteTestHelpers {
   /*::
   side: Remote
+  builders: ?Builders
   rootDir: ?RemoteDir
   */
 
@@ -42,6 +43,7 @@ class RemoteTestHelpers {
   ) {
     this.side = new Remote(opts)
     this.side.remoteCozy.client = cozy || cozyHelpers.cozy
+
     autoBind(this)
   }
 
@@ -51,6 +53,14 @@ class RemoteTestHelpers {
 
   async getClient() /*: CozyClient */ {
     return this.side.remoteCozy.getClient()
+  }
+
+  async getBuilders() /*: Promise<Builders> */ {
+    if (this.builders != null) return this.builders
+
+    const client = await this.getClient()
+    this.builders = new Builders({ client, pouch: this.pouch })
+    return this.builders
   }
 
   get pouch() /*: Pouch */ {
@@ -147,18 +157,45 @@ class RemoteTestHelpers {
 
   async createFile(
     name /*: string */,
-    dirID /*: string */ = ROOT_DIR_ID,
-    content /*: string */ = 'whatever'
+    content /*: string */ = 'whatever',
+    attrs /*: ?{|dirId?: string,
+                contentType?: string,
+                executable?: boolean,
+                lastModifiedDate?: string|} */
   ) /*: Promise<FullRemoteFile> */ {
-    return this.cozy.files
-      .create(content, {
-        name,
-        dirID,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      })
-      .then(remoteJsonToRemoteDoc)
-      .then(this.side.remoteCozy.toRemoteDoc)
+    const builders = await this.getBuilders()
+
+    const options = {
+      name,
+      dirId: ROOT_DIR_ID,
+      contentType: 'application/octet-stream',
+      contentLength: content.length,
+      checksum: builders.checksum(content).build(),
+      lastModifiedDate: new Date().toISOString(),
+      executable: false,
+      ...attrs
+    }
+
+    return this.side.remoteCozy.createFile(
+      builders
+        .stream()
+        .push(content)
+        .build(),
+      options
+    )
+  }
+
+  async createFileByPath(
+    fullpath /*: string */,
+    content /*: string */ = 'whatever',
+    attrs /*: ?{|contentType?: string,
+                executable?: boolean,
+                lastModifiedDate?: string|} */
+  ) /*: Promise<FullRemoteFile> */ {
+    const filename = path.basename(fullpath)
+    const parentPath = path.dirname(fullpath)
+    const parent = await this.createDirectoryByPath(parentPath)
+    return this.createFile(filename, content, { ...attrs, dirId: parent._id })
   }
 
   async createTree(paths /*: Array<string> */) /*: Promise<RemoteTree> */ {
@@ -176,8 +213,10 @@ class RemoteTestHelpers {
       } else {
         remoteDocsByPath[p] = await this.createFile(
           name,
-          dirId,
-          `Content of file ${p}`
+          `Content of file ${p}`,
+          {
+            dirId
+          }
         )
       }
     }
