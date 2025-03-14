@@ -191,7 +191,10 @@ const runActions = (scenario /*: * */, helpers /*: Helpers */) => {
               opts.name = path.posix.basename(action.dst)
             }
             const remoteDoc = await helpers.remote.byPath(`/${action.src}`)
-            return await cozy.files.updateAttributesById(remoteDoc._id, opts)
+            return await helpers.remote.updateAttributesById(
+              remoteDoc._id,
+              opts
+            )
           } catch (err) {
             if (err.status === 409) {
               // Remove conflicting doc
@@ -202,7 +205,10 @@ const runActions = (scenario /*: * */, helpers /*: Helpers */) => {
 
               // Retry move
               const remoteDoc = await helpers.remote.byPath(`/${action.src}`)
-              return await cozy.files.updateAttributesById(remoteDoc._id, opts)
+              return await helpers.remote.updateAttributesById(
+                remoteDoc._id,
+                opts
+              )
             } else {
               throw err
             }

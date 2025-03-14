@@ -5,11 +5,10 @@ const should = require('should')
 
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
 describe('Case or encoding change', () => {
-  let cozy, helpers
+  let helpers
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -20,7 +19,6 @@ describe('Case or encoding change', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
@@ -48,8 +46,8 @@ describe('Case or encoding change', () => {
     })
 
     it('remote', async () => {
-      await cozy.files.updateAttributesById(dir._id, { name: '\u00e9' }) // 'é'
-      await cozy.files.updateAttributesById(dir2._id, { name: 'FOO' })
+      await helpers.remote.updateAttributesById(dir._id, { name: '\u00e9' }) // 'é'
+      await helpers.remote.updateAttributesById(dir2._id, { name: 'FOO' })
       await helpers.remote.pullChanges()
 
       await helpers.syncAll()

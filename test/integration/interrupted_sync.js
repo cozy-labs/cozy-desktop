@@ -42,7 +42,7 @@ describe('Sync gets interrupted, initialScan occurs', () => {
     await helpers.remote.pullChanges()
     await helpers.syncAll()
 
-    await cozy.files.updateAttributesById(dirs['/b/']._id, {
+    await helpers.remote.updateAttributesById(dirs['/b/']._id, {
       dir_id: dirs['/a/']._id
     })
 
