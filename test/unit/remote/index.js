@@ -24,7 +24,7 @@ const { CONFLICT_REGEXP } = require('../../../core/utils/conflicts')
 const timestamp = require('../../../core/utils/timestamp')
 const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
-const { cozy, deleteAll } = require('../../support/helpers/cozy')
+const { cozy } = require('../../support/helpers/cozy')
 const pouchHelpers = require('../../support/helpers/pouch')
 const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
@@ -56,7 +56,6 @@ describe('remote.Remote', function() {
     // errors from `cozy-client-js` because it's missing a `client_secret`).
     this.remote.remoteCozy.client = cozy
   })
-  beforeEach(deleteAll)
   beforeEach('create the couchdb folder', async function() {
     couchdbFolder = await builders
       .remoteDir()

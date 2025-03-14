@@ -11,7 +11,6 @@ const metadata = require('../../core/metadata')
 const { logger } = require('../../core/utils/logger')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
 const log = new logger({
@@ -24,7 +23,6 @@ describe('Add', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
   beforeEach(async function() {
     helpers = TestHelpers.init(this)

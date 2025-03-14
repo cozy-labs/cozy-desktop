@@ -31,11 +31,6 @@ setupNetwork()
 const CozyClient = require('cozy-client').default
 const OldCozyClient = require('cozy-client-js').Client
 
-const {
-  FILES_DOCTYPE,
-  ROOT_DIR_ID,
-  TRASH_DIR_ID
-} = require('../../../core/remote/constants')
 const network = require('../../../gui/js/network')
 
 // The URL of the Cozy instance used for tests
@@ -98,39 +93,6 @@ module.exports = {
   cozy,
   oauthCozy,
   newClient,
-  deleteAll,
   setupNetwork,
   resetNetwork
-}
-
-// List files and directories in the root directory
-async function rootDirContents() {
-  const index = await cozy.data.defineIndex(FILES_DOCTYPE, ['dir_id'])
-  const remoteDocs = await cozy.data.query(index, {
-    selector: {
-      dir_id: ROOT_DIR_ID,
-      $not: { _id: TRASH_DIR_ID }
-    },
-    fields: ['_id', 'dir_id']
-  })
-
-  return remoteDocs
-}
-
-// Delete all files and directories
-async function deleteAll() {
-  const remoteDocs = await rootDirContents()
-
-  try {
-    await Promise.all(remoteDocs.map(doc => cozy.files.trashById(doc._id)))
-  } catch (err) {
-    if (
-      err.status !== 404 && // Document does not exist anymore
-      err.status !== 400 // Document is already in the trash
-    ) {
-      throw err
-    }
-  }
-
-  return cozy.files.clearTrash()
 }
