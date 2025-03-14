@@ -32,7 +32,7 @@ onPlatform('darwin', () => {
     before('instanciate config', configHelpers.createConfig)
     before('instanciate pouch', pouchHelpers.createDatabase)
     before('prepare builders', function() {
-      builders = new Builders({ pouch: this.pouch })
+      builders = new Builders(this)
     })
     before('instanciate local watcher', function() {
       this.merge = new Merge(this.pouch)

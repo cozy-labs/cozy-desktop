@@ -13,7 +13,6 @@ const _ = require('lodash')
 const { Pouch } = require('../../core/pouch')
 const { RemoteCozy } = require('../../core/remote/cozy')
 const timestamp = require('../../core/utils/timestamp')
-const Builders = require('../../test/support/builders')
 const TestHelpers = require('../../test/support/helpers')
 const configHelpers = require('../../test/support/helpers/config')
 
@@ -28,11 +27,11 @@ const debug = process.env.TESTDEBUG != null ? console.log : (...args) => {}
 
 const createInitialTree = async function(
   scenario /*: * */,
-  helpers /*: Helpers */,
-  builders /*: Builders */
+  helpers /*: Helpers */
 ) {
   if (!scenario.init) return
 
+  const { builders } = helpers.remote
   const remoteDocs /*: RemoteTree */ = {}
   const remoteDocsToTrash /*: Array<FullRemoteFile|RemoteDir> */ = []
 
@@ -254,13 +253,9 @@ const captureScenario = async (scenario /*: * */) => {
   const config = setupConfig()
   const pouch = await setupPouch(config)
   const helpers = TestHelpers.init({ config, pouch })
-  const builders = new Builders({
-    client: helpers.remote.client,
-    pouch
-  })
 
   await helpers.clean()
-  await createInitialTree(scenario, helpers, builders)
+  await createInitialTree(scenario, helpers)
 
   const remoteCozy = new RemoteCozy(config)
   const { last_seq } = await remoteCozy.changes()

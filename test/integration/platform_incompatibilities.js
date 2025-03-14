@@ -10,7 +10,6 @@ const metadata = require('../../core/metadata')
 const { DIR_TYPE } = require('../../core/remote/constants')
 const { INCOMPATIBLE_DOC_CODE } = require('../../core/sync/errors')
 const timestamp = require('../../core/utils/timestamp')
-const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -38,7 +37,7 @@ describe('Platform incompatibilities', () => {
 
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
-    builders = new Builders({ client: helpers.remote.client })
+    builders = helpers.remote.builders
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()

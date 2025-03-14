@@ -15,9 +15,8 @@ onPlatform('darwin', () => {
 
     before('instanciate config', configHelpers.createConfig)
     before('instanciate pouch', pouchHelpers.createDatabase)
-
     beforeEach('set up builders', function() {
-      builders = new Builders({ pouch: this.pouch })
+      builders = new Builders(this)
     })
 
     after('clean pouch', pouchHelpers.cleanDatabase)
