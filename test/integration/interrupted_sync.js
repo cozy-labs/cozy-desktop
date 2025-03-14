@@ -6,10 +6,7 @@ const sinon = require('sinon')
 
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-
-const cozy = cozyHelpers.cozy
 
 describe('Sync gets interrupted, initialScan occurs', () => {
   let helpers
@@ -78,8 +75,8 @@ describe('Sync gets interrupted, initialScan occurs', () => {
       await helpers.flushLocalAndSyncAll()
 
       const doc = await this.pouch.bySyncedPath(path)
-      await cozy.files.updateById(doc.remote._id, 'remote content', {
-        contentType: 'text/plain'
+      await helpers.remote.updateFileById(doc.remote._id, 'remote content', {
+        name: doc.remote.name
       })
       await helpers.remote.pullChanges() // Merge
 

@@ -140,9 +140,10 @@ const runActions = (scenario /*: * */, helpers /*: Helpers */) => {
         debug('- update_file', action.path)
         {
           const remoteFile = await helpers.remote.byPath(`/${action.path}`)
-          return cozy.files.updateById(remoteFile._id, action.content, {
+          return helpers.remote.updateFileById(remoteFile._id, action.content, {
+            name: remoteFile.name,
             contentType: 'text/plain',
-            updatedAt: now
+            lastModifiedDate: now
           })
         }
 
