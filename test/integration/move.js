@@ -404,7 +404,7 @@ describe('Move', () => {
       context('while we missed the overwritten file remote deletion', () => {
         beforeEach(async () => {
           // Destroy existing file on Cozy
-          await cozy.files.destroyById(existing._id)
+          await helpers.remote.destroyById(existing._id)
           // Fake missing the remote change by skipping its sequence
           skipRemoteChanges({ helpers, cozy })
         })
@@ -435,7 +435,7 @@ describe('Move', () => {
       context('while we missed the moved file remote deletion', () => {
         beforeEach(async () => {
           // Destroy moved file on Cozy
-          await cozy.files.destroyById(file._id)
+          await helpers.remote.destroyById(file._id)
           // Fake missing the remote change by skipping its sequence
           skipRemoteChanges({ helpers, cozy })
         })
@@ -471,7 +471,7 @@ describe('Move', () => {
     context('while we missed the moved file remote deletion', () => {
       beforeEach(async () => {
         // Destroy moved file on Cozy
-        await cozy.files.destroyById(file._id)
+        await helpers.remote.destroyById(file._id)
         // Fake missing the remote change by skipping its sequence
         skipRemoteChanges({ helpers, cozy })
       })
@@ -1193,7 +1193,7 @@ describe('Move', () => {
         () => {
           beforeEach(async () => {
             // Destroy existing directory on Cozy
-            await cozy.files.destroyById(existing._id)
+            await helpers.remote.destroyById(existing._id)
             // Fake missing the remote changes by skipping its sequence
             skipRemoteChanges({ helpers, cozy })
           })
@@ -1225,7 +1225,7 @@ describe('Move', () => {
       context('while we missed the moved directory remote deletion', () => {
         beforeEach(async () => {
           // Destroy moved directory on Cozy
-          await cozy.files.destroyById(dir._id)
+          await helpers.remote.destroyById(dir._id)
           // Fake missing the remote changes by skipping its sequence
           skipRemoteChanges({ helpers, cozy })
         })
@@ -1267,7 +1267,7 @@ describe('Move', () => {
     context('while we missed the moved directory remote deletion', () => {
       beforeEach(async () => {
         // Destroy moved directory on Cozy
-        await cozy.files.destroyById(dir._id)
+        await helpers.remote.destroyById(dir._id)
         // Fake missing the remote changes by skipping its sequence
         skipRemoteChanges({ helpers, cozy })
       })

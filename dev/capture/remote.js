@@ -33,7 +33,6 @@ const createInitialTree = async function(
 ) {
   if (!scenario.init) return
 
-  const { cozy } = helpers.remote
   const remoteDocs /*: RemoteTree */ = {}
   const remoteDocsToTrash /*: Array<FullRemoteFile|RemoteDir> */ = []
 
@@ -96,7 +95,7 @@ const createInitialTree = async function(
   for (const remoteDoc of remoteDocsToTrash) {
     debug(`- trashing remote ${remoteDoc.type}: ${remoteDoc.path}`)
     try {
-      await cozy.files.trashById(remoteDoc._id)
+      await helpers.remote.trashById(remoteDoc._id)
     } catch (err) {
       if (err.status === 400) continue
       throw err
@@ -106,8 +105,6 @@ const createInitialTree = async function(
 
 const runActions = (scenario /*: * */, helpers /*: Helpers */) => {
   debug('[actions]')
-
-  const { cozy } = helpers.remote
 
   return Promise.each(scenario.actions, async action => {
     const now = new Date().toISOString()
@@ -151,15 +148,15 @@ const runActions = (scenario /*: * */, helpers /*: Helpers */) => {
         debug('- trash', action.path)
         {
           const remoteDoc = await helpers.remote.byPath(`/${action.path}`)
-          return cozy.files.trashById(remoteDoc._id)
+          return helpers.remote.trashById(remoteDoc._id)
         }
 
       case 'delete':
         debug('- delete', action.path)
         {
           const remoteDoc = await helpers.remote.byPath(`/${action.path}`)
-          if (!remoteDoc.trashed) await cozy.files.trashById(remoteDoc._id)
-          return cozy.files.destroyById(remoteDoc._id)
+          if (!remoteDoc.trashed) await helpers.remote.trashById(remoteDoc._id)
+          return helpers.remote.destroyById(remoteDoc._id)
         }
 
       case 'restore':
@@ -168,7 +165,7 @@ const runActions = (scenario /*: * */, helpers /*: Helpers */) => {
           const remoteDoc = await helpers.remote.byPath(
             `/.cozy_trash/${action.pathInTrash}`
           )
-          return cozy.files.restoreById(remoteDoc._id)
+          return helpers.remote.restoreById(remoteDoc._id)
         }
 
       case 'mv':
@@ -202,7 +199,7 @@ const runActions = (scenario /*: * */, helpers /*: Helpers */) => {
               const remoteOverwriten = await helpers.remote.byPath(
                 `/${action.dst}`
               )
-              await cozy.files.destroyById(remoteOverwriten._id)
+              await helpers.remote.destroyById(remoteOverwriten._id)
 
               // Retry move
               const remoteDoc = await helpers.remote.byPath(`/${action.src}`)

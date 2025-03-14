@@ -402,6 +402,27 @@ class RemoteTestHelpers {
     )
     return this.side.remoteCozy.toRemoteDoc(updated)
   }
+
+  async trashById(_id /*: string */) {
+    const client = await this.getClient()
+    const { data: trashed } = await client
+      .collection(FILES_DOCTYPE)
+      .destroy({ _id })
+    return this.side.remoteCozy.toRemoteDoc(trashed)
+  }
+
+  async restoreById(id /*: string */) {
+    const client = await this.getClient()
+    const { data: restored } = await client
+      .collection(FILES_DOCTYPE)
+      .restore(id)
+    return this.side.remoteCozy.toRemoteDoc(restored)
+  }
+
+  async destroyById(_id /*: string */) {
+    const client = await this.getClient()
+    await client.collection(FILES_DOCTYPE).deleteFilePermanently(_id)
+  }
 }
 
 module.exports = {

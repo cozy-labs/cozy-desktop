@@ -14,8 +14,6 @@ const configHelpers = require('../support/helpers/config')
 const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
-const cozy = cozyHelpers.cozy
-
 const log = new logger({
   component: 'TEST'
 })
@@ -185,11 +183,12 @@ describe('Add', () => {
           ])
 
           // Destroy file before it is downloaded
-          await cozy.files.destroyById(remoteFile._id)
+          await helpers.remote.destroyById(remoteFile._id)
+
+          helpers.resetPouchSpy()
 
           await helpers.syncAll()
 
-          helpers.resetPouchSpy()
           should(
             helpers.putDocs('path', '_deleted', 'trashed', 'sides')
           ).deepEqual([

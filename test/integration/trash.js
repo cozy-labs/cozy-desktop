@@ -127,7 +127,7 @@ describe('Trash', () => {
         // avoid looping over it.
         it('ends up skipping the change', async () => {
           // Destroy file on Cozy
-          await cozy.files.destroyById(file._id)
+          await helpers.remote.destroyById(file._id)
           // Fake missing the remote change by skipping its sequence
           skipRemoteChange({ helpers, cozy })
 
@@ -219,8 +219,7 @@ describe('Trash', () => {
 
     context('on the remote Cozy', () => {
       it('trashes the file on the local filesystem', async () => {
-        await cozy.files.trashById(file._id)
-
+        await helpers.remote.trashById(file._id)
         await helpers.remote.pullChanges()
 
         should(helpers.putDocs('path', 'trashed')).deepEqual([
@@ -235,7 +234,7 @@ describe('Trash', () => {
 
       context('before the file was moved on the local filesystem', () => {
         it('does not trash the file on the local filesystem and restores it', async () => {
-          await cozy.files.trashById(file._id)
+          await helpers.remote.trashById(file._id)
           await helpers.remote.pullChanges()
           await helpers.local.syncDir.move(
             path.normalize('parent/file'),
@@ -262,7 +261,7 @@ describe('Trash', () => {
             'file'
           )
           await helpers.local.scan()
-          await cozy.files.trashById(file._id)
+          await helpers.remote.trashById(file._id)
           await helpers.remote.pullChanges()
           await helpers.syncAll()
 
@@ -277,7 +276,7 @@ describe('Trash', () => {
     context('destroyed on the remote Cozy', () => {
       context('before the file was moved on the local filesystem', () => {
         it('does not trash the file on the local filesystem and re-uploads it', async () => {
-          await cozy.files.destroyById(file._id)
+          await helpers.remote.destroyById(file._id)
           await helpers.remote.pullChanges()
           await helpers.local.syncDir.move(
             path.normalize('parent/file'),
@@ -300,7 +299,7 @@ describe('Trash', () => {
             'file'
           )
           await helpers.local.scan()
-          await cozy.files.destroyById(file._id)
+          await helpers.remote.destroyById(file._id)
           await helpers.remote.pullChanges()
           await helpers.syncAll()
 
@@ -361,7 +360,7 @@ describe('Trash', () => {
 
     context('on the remote Cozy', () => {
       it('trashes the directory on the local filesystem', async () => {
-        await cozy.files.trashById(dir._id)
+        await helpers.remote.trashById(dir._id)
 
         await helpers.remote.pullChanges()
         should(helpers.putDocs('path', 'trashed')).deepEqual([
@@ -394,7 +393,7 @@ describe('Trash', () => {
         })
 
         it('trashes the directory and its content on the local filesystem', async () => {
-          await cozy.files.trashById(dir._id)
+          await helpers.remote.trashById(dir._id)
 
           await helpers.remote.pullChanges()
           should(helpers.putDocs('path', 'trashed')).deepEqual([
@@ -415,7 +414,7 @@ describe('Trash', () => {
 })
 
 describe('Restore', () => {
-  let cozy, helpers
+  let helpers
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -426,7 +425,6 @@ describe('Restore', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
@@ -449,10 +447,10 @@ describe('Restore', () => {
     context('before trash is applied on local file system', () => {
       it('does not create a conflict', async () => {
         // Fetch and merge trashing
-        await cozy.files.trashById(file._id)
+        await helpers.remote.trashById(file._id)
         await helpers.remote.pullChanges()
 
-        await cozy.files.restoreById(file._id)
+        await helpers.remote.restoreById(file._id)
         await helpers.remote.pullChanges()
         await helpers.syncAll()
 
@@ -483,10 +481,10 @@ describe('Restore', () => {
 
     context('before trash is applied on local file system', () => {
       it('does not create conflicts', async () => {
-        await cozy.files.trashById(dirs['parent/dir/']._id)
+        await helpers.remote.trashById(dirs['parent/dir/']._id)
         await helpers.remote.pullChanges()
 
-        await cozy.files.restoreById(dirs['parent/dir/']._id)
+        await helpers.remote.restoreById(dirs['parent/dir/']._id)
         await helpers.remote.pullChanges()
         await helpers.syncAll()
 
