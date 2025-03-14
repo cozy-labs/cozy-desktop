@@ -27,7 +27,10 @@ import type { RemoteOptions } from '../../../core/remote'
 import type { FullRemoteFile, RemoteDir, RemoteDoc } from '../../../core/remote/document'
 import type { Metadata, MetadataRemoteInfo } from '../../../core/metadata'
 
-export type RemoteTree = { [string]: FullRemoteFile|RemoteDir }
+export type RemoteTree = {
+  dirs: { [string]: RemoteDir },
+  files: { [string]: FullRemoteFile },
+}
 */
 
 class RemoteTestHelpers {
@@ -199,29 +202,26 @@ class RemoteTestHelpers {
   }
 
   async createTree(paths /*: Array<string> */) /*: Promise<RemoteTree> */ {
-    const remoteDocsByPath = {}
+    const dirs = {}
+    const files = {}
     for (const p of paths) {
       const name = path.posix.basename(p)
       const parentPath = path.posix.dirname(p)
       const dirId = (
-        remoteDocsByPath[parentPath + '/'] ||
+        dirs[parentPath + '/'] ||
         (await this.byPath('/' + parentPath + '/')) ||
         {}
       )._id
       if (p.endsWith('/')) {
-        remoteDocsByPath[p] = await this.createDirectory(name, { dirId })
+        dirs[p] = await this.createDirectory(name, { dirId })
       } else {
-        remoteDocsByPath[p] = await this.createFile(
-          name,
-          `Content of file ${p}`,
-          {
-            dirId
-          }
-        )
+        files[p] = await this.createFile(name, `Content of file ${p}`, {
+          dirId
+        })
       }
     }
 
-    return remoteDocsByPath
+    return { dirs, files }
   }
 
   // TODO: Extract reusable #scan() method from tree*()
