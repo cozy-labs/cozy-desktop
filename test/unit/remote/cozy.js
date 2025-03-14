@@ -1,5 +1,5 @@
 /* eslint-env mocha */
-/* @flow weak */
+/* @flow */
 
 const path = require('path')
 
@@ -24,7 +24,6 @@ const {
   FILES_DOCTYPE
 } = require('../../../core/remote/constants')
 const { RemoteCozy } = require('../../../core/remote/cozy')
-const { withDefaultValues } = require('../../../core/remote/document')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
 const Builders = require('../../support/builders')
 const CozyStackDouble = require('../../support/doubles/cozy_stack')
@@ -496,21 +495,25 @@ describe('RemoteCozy', function() {
       const docsOnServer = [
         {
           doc: {
+            ...builders.remoteDir().build(),
             _id: 'a'
           }
         },
         {
           doc: {
+            ...builders.remoteDir().build(),
             _id: 'b'
           }
         },
         {
           doc: {
+            ...builders.remoteDir().build(),
             _id: 'c'
           }
         },
         {
           doc: {
+            ...builders.remoteDir().build(),
             _id: 'd'
           }
         }
@@ -539,9 +542,7 @@ describe('RemoteCozy', function() {
       // faked here.
       try {
         const { docs } = await remoteCozy.changes('')
-        should(docs.map(doc => ({ doc }))).eql(
-          docsOnServer.map(({ doc }) => ({ doc: withDefaultValues(doc) }))
-        )
+        should(docs).deepEqual(docsOnServer.map(({ doc }) => doc))
       } finally {
         fakeCollection.restore()
       }
@@ -749,9 +750,9 @@ describe('RemoteCozy', function() {
         .create()
 
       for (let path of ['/missing', '/existing/missing']) {
-        await remoteCozy
-          .findDirectoryByPath(path)
-          .should.be.rejectedWith(DirectoryNotFound)
+        await should(remoteCozy.findDirectoryByPath(path)).be.rejectedWith(
+          DirectoryNotFound
+        )
       }
     })
 
@@ -762,9 +763,9 @@ describe('RemoteCozy', function() {
         .inRootDir()
         .create()
 
-      await remoteCozy
-        .findDirectoryByPath('/foo')
-        .should.be.rejectedWith(DirectoryNotFound)
+      await should(remoteCozy.findDirectoryByPath('/foo')).be.rejectedWith(
+        DirectoryNotFound
+      )
     })
   })
 
@@ -775,7 +776,9 @@ describe('RemoteCozy', function() {
         .createdAt(2017, 1, 1, 1, 1, 1, 0)
         .create()
 
-      const trashed = await remoteCozy.trashById(orig._id)
+      const trashed = await remoteCozy.trashById(orig._id, {
+        ifMatch: orig._rev
+      })
 
       should(trashed).have.properties({
         _id: orig._id,
@@ -848,7 +851,7 @@ describe('RemoteCozy', function() {
         data += chunk
       })
       stream.on('end', () => {
-        data.should.equal('foo')
+        should(data).equal('foo')
       })
     })
   })
@@ -1051,6 +1054,7 @@ describe('RemoteCozy', function() {
 
     it('returns an empty array for directories', async () => {
       const dir = await builders.remoteDir().create()
+      // $FlowFixMe we're deliberately calling the method with the wrong type
       await should(remoteCozy.fetchOldFileVersions(dir)).be.fulfilledWith([])
     })
 
