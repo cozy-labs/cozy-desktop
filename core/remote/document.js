@@ -1,4 +1,4 @@
-/** The remote Cozy metadata, as returned by cozy-client-js.
+/** The remote Cozy metadata, as returned by cozy-client.
  *
  * @module core/remote/document
  * @flow
@@ -154,38 +154,12 @@ export type JsonApiDirAttributes = {|
   restore_path?: string,
 |}
 
-// Old cozy-client-js responses type
-export type RemoteJsonFile = {|
-  _id: string,
-  _rev: string,
-  _type: string,
-  attributes: JsonApiFileAttributes,
-  relations?: RemoteRelations,
-  relationships: JsonApiRelationShips,
-|}
-export type RemoteJsonDir = {|
-  _id: string,
-  _rev: string,
-  _type: string,
-  attributes: JsonApiDirAttributes,
-  relations?: RemoteRelations,
-  relationships: JsonApiRelationShips,
-|}
-export type RemoteJsonDoc = RemoteJsonFile|RemoteJsonDir
-
-// New cozy-client responses types
-type JsonApiRef = {
-  id: string,
-  type: string,
-}
-
 type JsonApiFileVersionAttributes = {|
   md5sum: string,
   size: string,
   tags: string[],
   updated_at: string,
 |}
-
 export type JsonApiFileVersion = {|
   _id: string,
   _rev: string,
@@ -197,13 +171,16 @@ export type JsonApiFileVersion = {|
   relationships: JsonApiRelationShips,
 |}
 
+type JsonApiRef = {|
+  id: string,
+  type: string,
+|}
 type JsonApiRelationShips = {|
   contents?: { data?: JsonApiRef[] },
   file?: { data: JsonApiRef },
   old_versions?: { data?: JsonApiFileVersion[] },
   referenced_by?: { data?: JsonApiRef | JsonApiRef[] },
 |}
-
 
 type JsonApiDeletion = {|
   id: string,
@@ -240,8 +217,7 @@ module.exports = {
   inRemoteTrash,
   trashedDoc,
   withDefaultValues,
-  remoteJsonToRemoteDoc,
-  jsonApiToRemoteJsonDoc,
+  isDeletedDoc,
   jsonApiToRemoteDoc,
   jsonFileVersionToRemoteFileVersion
 }
@@ -332,65 +308,10 @@ function withDefaultRelations(
   }
 }
 
-function remoteJsonToRemoteDoc /*:: <T: RemoteJsonDoc> */(
-  json /*: T */
-) /*: RemoteDoc */ {
-  if (json.attributes.type === DIR_TYPE) {
-    const remoteDir = ({
-      type: DIR_TYPE,
-      _id: json._id,
-      _rev: json._rev,
-      ...withDefaultValues(json.attributes),
-      ...withDefaultRelations(json.relations, json.relationships)
-    } /*: RemoteDir */)
-
-    return remoteDir
-  } else {
-    const remoteFile = ({
-      type: FILE_TYPE,
-      _id: json._id,
-      _rev: json._rev,
-      ...withDefaultValues(json.attributes),
-      ...withDefaultRelations(json.relations, json.relationships)
-    } /*: RemoteFile */)
-
-    return remoteFile
-  }
-}
-
-function jsonApiToRemoteJsonDoc(
+function isDeletedDoc(
   json /*: JsonApiDoc|JsonApiDeletion */
-) /*: RemoteJsonDoc|CouchDBDeletion */ {
-  if (json._deleted) {
-    return ({
-      _id: json.id,
-      _rev: json.rev,
-      _deleted: true
-    } /*: CouchDBDeletion */)
-  } else if (!json.meta || !json.meta.rev) {
-    const error = new Error('Missing meta.rev attribute in JsonAPI resource.')
-    // $FlowFixMe we add the `data` attribute on purpose
-    error.data = { json }
-    throw error
-  } else {
-    const { attributes, id, type, relationships } = json
-
-    return attributes.type === DIR_TYPE
-      ? ({
-          _id: id,
-          _type: type,
-          _rev: json.meta.rev,
-          attributes,
-          relationships
-        } /*: RemoteJsonDir */)
-      : ({
-          _id: id,
-          _type: type,
-          _rev: json.meta.rev,
-          attributes,
-          relationships
-        } /*: RemoteJsonFile */)
-  }
+) /*: boolean %checks */ {
+  return json._deleted != null && json._deleted
 }
 
 /*::
@@ -411,27 +332,21 @@ function jsonApiToRemoteDoc(json) {
     error.data = { json }
     throw error
   } else {
-    const { attributes, id, type, relationships } = json
-
-    return attributes.type === DIR_TYPE
-      ? remoteJsonToRemoteDoc(
-          ({
-            _id: id,
-            _type: type,
-            _rev: json.meta.rev,
-            attributes,
-            relationships
-          } /*: RemoteJsonDir */)
-        )
-      : remoteJsonToRemoteDoc(
-          ({
-            _id: id,
-            _type: type,
-            _rev: json.meta.rev,
-            attributes,
-            relationships
-          } /*: RemoteJsonFile */)
-        )
+    return json.attributes.type === DIR_TYPE
+      ? {
+          type: DIR_TYPE,
+          _id: json.id,
+          _rev: json.meta.rev,
+          ...withDefaultValues(json.attributes),
+          ...withDefaultRelations(json.relations, json.relationships)
+        }
+      : {
+          type: FILE_TYPE,
+          _id: json.id,
+          _rev: json.meta.rev,
+          ...withDefaultValues(json.attributes),
+          ...withDefaultRelations(json.relations, json.relationships)
+        }
   }
 }
 

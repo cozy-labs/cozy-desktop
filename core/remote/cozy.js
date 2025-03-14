@@ -28,9 +28,8 @@ const {
 const {
   dropSpecialDocs,
   withDefaultValues,
-  remoteJsonToRemoteDoc,
+  isDeletedDoc,
   jsonApiToRemoteDoc,
-  jsonApiToRemoteJsonDoc,
   jsonFileVersionToRemoteFileVersion
 } = require('./document')
 const { DirectoryNotFound } = require('./errors')
@@ -45,11 +44,9 @@ import type { Config } from '../config'
 import type {
   CouchDBDeletion,
   CouchDBDoc,
-  CouchDBFile,
   FullRemoteFile,
-  RemoteJsonDoc,
-  RemoteJsonFile,
-  RemoteJsonDir,
+  JsonApiFile,
+  JsonApiDir,
   RemoteFile,
   RemoteFileVersion,
   RemoteDir,
@@ -99,8 +96,8 @@ class RemoteCozy {
   newClient: ?CozyClient
 
   toRemoteDoc:
-    & ((doc: RemoteFile, parentDir: ?RemoteDir) => Promise<FullRemoteFile>)
-    & ((doc: RemoteDir, parentDir: ?RemoteDir) => Promise<RemoteDir>)
+    & ((doc: JsonApiFile, parentDir: ?RemoteDir) => Promise<FullRemoteFile>)
+    & ((doc: JsonApiDir, parentDir: ?RemoteDir) => Promise<RemoteDir>)
   */
 
   constructor(config /*: Config */) {
@@ -283,7 +280,7 @@ class RemoteCozy {
         .createFile(data, options, {
           sanitizeName: false
         })
-      return this.toRemoteDoc(jsonApiToRemoteDoc(file))
+      return this.toRemoteDoc(file)
     })
   }
 
@@ -298,7 +295,7 @@ class RemoteCozy {
       .createDirectory(options, {
         sanitizeName: false
       })
-    return this.toRemoteDoc(jsonApiToRemoteDoc(folder))
+    return this.toRemoteDoc(folder)
   }
 
   async updateFileById(
@@ -326,7 +323,7 @@ class RemoteCozy {
             sanitizeName: false
           }
         )
-      return this.toRemoteDoc(jsonApiToRemoteDoc(updated))
+      return this.toRemoteDoc(updated)
     })
   }
 
@@ -342,7 +339,7 @@ class RemoteCozy {
     const { data: updated } = await client
       .collection(FILES_DOCTYPE)
       .updateAttributes(id, attrs, { ...options, sanitizeName: false })
-    return this.toRemoteDoc(jsonApiToRemoteDoc(updated))
+    return this.toRemoteDoc(updated)
   }
 
   async trashById(
@@ -356,7 +353,7 @@ class RemoteCozy {
     const { data: trashed } = await client
       .collection(FILES_DOCTYPE)
       .destroy({ _id }, options)
-    return this.toRemoteDoc(jsonApiToRemoteDoc(trashed))
+    return this.toRemoteDoc(trashed)
   }
 
   async changes(
@@ -390,7 +387,7 @@ class RemoteCozy {
   async find(id /*: string */) /*: Promise<FullRemoteFile|RemoteDir> */ {
     const client = await this.getClient()
     const { data: doc } = await client.collection(FILES_DOCTYPE).statById(id)
-    return this.toRemoteDoc(jsonApiToRemoteDoc(doc))
+    return this.toRemoteDoc(doc)
   }
 
   async findMaybe(
@@ -456,7 +453,7 @@ class RemoteCozy {
   ) /*: Promise<FullRemoteFile|RemoteDir> */ {
     const client = await this.getClient()
     const { data } = await client.collection(FILES_DOCTYPE).statByPath(path)
-    return this.toRemoteDoc(jsonApiToRemoteDoc(data))
+    return this.toRemoteDoc(data)
   }
 
   async findMaybeByPath(
@@ -507,13 +504,9 @@ class RemoteCozy {
 
     const remoteDocs = []
     for (const j of data) {
-      const remoteJson = jsonApiToRemoteJsonDoc(j)
-      if (remoteJson._deleted) continue
+      if (isDeletedDoc(j)) continue
 
-      const remoteDoc = await this.toRemoteDoc(
-        remoteJsonToRemoteDoc(remoteJson),
-        dir
-      )
+      const remoteDoc = await this.toRemoteDoc(j, dir)
 
       if (!this.isExcludedDirectory(remoteDoc)) {
         remoteDocs.push(remoteDoc)
@@ -547,9 +540,10 @@ class RemoteCozy {
   }
 
   async toRemoteDoc(
-    remoteDoc /*: RemoteFile|RemoteDir */,
+    doc /*: JsonApiFile|JsonApiDir */,
     parentDir /*: ?RemoteDir */
   ) /*: Promise<FullRemoteFile|RemoteDir> */ {
+    const remoteDoc = jsonApiToRemoteDoc(doc)
     if (remoteDoc.type === FILE_TYPE) {
       parentDir = parentDir || (await this.findDir(remoteDoc.dir_id))
       return (this._withPath(remoteDoc, parentDir) /*: FullRemoteFile */)
