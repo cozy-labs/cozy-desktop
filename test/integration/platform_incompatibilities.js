@@ -13,7 +13,6 @@ const timestamp = require('../../core/utils/timestamp')
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
 /*::
@@ -27,7 +26,7 @@ describe('Platform incompatibilities', () => {
     return
   }
 
-  let builders, cozy, helpers
+  let builders, helpers
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
@@ -38,7 +37,6 @@ describe('Platform incompatibilities', () => {
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
     builders = new Builders({ client: await helpers.remote.getClient() })
 
@@ -146,8 +144,8 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.trashById(dirs['d:ir/']._id)
-    await cozy.files.trashById(files['f:ile']._id)
+    await helpers.remote.trashById(dirs['d:ir/']._id)
+    await helpers.remote.trashById(files['f:ile']._id)
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -156,8 +154,8 @@ describe('Platform incompatibilities', () => {
     shouldNotHaveBlocked()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.restoreById(dirs['d:ir/']._id)
-    await cozy.files.restoreById(files['f:ile']._id)
+    await helpers.remote.restoreById(dirs['d:ir/']._id)
+    await helpers.remote.restoreById(files['f:ile']._id)
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -170,10 +168,10 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.trashById(dirs['d:ir/']._id)
-    await cozy.files.trashById(files['f:ile']._id)
-    await cozy.files.destroyById(dirs['d:ir/']._id)
-    await cozy.files.destroyById(files['f:ile']._id)
+    await helpers.remote.trashById(dirs['d:ir/']._id)
+    await helpers.remote.trashById(files['f:ile']._id)
+    await helpers.remote.destroyById(dirs['d:ir/']._id)
+    await helpers.remote.destroyById(files['f:ile']._id)
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()

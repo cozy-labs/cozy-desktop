@@ -459,7 +459,7 @@ module.exports.init = async (
   for (const remoteDoc of remoteDocsToTrash) {
     debug(`- trashing remote ${remoteDoc.type}: ${remoteDoc.path}`)
     try {
-      await helpers.remote.cozy.files.trashById(remoteDoc._id)
+      await helpers.remote.destroyById(remoteDoc._id)
     } catch (err) {
       if (err.status === 400) continue
       throw err

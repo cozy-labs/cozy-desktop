@@ -713,7 +713,7 @@ describe('remote.Remote', function() {
         .inRootDir()
         .createdAt(2016, 1, 2, 3, 4, 5, 0)
         .create()
-      await cozy.files.destroyById(deletedDir._id)
+      await remoteHelpers.destroyById(deletedDir._id)
       const doc = builders
         .metadir()
         .fromRemote(deletedDir)
@@ -1098,7 +1098,7 @@ describe('remote.Remote', function() {
 
       context('when the overwritten file does not exist anymore', () => {
         beforeEach(async function() {
-          await cozy.files.destroyById(existingRemote._id)
+          await remoteHelpers.destroyById(existingRemote._id)
         })
 
         it('successfuly moves the file', async function() {
@@ -1349,7 +1349,7 @@ describe('remote.Remote', function() {
     })
 
     it('fails if there are no remote documents with the given path', async function() {
-      await this.remote.remoteCozy.trashById(remoteFile._id)
+      await remoteHelpers.trashById(remoteFile._id)
 
       await should(this.remote.resolveConflict(file)).be.rejected()
     })
