@@ -304,10 +304,21 @@ class RemoteTestHelpers {
     })
   }
 
-  async readFile(path /*: string */) {
-    if (!path.startsWith('/')) path = '/' + path
-    const resp = await this.cozy.files.downloadByPath(path)
-    return resp.text()
+  async readFile(remotePath /*: string */) {
+    if (!remotePath.startsWith('/')) remotePath = '/' + remotePath
+    const file = await this.byPath(remotePath)
+    return this.downloadById(file._id)
+  }
+
+  async downloadById(_id /*: string */) /*: Promise<string> */ {
+    // $FlowFixMe stream.Readable does implement $AsyncIterable
+    const stream = await this.side.remoteCozy.downloadBinary(_id)
+
+    let content = ''
+    for await (const chunk of stream) {
+      content += chunk
+    }
+    return content
   }
 
   async byId(id /*: string */) /*: Promise<FullRemoteFile|RemoteDir> */ {
