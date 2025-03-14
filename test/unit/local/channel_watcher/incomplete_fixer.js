@@ -35,7 +35,7 @@ onPlatforms(['linux', 'win32'], () => {
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
     beforeEach('create helpers', function() {
       syncDir = new ContextDir(this.syncPath)
-      builders = new Builders({ pouch: this.pouch })
+      builders = new Builders(this)
 
       const { config, pouch } = this
       opts = { config, checksumer, pouch, fatal: sinon.spy() }

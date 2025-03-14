@@ -60,7 +60,7 @@ onPlatforms(['linux', 'win32'], () => {
     before('instanciate config', configHelpers.createConfig)
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
     beforeEach('populate pouch with documents', async function() {
-      builders = new Builders({ pouch: this.pouch })
+      builders = new Builders(this)
       channel = new Channel()
 
       events = sinon.createStubInstance(SyncState)

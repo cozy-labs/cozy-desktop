@@ -75,7 +75,7 @@ describe('LocalWatcher charge', () => {
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
   before('prepare builders', function() {
-    builders = new Builders({ pouch: this.pouch })
+    builders = new Builders(this)
   })
   before('create outside dir', async function() {
     await fse.emptyDir(path.resolve(path.join(this.syncPath, '..', 'outside')))

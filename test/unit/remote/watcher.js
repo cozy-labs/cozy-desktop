@@ -24,7 +24,6 @@ const { FetchError, RemoteCozy } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 const timestamp = require('../../../core/utils/timestamp')
-const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const { posixifyPath } = require('../../support/helpers/context_dir')
 const { onPlatform, onPlatforms } = require('../../support/helpers/platform')
@@ -88,10 +87,11 @@ describe('RemoteWatcher', function() {
 
   before('instanciate config', configHelpers.createConfig)
   before('register client', configHelpers.registerClient)
-  before('instanciate helpers', function() {
-    remoteHelpers = new RemoteTestHelpers(this)
-  })
   beforeEach(pouchHelpers.createDatabase)
+  beforeEach('instanciate helpers', function() {
+    remoteHelpers = new RemoteTestHelpers(this)
+    builders = remoteHelpers.builders
+  })
   beforeEach(async function instanciateRemoteWatcher() {
     clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'setInterval'] })
 
@@ -100,11 +100,6 @@ describe('RemoteWatcher', function() {
     this.remoteCozy = new RemoteCozy(this.config)
     this.events = new EventEmitter()
     this.watcher = new RemoteWatcher(this)
-
-    builders = new Builders({
-      client: this.remoteCozy.client,
-      pouch: this.pouch
-    })
   })
   beforeEach(async function() {
     const remoteTree = await builders.createRemoteTree([
@@ -122,6 +117,7 @@ describe('RemoteWatcher', function() {
     // XXX: save remote tree in PouchDB
     await saveTree(remoteTree, builders)
   })
+
   afterEach(async function() {
     await this.watcher.stop()
   })

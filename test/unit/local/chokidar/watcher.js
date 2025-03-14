@@ -25,7 +25,7 @@ onPlatform('darwin', () => {
     before('instanciate config', configHelpers.createConfig)
     before('instanciate pouch', pouchHelpers.createDatabase)
     beforeEach('instanciate local watcher', function() {
-      builders = new Builders({ pouch: this.pouch })
+      builders = new Builders(this)
       this.prep = {}
       this.watcher = new Watcher(
         this.syncPath,

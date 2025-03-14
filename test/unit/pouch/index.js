@@ -66,7 +66,7 @@ describe('Pouch', function() {
       let doc, old
 
       beforeEach(async function() {
-        const builders = new Builders({ pouch: this.pouch })
+        const builders = new Builders(this)
 
         old = await builders
           .metafile()
@@ -115,7 +115,7 @@ describe('Pouch', function() {
       let doc, old
 
       beforeEach(async function() {
-        const builders = new Builders({ pouch: this.pouch })
+        const builders = new Builders(this)
 
         old = await builders
           .metafile()
@@ -142,7 +142,7 @@ describe('Pouch', function() {
       let builders, doc1, doc2, old1, old2
 
       beforeEach(async function() {
-        builders = new Builders({ pouch: this.pouch })
+        builders = new Builders(this)
 
         old1 = await builders
           .metafile()
@@ -416,7 +416,7 @@ describe('Pouch', function() {
       let dir, file
 
       beforeEach(async function() {
-        const builders = new Builders({ pouch: this.pouch })
+        const builders = new Builders(this)
         dir = await builders
           .metadir()
           .path('dir-with-remote-id')
@@ -471,7 +471,7 @@ describe('Pouch', function() {
 
     describe('initialScanDocs', () => {
       it('returns only existing docs with local side and metadata', async function() {
-        const builders = new Builders({ pouch: this.pouch })
+        const builders = new Builders(this)
         const dir = await builders
           .metadir()
           .path('dir')
@@ -629,7 +629,7 @@ describe('Pouch', function() {
     describe('localTree', () => {
       let builders
       beforeEach(async function() {
-        builders = new Builders({ pouch: this.pouch })
+        builders = new Builders(this)
       })
 
       it('returns the local paths of all saved documents', async function() {

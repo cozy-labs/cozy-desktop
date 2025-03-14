@@ -26,7 +26,7 @@ onPlatforms(['linux', 'win32'], () => {
     before('instanciate config', configHelpers.createConfig)
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
     beforeEach('create builders', function() {
-      builders = new Builders({ pouch: this.pouch })
+      builders = new Builders(this)
     })
     afterEach('clean pouch', pouchHelpers.cleanDatabase)
     after('clean config directory', configHelpers.cleanConfig)
