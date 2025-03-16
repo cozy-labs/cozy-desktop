@@ -2,8 +2,6 @@
 
 const _ = require('lodash')
 
-const CozyClient = require('cozy-client').default
-
 const RemoteBaseBuilder = require('./base')
 const {
   DIR_TYPE,
@@ -12,8 +10,9 @@ const {
 } = require('../../../../core/remote/constants')
 const {
   inRemoteTrash,
-  remoteJsonToRemoteDoc
+  jsonApiToRemoteDoc
 } = require('../../../../core/remote/document')
+const cozyHelpers = require('../../helpers/cozy')
 
 /*::
 import type { Cozy } from 'cozy-client-js'
@@ -50,90 +49,77 @@ module.exports = class RemoteDirBuilder extends RemoteBaseBuilder /*:: <RemoteDi
     return this
   }
 
-  async newClient(cozy /*: Cozy */) /*: Promise<CozyClient> */ {
-    let client /*: CozyClient */
-    return (async (cozy /*: Cozy */) /*: Promise<CozyClient> */ => {
-      if (!client) {
-        if (cozy._oauth) {
-          // Make sure we have an authorized client to build a new client from.
-          await cozy.authorize()
-          client = await CozyClient.fromOldOAuthClient(cozy)
-        } else {
-          client = await CozyClient.fromOldClient(cozy)
-        }
-      }
-      return client
-    })(cozy)
-  }
-
   async create() /*: Promise<RemoteDir> */ {
     const cozy = this._ensureCozy()
+    const client = await cozyHelpers.newClient(cozy)
+    const files = client.collection(FILES_DOCTYPE)
 
-    const json = await cozy.files.createDirectory({
-      name: this.remoteDoc.name,
-      dirID: this.remoteDoc.dir_id,
-      createdAt: this.remoteDoc.created_at,
-      updatedAt: this.remoteDoc.updated_at,
-      noSanitize: true
-    })
+    const { data: directory } = await files.createDirectory(
+      {
+        name: this.remoteDoc.name,
+        dirId: this.remoteDoc.dir_id,
+        lastModifiedDate: this.remoteDoc.updated_at || this.remoteDoc.created_at
+      },
+      { sanitizeName: false }
+    )
 
     if (
       this.remoteDoc.not_synchronized_on &&
       this.remoteDoc.not_synchronized_on.length
     ) {
       for (const { id, type } of this.remoteDoc.not_synchronized_on) {
-        const client = await this.newClient(cozy)
-        const files = client.collection(FILES_DOCTYPE)
         await files.addNotSynchronizedDirectories({ _id: id, _type: type }, [
-          json
+          directory
         ])
       }
 
-      const excluded = await cozy.files.statById(json._id)
-      return _.clone(remoteJsonToRemoteDoc(excluded))
+      const { data: excluded } = await files.statById(directory._id)
+      return jsonApiToRemoteDoc(excluded)
     }
 
-    return _.clone(remoteJsonToRemoteDoc(json))
+    return jsonApiToRemoteDoc(directory)
   }
 
   async update() /*: Promise<RemoteDir> */ {
     const cozy = this._ensureCozy()
+    const client = await cozyHelpers.newClient(cozy)
+    const files = client.collection(FILES_DOCTYPE)
 
-    const json = inRemoteTrash(this.remoteDoc)
-      ? await cozy.files.trashById(this.remoteDoc._id, { dontRetry: true })
-      : await cozy.files.updateAttributesById(this.remoteDoc._id, {
-          dir_id: this.remoteDoc.dir_id,
-          name: this.remoteDoc.name,
-          updated_at: this.remoteDoc.updated_at,
-          noSanitize: true
-        })
+    const { data: directory } = inRemoteTrash(this.remoteDoc)
+      ? await client.collection(FILES_DOCTYPE).destroy(this.remoteDoc)
+      : await client.collection(FILES_DOCTYPE).updateAttributesById(
+          this.remoteDoc._id,
+          {
+            dir_id: this.remoteDoc.dir_id,
+            name: this.remoteDoc.name,
+            updated_at: this.remoteDoc.updated_at
+          },
+          { sanitizeName: false }
+        )
 
     if (
       _.difference(
         this.remoteDoc.not_synchronized_on,
-        json.attributes.not_synchronized_on || []
+        directory.attributes.not_synchronized_on || []
       ).length
     ) {
-      for (const { id, type } of json.attributes.not_synchronized_on || []) {
-        const client = await this.newClient(cozy)
-        const files = client.collection(FILES_DOCTYPE)
+      for (const { id, type } of directory.attributes.not_synchronized_on ||
+        []) {
         await files.removeNotSynchronizedDirectories({ _id: id, _type: type }, [
-          json
+          directory
         ])
       }
 
       for (const { id, type } of this.remoteDoc.not_synchronized_on || []) {
-        const client = await this.newClient(cozy)
-        const files = client.collection(FILES_DOCTYPE)
         await files.addNotSynchronizedDirectories({ _id: id, _type: type }, [
-          json
+          directory
         ])
       }
 
-      const excluded = await cozy.files.statById(json._id)
-      return _.clone(remoteJsonToRemoteDoc(excluded))
+      const { data: excluded } = await files.statById(directory._id)
+      return jsonApiToRemoteDoc(excluded)
     }
 
-    return _.clone(remoteJsonToRemoteDoc(json))
+    return jsonApiToRemoteDoc(directory)
   }
 }
