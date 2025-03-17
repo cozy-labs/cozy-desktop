@@ -554,7 +554,11 @@ class Pouch {
       }
     }
     const designDoc = await this.byIdMaybe(doc._id)
-    if (designDoc) doc._rev = designDoc._rev
+    if (designDoc) {
+      doc._rev = designDoc._rev
+    } else {
+      delete doc._rev
+    }
     if (isEqual(doc, designDoc)) {
       return
     } else {

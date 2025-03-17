@@ -19,40 +19,34 @@ const {
   TRASH_DIR_ID
 } = require('../../../core/remote/constants')
 const { FetchError } = require('../../../core/remote/cozy')
-const { remoteJsonToRemoteDoc } = require('../../../core/remote/document')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
 const { CONFLICT_REGEXP } = require('../../../core/utils/conflicts')
 const timestamp = require('../../../core/utils/timestamp')
-const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
-const { cozy, deleteAll } = require('../../support/helpers/cozy')
 const pouchHelpers = require('../../support/helpers/pouch')
+const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
 /*::
 import type { Metadata, SavedMetadata } from '../../../core/metadata'
-import type { RemoteDoc, RemoteJsonDoc } from '../../../core/remote/document'
+import type { RemoteDoc } from '../../../core/remote/document'
 */
 const CHAT_MIGNON_MOD_PATH = 'test/fixtures/chat-mignon-mod.jpg'
 
 describe('remote.Remote', function() {
-  let builders, couchdbFolder
+  let builders, couchdbFolder, remoteHelpers
 
   before('instanciate config', configHelpers.createConfig)
-  before('register OAuth client', configHelpers.registerClient)
+  before('register client', configHelpers.registerClient)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  beforeEach('prepare builders', function() {
-    builders = new Builders({ cozy, pouch: this.pouch })
+  beforeEach('prepare helpers', async function() {
+    remoteHelpers = new RemoteTestHelpers(this)
+    builders = remoteHelpers.builders
   })
   beforeEach('instanciate remote', function() {
     this.prep = sinon.createStubInstance(Prep)
     this.events = new EventEmitter()
     this.remote = new remote.Remote(this)
-    // TODO: find out why the client built by `new Remote()` doesn't behave
-    // correctly (i.e. its auth isn't totally set and we can end up getting
-    // errors from `cozy-client-js` because it's missing a `client_secret`).
-    this.remote.remoteCozy.client = cozy
   })
-  beforeEach(deleteAll)
   beforeEach('create the couchdb folder', async function() {
     couchdbFolder = await builders
       .remoteDir()
@@ -66,6 +60,7 @@ describe('remote.Remote', function() {
       .create()
   })
   afterEach('clean pouch', pouchHelpers.cleanDatabase)
+  afterEach('clean remote cozy', () => remoteHelpers.clean())
   after('clean config directory', configHelpers.cleanConfig)
 
   describe('constructor', () => {
@@ -128,8 +123,8 @@ describe('remote.Remote', function() {
 
       should(doc).have.propertyByPath('remote', '_id')
 
-      const file = await cozy.files.statById(doc.remote._id)
-      should(file.attributes).have.properties({
+      const file = await remoteHelpers.byId(doc.remote._id)
+      should(file).have.properties({
         dir_id: 'io.cozy.files.root-dir',
         executable: true,
         mime: 'image/jpg',
@@ -137,9 +132,7 @@ describe('remote.Remote', function() {
         size: '36901',
         type: 'file'
       })
-      should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
-        doc.updated_at
-      )
+      should(timestamp.roundedRemoteDate(file.updated_at)).equal(doc.updated_at)
     })
 
     it('fails if the md5sum does not match the content', async function() {
@@ -245,13 +238,13 @@ describe('remote.Remote', function() {
 
       should(doc).have.propertyByPath('remote', '_id')
 
-      const folder = await cozy.files.statById(doc.remote._id)
-      should(folder.attributes).have.properties({
+      const folder = await remoteHelpers.byId(doc.remote._id)
+      should(folder).have.properties({
         path: '/folder-1',
         name: 'folder-1',
         type: DIR_TYPE
       })
-      should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
+      should(timestamp.roundedRemoteDate(folder.updated_at)).equal(
         doc.updated_at
       )
     })
@@ -321,14 +314,14 @@ describe('remote.Remote', function() {
 
         await this.remote.overwriteFileAsync(doc)
 
-        const file = await cozy.files.statById(doc.remote._id)
-        should(file.attributes).have.properties({
+        const file = await remoteHelpers.byId(doc.remote._id)
+        should(file).have.properties({
           type: 'file',
           dir_id: created.dir_id,
           name: created.name,
           md5sum: 'N7UdGUp1E+RbVvZSTy1R8g=='
         })
-        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+        should(timestamp.roundedRemoteDate(file.updated_at)).equal(
           doc.updated_at
         )
         should(doc.remote._rev).equal(file._rev)
@@ -365,8 +358,8 @@ describe('remote.Remote', function() {
           status: 412
         })
 
-        const file = await cozy.files.statById(doc.remote._id)
-        should(file.attributes).have.properties({
+        const file = await remoteHelpers.byId(doc.remote._id)
+        should(file).have.properties({
           md5sum: old.md5sum
         })
       })
@@ -421,14 +414,14 @@ describe('remote.Remote', function() {
 
         await this.remote.overwriteFileAsync(_.cloneDeep(doc))
 
-        const file = await cozy.files.statById(doc.remote._id)
-        should(file.attributes).have.properties({
+        const file = await remoteHelpers.byId(doc.remote._id)
+        should(file).have.properties({
           type: 'file',
           dir_id: created.dir_id,
           name: created.name,
           md5sum: doc.md5sum
         })
-        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+        should(timestamp.roundedRemoteDate(file.updated_at)).equal(
           doc.updated_at
         )
         should(metadata.extractRevNumber(file)).equal(
@@ -518,10 +511,10 @@ describe('remote.Remote', function() {
 
         await this.remote.overwriteFileAsync(doc1)
 
-        const update1 = await cozy.files.statById(doc1.remote._id)
-        should(
-          timestamp.roundedRemoteDate(update1.attributes.updated_at)
-        ).equal(timestamp.roundedRemoteDate(created.updated_at))
+        const update1 = await remoteHelpers.byId(doc1.remote._id)
+        should(timestamp.roundedRemoteDate(update1.updated_at)).equal(
+          timestamp.roundedRemoteDate(created.updated_at)
+        )
         should(doc1.remote._rev).equal(update1._rev)
 
         // Request with remote modification date older than local one
@@ -547,10 +540,10 @@ describe('remote.Remote', function() {
 
         await this.remote.overwriteFileAsync(doc2)
 
-        const update2 = await cozy.files.statById(doc2.remote._id)
-        should(
-          timestamp.roundedRemoteDate(update2.attributes.updated_at)
-        ).equal(doc2.local.updated_at)
+        const update2 = await remoteHelpers.byId(doc2.remote._id)
+        should(timestamp.roundedRemoteDate(update2.updated_at)).equal(
+          doc2.local.updated_at
+        )
         should(doc2.remote._rev).equal(update2._rev)
 
         // Request without remote modification date. Old PouchDB records might
@@ -563,15 +556,8 @@ describe('remote.Remote', function() {
           .updatedAt(timestamp.build(2017, 10, 16, 16, 12, 1, 0).toISOString())
           .noRecord() // XXX: Prevent Pouch conflict from reusing `doc2`'s _id
           .create()
-        doc3 = {
-          ...doc3,
-          remote: {
-            path: doc3.remote.path,
-            _id: doc3.remote._id,
-            _rev: doc3.remote._rev
-          }
-        }
-        // Fake old PouchDB record
+
+        delete doc3.remote.updated_at
         const { rev } = await this.pouch.put(doc3)
         doc3._rev = rev
 
@@ -588,10 +574,10 @@ describe('remote.Remote', function() {
 
         await this.remote.overwriteFileAsync(doc3)
 
-        const update3 = await cozy.files.statById(doc3.remote._id)
-        should(
-          timestamp.roundedRemoteDate(update3.attributes.updated_at)
-        ).equal(doc3.local.updated_at)
+        const update3 = await remoteHelpers.byId(doc3.remote._id)
+        should(timestamp.roundedRemoteDate(update3.updated_at)).equal(
+          doc3.local.updated_at
+        )
         should(doc3.remote._rev).equal(update3._rev)
       })
     })
@@ -615,10 +601,9 @@ describe('remote.Remote', function() {
       should(doc)
         .have.propertyByPath('remote', '_rev')
         .not.eql(oldRemote._rev)
-      const newRemote = await cozy.files.statById(oldRemote._id)
-      should(newRemote)
-        .have.propertyByPath('attributes', 'executable')
-        .eql(true)
+      should(await remoteHelpers.byId(oldRemote._id))
+        .have.property('executable')
+        .be.true()
     })
 
     it('makes the remote file non-executable when the local one is not anymore', async function() {
@@ -638,10 +623,9 @@ describe('remote.Remote', function() {
       should(doc)
         .have.propertyByPath('remote', '_rev')
         .not.eql(oldRemote._rev)
-      const newRemote = await cozy.files.statById(oldRemote._id)
-      should(newRemote)
-        .have.propertyByPath('attributes', 'executable')
-        .eql(false)
+      should(await remoteHelpers.byId(oldRemote._id))
+        .have.property('executable')
+        .be.false()
     })
 
     it('updates the last modification date of the remote file', async function() {
@@ -666,8 +650,8 @@ describe('remote.Remote', function() {
 
       await this.remote.updateFileMetadataAsync(doc)
 
-      const file = await cozy.files.statById(doc.remote._id)
-      should(file.attributes).have.properties({
+      const file = await remoteHelpers.byId(doc.remote._id)
+      should(file).have.properties({
         type: 'file',
         dir_id: dir._id,
         name: 'file-7',
@@ -695,10 +679,8 @@ describe('remote.Remote', function() {
 
       await this.remote.updateFolderAsync(doc)
 
-      const folder /*: RemoteJsonDoc */ = await cozy.files.statById(
-        doc.remote._id
-      )
-      should(folder.attributes).have.properties({
+      const folder = await remoteHelpers.byId(doc.remote._id)
+      should(folder).have.properties({
         path: '/created',
         type: DIR_TYPE,
         dir_id: ROOT_DIR_ID,
@@ -717,7 +699,7 @@ describe('remote.Remote', function() {
         .inRootDir()
         .createdAt(2016, 1, 2, 3, 4, 5, 0)
         .create()
-      await cozy.files.destroyById(deletedDir._id)
+      await remoteHelpers.destroyById(deletedDir._id)
       const doc = builders
         .metadir()
         .fromRemote(deletedDir)
@@ -786,18 +768,16 @@ describe('remote.Remote', function() {
 
         await this.remote.moveAsync(doc, old)
 
-        const file = await cozy.files.statById(doc.remote._id)
+        const file = await remoteHelpers.byId(doc.remote._id)
         should(file).have.properties({
           _id: old.remote._id,
-          _rev: doc.remote._rev
-        })
-        should(file.attributes).have.properties({
+          _rev: doc.remote._rev,
           dir_id: dstDir._id,
           name: 'cat7.jpg',
           type: 'file',
           size: '4'
         })
-        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+        should(timestamp.roundedRemoteDate(file.updated_at)).equal(
           doc.updated_at
         )
       })
@@ -826,13 +806,13 @@ describe('remote.Remote', function() {
 
         await this.remote.moveAsync(doc, old)
 
-        const folder = await cozy.files.statById(doc.remote._id)
-        should(folder.attributes).have.properties({
+        const folder = await remoteHelpers.byId(doc.remote._id)
+        should(folder).have.properties({
           dir_id: couchdbFolder._id,
           name: 'folder-5',
           type: DIR_TYPE
         })
-        should(timestamp.roundedRemoteDate(folder.attributes.updated_at)).equal(
+        should(timestamp.roundedRemoteDate(folder.updated_at)).equal(
           doc.updated_at
         )
       })
@@ -881,16 +861,16 @@ describe('remote.Remote', function() {
 
           await this.remote.moveAsync(doc, old)
 
-          const movedFile = await cozy.files.statById(doc.remote._id)
+          const movedFile = await remoteHelpers.byId(doc.remote._id)
           should(movedFile).have.properties({
             _id: old.remote._id,
-            _rev: doc.remote._rev
+            _rev: doc.remote._rev,
+            name: 'My Cat.jpg'
           })
-          should(movedFile.attributes).have.property('name', 'My Cat.jpg')
           // The `remote` attribute of the PouchDB record is updated
           should(doc.remote).have.property(
             'updated_at',
-            timestamp.roundedRemoteDate(movedFile.attributes.updated_at)
+            timestamp.roundedRemoteDate(movedFile.updated_at)
           )
         })
       }
@@ -932,16 +912,16 @@ describe('remote.Remote', function() {
 
           await this.remote.moveAsync(doc, file)
 
-          const movedFile = await cozy.files.statById(doc.remote._id)
+          const movedFile = await remoteHelpers.byId(doc.remote._id)
           should(movedFile).have.properties({
             _id: file.remote._id,
-            _rev: doc.remote._rev
+            _rev: doc.remote._rev,
+            name: 'My Cat.jpg'
           })
-          should(movedFile.attributes).have.property('name', 'My Cat.jpg')
           // The `remote` attribute of the PouchDB record is updated
           should(doc.remote).have.property(
             'updated_at',
-            timestamp.roundedRemoteDate(movedFile.attributes.created_at)
+            timestamp.roundedRemoteDate(movedFile.created_at)
           )
         })
       }
@@ -1014,18 +994,16 @@ describe('remote.Remote', function() {
 
         should(doc.remote._id).equal(old.remote._id)
         should(doc.remote._rev).not.equal(old.remote._rev)
-        const file = await cozy.files.statById(doc.remote._id)
+        const file = await remoteHelpers.byId(doc.remote._id)
         should(file).have.properties({
           _id: old.remote._id,
-          _rev: doc.remote._rev
-        })
-        should(file.attributes).have.properties({
+          _rev: doc.remote._rev,
           dir_id: newDir._id,
           name: 'cat7.jpg',
           type: 'file',
           size: '4'
         })
-        should(timestamp.roundedRemoteDate(file.attributes.updated_at)).equal(
+        should(timestamp.roundedRemoteDate(file.updated_at)).equal(
           doc.updated_at
         )
       })
@@ -1035,8 +1013,8 @@ describe('remote.Remote', function() {
 
         await this.remote.moveAsync(doc, old)
 
-        should(await cozy.files.statById(existing.remote._id))
-          .have.propertyByPath('attributes', 'trashed')
+        should(await remoteHelpers.byId(existing.remote._id))
+          .have.property('trashed')
           .be.true()
       })
 
@@ -1045,9 +1023,10 @@ describe('remote.Remote', function() {
 
         await this.remote.moveAsync(doc, old)
 
-        should(await cozy.files.statById(doc.remote._id))
-          .have.propertyByPath('relationships', 'referenced_by', 'data')
-          .eql(existingRefs.map(ref => ({ id: ref._id, type: ref._type })))
+        const remoteDoc = await remoteHelpers.byId(doc.remote._id)
+        should(remoteDoc.relations('referenced_by')).eql(
+          existingRefs.map(ref => ({ id: ref._id, type: ref._type }))
+        )
       })
 
       it('updates the remote attribute', async function() {
@@ -1055,7 +1034,7 @@ describe('remote.Remote', function() {
 
         await this.remote.moveAsync(doc, old)
 
-        const udpatedFile = await this.remote.remoteCozy.find(doc.remote._id)
+        const udpatedFile = await remoteHelpers.byId(doc.remote._id)
 
         should(doc.remote).deepEqual({
           ...udpatedFile,
@@ -1078,12 +1057,10 @@ describe('remote.Remote', function() {
           await this.remote.moveAsync(doc, old)
 
           should(doc.remote._id).equal(old.remote._id)
-          const file = await cozy.files.statById(doc.remote._id)
+          const file = await remoteHelpers.byId(doc.remote._id)
           should(file).have.properties({
             _id: old.remote._id,
-            _rev: doc.remote._rev
-          })
-          should(file.attributes).have.properties({
+            _rev: doc.remote._rev,
             dir_id: newDir._id,
             name: 'cat7.jpg'
           })
@@ -1094,15 +1071,16 @@ describe('remote.Remote', function() {
 
           await this.remote.moveAsync(doc, old)
 
-          should(await cozy.files.statById(doc.remote._id))
-            .have.propertyByPath('relationships', 'referenced_by', 'data')
-            .eql(existingRefs.map(ref => ({ id: ref._id, type: ref._type })))
+          const remoteDoc = await remoteHelpers.byId(doc.remote._id)
+          should(remoteDoc.relations('referenced_by')).eql(
+            existingRefs.map(ref => ({ id: ref._id, type: ref._type }))
+          )
         })
       })
 
       context('when the overwritten file does not exist anymore', () => {
         beforeEach(async function() {
-          await cozy.files.destroyById(existingRemote._id)
+          await remoteHelpers.destroyById(existingRemote._id)
         })
 
         it('successfuly moves the file', async function() {
@@ -1111,12 +1089,10 @@ describe('remote.Remote', function() {
           await this.remote.moveAsync(doc, old)
 
           should(doc.remote._id).equal(old.remote._id)
-          const file = await cozy.files.statById(doc.remote._id)
+          const file = await remoteHelpers.byId(doc.remote._id)
           should(file).have.properties({
             _id: old.remote._id,
-            _rev: doc.remote._rev
-          })
-          should(file.attributes).have.properties({
+            _rev: doc.remote._rev,
             dir_id: newDir._id,
             name: 'cat7.jpg'
           })
@@ -1127,9 +1103,8 @@ describe('remote.Remote', function() {
 
           await this.remote.moveAsync(doc, old)
 
-          should(await cozy.files.statById(doc.remote._id))
-            .have.propertyByPath('relationships', 'referenced_by', 'data')
-            .be.null()
+          const remoteDoc = await remoteHelpers.byId(doc.remote._id)
+          should(remoteDoc.relations('referenced_by')).be.empty()
         })
       })
     })
@@ -1146,9 +1121,8 @@ describe('remote.Remote', function() {
 
       await this.remote.trashAsync(doc)
 
-      const trashed = await cozy.files.statById(doc.remote._id)
-      should(trashed)
-        .have.propertyByPath('attributes', 'dir_id')
+      should(await remoteHelpers.byId(doc.remote._id))
+        .have.property('dir_id')
         .eql(TRASH_DIR_ID)
     })
 
@@ -1162,7 +1136,7 @@ describe('remote.Remote', function() {
 
       await this.remote.trashAsync(doc)
 
-      await should(cozy.files.statById(doc.remote._id)).be.rejectedWith({
+      await should(remoteHelpers.byId(doc.remote._id)).be.rejectedWith({
         status: 404
       })
     })
@@ -1196,11 +1170,11 @@ describe('remote.Remote', function() {
         .upToDate()
         .build()
 
-      await this.remote.remoteCozy.updateAttributesById(remoteSrc._id, {
+      await remoteHelpers.updateAttributesById(remoteSrc._id, {
         name: 'dst-dir'
       })
 
-      const movedFile = await this.remote.remoteCozy.find(remoteFile._id)
+      const movedFile = await remoteHelpers.byId(remoteFile._id)
       await this.remote.assignNewRemote(file)
       should(file.remote).deepEqual({
         ...movedFile,
@@ -1208,7 +1182,7 @@ describe('remote.Remote', function() {
         updated_at: timestamp.roundedRemoteDate(movedFile.updated_at)
       })
 
-      const movedDir = await this.remote.remoteCozy.find(remoteDir._id)
+      const movedDir = await remoteHelpers.byId(remoteDir._id)
       await this.remote.assignNewRemote(dir)
       should(dir.remote).deepEqual({
         ...movedDir,
@@ -1291,12 +1265,7 @@ describe('remote.Remote', function() {
     })
 
     it('returns the remote root directory for path .', async function() {
-      // $FlowFixMe Root is a directory
-      const root /*: RemoteDir */ = remoteJsonToRemoteDoc(
-        // XXX: We call the cozy-client-js method directly to increase the
-        // likelyhood that the remote document is unaltered.
-        await this.remote.remoteCozy.client.files.statById(ROOT_DIR_ID)
-      )
+      const root = await remoteHelpers.getRootDir()
 
       should(await this.remote.findDirectoryByPath('.')).have.properties({
         _id: root._id,
@@ -1358,14 +1327,14 @@ describe('remote.Remote', function() {
     })
 
     it('fails if there are no remote documents with the given path', async function() {
-      await this.remote.remoteCozy.destroyById(remoteFile._id)
+      await remoteHelpers.trashById(remoteFile._id)
 
       await should(this.remote.resolveConflict(file)).be.rejected()
     })
 
     it('renames the remote document with a conflict suffix', async function() {
       await this.remote.resolveConflict(file)
-      should(await this.remote.remoteCozy.find(remoteFile._id))
+      should(await remoteHelpers.byId(remoteFile._id))
         .have.property('name')
         .match(CONFLICT_REGEXP)
     })

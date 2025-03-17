@@ -3,12 +3,15 @@
 const _ = require('lodash')
 
 const metadata = require('../../../../core/metadata')
-const { ROOT_DIR_ID } = require('../../../../core/remote/constants')
-const { remoteJsonToRemoteDoc } = require('../../../../core/remote/document')
+const {
+  FILES_DOCTYPE,
+  ROOT_DIR_ID
+} = require('../../../../core/remote/constants')
+const { jsonApiToRemoteDoc } = require('../../../../core/remote/document')
 const dbBuilders = require('../db')
 
 /*::
-import type { Cozy } from 'cozy-client-js'
+import type { CozyClient } from 'cozy-client'
 import type { FullRemoteFile, RemoteDir, CouchDBDeletion } from '../../../../core/remote/document'
 */
 
@@ -24,12 +27,16 @@ import type { FullRemoteFile, RemoteDir, CouchDBDeletion } from '../../../../cor
 //
 module.exports = class RemoteErasedBuilder {
   /*::
-  cozy: ?Cozy
+  client: CozyClient
   remoteDoc: ?(FullRemoteFile|RemoteDir)
   */
 
-  constructor(cozy /*: ?Cozy */, old /*: ?(FullRemoteFile|RemoteDir) */) {
-    this.cozy = cozy
+  constructor(
+    client /*: CozyClient */,
+    old /*: ?(FullRemoteFile|RemoteDir) */
+  ) {
+    this.client = client
+
     if (old) {
       this.remoteDoc = {
         ..._.cloneDeep(old),
@@ -38,9 +45,9 @@ module.exports = class RemoteErasedBuilder {
     }
   }
 
-  _ensureCozy() /*: Cozy */ {
-    if (this.cozy) {
-      return this.cozy
+  _ensureClient() /*: CozyClient */ {
+    if (this.client) {
+      return this.client
     } else {
       throw new Error('Cannot create remote files/dirs without a Cozy client.')
     }
@@ -63,34 +70,28 @@ module.exports = class RemoteErasedBuilder {
   }
 
   async create() /*: Promise<CouchDBDeletion> */ {
-    const cozy = this._ensureCozy()
+    const client = this._ensureClient()
 
-    if (this.remoteDoc) {
-      const { _id, _rev } = this.remoteDoc
-      await cozy.files.destroyById(_id)
-      return {
-        _id,
-        // Build a fake revision as destroyById does not return the deleted doc
-        _rev: dbBuilders.rev(metadata.extractRevNumber({ _rev }) + 1),
-        _deleted: true
-      }
-    } else {
-      const { _id, _rev } = _.clone(
-        remoteJsonToRemoteDoc(
-          await cozy.files.createDirectory({
+    if (!this.remoteDoc) {
+      const { data: directory } = await client
+        .collection(FILES_DOCTYPE)
+        .createDirectory(
+          {
             name: '',
-            dirID: ROOT_DIR_ID,
-            noSanitize: true
-          })
+            dirId: ROOT_DIR_ID
+          },
+          {
+            sanitizeName: false
+          }
         )
-      )
-      await cozy.files.destroyById(_id)
-      return {
-        _id,
-        // Build a fake revision as destroyById does not return the deleted doc
-        _rev: dbBuilders.rev(metadata.extractRevNumber({ _rev }) + 1),
-        _deleted: true
-      }
+
+      this.remoteDoc = jsonApiToRemoteDoc(directory)
     }
+
+    const {
+      data: { _id, _rev, _deleted }
+    } = await client.collection(FILES_DOCTYPE).destroy(this.remoteDoc)
+
+    return { _id, _rev, _deleted }
   }
 }

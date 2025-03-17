@@ -10,10 +10,8 @@ const metadata = require('../../core/metadata')
 const { DIR_TYPE } = require('../../core/remote/constants')
 const { INCOMPATIBLE_DOC_CODE } = require('../../core/sync/errors')
 const timestamp = require('../../core/utils/timestamp')
-const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
 /*::
@@ -27,21 +25,19 @@ describe('Platform incompatibilities', () => {
     return
   }
 
-  let builders, cozy, helpers
+  let builders, helpers
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    cozy = cozyHelpers.cozy
-    builders = new Builders({ cozy })
     helpers = TestHelpers.init(this)
+    builders = helpers.remote.builders
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
@@ -133,8 +129,8 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesByPath('/d:ir', { name: 'di:r' })
-    await cozy.files.updateAttributesByPath('/f:ile', { name: 'fi:le' })
+    await helpers.remote.updateAttributesByPath('/d:ir', { name: 'di:r' })
+    await helpers.remote.updateAttributesByPath('/f:ile', { name: 'fi:le' })
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -143,12 +139,12 @@ describe('Platform incompatibilities', () => {
   })
 
   it('trash & restore incompatible', async () => {
-    const remoteDocs = await helpers.remote.createTree(['d:ir/', 'f:ile'])
+    const { dirs, files } = await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.trashById(remoteDocs['d:ir/']._id)
-    await cozy.files.trashById(remoteDocs['f:ile']._id)
+    await helpers.remote.trashById(dirs['d:ir/']._id)
+    await helpers.remote.trashById(files['f:ile']._id)
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -157,8 +153,8 @@ describe('Platform incompatibilities', () => {
     shouldNotHaveBlocked()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.restoreById(remoteDocs['d:ir/']._id)
-    await cozy.files.restoreById(remoteDocs['f:ile']._id)
+    await helpers.remote.restoreById(dirs['d:ir/']._id)
+    await helpers.remote.restoreById(files['f:ile']._id)
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -167,14 +163,14 @@ describe('Platform incompatibilities', () => {
   })
 
   it('destroy & recreate incompatible', async () => {
-    const remoteDocs = await helpers.remote.createTree(['d:ir/', 'f:ile'])
+    const { dirs, files } = await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.trashById(remoteDocs['d:ir/']._id)
-    await cozy.files.trashById(remoteDocs['f:ile']._id)
-    await cozy.files.destroyById(remoteDocs['d:ir/']._id)
-    await cozy.files.destroyById(remoteDocs['f:ile']._id)
+    await helpers.remote.trashById(dirs['d:ir/']._id)
+    await helpers.remote.trashById(files['f:ile']._id)
+    await helpers.remote.destroyById(dirs['d:ir/']._id)
+    await helpers.remote.destroyById(files['f:ile']._id)
     await helpers.pullAndSyncAll()
 
     should(await helpers.local.tree()).be.empty()
@@ -190,7 +186,7 @@ describe('Platform incompatibilities', () => {
   })
 
   it('make compatible bottom-up', async () => {
-    const remoteDocs = await helpers.remote.createTree([
+    const { dirs, files } = await helpers.remote.createTree([
       'd:ir/',
       'd:ir/sub:dir/',
       'd:ir/sub:dir/f:ile',
@@ -199,10 +195,9 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(
-      remoteDocs['d:ir/sub:dir/f:ile']._id,
-      { name: 'file' }
-    )
+    await helpers.remote.updateAttributesById(files['d:ir/sub:dir/f:ile']._id, {
+      name: 'file'
+    })
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).be.empty()
     should(await helpers.incompatibleTree()).deepEqual([
@@ -214,7 +209,7 @@ describe('Platform incompatibilities', () => {
     shouldHaveBlockedFor('d:ir/sub:dir/file')
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['d:ir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['d:ir/']._id, {
       name: 'dir'
     })
     await helpers.pullAndSyncAll()
@@ -231,7 +226,7 @@ describe('Platform incompatibilities', () => {
     ])
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['d:ir/sub:dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['d:ir/sub:dir/']._id, {
       name: 'subdir'
     })
     await helpers.pullAndSyncAll()
@@ -246,7 +241,7 @@ describe('Platform incompatibilities', () => {
   })
 
   it('rename dir compatible -> incompatible', async () => {
-    const remoteDocs = await helpers.remote.createTree([
+    const { dirs } = await helpers.remote.createTree([
       'dir/',
       'dir/subdir/',
       'dir/subdir/file'
@@ -254,7 +249,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir:'
     })
     await helpers.pullAndSyncAll()
@@ -272,7 +267,7 @@ describe('Platform incompatibilities', () => {
   })
 
   it('rename dir compatible -> incompatible with already incompatible content', async () => {
-    const remoteDocs = await helpers.remote.createTree([
+    const { dirs } = await helpers.remote.createTree([
       'dir/',
       'dir/sub:dir/',
       'dir/sub:dir/file'
@@ -280,7 +275,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir:'
     })
     await helpers.pullAndSyncAll()
@@ -294,11 +289,11 @@ describe('Platform incompatibilities', () => {
   })
 
   it('rename file compatible -> incompatible', async () => {
-    const remoteDocs = await helpers.remote.createTree(['dir/', 'dir/file'])
+    const { files } = await helpers.remote.createTree(['dir/', 'dir/file'])
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/file']._id, {
+    await helpers.remote.updateAttributesById(files['dir/file']._id, {
       name: 'fi:le'
     })
     await helpers.pullAndSyncAll()
@@ -308,7 +303,7 @@ describe('Platform incompatibilities', () => {
   })
 
   it('rename dir compatible -> compatible with incompatible content', async () => {
-    const remoteDocs = await helpers.remote.createTree([
+    const { dirs } = await helpers.remote.createTree([
       'dir/',
       'dir/fi:le',
       'dir/sub:dir/'
@@ -316,7 +311,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir2'
     })
     await helpers.pullAndSyncAll()
@@ -329,7 +324,7 @@ describe('Platform incompatibilities', () => {
   })
 
   it('move local dir with incompatible metadata & remote content', async () => {
-    const remoteDocs = await helpers.remote.createTree([
+    const { dirs } = await helpers.remote.createTree([
       'dir/',
       'dir/sub:dir/',
       'dir/sub:dir/file'
@@ -338,7 +333,7 @@ describe('Platform incompatibilities', () => {
 
     // Simulate local move
     helpers._sync.blockSyncFor.resetHistory()
-    const dir = await helpers.pouch.byRemoteId(remoteDocs['dir/']._id)
+    const dir = await helpers.pouch.byRemoteId(dirs['dir/']._id)
     const dir2 = metadata.buildDir('dir2', {
       atime: new Date(),
       mtime: new Date(),
@@ -366,7 +361,7 @@ describe('Platform incompatibilities', () => {
   })
 
   it('move remote dir with incompatible metadata & remote content', async () => {
-    const remoteDocs = await helpers.remote.createTree([
+    const { dirs } = await helpers.remote.createTree([
       'dir/',
       'dir/sub:dir/',
       'dir/sub:dir/file'
@@ -375,10 +370,10 @@ describe('Platform incompatibilities', () => {
 
     // Simulate remote move
     helpers._sync.blockSyncFor.resetHistory()
-    if (remoteDocs['dir/'].type !== DIR_TYPE) {
+    if (dirs['dir/'].type !== DIR_TYPE) {
       throw new Error('Unexpected remote file with dir/ path')
     }
-    const remoteDoc = remoteDocs['dir/']
+    const remoteDoc = dirs['dir/']
     const dir = await helpers.pouch.byRemoteId(remoteDoc._id)
     const newRemoteDoc = await builders
       .remoteDir(remoteDoc)
@@ -401,13 +396,13 @@ describe('Platform incompatibilities', () => {
   })
 
   it('rename dir compatible -> incompatible -> compatible with compatible content', async () => {
-    const remoteDocs = await helpers.remote.createTree(['dir/', 'dir/file'])
+    const { dirs } = await helpers.remote.createTree(['dir/', 'dir/file'])
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
     should(await helpers.incompatibleTree()).be.empty()
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'd:ir'
     })
     await helpers.pullAndSyncAll()
@@ -416,7 +411,7 @@ describe('Platform incompatibilities', () => {
     shouldHaveBlockedFor(['d:ir', 'd:ir/file'])
 
     helpers._sync.blockSyncFor.resetHistory()
-    await cozy.files.updateAttributesById(remoteDocs['dir/']._id, {
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir'
     })
     await helpers.pullAndSyncAll()

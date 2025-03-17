@@ -43,7 +43,7 @@ describe('Local', function() {
     this.events = { emit: () => {} }
     this.local = new Local({ ...this, sendToTrash: trashMock.sendToTrash })
 
-    builders = new Builders({ pouch: this.pouch })
+    builders = new Builders(this)
     syncDir = new ContextDir(this.syncPath)
   })
   after('clean pouch', pouchHelpers.cleanDatabase)

@@ -8,32 +8,20 @@ const should = require('should')
 const pathUtils = require('../../core/utils/path')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
-const skipRemoteChange = async ({ helpers, cozy }) => {
-  const since = await helpers.pouch.getRemoteSeq()
-  const { last_seq } = await cozy.data.changesFeed('io.cozy.files', {
-    since,
-    limit: 10000
-  })
-  await helpers.pouch.setRemoteSeq(last_seq)
-}
-
 describe('Trash', () => {
-  let cozy, helpers, pouch, prep
+  let helpers, pouch, prep
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
     pouch = helpers.pouch
     prep = helpers.prep
@@ -49,10 +37,9 @@ describe('Trash', () => {
     let parent, file
 
     beforeEach(async () => {
-      parent = await cozy.files.createDirectory({ name: 'parent' })
-      file = await cozy.files.create('File content...', {
-        name: 'file',
-        dirID: parent._id
+      parent = await helpers.remote.createDirectory('parent')
+      file = await helpers.remote.createFile('file', 'File content...', {
+        dirId: parent._id
       })
       await helpers.remote.pullChanges()
       await helpers.syncAll()
@@ -84,9 +71,9 @@ describe('Trash', () => {
         it('does not trash the file on the remote Cozy and re-downloads it', async () => {
           await helpers.local.syncDir.remove('parent/file')
           await helpers.local.scan()
-          await cozy.files.updateAttributesById(file._id, {
+          await helpers.remote.updateAttributesById(file._id, {
             name: 'file',
-            dir_id: parent.attributes.dir_id
+            dir_id: parent.dir_id
           })
           await helpers.remote.pullChanges()
           await helpers.syncAll()
@@ -104,9 +91,9 @@ describe('Trash', () => {
       // stopped.
       context('after the file was moved on the remote Cozy', () => {
         it('does not trash the file on the remote Cozy and re-downloads it', async () => {
-          await cozy.files.updateAttributesById(file._id, {
+          await helpers.remote.updateAttributesById(file._id, {
             name: 'file',
-            dir_id: parent.attributes.dir_id
+            dir_id: parent.dir_id
           })
           await helpers.remote.pullChanges()
           await helpers.local.syncDir.remove('parent/file')
@@ -129,9 +116,9 @@ describe('Trash', () => {
         // avoid looping over it.
         it('ends up skipping the change', async () => {
           // Destroy file on Cozy
-          await cozy.files.destroyById(file._id)
+          await helpers.remote.destroyById(file._id)
           // Fake missing the remote change by skipping its sequence
-          skipRemoteChange({ helpers, cozy })
+          await helpers.remote.ignorePreviousChanges()
 
           await helpers.local.syncDir.remove('parent/file')
           await helpers.local.scan()
@@ -153,9 +140,11 @@ describe('Trash', () => {
         // trying forever.
         it('can be skipped manually', async () => {
           // Destroy file on Cozy
-          await cozy.files.updateById(file._id, 'remote update')
+          await helpers.remote.updateFileById(file._id, 'remote update', {
+            name: file.name
+          })
           // Fake missing the remote change by skipping its sequence
-          skipRemoteChange({ helpers, cozy })
+          await helpers.remote.ignorePreviousChanges()
 
           await helpers.local.syncDir.remove('parent/file')
           await helpers.local.scan()
@@ -219,8 +208,7 @@ describe('Trash', () => {
 
     context('on the remote Cozy', () => {
       it('trashes the file on the local filesystem', async () => {
-        await cozy.files.trashById(file._id)
-
+        await helpers.remote.trashById(file._id)
         await helpers.remote.pullChanges()
 
         should(helpers.putDocs('path', 'trashed')).deepEqual([
@@ -235,7 +223,7 @@ describe('Trash', () => {
 
       context('before the file was moved on the local filesystem', () => {
         it('does not trash the file on the local filesystem and restores it', async () => {
-          await cozy.files.trashById(file._id)
+          await helpers.remote.trashById(file._id)
           await helpers.remote.pullChanges()
           await helpers.local.syncDir.move(
             path.normalize('parent/file'),
@@ -262,7 +250,7 @@ describe('Trash', () => {
             'file'
           )
           await helpers.local.scan()
-          await cozy.files.trashById(file._id)
+          await helpers.remote.trashById(file._id)
           await helpers.remote.pullChanges()
           await helpers.syncAll()
 
@@ -277,7 +265,7 @@ describe('Trash', () => {
     context('destroyed on the remote Cozy', () => {
       context('before the file was moved on the local filesystem', () => {
         it('does not trash the file on the local filesystem and re-uploads it', async () => {
-          await cozy.files.destroyById(file._id)
+          await helpers.remote.destroyById(file._id)
           await helpers.remote.pullChanges()
           await helpers.local.syncDir.move(
             path.normalize('parent/file'),
@@ -300,7 +288,7 @@ describe('Trash', () => {
             'file'
           )
           await helpers.local.scan()
-          await cozy.files.destroyById(file._id)
+          await helpers.remote.destroyById(file._id)
           await helpers.remote.pullChanges()
           await helpers.syncAll()
 
@@ -317,14 +305,13 @@ describe('Trash', () => {
     let parent, dir, subdir
 
     beforeEach(async () => {
-      parent = await cozy.files.createDirectory({ name: 'parent' })
-      dir = await cozy.files.createDirectory({ name: 'dir', dirID: parent._id })
-      await cozy.files.createDirectory({ name: 'empty-subdir', dirID: dir._id })
-      subdir = await cozy.files.createDirectory({
-        name: 'subdir',
-        dirID: dir._id
+      parent = await helpers.remote.createDirectory('parent')
+      dir = await helpers.remote.createDirectory('dir', { dirId: parent._id })
+      await helpers.remote.createDirectory('empty-subdir', { dirId: dir._id })
+      subdir = await helpers.remote.createDirectory('subdir', {
+        dirId: dir._id
       })
-      await cozy.files.create('foo', { name: 'file', dirID: subdir._id })
+      await helpers.remote.createFile('file', 'foo', { dirId: subdir._id })
 
       await helpers.remote.pullChanges()
       await helpers.syncAll()
@@ -362,7 +349,7 @@ describe('Trash', () => {
 
     context('on the remote Cozy', () => {
       it('trashes the directory on the local filesystem', async () => {
-        await cozy.files.trashById(dir._id)
+        await helpers.remote.trashById(dir._id)
 
         await helpers.remote.pullChanges()
         should(helpers.putDocs('path', 'trashed')).deepEqual([
@@ -386,7 +373,7 @@ describe('Trash', () => {
       context('with unsynced local-only content', () => {
         beforeEach(async () => {
           await helpers.local.syncDir.outputFile(
-            `${pathUtils.remoteToLocal(dir.attributes.path)}/local-child-file`,
+            `${pathUtils.remoteToLocal(dir.path)}/local-child-file`,
             'content'
           )
           await helpers.local.scan()
@@ -395,7 +382,7 @@ describe('Trash', () => {
         })
 
         it('trashes the directory and its content on the local filesystem', async () => {
-          await cozy.files.trashById(dir._id)
+          await helpers.remote.trashById(dir._id)
 
           await helpers.remote.pullChanges()
           should(helpers.putDocs('path', 'trashed')).deepEqual([
@@ -416,19 +403,17 @@ describe('Trash', () => {
 })
 
 describe('Restore', () => {
-  let cozy, helpers
+  let helpers
 
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    cozy = cozyHelpers.cozy
     helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
@@ -439,10 +424,9 @@ describe('Restore', () => {
     let parent, file
 
     beforeEach(async () => {
-      parent = await cozy.files.createDirectory({ name: 'parent' })
-      file = await cozy.files.create('File content...', {
-        name: 'file',
-        dirID: parent._id
+      parent = await helpers.remote.createDirectory('parent')
+      file = await helpers.remote.createFile('file', 'File content...', {
+        dirId: parent._id
       })
       await helpers.remote.pullChanges()
       await helpers.syncAll()
@@ -452,10 +436,10 @@ describe('Restore', () => {
     context('before trash is applied on local file system', () => {
       it('does not create a conflict', async () => {
         // Fetch and merge trashing
-        await cozy.files.trashById(file._id)
+        await helpers.remote.trashById(file._id)
         await helpers.remote.pullChanges()
 
-        await cozy.files.restoreById(file._id)
+        await helpers.remote.restoreById(file._id)
         await helpers.remote.pullChanges()
         await helpers.syncAll()
 
@@ -468,16 +452,17 @@ describe('Restore', () => {
   })
 
   describe('folder', () => {
-    let remoteDocs
+    let dirs
 
     beforeEach(async () => {
-      remoteDocs = await helpers.remote.createTree([
+      const remoteDocs = await helpers.remote.createTree([
         'parent/',
         'parent/dir/',
         'parent/dir/empty-subdir/',
         'parent/dir/subdir/',
         'parent/dir/subdir/file'
       ])
+      dirs = remoteDocs.dirs
 
       await helpers.remote.pullChanges()
       await helpers.syncAll()
@@ -485,10 +470,10 @@ describe('Restore', () => {
 
     context('before trash is applied on local file system', () => {
       it('does not create conflicts', async () => {
-        await cozy.files.trashById(remoteDocs['parent/dir/']._id)
+        await helpers.remote.trashById(dirs['parent/dir/']._id)
         await helpers.remote.pullChanges()
 
-        await cozy.files.restoreById(remoteDocs['parent/dir/']._id)
+        await helpers.remote.restoreById(dirs['parent/dir/']._id)
         await helpers.remote.pullChanges()
         await helpers.syncAll()
 

@@ -21,7 +21,7 @@ onPlatforms(['linux', 'win32'], () => {
     before('instanciate config', configHelpers.createConfig)
     beforeEach('instanciate pouch', pouchHelpers.createDatabase)
     beforeEach('instanciate builders', async function() {
-      builders = new Builders({ pouch: this.pouch })
+      builders = new Builders(this)
     })
     beforeEach('create step opts', async function() {
       this.config.syncPath = path.dirname(__dirname)
