@@ -4412,10 +4412,10 @@ electron-window@^0.8.0:
   dependencies:
     is-electron-renderer "^2.0.0"
 
-electron@^32:
-  version "32.3.3"
-  resolved "https://registry.yarnpkg.com/electron/-/electron-32.3.3.tgz#000b390f96379b1fd56ca2fcbe9340d266057e83"
-  integrity sha512-7FT8tDg+MueAw8dBn5LJqDvlM4cZkKJhXfgB3w7P5gvSoUQVAY6LIQcXJxgL+vw2rIRY/b9ak7ZBFbCMF2Bk4w==
+electron@^33:
+  version "33.4.5"
+  resolved "https://registry.yarnpkg.com/electron/-/electron-33.4.5.tgz#be0b2791af8c250da8b09612f6041d7a47499df2"
+  integrity sha512-rbDc4QOqfMT1uopUG+KcaMKzKgFAXAzN3wNIdgErnB1tUnpgTxwFv1BDN/exCl1vaVWBeM9YtbO5PgbGZeq7xw==
   dependencies:
     "@electron/get" "^2.0.0"
     "@types/node" "^20.9.0"
