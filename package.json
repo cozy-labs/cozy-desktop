@@ -93,7 +93,6 @@
     "bufferutil": "^4.0.7",
     "chokidar": "^3.5.0",
     "cozy-client": "^57.2.0",
-    "cozy-client-js": "^0.21.0",
     "cozy-flags": "^3.0.1",
     "cozy-realtime": "^4.6.0",
     "cozy-stack-client": "^57.2.0",
