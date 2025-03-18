@@ -8,10 +8,8 @@ const should = require('should')
 const { TRASH_DIR_ID } = require('../../core/remote/constants')
 const { isNote } = require('../../core/utils/notes')
 const timestamp = require('../../core/utils/timestamp')
-const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
 describe('Update', () => {
@@ -20,14 +18,14 @@ describe('Update', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
     helpers = TestHelpers.init(this)
+    builders = helpers.remote.builders
 
     await helpers.local.clean()
     await helpers.local.setupTrash()

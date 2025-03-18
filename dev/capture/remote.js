@@ -11,35 +11,27 @@ const fse = require('fs-extra')
 const _ = require('lodash')
 
 const { Pouch } = require('../../core/pouch')
-const { ROOT_DIR_ID } = require('../../core/remote/constants')
 const { RemoteCozy } = require('../../core/remote/cozy')
 const timestamp = require('../../core/utils/timestamp')
-const Builders = require('../../test/support/builders')
+const TestHelpers = require('../../test/support/helpers')
 const configHelpers = require('../../test/support/helpers/config')
-const cozyHelpers = require('../../test/support/helpers/cozy')
 
 /*::
-import type { MetadataRemoteInfo } from '../../core/metadata'
 import type { FullRemoteFile, RemoteDir } from '../../core/remote/document'
 import type { RemoteTree } from '../../test/support/helpers/remote'
+import type { TestHelpers as Helpers } from '../../test/support/helpers'
 */
 
 // eslint-disable-next-line no-console,no-unused-vars
 const debug = process.env.TESTDEBUG != null ? console.log : (...args) => {}
 
-const ROOT_DIR = {
-  _id: ROOT_DIR_ID,
-  path: '/'
-}
-
 const createInitialTree = async function(
   scenario /*: * */,
-  cozy /*: * */,
-  pouch /*: Pouch */
+  helpers /*: Helpers */
 ) {
   if (!scenario.init) return
 
-  const builders = new Builders({ cozy, pouch })
+  const { builders } = helpers.remote
   const remoteDocs /*: RemoteTree */ = {}
   const remoteDocsToTrash /*: Array<FullRemoteFile|RemoteDir> */ = []
 
@@ -47,7 +39,9 @@ const createInitialTree = async function(
   for (const initDoc of scenario.init) {
     const remotePath = '/' + _.trimEnd(initDoc.path, '/')
     const remoteName = path.posix.basename(remotePath)
-    const remoteParent = remoteDocs[path.posix.dirname(remotePath)] || ROOT_DIR
+    const remoteParent =
+      remoteDocs[path.posix.dirname(remotePath)] ||
+      (await helpers.remote.getRootDir())
     const updatedAt = new Date()
 
     if (initDoc.path.endsWith('/')) {
@@ -100,7 +94,7 @@ const createInitialTree = async function(
   for (const remoteDoc of remoteDocsToTrash) {
     debug(`- trashing remote ${remoteDoc.type}: ${remoteDoc.path}`)
     try {
-      await cozy.files.trashById(remoteDoc._id)
+      await helpers.remote.trashById(remoteDoc._id)
     } catch (err) {
       if (err.status === 400) continue
       throw err
@@ -108,66 +102,69 @@ const createInitialTree = async function(
   }
 }
 
-const runActions = (scenario /*: * */, cozy /*: * */) => {
+const runActions = (scenario /*: * */, helpers /*: Helpers */) => {
   debug('[actions]')
+
   return Promise.each(scenario.actions, async action => {
     const now = new Date().toISOString()
 
     switch (action.type) {
       case 'mkdir':
         debug('- mkdir', action.path)
-        return cozy.files.createDirectoryByPath(`/${action.path}`, {
-          createdAt: now,
-          updatedAt: now
+        return helpers.remote.createDirectoryByPath(`/${action.path}`, {
+          lastModifiedDate: now
         })
 
       case 'create_file':
         debug('- create_file', action.path)
         {
-          const parentDir = await cozy.files.statByPath(
+          const parentDir = await helpers.remote.byPath(
             `/${path.posix.dirname(action.path)}`
           )
-          return cozy.files.create(action.content || 'whatever', {
-            name: path.posix.basename(action.path),
-            dirID: parentDir._id,
-            contentType: 'text/plain',
-            createdAt: now,
-            updatedAt: now
-          })
+          return helpers.remote.createFile(
+            path.posix.basename(action.path),
+            action.content || 'whatever',
+            {
+              dirId: parentDir._id,
+              contentType: 'text/plain',
+              lastModifiedDate: now
+            }
+          )
         }
 
       case 'update_file':
         debug('- update_file', action.path)
         {
-          const remoteFile = await cozy.files.statByPath(`/${action.path}`)
-          return cozy.files.updateById(remoteFile._id, action.content, {
+          const remoteFile = await helpers.remote.byPath(`/${action.path}`)
+          return helpers.remote.updateFileById(remoteFile._id, action.content, {
+            name: remoteFile.name,
             contentType: 'text/plain',
-            updatedAt: now
+            lastModifiedDate: now
           })
         }
 
       case 'trash':
         debug('- trash', action.path)
         {
-          const remoteDoc = await cozy.files.statByPath(`/${action.path}`)
-          return cozy.files.trashById(remoteDoc._id)
+          const remoteDoc = await helpers.remote.byPath(`/${action.path}`)
+          return helpers.remote.trashById(remoteDoc._id)
         }
 
       case 'delete':
         debug('- delete', action.path)
         {
-          const remoteDoc = await cozy.files.statByPath(`/${action.path}`)
-          if (!remoteDoc.trashed) await cozy.files.trashById(remoteDoc._id)
-          return cozy.files.destroyById(remoteDoc._id)
+          const remoteDoc = await helpers.remote.byPath(`/${action.path}`)
+          if (!remoteDoc.trashed) await helpers.remote.trashById(remoteDoc._id)
+          return helpers.remote.destroyById(remoteDoc._id)
         }
 
       case 'restore':
         debug('- restore .cozy_trash/', action.pathInTrash)
         {
-          const remoteDoc = await cozy.files.statByPath(
+          const remoteDoc = await helpers.remote.byPath(
             `/.cozy_trash/${action.pathInTrash}`
           )
-          return cozy.files.restoreById(remoteDoc._id)
+          return helpers.remote.restoreById(remoteDoc._id)
         }
 
       case 'mv':
@@ -180,7 +177,7 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
             if (
               path.posix.dirname(action.src) != path.posix.dirname(action.dst)
             ) {
-              const newParent = await cozy.files.statByPath(
+              const newParent = await helpers.remote.byPath(
                 `/${path.posix.dirname(action.dst)}`
               )
               opts.dir_id = newParent._id
@@ -190,19 +187,25 @@ const runActions = (scenario /*: * */, cozy /*: * */) => {
             ) {
               opts.name = path.posix.basename(action.dst)
             }
-            const remoteDoc = await cozy.files.statByPath(`/${action.src}`)
-            return await cozy.files.updateAttributesById(remoteDoc._id, opts)
+            const remoteDoc = await helpers.remote.byPath(`/${action.src}`)
+            return await helpers.remote.updateAttributesById(
+              remoteDoc._id,
+              opts
+            )
           } catch (err) {
             if (err.status === 409) {
               // Remove conflicting doc
-              const remoteOverwriten = await cozy.files.statByPath(
+              const remoteOverwriten = await helpers.remote.byPath(
                 `/${action.dst}`
               )
-              await cozy.files.destroyById(remoteOverwriten._id)
+              await helpers.remote.destroyById(remoteOverwriten._id)
 
               // Retry move
-              const remoteDoc = await cozy.files.statByPath(`/${action.src}`)
-              return await cozy.files.updateAttributesById(remoteDoc._id, opts)
+              const remoteDoc = await helpers.remote.byPath(`/${action.src}`)
+              return await helpers.remote.updateAttributesById(
+                remoteDoc._id,
+                opts
+              )
             } else {
               throw err
             }
@@ -249,13 +252,16 @@ const captureScenario = async (scenario /*: * */) => {
   // Setup
   const config = setupConfig()
   const pouch = await setupPouch(config)
-  await cozyHelpers.deleteAll()
-  await createInitialTree(scenario, cozyHelpers.cozy, pouch)
+  const helpers = TestHelpers.init({ config, pouch })
+
+  await helpers.clean()
+  await createInitialTree(scenario, helpers)
+
   const remoteCozy = new RemoteCozy(config)
   const { last_seq } = await remoteCozy.changes()
 
   // Run
-  await runActions(scenario, cozyHelpers.cozy)
+  await runActions(scenario, helpers)
 
   // Capture
   const { docs } = await await remoteCozy.changes(last_seq)

@@ -11,10 +11,7 @@ const metadata = require('../../core/metadata')
 const { logger } = require('../../core/utils/logger')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-
-const cozy = cozyHelpers.cozy
 
 const log = new logger({
   component: 'TEST'
@@ -26,14 +23,13 @@ describe('Add', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
 
-    parent = await cozy.files.createDirectory({ name: 'parent' })
+    parent = await helpers.remote.createDirectory('parent')
     await helpers.pullAndSyncAll()
     await helpers.local.scan()
 
@@ -43,20 +39,19 @@ describe('Add', () => {
     await helpers.stop()
   })
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
   describe('file', () => {
     const createDoc = async (side, filename, content = 'foo') => {
       if (side === 'remote') {
-        return await cozy.files.create(content, {
-          name: filename,
-          dirID: parent._id
+        return await helpers.remote.createFile(filename, content, {
+          dirId: parent._id
         })
       } else {
         return await helpers.local.syncDir.outputFile(
-          path.join(parent.attributes.path.slice(1), filename),
+          path.join(parent.path.slice(1), filename),
           'foo'
         )
       }
@@ -186,11 +181,12 @@ describe('Add', () => {
           ])
 
           // Destroy file before it is downloaded
-          await cozy.files.destroyById(remoteFile._id)
+          await helpers.remote.destroyById(remoteFile._id)
+
+          helpers.resetPouchSpy()
 
           await helpers.syncAll()
 
-          helpers.resetPouchSpy()
           should(
             helpers.putDocs('path', '_deleted', 'trashed', 'sides')
           ).deepEqual([
@@ -209,13 +205,13 @@ describe('Add', () => {
   describe('folder', () => {
     const createDoc = async (side, name, parent) => {
       if (side === 'remote') {
-        return await cozy.files.createDirectory({ name, dirID: parent._id })
+        return await helpers.remote.createDirectory(name, { dirId: parent._id })
       } else {
-        const dirPath = path.join(parent.attributes.path.slice(1), name)
+        const dirPath = path.join(parent.path.slice(1), name)
         await helpers.local.syncDir.ensureDir(dirPath)
         return {
           _id: metadata.id(dirPath),
-          attributes: { path: `/${dirPath}` },
+          path: `/${dirPath}`,
           _rev: '1'
         }
       }
@@ -235,7 +231,7 @@ describe('Add', () => {
         await createDoc('local', 'empty-subdir', dir)
 
         await helpers.local.syncDir.outputFile(
-          path.join(subdir.attributes.path, 'file'),
+          path.join(subdir.path, 'file'),
           'foo'
         )
         await helpers.local.scan()
@@ -296,14 +292,14 @@ describe('Add', () => {
           await createDoc('local', 'empty-subdir', dir)
 
           await helpers.local.syncDir.outputFile(
-            path.join(subdir.attributes.path, 'file'),
+            path.join(subdir.path, 'file'),
             'foo'
           )
           await helpers.local.scan()
 
           // Update the directory's metadata
           await fse.utimes(
-            helpers.local.syncDir.abspath(dir.attributes.path.slice(1)),
+            helpers.local.syncDir.abspath(dir.path.slice(1)),
             new Date(),
             new Date()
           )
@@ -400,7 +396,7 @@ describe('Add', () => {
         const dir = await createDoc('remote', 'dir', parent)
         const subdir = await createDoc('remote', 'subdir', dir)
         await createDoc('remote', 'empty-subdir', dir)
-        await cozy.files.create('foo', { name: 'file', dirID: subdir._id })
+        await helpers.remote.createFile('file', 'foo', { dirId: subdir._id })
         await helpers.remote.pullChanges()
 
         should(

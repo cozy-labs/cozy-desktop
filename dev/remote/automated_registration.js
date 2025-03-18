@@ -143,19 +143,18 @@ const authorize = async authorizeUrl => {
 const automatedRegistration = (
   cozyBaseUrl /*: string */,
   passphrase /*: string */,
-  storage /*: * */
+  config /*: * */
 ) /*: Registration */ => {
   const cozyUrl = path => new url.URL(path, cozyBaseUrl).toString()
-  const saveCredentials = async redirectUrl => {
-    log.debug('Saving credentials...')
+  const completeRegistration = async redirectUrl => {
+    log.debug('Completing registration...')
     await fetch(redirectUrl)
   }
 
-  return new Registration(cozyBaseUrl, storage, async authorizeUrl => {
+  return new Registration(cozyBaseUrl, config, async authorizeUrl => {
     await login(cozyUrl, passphrase)
     const redirectUrl = await authorize(authorizeUrl)
-    await saveCredentials(redirectUrl)
-    return cozyUrl
+    await completeRegistration(redirectUrl)
   })
 }
 

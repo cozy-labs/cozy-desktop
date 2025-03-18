@@ -1,14 +1,12 @@
 /* eslint-env mocha */
 /* @flow */
 
-const fse = require('fs-extra')
 const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
 
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 const { runActions, init } = require('../support/helpers/scenarios')
 
@@ -21,16 +19,15 @@ describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)'
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
-  beforeEach('set up synced dir', async function() {
-    await fse.emptyDir(this.syncPath)
+  beforeEach(function() {
+    helpers = TestHelpers.init(this)
   })
 
   afterEach(pouchHelpers.cleanDatabase)
+  afterEach(() => helpers.clean())
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    helpers = TestHelpers.init(this)
     prepCalls = []
 
     for (let method of [
@@ -85,8 +82,7 @@ describe('TRELLO #484: Local sort before squash (https://trello.com/c/RcRmqymw)'
           { ino: 9, path: 'facture-boulanger.pdf' }
         ]
       },
-      this.pouch,
-      helpers.local.syncDir.abspath,
+      helpers,
       _.identity
     )
     await runActions(

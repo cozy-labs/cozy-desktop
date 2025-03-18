@@ -8,10 +8,9 @@ const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
 
-const { FetchError } = require('cozy-stack-client')
-
 const { Ignore } = require('../../../core/ignore')
 const metadata = require('../../../core/metadata')
+const { FetchError } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
 const { otherSide } = require('../../../core/side')
 const { Sync, compareChanges } = require('../../../core/sync')

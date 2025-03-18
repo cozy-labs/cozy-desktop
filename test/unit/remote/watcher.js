@@ -4,15 +4,11 @@
 const EventEmitter = require('events')
 const path = require('path')
 
-const async = require('async')
 const { Promise } = require('bluebird')
 const faker = require('faker')
 const _ = require('lodash')
 const should = require('should')
 const sinon = require('sinon')
-
-const CozyClient = require('cozy-client-js').Client
-const { FetchError } = require('cozy-stack-client')
 
 const metadata = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
@@ -24,17 +20,15 @@ const {
   REMOTE_WATCHER_ERROR_EVENT,
   REMOTE_WATCHER_FATAL_EVENT
 } = require('../../../core/remote/constants')
-const { RemoteCozy } = require('../../../core/remote/cozy')
+const { FetchError, RemoteCozy } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
 const { RemoteWatcher } = require('../../../core/remote/watcher')
 const timestamp = require('../../../core/utils/timestamp')
-const Builders = require('../../support/builders')
 const configHelpers = require('../../support/helpers/config')
 const { posixifyPath } = require('../../support/helpers/context_dir')
-const cozyHelpers = require('../../support/helpers/cozy')
 const { onPlatform, onPlatforms } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
-const { ensureValidPath } = metadata
+const { RemoteTestHelpers } = require('../../support/helpers/remote')
 
 /*::
 import type {
@@ -60,65 +54,70 @@ const isFile = (remoteFile) /*: boolean %checks */ =>
   remoteFile.type === FILE_TYPE
 const isDir = (remoteDir) /*: boolean %checks */ => remoteDir.type === DIR_TYPE
 
-const saveTree = async (remoteTree, builders) => {
-  for (const key in remoteTree) {
-    const remoteDoc = remoteTree[key]
-    if (remoteDoc.type === DIR_TYPE) {
-      await builders
-        .metadir()
-        .fromRemote(remoteDoc)
-        .upToDate()
-        .create()
-    } else {
-      await builders
-        .metafile()
-        .fromRemote(remoteDoc)
-        .upToDate()
-        .create()
-    }
+const pathsToDocs = (
+  paths /* string[] */,
+  { dirs, files } /* RemoteTree */
+) /*: Array<FullRemoteFile|RemoteDir> */ =>
+  paths.map(p => {
+    if (p[0].endsWith('/')) return dirs[p[0]]
+    else return files[p[0]]
+  })
+
+const saveTree = async ({ dirs, files }, builders) => {
+  for (const dirPath in dirs) {
+    await builders
+      .metadir()
+      .fromRemote(dirs[dirPath])
+      .upToDate()
+      .create()
+  }
+
+  for (const filePath in files) {
+    await builders
+      .metafile()
+      .fromRemote(files[filePath])
+      .upToDate()
+      .create()
   }
 }
 
 describe('RemoteWatcher', function() {
-  let builders, clock
-  let remoteTree /*: Object */
+  let builders, clock, remoteHelpers
+  let dirs, files
 
   before('instanciate config', configHelpers.createConfig)
-  before('register OAuth client', configHelpers.registerClient)
+  before('register client', configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(function instanciateRemoteWatcher() {
+  beforeEach('instanciate helpers', function() {
+    remoteHelpers = new RemoteTestHelpers(this)
+    builders = remoteHelpers.builders
+  })
+  beforeEach(async function instanciateRemoteWatcher() {
     clock = sinon.useFakeTimers({ toFake: ['setTimeout', 'setInterval'] })
 
     this.prep = sinon.createStubInstance(Prep)
     this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
-    this.remoteCozy.client = new CozyClient({
-      version: 3,
-      cozyURL: this.config.cozyUrl,
-      token: process.env.COZY_STACK_TOKEN
-    })
     this.events = new EventEmitter()
     this.watcher = new RemoteWatcher(this)
-    builders = new Builders({ cozy: cozyHelpers.cozy, pouch: this.pouch })
   })
   beforeEach(async function() {
-    await async.retry({ times: 2 }, async () => {
-      try {
-        remoteTree = await builders.createRemoteTree([
-          'my-folder/',
-          'my-folder/folder-1/',
-          'my-folder/folder-2/',
-          'my-folder/folder-3/',
-          'my-folder/file-1',
-          'my-folder/file-2',
-          'my-folder/file-3'
-        ])
-        await saveTree(remoteTree, builders)
-      } catch (err) {
-        await cozyHelpers.deleteAll()
-      }
-    })
+    const remoteTree = await builders.createRemoteTree([
+      'my-folder/',
+      'my-folder/folder-1/',
+      'my-folder/folder-2/',
+      'my-folder/folder-3/',
+      'my-folder/file-1',
+      'my-folder/file-2',
+      'my-folder/file-3'
+    ])
+    dirs = remoteTree.dirs
+    files = remoteTree.files
+
+    // XXX: save remote tree in PouchDB
+    await saveTree(remoteTree, builders)
   })
+
   afterEach(async function() {
     await this.watcher.stop()
   })
@@ -131,9 +130,7 @@ describe('RemoteWatcher', function() {
   afterEach(async function() {
     await pouchHelpers.cleanDatabase()
   })
-  afterEach(async function() {
-    await cozyHelpers.deleteAll()
-  })
+  afterEach(() => remoteHelpers.clean())
   after(configHelpers.cleanConfig)
 
   describe('start', function() {
@@ -612,7 +609,7 @@ describe('RemoteWatcher', function() {
     remoteDoc /*: FullRemoteFile|RemoteDir */
   ) /*: Metadata */ => {
     const doc = metadata.fromRemoteDoc(remoteDoc)
-    ensureValidPath(doc)
+    metadata.ensureValidPath(doc)
     return doc
   }
 
@@ -1154,7 +1151,7 @@ describe('RemoteWatcher', function() {
       let srcFileDoc, dstFileDoc, olds, srcFileMoved, dstFileTrashed
 
       beforeEach(() => {
-        const remoteDocs = builders.buildRemoteTree([
+        const { dirs, files } = builders.buildRemoteTree([
           'dst/',
           'dst/file',
           'src/',
@@ -1164,27 +1161,27 @@ describe('RemoteWatcher', function() {
         /* Files were synced */
         srcFileDoc = builders
           .metafile()
-          .fromRemote(remoteDocs['src/file'])
+          .fromRemote(files['src/file'])
           .upToDate()
           .build()
         dstFileDoc = builders
           .metafile()
-          .fromRemote(remoteDocs['dst/file'])
+          .fromRemote(files['dst/file'])
           .upToDate()
           .build()
         olds = [srcFileDoc, dstFileDoc]
 
         /* Moving /src/file to /dst/file (overwriting the destination) */
-        srcFileMoved = isFile(remoteDocs['src/file'])
+        srcFileMoved = isFile(files['src/file'])
           ? builders
-              .remoteFile(remoteDocs['src/file'])
+              .remoteFile(files['src/file'])
               .shortRev(2)
-              .inDir(remoteDocs['dst/'])
+              .inDir(dirs['dst/'])
               .build()
           : undefined
-        dstFileTrashed = isFile(remoteDocs['dst/file'])
+        dstFileTrashed = isFile(files['dst/file'])
           ? builders
-              .remoteFile(remoteDocs['dst/file'])
+              .remoteFile(files['dst/file'])
               .shortRev(2)
               .trashed()
               .build()
@@ -1242,7 +1239,7 @@ describe('RemoteWatcher', function() {
       let srcFileDoc, dstFileDoc, olds, srcFileMoved, dstFileTrashed
 
       beforeEach(() => {
-        const remoteDocs = builders.buildRemoteTree([
+        const { dirs, files } = builders.buildRemoteTree([
           'dst/',
           'dst/FILE',
           'src/',
@@ -1252,27 +1249,27 @@ describe('RemoteWatcher', function() {
         /* Files were synced */
         srcFileDoc = builders
           .metafile()
-          .fromRemote(remoteDocs['src/file'])
+          .fromRemote(files['src/file'])
           .upToDate()
           .build()
         dstFileDoc = builders
           .metafile()
-          .fromRemote(remoteDocs['dst/FILE'])
+          .fromRemote(files['dst/FILE'])
           .upToDate()
           .build()
         olds = [srcFileDoc, dstFileDoc]
 
         /* Moving /src/file to /dst/file (overwriting the destination) */
-        srcFileMoved = isFile(remoteDocs['src/file'])
+        srcFileMoved = isFile(files['src/file'])
           ? builders
-              .remoteFile(remoteDocs['src/file'])
+              .remoteFile(files['src/file'])
               .shortRev(2)
-              .inDir(remoteDocs['dst/'])
+              .inDir(dirs['dst/'])
               .build()
           : undefined
-        dstFileTrashed = isFile(remoteDocs['dst/FILE'])
+        dstFileTrashed = isFile(files['dst/FILE'])
           ? builders
-              .remoteFile(remoteDocs['dst/FILE'])
+              .remoteFile(files['dst/FILE'])
               .shortRev(2)
               .trashed()
               .build()
@@ -1376,7 +1373,7 @@ describe('RemoteWatcher', function() {
       let srcDoc, dstDoc, olds, srcMoved, dstTrashed
 
       beforeEach(() => {
-        const remoteDocs = builders.buildRemoteTree([
+        const { dirs } = builders.buildRemoteTree([
           'dst/',
           'dst/dir/',
           'src/',
@@ -1386,27 +1383,27 @@ describe('RemoteWatcher', function() {
         /* Directories were synced */
         srcDoc = builders
           .metadir()
-          .fromRemote(remoteDocs['src/dir/'])
+          .fromRemote(dirs['src/dir/'])
           .upToDate()
           .build()
         dstDoc = builders
           .metadir()
-          .fromRemote(remoteDocs['dst/dir/'])
+          .fromRemote(dirs['dst/dir/'])
           .upToDate()
           .build()
         olds = [srcDoc, dstDoc]
 
         /* Moving /src/dir to /dst/dir (overwriting the destination) */
-        srcMoved = isDir(remoteDocs['src/dir/'])
+        srcMoved = isDir(dirs['src/dir/'])
           ? builders
-              .remoteDir(remoteDocs['src/dir/'])
+              .remoteDir(dirs['src/dir/'])
               .shortRev(2)
-              .inDir(remoteDocs['dst/'])
+              .inDir(dirs['dst/'])
               .build()
           : undefined
-        dstTrashed = isDir(remoteDocs['dst/dir/'])
+        dstTrashed = isDir(dirs['dst/dir/'])
           ? builders
-              .remoteDir(remoteDocs['dst/dir/'])
+              .remoteDir(dirs['dst/dir/'])
               .shortRev(2)
               .trashed()
               .build()
@@ -1464,7 +1461,7 @@ describe('RemoteWatcher', function() {
       let srcDoc, dstDoc, olds, srcMoved, dstTrashed
 
       beforeEach(() => {
-        const remoteDocs = builders.buildRemoteTree([
+        const { dirs } = builders.buildRemoteTree([
           'dst/',
           'dst/DIR/',
           'src/',
@@ -1474,27 +1471,27 @@ describe('RemoteWatcher', function() {
         /* Directories were synced */
         srcDoc = builders
           .metadir()
-          .fromRemote(remoteDocs['src/dir/'])
+          .fromRemote(dirs['src/dir/'])
           .upToDate()
           .build()
         dstDoc = builders
           .metadir()
-          .fromRemote(remoteDocs['dst/DIR/'])
+          .fromRemote(dirs['dst/DIR/'])
           .upToDate()
           .build()
         olds = [srcDoc, dstDoc]
 
         /* Moving /src/dir to /dst/dir (overwriting the destination) */
-        srcMoved = isDir(remoteDocs['src/dir/'])
+        srcMoved = isDir(dirs['src/dir/'])
           ? builders
-              .remoteDir(remoteDocs['src/dir/'])
+              .remoteDir(dirs['src/dir/'])
               .shortRev(2)
-              .inDir(remoteDocs['dst/'])
+              .inDir(dirs['dst/'])
               .build()
           : undefined
-        dstTrashed = isDir(remoteDocs['dst/DIR/'])
+        dstTrashed = isDir(dirs['dst/DIR/'])
           ? builders
-              .remoteDir(remoteDocs['dst/DIR/'])
+              .remoteDir(dirs['dst/DIR/'])
               .shortRev(2)
               .trashed()
               .build()
@@ -1712,58 +1709,58 @@ describe('RemoteWatcher', function() {
         ['parent/dst/dir/subdir/filerenamed', 3],
         ['parent/dst/dir/subdir/filerenamed2', 3]
       ]
-      const remoteDocsByPath = builders.buildRemoteTree(remotePaths)
-      const remoteDocs = remotePaths.map(p => remoteDocsByPath[p[0]])
+      const { dirs, files } = builders.buildRemoteTree(remotePaths)
+      const remoteDocs = pathsToDocs(remotePaths, { dirs, files })
       const olds = [
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/'])
+          .fromRemote(dirs['parent/'])
           .path('parent')
           .upToDate()
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst/'])
+          .fromRemote(dirs['parent/dst/'])
           .path(path.normalize('parent/dst'))
           .upToDate()
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/src/'])
+          .fromRemote(dirs['parent/src/'])
           .path(path.normalize('parent/src'))
           .upToDate()
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst/dir/'])
+          .fromRemote(dirs['parent/dst/dir/'])
           .path(path.normalize('parent/src/dir'))
           .upToDate()
           .remoteRev(1)
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst/dir/empty-subdir/'])
+          .fromRemote(dirs['parent/dst/dir/empty-subdir/'])
           .path(path.normalize('parent/src/dir/empty-subdir'))
           .upToDate()
           .remoteRev(1)
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst/dir/subdir/'])
+          .fromRemote(dirs['parent/dst/dir/subdir/'])
           .path(path.normalize('parent/src/dir/subdir'))
           .upToDate()
           .remoteRev(1)
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst/dir/subdir/filerenamed'])
+          .fromRemote(files['parent/dst/dir/subdir/filerenamed'])
           .path(path.normalize('parent/src/dir/subdir/file'))
           .upToDate()
           .remoteRev(1)
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst/dir/subdir/filerenamed2'])
+          .fromRemote(files['parent/dst/dir/subdir/filerenamed2'])
           .path(path.normalize('parent/src/dir/subdir/file2'))
           .upToDate()
           .remoteRev(1)
@@ -1832,57 +1829,57 @@ describe('RemoteWatcher', function() {
         ['parent/dst2/subdir/', 3],
         ['parent/dst2/subdir/file', 3]
       ]
-      const remoteDocsByPath = builders.buildRemoteTree(remotePaths)
-      const remoteDocs = remotePaths.map(p => remoteDocsByPath[p[0]])
+      const { dirs, files } = builders.buildRemoteTree(remotePaths)
+      const remoteDocs = pathsToDocs(remotePaths, { dirs, files })
       const olds = [
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/'])
+          .fromRemote(dirs['parent/'])
           .path('parent')
           .upToDate()
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst/'])
+          .fromRemote(dirs['parent/dst/'])
           .path(path.normalize('parent/dst'))
           .upToDate()
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst2/'])
+          .fromRemote(dirs['parent/dst2/'])
           .path(path.normalize('parent/dst2'))
           .upToDate()
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/src/'])
+          .fromRemote(dirs['parent/src/'])
           .path(path.normalize('parent/src'))
           .upToDate()
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst/dir/'])
+          .fromRemote(dirs['parent/dst/dir/'])
           .path(path.normalize('parent/src/dir'))
           .upToDate()
           .remoteRev(1)
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst/dir/empty-subdir/'])
+          .fromRemote(dirs['parent/dst/dir/empty-subdir/'])
           .path(path.normalize('parent/src/dir/empty-subdir'))
           .upToDate()
           .remoteRev(1)
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst2/subdir/'])
+          .fromRemote(dirs['parent/dst2/subdir/'])
           .path(path.normalize('parent/src/dir/subdir'))
           .upToDate()
           .remoteRev(1)
           .build(),
         builders
           .metadir()
-          .fromRemote(remoteDocsByPath['parent/dst2/subdir/file'])
+          .fromRemote(files['parent/dst2/subdir/file'])
           .path(path.normalize('parent/src/dir/subdir/file'))
           .upToDate()
           .remoteRev(1)
@@ -1956,47 +1953,49 @@ describe('RemoteWatcher', function() {
         ['parent/dst/dir2/subdir/file2', 4]
       ]
 
-      let remoteDocsByPath, olds
+      let dirs, files, olds
       beforeEach('build changes', () => {
-        remoteDocsByPath = builders.buildRemoteTree(remotePaths)
+        const remoteDocsByPath = builders.buildRemoteTree(remotePaths)
+        dirs = remoteDocsByPath.dirs
+        files = remoteDocsByPath.files
         olds = [
           builders
             .metadir()
-            .fromRemote(remoteDocsByPath['parent/'])
+            .fromRemote(dirs['parent/'])
             .path('parent')
             .upToDate()
             .build(),
           builders
             .metadir()
-            .fromRemote(remoteDocsByPath['parent/dst/'])
+            .fromRemote(dirs['parent/dst/'])
             .path(path.normalize('parent/src'))
             .upToDate()
             .remoteRev(1)
             .build(),
           builders
             .metadir()
-            .fromRemote(remoteDocsByPath['parent/dst/dir2/'])
+            .fromRemote(dirs['parent/dst/dir2/'])
             .path(path.normalize('parent/src/dir'))
             .upToDate()
             .remoteRev(1)
             .build(),
           builders
             .metadir()
-            .fromRemote(remoteDocsByPath['parent/dst/dir2/empty-subdir/'])
+            .fromRemote(dirs['parent/dst/dir2/empty-subdir/'])
             .path(path.normalize('parent/src/dir/empty-subdir'))
             .upToDate()
             .remoteRev(1)
             .build(),
           builders
             .metadir()
-            .fromRemote(remoteDocsByPath['parent/dst/dir2/subdir/'])
+            .fromRemote(dirs['parent/dst/dir2/subdir/'])
             .path(path.normalize('parent/src/dir/subdir'))
             .upToDate()
             .remoteRev(1)
             .build(),
           builders
             .metadir()
-            .fromRemote(remoteDocsByPath['parent/dst/dir2/subdir/file2'])
+            .fromRemote(files['parent/dst/dir2/subdir/file2'])
             .path(path.normalize('parent/src/dir/subdir/file'))
             .upToDate()
             .remoteRev(1)
@@ -2006,11 +2005,11 @@ describe('RemoteWatcher', function() {
 
       it('sorts correctly order1', function() {
         const order1 = [
-          remoteDocsByPath['parent/dst/dir2/'],
-          remoteDocsByPath['parent/dst/'],
-          remoteDocsByPath['parent/dst/dir2/empty-subdir/'],
-          remoteDocsByPath['parent/dst/dir2/subdir/file2'],
-          remoteDocsByPath['parent/dst/dir2/subdir/']
+          dirs['parent/dst/dir2/'],
+          dirs['parent/dst/'],
+          dirs['parent/dst/dir2/empty-subdir/'],
+          files['parent/dst/dir2/subdir/file2'],
+          dirs['parent/dst/dir2/subdir/']
         ]
         should(
           this.watcher.identifyAll(order1, olds).map(changeInfo)
@@ -2045,11 +2044,11 @@ describe('RemoteWatcher', function() {
 
       it('sorts correctly order2', function() {
         const order2 = [
-          remoteDocsByPath['parent/dst/dir2/subdir/'],
-          remoteDocsByPath['parent/dst/'],
-          remoteDocsByPath['parent/dst/dir2/'],
-          remoteDocsByPath['parent/dst/dir2/subdir/file2'],
-          remoteDocsByPath['parent/dst/dir2/empty-subdir/']
+          dirs['parent/dst/dir2/subdir/'],
+          dirs['parent/dst/'],
+          dirs['parent/dst/dir2/'],
+          files['parent/dst/dir2/subdir/file2'],
+          dirs['parent/dst/dir2/empty-subdir/']
         ]
         should(
           this.watcher.identifyAll(order2, olds).map(changeInfo)
@@ -2191,7 +2190,7 @@ describe('RemoteWatcher', function() {
       this.prep.addFileAsync.resolves(null)
       const remoteDoc = builders
         .remoteFile()
-        .inDir(remoteTree['my-folder/'])
+        .inDir(dirs['my-folder/'])
         .name('file-5')
         .data('some data')
         .build()
@@ -2220,7 +2219,7 @@ describe('RemoteWatcher', function() {
       this.prep.updateFileAsync = sinon.stub()
       this.prep.updateFileAsync.resolves(null)
       const remoteDoc = builders
-        .remoteFile(remoteTree['my-folder/file-1'])
+        .remoteFile(files['my-folder/file-1'])
         .tags('foo', 'bar', 'baz')
         .shortRev(5)
         .build()
@@ -2253,7 +2252,7 @@ describe('RemoteWatcher', function() {
       this.prep.updateFileAsync = sinon.stub().resolves(null)
 
       const remoteDoc = builders
-        .remoteFile(remoteTree['my-folder/file-1'])
+        .remoteFile(files['my-folder/file-1'])
         .data('whatever data change')
         .shortRev(5)
         .build()
@@ -2287,7 +2286,7 @@ describe('RemoteWatcher', function() {
       this.prep.moveFileAsync = sinon.stub()
       this.prep.moveFileAsync.resolves(null)
       const remoteDoc = builders
-        .remoteFile(remoteTree['my-folder/file-2'])
+        .remoteFile(files['my-folder/file-2'])
         .name('file-2-bis')
         .shortRev(5)
         .build()
@@ -2326,7 +2325,7 @@ describe('RemoteWatcher', function() {
         .name('other-folder')
         .build()
       const remoteDoc = builders
-        .remoteFile(remoteTree['my-folder/file-2'])
+        .remoteFile(files['my-folder/file-2'])
         .inDir(remoteDir)
         .name('file-2-ter')
         .shortRev(5)
