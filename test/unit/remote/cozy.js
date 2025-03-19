@@ -21,6 +21,7 @@ const {
 } = require('../../../core/remote/constants')
 const { FetchError, RemoteCozy } = require('../../../core/remote/cozy')
 const { DirectoryNotFound } = require('../../../core/remote/errors')
+const timestamp = require('../../../core/utils/timestamp')
 const CozyStackDouble = require('../../support/doubles/cozy_stack')
 const configHelpers = require('../../support/helpers/config')
 const { COZY_URL } = require('../../support/helpers/cozy')
@@ -363,11 +364,13 @@ describe('RemoteCozy', function() {
   describe('updateAttributesById', () => {
     context('when the name starts or ends with a space', () => {
       it('updates the file with the given name', async () => {
+        const origDate = new Date()
         const remoteFile = await builders
           .remoteFile()
           .inRootDir()
           .name(' foo')
           .data('initial content')
+          .updatedAt(...timestamp.spread(origDate))
           .create()
 
         should(
@@ -375,7 +378,7 @@ describe('RemoteCozy', function() {
             remoteFile._id,
             {
               name: 'bar ',
-              updated_at: new Date().toISOString()
+              updated_at: timestamp.after(origDate).toISOString()
             },
             { ifMatch: remoteFile._rev }
           )
