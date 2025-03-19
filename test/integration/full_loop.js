@@ -5,10 +5,7 @@ const should = require('should')
 
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-
-const cozy = cozyHelpers.cozy
 
 describe('Full watch/merge/sync/repeat loop', () => {
   let helpers
@@ -16,9 +13,8 @@ describe('Full watch/merge/sync/repeat loop', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
@@ -39,7 +35,7 @@ describe('Full watch/merge/sync/repeat loop', () => {
   it('remote -> local add file', async () => {
     await helpers._local.watcher.start()
 
-    await cozy.files.create('some file content', { name: 'file' })
+    await helpers.remote.createFile('file', 'some file content')
     await helpers.remote.pullChanges()
     await helpers.syncAll()
 

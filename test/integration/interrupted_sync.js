@@ -6,10 +6,7 @@ const sinon = require('sinon')
 
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-
-const cozy = cozyHelpers.cozy
 
 describe('Sync gets interrupted, initialScan occurs', () => {
   let helpers
@@ -17,9 +14,8 @@ describe('Sync gets interrupted, initialScan occurs', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
@@ -38,13 +34,13 @@ describe('Sync gets interrupted, initialScan occurs', () => {
   })
 
   it('move Folder', async () => {
-    const docs = await helpers.remote.createTree(['/a/', '/b/'])
+    const { dirs } = await helpers.remote.createTree(['/a/', '/b/'])
 
     await helpers.remote.pullChanges()
     await helpers.syncAll()
 
-    await cozy.files.updateAttributesById(docs['/b/']._id, {
-      dir_id: docs['/a/']._id
+    await helpers.remote.updateAttributesById(dirs['/b/']._id, {
+      dir_id: dirs['/a/']._id
     })
 
     await helpers.remote.pullChanges() // Merge
@@ -79,8 +75,8 @@ describe('Sync gets interrupted, initialScan occurs', () => {
       await helpers.flushLocalAndSyncAll()
 
       const doc = await this.pouch.bySyncedPath(path)
-      await cozy.files.updateById(doc.remote._id, 'remote content', {
-        contentType: 'text/plain'
+      await helpers.remote.updateFileById(doc.remote._id, 'remote content', {
+        name: doc.remote.name
       })
       await helpers.remote.pullChanges() // Merge
 
@@ -90,8 +86,9 @@ describe('Sync gets interrupted, initialScan occurs', () => {
       await helpers.pullAndSyncAll()
 
       // Contents are kept untouched
-      const resp = await helpers.remote.cozy.files.downloadById(doc.remote._id)
-      should(await resp.text()).eql('remote content')
+      should(await helpers.remote.downloadById(doc.remote._id)).eql(
+        'remote content'
+      )
       should(await helpers.local.readFile('file')).eql('remote content')
     })
   })

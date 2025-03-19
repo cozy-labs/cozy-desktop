@@ -10,10 +10,8 @@ const {
   FILES_DOCTYPE,
   OAUTH_CLIENTS_DOCTYPE
 } = require('../../core/remote/constants')
-const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
 
 const path = remoteDoc =>
@@ -22,27 +20,25 @@ const path = remoteDoc =>
     : remoteDoc.path.slice(1)
 
 describe('Differential synchronization', () => {
-  let helpers, builders, cozy, files
+  let helpers, builders, files
 
   before(configHelpers.createConfig)
   before('register OAuth client', configHelpers.registerOAuthClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
   beforeEach(async function() {
-    this.cozy = cozy = await cozyHelpers.oauthCozy(this.config)
-
     helpers = TestHelpers.init(this)
     helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
 
     helpers.spyPouch()
 
-    builders = new Builders({ cozy })
+    builders = helpers.remote.builders
+    files = helpers.remote.client.collection(FILES_DOCTYPE)
   })
   afterEach(async function() {
     await helpers.stop()
@@ -60,8 +56,6 @@ describe('Differential synchronization', () => {
       .name('IMG_001.jpg')
       .data('image')
       .create()
-
-    files = (await cozyHelpers.newClient(cozy)).collection(FILES_DOCTYPE)
   })
 
   describe('when a folder is excluded from synchronization', () => {

@@ -382,7 +382,7 @@ const updateState = async ({ newState, data }) => {
     if (status === 'uptodate') {
       lastSyncTimeout = setTimeout(async () => {
         try {
-          await desktop.remote.updateLastSync()
+          await desktop.remote.updateLastSynced()
           log.debug('last sync updated')
         } catch (err) {
           log.warn('could not update last sync date', { err })
@@ -442,10 +442,10 @@ const sendDiskUsage = () => {
     diskTimeout = setTimeout(sendDiskUsage, 10 * 60 * 1000) // every 10 minutes
     desktop
       .diskUsage()
-      .then(res => {
+      .then(({ used, quota }) => {
         const space = {
-          used: +res.attributes.used,
-          quota: +(res.attributes.quota || 0)
+          used: +used,
+          quota: +(quota || 0)
         }
         trayWindow.send('disk-space', space)
         return space

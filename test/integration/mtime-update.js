@@ -3,15 +3,11 @@
 
 const should = require('should')
 
-const { ROOT_DIR_ID } = require('../../core/remote/constants')
 const timestamp = require('../../core/utils/timestamp')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const platform = require('../support/helpers/platform')
 const pouchHelpers = require('../support/helpers/pouch')
-
-const cozy = cozyHelpers.cozy
 
 describe('Update only mtime', () => {
   let helpers
@@ -19,7 +15,6 @@ describe('Update only mtime', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
   beforeEach(function() {
     helpers = TestHelpers.init(this)
@@ -29,7 +24,7 @@ describe('Update only mtime', () => {
     await helpers.stop()
   })
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
@@ -42,9 +37,8 @@ describe('Update only mtime', () => {
         oldUpdatedAt = new Date()
         oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-        await cozy.files.create('basecontent', {
-          name: 'file',
-          updatedAt: oldUpdatedAt.toISOString()
+        await helpers.remote.createFile('file', 'basecontent', {
+          lastModifiedDate: oldUpdatedAt.toISOString()
         })
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
@@ -81,9 +75,8 @@ describe('Update only mtime', () => {
         oldUpdatedAt = new Date()
         oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-        file = await cozy.files.create('basecontent', {
-          name: 'file',
-          updatedAt: oldUpdatedAt.toISOString()
+        file = await helpers.remote.createFile('file', 'basecontent', {
+          lastModifiedDate: oldUpdatedAt.toISOString()
         })
         await helpers.remote.pullChanges()
         await helpers.syncAll()
@@ -93,20 +86,22 @@ describe('Update only mtime', () => {
         helpers.spyPouch()
 
         // update only the file mtime
-        await cozy.files.updateById(file._id, 'changedcontent', {
-          contentType: 'text/plain'
+        await helpers.remote.updateFileById(file._id, 'changedcontent', {
+          name: file.name
         })
-        const newFile = await cozy.files.updateById(file._id, 'basecontent', {
-          contentType: 'text/plain'
-        })
+        const updatedFile = await helpers.remote.updateFileById(
+          file._id,
+          'basecontent',
+          {
+            name: file.name
+          }
+        )
 
         await helpers.remote.pullChanges()
         should(helpers.putDocs('path', 'updated_at')).deepEqual([
           {
-            path: file.attributes.name,
-            updated_at: timestamp.roundedRemoteDate(
-              newFile.attributes.updated_at
-            )
+            path: file.name,
+            updated_at: timestamp.roundedRemoteDate(updatedFile.updated_at)
           }
         ])
       })
@@ -122,11 +117,8 @@ describe('Update only mtime', () => {
         oldUpdatedAt = new Date()
         oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-        await cozy.files.createDirectory({
-          name: 'folder',
-          dirID: ROOT_DIR_ID,
-          createdAt: oldUpdatedAt.toISOString(),
-          updatedAt: oldUpdatedAt.toISOString()
+        await helpers.remote.createDirectory('folder', {
+          lastModifiedDate: oldUpdatedAt.toISOString()
         })
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
@@ -155,11 +147,8 @@ describe('Update only mtime', () => {
         oldUpdatedAt = new Date()
         oldUpdatedAt.setDate(oldUpdatedAt.getDate() - 1)
 
-        dir = await cozy.files.createDirectory({
-          name: 'folder',
-          dirID: ROOT_DIR_ID,
-          createdAt: oldUpdatedAt.toISOString(),
-          updatedAt: oldUpdatedAt.toISOString()
+        dir = await helpers.remote.createDirectory('folder', {
+          lastModifiedDate: oldUpdatedAt.toISOString()
         })
         await helpers.pullAndSyncAll()
         await helpers.flushLocalAndSyncAll()
@@ -170,15 +159,15 @@ describe('Update only mtime', () => {
 
         const newUpdatedAt = new Date()
         newUpdatedAt.setDate(oldUpdatedAt.getDate() + 1)
-        await cozy.files.updateAttributesById(dir._id, {
-          updated_at: newUpdatedAt
+        await helpers.remote.updateAttributesById(dir._id, {
+          updated_at: newUpdatedAt.toISOString()
         })
 
         await helpers.remote.pullChanges()
 
         should(helpers.putDocs('path', 'updated_at')).deepEqual([
           {
-            path: dir.attributes.name,
+            path: dir.name,
             updated_at: newUpdatedAt.toISOString()
           }
         ])

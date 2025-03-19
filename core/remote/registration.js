@@ -1,21 +1,43 @@
 /** Registration of the client to the remote Cozy.
  *
  * @module core/remote/registration
+ * @flow
  */
 
 const http = require('http')
 const os = require('os')
+const url = require('url')
 
 const autoBind = require('auto-bind')
 const open = require('open')
 
-const CozyClient = require('cozy-client-js').Client
+const { createClient, loginAndSaveClient, registerClient } = require('./client')
+const { logger } = require('../utils/logger')
 
 const PORT_NUMBER = 3344
+const log = logger({
+  component: 'App'
+})
+
+/*::
+import type { Config } from '../config'
+import type { OAuthClient } from './client'
+*/
 
 module.exports = class Registration {
-  constructor(url, config, onReady = null) {
-    this.url = url
+  /*::
+  cozyUrl: string
+  config: Config
+  onReady: (string) => any
+  onRegistered: ?(string) => string
+  */
+
+  constructor(
+    cozyUrl /*: string */,
+    config /*: Config */,
+    onReady /*: ?(string) => any */ = null
+  ) {
+    this.cozyUrl = cozyUrl
     this.config = config
     this.onReady =
       onReady ||
@@ -31,7 +53,7 @@ module.exports = class Registration {
     autoBind(this)
   }
 
-  async onRegistered(client, url) {
+  async defaultOnRegistered(url /*: string */) {
     let server
     try {
       // TODO if the port is already taken, try again with a new port
@@ -55,7 +77,17 @@ module.exports = class Registration {
     }
   }
 
-  clientParams(pkg, redirectURI, deviceName) {
+  async openURLCallback(authorizeUrl /*: string */) {
+    const onRegistered = this.onRegistered || this.defaultOnRegistered
+    const redirectPath = await onRegistered(authorizeUrl)
+    return new url.URL(redirectPath, this.cozyUrl).toString()
+  }
+
+  oauthClient(
+    pkg /*: Object */,
+    redirectURI /*: ?string */,
+    deviceName /*: ?string */
+  ) /*: $Shape<OAuthClient> */ {
     if (!deviceName) {
       deviceName = `Cozy Drive (${os.hostname()})`
     }
@@ -74,28 +106,30 @@ module.exports = class Registration {
       clientKind: 'desktop',
       clientURI: pkg.homepage,
       logoURI: pkg.logo,
-      policyURI: 'https://files.cozycloud.cc/cgu.pdf',
-      scopes: [
-        // TODO: Implement existing config update in case we change permissions
-        'io.cozy.files',
-        'io.cozy.settings:GET:io.cozy.settings.disk-usage',
-        'io.cozy.jobs:POST:sendmail:worker'
-      ]
+      policyURI: 'https://files.cozycloud.cc/cgu.pdf'
     }
   }
 
-  process(pkg, redirectURI, onRegistered, deviceName) {
-    const params = this.clientParams(pkg, redirectURI, deviceName)
-    onRegistered = onRegistered || this.onRegistered
-    const cozy = new CozyClient({
-      version: 3,
-      cozyURL: this.url,
-      oauth: {
-        storage: this.config,
-        clientParams: params,
-        onRegistered: onRegistered
-      }
-    })
-    return cozy.authorize()
+  async process(
+    pkg /*: Object */,
+    redirectURI /*: ?string */,
+    onRegistered /*: ?(string) => string */,
+    deviceName /*: ?string */
+  ) {
+    this.onRegistered = onRegistered // TODO: move to constructor
+
+    try {
+      this.config.cozyUrl = this.cozyUrl
+      this.config.client = this.oauthClient(pkg, redirectURI, deviceName)
+
+      const client = createClient(this.config)
+      await registerClient(client, this)
+      await loginAndSaveClient(client, this.config)
+
+      return redirectURI
+    } catch (err) {
+      log.error('could not register OAuth client', { err })
+      this.config.clear()
+    }
   }
 }

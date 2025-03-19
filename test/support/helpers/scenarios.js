@@ -13,18 +13,14 @@ const glob = require('glob')
 const _ = require('lodash')
 const sinon = require('sinon')
 
-const { cozy } = require('./cozy')
 const stater = require('../../../core/local/stater')
-const Builders = require('../builders')
 
 /*::
 import type { Scenario, ScenarioInit, FSAction } from '../../scenarios'
-import type { Metadata } from '../../../core/metadata'
-import type { Pouch } from '../../../core/pouch'
 import type { Stats } from '../../../core/local/stater'
 import type { ChannelEvent, EventKind } from '../../../core/local/channel_watcher/event'
 import type { ChokidarEvent } from '../../../core/local/chokidar/event'
-import type { ContextDir } from './context_dir'
+import type { TestHelpers as Helpers } from '.'
 */
 
 const DEFAULT_FILE_CONTENT = (module.exports.DEFAULT_FILE_CONTENT = 'foo')
@@ -345,12 +341,11 @@ const isOutside = relpath => relpath.startsWith('../outside')
 
 module.exports.init = async (
   scenario /*: { init: ScenarioInit } */,
-  pouch /*: Pouch */,
-  abspath /*: (string) => string */,
+  helpers /*: Helpers */,
   localCapture /*: ?({| batches: ChannelEvent[][] |} | {| events: ChokidarEvent[] |}) */
 ) => {
   debug('[init]')
-  const builders = new Builders({ cozy, pouch })
+  const { builders } = helpers.remote
   const remoteDocsToTrash = []
   const inoMap = new Map()
 
@@ -368,16 +363,19 @@ module.exports.init = async (
       if (!trashed) {
         if (relpath.endsWith('/')) {
           debug(`- create local dir: ${localPath}`)
-          await fse.ensureDir(abspath(localPath))
+          await fse.ensureDir(helpers.local.syncDir.abspath(localPath))
         } else {
           debug(`- create local file: ${localPath}`)
           // Writing the file seems to be changing the parent folder's mtime and
           // thus trigger a PouchDB write when launching the local watcher to
           // update the local updated_at value.
-          await fse.outputFile(abspath(localPath), content)
+          await fse.outputFile(
+            helpers.local.syncDir.abspath(localPath),
+            content
+          )
         }
 
-        stats = await stater.stat(abspath(localPath))
+        stats = await stater.stat(helpers.local.syncDir.abspath(localPath))
         inoMap.set(fakeIno, stats.ino)
       }
 
@@ -385,17 +383,14 @@ module.exports.init = async (
 
       const remoteParentPath = path.posix.join('/', path.posix.dirname(relpath))
       debug(`- retrieve remote parent: ${remoteParentPath}`)
-      const remoteParent = await cozy.files.statByPath(remoteParentPath)
+      const remoteParent = await helpers.remote.byPath(remoteParentPath)
       if (!remoteParent) {
         debug(`Could not retrieve remote parent: ${remoteParentPath}`)
         return
       }
 
       const remoteName = path.posix.basename(relpath)
-      const remotePath = path.posix.join(
-        _.get(remoteParent, 'attributes.path', ''),
-        remoteName
-      )
+      const remotePath = path.posix.join(remoteParent.path, remoteName)
 
       if (relpath.endsWith('/')) {
         debug(
@@ -404,10 +399,7 @@ module.exports.init = async (
         const remoteDir = await builders
           .remoteDir()
           .name(remoteName)
-          .inDir({
-            _id: remoteParent._id,
-            path: remoteParent.attributes.path
-          })
+          .inDir(remoteParent)
           .create()
 
         if (trashed) {
@@ -423,7 +415,7 @@ module.exports.init = async (
           stater.assignInoAndFileId(doc, stats)
           stater.assignInoAndFileId(doc.local, stats)
 
-          await pouch.put(doc)
+          await helpers.pouch.put(doc)
         }
       } else {
         debug(
@@ -432,10 +424,7 @@ module.exports.init = async (
         const remoteFile = await builders
           .remoteFile()
           .name(remoteName)
-          .inDir({
-            _id: remoteParent._id,
-            path: remoteParent.attributes.path
-          })
+          .inDir(remoteParent)
           .data(content)
           .executable(false)
           .create()
@@ -453,7 +442,7 @@ module.exports.init = async (
           stater.assignInoAndFileId(doc, stats)
           stater.assignInoAndFileId(doc.local, stats)
 
-          await pouch.put(doc)
+          await helpers.pouch.put(doc)
         }
       } // if relpath ...
     } // for (... of scenario.init)
@@ -466,7 +455,7 @@ module.exports.init = async (
   for (const remoteDoc of remoteDocsToTrash) {
     debug(`- trashing remote ${remoteDoc.type}: ${remoteDoc.path}`)
     try {
-      await cozy.files.trashById(remoteDoc._id)
+      await helpers.remote.destroyById(remoteDoc._id)
     } catch (err) {
       if (err.status === 400) continue
       throw err

@@ -20,7 +20,7 @@ const { ROOT_DIR_ID } = require('../../../core/remote/constants')
 
 /*::
 import type { Readable } from 'stream'
-import type { Cozy } from 'cozy-client-js'
+import type { CozyClient } from 'cozy-client'
 import type { Metadata, MetadataRemoteFile, MetadataRemoteDir } from '../../../core/metadata'
 import type { Pouch } from '../../../core/pouch'
 import type { Warning } from '../../../core/remote/cozy'
@@ -38,12 +38,15 @@ import type { RemoteTree } from '../helpers/remote'
 //
 module.exports = class Builders {
   /*::
-  cozy: ?Cozy
+  client: ?CozyClient
   pouch: ?Pouch
   */
 
-  constructor({ cozy, pouch } /*: {cozy?: Cozy, pouch?: Pouch} */ = {}) {
-    this.cozy = cozy
+  constructor({
+    client,
+    pouch
+  } /*: { +client?: CozyClient, +pouch?: Pouch } */ = {}) {
+    this.client = client
     this.pouch = pouch
   }
 
@@ -60,27 +63,28 @@ module.exports = class Builders {
   }
 
   remoteDir(old /*: ?RemoteDir */) /*: RemoteDirBuilder */ {
-    return new RemoteDirBuilder(this.cozy, old)
+    return new RemoteDirBuilder(this.client, old)
   }
 
   remoteFile(old /*: ?FullRemoteFile */) /*: RemoteFileBuilder */ {
-    return new RemoteFileBuilder(this.cozy, old)
+    return new RemoteFileBuilder(this.client, old)
   }
 
   remoteNote(old /*: ?FullRemoteFile */) /*: RemoteNoteBuilder */ {
-    return new RemoteNoteBuilder(this.cozy, old)
+    return new RemoteNoteBuilder(this.client, old)
   }
 
   remoteErased(
     old /*: ?FullRemoteFile|RemoteDir */
   ) /*: RemoteErasedBuilder */ {
-    return new RemoteErasedBuilder(this.cozy, old)
+    return new RemoteErasedBuilder(this.client, old)
   }
 
   buildRemoteTree(
     paths /*: Array<string|[string, number]> */
   ) /*: RemoteTree */ {
-    const remoteDocsByPath = {}
+    const dirs = {}
+    const files = {}
     for (const p of paths) {
       let docPath, shortRev
       if (typeof p === 'string') {
@@ -92,25 +96,25 @@ module.exports = class Builders {
       }
       const name = path.posix.basename(docPath)
       const parentPath = path.posix.dirname(docPath)
-      const parentDir = remoteDocsByPath[parentPath + '/'] || {
+      const parentDir = dirs[parentPath + '/'] || {
         _id: ROOT_DIR_ID,
         path: '/'
       }
 
       if (docPath.endsWith('/')) {
-        remoteDocsByPath[docPath] = this.remoteDir()
+        dirs[docPath] = this.remoteDir()
           .name(name)
           .inDir(parentDir)
           .shortRev(shortRev)
           .build()
       } else if (docPath.endsWith('cozy-note')) {
-        remoteDocsByPath[docPath] = this.remoteNote()
+        files[docPath] = this.remoteNote()
           .name(name)
           .inDir(parentDir)
           .shortRev(shortRev)
           .build()
       } else {
-        remoteDocsByPath[docPath] = this.remoteFile()
+        files[docPath] = this.remoteFile()
           .name(name)
           .inDir(parentDir)
           .shortRev(shortRev)
@@ -118,38 +122,39 @@ module.exports = class Builders {
       }
     }
 
-    return remoteDocsByPath
+    return { dirs, files }
   }
 
   async createRemoteTree(paths /*: string[] */) /*: Promise<RemoteTree> */ {
-    const remoteDocsByPath = {}
+    const dirs = {}
+    const files = {}
     for (const docPath of paths) {
       const name = path.posix.basename(docPath)
       const parentPath = path.posix.dirname(docPath)
-      const parentDir = remoteDocsByPath[parentPath + '/'] || {
+      const parentDir = dirs[parentPath + '/'] || {
         _id: ROOT_DIR_ID,
         path: '/'
       }
 
       if (docPath.endsWith('/')) {
-        remoteDocsByPath[docPath] = await this.remoteDir()
+        dirs[docPath] = await this.remoteDir()
           .name(name)
           .inDir(parentDir)
           .create()
       } else if (docPath.endsWith('cozy-note')) {
-        remoteDocsByPath[docPath] = await this.remoteNote()
+        files[docPath] = await this.remoteNote()
           .name(name)
           .inDir(parentDir)
           .create()
       } else {
-        remoteDocsByPath[docPath] = await this.remoteFile()
+        files[docPath] = await this.remoteFile()
           .name(name)
           .inDir(parentDir)
           .create()
       }
     }
 
-    return remoteDocsByPath
+    return { dirs, files }
   }
 
   remoteWarnings() /*: Warning[] */ {

@@ -11,10 +11,7 @@ const metadata = require('../../core/metadata')
 const Builders = require('../support/builders')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
-const cozyHelpers = require('../support/helpers/cozy')
 const pouchHelpers = require('../support/helpers/pouch')
-
-const cozy = cozyHelpers.cozy
 
 describe('Conflict resolution', () => {
   let helpers, builders
@@ -22,9 +19,8 @@ describe('Conflict resolution', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-  beforeEach(cozyHelpers.deleteAll)
 
-  afterEach(() => helpers.local.clean())
+  afterEach(() => helpers.clean())
   afterEach(pouchHelpers.cleanDatabase)
   after(configHelpers.cleanConfig)
 
@@ -41,7 +37,7 @@ describe('Conflict resolution', () => {
 
   describe('local', () => {
     beforeEach('create and merge conflicting remote file', async () => {
-      await cozy.files.create('whatever', { name: 'foo' })
+      await helpers.remote.createFile('foo', 'whatever')
       await helpers.remote.pullChanges()
     })
 
@@ -78,9 +74,11 @@ describe('Conflict resolution', () => {
       await helpers.syncAll()
 
       // Update file remotely
-      const remoteFile = await cozy.files.statByPath('/concurrent-edited')
+      const remoteFile = await helpers.remote.byPath('/concurrent-edited')
       await helpers.pouch.byRemoteIdMaybe(remoteFile._id)
-      await cozy.files.updateById(remoteFile._id, 'remote-content', {
+
+      await helpers.remote.updateFileById(remoteFile._id, 'remote-content', {
+        name: remoteFile.name,
         contentType: 'text/plain'
       })
     })
@@ -140,9 +138,10 @@ describe('Conflict resolution', () => {
         'concurrent-edited',
         localUpdateContent
       )
-      remoteFile = await cozy.files.statByPath(`/concurrent-edited`)
+      remoteFile = await helpers.remote.byPath(`/concurrent-edited`)
       pouchFile = await helpers.pouch.byRemoteIdMaybe(remoteFile._id)
-      await cozy.files.updateById(remoteFile._id, remoteUpdateContent, {
+      await helpers.remote.updateFileById(remoteFile._id, remoteUpdateContent, {
+        name: remoteFile.name,
         contentType: 'text/plain',
         contentLength: remoteUpdateContent.length
       })
@@ -195,10 +194,11 @@ describe('Conflict resolution', () => {
           await fse.readdir(helpers.local.syncPath)
         ).filter(x => x.indexOf('-conflict-') !== -1)[0]
 
-        const remoteBadFile = await cozy.files.statByPath('/' + conflictedPath)
-        const remoteFile = await cozy.files.statByPath(`/concurrent-edited`)
-        await cozy.files.trashById(remoteBadFile._id)
-        await cozy.files.updateById(remoteFile._id, `content6`, {
+        const remoteBadFile = await helpers.remote.byPath('/' + conflictedPath)
+        const remoteFile = await helpers.remote.byPath(`/concurrent-edited`)
+        await helpers.remote.trashById(remoteBadFile._id)
+        await helpers.remote.updateFileById(remoteFile._id, `content6`, {
+          name: remoteFile.name,
           contentType: 'text/plain'
         })
 
@@ -252,10 +252,7 @@ describe('Conflict resolution', () => {
     context('when the content differs', () => {
       it('renames one of them', async () => {
         await helpers.local.syncDir.outputFile('same-name', 'content1')
-        await cozy.files.create('content2', {
-          name: 'same-name',
-          contentType: 'text/plain'
-        })
+        await helpers.remote.createFile('same-name', 'content2')
 
         await fullSyncStartingFrom('local')
 
@@ -268,10 +265,7 @@ describe('Conflict resolution', () => {
     context('when the content is the same', () => {
       it('links the two within the same PouchDB record', async () => {
         await helpers.local.syncDir.outputFile('same-name', 'same content')
-        await cozy.files.create('same content', {
-          name: 'same-name',
-          contentType: 'text/plain'
-        })
+        await helpers.remote.createFile('same-name', 'same content')
 
         await fullSyncStartingFrom('local')
 
@@ -283,9 +277,7 @@ describe('Conflict resolution', () => {
   describe('merging local file then remote dir', () => {
     beforeEach(async () => {
       await helpers.local.syncDir.outputFile('same-name', 'content1')
-      await cozy.files.createDirectory({
-        name: 'same-name'
-      })
+      await helpers.remote.createDirectory('same-name')
 
       await fullSyncStartingFrom('local')
     })
@@ -307,10 +299,7 @@ describe('Conflict resolution', () => {
   describe('merging local dir then remote file', () => {
     it('renames the remote file', async () => {
       await helpers.local.syncDir.ensureDir('same-name')
-      await cozy.files.create('content2', {
-        name: 'same-name',
-        contentType: 'text/plain'
-      })
+      await helpers.remote.createFile('same-name', 'content2')
 
       await fullSyncStartingFrom('local')
 
@@ -326,8 +315,8 @@ describe('Conflict resolution', () => {
       await helpers.local.scan()
       await helpers.syncAll()
       // FIXME: Initial tree helper?
-      const remoteFile = await cozy.files.statByPath(`/src`)
-      await cozy.files.updateAttributesById(remoteFile._id, { name: 'dst' })
+      const remoteFile = await helpers.remote.byPath('/src')
+      await helpers.remote.move(remoteFile, '/dst')
       await helpers.local.syncDir.outputFile('dst', 'local dst content')
 
       await fullSyncStartingFrom('local')
@@ -345,7 +334,7 @@ describe('Conflict resolution', () => {
       await helpers.syncAll()
       await helpers.pullAndSyncAll()
       // FIXME: Initial tree helper?
-      await cozy.files.create('remote dst content', { name: 'dst' })
+      await helpers.remote.createFile('dst', 'remote dst content')
       await helpers.local.syncDir.move('src', 'dst')
 
       await fullSyncStartingFrom('local')
@@ -362,8 +351,8 @@ describe('Conflict resolution', () => {
       await helpers.local.scan()
       await helpers.syncAll()
       // FIXME: Initial tree helper?
-      const remoteDir = await cozy.files.statByPath(`/src`)
-      await cozy.files.updateAttributesById(remoteDir._id, { name: 'dst' })
+      const remoteDir = await helpers.remote.byPath('/src')
+      await helpers.remote.move(remoteDir, '/dst')
       await helpers.local.syncDir.ensureDir('dst')
 
       await fullSyncStartingFrom('local')
@@ -417,7 +406,7 @@ describe('Conflict resolution', () => {
           .path('foo')
           .build()
       )
-      await cozy.files.create('whatever', { name: 'foo' })
+      await helpers.remote.createFile('foo', 'whatever')
     })
 
     it('success', async () => {
@@ -429,16 +418,18 @@ describe('Conflict resolution', () => {
     })
 
     describe('retry', () => {
-      beforeEach('simulate stack failure', () => {
-        sinon.stub(cozy.files, 'updateAttributesById').throws(new FetchError())
-      })
-
       it('success', async () => {
+        // Simulate stack failure
+        sinon
+          .stub(helpers.remote.side.remoteCozy, 'updateAttributesById')
+          .throws(new FetchError())
+
         await helpers.remote.pullChanges()
         should(await helpers.remote.tree()).deepEqual(['.cozy_trash/', 'foo'])
 
         // Stack is back, retry...
-        cozy.files.updateAttributesById.restore()
+        helpers.remote.side.remoteCozy.updateAttributesById.restore()
+
         await helpers.remote.pullChanges()
         should(await helpers.remote.tree()).deepEqual([
           '.cozy_trash/',
@@ -524,10 +515,9 @@ describe('Conflict resolution', () => {
       await helpers.local.scan()
 
       // Create remote directory with content
-      const remoteDst = await cozy.files.createDirectory({ name: 'dst' })
-      await cozy.files.create('remote content', {
-        name: 'foo',
-        dirID: remoteDst._id
+      const remoteDst = await helpers.remote.createDirectory('dst')
+      await helpers.remote.createFile('foo', 'remote content', {
+        dirId: remoteDst._id
       })
     })
 

@@ -73,8 +73,8 @@ const ROOT_DIR /*: MetadataRemoteDir */ = {
 
 /** `Remote` is the class that interfaces cozy-desktop with the remote Cozy.
  *
- * It uses a watcher, based on cozy-client-js, to poll for file and folder
- * changes from the remote CouchDB.
+ * It uses a watcher, based on cozy-client, to poll for file and folder changes
+ * from the remote CouchDB.
  * It also applies changes from the local filesystem on the remote cozy.
  *
  * Its `other` attribute is a reference to a {@link module:core/local|Local}
@@ -142,8 +142,8 @@ class Remote /*:: implements Reader, Writer */ {
     return this.remoteCozy.update()
   }
 
-  updateLastSync() {
-    return this.remoteCozy.updateLastSync()
+  updateLastSynced() {
+    return this.remoteCozy.updateLastSynced()
   }
 
   /** Create a readable stream for the given doc */
@@ -265,11 +265,12 @@ class Remote /*:: implements Reader, Writer */ {
         const options = Object.assign(
           {},
           {
+            name: doc.remote.name,
             checksum: doc.md5sum,
             executable: doc.executable || false,
             contentLength: doc.size,
             contentType: doc.mime,
-            updatedAt: mostRecentUpdatedAt(doc),
+            lastModifiedDate: mostRecentUpdatedAt(doc),
             ifMatch: doc.remote._rev
           }
         )
@@ -370,10 +371,11 @@ class Remote /*:: implements Reader, Writer */ {
 
     if (overwrite && isOverwritingTarget) {
       try {
-        const referencedBy = await this.remoteCozy.getReferencedBy(
-          overwrite.remote._id
+        const remoteDoc = await this.remoteCozy.find(overwrite.remote._id)
+        await this.remoteCozy.addReferencedBy(
+          remoteId,
+          remoteDoc.relations('referenced_by')
         )
-        await this.remoteCozy.addReferencedBy(remoteId, referencedBy)
         await this.assignNewRemote(newMetadata)
       } catch (err) {
         if (err.status === 404) {
@@ -443,9 +445,9 @@ class Remote /*:: implements Reader, Writer */ {
 
   async findDocByPath(fpath /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
     const [parentPath, name] = dirAndName(fpath)
-    const { _id: dirID } = await this.findDirectoryByPath(parentPath)
+    const { _id: dir_id } = await this.findDirectoryByPath(parentPath)
 
-    const results = await this.remoteCozy.search({ dir_id: dirID, name })
+    const results = await this.remoteCozy.search({ dir_id, name })
     if (results.length > 0) return results[0]
   }
 
@@ -487,8 +489,9 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async includeInSync(doc /*: SavedMetadata */) /*: Promise<*> */ {
-    const remoteDocs = await this.remoteCozy.search({ path: `/${doc.path}` })
-    const remoteDoc = remoteDocs[0]
+    const remoteDoc = await this.remoteCozy.findMaybeByPath(
+      pathUtils.localToRemote(doc.path)
+    )
     if (!remoteDoc || remoteDoc.type !== DIR_TYPE) return
 
     await this.remoteCozy.includeInSync(remoteDoc)
@@ -520,17 +523,13 @@ function dirAndName(localPath /*: string */) /*: [string, string] */ {
 
 function newDocumentAttributes(
   name /*: string */,
-  dirID /*: string */,
-  updatedAt /*: string */
+  dirId /*: string */,
+  lastModifiedDate /*: string */
 ) {
   return {
     name,
-    dirID,
-    // We force the creation date otherwise the stack will set it with the
-    // current date and could possibly update the modification date to be
-    // greater.
-    createdAt: updatedAt,
-    updatedAt
+    dirId,
+    lastModifiedDate
   }
 }
 

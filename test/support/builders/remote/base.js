@@ -16,7 +16,7 @@ const timestamp = require('../../../../core/utils/timestamp')
 const dbBuilders = require('../db')
 
 /*::
-import type { Cozy } from 'cozy-client-js'
+import type { CozyClient } from 'cozy-client'
 import type { FullRemoteFile, RemoteDir, RemoteDoc } from '../../../../core/remote/document'
 
 type Ref = { _id: string, _type: string }
@@ -24,12 +24,13 @@ type Ref = { _id: string, _type: string }
 
 module.exports = class RemoteBaseBuilder /*:: <T: FullRemoteFile|RemoteDir> */ {
   /*::
-  cozy: ?Cozy
+  client: CozyClient
   remoteDoc: T & { referenced_by: Ref[] }
   */
 
-  constructor(cozy /*: ?Cozy */, old /*: ?T */) {
-    this.cozy = cozy
+  constructor(client /*: CozyClient */, old /*: ?T */) {
+    this.client = client
+
     if (old) {
       this.remoteDoc = _.cloneDeep(old)
       this.shortRev(metadata.extractRevNumber(old) + 1)
@@ -123,9 +124,9 @@ module.exports = class RemoteBaseBuilder /*:: <T: FullRemoteFile|RemoteDir> */ {
     return _.clone(this.remoteDoc)
   }
 
-  _ensureCozy() /*: Cozy */ {
-    if (this.cozy) {
-      return this.cozy
+  _ensureClient() /*: CozyClient */ {
+    if (this.client) {
+      return this.client
     } else {
       throw new Error('Cannot create remote files/dirs without a Cozy client.')
     }
