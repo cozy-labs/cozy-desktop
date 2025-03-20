@@ -79,7 +79,7 @@ jobs:
             ${{ github.workspace }}/node_modules
             ~/.cache/electron
             ~/.cache/electron-builder
-          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup Docker
         uses: douglascamata/setup-docker-macos-action@v1-alpha
       - name: Install Bash for docker-cache
@@ -148,7 +148,7 @@ jobs:
             ${{ github.workspace }}/node_modules
             ~/.cache/electron
             ~/.cache/electron-builder
-          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup Docker
         uses: douglascamata/setup-docker-macos-action@v1-alpha
       - name: Install Bash for docker-cache
@@ -218,7 +218,7 @@ jobs:
             ${{ github.workspace }}/node_modules
             ~/.cache/electron
             ~/.cache/electron-builder
-          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup Docker
         uses: douglascamata/setup-docker-macos-action@v1-alpha
       - name: Install Bash for docker-cache
@@ -290,7 +290,7 @@ jobs:
             ${{ github.workspace }}/node_modules
             ~/.cache/electron
             ~/.cache/electron-builder
-          key: ${{ runner.os }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
+          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup node
         uses: actions/setup-node@v3
         with:
