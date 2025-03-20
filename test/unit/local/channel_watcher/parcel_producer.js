@@ -1,20 +1,22 @@
 /* eslint-env mocha */
 /* @flow */
 
-const EventEmitter = require('events')
-const path = require('path')
-
-const _ = require('lodash')
-const should = require('should')
-
-const { Ignore } = require('../../../../core/ignore')
-const Producer = require('../../../../core/local/channel_watcher/parcel_producer')
-const stater = require('../../../../core/local/stater')
-const configHelpers = require('../../../support/helpers/config')
-const { ContextDir } = require('../../../support/helpers/context_dir')
 const { onPlatforms } = require('../../../support/helpers/platform')
 
 onPlatforms(['linux', 'win32'], () => {
+  const EventEmitter = require('events')
+  const path = require('path')
+
+  const _ = require('lodash')
+  const should = require('should')
+
+  const { Ignore } = require('../../../../core/ignore')
+  console.log('import')
+  const Producer = require('../../../../core/local/channel_watcher/parcel_producer')
+  const stater = require('../../../../core/local/stater')
+  const configHelpers = require('../../../support/helpers/config')
+  const { ContextDir } = require('../../../support/helpers/context_dir')
+
   describe('core/local/channel_watcher/producer', () => {
     let syncDir
     let config

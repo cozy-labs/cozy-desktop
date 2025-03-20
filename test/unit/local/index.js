@@ -14,6 +14,7 @@ const Builders = require('../../support/builders')
 const { createTrashMock } = require('../../support/doubles/fs')
 const configHelpers = require('../../support/helpers/config')
 const { ContextDir } = require('../../support/helpers/context_dir')
+const { LocalTestHelpers } = require('../../support/helpers/local')
 const { WINDOWS_DEFAULT_MODE } = require('../../support/helpers/platform')
 const pouchHelpers = require('../../support/helpers/pouch')
 
@@ -32,7 +33,7 @@ const streamer = (doc, content, err) => ({
 })
 
 describe('Local', function() {
-  let builders, syncDir, trashMock
+  let builders, localHelpers, syncDir, trashMock
 
   before('instanciate config', configHelpers.createConfig)
   before('instanciate pouch', pouchHelpers.createDatabase)
@@ -43,9 +44,12 @@ describe('Local', function() {
     this.events = { emit: () => {} }
     this.local = new Local({ ...this, sendToTrash: trashMock.sendToTrash })
 
+    localHelpers = new LocalTestHelpers(this)
     builders = new Builders(this)
     syncDir = new ContextDir(this.syncPath)
   })
+
+  afterEach(() => localHelpers.clean())
   after('clean pouch', pouchHelpers.cleanDatabase)
   after('clean config directory', configHelpers.cleanConfig)
 
@@ -211,6 +215,28 @@ describe('Local', function() {
       await should(this.local.fileExistsLocally('deadcafe')).be.fulfilledWith(
         filePath
       )
+    })
+  })
+
+  describe('exists', () => {
+    it('checks for file existence on disk', async function() {
+      const filepath = 'folder/testfile'
+
+      await should(this.local.exists(filepath)).be.fulfilledWith(false)
+
+      fse.ensureFileSync(this.local.abspath(filepath))
+
+      await should(this.local.exists(filepath)).be.fulfilledWith(true)
+    })
+
+    it('checks for dir existence on disk', async function() {
+      const dirpath = 'folder/testdir'
+
+      await should(this.local.exists(dirpath)).be.fulfilledWith(false)
+
+      fse.ensureDirSync(this.local.abspath(dirpath))
+
+      await should(this.local.exists(dirpath)).be.fulfilledWith(true)
     })
   })
 

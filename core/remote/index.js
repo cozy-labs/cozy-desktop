@@ -443,6 +443,11 @@ class Remote /*:: implements Reader, Writer */ {
     }
   }
 
+  async exists(fullpath /*: string */) /*: Promise<boolean> */ {
+    const remoteDoc = await this.remoteCozy.findMaybeByPath(fullpath)
+    return remoteDoc != null
+  }
+
   async findDocByPath(fpath /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
     const [parentPath, name] = dirAndName(fpath)
     const { _id: dir_id } = await this.findDirectoryByPath(parentPath)

@@ -80,7 +80,6 @@
   "dependencies": {
     "@babel/runtime": "7.16.7",
     "@electron/remote": "2.1.2",
-    "@parcel/watcher": "https://github.com/taratatach/parcel-watcher.git#cozy-desktop",
     "@sentry/electron": "^5.7.0",
     "@sentry/integrations": "^7.114.0",
     "agent-base": "7.1.0",
@@ -186,7 +185,8 @@
     "treeify": "^1.1.0"
   },
   "optionalDependencies": {
-    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#2.0.0"
+    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#2.0.0",
+    "@parcel/watcher": "https://github.com/taratatach/parcel-watcher.git#cozy-desktop"
   },
   "resolutions": {
     "node-abi": "3.5.0"

@@ -32,11 +32,15 @@ const fireLocatStartEvent = require('./fire_local_start_event')
 const incompleteFixer = require('./incomplete_fixer')
 const initialDiff = require('./initial_diff')
 const overwrite = require('./overwrite')
-const Producer = require('./parcel_producer')
 const scanFolder = require('./scan_folder')
 const winIdenticalRenaming = require('./win_identical_renaming')
 const { logger } = require('../../utils/logger')
 const { LOCAL_WATCHER_FATAL_EVENT } = require('../constants')
+
+let Producer
+if (['linux', 'win32'].includes(process.platform)) {
+  Producer = require('./parcel_producer')
+}
 
 /*::
 import type { Config } from '../../config'
