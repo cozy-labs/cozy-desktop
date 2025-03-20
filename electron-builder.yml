@@ -87,7 +87,7 @@ linux:
     friends and colleagues. You can host your own Cozy Cloud, and or use the hosting
     services. Your freedom to chose is why you can trust us.
 appImage:
-  artifactName: 'Cozy-Drive-${version}-${arch}.${ext}'
+  artifactName: 'Cozy-Drive-${arch}.${ext}'
   executableArgs: [" "] # do not use --no-sandbox by default (see build/launcher-script.sh for details on when it should be used)
 
 extraResources:
