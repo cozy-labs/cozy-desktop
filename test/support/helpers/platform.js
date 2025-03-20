@@ -64,10 +64,9 @@ function onPlatforms(
 ) {
   const currentPlatform = process.platform
 
-  const describeOrSkip =
-    expectedPlatforms.indexOf(currentPlatform) > -1 ? describe : describe.skip
-
-  describeOrSkip(`on ${expectedPlatforms.join(' / ')}`, spec)
+  if (expectedPlatforms.indexOf(currentPlatform) > -1) {
+    describe(`on ${expectedPlatforms.join(' / ')}`, spec)
+  }
 }
 
 function onPlatform(platform /*: string */, spec /*: Function */) {
