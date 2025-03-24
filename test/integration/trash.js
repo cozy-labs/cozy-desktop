@@ -16,11 +16,6 @@ describe('Trash', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-
-  afterEach(() => helpers.clean())
-  afterEach(pouchHelpers.cleanDatabase)
-  after(configHelpers.cleanConfig)
-
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
     pouch = helpers.pouch
@@ -29,9 +24,11 @@ describe('Trash', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
-  afterEach(async function() {
-    await helpers.stop()
-  })
+
+  afterEach(async () => await helpers.stop())
+  afterEach(() => helpers.clean())
+  afterEach(pouchHelpers.cleanDatabase)
+  after(configHelpers.cleanConfig)
 
   describe('file', () => {
     let parent, file
@@ -408,17 +405,17 @@ describe('Restore', () => {
   before(configHelpers.createConfig)
   before(configHelpers.registerClient)
   beforeEach(pouchHelpers.createDatabase)
-
-  afterEach(() => helpers.clean())
-  afterEach(pouchHelpers.cleanDatabase)
-  after(configHelpers.cleanConfig)
-
   beforeEach(async function() {
     helpers = TestHelpers.init(this)
 
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
   })
+
+  afterEach(async () => await helpers.stop())
+  afterEach(() => helpers.clean())
+  afterEach(pouchHelpers.cleanDatabase)
+  after(configHelpers.cleanConfig)
 
   describe('file', () => {
     let parent, file
