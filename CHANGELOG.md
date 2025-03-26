@@ -1,5 +1,18 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.43.0-beta.1 - 2025-03-26
+
+Improvements for all users:
+
+- We made some technical changes to lay the foundations for the future.
+  For those who know about it, it's time to say goodbye to `cozy-client-js`
+  which has been completed replaced by `cozy-client` a more modern and complete
+  library to interact with your Cozy.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.42.0 - 2025-01-22
 
 Improvements for all users:
