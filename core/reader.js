@@ -13,5 +13,6 @@ import type { SavedMetadata } from './metadata'
 
 export interface Reader {
   createReadStreamAsync (SavedMetadata): Promise<ReadableWithSize>;
+  exists (string): Promise<boolean>;
 }
 */

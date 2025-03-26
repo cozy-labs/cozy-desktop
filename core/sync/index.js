@@ -1233,18 +1233,35 @@ class Sync {
         parentPath
       )
 
-      if (
-        parent &&
-        isMarkedForDeletion(parent) &&
-        !metadata.isUpToDate(side.name, parent)
-      ) {
-        log.info(`${doc.docType} will be trashed within its parent directory`, {
-          path: doc.path
-        })
-        // XXX: doc will be erased from PouchDB as it is marked as `deleted`.
-        // This means that, until the parent deletion is synchronized, our local
-        // PouchDB won't reflect the reality.
-        return
+      if (parent) {
+        if (
+          isMarkedForDeletion(parent) &&
+          !metadata.isUpToDate(side.name, parent) // TODO: trash doc with parent even if parent was trashed on other side?
+        ) {
+          log.info(
+            `${doc.docType} will be trashed within its parent directory`,
+            {
+              path: doc.path
+            }
+          )
+          // XXX: doc will be erased from PouchDB as it is marked as `deleted`.
+          // This means that, until the parent deletion is synchronized, our local
+          // PouchDB won't reflect the reality.
+          return
+        } else if (await this.isMissing(parent, otherSide(side.name))) {
+          // XXX: We haven't merged the parent deletion yet but it does not
+          // exist anymore so we expect to receive and merge the event soon.
+          log.info(
+            `${doc.docType} will be trashed within its parent directory`,
+            {
+              path: doc.path
+            }
+          )
+          // XXX: doc will be erased from PouchDB as it is marked as `deleted`.
+          // This means that, until the parent deletion is synchronized, our local
+          // PouchDB won't reflect the reality.
+          return
+        }
       }
     }
 
@@ -1276,6 +1293,17 @@ class Sync {
     if (metadata.isFile(doc)) {
       this.events.emit('delete-file', doc)
     }
+  }
+
+  async isMissing(
+    doc /*: SavedMetadata */,
+    sideName /*: SideName */
+  ) /*: Promise<boolean> */ {
+    const docExists =
+      sideName === 'remote'
+        ? await this.remote.exists(doc.remote.path)
+        : await this.local.exists(doc.local.path)
+    return !docExists
   }
 }
 
