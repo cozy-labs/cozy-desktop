@@ -21,7 +21,6 @@ const log = logger({
   component: 'Sync:errors'
 })
 
-const EXCLUDED_DIR_CODE = 'ExcludedDir'
 const INCOMPATIBLE_DOC_CODE = 'IncompatibleDoc'
 const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
 const NO_DISK_SPACE_CODE = 'NoDiskSpace'
@@ -122,7 +121,7 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
       case NO_DISK_SPACE_CODE:
         return 1 * MINUTES
 
-      case EXCLUDED_DIR_CODE:
+      case remoteErrors.EXCLUDED_DIR_CODE:
         return 5 * MINUTES
 
       case UNSYNCED_PARENT_MOVE_CODE:
@@ -293,8 +292,6 @@ const wrapError = (
     })
   } else if (err instanceof IncompatibleDocError) {
     return new SyncError({ sideName, err, code: INCOMPATIBLE_DOC_CODE, doc })
-  } else if (err instanceof remoteErrors.ExcludedDirError) {
-    return new SyncError({ sideName, err, code: EXCLUDED_DIR_CODE, doc })
   } else if (remoteErrors.isNetworkError(err)) {
     // FetchErrors can be raised from the LocalWriter when failing to download a
     // file for example. In this case the error name won't be "FetchError" but
@@ -311,7 +308,6 @@ const wrapError = (
 }
 
 module.exports = {
-  EXCLUDED_DIR_CODE,
   INCOMPATIBLE_DOC_CODE,
   MISSING_PERMISSIONS_CODE,
   NO_DISK_SPACE_CODE,

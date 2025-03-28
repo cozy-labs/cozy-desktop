@@ -19,7 +19,10 @@ const {
   TRASH_DIR_ID
 } = require('../../../core/remote/constants')
 const { FetchError } = require('../../../core/remote/cozy')
-const { DirectoryNotFound } = require('../../../core/remote/errors')
+const {
+  MissingDocumentError,
+  MissingParentError
+} = require('../../../core/remote/errors')
 const { CONFLICT_REGEXP } = require('../../../core/utils/conflicts')
 const timestamp = require('../../../core/utils/timestamp')
 const configHelpers = require('../../support/helpers/config')
@@ -174,7 +177,7 @@ describe('remote.Remote', function() {
         .and.not.have.property('remote')
     })
 
-    it('rejects with a DirectoryNotFound error if its parent is missing on the Cozy', async function() {
+    it('rejects with a MissingParentError error if its parent is missing on the Cozy', async function() {
       const doc /*: Metadata */ = builders
         .metafile()
         .path('dir/foo')
@@ -187,7 +190,7 @@ describe('remote.Remote', function() {
         }
       }
       await should(this.remote.addFileAsync(doc)).be.rejectedWith(
-        DirectoryNotFound
+        MissingParentError
       )
     })
 
@@ -272,7 +275,7 @@ describe('remote.Remote', function() {
         .path(path.join('foo', 'bar', 'qux'))
         .build()
       await should(this.remote.addFolderAsync(doc)).be.rejectedWith(
-        DirectoryNotFound
+        MissingParentError
       )
     })
   })
@@ -1298,18 +1301,18 @@ describe('remote.Remote', function() {
       })
     })
 
-    it('returns a DirectoryNotFound error if the directory cannot be found in PouchDB', async function() {
+    it('returns a MissingDocumentError error if the directory cannot be found in PouchDB', async function() {
       await builders
         .remoteDir()
         .name('missing')
         .create()
 
       await should(this.remote.findDirectoryByPath('missing')).be.rejectedWith(
-        DirectoryNotFound
+        MissingDocumentError
       )
     })
 
-    it('returns a DirectoryNotFound error if the local document is not a directory', async function() {
+    it('returns a MissingDocumentError error if the local document is not a directory', async function() {
       await builders
         .metafile()
         .path('wrong-type')
@@ -1318,10 +1321,10 @@ describe('remote.Remote', function() {
 
       await should(
         this.remote.findDirectoryByPath('wrong-type')
-      ).be.rejectedWith(DirectoryNotFound)
+      ).be.rejectedWith(MissingDocumentError)
     })
 
-    it('returns a DirectoryNotFound error if the directory has no remote side', async function() {
+    it('returns a MissingDocumentError error if the directory has no remote side', async function() {
       await builders
         .metadir()
         .path('no-remote')
@@ -1330,7 +1333,7 @@ describe('remote.Remote', function() {
 
       await should(
         this.remote.findDirectoryByPath('no-remote')
-      ).be.rejectedWith(DirectoryNotFound)
+      ).be.rejectedWith(MissingDocumentError)
     })
   })
 

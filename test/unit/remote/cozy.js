@@ -20,7 +20,7 @@ const {
   FILES_DOCTYPE
 } = require('../../../core/remote/constants')
 const { FetchError, RemoteCozy } = require('../../../core/remote/cozy')
-const { DirectoryNotFound } = require('../../../core/remote/errors')
+const { MissingDocumentError } = require('../../../core/remote/errors')
 const timestamp = require('../../../core/utils/timestamp')
 const CozyStackDouble = require('../../support/doubles/cozy_stack')
 const configHelpers = require('../../support/helpers/config')
@@ -748,7 +748,7 @@ describe('RemoteCozy', function() {
 
       for (let path of ['/missing', '/existing/missing']) {
         await should(remoteCozy.findDirectoryByPath(path)).be.rejectedWith(
-          DirectoryNotFound
+          MissingDocumentError
         )
       }
     })
@@ -761,7 +761,7 @@ describe('RemoteCozy', function() {
         .create()
 
       await should(remoteCozy.findDirectoryByPath('/foo')).be.rejectedWith(
-        DirectoryNotFound
+        MissingDocumentError
       )
     })
   })

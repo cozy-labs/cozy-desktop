@@ -14,9 +14,10 @@ const metadata = require('../metadata')
 const { ROOT_DIR_ID, DIR_TYPE } = require('./constants')
 const { RemoteCozy } = require('./cozy')
 const {
-  DirectoryNotFound,
   ExcludedDirError,
-  isRetryableNetworkError
+  isRetryableNetworkError,
+  MissingDocumentError,
+  MissingParentError
 } = require('./errors')
 const { RemoteWarningPoller } = require('./warning_poller')
 const { RemoteWatcher } = require('./watcher')
@@ -159,15 +160,18 @@ class Remote /*:: implements Reader, Writer */ {
     const { path } = doc
     log.info('Creating folder...', { path })
 
-    const [parentPath, name] = dirAndName(doc.path)
-    const parent /*: RemoteDoc */ = await this.findDirectoryByPath(parentPath)
-
     try {
+      const [parentPath, name] = dirAndName(doc.path)
+      const parent /*: RemoteDoc */ = await this.findDirectoryByPath(parentPath)
       const dir = await this.remoteCozy.createDirectory(
         newDocumentAttributes(name, parent._id, doc.updated_at)
       )
       metadata.updateRemote(doc, dir)
     } catch (err) {
+      if (err instanceof MissingDocumentError) {
+        throw new MissingParentError(err)
+      }
+
       if (err.status === 409) {
         let remoteDoc
         try {
@@ -180,9 +184,10 @@ class Remote /*:: implements Reader, Writer */ {
           })
         }
         if (remoteDoc && this.remoteCozy.isExcludedDirectory(remoteDoc)) {
-          throw new ExcludedDirError(path)
+          throw new ExcludedDirError({ path })
         }
       }
+
       throw err
     }
   }
@@ -195,40 +200,48 @@ class Remote /*:: implements Reader, Writer */ {
     log.info('Uploading new file...', { path })
     const stopMeasure = measureTime('RemoteWriter#addFile')
 
-    const [parentPath, name] = dirAndName(path)
-    const parent = await this.findDirectoryByPath(parentPath)
+    try {
+      const [parentPath, name] = dirAndName(path)
+      const parent = await this.findDirectoryByPath(parentPath)
 
-    await async.retry(
-      { times: 5, interval: 2000, errorFilter: isRetryableNetworkError },
-      async () => {
-        let stream
-        try {
-          stream = await this.other.createReadStreamAsync(doc)
-        } catch (err) {
-          if (err.code === 'ENOENT') {
-            log.warn('Local file does not exist anymore.', { path })
-            // FIXME: with this deletion marker, the record will be erased from
-            // PouchDB while the remote document will remain.
-            doc.trashed = true
-            return doc
+      await async.retry(
+        { times: 5, interval: 2000, errorFilter: isRetryableNetworkError },
+        async () => {
+          let stream
+          try {
+            stream = await this.other.createReadStreamAsync(doc)
+          } catch (err) {
+            if (err.code === 'ENOENT') {
+              log.warn('Local file does not exist anymore.', { path })
+              // FIXME: with this deletion marker, the record will be erased from
+              // PouchDB while the remote document will remain.
+              doc.trashed = true
+              return doc
+            }
+            throw err
           }
-          throw err
+
+          const source = onProgress
+            ? streamUtils.withProgress(stream, onProgress)
+            : stream
+
+          const created = await this.remoteCozy.createFile(source, {
+            ...newDocumentAttributes(name, parent._id, doc.updated_at),
+            checksum: doc.md5sum,
+            executable: doc.executable || false,
+            contentLength: doc.size,
+            contentType: doc.mime
+          })
+          metadata.updateRemote(doc, created)
         }
-
-        const source = onProgress
-          ? streamUtils.withProgress(stream, onProgress)
-          : stream
-
-        const created = await this.remoteCozy.createFile(source, {
-          ...newDocumentAttributes(name, parent._id, doc.updated_at),
-          checksum: doc.md5sum,
-          executable: doc.executable || false,
-          contentLength: doc.size,
-          contentType: doc.mime
-        })
-        metadata.updateRemote(doc, created)
+      )
+    } catch (err) {
+      if (err instanceof MissingDocumentError) {
+        throw new MissingParentError(err)
+      } else {
+        throw err
       }
-    )
+    }
 
     stopMeasure()
   }
@@ -344,30 +357,38 @@ class Remote /*:: implements Reader, Writer */ {
       { path, oldpath: oldMetadata.path }
     )
 
-    const [newParentPath, newName] /*: [string, string] */ = dirAndName(path)
-    const newParent /*: MetadataRemoteDir */ = await this.findDirectoryByPath(
-      newParentPath
-    )
+    try {
+      const [newParentPath, newName] /*: [string, string] */ = dirAndName(path)
+      const newParent /*: MetadataRemoteDir */ = await this.findDirectoryByPath(
+        newParentPath
+      )
 
-    const attrs = {
-      name: newName,
-      dir_id: newParent._id,
-      updated_at: mostRecentUpdatedAt(newMetadata)
-    }
-    const opts = {
-      ifMatch: oldMetadata.remote._rev
-    }
+      const attrs = {
+        name: newName,
+        dir_id: newParent._id,
+        updated_at: mostRecentUpdatedAt(newMetadata)
+      }
+      const opts = {
+        ifMatch: oldMetadata.remote._rev
+      }
 
-    if (overwrite && isOverwritingTarget) {
-      await this.trashAsync(overwrite)
-    }
+      if (overwrite && isOverwritingTarget) {
+        await this.trashAsync(overwrite)
+      }
 
-    const newRemoteDoc = await this.remoteCozy.updateAttributesById(
-      remoteId,
-      attrs,
-      opts
-    )
-    metadata.updateRemote(newMetadata, newRemoteDoc)
+      const newRemoteDoc = await this.remoteCozy.updateAttributesById(
+        remoteId,
+        attrs,
+        opts
+      )
+      metadata.updateRemote(newMetadata, newRemoteDoc)
+    } catch (err) {
+      if (err instanceof MissingDocumentError) {
+        throw new MissingParentError(err)
+      } else {
+        throw err
+      }
+    }
 
     if (overwrite && isOverwritingTarget) {
       try {
@@ -449,11 +470,19 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async findDocByPath(fpath /*: string */) /*: Promise<?MetadataRemoteInfo> */ {
-    const [parentPath, name] = dirAndName(fpath)
-    const { _id: dir_id } = await this.findDirectoryByPath(parentPath)
+    try {
+      const [parentPath, name] = dirAndName(fpath)
+      const { _id: dir_id } = await this.findDirectoryByPath(parentPath)
 
-    const results = await this.remoteCozy.search({ dir_id, name })
-    if (results.length > 0) return results[0]
+      const results = await this.remoteCozy.search({ dir_id, name })
+      if (results.length > 0) return results[0]
+    } catch (err) {
+      if (err instanceof MissingDocumentError) {
+        throw new MissingParentError(err)
+      } else {
+        throw err
+      }
+    }
   }
 
   async findDirectoryByPath(
@@ -470,7 +499,7 @@ class Remote /*:: implements Reader, Writer */ {
     // after a move has been fully synchronzed.
     const dir = await this.pouch.bySyncedPath(pathUtils.remoteToLocal(path))
     if (!dir || dir.deleted || !dir.remote || dir.docType !== metadata.FOLDER) {
-      throw new DirectoryNotFound(path, this.config.cozyUrl)
+      throw new MissingDocumentError({ path, cozyURL: this.config.cozyUrl })
     }
 
     return dir.remote

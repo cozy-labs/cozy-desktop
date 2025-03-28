@@ -31,7 +31,7 @@ const {
   jsonApiToRemoteDoc,
   jsonFileVersionToRemoteFileVersion
 } = require('./document')
-const { DirectoryNotFound } = require('./errors')
+const { MissingDocumentError } = require('./errors')
 const { sortBy } = require('../utils/array')
 const { logger } = require('../utils/logger')
 
@@ -434,10 +434,10 @@ class RemoteCozy {
 
       if (remoteDoc.type === DIR_TYPE) return remoteDoc
 
-      throw new DirectoryNotFound(path, this.url)
+      throw new MissingDocumentError({ path, cozyURL: this.url })
     } catch (err) {
       if (err.status === 404) {
-        throw new DirectoryNotFound(path, this.url)
+        throw new MissingDocumentError({ path, cozyURL: this.url })
       }
       throw err
     }

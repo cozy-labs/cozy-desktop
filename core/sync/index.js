@@ -489,11 +489,11 @@ class Sync {
           case remoteErrors.TWAKE_NOT_FOUND_CODE:
             this.fatal(err)
             break
-          case syncErrors.EXCLUDED_DIR_CODE:
           case syncErrors.INCOMPATIBLE_DOC_CODE:
           case syncErrors.MISSING_PERMISSIONS_CODE:
           case syncErrors.NO_DISK_SPACE_CODE:
           case remoteErrors.CONFLICTING_NAME_CODE:
+          case remoteErrors.EXCLUDED_DIR_CODE:
           case remoteErrors.FILE_TOO_LARGE_CODE:
           case remoteErrors.INVALID_FOLDER_MOVE_CODE:
           case remoteErrors.INVALID_METADATA_CODE:
@@ -1104,11 +1104,11 @@ class Sync {
       this.events.emit('offline')
     } else if (err instanceof syncErrors.SyncError) {
       switch (err.code) {
-        case syncErrors.EXCLUDED_DIR_CODE:
         case syncErrors.INCOMPATIBLE_DOC_CODE:
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
         case remoteErrors.CONFLICTING_NAME_CODE:
+        case remoteErrors.EXCLUDED_DIR_CODE:
         case remoteErrors.FILE_TOO_LARGE_CODE:
         case remoteErrors.INVALID_METADATA_CODE:
         case remoteErrors.INVALID_NAME_CODE:

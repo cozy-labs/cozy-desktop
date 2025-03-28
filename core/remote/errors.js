@@ -17,6 +17,7 @@ const CONFLICTING_NAME_CODE = 'ConflictingName'
 const OAUTH_CLIENT_REVOKED_CODE = 'OAuthClientRevoked'
 const TWAKE_NOT_FOUND_CODE = 'TwakeNotFound'
 const DOCUMENT_IN_TRASH_CODE = 'DocumentInTrash'
+const EXCLUDED_DIR_CODE = 'ExcludedDir'
 const FILE_TOO_LARGE_CODE = 'FileTooLarge'
 const INVALID_FOLDER_MOVE_CODE = 'InvalidFolderMove'
 const INVALID_METADATA_CODE = 'InvalidMetadata'
@@ -36,51 +37,13 @@ const USER_ACTION_REQUIRED_CODE = 'UserActionRequired'
 const OAUTH_CLIENT_REVOKED_MESSAGE =
   'Your Twake Desktop authorizations have been revoked' // Only necessary for the GUI
 
-class DirectoryNotFound extends Error {
-  /*::
-  path: string
-  cozyURL: string
-  */
-
-  constructor(path /*: string */, cozyURL /*: string */) {
-    super(`Directory ${path} was not found on Twake Workplace ${cozyURL}`)
-
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, DirectoryNotFound)
-    }
-
-    this.name = 'DirectoryNotFound'
-    this.path = path
-    this.cozyURL = cozyURL
-  }
-}
-
-class ExcludedDirError extends Error {
-  /*::
-  path: string
-  */
-
-  constructor(path /*: string */) {
-    super(
-      `Directory ${path} was excluded from the synchronization on this client`
-    )
-
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, DirectoryNotFound)
-    }
-
-    this.name = 'ExcludedDirError'
-    this.path = path
-  }
-}
-
 class RemoteError extends Error {
   /*::
   $key: string
   $value: any
 
   code: string
-  originalErr: Error
+  originalErr: ?Error
   */
 
   static fromWarning(warning /*: Warning */) {
@@ -98,7 +61,7 @@ class RemoteError extends Error {
       message,
       err,
       extra = {}
-    } /*: { code?: string, message?: string, err: Error, extra?: Object } */
+    } /*: { code?: string, message?: string, err?: Error, extra?: Object } */
   ) {
     super(message)
 
@@ -106,15 +69,18 @@ class RemoteError extends Error {
       Error.captureStackTrace(this, RemoteError)
     }
 
-    // Copy over all attributes from original error. We copy them before setting
-    // other attributes to make sure the specific RemoteError attributes are not
-    // overwritten.
-    for (const [attr, value] of Object.entries(err)) {
-      Object.defineProperty(this, attr, {
-        value,
-        writable: true,
-        enumerable: true
-      })
+    if (err) {
+      // Copy over all attributes from original error. We copy them before setting
+      // other attributes to make sure the specific RemoteError attributes are not
+      // overwritten.
+      for (const [attr, value] of Object.entries(err)) {
+        Object.defineProperty(this, attr, {
+          value,
+          writable: true,
+          enumerable: true
+        })
+      }
+      this.originalErr = err
     }
 
     // Copy over extra attributes. We copy them before setting other attributes
@@ -129,21 +95,51 @@ class RemoteError extends Error {
 
     this.name = 'RemoteError'
     this.code = code
-    this.originalErr = err
 
-    this.buildMessage()
+    this.buildMessage(message)
   }
 
   // Sets error message to:
-  //   | <Original error message>
-  //   | <Code>: <Original error message>
-  //   | <Custom message>: <Original error message>
-  //   | <Code>: <Custom message>: <Original error message>
-  buildMessage() {
-    this.message =
-      (this.code ? `[${this.code}]: ` : '') +
-      (this.message && this.message !== '' ? `${this.message}: ` : '') +
-      this.originalErr.message
+  //   | [<Code>]
+  //   | [<Code>]: <Original error message>
+  //   | [<Code>]: <Custom message>: <Original error message>
+  buildMessage(customMessage /*: ?string */) {
+    this.message = `[${this.code}]`
+
+    if (customMessage && customMessage !== '')
+      this.message += ` :${customMessage}`
+
+    if (this.originalErr && this.originalErr.message !== '')
+      this.message += ` :${this.originalErr.message}`
+  }
+}
+
+class ExcludedDirError extends RemoteError {
+  constructor({ path } /*: { path: string } */) {
+    super({
+      code: EXCLUDED_DIR_CODE,
+      message: `Directory ${path} was excluded from the synchronization on this client`
+    })
+  }
+}
+
+class MissingDocumentError extends RemoteError {
+  constructor({ path, cozyURL } /*: { path: string, cozyURL: string } */) {
+    super({
+      code: MISSING_DOCUMENT_CODE,
+      message: `Document ${path} was not found on Twake Workplace ${cozyURL}`,
+      extra: { path, cozyURL }
+    })
+  }
+}
+
+class MissingParentError extends RemoteError {
+  constructor({ path, cozyURL } /*: { path: string, cozyURL: string } */) {
+    super({
+      code: MISSING_PARENT_CODE,
+      message: `Parent directory ${path} was not found on Twake Workplace ${cozyURL}`,
+      extra: { path, cozyURL }
+    })
   }
 }
 
@@ -294,17 +290,10 @@ const wrapError = (
           })
         }
     }
-  } else if (err instanceof DirectoryNotFound) {
-    return new RemoteError({
-      code: MISSING_PARENT_CODE,
-      message:
-        'The parent directory of the document is missing on the Twake Workplace',
-      err
-    })
   } else if (err instanceof RemoteError) {
     return err
   } else {
-    return new RemoteError({ err })
+    return new RemoteError({ err, extra: doc })
   }
 }
 
@@ -359,14 +348,16 @@ function isRetryableNetworkError(err /*: Error */) {
 }
 
 module.exports = {
-  DirectoryNotFound,
   ExcludedDirError,
+  MissingDocumentError,
+  MissingParentError,
   RemoteError,
   OAUTH_CLIENT_REVOKED_MESSAGE, // FIXME: should be removed once gui/main does not use it anymore
   CONFLICTING_NAME_CODE,
   OAUTH_CLIENT_REVOKED_CODE,
   TWAKE_NOT_FOUND_CODE,
   DOCUMENT_IN_TRASH_CODE,
+  EXCLUDED_DIR_CODE,
   FILE_TOO_LARGE_CODE,
   INVALID_FOLDER_MOVE_CODE,
   INVALID_METADATA_CODE,
