@@ -36,27 +36,6 @@ const USER_ACTION_REQUIRED_CODE = 'UserActionRequired'
 const OAUTH_CLIENT_REVOKED_MESSAGE =
   'Your Twake Desktop authorizations have been revoked' // Only necessary for the GUI
 
-class CozyDocumentMissingError extends Error {
-  /*::
-  cozyURL: string
-  doc: { name: string }
-  */
-
-  constructor(
-    { cozyURL, doc } /*: { cozyURL: string, doc: { name: string } } */
-  ) {
-    super('Could not find document on Twake Workplace')
-
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, CozyDocumentMissingError)
-    }
-
-    this.name = 'CozyDocumentMissingError'
-    this.cozyURL = cozyURL
-    this.doc = doc
-  }
-}
-
 class DirectoryNotFound extends Error {
   /*::
   path: string
@@ -95,23 +74,6 @@ class ExcludedDirError extends Error {
   }
 }
 
-class UnreachableError extends Error {
-  /*::
-  cozyURL: string
-  */
-
-  constructor({ cozyURL } /*: { cozyURL: string } */) {
-    super('Cannot reach Twake Workplace')
-
-    if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, UnreachableError)
-    }
-
-    this.name = 'UnreachableError'
-    this.cozyURL = cozyURL
-  }
-}
-
 class RemoteError extends Error {
   /*::
   $key: string
@@ -141,7 +103,7 @@ class RemoteError extends Error {
     super(message)
 
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, CozyDocumentMissingError)
+      Error.captureStackTrace(this, RemoteError)
     }
 
     // Copy over all attributes from original error. We copy them before setting
@@ -397,11 +359,9 @@ function isRetryableNetworkError(err /*: Error */) {
 }
 
 module.exports = {
-  CozyDocumentMissingError,
   DirectoryNotFound,
   ExcludedDirError,
   RemoteError,
-  UnreachableError,
   OAUTH_CLIENT_REVOKED_MESSAGE, // FIXME: should be removed once gui/main does not use it anymore
   CONFLICTING_NAME_CODE,
   OAUTH_CLIENT_REVOKED_CODE,
