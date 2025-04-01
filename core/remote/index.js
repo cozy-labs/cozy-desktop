@@ -44,6 +44,7 @@ import type Prep from '../prep'
 import type { RemoteDoc, RemoteFileVersion } from './document'
 import type { Reader } from '../reader'
 import type { Writer } from '../writer'
+import type { RemoteError } from './errors'
 
 export type RemoteOptions = {
   config: Config,
@@ -129,6 +130,14 @@ class Remote /*:: implements Reader, Writer */ {
 
   async stop() {
     await Promise.all([this.watcher.stop(), this.warningsPoller.stop()])
+  }
+
+  onError(listener /*: RemoteError => any */) {
+    this.watcher.onError(listener)
+  }
+
+  onFatal(listener /*: Error => any */) {
+    this.watcher.onFatal(listener)
   }
 
   sendMail(args /*: any */) {

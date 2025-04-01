@@ -185,9 +185,7 @@ const retry = async (
   }
 
   // Await to make sure we've fetched potential remote changes
-  if (sync.remote.watcher && !sync.remote.watcher.running) {
-    await sync.remote.watcher.start()
-  }
+  await sync.remote.start()
 }
 
 const skip = async (
@@ -202,9 +200,7 @@ const skip = async (
     await sync.skipChange(cause.change, cause.err)
   }
 
-  if (!sync.remote.watcher.running) {
-    await sync.remote.watcher.start()
-  }
+  await sync.remote.start()
 }
 
 const createConflict = async (

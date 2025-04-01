@@ -26,6 +26,10 @@ import type { SavedMetadata } from '../../../core/metadata'
 import type { Change } from '../../../core/sync'
 */
 
+const events = new EventEmitter()
+const localFatalError = err => events.emit('local:fatal', err)
+const remoteFatalError = err => events.emit('remote:fatal', err)
+
 const localSyncError = (msg, doc) =>
   new syncErrors.SyncError({
     code: syncErrors.UNKNOWN_SYNC_ERROR_CODE,
@@ -46,60 +50,50 @@ const remoteSyncError = (msg, doc) =>
   })
 
 describe('Sync', function() {
+  let builders
+
   before('instanciate config', configHelpers.createConfig)
   beforeEach('instanciate pouch', pouchHelpers.createDatabase)
-  afterEach('clean pouch', pouchHelpers.cleanDatabase)
-  after('clean config directory', configHelpers.cleanConfig)
-
   beforeEach('instanciate sync', function() {
     this.local = stubSide('local')
     this.remote = stubSide('remote')
     this.ignore = new Ignore(['ignored'])
-    this.events = new EventEmitter()
     this.sync = new Sync(
       this.pouch,
       this.local,
       // $FlowFixMe the remote stub is not recognized as a Remote instance
       this.remote,
       this.ignore,
-      this.events
+      events
     )
+    sinon.spy(this.sync.events, 'emit')
   })
-
-  afterEach(async function() {
-    await this.sync.stop()
-  })
-
-  let builders
   beforeEach('prepare builders', function() {
     builders = new Builders(this)
   })
 
+  afterEach(async function() {
+    this.sync.events.emit.restore()
+    await this.sync.stop()
+  })
+  afterEach('clean pouch', pouchHelpers.cleanDatabase)
+  after('clean config directory', configHelpers.cleanConfig)
+
   describe('start', function() {
     beforeEach('instanciate sync', function() {
-      const events = new EventEmitter()
-
       this.local.start = sinon.stub().resolves()
-      this.local.watcher.onFatal = sinon.stub().callsFake(listener => {
+      this.local.onFatal = sinon.stub().callsFake(listener => {
         events.on('local:fatal', listener)
-      })
-      this.local.watcher.fatal = sinon.stub().callsFake(err => {
-        events.emit('local:fatal', err)
       })
       this.local.stop = sinon.stub().resolves()
       this.remote.start = sinon.stub().resolves()
-      this.remote.watcher.running = true
-      this.remote.watcher.onError = sinon.stub().returns()
-      this.remote.watcher.onFatal = sinon.stub().callsFake(listener => {
+      this.remote.onError = sinon.stub().returns()
+      this.remote.onFatal = sinon.stub().callsFake(listener => {
         events.on('remote:fatal', listener)
-      })
-      this.remote.watcher.fatal = sinon.stub().callsFake(err => {
-        events.emit('remote:fatal', err)
       })
       this.remote.stop = sinon.stub().resolves()
       this.sync.runSyncLoop = sinon.stub().resolves()
       sinon.spy(this.sync, 'stop')
-      sinon.spy(this.sync.events, 'emit')
     })
 
     it('starts the metadata replication of both sides', async function() {
@@ -110,7 +104,7 @@ describe('Sync', function() {
       should(this.sync.runSyncLoop).have.been.called()
     })
 
-    context('if local watcher fails to start', () => {
+    context('if local side fails to start', () => {
       beforeEach(function() {
         this.local.start = sinon.stub().rejects(new Error('failed'))
       })
@@ -120,12 +114,12 @@ describe('Sync', function() {
         should(this.sync.runSyncLoop).not.have.been.called()
       })
 
-      it('does not start remote watcher', async function() {
+      it('does not start remote side', async function() {
         await this.sync.start()
         should(this.remote.start).not.have.been.called()
       })
 
-      it('stops local watcher', async function() {
+      it('stops local side', async function() {
         await this.sync.start()
         should(this.local.stop).have.been.calledOnce()
       })
@@ -136,24 +130,24 @@ describe('Sync', function() {
       })
     })
 
-    context('if remote watcher throws fatal error during start', () => {
+    context('if the remote side throws fatal error during start', () => {
       beforeEach(function() {
         this.remote.start = sinon.stub().callsFake(() => {
-          this.remote.watcher.fatal(new Error('failed'))
+          remoteFatalError(new Error('failed'))
         })
       })
 
-      it('starts local watcher', async function() {
+      it('starts local side', async function() {
         await this.sync.start()
         should(this.local.start).have.been.calledOnce()
       })
 
-      it('stops local watcher', async function() {
+      it('stops local side', async function() {
         await this.sync.start()
         should(this.local.stop).have.been.calledOnce()
       })
 
-      it('stops remote watcher', async function() {
+      it('stops remote side', async function() {
         await this.sync.start()
         should(this.remote.stop).have.been.calledOnce()
       })
@@ -169,32 +163,32 @@ describe('Sync', function() {
       })
     })
 
-    context('if local watcher rejects while running', () => {
+    context('if local side rejects while running', () => {
       beforeEach(async function() {
         this.sync.start()
         await this.sync.started()
       })
 
       it('stops replication', async function() {
-        this.local.watcher.fatal(new Error('failed'))
+        localFatalError(new Error('failed'))
         await this.sync.stopped()
         should(this.sync.stop).have.been.calledOnce()
       })
 
-      it('stops local watcher', async function() {
-        this.local.watcher.fatal(new Error('failed'))
+      it('stops local side', async function() {
+        localFatalError(new Error('failed'))
         await this.sync.stopped()
         should(this.local.stop).have.been.calledOnce()
       })
 
-      it('stops remote watcher', async function() {
-        this.local.watcher.fatal(new Error('failed'))
+      it('stops remote side', async function() {
+        localFatalError(new Error('failed'))
         await this.sync.stopped()
         should(this.remote.stop).have.been.calledOnce()
       })
 
       it('emits a Sync:fatal event', async function() {
-        this.local.watcher.fatal(new Error('failed'))
+        localFatalError(new Error('failed'))
         await this.sync.stopped()
         should(this.sync.events.emit).have.been.calledWith('Sync:fatal')
       })
@@ -954,15 +948,12 @@ describe('Sync', function() {
 
   describe('blockSyncFor', () => {
     beforeEach(function() {
-      sinon.spy(this.events, 'emit')
-      this.remote.watcher = {
-        start: sinon.stub().returns(),
-        stop: sinon.stub().returns()
-      }
+      this.remote.start = sinon.stub().resolves()
+      this.remote.stop = sinon.stub().resolves()
     })
     afterEach(function() {
-      delete this.remote.watcher
-      this.events.emit.restore()
+      delete this.remote.start
+      delete this.remote.stop
     })
 
     context('when Sync is already blocked for a reason', () => {
@@ -1014,20 +1005,20 @@ describe('Sync', function() {
       })
 
       it('emits offline event', function() {
-        should(this.events.emit).have.been.calledWith('offline')
+        should(this.sync.events.emit).have.been.calledWith('offline')
       })
 
-      it('stops the remote watcher', function() {
-        should(this.remote.watcher.stop).have.been.called()
+      it('stops the remote side', function() {
+        should(this.remote.stop).have.been.called()
       })
 
-      // If the remote watcher encounters a network issue and throws an
+      // If the remote side encounters a network issue and throws an
       // `UnreachableCozy` error while Sync has encountered a similar
       // `UnreachableCozy` error right before that, there's a risk the remote
-      // watcher error will overwrite the `Sync.retryInterval` attribute with a
-      // new interval without clearing the one created by the Sync error.
-      // It this case we could have an endless Sync error retry loop. This test
-      // checks that this does not occur.
+      // error will overwrite the `Sync.retryInterval` attribute with a new
+      // interval without clearing the one created by the Sync error. It this
+      // case we could have an endless Sync error retry loop. This test checks
+      // that this does not occur.
       it('does not allow multiple retry intervals', async function() {
         const unreachableRemoteError = remoteErrors.wrapError(
           new FetchError(
@@ -1058,46 +1049,46 @@ describe('Sync', function() {
         context('after Cozy is reachable again', () => {
           beforeEach(async function() {
             // Reset calls history
-            this.events.emit.resetHistory()
+            this.sync.events.emit.resetHistory()
 
             // Cozy is reachable
             this.remote.ping = sinon.stub().resolves(true)
 
             // Force call to `retry`
-            this.events.emit('user-action-done')
+            this.sync.events.emit('user-action-done')
             // Wait for `retry` to run
             await Promise.delay(1000)
           })
 
           it('emits online event', async function() {
-            should(this.events.emit).have.been.calledWith('online')
+            should(this.sync.events.emit).have.been.calledWith('online')
           })
 
-          it('restarts the remote watcher', function() {
-            should(this.remote.watcher.start).have.been.called()
+          it('restarts the remote side', function() {
+            should(this.remote.start).have.been.called()
           })
         })
 
         context('while Cozy is still unreachable', () => {
           beforeEach(async function() {
             // Reset calls history
-            this.events.emit.resetHistory()
+            this.sync.events.emit.resetHistory()
 
             // Cozy is unreachable
             this.remote.ping = sinon.stub().resolves(false)
 
             // Force call to `retry`
-            this.events.emit('user-action-done')
+            this.sync.events.emit('user-action-done')
             // Wait for `retry` to run
             await Promise.delay(1000)
           })
 
           it('emits offline event', async function() {
-            should(this.events.emit).have.been.calledWith('offline')
+            should(this.sync.events.emit).have.been.calledWith('offline')
           })
 
-          it('does not restart the remote watcher', function() {
-            should(this.remote.watcher.start).not.have.been.called()
+          it('does not restart the remote side', function() {
+            should(this.remote.start).not.have.been.called()
           })
         })
       })
@@ -1167,10 +1158,10 @@ describe('Sync', function() {
       describe('retry', () => {
         beforeEach(async function() {
           // Reset calls history
-          this.events.emit.resetHistory()
+          this.sync.events.emit.resetHistory()
 
           // Force call to `retry`
-          this.events.emit('user-action-done')
+          this.sync.events.emit('user-action-done')
           // Wait for `retry` to run
           await Promise.delay(1000)
         })

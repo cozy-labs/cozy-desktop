@@ -269,13 +269,13 @@ class Sync {
     // client) will not be thrown and thus not handled if these listeners are
     // not attached before starting the watchers.
     // This results in the Sync starting without both watchers.
-    this.remote.watcher.onError(err => {
+    this.remote.onError(err => {
       this.blockSyncFor({ err })
     })
-    this.remote.watcher.onFatal(err => {
+    this.remote.onFatal(err => {
       this.fatal(err)
     })
-    this.local.watcher.onFatal(err => {
+    this.local.onFatal(err => {
       this.fatal(err)
     })
 
@@ -1096,11 +1096,11 @@ class Sync {
     // It will be started again with the next retry or if the user action is
     // skipped.
     if (err instanceof remoteErrors.RemoteError) {
-      this.remote.watcher.stop()
+      this.remote.stop()
     }
 
     if (err.code === remoteErrors.UNREACHABLE_COZY_CODE) {
-      this.remote.watcher.stop()
+      this.remote.stop()
       this.events.emit('offline')
     } else if (err instanceof syncErrors.SyncError) {
       switch (err.code) {

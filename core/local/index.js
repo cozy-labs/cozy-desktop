@@ -131,6 +131,10 @@ class Local /*:: implements Reader, Writer */ {
     return this.watcher.stop()
   }
 
+  onFatal(listener /*: Error => any */) {
+    this.watcher.onFatal(listener)
+  }
+
   /** Create a readable stream for the given doc */
   async createReadStreamAsync(
     doc /*: SavedMetadata */
