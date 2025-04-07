@@ -15,6 +15,7 @@ const { ROOT_DIR_ID, DIR_TYPE } = require('./constants')
 const { RemoteCozy } = require('./cozy')
 const {
   ExcludedDirError,
+  ForbiddenDeletionError,
   isRetryableNetworkError,
   MissingDocumentError,
   MissingParentError
@@ -423,6 +424,11 @@ class Remote /*:: implements Reader, Writer */ {
     const { path } = doc
     log.info('Moving to the trash...', { path })
 
+    if (await this.isProtectedDocument(doc)) {
+      log.warn('Trying to modify protected document; aborting', { doc })
+      throw new ForbiddenDeletionError(doc)
+    }
+
     try {
       const newRemoteDoc = await this.remoteCozy.trashById(doc.remote._id, {
         ifMatch: doc.remote._rev
@@ -551,6 +557,25 @@ class Remote /*:: implements Reader, Writer */ {
     return oldVersions.some(
       version => version.md5sum === md5sum && Number(version.size) === size
     )
+  }
+
+  async synchronizeDocument(
+    remoteDoc /*: MetadataRemoteInfo */,
+    { recursive = false } /*: { recursive?: boolean } */ = {}
+  ) {
+    await this.watcher.processRemoteChanges([remoteDoc], {
+      isRecursiveFetch: recursive
+    })
+  }
+
+  async isProtectedDocument(
+    doc /*: Metadata|SavedMetadata */
+  ) /*: Promise<boolean> */ {
+    if (doc.remote == null || doc.remote.type !== DIR_TYPE) return false
+
+    if (this.remoteCozy.isSharedDrivesRoot(doc.remote)) return true
+
+    return this.remoteCozy.isSharedDrive(doc.remote)
   }
 }
 

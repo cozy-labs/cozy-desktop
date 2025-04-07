@@ -19,6 +19,7 @@ const TWAKE_NOT_FOUND_CODE = 'TwakeNotFound'
 const DOCUMENT_IN_TRASH_CODE = 'DocumentInTrash'
 const EXCLUDED_DIR_CODE = 'ExcludedDir'
 const FILE_TOO_LARGE_CODE = 'FileTooLarge'
+const FORBIDDEN_DELETION_CODE = 'ForbiddenDeletion'
 const INVALID_FOLDER_MOVE_CODE = 'InvalidFolderMove'
 const INVALID_METADATA_CODE = 'InvalidMetadata'
 const INVALID_NAME_CODE = 'InvalidName'
@@ -139,6 +140,17 @@ class MissingParentError extends RemoteError {
       code: MISSING_PARENT_CODE,
       message: `Parent directory ${path} was not found on Twake Workplace ${cozyURL}`,
       extra: { path, cozyURL }
+    })
+  }
+}
+
+class ForbiddenDeletionError extends RemoteError {
+  constructor(doc /*: SavedMetadata */) {
+    super({
+      code: FORBIDDEN_DELETION_CODE,
+      message:
+        'The document is protected on the remote Cozy and thus cannot be deleted',
+      extra: { doc }
     })
   }
 }
@@ -349,6 +361,7 @@ function isRetryableNetworkError(err /*: Error */) {
 
 module.exports = {
   ExcludedDirError,
+  ForbiddenDeletionError,
   MissingDocumentError,
   MissingParentError,
   RemoteError,
@@ -359,6 +372,7 @@ module.exports = {
   DOCUMENT_IN_TRASH_CODE,
   EXCLUDED_DIR_CODE,
   FILE_TOO_LARGE_CODE,
+  FORBIDDEN_DELETION_CODE,
   INVALID_FOLDER_MOVE_CODE,
   INVALID_METADATA_CODE,
   INVALID_NAME_CODE,

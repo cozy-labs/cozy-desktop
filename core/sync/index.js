@@ -589,6 +589,23 @@ class Sync {
               }
             }
             break
+          // XXX: we need to handle forbidden deletions here rather than in
+          // Merge because we can process a folder's content deletion faster
+          // than we process the deletion of the folder itself otherwise.
+          case remoteErrors.FORBIDDEN_DELETION_CODE:
+            // Do not symchronize forbidden change
+            await this.skipChange(change, err)
+
+            // Cleanup PouchDB
+            // XXX: No need to cleanup children as they've already been erased
+            // from PouchDB since we make sure to trash folders from the root.
+            await this.pouch.eraseDocument(err.doc)
+
+            // Download protected document from Cozy with its potential children
+            await this.remote.synchronizeDocument(err.doc.remote, {
+              recursive: metadata.isFolder(err.doc.remote)
+            })
+            break
           default:
             if (shouldAttemptRetry(change)) {
               this.blockSyncFor({ err, change })

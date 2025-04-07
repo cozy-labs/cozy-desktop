@@ -20,6 +20,7 @@ module.exports = {
   JOBS_DOCTYPE: 'io.cozy.jobs',
   OAUTH_CLIENTS_DOCTYPE: 'io.cozy.oauth.clients',
   SETTINGS_DOCTYPE: 'io.cozy.settings',
+  SHARINGS_DOCTYPE: 'io.cozy.sharings',
   VERSIONS_DOCTYPE: 'io.cozy.files.versions',
 
   // Files document type
@@ -28,6 +29,7 @@ module.exports = {
 
   // Special document ids
   ROOT_DIR_ID: 'io.cozy.files.root-dir',
+  SHARED_DRIVES_DIR_ID: 'io.cozy.files.shared-drives-dir',
   TRASH_DIR_ID: 'io.cozy.files.trash-dir',
 
   TRASH_DIR_NAME: '.cozy_trash',

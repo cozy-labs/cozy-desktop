@@ -22,6 +22,8 @@ const {
   MAX_FILE_SIZE,
   OAUTH_CLIENTS_DOCTYPE,
   SETTINGS_DOCTYPE,
+  SHARED_DRIVES_DIR_ID,
+  SHARINGS_DOCTYPE,
   VERSIONS_DOCTYPE
 } = require('./constants')
 const {
@@ -619,6 +621,27 @@ class RemoteCozy {
       return []
     }
   }
+
+  isSharedDrivesRoot(
+    doc /*: MetadataRemoteFile|MetadataRemoteDir */
+  ) /*: boolean */ {
+    return doc._id === SHARED_DRIVES_DIR_ID
+  }
+
+  async isSharedDrive(
+    remoteDoc /*: MetadataRemoteFile|MetadataRemoteDir */
+  ) /*: Promise<boolean> */ {
+    // TODO: add method in `cozy-client`'s `SharingCollection`
+    const { data: sharedDrives } = await this.client
+      .collection(SHARINGS_DOCTYPE)
+      .findAll({ active: true, drive: true })
+
+    return sharedDrives.some(hasSharedDoc(remoteDoc))
+  }
+}
+
+function hasSharedDoc(remoteDoc /*: MetadataRemoteFile|MetadataRemoteDir */) {
+  return sharing => sharing.rules.some(r => r.values.includes(remoteDoc._id))
 }
 
 async function fetchChangesFromFeed(
