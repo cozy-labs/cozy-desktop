@@ -606,6 +606,16 @@ class Sync {
               recursive: metadata.isFolder(err.doc.remote)
             })
             break
+          case remoteErrors.FORBIDDEN_MOVE_CODE: {
+            // XXX: we use `blockSyncFor` so we can release the lock on
+            // PouchDB, manage potential conflicts AND be able to wait for the
+            // conflict resolution to be merged in PouchDB before unblocking
+            // the synchronization.
+            // Otherwise Sync could try to synchronize the conflicting change as
+            // part of the same batch.
+            this.blockSyncFor({ err, change })
+            break
+          }
           default:
             if (shouldAttemptRetry(change)) {
               this.blockSyncFor({ err, change })
@@ -1039,11 +1049,14 @@ class Sync {
     }
   }
 
-  blockSyncFor(
+  async blockSyncFor(
     cause
     /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */
   ) {
     log.info('blocking sync for error', cause)
+
+    // Clear any existing interval since we're replacing the blocking error
+    clearInterval(this.retryInterval)
 
     const { err } = cause
 
@@ -1093,15 +1106,6 @@ class Sync {
 
       this.lifecycle.unblockFor(err.code)
     }
-
-    // Clear any existing interval since we'll replace it
-    clearInterval(this.retryInterval)
-    // We'll automatically retry to sync the change after a delay
-    const retryDelay = syncErrors.retryDelay(err)
-    this.retryInterval = setInterval(
-      executeCommand.bind(this, { cmd: 'retry' }),
-      retryDelay
-    )
 
     // FIXME: possible memory leak as it seems possible to add lots of listeners
     // without removing them (maybe if we have multiple blocking changes?)
@@ -1156,6 +1160,22 @@ class Sync {
         default:
         // Hide the error from the user as we should be able to solve it
       }
+    }
+
+    if (cause.err.code === remoteErrors.FORBIDDEN_MOVE_CODE) {
+      try {
+        // $FlowFixMe we know we're dealing with a SyncError and cause has a change
+        await syncErrors.revertMove(cause, this)
+      } finally {
+        this.lifecycle.unblockFor(err.code)
+      }
+    } else {
+      // We'll automatically retry to sync the change after a delay
+      const retryDelay = syncErrors.retryDelay(err)
+      this.retryInterval = setInterval(
+        executeCommand.bind(this, { cmd: 'retry' }),
+        retryDelay
+      )
     }
   }
 

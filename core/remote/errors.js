@@ -20,6 +20,7 @@ const DOCUMENT_IN_TRASH_CODE = 'DocumentInTrash'
 const EXCLUDED_DIR_CODE = 'ExcludedDir'
 const FILE_TOO_LARGE_CODE = 'FileTooLarge'
 const FORBIDDEN_DELETION_CODE = 'ForbiddenDeletion'
+const FORBIDDEN_MOVE_CODE = 'ForbiddenMove'
 const INVALID_FOLDER_MOVE_CODE = 'InvalidFolderMove'
 const INVALID_METADATA_CODE = 'InvalidMetadata'
 const INVALID_NAME_CODE = 'InvalidName'
@@ -151,6 +152,17 @@ class ForbiddenDeletionError extends RemoteError {
       message:
         'The document is protected on the remote Cozy and thus cannot be deleted',
       extra: { doc }
+    })
+  }
+}
+
+class ForbiddenMoveError extends RemoteError {
+  constructor(doc /*: SavedMetadata */) {
+    super({
+      code: FORBIDDEN_MOVE_CODE,
+      message:
+        'The document is protected on the remote Cozy and thus cannot be moved or renamed',
+      extra: { doc, was: doc.moveFrom }
     })
   }
 }
@@ -362,6 +374,7 @@ function isRetryableNetworkError(err /*: Error */) {
 module.exports = {
   ExcludedDirError,
   ForbiddenDeletionError,
+  ForbiddenMoveError,
   MissingDocumentError,
   MissingParentError,
   RemoteError,
@@ -373,6 +386,7 @@ module.exports = {
   EXCLUDED_DIR_CODE,
   FILE_TOO_LARGE_CODE,
   FORBIDDEN_DELETION_CODE,
+  FORBIDDEN_MOVE_CODE,
   INVALID_FOLDER_MOVE_CODE,
   INVALID_METADATA_CODE,
   INVALID_NAME_CODE,

@@ -263,6 +263,53 @@ const linkDirectories = async (
   }
 }
 
+const revertMove = async (
+  cause /*: {| err: SyncError, change: Change |} */,
+  sync /*: Sync */
+) => {
+  const { change, err } = cause
+
+  const { doc } = change
+  const oldDoc = doc.moveFrom
+  if (oldDoc == null) return
+
+  // Do not symchronize the move we're reverting
+  await sync.skipChange(change, err)
+
+  const release = await sync.pouch.lock(sync)
+  try {
+    // Cleanup PouchDB
+    const children = await sync.pouch.byRecursivePath(doc.path)
+    await sync.pouch.eraseDocuments([doc].concat(children))
+    release() // XXX: necessary to avoid mutual lock with `waitForNewChangeOn`
+
+    // Rename any document now at move's original path
+    const replacerDoc = await sync.pouch.byLocalPath(oldDoc.local.path)
+    if (replacerDoc != null) {
+      const conflict = await sync.local.resolveConflict(replacerDoc)
+
+      // Wait for our conflict resolution to make it to PouchDB to avoid
+      // synchronizing the replacing move.
+      await sync.waitForNewChangeOn(change.seq, conflict.path)
+    }
+
+    // Trash locally moved folder
+    // FIXME: it would be nicer to revert the local move to avoid re-dowloading
+    // the binaries but the local watcher would receive `renamed` events for a
+    // folder that does not exist in PouchDB anymore and we handle that very
+    // well (e.g. on linux, we don't scan its content and we don't even merge
+    // the folder's metadata in PouchDB…).
+    await sync.local.trashAsync(doc)
+
+    // Download protected document from Cozy with its potential children
+    await sync.remote.synchronizeDocument(doc.remote, {
+      recursive: metadata.isFolder(doc.remote)
+    })
+  } finally {
+    release() // XXX: in case an error occurred, release the PouchDB lock anyway
+  }
+}
+
 /* This method wraps errors caught during a Sync.apply call.
  * Those errors were most probably raised from the Local or Remote side thus
  * making a SyncError type unnecessary.
@@ -316,5 +363,6 @@ module.exports = {
   skip,
   createConflict,
   linkDirectories,
+  revertMove,
   wrapError
 }

@@ -16,6 +16,7 @@ const { RemoteCozy } = require('./cozy')
 const {
   ExcludedDirError,
   ForbiddenDeletionError,
+  ForbiddenMoveError,
   isRetryableNetworkError,
   MissingDocumentError,
   MissingParentError
@@ -356,6 +357,13 @@ class Remote /*:: implements Reader, Writer */ {
     newMetadata /*: T */,
     oldMetadata /*: T */
   ) /*: Promise<void> */ {
+    if (await this.isProtectedDocument(oldMetadata)) {
+      log.warn('Trying to move protected document; aborting', {
+        doc: oldMetadata
+      })
+      throw new ForbiddenMoveError(oldMetadata, newMetadata)
+    }
+
     const remoteId = oldMetadata.remote._id
     const { path, overwrite } = newMetadata
     const isOverwritingTarget =
