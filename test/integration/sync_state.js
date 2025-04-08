@@ -49,7 +49,7 @@ describe('Sync state', () => {
     })
 
     const remoteFile = builders.remoteFile().build()
-    await helpers._remote.watcher.processRemoteChanges([remoteFile], {
+    await helpers.remote.watcher.processRemoteChanges([remoteFile], {
       isInitialFetch: true // XXX: avoid unnecessary remote requests
     })
     await helpers.syncAll()

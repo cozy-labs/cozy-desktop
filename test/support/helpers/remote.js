@@ -22,6 +22,7 @@ const {
 import type { CozyClient } from 'cozy-client'
 import type { Pouch } from '../../../core/pouch'
 import type { RemoteOptions } from '../../../core/remote'
+import type { RemoteWatcher } from '../../../core/remote/watcher'
 import type { FullRemoteFile, RemoteDir, RemoteDoc } from '../../../core/remote/document'
 import type { Metadata, MetadataRemoteInfo } from '../../../core/metadata'
 
@@ -60,6 +61,10 @@ class RemoteTestHelpers {
     return this._builders
   }
 
+  get watcher() /*: RemoteWatcher */ {
+    return this.side.getWatcher(ROOT_DIR_ID)
+  }
+
   async clean() {
     const queryDef = Q(FILES_DOCTYPE)
       .where({
@@ -91,9 +96,9 @@ class RemoteTestHelpers {
   }
 
   async pullChanges() {
-    this.side.watcher.running = true
-    await this.side.watcher.requestRun()
-    this.side.watcher.running = false
+    this.watcher.running = true
+    await this.watcher.requestRun()
+    this.watcher.running = false
   }
 
   async getRootDir() {
@@ -286,7 +291,7 @@ class RemoteTestHelpers {
   }
 
   async simulateChanges(docs /*: * */) {
-    await this.side.watcher.processRemoteChanges(docs, {
+    await this.watcher.processRemoteChanges(docs, {
       isInitialFetch: false
     })
   }

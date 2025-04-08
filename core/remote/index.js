@@ -93,7 +93,7 @@ class Remote /*:: implements Reader, Writer */ {
   config: Config
   pouch: Pouch
   events: EventEmitter
-  watcher: RemoteWatcher
+  watchers: Map<string, RemoteWatcher>
   remoteCozy: RemoteCozy
   warningsPoller: RemoteWarningPoller
   */
@@ -105,41 +105,65 @@ class Remote /*:: implements Reader, Writer */ {
     this.events = events
     this.remoteCozy = new RemoteCozy(config)
     this.warningsPoller = new RemoteWarningPoller(this.remoteCozy, events)
-    this.watcher = new RemoteWatcher({
-      config: this.config,
-      pouch: this.pouch,
-      events: this.events,
-      remoteCozy: this.remoteCozy,
-      prep
-    })
+    this.watchers = new Map([
+      [
+        ROOT_DIR_ID,
+        new RemoteWatcher({
+          config: this.config,
+          pouch: this.pouch,
+          events: this.events,
+          remoteCozy: this.remoteCozy,
+          prep
+        })
+      ]
+    ])
 
     autoBind(this)
   }
 
+  getWatcher(id /*: string */) /*: RemoteWatcher */ {
+    const watcher = this.watchers.get(id)
+    if (watcher == null) {
+      throw new Error(`Missing ${ROOT_DIR_ID} remote watcher`)
+    }
+
+    return watcher
+  }
+
+  async mapWatchers(fn /*: RemoteWatcher => any */) {
+    return Promise.all([...this.watchers.values()].map(fn))
+  }
+
   async start() {
-    await this.watcher.start()
+    await this.mapWatchers(watcher => watcher.start())
     return this.warningsPoller.start()
   }
 
   async resume() {
-    await this.watcher.resume()
+    await this.mapWatchers(watcher => watcher.resume())
     return this.warningsPoller.start()
   }
 
   async suspend() {
-    await Promise.all([this.watcher.suspend(), this.warningsPoller.stop()])
+    await Promise.all([
+      this.mapWatchers(watcher => watcher.suspend()),
+      this.warningsPoller.stop()
+    ])
   }
 
   async stop() {
-    await Promise.all([this.watcher.stop(), this.warningsPoller.stop()])
+    await Promise.all([
+      this.mapWatchers(watcher => watcher.stop()),
+      this.warningsPoller.stop()
+    ])
   }
 
   onError(listener /*: RemoteError => any */) {
-    this.watcher.onError(listener)
+    this.watchers.forEach(watcher => watcher.onError(listener))
   }
 
   onFatal(listener /*: Error => any */) {
-    this.watcher.onFatal(listener)
+    this.watchers.forEach(watcher => watcher.onFatal(listener))
   }
 
   sendMail(args /*: any */) {
@@ -571,7 +595,7 @@ class Remote /*:: implements Reader, Writer */ {
     remoteDoc /*: MetadataRemoteInfo */,
     { recursive = false } /*: { recursive?: boolean } */ = {}
   ) {
-    await this.watcher.processRemoteChanges([remoteDoc], {
+    await this.getWatcher(ROOT_DIR_ID).processRemoteChanges([remoteDoc], {
       isRecursiveFetch: recursive
     })
   }

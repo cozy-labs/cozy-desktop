@@ -6,6 +6,7 @@ const { start } = require('repl')
 
 require('../core/globals')
 const { App } = require('../core/app')
+const { ROOT_DIR_ID } = require('../core/remote/constants')
 
 const basePath = process.env.COZY_DESKTOP_DIR
 if (basePath == null) throw new Error('COZY_DESKTOP_DIR is undefined')
@@ -22,7 +23,7 @@ The following objects are available:
 
 if (config.isValid()) {
   app.instanciate()
-  cozy = app.remote.watcher.remoteCozy.client
+  cozy = app.remote.getWatcher(ROOT_DIR_ID).remoteCozy.client
   // eslint-disable-next-line no-console
   console.log(`  cozy     A cozy-client instance, set up with your config
 
