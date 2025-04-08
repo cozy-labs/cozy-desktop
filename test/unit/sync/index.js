@@ -401,6 +401,48 @@ describe('Sync', function() {
       }
     })
 
+    it('skips trashing a locally deleted file event if its parent deletion has not been merged yet', async function() {
+      const parent = await builders
+        .metadir()
+        .path('foo')
+        .upToDate()
+        .create()
+      const deletedChild = await builders
+        .metadata()
+        .path('foo/bar')
+        .trashed()
+        .changedSide('local')
+        .create()
+      const change /*: Change */ = {
+        changes: [{ rev: deletedChild._rev }],
+        doc: deletedChild,
+        id: deletedChild._id,
+        seq: 145,
+        operation: { type: 'DEL', side: 'remote' }
+      }
+
+      // XXX: Parent should not exist on the filesystem for this to work.
+      this.local.exists = sinon
+        .stub()
+        .callsFake(async p => p !== parent.local.path)
+      this.remote.trashAsync = sinon.stub().resolves(true)
+
+      sinon.spy(this.sync, 'trashWithParentOrByItself')
+      try {
+        await this.sync.apply(change)
+        should(this.sync.trashWithParentOrByItself).have.been.calledWith(
+          deletedChild,
+          this.remote
+        )
+        should(this.remote.trashAsync).not.have.been.called()
+        // XXX: the child change is erased after we've skipped it since it is
+        // marked as `deleted`.
+        should(await this.pouch.bySyncedPath(deletedChild.path)).be.undefined()
+      } finally {
+        this.sync.trashWithParentOrByItself.restore()
+      }
+    })
+
     it('calls applyDoc for a modified file', async function() {
       const initial = await builders
         .metafile()
@@ -1156,6 +1198,52 @@ describe('Sync', function() {
           const synced = await this.pouch.bySyncedPath(merged.path)
           should(synced).not.have.properties(['moveFrom', 'overwrite'])
         })
+      })
+    })
+
+    describe('isMissing', () => {
+      it('checks if a file is missing on the given side', async function() {
+        this.local.exists = sinon.stub().resolves(false)
+        this.remote.exists = sinon.stub().resolves(false)
+
+        const doc = await builders
+          .metafile()
+          .path('folder/testfile')
+          .upToDate()
+          .create()
+        await should(this.sync.isMissing(doc, 'local')).be.fulfilledWith(true)
+        await should(this.sync.isMissing(doc, 'remote')).be.fulfilledWith(true)
+
+        this.local.exists.resolves(true)
+        await should(this.sync.isMissing(doc, 'local')).be.fulfilledWith(false)
+
+        this.remote.exists.callsFake(async p => {
+          if (p.startsWith('/')) return true
+          else throw new Error('Path needs to be absolute')
+        })
+        await should(this.sync.isMissing(doc, 'remote')).be.fulfilledWith(false)
+      })
+
+      it('checks if a folder is missing on the given side', async function() {
+        this.local.exists = sinon.stub().resolves(false)
+        this.remote.exists = sinon.stub().resolves(false)
+
+        const doc = await builders
+          .metadir()
+          .path('folder/testdir')
+          .upToDate()
+          .create()
+        await should(this.sync.isMissing(doc, 'local')).be.fulfilledWith(true)
+        await should(this.sync.isMissing(doc, 'remote')).be.fulfilledWith(true)
+
+        this.local.exists.resolves(true)
+        await should(this.sync.isMissing(doc, 'local')).be.fulfilledWith(false)
+
+        this.remote.exists.callsFake(async p => {
+          if (p.startsWith('/')) return true
+          else throw new Error('Path needs to be absolute')
+        })
+        await should(this.sync.isMissing(doc, 'remote')).be.fulfilledWith(false)
       })
     })
   })

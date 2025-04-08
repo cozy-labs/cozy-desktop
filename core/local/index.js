@@ -217,6 +217,10 @@ class Local /*:: implements Reader, Writer */ {
     return false
   }
 
+  async exists(relpath /*: string */) /*: Promise<boolean> */ {
+    return fse.exists(this.abspath(relpath))
+  }
+
   /* Write operations */
 
   /**

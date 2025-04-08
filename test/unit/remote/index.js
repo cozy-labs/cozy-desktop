@@ -1211,6 +1211,28 @@ describe('remote.Remote', function() {
     })
   })
 
+  describe('exists', () => {
+    it('checks for file existence on the remote Cozy', async function() {
+      const filepath = '/folder/testfile'
+
+      await should(this.remote.exists(filepath)).be.fulfilledWith(false)
+
+      await remoteHelpers.createFileByPath(filepath)
+
+      await should(this.remote.exists(filepath)).be.fulfilledWith(true)
+    })
+
+    it('checks for dir existence on the remote Cozy', async function() {
+      const dirpath = '/folder/testdir'
+
+      await should(this.remote.exists(dirpath)).be.fulfilledWith(false)
+
+      await remoteHelpers.createDirectoryByPath(dirpath)
+
+      await should(this.remote.exists(dirpath)).be.fulfilledWith(true)
+    })
+  })
+
   describe('findDirectoryByPath', () => {
     let oldRemoteDir, newRemoteDir, oldDir, dir
     beforeEach(async function() {
