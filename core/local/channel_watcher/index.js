@@ -134,16 +134,14 @@ class ChannelWatcher {
     this.producer = producer(opts)
     this.state = {}
 
-    const stepOptions /* ChannelWatcherStepOptions */ = Object.assign(
-      {},
-      {
-        checksumer: this.checksumer,
-        scan: this.producer.scan,
-        state: this.state,
-        fatal: this.fatal
-      },
-      opts
-    )
+    const stepOptions /* ChannelWatcherStepOptions */ = {
+      checksumer: this.checksumer,
+      scan: this.producer.scan,
+      state: this.state,
+      fatal: this.fatal.bind(this),
+      ...opts
+    }
+
     // Here, we build the chain of steps.
     STEPS.reduce(
       (

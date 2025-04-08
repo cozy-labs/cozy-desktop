@@ -54,6 +54,7 @@ export type SyncStatus =
 export type SyncError = {|
   name: string,
   code: string,
+  message: string,
 |}
 */
 
@@ -110,11 +111,12 @@ const removeAlert = (
 }
 
 const makeError = (err /*: Object */) /*: SyncError */ => {
-  const { name = '', code = '' } = err
+  const { name = '', code = '', message = '' } = err
 
   return {
     name,
-    code
+    code,
+    message
   }
 }
 
