@@ -33,16 +33,16 @@ icon status platform =
         Darwin ->
             case status of
                 UpToDate ->
-                    imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "uptodate"
+                    imgIcon "images/tray-icon-macos/idleTemplate@2x.png" "uptodate"
 
                 UserActionRequired ->
-                    imgIcon "images/tray-icon-osx/pauseTemplate@2x.png" "offline"
+                    imgIcon "images/tray-icon-macos/pauseTemplate@2x.png" "offline"
 
                 Offline ->
-                    imgIcon "images/tray-icon-osx/offlineTemplate@2x.png" "offline"
+                    imgIcon "images/tray-icon-macos/offlineTemplate@2x.png" "offline"
 
                 Error _ ->
-                    imgIcon "images/tray-icon-osx/errorTemplate@2x.png" "error"
+                    imgIcon "images/tray-icon-macos/errorTemplate@2x.png" "error"
 
                 _ ->
                     span [ class "status__icon spin" ] []
