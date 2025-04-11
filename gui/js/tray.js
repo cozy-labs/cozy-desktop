@@ -20,8 +20,8 @@ const platformIcon = (iconName, { pressed = false } = {}) =>
   nativeImage.createFromPath(
     isMac
       ? pressed
-        ? `${imgs}/tray-icon-osx/${iconName}Highlight.png`
-        : `${imgs}/tray-icon-osx/${iconName}Template.png`
+        ? `${imgs}/tray-icon-macos/${iconName}Highlight.png`
+        : `${imgs}/tray-icon-macos/${iconName}Template.png`
       : `${imgs}/tray-icon/${iconName}.png`
   )
 
