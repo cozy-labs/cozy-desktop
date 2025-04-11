@@ -130,7 +130,7 @@ Almost everything is in the `*.AppImage` file however, if you have installed
 
 Everything else works the same as Windows or macOS: your synchronized files are
 in `~/Cozy Drive/` or the folder you choose on first run, and the hidden
-`~/.cozy-desktop/` folder contains the application configuration, metadata and
+`~/.twake-desktop/` folder contains the application configuration, metadata and
 logs.
 
 ## Displaying the app window
@@ -153,7 +153,7 @@ effects so you need to do a right-click on the icon then select the
 > **Note for i3wm Users**
 >
 > You can set `"gui": {"visibleOnBlur": true}` in your
-> `~/.cozy-desktop/config.json` so the popover doesn't hide when focusing
+> `~/.twake-desktop/config.json` so the popover doesn't hide when focusing
 > another window.
 
 ## Uninstall

@@ -52,7 +52,7 @@ function loop(
       if (eventToKeep) {
         batch.push(eventToKeep)
       } else {
-        log.debug('Ignored via .cozyignore', { event })
+        log.debug('Ignored via syncignore', { event })
       }
     }
 

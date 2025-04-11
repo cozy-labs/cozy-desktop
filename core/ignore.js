@@ -1,6 +1,6 @@
 /** Ignored files/directories handling.
  *
- * Cozy-desktop can ignore some files and folders with a `.cozyignore` file. This
+ * Cozy-desktop can ignore some files and folders with a `syncignore` file. This
  * file is read only at the startup of Cozy-desktop. So, if this file is
  * modified, cozy-desktop has to be relaunched for the changes to be effective.
  *
@@ -28,7 +28,7 @@
  *
  * In practice, it's really convenient to let the changes from the remote couchdb
  * flows to pouchdb, even for ignored files, as it is very costly to find them
- * later if `.cozyignore` has changed. And it's a lot easier to detect local
+ * later if `syncignore` has changed. And it's a lot easier to detect local
  * files that were ignored but are no longer at the startup, as cozy-desktop
  * already does a full scan of the local file system at that moment.
  *
@@ -168,11 +168,11 @@ function match(
 }
 
 /** The default rules included in the repo */
-const defaultRulesPath = resolve(__dirname, './config/.cozyignore')
+const defaultRulesPath = resolve(__dirname, './config/syncignore')
 
 /**
  * Cozy-desktop can ignore some files and folders from a list of patterns in the
- * cozyignore file. This class can be used to know if a file/folder is ignored.
+ * syncignore file. This class can be used to know if a file/folder is ignored.
  */
 class Ignore {
   /*::

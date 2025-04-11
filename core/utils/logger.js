@@ -5,7 +5,6 @@
  */
 
 const os = require('os')
-const path = require('path')
 
 const fse = require('fs-extra')
 const _ = require('lodash')
@@ -13,14 +12,13 @@ const winston = require('winston')
 const DailyRotateFile = require('winston-daily-rotate-file')
 const { combine, json, splat, timestamp, printf } = winston.format
 
+const { findBasePath } = require('../migrations/configPaths')
+
 /*::
 export type Logger = winston.Logger
 */
 
-const LOG_DIR = path.join(
-  process.env.COZY_DESKTOP_DIR || os.homedir(),
-  '.cozy-desktop'
-)
+const LOG_DIR = findBasePath(process.env.COZY_DESKTOP_DIR || os.homedir())
 const LOG_BASENAME = 'logs.txt'
 
 fse.ensureDirSync(LOG_DIR)

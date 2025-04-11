@@ -10,6 +10,7 @@ const path = require('path')
 const fse = require('fs-extra')
 const _ = require('lodash')
 
+const { getPath } = require('./migrations/configPaths')
 const { hideOnWindows } = require('./utils/fs')
 const { logger } = require('./utils/logger')
 
@@ -37,6 +38,10 @@ type FileConfig = Object
  * Users who will have skipped the version introducing the flag will see all
  * their checksums re-computed.
  */
+
+const IGNORE_RULES_FILE_NAME = 'syncignore'
+const LEGACY_IGNORE_RULES_FILE_NAME = '.cozyignore'
+
 const WINDOWS_DATE_MIGRATION_APP_VERSION = '3.28.1'
 const WINDOWS_DATE_MIGRATION_FLAG = 'roundWindowsDatesToSecondInInitialDiff'
 
@@ -58,6 +63,7 @@ class InvalidConfigError extends Error {
 // like the devices credentials or the mount path
 class Config {
   /*::
+  basePath: string
   configPath: string
   dbPath: string
   fileConfig: FileConfig
@@ -65,6 +71,7 @@ class Config {
 
   // Create config file if it doesn't exist.
   constructor(basePath /*: string */) {
+    this.basePath = basePath
     this.configPath = path.join(basePath, 'config.json')
     fse.ensureFileSync(this.configPath)
     this.dbPath = path.join(basePath, 'db')
@@ -134,6 +141,14 @@ class Config {
   // Set the path on the local file system of the synchronized folder
   set syncPath(path /*: string */) {
     this.fileConfig.path = path
+  }
+
+  // Path to the file containing user-defined ignore rules
+  get ignoreRulesPath() /*: string */ {
+    return getPath(this.basePath, {
+      newName: IGNORE_RULES_FILE_NAME,
+      legacyName: LEGACY_IGNORE_RULES_FILE_NAME
+    })
   }
 
   // Return the URL of the cozy instance

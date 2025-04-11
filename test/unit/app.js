@@ -8,6 +8,7 @@ const should = require('should')
 const sinon = require('sinon')
 
 const { App } = require('../../core/app')
+const { BASE_DIR_NAME } = require('../../core/migrations/configPaths')
 const { FetchError } = require('../../core/remote/cozy')
 const { LOG_BASENAME } = require('../../core/utils/logger')
 const pkg = require('../../package.json')
@@ -229,7 +230,7 @@ describe('App', function() {
 
       should(info).deepEqual({
         appVersion: version,
-        configPath: path.join(basePath, '.cozy-desktop', 'config.json'),
+        configPath: path.join(basePath, BASE_DIR_NAME, 'config.json'),
         configVersion: '',
         cozyUrl: undefined,
         deviceName: '',
