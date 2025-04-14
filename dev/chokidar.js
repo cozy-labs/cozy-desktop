@@ -54,7 +54,7 @@ function startChokidar() {
 
   const watcher = chokidar.watch('.', {
     cwd: syncPath,
-    ignored: /(^|[\/\\])\.system-tmp-cozy-drive/, // eslint-disable-line no-useless-escape
+    ignored: /(^|[\/\\])\.system-tmp-twake-desktop/, // eslint-disable-line no-useless-escape
     followSymlinks: false,
     alwaysStat: true,
     usePolling: process.platform === 'win32',

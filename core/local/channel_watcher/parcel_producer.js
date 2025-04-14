@@ -175,7 +175,7 @@ class Producer {
     if (event.path === this.config.syncPath) {
       return null
     }
-    if (/(^|[/\\])\.system-tmp-cozy-drive/.test(event.path)) {
+    if (/(^|[/\\])\.system-tmp-(cozy-drive|twake-desktop)/.test(event.path)) {
       return null
     }
 

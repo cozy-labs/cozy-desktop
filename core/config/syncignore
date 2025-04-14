@@ -3,8 +3,10 @@
 # all hidden files
 .*
 
-# Cozy
-.system-tmp-cozy-drive/
+# Legacy Cozy Desktop tmp folder
+.system-tmp-cozy-desktop/
+# Twake Desktop tmp folder
+.system-tmp-twake-desktop/
 
 # Dropbox
 .dropbox

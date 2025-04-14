@@ -13,7 +13,6 @@ const autoBind = require('auto-bind')
 const bluebird = require('bluebird')
 const fse = require('fs-extra')
 
-const { TMP_DIR_NAME } = require('./constants')
 const stater = require('./stater')
 const metadata = require('../metadata')
 const syncDir = require('./sync_dir')
@@ -92,7 +91,7 @@ class Local /*:: implements Reader, Writer */ {
     this.pouch = opts.pouch
     this.events = opts.events
     this.syncPath = opts.config.syncPath
-    this.tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
+    this.tmpPath = opts.config.tmpPath
     this.sendToTrash = opts.sendToTrash
     this.watcher = watcher.build(opts)
     // $FlowFixMe

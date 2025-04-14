@@ -14,11 +14,14 @@ module.exports = {
   createConfig() {
     let parent = process.env.COZY_DESKTOP_DIR || 'tmp'
     this.basePath = path.resolve(`${parent}/test/${+new Date()}`)
-    this.syncPath = path.join(this.basePath, 'Cozy Drive')
-    fse.ensureDirSync(this.syncPath)
+
     this.config = config.load(findBasePath(this.basePath))
-    this.config.syncPath = this.syncPath
+    this.config.syncPath = path.join(this.basePath, 'Cozy Drive')
     this.config.cozyUrl = COZY_URL
+
+    this.syncPath = this.config.syncPath
+    fse.ensureDirSync(this.syncPath)
+    this.tmpPath = this.config.tmpPath
   },
 
   registerClient() {

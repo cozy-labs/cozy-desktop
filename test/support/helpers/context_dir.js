@@ -8,8 +8,8 @@ const fse = require('fs-extra')
 const _ = require('lodash')
 const rimraf = require('rimraf')
 
+const { TMP_DIR_NAME } = require('../../../core/config')
 const checksumer = require('../../../core/local/checksumer')
-const { TMP_DIR_NAME } = require('../../../core/local/constants')
 const stater = require('../../../core/local/stater')
 
 Promise.promisifyAll(checksumer)

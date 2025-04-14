@@ -42,6 +42,9 @@ type FileConfig = Object
 const IGNORE_RULES_FILE_NAME = 'syncignore'
 const LEGACY_IGNORE_RULES_FILE_NAME = '.cozyignore'
 
+const TMP_DIR_NAME = '.system-tmp-twake-desktop'
+const LEGACY_TMP_DIR_NAME = '.system-tmp-cozy-desktop'
+
 const WINDOWS_DATE_MIGRATION_APP_VERSION = '3.28.1'
 const WINDOWS_DATE_MIGRATION_FLAG = 'roundWindowsDatesToSecondInInitialDiff'
 
@@ -148,6 +151,14 @@ class Config {
     return getPath(this.basePath, {
       newName: IGNORE_RULES_FILE_NAME,
       legacyName: LEGACY_IGNORE_RULES_FILE_NAME
+    })
+  }
+
+  // Path to the local folder where files are temporarily downloaded
+  get tmpPath() /*: string */ {
+    return getPath(this.syncPath, {
+      newName: TMP_DIR_NAME,
+      legacyName: LEGACY_TMP_DIR_NAME
     })
   }
 
@@ -337,6 +348,7 @@ function validateWatcherType(watcherType /*: ?string */) /*: ?WatcherType */ {
 
 module.exports = {
   INVALID_CONFIG_ERROR,
+  TMP_DIR_NAME,
   WINDOWS_DATE_MIGRATION_APP_VERSION,
   WINDOWS_DATE_MIGRATION_FLAG,
   InvalidConfigError,
