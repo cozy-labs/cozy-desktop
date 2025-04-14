@@ -129,7 +129,7 @@ Almost everything is in the `*.AppImage` file however, if you have installed
 - Icons in `~/.local/share/icons/hicolor/*/apps/appimagekit<same unique identifier>-cozydrive.png`
 
 Everything else works the same as Windows or macOS: your synchronized files are
-in `~/Cozy Drive/` or the folder you choose on first run, and the hidden
+in `~/Twake/` or the folder you choose on first run, and the hidden
 `~/.twake-desktop/` folder contains the application configuration, metadata and
 logs.
 

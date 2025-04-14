@@ -36,9 +36,9 @@ type alias Model =
 
 
 init : String -> String -> Model
-init folder platform =
+init defaultSyncPath platform =
     { page = WelcomePage
-    , context = Context.init platform folder
+    , context = Context.init platform defaultSyncPath
     }
 
 

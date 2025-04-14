@@ -4,7 +4,6 @@ const { enable: enableRemoteModule } = require('@electron/remote/main')
 const { dialog, session, BrowserView, shell } = require('electron')
 
 const autoLaunch = require('./autolaunch')
-const defaults = require('./defaults')
 const { translate } = require('./i18n')
 const { SESSION_PARTITION_NAME } = require('./network')
 const { addFileManagerShortcut } = require('./shortcut')
@@ -55,7 +54,7 @@ module.exports = class OnboardingWM extends WindowManager {
       setTimeout(async () => {
         await this.sendSyncConfig()
         // XXX: Passing this as an event sender is a bit hacky...
-        this.checkSyncPath(defaults.syncPath, this)
+        this.checkSyncPath(this.desktop.config.syncPath, this)
       }, 20)
     })
   }
@@ -214,7 +213,7 @@ module.exports = class OnboardingWM extends WindowManager {
         this.win.webContents.once('dom-ready', () => {
           setTimeout(async () => {
             await this.sendSyncConfig()
-            this.checkSyncPath(defaults.syncPath, event.sender) // Why ???
+            this.checkSyncPath(this.desktop.config.syncPath, event.sender) // Why ???
           }, 20)
         })
         this.win.loadURL(redirectURI)

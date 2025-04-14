@@ -1,8 +1,8 @@
 module Data.SyncFolderConfig exposing
     ( SyncFolderConfig
+    , init
     , isValid
     , setError
-    , valid
     )
 
 
@@ -12,8 +12,8 @@ type alias SyncFolderConfig =
     }
 
 
-valid : String -> SyncFolderConfig
-valid folder =
+init : String -> SyncFolderConfig
+init folder =
     { folder = folder
     , error = Nothing
     }

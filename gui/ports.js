@@ -25,7 +25,7 @@ const elmectron = Elm.Main.init({
   node: container,
   flags: {
     hash: window.location.hash,
-    folder: defaults.syncPath,
+    defaultSyncPath: defaults.syncPath,
     locale: remote.app.locale,
     locales: {
       en: remote.require('./locales/en.json'),

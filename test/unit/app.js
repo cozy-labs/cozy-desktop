@@ -8,6 +8,7 @@ const should = require('should')
 const sinon = require('sinon')
 
 const { App } = require('../../core/app')
+const { DEFAULT_SYNC_DIR_NAME } = require('../../core/local/constants')
 const { BASE_DIR_NAME } = require('../../core/migrations/configPaths')
 const { FetchError } = require('../../core/remote/cozy')
 const { LOG_BASENAME } = require('../../core/utils/logger')
@@ -166,7 +167,7 @@ describe('App', function() {
     })
 
     it('can be the default dir', () => {
-      const syncPath = path.join(os.homedir(), 'Cozy Drive')
+      const syncPath = path.join(os.homedir(), DEFAULT_SYNC_DIR_NAME)
       const result = App.prototype.checkSyncPath(syncPath)
       should(result).deepEqual({ syncPath })
     })
