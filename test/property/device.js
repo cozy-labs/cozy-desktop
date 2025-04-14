@@ -56,7 +56,7 @@ class Device {
     env.COZY_DESKTOP_DIR = this.desktopDir
     env.COZY_DESKTOP_HEARTBEAT = 10000
     env.COZY_DESKTOP_PROPERTY_BASED_TESTING = true
-    // TODO it would be nice to start cozy-desktop without the GUI
+    // TODO it would be nice to start Twake Desktop without the GUI
     this.child = spawn('yarn', ['run', 'electron', '.'], {
       stdio: ['ignore', 'ignore', 'ignore'],
       cwd: path.join(__dirname, '../..'),

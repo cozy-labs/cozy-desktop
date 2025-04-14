@@ -9,7 +9,7 @@ const log = require('../../core/app').logger({
   component: 'GUI'
 })
 
-const APP_NAME = 'Cozy-Desktop'
+const APP_NAME = 'Twake-Desktop'
 const opts = {
   name: APP_NAME,
   isHidden: true

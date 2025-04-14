@@ -1,6 +1,6 @@
 # Setting Up a Development Environment
 
-Cozy Desktop is based on [electron](https://electronjs.org/) and the code is mostly written in JavaScript.
+Twake Desktop is based on [electron](https://electronjs.org/) and the code is mostly written in JavaScript.
 To start developing, check the prerequisites and follow the guide below.
 
 The following commands should work in a Unix shell (Bash or ZSH for example)
@@ -14,7 +14,7 @@ To develop and build the source code, you will need the following:
 -   [Node.js](https://nodejs.org/)
 -   [Yarn](https://yarnpkg.com/)
 -   [Docker](https://www.docker.com/)
--   [Cozy Stack in Docker](./requirements.md#set-up-a-cozy-stack)
+-   [Twake Workplace in Docker](./requirements.md#set-up-a-cozy-stack)
 
 Consult [./requirements.md](./requirements.md) for help on this topic.
 
@@ -54,7 +54,7 @@ If you need to update translations, you'll need a Transifex API token at this st
 yarn start
 ```
 
-N.B.: the address of the development cozy-stack is http://cozy.localhost:8080. Don't forget the protocol part when creating the connection in cozy-desktop for the first time or it won't find the server.
+N.B.: the address of the development cozy-stack is http://cozy.localhost:8080. Don't forget the protocol part when creating the connection in Twake Desktop for the first time or it won't find the server.
 
 ## Run tests
 

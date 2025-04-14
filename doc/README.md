@@ -1,5 +1,5 @@
 ---
-title: Cozy-Desktop documentation - Table of contents
+title: Twake Desktop documentation - Table of contents
 ---
 
 ## Usage

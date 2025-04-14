@@ -138,7 +138,7 @@ class App {
     return { syncPath }
   }
 
-  // Return a promise for registering a device on the remote cozy
+  // Return a promise for registering a device on the Twake Workplace
   async registerRemote(
     cozyUrl /*: string */,
     redirectURI /*: ?string */,
@@ -174,7 +174,7 @@ class App {
       }
 
       await this.removeConfig()
-      log.info('Current device properly removed from remote cozy.')
+      log.info('Current device properly unlinked from Twake Workplace.')
       return null
     } catch (err) {
       log.error('An error occured while unregistering the device.', {
@@ -292,7 +292,7 @@ class App {
     const args = {
       mode: 'from',
       to: [{ name: 'Support', email: SUPPORT_EMAIL }],
-      subject: 'Ask support for cozy-desktop',
+      subject: 'Support requested with Twake Desktop',
       parts: [{ type: 'text/plain', body: content }]
     }
     const mailSent = this.remote.sendMail(args)
@@ -419,7 +419,7 @@ class App {
     }
   }
 
-  // Get disk space informations from the cozy
+  // Get disk space informations from the Twake Workplace
   diskUsage() /*: Promise<*> */ {
     if (!this.remote) this.instanciate()
     return this.remote.diskUsage()

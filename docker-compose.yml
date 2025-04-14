@@ -1,14 +1,14 @@
 version: '2.1'
 services:
   cozy:
-    container_name: cozy-desktop-stack
+    container_name: twake-desktop-stack
     image: cozy/cozy-app-dev:latest
     ports:
       - "8080:8080"
       - "8025:8025"
       - "5984:5984"
     volumes:
-      - .:/cozy-desktop
+      - .:/twake-desktop
       # Mounting storage files on a Windows or macOS workstation is a bad idea
       # since it may generate FS-specific cozy-stack issues.
       # Better keep them in the GNU/Linux container to match the current

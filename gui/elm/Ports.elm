@@ -13,9 +13,9 @@ port module Ports exposing
     , focus
     , folder
     , folderError
-    , gotocozy
     , gotofolder
     , gototab
+    , gototwake
     , mail
     , manualStartSync
     , newRelease
@@ -31,7 +31,7 @@ port module Ports exposing
     , showInParent
     , startSync
     , transfer
-    , unlinkCozy
+    , unlinkTwake
     )
 
 import Data.File exposing (EncodedFile)
@@ -59,7 +59,7 @@ port folder : (SyncFolderConfig -> msg) -> Sub msg
 port folderError : (String -> msg) -> Sub msg
 
 
-port gotocozy : Bool -> Cmd msg
+port gototwake : Bool -> Cmd msg
 
 
 port gotofolder : Bool -> Cmd msg
@@ -104,7 +104,7 @@ port startSync : String -> Cmd msg
 port transfer : (EncodedFile -> msg) -> Sub msg
 
 
-port unlinkCozy : () -> Cmd msg
+port unlinkTwake : () -> Cmd msg
 
 
 port reinitializeSynchronization : () -> Cmd msg

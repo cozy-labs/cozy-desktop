@@ -8,8 +8,8 @@ module Data.SyncError exposing
 
 
 type SyncError
-    = CozyNotFound
-    | CozyClientRevoked
+    = TwakeNotFound
+    | OAuthClientRevoked
     | MissingPermissions
     | None
     | SynchronizationImpossible
@@ -24,11 +24,11 @@ type alias EncodedSyncError =
 decode : EncodedSyncError -> SyncError
 decode { name, code } =
     case code of
-        "CozyNotFound" ->
-            CozyNotFound
+        "TwakeNotFound" ->
+            TwakeNotFound
 
-        "CozyClientRevoked" ->
-            CozyClientRevoked
+        "OAuthClientRevoked" ->
+            OAuthClientRevoked
 
         "MissingPermissions" ->
             MissingPermissions
@@ -48,11 +48,11 @@ decodeLatest errors =
 message : SyncError -> String
 message error =
     case error of
-        CozyNotFound ->
-            "Error Your Cozy could not be found"
+        TwakeNotFound ->
+            "Error Your Twake Workplace could not be found"
 
-        CozyClientRevoked ->
-            "Cozy client has been revoked"
+        OAuthClientRevoked ->
+            "Your Twake Desktop authorizations have been revoked"
 
         MissingPermissions ->
             "Dashboard Synchronization impossible"

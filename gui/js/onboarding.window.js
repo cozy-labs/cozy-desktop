@@ -238,7 +238,7 @@ module.exports = class OnboardingWM extends WindowManager {
         } else {
           event.sender.send(
             'registration-error',
-            translate('Address No cozy instance at this address!')
+            translate('Address No Twake Workplace at this address!')
           )
         }
         throw err

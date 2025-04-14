@@ -186,7 +186,7 @@ onPlatforms(['linux', 'win32'], () => {
       it('detect events on file in temp dir', async () => {
         const filename = 'barbaz'
         const newname = 'barfoobaz'
-        const content = 'Hello, Cozy Drive for Desktop'
+        const content = 'Hello, Twake Desktop'
 
         await syncDir.outputFile(filename, content)
         const { ino, fileid } = await stater.stat(syncDir.abspath(filename))

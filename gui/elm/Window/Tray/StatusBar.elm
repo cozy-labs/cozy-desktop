@@ -69,7 +69,7 @@ statusToString : Helpers -> Status -> String
 statusToString helpers status =
     case status of
         UpToDate ->
-            helpers.t "Dashboard Your cozy is up to date!"
+            helpers.t "Dashboard Your Twake Workplace is up to date!"
 
         Offline ->
             helpers.t "Dashboard Offline"

@@ -1,4 +1,4 @@
-# Build Cozy Drive for the GNU/Linux
+# Build Twake Desktop for GNU/Linux
 
 **If your distribution is supported, it is much  easier to use our provided `.AppImage` file**
 

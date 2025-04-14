@@ -95,7 +95,7 @@ class LocalWatcher {
     this.pendingChanges = []
 
     // To detect which files&folders have been removed since the last run of
-    // cozy-desktop, we keep all the paths seen by chokidar during its
+    // Twake Desktop, we keep all the paths seen by chokidar during its
     // initial scan in @paths to compare them with pouchdb database.
     this.initialScanParams = {
       paths: [],

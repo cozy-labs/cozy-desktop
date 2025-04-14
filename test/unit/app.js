@@ -175,7 +175,7 @@ describe('App', function() {
     it('can be a subdir of the user home', () => {
       const syncPath = path.join(
         os.homedir(),
-        'Cozy Drive Test ' + new Date().getTime()
+        'Twake Desktop Test ' + new Date().getTime()
       )
       const result = App.prototype.checkSyncPath(syncPath)
       should(result).deepEqual({ syncPath })

@@ -33,14 +33,14 @@ const log = logger({
 const POUCHDB_BATCH_SIZE = 1000
 
 // Pouchdb is used to store all the metadata about files and folders.
-// These metadata can come from the local filesystem or the remote cozy instance.
+// These metadata can come from the local filesystem or the Twake Workplace.
 //
 // Best practices from:
 // http://pouchdb.com/2014/06/17/12-pro-tips-for-better-code-with-pouchdb.html
 // http://docs.ehealthafrica.org/couchdb-best-practices/
 //
-// For naming conventions, we kept those used on cozy and its couchdb. And
-// views name are in camelcase (byChecksum, not by-checksum).
+// For naming conventions, we kept those used on Twake Workplace and its
+// couchdb. And views name are in camelcase (byChecksum, not by-checksum).
 class Pouch {
   /*::
   config: Config
@@ -521,7 +521,7 @@ class Pouch {
     await this.createDesignDoc('byChecksum', query)
   }
 
-  // Create a view to find file/folder by their _id on a remote cozy
+  // Create a view to find file/folder by their _id on a Twake Workplace
   async addByRemoteIdView() {
     /* !pragma no-coverage-next */
     /* istanbul ignore next */

@@ -60,7 +60,7 @@ type Command
 
 type Msg
     = SendCommand Command UserAlert -- send specified command to client
-    | ShowInParent Path ShowInWeb -- open file explorer or Cozy Drive Web at parent's path
+    | ShowInParent Path ShowInWeb -- open file explorer or web Twake Drive at parent's path
     | ShowHelp
 
 
@@ -300,7 +300,7 @@ viewByCode helpers alert =
         RemoteError "UnknownRemoteError" ->
             { title = "Error Unexpected error"
             , content =
-                [ "Error Cozy Desktop encountered an unexpected error while trying to reach your Cozy."
+                [ "Error Twake Desktop encountered an unexpected error while trying to reach your Twake Workplace."
                 , "Error Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed."
                 ]
             , buttons =
@@ -325,8 +325,8 @@ viewByCode helpers alert =
         RemoteWarning "UserActionRequired" { link } ->
             { title = "CGUUpdated The ToS have been updated"
             , content =
-                [ "CGUUpdated Your Cozy hosting provider informs you that it has updated its Terms of Service (ToS)."
-                , "CGUUpdated Their acceptance is required to continue using your Cozy."
+                [ "CGUUpdated Your Twake Workplace hosting provider informs you that it has updated its Terms of Service (ToS)."
+                , "CGUUpdated Their acceptance is required to continue using your Twake Workplace."
                 ]
             , buttons =
                 [ actionButton helpers (SendCommand Retry alert) "UserAlert OK" Secondary
@@ -405,8 +405,8 @@ viewByCode helpers alert =
             in
             { title = "Error Invalid document metadata"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s metadata cannot be accepted by your Cozy."
-                , "Error This message persists if the local metadata of your document is corrupted. In this case try to move it out of the Cozy Drive folder and back again or contact support for help on the procedure."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s metadata cannot be accepted by your Twake Workplace."
+                , "Error This message persists if the local metadata of your document is corrupted. In this case try to move it out of the Twake folder and back again or contact support for help on the procedure."
                 ]
             , buttons =
                 [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary
@@ -420,7 +420,7 @@ viewByCode helpers alert =
             in
             { title = "Error Invalid document name"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name contains characters forbidden by your Cozy."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name contains characters forbidden by your Twake Workplace."
                 , "Error Try renaming it without using the following characters: / \\u{0000} \\n \\u{000D}."
                 ]
             , buttons = [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ]
@@ -433,7 +433,7 @@ viewByCode helpers alert =
             in
             { title = "Error Access denied temporarily"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be updated on your computer to apply the changes made on your Cozy."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be updated on your computer to apply the changes made on your Twake Workplace."
                 , "Error Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights."
                 ]
             , buttons = [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ]
@@ -446,8 +446,8 @@ viewByCode helpers alert =
             in
             { title = "Error Conflict with remote version"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` has been simultaneously modified on your computer and your Cozy."
-                , "Error This message persists if Cozy is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` has been simultaneously modified on your computer and your Twake Workplace."
+                , "Error This message persists if Twake Desktop is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
                 ]
             , buttons =
                 [ actionButton helpers (SendCommand GiveUp alert) "UserAlert Give up" SecondaryWithDanger
@@ -460,9 +460,9 @@ viewByCode helpers alert =
                 localDocType =
                     "Helpers " ++ docType
             in
-            { title = "Error Your Cozy's disk space is saturated"
+            { title = "Error Your Twake Workplace's disk space is saturated"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be written to your Cozy's disk because its maximum storage capacity has been reached."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be written to your Twake Workplace because its maximum storage capacity has been reached."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files...), or increased its capacity."
                 ]
             , buttons = [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ] -- Could show link to buy more disk space
@@ -488,7 +488,7 @@ viewByCode helpers alert =
             in
             { title = "Error Document path with too many levels"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Cozy."
+                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Twake Workplace."
                 , "Error Try removing some parent levels or moving it to antoher folder."
                 ]
             , buttons = [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ]
@@ -511,7 +511,7 @@ viewByCode helpers alert =
             in
             { title = "Error Synchronization error"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error Cozy Desktop encountered an unexpected error while trying to synchronise the {0} `{1}`."
+                [ helpers.interpolate [ localDocType, path ] "Error Twake Desktop encountered an unexpected error while trying to synchronise the {0} `{1}`."
                 , "Error Your hosting provider is working on fixing the issue and the synchronization will automatically be retried periodically."
                 ]
             , buttons =

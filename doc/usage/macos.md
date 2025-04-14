@@ -1,4 +1,4 @@
-# Cozy Drive on macOS
+# Twake Desktop on macOS
 
 ## Supported versions
 

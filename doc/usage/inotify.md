@@ -5,7 +5,7 @@ How to increase the number of inotify watches
 What is this limit?
 -------------------
 
-Under GNU/Linux, cozy-desktop is notified of file system changes via inotify.
+Under GNU/Linux, Twake Desktop is notified of file system changes via inotify.
 This mechanism has a limit for the number of files and directories that it can
 watch, to avoid taking too much memory.
 

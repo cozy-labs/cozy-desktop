@@ -87,7 +87,7 @@ const openNote = async (
               level: 'error',
               title: translate('Error This note could not be found'),
               details: translate(
-                "Error Check that the note still exists either on your Cozy or its owner's." +
+                "Error Check that the note still exists either on your Twake Workplace or its owner's." +
                   ' This could also mean that the note is out of sync.'
               )
             }
@@ -95,7 +95,7 @@ const openNote = async (
           case 'UnreachableError':
             banner = {
               level: 'info',
-              title: translate('Error Your Cozy is unreachable'),
+              title: translate('Error Your Twake Workplace is unreachable'),
               details: translate(
                 'Error Are you connected to the Internet?' +
                   ' You can nevertheless read the content of your note below in degraded mode.'

@@ -1,4 +1,4 @@
-# Cozy Drive on Windows
+# Twake Desktop on Windows
 
 ## Supported versions
 

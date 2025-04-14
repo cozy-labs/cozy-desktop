@@ -8,7 +8,7 @@ const WindowManager = require('./window_manager')
 module.exports = class CozyWebWM extends WindowManager {
   windowOptions() {
     return {
-      title: 'Cozy',
+      title: 'Twake Workplace',
       show: true,
       center: true,
       width: SCREEN_WIDTH,
@@ -21,7 +21,7 @@ module.exports = class CozyWebWM extends WindowManager {
   }
 
   hash() {
-    return '#cozy'
+    return '#twake-workplace'
   }
 
   on(event /*: Event */, handler /*: Function */) {

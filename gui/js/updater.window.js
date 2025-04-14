@@ -78,8 +78,8 @@ module.exports = class UpdaterWM extends WindowManager {
         const shouldUpdate =
           dialog.showMessageBoxSync({
             icon: path.resolve(__dirname, '..', 'images', 'icon.png'),
-            title: 'Cozy Drive',
-            message: 'Cozy Drive',
+            title: 'Twake Desktop',
+            message: 'Twake Desktop',
             detail: translate(
               'A new version is available, do you want to update?'
             ),

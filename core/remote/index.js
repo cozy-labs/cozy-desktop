@@ -71,7 +71,7 @@ const ROOT_DIR /*: MetadataRemoteDir */ = {
   path: '/'
 }
 
-/** `Remote` is the class that interfaces cozy-desktop with the remote Cozy.
+/** `Remote` is the class that interfaces Twake Desktop with the remote Twake Workplace.
  *
  * It uses a watcher, based on cozy-client, to poll for file and folder changes
  * from the remote CouchDB.

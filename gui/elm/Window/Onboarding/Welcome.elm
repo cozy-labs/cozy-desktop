@@ -40,7 +40,7 @@ view helpers context =
                 , href "#"
                 , onClick NextPage
                 ]
-                [ span [] [ text (helpers.t "Welcome Sign in to your Cozy") ] ]
+                [ span [] [ text (helpers.t "Welcome Sign in to my Twake Workplace") ] ]
             , a
                 [ href ("https://cozy.io/en/try-it/?from=desktop-" ++ context.platform)
                 , class "more-info"
