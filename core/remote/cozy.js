@@ -622,6 +622,15 @@ class RemoteCozy {
     }
   }
 
+  // TODO: add method in `cozy-client`'s `SharingCollection`
+  async fetchSharedDrives() {
+    const { data: sharedDrives } = await this.client
+      .collection(SHARINGS_DOCTYPE)
+      .findAll({ active: true, drive: true })
+
+    return sharedDrives
+  }
+
   isSharedDrivesRoot(
     doc /*: MetadataRemoteFile|MetadataRemoteDir */
   ) /*: boolean */ {
@@ -631,10 +640,7 @@ class RemoteCozy {
   async isSharedDrive(
     remoteDoc /*: MetadataRemoteFile|MetadataRemoteDir */
   ) /*: Promise<boolean> */ {
-    // TODO: add method in `cozy-client`'s `SharingCollection`
-    const { data: sharedDrives } = await this.client
-      .collection(SHARINGS_DOCTYPE)
-      .findAll({ active: true, drive: true })
+    const sharedDrives = await this.fetchSharedDrives()
 
     return sharedDrives.some(hasSharedDoc(remoteDoc))
   }

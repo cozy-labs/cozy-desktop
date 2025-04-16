@@ -13,6 +13,7 @@ const Promise = require('bluebird')
 const metadata = require('../metadata')
 const { ROOT_DIR_ID, DIR_TYPE } = require('./constants')
 const { RemoteCozy } = require('./cozy')
+const { CozyProxy } = require('./cozyProxy')
 const {
   ExcludedDirError,
   ForbiddenDeletionError,
@@ -91,6 +92,7 @@ class Remote /*:: implements Reader, Writer */ {
   name: SideName
   other: Reader & Writer
   config: Config
+  prep: Prep
   pouch: Pouch
   events: EventEmitter
   watchers: Map<string, RemoteWatcher>
@@ -101,6 +103,7 @@ class Remote /*:: implements Reader, Writer */ {
   constructor({ config, prep, pouch, events } /*: RemoteOptions */) {
     this.name = 'remote'
     this.config = config
+    this.prep = prep
     this.pouch = pouch
     this.events = events
     this.remoteCozy = new RemoteCozy(config)
@@ -113,7 +116,7 @@ class Remote /*:: implements Reader, Writer */ {
           pouch: this.pouch,
           events: this.events,
           remoteCozy: this.remoteCozy,
-          prep
+          prep: this.prep
         })
       ]
     ])
@@ -180,6 +183,23 @@ class Remote /*:: implements Reader, Writer */ {
 
   updateLastSynced() {
     return this.remoteCozy.updateLastSynced()
+  }
+
+  async watchSharedDrives() {
+    const sharedDrives = await this.remoteCozy.fetchSharedDrives()
+
+    for (const sharedDrive of sharedDrives) {
+      this.watchers.set(
+        sharedDrive._id,
+        new RemoteWatcher({
+          config: this.config,
+          pouch: this.pouch,
+          events: this.events,
+          remoteCozy: new CozyProxy(sharedDrive._id, { cozy: this.remoteCozy }),
+          prep: this.prep
+        })
+      )
+    }
   }
 
   /** Create a readable stream for the given doc */
