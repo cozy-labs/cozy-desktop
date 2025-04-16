@@ -2,7 +2,9 @@
 @require './node_modules/cozy-ui/stylus/components/button.styl'
 @require './node_modules/cozy-ui/stylus/components/tabs.styl'
 @require './node_modules/cozy-ui/stylus/settings/palette.styl'
+
 @require '_spin'
+@require '_twake_palette'
 
 .container
   display flex
@@ -23,6 +25,7 @@
   @extend $tabs-base .coz-tab
   font-size: rem(16)
   font-weight: normal
+  text-transform: math-auto
 
 .two-panes__menu__item--active
   @extend $tabs-base .coz-tab--active
