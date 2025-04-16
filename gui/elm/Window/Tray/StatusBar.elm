@@ -50,16 +50,16 @@ icon status platform =
         _ ->
             case status of
                 UpToDate ->
-                    imgIcon "images/tray-icon-win/idle.png" "uptodate"
+                    imgIcon "images/tray-icon/idle.png" "uptodate"
 
                 UserActionRequired ->
-                    imgIcon "images/tray-icon-win/pause.png" "offline"
+                    imgIcon "images/tray-icon/pause.png" "offline"
 
                 Offline ->
-                    imgIcon "images/tray-icon-win/offline.png" "offline"
+                    imgIcon "images/tray-icon/offline.png" "offline"
 
                 Error _ ->
-                    imgIcon "images/tray-icon-win/error.png" "error"
+                    imgIcon "images/tray-icon/error.png" "error"
 
                 _ ->
                     span [ class "status__icon spin" ] []
