@@ -730,7 +730,7 @@ describe('Move', () => {
         const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
         const doc = builders
           .metadir()
-          .path('.system-tmp-cozy-drive/dir')
+          .path('.system-tmp-twake-desktop/dir')
           .build()
 
         await prep.moveFolderAsync('local', doc, oldFolder)
@@ -784,7 +784,7 @@ describe('Move', () => {
           const oldFolder = await pouch.byRemoteIdMaybe(dir._id)
           const doc = builders
             .metadir(oldFolder)
-            .path('.system-tmp-cozy-drive/dir')
+            .path('.system-tmp-twake-desktop/dir')
             .unmerged('local')
             .build()
 

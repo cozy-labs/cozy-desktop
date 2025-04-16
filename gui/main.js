@@ -45,8 +45,8 @@ const pkg = require('../package.json')
 const network = require('./js/network')
 const { MigrationFailedError } = require('../core/migrations')
 const {
-  COZY_CLIENT_REVOKED_CODE,
-  COZY_CLIENT_REVOKED_MESSAGE
+  OAUTH_CLIENT_REVOKED_CODE,
+  OAUTH_CLIENT_REVOKED_MESSAGE
 } = require('../core/remote/errors')
 const winRegistry = require('../core/utils/win_registry')
 const { translate } = i18n
@@ -65,7 +65,7 @@ process.on('uncaughtException', err =>
 
 const mainInstance = app.requestSingleInstanceLock()
 if (!mainInstance && !process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
-  log.warn('Cozy Drive is already running. Exiting...')
+  log.warn('Twake Desktop is already running. Exiting...')
   app.exit()
 }
 
@@ -237,7 +237,7 @@ const showMigrationError = async (err /*: Error */) => {
     type: 'error',
     title: translate('AppUpgrade App upgrade failed'),
     message: translate(
-      'AppUpgrade An error happened after we tried upgrading your Cozy Desktop version. Please contact support at contact@cozycloud.cc.'
+      'AppUpgrade An error happened during the upgrade of Twake Desktop. Please contact support at contact@cozycloud.cc.'
     ),
     detail: errorDetails.join('\n'),
     buttons: [translate('Button Contact support')],
@@ -257,13 +257,13 @@ const showRevokedCozyError = async () => {
 
   if (trayWindow) trayWindow.hide()
   if (tray.wasInitiated())
-    tray.setStatus('error', translate(COZY_CLIENT_REVOKED_MESSAGE))
+    tray.setStatus('error', translate(OAUTH_CLIENT_REVOKED_MESSAGE))
 
   const options = {
     type: 'warning',
     title: pkg.productName,
     message: translate(
-      'Revoked Synchronization with your Cozy is unavailable, maybe you revoked this computer?'
+      'Revoked Synchronization with your Twake Workplace is unavailable, maybe you revoked this computer?'
     ),
     detail: translate(
       "Revoked In case you didn't, contact us at contact@cozycloud.cc"
@@ -292,7 +292,7 @@ const showRevokedCozyError = async () => {
 // TODO: only send to main window errors that can be displayed within the
 // Recent tab and create pop-up methods for the others?
 const sendErrorToMainWindow = async ({ msg, code }) => {
-  if (code === COZY_CLIENT_REVOKED_CODE) {
+  if (code === OAUTH_CLIENT_REVOKED_CODE) {
     return showRevokedCozyError()
   } else if (msg === SYNC_DIR_UNLINKED_MESSAGE) {
     if (notificationsState.syncDirUnlinkedShown) return
@@ -337,7 +337,7 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
 
   if (notificationsState.notifiedMsg !== msg) {
     notificationsState.notifiedMsg = msg
-    new Notification({ title: 'Cozy Drive', body: msg }).show()
+    new Notification({ title: 'Twake Desktop', body: msg }).show()
   }
 }
 
@@ -350,8 +350,8 @@ const updateState = async ({ newState, data }) => {
     if (status === 'uptodate') tray.setStatus('online')
     else if (status === 'offline') tray.setStatus('offline')
     else if (status === 'error' && errors && errors.length) {
-      if (errors[0].code === COZY_CLIENT_REVOKED_CODE) {
-        tray.setStatus('error', translate(COZY_CLIENT_REVOKED_MESSAGE))
+      if (errors[0].code === OAUTH_CLIENT_REVOKED_CODE) {
+        tray.setStatus('error', translate(OAUTH_CLIENT_REVOKED_MESSAGE))
       } else {
         tray.setStatus(
           'error',
@@ -613,7 +613,7 @@ app.on('ready', async () => {
   }
 
   const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
-  let userAgent = `Cozy-Desktop-${process.platform}-${pkg.version}-${hostID}`
+  let userAgent = `Twake-Desktop-${process.platform}-${pkg.version}-${hostID}`
   const { argv } = await network.setup(
     app,
     network.config(),

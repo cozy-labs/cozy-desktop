@@ -68,7 +68,8 @@ toString path =
     let
         { platform, members } =
             path
-        separator = sep platform
-    in
-    separator ++ String.join separator members 
 
+        separator =
+            sep platform
+    in
+    separator ++ String.join separator members

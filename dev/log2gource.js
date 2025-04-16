@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// This script convert a log file made by cozy-desktop to a file that can be
+// This script convert a log file made by Twake Desktop to a file that can be
 // used with gource to visualize it.
 //
 // Gource: https://gource.io/

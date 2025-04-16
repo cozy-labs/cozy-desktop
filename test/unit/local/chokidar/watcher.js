@@ -10,7 +10,6 @@ const sinon = require('sinon')
 
 const chokidarEvent = require('../../../../core/local/chokidar/event')
 const Watcher = require('../../../../core/local/chokidar/watcher')
-const { TMP_DIR_NAME } = require('../../../../core/local/constants')
 const { FOLDER } = require('../../../../core/metadata')
 const Builders = require('../../../support/builders')
 const configHelpers = require('../../../support/helpers/config')
@@ -111,8 +110,8 @@ onPlatform('darwin', () => {
       })
 
       it('ignores the temporary directory', async function() {
-        fse.ensureDirSync(path.join(this.syncPath, TMP_DIR_NAME))
-        fse.ensureFileSync(path.join(this.syncPath, TMP_DIR_NAME, 'ac'))
+        fse.ensureDirSync(this.tmpPath)
+        fse.ensureFileSync(path.join(this.tmpPath, 'ac'))
         this.prep.putFolder = sinon.spy()
         this.prep.addFile = sinon.spy()
         this.prep.updateFile = sinon.spy()

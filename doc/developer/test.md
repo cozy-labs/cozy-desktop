@@ -14,7 +14,7 @@ yarn
 ```
 
 We use [`electron-mocha`][4], an electron-compatible version of [`mocha`][1],
-for testing cozy-desktop. See options in [`test/mocha.opt`][2].
+for testing Twake Desktop. See options in [`test/mocha.opt`][2].
 
 Unit, integration & scenario tests require that you have a Cozy stack up.
 It's also expected that you have an instance registered for
@@ -42,7 +42,7 @@ Integration tests
 -----------------
 
 You can run the integration suite to test the communication between
-cozy-desktop and a remote cozy stack:
+Twake Desktop and a Twake Workplace:
 
 ```bash
 yarn test:integration
@@ -155,7 +155,7 @@ We have two types of property based testing:
   local watcher, but it also touches other classes like Prep and Merge.
 
 - two_clients, where we start a cozy-stack, create an instance, and run 2
-  cozy-desktop on this instance. Then, we doing things like creating files on
+  Twake Desktop on this instance. Then, we doing things like creating files on
   both clients, and at the end, we check that the two clients has the same data
   as the stack (in CouchDB).
 

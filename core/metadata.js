@@ -7,12 +7,12 @@
  * - `path`: the original path to this file
  * - `md5sum`: a checksum of its content
  * - `updated_at`: date and time of the last modification
- * - `tags`: the list of tags, from the remote cozy
+ * - `tags`: the list of tags, from the Twake Workplace
  * - `size`: the size on disk
  * - `class`: generic class of the mime-type (can be document, image, etc.)
  * - `mime`: the precise mime-type (example: image/jpeg)
  * - `remote`: id and rev of the associated documents in the remote CouchDB
- * - `sides`: for tracking what is applied on local file system and remote cozy
+ * - `sides`: for tracking what is applied on local file system and Twake Workplace
  * - `executable`: true if the file is executable (UNIX permission)
  * - `errors`: the number of errors while applying the last modification
  *
@@ -22,9 +22,9 @@
  * - `docType`: always 'folder'
  * - `path`: the original path to this file
  * - `updated_at`: date and time of the last modification
- * - `tags`: the list of tags, from the remote cozy
+ * - `tags`: the list of tags, from the Twake Workplace
  * - `remote`: id and rev of the associated documents in the remote CouchDB
- * - `sides`: for tracking what is applied on local file system and remote cozy
+ * - `sides`: for tracking what is applied on local file system and Twake Workplace
  * - `errors`: the number of errors while applying the last modification
  *
  * @module core/metadata

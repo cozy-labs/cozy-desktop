@@ -1,11 +1,11 @@
 {
-  "name": "CozyDrive",
-  "productName": "Cozy Drive",
+  "name": "TwakeDesktop",
+  "productName": "Twake Desktop",
   "private": true,
   "version": "3.43.0-beta.1",
-  "description": "Cozy Drive is a synchronization tool for your files and folders with Cozy Cloud.",
+  "description": "Twake Desktop is a synchronization tool for your Twake Drive files and folders.",
   "homepage": "https://github.com/cozy-labs/cozy-desktop",
-  "author": "Cozy Cloud <contact@cozycloud.cc> (https://cozycloud.cc/)",
+  "author": "Linagora <contact@cozycloud.cc> (https://linagora.com/)",
   "license": "AGPL-3.0",
   "bugs": {
     "url": "https://github.com/cozy-labs/cozy-desktop/issues"
@@ -25,7 +25,8 @@
     "data",
     "sync",
     "files",
-    "cozy"
+    "cozy",
+    "twake"
   ],
   "scripts": {
     "bootstrap": "yarn dev:setup && yarn test:setup",
@@ -38,11 +39,11 @@
     "capture:manual": "env-cmd -f .env.test electron ./dev/chokidar.js",
     "clean": "rimraf core/lib/ core/tmp/ gui/elm.js gui/app.css* gui/dist/",
     "cozy-stack": "yarn docker:exec cozy-stack",
-    "dev:setup": "yarn docker:exec /cozy-desktop/dev/setup.sh",
+    "dev:setup": "yarn docker:exec /twake-desktop/dev/setup.sh",
     "dev:elm": "yarn watch:css & yarn watch:elm & python2 -m SimpleHTTPServer 8000",
     "dev:exclusions": "env-cmd -f .env.dev electron ./dev/remote/change-dir-exclusions.js",
     "dist": "electron-builder build",
-    "docker:exec": "docker exec -it cozy-desktop-stack",
+    "docker:exec": "docker exec -it twake-desktop-stack",
     "elm:upgrade": "cd gui && yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
     "jq": "cross-env HOME=. nice -n 19 jq",
     "jsdoc": "jsdoc -c .jsdoc.json -r ./CODE_ORGANIZATION.md -d ./doc/api/ core/ dev/ gui/ test/",
@@ -67,7 +68,7 @@
     "test:performance": "yarn mocha test/performance",
     "test:property": "env NO_ELECTRON=true BLUEBIRD_WARNINGS=0 mocha --exit test/property",
     "test:scenarios": "yarn mocha --reporter=list test/scenarios/run.js",
-    "test:setup": "yarn docker:exec /cozy-desktop/test/setup.sh",
+    "test:setup": "yarn docker:exec /twake-desktop/test/setup.sh",
     "test:unit": "yarn mocha test/unit/",
     "test:unit:coverage": "yarn mocha:coverage test/unit/",
     "test:world": "yarn mocha test/world/",

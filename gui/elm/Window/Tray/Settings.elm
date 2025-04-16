@@ -28,9 +28,9 @@ reinitializationConfirmationId =
     Confirmation.newId "ReinitializationRequested"
 
 
-unlinkCozyConfirmationId : ConfirmationID
-unlinkCozyConfirmationId =
-    Confirmation.newId "UnlinkCozyRequested"
+unlinkTwakeConfirmationId : ConfirmationID
+unlinkTwakeConfirmationId =
+    Confirmation.newId "UnlinkTwakeRequested"
 
 
 
@@ -135,8 +135,8 @@ update msg model =
             if id == reinitializationConfirmationId && confirmed == True then
                 ( { model | reinitializationInProgress = True }, Ports.reinitializeSynchronization () )
 
-            else if id == unlinkCozyConfirmationId && confirmed == True then
-                ( { model | busyUnlinking = True }, Ports.unlinkCozy () )
+            else if id == unlinkTwakeConfirmationId && confirmed == True then
+                ( { model | busyUnlinking = True }, Ports.unlinkTwake () )
 
             else
                 ( model, Cmd.none )
@@ -218,9 +218,9 @@ view helpers status model =
             model.syncConfig.flags
     in
     section [ class "two-panes__content two-panes__content--settings" ]
-        [ h2 [] [ text (helpers.t "Account Cozy disk space") ]
+        [ h2 [] [ text (helpers.t "Account Twake Workplace disk space") ]
         , diskQuotaLine helpers model
-        , h2 [] [ text (helpers.t "Settings Start Cozy Drive on system startup") ]
+        , h2 [] [ text (helpers.t "Settings Start Twake Desktop on system startup") ]
         , div
             [ class "coz-form-toggle"
             ]
@@ -244,7 +244,7 @@ view helpers status model =
         , h2 [] [ text (helpers.t "Account About") ]
         , p []
             [ strong [] [ text (helpers.t "Account Account" ++ " ") ]
-            , cozyLink model
+            , twakeLink model
             ]
         , p []
             [ strong [] [ text (helpers.t "Account Device name" ++ " ") ]
@@ -260,11 +260,11 @@ view helpers status model =
         , quitButton helpers model
         , h2 [] [ text (helpers.t "Settings Reinitialize synchronization") ]
         , p []
-            [ text (helpers.t "Settings The synchronization of the local Cozy folder with your personal Cozy Cloud will be entirely rebuilt." ++ " ")
+            [ text (helpers.t "Settings The synchronization of the Twake Desktop folder with your Twake Workplace will be entirely rebuilt." ++ " ")
             , text (helpers.t "Settings Your files won't be deleted.")
             ]
         , reinitializationButton helpers model
-        , h2 [] [ text (helpers.t "Account Unlink Cozy") ]
+        , h2 [] [ text (helpers.t "Account Unlink Twake Desktop") ]
         , p []
             [ text (helpers.t "Account It will unlink your account to this computer." ++ " ")
             , text (helpers.t "Account Your files won't be deleted.")
@@ -315,8 +315,8 @@ selectiveSyncButton helpers model =
         [ span [] [ text (helpers.t "Settings Configure") ] ]
 
 
-cozyLink : Model -> Html Msg
-cozyLink model =
+twakeLink : Model -> Html Msg
+twakeLink model =
     let
         { address } =
             model.syncConfig
@@ -368,7 +368,7 @@ reinitializationButton helpers model =
                         "Reinitialization - if some files exist on both sides but have different content then conflicts will be created so you can choose the version you wish to keep;"
                     ++ "\n"
                     ++ helpers.t
-                        "Reinitialization - if some files are only present on your Cozy or your computer, they will be added to the other side;"
+                        "Reinitialization - if some files are only present on your Twake Workplace or your computer, they will be added to the other side;"
                     ++ "\n"
                     ++ helpers.t
                         "Reinitialization - files already identical on both sides won't be impacted."
@@ -391,7 +391,7 @@ unlinkButton : Helpers -> Model -> Html Msg
 unlinkButton helpers model =
     let
         confirmation =
-            { id = unlinkCozyConfirmationId
+            { id = unlinkTwakeConfirmationId
             , title = helpers.t "Unlink Title"
             , message = helpers.t "Unlink Message"
             , detail = helpers.t "Unlink Detail"
@@ -407,4 +407,4 @@ unlinkButton helpers model =
           else
             onClick (ConfirmationRequested confirmation)
         ]
-        [ span [] [ text (helpers.t "Account Unlink this Cozy") ] ]
+        [ span [] [ text (helpers.t "Account Unlink Twake Desktop") ] ]

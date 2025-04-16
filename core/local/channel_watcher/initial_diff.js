@@ -1,6 +1,6 @@
 /** This step handle the events of the ChannelWatcher initial scan.
  *
- * Some files and directories can have been deleted while cozy-desktop was
+ * Some files and directories can have been deleted while Twake Desktop was
  * stopped. So, at the end of the initial scan, we have to do a diff between
  * what was in pouchdb and the events from the local watcher to find what was
  * deleted.

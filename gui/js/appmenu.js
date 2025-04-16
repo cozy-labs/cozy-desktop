@@ -68,10 +68,10 @@ module.exports.buildAppMenu = app => {
 
   if (process.platform === 'darwin') {
     template.unshift({
-      label: 'Cozy Drive',
+      label: 'Twake Desktop',
       submenu: [
         {
-          label: translate('AppMenu Hide Cozy Drive'),
+          label: translate('AppMenu Hide Twake Desktop'),
           accelerator: 'Command+H',
           role: 'hide'
         },

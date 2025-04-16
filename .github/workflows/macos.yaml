@@ -15,7 +15,7 @@ on:
       - '.github/workflows/linux.yaml'
 
 env:
-  COZY_DESKTOP_DIR: "${{ github.workspace }}/cozy-desktop"
+  COZY_DESKTOP_DIR: "${{ github.workspace }}/twake-desktop"
   COZY_STACK_STORAGE: "${{ github.workspace }}/storage"
   COZY_URL: "http://cozy.localhost:8080"
   COZY_PASSPHRASE: "cozy"
@@ -111,14 +111,14 @@ jobs:
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
         run: |
-          hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
+          hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname twake-desktop "$COZY_DESKTOP_DIR"
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
       - name: Setup cozy-stack
         run: docker-compose up -d
       - name: Setup test config
         run: |
-          until docker exec cozy-desktop-stack /cozy-desktop/test/setup.sh
+          until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
           do
             echo "Waiting for cozy-stack to be running..."
             sleep 30
@@ -180,14 +180,14 @@ jobs:
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
         run: |
-          hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
+          hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname twake-desktop "$COZY_DESKTOP_DIR"
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
       - name: Setup cozy-stack
         run: docker-compose up -d
       - name: Setup test config
         run: |
-          until docker exec cozy-desktop-stack /cozy-desktop/test/setup.sh
+          until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
           do
             echo "Waiting for cozy-stack to be running..."
             sleep 30
@@ -250,7 +250,7 @@ jobs:
         env:
           COZY_DESKTOP_FS: ${{ matrix.fs }}
         run: |
-          until hdiutil create -megabytes 100 -fs "$COZY_DESKTOP_FS" -volname cozy-desktop "$COZY_DESKTOP_DIR"
+          until hdiutil create -megabytes 100 -fs "$COZY_DESKTOP_FS" -volname twake-desktop "$COZY_DESKTOP_DIR"
           do
             sleep 1
           done
@@ -263,7 +263,7 @@ jobs:
         run: docker-compose up -d
       - name: Setup test config
         run: |
-          until docker exec cozy-desktop-stack /cozy-desktop/test/setup.sh
+          until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
           do
             echo "Waiting for cozy-stack to be running..."
             sleep 30

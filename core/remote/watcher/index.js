@@ -227,9 +227,9 @@ class RemoteWatcher {
       }
     } catch (err) {
       switch (err.code) {
-        case remoteErrors.COZY_CLIENT_REVOKED_CODE:
+        case remoteErrors.OAUTH_CLIENT_REVOKED_CODE:
         case remoteErrors.MISSING_PERMISSIONS_CODE:
-        case remoteErrors.COZY_NOT_FOUND_CODE:
+        case remoteErrors.TWAKE_NOT_FOUND_CODE:
           await this.fatal(err)
           break
         default:

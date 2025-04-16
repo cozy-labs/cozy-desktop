@@ -78,7 +78,7 @@ view helpers context =
                 ]
             , p [ class "u-mb-0" ]
                 [ text <|
-                    helpers.t "Folder You can now synchronize your Cozy with this computer."
+                    helpers.t "Folder You can now synchronize your Twake Workplace with this computer."
                 ]
             , div [ class "u-mt-1" ]
                 [ ul [ class "u-mb-0 u-pl-1" ]
@@ -87,14 +87,14 @@ view helpers context =
                             [ span [ class "folder__config-option__title" ]
                                 [ text <| helpers.t "Folder Selective synchronization" ]
                             , text " - "
-                            , text <| helpers.t "Folder By default all the documents on your Cozy will be synchronized."
+                            , text <| helpers.t "Folder By default all the documents on your Twake Workplace will be synchronized."
                             , selectiveSyncLink helpers context
                             ]
                     , li [ class "u-mt-1" ]
                         [ span [ class "folder__config-option__title" ]
                             [ text <| helpers.t "Folder Location on the computer" ]
                         , text " - "
-                        , text <| helpers.t "Folder The documents selected on your Cozy will be synchronized on this computer in "
+                        , text <| helpers.t "Folder The documents selected on your Twake Workplace will be synchronized on this computer in "
                         , span [ class "folder__path" ] [ text context.folderConfig.folder ]
                         , text "."
                         , a [ class "u-ml-half u-primaryColor", href "#", onClick ChooseFolder ]

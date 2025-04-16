@@ -1,4 +1,4 @@
-# Cozy Drive for Desktop: Changelog
+# Twake Desktop: Changelog
 
 ## 3.43.0-beta.1 - 2025-03-26
 

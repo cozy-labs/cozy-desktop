@@ -9,7 +9,6 @@ const { Promise } = require('bluebird')
 const fse = require('fs-extra')
 const sinon = require('sinon')
 
-// import { TMP_DIR_NAME } from '../../../core/local/constants'
 const { Ignore } = require('../../../core/ignore')
 const ChokidarEvent = require('../../../core/local/chokidar/event')
 const Watcher = require('../../../core/local/chokidar/watcher')

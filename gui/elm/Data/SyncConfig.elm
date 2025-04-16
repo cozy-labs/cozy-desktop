@@ -37,7 +37,7 @@ type alias AppSlug =
 buildAppUrl : SyncConfig -> AppSlug -> Maybe Url
 buildAppUrl { address, capabilities } slug =
     let
-        cozyName =
+        twakeName =
             case address of
                 Just url ->
                     String.split "." url.host
@@ -50,7 +50,7 @@ buildAppUrl { address, capabilities } slug =
         host =
             case ( address, capabilities.flatSubdomains ) of
                 ( Just url, True ) ->
-                    String.replace cozyName (cozyName ++ "-" ++ slug) url.host
+                    String.replace twakeName (twakeName ++ "-" ++ slug) url.host
 
                 ( Just url, False ) ->
                     String.join "." [ slug, url.host ]

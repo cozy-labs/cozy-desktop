@@ -1,4 +1,4 @@
-# Cozy Drive on the GNU/Linux Desktop
+# Twake Desktop on GNU/Linux
 
 ## Introduction
 
@@ -71,7 +71,7 @@ We only support the latest version of each distribution although the app could w
 
 > **Note for Archlinux Users**
 >
-> You can install `cozy-desktop` from the [community] repo.
+> You can install `twake-desktop` (formerly `cozy-desktop`) from the [community] repo.
 
 1. Download the `*.AppImage` file for your architecture from the
    [latest release][Latest].
@@ -129,8 +129,8 @@ Almost everything is in the `*.AppImage` file however, if you have installed
 - Icons in `~/.local/share/icons/hicolor/*/apps/appimagekit<same unique identifier>-cozydrive.png`
 
 Everything else works the same as Windows or macOS: your synchronized files are
-in `~/Cozy Drive/` or the folder you choose on first run, and the hidden
-`~/.cozy-desktop/` folder contains the application configuration, metadata and
+in `~/Twake/` or the folder you choose on first run, and the hidden
+`~/.twake-desktop/` folder contains the application configuration, metadata and
 logs.
 
 ## Displaying the app window
@@ -145,7 +145,7 @@ effects so you need to do a right-click on the icon then select the
 > **Note for GNOME Users**
 >
 > From 3.26 onwards, GNOME removed the systray which is the only interface for
-> *Cozy Drive*. It should be replaced in the future by `libcloudprovider`, which
+> *Twake Desktop*. It should be replaced in the future by `libcloudprovider`, which
 > we will implement when it spreads. In the meantime, you need to install an
 > extension providing support for appindicator. You can find and install one
 > from https://extensions.gnome.org/ by searching for `appindicator`.
@@ -153,7 +153,7 @@ effects so you need to do a right-click on the icon then select the
 > **Note for i3wm Users**
 >
 > You can set `"gui": {"visibleOnBlur": true}` in your
-> `~/.cozy-desktop/config.json` so the popover doesn't hide when focusing
+> `~/.twake-desktop/config.json` so the popover doesn't hide when focusing
 > another window.
 
 ## Uninstall

@@ -37,7 +37,7 @@ main =
 
 type alias Flags =
     { hash : String
-    , folder : String
+    , defaultSyncPath : String
     , locale : String
     , locales : Json.Value
     , platform : String
@@ -74,7 +74,7 @@ init flags =
             , window = Window.fromHash flags.hash
 
             -- TODO: Attach submodels to windows
-            , onboarding = Onboarding.init flags.folder flags.platform
+            , onboarding = Onboarding.init flags.defaultSyncPath flags.platform
             , tray = Tray.init flags.version platform
             , updater = Updater.init flags.version
             , help = Help.init

@@ -8,4 +8,4 @@ You can:
 - 🗪 Chat with us on the IRC channel [#cozycloud](https://web.libera.chat/#cozycloud) on Libera.Chat
 - 🐦 Mention us on [Twitter](https://twitter.com/mycozycloud)
 
-The current maintainers of Cozy Drive for Desktop are @cozy-labs/cozy-drive-for-desktop, feel free to say hello!
+The current maintainers of Twake Desktop are @cozy-labs/cozy-drive-for-desktop, feel free to say hello!

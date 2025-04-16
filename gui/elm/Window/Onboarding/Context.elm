@@ -15,10 +15,10 @@ type alias Context =
 
 
 init : String -> String -> Context
-init platform folder =
+init platform defaultSyncPath =
     { platform = platform
     , addressConfig = AddressConfig.init
-    , folderConfig = SyncFolderConfig.valid folder
+    , folderConfig = SyncFolderConfig.init defaultSyncPath
     , syncConfig = SyncConfig.init
     }
 

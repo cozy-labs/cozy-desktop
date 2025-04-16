@@ -8,6 +8,8 @@ const should = require('should')
 const sinon = require('sinon')
 
 const { App } = require('../../core/app')
+const { DEFAULT_SYNC_DIR_NAME } = require('../../core/local/constants')
+const { BASE_DIR_NAME } = require('../../core/migrations/configPaths')
 const { FetchError } = require('../../core/remote/cozy')
 const { LOG_BASENAME } = require('../../core/utils/logger')
 const pkg = require('../../package.json')
@@ -165,7 +167,7 @@ describe('App', function() {
     })
 
     it('can be the default dir', () => {
-      const syncPath = path.join(os.homedir(), 'Cozy Drive')
+      const syncPath = path.join(os.homedir(), DEFAULT_SYNC_DIR_NAME)
       const result = App.prototype.checkSyncPath(syncPath)
       should(result).deepEqual({ syncPath })
     })
@@ -173,7 +175,7 @@ describe('App', function() {
     it('can be a subdir of the user home', () => {
       const syncPath = path.join(
         os.homedir(),
-        'Cozy Drive Test ' + new Date().getTime()
+        'Twake Desktop Test ' + new Date().getTime()
       )
       const result = App.prototype.checkSyncPath(syncPath)
       should(result).deepEqual({ syncPath })
@@ -229,7 +231,7 @@ describe('App', function() {
 
       should(info).deepEqual({
         appVersion: version,
-        configPath: path.join(basePath, '.cozy-desktop', 'config.json'),
+        configPath: path.join(basePath, BASE_DIR_NAME, 'config.json'),
         configVersion: '',
         cozyUrl: undefined,
         deviceName: '',

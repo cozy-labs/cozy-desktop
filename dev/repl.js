@@ -14,17 +14,17 @@ const config = app.config
 let cozy, helpers
 
 // eslint-disable-next-line no-console
-console.log(`Welcome to the Cozy Desktop REPL!
+console.log(`Welcome to the Twake Desktop REPL!
 
 The following objects are available:
-  app      The cozy-desktop app
-  config   Your active cozy-desktop configuration`)
+  app      The Twake Desktop app
+  config   Your active Twake Desktop configuration`)
 
 if (config.isValid()) {
   app.instanciate()
   cozy = app.remote.watcher.remoteCozy.client
   // eslint-disable-next-line no-console
-  console.log(`  cozy     A cozy-client-js instance, set up with your config
+  console.log(`  cozy     A cozy-client instance, set up with your config
 
 Since a valid configuration is available, app.instanciate() was already called
 for you, which means you can call app.startSync().`)

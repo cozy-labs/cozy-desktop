@@ -62,7 +62,7 @@ module.exports = class Registration {
           if (request.url.indexOf('/callback') === 0) {
             resolve(request.url)
             response.end(
-              'Cozy-desktop has been successfully registered as a Cozy device'
+              'Twake Desktop has been successfully registered as a Twake Workplace device'
             )
           }
         })
@@ -89,7 +89,7 @@ module.exports = class Registration {
     deviceName /*: ?string */
   ) /*: $Shape<OAuthClient> */ {
     if (!deviceName) {
-      deviceName = `Cozy Drive (${os.hostname()})`
+      deviceName = `Twake Desktop (${os.hostname()})`
     }
     let softwareID = pkg.repository || 'cozy-desktop'
     if (softwareID.url) {

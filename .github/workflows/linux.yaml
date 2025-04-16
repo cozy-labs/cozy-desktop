@@ -15,7 +15,7 @@ on:
       - '.github/workflows/macos.yaml'
 
 env:
-  COZY_DESKTOP_DIR: "${{ github.workspace }}/cozy-desktop"
+  COZY_DESKTOP_DIR: "${{ github.workspace }}/twake-desktop"
   COZY_STACK_STORAGE: "${{ github.workspace }}/storage"
   COZY_URL: "http://cozy.localhost:8080"
   COZY_PASSPHRASE: "cozy"

@@ -135,8 +135,8 @@ describe('RemoteWatcher', function() {
 
   describe('start', function() {
     const fatalError = new remoteErrors.RemoteError({
-      code: remoteErrors.COZY_CLIENT_REVOKED_CODE,
-      message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
+      code: remoteErrors.OAUTH_CLIENT_REVOKED_CODE,
+      message: remoteErrors.OAUTH_CLIENT_REVOKED_MESSAGE,
       err: new Error('from watch')
     })
     const nonFatalError = new Error('from watch')
@@ -350,8 +350,8 @@ describe('RemoteWatcher', function() {
       context('when next #watch() has no chance to work anymore', () => {
         beforeEach(function() {
           err = new remoteErrors.RemoteError({
-            code: remoteErrors.COZY_CLIENT_REVOKED_CODE,
-            message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
+            code: remoteErrors.OAUTH_CLIENT_REVOKED_CODE,
+            message: remoteErrors.OAUTH_CLIENT_REVOKED_MESSAGE,
             err: new FetchError({ status: 400 }, randomMessage())
           })
           this.watcher.watch.rejects(err)
@@ -462,8 +462,8 @@ describe('RemoteWatcher', function() {
         err.status = 400 // Revoked
         await should(this.watcher.watch()).be.rejectedWith(
           new remoteErrors.RemoteError({
-            code: remoteErrors.COZY_CLIENT_REVOKED_CODE,
-            message: remoteErrors.COZY_CLIENT_REVOKED_MESSAGE,
+            code: remoteErrors.OAUTH_CLIENT_REVOKED_CODE,
+            message: remoteErrors.OAUTH_CLIENT_REVOKED_MESSAGE,
             err
           })
         )
@@ -473,7 +473,7 @@ describe('RemoteWatcher', function() {
           new remoteErrors.RemoteError({
             code: remoteErrors.UNKNOWN_REMOTE_ERROR_CODE,
             message:
-              'The remote Cozy failed to process the request for an unknown reason',
+              'The Twake Workplace failed to process the request for an unknown reason',
             err
           })
         )

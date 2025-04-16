@@ -18,7 +18,7 @@ describe('Registration', function() {
   describe('oauthClient', function() {
     it('generates a device name based on the hostname', function() {
       const { clientName } = this.registration.oauthClient({})
-      should(clientName).match(/Cozy Drive/)
+      should(clientName).match(/Twake Desktop/)
       should(clientName.includes(os.hostname())).be.true()
     })
 

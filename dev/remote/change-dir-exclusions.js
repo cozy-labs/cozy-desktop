@@ -9,6 +9,7 @@ const yargs = require('yargs')
 const { default: CozyClient, Q } = require('cozy-client')
 
 const { Config } = require('../../core/config')
+const { findBasePath } = require('../../core/migrations/configPaths')
 const {
   DIR_TYPE,
   FILES_DOCTYPE,
@@ -139,7 +140,7 @@ app
   .then(async () => {
     const { COZY_DESKTOP_DIR } = process.env
 
-    const config = new Config(path.resolve(COZY_DESKTOP_DIR, '.cozy-desktop'))
+    const config = new Config(findBasePath(path.resolve(COZY_DESKTOP_DIR)))
     const client = new CozyClient({
       uri: config.cozyUrl,
       oauth: config.client,

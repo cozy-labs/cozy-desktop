@@ -240,7 +240,7 @@ module.exports = class TrayWM extends WindowManager {
           this.win.setAlwaysOnTop(false)
         }
       },
-      'go-to-cozy': (event /*: ElectronEvent */, showInWeb /*: boolean */) => {
+      'go-to-twake': (event /*: ElectronEvent */, showInWeb /*: boolean */) => {
         if (showInWeb) {
           shell.openExternal(this.desktop.config.cozyUrl)
         } else {
@@ -278,7 +278,7 @@ module.exports = class TrayWM extends WindowManager {
         this.desktop.stopSync()
         this.app.quit()
       },
-      'unlink-cozy': () => {
+      'unlink-twake': () => {
         if (!this.desktop.config.isValid()) {
           log.warn('Could not disconnect client. No valid config found!')
           return

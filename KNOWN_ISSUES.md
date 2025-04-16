@@ -15,10 +15,11 @@ Please report any other issue you may encounter by using the app help form.
   synchronized directory can have unexpected consequences: in case the device is
   not mounted when the client starts, the mount point will appear as an empty
   directory and the client will assume you deleted everything and will update
-  your Cozy accordingly, putting everything in the Cozy trash.
-* Using two clients on two different OS with a shared partition between the two is not supported.
-* When a file is made executable / non-executable on the Cozy side (i.e.
-  typically from another device), the local file permissions are set to
+  your Twake Workplace accordingly, putting everything in the Twake Drive trash.
+* Using two clients on two different OS with a shared partition between the two
+  is not supported.
+* When a file is made executable / non-executable on the Twake Workplace side
+  (i.e. typically from another device), the local file permissions are set to
   755 / 644, which means they could be more accessible than they were before
   for group / others.
 * Loses the original creation date of the files and applies the sync date as the creation date instead.
@@ -28,7 +29,7 @@ Please report any other issue you may encounter by using the app help form.
 * Replacing a directory with a file of the same name won't work (same when
   replacing a file with a directory of the same name).
 * Files and directories at the root of the synchronized directory (usually
-  `Cozy Drive`) and whose name start with an underscore (i.e. `_`), won't be
+  `Twake`) and whose name start with an underscore (i.e. `_`), won't be
   synchronized at all.
 * While having some errors, client might display "offline" message instead of relevant one.
 * With some specific successive actions, moving a parent folder and editing a child file, or removing it, some changes might not be taken into account.
@@ -45,7 +46,7 @@ Please report any other issue you may encounter by using the app help form.
 
 ## UI issues
 
-* The *Start Cozy Drive on system startup* switch in the app settings may not
+* The *Start Twake Desktop on system startup* switch in the app settings may not
   reflect the actual configuration. This is an UI bug, the app should still be
   effectively started on boot.
 

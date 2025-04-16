@@ -44,9 +44,9 @@ bodyOrDefault helpers model =
         Nothing ->
             String.join "\n\n"
                 (List.map helpers.t
-                    [ "Help Hello Cozy,"
+                    [ "Help Hello Twake team,"
                     , "Help I like a lot what you do, but I have an issue:"
-                    , "Help [ The more you can say about the issue, the better: do you have many files? Are they big? Is your cozy up-to-date? ]"
+                    , "Help [ The more you can say about the issue, the better: do you have many files? Are they big? Is your Twake Workplace up-to-date? ]"
                     , "Help Take care!"
                     ]
                 )

@@ -14,8 +14,8 @@ export type { FetchError }
 */
 
 const CONFLICTING_NAME_CODE = 'ConflictingName'
-const COZY_CLIENT_REVOKED_CODE = 'CozyClientRevoked'
-const COZY_NOT_FOUND_CODE = 'CozyNotFound'
+const OAUTH_CLIENT_REVOKED_CODE = 'OAuthClientRevoked'
+const TWAKE_NOT_FOUND_CODE = 'TwakeNotFound'
 const DOCUMENT_IN_TRASH_CODE = 'DocumentInTrash'
 const FILE_TOO_LARGE_CODE = 'FileTooLarge'
 const INVALID_FOLDER_MOVE_CODE = 'InvalidFolderMove'
@@ -33,7 +33,8 @@ const UNKNOWN_REMOTE_ERROR_CODE = 'UnknownRemoteError'
 const UNREACHABLE_COZY_CODE = 'UnreachableCozy'
 const USER_ACTION_REQUIRED_CODE = 'UserActionRequired'
 
-const COZY_CLIENT_REVOKED_MESSAGE = 'Cozy client has been revoked' // Only necessary for the GUI
+const OAUTH_CLIENT_REVOKED_MESSAGE =
+  'Your Twake Desktop authorizations have been revoked' // Only necessary for the GUI
 
 class CozyDocumentMissingError extends Error {
   /*::
@@ -44,7 +45,7 @@ class CozyDocumentMissingError extends Error {
   constructor(
     { cozyURL, doc } /*: { cozyURL: string, doc: { name: string } } */
   ) {
-    super('Could not find document on remote Cozy')
+    super('Could not find document on Twake Workplace')
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, CozyDocumentMissingError)
@@ -63,7 +64,7 @@ class DirectoryNotFound extends Error {
   */
 
   constructor(path /*: string */, cozyURL /*: string */) {
-    super(`Directory ${path} was not found on Cozy ${cozyURL}`)
+    super(`Directory ${path} was not found on Twake Workplace ${cozyURL}`)
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, DirectoryNotFound)
@@ -100,7 +101,7 @@ class UnreachableError extends Error {
   */
 
   constructor({ cozyURL } /*: { cozyURL: string } */) {
-    super('Cannot reach remote Cozy')
+    super('Cannot reach Twake Workplace')
 
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, UnreachableError)
@@ -197,14 +198,14 @@ const wrapError = (
         if (detail(err) === 'File or directory is already in the trash') {
           return new RemoteError({
             code: DOCUMENT_IN_TRASH_CODE,
-            message: 'Remote document is in the Cozy trash',
+            message: 'Remote document is in the Twake Workplace trash',
             err
           })
         } else {
           // TODO: Merge with ClientRevokedError
           return new RemoteError({
-            code: COZY_CLIENT_REVOKED_CODE,
-            message: COZY_CLIENT_REVOKED_MESSAGE, // We'll match the message to display an error in gui/main
+            code: OAUTH_CLIENT_REVOKED_CODE,
+            message: OAUTH_CLIENT_REVOKED_MESSAGE, // We'll match the message to display an error in gui/main
             err
           })
         }
@@ -223,20 +224,20 @@ const wrapError = (
       case 403:
         return new RemoteError({
           code: MISSING_PERMISSIONS_CODE,
-          message: 'Cozy client is missing permissions (lack disk-usage?)',
+          message: 'OAuth client is missing permissions (lack disk-usage?)',
           err
         })
       case 404:
         if (hasNoReason(err)) {
           return new RemoteError({
-            code: COZY_NOT_FOUND_CODE,
-            message: 'Remote Cozy could not be found',
+            code: TWAKE_NOT_FOUND_CODE,
+            message: 'Twake Workplace not be found',
             err
           })
         } else {
           return new RemoteError({
             code: MISSING_DOCUMENT_CODE,
-            message: 'The updated document is missing on the remote Cozy',
+            message: 'The updated document is missing on the Twake Workplace',
             err
           })
         }
@@ -244,7 +245,7 @@ const wrapError = (
         return new RemoteError({
           code: CONFLICTING_NAME_CODE,
           message:
-            'A document with the same name already exists on the remote Cozy at the same location',
+            'A document with the same name already exists on the Twake Workplace at the same location',
           err
         })
       case 412:
@@ -260,7 +261,7 @@ const wrapError = (
           return new RemoteError({
             code: INVALID_FOLDER_MOVE_CODE,
             message:
-              'The folder would be moved wihtin one of its sub-folders on the remote Cozy',
+              'The folder would be moved wihtin one of its sub-folders on the Twake Workplace',
             err
           })
         } else {
@@ -275,13 +276,13 @@ const wrapError = (
         if (isFileLargerThanAllowed(doc)) {
           return new RemoteError({
             code: FILE_TOO_LARGE_CODE,
-            message: 'The file is larger than allowed by the remote Cozy',
+            message: 'The file is larger than allowed by the Twake Workplace',
             err
           })
         } else {
           return new RemoteError({
             code: NO_COZY_SPACE_CODE,
-            message: 'Not enough space available on remote Cozy',
+            message: 'Not enough space available on Twake Workplace',
             err
           })
         }
@@ -290,14 +291,14 @@ const wrapError = (
           return new RemoteError({
             code: INVALID_NAME_CODE,
             message:
-              'The name of the document contains characters forbidden by the remote Cozy',
+              'The name of the document contains characters forbidden by the Twake Workplace',
             err
           })
         } else if (sourceParameter(err) === 'path') {
           return new RemoteError({
             code: PATH_TOO_DEEP_CODE,
             message:
-              'The path of the document has too many levels for the remote Cozy',
+              'The path of the document has too many levels for the Twake Workplace',
             err
           })
         } else {
@@ -312,21 +313,21 @@ const wrapError = (
           return new RemoteError({
             code: UNKNOWN_INVALID_DATA_ERROR_CODE,
             message:
-              'The data sent to the remote Cozy is invalid for some unhandled reason',
+              'The data sent to the Twake Workplace is invalid for some unhandled reason',
             err
           })
         } else if (status >= 500 && status < 600) {
           return new RemoteError({
             code: UNKNOWN_REMOTE_ERROR_CODE,
             message:
-              'The remote Cozy failed to process the request for an unknown reason',
+              'The Twake Workplace failed to process the request for an unknown reason',
             err
           })
         } else {
           // TODO: Merge with UnreachableError?!
           return new RemoteError({
             code: UNREACHABLE_COZY_CODE,
-            message: 'Cannot reach remote Cozy',
+            message: 'Cannot reach Twake Workplace',
             err
           })
         }
@@ -335,7 +336,7 @@ const wrapError = (
     return new RemoteError({
       code: MISSING_PARENT_CODE,
       message:
-        'The parent directory of the document is missing on the remote Cozy',
+        'The parent directory of the document is missing on the Twake Workplace',
       err
     })
   } else if (err instanceof RemoteError) {
@@ -401,10 +402,10 @@ module.exports = {
   ExcludedDirError,
   RemoteError,
   UnreachableError,
-  COZY_CLIENT_REVOKED_MESSAGE, // FIXME: should be removed once gui/main does not use it anymore
+  OAUTH_CLIENT_REVOKED_MESSAGE, // FIXME: should be removed once gui/main does not use it anymore
   CONFLICTING_NAME_CODE,
-  COZY_CLIENT_REVOKED_CODE,
-  COZY_NOT_FOUND_CODE,
+  OAUTH_CLIENT_REVOKED_CODE,
+  TWAKE_NOT_FOUND_CODE,
   DOCUMENT_IN_TRASH_CODE,
   FILE_TOO_LARGE_CODE,
   INVALID_FOLDER_MOVE_CODE,

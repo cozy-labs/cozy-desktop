@@ -247,7 +247,7 @@ class Sync {
     autoBind(this)
   }
 
-  // Start to synchronize the remote cozy with the local filesystem
+  // Start to synchronize the Twake Workplace with the local filesystem
   // First, start metadata synchronization in pouch, with the watchers
   // Then, when a stable state is reached, start applying changes from pouch
   async start() /*: Promise<void> */ {
@@ -486,7 +486,7 @@ class Sync {
           log.warn(`Sync error: ${err.message}`, { err, change, path })
         }
         switch (err.code) {
-          case remoteErrors.COZY_NOT_FOUND_CODE:
+          case remoteErrors.TWAKE_NOT_FOUND_CODE:
             this.fatal(err)
             break
           case syncErrors.EXCLUDED_DIR_CODE:
@@ -544,7 +544,7 @@ class Sync {
             break
           case remoteErrors.MISSING_PARENT_CODE:
             /* When we fail to apply a change because its parent does not exist on
-             * the remote Cozy, it means we either:
+             * the Twake Workplace, it means we either:
              * 1. have another change to apply that will create that parent
              * 2. have not yet merged the remote change that removed that parent
              * 3. have failed to sync the creation of the parent and will never
@@ -556,7 +556,7 @@ class Sync {
               // Solve 1. & 2.
               this.blockSyncFor({ err, change })
             } else {
-              log.error('Parent directory is missing on Cozy', {
+              log.error('Parent directory is missing on Twake Workplace', {
                 path,
                 err,
                 change
@@ -567,7 +567,7 @@ class Sync {
                 // This is a weird situation where we don't have a parent in
                 // PouchDB. This should never be the case though.
                 log.error(
-                  'Parent directory could not be found either on Cozy or PouchDB. Abandoning.',
+                  'Parent directory could not be found either on Twake Workplace or PouchDB. Abandoning.',
                   { path, err, change, sentry: true }
                 )
                 await this.skipChange(change, err)

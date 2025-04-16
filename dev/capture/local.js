@@ -16,6 +16,7 @@ const { Config, watcherType } = require('../../core/config')
 const { Ignore } = require('../../core/ignore')
 const { INITIAL_SCAN_DONE } = require('../../core/local/channel_watcher/event')
 const ParcelProducer = require('../../core/local/channel_watcher/parcel_producer')
+const { findBasePath } = require('../../core/migrations/configPaths')
 const fixturesHelpers = require('../../test/support/helpers/scenarios')
 
 /*::
@@ -24,7 +25,7 @@ import type { Scenario } from '../../test/scenarios'
 
 const cliDir = path.resolve(path.join(__dirname, '..', '..'))
 const syncDir = process.env.COZY_DESKTOP_DIR || cliDir
-const config = new Config(path.join(syncDir, 'tmp', '.cozy-desktop'))
+const config = new Config(findBasePath(path.join(syncDir, 'tmp')))
 const syncPath = (config.syncPath = path.resolve(
   syncDir,
   'tmp',
@@ -37,7 +38,7 @@ const abspath = relpath => path.join(syncPath, relpath.replace(/\//g, path.sep))
 
 const chokidarOptions = {
   cwd: syncPath,
-  ignored: /(^|[\/\\])\.system-tmp-cozy-drive/, // eslint-disable-line no-useless-escape
+  ignored: /(^|[\/\\])\.system-tmp-twake-desktop/, // eslint-disable-line no-useless-escape
   followSymlinks: false,
   alwaysStat: true,
   usePolling: process.platform === 'win32',

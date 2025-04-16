@@ -1,28 +1,23 @@
 Limitations
 -----------
 
-Cozy-desktop is designed to synchronize files and folders between a remote
-cozy instance and a local hard drive, for a personal usage. We tried to make
-it simple and easy. So, it has some limitations:
+Twake Desktop is designed to synchronize files and folders between a Twake
+Workplace and a local hard drive, for a personal usage. We tried to make it
+simple and easy. So, it has some limitations:
 
 - Files and folders named like this are ignored:
-  - `.system-tmp-cozy-drive` (they are used to keep internal state)
+  - `.system-tmp-twake-desktop` (they are used to keep internal state)
   - `_design` (special meaning for pouchdb/couchdb)
 
-- It's not a particularly good idea to share code with cozy-desktop:
+- It's not a particularly good idea to share code with Twake Desktop:
   - `node_modules` have tons of small files
   - compiled code often has to be recompile to works on another environment
   - git (and other VCS) repositories are not meant to be shared this way.
     You may lose your work if you make changes on two laptops synchronized
-    by cozy-desktop (it's the same with [dropbox][4], [google-drive][5],
+    by Twake Desktop (it's the same with [dropbox][4], [google-drive][5],
     [syncthing][6], etc.)
-  - `cozy-desktop` keeps the time with only a precision of a second, which may
-    trigger unexpected "file changed" notifications in your editor (see
-    [emacs issue](https://github.com/cozy-labs/cozy-desktop/issues/446) and
-    [workaround](https://github.com/cozy-labs/cozy-desktop/issues/446#issuecomment-262239629)).
 
-
-- If the same file has been modified in parallel, cozy-desktop don't try to
+- If the same file has been modified in parallel, Twake Desktop don't try to
   merge the modifications. It will just rename of one the copies with a
   `-conflict` suffix. It's the same for folders.
 
@@ -45,13 +40,13 @@ it simple and easy. So, it has some limitations:
   making it possible to split a large file in several blocks for
   download/upload).
 
-- Due to its nature, cozy-desktop needs resources:
+- Due to its nature, Twake Desktop needs resources:
   - CPU, for checksums in particular
   - RAM, to keep all the metadata in memory, and for nodejs libraries
-  - Disk, but the overhead from cozy-desktop is low
+  - Disk, but the overhead from Twake Desktop is low
   - Network bandwidth obviously
 
-- No advanced feature, like P2P replication between several cozy-desktop
+- No advanced feature, like P2P replication between several Twake Desktop
   instances.
 
 [4]: https://github.com/anishathalye/git-remote-dropbox#faq

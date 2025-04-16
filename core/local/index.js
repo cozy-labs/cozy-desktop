@@ -13,7 +13,6 @@ const autoBind = require('auto-bind')
 const bluebird = require('bluebird')
 const fse = require('fs-extra')
 
-const { TMP_DIR_NAME } = require('./constants')
 const stater = require('./stater')
 const metadata = require('../metadata')
 const syncDir = require('./sync_dir')
@@ -63,10 +62,10 @@ export type LocalOptions = {
 }
 */
 
-/** `Local` is the class that interfaces cozy-desktop with the local filesystem.
+/** `Local` is the class that interfaces Twake Desktop with the local filesystem.
  *
  * It uses a watcher, based on chokidar, to listen for file and folder changes.
- * It also applied changes from the remote cozy on the local filesystem.
+ * It also applies changes from the remote Twake Workplace on the local filesystem.
  *
  * Its `other` attribute is a reference to a {@link module:core/remote|Remote} side instance.
  * This allows us to read from the remote Cozy when writing to the local
@@ -92,7 +91,7 @@ class Local /*:: implements Reader, Writer */ {
     this.pouch = opts.pouch
     this.events = opts.events
     this.syncPath = opts.config.syncPath
-    this.tmpPath = path.join(this.syncPath, TMP_DIR_NAME)
+    this.tmpPath = opts.config.tmpPath
     this.sendToTrash = opts.sendToTrash
     this.watcher = watcher.build(opts)
     // $FlowFixMe

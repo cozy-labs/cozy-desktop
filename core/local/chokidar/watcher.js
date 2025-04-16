@@ -95,7 +95,7 @@ class LocalWatcher {
     this.pendingChanges = []
 
     // To detect which files&folders have been removed since the last run of
-    // cozy-desktop, we keep all the paths seen by chokidar during its
+    // Twake Desktop, we keep all the paths seen by chokidar during its
     // initial scan in @paths to compare them with pouchdb database.
     this.initialScanParams = {
       paths: [],
@@ -134,8 +134,8 @@ class LocalWatcher {
     this.watcher = chokidar.watch('.', {
       // Let paths in events be relative to this base path
       cwd: this.syncPath,
-      // Ignore our own .system-tmp-cozy-drive directory
-      ignored: /(^|[\/\\])\.system-tmp-cozy-drive/, // eslint-disable-line no-useless-escape
+      // Ignore our own .system-tmp-twake-desktop directory (and legacy .system-tmp-cozy-drive)
+      ignored: /(^|[\/\\])\.system-tmp-(cozy-drive|twake-desktop)/, // eslint-disable-line no-useless-escape
       // Don't follow symlinks
       followSymlinks: false,
       // The stats object is used in methods below

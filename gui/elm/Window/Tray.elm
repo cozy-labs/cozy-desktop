@@ -65,7 +65,7 @@ type Msg
     = GotSyncState SyncState
     | GotSyncConfig SyncConfig
     | GotConfirmation ( ConfirmationID, Bool )
-    | GoToCozy ShowInWeb
+    | GoToTwake ShowInWeb
     | GoToFolder ShowInWeb
     | GoToTab Page
     | GoToStrTab String
@@ -145,8 +145,8 @@ update msg model =
             in
             ( { model | settings = settings }, Cmd.map SettingsMsg cmd )
 
-        GoToCozy showInWeb ->
-            ( model, Ports.gotocozy showInWeb )
+        GoToTwake showInWeb ->
+            ( model, Ports.gototwake showInWeb )
 
         GoToFolder showInWeb ->
             ( model, Ports.gotofolder showInWeb )
@@ -248,10 +248,10 @@ viewBottomBar helpers =
             ]
         , a
             [ href "#"
-            , Mouse.onSpecialClick handleGoToCozy
+            , Mouse.onSpecialClick handleGoToTwake
             ]
             [ Icons.globe 48 False
-            , text (helpers.t "Bar GoToCozy")
+            , text (helpers.t "Bar GoToTwake")
             ]
         ]
 
@@ -265,10 +265,10 @@ handleGoToFolder mouseEvent =
         GoToFolder onOS
 
 
-handleGoToCozy : Mouse.EventWithKeys -> Msg
-handleGoToCozy mouseEvent =
+handleGoToTwake : Mouse.EventWithKeys -> Msg
+handleGoToTwake mouseEvent =
     if mouseEvent.keys.ctrl || mouseEvent.keys.meta then
-        GoToCozy onOS
+        GoToTwake onOS
 
     else
-        GoToCozy inWeb
+        GoToTwake inWeb

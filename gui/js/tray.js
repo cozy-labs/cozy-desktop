@@ -15,22 +15,14 @@ let lastStatus = ''
 
 const imgs = path.resolve(__dirname, '..', 'images')
 const isMac = process.platform === 'darwin'
-const isWindows = process.platform === 'win32'
-const isKde =
-  process.env.XDG_CURRENT_DESKTOP &&
-  process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
 
 const platformIcon = (iconName, { pressed = false } = {}) =>
   nativeImage.createFromPath(
     isMac
       ? pressed
-        ? `${imgs}/tray-icon-osx/${iconName}Highlight.png`
-        : `${imgs}/tray-icon-osx/${iconName}Template.png`
-      : isWindows
-      ? `${imgs}/tray-icon-win/${iconName}.png`
-      : isKde
-      ? `${imgs}/tray-icon-linux-kde/${iconName}.png`
-      : `${imgs}/tray-icon-linux/${iconName}.png`
+        ? `${imgs}/tray-icon-macos/${iconName}Highlight.png`
+        : `${imgs}/tray-icon-macos/${iconName}Template.png`
+      : `${imgs}/tray-icon/${iconName}.png`
   )
 
 const setImage = iconName => {
@@ -56,7 +48,7 @@ const systrayInfo = (appStatus, label) => {
       ]
     case 'up-to-date':
     case 'online':
-      return ['idle', translate('Tray Your cozy is up to date')]
+      return ['idle', translate('Tray Your Twake Workplace is up to date')]
     case 'offline':
       return ['offline', translate('Tray Offline')]
     default:
@@ -143,8 +135,8 @@ const goToTab = (tab) => {
 const menu = Menu.buildFromTemplate([
   { label: statusLabel, enabled: false },
   { type: 'separator' },
-  { label: translate('Tray Open Cozy folder'), click: openCozyFolder },
-  { label: translate('Tray Go to my Cozy'), click: goToMyCozy },
+  { label: translate('Tray Open Twake Desktop folder'), click: openTwakeFolder },
+  { label: translate('Tray Go to my Twake Workplace'), click: goToMyTwake },
   { type: 'separator' },
   { label: translate('Tray Help'), click: goToTab.bind(null, 'help') },
   { label: translate('Tray Settings'), click: goToTab.bind(null, 'settings') },

@@ -6,6 +6,8 @@ const path = require('path')
 const fse = require('fs-extra')
 const { clone } = require('lodash')
 
+const { findBasePath } = require('../../core/migrations/configPaths')
+
 /*::
 import type { Stack } from './stack'
 import type { ChildProcess } from 'child_process'
@@ -32,7 +34,7 @@ class Device {
   async register(dir /*: ContextDir */) /*: Promise<void> */ {
     const client = await this.stack.registerClient(this.name)
     const token = await this.stack.createToken(client)
-    const desktopDir = path.join(dir.root + '-config', '.cozy-desktop')
+    const desktopDir = findBasePath(path.join(dir.root + '-config'))
     await fse.ensureDir(desktopDir)
     const json = {
       url: `http://${this.stack.instance}/`,
@@ -54,7 +56,7 @@ class Device {
     env.COZY_DESKTOP_DIR = this.desktopDir
     env.COZY_DESKTOP_HEARTBEAT = 10000
     env.COZY_DESKTOP_PROPERTY_BASED_TESTING = true
-    // TODO it would be nice to start cozy-desktop without the GUI
+    // TODO it would be nice to start Twake Desktop without the GUI
     this.child = spawn('yarn', ['run', 'electron', '.'], {
       stdio: ['ignore', 'ignore', 'ignore'],
       cwd: path.join(__dirname, '../..'),

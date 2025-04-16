@@ -23,6 +23,7 @@ const Ignore = require('./ignore')
 const { Local } = require('./local')
 const { Merge } = require('./merge')
 const { migrations, runMigrations } = require('./migrations')
+const { findBasePath } = require('./migrations/configPaths')
 const { Pouch } = require('./pouch')
 const Prep = require('./prep')
 const { Remote } = require('./remote')
@@ -87,7 +88,7 @@ class App {
       basePath = os.homedir()
     }
     basePath = path.resolve(basePath)
-    this.basePath = path.join(basePath, '.cozy-desktop')
+    this.basePath = findBasePath(basePath)
     this.config = config.load(this.basePath)
     this.pouch = new Pouch(this.config)
     this.events = new SyncState()
@@ -137,7 +138,7 @@ class App {
     return { syncPath }
   }
 
-  // Return a promise for registering a device on the remote cozy
+  // Return a promise for registering a device on the Twake Workplace
   async registerRemote(
     cozyUrl /*: string */,
     redirectURI /*: ?string */,
@@ -173,7 +174,7 @@ class App {
       }
 
       await this.removeConfig()
-      log.info('Current device properly removed from remote cozy.')
+      log.info('Current device properly unlinked from Twake Workplace.')
       return null
     } catch (err) {
       log.error('An error occured while unregistering the device.', {
@@ -291,7 +292,7 @@ class App {
     const args = {
       mode: 'from',
       to: [{ name: 'Support', email: SUPPORT_EMAIL }],
-      subject: 'Ask support for cozy-desktop',
+      subject: 'Support requested with Twake Desktop',
       parts: [{ type: 'text/plain', body: content }]
     }
     const mailSent = this.remote.sendMail(args)
@@ -299,14 +300,9 @@ class App {
     return Promise.all([mailSent, logsSent])
   }
 
-  /** Path to the file containing user-defined ignore rules */
-  userIgnoreRules() /*: string */ {
-    return path.join(this.config.syncPath, '.cozyignore')
-  }
-
   // Instanciate some objects before sync
   instanciate() {
-    this.ignore = Ignore.loadSync(this.userIgnoreRules())
+    this.ignore = Ignore.loadSync(this.config.ignoreRulesPath)
     this.merge = new Merge(this.pouch)
     this.prep = new Prep(this.merge, this.ignore, this.config)
     this.local = this.merge.local = new Local({ ...this, sendToTrash })
@@ -423,7 +419,7 @@ class App {
     }
   }
 
-  // Get disk space informations from the cozy
+  // Get disk space informations from the Twake Workplace
   diskUsage() /*: Promise<*> */ {
     if (!this.remote) this.instanciate()
     return this.remote.diskUsage()

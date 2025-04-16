@@ -1,14 +1,14 @@
 Tools for debugging
 ===================
 
-Bugs can happen. Cozy-desktop has some tools to track them.
+Bugs can happen. Twake Desktop has some tools to track them.
 
 
 Debug logs
 ----------
 
 The first and most important one is logging. If you think you might have found
-a bug, the first thing to do is running cozy-desktop with debug:
+a bug, the first thing to do is running Twake Desktop with debug:
 
 ```bash
 DEBUG=true yarn start
@@ -27,7 +27,7 @@ logs and request debug logs:
 NODE_DEBUG=request DEBUG=pouchdb:* yarn start
 ```
 
-When cozy-desktop is running, it's possible to send it the `USR1` signal to
+When Twake Desktop is running, it's possible to send it the `USR1` signal to
 make it list the paths watched by chokidar:
 
 ```bash

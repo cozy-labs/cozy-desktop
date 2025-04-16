@@ -25,7 +25,7 @@ const elmectron = Elm.Main.init({
   node: container,
   flags: {
     hash: window.location.hash,
-    folder: defaults.syncPath,
+    defaultSyncPath: defaults.syncPath,
     locale: remote.app.locale,
     locales: {
       en: remote.require('./locales/en.json'),
@@ -118,8 +118,8 @@ ipcRenderer.on('new-release-available', (event, notes, name) => {
 elmectron.ports.quitAndInstall.subscribe(() => {
   ipcRenderer.send('quit-and-install')
 })
-elmectron.ports.gotocozy.subscribe(showInWeb => {
-  ipcRenderer.send('go-to-cozy', showInWeb)
+elmectron.ports.gototwake.subscribe(showInWeb => {
+  ipcRenderer.send('go-to-twake', showInWeb)
 })
 elmectron.ports.gotofolder.subscribe(showInWeb => {
   ipcRenderer.send('go-to-folder', showInWeb)
@@ -140,8 +140,8 @@ ipcRenderer.on('go-to-tab', (event, tab) => {
   elmectron.ports.gototab.send(tab)
 })
 
-elmectron.ports.unlinkCozy.subscribe(() => {
-  ipcRenderer.send('unlink-cozy')
+elmectron.ports.unlinkTwake.subscribe(() => {
+  ipcRenderer.send('unlink-twake')
 })
 
 elmectron.ports.reinitializeSynchronization.subscribe(() => {

@@ -1,0 +1,60 @@
+# See https://github.com/github/gitignore/tree/master/Global
+
+# all hidden files
+.*
+
+# Legacy Cozy Desktop tmp folder
+.system-tmp-cozy-desktop/
+# Twake Desktop tmp folder
+.system-tmp-twake-desktop/
+
+# Dropbox
+.dropbox
+.dropbox.attr
+.dropbox.cache
+
+# Eclipse, SublimeText and many others
+*.tmp
+*.bak
+
+# Emacs
+*~
+\\#*\\#
+
+# LibreOffice
+.~lock.*#
+# https://cgit.freedesktop.org/libreoffice/core/tree/sal/osl/unx/file_misc.cxx?h=libreoffice-6-2-4#n819
+*.osl-tmp
+
+# OpenOffice
+*.lck
+
+# Microsoft Office
+~$*
+
+# Vim
+*.sw[px]
+
+# Google Chrome
+*.crdownload
+
+# Linux
+.fuse_hidden*
+.Trash-*
+
+# OSX
+.DS_Store
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+Icon
+Icon\r
+
+# Windows
+System Volume Information/
+Thumbs.db
+ehthumbs.db
+$Recycle.bin

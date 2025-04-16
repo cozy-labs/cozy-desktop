@@ -6,6 +6,8 @@ const fse = require('fs-extra')
 const { COZY_URL } = require('./cozy')
 const PASSPHRASE = require('./passphrase')
 const config = require('../../../core/config')
+const { DEFAULT_SYNC_DIR_NAME } = require('../../../core/local/constants')
+const { findBasePath } = require('../../../core/migrations/configPaths')
 const automatedRegistration = require('../../../dev/remote/automated_registration')
 const pkg = require('../../../package.json')
 
@@ -13,11 +15,14 @@ module.exports = {
   createConfig() {
     let parent = process.env.COZY_DESKTOP_DIR || 'tmp'
     this.basePath = path.resolve(`${parent}/test/${+new Date()}`)
-    this.syncPath = path.join(this.basePath, 'Cozy Drive')
-    fse.ensureDirSync(this.syncPath)
-    this.config = config.load(path.join(this.basePath, '.cozy-desktop'))
-    this.config.syncPath = this.syncPath
+
+    this.config = config.load(findBasePath(this.basePath))
+    this.config.syncPath = path.join(this.basePath, DEFAULT_SYNC_DIR_NAME)
     this.config.cozyUrl = COZY_URL
+
+    this.syncPath = this.config.syncPath
+    fse.ensureDirSync(this.syncPath)
+    this.tmpPath = this.config.tmpPath
   },
 
   registerClient() {

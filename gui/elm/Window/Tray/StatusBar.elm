@@ -33,16 +33,16 @@ icon status platform =
         Darwin ->
             case status of
                 UpToDate ->
-                    imgIcon "images/tray-icon-osx/idleTemplate@2x.png" "uptodate"
+                    imgIcon "images/tray-icon-macos/idleTemplate@2x.png" "uptodate"
 
                 UserActionRequired ->
-                    imgIcon "images/tray-icon-osx/pauseTemplate@2x.png" "offline"
+                    imgIcon "images/tray-icon-macos/pauseTemplate@2x.png" "offline"
 
                 Offline ->
-                    imgIcon "images/tray-icon-osx/offlineTemplate@2x.png" "offline"
+                    imgIcon "images/tray-icon-macos/offlineTemplate@2x.png" "offline"
 
                 Error _ ->
-                    imgIcon "images/tray-icon-osx/errorTemplate@2x.png" "error"
+                    imgIcon "images/tray-icon-macos/errorTemplate@2x.png" "error"
 
                 _ ->
                     span [ class "status__icon spin" ] []
@@ -50,16 +50,16 @@ icon status platform =
         _ ->
             case status of
                 UpToDate ->
-                    imgIcon "images/tray-icon-win/idle.png" "uptodate"
+                    imgIcon "images/tray-icon/idle.png" "uptodate"
 
                 UserActionRequired ->
-                    imgIcon "images/tray-icon-win/pause.png" "offline"
+                    imgIcon "images/tray-icon/pause.png" "offline"
 
                 Offline ->
-                    imgIcon "images/tray-icon-win/offline.png" "offline"
+                    imgIcon "images/tray-icon/offline.png" "offline"
 
                 Error _ ->
-                    imgIcon "images/tray-icon-win/error.png" "error"
+                    imgIcon "images/tray-icon/error.png" "error"
 
                 _ ->
                     span [ class "status__icon spin" ] []
@@ -69,7 +69,7 @@ statusToString : Helpers -> Status -> String
 statusToString helpers status =
     case status of
         UpToDate ->
-            helpers.t "Dashboard Your cozy is up to date!"
+            helpers.t "Dashboard Your Twake Workplace is up to date!"
 
         Offline ->
             helpers.t "Dashboard Offline"

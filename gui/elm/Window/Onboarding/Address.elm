@@ -147,9 +147,6 @@ update msg context =
             else if contains "@" address then
                 setError context "Address No email address"
 
-            else if contains "mycosy.cloud" address then
-                setError context "Address Cozy not cosy"
-
             else
                 ( Context.setAddressConfig context { addressConfig | busy = True }
                 , Ports.registerRemote addressConfig.address
@@ -175,22 +172,22 @@ view helpers context =
         [ div
             [ class "step-content" ]
             [ Icons.cozyBig
-            , h1 [] [ text (helpers.t "Address Please introduce your cozy address") ]
+            , h1 [] [ text (helpers.t "Address Please enter your Twake Workplace address") ]
             , if context.addressConfig.error == "" then
                 p [ class "adress-helper" ]
-                    [ text (helpers.t "Address This is the web address you use to sign in to your cozy.") ]
+                    [ text (helpers.t "Address This is the web address you use to sign in to your Twake Workplace.") ]
 
               else
                 p [ class "error-message" ]
                     [ text (helpers.t context.addressConfig.error) ]
             , div [ class "coz-form-group" ]
                 [ label [ class "coz-form-label" ]
-                    [ text (helpers.t "Address Cozy address") ]
+                    [ text (helpers.t "Address Twake Workplace address") ]
                 , div [ class "https-input-wrapper" ]
                     [ span [ class "address_https" ]
                         [ text "https://" ]
                     , input
-                        [ placeholder "cloudy.mycozy.cloud"
+                        [ placeholder "lucie.twake.app"
                         , classList
                             [ ( "wizard__address", True )
                             , ( "error", context.addressConfig.error /= "" )

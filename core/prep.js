@@ -25,13 +25,13 @@ const log = logger({
   component: 'Prep'
 })
 
-// When the local filesystem or the remote cozy detects a change, it calls this
-// class to inform it. This class will check this event, add some informations,
-// and give it to merge, so it can be saved in pouchdb.
+// When the local filesystem or the Twake Workplace detects a change, it calls
+// this class to inform it. This class will check this event, add some
+// informations, and give it to merge, so it can be saved in pouchdb.
 //
 // The documents in PouchDB have similar informations of those in CouchDB, but
-// are not structured in the same way. In particular, the _id are uuid in CouchDB
-// and the path to the file/folder (in a normalized form) in PouchDB.
+// are not structured in the same way. In particular, the _id are uuid in
+// CouchDB and the path to the file/folder (in a normalized form) in PouchDB.
 class Prep {
   /*::
   merge : Merge
