@@ -32,14 +32,14 @@ env:
 jobs:
   cancel:
     name: 'Cancel Previous Runs'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     timeout-minutes: 3
     steps:
       - uses: styfle/cancel-workflow-action@5df4e62aed82ea1f787d2a02ab3dbfcaa49ffdd1
 
   unit:
     needs: cancel
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     name: Lint & Unit tests
     steps:
       - uses: actions/checkout@v3
@@ -99,7 +99,7 @@ jobs:
 
   integration:
     needs: cancel
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     name: Integration tests
     steps:
       - uses: actions/checkout@v3
@@ -151,7 +151,7 @@ jobs:
 
   scenarios:
     needs: cancel
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     name: Scenarios
     strategy:
       matrix:
@@ -209,7 +209,7 @@ jobs:
 
   build:
     needs: cancel
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     name: Build packages
     steps:
       - uses: actions/checkout@v3
