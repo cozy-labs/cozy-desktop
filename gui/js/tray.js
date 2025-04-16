@@ -15,10 +15,6 @@ let lastStatus = ''
 
 const imgs = path.resolve(__dirname, '..', 'images')
 const isMac = process.platform === 'darwin'
-const isWindows = process.platform === 'win32'
-const isKde =
-  process.env.XDG_CURRENT_DESKTOP &&
-  process.env.XDG_CURRENT_DESKTOP.match(/KDE/)
 
 const platformIcon = (iconName, { pressed = false } = {}) =>
   nativeImage.createFromPath(
@@ -26,11 +22,7 @@ const platformIcon = (iconName, { pressed = false } = {}) =>
       ? pressed
         ? `${imgs}/tray-icon-osx/${iconName}Highlight.png`
         : `${imgs}/tray-icon-osx/${iconName}Template.png`
-      : isWindows
-      ? `${imgs}/tray-icon-win/${iconName}.png`
-      : isKde
-      ? `${imgs}/tray-icon-linux-kde/${iconName}.png`
-      : `${imgs}/tray-icon-linux/${iconName}.png`
+      : `${imgs}/tray-icon/${iconName}.png`
   )
 
 const setImage = iconName => {
