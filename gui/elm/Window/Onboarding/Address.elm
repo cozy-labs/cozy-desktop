@@ -162,24 +162,35 @@ update msg context =
 
 view : Helpers -> Context -> Html Msg
 view helpers context =
+    let
+        error =
+            context.addressConfig.error
+
+        isValid =
+            error == ""
+    in
     div
         [ classList
             [ ( "step", True )
             , ( "step-address", True )
-            , ( "step-error", context.addressConfig.error /= "" )
+            , ( "step-error", not isValid )
             ]
         ]
         [ div
             [ class "step-content" ]
-            [ Icons.cozyBig
+            [ if isValid then
+                Icons.twakeDrive
+
+              else
+                Icons.bigCross
             , h1 [] [ text (helpers.t "Address Please enter your Twake Workplace address") ]
-            , if context.addressConfig.error == "" then
+            , if isValid then
                 p [ class "adress-helper" ]
                     [ text (helpers.t "Address This is the web address you use to sign in to your Twake Workplace.") ]
 
               else
                 p [ class "error-message" ]
-                    [ text (helpers.t context.addressConfig.error) ]
+                    [ text (helpers.t error) ]
             , div [ class "coz-form-group" ]
                 [ label [ class "coz-form-label" ]
                     [ text (helpers.t "Address Twake Workplace address") ]
@@ -190,7 +201,7 @@ view helpers context =
                         [ placeholder "lucie.twake.app"
                         , classList
                             [ ( "wizard__address", True )
-                            , ( "error", context.addressConfig.error /= "" )
+                            , ( "error", not isValid )
                             ]
                         , type_ "text"
                         , value context.addressConfig.address

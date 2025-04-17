@@ -102,7 +102,7 @@ view helpers model =
 progressView : Helpers -> List (Html Msg) -> List (Html Msg)
 progressView helpers localProgressBar =
     [ h1 []
-        [ figure [ class "logo" ] [ Icons.logo ]
+        [ figure [ class "logo" ] [ Icons.twakeDrive ]
         , text (helpers.t "Updater Downloading")
         ]
     , div [ class "spacer" ]
