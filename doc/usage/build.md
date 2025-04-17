@@ -37,10 +37,10 @@ yarn dist
 
 ## Run it
 ```bash
-mkdir /opt/cozydrive # you can change this path
-cp ./dist/CozyDrive-*.AppImage /opts/cozydrive/CozyDrive.AppImage
-chmod +x /opt/cozydrive/CozyDrive.AppImage
-/opt/cozydrive/CozyDrive.AppImage
+mkdir /opt/twakedesktop # you can change this path
+cp ./dist/Twake-Desktop-*.AppImage /opts/twakedesktop/Twake-Desktop.AppImage
+chmod +x /opt/twakedesktop/Twake-Desktop.AppImage
+/opt/twakedesktop/Twake-Desktop.AppImage
 ```
 
 **Note:** When a new version gets out, the application will attempt to update itself but it will fail, simply repeat the steps above to make it works again.

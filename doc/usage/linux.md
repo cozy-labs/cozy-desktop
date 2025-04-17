@@ -125,8 +125,8 @@ on system start.
 Almost everything is in the `*.AppImage` file however, if you have installed
 `appimaged`, the following additional files are created:
 
-- Launcher file in `~/.local/share/applications/appimagekit_<unique identifier>-Cozy_Drive.desktop`
-- Icons in `~/.local/share/icons/hicolor/*/apps/appimagekit<same unique identifier>-cozydrive.png`
+- Launcher file in `~/.local/share/applications/appimagekit_<unique identifier>-Twake_Desktop.desktop`
+- Icons in `~/.local/share/icons/hicolor/*/apps/appimagekit<same unique identifier>-twakedesktop.png`
 
 Everything else works the same as Windows or macOS: your synchronized files are
 in `~/Twake/` or the folder you choose on first run, and the hidden
