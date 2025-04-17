@@ -61,4 +61,4 @@ UNPRIVILEGED_USERNS_ENABLED=$(cat /proc/sys/kernel/unprivileged_userns_clone 2>/
 # distributions using its custom kernel.
 # This prevents the app from starting and so the only way for our users to use
 # Cozy Desktop is for us to manually disable the Chromium sandbox at runtime.
-exec "$APP_DIR/cozydrive-bin" "$([[ $UNPRIVILEGED_USERNS_ENABLED == 0 ]] && echo '--no-sandbox')" "$@"
+exec "$APP_DIR/twakedesktop-bin" "$([[ $UNPRIVILEGED_USERNS_ENABLED == 0 ]] && echo '--no-sandbox')" "$@"

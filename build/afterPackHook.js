@@ -1,5 +1,5 @@
-const path = require('path')
 const fs = require('fs')
+const path = require('path')
 const util = require('util')
 
 const renameAsync = util.promisify(fs.rename)
@@ -24,10 +24,10 @@ module.exports = async function(context) {
   const chromeSandbox = path.join(context.appOutDir, 'chrome-sandbox')
 
   return Promise.all([
-    // rename cozydrive to cozydrive-bin
+    // rename twakedesktop to twakedesktop-bin
     renameAsync(sourceExecutable, targetExecutable),
 
-    // rename launcher script to cozydrive
+    // rename launcher script to twakedesktop
     renameAsync(launcherScript, sourceExecutable),
 
     // remove the chrome-sandbox file since we explicitly disable it
