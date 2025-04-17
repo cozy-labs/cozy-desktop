@@ -298,7 +298,7 @@ view helpers model =
 viewEmptyFileList : Helpers -> Html Msg
 viewEmptyFileList helpers =
     div [ class "recent-files recent-files--empty" ]
-        [ Icons.logo
+        [ Icons.folderEmpty
         , h1 [] [ text (helpers.t "Dashboard This list is empty") ]
         , p [] [ text (helpers.t "Dashboard Files recently synchronized will show up here") ]
         ]

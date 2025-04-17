@@ -33,7 +33,7 @@ view helpers context =
         ]
         [ div
             [ class "step-content" ]
-            [ Icons.cozyBig
+            [ Icons.twakeDrive
             , h1 [] [ text (helpers.t "Welcome Your own private cloud") ]
             , a
                 [ class "c-btn c-btn--full"
