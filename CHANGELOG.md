@@ -1,5 +1,15 @@
 # Twake Desktop: Changelog
 
+## 4.0.0-beta.2 - 2025-04-18
+
+Improvements for linux users:
+
+- We fixed the launcher script included in the AppImage so the app runs again.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 4.0.0-beta.1 - 2025-04-16
 
 Improvements for all users:
