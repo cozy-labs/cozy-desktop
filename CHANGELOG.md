@@ -1,5 +1,16 @@
 # Twake Desktop: Changelog
 
+## 4.0.0-beta.3 - 2025-04-22
+
+Improvements for all users:
+
+- We replaced the remaining Cozy icons with their Twake Desktop equivalent thus
+  completing the first step of the Twake Desktop rebranding.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 4.0.0-beta.2 - 2025-04-18
 
 Improvements for linux users:
