@@ -3,19 +3,31 @@
  * @flow
  */
 
+const { posix: posixPath } = require('path')
+
 const _ = require('lodash')
 
-const { INITIAL_SEQ } = require('./constants')
-const { dropSpecialDocs, withDefaultValues } = require('./document')
+const {
+  DIR_TYPE,
+  FILE_TYPE,
+  FILES_DOCTYPE,
+  INITIAL_SEQ
+} = require('./constants')
+const {
+  dropSpecialDocs,
+  jsonApiToRemoteDoc,
+  withDefaultValues
+} = require('./document')
 const querystring = require('./querystring')
 const { sortByPath, uri } = require('./utils')
 
 /*::
 import type { CozyStackClient } from 'cozy-client'
+import type { Readable } from 'stream'
 
 import type { RemoteCozy } from './cozy'
 import type { ChangesFeedResponse, ClientWrapper } from './clientWrapper'
-import type { CouchDBDeletion, CouchDBDoc, FullRemoteFile, RemoteDir } from './document'
+import type { CouchDBDeletion, CouchDBDoc, FullRemoteFile, JsonApiDir, JsonApiFile, RemoteDir, RemoteFile } from './document'
 
 type CouchOptions = {
   since?: string,
@@ -69,7 +81,7 @@ class CozyProxy /*:: implements ClientWrapper */ {
       docs
     })
 
-    return { last_seq, docs: [], isInitialFetch }
+    return { last_seq, docs, isInitialFetch }
   }
 
   async getDirectoryContent(
@@ -77,6 +89,79 @@ class CozyProxy /*:: implements ClientWrapper */ {
     { batchSize } /*: { batchSize?: number } */ = {}
   ) /*: Promise<$ReadOnlyArray<FullRemoteFile|RemoteDir>> */ {
     return [].slice(batchSize)
+  }
+
+  async downloadBinary(id /*: string */) /*: Promise<Readable> */ {
+    const resp = await this.cozy.client
+      .collection(FILES_DOCTYPE, { driveId: this.sharingId })
+      .fetchFileContentById(id)
+
+    return resp.body
+  }
+
+  async find(id /*: string */) /*: Promise<FullRemoteFile|RemoteDir> */ {
+    const { data: doc } = await this.cozy.client
+      .collection(FILES_DOCTYPE)
+      .statById(id)
+    return this.toRemoteDoc(doc)
+  }
+
+  async findDir(id /*: string */) /*: Promise<RemoteDir> */ {
+    const doc = await this.find(id)
+    if (doc.type !== DIR_TYPE) {
+      if (doc.drive) {
+        const err = new Error('Cannot fetch drive shortcut as directory')
+        // $FlowFixMe adding status attribute on purpose (see findDirMaybe)
+        err.status = 404
+        throw err
+      }
+
+      throw new Error(`Unexpected file with remote _id ${id}`)
+    }
+    return doc
+  }
+
+  async findByPath(
+    path /*: string */
+  ) /*: Promise<FullRemoteFile|RemoteDir> */ {
+    const { data } = await this.cozy.client
+      .collection(FILES_DOCTYPE, { driveId: this.sharingId })
+      .statByPath(path)
+    return this.toRemoteDoc(data)
+  }
+
+  async findMaybeByPath(
+    path /*: string */
+  ) /*: Promise<?FullRemoteFile|RemoteDir> */ {
+    try {
+      return await this.findByPath(path)
+    } catch (err) {
+      if (err.status === 404) return null
+      else throw err
+    }
+  }
+
+  async toRemoteDoc(
+    doc /*: JsonApiFile|JsonApiDir */,
+    parentDir /*: ?RemoteDir */
+  ) /*: Promise<FullRemoteFile|RemoteDir> */ {
+    const remoteDoc = jsonApiToRemoteDoc(doc)
+    if (remoteDoc.type === FILE_TYPE) {
+      parentDir = parentDir || (await this.findDir(remoteDoc.dir_id))
+      return (this._withPath(remoteDoc, parentDir) /*: FullRemoteFile */)
+    }
+    return (remoteDoc /*: RemoteDir */)
+  }
+
+  /** Set the path of a remote file doc. */
+  _withPath(
+    doc /*: RemoteFile */,
+    parentDir /*: RemoteDir */
+  ) /*: FullRemoteFile */ {
+    return {
+      ...doc,
+      path: posixPath.join(parentDir.path, doc.name)
+    }
   }
 
   async isSharedDriveShortcut(/*:: remoteDoc: CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir */) /*: Promise<boolean> */ {

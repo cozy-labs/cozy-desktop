@@ -32,6 +32,7 @@ const timestamp = require('../utils/timestamp')
 
 /*::
 import type EventEmitter from 'events'
+
 import type { SideName } from '../side'
 import type { ProgressCallback, ReadableWithSize } from '../utils/stream'
 import type { Config } from '../config'
@@ -48,6 +49,7 @@ import type { RemoteDoc, RemoteFileVersion } from './document'
 import type { Reader } from '../reader'
 import type { Writer } from '../writer'
 import type { RemoteError } from './errors'
+import type { ClientWrapper } from './clientWrapper'
 
 export type RemoteOptions = {
   config: Config,
@@ -96,6 +98,8 @@ class Remote /*:: implements Reader, Writer */ {
   pouch: Pouch
   events: EventEmitter
   watchers: Map<string, RemoteWatcher>
+  rootClient: ClientWrapper
+  clients: Map<string, ClientWrapper>
   remoteCozy: RemoteCozy
   warningsPoller: RemoteWarningPoller
   */
@@ -108,6 +112,7 @@ class Remote /*:: implements Reader, Writer */ {
     this.events = events
     this.remoteCozy = new RemoteCozy(config)
     this.warningsPoller = new RemoteWarningPoller(this.remoteCozy, events)
+
     this.watchers = new Map([
       [
         ROOT_DIR_ID,
@@ -121,15 +126,17 @@ class Remote /*:: implements Reader, Writer */ {
       ]
     ])
 
+    this.rootClient = new RemoteCozy(config)
+    this.clients = new Map()
+
     autoBind(this)
   }
 
   getWatcher(id /*: string */) /*: RemoteWatcher */ {
     const watcher = this.watchers.get(id)
     if (watcher == null) {
-      throw new Error(`Missing ${ROOT_DIR_ID} remote watcher`)
+      throw new Error(`Missing ${id} remote watcher`)
     }
-
     return watcher
   }
 
@@ -137,8 +144,19 @@ class Remote /*:: implements Reader, Writer */ {
     return Promise.all([...this.watchers.values()].map(fn))
   }
 
+  getClient(docPath /*: string */ = '') /*: ClientWrapper */ {
+    if (docPath == '') return this.rootClient
+
+    if (!docPath.startsWith('/')) docPath = '/' + docPath
+
+    for (const [drivePath, client] of this.clients) {
+      if (docPath.startsWith(drivePath + '/')) return client
+    }
+    return this.rootClient
+  }
+
   async start() {
-    await this.watchSharedDrives()
+    await this.setupSharedDrives()
     await this.mapWatchers(watcher => watcher.start())
     return this.warningsPoller.start()
   }
@@ -186,21 +204,29 @@ class Remote /*:: implements Reader, Writer */ {
     return this.remoteCozy.updateLastSynced()
   }
 
-  async watchSharedDrives() {
+  async setupSharedDrives() {
     const sharedDrives = await this.remoteCozy.fetchSharedDrives()
-    console.log({ sharedDrives })
+    console.log('sharedDrives: [')
+    sharedDrives.forEach(sd => console.log(sd))
+    // console.log({ sharedDrives })
+    console.log(']')
 
     for (const sharedDrive of sharedDrives) {
+      const remoteCozy = new CozyProxy(sharedDrive._id, {
+        cozy: this.remoteCozy
+      })
+
       this.watchers.set(
         sharedDrive._id,
         new RemoteWatcher(sharedDrive._id, {
           config: this.config,
           pouch: this.pouch,
           events: this.events,
-          remoteCozy: new CozyProxy(sharedDrive._id, { cozy: this.remoteCozy }),
+          remoteCozy,
           prep: this.prep
         })
       )
+      this.clients.set(`/Drives/${sharedDrive.rules[0].title}`, remoteCozy) // FIXME: /Drives should not be hardcoded
     }
   }
 
@@ -208,8 +234,13 @@ class Remote /*:: implements Reader, Writer */ {
   async createReadStreamAsync(
     doc /*: SavedMetadata */
   ) /*: Promise<ReadableWithSize> */ {
-    const stream = await this.remoteCozy.downloadBinary(doc.remote._id)
-    return streamUtils.withSize(stream, doc.size || 0)
+    const {
+      path,
+      size,
+      remote: { _id }
+    } = doc
+    const stream = await this.getClient(path).downloadBinary(_id)
+    return streamUtils.withSize(stream, size || 0)
   }
 
   /** Create a folder on the remote cozy instance */
@@ -534,7 +565,7 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async exists(fullpath /*: string */) /*: Promise<boolean> */ {
-    const remoteDoc = await this.remoteCozy.findMaybeByPath(fullpath)
+    const remoteDoc = await this.getClient(fullpath).findMaybeByPath(fullpath)
     return remoteDoc != null
   }
 
@@ -626,6 +657,8 @@ class Remote /*:: implements Reader, Writer */ {
     doc /*: Metadata|SavedMetadata */
   ) /*: Promise<boolean> */ {
     if (doc.remote == null || doc.remote.type !== DIR_TYPE) return false
+
+    if (doc.drive || doc.remote.drive) return true
 
     if (this.remoteCozy.isSharedDrivesRoot(doc.remote)) return true
 

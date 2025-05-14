@@ -364,6 +364,13 @@ class RemoteCozy /*:: implements ClientWrapper */ {
   async findDir(id /*: string */) /*: Promise<RemoteDir> */ {
     const doc = await this.find(id)
     if (doc.type !== DIR_TYPE) {
+      if (doc.drive) {
+        const err = new Error('Cannot fetch drive shortcut as directory')
+        // $FlowFixMe adding status attribute on purpose (see findDirMaybe)
+        err.status = 404
+        throw err
+      }
+
       throw new Error(`Unexpected file with remote _id ${id}`)
     }
     return doc
@@ -645,7 +652,7 @@ class RemoteCozy /*:: implements ClientWrapper */ {
 
   async isSharedDriveShortcut(
     remoteDoc /*: CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir */
-  ) /*: Promise<boolean> */ {
+  ) /*: Promise<boolean>  */ {
     const sharedDrives = await this.fetchSharedDrives()
 
     return sharedDrives.some(hasShortcut(remoteDoc))

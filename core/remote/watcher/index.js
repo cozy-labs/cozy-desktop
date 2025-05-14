@@ -18,7 +18,7 @@ const {
   REMOTE_WATCHER_ERROR_EVENT,
   REMOTE_WATCHER_FATAL_EVENT
 } = require('../constants')
-const { inRemoteTrash } = require('../document')
+const { buildSharedDriveFolder, inRemoteTrash } = require('../document')
 const remoteErrors = require('../errors')
 const normalizePaths = require('./normalizePaths')
 const { RealtimeManager } = require('./realtime_manager')
@@ -362,7 +362,7 @@ class RemoteWatcher {
     } /*: { isInitialFetch?: boolean, isRecursiveFetch?: boolean } */ = {}
   ) /*: Promise<RemoteChange[]> */ {
     log.trace('Contextualize and analyse changesfeed results...')
-    const changes = this.identifyAll(remoteDocs, olds, {
+    const changes = await this.identifyAll(remoteDocs, olds, {
       isInitialFetch,
       isRecursiveFetch
     })
@@ -383,7 +383,7 @@ class RemoteWatcher {
     return normalizedChanges
   }
 
-  identifyAll(
+  async identifyAll(
     remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir> */,
     olds /*: SavedMetadata[] */,
     {
@@ -395,6 +395,7 @@ class RemoteWatcher {
     const originalMoves = []
 
     const oldsByRemoteId = _.keyBy(olds, 'remote._id')
+
     for (const remoteDoc of remoteDocs) {
       const was /*: ?SavedMetadata */ = oldsByRemoteId[remoteDoc._id]
       changes.push(
@@ -405,10 +406,10 @@ class RemoteWatcher {
       )
     }
 
-    return changes
+    return Promise.all(changes)
   }
 
-  identifyChange(
+  async identifyChange(
     remoteDoc /*: CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir */,
     was /*: ?SavedMetadata */,
     previousChanges /*: Array<RemoteChange> */,
@@ -417,7 +418,7 @@ class RemoteWatcher {
       isInitialFetch = false,
       isRecursiveFetch = false
     } /*: { isInitialFetch?: boolean, isRecursiveFetch?: boolean } */ = {}
-  ) /*: RemoteChange */ {
+  ) /*: Promise<RemoteChange> */ {
     const oldpath /*: ?string */ = was ? was.path : undefined
     log.debug('change received', {
       path: remoteDoc.path || oldpath,
@@ -456,6 +457,20 @@ class RemoteWatcher {
           doc: remoteDoc,
           detail: 'Ignoring temporary file'
         }
+      } else if (
+        (await this.remoteCozy.isSharedDriveShortcut(remoteDoc)) &&
+        remoteDoc.type === FILE_TYPE
+      ) {
+        console.log({ remoteShortcut: remoteDoc })
+        const folderDoc = buildSharedDriveFolder(remoteDoc)
+        console.log({ folderDoc })
+        return this.identifyExistingDocChange(
+          folderDoc,
+          was, // XXX: was is still relevant because we keep the remote file _id when building the folder
+          previousChanges,
+          originalMoves,
+          { isInitialFetch, isRecursiveFetch }
+        )
       } else {
         return this.identifyExistingDocChange(
           remoteDoc,

@@ -1275,6 +1275,10 @@ class Sync {
           isMarkedForDeletion(parent) &&
           !metadata.isUpToDate(side.name, parent) // TODO: trash doc with parent even if parent was trashed on other side?
         ) {
+          console.log('trashWithParentOrByItself: parent is not up-to-date', {
+            doc,
+            parent
+          })
           log.info(
             `${doc.docType} will be trashed within its parent directory`,
             {
@@ -1286,6 +1290,15 @@ class Sync {
           // PouchDB won't reflect the reality.
           return
         } else if (await this.isMissing(parent, otherSide(side.name))) {
+          console.log(
+            `trashWithParentOrByItself: parent is missing on ${otherSide(
+              side.name
+            )} side`,
+            {
+              doc,
+              parent
+            }
+          )
           // XXX: We haven't merged the parent deletion yet but it does not
           // exist anymore so we expect to receive and merge the event soon.
           log.info(

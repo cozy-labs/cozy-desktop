@@ -95,10 +95,10 @@ type CommonCouchDBAttributes = {|
   metadata?: Object,
   name: string,
   path: string,
-  referenced_by: Object[],
   restore_path?: string,
   updated_at: string,
   tags: string[],
+  drive?: true, // XXX: Added by desktop on shared drive roots
 |}
 export type CouchDBDir = {|
   ...CommonCouchDBAttributes,
@@ -211,6 +211,7 @@ export type JsonApiDir = {|
 */
 
 module.exports = {
+  buildSharedDriveFolder,
   specialId,
   dropSpecialDocs,
   inRemoteTrash,
@@ -386,5 +387,44 @@ function normalizeDoc(json /*: JsonApiDeletion|JsonApiDoc */) {
       ...json.attributes,
       ...withDefaultRelations(undefined, json.relationships)
     }
+  }
+}
+
+function buildSharedDriveFolder(
+  sharedDriveShortcut /*: CouchDBFile|FullRemoteFile */
+) /*: RemoteDir */ {
+  const {
+    _id,
+    _rev,
+    cozyMetadata,
+    created_at,
+    dir_id,
+    metadata,
+    name: shortcutName,
+    path: shortcutPath,
+    tags,
+    trashed,
+    updated_at
+  } = sharedDriveShortcut
+
+  const name = posixPath.basename(shortcutName, '.url')
+  const parentPath = trashed ? TRASH_DIR_NAME : posixPath.dirname(shortcutPath)
+  const path = posixPath.join(parentPath, name)
+
+  return {
+    _id,
+    _rev,
+    created_at,
+    cozyMetadata,
+    dir_id,
+    drive: true,
+    metadata,
+    name,
+    path,
+    // restore_path, TODO: should we add a restore_path?
+    tags,
+    type: DIR_TYPE,
+    updated_at,
+    relations: () => [] // TODO: find a way to keep the referenced_by relations?
   }
 }

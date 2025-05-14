@@ -254,13 +254,12 @@ class Local /*:: implements Reader, Writer */ {
       onProgress = undefined
     }
 
-    console.log('addFile', { doc, drive: doc.drive })
-    if (doc.drive) {
-      this.addSharedDriveRoot(doc)
-        .then(callback)
-        .catch(callback)
-      return
-    }
+    // if (doc.drive) {
+    //   this.addSharedDriveRoot(doc)
+    //     .then(callback)
+    //     .catch(callback)
+    //   return
+    // }
 
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
     let filePath = this.abspath(doc.path)
@@ -414,24 +413,24 @@ class Local /*:: implements Reader, Writer */ {
     )
   }
 
-  async addSharedDriveRoot(doc /*: SavedMetadata */) {
-    const { dir, name } = path.parse(doc.path)
-    const relpath = path.join(dir, name)
-    const folderPath = path.join(this.syncPath, relpath)
-    log.info('Add shared drive', { path: relpath })
+  // async addSharedDriveRoot(doc /*: SavedMetadata */) {
+  //   const { dir, name } = path.parse(doc.path)
+  //   const relpath = path.join(dir, name)
+  //   const folderPath = path.join(this.syncPath, relpath)
+  //   log.info('Add shared drive', { path: relpath })
 
-    await fse.ensureDir(folderPath)
-    await this.inodeSetterAsync(doc)
-    // await new Promise((resolve, reject) => {
-    //   const setter = this.inodeSetter(doc)
-    //   setter(err => {
-    //     if (err) reject(err)
-    //     else resolve()
-    //   })
-    // })
-    await this.updateMetadataAsync(doc)
-    metadata.updateLocal(doc, { path: folderPath })
-  }
+  //   await fse.ensureDir(folderPath)
+  //   await this.inodeSetterAsync(doc)
+  //   // await new Promise((resolve, reject) => {
+  //   //   const setter = this.inodeSetter(doc)
+  //   //   setter(err => {
+  //   //     if (err) reject(err)
+  //   //     else resolve()
+  //   //   })
+  //   // })
+  //   await this.updateMetadataAsync(doc)
+  //   metadata.updateLocal(doc, { path: folderPath })
+  // }
 
   /** Overwrite a file */
   async overwriteFileAsync(
