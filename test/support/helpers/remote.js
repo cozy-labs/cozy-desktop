@@ -90,9 +90,10 @@ class RemoteTestHelpers {
     }
   }
 
+  // TODO: allow passing feedId as argument
   async ignorePreviousChanges() {
     const last_seq = await this.side.remoteCozy.fetchLastSeq()
-    await this.pouch.setRemoteSeq(last_seq)
+    await this.pouch.setRemoteSeq(ROOT_DIR_ID, last_seq)
   }
 
   async pullChanges() {

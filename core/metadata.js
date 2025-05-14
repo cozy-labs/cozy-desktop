@@ -164,6 +164,7 @@ export type Metadata = {
   mime?: string,
   class?: string,
 
+  drive?: true, // XXX: Added by desktop on shared drive roots
   trashed?: true,
   errors?: number,
   overwrite?: SavedMetadata,

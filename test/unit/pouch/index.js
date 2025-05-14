@@ -685,22 +685,28 @@ describe('Pouch', function() {
 
     describe('getRemoteSeq', () => {
       it('gets 0 when the remote seq number is not initialized', async function() {
-        await should(this.pouch.getRemoteSeq()).be.fulfilledWith('0')
+        await should(
+          this.pouch.getRemoteSeq('random feed id')
+        ).be.fulfilledWith('0')
       })
     })
 
     describe('setRemoteSeq', function() {
       it('saves the remote sequence number', async function() {
-        await this.pouch.setRemoteSeq('31')
-        await should(this.pouch.getRemoteSeq()).be.fulfilledWith('31')
-        await this.pouch.setRemoteSeq('32')
-        await should(this.pouch.getRemoteSeq()).be.fulfilledWith('32')
+        await this.pouch.setRemoteSeq('random feed id', '31')
+        await should(
+          this.pouch.getRemoteSeq('random feed id')
+        ).be.fulfilledWith('31')
+        await this.pouch.setRemoteSeq('random feed id', '32')
+        await should(
+          this.pouch.getRemoteSeq('random feed id')
+        ).be.fulfilledWith('32')
       })
 
       it('can be called multiple times in parallel', async function() {
         await Promise.map(
           _.range(1, 101),
-          seq => this.pouch.setRemoteSeq(String(seq)),
+          seq => this.pouch.setRemoteSeq('random feed id', String(seq)),
           { concurrency: 2 }
         )
       })

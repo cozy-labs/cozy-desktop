@@ -18,7 +18,8 @@ const {
   HEARTBEAT: REMOTE_HEARTBEAT,
   INITIAL_SEQ,
   REMOTE_WATCHER_ERROR_EVENT,
-  REMOTE_WATCHER_FATAL_EVENT
+  REMOTE_WATCHER_FATAL_EVENT,
+  ROOT_DIR_ID
 } = require('../../../core/remote/constants')
 const { FetchError, RemoteCozy } = require('../../../core/remote/cozy')
 const remoteErrors = require('../../../core/remote/errors')
@@ -99,7 +100,7 @@ describe('RemoteWatcher', function() {
     this.prep.config = this.config
     this.remoteCozy = new RemoteCozy(this.config)
     this.events = new EventEmitter()
-    this.watcher = new RemoteWatcher(this)
+    this.watcher = new RemoteWatcher(ROOT_DIR_ID, this)
   })
   beforeEach(async function() {
     const remoteTree = await builders.createRemoteTree([
@@ -417,7 +418,7 @@ describe('RemoteWatcher', function() {
       sinon.stub(this.remoteCozy, 'changes')
       sinon.spy(this.events, 'emit')
 
-      this.pouch.getRemoteSeq.resolves(lastLocalSeq)
+      this.pouch.getRemoteSeq.with(ROOT_DIR_ID).resolves(lastLocalSeq)
       this.watcher.running = true
       this.watcher.processRemoteChanges.resolves([])
       this.remoteCozy.changes.resolves(changes)
@@ -715,11 +716,11 @@ describe('RemoteWatcher', function() {
       })
 
       it('does not update the remote sequence', async function() {
-        const remoteSeq = await this.pouch.getRemoteSeq()
+        const remoteSeq = await this.pouch.getRemoteSeq(ROOT_DIR_ID)
         await this.watcher
           .processRemoteChanges(remoteDocs, { isInitialFetch: false })
           .catch(() => {})
-        should(this.pouch.getRemoteSeq()).be.fulfilledWith(remoteSeq)
+        should(this.pouch.getRemoteSeq(ROOT_DIR_ID)).be.fulfilledWith(remoteSeq)
       })
     })
 

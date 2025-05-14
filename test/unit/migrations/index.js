@@ -21,6 +21,7 @@ const {
   SCHEMA_INITIAL_VERSION
 } = require('../../../core/migrations/constants')
 const { PouchError } = require('../../../core/pouch/error')
+const { ROOT_DIR_ID } = require('../../../core/remote/constants')
 const configHelpers = require('../../support/helpers/config')
 const pouchHelpers = require('../../support/helpers/pouch')
 
@@ -422,10 +423,12 @@ describe('core/migrations', function() {
             })
 
             it('does not update the remoteSeq', async function() {
-              const expected = await this.pouch.getRemoteSeq()
+              const expected = await this.pouch.getRemoteSeq(ROOT_DIR_ID)
 
               await migrate(migration, this)
-              await should(this.pouch.getRemoteSeq()).be.fulfilledWith(expected)
+              await should(
+                this.pouch.getRemoteSeq(ROOT_DIR_ID)
+              ).be.fulfilledWith(expected)
             })
 
             it('does not prevent synchronizing merged changes', async function() {
@@ -490,10 +493,12 @@ describe('core/migrations', function() {
             })
 
             it('does not update the remoteSeq', async function() {
-              const expected = await this.pouch.getRemoteSeq()
+              const expected = await this.pouch.getRemoteSeq(ROOT_DIR_ID)
 
               await migrate(migration, this)
-              await should(this.pouch.getRemoteSeq()).be.fulfilledWith(expected)
+              await should(
+                this.pouch.getRemoteSeq(ROOT_DIR_ID)
+              ).be.fulfilledWith(expected)
             })
           })
         })

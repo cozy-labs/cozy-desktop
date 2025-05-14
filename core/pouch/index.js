@@ -627,20 +627,26 @@ class Pouch {
     })
   }
 
+  // FIXME: add migration from _local/remoteSeq to _local/remoteSeqs with
+  // ROOT_DIR_ID as the feedId.
+  //
   // Get last remote replication sequence,
   // ie the last change from couchdb that have been saved in pouch
-  async getRemoteSeq() /*: Promise<string> */ {
-    const doc = await this.byIdMaybe('_local/remoteSeq')
+  async getRemoteSeq(feedId /*: string */) /*: Promise<string> */ {
+    const doc = await this.byIdMaybe(`_local/remoteSeqs/${feedId}`)
     if (doc) return doc.seq
-    else return remoteConstants.INITIAL_SEQ
+    else {
+      console.log('remote seq not found', { feedId, doc })
+      return remoteConstants.INITIAL_SEQ
+    }
   }
 
   // Set last remote replication sequence
   // It is saved in PouchDB as a local document
   // See http://pouchdb.com/guides/local-documents.html
-  setRemoteSeq(seq /*: string */) {
+  setRemoteSeq(feedId /*: string */, seq /*: string */) {
     const task = {
-      _id: '_local/remoteSeq',
+      _id: `_local/remoteSeqs/${feedId}`,
       seq
     }
     return new Promise((resolve, reject) => {

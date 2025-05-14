@@ -25,11 +25,12 @@ const { RealtimeManager } = require('./realtime_manager')
 const squashMoves = require('./squashMoves')
 
 /*::
-import type { Config } from '../../config'
+import type { QueueObject } from 'async'
 import type EventEmitter from 'events'
+
+import type { Config } from '../../config'
 import type { Pouch } from '../../pouch'
 import type Prep from '../../prep'
-import type { RemoteCozy } from '../cozy'
 import type {
   Metadata,
   MetadataRemoteInfo,
@@ -38,16 +39,17 @@ import type {
   RemoteRevisionsByID
 } from '../../metadata'
 import type { RemoteChange, RemoteFileMove, RemoteDirMove, RemoteDescendantChange } from '../change'
+import type { ClientWrapper } from '../clientWrapper'
+import type { RemoteCozy } from '../cozy'
 import type { CouchDBDeletion, CouchDBDoc, FullRemoteFile, RemoteDir } from '../document'
 import type { RemoteError } from '../errors'
-import type { QueueObject } from 'async'
 
 export type RemoteWatcherOptions = {
   +config: Config,
   events: EventEmitter,
   pouch: Pouch,
   prep: Prep,
-  remoteCozy: RemoteCozy
+  remoteCozy: ClientWrapper
 }
 */
 
@@ -79,10 +81,11 @@ const needsContentFetching = (
 /** Get changes from the remote Cozy and prepare them for merge */
 class RemoteWatcher {
   /*::
+  feedId: string
   config: Config
   pouch: Pouch
   prep: Prep
-  remoteCozy: RemoteCozy
+  remoteCozy: ClientWrapper
   events: EventEmitter
   running: boolean
   watchInterval: ?IntervalID
@@ -92,8 +95,10 @@ class RemoteWatcher {
   */
 
   constructor(
+    feedId /*: string */,
     { config, pouch, prep, remoteCozy, events } /*: RemoteWatcherOptions */
   ) {
+    this.feedId = feedId
     this.config = config
     this.pouch = pouch
     this.prep = prep
@@ -248,15 +253,23 @@ class RemoteWatcher {
 
       this.events.emit('buffering-start')
 
-      const seq = await this.pouch.getRemoteSeq()
+      const seq = await this.pouch.getRemoteSeq(this.feedId)
       const { last_seq, docs, isInitialFetch } = await this.remoteCozy.changes(
         seq
       )
+      console.log('fetched remote changes', {
+        feedId: this.feedId,
+        since: seq,
+        last_seq,
+        docs: docs.length,
+        isInitialFetch
+      })
       this.events.emit('online')
 
       if (docs.length === 0) {
         log.info('No remote changes for now')
         await this.fetchReincludedContent()
+        await this.pouch.setRemoteSeq(this.feedId, last_seq) // TODO: pass watcher id to set the proper remote seq
         return
       }
 
@@ -275,7 +288,7 @@ class RemoteWatcher {
         .last_seq
       this.events.emit('sync-target', target)
 
-      await this.pouch.setRemoteSeq(last_seq)
+      await this.pouch.setRemoteSeq(this.feedId, last_seq)
       log.info('No more remote changes for now')
     } catch (err) {
       // TODO: Maybe wrap remote errors more closely to remote calls to avoid

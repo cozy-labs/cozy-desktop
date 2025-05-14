@@ -58,7 +58,8 @@ export type RemoteBase = {|
   cozyMetadata?: Object,
   metadata?: Object,
   restore_path?: string,
-  relations: RemoteRelations
+  relations: RemoteRelations,
+  drive?: true, // XXX: Added by desktop on shared drive roots
 |}
 export type RemoteFile = {| ...RemoteBase, ...RemoteFileAttributes |}
 export type FullRemoteFile = {| ...RemoteFile, path: string |}
@@ -94,6 +95,7 @@ type CommonCouchDBAttributes = {|
   metadata?: Object,
   name: string,
   path: string,
+  referenced_by: Object[],
   restore_path?: string,
   updated_at: string,
   tags: string[],
@@ -188,33 +190,31 @@ type JsonApiDeletion = {|
   _deleted: true
 |}
 
-export type JsonApiFile = {|
+export type JsonApiDoc = {|
   id: string,
   type: string,
   meta?: {
     rev?: string
   },
   links: Object,
-  attributes: JsonApiFileAttributes,
+  attributes: Object,
   relationships: JsonApiRelationShips
+|}
+export type JsonApiFile = {|
+  ...JsonApiDoc,
+  attributes: JsonApiFileAttributes,
 |}
 export type JsonApiDir = {|
-  id: string,
-  type: string,
-  meta?: {
-    rev?: string
-  },
-  links: Object,
+  ...JsonApiDoc,
   attributes: JsonApiDirAttributes,
-  relationships: JsonApiRelationShips
 |}
-export type JsonApiDoc = JsonApiFile | JsonApiDir
 */
 
 module.exports = {
   specialId,
   dropSpecialDocs,
   inRemoteTrash,
+  normalizeDoc,
   trashedDoc,
   withDefaultValues,
   isDeletedDoc,
@@ -363,5 +363,28 @@ function jsonFileVersionToRemoteFileVersion(
     metadata: version.metadata,
     relationships: version.relationships,
     ...withDefaultValues(version.attributes)
+  }
+}
+
+function normalizeDoc(json /*: JsonApiDeletion|JsonApiDoc */) {
+  if (json._deleted) {
+    return ({
+      _id: json.id,
+      _rev: json.rev,
+      _deleted: true
+    } /*: CouchDBDeletion */)
+  } else if (!json.meta || !json.meta.rev) {
+    const error = new Error('Missing meta.rev attribute in JsonAPI resource.')
+    // $FlowFixMe we add the `data` attribute on purpose
+    error.data = { json }
+    throw error
+  } else {
+    return {
+      _type: json.type,
+      _id: json.id,
+      _rev: json.meta.rev,
+      ...json.attributes,
+      ...withDefaultRelations(undefined, json.relationships)
+    }
   }
 }

@@ -104,6 +104,7 @@ class Local /*:: implements Reader, Writer */ {
   /*::
   addFileAsync: (SavedMetadata, ?ProgressCallback) => Promise<*>
   addFolderAsync: (SavedMetadata) => Promise<*>
+  inodeSetterAsync: (SavedMetadata) => Promise<*>
   renameConflictingDocAsync: (doc: SavedMetadata, newPath: string) => Promise<void>
   */
 
@@ -251,6 +252,14 @@ class Local /*:: implements Reader, Writer */ {
     if (callback == null) {
       callback = (onProgress /*: any */)
       onProgress = undefined
+    }
+
+    console.log('addFile', { doc, drive: doc.drive })
+    if (doc.drive) {
+      this.addSharedDriveRoot(doc)
+        .then(callback)
+        .catch(callback)
+      return
     }
 
     let tmpFile = path.resolve(this.tmpPath, `${path.basename(doc.path)}.tmp`)
@@ -403,6 +412,25 @@ class Local /*:: implements Reader, Writer */ {
       ],
       callback
     )
+  }
+
+  async addSharedDriveRoot(doc /*: SavedMetadata */) {
+    const { dir, name } = path.parse(doc.path)
+    const relpath = path.join(dir, name)
+    const folderPath = path.join(this.syncPath, relpath)
+    log.info('Add shared drive', { path: relpath })
+
+    await fse.ensureDir(folderPath)
+    await this.inodeSetterAsync(doc)
+    // await new Promise((resolve, reject) => {
+    //   const setter = this.inodeSetter(doc)
+    //   setter(err => {
+    //     if (err) reject(err)
+    //     else resolve()
+    //   })
+    // })
+    await this.updateMetadataAsync(doc)
+    metadata.updateLocal(doc, { path: folderPath })
   }
 
   /** Overwrite a file */

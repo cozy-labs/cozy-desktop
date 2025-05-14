@@ -111,7 +111,7 @@ class Remote /*:: implements Reader, Writer */ {
     this.watchers = new Map([
       [
         ROOT_DIR_ID,
-        new RemoteWatcher({
+        new RemoteWatcher(ROOT_DIR_ID, {
           config: this.config,
           pouch: this.pouch,
           events: this.events,
@@ -138,6 +138,7 @@ class Remote /*:: implements Reader, Writer */ {
   }
 
   async start() {
+    await this.watchSharedDrives()
     await this.mapWatchers(watcher => watcher.start())
     return this.warningsPoller.start()
   }
@@ -187,11 +188,12 @@ class Remote /*:: implements Reader, Writer */ {
 
   async watchSharedDrives() {
     const sharedDrives = await this.remoteCozy.fetchSharedDrives()
+    console.log({ sharedDrives })
 
     for (const sharedDrive of sharedDrives) {
       this.watchers.set(
         sharedDrive._id,
-        new RemoteWatcher({
+        new RemoteWatcher(sharedDrive._id, {
           config: this.config,
           pouch: this.pouch,
           events: this.events,
@@ -405,7 +407,7 @@ class Remote /*:: implements Reader, Writer */ {
       log.warn('Trying to move protected document; aborting', {
         doc: oldMetadata
       })
-      throw new ForbiddenMoveError(oldMetadata, newMetadata)
+      throw new ForbiddenMoveError(newMetadata)
     }
 
     const remoteId = oldMetadata.remote._id

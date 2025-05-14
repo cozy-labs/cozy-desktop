@@ -229,6 +229,8 @@ const setup = async (
       headers: { ...opts.headers, 'User-Agent': userAgent }, // XXX: electron-fetch does not use the session's user-agent
       session: syncSession,
       useSessionCookies: true
+    }).catch(err => {
+      throw err
     })
   }
 

@@ -28,12 +28,14 @@ const {
 } = require('./constants')
 const {
   dropSpecialDocs,
-  withDefaultValues,
   isDeletedDoc,
   jsonApiToRemoteDoc,
-  jsonFileVersionToRemoteFileVersion
+  jsonFileVersionToRemoteFileVersion,
+  normalizeDoc,
+  withDefaultValues
 } = require('./document')
 const { MissingDocumentError } = require('./errors')
+const { sortByPath } = require('./utils')
 const { sortBy } = require('../utils/array')
 const { logger } = require('../utils/logger')
 
@@ -57,6 +59,7 @@ import type {
   MetadataRemoteDir,
   MetadataRemoteFile
 } from '../metadata'
+import type { ChangesFeedResponse, ClientWrapper } from './clientWrapper'
 
 export type Warning = {
   status: number,
@@ -71,12 +74,6 @@ export type Reference = {
   id: string,
   type: string
 }
-
-type ChangesFeedResponse = Promise<{
-  last_seq: string,
-  docs: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion>,
-  isInitialFetch: boolean
-}>
 */
 
 const log = logger({
@@ -90,7 +87,7 @@ const log = logger({
  * - deal with parsing and errors
  * - provide custom functions (that may eventually be merged into the lib)
  */
-class RemoteCozy {
+class RemoteCozy /*:: implements ClientWrapper */ {
   /*::
   config: Config
   url: string
@@ -624,11 +621,12 @@ class RemoteCozy {
 
   // TODO: add method in `cozy-client`'s `SharingCollection`
   async fetchSharedDrives() {
-    const { data: sharedDrives } = await this.client
-      .collection(SHARINGS_DOCTYPE)
-      .findAll({ active: true, drive: true })
+    const { data: sharedDrives } = await this.client.stackClient.fetchJSON(
+      'GET',
+      '/sharings/drives'
+    )
 
-    return sharedDrives
+    return sharedDrives.map(normalizeDoc)
   }
 
   isSharedDrivesRoot(
@@ -644,10 +642,24 @@ class RemoteCozy {
 
     return sharedDrives.some(hasSharedDoc(remoteDoc))
   }
+
+  async isSharedDriveShortcut(
+    remoteDoc /*: CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir */
+  ) /*: Promise<boolean> */ {
+    const sharedDrives = await this.fetchSharedDrives()
+
+    return sharedDrives.some(hasShortcut(remoteDoc))
+  }
 }
 
 function hasSharedDoc(remoteDoc /*: MetadataRemoteFile|MetadataRemoteDir */) {
   return sharing => sharing.rules.some(r => r.values.includes(remoteDoc._id))
+}
+
+function hasShortcut(
+  remoteDoc /*: CouchDBDoc|CouchDBDeletion|FullRemoteFile|RemoteDir */
+) {
+  return sharing => sharing.shortcut_id === remoteDoc._id
 }
 
 async function fetchChangesFromFeed(
@@ -685,6 +697,7 @@ async function fetchInitialChanges(
       { since, includeDocs: true, limit: batchSize },
       { includeFilePath: true, skipDeleted: true, skipTrashed: true }
     )
+  // FIXME: no docs returned for main changeds feed
   remoteDocs = remoteDocs.concat(results.map(r => withDefaultValues(r.doc)))
 
   if (pending === 0) {
@@ -692,30 +705,6 @@ async function fetchInitialChanges(
   } else {
     return fetchInitialChanges(last_seq, client, batchSize, remoteDocs)
   }
-}
-
-function sortByPath /*::<T: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion>> */(
-  docs /*: T */
-) /*: T */ {
-  // XXX: We copy the array because `Array.sort()` mutates it and we're supposed
-  // to deal with read-only arrays (because it's an array of union type values
-  // and Flow will complain if a value can change type).
-  return [...docs].sort(byPath)
-}
-
-function byPath(
-  docA /*: CouchDBDoc|CouchDBDeletion */,
-  docB /*: CouchDBDoc|CouchDBDeletion */
-) {
-  if (!docA._deleted && !docB._deleted) {
-    if (docA.path < docB.path) return -1
-    if (docA.path > docB.path) return 1
-  } else if (docA._deleted && !docB._deleted) {
-    return -1
-  } else if (docB._deleted && !docA._deleted) {
-    return 1
-  }
-  return 0
 }
 
 module.exports = {
