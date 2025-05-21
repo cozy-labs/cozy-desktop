@@ -41,7 +41,7 @@
   "AppMenu Window": "Venster",
 
   "AppUpgrade App upgrade failed": "Het bijwerken van Twake Desktop is mislukt",
-  "AppUpgrade An error happened during the upgrade of Twake Desktop. Please contact support at contact@cozycloud.cc.": "Er is een fout opgetreden tijdens het bijwerken van Twake Desktop. Neem contact met ons op: contact@cozycloud.cc",
+  "AppUpgrade An error happened during the upgrade of Twake Desktop. Please contact support at support@twake.app.": "Er is een fout opgetreden tijdens het bijwerken van Twake Desktop. Neem contact met ons op: support@twake.app",
 
   "Bar GoToTwake": "Twake openen",
   "Bar GoToFolder": "Map openen",
@@ -187,7 +187,7 @@
 
   "InvalidConfiguration Invalid configuration": "Onjuiste configuratie",
   "InvalidConfiguration The client configuration is invalid": "De clientconfiguratie is onjuist",
-  "InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc": "Log uit en probeer het opnieuw, of neem contact met ons op: contact@cozycloud.cc",
+  "InvalidConfiguration Please log out and go through the onboarding again or contact us at support@twake.app": "Log uit en probeer het opnieuw, of neem contact met ons op: support@twake.app",
 
   "InvalidDoc Naming rules for each Operating System": "Naamrichtlijnen per besturingssysteem",
   "InvalidDoc Windows restrictions": "Windows-beperkingen",
@@ -215,7 +215,7 @@
   "Reinitialization Are you sure you want to reinitialize the synchronization?": "Weet je zeker dat je overnieuw wilt beginnen met synchroniseren?",
   "Reinitialization Reinitialize": "Reinitialize",
 
-  "Revoked In case you didn't, contact us at contact@cozycloud.cc": "Als dat niet zo is, neem dan contact met ons op via contact@cozycloud.cc",
+  "Revoked In case you didn't, contact us at support@twake.app": "Als dat niet zo is, neem dan contact met ons op via support@twake.app",
   "Revoked Reconnect": "Opnieuw verbinden",
   "Revoked Synchronization with your Twake Workplace is unavailable, maybe you revoked this computer?": "Synchronisatie is niet beschikbaar. Heb je de machtiging voor deze computer ingetrokken?",
   "Revoked Try again later": "Probeer het later opnieuw",

@@ -61,7 +61,7 @@ const log = logger({
 })
 
 const SUPPORT_EMAIL =
-  process.env.COZY_DESKTOP_SUPPORT_EMAIL || 'contact@cozycloud.cc'
+  process.env.COZY_DESKTOP_SUPPORT_EMAIL || 'support@twake.app'
 
 // App is the entry point for the CLI and GUI.
 // They both can do actions and be notified by events via an App instance.

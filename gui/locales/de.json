@@ -41,7 +41,7 @@
   "AppMenu Window": "Fenster",
 
   "AppUpgrade App upgrade failed": "Twake Desktop Upgrade fehlgeschlagen",
-  "AppUpgrade An error happened during the upgrade of Twake Desktop. Please contact support at contact@cozycloud.cc.": "Ein Fehler ist aufgetreten nachdem wir versucht haben, deine Twake Desktop Version zu aktualisieren.\nBitte kontaktiere den Support unter contact@cozycloud.cc.",
+  "AppUpgrade An error happened during the upgrade of Twake Desktop. Please contact support at support@twake.app.": "Ein Fehler ist aufgetreten nachdem wir versucht haben, deine Twake Desktop Version zu aktualisieren.\nBitte kontaktiere den Support unter support@twake.app.",
 
   "Bar GoToTwake": "Twake öffnen",
   "Bar GoToFolder": "Ordner öffnen",
@@ -187,7 +187,7 @@
 
   "InvalidConfiguration Invalid configuration": "Ungültige Konfiguration",
   "InvalidConfiguration The client configuration is invalid": "Die Nutzerkonfiguration ist ungültig",
-  "InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc": "BItte logge dich aus und wiederhole das Onboarding oder kontaktiere uns über contact@cozycloud.cc",
+  "InvalidConfiguration Please log out and go through the onboarding again or contact us at support@twake.app": "BItte logge dich aus und wiederhole das Onboarding oder kontaktiere uns über support@twake.app",
 
   "InvalidDoc Naming rules for each Operating System": "Naming rules for each Operating System",
   "InvalidDoc Windows restrictions": "Windows restrictions",
@@ -215,7 +215,7 @@
   "Reinitialization Are you sure you want to reinitialize the synchronization?": "Are you sure you want to reinitialize the synchronization?",
   "Reinitialization Reinitialize": "Reinitialize",
 
-  "Revoked In case you didn't, contact us at contact@cozycloud.cc": "Falls du dies nicht getan hast, kontaktiere uns über contact@cozycloud.cc",
+  "Revoked In case you didn't, contact us at support@twake.app": "Falls du dies nicht getan hast, kontaktiere uns über support@twake.app",
   "Revoked Reconnect": "Wiederverbinden",
   "Revoked Synchronization with your Twake Workplace is unavailable, maybe you revoked this computer?": "Synchronisation mit deinem Twake Workplace ist nicht verfügbar, vielleicht hast du diesen Computer widerrufen?",
   "Revoked Try again later": "Versuche es später erneut",

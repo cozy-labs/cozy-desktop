@@ -210,7 +210,7 @@ const showInvalidConfigError = async () => {
       'InvalidConfiguration The client configuration is invalid'
     ),
     detail: translate(
-      'InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc'
+      'InvalidConfiguration Please log out and go through the onboarding again or contact us at support@twake.app'
     ),
     buttons: [translate('Button Log out'), translate('Button Contact support')],
     defaultId: 0
@@ -237,7 +237,7 @@ const showMigrationError = async (err /*: Error */) => {
     type: 'error',
     title: translate('AppUpgrade App upgrade failed'),
     message: translate(
-      'AppUpgrade An error happened during the upgrade of Twake Desktop. Please contact support at contact@cozycloud.cc.'
+      'AppUpgrade An error happened during the upgrade of Twake Desktop. Please contact support at support@twake.app.'
     ),
     detail: errorDetails.join('\n'),
     buttons: [translate('Button Contact support')],
@@ -266,7 +266,7 @@ const showRevokedCozyError = async () => {
       'Revoked Synchronization with your Twake Workplace is unavailable, maybe you revoked this computer?'
     ),
     detail: translate(
-      "Revoked In case you didn't, contact us at contact@cozycloud.cc"
+      "Revoked In case you didn't, contact us at support@twake.app"
     ),
     buttons: [
       translate('Revoked Reconnect'),

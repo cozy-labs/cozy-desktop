@@ -5,7 +5,7 @@
   "version": "4.0.0-beta.3",
   "description": "Twake Desktop is a synchronization tool for your Twake Drive files and folders.",
   "homepage": "https://github.com/cozy-labs/cozy-desktop",
-  "author": "Linagora <contact@cozycloud.cc> (https://linagora.com/)",
+  "author": "Linagora <support@twake.app> (https://linagora.com/)",
   "license": "AGPL-3.0",
   "bugs": {
     "url": "https://github.com/cozy-labs/cozy-desktop/issues"
