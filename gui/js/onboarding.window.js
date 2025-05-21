@@ -171,6 +171,8 @@ module.exports = class OnboardingWM extends WindowManager {
     let cozyUrl
     try {
       cozyUrl = await desktop.checkCozyUrl(arg.cozyUrl)
+      // XXX: remove potential auth cookies set when checking the cozyUrl
+      syncSession.clearStorageData()
     } catch (err) {
       return event.sender.send(
         'registration-error',
