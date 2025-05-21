@@ -41,7 +41,7 @@
   "AppMenu Window": "ウインドウ",
 
   "AppUpgrade App upgrade failed": "Twake Desktop の更新に失敗しました",
-  "AppUpgrade An error happened during the upgrade of Twake Desktop. Please contact support at contact@cozycloud.cc.": "Twake Desktop バージョンをアップグレードしようとして、エラーが発生しました。 contact@cozycloud.cc サポートに連絡してください。",
+  "AppUpgrade An error happened during the upgrade of Twake Desktop. Please contact support at support@twake.app.": "Twake Desktop バージョンをアップグレードしようとして、エラーが発生しました。 support@twake.app サポートに連絡してください。",
 
   "Bar GoToTwake": "Twake を開く",
   "Bar GoToFolder": "フォルダーを開く",
@@ -187,7 +187,7 @@
 
   "InvalidConfiguration Invalid configuration": "設定が間違っています",
   "InvalidConfiguration The client configuration is invalid": "クライアント設定が間違っています",
-  "InvalidConfiguration Please log out and go through the onboarding again or contact us at contact@cozycloud.cc": "ログアウトしてもう一度オンボーディングするか、contact@cozycloud.cc にご連絡ください",
+  "InvalidConfiguration Please log out and go through the onboarding again or contact us at support@twake.app": "ログアウトしてもう一度オンボーディングするか、support@twake.app にご連絡ください",
 
   "InvalidDoc Naming rules for each Operating System": "Naming rules for each Operating System",
   "InvalidDoc Windows restrictions": "Windows restrictions",
@@ -215,7 +215,7 @@
   "Reinitialization Are you sure you want to reinitialize the synchronization?": "Are you sure you want to reinitialize the synchronization?",
   "Reinitialization Reinitialize": "Reinitialize",
 
-  "Revoked In case you didn't, contact us at contact@cozycloud.cc": "行っていない場合は contact@cozycloud.cc にご連絡ください",
+  "Revoked In case you didn't, contact us at support@twake.app": "行っていない場合は support@twake.app にご連絡ください",
   "Revoked Reconnect": "再接続",
   "Revoked Synchronization with your Twake Workplace is unavailable, maybe you revoked this computer?": "お使いの Twake Workplace との同期が利用できません。このコンピュータを無効にしましたか?",
   "Revoked Try again later": "後でもう一度やり直してください",
