@@ -1,5 +1,19 @@
 # Twake Desktop: Changelog
 
+## 4.0.0-beta.4 - 2025-05-21
+
+Improvements for all users:
+
+- Some SSO have a behavior which prevented users from registering Twake Desktop
+  with an instance that uses the SSO to authenticate its owner.
+  We added a temporary fix until we come up with a long term solution as we
+  can't control all SSO implementations.
+- We changed the support e-mail address for Twake Workplace's.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 4.0.0-beta.3 - 2025-04-22
 
 Improvements for all users:
