@@ -1,5 +1,16 @@
 # Twake Desktop: Changelog
 
+## 4.0.0-beta.5 - 2025-05-22
+
+Improvements for all users:
+
+- We increased the onboarding window height to make sure its content is clearly
+  visible and doesn't require scrolling down.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 4.0.0-beta.4 - 2025-05-21
 
 Improvements for all users:
