@@ -13,7 +13,6 @@ const Promise = require('bluebird')
 const metadata = require('../metadata')
 const { ROOT_DIR_ID, DIR_TYPE } = require('./constants')
 const { RemoteCozy } = require('./cozy')
-const { CozyProxy } = require('./cozyProxy')
 const {
   ExcludedDirError,
   ForbiddenDeletionError,
@@ -212,9 +211,7 @@ class Remote /*:: implements Reader, Writer */ {
     console.log(']')
 
     for (const sharedDrive of sharedDrives) {
-      const remoteCozy = new CozyProxy(sharedDrive._id, {
-        cozy: this.remoteCozy
-      })
+      const remoteCozy = new RemoteCozy(this.config, sharedDrive._id)
 
       this.watchers.set(
         sharedDrive._id,

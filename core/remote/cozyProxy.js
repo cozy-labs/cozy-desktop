@@ -5,7 +5,7 @@
 
 const { posix: posixPath } = require('path')
 
-const _ = require('lodash')
+// const _ = require('lodash')
 
 const {
   DIR_TYPE,
@@ -18,11 +18,11 @@ const {
   jsonApiToRemoteDoc,
   withDefaultValues
 } = require('./document')
-const querystring = require('./querystring')
-const { sortByPath, uri } = require('./utils')
+// const querystring = require('./querystring')
+const { sortByPath /*, uri */ } = require('./utils')
 
 /*::
-import type { CozyStackClient } from 'cozy-client'
+import type { CozyClient, FileCollection } from 'cozy-client'
 import type { Readable } from 'stream'
 
 import type { RemoteCozy } from './cozy'
@@ -52,14 +52,21 @@ type  FetchChangesReturnValue = {
 class CozyProxy /*:: implements ClientWrapper */ {
   /*::
   sharingId: string
-  cozy: RemoteCozy
-  stackClient: CozyStackClient
+  client: CozyClient
   */
 
-  constructor(sharingId /*: string */, { cozy } /*: { cozy: RemoteCozy } */) {
+  constructor(
+    sharingId /*: string */,
+    { client } /*: { client: CozyClient } */
+  ) {
     this.sharingId = sharingId
-    this.cozy = cozy
-    this.stackClient = cozy.client.stackClient
+    this.client = client
+  }
+
+  get collection() {
+    return this.client.collection(FILES_DOCTYPE, {
+      driveId: this.sharingId
+    })
   }
 
   async changes(
@@ -68,12 +75,12 @@ class CozyProxy /*:: implements ClientWrapper */ {
   ) /*: ChangesFeedResponse */ {
     const isInitialFetch = since === INITIAL_SEQ
     const { last_seq, remoteDocs } = isInitialFetch
-      ? await fetchInitialChanges(this, since, batchSize)
-      : await fetchChangesFromFeed(this, since, batchSize)
+      ? await fetchInitialChanges(since, this.collection, batchSize)
+      : await fetchChangesFromFeed(since, this.collection, batchSize)
 
     const docs = sortByPath(dropSpecialDocs(remoteDocs))
 
-    console.log({
+    console.log('shared drive changes', {
       sharingId: this.sharingId,
       since,
       last_seq,
@@ -92,18 +99,16 @@ class CozyProxy /*:: implements ClientWrapper */ {
   }
 
   async downloadBinary(id /*: string */) /*: Promise<Readable> */ {
-    const resp = await this.cozy.client
-      .collection(FILES_DOCTYPE, { driveId: this.sharingId })
-      .fetchFileContentById(id)
+    const resp = await this.collection.fetchFileContentById(id)
 
     return resp.body
   }
 
   async find(id /*: string */) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    const { data: doc } = await this.cozy.client
-      .collection(FILES_DOCTYPE)
-      .statById(id)
-    return this.toRemoteDoc(doc)
+    const { data: doc } = await this.collection.statById(id)
+    const remoteDoc = this.toRemoteDoc(doc)
+    console.log('cozyProxy.find', { remoteDoc })
+    return remoteDoc
   }
 
   async findDir(id /*: string */) /*: Promise<RemoteDir> */ {
@@ -124,9 +129,7 @@ class CozyProxy /*:: implements ClientWrapper */ {
   async findByPath(
     path /*: string */
   ) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    const { data } = await this.cozy.client
-      .collection(FILES_DOCTYPE, { driveId: this.sharingId })
-      .statByPath(path)
+    const { data } = await this.collection.statByPath(path)
     return this.toRemoteDoc(data)
   }
 
@@ -170,16 +173,16 @@ class CozyProxy /*:: implements ClientWrapper */ {
 }
 
 async function fetchChangesFromFeed(
-  {
-    stackClient,
-    sharingId
-  } /*: { stackClient: CozyStackClient, sharingId: string } */,
   since /*: string */,
+  filesCollection /*: FileCollection */,
   batchSize /*: number */,
   remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> */ = []
 ) /*: Promise<{ last_seq: string, remoteDocs: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> }> */ {
-  const { newLastSeq: last_seq, pending, results } = await fetchChanges(
-    { stackClient, sharingId },
+  const {
+    newLastSeq: last_seq,
+    pending,
+    results
+  } = await filesCollection.fetchChanges(
     { since, includeDocs: true, limit: batchSize },
     { includeFilePath: true }
   )
@@ -191,8 +194,8 @@ async function fetchChangesFromFeed(
     return { last_seq, remoteDocs }
   } else {
     return fetchChangesFromFeed(
-      { stackClient, sharingId },
       last_seq,
+      filesCollection,
       batchSize,
       remoteDocs
     )
@@ -200,16 +203,16 @@ async function fetchChangesFromFeed(
 }
 
 async function fetchInitialChanges(
-  {
-    stackClient,
-    sharingId
-  } /*: { stackClient: CozyStackClient, sharingId: string } */,
   since /*: string */,
+  filesCollection /*: FileCollection */,
   batchSize /*: number */,
   remoteDocs /*: CouchDBDoc[] */ = []
 ) /*: Promise<{ last_seq: string, remoteDocs: CouchDBDoc[] }> */ {
-  const { newLastSeq: last_seq, pending, results } = await fetchChanges(
-    { stackClient, sharingId },
+  const {
+    newLastSeq: last_seq,
+    pending,
+    results
+  } = await filesCollection.fetchChanges(
     { since, includeDocs: true, limit: batchSize },
     { includeFilePath: true, skipDeleted: true, skipTrashed: true }
   )
@@ -218,61 +221,53 @@ async function fetchInitialChanges(
   if (pending === 0) {
     return { last_seq, remoteDocs }
   } else {
-    return fetchInitialChanges(
-      { stackClient, sharingId },
-      last_seq,
-      batchSize,
-      remoteDocs
-    )
+    return fetchInitialChanges(last_seq, filesCollection, batchSize, remoteDocs)
   }
 }
 
-async function fetchChanges(
-  {
-    stackClient,
-    sharingId
-  } /*: { stackClient: CozyStackClient, sharingId: string } */,
-  couchOptions /*: CouchOptions */ = {},
-  options /*: FetchChangesOptions */ = {}
-) /*: Promise<FetchChangesReturnValue> */ {
-  let opts = {}
-  if (typeof couchOptions !== 'object') {
-    opts.since = couchOptions
-  } else if (Object.keys(couchOptions).length > 0) {
-    Object.assign(opts, couchOptions)
-  }
-  if (Object.keys(options).length > 0) {
-    Object.assign(opts, options)
+// async function fetchChanges(
+//   { client, sharingId } /*: { client: CozyClient, sharingId: string } */,
+//   couchOptions /*: CouchOptions */ = {},
+//   options /*: FetchChangesOptions */ = {}
+// ) /*: Promise<FetchChangesReturnValue> */ {
+//   let opts = {}
+//   if (typeof couchOptions !== 'object') {
+//     opts.since = couchOptions
+//   } else if (Object.keys(couchOptions).length > 0) {
+//     Object.assign(opts, couchOptions)
+//   }
+//   if (Object.keys(options).length > 0) {
+//     Object.assign(opts, options)
 
-    if (options.skipTrashed || options.includeFilePath) {
-      opts.includeDocs = true
-    }
-  }
+//     if (options.skipTrashed || options.includeFilePath) {
+//       opts.includeDocs = true
+//     }
+//   }
 
-  const params = {
-    ..._.omit(opts, [
-      'fields',
-      'includeDocs',
-      'includeFilePath',
-      'skipDeleted',
-      'skipTrashed'
-    ]),
-    fields: opts.fields ? opts.fields.join(',') : null,
-    include_docs: opts.includeDocs,
-    include_file_path: opts.includeFilePath,
-    skip_deleted: opts.skipDeleted,
-    skip_trashed: opts.skipTrashed
-  }
-  const path = uri`/sharings/drives/${sharingId}/_changes`
-  const url = querystring.buildURL(path, params)
-  const {
-    last_seq: newLastSeq,
-    pending,
-    results
-  } = await stackClient.fetchJSON('GET', url)
+//   const params = {
+//     ..._.omit(opts, [
+//       'fields',
+//       'includeDocs',
+//       'includeFilePath',
+//       'skipDeleted',
+//       'skipTrashed'
+//     ]),
+//     fields: opts.fields ? opts.fields.join(',') : null,
+//     include_docs: opts.includeDocs,
+//     include_file_path: opts.includeFilePath,
+//     skip_deleted: opts.skipDeleted,
+//     skip_trashed: opts.skipTrashed
+//   }
+//   const path = uri`/sharings/drives/${sharingId}/_changes`
+//   const url = querystring.buildURL(path, params)
+//   const {
+//     last_seq: newLastSeq,
+//     pending,
+//     results
+//   } = await client.stackClient.fetchJSON('GET', url)
 
-  return { newLastSeq, pending, results }
-}
+//   return { newLastSeq, pending, results }
+// }
 
 module.exports = {
   CozyProxy

@@ -40,7 +40,7 @@ const { sortBy } = require('../utils/array')
 const { logger } = require('../utils/logger')
 
 /*::
-import type { CozyClient } from 'cozy-client'
+import type { CozyClient, FileCollection } from 'cozy-client'
 import type { CozyRealtime } from 'cozy-realtime'
 import type { Readable } from 'stream'
 
@@ -92,22 +92,36 @@ class RemoteCozy /*:: implements ClientWrapper */ {
   config: Config
   url: string
   client: CozyClient
+  driveId: ?string
 
   toRemoteDoc:
     & ((doc: JsonApiFile, parentDir: ?RemoteDir) => Promise<FullRemoteFile>)
     & ((doc: JsonApiDir, parentDir: ?RemoteDir) => Promise<RemoteDir>)
   */
 
-  constructor(config /*: Config */) {
+  constructor(config /*: Config */, driveId /*: ?string */) {
     this.config = config
     this.url = config.cozyUrl
     this.client = createClient(config)
+    this.driveId = driveId
 
     autoBind(this)
   }
 
+  get filesCollection() {
+    return this.client.collection(FILES_DOCTYPE, this)
+  }
+
+  get jobsCollection() {
+    return this.client.collection(JOBS_DOCTYPE)
+  }
+
+  get settingsCollection() {
+    return this.client.collection(SETTINGS_DOCTYPE)
+  }
+
   async createJob(workerType /*: string */, args /*: any */) /*: Promise<*> */ {
-    return this.client.collection(JOBS_DOCTYPE).create(workerType, args)
+    return this.jobsCollection.create(workerType, args)
   }
 
   async unregister() /*: Promise<void> */ {
@@ -121,9 +135,7 @@ class RemoteCozy /*:: implements ClientWrapper */ {
   async diskUsage() /* Promise<{ quota: number, used: number }> */ {
     const {
       data: { attributes }
-    } = await this.client
-      .collection(SETTINGS_DOCTYPE)
-      .get(`${SETTINGS_DOCTYPE}.disk-usage`)
+    } = await this.settingsCollection.get(`${SETTINGS_DOCTYPE}.disk-usage`)
     return attributes
   }
 
@@ -133,7 +145,7 @@ class RemoteCozy /*:: implements ClientWrapper */ {
   }
 
   async updateLastSynced() /*: Promise<void> */ {
-    return this.client.collection(SETTINGS_DOCTYPE).updateLastSynced()
+    return this.settingsCollection.updateLastSynced()
   }
 
   // Catches cryptic errors thrown during requests made to the remote Cozy by
@@ -240,11 +252,13 @@ class RemoteCozy /*:: implements ClientWrapper */ {
                  executable: boolean|} */
   ) /*: Promise<FullRemoteFile> */ {
     return this._withDomainErrors(data, options, async () => {
-      const { data: file } = await this.client
-        .collection(FILES_DOCTYPE)
-        .createFile(data, options, {
+      const { data: file } = await this.filesCollection.createFile(
+        data,
+        options,
+        {
           sanitizeName: false
-        })
+        }
+      )
       return this.toRemoteDoc(file)
     })
   }
@@ -254,11 +268,12 @@ class RemoteCozy /*:: implements ClientWrapper */ {
                  dirId?: string,
                  lastModifiedDate: string|} */
   ) /*: Promise<RemoteDir> */ {
-    const { data: folder } = await this.client
-      .collection(FILES_DOCTYPE)
-      .createDirectory(options, {
+    const { data: folder } = await this.filesCollection.createDirectory(
+      options,
+      {
         sanitizeName: false
-      })
+      }
+    )
     return this.toRemoteDoc(folder)
   }
 
@@ -274,18 +289,16 @@ class RemoteCozy /*:: implements ClientWrapper */ {
                  ifMatch: string|} */
   ) /*: Promise<FullRemoteFile> */ {
     return this._withDomainErrors(data, options, async () => {
-      const { data: updated } = await this.client
-        .collection(FILES_DOCTYPE)
-        .updateFile(
-          data,
-          {
-            ...options,
-            fileId: id
-          },
-          {
-            sanitizeName: false
-          }
-        )
+      const { data: updated } = await this.filesCollection.updateFile(
+        data,
+        {
+          ...options,
+          fileId: id
+        },
+        {
+          sanitizeName: false
+        }
+      )
       return this.toRemoteDoc(updated)
     })
   }
@@ -298,9 +311,11 @@ class RemoteCozy /*:: implements ClientWrapper */ {
                updated_at: string|} */,
     options /*: {|ifMatch: string|} */
   ) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    const { data: updated } = await this.client
-      .collection(FILES_DOCTYPE)
-      .updateAttributes(id, attrs, { ...options, sanitizeName: false })
+    const { data: updated } = await this.filesCollection.updateAttributes(
+      id,
+      attrs,
+      { ...options, sanitizeName: false }
+    )
     return this.toRemoteDoc(updated)
   }
 
@@ -311,9 +326,10 @@ class RemoteCozy /*:: implements ClientWrapper */ {
     // TODO: include relationships or referenced_by to first argument so
     // cozy-client can make sure they're removed.
     // Make sure we don't need them though.
-    const { data: trashed } = await this.client
-      .collection(FILES_DOCTYPE)
-      .destroy({ _id }, options)
+    const { data: trashed } = await this.filesCollection.destroy(
+      { _id },
+      options
+    )
     return this.toRemoteDoc(trashed)
   }
 
@@ -323,8 +339,8 @@ class RemoteCozy /*:: implements ClientWrapper */ {
   ) /*: ChangesFeedResponse */ {
     const isInitialFetch = since === INITIAL_SEQ
     const { last_seq, remoteDocs } = isInitialFetch
-      ? await fetchInitialChanges(since, this.client, batchSize)
-      : await fetchChangesFromFeed(since, this.client, batchSize)
+      ? await fetchInitialChanges(since, this.filesCollection, batchSize)
+      : await fetchChangesFromFeed(since, this.filesCollection, batchSize)
 
     const docs = sortByPath(dropSpecialDocs(remoteDocs))
 
@@ -332,21 +348,17 @@ class RemoteCozy /*:: implements ClientWrapper */ {
   }
 
   async fetchLastSeq() {
-    const { last_seq } = await this.client
-      .collection(FILES_DOCTYPE)
-      .fetchChangesRaw({
-        since: INITIAL_SEQ,
-        descending: true,
-        limit: 1,
-        includeDocs: false
-      })
+    const { last_seq } = await this.filesCollection.fetchChangesRaw({
+      since: INITIAL_SEQ,
+      descending: true,
+      limit: 1,
+      includeDocs: false
+    })
     return last_seq
   }
 
   async find(id /*: string */) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    const { data: doc } = await this.client
-      .collection(FILES_DOCTYPE)
-      .statById(id)
+    const { data: doc } = await this.filesCollection.statById(id)
     return this.toRemoteDoc(doc)
   }
 
@@ -416,9 +428,7 @@ class RemoteCozy /*:: implements ClientWrapper */ {
   async findByPath(
     path /*: string */
   ) /*: Promise<FullRemoteFile|RemoteDir> */ {
-    const { data } = await this.client
-      .collection(FILES_DOCTYPE)
-      .statByPath(path)
+    const { data } = await this.filesCollection.statByPath(path)
     return this.toRemoteDoc(data)
   }
 
@@ -496,9 +506,7 @@ class RemoteCozy /*:: implements ClientWrapper */ {
   }
 
   async downloadBinary(id /*: string */) /*: Promise<Readable> */ {
-    const resp = await this.client
-      .collection(FILES_DOCTYPE)
-      .fetchFileContentById(id)
+    const resp = await this.filesCollection.fetchFileContentById(id)
 
     return resp.body
   }
@@ -528,9 +536,9 @@ class RemoteCozy /*:: implements ClientWrapper */ {
 
   async warnings() /*: Promise<Warning[]> */ {
     try {
-      const response = await this.client
-        .collection(SETTINGS_DOCTYPE)
-        .get(`${SETTINGS_DOCTYPE}.warnings`)
+      const response = await this.settingsCollection.get(
+        `${SETTINGS_DOCTYPE}.warnings`
+      )
       log.warn('Unexpected warnings response. Assuming no warnings.', {
         response
       })
@@ -556,9 +564,7 @@ class RemoteCozy /*:: implements ClientWrapper */ {
       data: {
         attributes: { flat_subdomains: flatSubdomains }
       }
-    } = await this.client
-      .collection(SETTINGS_DOCTYPE)
-      .get(`${SETTINGS_DOCTYPE}.capabilities`)
+    } = await this.settingsCollection.get(`${SETTINGS_DOCTYPE}.capabilities`)
     return { flatSubdomains }
   }
 
@@ -566,7 +572,6 @@ class RemoteCozy /*:: implements ClientWrapper */ {
     _id /*: string */,
     referencedBy /*: Reference[] */
   ) /*: Promise<{_rev: string, referencedBy: Reference[] }> */ {
-    const files = this.client.collection(FILES_DOCTYPE)
     const doc = { _id, _type: FILES_DOCTYPE }
     const references = referencedBy.map(ref => ({
       _id: ref.id,
@@ -575,17 +580,18 @@ class RemoteCozy /*:: implements ClientWrapper */ {
     const {
       meta: { rev: _rev },
       data
-    } = await files.addReferencedBy(doc, references)
+    } = await this.filesCollection.addReferencedBy(doc, references)
     return { _rev, referencedBy: data }
   }
 
   async includeInSync(dir /*: RemoteDir */) /*: Promise<void> */ {
-    const files = this.client.collection(FILES_DOCTYPE)
     const {
       client: { clientID }
     } = this.config
     const oauthClient = { _id: clientID, _type: OAUTH_CLIENTS_DOCTYPE }
-    await files.removeNotSynchronizedDirectories(oauthClient, [dir])
+    await this.filesCollection.removeNotSynchronizedDirectories(oauthClient, [
+      dir
+    ])
   }
 
   async flags() /*: Promise<Object> */ {
@@ -610,9 +616,9 @@ class RemoteCozy /*:: implements ClientWrapper */ {
   async fetchOldFileVersions(
     file /*: MetadataRemoteFile|FullRemoteFile */
   ) /*: Promise<RemoteFileVersion[]> */ {
-    const { data: remoteDoc, included } = await this.client
-      .collection(FILES_DOCTYPE)
-      .statById(file._id)
+    const { data: remoteDoc, included } = await this.filesCollection.statById(
+      file._id
+    )
 
     if (remoteDoc.type === FILE_TYPE && Array.isArray(included)) {
       const oldVersions = included.filter(
@@ -671,16 +677,18 @@ function hasShortcut(
 
 async function fetchChangesFromFeed(
   since /*: string */,
-  client /*: CozyClient */,
+  filesCollection /*: FileCollection */,
   batchSize /*: number */,
   remoteDocs /*: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> */ = []
 ) /*: Promise<{ last_seq: string, remoteDocs: $ReadOnlyArray<CouchDBDoc|CouchDBDeletion> }> */ {
-  const { newLastSeq: last_seq, pending, results } = await client
-    .collection(FILES_DOCTYPE)
-    .fetchChanges(
-      { since, includeDocs: true, limit: batchSize },
-      { includeFilePath: true }
-    )
+  const {
+    newLastSeq: last_seq,
+    pending,
+    results
+  } = await filesCollection.fetchChanges(
+    { since, includeDocs: true, limit: batchSize },
+    { includeFilePath: true }
+  )
   remoteDocs = remoteDocs.concat(
     results.map(r => (r.doc._deleted ? r.doc : withDefaultValues(r.doc)))
   )
@@ -688,29 +696,36 @@ async function fetchChangesFromFeed(
   if (pending === 0) {
     return { last_seq, remoteDocs }
   } else {
-    return fetchChangesFromFeed(last_seq, client, batchSize, remoteDocs)
+    return fetchChangesFromFeed(
+      last_seq,
+      filesCollection,
+      batchSize,
+      remoteDocs
+    )
   }
 }
 
 async function fetchInitialChanges(
   since /*: string */,
-  client /*: CozyClient */,
+  filesCollection /*: FileCollection */,
   batchSize /*: number */,
   remoteDocs /*: CouchDBDoc[] */ = []
 ) /*: Promise<{ last_seq: string, remoteDocs: CouchDBDoc[] }> */ {
-  const { newLastSeq: last_seq, pending, results } = await client
-    .collection(FILES_DOCTYPE)
-    .fetchChanges(
-      { since, includeDocs: true, limit: batchSize },
-      { includeFilePath: true, skipDeleted: true, skipTrashed: true }
-    )
+  const {
+    newLastSeq: last_seq,
+    pending,
+    results
+  } = await filesCollection.fetchChanges(
+    { since, includeDocs: true, limit: batchSize },
+    { includeFilePath: true, skipDeleted: true, skipTrashed: true }
+  )
   // FIXME: no docs returned for main changeds feed
   remoteDocs = remoteDocs.concat(results.map(r => withDefaultValues(r.doc)))
 
   if (pending === 0) {
     return { last_seq, remoteDocs }
   } else {
-    return fetchInitialChanges(last_seq, client, batchSize, remoteDocs)
+    return fetchInitialChanges(last_seq, filesCollection, batchSize, remoteDocs)
   }
 }
 
