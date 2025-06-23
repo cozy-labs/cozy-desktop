@@ -1,5 +1,16 @@
 # Twake Desktop: Changelog
 
+## 4.0.0-beta.6 - 2025-06-23
+
+Improvements for macOS users:
+
+- We replaced the installer icon with one with rounded corners to match the
+  style of the same icon on other platforms.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 4.0.0-beta.5 - 2025-05-22
 
 Improvements for all users:
