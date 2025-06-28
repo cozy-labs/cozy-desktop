@@ -69,8 +69,10 @@ if (!mainInstance && !process.env.COZY_DESKTOP_PROPERTY_BASED_TESTING) {
   app.exit()
 }
 
-let desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
-sentry.setup(desktop.clientInfo())
+const desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
+if (desktop.config.cozyUrl) {
+  sentry.setup(desktop.clientInfo())
+}
 
 let diskTimeout = null
 let onboardingWindow = null
@@ -658,6 +660,7 @@ app.on('ready', async () => {
     log.trace('Setting up onboarding WM...')
     onboardingWindow = new OnboardingWM(app, desktop)
     onboardingWindow.onOnboardingDone(async () => {
+      sentry.setup(desktop.clientInfo())
       await setupDesktop()
       onboardingWindow.hide()
       await trayWindow.show()
