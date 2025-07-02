@@ -4,8 +4,9 @@ const path = require('path')
 
 const { enable: enableRemoteModule } = require('@electron/remote/main')
 const Promise = require('bluebird')
-const { dialog } = require('electron')
+const { app, dialog, shell } = require('electron')
 const { autoUpdater } = require('electron-updater')
+const semver = require('semver')
 
 const { translate } = require('./i18n')
 const WindowManager = require('./window_manager')
@@ -72,6 +73,30 @@ module.exports = class UpdaterWM extends WindowManager {
     autoUpdater.autoDownload = false
     autoUpdater.on('update-available', info => {
       this.clearTimeoutIfAny()
+
+      const { version } = info
+      if (semver.gte(version, '4.0.0-a')) {
+        const goToTwakeWebsite = dialog.showMessageBoxSync({
+          icon: path.resolve(__dirname, '..', 'images', 'icon.png'),
+          title: 'Cozy Desktop',
+          message: translate(
+            'AppUpgrade A new version of the application is available'
+          ),
+          detail: translate(
+            'AppUpgrade We are thrilled to announce the launch of our new Twake application'
+          ),
+          type: 'warning',
+          buttons: ['AppUpgrade Go to download', 'Later'].map(translate)
+        })
+
+        this.skipUpdate('update unsupported')
+
+        if (goToTwakeWebsite === 0) {
+          shell.openExternal('https://cozy.io/download')
+          app.exit(0)
+        }
+      }
+
       log.info('Update available', { update: info, skipped: this.skipped })
       // Make sure UI doesn't show up after timeout
       if (!this.skipped) {
