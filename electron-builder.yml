@@ -45,10 +45,12 @@ mac:
         arch:
             - x64
             - arm64
+            - universal
       - target: dmg
         arch:
             - x64
             - arm64
+            - universal
   notarize: false # XXX: we do it ourselves in afterSign
 dmg:
   contents:
