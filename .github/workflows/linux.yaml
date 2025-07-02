@@ -247,5 +247,6 @@ jobs:
             path: |
                 ${{ github.workspace }}/dist/latest-linux.yml
                 ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*.AppImage
+                ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.AppImage
             retention-days: 5
             compression-level: 0

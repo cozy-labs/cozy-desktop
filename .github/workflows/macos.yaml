@@ -318,7 +318,9 @@ jobs:
             name: Binaries
             path: |
                 ${{ github.workspace }}/dist/latest-mac.yml
-                ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*.dmg
-                ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*-mac.zip
+                ${{ github.workspace }}/dist/Cozy[- ]Desktop[- ]*.dmg
+                ${{ github.workspace }}/dist/Cozy[- ]Desktop[- ]*-mac.zip
+                ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.dmg
+                ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*-mac.zip
             retention-days: 5
             compression-level: 0
