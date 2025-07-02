@@ -43,12 +43,10 @@ mac:
   target:
       - target: zip # this is required for the update to work (see https://github.com/electron-userland/electron-builder/issues/2199)
         arch:
-            - x64
-            - arm64
+            - universal
       - target: dmg
         arch:
-            - x64
-            - arm64
+            - universal
   notarize: false # XXX: we do it ourselves in afterSign
 dmg:
   contents:
