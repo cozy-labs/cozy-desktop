@@ -44,6 +44,10 @@
 
   "AppUpgrade App upgrade failed": "Échec de la mise à jour",
   "AppUpgrade An error happened during the upgrade of Cozy Desktop. Please contact support at contact@cozycloud.cc.": "Une erreur est survenue pendant la mise à jour de Cozy Desktop. Merci de contacter l'assistance sur contact@cozycloud.cc.",
+  "AppUpgrade A new version of the application is available": "Une nouvelle version de l’application est disponible !",
+  "AppUpgrade We are thrilled to announce the launch of our new Twake application": "Nous sommes heureux de vous annoncer le lancement de notre nouvelle application Twake.\nPour en profiter, vous devez désinstaller votre application actuelle, puis installer la nouvelle version en cliquant sur le bouton « Aller au téléchargement ».\nMerci pour votre confiance et à très vite sur Twake !",
+  "AppUpgrade Go to download": "Aller au téléchargement",
+  "AppUpgrade Later": "Plus tard",
 
   "Bar GoToCozy": "Ouvrir Cozy",
   "Bar GoToFolder": "Ouvrir le dossier",
