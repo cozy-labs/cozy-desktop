@@ -45,7 +45,7 @@
   "AppUpgrade App upgrade failed": "Cozy Desktop upgrade failed",
   "AppUpgrade An error happened during the upgrade of Cozy Desktop. Please contact support at contact@cozycloud.cc.": "An error happened after we tried upgrading your Cozy Desktop version. Please contact support at contact@cozycloud.cc.",
   "AppUpgrade A new version of the application is available": "A new version of the application is available",
-  "AppUpgrade We are thrilled to announce the launch of our new Twake application": "We are thrilled to announce the launch of our new Twake application.\nTo use it, you'll need to uninstall your current application and install the new one by clicking on the \"Go to download\" button.\nThank you for your trust and see you soon on Twake!",
+  "AppUpgrade We are thrilled to announce the launch of our new Twake application": "We are thrilled to announce the launch of our new Twake application.\nTo use it, you'll need to uninstall your current application and install the new one by clicking on the \"Go to download\" button.\nThank you for your trust and see you soon on Twake!\n\nIf you have any questions, please contact us at support@cozycloud.cc.",
   "AppUpgrade Go to download": "Go to download",
   "AppUpgrade Later": "Later",
 
