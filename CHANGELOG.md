@@ -1,5 +1,21 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.43.0 - 2025-07-03
+
+Improvements for all users:
+
+- We made some technical changes to lay the foundations for the future.
+  For those who know about it, it's time to say goodbye to `cozy-client-js`
+  which has been completed replaced by `cozy-client` a more modern and complete
+  library to interact with your Cozy.
+- We blocked upgrades to the future v4.0.0 version as the included Twake
+  rebranding would not be properly applied for current users.
+  You'll have to uninstall Cozy Desktop and install Twake Desktop in its stead.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.43.0-beta.2 - 2025-07-02
 
 Improvements for all users:
