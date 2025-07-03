@@ -1,5 +1,15 @@
 # Twake Desktop: Changelog
 
+## 4.0.0-beta.7 - 2025-07-03
+
+Improvements for all users:
+
+- Just a build to trigger an auto-update and run some tests.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 4.0.0-beta.6 - 2025-06-23
 
 Improvements for macOS users:
