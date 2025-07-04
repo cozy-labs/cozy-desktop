@@ -67,12 +67,12 @@ win:
         arch:
             - x64
             - ia32
-  # Comment out the following line if the Digicert server starts failing.
-  # Electron-Builder will then swtich back to the default Comodoca server.
-  rfc3161TimeStampServer: 'http://timestamp.digicert.com'
-  sign: 'build/windows/customSign.js'
-  signDlls: true
-  signingHashAlgorithms: ['sha256']
+  signtoolOptions:
+    # Comment out the following line if the Digicert server starts failing.
+    # Electron-Builder will then swtich back to the default Comodoca server.
+    rfc3161TimeStampServer: 'http://timestamp.digicert.com'
+    sign: 'build/windows/customSign.js'
+    signingHashAlgorithms: ['sha256']
 
 linux:
   target:
@@ -81,7 +81,8 @@ linux:
             - x64
   category: Network;FileTransfer;
   desktop:
-    StartupNotify: 'true'
+    entry:
+      StartupNotify: 'true'
   synopsis: Twake Desktop is a synchronization tool for your Twake Workplace files and folders.
   description: Save them safely in your open source personal cloud, access them anywhere,
     anytime with the mobile application and share them with the world or just your
