@@ -53,6 +53,9 @@ const config = {
       },
       { target: 'dmg', arch: [macOSArch] }
     ],
+    publish: {
+      channel: 'latest.${arch}'
+    },
     notarize: false // XXX: we do it ourselves in afterSign
   },
   dmg: {
