@@ -47,6 +47,7 @@ mac:
       - target: dmg
         arch:
             - universal
+  singleArchFiles: *.node
   notarize: false # XXX: we do it ourselves in afterSign
 dmg:
   contents:
