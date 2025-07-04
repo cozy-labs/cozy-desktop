@@ -315,7 +315,7 @@ jobs:
           apple-id-password: "${{ secrets.apple_id_password }}"
           apple-team-id: "${{ secrets.apple_team_id }}"
       - name: Save artifacts
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' || github.ref_type == 'tag' }}
         uses: actions/upload-artifact@v4
         with:
             name: dist-mac-${{ runner.arch }}
@@ -353,7 +353,7 @@ jobs:
           node ./dev/ci/mergeLatestYmls.js ./dist-mac-arm64/latest-mac.yml ./dist-mac-x64/latest-mac.yml latest-mac.yml
 
       - name: Save artifact
-        if: ${{ github.event_name == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request' || github.ref_type == 'tag' }}
         uses: actions/upload-artifact@v4
         with:
             name: latest-mac.yml
