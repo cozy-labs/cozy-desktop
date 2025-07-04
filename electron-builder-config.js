@@ -54,6 +54,7 @@ const config = {
       { target: 'dmg', arch: [macOSArch] }
     ],
     publish: {
+      provider: 'github',
       channel: 'latest.${arch}'
     },
     notarize: false // XXX: we do it ourselves in afterSign
