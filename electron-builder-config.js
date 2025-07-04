@@ -53,13 +53,7 @@ const config = {
       },
       { target: 'dmg', arch: [macOSArch] }
     ],
-    notarize: false, // XXX: we do it ourselves in afterSign
-    publish: [
-      {
-        provider: 'github',
-        publishAutoUpdate: false
-      }
-    ]
+    notarize: false // XXX: we do it ourselves in afterSign
   },
   dmg: {
     contents: [
@@ -105,6 +99,13 @@ const config = {
       to: 'vnd.cozy.note+markdown.xml'
     },
     { from: 'build/text-x-cozy-note.svg', to: 'text-x-cozy-note.svg' }
+  ],
+
+  publish: [
+    {
+      provider: 'github',
+      publishAutoUpdate: process.platform !== 'darwin'
+    }
   ]
 }
 
