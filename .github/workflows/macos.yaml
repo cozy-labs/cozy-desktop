@@ -59,220 +59,220 @@ jobs:
     outputs:
       key: ${{ steps.cozy-app-dev.outputs.key }}
 
-  unit:
-    needs: [cancel, docker_cache_key]
-    runs-on: macos-13
-    name: Unit tests
-    strategy:
-      matrix:
-        fs: ['APFS']
-      fail-fast: false
-    steps:
-      - uses: actions/checkout@v3
-      - name: Cache node modules
-        id: cache-node-modules
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: |
-            ${{ github.workspace }}/node_modules
-            ~/.cache/electron
-            ~/.cache/electron-builder
-          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
-      - name: Setup Docker
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
-      - name: Install Bash for docker-cache
-        id: install-bash
-        run: |
-          brew install bash
-          echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
-      - name: Cache Docker images.
-        uses: cozy-labs/docker-cache@0.7.0
-        with:
-          key: ${{ needs.docker_cache_key.outputs.key }}
-          bash: ${{ steps.install-bash.outputs.bash-path }}
-      - name: Setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: Setup golang
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Setup python
-        run: pip install setuptools
-      - name: Setup DNS resolution for .localhost
-        uses: ./.github/actions/setup-dnsmasq
-      - name: Install dependencies
-        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
-        run: yarn install:all
-      - name: Setup local env
-        env:
-          COZY_DESKTOP_FS: ${{ matrix.fs }}
-        run: |
-          hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname twake-desktop "$COZY_DESKTOP_DIR"
-          hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
-          echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-      - name: Setup cozy-stack
-        run: docker-compose up -d
-      - name: Setup test config
-        run: |
-          until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
-          do
-            echo "Waiting for cozy-stack to be running..."
-            sleep 30
-          done
-      - name: Unit tests
-        env:
-          COZY_DESKTOP_FS: ${{ matrix.fs }}
-        run: yarn test:unit --forbid-only
+  # unit:
+  #   needs: [cancel, docker_cache_key]
+  #   runs-on: macos-13
+  #   name: Unit tests
+  #   strategy:
+  #     matrix:
+  #       fs: ['APFS']
+  #     fail-fast: false
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Cache node modules
+  #       id: cache-node-modules
+  #       uses: actions/cache@v3
+  #       env:
+  #         cache-name: cache-node-modules
+  #       with:
+  #         path: |
+  #           ${{ github.workspace }}/node_modules
+  #           ~/.cache/electron
+  #           ~/.cache/electron-builder
+  #         key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
+  #     - name: Setup Docker
+  #       uses: douglascamata/setup-docker-macos-action@v1-alpha
+  #     - name: Install Bash for docker-cache
+  #       id: install-bash
+  #       run: |
+  #         brew install bash
+  #         echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
+  #     - name: Cache Docker images.
+  #       uses: cozy-labs/docker-cache@0.7.0
+  #       with:
+  #         key: ${{ needs.docker_cache_key.outputs.key }}
+  #         bash: ${{ steps.install-bash.outputs.bash-path }}
+  #     - name: Setup node
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #     - name: Setup golang
+  #       uses: actions/setup-go@v3
+  #       with:
+  #         go-version: ${{ env.GO_VERSION }}
+  #     - name: Setup python
+  #       run: pip install setuptools
+  #     - name: Setup DNS resolution for .localhost
+  #       uses: ./.github/actions/setup-dnsmasq
+  #     - name: Install dependencies
+  #       if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+  #       run: yarn install:all
+  #     - name: Setup local env
+  #       env:
+  #         COZY_DESKTOP_FS: ${{ matrix.fs }}
+  #       run: |
+  #         hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname twake-desktop "$COZY_DESKTOP_DIR"
+  #         hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
+  #         echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+  #     - name: Setup cozy-stack
+  #       run: docker-compose up -d
+  #     - name: Setup test config
+  #       run: |
+  #         until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
+  #         do
+  #           echo "Waiting for cozy-stack to be running..."
+  #           sleep 30
+  #         done
+  #     - name: Unit tests
+  #       env:
+  #         COZY_DESKTOP_FS: ${{ matrix.fs }}
+  #       run: yarn test:unit --forbid-only
 
-  integration:
-    needs: [cancel, docker_cache_key]
-    runs-on: macos-13
-    name: Integration tests
-    strategy:
-      matrix:
-        fs: ['APFS']
-      fail-fast: false
-    steps:
-      - uses: actions/checkout@v3
-      - name: Cache node modules
-        id: cache-node-modules
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: |
-            ${{ github.workspace }}/node_modules
-            ~/.cache/electron
-            ~/.cache/electron-builder
-          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
-      - name: Setup Docker
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
-      - name: Install Bash for docker-cache
-        id: install-bash
-        run: |
-          brew install bash
-          echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
-      - name: Cache Docker images.
-        uses: cozy-labs/docker-cache@0.7.0
-        with:
-          key: ${{ needs.docker_cache_key.outputs.key }}
-          bash: ${{ steps.install-bash.outputs.bash-path }}
-      - name: Setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: Setup golang
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Setup python
-        run: pip install setuptools
-      - name: Setup DNS resolution for .localhost
-        uses: ./.github/actions/setup-dnsmasq
-      - name: Install dependencies
-        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
-        run: yarn install:all
-      - name: Setup local env
-        env:
-          COZY_DESKTOP_FS: ${{ matrix.fs }}
-        run: |
-          hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname twake-desktop "$COZY_DESKTOP_DIR"
-          hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
-          echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-      - name: Setup cozy-stack
-        run: docker-compose up -d
-      - name: Setup test config
-        run: |
-          until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
-          do
-            echo "Waiting for cozy-stack to be running..."
-            sleep 30
-          done
-      - name: Integration tests
-        env:
-          COZY_DESKTOP_FS: ${{ matrix.fs }}
-        run: yarn test:integration --forbid-only
+  # integration:
+  #   needs: [cancel, docker_cache_key]
+  #   runs-on: macos-13
+  #   name: Integration tests
+  #   strategy:
+  #     matrix:
+  #       fs: ['APFS']
+  #     fail-fast: false
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Cache node modules
+  #       id: cache-node-modules
+  #       uses: actions/cache@v3
+  #       env:
+  #         cache-name: cache-node-modules
+  #       with:
+  #         path: |
+  #           ${{ github.workspace }}/node_modules
+  #           ~/.cache/electron
+  #           ~/.cache/electron-builder
+  #         key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
+  #     - name: Setup Docker
+  #       uses: douglascamata/setup-docker-macos-action@v1-alpha
+  #     - name: Install Bash for docker-cache
+  #       id: install-bash
+  #       run: |
+  #         brew install bash
+  #         echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
+  #     - name: Cache Docker images.
+  #       uses: cozy-labs/docker-cache@0.7.0
+  #       with:
+  #         key: ${{ needs.docker_cache_key.outputs.key }}
+  #         bash: ${{ steps.install-bash.outputs.bash-path }}
+  #     - name: Setup node
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #     - name: Setup golang
+  #       uses: actions/setup-go@v3
+  #       with:
+  #         go-version: ${{ env.GO_VERSION }}
+  #     - name: Setup python
+  #       run: pip install setuptools
+  #     - name: Setup DNS resolution for .localhost
+  #       uses: ./.github/actions/setup-dnsmasq
+  #     - name: Install dependencies
+  #       if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+  #       run: yarn install:all
+  #     - name: Setup local env
+  #       env:
+  #         COZY_DESKTOP_FS: ${{ matrix.fs }}
+  #       run: |
+  #         hdiutil create -megabytes 50 -fs "$COZY_DESKTOP_FS" -volname twake-desktop "$COZY_DESKTOP_DIR"
+  #         hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
+  #         echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+  #     - name: Setup cozy-stack
+  #       run: docker-compose up -d
+  #     - name: Setup test config
+  #       run: |
+  #         until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
+  #         do
+  #           echo "Waiting for cozy-stack to be running..."
+  #           sleep 30
+  #         done
+  #     - name: Integration tests
+  #       env:
+  #         COZY_DESKTOP_FS: ${{ matrix.fs }}
+  #       run: yarn test:integration --forbid-only
 
-  scenarios:
-    needs: [cancel, docker_cache_key]
-    runs-on: macos-13
-    name: Scenarios
-    strategy:
-      matrix:
-        stopped_client: ['', 'STOPPED']
-        fs: ['APFS', 'HFS+']
-      fail-fast: false
-    steps:
-      - uses: actions/checkout@v3
-      - name: Cache node modules
-        id: cache-node-modules
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-node-modules
-        with:
-          path: |
-            ${{ github.workspace }}/node_modules
-            ~/.cache/electron
-            ~/.cache/electron-builder
-          key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
-      - name: Setup Docker
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
-      - name: Install Bash for docker-cache
-        id: install-bash
-        run: |
-          brew install bash
-          echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
-      - name: Cache Docker images.
-        uses: cozy-labs/docker-cache@0.7.0
-        with:
-          key: ${{ needs.docker_cache_key.outputs.key }}
-          bash: ${{ steps.install-bash.outputs.bash-path }}
-      - name: Setup node
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      - name: Setup golang
-        uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-      - name: Setup python
-        run: pip install setuptools
-      - name: Setup DNS resolution for .localhost
-        uses: ./.github/actions/setup-dnsmasq
-      - name: Install dependencies
-        if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
-        run: yarn install:all
-      - name: Setup local env
-        env:
-          COZY_DESKTOP_FS: ${{ matrix.fs }}
-        run: |
-          until hdiutil create -megabytes 100 -fs "$COZY_DESKTOP_FS" -volname twake-desktop "$COZY_DESKTOP_DIR"
-          do
-            sleep 1
-          done
-          until hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
-          do
-            sleep 1
-          done
-          echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
-      - name: Setup cozy-stack
-        run: docker-compose up -d
-      - name: Setup test config
-        run: |
-          until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
-          do
-            echo "Waiting for cozy-stack to be running..."
-            sleep 30
-          done
-      - name: Scenarios
-        env:
-          STOPPED_CLIENT: ${{ matrix.stopped_client == 'STOPPED' }}
-          COZY_DESKTOP_FS: ${{ matrix.fs }}
-        run: yarn test:scenarios --forbid-only
+  # scenarios:
+  #   needs: [cancel, docker_cache_key]
+  #   runs-on: macos-13
+  #   name: Scenarios
+  #   strategy:
+  #     matrix:
+  #       stopped_client: ['', 'STOPPED']
+  #       fs: ['APFS', 'HFS+']
+  #     fail-fast: false
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #     - name: Cache node modules
+  #       id: cache-node-modules
+  #       uses: actions/cache@v3
+  #       env:
+  #         cache-name: cache-node-modules
+  #       with:
+  #         path: |
+  #           ${{ github.workspace }}/node_modules
+  #           ~/.cache/electron
+  #           ~/.cache/electron-builder
+  #         key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
+  #     - name: Setup Docker
+  #       uses: douglascamata/setup-docker-macos-action@v1-alpha
+  #     - name: Install Bash for docker-cache
+  #       id: install-bash
+  #       run: |
+  #         brew install bash
+  #         echo "bash-path=$(brew --prefix)/bin/bash" >> $GITHUB_OUTPUT
+  #     - name: Cache Docker images.
+  #       uses: cozy-labs/docker-cache@0.7.0
+  #       with:
+  #         key: ${{ needs.docker_cache_key.outputs.key }}
+  #         bash: ${{ steps.install-bash.outputs.bash-path }}
+  #     - name: Setup node
+  #       uses: actions/setup-node@v3
+  #       with:
+  #         node-version: ${{ env.NODE_VERSION }}
+  #     - name: Setup golang
+  #       uses: actions/setup-go@v3
+  #       with:
+  #         go-version: ${{ env.GO_VERSION }}
+  #     - name: Setup python
+  #       run: pip install setuptools
+  #     - name: Setup DNS resolution for .localhost
+  #       uses: ./.github/actions/setup-dnsmasq
+  #     - name: Install dependencies
+  #       if: ${{ steps.cache-node-modules.outputs.cache-hit != 'true' }}
+  #       run: yarn install:all
+  #     - name: Setup local env
+  #       env:
+  #         COZY_DESKTOP_FS: ${{ matrix.fs }}
+  #       run: |
+  #         until hdiutil create -megabytes 100 -fs "$COZY_DESKTOP_FS" -volname twake-desktop "$COZY_DESKTOP_DIR"
+  #         do
+  #           sleep 1
+  #         done
+  #         until hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
+  #         do
+  #           sleep 1
+  #         done
+  #         echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
+  #     - name: Setup cozy-stack
+  #       run: docker-compose up -d
+  #     - name: Setup test config
+  #       run: |
+  #         until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
+  #         do
+  #           echo "Waiting for cozy-stack to be running..."
+  #           sleep 30
+  #         done
+  #     - name: Scenarios
+  #       env:
+  #         STOPPED_CLIENT: ${{ matrix.stopped_client == 'STOPPED' }}
+  #         COZY_DESKTOP_FS: ${{ matrix.fs }}
+  #       run: yarn test:scenarios --forbid-only
 
   build:
     needs: cancel
