@@ -150,7 +150,7 @@
     "del": "^6.0.0",
     "devtron": "^1.4.0",
     "electron": "^31",
-    "electron-builder": "^24",
+    "electron-builder": "^26",
     "electron-download": "^4.1.1",
     "electron-mocha": "^13.0.0",
     "elm": "^0.19.1-6",
