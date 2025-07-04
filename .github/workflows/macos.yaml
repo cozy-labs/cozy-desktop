@@ -334,22 +334,23 @@ jobs:
       - name: Download mac-x64 artifacts
         uses: actions/download-artifact@v4
         with:
-          name: dist-mac-x64
-          path: dist-mac-x64
+          name: dist-mac-X64
+          path: dist-mac-X64
 
       - name: Download mac-arm64 artifacts
         uses: actions/download-artifact@v4
         with:
-          name: dist-mac-arm64
-          path: dist-mac-arm64
+          name: dist-mac-ARM64
+          path: dist-mac-ARM64
 
       - name: 'Merge latest-mac.yml'
         # unfortunately electron-builder doesn't understand that we have two different releases for mac-x64 and mac-arm, so we need to manually merge the latest files
         # see https://github.com/electron-userland/electron-builder/issues/5592
         run: |
-          ls -la dist-mac-arm64
+          ls -la dist-mac-X64
+          ls -la dist-mac-ARM64
           yarn add js-yaml
-          node ./dev/ci/mergeLatestYmls.js ./dist-mac-arm64/latest-mac.yml ./dist-mac-x64/latest-mac.yml latest-mac.yml
+          node ./dev/ci/mergeLatestYmls.js ./dist-mac-ARM64/latest-mac.yml ./dist-mac-X64/latest-mac.yml latest-mac.yml
 
       - name: Save artifact
         uses: actions/upload-artifact@v4
