@@ -46,6 +46,7 @@ const config = {
     hardenedRuntime: true,
     entitlements: './build/entitlements.mac.inherit.plist',
     category: 'public.app-category.productivity',
+    icon: 'gui/assets/icon.icns',
     target: [
       {
         target: 'zip', // this is required for the update to work (see https://github.com/electron-userland/electron-builder/issues/2199)
