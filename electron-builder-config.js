@@ -64,22 +64,19 @@ const config = {
 
   win: {
     target: [{ target: 'nsis', arch: ['x64', 'ia32'] }],
-    signtoolOptions: {
-      // Comment out the following line if the Digicert server starts failing.
-      // Electron-Builder will then swtich back to the default Comodoca server.
-      rfc3161TimeStampServer: 'http://timestamp.digicert.com',
-      sign: 'build/windows/customSign.js',
-      signingHashAlgorithms: ['sha256']
-    }
+    // Comment out the following line if the Digicert server starts failing.
+    // Electron-Builder will then swtich back to the default Comodoca server.
+    rfc3161TimeStampServer: 'http://timestamp.digicert.com',
+    sign: 'build/windows/customSign.js',
+    signDlls: true,
+    signingHashAlgorithms: ['sha256']
   },
 
   linux: {
     target: [{ target: 'AppImage', arch: ['x64'] }],
     category: 'Network;FileTransfer;',
     desktop: {
-      entry: {
-        StartupNotify: 'true'
-      }
+      StartupNotify: 'true'
     },
     synopsis:
       'Twake Desktop is a synchronization tool for your Twake Workplace files and folders.',

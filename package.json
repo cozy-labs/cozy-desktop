@@ -41,7 +41,7 @@
     "dev:setup": "yarn docker:exec /cozy-desktop/dev/setup.sh",
     "dev:elm": "yarn watch:css & yarn watch:elm & python2 -m SimpleHTTPServer 8000",
     "dev:exclusions": "env-cmd -f .env.dev electron ./dev/remote/change-dir-exclusions.js",
-    "dist": "electron-builder build",
+    "dist": "electron-builder -c ./electron-builder-config.js build",
     "docker:exec": "docker exec -it cozy-desktop-stack",
     "elm:upgrade": "cd gui && yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
     "jq": "cross-env HOME=. nice -n 19 jq",
@@ -190,5 +190,6 @@
   },
   "resolutions": {
     "node-abi": "3.5.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
