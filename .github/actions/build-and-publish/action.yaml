@@ -31,6 +31,7 @@ runs:
         CSC_KEY_PASSWORD: "${{ inputs.mac-cert-password }}"
         APPLE_ID: "${{ inputs.apple-id }}"
         APPLE_ID_PASSWORD: "${{ inputs.apple-id-password }}"
+        APPLE_APP_SPECIFIC_PASSWORD: "${{ inputs.apple-id-password }}"
         APPLE_TEAM_ID: "${{ inputs.apple-team-id }}"
       run: |
         if [ "${{ runner.os }}" == "Linux" ]; then
