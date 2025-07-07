@@ -1,5 +1,19 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.43.1-beta.1 - 2025-07-07
+
+Improvements for macOS users:
+
+- The latest release showed that users of the Apple Silicon version of
+  Cozy Desktop could not run the application after an upgrade as the executable
+  contained code compiled for the Intel version.
+  We made sure to compile both versions separately to make sure each platform
+  receives the appropriate executable.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.43.0 - 2025-07-03
 
 Improvements for all users:
