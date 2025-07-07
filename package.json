@@ -41,7 +41,7 @@
     "dev:setup": "yarn docker:exec /cozy-desktop/dev/setup.sh",
     "dev:elm": "yarn watch:css & yarn watch:elm & python2 -m SimpleHTTPServer 8000",
     "dev:exclusions": "env-cmd -f .env.dev electron ./dev/remote/change-dir-exclusions.js",
-    "dist": "electron-builder build",
+    "dist": "electron-builder -c ./electron-builder-config.js build",
     "docker:exec": "docker exec -it cozy-desktop-stack",
     "elm:upgrade": "cd gui && yarn add --dev elm@latest elm-upgrade@latest && elm-upgrade",
     "jq": "cross-env HOME=. nice -n 19 jq",
