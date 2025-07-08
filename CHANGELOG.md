@@ -1,5 +1,25 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.43.1-beta.2 - 2025-07-08
+
+Improvements for Windows users:
+
+- Some users have experienced issues with the latest stable release on Windows.
+  We believe this is due to compilation issues for the 32 bits version of
+  Cozy Desktop.
+  Since we've stopped supporting 32 bits versions of Windows a while ago we
+  decided to fix the issue by stopping building a 32 bits version of the
+  application.
+
+Improvements for linux users:
+
+- We reverted the unexpected Cozy Drive rebranding into Twake Desktop as it's
+  not meant to go live yet.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.43.1-beta.1 - 2025-07-07
 
 Improvements for macOS users:
