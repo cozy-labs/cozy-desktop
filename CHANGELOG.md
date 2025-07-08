@@ -1,5 +1,17 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.43.1-beta.3 - 2025-07-08
+
+Improvements for Windows users:
+
+- Windows binaries were not signed so the OS was poping security errors when
+  trying to install Cozy Desktop.
+  We made sure to force code signing for these releases.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.43.1-beta.2 - 2025-07-08
 
 Improvements for Windows users:
