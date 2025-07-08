@@ -34,7 +34,7 @@ before_build:
   - ps: if ($env:BUILD_JOB -eq "build") { pwsh -NoProfile -ExecutionPolicy Unrestricted -Command .\build\windows\setup-keylocker.ps1 }
 
 build_script:
-  - ps: $env:SIGN_CODE=( ($env:APPVEYOR_REPO_BRANCH -eq "master" ) -and ($env:APPVEYOR_REPO_TAG -eq 'true') )
+  - ps: $env:SIGN_CODE=( ($env:FORCE_CODE_SIGNING -eq "true") -or (($env:APPVEYOR_REPO_BRANCH -eq "master" ) -and ($env:APPVEYOR_REPO_TAG -eq 'true')) )
   - ps: if ($env:BUILD_JOB -eq "build") { yarn dist }
 
 artifacts:
