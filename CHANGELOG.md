@@ -1,5 +1,28 @@
 # Cozy Drive for Desktop: Changelog
 
+## 3.43.1 - 2025-07-09
+
+Improvements for Windows users:
+
+- Some users have experienced issues with the latest stable release on Windows.
+  We believe this is due to compilation issues for the 32 bits version of
+  Cozy Desktop.
+  Since we've stopped supporting 32 bits versions of Windows a while ago we
+  decided to fix the issue by stopping building a 32 bits version of the
+  application.
+
+Improvements for macOS users:
+
+- The latest release showed that users of the Apple Silicon version of
+  Cozy Desktop could not run the application after an upgrade as the executable
+  contained code compiled for the Intel version.
+  We made sure to compile both versions separately to make sure each platform
+  receives the appropriate executable.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 3.43.1-beta.3 - 2025-07-08
 
 Improvements for Windows users:
