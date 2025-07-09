@@ -39,7 +39,7 @@ build_script:
 
 artifacts:
   - path: "dist\\latest.yml"
-  - path: "dist\\Cozy*Drive*Setup*.exe*"
+  - path: "dist\\Twake*Desktop*Setup*.exe*"
 
 on_failure:
   - node --version
