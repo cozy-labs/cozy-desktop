@@ -276,8 +276,11 @@ jobs:
 
   build:
     needs: cancel
-    runs-on: macos-14
     name: Build packages
+    strategy:
+      matrix:
+        os: [macos-13, macos-14]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - name: Cache node modules
@@ -312,13 +315,53 @@ jobs:
           apple-id-password: "${{ secrets.apple_id_password }}"
           apple-team-id: "${{ secrets.apple_team_id }}"
       - name: Save artifacts
-        if: ${{ github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
-            name: Binaries
+            name: dist-mac-${{ runner.arch }}
             path: |
                 ${{ github.workspace }}/dist/latest-mac.yml
                 ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*.dmg
                 ${{ github.workspace }}/dist/Cozy[- ]Drive[- ]*-mac.zip
             retention-days: 5
             compression-level: 0
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Download mac-x64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-mac-X64
+          path: dist-mac-X64
+
+      - name: Download mac-arm64 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-mac-ARM64
+          path: dist-mac-ARM64
+
+      - name: 'Merge latest-mac.yml'
+        # unfortunately electron-builder doesn't understand that we have two different releases for mac-x64 and mac-arm, so we need to manually merge the latest files
+        # see https://github.com/electron-userland/electron-builder/issues/5592
+        run: |
+          ls -la dist-mac-X64
+          ls -la dist-mac-ARM64
+          yarn add js-yaml
+          node ./dev/ci/mergeLatestYmls.js ./dist-mac-ARM64/latest-mac.yml ./dist-mac-X64/latest-mac.yml latest-mac.yml
+
+      - name: Save artifact
+        uses: actions/upload-artifact@v4
+        with:
+            name: latest-mac.yml
+            path: |
+                ${{ github.workspace }}/latest-mac.yml
+            retention-days: 5
+            compression-level: 0
+
+      - name: Add artifact to release
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: latest-mac.yml
