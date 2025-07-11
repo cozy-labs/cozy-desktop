@@ -1,5 +1,16 @@
 # Twake Desktop: Changelog
 
+## 4.0.0-beta.9 - 2025-07-11
+
+Improvements for all users:
+
+- We fixed the updater window content display which was larger than the
+  available space after the Twake Desktop rebranding.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 4.0.0-beta.8 - 2025-07-09
 
 Improvements for Windows users:
