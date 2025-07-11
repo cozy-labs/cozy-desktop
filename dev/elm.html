@@ -14,11 +14,11 @@
                 const params = new URL(window.location).searchParams;
                 const flags = {
                     hash: window.location.hash,
-                    version: "debug",
-                    platform: "linux",
+                    defaultSyncPath: "/",
                     locale: params.get("lang") || "en",
                     locales,
-                    folder: "/"
+                    platform: "linux",
+                    version: "debug"
                 };
                 var app = Elm.Main.init({
                     node,
