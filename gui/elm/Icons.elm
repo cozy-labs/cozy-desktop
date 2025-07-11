@@ -1,6 +1,7 @@
 module Icons exposing
     ( IconFunction
     , account
+    , badge
     , bigCross
     , bigTick
     , dashboard
@@ -129,34 +130,34 @@ globe =
 
 
 twakeDrive =
-    figure []
-        [ div [ class "svg-wrapper" ]
-            [ svg
-                [ viewBox "0 0 33 33" ]
-                [ Svg.rect [ attribute "x" "0.618", attribute "y" "0.718", width 32, height 32, attribute "rx" "10.568", fill "url(#drive_svg__paint0_linear_11347_30928)" ] []
-                , Svg.g [ attribute "filter" "url(#drive_svg__filter0_d_11347_30928)", fill "#fff" ]
-                    [ Svg.path [ attribute "fill-rule" "evenodd", attribute "clip-rule" "evenodd", d "M16.61 18.913a5.25 5.25 0 00-.228-1.54 5.455 5.455 0 00-.398-.96 5.25 5.25 0 00-.927-1.25 5.318 5.318 0 00-2.972-1.496 5.484 5.484 0 00-.779-.058 5.25 5.25 0 00-1.54.229 5.358 5.358 0 00-1.406.665 5.288 5.288 0 00-1.953 2.38 5.276 5.276 0 00-.398 2.29 5.306 5.306 0 005.037 5.037c.087.004.174.006.26.006h8.486v-5.303H16.61z" ] []
-                    , Svg.path [ d "M19.791 24.216a7.425 7.425 0 100-14.85 7.425 7.425 0 000 14.85z" ] []
-                    ]
-                , Svg.defs []
-                    [ Svg.linearGradient [ id "drive_svg__paint0_linear_11347_30928", attribute "x1" "4.126", attribute "y1" "29.682", attribute "x2" "39.046", attribute "y2" "-5.32", attribute "gradientUnits" "userSpaceOnUse" ]
-                        [ Svg.stop [ attribute "offset" "0.248", attribute "stop-color" "#FF4759" ] []
-                        , Svg.stop [ attribute "offset" "1", attribute "stop-color" "#FFD600" ] []
-                        ]
-                    , Svg.filter [ id "drive_svg__filter0_d_11347_30928", attribute "x" "4.371", attribute "y" "8.061", attribute "width" "24.477", attribute "height" "18.113", attribute "filterUnits" "userSpaceOnUse", attribute "color-interpolation-filters" "sRGB" ]
-                        [ Svg.feFlood [ attribute "flood-opacity" "0", attribute "result" "BackgroundImageFix" ] []
-                        , Svg.feColorMatrix [ attribute "in" "SourceAlpha", attribute "values" "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0", attribute "result" "hardAlpha" ] []
-                        , Svg.feOffset [ attribute "dy" "0.326" ] []
-                        , Svg.feGaussianBlur [ attribute "stdDeviation" "0.816" ] []
-                        , Svg.feComposite [ attribute "in2" "hardAlpha", attribute "operator" "out" ] []
-                        , Svg.feColorMatrix [ attribute "values" "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0" ] []
-                        , Svg.feBlend [ attribute "in2" "BackgroundImageFix", attribute "result" "effect1_dropShadow_11347_30928" ] []
-                        , Svg.feBlend [ attribute "in" "SourceGraphic", attribute "in2" "effect1_dropShadow_11347_30928", attribute "result" "shape" ] []
-                        ]
-                    ]
+    svg
+        [ viewBox "0 0 33 33" ]
+        [ Svg.rect [ attribute "x" "0.618", attribute "y" "0.718", width 32, height 32, attribute "rx" "10.568", fill "url(#drive_svg__paint0_linear_11347_30928)" ] []
+        , Svg.g [ attribute "filter" "url(#drive_svg__filter0_d_11347_30928)", fill "#fff" ]
+            [ Svg.path [ attribute "fill-rule" "evenodd", attribute "clip-rule" "evenodd", d "M16.61 18.913a5.25 5.25 0 00-.228-1.54 5.455 5.455 0 00-.398-.96 5.25 5.25 0 00-.927-1.25 5.318 5.318 0 00-2.972-1.496 5.484 5.484 0 00-.779-.058 5.25 5.25 0 00-1.54.229 5.358 5.358 0 00-1.406.665 5.288 5.288 0 00-1.953 2.38 5.276 5.276 0 00-.398 2.29 5.306 5.306 0 005.037 5.037c.087.004.174.006.26.006h8.486v-5.303H16.61z" ] []
+            , Svg.path [ d "M19.791 24.216a7.425 7.425 0 100-14.85 7.425 7.425 0 000 14.85z" ] []
+            ]
+        , Svg.defs []
+            [ Svg.linearGradient [ id "drive_svg__paint0_linear_11347_30928", attribute "x1" "4.126", attribute "y1" "29.682", attribute "x2" "39.046", attribute "y2" "-5.32", attribute "gradientUnits" "userSpaceOnUse" ]
+                [ Svg.stop [ attribute "offset" "0.248", attribute "stop-color" "#FF4759" ] []
+                , Svg.stop [ attribute "offset" "1", attribute "stop-color" "#FFD600" ] []
+                ]
+            , Svg.filter [ id "drive_svg__filter0_d_11347_30928", attribute "x" "4.371", attribute "y" "8.061", attribute "width" "24.477", attribute "height" "18.113", attribute "filterUnits" "userSpaceOnUse", attribute "color-interpolation-filters" "sRGB" ]
+                [ Svg.feFlood [ attribute "flood-opacity" "0", attribute "result" "BackgroundImageFix" ] []
+                , Svg.feColorMatrix [ attribute "in" "SourceAlpha", attribute "values" "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0", attribute "result" "hardAlpha" ] []
+                , Svg.feOffset [ attribute "dy" "0.326" ] []
+                , Svg.feGaussianBlur [ attribute "stdDeviation" "0.816" ] []
+                , Svg.feComposite [ attribute "in2" "hardAlpha", attribute "operator" "out" ] []
+                , Svg.feColorMatrix [ attribute "values" "0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.1 0" ] []
+                , Svg.feBlend [ attribute "in2" "BackgroundImageFix", attribute "result" "effect1_dropShadow_11347_30928" ] []
+                , Svg.feBlend [ attribute "in" "SourceGraphic", attribute "in2" "effect1_dropShadow_11347_30928", attribute "result" "shape" ] []
                 ]
             ]
         ]
+
+
+badge i =
+    figure [] [ div [ class "svg-wrapper" ] [ i ] ]
 
 
 bigTick =

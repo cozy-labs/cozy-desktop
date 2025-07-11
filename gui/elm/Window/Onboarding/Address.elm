@@ -179,7 +179,7 @@ view helpers context =
         [ div
             [ class "step-content" ]
             [ if isValid then
-                Icons.twakeDrive
+                Icons.badge Icons.twakeDrive
 
               else
                 Icons.bigCross
