@@ -1,6 +1,7 @@
 module Icons exposing
     ( IconFunction
     , account
+    , badge
     , bigCross
     , bigTick
     , dashboard
@@ -157,6 +158,10 @@ twakeDrive =
                 ]
             ]
         ]
+
+
+badge i =
+    figure [] [ div [ class "svg-wrapper" ] [ i ] ]
 
 
 bigTick =
