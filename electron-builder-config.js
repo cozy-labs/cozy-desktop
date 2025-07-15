@@ -81,7 +81,7 @@ const config = {
     synopsis:
       'Twake Desktop is a synchronization tool for your Twake Workplace files and folders.',
     description:
-      'Save them safely in your open source personal cloud, access them anywhere,\nanytime with the mobile application and share them with the world or just your\nfriends and colleagues. You can host your own Twake Workplace or use hosted\nservices. Your freedom to chose is why you can trust us.'
+      'Save them safely in your open source personal cloud, access them anywhere, anytime with the mobile application and share them with the world or just your friends and colleagues. You can host your own Twake Workplace or use hosted services. Your freedom to chose is why you can trust us.'
   },
   appImage: {
     artifactName: 'Twake-Desktop-${arch}.${ext}',
