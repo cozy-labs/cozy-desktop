@@ -1,5 +1,41 @@
 # Twake Desktop: Changelog
 
+## 4.0.0 - 2025-07-15
+
+Improvements for all users:
+
+- Cozy Cloud is joining Linagora and its Twake Workplace suite so we've
+  rebranded Cozy Desktop to reflect this merge.
+  Please give Twake Desktop a warm welcome!
+- Some SSO have a behavior which prevented users from registering Twake Desktop
+  with an instance that uses the SSO to authenticate its owner.
+  We added a temporary fix until we come up with a long term solution as we
+  can't control all SSO implementations.
+- We increased the onboarding window height to make sure its content is clearly
+  visible and doesn't require scrolling down.
+
+Improvements for Windows and linux users:
+
+- We now detect when the local synchronization folder exists but is empty when
+  starting Twake Desktop and will stop the synchronization in this situation to
+  prevent inadvertently emptying the Twake Workplace (e.g. if the
+  synchronization folder is a mount point which was not mounted yet).
+
+Improvements for linux users:
+
+- We now detect when files are deleted with their parent folder on the local
+  filesystem so we'll trash them with their parent instead of trashing them
+  individually.
+  This will make finding and restoring them from the Twake Drive trash easier.
+- We removed the app version number from the AppImage file to avoid path changes when updating the app.
+  This should make operations requiring a reference to Twake Desktop's binary
+  path (e.g. using a custom AppArmor profile to allow the app to run on Ubuntu
+  24.04+) easier to perform.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 4.0.0-beta.9 - 2025-07-11
 
 Improvements for all users:
