@@ -27,7 +27,8 @@ Improvements for linux users:
   filesystem so we'll trash them with their parent instead of trashing them
   individually.
   This will make finding and restoring them from the Twake Drive trash easier.
-- We removed the app version number from the AppImage file to avoid path changes when updating the app.
+- We removed the app version number from the AppImage file to avoid path
+  changes when updating the app.
   This should make operations requiring a reference to Twake Desktop's binary
   path (e.g. using a custom AppArmor profile to allow the app to run on Ubuntu
   24.04+) easier to perform.
@@ -162,6 +163,103 @@ Improvements for linux users:
   This should make operations requiring a reference to Twake Desktop's binary
   path (e.g. using a custom AppArmor profile to allow the app to run on Ubuntu
   24.04+) easier to perform.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+## 3.43.1 - 2025-07-09
+
+Improvements for Windows users:
+
+- Some users have experienced issues with the latest stable release on Windows.
+  We believe this is due to compilation issues for the 32 bits version of
+  Cozy Desktop.
+  Since we've stopped supporting 32 bits versions of Windows a while ago we
+  decided to fix the issue by stopping building a 32 bits version of the
+  application.
+
+Improvements for macOS users:
+
+- The latest release showed that users of the Apple Silicon version of
+  Cozy Desktop could not run the application after an upgrade as the executable
+  contained code compiled for the Intel version.
+  We made sure to compile both versions separately to make sure each platform
+  receives the appropriate executable.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+## 3.43.1-beta.3 - 2025-07-08
+
+Improvements for Windows users:
+
+- Windows binaries were not signed so the OS was poping security errors when
+  trying to install Cozy Desktop.
+  We made sure to force code signing for these releases.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+## 3.43.1-beta.2 - 2025-07-08
+
+Improvements for Windows users:
+
+- Some users have experienced issues with the latest stable release on Windows.
+  We believe this is due to compilation issues for the 32 bits version of
+  Cozy Desktop.
+  Since we've stopped supporting 32 bits versions of Windows a while ago we
+  decided to fix the issue by stopping building a 32 bits version of the
+  application.
+
+Improvements for linux users:
+
+- We reverted the unexpected Cozy Drive rebranding into Twake Desktop as it's
+  not meant to go live yet.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+## 3.43.1-beta.1 - 2025-07-07
+
+Improvements for macOS users:
+
+- The latest release showed that users of the Apple Silicon version of
+  Cozy Desktop could not run the application after an upgrade as the executable
+  contained code compiled for the Intel version.
+  We made sure to compile both versions separately to make sure each platform
+  receives the appropriate executable.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+## 3.43.0 - 2025-07-03
+
+Improvements for all users:
+
+- We made some technical changes to lay the foundations for the future.
+  For those who know about it, it's time to say goodbye to `cozy-client-js`
+  which has been completed replaced by `cozy-client` a more modern and complete
+  library to interact with your Cozy.
+- We blocked upgrades to the future v4.0.0 version as the included Twake
+  rebranding would not be properly applied for current users.
+  You'll have to uninstall Cozy Desktop and install Twake Desktop in its stead.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+## 3.43.0-beta.2 - 2025-07-02
+
+Improvements for all users:
+
+- We blocked upgrades to the future v4.0.0 version as the included Twake
+  rebranding would not be properly applied for current users.
+  You'll have to uninstall Cozy Desktop and install Twake Desktop in its stead.
 
 See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
 
