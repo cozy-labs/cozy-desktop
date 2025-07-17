@@ -240,7 +240,6 @@ jobs:
         with:
           gh-token: "${{ secrets.GITHUB_TOKEN }}"
       - name: Save artifacts
-        if: ${{ github.event_name == 'pull_request' }}
         uses: actions/upload-artifact@v4
         with:
             name: Binaries
