@@ -9,7 +9,7 @@ const { SESSION_PARTITION_NAME } = require('./network')
 const { addFileManagerShortcut } = require('./shortcut')
 const WindowManager = require('./window_manager')
 const log = require('../../core/app').logger({
-  component: 'GUI'
+  component: 'GUI/Onboarding'
 })
 
 /*::

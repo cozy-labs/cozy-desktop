@@ -13,7 +13,7 @@ const DetailsWM = require('./details.window')
 const { translate } = require('./i18n')
 const WindowManager = require('./window_manager')
 const log = require('../../core/app').logger({
-  component: 'GUI'
+  component: 'GUI/Tray'
 })
 const { openNote } = require('../utils/notes')
 const { openUrl } = require('../utils/urls')
