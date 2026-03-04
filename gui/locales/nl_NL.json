@@ -220,6 +220,15 @@
   "Revoked Synchronization with your Twake Workplace is unavailable, maybe you revoked this computer?": "Synchronisatie is niet beschikbaar. Heb je de machtiging voor deze computer ingetrokken?",
   "Revoked Try again later": "Probeer het later opnieuw",
 
+  "SelectCertificate Select a certificate": "Select a certificate",
+  "SelectCertificate Select a certificate to authenticate with {0}.": "Select a certificate to authenticate with {0}.",
+  "SelectCertificate Object": "Object",
+  "SelectCertificate Issuer": "Issuer",
+  "SelectCertificate Serial Number": "Serial Number",
+  "SelectCertificate Cancel": "Cancel",
+  "SelectCertificate OK": "OK",
+  "SelectCertificate No certificates found for this site": "No certificates found for this site",
+
   "Settings A new release is available": "Er is een nieuwe versie beschikbaar",
   "Settings Github Page": "GitHub-pagina",
   "Settings Install the new release and restart the application": "Installeer de nieuwe versie en herstart de app",

@@ -14,6 +14,7 @@ const yargs = require('yargs')
 
 const { ProxyAgent, getProxyForUrl } = require('./agent')
 const { logger } = require('../../../core/utils/logger')
+const SelectCertificateWM = require('../select-certificate.window.js')
 
 /*::
 import { Session } from 'electron'
@@ -199,15 +200,35 @@ const setup = async (
 
   await setupProxy(networkConfig, syncSession)
 
-  // Debug certificate errors
   app.on(
     'select-client-certificate',
     (event, webContents, url, list, callback) => {
-      log.debug('select-client-certificate', { url })
-      callback()
+      event.preventDefault()
+      log.debug('select-client-certificate', { url, list })
+
+      try {
+        let selected
+        ipcMain.on('selected-client-certificate', (event, { serialNumber }) => {
+          selected = list.find(
+            certificate => certificate.serialNumber === serialNumber
+          )
+          log.debug('selected-client-certificate', { serialNumber, selected })
+          if (selected != null) {
+            callback(selected)
+          } else {
+            callback()
+          }
+        })
+        new SelectCertificateWM(url, list).show()
+      } catch (err) {
+        log.error('failed to select client certificate', { err })
+        callback()
+      }
+      log.debug('select-client-certificate done')
     }
   )
 
+  // Debug certificate errors
   app.on(
     'certificate-error',
     (event, webContents, url, error, certificate, callback) => {

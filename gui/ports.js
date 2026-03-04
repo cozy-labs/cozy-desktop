@@ -212,6 +212,17 @@ elmectron.ports.showHelp.subscribe(() => {
   ipcRenderer.send('show-help')
 })
 
+elmectron.ports.selectClientCertificate.subscribe(serialNumber => {
+  ipcRenderer.send('selected-client-certificate', { serialNumber })
+})
+
+ipcRenderer.on(
+  'load-client-certificates',
+  (event, { siteUrl, certificates }) => {
+    elmectron.ports.clientCertificates.send({ siteUrl, certificates })
+  }
+)
+
 // Chrome-like "inspect element" for Electron
 if (process.env.WATCH === 'true' || process.env.DEBUG === 'true') {
   // eslint-disable-next-line node/no-unpublished-require

@@ -20,6 +20,7 @@ import I18n exposing (Helpers, Locale)
 import Json.Decode as Json
 import Window.Help as Help
 import Window.Onboarding as Onboarding
+import Window.SelectCertificate as SelectCertificate
 import Window.Tray as Tray
 import Window.Tray.Dashboard as Dashboard
 import Window.Updater as Updater
@@ -59,6 +60,7 @@ type alias Model =
     , tray : Tray.Model
     , updater : Updater.Model
     , help : Help.Model
+    , selectCertificate : SelectCertificate.Model
     }
 
 
@@ -78,6 +80,7 @@ init flags =
             , tray = Tray.init flags.version platform
             , updater = Updater.init flags.version
             , help = Help.init
+            , selectCertificate = SelectCertificate.init "" []
             }
     in
     ( model, Cmd.none )
@@ -98,6 +101,7 @@ type Msg
     | TrayMsg Tray.Msg
     | HelpMsg Help.Msg
     | UpdaterMsg Updater.Msg
+    | SelectCertificateMsg SelectCertificate.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -135,6 +139,15 @@ update msg model =
             in
             ( { model | updater = updater }, Cmd.map UpdaterMsg cmd )
 
+        SelectCertificateMsg subMsg ->
+            let
+                ( selectCertificate, cmd ) =
+                    SelectCertificate.update subMsg model.selectCertificate
+            in
+            ( { model | selectCertificate = selectCertificate }
+            , Cmd.map SelectCertificateMsg cmd
+            )
+
 
 debugLog : Msg -> Msg
 debugLog msg =
@@ -159,6 +172,7 @@ subscriptions model =
         , Onboarding.subscriptions model.onboarding |> Sub.map OnboardingMsg
         , Tray.subscriptions model.tray |> Sub.map TrayMsg
         , Updater.subscriptions model.updater |> Sub.map UpdaterMsg
+        , SelectCertificate.subscriptions model.selectCertificate |> Sub.map SelectCertificateMsg
         ]
 
 
@@ -184,3 +198,6 @@ view model =
 
         Window.Tray ->
             Html.map TrayMsg (Tray.view helpers model.tray)
+
+        Window.SelectCertificate ->
+            Html.map SelectCertificateMsg (SelectCertificate.view helpers model.selectCertificate)
