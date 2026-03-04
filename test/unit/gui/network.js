@@ -7,7 +7,7 @@ const path = require('path')
 const process = require('process')
 const { URL } = require('url')
 
-const { app, session } = require('electron')
+const { session } = require('electron')
 const faker = require('faker')
 const should = require('should')
 
@@ -101,10 +101,10 @@ describe('gui/js/network', function() {
 
     const proxySetupHook = config => async () => {
       // TODO: use network.setupProxy() instead
-      proxySideEffects = await network.setup(app, config, session, userAgent)
+      proxySideEffects = await network.setup(config, session, userAgent)
     }
     const revertProxySideEffects = async () => {
-      await network.reset(app, session, proxySideEffects)
+      await network.reset(session, proxySideEffects)
     }
 
     afterEach(revertProxySideEffects)

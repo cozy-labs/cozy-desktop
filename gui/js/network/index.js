@@ -8,7 +8,7 @@ const dns = require('dns')
 const http = require('http')
 const https = require('https')
 
-const { app } = require('electron')
+const { app, ipcMain } = require('electron')
 const electronFetch = require('electron-fetch').default
 const yargs = require('yargs')
 
@@ -16,7 +16,7 @@ const { ProxyAgent, getProxyForUrl } = require('./agent')
 const { logger } = require('../../../core/utils/logger')
 
 /*::
-import { App, Session } from 'electron'
+import { Session } from 'electron'
 
 type NetworkConfig = {
   'proxy-script': ?string,
@@ -125,7 +125,6 @@ const getSession = (
  * Start the app with `INSECURE_SSL=1` and the `--proxy-rules="localhost:8888"` argument.
  */
 const setupProxy = async (
-  electronApp /*: App */,
   networkConfig /*: Object */,
   session /*: Session */
 ) => {
@@ -174,7 +173,7 @@ const setupProxy = async (
   // $FlowFixMe
   https.globalAgent = httpsAgent
 
-  electronApp.on('login', (event, webContents, request, authInfo, callback) => {
+  app.on('login', (event, webContents, request, authInfo, callback) => {
     log.debug('Login event', { request: request.method + ' ' + request.url })
     const auth = loginByRealm[authInfo.realm]
     if (auth) {
@@ -184,31 +183,9 @@ const setupProxy = async (
       callback()
     }
   })
-
-  // Debug certificate errors
-  electronApp.on(
-    'select-client-certificate',
-    (event, webContents, url, list, callback) => {
-      log.debug('select-client-certificate', { url })
-      callback()
-    }
-  )
-
-  electronApp.on(
-    'certificate-error',
-    (event, webContents, url, error, certificate, callback) => {
-      log.error('App Certificate Error', {
-        url,
-        error,
-        certificate: formatCertificate(certificate)
-      })
-      callback(false)
-    }
-  )
 }
 
 const setup = async (
-  electronApp /*: App */,
   networkConfig /*: Object */,
   session /*: Session */,
   userAgent /*: string */
@@ -220,7 +197,28 @@ const setup = async (
 
   const syncSession = getSession(session, userAgent)
 
-  await setupProxy(electronApp, networkConfig, syncSession)
+  await setupProxy(networkConfig, syncSession)
+
+  // Debug certificate errors
+  app.on(
+    'select-client-certificate',
+    (event, webContents, url, list, callback) => {
+      log.debug('select-client-certificate', { url })
+      callback()
+    }
+  )
+
+  app.on(
+    'certificate-error',
+    (event, webContents, url, error, certificate, callback) => {
+      log.error('App Certificate Error', {
+        url,
+        error,
+        certificate: formatCertificate(certificate)
+      })
+      callback(false)
+    }
+  )
 
   const originalFetch = global.fetch
   global.fetch = (url, opts = {}) => {
@@ -239,7 +237,6 @@ const setup = async (
 }
 
 const reset = async (
-  electronApp /*: App */,
   session /*: Session */,
   { originalFetch } /*: { originalFetch: Function } */
 ) => {
@@ -255,7 +252,7 @@ const reset = async (
     'certificate-error',
     'login'
   ]) {
-    electronApp.removeAllListeners(event)
+    app.removeAllListeners(event)
   }
 
   const syncSession = session.fromPartition(SESSION_PARTITION_NAME)

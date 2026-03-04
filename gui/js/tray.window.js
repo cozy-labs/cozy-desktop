@@ -4,7 +4,7 @@ const path = require('path')
 
 const { enable: enableRemoteModule } = require('@electron/remote/main')
 const electron = require('electron')
-const { dialog, shell } = electron
+const { app, dialog, shell } = electron
 
 const { restart } = require('./actions')
 const autoLaunch = require('./autolaunch')
@@ -20,7 +20,7 @@ const { openUrl } = require('../utils/urls')
 const { openInWeb } = require('../utils/web')
 
 /*::
-import type { App as ElectronApp, Event as ElectronEvent } from 'electron'
+import type { Event as ElectronEvent } from 'electron'
 import type { App as CoreApp } from '../../core/app'
 import type { UserActionCommand, UserAlert } from '../../core/syncstate'
 
@@ -98,12 +98,8 @@ const popoverBounds = (
 }
 
 module.exports = class TrayWM extends WindowManager {
-  constructor(
-    app /*: ElectronApp */,
-    desktop /*: CoreApp */,
-    lastFiles /*: Object */
-  ) {
-    super(app, desktop)
+  constructor(desktop /*: CoreApp */, lastFiles /*: Object */) {
+    super(desktop)
     this.lastFiles = lastFiles
     this.create()
   }
@@ -244,7 +240,7 @@ module.exports = class TrayWM extends WindowManager {
         if (showInWeb) {
           shell.openExternal(this.desktop.config.cozyUrl)
         } else {
-          let cozyWebWindow = new CozyWebWM(this.app, this.desktop)
+          let cozyWebWindow = new CozyWebWM(this.desktop)
           cozyWebWindow.show()
           cozyWebWindow.on('closed', () => {
             cozyWebWindow = null
@@ -276,7 +272,7 @@ module.exports = class TrayWM extends WindowManager {
         autoLaunch.setEnabled(enabled),
       'close-app': () => {
         this.desktop.stopSync()
-        this.app.quit()
+        app.quit()
       },
       'unlink-twake': () => {
         if (!this.desktop.config.isValid()) {
@@ -302,7 +298,7 @@ module.exports = class TrayWM extends WindowManager {
         alert /*: UserAlert */
       ) => {
         try {
-          let detailsWindow = new DetailsWM(this.app, this.desktop)
+          let detailsWindow = new DetailsWM(this.desktop)
           if (detailsWindow) {
             detailsWindow.create()
             detailsWindow.on('closed', () => {

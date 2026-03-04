@@ -5,14 +5,12 @@
 
 const path = require('path')
 
-const { BrowserWindow, ipcMain, shell } = require('electron')
+const { app, BrowserWindow, ipcMain, shell } = require('electron')
 const _ = require('lodash')
 
-const log = require('../../core/app').logger({
-  component: 'windows'
-})
 const capabilities = require('../../core/utils/capabilities')
 const flags = require('../../core/utils/flags')
+const { logger } = require('../../core/utils/logger')
 
 const ELMSTARTUP = 400
 
@@ -25,11 +23,10 @@ export type WindowBanner = {
 */
 
 module.exports = class WindowManager {
-  constructor(app, desktop) {
+  constructor(desktop) {
     this.win = null
-    this.app = app
     this.desktop = desktop
-    this.log = require('../../core/app').logger({
+    this.log = logger({
       component: 'GUI/' + this.windowOptions().title
     })
 
@@ -143,15 +140,21 @@ module.exports = class WindowManager {
   }
 
   async sendSyncConfig() {
-    const { cozyUrl, deviceName, deviceId } = this.desktop.config
-    this.send(
-      'sync-config',
-      cozyUrl,
-      deviceName,
-      deviceId,
-      await capabilities(this.desktop.config),
-      await flags.all(this.desktop.config)
-    )
+    if (this.desktop) {
+      const { cozyUrl, deviceName, deviceId } = this.desktop.config
+      this.send(
+        'sync-config',
+        cozyUrl,
+        deviceName,
+        deviceId,
+        await capabilities(this.desktop.config),
+        await flags.all(this.desktop.config)
+      )
+    } else {
+      this.log.warn(
+        'could not send sync config data to window as `desktop` attribute is missing'
+      )
+    }
   }
 
   hash() {
@@ -163,7 +166,11 @@ module.exports = class WindowManager {
       this.win.setSize(wantedWidth, wantedHeight, true)
       this.win.center()
     } catch (err) {
-      log.warn('Failed to centerOnScreen', { err, wantedWidth, wantedHeight })
+      this.log.warn('Failed to centerOnScreen', {
+        err,
+        wantedWidth,
+        wantedHeight
+      })
     }
   }
 
@@ -227,12 +234,12 @@ module.exports = class WindowManager {
     // dock (and cmd+tab) by default. App is hidden when windows is closed to
     // allow per-window visibility.
     if (process.platform === 'darwin' && this.makesAppVisible()) {
-      this.app.dock.show()
+      app.dock.show()
       const showTime = Date.now()
       this.win.on('closed', () => {
         const hideTime = Date.now()
         setTimeout(() => {
-          this.app.dock.hide()
+          app.dock.hide()
         }, 1000 - (hideTime - showTime))
       })
     }
@@ -253,7 +260,9 @@ module.exports = class WindowManager {
           }, ELMSTARTUP)
         })
       }
-    }).catch(err => log.error('failed showing window', { err, sentry: true }))
+    }).catch(err =>
+      this.log.error('failed showing window', { err, sentry: true })
+    )
 
     this.win.loadURL(`file://${opts.indexPath}${this.hash()}`)
 

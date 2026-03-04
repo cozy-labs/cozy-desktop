@@ -13,16 +13,11 @@ import type { Config } from '../../../core/config'
 let originalNet
 const setupNetwork = async () => {
   await app.whenReady()
-  originalNet = await network.setup(
-    app,
-    { 'resolve-ipv4-first': true },
-    session,
-    ''
-  )
+  originalNet = await network.setup({ 'resolve-ipv4-first': true }, session, '')
 }
 const resetNetwork = async () => {
   if (originalNet && (await originalNet)) {
-    await network.reset(app, session, originalNet)
+    await network.reset(session, originalNet)
     originalNet = null
   }
 }

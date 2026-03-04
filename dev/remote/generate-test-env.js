@@ -49,7 +49,7 @@ app
     // session cookie which would trigger a redirect from the login page.
     return syncSession.clearStorageData()
   })
-  .then(() => network.setup(app, {}, session, ''))
+  .then(() => network.setup({}, session, ''))
   .then(() => automatedRegistration(cozyUrl, passphrase, storage).process(pkg))
   .then(readAccessToken)
   .then(generateTestEnv)
