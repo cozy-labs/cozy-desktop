@@ -81,7 +81,7 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup Docker
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
+        uses: douglascamata/setup-docker-macos-action@v1.1.0
       - name: Install Bash for docker-cache
         id: install-bash
         run: |
@@ -115,7 +115,7 @@ jobs:
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
       - name: Setup cozy-stack
-        run: docker-compose up -d
+        run: docker compose up -d
       - name: Setup test config
         run: |
           until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
@@ -150,7 +150,7 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup Docker
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
+        uses: douglascamata/setup-docker-macos-action@v1.1.0
       - name: Install Bash for docker-cache
         id: install-bash
         run: |
@@ -184,7 +184,7 @@ jobs:
           hdiutil attach "${COZY_DESKTOP_DIR}.dmg" -mountpoint "$COZY_DESKTOP_DIR"
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
       - name: Setup cozy-stack
-        run: docker-compose up -d
+        run: docker compose up -d
       - name: Setup test config
         run: |
           until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
@@ -220,7 +220,7 @@ jobs:
             ~/.cache/electron-builder
           key: ${{ runner.os }}-${{ runner.arch }}-v${{ env.NODE_VERSION }}-${{ env.cache-name }}-${{ hashFiles('yarn.lock') }}
       - name: Setup Docker
-        uses: douglascamata/setup-docker-macos-action@v1-alpha
+        uses: douglascamata/setup-docker-macos-action@v1.1.0
       - name: Install Bash for docker-cache
         id: install-bash
         run: |
@@ -260,7 +260,7 @@ jobs:
           done
           echo "NODE_ENV=test" > "${{ github.workspace }}/.env.test"
       - name: Setup cozy-stack
-        run: docker-compose up -d
+        run: docker compose up -d
       - name: Setup test config
         run: |
           until docker exec twake-desktop-stack /twake-desktop/test/setup.sh
