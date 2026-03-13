@@ -64,6 +64,7 @@ const config = {
 
   win: {
     target: [{ target: 'nsis', arch: ['x64'] }],
+    publisherName: 'Linagora SAS',
     // Comment out the following line if the Digicert server starts failing.
     // Electron-Builder will then swtich back to the default Comodoca server.
     rfc3161TimeStampServer: 'http://timestamp.digicert.com',
