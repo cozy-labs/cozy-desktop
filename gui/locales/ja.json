@@ -220,6 +220,15 @@
   "Revoked Synchronization with your Twake Workplace is unavailable, maybe you revoked this computer?": "お使いの Twake Workplace との同期が利用できません。このコンピュータを無効にしましたか?",
   "Revoked Try again later": "後でもう一度やり直してください",
 
+  "SelectCertificate Select a certificate": "Select a certificate",
+  "SelectCertificate Select a certificate to authenticate with {0}.": "Select a certificate to authenticate with {0}.",
+  "SelectCertificate Object": "Object",
+  "SelectCertificate Issuer": "Issuer",
+  "SelectCertificate Serial Number": "Serial Number",
+  "SelectCertificate Cancel": "Cancel",
+  "SelectCertificate OK": "OK",
+  "SelectCertificate No certificates found for this site": "No certificates found for this site",
+
   "Settings A new release is available": "新しいリリースが利用可能です",
   "Settings Github Page": "GitHub ページ",
   "Settings Install the new release and restart the application": "新しいリリースをインストールして、アプリケーションを再起動します",

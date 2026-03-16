@@ -3,13 +3,13 @@
  * @module gui/js/appmenu
  */
 
-const { Menu } = require('electron')
+const { app, Menu } = require('electron')
 
 const { translate } = require('./i18n')
 
 // FIXME: killme
 
-module.exports.buildAppMenu = app => {
+module.exports.buildAppMenu = () => {
   const template = [
     {
       label: translate('AppMenu Edit'),

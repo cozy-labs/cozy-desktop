@@ -223,7 +223,7 @@ const showInvalidConfigError = async () => {
         log.error('failed disconnecting client', { err, sentry: true })
       )
   } else {
-    helpWindow = new HelpWM(app, desktop)
+    helpWindow = new HelpWM(desktop)
     helpWindow.show()
   }
 }
@@ -245,7 +245,7 @@ const showMigrationError = async (err /*: Error */) => {
   }
   const { response } = await dialog.showMessageBox(null, options)
   if (response === 0) {
-    helpWindow = new HelpWM(app, desktop)
+    helpWindow = new HelpWM(desktop)
     helpWindow.show()
   }
 }
@@ -614,12 +614,7 @@ app.on('ready', async () => {
 
   const hostID = (dumbhash(os.hostname()) % 4096).toString(16)
   let userAgent = `Twake-Desktop-${process.platform}-${pkg.version}-${hostID}`
-  const { argv } = await network.setup(
-    app,
-    network.config(),
-    session,
-    userAgent
-  )
+  const { argv } = await network.setup(network.config(), session, userAgent)
   log.info('Loading CLI...')
   i18n.init(app)
 
@@ -649,14 +644,14 @@ app.on('ready', async () => {
   }
 
   if (shouldStartSync) {
-    tray.init(app, toggleWindow)
+    tray.init(toggleWindow)
     lastFiles.init(desktop)
     log.trace('Setting up tray WM...')
-    trayWindow = new TrayWM(app, desktop, lastFiles)
+    trayWindow = new TrayWM(desktop, lastFiles)
     log.trace('Setting up help WM...')
-    helpWindow = new HelpWM(app, desktop)
+    helpWindow = new HelpWM(desktop)
     log.trace('Setting up onboarding WM...')
-    onboardingWindow = new OnboardingWM(app, desktop)
+    onboardingWindow = new OnboardingWM(desktop)
     onboardingWindow.onOnboardingDone(async () => {
       await setupDesktop()
       onboardingWindow.hide()
@@ -665,7 +660,7 @@ app.on('ready', async () => {
     })
 
     // Os X wants all application to have a menu
-    Menu.setApplicationMenu(buildAppMenu(app))
+    Menu.setApplicationMenu(buildAppMenu())
 
     // On OS X it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
@@ -673,7 +668,7 @@ app.on('ready', async () => {
 
     if (app.isPackaged) {
       log.trace('Setting up updater WM...')
-      updaterWindow = new UpdaterWM(app, desktop)
+      updaterWindow = new UpdaterWM(desktop)
       updaterWindow.onUpToDate(() => {
         updaterWindow.hide()
         startApp()

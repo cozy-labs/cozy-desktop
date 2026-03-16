@@ -10,7 +10,7 @@ const { autoUpdater } = require('electron-updater')
 const { translate } = require('./i18n')
 const WindowManager = require('./window_manager')
 const log = require('../../core/app').logger({
-  component: 'GUI:autoupdater'
+  component: 'GUI/Updater'
 })
 
 /*::

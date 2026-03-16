@@ -4,7 +4,7 @@ const { enable: enableRemoteModule } = require('@electron/remote/main')
 
 const WindowManager = require('./window_manager')
 const log = require('../../core/app').logger({
-  component: 'GUI'
+  component: 'GUI/Help'
 })
 
 /*::

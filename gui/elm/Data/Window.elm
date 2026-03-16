@@ -9,6 +9,7 @@ type Window
     | Onboarding
     | Tray
     | Updater
+    | SelectCertificate
 
 
 fromHash : String -> Window
@@ -25,6 +26,9 @@ fromHash hash =
 
         "#updater" ->
             Updater
+
+        "#select-certificate" ->
+            SelectCertificate
 
         -- Temporarily use the MsgMechanism to
         -- get to the 2Panes page.

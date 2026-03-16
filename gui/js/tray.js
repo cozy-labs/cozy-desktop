@@ -5,7 +5,7 @@
 
 const path = require('path')
 
-const { Tray, Menu, MenuItem, nativeImage } = require('electron')
+const { app, Tray, Menu, MenuItem, nativeImage } = require('electron')
 const _ = require('lodash')
 
 const { translate } = require('./i18n')
@@ -71,7 +71,7 @@ const setStatus = _.throttle(
   { leading: true, trailing: true } // execute first and last upades
 )
 
-const init = (app, listener) => {
+const init = listener => {
   tray = new Tray(nativeImage.createEmpty())
 
   // XXX: updating the status should always come after the initialization of the
