@@ -42,7 +42,7 @@ view helpers context =
                 ]
                 [ span [] [ text (helpers.t "Welcome Sign in to my Twake Workplace") ] ]
             , a
-                [ href ("https://cozy.io/en/try-it/?from=desktop-" ++ context.platform)
+                [ href "https://sign-up.twake.app?register"
                 , class "more-info"
                 ]
                 [ text (helpers.t "Address Don't have an account? Request one here") ]
