@@ -1,5 +1,18 @@
 # Twake Desktop: Changelog
 
+## 4.1.0-beta.2 - 2026-03-19
+
+Improvements for Windows users:
+
+- We changed the application publisher name to include both Cozy Cloud SAS and
+  Linagora SAS so users of previous versions signed in the name of
+  Cozy Cloud SAS can auto-upgrade to new versions signed in the name of
+  Linagora SAS.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 4.1.0-beta.1 - 2026-03-16
 
 Improvements for all users:
