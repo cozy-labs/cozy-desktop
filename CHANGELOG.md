@@ -1,5 +1,16 @@
 # Twake Desktop: Changelog
 
+## 4.1.0-beta.3 - 2026-03-19
+
+Improvements for Windows users:
+
+- We changed the application publisher name Cozy Cloud SAS only in a final
+  attempt to allow auto-upgrades with the new certificate on Windows.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 4.1.0-beta.2 - 2026-03-19
 
 Improvements for Windows users:
