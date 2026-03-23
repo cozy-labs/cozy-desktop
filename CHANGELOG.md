@@ -1,5 +1,33 @@
 # Twake Desktop: Changelog
 
+## 5.0.0 - 2026-03-23
+
+BREAKING CHANGES:
+
+- Windows users of versions below 5.0.0 won't be able to update to versions 5+
+  because of a code signature certificate change.
+  They will need to install the new version by hand.
+
+Improvements for all users:
+
+- Desktop will now detect when a website offers (or requires) authentication
+  via a client certificate or Smart Card and open a window to let you select
+  the certificate to use.
+  This can be useful during the onboarding if this is the authentication method
+  used by your SSO for example.
+- We updated the link to create a new account in the first screen of the
+  onboarding.
+  It now points to Twake's signup page.
+
+Improvements for linux users:
+
+- We removed newlines from the app description in the `.desktop` file to fix
+  the app integration with the OS as newlines make the file invalid.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 4.1.0-beta.3 - 2026-03-19
 
 Improvements for Windows users:
