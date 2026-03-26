@@ -120,7 +120,7 @@ class RemoteWatcher {
           client: this.remoteCozy.client,
           eventHandler: this.requestRun.bind(this)
         })
-        await this.realtimeManager.start()
+        this.realtimeManager.start()
       }
 
       await this.requestRun()
