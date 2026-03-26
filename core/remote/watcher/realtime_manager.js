@@ -71,12 +71,6 @@ class RealtimeManager {
     try {
       if (client.plugins[RealtimePlugin.pluginName] == null) {
         client.registerPlugin(RealtimePlugin, {
-          createWebSocket: (url, doctype) =>
-            new global.WebSocket(url, doctype, {
-              agent: url.startsWith('wss:')
-                ? https.globalAgent
-                : http.globalAgent
-            }),
           logger: logger({ component: 'RemoteWatcher:CozyRealtime' })
         })
       }
