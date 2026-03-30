@@ -8,12 +8,14 @@ const should = require('should')
 const sinon = require('sinon')
 
 const { App } = require('../../core/app')
+const config = require('../../core/config')
 const { DEFAULT_SYNC_DIR_NAME } = require('../../core/local/constants')
 const { BASE_DIR_NAME } = require('../../core/migrations/configPaths')
 const { FetchError } = require('../../core/remote/cozy')
 const { LOG_BASENAME } = require('../../core/utils/logger')
 const pkg = require('../../package.json')
 const { version } = pkg
+const CozyStackDouble = require('../support/doubles/cozy_stack')
 const configHelpers = require('../support/helpers/config')
 
 describe('App', function() {
@@ -194,6 +196,64 @@ describe('App', function() {
         should(result).deepEqual({ syncPath })
       })
     }
+  })
+
+  describe('checkForInstanceMigration', () => {
+    context('when Cozy instance has been migrated to Twake', () => {
+      const cozyStackDouble = new CozyStackDouble()
+
+      before(() => cozyStackDouble.start())
+
+      let app
+      beforeEach('create app', function() {
+        configHelpers.createConfig.call(this)
+        configHelpers.registerClient.call(this)
+
+        app = new App(this.basePath)
+        app.config.cozyUrl = cozyStackDouble.url()
+        app.config.persist() // the config helper does not persist it
+      })
+
+      afterEach(() => cozyStackDouble.clearStub())
+      after(() => cozyStackDouble.stop())
+
+      it('updates the config with the new URL', async function() {
+        const twakeUrl = 'http://twake.localhost:8080'
+        cozyStackDouble.stub((req, res) => {
+          res.writeHead(308, { Location: twakeUrl })
+          res.end('whatever')
+        })
+
+        await app.checkForInstanceMigration()
+
+        should(app.config.cozyUrl).equal(twakeUrl)
+
+        const savedConfig = config.load(app.config.basePath)
+        should(savedConfig.cozyUrl).equal(twakeUrl)
+      })
+    })
+
+    context('when Cozy instance has not been migrated', () => {
+      let app
+      beforeEach('create app', function() {
+        configHelpers.createConfig.call(this)
+        configHelpers.registerClient.call(this)
+        this.config.persist() // the config helper does not persist it
+
+        app = new App(this.basePath)
+      })
+
+      it('does nothing', async function() {
+        const { cozyUrl } = app.config
+
+        await app.checkForInstanceMigration()
+
+        should(app.config.cozyUrl).equal(cozyUrl)
+
+        const savedConfig = config.load(app.config.basePath)
+        should(savedConfig.cozyUrl).equal(cozyUrl)
+      })
+    })
   })
 
   describe('stopSync', () => {
