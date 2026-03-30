@@ -3,6 +3,8 @@
  * @module core/app
  * @flow
  */
+
+const http = require('http')
 const https = require('https')
 const os = require('os')
 const path = require('path')
@@ -140,6 +142,39 @@ class App {
     }
 
     return { syncPath }
+  }
+
+  async checkForInstanceMigration() {
+    await new Promise(resolve => {
+      const { cozyUrl } = this.config
+
+      const adapter = new url.URL(cozyUrl).protocol === 'https:' ? https : http
+      adapter
+        .get(cozyUrl, res => {
+          const newLocation = res.headers['location'] || res.headers['Location']
+
+          // Consume response data to free up memory
+          // See https://nodejs.org/docs/latest/api/http.html#httpgeturl-options-callback
+          res.resume()
+
+          if (res.statusCode == 308 && newLocation) {
+            log.warn(
+              `Cozy URL ${this.config.cozyUrl} redirects to ${newLocation}; Updating config`
+            )
+            this.config.cozyUrl = newLocation
+            this.config.persist()
+          }
+
+          resolve()
+        })
+        .on('error', err => {
+          log.error('failed to check for instance migration', {
+            err,
+            sentry: true
+          })
+          resolve()
+        })
+    })
   }
 
   // Return a promise for registering a device on the Twake Workplace
@@ -384,6 +419,8 @@ class App {
 
       this.config.persist()
     }
+
+    await this.checkForInstanceMigration()
 
     this.instanciate()
 
