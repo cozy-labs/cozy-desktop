@@ -115,10 +115,8 @@ describe('core/config', function() {
           }
         })
 
-        it('throws an error', function() {
-          ;(() => {
-            config.loadOrDeleteFile(this.config.configPath)
-          }).should.throw()
+        it('returns an empty object', function() {
+          should(config.loadOrDeleteFile(this.config.configPath)).deepEqual({})
         })
       })
 

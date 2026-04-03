@@ -367,6 +367,8 @@ class App {
           sentry: true
         })
       }
+
+      this.config.persist()
     }
 
     this.instanciate()

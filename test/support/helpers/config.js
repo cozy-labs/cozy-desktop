@@ -19,6 +19,7 @@ module.exports = {
     this.config = config.load(findBasePath(this.basePath))
     this.config.syncPath = path.join(this.basePath, DEFAULT_SYNC_DIR_NAME)
     this.config.cozyUrl = COZY_URL
+    this.config.persist()
 
     this.syncPath = this.config.syncPath
     fse.ensureDirSync(this.syncPath)
