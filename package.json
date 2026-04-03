@@ -112,6 +112,7 @@
     "mime": "3.0.0",
     "nan": "2.17.0",
     "node-abi": "3.5.0",
+    "node-fetch": "^3.3.2",
     "open": "8.4.0",
     "pac-proxy-agent": "6.0.3",
     "pouchdb": "^8.0.1",
@@ -126,6 +127,7 @@
     "semver": "7.3.5",
     "socks-proxy-agent": "8.0.1",
     "tar": "6.1.11",
+    "tough-cookie": "^6.0.1",
     "utf-8-validate": "^6.0.3",
     "uuid": "8.3.2",
     "winston": "^3.14.2",
@@ -137,7 +139,7 @@
     "@babel/core": "7.16.7",
     "@babel/eslint-parser": "^7.25.9",
     "@electron/notarize": "^2.1.0",
-    "@sentry/cli": "^2.39.1",
+    "@sentry/cli": "^3.3.5",
     "babel-preset-cozy-app": "^2.0.1",
     "chai": "4.3.4",
     "chai-like": "1.1.1",
@@ -149,12 +151,12 @@
     "debug-menu": "^0.6.1",
     "del": "^6.0.0",
     "devtron": "^1.4.0",
-    "electron": "^31",
+    "electron": "^39",
     "electron-builder": "^24",
     "electron-download": "^4.1.1",
     "electron-mocha": "^13.0.0",
     "elm": "^0.19.1-6",
-    "elm-format": "0.8.5",
+    "elm-format": "^0.8.8",
     "elm-test": "^0.19.1-revision15",
     "elm-upgrade": "0.19.8",
     "env-cmd": "10.1.0",
@@ -187,10 +189,12 @@
     "treeify": "^1.1.0"
   },
   "optionalDependencies": {
-    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#2.0.0"
+    "@gyselroth/windows-fsstat": "https://github.com/taratatach/node-windows-fsstat.git#3.0.0"
   },
   "resolutions": {
-    "node-abi": "3.5.0"
+    "node-abi": "3.5.0",
+    "node-fetch": "^3.3.2",
+    "tough-cookie": "^6.0.1"
   },
   "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }
