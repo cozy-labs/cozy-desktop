@@ -32,7 +32,12 @@ const { Sync } = require('./sync')
 const SyncState = require('./syncstate')
 const flags = require('./utils/flags')
 const { sendToTrash } = require('./utils/fs')
-const { baseLogger, logger, LOG_BASENAME } = require('./utils/logger')
+const {
+  addDefaultTransport,
+  baseLogger,
+  logger,
+  LOG_BASENAME
+} = require('./utils/logger')
 const notes = require('./utils/notes')
 const web = require('./utils/web')
 
@@ -345,6 +350,8 @@ class App {
     if (!this.config.isValid()) {
       throw new config.InvalidConfigError()
     }
+
+    addDefaultTransport()
 
     let wasUpdated = clientInfo.configVersion !== clientInfo.appVersion
     if (wasUpdated) {

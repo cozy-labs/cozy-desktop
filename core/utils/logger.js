@@ -21,8 +21,6 @@ export type Logger = winston.Logger
 const LOG_DIR = findBasePath(process.env.COZY_DESKTOP_DIR || os.homedir())
 const LOG_BASENAME = 'logs.txt'
 
-fse.ensureDirSync(LOG_DIR)
-
 // Remove the `timestamp` field as we use the `time` alias (for backwards
 // compatibility with our jq filters.
 //
@@ -136,15 +134,6 @@ const defaultFormatter = combine(
   levelToInt()
 )
 
-const defaultTransport = new DailyRotateFile({
-  dirname: LOG_DIR,
-  filename: LOG_BASENAME,
-  datePattern: 'YYYY-MM-DD', // XXX: rotate every day
-  maxFiles: 7,
-  zippedArchive: true, // XXX: gzip archived log files
-  format: combine(defaultFormatter, json())
-})
-
 const baseLogger = winston.createLogger({
   levels: {
     fatal: 0,
@@ -155,7 +144,7 @@ const baseLogger = winston.createLogger({
     trace: 5
   },
   level: process.env.DEBUG ? 'trace' : 'info',
-  transports: [defaultTransport]
+  transports: []
 })
 baseLogger.on('error', err => {
   // eslint-disable-next-line no-console
@@ -204,6 +193,23 @@ function logger(options) {
   return baseLogger.child(options)
 }
 
+let defaultTransportAdded = false
+function addDefaultTransport() {
+  if (defaultTransportAdded) return
+
+  baseLogger.add(
+    new DailyRotateFile({
+      dirname: LOG_DIR,
+      filename: LOG_BASENAME,
+      datePattern: 'YYYY-MM-DD', // XXX: rotate every day
+      maxFiles: 7,
+      zippedArchive: true, // XXX: gzip archived log files
+      format: combine(defaultFormatter, json())
+    })
+  )
+  defaultTransportAdded = true
+}
+
 module.exports = {
   FATAL_LVL,
   ERROR_LVL,
@@ -215,7 +221,7 @@ module.exports = {
   LOG_BASENAME,
   defaultFormatter,
   baseLogger,
-  defaultTransport,
+  addDefaultTransport,
   dropTimestamp,
   logger,
   messageToMsg
