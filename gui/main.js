@@ -96,11 +96,6 @@ const notificationsState = {
   notifiedMsg: ''
 }
 
-const toggleWindow = bounds => {
-  if (trayWindow.shown()) trayWindow.hide()
-  else showWindow(bounds)
-}
-
 const setupDesktop = async () => {
   try {
     // TODO: allow setting desktop up without running migrations (when opening
@@ -166,39 +161,38 @@ const startApp = async () => {
   }
 }
 
+const toggleWindow = bounds => {
+  if (trayWindow.shown()) trayWindow.hide()
+  else showWindow(bounds)
+}
+
 const showWindow = async bounds => {
   if (
     notificationsState.revokedAlertShown ||
     notificationsState.syncDirUnlinkedShown
   )
     return
+
   if (updaterWindow && updaterWindow.shown()) return updaterWindow.focus()
-  if (!desktop.config.syncPath) {
-    onboardingWindow.show(bounds)
-    // registration is done, but we need a syncPath
-    if (desktop.config.isValid()) {
-      onboardingWindow.jumpToSyncPath()
+
+  if (desktop.sync) {
+    sendDiskUsage()
+  }
+
+  try {
+    await trayWindow.show(bounds)
+
+    trayWindow.sendSyncConfig()
+
+    const files = await lastFiles.list()
+    for (const file of files) {
+      trayWindow.send('transfer', { ...file, transferred: file.size })
     }
-  } else {
-    if (desktop.sync) {
-      sendDiskUsage()
-    }
 
-    try {
-      await trayWindow.show(bounds)
-
-      trayWindow.sendSyncConfig()
-
-      const files = await lastFiles.list()
-      for (const file of files) {
-        trayWindow.send('transfer', { ...file, transferred: file.size })
-      }
-
-      const hasAutolaunch = await autoLaunch.isEnabled()
-      trayWindow.send('auto-launch', hasAutolaunch)
-    } catch (err) {
-      log.error('could not show tray window or recent files', { err })
-    }
+    const hasAutolaunch = await autoLaunch.isEnabled()
+    trayWindow.send('auto-launch', hasAutolaunch)
+  } catch (err) {
+    log.error('could not show tray window or recent files', { err })
   }
 }
 
