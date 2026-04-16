@@ -1,7 +1,7 @@
 /* @flow */
 
 const { enable: enableRemoteModule } = require('@electron/remote/main')
-const { dialog, session, BrowserView, shell } = require('electron')
+const { app, dialog, session, BrowserView, shell } = require('electron')
 
 const autoLaunch = require('./autolaunch')
 const { translate } = require('./i18n')
@@ -149,6 +149,8 @@ module.exports = class OnboardingWM extends WindowManager {
 
       enableRemoteModule(this.win.webContents)
 
+      this.win.on('closed', app.quit)
+
       if (this.shouldJumpToSyncPath) {
         await this.jumpToSyncPath()
       }
@@ -274,21 +276,26 @@ module.exports = class OnboardingWM extends WindowManager {
       log.error({ err: error })
       return
     }
-    let desktop = this.desktop
-    if (!desktop.config.isValid()) {
+
+    if (!this.desktop.config.isValid()) {
       log.error('Cannot start desktop client. No valid config found!')
       return
     }
+
     try {
-      desktop.saveConfig(desktop.config.cozyUrl, syncPath)
+      this.desktop.saveConfig(syncPath)
+
       try {
-        addFileManagerShortcut(desktop.config)
+        addFileManagerShortcut(syncPath)
       } catch (err) {
         log.error('failed adding shortcuts in file manager', { err })
       }
+
+      this.win.off('closed', app.quit)
       this.afterOnboarding()
     } catch (err) {
       log.error('failed starting sync', { err })
+      // TODO: figure if this is still relevant; seems not
       event.sender.send('folder-error', translate('Error Invalid path'))
     }
   }

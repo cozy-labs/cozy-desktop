@@ -7,6 +7,7 @@
 const fs = require('fs')
 const path = require('path')
 
+const autoBind = require('auto-bind')
 const fse = require('fs-extra')
 const _ = require('lodash')
 
@@ -76,12 +77,11 @@ class Config {
   constructor(basePath /*: string */) {
     this.basePath = basePath
     this.configPath = path.join(basePath, 'config.json')
-    fse.ensureFileSync(this.configPath)
     this.dbPath = path.join(basePath, 'db')
-    fse.ensureDirSync(this.dbPath)
-    hideOnWindows(basePath)
 
     this.fileConfig = this.read()
+
+    autoBind(this)
   }
 
   // Read the configuration from disk
@@ -107,6 +107,8 @@ class Config {
 
   // Save configuration to file system.
   persist() {
+    hideOnWindows(this.basePath)
+
     this._writeTmpConfig(this.toJSON())
     this._moveTmpConfig()
   }
@@ -193,7 +195,6 @@ class Config {
   set client(options /*: OAuthClient */) {
     const { creds } = this.fileConfig
     this.fileConfig.creds = _.merge(creds, { client: options })
-    this.persist()
   }
 
   get version() /*: string */ {
@@ -202,7 +203,6 @@ class Config {
 
   set version(newVersion /*: string */) /*: * */ {
     _.set(this.fileConfig, 'creds.client.softwareVersion', newVersion)
-    this.persist()
   }
 
   get permissions() /*: string[] */ {
@@ -217,7 +217,6 @@ class Config {
   set permissions(scope /*: string */) {
     const { creds } = this.fileConfig
     this.fileConfig.creds = _.merge(creds, { scope })
-    this.persist()
   }
 
   // Return the id of the registered OAuth client
@@ -240,11 +239,11 @@ class Config {
   set oauthTokens(token /*: OAuthTokens */) {
     const { creds } = this.fileConfig
     this.fileConfig.creds = _.merge(creds, { token })
-    this.persist()
   }
 
   onTokenRefresh(newToken /*: OAuthTokens */) {
     this.oauthTokens = newToken
+    this.persist() // XXX: automatically persist as onTokenRefresh is called by CozyClient
   }
 
   // Flags are options that can be activated by the user via the config file.
@@ -268,7 +267,6 @@ class Config {
       )
     }
     _.set(this.fileConfig, `flags.${flag}`, isActive)
-    this.persist()
   }
 
   get watcherType() /*: WatcherType */ {
@@ -298,6 +296,9 @@ function loadOrDeleteFile(configPath /*: string */) /*: FileConfig */ {
     if (e instanceof SyntaxError) {
       log.error(`Could not read config file at ${configPath}`, { err: e })
       fse.unlinkSync(configPath)
+      return {}
+    } else if (e.code === 'ENOENT') {
+      log.warn(`Config file does not exist at ${configPath}`, { err: e })
       return {}
     } else {
       throw e

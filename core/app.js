@@ -32,7 +32,12 @@ const { Sync } = require('./sync')
 const SyncState = require('./syncstate')
 const flags = require('./utils/flags')
 const { sendToTrash } = require('./utils/fs')
-const { baseLogger, logger, LOG_BASENAME } = require('./utils/logger')
+const {
+  addDefaultTransport,
+  baseLogger,
+  logger,
+  LOG_BASENAME
+} = require('./utils/logger')
 const notes = require('./utils/notes')
 const web = require('./utils/web')
 
@@ -90,7 +95,6 @@ class App {
     basePath = path.resolve(basePath)
     this.basePath = findBasePath(basePath)
     this.config = config.load(this.basePath)
-    this.pouch = new Pouch(this.config)
     this.events = new SyncState()
 
     autoBind(this)
@@ -150,9 +154,8 @@ class App {
   }
 
   // Save the config with all the informations for synchonization
-  saveConfig(cozyUrl /*: string */, syncPath /*: string */) {
+  saveConfig(syncPath /*: string */) {
     fse.ensureDirSync(syncPath)
-    this.config.cozyUrl = cozyUrl
     this.config.syncPath = syncPath
     this.config.persist()
     log.info(
@@ -187,7 +190,9 @@ class App {
 
   async removeConfig() {
     log.info('Removing config...')
-    await this.pouch.db.destroy()
+    if (this.pouch) {
+      await this.pouch.db.destroy()
+    }
     for (const name of await fse.readdir(this.basePath)) {
       if (name.startsWith(LOG_BASENAME)) continue
       await fse.remove(path.join(this.basePath, name))
@@ -265,9 +270,15 @@ class App {
     }
 
     const sendPouchDBTree = async () => {
+      if (!this.pouch) {
+        log.warn('no PouchDB so no tree to send')
+        return
+      }
+
       const pouchdbTree = await this.pouch.localTree()
 
       if (!pouchdbTree) {
+        log.warn('no PouchDB tree to send')
         return
       } else {
         return this.uploadFileToSupport(
@@ -302,6 +313,7 @@ class App {
 
   // Instanciate some objects before sync
   instanciate() {
+    this.pouch = new Pouch(this.config)
     this.ignore = Ignore.loadSync(this.config.ignoreRulesPath)
     this.merge = new Merge(this.pouch)
     this.prep = new Prep(this.merge, this.ignore, this.config)
@@ -338,6 +350,8 @@ class App {
       throw new config.InvalidConfigError()
     }
 
+    addDefaultTransport()
+
     let wasUpdated = clientInfo.configVersion !== clientInfo.appVersion
     if (wasUpdated) {
       try {
@@ -367,6 +381,8 @@ class App {
           sentry: true
         })
       }
+
+      this.config.persist()
     }
 
     this.instanciate()

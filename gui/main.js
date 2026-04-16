@@ -15,7 +15,8 @@ const {
   ipcMain,
   dialog,
   powerMonitor,
-  session
+  session,
+  shell
 } = require('electron')
 
 if (process.env.INSECURE_SSL) {
@@ -73,10 +74,9 @@ let desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
 sentry.setup(desktop.clientInfo())
 
 let diskTimeout = null
-let onboardingWindow = null
-let helpWindow = null
 let updaterWindow = null
 let trayWindow = null
+let windowsCreated = false
 
 let desktopIsReady, desktopIsKO
 const whenDesktopReady = new Promise((resolve, reject) => {
@@ -94,11 +94,6 @@ const notificationsState = {
   syncDirUnlinkedShown: false,
   invalidConfigShown: false,
   notifiedMsg: ''
-}
-
-const toggleWindow = bounds => {
-  if (trayWindow.shown()) trayWindow.hide()
-  else showWindow(bounds)
 }
 
 const setupDesktop = async () => {
@@ -154,16 +149,9 @@ const setupDesktop = async () => {
   }
 }
 
-const startApp = async () => {
-  if (!desktop.config.syncPath) {
-    onboardingWindow.show()
-    // registration is done, but we need a syncPath
-    if (desktop.config.isValid()) {
-      onboardingWindow.jumpToSyncPath()
-    }
-  } else {
-    startSync()
-  }
+const toggleWindow = bounds => {
+  if (trayWindow.shown()) trayWindow.hide()
+  else showWindow(bounds)
 }
 
 const showWindow = async bounds => {
@@ -172,34 +160,37 @@ const showWindow = async bounds => {
     notificationsState.syncDirUnlinkedShown
   )
     return
+
   if (updaterWindow && updaterWindow.shown()) return updaterWindow.focus()
-  if (!desktop.config.syncPath) {
-    onboardingWindow.show(bounds)
-    // registration is done, but we need a syncPath
-    if (desktop.config.isValid()) {
-      onboardingWindow.jumpToSyncPath()
-    }
-  } else {
-    if (desktop.sync) {
-      sendDiskUsage()
-    }
 
-    try {
-      await trayWindow.show(bounds)
-
-      trayWindow.sendSyncConfig()
-
-      const files = await lastFiles.list()
-      for (const file of files) {
-        trayWindow.send('transfer', { ...file, transferred: file.size })
-      }
-
-      const hasAutolaunch = await autoLaunch.isEnabled()
-      trayWindow.send('auto-launch', hasAutolaunch)
-    } catch (err) {
-      log.error('could not show tray window or recent files', { err })
-    }
+  if (desktop.sync) {
+    sendDiskUsage()
   }
+
+  try {
+    await trayWindow.show(bounds)
+
+    trayWindow.sendSyncConfig()
+
+    const files = await lastFiles.list()
+    for (const file of files) {
+      trayWindow.send('transfer', { ...file, transferred: file.size })
+    }
+
+    const hasAutolaunch = await autoLaunch.isEnabled()
+    trayWindow.send('auto-launch', hasAutolaunch)
+  } catch (err) {
+    log.error('could not show tray window or recent files', { err })
+  }
+}
+
+const showHelp = async () => {
+  log.trace('Setting up help WM...')
+  const helpWindow = new HelpWM(desktop)
+  const win = await helpWindow.show()
+  await new Promise(resolve => {
+    win.on('closed', resolve)
+  })
 }
 
 const showInvalidConfigError = async () => {
@@ -223,8 +214,7 @@ const showInvalidConfigError = async () => {
         log.error('failed disconnecting client', { err, sentry: true })
       )
   } else {
-    helpWindow = new HelpWM(desktop)
-    helpWindow.show()
+    await shell.openExternal('mailto:support@twake.app')
   }
 }
 
@@ -245,8 +235,7 @@ const showMigrationError = async (err /*: Error */) => {
   }
   const { response } = await dialog.showMessageBox(null, options)
   if (response === 0) {
-    helpWindow = new HelpWM(desktop)
-    helpWindow.show()
+    await showHelp()
   }
 }
 
@@ -494,6 +483,18 @@ const startSync = async () => {
   sendDiskUsage()
 }
 
+const setupWindows = () => {
+  tray.init(toggleWindow)
+  lastFiles.init(desktop)
+  log.trace('Setting up tray WM...')
+  trayWindow = new TrayWM(desktop, lastFiles)
+
+  // Os X wants all application to have a menu
+  Menu.setApplicationMenu(buildAppMenu())
+
+  windowsCreated = true
+}
+
 const dumbhash = k =>
   k
     .split('')
@@ -618,68 +619,78 @@ app.on('ready', async () => {
   log.info('Loading CLI...')
   i18n.init(app)
 
-  if (desktop.config.syncPath) {
-    await setupDesktop()
-  }
-
-  if (process.platform !== 'darwin' && argv && argv.length > 2) {
-    const filePath = argv[argv.length - 1]
+  // Note opening on Windows and Linux
+  const filePath = argv && argv.length > 1 ? argv[argv.length - 1] : null
+  if (filePath && filePath.endsWith('.cozy-note')) {
     log.info('main instance invoked with arguments', { filePath, argv })
 
     // We need a valid config to start the App and open the requested note.
     // We assume users won't have notes they want to open without a connected
     // client.
     if (desktop.config.syncPath) {
-      if (filePath.endsWith('.cozy-note')) {
-        await openNote(filePath, { desktop })
-      } else {
-        log.warn('file path argument does not have valid Cozy note extension')
-      }
+      await setupDesktop()
+      await openNote(filePath, { desktop })
     } else {
       log.warn('no valid config')
+      await showInvalidConfigError()
     }
 
     await exit(0)
     return
   }
 
-  if (shouldStartSync) {
-    tray.init(toggleWindow)
-    lastFiles.init(desktop)
-    log.trace('Setting up tray WM...')
-    trayWindow = new TrayWM(desktop, lastFiles)
-    log.trace('Setting up help WM...')
-    helpWindow = new HelpWM(desktop)
-    log.trace('Setting up onboarding WM...')
-    onboardingWindow = new OnboardingWM(desktop)
-    onboardingWindow.onOnboardingDone(async () => {
+  // Note opening on macOS
+  if (!shouldStartSync) {
+    log.info('main instance invoked for open-file')
+
+    // We need a valid config to start the App and open the requested note.
+    // We assume users won't have notes they want to open without a connected
+    // client.
+    if (desktop.config.syncPath) {
       await setupDesktop()
-      onboardingWindow.hide()
-      await trayWindow.show()
-      await startSync()
-    })
-
-    // Os X wants all application to have a menu
-    Menu.setApplicationMenu(buildAppMenu())
-
-    // On OS X it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
-    app.on('activate', showWindow)
-
-    if (app.isPackaged) {
-      log.trace('Setting up updater WM...')
-      updaterWindow = new UpdaterWM(desktop)
-      updaterWindow.onUpToDate(() => {
-        updaterWindow.hide()
-        startApp()
-      })
-      updaterWindow.checkForUpdates()
-      setInterval(() => {
-        updaterWindow.checkForUpdates()
-      }, DAILY)
     } else {
-      startApp()
+      log.warn('no valid config')
+      await showInvalidConfigError()
     }
+
+    return
+  }
+
+  if (!desktop.config.syncPath) {
+    log.trace('Setting up onboarding WM...')
+    const onboardingWindow = new OnboardingWM(desktop)
+    await new Promise(resolve => {
+      onboardingWindow.onOnboardingDone(resolve)
+      onboardingWindow.show()
+    })
+    onboardingWindow.hide()
+    setupWindows()
+    await trayWindow.show()
+  }
+
+  await setupDesktop()
+
+  if (!windowsCreated) {
+    setupWindows()
+  }
+
+  // On OS X it's common to re-create a window in the app when the
+  // dock icon is clicked and there are no other windows open.
+  app.on('activate', showWindow)
+
+  if (app.isPackaged) {
+    log.trace('Setting up updater WM...')
+    updaterWindow = new UpdaterWM(desktop)
+    updaterWindow.onUpToDate(() => {
+      updaterWindow.hide()
+      startSync()
+    })
+    updaterWindow.checkForUpdates()
+    setInterval(() => {
+      updaterWindow.checkForUpdates()
+    }, DAILY)
+  } else {
+    startSync()
   }
 })
 
@@ -690,7 +701,7 @@ app.on('window-all-closed', () => {
 })
 
 ipcMain.on('show-help', () => {
-  helpWindow.show()
+  showHelp()
 })
 
 // On watch mode, automatically reload the window when sources are updated
