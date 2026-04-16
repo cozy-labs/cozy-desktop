@@ -1,7 +1,7 @@
 /* @flow */
 
 const { enable: enableRemoteModule } = require('@electron/remote/main')
-const { dialog, session, BrowserView, shell } = require('electron')
+const { app, dialog, session, BrowserView, shell } = require('electron')
 
 const autoLaunch = require('./autolaunch')
 const { translate } = require('./i18n')
@@ -149,6 +149,8 @@ module.exports = class OnboardingWM extends WindowManager {
 
       enableRemoteModule(this.win.webContents)
 
+      this.win.on('closed', app.quit)
+
       if (this.shouldJumpToSyncPath) {
         await this.jumpToSyncPath()
       }
@@ -288,6 +290,8 @@ module.exports = class OnboardingWM extends WindowManager {
       } catch (err) {
         log.error('failed adding shortcuts in file manager', { err })
       }
+
+      this.win.off('closed', app.quit)
       this.afterOnboarding()
     } catch (err) {
       log.error('failed starting sync', { err })
