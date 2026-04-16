@@ -74,7 +74,6 @@ sentry.setup(desktop.clientInfo())
 
 let diskTimeout = null
 let onboardingWindow = null
-let helpWindow = null
 let updaterWindow = null
 let trayWindow = null
 
@@ -196,6 +195,15 @@ const showWindow = async bounds => {
   }
 }
 
+const showHelp = async () => {
+  log.trace('Setting up help WM...')
+  const helpWindow = new HelpWM(desktop)
+  const win = await helpWindow.show()
+  await new Promise(resolve => {
+    win.on('closed', resolve)
+  })
+}
+
 const showInvalidConfigError = async () => {
   const options = {
     type: 'warning',
@@ -217,8 +225,7 @@ const showInvalidConfigError = async () => {
         log.error('failed disconnecting client', { err, sentry: true })
       )
   } else {
-    helpWindow = new HelpWM(desktop)
-    helpWindow.show()
+    await showHelp()
   }
 }
 
@@ -239,8 +246,7 @@ const showMigrationError = async (err /*: Error */) => {
   }
   const { response } = await dialog.showMessageBox(null, options)
   if (response === 0) {
-    helpWindow = new HelpWM(desktop)
-    helpWindow.show()
+    await showHelp()
   }
 }
 
@@ -684,7 +690,7 @@ app.on('window-all-closed', () => {
 })
 
 ipcMain.on('show-help', () => {
-  helpWindow.show()
+  showHelp()
 })
 
 // On watch mode, automatically reload the window when sources are updated
