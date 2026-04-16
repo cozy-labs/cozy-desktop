@@ -274,21 +274,24 @@ module.exports = class OnboardingWM extends WindowManager {
       log.error({ err: error })
       return
     }
-    let desktop = this.desktop
-    if (!desktop.config.isValid()) {
+
+    if (!this.desktop.config.isValid()) {
       log.error('Cannot start desktop client. No valid config found!')
       return
     }
+
     try {
-      desktop.saveConfig(desktop.config.cozyUrl, syncPath)
+      this.desktop.saveConfig(syncPath)
+
       try {
-        addFileManagerShortcut(desktop.config)
+        addFileManagerShortcut(syncPath)
       } catch (err) {
         log.error('failed adding shortcuts in file manager', { err })
       }
       this.afterOnboarding()
     } catch (err) {
       log.error('failed starting sync', { err })
+      // TODO: figure if this is still relevant; seems not
       event.sender.send('folder-error', translate('Error Invalid path'))
     }
   }

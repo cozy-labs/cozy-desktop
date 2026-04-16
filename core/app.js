@@ -154,9 +154,8 @@ class App {
   }
 
   // Save the config with all the informations for synchonization
-  saveConfig(cozyUrl /*: string */, syncPath /*: string */) {
+  saveConfig(syncPath /*: string */) {
     fse.ensureDirSync(syncPath)
-    this.config.cozyUrl = cozyUrl
     this.config.syncPath = syncPath
     this.config.persist()
     log.info(
