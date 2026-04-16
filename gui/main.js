@@ -15,7 +15,8 @@ const {
   ipcMain,
   dialog,
   powerMonitor,
-  session
+  session,
+  shell
 } = require('electron')
 
 if (process.env.INSECURE_SSL) {
@@ -225,7 +226,7 @@ const showInvalidConfigError = async () => {
         log.error('failed disconnecting client', { err, sentry: true })
       )
   } else {
-    await showHelp()
+    await shell.openExternal('mailto:support@twake.app')
   }
 }
 
