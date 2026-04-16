@@ -1,5 +1,18 @@
 # Twake Desktop: Changelog
 
+## 5.1.0-beta.1 - 2026-04-16
+
+Improvements for all users:
+
+- We've reworked the onboarding so that nothing we'll get written on disk until
+  it's completed and closing this window won't leave you in a middle ground
+  where the Desktop believes it's configured while it might not be able to
+  reach the remote instance.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.0.0 - 2026-03-23
 
 BREAKING CHANGES:
