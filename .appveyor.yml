@@ -15,27 +15,27 @@ cache:
   - node_modules -> yarn.lock
 
 install:
-  - ps: Update-NodeJsInstallation 20.15.1 x64
+  - pwsh: Update-NodeJsInstallation 20.15.1 x64
   - cmd: appveyor-retry pip install setuptools
   - cmd: appveyor-retry yarn install
   - cmd: appveyor-retry node node_modules/electron/install.js
   - cmd: appveyor-retry yarn install:electron
-  - ps: yarn build:css; yarn build:elm
+  - pwsh: yarn build:css; yarn build:elm
 
 test_script:
-  - ps: if ($env:BUILD_JOB -ne "build") { yarn bootstrap:remote }
-  - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:elm }
-  - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:world --timeout $env:MOCHA_TIMEOUT }
-  - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:unit --timeout $env:MOCHA_TIMEOUT }
-  - ps: if ($env:BUILD_JOB -eq "short_tests") { yarn test:integration --timeout $env:MOCHA_TIMEOUT }
-  - ps: if ($env:BUILD_JOB -eq "scenarios") { yarn test:scenarios --timeout $env:MOCHA_TIMEOUT }
+  - pwsh: if ($env:BUILD_JOB -ne "build") { yarn bootstrap:remote }
+  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:elm }
+  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:world --timeout $env:MOCHA_TIMEOUT }
+  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:unit --timeout $env:MOCHA_TIMEOUT }
+  - pwsh: if ($env:BUILD_JOB -eq "short_tests") { yarn test:integration --timeout $env:MOCHA_TIMEOUT }
+  - pwsh: if ($env:BUILD_JOB -eq "scenarios") { yarn test:scenarios --timeout $env:MOCHA_TIMEOUT }
 
 before_build:
-  - ps: if ($env:BUILD_JOB -eq "build") { pwsh -NoProfile -ExecutionPolicy Unrestricted -Command .\build\windows\setup-keylocker.ps1 }
+  - pwsh: if ($env:BUILD_JOB -eq "build") { pwsh -NoProfile -ExecutionPolicy Unrestricted -Command .\build\windows\setup-keylocker.ps1 }
 
 build_script:
-  - ps: $env:SIGN_CODE=( ($env:FORCE_CODE_SIGNING -eq "true") -or (($env:APPVEYOR_REPO_BRANCH -eq "master" ) -and ($env:APPVEYOR_REPO_TAG -eq 'true')) )
-  - ps: if ($env:BUILD_JOB -eq "build") { yarn dist }
+  - pwsh: $env:SIGN_CODE=( ($env:FORCE_CODE_SIGNING -eq "true") -or (($env:APPVEYOR_REPO_BRANCH -eq "master" ) -and ($env:APPVEYOR_REPO_TAG -eq 'true')) )
+  - pwsh: if ($env:BUILD_JOB -eq "build") { yarn dist }
 
 artifacts:
   - path: "dist\\latest.yml"
