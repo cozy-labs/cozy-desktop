@@ -129,7 +129,10 @@ module.exports = class Registration {
       return redirectURI
     } catch (err) {
       log.error('could not register OAuth client', { err })
+
       this.config.clear()
+
+      throw err
     }
   }
 }
