@@ -1,5 +1,16 @@
 # Twake Desktop: Changelog
 
+## 5.1.0-beta.2 - 2026-04-17
+
+Improvements for all users:
+
+- Entering an invalid instance URL during the onboarding now results in an
+  error message being displayed instead of a stuck onboarding.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.1.0-beta.1 - 2026-04-16
 
 Improvements for all users:
