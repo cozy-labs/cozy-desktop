@@ -6,6 +6,8 @@ const localToRemote = (p /*: string */) /*: string */ =>
   path.posix.join(path.posix.sep, ...p.split(path.sep))
 
 const remoteToLocal = (p /*: string */) /*: string */ =>
+  // FIXME: on Windows, with node 22, path.normalize('dir:') returns '.\\dir:'
+  // while it returned `dir:` with node 20.
   p.startsWith(path.posix.sep)
     ? path.normalize(p.substring(1))
     : path.normalize(p)
