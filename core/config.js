@@ -194,7 +194,7 @@ class Config {
   // Set the remote configuration
   set client(options /*: OAuthClient */) {
     const { creds } = this.fileConfig
-    this.fileConfig.creds = _.merge(creds, { client: options })
+    this.fileConfig.creds = { ...creds, client: options }
   }
 
   get version() /*: string */ {

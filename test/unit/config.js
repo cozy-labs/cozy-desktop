@@ -205,6 +205,29 @@ describe('core/config', function() {
         this.config.reset()
         should(this.config.isValid()).be.false()
       })
+
+      it('replaces previous client fields when set to new options', function() {
+        // Mimic a fully registered client left over from a previous
+        // session (e.g. after an interrupted onboarding).
+        this.config.client = {
+          clientID: 'stale-id',
+          clientSecret: 'stale-secret',
+          registrationAccessToken: 'stale-token',
+          clientName: 'test',
+          redirectURI: 'http://localhost:3344/callback'
+        }
+
+        // Registration.process reassigns the client with fresh options
+        // from `oauthClient()`, which never carries a `clientID`.
+        this.config.client = {
+          clientName: 'test',
+          redirectURI: 'http://localhost:3344/callback'
+        }
+
+        should(this.config.client.clientID).be.undefined()
+        should(this.config.client.clientSecret).be.undefined()
+        should(this.config.client.registrationAccessToken).be.undefined()
+      })
     })
 
     describe('flags', () => {
