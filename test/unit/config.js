@@ -194,6 +194,60 @@ describe('core/config', function() {
       })
     })
 
+    describe('onTokenRefresh', function() {
+      const newToken = {
+        tokenType: 'Bearer',
+        accessToken: 'new-access',
+        refreshToken: 'new-refresh',
+        scope: 'io.cozy.files'
+      }
+
+      beforeEach('set initial credentials', function() {
+        this.config.fileConfig.creds = {
+          client: { clientID: 'x', clientName: 'test' },
+          token: {
+            tokenType: 'Bearer',
+            accessToken: 'old',
+            refreshToken: 'old',
+            scope: ''
+          }
+        }
+      })
+
+      context('when a sync path has been chosen', function() {
+        it('updates the token in memory', function() {
+          this.config.onTokenRefresh(newToken)
+          should(this.config.oauthTokens.accessToken).equal('new-access')
+        })
+
+        it('persists the refreshed token to disk', function() {
+          this.config.onTokenRefresh(newToken)
+
+          const persisted = config.loadOrDeleteFile(this.config.configPath)
+          should(persisted.creds.token.accessToken).equal('new-access')
+        })
+      })
+
+      context('when no sync path has been chosen yet', function() {
+        beforeEach('simulate onboarding in progress', function() {
+          // The config helper sets a syncPath and persists; an ongoing
+          // onboarding is in the opposite state.
+          delete this.config.fileConfig.path
+          fse.removeSync(this.config.configPath)
+        })
+
+        it('updates the token in memory', function() {
+          this.config.onTokenRefresh(newToken)
+          should(this.config.oauthTokens.accessToken).equal('new-access')
+        })
+
+        it('does not persist the config to disk', function() {
+          this.config.onTokenRefresh(newToken)
+          should(fse.existsSync(this.config.configPath)).be.false()
+        })
+      })
+    })
+
     describe('Client', function() {
       it('can set a client', function() {
         this.config.client = { clientName: 'test' }

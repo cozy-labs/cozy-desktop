@@ -243,7 +243,14 @@ class Config {
 
   onTokenRefresh(newToken /*: OAuthTokens */) {
     this.oauthTokens = newToken
-    this.persist() // XXX: automatically persist as onTokenRefresh is called by CozyClient
+    // Only persist once the onboarding is complete (i.e. a sync path
+    // has been chosen). Otherwise the first `client.login()` performed
+    // during onboarding would write partial credentials to disk, which
+    // survives across app restarts and breaks the next onboarding
+    // attempt with a local "Client already registered" error.
+    if (this.syncPath) {
+      this.persist()
+    }
   }
 
   // Flags are options that can be activated by the user via the config file.
