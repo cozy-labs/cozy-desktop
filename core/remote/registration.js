@@ -130,7 +130,12 @@ module.exports = class Registration {
     } catch (err) {
       log.error('could not register OAuth client', { err })
 
+      // Persist the cleanup so a leftover `clientID` or token on disk
+      // does not survive a failed registration and break the next
+      // onboarding attempt (locally with "Client already registered"
+      // or remotely with an "Invalid token" on a revoked client).
       this.config.clear()
+      this.config.persist()
 
       throw err
     }
