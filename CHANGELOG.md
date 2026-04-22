@@ -1,5 +1,20 @@
 # Twake Desktop: Changelog
 
+## 5.1.0 - 2026-04-22
+
+Improvements for all users:
+
+- We've reworked the onboarding so that nothing we'll get written on disk until
+  it's completed and closing this window won't leave you in a middle ground
+  where the Desktop believes it's configured while it might not be able to
+  reach the remote instance.
+- Entering an invalid instance URL during the onboarding now results in an
+  error message being displayed instead of a stuck onboarding.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.1.0-beta.2 - 2026-04-17
 
 Improvements for all users:
