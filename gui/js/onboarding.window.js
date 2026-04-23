@@ -223,7 +223,7 @@ module.exports = class OnboardingWM extends WindowManager {
         this.win.loadURL(redirectURI)
         this.closeOAuthView()
         if (!process.env.DEBUG) {
-          autoLaunch.setEnabled(true)
+          autoLaunch.enable()
         }
         return
       },

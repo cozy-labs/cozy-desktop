@@ -4,67 +4,93 @@
  */
 
 const AutoLaunch = require('auto-launch')
+const { app } = require('electron')
 
 const log = require('../../core/app').logger({
   component: 'GUI'
 })
 
 const APP_NAME = 'Twake-Desktop'
-const opts = {
-  name: APP_NAME,
-  isHidden: true
+
+class AppImageAutoLauncher {
+  constructor() {
+    this.autoLauncher = new AutoLaunch({
+      name: APP_NAME,
+      path: process.env.APPIMAGE
+    })
+
+    // Fix issue with `auto-launch` that uses the path instead of the app name
+    // when defining the autolaunch entry leading to autolaunch to stop working
+    // after an app update.
+    // See https://github.com/Teamwork/node-auto-launch/issues/92
+    this.autoLauncher.opts.appName = APP_NAME
+  }
+
+  async isEnabled() {
+    try {
+      const enabled = await this.autoLauncher.isEnabled()
+      log.debug(`Autolaunch status: ${enabled.toString()}`)
+      return enabled
+    } catch (err) {
+      log.error('could not check autolaunch status', { err })
+      return false
+    }
+  }
+
+  async enable() {
+    try {
+      await this.autoLauncher.enable()
+      log.debug('Enabled autolaunch')
+    } catch (err) {
+      log.error('could not enable autolaunch', { err })
+    }
+  }
+
+  async disable() {
+    try {
+      await this.autoLauncher.disable()
+      log.debug('Disabled autolaunch')
+    } catch (err) {
+      log.error('could not disable autolaunch', { err })
+    }
+  }
+}
+
+class MacWinAutoLauncher {
+  async isEnabled() {
+    try {
+      const { openAtLogin } = app.getLoginItemSettings({
+        serviceName: APP_NAME
+      })
+      log.debug(`Autolaunch status: ${openAtLogin.toString()}`)
+      return openAtLogin
+    } catch (err) {
+      log.error('could not check autolaunch status', { err })
+      return false
+    }
+  }
+
+  async enable() {
+    try {
+      app.setLoginItemSettings({ openAtLogin: true, serviceName: APP_NAME })
+      log.debug('Enabled autolaunch')
+    } catch (err) {
+      log.error('could not enable autolaunch', { err })
+    }
+  }
+
+  async disable() {
+    try {
+      app.setLoginItemSettings({ openAtLogin: false, serviceName: APP_NAME })
+      log.debug('Disabled autolaunch')
+    } catch (err) {
+      log.error('could not disable autolaunch', { err })
+    }
+  }
 }
 
 if (process.env.APPIMAGE) {
-  opts.path = process.env.APPIMAGE
-}
-
-const autoLauncher = new AutoLaunch(opts)
-
-if (process.env.APPIMAGE) {
-  // Fix issue with `auto-launch` that uses the path instead of the app name
-  // when defining the autolaunch entry leading to autolaunch to stop working
-  // after an app update.
-  // See https://github.com/Teamwork/node-auto-launch/issues/92
-
-  // Make sure the autolaunch entry will use the app's name.
-  autoLauncher.opts.appName = APP_NAME
-
-  // Check if there is an autolaunch entry with the app's path.
-  autoLauncher
-    .isEnabled()
-    .then(pathAutoLaunchEnabled => {
-      if (pathAutoLaunchEnabled) {
-        // Remove it to avoid having multiple entries.
-        autoLauncher.disable()
-
-        // Create an autolaunch entry with the app's name if there was an entry
-        // with the app's path.
-        autoLauncher.enable()
-      }
-      return
-    })
-    .catch(err =>
-      log.error('could not check autolaunch or replace old one', { err })
-    )
-}
-
-module.exports.isEnabled = () => autoLauncher.isEnabled()
-
-module.exports.setEnabled = enabled => {
-  autoLauncher
-    .isEnabled()
-    .then(was => {
-      if (was !== enabled) {
-        if (enabled) {
-          autoLauncher.enable()
-          return true
-        } else {
-          autoLauncher.disable()
-          return false
-        }
-      }
-      return was
-    })
-    .catch(err => log.error('could not set autolaunch', { err }))
+  module.exports = new AppImageAutoLauncher()
+} else {
+  module.exports = new MacWinAutoLauncher()
 }
