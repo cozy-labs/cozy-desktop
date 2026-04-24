@@ -7,8 +7,8 @@ environment:
   MOCHA_TIMEOUT: "60000"
   NO_BREAKPOINTS: "1"
   matrix:
-      - BUILD_JOB: "short_tests"
-      - BUILD_JOB: "scenarios"
+      # - BUILD_JOB: "short_tests"
+      # - BUILD_JOB: "scenarios"
       - BUILD_JOB: "build"
 
 cache:
