@@ -36,7 +36,9 @@ before_build:
 build_script:
   - pwsh: |
       $signCode = (($env:FORCE_CODE_SIGNING -eq "true") -or (($env:APPVEYOR_REPO_BRANCH -eq "master") -and ($env:APPVEYOR_REPO_TAG -eq "true"))).ToString()
+      Write-Output "About to set SIGN_CODE to: $signCode"
       appveyor env set SIGN_CODE $signCode
+      Write-Output "SIGN_CODE command completed"
   - pwsh: |
       if ($env:BUILD_JOB -eq "build") {
         Write-Output "FORCE_CODE_SIGNING: $env:FORCE_CODE_SIGNING"
