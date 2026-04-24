@@ -35,11 +35,14 @@ before_build:
 
 build_script:
   - pwsh: |
-    [System.Environment]::SetEnvironmentVariable(
-      "SIGN_CODE",
-      (($env:FORCE_CODE_SIGNING -eq "true") -or (($env:APPVEYOR_REPO_BRANCH -eq "master") -and ($env:APPVEYOR_REPO_TAG -eq "true"))).ToString(),
-      "User"
-    )
+      [System.Environment]::SetEnvironmentVariable(
+        "SIGN_CODE",
+        (
+          ($env:FORCE_CODE_SIGNING -eq "true") -or
+          (($env:APPVEYOR_REPO_BRANCH -eq "master") -and ($env:APPVEYOR_REPO_TAG -eq "true"))
+        ).ToString(),
+        "User"
+      )
   - pwsh: |
       if ($env:BUILD_JOB -eq "build") {
         Write-Output "FORCE_CODE_SIGNING: $env:FORCE_CODE_SIGNING"
