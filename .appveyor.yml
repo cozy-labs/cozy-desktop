@@ -40,6 +40,13 @@ build_script:
       (($env:FORCE_CODE_SIGNING -eq "true") -or (($env:APPVEYOR_REPO_BRANCH -eq "master") -and ($env:APPVEYOR_REPO_TAG -eq "true"))).ToString(),
       "User"
     )
+  - pwsh: |
+      if ($env:BUILD_JOB -eq "build") {
+        Write-Output "FORCE_CODE_SIGNING: $env:FORCE_CODE_SIGNING"
+        Write-Output "APPVEYOR_REPO_BRANCH: $env:APPVEYOR_REPO_BRANCH"
+        Write-Output "APPVEYOR_REPO_TAG: $env:APPVEYOR_REPO_TAG"
+        Write-Output "SIGN_CODE: $env:SIGN_CODE"
+      }
   - pwsh: if ($env:BUILD_JOB -eq "build") { yarn dist }
 
 artifacts:
