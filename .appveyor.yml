@@ -34,7 +34,12 @@ before_build:
   - pwsh: if ($env:BUILD_JOB -eq "build") { pwsh -NoProfile -ExecutionPolicy Unrestricted -Command .\build\windows\setup-keylocker.ps1 }
 
 build_script:
-  - pwsh: $env:SIGN_CODE=( ($env:FORCE_CODE_SIGNING -eq "true") -or (($env:APPVEYOR_REPO_BRANCH -eq "master" ) -and ($env:APPVEYOR_REPO_TAG -eq 'true')) )
+  - pwsh: |
+    [System.Environment]::SetEnvironmentVariable(
+      "SIGN_CODE",
+      (($env:FORCE_CODE_SIGNING -eq "true") -or (($env:APPVEYOR_REPO_BRANCH -eq "master") -and ($env:APPVEYOR_REPO_TAG -eq "true"))).ToString(),
+      "User"
+    )
   - pwsh: if ($env:BUILD_JOB -eq "build") { yarn dist }
 
 artifacts:
