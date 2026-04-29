@@ -1,5 +1,16 @@
 # Twake Desktop: Changelog
 
+## 5.1.1 - 2026-04-29
+
+Improvements for Windows users:
+
+- We fixed an issue that resulted in unsigned binaries which would trigger
+  security alerts when trying to install version 5.1.0.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.1.1-beta.1 - 2026-04-27
 
 Improvements for Windows users:
