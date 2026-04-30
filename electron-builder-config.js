@@ -62,6 +62,10 @@ const config = {
     ]
   },
 
+  nsis: {
+    include: 'build/installer.nsh'
+  },
+
   win: {
     target: [{ target: 'nsis', arch: ['x64'] }],
     publisherName: 'Cozy Cloud SAS',
