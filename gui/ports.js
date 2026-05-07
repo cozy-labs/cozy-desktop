@@ -68,11 +68,14 @@ ipcRenderer.on('registration-error', (event, err) => {
   err = errMessage(err)
   elmectron.ports.registrationError.send(err)
 })
-elmectron.ports.registerRemote.subscribe(url => {
-  ipcRenderer.send('register-remote', {
+elmectron.ports.registerWithURL.subscribe(url => {
+  ipcRenderer.send('register-with-url', {
     cozyUrl: url,
     location: window.location.toString().replace('#', '')
   })
+})
+elmectron.ports.registerWithTwake.subscribe(() => {
+  ipcRenderer.send('register-with-twake')
 })
 
 ipcRenderer.on('folder-chosen', (event, result) => {

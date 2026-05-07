@@ -21,7 +21,6 @@ port module Ports exposing
     , newRelease
     , openFile
     , quitAndInstall
-    , registerRemote
     , registrationError
     , reinitialization
     , reinitializeSynchronization
@@ -81,9 +80,6 @@ port showInParent : ( String, Bool ) -> Cmd msg
 
 
 port quitAndInstall : () -> Cmd msg
-
-
-port registerRemote : String -> Cmd msg
 
 
 port registrationError : (String -> msg) -> Sub msg

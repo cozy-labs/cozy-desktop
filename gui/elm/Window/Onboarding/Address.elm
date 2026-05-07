@@ -1,4 +1,4 @@
-module Window.Onboarding.Address exposing
+port module Window.Onboarding.Address exposing
     ( Msg(..)
     , correctAddress
     , dropAppName
@@ -26,7 +26,7 @@ import Window.Onboarding.Context as Context exposing (Context)
 
 type Msg
     = FillAddress String
-    | RegisterRemote
+    | RegisterWithURL
     | RegistrationError String
 
 
@@ -133,7 +133,7 @@ update msg context =
         FillAddress address ->
             ( Context.setAddressConfig context { address = address, error = "", busy = False }, Cmd.none )
 
-        RegisterRemote ->
+        RegisterWithURL ->
             let
                 addressConfig =
                     context.addressConfig
@@ -149,11 +149,14 @@ update msg context =
 
             else
                 ( Context.setAddressConfig context { addressConfig | busy = True }
-                , Ports.registerRemote addressConfig.address
+                , registerWithURL addressConfig.address
                 )
 
         RegistrationError error ->
             setError context error
+
+
+port registerWithURL : String -> Cmd msg
 
 
 
@@ -207,7 +210,7 @@ view helpers context =
                         , value context.addressConfig.address
                         , disabled context.addressConfig.busy
                         , onInput FillAddress
-                        , Keyboard.onEnter RegisterRemote
+                        , Keyboard.onEnter RegisterWithURL
                         ]
                         []
                     ]
@@ -227,7 +230,7 @@ view helpers context =
                     attribute "aria-busy" "true"
 
                   else
-                    onClick RegisterRemote
+                    onClick RegisterWithURL
                 ]
                 [ span [] [ text (helpers.t "Address Next") ] ]
             ]

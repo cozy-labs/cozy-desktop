@@ -16,7 +16,8 @@ import Window.Onboarding.Context as Context exposing (Context)
 
 
 type Msg
-    = NextPage
+    = LoginWithTwake
+    | LoginWithAddress
 
 
 
@@ -38,13 +39,19 @@ view helpers context =
             , a
                 [ class "c-btn c-btn--full"
                 , href "#"
-                , onClick NextPage
+                , onClick LoginWithTwake
                 ]
-                [ span [] [ text (helpers.t "Welcome Sign in to my Twake Workplace") ] ]
+                [ span [] [ text (helpers.t "Welcome Sign in") ] ]
             , a
-                [ href "https://sign-up.twake.app?register"
-                , class "more-info"
+                [ class "c-btn c-btn--secondary c-btn--full"
+                , href "https://sign-up.twake.app?register"
                 ]
-                [ text (helpers.t "Address Don't have an account? Request one here") ]
+                [ span [] [ text (helpers.t "Welcome Create account") ] ]
+            , a
+                [ class "more-info"
+                , href "#"
+                , onClick LoginWithAddress
+                ]
+                [ text (helpers.t "Welcome Enter my Twake URL") ]
             ]
         ]

@@ -1,4 +1,4 @@
-module Window.Onboarding exposing
+port module Window.Onboarding exposing
     ( Model
     , Msg(..)
     , Page(..)
@@ -60,7 +60,10 @@ update msg model =
             case
                 subMsg
             of
-                Welcome.NextPage ->
+                Welcome.LoginWithTwake ->
+                    ( model, registerWithTwake () )
+
+                Welcome.LoginWithAddress ->
                     ( { model | page = AddressPage }
                     , Ports.focus ".wizard__address"
                     )
@@ -86,6 +89,9 @@ update msg model =
                     Folder.update subMsg model.context
             in
             ( { model | context = context }, cmd )
+
+
+port registerWithTwake : () -> Cmd msg
 
 
 

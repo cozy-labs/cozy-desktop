@@ -11,6 +11,7 @@ const WindowManager = require('./window_manager')
 const log = require('../../core/app').logger({
   component: 'GUI/Onboarding'
 })
+const { COZY_SCHEME, oidcLoginURL } = require('../../core/utils/twake')
 
 /*::
 import type { Event as ElectronEvent } from 'electron'
@@ -34,7 +35,8 @@ module.exports = class OnboardingWM extends WindowManager {
 
   ipcEvents() {
     return {
-      'register-remote': this.onRegisterRemote,
+      'register-with-url': this.onRegisterWithURL,
+      'register-with-twake': this.onRegisterWithTwake,
       'choose-folder': this.onChooseFolder,
       'start-sync': this.onStartSync
     }
@@ -163,7 +165,7 @@ module.exports = class OnboardingWM extends WindowManager {
     this.afterOnboarding = handler
   }
 
-  async onRegisterRemote(
+  async onRegisterWithURL(
     event /*: ElectronEvent */,
     arg /*: { cozyUrl: string, location: string } */
   ) {
@@ -211,7 +213,7 @@ module.exports = class OnboardingWM extends WindowManager {
       this.openOAuthView(url)
       return promise
     }
-    return desktop.registerRemote(cozyUrl, arg.location, onRegistered).then(
+    return desktop.registerWithURL(cozyUrl, arg.location, onRegistered).then(
       redirectURI => {
         syncSession.clearStorageData()
         this.win.webContents.once('dom-ready', () => {
@@ -248,6 +250,62 @@ module.exports = class OnboardingWM extends WindowManager {
         throw err
       }
     )
+  }
+
+  async onRegisterWithTwake() {
+    const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
+
+    const registrationDone = new Promise((resolve, reject) => {
+      syncSession.protocol.handle(COZY_SCHEME, async request => {
+        log.debug(`received cozy:// request; starting OIDC registration`, {
+          request
+        })
+
+        try {
+          syncSession.protocol.unhandle(COZY_SCHEME)
+        } catch (err) {
+          log.error(`failed to unhandle ${COZY_SCHEME} protocol`, {
+            err,
+            sentry: true
+          })
+        }
+
+        const redirectURI = new URL(request.url)
+        const code = redirectURI.searchParams.get('code')
+        const fqdn = redirectURI.searchParams.get('fqdn')
+
+        try {
+          await this.desktop.registerWithDelegationCode(fqdn, code)
+
+          resolve()
+
+          // XXX: protocol.handle is expecting a Response to be returned.
+          // Even though we don't care about it we return an empty response to
+          // avoid errors on stderr.
+          return new Response()
+        } catch (err) {
+          log.error('failed registering device with Twake instance', {
+            err,
+            fqdn,
+            code
+          })
+          reject(err)
+        }
+      })
+    })
+
+    this.openOAuthView(
+      `${oidcLoginURL()}?redirect_after_oidc=${COZY_SCHEME}://`
+    )
+
+    await registrationDone
+    await this.sendSyncConfig()
+
+    this.closeOAuthView()
+
+    if (!process.env.DEBUG) {
+      autoLaunch.setEnabled(true)
+    }
   }
 
   onChooseFolder(event /*: ElectronEvent */) {
