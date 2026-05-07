@@ -1,5 +1,19 @@
 # Twake Desktop: Changelog
 
+## 5.2.0-beta.1 - 2026-05-07
+
+Improvements for all users:
+
+- We changed the default login method to leverage Twake SSO so you can sign in
+  with your registered phone number or Twake email address instead of your
+  workplace URL.
+  You can still sign in using your workplace URL though, if you don't have a
+  Twake SSO account for example.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.1.1 - 2026-04-29
 
 Improvements for Windows users:
