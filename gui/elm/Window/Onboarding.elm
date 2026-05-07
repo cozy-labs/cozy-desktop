@@ -15,6 +15,7 @@ import I18n exposing (Helpers)
 import Ports
 import Window.Onboarding.Address as Address
 import Window.Onboarding.Context as Context exposing (Context)
+import Window.Onboarding.Email as Email
 import Window.Onboarding.Folder as Folder
 import Window.Onboarding.Welcome as Welcome
 
@@ -25,6 +26,7 @@ import Window.Onboarding.Welcome as Welcome
 
 type Page
     = WelcomePage
+    | EmailPage
     | AddressPage
     | FolderPage
 
@@ -48,6 +50,7 @@ init defaultSyncPath platform =
 
 type Msg
     = WelcomeMsg Welcome.Msg
+    | EmailMsg Email.Msg
     | AddressMsg Address.Msg
     | RegistrationDone SyncConfig
     | FolderMsg Folder.Msg
@@ -57,23 +60,47 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         WelcomeMsg subMsg ->
-            case
-                subMsg
-            of
+            case subMsg of
                 Welcome.LoginWithTwake ->
                     ( model, registerWithTwake () )
+
+                Welcome.LoginWithCustomServer ->
+                    ( { model | page = EmailPage }
+                    , Ports.focus ".wizard__address"
+                    )
 
                 Welcome.LoginWithAddress ->
                     ( { model | page = AddressPage }
                     , Ports.focus ".wizard__address"
                     )
 
+        EmailMsg subMsg ->
+            let
+                ( context, cmd ) =
+                    Email.update subMsg model.context
+            in
+            case subMsg of
+                Email.LoginWithAddress ->
+                    ( { model | context = context, page = AddressPage }
+                    , Ports.focus ".wizard__address"
+                    )
+
+                _ ->
+                    ( { model | context = context }, Cmd.map EmailMsg cmd )
+
         AddressMsg subMsg ->
             let
                 ( context, cmd ) =
                     Address.update subMsg model.context
             in
-            ( { model | context = context }, Cmd.map AddressMsg cmd )
+            case subMsg of
+                Address.LoginWithCustomServer ->
+                    ( { model | context = context, page = EmailPage }
+                    , Ports.focus ".wizard__address"
+                    )
+
+                _ ->
+                    ( { model | context = context }, Cmd.map AddressMsg cmd )
 
         RegistrationDone syncConfig ->
             ( { model
@@ -118,11 +145,13 @@ view helpers model =
         [ classList
             [ ( "wizard", True )
             , ( "on-step-welcome", model.page == WelcomePage )
+            , ( "on-step-email", model.page == EmailPage )
             , ( "on-step-address", model.page == AddressPage )
             , ( "on-step-folder", model.page == FolderPage )
             ]
         ]
         [ Html.map WelcomeMsg (Welcome.view helpers model.context)
+        , Html.map EmailMsg (Email.view helpers model.context)
         , Html.map AddressMsg (Address.view helpers model.context)
         , Html.map FolderMsg (Folder.view helpers model.context)
         ]

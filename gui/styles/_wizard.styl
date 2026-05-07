@@ -10,13 +10,17 @@
   height 100vh
   position relative
 
-.on-step-address
+.on-step-email
   .step
     transform translate(-100vw, 0)
 
-.on-step-folder
+.on-step-address
   .step
     transform translate(-200vw, 0)
+
+.on-step-folder
+  .step
+    transform translate(-300vw, 0)
 
 .step
   position absolute
@@ -37,7 +41,7 @@
 a.more-info
   display: inline-block
   color var(--dodgerBlue)
-  padding-top rem(13px, 14px)
+  margin-top rem(13px, 14px)
   margin-left .25em
   text-decoration: none
 
@@ -68,15 +72,18 @@ a.more-info
       @extend $spin
       background-color: var(--primaryContrastTextColor)
 
+.step
+  .c-btn + .c-btn
+    margin-top rem(13px, 14px)
 
-.step-address .coz-form-group
+.step .coz-form-group
   @extend $form .coz-form-group
   @extend $form-text
   margin-bottom: 1em
-.step-address label
+.step label
   @extend $form .coz-form-label
   font-size: 1em
-.step-address .https-input-wrapper
+.step .input-wrapper
   display: flex
   flex-direction: row
   span
@@ -86,7 +93,7 @@ a.more-info
     color var(--black)
   input
     flex 1 0
-.step-address .cozy-form-tip
+.step .cozy-form-tip
   font-style: italic
   color var(--slateGrey)
 
@@ -123,11 +130,14 @@ a.more-info
     /.u-error &
       background-color var(--errorColor)
 
-.step-address
+.step-email
   left 100vw
 
-.step-folder
+.step-address
   left 200vw
+
+.step-folder
+  left 300vw
   text-align left
 
   .svg-wrapper

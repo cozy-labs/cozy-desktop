@@ -74,6 +74,11 @@ elmectron.ports.registerWithURL.subscribe(url => {
     location: window.location.toString().replace('#', '')
   })
 })
+elmectron.ports.registerWithEmail.subscribe(email => {
+  ipcRenderer.send('register-with-email', {
+    email: email
+  })
+})
 elmectron.ports.registerWithTwake.subscribe(() => {
   ipcRenderer.send('register-with-twake')
 })

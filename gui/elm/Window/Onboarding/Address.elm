@@ -28,6 +28,7 @@ type Msg
     = FillAddress String
     | RegisterWithURL
     | RegistrationError String
+    | LoginWithCustomServer
 
 
 coreAppNames : List String
@@ -142,7 +143,7 @@ update msg context =
                     addressConfig.address
             in
             if address == "" then
-                setError context "Address You don't have filled the address!"
+                setError context "Address You haven't filled the address!"
 
             else if contains "@" address then
                 setError context "Address No email address"
@@ -154,6 +155,9 @@ update msg context =
 
         RegistrationError error ->
             setError context error
+
+        LoginWithCustomServer ->
+            ( Context.setAddressConfig context { address = "", error = "", busy = False }, Cmd.none )
 
 
 port registerWithURL : String -> Cmd msg
@@ -186,10 +190,10 @@ view helpers context =
 
               else
                 Icons.bigCross
-            , h1 [] [ text (helpers.t "Address Please enter your Twake Workplace address") ]
+            , h1 [] [ text (helpers.t "Address Sign in") ]
             , if isValid then
                 p [ class "adress-helper" ]
-                    [ text (helpers.t "Address This is the web address you use to sign in to your Twake Workplace.") ]
+                    [ text (helpers.t "Address To sign in and access your Twake Workplace, please enter its URL.") ]
 
               else
                 p [ class "error-message" ]
@@ -197,11 +201,11 @@ view helpers context =
             , div [ class "coz-form-group" ]
                 [ label [ class "coz-form-label" ]
                     [ text (helpers.t "Address Twake Workplace address") ]
-                , div [ class "https-input-wrapper" ]
+                , div [ class "input-wrapper" ]
                     [ span [ class "address_https" ]
                         [ text "https://" ]
                     , input
-                        [ placeholder "lucie.twake.app"
+                        [ placeholder "claude.twake.app"
                         , classList
                             [ ( "wizard__address", True )
                             , ( "error", not isValid )
@@ -220,6 +224,12 @@ view helpers context =
                 , strong [] [ text (helpers.t "Address Example Bold") ]
                 , text (helpers.t "Address Example After")
                 ]
+            , a
+                [ class "more-info"
+                , href "#"
+                , onClick LoginWithCustomServer
+                ]
+                [ span [] [ text (helpers.t "Address Enter my organization email") ] ]
             , a
                 [ class "c-btn c-btn--full u-mt-1"
                 , href "#"
