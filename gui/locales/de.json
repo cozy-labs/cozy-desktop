@@ -300,6 +300,8 @@
   "UserAlert Show details": "Show details",
   "UserAlert Got it": "Got it",
 
-  "Welcome Sign in to my Twake Workplace": "Bei meinem Twake Workplace anmelden",
+  "Welcome Sign in": "Sign in",
+  "Welcome Create account": "Create account",
+  "Welcome Enter my Twake URL": "Enter my Twake URL",
   "Welcome Your own private cloud": "Willkommen zur Twake Desktop!"
 }

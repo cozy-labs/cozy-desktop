@@ -11,7 +11,12 @@ const url = require('url')
 const autoBind = require('auto-bind')
 const open = require('open')
 
-const { createClient, loginAndSaveClient, registerClient } = require('./client')
+const {
+  createClient,
+  loginAndSaveClient,
+  registerClient,
+  connectOIDCClient
+} = require('./client')
 const { logger } = require('../utils/logger')
 
 const PORT_NUMBER = 3344
@@ -107,6 +112,31 @@ module.exports = class Registration {
       clientURI: pkg.homepage,
       logoURI: pkg.logo,
       policyURI: 'https://files.cozycloud.cc/cgu.pdf'
+    }
+  }
+
+  async registerWithDelegationCode(
+    pkg /*: Object */,
+    code /*: string */,
+    deviceName /*: ?string */,
+    redirectURI /*: ?string */
+  ) {
+    this.config.cozyUrl = this.cozyUrl
+    this.config.client = this.oauthClient(pkg, redirectURI, deviceName)
+
+    try {
+      const client = createClient(this.config)
+      await connectOIDCClient(client, code)
+      await loginAndSaveClient(client, this.config)
+    } catch (err) {
+      log.error('could not register OAuth client with delegation code', {
+        err,
+        code
+      })
+
+      this.config.clear()
+
+      throw err
     }
   }
 

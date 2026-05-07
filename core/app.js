@@ -39,6 +39,7 @@ const {
   LOG_BASENAME
 } = require('./utils/logger')
 const notes = require('./utils/notes')
+const { getInstanceFromFqdn } = require('./utils/twake')
 const web = require('./utils/web')
 
 /*::
@@ -143,14 +144,24 @@ class App {
   }
 
   // Return a promise for registering a device on the Twake Workplace
-  async registerRemote(
+  async registerWithURL(
     cozyUrl /*: string */,
     redirectURI /*: ?string */,
     onRegistered /*: ?Function */,
-    deviceName /*: string */
+    deviceName /*: ?string */
   ) {
     const registration = new Registration(cozyUrl, this.config)
     return registration.process(pkg, redirectURI, onRegistered, deviceName)
+  }
+
+  async registerWithDelegationCode(
+    fqdn /*: string */,
+    code /*: string */,
+    deviceName /*: ?string */
+  ) {
+    const cozyUrl = getInstanceFromFqdn(fqdn)
+    const registration = new Registration(cozyUrl, this.config)
+    return registration.registerWithDelegationCode(pkg, code, deviceName)
   }
 
   // Save the config with all the informations for synchonization
