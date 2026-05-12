@@ -51,6 +51,12 @@ const oidcLoginURL = () /*: string */ => {
   return `${managerURL()}/linagora/${oidcRoute()}`
 }
 
+const webFingerURL = (domain /*: string */) /*: string */ => {
+  return getURLWithEnforcedProtocol(
+    `${domain}/.well-known/twake-configuration`
+  ).toString()
+}
+
 /**
  * Get Cozy Instance from FQDN
  *
@@ -97,6 +103,7 @@ module.exports = {
   managerURL,
   oidcRoute,
   oidcLoginURL,
+  webFingerURL,
   getInstanceFromFqdn,
   isUnsecureDomain
 }

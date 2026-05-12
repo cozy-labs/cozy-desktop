@@ -17,6 +17,7 @@ import Window.Onboarding.Context as Context exposing (Context)
 
 type Msg
     = LoginWithTwake
+    | LoginWithCustomServer
     | LoginWithAddress
 
 
@@ -50,8 +51,8 @@ view helpers context =
             , a
                 [ class "more-info"
                 , href "#"
-                , onClick LoginWithAddress
+                , onClick LoginWithCustomServer
                 ]
-                [ text (helpers.t "Welcome Enter my Twake URL") ]
+                [ text (helpers.t "Welcome Use my organization server") ]
             ]
         ]

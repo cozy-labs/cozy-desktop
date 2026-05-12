@@ -11,10 +11,15 @@ const WindowManager = require('./window_manager')
 const log = require('../../core/app').logger({
   component: 'GUI/Onboarding'
 })
-const { COZY_SCHEME, oidcLoginURL } = require('../../core/utils/twake')
+const {
+  COZY_SCHEME,
+  oidcLoginURL,
+  webFingerURL
+} = require('../../core/utils/twake')
 
 /*::
 import type { Event as ElectronEvent } from 'electron'
+import type { TwakeConfiguration } from '../../core/utils/twake'
 */
 
 const ONBOARDING_SCREEN_WIDTH = 768
@@ -36,6 +41,7 @@ module.exports = class OnboardingWM extends WindowManager {
   ipcEvents() {
     return {
       'register-with-url': this.onRegisterWithURL,
+      'register-with-email': this.onRegisterWithEmail,
       'register-with-twake': this.onRegisterWithTwake,
       'choose-folder': this.onChooseFolder,
       'start-sync': this.onStartSync
@@ -252,7 +258,58 @@ module.exports = class OnboardingWM extends WindowManager {
     )
   }
 
+  async onRegisterWithEmail(
+    event /*: ElectronEvent */,
+    { email } /*: { email: string } */
+  ) {
+    const domain = email.split('@')[1]
+
+    try {
+      // $FlowFixMe Promise does has an `any` method
+      const config = await Promise.any([
+        this.fetchTwakeConfiguration(domain),
+        this.fetchTwakeConfiguration(`jmap.${domain}`),
+        this.fetchTwakeConfiguration(`autodiscover.${domain}`)
+      ])
+
+      await this.doRegistration(config['twake-flagship-login-uri'])
+    } catch (err) {
+      log.error(`failed to fetch Twake configuration from ${domain}`, {
+        err,
+        sentry: true
+      })
+      event.sender.send(
+        'registration-error',
+        `${translate('Email Could not find a valid Twake server on')} ${domain}`
+      )
+    }
+  }
+
+  async fetchTwakeConfiguration(
+    domain /*: string */
+  ) /*: Promise<TwakeConfiguration> */ {
+    const configURL = webFingerURL(domain)
+    log.debug(`fetching Twake configuration from ${configURL}`)
+
+    try {
+      const res = await fetch(configURL)
+      const config = await res.json()
+
+      log.debug(`fetched Twake configuration from ${configURL}`, { config })
+      return config
+    } catch (err) {
+      log.debug(`failed to fetch Twake configuration from ${configURL}`, {
+        err
+      })
+      throw err
+    }
+  }
+
   async onRegisterWithTwake() {
+    await this.doRegistration(oidcLoginURL())
+  }
+
+  async doRegistration(oidcLoginURL /*: string */) {
     const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
 
     const registrationDone = new Promise((resolve, reject) => {
@@ -294,9 +351,7 @@ module.exports = class OnboardingWM extends WindowManager {
       })
     })
 
-    this.openOAuthView(
-      `${oidcLoginURL()}?redirect_after_oidc=${COZY_SCHEME}://`
-    )
+    this.openOAuthView(`${oidcLoginURL}?redirect_after_oidc=${COZY_SCHEME}://`)
 
     await registrationDone
     await this.sendSyncConfig()
