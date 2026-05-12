@@ -1,5 +1,16 @@
 # Twake Desktop: Changelog
 
+## 5.2.0-beta.2 - 2026-05-12
+
+Improvements for all users:
+
+- We added the possibility to login using your organization's SSO so you don't
+  have to use your workplace URL even for on-premise Twake deployments.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.2.0-beta.1 - 2026-05-07
 
 Improvements for all users:
