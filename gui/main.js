@@ -49,7 +49,6 @@ const {
   OAUTH_CLIENT_REVOKED_CODE,
   OAUTH_CLIENT_REVOKED_MESSAGE
 } = require('../core/remote/errors')
-const winRegistry = require('../core/utils/win_registry')
 const { translate } = i18n
 
 const DAILY = 3600 * 24 * 1000
@@ -112,14 +111,6 @@ const setupDesktop = async () => {
       desktop.events.emit('power-resume')
     })
 
-    // We do it here since Sentry's setup happens in `desktop.setup()`
-    if (process.platform === 'win32') {
-      winRegistry.removeOldUninstallKey().catch(err => {
-        if (err instanceof winRegistry.RegeditError) {
-          log.warn('Failed to remove uninstall registry key', { err })
-        }
-      })
-    }
   } catch (err) {
     log.fatal('Could not setup app', { err, sentry: true })
 
