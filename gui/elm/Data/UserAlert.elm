@@ -375,7 +375,7 @@ viewByCode helpers alert =
         SynchronizationError "FileTooLarge" { path } ->
             { title = "Error The file is too large"
             , content =
-                [ helpers.interpolate [ path ] "Error The file `{0}` could not be synchronized on your Cozy because its size exceeds the maximum allowed of 5 GiB."
+                [ helpers.interpolate [ path ] "Error The file `{0}` could not be synchronized on your Twake Workplace because its size exceeds the maximum allowed of 5 GiB."
                 , "Error It will therefore not be synchronized. To stop being notified, you can click on the button below."
                 ]
             , buttons =
@@ -390,7 +390,7 @@ viewByCode helpers alert =
             { title = "Error Document path incompatible with current OS"
             , content =
                 [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System."
-                , "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary."
+                , "Error Try renaming it on Twake Drive without using special characters and choose a shorter name if necessary."
                 ]
             , buttons =
                 [ actionButton helpers (SendCommand ShowDetails alert) "UserAlert Show details" Secondary
