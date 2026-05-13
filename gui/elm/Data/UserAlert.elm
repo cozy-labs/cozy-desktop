@@ -287,9 +287,9 @@ view helpers platform alert =
                 _ ->
                     Nothing
     in
-    div [ class "u-p-1 u-bg-paleGrey" ]
-        [ header [ class "u-title-h1" ] [ text (helpers.t title) ]
-        , p [ class "u-text" ] (alertContent helpers platform content side)
+    div [ class "u-p-1 u-bg-primaryColorLight" ]
+        [ header [ class "u-title-h1 u-primaryContrastTextColor" ] [ text (helpers.t title) ]
+        , p [ class "u-text u-primaryContrastTextColor" ] (alertContent helpers platform content side)
         , div [ class "u-flex u-flex-justify-end" ] buttons
         ]
 
@@ -616,7 +616,7 @@ decoratedName side path =
                     onOS
     in
     span
-        [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
+        [ class "u-bg-primaryColor u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
         , title (Path.toString path)
         , onClick (ShowInParent path medium)
         ]
