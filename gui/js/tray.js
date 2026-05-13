@@ -135,7 +135,7 @@ const goToTab = (tab) => {
 const menu = Menu.buildFromTemplate([
   { label: statusLabel, enabled: false },
   { type: 'separator' },
-  { label: translate('Tray Open Twake Desktop folder'), click: openTwakeFolder },
+  { label: translate('Tray Open Twake folder'), click: openTwakeFolder },
   { label: translate('Tray Go to my Twake Workplace'), click: goToMyTwake },
   { type: 'separator' },
   { label: translate('Tray Help'), click: goToTab.bind(null, 'help') },

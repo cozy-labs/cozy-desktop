@@ -260,7 +260,7 @@ view helpers status model =
         , quitButton helpers model
         , h2 [] [ text (helpers.t "Settings Reinitialize synchronization") ]
         , p []
-            [ text (helpers.t "Settings The synchronization of the Twake Desktop folder with your Twake Workplace will be entirely rebuilt." ++ " ")
+            [ text (helpers.t "Settings The synchronization of the Twake folder with your Twake Workplace will be entirely rebuilt." ++ " ")
             , text (helpers.t "Settings Your files won't be deleted.")
             ]
         , reinitializationButton helpers model
