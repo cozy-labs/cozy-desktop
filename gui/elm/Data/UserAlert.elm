@@ -287,9 +287,9 @@ view helpers platform alert =
                 _ ->
                     Nothing
     in
-    div [ class "u-p-1 u-bg-paleGrey" ]
-        [ header [ class "u-title-h1" ] [ text (helpers.t title) ]
-        , p [ class "u-text" ] (alertContent helpers platform content side)
+    div [ class "u-p-1 u-bg-primaryColorLight" ]
+        [ header [ class "u-title-h1 u-primaryContrastTextColor" ] [ text (helpers.t title) ]
+        , p [ class "u-text u-primaryContrastTextColor" ] (alertContent helpers platform content side)
         , div [ class "u-flex u-flex-justify-end" ] buttons
         ]
 
@@ -375,7 +375,7 @@ viewByCode helpers alert =
         SynchronizationError "FileTooLarge" { path } ->
             { title = "Error The file is too large"
             , content =
-                [ helpers.interpolate [ path ] "Error The file `{0}` could not be synchronized on your Cozy because its size exceeds the maximum allowed of 5 GiB."
+                [ helpers.interpolate [ path ] "Error The file `{0}` could not be synchronized on your Twake Workplace because its size exceeds the maximum allowed of 5 GiB."
                 , "Error It will therefore not be synchronized. To stop being notified, you can click on the button below."
                 ]
             , buttons =
@@ -390,7 +390,7 @@ viewByCode helpers alert =
             { title = "Error Document path incompatible with current OS"
             , content =
                 [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System."
-                , "Error Try renaming it on your Cozy without using special characters and choose a shorter name if necessary."
+                , "Error Try renaming it on Twake Drive without using special characters and choose a shorter name if necessary."
                 ]
             , buttons =
                 [ actionButton helpers (SendCommand ShowDetails alert) "UserAlert Show details" Secondary
@@ -616,7 +616,7 @@ decoratedName side path =
                     onOS
     in
     span
-        [ class "u-bg-frenchPass u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
+        [ class "u-bg-primaryColor u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
         , title (Path.toString path)
         , onClick (ShowInParent path medium)
         ]
