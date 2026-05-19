@@ -201,7 +201,7 @@
   "InvalidDoc Naming rules for each Operating System": "Naamrichtlijnen per besturingssysteem",
   "InvalidDoc Windows restrictions": "Windows-beperkingen",
   "InvalidDoc macOS restrictions": "macOS-beperkingen",
-  "InvalidDoc GNU/Linux restrictions": "GNU/Linux-beperkingen",
+  "InvalidDoc Linux restrictions": "Linux-beperkingen",
   "InvalidDoc File names, extension included, cannot be more than 256 characters long.": "Bestandsnamen, inclusief extensies, mogen niet langer zijn dan 256 tekens.",
   "InvalidDoc Folder names cannot be more than 243 characters long.": "Mapnamen mogen niet langer zijn dan 243 tekens.",
   "InvalidDoc Document names, extension included, cannot be more than {0} characters long.": "Documentnamen, inclusief extensies, mogen niet langer zijn dan {0} tekens.",
