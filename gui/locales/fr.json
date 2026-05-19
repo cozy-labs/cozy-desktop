@@ -201,7 +201,7 @@
   "InvalidDoc Naming rules for each Operating System": "Règles de nommage par système d'exploitation",
   "InvalidDoc Windows restrictions": "Restrictions sur Windows",
   "InvalidDoc macOS restrictions": "Restrictions sur macOS",
-  "InvalidDoc GNU/Linux restrictions": "Restrictions sur GNU/Linux",
+  "InvalidDoc Linux restrictions": "Restrictions sur Linux",
   "InvalidDoc File names, extension included, cannot be more than 256 characters long.": "Les noms de fichiers, extension incluse, ne doivent pas faire plus de 256 caractères.",
   "InvalidDoc Folder names cannot be more than 243 characters long.": "Les noms de dossiers ne doivent pas faire plus de 243 caractères.",
   "InvalidDoc Document names, extension included, cannot be more than {0} characters long.": "Les noms des documents, extension incluse, ne doivent pas faire plus de {0} caractères.",

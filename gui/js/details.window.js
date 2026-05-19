@@ -50,7 +50,7 @@ module.exports = class DetailsWM extends WindowManager {
       'InvalidDoc Naming rules for each Operating System',
       'InvalidDoc Windows restrictions',
       'InvalidDoc macOS restrictions',
-      'InvalidDoc GNU/Linux restrictions',
+      'InvalidDoc Linux restrictions',
       'InvalidDoc File names, extension included, cannot be more than 256 characters long.',
       'InvalidDoc Folder names cannot be more than 243 characters long.',
       'InvalidDoc Document names, extension included, cannot be more than {0} characters long.',
