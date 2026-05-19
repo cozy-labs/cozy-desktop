@@ -1,5 +1,20 @@
 # Twake Desktop: Changelog
 
+## 5.3.0-beta.1 - 2026-05-19
+
+Improvements for all users:
+
+- We fixed the display of some errors which could be unlocalized or hard to
+  read.
+- We've improved the way we handle realtime events to not prevent
+  synchronization if we can't get a proper realtime connexion for any reason
+  and make sure it works even for instances migrated from Cozy to Twake.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
+
 ## 5.2.0 - 2026-05-13
 
 Improvements for all users:
