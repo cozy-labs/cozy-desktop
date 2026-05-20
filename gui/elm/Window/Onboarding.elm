@@ -98,6 +98,11 @@ update msg model =
                     , Ports.focus ".wizard__address"
                     )
 
+                Email.GoToWelcome ->
+                    ( { model | context = context, page = WelcomePage }
+                    , Cmd.none
+                    )
+
                 _ ->
                     ( { model | context = context }, Cmd.map EmailMsg cmd )
 
@@ -110,6 +115,11 @@ update msg model =
                 Address.LoginWithCustomServer ->
                     ( { model | context = context, page = EmailPage }
                     , Ports.focus ".wizard__address"
+                    )
+
+                Address.GoToWelcome ->
+                    ( { model | context = context, page = WelcomePage }
+                    , Cmd.none
                     )
 
                 _ ->
