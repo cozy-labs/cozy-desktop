@@ -42,7 +42,8 @@ module.exports = class OnboardingWM extends WindowManager {
     return {
       'register-with-url': this.onRegisterWithURL,
       'register-with-email': this.onRegisterWithEmail,
-      'register-with-twake': this.onRegisterWithTwake,
+      'start-oauth': this.startOAuth,
+      'handle-deeplink': this.handleDeepLink,
       'choose-folder': this.onChooseFolder,
       'start-sync': this.onStartSync
     }
@@ -305,13 +306,36 @@ module.exports = class OnboardingWM extends WindowManager {
     }
   }
 
-  async onRegisterWithTwake() {
-    await this.doRegistration(oidcLoginURL())
+  async startOAuth() {
+    const url = oidcLoginURL()
+    log.info('starting OAuth flow in browser', { url })
+    shell.openExternal(`${url}?redirect_after_oidc=${COZY_SCHEME}://`)
+  }
+
+  async handleDeepLink(url /*: string */) {
+    const deeplink = new URL(url)
+    const code = deeplink.searchParams.get('code')
+    const fqdn = deeplink.searchParams.get('fqdn')
+
+    try {
+      await this.desktop.registerWithDelegationCode(fqdn, code)
+    } catch (err) {
+      log.error('failed registering device with Twake instance', {
+        err,
+        fqdn,
+        code
+      })
+    }
+
+    await this.sendSyncConfig()
+
+    if (!process.env.DEBUG) {
+      autoLaunch.setEnabled(true)
+    }
   }
 
   async doRegistration(oidcLoginURL /*: string */) {
     const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
-
     const registrationDone = new Promise((resolve, reject) => {
       syncSession.protocol.handle(COZY_SCHEME, async request => {
         log.debug(`received cozy:// request; starting OIDC registration`, {

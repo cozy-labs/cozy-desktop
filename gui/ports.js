@@ -79,8 +79,8 @@ elmectron.ports.registerWithEmail.subscribe(email => {
     email: email
   })
 })
-elmectron.ports.registerWithTwake.subscribe(() => {
-  ipcRenderer.send('register-with-twake')
+elmectron.ports.startOAuth.subscribe(() => {
+  ipcRenderer.send('start-oauth')
 })
 
 ipcRenderer.on('folder-chosen', (event, result) => {
