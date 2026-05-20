@@ -1,6 +1,7 @@
 port module Window.Onboarding.OAuth exposing
     ( Msg(..)
     , setError
+    , setOIDCLoginURL
     , startLogin
     , update
     , view
@@ -23,6 +24,7 @@ import Window.Onboarding.Context as Context exposing (Context)
 
 type Msg
     = StartOAuth
+    | SetOIDCLoginURL String
     | OAuthError String
     | Tick Time.Posix
 
@@ -32,6 +34,9 @@ update msg context =
     case msg of
         StartOAuth ->
             startLogin context
+
+        SetOIDCLoginURL oidcLoginUrl ->
+            ( setOIDCLoginURL oidcLoginUrl context, Cmd.none )
 
         OAuthError error ->
             setError error context
@@ -51,8 +56,17 @@ startLogin context =
             context
     in
     ( Context.setOAuthConfig context { oauthConfig | busy = True }
-    , startOAuth ()
+    , startOAuth oauthConfig.oidcLoginURL
     )
+
+
+setOIDCLoginURL : String -> Context -> Context
+setOIDCLoginURL url context =
+    let
+        oauthConfig =
+            OAuthConfig.setOIDCLoginURL context.oauthConfig url
+    in
+    Context.setOAuthConfig context oauthConfig
 
 
 setError : String -> Context -> ( Context, Cmd msg )
@@ -66,8 +80,8 @@ setError message context =
     )
 
 
+port startOAuth : Maybe String -> Cmd msg
 
-port startOAuth : () -> Cmd msg
 
 
 -- VIEW

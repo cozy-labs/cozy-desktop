@@ -57,7 +57,9 @@ type Msg
     | EmailMsg Email.Msg
     | AddressMsg Address.Msg
     | OAuthMsg OAuth.Msg
+    | LoginWithCustomServer String
     | RegistrationDone SyncConfig
+    | RegistrationError String
     | FolderMsg Folder.Msg
 
 
@@ -120,6 +122,17 @@ update msg model =
             in
             ( { model | context = context }, Cmd.map OAuthMsg cmd )
 
+        LoginWithCustomServer oidcLoginUrl ->
+            let
+                ( context, cmd ) =
+                    model.context
+                        |> OAuth.setOIDCLoginURL oidcLoginUrl
+                        |> OAuth.startLogin
+            in
+            ( { model | context = context, page = OAuthPage }
+            , cmd
+            )
+
         RegistrationDone syncConfig ->
             ( { model
                 | page = FolderPage
@@ -127,6 +140,25 @@ update msg model =
               }
             , Cmd.none
             )
+
+        RegistrationError error ->
+            case model.page of
+                AddressPage ->
+                    let
+                        ( context, cmd ) =
+                            Address.update (Address.RegistrationError error) model.context
+                    in
+                    ( { model | context = context }, Cmd.map AddressMsg cmd )
+
+                EmailPage ->
+                    let
+                        ( context, cmd ) =
+                            Email.update (Email.RegistrationError error) model.context
+                    in
+                    ( { model | context = context }, Cmd.map EmailMsg cmd )
+
+                _ ->
+                    ( model, Cmd.none )
 
         FolderMsg subMsg ->
             let
@@ -146,10 +178,11 @@ port registerWithTwake : () -> Cmd msg
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Ports.registrationError (AddressMsg << Address.RegistrationError)
+        [ Ports.registrationError RegistrationError
         , SyncConfig.gotSyncConfig RegistrationDone
         , Ports.folderError (FolderMsg << Folder.SetError)
         , Ports.folder (FolderMsg << Folder.FillFolder)
+        , OAuthConfig.gotOIDCLoginURL LoginWithCustomServer
         , Time.every 10000 (OAuthMsg << OAuth.Tick)
         ]
 

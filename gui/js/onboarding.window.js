@@ -273,7 +273,10 @@ module.exports = class OnboardingWM extends WindowManager {
         this.fetchTwakeConfiguration(`autodiscover.${domain}`)
       ])
 
-      await this.doRegistration(config['twake-flagship-login-uri'])
+      event.sender.send(
+        'found-oidc-login-url',
+        config['twake-flagship-login-uri']
+      )
     } catch (err) {
       log.error(`failed to fetch Twake configuration from ${domain}`, {
         err,
@@ -306,8 +309,8 @@ module.exports = class OnboardingWM extends WindowManager {
     }
   }
 
-  async startOAuth() {
-    const url = oidcLoginURL()
+  async startOAuth(event /*: ElectronEvent */, url /*: string */) {
+    url = url || oidcLoginURL()
     log.info('starting OAuth flow in browser', { url })
     shell.openExternal(`${url}?redirect_after_oidc=${COZY_SCHEME}://`)
   }
@@ -328,59 +331,6 @@ module.exports = class OnboardingWM extends WindowManager {
     }
 
     await this.sendSyncConfig()
-
-    if (!process.env.DEBUG) {
-      autoLaunch.setEnabled(true)
-    }
-  }
-
-  async doRegistration(oidcLoginURL /*: string */) {
-    const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
-    const registrationDone = new Promise((resolve, reject) => {
-      syncSession.protocol.handle(COZY_SCHEME, async request => {
-        log.debug(`received cozy:// request; starting OIDC registration`, {
-          request
-        })
-
-        try {
-          syncSession.protocol.unhandle(COZY_SCHEME)
-        } catch (err) {
-          log.error(`failed to unhandle ${COZY_SCHEME} protocol`, {
-            err,
-            sentry: true
-          })
-        }
-
-        const redirectURI = new URL(request.url)
-        const code = redirectURI.searchParams.get('code')
-        const fqdn = redirectURI.searchParams.get('fqdn')
-
-        try {
-          await this.desktop.registerWithDelegationCode(fqdn, code)
-
-          resolve()
-
-          // XXX: protocol.handle is expecting a Response to be returned.
-          // Even though we don't care about it we return an empty response to
-          // avoid errors on stderr.
-          return new Response()
-        } catch (err) {
-          log.error('failed registering device with Twake instance', {
-            err,
-            fqdn,
-            code
-          })
-          reject(err)
-        }
-      })
-    })
-
-    this.openOAuthView(`${oidcLoginURL}?redirect_after_oidc=${COZY_SCHEME}://`)
-
-    await registrationDone
-    await this.sendSyncConfig()
-
-    this.closeOAuthView()
 
     if (!process.env.DEBUG) {
       autoLaunch.setEnabled(true)

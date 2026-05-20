@@ -79,8 +79,11 @@ elmectron.ports.registerWithEmail.subscribe(email => {
     email: email
   })
 })
-elmectron.ports.startOAuth.subscribe(() => {
-  ipcRenderer.send('start-oauth')
+ipcRenderer.on('found-oidc-login-url', (event, url) => {
+  elmectron.ports.oidcLoginURL.send(url)
+})
+elmectron.ports.startOAuth.subscribe(url => {
+  ipcRenderer.send('start-oauth', url)
 })
 
 ipcRenderer.on('folder-chosen', (event, result) => {
