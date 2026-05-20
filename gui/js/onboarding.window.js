@@ -85,6 +85,11 @@ module.exports = class OnboardingWM extends WindowManager {
 
       await this.oauthView.webContents.loadURL(url)
 
+      // Hide the Back button on Twake Signup
+      await this.oauthView.webContents.insertCSS(
+        '.absolute.left-0 > button { display: none; }'
+      )
+
       // Hide the message inviting to make sure the page URL is the expected
       // Cozy URL until we figure out how to properly display it during the
       // on-boarding.
