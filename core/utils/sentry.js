@@ -94,11 +94,11 @@ function setup(clientInfos /*: ClientInfo */) {
     return
   }
   try {
-    const { appVersion, cozyUrl } = clientInfos
+    const { softwareVersion, cozyUrl } = clientInfos
     const { domain, instance, environment } = toSentryContext(cozyUrl)
     Sentry.init({
       dsn: SENTRY_DSN,
-      release: appVersion,
+      release: softwareVersion,
       environment,
       // Inject preload script into all used sessions
       getSessions: () => [

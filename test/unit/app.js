@@ -290,7 +290,7 @@ describe('App', function() {
       const info = app.clientInfo()
 
       should(info).deepEqual({
-        appVersion: version,
+        clientURI: 'https://github.com/cozy-labs/cozy-desktop',
         configPath: path.join(basePath, BASE_DIR_NAME, 'config.json'),
         configVersion: '',
         cozyUrl: undefined,
@@ -299,6 +299,7 @@ describe('App', function() {
         osType: os.type(),
         osArch: os.arch(),
         permissions: [],
+        softwareVersion: version,
         syncPath: undefined
       })
     })
@@ -311,7 +312,6 @@ describe('App', function() {
       const app = new App(this.basePath)
       const info = app.clientInfo()
 
-      should(info.appVersion).equal(version)
       should(info.configPath).startWith(this.basePath)
       should(info.configVersion).equal(this.config.version)
       should(info.cozyUrl).equal(this.config.cozyUrl)
@@ -319,6 +319,7 @@ describe('App', function() {
       should.exist(info.osRelease)
       should.exist(info.osType)
       should(info.permissions).deepEqual(this.config.permissions)
+      should(info.softwareVersion).equal(version)
       should(info.syncPath).equal(this.syncPath)
     })
   })
