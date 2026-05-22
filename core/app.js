@@ -51,7 +51,7 @@ import type stream from 'stream'
 import type { Metadata } from './metadata'
 
 export type ClientInfo = {
-  appVersion: string,
+  clientURI: string,
   configPath: string,
   configVersion: ?string,
   cozyUrl: string,
@@ -60,6 +60,7 @@ export type ClientInfo = {
   osRelease: string,
   osArch: string,
   permissions: string[],
+  softwareVersion: string,
   syncPath: string
 }
 */
@@ -398,10 +399,10 @@ class App {
 
     addDefaultTransport()
 
-    let wasUpdated = clientInfo.configVersion !== clientInfo.appVersion
+    let wasUpdated = clientInfo.configVersion !== clientInfo.softwareVersion
     if (wasUpdated) {
       try {
-        this.config.version = clientInfo.appVersion
+        this.config.version = clientInfo.softwareVersion
       } catch (err) {
         log.error('could not update config version after app update', {
           err,
@@ -440,7 +441,7 @@ class App {
 
     if (wasUpdated && this.remote) {
       try {
-        this.remote.update()
+        this.remote.update(clientInfo)
       } catch (err) {
         log.error('could not update OAuth client after app update', {
           err,
@@ -470,7 +471,7 @@ class App {
     const config = this.config || {}
 
     return {
-      appVersion: pkg.version,
+      clientURI: pkg.homepage,
       configPath: config.configPath,
       configVersion: config.version,
       cozyUrl: config.cozyUrl,
@@ -479,6 +480,7 @@ class App {
       osRelease: os.release(),
       osArch: os.arch(),
       permissions: config.permissions,
+      softwareVersion: pkg.version,
       syncPath: config.syncPath
     }
   }

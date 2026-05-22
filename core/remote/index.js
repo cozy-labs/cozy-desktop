@@ -138,8 +138,13 @@ class Remote /*:: implements Reader, Writer */ {
     return this.remoteCozy.unregister()
   }
 
-  update() {
-    return this.remoteCozy.update()
+  update(
+    {
+      clientURI,
+      softwareVersion
+    } /*: { clientURI: string, softwareVersion: string } */
+  ) {
+    return this.remoteCozy.update({ clientURI, softwareVersion })
   }
 
   updateLastSynced() {

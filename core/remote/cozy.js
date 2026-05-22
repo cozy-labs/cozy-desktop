@@ -115,8 +115,18 @@ class RemoteCozy {
     return this.client.logout()
   }
 
-  async update() /*: Promise<void> */ {
-    return this.client.stackClient.updateInformation()
+  async update(
+    {
+      clientURI,
+      softwareVersion
+    } /*: { clientURI: string, softwareVersion: string } */
+  ) /*: Promise<void> */ {
+    return this.client.stackClient.updateInformation({
+      softwareVersion,
+      clientKind: this.config.client.clientKind,
+      clientURI,
+      policyURI: this.config.client.policyURI
+    })
   }
 
   async diskUsage() /* Promise<{ quota: number, used: number }> */ {
