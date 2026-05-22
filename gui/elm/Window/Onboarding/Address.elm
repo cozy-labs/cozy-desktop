@@ -17,6 +17,7 @@ import Ports
 import String exposing (contains)
 import Url
 import Util.Keyboard as Keyboard
+import View.BackButton as BackButton
 import Window.Onboarding.Context as Context exposing (Context)
 
 
@@ -29,6 +30,7 @@ type Msg
     | RegisterWithURL
     | RegistrationError String
     | LoginWithCustomServer
+    | GoToWelcome
 
 
 coreAppNames : List String
@@ -157,7 +159,17 @@ update msg context =
             setError context error
 
         LoginWithCustomServer ->
-            ( Context.setAddressConfig context { address = "", error = "", busy = False }, Cmd.none )
+            reset context
+
+        GoToWelcome ->
+            reset context
+
+
+reset : Context -> ( Context, Cmd msg )
+reset context =
+    ( Context.setAddressConfig context { address = "", error = "", busy = False }
+    , Cmd.none
+    )
 
 
 port registerWithURL : String -> Cmd msg
@@ -185,7 +197,11 @@ view helpers context =
         ]
         [ div
             [ class "step-content" ]
-            [ if isValid then
+            [ div
+                [ class "u-pos-absolute u-top-xs u-left-xs" ]
+                [ BackButton.view helpers GoToWelcome
+                ]
+            , if isValid then
                 Icons.badge Icons.twakeDrive
 
               else

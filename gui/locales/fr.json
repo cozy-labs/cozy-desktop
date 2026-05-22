@@ -45,6 +45,7 @@
   "Bar GoToTwake": "Ouvrir Twake",
   "Bar GoToFolder": "Ouvrir le dossier",
 
+  "Button Back": "Retour",
   "Button Log out": "Se déconnecter",
   "Button Contact support": "Contacter l'assistance",
 
@@ -211,6 +212,13 @@
   "InvalidDoc The following document names are forbidden: ": "Les noms suivants sont réservés : ",
 
   "MarkdownViewer Why do I see this?": "Pourquoi ce mode d'affichage ?",
+
+  "OAuth Waiting for login": "En attente de connexion",
+  "OAuth Please check your default browser and log in your Twake account.": "La page de connexion à votre Twake Workplace s'est ouverte dans votre navigateur.",
+  "OAuth You'll be redirected here once it's done.":"Vous serez redirigé ici une fois connecté à votre workplace.",
+  "OAuth If something went wrong, you can retry the login by clicking on the button below.":"En cas de problème, vous pouvez retenter de vous connecter en cliquant sur le bouton ci-dessous.",
+  "OAuth Retry":"Réessayer",
+  "OAuth Contact support":"Contacter le support",
 
   "Quotation Start": "« ",
   "Quotation End": " »",

@@ -14,6 +14,7 @@ import Icons
 import Ports
 import String exposing (contains)
 import Util.Keyboard as Keyboard
+import View.BackButton as BackButton
 import Window.Onboarding.Context as Context exposing (Context)
 import Window.Onboarding.Welcome as Welcome
 
@@ -27,6 +28,7 @@ type Msg
     | RegisterWithEmail
     | RegistrationError String
     | LoginWithAddress
+    | GoToWelcome
 
 
 setError : Context -> String -> ( Context, Cmd msg )
@@ -67,7 +69,17 @@ update msg context =
             setError context error
 
         LoginWithAddress ->
-            ( Context.setEmailConfig context { address = "", error = "", busy = False }, Cmd.none )
+            reset context
+
+        GoToWelcome ->
+            reset context
+
+
+reset : Context -> ( Context, Cmd msg )
+reset context =
+    ( Context.setEmailConfig context { address = "", error = "", busy = False }
+    , Cmd.none
+    )
 
 
 port registerWithEmail : String -> Cmd msg
@@ -95,7 +107,11 @@ view helpers context =
         ]
         [ div
             [ class "step-content" ]
-            [ if isValid then
+            [ div
+                [ class "u-pos-absolute u-top-xs u-left-xs" ]
+                [ BackButton.view helpers GoToWelcome
+                ]
+            , if isValid then
                 Icons.badge Icons.twakeDrive
 
               else

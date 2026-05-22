@@ -42,7 +42,8 @@ module.exports = class OnboardingWM extends WindowManager {
     return {
       'register-with-url': this.onRegisterWithURL,
       'register-with-email': this.onRegisterWithEmail,
-      'register-with-twake': this.onRegisterWithTwake,
+      'start-oauth': this.startOAuth,
+      'handle-deeplink': this.handleDeepLink,
       'choose-folder': this.onChooseFolder,
       'start-sync': this.onStartSync
     }
@@ -83,6 +84,11 @@ module.exports = class OnboardingWM extends WindowManager {
       const bounds = this.win.getContentBounds()
 
       await this.oauthView.webContents.loadURL(url)
+
+      // Hide the Back button on Twake Signup
+      await this.oauthView.webContents.insertCSS(
+        '.absolute.left-0 > button { display: none; }'
+      )
 
       // Hide the message inviting to make sure the page URL is the expected
       // Cozy URL until we figure out how to properly display it during the
@@ -272,7 +278,10 @@ module.exports = class OnboardingWM extends WindowManager {
         this.fetchTwakeConfiguration(`autodiscover.${domain}`)
       ])
 
-      await this.doRegistration(config['twake-flagship-login-uri'])
+      event.sender.send(
+        'found-oidc-login-url',
+        config['twake-flagship-login-uri']
+      )
     } catch (err) {
       log.error(`failed to fetch Twake configuration from ${domain}`, {
         err,
@@ -305,58 +314,28 @@ module.exports = class OnboardingWM extends WindowManager {
     }
   }
 
-  async onRegisterWithTwake() {
-    await this.doRegistration(oidcLoginURL())
+  async startOAuth(event /*: ElectronEvent */, url /*: string */) {
+    url = url || oidcLoginURL()
+    log.info('starting OAuth flow in browser', { url })
+    shell.openExternal(`${url}?redirect_after_oidc=${COZY_SCHEME}://`)
   }
 
-  async doRegistration(oidcLoginURL /*: string */) {
-    const syncSession = session.fromPartition(SESSION_PARTITION_NAME)
+  async handleDeepLink(url /*: string */) {
+    const deeplink = new URL(url)
+    const code = deeplink.searchParams.get('code')
+    const fqdn = deeplink.searchParams.get('fqdn')
 
-    const registrationDone = new Promise((resolve, reject) => {
-      syncSession.protocol.handle(COZY_SCHEME, async request => {
-        log.debug(`received cozy:// request; starting OIDC registration`, {
-          request
-        })
-
-        try {
-          syncSession.protocol.unhandle(COZY_SCHEME)
-        } catch (err) {
-          log.error(`failed to unhandle ${COZY_SCHEME} protocol`, {
-            err,
-            sentry: true
-          })
-        }
-
-        const redirectURI = new URL(request.url)
-        const code = redirectURI.searchParams.get('code')
-        const fqdn = redirectURI.searchParams.get('fqdn')
-
-        try {
-          await this.desktop.registerWithDelegationCode(fqdn, code)
-
-          resolve()
-
-          // XXX: protocol.handle is expecting a Response to be returned.
-          // Even though we don't care about it we return an empty response to
-          // avoid errors on stderr.
-          return new Response()
-        } catch (err) {
-          log.error('failed registering device with Twake instance', {
-            err,
-            fqdn,
-            code
-          })
-          reject(err)
-        }
+    try {
+      await this.desktop.registerWithDelegationCode(fqdn, code)
+    } catch (err) {
+      log.error('failed registering device with Twake instance', {
+        err,
+        fqdn,
+        code
       })
-    })
+    }
 
-    this.openOAuthView(`${oidcLoginURL}?redirect_after_oidc=${COZY_SCHEME}://`)
-
-    await registrationDone
     await this.sendSyncConfig()
-
-    this.closeOAuthView()
 
     if (!process.env.DEBUG) {
       autoLaunch.setEnabled(true)

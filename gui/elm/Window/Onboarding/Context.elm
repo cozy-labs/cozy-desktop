@@ -1,7 +1,8 @@
-module Window.Onboarding.Context exposing (Context, init, setAddressConfig, setEmailConfig, setFolderConfig, setSyncConfig)
+module Window.Onboarding.Context exposing (Context, init, setAddressConfig, setEmailConfig, setFolderConfig, setOAuthConfig, setSyncConfig)
 
 import Data.AddressConfig as AddressConfig exposing (AddressConfig)
 import Data.EmailConfig as EmailConfig exposing (EmailConfig)
+import Data.OAuthConfig as OAuthConfig exposing (OAuthConfig)
 import Data.SyncConfig as SyncConfig exposing (SyncConfig)
 import Data.SyncFolderConfig as SyncFolderConfig exposing (SyncFolderConfig)
 
@@ -10,6 +11,7 @@ type alias Context =
     { platform : String
     , addressConfig : AddressConfig
     , emailConfig : EmailConfig
+    , oauthConfig : OAuthConfig
     , folderConfig : SyncFolderConfig
     , syncConfig : SyncConfig
     }
@@ -20,6 +22,7 @@ init platform defaultSyncPath =
     { platform = platform
     , addressConfig = AddressConfig.init
     , emailConfig = EmailConfig.init
+    , oauthConfig = OAuthConfig.init
     , folderConfig = SyncFolderConfig.init defaultSyncPath
     , syncConfig = SyncConfig.init
     }
@@ -43,3 +46,8 @@ setSyncConfig context syncConfig =
 setFolderConfig : Context -> SyncFolderConfig -> Context
 setFolderConfig context folderConfig =
     { context | folderConfig = folderConfig }
+
+
+setOAuthConfig : Context -> OAuthConfig -> Context
+setOAuthConfig context oauthConfig =
+    { context | oauthConfig = oauthConfig }

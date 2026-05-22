@@ -49,6 +49,7 @@ const {
   OAUTH_CLIENT_REVOKED_CODE,
   OAUTH_CLIENT_REVOKED_MESSAGE
 } = require('../core/remote/errors')
+const { COZY_SCHEME } = require('../core/utils/twake')
 const winRegistry = require('../core/utils/win_registry')
 const { translate } = i18n
 
@@ -74,6 +75,7 @@ let desktop = new Desktop.App(process.env.COZY_DESKTOP_DIR)
 sentry.setup(desktop.clientInfo())
 
 let diskTimeout = null
+let onboardingWindow = null
 let updaterWindow = null
 let trayWindow = null
 let windowsCreated = false
@@ -502,6 +504,26 @@ const dumbhash = k =>
       (a /*: number */, c /*: string */) => ((a << 5) - a + c.charCodeAt(0)) | 0
     )
 
+/*
+ *
+ */
+app.setAsDefaultProtocolClient(COZY_SCHEME)
+
+/*
+ *
+ */
+const handleDeepLink = async url => {
+  log.info('handleDeepLink', { url })
+
+  if (onboardingWindow) {
+    await onboardingWindow.handleDeepLink(url)
+  } else {
+    log.warn('could not handle deeplink request: onboarding window is closed', {
+      onboardingWindow
+    })
+  }
+}
+
 /* This event is emitted inside the primary instance and is guaranteed to be
  * emitted after the `ready` event of `app` gets emitted.
  *
@@ -511,28 +533,53 @@ const dumbhash = k =>
  * point.
  * To avoid race conditions, we'll wait for that setup to be done.
  */
-app.on('second-instance', async (event, argv) => {
+app.on('second-instance', async (event, commandLine) => {
+  log.info('second instance invoked with arguments', { commandLine })
+
+  const url = commandLine.find(arg => arg.startsWith(`${COZY_SCHEME}://`))
+  if (url) {
+    handleDeepLink(url)
+    return
+  } else {
+    log.info('no Desktop url found in command line arguments')
+  }
+
   try {
     await whenDesktopReady
   } catch (err) {
+    log.error('could not get Desktop setup status', { err })
     return
   }
 
-  if (argv && argv.length > 2) {
-    const filePath = argv[argv.length - 1]
-    log.info('second instance invoked with arguments', { filePath })
+  if (commandLine && commandLine.length > 2) {
+    const filePath = commandLine.find(arg => arg.endsWith('.cozy-note'))
 
     // If we found a note to open, stop here. Otherwise, show main window.
-    if (filePath.endsWith('.cozy-note')) {
+    if (filePath) {
       await openNote(filePath, { desktop })
       return
     } else {
-      log.warn('file path argument does not have valid Cozy note extension')
+      log.info('no cozy note path found in command line arguments')
     }
   }
 
   // Make sure the main window exists before trying to show it
   if (trayWindow) showWindow()
+})
+
+/*
+ * macOS only.
+ *
+ */
+app.on('open-url', (event, url) => {
+  log.info('received open-url event', { url })
+
+  if (url.startsWith(`${COZY_SCHEME}://`)) {
+    event.preventDefault()
+    handleDeepLink(url)
+  } else {
+    log.info('not a Desktop url', { url })
+  }
 })
 
 /* macOS only.
@@ -658,7 +705,7 @@ app.on('ready', async () => {
 
   if (!desktop.config.syncPath) {
     log.trace('Setting up onboarding WM...')
-    const onboardingWindow = new OnboardingWM(desktop)
+    onboardingWindow = new OnboardingWM(desktop)
     await new Promise(resolve => {
       onboardingWindow.onOnboardingDone(resolve)
       onboardingWindow.show()
