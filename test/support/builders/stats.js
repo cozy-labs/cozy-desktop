@@ -26,9 +26,17 @@ const nonExecutableModeSync = path => fs.statSync(path).mode & (0 << 6)
 const defaultDirMode = nonExecutableModeSync(__dirname)
 const defaultFileMode = nonExecutableModeSync(__filename)
 const defaultDate = () => new Date()
+const defaultTime = () => defaultDate().getTime()
 const commonDefaults = () => ({
   ino: 1,
-  size: 0,
+  size: 0
+})
+const unixTimes = () => ({
+  atimeMs: defaultTime(),
+  mtimeMs: defaultTime(),
+  ctimeMs: defaultTime()
+})
+const winTimes = () => ({
   atime: defaultDate(),
   mtime: defaultDate(),
   ctime: defaultDate()
@@ -41,16 +49,19 @@ class DefaultStatsBuilder {
   */
 
   constructor(oldStats /*: ?fs.Stats */) {
-    this.stats = oldStats
-      ? _.clone(oldStats)
-      : Object.assign(
-          new fs.Stats(),
-          {
-            mode: defaultFileMode,
-            birthtime: defaultDate()
-          },
-          commonDefaults()
-        )
+    if (oldStats) {
+      this.stats = _.clone(oldStats)
+    } else {
+      this.stats = Object.assign(
+        fs.statSync(__filename),
+        {
+          mode: defaultFileMode,
+          birthtimeMs: defaultTime()
+        },
+        commonDefaults(),
+        unixTimes()
+      )
+    }
   }
 
   ino(newIno /*: number */) /*: this */ {
@@ -69,12 +80,12 @@ class DefaultStatsBuilder {
   }
 
   mtime(newMtime /*: Date */) /*: this */ {
-    this.stats.mtime = newMtime
+    this.stats.mtimeMs = newMtime.getTime()
     return this
   }
 
   ctime(newCtime /*: Date */) /*: this */ {
-    this.stats.ctime = newCtime
+    this.stats.ctimeMs = newCtime.getTime()
     return this
   }
 
@@ -108,7 +119,8 @@ class WinStatsBuilder {
             directory: false,
             symbolicLink: false
           } /*: Object */),
-          commonDefaults()
+          commonDefaults(),
+          winTimes()
         )
   }
 

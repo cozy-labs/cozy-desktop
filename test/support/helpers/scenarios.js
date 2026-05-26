@@ -50,15 +50,20 @@ const scenarioByPath = (module.exports.scenarioByPath = (
 
 const statsFixer = event => {
   if (event.stats) {
-    event.stats = _.defaultsDeep(
-      {
-        atime: new Date(event.stats.atime),
-        mtime: new Date(event.stats.mtime),
-        ctime: new Date(event.stats.ctime),
-        birthtime: new Date(event.stats.birthtime)
-      },
-      event.stats
-    )
+    if (process.platform === 'win32') {
+      const { atimeMs, mtimeMs, ctimeMs, birthtimeMs, ...stats } = event.stats
+      event.stats = Object.assign(stats, {
+        atime: new Date(atimeMs),
+        mtime: new Date(mtimeMs),
+        ctime: new Date(ctimeMs),
+        birthtime: new Date(birthtimeMs)
+      })
+    } else {
+      delete event.stats.atime
+      delete event.stats.mtime
+      delete event.stats.ctime
+      delete event.stats.birthtime
+    }
   }
 }
 
@@ -217,6 +222,7 @@ const fixCapture = (
 
       const ino = inoMap.get(event.stats.ino)
       if (ino) event.stats.ino = ino
+      // $FlowFixMe We know we'll never have WinStats objects on macOS
       event.stats = fsStatsFromObj(
         event.stats,
         event.type.endsWith('Dir') ? 'directory' : 'file'
@@ -235,7 +241,6 @@ const fixCapture = (
         if (!stats.fileid) {
           // Make sure `event.stats` is an instance of `fs.Stats` so
           // `stater.isDirectory()` returns the appropriate value.
-          // $FlowFixMe No `fileid` means `stats` is not a `WinStats` instance
           event.stats = fsStatsFromObj(stats, event.kind)
         }
       })
@@ -246,46 +251,48 @@ const fixCapture = (
 const fsStatsFromObj = (module.exports.fsStatsFromObj = (
   statsObj /*: Object */,
   kind /*: EventKind */
-) => {
-  const {
-    dev,
-    mode,
-    nlink,
-    uid,
-    gid,
-    rdev,
-    blksize,
-    ino,
-    size,
-    blocks,
-    atimeMs,
-    mtimeMs,
-    ctimeMs,
-    birthtimeMs
-  } = statsObj
+) /*: Stats */ => {
+  if (process.platform === 'win32') {
+    return { ...statsObj, directory: kind === 'directory' }
+  } else {
+    const {
+      dev,
+      mode,
+      nlink,
+      uid,
+      gid,
+      rdev,
+      blksize,
+      ino,
+      size,
+      blocks,
+      atimeMs,
+      mtimeMs,
+      ctimeMs,
+      birthtimeMs
+    } = statsObj
 
-  // $FlowFixMe `fs.Stats` constructor does accept arguments
-  const stats = new fs.Stats(
-    dev,
-    mode,
-    nlink,
-    uid,
-    gid,
-    rdev,
-    blksize,
-    ino,
-    size,
-    blocks,
-    atimeMs,
-    mtimeMs,
-    ctimeMs,
-    birthtimeMs
-  )
-  if (kind === 'directory') {
-    sinon.stub(stats, 'isDirectory').returns(true)
-    if (process.platform === 'win32') stats.directory = true
+    const stats = Object.assign(fs.statSync(__filename), {
+      dev,
+      mode,
+      nlink,
+      uid,
+      gid,
+      rdev,
+      blksize,
+      ino,
+      size,
+      blocks,
+      atimeMs,
+      mtimeMs,
+      ctimeMs,
+      birthtimeMs
+    })
+    if (kind === 'directory') {
+      sinon.stub(stats, 'isDirectory').returns(true)
+    }
+    return stats
   }
-  return stats
 })
 
 const merge = async (srcPath, dstPath) => {

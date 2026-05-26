@@ -510,7 +510,11 @@ class RemoteWatcher {
       metadata.assignPlatformIncompatibilities(doc, this.config.syncPath)
       const { incompatibilities } = doc
       if (incompatibilities) {
-        log.info({ path, oldpath: was && was.path, incompatibilities })
+        log.info('incompatible change', {
+          path,
+          oldpath: was && was.path,
+          incompatibilities
+        })
       }
     } else {
       if (!was) {
