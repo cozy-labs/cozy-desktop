@@ -1,5 +1,27 @@
 # Twake Desktop: Changelog
 
+## 5.3.0-beta.2 - 2026-05-26
+
+Improvements for all users:
+
+- We fixed the localization of some errors.
+- Desktop will now open the login form in your default browser for the Twake
+  and organization onboardings.
+  This will improve the onboarding experience in several ways like
+  automatically letting you in if you're already logged in in your browser or
+  allowing you to use your browser's password manager.
+  The old onboarding via your instance URL is still handled within Desktop.
+- We fixed an issue with Desktop's upgrade which resulted in your client
+  disappearing fromt the list of connected clients in the web Settings app (and
+  thus preventing you from configuring the selective synchronization for your
+  client).
+- We fixed an issue with the local synchronization directory change when it is
+  removed or renamed so you can do it again.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.3.0-beta.1 - 2026-05-19
 
 Improvements for all users:
@@ -13,7 +35,6 @@ Improvements for all users:
 See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
 
 Happy syncing!
-
 
 ## 5.2.0 - 2026-05-13
 
