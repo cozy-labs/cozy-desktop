@@ -250,10 +250,10 @@
   "SyncDirEmpty Message": "Mire si su carpeta Twake Desktop está llena. Quizás su disco duro no está conectado en este momento.",
   "SyncDirEmpty Title": "Su carpeta Twake Desktop está vacía",
 
-  "SyncDirUnlinked Choose Folder": "Escoja una carpeta",
-  "SyncDirUnlinked The client will restart": "Para habilitarlo de nuevo, debe seleccionar una nueva carpeta Twake Desktop",
-  "SyncDirUnlinked Title": "Usted ha borrado su carpeta Twake Desktop",
-  "SyncDirUnlinked You have removed your sync dir.": "Como usted ha borrado su carpeta Twake Desktop, se ha parado la sincronización.",
+  "SyncDirUnlinked You have deleted or moved your Twake folder. As a result the synchronization has been stopped.": "Como usted ha borrado su carpeta Twake, se ha parado la sincronización.",
+  "SyncDirUnlinked To enable it again, you must select a new Twake folder": "Para habilitarlo de nuevo, debe seleccionar una nueva carpeta Twake",
+  "SyncDirUnlinked Choose a folder": "Escoja una carpeta",
+  "SyncDirUnlinked Select folder": "Select folder",
 
   "Tray A new release is available": "Una nueva versión está disponible",
   "Tray Go to my Twake Workplace": "Ir a mi Twake Workplace",

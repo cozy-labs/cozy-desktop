@@ -259,10 +259,10 @@
   "SyncDirEmpty Message": "Twake Desktop のフォルダが空になったようです。 現在接続されていないハードドライブ上にある可能性がありますか?",
   "SyncDirEmpty Title": "Twake Desktop フォルダーは空です",
 
-  "SyncDirUnlinked Choose Folder": "フォルダーを選択",
-  "SyncDirUnlinked The client will restart": "もう一度有効にするには、新しい Twake Desktop フォルダーを選択する必要があります",
-  "SyncDirUnlinked Title": "Twake Desktop フォルダーを削除しました",
-  "SyncDirUnlinked You have removed your sync dir.": "あなたは Twake Desktop フォルダーを削除しました。そのため同期が停止しました。",
+  "SyncDirUnlinked You have deleted or moved your Twake folder. As a result the synchronization has been stopped.": "あなたは Twake Desktop フォルダーを削除しました。そのため同期が停止しました。",
+  "SyncDirUnlinked To enable it again, you must select a new Twake folder": "もう一度有効にするには、新しい Twake Desktop フォルダーを選択する必要があります",
+  "SyncDirUnlinked Choose a folder": "フォルダーを選択",
+  "SyncDirUnlinked Select folder": "Select folder",
 
   "Tray A new release is available": "新しいリリースが利用可能です",
   "Tray Go to my Twake Workplace": "マイ Twake Workplace に移動する",

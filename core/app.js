@@ -122,6 +122,19 @@ class App {
     return rootUrl.origin
   }
 
+  async changeLocalSyncFolder(path /*: string */) /*: Promise<void> */ {
+    log.info('changing local sync folder path', { path })
+
+    await this.stopSync()
+
+    this.config.syncPath = path
+    await this.config.persist()
+
+    // Destroy local DB so it can be recomputed with the actual content of the
+    // new local folder.
+    await this.pouch.db.destroy()
+  }
+
   // Returns an object including the syncPath only when valid, or with an error
   // otherwise.
   checkSyncPath(syncPath /*: string */) {

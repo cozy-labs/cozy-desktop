@@ -288,27 +288,50 @@ const sendErrorToMainWindow = async ({ msg, code }) => {
   } else if (msg === SYNC_DIR_UNLINKED_MESSAGE) {
     if (notificationsState.syncDirUnlinkedShown) return
     notificationsState.syncDirUnlinkedShown = true // prevent the alert from appearing twice
+
+    if (trayWindow) trayWindow.hide()
+
     const options = {
       type: 'warning',
-      title: translate('SyncDirUnlinked Title'),
-      message: translate('SyncDirUnlinked You have removed your sync dir.'),
-      detail: translate('SyncDirUnlinked The client will restart'),
-      buttons: [translate('SyncDirUnlinked Choose Folder')],
-      cancelId: 0,
-      defaultId: 0
+      message: translate(
+        'SyncDirUnlinked You have deleted or moved your Twake folder. As a result the synchronization has been stopped.'
+      ),
+      detail: translate(
+        'SyncDirUnlinked To enable it again, you must select a new Twake folder'
+      ),
+      buttons: ['Cancel', translate('SyncDirUnlinked Choose a folder')],
+      defaultId: 1
     }
-    if (trayWindow) trayWindow.hide()
-    await dialog.showMessageBox(null, options)
-    desktop
-      .stopSync()
-      .then(() => desktop.pouch.db.destroy())
-      .then(() => (desktop.config.syncPath = undefined))
-      .then(() => desktop.config.persist())
-      .then(() => log.info('Sync dir reset'))
-      .then(() => restart())
-      .catch(err =>
-        log.error('failed disconnecting client', { err, sentry: true })
-      )
+
+    const { response } = await dialog.showMessageBox(options)
+    if (response === 0) {
+      await exit(0)
+    }
+
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: translate('SyncDirUnlinked Choose a folder'),
+      defaultPath: os.homedir(),
+      buttonLabel: translate('SyncDirUnlinked Select Twake folder'),
+      properties: ['openDirectory', 'createDirectory', 'dontAddToRecent']
+    })
+
+    if (filePaths.length > 0) {
+      // Update the config with the new folder and restart the app
+      try {
+        await desktop.changeLocalSyncFolder(filePaths[0])
+        await restart()
+      } catch (err) {
+        log.error('failed to change local sync folder', { err, sentry: true })
+        await exit(0)
+      }
+    } else {
+      // No selected folder, stop Desktop
+      log.debug('local sync folder selection was canceled', {
+        canceled,
+        filePaths
+      })
+      await exit(0)
+    }
     return // no notification
   } else if (msg === SYNC_DIR_EMPTY_MESSAGE) {
     trayWindow.send('sync-error', translate('SyncDirEmpty Title'))

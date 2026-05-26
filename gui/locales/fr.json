@@ -266,10 +266,10 @@
   "SyncDirEmpty Message": "Il semblerait que votre dossier Twake Desktop ait été vidé. Peut-être se trouve-t-il sur un disque externe qui n'est pas connecté actuellement ?",
   "SyncDirEmpty Title": "Votre dossier Twake Desktop est vide",
 
-  "SyncDirUnlinked Choose Folder": "Choisir un dossier",
-  "SyncDirUnlinked The client will restart": "Pour la réactiver, vous devez sélectionner un nouveau dossier Twake Desktop.",
-  "SyncDirUnlinked Title": "Vous avez supprimé votre dossier Twake Desktop",
-  "SyncDirUnlinked You have removed your sync dir.": "Vous avez supprimé le dossier Twake Desktop, la synchronisation est donc arrêtée.",
+  "SyncDirUnlinked You have deleted or moved your Twake folder. As a result the synchronization has been stopped.": "Vous avez supprimé ou déplacé votre dossier Twake. La synchronisation a donc été stoppée.",
+  "SyncDirUnlinked To enable it again, you must select a new Twake folder": "Pour la réactiver, vous devez sélectionner un nouveau dossier Twake.",
+  "SyncDirUnlinked Choose a folder": "Choisir un dossier",
+  "SyncDirUnlinked Select folder": "Sélectionner le dossier",
 
   "Tray A new release is available": "Une nouvelle version est disponible",
   "Tray Go to my Twake Workplace": "Aller sur ma Twake Workplace",

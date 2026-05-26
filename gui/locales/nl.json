@@ -259,10 +259,10 @@
   "SyncDirEmpty Message": "Het lijkt erop dat je Twake Desktop-map is geleegd. Bevinden de gegevens zich op een harde schijf die momenteel niet is aangekoppeld?",
   "SyncDirEmpty Title": "Je Twake Desktop-map is leeg",
 
-  "SyncDirUnlinked Choose Folder": "Kies een map",
-  "SyncDirUnlinked The client will restart": "Om dit te hervatten, moet je een nieuwe Twake Desktop-map kiezen",
-  "SyncDirUnlinked Title": "Je hebt je Twake Desktop-map verwijderd",
-  "SyncDirUnlinked You have removed your sync dir.": "Je hebt je Twake Desktop-map verwijderd; synchronisatie is gestopt.",
+  "SyncDirUnlinked You have deleted or moved your Twake folder. As a result the synchronization has been stopped.": "Je hebt je Twake-map verwijderd; synchronisatie is gestopt.",
+  "SyncDirUnlinked To enable it again, you must select a new Twake folder": "Om dit te hervatten, moet je een nieuwe Twake-map kiezen",
+  "SyncDirUnlinked Choose a folder": "Kies een map",
+  "SyncDirUnlinked Select folder": "Select folder",
 
   "Tray A new release is available": "Er is een nieuwe versie beschikbaar",
   "Tray Go to my Twake Workplace": "Ga naar mijn Twake Workplace",
