@@ -259,10 +259,10 @@
   "SyncDirEmpty Message": "Looks like your Twake folder got emptied. May be it is on a hard-drive which is not plugged at the moment?",
   "SyncDirEmpty Title": "Your Twake folder is empty",
 
-  "SyncDirUnlinked Choose Folder": "Wybierz folder",
-  "SyncDirUnlinked The client will restart": "Aby włączyć ponownie musisz wskazać nowy folder Twake Desktop",
-  "SyncDirUnlinked Title": "Usunąłeś swój folder Twake Desktop",
-  "SyncDirUnlinked You have removed your sync dir.": "Usunąłeś swój folder Twake Desktop w związku z czym synchronizacja nie może zostać wykonana.",
+  "SyncDirUnlinked You have deleted or moved your Twake folder. As a result the synchronization has been stopped.": "Usunąłeś swój folder Twake w związku z czym synchronizacja nie może zostać wykonana.",
+  "SyncDirUnlinked To enable it again, you must select a new Twake folder": "Aby włączyć ponownie musisz wskazać nowy folder Twake",
+  "SyncDirUnlinked Choose a folder": "Wybierz folder",
+  "SyncDirUnlinked Select folder": "Select folder",
 
   "Tray A new release is available": "Dostępna jest nowsza wersja",
   "Tray Go to my Twake Workplace": "Przejdź do mojego Twake Workplace",
