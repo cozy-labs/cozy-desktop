@@ -23,10 +23,9 @@ module.exports = {
  * Any other error occuring during the check will be thrown too.
  */
 function ensureExistsSync(
-  { syncPath, events } /*: {syncPath: string, events: EventEmitter} */
+  { syncPath } /*: { syncPath: string } */
 ) /*: void */ {
   if (!fs.existsSync(syncPath)) {
-    events.emit('syncdir-unlinked')
     throw new Error(SYNC_DIR_UNLINKED_MESSAGE)
   }
 }
@@ -36,7 +35,15 @@ function ensureExistsSync(
  * Caller should stop the regular check at some point with clearInterval().
  */
 function startIntervalCheck(
-  context /*: {syncPath: string, events: EventEmitter} */
+  context /*: { syncPath: string, events: EventEmitter } */
 ) /*: IntervalID */ {
-  return setInterval(() => ensureExistsSync(context), 5000)
+  return setInterval(() => {
+    try {
+      ensureExistsSync(context)
+    } catch (err) {
+      if (err.message === SYNC_DIR_UNLINKED_MESSAGE) {
+        context.events.emit('syncdir-unlinked')
+      }
+    }
+  }, 5000)
 }
