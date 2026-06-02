@@ -148,6 +148,9 @@ const detectOperation = async (
 // - a positive value when the second Change should be propagated before the
 //   first one
 // - 0 when the order of the Changes should be kept
+const A_FIRST = -1
+const B_FIRST = 1
+const KEEP_ORDER = 0
 const compareChanges = (
   { operation: opA, doc: docA } /*: Change */,
   { operation: opB, doc: docB } /*: Change */
@@ -159,8 +162,8 @@ const compareChanges = (
   if (opA.side != null && opB.side != null && opA.side === opB.side) {
     if (opA.type === opB.type) {
       // Handle same operation parent change before child changes
-      if (docB.path.startsWith(docA.path + sep)) return -1
-      else if (docA.path.startsWith(docB.path + sep)) return 1
+      if (docB.path.startsWith(docA.path + sep)) return A_FIRST
+      else if (docA.path.startsWith(docB.path + sep)) return B_FIRST
     }
 
     if (opA.type === 'DEL' && opB.type === 'MOVE' && docB.moveFrom != null) {
@@ -169,7 +172,7 @@ const compareChanges = (
         docB.moveFrom.path.startsWith(docA.path + sep) &&
         !docB.path.startsWith(docA.path + sep)
       ) {
-        return 1
+        return B_FIRST
       }
     }
     if (opB.type === 'DEL' && opA.type === 'MOVE' && docA.moveFrom != null) {
@@ -178,23 +181,28 @@ const compareChanges = (
         docA.moveFrom.path.startsWith(docB.path + sep) &&
         !docA.path.startsWith(docB.path + sep)
       )
-        return -1
+        return A_FIRST
     }
-    if (opA.type === 'ADD' && opB.type === 'MOVE') {
+
+    if (opA.type === 'ADD' && opB.type === 'MOVE' && docB.moveFrom != null) {
+      // Handle replacement after move
+      if (docA.path === docB.moveFrom.path) return B_FIRST
       // Handle child addtion after parent move
-      if (docA.path.startsWith(docB.path + sep)) return 1
+      if (docA.path.startsWith(docB.path + sep)) return B_FIRST
       // Handle move to dir after dir addition
-      if (docB.path.startsWith(docA.path + sep)) return -1
+      if (docB.path.startsWith(docA.path + sep)) return A_FIRST
     }
-    if (opB.type === 'ADD' && opA.type === 'MOVE') {
+    if (opB.type === 'ADD' && opA.type === 'MOVE' && docA.moveFrom != null) {
+      // Handle replacement after move
+      if (docB.path === docA.moveFrom.path) return A_FIRST
       // Handle child addtion after parent move
-      if (docB.path.startsWith(docA.path + sep)) return -1
+      if (docB.path.startsWith(docA.path + sep)) return A_FIRST
       // Handle move to dir after dir addition
-      if (docA.path.startsWith(docB.path + sep)) return 1
+      if (docA.path.startsWith(docB.path + sep)) return B_FIRST
     }
   }
 
-  return 0
+  return KEEP_ORDER
 }
 
 // Save the given changes' PouchDB records without making any modifications to
