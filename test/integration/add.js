@@ -100,7 +100,7 @@ describe('Add', () => {
       })
 
       context('when file path is already taken on the remote Cozy', () => {
-        it('renames the remote document as conflict', async () => {
+        it('renames the local document as conflict', async () => {
           const remoteFile = await createDoc(
             'remote',
             'file.txt',
@@ -115,9 +115,10 @@ describe('Add', () => {
             local: ['parent/', 'parent/file-conflict-...', 'parent/file.txt'],
             remote: ['parent/', 'parent/file-conflict-...', 'parent/file.txt']
           })
-          should(await helpers.remote.byIdMaybe(remoteFile._id))
-            .have.property('name')
-            .startWith('file-conflict-')
+          should(await helpers.remote.byIdMaybe(remoteFile._id)).have.property(
+            'name',
+            'file.txt'
+          )
         })
       })
 
@@ -353,6 +354,7 @@ describe('Add', () => {
           await createDoc('local', 'dir', parent)
 
           await syncSideAddition('local')
+          await helpers.pullAndSyncAll()
 
           const updatedDir = metadata.fromRemoteDoc(
             await helpers.remote.byId(remoteDir._id)
@@ -371,20 +373,14 @@ describe('Add', () => {
               sides: { target: 1, local: 1 }
             },
             // We encounter a conflict error since a remote doc with the same
-            // path already exists.
-            {
-              path: path.normalize('parent/dir'),
-              local: { path: path.normalize('parent/dir') },
-              sides: { target: 2, local: 2 },
-              errors: 1
-            },
+            // path already exists and we skip the change.
             // The conflict is solved when the remote watcher fetches the remote
             // doc and links it to the local one during Merge.
             {
               path: path.normalize('parent/dir'),
               local: { path: path.normalize('parent/dir') },
               remote: updatedDir.remote,
-              sides: { target: 3, local: 3, remote: 3 }
+              sides: { target: 2, local: 2, remote: 2 }
             }
           ])
         })

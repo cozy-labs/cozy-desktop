@@ -468,21 +468,29 @@ describe('Conflict resolution', () => {
       await helpers.remote.move(remoteDir2, 'dst')
     })
 
-    it('creates a conflict and keeps files in their own directories', async () => {
+    it('creates a local conflict and keeps files in their own directories', async () => {
+      // XXX: will fail with conflict error
+      await helpers.syncAll()
+
+      // Detect and merge local conflict renaming
+      await helpers.local.scan()
+      // Fetch and merge remote move
+      await helpers.remote.pullChanges()
+      // Sync all changes
       await helpers.syncAll()
 
       await should(helpers.trees('local', 'remote')).be.fulfilledWith({
         local: [
           'dst-conflict-.../',
-          'dst-conflict-.../file2',
+          'dst-conflict-.../file1',
           'dst/',
-          'dst/file1'
+          'dst/file2'
         ],
         remote: [
           'dst-conflict-.../',
-          'dst-conflict-.../file2',
+          'dst-conflict-.../file1',
           'dst/',
-          'dst/file1'
+          'dst/file2'
         ]
       })
     })

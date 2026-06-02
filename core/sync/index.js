@@ -501,7 +501,6 @@ class Sync {
           case syncErrors.INCOMPATIBLE_DOC_CODE:
           case syncErrors.MISSING_PERMISSIONS_CODE:
           case syncErrors.NO_DISK_SPACE_CODE:
-          case remoteErrors.CONFLICTING_NAME_CODE:
           case remoteErrors.FILE_TOO_LARGE_CODE:
           case remoteErrors.INVALID_FOLDER_MOVE_CODE:
           case remoteErrors.INVALID_METADATA_CODE:
@@ -519,6 +518,16 @@ class Sync {
             // See `default` case for other blocking errors for which we'll stop
             // retrying after 3 failed attempts.
             this.blockSyncFor({ err, change })
+            break
+          case remoteErrors.CONFLICTING_NAME_CODE:
+            if (
+              metadata.isFolder(change.doc) &&
+              change.operation.type === 'ADD'
+            ) {
+              await this.skipChange(change, err) // XXX: both directories will be merged in the next merge cycle?!
+            } else {
+              await syncErrors.createConflict({ err, change }, this)
+            }
             break
           case remoteErrors.DOCUMENT_IN_TRASH_CODE:
             delete change.doc.moveFrom
@@ -765,9 +774,16 @@ class Sync {
       feedObserver = this.pouch.db
         .changes(opts)
         .on('change', ({ doc }) => {
-          if (doc.path === expectedPath) {
-            log.debug('New change merged', { path: expectedPath })
-            done()
+          if (expectedPath.endsWith(sep)) {
+            if (doc.path.startsWith(expectedPath)) {
+              log.debug('New change merged', { path: expectedPath })
+              done()
+            }
+          } else {
+            if (doc.path === expectedPath) {
+              log.debug('New change merged', { path: expectedPath })
+              done()
+            }
           }
         })
         .on('error', done)
@@ -1116,7 +1132,6 @@ class Sync {
         case syncErrors.INCOMPATIBLE_DOC_CODE:
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
-        case remoteErrors.CONFLICTING_NAME_CODE:
         case remoteErrors.FILE_TOO_LARGE_CODE:
         case remoteErrors.INVALID_METADATA_CODE:
         case remoteErrors.INVALID_NAME_CODE:
