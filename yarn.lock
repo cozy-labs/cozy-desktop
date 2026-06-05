@@ -1778,9 +1778,9 @@
   dependencies:
     "@opentelemetry/core" "^1.1.0"
 
-"@parcel/watcher@https://github.com/taratatach/parcel-watcher.git#cozy-desktop":
-  version "3.0.0"
-  resolved "https://github.com/taratatach/parcel-watcher.git#9346f734e27901975339f12431b0a78e4f44a6a7"
+"@parcel/watcher@https://github.com/taratatach/parcel-watcher.git#v3.1.0":
+  version "3.1.0"
+  resolved "https://github.com/taratatach/parcel-watcher.git#01fa6d8b6cd1cebd1f61155a6eac98c6d34c57e8"
   dependencies:
     node-addon-api "^3.2.1"
     node-gyp-build "^4.8.1"
