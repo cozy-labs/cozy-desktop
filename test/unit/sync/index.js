@@ -569,7 +569,12 @@ describe('Sync', function() {
           seq,
           operation: { type: 'EDIT', side: 'remote' }
         }
-        sinon.stub(this.sync, 'getNextChanges').returns([change])
+        sinon
+          .stub(this.sync, 'getNextChanges')
+          .withArgs(previousSeq)
+          .returns([change])
+          .withArgs(seq)
+          .returns([])
       })
       afterEach(function() {
         this.sync.getNextChanges.restore()
@@ -613,6 +618,38 @@ describe('Sync', function() {
             err: { code: remoteErrors.NEEDS_REMOTE_MERGE_CODE },
             change
           })
+        })
+      })
+
+      describe('when apply throws an INVALID_METADATA_CODE error', () => {
+        beforeEach(function() {
+          sinon.spy(this.sync, 'skipChange')
+        })
+        beforeEach('simulate error', async function() {
+          this.sync.lifecycle.transitionTo('done-start')
+          sinon.stub(this.sync, 'apply').rejects(
+            new syncErrors.SyncError({
+              code: remoteErrors.INVALID_METADATA_CODE,
+              sideName,
+              err: new FetchError(
+                { status: 422 },
+                {
+                  errors: [{ status: 422, title: 'Invalid metadata' }]
+                }
+              ),
+              doc: change.doc
+            })
+          )
+          await this.sync.syncBatch()
+          this.sync.apply.restore()
+        })
+        afterEach(function() {
+          this.sync.skipChange.restore()
+        })
+
+        it('skips the change on InvalidMetadata error', async function() {
+          should(this.sync.skipChange).have.been.calledOnce()
+          should(this.sync.skipChange).have.been.calledWithMatch(change)
         })
       })
     })
@@ -996,6 +1033,27 @@ describe('Sync', function() {
 
         this.sync.lifecycle.unblockFor(remoteErrors.UNREACHABLE_COZY_CODE)
         should(this.sync.lifecycle.blockedFor).be.null()
+      })
+    })
+
+    context('when an INVALID_METADATA_CODE error is encountered', () => {
+      const invalidMetadataError = syncErrors.wrapError(
+        new remoteErrors.RemoteError({
+          code: remoteErrors.INVALID_METADATA_CODE,
+          message: 'The local metadata for the document is corrupted',
+          err: new Error('invalid metadata')
+        }),
+        'remote'
+      )
+
+      beforeEach(function() {
+        this.sync.blockSyncFor({
+          err: invalidMetadataError
+        })
+      })
+
+      it('does not emit a user-alert event', function() {
+        should(this.events.emit.calledWith('user-alert')).be.false()
       })
     })
 

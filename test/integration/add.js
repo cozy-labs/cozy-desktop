@@ -137,6 +137,43 @@ describe('Add', () => {
           }
         ])
       })
+
+      it('recovers when InvalidMetadata error is raised on first sync attempt', async () => {
+        // 1. Create local file (initial checksum will be invalid)
+        await createDoc('local', 'foo.txt', 'v1')
+
+        // 2. First scan: merges file with v1 checksum
+        await helpers.local.scan()
+
+        // 3. File changes on disk: content is now different
+        await helpers.local.syncDir.outputFile('foo.txt', 'v2')
+
+        sinon.spy(helpers.events, 'emit')
+
+        try {
+          // 4. First sync: creation with invalid checksum should fail
+          await helpers.syncAll()
+
+          // File should NOT be on remote (creation was skipped due to InvalidMetadata)
+          await should(helpers.remote.readFile('foo.txt')).be.rejected()
+
+          // No user-alert should have been emitted
+          const userAlertCalls = helpers.events.emit
+            .getCalls()
+            .filter(c => c.args[0] === 'user-alert')
+          should(userAlertCalls).have.length(0)
+        } finally {
+          helpers.events.emit.restore()
+        }
+
+        // 5. Second scan: picks up the modification, computes real checksum
+        await helpers.local.scan()
+
+        // 6. Second sync: should succeed with valid checksum
+        await helpers.syncAll()
+
+        should(await helpers.remote.readFile('foo.txt')).eql('v2')
+      })
     })
 
     describe('remote', () => {

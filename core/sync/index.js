@@ -478,7 +478,6 @@ class Sync {
         if (
           [
             remoteErrors.INVALID_FOLDER_MOVE_CODE,
-            remoteErrors.INVALID_METADATA_CODE,
             remoteErrors.MISSING_DOCUMENT_CODE,
             remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE,
             remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
@@ -503,7 +502,6 @@ class Sync {
           case syncErrors.NO_DISK_SPACE_CODE:
           case remoteErrors.FILE_TOO_LARGE_CODE:
           case remoteErrors.INVALID_FOLDER_MOVE_CODE:
-          case remoteErrors.INVALID_METADATA_CODE:
           case remoteErrors.INVALID_NAME_CODE:
           case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
           case remoteErrors.NO_COZY_SPACE_CODE:
@@ -528,6 +526,11 @@ class Sync {
             } else {
               await syncErrors.createConflict({ err, change }, this)
             }
+            break
+          case remoteErrors.INVALID_METADATA_CODE:
+            // Content has changed on disk the current change was merged. A new
+            // sync attempt will be triggered by the new content merge.
+            await this.skipChange(change, err)
             break
           case remoteErrors.DOCUMENT_IN_TRASH_CODE:
             delete change.doc.moveFrom
@@ -1133,7 +1136,6 @@ class Sync {
         case syncErrors.MISSING_PERMISSIONS_CODE:
         case syncErrors.NO_DISK_SPACE_CODE:
         case remoteErrors.FILE_TOO_LARGE_CODE:
-        case remoteErrors.INVALID_METADATA_CODE:
         case remoteErrors.INVALID_NAME_CODE:
         case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
         case remoteErrors.NO_COZY_SPACE_CODE:

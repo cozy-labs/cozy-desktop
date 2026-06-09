@@ -305,8 +305,6 @@ describe('Update file', () => {
 
   describe('M1, local merge M1, M2, remote sync M1, local merge M2', () => {
     it('fails remote sync M1 & local merge M2', async function() {
-      if (process.env.CI) this.timeout(60 * 1000)
-
       await helpers.remote.createFile('file', 'Initial content')
       await helpers.pullAndSyncAll()
       await helpers.flushLocalAndSyncAll()
@@ -326,11 +324,21 @@ describe('Update file', () => {
       await helpers.local.syncDir.outputFile('file', m2)
 
       log.info('-------- remote sync M1 --------')
-      // We don't await the end of the syncAll() call because it will raise 412
-      // errors that will only be fixed by the next local scan (i.e. the
-      // checksum of the file on the local filesystem is different from the one
-      // stored in PouchDB).
-      helpers.syncAll()
+      sinon.spy(helpers.events, 'emit')
+      try {
+        // Will fail with 412 errors that will only be fixed by the next local
+        // scan (i.e. the checksum of the file on the local filesystem is
+        // different from the one stored in PouchDB).
+        await helpers.syncAll()
+
+        // No user-alert should have been emitted
+        const userAlertCalls = helpers.events.emit
+          .getCalls()
+          .filter(c => c.args[0] === 'user-alert')
+        should(userAlertCalls).have.length(0)
+      } finally {
+        helpers.events.emit.restore()
+      }
 
       log.info('-------- local merge (and remote sync) M2 --------')
       should(await helpers.local.syncDir.checksum('file')).equal(
@@ -338,8 +346,7 @@ describe('Update file', () => {
       )
       await helpers.local.scan()
 
-      // Wait for Sync's retry to complete
-      await helpers._sync.stopped()
+      await helpers.syncAll()
 
       should({
         localTree: await helpers.local.tree(),
