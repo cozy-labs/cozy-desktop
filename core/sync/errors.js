@@ -219,16 +219,30 @@ const createConflict = async (
   if (cause.change) {
     const { change, err } = cause
     try {
-      const conflict = await sync.local.resolveConflict(change.doc)
-
       // Skip the change since it would result in the same conflict error.
       await sync.skipChange(change, err)
 
-      if (metadata.isFolder(change.doc)) {
-        // Wait for our conflict to make it to PouchDB to avoid synchronizing its
-        // descendants and creating more conflicts.
-        await sync.waitForNewChangeOn(change.seq, conflict.path)
+      const conflict = await sync.local.resolveConflict(change.doc)
+
+      // Prepare the list of documents to save
+      const docsToSave = [conflict]
+
+      // If it's a folder, update the paths of all children
+      if (metadata.isFolder(conflict)) {
+        const oldPath = change.doc.path
+        const newPath = conflict.path
+        const children = await sync.pouch.byRecursivePath(oldPath)
+
+        // Update the paths of all children
+        for (const child of children) {
+          child.path = child.path.replace(oldPath, newPath)
+        }
+
+        docsToSave.push(...children)
       }
+
+      // Save all documents (conflict + children) in a single operation
+      await sync.pouch.bulkDocs(docsToSave)
     } catch (err) {
       log.debug('failed to create conflict on behalf of user', {
         path: change.doc.path,
@@ -295,6 +309,12 @@ const wrapError = (
     return new SyncError({ sideName, err, code: INCOMPATIBLE_DOC_CODE, doc })
   } else if (err instanceof remoteErrors.ExcludedDirError) {
     return new SyncError({ sideName, err, code: EXCLUDED_DIR_CODE, doc })
+  } else if (err instanceof remoteErrors.DirectoryNotFound) {
+    return new SyncError({
+      sideName,
+      err: remoteErrors.wrapError(err, doc),
+      doc
+    })
   } else if (remoteErrors.isNetworkError(err)) {
     // FetchErrors can be raised from the LocalWriter when failing to download a
     // file for example. In this case the error name won't be "FetchError" but

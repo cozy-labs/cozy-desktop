@@ -87,7 +87,7 @@ class ExcludedDirError extends Error {
     )
 
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, DirectoryNotFound)
+      Error.captureStackTrace(this, ExcludedDirError)
     }
 
     this.name = 'ExcludedDirError'

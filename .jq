@@ -76,7 +76,7 @@ def Atom: component("^Atom|atom");
 def Fs: component("^Fs|FS");
 def LocalAnalysis: component("^LocalAnalysis|local/analysis");
 def LocalChange: component("^LocalChange|local/change");
-def LocalWatcher: component("^LocalWatcher");
+def LocalWatcher: component("^LocalWatcher|ChannelWatcher");
 def LocalWriter: component("^LocalWriter");
 def Merge: component("^Merge");
 def Metadata: component("^Metadata");
@@ -90,7 +90,7 @@ def RemoteWatcher: component("^RemoteWatcher");
 def RemoteWriter: component("^RemoteWriter");
 def Sync: component("^Sync");
 
-def Local: select(.component | test("^local|chokidar|atom"; "i"));
+def Local: select(.component | test("^local|chokidar|atom|ChannelWatcher"; "i"));
 def Remote: select(.component | test("^remote"; "i"));
 
 # Exclude "up-to-date" messages
