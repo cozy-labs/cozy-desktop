@@ -1650,5 +1650,41 @@ describe('Sync', function() {
         }
       )
     })
+
+    context(
+      'with a file move and an addition at the move source path (replacement)',
+      () => {
+        let move, add
+        beforeEach(async function() {
+          const srcFile = await builders
+            .metafile()
+            .path('file')
+            .upToDate()
+            .create()
+          const dstFile = await builders
+            .metafile()
+            .moveFrom(srcFile)
+            .path('moved-file')
+            .changedSide('local')
+            .create()
+          const newFile = await builders
+            .metafile()
+            .path('file')
+            .sides({ local: 1 })
+            .create()
+
+          move = makeChange(dstFile, 'MOVE', this)
+          add = makeChange(newFile, 'ADD', this)
+        })
+
+        it('returns -1 if move is passed as first argument', () => {
+          should(compareChanges(move, add)).eql(-1)
+        })
+
+        it('returns 1 if move is passed as second argument', () => {
+          should(compareChanges(add, move)).eql(1)
+        })
+      }
+    )
   })
 })
