@@ -18,7 +18,8 @@ const METHODS = [
   'trashAsync',
   'renameConflictingDocAsync',
   'diskUsage',
-  'resolveConflict'
+  'resolveConflict',
+  'stop'
 ]
 
 module.exports = function stubSide(name /*: SideName */) /*: Writer */ {
