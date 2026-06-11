@@ -46,6 +46,7 @@ const config = {
     hardenedRuntime: true,
     entitlements: './build/entitlements.mac.inherit.plist',
     category: 'public.app-category.productivity',
+    artifactName: 'Twake-Desktop-${arch}.${ext}',
     target: [
       {
         target: 'zip', // this is required for the update to work (see https://github.com/electron-userland/electron-builder/issues/2199)
@@ -64,6 +65,7 @@ const config = {
 
   win: {
     target: [{ target: 'nsis', arch: ['x64'] }],
+    artifactName: 'Twake-Desktop-Setup.${ext}',
     publisherName: 'Cozy Cloud SAS',
     // Comment out the following line if the Digicert server starts failing.
     // Electron-Builder will then swtich back to the default Comodoca server.
