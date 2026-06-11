@@ -319,50 +319,9 @@ jobs:
         with:
             name: dist-mac-${{ runner.arch }}
             path: |
-                ${{ github.workspace }}/dist/latest-mac.yml
+                ${{ github.workspace }}/dist/latest*.yml
                 ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.dmg
-                ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*-mac.zip
+                ${{ github.workspace }}/dist/Twake[- ]Desktop[- ]*.zip
             retention-days: 5
             compression-level: 0
 
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Download mac-x64 artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-mac-X64
-          path: dist-mac-X64
-
-      - name: Download mac-arm64 artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-mac-ARM64
-          path: dist-mac-ARM64
-
-      - name: 'Merge latest-mac.yml'
-        # unfortunately electron-builder doesn't understand that we have two different releases for mac-x64 and mac-arm, so we need to manually merge the latest files
-        # see https://github.com/electron-userland/electron-builder/issues/5592
-        run: |
-          ls -la dist-mac-X64
-          ls -la dist-mac-ARM64
-          yarn add js-yaml
-          node ./dev/ci/mergeLatestYmls.js ./dist-mac-ARM64/latest-mac.yml ./dist-mac-X64/latest-mac.yml latest-mac.yml
-
-      - name: Save artifact
-        uses: actions/upload-artifact@v4
-        with:
-            name: latest-mac.yml
-            path: |
-                ${{ github.workspace }}/latest-mac.yml
-            retention-days: 5
-            compression-level: 0
-
-      - name: Add artifact to release
-        uses: softprops/action-gh-release@v2
-        if: github.ref_type == 'tag'
-        with:
-          draft: true
-          files: latest-mac.yml

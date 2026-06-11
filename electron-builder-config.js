@@ -1,5 +1,7 @@
 const macOSArch = process.arch
 
+const publishChannel = process.arch === 'arm64' ? 'latest-arm64' : 'latest'
+
 const config = {
   appId: 'io.cozy.desktop',
   files: [
@@ -40,6 +42,12 @@ const config = {
     description: 'Cozy Note markdown export',
     mimeType: 'text/vnd.cozy.note+markdown',
     role: 'Viewer'
+  },
+
+  publish: {
+    provider: 'github',
+    channel: publishChannel,
+    releaseType: 'draft'
   },
 
   mac: {
