@@ -1,5 +1,40 @@
 # Twake Desktop: Changelog
 
+## 5.4.0-beta.1 - 2026-06-11
+
+Improvements for all users:
+
+- When editing a file while it is being synchronized, an alert could be
+  shown to you even though the issue would resolve on its own moments
+  later.
+  We now let the synchronization handle this silently without
+  interrupting you.
+- When moving a file to a location that was previously used by another
+  file, the operation could fail.
+  We fixed the order in which changes are processed so that moves are
+  completed properly without conflicts.
+- When trying to synchronize a local file or folder whose name was
+  already taken on the remote Cozy, an alert was shown asking you to
+  resolve the conflict manually.
+  We now handle this automatically: when possible, folders are merged
+  and a copy of the conflicting file is kept with a different name.
+
+Improvements for Windows and macOS users:
+
+- The names of downloaded binaries changed with each release, making it
+  difficult to link to the latest version.
+  They are now stable across releases for each operating system.
+
+Improvements for macOS users:
+
+- On macOS, the automatic update mechanism could sometimes offer an
+  update for the wrong processor type (Intel vs Apple Silicon).
+  We fixed this so each Mac receives the correct update.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.3.0 - 2026-06-03
 
 Improvements for all users:
