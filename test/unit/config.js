@@ -194,6 +194,60 @@ describe('core/config', function() {
       })
     })
 
+    describe('onTokenRefresh', function() {
+      const newToken = {
+        tokenType: 'Bearer',
+        accessToken: 'new-access',
+        refreshToken: 'new-refresh',
+        scope: 'io.cozy.files'
+      }
+
+      beforeEach('set initial credentials', function() {
+        this.config.fileConfig.creds = {
+          client: { clientID: 'x', clientName: 'test' },
+          token: {
+            tokenType: 'Bearer',
+            accessToken: 'old',
+            refreshToken: 'old',
+            scope: ''
+          }
+        }
+      })
+
+      context('when a sync path has been chosen', function() {
+        it('updates the token in memory', function() {
+          this.config.onTokenRefresh(newToken)
+          should(this.config.oauthTokens.accessToken).equal('new-access')
+        })
+
+        it('persists the refreshed token to disk', function() {
+          this.config.onTokenRefresh(newToken)
+
+          const persisted = config.loadOrDeleteFile(this.config.configPath)
+          should(persisted.creds.token.accessToken).equal('new-access')
+        })
+      })
+
+      context('when no sync path has been chosen yet', function() {
+        beforeEach('simulate onboarding in progress', function() {
+          // The config helper sets a syncPath and persists; an ongoing
+          // onboarding is in the opposite state.
+          delete this.config.fileConfig.path
+          fse.removeSync(this.config.configPath)
+        })
+
+        it('updates the token in memory', function() {
+          this.config.onTokenRefresh(newToken)
+          should(this.config.oauthTokens.accessToken).equal('new-access')
+        })
+
+        it('does not persist the config to disk', function() {
+          this.config.onTokenRefresh(newToken)
+          should(fse.existsSync(this.config.configPath)).be.false()
+        })
+      })
+    })
+
     describe('Client', function() {
       it('can set a client', function() {
         this.config.client = { clientName: 'test' }
@@ -204,6 +258,29 @@ describe('core/config', function() {
       it('has no client after a reset', function() {
         this.config.reset()
         should(this.config.isValid()).be.false()
+      })
+
+      it('replaces previous client fields when set to new options', function() {
+        // Mimic a fully registered client left over from a previous
+        // session (e.g. after an interrupted onboarding).
+        this.config.client = {
+          clientID: 'stale-id',
+          clientSecret: 'stale-secret',
+          registrationAccessToken: 'stale-token',
+          clientName: 'test',
+          redirectURI: 'http://localhost:3344/callback'
+        }
+
+        // Registration.process reassigns the client with fresh options
+        // from `oauthClient()`, which never carries a `clientID`.
+        this.config.client = {
+          clientName: 'test',
+          redirectURI: 'http://localhost:3344/callback'
+        }
+
+        should(this.config.client.clientID).be.undefined()
+        should(this.config.client.clientSecret).be.undefined()
+        should(this.config.client.registrationAccessToken).be.undefined()
       })
     })
 

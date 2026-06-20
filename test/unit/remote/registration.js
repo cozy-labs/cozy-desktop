@@ -3,7 +3,9 @@
 const os = require('os')
 
 const should = require('should')
+const sinon = require('sinon')
 
+const config = require('../../../core/config')
 const Registration = require('../../../core/remote/registration')
 const configHelpers = require('../../support/helpers/config')
 
@@ -35,6 +37,37 @@ describe('Registration', function() {
       should(params.clientKind).equal('desktop')
       should(params.clientURI).equal(pkg.homepage)
       should(params.logoURI).equal(pkg.logo)
+    })
+  })
+
+  describe('process', function() {
+    context('when registration fails', function() {
+      beforeEach('persist stale credentials on disk', function() {
+        this.config.client = {
+          clientID: 'stale-client-id',
+          clientSecret: 'stale-secret',
+          clientName: 'test',
+          redirectURI: 'http://localhost:3344/callback'
+        }
+        this.config.persist()
+      })
+
+      afterEach(function() {
+        sinon.restore()
+      })
+
+      it('clears the stale credentials from disk', async function() {
+        sinon
+          .stub(this.registration, 'oauthClient')
+          .throws(new Error('registration failure'))
+
+        await should(this.registration.process({})).be.rejectedWith(
+          'registration failure'
+        )
+
+        const persisted = config.loadOrDeleteFile(this.config.configPath)
+        should(persisted.creds).be.undefined()
+      })
     })
   })
 })
