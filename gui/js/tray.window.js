@@ -269,7 +269,7 @@ module.exports = class TrayWM extends WindowManager {
         this.showInParent(path, showInWeb)
       },
       'auto-launcher': (event /*: ElectronEvent */, enabled /*: boolean */) =>
-        autoLaunch.setEnabled(enabled),
+        enabled ? autoLaunch.enable() : autoLaunch.disable(),
       'close-app': () => {
         this.desktop.stopSync()
         app.quit()
