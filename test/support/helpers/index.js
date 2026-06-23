@@ -16,7 +16,7 @@ const { Merge } = require('../../../core/merge')
 const { FOLDER } = require('../../../core/metadata')
 const Prep = require('../../../core/prep')
 const { Sync } = require('../../../core/sync')
-const SyncState = require('../../../core/syncstate')
+const { SyncState } = require('../../../core/syncstate')
 
 /*::
 import type { Config } from '../../../core/config'
@@ -82,12 +82,18 @@ class TestHelpers {
     await this._local.stop()
   }
 
-  async syncAll() {
+  async sync() {
     this._sync.lifecycle.transitionTo('done-start')
     await this._sync.sync()
     // Wait until all potentially blocking changes have been handled
     await this._sync.lifecycle.ready()
     this._sync.lifecycle.transitionTo('done-stop')
+  }
+
+  async syncAll() {
+    while (await this._sync.hasChangesToSync()) {
+      await this.sync()
+    }
   }
 
   async pullAndSyncAll() {

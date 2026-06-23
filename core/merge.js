@@ -65,12 +65,14 @@ class Merge {
 
   async save(doc /*: Metadata */) {
     delete doc.errors
+    delete doc.skipped
     return this.pouch.put(doc)
   }
 
   async saveAll(docs /*: Metadata[] */) {
     docs.forEach(doc => {
       delete doc.errors
+      delete doc.skipped
     })
     return this.pouch.bulkDocs(docs)
   }

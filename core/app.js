@@ -31,7 +31,7 @@ const Prep = require('./prep')
 const { Remote } = require('./remote')
 const Registration = require('./remote/registration')
 const { Sync } = require('./sync')
-const SyncState = require('./syncstate')
+const { SyncState } = require('./syncstate')
 const flags = require('./utils/flags')
 const { sendToTrash } = require('./utils/fs')
 const {

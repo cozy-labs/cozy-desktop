@@ -45,9 +45,9 @@ describe('Platform incompatibilities', () => {
     sinon
       .stub(helpers._sync, 'blockSyncFor')
       .callsFake(async ({ change, err }) => {
-        helpers._sync.lifecycle.blockFor(err.code)
+        helpers._sync.lifecycle.block()
         await helpers._sync.skipChange(change, err)
-        helpers._sync.lifecycle.unblockFor(err.code)
+        helpers._sync.lifecycle.unblock()
       })
   })
   afterEach(async function() {

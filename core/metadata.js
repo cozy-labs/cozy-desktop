@@ -166,6 +166,7 @@ export type Metadata = {
 
   trashed?: true,
   errors?: number,
+  skipped?: boolean,
   overwrite?: SavedMetadata,
   childMove?: boolean,
   incompatibilities?: *,
@@ -551,9 +552,11 @@ function markAsUnmerged(
   sideName /*: SideName */
 ) {
   removeActionHints(doc)
-  if (doc._id) delete doc._id
-  if (doc._rev) delete doc._rev
-  if (doc._deleted) delete doc._deleted
+  delete doc._id
+  delete doc._rev
+  delete doc._deleted
+  delete doc.errors
+  delete doc.skipped
   if (sideName === 'local') {
     dissociateRemote(doc)
   } else {
@@ -569,6 +572,7 @@ function markAsUpToDate /*:: <T: Metadata|SavedMetadata> */(doc /*: T */) {
     remote: newTarget
   }
   delete doc.errors
+  delete doc.skipped
   return newTarget
 }
 

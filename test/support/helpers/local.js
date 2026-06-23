@@ -147,13 +147,14 @@ class LocalTestHelpers {
   }
 
   async treeWithoutTrash({
+    ellipsize = true,
     withIno = false
-  } /*: { withIno?: boolean } */ = {}) {
+  } /*: { ellipsize?: boolean, withIno?: boolean } */ = {}) {
     return withIno
-      ? (await this.tree({ withIno })).filter(
+      ? (await this.tree({ ellipsize, withIno })).filter(
           p => !p.path.startsWith('/Trash/')
         )
-      : (await this.tree()).filter(p => !p.startsWith('/Trash/'))
+      : (await this.tree({ ellipsize })).filter(p => !p.startsWith('/Trash/'))
   }
 
   async simulateEvents(events /*: ChokidarEvent[] */) {
