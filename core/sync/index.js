@@ -670,12 +670,8 @@ class Sync {
 
   async getNextChanges(seq /*: number */) /*: Promise<Change[]> */ {
     const stopMeasure = measureTime('Sync#getNextChanges')
-    const opts = {
-      ...this.baseChangeOptions(seq),
-      include_docs: true,
-      limit: null
-    }
-    const p = new Promise((resolve, reject) => {
+
+    const pouchChanges = await new Promise((resolve, reject) => {
       let feedObserver
       const done = (data = [], err) => {
         this.lifecycle.off('will-stop', done)
@@ -692,44 +688,49 @@ class Sync {
       }
       this.lifecycle.once('will-stop', done)
 
-      const changes = []
-      const asyncOps = []
+      const pouchChanges = []
 
+      const opts = {
+        ...this.baseChangeOptions(seq),
+        include_docs: true,
+        limit: null
+      }
       feedObserver = this.pouch.db
         .changes(opts)
-        .on('change', async data => {
-          const { doc, seq } = data
-          if (changes.length === 0 && metadata.shouldIgnore(doc, this.ignore)) {
-            asyncOps.push(this.pouch.setLocalSeq(seq))
-          } else if (
-            changes.length === 0 &&
-            metadata.isUpToDate('local', doc) &&
-            metadata.isUpToDate('remote', doc)
-          ) {
-            log.info('up to date', { path: doc.path })
-            asyncOps.push(this.pouch.setLocalSeq(seq))
-          } else {
-            asyncOps.push(
-              detectOperation(data, this).then(op => {
-                data.operation = op
-                changes.push(data)
-                return
-              })
-            )
-          }
+        .on('change', data => {
+          pouchChanges.push(data)
         })
         .on('error', err => {
           done(null, err)
         })
-        .on('complete', async data => {
+        .on('complete', data => {
           if (data.results == null || data.results.length === 0) {
-            await Promise.all(asyncOps)
-            done(changes)
+            done(pouchChanges)
           }
         })
     })
+
+    const changes = []
+    for (const pouchChange of pouchChanges) {
+      const { doc, seq } = pouchChange
+      if (changes.length === 0 && metadata.shouldIgnore(doc, this.ignore)) {
+        await this.pouch.setLocalSeq(seq)
+      } else if (
+        changes.length === 0 &&
+        metadata.isUpToDate('local', doc) &&
+        metadata.isUpToDate('remote', doc)
+      ) {
+        log.info('up to date', { path: doc.path })
+        await this.pouch.setLocalSeq(seq)
+      } else {
+        const op = await detectOperation(pouchChange, this)
+        pouchChange.operation = op
+        changes.push(pouchChange)
+      }
+    }
+
     stopMeasure()
-    return p
+    return changes
   }
 
   // Wait for a change in PouchDB's changesfeed after the given sequence and
