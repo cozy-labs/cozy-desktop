@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>UserAlert Preview</title>
+        <link rel="stylesheet" href="../gui/app.css" />
+        <script src="../gui/elm.js"></script>
+        <style>
+            #controls.disabled { opacity: 0.5; pointer-events: none; }
+        </style>
+    </head>
+    <body>
+        <div id="container" role="application"></div>
+        <script>
+            const ALERTS = [
+                {
+                    label: "SynchronizationError — ConflictingName",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 1, status: "Required", code: "ConflictingName", side: "remote", doc: { docType: "text", path: "/Documents/report.docx" }, links: null, lastSeenAt: Date.now() - 0 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — ExcludedDir",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 2, status: "Required", code: "ExcludedDir", side: "remote", doc: { docType: "directory", path: "/Photos" }, links: null, lastSeenAt: Date.now() - 60000 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — FileTooLarge",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 3, status: "Required", code: "FileTooLarge", side: "remote", doc: { docType: "code", path: "/backup/dump.sql" }, links: null, lastSeenAt: Date.now() - 300000 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — IncompatibleDoc",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 4, status: "Required", code: "IncompatibleDoc", side: "local", doc: { docType: "text", path: "/projects/foo/bar:test.txt" }, links: null, lastSeenAt: Date.now() - 600000 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — InvalidMetadata",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 5, status: "Required", code: "InvalidMetadata", side: "remote", doc: { docType: "code", path: "/docs/metadata.json" }, links: null, lastSeenAt: Date.now() - 1800000 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — InvalidName",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 6, status: "Required", code: "InvalidName", side: "remote", doc: { docType: "spreadsheet", path: "/projects/data/file?.csv" }, links: null, lastSeenAt: Date.now() - 3600000 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — MissingPermissions",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 7, status: "Required", code: "MissingPermissions", side: "local", doc: { docType: "pdf", path: "/shared/invoice.pdf" }, links: null, lastSeenAt: Date.now() - 7200000 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — NeedsRemoteMerge",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 8, status: "Required", code: "NeedsRemoteMerge", side: "local", doc: { docType: "presentation", path: "/projects/presentation.pptx" }, links: null, lastSeenAt: Date.now() - 14400000 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — NoCozySpace",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 9, status: "Required", code: "NoCozySpace", side: "remote", doc: { docType: "video", path: "/videos/demo.mp4" }, links: null, lastSeenAt: Date.now() - 28800000 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — NoDiskSpace",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 10, status: "Required", code: "NoDiskSpace", side: "local", doc: { docType: "archive", path: "/downloads/archive.zip" }, links: null, lastSeenAt: Date.now() - 86400000 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — PathTooDeep",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 11, status: "Required", code: "PathTooDeep", side: "remote", doc: { docType: "text", path: "/a/b/c/d/e/f/g/file.txt" }, links: null, lastSeenAt: Date.now() - 172800000 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — RemoteMaintenance",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 12, status: "Required", code: "RemoteMaintenance", side: null, doc: { docType: "text", path: "/any/file.txt" }, links: null, lastSeenAt: Date.now() - 604800000 }]
+                    }
+                },
+                {
+                    label: "SynchronizationError — UnknownRemoteError",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: 13, status: "Required", code: "UnknownRemoteError", side: "remote", doc: { docType: "text", path: "/docs/notes.txt" }, links: null, lastSeenAt: Date.now() - 2592000000 }]
+                    }
+                },
+                {
+                    label: "RemoteWarning — UserActionRequired",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: null, status: "Required", code: "UserActionRequired", side: null, doc: null, links: { self: "https://cozy.example.com/tos" }, lastSeenAt: Date.now() - 120000 }]
+                    }
+                },
+                {
+                    label: "RemoteError — UnknownRemoteError",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: null, status: "Required", code: "UnknownRemoteError", side: null, doc: null, links: null, lastSeenAt: Date.now() - 1800000 }]
+                    }
+                },
+                {
+                    label: "RemoteError — RemoteMaintenance",
+                    data: {
+                        status: "user-alert", remaining: 0, errors: [],
+                        userAlerts: [{ seq: null, status: "Required", code: "RemoteMaintenance", side: null, doc: null, links: null, lastSeenAt: Date.now() - 3600000 }]
+                    }
+                }
+            ];
+
+            let app;
+            let currentIndex = 0;
+
+            function sendAlerts(index) {
+                currentIndex = index;
+                const { label, data } = ALERTS[index];
+                app.ports.syncState.send(data);
+                document.getElementById("current-label").textContent = label;
+                document.getElementById("current-num").textContent = `${index + 1} / ${ALERTS.length}`;
+            }
+
+            function sendAll() {
+                const all = {
+                    status: "user-alert",
+                    remaining: 0,
+                    errors: [],
+                    userAlerts: ALERTS.map(a => a.data.userAlerts[0])
+                };
+                app.ports.syncState.send(all);
+                document.getElementById("current-label").textContent = "ALL ALERTS";
+                document.getElementById("current-num").textContent = `${ALERTS.length} alerts`;
+            }
+
+            function init(locales) {
+                const node = document.getElementById("container");
+                const params = new URL(window.location).searchParams;
+                const flags = {
+                    hash: "#tray",
+                    defaultSyncPath: "/",
+                    locale: params.get("lang") || "fr",
+                    locales,
+                    platform: "linux",
+                    version: "debug"
+                };
+                app = Elm.Main.init({ node, flags });
+
+                window.sendAlerts = sendAlerts;
+                window.sendAll = sendAll;
+                window.app = app;
+
+                document.getElementById("controls").classList.remove("disabled");
+                sendAll();
+            }
+
+            const downloadLocales = available_locales =>
+                Promise.all(
+                    available_locales.map(lang =>
+                        fetch(`../gui/locales/${lang}.json`)
+                            .then(resp => resp.json())
+                            .then(locales => ({ [lang]: locales }))
+                    )
+                ).then(locales =>
+                    locales.reduce((acc, locale) => ({ ...acc, ...locale }), {})
+                );
+
+            downloadLocales(["en", "fr"]).then(init);
+        </script>
+        <div id="controls" class="disabled" style="position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:2px solid #ddd;padding:8px 16px;display:flex;align-items:center;gap:8px;font-family:sans-serif;font-size:14px;z-index:9999">
+            <button onclick="sendAll()" style="padding:4px 12px">Toutes</button>
+            <button onclick="sendAlerts(Math.max(0, currentIndex - 1))" style="padding:4px 12px">◀</button>
+            <span id="current-num" style="min-width:80px;text-align:center">0 / 0</span>
+            <button onclick="sendAlerts(Math.min(ALERTS.length - 1, currentIndex + 1))" style="padding:4px 12px">▶</button>
+            <span id="current-label" class="u-ml-half u-fz-medium"></span>
+        </div>
+    </body>
+</html>

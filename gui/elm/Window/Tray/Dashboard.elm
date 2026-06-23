@@ -14,7 +14,6 @@ import Data.File as File exposing (EncodedFile, File)
 import Data.Path as Path exposing (Path)
 import Data.Platform as Platform exposing (Platform)
 import Data.Progress as Progress
-import Data.UserAlert as UserAlert exposing (UserAlert)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
@@ -33,21 +32,17 @@ import View.ProgressBar as ProgressBar
 
 
 type alias Model =
-    { now : Time.Posix
-    , files : List File
+    { files : List File
     , page : Int
     , platform : Platform
-    , userAlerts : List UserAlert
     }
 
 
 init : Platform -> Model
 init platform =
-    { now = Time.millisToPosix 0
-    , files = []
+    { files = []
     , page = 1
     , platform = platform
-    , userAlerts = []
     }
 
 
@@ -68,17 +63,10 @@ type Msg
     | Remove EncodedFile
     | OpenPath Path ShowInWeb
     | ShowInParent Path ShowInWeb
-    | Tick Time.Posix
     | ShowMore
     | ShowHelp
     | Reset
     | ShowFirstPage
-    | GotUserAlerts (List UserAlert)
-    | SendActionCommand UserAlert.Command UserAlert
-    | UserAlertSkipped UserAlert
-    | UserAlertInProgress UserAlert
-    | UserAlertDone UserAlert
-    | UserAlertDetails UserAlert
 
 
 update : Msg -> Model -> ( Model, Cmd msg )
@@ -112,9 +100,6 @@ update msg model =
         ShowInParent path showInWeb ->
             ( model, Ports.showInParent ( Path.toString path, showInWeb ) )
 
-        Tick now ->
-            ( { model | now = now }, Cmd.none )
-
         ShowMore ->
             ( { model | page = model.page + 1 }, Cmd.none )
 
@@ -124,40 +109,22 @@ update msg model =
         ShowFirstPage ->
             ( { model | page = 1 }, Cmd.none )
 
-        GotUserAlerts alerts ->
-            ( { model | userAlerts = alerts }, Cmd.none )
-
-        SendActionCommand cmd alert ->
-            ( model, UserAlert.sendCommand cmd alert )
-
-        UserAlertSkipped alert ->
-            ( model |> removeCurrentAlert, Cmd.none )
-
-        UserAlertInProgress alert ->
-            ( model, UserAlert.start alert )
-
-        UserAlertDone alert ->
-            ( model |> removeCurrentAlert, Cmd.none )
-
-        UserAlertDetails alert ->
-            ( model, UserAlert.showDetails alert )
-
         Reset ->
-            ( { model | page = 1, files = [], userAlerts = [] }, Cmd.none )
+            ( { model | page = 1, files = [] }, Cmd.none )
 
 
 
 -- VIEW
 
 
-renderFile : Helpers -> Model -> File -> Html Msg
-renderFile helpers model file =
+renderFile : Helpers -> Time.Posix -> Model -> File -> Html Msg
+renderFile helpers now model file =
     let
         ( basename, extname ) =
             File.splitName file.filename
 
         timeAgo =
-            helpers.distance_of_time_in_words file.updated model.now
+            helpers.distance_of_time_in_words file.updated now
 
         dirPath =
             Path.parent file.path
@@ -241,42 +208,14 @@ showMoreButton helpers =
         ]
 
 
-viewAlerts : Helpers -> Model -> Html Msg
-viewAlerts helpers model =
-    let
-        msg =
-            \alertMsg ->
-                case alertMsg of
-                    UserAlert.ShowInParent path showInWeb ->
-                        ShowInParent path showInWeb
-
-                    UserAlert.SendCommand cmd alert ->
-                        SendActionCommand cmd alert
-
-                    UserAlert.ShowHelp ->
-                        ShowHelp
-    in
-    case model.userAlerts of
-        alert :: _ ->
-            Html.map msg
-                (UserAlert.view
-                    helpers
-                    model.platform
-                    alert
-                )
-
-        _ ->
-            Html.text ""
-
-
-view : Helpers -> Model -> Html Msg
-view helpers model =
+view : Helpers -> Time.Posix -> Model -> Html Msg
+view helpers now model =
     let
         nbFiles =
             model.page * nbActivitiesPerPage
 
         renderLine =
-            renderFile helpers model
+            renderFile helpers now model
 
         filesToRender =
             List.take nbFiles model.files
@@ -285,8 +224,7 @@ view helpers model =
             List.length model.files > nbFiles
     in
     section [ class "two-panes__content two-panes__content--dashboard" ]
-        [ viewAlerts helpers model
-        , case filesToRender of
+        [ case filesToRender of
             [] ->
                 viewEmptyFileList helpers
 
@@ -310,21 +248,3 @@ viewRecentFileList helpers files renderLine hasMoreFiles =
         (List.map renderLine files
             ++ [ viewIf hasMoreFiles (showMoreButton helpers) ]
         )
-
-
-
---HELPERS
-
-
-removeCurrentAlert : Model -> Model
-removeCurrentAlert model =
-    { model
-        | userAlerts =
-            List.tail model.userAlerts
-                |> Maybe.withDefault []
-    }
-
-
-currentUserAlert : Model -> Maybe UserAlert
-currentUserAlert model =
-    List.head model.userAlerts

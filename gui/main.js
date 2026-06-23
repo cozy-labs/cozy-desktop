@@ -375,7 +375,7 @@ const updateState = async ({ newState, data }) => {
     } else if (status === 'user-alert' && userAlerts && userAlerts.length)
       tray.setStatus(
         'user-alert',
-        translate('Dashboard Synchronization suspended')
+        translate('Dashboard Some files could not be synced')
       )
     else tray.setStatus('syncing')
   } else if (newState === 'syncing' && filename) {

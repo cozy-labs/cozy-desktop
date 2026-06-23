@@ -40,7 +40,7 @@ const systrayInfo = (appStatus, label) => {
     case 'error':
       return ['error', label]
     case 'user-alert':
-      return ['pause', label]
+      return ['error', label]
     case 'syncing':
       return [
         'sync',

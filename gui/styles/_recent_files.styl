@@ -1,3 +1,5 @@
+@require '_item_line'
+
 .recent-files
   display flex
   flex-direction column
@@ -19,39 +21,21 @@
     font-size rem(16)
 
 
-$fileLinePaddingRight = .5em
-
 .file-line
-  padding 1.1em $fileLinePaddingRight 1.1em 5em
-  font-weight: normal
-  position: relative
-  width 100%
-  box-sizing border-box
-  display: flex
-  flex-direction: column
-  border-bottom: 1px solid #d6d8da
-  cursor: pointer;
-
-  &:hover, &:active
-    background: var(--paleGrey)
-
-    .file-path
-      text-decoration: underline
+  @extend $item-line
 
 .file-type
   content ''
   position absolute
   left 1em
-  top 0
-  bottom 0
-  margin auto 0
+  top $fileLinePaddingTop
   width 2rem
   height 2rem
   background-repeat no-repeat
   background-size contain
   background-position center center
 
-  for mimetype in 'archive' 'audio' 'binary' 'code' 'contact' 'cozy-note' 'file' 'folder' 'image' 'link' 'pdf' 'presentation' 'spreadsheet' 'text' 'video'
+  for mimetype in 'archive' 'audio' 'binary' 'code' 'contact' 'cozy-note' 'file' 'folder' 'image' 'link' 'pdf' 'presentation' 'spreadsheet' 'system-error' 'text' 'video'
       &.file-type-{mimetype}
           background-image url("./images/type-icons/icon-type-" + mimetype + ".svg")
 

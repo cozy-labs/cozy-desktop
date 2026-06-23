@@ -7,18 +7,19 @@ port module Data.UserAlert exposing
     , same
     , sendCommand
     , showDetails
-    , start
     , view
     )
 
+import Data.File as File
 import Data.Path as Path exposing (Path)
 import Data.Platform as Platform exposing (Platform)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import I18n exposing (Helpers)
+import Icons
+import Time
 import Util.Conditional exposing (ShowInWeb, inWeb, onOS)
-import Util.DecorationParser exposing (DecorationResult(..), findDecorations)
 
 
 type alias UserAlertCode =
@@ -43,7 +44,7 @@ type Side
 
 
 type alias SynchronizationErrorInfo =
-    { status : UserActionStatus, seq : Int, docType : String, path : String, side : Maybe Side }
+    { status : UserActionStatus, seq : Int, id : String, docType : String, path : String, side : Maybe Side, lastSeenAt : Time.Posix }
 
 
 type alias RemoteWarningInfo =
@@ -62,6 +63,7 @@ type Msg
     = SendCommand Command UserAlert -- send specified command to client
     | ShowInParent Path ShowInWeb -- open file explorer or web Twake Drive at parent's path
     | ShowHelp
+    | OpenFile Path ShowInWeb
 
 
 same : UserAlert -> UserAlert -> Bool
@@ -84,20 +86,12 @@ same alertA alertB =
 port userAlertDetails : EncodedUserAlert -> Cmd msg
 
 
-port userActionInProgress : EncodedUserAlert -> Cmd msg
-
-
 port userActionCommand : ( EncodedCommand, EncodedUserAlert ) -> Cmd msg
 
 
 showDetails : UserAlert -> Cmd msg
 showDetails alert =
     userAlertDetails (encode alert)
-
-
-start : UserAlert -> Cmd msg
-start alert =
-    userActionInProgress (encode alert)
 
 
 sendCommand : Command -> UserAlert -> Cmd msg
@@ -117,13 +111,15 @@ type alias EncodedUserAlert =
     , side : Maybe String
     , doc :
         Maybe
-            { docType : String
+            { id : String
+            , docType : String
             , path : String
             }
     , links :
         Maybe
             { self : String
             }
+    , lastSeenAt : Maybe Int
     }
 
 
@@ -132,23 +128,28 @@ type alias EncodedCommand =
 
 
 decode : EncodedUserAlert -> Maybe UserAlert
-decode { seq, status, code, side, doc, links } =
+decode { seq, status, code, side, doc, links, lastSeenAt } =
     let
         decodedStatus =
             decodeUserActionStatus status
+
+        decodedLastSeenAt =
+            Maybe.withDefault (Time.millisToPosix 0) (Maybe.map Time.millisToPosix lastSeenAt)
     in
     case ( doc, links, seq ) of
         ( _, Just { self }, _ ) ->
             Just (RemoteWarning code { status = decodedStatus, link = self })
 
-        ( Just { docType, path }, _, Just num ) ->
+        ( Just { id, docType, path }, _, Just num ) ->
             Just
                 (SynchronizationError code
                     { status = decodedStatus
                     , seq = num
+                    , id = id
                     , docType = docType
                     , path = path
                     , side = decodedSide side
+                    , lastSeenAt = decodedLastSeenAt
                     }
                 )
 
@@ -164,8 +165,9 @@ encode alert =
             , status = encodeUserActionStatus a.status
             , code = code
             , side = encodedSide a.side
-            , doc = Just { docType = a.docType, path = a.path }
+            , doc = Just { id = a.id, docType = a.docType, path = a.path }
             , links = Nothing
+            , lastSeenAt = Just (Time.posixToMillis a.lastSeenAt)
             }
 
         RemoteError code ->
@@ -175,6 +177,7 @@ encode alert =
             , side = Nothing
             , doc = Nothing
             , links = Nothing
+            , lastSeenAt = Nothing
             }
 
         RemoteWarning code a ->
@@ -184,6 +187,7 @@ encode alert =
             , side = Nothing
             , links = Just { self = a.link }
             , doc = Nothing
+            , lastSeenAt = Nothing
             }
 
 
@@ -273,24 +277,104 @@ type ButtonType
     | SecondaryWithDanger
 
 
-view : Helpers -> Platform -> UserAlert -> Html Msg
-view helpers platform alert =
+view : Helpers -> Platform -> Time.Posix -> UserAlert -> Html Msg
+view helpers platform now alert =
+    case alert of
+        SynchronizationError _ info ->
+            viewSyncError helpers platform now alert info
+
+        RemoteError _ ->
+            viewRemoteError helpers platform now alert
+
+        RemoteWarning _ _ ->
+            viewRemoteError helpers platform now alert
+
+
+viewSyncError : Helpers -> Platform -> Time.Posix -> UserAlert -> SynchronizationErrorInfo -> Html Msg
+viewSyncError helpers platform now alert info =
     let
         { title, content, buttons } =
             viewByCode helpers alert
 
-        side =
-            case alert of
-                SynchronizationError _ a ->
-                    a.side
+        path =
+            Path.fromString platform info.path
+
+        ( basename, extname ) =
+            File.splitName (Path.name path)
+
+        dirPath =
+            Path.parent path
+
+        icon =
+            if info.docType == "directory" then
+                "folder"
+
+            else
+                info.docType
+
+        medium =
+            case info.side of
+                -- Open on the side opposite of the one on which the change is
+                -- being applied.
+                Just Local ->
+                    inWeb
 
                 _ ->
-                    Nothing
+                    onOS
+
+        timeAgo =
+            helpers.distance_of_time_in_words info.lastSeenAt now
     in
-    div [ class "u-p-1 u-bg-primaryColorLight" ]
-        [ header [ class "u-title-h1 u-primaryContrastTextColor" ] [ text (helpers.t title) ]
-        , p [ class "u-text u-primaryContrastTextColor" ] (alertContent helpers platform content side)
-        , div [ class "u-flex u-flex-justify-end" ] buttons
+    div
+        [ class "alert-line" ]
+        [ span [ class "file-alert-icon" ]
+            [ div [ class ("file-type file-type-" ++ icon) ] []
+            , span [ class "badge" ] [ text "!" ]
+            ]
+        , span
+            [ class "file-line-content file-name-wrapper u-c-pointer"
+            , Html.Attributes.title (Path.toString path)
+            , onClick (OpenFile path medium)
+            ]
+            [ span [ class "file-name-name" ] [ text basename ]
+            , span [ class "file-name-ext" ] [ text extname ]
+            , span [ class "file-name-open" ] [ Icons.openwith 12 False ]
+            ]
+        , span [ class "file-line-content file-extra" ]
+            [ span [ class "file-time-ago" ] [ text timeAgo ]
+            , span
+                [ class "file-parent-folder u-c-pointer"
+                , Html.Attributes.title (Path.toString dirPath)
+                , onClick (ShowInParent path medium)
+                ]
+                [ text (Path.toString dirPath) ]
+            ]
+        , span [ class "file-line-content u-spacenormal u-errorColorDark u-mt-half" ]
+            (alertContent helpers content)
+        , div [ class "u-flex u-mt-half u-pb-1" ] buttons
+        ]
+
+
+viewRemoteError : Helpers -> Platform -> Time.Posix -> UserAlert -> Html Msg
+viewRemoteError helpers platform now alert =
+    let
+        { title, content, buttons } =
+            viewByCode helpers alert
+    in
+    div
+        [ class "alert-line" ]
+        [ span [ class "file-alert-icon" ]
+            [ div [ class "file-type file-type-system-error" ] []
+            ]
+        , span [ class "file-line-content file-name-wrapper" ]
+            [ span [ class "file-name-name" ] [ text (helpers.t title) ]
+            ]
+        , span [ class "file-line-content file-extra" ]
+            [ span [ class "file-parent-folder" ] [ text (helpers.t "UserAlert System") ]
+            ]
+        , span [ class "file-line-content u-spacenormal u-errorColorDark u-mt-half" ]
+            (alertContent helpers content)
+        , div [ class "u-flex u-mt-half u-pb-1" ] buttons
         ]
 
 
@@ -304,8 +388,8 @@ viewByCode helpers alert =
                 , "Error Your hosting provider is working on fixing the issue and the synchronization will resume once it is fixed."
                 ]
             , buttons =
-                [ actionButton helpers ShowHelp "Button Contact support" Secondary
-                , actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary
+                [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary
+                , actionButton helpers ShowHelp "Button Contact support" Secondary
                 ]
             }
 
@@ -329,83 +413,83 @@ viewByCode helpers alert =
                 , "CGUUpdated Their acceptance is required to continue using your Twake Workplace."
                 ]
             , buttons =
-                [ actionButton helpers (SendCommand Retry alert) "UserAlert OK" Secondary
-                , linkButton helpers link "CGUUpdated Read the new ToS" Primary
+                [ linkButton helpers link "CGUUpdated Read the new ToS" Primary
+                , actionButton helpers (SendCommand Retry alert) "UserAlert OK" Secondary
                 ]
             }
 
         RemoteWarning _ _ ->
             { title = "", content = [], buttons = [] }
 
-        SynchronizationError "ConflictingName" { docType, path } ->
+        SynchronizationError "ConflictingName" { docType } ->
             let
                 localDocType =
-                    "Helpers " ++ docType
+                    localDocTypeLabel docType
 
                 localAction =
                     helpers.interpolate [ localDocType ] "UserAlert Rename {0}"
             in
             { title = "Error Conflict with existing document"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The name of {0} `{1}` is conflicting with an existing document."
+                [ helpers.interpolate [ localDocType ] "Error The {0}'s name is conflicting with an existing document."
                 , helpers.interpolate [ localDocType ] "Error You need to rename this {0} to solve the conflict."
                 ]
             , buttons =
-                [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Secondary
-                , actionButton helpers (SendCommand CreateConflict alert) localAction Primary
+                [ actionButton helpers (SendCommand CreateConflict alert) localAction Primary
+                , actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Secondary
                 ]
             }
 
-        SynchronizationError "ExcludedDir" { path } ->
+        SynchronizationError "ExcludedDir" { docType } ->
             let
                 localAction =
-                    helpers.interpolate [ "Helpers folder" ] "UserAlert Rename {0}"
+                    helpers.interpolate [ localDocTypeLabel docType ] "UserAlert Rename {0}"
             in
             { title = "Error Conflict with excluded directory"
             , content =
-                [ helpers.interpolate [ path ] "Error The remote directory `{0}` was excluded from the synchronization on this device."
+                [ "Error The remote directory was excluded from the synchronization on this device."
                 , "Error The local directory with the same path can either be linked to the remote one which will be synchronized again or be renamed to solve this conflict."
                 ]
             , buttons =
-                [ actionButton helpers (SendCommand CreateConflict alert) localAction Secondary
-                , actionButton helpers (SendCommand LinkDirectories alert) "UserAlert Link directories" Primary
+                [ actionButton helpers (SendCommand LinkDirectories alert) "UserAlert Link directories" Primary
+                , actionButton helpers (SendCommand CreateConflict alert) localAction Secondary
                 ]
             }
 
-        SynchronizationError "FileTooLarge" { path } ->
+        SynchronizationError "FileTooLarge" _ ->
             { title = "Error The file is too large"
             , content =
-                [ helpers.interpolate [ path ] "Error The file `{0}` could not be synchronized on your Twake Workplace because its size exceeds the maximum allowed of 5 GiB."
+                [ "Error The file could not be synchronized on your Twake Workplace because its size exceeds the maximum allowed of 5 GiB."
                 , "Error It will therefore not be synchronized. To stop being notified, you can click on the button below."
                 ]
             , buttons =
                 [ actionButton helpers (SendCommand GiveUp alert) "UserAlert Got it" Primary ]
             }
 
-        SynchronizationError "IncompatibleDoc" { docType, path } ->
+        SynchronizationError "IncompatibleDoc" { docType } ->
             let
                 localDocType =
-                    "Helpers " ++ docType
+                    localDocTypeLabel docType
             in
             { title = "Error Document path incompatible with current OS"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name either contains forbidden characters or is reserved or is too long for your Operating System."
+                [ helpers.interpolate [ localDocType ] "Error The {0}'s name either contains forbidden characters or is reserved or is too long for your Operating System."
                 , "Error Try renaming it on Twake Drive without using special characters and choose a shorter name if necessary."
                 ]
             , buttons =
-                [ actionButton helpers (SendCommand ShowDetails alert) "UserAlert Show details" Secondary
-                , actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary
+                [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary
+                , actionButton helpers (SendCommand ShowDetails alert) "UserAlert Show details" Secondary
                 ]
             }
 
-        SynchronizationError "InvalidMetadata" { docType, path } ->
+        SynchronizationError "InvalidMetadata" { docType } ->
             let
                 localDocType =
-                    "Helpers " ++ docType
+                    localDocTypeLabel docType
             in
             { title = "Error Invalid document metadata"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s metadata cannot be accepted by your Twake Workplace."
+                [ helpers.interpolate [ localDocType ] "Error The {0}'s metadata cannot be accepted by your Twake Workplace."
                 , "Error This message persists if the local metadata of your document is corrupted. In this case try to move it out of the Twake folder and back again or contact support for help on the procedure."
                 ]
             , buttons =
@@ -413,82 +497,82 @@ viewByCode helpers alert =
                 ]
             }
 
-        SynchronizationError "InvalidName" { docType, path } ->
+        SynchronizationError "InvalidName" { docType } ->
             let
                 localDocType =
-                    "Helpers " ++ docType
+                    localDocTypeLabel docType
             in
             { title = "Error Invalid document name"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s name contains characters forbidden by your Twake Workplace."
+                [ helpers.interpolate [ localDocType ] "Error The {0}'s name contains characters forbidden by your Twake Workplace."
                 , "Error Try renaming it without using the following characters: / \\u{0000} \\n \\u{000D}."
                 ]
             , buttons = [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ]
             }
 
-        SynchronizationError "MissingPermissions" { docType, path } ->
+        SynchronizationError "MissingPermissions" { docType } ->
             let
                 localDocType =
-                    "Helpers " ++ docType
+                    localDocTypeLabel docType
             in
             { title = "Error Access denied temporarily"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be updated on your computer to apply the changes made on your Twake Workplace."
+                [ helpers.interpolate [ localDocType ] "Error The {0} could not be updated on your computer to apply the changes made on your Twake Workplace."
                 , "Error Synchronization will resume as soon as you close the opened file(s) blocking this operation or restore sufficient access rights."
                 ]
             , buttons = [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ]
             }
 
-        SynchronizationError "NeedsRemoteMerge" { docType, path } ->
+        SynchronizationError "NeedsRemoteMerge" { docType } ->
             let
                 localDocType =
-                    "Helpers " ++ docType
+                    localDocTypeLabel docType
             in
             { title = "Error Conflict with remote version"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` has been simultaneously modified on your computer and your Twake Workplace."
+                [ helpers.interpolate [ localDocType ] "Error The {0} has been simultaneously modified on your computer and your Twake Workplace."
                 , "Error This message persists if Twake Desktop is unable to resolve this conflict. In this case rename the version you want to keep and click on \"Give up\"."
                 ]
             , buttons =
-                [ actionButton helpers (SendCommand GiveUp alert) "UserAlert Give up" SecondaryWithDanger
-                , actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary
+                [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary
+                , actionButton helpers (SendCommand GiveUp alert) "UserAlert Give up" SecondaryWithDanger
                 ]
             }
 
-        SynchronizationError "NoCozySpace" { docType, path } ->
+        SynchronizationError "NoCozySpace" { docType } ->
             let
                 localDocType =
-                    "Helpers " ++ docType
+                    localDocTypeLabel docType
             in
             { title = "Error Your Twake Workplace's disk space is saturated"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be written to your Twake Workplace because its maximum storage capacity has been reached."
+                [ helpers.interpolate [ localDocType ] "Error The {0} could not be written to your Twake Workplace because its maximum storage capacity has been reached."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files...), or increased its capacity."
                 ]
             , buttons = [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ] -- Could show link to buy more disk space
             }
 
-        SynchronizationError "NoDiskSpace" { docType, path } ->
+        SynchronizationError "NoDiskSpace" { docType } ->
             let
                 localDocType =
-                    "Helpers " ++ docType
+                    localDocTypeLabel docType
             in
             { title = "Error Your computer's disk space is insufficient"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}` could not be written to your computer disk because there is not enough space available."
+                [ helpers.interpolate [ localDocType ] "Error The {0} could not be written to your computer disk because there is not enough space available."
                 , "Error Synchronization will resume as soon as you have freed up space (emptied your Trash, deleted unnecessary files…)."
                 ]
             , buttons = [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ]
             }
 
-        SynchronizationError "PathTooDeep" { docType, path } ->
+        SynchronizationError "PathTooDeep" { docType } ->
             let
                 localDocType =
-                    "Helpers " ++ docType
+                    localDocTypeLabel docType
             in
             { title = "Error Document path with too many levels"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error The {0} `{1}`'s path has too many levels (i.e. parent folders) for your Twake Workplace."
+                [ helpers.interpolate [ localDocType ] "Error The {0}'s path has too many levels (i.e. parent folders) for your Twake Workplace."
                 , "Error Try removing some parent levels or moving it to antoher folder."
                 ]
             , buttons = [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ]
@@ -504,19 +588,19 @@ viewByCode helpers alert =
                 [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary ]
             }
 
-        SynchronizationError "UnknownRemoteError" { docType, path } ->
+        SynchronizationError "UnknownRemoteError" { docType } ->
             let
                 localDocType =
-                    "Helpers " ++ docType
+                    localDocTypeLabel docType
             in
             { title = "Error Synchronization error"
             , content =
-                [ helpers.interpolate [ localDocType, path ] "Error Twake Desktop encountered an unexpected error while trying to synchronise the {0} `{1}`."
+                [ helpers.interpolate [ localDocType ] "Error Twake Desktop encountered an unexpected error while trying to synchronise the {0}."
                 , "Error Your hosting provider is working on fixing the issue and the synchronization will automatically be retried periodically."
                 ]
             , buttons =
-                [ actionButton helpers ShowHelp "Button Contact support" Secondary
-                , actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary
+                [ actionButton helpers (SendCommand Retry alert) "UserAlert Retry" Primary
+                , actionButton helpers ShowHelp "Button Contact support" Secondary
                 ]
             }
 
@@ -524,13 +608,21 @@ viewByCode helpers alert =
             { title = "", content = [], buttons = [] }
 
 
-alertContent : Helpers -> Platform -> List String -> Maybe Side -> List (Html Msg)
-alertContent helpers platform details side =
+localDocTypeLabel : String -> String
+localDocTypeLabel docType =
+    if docType == "directory" then
+        "Helpers folder"
+
+    else
+        "Helpers file"
+
+
+alertContent : Helpers -> List String -> List (Html Msg)
+alertContent helpers details =
     details
         |> List.map helpers.capitalize
-        |> List.map (viewAlertContentLine platform side)
-        |> List.intersperse [ br [] [] ]
-        |> List.concat
+        |> List.map text
+        |> List.intersperse (br [] [])
 
 
 classList : List String -> List ( Maybe Bool, String ) -> String
@@ -550,21 +642,20 @@ classList baseList optionalClasses =
 
 buttonClass : ButtonType -> String
 buttonClass bType =
-    [ "c-btn" ]
+    "alert-btn"
         ++ (case bType of
                 Primary ->
-                    []
+                    " alert-btn--primary"
 
                 Secondary ->
-                    [ "c-btn--secondary" ]
+                    ""
 
                 PrimaryWithDanger ->
-                    [ "c-btn--danger" ]
+                    " alert-btn--danger"
 
                 SecondaryWithDanger ->
-                    [ "c-btn--danger-outline" ]
+                    " alert-btn--danger-light"
            )
-        |> String.join " "
 
 
 actionButton : Helpers -> Msg -> String -> ButtonType -> Html Msg
@@ -573,7 +664,36 @@ actionButton helpers msg label bType =
         [ class (buttonClass bType)
         , onClick msg
         ]
-        [ span [] [ text (helpers.t label) ] ]
+        [ span [ class "alert-btn-icon" ] [ iconForMsg msg ]
+        , text (helpers.t label)
+        ]
+
+
+iconForMsg : Msg -> Html Msg
+iconForMsg msg =
+    case msg of
+        ShowHelp ->
+            Icons.help 12 False
+
+        SendCommand cmd _ ->
+            case cmd of
+                Retry ->
+                    Icons.sync 12 False
+
+                CreateConflict ->
+                    Icons.pen 12 False
+
+                LinkDirectories ->
+                    Icons.link 12 False
+
+                GiveUp ->
+                    Icons.cross 12 False
+
+                ShowDetails ->
+                    Icons.info 12 False
+
+        _ ->
+            text ""
 
 
 linkButton : Helpers -> String -> String -> ButtonType -> Html Msg
@@ -582,42 +702,6 @@ linkButton helpers link label bType =
         [ class (buttonClass bType)
         , href link
         ]
-        [ span [] [ text (helpers.t label) ] ]
-
-
-viewAlertContentLine : Platform -> Maybe Side -> String -> List (Html Msg)
-viewAlertContentLine platform side line =
-    let
-        toHTML =
-            \decoration ->
-                case decoration of
-                    Decorated path ->
-                        Path.fromString platform path
-                            |> decoratedName side
-
-                    Normal str ->
-                        text str
-    in
-    findDecorations line
-        |> List.map toHTML
-
-
-decoratedName : Maybe Side -> Path -> Html Msg
-decoratedName side path =
-    let
-        medium =
-            case side of
-                -- Open on the side opposite of the one on which the change is
-                -- being applied.
-                Just Local ->
-                    inWeb
-
-                _ ->
-                    onOS
-    in
-    span
-        [ class "u-bg-primaryColor u-bdrs-4 u-ph-half u-pv-0 u-c-pointer"
-        , title (Path.toString path)
-        , onClick (ShowInParent path medium)
+        [ span [ class "alert-btn-icon" ] [ Icons.openwith 12 False ]
+        , text (helpers.t label)
         ]
-        [ text (Path.name path) ]

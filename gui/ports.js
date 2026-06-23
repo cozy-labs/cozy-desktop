@@ -182,10 +182,6 @@ elmectron.ports.userAlertDetails.subscribe(action => {
   ipcRenderer.send('userAlertDetails', action)
 })
 
-elmectron.ports.userActionInProgress.subscribe(action => {
-  ipcRenderer.send('userActionInProgress', action)
-})
-
 elmectron.ports.userActionCommand.subscribe(([cmd, action]) => {
   ipcRenderer.send('userActionCommand', cmd, action)
 })
