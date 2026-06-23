@@ -95,8 +95,13 @@ const notificationsState = {
   revokedAlertShown: false,
   syncDirUnlinkedShown: false,
   invalidConfigShown: false,
-  notifiedMsg: ''
+  notifiedMsg: '',
+  userAlertNotification: null,
+  notifiedAlertKeys: new Set(),
+  currentUserAlertKeys: new Set()
 }
+
+const alertKey = a => (a.doc ? `${a.code}::${a.doc.path}` : a.code)
 
 const setupDesktop = async () => {
   try {
@@ -361,6 +366,14 @@ const updateState = async ({ newState, data }) => {
   const { status, filename, userAlerts, errors } = data || {}
 
   if (newState === 'sync-state') {
+    if (status === 'uptodate') {
+      if (notificationsState.userAlertNotification) {
+        notificationsState.userAlertNotification.close()
+      }
+      notificationsState.userAlertNotification = null
+      notificationsState.notifiedAlertKeys = new Set()
+    }
+
     if (status === 'uptodate') tray.setStatus('online')
     else if (status === 'offline') tray.setStatus('offline')
     else if (status === 'error' && errors && errors.length) {
@@ -372,12 +385,50 @@ const updateState = async ({ newState, data }) => {
           translate('Dashboard Synchronization impossible')
         )
       }
-    } else if (status === 'user-alert' && userAlerts && userAlerts.length)
+    } else if (status === 'user-alert' && userAlerts && userAlerts.length) {
       tray.setStatus(
         'user-alert',
         translate('Dashboard Some files could not be synced')
       )
-    else tray.setStatus('syncing')
+      const currentKeys = new Set(userAlerts.map(alertKey))
+      notificationsState.currentUserAlertKeys = currentKeys
+      // Prune: keep only alerts that are still present, so that an alert
+      // resolved then reappeared is considered new again.
+      notificationsState.notifiedAlertKeys = new Set(
+        [...notificationsState.notifiedAlertKeys].filter(k =>
+          currentKeys.has(k)
+        )
+      )
+      const hasNewAlerts = [...currentKeys].some(
+        k => !notificationsState.notifiedAlertKeys.has(k)
+      )
+      if (!notificationsState.userAlertNotification && hasNewAlerts) {
+        const notification = new Notification({
+          title: 'Twake Desktop',
+          body: translate('Dashboard Some files could not be synced')
+        })
+        notification.on('click', () => {
+          notificationsState.userAlertNotification = null
+          notificationsState.notifiedAlertKeys =
+            notificationsState.currentUserAlertKeys
+          notification.close()
+          if (trayWindow) {
+            trayWindow.show()
+            trayWindow.send('show-alerts-panel', true)
+          }
+        })
+        notification.on('close', () => {
+          // On close without click, we only clear the notification but keep
+          // notifiedAlertKeys: dismissing without viewing should not acquit
+          // new alerts, otherwise the same alert would re-notify on the next
+          // sync-state.
+          notificationsState.userAlertNotification = null
+        })
+        notification.show()
+        notificationsState.userAlertNotification = notification
+        notificationsState.notifiedAlertKeys = currentKeys
+      }
+    } else tray.setStatus('syncing')
   } else if (newState === 'syncing' && filename) {
     tray.setStatus(newState, filename)
   } else {

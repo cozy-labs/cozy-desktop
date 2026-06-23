@@ -204,6 +204,10 @@ ipcRenderer.on('disk-space', (event, info) => {
   elmectron.ports.diskSpace.send(info)
 })
 
+ipcRenderer.on('show-alerts-panel', (event, visible) => {
+  elmectron.ports.showAlertsPanel.send(visible)
+})
+
 // Give focus to DOM nodes
 elmectron.ports.focus.subscribe(selector => {
   // We wait that the CSS transition has finished before focusing the node
