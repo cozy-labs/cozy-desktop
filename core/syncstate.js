@@ -124,7 +124,7 @@ const addError = (
   errors /*: SyncError[] */,
   newError /*: SyncError */
 ) /*: SyncError[] */ => {
-  const existingError = errors.find(error => error.code === error.code)
+  const existingError = errors.find(error => error.code === newError.code)
   if (existingError) {
     return errors
   } else {
