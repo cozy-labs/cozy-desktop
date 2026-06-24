@@ -154,7 +154,7 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
 const retryAll = async (
   causes /*: Array<{| err: RemoteError |} | {| err: SyncError, change: Change |}> */,
   sync /*: Sync */
-) => {
+) /*: Promise<boolean> */ => {
   log.debug('retrying after blocking errors', causes)
 
   const hasUnreachable = causes.some(
@@ -172,7 +172,7 @@ const retryAll = async (
       if (sync.retryInterval) sync.retryInterval.refresh()
       // We're still offline so no need to try fetching changes or
       // synchronizing.
-      return
+      return false
     }
   }
 
@@ -193,13 +193,15 @@ const retryAll = async (
   if (sync.remote.watcher && !sync.remote.watcher.running) {
     sync.remote.watcher.start()
   }
+
+  return true
 }
 
 const retry = async (
   cause /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */,
   sync /*: Sync */
-) => {
-  await retryAll([cause], sync)
+) /*: Promise<boolean> */ => {
+  return retryAll([cause], sync)
 }
 
 const skip = async (

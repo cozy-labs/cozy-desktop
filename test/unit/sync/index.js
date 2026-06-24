@@ -1131,6 +1131,10 @@ describe('Sync', function() {
           it('clears RemoteWatcher blocking causes', function() {
             should(this.sync._blockedCauses.size).equal(0)
           })
+
+          it('unblocks the lifecycle', function() {
+            should(this.sync.lifecycle.blocked).be.false()
+          })
         })
 
         context('while Cozy is still unreachable', () => {
@@ -1154,6 +1158,10 @@ describe('Sync', function() {
 
           it('keeps RemoteWatcher blocking causes', function() {
             should(this.sync._blockedCauses.size).above(0)
+          })
+
+          it('keeps the lifecycle blocked', function() {
+            should(this.sync.lifecycle.blocked).be.true()
           })
         })
       })

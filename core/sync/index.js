@@ -1239,13 +1239,13 @@ class Sync {
             })
             await syncErrors.retry(cause, this)
         }
+        this.lifecycle.unblock()
       } else {
         const causes = Array.from(this._blockedCauses.values())
-        await syncErrors.retryAll(causes, this)
+        const proceeded = await syncErrors.retryAll(causes, this)
+        if (proceeded) this.lifecycle.unblock()
       }
     } finally {
-      this.lifecycle.unblock()
-
       release()
     }
   }

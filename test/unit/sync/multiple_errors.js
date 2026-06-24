@@ -253,6 +253,10 @@ describe('Multiple sync errors', function() {
 
       should(this.events.emit).have.been.calledWith('offline')
       should(this.events.emit).not.have.been.calledWith('online')
+      // The lifecycle must stay blocked so runSyncLoop does not resume and
+      // re-apply the blocked change right after the ping that just failed.
+      should(this.sync.lifecycle.blocked).be.true()
+      should(this.sync._blockedCauses.size).equal(1)
     })
   })
 
