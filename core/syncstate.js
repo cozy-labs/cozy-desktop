@@ -189,10 +189,10 @@ class SyncState extends EventEmitter {
     const status /*: SyncStatus */ =
       errors.length > 0
         ? 'error'
-        : userAlerts.length > 0
-        ? 'user-alert'
         : offline
         ? 'offline'
+        : userAlerts.length > 0
+        ? 'user-alert'
         : syncing
         ? 'syncing'
         : buffering

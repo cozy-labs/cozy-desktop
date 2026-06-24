@@ -434,4 +434,39 @@ describe('Multiple sync errors', function() {
       should(this.events.emit).not.have.been.calledWith('user-action-done')
     })
   })
+
+  describe('SyncState status priority', () => {
+    it('shows offline status over pre-existing user alerts', function() {
+      const events = new SyncState()
+
+      // Simulate a pre-existing user alert
+      events.update({
+        userAlerts: [
+          {
+            seq: 1,
+            code: syncErrors.MISSING_PERMISSIONS_CODE,
+            status: 'Required',
+            doc: null,
+            side: null,
+            links: null,
+            lastSeenAt: Date.now()
+          }
+        ]
+      })
+
+      // Simulate network loss
+      events.emit('offline')
+
+      should(events.state.offline).be.true()
+      should(events.state.userAlerts.length).equal(1)
+
+      let emitted
+      events.on('sync-state', state => {
+        emitted = state.status
+      })
+      events.emitStatus()
+
+      should(emitted).equal('offline')
+    })
+  })
 })
