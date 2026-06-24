@@ -1,5 +1,27 @@
 # Twake Desktop: Changelog
 
+## 5.4.0-beta.2 - 2026-06-24
+
+Improvements for all users:
+
+- When several sync problems happened at the same time, only some of them were
+  shown and they would disappear without telling you whether they were fixed.
+  All unresolved sync errors are now listed in a dedicated panel in the tray,
+  and a notification lets you know when they occur.
+- When the network dropped while a sync alert was visible, the tray kept
+  showing the alert instead of reflecting the loss of connectivity.
+  The offline status is now prioritized over alerts so the tray correctly shows
+  it during network outages, and the alert reappears once the connection is
+  back.
+- While the remote Cozy could not be reached, the synchronization kept sending
+  it network requests right after each failed attempt.
+  We now keep the synchronization on hold and let retries happen only at the
+  proper interval.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.4.0-beta.1 - 2026-06-11
 
 Improvements for all users:
