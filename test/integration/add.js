@@ -402,7 +402,7 @@ describe('Add', () => {
             remote: ['parent/', 'parent/dir/']
           })
           should(
-            helpers.putDocs('path', 'local.path', 'remote', 'sides', 'errors')
+            helpers.putDocs('path', 'local.path', 'remote', 'sides', 'skipped')
           ).deepEqual([
             {
               path: path.normalize('parent/dir'),
@@ -411,6 +411,12 @@ describe('Add', () => {
             },
             // We encounter a conflict error since a remote doc with the same
             // path already exists and we skip the change.
+            {
+              path: path.normalize('parent/dir'),
+              local: { path: path.normalize('parent/dir') },
+              sides: { target: 1, local: 1 },
+              skipped: true
+            },
             // The conflict is solved when the remote watcher fetches the remote
             // doc and links it to the local one during Merge.
             {

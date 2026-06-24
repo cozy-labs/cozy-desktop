@@ -11,7 +11,9 @@ import Data.Status exposing (Status(..))
 import Data.SyncError as SyncError
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (..)
 import I18n exposing (..)
+import Icons
 
 
 
@@ -36,7 +38,7 @@ icon status platform =
                     imgIcon "images/tray-icon-macos/idleTemplate@2x.png" "uptodate"
 
                 UserActionRequired ->
-                    imgIcon "images/tray-icon-macos/pauseTemplate@2x.png" "offline"
+                    imgIcon "images/tray-icon-macos/errorTemplate@2x.png" "error"
 
                 Offline ->
                     imgIcon "images/tray-icon-macos/offlineTemplate@2x.png" "offline"
@@ -53,7 +55,7 @@ icon status platform =
                     imgIcon "images/tray-icon/idle.png" "uptodate"
 
                 UserActionRequired ->
-                    imgIcon "images/tray-icon/pause.png" "offline"
+                    imgIcon "images/tray-icon/error.png" "error"
 
                 Offline ->
                     imgIcon "images/tray-icon/offline.png" "offline"
@@ -75,7 +77,7 @@ statusToString helpers status =
             helpers.t "Dashboard Offline"
 
         UserActionRequired ->
-            helpers.t "Dashboard Synchronization suspended"
+            helpers.t "Dashboard Some files could not be synced"
 
         Starting ->
             helpers.t "Dashboard Sync in progress (preparation)"
@@ -108,17 +110,32 @@ viewMessage helpers status =
             [ text (statusToString helpers status) ]
 
 
-view : Helpers -> Status -> Platform -> Html msg
-view helpers status platform =
+view : Helpers -> Status -> Platform -> Bool -> msg -> Html msg
+view helpers status platform showAlerts toggleMsg =
     div
-        [ class
-            (if platform == Darwin then
-                "status"
-
-             else
-                "status blue"
-            )
+        [ classList
+            [ ( "status", True )
+            , ( "blue", platform /= Darwin )
+            , ( "status--warning", status == UserActionRequired )
+            ]
         ]
         [ span [ class "status_img" ] [ icon status platform ]
         , span [ class "status_text" ] (viewMessage helpers status)
+        , if status == UserActionRequired then
+            span
+                [ class "status__view-btn"
+                , onClick toggleMsg
+                ]
+                [ text (helpers.t "Bar View alerts")
+                , span
+                    [ classList
+                        [ ( "chevron", True )
+                        , ( "chevron--down", showAlerts )
+                        ]
+                    ]
+                    [ Icons.chevronRight 12 False ]
+                ]
+
+          else
+            Html.text ""
         ]

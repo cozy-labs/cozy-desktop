@@ -21,12 +21,14 @@ export type UserAlert = {
   seq: ?number,
   code: string,
   side: ?SideName,
-  doc?: {
+  doc: ?{
+    id: string,
     docType: string,
     path: string,
   },
   links: ?{ self: string },
-  status: UserActionStatus
+  status: UserActionStatus,
+  lastSeenAt: ?number
 }
 
 type State = {
@@ -71,8 +73,9 @@ const makeAlert = (
     status: 'Required',
     code: err.code,
     side: side || null,
-    doc: doc || null,
-    links: links || null
+    doc: doc ? { id: doc._id, docType: doc.docType, path: doc.path } : null,
+    links: links || null,
+    lastSeenAt: Date.now()
   }
 }
 
@@ -80,9 +83,15 @@ const addAlert = (
   alerts /*: UserAlert[] */,
   newAlert /*: UserAlert */
 ) /*: UserAlert[] */ => {
-  const existingAlert = alerts.find(alert => alert.code === newAlert.code)
+  const existingAlert = alerts.find(alert => {
+    if (alert.code !== newAlert.code) return false
+    if (alert.doc && newAlert.doc) return alert.doc.path === newAlert.doc.path
+    return alert.seq === newAlert.seq
+  })
   if (existingAlert) {
-    existingAlert.status = 'Required'
+    existingAlert.status = newAlert.status
+    existingAlert.seq = newAlert.seq
+    existingAlert.lastSeenAt = newAlert.lastSeenAt
     return alerts
   } else {
     return alerts.concat(newAlert)
@@ -95,7 +104,12 @@ const updateAlert = (
   status /*: UserActionStatus */
 ) /*: UserAlert[] */ => {
   return alerts.reduce((prev /*: UserAlert[] */, curr /*: UserAlert */) => {
-    if (curr.code === alert.code) {
+    const match =
+      curr.code === alert.code &&
+      (curr.doc && alert.doc
+        ? curr.doc.path === alert.doc.path
+        : curr.seq === alert.seq)
+    if (match) {
       return prev.concat({ ...alert, status })
     } else {
       return prev.concat(curr)
@@ -107,7 +121,11 @@ const removeAlert = (
   alerts /*: UserAlert[] */,
   alert /*: UserAlert */
 ) /*: UserAlert[] */ => {
-  return alerts.filter(a => a.code !== alert.code)
+  return alerts.filter(a => {
+    if (a.code !== alert.code) return true
+    if (a.doc && alert.doc) return a.doc.path !== alert.doc.path
+    return a.seq !== alert.seq
+  })
 }
 
 const makeError = (err /*: Object */) /*: SyncError */ => {
@@ -124,7 +142,7 @@ const addError = (
   errors /*: SyncError[] */,
   newError /*: SyncError */
 ) /*: SyncError[] */ => {
-  const existingError = errors.find(error => error.code === error.code)
+  const existingError = errors.find(error => error.code === newError.code)
   if (existingError) {
     return errors
   } else {
@@ -132,7 +150,7 @@ const addError = (
   }
 }
 
-module.exports = class SyncState extends EventEmitter {
+class SyncState extends EventEmitter {
   /*::
   state: State
   */
@@ -171,10 +189,10 @@ module.exports = class SyncState extends EventEmitter {
     const status /*: SyncStatus */ =
       errors.length > 0
         ? 'error'
-        : userAlerts.length > 0
-        ? 'user-alert'
         : offline
         ? 'offline'
+        : userAlerts.length > 0
+        ? 'user-alert'
         : syncing
         ? 'syncing'
         : buffering
@@ -205,20 +223,7 @@ module.exports = class SyncState extends EventEmitter {
         : // Otherwise the remaining number of changes is still the same
           state.remaining
 
-    const updatedUserAlerts = newState.userAlerts || state.userAlerts
-    const userAlerts =
-      newState.syncCurrentSeq != null
-        ? updatedUserAlerts.reduce((
-            alerts /*: UserAlert[] */,
-            alert /*: UserAlert */
-          ) => {
-            if (alert.seq && alert.seq <= newState.syncCurrentSeq) {
-              return alerts
-            } else {
-              return alerts.concat(alert)
-            }
-          }, [])
-        : updatedUserAlerts
+    const userAlerts = newState.userAlerts || state.userAlerts
 
     newState = {
       ...state,
@@ -291,15 +296,6 @@ module.exports = class SyncState extends EventEmitter {
           userAlerts: addAlert(this.state.userAlerts, makeAlert(...args))
         })
         break
-      case 'user-action-inprogress':
-        this.update({
-          userAlerts: updateAlert(
-            this.state.userAlerts,
-            makeAlert(args[0]),
-            'InProgress'
-          )
-        })
-        break
       case 'user-action-done':
         this.update({
           userAlerts: removeAlert(this.state.userAlerts, makeAlert(...args))
@@ -309,4 +305,14 @@ module.exports = class SyncState extends EventEmitter {
 
     return super.emit(name, ...args)
   }
+}
+
+module.exports = {
+  SyncState,
+  makeAlert,
+  addAlert,
+  updateAlert,
+  removeAlert,
+  makeError,
+  addError
 }

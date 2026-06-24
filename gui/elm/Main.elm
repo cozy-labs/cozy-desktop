@@ -22,7 +22,6 @@ import Window.Help as Help
 import Window.Onboarding as Onboarding
 import Window.SelectCertificate as SelectCertificate
 import Window.Tray as Tray
-import Window.Tray.Dashboard as Dashboard
 import Window.Updater as Updater
 
 
@@ -153,7 +152,7 @@ debugLog : Msg -> Msg
 debugLog msg =
     case msg of
         -- Don't log ticks to prevent flooding
-        TrayMsg (Tray.DashboardMsg (Dashboard.Tick _)) ->
+        TrayMsg (Tray.Tick _) ->
             msg
 
         _ ->

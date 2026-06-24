@@ -14,6 +14,13 @@
   display: flex
   align-items: center
 
+  &.status--warning
+    background-color unquote("color-mix(in srgb, var(--warningColorDark) 12%, white)")
+    color var(--statusWarningTextColor)
+
+    .status__view-btn
+      color var(--primaryContrastTextColor)
+
   .status_text
     text-overflow: ellipsis;
     overflow: hidden;
@@ -35,3 +42,21 @@
       @extend $spin
       background-color: var(--primaryColor)
       margin-left 1em
+
+  .status__view-btn
+    margin-left auto
+    display inline-flex
+    align-items center
+    gap 0.4em
+    padding 0 1em
+    cursor pointer
+
+    &:hover
+      opacity 0.7
+
+    .chevron
+      display inline-flex
+      align-items center
+
+      &--down svg
+        transform rotate(90deg)

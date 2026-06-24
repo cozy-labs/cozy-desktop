@@ -151,14 +151,16 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
   }
 }
 
-const retry = async (
-  cause /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */,
+const retryAll = async (
+  causes /*: Array<{| err: RemoteError |} | {| err: SyncError, change: Change |}> */,
   sync /*: Sync */
-) => {
-  log.debug('retrying after blocking error', cause)
+) /*: Promise<boolean> */ => {
+  log.debug('retrying after blocking errors', causes)
 
-  const { err } = cause
-  if (err.code === remoteErrors.UNREACHABLE_COZY_CODE) {
+  const hasUnreachable = causes.some(
+    c => c.err.code === remoteErrors.UNREACHABLE_COZY_CODE
+  )
+  if (hasUnreachable) {
     // We could simply fetch the remote changes but it could take time
     // before we're done fetching them and we want to notify the GUI we're
     // back online as soon as possible.
@@ -170,25 +172,36 @@ const retry = async (
       if (sync.retryInterval) sync.retryInterval.refresh()
       // We're still offline so no need to try fetching changes or
       // synchronizing.
-      return
+      return false
     }
   }
 
   clearInterval(sync.retryInterval)
 
-  if (cause.change) {
-    // We increment the record's errors counter to keep track of the
-    // retries and above all, save any changes made to the record by
-    // `applyDoc()` and such (e.g. when applying a file move with update,
-    // if the update fails, we want to remove the `moveFrom` attribute to
-    // avoid re-applying the move which was already applied).
-    await sync.updateErrors(cause.change, cause.err)
+  for (const cause of causes) {
+    if (cause.change) {
+      await sync.updateErrors(cause.change, cause.err)
+    } else {
+      sync._blockedCauses.delete(
+        sync._blockedCauseKey({ docId: undefined, code: cause.err.code })
+      )
+    }
   }
 
-  // Await to make sure we've fetched potential remote changes
+  // Fire-and-forget: awaiting watcher.start() would deadlock with the
+  // pouch.lock(this) held by the caller (_onUserActionCommand).
   if (sync.remote.watcher && !sync.remote.watcher.running) {
-    await sync.remote.watcher.start()
+    sync.remote.watcher.start()
   }
+
+  return true
+}
+
+const retry = async (
+  cause /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */,
+  sync /*: Sync */
+) /*: Promise<boolean> */ => {
+  return retryAll([cause], sync)
 }
 
 const skip = async (
@@ -203,8 +216,10 @@ const skip = async (
     await sync.skipChange(cause.change, cause.err)
   }
 
-  if (!sync.remote.watcher.running) {
-    await sync.remote.watcher.start()
+  // Fire-and-forget: awaiting watcher.start() would deadlock with the
+  // pouch.lock(this) held by the caller (_onUserActionCommand).
+  if (sync.remote.watcher && !sync.remote.watcher.running) {
+    sync.remote.watcher.start()
   }
 }
 
@@ -217,11 +232,8 @@ const createConflict = async (
   clearInterval(sync.retryInterval)
 
   if (cause.change) {
-    const { change, err } = cause
+    const { change } = cause
     try {
-      // Skip the change since it would result in the same conflict error.
-      await sync.skipChange(change, err)
-
       const conflict = await sync.local.resolveConflict(change.doc)
 
       // Prepare the list of documents to save
@@ -341,6 +353,7 @@ module.exports = {
   SyncError,
   retryDelay,
   retry,
+  retryAll,
   skip,
   createConflict,
   linkDirectories,

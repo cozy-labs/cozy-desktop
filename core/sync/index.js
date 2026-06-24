@@ -32,7 +32,7 @@ import type { SavedMetadata, MetadataLocalInfo, MetadataRemoteInfo } from '../me
 import type { SideName } from '../side'
 import type { Writer } from '../writer'
 import type { SyncError } from './errors'
-import type { UserActionCommand } from '../syncstate'
+import type { UserActionCommand, UserAlert } from '../syncstate'
 
 export type PouchDBFeedData = {
   changes: {rev: string}[],
@@ -69,6 +69,10 @@ const shouldAttemptRetry = (change /*: PouchDBFeedData */) => {
     !process.env.SYNC_SHOULD_NOT_RETRY &&
     (!change.doc.errors || change.doc.errors < MAX_SYNC_RETRIES)
   )
+}
+
+const wasSkipped = (change /*: PouchDBFeedData */) => {
+  return change.doc.skipped
 }
 
 // Returns the given side metadata of the given PouchDB record.
@@ -230,6 +234,7 @@ class Sync {
   lifecycle: LifeCycle
   retryInterval: ?IntervalID
   currentChangesToApply: Change[]
+  _blockedCauses: Map<string, {| err: RemoteError |} | {| err: SyncError, change: Change |}>
   */
 
   constructor(
@@ -252,6 +257,9 @@ class Sync {
     // Used only when the synchronization of a change failed and blocks
     this.retryInterval = null
 
+    // Registry of currently blocking sync errors, keyed by doc id (or `remote:${code}`)
+    this._blockedCauses = new Map()
+
     autoBind(this)
   }
 
@@ -271,6 +279,7 @@ class Sync {
       return
     }
 
+    this.events.on('user-action-command', this._onUserActionCommand)
     this.events.once('power-suspend', this.suspend)
 
     // Errors emitted while the watchers are starting (e.g. revoked OAuth
@@ -308,9 +317,10 @@ class Sync {
       return
     }
 
+    this.events.on('user-action-command', this._onUserActionCommand)
     this.events.once('power-suspend', this.suspend)
 
-    this.lifecycle.unblockFor('all')
+    this.lifecycle.unblock()
     this.local.resume()
     this.remote.resume()
     this.lifecycle.end('start')
@@ -321,6 +331,7 @@ class Sync {
   suspend() {
     log.info('suspending synchronization')
 
+    this.events.off('user-action-command', this._onUserActionCommand)
     this.events.once('power-resume', this.resume)
 
     try {
@@ -333,7 +344,7 @@ class Sync {
     this.remote.suspend()
     clearInterval(this.retryInterval)
     this.retryInterval = null
-    this.lifecycle.unblockFor('all')
+    this.lifecycle.unblock()
     this.lifecycle.end('stop')
   }
 
@@ -344,6 +355,7 @@ class Sync {
     // This is especially useful in tests.
     clearInterval(this.retryInterval)
 
+    this.events.off('user-action-command', this._onUserActionCommand)
     this.events.off('power-resume', this.resume)
     this.events.off('power-suspend', this.suspend)
 
@@ -362,7 +374,7 @@ class Sync {
     await Promise.all([this.local.stop(), this.remote.stop()])
     clearInterval(this.retryInterval)
     this.retryInterval = null
-    this.lifecycle.unblockFor('all')
+    this.lifecycle.unblock()
     this.lifecycle.end('stop')
   }
 
@@ -410,6 +422,49 @@ class Sync {
     }
   }
 
+  async hasChangesToSync() {
+    const seq = await this.pouch.getLocalSeq()
+
+    const opts = {
+      ...this.baseChangeOptions(seq),
+      include_docs: true,
+      limit: null
+    }
+
+    return new Promise((resolve, reject) => {
+      let feedObserver
+      const done = (result, err) => {
+        if (feedObserver) feedObserver.cancel()
+        this.lifecycle.off('will-stop', done)
+        if (err) reject(err)
+        else resolve(result)
+      }
+      this.lifecycle.once('will-stop', () => done(false))
+
+      feedObserver = this.pouch.db
+        .changes(opts)
+        .on('change', ({ doc }) => {
+          if (this._isChangeToSync(doc)) done(true)
+        })
+        .on('error', err => done(false, err))
+        .on('complete', () => done(false))
+    })
+  }
+
+  // Read-only predicate: true if the document needs to be synchronized.
+  // Shared between getNextChanges (which advances setLocalSeq on skipped
+  // docs) and hasChangesToSync (which must not have side effects).
+  _isChangeToSync(doc /*: SavedMetadata */) /*: boolean */ {
+    if (metadata.shouldIgnore(doc, this.ignore)) return false
+    if (
+      metadata.isUpToDate('local', doc) &&
+      metadata.isUpToDate('remote', doc)
+    ) {
+      return false
+    }
+    return true
+  }
+
   async sync() /*: Promise<*> */ {
     this.events.emit('sync-start')
     try {
@@ -421,204 +476,213 @@ class Sync {
 
   // sync
   async syncBatch() /*: Promise<void> */ {
+    if (this.lifecycle.willStop()) {
+      return
+    }
+
+    await this.lifecycle.ready()
+
+    const release = await this.pouch.lock(this)
+
     let change /*: Change */ = {}
-    while (!this.lifecycle.willStop()) {
-      await this.lifecycle.ready()
+    try {
+      const seq = await this.pouch.getLocalSeq()
+      const changes = await this.getNextChanges(seq)
+      if (changes.length === 0) {
+        log.info('No more metadata changes for now')
+        return
+      }
 
-      const release = await this.pouch.lock(this)
-      try {
-        const seq = await this.pouch.getLocalSeq()
-        const changes = await this.getNextChanges(seq)
-        if (changes.length === 0) {
-          log.info('No more metadata changes for now')
-          break
+      this.currentChangesToApply = new DependencyGraph(changes, {
+        compare: compareChanges
+      }).toArray()
+
+      // If a change is dependent on another change that was merged later (and
+      // thus has a greater sequence number), we reschedule the dependent one
+      // as it would otherwise be skipped once its dependency is applied and
+      // the feed's sequence number is increased to the dependency's sequence
+      // number.
+      //
+      // We also reschedule all following changes to grossly keep the order in
+      // which "independent" changes were made.
+      const reschedulingStart = this.currentChangesToApply.findIndex(
+        // Find decreasing sequence
+        (change, index, changes) => {
+          return index > 0 ? change.seq < changes[index - 1].seq : false
         }
-
-        this.currentChangesToApply = new DependencyGraph(changes, {
-          compare: compareChanges
-        }).toArray()
-
-        // If a change is dependent on another change that was merged later (and
-        // thus has a greater sequence number), we reschedule the dependent one
-        // as it would otherwise be skipped once its dependency is applied and
-        // the feed's sequence number is increased to the dependency's sequence
-        // number.
-        //
-        // We also reschedule all following changes to grossly keep the order in
-        // which "independent" changes were made.
-        const reschedulingStart = this.currentChangesToApply.findIndex(
-          // Find decreasing sequence
-          (change, index, changes) => {
-            return index > 0 ? change.seq < changes[index - 1].seq : false
-          }
+      )
+      if (reschedulingStart > 0) {
+        const changesToReschedule = this.currentChangesToApply.splice(
+          reschedulingStart
         )
-        if (reschedulingStart > 0) {
-          const changesToReschedule = this.currentChangesToApply.splice(
-            reschedulingStart
-          )
-          await rescheduleChanges(changesToReschedule, this)
-        }
+        await rescheduleChanges(changesToReschedule, this)
+      }
 
-        // We can now apply all changes that were not rescheduled
-        for (const changeToApply of this.currentChangesToApply) {
-          // We need to set the value of `change` so it can be reused in the
-          // `catch` block.
-          change = changeToApply
+      // We can now apply all changes that were not rescheduled
+      for (const changeToApply of this.currentChangesToApply) {
+        // We need to set the value of `change` so it can be reused in the
+        // `catch` block.
+        change = changeToApply
+
+        if (wasSkipped(change)) {
+          await this.pouch.setLocalSeq(change.seq)
+        } else {
           await this.apply(change)
         }
-      } catch (err) {
-        if (this.lifecycle.willStop()) return
-        if (!(err instanceof syncErrors.SyncError)) throw err
 
-        const {
-          sideName,
-          doc: { path }
-        } = err
+        this.resolveBlockingCause(change.id)
+      }
+    } catch (err) {
+      if (this.lifecycle.willStop()) return
+      if (!(err instanceof syncErrors.SyncError)) throw err
 
-        if (
-          [
-            remoteErrors.INVALID_FOLDER_MOVE_CODE,
-            remoteErrors.MISSING_DOCUMENT_CODE,
-            remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE,
-            remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
-          ].includes(err.code)
-        ) {
-          log.error(`Sync error: ${err.message}`, {
-            err,
-            change,
-            path,
-            sentry: true
-          })
-        } else {
-          log.warn(`Sync error: ${err.message}`, { err, change, path })
-        }
-        switch (err.code) {
-          case remoteErrors.TWAKE_NOT_FOUND_CODE:
-            this.fatal(err)
-            break
-          case syncErrors.EXCLUDED_DIR_CODE:
-          case syncErrors.INCOMPATIBLE_DOC_CODE:
-          case syncErrors.MISSING_PERMISSIONS_CODE:
-          case syncErrors.NO_DISK_SPACE_CODE:
-          case remoteErrors.FILE_TOO_LARGE_CODE:
-          case remoteErrors.INVALID_FOLDER_MOVE_CODE:
-          case remoteErrors.INVALID_NAME_CODE:
-          case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
-          case remoteErrors.NO_COZY_SPACE_CODE:
-          case remoteErrors.PATH_TOO_DEEP_CODE:
-          case remoteErrors.REMOTE_MAINTENANCE_ERROR_CODE:
-          case remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE:
-          case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
-          case remoteErrors.UNREACHABLE_COZY_CODE:
-          case remoteErrors.USER_ACTION_REQUIRED_CODE:
-            // We will keep retrying to apply the change until it's fixed or the
-            // user contacts our support.
-            // See `default` case for other blocking errors for which we'll stop
-            // retrying after 3 failed attempts.
-            this.blockSyncFor({ err, change })
-            break
-          case remoteErrors.CONFLICTING_NAME_CODE:
-            if (
-              metadata.isFolder(change.doc) &&
-              change.operation.type === 'ADD'
-            ) {
-              await this.skipChange(change, err) // XXX: both directories will be merged in the next merge cycle?!
+      const {
+        sideName,
+        doc: { path }
+      } = err
+
+      if (
+        [
+          remoteErrors.INVALID_FOLDER_MOVE_CODE,
+          remoteErrors.MISSING_DOCUMENT_CODE,
+          remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE,
+          remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
+        ].includes(err.code)
+      ) {
+        log.error(`Sync error: ${err.message}`, {
+          err,
+          change,
+          path,
+          sentry: true
+        })
+      } else {
+        log.warn(`Sync error: ${err.message}`, { err, change, path })
+      }
+      switch (err.code) {
+        case remoteErrors.TWAKE_NOT_FOUND_CODE:
+          this.fatal(err)
+          break
+        case syncErrors.EXCLUDED_DIR_CODE:
+        case syncErrors.INCOMPATIBLE_DOC_CODE:
+        case syncErrors.MISSING_PERMISSIONS_CODE:
+        case syncErrors.NO_DISK_SPACE_CODE:
+        case remoteErrors.FILE_TOO_LARGE_CODE:
+        case remoteErrors.INVALID_FOLDER_MOVE_CODE:
+        case remoteErrors.INVALID_NAME_CODE:
+        case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
+        case remoteErrors.NO_COZY_SPACE_CODE:
+        case remoteErrors.PATH_TOO_DEEP_CODE:
+        case remoteErrors.REMOTE_MAINTENANCE_ERROR_CODE:
+        case remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE:
+        case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
+        case remoteErrors.UNREACHABLE_COZY_CODE:
+        case remoteErrors.USER_ACTION_REQUIRED_CODE:
+          // We will keep retrying to apply the change until it's fixed or the
+          // user contacts our support.
+          // See `default` case for other blocking errors for which we'll stop
+          // retrying after 3 failed attempts.
+          await this.blockSyncFor({ err, change })
+          break
+        case remoteErrors.CONFLICTING_NAME_CODE:
+          if (
+            metadata.isFolder(change.doc) &&
+            change.operation.type === 'ADD'
+          ) {
+            await this.skipChange(change, err) // XXX: both directories will be merged in the next merge cycle?!
+          } else {
+            await syncErrors.createConflict({ err, change }, this)
+          }
+          break
+        case remoteErrors.INVALID_METADATA_CODE:
+          // Content has changed on disk the current change was merged. A new
+          // sync attempt will be triggered by the new content merge.
+          await this.skipChange(change, err)
+          break
+        case remoteErrors.DOCUMENT_IN_TRASH_CODE:
+          delete change.doc.moveFrom
+          delete change.doc.overwrite
+
+          // Go ahead and mark remote document as trashed
+          change.doc.remote = remoteDocument.trashedDoc(change.doc.remote)
+
+          await this.updateRevs(change.doc, sideName)
+          break
+        case remoteErrors.MISSING_DOCUMENT_CODE:
+          if (shouldAttemptRetry(change)) {
+            await this.blockSyncFor({ err, change })
+          } else {
+            if (isMarkedForDeletion(change.doc)) {
+              await this.skipChange(change, err)
+            } else if (sideName === 'remote') {
+              // FIXME: what about folder content?
+              delete change.doc.moveFrom
+              delete change.doc.overwrite
+              delete change.doc.remote
+
+              await this.doAdd(this.remote, change.doc)
+              await this.updateRevs(change.doc, 'remote')
             } else {
-              await syncErrors.createConflict({ err, change }, this)
-            }
-            break
-          case remoteErrors.INVALID_METADATA_CODE:
-            // Content has changed on disk the current change was merged. A new
-            // sync attempt will be triggered by the new content merge.
-            await this.skipChange(change, err)
-            break
-          case remoteErrors.DOCUMENT_IN_TRASH_CODE:
-            delete change.doc.moveFrom
-            delete change.doc.overwrite
-
-            // Go ahead and mark remote document as trashed
-            change.doc.remote = remoteDocument.trashedDoc(change.doc.remote)
-
-            await this.updateRevs(change.doc, sideName)
-            break
-          case remoteErrors.MISSING_DOCUMENT_CODE:
-            if (shouldAttemptRetry(change)) {
-              this.blockSyncFor({ err, change })
-            } else {
-              if (isMarkedForDeletion(change.doc)) {
-                await this.skipChange(change, err)
-              } else if (sideName === 'remote') {
-                delete change.doc.moveFrom
-                delete change.doc.overwrite
-                delete change.doc.remote
-
-                await this.doAdd(this.remote, change.doc)
-                await this.updateRevs(change.doc, 'remote')
-              } else {
-                await this.pouch.eraseDocument(change.doc)
-                if (change.doc.docType === metadata.FILE) {
-                  this.events.emit('delete-file', change.doc)
-                }
+              await this.pouch.eraseDocument(change.doc)
+              if (change.doc.docType === metadata.FILE) {
+                this.events.emit('delete-file', change.doc)
               }
             }
-            break
-          case remoteErrors.MISSING_PARENT_CODE:
-            /* When we fail to apply a change because its parent does not exist on
-             * the Twake Workplace, it means we either:
-             * 1. have another change to apply that will create that parent
-             * 2. have not yet merged the remote change that removed that parent
-             * 3. have failed to sync the creation of the parent and will never
-             *    succeed because we abandoned in the past
-             * 4. have failed to merge its remote deletion and will never succeed
-             *    because we abandoned in the past
-             */
-            if (shouldAttemptRetry(change)) {
-              // Solve 1. & 2.
-              this.blockSyncFor({ err, change })
-            } else {
-              log.error('Parent directory is missing on Twake Workplace', {
+          }
+          break
+        case remoteErrors.MISSING_PARENT_CODE:
+          /* When we fail to apply a change because its parent does not exist on
+           * the Twake Workplace, it means we either:
+           * 1. have another change to apply that will create that parent
+           * 2. have not yet merged the remote change that removed that parent
+           * 3. have failed to sync the creation of the parent and will never
+           *    succeed because we abandoned in the past
+           * 4. have failed to merge its remote deletion and will never succeed
+           *    because we abandoned in the past
+           */
+          if (shouldAttemptRetry(change)) {
+            // Solve 1. & 2.
+            await this.blockSyncFor({ err, change })
+          } else {
+            log.error('Parent directory is missing on Twake Workplace', {
+              path,
+              err,
+              change
+            })
+            const parent = await this.pouch.bySyncedPath(dirname(path))
+            if (!parent) {
+              // Solve 3.
+              // This is a weird situation where we don't have a parent in
+              // PouchDB. This should never be the case though.
+              log.error(
+                'Parent directory could not be found either on Twake Workplace or PouchDB. Abandoning.',
+                { path, err, change, sentry: true }
+              )
+              await this.skipChange(change, err)
+            } else if (parent.remote) {
+              // We're in a fishy situation where we have a folder whose synced
+              // path is the parent path of our document but its remote path is
+              // not and the synchronization did not change this.
+              // The database is corrupted and should be cleaned up.
+              log.error('Parent directory is desynchronized. Abandoning.', {
                 path,
                 err,
-                change
+                change,
+                sentry: true
               })
-              const parent = await this.pouch.bySyncedPath(dirname(path))
-              if (!parent) {
-                // Solve 3.
-                // This is a weird situation where we don't have a parent in
-                // PouchDB. This should never be the case though.
-                log.error(
-                  'Parent directory could not be found either on Twake Workplace or PouchDB. Abandoning.',
-                  { path, err, change, sentry: true }
-                )
-                await this.skipChange(change, err)
-              } else if (parent.remote) {
-                // We're in a fishy situation where we have a folder whose synced
-                // path is the parent path of our document but its remote path is
-                // not and the synchronization did not change this.
-                // The database is corrupted and should be cleaned up.
-                log.error('Parent directory is desynchronized. Abandoning.', {
-                  path,
-                  err,
-                  change,
-                  sentry: true
-                })
-                await this.skipChange(change, err)
-              } else {
-                // Solve 3. or 4.
-                await this.remote.addFolderAsync(parent)
-              }
-            }
-            break
-          default:
-            if (shouldAttemptRetry(change)) {
-              this.blockSyncFor({ err, change })
-            } else {
               await this.skipChange(change, err)
+            } else {
+              // Solve 3. or 4.
+              await this.remote.addFolderAsync(parent)
             }
-        }
-      } finally {
-        release()
+          }
+          break
+        default:
+          // Unknown error codes block sync indefinitely (rather than skipping
+          // after MAX_SYNC_RETRIES) to surface unexpected failures as alerts.
+          await this.blockSyncFor({ err, change })
       }
+    } finally {
+      release()
     }
   }
 
@@ -670,12 +734,8 @@ class Sync {
 
   async getNextChanges(seq /*: number */) /*: Promise<Change[]> */ {
     const stopMeasure = measureTime('Sync#getNextChanges')
-    const opts = {
-      ...this.baseChangeOptions(seq),
-      include_docs: true,
-      limit: null
-    }
-    const p = new Promise((resolve, reject) => {
+
+    const pouchChanges = await new Promise((resolve, reject) => {
       let feedObserver
       const done = (data = [], err) => {
         this.lifecycle.off('will-stop', done)
@@ -692,44 +752,45 @@ class Sync {
       }
       this.lifecycle.once('will-stop', done)
 
-      const changes = []
-      const asyncOps = []
+      const pouchChanges = []
 
+      const opts = {
+        ...this.baseChangeOptions(seq),
+        include_docs: true,
+        limit: null
+      }
       feedObserver = this.pouch.db
         .changes(opts)
-        .on('change', async data => {
-          const { doc, seq } = data
-          if (changes.length === 0 && metadata.shouldIgnore(doc, this.ignore)) {
-            asyncOps.push(this.pouch.setLocalSeq(seq))
-          } else if (
-            changes.length === 0 &&
-            metadata.isUpToDate('local', doc) &&
-            metadata.isUpToDate('remote', doc)
-          ) {
-            log.info('up to date', { path: doc.path })
-            asyncOps.push(this.pouch.setLocalSeq(seq))
-          } else {
-            asyncOps.push(
-              detectOperation(data, this).then(op => {
-                data.operation = op
-                changes.push(data)
-                return
-              })
-            )
-          }
+        .on('change', data => {
+          pouchChanges.push(data)
         })
         .on('error', err => {
           done(null, err)
         })
-        .on('complete', async data => {
+        .on('complete', data => {
           if (data.results == null || data.results.length === 0) {
-            await Promise.all(asyncOps)
-            done(changes)
+            done(pouchChanges)
           }
         })
     })
+
+    const changes = []
+    for (const pouchChange of pouchChanges) {
+      const { doc, seq } = pouchChange
+      if (changes.length === 0 && !this._isChangeToSync(doc)) {
+        if (!metadata.shouldIgnore(doc, this.ignore)) {
+          log.info('up to date', { path: doc.path })
+        }
+        await this.pouch.setLocalSeq(seq)
+      } else {
+        const op = await detectOperation(pouchChange, this)
+        pouchChange.operation = op
+        changes.push(pouchChange)
+      }
+    }
+
     stopMeasure()
-    return p
+    return changes
   }
 
   // Wait for a change in PouchDB's changesfeed after the given sequence and
@@ -806,8 +867,6 @@ class Sync {
   async apply(change /*: Change */) /*: Promise<void> */ {
     let stopMeasure = () => {}
     try {
-      this.events.emit('sync-current', change.seq)
-
       let { doc, seq } = change
       const { path } = doc
       const side = this.selectSide(change)
@@ -838,6 +897,8 @@ class Sync {
       } catch (err) {
         throw syncErrors.wrapError(err, side.name, change)
       }
+
+      this.events.emit('sync-current', change.seq)
 
       await this.pouch.setLocalSeq(seq)
       log.trace(`Applied change on ${side.name} side`, { path, seq })
@@ -1049,74 +1110,32 @@ class Sync {
     }
   }
 
-  blockSyncFor(
+  async blockSyncFor(
     cause
     /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */
   ) {
     log.info('blocking sync for error', cause)
 
-    const { err } = cause
+    this.lifecycle.block()
 
-    this.lifecycle.blockFor(err.code)
+    const err = cause.err
+    const change = cause.change ? cause.change : undefined
 
-    const waitBeforeRetry = () => {
-      // The user is currently doing the required action so we postpone the next
-      // retry up to `retryDelay` to give the user enough time to complete the
-      // action.
-      // $FlowFixMe intervals have a refresh() method starting with Node v10
-      if (this.retryInterval) this.retryInterval.refresh()
-    }
-    const executeCommand = async (
-      { cmd } /*: { cmd: UserActionCommand } */
-    ) => {
-      this.events.off('user-action-inprogress', waitBeforeRetry)
-      this.events.off('user-action-command', executeCommand)
+    const key = this._blockedCauseKey({
+      docId: change && change.id,
+      code: err.code
+    })
+    this._blockedCauses.set(key, cause)
 
-      // Remove the user action from the list and thus the UI
-      this.events.emit(
-        'user-action-done',
-        err,
-        cause.change && cause.change.seq
-      )
-
-      switch (cmd) {
-        case 'retry':
-          await syncErrors.retry(cause, this)
-          break
-        case 'skip':
-          await syncErrors.skip(cause, this)
-          break
-        case 'create-conflict':
-          await syncErrors.createConflict(cause, this)
-          break
-        case 'link-directories':
-          await syncErrors.linkDirectories(cause, this)
-          break
-        default:
-          log.error('received invalid user action command', {
-            path: cause.change && cause.change.doc.path,
-            cmd,
-            sentry: true
-          })
-          await syncErrors.retry(cause, this)
-      }
-
-      this.lifecycle.unblockFor(err.code)
-    }
-
-    // Clear any existing interval since we'll replace it
+    // Set the auto-retry interval.
+    // Note: each call clears + resets retryInterval, so when multiple changes
+    // block successively, the last retryDelay wins and earlier timers are
+    // lost. This is accepted given the current boolean lifecycle.
     clearInterval(this.retryInterval)
-    // We'll automatically retry to sync the change after a delay
-    const retryDelay = syncErrors.retryDelay(err)
     this.retryInterval = setInterval(
-      executeCommand.bind(this, { cmd: 'retry' }),
-      retryDelay
+      () => this._onUserActionCommand({ cmd: 'retry' }),
+      syncErrors.retryDelay(err)
     )
-
-    // FIXME: possible memory leak as it seems possible to add lots of listeners
-    // without removing them (maybe if we have multiple blocking changes?)
-    this.events.once('user-action-inprogress', waitBeforeRetry)
-    this.events.once('user-action-command', executeCommand)
 
     // In case the error comes from the RemoteWatcher and not a change
     // application, we stop the watcher to avoid more errors.
@@ -1146,10 +1165,8 @@ class Sync {
           this.events.emit(
             'user-alert',
             err,
-            cause.change && cause.change.seq,
-            cause.change &&
-              cause.change.operation.side != null &&
-              cause.change.operation.side
+            change && change.seq,
+            change && change.operation.side != null && change.operation.side
           )
           break
         default:
@@ -1167,6 +1184,72 @@ class Sync {
     }
   }
 
+  _blockedCauseKey({ docId, code } /*: { docId: ?string, code: string } */) {
+    return docId != null ? docId : `remote:${code}`
+  }
+
+  resolveBlockingCause(key /*: string */) {
+    const cause = this._blockedCauses.get(key)
+    if (!cause) return
+
+    this._blockedCauses.delete(key)
+
+    this.events.emit(
+      'user-action-done',
+      cause.err,
+      cause.change && cause.change.seq
+    )
+  }
+
+  async _onUserActionCommand(
+    { cmd, alert } /*: { cmd: UserActionCommand, alert?: UserAlert } */
+  ) {
+    const release = await this.pouch.lock(this)
+    try {
+      if (alert) {
+        const key = this._blockedCauseKey({
+          docId: alert.doc && alert.doc.id,
+          code: alert.code
+        })
+
+        // Read the cause before resolving, as resolveBlockingCause deletes it.
+        const cause = this._blockedCauses.get(key)
+        if (!cause) return
+
+        this.resolveBlockingCause(key)
+
+        switch (cmd) {
+          case 'retry':
+            await syncErrors.retry(cause, this)
+            break
+          case 'skip':
+            await syncErrors.skip(cause, this)
+            break
+          case 'create-conflict':
+            await syncErrors.createConflict(cause, this)
+            break
+          case 'link-directories':
+            await syncErrors.linkDirectories(cause, this)
+            break
+          default:
+            log.error('received invalid user action command', {
+              path: cause.change && cause.change.doc.path,
+              cmd,
+              sentry: true
+            })
+            await syncErrors.retry(cause, this)
+        }
+        this.lifecycle.unblock()
+      } else {
+        const causes = Array.from(this._blockedCauses.values())
+        const proceeded = await syncErrors.retryAll(causes, this)
+        if (proceeded) this.lifecycle.unblock()
+      }
+    } finally {
+      release()
+    }
+  }
+
   // Increment the counter of errors for this document
   async updateErrors(
     change /*: Change */,
@@ -1181,17 +1264,26 @@ class Sync {
       const sourceSideName = otherSide(err.sideName)
       metadata.markSide(sourceSideName, doc, doc)
 
-      await this.pouch.put(doc, { checkInvariants: false })
+      change.doc = await this.pouch.put(doc, { checkInvariants: false })
     } catch (err) {
-      // If the doc can't be saved, it's because of a new revision.
-      // So, we can skip this revision
       if (err.status === 409) {
+        // If the doc can't be saved, because of a new revision, we can ignore
+        // it as this change will be replaced by the latest doc change.
         const was = await this.pouch.byIdMaybe(doc._id)
-        log.info(`Ignored ${change.seq}`, { err, doc, was })
+        log.info(`could not update doc errors for change ${change.seq}`, {
+          err,
+          doc,
+          was
+        })
       } else {
-        log.info(`Ignored ${change.seq}`, { err })
+        // If we could not update the doc errors for another reason than a
+        // revision conflict, there's not much we can do as skipping the change
+        // requires to be able to udpate the doc.
+        log.error(
+          `could not update doc errors for change ${change.seq}; skipping`,
+          { err, sentry: true }
+        )
       }
-      await this.pouch.setLocalSeq(change.seq)
     }
   }
 
@@ -1200,14 +1292,17 @@ class Sync {
     err /*: SyncError */
   ) /*: Promise<void> */ {
     const { doc } = change
-    const { errors = 0 } = doc
-    log.warn(`Failed to sync ${errors + 1} times. Giving up.`, {
+    log.warn('skipping change', {
       err,
       path: doc.path,
       oldpath: _.get(doc, 'moveFrom.path'),
       sentry: true
     })
-    await this.pouch.setLocalSeq(change.seq)
+
+    this._blockedCauses.delete(change.id)
+
+    doc.skipped = true
+    await this.pouch.put(doc, { checkInvariants: false })
   }
 
   // Update rev numbers for both local and remote sides

@@ -25,6 +25,7 @@ import Util.Mouse as Mouse
 import Window.Tray.Dashboard as Dashboard
 import Window.Tray.Settings as Settings
 import Window.Tray.StatusBar as StatusBar
+import Window.Tray.UserAlertPanel as UserAlertPanel
 
 
 
@@ -43,6 +44,8 @@ type alias Model =
     , settings : Settings.Model
     , status : Status
     , syncState : SyncState
+    , now : Time.Posix
+    , userAlertPanel : UserAlertPanel.Model
     }
 
 
@@ -54,6 +57,8 @@ init version platform =
     , settings = Settings.init version
     , status = Status.init
     , syncState = SyncState.init
+    , now = Time.millisToPosix 0
+    , userAlertPanel = UserAlertPanel.init platform
     }
 
 
@@ -69,8 +74,10 @@ type Msg
     | GoToFolder ShowInWeb
     | GoToTab Page
     | GoToStrTab String
+    | Tick Time.Posix
     | DashboardMsg Dashboard.Msg
     | SettingsMsg Settings.Msg
+    | UserAlertPanelMsg UserAlertPanel.Msg
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -89,16 +96,16 @@ update msg model =
                         _ ->
                             ( model.settings, Cmd.none )
 
-                ( dashboard, cmd ) =
-                    Dashboard.update (Dashboard.GotUserAlerts syncState.userAlerts) model.dashboard
+                ( userAlertPanel, uaCmd ) =
+                    UserAlertPanel.update (UserAlertPanel.GotUserAlerts syncState.userAlerts) model.userAlertPanel
             in
             ( { model
                 | status = status
-                , dashboard = dashboard
                 , settings = settings
                 , syncState = syncState
+                , userAlertPanel = userAlertPanel
               }
-            , Cmd.none
+            , Cmd.map UserAlertPanelMsg uaCmd
             )
 
         GotSyncConfig config ->
@@ -168,6 +175,16 @@ update msg model =
                 _ ->
                     update (GoToTab DashboardPage) model
 
+        Tick now ->
+            ( { model | now = now }, Cmd.none )
+
+        UserAlertPanelMsg subMsg ->
+            let
+                ( userAlertPanel, cmd ) =
+                    UserAlertPanel.update subMsg model.userAlertPanel
+            in
+            ( { model | userAlertPanel = userAlertPanel }, Cmd.map UserAlertPanelMsg cmd )
+
 
 
 -- SUBSCRIPTIONS
@@ -182,7 +199,6 @@ subscriptions model =
         , Confirmation.gotConfirmation GotConfirmation
 
         -- Dashboard subscriptions
-        , Time.every 1000 (DashboardMsg << Dashboard.Tick)
         , Ports.transfer (DashboardMsg << Dashboard.Transfer)
         , Ports.remove (DashboardMsg << Dashboard.Remove)
 
@@ -191,6 +207,12 @@ subscriptions model =
         , Settings.gotDiskSpace (SettingsMsg << Settings.UpdateDiskSpace)
         , Ports.autolaunch (SettingsMsg << Settings.AutoLaunchSet)
         , Ports.reinitialization (SettingsMsg << Settings.GotReinitializationStatus)
+
+        -- UserAlertPanel subscriptions
+        , UserAlertPanel.showAlertsPanel (\visible -> UserAlertPanelMsg (UserAlertPanel.SetShowAlerts visible))
+
+        -- Time
+        , Time.every 1000 Tick
         ]
 
 
@@ -201,7 +223,12 @@ subscriptions model =
 view : Helpers -> Model -> Html Msg
 view helpers model =
     div [ class "container" ]
-        [ StatusBar.view helpers model.status model.platform
+        [ StatusBar.view helpers model.status model.platform model.userAlertPanel.showAlerts (UserAlertPanelMsg UserAlertPanel.ToggleAlerts)
+        , if model.status == Status.UserActionRequired then
+            Html.map UserAlertPanelMsg (UserAlertPanel.view helpers model.now model.userAlertPanel)
+
+          else
+            Html.text ""
         , viewTabsWithContent helpers model
         , viewBottomBar helpers
         ]
@@ -216,7 +243,7 @@ viewTabsWithContent helpers model =
             ]
         , case model.page of
             DashboardPage ->
-                Html.map DashboardMsg (Dashboard.view helpers model.dashboard)
+                Html.map DashboardMsg (Dashboard.view helpers model.now model.dashboard)
 
             SettingsPage ->
                 Html.map SettingsMsg (Settings.view helpers model.status model.settings)

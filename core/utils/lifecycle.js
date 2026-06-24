@@ -14,14 +14,14 @@ type State = 'done-stop' | 'will-start' | 'done-start' | 'will-stop'
 class LifeCycle extends EventEmitter {
   /*::
   currentState: State
-  blockedFor: ?string
+  blocked: boolean
   log: Logger
   */
 
   constructor(logger /*: Logger */) {
     super()
     this.currentState = 'done-stop'
-    this.blockedFor = null
+    this.blocked = false
     this.log = logger
   }
 
@@ -88,23 +88,21 @@ class LifeCycle extends EventEmitter {
     await this.transitionedTo('done-start')
   }
 
-  blockFor(reason /*: string */) {
-    this.log.debug(`blocking for ${reason}`)
-    this.blockedFor = reason
+  block() {
+    this.log.debug('blocking sync')
+    this.blocked = true
   }
 
-  unblockFor(reason /*: string */) {
-    this.log.debug(`unblocking for ${reason}`)
-    if (reason === 'all' || reason === this.blockedFor) {
-      this.blockedFor = null
-      this.emit('ready')
-    }
+  unblock() {
+    this.log.debug('unblocking sync')
+    this.blocked = false
+    this.emit('ready')
   }
 
   async ready() /*: Promise<void> */ {
     return new Promise(resolve => {
       this.once('ready', resolve)
-      if (this.blockedFor == null) {
+      if (!this.blocked) {
         resolve()
         this.off('ready', resolve)
       }

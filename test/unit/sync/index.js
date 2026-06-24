@@ -582,7 +582,7 @@ describe('Sync', function() {
 
       describe('when apply throws a NEEDS_REMOTE_MERGE_CODE error', () => {
         beforeEach(function() {
-          sinon.stub(this.sync, 'blockSyncFor').callsFake(() => {
+          sinon.stub(this.sync, 'blockSyncFor').callsFake(async () => {
             this.sync.lifecycle.transitionTo('done-stop')
           })
         })
@@ -1014,25 +1014,21 @@ describe('Sync', function() {
         ),
         'remote'
       )
-      beforeEach(function() {
-        this.sync.blockSyncFor({
+      beforeEach(async function() {
+        await this.sync.blockSyncFor({
           err: unknownSyncError
         })
-        should(this.sync.lifecycle.blockedFor).equal(
-          syncErrors.UNKNOWN_SYNC_ERROR_CODE
-        )
+        should(this.sync.lifecycle.blocked).be.true()
       })
 
       it('replaces the old reason with the new one', async function() {
-        this.sync.blockSyncFor({
+        await this.sync.blockSyncFor({
           err: unreachableSyncError
         })
-        should(this.sync.lifecycle.blockedFor).equal(
-          remoteErrors.UNREACHABLE_COZY_CODE
-        )
+        should(this.sync.lifecycle.blocked).be.true()
 
-        this.sync.lifecycle.unblockFor(remoteErrors.UNREACHABLE_COZY_CODE)
-        should(this.sync.lifecycle.blockedFor).be.null()
+        this.sync.lifecycle.unblock()
+        should(this.sync.lifecycle.blocked).be.false()
       })
     })
 
@@ -1046,8 +1042,8 @@ describe('Sync', function() {
         'remote'
       )
 
-      beforeEach(function() {
-        this.sync.blockSyncFor({
+      beforeEach(async function() {
+        await this.sync.blockSyncFor({
           err: invalidMetadataError
         })
       })
@@ -1065,8 +1061,8 @@ describe('Sync', function() {
         ),
         'remote'
       )
-      beforeEach(function() {
-        this.sync.blockSyncFor({
+      beforeEach(async function() {
+        await this.sync.blockSyncFor({
           err: unreachableSyncError
         })
       })
@@ -1093,7 +1089,7 @@ describe('Sync', function() {
             'request to ... failed, reason: net::ERR_NAME_NOT_RESOLVED'
           )
         )
-        this.sync.blockSyncFor({
+        await this.sync.blockSyncFor({
           err: unreachableRemoteError
         })
 
@@ -1121,18 +1117,23 @@ describe('Sync', function() {
             // Cozy is reachable
             this.remote.ping = sinon.stub().resolves(true)
 
-            // Force call to `retry`
-            this.events.emit('user-action-done')
-            // Wait for `retry` to run
-            await Promise.delay(1000)
+            await this.sync._onUserActionCommand({ cmd: 'retry' })
           })
 
           it('emits online event', async function() {
-            should(this.events.emit).have.been.calledWith('online')
+            should(this.sync.events.emit).have.been.calledWith('online')
           })
 
           it('restarts the remote watcher', function() {
             should(this.remote.watcher.start).have.been.called()
+          })
+
+          it('clears RemoteWatcher blocking causes', function() {
+            should(this.sync._blockedCauses.size).equal(0)
+          })
+
+          it('unblocks the lifecycle', function() {
+            should(this.sync.lifecycle.blocked).be.false()
           })
         })
 
@@ -1144,10 +1145,7 @@ describe('Sync', function() {
             // Cozy is unreachable
             this.remote.ping = sinon.stub().resolves(false)
 
-            // Force call to `retry`
-            this.events.emit('user-action-done')
-            // Wait for `retry` to run
-            await Promise.delay(1000)
+            await this.sync._onUserActionCommand({ cmd: 'retry' })
           })
 
           it('emits offline event', async function() {
@@ -1156,6 +1154,14 @@ describe('Sync', function() {
 
           it('does not restart the remote watcher', function() {
             should(this.remote.watcher.start).not.have.been.called()
+          })
+
+          it('keeps RemoteWatcher blocking causes', function() {
+            should(this.sync._blockedCauses.size).above(0)
+          })
+
+          it('keeps the lifecycle blocked', function() {
+            should(this.sync.lifecycle.blocked).be.true()
           })
         })
       })
@@ -1206,8 +1212,8 @@ describe('Sync', function() {
         }
       )
 
-      beforeEach(function() {
-        this.sync.blockSyncFor({
+      beforeEach(async function() {
+        await this.sync.blockSyncFor({
           err: syncErrors.wrapError(
             remoteErrors.wrapError(
               new FetchError(
@@ -1224,13 +1230,7 @@ describe('Sync', function() {
 
       describe('retry', () => {
         beforeEach(async function() {
-          // Reset calls history
-          this.events.emit.resetHistory()
-
-          // Force call to `retry`
-          this.events.emit('user-action-done')
-          // Wait for `retry` to run
-          await Promise.delay(1000)
+          await this.sync._onUserActionCommand({ cmd: 'retry' })
         })
 
         it('increases the record errors counter', async function() {

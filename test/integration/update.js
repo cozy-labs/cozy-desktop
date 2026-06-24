@@ -398,8 +398,7 @@ describe('Update file', () => {
 
         log.info('Trying sync with errors')
 
-        const failingAttempts = 1 + MAX_SYNC_RETRIES // XXX: first attempt + all failing retries
-        for (let i = 0; i < failingAttempts; i++) {
+        for (let i = 0; i <= MAX_SYNC_RETRIES + 1; i++) {
           doOverwriteStub.onCall(i).throws(syncErrors.UNKNOWN_SYNC_ERROR_CODE)
         }
 

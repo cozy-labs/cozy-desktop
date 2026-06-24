@@ -276,6 +276,11 @@ module.exports = class BaseMetadataBuilder {
     return this
   }
 
+  skipped(bool /*: boolean */) /*: this */ {
+    this.doc.skipped = bool
+    return this
+  }
+
   build() /*: Metadata */ {
     // Don't detect incompatibilities according to syncPath for test data, to
     // prevent environment related failures.

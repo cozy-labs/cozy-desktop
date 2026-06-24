@@ -313,12 +313,6 @@ module.exports = class TrayWM extends WindowManager {
           log.error('could not load user alert details content', { err })
         }
       },
-      userActionInProgress: (
-        event /*: ElectronEvent */,
-        action /*: UserAlert */
-      ) => {
-        this.desktop.events.emit('user-action-inprogress', action)
-      },
       userActionCommand: (
         event /*: ElectronEvent */,
         cmd /*: UserActionCommand */,

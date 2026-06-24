@@ -182,10 +182,6 @@ elmectron.ports.userAlertDetails.subscribe(action => {
   ipcRenderer.send('userAlertDetails', action)
 })
 
-elmectron.ports.userActionInProgress.subscribe(action => {
-  ipcRenderer.send('userActionInProgress', action)
-})
-
 elmectron.ports.userActionCommand.subscribe(([cmd, action]) => {
   ipcRenderer.send('userActionCommand', cmd, action)
 })
@@ -206,6 +202,10 @@ ipcRenderer.on('delete-file', (event, info) => {
 
 ipcRenderer.on('disk-space', (event, info) => {
   elmectron.ports.diskSpace.send(info)
+})
+
+ipcRenderer.on('show-alerts-panel', (event, visible) => {
+  elmectron.ports.showAlertsPanel.send(visible)
 })
 
 // Give focus to DOM nodes

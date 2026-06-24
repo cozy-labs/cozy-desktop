@@ -10,6 +10,7 @@ const {
   FILES_DOCTYPE,
   OAUTH_CLIENTS_DOCTYPE
 } = require('../../core/remote/constants')
+const { makeAlert } = require('../../core/syncstate')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
 const pouchHelpers = require('../support/helpers/pouch')
@@ -156,9 +157,10 @@ describe('Differential synchronization', () => {
         // command and run the local watcher to pick up the new local changes
         // (i.e. the conflict creation).
         helpers._sync.blockSyncFor.onFirstCall().callsFake(async cause => {
-          originalBlockSyncFor(cause)
-          helpers._sync.events.emit('user-action-command', {
-            cmd: 'create-conflict'
+          await originalBlockSyncFor(cause)
+          helpers._sync._onUserActionCommand({
+            cmd: 'create-conflict',
+            alert: makeAlert(cause.err, cause.change.seq, cause.change.side)
           })
         })
         helpers._sync.blockSyncFor.callThrough()
@@ -179,18 +181,16 @@ describe('Differential synchronization', () => {
         // `Photos/My Image.png` too many times and ends up recreating its
         // missing parent (i.e. `Photos/`), thus triggering an uncaught
         // `ExcludedDir` error.
-        const doneStart = new Promise(resolve => {
-          helpers.local.side.events.on('local-end', () => {
-            resolve()
+        const localScanDone = async () => {
+          await new Promise(resolve => {
+            helpers.local.side.events.on('local-end', resolve)
           })
-        })
+        }
         await helpers.local.side.start()
-        await doneStart
+        await localScanDone()
         await helpers.local.syncDir.ensureDir('Photos')
         await helpers.local.syncDir.ensureFile('Photos/My Image.png')
-        await new Promise(resolve =>
-          helpers.local.side.events.on('local-end', resolve)
-        )
+        await localScanDone()
         await helpers.syncAll()
 
         should(await helpers.local.treeWithoutTrash()).deepEqual([
@@ -215,9 +215,10 @@ describe('Differential synchronization', () => {
         // command and run the local watcher to pick up the new local changes
         // (i.e. the conflict creation).
         helpers._sync.blockSyncFor.onFirstCall().callsFake(async cause => {
-          originalBlockSyncFor(cause)
-          helpers._sync.events.emit('user-action-command', {
-            cmd: 'link-directories'
+          await originalBlockSyncFor(cause)
+          helpers._sync._onUserActionCommand({
+            cmd: 'link-directories',
+            alert: makeAlert(cause.err, cause.change.seq, cause.change.side)
           })
           // XXX: give enough time to Sync to link the directories before
           // starting the remote watcher.
