@@ -1,8 +1,10 @@
 /* eslint-env mocha */
 
 const should = require('should')
+const sinon = require('sinon')
 
-const { popoverBounds } = require('../../../gui/js/tray.window')
+const TrayWM = require('../../../gui/js/tray.window')
+const { popoverBounds } = TrayWM
 
 describe('tray.window', () => {
   describe('popoverBounds', () => {
@@ -451,6 +453,27 @@ describe('tray.window', () => {
 
       // TODO: Unity (e.g. Ubuntu LTS)
       // TODO: KDE
+    })
+  })
+
+  describe('userActionCommand handler', () => {
+    it('emits user-action-command with cmd and alert', () => {
+      const emit = sinon.stub()
+      const handlers = TrayWM.prototype.ipcEvents.call({
+        desktop: { events: { emit } }
+      })
+      const alert = {
+        code: 'MISSING_PERMISSIONS',
+        doc: { id: 'file-id', docType: 'file', path: 'missing' }
+      }
+
+      handlers.userActionCommand({}, 'retry', alert)
+
+      should(emit).have.been.calledOnce()
+      should(emit).have.been.calledWith('user-action-command', {
+        cmd: 'retry',
+        alert
+      })
     })
   })
 })
