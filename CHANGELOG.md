@@ -1,5 +1,22 @@
 # Twake Desktop: Changelog
 
+## 5.4.0-beta.3 - 2026-06-26
+
+Improvements for all users:
+
+- In the French version, the text shown in the tray status bar when a
+  synchronization error occurred was too long and overflowed the bar.
+  We replaced it with a shorter version so it is fully readable.
+- When an alert was shown in the tray for a sync problem, clicking the button to
+  act on it (retry, skip, etc.) did not resolve the alert and could leave it
+  stuck even though the action had been requested.
+  We fixed this so the alert is cleared and the requested action is applied to the
+  right file or folder.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.4.0-beta.2 - 2026-06-24
 
 Improvements for all users:
