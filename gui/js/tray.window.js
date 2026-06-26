@@ -316,9 +316,9 @@ module.exports = class TrayWM extends WindowManager {
       userActionCommand: (
         event /*: ElectronEvent */,
         cmd /*: UserActionCommand */,
-        action /*: UserAlert */
+        alert /*: UserAlert */
       ) => {
-        this.desktop.events.emit('user-action-command', { cmd, action })
+        this.desktop.events.emit('user-action-command', { cmd, alert })
       },
       'reinitialize-synchronization': (event /*: ElectronEvent */) => {
         log.info('Reinitializing synchronization...')
