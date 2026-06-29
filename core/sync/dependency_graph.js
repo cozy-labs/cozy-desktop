@@ -171,6 +171,15 @@ class DependencyGraph {
 
     return Array.from(visited).map(node => node.change)
   }
+
+  // Return the direct prerequisite changes of `change` — the changes that must
+  // be applied before `change`. Direct edges only; transitivity is handled by
+  // the caller walking `blockedIds` across the topologically ordered batch.
+  directPrerequisites(change /*: Change */) /*: Change[] */ {
+    const node = this.nodes.find(n => n.change === change)
+    if (!node) return []
+    return node.dependentOn.map(n => n.change)
+  }
 }
 
 // Visit the sub-graph represented by the given node and its dependencies to
