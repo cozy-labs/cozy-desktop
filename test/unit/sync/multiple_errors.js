@@ -260,6 +260,73 @@ describe('Multiple sync errors', function() {
     })
   })
 
+  describe('registerBlockingCause', () => {
+    beforeEach(function() {
+      sinon.spy(this.events, 'emit')
+    })
+    afterEach(function() {
+      this.events.emit.restore()
+    })
+
+    it('registers cause and emits alert without blocking lifecycle', async function() {
+      const doc = await builders
+        .metafile()
+        .path('register')
+        .sides({ local: 1 })
+        .create()
+
+      const err = blockingSyncError(doc)
+      const change = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
+        seq: 42,
+        operation: { type: 'ADD', side: 'remote' }
+      }
+
+      await this.sync.registerBlockingCause({ err, change })
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.sync._blockedCauses.has(doc._id)).be.true()
+      should(this.events.emit).have.been.calledWith('user-alert')
+      should(this.sync.lifecycle.blocked).be.false()
+      should(this.sync.retryInterval).be.null()
+    })
+  })
+
+  describe('scheduleRetry', () => {
+    let cause
+    beforeEach(async function() {
+      const doc = await builders
+        .metafile()
+        .path('schedule')
+        .sides({ local: 1 })
+        .create()
+
+      cause = {
+        err: blockingSyncError(doc),
+        change: {
+          changes: [{ rev: doc._rev }],
+          doc,
+          id: doc._id,
+          seq: 42,
+          operation: { type: 'ADD', side: 'remote' }
+        }
+      }
+      await this.sync.registerBlockingCause(cause)
+    })
+
+    it('blocks lifecycle and sets retry interval', async function() {
+      should(this.sync.lifecycle.blocked).be.false()
+      should(this.sync.retryInterval).be.null()
+
+      await this.sync.scheduleRetry([cause])
+
+      should(this.sync.lifecycle.blocked).be.true()
+      should(this.sync.retryInterval).not.be.null()
+    })
+  })
+
   describe('blocked cause key', () => {
     it('overwrites existing blocked cause for same doc with latest seq', async function() {
       const doc = await builders
