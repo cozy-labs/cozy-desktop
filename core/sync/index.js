@@ -536,153 +536,157 @@ class Sync {
       if (this.lifecycle.willStop()) return
       if (!(err instanceof syncErrors.SyncError)) throw err
 
-      const {
-        sideName,
-        doc: { path }
-      } = err
-
-      if (
-        [
-          remoteErrors.INVALID_FOLDER_MOVE_CODE,
-          remoteErrors.MISSING_DOCUMENT_CODE,
-          remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE,
-          remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
-        ].includes(err.code)
-      ) {
-        log.error(`Sync error: ${err.message}`, {
-          err,
-          change,
-          path,
-          sentry: true
-        })
-      } else {
-        log.warn(`Sync error: ${err.message}`, { err, change, path })
-      }
-      switch (err.code) {
-        case remoteErrors.TWAKE_NOT_FOUND_CODE:
-          this.fatal(err)
-          break
-        case syncErrors.EXCLUDED_DIR_CODE:
-        case syncErrors.INCOMPATIBLE_DOC_CODE:
-        case syncErrors.MISSING_PERMISSIONS_CODE:
-        case syncErrors.NO_DISK_SPACE_CODE:
-        case remoteErrors.FILE_TOO_LARGE_CODE:
-        case remoteErrors.INVALID_FOLDER_MOVE_CODE:
-        case remoteErrors.INVALID_NAME_CODE:
-        case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
-        case remoteErrors.NO_COZY_SPACE_CODE:
-        case remoteErrors.PATH_TOO_DEEP_CODE:
-        case remoteErrors.REMOTE_MAINTENANCE_ERROR_CODE:
-        case remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE:
-        case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
-        case remoteErrors.UNREACHABLE_COZY_CODE:
-        case remoteErrors.USER_ACTION_REQUIRED_CODE:
-          // We will keep retrying to apply the change until it's fixed or the
-          // user contacts our support.
-          // See `default` case for other blocking errors for which we'll stop
-          // retrying after 3 failed attempts.
-          await this.blockSyncFor({ err, change })
-          break
-        case remoteErrors.CONFLICTING_NAME_CODE:
-          if (
-            metadata.isFolder(change.doc) &&
-            change.operation.type === 'ADD'
-          ) {
-            await this.skipChange(change, err) // XXX: both directories will be merged in the next merge cycle?!
-          } else {
-            await syncErrors.createConflict({ err, change }, this)
-          }
-          break
-        case remoteErrors.INVALID_METADATA_CODE:
-          // Content has changed on disk the current change was merged. A new
-          // sync attempt will be triggered by the new content merge.
-          await this.skipChange(change, err)
-          break
-        case remoteErrors.DOCUMENT_IN_TRASH_CODE:
-          delete change.doc.moveFrom
-          delete change.doc.overwrite
-
-          // Go ahead and mark remote document as trashed
-          change.doc.remote = remoteDocument.trashedDoc(change.doc.remote)
-
-          await this.updateRevs(change.doc, sideName)
-          break
-        case remoteErrors.MISSING_DOCUMENT_CODE:
-          if (shouldAttemptRetry(change)) {
-            await this.blockSyncFor({ err, change })
-          } else {
-            if (isMarkedForDeletion(change.doc)) {
-              await this.skipChange(change, err)
-            } else if (sideName === 'remote') {
-              // FIXME: what about folder content?
-              delete change.doc.moveFrom
-              delete change.doc.overwrite
-              delete change.doc.remote
-
-              await this.doAdd(this.remote, change.doc)
-              await this.updateRevs(change.doc, 'remote')
-            } else {
-              await this.pouch.eraseDocument(change.doc)
-              if (change.doc.docType === metadata.FILE) {
-                this.events.emit('delete-file', change.doc)
-              }
-            }
-          }
-          break
-        case remoteErrors.MISSING_PARENT_CODE:
-          /* When we fail to apply a change because its parent does not exist on
-           * the Twake Workplace, it means we either:
-           * 1. have another change to apply that will create that parent
-           * 2. have not yet merged the remote change that removed that parent
-           * 3. have failed to sync the creation of the parent and will never
-           *    succeed because we abandoned in the past
-           * 4. have failed to merge its remote deletion and will never succeed
-           *    because we abandoned in the past
-           */
-          if (shouldAttemptRetry(change)) {
-            // Solve 1. & 2.
-            await this.blockSyncFor({ err, change })
-          } else {
-            log.error('Parent directory is missing on Twake Workplace', {
-              path,
-              err,
-              change
-            })
-            const parent = await this.pouch.bySyncedPath(dirname(path))
-            if (!parent) {
-              // Solve 3.
-              // This is a weird situation where we don't have a parent in
-              // PouchDB. This should never be the case though.
-              log.error(
-                'Parent directory could not be found either on Twake Workplace or PouchDB. Abandoning.',
-                { path, err, change, sentry: true }
-              )
-              await this.skipChange(change, err)
-            } else if (parent.remote) {
-              // We're in a fishy situation where we have a folder whose synced
-              // path is the parent path of our document but its remote path is
-              // not and the synchronization did not change this.
-              // The database is corrupted and should be cleaned up.
-              log.error('Parent directory is desynchronized. Abandoning.', {
-                path,
-                err,
-                change,
-                sentry: true
-              })
-              await this.skipChange(change, err)
-            } else {
-              // Solve 3. or 4.
-              await this.remote.addFolderAsync(parent)
-            }
-          }
-          break
-        default:
-          // Unknown error codes block sync indefinitely (rather than skipping
-          // after MAX_SYNC_RETRIES) to surface unexpected failures as alerts.
-          await this.blockSyncFor({ err, change })
-      }
+      await this.handleSyncError(err, change)
     } finally {
       release()
+    }
+  }
+
+  async handleSyncError(err /*: SyncError */, change /*: Change */) {
+    const {
+      sideName,
+      doc: { path }
+    } = err
+
+    if (
+      [
+        remoteErrors.INVALID_FOLDER_MOVE_CODE,
+        remoteErrors.MISSING_DOCUMENT_CODE,
+        remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE,
+        remoteErrors.UNKNOWN_REMOTE_ERROR_CODE
+      ].includes(err.code)
+    ) {
+      log.error(`Sync error: ${err.message}`, {
+        err,
+        change,
+        path,
+        sentry: true
+      })
+    } else {
+      log.warn(`Sync error: ${err.message}`, { err, change, path })
+    }
+    switch (err.code) {
+      case remoteErrors.TWAKE_NOT_FOUND_CODE:
+        this.fatal(err)
+        break
+      case syncErrors.EXCLUDED_DIR_CODE:
+      case syncErrors.INCOMPATIBLE_DOC_CODE:
+      case syncErrors.MISSING_PERMISSIONS_CODE:
+      case syncErrors.NO_DISK_SPACE_CODE:
+      case remoteErrors.FILE_TOO_LARGE_CODE:
+      case remoteErrors.INVALID_FOLDER_MOVE_CODE:
+      case remoteErrors.INVALID_NAME_CODE:
+      case remoteErrors.NEEDS_REMOTE_MERGE_CODE:
+      case remoteErrors.NO_COZY_SPACE_CODE:
+      case remoteErrors.PATH_TOO_DEEP_CODE:
+      case remoteErrors.REMOTE_MAINTENANCE_ERROR_CODE:
+      case remoteErrors.UNKNOWN_INVALID_DATA_ERROR_CODE:
+      case remoteErrors.UNKNOWN_REMOTE_ERROR_CODE:
+      case remoteErrors.UNREACHABLE_COZY_CODE:
+      case remoteErrors.USER_ACTION_REQUIRED_CODE:
+        // We will keep retrying to apply the change until it's fixed or the
+        // user contacts our support.
+        // See `default` case for other blocking errors for which we'll stop
+        // retrying after 3 failed attempts.
+        await this.blockSyncFor({ err, change })
+        break
+      case remoteErrors.CONFLICTING_NAME_CODE:
+        if (
+          metadata.isFolder(change.doc) &&
+          change.operation.type === 'ADD'
+        ) {
+          await this.skipChange(change, err) // XXX: both directories will be merged in the next merge cycle?!
+        } else {
+          await syncErrors.createConflict({ err, change }, this)
+        }
+        break
+      case remoteErrors.INVALID_METADATA_CODE:
+        // Content has changed on disk the current change was merged. A new
+        // sync attempt will be triggered by the new content merge.
+        await this.skipChange(change, err)
+        break
+      case remoteErrors.DOCUMENT_IN_TRASH_CODE:
+        delete change.doc.moveFrom
+        delete change.doc.overwrite
+
+        // Go ahead and mark remote document as trashed
+        change.doc.remote = remoteDocument.trashedDoc(change.doc.remote)
+
+        await this.updateRevs(change.doc, sideName)
+        break
+      case remoteErrors.MISSING_DOCUMENT_CODE:
+        if (shouldAttemptRetry(change)) {
+          await this.blockSyncFor({ err, change })
+        } else {
+          if (isMarkedForDeletion(change.doc)) {
+            await this.skipChange(change, err)
+          } else if (sideName === 'remote') {
+            // FIXME: what about folder content?
+            delete change.doc.moveFrom
+            delete change.doc.overwrite
+            delete change.doc.remote
+
+            await this.doAdd(this.remote, change.doc)
+            await this.updateRevs(change.doc, 'remote')
+          } else {
+            await this.pouch.eraseDocument(change.doc)
+            if (change.doc.docType === metadata.FILE) {
+              this.events.emit('delete-file', change.doc)
+            }
+          }
+        }
+        break
+      case remoteErrors.MISSING_PARENT_CODE:
+        /* When we fail to apply a change because its parent does not exist on
+         * the Twake Workplace, it means we either:
+         * 1. have another change to apply that will create that parent
+         * 2. have not yet merged the remote change that removed that parent
+         * 3. have failed to sync the creation of the parent and will never
+         *    succeed because we abandoned in the past
+         * 4. have failed to merge its remote deletion and will never succeed
+         *    because we abandoned in the past
+         */
+        if (shouldAttemptRetry(change)) {
+          // Solve 1. & 2.
+          await this.blockSyncFor({ err, change })
+        } else {
+          log.error('Parent directory is missing on Twake Workplace', {
+            path,
+            err,
+            change
+          })
+          const parent = await this.pouch.bySyncedPath(dirname(path))
+          if (!parent) {
+            // Solve 3.
+            // This is a weird situation where we don't have a parent in
+            // PouchDB. This should never be the case though.
+            log.error(
+              'Parent directory could not be found either on Twake Workplace or PouchDB. Abandoning.',
+              { path, err, change, sentry: true }
+            )
+            await this.skipChange(change, err)
+          } else if (parent.remote) {
+            // We're in a fishy situation where we have a folder whose synced
+            // path is the parent path of our document but its remote path is
+            // not and the synchronization did not change this.
+            // The database is corrupted and should be cleaned up.
+            log.error('Parent directory is desynchronized. Abandoning.', {
+              path,
+              err,
+              change,
+              sentry: true
+            })
+            await this.skipChange(change, err)
+          } else {
+            // Solve 3. or 4.
+            await this.remote.addFolderAsync(parent)
+          }
+        }
+        break
+      default:
+        // Unknown error codes block sync indefinitely (rather than skipping
+        // after MAX_SYNC_RETRIES) to surface unexpected failures as alerts.
+        await this.blockSyncFor({ err, change })
     }
   }
 
