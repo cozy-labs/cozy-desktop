@@ -409,5 +409,24 @@ module.exports = ([
         { concurrency: 10 }
       )
     }
+  },
+  {
+    baseSchemaVersion: 14,
+    targetSchemaVersion: 15,
+    description: 'Convert legacy skipped:true boolean to UserSkipped code',
+    affectedDocs: (docs /*: SavedMetadata[] */) /*: SavedMetadata[] */ => {
+      return docs.filter(doc => {
+        // $FlowFixMe legacy `skipped` was a boolean before this migration
+        return doc.skipped === true
+      })
+    },
+    run: (docs /*: SavedMetadata[] */) /*: Promise<SavedMetadata[]> */ => {
+      return Promise.resolve(
+        docs.map(doc => {
+          doc.skipped = 'UserSkipped'
+          return doc
+        })
+      )
+    }
   }
 ] /*: Migration[] */)

@@ -25,8 +25,10 @@ const EXCLUDED_DIR_CODE = 'ExcludedDir'
 const INCOMPATIBLE_DOC_CODE = 'IncompatibleDoc'
 const MISSING_PERMISSIONS_CODE = 'MissingPermissions'
 const NO_DISK_SPACE_CODE = 'NoDiskSpace'
+const SKIPPED_DEPENDENCY_CODE = 'SkippedDependency'
 const UNSYNCED_PARENT_MOVE_CODE = 'UnsyncedParentMove'
 const UNKNOWN_SYNC_ERROR_CODE = 'UnknownSyncError'
+const USER_SKIPPED_CODE = 'UserSkipped'
 
 class UnsyncedParentMoveError extends Error {
   /*::
@@ -52,7 +54,7 @@ class SyncError extends Error {
 
   code: string
   message: string
-  sideName: SideName
+  sideName: ?SideName
   originalErr: Error
   doc: SavedMetadata
   */
@@ -63,7 +65,7 @@ class SyncError extends Error {
       sideName,
       err,
       doc
-    } /*: { code?: string, sideName: SideName, err: Error, doc: SavedMetadata } */
+    } /*: { code?: string, sideName: ?SideName, err: Error, doc: SavedMetadata } */
   ) {
     super(err.message)
 
@@ -157,6 +159,27 @@ const minRetryDelay = (
   return Math.min(...causes.map(c => retryDelay(c.err)))
 }
 
+// Synthetic error emitted when a change is skipped because one of its
+// prerequisite changes was skipped. `prereqPath` is carried to the GUI so
+// `viewByCode` can build a localized message with the path wrapped in
+// backticks, rendered as a clickable chip by `Util.DecorationParser`.
+const skippedDependencyErr = (
+  change /*: Change */,
+  prereqPath /*: string */
+) /*: SyncError */ => {
+  const err = new Error(
+    `Change skipped: a prerequisite change on ${prereqPath} was skipped`
+  )
+  // $FlowFixMe: Error has no prereqPath by default, we add it on purpose.
+  err.prereqPath = prereqPath
+  return new SyncError({
+    code: SKIPPED_DEPENDENCY_CODE,
+    sideName: null,
+    err,
+    doc: change.doc
+  })
+}
+
 const retryAll = async (
   causes /*: Array<{| err: RemoteError |} | {| err: SyncError, change: Change |}> */,
   sync /*: Sync */
@@ -219,7 +242,16 @@ const skip = async (
   clearInterval(sync.retryInterval)
 
   if (cause.change) {
-    await sync.skipChange(cause.change, cause.err)
+    // Wrap the original error so the skip is recorded as user-initiated
+    // (fatal), regardless of the original error's code (which may be
+    // non-fatal like MISSING_DOCUMENT).
+    const wrappedErr = new SyncError({
+      code: USER_SKIPPED_CODE,
+      sideName: cause.err.sideName,
+      err: cause.err,
+      doc: cause.change.doc
+    })
+    await sync.skipChange(cause.change, wrappedErr)
   }
 
   // Fire-and-forget: awaiting watcher.start() would deadlock with the
@@ -353,12 +385,15 @@ module.exports = {
   INCOMPATIBLE_DOC_CODE,
   MISSING_PERMISSIONS_CODE,
   NO_DISK_SPACE_CODE,
+  SKIPPED_DEPENDENCY_CODE,
   UNKNOWN_SYNC_ERROR_CODE,
   UNSYNCED_PARENT_MOVE_CODE,
+  USER_SKIPPED_CODE,
   UnsyncedParentMoveError,
   SyncError,
   retryDelay,
   minRetryDelay,
+  skippedDependencyErr,
   retry,
   retryAll,
   skip,

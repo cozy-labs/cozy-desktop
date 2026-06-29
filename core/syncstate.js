@@ -75,6 +75,7 @@ const makeAlert = (
     side: side || null,
     doc: doc ? { id: doc._id, docType: doc.docType, path: doc.path } : null,
     links: links || null,
+    prereqPath: err.prereqPath || null,
     lastSeenAt: Date.now()
   }
 }

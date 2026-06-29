@@ -4,6 +4,7 @@
 const should = require('should')
 const sinon = require('sinon')
 
+const remoteErrors = require('../../core/remote/errors')
 const syncErrors = require('../../core/sync/errors')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
@@ -180,6 +181,115 @@ describe('Multiple sync problems', () => {
       should(alertPaths).containEql('blocker-2')
 
       helpers.remote.side.addFileAsync.restore()
+    })
+  })
+
+  describe('transitive skip of dependants', () => {
+    it('does not cascade a non-fatal skip (CONFLICTING_NAME on parent) to its child', async function() {
+      // Pre-existing remote directory (no pullChanges → no merge → no link).
+      await helpers.remote.createDirectoryByPath('/non-fatal-parent')
+
+      // Local side: parent dir + child file under it.
+      await helpers.local.syncDir.ensureDir('non-fatal-parent')
+      await helpers.local.syncDir.outputFile(
+        'non-fatal-parent/child',
+        'child content'
+      )
+      await helpers.local.scan()
+
+      const alertPaths = []
+      helpers.events.on('user-alert', err => {
+        if (err.doc) alertPaths.push(err.doc.path)
+      })
+
+      // First sync: parent ADD hits CONFLICTING_NAME (dir already on Cozy)
+      // → non-fatal skip. Child must NOT be alerted SKIPPED_DEPENDENCY.
+      await helpers.sync()
+
+      const parentDoc = await helpers.pouch.bySyncedPath('non-fatal-parent')
+      should(parentDoc.skipped).equal(remoteErrors.CONFLICTING_NAME_CODE)
+      should(alertPaths).not.containEql('non-fatal-parent/child')
+
+      const childDoc = await helpers.pouch.bySyncedPath(
+        'non-fatal-parent/child'
+      )
+      should(childDoc.skipped).be.undefined()
+
+      // Recovery: watcher fetches the remote dir, Merge.save clears the
+      // parent's skipped flag, the child is then synced to Cozy.
+      await helpers.remote.pullChanges()
+      await helpers.syncAll()
+
+      const remoteTree = await helpers.remote.treeWithoutTrash()
+      should(remoteTree).containDeep([
+        'non-fatal-parent/',
+        'non-fatal-parent/child'
+      ])
+    })
+
+    it('cascades a fatal skip (MISSING_PARENT) to its grandchild', async function() {
+      // Create a parent dir + mid dir + leaf file under it.
+      await helpers.local.syncDir.ensureDir('fatal-parent')
+      await helpers.local.syncDir.ensureDir('fatal-parent/mid')
+      await helpers.local.syncDir.outputFile('fatal-parent/mid/leaf', 'leaf')
+      await helpers.local.scan()
+
+      // Stub addFolderAsync to throw MISSING_PARENT for the mid dir.
+      // MISSING_PARENT is fatal: its dependants must be cascaded with
+      // SKIPPED_DEPENDENCY rather than merely blocked for this batch.
+      const originalAddDir = helpers.remote.side.addFolderAsync
+      sinon
+        .stub(helpers.remote.side, 'addFolderAsync')
+        .callsFake(async (doc, ...args) => {
+          if (doc.path && doc.path.includes('fatal-parent/mid')) {
+            throw new syncErrors.SyncError({
+              code: remoteErrors.MISSING_PARENT_CODE,
+              sideName: 'local',
+              err: new Error('Parent directory is missing'),
+              doc
+            })
+          }
+          return originalAddDir(doc, ...args)
+        })
+
+      // Force retry exhaustion so MISSING_PARENT skips instead of blocking.
+      sinon.stub(helpers._sync, 'scheduleRetry').resolves()
+      process.env.SYNC_SHOULD_NOT_RETRY = 'true'
+
+      const alertPaths = []
+      const alertErrs = []
+      helpers.events.on('user-alert', err => {
+        if (err.doc) {
+          alertPaths.push(err.doc.path)
+          alertErrs.push(err)
+        }
+      })
+
+      try {
+        await helpers.sync()
+
+        // The mid dir was fatally skipped (MISSING_PARENT_CODE).
+        const midDoc = await helpers.pouch.bySyncedPath('fatal-parent/mid')
+        should(midDoc.skipped).equal(remoteErrors.MISSING_PARENT_CODE)
+
+        // The leaf was cascaded with SKIPPED_DEPENDENCY (transitive fatal
+        // cascade), not merely blocked for this batch.
+        should(alertPaths).containEql('fatal-parent/mid/leaf')
+        const leafAlert =
+          alertErrs.find(err => err.doc.path === 'fatal-parent/mid/leaf') || {}
+        should(leafAlert).not.be.empty()
+        should(leafAlert.code).equal(syncErrors.SKIPPED_DEPENDENCY_CODE)
+        should(leafAlert.prereqPath).equal('fatal-parent/mid')
+
+        const leafDoc = await helpers.pouch.bySyncedPath(
+          'fatal-parent/mid/leaf'
+        )
+        should(leafDoc.skipped).equal(syncErrors.SKIPPED_DEPENDENCY_CODE)
+      } finally {
+        helpers.remote.side.addFolderAsync.restore()
+        helpers._sync.scheduleRetry.restore()
+        delete process.env.SYNC_SHOULD_NOT_RETRY
+      }
     })
   })
 

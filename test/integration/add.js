@@ -8,6 +8,7 @@ const should = require('should')
 const sinon = require('sinon')
 
 const metadata = require('../../core/metadata')
+const remoteErrors = require('../../core/remote/errors')
 const { logger } = require('../../core/utils/logger')
 const TestHelpers = require('../support/helpers')
 const configHelpers = require('../support/helpers/config')
@@ -415,7 +416,7 @@ describe('Add', () => {
               path: path.normalize('parent/dir'),
               local: { path: path.normalize('parent/dir') },
               sides: { target: 1, local: 1 },
-              skipped: true
+              skipped: remoteErrors.CONFLICTING_NAME_CODE
             },
             // The conflict is solved when the remote watcher fetches the remote
             // doc and links it to the local one during Merge.
