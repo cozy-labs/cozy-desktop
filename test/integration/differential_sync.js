@@ -150,23 +150,24 @@ describe('Differential synchronization', () => {
 
     context('and the user chooses to create a conflict', () => {
       beforeEach(function() {
-        const originalBlockSyncFor = helpers._sync.blockSyncFor
-        sinon.stub(helpers._sync, 'blockSyncFor')
+        const originalScheduleRetry = helpers._sync.scheduleRetry
+        sinon.stub(helpers._sync, 'scheduleRetry')
 
-        // Stub Sync.blockSyncFor to execute the create-conflict user action
+        // Stub Sync.scheduleRetry to execute the create-conflict user action
         // command and run the local watcher to pick up the new local changes
         // (i.e. the conflict creation).
-        helpers._sync.blockSyncFor.onFirstCall().callsFake(async cause => {
-          await originalBlockSyncFor(cause)
+        helpers._sync.scheduleRetry.onFirstCall().callsFake(async causes => {
+          await originalScheduleRetry(causes)
+          const cause = causes[0]
           helpers._sync._onUserActionCommand({
             cmd: 'create-conflict',
             alert: makeAlert(cause.err, cause.change.seq, cause.change.side)
           })
         })
-        helpers._sync.blockSyncFor.callThrough()
+        helpers._sync.scheduleRetry.callThrough()
       })
       afterEach(async function() {
-        helpers._sync.blockSyncFor.restore()
+        helpers._sync.scheduleRetry.restore()
         await helpers.local.side.stop()
       })
 
@@ -208,14 +209,15 @@ describe('Differential synchronization', () => {
 
     context('and the user chooses to merge both folders', () => {
       beforeEach(function() {
-        const originalBlockSyncFor = helpers._sync.blockSyncFor
-        sinon.stub(helpers._sync, 'blockSyncFor')
+        const originalScheduleRetry = helpers._sync.scheduleRetry
+        sinon.stub(helpers._sync, 'scheduleRetry')
 
-        // Stub Sync.blockSyncFor to execute the create-conflict user action
+        // Stub Sync.scheduleRetry to execute the create-conflict user action
         // command and run the local watcher to pick up the new local changes
         // (i.e. the conflict creation).
-        helpers._sync.blockSyncFor.onFirstCall().callsFake(async cause => {
-          await originalBlockSyncFor(cause)
+        helpers._sync.scheduleRetry.onFirstCall().callsFake(async causes => {
+          await originalScheduleRetry(causes)
+          const cause = causes[0]
           helpers._sync._onUserActionCommand({
             cmd: 'link-directories',
             alert: makeAlert(cause.err, cause.change.seq, cause.change.side)
@@ -225,10 +227,10 @@ describe('Differential synchronization', () => {
           await Promise.delay(100)
           helpers.remote.pullChanges()
         })
-        helpers._sync.blockSyncFor.callThrough()
+        helpers._sync.scheduleRetry.callThrough()
       })
       afterEach(function() {
-        helpers._sync.blockSyncFor.restore()
+        helpers._sync.scheduleRetry.restore()
       })
 
       it('does not rename the local folder and re-includes the remote one', async function() {
