@@ -1,5 +1,58 @@
 # Twake Desktop: Changelog
 
+## 5.4.0 - 2026-06-29
+
+Improvements for all users:
+
+- When editing a file while it was being synchronized, an alert could be shown
+  even though the issue would resolve on its own moments later.
+  We now let the synchronization handle this silently without interrupting you.
+- When moving a file to a location that was previously used by another file, the
+  operation could fail.
+  We fixed the order in which changes are processed so that moves are completed
+  properly without conflicts.
+- When trying to synchronize a local file or folder whose name was already taken
+  on the remote Cozy, an alert asked you to resolve the conflict manually.
+  We now handle this automatically: when possible, folders are merged and a copy
+  of the conflicting file is kept with a different name.
+- When several sync problems happened at the same time, only some of them were
+  shown and they would disappear without telling you whether they were fixed.
+  All unresolved sync errors are now listed in a dedicated panel in the tray,
+  and a notification lets you know when they occur.
+- When the network dropped while a sync alert was visible, the tray kept showing
+  the alert instead of reflecting the loss of connectivity.
+  The offline status is now prioritized over alerts so the tray correctly shows
+  it during network outages, and the alert reappears once the connection is
+  back.
+- While the remote Cozy could not be reached, the synchronization kept sending
+  it network requests right after each failed attempt.
+  We now keep the synchronization on hold and let retries happen only at the
+  proper interval.
+- In the French version, the text shown in the tray status bar when a
+  synchronization error occurred was too long and overflowed the bar.
+  We replaced it with a shorter version so it is fully readable.
+- When an alert was shown in the tray for a sync problem, clicking the button to
+  act on it (retry, skip, etc.) did not resolve the alert and could leave it
+  stuck even though the action had been requested.
+  We fixed this so the alert is cleared and the requested action is applied to
+  the right file or folder.
+
+Improvements for Windows and macOS users:
+
+- The names of downloaded binaries changed with each release, making it
+  difficult to link to the latest version.
+  They are now stable across releases for each operating system.
+
+Improvements for macOS users:
+
+- On macOS, the automatic update mechanism could sometimes offer an update for
+  the wrong processor type (Intel vs Apple Silicon).
+  We fixed this so each Mac receives the correct update.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.4.0-beta.3 - 2026-06-26
 
 Improvements for all users:
