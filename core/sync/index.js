@@ -1110,13 +1110,11 @@ class Sync {
     }
   }
 
-  async blockSyncFor(
+  async registerBlockingCause(
     cause
     /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */
   ) {
-    log.info('blocking sync for error', cause)
-
-    this.lifecycle.block()
+    log.info('registering blocking cause for error', cause)
 
     const err = cause.err
     const change = cause.change ? cause.change : undefined
@@ -1126,16 +1124,6 @@ class Sync {
       code: err.code
     })
     this._blockedCauses.set(key, cause)
-
-    // Set the auto-retry interval.
-    // Note: each call clears + resets retryInterval, so when multiple changes
-    // block successively, the last retryDelay wins and earlier timers are
-    // lost. This is accepted given the current boolean lifecycle.
-    clearInterval(this.retryInterval)
-    this.retryInterval = setInterval(
-      () => this._onUserActionCommand({ cmd: 'retry' }),
-      syncErrors.retryDelay(err)
-    )
 
     // In case the error comes from the RemoteWatcher and not a change
     // application, we stop the watcher to avoid more errors.
@@ -1182,6 +1170,31 @@ class Sync {
         // Hide the error from the user as we should be able to solve it
       }
     }
+  }
+
+  async scheduleRetry(
+    causes
+    /*: Array<{| err: RemoteError |} | {| err: SyncError, change: Change |}> */
+  ) {
+    this.lifecycle.block()
+
+    // Set the auto-retry interval.
+    // Note: each call clears + resets retryInterval, so when multiple changes
+    // block successively, the last retryDelay wins and earlier timers are
+    // lost. This is accepted given the current boolean lifecycle.
+    clearInterval(this.retryInterval)
+    this.retryInterval = setInterval(
+      () => this._onUserActionCommand({ cmd: 'retry' }),
+      syncErrors.minRetryDelay(causes)
+    )
+  }
+
+  async blockSyncFor(
+    cause
+    /*: {| err: RemoteError |} | {| err: SyncError, change: Change |} */
+  ) {
+    await this.registerBlockingCause(cause)
+    await this.scheduleRetry([cause])
   }
 
   _blockedCauseKey({ docId, code } /*: { docId: ?string, code: string } */) {

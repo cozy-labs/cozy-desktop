@@ -151,6 +151,12 @@ const retryDelay = (err /*: RemoteError|SyncError */) /*: number */ => {
   }
 }
 
+const minRetryDelay = (
+  causes /*: Array<{| err: RemoteError |} | {| err: SyncError, change: Change |}> */
+) /*: number */ => {
+  return Math.min(...causes.map(c => retryDelay(c.err)))
+}
+
 const retryAll = async (
   causes /*: Array<{| err: RemoteError |} | {| err: SyncError, change: Change |}> */,
   sync /*: Sync */
@@ -352,6 +358,7 @@ module.exports = {
   UnsyncedParentMoveError,
   SyncError,
   retryDelay,
+  minRetryDelay,
   retry,
   retryAll,
   skip,

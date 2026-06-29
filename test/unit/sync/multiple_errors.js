@@ -258,6 +258,59 @@ describe('Multiple sync errors', function() {
       should(this.sync.lifecycle.blocked).be.true()
       should(this.sync._blockedCauses.size).equal(1)
     })
+
+    it('registerBlockingCause alone registers cause and emits alert without blocking lifecycle', async function() {
+      const doc = await builders
+        .metafile()
+        .path('register')
+        .sides({ local: 1 })
+        .create()
+
+      const err = blockingSyncError(doc)
+      const change = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
+        seq: 42,
+        operation: { type: 'ADD', side: 'remote' }
+      }
+
+      await this.sync.registerBlockingCause({ err, change })
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.sync._blockedCauses.has(doc._id)).be.true()
+      should(this.events.emit).have.been.calledWith('user-alert')
+      should(this.sync.lifecycle.blocked).be.false()
+      should(this.sync.retryInterval).be.null()
+    })
+
+    it('scheduleRetry blocks lifecycle and sets retry interval', async function() {
+      const doc = await builders
+        .metafile()
+        .path('schedule')
+        .sides({ local: 1 })
+        .create()
+
+      const cause = {
+        err: blockingSyncError(doc),
+        change: {
+          changes: [{ rev: doc._rev }],
+          doc,
+          id: doc._id,
+          seq: 42,
+          operation: { type: 'ADD', side: 'remote' }
+        }
+      }
+      await this.sync.registerBlockingCause(cause)
+
+      should(this.sync.lifecycle.blocked).be.false()
+      should(this.sync.retryInterval).be.null()
+
+      await this.sync.scheduleRetry([cause])
+
+      should(this.sync.lifecycle.blocked).be.true()
+      should(this.sync.retryInterval).not.be.null()
+    })
   })
 
   describe('blocked cause key', () => {
