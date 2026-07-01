@@ -116,8 +116,8 @@ describe('Multiple sync problems', () => {
       await helpers.local.syncDir.outputFile('blocked-file', 'modified')
       await helpers.local.scan()
 
-      // Spy on blockSyncFor to verify it was called
-      sinon.spy(helpers._sync, 'blockSyncFor')
+      // Spy on registerBlockingCause to verify it was called
+      sinon.spy(helpers._sync, 'registerBlockingCause')
 
       // Stub the remote API with EACCES so wrapError produces
       // MISSING_PERMISSIONS_CODE → no retry exhaustion, user-alert emitted
@@ -126,8 +126,8 @@ describe('Multiple sync problems', () => {
       permError.code = 'EACCES'
       sinon.stub(helpers.remote.side, 'overwriteFileAsync').rejects(permError)
 
-      // When blockSyncFor emits user-alert, the lifecycle is blocked and a
-      // retry interval has been set. Restore overwriteFileAsync so the
+      // When registerBlockingCause emits user-alert, the lifecycle is blocked
+      // and a retry interval has been set. Restore overwriteFileAsync so the
       // upcoming auto-retry succeeds.
       helpers.events.once('user-alert', () => {
         helpers.remote.side.overwriteFileAsync.restore()
@@ -135,8 +135,53 @@ describe('Multiple sync problems', () => {
 
       await helpers.syncAll()
 
-      should(helpers._sync.blockSyncFor.called).be.true()
-      helpers._sync.blockSyncFor.restore()
+      should(helpers._sync.registerBlockingCause.called).be.true()
+      helpers._sync.registerBlockingCause.restore()
+    })
+  })
+
+  describe('multiple blocking errors in the same batch', () => {
+    it('shows all blocking errors and applies independent changes', async function() {
+      await helpers.local.syncDir.outputFile('blocker-1', 'content 1')
+      await helpers.local.syncDir.outputFile('independent', 'content ind')
+      await helpers.local.syncDir.outputFile('blocker-2', 'content 2')
+      await helpers.local.scan()
+
+      sinon.spy(helpers._sync, 'registerBlockingCause')
+      const alertPaths = []
+      helpers.events.on('user-alert', err => {
+        if (err.doc) alertPaths.push(err.doc.path)
+      })
+
+      const originalAddFile = helpers.remote.side.addFileAsync
+      sinon.stub(helpers.remote.side, 'addFileAsync')
+      helpers.remote.side.addFileAsync.callsFake(async (doc, ...args) => {
+        if (
+          doc.path &&
+          (doc.path.includes('blocker-1') || doc.path.includes('blocker-2'))
+        ) {
+          throw new syncErrors.SyncError({
+            code: syncErrors.MISSING_PERMISSIONS_CODE,
+            sideName: 'local',
+            err: new Error('Permission denied'),
+            doc
+          })
+        }
+        return originalAddFile(doc, ...args)
+      })
+
+      await helpers.sync()
+
+      // The independent file was applied despite both blockers failing.
+      should(await helpers.remote.side.exists('/independent')).be.true()
+
+      // Both blockers were registered as blocking causes with alerts.
+      should(helpers._sync._blockedCauses.size).equal(2)
+      should(alertPaths).containEql('blocker-1')
+      should(alertPaths).containEql('blocker-2')
+
+      helpers.remote.side.addFileAsync.restore()
+      helpers._sync.registerBlockingCause.restore()
     })
   })
 

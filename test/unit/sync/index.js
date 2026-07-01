@@ -465,7 +465,7 @@ describe('Sync', function() {
         seq: 123,
         operation: { type: 'EDIT', side: 'remote' }
       }
-      await this.sync.apply(change)
+      await should(this.sync.apply(change)).be.fulfilled()
       should(await this.pouch.bySyncedPath(change.doc.path)).have.properties({
         path: initial.path,
         docType: 'file',
@@ -475,7 +475,6 @@ describe('Sync', function() {
           remote: 4
         }
       })
-      should(await this.pouch.getLocalSeq()).equal(123)
     })
 
     it('calls applyDoc for a modified folder', async function() {
@@ -497,7 +496,7 @@ describe('Sync', function() {
         seq: 124,
         operation: { type: 'EDIT', side: 'remote' }
       }
-      await this.sync.apply(change)
+      await should(this.sync.apply(change)).be.fulfilled()
       should(await this.pouch.bySyncedPath(change.doc.path)).have.properties({
         path: initial.path,
         docType: metadata.FOLDER,
@@ -507,7 +506,6 @@ describe('Sync', function() {
           remote: 4
         }
       })
-      should(await this.pouch.getLocalSeq()).equal(124)
     })
 
     it('calls addFileAsync for an added file', async function() {
@@ -582,9 +580,10 @@ describe('Sync', function() {
 
       describe('when apply throws a NEEDS_REMOTE_MERGE_CODE error', () => {
         beforeEach(function() {
-          sinon.stub(this.sync, 'blockSyncFor').callsFake(async () => {
+          sinon.stub(this.sync, 'scheduleRetry').callsFake(async () => {
             this.sync.lifecycle.transitionTo('done-stop')
           })
+          sinon.spy(this.sync, 'registerBlockingCause')
         })
         beforeEach('simulate error', async function() {
           this.sync.lifecycle.transitionTo('done-start')
@@ -605,7 +604,8 @@ describe('Sync', function() {
           this.sync.apply.restore()
         })
         afterEach(function() {
-          this.sync.blockSyncFor.restore()
+          this.sync.scheduleRetry.restore()
+          this.sync.registerBlockingCause.restore()
         })
 
         it('removes moveFrom and overwrite attributes', async function() {
@@ -613,11 +613,12 @@ describe('Sync', function() {
         })
 
         it('blocks the synchronization so we can retry applying the change', async function() {
-          should(this.sync.blockSyncFor).have.been.calledOnce()
-          should(this.sync.blockSyncFor).have.been.calledWithMatch({
+          should(this.sync.registerBlockingCause).have.been.calledOnce()
+          should(this.sync.registerBlockingCause).have.been.calledWithMatch({
             err: { code: remoteErrors.NEEDS_REMOTE_MERGE_CODE },
             change
           })
+          should(this.sync.scheduleRetry).have.been.calledOnce()
         })
       })
 

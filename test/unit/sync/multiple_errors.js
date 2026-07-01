@@ -84,47 +84,254 @@ describe('Multiple sync errors', function() {
   })
 
   describe('syncBatch error propagation', () => {
-    it('stops applying changes when a blocking error is thrown', async function() {
-      await builders
+    it('collects multiple blocking errors and applies independent changes', async function() {
+      // A (indep, succeed) → B (indep, blocking) → C (depends on B, pending)
+      // → D (indep, blocking)
+      const docA = await builders
         .metafile()
         .path('a')
         .sides({ local: 1 })
         .create()
-      await builders
+      const docB = await builders
         .metafile()
         .path('b')
         .sides({ local: 1 })
         .create()
+      // C depends on B via parent/child path on the same side.
+      const docC = await builders
+        .metafile()
+        .path('b/c')
+        .sides({ local: 1 })
+        .create()
+      const docD = await builders
+        .metafile()
+        .path('d')
+        .sides({ local: 1 })
+        .create()
+
+      const changeA = {
+        changes: [{ rev: docA._rev }],
+        doc: docA,
+        id: docA._id,
+        seq: 10,
+        operation: { type: 'ADD', side: 'local' }
+      }
+      const changeB = {
+        changes: [{ rev: docB._rev }],
+        doc: docB,
+        id: docB._id,
+        seq: 11,
+        operation: { type: 'ADD', side: 'local' }
+      }
+      const changeC = {
+        changes: [{ rev: docC._rev }],
+        doc: docC,
+        id: docC._id,
+        seq: 12,
+        operation: { type: 'ADD', side: 'local' }
+      }
+      const changeD = {
+        changes: [{ rev: docD._rev }],
+        doc: docD,
+        id: docD._id,
+        seq: 13,
+        operation: { type: 'ADD', side: 'local' }
+      }
+
+      sinon
+        .stub(this.sync, 'getNextChanges')
+        .onFirstCall()
+        .resolves([changeA, changeB, changeC, changeD])
+        .onSecondCall()
+        .resolves([])
 
       const applyStub = sinon.stub(this.sync, 'apply')
       applyStub.callsFake(async change => {
-        if (change.doc.path === 'a') {
-          await this.pouch.setLocalSeq(change.seq)
-        } else if (change.doc.path === 'b') {
-          throw blockingSyncError(change.doc)
-        } else {
-          throw new Error(`Unexpected apply call for ${change.doc.path}`)
-        }
+        if (change.id === docA._id) return
+        if (change.id === docB._id) throw blockingSyncError(change.doc)
+        if (change.id === docD._id) throw blockingSyncError(change.doc)
+        throw new Error(`Unexpected apply call for ${change.id}`)
       })
 
-      // Let blockSyncFor run its full logic but stop lifecycle to avoid hang
-      const originalBlockSyncFor = this.sync.blockSyncFor
-      sinon.stub(this.sync, 'blockSyncFor').callsFake(async cause => {
-        await originalBlockSyncFor(cause)
-        this.sync.lifecycle.transitionTo('done-stop')
-      })
+      // Stub scheduleRetry to avoid hanging on the retry interval.
+      sinon.stub(this.sync, 'scheduleRetry').resolves()
+      const emitSpy = sinon.spy(this.events, 'emit')
 
       await this.sync.syncBatch()
 
-      should(applyStub).have.been.calledTwice()
-      should(applyStub.args[0][0].doc.path).equal('a')
-      should(applyStub.args[1][0].doc.path).equal('b')
+      // A, B and D were attempted (C was skipped as a dependant of B).
+      should(applyStub).have.been.calledThrice()
+      const appliedIds = applyStub.args.map(args => args[0].id)
+      should(appliedIds).containEql(docA._id)
+      should(appliedIds).containEql(docB._id)
+      should(appliedIds).containEql(docD._id)
+      should(appliedIds).not.containEql(docC._id)
 
-      const aSeq = applyStub.args[0][0].seq
-      should(await this.pouch.getLocalSeq()).equal(aSeq)
+      // Two blocking causes were registered (B and D), both with alerts.
+      should(this.sync._blockedCauses.size).equal(2)
+      const alertCalls = emitSpy.args.filter(args => args[0] === 'user-alert')
+      should(alertCalls).have.length(2)
 
+      // localSeq frozen at A's seq (last success before first failure).
+      should(await this.pouch.getLocalSeq()).equal(changeA.seq)
+
+      // scheduleRetry was called once at the end with the accumulated causes.
+      should(this.sync.scheduleRetry).have.been.calledOnce()
+      const causes = this.sync.scheduleRetry.args[0][0]
+      should(causes).have.length(2)
+
+      this.sync.getNextChanges.restore()
+      this.sync.apply.restore()
+      this.sync.scheduleRetry.restore()
+      emitSpy.restore()
+    })
+
+    it('applies independent changes after a blocking error without waiting for retry', async function() {
+      const docB = await builders
+        .metafile()
+        .path('blocker')
+        .sides({ local: 1 })
+        .create()
+      const docD = await builders
+        .metafile()
+        .path('independent')
+        .sides({ local: 1 })
+        .create()
+
+      const changeB = {
+        changes: [{ rev: docB._rev }],
+        doc: docB,
+        id: docB._id,
+        seq: 20,
+        operation: { type: 'ADD', side: 'local' }
+      }
+      const changeD = {
+        changes: [{ rev: docD._rev }],
+        doc: docD,
+        id: docD._id,
+        seq: 21,
+        operation: { type: 'ADD', side: 'local' }
+      }
+
+      sinon
+        .stub(this.sync, 'getNextChanges')
+        .onFirstCall()
+        .resolves([changeB, changeD])
+        .onSecondCall()
+        .resolves([])
+
+      let dApplied = false
+      const applyStub = sinon.stub(this.sync, 'apply')
+      applyStub.callsFake(async change => {
+        if (change.id === docB._id) throw blockingSyncError(change.doc)
+        if (change.id === docD._id) {
+          dApplied = true
+          return
+        }
+        throw new Error(`Unexpected apply call for ${change.id}`)
+      })
+
+      sinon.stub(this.sync, 'scheduleRetry').resolves()
+
+      await this.sync.syncBatch()
+
+      // D was applied even though B blocked — independent changes are not
+      // delayed by the retry timer of the failed change.
+      should(dApplied).be.true()
+
+      this.sync.getNextChanges.restore()
+      this.sync.apply.restore()
+      this.sync.scheduleRetry.restore()
+    })
+
+    it('freezes localSeq at last success before first failure (crash recovery)', async function() {
+      const docA = await builders
+        .metafile()
+        .path('recover-a')
+        .sides({ local: 1 })
+        .create()
+      const docB = await builders
+        .metafile()
+        .path('recover-b')
+        .sides({ local: 1 })
+        .create()
+      const docD = await builders
+        .metafile()
+        .path('recover-d')
+        .sides({ local: 1 })
+        .create()
+
+      const changeA = {
+        changes: [{ rev: docA._rev }],
+        doc: docA,
+        id: docA._id,
+        seq: 30,
+        operation: { type: 'ADD', side: 'local' }
+      }
+      const changeB = {
+        changes: [{ rev: docB._rev }],
+        doc: docB,
+        id: docB._id,
+        seq: 31,
+        operation: { type: 'ADD', side: 'local' }
+      }
+      const changeD = {
+        changes: [{ rev: docD._rev }],
+        doc: docD,
+        id: docD._id,
+        seq: 32,
+        operation: { type: 'ADD', side: 'local' }
+      }
+
+      sinon
+        .stub(this.sync, 'getNextChanges')
+        .onFirstCall()
+        .resolves([changeA, changeB, changeD])
+        .onSecondCall()
+        .resolves([])
+
+      const applyStub = sinon.stub(this.sync, 'apply')
+      applyStub.callsFake(async change => {
+        if (change.id === docA._id) return
+        if (change.id === docB._id) throw blockingSyncError(change.doc)
+        if (change.id === docD._id) return
+        throw new Error(`Unexpected apply call for ${change.id}`)
+      })
+
+      sinon.stub(this.sync, 'scheduleRetry').resolves()
+
+      await this.sync.syncBatch()
+
+      // localSeq frozen at A (last success before first failure B).
+      should(await this.pouch.getLocalSeq()).equal(changeA.seq)
+
+      // Simulate a restart: a new syncBatch from the frozen localSeq.
+      // A and D are already up-to-date (no-op), B is re-attempted.
       applyStub.restore()
-      this.sync.blockSyncFor.restore()
+      const applyStub2 = sinon.stub(this.sync, 'apply')
+      applyStub2.callsFake(async change => {
+        if (change.id === docA._id) return
+        if (change.id === docB._id) throw blockingSyncError(change.doc)
+        if (change.id === docD._id) return
+        throw new Error(`Unexpected apply call for ${change.id}`)
+      })
+
+      this.sync.getNextChanges.restore()
+      sinon
+        .stub(this.sync, 'getNextChanges')
+        .onFirstCall()
+        .resolves([changeA, changeB, changeD])
+        .onSecondCall()
+        .resolves([])
+
+      await this.sync.syncBatch()
+
+      // localSeq still frozen at A: B failed again, A/D were no-ops.
+      should(await this.pouch.getLocalSeq()).equal(changeA.seq)
+
+      this.sync.getNextChanges.restore()
+      this.sync.apply.restore()
+      this.sync.scheduleRetry.restore()
     })
   })
 
@@ -257,6 +464,59 @@ describe('Multiple sync errors', function() {
       // re-apply the blocked change right after the ping that just failed.
       should(this.sync.lifecycle.blocked).be.true()
       should(this.sync._blockedCauses.size).equal(1)
+    })
+
+    it('registerBlockingCause alone registers cause and emits alert without blocking lifecycle', async function() {
+      const doc = await builders
+        .metafile()
+        .path('register')
+        .sides({ local: 1 })
+        .create()
+
+      const err = blockingSyncError(doc)
+      const change = {
+        changes: [{ rev: doc._rev }],
+        doc,
+        id: doc._id,
+        seq: 42,
+        operation: { type: 'ADD', side: 'remote' }
+      }
+
+      await this.sync.registerBlockingCause({ err, change })
+
+      should(this.sync._blockedCauses.size).equal(1)
+      should(this.sync._blockedCauses.has(doc._id)).be.true()
+      should(this.events.emit).have.been.calledWith('user-alert')
+      should(this.sync.lifecycle.blocked).be.false()
+      should(this.sync.retryInterval).be.null()
+    })
+
+    it('scheduleRetry blocks lifecycle and sets retry interval', async function() {
+      const doc = await builders
+        .metafile()
+        .path('schedule')
+        .sides({ local: 1 })
+        .create()
+
+      const cause = {
+        err: blockingSyncError(doc),
+        change: {
+          changes: [{ rev: doc._rev }],
+          doc,
+          id: doc._id,
+          seq: 42,
+          operation: { type: 'ADD', side: 'remote' }
+        }
+      }
+      await this.sync.registerBlockingCause(cause)
+
+      should(this.sync.lifecycle.blocked).be.false()
+      should(this.sync.retryInterval).be.null()
+
+      await this.sync.scheduleRetry([cause])
+
+      should(this.sync.lifecycle.blocked).be.true()
+      should(this.sync.retryInterval).not.be.null()
     })
   })
 

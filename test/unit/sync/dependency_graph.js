@@ -189,4 +189,68 @@ describe('DependencyGraph', () => {
       ])
     })
   })
+
+  describe('directPrerequisites', () => {
+    it('returns the direct prerequisite changes of a change', () => {
+      const dependencies = {
+        a: ['b', 'c'],
+        b: ['d'],
+        c: [],
+        d: ['c']
+      }
+      const changes = {
+        a: { doc: { path: 'a' } },
+        b: { doc: { path: 'b' } },
+        c: { doc: { path: 'c' } },
+        d: { doc: { path: 'd' } }
+      }
+      const compare = dependencyBasedCompare(dependencies)
+      const graph = new DependencyGraph(
+        [changes.a, changes.b, changes.c, changes.d],
+        { compare }
+      )
+
+      const prereqs = graph.directPrerequisites(changes.a)
+      should(prereqs.map(c => c.doc.path).sort()).deepEqual(['b', 'c'])
+    })
+
+    it('returns an empty array for a change without prerequisites', () => {
+      const changes = {
+        a: { doc: { path: 'a' } },
+        b: { doc: { path: 'b' } }
+      }
+      const dependencies = { a: ['b'], b: [] }
+      const compare = dependencyBasedCompare(dependencies)
+      const graph = new DependencyGraph([changes.a, changes.b], { compare })
+
+      should(graph.directPrerequisites(changes.b)).deepEqual([])
+    })
+
+    it('returns changes and not internal nodes', () => {
+      const changes = {
+        a: { doc: { path: 'a' } },
+        b: { doc: { path: 'b' } }
+      }
+      const dependencies = { a: ['b'], b: [] }
+      const compare = dependencyBasedCompare(dependencies)
+      const graph = new DependencyGraph([changes.a, changes.b], { compare })
+
+      const prereqs = graph.directPrerequisites(changes.a)
+      should(prereqs).have.length(1)
+      should(prereqs[0]).equal(changes.b)
+    })
+
+    it('returns an empty array for an unknown change', () => {
+      const changes = {
+        a: { doc: { path: 'a' } }
+      }
+      const graph = new DependencyGraph([changes.a], {
+        compare: () => 0
+      })
+
+      should(graph.directPrerequisites({ doc: { path: 'unknown' } })).deepEqual(
+        []
+      )
+    })
+  })
 })
