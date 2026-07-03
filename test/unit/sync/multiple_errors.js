@@ -244,6 +244,85 @@ describe('Multiple sync errors', function() {
       this.sync.scheduleRetry.restore()
     })
 
+    it('blocks a chained move when the move freeing its path fails', async function() {
+      // Reproduces the remote rename case: i->i* (blocked on linux because
+      // `*` is a reserved char) followed by j->i (must wait for i->i* to
+      // free the destination path). Before the fix, j->i was attempted
+      // anyway and failed with a "destination already exists" error.
+      const srcI = await builders
+        .metadir()
+        .path('i')
+        .upToDate()
+        .create()
+      const dstIStar = await builders
+        .metadir()
+        .moveFrom(srcI)
+        .path('i*')
+        .changedSide('local')
+        .create()
+      const srcJ = await builders
+        .metadir()
+        .path('j')
+        .upToDate()
+        .create()
+      const dstIFromJ = await builders
+        .metadir()
+        .moveFrom(srcJ)
+        .path('i')
+        .changedSide('local')
+        .create()
+
+      const changeI = {
+        changes: [{ rev: dstIStar._rev }],
+        doc: dstIStar,
+        id: dstIStar._id,
+        seq: 40,
+        operation: { type: 'MOVE', side: 'local' }
+      }
+      const changeJ = {
+        changes: [{ rev: dstIFromJ._rev }],
+        doc: dstIFromJ,
+        id: dstIFromJ._id,
+        seq: 41,
+        operation: { type: 'MOVE', side: 'local' }
+      }
+
+      sinon
+        .stub(this.sync, 'getNextChanges')
+        .onFirstCall()
+        .resolves([changeI, changeJ])
+        .onSecondCall()
+        .resolves([])
+
+      const applyStub = sinon.stub(this.sync, 'apply')
+      applyStub.callsFake(async change => {
+        if (change.id === dstIStar._id) throw blockingSyncError(change.doc)
+        if (change.id === dstIFromJ._id) {
+          throw new Error('j->i must not be applied while i->i* is blocked')
+        }
+        throw new Error(`Unexpected apply call for ${change.id}`)
+      })
+
+      sinon.stub(this.sync, 'scheduleRetry').resolves()
+
+      await this.sync.syncBatch()
+
+      // i->i* was attempted (and blocked)...
+      should(applyStub).have.been.calledOnce()
+      should(applyStub.args[0][0].id).equal(dstIStar._id)
+
+      // ...and j->i was skipped as a dependent of the blocked i->i*.
+      const appliedIds = applyStub.args.map(args => args[0].id)
+      should(appliedIds).not.containEql(dstIFromJ._id)
+
+      // localSeq frozen at the failed change's predecessor (no success).
+      should(await this.pouch.getLocalSeq()).equal(0)
+
+      this.sync.getNextChanges.restore()
+      this.sync.apply.restore()
+      this.sync.scheduleRetry.restore()
+    })
+
     it('freezes localSeq at last success before first failure (crash recovery)', async function() {
       const docA = await builders
         .metafile()

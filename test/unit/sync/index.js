@@ -1745,5 +1745,88 @@ describe('Sync', function() {
         })
       }
     )
+
+    context(
+      'with two chained moves where one frees the path the other takes',
+      () => {
+        let moveAToC, moveBToA
+        beforeEach(async function() {
+          // i -> i*  (must happen first: frees the path "i")
+          const srcA = await builders
+            .metadir()
+            .path('i')
+            .upToDate()
+            .create()
+          const dstA = await builders
+            .metadir()
+            .moveFrom(srcA)
+            .path('i*')
+            .changedSide('local')
+            .create()
+          // j -> i  (must happen second: takes the freed path "i")
+          const srcB = await builders
+            .metadir()
+            .path('j')
+            .upToDate()
+            .create()
+          const dstB = await builders
+            .metadir()
+            .moveFrom(srcB)
+            .path('i')
+            .changedSide('local')
+            .create()
+
+          moveAToC = makeChange(dstA, 'MOVE', this)
+          moveBToA = makeChange(dstB, 'MOVE', this)
+        })
+
+        it('returns -1 when the freeing move is passed first', () => {
+          should(compareChanges(moveAToC, moveBToA)).eql(-1)
+        })
+
+        it('returns 1 when the freeing move is passed second', () => {
+          should(compareChanges(moveBToA, moveAToC)).eql(1)
+        })
+      }
+    )
+
+    context(
+      'with two unrelated moves where neither frees a path the other takes',
+      () => {
+        let moveX, moveY
+        beforeEach(async function() {
+          const srcX = await builders
+            .metadir()
+            .path('x')
+            .upToDate()
+            .create()
+          const dstX = await builders
+            .metadir()
+            .moveFrom(srcX)
+            .path('x-renamed')
+            .changedSide('local')
+            .create()
+          const srcY = await builders
+            .metadir()
+            .path('y')
+            .upToDate()
+            .create()
+          const dstY = await builders
+            .metadir()
+            .moveFrom(srcY)
+            .path('y-renamed')
+            .changedSide('local')
+            .create()
+
+          moveX = makeChange(dstX, 'MOVE', this)
+          moveY = makeChange(dstY, 'MOVE', this)
+        })
+
+        it('returns 0', () => {
+          should(compareChanges(moveX, moveY)).eql(0)
+          should(compareChanges(moveY, moveX)).eql(0)
+        })
+      }
+    )
   })
 })

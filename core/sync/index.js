@@ -204,6 +204,17 @@ const compareChanges = (
       // Handle move to dir after dir addition
       if (docA.path.startsWith(docB.path + sep)) return B_FIRST
     }
+    if (
+      opA.type === 'MOVE' &&
+      opB.type === 'MOVE' &&
+      docA.moveFrom != null &&
+      docB.moveFrom != null
+    ) {
+      // Handle chained rename: A frees the path B will take (e.g. i->i*
+      // must happen before j->i so the destination path is free).
+      if (docB.path === docA.moveFrom.path) return A_FIRST
+      if (docA.path === docB.moveFrom.path) return B_FIRST
+    }
   }
 
   return KEEP_ORDER
