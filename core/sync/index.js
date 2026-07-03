@@ -1140,12 +1140,16 @@ class Sync {
     doc /*: SavedMetadata */,
     from /*: SavedMetadata */
   ) /*: Promise<void> */ {
-    const oldParentPath = dirname(from.path)
     const newParentPath = dirname(doc.path)
     const parent = await this.pouch.bySyncedPath(newParentPath)
-    if (parent && parent.moveFrom && parent.moveFrom.path === oldParentPath) {
-      // If the parent move was not successfully synchronized, prevent the child
-      // move synchronization by throwning a SyncError.
+    if (parent && parent.moveFrom) {
+      // The parent move was not successfully synchronized yet (its `moveFrom`
+      // is only cleared on sync success), so the child cannot be at its
+      // destination path on the filesystem. We block until the parent move is
+      // applied.
+      // We don't compare paths here: with moveFrom chaining, the parent's
+      // `moveFrom.path` can point to the original source rather than the
+      // intermediate path, so a path match would be unreliable.
       throw new syncErrors.UnsyncedParentMoveError(parent)
     }
 

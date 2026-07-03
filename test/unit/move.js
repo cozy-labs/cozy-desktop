@@ -74,6 +74,97 @@ describe('move', () => {
     })
   })
 
+  describe('chained moveFrom', () => {
+    it('chains through src.moveFrom when local side is not up-to-date', async () => {
+      // Simulates i -> i* (remote move, not synced locally) then i* -> z:
+      // src = i* (carries moveFrom = i, local side out-of-date), dst = z.
+      const originalSrc = await builders
+        .metadata()
+        .path('i')
+        .upToDate()
+        .create()
+      const src = await builders
+        .metadata()
+        .moveFrom(originalSrc)
+        .path('i*')
+        .changedSide('remote')
+        .create()
+      const dst = builders
+        .metadata()
+        .path('z')
+        .build()
+
+      move('remote', src, dst)
+
+      should(dst.moveFrom).eql(originalSrc)
+    })
+
+    it('uses src directly when local side is up-to-date', async () => {
+      // Local move already applied to filesystem: src.moveFrom exists but
+      // local side is up-to-date, so we must not chain through.
+      const originalSrc = await builders
+        .metadata()
+        .path('src')
+        .upToDate()
+        .create()
+      const src = await builders
+        .metadata()
+        .moveFrom(originalSrc)
+        .path('src2')
+        .changedSide('local')
+        .create()
+      const dst = builders
+        .metadata()
+        .path('dst')
+        .build()
+
+      move('local', src, dst)
+
+      should(dst.moveFrom).eql(src)
+    })
+
+    it('uses src directly when src has no moveFrom', async () => {
+      const src = await builders
+        .metadata()
+        .path('src')
+        .upToDate()
+        .create()
+      const dst = builders
+        .metadata()
+        .path('dst')
+        .build()
+
+      move('local', src, dst)
+
+      should(dst.moveFrom).eql(src)
+    })
+
+    it('uses src directly when src.moveFrom is a child move', async () => {
+      // A child move's `moveFrom` points at the path before the parent move.
+      // The parent's sync will relocate that path, so we must not chain
+      // through it — `src` is the actual local path to move from.
+      const originalSrc = await builders
+        .metadata()
+        .path('parent/src')
+        .upToDate()
+        .create()
+      const src = await builders
+        .metadata()
+        .moveFrom(originalSrc, { childMove: true })
+        .path('parent/dst/src')
+        .changedSide('remote')
+        .create()
+      const dst = builders
+        .metadata()
+        .path('parent/dst2/src')
+        .build()
+
+      move('remote', src, dst)
+
+      should(dst.moveFrom).eql(src)
+    })
+  })
+
   describe('convertToDestinationAddition', () => {
     const side = 'local'
     let src, dst

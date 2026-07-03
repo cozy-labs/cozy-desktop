@@ -415,10 +415,9 @@ describe('Platform incompatibilities', () => {
     await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'd:ir'
     })
-    await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
     should(await helpers.incompatibleTree()).deepEqual(['d:ir/', 'd:ir/file'])
-    shouldHaveBlockedFor(['d:ir', 'd:ir/file'])
+    shouldHaveBlockedFor(['d:ir'])
 
     helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(dirs['dir/']._id, {
@@ -426,6 +425,34 @@ describe('Platform incompatibilities', () => {
     })
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
+    should(await helpers.incompatibleTree()).be.empty()
+    shouldNotHaveBlocked()
+  })
+
+  it('rename dir compatible -> incompatible -> new compatible name', async () => {
+    const { dirs } = await helpers.remote.createTree(['dir/', 'dir/file'])
+    await helpers.pullAndSyncAll()
+    should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
+    should(await helpers.incompatibleTree()).be.empty()
+
+    helpers._sync.scheduleRetry.resetHistory()
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
+      name: 'd:ir'
+    })
+    // XXX: try to sync only once as the issue won't resolve itself and we'd
+    // loop indefinitely.
+    await helpers.remote.pullChanges()
+    await helpers.sync()
+    should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
+    should(await helpers.incompatibleTree()).deepEqual(['d:ir/', 'd:ir/file'])
+    shouldHaveBlockedFor(['d:ir', 'd:ir/file'])
+
+    helpers._sync.scheduleRetry.resetHistory()
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
+      name: 'dir2'
+    })
+    await helpers.pullAndSyncAll()
+    should(await helpers.local.tree()).deepEqual(['dir2/', 'dir2/file'])
     should(await helpers.incompatibleTree()).be.empty()
     shouldNotHaveBlocked()
   })
