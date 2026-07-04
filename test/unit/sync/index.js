@@ -814,6 +814,72 @@ describe('Sync', function() {
     })
   })
 
+  describe('doChildMove', () => {
+    context('when parent move is not yet synchronized', () => {
+      it('throws UnsyncedParentMoveError for a simple parent move', async function() {
+        const parent = await builders
+          .metadir()
+          .path('parent/src')
+          .upToDate()
+          .create()
+        await builders
+          .metadir()
+          .moveFrom(parent)
+          .path('parent/dst')
+          .changedSide('remote')
+          .create()
+        const childWas = await builders
+          .metafile()
+          .path('parent/src/child')
+          .upToDate()
+          .create()
+        const child = await builders
+          .metafile()
+          .moveFrom(childWas, { childMove: true })
+          .path('parent/dst/child')
+          .changedSide('remote')
+          .create()
+
+        await should(
+          this.sync.applyDoc(child, this.local, 'local')
+        ).be.rejectedWith(syncErrors.UnsyncedParentMoveError)
+      })
+
+      it('throws UnsyncedParentMoveError when parent moveFrom is chained', async function() {
+        // Parent moved parent/src -> parent/dst -> parent/dst2 (batched).
+        // The parent at dst2 has a chained moveFrom pointing to parent/src,
+        // not the intermediate parent/dst. The child's `from.path` is
+        // parent/dst/child, so the old path-based guard would not match.
+        const originalParent = await builders
+          .metadir()
+          .path('parent/src')
+          .upToDate()
+          .create()
+        await builders
+          .metadir()
+          .moveFrom(originalParent)
+          .path('parent/dst2')
+          .changedSide('remote')
+          .create()
+        const childWas = await builders
+          .metafile()
+          .path('parent/dst/child')
+          .upToDate()
+          .create()
+        const child = await builders
+          .metafile()
+          .moveFrom(childWas, { childMove: true })
+          .path('parent/dst2/child')
+          .changedSide('remote')
+          .create()
+
+        await should(
+          this.sync.applyDoc(child, this.local, 'local')
+        ).be.rejectedWith(syncErrors.UnsyncedParentMoveError)
+      })
+    })
+  })
+
   describe('updateErrors', function() {
     it('retries on first local -> remote sync error', async function() {
       const doc = await builders

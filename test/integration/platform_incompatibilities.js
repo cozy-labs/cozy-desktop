@@ -42,33 +42,43 @@ describe('Platform incompatibilities', () => {
     await helpers.local.setupTrash()
     await helpers.remote.ignorePreviousChanges()
 
-    sinon
-      .stub(helpers._sync, 'blockSyncFor')
-      .callsFake(async ({ change, err }) => {
-        helpers._sync.lifecycle.block()
-        await helpers._sync.skipChange(change, err)
-        helpers._sync.lifecycle.unblock()
-      })
+    sinon.stub(helpers._sync, 'scheduleRetry').callsFake(async causes => {
+      const { change, err } = causes[0]
+      await helpers._sync.skipChange(change, err)
+    })
   })
   afterEach(async function() {
     await helpers.stop()
   })
 
-  const shouldHaveBlockedFor = dpath =>
-    Array.isArray(dpath)
-      ? dpath.forEach(dpath =>
-          should(helpers._sync.blockSyncFor).have.been.calledWithMatch({
-            change: { doc: { path: path.normalize(dpath) } },
-            err: { code: INCOMPATIBLE_DOC_CODE }
-          })
-        )
-      : should(helpers._sync.blockSyncFor).have.been.calledWithMatch({
-          change: { doc: { path: path.normalize(dpath) } },
+  const shouldHaveBlockedFor = dpath => {
+    const paths = Array.isArray(dpath) ? dpath : [dpath]
+    for (const p of paths) {
+      const target = path.normalize(p)
+      const matcher = sinon.match.some(
+        sinon.match({
+          change: { doc: { path: target } },
           err: { code: INCOMPATIBLE_DOC_CODE }
         })
+      )
+      const stub = helpers._sync.scheduleRetry
+      should(stub.calledWithMatch(matcher)).be.true(
+        `scheduleRetry was not called with a cause for "${p}" ` +
+          `(expected change.doc.path=${target}, err.code=${INCOMPATIBLE_DOC_CODE}); ` +
+          `actual blocked paths: ${JSON.stringify(
+            stub
+              .getCalls()
+              .flatMap(c => c.args[0] || [])
+              .map(
+                c => (c && c.change && c.change.doc && c.change.doc.path) || '?'
+              )
+          )}`
+      )
+    }
+  }
 
   const shouldNotHaveBlocked = () =>
-    should(helpers._sync.blockSyncFor).not.have.been.called()
+    should(helpers._sync.scheduleRetry).not.have.been.called()
 
   it('add incompatible dir and file', async () => {
     await builders
@@ -128,7 +138,7 @@ describe('Platform incompatibilities', () => {
     await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesByPath('/d:ir', { name: 'di:r' })
     await helpers.remote.updateAttributesByPath('/f:ile', { name: 'fi:le' })
     await helpers.pullAndSyncAll()
@@ -142,7 +152,7 @@ describe('Platform incompatibilities', () => {
     const { dirs, files } = await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.trashById(dirs['d:ir/']._id)
     await helpers.remote.trashById(files['f:ile']._id)
     await helpers.pullAndSyncAll()
@@ -152,7 +162,7 @@ describe('Platform incompatibilities', () => {
     should(await helpers.incompatibleTree()).be.empty()
     shouldNotHaveBlocked()
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.restoreById(dirs['d:ir/']._id)
     await helpers.remote.restoreById(files['f:ile']._id)
     await helpers.pullAndSyncAll()
@@ -166,7 +176,7 @@ describe('Platform incompatibilities', () => {
     const { dirs, files } = await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.trashById(dirs['d:ir/']._id)
     await helpers.remote.trashById(files['f:ile']._id)
     await helpers.remote.destroyById(dirs['d:ir/']._id)
@@ -177,7 +187,7 @@ describe('Platform incompatibilities', () => {
     should(await helpers.incompatibleTree()).be.empty()
     shouldNotHaveBlocked()
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.createTree(['d:ir/', 'f:ile'])
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).be.empty()
@@ -194,7 +204,7 @@ describe('Platform incompatibilities', () => {
     ])
     await helpers.pullAndSyncAll()
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(files['d:ir/sub:dir/f:ile']._id, {
       name: 'file'
     })
@@ -208,7 +218,7 @@ describe('Platform incompatibilities', () => {
     ])
     shouldHaveBlockedFor('d:ir/sub:dir/file')
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(dirs['d:ir/']._id, {
       name: 'dir'
     })
@@ -225,7 +235,7 @@ describe('Platform incompatibilities', () => {
       'dir/sub:dir/subsubdir'
     ])
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(dirs['d:ir/sub:dir/']._id, {
       name: 'subdir'
     })
@@ -248,7 +258,7 @@ describe('Platform incompatibilities', () => {
     ])
     await helpers.pullAndSyncAll()
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir:'
     })
@@ -274,7 +284,7 @@ describe('Platform incompatibilities', () => {
     ])
     await helpers.pullAndSyncAll()
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir:'
     })
@@ -292,7 +302,7 @@ describe('Platform incompatibilities', () => {
     const { files } = await helpers.remote.createTree(['dir/', 'dir/file'])
     await helpers.pullAndSyncAll()
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(files['dir/file']._id, {
       name: 'fi:le'
     })
@@ -310,7 +320,7 @@ describe('Platform incompatibilities', () => {
     ])
     await helpers.pullAndSyncAll()
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir2'
     })
@@ -332,7 +342,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     // Simulate local move
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     const dir = await helpers.pouch.byRemoteId(dirs['dir/']._id)
     const dir2 = metadata.buildDir('dir2', {
       atime: new Date(),
@@ -369,7 +379,7 @@ describe('Platform incompatibilities', () => {
     await helpers.pullAndSyncAll()
 
     // Simulate remote move
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     if (dirs['dir/'].type !== DIR_TYPE) {
       throw new Error('Unexpected remote file with dir/ path')
     }
@@ -401,21 +411,48 @@ describe('Platform incompatibilities', () => {
     should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
     should(await helpers.incompatibleTree()).be.empty()
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'd:ir'
     })
-    await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
     should(await helpers.incompatibleTree()).deepEqual(['d:ir/', 'd:ir/file'])
-    shouldHaveBlockedFor(['d:ir', 'd:ir/file'])
+    shouldHaveBlockedFor(['d:ir'])
 
-    helpers._sync.blockSyncFor.resetHistory()
+    helpers._sync.scheduleRetry.resetHistory()
     await helpers.remote.updateAttributesById(dirs['dir/']._id, {
       name: 'dir'
     })
     await helpers.pullAndSyncAll()
     should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
+    should(await helpers.incompatibleTree()).be.empty()
+    shouldNotHaveBlocked()
+  })
+
+  it('rename dir compatible -> incompatible -> new compatible name', async () => {
+    const { dirs } = await helpers.remote.createTree(['dir/', 'dir/file'])
+    await helpers.pullAndSyncAll()
+    should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
+    should(await helpers.incompatibleTree()).be.empty()
+
+    helpers._sync.scheduleRetry.resetHistory()
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
+      name: 'd:ir'
+    })
+    // XXX: try to sync only once as the issue won't resolve itself and we'd
+    // loop indefinitely.
+    await helpers.remote.pullChanges()
+    await helpers.sync()
+    should(await helpers.local.tree()).deepEqual(['dir/', 'dir/file'])
+    should(await helpers.incompatibleTree()).deepEqual(['d:ir/', 'd:ir/file'])
+    shouldHaveBlockedFor(['d:ir', 'd:ir/file'])
+
+    helpers._sync.scheduleRetry.resetHistory()
+    await helpers.remote.updateAttributesById(dirs['dir/']._id, {
+      name: 'dir2'
+    })
+    await helpers.pullAndSyncAll()
+    should(await helpers.local.tree()).deepEqual(['dir2/', 'dir2/file'])
     should(await helpers.incompatibleTree()).be.empty()
     shouldNotHaveBlocked()
   })

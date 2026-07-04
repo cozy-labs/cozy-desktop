@@ -44,7 +44,22 @@ function move(
     }
   }
 
-  dst.moveFrom = src
+  // If the previous move was not applied locally (its `moveFrom` is only
+  // cleared on sync success), `src` still carries its own `moveFrom` pointing
+  // to the original source path. We chain through it so the destination
+  // records the actual local path to move from, not an intermediate path that
+  // was never materialized on the filesystem (e.g. a remote move batched with
+  // a later move of the same doc, or a move blocked by platform
+  // incompatibilities).
+  // We don't chain for child moves: their `moveFrom` is the original path
+  // before the parent move, which the parent's sync will relocate. Chaining
+  // would point at a path the parent move will have already moved away.
+  dst.moveFrom =
+    src.moveFrom &&
+    !src.moveFrom.childMove &&
+    !metadata.isAtLeastUpToDate('local', src)
+      ? src.moveFrom
+      : src
   // TODO: remove `_id` and `_rev` from the exception list above and stop
   // assigning them manually.
   dst._id = src._id
