@@ -217,6 +217,7 @@
   "OAuth Waiting for login": "En attente de connexion",
   "OAuth Please check your default browser and log in your Twake account.": "La page de connexion à votre Twake Workplace s'est ouverte dans votre navigateur.",
   "OAuth You'll be redirected here once it's done.":"Vous serez redirigé ici une fois connecté à votre workplace.",
+  "OAuth Could not login": "Nous n'avons pas pu terminer la connexion. Veuillez réessayer ou vérifier que ce compte de staging est rattaché à ce Twake Workplace.",
   "OAuth If something went wrong, you can retry the login by clicking on the button below.":"En cas de problème, vous pouvez retenter de vous connecter en cliquant sur le bouton ci-dessous.",
   "OAuth Retry":"Réessayer",
   "OAuth Contact support":"Contacter le support",

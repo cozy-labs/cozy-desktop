@@ -167,6 +167,13 @@ update msg model =
                     in
                     ( { model | context = context }, Cmd.map EmailMsg cmd )
 
+                OAuthPage ->
+                    let
+                        ( context, cmd ) =
+                            OAuth.update (OAuth.OAuthError error) model.context
+                    in
+                    ( { model | context = context }, Cmd.map OAuthMsg cmd )
+
                 _ ->
                     ( model, Cmd.none )
 

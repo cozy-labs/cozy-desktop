@@ -325,6 +325,15 @@ module.exports = class OnboardingWM extends WindowManager {
     const code = deeplink.searchParams.get('code')
     const fqdn = deeplink.searchParams.get('fqdn')
 
+    if (!code || !fqdn) {
+      log.error('invalid OAuth callback', { url })
+      this.win.webContents.send(
+        'registration-error',
+        translate('OAuth Could not login')
+      )
+      return
+    }
+
     try {
       await this.desktop.registerWithDelegationCode(fqdn, code)
     } catch (err) {
@@ -333,6 +342,11 @@ module.exports = class OnboardingWM extends WindowManager {
         fqdn,
         code
       })
+      this.win.webContents.send(
+        'registration-error',
+        translate('OAuth Could not login')
+      )
+      return
     }
 
     await this.sendSyncConfig()
