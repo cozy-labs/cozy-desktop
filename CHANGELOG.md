@@ -1,5 +1,28 @@
 # Twake Desktop: Changelog
 
+## 5.5.0-beta.1 - 2026-07-06
+
+Improvements for all users:
+
+- When several sync problems happened in the same batch, only the first one
+  was reported and the rest of the batch was skipped until it resolved.
+  All blocking errors in a batch are now collected so each one shows up in
+  the tray panel, independent changes are still applied, and a single retry
+  is scheduled for the whole batch.
+- When a remote rename freed a path that another move needed, the second move
+  could run first and fail with a "destination already exists" error.
+  Dependent moves are now ordered so the freeing move runs before the one that
+  reuses its path.
+- When a file was renamed through a path incompatible with the local
+  filesystem (e.g. a forbidden character) and then renamed again to a valid
+  path, the local copy could not be moved to its final name.
+  The sync now chains through the original path so the local move always
+  starts from a file that actually exists.
+
+See also [known issues](https://github.com/cozy-labs/cozy-desktop/blob/master/KNOWN_ISSUES.md).
+
+Happy syncing!
+
 ## 5.4.0 - 2026-06-29
 
 Improvements for all users:
