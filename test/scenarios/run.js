@@ -464,7 +464,12 @@ async function verifyExpectations(
               fileid: pouchItem && pouchItem.local && pouchItem.local.fileid // undefined if not running on Windows
             }
       })
-      actual.localTree = localTree
+      actual.localTree =
+        process.env.COZY_DESKTOP_FS === 'HFS+'
+          ? localTree.map(item =>
+              Object.assign({}, item, { path: item.path.normalize('NFD') })
+            )
+          : localTree
     }
     if (expectedRemoteTree) {
       // TODO: fetch tree with id and rev to compare them
