@@ -464,12 +464,17 @@ async function verifyExpectations(
               fileid: pouchItem && pouchItem.local && pouchItem.local.fileid // undefined if not running on Windows
             }
       })
-      actual.localTree =
-        process.env.COZY_DESKTOP_FS === 'HFS+'
-          ? localTree.map(item =>
-              Object.assign({}, item, { path: item.path.normalize('NFD') })
-            )
-          : localTree
+      if (process.env.COZY_DESKTOP_FS === 'HFS+') {
+        localTree.forEach(({ path: fpath }) => {
+          fpath.should.equal(
+            fpath.normalize('NFD'),
+            `Expected HFS+ local path to be NFD: ${formatPathForUnicodeDebug(
+              fpath
+            )}`
+          )
+        })
+      }
+      actual.localTree = localTree
     }
     if (expectedRemoteTree) {
       // TODO: fetch tree with id and rev to compare them
@@ -502,3 +507,14 @@ async function verifyExpectations(
     actual.should.be.like(expected)
   }
 }
+
+const formatPathForUnicodeDebug = (fpath /*: string */) =>
+  `${fpath} (${Array.from(fpath)
+    .map(
+      char =>
+        `U+${char
+          .codePointAt(0)
+          .toString(16)
+          .toUpperCase()}`
+    )
+    .join(' ')})`
