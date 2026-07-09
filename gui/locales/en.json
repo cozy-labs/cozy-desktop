@@ -217,6 +217,7 @@
   "OAuth Waiting for login": "Waiting for login",
   "OAuth Please check your default browser and log in your Twake account.": "Please check your default browser and log in your Twake account.",
   "OAuth You'll be redirected here once it's done.":"You'll be redirected here once it's done.",
+  "OAuth Could not login": "We could not complete the login. Please retry, or check that a Twake Workplace is associated with your account.",
   "OAuth If something went wrong, you can retry the login by clicking on the button below.":"If something went wrong, you can retry the login by clicking on the button below.",
   "OAuth Retry":"Retry",
   "OAuth Contact support":"Contact support",

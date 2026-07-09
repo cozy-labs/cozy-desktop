@@ -214,6 +214,8 @@
 
   "MarkdownViewer Why do I see this?": "Why do I see this?",
 
+  "OAuth Could not login": "我们无法完成登录。请重试，或检查您的账号是否已关联 Twake Workplace。",
+
   "Quotation Start": "“",
   "Quotation End": "”",
 

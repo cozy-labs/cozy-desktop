@@ -214,6 +214,8 @@
 
   "MarkdownViewer Why do I see this?": "Warum sehe ich das?",
 
+  "OAuth Could not login": "Wir konnten die Anmeldung nicht abschließen. Bitte versuche es erneut oder prüfe, ob deinem Konto ein Twake Workplace zugeordnet ist.",
+
   "Quotation Start": "“",
   "Quotation End": "”",
 
